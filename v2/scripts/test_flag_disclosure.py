@@ -53,6 +53,8 @@ from ingest_flag_disclosure import (  # noqa: E402
     normalise_url,
     parse_state,
     parse_wage,
+    load_record_key,
+    names_for_year,
     pick_latest,
 )
 from lib_gov_data import discover_links  # noqa: E402
@@ -427,6 +429,17 @@ def check_discovery() -> None:
           "PW_Disclosure_Data_FY2026_Q3.xlsx")
     check("normalise_url leaves the scheme alone",
           normalise_url("https://www.dol.gov///media/x.xlsx"), "https://www.dol.gov/media/x.xlsx")
+    # --fy: one year's files, and the newest of them; a year DOL does not list is empty
+    check("--fy keeps only that fiscal year's files",
+          sorted(names_for_year(pw, 2023)),
+          ["PW_Disclosure_Data_FY2023_Q4_old_form.xlsx", "PW_Disclosure_Data_FY2023_Q4_revised_form.xlsx"])
+    check("--fy then picks the revised form for that year",
+          pick_latest(names_for_year(pw, 2023)), "PW_Disclosure_Data_FY2023_Q4_revised_form.xlsx")
+    check("--fy 2025 is the Q4 file", pick_latest(names_for_year(pw, 2025)), "PW_Disclosure_Data_FY2025_Q4.xlsx")
+    check("--fy for an unlisted year is empty, never a neighbour", names_for_year(pw, 2019), [])
+    check("load records are per file", load_record_key("pw", "PW_Disclosure_Data_FY2025_Q4.xlsx"),
+          "flag_disclosure_pw:PW_Disclosure_Data_FY2025_Q4.xlsx")
+    check("the legacy per-program key is unchanged", load_record_key("pw"), "flag_disclosure_pw")
 
 
 def check_units() -> None:

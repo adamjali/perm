@@ -38,6 +38,10 @@ on:
         required: false
         type: boolean
         default: false
+      fy:
+        description: "History: load this fiscal year's newest file (e.g. 2025) instead of the newest overall"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -87,6 +91,7 @@ jobs:
         env:
           PROGRAM: ${{ matrix.program }}
           FORCE: ${{ inputs.force }}
+          FY: ${{ inputs.fy }}
         run: |
           case "$PROGRAM" in
             pw|lca) ;;
@@ -99,6 +104,12 @@ jobs:
           EXTRA=""
           if [ "$FORCE" = "true" ]; then
             EXTRA="--force"
+          fi
+          if [ -n "$FY" ]; then
+            case "$FY" in
+              20[0-9][0-9]) EXTRA="$EXTRA --fy $FY" ;;
+              *) echo "::error::fy must be a four-digit year, got '$FY'"; exit 1 ;;
+            esac
           fi
           echo "program: $PROGRAM ${EXTRA:+($EXTRA)}"
           # `timeout` rather than the job cap, so a hang FAILS and notifies

@@ -526,7 +526,21 @@ def main() -> int:
     ap.add_argument("--full", action="store_true", help="Re-check every case.")
     ap.add_argument("--program", choices=[*PROGRAMS, "all"], default="all")
     ap.add_argument("--limit", type=int)
+    # Two read-only probes for the workflow that chains backfill legs: where
+    # the frontier is, and the day code a --to date resolves to. Neither
+    # touches DOL; --day-code does not even open Turso.
+    ap.add_argument("--progress", action="store_true",
+                    help="Print the backfill frontier (last day code done) and exit.")
+    ap.add_argument("--day-code", metavar="YYYY-MM-DD",
+                    help="Print the day code for a date and exit.")
     args = ap.parse_args()
+
+    if args.day_code:
+        print(day_code(datetime.date.fromisoformat(args.day_code)))
+        return 0
+    if args.progress:
+        print(read_progress(Turso()) or "")
+        return 0
 
     db = Turso()
     ensure_schema(db)

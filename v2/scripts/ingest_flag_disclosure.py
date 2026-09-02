@@ -240,6 +240,11 @@ def file_sort_key(name: str) -> tuple:
     return (file_fiscal_year(name), quarter, generation)
 
 
+def names_for_year(names, fy: int) -> list[str]:
+    """The disclosure files for one fiscal year, in DOL's naming. Pure."""
+    return [n for n in names if file_fiscal_year(n) == fy]
+
+
 def pick_latest(names) -> str:
     """The newest disclosure filename. Pure, so it is testable without DOL."""
     names = list(names)
@@ -254,8 +259,12 @@ def normalise_url(url: str) -> str:
     return scheme + sep + re.sub(r"/{2,}", "/", rest)
 
 
-def discover_latest(cfg: dict) -> tuple[str, str]:
-    """Return (filename, absolute_url) of the newest file for this program."""
+def discover_latest(cfg: dict, fy: int | None = None) -> tuple[str, str]:
+    """Return (filename, absolute_url) of the newest file for this program.
+
+    With `fy`, the newest file OF THAT FISCAL YEAR (a completed year's Q4 file
+    covers the whole year), so history can be loaded one year at a time.
+    """
     log(f"Discovering {cfg['label']} disclosure files from {PERFORMANCE_PAGE}")
     html = fetch(PERFORMANCE_PAGE).decode("utf-8", "replace")
     found = discover_links(html, cfg["file_pattern"], HOST)
@@ -265,6 +274,13 @@ def discover_latest(cfg: dict) -> tuple[str, str]:
             "page. The page layout changed or the fetch was blocked. Refusing "
             "to report success."
         )
+    if fy is not None:
+        wanted = names_for_year(found, fy)
+        if not wanted:
+            raise SystemExit(
+                f"FATAL: DOL's page lists {len(found)} {cfg['label']} files and none "
+                f"is FY{fy}: " + ", ".join(sorted(found)))
+        found = {n: found[n] for n in wanted}
     name = pick_latest(found)
     url = normalise_url(found[name])
     log(f"  found {len(found)} files; newest is FY{file_fiscal_year(name)} {name}")
@@ -535,14 +551,15 @@ def iter_cases(path: str, cfg: dict, stats: ParseStats, dump_header: bool = Fals
 # Writing
 # ---------------------------------------------------------------------------
 
-def load_record_key(program: str) -> str:
-    return f"flag_disclosure_{program}"
+def load_record_key(program: str, name: str | None = None) -> str:
+    """One record per FILE, so a year loaded with --fy never masquerades as
+    the latest quarter's load. The bare per-program key predates --fy and is
+    read as a fallback so the FY2026 file is not reloaded once for nothing."""
+    return f"flag_disclosure_{program}" + (f":{name}" if name else "")
 
 
-def read_load_record(db: Turso, program: str) -> dict | None:
-    db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
-        key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
-    raw = db.scalar("SELECT json FROM perm_docs WHERE key = ?", [load_record_key(program)])
+def _read_doc(db: Turso, key: str) -> dict | None:
+    raw = db.scalar("SELECT json FROM perm_docs WHERE key = ?", [key])
     if not raw:
         return None
     try:
@@ -551,12 +568,55 @@ def read_load_record(db: Turso, program: str) -> dict | None:
         return None
 
 
-def write_load_record(db: Turso, program: str, record: dict) -> None:
+def read_load_record(db: Turso, program: str, name: str) -> dict | None:
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
+        key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
+    rec = _read_doc(db, load_record_key(program, name))
+    if rec:
+        return rec
+    legacy = _read_doc(db, load_record_key(program))
+    return legacy if legacy and legacy.get("file") == name else None
+
+
+def write_load_record(db: Turso, program: str, record: dict, *, latest: bool) -> None:
+    keys = [load_record_key(program, record["file"])]
+    if latest:
+        keys.append(load_record_key(program))
+    for key in keys:
+        db.execute(
+            "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
+            [key, json.dumps(record, separators=(",", ":")), int(time.time() * 1000)],
+        )
+
+
+def summary_key(program: str) -> str:
+    return f"flag_disclosure_summary_{program}"
+
+
+def write_summary_doc(db: Turso, program: str, table: str) -> dict:
+    """What the web reads instead of counting the table on every render:
+    rows, the span of dates, and the files behind them. Two scans, once per
+    load, against a table nothing else counts."""
+    res = db.execute(
+        f"SELECT count(*), min(received_date), max(decision_date) FROM {table}")
+    row = res["response"]["result"]["rows"][0]
+    cell = lambda c: None if c["type"] == "null" else c["value"]  # noqa: E731
+    per_file = db.execute(
+        f"SELECT source_file, count(*) FROM {table} GROUP BY source_file ORDER BY source_file")
+    files = {r[0]["value"]: int(r[1]["value"]) for r in per_file["response"]["result"]["rows"]}
+    doc = {
+        "rows": int(cell(row[0]) or 0),
+        "earliestReceived": cell(row[1]),
+        "latestDecision": cell(row[2]),
+        "files": files,
+    }
     db.execute(
         "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-        [load_record_key(program), json.dumps(record, separators=(",", ":")),
-         int(time.time() * 1000)],
+        [summary_key(program), json.dumps(doc, separators=(",", ":")), int(time.time() * 1000)],
     )
+    log(f"  summary   {doc['rows']:,} rows, received from {doc['earliestReceived']}, "
+        f"decided through {doc['latestDecision']}, {len(files)} file(s)")
+    return doc
 
 
 def count_for_file(db: Turso, table: str, source_file: str) -> int:
@@ -619,13 +679,16 @@ def main() -> int:
                     help="Print the file's resolved and raw column names, then stop.")
     ap.add_argument("--force", action="store_true",
                     help="Write even when the file's hash matches the last load.")
+    ap.add_argument("--fy", type=int, metavar="YYYY",
+                    help="Load that fiscal year's newest file instead of the newest overall "
+                         "(history, one year per run).")
     args = ap.parse_args()
     if args.dump_rows and not args.dry_run:
         ap.error("--dump-rows only makes sense with --dry-run")
 
     cfg = PROGRAMS[args.program]
     table = cfg["table"]
-    script = f"ingest_flag_disclosure.py --program {args.program}"
+    script = f"ingest_flag_disclosure.py --program {args.program}" + (f" --fy {args.fy}" if args.fy else "")
     started = time.time()
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -635,7 +698,7 @@ def main() -> int:
             sha = sha256_of(path)
             log(f"Using local file {name} ({os.path.getsize(path) / 1e6:.1f} MB)")
         else:
-            name, url = discover_latest(cfg)
+            name, url = discover_latest(cfg, args.fy)
             path = os.path.join(tmp, name)
             log(f"Downloading {name}")
             sha, size = download(url, path, referer=PERFORMANCE_PAGE)
@@ -664,13 +727,16 @@ def main() -> int:
         # Everything below touches Turso. Deliberately after the two probe
         # modes, so they can run on a laptop with no credentials.
         db = Turso()
-        prior = read_load_record(db, args.program)
+        prior = read_load_record(db, args.program, name)
         if prior and prior.get("sha256") == sha and not args.force:
             db.script(table_ddl(table))
             have = count_for_file(db, table, name)
             if have == int(prior.get("rows") or -1):
                 log(f"{name} unchanged since {prior.get('loadedAt')} (sha256 match, "
                     f"{have:,} rows still present); skipping the write")
+                write_summary_doc(db, args.program, table)
+                if args.fy:
+                    return 0
                 stamp_freshness(db, cfg["freshness"], as_of=prior.get("asOf"),
                                 source=cfg["source"], cadence="Quarterly",
                                 note=f"{have:,} cases, {name} (unchanged)",
@@ -706,7 +772,15 @@ def main() -> int:
             "file": name, "sha256": sha, "rows": stats.kept,
             "asOf": stats.last_decided or None,
             "loadedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        })
+        }, latest=args.fy is None)
+        write_summary_doc(db, args.program, table)
+        if args.fy:
+            # A history year is not "the latest data": the freshness row
+            # describes the newest quarter and stays with it.
+            record_run(db, script, status="ok", rows_written=written,
+                       note=f"{name}: {stats.kept:,} cases (FY{args.fy})", started_at=started)
+            log(f"loaded FY{args.fy}; freshness left on the newest quarter")
+            return 0
         stamp_freshness(db, cfg["freshness"], as_of=stats.last_decided or None,
                         source=cfg["source"], cadence="Quarterly",
                         note=f"{stats.kept:,} cases, {name}",
