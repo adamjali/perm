@@ -38,6 +38,8 @@ export type DataSection =
   | "employers"
   | "attorneys"
   | "cases"
+  | "pwd-cases"
+  | "lca-cases"
   | "risk"
   | "rfi-audit"
   | "visa-bulletin"
@@ -79,6 +81,9 @@ export const SECTIONS: DataNavSection[] = [
   // holding a case number is the highest-intent reader on this surface; the
   // two lookups belong together.
   { key: "cases", group: "Case tools", label: "Case search", href: "/perm-cases" },
+  // The step before the PERM, findable the same way: employer, title, month.
+  { key: "pwd-cases", group: "Case tools", label: "Wage requests", href: "/pwd-cases" },
+  { key: "lca-cases", group: "Case tools", label: "H-1B LCAs", href: "/lca-cases" },
   { key: "calculators", group: "Case tools", label: "Calculators", href: "/calculators" },
 
   // "Queue backlog", not "Live queue". 79.8% of pending cases were last

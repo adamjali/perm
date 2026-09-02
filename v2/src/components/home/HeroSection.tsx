@@ -305,6 +305,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
                 autoCapitalize="characters"
                 spellCheck={false}
                 placeholder="G-100-24339-516453"
+                aria-describedby="hero-case-hint"
                 className="mono min-h-[48px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />{" "}
               <button
@@ -313,7 +314,10 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               >
                 Check my case
               </button>
-            </div>
+            </div>{" "}
+            <p id="hero-case-hint" className="mt-2 text-sm text-foreground/70">
+              PERM (G-), wage request (P-) or LCA (I-) number.
+            </p>
             {/* NO HELP LINE. It read "Live DOL status, your place in the
                 queue, and an estimate. Free, no account. The case number is on
                 the filing receipt, or ask whoever filed for you." The tail was

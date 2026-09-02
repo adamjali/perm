@@ -150,6 +150,17 @@ export default async function PwdCalculatorPage() {
         </Link>
       </section>
 
+      <p className="mt-8 max-w-3xl text-base leading-relaxed text-foreground/80">
+        Have a request in this queue and no number for it? The{" "}
+        <Link href="/pwd-cases" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          wage request search
+        </Link>{" "}
+        finds it by employer, and a P- number pasted into the{" "}
+        <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+          status lookup
+        </Link>{" "}
+        shows where it sits in this queue.
+      </p>{" "}
       <DataProvenance datasets={["processing-times"]} />
 
 

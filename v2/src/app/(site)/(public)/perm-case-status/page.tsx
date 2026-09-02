@@ -10,6 +10,8 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
 import { CaseNotFound, CaseStatusEmpty } from "@/components/tools/CaseNotFound";
 import { CaseStatusResult } from "@/components/tools/CaseStatusResult";
+import { PwdLookup } from "@/components/tools/PwdStatusResult";
+import { LcaLookup } from "@/components/tools/LcaStatusResult";
 import { buildWall, neighbourMonths } from "@/lib/casePosition";
 import { isLegacyCaseNumber, normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
@@ -19,6 +21,8 @@ import { parseCaseNumber } from "@/lib/permCaseNumber";
 import { getMonthBacklog } from "@/lib/turso/backlog";
 import { getCaseWageContext, getCohortDuration } from "@/lib/turso/caseContext";
 import { lookupCase } from "@/lib/turso/caseLookup";
+import { normalisePwdCaseNumber } from "@/lib/turso/pwdCases";
+import { normaliseLcaCaseNumber } from "@/lib/turso/lcaCases";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { getAlphabet } from "@/lib/turso/alphabet";
 import { getLiveBacklog, getLiveMirrorSize } from "@/lib/turso/publicData";
@@ -132,8 +136,16 @@ export default async function PermCaseStatusPage({
 }) {
   const { case: raw } = await searchParams;
   const typed = typeof raw === "string" ? raw : "";
-  const caseNumber = typed.trim().length > 0 ? normaliseCaseNumber(typed) : null;
-  const malformed = typed.trim().length > 0 && caseNumber === null;
+  // A prevailing wage number (P-100-...) takes its own path: same page, same
+  // form, a different table and a different queue. Checked FIRST, because the
+  // PERM shape rule accepts any letter and would otherwise send it to the
+  // PERM lookup, which refuses to record it and reports "not found".
+  const pwdNumber = typed.trim().length > 0 ? normalisePwdCaseNumber(typed) : null;
+  const lcaNumber = !pwdNumber && typed.trim().length > 0 ? normaliseLcaCaseNumber(typed) : null;
+  const caseNumber =
+    !pwdNumber && !lcaNumber && typed.trim().length > 0 ? normaliseCaseNumber(typed) : null;
+  const malformed =
+    typed.trim().length > 0 && caseNumber === null && pwdNumber === null && lcaNumber === null;
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -169,7 +181,8 @@ export default async function PermCaseStatusPage({
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
           A case number gets you the status in plain English, what the queue in
           front of it looks like, and the employer&apos;s own record. It will
-          not get you a decision date, and the page says why.
+          not get you a decision date, and the page says why. Prevailing wage
+          (P-100-...) and LCA (I-200-...) numbers work here too.
         </p>
       </header>
 
@@ -194,13 +207,22 @@ export default async function PermCaseStatusPage({
             so nothing was looked up. Current ones run letter, three digits,
             five digits, then a serial, like G-100-26125-868956. Cases from
             2022 and 2023 use a shorter form, like A-23043-00641. Either is on
-            the ETA-9089 receipt.
+            the ETA-9089 receipt. A prevailing wage request starts with P
+            (P-100-26240-200135) and an H-1B LCA with I (I-200-26239-199948).
           </span>
         </p>
       ) : null}
 
       <div className="mt-8">
-        {caseNumber ? (
+        {pwdNumber ? (
+          <Suspense key={pwdNumber} fallback={<LookupSkeleton />}>
+            <PwdLookup caseNumber={pwdNumber} />
+          </Suspense>
+        ) : lcaNumber ? (
+          <Suspense key={lcaNumber} fallback={<LookupSkeleton />}>
+            <LcaLookup caseNumber={lcaNumber} />
+          </Suspense>
+        ) : caseNumber ? (
           <Suspense key={caseNumber} fallback={<LookupSkeleton />}>
             <Lookup caseNumber={caseNumber} />
           </Suspense>

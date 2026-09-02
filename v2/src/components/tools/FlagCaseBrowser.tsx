@@ -1,0 +1,345 @@
+"use client";
+
+import { Fragment, useMemo, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+
+import { usePublicQuery } from "@/lib/usePublicQuery";
+import { formatMonth } from "@/lib/dolFormat";
+import type { FlagCaseRow, FlagKind, FlagListPage, FlagSummary } from "@/lib/turso/flagCases";
+
+/**
+ * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
+ * the rest. One component, two programs: the API path and the nouns differ,
+ * the mechanics do not.
+ *
+ * The question this answers is the one people bring to Reddit: "my lawyer
+ * filed it in May, I don't know the number, how do I find it and see where
+ * it is." Employer, a word from the title, a month or two, and the number is
+ * on the screen with its status. Every row links to the status page, which
+ * asks DOL directly.
+ */
+
+export interface FlagBrowserProgram {
+  /** `/api/pwd-cases` or `/api/lca-cases`. */
+  api: string;
+  /** Singular and plural nouns for the rows: "wage request", "wage requests". */
+  noun: string;
+  nouns: string;
+  /** Chip labels for pending and decided. */
+  pendingLabel: string;
+  decidedLabel: string;
+}
+
+export const PWD_PROGRAM: FlagBrowserProgram = {
+  api: "/api/pwd-cases",
+  noun: "wage request",
+  nouns: "wage requests",
+  pendingLabel: "In process",
+  decidedLabel: "Issued",
+};
+
+export const LCA_PROGRAM: FlagBrowserProgram = {
+  api: "/api/lca-cases",
+  noun: "LCA",
+  nouns: "LCAs",
+  pendingLabel: "In process",
+  decidedLabel: "Decided",
+};
+
+const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+const PAGE_SIZE = 50;
+const SMALL_COHORT = 20;
+
+const CONTROL =
+  "w-full min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
+const BUTTON =
+  "min-h-[44px] border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
+const CHIP =
+  "min-h-[44px] border-2 border-border px-4 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary ";
+
+
+const fmt = (n: number) => n.toLocaleString("en-US");
+
+function chip(status: string, isFinal: boolean): string {
+  const u = status.toUpperCase();
+  if (u === "DETERMINATION ISSUED" || u.startsWith("REDETERMINATION")) return "bg-primary text-primary-foreground";
+  if (u === "DENIED") return "bg-foreground text-background";
+  return isFinal ? "bg-card" : "bg-tint-primary";
+}
+
+function Rows({ rows, caption }: { rows: FlagCaseRow[]; caption: string }) {
+  return (
+    <div className="mt-4 overflow-x-auto">
+      <table className="w-full min-w-[820px] border-collapse text-left text-base">
+        <caption className="sr-only">{caption}</caption>
+        <thead className="bg-foreground text-background">
+          <tr>
+            {["Case", "Status", "Employer", "Job title", "Filed", "Checked"].map((h) => (
+              <Fragment key={h}>{" "}
+              <th scope="col" className="whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider">
+                {h}
+              </th>
+              </Fragment>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="bg-card">
+          {rows.map((r) => (
+            <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
+                <Link
+                  href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
+                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  {r.caseNumber}
+                </Link>
+              </td>{" "}
+              <td className="whitespace-nowrap px-3 py-3">
+                <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chip(r.status, r.isFinal)}>
+                  {r.status}
+                </span>
+              </td>{" "}
+              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}</td>{" "}
+              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>{" "}
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.filingDate ?? ""}</td>{" "}
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
+                {r.lastCheckedAt?.slice(0, 10) ?? ""}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export function FlagCaseBrowser({
+  summary,
+  program,
+}: {
+  summary: FlagSummary | null;
+  program: FlagBrowserProgram;
+}) {
+  const KIND_LABEL: Record<FlagKind, string> = {
+    all: "All",
+    pending: program.pendingLabel,
+    decided: program.decidedLabel,
+  };
+  const params = useSearchParams();
+  const initial = params.get("q") ?? "";
+
+  // --- search -----------------------------------------------------------
+  const [employerInput, setEmployerInput] = useState(initial);
+  const [titleInput, setTitleInput] = useState("");
+  const [fromInput, setFromInput] = useState("");
+  const [toInput, setToInput] = useState("");
+  const [query, setQuery] = useState<{ employer: string; title: string; from: string; to: string; n: number }>({
+    employer: initial.trim(),
+    title: "",
+    from: "",
+    to: "",
+    n: 0,
+  });
+
+  const searchUrl = useMemo(() => {
+    if (query.employer.length < 2) return "skip" as const;
+    const p = new URLSearchParams({ action: "search", text: query.employer });
+    if (query.title) p.set("title", query.title);
+    if (query.from) p.set("from", query.from);
+    if (query.to) p.set("to", query.to);
+    p.set("s", String(query.n));
+    return `${program.api}?${p.toString()}`;
+  }, [query, program.api]);
+  const { data: search, failed: searchFailed } = usePublicQuery<{ cases: FlagCaseRow[] }>(searchUrl);
+  const searching = query.employer.length >= 2;
+  const searchPending = searching && search === undefined && !searchFailed;
+
+  // --- browse -----------------------------------------------------------
+  const [kind, setKind] = useState<FlagKind>("all");
+  const [month, setMonth] = useState("");
+  const [cursors, setCursors] = useState<string[]>([]);
+  const months = useMemo(
+    () => (summary ? [...summary.byMonth].sort((a, b) => (a.month < b.month ? 1 : -1)) : []),
+    [summary],
+  );
+  const cohort = month ? months.find((m) => m.month === month) ?? null : null;
+  const withheld = cohort !== null && cohort.total < SMALL_COHORT;
+  const listUrl = useMemo(() => {
+    if (withheld) return "skip" as const;
+    const p = new URLSearchParams({ action: "list", kind, numItems: String(PAGE_SIZE) });
+    if (month) p.set("month", month);
+    const cursor = cursors[cursors.length - 1];
+    if (cursor) p.set("cursor", cursor);
+    return `${program.api}?${p.toString()}`;
+  }, [kind, month, cursors, withheld, program.api]);
+  const { data: page, failed: listFailed } = usePublicQuery<FlagListPage>(listUrl);
+
+  return (
+    <div className="space-y-10">
+      <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+        <h2 className="font-heading text-xl font-black">Find {program.noun === "LCA" ? "an" : "a"} {program.noun} by employer</h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
+          Start of the employer&apos;s name is enough. A word from the job title
+          and the month it was filed narrow it down when the employer files a lot.
+        </p>{" "}
+        <form
+          className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_1fr_auto] [&>*]:min-w-0"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setQuery((q) => ({
+              employer: employerInput.trim(),
+              title: titleInput.trim(),
+              from: MONTH_RE.test(fromInput) ? fromInput : "",
+              to: MONTH_RE.test(toInput) ? toInput : "",
+              n: q.n + 1,
+            }));
+          }}
+        >
+          <label className="block sm:col-span-2">
+            <span className="mb-1 block text-sm font-bold">Employer</span>{" "}
+            <input
+              type="text"
+              value={employerInput}
+              onChange={(e) => setEmployerInput(e.target.value)}
+              placeholder="Start of the employer's name"
+              maxLength={120}
+              autoComplete="off"
+              className={CONTROL}
+            />
+          </label>{" "}
+          <div className="flex items-end">
+            <button type="submit" className={BUTTON} disabled={searchPending} aria-busy={searchPending}>
+              {searchPending ? "Searching…" : "Search"}
+            </button>
+          </div>{" "}
+          <label className="block">
+            <span className="mb-1 block text-sm font-bold">Job title contains</span>{" "}
+            <input
+              type="text"
+              value={titleInput}
+              onChange={(e) => setTitleInput(e.target.value)}
+              placeholder="e.g. engineer"
+              maxLength={80}
+              autoComplete="off"
+              className={CONTROL}
+            />
+          </label>{" "}
+          <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0">
+            <label className="block">
+              <span className="mb-1 block text-sm font-bold">Filed from</span>{" "}
+              <input type="month" value={fromInput} onChange={(e) => setFromInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL} />
+            </label>{" "}
+            <label className="block">
+              <span className="mb-1 block text-sm font-bold">Filed to</span>{" "}
+              <input type="month" value={toInput} onChange={(e) => setToInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL} />
+            </label>
+          </div>
+        </form>{" "}
+        {searching && searchFailed ? (
+          <p className="mt-4 text-base text-foreground/80">The search didn&apos;t load. Try again in a moment.</p>
+        ) : null}
+        {searching && search && search.cases.length === 0 ? (
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
+            Nothing under that employer yet. The list grows every night as DOL
+            confirms new filings, and it only reaches back to when this started
+            watching, so an older request may not be here. If you have the
+            number, the{" "}
+            <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+              status lookup
+            </Link>{" "}
+            asks DOL directly.
+          </p>
+        ) : null}
+        {searching && search && search.cases.length > 0 ? (
+          <>
+            <p className="mt-4 text-sm text-foreground/70">
+              {fmt(search.cases.length)} {search.cases.length === 1 ? program.noun : program.nouns}, newest filing first
+              {search.cases.length >= 200 ? " (the first 200; narrow by title or month for the rest)" : ""}.
+            </p>{" "}
+            <Rows rows={search.cases} caption={`${program.nouns} matching the search`} />
+          </>
+        ) : null}
+      </section>
+
+      <section id="browse" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+        <h2 className="font-heading text-xl font-black">Browse every {program.noun} DOL has confirmed</h2>{" "}
+        {summary ? (
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            {fmt(summary.total)} {program.nouns} so far: {fmt(summary.pending)} still in process,{" "}
+            {fmt(summary.decided)} {program.decidedLabel.toLowerCase()}. Newest filing first.
+          </p>
+        ) : null}{" "}
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <div role="group" aria-label="Which requests" className="flex flex-wrap gap-2">
+            {(["all", "pending", "decided"] as const).map((k) => (
+              <Fragment key={k}>{" "}
+              <button
+                type="button"
+                aria-pressed={kind === k}
+                onClick={() => {
+                  setKind(k);
+                  setCursors([]);
+                }}
+                className={CHIP + (kind === k ? "bg-foreground text-background hover:bg-foreground" : "bg-card")}
+              >
+                {KIND_LABEL[k]}
+                {summary && k !== "all" ? ` · ${fmt(summary[k])}` : ""}
+              </button>
+              </Fragment>
+            ))}
+          </div>{" "}
+          <label className="ml-auto flex min-h-[44px] items-center gap-2 text-sm font-bold">
+            <span>Filed in</span>{" "}
+            <select
+              value={month}
+              onChange={(e) => {
+                setMonth(e.target.value);
+                setCursors([]);
+              }}
+              className="min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <option value="">Any month</option>
+              {months.map((m) => (
+                <option key={m.month} value={m.month}>
+                  {formatMonth(m.month) ?? m.month} ({fmt(m.total)})
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>{" "}
+        {withheld && cohort ? (
+          <p className="mt-4 text-base leading-relaxed text-foreground/80">
+            {fmt(cohort.total)} {program.nouns} were filed in {formatMonth(cohort.month) ?? cohort.month}. Rows aren&apos;t
+            listed for a month this small, because a case number beside an employer and a job title is close to naming a person.
+          </p>
+        ) : null}
+        {listFailed ? <p className="mt-4 text-base text-foreground/80">The list didn&apos;t load.</p> : null}
+        {!withheld && !listFailed && page === undefined ? (
+          <p className="mt-4 text-base text-foreground/70">Loading…</p>
+        ) : null}
+        {!withheld && page && page.rows.length === 0 ? (
+          <p className="mt-4 text-base text-foreground/70">Nothing matches that filter.</p>
+        ) : null}
+        {!withheld && page && page.rows.length > 0 ? (
+          <Rows rows={page.rows} caption={`${program.nouns} from DOL's daily check`} />
+        ) : null}
+        {!withheld && !listFailed ? (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-foreground/70">
+              &ldquo;Checked&rdquo; is the last day this site asked DOL about it.
+            </p>{" "}
+            <div className="flex gap-2">
+              <button type="button" disabled={cursors.length === 0} onClick={() => setCursors((c) => c.slice(0, -1))} className={CHIP + "bg-card"}>
+                Newer
+              </button>{" "}
+              <button type="button" disabled={!page || page.isDone} onClick={() => page && setCursors((c) => [...c, page.continueCursor])} className={CHIP + "bg-card"}>
+                Older
+              </button>
+            </div>
+          </div>
+        ) : null}
+      </section>
+    </div>
+  );
+}

@@ -152,3 +152,24 @@ describe("discoverCase", () => {
     expect(insert).toBeUndefined();
   });
 });
+
+
+describe("discoverCase refuses non-PERM prefixes", () => {
+  it("does not ask DOL, spend budget, or write for a P- (wage request) number", async () => {
+    const f = vi.fn();
+    const r = await discoverCase(
+      "P-100-26240-200135",
+      f as unknown as typeof fetch,
+      new Date("2026-09-02T12:00:00Z"),
+    );
+    expect(r).toBeNull();
+    expect(f).not.toHaveBeenCalled();
+    expect(execMock).not.toHaveBeenCalled();
+  });
+
+  it("nor for an H-1B LCA (I-) number", async () => {
+    const f = vi.fn();
+    expect(await discoverCase("I-200-26155-983861", f as unknown as typeof fetch)).toBeNull();
+    expect(f).not.toHaveBeenCalled();
+  });
+});

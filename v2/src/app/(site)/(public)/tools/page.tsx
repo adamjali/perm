@@ -259,6 +259,20 @@ export default async function ToolsPage() {
               tone: "card",
               viz: "tape" as const,
             },
+            {
+              href: "/pwd-cases",
+              label: "Wage requests",
+              blurb: "Prevailing wage requests confirmed by DOL, searchable by employer before the PERM exists.",
+              tone: "tint",
+              viz: "tape" as const,
+            },
+            {
+              href: "/lca-cases",
+              label: "H-1B LCAs",
+              blurb: "Labor condition applications as DOL confirms them, by employer and title.",
+              tone: "card",
+              viz: "tape" as const,
+            },
           ].map((c) => (
             <a
               key={c.href}

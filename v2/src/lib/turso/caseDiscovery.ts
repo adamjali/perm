@@ -124,8 +124,11 @@ export async function fetchDolCase(
  * a few; a soft cap two orders of magnitude above organic traffic does not
  * need to be exact.
  */
-async function underDailyBudget(now: Date): Promise<boolean> {
-  const key = `discovery_budget_${now.toISOString().slice(0, 10)}`;
+export async function underDailyBudget(
+  now: Date,
+  keyPrefix = "discovery_budget_",
+): Promise<boolean> {
+  const key = `${keyPrefix}${now.toISOString().slice(0, 10)}`;
   await exec(
     `INSERT INTO perm_docs (key, json, computed_at) VALUES (?, '1', ?)
      ON CONFLICT(key) DO UPDATE SET
@@ -152,11 +155,26 @@ export interface DiscoveredCase {
 /**
  * The composite the lookup calls on a miss: budget, fetch, record, return.
  */
+/** The PERM prefixes. Everything else DOL serves belongs in another table. */
+export const PERM_PREFIX_RE = /^[GA]-/;
+
 export async function discoverCase(
   caseNumber: string,
   f: typeof fetch = fetch,
   now: Date = new Date(),
 ): Promise<DiscoveredCase | null> {
+  // ONLY PERM NUMBERS MAY BE RECORDED HERE. DOL's endpoint also answers for
+  // prevailing wage requests (P-), H-1B LCAs (I-) and the rest of FLAG, all
+  // with the same field names, and the shape check upstream accepts any
+  // letter. Before this guard existed, nine P- and one I- case had been
+  // written into perm_case_status and perm_live_recent by visitors typing
+  // their numbers into the PERM lookup - where they would have counted as
+  // pending PERM cases in every queue figure. P- numbers have their own
+  // path in pwdCases.ts.
+  if (!PERM_PREFIX_RE.test(caseNumber)) {
+    console.error("[caseDiscovery] refused non-PERM prefix", caseNumber);
+    return null;
+  }
   // The page wraps its lookup in .catch(() => null), so a throw from here
   // renders as an ordinary "no record" - a silent failure indistinguishable
   // from a genuine miss. First deploy proved it: the budget INSERT failed in

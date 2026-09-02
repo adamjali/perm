@@ -1,0 +1,91 @@
+name: PWD case status (direct from DOL)
+
+# Per-case PREVAILING WAGE (ETA-9141) status, straight from flag.dol.gov, the
+# same endpoint and the same discipline as case-status-direct.yml. See
+# scripts/ingest_pwd_status_direct.py for the two measurements this rests on:
+# DOL's batch endpoint serves P- cases, and PERM and PWD filings share one
+# serial counter, so the PERM corpus's serial range per filing day is the
+# range to probe for that day's wage requests.
+#
+# THREE PASSES:
+#   pending   daily 05:40 ET  - every IN PROCESS request (~50k at steady
+#                               state, ~1,000 requests) plus discovery of the
+#                               last week's filings (~300 requests)
+#   full      Sundays 06:40 ET - every request, so a determination that later
+#                               moves (redetermination, withdrawal) is seen
+#   backfill  dispatch only    - walks earlier filing days, resumable, ~60
+#                               requests per day code; run it a few times
+#                               with --from/--to until the range is covered
+#
+# Scheduled AFTER the PERM sweep (04:10 ET) so the serial windows it probes
+# include that morning's PERM discoveries, and inside DOL's quiet hours.
+
+on:
+  schedule:
+    - cron: "40 9 * * *"       # 05:40 ET daily - pending + discovery
+    - cron: "40 10 * * 0"      # 06:40 ET Sundays - full
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Which pass to run
+        required: true
+        default: pending
+        type: choice
+        options: [pending, full, discover, backfill]
+      from:
+        description: "backfill only: first filing day, YYYY-MM-DD"
+        required: false
+        default: "2026-01-01"
+      to:
+        description: "backfill only: last filing day, YYYY-MM-DD"
+        required: false
+        default: "2026-08-31"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pwd-status-direct
+  cancel-in-progress: false
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Sweep
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          MODE_IN: ${{ github.event.inputs.mode }}
+          FROM_IN: ${{ github.event.inputs.from }}
+          TO_IN: ${{ github.event.inputs.to }}
+        run: |
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          MODE="$MODE_IN"
+          if [ -z "$MODE" ]; then
+            if [ "${{ github.event.schedule }}" = "40 10 * * 0" ]; then
+              MODE=full
+            else
+              MODE=pending
+            fi
+          fi
+          echo "mode: $MODE"
+          # `timeout` rather than the job cap, so a hang FAILS and notifies
+          # instead of being cancelled silently (see case-status-direct.yml).
+          case "$MODE" in
+            backfill)
+              timeout 170m python3 scripts/ingest_pwd_status_direct.py \
+                --backfill --from "$FROM_IN" --to "$TO_IN" ;;
+            discover)
+              timeout 60m python3 scripts/ingest_pwd_status_direct.py --discover ;;
+            *)
+              timeout 170m python3 scripts/ingest_pwd_status_direct.py --"$MODE" ;;
+          esac
