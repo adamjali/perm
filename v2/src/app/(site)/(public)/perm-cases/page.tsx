@@ -19,6 +19,8 @@ import { getDatasetSchema } from "@/lib/structuredData";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { CaseBrowser, type OccupationOption } from "@/components/tools/CaseBrowser";
+import { LiveCaseBrowser } from "@/components/tools/LiveCaseBrowser";
+import { getLiveRemainderSummary } from "@/lib/turso/liveCases";
 import { getMeta } from "@/lib/turso/cases";
 import { getDailyDecisions } from "@/lib/turso/publicData";
 import { DailyDecisionsChart } from "@/components/tools/DailyDecisionsChart";
@@ -68,10 +70,14 @@ export default async function PermCasesPage() {
   // the first ingest writes a coverage document, and the page says so; a read
   // that FAILS is a different thing and throws, because an outage rendered as
   // an empty state is what let a disabled backend pass every status check.
-  const [meta, occupationRows, daily] = await Promise.all([
+  const [meta, occupationRows, daily, liveSummary] = await Promise.all([
     getMeta(),
     listByKind("occupation", 60),
     getDailyDecisions(),
+    // The live half's counts, precomputed nightly. Null before the first
+    // build writes the doc, or when it is more than eight days old; the
+    // section below still renders and says less.
+    getLiveRemainderSummary(),
   ]);
 
   // The dropdown wants the busiest occupations, and `listByKind` already
@@ -116,9 +122,16 @@ export default async function PermCasesPage() {
               {longDate(meta.lastDecisionDate)}. Filed as far back as{" "}
               {longDate(meta.firstReceivedDate)}. Anything newer than{" "}
               {longDate(meta.lastDecisionDate)} isn&apos;t in DOL&apos;s
-              published files yet - the employer search below fills that gap
-              from DOL&apos;s live feed, and any case number can be checked
-              live.
+              published files yet. Those cases, decided and still waiting, are
+              in the{" "}
+              <Link
+                href="#live"
+                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              >
+                live list
+              </Link>{" "}
+              further down, the employer search returns them too, and any case
+              number can be checked live.
             </>
           ) : (
             <>
@@ -166,6 +179,13 @@ export default async function PermCasesPage() {
             <DailyDecisionsChart points={daily} className="mb-10" />
 
             <CaseBrowser meta={meta} occupations={occupations} />
+
+            <div className="mt-12">
+              <LiveCaseBrowser
+                summary={liveSummary}
+                publishedThrough={meta.lastDecisionDate}
+              />
+            </div>
           </Suspense>
         ) : (
           <section className="border-2 border-border bg-card p-8 text-center shadow-hard">

@@ -428,6 +428,59 @@ export interface SearchCasesArgs {
   status?: CaseStatus;
   state?: string;
   limit?: number;
+  /** Case-insensitive "contains" on the job title. `%` and `_` are literal. */
+  title?: string;
+  /** Filing month, `YYYY-MM`, inclusive. */
+  from?: string;
+  /** Filing month, `YYYY-MM`, inclusive. */
+  to?: string;
+}
+
+/**
+ * The two narrowing filters an applicant actually has: the job title on the
+ * posting and roughly when the lawyer filed. Together with the employer they
+ * are what finds one case among Amazon's thousands, which is the question
+ * "how do I find my PERM case number" is really asking.
+ *
+ * Both filters run AFTER the indexed employer range narrows the rows, so
+ * they cost a scan of one employer's cases in one window, not of the table.
+ * The title uses LIKE with the wildcards escaped, because a stranger types
+ * it; the months are a half-open range so December does not swallow 1 Jan.
+ */
+export const SEARCH_MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+export const MAX_TITLE_FILTER = 80;
+
+function monthSuccessor(month: string): string {
+  const y = Number(month.slice(0, 4));
+  const m = Number(month.slice(5, 7));
+  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+}
+
+/** Extra WHERE clauses for title and month filters, over the named date column. */
+export function narrowingClauses(
+  dateColumn: string,
+  args: { title?: string; from?: string; to?: string },
+): { conds: string[]; params: string[] } {
+  const conds: string[] = [];
+  const params: string[] = [];
+  const title = (args.title ?? "").trim();
+  if (title) {
+    if (title.length > MAX_TITLE_FILTER) throw new Error("title filter too long");
+    const escaped = title.replace(/[\\%_]/g, (c) => `\\${c}`);
+    conds.push("job_title LIKE ? ESCAPE '\\'");
+    params.push(`%${escaped}%`);
+  }
+  if (args.from) {
+    if (!SEARCH_MONTH_RE.test(args.from)) throw new Error(`not a month: ${args.from}`);
+    conds.push(`${dateColumn} >= ?`);
+    params.push(`${args.from}-01`);
+  }
+  if (args.to) {
+    if (!SEARCH_MONTH_RE.test(args.to)) throw new Error(`not a month: ${args.to}`);
+    conds.push(`${dateColumn} < ?`);
+    params.push(`${monthSuccessor(args.to)}-01`);
+  }
+  return { conds, params };
 }
 
 /**
@@ -494,22 +547,32 @@ const toLiveRow = (r: LiveDbRow): LiveCaseRow => ({
  * live feed simply has no firm names (DOL reveals the firm at publication),
  * which the UI says in words rather than returning a silently empty list.
  */
+/**
+ * The live half returns up to 200 rows, not 25. Twenty-five newest filings is
+ * a few days of Amazon, and the case someone is looking for was filed in May.
+ * With the title and month filters the row count is usually small anyway;
+ * without them, 200 is the whole live set for all but the largest filers.
+ */
+export const LIVE_SEARCH_MAX = 200;
+
 export async function searchLiveCases(
   text: string,
-  limit = 25,
+  opts: { limit?: number; title?: string; from?: string; to?: string } = {},
 ): Promise<LiveCaseRow[]> {
   if (text.length > 120) return [];
   const needle = slugify(text.trim());
   if (needle.length < 2) return [];
   const upper =
     needle.slice(0, -1) + String.fromCharCode(needle.charCodeAt(needle.length - 1) + 1);
-  const take = Math.min(Math.max(1, Math.floor(limit)), MAX_SEARCH_RESULTS);
+  const take = Math.min(Math.max(1, Math.floor(opts.limit ?? LIVE_SEARCH_MAX)), LIVE_SEARCH_MAX);
+  const narrow = narrowingClauses("filing_date", opts);
+  const conds = ["employer_slug >= ?", "employer_slug < ?", ...narrow.conds];
   const found = await rows<LiveDbRow>(
     `SELECT case_number, filing_date, status, is_final, employer_name, job_title
        FROM perm_live_recent
-      WHERE employer_slug >= ? AND employer_slug < ?
-      ORDER BY filing_date DESC LIMIT ?`,
-    [needle, upper, take],
+      WHERE ${conds.join(" AND ")}
+      ORDER BY filing_date DESC, case_number DESC LIMIT ?`,
+    [needle, upper, ...narrow.params, take],
   );
   return found.map(toLiveRow);
 }
@@ -584,6 +647,9 @@ export async function searchCases(args: SearchCasesArgs): Promise<PermCaseRow[]>
     conds.push("state = ?");
     sqlArgs.push(args.state);
   }
+  const narrow = narrowingClauses("received_date", args);
+  conds.push(...narrow.conds);
+  sqlArgs.push(...narrow.params);
 
   const found = await rows<CaseDbRow>(
     `SELECT ${CASE_COLS} FROM perm_cases WHERE ${conds.join(" AND ")} ` +

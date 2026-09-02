@@ -254,6 +254,9 @@ export default async function PermByStatePage() {
         </div>
       </section>
       <PageBasics page="perm-by-state" />{" "}
+      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
+        Filings newer than DOL&apos;s last published file aren&apos;t in these figures. DOL reports the worksite state only when it publishes the decided case, so nothing filed since then can be placed under a state yet. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link> on the case search page, by employer.
+      </p>{" "}
       <DataProvenance datasets={["perm-cases"]} />
     </div>
   );

@@ -40,6 +40,8 @@ trust.
 from __future__ import annotations
 
 import argparse
+import datetime
+import time
 import json
 import pathlib
 import sys
@@ -174,6 +176,7 @@ def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
         "WHERE NOT EXISTS (SELECT 1 FROM perm_cases c "
         "                   WHERE c.case_number = s.case_number)"))
     boundary = str(db.scalar("SELECT MAX(decision_date) FROM perm_cases") or "")[:7]
+    seen = decided_seen_map(db)
     emp = maps["employer"]
     out = []
     matched = 0
@@ -182,14 +185,17 @@ def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
         hit = emp.get(entity_key(name)) if name else None
         if hit is not None:
             matched += 1
+        case = cell(r[0])
+        fin = int(cell(r[3]) or 0)
         out.append({
-            "case_number": cell(r[0]),
+            "case_number": case,
             "filing_date": cell(r[1]),
             "status": cell(r[2]),
-            "is_final": int(cell(r[3]) or 0),
+            "is_final": fin,
             "employer_name": name,
             "employer_slug": hit[0] if hit is not None else _search_slug(name),
             "job_title": cell(r[5]),
+            "decided_seen": seen.get(str(case)) if fin else None,
         })
     log(f"  live-recent: {len(out):,} cases absent from the disclosure corpus "
         f"(published through {boundary}), {matched:,} matched to a known entity")
@@ -204,14 +210,111 @@ LIVE_RECENT_DDL = [
          is_final      INTEGER,
          employer_name TEXT,
          employer_slug TEXT,
-         job_title     TEXT)""",
+         job_title     TEXT,
+         decided_seen  TEXT)""",
     "CREATE INDEX IF NOT EXISTS perm_live_recent_emp "
     "ON perm_live_recent (employer_slug, filing_date DESC)",
+    # The two browse orders on /perm-cases and /perm-queue/[month]. Equality
+    # first, the range/sort column next, the unique tiebreak last, so
+    # `WHERE is_final = ? [AND filing_date range] ORDER BY filing_date,
+    # case_number` is one reverse index scan of `take + 1` rows at any offset.
+    # Turso forbids ANALYZE, so an index has to win on shape alone.
+    "CREATE INDEX IF NOT EXISTS perm_live_recent_final_filed "
+    "ON perm_live_recent (is_final, filing_date, case_number)",
+    "CREATE INDEX IF NOT EXISTS perm_live_recent_filed "
+    "ON perm_live_recent (filing_date, case_number)",
 ]
 
 
 LIVE_COLS = ["case_number", "filing_date", "status", "is_final",
-             "employer_name", "employer_slug", "job_title"]
+             "employer_name", "employer_slug", "job_title", "decided_seen"]
+
+
+def ensure_live_recent_columns(db: Turso) -> None:
+    """Add columns the CREATE TABLE above gained after the table existed.
+
+    `CREATE TABLE IF NOT EXISTS` is a no-op on the live database, so a column
+    added to the DDL never reaches production by itself. `decided_seen` was
+    added 2026-09-02; the ALTER runs once and is idempotent afterwards.
+    """
+    have = {cell(r[1]) for r in rows_of(db.execute("PRAGMA table_info(perm_live_recent)"))}
+    if "decided_seen" not in have:
+        db.execute("ALTER TABLE perm_live_recent ADD COLUMN decided_seen TEXT")
+        log("  added column perm_live_recent.decided_seen")
+
+
+def decided_seen_map(db: Turso) -> dict[str, str]:
+    """case_number -> the day OUR sweep first recorded a final status.
+
+    An observation date, never DOL's decision date: DOL's per-case lookup
+    does not return one. Only cases whose decision the direct sweep actually
+    watched have an entry (3,641 of 40,935 decided live cases on 2026-09-02);
+    the rest were already decided when the corpus was seeded and stay null.
+    `CERTIFIED - EXPIRED` is a clock running out, not a decision, and is not
+    a status here anyway; the three real outcomes are named explicitly.
+    """
+    out: dict[str, str] = {}
+    for r in rows_of(db.execute(
+            "SELECT case_number, MIN(changed_at) FROM perm_case_events "
+            "WHERE to_final = 1 AND to_status IN ('CERTIFIED', 'DENIED', 'WITHDRAWN') "
+            "GROUP BY case_number")):
+        ms = cell(r[1])
+        if ms is None:
+            continue
+        secs = int(ms) / 1000 if int(ms) > 10_000_000_000 else int(ms)
+        out[str(cell(r[0]))] = datetime.datetime.fromtimestamp(
+            secs, tz=datetime.timezone.utc).strftime("%Y-%m-%d")
+    return out
+
+
+LIVE_REMAINDER_DOC = "live_remainder"
+
+
+def write_live_remainder_doc(db: Turso, live: list[dict]) -> bool:
+    """Precompute the live remainder's counts into perm_docs['live_remainder'].
+
+    The /perm-cases page prints "N decided and M pending since DOL's last
+    file" and offers a month picker. A `count(*)` over 137k rows per request
+    is the read pattern that got Turso blocked in August, and the reader
+    already treats a doc older than eight days as absent, so the counts are
+    written here, by the same run that writes the rows they describe.
+    """
+    published_through = db.scalar("SELECT MAX(decision_date) FROM perm_cases")
+    by_month: dict[str, dict[str, int]] = {}
+    counts = {"pending": 0, "decided": 0, "certified": 0, "denied": 0, "withdrawn": 0}
+    for row in live:
+        fin = int(row["is_final"] or 0)
+        counts["decided" if fin else "pending"] += 1
+        st = (row["status"] or "").upper()
+        if st in ("CERTIFIED", "DENIED", "WITHDRAWN"):
+            counts[st.lower()] += 1
+        m = (row["filing_date"] or "")[:7]
+        if len(m) == 7:
+            b = by_month.setdefault(m, {"total": 0, "pending": 0, "decided": 0})
+            b["total"] += 1
+            b["decided" if fin else "pending"] += 1
+    doc = {
+        "total": len(live),
+        **counts,
+        "publishedThrough": str(published_through) if published_through else None,
+        "asOf": datetime.datetime.now(tz=datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "byMonth": [{"month": m, **v} for m, v in
+                    sorted(by_month.items(), key=lambda kv: kv[1]["total"], reverse=True)],
+    }
+    payload = json.dumps(doc, separators=(",", ":"))
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
+        key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER NOT NULL)""")
+    db.execute(
+        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
+        [LIVE_REMAINDER_DOC, payload, int(time.time() * 1000)])
+    # Read it back: an INSERT the pipeline reported as fine is not evidence
+    # the row is there in the shape the reader expects.
+    got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?", [LIVE_REMAINDER_DOC])
+    ok = int(got or 0) == len(payload)
+    log(f"  {'ok ' if ok else 'MISMATCH'} perm_docs[{LIVE_REMAINDER_DOC}]  "
+        f"{counts['decided']:,} decided, {counts['pending']:,} pending, "
+        f"{len(by_month)} months, {len(payload):,} bytes")
+    return ok
 
 
 def live_norm(row) -> tuple:
@@ -254,11 +357,11 @@ def write_live_recent(db: Turso, live: list[dict]) -> bool:
     """
     for ddl in LIVE_RECENT_DDL:
         db.execute(ddl)
+    ensure_live_recent_columns(db)
 
     stored: dict[str, tuple] = {}
     for r in rows_of(db.execute(
-            "SELECT case_number, filing_date, status, is_final, "
-            "employer_name, employer_slug, job_title FROM perm_live_recent")):
+            "SELECT " + ", ".join(LIVE_COLS) + " FROM perm_live_recent")):
         vals = live_norm(r)
         stored[str(vals[0])] = vals
 
@@ -542,7 +645,7 @@ def main() -> int:
         if args.dry_run:
             log("\nDRY RUN - nothing written")
             return 0
-        ok = write_live_recent(db, live)
+        ok = write_live_recent(db, live) and write_live_remainder_doc(db, live)
         # STAMP FRESHNESS AND AUDIT THE RUN. This table is the only thing that
         # makes cases newer than the last disclosure file findable, it rebuilds
         # under `|| true` in the sweep workflow, and it had no monitoring at
@@ -578,6 +681,7 @@ def main() -> int:
                facets)
     live, _ = build_live_recent(db, maps)
     write_live_recent(db, live)
+    write_live_remainder_doc(db, live)
 
     log("VERIFY")
     ok = True

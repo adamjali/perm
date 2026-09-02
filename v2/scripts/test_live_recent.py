@@ -36,7 +36,7 @@ def check(name: str, got, want) -> None:
 
 
 def libsql_row(case: str, filing: str, status: str, is_final: int,
-               emp: str, slug: str, title: str) -> list[dict]:
+               emp: str, slug: str, title: str, seen: str | None = None) -> list[dict]:
     """A row shaped the way libSQL actually returns one: integers as strings."""
     return [
         {"type": "text", "value": case},
@@ -46,16 +46,17 @@ def libsql_row(case: str, filing: str, status: str, is_final: int,
         {"type": "text", "value": emp},
         {"type": "text", "value": slug},
         {"type": "text", "value": title},
+        {"type": "null"} if seen is None else {"type": "text", "value": seen},
     ]
 
 
 def built_row(case: str, filing: str, status: str, is_final: int,
-              emp: str, slug: str, title: str) -> dict:
+              emp: str, slug: str, title: str, seen: str | None = None) -> dict:
     """A row shaped the way `build_live_recent` produces one."""
     return {
         "case_number": case, "filing_date": filing, "status": status,
         "is_final": is_final, "employer_name": emp,
-        "employer_slug": slug, "job_title": title,
+        "employer_slug": slug, "job_title": title, "decided_seen": seen,
     }
 
 
@@ -98,6 +99,19 @@ def main() -> int:
 
     check("the tuple covers every stored column",
           len(live_norm(libsql_row(*ARGS))), len(LIVE_COLS))
+
+    # decided_seen: a null on the stored side and None on the built side must
+    # agree (every pending row, every night), and a date appearing must read
+    # as a change exactly once.
+    check("a null decided_seen agrees with None",
+          live_norm(libsql_row(*ARGS)), live_norm(built_row(*ARGS, None)))
+    decided = list(ARGS)
+    decided[2], decided[3] = "CERTIFIED", 1
+    check("a decision date appearing is a change",
+          live_norm(libsql_row(*decided)) != live_norm(libsql_row(*decided, "2026-09-01")), True)
+    check("the same decision date on both sides is not a change",
+          live_norm(libsql_row(*decided, "2026-09-01")),
+          live_norm(built_row(*decided, "2026-09-01")))
 
     print()
     if FAILURES:

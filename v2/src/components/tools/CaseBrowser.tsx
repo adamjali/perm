@@ -118,6 +118,9 @@ const STATUS_LABEL: Record<Status, string> = {
 // only on WebKit. It also puts the class where the repo's own gate can see it -
 // that gate reads the attributes on the tag, so a class list hidden in a
 // constant is invisible to it and passes for the wrong reason.
+/** What the month inputs must hold before a filter is sent. */
+const MONTH_INPUT_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+
 const CONTROL =
   "min-h-[44px] w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-base outline-none shadow-hard-sm focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
@@ -200,6 +203,16 @@ export function CaseBrowser({
   const [caseInput, setCaseInput] = useState("");
   const [caseQuery, setCaseQuery] = useState("");
   const [nameInput, setNameInput] = useState("");
+  // The narrowing filters: title contains, filed between. Applied on submit
+  // like the name, so a half-typed month never fires a request.
+  const [titleInput, setTitleInput] = useState("");
+  const [fromInput, setFromInput] = useState("");
+  const [toInput, setToInput] = useState("");
+  const [narrow, setNarrow] = useState<{ title: string; from: string; to: string }>({
+    title: "",
+    from: "",
+    to: "",
+  });
   const [nameField, setNameField] = useState<"employer" | "attorney">("employer");
   const [nameQuery, setNameQuery] = useState("");
   // A submit counter, folded into each lookup url. Without it, pressing the
@@ -323,7 +336,11 @@ export function CaseBrowser({
     live: LiveHit[];
   }>(
     nameQuery.length >= 2
-      ? `/api/perm-cases?action=search&field=${nameField}&limit=50&text=${encodeURIComponent(nameQuery)}&s=${nameSubmit}`
+      ? `/api/perm-cases?action=search&field=${nameField}&limit=100&text=${encodeURIComponent(nameQuery)}` +
+          (narrow.title ? `&title=${encodeURIComponent(narrow.title)}` : "") +
+          (narrow.from ? `&from=${narrow.from}` : "") +
+          (narrow.to ? `&to=${narrow.to}` : "") +
+          `&s=${nameSubmit}`
       : "skip",
   );
   const nameHits = searchData?.cases;
@@ -723,6 +740,11 @@ export function CaseBrowser({
           onSubmit={(e) => {
             e.preventDefault();
             setNameQuery(nameInput.trim());
+            setNarrow({
+              title: titleInput.trim(),
+              from: MONTH_INPUT_RE.test(fromInput) ? fromInput : "",
+              to: MONTH_INPUT_RE.test(toInput) ? toInput : "",
+            });
             setNameSubmit((s) => s + 1);
           }}
         >
@@ -756,7 +778,46 @@ export function CaseBrowser({
             aria-busy={nameSearchPending}
           >
             {nameSearchPending ? "Searching…" : "Search"}
-          </button>
+          </button>{" "}
+          {/* Narrowing: the two facts an applicant has besides the employer.
+              Optional, and they narrow both halves - the published cases by
+              the month DOL received them, the live ones by filing date. */}
+          <label className="block sm:col-start-2">
+            <span className="mb-1 block text-sm font-bold">Job title contains</span>{" "}
+            <input
+              type="text"
+              value={titleInput}
+              onChange={(e) => setTitleInput(e.target.value)}
+              placeholder="e.g. software, analyst"
+              maxLength={80}
+              autoComplete="off"
+              className={CONTROL}
+            />
+          </label>{" "}
+          <div className="grid grid-cols-2 gap-3 sm:col-start-2 [&>*]:min-w-0">
+            <label className="block">
+              <span className="mb-1 block text-sm font-bold">Filed from</span>{" "}
+              <input
+                type="month"
+                value={fromInput}
+                onChange={(e) => setFromInput(e.target.value)}
+                placeholder="YYYY-MM"
+                pattern="\\d{4}-\\d{2}"
+                className={CONTROL}
+              />
+            </label>{" "}
+            <label className="block">
+              <span className="mb-1 block text-sm font-bold">Filed to</span>{" "}
+              <input
+                type="month"
+                value={toInput}
+                onChange={(e) => setToInput(e.target.value)}
+                placeholder="YYYY-MM"
+                pattern="\\d{4}-\\d{2}"
+                className={CONTROL}
+              />
+            </label>
+          </div>
         </form>
         {searching && nameField === "employer" && liveHits.length > 0 ? (
           /* The live strip: the exact case Adam searched for and could not
@@ -764,7 +825,9 @@ export function CaseBrowser({
              live feed, each linking to its own status page. */
           <div className="mt-4 border-2 border-border bg-tint-primary p-4">
             <p className="text-base font-bold">
-              Newest filings - live from DOL, not yet in the published files
+              {narrow.title || narrow.from || narrow.to
+                ? "Matching filings - live from DOL, not yet in the published files"
+                : "Newest filings - live from DOL, not yet in the published files"}
             </p>{" "}
             <ul className="mt-2 divide-y divide-border/60">
               {liveHits.map((h) => (

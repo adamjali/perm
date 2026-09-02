@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon, ArrowRightIcon, WarningIcon } from "@phosphor-icons/react/ssr";
@@ -17,6 +18,8 @@ import {
   getPendingBefore,
 } from "@/lib/turso/backlog";
 import { getEstimatorData } from "@/lib/turso/estimate";
+import { getLiveRemainderSummary, listLiveCases } from "@/lib/turso/liveCases";
+import { SMALL_STAGE_MAX } from "@/lib/turso/rfi";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -74,6 +77,14 @@ export async function generateMetadata({
 // than a rounding error.
 export const revalidate = 21600;
 
+/**
+ * How many of the month's live rows the page lists before pointing at the
+ * full list on /perm-cases. A busy month holds ~14,500 filings; the whole set
+ * belongs in the paginated browser, not in a prerendered page whose size is
+ * an ISR write unit every 8 KB.
+ */
+const MONTH_LIST_MAX = 100;
+
 const int = (n: number) => n.toLocaleString("en-US");
 
 export default async function CohortPage({
@@ -100,6 +111,19 @@ export default async function CohortPage({
     getEstimatorData(),
   ]);
   if (!backlog || backlog.total === 0) notFound();
+
+  // The month's LIVE rows: every case filed this month that DOL's published
+  // files do not hold yet, pending or decided, from the same table the case
+  // search reads. Withheld under the review-stage floor, for the same reason:
+  // a case number beside an employer and a job title, in a cohort of three,
+  // is a person. The census above counts published cases too, so the two
+  // totals differ on purpose and the copy says which is which.
+  const remainder = await getLiveRemainderSummary();
+  const liveMonth = remainder?.byMonth.find((m) => m.month === month) ?? null;
+  const liveRows =
+    liveMonth && liveMonth.total >= SMALL_STAGE_MAX
+      ? (await listLiveCases({ kind: "all", month, numItems: MONTH_LIST_MAX })).rows
+      : [];
 
   const split = groupByStage(backlog.statuses);
   const label = formatMonth(month) ?? month;
@@ -239,6 +263,84 @@ export default async function CohortPage({
         <div className="mt-6">
           <DecidedList statuses={split.decided} />
         </div>
+      </section>{" "}
+
+      <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+        <h2 className="font-heading text-xl font-black sm:text-2xl">
+          Who filed in {label}
+        </h2>{" "}
+        {liveMonth ? (
+          <p className="mt-2 text-base leading-relaxed text-foreground/80">
+            {int(liveMonth.total)} of the {int(backlog.total)} {label} filings{" "}
+            {liveMonth.total === 1 ? "isn't" : "aren't"} in DOL&apos;s published
+            files yet: {int(liveMonth.pending)} still waiting, {int(liveMonth.decided)}{" "}
+            decided since the last file. DOL&apos;s daily check gives the employer,
+            the job title and the status, and nothing else until DOL publishes
+            the case.
+          </p>
+        ) : (
+          <p className="mt-2 text-base leading-relaxed text-foreground/80">
+            Every {label} filing DOL still holds is in its published files. The{" "}
+            <Link
+              href="/perm-cases"
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              case search
+            </Link>{" "}
+            carries them with the wage, firm and decision date.
+          </p>
+        )}
+        {liveRows.length > 0 ? (
+          <ol className="mt-5 divide-y divide-border/60">
+            {liveRows.map((r) => (
+              <Fragment key={r.caseNumber}>{" "}
+              <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
+                <Link
+                  href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
+                  className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2"
+                >
+                  {r.caseNumber}
+                </Link>{" "}
+                {r.employerSlug ? (
+                  <Link
+                    href={`/perm-employers/${r.employerSlug}`}
+                    className="font-medium underline decoration-border decoration-2 underline-offset-2 hover:text-primary"
+                  >
+                    {r.employerName}
+                  </Link>
+                ) : (
+                  <span className="font-medium">{r.employerName}</span>
+                )}{" "}
+                {r.jobTitle ? <span className="text-foreground/70">{r.jobTitle}</span> : null}{" "}
+                <span className="ml-auto font-mono text-xs font-bold uppercase text-foreground/80">
+                  {r.filingDate ? `${r.filingDate} · ` : ""}
+                  {r.status ?? ""}
+                </span>
+              </li>
+              </Fragment>
+            ))}
+          </ol>
+        ) : liveMonth && liveMonth.total > 0 ? (
+          <p className="mt-3 text-sm leading-relaxed text-foreground/70">
+            Rows aren&apos;t listed for a month this small, because a case number
+            beside an employer and a job title is close to naming a person.
+          </p>
+        ) : null}
+        {liveMonth && liveRows.length > 0 ? (
+          <p className="mt-4 text-base leading-relaxed">
+            {liveMonth.total > liveRows.length
+              ? `The newest ${int(liveRows.length)} are above. `
+              : ""}
+            <Link
+              href={`/perm-cases?filed=${month}#live`}
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              All {int(liveMonth.total)} live {label} filings, pending and decided
+            </Link>
+            , newest first. DOL works a month alphabetically by employer, so the
+            order they decide in is not the order above.
+          </p>
+        ) : null}
       </section>{" "}
 
       <nav

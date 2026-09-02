@@ -692,6 +692,9 @@ export default async function OccupationPage({
           </p>
         </div>
       </section>
+      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
+        Filings newer than DOL&apos;s last published file can&apos;t be attributed to this occupation until DOL publishes them. The <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link> on the case search page carries them by employer.
+      </p>{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>
   );

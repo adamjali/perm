@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import {
   DEFAULT_PAGE_ITEMS,
   MAX_SEARCH_RESULTS,
+  MAX_TITLE_FILTER,
+  SEARCH_MONTH_RE,
   isCaseStatus,
   listCases,
   lookupByCaseNumber,
@@ -12,6 +14,12 @@ import {
   type CaseFilter,
   type CaseSlice,
 } from "@/lib/turso/cases";
+import {
+  LIVE_DEFAULT_ITEMS,
+  MONTH_RE,
+  isLiveKind,
+  listLiveCases,
+} from "@/lib/turso/liveCases";
 
 /**
  * The case browser's data, for a page with no ConvexProvider.
@@ -139,6 +147,20 @@ export async function GET(request: Request) {
     if (status && !isCaseStatus(status)) return bad("unknown status");
     const state = p.get("state");
     if (state && state.length > 2) return bad("bad state");
+    // The narrowing filters. Length before anything walks the string, and
+    // a month shape-checked before it reaches SQL.
+    const title = p.get("title") ?? "";
+    if (title.length > MAX_TITLE_FILTER) return bad("title filter too long");
+    const from = p.get("from") ?? "";
+    const to = p.get("to") ?? "";
+    if ((from && !SEARCH_MONTH_RE.test(from)) || (to && !SEARCH_MONTH_RE.test(to))) {
+      return bad("from and to must be YYYY-MM");
+    }
+    const narrow = {
+      ...(title ? { title } : {}),
+      ...(from ? { from } : {}),
+      ...(to ? { to } : {}),
+    };
     const rawLimit = Number(p.get("limit") ?? MAX_SEARCH_RESULTS);
     const limit = Number.isFinite(rawLimit)
       ? Math.min(Math.max(Math.floor(rawLimit), 1), MAX_SEARCH_RESULTS)
@@ -153,9 +175,10 @@ export async function GET(request: Request) {
         text,
         ...(status && isCaseStatus(status) ? { status } : {}),
         ...(state ? { state } : {}),
+        ...narrow,
         limit,
       }),
-      field === "employer" ? searchLiveCases(text) : Promise.resolve([]),
+      field === "employer" ? searchLiveCases(text, narrow) : Promise.resolve([]),
     ]);
     return NextResponse.json(
       { cases: rows, live },
@@ -163,6 +186,33 @@ export async function GET(request: Request) {
         headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },
       },
     );
+  }
+
+  if (action === "live") {
+    // The live remainder: everything DOL's daily check holds that the
+    // published files do not. Pending or decided by `kind`, optionally one
+    // filing month, newest filing first. Served by an index either way.
+    const kind = p.get("kind") ?? "all";
+    if (!isLiveKind(kind)) return bad("kind must be pending, decided or all");
+    const month = p.get("month");
+    if (month && !MONTH_RE.test(month)) return bad("month must be YYYY-MM");
+    const cursor = p.get("cursor");
+    if (cursor && cursor.length > MAX_CURSOR) return bad("cursor too long");
+    const order = p.get("order") === "oldest" ? "oldest" : "newest";
+    const rawItems = Number(p.get("numItems") ?? LIVE_DEFAULT_ITEMS);
+    const page = await listLiveCases({
+      kind,
+      month: month ?? null,
+      order,
+      cursor: cursor ?? null,
+      ...(Number.isFinite(rawItems) ? { numItems: Math.floor(rawItems) } : {}),
+    });
+    // The table behind this rebuilds once a night and the sweep that feeds
+    // it runs twice a day, so half an hour bounds staleness well under the
+    // data's own cadence.
+    return NextResponse.json(page, {
+      headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=86400" },
+    });
   }
 
   if (action !== "list") return bad("unknown action");
