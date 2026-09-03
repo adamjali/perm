@@ -138,6 +138,19 @@ export default async function PermCasesPage() {
               The case table lands with the quarterly disclosure ingest.
             </>
           )}
+        </p>{" "}
+        {/* This page is PERM's published half. Somebody who does not know a
+            wage request is a different DOL programme cannot know to leave, so
+            the way out is named here rather than only in the nav. */}
+        <p className="mt-3 text-base leading-relaxed text-foreground/70">
+          Looking for everything one employer has filed, open cases included?{" "}
+          <Link
+            href="/case-search"
+            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          >
+            Search all three DOL programs at once
+          </Link>
+          .
         </p>
       </header>
 

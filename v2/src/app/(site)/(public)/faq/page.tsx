@@ -50,7 +50,7 @@ const faqData = [
         // complete sentence first means the truncation lands on a finished
         // thought whatever length Google allows.
         answer:
-          "PERM Tracker follows your case through the Department of Labor and tells you where it stands. Look up a case number to see its federal record and where the queue has reached, get an email when the status changes, and track the deadlines around it: PWD expiration, the 30-180 day ETA 9089 filing window, and I-140 filing cutoffs. The lookup takes all three DOL numbers, not just PERM: a PERM case (G- or A-), a prevailing wage request (P-), or an H-1B labor condition application (I-), pending ones included. No account is needed for any of that. Attorneys manage full caseloads on the same data.",
+          "PERM Tracker follows your case through the Department of Labor and tells you where it stands. Look up a case number to see its federal record and where the queue has reached, get an email when the status changes, and track the deadlines around it: PWD expiration, the 30-180 day ETA 9089 filing window, and I-140 filing cutoffs. The lookup takes all three DOL numbers, not just PERM: a PERM case (G- or A-), a prevailing wage request (P-), or an H-1B labor condition application (I-), pending ones included. Without a number, search all three programs at once by employer, law firm, worksite state or occupation. No account is needed for any of that. Attorneys manage full caseloads on the same data.",
       },
       {
         question: "How is this different from using a spreadsheet?",

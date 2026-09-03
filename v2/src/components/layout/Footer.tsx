@@ -173,6 +173,13 @@ export default function Footer({ audience = "public" }: FooterProps) {
                 Track my case
               </NavLink>{" "}
               <NavLink
+                href="/case-search"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Search every case
+              </NavLink>{" "}
+              <NavLink
                 href="/tools/perm-timeline-calculator"
                 className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
                 spinnerClassName="text-(--primary)"
