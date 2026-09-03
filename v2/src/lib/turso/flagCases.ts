@@ -38,6 +38,126 @@ export interface FlagProgramConfig {
   budgetPrefix: string;
   /** When set, every list and search filters `visa_type` to it by default. */
   defaultVisaType?: string;
+  /**
+   * DOL's quarterly disclosure table for the program (`pwd_cases`,
+   * `lca_cases`), loaded by scripts/ingest_flag_disclosure.py. Decided cases
+   * only, with what the live endpoint never says: the wage. Absent when the
+   * program has no such file.
+   */
+  disclosureTable?: string;
+  /** perm_docs key of the ingest's summary (rows, date span, files). */
+  disclosureDocKey?: string;
+  /** `visa_class` value that means "this program's PERM half" in the file. */
+  defaultVisaClass?: string;
+}
+
+/** One row of DOL's quarterly disclosure file: the decided record, wage included. */
+export interface FlagDisclosedRow {
+  caseNumber: string;
+  status: string;
+  receivedDate: string | null;
+  decisionDate: string | null;
+  employerName: string | null;
+  employerSlug: string | null;
+  jobTitle: string | null;
+  socCode: string | null;
+  socTitle: string | null;
+  wage: number | null;
+  wageUnit: string | null;
+  worksiteState: string | null;
+  visaClass: string | null;
+  fiscalYear: number | null;
+}
+
+interface DisclosedDbRow {
+  case_number: string;
+  case_status: string;
+  received_date: string | null;
+  decision_date: string | null;
+  employer_name: string | null;
+  employer_slug: string | null;
+  job_title: string | null;
+  soc_code: string | null;
+  soc_title: string | null;
+  wage: number | string | null;
+  wage_unit: string | null;
+  worksite_state: string | null;
+  visa_class: string | null;
+  fiscal_year: number | string | null;
+}
+
+const DISCLOSED_COLS =
+  "case_number, case_status, received_date, decision_date, employer_name, employer_slug, " +
+  "job_title, soc_code, soc_title, wage, wage_unit, worksite_state, visa_class, fiscal_year";
+
+const num = (v: number | string | null): number | null => {
+  if (v === null || v === undefined) return null;
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : null;
+};
+
+const toDisclosed = (r: DisclosedDbRow): FlagDisclosedRow => ({
+  caseNumber: r.case_number,
+  status: r.case_status,
+  receivedDate: r.received_date,
+  decisionDate: r.decision_date,
+  employerName: r.employer_name,
+  employerSlug: r.employer_slug,
+  jobTitle: r.job_title,
+  socCode: r.soc_code,
+  socTitle: r.soc_title,
+  wage: num(r.wage),
+  wageUnit: r.wage_unit,
+  worksiteState: r.worksite_state,
+  visaClass: r.visa_class,
+  fiscalYear: num(r.fiscal_year),
+});
+
+export interface FlagDisclosureSummary {
+  rows: number;
+  earliestReceived: string | null;
+  latestDecision: string | null;
+  files: Record<string, number>;
+  computedAt: number;
+}
+
+/**
+ * The ingest's summary doc. No age cutoff, unlike the live summary: the
+ * file is quarterly and a count of it stays true until the next load
+ * replaces it. Shape is still checked, so a half-written doc reads as absent.
+ */
+export function parseDisclosureSummaryDoc(json: string, computedAt: number): FlagDisclosureSummary | null {
+  let d: unknown;
+  try {
+    d = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (!d || typeof d !== "object") return null;
+  const o = d as Record<string, unknown>;
+  if (!isInt(o.rows) || !isCountMap(o.files ?? {})) return null;
+  const date = (v: unknown): string | null =>
+    typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null;
+  return {
+    rows: o.rows,
+    earliestReceived: date(o.earliestReceived),
+    latestDecision: date(o.latestDecision),
+    files: (o.files as Record<string, number> | undefined) ?? {},
+    computedAt: Number.isFinite(computedAt) ? computedAt : 0,
+  };
+}
+
+/**
+ * The half-open slug range for an employer-name prefix, or null when the
+ * text slugs to nothing searchable. Shared by the live and disclosed
+ * searches so the two halves answer the same needle.
+ */
+export function slugRange(text: string): { lo: string; hi: string } | null {
+  if (text.length > 120) return null;
+  const needle = slugify(text.trim());
+  if (needle.length < 2) return null;
+  const hi = needle.slice(0, -1) + String.fromCharCode(needle.charCodeAt(needle.length - 1) + 1);
+  return { lo: needle, hi };
 }
 
 export interface FlagCaseRow {
@@ -188,6 +308,11 @@ export interface FlagProgram {
   search: (args: SearchFlagArgs) => Promise<FlagCaseRow[]>;
   list: (args: ListFlagArgs) => Promise<FlagListPage>;
   getSummary: () => Promise<FlagSummary | null>;
+  /** DOL's decided record from the quarterly file, or null (no file, or not in it). */
+  lookupDisclosed: (input: string) => Promise<FlagDisclosedRow | null>;
+  /** Decided cases under an employer prefix, newest received first. Empty without a file. */
+  searchDisclosed: (args: SearchFlagArgs) => Promise<FlagDisclosedRow[]>;
+  getDisclosureSummary: () => Promise<FlagDisclosureSummary | null>;
 }
 
 export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
@@ -283,15 +408,12 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
   };
 
   const search = async (args: SearchFlagArgs): Promise<FlagCaseRow[]> => {
-    if (args.text.length > 120) return [];
-    const needle = slugify(args.text.trim());
-    if (needle.length < 2) return [];
-    const upper =
-      needle.slice(0, -1) + String.fromCharCode(needle.charCodeAt(needle.length - 1) + 1);
+    const range = slugRange(args.text);
+    if (!range) return [];
     const take = Math.min(Math.max(1, Math.floor(args.limit ?? LIVE_SEARCH_MAX)), LIVE_SEARCH_MAX);
     const narrow = narrowingClauses("filing_date", args);
     const conds = ["employer_slug >= ?", "employer_slug < ?", ...narrow.conds];
-    const params: (string | number)[] = [needle, upper, ...narrow.params];
+    const params: (string | number)[] = [range.lo, range.hi, ...narrow.params];
     const visa = visaClause(args.visa);
     if (visa.cond && visa.param) {
       conds.push(visa.cond);
@@ -348,6 +470,52 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     };
   };
 
+  const disclosureTable = config.disclosureTable;
+
+  const lookupDisclosed = async (input: string): Promise<FlagDisclosedRow | null> => {
+    if (!disclosureTable) return null;
+    const cn = normalise(input);
+    if (!cn) return null;
+    const r = await one<DisclosedDbRow>(
+      `SELECT ${DISCLOSED_COLS} FROM ${disclosureTable} WHERE case_number = ?`,
+      [cn],
+    );
+    return r ? toDisclosed(r) : null;
+  };
+
+  const searchDisclosed = async (args: SearchFlagArgs): Promise<FlagDisclosedRow[]> => {
+    if (!disclosureTable) return [];
+    const range = slugRange(args.text);
+    if (!range) return [];
+    const take = Math.min(Math.max(1, Math.floor(args.limit ?? LIVE_SEARCH_MAX)), LIVE_SEARCH_MAX);
+    // received_date is the file's filing date, and the second column of the
+    // ingest's (employer_slug, received_date) index, so the month narrowing
+    // and the ordering both ride the same range read.
+    const narrow = narrowingClauses("received_date", args);
+    const conds = ["employer_slug >= ?", "employer_slug < ?", ...narrow.conds];
+    const params: (string | number)[] = [range.lo, range.hi, ...narrow.params];
+    if ((args.visa ?? "default") === "default" && config.defaultVisaClass) {
+      conds.push("visa_class = ?");
+      params.push(config.defaultVisaClass);
+    }
+    const found = await rows<DisclosedDbRow>(
+      `SELECT ${DISCLOSED_COLS} FROM ${disclosureTable} WHERE ${conds.join(" AND ")} ` +
+        "ORDER BY received_date DESC, case_number DESC LIMIT ?",
+      [...params, take],
+    );
+    return found.map(toDisclosed);
+  };
+
+  const getDisclosureSummary = cache(async (): Promise<FlagDisclosureSummary | null> => {
+    if (!config.disclosureDocKey) return null;
+    const r = await one<{ json: string; computed_at: number }>(
+      "SELECT json, computed_at FROM perm_docs WHERE key = ?",
+      [config.disclosureDocKey],
+    );
+    if (!r) return null;
+    return parseDisclosureSummaryDoc(String(r.json), Number(r.computed_at));
+  });
+
   const getSummary = cache(async (): Promise<FlagSummary | null> => {
     const r = await one<{ json: string; computed_at: number }>(
       "SELECT json, computed_at FROM perm_docs WHERE key = ?",
@@ -366,5 +534,8 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     search,
     list,
     getSummary,
+    lookupDisclosed,
+    searchDisclosed,
+    getDisclosureSummary,
   };
 }

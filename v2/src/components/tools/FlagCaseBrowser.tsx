@@ -6,7 +6,16 @@ import { useSearchParams } from "next/navigation";
 
 import { usePublicQuery } from "@/lib/usePublicQuery";
 import { formatMonth } from "@/lib/dolFormat";
-import type { FlagCaseRow, FlagKind, FlagListPage, FlagSummary } from "@/lib/turso/flagCases";
+import type {
+  FlagCaseRow,
+  FlagDisclosedRow,
+  FlagDisclosureSummary,
+  FlagKind,
+  FlagListPage,
+  FlagSummary,
+} from "@/lib/turso/flagCases";
+import { formatWage } from "@/lib/wageFormat";
+import { mergeHalves } from "@/lib/flagMerge";
 
 /**
  * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
@@ -29,6 +38,8 @@ export interface FlagBrowserProgram {
   /** Chip labels for pending and decided. */
   pendingLabel: string;
   decidedLabel: string;
+  /** What the wage column holds: the wage DOL SET (PWD) or the wage OFFERED (LCA). */
+  wageLabel: string;
 }
 
 export const PWD_PROGRAM: FlagBrowserProgram = {
@@ -37,6 +48,7 @@ export const PWD_PROGRAM: FlagBrowserProgram = {
   nouns: "wage requests",
   pendingLabel: "In process",
   decidedLabel: "Issued",
+  wageLabel: "Wage set",
 };
 
 export const LCA_PROGRAM: FlagBrowserProgram = {
@@ -45,7 +57,9 @@ export const LCA_PROGRAM: FlagBrowserProgram = {
   nouns: "LCAs",
   pendingLabel: "In process",
   decidedLabel: "Decided",
+  wageLabel: "Wage offered",
 };
+
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const PAGE_SIZE = 50;
@@ -68,14 +82,29 @@ function chip(status: string, isFinal: boolean): string {
   return isFinal ? "bg-card" : "bg-tint-primary";
 }
 
-function Rows({ rows, caption }: { rows: FlagCaseRow[]; caption: string }) {
+function Rows({
+  rows,
+  caption,
+  wages,
+  wageLabel,
+}: {
+  rows: FlagCaseRow[];
+  caption: string;
+  /** The file's record for rows it also holds; adds a wage column when non-empty. */
+  wages?: Map<string, FlagDisclosedRow>;
+  wageLabel?: string;
+}) {
+  const withWage = !!wages && wages.size > 0;
+  const heads = withWage
+    ? ["Case", "Status", "Employer", "Job title", wageLabel ?? "Wage", "Filed", "Checked"]
+    : ["Case", "Status", "Employer", "Job title", "Filed", "Checked"];
   return (
     <div className="mt-4 overflow-x-auto">
       <table className="w-full min-w-[820px] border-collapse text-left text-base">
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-foreground text-background">
           <tr>
-            {["Case", "Status", "Employer", "Job title", "Filed", "Checked"].map((h) => (
+            {heads.map((h) => (
               <Fragment key={h}>
               <th scope="col" className="whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider">
                 {h}
@@ -102,6 +131,11 @@ function Rows({ rows, caption }: { rows: FlagCaseRow[]; caption: string }) {
               </td>
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}</td>
               <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>
+              {withWage ? (
+                <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
+                  {formatWage(wages?.get(r.caseNumber)?.wage ?? null, wages?.get(r.caseNumber)?.wageUnit ?? null) ?? ""}
+                </td>
+              ) : null}
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.filingDate ?? ""}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
                 {r.lastCheckedAt?.slice(0, 10) ?? ""}
@@ -114,11 +148,67 @@ function Rows({ rows, caption }: { rows: FlagCaseRow[]; caption: string }) {
   );
 }
 
+function DisclosedRows({
+  rows,
+  caption,
+  wageLabel,
+}: {
+  rows: FlagDisclosedRow[];
+  caption: string;
+  wageLabel: string;
+}) {
+  return (
+    <div className="mt-4 overflow-x-auto">
+      <table className="w-full min-w-[820px] border-collapse text-left text-base">
+        <caption className="sr-only">{caption}</caption>
+        <thead className="bg-foreground text-background">
+          <tr>
+            {["Case", "Status", "Employer", "Job title", wageLabel, "Received", "Decided"].map((h) => (
+              <Fragment key={h}>
+              <th scope="col" className="whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider">
+                {h}
+              </th>
+              </Fragment>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="bg-card">
+          {rows.map((r) => (
+            <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
+                <Link
+                  href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
+                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  {r.caseNumber}
+                </Link>
+              </td>
+              <td className="whitespace-nowrap px-3 py-3">
+                <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chip(r.status, true)}>
+                  {r.status}
+                </span>
+              </td>
+              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}</td>
+              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{formatWage(r.wage, r.wageUnit) ?? ""}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.receivedDate ?? ""}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">{r.decisionDate ?? ""}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function FlagCaseBrowser({
   summary,
+  disclosure,
   program,
 }: {
   summary: FlagSummary | null;
+  /** The quarterly file's summary, for the "through <date>" line. */
+  disclosure?: FlagDisclosureSummary | null;
   program: FlagBrowserProgram;
 }) {
   const KIND_LABEL: Record<FlagKind, string> = {
@@ -151,8 +241,13 @@ export function FlagCaseBrowser({
     p.set("s", String(query.n));
     return `${program.api}?${p.toString()}`;
   }, [query, program.api]);
-  const { data: search, failed: searchFailed } = usePublicQuery<{ cases: FlagCaseRow[] }>(searchUrl);
+  const { data: search, failed: searchFailed } = usePublicQuery<{ cases: FlagCaseRow[]; disclosed?: FlagDisclosedRow[] }>(searchUrl);
   const searching = query.employer.length >= 2;
+  const halves = useMemo(
+    () => (search ? mergeHalves(search.cases, search.disclosed ?? []) : null),
+    [search],
+  );
+  const found = search ? search.cases.length + (halves?.fileOnly.length ?? 0) : 0;
   const searchPending = searching && search === undefined && !searchFailed;
 
   // --- browse -----------------------------------------------------------
@@ -239,11 +334,13 @@ export function FlagCaseBrowser({
         {searching && searchFailed ? (
           <p className="mt-4 text-base text-foreground/80">The search didn&apos;t load. Try again in a moment.</p>
         ) : null}
-        {searching && search && search.cases.length === 0 ? (
+        {searching && search && found === 0 ? (
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
-            Nothing under that employer yet. The list grows nightly and only
-            reaches back to when this site started watching, so an older filing
-            may be missing. Have the number? The{" "}
+            Nothing under that employer yet. Pending filings arrive from DOL&apos;s
+            nightly check and reach back only as far as the backfill has walked;
+            decided ones come from DOL&apos;s quarterly files
+            {disclosure?.latestDecision ? ` (through ${disclosure.latestDecision})` : ""}.
+            Have the number? The{" "}
             <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
               status lookup
             </Link>{" "}
@@ -253,10 +350,37 @@ export function FlagCaseBrowser({
         {searching && search && search.cases.length > 0 ? (
           <>
             <p className="mt-4 text-sm text-foreground/70">
-              {fmt(search.cases.length)} {search.cases.length === 1 ? program.noun : program.nouns}, newest filing first
+              {fmt(search.cases.length)} {search.cases.length === 1 ? program.noun : program.nouns} from DOL&apos;s
+              daily check, newest filing first
               {search.cases.length >= 200 ? " (the first 200; narrow by title or month for the rest)" : ""}.
+              {halves && halves.wages.size > 0
+                ? ` ${fmt(halves.wages.size)} of them ${halves.wages.size === 1 ? "has" : "have"} the wage from DOL's quarterly file.`
+                : ""}
             </p>{" "}
-            <Rows rows={search.cases} caption={`${program.nouns} matching the search`} />
+            <Rows
+              rows={search.cases}
+              caption={`${program.nouns} matching the search`}
+              wages={halves?.wages}
+              wageLabel={program.wageLabel}
+            />
+          </>
+        ) : null}
+        {searching && halves && halves.fileOnly.length > 0 ? (
+          <>
+            <h3 className="mt-8 font-heading text-lg font-black">
+              {search && search.cases.length > 0 ? "Earlier, from DOL\u2019s quarterly file" : "From DOL\u2019s quarterly file"}
+            </h3>{" "}
+            <p className="mt-1 text-sm text-foreground/70">
+              {fmt(halves.fileOnly.length)} decided {halves.fileOnly.length === 1 ? program.noun : program.nouns} with the{" "}
+              {program.wageLabel.toLowerCase()}
+              {disclosure?.latestDecision ? `, decisions through ${disclosure.latestDecision}` : ""}
+              {halves.fileOnly.length >= 200 ? " (the first 200; narrow by title or month for the rest)" : ""}.
+            </p>{" "}
+            <DisclosedRows
+              rows={halves.fileOnly}
+              caption={`decided ${program.nouns} from DOL's quarterly file`}
+              wageLabel={program.wageLabel}
+            />
           </>
         ) : null}
       </section>

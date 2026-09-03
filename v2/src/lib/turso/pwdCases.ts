@@ -2,6 +2,8 @@ import "server-only";
 import { makeFlagProgram } from "./flagCases";
 
 export type {
+  FlagDisclosedRow as PwdDisclosedRow,
+  FlagDisclosureSummary as PwdDisclosureSummary,
   FlagCaseRow as PwdCaseRow,
   FlagListPage as PwdListPage,
   FlagMonth as PwdMonth,
@@ -49,6 +51,10 @@ export const pwd = makeFlagProgram({
   discoverySource: PWD_DISCOVERY_SOURCE,
   budgetPrefix: "pwd_discovery_budget_",
   defaultVisaType: "PERM",
+  // DOL's quarterly PW file: the determination itself, wage included.
+  disclosureTable: "pwd_cases",
+  disclosureDocKey: "flag_disclosure_summary_pw",
+  defaultVisaClass: "PERM",
 });
 
 export const normalisePwdCaseNumber = pwd.normalise;
@@ -58,3 +64,6 @@ export const discoverPwdCase = pwd.discover;
 export const searchPwdCases = pwd.search;
 export const listPwdCases = pwd.list;
 export const getPwdSummary = pwd.getSummary;
+export const lookupPwdDetermination = pwd.lookupDisclosed;
+export const searchPwdDeterminations = pwd.searchDisclosed;
+export const getPwdDisclosureSummary = pwd.getDisclosureSummary;

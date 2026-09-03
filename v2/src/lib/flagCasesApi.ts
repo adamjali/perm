@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { FlagProgram } from "@/lib/turso/flagCases";
+import type { FlagProgram, SearchFlagArgs } from "@/lib/turso/flagCases";
 import { FLAG_DEFAULT_ITEMS, isFlagKind } from "@/lib/turso/flagCases";
 import { MAX_TITLE_FILTER, SEARCH_MONTH_RE } from "@/lib/turso/cases";
 
@@ -28,9 +28,9 @@ export function makeFlagCasesHandler(program: FlagProgram) {
     if (action === "lookup") {
       const raw = p.get("caseNumber") ?? "";
       if (!raw || raw.length > 32) return bad("caseNumber missing or too long");
-      const row = await program.lookup(raw);
+      const [row, disclosed] = await Promise.all([program.lookup(raw), program.lookupDisclosed(raw)]);
       return NextResponse.json(
-        { case: row },
+        { case: row, disclosed },
         {
           headers: {
             "Cache-Control": row?.isFinal
@@ -53,15 +53,18 @@ export function makeFlagCasesHandler(program: FlagProgram) {
     if (action === "search") {
       const text = p.get("text") ?? "";
       if (text.length < 2 || text.length > MAX_TEXT) return bad("text must be 2..120 chars");
-      const cases = await program.search({
+      const args: SearchFlagArgs = {
         text,
         ...(title ? { title } : {}),
         ...(from ? { from } : {}),
         ...(to ? { to } : {}),
         visa,
-      });
+      };
+      // Two halves of one answer: the live table (status, may be pending) and
+      // DOL's quarterly file (decided, with the wage). The browser merges them.
+      const [cases, disclosed] = await Promise.all([program.search(args), program.searchDisclosed(args)]);
       return NextResponse.json(
-        { cases },
+        { cases, disclosed },
         { headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=86400" } },
       );
     }

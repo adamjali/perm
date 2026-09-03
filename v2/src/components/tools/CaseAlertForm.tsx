@@ -4,6 +4,7 @@ import { useId, useState } from "react";
 import { BellIcon, CheckCircleIcon } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
+import { programNoun, type FlagProgram } from "@/lib/flagCaseNumber";
 
 /**
  * Subscribe to status changes on ONE case.
@@ -24,7 +25,22 @@ import { cn } from "@/lib/utils";
  * WHERE IT IS OFFERED is decided by the caller, and only for a case that can
  * still change. Mounting it on a decided case would promise mail that can
  * never arrive.
+ *
+ * THE `program` PROP CHANGES WORDING AND NOTHING ELSE. The endpoint works out
+ * which program a number belongs to from the number itself, and it has to,
+ * because the case-status page takes all three prefixes and a form cannot be
+ * trusted to say. So this prop is presentation: it names the thing the reader
+ * is looking at, and tags the source so signup mix can be read per surface.
+ * Passing the wrong one produces mildly wrong copy, never a wrong
+ * subscription.
  */
+
+/** Where the signup came from, for the `source` column. Wording aside, inert. */
+const SOURCE: Record<FlagProgram, string> = {
+  perm: "perm-case-status",
+  pwd: "pwd-status",
+  lca: "lca-status",
+};
 
 /**
  * Convex HTTP actions are served from the `.convex.site` twin of the
@@ -45,11 +61,14 @@ type State =
 
 export function CaseAlertForm({
   caseNumber,
+  program = "perm",
   className,
 }: {
   caseNumber: string;
+  program?: FlagProgram;
   className?: string;
 }) {
+  const noun = programNoun(program);
   const inputId = useId();
   const noteId = useId();
   const newsId = useId();
@@ -71,7 +90,7 @@ export function CaseAlertForm({
         body: JSON.stringify({
           email: email.trim(),
           caseNumber,
-          source: "perm-case-status",
+          source: SOURCE[program],
           news: news || undefined,
         }),
       });
@@ -129,7 +148,7 @@ export function CaseAlertForm({
         Watch this case
       </p>{" "}
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-        Get an email when DOL&apos;s status for this case changes. We&apos;ll
+        Get an email when DOL&apos;s status for this {noun} changes. We&apos;ll
         stop once it&apos;s decided.
       </p>
       <div className="mt-4 flex flex-wrap items-stretch gap-3">

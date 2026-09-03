@@ -192,6 +192,14 @@ COLUMNS = (
 
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
+# MEASURED 2026-09-02, and the reason this exists: while a 147k-row load ran,
+# an ordinary GROUP BY on another table went from ~0.3s to a WORST OF 59.2s,
+# sampled every 10 seconds. That starved a production build's prerender (a 90s
+# query deadline, blown twice) and would starve the live site the same way. A
+# load is a background chore; the site is not. Pacing gives the primary room
+# between write requests: 2,000 rows a request at 0.35s idle is ~26 seconds
+# added per 147k rows, against a load that already takes minutes.
+WRITE_PAUSE_S = 0.35
 # Names and titles are truncated exactly as the PERM corpus truncates them,
 # so an employer string here matches the one the entity tables were built on.
 NAME_LEN = 80
@@ -623,7 +631,7 @@ def count_for_file(db: Turso, table: str, source_file: str) -> int:
     return int(db.scalar(f"SELECT count(*) FROM {table} WHERE source_file = ?", [source_file]) or 0)
 
 
-def write_cases(db: Turso, table: str, rows) -> int:
+def write_cases(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> int:
     """Chunked INSERT OR REPLACE: 500 rows a statement, 4 statements a request."""
     placeholders = "(" + ",".join("?" * len(COLUMNS)) + ")"
     head = f"INSERT OR REPLACE INTO {table} ({','.join(COLUMNS)}) VALUES "
@@ -647,6 +655,8 @@ def write_cases(db: Turso, table: str, rows) -> int:
             return
         db.pipeline(pending + [{"type": "close"}])
         pending = []
+        if pause > 0:
+            time.sleep(pause)
 
     for row in rows:
         batch.append(row)
@@ -679,6 +689,9 @@ def main() -> int:
                     help="Print the file's resolved and raw column names, then stop.")
     ap.add_argument("--force", action="store_true",
                     help="Write even when the file's hash matches the last load.")
+    ap.add_argument("--pause", type=float, default=WRITE_PAUSE_S, metavar="SECONDS",
+                    help="Idle between write requests so a load cannot starve the live site "
+                         f"(default {WRITE_PAUSE_S}; 0 disables).")
     ap.add_argument("--fy", type=int, metavar="YYYY",
                     help="Load that fiscal year's newest file instead of the newest overall "
                          "(history, one year per run).")
@@ -751,7 +764,7 @@ def main() -> int:
         db.script(table_ddl(table))
         written = 0
         try:
-            written = write_cases(db, table, iter_cases(path, cfg, stats))
+            written = write_cases(db, table, iter_cases(path, cfg, stats), pause=args.pause)
             stats.report()
             have = count_for_file(db, table, name)
             log(f"  VERIFY count(*) where source_file = {name}: {have:,} (read {stats.kept:,})")

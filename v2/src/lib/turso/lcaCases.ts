@@ -27,6 +27,9 @@ export const lca = makeFlagProgram({
   docKey: "lca_live_summary",
   discoverySource: "flag.dol.gov/recaptcha/caseStatus (DOL, via lookup)",
   budgetPrefix: "lca_discovery_budget_",
+  // DOL's quarterly LCA file: the decided record with the OFFERED wage.
+  disclosureTable: "lca_cases",
+  disclosureDocKey: "flag_disclosure_summary_lca",
 });
 
 export const normaliseLcaCaseNumber = lca.normalise;
@@ -35,3 +38,6 @@ export const lookupLcaCase = lca.lookup;
 export const searchLcaCases = lca.search;
 export const listLcaCases = lca.list;
 export const getLcaSummary = lca.getSummary;
+export const lookupLcaDisclosed = lca.lookupDisclosed;
+export const searchLcaDisclosed = lca.searchDisclosed;
+export const getLcaDisclosureSummary = lca.getDisclosureSummary;

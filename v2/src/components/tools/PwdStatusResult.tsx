@@ -2,8 +2,15 @@ import Link from "next/link";
 import { estimatePwdQueue } from "@/lib/perm";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
-import { lookupPwdCase, type PwdCaseRow } from "@/lib/turso/pwdCases";
+import {
+  lookupPwdCase,
+  lookupPwdDetermination,
+  type PwdCaseRow,
+  type PwdDisclosedRow,
+} from "@/lib/turso/pwdCases";
 import { currentMonthUtc } from "@/lib/dolFormat";
+import { calculatePWDExpiration } from "@/lib/perm";
+import { formatWage } from "@/lib/wageFormat";
 import { QueueAlertForm } from "@/app/(site)/(public)/perm-processing-times/QueueAlertForm";
 
 /**
@@ -49,11 +56,135 @@ function day(iso: string | null): string | null {
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 
+const ISSUED = /^(DETERMINATION ISSUED|REDETERMINATION|CENTER DIRECTOR REVIEW)/;
+
+/**
+ * How long the determination is good for. `calculatePWDExpiration` is the
+ * central OEWS wage-year rule (a January determination expires June 30 of
+ * that year, not 90 days on), and it throws on a malformed date, so the
+ * date is shape-checked first and a failure prints nothing rather than a
+ * wrong day.
+ */
+function validUntil(decisionDate: string | null): string | null {
+  if (!decisionDate || !/^\d{4}-\d{2}-\d{2}$/.test(decisionDate)) return null;
+  try {
+    return calculatePWDExpiration(decisionDate);
+  } catch {
+    return null;
+  }
+}
+
+/** DOL's own determination, from the quarterly disclosure file: the part the live endpoint never says. */
+function Determination({ d }: { d: PwdDisclosedRow }) {
+  const issued = ISSUED.test(d.status.toUpperCase());
+  const wage = formatWage(d.wage, d.wageUnit);
+  const until = issued ? validUntil(d.decisionDate) : null;
+  return (
+    <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+      <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        DOL&apos;s determination · from the quarterly disclosure file
+      </p>{" "}
+      {issued && wage ? (
+        <p className="mt-2 font-heading text-3xl font-black sm:text-4xl">{wage}</p>
+      ) : (
+        <p className="mt-2 font-heading text-2xl font-black">{d.status.charAt(0) + d.status.slice(1).toLowerCase()}</p>
+      )}{" "}
+      <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
+        {d.socTitle || d.socCode ? (
+          <div>
+            <dt className="text-sm font-bold text-foreground/70">Occupation DOL used</dt>{" "}
+            <dd className="font-medium">
+              {d.socTitle ?? "Not given"}
+              {d.socCode ? <span className="font-mono text-sm text-foreground/70"> · {d.socCode}</span> : null}
+            </dd>
+          </div>
+        ) : null}{" "}
+        {d.worksiteState ? (
+          <div>
+            <dt className="text-sm font-bold text-foreground/70">Worksite state</dt>{" "}
+            <dd className="font-medium">{d.worksiteState}</dd>
+          </div>
+        ) : null}{" "}
+        <div>
+          <dt className="text-sm font-bold text-foreground/70">Received by DOL</dt>{" "}
+          <dd className="font-medium">{day(d.receivedDate) ?? "Unknown"}</dd>
+        </div>{" "}
+        <div>
+          <dt className="text-sm font-bold text-foreground/70">{issued ? "Determination date" : "Decided"}</dt>{" "}
+          <dd className="font-medium">{day(d.decisionDate) ?? "Unknown"}</dd>
+        </div>{" "}
+        {until ? (
+          <div>
+            <dt className="text-sm font-bold text-foreground/70">Valid until</dt>{" "}
+            <dd className="font-medium">{day(until)}</dd>
+          </div>
+        ) : null}
+      </dl>{" "}
+      {until ? (
+        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-foreground/70">
+          The PERM must be filed, or recruitment started, before the
+          determination expires. Every date after it is arithmetic on this one;
+          the{" "}
+          <Link href="/tools/perm-deadline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+            deadline calculator
+          </Link>{" "}
+          works them out.
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
-  const [row, est] = await Promise.all([
+  const [row, disclosed, est] = await Promise.all([
     lookupPwdCase(caseNumber).catch(() => null),
+    lookupPwdDetermination(caseNumber).catch(() => null),
     getPwdEstimatorData().catch(() => null),
   ]);
+
+  if (!row && disclosed) {
+    // DOL's live endpoint has nothing (or did not answer) but the quarterly
+    // file holds the decided record: show that, plainly labelled as the file.
+    return (
+      <div className="space-y-6">
+        <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+          <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Prevailing wage request · ETA-9141
+          </p>{" "}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <h2 className="font-heading text-2xl font-black sm:text-3xl">{disclosed.caseNumber}</h2>{" "}
+            <span className="border-2 border-border bg-primary px-2 py-0.5 font-mono text-xs font-bold uppercase text-primary-foreground">
+              {prettyStatus(disclosed.status)}
+            </span>
+          </div>{" "}
+          <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
+            <div>
+              <dt className="text-sm font-bold text-foreground/70">Employer</dt>{" "}
+              <dd className="font-medium">
+                {disclosed.employerName ? (
+                  <Link href={`/pwd-cases?q=${encodeURIComponent(disclosed.employerName)}`} className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                    {disclosed.employerName}
+                  </Link>
+                ) : (
+                  "Not given"
+                )}
+              </dd>
+            </div>{" "}
+            <div>
+              <dt className="text-sm font-bold text-foreground/70">Job title</dt>{" "}
+              <dd className="font-medium">{disclosed.jobTitle ?? "Not given"}</dd>
+            </div>
+          </dl>{" "}
+          <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+            DOL&apos;s live case system didn&apos;t return this number; the record
+            above is from its quarterly disclosure file, which lists decided
+            requests only.
+          </p>
+        </section>
+        <Determination d={disclosed} />
+      </div>
+    );
+  }
 
   if (!row) {
     return (
@@ -154,6 +285,8 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
         ) : null}
       </section>
 
+      {disclosed ? <Determination d={disclosed} /> : null}
+
       {!row.isFinal && !notPerm ? (
         <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
           <h3 className="font-heading text-xl font-black">Where it sits in DOL&apos;s wage queue</h3>{" "}
@@ -215,6 +348,13 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           queue="pwd-oews"
           allowPwdChoice
         />
+      ) : null}
+
+      {row.isFinal && !disclosed ? (
+        <p className="max-w-2xl text-sm leading-relaxed text-foreground/70">
+          The wage DOL set is not in its live record. It arrives in the next
+          quarterly disclosure file, which this page reads as soon as it lands.
+        </p>
       ) : null}
 
       {row.isFinal ? (

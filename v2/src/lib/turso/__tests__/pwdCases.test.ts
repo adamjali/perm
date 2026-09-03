@@ -145,3 +145,71 @@ describe("parsePwdSummaryDoc", () => {
     expect(parsePwdSummaryDoc("{", now, now)).toBeNull();
   });
 });
+
+const { lookupPwdDetermination, searchPwdDeterminations, getPwdDisclosureSummary } = await import("../pwdCases");
+const { parseDisclosureSummaryDoc, slugRange } = await import("../flagCases");
+
+describe("the decided half: DOL's quarterly file", () => {
+
+  it("searches pwd_cases by the same slug range as the live half, PERM-only, on received_date", async () => {
+    await searchPwdDeterminations({ text: "Google", from: "2026-01", to: "2026-03", title: "engineer" });
+    const [sql, args] = rows.mock.calls[0]!;
+    expect(sql).toMatch(/FROM pwd_cases WHERE employer_slug >= \? AND employer_slug < \?/);
+    expect(sql).toMatch(/job_title LIKE \? ESCAPE/);
+    expect(sql).toMatch(/received_date >= \? AND received_date < \?/);
+    expect(sql).toMatch(/visa_class = \?/);
+    expect(sql).toMatch(/ORDER BY received_date DESC, case_number DESC LIMIT \?/);
+    expect(args).toEqual(["google", "googlf", "%engineer%", "2026-01-01", "2026-04-01", "PERM", 200]);
+    // the live half's range for the same text is byte-identical
+    expect(slugRange("Google")).toEqual({ lo: "google", hi: "googlf" });
+  });
+
+  it("asks nothing for a needle that slugs to under two characters", async () => {
+    expect(await searchPwdDeterminations({ text: "a" })).toEqual([]);
+    expect(rows).not.toHaveBeenCalled();
+  });
+
+  it("looks a determination up by number and maps the file's row, numbers as strings included", async () => {
+    one.mockResolvedValueOnce({
+      case_number: "P-100-26092-751498",
+      case_status: "DETERMINATION ISSUED",
+      received_date: "2026-04-02",
+      decision_date: "2026-06-30",
+      employer_name: "Google LLC",
+      employer_slug: "google-llc",
+      job_title: "Strategic Partnerships Development Manager",
+      soc_code: "11-2021",
+      soc_title: "Marketing Managers",
+      wage: "241925.0",
+      wage_unit: "YEAR",
+      worksite_state: "NY",
+      visa_class: "PERM",
+      fiscal_year: "2026",
+    });
+    const d = await lookupPwdDetermination(" p-100-26092-751498 ");
+    expect(one.mock.calls[0]![0]).toMatch(/FROM pwd_cases WHERE case_number = \?/);
+    expect(one.mock.calls[0]![1]).toEqual(["P-100-26092-751498"]);
+    expect(d).toMatchObject({ wage: 241925, fiscalYear: 2026, socCode: "11-2021", status: "DETERMINATION ISSUED" });
+    expect(exec).not.toHaveBeenCalled(); // the file is never "discovered" from DOL
+  });
+
+  it("refuses a G- number without touching the table", async () => {
+    expect(await lookupPwdDetermination("G-100-26240-200246")).toBeNull();
+    expect(one).not.toHaveBeenCalled();
+  });
+
+  it("reads the ingest's summary doc with no age cutoff, and rejects a malformed one", async () => {
+    const good = parseDisclosureSummaryDoc(
+      JSON.stringify({ rows: 147244, earliestReceived: "2025-07-01", latestDecision: "2026-06-30", files: { a: 147244 } }),
+      1,
+    );
+    expect(good).toMatchObject({ rows: 147244, latestDecision: "2026-06-30" });
+    expect(parseDisclosureSummaryDoc("{\"rows\":\"many\"}", 1)).toBeNull();
+    expect(parseDisclosureSummaryDoc("not json", 1)).toBeNull();
+    // a date that is not YYYY-MM-DD is dropped, not passed through
+    expect(parseDisclosureSummaryDoc(JSON.stringify({ rows: 1, latestDecision: "June 2026" }), 1)?.latestDecision).toBeNull();
+    one.mockResolvedValueOnce({ json: JSON.stringify({ rows: 5, files: {} }), computed_at: 7 });
+    expect(await getPwdDisclosureSummary()).toMatchObject({ rows: 5, computedAt: 7 });
+    expect(one.mock.calls[0]![1]).toEqual(["flag_disclosure_summary_pw"]);
+  });
+});

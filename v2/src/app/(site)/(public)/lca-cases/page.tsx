@@ -6,7 +6,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FlagCaseBrowser, LCA_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { getLcaSummary } from "@/lib/turso/lcaCases";
+import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
 
 /**
  * Labor condition applications, findable by employer as DOL confirms them.
@@ -44,7 +44,7 @@ function longDate(iso: string | null): string | null {
 }
 
 export default async function LcaCasesPage() {
-  const summary = await getLcaSummary();
+  const [summary, disclosure] = await Promise.all([getLcaSummary(), getLcaDisclosureSummary()]);
   const earliest = summary?.byMonth.length
     ? [...summary.byMonth].map((m) => m.month).sort()[0] ?? null
     : null;
@@ -68,24 +68,37 @@ export default async function LcaCasesPage() {
           The employer files the labor condition application with DOL before the
           H-1B petition. Search the employer to get the number, job title, filing
           date and DOL&apos;s status.{" "}
-          {summary ? (
-            <>
-              {summary.total.toLocaleString("en-US")} LCAs confirmed by DOL so far
-              {earliest ? `, from filings since ${longDate(`${earliest}-01`) ?? earliest}` : ""}.
-            </>
-          ) : null}
-        </p>
+        </p>{" "}
+        <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
+          <div className="border-2 border-border bg-card p-4 shadow-hard">
+            <dt className="text-sm font-bold text-foreground/70">Confirmed by DOL&apos;s daily check</dt>{" "}
+            <dd className="mt-1 font-heading text-3xl font-black">{summary ? summary.total.toLocaleString("en-US") : "—"}</dd>
+          </div>{" "}
+          <div className="border-2 border-border bg-card p-4 shadow-hard">
+            <dt className="text-sm font-bold text-foreground/70">Decided, with the wage offered</dt>{" "}
+            <dd className="mt-1 font-heading text-3xl font-black">{disclosure ? disclosure.rows.toLocaleString("en-US") : "—"}</dd>
+          </div>{" "}
+          <div className="border-2 border-border bg-tint-primary p-4 shadow-hard">
+            <dt className="text-sm font-bold text-foreground/70">Decisions through</dt>{" "}
+            <dd className="mt-1 font-heading text-2xl font-black">{longDate(disclosure?.latestDecision ?? null) ?? "—"}</dd>
+          </div>
+        </dl>{" "}
+        {summary && earliest ? (
+          <p className="mt-3 text-sm text-foreground/70">
+            Live rows reach back to filings from {longDate(`${earliest}-01`) ?? earliest}; the backfill keeps walking earlier days.
+          </p>
+        ) : null}
       </header>
 
       <section className="pop mt-8 max-w-3xl">
         <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
           <h2 className="font-heading text-lg font-black">What&apos;s in here, and what isn&apos;t</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            Every row comes from DOL&apos;s own case system: number, employer,
-            job title, filing date and status. Wage, worksite and visa class
-            arrive only in DOL&apos;s quarterly disclosure files. The H-1B
-            petition is separate: it has a USCIS receipt number and is tracked
-            at USCIS.
+            Pending LCAs come from DOL&apos;s own case system, checked daily:
+            number, employer, job title, filing date, status. Decided ones come
+            from DOL&apos;s quarterly disclosure files with the wage offered and
+            the worksite state. The H-1B petition is separate: it has a USCIS
+            receipt number and is tracked at USCIS.
           </p>{" "}
           <p className="mt-3 text-sm leading-relaxed text-foreground/70">
             Have the number? The{" "}
@@ -99,7 +112,7 @@ export default async function LcaCasesPage() {
 
       <div className="mt-10">
         <Suspense fallback={<p className="text-base text-foreground/60">Loading the search…</p>}>
-          <FlagCaseBrowser summary={summary} program={LCA_PROGRAM} />
+          <FlagCaseBrowser summary={summary} disclosure={disclosure} program={LCA_PROGRAM} />
         </Suspense>
       </div>
 

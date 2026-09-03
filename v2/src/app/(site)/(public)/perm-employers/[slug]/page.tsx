@@ -53,8 +53,10 @@ import {
   sizeBand,
 } from "@/lib/turso/entityDetail";
 import { recentLiveByEmployer } from "@/lib/turso/cases";
-import { searchPwdCases } from "@/lib/turso/pwdCases";
-import { searchLcaCases } from "@/lib/turso/lcaCases";
+import { searchPwdCases, searchPwdDeterminations } from "@/lib/turso/pwdCases";
+import { searchLcaCases, searchLcaDisclosed } from "@/lib/turso/lcaCases";
+import { unifiedRows } from "@/lib/flagMerge";
+import { formatWage } from "@/lib/wageFormat";
 import { liveEmployerRecord } from "@/lib/turso/liveEmployers";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -352,7 +354,7 @@ export default async function EmployerPage({
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305
   // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageReqs, lcas] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets] =
     await Promise.all([
       getDisclosureStats(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -372,12 +374,18 @@ export default async function EmployerPage({
       // sponsor's page until DOL's quarterly publication. Indexed point
       // read over the small remainder table; degrades to an absent band.
       recentLiveByEmployer(canonicalSlug, 8).catch(() => []),
-      // The steps BEFORE the PERM, from the same DOL check: the wage
-      // requests and H-1B LCAs this employer has filed. Matched by name
-      // prefix (those tables carry name-derived slugs), indexed, five each.
+      // The steps BEFORE the PERM: the wage requests and H-1B LCAs this
+      // employer has filed. Two halves each: the live table from DOL's daily
+      // check (status, pending included) and DOL's quarterly file (decided,
+      // with the wage). Matched by name prefix (those tables carry
+      // name-derived slugs), indexed, five each; merged newest-first below.
       searchPwdCases({ text: row.name, limit: 5 }).catch(() => []),
       searchLcaCases({ text: row.name, limit: 5 }).catch(() => []),
+      searchPwdDeterminations({ text: row.name, limit: 5 }).catch(() => []),
+      searchLcaDisclosed({ text: row.name, limit: 5 }).catch(() => []),
     ]);
+  const wageReqs = unifiedRows(wageLive, wageDets, 5);
+  const lcas = unifiedRows(lcaLive, lcaDets, 5);
   const band = await sizeBand(KIND, row.rank);
   const mirrorAsOf = freshness["perm-case-status"]?.asOf ?? null;
 
@@ -586,7 +594,8 @@ export default async function EmployerPage({
             Before the PERM: wage requests and LCAs
           </h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            Filed by {row.name}, confirmed by DOL, checked daily.
+            Filed by {row.name}. Pending ones are DOL&apos;s daily check; decided
+            ones carry the wage from DOL&apos;s quarterly files.
           </p>{" "}
           <div className="mt-5 grid grid-cols-1 gap-6 sm:grid-cols-2 [&>*]:min-w-0">
             {[
@@ -610,8 +619,11 @@ export default async function EmployerPage({
                           {r.caseNumber}
                         </Link>{" "}
                         {r.jobTitle ? <span className="text-foreground/80">{r.jobTitle}</span> : null}{" "}
+                        {formatWage(r.wage, r.wageUnit) ? (
+                          <span className="font-mono text-sm font-bold">{formatWage(r.wage, r.wageUnit)}</span>
+                        ) : null}{" "}
                         <span className="ml-auto font-mono text-xs font-bold uppercase text-foreground/70">
-                          {r.filingDate ? `${r.filingDate} · ` : ""}
+                          {r.date ? `${r.date} · ` : ""}
                           {r.status}
                         </span>
                       </li>

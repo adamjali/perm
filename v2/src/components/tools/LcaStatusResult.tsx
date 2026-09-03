@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { lookupLcaCase, type LcaRow } from "@/lib/turso/lcaCasesTypes";
+import { lookupLcaCase, lookupLcaDisclosed, type LcaDisclosedRow, type LcaRow } from "@/lib/turso/lcaCasesTypes";
+import { formatWage } from "@/lib/wageFormat";
 
 /**
  * A labor condition application (ETA-9035) by number: DOL's own status,
@@ -31,8 +32,101 @@ function day(iso: string | null): string | null {
     : null;
 }
 
+/** The decided record from DOL's quarterly LCA file: what the live endpoint never says. */
+function Disclosed({ d }: { d: LcaDisclosedRow }) {
+  const wage = formatWage(d.wage, d.wageUnit);
+  return (
+    <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+      <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        DOL&apos;s record · from the quarterly disclosure file
+      </p>{" "}
+      {wage ? <p className="mt-2 font-heading text-3xl font-black sm:text-4xl">{wage}</p> : null}{" "}
+      <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
+        <div>
+          <dt className="text-sm font-bold text-foreground/70">{wage ? "Wage offered" : "Wage"}</dt>{" "}
+          <dd className="font-medium">{wage ?? "Not in the file"}</dd>
+        </div>{" "}
+        {d.socTitle || d.socCode ? (
+          <div>
+            <dt className="text-sm font-bold text-foreground/70">Occupation</dt>{" "}
+            <dd className="font-medium">
+              {d.socTitle ?? "Not given"}
+              {d.socCode ? <span className="font-mono text-sm text-foreground/70"> · {d.socCode}</span> : null}
+            </dd>
+          </div>
+        ) : null}{" "}
+        {d.worksiteState ? (
+          <div>
+            <dt className="text-sm font-bold text-foreground/70">Worksite state</dt>{" "}
+            <dd className="font-medium">{d.worksiteState}</dd>
+          </div>
+        ) : null}{" "}
+        {d.visaClass ? (
+          <div>
+            <dt className="text-sm font-bold text-foreground/70">Visa class</dt>{" "}
+            <dd className="font-medium">{d.visaClass}</dd>
+          </div>
+        ) : null}{" "}
+        <div>
+          <dt className="text-sm font-bold text-foreground/70">Received by DOL</dt>{" "}
+          <dd className="font-medium">{day(d.receivedDate) ?? "Unknown"}</dd>
+        </div>{" "}
+        <div>
+          <dt className="text-sm font-bold text-foreground/70">Decided</dt>{" "}
+          <dd className="font-medium">{day(d.decisionDate) ?? "Unknown"}</dd>
+        </div>
+      </dl>
+    </section>
+  );
+}
+
 export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
-  const row = await lookupLcaCase(caseNumber).catch(() => null);
+  const [row, disclosed] = await Promise.all([
+    lookupLcaCase(caseNumber).catch(() => null),
+    lookupLcaDisclosed(caseNumber).catch(() => null),
+  ]);
+
+  if (!row && disclosed) {
+    return (
+      <div className="space-y-6">
+        <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
+          <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Labor condition application · ETA-9035
+          </p>{" "}
+          <div className="mt-2 flex flex-wrap items-center gap-3">
+            <h2 className="font-heading text-2xl font-black sm:text-3xl">{disclosed.caseNumber}</h2>{" "}
+            <span className="border-2 border-border bg-primary px-2 py-0.5 font-mono text-xs font-bold uppercase text-primary-foreground">
+              {prettyStatus(disclosed.status)}
+            </span>
+          </div>{" "}
+          <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
+            <div>
+              <dt className="text-sm font-bold text-foreground/70">Employer</dt>{" "}
+              <dd className="font-medium">
+                {disclosed.employerName ? (
+                  <Link href={`/lca-cases?q=${encodeURIComponent(disclosed.employerName)}`} className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                    {disclosed.employerName}
+                  </Link>
+                ) : (
+                  "Not given"
+                )}
+              </dd>
+            </div>{" "}
+            <div>
+              <dt className="text-sm font-bold text-foreground/70">Job title</dt>{" "}
+              <dd className="font-medium">{disclosed.jobTitle ?? "Not given"}</dd>
+            </div>
+          </dl>{" "}
+          <p className="mt-4 text-sm leading-relaxed text-foreground/70">
+            DOL&apos;s live case system didn&apos;t return this number; the record
+            above is from its quarterly disclosure file, which lists decided
+            LCAs only.
+          </p>
+        </section>
+        <Disclosed d={disclosed} />
+      </div>
+    );
+  }
 
   if (!row) {
     return (
@@ -104,6 +198,8 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
           </div>
         </dl>
       </section>
+
+      {disclosed ? <Disclosed d={disclosed} /> : null}
 
       <section className="border-2 border-border bg-tint-primary p-5 sm:p-6">
         <h3 className="font-heading text-xl font-black">What this status means</h3>{" "}
