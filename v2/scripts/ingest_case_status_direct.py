@@ -450,6 +450,87 @@ def write_review_stages(db) -> None:
         f"{pending_total:,} pending, {len(payload):,} bytes)")
 
 
+def write_stage_cohorts(db) -> None:
+    """Precompute the filing-month x status matrix into perm_docs['stage_cohorts'].
+
+    WHY. `getStageCohorts` ran a GROUP BY over EVERY row of perm_case_status
+    on each cold render of /perm-rfi-audit and its ten stage pages. Measured
+    2026-09-03: 414,357 rows, and the group key is substr(filing_date, 1, 7),
+    an expression no index can serve, so it is a full scan every time. It blew
+    the read layer's 20s deadline locally and returned 500; production only
+    survived on the ISR cache, which is exactly the shape of the getReviewStages
+    incident above - a page that is fine until the first cold render after a
+    deploy, and then 5xxs at Google.
+
+    It is also a bill. Turso charges rows READ, and this one query read 414,357
+    of them per render on eleven pages.
+
+    WHY NOT FOLD live_census, WHICH ALREADY HOLDS THIS MATRIX. Because it does
+    not hold the same one: live_census counts every row, and every reader in
+    rfi.ts excludes DOL's own test-fixture employer. That is 10 rows in 414,357,
+    small enough to look right and wrong enough to make two surfaces disagree
+    about one cohort, which is the defect this codebase keeps writing rules
+    about. A doc of its own costs a few hundred bytes and cannot drift.
+
+    THE WHOLE MATRIX, NOT THE WANTED STATUSES. `filed` has to count the whole
+    month including decided cases, so it is its own denominator; the reader
+    filters to the statuses it wants. Storing a filtered matrix would make the
+    doc unusable for the stage pages, which each ask for a different one.
+
+    THE DOC MUST RECONCILE OR IT MUST NOT BE WRITTEN, the same rule the two
+    writers above follow: sum(n) must equal a separately counted total over the
+    same predicate. A partial matrix folds into smaller plausible numbers and
+    nothing downstream can tell.
+    """
+    rows = _rows(db, """
+        SELECT substr(filing_date, 1, 7) AS month,
+               current_status            AS status,
+               COUNT(*)                  AS n
+          FROM perm_case_status
+         WHERE filing_date IS NOT NULL AND filing_date <> ''
+           AND employer_name IS NOT ?
+         GROUP BY month, status
+         ORDER BY month""", [TEST_FIXTURE_EMPLOYER])
+
+    total = int(db.scalar(
+        "SELECT COUNT(*) FROM perm_case_status "
+        "WHERE filing_date IS NOT NULL AND filing_date <> '' "
+        "AND employer_name IS NOT ?", [TEST_FIXTURE_EMPLOYER]) or 0)
+
+    matrix = [{"month": str(m), "status": str(st), "n": int(n)}
+              for m, st, n in rows]
+    summed = sum(r["n"] for r in matrix)
+    if summed != total:
+        # The two queries saw different tables (a concurrent write landed
+        # between them). Skip; the previous doc stays live and the next run
+        # reconciles.
+        log(f"NOT writing stage_cohorts: matrix {summed:,} != total {total:,}")
+        return
+
+    doc = {"asOf": time.strftime("%Y-%m-%d"), "source": SOURCE,
+           "total": total, "rows": matrix}
+    payload = json.dumps(doc, separators=(",", ":"))
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
+        key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
+    db.execute(
+        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
+        "VALUES (?, ?, ?)",
+        ["stage_cohorts", payload, int(time.time() * 1000)])
+    got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?",
+                    ["stage_cohorts"])
+    if int(got or 0) != len(payload):
+        raise SystemExit("FATAL: stage_cohorts read-back does not match write")
+    # Its own freshness row, for the same reason review_stages has one: the
+    # guard above can skip the write while the sweep stamps itself green, and
+    # without this a doc that quietly stopped being written would age past the
+    # reader's cutoff and put all eleven pages back on the full scan.
+    stamp_freshness(db, "stage-cohorts", source=SOURCE, cadence="Daily",
+                    note=f"{len(matrix)} month/status pairs, {total:,} cases",
+                    max_age_days=3)
+    log(f"wrote     stage_cohorts ({len(matrix)} pairs, {total:,} cases, "
+        f"{len(payload):,} bytes)")
+
+
 def write_live_census(db) -> None:
     """Precompute the mirror census into perm_docs['live_census'].
 
@@ -580,6 +661,7 @@ def main() -> int:
         if found:
             write_live_census(db)
             write_review_stages(db)
+            write_stage_cohorts(db)
             write_decided_percentiles(db)
             log("census refreshed")
         return 0
@@ -722,6 +804,7 @@ def main() -> int:
             run_discovery(db)
         write_live_census(db)
         write_review_stages(db)
+        write_stage_cohorts(db)
         write_decided_percentiles(db)
     else:
         log("NOT stamping freshness: this run checked nothing")

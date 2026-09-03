@@ -572,8 +572,108 @@ export interface StageCohort {
  * Months with no review-stage case at all are dropped: the chart's subject is
  * the stages, and 30 empty columns bury the five that carry the shape.
  */
-export async function getStageCohorts(statuses: string[]): Promise<StageCohort[]> {
-  if (statuses.length === 0) return [];
+/** One cell of the filing-month x status matrix, as the doc stores it. */
+export interface StageCohortCell {
+  month: string;
+  status: string;
+  n: number;
+}
+
+/**
+ * A doc older than this is treated as absent.
+ *
+ * Eight days, matching REVIEW_STAGES_MAX_AGE_MS, and for the same reason: the
+ * writer's freshness row fires at three, so an alert lands well before the
+ * reader gives up and puts eleven pages back on the full scan.
+ */
+const STAGE_COHORTS_MAX_AGE_MS = 8 * 24 * 60 * 60 * 1000;
+
+/**
+ * Fold the matrix into one row per filing month.
+ *
+ * ONE FOLD, TWO CALLERS, DELIBERATELY. The doc path and the live fallback run
+ * this same function over the same shaped cells, so the published page cannot
+ * disagree with what it renders when the doc is missing. That is the rule
+ * `parseReviewStagesDoc` follows one screen up, and the reason it exists is
+ * that a fallback which quietly computes something slightly different is
+ * indistinguishable from a working one.
+ *
+ * `filed` counts EVERY status in the month, including decided cases, because
+ * it is the denominator the stage counts are read against. Only `stages` is
+ * filtered to what the caller asked for, which is why the matrix has to be
+ * stored whole.
+ *
+ * Months with nothing at any wanted stage are dropped: the chart's subject is
+ * the stages, and thirty empty columns bury the five that carry the shape.
+ */
+export function foldStageCohorts(
+  cells: readonly StageCohortCell[],
+  statuses: readonly string[],
+): StageCohort[] {
+  const wanted = new Set(statuses);
+  const byMonth = new Map<string, StageCohort>();
+  for (const c of cells) {
+    let row = byMonth.get(c.month);
+    if (!row) {
+      row = { month: c.month, filed: 0, stages: {} };
+      byMonth.set(c.month, row);
+    }
+    row.filed += c.n;
+    if (wanted.has(c.status)) row.stages[c.status] = (row.stages[c.status] ?? 0) + c.n;
+  }
+  return [...byMonth.values()]
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .filter((m) => Object.values(m.stages).some((n) => n > 0));
+}
+
+function isCohortCell(v: unknown): v is StageCohortCell {
+  if (typeof v !== "object" || v === null) return false;
+  const c = v as Record<string, unknown>;
+  return (
+    typeof c.month === "string" &&
+    typeof c.status === "string" &&
+    typeof c.n === "number" &&
+    Number.isFinite(c.n)
+  );
+}
+
+/**
+ * The stored matrix, or null when it cannot be trusted.
+ *
+ * IT MUST RECONCILE. `total` is counted by a separate query in the writer, so
+ * requiring it to equal the summed cells catches a doc assembled from two
+ * different views of the table. Half a matrix folds into smaller plausible
+ * numbers on every one of the eleven pages and nothing downstream can tell.
+ */
+export function parseStageCohortsDoc(
+  json: string,
+  computedAt: number,
+  now: number,
+): StageCohortCell[] | null {
+  if (now - computedAt > STAGE_COHORTS_MAX_AGE_MS) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const d = parsed as Record<string, unknown>;
+  if (
+    typeof d.asOf !== "string" ||
+    typeof d.total !== "number" ||
+    !Array.isArray(d.rows) ||
+    !d.rows.every(isCohortCell)
+  ) {
+    return null;
+  }
+  const cells = d.rows as StageCohortCell[];
+  if (cells.reduce((a, c) => a + c.n, 0) !== d.total) return null;
+  return cells;
+}
+
+/** The full scan, kept as the fallback. See getStageCohorts. */
+async function getStageCohortsLive(statuses: string[]): Promise<StageCohort[]> {
   // Every status, then filter in JS. `filed` has to count the whole month
   // including decided cases, so the query cannot filter to the wanted
   // statuses without losing its own denominator.
@@ -584,23 +684,50 @@ export async function getStageCohorts(statuses: string[]): Promise<StageCohort[]
       GROUP BY month, status ORDER BY month`,
     [TEST_FIXTURE_EMPLOYER],
   );
-  const wanted = new Set(statuses);
-  const byMonth = new Map<string, StageCohort>();
-  for (const x of r) {
-    const month = String(x.month);
-    const n = Number(x.n) || 0;
-    let row = byMonth.get(month);
-    if (!row) {
-      row = { month, filed: 0, stages: {} };
-      byMonth.set(month, row);
-    }
-    row.filed += n;
-    const status = String(x.status);
-    if (wanted.has(status)) row.stages[status] = (row.stages[status] ?? 0) + n;
-  }
-  return [...byMonth.values()].filter((m) =>
-    Object.values(m.stages).some((n) => n > 0),
+  return foldStageCohorts(
+    r.map((x) => ({
+      month: String(x.month),
+      status: String(x.status),
+      n: Number(x.n) || 0,
+    })),
+    statuses,
   );
+}
+
+/**
+ * Cases by filing month and review stage.
+ *
+ * READS A PRECOMPUTED DOC, and falls back to computing it live.
+ *
+ * The live query groups on `substr(filing_date, 1, 7)`, an expression no index
+ * can serve, so it is a full scan of perm_case_status: measured 2026-09-03 at
+ * **414,357 rows on every cold render**, across the eleven pages that call it.
+ * It blew this layer's 20s deadline and returned 500; production survived only
+ * on the ISR cache, which is the same shape as the getReviewStages incident -
+ * fine until the first cold render after a deploy, then 5xx at Google. It is a
+ * bill as well as an outage: Turso charges rows read.
+ *
+ * The fallback is kept rather than deleted because a missing doc must degrade
+ * to a slow page, never a blank one, and it is what runs the first time this
+ * ships, before the next sweep writes the doc.
+ */
+export async function getStageCohorts(statuses: string[]): Promise<StageCohort[]> {
+  if (statuses.length === 0) return [];
+  const doc = await one<{ json: string; computed_at: number }>(
+    "SELECT json, computed_at FROM perm_docs WHERE key = 'stage_cohorts'",
+  );
+  if (doc?.json) {
+    const cells = parseStageCohortsDoc(
+      String(doc.json),
+      Number(doc.computed_at) || 0,
+      Date.now(),
+    );
+    if (cells) return foldStageCohorts(cells, statuses);
+    // Named, because a silent fall-through here is a full-table scan wearing
+    // an ordinary slow render's clothes.
+    console.warn("[rfi] stage_cohorts doc rejected; computing live");
+  }
+  return getStageCohortsLive(statuses);
 }
 
 // ---------------------------------------------------------------------------
