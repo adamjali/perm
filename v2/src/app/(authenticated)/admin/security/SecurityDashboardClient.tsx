@@ -249,7 +249,7 @@ function EventsTab() {
                 >
                   <td className="whitespace-nowrap px-3 py-2 text-sm text-muted-foreground">
                     {new Date(e.at).toLocaleString()}
-                  </td>
+                  {" "}</td>
                   <td className="px-3 py-2">
                     <span
                       className={cn(
@@ -261,14 +261,14 @@ function EventsTab() {
                     >
                       {e.kind}
                     </span>
-                  </td>
-                  <td className="max-w-[220px] truncate px-3 py-2 text-sm">{e.endpoint}</td>
+                  {" "}</td>
+                  <td className="max-w-[220px] truncate px-3 py-2 text-sm">{e.endpoint}{" "}</td>
                   <td className="max-w-[200px] truncate px-3 py-2 text-sm">
                     {actorFor(e)}
-                  </td>
+                  {" "}</td>
                   <td className="max-w-[280px] truncate px-3 py-2 text-sm text-muted-foreground">
                     {e.reason}
-                  </td>
+                  {" "}</td>
                 </tr>
               ))}
             </tbody>
@@ -392,10 +392,10 @@ function BlockedIpsTab() {
               <tbody className="mono">
                 {blocks.map((b) => (
                   <tr key={b._id} className="border-b border-border">
-                    <td className="px-3 py-2 text-sm">{b.ip}</td>
-                    <td className="px-3 py-2 text-sm text-muted-foreground">{b.reason}</td>
-                    <td className="px-3 py-2 text-sm">{new Date(b.addedAt).toLocaleString()}</td>
-                    <td className="px-3 py-2 text-sm">{new Date(b.expiresAt).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-sm">{b.ip}{" "}</td>
+                    <td className="px-3 py-2 text-sm text-muted-foreground">{b.reason}{" "}</td>
+                    <td className="px-3 py-2 text-sm">{new Date(b.addedAt).toLocaleString()}{" "}</td>
+                    <td className="px-3 py-2 text-sm">{new Date(b.expiresAt).toLocaleString()}{" "}</td>
                     <td className="px-3 py-2 text-sm">
                       <span
                         className={cn(
@@ -407,7 +407,7 @@ function BlockedIpsTab() {
                       >
                         {b.manualOverride ? "manual" : "auto"}
                       </span>
-                    </td>
+                    {" "}</td>
                     <td className="px-3 py-2 text-right">
                       <Button
                         size="sm"
@@ -421,7 +421,7 @@ function BlockedIpsTab() {
                           "UNBLOCK"
                         )}
                       </Button>
-                    </td>
+                    {" "}</td>
                   </tr>
                 ))}
               </tbody>
@@ -489,16 +489,16 @@ function FlaggedUsersTab() {
           <tbody className="mono">
             {flagged.map((u) => (
               <tr key={u.profileId} className="border-b border-border bg-destructive/5">
-                <td className="px-3 py-2 text-sm">{u.email ?? "-"}</td>
+                <td className="px-3 py-2 text-sm">{u.email ?? "-"}{" "}</td>
                 <td className="px-3 py-2 text-sm">
                   {u.suspendedAt ? new Date(u.suspendedAt).toLocaleString() : "-"}
-                </td>
+                {" "}</td>
                 <td className="px-3 py-2 text-sm">
                   {u.suspendedUntil ? new Date(u.suspendedUntil).toLocaleString() : "-"}
-                </td>
+                {" "}</td>
                 <td className="px-3 py-2 text-sm text-muted-foreground">
                   {u.suspendedReason ?? "-"}
-                </td>
+                {" "}</td>
                 <td className="px-3 py-2 text-right">
                   <Button
                     size="sm"
@@ -512,7 +512,7 @@ function FlaggedUsersTab() {
                       "UNSUSPEND"
                     )}
                   </Button>
-                </td>
+                {" "}</td>
               </tr>
             ))}
           </tbody>
@@ -551,8 +551,8 @@ function SettingsTab() {
           <tbody className="mono">
             {rows.map(([k, v]) => (
               <tr key={k} className="border-b border-border last:border-0">
-                <td className="px-3 py-2 text-sm text-muted-foreground">{k}</td>
-                <td className="px-3 py-2 text-sm font-bold">{v}</td>
+                <td className="px-3 py-2 text-sm text-muted-foreground">{k}{" "}</td>
+                <td className="px-3 py-2 text-sm font-bold">{v}{" "}</td>
               </tr>
             ))}
           </tbody>

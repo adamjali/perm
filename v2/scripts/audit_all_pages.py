@@ -16,6 +16,7 @@ import html as html_mod
 import re
 import os
 import sys
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_sitemap_sample import describe_sampling, sample_by_shape  # noqa: E402
@@ -56,15 +57,28 @@ DATA_PAGES = {
 EMPTY_STATE = "aggregates land with the quarterly"
 
 
-def get(url: str, timeout: int = 30) -> tuple[int, str]:
-    try:
-        req = urllib.request.Request(url, headers=UA)
-        with urllib.request.urlopen(req, timeout=timeout) as r:
-            return r.status, r.read().decode("utf-8", "replace")
-    except urllib.error.HTTPError as e:
-        return e.code, ""
-    except Exception as e:  # noqa: BLE001
-        return 0, str(e)
+def get(url: str, timeout: int = 30, tries: int = 2) -> tuple[int, str]:
+    """Fetch a URL, retrying once on a TRANSPORT failure only.
+
+    A status 0 means the connection never completed, and this sweep runs
+    concurrently against a live site, so a blip reads as a dead page: three
+    URLs reported HTTP 0 on one run and all three answered 200 seconds later.
+    An HTTPError is a real answer from the server and is never retried, or a
+    genuine 404 would cost a second request and still be reported.
+    """
+    last = (0, "no attempt")
+    for attempt in range(tries):
+        try:
+            req = urllib.request.Request(url, headers=UA)
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return r.status, r.read().decode("utf-8", "replace")
+        except urllib.error.HTTPError as e:
+            return e.code, ""
+        except Exception as e:  # noqa: BLE001
+            last = (0, str(e))
+            if attempt + 1 < tries:
+                time.sleep(1.5)
+    return last
 
 
 def text_of(html: str) -> str:

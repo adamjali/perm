@@ -199,7 +199,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
         )}
       >
         {children}
-      </td>
+      {" "}</td>
     ),
 
     // Blockquotes

@@ -251,7 +251,7 @@ export function StageCohortsTable({
         <tbody>
           {cohorts.map((c, i) => (
             <tr key={c.month} className="border-b border-border/25">
-              <td className="py-1.5 pr-3 font-mono tabular-nums">{c.month} </td>
+              <td className="py-1.5 pr-3 font-mono tabular-nums">{c.month} {" "}</td>
               <td className="py-1.5 pr-3 text-right font-mono tabular-nums text-muted-foreground">
                 {c.filed.toLocaleString()}{" "}
               </td>

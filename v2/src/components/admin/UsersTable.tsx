@@ -355,7 +355,7 @@ export function UsersTable({
                         ) : (
                           col.render(user)
                         )}
-                      </td>
+                      {" "}</td>
                     ))}
                     <td className="p-3 sticky right-0 z-20 bg-card border-l-2 border-border">
                       <div className="flex items-center justify-end gap-1">
@@ -377,7 +377,7 @@ export function UsersTable({
                           <Trash2 className="size-4" />
                         </Button>
                       </div>
-                    </td>
+                    {" "}</td>
                   </tr>
                 ))}
               </tbody>

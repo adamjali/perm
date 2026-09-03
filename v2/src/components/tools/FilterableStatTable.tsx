@@ -516,7 +516,7 @@ export function FilterableStatTable<T>({
                         // PUBLISHED corpus; the block below holds the rest.
                         `Nothing in the published files matches that. There is more below.`
                       : `Nothing matches that. Clear the search and the filters to see the full list.`}
-                </td>
+                {" "}</td>
               </tr>
             ) : null}
           </tbody>

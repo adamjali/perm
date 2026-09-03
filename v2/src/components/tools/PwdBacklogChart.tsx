@@ -165,7 +165,7 @@ function BacklogTable({
               {" "}</td>
               <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
                 {fmtInt(cumulative.get(row.receiptMonth) ?? 0)}
-              </td>
+              {" "}</td>
             </tr>
           ))}
         </tbody>

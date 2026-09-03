@@ -1077,7 +1077,7 @@ function CaseTable({
       <tbody className="bg-card">
         {rows.map((r) => (
           <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
-            <td className="whitespace-nowrap px-3 py-3 font-mono text-base">{r.caseNumber}</td>
+            <td className="whitespace-nowrap px-3 py-3 font-mono text-base">{r.caseNumber}{" "}</td>
             <td className="whitespace-nowrap px-3 py-3">
               <span
                 className={
@@ -1091,7 +1091,7 @@ function CaseTable({
               >
                 {STATUS_LABEL[r.status]}
               </span>
-            </td>
+            {" "}</td>
             <td className="px-3 py-3">
               {r.employerSlug ? (
                 <Link
@@ -1121,8 +1121,8 @@ function CaseTable({
                 </>
               ) : null}
             </td>
-            <td className="hidden px-3 py-3 sm:table-cell">{r.jobTitle || "—"}</td>
-            <td className="whitespace-nowrap px-3 py-3">{r.state || "—"}</td>
+            <td className="hidden px-3 py-3 sm:table-cell">{r.jobTitle || "—"}{" "}</td>
+            <td className="whitespace-nowrap px-3 py-3">{r.state || "—"}{" "}</td>
             <td className="hidden px-3 py-3 sm:table-cell">
               {r.socTitle || r.socCode || "—"}
               {r.socCode ? (
@@ -1134,16 +1134,16 @@ function CaseTable({
             </td>
             <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">
               {fmtWage(r.wage)}
-            </td>
+            {" "}</td>
             <td className="hidden whitespace-nowrap px-3 py-3 text-right font-mono text-base tabular-nums sm:table-cell">
               {r.receivedDate}
-            </td>
+            {" "}</td>
             <td className="whitespace-nowrap px-3 py-3 text-right font-mono text-base tabular-nums">
               {r.decisionDate}
-            </td>
+            {" "}</td>
             <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">
               {fmtInt(r.days)}
-            </td>
+            {" "}</td>
           </tr>
         ))}
       </tbody>

@@ -222,14 +222,14 @@ export function LiveCaseBrowser({
                   <tr>
                     <td colSpan={6} className="px-3 py-6 text-foreground/70">
                       Loading the live list…
-                    </td>
+                    {" "}</td>
                   </tr>
                 ) : null}
                 {page && page.rows.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="px-3 py-6 text-foreground/70">
                       Nothing live matches that filter.
-                    </td>
+                    {" "}</td>
                   </tr>
                 ) : null}
                 {page?.rows.map((r) => (
@@ -241,7 +241,7 @@ export function LiveCaseBrowser({
                       >
                         {r.caseNumber}
                       </Link>
-                    </td>
+                    {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3">
                       <span
                         className={
@@ -251,7 +251,7 @@ export function LiveCaseBrowser({
                       >
                         {r.status ?? "unknown"}
                       </span>
-                    </td>
+                    {" "}</td>
                     <td className="px-3 py-3">
                       {r.employerSlug ? (
                         <Link
@@ -263,14 +263,14 @@ export function LiveCaseBrowser({
                       ) : (
                         <span className="font-bold">{r.employerName}</span>
                       )}
-                    </td>
-                    <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>
+                    {" "}</td>
+                    <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}{" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
                       {r.filingDate ?? ""}
-                    </td>
+                    {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
                       {r.decidedSeen ?? ""}
-                    </td>
+                    {" "}</td>
                   </tr>
                 ))}
               </tbody>

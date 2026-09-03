@@ -97,37 +97,46 @@ export function ChangeTable({
               key={`${c.program}:${c.caseNumber}`}
               className="border-t-2 border-border/30 align-top"
             >
+              {/* A SEPARATOR INSIDE EVERY CELL. JSX puts nothing between
+                  sibling cells, so a row reached extractors as one run:
+                  "G-100-25269-338692PERMAbercrombie & Fitch...2025-09-26DENIED".
+                  270 pairs on this page in the rendered sweep while the
+                  source gate stayed green, because it cannot see .map()
+                  output. It goes INSIDE the cell, before the closing tag: a
+                  whitespace text node whose parent is <tr> is invalid HTML and
+                  React warns it breaks hydration, which
+                  no-whitespace-in-table-rows.test.ts pins. */}
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                 <Link
                   href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
                   className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
                 >
                   {c.caseNumber}
-                </Link>
+                </Link>{" "}
               </td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
-                {PROGRAM_LABEL[c.program]}
+                {PROGRAM_LABEL[c.program]}{" "}
               </td>
               <td className="px-3 py-3 font-bold">
                 {c.employerName ?? (
                   <span className="font-normal text-foreground/70">
                     Not named in the live record yet
                   </span>
-                )}
+                )}{" "}
               </td>
-              <td className="px-3 py-3 text-foreground/80">{c.jobTitle ?? ""}</td>
+              <td className="px-3 py-3 text-foreground/80">{c.jobTitle ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
-                {c.filingDate ?? ""}
+                {c.filingDate ?? ""}{" "}
               </td>
               <td className="whitespace-nowrap px-3 py-3 text-sm text-foreground/70">
-                {c.fromStatus}
+                {c.fromStatus}{" "}
               </td>
               <td
                 className={
                   "whitespace-nowrap px-3 py-3 text-sm font-bold " + toneOf(c.toStatus)
                 }
               >
-                {c.toStatus}
+                {c.toStatus}{" "}
               </td>
             </tr>
           ))}

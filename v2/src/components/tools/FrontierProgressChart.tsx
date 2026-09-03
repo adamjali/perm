@@ -314,7 +314,7 @@ function FrontierTable({
                 {" "}</td>
                 <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
                   {p.decisions.toLocaleString("en-US")}
-                </td>
+                {" "}</td>
               </tr>
             );
           })}

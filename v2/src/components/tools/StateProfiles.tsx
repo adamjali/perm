@@ -166,7 +166,7 @@ function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
               <td className="p-3 font-bold">{stateName(b.state)}{" "}</td>
               <td className="p-3">{b.label}{" "}</td>
               <td className="p-3 text-right tabular-nums">{int(b.count)}{" "}</td>
-              <td className="p-3 text-right font-bold tabular-nums">{pct(b.share)}</td>
+              <td className="p-3 text-right font-bold tabular-nums">{pct(b.share)}{" "}</td>
             </tr>
           ))}
         </tbody>

@@ -174,7 +174,7 @@ export function DenialReach({
               <td className="p-3 text-right tabular-nums">{int(c.decided)}{" "}</td>
               <td className="p-3 text-right tabular-nums">{int(c.denied)}{" "}</td>
               <td className="p-3 text-right tabular-nums">{pct(c.reach)}{" "}</td>
-              <td className="p-3 text-right font-bold tabular-nums">{pct(c.share)}</td>
+              <td className="p-3 text-right font-bold tabular-nums">{pct(c.share)}{" "}</td>
             </tr>
           ))}
         </tbody>

@@ -353,7 +353,7 @@ function QueueHistoryTable({
                 {" "}</td>
                 <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
                   {g === null ? "—" : g}
-                </td>
+                {" "}</td>
               </tr>
             );
           })}
@@ -627,7 +627,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                         {windowTotal > 0
                           ? `${((p.decisions / windowTotal) * 100).toFixed(1)}%`
                           : "—"}
-                      </td>
+                      {" "}</td>
                     </tr>
                   );
                 })}

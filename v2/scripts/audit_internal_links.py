@@ -173,9 +173,19 @@ def main() -> int:
                 # points at exactly that firm; an article's title contains the
                 # topic it is about. Both are the link working, not failing.
                 # This one rule removed every entity and article false positive.
-                if words(label) and words(label) <= (words(h1) | words(label) & words(h1)) \
-                        and len(words(label) & words(h1)) >= max(1, len(words(label)) - 1):
-                    break
+                # ...and it holds in BOTH directions. "No number? Processing
+                # time calculator" pointing at the page titled "PERM
+                # processing time calculator" is a correct link with a lead-in
+                # clause, not a mismatch; the title is a subset of the label
+                # rather than the other way round. Checking only one direction
+                # flagged it. The looser rule still fires on the real defect
+                # (label "Processing times" -> a page titled "PERM
+                # calculators" shares no words at all), which is the probe.
+                lw, hw = words(label), words(h1)
+                if lw and hw:
+                    small, big = (lw, hw) if len(lw) <= len(hw) else (hw, lw)
+                    if len(small & big) >= max(1, len(small) - 1):
+                        break
                 suspect.append((t, label, h1[:60], sorted(where[t])[:1], phrase))
                 break
 

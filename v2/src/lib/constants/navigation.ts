@@ -20,7 +20,6 @@ export interface NavLink {
    * Name). Speech-input users say what they can see, so an accessible name
    * that drops or rewords the visible text makes the control unspeakable.
    */
-  ariaLabel?: string;
 }
 
 /**
@@ -114,21 +113,18 @@ export const HOME_SECTION_LINKS = [
 export const PUBLIC_NAV_LINKS = [
   { href: "/perm-case-status", label: "Track my case" },
   // "Processing times", verbatim: the phrase carries ~6.7K quarterly Bing
-  // impressions against zero for "timelines"/"predictor" - the nav should
-  // say what people search. It lands on the calculator hub, whose first
-  // card is the PERM processing time calculator.
+  // impressions against zero for "timelines"/"predictor", so the nav says what
+  // people search.
   //
-  // `ariaLabel` because the FOOTER also has a "Processing times" link, and it
-  // points at /perm-processing-times - the data page, which is a different
-  // and equally reasonable destination for that phrase. Two links, one
-  // visible name, two targets. The visible text stays exactly as-is for the
-  // reason above; only the accessible name is widened, and it still contains
-  // "Processing times" verbatim so speech input keeps working.
-  {
-    href: "/calculators",
-    label: "Processing times",
-    ariaLabel: "Processing times calculators",
-  },
+  // It points at /perm-processing-times, the page that bears the name and
+  // answers the question the phrase asks, with DOL's own published figure. It
+  // used to point at /calculators, which was wrong twice: a nav label earns no
+  // search impressions, so the SEO argument never applied to the TARGET; and
+  // the footer already used this exact visible text for
+  // /perm-processing-times, leaving two links with one name and two
+  // destinations. Both agree now. The calculator hub keeps its links from the
+  // homepage CTA and /tools, and this page links on to the timeline calculator.
+  { href: "/perm-processing-times", label: "Processing times" },
   { href: "/tools", label: "Data" },
   { href: "/for-attorneys", label: "For attorneys" },
 ] as const satisfies readonly NavLink[];

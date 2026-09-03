@@ -136,23 +136,23 @@ function Rows({
                 >
                   {r.caseNumber}
                 </Link>
-              </td>
+              {" "}</td>
               <td className="whitespace-nowrap px-3 py-3">
                 <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chip(r.status, r.isFinal)}>
                   {r.status}
                 </span>
-              </td>
-              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}</td>
-              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>
+              {" "}</td>
+              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}{" "}</td>
               {withWage ? (
                 <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
                   {formatWage(wages?.get(r.caseNumber)?.wage ?? null, wages?.get(r.caseNumber)?.wageUnit ?? null) ?? ""}
-                </td>
+                {" "}</td>
               ) : null}
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.filingDate ?? ""}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.filingDate ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
                 {r.lastCheckedAt?.slice(0, 10) ?? ""}
-              </td>
+              {" "}</td>
             </tr>
           ))}
         </tbody>
@@ -203,17 +203,17 @@ function DisclosedRows({
                 >
                   {r.caseNumber}
                 </Link>
-              </td>
+              {" "}</td>
               <td className="whitespace-nowrap px-3 py-3">
                 <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chip(r.status, true)}>
                   {r.status}
                 </span>
-              </td>
-              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}</td>
-              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}</td>
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{formatWage(r.wage, r.wageUnit) ?? ""}</td>
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.receivedDate ?? ""}</td>
-              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">{r.decisionDate ?? ""}</td>
+              {" "}</td>
+              <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}{" "}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{formatWage(r.wage, r.wageUnit) ?? ""}{" "}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.receivedDate ?? ""}{" "}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">{r.decisionDate ?? ""}{" "}</td>
             </tr>
           ))}
         </tbody>

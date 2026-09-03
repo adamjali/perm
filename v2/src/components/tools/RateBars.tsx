@@ -254,7 +254,7 @@ export function RateTable({
                 <td className="px-3 py-2.5 text-right tabular-nums">{fmtInt(r.decided)}{" "}</td>
                 <td className="hidden px-3 py-2.5 text-right sm:table-cell">
                   <BaselineMultiple rate={r.rate} baseline={baseline} />
-                </td>
+                {" "}</td>
               </tr>
             );
           })}

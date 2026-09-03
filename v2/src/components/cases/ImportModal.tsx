@@ -735,7 +735,7 @@ export function ImportModal({
                                     {caseData?.employerName || (
                                       <span className="text-muted-foreground italic">-</span>
                                     )}
-                                  </td>
+                                  {" "}</td>
                                   <td
                                     className="px-3 py-3 text-sm truncate max-w-[150px]"
                                     title={caseData?.beneficiaryIdentifier}
@@ -752,7 +752,7 @@ export function ImportModal({
                                     ) : (
                                       <span className="text-muted-foreground italic">-</span>
                                     )}
-                                  </td>
+                                  {" "}</td>
                                   <td className="px-3 py-3 text-sm">
                                     {caseData?.caseStatus ? (
                                       <div className="flex flex-wrap items-center gap-1">
@@ -764,7 +764,7 @@ export function ImportModal({
                                     ) : (
                                       <span className="text-muted-foreground italic">-</span>
                                     )}
-                                  </td>
+                                  {" "}</td>
                                   <td className="px-3 py-3 text-sm">
                                     <div className="flex items-center justify-between gap-2">
                                       <span>
@@ -782,7 +782,7 @@ export function ImportModal({
                                         <PencilIcon className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0" />
                                       )}
                                     </div>
-                                  </td>
+                                  {" "}</td>
                                 </tr>
                               );
                             });
@@ -1033,13 +1033,13 @@ export function ImportModal({
                       >
                         <td className="px-3 py-3 text-sm truncate max-w-[150px]" title={dup.employerName}>
                           {dup.employerName}
-                        </td>
+                        {" "}</td>
                         <td
                           className="px-3 py-3 text-sm truncate max-w-[150px]"
                           title={dup.beneficiaryIdentifier}
                         >
                           {dup.beneficiaryIdentifier}
-                        </td>
+                        {" "}</td>
                         <td className="px-3 py-3">
                           <div className="flex items-center gap-2">
                             <Button
@@ -1063,7 +1063,7 @@ export function ImportModal({
                               Replace
                             </Button>
                           </div>
-                        </td>
+                        {" "}</td>
                       </tr>
                     ))}
                   </tbody>

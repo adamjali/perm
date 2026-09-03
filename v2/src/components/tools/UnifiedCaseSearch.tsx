@@ -859,13 +859,13 @@ export function UnifiedCaseSearch({
                       >
                         {r.caseNumber}
                       </Link>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm">{PROGRAM_LABEL[r.program]}</td>
+                    {" "}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm">{PROGRAM_LABEL[r.program]}{" "}</td>
                     <td className="px-3 py-3">
                       <span className={"inline-block border-2 border-border px-2 py-1 text-sm font-bold " + statusTone(r.status, r.isFinal)}>
                         {r.status || "—"}
                       </span>
-                    </td>
+                    {" "}</td>
                     <td className="px-3 py-3 text-sm">
                       {r.employerSlug && r.program === "perm" ? (
                         <Link
@@ -877,10 +877,10 @@ export function UnifiedCaseSearch({
                       ) : (
                         (r.employerName ?? "—")
                       )}
-                    </td>
-                    <td className="px-3 py-3 text-sm">{r.jobTitle ?? "—"}</td>
-                    <td className="px-3 py-3 text-sm">{r.socTitle ?? "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm">{r.state ?? "—"}</td>
+                    {" "}</td>
+                    <td className="px-3 py-3 text-sm">{r.jobTitle ?? "—"}{" "}</td>
+                    <td className="px-3 py-3 text-sm">{r.socTitle ?? "—"}{" "}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm">{r.state ?? "—"}{" "}</td>
                     <td className="px-3 py-3 text-sm">
                       {r.firmSlug && r.firmName ? (
                         <Link
@@ -892,13 +892,13 @@ export function UnifiedCaseSearch({
                       ) : (
                         (r.firmName ?? "—")
                       )}
-                    </td>
+                    {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">
                       {r.wage === null ? "—" : formatWage(r.wage, r.wageUnit)}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.filedOn ?? "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.decidedOn ?? "—"}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.days ?? "—"}</td>
+                    {" "}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.filedOn ?? "—"}{" "}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.decidedOn ?? "—"}{" "}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.days ?? "—"}{" "}</td>
                   </tr>
                 ))}
               </tbody>

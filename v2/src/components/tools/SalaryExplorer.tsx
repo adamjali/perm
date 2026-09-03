@@ -365,15 +365,15 @@ export function SalaryExplorer({
                           <th scope="row" className="px-3 py-2 font-bold">
                             {r.state}
                           </th>
-                          <td className="px-3 py-2 text-right tabular-nums">{int(r.n)}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{int(r.n)}{" "}</td>
                           <td className="px-3 py-2 text-right tabular-nums">
                             {r.n >= 100 ? usd(r.p5) : "n/a"}
-                          </td>
-                          <td className="px-3 py-2 text-right font-bold tabular-nums">{usd(r.p50)}</td>
-                          <td className="px-3 py-2 text-right tabular-nums">{usd(r.avg)}</td>
+                          {" "}</td>
+                          <td className="px-3 py-2 text-right font-bold tabular-nums">{usd(r.p50)}{" "}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{usd(r.avg)}{" "}</td>
                           <td className="px-3 py-2 text-right tabular-nums">
                             {r.n >= 100 ? usd(r.p95) : "n/a"}
-                          </td>
+                          {" "}</td>
                         </tr>
                       ))}
                     </tbody>

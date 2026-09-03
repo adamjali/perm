@@ -15,8 +15,8 @@ import { STAGE_META, prettyStatus, type StageGroup } from "./stages";
  * real `<th scope="row">` cells so the structure survives being read aloud.
  *
  * EVERY CELL ENDS WITH A SPACE, AND THE SPACE IS INSIDE THE CELL. A table is
- * the worst case for JSX whitespace stripping: `<td>NORD Issued</td><td>110
- * </td>` reaches an extractor as `NORD Issued110`, which the rendered page
+ * the worst case for JSX whitespace stripping: `<td>NORD Issued{" "}</td><td>110
+ * {" "}</td>` reaches an extractor as `NORD Issued110`, which the rendered page
  * confirmed before these were added, and cell padding hides it completely in
  * a browser.
  *
