@@ -27,6 +27,16 @@ vi.mock("@/lib/usePublicQuery", () => ({ usePublicQuery }));
 
 const { ChangeFeedBrowser } = await import("../ChangeFeedBrowser");
 
+/**
+ * The two records as production holds them. The gap between 2026-06-30 and
+ * 2026-08-26 is genuine, so a fixture using round numbers would not exercise
+ * the case the page exists to describe.
+ */
+const WINDOWS = {
+  decided: { from: "2023-10-01", to: "2026-06-30" },
+  observed: { from: "2026-08-26", to: "2026-09-03" },
+};
+
 function change(over: Partial<CaseChange> = {}): CaseChange {
   return {
     caseNumber: "G-100-25308-370619",
@@ -110,23 +120,44 @@ beforeEach(() => {
 });
 
 describe("filters DOL's data cannot support", () => {
-  it("renders each one disabled, with the reason in text a reader can see", () => {
+  it("explains them on a date only the live check covers, and opens itself", () => {
+    // 2026-09-03 is past DOL's last published file, so on THIS date the four
+    // fields genuinely do not exist and the explanation is what the reader
+    // needs. The panel opens itself for exactly this case.
     loaded();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
 
-    for (const label of ["Wage", "Law firm", "Worksite state", "Occupation (SOC)"]) {
-      const control = screen.getByLabelText(label) as HTMLSelectElement;
-      expect([label, control.disabled]).toEqual([label, true]);
-      // The reason is bound to the control, not floated near it, so it reaches
-      // a screen reader as well as an eye.
-      const why = document.getElementById(control.getAttribute("aria-describedby")!);
-      expect(why?.textContent ?? "").toMatch(/decided|publication|published record/);
+    const panel = document.querySelector("details");
+    expect(panel?.open).toBe(true);
+    for (const why of [/no wage from the live case lookup/i, /attorney or agent only at publication/i,
+                       /worksite is on the published record/i, /SOC code is on the published record/i]) {
+      expect(screen.getByText(why)).toBeInTheDocument();
     }
+  });
+
+  it("says they WORK on a date inside the published files, and stays shut", () => {
+    // THE OLD BEHAVIOUR WAS A BLANKET RULE AND IT WAS WRONG. These four exist
+    // on every published case, so on a date DOL has published they are fully
+    // filterable. Disabling them regardless taught the reader they can never
+    // be used, which is what made a two-year-old date look unanswerable.
+    loaded();
+    render(
+      <ChangeFeedBrowser
+        calendar={CALENDAR}
+        initialDay={{ ...day(), date: "2025-03-12" }}
+        windows={WINDOWS}
+      />,
+    );
+
+    const panel = document.querySelector("details");
+    expect(panel?.open).toBe(false);
+    expect(screen.getByText(/available for these dates/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no wage from the live case lookup/i)).toBeNull();
   });
 
   it("sends the reader where those filters do work", () => {
     loaded();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
     expect(screen.getByRole("link", { name: /decided case browser/i })).toHaveAttribute(
       "href",
       "/perm-cases",
@@ -137,9 +168,9 @@ describe("filters DOL's data cannot support", () => {
 describe("before the whole day has loaded", () => {
   it("turns every control off, including sorting", () => {
     pending();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
 
-    expect((screen.getByLabelText("Search this day") as HTMLInputElement).disabled).toBe(true);
+    expect((screen.getByLabelText("Search these dates") as HTMLInputElement).disabled).toBe(true);
     expect((screen.getByLabelText("Changed from") as HTMLSelectElement).disabled).toBe(true);
     expect((screen.getByLabelText("Program") as HTMLSelectElement).disabled).toBe(true);
     for (const h of screen.getAllByRole("button", { name: /Employer|Changed to/ })) {
@@ -151,22 +182,22 @@ describe("before the whole day has loaded", () => {
     // This is also the prerendered sentence, so it has to read correctly for
     // somebody whose JavaScript never runs.
     pending();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
     expect(screen.getByText(/Showing the first 3 of 587 changes/)).toBeTruthy();
   });
 
   it("still lets the day be changed, because that is a fresh request either way", () => {
     pending();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
-    expect((screen.getByLabelText("Day observed") as HTMLSelectElement).disabled).toBe(false);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
+    expect((screen.getByLabelText("From date") as HTMLInputElement).disabled).toBe(false);
   });
 });
 
 describe("searching, filtering and sorting one day", () => {
   it("searches the case number, the employer and the job title", () => {
     loaded();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
-    const box = screen.getByLabelText("Search this day");
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
+    const box = screen.getByLabelText("Search these dates");
 
     fireEvent.change(box, { target: { value: "flextronics" } });
     expect(caseNumbers()).toEqual(["G-100-25308-370619"]);
@@ -183,7 +214,7 @@ describe("searching, filtering and sorting one day", () => {
     // "everything that became CERTIFIED" and "everything that left ANALYST
     // REVIEW" are different questions.
     loaded();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
 
     fireEvent.change(screen.getByLabelText("Changed to"), { target: { value: "DENIED" } });
     expect(caseNumbers()).toEqual(["G-100-25200-111111"]);
@@ -195,7 +226,7 @@ describe("searching, filtering and sorting one day", () => {
 
   it("filters by program, and disables a program with nothing that day", () => {
     loaded();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
     const select = screen.getByLabelText("Program") as HTMLSelectElement;
 
     fireEvent.change(select, { target: { value: "pwd" } });
@@ -211,7 +242,7 @@ describe("searching, filtering and sorting one day", () => {
 
   it("sorts on any column, and a click on the active one reverses it", () => {
     loaded();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
 
     // Employer ascending is the default, and it is already active, so the
     // first click on that header flips it rather than re-applying it.
@@ -231,9 +262,9 @@ describe("searching, filtering and sorting one day", () => {
 
   it("reports how many matched, and offers a way back when nothing does", () => {
     loaded();
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
 
-    fireEvent.change(screen.getByLabelText("Search this day"), {
+    fireEvent.change(screen.getByLabelText("Search these dates"), {
       target: { value: "no such employer" },
     });
     expect(screen.queryByRole("table")).toBeNull();
@@ -252,7 +283,7 @@ describe("what the day itself leaves out", () => {
     // Rendered on the server once, this would keep describing the day the page
     // was built for while the reader looked at another one.
     loaded({ expiriesExcluded: 92_113, bulkExcluded: 2_410 });
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
 
     const note = screen.getByText(/Left out of that count/);
     expect(note.textContent).toContain("92,113");
@@ -263,7 +294,7 @@ describe("what the day itself leaves out", () => {
 
   it("says nothing when a day excluded nothing, rather than printing a zero", () => {
     loaded({ expiriesExcluded: 0, bulkExcluded: 0 });
-    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} />);
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
     expect(screen.queryByText(/Left out of that count/)).toBeNull();
   });
 });

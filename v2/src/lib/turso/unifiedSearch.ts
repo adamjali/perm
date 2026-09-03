@@ -45,9 +45,11 @@ import { PUBLISHED_ONLY_FILTERS, type Lead } from "@/lib/caseSearchPlan";
  *
  * **Which lead.** `chooseLead` in `@/lib/caseSearchPlan` picks it and the UI
  * uses the same function, so a control the page leaves enabled is a control the
- * route can serve. Only an employer lead reaches all six sources; a firm, state
- * or occupation lead reads DOL's published PERM file alone, because that is the
- * only table carrying an index on those columns.
+ * route can serve. An employer lead reaches all six sources. A state or an
+ * occupation lead reaches the three PUBLISHED halves - the live tables have no
+ * worksite or occupation column at all, which is a fact about DOL's live
+ * endpoint rather than a missing index. A firm lead reaches published PERM
+ * alone, because PERM is the only program whose firm column has been ingested.
  *
  * **One row per case.** A case can be in both halves of its program at once.
  */
@@ -195,8 +197,12 @@ const fromFlagDisclosed = (r: FlagDisclosedRow, program: Program): UnifiedCase =
   wage: r.wage,
   wageUnit: r.wageUnit,
   state: r.worksiteState,
-  // DOL's wage-request and LCA disclosure files carry no attorney column at
-  // all, so this is null by absence, not by omission.
+  // NULL BY OMISSION, NOT BY ABSENCE, and the difference matters because the
+  // opposite was written here first. DOL publishes `LAWFIRM_NAME_BUSINESS_NAME`
+  // in both the ETA-9035 and ETA-9141 disclosure files - verbatim from the
+  // FY2026 Q3 record layouts, read 2026-09-03 - and
+  // `scripts/ingest_flag_disclosure.py` simply does not map it. Ingesting it is
+  // what would make a firm lead reach these programs.
   firmName: null,
   firmSlug: null,
   socCode: r.socCode,
@@ -292,8 +298,10 @@ export function skippedSources(narrow: UnifiedNarrow, lead: Lead): SkippedSource
   for (const key of PUBLISHED_ONLY_FILTERS) {
     if (set[key]) because.push(labels[key] ?? key);
   }
-  // An equality lead already reads the published PERM file alone, so the live
-  // half is out for the lead itself rather than for anything the reader typed.
+  // An equality lead reads DOL's published files only, so the live half is out
+  // for the lead itself rather than for anything the reader typed: there is no
+  // worksite, occupation or firm column on a live row, whichever program it
+  // belongs to.
   const leadIsPublishedOnly =
     lead.kind === "firm" || lead.kind === "state" || lead.kind === "occupation";
   return {
@@ -367,28 +375,38 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   const want = new Set<Program>(args.programs?.length ? args.programs : PROGRAMS);
   const employer = args.lead.kind === "employer" ? args.lead.value : null;
 
-  // THE PROGRAM CHIPS ONLY MEAN SOMETHING UNDER AN EMPLOYER LEAD. A firm,
-  // state or occupation lead reads DOL's published PERM file and nothing else,
-  // so honouring a chip set of ["pwd"] there would return an empty answer to a
-  // search the page had already told the reader was PERM-only. The page turns
-  // the chips off for those leads; this makes that structural.
-  const wantPerm = args.lead.kind === "employer" ? want.has("perm") : true;
-  const askPublished = (p: Program) => want.has(p) && !skipped.published;
-  const askLive = (p: Program) => want.has(p) && !skipped.live && employer !== null;
+  // THE PROGRAM CHIPS MEAN SOMETHING FOR EVERY LEAD BUT A FIRM. A firm lead
+  // reads published PERM and nothing else - DOL publishes the firm for the
+  // other two programs and this site has not ingested it - so honouring a chip
+  // set of ["pwd"] there would return an empty answer to a search the page had
+  // already told the reader was PERM-only. `filterAvailability` turns the chips
+  // off for exactly that lead and leaves them on for the others; this is the
+  // same rule on the server side, which is where it is enforced.
+  const chipsApply = args.lead.kind !== "firm";
+  const wanted = (p: Program) => (chipsApply ? want.has(p) : p === "perm");
+  const askPublished = (p: Program) => wanted(p) && !skipped.published;
+  const askLive = (p: Program) => wanted(p) && !skipped.live && employer !== null;
+  // `pwd_cases` and `lca_cases` carry a worksite state and a SOC code, and now
+  // an index on each, so those two leads reach them. They carry no firm column,
+  // so a firm lead does not.
+  const flagCanLead =
+    args.lead.kind === "employer" ||
+    args.lead.kind === "state" ||
+    args.lead.kind === "occupation";
 
   const flagLive = (p: FlagProgramKey) =>
     askLive(p) && employer
       ? readFlagLive(p, employer, narrow, PER_SOURCE).catch(none<FlagCaseRow>)
       : none<FlagCaseRow>();
   const flagPublished = (p: FlagProgramKey) =>
-    askPublished(p) && employer
-      ? readFlagPublished(p, employer, narrow, PER_SOURCE).catch(none<FlagDisclosedRow>)
+    askPublished(p) && flagCanLead
+      ? readFlagPublished(p, args.lead, narrow, PER_SOURCE).catch(none<FlagDisclosedRow>)
       : none<FlagDisclosedRow>();
 
   // Every read is caught individually: one program's table being unavailable
   // should narrow the answer, never blank the page.
   const [permPub, permLive, pwdLive, pwdPub, lcaLive, lcaPub] = await Promise.all([
-    wantPerm && !skipped.published
+    askPublished("perm")
       ? readPermPublished({ lead: args.lead, narrow, limit: PER_SOURCE }).catch(none<PermCaseRow>)
       : none<PermCaseRow>(),
     askLive("perm") && employer

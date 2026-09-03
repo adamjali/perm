@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Lead } from "@/lib/caseSearchPlan";
@@ -22,6 +25,7 @@ vi.mock("../client", () => ({ rows, one, exec: vi.fn() }));
 const {
   OUTCOME_STATUSES,
   SLICE_CAP,
+  flagLeadIndex,
   lookupUnifiedCase,
   permLeadIndex,
   programForCaseNumber,
@@ -29,6 +33,7 @@ const {
   readFlagPublished,
   readPermLive,
   readPermPublished,
+  socGroup,
 } = await import("../caseSearchReads");
 
 /**
@@ -329,9 +334,104 @@ describe("readFlagLive", () => {
   });
 });
 
-describe("readFlagPublished", () => {
+describe("socGroup", () => {
+  // THE THREE PROGRAMS SPELL THE OCCUPATION DIFFERENTLY and an exact equality
+  // across them matches nothing: `pwd_cases` holds ZERO dotted codes out of
+  // 634,638, `lca_cases` holds 434,314 of them, and the leads resolved from
+  // `perm_entities` arrive in both forms. None of that shows in a result set -
+  // it shows as a program contributing no rows, which looks exactly like a
+  // program with no rows to contribute.
+  it.each([
+    ["15-1252.00", "15-1252"],
+    ["15-1299.09", "15-1299"],
+    ["49-3051", "49-3051"],
+    ["  15-1252.00  ", "15-1252"],
+  ])("folds %s to its 6-digit group", (code, group) => {
+    expect(socGroup(code)).toBe(group);
+  });
+
+  it("returns null for anything that is not a SOC code, rather than binding it", () => {
+    for (const junk of ["", "software", "15", "15-125", "'; DROP TABLE"]) {
+      expect(socGroup(junk)).toBeNull();
+    }
+  });
+});
+
+describe("flagLeadIndex", () => {
+  // The pairing of lead to index IS the feature, and reading it back out of
+  // the SQL would pass over two index names being swapped.
+  it("adds the status column to the seek only for a SINGLE-status bucket", () => {
+    expect(flagLeadIndex("pwd", state, false)).toBe("pwd_cases_state_dec");
+    expect(flagLeadIndex("pwd", state, true)).toBe("pwd_cases_state_st_dec");
+    expect(flagLeadIndex("lca", occupation, false)).toBe("lca_cases_soc_dec");
+    expect(flagLeadIndex("lca", occupation, true)).toBe("lca_cases_soc_st_dec");
+  });
+
+  it("keeps the employer index for a range lead", () => {
+    expect(flagLeadIndex("lca", employer, true)).toBe("lca_cases_emp");
+  });
+
+  it("has no index for a firm, because the column was never ingested", () => {
+    // DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` in both the ETA-9035 and the
+    // ETA-9141 disclosure files. `scripts/ingest_flag_disclosure.py` does not
+    // map it, so there is no column here to seek - a missing ingest, not a
+    // missing index, and the two must not be confused when this is revisited.
+    expect(flagLeadIndex("pwd", firm, false)).toBeNull();
+    expect(flagLeadIndex("lca", firm, true)).toBeNull();
+  });
+});
+
+describe("the index names, against the DDL that creates them", () => {
+  // A DRIFT HERE IS SILENT, WHICH IS WHY IT IS GATED. `INDEXED BY <name>` over
+  // an index that does not exist raises "no such index", and `unifiedSearch`
+  // catches every read individually so one program's failure narrows the
+  // answer rather than blanking the page. So a renamed index does not error:
+  // the wage-request half just stops appearing, which is indistinguishable
+  // from an employer who has filed no wage requests.
+  const ddl = readFileSync(
+    join(process.cwd(), "scripts/ingest_flag_disclosure.py"),
+    "utf8",
+  );
+
+  it.each(["pwd", "lca"] as const)("%s: every index this file names is created", (program) => {
+    const names = new Set<string>();
+    for (const lead of [employer, state, occupation]) {
+      for (const single of [true, false]) {
+        const n = flagLeadIndex(program, lead, single);
+        if (n) names.add(n);
+      }
+    }
+    // Five per program: the employer index plus the four created for the
+    // state and occupation leads. A count guard, so a `flagLeadIndex` that
+    // started returning null for everything could not pass this vacuously.
+    expect(names.size).toBe(5);
+    // The Python builds these from an f-string, so the file holds the TEMPLATE
+    // (`{table}_emp`) and never the interpolated name. Matching the
+    // interpolated form is what the first version of this gate did, and it
+    // failed against a correct DDL - the tenth time a new gate's first run was
+    // mostly the gate.
+    const table = program === "pwd" ? "pwd_cases" : "lca_cases";
+    for (const name of names) {
+      const suffix = name.slice(table.length);
+      expect(ddl, `${name} is not created by ingest_flag_disclosure.py`).toContain(
+        "CREATE INDEX IF NOT EXISTS {table}" + suffix + " ON {table} (",
+      );
+    }
+  });
+
+  it("builds the SOC indexes on the expression the reads filter by", () => {
+    // SQLite serves a filter on an expression only from an index on the SAME
+    // expression. A space added on one side of this and the plan silently
+    // falls back to `SCAN <table> USING INDEX <table>_decided`, which read
+    // 437,496 rows to return none before these indexes existed.
+    expect(ddl).toContain("(substr(soc_code, 1, 7), decision_date)");
+    expect(ddl).toContain("(substr(soc_code, 1, 7), case_status, decision_date)");
+  });
+});
+
+describe("readFlagPublished, employer lead", () => {
   it("names its index, scopes the visa class and orders by the received date", async () => {
-    await readFlagPublished("pwd", "amazon", {}, 100);
+    await readFlagPublished("pwd", employer, {}, 100);
     expect(firstPass().sql).toMatch(/SELECT rowid FROM pwd_cases INDEXED BY pwd_cases_emp/);
     expect(secondPass().sql).toContain("visa_class = ?");
     expect(secondPass().sql).toMatch(/ORDER BY received_date DESC, case_number DESC LIMIT \?$/);
@@ -340,21 +440,108 @@ describe("readFlagPublished", () => {
   it("binds the fiscal year as a NUMBER here, where the column is INTEGER", async () => {
     // The same field name is TEXT on perm_cases. A string bound against an
     // INTEGER column matches nothing in SQLite and raises no error at all.
-    await readFlagPublished("lca", "amazon", { fiscalYear: "2025" }, 100);
+    await readFlagPublished("lca", employer, { fiscalYear: "2025" }, 100);
     expect(secondPass().args).toEqual([11, 22, 2025, 100]);
   });
 
   it("filters on worksite_state, which is what this file calls the column", async () => {
-    await readFlagPublished("lca", "amazon", { state: "TX", socCode: "15-1252" }, 100);
+    await readFlagPublished("lca", employer, { state: "TX", socCode: "15-1252.00" }, 100);
     expect(secondPass().sql).toContain("worksite_state = ?");
-    expect(secondPass().sql).toContain("soc_code = ?");
+  });
+
+  it("narrows by the SOC GROUP, because a dotted code matches nothing here", async () => {
+    // `soc_code = '15-1252.00'` against pwd_cases matches 0 of 634,638 rows,
+    // so an employer who files wage requests for that occupation constantly
+    // would come back with none and nothing would error.
+    await readFlagPublished("pwd", employer, { socCode: "15-1252.00" }, 100);
+    expect(secondPass().sql).toContain("substr(soc_code, 1, 7) = ?");
+    expect(secondPass().args).toContain("15-1252");
+    expect(secondPass().args).not.toContain("15-1252.00");
   });
 
   it('reads nothing for "still open"', async () => {
-    expect(await readFlagPublished("pwd", "amazon", { outcome: "open" }, 100)).toEqual({
+    expect(await readFlagPublished("pwd", employer, { outcome: "open" }, 100)).toEqual({
       rows: [],
       windowed: false,
     });
+    expect(rows).not.toHaveBeenCalled();
+  });
+});
+
+describe("readFlagPublished, equality leads", () => {
+  // ONE STATEMENT, NOT TWO. The two-pass employer read exists because a prefix
+  // range cannot supply the ordering; an equality can, so the same shape here
+  // would read a covering pass it does not need.
+  it("reads a state lead in one indexed statement", async () => {
+    rows.mockResolvedValueOnce([]);
+    await readFlagPublished("pwd", state, {}, 100);
+    expect(rows).toHaveBeenCalledTimes(1);
+    expect(firstPass().sql).toMatch(
+      /SELECT case_number.* FROM pwd_cases INDEXED BY pwd_cases_state_dec WHERE worksite_state = \? AND visa_class = \? ORDER BY decision_date DESC LIMIT \?/,
+    );
+    expect(firstPass().args).toEqual(["CA", "PERM", 100]);
+  });
+
+  it("moves to the status index only when the bucket is one status", async () => {
+    // pwd's granted bucket holds FIVE statuses, so it rides the plain index
+    // and filters: an IN list cannot seek the middle column of a three-column
+    // index, and SQLite would sort the union instead of streaming it.
+    rows.mockResolvedValue([]);
+    await readFlagPublished("lca", state, { outcome: "denied" }, 100);
+    expect(firstPass().sql).toContain("INDEXED BY lca_cases_state_st_dec");
+    rows.mockClear();
+    await readFlagPublished("pwd", state, { outcome: "granted" }, 100);
+    expect(firstPass().sql).toContain("INDEXED BY pwd_cases_state_dec");
+    expect(firstPass().sql).toContain("case_status IN (?, ?, ?, ?, ?)");
+  });
+
+  it("seeks the SOC group expression the index is built on", async () => {
+    rows.mockResolvedValueOnce([]);
+    await readFlagPublished("lca", occupation, {}, 100);
+    expect(firstPass().sql).toContain("INDEXED BY lca_cases_soc_dec");
+    // SQLite serves a filter on an expression only from an index on the SAME
+    // expression, so this string and the CREATE INDEX are one fact.
+    expect(firstPass().sql).toContain("substr(soc_code, 1, 7) = ?");
+    expect(firstPass().args).toEqual(["15-1252", 100]);
+  });
+
+  it("keeps the decided range, which is the last column of the index", async () => {
+    rows.mockResolvedValueOnce([]);
+    await readFlagPublished("lca", state, { decidedFrom: "2025-01", decidedTo: "2025-03" }, 100);
+    expect(firstPass().args).toEqual(["CA", "2025-01-01", "2025-04-01", 100]);
+  });
+
+  it("strips the narrowing this index cannot carry, even if the caller sends it", async () => {
+    // The route drops these and the UI greys them out. This makes it
+    // structural, so no hand-crafted URL can reach a slice walk.
+    rows.mockResolvedValueOnce([]);
+    await readFlagPublished(
+      "pwd",
+      state,
+      { title: "engineer", from: "2024-01", to: "2024-12", wageMin: 100000, fiscalYear: "2025" },
+      100,
+    );
+    // The WHERE clause only: every one of these column names is in the SELECT
+    // list too, so a check over the whole statement fails on a correct query.
+    const where = firstPass().sql.split(" WHERE ")[1] ?? "";
+    expect(where).not.toContain("job_title LIKE");
+    expect(where).not.toContain("received_date");
+    expect(where).not.toContain("wage >=");
+    expect(where).not.toContain("fiscal_year");
+    expect(firstPass().args).toEqual(["CA", "PERM", 100]);
+  });
+
+  it("reads nothing at all under a firm lead", async () => {
+    // Not an empty statement: no statement. A read guaranteed to find nothing
+    // is still a read Turso charges for.
+    expect(await readFlagPublished("lca", firm, {}, 100)).toEqual({ rows: [], windowed: false });
+    expect(rows).not.toHaveBeenCalled();
+  });
+
+  it("reads nothing when the occupation lead is not a SOC code", async () => {
+    expect(
+      await readFlagPublished("lca", { kind: "occupation", value: "software" }, {}, 100),
+    ).toEqual({ rows: [], windowed: false });
     expect(rows).not.toHaveBeenCalled();
   });
 });

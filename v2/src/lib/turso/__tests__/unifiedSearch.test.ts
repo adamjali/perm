@@ -21,6 +21,8 @@ type UnifiedCase = Parameters<typeof dedupeToOnePerCase>[0][number];
 
 const employerLead: Lead = { kind: "employer", value: "acme" };
 const stateLead: Lead = { kind: "state", value: "WA" };
+const occupationLead: Lead = { kind: "occupation", value: "15-1252.00" };
+const firmLead: Lead = { kind: "firm", value: "firm-llp" };
 
 /** A published PERM row, as `readPermPublished` returns it. */
 const permPub = (caseNumber: string, over: Record<string, unknown> = {}) => ({
@@ -266,19 +268,45 @@ describe("unifiedSearch", () => {
     expect(readFlagLive.mock.calls[0]?.[0]).toBe("pwd");
   });
 
-  it("ignores the program chips under an equality lead, which is PERM-published only", async () => {
-    // Honouring ["pwd"] here would return an empty answer to a search the page
-    // had already told the reader reads DOL's published PERM file.
-    await unifiedSearch({ lead: stateLead, programs: ["pwd"] });
+  it.each([
+    ["state", stateLead],
+    ["occupation", occupationLead],
+  ] as const)("reaches all three published programs under a %s lead", async (_kind, lead) => {
+    // THE DEFECT THIS PINS. `pwd_cases` and `lca_cases` have always held a
+    // worksite state and a SOC code; what they lacked was an index, so these
+    // two leads read the PERM file alone and the answer said nothing about it.
+    // Somebody asking for every case in Texas got a third of the corpus and no
+    // way to tell.
+    await unifiedSearch({ lead });
     expect(readPermPublished).toHaveBeenCalledTimes(1);
+    expect(readFlagPublished).toHaveBeenCalledTimes(2);
+    expect(readFlagPublished.mock.calls.map((c) => c[0]).sort()).toEqual(["lca", "pwd"]);
+    // The LEAD is handed down, not an employer string: the read layer picks
+    // its own index from it.
+    expect(readFlagPublished.mock.calls[0]?.[1]).toEqual(lead);
+    // No live half either way - a live row has no worksite or occupation on it
+    // at all, which is DOL's endpoint rather than a missing index.
+    expect(readPermLive).not.toHaveBeenCalled();
     expect(readFlagLive).not.toHaveBeenCalled();
-    expect(readFlagPublished).not.toHaveBeenCalled();
   });
 
-  it("reads the published half only under an equality lead", async () => {
-    await unifiedSearch({ lead: stateLead });
+  it("honours the program chips under a state lead, because the page leaves them on", async () => {
+    // `filterAvailability` turns these chips ON for a state lead. A control the
+    // page leaves enabled must be one the route serves, or the greying is a
+    // lie in the other direction.
+    await unifiedSearch({ lead: stateLead, programs: ["pwd"] });
+    expect(readPermPublished).not.toHaveBeenCalled();
+    expect(readFlagPublished).toHaveBeenCalledTimes(1);
+    expect(readFlagPublished.mock.calls[0]?.[0]).toBe("pwd");
+  });
+
+  it("ignores the program chips under a FIRM lead, which really is PERM-only", async () => {
+    // DOL publishes the firm for all three programs; this site has ingested it
+    // for one. Honouring ["pwd"] here would return an empty answer that reads
+    // as "this firm files no wage requests".
+    await unifiedSearch({ lead: firmLead, programs: ["pwd"] });
     expect(readPermPublished).toHaveBeenCalledTimes(1);
-    expect(readPermLive).not.toHaveBeenCalled();
+    expect(readFlagPublished).not.toHaveBeenCalled();
     expect(readFlagLive).not.toHaveBeenCalled();
   });
 

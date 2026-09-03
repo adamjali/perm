@@ -3,11 +3,13 @@
 import { Fragment, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { usePublicQuery } from "@/lib/usePublicQuery";
 import { formatWage } from "@/lib/wageFormat";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { SortableHeader } from "@/components/tools/SortableHeader";
+import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 import { nextSort, sortRows, type SortColumn, type SortState } from "@/lib/tableSort";
 import {
   FILTER_LABEL,
@@ -328,6 +330,26 @@ export function UnifiedCaseSearch({
 
   const droppedList = data?.dropped ?? [];
 
+  /**
+   * Date boxes holding something that is not a month.
+   *
+   * `buildParams` only sets a date when `MONTH_RE` matches, so anything else
+   * is discarded without a word - and on Firefox, where `input type="month"`
+   * is still a plain text box, typing a date the way a person writes one is
+   * the NORMAL outcome, not an edge case. A filter that vanishes in silence is
+   * the same defect as a button that does nothing.
+   */
+  const unreadMonths = (
+    [
+      ["Filed from", fromInput],
+      ["Filed to", toInput],
+      ["Decided from", dFromInput],
+      ["Decided to", dToInput],
+    ] as const
+  )
+    .filter(([, v]) => v.trim() !== "" && !MONTH_RE.test(v))
+    .map(([label]) => label);
+
   return (
     <div className="space-y-8">
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
@@ -352,11 +374,23 @@ export function UnifiedCaseSearch({
                   type="text"
                   value={textInput}
                   onChange={(e) => setTextInput(e.target.value)}
-                  placeholder="Start of the employer's name, or G- / A- / P- / I-"
+                  /* 361.8px of real Inter at 16px/500 before this, in a box
+                     that is 220px wide on a 320px phone: the reader saw
+                     "Start of the employer's name, or G-" and no more, so the
+                     three other prefixes the field accepts were invisible on
+                     every phone. The list moved to the hint below, which is
+                     where it can be read. */
+                  placeholder="e.g. Microsoft or G-100-…"
                   maxLength={120}
                   autoComplete="off"
+                  aria-describedby={`${uid}-q-hint`}
                   className={CONTROL}
                 />
+                <span id={`${uid}-q-hint`} className="mt-1 block text-sm leading-snug text-foreground/70">
+                  An employer is matched from the start of the name. All four
+                  case-number prefixes work: G- and A- for PERM, P- for a wage
+                  request, I- for an H-1B LCA.
+                </span>
               </div>{" "}
               <div className="flex items-end">
                 <button type="submit" className={BUTTON} disabled={pending} aria-busy={pending}>
@@ -415,7 +449,7 @@ export function UnifiedCaseSearch({
                   type="text"
                   value={occInput}
                   onChange={(e) => setOccInput(e.target.value)}
-                  placeholder="e.g. software developers"
+                  placeholder="e.g. software"
                   maxLength={120}
                   autoComplete="off"
                   disabled={!can.occupation.on}
@@ -432,11 +466,18 @@ export function UnifiedCaseSearch({
             </legend>{" "}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-sm font-bold">{FILTER_LABEL.outcome}:</span>{" "}
+              {/* THE REASON WAS ON SCREEN AND NOT WIRED TO THE CONTROLS. The
+                  sentence under this row explains why the chips are off, and
+                  `Field` already does `aria-describedby` for every refused
+                  INPUT - but these two chip rows are not Fields, so a screen
+                  reader met a disabled button with no explanation attached to
+                  it and a sentence floating nearby. */}
               <button
                 type="button"
                 aria-pressed={outcome === ""}
                 onClick={() => setOutcome("")}
                 disabled={!can.outcome.on}
+                aria-describedby={can.outcome.on ? undefined : `${uid}-outcome-why`}
                 className={CHIP + (outcome === "" ? "bg-foreground text-background hover:bg-foreground" : "bg-card")}
               >
                 Any
@@ -448,6 +489,7 @@ export function UnifiedCaseSearch({
                     aria-pressed={outcome === o}
                     onClick={() => setOutcome(outcome === o ? "" : o)}
                     disabled={!can.outcome.on}
+                    aria-describedby={can.outcome.on ? undefined : `${uid}-outcome-why`}
                     className={
                       CHIP + (outcome === o ? "bg-foreground text-background hover:bg-foreground" : "bg-card")
                     }
@@ -458,7 +500,7 @@ export function UnifiedCaseSearch({
               ))}
             </div>{" "}
             {can.outcome.on ? null : (
-              <p className="mt-2 text-sm leading-snug text-foreground/70">
+              <p id={`${uid}-outcome-why`} className="mt-2 text-sm leading-snug text-foreground/70">
                 {refusalText(can.outcome.why ?? "no-lead", "outcome")}
               </p>
             )}{" "}
@@ -495,6 +537,19 @@ export function UnifiedCaseSearch({
               >
                 <input
                   type="month"
+                  /* FIREFOX RENDERS THIS AS A PLAIN TEXT BOX. `input
+                     type="month"` is still unimplemented there (caniuse
+                     `input-datetime` marks Firefox partial through 157, and
+                     read from `caniuse-lite` in this repo rather than from
+                     memory), so it falls back to Text state - with no picker,
+                     no format hint, and nothing to say what is expected. The
+                     value is then matched against MONTH_RE and silently
+                     dropped if it does not fit, which is the worst of both:
+                     the reader types "March 2026", presses Search, and the
+                     filter quietly does not exist. The placeholder and the
+                     warning below are for that engine; Chrome and Safari
+                     paint their own edit fields and ignore both. */
+                  placeholder="YYYY-MM"
                   value={fromInput}
                   onChange={(e) => setFromInput(e.target.value)}
                   disabled={!can.filed.on}
@@ -511,6 +566,19 @@ export function UnifiedCaseSearch({
               >
                 <input
                   type="month"
+                  /* FIREFOX RENDERS THIS AS A PLAIN TEXT BOX. `input
+                     type="month"` is still unimplemented there (caniuse
+                     `input-datetime` marks Firefox partial through 157, and
+                     read from `caniuse-lite` in this repo rather than from
+                     memory), so it falls back to Text state - with no picker,
+                     no format hint, and nothing to say what is expected. The
+                     value is then matched against MONTH_RE and silently
+                     dropped if it does not fit, which is the worst of both:
+                     the reader types "March 2026", presses Search, and the
+                     filter quietly does not exist. The placeholder and the
+                     warning below are for that engine; Chrome and Safari
+                     paint their own edit fields and ignore both. */
+                  placeholder="YYYY-MM"
                   value={toInput}
                   onChange={(e) => setToInput(e.target.value)}
                   disabled={!can.filed.on}
@@ -549,6 +617,19 @@ export function UnifiedCaseSearch({
               >
                 <input
                   type="month"
+                  /* FIREFOX RENDERS THIS AS A PLAIN TEXT BOX. `input
+                     type="month"` is still unimplemented there (caniuse
+                     `input-datetime` marks Firefox partial through 157, and
+                     read from `caniuse-lite` in this repo rather than from
+                     memory), so it falls back to Text state - with no picker,
+                     no format hint, and nothing to say what is expected. The
+                     value is then matched against MONTH_RE and silently
+                     dropped if it does not fit, which is the worst of both:
+                     the reader types "March 2026", presses Search, and the
+                     filter quietly does not exist. The placeholder and the
+                     warning below are for that engine; Chrome and Safari
+                     paint their own edit fields and ignore both. */
+                  placeholder="YYYY-MM"
                   value={dFromInput}
                   onChange={(e) => setDFromInput(e.target.value)}
                   disabled={!can.decided.on}
@@ -565,6 +646,19 @@ export function UnifiedCaseSearch({
               >
                 <input
                   type="month"
+                  /* FIREFOX RENDERS THIS AS A PLAIN TEXT BOX. `input
+                     type="month"` is still unimplemented there (caniuse
+                     `input-datetime` marks Firefox partial through 157, and
+                     read from `caniuse-lite` in this repo rather than from
+                     memory), so it falls back to Text state - with no picker,
+                     no format hint, and nothing to say what is expected. The
+                     value is then matched against MONTH_RE and silently
+                     dropped if it does not fit, which is the worst of both:
+                     the reader types "March 2026", presses Search, and the
+                     filter quietly does not exist. The placeholder and the
+                     warning below are for that engine; Chrome and Safari
+                     paint their own edit fields and ignore both. */
+                  placeholder="YYYY-MM"
                   value={dToInput}
                   onChange={(e) => setDToInput(e.target.value)}
                   disabled={!can.decided.on}
@@ -625,6 +719,7 @@ export function UnifiedCaseSearch({
                       title={PROGRAM_BLURB[p]}
                       onClick={() => toggleProgram(p)}
                       disabled={!can.programs.on}
+                      aria-describedby={can.programs.on ? undefined : `${uid}-programs-why`}
                       className={
                         CHIP + (programs.includes(p) ? "bg-foreground text-background hover:bg-foreground" : "bg-card")
                       }
@@ -635,7 +730,7 @@ export function UnifiedCaseSearch({
                 ))}
               </div>
               {can.programs.on ? null : (
-                <p className="mt-2 text-sm leading-snug text-foreground/70">
+                <p id={`${uid}-programs-why`} className="mt-2 text-sm leading-snug text-foreground/70">
                   {refusalText(can.programs.why ?? "no-lead", "programs")}
                 </p>
               )}
@@ -658,10 +753,52 @@ export function UnifiedCaseSearch({
           <p className="mt-3">
             <Link
               href={`/perm-case-status?case=${encodeURIComponent(typedCaseNumber)}`}
-              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
+              className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
             >
+              <LinkPending />
               Check {typedCaseNumber} with DOL
             </Link>
+          </p>
+        </div>
+      ) : null}
+
+      {/* Warnings ABOVE the answer, the same rule the calculators follow: a
+          result computed from input that was partly thrown away must not read
+          as more authoritative than the doubt about the input. */}
+      {unreadMonths.length > 0 ? (
+        <p className="flex items-start gap-2 border-2 border-border bg-data-warn/8 p-4 text-base leading-relaxed">
+          <WarningIcon className="mt-1 size-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
+          <span>
+            <b className="font-bold">
+              {unreadMonths.length === 1
+                ? `"${unreadMonths[0]}" was not used.`
+                : `${unreadMonths.join(" and ")} were not used.`}
+            </b>{" "}
+            Those boxes take a month written as YYYY-MM, so 2026-03 rather than
+            March 2026. Anything else is left out of the search.
+          </span>
+        </p>
+      ) : null}
+
+      {/* WHILE THE SEARCH RUNS, SOMETHING HAS TO BE HERE. Every panel below
+          needs `data`, and the explainer at the foot is hidden the moment a
+          search starts, so pressing Search emptied the page and left only a
+          button reading "Searching…" - which on a phone is already scrolled
+          off the top by the time the results would appear. */}
+      {pending ? (
+        <div className="border-2 border-border bg-card p-5" role="status">
+          <p className="flex items-center gap-2 text-base font-bold">
+            <CircleNotchIcon
+              className="size-5 shrink-0 animate-spin motion-reduce:animate-none"
+              weight="bold"
+              aria-hidden="true"
+            />{" "}
+            <span>Searching DOL&apos;s records…</span>
+          </p>{" "}
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-foreground/70">
+            An employer or a case number answers in under a second. A law firm,
+            a state or an occupation reads the published PERM file and can take
+            a few seconds longer.
           </p>
         </div>
       ) : null}
@@ -853,12 +990,14 @@ export function UnifiedCaseSearch({
                 {shown.map((r) => (
                   <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
-                      <Link
+                      {/* PendingLink: /perm-case-status is dynamic and can
+                          ask DOL live, so a bare link is seconds of silence. */}
+                      <PendingLink
                         href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
                         className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
                       >
                         {r.caseNumber}
-                      </Link>
+                      </PendingLink>
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm">{PROGRAM_LABEL[r.program]}{" "}</td>
                     <td className="px-3 py-3">

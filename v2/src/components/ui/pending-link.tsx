@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useLinkStatus } from "next/link";
 import type { ComponentProps } from "react";
+import { CircleNotchIcon } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 
@@ -53,5 +54,33 @@ export function PendingLink({
       {children}
       <PendingDot />
     </Link>
+  );
+}
+
+/**
+ * The same pending signal, as a spinner, for a link that already has its own
+ * layout: a button-shaped call to action, a row in a table.
+ *
+ * EXTRACTED ON THE SECOND USE, not the third. The rail's "Check my case"
+ * button and the case-number links in the four case browsers all point at
+ * `/perm-case-status`, which is the slowest page on the site - it is dynamic,
+ * and a case it does not hold is asked of DOL live at around 3.5 seconds. Every
+ * one of them was a bare `<Link>`. That is the whole of the complaint: press
+ * it, and for three seconds nothing anywhere says it heard you.
+ *
+ * It renders nothing at all when idle, so a link that is never pressed pays no
+ * layout for it; the appearing spinner is inside a flex row with a gap in
+ * every current caller, so nothing jumps. It rotates rather than pulsing, and
+ * `motion-reduce` stops the rotation.
+ */
+export function LinkPending({ className }: { className?: string }) {
+  const { pending } = useLinkStatus();
+  if (!pending) return null;
+  return (
+    <CircleNotchIcon
+      aria-hidden="true"
+      weight="bold"
+      className={cn("size-4 shrink-0 animate-spin motion-reduce:animate-none", className)}
+    />
   );
 }

@@ -61,8 +61,10 @@ The two things this script does that the PERM ingest does not:
 
 **A monthly schedule on a quarterly file would rewrite every row eleven
 times for nothing.** An LCA file is several hundred thousand rows, and each
-row written costs one table write plus one per index, against a 10M/month
-plan. So the file's SHA-256 is computed while it downloads and kept in
+row written costs one table write plus one per index - SEVEN indexes now,
+after the four the unified search's state and occupation leads need, so a
+437k-row LCA reload is ~3.5M writes against a 10M/month plan and the skip
+below is what keeps that quarterly rather than monthly. So the file's SHA-256 is computed while it downloads and kept in
 `perm_docs['flag_disclosure_<program>']` with the row count; a later run that
 sees the same hash and finds the table still holding that count skips the
 write, re-stamps freshness (the data has been re-verified current) and
@@ -234,6 +236,39 @@ def table_ddl(table: str) -> list[str]:
         # read never touches rows belonging to anybody else.
         f"CREATE INDEX IF NOT EXISTS {table}_emp ON {table} (employer_slug, received_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_decided ON {table} (decision_date)",
+        # THE STATE AND OCCUPATION LEADS OF THE UNIFIED CASE SEARCH. Both
+        # columns were here from the first load and neither had an index, so
+        # `src/lib/turso/unifiedSearch.ts` read the PERM file alone for those
+        # two leads and said nothing about the other two programs. Measured
+        # against production on 2026-09-03, rows READ for a hundred-row page:
+        #
+        #     pwd state=WY                229,555 -> 305
+        #     pwd state=CA + DENIED       634,638 -> 0     (no such rows exist)
+        #     lca state=WY                259,885 -> 100
+        #     lca state=CA + DENIED        78,360 -> 100
+        #     lca occupation 49-3051      437,496 -> 0
+        #
+        # Every "before" planned as `SCAN {table} USING INDEX {table}_decided`:
+        # cheap when the needle is common, the whole table when it is rare.
+        #
+        # FOUR RATHER THAN TWO, because a three-column index cannot supply
+        # `ORDER BY decision_date DESC` unless the status is an equality, and a
+        # two-column one cannot seek the status. The `_st_` pair is used only
+        # when the outcome bucket is a SINGLE status; a multi-status bucket
+        # rides the plain index and filters, which measured cheaper (0.57 s for
+        # California's three-status withdrawn bucket on `lca_cases`).
+        #
+        # THE SOC INDEXES ARE ON AN EXPRESSION because the programs spell the
+        # occupation differently: `pwd_cases` holds ZERO dotted codes out of
+        # 634,638 while `lca_cases` holds 434,314 of them. The 6-digit group is
+        # the only key the files share, and SQLite serves a filter on an
+        # expression only from an index on the same expression - so this text
+        # and `SOC_GROUP_EXPR` in `src/lib/turso/caseSearchReads.ts` are one
+        # fact written twice.
+        f"CREATE INDEX IF NOT EXISTS {table}_state_dec ON {table} (worksite_state, decision_date)",
+        f"CREATE INDEX IF NOT EXISTS {table}_state_st_dec ON {table} (worksite_state, case_status, decision_date)",
+        f"CREATE INDEX IF NOT EXISTS {table}_soc_dec ON {table} (substr(soc_code, 1, 7), decision_date)",
+        f"CREATE INDEX IF NOT EXISTS {table}_soc_st_dec ON {table} (substr(soc_code, 1, 7), case_status, decision_date)",
     ]
 
 

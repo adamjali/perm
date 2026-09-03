@@ -7,6 +7,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 // client is server-only, so the reads go through /api/perm-cases. See
 // src/lib/usePublicQuery.ts.
 import { usePublicQuery } from "@/lib/usePublicQuery";
+import { Pager } from "@/components/ui/pager";
+import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 // TYPE ONLY, and that is what makes it legal here. `@/lib/turso/cases` imports
 // `server-only`, so a value import would be a build error in a client
 // component - correctly, because the token behind it grants access to the
@@ -529,8 +531,9 @@ export function CaseBrowser({
             </p>{" "}
             <Link
               href={`/perm-case-status?case=${encodeURIComponent(liveHit.caseNumber)}`}
-              className="mt-3 inline-flex min-h-[44px] items-center border-2 border-border bg-primary px-4 font-heading font-black text-primary-foreground shadow-hard-sm"
+              className="mt-3 inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-primary px-4 font-heading font-black text-primary-foreground shadow-hard-sm"
             >
+              <LinkPending />
               View the live status
             </Link>
           </div>
@@ -543,12 +546,12 @@ export function CaseBrowser({
             <p className="mt-2 text-base leading-relaxed text-foreground/70">
               DOL&apos;s disclosure files carry decided cases only, and our live
               feed hasn&apos;t seen this number either. It may be very new:{" "}
-              <Link
+              <PendingLink
                 href={`/perm-case-status?case=${encodeURIComponent(caseQuery)}`}
                 className="font-bold underline decoration-primary decoration-2 underline-offset-2"
               >
                 check it against DOL&apos;s live system
-              </Link>
+              </PendingLink>
               , which asks DOL directly and remembers the answer.
             </p>
           </div>
@@ -835,12 +838,14 @@ export function CaseBrowser({
                 <li
                   className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base"
                 >
-                  <Link
+                  {/* PendingLink: /perm-case-status is dynamic and can ask
+                      DOL live, so a bare link is seconds of silence. */}
+                  <PendingLink
                     href={`/perm-case-status?case=${encodeURIComponent(h.caseNumber)}`}
                     className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2"
                   >
                     {h.caseNumber}
-                  </Link>{" "}
+                  </PendingLink>{" "}
                   <span className="font-medium">{h.employerName}</span>{" "}
                   {h.jobTitle ? (
                     <span className="text-foreground/70">{h.jobTitle}</span>
@@ -990,31 +995,25 @@ export function CaseBrowser({
         ) : null}
 
         {!searching && (rows.length > 0 || prevRows.length > 0) ? (
-          <nav aria-label="Pages" className="mt-4 flex flex-wrap items-center justify-between gap-3">
-            <p className={LABEL}>Page {fmtInt(pageIndex + 1)}</p>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className={BUTTON}
-                disabled={isFirstPage}
-                onClick={() => setCursors((c) => (c.length > 1 ? c.slice(0, -1) : c))}
-              >
-                Previous
-              </button>{" "}
-              <button
-                type="button"
-                className={BUTTON}
-                disabled={page?.isDone !== false}
-                onClick={() =>
-                  setCursors((c) =>
-                    page && !page.isDone ? [...c, page.continueCursor] : c,
-                  )
-                }
-              >
-                Next
-              </button>
-            </div>
-          </nav>
+          /* `disabled={page?.isDone !== false}` used to sit on Next, which is
+             true while the page is STILL LOADING as well as when there is no
+             next page - so a slow fetch and the end of the list were the same
+             greyed button. Pager separates the two and writes the reason down
+             where it can be read. */
+          <Pager
+            id="perm-case-pager"
+            page={pageIndex + 1}
+            hasPrevious={!isFirstPage}
+            hasNext={page?.isDone === false}
+            loading={page === undefined && !pageFailed && !awaitingValue}
+            noun="case"
+            labelClassName={LABEL}
+            buttonClassName={BUTTON}
+            onPrevious={() => setCursors((c) => (c.length > 1 ? c.slice(0, -1) : c))}
+            onNext={() =>
+              setCursors((c) => (page && !page.isDone ? [...c, page.continueCursor] : c))
+            }
+          />
         ) : null}
       </section>
     </div>

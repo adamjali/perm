@@ -1,10 +1,12 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { usePublicQuery } from "@/lib/usePublicQuery";
+import { Pager } from "@/components/ui/pager";
+import { PendingLink } from "@/components/ui/pending-link";
 import { formatMonth } from "@/lib/dolFormat";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
@@ -130,12 +132,16 @@ function Rows({
           {ordered.map((r) => (
             <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
-                <Link
+                {/* PendingLink, not Link: /perm-case-status is dynamic, and a
+                    number this site does not hold is asked of DOL live at
+                    around 3.5 seconds. A bare link there is three seconds of
+                    a page that looks like it ignored the click. */}
+                <PendingLink
                   href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
                   className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
                 >
                   {r.caseNumber}
-                </Link>
+                </PendingLink>
               {" "}</td>
               <td className="whitespace-nowrap px-3 py-3">
                 <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chip(r.status, r.isFinal)}>
@@ -197,12 +203,16 @@ function DisclosedRows({
           {ordered.map((r) => (
             <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
-                <Link
+                {/* PendingLink, not Link: /perm-case-status is dynamic, and a
+                    number this site does not hold is asked of DOL live at
+                    around 3.5 seconds. A bare link there is three seconds of
+                    a page that looks like it ignored the click. */}
+                <PendingLink
                   href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
                   className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
                 >
                   {r.caseNumber}
-                </Link>
+                </PendingLink>
               {" "}</td>
               <td className="whitespace-nowrap px-3 py-3">
                 <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chip(r.status, true)}>
@@ -239,6 +249,7 @@ export function FlagCaseBrowser({
   };
   const params = useSearchParams();
   const initial = params.get("q") ?? "";
+  const uid = useId();
 
   // --- search -----------------------------------------------------------
   const [employerInput, setEmployerInput] = useState(initial);
@@ -321,7 +332,10 @@ export function FlagCaseBrowser({
               type="text"
               value={employerInput}
               onChange={(e) => setEmployerInput(e.target.value)}
-              placeholder="Start of the employer's name"
+              /* 221.7px in a 220px box on a 320px phone: it clipped, and
+                 the sentence above the form already says the start of the name
+                 is enough. An example is shorter and more use than a rule. */
+              placeholder="e.g. Microsoft"
               maxLength={120}
               autoComplete="off"
               className={CONTROL}
@@ -358,12 +372,12 @@ export function FlagCaseBrowser({
         {typedCaseNumber ? (
           <p className="mt-4 border-2 border-primary bg-tint-primary p-4 text-base leading-relaxed">
             That is a case number.{" "}
-            <Link
+            <PendingLink
               href={`/perm-case-status?case=${encodeURIComponent(typedCaseNumber)}`}
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
             >
               Look up {typedCaseNumber} directly
-            </Link>{" "}
+            </PendingLink>{" "}
             and DOL is asked live, which answers even for a filing nothing here
             has recorded yet.
           </p>
@@ -496,19 +510,24 @@ export function FlagCaseBrowser({
           <Rows rows={page.rows} caption={`${program.nouns} from DOL's daily check`} />
         ) : null}
         {!withheld && !listFailed ? (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <Pager
+            id={`${uid}-list-pager`}
+            page={cursors.length + 1}
+            hasPrevious={cursors.length > 0}
+            hasNext={Boolean(page && !page.isDone)}
+            loading={page === undefined}
+            noun={program.noun.toLowerCase()}
+            previousLabel="Newer"
+            nextLabel="Older"
+            labelClassName="text-sm font-bold"
+            buttonClassName={CHIP + "bg-card disabled:opacity-40 disabled:hover:bg-card"}
+            onPrevious={() => setCursors((c) => c.slice(0, -1))}
+            onNext={() => page && setCursors((c) => [...c, page.continueCursor])}
+          >
             <p className="text-sm text-foreground/70">
               &ldquo;Checked&rdquo; is the last day this site asked DOL about it.
-            </p>{" "}
-            <div className="flex gap-2">
-              <button type="button" disabled={cursors.length === 0} onClick={() => setCursors((c) => c.slice(0, -1))} className={CHIP + "bg-card"}>
-                Newer
-              </button>{" "}
-              <button type="button" disabled={!page || page.isDone} onClick={() => page && setCursors((c) => [...c, page.continueCursor])} className={CHIP + "bg-card"}>
-                Older
-              </button>
-            </div>
-          </div>
+            </p>
+          </Pager>
         ) : null}
       </section>
     </div>

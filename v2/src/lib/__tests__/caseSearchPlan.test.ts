@@ -97,9 +97,25 @@ describe("filterAvailability", () => {
       for (const k of ["title", "filed", "fiscalYear", "wage"] as const) {
         expect(can[k]).toEqual({ on: false, why: "walks-the-slice" });
       }
-      expect(can.programs).toEqual({ on: false, why: "published-only" });
     },
   );
+
+  // THE CHIPS ARE THE ONE PLACE THE THREE EQUALITY LEADS DIFFER, and the
+  // difference is about which column DOL's files carry rather than about cost.
+  // Asserted here because the UI reads `can.programs` and nothing else: a chip
+  // row left disabled is a whole program the reader cannot see they could have
+  // searched, and a chip row enabled over a source that cannot answer returns
+  // an empty half that reads as "this firm files no wage requests".
+  it.each(["state", "occupation"] as const)(
+    "lets a %s lead choose between all three programs",
+    (kind) => {
+      expect(filterAvailability(leads[kind]!).programs).toEqual({ on: true });
+    },
+  );
+
+  it("keeps the chips off under a firm lead, which is the only PERM-only one", () => {
+    expect(filterAvailability(leads.firm!).programs).toEqual({ on: false, why: "perm-only" });
+  });
 
   it("does not let one equality lead double as another one's filter", () => {
     // Two equalities on `perm_cases` means the second is a walk of the first's
@@ -127,7 +143,7 @@ describe("availableOutcomes", () => {
 
 describe("refusalText", () => {
   it("names the alternative in every reason, never just the refusal", () => {
-    for (const why of ["no-lead", "one-case", "number-names-program", "published-only", "walks-the-slice"] as const) {
+    for (const why of ["no-lead", "one-case", "number-names-program", "perm-only", "walks-the-slice"] as const) {
       const text = refusalText(why, "wage");
       expect(text.length).toBeGreaterThan(20);
       // No em-dash: house style, and it is the loudest machine-written tell.

@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { WarningIcon } from "@phosphor-icons/react";
+import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui";
 import {
@@ -238,7 +238,26 @@ export function SalaryExplorer({
           </div>
         </div>
 
-        <p className="mt-4 font-mono text-sm text-muted-foreground">{subject}</p>
+        <p className="mt-4 font-mono text-sm text-muted-foreground">{subject}</p>{" "}
+        {/* A DIMMED PANEL IS NOT A LOADING STATE. Changing a filter refetches,
+            and the only signal was `opacity-60` on the figures below - which
+            reads as a styling choice, not as work in progress, and says nothing
+            at all to a screen reader beyond the `aria-busy` flag. The numbers
+            deliberately stay on screen behind this rather than blanking; what
+            was missing was a sentence saying they are the OLD ones. */}
+        {loading ? (
+          <p
+            role="status"
+            className="mt-3 flex items-center gap-2 text-base font-bold"
+          >
+            <CircleNotchIcon
+              className="size-4 shrink-0 animate-spin motion-reduce:animate-none"
+              weight="bold"
+              aria-hidden="true"
+            />{" "}
+            <span>Loading these figures… the numbers below are the previous selection.</span>
+          </p>
+        ) : null}
       </div>
 
       {/* Warnings ABOVE the figures, always. A number computed from a suspect

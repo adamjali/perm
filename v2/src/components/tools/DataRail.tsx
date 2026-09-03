@@ -1,11 +1,12 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { CaretRightIcon, CircleNotchIcon, HouseIcon } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
+import { LinkPending } from "@/components/ui/pending-link";
 
 import {
   GROUPS,
@@ -90,12 +91,12 @@ export function DataRail() {
     if (next) setOpen(next.group);
   }, [pathname]);
 
-  // The link just clicked, so the rail can show it is working. Cleared when
-  // the pathname actually changes, which is the only honest signal that the
-  // navigation finished.
-  const [pending, setPending] = useState<string | null>(null);
+  // Arriving somewhere closes the drawer. The rail's own pending marker used
+  // to be tracked here too, as "the href just clicked, cleared on a pathname
+  // change" - which meant a click that never landed anywhere left that row
+  // spinning for the life of the page. It reads `useLinkStatus` inside the
+  // link now, so it clears on commit, failure and supersede alike.
   useEffect(() => {
-    setPending(null);
     setPanelOpen(false);
   }, [pathname]);
 
@@ -124,8 +125,6 @@ export function DataRail() {
         href={OVERVIEW.href}
         label={OVERVIEW.label}
         current={onOverview}
-        pending={pending === OVERVIEW.href}
-        onNavigate={setPending}
         kind="home"
       />{" "}
       {GROUPS.map((g) => {
@@ -239,8 +238,6 @@ export function DataRail() {
                           href={s.href}
                           label={s.label}
                           current={active?.key === s.key}
-                          pending={pending === s.href}
-                          onNavigate={setPending}
                           kind="leaf"
                         />
                       </li>
@@ -548,6 +545,51 @@ export function DataRail() {
 }
 
 /**
+ * The state marker at the head of a tab, and the one place the rail says it is
+ * working.
+ *
+ * IT READS `useLinkStatus`, WHICH MEANS IT IS INSIDE THE LINK. Next publishes
+ * the pending state through a context the `<Link>` itself renders, so nothing
+ * outside the anchor can see it. The rail used to track "the href I just
+ * clicked" in a `useState` above and clear it on a pathname change; a click
+ * that resolved to nothing (a failed route, a reader hitting Back, a second
+ * click superseding the first) left that row spinning forever, which is the
+ * exact failure the marker exists to prevent.
+ *
+ * The marker BOX never changes size, so a row does not jump when a navigation
+ * turns out to be slow: the spinner replaces the glyph in place. It rotates,
+ * it does not pulse, and `motion-reduce` stops the rotation.
+ */
+function TabMarker({ current, kind }: { current: boolean; kind: "home" | "leaf" }) {
+  const { pending } = useLinkStatus();
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "rail-marker",
+        current ? "text-black" : kind === "home" ? "text-primary" : "text-transparent",
+        // A leaf's marker is transparent until it is the current page. While a
+        // navigation is running it has to be visible or there is no signal at
+        // all, which is the whole point of the row.
+        pending && !current && "text-foreground",
+      )}
+    >
+      {pending ? (
+        <CircleNotchIcon className="size-3.5 animate-spin motion-reduce:animate-none" weight="bold" />
+      ) : kind === "home" ? (
+        // Overview alone gets a real glyph. It is the section's front page
+        // rather than a page inside it, and a house says that in the place
+        // where every other row carries only a state marker.
+        <HouseIcon className="size-3.5" weight="fill" />
+      ) : (
+        // A square, not a dot: the site's marker vocabulary is square.
+        <span className="size-1.5 bg-current" />
+      )}
+    </span>
+  );
+}
+
+/**
  * One tab. A destination, not a container.
  *
  * `kind` is the type distinction made visible: `home` is the section's own
@@ -561,26 +603,17 @@ function Tab({
   href,
   label,
   current,
-  pending,
-  onNavigate,
   kind,
 }: {
   href: string;
   label: string;
   current: boolean;
-  pending: boolean;
-  onNavigate: (href: string) => void;
   kind: "home" | "leaf";
 }) {
   return (
     <Link
       href={href}
       aria-current={current ? "page" : undefined}
-      onClick={() => {
-        // Never on the page you are already on: a spinner that cannot resolve
-        // is worse than none, because nothing will ever clear it.
-        if (!current) onNavigate(href);
-      }}
       className={cn(
         // `rail-row` carries the layout, the transition, the focus ring and
         // the reduced-motion opt-out. It is one class in the markup instead of
@@ -654,25 +687,7 @@ function Tab({
           className="rail-guide"
         />
       ) : null}
-      <span
-        aria-hidden="true"
-        className={cn(
-          "rail-marker",
-          current ? "text-black" : kind === "home" ? "text-primary" : "text-transparent",
-        )}
-      >
-        {pending ? (
-          <CircleNotchIcon className="size-3.5 animate-spin" weight="bold" />
-        ) : kind === "home" ? (
-          // Overview alone gets a real glyph. It is the section's front page
-          // rather than a page inside it, and a house says that in the place
-          // where every other row carries only a state marker.
-          <HouseIcon className="size-3.5" weight="fill" />
-        ) : (
-          // A square, not a dot: the site's marker vocabulary is square.
-          <span className="size-1.5 bg-current" />
-        )}
-      </span>{" "}
+      <TabMarker current={current} kind={kind} />{" "}
       <span className="min-w-0 flex-1 truncate">{label}</span>
     </Link>
   );
@@ -715,13 +730,19 @@ function RailFooter() {
       <Link
         href="/perm-case-status"
         className={cn(
-          "mt-3 flex min-h-11 items-center justify-center border-2 border-border bg-primary px-3",
+          "mt-3 flex min-h-11 items-center justify-center gap-2 border-2 border-border bg-primary px-3",
           "font-heading text-sm font-black text-black shadow-hard-sm",
           "transition-transform duration-150 ease-out hover:-translate-y-[1px] active:translate-y-0",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
           "motion-reduce:transition-none motion-reduce:hover:translate-y-0",
         )}
       >
+        {/* /perm-case-status is the one genuinely dynamic page on this
+            surface - a miss there asks DOL live, measured at ~3.5s - and this
+            was a bare <Link> with no signal at all. That is the shape of the
+            complaint: press it, and for three seconds nothing on screen says
+            anything happened. */}
+        <LinkPending />
         Check my case
       </Link>
     </div>

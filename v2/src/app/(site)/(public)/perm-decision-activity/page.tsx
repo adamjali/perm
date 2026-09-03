@@ -32,6 +32,7 @@ import { WeekdayShape } from "@/components/activity/WeekdayShape";
 import { ChangeFeedBrowser } from "@/components/activity/ChangeFeedBrowser";
 import { getActivitySeries } from "@/lib/turso/activity";
 import { getChangeActivity } from "@/lib/turso/changes";
+import { getCoverageWindows } from "@/lib/turso/decidedDays";
 import { getLiveMirrorSize } from "@/lib/turso/publicData";
 import {
   fillZeros,
@@ -81,7 +82,7 @@ function longDate(iso: string): string {
 }
 
 export default async function DecisionActivityPage() {
-  const [series, mirrorSize, activity] = await Promise.all([
+  const [series, mirrorSize, activity, windows] = await Promise.all([
     getActivitySeries(),
     getLiveMirrorSize(),
     // The event record is days old, so a failure here must not take the whole
@@ -94,6 +95,11 @@ export default async function DecisionActivityPage() {
     // regeneration of a page that revalidates six-hourly, and an ISR write unit
     // is 8 KB.
     getChangeActivity(null, 60).catch(() => null),
+    // WHAT EACH RECORD CAN ANSWER, read once per regeneration rather than
+    // per visitor. Six index seeks. It moves only when a quarterly file
+    // lands or the sweep runs, so a hardcoded pair of dates would silently
+    // under-report coverage for months.
+    getCoverageWindows().catch(() => ({ decided: null, observed: null })),
   ]);
 
   const disclosure = series.find((s) => s.source === "dol-disclosure");
@@ -205,19 +211,56 @@ export default async function DecisionActivityPage() {
             The cases DOL moved, day by day
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-            Every PERM, prevailing wage and LCA case whose status changed on a
-            given day, with what it changed from and what it changed to. Search
-            it, filter it by either end of the transition, and sort on any
-            column.
+            Pick any date back to October 2023. On a date DOL has published,
+            you get every PERM, prevailing wage and LCA case it decided, with
+            the outcome, wage, worksite and occupation on each. On a date newer
+            than its last file, you get what our own daily check saw change,
+            with what each case changed from and to. Search, filter and sort
+            either one, and pick a range to cross both.
           </p>{" "}
           <ChangeFeedBrowser
             calendar={activity.calendar}
             initialDay={activity.day}
+            windows={windows}
           />{" "}
           <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">
-            Dated when our scan <b>saw</b> the change, not when DOL made it: a
-            Friday determination read on Monday is a Monday row.
+            A change row is dated when our scan <b>saw</b> it, not when DOL made
+            it: a Friday determination read on Monday is a Monday row. A decided
+            row carries DOL&apos;s own determination date, so it needs no such
+            caveat.
           </p>{" "}
+          {/* WHERE THE SAME CASES LIVE, said plainly. A reader who has just
+              found a case here has an obvious next question, and every one of
+              these answers it from the same corpus. */}
+          <nav
+            aria-label="Related records"
+            className="mt-6 max-w-3xl border-2 border-border bg-card p-4"
+          >
+            <p className="font-mono text-xs font-bold uppercase tracking-wider">
+              The same cases, other ways in
+            </p>{" "}
+            <ul className="mt-2 grid grid-cols-1 gap-2 text-base sm:grid-cols-2">
+              {[
+                { href: "/perm-case-status", label: "Look up one case by its number" },
+                { href: "/perm-cases", label: "Browse every decided PERM case" },
+                { href: "/pwd-cases", label: "Prevailing wage requests, pending included" },
+                { href: "/lca-cases", label: "H-1B labor condition applications" },
+                { href: "/perm-queue", label: "Where DOL is in the filing queue" },
+                { href: "/perm-processing-times", label: "DOL's published processing times" },
+              ].map(({ href, label }) => (
+                <Fragment key={href}>
+                  <li>
+                    <Link
+                      href={href}
+                      className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    >
+                      {label}
+                    </Link>
+                  </li>{" "}
+                </Fragment>
+              ))}
+            </ul>
+          </nav>{" "}
           <FinePrint summary="What this record covers, and what is left out">
             <p>
               DOL publishes no timestamp of its own. Observations begin{" "}

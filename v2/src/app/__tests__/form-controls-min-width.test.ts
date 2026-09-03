@@ -86,6 +86,36 @@ function stripComments(source: string): string {
   return source.replace(/\{?\/\*[\s\S]*?\*\/\}?/g, "");
 }
 
+/**
+ * Same-file string constants, so a shared class list can be seen through.
+ *
+ * A control that writes `className={`${CONTROL} mt-1`}` has whatever `CONTROL`
+ * holds, but a literal scan of the attrs sees only the interpolation. That is
+ * not a cosmetic blind spot: it means the gate would MISS a real violation in
+ * every component that factors its class list out, which is most of them. Two
+ * date inputs in ChangeFeedBrowser were reported as offenders while carrying
+ * `min-w-0` through exactly this route.
+ *
+ * Only same-file `const X = "..."` is resolved. An imported constant is left
+ * unresolved and therefore still reported, which is the safe direction: a
+ * false positive is read and fixed, a false negative ships.
+ */
+function localConstants(source: string): Map<string, string> {
+  const out = new Map<string, string>();
+  const re = /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*((?:"[^"]*"|'[^']*'|`[^`]*`)(?:\s*\+\s*(?:"[^"]*"|'[^']*'|`[^`]*`))*)\s*;/g;
+  for (const m of source.matchAll(re)) {
+    out.set(m[1]!, m[2]!.replace(/["'`]/g, " "));
+  }
+  return out;
+}
+
+/** Expand `${NAME}` against same-file constants, one level deep. */
+function expand(attrs: string, consts: Map<string, string>): string {
+  return attrs.replace(/\$\{\s*([A-Za-z_$][\w$]*)\s*\}/g, (whole, name: string) =>
+    consts.has(name) ? ` ${consts.get(name)!} ` : whole,
+  );
+}
+
 /** Either a utility class or an inline style satisfies the requirement. */
 function hasMinWidthZero(attrs: string): boolean {
   return /\bmin-w-0\b/.test(attrs) || /minWidth:\s*0/.test(attrs);
@@ -105,7 +135,9 @@ describe("form controls cannot overflow their track", () => {
     const offenders: string[] = [];
     for (const file of files) {
       const source = stripComments(readFileSync(file, "utf8"));
-      for (const { tag, attrs } of openingTags(source)) {
+      const consts = localConstants(source);
+      for (const { tag, attrs: raw } of openingTags(source)) {
+        const attrs = expand(raw, consts);
         const type = /type="([^"]+)"/.exec(attrs)?.[1];
         if (!type || !DATE_TYPES.includes(type)) continue;
         if (hasMinWidthZero(attrs)) continue;

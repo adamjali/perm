@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
 import { usePublicQuery } from "@/lib/usePublicQuery";
+import { Pager } from "@/components/ui/pager";
+import { PendingLink } from "@/components/ui/pending-link";
 import { formatMonth } from "@/lib/dolFormat";
 // Type-only: `@/lib/turso/liveCases` imports `server-only`, and a value import
 // here would be a build error. A type import compiles to nothing.
@@ -235,12 +237,14 @@ export function LiveCaseBrowser({
                 {page?.rows.map((r) => (
                   <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
-                      <Link
+                      {/* PendingLink: /perm-case-status is dynamic and can
+                          ask DOL live, so a bare link is seconds of silence. */}
+                      <PendingLink
                         href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
                         className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
                       >
                         {r.caseNumber}
-                      </Link>
+                      </PendingLink>
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3">
                       <span
@@ -279,30 +283,25 @@ export function LiveCaseBrowser({
         ) : null}
 
         {!withheld && !failed ? (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <Pager
+            id="live-case-pager"
+            page={pageIndex + 1}
+            hasPrevious={pageIndex > 0}
+            hasNext={Boolean(page && !page.isDone)}
+            loading={loading}
+            noun="case"
+            previousLabel="Newer"
+            nextLabel="Older"
+            labelClassName="text-sm font-bold"
+            buttonClassName="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+            onPrevious={() => setCursors((c) => c.slice(0, -1))}
+            onNext={() => page && setCursors((c) => [...c, page.continueCursor])}
+          >
             <p className="text-sm text-foreground/70">
               Newest filing first. &ldquo;Seen&rdquo; is the day this site first saw the
               decision. It&apos;s blank for cases decided before the daily check began.
-            </p>{" "}
-            <div className="flex gap-2">
-              <button
-                type="button"
-                disabled={pageIndex === 0}
-                onClick={() => setCursors((c) => c.slice(0, -1))}
-                className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider hover:bg-tint-primary disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                Newer
-              </button>{" "}
-              <button
-                type="button"
-                disabled={!page || page.isDone}
-                onClick={() => page && setCursors((c) => [...c, page.continueCursor])}
-                className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider hover:bg-tint-primary disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary"
-              >
-                Older
-              </button>
-            </div>
-          </div>
+            </p>
+          </Pager>
         ) : null}
       </div>
     </section>

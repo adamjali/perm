@@ -41,6 +41,29 @@
  * may be narrowed only by the columns its own index already carries - the
  * outcome and a decided-date range. Everything else is refused HERE, in words,
  * rather than shipped as a scan.
+ *
+ * **3. The same rule now holds on all three programs.** A state or occupation
+ * lead used to read `perm_cases` alone, and the reason given was that no other
+ * table carried an index on those columns. That was true and it was fixable:
+ * `pwd_cases` and `lca_cases` both hold `worksite_state` and `soc_code`, so
+ * eight indexes (`<table>_state_dec`, `<table>_state_st_dec`,
+ * `<table>_soc_dec`, `<table>_soc_st_dec`) were created and the leads now
+ * reach every program. Measured against production on 2026-09-03, rows READ
+ * for a hundred-row page:
+ *
+ * | query | before | after |
+ * |---|---|---|
+ * | `pwd_cases` state `WY` | 229,555 | **305** |
+ * | `pwd_cases` state `CA` + `DENIED` (no such rows) | 634,638 | **0** |
+ * | `lca_cases` state `WY` | 259,885 | **100** |
+ * | `lca_cases` state `CA` + `DENIED` | 78,360 | **100** |
+ * | `lca_cases` occupation `49-3051` (no such rows) | 437,496 | **0** |
+ *
+ * The before column is not hypothetical: every one of those planned as
+ * `SCAN <table> USING INDEX <table>_decided`, which walks the whole table in
+ * decision order and throws away what does not match. It is cheap when the
+ * needle is common and it is the entire table when the needle is rare, which
+ * is the shape of cost that arrives as a bill rather than as a bug report.
  */
 
 /** Which field leads the search. Exactly one, and the index follows from it. */
@@ -115,8 +138,8 @@ export type Refusal =
   | "number-names-program"
   /** The field would be a filter the lead's index cannot carry: a slice walk. */
   | "walks-the-slice"
-  /** The field only exists in DOL's published files, and this lead reads them only. */
-  | "published-only";
+  /** Only DOL's PERM file carries the column this lead searches by. */
+  | "perm-only";
 
 export interface FilterState {
   on: boolean;
@@ -132,8 +155,12 @@ export function refusalText(why: Refusal, key: FilterKey): string {
       return "A case number finds one case, so there is nothing left to narrow.";
     case "number-names-program":
       return "The case number already says which program it is.";
-    case "published-only":
-      return "Open filings have no wage, firm, worksite or occupation on them yet, so this reads DOL's published files only.";
+    case "perm-only":
+      return (
+        "DOL names the law firm in its PERM file only, so a firm search reads " +
+        "PERM. Search by worksite state or occupation to reach wage requests " +
+        "and LCAs as well."
+      );
     case "walks-the-slice":
       return (
         `Narrowing by ${FILTER_LABEL[key].toLowerCase()} works under an employer, ` +
@@ -202,11 +229,27 @@ export function chooseLead(input: LeadInput): Lead | null {
  * The three equality leads (firm, state, occupation) keep the outcome and the
  * decided-date range because those are literally the next columns of the index
  * they ride - `idx_pc_state_st_dec` is `(state, status, decision_date)` - so
- * both are a seek rather than a walk. They also drop the "still open" bucket
- * and the program chips, because they read DOL's published PERM file and
- * nothing else: the live tables carry an employer index and no other, and the
- * published wage-request and LCA files carry no state or occupation index at
- * all.
+ * both are a seek rather than a walk. They all drop the "still open" bucket,
+ * because they read DOL's published files and every row in one of those has a
+ * decision on it.
+ *
+ * THE PROGRAM CHIPS SPLIT THE THREE APART, and the split is about which column
+ * DOL publishes rather than about cost:
+ *
+ * * **state and occupation** now reach all three programs. `pwd_cases` and
+ *   `lca_cases` have always held `worksite_state` and `soc_code`; what they
+ *   lacked was an index on either, so the search read the PERM file alone and
+ *   said nothing about it. Measured 2026-09-03 before the indexes existed: a
+ *   state lead on `pwd_cases` planned as `SCAN pwd_cases USING INDEX
+ *   pwd_cases_decided` and read **634,638 rows to return none** for a state
+ *   and status pair that does not occur. The eight indexes in
+ *   `scripts/ingest_flag_disclosure.py` turn every one of those into a seek.
+ * * **firm** still reads PERM alone. DOL DOES publish the firm for the other
+ *   two programs - `LAWFIRM_NAME_BUSINESS_NAME` is in both the ETA-9035 and
+ *   ETA-9141 FY2026 Q3 record layouts - but this site has never ingested that
+ *   column, so there is nothing to search. That is a missing ingest, not a
+ *   missing index, and the chips say so rather than returning an empty PWD
+ *   half that looks like "this firm files no wage requests".
  */
 export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterState> {
   const all = (state: FilterState): Record<FilterKey, FilterState> =>
@@ -226,7 +269,11 @@ export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterS
   const out = all({ on: false, why: "walks-the-slice" });
   out.outcome = { on: true };
   out.decided = { on: true };
-  out.programs = { on: false, why: "published-only" };
+  // A state or an occupation is a column all three published files carry, so
+  // the chips choose between three real sources. A firm is a column only the
+  // PERM file has been ingested for, so they would choose between one source
+  // and two empty ones.
+  out.programs = lead.kind === "firm" ? { on: false, why: "perm-only" } : { on: true };
   // The field this lead IS stays "on" so the form does not grey out the box
   // the reader just filled in.
   if (lead.kind === "firm") out.firm = { on: true };
@@ -238,10 +285,10 @@ export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterS
 /**
  * The outcome buckets a lead can actually answer.
  *
- * A firm, state or occupation lead reads DOL's published PERM file and
- * nothing else, and every row in a disclosure file has a decision on it, so
- * "still open" over one of those leads is empty by construction. The chip is
- * removed rather than offered and left to return nothing.
+ * A firm, state or occupation lead reads DOL's published files and nothing
+ * else, and every row in a disclosure file has a decision on it, so "still
+ * open" over one of those leads is empty by construction. The chip is removed
+ * rather than offered and left to return nothing.
  */
 export function availableOutcomes(lead: Lead | null): readonly Outcome[] {
   if (lead === null) return OUTCOMES;

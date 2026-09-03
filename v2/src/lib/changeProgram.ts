@@ -20,6 +20,17 @@ export const CHANGE_PROGRAMS = ["perm", "pwd", "lca"] as const;
 
 export type ChangeProgram = (typeof CHANGE_PROGRAMS)[number];
 
+/**
+ * Narrow an untrusted string to a program.
+ *
+ * Lives here rather than in a route because the same check is needed wherever
+ * a program arrives from outside: a query string, a stored preference, a
+ * link. A second copy is a second place for the list to drift.
+ */
+export function isChangeProgram(v: string): v is ChangeProgram {
+  return (CHANGE_PROGRAMS as readonly string[]).includes(v);
+}
+
 export const PROGRAM_LABEL: Record<ChangeProgram, string> = {
   perm: "PERM",
   pwd: "Prevailing wage",

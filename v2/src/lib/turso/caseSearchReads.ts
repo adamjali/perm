@@ -72,7 +72,12 @@ export interface UnifiedNarrow {
   /** Decision month, `YYYY-MM`, inclusive both ends. */
   decidedFrom?: string;
   decidedTo?: string;
-  /** A resolved `attorney_slug`. Published PERM only - DOL names no firm elsewhere. */
+  /**
+   * A resolved `attorney_slug`. Published PERM only, because PERM is the only
+   * program whose firm column this site has ingested - not because DOL keeps
+   * it. `LAWFIRM_NAME_BUSINESS_NAME` is in the ETA-9035 and ETA-9141 FY2026 Q3
+   * record layouts too.
+   */
   firmSlug?: string;
   /** Two-letter worksite state. Published halves only. */
   state?: string;
@@ -657,16 +662,158 @@ export async function readFlagLive(
   );
 }
 
+/**
+ * The 6-digit SOC group a code belongs to, or null when it is not a SOC code.
+ *
+ * THE THREE PROGRAMS SPELL THE OCCUPATION DIFFERENTLY, and an exact equality
+ * across them matches nothing. Measured on 2026-09-03:
+ *
+ * | table | dotted `15-1252.00` | bare `15-1252` |
+ * |---|---|---|
+ * | `perm_cases` | 302,081 | 49,432 |
+ * | `pwd_cases` | **0** | 614,015 |
+ * | `lca_cases` | 434,314 | 3,182 |
+ *
+ * DOL's PW file publishes the 6-digit SOC and nothing finer, so the group is
+ * the only key the three files share. An occupation lead resolved from
+ * `perm_entities` arrives as either form (851 of its 1,410 occupation rows are
+ * dotted) and is folded to the group before it reaches a flag table.
+ *
+ * THE COST OF THAT, STATED RATHER THAN HIDDEN: for a SOC group that O*NET
+ * splits into detail occupations - `15-1299.08` and `15-1299.09` are different
+ * jobs under one group - the wage-request and LCA halves answer at the group
+ * level while the PERM half answers at the detail level. 62,007 of 434,314
+ * dotted LCA rows carry a suffix other than `.00`, so it is roughly a seventh
+ * of that table. There is no finer answer available: DOL does not publish one.
+ */
+export function socGroup(code: string): string | null {
+  // `m?.[1] ?? null`, not `m ? m[1] : null`: `noUncheckedIndexedAccess` types
+  // a capture group as `string | undefined` even when the regex guarantees it.
+  return /^(\d{2}-\d{4})/.exec(code.trim())?.[1] ?? null;
+}
+
+/**
+ * The indexed expression, written once.
+ *
+ * SQLite serves a filter on an expression from an index on that expression
+ * only when the two parse to the same tree, so this constant and the
+ * `CREATE INDEX` in `scripts/ingest_flag_disclosure.py` are one fact in two
+ * files. Verified against production: the plan reads
+ * `SEARCH pwd_cases USING INDEX pwd_cases_soc_dec (<expr>=?)`.
+ */
+const SOC_GROUP_EXPR = "substr(soc_code, 1, 7)";
+
+/**
+ * The index a lead rides on a published FLAG table, or null when that table
+ * cannot answer the lead at all.
+ *
+ * Exported for its own test, for the reason `permLeadIndex` is: the pairing of
+ * lead to index IS the feature, and reading it back out of the SQL string
+ * would pass over two index names being swapped.
+ *
+ * `singleStatus` is not `hasOutcome`. Every PERM bucket is one status, so
+ * there the two are the same question; here they are not. `pwd`'s granted
+ * bucket holds five statuses and `lca`'s withdrawn bucket three, and an `IN`
+ * list cannot seek the middle column of a three-column index - SQLite runs it
+ * as several seeks and sorts the union. Measured on the plain index instead,
+ * with the statuses applied as a filter: `lca_cases` state `CA` + the
+ * three-status withdrawn bucket is 0.57 s, because the bucket is 7.7% of the
+ * table and a hundred rows arrive after about 1,300. Behind the status index
+ * the same read would have to materialise every withdrawal in California
+ * before it could order them.
+ */
+export function flagLeadIndex(
+  program: FlagProgramKey,
+  lead: Lead,
+  singleStatus: boolean,
+): string | null {
+  const t = FLAG_TABLES[program].published;
+  switch (lead.kind) {
+    case "employer":
+      return `${t}_emp`;
+    case "state":
+      return singleStatus ? `${t}_state_st_dec` : `${t}_state_dec`;
+    case "occupation":
+      return singleStatus ? `${t}_soc_st_dec` : `${t}_soc_dec`;
+    case "firm":
+      // DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` in the ETA-9035 and
+      // ETA-9141 disclosure files - read off the FY2026 Q3 record layouts on
+      // 2026-09-03 - but `scripts/ingest_flag_disclosure.py` has never mapped
+      // it, so there is no column here to seek. Null rather than an empty
+      // result set, so the caller can say "not ingested" instead of "none".
+      return null;
+    case "case":
+      // A point read on the primary key; this function is never asked.
+      return null;
+  }
+}
+
 export async function readFlagPublished(
   program: FlagProgramKey,
-  employerText: string,
+  lead: Lead,
   narrow: UnifiedNarrow,
   limit: number,
 ): Promise<SliceResult<FlagDisclosedRow>> {
   const empty: SliceResult<FlagDisclosedRow> = { rows: [], windowed: false };
   if (narrow.outcome === "open") return empty;
   const t = FLAG_TABLES[program];
-  const range = slugRange(employerText);
+  const bucket = narrow.outcome ? OUTCOME_STATUSES[program][narrow.outcome] : undefined;
+  const index = flagLeadIndex(program, lead, bucket?.length === 1);
+  if (!index) return empty;
+
+  if (lead.kind !== "employer") {
+    // AN EQUALITY LEAD: one statement, and the index supplies the ordering, so
+    // `LIMIT` stops the read at a hundred rows however rare the needle is.
+    // This is the path the two-pass employer read must NOT be used for, and
+    // the reverse is true as well - see `readEmployerSlice`.
+    const conds: string[] = [];
+    const params: (string | number)[] = [];
+    if (lead.kind === "state") {
+      conds.push("worksite_state = ?");
+      params.push(lead.value);
+    } else if (lead.kind === "occupation") {
+      const group = socGroup(lead.value);
+      if (!group) return empty;
+      conds.push(`${SOC_GROUP_EXPR} = ?`);
+      params.push(group);
+    } else {
+      return empty;
+    }
+    if (t.visaClass) {
+      // 87.3% of `pwd_cases` is PERM, so this reads about 115 rows for every
+      // hundred returned. Cheap enough to stay a filter rather than earn a
+      // place in four more indexes.
+      conds.push("visa_class = ?");
+      params.push(t.visaClass);
+    }
+    if (bucket) {
+      const s = statusClause("case_status", bucket);
+      conds.push(s.cond);
+      params.push(...s.params);
+    }
+    // The decided range only, and for the same reason as `readPermPublished`:
+    // it is the last column of this index. The title and the filed range are
+    // stripped rather than trusted, so no caller can reach the slice walk.
+    const common = commonNarrowing(
+      {
+        ...(narrow.decidedFrom ? { decidedFrom: narrow.decidedFrom } : {}),
+        ...(narrow.decidedTo ? { decidedTo: narrow.decidedTo } : {}),
+      },
+      "received_date",
+      "decision_date",
+    );
+    conds.push(...common.conds);
+    params.push(...common.params);
+
+    const found = await rows<DisclosedDbRow>(
+      `SELECT ${DISCLOSED_COLS} FROM ${t.published} INDEXED BY ${index} ` +
+        `WHERE ${conds.join(" AND ")} ORDER BY decision_date DESC LIMIT ?`,
+      [...params, limit],
+    );
+    return { rows: found.map(toDisclosed), windowed: false };
+  }
+
+  const range = slugRange(lead.value);
   if (!range) return empty;
 
   // `(employer_slug, received_date)`, so the filed range rides the covering
@@ -686,8 +833,8 @@ export async function readFlagPublished(
     restConds.push("visa_class = ?");
     restParams.push(t.visaClass);
   }
-  if (narrow.outcome) {
-    const s = statusClause("case_status", OUTCOME_STATUSES[program][narrow.outcome]);
+  if (bucket) {
+    const s = statusClause("case_status", bucket);
     restConds.push(s.cond);
     restParams.push(...s.params);
   }
@@ -696,8 +843,15 @@ export async function readFlagPublished(
     restParams.push(narrow.state);
   }
   if (narrow.socCode) {
-    restConds.push("soc_code = ?");
-    restParams.push(narrow.socCode);
+    // THE 6-DIGIT GROUP, not the code as typed. `pwd_cases` holds ZERO dotted
+    // SOC codes out of 634,638, so `soc_code = '15-1252.00'` matches nothing
+    // there and would report an employer as having filed no wage requests for
+    // an occupation they file constantly. See `socGroup`.
+    const group = socGroup(narrow.socCode);
+    if (group) {
+      restConds.push(`${SOC_GROUP_EXPR} = ?`);
+      restParams.push(group);
+    }
   }
   if (narrow.fiscalYear) {
     // INTEGER here, TEXT in perm_cases. Two columns of the same name and two
@@ -728,7 +882,7 @@ export async function readFlagPublished(
   return readEmployerSlice<DisclosedDbRow, FlagDisclosedRow>(
     {
       table: t.published,
-      index: `${t.published}_emp`,
+      index,
       columns: DISCLOSED_COLS,
       orderColumn: "received_date",
       range,

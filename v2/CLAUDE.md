@@ -1385,6 +1385,89 @@ days. `changes.test.ts` reads the SQL the module issues rather than mocking a
 result set, because the defect lives in the predicate - shaped fixture output
 would pass with either filter deleted. Both were probed by reverting them.
 
+## The day feed asked one question when it holds two (2026-09-03)
+
+`/perm-decision-activity` offered a `<select>` of days, built from
+`perm_case_events`. That log records when our sweep SAW a change, so it starts
+2026-08-26 and cannot be extended backwards: DOL returns a case's CURRENT
+status and never says when it changed. The picker therefore looked capped at a
+week, and Adam asked why.
+
+**The cap was the picker, not the data.** Every published table carries an
+indexed `decision_date`, and it is by far the larger half of the record:
+
+| | earliest decision | rows |
+|---|---|---|
+| `perm_cases` | 2023-10-01 | 373,939 |
+| `pwd_cases` | 2023-10-01 | 634,638 |
+| `lca_cases` | 2025-10-01 | 437,496 |
+
+So "what did DOL do on 12 March 2025" was always answerable, with the wage,
+worksite and occupation attached. Measured that day: 576 PERM, 1,301 PWD.
+
+**THE TWO DIMENSIONS ARE NEVER SILENTLY MERGED**, and that is the whole design.
+"Decided on this day" and "changed status on this day" have different coverage,
+and a decision is only one of the things the event log records - it also carries
+RFIs issued, holds and appeals. They render as two labelled sections
+(`DecidedTable` and `ChangeTable`) with two row shapes, because one wider table
+would leave half its columns blank and the reader could not tell which blanks
+are DOL withholding and which are nothing happening.
+
+| dimension | source | reach | carries the wage |
+|---|---|---|---|
+| decided | quarterly files | 2023-10-01 → 2026-06-30 | yes, with state and SOC |
+| observed | our sweep's event log | 2026-08-26 → today | no |
+
+**There is a real gap, 2026-07-01 to 2026-08-25**, between the last published
+file and the first observation. `coverageFor` reports `uncoveredDays` so the
+page can say "we hold nothing for these dates" rather than render an empty
+table, which a reader correctly reads as "DOL did nothing". It closes from the
+left when DOL publishes Q4 FY2026, and it never grows.
+
+**A DISABLED FILTER MUST FOLLOW THE SELECTION, NOT A BLANKET RULE.** The page
+used to render wage, law firm, worksite and occupation as four permanently dead
+selects captioned "not on a live record". True of a live row, and false of the
+three years of published rows the picker could not reach. They are now enabled
+whenever the selection touches the published window, and the explanation panel
+is a `<details>` that opens itself only when it does not. It carries a `key`
+tied to that state so a remount re-applies `open`; an `open` prop alone sticks
+at its first value.
+
+**SORTING IS NOT FILTERING AND THEY FAIL DIFFERENTLY.** A filter on a wage
+cannot evaluate a row whose wage is unknown, so it must drop it. A sort just
+puts unknowns last, which `sortRows` already does both ways. They had been
+switched off together, disabling sorting for a reason that only ever applied to
+filtering.
+
+**Cost, because Turso bills rows read.** No `COUNT(*)` over a range: counting a
+year walks millions of index entries for one number. An exact count runs only
+for a single day (a few thousand entries) and a range reports what it fetched.
+Every read is `LIMIT`-capped and ordered by the indexed column, so a ten-year
+range costs the same as a one-day range - *provided the filter is indexed*,
+which is why `RANGE_MAX_DAYS_UNINDEXED` (92) bounds a wage bound, the one
+filter no index leads with. Verified: `SEARCH ... USING INDEX idx_pc_decision`
+and `idx_pc_state_dec`, no `SCAN`.
+
+**Carry `wage_unit`.** `pwd_cases` and `lca_cases` quote hourly as well as
+yearly, and a real row on the first test day was `9.75 HOURLY`. Rendered
+without its unit that is "$10" beside six-figure salaries. `perm_cases` has no
+such column, so PERM rows print the wage alone.
+
+Modules: `src/lib/dateCoverage.ts` is the PURE half (a plain module, because the
+browser needs the same arithmetic the queries are bounded by - a page that
+enables a control the route cannot serve is the invariant the case search
+already protects); `src/lib/turso/decidedDays.ts` is `server-only` and holds the
+reads; `/api/decided-cases` is a sibling of `/api/case-changes`, not a mode on
+it. A refusal there is a 400, never a 200 with no rows, or "too expensive" and
+"DOL decided nothing" become the same response.
+
+**Two things the observed half got wrong that only showed as "nothing
+happens".** It fetched `/api/case-changes` for any date, including ones outside
+its 400-day window, so an older date sat on "Loading…" forever. And the
+"Earlier day" button was disabled whenever the date was not in the calendar's
+day list, which is every published-only date. Both were invisible until the
+picker could reach those dates.
+
 ## The employer's initial: real, small, and SHOWN not sold (2026-08-29)
 
 DOL works each filing month alphabetically by employer, so the initial is a
