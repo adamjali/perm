@@ -1464,6 +1464,30 @@ before adding an index:
   and stats before a second, separate call showed it had been right all along.
   Re-run the EXPLAIN in a fresh request.
 
+## A prefix range on the leading index column forces a sort, always (2026-09-02)
+
+The employer searches over `pwd_cases` / `lca_cases` are
+`employer_slug >= ? AND employer_slug < ?` ordered by `received_date DESC`.
+`EXPLAIN QUERY PLAN` shows the index being used AND a `USE TEMP B-TREE FOR
+ORDER BY`, which reads every row for that employer to return five.
+
+**The obvious fix does not work, and it was measured rather than assumed.**
+Adding `case_number` as a third index column (so the index covers the full
+`ORDER BY received_date DESC, case_number DESC`) changed the plan **not at
+all**. The reason is structural: with a RANGE on the leading column, rows come
+out ordered by `employer_slug` first, so any ordering that crosses several
+slugs must be sorted. Only an equality on the leading column lets the index
+supply the order.
+
+The index kept its two-column shape and the comment now records the
+measurement. The sort is bounded by one employer's filings, which is the
+point - the read never touches rows belonging to anybody else. **This is the
+counterpart to the `idx_pe_kind_decided` win: an expression index fixed that
+one because the filter was an equality plus an expression, not a range.**
+
+**Re-EXPLAIN in a FRESH request**, as always here: an EXPLAIN in the same
+pipeline as its own CREATE INDEX reports the old plan.
+
 ## revalidateTag would be a silent no-op here (2026-08-30)
 
 Tags attach to data through `fetch` with `next.tags`, `unstable_cache`, or

@@ -80,6 +80,23 @@ Push to main triggers auto-deploy:
 - **20 CFR 656.40:** https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40
 
 
+
+## Each FLAG program has TWO sources and needs both (2026-09-02)
+
+DOL exposes every program twice and neither half is sufficient, which is why
+the wage-request and LCA pages read both and merge one row per case:
+
+| | live endpoint | quarterly disclosure file |
+|---|---|---|
+| covers | anything DOL indexes, **pending included** | **decided only**, to the last quarter |
+| freshness | today | up to three months behind |
+| **the wage** | **never returned** | yes, with SOC and worksite |
+
+The live half is the only record of a pending filing; the file is the only
+place the wage exists. Reading one and not the other is how `/pwd-cases`
+shipped saying "DETERMINATION ISSUED" with no determination on it. Detail and
+the merge rules: [`v2/CLAUDE.md`](v2/CLAUDE.md).
+
 ## SEO: JSX glues adjacent element text (2026-08-23)
 
 `<A/>` newline `<B/>` in JSX renders with **zero characters between them**, so
@@ -113,8 +130,10 @@ dependencies.**
 | I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly |
 | entities, daily decisions | derived from our own corpus | with each quarterly |
 | RFI funnel | permtrack aggregate **frozen**, plus our own observations | frozen half never re-read |
-| prevailing wage requests (`P-100-`) | **DOL** batch API, same counter as PERM | daily pending sweep + discovery; weekly full |
-| H-1B LCAs (`I-200-`, `I-203-`) | **DOL** batch API, same counter | daily pending sweep + discovery; weekly full |
+| prevailing wage requests, live (`P-100-`) | **DOL** batch API, same counter as PERM | daily pending sweep + discovery; weekly full; backfill self-chains |
+| prevailing wage DETERMINATIONS (the wage) | **DOL** quarterly PW disclosure files, FY2024-FY2026 | monthly on the 10th, `--fy` for history |
+| H-1B LCAs, live (`I-200-`, `I-203-`) | **DOL** batch API, same counter | daily pending sweep + discovery; weekly full |
+| H-1B LCAs, decided (the wage offered) | **DOL** quarterly LCA disclosure files | monthly on the 10th |
 
 **The corpus grows itself (2026-08-28):** a case-number lookup that misses
 asks DOL live and records the answer; a nightly prober walks the sequential
