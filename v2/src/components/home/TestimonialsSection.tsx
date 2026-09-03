@@ -9,68 +9,44 @@
 
 import Script from "next/script";
 import { useEffect, useRef } from "react";
-import { ChatDotsIcon, StarIcon } from "@phosphor-icons/react";
+import {
+  ArrowsClockwiseIcon,
+  BankIcon,
+  ChatDotsIcon,
+  LockKeyIcon,
+  PathIcon,
+  StarIcon,
+  UsersThreeIcon,
+  type Icon as PhosphorIcon,
+} from "@phosphor-icons/react";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { APP_RATING, shouldAdvertiseRating } from "@/lib/structuredData";
 
 interface TrustBadge {
-  icon: React.ReactNode;
+  Icon: PhosphorIcon;
   label: string;
 }
 
+/**
+ * What this site actually is, in five facts. Every one is checkable on the
+ * page it links to; none is a claim about how good it is.
+ *
+ * TWO THINGS WERE WRONG HERE BEFORE, both worth naming. The icons were five
+ * hand-drawn SVG paths (a shield, an envelope, three circles), which is the
+ * one icon rule that never bends: a hand-rolled glyph is an approximation
+ * that looks fine at 20px and wrong everywhere else. And two labels were
+ * claims rather than facts - "Real-Time Updates" over a sweep that runs
+ * DAILY, and "DOL Compliant", which means nothing for a site that reads
+ * DOL's own published data. A wrong badge on the homepage costs more trust
+ * than five right ones buy.
+ */
 const trustBadges: TrustBadge[] = [
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <path d="M10 2 L17 6 L17 11 Q17 17 10 18 Q3 17 3 11 L3 6 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M7 10 L9 12 L13 8" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="square" />
-      </svg>
-    ),
-    label: "Encrypted Data",
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <rect x="3" y="4" width="14" height="12" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M3 4 L10 10 L17 4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="15" cy="5" r="3" fill="var(--primary)" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    ),
-    label: "DOL Compliant",
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <circle cx="7" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="13" cy="7" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="10" cy="13" r="4" fill="none" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    ),
-    label: "Applicants and Attorneys",
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <line x1="2" y1="10" x2="18" y2="10" stroke="currentColor" strokeWidth="1.5" />
-        <circle cx="5" cy="10" r="2.5" fill="var(--stage-pwd)" stroke="currentColor" strokeWidth="1" />
-        <circle cx="10" cy="10" r="2.5" fill="var(--stage-recruitment)" stroke="currentColor" strokeWidth="1" />
-        <circle cx="15" cy="10" r="2.5" fill="var(--stage-eta9089)" stroke="currentColor" strokeWidth="1" />
-      </svg>
-    ),
-    label: "5 PERM Stages",
-  },
-  {
-    icon: (
-      <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-        <circle cx="10" cy="10" r="7" fill="none" stroke="currentColor" strokeWidth="1.5" />
-        <line x1="10" y1="5" x2="10" y2="10" stroke="currentColor" strokeWidth="2" />
-        <line x1="10" y1="10" x2="14" y2="12" stroke="var(--primary)" strokeWidth="1.5" />
-      </svg>
-    ),
-    label: "Real-Time Updates",
-  },
+  { Icon: BankIcon, label: "Federal data only" },
+  { Icon: ArrowsClockwiseIcon, label: "Checked daily" },
+  { Icon: PathIcon, label: "Every PERM stage" },
+  { Icon: UsersThreeIcon, label: "Applicants and attorneys" },
+  { Icon: LockKeyIcon, label: "No case number needed" },
 ];
-
 /**
  * Give Senja's "powered by" link an accessible name.
  *
@@ -152,11 +128,8 @@ export function TestimonialsSection() {
               Reviews
             </div>{" "}
             <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
-              What Our Users Say
-            </h2>{" "}
-            <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-              Applicants and attorneys use PERM Tracker to follow the queue and track their deadlines.
-            </p>
+              What people say
+            </h2>
           </div>
 
           {/* Trust badges row */}
@@ -166,7 +139,7 @@ export function TestimonialsSection() {
                 key={badge.label}
                 className="flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground"
               >
-                <span className="flex-shrink-0">{badge.icon}</span>{" "}
+                <badge.Icon className="h-5 w-5 flex-shrink-0" aria-hidden="true" />{" "}
                 <span>{badge.label}</span>
               </div>
             ))}

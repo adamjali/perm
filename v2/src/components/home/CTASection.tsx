@@ -115,13 +115,17 @@ export function CTASection({
               {eyebrow}
             </p>{" "}
             <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
-              Every PERM Deadline, Computed Per Case
+              Every PERM deadline, computed per case
             </h2>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-black/70">
               Free, and setup takes a few minutes.
             </p>
           </div>{" "}
 
+          {/* The secondary link sits OUTSIDE MagneticButton, which applies a
+              pointer-tracking transform to everything it wraps: inside it,
+              this link drifted with the button and was the harder of the two
+              to click. One magnetic element, one button. */}
           <div className="mt-6 flex flex-col items-center gap-5">
             <MagneticButton>
               <Button
@@ -137,14 +141,14 @@ export function CTASection({
                   <RocketIcon className="mr-2 h-5 w-5" />
                 )}
                 Start Tracking Cases
-              </Button>{" "}
+              </Button>
+            </MagneticButton>{" "}
             <a
               href="/tools"
-              className="mt-4 block font-bold text-black underline decoration-black/40 decoration-2 underline-offset-4 transition-colors hover:decoration-black"
+              className="inline-flex min-h-[44px] items-center font-bold text-black underline decoration-black/40 decoration-2 underline-offset-4 transition-colors hover:decoration-black"
             >
               Or browse the case data, no account needed
             </a>
-            </MagneticButton>
           </div>
         </ScrollReveal>
       </div>

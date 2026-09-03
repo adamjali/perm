@@ -6,14 +6,10 @@ import { useSearchParams } from "next/navigation";
 
 import { usePublicQuery } from "@/lib/usePublicQuery";
 import { formatMonth } from "@/lib/dolFormat";
-import type {
-  FlagCaseRow,
-  FlagDisclosedRow,
-  FlagDisclosureSummary,
-  FlagKind,
-  FlagListPage,
-  FlagSummary,
-} from "@/lib/turso/flagCases";
+// One line, deliberately: no-server-only-in-client.test.ts checks each import
+// line on its own, so a type import wrapped over several lines reads as a
+// runtime import of a "server-only" module. Keep the path on the `import type`.
+import type { FlagCaseRow, FlagDisclosedRow, FlagDisclosureSummary, FlagKind, FlagListPage, FlagSummary } from "@/lib/turso/flagCases";
 import { formatWage } from "@/lib/wageFormat";
 import { mergeHalves } from "@/lib/flagMerge";
 
