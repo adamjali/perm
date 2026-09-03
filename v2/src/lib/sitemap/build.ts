@@ -192,6 +192,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-cases`, lastModified: dol ?? "2026-08-24" },
     { url: `${base}/pwd-cases`, lastModified: "2026-09-02" },
     { url: `${base}/lca-cases`, lastModified: "2026-09-02" },
+    { url: `${base}/case-search`, lastModified: "2026-09-03" },
     // The bare path only. A `?case=` result sets robots:{index:false} and
     // canonicalises back here, so advertising one would contradict the page's
     // own directive and open ~412,000 URLs of crawl space.

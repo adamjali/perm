@@ -1,0 +1,99 @@
+---
+title: "PERM Case Number Format: What Each Part Means"
+description: "What a DOL case number is made of, why some start with G and others with A or P, and what the digits in the middle actually encode."
+seoTitle: "PERM Case Number Format: G-, A- and P- Explained"
+seoDescription: "What each part of a DOL case number means. Why some PERM numbers start with G and older ones with A, what P and I numbers are, and what the digits encode."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/perm-result.webp"
+imageAlt: "A DOL case number broken into its parts beside the record it returns"
+tags: ["perm", "case-number", "dol", "flag", "explainer", "pwd", "lca"]
+category: "data"
+featured: true
+published: true
+---
+
+A DOL case number looks like `G-100-26125-868956`. Every part of it means something, and one part is commonly explained wrong.
+
+## The shape
+
+```
+G  -  100  -  26125  -  868956
+│      │        │         └── serial, assigned in order that day
+│      │        └── filing day: year 26, day 125 of the fiscal year
+│      └── a three-digit segment, see below
+└── the letter: which program this filing belongs to
+```
+
+## The letter is the program
+
+This is the part that matters most, and it is measurable across every case in DOL's system:
+
+| Prefix | Form | What it is |
+|---|---|---|
+| `G-` | ETA-9089 | A PERM labor certification |
+| `A-` | ETA-9089 | A PERM filed on the older form |
+| `P-` | ETA-9141 | A prevailing wage determination request |
+| `I-` | ETA-9035 | An H-1B labor condition application (LCA) |
+
+Checked against the full corpus, this is clean: every PERM case carries `G-` or `A-`, every wage request `P-`, and every LCA `I-`. There are no exceptions in 374,000 PERM cases, 68,000 wage requests and 220,000 LCAs.
+
+## G or A is the form generation, and the switch has a date
+
+Older PERM cases start with `A-`, newer ones with `G-`. The changeover is sharp and measurable:
+
+| Prefix | Filing dates in the data | Cases |
+|---|---|---|
+| `A-` | 15 May 2017 to 31 May 2023 | 92,248 |
+| `G-` | 1 June 2023 onward | 281,691 |
+
+That boundary is the day DOL's revised ETA-9089 took effect. So if your number starts with `A-`, your case was filed under the old form. Both are valid and both are looked up the same way.
+
+## The three digits in the middle
+
+You will read in several places that this segment identifies the processing centre, Atlanta or Chicago. That may well be right, and **it is not something this data can confirm or deny.**
+
+What can be said is what it is *not*. All four values appear across the same date range, so it does not encode time:
+
+| Segment | Filing dates | Cases |
+|---|---|---|
+| `G-100` | Jun 2023 to Jun 2026 | 192,667 |
+| `G-200` | Jun 2023 to Jun 2026 | 84,145 |
+| `G-300` | Jun 2023 to Jun 2026 | 4,780 |
+| `G-400` | Jun 2023 to Jun 2026 | 99 |
+
+DOL doesn't publish a key for it, and nothing in the public record maps a value to a centre. It has no bearing on how your case is processed as far as anyone can demonstrate, so it isn't worth reading anything into.
+
+## The date segment, which is genuinely useful
+
+The five digits after the middle segment are a date: the first two are the fiscal year, the next three the day within it. So `26125` is day 125 of fiscal 2026.
+
+This is why a filing date can be read straight off the number without looking anything up. It's right about 95% of the time and off by a day for the rest, because the counter rolls at a moment that doesn't perfectly align with the calendar.
+
+## Where to find your number
+
+It's on the receipt DOL sends whoever filed, so your employer or its attorney has it. Asking is the quickest route.
+
+If that isn't working, every one of these is searchable by employer, job title and filing month:
+
+- [PERM cases](/perm-cases) for `G-` and `A-` numbers
+- [Wage requests](/pwd-cases) for `P-` numbers
+- [H-1B LCAs](/lca-cases) for `I-` numbers
+
+There's a fuller walkthrough in [how to find a PERM case number by employer name](/guides/find-a-dol-case-number-by-employer).
+
+## Checking a number once you have it
+
+[Case status](/perm-case-status) takes all three prefixes and works out the program from the letter. If the number isn't already held, it asks DOL directly at that moment, so a recent filing still resolves.
+
+## What this can't tell you
+
+- **What the middle segment means.** DOL publishes no key, and this page won't guess.
+- **Whether a number is real before you check it.** A wrong digit still makes a well-formed number, which is why a typo looks exactly like a missing case.
+- **Anything about cases before 2017.** They're not in the published data.
+
+## Related
+
+- [How to check PERM case status by case number](/guides/look-up-a-perm-case-by-number)
+- [How to find a PERM case number by employer name](/guides/find-a-dol-case-number-by-employer)
+- [What each PERM case status means](/guides/what-perm-case-statuses-mean)

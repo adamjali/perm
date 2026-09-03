@@ -1,6 +1,8 @@
 ---
 title: "PERM Salary Data: What Sponsored Jobs Actually Pay"
 description: "Median offered wages by occupation from DOL's PERM files: committed figures, not survey estimates. Software Developers at $139k, and the other half."
+seoTitle: "PERM Salary Data by Occupation: What Sponsorship Pays"
+seoDescription: "Median offered wages on certified PERM filings by occupation, from DOL's disclosure files, and why the figure is a floor rather than a market rate."
 date: "2026-08-24"
 author: "Adam J Ali"
 image: "/images/content/perm-wage-split.png"
@@ -77,3 +79,57 @@ certified - which makes them a better benchmark than any survey. The
 [methodology](/methodology) sets out exactly how each median is computed,
 and the [deadline calculator](/tools/perm-deadline-calculator) carries the
 dates side of the same filings.
+
+## How the PERM wage compares to what the job really pays
+
+The offered wage on a PERM is a floor, not a market rate, and the difference
+matters if you are reading these numbers to judge an offer.
+
+It has to meet or beat the prevailing wage the Department of Labor determines
+for that occupation, at that skill level, in that metropolitan area. So the
+figure answers "what did the employer commit to in a federal filing" rather
+than "what does this job pay". Total compensation is usually higher, because
+bonuses, equity and shift differentials are not in it at all.
+
+Two consequences worth holding onto:
+
+- **A low PERM wage is not evidence of a low salary.** An employer may
+  legitimately file at the determined wage and pay well above it.
+- **A high PERM wage is a real commitment.** The employer signed a federal
+  form saying it will pay at least that.
+
+## Where the wage floor comes from
+
+Before any of this, the employer asks DOL what the job pays. That request is
+Form ETA-9141, and DOL's answer sets the floor. It is based on the
+occupational code, the skill level 1 to 4, and the area, drawn from the federal
+wage survey unless the employer supplies its own.
+
+That determination is public too. The site holds about 634,000 decided ones
+with the wage DOL set, so a request looked up by its `P-` number shows the
+actual figure rather than a category. There is more on the mechanics in
+[how DOL sets a prevailing wage](/guides/how-dol-sets-a-prevailing-wage).
+
+## Reading a percentile without over-reading it
+
+The ladder on the [wages page](/perm-wages) cuts every certified case with a
+readable wage at five points: 10th, 25th, median, 75th and 90th. For the
+current window the whole distribution runs from $29,120 at the 10th to
+$175,000 at the 90th, with a median of $103,272.
+
+A single median across all occupations is close to meaningless, because the
+same process covers software developers and poultry line workers. Always read
+the percentile *within* an occupation, and ideally within a state.
+
+## What this data cannot tell you
+
+- **What you personally should be paid.** It is a floor across a whole
+  occupation, not a benchmark for one offer.
+- **Total compensation.** Equity and bonuses are excluded by construction.
+- **Anything about pending cases.** Wages appear only once DOL decides.
+
+## Related
+
+- [Explore PERM wages by occupation and state](/guides/explore-perm-wages)
+- [How DOL sets a prevailing wage](/guides/how-dol-sets-a-prevailing-wage)
+- [Where PERM salary data comes from](/blog/how-perm-wage-data-is-published)

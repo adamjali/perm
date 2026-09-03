@@ -56,6 +56,7 @@ const ISOLATED_UNIT_FILES = [
   // `cases.ts` binds it to ITS mock; every later file's mock then sees no
   // calls (6 failures on 2026-09-02 that each passed alone).
   "src/lib/turso/__tests__/liveCases.test.ts",
+  "src/lib/turso/__tests__/unifiedSearch.test.ts",
   "src/lib/turso/__tests__/searchFilters.test.ts",
   "src/lib/turso/__tests__/pwdCases.test.ts",
   "src/lib/turso/__tests__/lcaCases.test.ts",

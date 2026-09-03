@@ -129,6 +129,22 @@ function todayUtc(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/**
+ * Is this typed text plausibly an employer NAME rather than a mistyped number?
+ *
+ * Two letters somewhere and not mostly digits. A half-typed case number
+ * ("G-100-2612") is mostly digits and punctuation, so it stays on the
+ * "wrong shape" branch where the format hint helps; "Microsoft" does not, and
+ * gets offered the search that can actually answer it.
+ */
+function looksLikeName(input: string): boolean {
+  const t = input.trim();
+  if (t.length < 2 || t.length > 120) return false;
+  const letters = (t.match(/[A-Za-z]/g) ?? []).length;
+  const digits = (t.match(/\d/g) ?? []).length;
+  return letters >= 2 && letters > digits;
+}
+
 export default async function PermCaseStatusPage({
   searchParams,
 }: {
@@ -182,7 +198,7 @@ export default async function PermCaseStatusPage({
           A case number gets you the status in plain English, what the queue in
           front of it looks like, and the employer&apos;s own record. It will
           not get you a decision date, and the page says why. Prevailing wage
-          (P-100-...) and LCA (I-200-...) numbers work here too, and any of the three can email you when DOL's status changes.
+          (P-100-...) and LCA (I-200-...) numbers work here too, and any of the three can email you when DOL&apos;s status changes.
         </p>
       </header>
 
@@ -211,6 +227,29 @@ export default async function PermCaseStatusPage({
             (P-100-26240-200135) and an H-1B LCA with I (I-200-26239-199948).
           </span>
         </p>
+      ) : null}
+      {/* NOT A DEAD END. The homepage hero posts here, so whatever someone
+          types on the front page lands on this branch - and an employer name
+          is the most likely thing that is not a case number. Handing it to the
+          cross-program search answers the question they were actually asking
+          instead of stopping at "wrong shape". */}
+      {malformed && looksLikeName(typed) ? (
+        <div className="mt-4 border-2 border-border bg-tint-primary p-5">
+          <p className="text-base leading-relaxed">
+            <b className="font-bold">Looking for an employer rather than a number?</b>{" "}
+            Search every filing under that name across all three DOL programs:
+            the PERM, the wage request that came before it and the H-1B
+            condition application beside it.
+          </p>{" "}
+          <p className="mt-3">
+            <Link
+              href={`/case-search?q=${encodeURIComponent(typed.trim().slice(0, 120))}`}
+              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
+            >
+              Search DOL for &ldquo;{typed.trim().slice(0, 60)}&rdquo;
+            </Link>
+          </p>
+        </div>
       ) : null}
 
       <div className="mt-8">

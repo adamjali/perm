@@ -30,6 +30,10 @@ import {
   TOOL_NAV_LINKS,
 } from "@/lib/constants/navigation";
 import { SECTIONS } from "@/components/tools/dataSections";
+// The palette carried a byte-identical copy of this regex pair. One rule,
+// one module: `caseNumberShape` is the client-side wide form (G- and A-, and
+// by shape the P- and I- numbers that share the current layout).
+import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import type { EntityPayload } from "@/lib/entityPayload";
 
 export interface SearchArticle {
@@ -82,15 +86,6 @@ function staticIndex(): { label: string; href: string; group: string; keywords: 
   return out.filter((e) => (seen.has(e.href) ? false : (seen.add(e.href), true)));
 }
 
-/** `G-100-24339-516453` / `A-23043-00641`, forgiving spaces and case. */
-function looksLikeCaseNumber(q: string): string | null {
-  const raw = q.trim().toUpperCase().replace(/\s+/g, "");
-  if (/^[A-Z]-\d{3}-\d{5}-\d+$/.test(raw) || /^[A-Z]-\d{5}-\d{5}$/.test(raw)) {
-    return raw;
-  }
-  return null;
-}
-
 /** A bare "YYYY-MM" reads as a filing month. */
 function looksLikeMonth(q: string): string | null {
   const m = /^(\d{4})-(\d{2})$/.exec(q.trim());
@@ -125,7 +120,7 @@ export function SearchPalette({
   // compiler can see the computation it is memoizing. Behaviour is identical,
   // staticIndex takes no arguments.
   const pages = React.useMemo(() => staticIndex(), []);
-  const caseNumber = looksLikeCaseNumber(query);
+  const caseNumber = normaliseCaseNumber(query);
   const month = looksLikeMonth(query);
 
   const go = React.useCallback(
@@ -212,7 +207,7 @@ export function SearchPalette({
             autoFocus
             value={query}
             onValueChange={setQuery}
-            placeholder="Search pages, employers, firms, or paste a case number"
+            placeholder="Search employers, firms, pages, or paste any DOL case number"
             className="min-h-[52px] w-full bg-transparent text-base outline-none placeholder:text-muted-foreground"
           />
         </div>
@@ -224,6 +219,19 @@ export function SearchPalette({
               className="cursor-pointer border-2 border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
             >
               Check case {caseNumber}: live status and estimate
+            </Command.Item>
+          ) : null}
+          {!caseNumber && !month && query.trim().length >= 2 ? (
+            /* The bridge to the cross-program search. The entity rows below
+               answer "who is this employer"; this one answers "what have they
+               filed", across PERM, wage requests and LCAs at once, which no
+               other row on this list covers. */
+            <Command.Item
+              value={`all programs ${query.trim()}`}
+              onSelect={() => go(`/case-search?q=${encodeURIComponent(query.trim().slice(0, 120))}`)}
+              className="cursor-pointer border-2 border-primary bg-primary/10 px-3 py-3 font-bold data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
+            >
+              Search every DOL filing by &ldquo;{query.trim()}&rdquo;: PERM, wage requests and LCAs
             </Command.Item>
           ) : null}
           {month ? (

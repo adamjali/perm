@@ -52,9 +52,24 @@ export function QueueTape({
     months.push(addMonths(frontierMonth, i));
   }
 
+  // BOTH FLAGS USED THE SAME `-top-7 left-1/2 -translate-x-1/2`, so when the
+  // two months are near each other the badges overlap: "DOL is here" is ~90px
+  // wide over a column that can be ~30px, and "You" landed on top of it.
+  // Reported from a screenshot with the two one month apart.
+  //
+  // A flag is roughly four columns wide, so anything closer than that collides.
+  // When it does, "You" goes up a row rather than being nudged sideways, which
+  // would break the tie between a flag and the column it points at. The wrapper
+  // reserves the second row's height unconditionally so the tape does not shift
+  // when the selection moves.
+  const frontierAt = months.indexOf(frontierMonth);
+  const youAt = selectedMonth ? months.indexOf(selectedMonth) : -1;
+  const flagsCollide =
+    frontierAt >= 0 && youAt >= 0 && Math.abs(youAt - frontierAt) < 4;
+
   return (
     <figure className={cn("m-0", className)}>
-      <div className="-mx-1 overflow-x-auto px-1 pt-7">
+      <div className={cn("-mx-1 overflow-x-auto px-1", flagsCollide ? "pt-14" : "pt-7")}>
         <div
           className="relative grid min-w-[560px] border-2 border-border shadow-hard-sm"
           style={{ gridTemplateColumns: `repeat(${months.length}, minmax(0, 1fr))` }}
@@ -101,9 +116,22 @@ export function QueueTape({
                   </span>
                 ) : null}
                 {isYou && !isFrontier ? (
-                  <span className="absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-primary px-1.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider text-black">
+                  <span
+                    className={cn(
+                      "absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-primary px-1.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider text-black",
+                      flagsCollide ? "-top-14" : "-top-7",
+                    )}
+                  >
                     You
                   </span>
+                ) : null}
+                {isYou && !isFrontier && flagsCollide ? (
+                  // The raised flag is a row away from its column, so a hairline
+                  // keeps them tied together.
+                  <span
+                    aria-hidden="true"
+                    className="absolute -top-7 left-1/2 h-7 w-px -translate-x-1/2 bg-border"
+                  />
                 ) : null}
               </div>
               </Fragment>

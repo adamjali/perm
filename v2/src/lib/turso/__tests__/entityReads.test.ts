@@ -13,6 +13,17 @@ vi.mock("server-only", () => ({}));
 
 const rows = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown[]>>();
 const one = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown>>();
+// `unstable_cache` needs Next's incremental-cache context, which does not
+// exist in a bare unit test: it throws "Invariant: incrementalCache missing".
+// These tests assert the SQL that reaches the driver, so the cache is mocked
+// to a pass-through. That keeps the subject of the test the query, not the
+// caching layer wrapped around it.
+vi.mock("next/cache", () => ({
+  unstable_cache: (fn: (...a: unknown[]) => unknown) => fn,
+  revalidateTag: () => undefined,
+  revalidatePath: () => undefined,
+}));
+
 vi.mock("../client", () => ({ rows, one }));
 
 const { nameVariants } = await import("../entityDetail");

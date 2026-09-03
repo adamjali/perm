@@ -16,6 +16,7 @@
  * reader sees.
  */
 import "server-only";
+import { unstable_cache } from "next/cache";
 
 import type { BulletinMonth } from "@/lib/perm";
 import { MIN_TOTAL_FOR_PAGE, type EntityKind, type EntityRow } from "@/lib/entityPayload";
@@ -459,7 +460,29 @@ export async function getDailyDecisions(
  * rendered by <DataProvenance> so provenance sits ON the page instead of in
  * a methodology page nobody visits. A row per dataset, replaced on ingest.
  */
-export async function getFreshness(): Promise<Record<string, DatasetFreshness>> {
+/**
+ * Freshness for every dataset. Read by nearly every public page, and the SAME
+ * result for all of them.
+ *
+ * Wrapped in `unstable_cache`, which is Vercel's Data Cache. THE POINT IS THAT
+ * IT SURVIVES A DEPLOYMENT, unlike the ISR route cache: Vercel's own docs say
+ * "Cached data persists across deployments unless you explicitly invalidate
+ * it", while a new deployment always starts with an empty route cache. So
+ * after a deploy the 13,579 entity pages still regenerate, but they do it
+ * without re-running this query 13,579 times.
+ *
+ * That matters twice over here. It cuts the Turso rows-read bill, which
+ * overran at 11.58 billion rows in two days, and it makes the unavoidable
+ * post-deploy regeneration cheap.
+ *
+ * Small results only. Runtime Cache writes bill at the ISR write rate, so
+ * caching rendered markup here would move the cost rather than remove it.
+ * This is a handful of rows.
+ *
+ * It also makes `revalidateTag` real for the first time: nothing in this app
+ * carried a cache tag before, so `revalidateTag` was a silent no-op.
+ */
+const freshnessUncached = async (): Promise<Record<string, DatasetFreshness>> => {
   const r = await rows<Record<string, unknown>>(
     "SELECT dataset, as_of, fetched_at, source, cadence, note, max_age_days FROM data_freshness",
   );
@@ -497,7 +520,15 @@ export async function getFreshness(): Promise<Record<string, DatasetFreshness>> 
     };
   }
   return out;
-}
+};
+
+export const getFreshness = unstable_cache(
+  freshnessUncached,
+  ["data-freshness"],
+  // An hour is well inside the daily cadence of every ingest that writes here,
+  // and the tag lets an ingest clear it on demand.
+  { revalidate: 3600, tags: ["data-freshness"] },
+);
 
 export interface I485Position {
   asOf: string;

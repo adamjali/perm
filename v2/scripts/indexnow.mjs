@@ -18,39 +18,76 @@ const KEY = process.env.INDEXNOW_KEY || "387bc5d78cc17c7049731cf74644a70e";
 const KEY_LOCATION = `https://${HOST}/${KEY}.txt`;
 const SITEMAP_URL = `https://${HOST}/sitemap.xml`;
 
+const locs = (xml) =>
+  [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1].trim()).filter(Boolean);
+
+const get = async (url) => {
+  const r = await fetch(url, { headers: { "User-Agent": "permtracker-indexnow/1.0" } });
+  if (!r.ok) throw new Error(`fetch failed: HTTP ${r.status} for ${url}`);
+  return r.text();
+};
+
+/**
+ * IndexNow accepts up to 10,000 URLs per request.
+ * https://www.indexnow.org/documentation
+ */
+const BATCH = 10000;
+
 async function main() {
-  const sm = await fetch(SITEMAP_URL, {
-    headers: { "User-Agent": "permtracker-indexnow/1.0" },
-  });
-  if (!sm.ok) throw new Error(`sitemap fetch failed: HTTP ${sm.status}`);
-  const xml = await sm.text();
+  // THE SITEMAP IS AN INDEX, AND THIS USED TO SUBMIT THE INDEX ITSELF.
+  //
+  // `/sitemap.xml` holds five <loc> entries, and every one of them is another
+  // sitemap rather than a page. So this script submitted five .xml files and
+  // reported "Submitted 5 URLs" as a success, for months. Bing's IndexNow
+  // report shows exactly that: the most recent submissions are
+  // `sitemaps/pages.xml`, `employer-1.xml` and so on, while the last real page
+  // URLs went in on 25 August, before the sitemap was split.
+  //
+  // A sitemap URL is a legal thing to submit and IndexNow returns 200 for it,
+  // which is why nothing ever complained. It just does not tell Bing that
+  // 13,758 individual pages exist.
+  const index = await get(SITEMAP_URL);
+  const entries = locs(index);
+  if (entries.length === 0) throw new Error("no <loc> URLs found in sitemap");
 
-  const urlList = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)]
-    .map((m) => m[1].trim())
-    .filter(Boolean);
-  if (urlList.length === 0) throw new Error("no <loc> URLs found in sitemap");
-
-  console.log(`Submitting ${urlList.length} URLs to IndexNow for ${HOST} …`);
-
-  const res = await fetch("https://api.indexnow.org/indexnow", {
-    method: "POST",
-    headers: { "Content-Type": "application/json; charset=utf-8" },
-    body: JSON.stringify({ host: HOST, key: KEY, keyLocation: KEY_LOCATION, urlList }),
-  });
-
-  // IndexNow: 200/202 = accepted; 422 = key/URL mismatch; 403 = key not validated yet.
-  console.log(`IndexNow response: HTTP ${res.status} ${res.statusText}`);
-  if (res.status !== 200 && res.status !== 202) {
-    const body = await res.text().catch(() => "");
-    console.error("Response body:", body.slice(0, 500));
-    console.error(
-      "Tip: ensure the key file is live (deployed) at",
-      KEY_LOCATION,
-      "before submitting.",
-    );
-    process.exit(1);
+  const children = entries.filter((u) => u.endsWith(".xml"));
+  let urlList = entries.filter((u) => !u.endsWith(".xml"));
+  for (const child of children) {
+    urlList = urlList.concat(locs(await get(child)));
   }
-  console.log(`✓ Accepted. Submitted ${urlList.length} URLs.`);
+  urlList = [...new Set(urlList)];
+
+  // A count far below the real page count means the walk broke; submitting a
+  // handful of URLs and calling it a success is the bug this replaced.
+  if (urlList.length < 100) {
+    throw new Error(
+      `only ${urlList.length} page URLs found across ${children.length} child sitemaps; ` +
+        "refusing to report success over a broken walk",
+    );
+  }
+  console.log(
+    `Found ${urlList.length} page URLs across ${children.length} child sitemap(s) for ${HOST}`,
+  );
+
+  let sent = 0;
+  for (let i = 0; i < urlList.length; i += BATCH) {
+    const batch = urlList.slice(i, i + BATCH);
+    const res = await fetch("https://api.indexnow.org/indexnow", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8" },
+      body: JSON.stringify({ host: HOST, key: KEY, keyLocation: KEY_LOCATION, urlList: batch }),
+    });
+    // IndexNow: 200/202 = accepted; 422 = key/URL mismatch; 403 = key not validated yet.
+    console.log(`  batch ${i / BATCH + 1}: ${batch.length} URLs -> HTTP ${res.status} ${res.statusText}`);
+    if (res.status !== 200 && res.status !== 202) {
+      const body = await res.text().catch(() => "");
+      console.error("Response body:", body.slice(0, 500));
+      console.error("Tip: ensure the key file is live (deployed) at", KEY_LOCATION);
+      process.exit(1);
+    }
+    sent += batch.length;
+  }
+  console.log(`✓ Accepted. Submitted ${sent} page URLs.`);
 }
 
 main().catch((err) => {

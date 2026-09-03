@@ -27,6 +27,7 @@
  * from a sponsor that genuinely has nothing pending.
  */
 import "server-only";
+import { unstable_cache } from "next/cache";
 
 import type { EntityKind } from "@/lib/entityPayload";
 
@@ -401,11 +402,19 @@ export interface SizeBand {
  * degrades gracefully instead of inverting, so it is the one figure the band
  * is asked for.
  */
-export async function sizeBand(
+/**
+ * Cached in Vercel's Data Cache, which SURVIVES A DEPLOYMENT while the ISR
+ * route cache does not. Every entity page calls this, so after a deploy the
+ * pages still regenerate but they no longer each re-run the query.
+ *
+ * Keyed on kind and rank because the band is a window around the rank, so
+ * neighbours legitimately share an answer. Small result: five numbers.
+ */
+const sizeBandUncached = async (
   kind: EntityKind,
   rank: number,
   span = 60,
-): Promise<SizeBand | null> {
+): Promise<SizeBand | null> => {
   const reach = Math.min(Math.max(1, Math.floor(span)), 500);
   // The subject is excluded. Included, the range reads back its own figure
   // as the band's maximum - Fragomen at rank 1 was told its neighbours filed
@@ -429,4 +438,11 @@ export async function sizeBand(
     medianDays: days.length >= 8 ? (days[Math.floor(days.length / 2)] ?? null) : null,
     withDays: days.length,
   };
-}
+};
+
+export const sizeBand = (kind: EntityKind, rank: number, span = 60) =>
+  unstable_cache(
+    () => sizeBandUncached(kind, rank, span),
+    ["size-band", kind, String(rank), String(span)],
+    { revalidate: 86400, tags: ["entities"] },
+  )();

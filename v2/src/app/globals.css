@@ -2603,3 +2603,97 @@ html[data-pre="on"] body::before {
 /* Children of a selected (manila) row that normally use theme tokens. */
 .doc-row.selected .doc-name, .note.selected .note-text { color: var(--manila-ink); }
 .doc-row.selected .doc-meta, .note.selected .note-when { color: var(--manila-ink-soft); }
+
+/* ---------------------------------------------------------------------------
+   Data rail: the repeated class strings, hoisted out of the markup.
+
+   MEASURED 2026-09-03. The rail renders ~30 rows on every page that carries
+   it, and four of its Tailwind strings are long: one is 410 characters and
+   appears 30 times, which is 12 KB of a 243 KB entity page. The markup is then
+   serialised a SECOND time into the RSC flight payload, so the real cost is
+   about double that.
+
+   That matters here beyond page weight. A Vercel ISR write unit is 8 KB, so
+   every 8 KB on a page is one more write unit charged on each regeneration,
+   across 13,579 entity pages. Repeated utility strings are the cheapest bytes
+   on the site to remove: one definition in the stylesheet, a short name in the
+   markup, identical rendering.
+
+   Kept as plain CSS rather than @apply so the declarations are readable and so
+   a Tailwind upgrade cannot silently change them.
+--------------------------------------------------------------------------- */
+.rail-row {
+  position: relative;
+  display: flex;
+  min-height: 2.75rem;              /* min-h-11, the 44px tap target */
+  align-items: center;
+  gap: 0.625rem;                    /* gap-2.5 */
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-right: 0.75rem;
+  transition-property: transform, background-color, box-shadow, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.rail-row:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-row { transition: none; }
+  .rail-row:hover { transform: none; }
+}
+
+/* The hairline that runs down the indented rows. */
+.rail-guide {
+  position: absolute;
+  left: 1rem;
+  top: 0;
+  height: 100%;
+  width: 1px;
+  background-color: color-mix(in oklab, var(--border) 60%, transparent);
+  transition: color 150ms, background-color 150ms;
+}
+
+/* The square state marker box at the start of each row. */
+.rail-marker {
+  display: flex;
+  width: 0.875rem;
+  height: 0.875rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* The group header (CASE TOOLS, QUEUE, ...). 452 characters x 8 per page. */
+.rail-tab {
+  position: relative;
+  display: flex;
+  min-height: 2.75rem;
+  width: 100%;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem 0.625rem 1rem;
+  text-align: left;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  transition-property: transform, background-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
+}
+.rail-tab:hover {
+  transform: translateX(3px);
+  background-color: var(--tint-primary);
+  color: var(--foreground);
+}
+.rail-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rail-tab { transition: none; }
+  .rail-tab:hover { transform: none; }
+}

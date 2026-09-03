@@ -1464,6 +1464,32 @@ before adding an index:
   and stats before a second, separate call showed it had been right all along.
   Re-run the EXPLAIN in a fresh request.
 
+## IndexNow was telling Bing about 5 URLs, not 13,758 (2026-09-03)
+
+`scripts/indexnow.mjs` fetched `/sitemap.xml` and submitted every `<loc>` it
+found. **That file is a sitemap INDEX**: its five entries are other sitemaps,
+not pages. So the script submitted five `.xml` files, IndexNow returned 200
+because a sitemap URL is a legal thing to submit, and the workflow went green
+every deploy for weeks.
+
+**The artefact is what caught it.** Bing Webmaster's IndexNow report lists what
+was actually received, and the recent rows are `sitemaps/pages.xml`,
+`employer-1.xml` and so on, while the last real page URLs went in on **25
+August**, the day before the sitemap was split. The exit code said success the
+whole time.
+
+This is the likeliest mechanism behind the AI-citation gap: Bing's index feeds
+Copilot, and the site has **zero** AI citations for prevailing wage, LCA and
+case-status meaning. Those pages were never submitted.
+
+The script now walks the index one level down, batches at IndexNow's documented
+10,000-URL limit, and **refuses to report success if the walk yields under 100
+URLs**, because silently submitting a handful was the original bug. Verified
+before and after: 5 URLs then, 13,758 across five child sitemaps now.
+
+**Where to check this, not the workflow log:**
+`bing.com/webmasters/indexnow` lists every URL Bing received and when.
+
 ## A prefix range on the leading index column forces a sort, always (2026-09-02)
 
 The employer searches over `pwd_cases` / `lca_cases` are

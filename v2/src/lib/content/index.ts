@@ -127,15 +127,39 @@ export function getRelatedPosts(
 }
 
 /** Get all unique tags across all posts of a given type */
-export function getAllTags(type?: ContentType): string[] {
+/**
+ * Tags worth offering as a filter.
+ *
+ * A filter chip is only useful if clicking it narrows the list to something.
+ * At 37 guides the raw set reached 102 tags, 46 of them used exactly once,
+ * and the row filled an entire screen before a single article appeared. A tag
+ * on one article is not a category, it is a keyword, and it belongs in the
+ * article's own metadata rather than in the reader's way.
+ *
+ * So a caller that renders a filter row passes `minCount` and `limit`. The
+ * DEFAULTS RETURN EVERYTHING, because this is a shared utility and changing
+ * what it returns by default changes it for callers that never asked. Order is
+ * by frequency for SELECTION under the cap, then returned alphabetically, so
+ * a filter row can be scanned for a known word.
+ */
+export function getAllTags(type?: ContentType, minCount = 1, limit = Infinity): string[] {
   const posts = getAllPosts(type);
-  const tagSet = new Set<string>();
+  const counts = new Map<string, number>();
   for (const post of posts) {
     for (const tag of post.meta.tags) {
-      tagSet.add(tag);
+      counts.set(tag, (counts.get(tag) ?? 0) + 1);
     }
   }
-  return Array.from(tagSet).sort();
+  // Frequency decides WHICH tags survive the cap; the result is returned
+  // alphabetically, because a filter row is scanned to find a known word, not
+  // read in rank order. With the defaults this is the whole set, sorted, which
+  // is the contract callers already had.
+  return Array.from(counts.entries())
+    .filter(([, n]) => n >= minCount)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, limit)
+    .map(([tag]) => tag)
+    .sort((a, b) => a.localeCompare(b));
 }
 
 /** Get featured posts (pinned) */

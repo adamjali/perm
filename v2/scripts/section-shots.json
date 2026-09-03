@@ -1,0 +1,202 @@
+[
+ {
+  "name": "queue-frontier",
+  "url": "https://permtracker.app/perm-queue",
+  "clip": "main section:nth-of-type(1)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "queue-months",
+  "url": "https://permtracker.app/perm-queue",
+  "clip": "main section:nth-of-type(3)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "processing-oews",
+  "url": "https://permtracker.app/perm-processing-times",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "activity-feed",
+  "url": "https://permtracker.app/perm-decision-activity",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "employer-band",
+  "url": "https://permtracker.app/perm-employers/google-llc",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "employer-stats",
+  "url": "https://permtracker.app/perm-employers/google-llc",
+  "clip": "main section:nth-of-type(1)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "employers-list",
+  "url": "https://permtracker.app/perm-employers",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "attorneys-table",
+  "url": "https://permtracker.app/perm-attorneys",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "wages-ladder",
+  "url": "https://permtracker.app/perm-wages",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "wages-occupations",
+  "url": "https://permtracker.app/perm-wages",
+  "clip": "main section:nth-of-type(3)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "salary-explorer-ui",
+  "url": "https://permtracker.app/tools/salary-explorer",
+  "clip": "main section:nth-of-type(1)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "denial-factors",
+  "url": "https://permtracker.app/perm-denial-risk",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "rfi-stages",
+  "url": "https://permtracker.app/perm-rfi-audit",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "deadline-form",
+  "url": "https://permtracker.app/tools/perm-deadline-calculator",
+  "clip": "main section:nth-of-type(1)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "deadline-results",
+  "url": "https://permtracker.app/tools/perm-deadline-calculator",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "timeline-estimate",
+  "url": "https://permtracker.app/tools/perm-timeline-calculator",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "pwd-queue-months",
+  "url": "https://permtracker.app/tools/pwd-calculator",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "bulletin-chart",
+  "url": "https://permtracker.app/tools/priority-date-calculator",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "bulletin-table",
+  "url": "https://permtracker.app/tools/priority-date-calculator",
+  "clip": "main section:nth-of-type(3)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "pwd-search-form",
+  "url": "https://permtracker.app/pwd-cases",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "lca-search-form",
+  "url": "https://permtracker.app/lca-cases",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "case-search-form",
+  "url": "https://permtracker.app/perm-cases",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "tools-map",
+  "url": "https://permtracker.app/tools",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "calculators-table",
+  "url": "https://permtracker.app/calculators",
+  "clip": "main section:nth-of-type(2)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ },
+ {
+  "name": "by-state-map",
+  "url": "https://permtracker.app/perm-by-state",
+  "clip": "main section:nth-of-type(1)",
+  "wait": "main",
+  "width": 1280,
+  "settle": 1800
+ }
+]

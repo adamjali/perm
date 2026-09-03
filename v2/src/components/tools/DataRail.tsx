@@ -141,12 +141,10 @@ export function DataRail() {
                 aria-controls={`rail-${slug(g)}`}
                 onClick={() => setOpen(isOpen ? null : g)}
                 className={cn(
-                  "group/tab relative flex min-h-11 w-full items-center gap-2.5 py-2.5 pl-4 pr-3 text-left",
-                  "font-mono text-xs font-bold uppercase tracking-[0.12em]",
-                  "transition-[transform,background-color,color] duration-150 ease-out",
-                  "hover:translate-x-[3px] hover:bg-tint-primary hover:text-foreground",
-                  "focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-primary",
-                  "motion-reduce:transition-none motion-reduce:hover:translate-x-0",
+                  // `group/tab` stays: a child still targets it. Everything
+                  // else is `rail-tab` in globals.css, 452 characters saved on
+                  // each of the eight group headers, on every page.
+                  "group/tab rail-tab",
                   isOpen ? "text-foreground" : "text-foreground/65",
                 )}
               >
@@ -584,10 +582,11 @@ function Tab({
         if (!current) onNavigate(href);
       }}
       className={cn(
-        "relative flex min-h-11 items-center gap-2.5 py-2 pr-3",
-        "transition-[transform,background-color,box-shadow,color] duration-150 ease-out",
-        "focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-primary",
-        "motion-reduce:transition-none motion-reduce:hover:translate-x-0",
+        // `rail-row` carries the layout, the transition, the focus ring and
+        // the reduced-motion opt-out. It is one class in the markup instead of
+        // ~410 characters, and this row renders about 30 times per page across
+        // 13,579 entity pages. See globals.css for the measurement.
+        "rail-row",
         // SIZE IS THE HIERARCHY. Adam: "make overview bigger and make this one
         // like the (old) overview if u want hierarchy or something." Overview
         // is the parent of every group rather than a peer of any item, so it
@@ -652,13 +651,13 @@ function Tab({
         // it there would put a rule through the middle of a solid block.
         <span
           aria-hidden="true"
-          className="absolute left-4 top-0 h-full w-px bg-border/60 transition-colors duration-150"
+          className="rail-guide"
         />
       ) : null}
       <span
         aria-hidden="true"
         className={cn(
-          "flex size-3.5 shrink-0 items-center justify-center",
+          "rail-marker",
           current ? "text-black" : kind === "home" ? "text-primary" : "text-transparent",
         )}
       >

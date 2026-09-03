@@ -27,6 +27,7 @@
  * cost here.
  */
 import "server-only";
+import { unstable_cache } from "next/cache";
 
 import type { EntityKind, EntityRow } from "@/lib/entityPayload";
 
@@ -145,7 +146,25 @@ export function fieldDistribution(
   const hit = cohortCache.get(key);
   if (hit && Date.now() - hit.at < COHORT_TTL_MS) return hit.value;
 
-  const value = computeFieldDistribution(kind, bar);
+  // TWO LAYERS, and they do different jobs. The map above is L1: free,
+  // instant, and per server instance, so it dies with the instance and with
+  // every deployment. `unstable_cache` is L2: Vercel's Data Cache, which its
+  // docs say "persists across deployments unless you explicitly invalidate
+  // it", unlike the ISR route cache which is scoped to one deployment and
+  // always starts empty. So after a deploy the 13,579 entity pages still
+  // regenerate, but they no longer each re-read this cohort from Turso.
+  //
+  // That is the half of the bill worth attacking: the regeneration itself is
+  // unavoidable, the database read behind it is not. Rows read overran at
+  // 11.58 billion in two days.
+  //
+  // Small result, deliberately. Runtime Cache writes bill at the same rate as
+  // ISR writes, so this caches a computed distribution, never rendered markup.
+  const value = unstable_cache(
+    () => computeFieldDistribution(kind, bar),
+    ["field-distribution", kind, String(bar)],
+    { revalidate: 3600, tags: ["entities"] },
+  )();
   cohortCache.set(key, { at: Date.now(), value });
   // A rejected promise must not be pinned for an hour: evict it so the next
   // request retries rather than replaying one bad minute all afternoon.

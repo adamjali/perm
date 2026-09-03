@@ -29,7 +29,11 @@ export const metadata: Metadata = {
 
 export default function BlogPage() {
   const posts = getAllPosts("blog");
-  const tags = getAllTags("blog");
+  // Only tags that actually narrow the list. At 37 guides the raw set was
+  // 102 tags, 46 of them on a single article, and the filter row filled a
+  // whole screen before the first card. A tag on one article is a keyword,
+  // not a category.
+  const tags = getAllTags("blog", 2, 24);
   const { '@context': _1, ...itemList } = generateItemListSchema(posts, "blog");
   const { '@context': _2, ...breadcrumb } = generateBreadcrumbSchema([
     { name: "Home", href: "/" },

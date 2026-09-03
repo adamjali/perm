@@ -296,15 +296,19 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               Where&apos;s your case? When could it be decided?
             </label>{" "}
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              {/* autoCapitalize "none", not "characters": the field now takes
+                  an employer name as well, and forcing MICROSOFT CORPORATION
+                  on a phone reads as shouting. A case number is upper-cased by
+                  `normaliseCaseNumber` on the answer page anyway. */}
               <input
                 id="hero-case"
                 name="case"
                 type="text"
                 required
                 autoComplete="off"
-                autoCapitalize="characters"
+                autoCapitalize="none"
                 spellCheck={false}
-                placeholder="G-100-24339-516453"
+                placeholder="G-100-24339-516453 or an employer name"
                 aria-describedby="hero-case-hint"
                 className="mono min-h-[48px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />{" "}
@@ -316,7 +320,8 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               </button>
             </div>{" "}
             <p id="hero-case-hint" className="mt-2 text-sm text-foreground/70">
-              PERM (G-), wage request (P-) or LCA (I-) number.
+              PERM (G-), wage request (P-) or LCA (I-) number. No number? An
+              employer name works too.
             </p>{" "}
             {/* NO HELP LINE. It read "Live DOL status, your place in the
                 queue, and an estimate. Free, no account. The case number is on

@@ -38,6 +38,7 @@ export type DataSection =
   | "employers"
   | "attorneys"
   | "cases"
+  | "all-cases"
   | "pwd-cases"
   | "lca-cases"
   | "risk"
@@ -80,7 +81,12 @@ export const SECTIONS: DataNavSection[] = [
   // Moved out of "Who files". It searches the case corpus, and somebody
   // holding a case number is the highest-intent reader on this surface; the
   // two lookups belong together.
-  { key: "cases", group: "Case tools", label: "Case search", href: "/perm-cases" },
+  { key: "cases", group: "Case tools", label: "PERM cases", href: "/perm-cases" },
+  // The one entry that crosses programs. It sits above the three per-program
+  // pages because a reader who does not know which program their filing
+  // belongs to cannot pick between them, and that reader is the reason it
+  // exists.
+  { key: "all-cases", group: "Case tools", label: "Search all programs", href: "/case-search" },
   // The step before the PERM, findable the same way: employer, title, month.
   { key: "pwd-cases", group: "Case tools", label: "Wage requests", href: "/pwd-cases" },
   { key: "lca-cases", group: "Case tools", label: "H-1B LCAs", href: "/lca-cases" },

@@ -28,7 +28,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { DecisionPaceChart } from "@/components/activity/DecisionPaceChart";
 import { OutcomeMix } from "@/components/activity/OutcomeMix";
 import { WeekdayShape } from "@/components/activity/WeekdayShape";
-import { ChangeFeed } from "@/components/activity/ChangeFeed";
+import { ChangeFeedBrowser } from "@/components/activity/ChangeFeedBrowser";
 import { getActivitySeries } from "@/lib/turso/activity";
 import { getChangeFeed } from "@/lib/turso/changes";
 import { getLiveMirrorSize } from "@/lib/turso/publicData";
@@ -197,14 +197,14 @@ export default async function DecisionActivityPage() {
       {feed ? (
         <section className="mt-10">
           <h2 className="font-heading text-2xl font-black">
-            The cases DOL moved on {longDate(feed.date)}
+            The cases DOL moved, day by day
           </h2>{" "}
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
             Counts say how much DOL cleared. This says which cases, and what
             each one moved from and to, which is the only view that separates an
             information request being issued from one being answered.
           </p>{" "}
-          <ChangeFeed feed={feed} />{" "}
+          <ChangeFeedBrowser initial={feed} />{" "}
           <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">
             Dated when our per-case scan of flag.dol.gov{" "}
             <b>saw</b> the change, which is not necessarily the day DOL made it:

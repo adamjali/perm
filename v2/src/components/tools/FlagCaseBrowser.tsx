@@ -12,6 +12,9 @@ import { formatMonth } from "@/lib/dolFormat";
 import type { FlagCaseRow, FlagDisclosedRow, FlagDisclosureSummary, FlagKind, FlagListPage, FlagSummary } from "@/lib/turso/flagCases";
 import { formatWage } from "@/lib/wageFormat";
 import { mergeHalves } from "@/lib/flagMerge";
+import { normaliseCaseNumber } from "@/lib/caseNumberShape";
+import { SortableHeader } from "@/components/tools/SortableHeader";
+import { nextSort, sortRows, type SortColumn, type SortState } from "@/lib/tableSort";
 
 /**
  * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
@@ -91,26 +94,40 @@ function Rows({
   wageLabel?: string;
 }) {
   const withWage = !!wages && wages.size > 0;
-  const heads = withWage
-    ? ["Case", "Status", "Employer", "Job title", wageLabel ?? "Wage", "Filed", "Checked"]
-    : ["Case", "Status", "Employer", "Job title", "Filed", "Checked"];
+  const [sort, setSort] = useState<SortState>({ key: "filed", dir: -1 });
+  const columns: SortColumn<FlagCaseRow>[] = useMemo(() => {
+    const cols: SortColumn<FlagCaseRow>[] = [
+      { key: "status", label: "Status", get: (r) => r.status },
+      { key: "employer", label: "Employer", get: (r) => r.employerName },
+      { key: "title", label: "Job title", get: (r) => r.jobTitle },
+    ];
+    if (withWage) {
+      cols.push({
+        key: "wage",
+        label: wageLabel ?? "Wage",
+        descFirst: true,
+        get: (r) => wages?.get(r.caseNumber)?.wage ?? null,
+      });
+    }
+    cols.push(
+      { key: "filed", label: "Filed", descFirst: true, get: (r) => r.filingDate },
+      { key: "checked", label: "Checked", descFirst: true, get: (r) => r.lastCheckedAt ?? null },
+    );
+    return cols;
+  }, [withWage, wageLabel, wages]);
+  const ordered = useMemo(() => sortRows(rows, columns, sort), [rows, columns, sort]);
   return (
     <div className="mt-4 overflow-x-auto">
       <table className="w-full min-w-[820px] border-collapse text-left text-base">
         <caption className="sr-only">{caption}</caption>
-        <thead className="bg-foreground text-background">
-          <tr>
-            {heads.map((h) => (
-              <Fragment key={h}>
-              <th scope="col" className="whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider">
-                {h}
-              </th>
-              </Fragment>
-            ))}
-          </tr>
-        </thead>
+        <SortableHeader
+          columns={columns}
+          sort={sort}
+          onSort={(k) => setSort((cur) => nextSort(cur, k, columns))}
+          leading={["Case"]}
+        />
         <tbody className="bg-card">
-          {rows.map((r) => (
+          {ordered.map((r) => (
             <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                 <Link
@@ -153,23 +170,31 @@ function DisclosedRows({
   caption: string;
   wageLabel: string;
 }) {
+  const [sort, setSort] = useState<SortState>({ key: "decided", dir: -1 });
+  const columns: SortColumn<FlagDisclosedRow>[] = useMemo(
+    () => [
+      { key: "status", label: "Status", get: (r) => r.status },
+      { key: "employer", label: "Employer", get: (r) => r.employerName },
+      { key: "title", label: "Job title", get: (r) => r.jobTitle },
+      { key: "wage", label: wageLabel, descFirst: true, get: (r) => r.wage },
+      { key: "received", label: "Received", descFirst: true, get: (r) => r.receivedDate },
+      { key: "decided", label: "Decided", descFirst: true, get: (r) => r.decisionDate },
+    ],
+    [wageLabel],
+  );
+  const ordered = useMemo(() => sortRows(rows, columns, sort), [rows, columns, sort]);
   return (
     <div className="mt-4 overflow-x-auto">
       <table className="w-full min-w-[820px] border-collapse text-left text-base">
         <caption className="sr-only">{caption}</caption>
-        <thead className="bg-foreground text-background">
-          <tr>
-            {["Case", "Status", "Employer", "Job title", wageLabel, "Received", "Decided"].map((h) => (
-              <Fragment key={h}>
-              <th scope="col" className="whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider">
-                {h}
-              </th>
-              </Fragment>
-            ))}
-          </tr>
-        </thead>
+        <SortableHeader
+          columns={columns}
+          sort={sort}
+          onSort={(k) => setSort((cur) => nextSort(cur, k, columns))}
+          leading={["Case"]}
+        />
         <tbody className="bg-card">
-          {rows.map((r) => (
+          {ordered.map((r) => (
             <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                 <Link
@@ -217,6 +242,9 @@ export function FlagCaseBrowser({
 
   // --- search -----------------------------------------------------------
   const [employerInput, setEmployerInput] = useState(initial);
+  // Same reason as on the cross-program search: an employer search reads our
+  // tables and can only miss on a number, while the lookup asks DOL live.
+  const typedCaseNumber = normaliseCaseNumber(employerInput);
   const [titleInput, setTitleInput] = useState("");
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
@@ -327,6 +355,19 @@ export function FlagCaseBrowser({
             </label>
           </div>
         </form>{" "}
+        {typedCaseNumber ? (
+          <p className="mt-4 border-2 border-primary bg-tint-primary p-4 text-base leading-relaxed">
+            That is a case number.{" "}
+            <Link
+              href={`/perm-case-status?case=${encodeURIComponent(typedCaseNumber)}`}
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              Look up {typedCaseNumber} directly
+            </Link>{" "}
+            and DOL is asked live, which answers even for a filing nothing here
+            has recorded yet.
+          </p>
+        ) : null}
         {searching && searchFailed ? (
           <p className="mt-4 text-base text-foreground/80">The search didn&apos;t load. Try again in a moment.</p>
         ) : null}
@@ -380,6 +421,17 @@ export function FlagCaseBrowser({
           </>
         ) : null}
       </section>
+
+      <p className="text-base leading-relaxed text-foreground/80">
+        Looking for everything one employer has filed?{" "}
+        <Link
+          href={`/case-search${query.employer ? `?q=${encodeURIComponent(query.employer)}` : ""}`}
+          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+        >
+          Search all three DOL programs at once
+        </Link>{" "}
+        for the PERM, the wage request and the LCA side by side.
+      </p>
 
       <section id="browse" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <h2 className="font-heading text-xl font-black">Browse every {program.noun} DOL has confirmed</h2>{" "}

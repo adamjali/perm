@@ -83,7 +83,9 @@ def frontmatter(text):
     return fm, text[end + 4:]
 
 def main():
-    files = sorted(GUIDES.glob("*.mdx"))
+    # Both content sections: six pieces moved guides -> blog on 2026-09-03, and
+    # a gate that only knew one of them reported every cross-link as broken.
+    files = sorted(GUIDES.glob("*.mdx")) + sorted((ROOT / "content/blog").glob("*.mdx"))
     shots = {p.stem for p in SHOTS.glob("*.webp")}
     slugs = {p.stem for p in files}
     # Every internal route the articles may link to, from the live sitemap list
@@ -124,9 +126,10 @@ def main():
         # Internal links must point at a route or a guide that exists.
         for href in re.findall(r"\]\((/[\w\-/]*)\)", body):
             h = href.rstrip("/")
-            if h.startswith("/guides/"):
-                if h.removeprefix("/guides/") not in slugs:
-                    problems.append((rel, f"link to missing guide: {href}"))
+            if h.startswith("/guides/") or h.startswith("/blog/"):
+                slug = h.rsplit("/", 1)[-1]
+                if slug not in slugs:
+                    problems.append((rel, f"link to missing article: {href}"))
             elif routes and h not in routes:
                 problems.append((rel, f"link to unknown route: {href}"))
 

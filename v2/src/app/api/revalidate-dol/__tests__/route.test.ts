@@ -15,7 +15,8 @@ import { join } from "node:path";
  */
 
 const revalidatePath = vi.fn();
-vi.mock("next/cache", () => ({ revalidatePath }));
+const revalidateTag = vi.fn();
+vi.mock("next/cache", () => ({ revalidatePath, revalidateTag }));
 
 const { POST } = await import("../route");
 const { DOL_PAGES } = await import("../paths");
@@ -31,6 +32,7 @@ function post(secret: string | null = SECRET): Request {
 
 beforeEach(() => {
   revalidatePath.mockReset();
+  revalidateTag.mockReset();
   process.env.REVALIDATE_SECRET = SECRET;
 });
 
@@ -46,6 +48,7 @@ describe("POST /api/revalidate-dol", () => {
     delete process.env.REVALIDATE_SECRET;
     expect((await POST(post(null))).status).toBe(403);
     expect(revalidatePath).not.toHaveBeenCalled();
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 
   it("expires every listed path on a valid call", async () => {
@@ -54,6 +57,15 @@ describe("POST /api/revalidate-dol", () => {
     await expect(res.json()).resolves.toMatchObject({ revalidated: DOL_PAGES.length });
     expect(revalidatePath).toHaveBeenCalledTimes(DOL_PAGES.length);
     for (const p of DOL_PAGES) expect(revalidatePath).toHaveBeenCalledWith(p);
+    // The tag drops the cached DATA; the paths drop the pages that print it.
+    // Without the tag, every regenerated page reads the same cached freshness
+    // row back and the as-of stamp never moves.
+    expect(revalidateTag).toHaveBeenCalledWith("data-freshness", { expire: 0 });
+    // `{ expire: 0 }` is immediate. A NAMED profile would be a
+    // stale-while-revalidate window, which is the wrong semantic for a figure
+    // that has just changed, and calling it with one argument is deprecated.
+    expect(revalidateTag).not.toHaveBeenCalledWith("data-freshness");
+    expect(revalidateTag).not.toHaveBeenCalledWith("data-freshness", "max");
   });
 
   it("uses LITERAL paths, never the (route, 'page') pattern form", () => {

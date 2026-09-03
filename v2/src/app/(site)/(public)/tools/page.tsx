@@ -18,11 +18,14 @@ import {
   analystReviewAverage,
 } from "../../../../../convex/lib/dolProcessingTimes";
 import {
+  AttestationStackMini,
   BulletinStepsMini,
   QueueDepthMini,
+  RecordMatchMini,
   ScaleBarsMini,
-  TapeMini,
+  UnionMini,
   TwoBarsMini,
+  WageLevelsMini,
   WindowSpansMini,
 } from "@/components/tools/MiniDiagrams";
 import { QueueTape } from "@/components/tools/QueueTape";
@@ -208,16 +211,22 @@ export default async function ToolsPage() {
       <section className="mt-12">
         <h2 className="font-heading text-2xl font-black">The whole field</h2>{" "}
         <p className="mt-2 max-w-2xl text-base text-foreground/70">
-          DOL&apos;s disclosure files cut by place, pay, sponsor, firm and
-          outcome, then case-by-case search across PERM, wage requests and
-          LCAs.
+          One search across all three DOL programs, then the disclosure files
+          cut by place, pay, sponsor, firm and outcome.
         </p>
-        {/* Flex-wrap, not a 3-column grid: there are five cards, so a fixed
-            third column leaves an empty cell in the last row that reads as a
-            card that failed to load. Wrapping lets the last row share the
-            width instead. */}
+        {/* Flex-wrap, not a 3-column grid: the card count changes as pages are
+            added, and a fixed third column leaves an empty cell in the last
+            row that reads as a card that failed to load. Wrapping lets the
+            last row share the width instead, whatever the count. */}
         <div className="mt-6 flex flex-wrap gap-4 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:basis-72">
           {[
+            {
+              href: "/case-search",
+              label: "Search all programs",
+              blurb: "One box across PERM, wage requests and LCAs. Every filing an employer has made, sortable.",
+              tone: "ink",
+              viz: "union" as const,
+            },
             {
               href: "/perm-by-state",
               label: "By state",
@@ -229,7 +238,7 @@ export default async function ToolsPage() {
               href: "/perm-wages",
               label: "Wages",
               blurb: "Median offered wage by occupation, from what each employer committed to pay.",
-              tone: "ink",
+              tone: "tint",
               viz: "twobars" as const,
             },
             {
@@ -258,21 +267,21 @@ export default async function ToolsPage() {
               label: "Case search",
               blurb: "Every decided case DOL has published, searchable by employer, job and outcome.",
               tone: "card",
-              viz: "tape" as const,
+              viz: "records" as const,
             },
             {
               href: "/pwd-cases",
               label: "Wage requests",
               blurb: "Prevailing wage requests confirmed by DOL, searchable by employer before the PERM exists.",
               tone: "tint",
-              viz: "tape" as const,
+              viz: "levels" as const,
             },
             {
               href: "/lca-cases",
               label: "H-1B LCAs",
               blurb: "Labor condition applications as DOL confirms them, by employer and title.",
               tone: "card",
-              viz: "tape" as const,
+              viz: "attest" as const,
             },
           ].map((c) => (
             <a
@@ -299,7 +308,10 @@ export default async function ToolsPage() {
                 {c.viz === "queue" ? <QueueDepthMini /> : null}
                 {c.viz === "spans" ? <WindowSpansMini /> : null}
                 {c.viz === "steps" ? <BulletinStepsMini /> : null}
-                {c.viz === "tape" ? <TapeMini /> : null}
+                {c.viz === "union" ? <UnionMini /> : null}
+                {c.viz === "records" ? <RecordMatchMini /> : null}
+                {c.viz === "levels" ? <WageLevelsMini /> : null}
+                {c.viz === "attest" ? <AttestationStackMini /> : null}
               </div>{" "}
               <p
                 className={

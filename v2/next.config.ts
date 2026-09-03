@@ -168,6 +168,17 @@ const nextConfig: NextConfig = {
       { source: "/resources", destination: "/guides", permanent: true },
       { source: "/tutorials/:slug", destination: "/guides/:slug", permanent: true },
       { source: "/resources/:slug", destination: "/guides/:slug", permanent: true },
+      // Six analysis pieces moved guides -> blog on 2026-09-03. They argue a
+      // position from our own measured data rather than instructing, which is
+      // what the blog is for; guides stays how-to and reference. Redirects
+      // because these shipped at /guides/ hours earlier and are linked from
+      // other articles and from the sitemap Google has already read.
+      { source: "/guides/why-perm-cases-are-denied", destination: "/blog/why-perm-cases-are-denied", permanent: true },
+      { source: "/guides/what-law-firm-volume-tells-you", destination: "/blog/what-law-firm-volume-tells-you", permanent: true },
+      { source: "/guides/what-an-employers-perm-record-shows", destination: "/blog/what-an-employers-perm-record-shows", permanent: true },
+      { source: "/guides/what-dol-publishes-about-perm", destination: "/blog/what-dol-publishes-about-perm", permanent: true },
+      { source: "/guides/how-perm-wage-data-is-published", destination: "/blog/how-perm-wage-data-is-published", permanent: true },
+      { source: "/guides/what-to-do-while-you-wait", destination: "/blog/what-to-do-while-you-wait", permanent: true },
       { source: "/demo", destination: "/tools", permanent: true },
       { source: "/demo.html", destination: "/tools", permanent: true },
       { source: "/register.html", destination: "/signup", permanent: true },

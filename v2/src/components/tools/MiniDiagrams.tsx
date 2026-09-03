@@ -329,3 +329,209 @@ export function CertaintyRangeMini() {
     </svg>
   );
 }
+
+/**
+ * A corpus of decided cases with one row found, and its outcome.
+ *
+ * Three cards on the tools page were drawing `TapeMini`, which is the DOL
+ * QUEUE FRONTIER: cleared months behind a flag. That is the right picture for
+ * "where is the line", and the wrong picture for all three of them - a search
+ * over a published corpus, a wage determination, and a certified attestation
+ * are three different ideas and were reading as one product. A drawing that
+ * names the wrong subject is worse than no drawing, because it is confidently
+ * wrong and nobody re-reads a thumbnail.
+ *
+ * This one draws what the case search actually does: many published records,
+ * a query narrowing them, one row lit, and its decision at the end. The
+ * outcome mark is a rule, not a tick or a cross, because the corpus holds both
+ * and the drawing must not imply the answer is always a certification.
+ */
+export function RecordMatchMini() {
+  const rows = [0, 1, 2, 3];
+  const hit = 2;
+  return (
+    <svg viewBox="0 0 120 52" className={FRAME} aria-hidden="true">
+      {rows.map((r) => {
+        const y = 6 + r * 12;
+        const lit = r === hit;
+        return (
+          <g key={r}>
+            {/* The record: a run of fields. */}
+            {[0, 1, 2].map((f) => (
+              <rect
+                key={f}
+                x={4 + f * 26}
+                y={y}
+                width={f === 1 ? 22 : 20}
+                height={8}
+                fill={lit ? "var(--primary)" : "currentColor"}
+                opacity={lit ? 1 : 0.14}
+                stroke="currentColor"
+                strokeWidth={lit ? 1.5 : 1}
+              />
+            ))}
+            {/* The decision column, drawn for every row so the lit one is
+                found rather than singled out by having a field nobody else
+                has. */}
+            <rect
+              x={86}
+              y={y}
+              width={30}
+              height={8}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={lit ? 1.5 : 1}
+              opacity={lit ? 1 : 0.3}
+            />
+            <line
+              x1={90}
+              y1={y + 4}
+              x2={lit ? 112 : 100}
+              y2={y + 4}
+              stroke="currentColor"
+              strokeWidth="1.5"
+              opacity={lit ? 0.85 : 0.25}
+            />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/**
+ * A prevailing wage determination: four levels, one of them set.
+ *
+ * DOL does not return a number out of thin air. It places the job at one of
+ * four experience levels within its occupation and the level carries the wage,
+ * which is why this is a stepped scale with one step marked rather than a bar
+ * whose length is a dollar figure. The marked step is II because that is the
+ * modal level, and a drawing that always pointed at IV would read as a claim
+ * about wages rather than a picture of the mechanism.
+ *
+ * Deliberately unlike `TwoBarsMini` (two bars disagreeing) and `ScaleBarsMini`
+ * (stages to scale): ascending discrete steps with a caret is a third shape.
+ */
+export function WageLevelsMini() {
+  const heights = [10, 18, 26, 34];
+  const set = 1;
+  return (
+    <svg viewBox="0 0 120 52" className={FRAME} aria-hidden="true">
+      <line x1="4" y1="44" x2="116" y2="44" stroke="currentColor" strokeWidth="1.5" opacity="0.4" />
+      {heights.map((h, i) => (
+        <rect
+          key={i}
+          x={8 + i * 26}
+          y={44 - h}
+          width={20}
+          height={h}
+          fill={i === set ? "var(--primary)" : "currentColor"}
+          opacity={i === set ? 1 : 0.16}
+          stroke="currentColor"
+          strokeWidth={i === set ? 1.5 : 1}
+        />
+      ))}
+      {/* The determination, sitting on the level it set. */}
+      <text
+        x={8 + set * 26 - 2}
+        y={44 - heights[set]! - 5}
+        fontSize="8"
+        fontFamily="var(--font-mono)"
+        fontWeight="700"
+        fill="currentColor"
+      >
+        SET
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * A certified attestation, filed in volume.
+ *
+ * An LCA is not adjudicated the way a PERM is. The employer attests, DOL
+ * certifies, and it happens hundreds of thousands of times a year - so the
+ * honest picture is a stack, not a queue. Offset sheets with a certification
+ * rule on the face give this card a shape nothing else in the kit uses, which
+ * is the whole point: three cards in one row must not share a drawing.
+ */
+export function AttestationStackMini() {
+  return (
+    <svg viewBox="0 0 120 52" className={FRAME} aria-hidden="true">
+      {/* The stack behind: how many there are. Offset down-right so the face
+          sits at the top-left and the depth reads as depth rather than as a
+          second document that failed to line up. */}
+      {[2, 1].map((d) => (
+        <rect
+          key={d}
+          x={4 + d * 6}
+          y={4 + d * 4}
+          width={78}
+          height={38}
+          fill="currentColor"
+          opacity={0.1}
+          stroke="currentColor"
+          strokeWidth="1"
+        />
+      ))}
+      {/* The face. */}
+      <rect x="4" y="4" width="78" height="38" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      {[12, 19, 26].map((y, i) => (
+        <line
+          key={y}
+          x1="10"
+          y1={y}
+          x2={i === 2 ? 46 : 76}
+          y2={y}
+          stroke="currentColor"
+          strokeWidth="1.5"
+          opacity="0.35"
+        />
+      ))}
+      {/* Certified: a stamp ON the form, wholly inside its edge. Outlined
+          rather than filled so it reads on card, tint and ink alike - a filled
+          currentColor box with background-coloured text renders as a white box
+          with white text on the ink surface, the bug TapeMini's flag already
+          carries a comment about. */}
+      <rect x="34" y="30" width="44" height="9" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <rect x="34" y="30" width="4" height="9" fill="var(--primary)" />
+      <text x="41" y="37.2" fontSize="6" fontFamily="var(--font-mono)" fontWeight="700" fill="currentColor">
+        CERTIFIED
+      </text>
+    </svg>
+  );
+}
+
+/**
+ * Three programs, one search: three streams joining into one result.
+ *
+ * The cross-program search is the only card on that grid that is not a cut of
+ * one dataset, so its drawing has to say "these three become one" rather than
+ * name a subject. Three inbound runs at different lengths (the programs hold
+ * very different volumes) fold into a single lit row.
+ */
+export function UnionMini() {
+  const lanes = [
+    { y: 8, w: 34 },
+    { y: 20, w: 26 },
+    { y: 32, w: 30 },
+  ];
+  return (
+    <svg viewBox="0 0 120 52" className={FRAME} aria-hidden="true">
+      {lanes.map((l) => (
+        <g key={l.y}>
+          <rect x={4} y={l.y} width={l.w} height={8} fill="currentColor" opacity="0.16" stroke="currentColor" strokeWidth="1" />
+          {/* The fold: out of the lane, across to the join. */}
+          <path
+            d={`M ${4 + l.w} ${l.y + 4} H 56 L 66 ${24} H 72`}
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            opacity="0.4"
+          />
+        </g>
+      ))}
+      <rect x={72} y={20} width={44} height={8} fill="var(--primary)" stroke="currentColor" strokeWidth="1.5" />
+    </svg>
+  );
+}
