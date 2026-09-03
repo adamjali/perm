@@ -76,6 +76,7 @@ export function ChangeFeedBrowser({ initial }: { initial: Feed }) {
                 <option value={d.date}>
                   {longDate(d.date)} — {fmt(d.total)} changes
                 </option>
+              {" "}
               </Fragment>
             ))}
           </select>

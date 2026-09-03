@@ -443,6 +443,7 @@ function DenialRateLine({
               >
                 {v.toFixed(tickDecimals)}%
               </text>
+            {" "}
             </Fragment>
           ))}
           {segments.map((pts) => (

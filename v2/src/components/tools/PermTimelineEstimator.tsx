@@ -137,6 +137,7 @@ function StagesLine({
         <Fragment key={p.label}>
           {i > 0 ? (i === parts.length - 1 && rest <= 0 ? " and " : ", ") : ""}
           {fmt(p.n)} {p.label}
+        {" "}
         </Fragment>
       ))}
       {rest > 0 ? `, and ${fmt(rest)} in none of those three` : ""}. A case in

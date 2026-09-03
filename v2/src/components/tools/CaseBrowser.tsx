@@ -707,7 +707,7 @@ export function CaseBrowser({
               <option value="newest">Newest decision first</option>{" "}
               <option value="oldest">Oldest decision first</option>
             </select>
-          </label>
+          </label>{" "}
           <label className="block">
             <span className={LABEL}>Rows per page</span>{" "}
             <select
@@ -758,7 +758,7 @@ export function CaseBrowser({
               <option value="employer">Employer</option>{" "}
               <option value="attorney">Law firm</option>
             </select>
-          </label>
+          </label>{" "}
           <label className="block">
             <span className="sr-only">Name</span>{" "}
             <input

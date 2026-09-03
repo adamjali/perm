@@ -175,13 +175,25 @@ export default async function PermCasesPage() {
 
       <div className="mt-10">
         {meta ? (
-          // useSearchParams needs a Suspense boundary, or the whole route opts
-          // out of static rendering.
-          <Suspense
-            fallback={<p className="text-base text-foreground/60">Loading the case browser…</p>}
-          >
+          // THE CHART SITS OUTSIDE THE BOUNDARY, and that is the point.
+          //
+          // `CaseBrowser` calls useSearchParams, which needs a Suspense
+          // boundary or the whole route opts out of static rendering. But a
+          // boundary emits its FALLBACK into the static shell, so everything
+          // inside it is absent from the prerendered HTML and arrives only
+          // after hydration. The chart was inside, so it existed on this page
+          // only in the escaped RSC payload: measured on production 2026-09-03,
+          // /perm-cases served zero <polyline>, zero <polygon> and no chart
+          // aria-label, while the other two chart pages served theirs.
+          //
+          // It has no reason to be in there. It takes server-computed props and
+          // reads no search params. Outside, it is in the HTML a crawler gets
+          // and paints before the JS lands.
+          <>
             <DailyDecisionsChart points={daily} className="mb-10" />
-
+            <Suspense
+              fallback={<p className="text-base text-foreground/60">Loading the case browser…</p>}
+            >
             <CaseBrowser meta={meta} occupations={occupations} />
 
             <div className="mt-12">
@@ -190,7 +202,8 @@ export default async function PermCasesPage() {
                 publishedThrough={meta.lastDecisionDate}
               />
             </div>
-          </Suspense>
+            </Suspense>
+          </>
         ) : (
           <section className="border-2 border-border bg-card p-8 text-center shadow-hard">
             <p className="text-lg text-foreground/70">

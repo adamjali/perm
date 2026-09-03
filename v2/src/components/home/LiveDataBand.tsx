@@ -140,6 +140,7 @@ function FirmsFigure() {
             strokeWidth="1"
           />
           <rect x="1" y={y - 2} width="4" height="4" fill="currentColor" fillOpacity={0.5} />
+        {" "}
         </Fragment>
       ))}
       {[11, 15, 19].map((y) => (

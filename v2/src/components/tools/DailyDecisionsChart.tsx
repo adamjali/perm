@@ -137,12 +137,6 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
             strokeWidth="2.5"
             strokeLinejoin="round"
           />
-          <ChartHoverLayer
-            points={hover}
-            plot={{ x: PAD_L, y: PAD_T, width: plotW, height: plotH }}
-            viewBox={{ width: W, height: H }}
-            label="Decisions per week. Use the arrow keys to step through the weeks."
-          />
           {ticks.map((i, n) => (
             <text
               key={i}
@@ -156,6 +150,12 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
               {shortLabel(weeks[i]![0])}
             </text>
           ))}
+          <ChartHoverLayer
+            points={hover}
+            plot={{ x: PAD_L, y: PAD_T, width: plotW, height: plotH }}
+            viewBox={{ width: W, height: H }}
+            label="Decisions per week. Use the arrow keys to step through the weeks."
+          />
         </svg>
       </div>{" "}
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">

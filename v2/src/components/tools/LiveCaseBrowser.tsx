@@ -211,7 +211,7 @@ export function LiveCaseBrowser({
                       scope="col"
                       className="whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider"
                     >
-                      {h}
+                      {h}{" "}
                     </th>
                     </Fragment>
                   ))}

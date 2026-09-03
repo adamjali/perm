@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 
 /**
@@ -41,14 +42,22 @@ export function SectionIndex({
       </p>{" "}
       <ol className="mt-3 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2 [&>*]:min-w-0">
         {sections.map((s) => (
-          <li key={s.id}>
-            <Link
-              href={`#${s.id}`}
-              className="inline-flex min-h-[36px] items-center text-base underline decoration-border decoration-2 underline-offset-2 hover:decoration-primary hover:text-primary"
-            >
-              {s.title}
-            </Link>
-          </li>
+          // A Fragment with a trailing space, not a bare <li>. React renders
+          // array items with NOTHING between them, so 19 list items reached the
+          // DOM as "1. Introduction2. Information We Collect3. How We Use...",
+          // and Google has reproduced exactly that shape in a live listing.
+          // Caught by the rendered sweep after the source gate passed, which is
+          // the documented reason the rendered one is the authoritative check.
+          <Fragment key={s.id}>
+            <li>
+              <Link
+                href={`#${s.id}`}
+                className="inline-flex min-h-[36px] items-center text-base underline decoration-border decoration-2 underline-offset-2 hover:decoration-primary hover:text-primary"
+              >
+                {s.title}
+              </Link>
+            </li>{" "}
+          </Fragment>
         ))}
       </ol>
     </nav>
