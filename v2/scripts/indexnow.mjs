@@ -45,20 +45,34 @@ async function main() {
   //
   // A sitemap URL is a legal thing to submit and IndexNow returns 200 for it,
   // which is why nothing ever complained. It just does not tell Bing that
-  // 13,758 individual pages exist.
+  // the ~13,761 individual pages exist.
   const index = await get(SITEMAP_URL);
   const entries = locs(index);
   if (entries.length === 0) throw new Error("no <loc> URLs found in sitemap");
 
   const children = entries.filter((u) => u.endsWith(".xml"));
   let urlList = entries.filter((u) => !u.endsWith(".xml"));
+  // Per child, so an EMPTY one is caught. A child that fails at the HTTP level
+  // already throws inside get(); one that answers 200 with no <loc> entries
+  // does not, and the total floor below cannot see it: dropping both employer
+  // sitemaps (5,000 + 4,646) still leaves 4,115, which sails past `< 100` and
+  // reports success over a walk that lost two thirds of the site. Measured
+  // 2026-09-03 against the live sitemap, which is what named this gap.
   for (const child of children) {
-    urlList = urlList.concat(locs(await get(child)));
+    const found = locs(await get(child));
+    if (found.length === 0) {
+      throw new Error(
+        `child sitemap ${child} returned 200 with no <loc> entries; ` +
+          "refusing to submit a partial walk",
+      );
+    }
+    console.log(`  ${child}: ${found.length} URLs`);
+    urlList = urlList.concat(found);
   }
   urlList = [...new Set(urlList)];
 
-  // A count far below the real page count means the walk broke; submitting a
-  // handful of URLs and calling it a success is the bug this replaced.
+  // And a total floor, for the case where the INDEX itself came back thin.
+  // Kept deliberately loose: it is the backstop, not the real check above.
   if (urlList.length < 100) {
     throw new Error(
       `only ${urlList.length} page URLs found across ${children.length} child sitemaps; ` +
