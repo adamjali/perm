@@ -92,6 +92,39 @@ jobs:
         working-directory: v2
         run: python3 scripts/test_case_status_direct.py
 
+      # The sweep's own record of what it checked, and the freshness claim it
+      # replaced. `perm_case_status.last_checked_at` is permtrack's column,
+      # never written by our PERM sweep, and the review-stage doc used to
+      # publish MIN/MAX of it as "when we read these stages" - 66,771 pending
+      # cases carrying a July date on a morning the sweep had checked every
+      # one. These run the REAL SQL against in-memory SQLite, so a typo in the
+      # CTE fails here rather than in production. No network.
+      - name: Sweep coverage record
+        working-directory: v2
+        run: python3 scripts/test_sweep_runs.py
+
+      # Surviving a transient far-end failure, and saying so when it does not.
+      #
+      # On 2026-09-03 both DOL sweeps died on `SQLITE_NOMEM` two minutes apart
+      # and NOTHING reported it: the case-status run had stamped itself fresh
+      # and written an `ok` audit row 80 seconds before it crashed, and all 36
+      # rows in `ingest_runs` said `ok`. Two halves, tested separately:
+      #
+      #   resilience  the retry only fires for the transient class, and the
+      #               two AUTOINCREMENT writers still land exactly one row
+      #               through an applied-then-failed error
+      #   health      a `failed` or `partial` run turns the daily health run
+      #               red, a `cancelled` one does not, and a later success
+      #               clears the flag
+      #
+      # No network in either. Both were dead code until this step existed - a
+      # control that has never run is not a control.
+      - name: Ingest resilience and failure visibility
+        working-directory: v2
+        run: |
+          python3 scripts/test_ingest_resilience.py
+          python3 scripts/test_ingest_health.py
+
       # The nightly diff on perm_live_recent (~137k rows). A diff that never
       # matches is not slow, it is absent - and it logs "ok" while rewriting
       # every row, which is what shipped for one run when libSQL's
@@ -102,6 +135,26 @@ jobs:
           python3 scripts/test_live_recent.py
           python3 scripts/test_flag_disclosure.py
           python3 scripts/test_pwd_status.py
+
+      # The observed-decision series: our own half of `daily_decisions`.
+      #
+      # `daily_decisions` held three sources and read one. Two are now deleted:
+      # `permtrack` was the rival's series, overlapping ours on 88 dates and
+      # double-counting 42,056 decisions in anything that summed the table, and
+      # `flag-live` was labelled as our own per-case scan while actually being
+      # mirrored from permtrack's daily-summary endpoint two days before our
+      # first sweep ever ran. `sweep-observed` replaces them, derived from
+      # `perm_case_events` on every sweep.
+      #
+      # Every guard in here protects against a PLAUSIBLE WRONG NUMBER rather
+      # than an error. Dropping the 94,523-row backfill stamp from 2026-08-28
+      # leaves 57 decisions on that day - a number that looks like a quiet
+      # Friday and is a lie, so the whole day is withheld. The two filters are
+      # asserted byte-identical to src/lib/turso/changes.ts, which renders the
+      # same rows per case. No network.
+      - name: Observed-decision series contract
+        working-directory: v2
+        run: python3 scripts/test_observed_decisions.py
 
       # The quarterly Turso load, against a local SQLite stub instead of the
       # real thing. Five bugs in these load steps were each found by

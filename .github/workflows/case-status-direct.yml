@@ -141,6 +141,38 @@ jobs:
             -H "content-type: application/json" \
             --data @changed-employer-slugs.json || echo "revalidation call failed"
 
+      # THE ONLY THING THAT WILL SAY THIS RUN FAILED, TOMORROW.
+      #
+      # There is no alerting on these workflows. A red scheduled run does email
+      # the repo owner, but three of the four ways this job can die send
+      # nothing at all: a CANCELLED job (the job-level timeout-minutes cap),
+      # a runner reclaimed mid-sweep, and any failure whose only record is an
+      # Actions log that ages out. And the script's own `record_run` cannot
+      # help there, because in those cases no Python is left running.
+      #
+      # So write the failure where machinery that already exists will find it.
+      # `check_ingest_health.py` reads `ingest_runs` at 10:00 UTC daily and
+      # exits non-zero when an ingest's most recent run did not finish clean,
+      # which turns THAT run red and fires GitHub's own notification. No new
+      # service, no new secret - it rides the Turso token this job already has.
+      #
+      # `cancelled()` as well as `failure()`: a cancellation is the case with
+      # NO other signal whatsoever, so it is the one most worth recording. It
+      # is best-effort inside the runner's cancellation grace window.
+      - name: Record the failure where the health check will see it
+        if: failure() || cancelled()
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          # Env vars, not .env.local: a job that died before the sweep step
+          # ever wrote that file still has to be able to report itself.
+          python3 scripts/record_ingest_failure.py \
+            --script ingest_case_status_direct.py \
+            --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
+            --note "case-status-direct: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
       - name: Remove credentials
         if: always()
         working-directory: v2
