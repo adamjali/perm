@@ -51,6 +51,7 @@ export type DataGroup =
   | "Queue"
   | "Employers and wages"
   | "Denials and audits"
+  | "Visa bulletin"
   | "Reference";
 
 export interface DataNavSection {
@@ -77,16 +78,12 @@ export const OVERVIEW = {
  * checks passes on the day they diverge, which is the day it was needed.
  */
 export const SECTIONS: DataNavSection[] = [
+  { key: "all-cases", group: "Case tools", label: "Search all programs", href: "/case-search" },
   { key: "case-status", group: "Case tools", label: "Case status", href: "/perm-case-status" },
   // Moved out of "Who files". It searches the case corpus, and somebody
   // holding a case number is the highest-intent reader on this surface; the
   // two lookups belong together.
   { key: "cases", group: "Case tools", label: "PERM cases", href: "/perm-cases" },
-  // The one entry that crosses programs. It sits above the three per-program
-  // pages because a reader who does not know which program their filing
-  // belongs to cannot pick between them, and that reader is the reason it
-  // exists.
-  { key: "all-cases", group: "Case tools", label: "Search all programs", href: "/case-search" },
   // The step before the PERM, findable the same way: employer, title, month.
   { key: "pwd-cases", group: "Case tools", label: "Wage requests", href: "/pwd-cases" },
   { key: "lca-cases", group: "Case tools", label: "H-1B LCAs", href: "/lca-cases" },
@@ -111,7 +108,11 @@ export const SECTIONS: DataNavSection[] = [
   // would have left it unreachable by navigation, not merely mislabelled.
   { key: "rfi-audit", group: "Denials and audits", label: "RFI and audits", href: "/perm-rfi-audit" },
 
-  { key: "visa-bulletin", group: "Reference", label: "Visa bulletin", href: "/tools/priority-date-calculator" },
+  // Its own group, not "Reference". This is a calculator over State Department
+  // data: a different agency, a different dataset and a different question from
+  // anything else on this rail, and the old filing put a calculator on the
+  // reference shelf under a label that named neither.
+  { key: "visa-bulletin", group: "Visa bulletin", label: "Priority dates", href: "/tools/priority-date-calculator" },
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
 ];
 
@@ -120,6 +121,12 @@ export const GROUPS: DataGroup[] = [
   "Queue",
   "Employers and wages",
   "Denials and audits",
+  // Its own group rather than a line in Reference: State Department data, a
+  // different agency and a different question from everything above it. The
+  // rail iterates THIS list, so adding a group to DataGroup without adding it
+  // here leaves its pages in no list at all - which is exactly what
+  // data-nav-sections.test.ts caught when this moved.
+  "Visa bulletin",
   "Reference",
 ];
 

@@ -34,7 +34,12 @@ describe("LCA reads have no program filter, because every row is an LCA", () => 
   it("search", async () => {
     await searchLcaCases({ text: "versaflair" });
     const [sql, args] = rows.mock.calls[0]!;
-    expect(sql).toMatch(/FROM lca_case_status WHERE employer_slug >= \? AND employer_slug < \? ORDER BY/);
+    // INDEXED BY is asserted, not incidental: without it a status or month
+    // narrowing moved the plan onto `lca_case_status_stage` and read every
+    // LCA at that status for every employer in the country.
+    expect(sql).toMatch(
+      /FROM lca_case_status INDEXED BY lca_case_status_emp WHERE employer_slug >= \? AND employer_slug < \? ORDER BY/,
+    );
     expect(args).toEqual(["versaflair", "versaflais", 200]);
   });
 

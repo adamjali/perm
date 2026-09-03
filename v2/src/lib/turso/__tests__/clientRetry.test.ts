@@ -91,6 +91,63 @@ describe("reads retry a dropped connection", () => {
   });
 });
 
+describe("reads retry far-end pressure, which is not a network error", () => {
+  /**
+   * A LibsqlError as the driver actually throws it: a plain error with the
+   * code in its message and NO cause chain, because the HTTP request
+   * succeeded. That is exactly why TRANSIENT_NETWORK could not see it.
+   *
+   * Measured in production 2026-09-03: five SQLITE_NOMEM between 13:58 and
+   * 14:07 UTC on release 13cd6d00, including getWageFilterOptions on
+   * /tools/salary-explorer and a generateMetadata call, while the same
+   * pressure failed two ingest workflows. The query that died re-ran by hand
+   * minutes later in 22.8s, which is what makes it transient rather than
+   * wrong.
+   */
+  const libsql = (code: string) =>
+    new Error(`${code}: SQLite error: out of memory`);
+
+  it.each([
+    "SQLITE_NOMEM",
+    "SQLITE_BUSY",
+    "SQLITE_LOCKED",
+    "SQLITE_IOERR",
+    "STREAM_EXPIRED",
+  ])("retries %s and succeeds", async (code) => {
+    const { rows } = await import("../client");
+    execute.mockRejectedValueOnce(libsql(code)).mockResolvedValueOnce(OK);
+    await expect(rows("SELECT 1")).resolves.toEqual([]);
+    expect(execute).toHaveBeenCalledTimes(2);
+  });
+
+  it("still gives up after ONE retry", async () => {
+    const { rows } = await import("../client");
+    execute.mockRejectedValue(libsql("SQLITE_NOMEM"));
+    await expect(rows("SELECT 1")).rejects.toThrow("out of memory");
+    expect(execute).toHaveBeenCalledTimes(2);
+  });
+
+  it("does NOT retry a WRITE that ran out of memory", async () => {
+    // Out of memory does not say whether the far end applied the statement
+    // before it ran out of room, so the same rule as a dropped connection
+    // applies: a retried INSERT could apply twice.
+    const { exec } = await import("../client");
+    execute.mockRejectedValueOnce(libsql("SQLITE_NOMEM"));
+    await expect(exec("INSERT INTO t VALUES (1)")).rejects.toThrow("out of memory");
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+
+  it("does NOT retry a code outside the allow-list", async () => {
+    // An unknown code fails fast on purpose. The errors this must never
+    // swallow are the deterministic ones, and retrying them only makes the
+    // real message slower to reach.
+    const { rows } = await import("../client");
+    execute.mockRejectedValue(new Error("SQLITE_CONSTRAINT: UNIQUE failed"));
+    await expect(rows("SELECT 1")).rejects.toThrow("SQLITE_CONSTRAINT");
+    expect(execute).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("writes do not", () => {
   it("throws a dropped connection straight through instead of re-applying", async () => {
     // The reason `retryTransient` is a parameter rather than the default.

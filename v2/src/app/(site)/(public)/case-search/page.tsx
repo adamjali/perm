@@ -89,6 +89,18 @@ export default async function CaseSearchPage() {
     },
   ];
 
+  // Sorted the way a reader scans them: the states by volume, because the
+  // first thing anyone looks for is their own and the big ones are where most
+  // people are; the years newest first.
+  const stateOptions = (permMeta?.byState ?? [])
+    .filter((s) => s.state)
+    .map((s) => ({ code: s.state, total: s.total }))
+    .sort((a, b) => b.total - a.total);
+  const fiscalYearOptions = (permMeta?.byFiscalYear ?? [])
+    .filter((f) => f.fiscalYear)
+    .map((f) => ({ fiscalYear: f.fiscalYear, total: f.total }))
+    .sort((a, b) => (a.fiscalYear < b.fiscalYear ? 1 : -1));
+
   const breadcrumbSchema = generateBreadcrumbSchema([
     { name: "Data", href: "/tools" },
     { name: "Search every case", href: "/case-search" },
@@ -141,7 +153,10 @@ export default async function CaseSearchPage() {
 
       <div className="mt-10">
         <Suspense fallback={<p className="text-base text-foreground/60">Loading the search…</p>}>
-          <UnifiedCaseSearch />
+          {/* The state and fiscal-year lists come from the same `perm_docs`
+              row the header counts do, so the options and the totals beside
+              them cannot disagree, and neither costs a query of its own. */}
+          <UnifiedCaseSearch states={stateOptions} fiscalYears={fiscalYearOptions} />
         </Suspense>
       </div>
 
@@ -149,9 +164,12 @@ export default async function CaseSearchPage() {
         <h2 className="font-heading text-2xl font-black">How this search works</h2>{" "}
         <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
           <p>
-            <b className="font-bold">The employer field is required.</b> Job
-            title, wage and date narrow an employer&apos;s results rather than
-            standing on their own. With a case number,{" "}
+            <b className="font-bold">One field has to lead.</b> An employer name
+            reaches all three programs and both halves of each. A law firm, a
+            worksite state or an occupation reads DOL&apos;s published PERM
+            file, because that is the only table holding those columns with an
+            index on them. Everything else narrows whichever of those you gave.
+            With a case number,{" "}
             <Link
               href="/perm-case-status"
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -189,9 +207,21 @@ export default async function CaseSearchPage() {
               way rather than changing how a result reads, so it collapses. */}
           <FinePrint summary="Why a name works differently from a number">
             <p>
-              Every lookup underneath runs on an index built over the employer
-              name. A search on a job title or a wage alone has no index to sit
-              on and would read the whole corpus for every visitor.
+              Every lookup underneath runs on an index, and which index depends
+              on which field leads. An equality on a firm, a state or an
+              occupation lets the index hand back the rows already in date
+              order, so the row cap stops the read at a hundred rows: the
+              largest firm in the corpus answers in 0.67 seconds that way. A
+              filter the index does not carry has to walk the whole slice
+              instead, which for California is 67,742 cases and 44.7 seconds
+              measured. That is why those searches take an outcome and a
+              decision date and say no to the rest, on the control, rather than
+              quietly costing a fortune.
+            </p>{" "}
+            <p>
+              A search on a job title or a wage with nothing leading it has no
+              index to sit on at all and would read the whole corpus for every
+              visitor.
             </p>{" "}
             <p>
               DOL&apos;s case system answers numbers, not employers, and no

@@ -79,7 +79,7 @@ export interface PermCaseRow {
  * strings, so the mapper below collapses an absent name to "" and keeps only
  * `wage` nullable - which is what every caller already renders.
  */
-interface CaseDbRow {
+export interface CaseDbRow {
   case_number: string;
   status: string;
   received_date: string | null;
@@ -96,12 +96,12 @@ interface CaseDbRow {
   wage: number | null;
 }
 
-const CASE_COLS =
+export const CASE_COLS =
   "case_number, status, received_date, decision_date, days, employer_name, " +
   "employer_slug, state, job_title, soc_code, soc_title, attorney_name, " +
   "attorney_slug, wage";
 
-function toCaseRow(r: CaseDbRow): PermCaseRow {
+export function toCaseRow(r: CaseDbRow): PermCaseRow {
   // A status outside the three is corrupt data, not a rendering problem. The
   // Convex validator would have refused the row at read time; throwing keeps
   // that guarantee rather than quietly widening the union at the call site.
@@ -523,7 +523,7 @@ export interface LiveCaseRow {
   jobTitle: string | null;
 }
 
-interface LiveDbRow {
+export interface LiveDbRow {
   case_number: string;
   filing_date: string | null;
   status: string | null;
@@ -532,7 +532,7 @@ interface LiveDbRow {
   job_title: string | null;
 }
 
-const toLiveRow = (r: LiveDbRow): LiveCaseRow => ({
+export const toLiveRow = (r: LiveDbRow): LiveCaseRow => ({
   caseNumber: r.case_number,
   filingDate: r.filing_date,
   status: r.status,
@@ -567,9 +567,13 @@ export async function searchLiveCases(
   const take = Math.min(Math.max(1, Math.floor(opts.limit ?? LIVE_SEARCH_MAX)), LIVE_SEARCH_MAX);
   const narrow = narrowingClauses("filing_date", opts);
   const conds = ["employer_slug >= ?", "employer_slug < ?", ...narrow.conds];
+  // INDEXED BY: a `from`/`to` month narrowing otherwise moved the plan onto
+  // `perm_live_recent_filed (filing_date>? AND filing_date<?)`, which reads
+  // every filing in that window across every employer in the country and
+  // then discards all but one company's. Measured 2026-09-03.
   const found = await rows<LiveDbRow>(
     `SELECT case_number, filing_date, status, is_final, employer_name, job_title
-       FROM perm_live_recent
+       FROM perm_live_recent INDEXED BY perm_live_recent_emp
       WHERE ${conds.join(" AND ")}
       ORDER BY filing_date DESC, case_number DESC LIMIT ?`,
     [needle, upper, ...narrow.params, take],
@@ -630,6 +634,10 @@ export async function searchCases(args: SearchCasesArgs): Promise<PermCaseRow[]>
 
   const take = Math.min(Math.max(1, Math.floor(args.limit ?? 50)), MAX_SEARCH_RESULTS);
   const column = args.field === "employer" ? "employer_slug" : "attorney_slug";
+  // The two-column form, not the three-column one: the lead is a RANGE, so
+  // the status column after it can never be seeked and the narrower index is
+  // the cheaper walk.
+  const leadIndex = args.field === "employer" ? "idx_pc_emp_dec" : "idx_pc_att_dec";
 
   // The successor of a prefix, for a half-open range. Incrementing the last
   // character is correct whatever that character is: the comparison decides
@@ -651,9 +659,26 @@ export async function searchCases(args: SearchCasesArgs): Promise<PermCaseRow[]>
   conds.push(...narrow.conds);
   sqlArgs.push(...narrow.params);
 
+  // INDEXED BY, AND IT IS LOAD-BEARING. Measured against production
+  // 2026-09-03: with the status filter present and no hint, SQLite chose
+  // `SEARCH perm_cases USING INDEX idx_pc_status_dec (status=?)` - it read
+  // every certified case in the corpus and threw away the ones belonging to
+  // other employers. `state = ?` stole it the same way (`idx_pc_state_dec`),
+  // and so did `fiscal_year` (`idx_pc_fy_wage`). Turso forbids ANALYZE, so
+  // there are no statistics to tell the planner that one employer is a few
+  // thousand rows and one status is a quarter of a million; it prefers an
+  // equality over a range and is wrong here every time. Naming the index
+  // pins the read to this employer, and it fails loudly if the index is ever
+  // dropped rather than silently degrading to a scan.
+  // THE ORDER IS TOTAL, which `ORDER BY decision_date DESC` alone is not.
+  // Measured while pinning the index above: the two plans returned the same 50
+  // decision dates in the same sequence and a different pair of case numbers in
+  // the last two slots, because the cut fell inside a tie group at 2025-08-04.
+  // A search that quietly returns different rows for the same query is the
+  // kind of thing nobody reports and nobody can reproduce.
   const found = await rows<CaseDbRow>(
-    `SELECT ${CASE_COLS} FROM perm_cases WHERE ${conds.join(" AND ")} ` +
-      "ORDER BY decision_date DESC LIMIT ?",
+    `SELECT ${CASE_COLS} FROM perm_cases INDEXED BY ${leadIndex} ` +
+      `WHERE ${conds.join(" AND ")} ORDER BY decision_date DESC, case_number DESC LIMIT ?`,
     [...sqlArgs, take],
   );
   return found.map(toCaseRow);

@@ -103,7 +103,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
     rich: (
       <>
         We monitor DOL regulatory changes and update the calculations. Your existing cases are recalculated automatically, so there are no formulas to maintain.{" "}
-        <Link href="/blog/perm-processing-times-2026" className={faqLink}>Current processing times &rarr;</Link>
+        <Link href="/perm-processing-times" className={faqLink}>Current processing times &rarr;</Link>
       </>
     ),
   },

@@ -26,7 +26,7 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, stamp_freshness  # noqa: E402
 
 BASE = "https://permtrack.app/api/watchlist"
 SOURCE = "permtrack.app/api/watchlist (mirror; underlying: flag.dol.gov case status)"
@@ -66,6 +66,7 @@ def main() -> int:
         rfi_withdrawn INTEGER, median_days_to_decision INTEGER,
         source TEXT NOT NULL)""")
     f = get("rfi-funnel")
+    wrote_funnel = False
     if not f or not f.get("ever_rfi"):
         log("  rfi-funnel unreadable, skipping")
     else:
@@ -75,43 +76,52 @@ def main() -> int:
                 "median_days_to_decision"]
         db.execute("INSERT OR REPLACE INTO rfi_funnel VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                    [stamp, *[int(f.get(c) or 0) for c in cols], SOURCE])
+        wrote_funnel = True
         pct = round(f["rfi_certified"] / max(f["rfi_resolved"], 1) * 100)
         log(f"  rfi funnel: {f['ever_rfi']:,} ever issued, {f['rfi_resolved']:,} resolved, "
             f"{pct}% certified, {f['median_days_to_decision']}d median")
 
-    # -- Daily decisions -----------------------------------------------------
-    db.execute("""CREATE TABLE IF NOT EXISTS daily_decisions (
-        date TEXT NOT NULL, source TEXT NOT NULL,
-        total INTEGER, certified INTEGER, denied INTEGER, withdrawn INTEGER,
-        fetched_at INTEGER NOT NULL, PRIMARY KEY (date, source))""")
-    d = get("daily-summary")
-    days = (d or {}).get("days") or []
-    kept = 0
-    for row in days:
-        # has_data false is "we did not observe that day", not "zero decisions
-        # happened". Storing it as zero would draw a real trough.
-        if not row.get("has_data"):
-            continue
-        db.execute("INSERT OR REPLACE INTO daily_decisions VALUES (?,?,?,?,?,?,?)",
-                   [row["date"], "flag-live", int(row.get("total") or 0),
-                    int(row.get("certified") or 0), int(row.get("denied") or 0),
-                    int(row.get("withdrawn") or 0), stamp])
-        kept += 1
-    log(f"  daily decisions: {kept} observed days stored "
-        f"({len(days) - kept} skipped as unobserved)")
+    # -- Daily decisions: DELIBERATELY NOT WRITTEN ANY MORE ------------------
+    #
+    # This block used to read permtrack's `daily-summary` endpoint and store
+    # it in `daily_decisions` under the source name `flag-live`, which reads
+    # as our own per-case scan of flag.dol.gov. It was not. Measured
+    # 2026-09-03: all 14 rows carried one `fetched_at` of
+    # 2026-08-27T03:25:19Z, and our first sweep of DOL did not write an event
+    # until 2026-08-27T21:16Z - so every one of those days predated any
+    # observation we ever made. `src/lib/turso/activity.ts` listed it in
+    # FIRST_PARTY_SOURCES under the comment "Never the rival's".
+    #
+    # We now measure this ourselves. `ingest_case_status_direct.py` derives
+    # the series from `perm_case_events` on every sweep and writes it under
+    # `sweep-observed`, a name that says the dating is ours rather than DOL's.
+    # Two writers with different notions of truth pointed at one table is a
+    # flip-flop, not redundancy - the same reason `mirror_case_status.py` lost
+    # its schedule - so this one writes nothing.
+    #
+    # The RFI funnel above IS still mirrored, on purpose and by Adam's call:
+    # it is a FROZEN historical base that our own `perm_case_events` history
+    # is blended with by count, and it is re-read by nobody on a schedule.
 
-    total_days = int(db.scalar(
-        "SELECT count(DISTINCT date) FROM daily_decisions") or 0)
-    log(f"  VERIFY daily_decisions spans {total_days} distinct days across all sources")
-
-    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
-    newest = db.scalar("SELECT max(date) FROM daily_decisions WHERE source='flag-live'")
-    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-               ["rfi-funnel", str(newest), stamp, SOURCE, "Daily",
-                "RFI outcomes and observed daily decisions. Needs cases watched "
-                "over time, which a single snapshot cannot yield.", 7])
+    # `as_of` is the observation this run just recorded, not a series it no
+    # longer writes. It used to be `max(date) WHERE source='flag-live'`, which
+    # against a table that no longer holds that source would have stamped the
+    # literal string "None" and shown up as UNREADABLE in the health check.
+    # ONLY ON A RUN THAT DID THE WORK. Stamping after a failed read keeps a
+    # broken ingest reporting itself healthy forever, which is the one thing
+    # lib_turso.stamp_freshness's own docstring asks callers not to do - and
+    # the read above fails softly, by design, on a host fronted by Cloudflare.
+    if not wrote_funnel:
+        log("  not stamping freshness: nothing was written this run")
+        return 0
+    stamp_freshness(
+        db, "rfi-funnel", as_of=time.strftime("%Y-%m-%d"),
+        source=SOURCE,
+        cadence="One-off historical base (not scheduled)",
+        note="RFI outcomes mirrored once and frozen. Ongoing RFI history "
+             "comes from our own perm_case_events; the daily decision series "
+             "is written by ingest_case_status_direct.py as 'sweep-observed'.",
+        max_age_days=3650)
     return 0
 
 

@@ -57,6 +57,7 @@ const ISOLATED_UNIT_FILES = [
   // calls (6 failures on 2026-09-02 that each passed alone).
   "src/lib/turso/__tests__/liveCases.test.ts",
   "src/lib/turso/__tests__/unifiedSearch.test.ts",
+  "src/lib/turso/__tests__/caseSearchReads.test.ts",
   "src/lib/turso/__tests__/stageCohorts.test.ts",
   "src/lib/turso/__tests__/searchFilters.test.ts",
   "src/lib/turso/__tests__/pwdCases.test.ts",

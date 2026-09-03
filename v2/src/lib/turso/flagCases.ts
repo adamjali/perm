@@ -69,7 +69,7 @@ export interface FlagDisclosedRow {
   fiscalYear: number | null;
 }
 
-interface DisclosedDbRow {
+export interface DisclosedDbRow {
   case_number: string;
   case_status: string;
   received_date: string | null;
@@ -86,7 +86,7 @@ interface DisclosedDbRow {
   fiscal_year: number | string | null;
 }
 
-const DISCLOSED_COLS =
+export const DISCLOSED_COLS =
   "case_number, case_status, received_date, decision_date, employer_name, employer_slug, " +
   "job_title, soc_code, soc_title, wage, wage_unit, worksite_state, visa_class, fiscal_year";
 
@@ -96,7 +96,7 @@ const num = (v: number | string | null): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-const toDisclosed = (r: DisclosedDbRow): FlagDisclosedRow => ({
+export const toDisclosed = (r: DisclosedDbRow): FlagDisclosedRow => ({
   caseNumber: r.case_number,
   status: r.case_status,
   receivedDate: r.received_date,
@@ -174,7 +174,7 @@ export interface FlagCaseRow {
   lastCheckedAt: string | null;
 }
 
-interface DbRow {
+export interface FlagDbRow {
   case_number: string;
   filing_date: string | null;
   current_status: string;
@@ -188,11 +188,11 @@ interface DbRow {
   last_checked_at: string | null;
 }
 
-const COLS =
+export const FLAG_COLS =
   "case_number, filing_date, current_status, is_final, employer_name, employer_slug, " +
   "job_title, visa_type, submitted_date, first_seen_at, last_checked_at";
 
-const toRow = (r: DbRow): FlagCaseRow => ({
+export const toFlagRow = (r: FlagDbRow): FlagCaseRow => ({
   caseNumber: r.case_number,
   filingDate: r.filing_date,
   status: r.current_status,
@@ -402,8 +402,8 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
   const lookup = async (input: string): Promise<FlagCaseRow | null> => {
     const cn = normalise(input);
     if (!cn) return null;
-    const r = await one<DbRow>(`SELECT ${COLS} FROM ${table} WHERE case_number = ?`, [cn]);
-    if (r) return toRow(r);
+    const r = await one<FlagDbRow>(`SELECT ${FLAG_COLS} FROM ${table} WHERE case_number = ?`, [cn]);
+    if (r) return toFlagRow(r);
     return discover(cn);
   };
 
@@ -419,12 +419,17 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
       conds.push(visa.cond);
       params.push(visa.param);
     }
-    const found = await rows<DbRow>(
-      `SELECT ${COLS} FROM ${table} WHERE ${conds.join(" AND ")} ` +
+    // INDEXED BY, for the reason recorded in cases.ts: without it a status
+    // or month narrowing moved the plan onto `<table>_stage (current_status=?)`
+    // or `<table>_filed (filing_date>?)`, both of which read the whole slice
+    // for every employer in the country. Measured 2026-09-03.
+    const found = await rows<FlagDbRow>(
+      `SELECT ${FLAG_COLS} FROM ${table} INDEXED BY ${table}_emp ` +
+        `WHERE ${conds.join(" AND ")} ` +
         "ORDER BY filing_date DESC, case_number DESC LIMIT ?",
       [...params, take],
     );
-    return found.map(toRow);
+    return found.map(toFlagRow);
   };
 
   const list = async (args: ListFlagArgs): Promise<FlagListPage> => {
@@ -455,12 +460,12 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     const off = Number(args.cursor ?? 0);
     const offset = Number.isFinite(off) && off >= 0 ? Math.floor(off) : 0;
     const dir = args.order === "oldest" ? "ASC" : "DESC";
-    const found = await rows<DbRow>(
-      `SELECT ${COLS} FROM ${table} WHERE ${where} ` +
+    const found = await rows<FlagDbRow>(
+      `SELECT ${FLAG_COLS} FROM ${table} WHERE ${where} ` +
         `ORDER BY filing_date ${dir}, case_number ${dir} LIMIT ? OFFSET ?`,
       [...params, take + 1, offset],
     );
-    const page = found.slice(0, take).map(toRow);
+    const page = found.slice(0, take).map(toFlagRow);
     return {
       rows: page,
       isDone: found.length <= take,
@@ -499,7 +504,8 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
       params.push(config.defaultVisaClass);
     }
     const found = await rows<DisclosedDbRow>(
-      `SELECT ${DISCLOSED_COLS} FROM ${disclosureTable} WHERE ${conds.join(" AND ")} ` +
+      `SELECT ${DISCLOSED_COLS} FROM ${disclosureTable} INDEXED BY ${disclosureTable}_emp ` +
+        `WHERE ${conds.join(" AND ")} ` +
         "ORDER BY received_date DESC, case_number DESC LIMIT ?",
       [...params, take],
     );

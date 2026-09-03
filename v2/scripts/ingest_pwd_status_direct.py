@@ -46,6 +46,21 @@ and re-swept, the safe failure, and logged so the set grows from evidence.
     python3 scripts/ingest_pwd_status_direct.py --backfill --from 2026-01-01 --to 2026-08-31
     python3 scripts/ingest_pwd_status_direct.py --pending [--program pwd|lca|all]   # daily
     python3 scripts/ingest_pwd_status_direct.py --full [--program ...]              # weekly
+
+COVERAGE IS RECORDED PER RUN (`sweep_runs`, via lib_turso.record_sweep), the
+same as the PERM sweep. The reason the PERM one needed it does NOT apply here
+and that was checked rather than assumed: this script WRITES
+`last_checked_at` itself on every case it looks at - both the changed branch
+and the unchanged one - so `pwd_case_status` / `lca_case_status` already carry
+our own observation date, and `/pwd-cases` and `/lca-cases` print it honestly.
+`perm_case_status.last_checked_at` is permtrack's, inherited from the mirror
+seed and never written by the PERM sweep, which is what made the review-stage
+pages cite a retired competitor's timestamp. So this file gets the run record
+(useful: it is the only thing that can say a nightly probe stopped finishing)
+and none of the seenFrom/seenTo rework.
+
+Per-row stamping is affordable here and not there: this sweep re-checks ~1,400
+pending PWD cases and a similar LCA slice, against 414,358 PERM rows.
 """
 from __future__ import annotations
 
@@ -57,7 +72,9 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, lit, record_run, stamp_freshness  # noqa: E402
+from lib_turso import (  # noqa: E402
+    Turso, lit, record_run, record_sweep, run_independently, stamp_freshness,
+)
 from ingest_case_status_direct import (  # noqa: E402
     BATCH, CASE_RE, PACE_S, _rows, decode_filing_date, log, lookup_with_retry,
 )
@@ -379,6 +396,14 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None) -> dic
     log(f"{program}: {len(todo):,} cases to check, {BATCH} per request "
         f"= {(len(todo)+BATCH-1)//BATCH:,} requests")
     checked = moved = missing = fails = 0
+    # Coverage bookkeeping for the sweep record. Same meanings as the PERM
+    # sweep: `asked` counts numbers that reached DOL, `failed_batches` counts
+    # holes of up to 50 cases, and either a hole or an early stop disqualifies
+    # the run from dating anything.
+    asked = requests = failed_batches = 0
+    truncated = False
+    status_counts: dict[str, int] = {}
+    started = time.time()
     stamp = int(time.time() * 1000)
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
     pending_writes: list[dict] = []
@@ -390,14 +415,18 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None) -> dic
 
     for i in range(0, len(todo), BATCH):
         chunk = todo[i:i + BATCH]
+        requests += 1
         try:
             got = lookup_with_retry(chunk)
             fails = 0
+            asked += len(chunk)
         except Exception as exc:  # noqa: BLE001
             fails += 1
+            failed_batches += 1
             log(f"  batch {i//BATCH+1}: {exc}")
             if fails >= 3:
                 flush()
+                truncated = True
                 log("  three consecutive failures; stopping cleanly")
                 break
             time.sleep(5)
@@ -415,6 +444,8 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None) -> dic
             new_status = (v.get("caseStatus") or "").strip()
             old_status = (old[0] or "").strip()
             note_status(program, new_status)
+            status_counts[new_status or "(blank)"] = (
+                status_counts.get(new_status or "(blank)", 0) + 1)
             visa = (v.get("visaType") or "").strip() or None
             if new_status and new_status != old_status:
                 moved += 1
@@ -443,7 +474,21 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None) -> dic
         time.sleep(PACE_S)
     flush()
     log(f"{program}: checked {checked:,}  moved {moved:,}  not found {missing:,}")
-    return {"checked": checked, "moved": moved, "missing": missing}
+    # `complete` is decided here rather than by the caller because only this
+    # function knows whether a batch was lost. `limit` is the caller's, and a
+    # limited run is a slice of the population by construction.
+    complete = not limit and not truncated and failed_batches == 0
+    record_sweep(
+        db, script="ingest_pwd_status_direct.py", program=program,
+        mode="pending" if pending_only else "full",
+        started_at=started, asked=asked, answered=checked, missing=missing,
+        changed=moved, requests=requests, failed_batches=failed_batches,
+        complete=complete, status_counts=status_counts,
+    )
+    log(f"{program}: recorded sweep, asked {asked:,}, {requests:,} requests, "
+        f"{'COMPLETE' if complete else 'PARTIAL'}")
+    return {"checked": checked, "moved": moved, "missing": missing,
+            "asked": asked, "requests": requests, "complete": complete}
 
 
 # ---------------------------------------------------------------------------
@@ -512,6 +557,28 @@ def programs_from(arg: str) -> list[str]:
     return list(PROGRAMS) if arg == "all" else [arg]
 
 
+def _tail_exit(failed: list[tuple[str, str]]) -> int:
+    """0 when the sweep worked and only some docs did not; 1 when none did.
+
+    A doc write failing is not a reason to re-run a sweep that already spent
+    an hour being polite to a government host: the previous doc is still live
+    and correct, and every page that reads one has its own fallback. It
+    surfaces through the `partial` row `record_run` just wrote, which
+    check_ingest_health.py turns red the same morning.
+
+    EVERY doc failing is a different claim - that is the database being gone,
+    at which point the sweep's own writes are suspect too and the run should
+    be red now rather than tomorrow.
+    """
+    if failed and len(failed) >= len(PROGRAMS):
+        log(f"every summary doc failed ({len(failed)}); failing the run")
+        return 1
+    if failed:
+        log(f"TAIL: {len(failed)} doc write(s) failed: "
+            + ", ".join(k for k, _ in failed))
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--discover", action="store_true",
@@ -547,14 +614,47 @@ def main() -> int:
     today = datetime.date.today()
     started = time.time()
 
-    def finish_docs(added: dict[str, int] | None = None) -> None:
+    def finish_docs(note_for=None) -> list[tuple[str, str]]:
+        """Write each program's summary doc independently. Returns failures.
+
+        THREE OUTCOMES, NOT TWO, and only one of them is a failure:
+
+          wrote     the doc reconciled against COUNT(*) and was written
+          declined  the reconciliation guard refused, because a concurrent
+                    write landed between its two queries. HEALTHY. It leaves
+                    the previous doc live, must not be retried, and must not
+                    stamp freshness - the doc it describes was not written.
+          failed    it raised; the far end is unhappy and the next one might
+                    still succeed, so it must not take its siblings with it.
+
+        `write_summary_doc` has returned that bool since it was written and
+        EVERY CALLER THREW IT AWAY, then stamped freshness anyway - so a doc
+        that stopped reconciling would sit unwritten indefinitely behind a
+        green clock, which is the exact failure `data_freshness` exists to
+        make impossible.
+        """
+        wrote: dict[str, bool] = {}
+
+        def write_one(name: str) -> None:
+            wrote[name] = bool(write_summary_doc(db, name))
+
+        failed = run_independently(
+            [(f"{name}_summary_doc", (lambda n=name: write_one(n)))
+             for name in PROGRAMS])
+        if note_for is None:
+            return failed
         for name in PROGRAMS:
-            write_summary_doc(db, name)
-            if added is not None:
-                stamp_freshness(db, PROGRAMS[name]["freshness"],
-                                source="flag.dol.gov case status (DOL, direct)",
-                                cadence="Daily", note=f"{added.get(name, 0)} discovered",
-                                max_age_days=3)
+            note = note_for(name)
+            if note is None:
+                continue
+            if not wrote.get(name):
+                log(f"  NOT stamping {PROGRAMS[name]['freshness']}: its doc "
+                    f"was not written this run")
+                continue
+            stamp_freshness(db, PROGRAMS[name]["freshness"],
+                            source="flag.dol.gov case status (DOL, direct)",
+                            cadence="Daily", note=note, max_age_days=3)
+        return failed
 
     if args.discover:
         codes = [day_code(today - datetime.timedelta(days=i)) for i in range(args.days)]
@@ -563,11 +663,14 @@ def main() -> int:
         requests, added, done = probe_days(db, windows, args.cap or DISCOVERY_REQUEST_CAP,
                                            DISCOVERY_SOURCE)
         log(f"discover: {requests} requests, new cases {added}, days done {done}")
-        finish_docs(added)
-        record_run(db, "ingest_pwd_status_direct.py --discover", status="ok",
+        failed = finish_docs(lambda n: f"{added.get(n, 0)} discovered")
+        record_run(db, "ingest_pwd_status_direct.py --discover",
+                   status="ok" if not failed else "partial",
                    rows_written=sum(added.values()),
-                   note=f"{requests} requests in {time.time()-started:.0f}s")
-        return 0
+                   note=f"{requests} requests in {time.time()-started:.0f}s"
+                        + (f"; failed: {', '.join(k for k, _ in failed)}"
+                           if failed else ""))
+        return _tail_exit(failed)
 
     if args.backfill:
         if not (args.from_ and args.to):
@@ -600,11 +703,14 @@ def main() -> int:
                 log(f"backfill: stopped at cap ({total_req} requests); re-run to resume")
                 break
         log(f"backfill: {total_req} requests, new cases {total_added}")
-        finish_docs()
-        record_run(db, "ingest_pwd_status_direct.py --backfill", status="ok",
+        failed = finish_docs()
+        record_run(db, "ingest_pwd_status_direct.py --backfill",
+                   status="ok" if not failed else "partial",
                    rows_written=sum(total_added.values()),
-                   note=f"{start}..{end}, {total_req} requests")
-        return 0
+                   note=f"{start}..{end}, {total_req} requests"
+                        + (f"; failed: {', '.join(k for k, _ in failed)}"
+                           if failed else ""))
+        return _tail_exit(failed)
 
     if args.pending or args.full:
         results = {}
@@ -616,21 +722,24 @@ def main() -> int:
             windows = day_windows(db, codes)
             requests, added, _ = probe_days(db, windows, DISCOVERY_REQUEST_CAP, DISCOVERY_SOURCE)
             log(f"discover: {requests} requests, new cases {added}")
-        for name in PROGRAMS:
-            write_summary_doc(db, name)
+        # Was a second copy of finish_docs's loop, drifted: this one stamped
+        # freshness for a program whose doc had just been declined, the other
+        # did not. Two callers is enough to share.
+        def _note(name: str) -> str | None:
             res = results.get(name)
-            if res is not None:
-                stamp_freshness(db, PROGRAMS[name]["freshness"],
-                                source="flag.dol.gov case status (DOL, direct)",
-                                cadence="Daily",
-                                note=f"{res['checked']:,} checked, {res['moved']:,} moved",
-                                max_age_days=3)
+            return None if res is None else (
+                f"{res['checked']:,} checked, {res['moved']:,} moved")
+
+        failed = finish_docs(_note)
         record_run(db, f"ingest_pwd_status_direct.py --{'full' if args.full else 'pending'} "
                        f"--program {args.program}",
-                   status="ok", rows_written=sum(r["moved"] for r in results.values()),
+                   status="ok" if not failed else "partial",
+                   rows_written=sum(r["moved"] for r in results.values()),
                    note=f"{sum(r['checked'] for r in results.values()):,} checked in "
-                        f"{time.time()-started:.0f}s")
-        return 0
+                        f"{time.time()-started:.0f}s"
+                        + (f"; failed: {', '.join(k for k, _ in failed)}"
+                           if failed else ""))
+        return _tail_exit(failed)
 
     ap.print_help()
     return 2

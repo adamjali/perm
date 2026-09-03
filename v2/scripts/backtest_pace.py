@@ -70,8 +70,13 @@ def main() -> int:
                AND received_date <> '' AND decision_date <> ''
              GROUP BY 1, 2"""):
         by_month[m].append((d, int(n)))
+    # One source, deliberately - see the note in backtest_models.py. The
+    # unfiltered form summed `dol-disclosure` and the retired `permtrack`
+    # series together on 88 overlapping dates, roughly doubling the measured
+    # pace across Dec 2025 - Mar 2026, which is inside this backtest's window.
     daily = {d: int(n) for d, n in rows(db,
-        "SELECT date, sum(total) FROM daily_decisions GROUP BY date")}
+        "SELECT date, sum(total) FROM daily_decisions "
+        "WHERE source = 'dol-disclosure' GROUP BY date")}
     print(f"cohorts {len(by_month)}   daily-decision days {len(daily):,}")
 
     day = dt.date.fromisoformat

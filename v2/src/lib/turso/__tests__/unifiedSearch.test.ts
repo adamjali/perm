@@ -1,23 +1,31 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const searchCases = vi.fn();
-const searchLiveCases = vi.fn();
-const searchPwdCases = vi.fn();
-const searchPwdDeterminations = vi.fn();
-const searchLcaCases = vi.fn();
-const searchLcaDisclosed = vi.fn();
+import type { Lead } from "@/lib/caseSearchPlan";
 
-vi.mock("../cases", () => ({ searchCases, searchLiveCases }));
-vi.mock("../pwdCases", () => ({ searchPwdCases, searchPwdDeterminations }));
-vi.mock("../lcaCases", () => ({ searchLcaCases, searchLcaDisclosed }));
+const readPermPublished = vi.fn();
+const readPermLive = vi.fn();
+const readFlagLive = vi.fn();
+const readFlagPublished = vi.fn();
+const lookupUnifiedCase = vi.fn();
 
-const { dedupeToOnePerCase, unifiedSearch } = await import("../unifiedSearch");
+vi.mock("../caseSearchReads", () => ({
+  readPermPublished,
+  readPermLive,
+  readFlagLive,
+  readFlagPublished,
+  lookupUnifiedCase,
+}));
+
+const { dedupeToOnePerCase, skippedSources, unifiedSearch } = await import("../unifiedSearch");
 type UnifiedCase = Parameters<typeof dedupeToOnePerCase>[0][number];
 
-/** A published PERM row, as `searchCases` returns it. */
+const employerLead: Lead = { kind: "employer", value: "acme" };
+const stateLead: Lead = { kind: "state", value: "WA" };
+
+/** A published PERM row, as `readPermPublished` returns it. */
 const permPub = (caseNumber: string, over: Record<string, unknown> = {}) => ({
   caseNumber,
-  status: "CERTIFIED",
+  status: "certified",
   receivedDate: "2025-01-10",
   decisionDate: "2025-11-02",
   days: 296,
@@ -25,7 +33,7 @@ const permPub = (caseNumber: string, over: Record<string, unknown> = {}) => ({
   employerSlug: "acme-corp",
   state: "WA",
   jobTitle: "Engineer",
-  socCode: "15-1252",
+  socCode: "15-1252.00",
   socTitle: "Software Developers",
   attorneyName: "Firm LLP",
   attorneySlug: "firm-llp",
@@ -33,7 +41,7 @@ const permPub = (caseNumber: string, over: Record<string, unknown> = {}) => ({
   ...over,
 });
 
-/** A live PERM row, as `searchLiveCases` returns it. A DIFFERENT SHAPE. */
+/** A live PERM row. A DIFFERENT SHAPE, which is why there are two adapters. */
 const permLive = (caseNumber: string, over: Record<string, unknown> = {}) => ({
   caseNumber,
   filingDate: "2026-08-01",
@@ -64,20 +72,35 @@ const flagFile = (caseNumber: string, over: Record<string, unknown> = {}) => ({
   employerName: "ACME CORP",
   employerSlug: "acme-corp",
   jobTitle: "Analyst",
+  socCode: "13-1111.00",
+  socTitle: "Management Analysts",
   wage: 140000,
   wageUnit: "Year",
   worksiteState: "TX",
   ...over,
 });
 
+/**
+ * Each read returns `{ rows, windowed }`, not a bare array. `windowed` says the
+ * filters ran inside a window of this employer's newest filings rather than
+ * over everything they have filed, which is the one thing about a narrowed
+ * answer the reader cannot infer from the rows.
+ */
+const slice = (rows: unknown[], windowed = false) => ({ rows, windowed });
+
 beforeEach(() => {
   vi.resetAllMocks();
-  searchCases.mockResolvedValue([]);
-  searchLiveCases.mockResolvedValue([]);
-  searchPwdCases.mockResolvedValue([]);
-  searchPwdDeterminations.mockResolvedValue([]);
-  searchLcaCases.mockResolvedValue([]);
-  searchLcaDisclosed.mockResolvedValue([]);
+  readPermPublished.mockResolvedValue(slice([]));
+  readPermLive.mockResolvedValue(slice([]));
+  readFlagLive.mockResolvedValue(slice([]));
+  readFlagPublished.mockResolvedValue(slice([]));
+  lookupUnifiedCase.mockResolvedValue({
+    program: "perm",
+    permPublished: null,
+    permLive: null,
+    flagPublished: null,
+    flagLive: null,
+  });
 });
 
 describe("dedupeToOnePerCase", () => {
@@ -95,6 +118,11 @@ describe("dedupeToOnePerCase", () => {
     wage: half === "published" ? 140000 : null,
     wageUnit: half === "published" ? "Year" : null,
     state: half === "published" ? "TX" : null,
+    firmName: null,
+    firmSlug: null,
+    socCode: null,
+    socTitle: null,
+    days: null,
     ...over,
   });
 
@@ -123,13 +151,59 @@ describe("dedupeToOnePerCase", () => {
   });
 });
 
+describe("skippedSources", () => {
+  // A source that silently contributes nothing is indistinguishable from a
+  // source with nothing to contribute, so this is asserted directly rather
+  // than inferred from a result set.
+  it("drops the live half whenever a filter names a field only publication carries", () => {
+    for (const narrow of [
+      { firmSlug: "firm-llp" },
+      { state: "WA" },
+      { socCode: "15-1252.00" },
+      { fiscalYear: "2025" },
+      { wageMin: 100000 },
+      { wageMax: 100000 },
+    ]) {
+      expect(skippedSources(narrow, employerLead).live).toBe(true);
+    }
+  });
+
+  it("names the filters responsible so the page can print them", () => {
+    const s = skippedSources({ state: "WA", wageMin: 100000 }, employerLead);
+    expect(s.because).toEqual(["worksite state", "wage"]);
+  });
+
+  it("keeps both halves for a plain employer search", () => {
+    expect(skippedSources({}, employerLead)).toEqual({
+      live: false,
+      published: false,
+      because: [],
+    });
+  });
+
+  it('drops the published half only for "still open"', () => {
+    expect(skippedSources({ outcome: "open" }, employerLead).published).toBe(true);
+    expect(skippedSources({ outcome: "granted" }, employerLead).published).toBe(false);
+  });
+
+  it("drops the live half for an equality lead, without blaming a filter", () => {
+    const s = skippedSources({}, stateLead);
+    expect(s.live).toBe(true);
+    expect(s.because).toEqual([]);
+  });
+});
+
 describe("unifiedSearch", () => {
   it("labels each row with the program and half it came from", async () => {
-    searchCases.mockResolvedValue([permPub("G-100-25010-000001")]);
-    searchPwdCases.mockResolvedValue([flagLive("P-100-26232-000002")]);
-    searchLcaDisclosed.mockResolvedValue([flagFile("I-200-25032-000003")]);
+    readPermPublished.mockResolvedValue(slice([permPub("G-100-25010-000001")]));
+    readFlagLive.mockImplementation(async (program: string) =>
+      slice(program === "pwd" ? [flagLive("P-100-26232-000002")] : []),
+    );
+    readFlagPublished.mockImplementation(async (program: string) =>
+      slice(program === "lca" ? [flagFile("I-200-25032-000003")] : []),
+    );
 
-    const { rows } = await unifiedSearch({ text: "acme" });
+    const { rows } = await unifiedSearch({ lead: employerLead });
     const byNumber = Object.fromEntries(rows.map((r) => [r.caseNumber, r]));
 
     expect(byNumber["G-100-25010-000001"]).toMatchObject({ program: "perm", half: "published" });
@@ -137,40 +211,46 @@ describe("unifiedSearch", () => {
     expect(byNumber["I-200-25032-000003"]).toMatchObject({ program: "lca", half: "published" });
   });
 
-  it("shows a case in BOTH halves once, keeping the published record", async () => {
-    // The live table holds it because the daily check saw it; the quarterly
-    // file holds it because DOL has since decided it. Two rows for one case is
-    // the obvious bug, and the published one is the richer record.
-    const n = "P-100-26232-000009";
-    searchPwdCases.mockResolvedValue([flagLive(n)]);
-    searchPwdDeterminations.mockResolvedValue([flagFile(n)]);
+  it("carries the published-only fields through, and leaves them null on a live row", async () => {
+    readPermPublished.mockResolvedValue(slice([permPub("G-100-25010-000001")]));
+    readPermLive.mockResolvedValue(slice([permLive("G-100-26213-000002")]));
 
-    const { rows } = await unifiedSearch({ text: "acme" });
-    expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ half: "published", wage: 140000, decidedOn: "2025-06-01" });
-  });
-
-  it("reads the two PERM halves through their own shapes", async () => {
-    // They are genuinely different row types. A single adapter with optional
-    // fields would silently produce undefined here.
-    searchCases.mockResolvedValue([permPub("G-100-25010-000001")]);
-    searchLiveCases.mockResolvedValue([permLive("G-100-26213-000002")]);
-
-    const { rows } = await unifiedSearch({ text: "acme" });
+    const { rows } = await unifiedSearch({ lead: employerLead });
     const pub = rows.find((r) => r.caseNumber === "G-100-25010-000001");
     const live = rows.find((r) => r.caseNumber === "G-100-26213-000002");
 
-    expect(pub).toMatchObject({ filedOn: "2025-01-10", decidedOn: "2025-11-02", wage: 180000, isFinal: true, state: "WA" });
-    expect(live).toMatchObject({ filedOn: "2026-08-01", decidedOn: null, wage: null, isFinal: false });
+    expect(pub).toMatchObject({
+      filedOn: "2025-01-10",
+      decidedOn: "2025-11-02",
+      wage: 180000,
+      state: "WA",
+      firmName: "Firm LLP",
+      firmSlug: "firm-llp",
+      socTitle: "Software Developers",
+      days: 296,
+      isFinal: true,
+    });
+    // Not "unknown yet" as a blank string: null is what the column holds and
+    // what the table renders as a dash.
+    expect(live).toMatchObject({
+      wage: null,
+      state: null,
+      firmName: null,
+      socCode: null,
+      days: null,
+      isFinal: false,
+    });
   });
 
   it("orders newest filing first, with the case number breaking ties", async () => {
-    searchCases.mockResolvedValue([
-      permPub("G-100-25010-000001", { receivedDate: "2025-01-01" }),
-      permPub("G-100-25010-000003", { receivedDate: "2025-03-01" }),
-      permPub("G-100-25010-000002", { receivedDate: "2025-03-01" }),
-    ]);
-    const { rows } = await unifiedSearch({ text: "acme" });
+    readPermPublished.mockResolvedValue(
+      slice([
+        permPub("G-100-25010-000001", { receivedDate: "2025-01-01" }),
+        permPub("G-100-25010-000003", { receivedDate: "2025-03-01" }),
+        permPub("G-100-25010-000002", { receivedDate: "2025-03-01" }),
+      ]),
+    );
+    const { rows } = await unifiedSearch({ lead: employerLead });
     expect(rows.map((r) => r.caseNumber)).toEqual([
       "G-100-25010-000003",
       "G-100-25010-000002",
@@ -179,51 +259,136 @@ describe("unifiedSearch", () => {
   });
 
   it("only reads the programs asked for", async () => {
-    await unifiedSearch({ text: "acme", programs: ["pwd"] });
-    expect(searchPwdCases).toHaveBeenCalledTimes(1);
-    expect(searchCases).not.toHaveBeenCalled();
-    expect(searchLcaCases).not.toHaveBeenCalled();
+    await unifiedSearch({ lead: employerLead, programs: ["pwd"] });
+    expect(readPermPublished).not.toHaveBeenCalled();
+    expect(readPermLive).not.toHaveBeenCalled();
+    expect(readFlagLive).toHaveBeenCalledTimes(1);
+    expect(readFlagLive.mock.calls[0]?.[0]).toBe("pwd");
+  });
+
+  it("ignores the program chips under an equality lead, which is PERM-published only", async () => {
+    // Honouring ["pwd"] here would return an empty answer to a search the page
+    // had already told the reader reads DOL's published PERM file.
+    await unifiedSearch({ lead: stateLead, programs: ["pwd"] });
+    expect(readPermPublished).toHaveBeenCalledTimes(1);
+    expect(readFlagLive).not.toHaveBeenCalled();
+    expect(readFlagPublished).not.toHaveBeenCalled();
+  });
+
+  it("reads the published half only under an equality lead", async () => {
+    await unifiedSearch({ lead: stateLead });
+    expect(readPermPublished).toHaveBeenCalledTimes(1);
+    expect(readPermLive).not.toHaveBeenCalled();
+    expect(readFlagLive).not.toHaveBeenCalled();
+  });
+
+  it("stops asking the live tables once a published-only filter is set", async () => {
+    await unifiedSearch({ lead: employerLead, narrow: { wageMin: 120000 } });
+    expect(readPermLive).not.toHaveBeenCalled();
+    expect(readFlagLive).not.toHaveBeenCalled();
+    expect(readPermPublished).toHaveBeenCalledTimes(1);
+    expect(readFlagPublished).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops asking the published tables for "still open"', async () => {
+    await unifiedSearch({ lead: employerLead, narrow: { outcome: "open" } });
+    expect(readPermPublished).not.toHaveBeenCalled();
+    expect(readFlagPublished).not.toHaveBeenCalled();
+    expect(readPermLive).toHaveBeenCalledTimes(1);
+    expect(readFlagLive).toHaveBeenCalledTimes(2);
   });
 
   it("counts the RETURNED rows, not everything it collected", async () => {
-    // The chips above the table have to describe the table. Counting the
-    // collected set prints a number the reader cannot find on screen.
-    searchCases.mockResolvedValue(
-      Array.from({ length: 5 }, (_, i) => permPub(`G-100-25010-00000${i}`, { receivedDate: `2025-01-0${i + 1}` })),
+    readPermPublished.mockResolvedValue(
+      slice(
+        Array.from({ length: 5 }, (_, i) =>
+          permPub(`G-100-25010-00000${i}`, { receivedDate: `2025-01-0${i + 1}` }),
+        ),
+      ),
     );
-    const { rows, counts, truncated } = await unifiedSearch({ text: "acme", limit: 2 });
+    const { rows, counts, truncated } = await unifiedSearch({ lead: employerLead, limit: 2 });
     expect(rows).toHaveLength(2);
     expect(counts.perm).toBe(2);
     expect(truncated).toBe(true);
   });
 
   it("survives one program's table being unavailable, and still returns the others", async () => {
-    searchLcaCases.mockRejectedValue(new Error("turso query deadline"));
-    searchCases.mockResolvedValue([permPub("G-100-25010-000001")]);
+    readFlagLive.mockRejectedValue(new Error("turso query deadline"));
+    readPermPublished.mockResolvedValue(slice([permPub("G-100-25010-000001")]));
 
-    const { rows } = await unifiedSearch({ text: "acme" });
+    const { rows } = await unifiedSearch({ lead: employerLead });
     expect(rows.map((r) => r.caseNumber)).toEqual(["G-100-25010-000001"]);
   });
 
-  it("passes the narrowing filters through, and omits the ones not given", async () => {
-    await unifiedSearch({ text: "acme", title: "engineer", from: "2025-01" });
-    expect(searchCases).toHaveBeenCalledWith(
-      expect.objectContaining({ field: "employer", text: "acme", title: "engineer", from: "2025-01" }),
-    );
-    expect(searchCases.mock.calls[0]?.[0]).not.toHaveProperty("to");
-  });
-
   it("reports `capped` when a source returned a full page", async () => {
-    searchLcaCases.mockResolvedValue(
-      Array.from({ length: 100 }, (_, i) => flagLive(`I-200-26232-${String(i).padStart(6, "0")}`)),
+    readFlagLive.mockResolvedValue(
+      slice(
+        Array.from({ length: 100 }, (_, i) => flagLive(`I-200-26232-${String(i).padStart(6, "0")}`)),
+      ),
     );
-    const { capped } = await unifiedSearch({ text: "acme" });
+    const { capped } = await unifiedSearch({ lead: employerLead });
     expect(capped).toBe(true);
   });
 
+  it("reports `windowed` when any source filtered inside its slice window", async () => {
+    // Different claim from `capped`, and a much more important one: `capped`
+    // says there are more rows, `windowed` says the FILTER only looked at part
+    // of the record. Rendered as one message they would be the same sentence.
+    readFlagPublished.mockResolvedValue(slice([flagFile("I-200-25032-000003")], true));
+    const out = await unifiedSearch({ lead: employerLead, narrow: { wageMin: 100000 } });
+    expect(out.windowed).toBe(true);
+    expect(out.capped).toBe(false);
+  });
+
+  it("does not report `windowed` when nothing was", async () => {
+    readPermPublished.mockResolvedValue(slice([permPub("G-100-25010-000001")]));
+    expect((await unifiedSearch({ lead: employerLead })).windowed).toBe(false);
+  });
+
   it("does not report `capped` for a small answer", async () => {
-    searchLcaCases.mockResolvedValue([flagLive("I-200-26232-000001")]);
-    const { capped } = await unifiedSearch({ text: "acme" });
-    expect(capped).toBe(false);
+    readFlagLive.mockResolvedValue(slice([flagLive("I-200-26232-000001")]));
+    expect((await unifiedSearch({ lead: employerLead })).capped).toBe(false);
+  });
+});
+
+describe("unifiedSearch with a case number", () => {
+  it("returns the row we hold, from both halves, as one", async () => {
+    lookupUnifiedCase.mockResolvedValue({
+      program: "perm",
+      permPublished: permPub("G-100-25010-000001"),
+      permLive: permLive("G-100-25010-000001"),
+      flagPublished: null,
+      flagLive: null,
+    });
+    const { rows } = await unifiedSearch({
+      lead: { kind: "case", value: "G-100-25010-000001" },
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ half: "published", wage: 180000 });
+    // No employer search runs for a number: the lookup is a point read.
+    expect(readPermPublished).not.toHaveBeenCalled();
+  });
+
+  it("labels a wage-request number as the wage-request program", async () => {
+    lookupUnifiedCase.mockResolvedValue({
+      program: "pwd",
+      permPublished: null,
+      permLive: null,
+      flagPublished: null,
+      flagLive: flagLive("P-100-26232-000009"),
+    });
+    const { rows, counts } = await unifiedSearch({
+      lead: { kind: "case", value: "P-100-26232-000009" },
+    });
+    expect(rows[0]).toMatchObject({ program: "pwd", half: "live" });
+    expect(counts).toEqual({ perm: 0, pwd: 1, lca: 0 });
+  });
+
+  it("returns nothing rather than erroring when we do not hold the case", async () => {
+    const { rows, truncated } = await unifiedSearch({
+      lead: { kind: "case", value: "G-100-99999-999999" },
+    });
+    expect(rows).toEqual([]);
+    expect(truncated).toBe(false);
   });
 });

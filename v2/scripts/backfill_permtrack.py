@@ -126,23 +126,22 @@ def daily_decisions(db: Turso) -> None:
     ours = int(db.scalar("SELECT count(*) FROM daily_decisions WHERE source='dol-disclosure'") or 0)
     log(f"  daily series (ours, from perm_cases): {ours} days")
 
-    theirs = get(f"{BASE}/decisions-per-day")
-    db.execute("DELETE FROM daily_decisions WHERE source='permtrack'")
-    for r in theirs:
-        db.execute("INSERT INTO daily_decisions VALUES (?,?,?,?,?,?,?)",
-                   [r["date"], "permtrack", r["total"],
-                    r["certified"] + r.get("certified_expired", 0),
-                    r["denied"], r["withdrawn"], stamp])
-    log(f"  daily series (theirs, cross-check): {len(theirs)} days")
-
-    # CROSS-VALIDATION over the overlap - the point of keeping theirs at all.
-    rows = db.execute("""
-        SELECT a.date, a.total, b.total FROM daily_decisions a
-        JOIN daily_decisions b ON a.date=b.date
-        WHERE a.source='dol-disclosure' AND b.source='permtrack'""")["response"]["result"]["rows"]
-    same = sum(1 for r in rows if r[1]["value"] == r[2]["value"])
-    log(f"  overlap {len(rows)} days: {same} identical totals "
-        f"({same / max(len(rows), 1) * 100:.0f}% agreement)")
+    # THEIR DAILY SERIES IS NO LONGER STORED, and the 88 rows it had written
+    # were deleted on 2026-09-03. It was kept for a cross-check and became a
+    # hazard instead: `daily_decisions` is keyed (date, source), their series
+    # overlapped `dol-disclosure` on all 88 of its dates, and any reader that
+    # summed the table by date - which `backtest_models.py` and
+    # `backtest_pace.py` both did - counted 42,056 decisions twice.
+    #
+    # The comparison it existed for has also been answered: their numbers came
+    # from scanning flag.dol.gov per case, and since 2026-08-27 we scan the
+    # same endpoint ourselves. `ingest_case_status_direct.py` writes our own
+    # observed series as `sweep-observed`, from `perm_case_events`, on every
+    # sweep. Re-adding a second writer with a different notion of truth is the
+    # flip-flop this project already retired `mirror_case_status.py` over.
+    #
+    # If a one-off comparison is ever wanted again, fetch it and print it. Do
+    # not store it in a table the website reads.
 
 
 def freshness(db: Turso, vb_max: str) -> None:

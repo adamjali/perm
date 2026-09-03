@@ -31,7 +31,7 @@ import { OutcomeMix } from "@/components/activity/OutcomeMix";
 import { WeekdayShape } from "@/components/activity/WeekdayShape";
 import { ChangeFeedBrowser } from "@/components/activity/ChangeFeedBrowser";
 import { getActivitySeries } from "@/lib/turso/activity";
-import { getChangeFeed } from "@/lib/turso/changes";
+import { getChangeActivity } from "@/lib/turso/changes";
 import { getLiveMirrorSize } from "@/lib/turso/publicData";
 import {
   fillZeros,
@@ -81,12 +81,19 @@ function longDate(iso: string): string {
 }
 
 export default async function DecisionActivityPage() {
-  const [series, mirrorSize, feed] = await Promise.all([
+  const [series, mirrorSize, activity] = await Promise.all([
     getActivitySeries(),
     getLiveMirrorSize(),
     // The event record is days old, so a failure here must not take the whole
     // page down: the counts above it come from a different table entirely.
-    getChangeFeed(null, 60).catch(() => null),
+    //
+    // 60 ROWS, NOT THE WHOLE DAY. This is the slice that goes in the
+    // prerendered HTML, so it is sized for the page rather than for the
+    // instrument: the browser below fetches the rest on its own, once, through
+    // a cached route. Putting 1,090 rows here would add ~267 KB to every
+    // regeneration of a page that revalidates six-hourly, and an ISR write unit
+    // is 8 KB.
+    getChangeActivity(null, 60).catch(() => null),
   ]);
 
   const disclosure = series.find((s) => s.source === "dol-disclosure");
@@ -192,30 +199,58 @@ export default async function DecisionActivityPage() {
         </section>
       ) : null}
 
-      {feed ? (
+      {activity ? (
         <section className="mt-10">
           <h2 className="font-heading text-2xl font-black">
             The cases DOL moved, day by day
           </h2>{" "}
-          <ChangeFeedBrowser initial={feed} />{" "}
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+            Every PERM, prevailing wage and LCA case whose status changed on a
+            given day, with what it changed from and what it changed to. Search
+            it, filter it by either end of the transition, and sort on any
+            column.
+          </p>{" "}
+          <ChangeFeedBrowser
+            calendar={activity.calendar}
+            initialDay={activity.day}
+          />{" "}
           <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">
             Dated when our scan <b>saw</b> the change, not when DOL made it: a
             Friday determination read on Monday is a Monday row.
           </p>{" "}
-          <FinePrint summary="What this record covers">
+          <FinePrint summary="What this record covers, and what is left out">
             <p>
               DOL publishes no timestamp of its own. Observations begin{" "}
-              {feed.observedSince ? longDate(feed.observedSince) : "recently"},
-              so this is a short record that grows nightly rather than a
-              history.
+              {activity.calendar.observedSince
+                ? longDate(activity.calendar.observedSince)
+                : "recently"}
+              , the day the per-case scan started, and the record cannot be
+              extended backwards: nothing before that date was ever observed, so
+              no amount of reading DOL now can recover it. This is a short record
+              that grows nightly rather than a history.
+            </p>{" "}
+            <p>
+              Prevailing wage and LCA changes join it later than PERM does.{" "}
+              {activity.calendar.programSince.pwd
+                ? `Wage requests from ${longDate(activity.calendar.programSince.pwd)}`
+                : "Wage requests are not in it yet"}
+              {"; "}
+              {activity.calendar.programSince.lca
+                ? `LCAs from ${longDate(activity.calendar.programSince.lca)}`
+                : "LCAs are not in it yet"}
+              . A day before those dates shows no rows for them because none were
+              observed, not because DOL was idle.
+            </p>{" "}
+            <p>
+              Two kinds of row are left out of every day, and the count each one
+              costs that day is printed above the table rather than here, because
+              it changes with the day the reader picks. A certification whose
+              180-day I-140 window lapsed is a clock running out, not DOL acting
+              on a case. And a single timestamp carrying more than 5,000 changes
+              is a scan catching up on months of history: DOL{"\u2019"}s heaviest
+              measured day is under 2,000, and one sweep wrote 94,523 rows at
+              once, so the whole of such a timestamp is dropped.
             </p>
-            {feed.expiriesExcluded > 0 ? (
-              <p>
-                {fmt(feed.expiriesExcluded)} certifications whose 180-day I-140
-                window lapsed are left out: that clock running out is not DOL
-                acting on a case, and they were all noticed in one sweep.
-              </p>
-            ) : null}
           </FinePrint>
         </section>
       ) : null}

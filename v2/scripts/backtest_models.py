@@ -62,7 +62,17 @@ def load(db: Turso):
     for x in r:
         v = [None if c["type"] == "null" else c["value"] for c in x]
         bym[v[0]].append((v[1], int(v[2])))
-    d = db.execute("SELECT date, sum(total) FROM daily_decisions GROUP BY date")["response"]["result"]["rows"]
+    # PINNED TO ONE SOURCE. `daily_decisions` is keyed (date, source) and the
+    # sources are not interchangeable: `dol-disclosure` is dated by DOL's own
+    # decision date, `sweep-observed` by when our sweep saw the change. An
+    # unfiltered `sum(total) GROUP BY date` adds whichever ones overlap - and
+    # it already did: the retired `permtrack` series covered 88 of these dates
+    # and injected 42,056 phantom decisions into this backtest's pace curve
+    # (measured 2026-09-03, before those rows were deleted). This model is
+    # backtested against DOL's own dating, so that is the series it reads.
+    d = db.execute("SELECT date, sum(total) FROM daily_decisions "
+                   "WHERE source = 'dol-disclosure' "
+                   "GROUP BY date")["response"]["result"]["rows"]
     daily = {x[0]["value"]: int(x[1]["value"]) for x in d}
     return {m: sorted(v) for m, v in bym.items()}, daily
 

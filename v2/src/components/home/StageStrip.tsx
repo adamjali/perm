@@ -35,7 +35,7 @@ const STAGES = [
       "A separate DOL queue most tools skip entirely, split into OEWS and non-OEWS.",
     viz: QueueDepthMini,
     tool: { label: "PWD timeline", href: "/tools/pwd-calculator" },
-    data: { label: "The backlog", href: "/perm-processing-times" },
+    data: { label: "Processing times", href: "/perm-processing-times" },
     border: "border-t-stage-pwd",
   },
   {
@@ -59,7 +59,7 @@ const STAGES = [
       "USCIS's petition stage, with premium processing and a 180-day clock that matters in a layoff.",
     viz: TwoBarsMini,
     tool: { label: "I-140 timeline", href: "/tools/i140-calculator" },
-    data: { label: "The trends", href: "/tools/i140-trends" },
+    data: { label: "I-140 trends", href: "/tools/i140-trends" },
     border: "border-t-stage-i140",
   },
   {

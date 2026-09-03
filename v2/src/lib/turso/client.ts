@@ -101,6 +101,30 @@ const QUERY_DEADLINE_MS =
 const TRANSIENT_NETWORK =
   /other side closed|socket hang up|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EPIPE|EAI_AGAIN|ENOTFOUND|UND_ERR_SOCKET|UND_ERR_CONNECT_TIMEOUT|fetch failed/i;
 
+/**
+ * PRESSURE AT THE FAR END IS NOT A SETTLED ANSWER, and it does not look like a
+ * network error.
+ *
+ * A `SQLITE_NOMEM` comes back as a real, successful HTTP response carrying a
+ * LibsqlError, so TRANSIENT_NETWORK above cannot see it and the request threw
+ * on the first attempt. Measured in production on 2026-09-03: between 13:58 and
+ * 14:07 UTC, Turso was under memory pressure and Sentry caught five
+ * `SQLITE_NOMEM: SQLite error: out of memory` on release 13cd6d00, including
+ * getWageFilterOptions on /tools/salary-explorer and a generateMetadata call.
+ * The same pressure failed two ingest workflows in the same window, and the
+ * exact query that died re-ran by hand minutes later in 22.8s.
+ *
+ * So it is transient by definition: the statement was never rejected on its
+ * merits, the server ran out of room to answer it.
+ *
+ * ALLOW-LIST, NOT DENY-LIST. An unknown code fails fast, because the errors
+ * this must NOT swallow are the deterministic ones: a constraint violation, a
+ * missing table, and the read-only production token's BLOCKED, which is a
+ * configuration fact that only gets slower to diagnose if it is retried.
+ */
+const TRANSIENT_SQLITE =
+  /SQLITE_NOMEM|SQLITE_BUSY|SQLITE_LOCKED|SQLITE_IOERR|SQLITE_PROTOCOL|SQLITE_INTERRUPT|STREAM_EXPIRED|STREAM_NOT_FOUND/i;
+
 function causeChain(e: unknown): string {
   const seen = new Set<unknown>();
   const parts: string[] = [];
@@ -131,7 +155,8 @@ async function withDeadline<T>(
       const chain = causeChain(e);
       const retryable =
         chain.includes("turso query deadline") ||
-        (retryTransient && TRANSIENT_NETWORK.test(chain));
+        (retryTransient &&
+          (TRANSIENT_NETWORK.test(chain) || TRANSIENT_SQLITE.test(chain)));
       if (attempt >= 2 || !retryable) throw e;
     }
   }

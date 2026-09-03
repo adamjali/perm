@@ -52,8 +52,11 @@ describe("searchPwdCases", () => {
   it("is an indexed employer prefix range, PERM-only by default, narrowed like the PERM search", async () => {
     await searchPwdCases({ text: "deloitte", title: "consultant", from: "2026-08", to: "2026-08" });
     const [sql, args] = rows.mock.calls[0]!;
+    // The named index is asserted with the predicate: without it the month
+    // narrowing moved the plan onto `pwd_case_status_filed`, which reads every
+    // wage request filed in that window for every employer in the country.
     expect(sql).toMatch(
-      /WHERE employer_slug >= \? AND employer_slug < \? AND job_title LIKE \? ESCAPE '\\' AND filing_date >= \? AND filing_date < \? AND visa_type = \?/,
+      /FROM pwd_case_status INDEXED BY pwd_case_status_emp WHERE employer_slug >= \? AND employer_slug < \? AND job_title LIKE \? ESCAPE '\\' AND filing_date >= \? AND filing_date < \? AND visa_type = \?/,
     );
     expect(sql).toMatch(/ORDER BY filing_date DESC, case_number DESC LIMIT \?/);
     expect(args).toEqual(["deloitte", "deloittf", "%consultant%", "2026-08-01", "2026-09-01", "PERM", 200]);
@@ -154,7 +157,7 @@ describe("the decided half: DOL's quarterly file", () => {
   it("searches pwd_cases by the same slug range as the live half, PERM-only, on received_date", async () => {
     await searchPwdDeterminations({ text: "Google", from: "2026-01", to: "2026-03", title: "engineer" });
     const [sql, args] = rows.mock.calls[0]!;
-    expect(sql).toMatch(/FROM pwd_cases WHERE employer_slug >= \? AND employer_slug < \?/);
+    expect(sql).toMatch(/FROM pwd_cases INDEXED BY pwd_cases_emp WHERE employer_slug >= \? AND employer_slug < \?/);
     expect(sql).toMatch(/job_title LIKE \? ESCAPE/);
     expect(sql).toMatch(/received_date >= \? AND received_date < \?/);
     expect(sql).toMatch(/visa_class = \?/);

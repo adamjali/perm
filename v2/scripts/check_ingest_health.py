@@ -17,6 +17,13 @@ This runs in CI on a schedule and EXITS NON-ZERO when any dataset is past its
 own declared budget, which turns the run red and triggers GitHub's own
 notification. No new alerting infrastructure, no extra credential.
 
+TWO CHECKS, BECAUSE FRESHNESS ALONE MISSES A RUN THAT FAILED LATE. A sweep
+stamps `data_freshness` when its own work is done and then writes several
+precomputed docs; on 2026-09-03 the case-status sweep stamped itself fresh at
+13:58:50 and died at 14:00:11, and every one of the 36 rows in `ingest_runs`
+said `ok` while two ingests had failed that morning. So this also reads the
+audit trail and fails when an ingest's MOST RECENT run did not finish clean.
+
 THE BUDGET COMES FROM THE DATA, NOT FROM HERE. Each row carries the
 `max_age_days` its own ingest set, because only that ingest knows whether it is
 daily, quarterly or event-driven. A threshold hardcoded in the checker would
@@ -61,6 +68,83 @@ def parse_as_of(raw: str) -> datetime.date | None:
 
 
 NOW_MS = time.time() * 1000
+
+# How far back a failed run still counts. Matched to the daily ingests' own
+# `max_age_days=3` so the two checks agree about what "recent" means. An older
+# failure ages out on purpose: if the script never ran again, that is a
+# STOPPED ingest, and `data_freshness` is the check that says so.
+RUN_FAILURE_WINDOW_DAYS = 3
+
+# WHICH OUTCOMES ARE A BREAK, and which are merely worth recording.
+#
+# `cancelled` is deliberately NOT here. Both DOL workflows set
+# `cancel-in-progress: false`, so a newer run never cancels an older one and a
+# cancellation is almost always a person pressing stop. Turning that red would
+# train the reader to skim past the alert inside a week, which costs more than
+# the cancellation it reported. The row is still written and still printed
+# below - a cancellation mid-sweep IS worth seeing in the history - it just
+# does not fail the check.
+#
+# A genuine HANG is not a cancellation here either: both workflows wrap the
+# sweep in `timeout` set below the job cap precisely so a hang exits 124 and
+# lands as `failed`.
+BROKEN_STATUSES = frozenset({"failed", "partial"})
+
+
+def check_runs(db) -> int:
+    """Fail when an ingest's most recent run did not finish clean.
+
+    KEYED ON THE SCRIPT FILENAME, not the full argv. `record_run` writes
+    "ingest_pwd_status_direct.py --pending --program all" on one pass and
+    "... --backfill" on another, and the workflow's failure hook cannot know
+    which mode was running when the runner was killed. Normalising on the
+    filename means any later successful run of that script clears the flag,
+    which is the question worth answering: has this ingest recovered?
+
+    The per-pass distinction is not lost, it is just the OTHER check's job -
+    `data_freshness` carries `perm-case-status-full` and `perm-case-status`
+    separately, so a full pass that fails every night while the pending pass
+    succeeds still trips the budget above.
+    """
+    cutoff = int(NOW_MS - RUN_FAILURE_WINDOW_DAYS * 86_400_000)
+    try:
+        res = db.execute(
+            "SELECT script, status, note, finished_at FROM ingest_runs "
+            "WHERE finished_at >= ? ORDER BY finished_at DESC", [cutoff])
+    except RuntimeError as exc:
+        # A database that has never run an ingest has no such table. That is
+        # not a failure, and it must not read as one - but say so out loud,
+        # because "no rows" and "no table" look identical from a pass.
+        print(f"ingest_runs      : unreadable ({str(exc)[:120]})")
+        return 0
+    rows = [[None if c["type"] == "null" else c["value"] for c in r]
+            for r in res["response"]["result"]["rows"]]
+
+    newest: dict[str, tuple[str, str, int]] = {}
+    for script, status, note, finished in rows:
+        key = str(script).split()[0] if script else "?"
+        if key not in newest:                       # rows arrive newest first
+            newest[key] = (str(status), str(note or ""), int(finished))
+
+    print(f"\ningests with a run in {RUN_FAILURE_WINDOW_DAYS}d: {len(newest)} "
+          f"({len(rows)} runs)")
+    bad = []
+    for key in sorted(newest):
+        status, note, finished = newest[key]
+        age_h = (NOW_MS - finished) / 3_600_000
+        broken = status in BROKEN_STATUSES
+        verdict = "BROKEN" if broken else ("ok" if status == "ok" else status)
+        print(f"{key:38s} {status:8s} {age_h:5.1f}h ago  {verdict}")
+        if broken:
+            bad.append((key, status, note))
+    if not bad:
+        return 0
+    print(f"\nRUNS BROKEN: {len(bad)}")
+    for key, status, note in bad:
+        print(f"  {key}: last run finished '{status}' - {note[:160]}")
+    print("\nThe ingest's own work may have succeeded; something after it did "
+          "not. Read the note, then the Actions run it names.")
+    return 1
 
 
 def main() -> int:
@@ -127,6 +211,11 @@ def main() -> int:
         print(f"{dataset:22s} {str(as_of):12s} {age:>5}d {budget:>6}d  "
               f"{'STALE' if bad else 'ok'}")
 
+    # RUN BEFORE THE EARLY RETURNS BELOW. A stale dataset and a failed run
+    # are independent defects and the report must show both, or fixing the
+    # loud one hides the quiet one until tomorrow.
+    runs_bad = check_runs(db)
+
     print()
     if unparseable:
         print(f"UNREADABLE as_of on {len(unparseable)}: "
@@ -139,11 +228,16 @@ def main() -> int:
               "still serving the last good numbers under their own as-of date, "
               "which is why nothing else would have told us.")
         return 1
+    if runs_bad:
+        return 1
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
     if unparseable:
         return 1
-    print("All datasets within their declared freshness budgets.")
+    if runs_bad:
+        return 1
+    print("All datasets within their declared freshness budgets, and every "
+          "ingest's most recent run finished clean.")
     return 0
 
 

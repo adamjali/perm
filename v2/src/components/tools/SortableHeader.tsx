@@ -15,18 +15,26 @@ import type { SortColumn, SortState } from "@/lib/tableSort";
  *
  * `aria-sort` goes on the `th`, not the button: a screen reader announces the
  * column's state from the header cell.
+ *
+ * `disabled` exists for a caller whose rows are still a TRUNCATED sample.
+ * Sorting a slice puts a confident-looking order over data the reader cannot
+ * see the rest of, so the change feed turns the headers off until the whole
+ * day has landed rather than reordering the first page of it.
  */
 export function SortableHeader<T>({
   columns,
   sort,
   onSort,
   leading,
+  disabled = false,
 }: {
   columns: SortColumn<T>[];
   sort: SortState;
   onSort: (key: string) => void;
   /** Columns rendered before the sortable ones, e.g. the case number. */
   leading?: string[];
+  /** Turn sorting off while the rows on screen are only part of the set. */
+  disabled?: boolean;
 }) {
   return (
     <thead className="bg-foreground text-background">
@@ -52,9 +60,10 @@ export function SortableHeader<T>({
               >
                 <button
                   type="button"
+                  disabled={disabled}
                   onClick={() => onSort(c.key)}
                   className={
-                    "flex min-h-[44px] w-full items-center gap-1 px-3 py-3 text-left uppercase underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-primary " +
+                    "flex min-h-[44px] w-full items-center gap-1 px-3 py-3 text-left uppercase underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-60 focus-visible:ring-2 focus-visible:ring-primary " +
                     (active ? "underline" : "")
                   }
                 >
