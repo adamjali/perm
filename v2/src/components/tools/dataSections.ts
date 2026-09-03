@@ -133,14 +133,30 @@ export const GROUPS: DataGroup[] = [
  * over a list that happens to hold `/tools` earlier would put every
  * calculator under Overview. Sorting by href length makes the answer
  * independent of the order the list is written in.
+ *
+ * AND A TOOL PAGE FALLS BACK TO CALCULATORS. The individual tools live at
+ * `/tools/<name>` while their nav entry is the index at `/calculators`, so
+ * eight of the nine matched no section at all: the rail rendered (because
+ * `isDataPath` accepts anything under `/tools/`) with nothing marked current,
+ * on every calculator page. Reported from a screenshot of
+ * `/tools/perm-timeline-calculator`.
+ *
+ * The fallback is DERIVED rather than nine more entries, because `/calculators`
+ * already links to exactly these nine pages - a second hand-written list is
+ * the drift this function was written to remove. `/tools` itself is excluded
+ * (it is the Overview) and any tool with its own explicit entry still wins on
+ * the longest match above, which is what keeps the priority-date calculator
+ * under Visa bulletin.
  */
 export function sectionForPath(pathname: string): DataNavSection | null {
   const path = pathname.replace(/\/+$/, "") || "/";
   const candidates = [...SECTIONS].sort((a, b) => b.href.length - a.href.length);
-  return (
-    candidates.find((s) => path === s.href || path.startsWith(`${s.href}/`)) ??
-    null
-  );
+  const exact = candidates.find((s) => path === s.href || path.startsWith(`${s.href}/`));
+  if (exact) return exact;
+  if (path.startsWith(`${OVERVIEW.href}/`)) {
+    return SECTIONS.find((s) => s.key === "calculators") ?? null;
+  }
+  return null;
 }
 
 /** Whether a path is anywhere on the data surface, Overview included. */
