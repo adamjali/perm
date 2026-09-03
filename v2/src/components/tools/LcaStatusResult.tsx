@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { lookupLcaCase, lookupLcaDisclosed, type LcaDisclosedRow, type LcaRow } from "@/lib/turso/lcaCasesTypes";
 import { formatWage } from "@/lib/wageFormat";
+import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 
 /**
  * A labor condition application (ETA-9035) by number: DOL's own status,
@@ -200,6 +201,11 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
       </section>
 
       {disclosed ? <Disclosed d={disclosed} /> : null}
+
+      {/* An LCA is usually decided within seven business days, so the alert is
+          worth offering only while it is still pending: on a certified one it
+          would be a subscription to nothing. */}
+      {!row.isFinal ? <CaseAlertForm caseNumber={row.caseNumber} program="lca" /> : null}
 
       <section className="border-2 border-border bg-tint-primary p-5 sm:p-6">
         <h3 className="font-heading text-xl font-black">What this status means</h3>{" "}

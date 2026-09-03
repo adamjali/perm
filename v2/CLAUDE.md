@@ -2031,6 +2031,61 @@ per-stage value now. The global maximum survives only as the fallback for a
 stage holding nothing, which has no observation of its own.
 
 
+## A disclosure load starves the site's reads, measured (2026-09-02)
+
+While `ingest_flag_disclosure.py` wrote a 147k-row file, an ordinary
+`GROUP BY state` over `perm_cases` (a different table) was sampled every ten
+seconds and went from **~0.3s to a worst of 59.2s**. In the same window a
+production build's prerender blew its **90-second** query deadline twice on
+`/tools/salary-explorer` and only survived on the third attempt of three.
+
+**The load is a background chore and the site is not**, so the writer yields:
+`WRITE_PAUSE_S = 0.35` between write requests (2,000 rows each), which adds
+about 26 seconds per 147k rows. `--pause 0` disables it. Probed by timing
+`write_cases` against a fake driver at pause 0 and 0.2.
+
+Two things this explains that looked like other bugs. A build failing on a
+query that is normally instant is not a slow query, it is a busy primary; and
+"Turso is degraded" is worth checking against **our own** writers before their
+status page.
+
+## History loads one fiscal year at a time (`--fy`)
+
+`ingest_flag_disclosure.py --program pw --fy 2025` takes that fiscal year's
+newest file rather than the newest overall (a completed year's Q4 file covers
+the whole year). Three rules make it safe to run beside the quarterly load:
+
+- **It never stamps freshness.** That row describes the newest quarter and
+  stays with it; a 2024 file is history, not fresh data.
+- **Load records are keyed per FILE** (`flag_disclosure_pw:<name>`), with the
+  old per-program key read as a fallback, so a year load cannot masquerade as
+  the latest quarter and cause a needless reload of it.
+- **Every load or skip writes `perm_docs['flag_disclosure_summary_<program>']`**
+  (rows, date span, files), so the web never counts the table on a render.
+
+Loaded so far: FY2026 Q3 and FY2025 for `pw` (396,781 rows, received from
+2021-10-18, decided through 2026-06-30).
+
+## The two halves of a FLAG program, and why both are read
+
+DOL exposes each program twice and neither half is sufficient:
+
+| | live endpoint (`flag.dol.gov`) | quarterly disclosure file |
+|---|---|---|
+| covers | anything DOL indexes, pending included | decided only, to the last quarter |
+| freshness | today | up to three months behind |
+| **the wage** | **never** | yes, with SOC and worksite |
+
+So `/pwd-cases`, `/lca-cases`, the P- and I- lookups and the employer band all
+read both and merge one row per case (`src/lib/flagMerge.ts`): the live row
+wins for status, the file supplies the wage. A case only the file holds is
+listed after, labelled as the file. Both halves use the SAME `slugRange`, so
+one needle cannot answer differently on the two sides.
+
+**`flagMerge.ts` is a plain module, not an export from the browser component**,
+because the employer page is a server component and a function exported from a
+`"use client"` file is a client reference on the server, not a function.
+
 ## Motion's `initial` is an SSR inline style, and it hid the whole site (2026-08-31)
 
 `initial={{ opacity: 0 }}` is not a client-only instruction. Motion serializes

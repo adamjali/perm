@@ -225,6 +225,13 @@ def table_ddl(table: str) -> list[str]:
              visa_class      TEXT,
              source_file     TEXT,
              fiscal_year     INTEGER)""",
+        # The employer searches are a PREFIX RANGE on employer_slug, so rows
+        # come out slug-ordered and SQLite must sort them to honour
+        # `ORDER BY received_date DESC`. That temp B-tree is inherent to a
+        # prefix search and cannot be indexed away: adding case_number as a
+        # third column was tried and measured, and the plan did not change.
+        # It is bounded by one employer's filings, which is the point - the
+        # read never touches rows belonging to anybody else.
         f"CREATE INDEX IF NOT EXISTS {table}_emp ON {table} (employer_slug, received_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_decided ON {table} (decision_date)",
     ]

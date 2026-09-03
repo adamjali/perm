@@ -12,6 +12,7 @@ import { currentMonthUtc } from "@/lib/dolFormat";
 import { calculatePWDExpiration } from "@/lib/perm";
 import { formatWage } from "@/lib/wageFormat";
 import { QueueAlertForm } from "@/app/(site)/(public)/perm-processing-times/QueueAlertForm";
+import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 
 /**
  * A prevailing wage request (ETA-9141) by number: DOL's own status for it,
@@ -338,10 +339,16 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
         </section>
       ) : null}
 
+      {/* TWO alerts, and the order is the point. THIS request moving is what
+          the reader came for, so it goes first and is offered on every pending
+          request, PERM-tagged or not. The queue-month alert below is the
+          weaker, broader signal and only makes sense for a PERM request. */}
+      {!row.isFinal ? <CaseAlertForm caseNumber={row.caseNumber} program="pwd" /> : null}
+
       {!row.isFinal && !notPerm ? (
-        // The natural next step from reading a queue position: hear when DOL
-        // reaches the month. Same machinery as the calculator page's form,
-        // same PWD queues; the source tag says which page asked.
+        // The broader signal: hear when DOL reaches this filing month. Same
+        // machinery as the calculator page's form, same PWD queues; the
+        // source tag says which page asked.
         <QueueAlertForm
           source="pwd-status"
           newestMonth={currentMonthUtc()}
