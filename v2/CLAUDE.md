@@ -2055,6 +2055,42 @@ per-stage value now. The global maximum survives only as the fallback for a
 stage holding nothing, which has no observation of its own.
 
 
+## The article set, and the defect that caused it (2026-09-03)
+
+Google's AI Mode told Adam, twice and confidently, that this site cannot look
+up a pending prevailing wage case by its `P-` number, and that DOL hides
+pending PWD records from the public. Both are false. **It reached that
+conclusion by reading our own pages**, which makes it our defect and not its.
+
+An audit of 34 live pages found **41 places where a reader, or a machine, would
+form a wrong belief about what we can do.** The worst was the homepage FAQ
+answer to "What exactly does PERM Tracker do?" saying "check any PERM case
+number" - the single passage an answer engine is most likely to lift as the
+product definition. All 41 are fixed in `e424f38a`.
+
+**The other half is saying it out loud.** `content/guides/` now carries 37
+pieces: twelve capabilities with an explainer and a walkthrough each, plus one
+overall guide for the person waiting. The rules that keep them honest:
+
+- **Every article states what it CANNOT tell you.** That section is why the
+  rest is believable, and it is checked.
+- **Screenshots are captured, not pasted.** `scripts/shoot.mjs` shoots the live
+  site one browser at a time (parallel headless Chrome has crashed this machine
+  twice) from `scripts/article-shots.json`; `scripts/optimize-shots.py` takes
+  retina PNGs to WebP, measured at 55.7 MB -> 1.91 MB. Re-run both when the UI
+  changes, or the figures become lies.
+- **A viewport shot, not a full-page one.** The first run captured whole pages
+  and produced strips up to 13,552px tall; 24 of 26 were unusable as a figure.
+- **`scripts/audit_articles.py` is the gate** and it must stay aligned with
+  `content-frontmatter.test.ts`, which caps descriptions at 155. The two
+  disagreed on the first run (160 vs 155) and the repo's suite caught it.
+
+**THE GATE'S FIRST RUN REPORTED 26 PROBLEMS AND 8 WERE THE GATE**, which could
+not distinguish an article ASSERTING "real time" from one denying it or
+debunking the myth. It now understands negation, and three accurate uses are
+classified with a written reason each, with the count printed so the exception
+list cannot grow in silence.
+
 ## A disclosure load starves the site's reads, measured (2026-09-02)
 
 While `ingest_flag_disclosure.py` wrote a 147k-row file, an ordinary
