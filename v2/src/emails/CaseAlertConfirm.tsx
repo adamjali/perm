@@ -64,6 +64,17 @@ export interface CaseAlertConfirmProps {
    * things is only consent for the second if the email said so.
    */
   includesNews?: boolean;
+  /**
+   * What to call this filing, with its article: "a PERM case", "a prevailing
+   * wage request", "an LCA". From `programNounWithArticle` at the call site.
+   *
+   * A prop rather than a constant because DOL's case-status endpoint serves
+   * three programs and this email is sent for all of them. The subject line
+   * and the text part were already program-correct; this footer was the one
+   * string still saying "a PERM case" over a wage request, which is the kind
+   * of wrong that makes a reader doubt the whole subscription.
+   */
+  nounWithArticle?: string;
 }
 
 export function CaseAlertConfirm({
@@ -73,6 +84,7 @@ export function CaseAlertConfirm({
   asOf = null,
   confirmUrl,
   includesNews = false,
+  nounWithArticle = "a PERM case",
 }: CaseAlertConfirmProps) {
   const known = currentStatus !== null;
 
@@ -84,7 +96,7 @@ export function CaseAlertConfirm({
           : `We don't hold this case number yet. Check it before you confirm.`
       }
       hideSettingsLink
-      footerText="This address was entered to be told when a PERM case's status changes. It isn't confirmed yet, so nothing else will be sent."
+      footerText={`This address was entered to be told when ${nounWithArticle}\u2019s status changes. It isn\u2019t confirmed yet, so nothing else will be sent.`}
     >
       <QueueStamp eyebrow="Your case number" month={caseNumber}>
         {known ? (

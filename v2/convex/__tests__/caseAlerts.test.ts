@@ -20,8 +20,27 @@ import { internal } from "../_generated/api";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 
 const SECRET = "test-unsubscribe-secret";
-const CASE = "P-100-26125-868956";
+/** A PERM case. The default subject of every test that is not about programs. */
+const CASE = "G-100-26125-868956";
+/** A prevailing wage request (ETA-9141), in `pwd_case_status`. */
+const PWD_CASE = "P-100-26125-868956";
+/** A labor condition application (ETA-9035), in `lca_case_status`. */
+const LCA_CASE = "I-200-26125-868956";
 const originalFetch = global.fetch;
+
+/**
+ * Which status table holds a case number.
+ *
+ * DELIBERATELY RE-DERIVED HERE rather than imported from the module under
+ * test. The fixture is the control: if it shared the mapping with the code, a
+ * classifier that sent every number to the wrong table would still find its
+ * rows, and every assertion below would pass against it.
+ */
+function tableOf(caseNumber: string): string {
+  if (/^P-\d{3}-\d{5}-\d+$/.test(caseNumber)) return "pwd_case_status";
+  if (/^I-\d{3}-\d{5}-\d+$/.test(caseNumber)) return "lca_case_status";
+  return "perm_case_status";
+}
 
 /** One Hrana cell. Integers travel as strings, exactly as libSQL sends them. */
 function cellOf(v: string | number | null) {
@@ -55,7 +74,16 @@ interface MirrorFixture {
    */
   cases: Record<
     string,
-    { status: string; isFinal: boolean; lastCheckedAt?: string | null }
+    {
+      status: string;
+      /**
+       * A boolean writes the column as the INTEGER 0/1 the schema declares.
+       * A raw `"1"` or `1` is how a fixture reproduces libSQL handing an
+       * integer column back as a string, which `Boolean()` reads backwards.
+       */
+      isFinal: boolean | string | number;
+      lastCheckedAt?: string | null;
+    }
   >;
 }
 
@@ -68,6 +96,8 @@ interface MirrorFixture {
  */
 function stubMirrorAndResend(fixture: MirrorFixture, resendStatus = 200) {
   const sends: Record<string, unknown>[] = [];
+  /** Every statement the module issued, in order, with its bound arguments. */
+  const queries: { sql: string; args: (string | number | null)[] }[] = [];
 
   global.fetch = (async (url: unknown, init?: { body?: string }) => {
     const href = String(url);
@@ -79,6 +109,14 @@ function stubMirrorAndResend(fixture: MirrorFixture, resendStatus = 200) {
       const results = body.requests.map((req) => {
         if (req.type !== "execute" || !req.stmt) return { type: "ok", response: { type: "close" } };
         const sql = req.stmt.sql.replace(/\s+/g, " ");
+        // The status tables are interpolated, so which one a statement names
+        // is the thing several tests below assert on.
+        const table = /FROM ((?:perm|pwd|lca)_case_status)\b/.exec(sql)?.[1] ?? null;
+        const args = (req.stmt.args ?? []) as { value?: string }[];
+        queries.push({
+          sql,
+          args: args.map((a) => a.value ?? null),
+        });
 
         if (sql.includes("FROM data_freshness")) {
           return hranaResult([{ as_of: "2026-08-26" }]);
@@ -98,7 +136,11 @@ function stubMirrorAndResend(fixture: MirrorFixture, resendStatus = 200) {
         if (sql.includes("FROM perm_entities")) {
           return hranaResult([]);
         }
-        if (sql.includes("count(*) AS n FROM perm_case_status WHERE current_status")) {
+        // Table-agnostic on purpose: the census, cohort and ahead-of-you
+        // counts are the same shape in all three tables, and pinning them to
+        // `perm_case_status` would make every non-PERM alert silently render
+        // zeroes instead of failing.
+        if (/count\(\*\) AS n FROM \w+ WHERE current_status/.test(sql)) {
           return hranaResult([{ n: 906 }]);
         }
         if (sql.includes("count(*) AS total")) {
@@ -116,24 +158,35 @@ function stubMirrorAndResend(fixture: MirrorFixture, resendStatus = 200) {
             },
           ]);
         }
-        if (sql.includes("SELECT employer_name FROM perm_case_status")) {
+        if (/^SELECT employer_name FROM \w+/.test(sql)) {
           return hranaResult([{ employer_name: "Psomagen, Inc." }]);
         }
         // The batch read, and the confirmation's single-case read.
-        const args = (req.stmt.args ?? []) as { value?: string }[];
+        //
+        // A row is returned ONLY when the statement named the table that
+        // really holds that case number. That is what makes a wrong-table
+        // read look like "the mirror does not hold this case", which is
+        // exactly how it would present in production: silent, and no email.
         const wanted = args.map((a) => a.value ?? "");
         const rowsOut = wanted
-          .filter((n) => fixture.cases[n] !== undefined)
-          .map((n) => ({
-            case_number: n,
-            current_status: fixture.cases[n]!.status,
-            is_final: fixture.cases[n]!.isFinal ? 1 : 0,
-            employer_name: "Psomagen, Inc.",
-            last_checked_at:
-              fixture.cases[n]!.lastCheckedAt === undefined
-                ? "2026-08-05T22:31:24"
-                : fixture.cases[n]!.lastCheckedAt,
-          }));
+          .filter(
+            (n) =>
+              fixture.cases[n] !== undefined &&
+              (table === null || tableOf(n) === table),
+          )
+          .map((n) => {
+            const raw = fixture.cases[n]!.isFinal;
+            return {
+              case_number: n,
+              current_status: fixture.cases[n]!.status,
+              is_final: typeof raw === "boolean" ? (raw ? 1 : 0) : raw,
+              employer_name: "Psomagen, Inc.",
+              last_checked_at:
+                fixture.cases[n]!.lastCheckedAt === undefined
+                  ? "2026-08-05T22:31:24"
+                  : fixture.cases[n]!.lastCheckedAt,
+            };
+          });
         return hranaResult(rowsOut);
       });
       return new Response(JSON.stringify({ results }), {
@@ -157,7 +210,14 @@ function stubMirrorAndResend(fixture: MirrorFixture, resendStatus = 200) {
     });
   }) as unknown as typeof fetch;
 
-  return { sends, alerts: () => sends.filter((s) => String(s.subject).includes("is now")) };
+  return {
+    sends,
+    queries,
+    alerts: () => sends.filter((s) => String(s.subject).includes("is now")),
+    /** Every statement that named one of the three status tables. */
+    tableReads: () =>
+      queries.filter((q) => /FROM (?:perm|pwd|lca)_case_status\b/.test(q.sql)),
+  };
 }
 
 beforeEach(() => {
@@ -327,7 +387,7 @@ describe("subscribe input validation", () => {
     stubMirrorAndResend({ cases: {} });
     const res = await t.mutation(internal.caseAlerts.subscribe, {
       email: "  Person@Example.COM ",
-      caseNumber: " p-100-26125-868956 ",
+      caseNumber: " g-100-26125-868956 ",
     });
     expect(res.ok).toBe(true);
     const stored = await t.run(async (ctx) => ctx.db.query("caseStatusAlerts").collect());
@@ -695,7 +755,7 @@ describe("the global alert budget", () => {
     const { alerts } = stubMirrorAndResend({
       cases: Object.fromEntries(
         Array.from({ length: 60 }, (_, i) => [
-          `P-100-2612${i % 10}-86895${i}`,
+          `G-100-2612${i % 10}-86895${i}`,
           { status: "CERTIFIED", isFinal: true },
         ]),
       ),
@@ -705,7 +765,7 @@ describe("the global alert budget", () => {
         t,
         `person${i}@example.com`,
         "ANALYST REVIEW",
-        `P-100-2612${i % 10}-86895${i}`,
+        `G-100-2612${i % 10}-86895${i}`,
       );
     }
 
@@ -888,5 +948,247 @@ describe("the alert that goes out", () => {
       const hit = BANNED_CLAIMS.find((re) => re.test(good));
       expect(hit, `gate flagged legitimate copy: ${good} (${hit})`).toBeUndefined();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The three FLAG programs
+// ---------------------------------------------------------------------------
+
+/**
+ * DOL's batch endpoint serves PERM, prevailing wage requests and LCAs from one
+ * serial counter, and we store each in its own table. So the whole risk of
+ * generalising this module is a case read out of a table that cannot hold it:
+ * the row is simply absent, which this code correctly treats as "a recent
+ * filing the mirror has not reached yet". Nothing throws, nothing is logged,
+ * and the subscriber waits forever. Every test here is aimed at that.
+ */
+describe("the three FLAG programs", () => {
+  it("accepts a wage request and an LCA, and still rejects junk", async () => {
+    const t = createTestContext();
+    stubMirrorAndResend({ cases: {} });
+
+    for (const caseNumber of [CASE, PWD_CASE, LCA_CASE, "I-203-26125-868956"]) {
+      const res = await t.mutation(internal.caseAlerts.subscribe, {
+        email: `${caseNumber.toLowerCase()}@example.com`,
+        caseNumber,
+      });
+      expect(res.ok, `should have accepted ${caseNumber}`).toBe(true);
+    }
+
+    for (const caseNumber of [
+      "",
+      "hello",
+      "P-100-26125",
+      "I-200-26125",
+      "P-10-26125-868956",
+      "I-200-26125-868956; DROP TABLE lca_case_status",
+    ]) {
+      const res = await t.mutation(internal.caseAlerts.subscribe, {
+        email: "junk@example.com",
+        caseNumber,
+      });
+      expect(res.ok, `should have rejected ${JSON.stringify(caseNumber)}`).toBe(false);
+      // The refusal names every prefix the endpoint takes. Saying "PERM case
+      // number" to someone holding a P- number is a correct-looking rejection
+      // of a number that works.
+      expect(res.message).toContain("G-, A-, P- or I-");
+      expect(res.message).not.toContain("PERM case number");
+    }
+  });
+
+  it("reads each program out of its OWN status table", async () => {
+    const t = createTestContext();
+    const { tableReads } = stubMirrorAndResend({
+      cases: {
+        [CASE]: { status: "RFI ISSUED", isFinal: false },
+        [PWD_CASE]: { status: "DETERMINATION ISSUED", isFinal: true },
+        [LCA_CASE]: { status: "CERTIFIED", isFinal: true },
+      },
+    });
+    await seededSubscription(t, "perm@example.com", "ANALYST REVIEW", CASE);
+    await seededSubscription(t, "pwd@example.com", "IN PROCESS", PWD_CASE);
+    await seededSubscription(t, "lca@example.com", "IN PROCESS", LCA_CASE);
+
+    const res = await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(res.sent).toBe(3);
+
+    /** Which tables were named by a statement that bound this case number. */
+    const tablesFor = (caseNumber: string) =>
+      new Set(
+        tableReads()
+          .filter((q) => q.args.includes(caseNumber))
+          .map((q) => /FROM ((?:perm|pwd|lca)_case_status)\b/.exec(q.sql)![1]),
+      );
+
+    expect(tablesFor(PWD_CASE)).toEqual(new Set(["pwd_case_status"]));
+    expect(tablesFor(LCA_CASE)).toEqual(new Set(["lca_case_status"]));
+    // The control. Without it this passes just as well against a module that
+    // read nothing at all for any of them.
+    expect(tablesFor(CASE)).toEqual(new Set(["perm_case_status"]));
+  });
+
+  it("closes a wage request whose is_final arrives as the STRING \"1\"", async () => {
+    const t = createTestContext();
+    const { alerts } = stubMirrorAndResend({
+      // libSQL can hand an INTEGER column back as a string. Both obvious
+      // readings are wrong on it in opposite directions: `Boolean("0")` is
+      // true, so every case would retire on sight, and `num("1")` is 0, so a
+      // decided case would be swept forever and could alert again.
+      cases: { [PWD_CASE]: { status: "DETERMINATION ISSUED", isFinal: "1" } },
+    });
+    const id = await seededSubscription(t, "pwd@example.com", "IN PROCESS", PWD_CASE);
+
+    const res = await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(res.sent).toBe(1);
+    expect(String(alerts()[0]!.text)).toContain("last alert");
+
+    const row = await t.run(async (ctx) => ctx.db.get(id));
+    expect(row!.caseClosedAt).toBeDefined();
+
+    // And it really has left the sweep, rather than merely being stamped.
+    const after = await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(after.checked).toBe(0);
+  });
+
+  it("does NOT close a case whose is_final arrives as the STRING \"0\"", async () => {
+    const t = createTestContext();
+    stubMirrorAndResend({
+      cases: { [PWD_CASE]: { status: "IN PROCESS", isFinal: "0" } },
+    });
+    const id = await seededSubscription(t, "pwd@example.com", "RECEIVED", PWD_CASE);
+
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    const row = await t.run(async (ctx) => ctx.db.get(id));
+    // The half of the string bug a `Boolean()` reading gets wrong: a live case
+    // silently retired on its first sighting, and never heard from again.
+    expect(row!.caseClosedAt).toBeUndefined();
+  });
+
+  it("calls each program by its own name in the subject and the body", async () => {
+    const cases: [string, string, string][] = [
+      [CASE, "PERM case", "RFI ISSUED"],
+      [PWD_CASE, "prevailing wage request", "DETERMINATION ISSUED"],
+      [LCA_CASE, "LCA", "CERTIFIED"],
+    ];
+    for (const [caseNumber, noun, status] of cases) {
+      const t = createTestContext();
+      const { alerts } = stubMirrorAndResend({
+        cases: { [caseNumber]: { status, isFinal: status !== "RFI ISSUED" } },
+      });
+      await seededSubscription(t, "person@example.com", "IN PROCESS", caseNumber);
+      await t.action(internal.caseAlerts.sweepCaseChanges, {});
+
+      const sent = alerts()[0]!;
+      expect(String(sent.subject), caseNumber).toBe(`Your ${noun} is now ${status}`);
+      expect(String(sent.text), caseNumber).toContain(
+        `DOL's status for ${noun} ${caseNumber} has changed.`,
+      );
+    }
+  });
+
+  it("names the program in the confirmation, with the right article", async () => {
+    const t = createTestContext();
+    const { sends } = stubMirrorAndResend({
+      cases: { [LCA_CASE]: { status: "IN PROCESS", isFinal: false } },
+    });
+    await t.action(internal.caseAlerts.sendConfirmation, {
+      email: "person@example.com",
+      caseNumber: LCA_CASE,
+    });
+
+    const body = sends[0]!;
+    expect(String(body.subject)).toBe(`Confirm alerts for LCA ${LCA_CASE}`);
+    // "a LCA" is the tell that nobody read the sentence.
+    expect(String(body.text)).toContain("status for an LCA changes");
+  });
+
+  it("withholds the PERM regulatory gloss from a non-PERM alert", async () => {
+    // `statusMeaning("CERTIFIED")` promises 180 days to file the I-140. That
+    // is a PERM rule and it is simply untrue of a certified LCA. A plausible
+    // wrong explanation of a government status is worse than none, because
+    // the reader cannot tell them apart and will act on it.
+    const t = createTestContext();
+    const lca = stubMirrorAndResend({
+      cases: { [LCA_CASE]: { status: "CERTIFIED", isFinal: true } },
+    });
+    await seededSubscription(t, "lca@example.com", "IN PROCESS", LCA_CASE);
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(String(lca.alerts()[0]!.text)).not.toContain("I-140");
+
+    // The control: the identical status on a PERM case DOES carry the gloss,
+    // so the assertion above is measuring the program gate rather than a
+    // template that stopped rendering meanings altogether.
+    const t2 = createTestContext();
+    const perm = stubMirrorAndResend({
+      cases: { [CASE]: { status: "CERTIFIED", isFinal: true } },
+    });
+    await seededSubscription(t2, "perm@example.com", "ANALYST REVIEW", CASE);
+    await t2.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(String(perm.alerts()[0]!.text)).toContain("I-140");
+  });
+
+  it("withholds the RFI funnel from a non-PERM alert", async () => {
+    // `rfi_funnel` is measured over PERM cases. Its reassuring rate beside a
+    // wage request would be a number from one population presented as context
+    // for a case in another.
+    const t = createTestContext();
+    const pwd = stubMirrorAndResend({
+      cases: { [PWD_CASE]: { status: "RFI ISSUED", isFinal: false } },
+    });
+    await seededSubscription(t, "pwd@example.com", "IN PROCESS", PWD_CASE);
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(String(pwd.alerts()[0]!.text)).not.toContain("1,799");
+
+    const t2 = createTestContext();
+    const perm = stubMirrorAndResend({
+      cases: { [CASE]: { status: "RFI ISSUED", isFinal: false } },
+    });
+    await seededSubscription(t2, "perm@example.com", "ANALYST REVIEW", CASE);
+    await t2.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(String(perm.alerts()[0]!.text)).toContain("1,799");
+  });
+
+  it("dates each alert from its OWN ingest's freshness row", async () => {
+    const t = createTestContext();
+    const { queries } = stubMirrorAndResend({
+      cases: { [PWD_CASE]: { status: "DETERMINATION ISSUED", isFinal: true } },
+    });
+    await seededSubscription(t, "pwd@example.com", "IN PROCESS", PWD_CASE);
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+
+    const datasets = queries
+      .filter((q) => q.sql.includes("FROM data_freshness"))
+      .flatMap((q) => q.args);
+    // Each ingest stamps its own row on its own schedule, so dating a wage
+    // alert with the PERM sweep's timestamp is a false provenance on the one
+    // line whose entire job is provenance.
+    expect(datasets).toContain("pwd-status");
+    expect(datasets).not.toContain("perm-case-status");
+  });
+
+  it("keeps one address's programs apart when seeding a mixed set", async () => {
+    const t = createTestContext();
+    const { tableReads } = stubMirrorAndResend({
+      cases: {
+        [CASE]: { status: "ANALYST REVIEW", isFinal: false },
+        [PWD_CASE]: { status: "IN PROCESS", isFinal: false },
+      },
+    });
+    const email = "both@example.com";
+    await seededSubscription(t, email, undefined, CASE);
+    await seededSubscription(t, email, undefined, PWD_CASE);
+
+    await t.action(internal.caseAlerts.seedLastSeen, { email });
+
+    const rows = await t.run(async (ctx) => ctx.db.query("caseStatusAlerts").collect());
+    // One IN list cannot serve two tables, so a seeder that built one would
+    // silently seed neither, and both subscriptions would then take their
+    // baseline from the sweep's first-sighting path instead - a day late and
+    // invisible.
+    expect(rows.find((r) => r.caseNumber === CASE)!.lastSeenStatus).toBe("ANALYST REVIEW");
+    expect(rows.find((r) => r.caseNumber === PWD_CASE)!.lastSeenStatus).toBe("IN PROCESS");
+    expect(tableReads().some((q) => q.sql.includes("FROM pwd_case_status"))).toBe(true);
+    expect(tableReads().some((q) => q.sql.includes("FROM perm_case_status"))).toBe(true);
   });
 });

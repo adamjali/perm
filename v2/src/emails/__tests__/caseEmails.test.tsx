@@ -466,3 +466,39 @@ describe("case email templates", () => {
     );
   });
 });
+
+describe("the confirmation names the right filing", () => {
+  /**
+   * DOL's case-status endpoint serves three programs and this email is sent
+   * for all of them. Its subject and text part were program-correct while the
+   * HTML footer said "a PERM case" over a prevailing wage request, which is
+   * the kind of wrong that makes a reader doubt the whole subscription.
+   */
+  const base = {
+    caseNumber: "P-100-26092-751498",
+    currentStatus: "IN PROCESS",
+    employerName: "Google LLC",
+    asOf: "2 September 2026",
+    confirmUrl: "https://permtracker.app/confirm?t=x",
+  };
+
+  it("uses the noun it is given, and never says PERM for a wage request", async () => {
+    const html = await render(
+      CaseAlertConfirm({ ...base, nounWithArticle: "a prevailing wage request" }),
+    );
+    expect(html).toContain("a prevailing wage request’s status changes");
+    expect(html).not.toMatch(/a PERM case’s status changes/);
+  });
+
+  it("says LCA for an LCA", async () => {
+    const html = await render(
+      CaseAlertConfirm({ ...base, caseNumber: "I-200-26239-199948", nounWithArticle: "an LCA" }),
+    );
+    expect(html).toContain("an LCA’s status changes");
+  });
+
+  it("still says PERM when no noun is passed, so existing callers are unchanged", async () => {
+    const html = await render(CaseAlertConfirm({ ...base, caseNumber: "G-100-26240-200246" }));
+    expect(html).toContain("a PERM case’s status changes");
+  });
+});

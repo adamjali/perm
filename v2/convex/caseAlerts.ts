@@ -7,6 +7,25 @@
  * `perm_case_status` holds 412,865 cases including the 97,657 that are still
  * pending, which DOL's own disclosure files cannot express at all.
  *
+ * ## Three programs, one machine
+ *
+ * DOL's batch status endpoint serves every FLAG program from one serial
+ * counter, so the same subscription works for a PERM (`G-`, `A-`), the
+ * prevailing wage request that precedes it (`P-`) and a labor condition
+ * application (`I-200-`, `I-203-`). Each lives in its OWN table, because the
+ * PERM tables feed the queue census, the review stages and the RFI funnel and
+ * every one of those assumes a PERM status vocabulary.
+ *
+ * Nothing here duplicates a status vocabulary to cope with that. The program
+ * comes from the case number (`src/lib/flagCaseNumber.ts`), the table comes
+ * from the program, and whether a case is CLOSED comes from that table's own
+ * `is_final` column, so a status word this file has never heard of still
+ * retires the subscription correctly. What IS program-aware is the copy: the
+ * noun in the subject line, the plain-English gloss (PERM-only, because those
+ * sentences cite PERM regulations and one of them would be actively wrong on
+ * an LCA), the RFI funnel (measured over PERM cases) and which status counts
+ * as landing well.
+ *
  * ## The change detector
  *
  * Two halves, and they do different jobs.
@@ -53,8 +72,8 @@
  * caused one real outage on this product.
  *
  *   queue-alert confirmations      18/day   (convex/queueAlerts.ts)
- *   case-alert confirmations       15/day   (below)
- *   case alerts                    18/day   (below)
+ *   case-alert confirmations       15/day   (below, ALL THREE programs)
+ *   case alerts                    18/day   (below, ALL THREE programs)
  *   bulletin-alert confirmations    6/day   (convex/bulletinAlerts.ts)
  *   bulletin alerts                12/day   (convex/bulletinAlerts.ts)
  *   preference-center links         6/day   (convex/emailPrefs.ts)
@@ -85,6 +104,12 @@
  * per-IP limit does nothing against a proxy pool. Whatever anyone does,
  * confirmations stop at 15 and alerts stop at 18 in a rolling day.
  *
+ * Adding the prevailing wage and LCA programs added NO sending path and
+ * claimed no new line: all three share the two budgets above, so the worst
+ * case is unchanged. A P- subscription and a G- subscription compete for the
+ * same 18 alerts, which is the correct shape - the scarce thing is Resend's
+ * shared 100/day, and it does not care which program an email is about.
+ *
  * @module convex/caseAlerts
  */
 
@@ -102,17 +127,31 @@ import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
 import { formatAsOf } from "../src/lib/dolFormat";
 import {
   canonicalStatus,
-  isApproval,
-  normaliseCaseNumber,
   showsRfiFunnel,
   statusMeaning,
 } from "../src/lib/caseStatusVocabulary";
+import {
+  freshnessDatasetFor,
+  isProgramApproval,
+  normaliseFlagCaseNumber,
+  programNoun,
+  programNounWithArticle,
+  programOf,
+  statusTableFor,
+  type FlagProgram,
+} from "../src/lib/flagCaseNumber";
 import {
   makeUnsubscribeToken,
   verifyUnsubscribeToken,
   type TokenPurpose,
 } from "./lib/unsubscribeToken";
-import { one, placeholders, query, rows, type Row } from "./lib/publicMirror";
+import {
+  one,
+  placeholders,
+  query,
+  type Row,
+  type Statement,
+} from "./lib/publicMirror";
 import { recordError } from "./lib/errorRecording";
 import {
   checkAndRecordRateLimit,
@@ -248,6 +287,47 @@ function count(n: number): string {
   return n.toLocaleString("en-US");
 }
 
+/**
+ * The live status table holding one case number.
+ *
+ * Every read in this file goes through here rather than naming a table, so
+ * there is one decision rather than eight, and a program added later cannot
+ * be half-wired. The value is interpolated into SQL and is safe to be: it is
+ * one of three literals from a closed map, never anything a caller typed.
+ * See `src/lib/flagCaseNumber.ts`.
+ */
+function tableForCase(caseNumber: string): string {
+  return statusTableFor(programOf(caseNumber));
+}
+
+/** Case numbers bucketed by the program table that holds them. */
+function groupByProgram(caseNumbers: string[]): Map<FlagProgram, string[]> {
+  const out = new Map<FlagProgram, string[]>();
+  for (const caseNumber of caseNumbers) {
+    const program = programOf(caseNumber);
+    const held = out.get(program);
+    if (held) held.push(caseNumber);
+    else out.set(program, [caseNumber]);
+  }
+  return out;
+}
+
+/**
+ * Read the `is_final` column as a boolean.
+ *
+ * `Number(x) === 1`, not a truthiness test and not `num()`. libSQL can hand
+ * an integer column back as the STRING "0" or "1" depending on the driver
+ * path, and both of the obvious readings are wrong on one of those:
+ * `Boolean("0")` is TRUE, so every case would retire the moment it was seen,
+ * and `num("1")` is 0, so no case would ever retire and a decided case would
+ * be read forever. `Number` handles the string and the integer identically,
+ * and `Number(null)` is 0 rather than NaN-with-a-surprise. The read layer on
+ * the web side carries the same guard, for the same reason.
+ */
+function isFinalFlag(value: string | number | null | undefined): boolean {
+  return Number(value) === 1;
+}
+
 // ============================================================================
 // Subscribe
 // ============================================================================
@@ -289,13 +369,19 @@ export const subscribe = internalMutation({
     if (!isPlausibleEmail(email)) {
       return { ok: false, message: "That email address does not look right." };
     }
-    const caseNumber = normaliseCaseNumber(args.caseNumber);
-    if (!caseNumber) {
+    // Shape-gated and classified in one step. The gate is the same
+    // `normaliseCaseNumber` as before, so what may be stored as a key has not
+    // widened; what is new is that the number now says which program's table
+    // the sweep should read it out of.
+    const parsed = normaliseFlagCaseNumber(args.caseNumber);
+    if (!parsed) {
       return {
         ok: false,
-        message: "That does not look like a PERM case number.",
+        message:
+          "That does not look like a DOL case number (G-, A-, P- or I-).",
       };
     }
+    const caseNumber = parsed.caseNumber;
 
     // Per-caller limit. Skipped for "unknown" rather than bucketing every
     // unresolvable caller together, which would let one script lock out all of
@@ -466,10 +552,18 @@ async function renderOrTextOnly(
   }
 }
 
-/** The mirror's own as-of date for the case corpus, formatted, or null. */
-async function mirrorAsOf(): Promise<string | null> {
+/**
+ * The mirror's own as-of date for ONE program's corpus, formatted, or null.
+ *
+ * Per program, because each ingest stamps its own `data_freshness` row and
+ * they refresh on different schedules. Dating a prevailing wage alert with
+ * the PERM sweep's timestamp would be a false provenance on the one line
+ * whose entire job is provenance.
+ */
+async function mirrorAsOf(program: FlagProgram): Promise<string | null> {
   const row = await one(
-    "SELECT as_of FROM data_freshness WHERE dataset = 'perm-case-status'",
+    "SELECT as_of FROM data_freshness WHERE dataset = ?",
+    [freshnessDatasetFor(program)],
   );
   const raw = row?.as_of;
   return typeof raw === "string" ? (formatAsOf(raw) ?? raw) : null;
@@ -495,6 +589,8 @@ export const sendConfirmation = internalAction({
   handler: async (ctx, args) => {
     try {
       const includesNews = args.includesNews === true;
+      const program = programOf(args.caseNumber);
+      const noun = programNoun(program);
       const token = await makeUnsubscribeToken(
         args.email,
         unsubscribeSecret(),
@@ -511,7 +607,7 @@ export const sendConfirmation = internalAction({
       try {
         current = await one(
           `SELECT current_status, employer_name, last_checked_at
-             FROM perm_case_status WHERE case_number = ?`,
+             FROM ${tableForCase(args.caseNumber)} WHERE case_number = ?`,
           [args.caseNumber],
         );
         // This case's own check date, not the corpus-wide freshness stamp. The
@@ -548,6 +644,7 @@ export const sendConfirmation = internalAction({
             asOf,
             confirmUrl,
             includesNews,
+            nounWithArticle: programNounWithArticle(program),
           });
         },
       );
@@ -555,10 +652,10 @@ export const sendConfirmation = internalAction({
       const result = await sendEmailWithRetry(getResend(), {
         from: FROM_EMAIL,
         to: args.email,
-        subject: `Confirm alerts for PERM case ${args.caseNumber}`,
+        subject: `Confirm alerts for ${noun} ${args.caseNumber}`,
         html,
         text: [
-          "You asked to be told when the Department of Labor's status for a PERM case changes.",
+          `You asked to be told when the Department of Labor's status for ${programNounWithArticle(program)} changes.`,
           "",
           `Case number: ${args.caseNumber}`,
           ...(status
@@ -869,13 +966,23 @@ export const seedLastSeen = internalAction({
       const pending = subs.filter((s) => s.lastSeenStatus === undefined);
       if (pending.length === 0) return null;
 
-      const marks = placeholders(pending.length);
-      if (!marks) return null;
-      const current = await rows(
-        `SELECT case_number, current_status FROM perm_case_status
-          WHERE case_number IN (${marks})`,
+      // One statement per program table, one round trip for all of them. An
+      // address can hold a PERM and a wage request at once and they live in
+      // different tables, so a single IN list cannot serve both.
+      const statements: Statement[] = [];
+      for (const [program, numbers] of groupByProgram(
         pending.map((s) => s.caseNumber),
-      );
+      )) {
+        const marks = placeholders(numbers.length);
+        if (!marks) continue;
+        statements.push({
+          sql: `SELECT case_number, current_status FROM ${statusTableFor(program)}
+                 WHERE case_number IN (${marks})`,
+          args: numbers,
+        });
+      }
+      if (statements.length === 0) return null;
+      const current = (await query(statements)).flat();
 
       for (const row of current) {
         const num = typeof row.case_number === "string" ? row.case_number : null;
@@ -960,11 +1067,18 @@ function str(v: string | number | null | undefined): string | null {
  */
 async function caseContext(
   caseNumber: string,
+  program: FlagProgram,
   status: string,
   employerSlug: string | null,
 ): Promise<CaseContext | null> {
+  // Every count below is scoped to the case's OWN program, so "cases now at
+  // this status" and "filed the same month as yours" compare a wage request
+  // against wage requests. Counting a PWD against the PERM corpus would put a
+  // large, confident and meaningless number in front of the reader.
+  const table = statusTableFor(program);
+
   const base = await one(
-    `SELECT filing_date, employer_name, job_title FROM perm_case_status
+    `SELECT filing_date, employer_name, job_title FROM ${table}
       WHERE case_number = ?`,
     [caseNumber],
   );
@@ -975,16 +1089,16 @@ async function caseContext(
 
   const statements = [
     {
-      sql: "SELECT count(*) AS n FROM perm_case_status WHERE current_status = ?",
+      sql: `SELECT count(*) AS n FROM ${table} WHERE current_status = ?`,
       args: [status] as (string | number | null)[],
     },
     {
       sql: `SELECT count(*) AS total, coalesce(sum(is_final), 0) AS decided
-              FROM perm_case_status WHERE substr(filing_date, 1, 7) = ?`,
+              FROM ${table} WHERE substr(filing_date, 1, 7) = ?`,
       args: [month ?? ""] as (string | number | null)[],
     },
     {
-      sql: `SELECT count(*) AS n FROM perm_case_status
+      sql: `SELECT count(*) AS n FROM ${table}
              WHERE is_final = 0 AND substr(filing_date, 1, 7) < ?`,
       args: [month ?? ""] as (string | number | null)[],
     },
@@ -1103,20 +1217,28 @@ export const sweepCaseChanges = internalAction({
       return { checked: 0, sent: 0, failed: 0, seeded: 0, remaining: false };
     }
 
-    // One query for the whole batch. De-duplicated because several subscribers
-    // routinely watch the same case (an employer and a beneficiary), and the
-    // IN list is what bounds this read.
+    // One round trip for the whole batch, one statement per program table.
+    // De-duplicated because several subscribers routinely watch the same case
+    // (an employer and a beneficiary), and the IN lists are what bound this
+    // read. Keying the result by case number alone is safe because a serial is
+    // claimed by exactly one prefix, so the same number cannot exist in two
+    // programs' tables.
     const uniqueCases = Array.from(new Set(batch.map((r) => r.caseNumber)));
-    const marks = placeholders(uniqueCases.length);
-    if (!marks) {
+    const statements: Statement[] = [];
+    for (const [program, numbers] of groupByProgram(uniqueCases)) {
+      const marks = placeholders(numbers.length);
+      if (!marks) continue;
+      statements.push({
+        sql: `SELECT case_number, current_status, is_final, last_checked_at
+                FROM ${statusTableFor(program)} WHERE case_number IN (${marks})`,
+        args: numbers,
+      });
+    }
+    if (statements.length === 0) {
       return { checked: 0, sent: 0, failed: 0, seeded: 0, remaining: false };
     }
 
-    const mirror = await rows(
-      `SELECT case_number, current_status, is_final, last_checked_at
-         FROM perm_case_status WHERE case_number IN (${marks})`,
-      uniqueCases,
-    );
+    const mirror = (await query(statements)).flat();
     const nowByCase = new Map<
       string,
       { status: string; isFinal: boolean; observedAt: string | null }
@@ -1127,7 +1249,7 @@ export const sweepCaseChanges = internalAction({
       if (!numKey || !status) continue;
       nowByCase.set(numKey, {
         status: canonicalStatus(status),
-        isFinal: num(row.is_final) === 1,
+        isFinal: isFinalFlag(row.is_final),
         // May legitimately be null: 11,955 pending rows carry no check date.
         // Passed through as null rather than defaulted, so the template says
         // so instead of implying a fresh observation.
@@ -1138,6 +1260,7 @@ export const sweepCaseChanges = internalAction({
     const now = Date.now();
     const changed: {
       sub: (typeof batch)[number];
+      program: FlagProgram;
       status: string;
       isFinal: boolean;
       observedAt: string | null;
@@ -1175,6 +1298,7 @@ export const sweepCaseChanges = internalAction({
 
       changed.push({
         sub,
+        program: programOf(sub.caseNumber),
         status: current.status,
         isFinal: current.isFinal,
         observedAt: current.observedAt,
@@ -1207,26 +1331,43 @@ export const sweepCaseChanges = internalAction({
       return { checked: batch.length, sent: 0, failed: 0, seeded, remaining };
     }
 
-    const asOf = await mirrorAsOf();
-    // Deliberately says COUNTED, not checked. The counting is genuinely ours;
-    // the statuses being counted are not, and `asOf` here is the corpus-wide
-    // refresh stamp rather than any one case's check date, which is why the
-    // per-case date is carried separately in `observedAt`.
-    const contextProvenance = `Counted across our mirror of DOL case status${asOf ? `, as of ${asOf}` : ""}.`;
-    const funnel = changed.some((c) => showsRfiFunnel(c.status))
+    const sending = changed.slice(0, granted);
+
+    // One as-of per program present in this batch, at most three reads. Says
+    // COUNTED, not checked: the counting is genuinely ours, the statuses being
+    // counted are not, and this is the corpus-wide refresh stamp rather than
+    // any one case's check date, which is why the per-case date is carried
+    // separately in `observedAt`.
+    const provenanceByProgram = new Map<FlagProgram, string>();
+    for (const program of new Set(sending.map((c) => c.program))) {
+      const asOf = await mirrorAsOf(program);
+      provenanceByProgram.set(
+        program,
+        `Counted across our mirror of DOL case status${asOf ? `, as of ${asOf}` : ""}.`,
+      );
+    }
+
+    // PERM ONLY. `rfi_funnel` is measured over PERM cases, so pasting it into
+    // an alert about a wage request would be a rate from one population
+    // presented beside a case in another.
+    const funnel = sending.some(
+      (c) => c.program === "perm" && showsRfiFunnel(c.status),
+    )
       ? await rfiFunnel()
       : null;
 
-    for (const { sub, status, isFinal, observedAt } of changed.slice(0, granted)) {
+    for (const { sub, program, status, isFinal, observedAt } of sending) {
       try {
         const { slugify } = await import("../src/lib/entitySlug");
         const base = await one(
-          "SELECT employer_name FROM perm_case_status WHERE case_number = ?",
+          `SELECT employer_name FROM ${statusTableFor(program)}
+             WHERE case_number = ?`,
           [sub.caseNumber],
         );
         const employerRaw = str(base?.employer_name);
         const context = await caseContext(
           sub.caseNumber,
+          program,
           status,
           employerRaw ? slugify(employerRaw) : null,
         );
@@ -1244,8 +1385,24 @@ export const sweepCaseChanges = internalAction({
         );
         const unsubUrl = actionUrl("/case-alert/unsubscribe", token);
         const caseUrl = casePageUrl(sub.caseNumber);
-        const meaning = statusMeaning(status);
-        const tone = !isFinal || isApproval(status) ? "live" : "closed";
+        const noun = programNoun(program);
+        // The map is keyed off this same list, so the fallback is unreachable.
+        // It says the sentence WITHOUT a date rather than an empty string, so
+        // an impossible miss degrades to honest copy instead of a blank line
+        // where the provenance should be.
+        const contextProvenance =
+          provenanceByProgram.get(program) ??
+          "Counted across our mirror of DOL case status.";
+        // PERM ONLY, and this is a correctness floor rather than a style
+        // choice. Every gloss in `statusMeaning` cites PERM regulation - the
+        // CERTIFIED one promises a 180-day window to file the I-140, which is
+        // simply untrue of a certified LCA. A plausible wrong explanation of a
+        // government status is worse than none, because the reader cannot tell
+        // them apart and will act on it. Non-PERM programs get no sentence
+        // until one can be sourced; the template already renders nothing.
+        const meaning = program === "perm" ? statusMeaning(status) : null;
+        const tone =
+          !isFinal || isProgramApproval(program, status) ? "live" : "closed";
 
         const contextRows = [
           { label: "Cases now at this status", value: count(context.nowInStatus) },
@@ -1267,7 +1424,8 @@ export const sweepCaseChanges = internalAction({
             : []),
         ];
 
-        const showFunnel = showsRfiFunnel(status) && funnel !== null;
+        const showFunnel =
+          program === "perm" && showsRfiFunnel(status) && funnel !== null;
         const rfiRows = showFunnel
           ? [
               { label: "Resolved RFIs observed", value: count(funnel.resolved) },
@@ -1341,14 +1499,14 @@ export const sweepCaseChanges = internalAction({
         const result = await sendEmailWithRetry(getResend(), {
           from: FROM_EMAIL,
           to: sub.email,
-          subject: `Your PERM case is now ${status}`,
+          subject: `Your ${noun} is now ${status}`,
           html,
           headers: {
             "List-Unsubscribe": `<${unsubUrl}>`,
             "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
           },
           text: [
-            `DOL's status for PERM case ${sub.caseNumber} has changed.`,
+            `DOL's status for ${noun} ${sub.caseNumber} has changed.`,
             "",
             `Was: ${sub.lastSeenStatus}`,
             `Now: ${status}`,
