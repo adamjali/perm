@@ -23,11 +23,13 @@
  * across the record" are different questions and the line answers whichever
  * one you point it at. The table is the same series as figures, with the
  * decision count behind each point: a month at the median of 8,890 decisions
- * and a month at the median of 19,787 are not equally solid, and the chart
- * cannot show that.
+ * and a month at the median of 19,787 are not equally solid, and the line
+ * draws both at the same weight. The readout names that count for the point
+ * under the cursor; the table is where all of them can be compared at once.
  */
 
 import { Fragment, useId, useMemo, useState } from "react";
+import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverLayer";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
 import { DataView, ScopeSelect } from "@/components/tools/DataView";
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
@@ -102,6 +104,21 @@ function FrontierSvg({
 
   const toMonth = (idx: number) =>
     `${Math.floor(idx / 12)}-${String((idx % 12) + 1).padStart(2, "0")}`;
+
+  // What the reader can interrogate: one point per month of determinations,
+  // at the same coordinates the circles are drawn at, so the readout cannot
+  // drift from the line. The unit named is the one drawn - a month of
+  // determinations and the median filing month behind it - and the decision
+  // count rides along as the detail, because a median over 8,890 decisions
+  // and one over 19,787 are not equally solid and the line draws both at the
+  // same weight.
+  const hover: HoverPoint[] = points.map((p, i) => ({
+    x: px(xs[i]!),
+    y: py(ys[i]!),
+    label: `Decisions in ${formatMonth(p.decisionMonth)}`,
+    value: `Median filing month: ${formatMonth(p.medianFilingMonth)}`,
+    detail: `Across ${p.decisions.toLocaleString("en-US")} decisions`,
+  }));
 
   return (
     /* The drawing has a minimum width and scrolls inside this container.
@@ -211,6 +228,21 @@ function FrontierSvg({
             {formatMonthShort(points[idx]!.decisionMonth)}
           </text>
         ))}
+
+        {/* Last child on purpose: the hit area has to sit above the line, the
+            fill and the target rule, or a pointer lands on the paint instead
+            of the readout. */}
+        <ChartHoverLayer
+          points={hover}
+          plot={{
+            x: PAD_L,
+            y: PAD_T,
+            width: W - PAD_L - PAD_R,
+            height: H - PAD_T - PAD_B,
+          }}
+          viewBox={{ width: W, height: H }}
+          label="Queue position by month of determinations. Use the arrow keys to step through the months."
+        />
       </svg>
     </div>
   );
@@ -342,8 +374,6 @@ export function FrontierProgressChart({
   const movedAcross =
     monthIndex(last.medianFilingMonth) - monthIndex(first.medianFilingMonth);
   const elapsed = monthIndex(last.decisionMonth) - monthIndex(first.decisionMonth);
-  const targetReached =
-    monthIndex(filingMonth) <= monthIndex(points[points.length - 1]!.medianFilingMonth);
 
   const controls =
     options.length > 1 ? (
@@ -381,16 +411,16 @@ export function FrontierProgressChart({
         }
       />
 
+      {/* A legend and a provenance line. What each mark MEANS cannot be read
+          off the drawing, so it stays; what the reader is looking AT is now
+          answered by pointing at it, and "the queue has already passed your
+          month" is the overdue hero's own heading two sections up. */}
       <figcaption className="mt-4 space-y-2 text-sm leading-relaxed text-foreground/70">
         <p>
-          <span className="font-bold text-foreground">The solid line</span> is the
-          filing month DOL was deciding in each month across the bottom.{" "}
-          <span className="font-bold text-foreground">The dashed line</span> is
-          your filing month,{" "}
-          <span className="font-bold text-foreground">{formatMonth(filingMonth)}</span>
-          {targetReached
-            ? ", which the queue has already passed."
-            : ". The queue reaches you where the solid line meets it."}
+          <span className="font-bold text-foreground">Solid line</span>: the
+          filing month DOL was deciding.{" "}
+          <span className="font-bold text-foreground">Dashed</span>: yours,{" "}
+          <span className="font-bold text-foreground">{formatMonth(filingMonth)}</span>.
         </p>{" "}
         <p>
           Reconstructed from determination dates in DOL&apos;s disclosure files.

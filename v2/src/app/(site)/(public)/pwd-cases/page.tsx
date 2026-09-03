@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, PWD_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -75,9 +76,8 @@ export default async function PwdCasesPage() {
           Find a prevailing wage request
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The employer files the wage request months before the PERM. You
-          rarely see its number. Search the employer to get it, with the job
-          title, filing date, DOL&apos;s status and, once decided, the wage DOL set.
+          The employer files it months before the PERM and you rarely see its
+          number. Search the employer to get it.
         </p>{" "}
         <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
           <div className="border-2 border-border bg-card p-4 shadow-hard">
@@ -104,14 +104,12 @@ export default async function PwdCasesPage() {
         <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
           <h2 className="font-heading text-lg font-black">What&apos;s in here, and what isn&apos;t</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            Pending requests come from DOL&apos;s own case system, checked daily:
-            number, employer, job title, filing date, status. Decided ones come
-            from DOL&apos;s quarterly disclosure files with the wage, occupation and
-            worksite DOL used. H-1B and H-2B wage requests are left out; this is
-            the PERM queue.
+            Pending requests come from DOL&apos;s case system, checked daily.
+            Decided ones come from DOL&apos;s quarterly files, with the wage.
+            H-1B and H-2B wage requests are left out; this is the PERM queue.
           </p>{" "}
           <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-            Have the number? The{" "}
+            Have the number?{" "}
             <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               status lookup
             </Link>{" "}
@@ -134,19 +132,18 @@ export default async function PwdCasesPage() {
         <h2 className="font-heading text-2xl font-black">How this works</h2>{" "}
         <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
           <p>
-            <b className="font-bold">Where the rows come from.</b> DOL numbers wage
-            requests and PERM cases from one running counter. This site checks it
-            nightly for new filings, then re-checks each request daily until DOL
-            decides.
+            <b className="font-bold">Why a request might be missing.</b> One filed
+            today appears after tonight&apos;s check. A pending one from before the
+            backfill&apos;s reach is absent until the walk gets there. A decided one
+            outside the quarterly files loaded here has no wage yet.
           </p>{" "}
-          <p>
-            <b className="font-bold">Why a request might be missing.</b> A request
-            filed today appears after the next nightly check. A pending one from
-            before the backfill&apos;s reach is absent until the walk gets there. A
-            decided one older than the quarterly files loaded here, or newer than
-            the last file, has no wage yet. A number DOL&apos;s system doesn&apos;t
-            return can&apos;t be listed.
-          </p>
+          <FinePrint summary="Where the rows come from">
+            <p>
+              DOL numbers wage requests and PERM cases from one running counter.
+              This site walks it nightly for new filings, then re-checks each
+              request daily until DOL decides.
+            </p>
+          </FinePrint>
         </div>
       </section>
     </div>

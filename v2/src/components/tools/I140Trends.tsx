@@ -3,6 +3,7 @@
 import { Fragment, useId, useMemo, useState } from "react";
 
 import { Label } from "@/components/ui";
+import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverLayer";
 import {
   PREFERENCE_OF,
   isPreference,
@@ -98,9 +99,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
           I-140 petitions, quarter by quarter
         </h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70">
-          USCIS reports receipts, approvals, denials and the pending queue for
-          each employment-based category. These are its own figures and its own
-          category names.
+          USCIS&rsquo;s own figures, and its own category names.
         </p>
 
         {/* grid-cols-1 unprefixed and min-w-0 on the items: without a mobile
@@ -189,9 +188,7 @@ export function I140Trends({ rows }: I140TrendsProps) {
             <section className="mt-10">
               <h3 className="font-heading text-xl font-black">Receipts per quarter</h3>{" "}
               <p className="mt-2 text-base text-foreground/70">
-                Only quarters USCIS has reported. A quarter it has not
-                published is absent rather than drawn at zero, which would read
-                as filings collapsing.
+                Only quarters USCIS has reported.
               </p>
               <ol className="mt-4 space-y-1">
                 {points.map((p) => (
@@ -222,9 +219,8 @@ export function I140Trends({ rows }: I140TrendsProps) {
                 Approved against denied
               </h3>{" "}
               <p className="mt-2 text-base text-foreground/70">
-                One track per quarter, split by outcome. Bars are scaled to the
-                busiest quarter, so a shorter track means fewer decisions
-                rather than a different mix.
+                Bars are scaled to the busiest quarter, so a shorter track
+                means fewer decisions rather than a different mix.
               </p>
               <ol className="mt-4 space-y-1">
                 {points.map((p) => {
@@ -346,7 +342,12 @@ export function I140Trends({ rows }: I140TrendsProps) {
 function DenialRateLine({
   points,
 }: {
-  points: readonly { label: string; denialRate: number | null }[];
+  points: readonly {
+    label: string;
+    denialRate: number | null;
+    approved: number;
+    denied: number;
+  }[];
 }) {
   const rates = points.map((p) => p.denialRate).filter((r): r is number => r !== null);
   if (rates.length < 2) return null;
@@ -377,6 +378,30 @@ function DenialRateLine({
     });
     if (run.length > 1) segments.push(run.join(" "));
   }
+
+  // The points a reader can interrogate. ONE POINT IS ONE FISCAL QUARTER of
+  // the selected category, which is the unit drawn: a quarter is what USCIS
+  // publishes and there is nothing finer to report. A quarter with nothing
+  // decided has no rate and no mark, so it is not offered either - the
+  // readout can only name what is on the page.
+  //
+  // The value is `pct`, the same formatter as the Denial rate card above, so
+  // one quarter cannot read 2.53% in one place and 2.5% in another. The
+  // second line is the rate's own denominator: 47% over 12 decisions and 47%
+  // over 47,291 are not the same fact, and the axis cannot show which it is.
+  const hover: HoverPoint[] = points.flatMap((p, i) =>
+    p.denialRate === null
+      ? []
+      : [
+          {
+            x: px(i),
+            y: py(p.denialRate),
+            label: p.label,
+            value: pct(p.denialRate),
+            detail: `${int(p.denied)} denied of ${int(p.approved + p.denied)} decided`,
+          },
+        ],
+  );
 
   // A tick labelled to the nearest whole percent is wrong by half its own
   // value on a low-rate series: E-21 tops out near 2.53%, so the midpoint
@@ -448,6 +473,20 @@ function DenialRateLine({
               {p.label}
             </text>
           ))}
+          {/* LAST, after every painted element: the hit area is a transparent
+              rect over the plot, so anything drawn after it would take the
+              pointer instead of the readout. */}
+          <ChartHoverLayer
+            points={hover}
+            plot={{
+              x: PAD.l,
+              y: PAD.t,
+              width: W - PAD.l - PAD.r,
+              height: H - PAD.t - PAD.b,
+            }}
+            viewBox={{ width: W, height: H }}
+            label="Denial rate by quarter. Use the arrow keys to step through the quarters."
+          />
         </svg>
       </div>
     </section>

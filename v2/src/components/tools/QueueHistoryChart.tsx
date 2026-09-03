@@ -2,6 +2,7 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { evenTickIndices } from "@/components/tools/chartTicks";
+import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverLayer";
 
 import { formatMonthShort, formatMonth } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
@@ -52,8 +53,21 @@ function dayIndex(iso: string): number {
   return Date.parse(`${iso}T00:00:00Z`) / 86_400_000;
 }
 
-/** The step drawing itself. Null when the slice cannot carry a chart. */
-function QueueHistorySvg({ sorted }: { sorted: QueueSnapshotPoint[] }) {
+/**
+ * The step drawing itself. Null when the slice cannot carry a chart.
+ *
+ * It takes the movement maps rather than deriving them, for the same reason
+ * the table does: see the hover points below.
+ */
+function QueueHistorySvg({
+  sorted,
+  moved,
+  gapDays,
+}: {
+  sorted: QueueSnapshotPoint[];
+  moved: Map<string, number | null>;
+  gapDays: Map<string, number | null>;
+}) {
   if (sorted.length < 2) return null;
 
   const x0 = dayIndex(sorted[0]!.asOf);
@@ -142,6 +156,46 @@ function QueueHistorySvg({ sorted }: { sorted: QueueSnapshotPoint[] }) {
     ).values(),
   ];
 
+  /*
+   * THE POINTS A READER CAN INTERROGATE: one per READING, not one per step.
+   *
+   * A reading where the queue did not move is a fact about the queue - which
+   * is why the table keeps every one of them - and it is drawn, as the length
+   * of the flat tread. Every point sits exactly on the path, because the step
+   * turns the corner at (px(asOf), py(frontierMonth)) for every i including
+   * the first, so these are the same two scale functions `d` is built from
+   * rather than a second copy of the arithmetic.
+   *
+   * MOVEMENT COMES FROM THE PARENT'S MAPS, NOT FROM `sorted`. Those are
+   * computed over the WHOLE record. Deriving them here would recompute them
+   * over the window, so narrowing to the last six readings would make the
+   * oldest one on screen read "first reading" in the tooltip while the table
+   * three inches away still said "+2 months". That is precisely the defect the
+   * table's own test guards against, one surface over.
+   *
+   * The strings are the axes' own: the date exactly as the x axis prints it,
+   * the month exactly as the y axis prints it, the movement exactly as the
+   * table prints it. A readout in a fourth format is a fourth figure to
+   * reconcile.
+   */
+  const hover: HoverPoint[] = sorted.map((p) => {
+    const m = moved.get(p.asOf) ?? null;
+    const g = gapDays.get(p.asOf) ?? null;
+    const span = g !== null && g > 0 ? ` over ${g} day${g === 1 ? "" : "s"}` : "";
+    return {
+      x: px(p.asOf),
+      y: py(p.frontierMonth),
+      label: p.asOf,
+      value: `Working filings from ${formatMonthShort(p.frontierMonth) ?? p.frontierMonth}`,
+      detail:
+        m === null
+          ? undefined
+          : m === 0
+            ? `No change${span}`
+            : `${m > 0 ? "+" : ""}${m} month${Math.abs(m) === 1 ? "" : "s"}${span}`,
+    };
+  });
+
   return (
     <div className="-mx-1 overflow-x-auto px-1">
       <svg
@@ -221,6 +275,21 @@ function QueueHistorySvg({ sorted }: { sorted: QueueSnapshotPoint[] }) {
               strokeWidth="2"
             />
           ))}
+
+        {/* LAST, after every painted element: the hit area is a transparent
+            rect over the whole plot, so anything drawn after it would take the
+            pointer instead. */}
+        <ChartHoverLayer
+          points={hover}
+          plot={{
+            x: PAD.left,
+            y: PAD.top,
+            width: W - PAD.left - PAD.right,
+            height: H - PAD.top - PAD.bottom,
+          }}
+          viewBox={{ width: W, height: H }}
+          label="Queue month at each reading. Use the arrow keys to step through the readings."
+        />
       </svg>
     </div>
   );
@@ -364,7 +433,7 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
       </Fragment>
     ) : undefined;
 
-  const chart = <QueueHistorySvg sorted={shown} />;
+  const chart = <QueueHistorySvg sorted={shown} moved={moved} gapDays={gapDays} />;
 
   return (
     <figure className={cn("m-0", className)}>
@@ -381,9 +450,10 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
         }
         table={<QueueHistoryTable shown={shown} moved={moved} gapDays={gapDays} />}
       />
+      {/* Provenance only. The second sentence used to describe the flat
+          stretches; the readout now names each one, with its length in days. */}
       <figcaption className="mt-3 text-sm text-foreground/70">
-        Each step is a published DOL reading. Flat stretches are weeks where the
-        queue month didn’t move.
+        Each step is a published DOL reading.
       </figcaption>
     </figure>
   );

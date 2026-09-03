@@ -34,6 +34,7 @@ import {
 } from "@/lib/turso/wageBands";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { FinePrint } from "@/components/data/FinePrint";
 const TITLE = "PERM Denial Rates";
 // 147 characters. Anything past ~155 is truncated mid-sentence in the SERP,
 // and the entity-escaped source string is six characters per apostrophe, so
@@ -286,8 +287,8 @@ export default async function PermDenialRiskPage() {
           What gets denied
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The denial rates DOL&apos;s files record, by the factors the form asks
-          about, by job, and by worksite.
+          The rates DOL&apos;s own files record: by what the form asks, by job,
+          and by worksite.
         </p>
       </header>
 
@@ -334,9 +335,7 @@ export default async function PermDenialRiskPage() {
               <p className="max-w-lg text-base leading-relaxed text-foreground/70">
                 is the field baseline: {baseline.denied.toLocaleString("en-US")} denials in{" "}
                 {baseline.decided.toLocaleString("en-US")} decided cases. Withdrawn cases
-                sit on neither side of that ratio, because a withdrawal is neither
-                an approval nor a denial. It’s the reference every other rate is
-                measured against.
+                sit on neither side of that ratio.
               </p>
             </div>
           </section>
@@ -347,21 +346,20 @@ export default async function PermDenialRiskPage() {
               What these rates can and can’t tell you
             </h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-              Each bar is the denial rate of a group. It isn’t the probability
-              that a particular case is denied, and the factors are not
-              independent of each other: wage correlates with occupation, which
-              correlates with everything else. A single blended risk score built
-              from these would read as precision the data can’t support, so these
-              are the measured rates, unblended.
+              Each bar is a group’s rate, not the odds on one case. The factors
+              aren’t independent, so blending them into one score would read as
+              precision the data can’t support.
             </p>{" "}
             <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/70">
-              Two limits worth knowing before reading a ranking. A rate over a
-              small group is mostly noise, so the occupation and state rankings
-              carry a minimum population and print the 95% range beside every
-              rate. And a year-by-year split is the only cut DOL&apos;s files
-              support: the wage, occupation and state rates each span the whole
-              window, {sourceWindow}.
-            </p>
+              A rate over a small group is mostly noise, so the occupation and
+              state rankings carry a minimum population and print the 95% range.
+            </p>{" "}
+            <FinePrint summary="Which window each cut covers">
+              <p>
+                Only the year cut splits the window. The wage, occupation and
+                state rates each span all of {sourceWindow}.
+              </p>
+            </FinePrint>
           </section>
 
           {/* The reframe. Every rate on this page is a rate; none of them says
@@ -373,11 +371,9 @@ export default async function PermDenialRiskPage() {
                 Where the denials actually are
               </h2>{" "}
               <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-                A rate answers &ldquo;how often does this group get
-                denied&rdquo;. It says nothing about how many denials the group
-                accounts for, and on this data the two answers disagree. The
-                three factors the ETA-9089 asks about carry the highest rates on
-                the page and together explain{" "}
+                A rate is not a share, and here the two disagree. The three
+                factors the ETA-9089 asks about carry the highest rates on the
+                page and explain{" "}
                 <strong>{flagShare.toFixed(1)}% of all denials</strong>. Cases in
                 the {topWageByShare.bucket.toLowerCase()} band carry a middling
                 rate and are{" "}
@@ -420,15 +416,17 @@ export default async function PermDenialRiskPage() {
                   />
                 </div>
               </div>
-              <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/60">
-                The three declared factors overlap, and most cases declare none
-                of them, so those bars don&apos;t sum to the field. The wage
-                bands do, apart from{" "}
-                {(baseline.decided -
-                  wageForReach.reduce((n, r) => n + r.decided, 0)).toLocaleString("en-US")}{" "}
-                decided cases whose offered wage couldn&apos;t be annualised from
-                what DOL recorded.
-              </p>
+              <FinePrint summary="How these bars sum" className="mt-6">
+                <p>
+                  The three declared factors overlap, and most cases declare none
+                  of them, so those bars don&apos;t sum to the field. The wage
+                  bands do, apart from{" "}
+                  {(baseline.decided -
+                    wageForReach.reduce((n, r) => n + r.decided, 0)).toLocaleString("en-US")}{" "}
+                  decided cases whose offered wage couldn&apos;t be annualised
+                  from what DOL recorded.
+                </p>
+              </FinePrint>
             </section>
           ) : null}
 
@@ -437,10 +435,6 @@ export default async function PermDenialRiskPage() {
               <h2 className="font-heading text-2xl font-black">
                 By what the form declares
               </h2>{" "}
-              <p className="mt-2 text-base text-foreground/70">
-                Three questions on the ETA-9089 separate almost all of the
-                denials from the rest of the field.
-              </p>
               <div className="mt-6">
                 <RateViews
                   label="Denial rate by declared factor"
@@ -458,15 +452,12 @@ export default async function PermDenialRiskPage() {
               </div>
               {protectiveFlag ? (
                 <p className="mt-4 text-sm leading-relaxed text-foreground/60">
-                  One of the three runs the other way.{" "}
+                  One runs the other way:{" "}
                   {FLAG_LABELS[protectiveFlag.bucket]?.label ?? protectiveFlag.bucket} is
                   denied {protectiveFlag.denialRate}% of the time, below the{" "}
                   {baseline.denialRate}% field rate, on{" "}
                   {protectiveFlag.decided.toLocaleString("en-US")} decided cases.
-                  That&apos;s an association, not a cause: declaring a layoff
-                  triggers a notification requirement, and the employers who
-                  reach that question are the ones already working through it
-                  with counsel.
+                  That&apos;s an association, not a cause.
                 </p>
               ) : null}
             </div>
@@ -474,14 +465,9 @@ export default async function PermDenialRiskPage() {
             <div>
               <h2 className="font-heading text-2xl font-black">By offered wage</h2>{" "}
               <p className="mt-2 text-base text-foreground/70">
-                Denial rate against the wage the employer offered.
-                {fineWage.length > 0 ? (
-                  <>
-                    {" "}
-                    In {fineWage.length} bands, because five is too few to see
-                    what this one does.
-                  </>
-                ) : null}
+                {fineWage.length > 0
+                  ? `In ${fineWage.length} bands: five is too few to see what this one does.`
+                  : "Denial rate against the wage the employer offered."}
               </p>
               <div className="mt-6">
                 <RateViews
@@ -502,43 +488,36 @@ export default async function PermDenialRiskPage() {
               </div>
               {wageEnds ? (
                 <p className="mt-4 text-sm leading-relaxed text-foreground/60">
-                  The rate broadly falls as the wage rises, from{" "}
-                  {wageEnds.first.denialRate}% at the bottom to{" "}
-                  {wageEnds.lowest.denialRate}% at{" "}
+                  The rate falls as the wage rises, {wageEnds.first.denialRate}%
+                  to {wageEnds.lowest.denialRate}% at{" "}
                   {wageEnds.lowest.bucket.toLowerCase()}, a{" "}
                   {wageEnds.multiple}-fold difference.{" "}
                   {wageMonotonic
                     ? "It falls at every step."
                     : wageEnds.turnsUp
-                      ? `It doesn't fall smoothly, and it turns back up at the top: ${wageEnds.last.bucket.toLowerCase()} is denied ${wageEnds.last.denialRate}% of the time, on ${wageEnds.last.decided.toLocaleString("en-US")} decided cases.`
-                      : "It doesn't fall smoothly, and there are bands in the middle that run against the trend."}
+                      ? `Not smoothly: it turns back up at the top, with ${wageEnds.last.bucket.toLowerCase()} denied ${wageEnds.last.denialRate}% of the time on ${wageEnds.last.decided.toLocaleString("en-US")} decided cases.`
+                      : "Not smoothly: bands in the middle run against the trend."}
                 </p>
               ) : null}
               {wagePeak && wagePeak.hiddenByCoarse ? (
                 <p className="mt-3 text-sm leading-relaxed text-foreground/60">
-                  Where you draw the bands changes the picture, which is why
-                  they&apos;re drawn narrow here. The highest rate in the data
-                  is <strong>{wagePeak.fine.denialRate}%</strong> at{" "}
+                  Where you draw the bands changes the picture. The highest rate
+                  in the data is <strong>{wagePeak.fine.denialRate}%</strong> at{" "}
                   {wagePeak.fine.bucket.toLowerCase()}, on{" "}
                   {wagePeak.fine.decided.toLocaleString("en-US")} decided cases.
-                  Averaged into the five wide bands DOL&apos;s own reporting
-                  suggests, that peak disappears inside a bucket reporting{" "}
-                  {wagePeak.coarse.denialRate}%. Neither number is wrong. The
-                  narrow one is the one that shows you something.
+                  Averaged into five wide bands it disappears inside a bucket
+                  reporting {wagePeak.coarse.denialRate}%. Neither is wrong; the
+                  narrow one shows you something.
                 </p>
               ) : null}
               <p className="mt-3 text-sm leading-relaxed text-foreground/60">
-                What the bumps mean isn&apos;t something this data can say.
-                Wage tracks occupation, which tracks employer and who files
-                with counsel, and DOL denies on the record rather than on the
-                salary. That entanglement is the same reason nothing on this
-                page is blended into a score.
+                What the bumps mean isn&apos;t something this data can say: DOL
+                denies on the record, not on the salary.
                 {wageBands && wageBands.unbandedDecided > 0 ? (
                   <>
                     {" "}
                     {wageBands.unbandedDecided.toLocaleString("en-US")} decided
-                    cases carry no wage that could be annualised from what DOL
-                    recorded, so they sit in no band.
+                    cases carry no annualisable wage, so they sit in no band.
                   </>
                 ) : null}
               </p>
@@ -552,13 +531,11 @@ export default async function PermDenialRiskPage() {
               {yearSwing ? (
                 <>
                   {" "}
-                  It moves a long way: {yearSwing.low.bucket} was{" "}
-                  {yearSwing.low.denialRate}% and {yearSwing.high.bucket} was{" "}
-                  {yearSwing.high.denialRate}%, a{" "}
+                  {yearSwing.low.bucket} was {yearSwing.low.denialRate}% and{" "}
+                  {yearSwing.high.bucket} was {yearSwing.high.denialRate}%, a{" "}
                   {(yearSwing.high.denialRate / yearSwing.low.denialRate).toFixed(1)}-fold
-                  difference over the same programme, on nothing an applicant
-                  controls. A year isn&apos;t a factor in a case; it&apos;s the
-                  reason a rate quoted without one is worth little.
+                  difference on nothing an applicant controls. A rate quoted
+                  without its year is worth little.
                 </>
               ) : null}
             </p>
@@ -599,10 +576,9 @@ export default async function PermDenialRiskPage() {
                 />
               </div>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-foreground/60">
-                These are the occupations DOL&apos;s files record the most cases
-                for, so a job with very few filings nationally isn’t here at
-                all. Volume, median wage and processing days for each one sit on
-                the{" "}
+                These are the occupations with the most cases on record, so a
+                job with very few filings nationally isn’t here. Volume, median
+                wage and processing days sit on the{" "}
                 <Link
                   href="/perm-wages"
                   className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -619,8 +595,7 @@ export default async function PermDenialRiskPage() {
               <h2 className="font-heading text-2xl font-black">By worksite state</h2>{" "}
               <p className="mt-2 max-w-2xl text-base text-foreground/70">
                 DOL works one national queue, so this ranks where denials land.
-                Several states decide too few cases to carry a rate at all, which
-                is what the floor is for.
+                Several states decide too few cases to carry a rate.
               </p>
               <div className="mt-6">
                 <RankedRateViews
@@ -637,8 +612,7 @@ export default async function PermDenialRiskPage() {
                 />
               </div>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-foreground/60">
-                Volume, approval rate, median days and median wage for every
-                state are on the{" "}
+                Volume, approval rate, median days and median wage sit on the{" "}
                 <Link
                   href="/perm-by-state"
                   className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -667,9 +641,8 @@ export default async function PermDenialRiskPage() {
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Filing a case?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            None of these factors is a reason to file differently than the
-            regulations require. They’re a reason to document the ones that
-            apply. The{" "}
+            None of these is a reason to file differently than the regulations
+            require, only to document the ones that apply. The{" "}
             <Link href="/tools/perm-deadline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               deadline calculator
             </Link>{" "}

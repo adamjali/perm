@@ -273,10 +273,8 @@ export default async function StagePage({
               Which filing months these come from
             </h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-              A month appearing here means DOL is holding cases from it at this
-              stage today. It does not say how often DOL issues one: that would
-              need the cases it has already released, and a live status shows
-              only where a case stands now.
+              Where cases are held today, not how often DOL issues one: a live
+              status shows only where a case stands now.
             </p>
             <ol className="mt-5 space-y-1">
               {months.slice(0, 18).map((m) => {
@@ -326,9 +324,9 @@ export default async function StagePage({
 
           {listing === "too-large" ? (
             <p className="mt-2 max-w-3xl text-base leading-relaxed">
-              This stage holds {int(cases)} cases, which is the ordinary
-              queue rather than a stage anyone was pulled aside into. Listing
-              it here would be a worse copy of a view that already exists:{" "}
+              {int(cases)} cases, which is the ordinary queue rather than a
+              stage anyone was pulled aside into. It is drawn month by month
+              on{" "}
               <Link
                 href="/perm-queue"
                 className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -380,11 +378,10 @@ export default async function StagePage({
           {listing === "list" ? (
             <>
               <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-                Oldest filing first, so the top of this list is the longest
-                anyone has waited at this stage. DOL&apos;s live record carries
-                the case number, the employer and the job title; the wage, the
-                law firm and the worksite state arrive only with publication,
-                which is why they are absent rather than blank.
+                Oldest filing first. DOL&apos;s live record carries the case
+                number, employer and job title; the wage, law firm and worksite
+                arrive only with publication, so they are absent rather than
+                blank.
               </p>
               <ul className="mt-4 divide-y divide-border/60">
                 {records.map((c) => (
@@ -424,9 +421,9 @@ export default async function StagePage({
               </ul>{" "}
               {records.length < cases ? (
                 <p className="mt-5 max-w-3xl text-sm leading-relaxed text-foreground/70">
-                  {int(cases - records.length)} newer cases at this stage are
-                  not listed. There is no page two on purpose: to find one
-                  case, ask DOL for it directly through{" "}
+                  {int(cases - records.length)} newer cases are not listed.
+                  No page two on purpose: to find one case, ask DOL directly
+                  through{" "}
                   <Link
                     href="/perm-case-status"
                     className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"

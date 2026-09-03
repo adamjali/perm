@@ -17,6 +17,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { FinePrint } from "@/components/data/FinePrint";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { CaseBrowser, type OccupationOption } from "@/components/tools/CaseBrowser";
 import { LiveCaseBrowser } from "@/components/tools/LiveCaseBrowser";
@@ -151,8 +152,12 @@ export default async function PermCasesPage() {
             determination isn’t in these files, however recently it was filed.
           </p>{" "}
           {meta ? (
-            <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-              Source: {meta.sourceFiles.join(", ") || "DOL PERM disclosure files"}.
+            /* The four .xlsx filenames were printed in full on the page, under a
+               heading, above a link to the page that explains them. Provenance,
+               so it collapses; `<details>` keeps every word crawlable. */
+            <FinePrint summary="Source files" className="mt-3">
+              <p>
+              {meta.sourceFiles.join(", ") || "DOL PERM disclosure files"}.
               Counts cover every row in the files, including the ones off screen.
               A filtered count covers only that filter.{" "}
               <Link
@@ -162,7 +167,8 @@ export default async function PermCasesPage() {
                 How every figure is built
               </Link>
               .
-            </p>
+              </p>
+            </FinePrint>
           ) : null}
         </div>
       </section>

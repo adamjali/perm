@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { SectionIndex } from "@/components/legal/SectionIndex";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
@@ -33,6 +34,27 @@ export const metadata: Metadata = {
   },
 };
 
+const SECTIONS = [
+  { id: "agreement-to-terms", title: "1. Agreement to Terms" },
+  { id: "description-of-service", title: "2. Description of Service" },
+  { id: "user-accounts", title: "3. User Accounts" },
+  { id: "acceptable-use", title: "4. Acceptable Use" },
+  { id: "user-content", title: "5. User Content" },
+  { id: "intellectual-property", title: "6. Intellectual Property" },
+  { id: "disclaimers", title: "7. Disclaimers" },
+  { id: "limitation-of-liability", title: "8. Limitation of Liability" },
+  { id: "aipowered-features", title: "9. AI-Powered Features" },
+  { id: "indemnification", title: "10. Indemnification" },
+  { id: "service-modifications-pricing", title: "11. Service Modifications & Pricing" },
+  { id: "termination", title: "12. Termination" },
+  { id: "governing-law-dispute-resolution", title: "13. Governing Law & Dispute Resolution" },
+  { id: "changes-to-terms", title: "14. Changes to Terms" },
+  { id: "severability", title: "15. Severability" },
+  { id: "entire-agreement-assignment", title: "16. Entire Agreement & Assignment" },
+  { id: "attorneyclient-privilege-data-storage", title: "17. Attorney-Client Privilege & Data Storage" },
+  { id: "contact-us", title: "18. Contact Us" },
+] as const;
+
 export default function TermsPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
@@ -42,9 +64,12 @@ export default function TermsPage() {
           Effective Date: February 17, 2026 | Last Updated: June 15, 2026
         </p>{" "}
 
+        <SectionIndex sections={SECTIONS} />
+
+
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="agreement-to-terms" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               1. Agreement to Terms
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -60,7 +85,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="description-of-service" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               2. Description of Service
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -82,7 +107,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="user-accounts" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               3. User Accounts
             </h2>{" "}
 
@@ -137,7 +162,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="acceptable-use" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               4. Acceptable Use
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -158,7 +183,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="user-content" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               5. User Content
             </h2>{" "}
 
@@ -190,7 +215,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="intellectual-property" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               6. Intellectual Property
             </h2>{" "}
 
@@ -231,7 +256,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="disclaimers" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               7. Disclaimers
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed font-bold">
@@ -273,7 +298,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="limitation-of-liability" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               8. Limitation of Liability
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed font-bold">
@@ -297,7 +322,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="aipowered-features" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               9. AI-Powered Features
             </h2>{" "}
 
@@ -478,7 +503,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="indemnification" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               10. Indemnification
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -495,7 +520,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="service-modifications-pricing" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               11. Service Modifications & Pricing
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -516,7 +541,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="termination" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               12. Termination
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -536,7 +561,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="governing-law-dispute-resolution" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               13. Governing Law &amp; Dispute Resolution
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -574,7 +599,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="changes-to-terms" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               14. Changes to Terms
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -593,7 +618,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="severability" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               15. Severability
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -605,7 +630,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="entire-agreement-assignment" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               16. Entire Agreement &amp; Assignment
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -624,7 +649,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section id="attorney-privilege">
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="attorneyclient-privilege-data-storage" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               17. Attorney-Client Privilege & Data Storage
             </h2>{" "}
 
@@ -714,7 +739,7 @@ export default function TermsPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               18. Contact Us
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">

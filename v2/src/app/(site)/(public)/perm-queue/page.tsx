@@ -325,18 +325,15 @@ export default async function PermQueuePage() {
             Your employer&rsquo;s first letter, and what it is worth
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-            Within a filing month DOL works alphabetically by employer name, so
-            a case sponsored by an A company is decided before one sponsored by
-            a Z company that filed the same month. That much is real, and every
-            public estimator uses it. What none of them publishes is how much it
-            is worth, so here it is measured:{" "}
+            Within a filing month DOL works alphabetically by employer, so an
+            A company is decided before a Z company that filed the same month.
+            Every estimator uses that; none publishes its size. Measured:{" "}
             <b>
               the whole alphabet is about {Math.round(alphabet.spreadDays)} days
             </b>
             , and in {alphabet.monthsReversed} of {alphabet.monthsMeasured}{" "}
-            filing months the back half of the alphabet was decided{" "}
-            <b>faster</b> than the front. It is a real term and a small one.
-            Your filing month is worth far more than your initial.
+            filing months the back half was decided <b>faster</b> than the
+            front. Your filing month is worth far more than your initial.
           </p>{" "}
 
           <div className="mt-8 border-t-2 border-border pt-6">

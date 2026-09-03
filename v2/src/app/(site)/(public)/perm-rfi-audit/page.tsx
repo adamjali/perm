@@ -25,6 +25,7 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FinePrint } from "@/components/data/FinePrint";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
@@ -160,10 +161,8 @@ export default async function PermRfiAuditPage() {
             RFIs, audits and appeals
           </h1>{" "}
           <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
-            Every PERM case that gets pulled out of the ordinary queue lands on
-            one of a dozen status strings, and DOL prints them with no
-            explanation. Here is what each one means, how many cases are at each
-            one today, and what the record shows happens next.
+            DOL pulls a case out of the ordinary queue onto one of a dozen
+            status strings, and explains none of them.
           </p>
         </header>
 
@@ -217,12 +216,9 @@ export default async function PermRfiAuditPage() {
             direction wrong as often as right.
           */}
           <p className="mb-6 max-w-3xl border-l-4 border-border bg-secondary px-4 py-3 text-sm leading-relaxed">
-            Each case shows the stage it was in when it was last read, and each
-            row below carries that date. Every case at a review or appeal stage
-            was read within the past week. The 94,000-case analyst queue was
-            not, so a case that has moved into one of these stages since its
-            own last read is still counted in that queue: treat the review
-            counts as a floor rather than a total.
+            Review and appeal stages were read this week. The 94,000-case
+            analyst queue was not, so a case that has moved since its own last
+            read is still counted there. These are a floor, not a total.
           </p>{" "}
           <StageCensus
             stages={stages}
@@ -293,21 +289,24 @@ export default async function PermRfiAuditPage() {
                       Half of the RFIs that resolved did so within{" "}
                       {funnel.medianDaysToDecision} days.
                     </b>{" "}
-                    That is a figure about{" "}
-                    {funnel.resolved.toLocaleString()} cases and not a schedule
-                    for any one of them. Half took longer, and the tally records
-                    no upper bound.
+                    Half took longer, across{" "}
+                    {funnel.resolved.toLocaleString()} cases. It is not a
+                    schedule for any one of them.
                   </p>
                 ) : null}
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  The frozen half of these outcomes covers a watch list of{" "}
-                  {funnel.totalTracked.toLocaleString()} cases; the half we
-                  observe ourselves comes from our own sweep of every PERM
-                  case. Both are different and smaller populations than the{" "}
-                  {pending.toLocaleString()} pending cases counted above. None
-                  of the three are interchangeable, and the percentages should
-                  not be applied to each other.
+                  Three different populations. Do not apply these percentages
+                  to each other.
                 </p>
+                <FinePrint summary="Which three">
+                  <p>
+                    The frozen half of these outcomes covers a watch list of{" "}
+                    {funnel.totalTracked.toLocaleString()} cases. The half we
+                    observe ourselves comes from our own sweep of every PERM
+                    case. Both are smaller than the{" "}
+                    {pending.toLocaleString()} pending cases counted above.
+                  </p>
+                </FinePrint>
               </div>
             </>
           ) : (
@@ -345,16 +344,13 @@ export default async function PermRfiAuditPage() {
             }
           />
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            This counts cases by the month they were filed, not RFIs issued per
-            month. Each case here carries one reading, so this chart cannot
-            show a case entering or leaving a stage, and no line through these
-            columns would mean anything. The daily sweep does record stage
-            changes, and they are on the{" "}
+            By filing month, not RFIs issued per month, and one reading per
+            case: nothing here shows a case entering or leaving a stage. Those
+            are on the{" "}
             <Link href="/perm-decision-activity" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision activity
             </Link>{" "}
-            page, but that record starts when the sweep did and cannot be
-            projected backwards over these columns.
+            page, from when the sweep started.
           </p>
         </Section>
 
@@ -436,32 +432,29 @@ export default async function PermRfiAuditPage() {
         <section className="mt-14 max-w-3xl border-2 border-border bg-card p-5 sm:mt-20">
           <h2 className="font-heading text-lg font-black">
             Where these numbers come from
-          </h2>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            The regulations are quoted from the{" "}
-            <a
-              className="font-bold text-primary underline"
-              href="https://www.ecfr.gov/current/title-20/chapter-V/part-656"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              eCFR text of 20 CFR part 656
-            </a>
-            , which is the law itself and does not go stale between quarters.
-          </p>{" "}
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            The per-case counts come from DOL&rsquo;s own case-status search, read in batches every 12 hours. There is no documented API for it, so this is the same endpoint that page uses. DOL&rsquo;s{" "}
-            <a
-              className="font-bold text-primary underline"
-              href="https://flag.dol.gov/processingtimes"
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              own processing-times page
-            </a>{" "}
-            is the authority, and it is where the queue positions and the
-            analyst-review average on this page come from directly.
-          </p>{" "}
+          </h2>
+          {/* Provenance, not correction: it says where the numbers came from
+              rather than changing how they read, so it collapses. `<details>`
+              keeps every word in the DOM, so Google and the answer engines
+              still see it. */}
+          <FinePrint summary="Sources" className="mt-2">
+            <p>
+              Regulations quoted from the{" "}
+              <a href="https://www.ecfr.gov/current/title-20/chapter-V/part-656" rel="noopener noreferrer" target="_blank">
+                eCFR text of 20 CFR part 656
+              </a>
+              , which is the law itself.
+            </p>{" "}
+            <p>
+              Per-case counts from DOL&rsquo;s own case-status search, read in
+              batches every 12 hours. Queue positions and the analyst-review
+              average come from DOL&rsquo;s{" "}
+              <a href="https://flag.dol.gov/processingtimes" rel="noopener noreferrer" target="_blank">
+                processing-times page
+              </a>
+              .
+            </p>
+          </FinePrint>{" "}
           <PageBasics page="perm-rfi-audit" />{" "}
           <DataProvenance
             datasets={["perm-case-status", "rfi-funnel", "processing-times"]}

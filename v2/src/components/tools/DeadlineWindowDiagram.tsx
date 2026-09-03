@@ -157,6 +157,14 @@ export function DeadlineWindowDiagram({
                 >
                   {r.label}
                 </text>
+                {/* EACH SPAN CARRIES ITS OWN DATES. The axis prints a handful
+                    of ticks, so a reader could see that the filing window ends
+                    "somewhere after August" and had no way to ask when. The
+                    band is focusable with an aria-label, so the dates are
+                    reachable by keyboard and read by a screen reader, and
+                    <title> gives the same text on hover. A pointer-only
+                    tooltip would hide it from the keyboard and from every
+                    phone. */}
                 <rect
                   x={x0}
                   y={y + 6}
@@ -166,7 +174,13 @@ export function DeadlineWindowDiagram({
                   fillOpacity={r.tone === "muted" ? 0.28 : 1}
                   stroke="var(--border)"
                   strokeWidth="2"
-                />
+                  tabIndex={0}
+                  role="img"
+                  aria-label={`${r.label}: ${formatAsOf(r.from)} to ${formatAsOf(r.to)}`}
+                  style={{ outlineOffset: "2px" }}
+                >
+                  <title>{`${r.label}: ${formatAsOf(r.from)} to ${formatAsOf(r.to)}`}</title>
+                </rect>
                 {r.label === "Filing window" && isPwdLimited ? (
                   <text
                     x={x1}

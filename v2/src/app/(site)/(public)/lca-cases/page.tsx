@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, LCA_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -65,9 +66,8 @@ export default async function LcaCasesPage() {
           Find an H-1B LCA
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The employer files the labor condition application with DOL before the
-          H-1B petition. Search the employer to get the number, job title, filing
-          date and DOL&apos;s status.{" "}
+          The employer files it with DOL before the H-1B petition. Search the
+          employer to get the number, title, filing date and status.{" "}
         </p>{" "}
         <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
           <div className="border-2 border-border bg-card p-4 shadow-hard">
@@ -94,11 +94,9 @@ export default async function LcaCasesPage() {
         <div className="border-2 border-border bg-tint-primary p-5 sm:p-6">
           <h2 className="font-heading text-lg font-black">What&apos;s in here, and what isn&apos;t</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            Pending LCAs come from DOL&apos;s own case system, checked daily:
-            number, employer, job title, filing date, status. Decided ones come
-            from DOL&apos;s quarterly disclosure files with the wage offered and
-            the worksite state. The H-1B petition is separate: it has a USCIS
-            receipt number and is tracked at USCIS.
+            Pending LCAs come from DOL&apos;s case system, checked daily.
+            Decided ones come from DOL&apos;s quarterly files, with the wage
+            offered and the worksite.
           </p>{" "}
           <p className="mt-3 text-sm leading-relaxed text-foreground/70">
             Have the number? The{" "}
@@ -119,11 +117,9 @@ export default async function LcaCasesPage() {
       <section className="mt-12 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">How this works</h2>{" "}
         <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
-          <p>
-            <b className="font-bold">Where the rows come from.</b> DOL numbers every
-            filing from one running counter. This site checks it nightly for new
-            filings, then re-checks each LCA until DOL decides.
-          </p>{" "}
+          <FinePrint summary="Where the rows come from">
+            <p>DOL numbers every filing from one running counter. This site checks it nightly for new filings, then re-checks each LCA until DOL decides. {" "}</p>
+          </FinePrint>{" "}
           <p>
             <b className="font-bold">Why one might be missing.</b> Watching started
             in September 2026 and is working backwards through earlier filings. A

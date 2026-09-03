@@ -100,7 +100,7 @@ const faqData = [
       {
         question: "What’s a prevailing wage determination (PWD)?",
         answer:
-          "A prevailing wage determination is issued by the National Prevailing Wage Center (NPWC) and establishes the minimum wage the employer must offer for the PERM position. The wage is based on the occupation, skill level, and geographic area. PWDs are valid for one year from the determination date, and the PERM application must be filed before expiration. You can track the request itself: put a P- number into the case status page and you get DOL's current status while it is still pending, plus the wage, occupation and expiry once the determination is issued. Wage requests are also searchable by employer, job title and filing month. There is a walkthrough at /guides/track-a-prevailing-wage-request.",
+          "The National Prevailing Wage Center sets the minimum wage an employer must offer for the role, from its occupation, skill level and area. Validity is anchored to the wage year, not counted from the determination date: one issued 30 June 2026 is good for 90 days, one issued the next morning is good for 364. The PERM has to be filed before it expires. Track a request by putting its P- number into case status, or search by employer.",
       },
       {
         question: "What recruitment steps are required for PERM?",
@@ -130,7 +130,7 @@ const faqData = [
       {
         question: "Is there any way to check my PERM status myself?",
         answer:
-          "Yes. Most advice pages say only the employer or the attorney can check a pending PERM, and that's wrong: DOL's own FLAG system answers a case number for anyone who has it, pending cases included. Put yours into the case status page and you get the live DOL status in plain English, your place in the queue, a stage-aware decision estimate, and an optional email alert when the status changes. The same page takes prevailing wage request numbers (P-) and H-1B labor condition application numbers (I-), which work the same way. The case number is on the filing receipt; ask whoever filed for you if you don't have it, or search the employer's name.",
+          "Yes. Most advice says only the employer or the attorney can check a pending PERM, and that's wrong: DOL's own FLAG system answers a case number for anyone who has it, pending cases included. Put yours into case status for the live DOL status, your place in the queue, a stage-aware estimate and an optional email alert. Wage request (P-) and H-1B LCA (I-) numbers work the same way. The number is on the filing receipt, or search the employer by name.",
       },
       {
         question: "Where do the processing time numbers come from?",

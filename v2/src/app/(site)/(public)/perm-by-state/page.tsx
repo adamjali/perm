@@ -25,6 +25,7 @@ import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getStateProfiles } from "@/lib/turso/states";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
 import { stateName } from "@/lib/usStateNames";
 const TITLE = "PERM Filings by State";
@@ -103,8 +104,7 @@ export default async function PermByStatePage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           Every certified, denied and withdrawn case in the current disclosure
-          window, placed at its worksite state. Hover a state to read it, tap to
-          pin it.
+          window, placed at its worksite state. Hover a state to read it.
         </p>
       </header>
 
@@ -122,8 +122,7 @@ export default async function PermByStatePage() {
                 {fmtInt(uniqueCases)}
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-background/70">
-                Unique cases across the unioned quarterly files, de-duplicated
-                by case number.
+                De-duplicated by case number across the quarterly files.
               </p>
             </div>
             <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
@@ -147,11 +146,11 @@ export default async function PermByStatePage() {
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
                 DOL works one national queue, so median days barely move by
-                state. Volume and wages move a lot, which is industry mix. The{" "}
+                state. Volume and wages move a lot, which is industry mix.{" "}
                 <Link href="/methodology" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-                  methodology
-                </Link>{" "}
-                sets out both.
+                  Methodology
+                </Link>
+                .
               </p>
             </div>
           </section>
@@ -164,9 +163,7 @@ export default async function PermByStatePage() {
                 </h2>{" "}
                 <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
                   Shaded by volume, PERM looks like one national software
-                  program. It isn&apos;t. Here is the share of each state&apos;s
-                  filings sitting in its single biggest occupation, and in its
-                  single biggest employer, with the case counts behind both.
+                  program. It isn&apos;t.
                   {mostConcentrated && mostConcentrated.topOccupations[0] ? (
                     <>
                       {" "}
@@ -188,11 +185,18 @@ export default async function PermByStatePage() {
                   Every state&apos;s biggest occupation and biggest employer
                 </h2>{" "}
                 <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-                  DOL prints the same firm under several spellings, so these
-                  are grouped on the identity behind the name rather than the
-                  name itself. Washington&apos;s leader is one company written
-                  two ways, which ranked as two until they were merged.
+                  DOL prints the same firm under several spellings, so these are
+                  grouped on the identity behind the name rather than the name
+                  itself.
                 </p>
+                {/* The worked example is evidence for the grouping rule above,
+                    not a correction to any figure, so it collapses. */}
+                <FinePrint summary="One that was merged" className="mt-2">
+                  <p>
+                    Washington&apos;s leader is one company written two ways,
+                    which ranked as two until they were merged.
+                  </p>
+                </FinePrint>{" "}
                 <StateLeaders states={stateProfiles} className="mt-6" />
               </section>
             </>
@@ -203,16 +207,23 @@ export default async function PermByStatePage() {
               Reading a rate off a small state
             </h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-              The smallest jurisdictions decide a couple of dozen cases in a whole
-              window, where one denial swings a rate by several points. Those stay
-              uncoloured on rates and medians. Drop the floor to nothing and they
-              come back, with the same denominator beside them in the table.
-              Denial rates ranked with a 95% range on each are on the{" "}
+              The smallest jurisdictions decide a couple of dozen cases in a
+              window, where one denial swings a rate by several points. They stay
+              uncoloured on rates and medians. Ranked denial rates with a 95%
+              range are on the{" "}
               <Link href="/perm-denial-risk" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                 denial rates page
               </Link>
               .
             </p>
+            {/* The floor's mechanics, not a correction to a number: the
+                sentence above is what changes how a rate should be read. */}
+            <FinePrint summary="Turning the floor off" className="mt-2">
+              <p>
+                Drop it to nothing and the small states come back, with the same
+                denominator beside them in the table.
+              </p>
+            </FinePrint>
           </section>
         </>
       ) : (
@@ -255,7 +266,7 @@ export default async function PermByStatePage() {
       </section>
       <PageBasics page="perm-by-state" />{" "}
       <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
-        Filings newer than DOL&apos;s last published file aren&apos;t in these figures. DOL reports the worksite state only when it publishes the decided case, so nothing filed since then can be placed under a state yet. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link> on the case search page, by employer.
+        Filings newer than DOL&apos;s last published file aren&apos;t in these figures: DOL reports the worksite state only when it publishes the decided case. Those are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link>, by employer.
       </p>{" "}
       <DataProvenance datasets={["perm-cases"]} />
     </div>

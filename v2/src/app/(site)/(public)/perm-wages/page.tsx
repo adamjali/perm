@@ -108,9 +108,8 @@ export default async function PermWagesPage() {
           What PERM cases pay
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The wage on a PERM filing is the wage the employer committed to in a
-          federal filing. Here is the whole distribution behind it, by
-          occupation, by state and by year.
+          What each employer committed to pay, on the federal filing itself.
+          The whole distribution, by occupation, state and year.
         </p>
       </header>
 

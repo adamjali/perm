@@ -20,6 +20,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { getDatasetSchema } from "@/lib/structuredData";
@@ -185,10 +186,8 @@ export default async function DecisionActivityPage() {
             ))}
           </dl>
           <p className="mt-6 max-w-3xl text-sm leading-relaxed text-background/70">
-            Weekdays and weekend days are counted apart because they are not
-            the same working day. A single rate over both understates the
-            weekday pace by roughly a fifth, and DOL does issue determinations
-            at weekends: {longDate(currentPace.from)} to{" "}
+            Counted apart because a single rate over both understates the
+            weekday pace by about a fifth, and DOL does decide at weekends: {longDate(currentPace.from)} to{" "}
             {longDate(currentPace.to)}, from the per-case scan of flag.dol.gov.
           </p>
         </section>
@@ -200,26 +199,31 @@ export default async function DecisionActivityPage() {
             The cases DOL moved, day by day
           </h2>{" "}
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-            Counts say how much DOL cleared. This says which cases, and what
-            each one moved from and to, which is the only view that separates an
-            information request being issued from one being answered.
+            Which cases, and what each moved from and to: the only view that
+            separates an information request being issued from one answered.
           </p>{" "}
           <ChangeFeedBrowser initial={feed} />{" "}
           <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">
-            Dated when our per-case scan of flag.dol.gov{" "}
-            <b>saw</b> the change, which is not necessarily the day DOL made it:
-            DOL publishes no timestamp, so a Friday determination read on Monday
-            is a Monday row. Observations begin{" "}
-            {feed.observedSince ? longDate(feed.observedSince) : "recently"}, so
-            this is a short record that grows nightly rather than a history:{" "}
-            {feed.availableDays
-              .map((d) => `${fmt(d.total)} on ${longDate(d.date)}`)
-              .join(", ")}
-            .
-            {feed.expiriesExcluded > 0
-              ? ` ${fmt(feed.expiriesExcluded)} certifications whose 180-day I-140 window lapsed are left out of this day: that clock running out is not DOL acting on a case, and they were all noticed in one sweep rather than expiring that day.`
-              : ""}
-          </p>
+            Dated when our scan <b>saw</b> the change, not when DOL made it: DOL
+            publishes no timestamp, so a Friday determination read on Monday is
+            a Monday row.
+          </p>{" "}
+          <FinePrint summary="What this record covers, and what it leaves out">
+            <p>
+              Observations begin{" "}
+              {feed.observedSince ? longDate(feed.observedSince) : "recently"},
+              so this is a short record that grows nightly rather than a
+              history. The day picker above lists every day held, with its
+              count.
+            </p>
+            {feed.expiriesExcluded > 0 ? (
+              <p>
+                {fmt(feed.expiriesExcluded)} certifications whose 180-day I-140
+                window lapsed are left out: that clock running out is not DOL
+                acting on a case, and they were all noticed in one sweep.
+              </p>
+            ) : null}
+          </FinePrint>
         </section>
       ) : null}
 

@@ -296,6 +296,14 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               Where&apos;s your case? When could it be decided?
             </label>{" "}
             <div className="mt-3 flex flex-col gap-3 sm:flex-row">
+              {/* THE PLACEHOLDER IS THE FORMAT ONLY. Measured against the real
+                  input on the live page, "G-100-24339-516453 or an employer
+                  name" renders 365px wide while the usable space inside this
+                  input is 212px at 320, 267 at 375, 282 at 390 and 322 at 430 -
+                  clipped on EVERY phone, not just small ones. A placeholder
+                  shows the shape of the input; the hint line below carries the
+                  fact that a name works, and it wraps instead of clipping.
+                  `hero-placeholder.test.ts` holds the cap. */}
               {/* autoCapitalize "none", not "characters": the field now takes
                   an employer name as well, and forcing MICROSOFT CORPORATION
                   on a phone reads as shouting. A case number is upper-cased by
@@ -308,14 +316,6 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
                 autoComplete="off"
                 autoCapitalize="none"
                 spellCheck={false}
-                {/* THE FORMAT ONLY. Measured against the real input on the
-                    live page: "G-100-24339-516453 or an employer name" renders
-                    365px wide, and the usable space inside this input is 212px
-                    at 320, 267 at 375, 282 at 390 and 322 at 430 - so it was
-                    clipped on EVERY phone, not just small ones. A placeholder
-                    shows the shape of the input; the hint line below carries
-                    the fact that a name works, and it wraps instead of
-                    clipping. The bare number is 173px and fits everywhere. */}
                 placeholder="G-100-24339-516453"
                 aria-describedby="hero-case-hint"
                 className="mono min-h-[48px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

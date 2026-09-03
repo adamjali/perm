@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { SectionIndex } from "@/components/legal/SectionIndex";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
@@ -33,6 +34,28 @@ export const metadata: Metadata = {
   },
 };
 
+const SECTIONS = [
+  { id: "introduction", title: "1. Introduction" },
+  { id: "information-we-collect", title: "2. Information We Collect" },
+  { id: "how-we-use-your-information", title: "3. How We Use Your Information" },
+  { id: "google-oauth-disclosure", title: "4. Google OAuth Disclosure" },
+  { id: "data-storage-security", title: "5. Data Storage & Security" },
+  { id: "ai-chat-assistant", title: "6. AI Chat Assistant" },
+  { id: "product-analytics", title: "7. Product Analytics" },
+  { id: "error-monitoring-session-replay", title: "8. Error Monitoring & Session Replay" },
+  { id: "bot-fraud-prevention", title: "9. Bot & Fraud Prevention" },
+  { id: "push-notifications", title: "10. Push Notifications" },
+  { id: "google-calendar-integration", title: "11. Google Calendar Integration" },
+  { id: "cookies-local-storage", title: "12. Cookies & Local Storage" },
+  { id: "thirdparty-services", title: "13. Third-Party Services" },
+  { id: "data-retention-deletion", title: "14. Data Retention & Deletion" },
+  { id: "your-rights", title: "15. Your Rights" },
+  { id: "international-data-transfers", title: "16. International Data Transfers" },
+  { id: "childrens-privacy", title: "17. Children's Privacy" },
+  { id: "changes-to-this-policy", title: "18. Changes to This Policy" },
+  { id: "contact-us", title: "19. Contact Us" },
+] as const;
+
 export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
@@ -42,9 +65,12 @@ export default function PrivacyPage() {
           Effective Date: February 17, 2026 | Last Updated: August 24, 2026
         </p>{" "}
 
+        <SectionIndex sections={SECTIONS} />
+
+
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="introduction" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               1. Introduction
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -63,7 +89,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="information-we-collect" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               2. Information We Collect
             </h2>{" "}
 
@@ -135,7 +161,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="how-we-use-your-information" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               3. How We Use Your Information
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -155,7 +181,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="google-oauth-disclosure" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               4. Google OAuth Disclosure
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -200,7 +226,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="data-storage-security" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               5. Data Storage &amp; Security
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -254,7 +280,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="ai-chat-assistant" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               6. AI Chat Assistant
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -357,7 +383,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="product-analytics" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               7. Product Analytics
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -456,7 +482,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="error-monitoring-session-replay" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               8. Error Monitoring &amp; Session Replay
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -533,7 +559,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="bot-fraud-prevention" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               9. Bot &amp; Fraud Prevention
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -689,7 +715,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="push-notifications" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               10. Push Notifications
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -739,7 +765,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="google-calendar-integration" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               11. Google Calendar Integration
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -775,7 +801,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="cookies-local-storage" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               12. Cookies &amp; Local Storage
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -811,7 +837,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="thirdparty-services" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               13. Third-Party Services
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -899,7 +925,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="data-retention-deletion" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               14. Data Retention &amp; Deletion
             </h2>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
@@ -952,7 +978,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="your-rights" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               15. Your Rights
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -1070,7 +1096,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="international-data-transfers" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               16. International Data Transfers
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -1088,7 +1114,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="childrens-privacy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               17. Children&apos;s Privacy
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -1100,7 +1126,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="changes-to-this-policy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               18. Changes to This Policy
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -1119,7 +1145,7 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
-            <h2 className="font-heading text-2xl font-bold mt-8 mb-4">
+            <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
               19. Contact Us
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">

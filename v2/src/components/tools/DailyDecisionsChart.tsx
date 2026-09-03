@@ -1,5 +1,6 @@
 import { businessDayPace, type DailyTotal } from "@/lib/dolPace";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
+import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverLayer";
 
 /**
  * How much work DOL has actually been clearing, week by week.
@@ -42,6 +43,13 @@ function weekStart(iso: string): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** "14 Jul 2025", for the readout, where a month alone would be ambiguous. */
+function longDay(iso: string): string {
+  const [y, m, d] = iso.split("-");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return `${Number(d)} ${months[Number(m) - 1]} ${y}`;
+}
+
 function shortLabel(iso: string): string {
   const [y, m] = iso.split("-");
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -71,6 +79,15 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
   const line = weeks.map(([, v], i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
   const area = `${PAD_L},${PAD_T + plotH} ${line} ${(PAD_L + plotW).toFixed(1)},${PAD_T + plotH}`;
   const ticks = evenTickIndices(weeks.length, 7);
+  // The points the reader can interrogate. A week is the unit that is drawn, so
+  // it is the unit the readout names: reporting a day would be answering a
+  // question the line does not ask.
+  const hover: HoverPoint[] = weeks.map(([w, v], i) => ({
+    x: x(i),
+    y: y(v),
+    label: `Week of ${longDay(w)}`,
+    value: `${v.toLocaleString("en-US")} decisions`,
+  }));
   const yTicks = [0, max / 2, max];
   const first = weeks[0]![0];
   const last = weeks[weeks.length - 1]![0];
@@ -120,6 +137,12 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
             strokeWidth="2.5"
             strokeLinejoin="round"
           />
+          <ChartHoverLayer
+            points={hover}
+            plot={{ x: PAD_L, y: PAD_T, width: plotW, height: plotH }}
+            viewBox={{ width: W, height: H }}
+            label="Decisions per week. Use the arrow keys to step through the weeks."
+          />
           {ticks.map((i, n) => (
             <text
               key={i}
@@ -136,9 +159,8 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
         </svg>
       </div>{" "}
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Decisions DOL issued each week, summed from {points.length.toLocaleString("en-US")} days of
-        its own published records, {shortLabel(first)} to {shortLabel(last)}. The rate above counts
-        only working days, because DOL does not decide cases at weekends.
+        Weekly totals from {points.length.toLocaleString("en-US")} days of DOL&apos;s published
+        records. The rate counts working days only.
       </p>
     </div>
   );
