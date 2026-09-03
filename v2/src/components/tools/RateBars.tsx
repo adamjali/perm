@@ -500,15 +500,14 @@ export function RankedRateViews({
             <p className="mt-3 text-sm text-foreground/60">
               {showingAll ? (
                 <>
-                  All {kept.length.toLocaleString("en-US")} {noun} with at least{" "}
-                  {floor.toLocaleString("en-US")} decided cases, ranked by denial rate.
+                  All {kept.length.toLocaleString("en-US")} {noun} with{" "}
+                  {floor.toLocaleString("en-US")}+ decided cases, by denial rate.
                 </>
               ) : (
                 <>
-                  The {shown.length} highest denial rates among the{" "}
-                  {kept.length.toLocaleString("en-US")} {noun} with at least{" "}
-                  {floor.toLocaleString("en-US")} decided cases. The full ranking carries
-                  a 95% range on every rate.
+                  The {shown.length} highest rates among {kept.length.toLocaleString("en-US")}{" "}
+                  {noun} with {floor.toLocaleString("en-US")}+ decided cases. The full
+                  ranking carries a 95% range.
                 </>
               )}
             </p>

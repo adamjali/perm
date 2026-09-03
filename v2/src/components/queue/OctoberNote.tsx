@@ -1,5 +1,7 @@
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 
+import { FinePrint } from "@/components/data/FinePrint";
+
 /**
  * Why one month in the backlog is a twelfth the size of its neighbours.
  *
@@ -90,10 +92,8 @@ export function OctoberNote() {
 
       <p className="mt-4 text-base leading-relaxed text-foreground/80">
         1,616 applications carry an October 2025 filing date in the per-case
-        scan, which holds every application whether or not it has been
-        decided, against 13,629 in September and 15,034 in November.
-        That&rsquo;s a real event at DOL rather than a hole in the scan, and
-        DOL has published what caused it.
+        scan, against 13,629 in September and 15,034 in November.
+        That&rsquo;s a real event at DOL rather than a hole in the scan.
       </p>{" "}
 
       <p className="mt-3 text-base leading-relaxed text-foreground/80">
@@ -103,30 +103,7 @@ export function OctoberNote() {
           ceased all application processing activities and suspended public
           access to its Foreign Labor Application Gateway (FLAG) system&rdquo;
         </b>
-        , so employers &ldquo;were unable to prepare and submit requests for
-        prevailing wage determinations or labor certifications using the FLAG
-        system&hellip; between October 1, 2025, through October 31, 2025&rdquo;.
-        DOL extended affected response deadlines by 33 calendar days, which it
-        describes as the span during which staff, &ldquo;officially recalled
-        back to work on November 3&rdquo;, could not accept or process
-        applications.
-      </p>{" "}
-
-      <p className="mt-3 text-base leading-relaxed text-foreground/80">
-        Our own counts land on DOL&rsquo;s dates without being fitted to them.
-        The last ordinary day of determinations is 30 September; there are two
-        in the 30 days that follow; the filing system reopens on 31 October,
-        the day DOL announced the resumption; and ordinary volume returns on 3
-        November, the day DOL says staff came back.
-      </p>{" "}
-
-      <p className="mt-3 text-base leading-relaxed text-foreground/80">
-        The collapse also appears in{" "}
-        <b className="font-bold">DOL&rsquo;s own quarterly disclosure release</b>
-        , which is first-party and built from separate records: DOL issued{" "}
-        <b className="font-bold">21 PERM determinations in the whole of October
-        2025</b>, against 14,239 in September and 8,890 in November. Nineteen
-        of the 21 landed on 31 October.
+        .
       </p>{" "}
 
       <p className="mt-3 text-base leading-relaxed text-foreground/80">
@@ -138,15 +115,45 @@ export function OctoberNote() {
         a month when the portal was shut.
       </p>{" "}
 
-      <p className="mt-3 text-base leading-relaxed text-foreground/80">
-        One observation rather than a finding: OFLC&rsquo;s filing portal
-        carries the 31 October resumption notice and nothing announcing the
-        stoppage. Its announcements run from 16 May 2025 straight to 31
-        October. The explanation above is on{" "}
-        <span className="font-mono text-sm">{LIVE_NOTICE_URL}</span>, a
-        different DOL host, which refuses automated clients, so the text quoted
-        here was read from an Internet Archive capture of that page.
-      </p>{" "}
+      {/* The corroboration, the second corpus and the archive route are how
+          the claim was checked rather than what it says, so they collapse.
+          `<details>` keeps every quotation and every figure in the DOM. */}
+      <FinePrint summary="How this was checked" className="mt-3">
+        <p>
+          DOL&rsquo;s announcement adds that employers &ldquo;were unable to
+          prepare and submit requests for prevailing wage determinations or
+          labor certifications using the FLAG system&hellip; between October 1,
+          2025, through October 31, 2025&rdquo;. It extended affected response
+          deadlines by 33 calendar days, the span during which staff,
+          &ldquo;officially recalled back to work on November 3&rdquo;, could
+          not accept or process applications.
+        </p>{" "}
+        <p>
+          Our own counts land on those dates without being fitted to them. The
+          last ordinary day of determinations is 30 September; there are two in
+          the 30 days that follow; the filing system reopens on 31 October, the
+          day DOL announced the resumption; and ordinary volume returns on 3
+          November, the day DOL says staff came back.
+        </p>{" "}
+        <p>
+          The collapse also appears in DOL&rsquo;s own quarterly disclosure
+          release, which is first-party and built from separate records: DOL
+          issued 21 PERM determinations in the whole of October 2025, against
+          14,239 in September and 8,890 in November. Nineteen of the 21 landed
+          on 31 October. That release holds decided cases only, while the
+          1,616 above is from the per-case scan, which holds every application
+          whether or not it has been decided.
+        </p>{" "}
+        <p>
+          One observation rather than a finding: OFLC&rsquo;s filing portal
+          carries the 31 October resumption notice and nothing announcing the
+          stoppage. Its announcements run from 16 May 2025 straight to 31
+          October. The explanation above is on{" "}
+          <span className="font-mono text-sm">{LIVE_NOTICE_URL}</span>, a
+          different DOL host, which refuses automated clients, so the text
+          quoted here was read from an Internet Archive capture of that page.
+        </p>
+      </FinePrint>{" "}
 
       <p className="mt-4 flex flex-col gap-2 text-base leading-relaxed text-foreground/80 sm:flex-row sm:gap-6">
         <a

@@ -52,6 +52,7 @@ import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/turso/proce
 import { getEstimatorData } from "@/lib/turso/estimate";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { FinePrint } from "@/components/data/FinePrint";
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
 // literal here meant a preview deploy emitted Dataset markup pointing at
@@ -292,8 +293,8 @@ export default async function PermProcessingTimesPage() {
           PERM processing times
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          Where the Department of Labor&apos;s queues stand, from DOL&apos;s own published
-          figures, checked daily.
+          Where DOL&apos;s queues stand, from its own published figures, checked
+          daily.
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5">
           {flagFreshness ? <FreshnessDots items={[flagFreshness]} /> : null}{" "}
@@ -373,8 +374,7 @@ export default async function PermProcessingTimesPage() {
             <section className="mt-8">
               <h2 className="font-heading text-2xl font-black">The queue, drawn</h2>{" "}
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-                Every PERM waits in filing-month order. Solid months are cleared;
-                the flag is where the queue stands today.
+                Every PERM waits in filing-month order. Solid months are cleared.
               </p>
               <QueueTape frontierMonth={analyst.priorityDate} className="mt-6" />
             </section>
@@ -393,7 +393,7 @@ export default async function PermProcessingTimesPage() {
                 <strong>
                   {movedMonths} month{movedMonths === 1 ? "" : "s"}
                 </strong>
-                . That’s the difference between two dates DOL published.
+                .
               </p>
             </section>
           ) : null}
@@ -402,7 +402,7 @@ export default async function PermProcessingTimesPage() {
             <section className="mt-8">
               <h2 className="font-heading text-2xl font-black">Movement on record</h2>{" "}
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-                Every reading DOL has published since we started keeping them.
+                Every reading since we started keeping them.
               </p>
               <QueueHistoryChart points={historyPoints} className="mt-6" />
             </section>
@@ -415,12 +415,19 @@ export default async function PermProcessingTimesPage() {
               </h2>{" "}
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
                 DOL publishes where the queue stands and overwrites it, so its
-                own pages can never say how fast it is moving. This is
-                reconstructed from the determination dates in the disclosure
-                files: for each month DOL issued decisions, the filing month at
-                their median. It is the same frontier the section above tracks,
-                measured a second way and much further back.
-              </p>
+                own pages can never say how fast it is moving.
+              </p>{" "}
+              {/* Method, not correction: it says how the series was built
+                  rather than changing how the rate reads, so it collapses.
+                  `<details>` keeps every word in the DOM. */}
+              <FinePrint summary="How this is measured" className="mt-3">
+                <p>
+                  Reconstructed from the determination dates in the disclosure
+                  files: for each month DOL issued decisions, the filing month
+                  at their median. It is the same frontier the section above
+                  tracks, measured a second way and much further back.
+                </p>
+              </FinePrint>
 
               <div className="mt-6 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
                 <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
@@ -432,19 +439,17 @@ export default async function PermProcessingTimesPage() {
                 <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
                   months of filing queue cleared per calendar month, over the{" "}
                   {advance.pointsUsed} determination months to{" "}
-                  {formatMonth(advance.toMonth) ?? advance.toMonth}. At exactly
-                  1.00 the queue holds station and the backlog neither grows nor
-                  shrinks, so at {advance.rate.toFixed(2)} it is{" "}
+                  {formatMonth(advance.toMonth) ?? advance.toMonth}. At 1.00 the
+                  queue holds station, so at {advance.rate.toFixed(2)} it is{" "}
                   <strong className="text-background">{advanceVerdict}</strong>.
                 </p>
                 {advance.slowest !== null && advance.fastest !== null ? (
                   <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
                     Across the whole record it has run as slow as{" "}
                     {advance.slowest.toFixed(2)} and as fast as{" "}
-                    {advance.fastest.toFixed(2)}, measured over rolling
-                    three-month windows. That spread is the reason a single
-                    figure here is a description of the past rather than a rate
-                    to project a case forward on.
+                    {advance.fastest.toFixed(2)}, over rolling three-month
+                    windows. That spread is why this describes the past and
+                    can&apos;t be projected onto a case.
                   </p>
                 ) : null}
               </div>
@@ -452,17 +457,19 @@ export default async function PermProcessingTimesPage() {
               <div className="mt-6">
                 <QueueHistoryChart points={reconstructedPoints} />
               </div>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-foreground/60">
-                Reconstructed from{" "}
-                {disclosureWindow ?? "the quarterly disclosure files"}, so it
-                ends where those files end and is a quarter behind the readings
-                above. Its points aren&apos;t equally solid either: the thinnest
-                month in the series is a median over{" "}
-                {reconstructedSpread.min.toLocaleString("en-US")} decisions and
-                the fullest over{" "}
-                {reconstructedSpread.max.toLocaleString("en-US")}. Every
-                month&apos;s count is in the next section.
-              </p>
+              <FinePrint summary="Which files, and how solid each point is" className="mt-3">
+                <p>
+                  Reconstructed from{" "}
+                  {disclosureWindow ?? "the quarterly disclosure files"}, so it
+                  ends where those files end and is a quarter behind the
+                  readings above. Its points aren&apos;t equally solid either:
+                  the thinnest month in the series is a median over{" "}
+                  {reconstructedSpread.min.toLocaleString("en-US")} decisions
+                  and the fullest over{" "}
+                  {reconstructedSpread.max.toLocaleString("en-US")}. Every
+                  month&apos;s count is in the next section.
+                </p>
+              </FinePrint>
             </section>
           ) : null}
 
@@ -472,10 +479,15 @@ export default async function PermProcessingTimesPage() {
                 How much DOL decides in a month
               </h2>{" "}
               <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-                Every determination in DOL&apos;s quarterly disclosure files, counted
-                by the month it was issued. Those files lag the weekly queue page
-                by a quarter and carry a year and a half of history.
-              </p>
+                Every determination in DOL&apos;s quarterly disclosure files,
+                counted by the month it was issued.
+              </p>{" "}
+              <FinePrint summary="How far back, and how fresh" className="mt-3">
+                <p>
+                  Those files lag the weekly queue page by a quarter and carry a
+                  year and a half of history.
+                </p>
+              </FinePrint>
               <DecisionsByMonth points={decisionsByMonth} className="mt-6" />
             </section>
           ) : null}
@@ -514,10 +526,9 @@ export default async function PermProcessingTimesPage() {
               </h2>{" "}
               <p className="mt-2 max-w-2xl text-foreground/70">
                 PERM prevailing wage requests DOL hasn’t yet decided, by the month it received
-                them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}. A
-                running total from the oldest month is what answers how many
-                requests sit ahead of a given one, so each month carries one
-                alongside its share of the pile.
+                them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}. Each
+                month carries a running total from the oldest, which is how many
+                sit ahead of it.
               </p>
               <PwdBacklogChart backlog={snapshot.pwdPermBacklog} className="mt-6" />
             </section>
@@ -582,23 +593,23 @@ export default async function PermProcessingTimesPage() {
 
       <section className="mt-12 border-2 border-border bg-muted p-6">
         <h2 className="font-heading text-xl font-black">Where these numbers come from</h2>{" "}
-        <p className="mt-3 leading-relaxed text-foreground/70">
-          Every one of these figures is published by the Office of Foreign Labor Certification
-          at{" "}
-          <a
-            href={DOL_SOURCE}
-            className="font-bold underline underline-offset-2 hover:text-primary"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            flag.dol.gov/processingtimes
-          </a>
-          , and carries the date DOL attached to it. We read that page daily and keep each
-          publication, because DOL overwrites its own and keeps no archive.
-        </p>{" "}
+        {/* The absence rule changes how a blank cell reads, so it stays in
+            the open. The provenance behind it collapses. */}
         <p className="mt-3 leading-relaxed text-foreground/70">
           Where a number is missing here, DOL didn’t publish one.
-        </p>
+        </p>{" "}
+        <FinePrint summary="Sources" className="mt-3">
+          <p>
+            Every figure here is published by the Office of Foreign Labor
+            Certification at{" "}
+            <a href={DOL_SOURCE} target="_blank" rel="noopener noreferrer">
+              flag.dol.gov/processingtimes
+            </a>
+            , and carries the date DOL attached to it. We read that page daily
+            and keep each publication, because DOL overwrites its own and keeps
+            no archive.
+          </p>
+        </FinePrint>
       </section>
 
       <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
@@ -606,9 +617,9 @@ export default async function PermProcessingTimesPage() {
           The deadlines you control
         </h2>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">
-          The recruitment window, the quiet period and the filing window are fixed
-          arithmetic on your prevailing wage determination date. PERM Tracker computes
-          them for every case you run and sends a reminder before each one.
+          The recruitment window, the quiet period and the filing window are
+          fixed arithmetic on your prevailing wage determination date. PERM
+          Tracker computes them per case and reminds you before each one.
         </p>
         <Link
           href="/signup"

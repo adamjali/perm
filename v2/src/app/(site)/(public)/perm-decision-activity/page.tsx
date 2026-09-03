@@ -127,8 +127,7 @@ export default async function DecisionActivityPage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           Every PERM determination carries the date it was issued. Counted by
-          day, they say how much work DOL clears, when it clears it, and what
-          happened to the cases it got through.
+          day, that is the pace of the queue.
         </p>
       </header>
 
@@ -186,9 +185,9 @@ export default async function DecisionActivityPage() {
             ))}
           </dl>
           <p className="mt-6 max-w-3xl text-sm leading-relaxed text-background/70">
-            Counted apart because a single rate over both understates the
-            weekday pace by about a fifth, and DOL does decide at weekends: {longDate(currentPace.from)} to{" "}
-            {longDate(currentPace.to)}, from the per-case scan of flag.dol.gov.
+            Weekday and weekend counted apart: one rate over both understates
+            the weekday pace by about a fifth, and DOL does decide at
+            weekends. {longDate(currentPace.from)} to {longDate(currentPace.to)}.
           </p>
         </section>
       ) : null}
@@ -198,23 +197,17 @@ export default async function DecisionActivityPage() {
           <h2 className="font-heading text-2xl font-black">
             The cases DOL moved, day by day
           </h2>{" "}
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-            Which cases, and what each moved from and to: the only view that
-            separates an information request being issued from one answered.
-          </p>{" "}
           <ChangeFeedBrowser initial={feed} />{" "}
           <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">
-            Dated when our scan <b>saw</b> the change, not when DOL made it: DOL
-            publishes no timestamp, so a Friday determination read on Monday is
-            a Monday row.
+            Dated when our scan <b>saw</b> the change, not when DOL made it: a
+            Friday determination read on Monday is a Monday row.
           </p>{" "}
-          <FinePrint summary="What this record covers, and what it leaves out">
+          <FinePrint summary="What this record covers">
             <p>
-              Observations begin{" "}
+              DOL publishes no timestamp of its own. Observations begin{" "}
               {feed.observedSince ? longDate(feed.observedSince) : "recently"},
               so this is a short record that grows nightly rather than a
-              history. The day picker above lists every day held, with its
-              count.
+              history.
             </p>
             {feed.expiriesExcluded > 0 ? (
               <p>
@@ -234,25 +227,11 @@ export default async function DecisionActivityPage() {
           subject="Every week in the record, with its holes left open"
           caption={
             <>
-              A week at the floor and a break in the line mean opposite
-              things here. The long line is our own case corpus counted by
-              decision date, and a week DOL decided nothing is drawn at zero
-              rather than left out: in October 2025 that is three straight
-              weeks on the floor, two determinations in thirty days, ending
-              when DOL announced on the 31st that it{"\u2019"}d{" "}
-              <a
-                href="https://flag.dol.gov/announcement/2025-10-31"
-                className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                rel="nofollow noopener"
-              >
-                resumed application processing
-              </a>
-              . Why it stopped is not established here. The one BREAK in the
-              line, before the point on the right, is ours and not DOL{"\u2019"}s:
-              the quarterly file ends on 2026-06-30 and the per-case scan of
-              flag.dol.gov begins on 2026-08-13, and drawing those 44 days as
-              zero would invent a second national stoppage that never
-              happened.
+              A week at the floor and a break in the line mean opposite things.
+              At the floor DOL decided nothing: October 2025 is three straight
+              weeks there, two determinations in thirty days. The one break is
+              ours, not DOL{"\u2019"}s. Why October stopped is not established
+              here.
             </>
           }
           source="DOL PERM disclosure files and flag.dol.gov"
@@ -287,12 +266,32 @@ export default async function DecisionActivityPage() {
         </FigurePlate>
       ) : null}
 
+      {series.length > 0 ? (
+        <FinePrint summary="The break, and October 2025" className="mt-4">
+          <p>
+            The quarterly disclosure file ends 2026-06-30 and the per-case scan
+            of flag.dol.gov begins 2026-08-13. Drawing those 44 days as zero
+            would invent a second national stoppage that never happened.
+          </p>{" "}
+          <p>
+            October 2025 ended when DOL announced on the 31st that it had{" "}
+            <a
+              href="https://flag.dol.gov/announcement/2025-10-31"
+              rel="nofollow noopener"
+            >
+              resumed application processing
+            </a>
+            .
+          </p>
+        </FinePrint>
+      ) : null}
+
       {record.length > 0 ? (
         <FigurePlate
           n="02"
           title="The working week"
           subject={`Mean decisions by day of week, ${fmt(record.length)} days`}
-          caption="A weekend day runs about an eighth of a weekday, and most weekend days carry work rather than none. That matters for any rate quoted per working day: counting a Saturday as a working day drags the figure down without saying so."
+          caption="Counting a Saturday as a working day drags a per-working-day rate down without saying so."
           source="DOL PERM disclosure files"
           className="mt-10"
         >
@@ -305,7 +304,7 @@ export default async function DecisionActivityPage() {
           n="03"
           title="What happened to them"
           subject="Share of decided cases, by federal quarter"
-          caption="Denial and withdrawal have moved in opposite directions across the record. Neither is explained here: a share of decisions cannot separate a change in how DOL adjudicates from a change in who is filing, and this data holds no way to tell them apart."
+          caption="Denial and withdrawal have moved in opposite directions. Neither is explained here: a share of decisions cannot separate a change in how DOL adjudicates from a change in who is filing."
           source="DOL PERM disclosure files and flag.dol.gov"
           className="mt-10"
         >
@@ -319,8 +318,7 @@ export default async function DecisionActivityPage() {
             The heaviest and lightest days
           </h2>{" "}
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-            Weekdays only, on both ends. A quietest-day list that includes
-            Sundays says nothing except that they were Sundays.
+            Weekdays only: a quietest list full of Sundays says nothing.
           </p>
           <div className="mt-6 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
             {(
@@ -351,14 +349,20 @@ export default async function DecisionActivityPage() {
             ))}
           </div>
           {idleWeekdays.length > 0 ? (
-            <p className="mt-4 max-w-3xl text-sm leading-relaxed text-foreground/60">
-              {fmt(idleWeekdays.length)} weekdays in the record carry no
-              determination at all, so the quietest list is a list of ties. They
-              are federal holidays and the October 2025 stoppage, and they are
-              real days rather than gaps in the data: this series is counted
-              from the case corpus, so a day with no cases decided produces no
-              row, and those days are read as zero rather than as unmeasured.
-            </p>
+            <>
+              <p className="mt-4 max-w-3xl text-sm leading-relaxed text-foreground/60">
+                {fmt(idleWeekdays.length)} weekdays carry no determination at
+                all, so the quietest list is a list of ties: federal holidays
+                and the October 2025 stoppage.
+              </p>{" "}
+              <FinePrint summary="Why a zero is a zero" className="mt-3">
+                <p>
+                  These are real days, not gaps. The series is counted from the
+                  case corpus, so a day with no cases decided produces no row,
+                  and those days are read as zero rather than as unmeasured.
+                </p>
+              </FinePrint>
+            </>
           ) : null}
         </section>
       ) : null}
@@ -374,14 +378,14 @@ export default async function DecisionActivityPage() {
             >
               decision estimator
             </Link>{" "}
-            reads how many filings sit ahead of a given month, and{" "}
+            reads how many filings sit ahead of your month;{" "}
             <Link
               href="/perm-processing-times"
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
             >
               processing times
             </Link>{" "}
-            carries DOL&apos;s own published position.
+            carries DOL&apos;s own position.
           </p>
         </div>
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">

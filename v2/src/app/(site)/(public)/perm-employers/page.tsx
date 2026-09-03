@@ -21,6 +21,7 @@ import { pendingLeaders } from "@/lib/turso/entityDetail";
 import { getFreshness } from "@/lib/turso/publicData";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
 const TITLE = "Every PERM Employer, Ranked";
 const DESCRIPTION =
@@ -78,10 +79,9 @@ export default async function PermEmployersPage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           Every employer that filed a PERM case in the current disclosure
-          window, all {employerCount.toLocaleString("en-US")} of them. Search
-          yours, filter by state, sort any column. Employers whose filings are
-          still working through DOL, and so are not in a published file yet,
-          appear in search under the table.
+          window, all {employerCount.toLocaleString("en-US")} of them. Filings
+          still working through DOL, and so not in a published file yet, appear
+          in search under the table.
         </p>
       </header>
 
@@ -133,12 +133,20 @@ export default async function PermEmployersPage() {
               All {employerCount.toLocaleString("en-US")} sponsors in the
               published files
             </h2>{" "}
+            {/* The consequence stays visible because it changes how a row is
+                read: one company can hold several of them. The pooling
+                mechanics are provenance, so they collapse. */}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
-              DOL prints the legal entity name typed on the form. Spellings that
-              differ only by punctuation or a company suffix are counted as one
-              sponsor here, but a group filing through several subsidiaries
-              still appears as several rows.
-            </p>
+              A group filing through several subsidiaries appears as several
+              rows.
+            </p>{" "}
+            <FinePrint summary="How sponsors are counted" className="mt-2">
+              <p>
+                DOL prints the legal entity name typed on the form. Spellings
+                that differ only by punctuation or a company suffix are counted
+                as one sponsor here.
+              </p>
+            </FinePrint>
             <div className="mt-6">
               <EntityExplorer kind="employer" rows={employers} total={employerCount} />
             </div>
@@ -177,13 +185,12 @@ export default async function PermEmployersPage() {
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Managing a docket?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            Wages by occupation sit on the{" "}
             <Link href="/perm-wages" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              wages page
+              Wages by occupation
             </Link>
-            , volume by state on the{" "}
+            ,{" "}
             <Link href="/perm-by-state" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              map
+              volume by state
             </Link>
             , and every figure&apos;s recipe in the{" "}
             <Link href="/methodology" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">

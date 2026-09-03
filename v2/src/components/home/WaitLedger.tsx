@@ -359,8 +359,8 @@ export function WaitLedger({
         </div>
 
         <p className="sr-only">
-          Median months from filing to determination, for cases decided in each
-          month. One entry per month of determinations.
+          Median months from filing to determination, for cases decided in
+          each month.
         </p>
 
         <ul className="mt-4 flex flex-col" style={{ gap: `${gapH}px` }}>

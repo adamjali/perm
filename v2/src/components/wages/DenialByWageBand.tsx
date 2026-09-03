@@ -9,6 +9,7 @@ import {
   type WageBandSeries,
 } from "@/lib/wageLadder";
 import { cn } from "@/lib/utils";
+import { FinePrint } from "@/components/data/FinePrint";
 
 /**
  * Denial rate by wage band, at the resolution the data actually supports.
@@ -167,9 +168,9 @@ export function DenialByWageBand({
             the wrong way.{" "}
           </>
         ) : null}
-        Where those bumps sit moves with the band edges, so the bumps are not a
-        finding and no cause is offered for them: wage, occupation and employer
-        are entangled in these filings and nothing here separates them.
+        Where those bumps sit moves with the band edges, so no cause is offered
+        for them: wage, occupation and employer are entangled here and nothing
+        separates them.
       </p>{" "}
       <p className="mt-6 font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
         Eleven bands, by fiscal year and pooled
@@ -199,11 +200,9 @@ export function DenialByWageBand({
           The same cases in five wide bands
         </p>{" "}
         <p className="mt-1 text-sm leading-relaxed text-foreground/70">
-          Summed from the eleven above, not measured separately. Read it as a
-          scanning aid: it averages the{" "}
-          {peak ? peak.band.toLowerCase() : "peak"} band together with its
-          quieter neighbours, which is how a plateau appears at the bottom of
-          the range where the finer view has a peak.
+          Summed from the eleven above, not measured separately. It averages the{" "}
+          {peak ? peak.band.toLowerCase() : "peak"} band with its quieter
+          neighbours, so a plateau appears where the finer view has a peak.
         </p>
         <div className="mt-4">
           <Panel
@@ -215,14 +214,20 @@ export function DenialByWageBand({
         </div>
       </div>
 
+      {/* The denominator changes how every rate reads, so it stays visible.
+          How the drawing works is provenance, and collapses. */}
       <p className="mt-4 text-sm leading-relaxed text-foreground/60">
-        Bars share one scale within each block. The figure on the right of each
-        bar is the number of decided cases behind it; withdrawn cases are
-        excluded, because a withdrawal is the employer stopping rather than a
-        decision going against anyone. A band with fewer than{" "}
+        Withdrawn cases are excluded: a withdrawal is the employer stopping, not
+        a decision going against anyone. A band with fewer than{" "}
         {MIN_DECIDED_FOR_BAND_RATE.toLocaleString("en-US")} decided cases is
         withheld rather than drawn.
-      </p>
+      </p>{" "}
+      <FinePrint summary="Reading the bars" className="mt-2">
+        <p>
+          Bars share one scale within each block. The figure on the right of
+          each bar is the number of decided cases behind it.
+        </p>
+      </FinePrint>
     </div>
   );
 }

@@ -24,7 +24,7 @@ export function AttorneyPanel() {
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80 sm:text-lg">
             Enter the case dates once. Filing windows, wage expirations,
             recruitment clocks and audit responses come out computed, with
-            email reminders, calendar sync and a client-ready timeline.
+            reminders and calendar sync.
           </p>
         </div>
         <div className="flex flex-col gap-3 lg:col-span-4">

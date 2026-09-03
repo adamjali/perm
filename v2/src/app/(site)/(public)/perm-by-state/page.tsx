@@ -103,8 +103,8 @@ export default async function PermByStatePage() {
           PERM filings, state by state
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          Every certified, denied and withdrawn case in the current disclosure
-          window, placed at its worksite state. Hover a state to read it.
+          Every certified, denied and withdrawn case, at its worksite state.
+          Hover a state to read it.
         </p>
       </header>
 
@@ -184,17 +184,14 @@ export default async function PermByStatePage() {
                 <h2 className="font-heading text-2xl font-black">
                   Every state&apos;s biggest occupation and biggest employer
                 </h2>{" "}
-                <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-                  DOL prints the same firm under several spellings, so these are
-                  grouped on the identity behind the name rather than the name
-                  itself.
-                </p>
-                {/* The worked example is evidence for the grouping rule above,
-                    not a correction to any figure, so it collapses. */}
-                <FinePrint summary="One that was merged" className="mt-2">
+                {/* How the names were grouped, and the worked example that
+                    shows it working: method, not a correction to any figure. */}
+                <FinePrint summary="How employers are grouped" className="mt-2">
                   <p>
-                    Washington&apos;s leader is one company written two ways,
-                    which ranked as two until they were merged.
+                    DOL prints the same firm under several spellings, so these
+                    are grouped on the identity behind the name rather than the
+                    name itself. Washington&apos;s leader is one company written
+                    two ways, which ranked as two until they were merged.
                   </p>
                 </FinePrint>{" "}
                 <StateLeaders states={stateProfiles} className="mt-6" />
@@ -207,8 +204,8 @@ export default async function PermByStatePage() {
               Reading a rate off a small state
             </h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-              The smallest jurisdictions decide a couple of dozen cases in a
-              window, where one denial swings a rate by several points. They stay
+              The smallest jurisdictions decide a couple of dozen cases, where
+              one denial swings a rate by several points, so they stay
               uncoloured on rates and medians. Ranked denial rates with a 95%
               range are on the{" "}
               <Link href="/perm-denial-risk" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">

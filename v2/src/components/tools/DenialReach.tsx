@@ -137,10 +137,9 @@ export function DenialReach({
         ))}
       </ul>{" "}
       <p className="mt-6 text-sm leading-relaxed text-foreground/60">
-        The outlined bar is the {unitLabel.toLowerCase()}&apos;s share of every
-        decided case. The solid bar is its share of every denial. A solid bar
-        longer than its outline means denials land there more often than case
-        volume alone would put them.
+        Outlined is the {unitLabel.toLowerCase()}&apos;s share of decided cases,
+        solid its share of denials. Solid longer than outlined means denials
+        concentrate there.
       </p>
     </div>
   );

@@ -26,9 +26,8 @@ const stakes: StakeCard[] = [
     number: "1",
     title: "30-Day Audit Response",
     consequence:
-      "Miss DOL's 30-day audit window and the case is abandoned. No extension, no appeal, and the process starts over.",
-    prevention:
-      "Deadline computed for you, with alerts at 14, 7, 3 and 1 day before",
+      "Miss DOL's 30-day audit window and the case is abandoned. No extension, no appeal.",
+    prevention: "Computed, with alerts 14, 7, 3 and 1 day before",
     severity: "critical",
   },
   {
@@ -36,8 +35,7 @@ const stakes: StakeCard[] = [
     title: "PWD Expiration",
     consequence:
       "A prevailing wage determination expires under 20 CFR 656.40. File after that and you start from zero.",
-    prevention:
-      "Expiration computed from the determination date under DOL's rules",
+    prevention: "Computed from the determination date under DOL's rules",
     severity: "critical",
   },
   {
@@ -45,8 +43,7 @@ const stakes: StakeCard[] = [
     title: "180-Day Filing Window",
     consequence:
       "The ETA 9089 must be filed 30 to 180 days after recruitment ends, and before the PWD expires. Miss the window and recruitment is redone.",
-    prevention:
-      "Open and close dates computed from your recruitment dates",
+    prevention: "Open and close dates from your recruitment dates",
     severity: "high",
   },
   {
@@ -54,17 +51,15 @@ const stakes: StakeCard[] = [
     title: "I-140 Filing Deadline",
     consequence:
       "You have 180 days after PERM certification to file the I-140. Miss it and the approved labor certification expires.",
-    prevention:
-      "Set automatically when you enter the certification date",
+    prevention: "Set from your certification date",
     severity: "high",
   },
   {
     number: "5",
     title: "Recruitment Timing",
     consequence:
-      "Sunday ads, job orders and the notice of filing each have exact timing rules. Gaps in the documentation trigger DOL audits.",
-    prevention:
-      "Every recruitment deadline computed, business days accounted for",
+      "Sunday ads, job orders and the notice of filing each have exact timing rules. Gaps trigger DOL audits.",
+    prevention: "Every step computed, business days included",
     severity: "high",
   },
 ];

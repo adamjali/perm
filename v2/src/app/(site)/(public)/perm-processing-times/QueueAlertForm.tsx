@@ -295,9 +295,7 @@ export function QueueAlertForm({
       </Button>{" "}
 
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-        The month is the only thing that decides when we write to you. You confirm by email
-        first, so an address can’t be signed up by someone who doesn’t control it, and one
-        click opts out.
+        You confirm by email first, and one click opts out.
       </p>
     </form>
   );

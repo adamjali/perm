@@ -182,10 +182,7 @@ export function HowItWorks() {
           </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
             Get Started in 3 Steps
-          </h2>{" "}
-          <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-            From signup to case tracking in under a minute.
-          </p>
+          </h2>
         </ScrollReveal>
 
         {/* Step cards with connectors - single stagger container */}
@@ -246,10 +243,7 @@ export function HowItWorks() {
             </div>{" "}
             <h3 className="font-heading text-xl font-black tracking-tight sm:text-2xl lg:text-3xl">
               See How It Works in 20 Seconds
-            </h3>{" "}
-            <p className="mx-auto mt-3 max-w-lg text-base text-muted-foreground">
-              From creating a case to tracking its deadlines.
-            </p>
+            </h3>
           </div>
           {/* Product demo + Create case, side by side */}
           <div className="grid gap-6 md:grid-cols-2">

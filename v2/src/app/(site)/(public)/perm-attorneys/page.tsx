@@ -18,6 +18,7 @@ import { BrowseTeaser } from "@/components/entities/BrowseBody";
 import { fetchEntitySeed } from "@/lib/entitySeed";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
 const TITLE = "Every PERM Law Firm, Ranked";
 const DESCRIPTION =
@@ -70,8 +71,7 @@ export default async function PermAttorneysPage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           Every PERM filing names the firm that made it. All
-          {" "}{firmCount.toLocaleString("en-US")} of them, with volume, approval
-          rate and median days.
+          {" "}{firmCount.toLocaleString("en-US")} of them.
         </p>
       </header>
 
@@ -113,13 +113,19 @@ export default async function PermAttorneysPage() {
             <h2 className="font-heading text-2xl font-black">
               All {firmCount.toLocaleString("en-US")} firms
             </h2>{" "}
+            {/* The consequence stays visible because it changes how a row is
+                read. The pooling rule itself is method, so it collapses. */}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
-              Spellings that differ by punctuation, a legal suffix or a single
-              mistyped letter are pooled, so a practice DOL prints several ways
-              counts once. Spellings that differ by more than that stay
-              separate, and each firm&apos;s page lists the ones near it.
-              Filter by the state the firm files from.
-            </p>
+              A practice DOL prints several ways counts once here.
+            </p>{" "}
+            <FinePrint summary="How firms are pooled" className="mt-2">
+              <p>
+                Spellings that differ by punctuation, a legal suffix or a single
+                mistyped letter are pooled. Spellings that differ by more than
+                that stay separate, and each firm&apos;s page lists the ones
+                near it.
+              </p>
+            </FinePrint>
             <div className="mt-6">
               <EntityExplorer kind="attorney" rows={attorneys} total={firmCount} />
             </div>
@@ -148,8 +154,8 @@ export default async function PermAttorneysPage() {
         <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Running a PERM practice?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-background/70">
-            Benchmark your own volume and median against the field, then track
-            the deadlines on every case.{" "}
+            Benchmark your volume and median against the field, then track every
+            deadline.{" "}
             <Link href="/signup" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
               Free account
             </Link>
@@ -160,7 +166,7 @@ export default async function PermAttorneysPage() {
           <h2 className="font-heading text-lg font-black">Checking on your firm?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
             A firm&apos;s median sits near the national one because DOL works a
-            single queue. Your own date comes from your filing month, on the{" "}
+            single queue. Your own date comes from your filing month:{" "}
             <Link href="/tools/perm-timeline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision estimator
             </Link>
@@ -170,7 +176,7 @@ export default async function PermAttorneysPage() {
       </section>
       <PageBasics page="perm-attorneys" />{" "}
       <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
-        Filings newer than DOL&apos;s last published file aren&apos;t in this table. DOL names the law firm only when it publishes the decided case, so nothing filed since then can be placed under a firm yet. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link> on the case search page, by employer.
+        Filings newer than DOL&apos;s last published file aren&apos;t here: DOL names the firm only when it publishes the decided case. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link>, by employer.
       </p>{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>

@@ -192,9 +192,8 @@ export default async function ToolsPage() {
         <div>
           <h2 className="font-heading text-2xl font-black">Seven calculators</h2>{" "}
           <p className="mt-1 max-w-xl text-base text-foreground/70">
-            Decision times, the wage queue, the I-140 backlog, the I-485
-            queue, priority dates, the whole green card drawn to scale, and
-            every statutory deadline.
+            Decision times, the wage, I-140 and I-485 queues, priority dates,
+            the green card drawn to scale, and every statutory deadline.
           </p>
         </div>
         <Link
@@ -209,11 +208,7 @@ export default async function ToolsPage() {
       {/* The two sides of the product, connected in one band. */}
       {/* The disclosure aggregates: three cuts of the same quarterly files. */}
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">The whole field</h2>{" "}
-        <p className="mt-2 max-w-2xl text-base text-foreground/70">
-          One search across all three DOL programs, then the disclosure files
-          cut by place, pay, sponsor, firm and outcome.
-        </p>
+        <h2 className="font-heading text-2xl font-black">The whole field</h2>
         {/* Flex-wrap, not a 3-column grid: the card count changes as pages are
             added, and a fixed third column leaves an empty cell in the last
             row that reads as a card that failed to load. Wrapping lets the
@@ -223,35 +218,35 @@ export default async function ToolsPage() {
             {
               href: "/case-search",
               label: "Search all programs",
-              blurb: "One box across PERM, wage requests and LCAs. Every filing an employer has made, sortable.",
+              blurb: "One box across PERM, wage requests and LCAs.",
               tone: "ink",
               viz: "union" as const,
             },
             {
               href: "/perm-by-state",
               label: "By state",
-              blurb: "An interactive map of filings, approval rates and wages per worksite state.",
+              blurb: "An interactive map of filings, approval rates and wages by state.",
               tone: "tint",
               viz: "scale" as const,
             },
             {
               href: "/perm-wages",
               label: "Wages",
-              blurb: "Median offered wage by occupation, from what each employer committed to pay.",
+              blurb: "Median offered wage by occupation, from what employers committed to pay.",
               tone: "tint",
               viz: "twobars" as const,
             },
             {
               href: "/perm-employers",
               label: "Employers",
-              blurb: "Every sponsor in DOL's files, ranked and searchable, with their track records.",
+              blurb: "Every sponsor in DOL's files, ranked, with track records.",
               tone: "card",
               viz: "queue" as const,
             },
             {
               href: "/perm-attorneys",
               label: "Law firms",
-              blurb: "Who files the most PERM cases, with volume, approval rate and median days.",
+              blurb: "Who files the most PERM cases, and how fast.",
               tone: "card",
               viz: "spans" as const,
             },
@@ -265,14 +260,14 @@ export default async function ToolsPage() {
             {
               href: "/perm-cases",
               label: "Case search",
-              blurb: "Every decided case DOL has published, searchable by employer, job and outcome.",
+              blurb: "Every decided case DOL has published, by employer, job and outcome.",
               tone: "card",
               viz: "records" as const,
             },
             {
               href: "/pwd-cases",
               label: "Wage requests",
-              blurb: "Prevailing wage requests confirmed by DOL, searchable by employer before the PERM exists.",
+              blurb: "Prevailing wage requests, searchable before the PERM exists.",
               tone: "tint",
               viz: "levels" as const,
             },
@@ -349,9 +344,9 @@ export default async function ToolsPage() {
         <h2 className="font-heading text-2xl font-black">The queue, day by day</h2>{" "}
         <div className="mt-6 flex flex-wrap gap-4 [&>*]:min-w-0 [&>*]:flex-1 [&>*]:basis-64">
           {[
-            { href: "/perm-queue", label: "Queue backlog", blurb: "Every filing month's pending cases, split across DOL's separate queues." },
-            { href: "/perm-decision-activity", label: "Daily activity", blurb: "How many cases DOL decides each day, measured from status changes." },
-            { href: "/perm-rfi-audit", label: "RFI and audits", blurb: "How often cases leave filing order, and what happens to them after." },
+            { href: "/perm-queue", label: "Queue backlog", blurb: "Every filing month's pending cases, by DOL queue." },
+            { href: "/perm-decision-activity", label: "Daily activity", blurb: "How many cases DOL decides each day." },
+            { href: "/perm-rfi-audit", label: "RFI and audits", blurb: "How often cases leave filing order, and what follows." },
             { href: "/tools/priority-date-calculator", label: "Visa bulletin", blurb: "84 months of cutoff history, and whether your date is current." },
           ].map((c) => (
             <Link

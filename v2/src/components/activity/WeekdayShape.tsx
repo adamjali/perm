@@ -79,7 +79,7 @@ export function WeekdayShape({
         {meanOf(weekend).toLocaleString("en-US")}.{" "}
         {weekendDays > 0 ? (
           <>
-            Weekend work is small and it is routine rather than exceptional:{" "}
+            Weekend work is small but routine:{" "}
             {(weekendDays - zeroWeekend).toLocaleString("en-US")} of{" "}
             {weekendDays.toLocaleString("en-US")} Saturdays and Sundays carry at
             least one determination.

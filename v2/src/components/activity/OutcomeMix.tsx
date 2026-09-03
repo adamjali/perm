@@ -87,10 +87,9 @@ export function OutcomeMix({
       </ol>
       <p className="mt-4 text-sm leading-relaxed text-foreground/60">
         Both bars share one scale. A quarter is dated by the day the decision
-        landed, not by the day the case was filed, so a bar describes what DOL
-        did in those three months rather than how a filing cohort fared.
-        Quarters at the ends of the record are partial and carry their own
-        decided count.
+        landed, not the day the case was filed, so a bar shows what DOL did in
+        those three months, not how a filing cohort fared. Quarters at the ends
+        are partial.
       </p>
     </div>
   );

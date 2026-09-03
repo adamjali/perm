@@ -207,8 +207,12 @@ describe("RankedRateViews", () => {
     });
     // Four groups clear a floor of 25 and the chart shows twelve, so it is
     // showing all of them and says so rather than claiming a top slice.
+    // Matched on the discriminator, "All ... 4 ... 25", not on the whole
+    // sentence: the subject of this test is which of the two captions is
+    // chosen, and pinning the prose made a meaning-preserving rewrite of it
+    // fail here for no reason.
     expect(
-      screen.getByText(/All 4 occupations with at least 25 decided cases/),
+      screen.getByText(/All\s+4\s+occupations\b[^.]*\b25\b[^.]*decided cases/),
     ).toBeInTheDocument();
     expect(chartTab()).toHaveTextContent("Chart");
     openTable();
@@ -231,6 +235,7 @@ describe("RankedRateViews", () => {
       />,
     );
     expect(screen.getByRole("button", { name: "Top 2" })).toBeInTheDocument();
-    expect(screen.getByText(/The 2 highest denial rates among the 4/)).toBeInTheDocument();
+    // The other branch of the same ternary, so matching it proves the choice.
+    expect(screen.getByText(/The\s+2\s+highest\b[^.]*\bamong\b[^.]*\b4\b/)).toBeInTheDocument();
   });
 });

@@ -65,7 +65,7 @@ const TOOLS = [
     kind: "Estimate",
     tone: "ink",
     blurb:
-      "When DOL is likely to decide a case filed in a given month, from its published queue position and its record of cases already decided.",
+      "When DOL is likely to decide a case filed in a given month.",
   },
   {
     href: "/tools/perm-deadline-calculator",
@@ -75,7 +75,7 @@ const TOOLS = [
     kind: "Exact",
     tone: "pop",
     blurb:
-      "The recruitment window, the quiet period and the ETA-9089 filing window, worked out from the prevailing wage determination under 20 CFR 656.",
+      "The recruitment window, the quiet period and the ETA-9089 filing window, under 20 CFR 656.",
   },
   {
     href: "/tools/pwd-calculator",
@@ -85,7 +85,7 @@ const TOOLS = [
     kind: "Count",
     tone: "paper",
     blurb:
-      "How many wage requests sit ahead of yours, from the pending count DOL publishes.",
+      "How many wage requests sit ahead of yours.",
   },
   {
     href: "/tools/i140-calculator",
@@ -95,7 +95,7 @@ const TOOLS = [
     name: "I-140 queue calculator",
     tone: "paper",
     blurb:
-      "How many petitions are waiting in your category against how fast USCIS clears them, next to the processing time USCIS publishes.",
+      "How many petitions wait in your category, against how fast USCIS clears them.",
   },
   {
     href: "/tools/i485-queue-position",
@@ -115,7 +115,7 @@ const TOOLS = [
     name: "Priority date calculator",
     tone: "tint",
     blurb:
-      "Where a priority date sits against the visa bulletin, and which way the cutoff has moved, including the months it moved backwards.",
+      "Where a priority date sits against the visa bulletin, and which way the cutoff has moved, including backwards.",
   },
   {
     href: "/tools/green-card-timeline",
@@ -125,7 +125,7 @@ const TOOLS = [
     name: "Green card timeline",
     tone: "paper",
     blurb:
-      "Every stage drawn to scale, from the wage queue to the wait for a visa number, marked by which are fixed by regulation, which are queues, and which have no published figure.",
+      "Every stage drawn to scale, marked by which are fixed by regulation, which are queues, and which have no published figure.",
   },
 ];
 
@@ -136,7 +136,7 @@ const EXPLORERS = [
     kind: "Distribution",
     name: "Salary explorer",
     blurb:
-      "What certified PERM jobs actually pay, by occupation and state, as a percentile ladder rather than one average.",
+      "What certified PERM jobs actually pay, as a percentile ladder rather than one average.",
   },
   {
     href: "/tools/i140-trends",
@@ -144,7 +144,7 @@ const EXPLORERS = [
     kind: "Series",
     name: "I-140 trends",
     blurb:
-      "Petitions received, approved, denied and left pending by category, quarter by quarter, from USCIS's own counts.",
+      "Petitions received, approved, denied and left pending by category, quarter by quarter.",
   },
 ] as const;
 
@@ -177,9 +177,9 @@ export default function CalculatorsPage() {
           PERM calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          {TOOLS.length} calculators that take your dates and answer about your
-          case, and {EXPLORERS.length} explorers that describe the field you
-          filed into. All free, all on data the government publishes.
+          {TOOLS.length} calculators that answer about your case, and{" "}
+          {EXPLORERS.length} explorers that describe the field you filed into.
+          All free, on data the government publishes.
         </p>
       </header>
 
@@ -315,8 +315,7 @@ export default function CalculatorsPage() {
           And the field you filed into
         </h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-          These two ask nothing about your case. They describe what everyone
-          else&apos;s looks like, which is what tells you whether a wage or a
+          These ask nothing about your case. They tell you whether a wage or a
           category is ordinary.
         </p>
         <div className="mt-6 divide-y-2 divide-border border-2 border-border bg-card shadow-hard">
@@ -355,11 +354,10 @@ export default function CalculatorsPage() {
           Why some of these refuse to give you a number
         </h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          A queue estimate is a forecast. Where DOL publishes enough to be sure,
-          you get a figure and its source. Where it doesn’t, you get the count
-          that’s real and a plain statement of what’s missing. The deadline
-          calculator is the exception: those dates are arithmetic in the
-          regulations, so they’re exact.
+          A queue estimate is a forecast. Where DOL publishes enough, you get a
+          figure and its source. Where it doesn’t, you get the count that’s real
+          and what’s missing. The deadline calculator is the exception: those
+          dates are arithmetic in the regulations, so they’re exact.
         </p>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           Public estimators disagree with each other by months on the same

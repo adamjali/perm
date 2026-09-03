@@ -104,8 +104,7 @@ export function StageStrip() {
           Waiting on your green card? Every stage, measured
         </h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70 sm:text-lg">
-          PERM is only one stage of four. Each stage has its own processing
-          time, based on the supervising agency&apos;s published figures.
+          PERM is only one stage of four, each with its own processing time.
         </p>
         <div className="mt-8 grid grid-cols-1 gap-5 [&>*]:min-w-0 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           {STAGES.map((s) => (
@@ -157,7 +156,7 @@ export function StageStrip() {
           ))}
         </div>
         <p className="mt-6 text-base text-foreground/70">
-          Or see all four drawn to scale, end to end:{" "}
+          Or see them drawn to scale:{" "}
           <Link
             href="/tools/green-card-timeline"
             className="font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"

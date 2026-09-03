@@ -77,9 +77,8 @@ export default function ForAttorneysPage() {
               </ScrollReveal>
               <ScrollReveal direction="up" delay={0.1}>
                 <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
-                  Free, modern case management for immigration attorneys. Never
-                  miss a deadline, stay organized, and manage your PERM cases
-                  with confidence.
+                  Free case management for immigration attorneys. Enter the case
+                  dates once, get every PERM deadline.
                 </p>
               </ScrollReveal>
               <ScrollReveal direction="up" delay={0.15}>
@@ -99,13 +98,6 @@ export default function ForAttorneysPage() {
                     Check a Case First
                   </Link>
                 </div>
-              </ScrollReveal>
-              <ScrollReveal direction="up" delay={0.2}>
-                <p className="font-mono text-sm text-muted-foreground">
-                  No credit card required <span className="opacity-50">·</span>{" "}
-                  Free to use <span className="opacity-50">·</span> Built for
-                  attorneys
-                </p>
               </ScrollReveal>
             </div>
             <ScrollReveal direction="right" delay={0.15} className="relative lg:order-last">

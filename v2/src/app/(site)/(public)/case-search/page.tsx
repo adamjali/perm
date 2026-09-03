@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { FinePrint } from "@/components/data/FinePrint";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { UnifiedCaseSearch } from "@/components/tools/UnifiedCaseSearch";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
@@ -106,10 +107,10 @@ export default async function CaseSearchPage() {
           Search every case an employer has filed
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The PERM, the wage request that came before it and the H-1B condition
+          The PERM, the wage request before it and the H-1B condition
           application beside it are three separate DOL programs with three
           separate numbers. Type the employer once and see all of them, open
-          and decided, sortable by any column.
+          and decided.
         </p>
       </header>
 
@@ -148,12 +149,9 @@ export default async function CaseSearchPage() {
         <h2 className="font-heading text-2xl font-black">How this search works</h2>{" "}
         <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
           <p>
-            <b className="font-bold">Why the employer is required.</b> Every
-            lookup underneath runs on an index built over the employer name. A
-            search on a job title or a wage alone has no index to sit on and
-            would read the whole corpus for every visitor, so the other fields
-            narrow an employer&apos;s results rather than standing on their own.
-            If you have the case number,{" "}
+            <b className="font-bold">The employer field is required.</b> Job
+            title, wage and date narrow an employer&apos;s results rather than
+            standing on their own. With a case number,{" "}
             <Link
               href="/perm-case-status"
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -161,37 +159,47 @@ export default async function CaseSearchPage() {
               the status lookup
             </Link>{" "}
             takes all three prefixes and asks DOL live. Paste one into the box
-            above and it hands you straight to it.
+            above and it hands you straight there.
           </p>{" "}
           <p>
-            <b className="font-bold">What &ldquo;live&rdquo; means here, exactly.</b>{" "}
-            A case NUMBER is answered by asking DOL at that moment, so it works
-            for a filing made yesterday that nothing here has recorded. A
-            NAME cannot be: DOL&apos;s case system answers numbers, not
-            employers, and no public endpoint searches it by name. So a name is
-            answered from this site&apos;s own copy, which is rebuilt every
-            night from DOL and grows by walking forward into the numbers DOL
-            has newly issued. That is the honest difference, and it is why a
-            filing from the last day or two may not appear under its employer
-            yet while its number already resolves.
+            <b className="font-bold">A number is live, a name is not.</b> A case
+            number is answered by asking DOL at that moment, so a filing made
+            yesterday resolves. A name is answered from this site&apos;s own
+            copy, rebuilt every night, so one from the last day or two may not
+            appear under its employer yet.
           </p>{" "}
           <p>
-            <b className="font-bold">Two records per case, merged.</b> While a
-            filing is open, DOL&apos;s case system is the only public record of
-            it, and this site checks it daily. Once it is decided, DOL publishes
-            the full record with the wage in a quarterly file. Both are searched
-            and a case that appears in both is shown once, using the published
-            version because it carries more.
+            <b className="font-bold">Two records per case, merged.</b> An open
+            filing exists only in DOL&apos;s case system, checked here daily. A
+            decided one is published with its wage in a quarterly file. A case
+            in both is shown once, using the published version.
           </p>{" "}
+          {/* "One filed in the last day or two arrives with the next nightly
+              check" was cut from this list: the paragraph above already says
+              it, and a caveat repeated is a caveat skipped. */}
           <p>
-            <b className="font-bold">Why a filing might be missing.</b> One
-            filed in the last day or two arrives with the next nightly check. An
-            open one older than the backfill has reached is not there yet. DOL
-            names the law firm and the worksite only at publication, so those
-            are absent from anything still open. And an employer DOL spells
-            several ways will answer to the spelling on the filing, which is why
-            a shorter name usually finds more.
-          </p>
+            <b className="font-bold">Why a filing might be missing.</b> An open
+            one older than the backfill has reached is not there yet. DOL names
+            the law firm and the worksite only at publication, so those are
+            absent from anything still open. And an employer DOL spells several
+            ways answers to the spelling on the filing, so a shorter name
+            usually finds more.
+          </p>{" "}
+          {/* Mechanism, not correction: it says why the search is shaped this
+              way rather than changing how a result reads, so it collapses. */}
+          <FinePrint summary="Why a name works differently from a number">
+            <p>
+              Every lookup underneath runs on an index built over the employer
+              name. A search on a job title or a wage alone has no index to sit
+              on and would read the whole corpus for every visitor.
+            </p>{" "}
+            <p>
+              DOL&apos;s case system answers numbers, not employers, and no
+              public endpoint searches it by name. So a name is answered from
+              this site&apos;s own copy, which grows by walking forward into the
+              numbers DOL has newly issued.
+            </p>
+          </FinePrint>
         </div>
       </section>
     </div>

@@ -14,6 +14,7 @@
  * in one drawing and invisible in a column of medians.
  */
 
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -109,7 +110,6 @@ export default async function PermWagesPage() {
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           What each employer committed to pay, on the federal filing itself.
-          The whole distribution, by occupation, state and year.
         </p>
       </header>
 
@@ -120,10 +120,6 @@ export default async function PermWagesPage() {
               <h2 className="font-heading text-2xl font-black">
                 The whole wage ladder
               </h2>{" "}
-              <p className="mt-2 max-w-2xl text-base leading-relaxed text-background/70">
-                Every certified case in the window with a readable wage, sorted
-                and cut at five points.
-              </p>
               <dl className="mt-6 grid [&>*]:min-w-0 grid-cols-2 gap-4 sm:grid-cols-5">
                 {[
                   { k: "10th", v: ladder.p10 },
@@ -132,20 +128,24 @@ export default async function PermWagesPage() {
                   { k: "75th", v: ladder.p75 },
                   { k: "90th", v: ladder.p90 },
                 ].map((d) => (
-                  <div key={d.k} className={d.k === "Median" ? "border-2 border-primary bg-primary/15 p-3" : "p-3"}>
-                    <dt className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
-                      {d.k}
-                    </dt>{" "}
-                    <dd className="mt-1 font-heading text-xl font-black tabular-nums sm:text-2xl">
-                      {d.v == null ? "—" : fmtWage(d.v)}
-                    </dd>
-                  </div>
+                  // Array items render with NOTHING between them, so the
+                  // last figure of one rung glued to the next rung's label.
+                  <Fragment key={d.k}>
+                    <div className={d.k === "Median" ? "border-2 border-primary bg-primary/15 p-3" : "p-3"}>
+                      <dt className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+                        {d.k}
+                      </dt>{" "}
+                      <dd className="mt-1 font-heading text-xl font-black tabular-nums sm:text-2xl">
+                        {d.v == null ? "—" : fmtWage(d.v)}
+                      </dd>
+                    </div>{" "}
+                  </Fragment>
                 ))}
               </dl>
               <p className="mt-5 text-sm text-background/60">
-                From {ladder.count.toLocaleString("en-US")} certified cases. The
-                gap between the 25th and the median spans hourly roles at one end
-                and salaried knowledge work at the other.
+                Cut at five points, from{" "}
+                {ladder.count.toLocaleString("en-US")} certified cases with a
+                readable wage.
               </p>
             </section>
           ) : null}
@@ -158,12 +158,9 @@ export default async function PermWagesPage() {
               caption={
                 <>
                   <TwoMarketsNote ladders={ladders} className="mb-3" />
-                  Each row is one occupation&apos;s certified offers, sorted and
-                  cut at seven points. The order is filing volume, not pay:
-                  ranked by wage these rows would climb steadily, and the thing
-                  worth seeing is that the busiest occupations alternate between
-                  two scales instead. Hourly and other wage units are annualized
-                  before the percentiles are taken.
+                  Each row is one occupation&apos;s certified offers, cut at
+                  seven points. Ordered by filing volume, not by pay. Hourly and
+                  other wage units are annualized first.
                 </>
               }
               source="DOL PERM disclosure files, certified cases only"
@@ -186,7 +183,7 @@ export default async function PermWagesPage() {
               n="02"
               title="Denial rate by wage band"
               subject="Certified and denied cases, by fiscal year"
-              caption="Rates are measured, not modelled, and each band carries the number of decided cases behind it. A wage is one attribute of a filing among many, and nothing here says what a particular wage does to a particular case."
+              caption="Measured rates, each with the decided cases behind it. Nothing here says what a particular wage does to a particular case."
               source="DOL PERM disclosure files"
               className="mt-10"
             >
@@ -203,8 +200,8 @@ export default async function PermWagesPage() {
                 <p className="max-w-md text-base leading-relaxed text-foreground/70">
                   Median of the occupation medians, across all{" "}
                   {occupationCount.toLocaleString("en-US")} occupations. It sits
-                  well below the median case, because most occupations are small
-                  and the largest ones are the best paid.
+                  well below the median case: most occupations are small, and
+                  the largest are the best paid.
                 </p>
               </div>
             </section>
@@ -215,8 +212,7 @@ export default async function PermWagesPage() {
               All {occupationCount.toLocaleString("en-US")} occupations
             </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
-              Search by title or SOC code, filter by job family, sort any column,
-              or download the CSV.
+              Search, filter by job family, sort any column, or download the CSV.
             </p>
             <div className="mt-6">
               <EntityExplorer kind="occupation" rows={occupations} total={occupationCount} />
@@ -250,29 +246,27 @@ export default async function PermWagesPage() {
             <Link href="/tools/salary-explorer" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               salary explorer
             </Link>{" "}
-            recomputes the ladder over any occupation, state and year, and shows
-            the same occupation state by state.
+            recomputes the ladder over any occupation, state and year.
           </p>
         </div>
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Wondering about pace?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            A case&apos;s speed depends on its filing month rather than its
-            wage. The{" "}
+            A case&apos;s speed depends on its filing month, not its wage. The{" "}
             <Link href="/perm-decision-activity" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               decision activity
             </Link>{" "}
-            page carries how much DOL clears each day, and the{" "}
+            page carries how much DOL clears each day.{" "}
             <Link href="/methodology" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-              methodology
-            </Link>{" "}
-            says how every figure is computed.
+              Methodology
+            </Link>
+            .
           </p>
         </div>
       </section>
       <PageBasics page="perm-wages" />{" "}
       <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
-        Filings newer than DOL&apos;s last published file aren&apos;t in this table. DOL reports the occupation code and the wage only when it publishes the decided case, so nothing filed since then can be placed under an occupation yet. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link> on the case search page, by employer.
+        Filings newer than DOL&apos;s last published file aren&apos;t in this table: DOL reports the occupation and the wage only when it publishes the decided case. Those cases are on the <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link>, by employer.
       </p>{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>

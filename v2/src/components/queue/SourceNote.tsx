@@ -30,24 +30,33 @@
  * go to `DataProvenance` on any page carrying both.
  */
 
+import { FinePrint } from "@/components/data/FinePrint";
+
 /** DOL's own case-status search: the source, and the authority for one case. */
 export const DOL_CASE_STATUS_URL = "https://flag.dol.gov/case-status-search";
 
 export function SourceNote({ className }: { className?: string }) {
   return (
-    <p className={className ?? "text-base leading-relaxed text-foreground/80"}>
-      Anything undecided here is read from{" "}
-      <a
-        href={DOL_CASE_STATUS_URL}
-        className="font-bold underline underline-offset-2 hover:text-primary"
-        rel="noopener"
-      >
-        DOL&rsquo;s own case-status search
-      </a>
-      , in batches, every 12 hours. That page is also the authority for any
-      single case. Because it is a sweep rather than a live reading, a case
-      decided between sweeps still counts as waiting here, so these backlog
-      figures run a little high rather than a little low.
-    </p>
+    // The direction of the error stays visible, because it changes how every
+    // figure below should be read. Where the counts come from and how often
+    // they are read is provenance, so it collapses; `<details>` keeps it in
+    // the DOM for anything that reads the page.
+    <div className={className ?? "text-base leading-relaxed text-foreground/80"}>
+      <p>
+        This is a sweep, not a live reading, so a case decided between sweeps
+        still counts as waiting here: the backlog figures run a little high
+        rather than a little low.
+      </p>{" "}
+      <FinePrint summary="Where these come from" className="mt-2">
+        <p>
+          Anything undecided here is read from{" "}
+          <a href={DOL_CASE_STATUS_URL} rel="noopener">
+            DOL&rsquo;s own case-status search
+          </a>
+          , in batches, every 12 hours. That page is also the authority for any
+          single case.
+        </p>
+      </FinePrint>
+    </div>
   );
 }

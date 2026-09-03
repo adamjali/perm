@@ -5,6 +5,7 @@ import Link from "next/link";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
 import { BacklogWall } from "@/components/queue/BacklogWall";
 import { SourceNote } from "@/components/queue/SourceNote";
@@ -154,8 +155,7 @@ export default async function PermQueuePage() {
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
           DOL publishes which month it&rsquo;s working and nothing about the
           size of what&rsquo;s behind it. Its disclosure files carry no pending
-          rows at all, so a count of what is still waiting cannot be derived
-          from them at any level of effort.
+          rows, so the backlog cannot be derived from them.
         </p>{" "}
         <SourceNote className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/70" />
       </header>
@@ -220,38 +220,47 @@ export default async function PermQueuePage() {
 
           {agrees ? (
             <p>
-              That&rsquo;s the same month DOL publishes as its analyst-review
-              position, arrived at from the opposite direction: DOL states where
-              it is, and this scan finds the oldest month that hasn&rsquo;t
-              cleared. Two measurements, one answer.
+              That&rsquo;s the month DOL publishes as its analyst-review
+              position, reached from the opposite direction: DOL states where
+              it is; this scan finds the oldest month that hasn&rsquo;t cleared.
+              Two measurements, one answer.
             </p>
           ) : dolMonth !== null && front !== null ? (
             <p>
               DOL publishes {formatMonth(dolMonth)} as its analyst-review
-              position, which doesn&rsquo;t match the{" "}
-              {formatMonth(front.month)} this scan measures. Both figures are
-              shown as they are. Neither has been adjusted towards the other.
+              position; this scan measures {formatMonth(front.month)}. Both are
+              shown unadjusted; neither has been moved towards the other.
             </p>
           ) : null}
 
           {advance ? (
             <p>
-              Over the {advance.pointsUsed} determination months to{" "}
-              {formatMonth(advance.toMonth) ?? advance.toMonth}, the median
-              filing date on DOL&rsquo;s determinations moved forward{" "}
-              {advance.rate.toFixed(1)} months for every calendar month that
-              passed. Anything above 1.0 means DOL was working through filing
-              dates faster than new ones arrived.
+              Anything above 1.0 means DOL is clearing filing dates faster
+              than new ones arrive.
               {advance.slowest !== null && advance.fastest !== null ? (
                 <>
                   {" "}
                   Across the whole series that rate has run between{" "}
                   {`${advance.slowest.toFixed(2)}x`} and{" "}
-                  {`${advance.fastest.toFixed(2)}x`}, which is the reason it
-                  isn&rsquo;t a rate anyone should plan around.
+                  {`${advance.fastest.toFixed(2)}x`}, which is why it
+                  isn&rsquo;t a rate to plan around.
                 </>
               ) : null}
             </p>
+          ) : null}{" "}
+
+          {/* How the rate is measured, not what it means: the sentence above
+              is the part that changes how the figure reads. */}
+          {advance ? (
+            <FinePrint summary="How the advance is measured">
+              <p>
+                Over the {advance.pointsUsed} determination months to{" "}
+                {formatMonth(advance.toMonth) ?? advance.toMonth}, the median
+                filing date on DOL&rsquo;s determinations moved forward{" "}
+                {advance.rate.toFixed(1)} months for every calendar month that
+                passed.
+              </p>
+            </FinePrint>
           ) : null}
 
           {lastClearance ? (
@@ -259,17 +268,15 @@ export default async function PermQueuePage() {
               DOL issued {int(lastClearance.decisions)} determinations in{" "}
               {formatMonth(lastClearance.decisionMonth)}, the last full month in
               its disclosure window, against {int(census.pending)} still
-              undecided. Those two figures don&rsquo;t get divided into a wait.
-              New applications keep arriving, DOL reprioritises, and one
-              month&rsquo;s output is not a rate. For the envelope a case
-              actually sits inside, the{" "}
+              undecided. Those two figures don&rsquo;t get divided into a wait:
+              new applications keep arriving and DOL reprioritises. The{" "}
               <Link
                 href="/tools/perm-timeline-calculator"
                 className="font-bold underline underline-offset-2 hover:text-primary"
               >
                 timeline calculator
               </Link>{" "}
-              works from the percentile spread of real decided cases.
+              works from the percentile spread of decided cases instead.
             </p>
           ) : null}
         </div>
@@ -280,10 +287,9 @@ export default async function PermQueuePage() {
           What those {int(census.pending)} cases were doing
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-          A waiting case is in one of three places, and they answer different
-          questions. Analyst review moves in filing order, so the month is the
-          whole story. The other two don&rsquo;t, which is the honest answer
-          when DOL has passed your month and you still have nothing.
+          Analyst review moves in filing order, so the month is the whole
+          story. The other two queues don&rsquo;t, which is the answer when DOL
+          has passed your month and you still have nothing.
         </p>{" "}
 
         <StageLegend stages={stages} className="mt-6" />
@@ -301,9 +307,8 @@ export default async function PermQueuePage() {
           The wall, by filing month
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-          Bar length is the number of cases still waiting, on one scale across
-          every month, so the shape is the backlog&rsquo;s real shape. The
-          colours split each month across the three queues. Any month opens its
+          Bar length is cases still waiting, on one scale across every month.
+          Colours split each month across the three queues. Any month opens its
           own page.
         </p>{" "}
 
@@ -326,8 +331,8 @@ export default async function PermQueuePage() {
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
             Within a filing month DOL works alphabetically by employer, so an
-            A company is decided before a Z company that filed the same month.
-            Every estimator uses that; none publishes its size. Measured:{" "}
+            A company is decided before a Z company. Every estimator uses that;
+            none publishes its size. Measured:{" "}
             <b>
               the whole alphabet is about {Math.round(alphabet.spreadDays)} days
             </b>
