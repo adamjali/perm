@@ -1,0 +1,184 @@
+[
+  {
+    "name": "home",
+    "url": "https://permtracker.app/",
+    "file": "public/images/content/shots/home.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "case-status-entry",
+    "url": "https://permtracker.app/perm-case-status",
+    "file": "public/images/content/shots/case-status-entry.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "pwd-cases-page",
+    "url": "https://permtracker.app/pwd-cases",
+    "file": "public/images/content/shots/pwd-cases-page.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "lca-cases-page",
+    "url": "https://permtracker.app/lca-cases",
+    "file": "public/images/content/shots/lca-cases-page.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "perm-cases-page",
+    "url": "https://permtracker.app/perm-cases",
+    "file": "public/images/content/shots/perm-cases-page.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "queue",
+    "url": "https://permtracker.app/perm-queue",
+    "file": "public/images/content/shots/queue.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "processing-times",
+    "url": "https://permtracker.app/perm-processing-times",
+    "file": "public/images/content/shots/processing-times.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "decision-activity",
+    "url": "https://permtracker.app/perm-decision-activity",
+    "file": "public/images/content/shots/decision-activity.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "employer-page",
+    "url": "https://permtracker.app/perm-employers/google-llc",
+    "file": "public/images/content/shots/employer-page.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "employers-index",
+    "url": "https://permtracker.app/perm-employers",
+    "file": "public/images/content/shots/employers-index.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "attorneys",
+    "url": "https://permtracker.app/perm-attorneys",
+    "file": "public/images/content/shots/attorneys.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "wages",
+    "url": "https://permtracker.app/perm-wages",
+    "file": "public/images/content/shots/wages.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "by-state",
+    "url": "https://permtracker.app/perm-by-state",
+    "file": "public/images/content/shots/by-state.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "denial-risk",
+    "url": "https://permtracker.app/perm-denial-risk",
+    "file": "public/images/content/shots/denial-risk.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "rfi-audit",
+    "url": "https://permtracker.app/perm-rfi-audit",
+    "file": "public/images/content/shots/rfi-audit.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "deadline-calculator",
+    "url": "https://permtracker.app/tools/perm-deadline-calculator",
+    "file": "public/images/content/shots/deadline-calculator.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "timeline-calculator",
+    "url": "https://permtracker.app/tools/perm-timeline-calculator",
+    "file": "public/images/content/shots/timeline-calculator.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "pwd-calculator",
+    "url": "https://permtracker.app/tools/pwd-calculator",
+    "file": "public/images/content/shots/pwd-calculator.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "salary-explorer",
+    "url": "https://permtracker.app/tools/salary-explorer",
+    "file": "public/images/content/shots/salary-explorer.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "priority-date",
+    "url": "https://permtracker.app/tools/priority-date-calculator",
+    "file": "public/images/content/shots/priority-date.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "tools-overview",
+    "url": "https://permtracker.app/tools",
+    "file": "public/images/content/shots/tools-overview.png",
+    "w": 1280,
+    "h": 820
+  },
+  {
+    "name": "pwd-result-decided",
+    "url": "https://permtracker.app/perm-case-status?case=P-100-26092-751498",
+    "file": "public/images/content/shots/pwd-result-decided.png",
+    "w": 904,
+    "h": 228
+  },
+  {
+    "name": "lca-result",
+    "url": "https://permtracker.app/perm-case-status?case=I-200-26239-199948",
+    "file": "public/images/content/shots/lca-result.png",
+    "w": 904,
+    "h": 228
+  },
+  {
+    "name": "perm-result",
+    "url": "https://permtracker.app/perm-case-status?case=G-100-25150-032574",
+    "file": "public/images/content/shots/perm-result.png",
+    "w": 904,
+    "h": 318
+  },
+  {
+    "name": "home-mobile",
+    "url": "https://permtracker.app/",
+    "file": "public/images/content/shots/home-mobile.png",
+    "w": 414,
+    "h": 820
+  },
+  {
+    "name": "pwd-result-mobile",
+    "url": "https://permtracker.app/perm-case-status?case=P-100-26092-751498",
+    "file": "public/images/content/shots/pwd-result-mobile.png",
+    "w": 350,
+    "h": 388
+  }
+]

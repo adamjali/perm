@@ -711,7 +711,7 @@ function RailFooter() {
         Track a case
       </p>{" "}
       <p className="mt-2 text-sm text-foreground/75">
-        Look up a case number for its DOL record and its place in the queue.
+        Look up a PERM, prevailing wage or LCA case number for its DOL record and its place in the queue.
       </p>{" "}
       <Link
         href="/perm-case-status"

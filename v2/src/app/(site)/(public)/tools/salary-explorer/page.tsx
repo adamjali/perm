@@ -56,7 +56,7 @@ export const revalidate = 86400;
 const FAQS = [
   {
     q: "Is this what the job actually pays?",
-    a: "It is the wage the employer offered on the ETA-9089, which is the figure DOL publishes. It has to meet or beat the prevailing wage determination for that job in that area, so it is a floor set by the process rather than a market survey. Bonuses and equity are not in it.",
+    a: "It is the wage the employer offered on the ETA-9089, which is the figure DOL publishes. It has to meet or beat the prevailing wage determination for that job in that area, so it is a floor set by the process rather than a market survey. Bonuses and equity are not in it. The determinations themselves are held too, about 634,000 of them, so a wage request looked up by its P- number shows the wage DOL actually set for that job.",
   },
   {
     q: "Why does a filter sometimes show no figures?",

@@ -139,7 +139,7 @@ const TRACE: {
     figure: "Cases pending, by filing month",
     where: { href: "/perm-queue", label: "Live queue" },
     how: "A count of cases whose status is not final. Pending is read off the case's own final flag, never off a list of status names: sixteen statuses appear in the data and a hardcoded list silently mis-buckets the next one DOL adds.",
-    population: "A per-case scan of DOL's case-status pages, refreshed on a rolling basis. A different source from the quarterly files, which contain no pending cases at all.",
+    population: "A per-case read of DOL's own case-status system. Every case is re-read each morning and the pending ones again each afternoon, so a status change is seen within a day. A different source from the quarterly files, which contain no pending cases at all.",
   },
   {
     figure: "Requests ahead of yours in the wage queue",
@@ -173,7 +173,7 @@ const SOURCES = [
     seal: "/agency/dol-seal.png",
     sealAlt: "Seal of the US Department of Labor",
     what: "Queue positions and average days, the figures on the processing times page.",
-    cadence: "Checked weekly. A new snapshot is stored only when the figures change.",
+    cadence: "Checked daily. A new snapshot is stored only when the figures change.",
     href: "https://flag.dol.gov/processingtimes",
   },
   {
@@ -405,6 +405,13 @@ export default async function MethodologyPage() {
           "perm-cases",
           "processing-times",
           "perm-case-status",
+          // This page's whole job is to name every source behind every figure,
+          // and it stopped at PERM while the site also tracked wage requests
+          // and LCAs. A reader could not learn those existed from the one page
+          // written to tell them.
+          "pwd-status",
+          "lca-status",
+          "pw-disclosure",
           "visa-bulletin",
           "i485-inventory",
           "i140-trends",

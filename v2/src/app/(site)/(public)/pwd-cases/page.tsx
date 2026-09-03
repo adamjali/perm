@@ -115,7 +115,7 @@ export default async function PwdCasesPage() {
             <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               status lookup
             </Link>{" "}
-            takes P- numbers and asks DOL directly. The{" "}
+            takes P- numbers, asks DOL directly, and can email you when the status changes. The{" "}
             <Link href="/tools/pwd-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               PWD queue calculator
             </Link>{" "}

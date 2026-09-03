@@ -63,7 +63,7 @@ const FAQS = [
   },
   {
     q: "My filing month has already passed and I have no decision. What does that mean?",
-    a: "It usually means the case is in audit, in supervised recruitment, or waiting on a response to a request for information. Those run on their own queues, which DOL publishes separately from analyst review.",
+    a: "It usually means the case is in audit, in supervised recruitment, or waiting on a response to a request for information. Those run on their own queues, which DOL publishes separately from analyst review. You do not have to guess which one: put the case number into the case status page and DOL's own status for it says which. If we do not already hold the number, we ask DOL for it right then.",
   },
 ];
 

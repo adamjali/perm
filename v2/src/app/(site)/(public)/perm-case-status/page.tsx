@@ -104,7 +104,7 @@ const FAQS = [
   },
   {
     q: "My case isn't here. Is something wrong?",
-    a: "Almost certainly not. The per-case snapshot covers filings from mid-2023 and rebuilds on a schedule, so a very recent filing can be genuinely pending and genuinely absent. DOL's published decision files start at fiscal year 2024. A wrong digit in the serial is also worth ruling out, since it still makes a well-formed case number.",
+    a: "Almost certainly not. If we do not already hold your number, we ask DOL's case system for it and record what comes back, so a recent filing usually turns up. A wrong digit is worth ruling out first, because it still makes a well-formed number. Cases filed before mid-2023 are not in the per-case data. DOL's published decision files start at fiscal year 2024. A wrong digit in the serial is also worth ruling out, since it still makes a well-formed case number.",
   },
   {
     q: "What does my case number actually mean?",
@@ -182,7 +182,7 @@ export default async function PermCaseStatusPage({
           A case number gets you the status in plain English, what the queue in
           front of it looks like, and the employer&apos;s own record. It will
           not get you a decision date, and the page says why. Prevailing wage
-          (P-100-...) and LCA (I-200-...) numbers work here too.
+          (P-100-...) and LCA (I-200-...) numbers work here too, and any of the three can email you when DOL's status changes.
         </p>
       </header>
 

@@ -43,13 +43,14 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "What exactly does PERM Tracker do?",
     answer:
-      "Two things, both free. For the person waiting: check any PERM case number for its live DOL status and a decision estimate, follow the queue with live data, and get an email when your case's status changes. For the person managing cases: enter the case dates once and every critical deadline is computed - PWD expiration, the 30-180 day ETA 9089 filing window, I-140 cutoffs - with email and push reminders and Google Calendar sync.",
+      "Two things, both free. For the person waiting: check any DOL case number for its live status and a decision estimate, whether it's a PERM case (G- or A-), a prevailing wage request (P-) or an H-1B LCA (I-), follow the queue with live data, and get an email when the status changes. For the person managing cases: enter the case dates once and every critical deadline is computed - PWD expiration, the 30-180 day ETA 9089 filing window, I-140 cutoffs - with email and push reminders and Google Calendar sync.",
     rich: (
       <>
         Two things, both free. For the person waiting:{" "}
-        <Link href="/perm-case-status" className={faqLink}>check any PERM case number</Link>{" "}
-        for its live DOL status and a decision estimate, follow the queue with
-        live data, and get an email when the status changes. For the person
+        <Link href="/perm-case-status" className={faqLink}>check any DOL case number</Link>{" "}
+        for its live status and a decision estimate, whether it&apos;s a PERM case
+        (G- or A-), a prevailing wage request (P-) or an H-1B LCA (I-), follow the
+        queue with live data, and get an email when the status changes. For the person
         managing{" "}
         <Link href="/blog/what-is-perm-labor-certification" className={faqLink}>PERM labor certification</Link>{" "}
         cases: enter the case dates once and every critical deadline is
@@ -111,7 +112,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
     question:
       "What notifications can I configure?",
     answer:
-      "Without an account: an email when DOL's status for a case you watch changes, when DOL's queue reaches your filing month (PERM or either prevailing-wage queue), or when the visa bulletin moves your cutoff - all double opt-in. With an account: email and push reminders for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE) at 1 to 30 days before, quiet hours, and a weekly Monday digest.",
-    rich: "Without an account: an email when DOL's status for a case you watch changes, when DOL's queue reaches your filing month (PERM or either prevailing-wage queue), or when the visa bulletin moves your cutoff - all double opt-in. With an account: email and push reminders for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE) at 1 to 30 days before, quiet hours, and a weekly Monday digest.",
+      "Without an account: an email when DOL's status changes on any case you watch, whether that's a PERM case, a prevailing wage request or an H-1B LCA; when DOL's queue reaches your filing month (PERM or either prevailing-wage queue), or when the visa bulletin moves your cutoff - all double opt-in. With an account: email and push reminders for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE) at 1 to 30 days before, quiet hours, and a weekly Monday digest.",
+    rich: "Without an account: an email when DOL's status changes on any case you watch, whether that's a PERM case, a prevailing wage request or an H-1B LCA; when DOL's queue reaches your filing month (PERM or either prevailing-wage queue), or when the visa bulletin moves your cutoff - all double opt-in. With an account: email and push reminders for each deadline type (PWD, recruitment, ETA 9089, I-140, RFI, RFE) at 1 to 30 days before, quiet hours, and a weekly Monday digest.",
   },
 ];

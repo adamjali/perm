@@ -25,9 +25,9 @@ PERM case numbers come in two shapes, and only one of them carries a date:
 - **The current four-part form**, like `G-100-26125-868956`. The middle block encodes the day the case entered DOL's system: `26` is the year and `125` is the 125th day of it, so that case was filed on May 5, 2026. Measured against 20,000 cases in DOL's own records, that decoding matches DOL's recorded receipt date exactly about 89% of the time and runs a day or two late otherwise.
 - **The older three-part form** used for cases filed in 2022 and 2023, like `A-23043-00641`. PERM Tracker looks these up, and it refuses to read a filing date out of one: the same decoding lands 13% of the time on this format, so a queue position built on it would be a guess wearing a number.
 
-If your number comes back with nothing attached, the likeliest explanation is a mistyped digit in the serial, which still produces a well-formed case number. A very recent filing can also be genuinely pending and genuinely absent from a scan that runs on a schedule.
+If your number comes back with nothing attached, the likeliest explanation is a mistyped digit in the serial, which still produces a well-formed case number. If the number isn't already in our records, we ask DOL for it right then and show what comes back, so a filing from this week is still findable.
 
-The same lookup takes a prevailing wage number (`P-100-...`, on the ETA-9141 receipt the employer gets) and an H-1B LCA number (`I-200-...`, on the certified LCA the employer has to give the worker). Without any of the three, [find your case number](/guides/find-your-dol-case-number) from the employer's name.
+The same lookup takes a prevailing wage number (`P-100-...`, on the ETA-9141 receipt the employer gets) and an H-1B LCA number (`I-200-...` or `I-203-...`, on the certified LCA the employer has to give the worker). Without any of the three, [find your case number](/guides/find-your-dol-case-number) from the employer's name.
 
 ## What DOL's status words mean
 
@@ -55,7 +55,7 @@ Two of DOL's statuses have no published definition at all. `IN PROCESS` and `APP
 
 ## Getting told when the status changes
 
-On a case that hasn't been decided, [PERM case status](/perm-case-status) takes an email address and sends one message when the status changes. It's double opt-in, so nothing is sent until you confirm the address, and it's offered only on cases that can still move, since there's nothing to report on a case DOL has already decided.
+On a case that hasn't been decided, [PERM case status](/perm-case-status) takes an email address and sends one message when the status changes. The same alert works on a prevailing wage request or an LCA number. It's double opt-in, so nothing is sent until you confirm the address, and it's offered only on cases that can still move, since there's nothing to report on a case DOL has already decided.
 
 As of August 2026, PERM Tracker tracks about 414,000 PERM cases this way, roughly 99,000 of them still pending, and re-checks the undecided ones against DOL's own case-status search twice a day. That's a sweep rather than a live reading: a case decided in the last few hours shows at DOL first, and DOL is the authority for any single case.
 
@@ -65,7 +65,7 @@ The status says what's happening. It doesn't say how far off a decision is, and 
 
 Subtract your own filing month from the month DOL is working and you have a rough distance in queue terms. [The backlog page](/perm-queue) shows how many cases are still undecided in each filing month, which DOL's quarterly files can't show because they contain no pending rows at all. [The timeline calculator](/tools/perm-timeline-calculator) puts several models of the same question side by side and lets them disagree.
 
-What none of them will do is give you odds. PERM Tracker holds one reading per case and can't watch a case move from one status to another, so it has no basis for a transition rate, and a number of that shape printed next to a real case number would be read as a forecast for that specific case.
+What none of them will do is give you odds. PERM Tracker records when DOL changes a status, but it publishes no transition rate, and a number of that shape printed next to a real case number would be read as a forecast for that specific case.
 
 ## What you can't see, and why
 

@@ -1,0 +1,96 @@
+---
+title: "How to Track a Prevailing Wage Request by Case Number"
+description: "Paste a P- number and see the Department of Labor's current status for a prevailing wage request, pending ones included, plus the wage once it's issued."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/pwd-result-decided.webp"
+imageAlt: "A prevailing wage request looked up by case number, showing DOL's status"
+tags: ["pwd", "eta-9141", "prevailing-wage", "case-status", "dol", "how-to"]
+category: "data"
+seoTitle: "Track a Prevailing Wage Request (ETA-9141) by Case Number"
+seoDescription: "Check a P- prevailing wage case number against DOL's own record. Pending requests included, with the wage, occupation and expiry once the determination is issued."
+published: true
+---
+
+If you have a `P-` case number, you can check it here and see what the Department of Labor currently says about it. Pending requests included. This page walks through what you get and what you don't.
+
+<Callout type="important" title="A common myth, worth clearing up first">
+You will read in a lot of places that DOL only shows prevailing wage cases to the public once they've been decided, so a pending request can't be tracked. That isn't right. DOL's case status system answers for pending requests too, and that's what this site reads.
+</Callout>
+
+## What a prevailing wage request is
+
+Before an employer can file a PERM application, it has to ask DOL what the job pays. That request is Form ETA-9141, and DOL's answer is the prevailing wage determination. It sets the minimum the employer must offer, and every date that follows is measured from it.
+
+The request gets its own case number, separate from the PERM case number that comes later. It starts with `P-100-`, like `P-100-26092-751498`.
+
+## Look it up
+
+Paste the number into the [case status lookup](/perm-case-status). The same box takes PERM numbers, wage requests and H-1B labor condition applications, so you don't need to pick a tool first.
+
+<ScreenshotFigure
+  src="/images/content/shots/case-status-entry.webp"
+  alt="The case status lookup, with one box that accepts PERM, wage request and LCA numbers"
+  caption="One box. It works out which program the number belongs to from its prefix."
+  step={1}
+/>
+
+If the number isn't already in the corpus, the site asks DOL for it at that moment and records the answer, so a request filed recently still resolves.
+
+## What comes back on a pending request
+
+For a request DOL hasn't decided yet, you get its current status, the employer, the job title, the filing date, and when the record was last checked. You also get where the filing month sits in DOL's wage queue, drawn from DOL's own published backlog.
+
+<ScreenshotFigure
+  src="/images/content/shots/pwd-cases-page.webp"
+  alt="The wage request search, showing pending and decided counts"
+  caption="Pending requests come from DOL's daily check. Decided ones come from its quarterly files."
+  step={2}
+/>
+
+Two honest limits on the queue figures. DOL publishes how many requests are waiting, not how fast it clears them, so an estimated month is an estimate and is labelled as one. And DOL runs two wage queues, one for requests using the standard federal wage survey and one for everything else, which move at different speeds. A case record doesn't say which queue it's in, so both are shown.
+
+## What comes back once it's decided
+
+Once DOL issues the determination, you also get the part that matters most: the wage itself, the occupation DOL assigned, the worksite state, and how long the determination stays valid.
+
+<ScreenshotFigure
+  src="/images/content/shots/pwd-result-decided.webp"
+  alt="A decided prevailing wage request showing the wage DOL set and its validity date"
+  caption="A decided request, with the wage, the occupation DOL used, and the date it expires."
+  step={3}
+/>
+
+The validity date is worth understanding, because it isn't a fixed number of days. A determination issued in one part of the year expires at the end of that wage year, while one issued in another gets a set period. The [deadline calculator](/tools/perm-deadline-calculator) works the real rule out from the determination date.
+
+## Where the two halves of the data come from
+
+DOL exposes wage requests twice, and neither source is enough on its own.
+
+| | DOL's case status system | DOL's quarterly disclosure files |
+|---|---|---|
+| Covers | anything DOL indexes, pending included | decided requests only |
+| How current | checked daily | up to a quarter behind |
+| Includes the wage | no | yes, with occupation and worksite |
+
+So a pending request is visible through the first, and the wage arrives through the second. The lookup reads both and shows one record.
+
+## If you don't have the number
+
+The employer or its attorney has it, and asking is the quickest route. Failing that, [search by employer](/pwd-cases) with the company's legal name, and narrow by job title or filing month. There's a fuller walkthrough in [finding a DOL case number](/guides/find-your-dol-case-number).
+
+## Hearing about it without checking
+
+On a pending request you can leave an email address and hear when DOL's status changes. It's one email per change, and the link in it stops the alerts. Nothing else gets sent.
+
+## What this can't tell you
+
+- **Why** a determination came out at the level it did. DOL doesn't publish its reasoning.
+- Anything about a request DOL's system doesn't return, which includes very old filings.
+- The employer's internal plans. A wage determination is a legal step, not a commitment to file the PERM.
+
+## Related
+
+- [Wage request search](/pwd-cases), to find a number by employer
+- [PWD queue calculator](/tools/pwd-calculator), for the backlog month by month
+- [Every PERM deadline](/tools/perm-deadline-calculator), which starts from the determination date

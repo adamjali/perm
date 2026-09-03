@@ -190,8 +190,14 @@ export function QueueAlertForm({
           Get notified when DOL reaches your month
         </h2>
       </div>{" "}
+      {/* The queue is named from the prop, not hardcoded. This form also sits
+          on the prevailing wage pages, where "analyst review" is the wrong
+          queue entirely: it is the PERM stage, and a reader was being told the
+          alert watched a line their request is not in. */}
       <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-        We’ll email you when the analyst-review queue reaches the month your case was filed.
+        {selectedQueue === "perm"
+          ? "We’ll email you when the analyst-review queue reaches the month your case was filed."
+          : "We’ll email you when the prevailing wage queue you pick reaches the month your request was filed."}{" "}
         It isn’t a newsletter and nothing else follows it.
       </p>{" "}
 

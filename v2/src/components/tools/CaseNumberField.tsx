@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { useId, useState } from "react";
 
 import { Label } from "@/components/ui";
@@ -92,8 +94,12 @@ export function CaseNumberField({ onDecode, warning, className }: CaseNumberFiel
           </>
         ) : (
           <p className="mt-2 text-sm text-muted-foreground">
-            The month is read straight from the number. Nothing is looked up
-            and nothing is stored.
+            The month is read straight from the number here. Nothing is looked up
+            and nothing is stored. To see DOL&apos;s own status for it, use the{" "}
+            <Link href="/perm-case-status" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              case status lookup
+            </Link>
+            .
           </p>
         )}
       </div>

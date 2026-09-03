@@ -1,0 +1,206 @@
+[
+ {
+  "name": "home",
+  "url": "https://permtracker.app/",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "case-status-entry",
+  "url": "https://permtracker.app/perm-case-status",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "pwd-cases-page",
+  "url": "https://permtracker.app/pwd-cases",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "lca-cases-page",
+  "url": "https://permtracker.app/lca-cases",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "perm-cases-page",
+  "url": "https://permtracker.app/perm-cases",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "queue",
+  "url": "https://permtracker.app/perm-queue",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "processing-times",
+  "url": "https://permtracker.app/perm-processing-times",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "decision-activity",
+  "url": "https://permtracker.app/perm-decision-activity",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "employer-page",
+  "url": "https://permtracker.app/perm-employers/google-llc",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "employers-index",
+  "url": "https://permtracker.app/perm-employers",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "attorneys",
+  "url": "https://permtracker.app/perm-attorneys",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "wages",
+  "url": "https://permtracker.app/perm-wages",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "by-state",
+  "url": "https://permtracker.app/perm-by-state",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "denial-risk",
+  "url": "https://permtracker.app/perm-denial-risk",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "rfi-audit",
+  "url": "https://permtracker.app/perm-rfi-audit",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "deadline-calculator",
+  "url": "https://permtracker.app/tools/perm-deadline-calculator",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "timeline-calculator",
+  "url": "https://permtracker.app/tools/perm-timeline-calculator",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "pwd-calculator",
+  "url": "https://permtracker.app/tools/pwd-calculator",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "salary-explorer",
+  "url": "https://permtracker.app/tools/salary-explorer",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "priority-date",
+  "url": "https://permtracker.app/tools/priority-date-calculator",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "tools-overview",
+  "url": "https://permtracker.app/tools",
+  "wait": "main",
+  "width": 1280,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "pwd-result-decided",
+  "url": "https://permtracker.app/perm-case-status?case=P-100-26092-751498",
+  "clip": "main section",
+  "wait": "main",
+  "width": 1280
+ },
+ {
+  "name": "lca-result",
+  "url": "https://permtracker.app/perm-case-status?case=I-200-26239-199948",
+  "clip": "main section",
+  "wait": "main",
+  "width": 1280
+ },
+ {
+  "name": "perm-result",
+  "url": "https://permtracker.app/perm-case-status?case=G-100-25150-032574",
+  "clip": "main section",
+  "wait": "main",
+  "width": 1280
+ },
+ {
+  "name": "home-mobile",
+  "url": "https://permtracker.app/",
+  "wait": "main",
+  "width": 414,
+  "height": 820,
+  "settle": 1500
+ },
+ {
+  "name": "pwd-result-mobile",
+  "url": "https://permtracker.app/perm-case-status?case=P-100-26092-751498",
+  "clip": "main section",
+  "wait": "main",
+  "width": 414
+ }
+]

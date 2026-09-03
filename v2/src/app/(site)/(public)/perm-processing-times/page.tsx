@@ -104,7 +104,7 @@ const FAQ = [
   {
     question: "Where does this data come from?",
     answer:
-      "Directly from the Department of Labor's Office of Foreign Labor Certification, at flag.dol.gov/processingtimes. PERM Tracker reads that source weekly and stores every publication.",
+      "Directly from the Department of Labor's Office of Foreign Labor Certification, at flag.dol.gov/processingtimes. PERM Tracker reads that source daily and stores every publication.",
   },
 ];
 
@@ -293,7 +293,7 @@ export default async function PermProcessingTimesPage() {
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Where the Department of Labor&apos;s queues stand, from DOL&apos;s own published
-          figures, refreshed every week.
+          figures, checked daily.
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5">
           {flagFreshness ? <FreshnessDots items={[flagFreshness]} /> : null}{" "}
@@ -593,7 +593,7 @@ export default async function PermProcessingTimesPage() {
           >
             flag.dol.gov/processingtimes
           </a>
-          , and carries the date DOL attached to it. We read that page weekly and keep each
+          , and carries the date DOL attached to it. We read that page daily and keep each
           publication, because DOL overwrites its own and keeps no archive.
         </p>{" "}
         <p className="mt-3 leading-relaxed text-foreground/70">

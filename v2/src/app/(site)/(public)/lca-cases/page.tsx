@@ -105,7 +105,7 @@ export default async function LcaCasesPage() {
             <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               status lookup
             </Link>{" "}
-            takes I- numbers and asks DOL directly.
+            takes I- numbers, asks DOL directly, and can email you when the status changes.
           </p>
         </div>
       </section>

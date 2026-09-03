@@ -174,7 +174,7 @@ export default async function PermRfiAuditPage() {
               direction="flat"
               source={
                 analystQueue
-                  ? `Live case mirror, ${rfi.seenTo ?? "latest"} · DOL FLAG processing times, ${dol?.permAsOf ?? ""}`
+                  ? `Live case scan of flag.dol.gov, ${rfi.seenTo ?? "latest"} · DOL FLAG processing times, ${dol?.permAsOf ?? ""}`
                   : undefined
               }
             >
@@ -346,10 +346,15 @@ export default async function PermRfiAuditPage() {
           />
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
             This counts cases by the month they were filed, not RFIs issued per
-            month. The mirror records one observation per case, so it cannot
-            see a case enter or leave a stage, and no line through these columns
-            would mean anything. Whether DOL issues more RFIs than it used to is
-            a question this data cannot answer.
+            month. Each case here carries one reading, so this chart cannot
+            show a case entering or leaving a stage, and no line through these
+            columns would mean anything. The daily sweep does record stage
+            changes, and they are on the{" "}
+            <Link href="/perm-decision-activity" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+              decision activity
+            </Link>{" "}
+            page, but that record starts when the sweep did and cannot be
+            projected backwards over these columns.
           </p>
         </Section>
 
@@ -614,9 +619,11 @@ function Limits({
         defines the term and gives no number.
       </Limit>
       <Limit head="Whether RFIs are becoming more common">
-        Each case is observed once, so the data cannot see a case enter or
-        leave a stage. Counting how many are at a stage today is possible.
-        Counting how many arrived last month is not.
+        Each case in this snapshot carries one reading, so these counts cannot
+        show a case entering or leaving a stage. Counting how many are at a
+        stage today is possible. Counting how many arrived last month is not,
+        because the record of stage changes only starts when our daily sweep
+        did.
       </Limit>
       <Limit head="How long your RFI will take to resolve">
         The median in the outcome tally covers{" "}

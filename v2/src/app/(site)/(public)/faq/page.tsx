@@ -50,7 +50,7 @@ const faqData = [
         // complete sentence first means the truncation lands on a finished
         // thought whatever length Google allows.
         answer:
-          "PERM Tracker follows your PERM case through the Department of Labor and tells you where it stands. Look up a case number to see its federal record and where the queue has reached, get an email when the status changes, and track the deadlines around it: PWD expiration, the 30-180 day ETA 9089 filing window, and I-140 filing cutoffs. Attorneys manage full caseloads on the same data.",
+          "PERM Tracker follows your case through the Department of Labor and tells you where it stands. Look up a case number to see its federal record and where the queue has reached, get an email when the status changes, and track the deadlines around it: PWD expiration, the 30-180 day ETA 9089 filing window, and I-140 filing cutoffs. The lookup takes all three DOL numbers, not just PERM: a PERM case (G- or A-), a prevailing wage request (P-), or an H-1B labor condition application (I-), pending ones included. No account is needed for any of that. Attorneys manage full caseloads on the same data.",
       },
       {
         question: "How is this different from using a spreadsheet?",
@@ -60,7 +60,7 @@ const faqData = [
       {
         question: "Is PERM Tracker really free?",
         answer:
-          "Yes, currently free, with no credit card and no case limit. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
+          "Yes, currently free, with no credit card and no case limit. Looking up a case number and reading the data pages needs no account at all. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
       },
       {
         question: "Is my client data secure?",
@@ -100,7 +100,7 @@ const faqData = [
       {
         question: "What’s a prevailing wage determination (PWD)?",
         answer:
-          "A prevailing wage determination is issued by the National Prevailing Wage Center (NPWC) and establishes the minimum wage the employer must offer for the PERM position. The wage is based on the occupation, skill level, and geographic area. PWDs are valid for one year from the determination date, and the PERM application must be filed before expiration.",
+          "A prevailing wage determination is issued by the National Prevailing Wage Center (NPWC) and establishes the minimum wage the employer must offer for the PERM position. The wage is based on the occupation, skill level, and geographic area. PWDs are valid for one year from the determination date, and the PERM application must be filed before expiration. You can track the request itself: put a P- number into the case status page and you get DOL's current status while it is still pending, plus the wage, occupation and expiry once the determination is issued. Wage requests are also searchable by employer, job title and filing month.",
       },
       {
         question: "What recruitment steps are required for PERM?",
@@ -130,7 +130,7 @@ const faqData = [
       {
         question: "Is there any way to check my PERM status myself?",
         answer:
-          "Yes. Most advice pages say only the employer or the attorney can check a pending PERM, and that's wrong: DOL's own FLAG system answers a case number for anyone who has it, pending cases included. Put yours into the case status page and you get the live DOL status in plain English, your place in the queue, a stage-aware decision estimate, and an optional email alert when the status changes. The case number is on the filing receipt; ask whoever filed for you if you don't have it.",
+          "Yes. Most advice pages say only the employer or the attorney can check a pending PERM, and that's wrong: DOL's own FLAG system answers a case number for anyone who has it, pending cases included. Put yours into the case status page and you get the live DOL status in plain English, your place in the queue, a stage-aware decision estimate, and an optional email alert when the status changes. The same page takes prevailing wage request numbers (P-) and H-1B labor condition application numbers (I-), which work the same way. The case number is on the filing receipt; ask whoever filed for you if you don't have it, or search the employer's name.",
       },
       {
         question: "Where do the processing time numbers come from?",

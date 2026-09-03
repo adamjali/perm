@@ -198,6 +198,10 @@ export default function CalculatorsPage() {
             </thead>
             <tbody className="bg-card">
               {[
+                // A person with a live wage request was routed to a queue count only.
+                // Their first question is where THEIR request is, and that is a lookup.
+                { s: "Wage request filed, nothing since", q: "Where is mine right now?", href: "/perm-case-status", tool: "Case status (takes P- numbers)" },
+                { s: "Wage request filed, no number for it", q: "What is the case number?", href: "/pwd-cases", tool: "Wage request search" },
                 { s: "Wage request filed, nothing since", q: "How many are ahead of mine?", href: "/tools/pwd-calculator", tool: "Prevailing wage queue" },
                 { s: "Determination in hand, planning recruitment", q: "By when must we file?", href: "/tools/perm-deadline-calculator", tool: "Deadline calculator" },
                 { s: "ETA-9089 filed, waiting", q: "When will DOL decide?", href: "/tools/perm-timeline-calculator", tool: "Decision estimator" },

@@ -72,7 +72,7 @@ export function CaseNotFound({
         direction="flat"
         source={
           mirrorSize
-            ? `Searched ${int(mirrorSize)} per-case statuses and DOL's FY2024 to FY2026 decided files`
+            ? `Checked ${int(mirrorSize)} per-case statuses and DOL's FY2024 to FY2026 decided files, then asked DOL directly`
             : undefined
         }
       >
@@ -96,10 +96,10 @@ export function CaseNotFound({
         </h2>{" "}
         <ul className="mt-4 max-w-3xl space-y-3 text-base leading-relaxed text-foreground/80">
           <li>
-            <b className="font-bold text-foreground">It was filed very recently.</b>{" "}
-            The per-case snapshot is rebuilt on a schedule, so a case filed
-            in the last few days can be genuinely pending and genuinely absent
-            here.
+            <b className="font-bold text-foreground">DOL doesn&apos;t return it.</b>{" "}
+            A number we don&apos;t already hold is asked of DOL directly, at the
+            moment you search, so a filing from this week resolves. If DOL&apos;s
+            own system has no exact match, neither do we.
           </li>{" "}
           <li>
             <b className="font-bold text-foreground">It was filed before mid-2023.</b>{" "}
