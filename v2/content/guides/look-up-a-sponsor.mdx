@@ -1,0 +1,89 @@
+---
+title: "How to Look Up a Sponsoring Employer's PERM Record"
+description: "Search a sponsor by name, read what the filings and approval rate actually mean, and see the wage requests and LCAs filed before the PERM."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/employer-page.webp"
+imageAlt: "An employer's PERM page showing filings, approval rate and the live queue band"
+tags: ["perm", "employers", "sponsor", "employer-search", "dol", "how-to"]
+category: "data"
+seoTitle: "Look Up a PERM Sponsoring Employer by Name"
+seoDescription: "Find any PERM sponsor in DOL's record, read the filings and approval rate honestly, and see why one company appears under several spellings."
+published: true
+---
+
+You have a job offer, or you already work there, and you want to know what this employer's PERM filings look like. Every sponsor that has filed one has a page here, built from the Department of Labor's own files. No account is needed to read any of it.
+
+## Finding the employer
+
+Start at the [employer index](/perm-employers). The table ranks every sponsor in DOL's current disclosure window, 9,646 of them, and it sorts on any column. There's a search box above it, and a state filter beside that.
+
+Type the legal name, not the brand. DOL prints whatever the employer typed on the form, so "Amazon.com Services LLC" is a different string from "Amazon". Short beats complete: the first distinctive word usually gets you there faster than the full name with its suffix attached.
+
+<ScreenshotFigure
+  src="/images/content/shots/employers-index.webp"
+  alt="The employer index, ranked by filings, with search and a state filter"
+  caption="The ranked table covers sponsors in DOL's published files. Employers whose cases are still working through DOL, and so aren't in a published file yet, turn up in the search below the table instead."
+  step={1}
+/>
+
+## Reading the record
+
+The top of a sponsor's page carries five figures, and each one needs a different amount of trust.
+
+| Figure | What it's built from | How to read it |
+|---|---|---|
+| Filings | decided cases in DOL's published files | complete for the window, blind to anything still pending |
+| Certified and denied | the same files | counts, not rates |
+| Approval rate | certified over decided | compared against the field, and only plotted for sponsors with 30 or more decided cases |
+| Median wage | the offered wage on the form | moves with the roles they file, not with generosity |
+| Median days | filing to decision | follows when the cases were filed as much as who filed them |
+
+The approval rate is the one people misread most. A rate over a handful of cases lands wherever that handful landed, which is why sponsors under 30 decided cases are left out of the comparison population rather than plotted in it.
+
+<ScreenshotFigure
+  src="/images/content/shots/employer-page.webp"
+  alt="A sponsor page with filings, approval rate, and the live queue band beneath"
+  caption="The band under the headline figures is a different source. Published files only hold decided cases, so the count of what's waiting right now can't come from them."
+  step={2}
+/>
+
+Below that sits the live queue band: how many of this sponsor's cases are being tracked, how many have no decision yet, the oldest one still waiting, and which review stage they're standing in. Read that share against the tracked total shown beside it, never against the lifetime filings above. The two sources have different coverage and different as-of dates, and subtracting one from the other gives a number that means nothing.
+
+## The band before the PERM
+
+Further down there's a section for wage requests and H-1B labor condition applications filed by the same employer. This is usually the most useful part of the page if you're waiting on your own case, because the wage request comes first and the PERM can't be filed without it.
+
+Pending rows there come from DOL's daily check, so a request filed last week shows up with its current status. Decided ones carry the wage DOL set. The LCAs sit alongside them, same treatment. Both link straight into the [case status lookup](/perm-case-status), which takes PERM, `P-` and `I-` numbers in the same box.
+
+<ScreenshotFigure
+  src="/images/content/shots/case-status-entry.webp"
+  alt="The case status lookup, one box taking PERM, wage request and LCA numbers"
+  caption="Any number you find on an employer page can be pasted straight in here. If it isn't already held, the site asks DOL at that moment and records the answer."
+  step={3}
+/>
+
+## One firm, several spellings
+
+This is the part worth understanding before you draw any conclusion from a rank.
+
+DOL prints the legal entity name that went on the form, and nothing normalises it upstream. Spellings that differ only by punctuation or a company suffix are counted as one sponsor here. Anything more different than that is not merged, because a merge on a guess is worse than showing you the split.
+
+So a sponsor's page ends with a section naming the near-identical entries that were left separate. On Microsoft's page that's three of them, including a plain typo, "Microsoft Coporation", carrying five filings between them. A group that files through several subsidiaries appears as several rows for the same reason.
+
+The practical consequence: a rank is a rank among printed names, not among companies, and any total you read is a total for that spelling.
+
+## What this cannot tell you
+
+- **Whether this employer will sponsor you.** The page is a record of what they filed, not a policy. A company with four thousand certifications can still say no.
+- **Anything about the queue for one case.** DOL works a single national queue, oldest first, whoever filed. A large sponsor waits exactly as long as a small one, so volume on this page changes nothing about timing.
+- **Why a case was denied.** DOL publishes the outcome, never the reasoning. We publish measured denial and audit rates and refuse to blend them into a single score, because the factors aren't independent and one number would read as precision the data can't support.
+- **What the job pays you.** The median wage is the wage on the form for the roles they happened to file, and the mix drives it almost entirely.
+- **Today.** Everything here refreshes daily from DOL. It's not real time, and a case filed this morning isn't in it yet.
+- **A date you can rely on.** Where the site estimates a decision month, our own median error against real outcomes runs around 50 days.
+
+## Related
+
+- [Find a case number by employer](/guides/find-a-dol-case-number-by-employer), when you know the sponsor but not the number
+- [Track a prevailing wage request](/guides/track-a-prevailing-wage-request), for the `P-` filing that comes first
+- [How the PERM queue works](/guides/how-the-perm-queue-works), for where a filing month actually sits

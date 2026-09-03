@@ -1,0 +1,102 @@
+---
+title: "How to Read Your Priority Date History"
+description: "Put an employment-based priority date against 84 visa bulletins, read which way the cutoff moved, and get an email when it moves again."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/priority-date.webp"
+imageAlt: "A priority date charted against the visa bulletin cutoff, month by month"
+tags: ["priority-date", "visa-bulletin", "retrogression", "green-card", "how-to"]
+category: "data"
+seoTitle: "Read Your Priority Date History Across 84 Bulletins"
+seoDescription: "Check an employment-based priority date against the visa bulletin, see how the cutoff moved month by month, and hear when it moves again."
+published: true
+---
+
+Your priority date is your place in the queue for a visa number. The visa bulletin says where that queue currently stands. One cutoff in one month doesn't tell you much on its own. The useful part is which way it has been moving, and how fast.
+
+This site holds 84 bulletins, October 2019 through September 2026, and draws the whole run for the category and country you pick. Here's how to read it, and what it still can't answer.
+
+## Where your priority date comes from
+
+For an employment-based case it's the date DOL received your PERM application. If your case didn't need a labor certification, it's the date USCIS received the I-140.
+
+If you don't have it written down, your PERM record does. Paste your case number into the [case status lookup](/perm-case-status) and the received date is on the result. No account is needed for that, or for anything else on this page.
+
+<ScreenshotFigure
+  src="/images/content/shots/perm-result.webp"
+  alt="A PERM case looked up by number, showing DOL's record and the received date"
+  caption="The received date on the DOL record is the date the bulletin gets measured against."
+  step={1}
+/>
+
+## Setting it up
+
+<StepByStep>
+
+<Step title="Enter the date">
+Open the [priority date calculator](/tools/priority-date-calculator) and put the date in the first field. The comparison runs in your browser against the bulletins already loaded on the page.
+</Step>
+
+<Step title="Pick the category and country">
+EB-1 through EB-5, including EB-3 other workers. The country field is your country of birth, not your citizenship and not where you live or work. That distinction changes the answer more than anything else on the form.
+</Step>
+
+<Step title="Choose the chart">
+Final action dates govern when a green card can actually be approved. Dates for filing govern when the adjustment application can be submitted, and only in months when USCIS says it's honouring that chart. USCIS announces that separately, month by month.
+</Step>
+
+</StepByStep>
+
+## What the chart is actually showing
+
+Bulletin month runs along the bottom. The cutoff each bulletin published runs up the side. Every month gets its own column, and the shaded part of the column is the range of priority dates that qualified that month, so a taller column is a month more people were current in.
+
+<ScreenshotFigure
+  src="/images/content/shots/priority-date.webp"
+  alt="The cutoff history chart, with columns per bulletin month and a broken line across closed months"
+  caption="Seven years of bulletins in one view. The line stops where the category stopped, rather than being drawn through it."
+  step={2}
+/>
+
+Not every month has a date to plot, and that's the part most charts get wrong. A category can be **Current**, open to every priority date, or **closed**, with no visa numbers being issued at all. Those two states are opposites, so they're drawn as two different things rather than two shades of one thing.
+
+The cutoff line breaks at both. Joining a line across a run of closed months would draw a smooth rise through a period when the category was shut and nothing moved. A gap in the series is a break, not a point to interpolate through.
+
+## Why a cutoff moving forward isn't always progress
+
+A cutoff has to advance about thirty days every calendar month just for the queue to stay the same length, because a month of real time passes while it moves. Anyone holding a fixed priority date only gains ground when the cutoff advances faster than that.
+
+The page measures that as a pace figure. At 1.00 the queue is holding station. Below it, the number on the page went up while the wait got longer.
+
+| Queue | Cutoff in the September 2026 bulletin | Pace |
+|---|---|---|
+| EB-1, rest of world | Current | 1.35 |
+| EB-3, rest of world | September 1, 2024 | 1.18 |
+| EB-3, China | January 1, 2022 | 0.89 |
+| EB-3, India | January 1, 2014 | 0.72 |
+| EB-5, China | December 1, 2016 | 0.31 |
+| EB-2, India | Closed | withheld |
+
+Across the bulletins held here, 18 of the 25 measurable queues moved slower than one month per month. EB-2 India gets no pace figure at all, because it closed in September 2026 and a pace measured up to that point would describe a queue that no longer exists.
+
+## Hearing about it without checking
+
+Under the chart there's an alert. Pick a category and a country, leave an email address, and when a new bulletin changes that final-action cutoff you get one email with the before and the after. Nothing arrives in the months it doesn't move.
+
+It's double opt-in, so you confirm the address first and nobody else can sign you up. One click in any of those emails stops them.
+
+## What this can't tell you
+
+- **When your date will become current.** Nobody can. The State Department sets cutoffs from demand data it doesn't publish, and it revises them monthly. Past movement is a record, not a forecast.
+- **That a cutoff will keep going forwards.** Retrogression is normal. EB-2 India advanced by more than four years across this run and then closed outright.
+- **This month's cutoff, if the archive has fallen behind.** travel.state.gov refuses automated requests, so these bulletins come through a public archive of the same pages. The page names the newest bulletin it holds and links straight to the State Department's own. Check there before acting on anything.
+- **Anything about your case's progress.** The bulletin is about visa numbers, not about where your PERM or I-140 sits. Those live on the [case lookup](/perm-case-status) and the [queue pages](/perm-queue).
+- **A date, on this page.** Elsewhere on the site, where an estimated decision date is given, our own median error is around 50 days and it's labelled as an estimate. Here there's no prediction to label, on purpose.
+
+Family-sponsored categories aren't covered. Everything here is employment-based.
+
+## Related
+
+- [Green card timeline](/tools/green-card-timeline), for where the visa number wait sits against every stage before it
+- [Where your filing month sits](/guides/where-your-filing-month-sits), for the DOL queue rather than the State Department one
+- [Waiting on your green card](/guides/waiting-on-your-green-card)

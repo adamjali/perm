@@ -1,0 +1,111 @@
+---
+title: "How to Look Up an H-1B LCA by Case Number"
+description: "Paste an I-200 or I-203 number and see what DOL says about a labor condition application, pending ones included, plus how to find it by employer."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/lca-result.webp"
+imageAlt: "An H-1B labor condition application looked up by case number, showing DOL's current status"
+tags: ["lca", "eta-9035", "h-1b", "case-status", "dol", "how-to"]
+category: "data"
+seoTitle: "Look Up an H-1B LCA (ETA-9035) by Case Number"
+seoDescription: "Check an I-200 or I-203 number against DOL's own case system. Pending filings included, with the employer, job title, filing date and status."
+published: true
+---
+
+An H-1B labor condition application has a Department of Labor case number, and that number is checkable. Pending ones included. This walks through the lookup field by field, covers what to do if you don't have the number, and says where the record stops being useful.
+
+## What the number looks like
+
+An LCA number usually starts with `I-200-`. A smaller share start with `I-203-`. A full one looks like `I-200-26239-199948`: a letter, three digits, a five digit filing day code, then a serial.
+
+The middle block is DOL's own day code, not a date you can read straight off, so don't try to reverse it. Paste the number whole.
+
+The same box takes all three DOL programs, and works out which is which from the prefix.
+
+| Prefix | Program | Form |
+|---|---|---|
+| `I-200-`, `I-203-` | H-1B labor condition application | ETA-9035 |
+| `P-100-` | Prevailing wage request | ETA-9141 |
+| `G-100-`, and the older `A-` form | PERM application | ETA-9089 |
+
+## Where to get the number if you don't have it
+
+You are entitled to a copy of the certified LCA. The employer has to hand it to the H-1B worker no later than the day the work starts, and the number is printed on it. If it never arrived, asking for it is a reasonable request, not an awkward one.
+
+The employer also keeps a public access file with the supporting documents and has to make it available to anyone who asks within one working day of filing. That file is the fuller version of the same story.
+
+Failing both, search by employer, which is further down.
+
+## Look it up
+
+Paste the number into the [case status lookup](/perm-case-status). No account, and the number goes into the page address, so the result can be bookmarked or forwarded.
+
+<ScreenshotFigure
+  src="/images/content/shots/case-status-entry.webp"
+  alt="The case status lookup, with a single box that accepts PERM, wage request and LCA numbers"
+  caption="If the shape of the number is wrong, the page says so and looks nothing up, rather than returning an empty result you would have to interpret."
+  step={1}
+/>
+
+If the number isn't already held here, DOL's own case system gets asked at that moment and the answer is recorded. So a filing from a few days ago still resolves on the first try.
+
+## What comes back
+
+For a pending LCA you get four facts and DOL's status.
+
+<ScreenshotFigure
+  src="/images/content/shots/lca-result.webp"
+  alt="An LCA result showing the case number, status, employer, job title and filing date"
+  caption="The employer name links through to that company's other LCAs. Last checked against DOL is the honest freshness stamp: this is a daily check, not a live feed."
+  step={2}
+/>
+
+The employer and the job title are worth reading closely, because they are the part a worker can actually verify. A title that doesn't match the offer letter, or an employer name that isn't quite the entity you thought you were joining, is worth a question before it becomes a problem.
+
+There is no queue position on an LCA, deliberately. DOL's stated target is a decision within seven business days of filing, so where it sits in a line isn't the question anyone is really asking.
+
+The statuses you will see:
+
+| Status | What it means |
+|---|---|
+| In process | DOL has it and hasn't decided yet |
+| Certified | DOL accepted the attestations. The employer can now file the H-1B petition with USCIS |
+| Withdrawn | The employer pulled it before a decision. Not a denial, and refiling is common |
+| Certified, then withdrawn | It was certified and later withdrawn |
+| Denied | DOL found a problem with the form itself |
+
+If a filing has sat in process well past a couple of weeks, that is unusual for this program and the employer or its attorney will know why.
+
+## Hearing about a change without checking again
+
+On a pending LCA, the result carries a box for an email address. You confirm the address by clicking a link, then get one email per status change, and nothing else. It stops on its own once DOL decides, because there is nothing left to report. One address can watch 25 cases. No account either way.
+
+## If you only have the employer
+
+Search at [/lca-cases](/lca-cases) by the start of the company's legal name, and narrow by job title or filing month. Every case number in the results links straight into the lookup.
+
+<ScreenshotFigure
+  src="/images/content/shots/lca-cases-page.webp"
+  alt="The LCA search page, showing the count held and how far back the filings reach"
+  caption="The page prints how far back the live rows reach. The backfill is still walking towards earlier filing days, so the count on it is a floor, not a total."
+  step={3}
+/>
+
+Legal names are the trap here. Employers file under the entity name, not the brand, so a subsidiary or a staffing company may be what is actually on the form.
+
+## What this can't tell you
+
+- **Anything about the H-1B petition.** Whether it was filed, picked in the cap lottery, approved or denied happens at USCIS under a separate receipt number. A certified LCA is a prerequisite, not a decision.
+- **The wage on the form.** DOL's live case record doesn't carry the wage offered. That arrives in DOL's quarterly disclosure files, and for LCAs that half isn't filled in here yet.
+- **Whether the wage was ever paid.** The form is a promise made before the work starts. Enforcement runs through the Wage and Hour Division afterwards, not through this record.
+- **Why a denial happened.** DOL publishes the outcome and not its reasoning, on any of these programs.
+- **Whether anybody was hired.** An LCA names a job, a wage and a worksite area. It does not name a person, and plenty are certified and never used.
+- **Older filings, for now.** Live coverage started recently and is working backwards. A filing from a couple of years ago may not be here.
+
+Everything above refreshes once a day from DOL. It is current to the last check, and the result says when that was.
+
+## Related
+
+- [What an LCA is](/guides/what-an-lca-is), if you want the form itself explained
+- [LCA search](/lca-cases), to find a number by employer
+- [Tracking a prevailing wage request](/guides/track-a-prevailing-wage-request), the separate DOL determination PERM requires and an LCA doesn't

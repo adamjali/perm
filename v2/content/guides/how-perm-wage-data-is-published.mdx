@@ -1,0 +1,107 @@
+---
+title: "How PERM Wage Data Gets Published"
+description: "DOL publishes the wage on decided PERM cases in quarterly files. What the offered wage is, why it's a floor set by the process, and what it leaves out."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/wages.webp"
+imageAlt: "The offered wage distribution across certified PERM cases, cut at five percentiles"
+tags: ["wages", "disclosure-files", "prevailing-wage", "offered-wage", "dol", "explainer"]
+category: "data"
+seoTitle: "How DOL Publishes PERM Wage Data"
+seoDescription: "The quarterly disclosure files behind every PERM wage figure: offered wage versus prevailing wage, why it's a floor, and what the file leaves out."
+published: true
+---
+
+Every wage figure on this site comes from the same place: a spreadsheet the Department of Labor publishes four times a year. It's worth knowing what's in that file before you use it to judge an offer, because the number it carries is narrower than "what the job pays".
+
+## Where the wage numbers come from
+
+When DOL finishes a PERM case, that case joins a quarterly disclosure file. One row per case, with the employer, the job title, the worksite state, the occupation code DOL assigned, the filing and decision dates, the outcome, the law firm, and the wage. The newest is `PERM_Disclosure_Data_FY2026_Q3.xlsx`, covering decisions through 30 June 2026.
+
+Two things about those files trip people up.
+
+The first is that a file is a window on decisions, not on filings. A case filed in July 2024 and decided in August 2025 sits in the FY2025 file and is absent from FY2026. Read one file on its own and you see an old cohort's slow tail next to a new one's fast head, and both look like the middle. The figures here run over four files, unioned and de-duplicated by case number, currently 373,939 unique cases. DOL also changed the ETA-9089 form mid-way through FY2024 and published two files for that quarter, one per form generation, so even the file list has a seam in it.
+
+The second is that no pending case is in them at all. Every row has a decision date. Where an undecided case stands comes from DOL's case status system instead, which the [case lookup](/perm-case-status) reads daily and which does answer for pending cases.
+
+<ScreenshotFigure
+  src="/images/content/shots/wages.webp"
+  alt="The offered wage ladder across certified PERM cases, cut at five percentiles"
+  caption="343,211 certified cases with a readable wage. The tenth percentile is $29,120 and the ninetieth is $175,000, and the same federal process produced both."
+  step={1}
+/>
+
+## Is the offered wage the same as the prevailing wage?
+
+No. The file carries both, in separate columns, and they mean different things.
+
+| | Prevailing wage | Offered wage |
+|---|---|---|
+| Who sets it | DOL, from a wage survey | the employer, on the ETA-9089 |
+| What it means | the minimum for that occupation and area | what the employer committed to pay |
+| Where it starts | a separate ETA-9141 request, decided first | the PERM application itself |
+| Its relation to the other | the floor | at or above the floor, never below |
+
+The prevailing wage comes first. Before an employer can file, it asks DOL what the job pays in that area, and DOL answers with a determination. [How DOL sets a prevailing wage](/guides/how-dol-sets-a-prevailing-wage) covers that machinery in detail. The PERM application then states an offered wage, and it has to meet or beat the determination.
+
+The wage figures on the data pages are the offered wage, because that's the commitment the employer made. The determinations themselves are held separately, about 634,600 of them, so a `P-` number looked up at the [case lookup](/perm-case-status) shows the figure DOL actually set for that job.
+
+<ScreenshotFigure
+  src="/images/content/shots/pwd-result-decided.webp"
+  alt="A decided prevailing wage request showing the wage DOL set for that job"
+  caption="A wage determination looked up by its P- number. This is the floor the offered wage has to clear, and it does not appear on the PERM row."
+  step={2}
+/>
+
+## Why is this a floor and not a market survey?
+
+This is the part worth understanding before benchmarking anything against it.
+
+A salary survey asks a sample of employers what they pay and reports the spread. A PERM wage is produced by a rule instead. It can't go below a government determination, and an employer has a reason not to go far above one, because the offered wage is an enforceable promise for as long as the sponsorship runs. So the distribution is shaped by its floor and sits closer to it than a market would.
+
+Two selection effects sit on top of that. Only sponsored jobs are in the file, which is not a random sample of anything. And the wage pages default to certified cases only, because a denied case's offered wage is a number nobody ever agreed to.
+
+## What the wage figure leaves out
+
+One column, one figure, one unit of pay. There's no column for a bonus, none for equity, none for overtime, and none for a shift differential. A software role listed at $139,000 might carry a large stock grant on top, and the file has no idea. Treat every figure here as base pay.
+
+A few processing rules also apply before anything is compared:
+
+- Hourly, weekly and monthly rates are annualised through their stated unit of pay.
+- Values outside $15,000 to $1,000,000 are dropped as data-entry artefacts, most often an hourly rate typed into an annual field.
+- Thin selections are withheld rather than shown. Under 30 cases you get nothing, because a single filing moves a median by thousands. Between 30 and 100 the middle is shown and the tails are not.
+
+<ScreenshotFigure
+  src="/images/content/shots/salary-explorer.webp"
+  alt="The salary explorer, filtering the wage distribution by occupation, state and year"
+  caption="Filtering to one occupation and one state recomputes the ladder over those cases only, across 1,014 occupations. The floors above are why some selections come back empty."
+  step={3}
+/>
+
+## How current is it
+
+Two different systems, two different clocks. It's worth keeping them apart.
+
+| | Quarterly disclosure files | DOL case status |
+|---|---|---|
+| Refreshed | quarterly, when DOL publishes | daily |
+| Covers | decided cases only | decided and pending |
+| Carries the wage | yes | no |
+
+So a case decided last week shows up in the lookup within a day, and its wage doesn't reach the aggregate pages until the next quarterly file lands. That's not a lag we can shorten. It's how DOL releases the data.
+
+## What this can't tell you
+
+- **Total compensation.** Bonus, equity, overtime and anything variable are absent. A wage here is base pay and a floor.
+- **What anyone was actually paid.** The file records what the employer committed to at filing, not payroll.
+- **Whether a wage was generous for the role.** It's anchored to a government determination, and that determination isn't on the PERM row. Only the `P-` lookup shows it.
+- **Anything about a pending case.** Every row in these files has a decision date.
+- **Why DOL assigned the occupation code it did.** The code drives the wage, and DOL doesn't publish its reasoning.
+- **Whether the job still exists.** A certified PERM is a step in a process, not proof anyone was hired.
+
+## Related
+
+- [PERM wages](/perm-wages), the whole distribution by occupation, state and year
+- [Salary explorer](/tools/salary-explorer), the same ladder over any selection you pick
+- [How DOL sets a prevailing wage](/guides/how-dol-sets-a-prevailing-wage), the floor underneath all of it
+- [Methodology](/methodology), how each figure is computed and over which cases

@@ -1,0 +1,107 @@
+---
+title: "Track a Case Without Making an Account"
+description: "Everything here works with no sign-in: the lookup for all three DOL programs, the searches, the data pages, and the email alerts."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/case-status-entry.webp"
+imageAlt: "The case status lookup, a single box that takes any DOL case number"
+tags: ["case-status", "no-account", "dol", "email-alerts", "how-to"]
+category: "data"
+seoTitle: "Track a DOL Case Without an Account"
+seoDescription: "Look up PERM, prevailing wage and LCA numbers, search by employer, read the data and set email alerts. No sign-in needed for any of it."
+published: true
+---
+
+If you're waiting on a case, everything you need here is open. No sign-in for the lookup, none for the searches, none for the data pages. The email alerts want an address and nothing else. This walks through the lot, and ends with the part that matters most: what it can't tell you.
+
+## What can I do without signing in?
+
+All of it, on the beneficiary side. The lookup, the searches, every chart and table, and the alerts. An account exists, but it does a different job, and there's a short section on that below.
+
+## How do I look up my case number?
+
+Paste the number into the [case status lookup](/perm-case-status). One box takes all of them, and it works out the program from the prefix.
+
+| The number looks like | What it is |
+|---|---|
+| `G-100-26125-868956` | a PERM application, current form |
+| `A-23043-00641` | a PERM application filed in 2022 or 2023 |
+| `P-100-26092-751498` | a prevailing wage request |
+| `I-200-` or `I-203-` | an H-1B labor condition application |
+
+<ScreenshotFigure
+  src="/images/content/shots/case-status-entry.webp"
+  alt="The case status lookup, one box that accepts PERM, wage request and LCA numbers"
+  caption="You don't pick a tool first. The prefix decides which program the number belongs to."
+  step={1}
+/>
+
+Pending cases resolve for all three programs, not just decided ones. If the number isn't already held here, the site asks DOL's own case system at that moment and records the answer, so a case filed last week still comes back.
+
+What you get is DOL's record: the status in DOL's own wording, the employer, the job title, the filing date and when the record was last checked. Under that sits where your filing month falls in the queue, and an estimate that's labelled as an estimate.
+
+<ScreenshotFigure
+  src="/images/content/shots/perm-result.webp"
+  alt="A PERM case looked up by number, showing DOL's status and the queue position"
+  caption="The status line is DOL's. The queue position under it is worked out from the filing month against where DOL is currently deciding."
+  step={2}
+/>
+
+The case number goes into the page address, so you can bookmark the result or send it to someone.
+
+## What if I don't have the number?
+
+The employer or its attorney has it, and asking is the fastest route. Otherwise, search by company name:
+
+- [PERM cases](/perm-cases), for applications DOL has already decided
+- [Wage requests](/pwd-cases), searchable by employer, job title and filing month
+- [H-1B LCAs](/lca-cases), the same three ways
+
+There's a longer walkthrough in [finding a DOL case number by employer](/guides/find-a-dol-case-number-by-employer).
+
+## Can I get told instead of checking every day?
+
+Yes, and an email address is the only thing it needs. On a pending case there's a box under the result. It's double opt-in, so nothing is sent until you click the link in the confirmation. After that it's one email per change, and it stops on its own once DOL decides. One address can watch 25 cases, across all three programs.
+
+Two other alerts work the same way. Queue movement lives on [processing times](/perm-processing-times), and visa bulletin movement on the [priority date calculator](/tools/priority-date-calculator). Every email carries an off switch, and [email preferences](/email-preferences) turns any of them off from one link.
+
+## What data can I read without an account?
+
+Everything published. The whole corpus is refreshed daily from DOL.
+
+| Dataset | What's in it |
+|---|---|
+| PERM case statuses | about 414,000 records, re-checked daily |
+| Decided wage determinations | about 634,600, with the wage DOL set, the occupation, the worksite state and the validity period. Decisions through 30 June 2026, received dates back to 2021 |
+| Live wage requests | about 20,000, from the daily check |
+| H-1B LCAs | about 49,000 |
+| Visa bulletin history | 84 months of cutoffs |
+
+<ScreenshotFigure
+  src="/images/content/shots/home-mobile.webp"
+  alt="The PERM Tracker home page on a phone, showing DOL's current position in the queue"
+  caption="The date on the live band is DOL's own as-of stamp, not the time we fetched it."
+  step={3}
+/>
+
+Denial and audit rates are published as measured rates, broken out by factor. They're deliberately not blended into a single score, because the factors aren't independent and one number would read as more precision than the data supports.
+
+## What does an account add?
+
+Nothing on any page above. An account opens the case manager, which is for the person filing rather than the person waiting: deadlines calculated from your own dates, recruitment steps, a calendar, documents. If you're the beneficiary, the public pages are the whole thing.
+
+## What this can't tell you
+
+- **A decision date.** Every estimate here is anchored to a filing month, and our own median error is around 50 days. Where a date is shown, that error is shown with it.
+- **Which wage queue a request is in.** DOL runs two, one for standard survey wages and one for everything else, and they move at different speeds. A case record doesn't say which one it's in, so both are shown.
+- **Why.** DOL doesn't publish the reasoning behind a determination, an audit, or a denial. Nothing here can infer it.
+- **A single risk number.** See above. The rates are measured and published; the blend isn't.
+- **Anything at USCIS.** The I-140 and I-485 stages have their own receipt numbers and their own agency. This site covers the DOL stages.
+- **Today.** Data is refreshed daily. It's DOL's record as of the last check, not a live feed.
+- **A case DOL's system doesn't return.** Very old filings mostly, and there's no route around that.
+
+## Related
+
+- [Look up a PERM case by number](/guides/look-up-a-perm-case-by-number)
+- [Track a prevailing wage request](/guides/track-a-prevailing-wage-request)
+- [Where your filing month sits](/guides/where-your-filing-month-sits)

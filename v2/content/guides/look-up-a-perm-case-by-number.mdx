@@ -1,0 +1,102 @@
+---
+title: "Look Up a PERM Case by Its Number"
+description: "Paste a G- or A- case number and get DOL's current status, the queue in front of it, an estimate with its real error, and an email when it moves."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/perm-result.webp"
+imageAlt: "A PERM case looked up by number, showing DOL's status and the queue in front of it"
+tags: ["perm", "case-status", "case-number", "dol", "queue", "how-to"]
+category: "data"
+seoTitle: "Look Up a PERM Case by Number (G- or A-)"
+seoDescription: "Check a PERM case number against DOL's own record. Status, filing date, queue position, an honest estimate, and an email alert. No account needed."
+featured: true
+published: true
+---
+
+If you have a PERM case number, that's everything you need. Paste it into the [case status lookup](/perm-case-status) and you get DOL's current status for it, where it sits in the queue, and the option of an email when it changes. No account, nothing to pay.
+
+This walks through what each part of the result is, and where it stops being useful.
+
+## What the number looks like
+
+There are two PERM formats and the lookup takes both.
+
+The current one has four parts, like `G-100-26125-868956`. The middle block is a date: `26` is the year and `125` is the 125th day of it, so that number decodes to May 5, 2026. Checked against 20,000 cases in DOL's own records, that reading is exactly right about 89% of the time and a day or two late otherwise, so the page shows the decoded date and says how it got there.
+
+The older three-part form, used for cases filed in 2022 and 2023, looks like `A-23043-00641`. It's looked up the same way, and the page deliberately refuses to read a filing date out of it. The same decoding lands 13% of the time on that shape, which would be a guess wearing a number.
+
+The same box takes two other DOL programs, so there's no tool to pick first.
+
+| Prefix | Program | Where the number lives |
+|---|---|---|
+| `G-100-`, `G-200-`, older `A-` | PERM labor certification | the ETA-9089 receipt, and every DOL status notice |
+| `P-100-` | prevailing wage request | the ETA-9141 receipt |
+| `I-200-`, `I-203-` | H-1B labor condition application | the certified LCA the employer gives the worker |
+
+<ScreenshotFigure
+  src="/images/content/shots/case-status-entry.webp"
+  alt="The PERM case status lookup with a single case number field"
+  caption="The number goes into the page address, so a result is bookmarkable and shareable. It isn't stored."
+  step={1}
+/>
+
+## What if the number isn't already held
+
+Then the site asks DOL for it at that moment, shows what comes back, and records the answer.
+
+That matters for anything filed recently. The stored snapshot covers about 414,000 PERM cases and gets rebuilt on a schedule, so a case filed last week can be genuinely pending and genuinely absent from it. Asking DOL live closes that gap. A case looked up this way also becomes findable by employer straight afterwards.
+
+If nothing comes back at all, the likeliest cause is a mistyped digit in the serial, which still produces a well-formed case number.
+
+## What comes back
+
+DOL's status word, translated, plus the employer, the job title, the filing date and its age in days, and the date the status was last seen. That last one is doing real work: it's when the sweep saw the case, not when you asked, and the page prints the gap in days when it's grown.
+
+Statuses are refreshed daily, and undecided cases are re-checked twice a day. Never treat it as live. A case decided in the last few hours shows at DOL first, and [flag.dol.gov](https://flag.dol.gov) is the authority for any single case.
+
+<ScreenshotFigure
+  src="/images/content/shots/perm-result.webp"
+  alt="A PERM case result showing status, employer, job title and filing date"
+  caption="The status word gets the regulation behind it, so RFI and audit read as the different things they are."
+  step={2}
+/>
+
+## Where the case sits in the queue
+
+This is the part a status word can't give you. Below the record, the page counts how many undecided cases were filed before this one, names the filing month DOL is currently working, and splits the case's own filing month into the ordinary queue and the queues that take a case out of filing order.
+
+That split is the honest answer to the most common question there is, which is why DOL has passed your month and you still have nothing. A case that stays open past its month is usually in an information request, an audit, supervised recruitment, or an appeal, and none of those move in filing order.
+
+<ScreenshotFigure
+  src="/images/content/shots/queue.webp"
+  alt="The PERM queue page showing undecided cases by filing month"
+  caption="The backlog is counted case by case, because DOL's published files contain no pending rows at all."
+  step={3}
+/>
+
+## The estimate, and how wrong it usually is
+
+On a case DOL hasn't passed yet, you get a date. It's built from the percentile spread of real decided cases in that same filing month, read at the percentile the case's current stage implies, so a case sitting at RFI reads the slow tail rather than the middle. DOL's own published average sits next to it for comparison.
+
+Our own median error on those dates is around 50 days. That's the number to hold in your head. The estimate is checkable arithmetic over cases DOL has actually decided, and it is not a promise about yours.
+
+Where DOL has already gone past the filing month, no date is given at all. An elapsed estimate isn't an estimate, and the live status is the accurate read at that point.
+
+## Getting told when it changes
+
+On any undecided case you can leave an email address and get one message when DOL's status moves. It's double opt-in, so nothing is sent until you confirm, and the alerts stop on their own once the case is decided. One address can watch 25 cases, and the same thing works for wage requests and LCAs.
+
+## What this can't tell you
+
+- **A decision date you can rely on.** See the 50-day median error above. Cases leave the queue out of order and DOL publishes no schedule.
+- **Whether the case will be certified.** Measured denial and audit rates are published separately and are deliberately not blended into one score. The factors aren't independent, and a single number would hide which one is doing the work.
+- **Why DOL did anything.** No reasoning is published for an audit, an RFI, or a denial. The determination letter has it and nothing public does.
+- **Anything about the worker.** DOL's files carry no beneficiary name, so this holds employers, job titles and case numbers, and never a person.
+- **What today looks like.** This is a daily sweep, not a feed.
+
+## Related
+
+- [What each DOL status word means](/guides/check-perm-case-status), with the regulation behind each deadline
+- [Find your DOL case number](/guides/find-your-dol-case-number) if nobody has given it to you
+- [The whole queue](/perm-queue), month by month
+- [Timeline calculator](/tools/perm-timeline-calculator), every model side by side including where they disagree

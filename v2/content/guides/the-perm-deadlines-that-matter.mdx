@@ -1,0 +1,114 @@
+---
+title: "The PERM deadlines that actually matter"
+description: "Four dates fix a PERM case: the wage determination expiry, the 30 to 180 day recruitment window, the quiet period, and the 180 days after certification."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/deadline-calculator.webp"
+imageAlt: "The PERM deadline calculator showing dates computed from a prevailing wage determination"
+tags: ["perm", "deadlines", "prevailing-wage", "recruitment", "i-140", "20-cfr-656"]
+category: "data"
+seoTitle: "The PERM Deadlines That Actually Matter"
+seoDescription: "Prevailing wage expiry, the 30 to 180 day recruitment window, the quiet period, and the 180 day I-140 clock. Which ones restart a case if missed."
+published: true
+---
+
+A PERM case carries dozens of dates. Four of them are hard, in the sense that missing one costs you months and there's no mechanism to ask for more time. They're all plain arithmetic, so you can work out every one of them in advance. Most of the damage in PERM cases comes from dates nobody computed rather than from anything DOL did.
+
+| The deadline | Measured from | The rule |
+|---|---|---|
+| Wage determination expires | the determination date | 20 CFR 656.40(c) |
+| Filing window opens | the last recruitment step, plus 30 days | 20 CFR 656.17(e) |
+| Filing window closes | the first recruitment step, plus 180 days | 20 CFR 656.17(e) |
+| Certification expires | the certification date, plus 180 days | 20 CFR 656.30(b)(1) |
+
+## When does a prevailing wage determination expire?
+
+This is where the chain starts, and it's the one most often described wrongly. A determination isn't valid for a fixed number of days. Under [20 CFR 656.40(c)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40), how long it lasts depends on when DOL issued it.
+
+| Issued between | Valid until |
+|---|---|
+| 2 April and 30 June | 90 days after the determination |
+| 1 July and 31 December | 30 June of the following year |
+| 1 January and 1 April | 30 June of the same year |
+
+So a determination issued in September is good for roughly nine months, and one issued in May is good for about three. Same employer, same job, wildly different amount of room to run recruitment in. If you've been told a wage determination lasts a year, that's the July-to-December case being repeated as if it were the rule.
+
+<ScreenshotFigure
+  src="/images/content/shots/pwd-result-decided.webp"
+  alt="A decided prevailing wage request showing the wage DOL set and the date the determination expires"
+  caption="The determination date sits on DOL's own record, so you don't have to take the employer's word for when the clock started."
+  step={1}
+/>
+
+The application has to be filed while the determination is still valid. If it lapses first, the employer files a fresh ETA-9141 and rejoins DOL's wage queue. Recruitment already run has its own 180-day limit, and waiting out a new determination will usually eat it.
+
+## What is the 30 to 180 day recruitment window?
+
+The window for filing the application has two edges, and they're measured from two different events. That's the part that trips people.
+
+- It **opens** 30 days after the last recruitment step ends.
+- It **closes** 180 days after the first recruitment step started.
+
+Subtract one from the other and you get the real constraint on recruitment itself: every step has to be finished by day 150, or the 30-day wait won't fit before the window shuts. Recruitment that runs long doesn't just delay the filing, it can close the window entirely.
+
+There's a second ceiling on top of that: the window also closes when the wage determination expires, whichever comes first. A close date worked out by hand from the 180-day rule alone can be a date on which filing is already barred.
+
+## Why the quiet period denies cases
+
+The 30 days after the last recruitment step is the quiet period, and it's the deadline people cross in the wrong direction. Every other date on this page punishes being late. This one punishes being early.
+
+Filing on day 29 isn't a warning or a request for evidence. It's a denial, and refiling means a new application with a new filing date. Since the filing date is the priority date, an avoidable denial here can move somebody back years in the visa queue while the case itself looks like it only lost a few months.
+
+The quiet period exists so the employer can consider applicants who responded near the end of recruitment. Filing early is treated as evidence that consideration didn't happen.
+
+## The 180 days after certification
+
+Once DOL certifies the application, [20 CFR 656.30(b)(1)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-C/section-656.30) gives 180 calendar days to file it with an I-140. Calendar days, not business days, and the regulation has no extension mechanism in it.
+
+This is the most expensive deadline in the process, because missing it doesn't send you back a step. It sends you back to the beginning. New wage determination, new recruitment, new quiet period, new wait in DOL's queue, and a new priority date. Somebody with a 2023 priority date and a lapsed certification restarts in 2026 with a 2026 one.
+
+The employer is the petitioner at both stages, so a certification can sit with a company that has moved on while the worker, who has the most to lose, can't file anything.
+
+## Which deadlines restart the case
+
+Not all four are equally bad. This is what each one actually costs.
+
+| What you miss | What has to be done again | What survives |
+|---|---|---|
+| Wage determination expiry | The wage request, then the wait in DOL's wage queue. Recruitment usually has to be redone too, since its own 180 days runs while you wait | The filed priority date, if the application was already in |
+| 180 days from first recruitment | All recruitment: the job order, both Sunday ads, the notice of filing | The wage determination, if it's still valid |
+| The quiet period, by filing early | The application, after a denial. New filing date, so a new priority date | The recruitment, if it's still inside its 180 days |
+| 180 days after certification | Everything. Wage determination, recruitment, filing, priority date | Nothing from the PERM stage |
+
+The pattern worth remembering: the two recruitment-side deadlines cost you work, and the two at either end of the process cost you your place in line.
+
+## Working them out
+
+The [deadline calculator](/tools/perm-deadline-calculator) runs the whole chain from the determination date, including the rule where the filing window closes at the earlier of first recruitment plus 180 days and the determination's own expiry.
+
+<ScreenshotFigure
+  src="/images/content/shots/deadline-calculator.webp"
+  alt="The PERM deadline calculator with a determination date entered and the resulting deadlines listed"
+  caption="Entering the determination date alone fixes several dates. Adding the first recruitment step fixes the rest."
+  step={2}
+/>
+
+If you don't know the determination date, it's on DOL's record for the wage request. The [case lookup](/perm-case-status) takes PERM, wage request and H-1B numbers in one box, pending cases included, and needs no account.
+
+## What this can't tell you
+
+The deadlines are fixed. Almost nothing else about a PERM case is.
+
+- **When DOL will decide.** That's a queue, not a rule, and it moves. Where we do publish an estimated decision window, our own median error is around 50 days, and we say so on the page rather than in a footnote.
+- **Whether the recruitment was done properly.** These dates tell you a filing is timely. They say nothing about whether the ads ran in the right paper, whether the notice was posted where it should have been, or whether the file survives an audit.
+- **The steps beyond the standard set.** A professional occupation needs three additional recruitment steps with their own timing, and supervised recruitment runs on different rules entirely. Neither is covered here.
+- **What the employer intends to do.** A certification is permission to file, not a commitment to file. The 180 days run either way.
+
+None of this is legal advice. It's the arithmetic, which is the part you can check yourself.
+
+## Related
+
+- [PERM deadline calculator](/tools/perm-deadline-calculator), for every date the regulations fix in one case
+- [The three different 180-day rules](/guides/three-180-day-clocks), because two more of them show up after the I-140
+- [Recruitment checklist](/guides/perm-recruitment-checklist), for what counts as completing a step
+- [Wage request lookup](/pwd-cases), if you need the determination date and don't have the paperwork

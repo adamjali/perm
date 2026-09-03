@@ -1,0 +1,120 @@
+---
+title: "How DOL Sets a Prevailing Wage"
+description: "The OEWS survey, wage levels 1 to 4, the occupation code and the area, and how long a determination lasts. What actually sets the number."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/pwd-result-decided.webp"
+imageAlt: "A prevailing wage request record showing DOL's status for one ETA-9141"
+tags: ["prevailing-wage", "pwd", "eta-9141", "oews", "wage-levels", "dol", "explainer"]
+category: "data"
+seoTitle: "How DOL Sets a Prevailing Wage for PERM"
+seoDescription: "How the Department of Labor picks a prevailing wage: the OEWS survey, wage levels 1 to 4, the SOC occupation and area, and the validity period."
+published: true
+---
+
+An employer cannot file a PERM application until the Department of Labor has told it what the job pays. That number is the prevailing wage. It is not negotiated, and the person who will hold the job has nothing to do with it. DOL builds it from a wage survey, an occupation code and a geography. Here is how each one works.
+
+## What DOL is actually being asked
+
+The employer files Form ETA-9141. It describes one job, not one person: the duties, the education and experience required, the worksite address, and how many people the role supervises. DOL reads that description and answers with a single wage.
+
+That wage is a floor. The employer can offer more, and usually does. It cannot offer less.
+
+## Where the number comes from
+
+Unless something displaces it, the source is the wage component of the Occupational Employment and Wage Statistics survey, run by the Bureau of Labor Statistics. [20 CFR 656.40(b)(2)](https://www.ecfr.gov/current/title-20/chapter-V/part-656/subpart-D/section-656.40) names it directly and says the prevailing wage is the arithmetic mean of the wages of workers similarly employed in the area of intended employment.
+
+Two phrases in that sentence do most of the work.
+
+**Similarly employed** means DOL has to decide what occupation the job is before it can price it. Its staff pick an O\*NET-SOC code by comparing the whole job description against the tasks and knowledge listed for each occupation. The guidance says the code "should not be based solely on the title of the employer's job offer", and that a role straddling two occupations defaults to the higher paying one.
+
+**Area of intended employment** is defined at 20 CFR 656.3 as the area within normal commuting distance of the worksite address. Same job, different metro, different survey cell, different wage.
+
+Older DOL documents call the survey OES, newer ones OEWS. Same survey, renamed in 2021.
+
+<ScreenshotFigure
+  src="/images/content/shots/wages.webp"
+  alt="The wage distribution across certified PERM cases, cut at five percentiles"
+  caption="Offered wages on 343,211 certified cases, from $29,120 at the tenth percentile to $175,000 at the ninetieth. The prevailing wage sits under each of those, not on top of them."
+  step={1}
+/>
+
+## What the four wage levels mean
+
+The survey does not produce one number per occupation and area. It produces four, because the statute requires it: a government survey used for prevailing wage has to give at least four levels "commensurate with experience, education, and the level of supervision" ([8 U.S.C. 1182(p)(4)](https://www.law.cornell.edu/uscode/text/8/1182)).
+
+DOL's prevailing wage guidance describes them this way:
+
+| Level | Name | The worker it describes |
+|---|---|---|
+| I | Entry | Basic understanding of the occupation. Routine tasks, little judgment, close supervision. |
+| II | Qualified | A good understanding through education or experience. Moderately complex tasks, limited judgment. |
+| III | Experienced | A sound understanding plus special skills. Exercises judgment, may coordinate or supervise staff. |
+| IV | Fully competent | Plans and conducts work independently, solves unusual and complex problems, receives technical guidance only. Usually has management responsibility. |
+
+Behind the label is a worksheet, and it is stricter than most people expect. Every request starts at Level I. Points are added for experience above the range the occupation normally calls for, for education above what it usually requires, for special skills the O\*NET description does not already cover, and for supervisory duties. The points are summed, and anything above four is capped at Level IV.
+
+Two details get missed constantly. Education and experience are each counted once, so a degree cannot be claimed as equivalent experience in one step and as education in the next. And supervision earns no point when supervising is a customary duty of the occupation, because those survey wages already account for it.
+
+DOL also tells its own staff that the process "should not be implemented in an automated fashion" and that judgment applies. Worth remembering before treating a level as arithmetic.
+
+## Why two similar jobs get different numbers
+
+Three inputs, and none of them is about the candidate. Adjacent-sounding roles sit in different survey cells: across certified PERM cases the median committed wage is $139,027 for Software Developers and $128,939 for Computer Systems Analysts. Each occupation is then priced against local employers only. And a job written as entry level lands nowhere near the same job written with a master's requirement and five direct reports.
+
+So when a colleague's number comes out higher, DOL did not judge the two people differently. It never saw the people. It saw two job descriptions. The [full distribution by occupation](/perm-wages) shows how wide the spread gets.
+
+## How long a determination stays valid
+
+Not a fixed number of days, which surprises almost everyone. 20 CFR 656.40(c) says the validity period can never be less than 90 days or more than one year from the determination date, and DOL anchors it to the wage year ending 30 June.
+
+| Determination issued | Valid until | Roughly |
+|---|---|---|
+| 1 January to 1 April | 30 June of the same year | 90 to 180 days |
+| 2 April to 30 June | 90 days from the determination date | 90 days, flat |
+| 1 July to 31 December | 30 June of the following year | 181 to 364 days |
+
+The seam matters more than the rule. A determination issued on 30 June 2026 is good for 90 days. One issued the next morning is good for 364. Recruitment has to finish inside that window, the 30-day job order and the 30-day quiet period included, so which side of the line a determination lands on decides whether the schedule is comfortable or tight. The [deadline calculator](/tools/perm-deadline-calculator) works the rule out from a determination date.
+
+## When the survey is not the source
+
+Three exceptions, all in the same regulation.
+
+- A collective bargaining agreement negotiated at arm's length controls. Its rate is the prevailing wage, full stop.
+- The employer may submit its own survey. If it qualifies and gives a median but no arithmetic mean, the median is used.
+- For universities, affiliated nonprofits, and nonprofit or government research organizations, the wage level counts only employees at institutions of that kind in the same area. It is why an academic post and an industry post with the same title in one city can be far apart.
+
+## How long the answer takes to arrive
+
+DOL publishes the size of the pile and the month it is working. At its last published position: 50,300 requests pending, determinations going out for April 2026 filings where the wage comes from the OEWS survey and March 2026 where it does not. Two queues, moving at different speeds.
+
+<ScreenshotFigure
+  src="/images/content/shots/pwd-calculator.webp"
+  alt="The prevailing wage queue calculator showing requests ahead of a chosen filing month"
+  caption="Two different months on the same day. A case record does not say which queue a request is in, so both are shown."
+  step={2}
+/>
+
+If you have a `P-` number, the [case status lookup](/perm-case-status) checks it against DOL's own record, pending requests included.
+
+<ScreenshotFigure
+  src="/images/content/shots/pwd-result-decided.webp"
+  alt="A decided prevailing wage request with its DOL status, employer, job title and filing date"
+  caption="What DOL returns for one request. The status and the date it was last checked come from DOL directly, refreshed daily."
+  step={3}
+/>
+
+## What this cannot tell you
+
+- **Why a determination came out at the level it did.** DOL publishes the wage, not the worksheet. Nobody outside the National Prevailing Wage Center sees the points assigned or the reasoning.
+- **Whether a level is right for a given job.** That is a legal judgment about a job description, and it is what immigration counsel is for. Nothing here is advice.
+- **Which of the two queues a request is in.** DOL does not put it on the case record, so an estimate has to cover both.
+- **How fast DOL clears the backlog.** It publishes the size of the pile, not the rate it moves. Where a date is estimated on this site our own median error is around 50 days, and the page says so.
+- **What the employer will actually pay.** The prevailing wage is a floor in a federal filing. The offer can be higher, and the eventual salary is a separate matter again.
+
+## Related
+
+- [Track a prevailing wage request](/guides/track-a-prevailing-wage-request), the companion walkthrough
+- [Wage request search](/pwd-cases), to find a request by employer or job title
+- [Prevailing wage queue calculator](/tools/pwd-calculator), month by month from DOL's published backlog
+- [Methodology](/methodology), where each figure comes from and how often it is refreshed

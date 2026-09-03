@@ -1,0 +1,112 @@
+---
+title: "How DOL Works Through the PERM Queue"
+description: "PERM cases are decided roughly in filing-month order. What DOL's published frontier means, how much the employer initial is worth, and where it stops."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/queue.webp"
+imageAlt: "The PERM backlog drawn month by month, with DOL's current position flagged"
+tags: ["perm", "queue", "processing-times", "dol", "backlog", "explainer"]
+category: "data"
+seoTitle: "How the PERM Queue Works: Order, Frontier, Alphabet"
+seoDescription: "DOL decides PERM cases roughly in filing order. What the published queue position means, how much the employer initial is worth, and what it can't say."
+published: true
+---
+
+Every PERM application waits in the same line, and the line is ordered by the month the application was filed. That is the whole model. Everything else is detail sitting on top of it.
+
+This walks through what "roughly first in, first out" means in practice, what the one number the Department of Labor publishes actually says, and where the model stops being useful.
+
+## Who gets decided first?
+
+DOL's analyst review queue works in filing order. An application filed in October 2025 is looked at before one filed in December 2025, whatever the employer, the job, the state, or how urgent it is for the person waiting.
+
+It's filing month order, not filing day order. DOL clears a month over several weeks, and inside that month the order is alphabetical by employer name.
+
+Not every case rides that queue the whole way. On the last daily sweep, the cases DOL hadn't decided yet split like this:
+
+| Where a waiting case sits | Cases | What that means |
+|---|---|---|
+| Analyst review | 90,127 | the ordinary queue, worked in filing order |
+| Out of filing order | 3,074 | an audit, an information request, supervised recruitment or a hold |
+| Under appeal or review | 2,721 | went to appeal after an adverse determination |
+
+Only the first group moves in filing order. That's the honest answer to "DOL has passed my month and I still have nothing": a case in the second or third group has left the line, and its filing month stopped predicting anything the day it did.
+
+## What is the published frontier?
+
+Once a week DOL publishes one sentence about the queue: the filing month its analysts are currently reviewing. On 28 August 2026 that was November 2025. Audited cases have their own, slower position, which sat at December 2025.
+
+That is the frontier. It's the front of the line, and it's the single most useful public fact about where a case stands. Subtract your filing month from it and you have your distance in queue terms.
+
+Two things about it catch people out.
+
+DOL overwrites the figure every time it publishes. Its own page can never say how fast the queue is moving, because it only ever shows today's position. Keeping every reading is the only way to see the steps, which is what [processing times](/perm-processing-times) does.
+
+<ScreenshotFigure
+  src="/images/content/shots/processing-times.webp"
+  alt="DOL's published queue position, with the record of every previous reading below it"
+  caption="One number from DOL, plus the history DOL doesn't keep. Movement only exists in the record."
+  step={1}
+/>
+
+The second thing is that the frontier is DOL's own claim about itself, not a measurement of the pile. Scanning cases one by one puts the oldest month that isn't substantially decided at October 2025, a month behind the November 2025 DOL published. Both figures are shown as they are, with neither adjusted towards the other. They measure slightly different things, and neither one is wrong.
+
+## Does the employer's first letter matter?
+
+Yes, and less than you will read elsewhere.
+
+Within a filing month DOL works alphabetically by employer name, so a case sponsored by an A company is decided before one sponsored by a Z company that filed the same month. Every public estimator uses this. Almost none of them says how large the effect is, which is the part that decides whether it's worth thinking about.
+
+Measured against the average across the decided corpus:
+
+| | Compared to the average |
+|---|---|
+| A, the fastest letter | 11.4 days earlier |
+| Z, the slowest | 15.7 days later |
+| The alphabet end to end | about 27 days |
+
+It also isn't reliable. In 6 of 30 filing months the back half of the alphabet came out faster than the front. So it's a real term and a small one, worth roughly four weeks between the extremes, and it can run backwards. Your filing month is worth far more than your initial.
+
+<ScreenshotFigure
+  src="/images/content/shots/queue.webp"
+  alt="The PERM backlog by filing month, with each letter's measured effect below it"
+  caption="Bar length is cases still waiting, on one scale, so the shape is the backlog's real shape."
+  step={2}
+/>
+
+## Why isn't a queue position a promise?
+
+Because the queue's speed isn't stable.
+
+Over the six months of determinations to June 2026, DOL cleared 1.8 months of filing queue for every calendar month that passed. Anything above 1.0 means it's gaining on the backlog. Across the whole record on file, that rate has run between 0.33 and 2.50. A forecast built on the fast years and one built on the slow years land months apart, and both used real DOL data.
+
+The arithmetic people reach for first doesn't work either. DOL issued 19,787 determinations in June 2026, against 95,922 cases still waiting. Dividing one into the other gives about five months and means nothing. New applications keep arriving, DOL reprioritises, and one month's output isn't a rate.
+
+Where a date does get published here, it comes from the percentile spread of real decided cases rather than from dividing a backlog, and the median error on our own estimates is around 50 days. That's the honest size of the uncertainty. A single date quoted without one is a guess with the error bars taken off.
+
+## Where does my case sit?
+
+The frontier tells you about a month. Your case number tells you about your case, and the two answer different questions.
+
+<ScreenshotFigure
+  src="/images/content/shots/perm-result.webp"
+  alt="A PERM case number looked up, showing DOL's status and the case's place in the queue"
+  caption="DOL's status in its own words, with how many undecided cases were filed ahead of this one."
+  step={3}
+/>
+
+The [case status lookup](/perm-case-status) takes a case number and shows what DOL currently holds against it, including the status that says whether the case is still in analyst review or has stepped out of the line. If the number isn't already held, DOL is asked for it at that moment. No account is needed, and you can leave an email address to hear when the status changes.
+
+## What this can't tell you
+
+- **When a specific case will be decided.** A filing month gives you an order, not a date.
+- **Which of the three groups a case is in**, unless DOL's own status says so. That comes from the case number, not from the queue.
+- **Why DOL prioritises the way it does.** The order inside a month is observable. The reasoning behind a reprioritisation isn't published.
+- **Anything about the last few hours.** These figures are refreshed daily from DOL. A case decided this morning shows on DOL's system first.
+- **Whether the current pace holds.** Every rate on this page describes what already happened. None of them is a commitment by anyone.
+
+## Related
+
+- [PERM queue backlog](/perm-queue), month by month, with each letter's effect measured
+- [Processing times](/perm-processing-times), every DOL reading on record and how far it moved
+- [Case status lookup](/perm-case-status), for one case number

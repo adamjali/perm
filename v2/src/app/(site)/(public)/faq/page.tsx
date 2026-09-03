@@ -100,7 +100,7 @@ const faqData = [
       {
         question: "What’s a prevailing wage determination (PWD)?",
         answer:
-          "A prevailing wage determination is issued by the National Prevailing Wage Center (NPWC) and establishes the minimum wage the employer must offer for the PERM position. The wage is based on the occupation, skill level, and geographic area. PWDs are valid for one year from the determination date, and the PERM application must be filed before expiration. You can track the request itself: put a P- number into the case status page and you get DOL's current status while it is still pending, plus the wage, occupation and expiry once the determination is issued. Wage requests are also searchable by employer, job title and filing month.",
+          "A prevailing wage determination is issued by the National Prevailing Wage Center (NPWC) and establishes the minimum wage the employer must offer for the PERM position. The wage is based on the occupation, skill level, and geographic area. PWDs are valid for one year from the determination date, and the PERM application must be filed before expiration. You can track the request itself: put a P- number into the case status page and you get DOL's current status while it is still pending, plus the wage, occupation and expiry once the determination is issued. Wage requests are also searchable by employer, job title and filing month. There is a walkthrough at /guides/track-a-prevailing-wage-request.",
       },
       {
         question: "What recruitment steps are required for PERM?",

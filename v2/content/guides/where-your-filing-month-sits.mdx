@@ -1,0 +1,95 @@
+---
+title: "See Where Your Filing Month Sits"
+description: "Three pages answer three different questions about the PERM queue: where DOL is working, how fast it moves, and what it decided today."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/queue.webp"
+imageAlt: "The PERM queue backlog page, with pending cases drawn month by month"
+tags: ["perm-queue", "processing-times", "backlog", "dol", "how-to", "estimates"]
+category: "data"
+seoTitle: "Where Your PERM Filing Month Sits in the Queue"
+seoDescription: "Place your PERM filing month with the queue, processing times and decision activity pages, and the estimate's roughly 50 day median error."
+published: true
+---
+
+You know your filing month. What you want is how much sits in front of it. Three pages here answer that, and each answers a different half. This is the order that's actually useful.
+
+If you don't have the filing month to hand, the [case status lookup](/perm-case-status) gives it. The same box takes PERM numbers, prevailing wage requests and H-1B labor condition applications, pending ones included, and no account is needed.
+
+## Where is DOL working right now
+
+Start at the [queue backlog page](/perm-queue). It opens with the filing month DOL says its analyst review is working, and the size of everything still behind it.
+
+At the last check, DOL published November 2025 as its analyst review position, and a per-case scan found 95,922 cases last seen undecided across 39 filing months, out of 414,357 scanned. DOL's disclosure files carry no pending rows at all, so that count can't come from them. It comes from reading cases against DOL's case status system in batches.
+
+<ScreenshotFigure
+  src="/images/content/shots/queue.webp"
+  alt="The PERM queue backlog page showing pending cases by filing month on one scale"
+  caption="Every filing month on one scale, so the shape of the wall is the real shape rather than a per-month zoom."
+  step={1}
+/>
+
+Find your month in that chart and open it. A month page gives the three numbers that matter for one case: how many applications carry that filing date, how many already have a decision, and how many older cases are still undecided in front of it. For November 2025 that's 15,034 filed, 2,645 decided, and 4,944 cases filed earlier still waiting.
+
+That last figure is the queue ahead of you. It counts only cases DOL still has to decide, which is the only version that means anything.
+
+## How fast is it moving
+
+The [processing times page](/perm-processing-times) is DOL's published position rather than our scan, refreshed from DOL's own page. There are four queue positions on it, and they don't move together.
+
+| Queue | Filing month DOL is working |
+|---|---|
+| Analyst review | November 2025 |
+| Audit review | December 2025 |
+| Prevailing wage, OEWS survey | April 2026 |
+| Prevailing wage, everything else | March 2026 |
+
+The same page carries the average time to a determination, 336 days for those DOL issued in August 2026, plus every queue reading DOL has published since we started keeping them.
+
+<ScreenshotFigure
+  src="/images/content/shots/processing-times.webp"
+  alt="DOL's published queue positions with the movement record underneath"
+  caption="DOL overwrites its queue position each time, so it can never say how fast it moved. This keeps the readings, which is what makes movement visible."
+  step={2}
+/>
+
+Measured a second way, from determination dates in the disclosure files, the queue advanced about 1.80 filing months per calendar month over the six determination months to June 2026. Anything above 1.0 means DOL was clearing filing dates faster than new ones arrived. Across the whole record that rate has run between 0.33 and 2.50, which is why it isn't a rate to plan around.
+
+## What did DOL do today
+
+The [decision activity page](/perm-decision-activity) is the daily view. Over the last 14 days it counted 852 determinations per weekday and 233 per weekend day. Those are kept apart because a weekday and a weekend day aren't the same working day, and averaging them understates the weekday pace.
+
+The more useful half is underneath the counts: the individual cases DOL moved, with what each one moved from and to. A count has no "from", so it can't separate an information request being issued from one being answered. The transition list can, and those are opposite events.
+
+<ScreenshotFigure
+  src="/images/content/shots/decision-activity.webp"
+  alt="A day of PERM decisions grouped by status transition, with individual cases listed"
+  caption="Analyst review to certified, analyst review to RFI issued, RFI issued back to analyst review. The direction is the whole point."
+  step={3}
+/>
+
+## The estimate, and how wrong it usually is
+
+Look a case up and there's an estimate below the federal record. It leads with one date, puts the window directly under it, and names the model it came from. It's adjusted for the stage the case is actually at, and for the first letter of the employer's name, since DOL works each filing month alphabetically.
+
+The figure to hold on to: our median estimate error is around 50 days. That's the middle of the distribution, so half of cases land further out than that. For scale, the alphabet adjustment moves a date by at most about two weeks, well inside the error, which is why it's printed with its own number instead of folded quietly into the date.
+
+If the estimated date has already gone by, no date is given. An estimate whose window has elapsed isn't an estimate, and the page says so instead.
+
+You can also leave an email address on a pending case and hear when DOL's status changes. Double opt in, one email per change, and it works for wage requests and LCAs too.
+
+## What this can't tell you
+
+- **Your date.** None of this is a decision date. It's the position of a queue and the spread of what happened to cases like yours.
+- **Anything about a case that has left filing order.** Of the pending cases, 3,074 were last seen out of filing order on an information request, audit, supervised recruitment or hold, and 2,721 were under appeal or review. Filing month stops predicting those, and the queue page keeps them separate for that reason.
+- **Why DOL did anything.** No reasoning is published for a certification, a denial or an audit.
+- **A tidy single position.** DOL publishes November 2025 while the per-case scan measures October 2025 as the oldest month not substantially decided. Both are shown as they are, and neither is adjusted towards the other.
+- **A live reading.** Data is refreshed daily. Because the backlog comes from a sweep, a case decided between sweeps still counts as waiting, so those figures run a little high rather than low.
+- **Which prevailing wage queue a request is in.** DOL runs two, they move at different speeds, and the case record doesn't say which one a request sits in.
+- **One risk number.** We publish measured denial and audit rates and refuse to blend them into a score, because the factors aren't independent and a single letter grade would read as precision the data can't support.
+
+## Related
+
+- [Look up a PERM case by number](/guides/look-up-a-perm-case-by-number), for the record behind the estimate
+- [How the PERM queue works](/guides/how-the-perm-queue-works), for what the filing month actually governs
+- [Timeline calculator](/tools/perm-timeline-calculator), for the percentile spread of real decided cases

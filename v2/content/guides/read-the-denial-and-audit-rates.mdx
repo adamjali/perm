@@ -1,0 +1,117 @@
+---
+title: "Read the Denial and Audit Rates Without Over-Reading Them"
+description: "How to read the measured PERM denial rates and the review stage counts here, what the cohort sizes mean, and what neither one can tell you."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/denial-risk.webp"
+imageAlt: "The denial rates page, showing measured rates by declared factor against the field baseline"
+tags: ["denial-rates", "audits", "rfi", "perm", "dol", "how-to"]
+category: "data"
+seoTitle: "How to Read PERM Denial and Audit Rates"
+seoDescription: "The measured PERM denial rates by wage, occupation and declared factor, how long cases sit at each review stage, and the limits of both."
+published: true
+---
+
+There are two pages here about what goes wrong: [denial rates](/perm-denial-risk) and [RFIs, audits and appeals](/perm-rfi-audit). They answer different questions, and both are easy to misread in opposite directions. This is how to read them.
+
+## Start with the baseline, not the ranking
+
+In DOL's decided cases for the current window, 11,357 of 355,130 were denied. That's 3.2%, and every other rate on the page is drawn against it. Withdrawn cases sit on neither side of that ratio, because a withdrawal is neither an approval nor a denial.
+
+Read the baseline first. A 15% rate sounds alarming until you know the field is 3.2%, and it reads differently again once you see the group has 221 cases in it.
+
+<ScreenshotFigure
+  src="/images/content/shots/denial-risk.webp"
+  alt="Denial rates by declared factor, each shown against the 3.2 percent field baseline"
+  caption="Every bar is drawn against the field line, so no rate is ever shown on its own."
+  step={1}
+/>
+
+## What the three form questions actually show
+
+The ETA-9089 asks three things that carry unusual rates. All three appear with their populations, because the population is the point.
+
+| What the form declares | Denial rate | Decided cases | Against the field |
+|---|---|---|---|
+| Position isn't full time | 54.29% | 396 | 17x |
+| Worker has an ownership interest | 21.02% | 1,308 | 6.6x |
+| Employer had a layoff | 0.55% | 10,222 | 0.2x |
+
+Two things to take from that. The first two rates are dramatic and the groups are small. Together the three factors explain about 4.8% of all denials, so they're the sharpest signal on the page and account for almost none of the volume.
+
+The third runs the other way, and it's the more useful lesson. Declaring a layoff goes with a below-average denial rate. That isn't because layoffs help. Declaring one triggers a notification requirement, and the employers who reach that question are already working through it with counsel. An association is not a cause, and this is the cleanest example of it on the site.
+
+## Cohort size is most of the story
+
+Every rate prints the decided-case count behind it and a 95% range. Both are there for the same reason. A rate over a small group is mostly noise.
+
+The occupation and state rankings carry a minimum population you can change yourself. At 100 decided cases, 250 occupations and 54 states qualify, and moving the floor rearranges the leaderboard. That rearranging tells you how much of any ranking is real.
+
+<ScreenshotFigure
+  src="/images/content/shots/by-state.webp"
+  alt="The state map, showing volume, approval rate, median days and median wage per state"
+  caption="DOL works one national queue, so a state ranking shows where denials land, not where cases are treated differently."
+  step={2}
+/>
+
+Band width matters the same way. The highest offered-wage rate is 7.26%, at $40k to $50k, on 16,436 cases. Averaged into the five wide bands DOL's own reporting suggests, that peak vanishes inside a bucket reporting 5.22%. Neither number is wrong. The narrow one shows you something.
+
+Year matters too, and it moves a long way on nothing an applicant controls. FY2024 came in at 4.65%, FY2025 at 1.78%, FY2026 at 3.59%. A rate quoted without its year is worth little.
+
+## Why there is no single risk score
+
+The factors aren't independent. Wage tracks occupation, occupation tracks employer, and employer tracks who files with counsel. Multiplying them together would produce one confident-looking number built on double counting.
+
+So the rates are published unblended, and the page says so above the bars. A single score would look more finished without being any more accurate.
+
+## How long cases have sat at each review stage
+
+The second page is a live count rather than a historical rate. Of 95,913 pending PERM cases, 5,787 are at something other than the ordinary queue, which is about 6%.
+
+<ScreenshotFigure
+  src="/images/content/shots/rfi-audit.webp"
+  alt="Review stage counts with the median days since filing for each stage"
+  caption="Counts come from DOL's own case status system, read daily. The quarterly disclosure files hold only decided cases, so none of this can be built from them."
+  step={3}
+/>
+
+| Stage | Cases | Median days since filing | Middle 80% |
+|---|---|---|---|
+| Analyst review | 90,124 | 155 | 22 to 282 |
+| Application on hold | 1,855 | 181 | 157 to 198 |
+| RFI issued | 1,091 | 356 | 301 to 422 |
+| Reconsideration appeals | 2,340 | 433 | 378 to 552 |
+| BALCA appeals | 357 | 686 | 460 to 743 |
+| NORD issued | 121 | 691 | 657 to 735 |
+
+Read that as a map of where in a case's life you find each stage, not as how long a stage lasts. Appeals sit late for a mechanical reason: a case can't reach BALCA without first being filed, reviewed and denied.
+
+Treat the review counts as a floor. Every case at a review or appeal stage was read within the past week, but the 90,000-case analyst queue was not, so anything that has moved out of it since its own last read is still counted there.
+
+Each stage has its own page listing the cases that have waited longest, oldest filing first, with the case number, employer and job title DOL's live record carries. The wage, the law firm and the worksite state only arrive at publication, so they're absent there rather than blank.
+
+<Callout type="warning" title="One row is a single employer">
+Application on hold looks like a general condition and isn't. 1,831 of those 1,855 cases, about 99%, belong to one company. The page says so on the row. A stage count is only as general as the employers inside it.
+</Callout>
+
+## The two RFI outcome numbers, and which one you want
+
+Of 3,431 RFIs in the outcome tally, 1,799 ended in certification. That's 52.4% of every RFI issued. But 1,279 of them have no decision yet, so among the ones that actually reached a decision, 84% were certified.
+
+Both are true. The first answers how many have ended, the second answers how these usually end. Half of the resolved ones took 33 days or less, which is a description of that group and not a schedule for any case in it.
+
+## What this can't tell you
+
+- **Whether your case gets an RFI or a denial.** These are rates for named groups. Belonging to a group with a 9% rate doesn't make your case 9% likely.
+- **Why any case was denied.** DOL publishes the outcome, not the reasoning.
+- **Whether RFIs are becoming more common.** Each case is observed once, so the data sees where a case stands, never when it entered or left a stage.
+- **How many PERM cases get audited.** An audit has no status string of its own in the case-status feed, and no audit rate is published anywhere we can source. DOL does publish a live Audit Review queue on its [processing times page](/perm-processing-times), so audits are plainly still being worked.
+- **When your own case will be decided.** That's the [queue estimator](/perm-queue), and its median error is around 50 days.
+
+Denial rates come from DOL's quarterly disclosure files, currently through 30 June 2026. Stage counts come from DOL's case status system, refreshed daily.
+
+## Related
+
+- [What each PERM status means](/guides/what-perm-case-statuses-mean), for the strings DOL prints with no glossary
+- [Look up your own case](/perm-case-status), which takes PERM, wage request and LCA numbers
+- [Where your filing month sits](/guides/where-your-filing-month-sits), for the queue rather than the exceptions

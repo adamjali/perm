@@ -1,0 +1,117 @@
+---
+title: "Which Data Page Answers Which Question"
+description: "A map of the data pages on this site, one line each, with an honest note on what the whole set can't tell you."
+date: "2026-09-03"
+author: "Adam J Ali"
+image: "/images/content/shots/tools-overview.webp"
+imageAlt: "The data overview, showing DOL's current queue position and the calculators"
+tags: ["data", "navigation", "perm", "pwd", "lca", "guide"]
+category: "data"
+seoTitle: "Which PERM Data Page Answers Which Question"
+seoDescription: "One line per data page: case lookups, the queue, employers and wages, denial rates, the visa bulletin. Plus what none of them can tell you."
+published: true
+---
+
+There are around twenty data pages here. Most people need two of them, and which two depends on whether you're holding a case number or trying to understand the queue around it.
+
+This is the whole map, one line per page. No account is needed for any of it.
+
+## If you have a case number
+
+Everything starts at the [case status lookup](/perm-case-status). One box takes every DOL case number: PERM (`G-100-`, and the older `A-` form), prevailing wage requests (`P-100-`), and H-1B labor condition applications (`I-200-` and `I-203-`). It works out the program from the prefix.
+
+Pending cases are looked up for all three. If the number isn't already held here, the site asks DOL's own case system at that moment and records the answer, so a case filed last week still resolves.
+
+<ScreenshotFigure
+  src="/images/content/shots/case-status-entry.webp"
+  alt="The case status lookup, one box accepting PERM, wage request and LCA numbers"
+  caption="The prefix decides the program. You don't pick a tool first."
+  step={1}
+/>
+
+| Page | The question it answers |
+|---|---|
+| [Case status](/perm-case-status) | What does DOL say about this exact case number today? |
+| [Case search](/perm-cases) | Which PERM cases match this employer, firm, state or occupation? |
+| [Wage requests](/pwd-cases) | Which ETA-9141 requests has this employer filed, and what wage came back? |
+| [H-1B LCAs](/lca-cases) | Which labor condition applications has this employer filed? |
+| [Calculators](/calculators) | Given my dates, what are my deadlines and my likely decision window? |
+
+On a case that can still change, you can leave an email address and hear when DOL's status moves. It works for all three programs, it's double opt-in, and it's one email per change.
+
+## If you want to know where the queue stands
+
+| Page | The question it answers |
+|---|---|
+| [Queue backlog](/perm-queue) | How many cases are still undecided in each filing month, and which month is DOL working? |
+| [Processing times](/perm-processing-times) | What does DOL itself publish about how long each of its queues takes? |
+| [Daily activity](/perm-decision-activity) | How many decisions did DOL issue in the last few days, and on which cases? |
+
+<ScreenshotFigure
+  src="/images/content/shots/queue.webp"
+  alt="The PERM queue backlog, drawn month by month with DOL's current position marked"
+  caption="Cleared months solid, waiting months empty. The position is a month, not a date."
+  step={2}
+/>
+
+Two things worth knowing before you read a queue figure. DOL clears a filing month over weeks, alphabetically by employer inside it, so being in the current month doesn't mean this week. And DOL runs two prevailing wage queues, one for cases using the standard federal wage survey and one for everything else. They move at different speeds and a case record doesn't say which queue a request is in, so both get shown.
+
+## If you want to know about an employer, a firm, or a job
+
+| Page | The question it answers |
+|---|---|
+| [Employers](/perm-employers) | How much does this company file, and how does it do? |
+| [Law firms](/perm-attorneys) | How much does this firm file, and how does it do? |
+| [Wages](/perm-wages) | What do PERM cases in this occupation actually pay? |
+| [By state](/perm-by-state) | What gets filed where, and at what wage? |
+
+<ScreenshotFigure
+  src="/images/content/shots/employers-index.webp"
+  alt="The employer index, sortable by filings, approval rate and median days"
+  caption="Volume, approval rate and median days per sponsor, all from DOL's published files."
+  step={3}
+/>
+
+One caution that applies to all four. DOL prints some large firms under several spellings, so a single practice can appear more than once with its volume split between the entries. Treat a rank as approximate.
+
+## If you want to know what gets denied
+
+| Page | The question it answers |
+|---|---|
+| [Denial rates](/perm-denial-risk) | Which measured factors go with a higher denial rate? |
+| [RFIs and audits](/perm-rfi-audit) | How many cases sit at each review stage, and what happens after an RFI? |
+
+We publish the measured rates and refuse to blend them into a single risk score. The factors aren't independent, so one number would read as precision the data can't support.
+
+## Reference
+
+| Page | The question it answers |
+|---|---|
+| [Priority dates](/tools/priority-date-calculator) | Is my priority date current, and how has the cutoff moved? |
+| [Methodology](/methodology) | Where does each figure come from, and what do we refuse to publish? |
+
+## What's actually behind all of it
+
+| Holding | Size |
+|---|---|
+| Decided prevailing wage determinations | about 634,600, with the wage, occupation, worksite state and validity |
+| PERM case statuses | about 414,000 |
+| Live wage requests | about 20,000 |
+| H-1B LCAs | about 49,000 |
+| Visa bulletin history | 84 months |
+
+Decided detail runs through 30 June 2026, and received dates go back to 2021. Everything refreshes daily from DOL.
+
+## What none of these pages can tell you
+
+- **A date for your case.** The estimates are estimates. Our own median error is around 50 days, and we say so wherever a date appears.
+- **Which wage queue a request is in.** DOL doesn't put it on the record.
+- **Why.** DOL publishes what it decided, never its reasoning. No page here can tell you why a case was audited or denied.
+- **Anything current in the decided files.** Wage, occupation and duration arrive with DOL's quarterly publication, so a case decided last month has a live status here and no published detail yet.
+- **What your employer or attorney intends.** A filing is a legal step, not a plan you can read.
+
+## Related
+
+- [How to read the PERM data](/guides/reading-the-perm-data), for what each number on the overview means
+- [Look up a PERM case by number](/guides/look-up-a-perm-case-by-number)
+- [Where your filing month sits](/guides/where-your-filing-month-sits)
