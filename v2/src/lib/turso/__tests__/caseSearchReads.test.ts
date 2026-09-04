@@ -85,8 +85,28 @@ describe("permLeadIndex", () => {
     expect(permLeadIndex(state, true)).toBe("idx_pc_state_st_dec");
     expect(permLeadIndex(firm, false)).toBe("idx_pc_att_dec");
     expect(permLeadIndex(firm, true)).toBe("idx_pc_att_st_dec");
-    expect(permLeadIndex(occupation, false)).toBe("idx_pc_soc_dec");
-    expect(permLeadIndex(occupation, true)).toBe("idx_pc_soc_st_dec");
+    // The occupation pair is on `substr(soc_code, 1, 7)`, matching the WHERE
+    // clause. `idx_pc_soc_dec` is on the bare column and cannot serve the
+    // expression, so pinning it would scan the whole index while reading like
+    // a seek.
+    expect(permLeadIndex(occupation, false)).toBe("idx_pc_socg_dec");
+    expect(permLeadIndex(occupation, true)).toBe("idx_pc_socg_st_dec");
+  });
+
+  it("prefers a second equality over the outcome, because it is far more selective", () => {
+    // Measured on the biggest firm in the corpus, fresh request each time:
+    //   attorney_slug + state='WY' through idx_pc_att_dec   48,166 rows 17.11 s
+    //   the same through idx_pc_att_state_dec                    5 rows  0.55 s
+    // An outcome bucket cannot narrow like that, so when both are present the
+    // pair of equalities takes the index and the status is tested on what is
+    // left.
+    expect(permLeadIndex(firm, true, { state: "CA" })).toBe("idx_pc_att_state_dec");
+    expect(permLeadIndex(firm, true, { socCode: "15-1252" })).toBe("idx_pc_att_soc_dec");
+    expect(permLeadIndex(state, true, { socCode: "15-1252" })).toBe("idx_pc_state_soc_dec");
+    expect(permLeadIndex(occupation, true, { state: "CA" })).toBe("idx_pc_state_soc_dec");
+    expect(permLeadIndex(state, true, { firmSlug: "fragomen" })).toBe("idx_pc_att_state_dec");
+    // An empty string is not a filter, and must not steal the plan.
+    expect(permLeadIndex(firm, true, { state: "" })).toBe("idx_pc_att_st_dec");
   });
 });
 
@@ -149,7 +169,13 @@ describe("readPermPublished, employer lead", () => {
       "status = ?",
       "attorney_slug = ?",
       "state = ?",
-      "soc_code = ?",
+      // THE 6-DIGIT GROUP, NOT AN EXACT MATCH. `perm_cases` holds 302,081
+      // dotted codes (`15-1252.00`) and 71,858 bare ones (`15-1252`), so an
+      // equality matches one spelling and silently misses the other. The
+      // equality leads have always used the group; the employer path used to
+      // use `soc_code = ?`, which meant the same occupation answered
+      // differently depending on which box the reader filled.
+      "substr(soc_code, 1, 7) = ?",
       "fiscal_year = ?",
       "wage >= ?",
       "wage <= ?",
@@ -237,25 +263,45 @@ describe("readPermPublished, equality leads", () => {
     expect(rows).not.toHaveBeenCalled();
   });
 
-  it("strips the narrowing an equality lead cannot carry, even if the caller sends it", async () => {
-    // The route drops these and the UI greys them out. This makes it
-    // structural: a state search plus a wage bound is the 67,742-row,
-    // 44.7-second walk, and it must not be reachable from any caller.
+  it("carries every narrowing an equality lead is given, and seeks the pair", async () => {
+    // THE INVERSE OF WHAT THIS ASSERTED, and the inversion is the point. These
+    // used to be stripped here so that a state search plus a wage bound could
+    // not be reached from any caller. The cost that justified it was a
+    // SELECTIVE second equality walking the lead's whole slice: firm plus
+    // `state='WY'` read 48,166 rows in 17.11 s to return four cases.
+    //
+    // `idx_pc_state_soc_dec` and its two siblings make that pair the leading
+    // columns of an index, so the same shape reads 5 rows in 0.55 s. Stripping
+    // the filters now would only mean returning cases the reader explicitly
+    // excluded.
     await readPermPublished({
       lead: state,
-      narrow: { title: "engineer", from: "2024-01", to: "2024-12", wageMin: 100000, socCode: "x" },
+      narrow: {
+        title: "engineer",
+        from: "2024-01",
+        to: "2024-12",
+        wageMin: 100000,
+        socCode: "15-1252",
+      },
       limit: 100,
     });
     // Read the WHERE clause, not the whole statement: every one of these
-    // column names also appears in the SELECT list, so a naive `not.toContain`
-    // over the string fails on a correct query and would be "fixed" by
-    // weakening it.
+    // column names also appears in the SELECT list, so a naive `toContain`
+    // over the string would pass on a query that filtered by none of them.
     const where = firstPass().sql.split(" WHERE ")[1] ?? "";
-    expect(where).not.toContain("job_title LIKE");
-    expect(where).not.toContain("received_date");
-    expect(where).not.toContain("wage >=");
-    expect(where).not.toContain("soc_code");
-    expect(firstPass().args).toEqual(["CA", 100]);
+    for (const clause of [
+      "state = ?",
+      "substr(soc_code, 1, 7) = ?",
+      "job_title LIKE",
+      "received_date",
+      "wage >= ?",
+    ]) {
+      expect([clause, where.includes(clause)]).toEqual([clause, true]);
+    }
+    // AND THE PAIR PICKS THE COMPOSITE INDEX. Without this the filters would
+    // be honoured by walking, which is the slow shape the restriction existed
+    // to prevent.
+    expect(firstPass().sql).toContain("INDEXED BY idx_pc_state_soc_dec");
   });
 
   it("keeps the decided-date range, because the index carries it", async () => {
@@ -264,8 +310,13 @@ describe("readPermPublished, equality leads", () => {
       narrow: { decidedFrom: "2025-01", decidedTo: "2025-03" },
       limit: 100,
     });
-    expect(firstPass().sql).toMatch(/INDEXED BY idx_pc_soc_dec WHERE soc_code = \?/);
-    expect(firstPass().args).toEqual(["15-1252.00", "2025-01-01", "2025-04-01", 100]);
+    expect(firstPass().sql).toMatch(
+      /INDEXED BY idx_pc_socg_dec WHERE substr\(soc_code, 1, 7\) = \?/,
+    );
+    // THE NEEDLE IS THE GROUP, NOT THE LEAD'S OWN SPELLING. `substr(x, 1, 7)`
+    // is seven characters, so binding `15-1252.00` compares ten against seven
+    // and matches nothing. This assertion is what caught it.
+    expect(firstPass().args).toEqual(["15-1252", "2025-01-01", "2025-04-01", 100]);
   });
 });
 
@@ -371,13 +422,18 @@ describe("flagLeadIndex", () => {
     expect(flagLeadIndex("lca", employer, true)).toBe("lca_cases_emp");
   });
 
-  it("has no index for a firm, because the column was never ingested", () => {
-    // DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` in both the ETA-9035 and the
-    // ETA-9141 disclosure files. `scripts/ingest_flag_disclosure.py` does not
-    // map it, so there is no column here to seek - a missing ingest, not a
-    // missing index, and the two must not be confused when this is revisited.
-    expect(flagLeadIndex("pwd", firm, false)).toBeNull();
-    expect(flagLeadIndex("lca", firm, true)).toBeNull();
+  it("seeks a firm on both programs, now that the column is ingested", () => {
+    // THIS USED TO ASSERT NULL, and the reason was true at the time: DOL
+    // publishes `LAWFIRM_NAME_BUSINESS_NAME` in both the ETA-9035 and the
+    // ETA-9141 disclosure files, and `ingest_flag_disclosure.py` had never
+    // mapped it, so there was no column here to seek. A missing ingest, not a
+    // missing index. The ingest reads it now and backfills it with
+    // `--backfill-attorney`, so a firm lead reaches all three programs and a
+    // law firm's page can stop implying it files no wage requests.
+    expect(flagLeadIndex("pwd", firm, false)).toBe("pwd_cases_att_dec");
+    expect(flagLeadIndex("pwd", firm, true)).toBe("pwd_cases_att_st_dec");
+    expect(flagLeadIndex("lca", firm, false)).toBe("lca_cases_att_dec");
+    expect(flagLeadIndex("lca", firm, true)).toBe("lca_cases_att_st_dec");
   });
 });
 
@@ -531,11 +587,15 @@ describe("readFlagPublished, equality leads", () => {
     expect(firstPass().args).toEqual(["CA", "PERM", 100]);
   });
 
-  it("reads nothing at all under a firm lead", async () => {
-    // Not an empty statement: no statement. A read guaranteed to find nothing
-    // is still a read Turso charges for.
-    expect(await readFlagPublished("lca", firm, {}, 100)).toEqual({ rows: [], windowed: false });
-    expect(rows).not.toHaveBeenCalled();
+  it("seeks the firm rather than reading nothing, now that it is ingested", async () => {
+    // This asserted "no statement at all", which was right while the column
+    // did not exist: a read guaranteed to find nothing is still a read Turso
+    // charges for. The column is ingested now, so the correct behaviour is a
+    // seek on the firm index.
+    await readFlagPublished("lca", firm, {}, 100);
+    const sql = (rows as unknown as { mock: { calls: unknown[][] } }).mock.calls[0]?.[0] as string;
+    expect(sql).toContain("INDEXED BY lca_cases_att_dec");
+    expect(sql).toContain("attorney_slug = ?");
   });
 
   it("reads nothing when the occupation lead is not a SOC code", async () => {

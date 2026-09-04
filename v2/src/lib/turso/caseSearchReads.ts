@@ -326,18 +326,44 @@ async function readEmployerSlice<Db, Out>(
  * out of the SQL: the pairing of lead to index IS the feature, and a test that
  * only checks the string would pass over a swap of two index names.
  */
-export function permLeadIndex(lead: Lead, hasOutcome: boolean): string {
+export function permLeadIndex(
+  lead: Lead,
+  hasOutcome: boolean,
+  narrow: UnifiedNarrow = {},
+): string {
+  // A SECOND EQUALITY BEATS THE OUTCOME, because it is far more selective.
+  // Measured on the biggest firm in the corpus: `attorney_slug + state='WY'`
+  // read 48,166 rows in 17.11 s through `idx_pc_att_dec` (walking the firm's
+  // whole slice to return four rows) and 5 rows in 0.55 s through
+  // `idx_pc_att_state_dec`. `state='CA' + a rare SOC` went 67,743 rows / 8.82 s
+  // -> 0 rows / 0.43 s. An outcome bucket cannot come close to that, so when
+  // both are present the pair of equalities wins and the status is tested on
+  // the handful of rows the composite already narrowed to.
+  const hasState = narrow.state !== undefined && narrow.state !== "";
+  const hasSoc = narrow.socCode !== undefined && narrow.socCode !== "";
+  const hasFirm = narrow.firmSlug !== undefined && narrow.firmSlug !== "";
+
   switch (lead.kind) {
     case "employer":
       // A RANGE, so the status column of the three-column index can never be
       // seeked. The narrower index is the cheaper walk.
       return "idx_pc_emp_dec";
     case "firm":
+      if (hasState) return "idx_pc_att_state_dec";
+      if (hasSoc) return "idx_pc_att_soc_dec";
       return hasOutcome ? "idx_pc_att_st_dec" : "idx_pc_att_dec";
     case "state":
+      if (hasSoc) return "idx_pc_state_soc_dec";
+      if (hasFirm) return "idx_pc_att_state_dec";
       return hasOutcome ? "idx_pc_state_st_dec" : "idx_pc_state_dec";
     case "occupation":
-      return hasOutcome ? "idx_pc_soc_st_dec" : "idx_pc_soc_dec";
+      if (hasState) return "idx_pc_state_soc_dec";
+      if (hasFirm) return "idx_pc_att_soc_dec";
+      // The `socg` pair is on `substr(soc_code, 1, 7)`, matching the WHERE
+      // clause. The older `idx_pc_soc_dec` is on the bare column and cannot
+      // serve the expression, so pinning it would force a scan of the whole
+      // index while looking like a seek in the code.
+      return hasOutcome ? "idx_pc_socg_st_dec" : "idx_pc_socg_dec";
     case "case":
       // A point read on the primary key; this function is never asked.
       return "sqlite_autoindex_perm_cases_1";
@@ -375,7 +401,7 @@ export async function readPermPublished(args: PermReadArgs): Promise<SliceResult
     return empty;
   }
   const bucket = narrow.outcome ? OUTCOME_STATUSES.perm_cases[narrow.outcome] : undefined;
-  const index = permLeadIndex(lead, bucket !== undefined);
+  const index = permLeadIndex(lead, bucket !== undefined, narrow);
 
   const status = bucket ? statusClause("status", bucket) : null;
 
@@ -410,7 +436,12 @@ export async function readPermPublished(args: PermReadArgs): Promise<SliceResult
       restParams.push(narrow.state);
     }
     if (narrow.socCode) {
-      restConds.push("soc_code = ?");
+      // THE GROUP, NOT AN EXACT MATCH, and the same rule the equality leads
+      // use. `perm_cases` holds 302,081 dotted codes and 71,858 bare ones, so
+      // `soc_code = '15-1252.00'` silently misses every bare row and
+      // `= '15-1252'` misses every dotted one. One needle must not answer
+      // differently depending on which box the reader filled.
+      restConds.push(`${SOC_GROUP_EXPR} = ?`);
       restParams.push(narrow.socCode);
     }
     if (narrow.fiscalYear) {
@@ -467,8 +498,25 @@ export async function readPermPublished(args: PermReadArgs): Promise<SliceResult
     conds.push("state = ?");
     params.push(lead.value);
   } else if (lead.kind === "occupation") {
-    conds.push("soc_code = ?");
-    params.push(lead.value);
+    // THE 6-DIGIT GROUP, NOT AN EXACT MATCH, and this was a correctness bug
+    // rather than a performance one. `perm_cases` holds both spellings of the
+    // same occupation - 302,081 dotted (`15-1252.00`) and 71,858 bare
+    // (`15-1252`) - so `soc_code = ?` answers with whichever spelling the lead
+    // happened to resolve to and silently drops the other. Measured: SOC
+    // 13-2011 is 3,686 dotted plus 1,207 bare, so an exact match on the dotted
+    // form lost 24.7% of the accountants. 29-1141 lost 31%.
+    //
+    // `idx_pc_socg_dec` and `idx_pc_socg_st_dec` are on the same expression,
+    // so this stays a seek. The FLAG tables already did it this way; PERM was
+    // the odd one out.
+    // THE NEEDLE MUST BE THE GROUP TOO, not just the column. `substr(x, 1, 7)`
+    // yields `15-1252`, so binding the lead's own `15-1252.00` compares seven
+    // characters against ten and matches nothing at all. The FLAG path already
+    // resolved this with `socGroup`; a test caught PERM doing it wrong here.
+    const group = socGroup(lead.value);
+    if (!group) return empty;
+    conds.push(`${SOC_GROUP_EXPR} = ?`);
+    params.push(group);
   } else {
     return empty;
   }
@@ -476,19 +524,54 @@ export async function readPermPublished(args: PermReadArgs): Promise<SliceResult
     conds.push(status.cond);
     params.push(...status.params);
   }
-  // Under an equality lead the title and the filed-month range are stripped
-  // rather than trusted: both are walks of the whole slice, the UI turns them
-  // off, and this makes that structural instead of a convention two files
-  // apart have to agree on. The decided range survives because it is the last
-  // column of the same index.
-  const common = commonNarrowing(
-    {
-      ...(narrow.decidedFrom ? { decidedFrom: narrow.decidedFrom } : {}),
-      ...(narrow.decidedTo ? { decidedTo: narrow.decidedTo } : {}),
-    },
-    "received_date",
-    "decision_date",
-  );
+  // THE SECOND AND THIRD EQUALITIES, when the lead is not already one of them.
+  // These are what `permLeadIndex` just chose a composite index for, so they
+  // are seeked rather than tested: putting them in the WHERE is what lets the
+  // index do its job.
+  if (lead.kind !== "firm" && narrow.firmSlug) {
+    conds.push("attorney_slug = ?");
+    params.push(narrow.firmSlug);
+  }
+  if (lead.kind !== "state" && narrow.state) {
+    conds.push("state = ?");
+    params.push(narrow.state);
+  }
+  if (lead.kind !== "occupation" && narrow.socCode) {
+    conds.push(`${SOC_GROUP_EXPR} = ?`);
+    params.push(narrow.socCode);
+  }
+
+  // EVERY REMAINING FILTER IS PASSED THROUGH RATHER THAN STRIPPED.
+  //
+  // It used to drop the title and the filed-month range here, on the grounds
+  // that both walk the whole slice. That was true and it was measured, but it
+  // made the controls permanently dead on three of the five leads, and a
+  // reader who picked a law firm then found worksite state greyed out.
+  //
+  // What changed is the shape of the read, not the appetite for cost. The
+  // three composite indexes above turn the pair of equalities into a seek, so
+  // a title or a wage bound is now tested against the handful of rows that
+  // survive it rather than against 67,742 Californian cases. And the walk was
+  // never the disaster the old comment implied: `state='CA'` plus a title
+  // LIKE measured 0.57 s. The genuinely slow case was a SELECTIVE second
+  // equality, which is exactly what is now indexed.
+  if (narrow.fiscalYear) {
+    // TEXT in perm_cases, INTEGER in the flag disclosure tables. Binding a
+    // number here would compare an integer against a string and match nothing,
+    // silently.
+    conds.push("fiscal_year = ?");
+    params.push(narrow.fiscalYear);
+  }
+  if (narrow.wageMin !== undefined) {
+    conds.push("wage >= ?");
+    params.push(narrow.wageMin);
+  }
+  if (narrow.wageMax !== undefined) {
+    conds.push("wage <= ?");
+    params.push(narrow.wageMax);
+  }
+
+  const common = commonNarrowing(narrow, "received_date", "decision_date");
   conds.push(...common.conds);
   params.push(...common.params);
 
@@ -738,10 +821,10 @@ export function flagLeadIndex(
     case "firm":
       // DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` in the ETA-9035 and
       // ETA-9141 disclosure files - read off the FY2026 Q3 record layouts on
-      // 2026-09-03 - but `scripts/ingest_flag_disclosure.py` has never mapped
-      // it, so there is no column here to seek. Null rather than an empty
-      // result set, so the caller can say "not ingested" instead of "none".
-      return null;
+      // 2026-09-03 - and as of the same day the ingest reads it. Before that
+      // this returned null and the firm lead answered from the PERM file
+      // alone, which said "this firm files no wage requests" by omission.
+      return singleStatus ? `${t}_att_st_dec` : `${t}_att_dec`;
     case "case":
       // A point read on the primary key; this function is never asked.
       return null;
@@ -770,6 +853,9 @@ export async function readFlagPublished(
     const params: (string | number)[] = [];
     if (lead.kind === "state") {
       conds.push("worksite_state = ?");
+      params.push(lead.value);
+    } else if (lead.kind === "firm") {
+      conds.push("attorney_slug = ?");
       params.push(lead.value);
     } else if (lead.kind === "occupation") {
       const group = socGroup(lead.value);

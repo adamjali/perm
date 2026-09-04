@@ -891,7 +891,7 @@ export function UnifiedCaseSearch({
             {droppedList.map((k) => (
               <li key={k} className="text-sm leading-relaxed">
                 <b className="font-bold">{FILTER_LABEL[k]}:</b>{" "}
-                {refusalText(filterAvailability(data?.lead ?? null)[k].why ?? "walks-the-slice", k)}
+                {refusalText(filterAvailability(data?.lead ?? null)[k].why ?? "no-lead", k)}
               </li>
             ))}
           </ul>

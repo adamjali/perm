@@ -136,10 +136,7 @@ export type Refusal =
   | "one-case"
   /** The number itself says which program it belongs to. */
   | "number-names-program"
-  /** The field would be a filter the lead's index cannot carry: a slice walk. */
-  | "walks-the-slice"
-  /** Only DOL's PERM file carries the column this lead searches by. */
-  | "perm-only";
+  ;
 
 export interface FilterState {
   on: boolean;
@@ -150,25 +147,14 @@ export interface FilterState {
 export function refusalText(why: Refusal, key: FilterKey): string {
   switch (why) {
     case "no-lead":
-      return "Type an employer or a case number first, or pick a worksite state.";
+      return (
+        "Start with an employer or a case number, or search by law firm, " +
+        "worksite state or occupation."
+      );
     case "one-case":
       return "A case number finds one case, so there is nothing left to narrow.";
     case "number-names-program":
       return "The case number already says which program it is.";
-    case "perm-only":
-      return (
-        "DOL names the law firm in its PERM file only, so a firm search reads " +
-        "PERM. Search by worksite state or occupation to reach wage requests " +
-        "and LCAs as well."
-      );
-    case "walks-the-slice":
-      return (
-        `Narrowing by ${FILTER_LABEL[key].toLowerCase()} works under an employer, ` +
-        "whose filings are a few thousand rows. Under a firm, a state or an " +
-        "occupation it would read every case in that slice on every search: " +
-        "measured at 44.7 seconds for California. Add an employer, or make " +
-        `${FILTER_LABEL[key].toLowerCase()} the thing you search by.`
-      );
   }
 }
 
@@ -278,20 +264,33 @@ export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterS
 
   if (lead.kind === "employer") return all({ on: true });
 
-  // firm | state | occupation: one equality, and only what its index carries.
-  const out = all({ on: false, why: "walks-the-slice" });
-  out.outcome = { on: true };
-  out.decided = { on: true };
-  // A state or an occupation is a column all three published files carry, so
-  // the chips choose between three real sources. A firm is a column only the
-  // PERM file has been ingested for, so they would choose between one source
-  // and two empty ones.
-  out.programs = lead.kind === "firm" ? { on: false, why: "perm-only" } : { on: true };
-  // The field this lead IS stays "on" so the form does not grey out the box
-  // the reader just filled in.
-  if (lead.kind === "firm") out.firm = { on: true };
-  if (lead.kind === "state") out.state = { on: true };
-  if (lead.kind === "occupation") out.occupation = { on: true };
+  // firm | state | occupation: EVERY filter, because the index now carries the
+  // combinations that used to be walks.
+  //
+  // This block used to turn everything off with `walks-the-slice` except the
+  // outcome and a decided-date range, so picking a law firm greyed out
+  // worksite state. The cost argument behind it was real and measured, and it
+  // was about a SELECTIVE second equality: the biggest firm in the corpus plus
+  // `state='WY'` read 48,166 rows in 17.11 s through `idx_pc_att_dec`, walking
+  // the firm's whole slice to return four cases.
+  //
+  // Three composite indexes now cover exactly those pairs, and the same query
+  // reads 5 rows in 0.55 s. `state='CA'` plus a rare occupation went from
+  // 67,743 rows / 8.82 s to 0 rows / 0.43 s. The filters that still walk are
+  // the cheap per-row tests - a title LIKE over all of California measured
+  // 0.57 s - and they now run against whatever the pair of equalities left,
+  // which is usually a handful of rows.
+  //
+  // So the restriction is gone rather than relaxed. A control is disabled here
+  // only when the data genuinely cannot answer it, which is the next line.
+  const out = all({ on: true });
+  // ALL THREE LEADS NOW REACH ALL THREE PROGRAMS. The firm used to be the odd
+  // one out: DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` in the ETA-9035 and
+  // ETA-9141 files, and this site had simply never ingested the column, so a
+  // firm lead read the PERM file alone and said "this firm files no wage
+  // requests" by omission. `ingest_flag_disclosure.py --backfill-attorney`
+  // reads it now; measured on the FY2026 wage-request file, DOL fills it on
+  // 91.0% of rows.
   return out;
 }
 

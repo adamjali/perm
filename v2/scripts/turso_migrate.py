@@ -96,6 +96,29 @@ INDEXES = [
     "CREATE INDEX idx_pc_emp_st_dec    ON perm_cases(employer_slug, status, decision_date)",
     "CREATE INDEX idx_pc_att_dec       ON perm_cases(attorney_slug, decision_date)",
     "CREATE INDEX idx_pc_att_st_dec    ON perm_cases(attorney_slug, status, decision_date)",
+    # THE OCCUPATION PAIR IS ON THE 6-DIGIT GROUP, added 2026-09-03, and it
+    # fixed a correctness bug rather than a slow query. `perm_cases` holds both
+    # spellings of the same occupation - 302,081 dotted (`15-1252.00`) and
+    # 71,858 bare (`15-1252`) - so `soc_code = ?` answered with whichever the
+    # lead resolved to and silently dropped the rest. SOC 13-2011 is 3,686
+    # dotted plus 1,207 bare, so an exact match lost 24.7% of the accountants.
+    # `idx_pc_soc_dec` above is kept: it is on the bare column and cannot serve
+    # the expression, and dropping it would change other plans.
+    "CREATE INDEX idx_pc_socg_dec      ON perm_cases(substr(soc_code, 1, 7), decision_date)",
+    "CREATE INDEX idx_pc_socg_st_dec   ON perm_cases(substr(soc_code, 1, 7), status, decision_date)",
+    # TWO EQUALITIES AS A SEEK, added 2026-09-03. Before these, combining a
+    # lead with a second equality walked the lead's whole slice: the biggest
+    # firm plus `state='WY'` read 48,166 rows in 17.11 s to return four cases,
+    # and `state='CA'` plus a rare occupation read 67,743 in 8.82 s to return
+    # none. That cost is why the UI used to grey out worksite state the moment
+    # a law firm was picked. Through these the same reads are 5 rows / 0.55 s
+    # and 0 rows / 0.43 s, so every filter can now be combined.
+    #
+    # `decision_date` is last in each so `ORDER BY decision_date DESC` stays
+    # free, exactly as it is for the single-equality indexes above.
+    "CREATE INDEX idx_pc_att_state_dec ON perm_cases(attorney_slug, state, decision_date)",
+    "CREATE INDEX idx_pc_att_soc_dec   ON perm_cases(attorney_slug, substr(soc_code, 1, 7), decision_date)",
+    "CREATE INDEX idx_pc_state_soc_dec ON perm_cases(state, substr(soc_code, 1, 7), decision_date)",
     # COVERING INDEX for the /perm-wages band aggregation, added 2026-08-31.
     # Without it that GROUP BY was `SCAN perm_cases` over 373,939 rows plus a
     # temp B-tree and took 68s, which blew the query deadline TWICE and failed

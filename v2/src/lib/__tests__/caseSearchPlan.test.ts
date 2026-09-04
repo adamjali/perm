@@ -106,15 +106,20 @@ describe("filterAvailability", () => {
   });
 
   it.each(["firm", "state", "occupation"] as const)(
-    "gives a %s lead only the outcome, the decided range and its own field",
+    "lets a %s lead combine every filter, because the index now carries the pairs",
     (kind) => {
+      // THIS USED TO ASSERT THE OPPOSITE, and it was pinning a restriction
+      // rather than a fact. Picking a law firm greyed out worksite state, so
+      // "every case this firm filed in Texas" was unaskable.
+      //
+      // The cost argument was real: the biggest firm plus `state='WY'` read
+      // 48,166 rows in 17.11 s, walking the firm's whole slice to return four
+      // cases. Three composite indexes now make that pair a seek - 5 rows in
+      // 0.55 s - so the reason for the restriction is gone, not waived.
       const can = filterAvailability(leads[kind]!);
-      expect(can.outcome.on).toBe(true);
-      expect(can.decided.on).toBe(true);
-      expect(can[kind as FilterKey].on).toBe(true);
-      // The rest walk the slice.
-      for (const k of ["title", "filed", "fiscalYear", "wage"] as const) {
-        expect(can[k]).toEqual({ on: false, why: "walks-the-slice" });
+      for (const k of FILTER_KEYS) {
+        if (k === "programs") continue; // its own rule, asserted below
+        expect([kind, k, can[k].on]).toEqual([kind, k, true]);
       }
     },
   );
@@ -132,16 +137,27 @@ describe("filterAvailability", () => {
     },
   );
 
-  it("keeps the chips off under a firm lead, which is the only PERM-only one", () => {
-    expect(filterAvailability(leads.firm!).programs).toEqual({ on: false, why: "perm-only" });
+  it("lets a firm lead reach all three programs, now that the column is ingested", () => {
+    // The chips used to be off here with `perm-only`, and the reason was true:
+    // DOL publishes the firm for all three programs but this site had only
+    // ever ingested PERM's, so the chips would have offered one real source
+    // and two empty ones. The backfill reads it now - DOL fills it on 91.0% of
+    // the FY2026 wage-request rows - so the firm is no longer the odd lead out.
+    expect(filterAvailability(leads.firm!).programs.on).toBe(true);
   });
 
-  it("does not let one equality lead double as another one's filter", () => {
-    // Two equalities on `perm_cases` means the second is a walk of the first's
-    // slice: state plus occupation is the exact 44.7-second combination.
-    expect(filterAvailability(leads.state!).occupation.on).toBe(false);
-    expect(filterAvailability(leads.occupation!).state.on).toBe(false);
-    expect(filterAvailability(leads.firm!).state.on).toBe(false);
+  it("lets one equality lead take another as a filter, which is now a seek", () => {
+    // THE INVERSE OF WHAT THIS ASSERTED. Two equalities on `perm_cases` used
+    // to mean the second was a walk of the first's slice, so the combination
+    // was refused. That is what `idx_pc_att_state_dec`, `idx_pc_att_soc_dec`
+    // and `idx_pc_state_soc_dec` exist for: the pair is the leading two
+    // columns of an index, with `decision_date` last so the ordering stays
+    // free. Measured before and after on the same rows, fresh request each:
+    //   firm + state='WY'   48,166 rows / 17.11 s  ->  5 rows / 0.55 s
+    //   state='CA' + a SOC  67,743 rows /  8.82 s  ->  0 rows / 0.43 s
+    expect(filterAvailability(leads.state!).occupation.on).toBe(true);
+    expect(filterAvailability(leads.occupation!).state.on).toBe(true);
+    expect(filterAvailability(leads.firm!).state.on).toBe(true);
   });
 });
 
@@ -162,13 +178,16 @@ describe("availableOutcomes", () => {
 
 describe("refusalText", () => {
   it("names the alternative in every reason, never just the refusal", () => {
-    for (const why of ["no-lead", "one-case", "number-names-program", "perm-only", "walks-the-slice"] as const) {
+    for (const why of ["no-lead", "one-case", "number-names-program"] as const) {
       const text = refusalText(why, "wage");
       expect(text.length).toBeGreaterThan(20);
       // No em-dash: house style, and it is the loudest machine-written tell.
       expect(text).not.toContain("—");
     }
-    expect(refusalText("walks-the-slice", "wage")).toContain("employer");
+    // Every reason names a way forward. `walks-the-slice` and `perm-only` are
+    // gone: nothing sets them any more, and a refusal reason no code can
+    // produce is documentation that lies.
+    expect(refusalText("no-lead", "wage")).toContain("law firm");
   });
 });
 

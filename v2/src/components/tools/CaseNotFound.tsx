@@ -12,6 +12,7 @@ import type { CohortMonth } from "@/lib/liveQueue";
 import type { Wall } from "@/lib/casePosition";
 import type { ParsedCaseNumber } from "@/lib/permCaseNumber";
 import { CASE_NUMBER_ACCURACY } from "@/lib/permCaseNumber";
+import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
 
 /**
  * A case number we hold no record for. A real state, not an error.
@@ -80,12 +81,17 @@ export function CaseNotFound({
         <b className="font-mono text-primary-on-ink">{caseNumber}</b>. That is
         not a statement about the case. It means this project has not got it,
         and{" "}
+        {/* THE CASE-STATUS SEARCH, NOT THE PROCESSING-TIMES PAGE. The link
+            says "DOL's own system" is the authority on THIS NUMBER, and sent
+            the reader to a page of queue averages that cannot look a case up
+            at all. The wage-request and LCA equivalents already used the right
+            one; the PERM pair did not. */}
         <a
-          href="https://flag.dol.gov/processingtimes"
+          href={DOL_CASE_STATUS_URL}
           rel="noopener noreferrer"
           className="underline underline-offset-4 decoration-2"
         >
-          DOL&apos;s own system
+          DOL&apos;s own case-status search
         </a>{" "}
         is the authority either way.
       </InsightLede>

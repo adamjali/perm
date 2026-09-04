@@ -32,6 +32,7 @@ import type { CaseLookupResult } from "@/lib/turso/caseLookup";
 import type { CaseWageContext, CohortDuration } from "@/lib/turso/caseContext";
 import type { CohortMonth } from "@/lib/liveQueue";
 import { cn } from "@/lib/utils";
+import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
 
 /**
  * Everything this project can honestly say about one case, arranged.
@@ -181,8 +182,12 @@ export function CaseStatusResult({
             , on {formatAsOf(check.date)}, and it has not been looked at since.
             A case can move in that time, so if something has changed recently
             it will show on DOL&apos;s own status page before it shows here.{" "}
+            {/* The sentence above promises "DOL's own status page", which is
+                the case-status search. It pointed at the processing-times
+                page, which publishes queue averages and cannot show one
+                case. */}
             <a
-              href="https://flag.dol.gov/processingtimes"
+              href={DOL_CASE_STATUS_URL}
               rel="noopener noreferrer"
               className="font-bold underline underline-offset-2 hover:text-primary"
             >
