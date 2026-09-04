@@ -221,6 +221,14 @@ FRESHNESS_MAX_AGE_DAYS = 120
 
 
 def table_ddl(table: str) -> list[str]:
+    """The CREATE TABLE only.
+
+    SPLIT FROM THE INDEXES ON PURPOSE. `ensure_columns` has to run between the
+    two: an index naming a column the live table has not got is a hard error,
+    and the first dispatch of the attorney backfill died on exactly that -
+    `no such column: attorney_slug` - because the index statements ran before
+    the ALTER that adds it. Table, then columns, then indexes.
+    """
     return [
         f"""CREATE TABLE IF NOT EXISTS {table} (
              case_number     TEXT PRIMARY KEY,
@@ -240,6 +248,12 @@ def table_ddl(table: str) -> list[str]:
              attorney_slug   TEXT,
              source_file     TEXT,
              fiscal_year     INTEGER)""",
+    ]
+
+
+def index_ddl(table: str) -> list[str]:
+    """Every index, applied AFTER `ensure_columns`."""
+    return [
         # The employer searches are a PREFIX RANGE on employer_slug, so rows
         # come out slug-ordered and SQLite must sort them to honour
         # `ORDER BY received_date DESC`. That temp B-tree is inherent to a
@@ -899,26 +913,12 @@ def main() -> int:
         # modes, so they can run on a laptop with no credentials.
         db = Turso()
         prior = read_load_record(db, args.program, name)
-        if prior and prior.get("sha256") == sha and not args.force:
-            db.script(table_ddl(table))
-            ensure_columns(db, table)
-            have = count_for_file(db, table, name)
-            if have == int(prior.get("rows") or -1):
-                log(f"{name} unchanged since {prior.get('loadedAt')} (sha256 match, "
-                    f"{have:,} rows still present); skipping the write")
-                write_summary_doc(db, args.program, table)
-                if args.fy:
-                    return 0
-                stamp_freshness(db, cfg["freshness"], as_of=prior.get("asOf"),
-                                source=cfg["source"], cadence="Quarterly",
-                                note=f"{have:,} cases, {name} (unchanged)",
-                                max_age_days=FRESHNESS_MAX_AGE_DAYS)
-                record_run(db, script, status="ok", rows_written=0,
-                           note=f"{name} unchanged (sha256 match)", started_at=started)
-                return 0
-            log(f"  {name} hash matches the last load but the table holds {have:,} of "
-                f"{int(prior.get('rows') or 0):,} rows; reloading")
-
+        # BEFORE THE HASH CHECK, because a backfill is not a load. The file
+        # is unchanged by definition - that is the whole point, the rows are
+        # already there and only two columns are missing - so leaving this
+        # after the sha-match branch meant it returned "unchanged; skipping"
+        # and never ran. Caught by dispatching it once rather than by reading
+        # the flow.
         if args.backfill_attorney:
             # THE INDEXES ARE CREATED AFTER, DELIBERATELY. An UPDATE rewrites
             # the table row plus every index containing a changed column, so
@@ -954,9 +954,33 @@ def main() -> int:
                        started_at=started)
             return 0
 
+        if prior and prior.get("sha256") == sha and not args.force:
+            # Table, then columns, then indexes. An index naming a column the
+            # live table has not got is a hard error.
+            db.script(table_ddl(table))
+            ensure_columns(db, table)
+            db.script(index_ddl(table))
+            have = count_for_file(db, table, name)
+            if have == int(prior.get("rows") or -1):
+                log(f"{name} unchanged since {prior.get('loadedAt')} (sha256 match, "
+                    f"{have:,} rows still present); skipping the write")
+                write_summary_doc(db, args.program, table)
+                if args.fy:
+                    return 0
+                stamp_freshness(db, cfg["freshness"], as_of=prior.get("asOf"),
+                                source=cfg["source"], cadence="Quarterly",
+                                note=f"{have:,} cases, {name} (unchanged)",
+                                max_age_days=FRESHNESS_MAX_AGE_DAYS)
+                record_run(db, script, status="ok", rows_written=0,
+                           note=f"{name} unchanged (sha256 match)", started_at=started)
+                return 0
+            log(f"  {name} hash matches the last load but the table holds {have:,} of "
+                f"{int(prior.get('rows') or 0):,} rows; reloading")
+
         log(f"Loading {name} into {table}")
         db.script(table_ddl(table))
         ensure_columns(db, table)
+        db.script(index_ddl(table))
         written = 0
         try:
             written = write_cases(db, table, iter_cases(path, cfg, stats), pause=args.pause)
