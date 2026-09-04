@@ -748,6 +748,15 @@ def count_for_file(db: Turso, table: str, source_file: str) -> int:
     return int(db.scalar(f"SELECT count(*) FROM {table} WHERE source_file = ?", [source_file]) or 0)
 
 
+# One UPDATE carries this many rows. 200 x 3 parameters is 600 per statement,
+# comfortably inside any bind limit, and it is the batching that matters:
+# 500 SEPARATE update statements in one request measured 986 rows per 20
+# seconds against production, which is 3.6 hours for pwd_cases alone and over
+# the workflow's own timeout. The cost was per STATEMENT, not per request.
+BACKFILL_ROWS_PER_STMT = 200
+BACKFILL_STMTS_PER_REQUEST = 8
+
+
 def backfill_attorney(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> int:
     """Write ONLY the two attorney columns onto rows that already exist.
 
@@ -760,16 +769,42 @@ def backfill_attorney(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S)
     this runs, so the backfill costs one write per row: about 1.07M, ten times
     cheaper for the same result.
 
+    ONE STATEMENT PER BATCH, NOT ONE PER ROW. A `CASE case_number WHEN ...`
+    updates the whole batch in a single statement whose `WHERE ... IN (...)` is
+    a primary-key seek per row. The first version sent 500 individual UPDATEs
+    per request and managed 986 rows per 20 seconds; the work was in the
+    per-statement overhead, not the network.
+
     A case in the file that is not in the table is simply not updated. That is
     correct rather than a gap: this is a backfill of rows the ordinary load
     already wrote, and a genuinely new case arrives through that load with its
     firm already on it.
     """
     pending: list[dict] = []
+    batch: list[dict] = []
     seen = 0
     t0 = time.time()
 
-    def flush() -> None:
+    def flush_stmt() -> None:
+        nonlocal batch
+        if not batch:
+            return
+        whens = " ".join(["WHEN ? THEN ?"] * len(batch))
+        holes = ",".join(["?"] * len(batch))
+        sql = (f"UPDATE {table} SET "
+               f"attorney_name = CASE case_number {whens} END, "
+               f"attorney_slug = CASE case_number {whens} END "
+               f"WHERE case_number IN ({holes})")
+        args: list = []
+        for r in batch:
+            args += [lit(r["case_number"]), lit(r["attorney_name"])]
+        for r in batch:
+            args += [lit(r["case_number"]), lit(r["attorney_slug"])]
+        args += [lit(r["case_number"]) for r in batch]
+        pending.append({"type": "execute", "stmt": {"sql": sql, "args": args}})
+        batch = []
+
+    def flush_request() -> None:
         nonlocal pending
         if not pending:
             return
@@ -779,21 +814,17 @@ def backfill_attorney(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S)
             time.sleep(pause)
 
     for row in rows:
+        batch.append(row)
         seen += 1
-        pending.append({
-            "type": "execute",
-            "stmt": {
-                "sql": (f"UPDATE {table} SET attorney_name = ?, attorney_slug = ? "
-                        "WHERE case_number = ?"),
-                "args": [lit(row["attorney_name"]), lit(row["attorney_slug"]),
-                         lit(row["case_number"])],
-            },
-        })
-        if len(pending) >= ROWS_PER_STMT:
-            flush()
-            if seen % 50_000 == 0:
-                log(f"  {seen:,} rows in {time.time() - t0:,.0f}s")
-    flush()
+        if len(batch) >= BACKFILL_ROWS_PER_STMT:
+            flush_stmt()
+        if len(pending) >= BACKFILL_STMTS_PER_REQUEST:
+            flush_request()
+            if seen % 50_000 < BACKFILL_ROWS_PER_STMT * BACKFILL_STMTS_PER_REQUEST:
+                rate = seen / max(1e-9, time.time() - t0)
+                log(f"  {seen:,} rows in {time.time() - t0:,.0f}s ({rate:,.0f}/s)")
+    flush_stmt()
+    flush_request()
     log(f"  backfilled {seen:,} rows in {time.time() - t0:,.0f}s")
     return seen
 
