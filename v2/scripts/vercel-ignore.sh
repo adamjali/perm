@@ -11,6 +11,13 @@
 # 2. Keep this logic in a file. vercel.json caps ignoreCommand at 256
 #    characters and rejects the whole deployment above it, with no build log.
 #
+# 3. ROOT `docs/` counts as well as `v2/docs/`. The Vercel root directory is
+#    `v2/`, so nothing in the repo-root `docs/` tree can reach a build - but the
+#    pattern only listed `v2/docs/`, so committing a README screenshot to
+#    `docs/images/` triggered a full production build on 2026-09-04. Every
+#    deploy cold-starts the ISR cache, so a docs-only build is not just wasted
+#    minutes, it is a full regeneration of ~21,000 entity pages.
+#
 # Paths from `git diff --name-only` are repo-root relative regardless of cwd.
 BASE="${VERCEL_GIT_PREVIOUS_SHA:-}"
 if [ -z "$BASE" ]; then
@@ -21,7 +28,7 @@ fi
 git rev-parse "$BASE" >/dev/null 2>&1 || exit 1
 
 if git diff --name-only "$BASE" HEAD \
-  | grep -qvE '^(v2/scripts/|\.github/|\.planning/|v2/docs/)|\.md$|/__tests__/|\.test\.tsx?$|^v2/vitest\.'; then
+  | grep -qvE '^(v2/scripts/|\.github/|\.planning/|v2/docs/|docs/)|\.md$|/__tests__/|\.test\.tsx?$|^v2/vitest\.'; then
   exit 1
 fi
 exit 0
