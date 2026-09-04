@@ -170,6 +170,19 @@ describe("queue month route: both miss shapes are decided in metadata", () => {
       getPendingBefore: vi.fn().mockResolvedValue(0),
       getAdjacentMonths: vi.fn().mockResolvedValue({ prev: null, next: null }),
     }));
+    // EVERY TURSO MODULE THE PAGE IMPORTS, not just the one metadata reads.
+    // Importing the route pulls its whole graph in, and three of these were
+    // left real: under full-suite load one of them made an actual network call
+    // and the test died on its 10s timeout while passing in isolation. A test
+    // that reaches the network is a CI flake waiting for a slow day.
+    vi.doMock("@/lib/turso/estimate", () => ({
+      getEstimatorData: vi.fn().mockResolvedValue(null),
+    }));
+    vi.doMock("@/lib/turso/liveCases", () => ({
+      getLiveRemainderSummary: vi.fn().mockResolvedValue(null),
+      listLiveCases: vi.fn().mockResolvedValue([]),
+    }));
+    vi.doMock("@/lib/turso/rfi", () => ({ SMALL_STAGE_MAX: 10 }));
     const { generateMetadata } = await import(
       "../(site)/(public)/perm-queue/[month]/page"
     );
@@ -183,5 +196,8 @@ describe("queue month route: both miss shapes are decided in metadata", () => {
       NOT_FOUND_DIGEST,
     );
     vi.doUnmock("@/lib/turso/backlog");
+    vi.doUnmock("@/lib/turso/estimate");
+    vi.doUnmock("@/lib/turso/liveCases");
+    vi.doUnmock("@/lib/turso/rfi");
   });
 });

@@ -67,6 +67,9 @@ export interface FlagDisclosedRow {
   worksiteState: string | null;
   visaClass: string | null;
   fiscalYear: number | null;
+  /** The representing law firm. DOL publishes it for all three programs. */
+  attorneyName: string | null;
+  attorneySlug: string | null;
 }
 
 export interface DisclosedDbRow {
@@ -84,11 +87,18 @@ export interface DisclosedDbRow {
   worksite_state: string | null;
   visa_class: string | null;
   fiscal_year: number | string | null;
+  attorney_name: string | null;
+  attorney_slug: string | null;
 }
 
 export const DISCLOSED_COLS =
   "case_number, case_status, received_date, decision_date, employer_name, employer_slug, " +
-  "job_title, soc_code, soc_title, wage, wage_unit, worksite_state, visa_class, fiscal_year";
+  "job_title, soc_code, soc_title, wage, wage_unit, worksite_state, visa_class, fiscal_year, " +
+  // SELECTED, or the firm is null on every row no matter what the table holds.
+  // A firm search returned 44 correct wage requests with an empty law-firm
+  // column because these two were missing here: the WHERE clause found them and
+  // the SELECT never fetched them.
+  "attorney_name, attorney_slug";
 
 const num = (v: number | string | null): number | null => {
   if (v === null || v === undefined) return null;
@@ -111,6 +121,8 @@ export const toDisclosed = (r: DisclosedDbRow): FlagDisclosedRow => ({
   worksiteState: r.worksite_state,
   visaClass: r.visa_class,
   fiscalYear: num(r.fiscal_year),
+  attorneyName: r.attorney_name,
+  attorneySlug: r.attorney_slug,
 });
 
 export interface FlagDisclosureSummary {

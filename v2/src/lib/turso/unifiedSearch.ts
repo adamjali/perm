@@ -4,6 +4,7 @@ import type { LiveCaseRow, PermCaseRow } from "./cases";
 import type { FlagCaseRow, FlagDisclosedRow } from "./flagCases";
 import {
   SLICE_CAP,
+  firstSeenDecided,
   lookupUnifiedCase,
   readFlagLive,
   readFlagPublished,
@@ -80,6 +81,15 @@ export interface UnifiedCase {
   state: string | null;
   /** Published only: DOL names the firm at publication and never before. */
   firmName: string | null;
+  /**
+   * The day we FIRST SAW this case final. Never a determination date.
+   *
+   * Only ever set on a live row that is final and has no published date, which
+   * means DOL has decided it and not yet published it. It is an upper bound:
+   * the case was final by the time our sweep looked. Rendered in words, never
+   * in the decided-date column.
+   */
+  seenDecidedOn?: string | null;
   firmSlug: string | null;
   /** Published only. */
   socCode: string | null;
@@ -150,7 +160,10 @@ const fromPermLive = (r: LiveCaseRow): UnifiedCase => ({
   filedOn: r.filingDate,
   decidedOn: null,
   employerName: r.employerName,
-  employerSlug: null,
+  // Carried now: `perm_live_recent` holds the slug and this mapper dropped it,
+  // so a live PERM row rendered with no link to its employer while a live wage
+  // request or LCA, from tables that also hold it, rendered with one.
+  employerSlug: r.employerSlug,
   jobTitle: r.jobTitle,
   wage: null,
   wageUnit: null,
@@ -183,6 +196,22 @@ const fromFlagLive = (r: FlagCaseRow, program: Program): UnifiedCase => ({
   days: null,
 });
 
+/**
+ * Calendar days from filing to decision, when both ends are known.
+ *
+ * `perm_cases` stores this as a column; `pwd_cases` and `lca_cases` do not,
+ * and it is the same arithmetic on the same two dates. Null when either end is
+ * missing rather than 0, because "we do not know" and "decided the same day"
+ * are different facts and a 0 would read as the second.
+ */
+function daysBetween(from: string | null, to: string | null): number | null {
+  if (!from || !to) return null;
+  const a = Date.parse(`${from}T00:00:00Z`);
+  const b = Date.parse(`${to}T00:00:00Z`);
+  if (!Number.isFinite(a) || !Number.isFinite(b) || b < a) return null;
+  return Math.round((b - a) / 86_400_000);
+}
+
 const fromFlagDisclosed = (r: FlagDisclosedRow, program: Program): UnifiedCase => ({
   caseNumber: r.caseNumber,
   program,
@@ -197,17 +226,18 @@ const fromFlagDisclosed = (r: FlagDisclosedRow, program: Program): UnifiedCase =
   wage: r.wage,
   wageUnit: r.wageUnit,
   state: r.worksiteState,
-  // NULL BY OMISSION, NOT BY ABSENCE, and the difference matters because the
-  // opposite was written here first. DOL publishes `LAWFIRM_NAME_BUSINESS_NAME`
-  // in both the ETA-9035 and ETA-9141 disclosure files - verbatim from the
-  // FY2026 Q3 record layouts, read 2026-09-03 - and
-  // `scripts/ingest_flag_disclosure.py` simply does not map it. Ingesting it is
-  // what would make a firm lead reach these programs.
-  firmName: null,
-  firmSlug: null,
+  // THE FIRM, which these rows have carried since the 2026-09-03 backfill and
+  // this mapper kept returning null for. A reader searched a law firm, got 44
+  // of its wage requests back, and every one showed an empty law-firm column -
+  // the rows were right and the field was dropped on the way out.
+  firmName: r.attorneyName,
+  firmSlug: r.attorneySlug,
   socCode: r.socCode,
   socTitle: r.socTitle,
-  days: null,
+  // DERIVED, because these tables carry no `days` column while `perm_cases`
+  // does. Both dates are right here, so leaving it null showed a filing date
+  // and a decision date beside an empty "days" on every wage request and LCA.
+  days: daysBetween(r.receivedDate, r.decisionDate),
 });
 
 /**
@@ -304,6 +334,13 @@ export function skippedSources(narrow: UnifiedNarrow, lead: Lead): SkippedSource
   // belongs to.
   const leadIsPublishedOnly =
     lead.kind === "firm" || lead.kind === "state" || lead.kind === "occupation";
+  // AND IT HAS TO SAY SO. `because` used to stay empty when the LEAD was what
+  // ruled the live half out, so the page dropped every pending case and gave no
+  // reason: a reader searched a law firm, got only decided cases back, and had
+  // to ask why. The label names the lead, because that is the thing to change.
+  if (leadIsPublishedOnly && because.length === 0) {
+    because.push(labels[lead.kind] ?? lead.kind);
+  }
   return {
     live: because.length > 0 || leadIsPublishedOnly,
     published: narrow.outcome === "open",
@@ -324,17 +361,50 @@ function byNewestFiling(a: UnifiedCase, b: UnifiedCase): number {
   return a.caseNumber < b.caseNumber ? 1 : -1;
 }
 
-function finish(
+/**
+ * Attach "we first saw this final on" to the rows that have nothing better.
+ *
+ * AFTER the deduper and AFTER the slice, deliberately. A case that also exists
+ * in a quarterly file is deduped to the published row and already carries DOL's
+ * own determination date, so asking about it would be a read for an answer that
+ * is thrown away; and asking about rows past the limit is a read for rows
+ * nobody sees. On a hundred-row page this is at most a hundred primary-key
+ * seeks, and usually a handful: only a live row that is FINAL and UNDATED
+ * qualifies.
+ */
+async function addSeenDecided(rows: UnifiedCase[]): Promise<void> {
+  const byProgram = new Map<Program, string[]>();
+  for (const r of rows) {
+    if (r.half !== "live" || !r.isFinal || r.decidedOn) continue;
+    const list = byProgram.get(r.program) ?? [];
+    list.push(r.caseNumber);
+    byProgram.set(r.program, list);
+  }
+  if (byProgram.size === 0) return;
+  const found = await Promise.all(
+    [...byProgram].map(async ([program, numbers]) =>
+      [program, await firstSeenDecided(program, numbers)] as const,
+    ),
+  );
+  const seen = new Map(found);
+  for (const r of rows) {
+    const day = seen.get(r.program)?.get(r.caseNumber);
+    if (day) r.seenDecidedOn = day;
+  }
+}
+
+async function finish(
   collected: UnifiedCase[],
   args: UnifiedSearchArgs,
   capped: boolean,
   windowed: boolean,
   skipped: SkippedSources,
-): UnifiedSearchResult {
+): Promise<UnifiedSearchResult> {
   const all = dedupeToOnePerCase(collected);
   all.sort(byNewestFiling);
   const take = Math.min(Math.max(1, Math.floor(args.limit ?? UNIFIED_MAX)), UNIFIED_MAX);
   const rows = all.slice(0, take);
+  await addSeenDecided(rows);
   const counts: Record<Program, number> = { perm: 0, pwd: 0, lca: 0 };
   for (const r of rows) counts[r.program] += 1;
   return {
@@ -364,7 +434,7 @@ async function searchOneCase(args: UnifiedSearchArgs): Promise<UnifiedSearchResu
   if (found.permLive) collected.push(fromPermLive(found.permLive));
   if (found.flagPublished) collected.push(fromFlagDisclosed(found.flagPublished, found.program));
   if (found.flagLive) collected.push(fromFlagLive(found.flagLive, found.program));
-  return finish(collected, args, false, false, { live: false, published: false, because: [] });
+  return await finish(collected, args, false, false, { live: false, published: false, because: [] });
 }
 
 export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSearchResult> {
@@ -436,5 +506,5 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // Different claim from `capped`, and a much more important one to print.
   const windowed = halves.some((half) => half.windowed);
 
-  return finish(collected, args, capped, windowed, skipped);
+  return await finish(collected, args, capped, windowed, skipped);
 }

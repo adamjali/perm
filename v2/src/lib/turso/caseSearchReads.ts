@@ -23,6 +23,7 @@ import {
   type FlagDisclosedRow,
 } from "./flagCases";
 import type { Lead, Outcome } from "@/lib/caseSearchPlan";
+import type { ChangeProgram } from "@/lib/changeProgram";
 
 /**
  * Every read the unified case search makes, and the index each one rides.
@@ -1066,4 +1067,46 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
     flagPublished: pub ? toDisclosed(pub) : null,
     flagLive: live ? toFlagRow(live) : null,
   };
+}
+
+/**
+ * When we FIRST SAW a case reach a final status. Not when DOL decided it.
+ *
+ * WHY THIS IS NOT A DECISION DATE, and must never be rendered as one. DOL's
+ * batch endpoint returns five fields on a case - number, status, visa type,
+ * employer, job title, submitted date - and a determination date is not among
+ * them. None of the three live tables even has the column. So for a case DOL
+ * has decided but not yet published, the true date is unknown and this is an
+ * UPPER BOUND: the case was final by the time our sweep looked, and could have
+ * been decided any time between that sweep and the one before it.
+ *
+ * Measured 2026-09-04 on `perm_case_status`: 319,378 of 414,358 live rows are
+ * already final, which is why "live" is not a synonym for "pending". 276,819 of
+ * those (86.7%) also appear in a quarterly file, and the row deduper prefers
+ * the published half, so they carry DOL's own date already. This exists for the
+ * remaining 42,559, of which 5,280 were watched becoming final.
+ *
+ * One seek per case number on the events table's primary key, and it is only
+ * asked about rows that are live, final and undated - a handful of a page.
+ */
+export async function firstSeenDecided(
+  program: ChangeProgram,
+  caseNumbers: readonly string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  if (caseNumbers.length === 0) return out;
+  const holes = caseNumbers.map(() => "?").join(",");
+  const found = await rows<{ case_number: string; seen: number | string | null }>(
+    `SELECT case_number, MIN(changed_at) AS seen
+       FROM ${program}_case_events
+      WHERE case_number IN (${holes}) AND to_final IN (1, '1')
+      GROUP BY case_number`,
+    [...caseNumbers],
+  ).catch(() => []);
+  for (const r of found) {
+    const ms = Number(r.seen);
+    if (!Number.isFinite(ms) || ms <= 0) continue;
+    out.set(String(r.case_number), new Date(ms).toISOString().slice(0, 10));
+  }
+  return out;
 }

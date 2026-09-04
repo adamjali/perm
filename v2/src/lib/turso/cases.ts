@@ -520,6 +520,15 @@ export interface LiveCaseRow {
   status: string | null;
   isFinal: boolean;
   employerName: string | null;
+  /**
+   * The employer's slug, so a live row can link to its employer page.
+   *
+   * `perm_live_recent` has carried this since it was built - it is the leading
+   * column of the index this read is pinned to - and it was dropped here, so
+   * live PERM rows rendered without a link while live wage-request and LCA
+   * rows, whose tables also carry it, rendered with one.
+   */
+  employerSlug: string | null;
   jobTitle: string | null;
 }
 
@@ -529,6 +538,7 @@ export interface LiveDbRow {
   status: string | null;
   is_final: number;
   employer_name: string | null;
+  employer_slug: string | null;
   job_title: string | null;
 }
 
@@ -538,6 +548,7 @@ export const toLiveRow = (r: LiveDbRow): LiveCaseRow => ({
   status: r.status,
   isFinal: Boolean(r.is_final),
   employerName: r.employer_name,
+  employerSlug: r.employer_slug,
   jobTitle: r.job_title,
 });
 
@@ -572,7 +583,7 @@ export async function searchLiveCases(
   // every filing in that window across every employer in the country and
   // then discards all but one company's. Measured 2026-09-03.
   const found = await rows<LiveDbRow>(
-    `SELECT case_number, filing_date, status, is_final, employer_name, job_title
+    `SELECT case_number, filing_date, status, is_final, employer_name, employer_slug, job_title
        FROM perm_live_recent INDEXED BY perm_live_recent_emp
       WHERE ${conds.join(" AND ")}
       ORDER BY filing_date DESC, case_number DESC LIMIT ?`,
@@ -617,7 +628,7 @@ export async function recentLiveByEmployer(
 ): Promise<LiveCaseRow[]> {
   if (!slug || slug.length > 80) return [];
   const found = await rows<LiveDbRow>(
-    `SELECT case_number, filing_date, status, is_final, employer_name, job_title
+    `SELECT case_number, filing_date, status, is_final, employer_name, employer_slug, job_title
        FROM perm_live_recent WHERE employer_slug = ?
       ORDER BY filing_date DESC LIMIT ?`,
     [slug, Math.min(Math.max(1, Math.floor(limit)), 100)],

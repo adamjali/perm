@@ -188,10 +188,25 @@ describe("skippedSources", () => {
     expect(skippedSources({ outcome: "granted" }, employerLead).published).toBe(false);
   });
 
-  it("drops the live half for an equality lead, without blaming a filter", () => {
+  it("drops the live half for an equality lead AND says which lead did it", () => {
+    // THIS ASSERTED AN EMPTY `because`, and an empty list is why a reader who
+    // searched a law firm saw only decided cases with nothing explaining it.
+    // The lead is the reason and the thing they would change, so it names
+    // itself. The page has one branch now instead of a filter message and a
+    // vaguer fallback that still claimed the answer read the PERM file alone.
     const s = skippedSources({}, stateLead);
     expect(s.live).toBe(true);
-    expect(s.because).toEqual([]);
+    expect(s.because).toEqual(["worksite state"]);
+
+    expect(skippedSources({}, firmLead).because).toEqual(["law firm"]);
+  });
+
+  it("blames the filter, not the lead, when a filter is what did it", () => {
+    // An employer lead can reach the live half, so a published-only FILTER is
+    // the whole reason there. The lead must not be added on top.
+    const s = skippedSources({ wageMin: 100_000 }, employerLead);
+    expect(s.live).toBe(true);
+    expect(s.because).toEqual(["wage"]);
   });
 });
 

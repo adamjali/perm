@@ -888,20 +888,18 @@ export function UnifiedCaseSearch({
       {data && !data.needsLead && (data.skipped.live || data.skipped.published) ? (
         <div className="border-2 border-border bg-card p-4">
           <p className="text-base leading-relaxed">
-            {data.skipped.live && data.skipped.because.length > 0 ? (
+            {/* ONE BRANCH, because `because` is never empty when the live half
+                is out: a lead that forces the published record now names itself
+                there. The old empty-list fallback also claimed the answer read
+                "DOL's published PERM file", which stopped being true when a
+                firm, state or occupation lead started reaching all three
+                programs. */}
+            {data.skipped.live ? (
               <>
                 <b className="font-bold">Open filings are not in this answer.</b>{" "}
-                DOL does not put the{" "}
-                {data.skipped.because.join(", ")} on a case until it publishes
-                it in a quarterly file, so filtering on that reads the published
-                record only.
-              </>
-            ) : null}
-            {data.skipped.live && data.skipped.because.length === 0 ? (
-              <>
-                <b className="font-bold">Open filings are not in this answer.</b>{" "}
-                A firm, state or occupation search reads DOL&apos;s published
-                PERM file, which holds decided cases only.
+                DOL does not put the {data.skipped.because.join(", ")} on a case
+                until it publishes it in a quarterly file, so searching by that
+                reads the published record only.
               </>
             ) : null}
             {data.skipped.published ? (
@@ -1024,7 +1022,27 @@ export function UnifiedCaseSearch({
                       {r.wage === null ? "—" : formatWage(r.wage, r.wageUnit)}
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.filedOn ?? "—"}{" "}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.decidedOn ?? "—"}{" "}</td>
+                    {/* IN THIS COLUMN, BUT NEVER AS A BARE DATE. DOL's batch
+                        endpoint returns no determination date, so a live row
+                        that is already final has none anywhere. What we do have
+                        is the day our sweep first saw it final, which is an
+                        UPPER BOUND - it was decided at some point between that
+                        sweep and the one before. Printed bare it would read as
+                        DOL's own date, so it carries its words with it. The
+                        sort key stays `decidedOn`, so these still order after
+                        every genuinely dated row rather than interleaving. */}
+                    <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">
+                      {r.decidedOn ? (
+                        r.decidedOn
+                      ) : r.seenDecidedOn ? (
+                        <span className="font-sans text-xs font-normal normal-case text-foreground/70">
+                          first seen decided{" "}
+                          <span className="tabular-nums">{r.seenDecidedOn}</span>
+                        </span>
+                      ) : (
+                        "—"
+                      )}
+                    {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm tabular-nums">{r.days ?? "—"}{" "}</td>
                   </tr>
                 ))}
