@@ -304,6 +304,11 @@ export default async function OccupationPage({
   const daysDelta =
     row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null;
   const thinMedian = reliability.decided < MIN_DECIDED_FOR_MEDIAN;
+  // Each caveat leads with THIS occupation's own figure. See the note on the
+  // attorney page: the entity long tail is what GSC has discovered and never
+  // crawled, and 721 words of every entity page were byte-identical.
+  const topEmp = facets.employer?.[0];
+  const topState = facets.state?.[0];
   const wageInCohort = inCohort && row.medianAnnualWage != null;
   const peers = near.peers;
   // The query falls back to volume peers when the major group matched nothing,
@@ -591,6 +596,7 @@ export default async function OccupationPage({
             head: "The code is the identity",
             body: (
               <>
+                This one is {row.code ? `SOC ${row.code}` : "an occupation DOL left untitled"}.
                 Two SOC codes can carry the same job title, so a title that
                 looks duplicated on the ranking is two different occupations.
                 Match on the code when you&apos;re checking a specific filing.
@@ -601,8 +607,9 @@ export default async function OccupationPage({
             head: "A median isn’t an offer",
             body: (
               <>
-                It&apos;s the middle of every wage committed to for this occupation
-                across the country, entry level and principal alike. The same
+                It&apos;s the middle of all {fmt(row.total)} wages committed to
+                for this occupation across the country, entry level and
+                principal alike. The same
                 role&apos;s medians swing hard by worksite, which the{" "}
                 <Link
                   href="/perm-by-state"
@@ -619,7 +626,8 @@ export default async function OccupationPage({
             body: (
               <>
                 The denial rate moves with what happened in the filing rather
-                than with the job title. The measured factors are on the{" "}
+                than with the job title, so nothing here is a property of{" "}
+                {displayTitle(row)}. The measured factors are on the{" "}
                 <Link
                   href="/perm-denial-risk"
                   className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -634,8 +642,11 @@ export default async function OccupationPage({
             head: "Nothing here is pending",
             body: (
               <>
-                Every case in DOL&apos;s disclosure files carries a decision
-                date, so a case still waiting is in none of these counts. Where
+                All {fmt(row.total)} counted here carry a decision date, because
+                every case in DOL&apos;s disclosure files does, so a case still
+                waiting is in none of them.{topEmp ? ` The largest filer of this
+                occupation is ${topEmp.label}.` : ""}
+                {topState && !topEmp ? ` Most sit in ${topState.label}.` : ""} Where
                 the queue stands today is on the{" "}
                 <Link
                   href="/perm-processing-times"

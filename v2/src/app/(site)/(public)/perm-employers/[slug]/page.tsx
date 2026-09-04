@@ -429,6 +429,11 @@ export default async function EmployerPage({
   const daysDelta =
     row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null;
   const thinMedian = reliability.decided < MIN_DECIDED_FOR_MEDIAN;
+  // Each caveat leads with THIS sponsor's own figure. See the note on the
+  // attorney page: 721 words of every entity page were byte-identical, and the
+  // entity long tail is what GSC has discovered and never crawled.
+  const topOcc = facets.occupation?.[0];
+  const topState = facets.state?.[0];
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
@@ -791,6 +796,12 @@ export default async function EmployerPage({
             head: "The wage is the job, not the payer",
             body: (
               <>
+                {topOcc ? (
+                  <>
+                    Their filings are led by {topOcc.label}, {fmt(topOcc.n)} of{" "}
+                    {fmt(row.total)}.{" "}
+                  </>
+                ) : null}
                 The median offered wage moves almost entirely with what roles they
                 {" "}
                 file. A software developer and a poultry cutter are different
@@ -813,8 +824,9 @@ export default async function EmployerPage({
             body: (
               <>
                 DOL works a single national queue, oldest first, whoever filed
-                the case, so a company with four thousand filings waits exactly
-                as long as one with three.
+                the case, so these {fmt(row.total)} filings bought no priority:
+                a company with four thousand waits exactly as long as one with
+                three.
               </>
             ),
           },
@@ -822,7 +834,8 @@ export default async function EmployerPage({
             head: "The name is a legal entity",
             body: (
               <>
-                DOL prints whatever went on the form. A group that files
+                DOL prints whatever went on the form, and here that name ranks{" "}
+                {fmt(row.rank)}. A group that files
                 through several subsidiaries appears as several rows, and one
                 that files everything through a parent appears once, so a rank
                 is a rank among printed names rather than among companies.
@@ -848,7 +861,8 @@ export default async function EmployerPage({
                 is in them. The queue figures come from a live per-case
                 tracker with its own coverage and its own as-of date.
                 Subtracting one from the other gives a number that means
-                nothing. Where the queue stands overall is on the{" "}
+                nothing.{topState ? ` The worksite on most of these is ${topState.label}.` : ""}{" "}
+                Where the queue stands overall is on the{" "}
                 <Link
                   href="/perm-processing-times"
                   className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"

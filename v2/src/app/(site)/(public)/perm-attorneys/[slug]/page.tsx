@@ -309,6 +309,15 @@ export default async function AttorneyPage({
   const daysDelta =
     row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null;
   const thinMedian = reliability.decided < MIN_DECIDED_FOR_MEDIAN;
+  // THE LIMITS PANEL CARRIES THIS FIRM'S OWN FIGURES, NOT A TEMPLATE.
+  // Measured 2026-09-04: 721 words of every attorney page were byte-identical
+  // to every other one, and GSC holds 19,931 entity URLs at "Discovered -
+  // currently not indexed" with last-crawled N/A. Google's crawl-budget
+  // guidance names duplicate content as the lever. Each caveat below now leads
+  // with the subject's own number, which removes no disclosure and makes the
+  // caveat more useful: "their rate is 99.2%, and the median is above 99" tells
+  // a reader something the generic sentence never did.
+  const topOcc = facets.occupation?.[0];
   const where = stateName(row.state);
   const peers = near.peers;
   // The query falls back to volume peers when a state matched nothing, so the
@@ -565,6 +574,12 @@ export default async function AttorneyPage({
             head: "The wage is the job, not the payer",
             body: (
               <>
+                {topOcc ? (
+                  <>
+                    Their filings are led by {topOcc.label}, {fmt(topOcc.n)} of{" "}
+                    {fmt(row.total)}.{" "}
+                  </>
+                ) : null}
                 The median offered wage moves almost entirely with what roles their clients
                 {" "}
                 file. A software developer and a poultry cutter are different
@@ -586,8 +601,9 @@ export default async function AttorneyPage({
             head: "Nothing here is waiting",
             body: (
               <>
-                Every row in DOL&apos;s disclosure files carries a decision
-                date, so a case still in the queue is in none of these counts.
+                All {fmt(row.total)} of the cases on this page carry a
+                decision date, because every row in DOL&apos;s disclosure files
+                does, so a case still in the queue is in none of these counts.
                 The live tracker that does see pending cases records the
                 employer on each one and not the firm, so a firm&apos;s
                 current queue cannot be broken out at all. Where the queue
@@ -606,6 +622,9 @@ export default async function AttorneyPage({
             head: "The approval rate barely separates firms",
             body: (
               <>
+                {reliability.ratePct !== null ? (
+                  <>This firm is at {reliability.ratePct.toFixed(1)}%. </>
+                ) : null}
                 Across every firm with enough decided cases to carry a rate the
                 median is above 99%, and hundreds have no denials at all.
                 Placing near the top of that axis mostly means being level with
