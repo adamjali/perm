@@ -164,28 +164,55 @@ const PUBLISHED: Record<
 /**
  * The two windows, measured rather than assumed.
  *
- * `MIN`/`MAX` on an indexed column is a seek at each end, not a scan, so this
- * is six cheap reads. It is deliberately measured on every regeneration: the
- * decided window moves when a quarterly file lands, and a hardcoded date would
+ * ONE AGGREGATE PER STATEMENT, and that is the whole trick. SQLite rewrites a
+ * LONE `MIN(x)` or `MAX(x)` over an indexed column into a seek at one end of
+ * the index; put BOTH in the same statement and it can no longer do that and
+ * scans the whole covering index instead. Measured against production:
+ *
+ *     SELECT MIN(decision_date), MAX(decision_date) FROM perm_cases
+ *       -> SCAN, 373,939 rows read
+ *     SELECT MIN(decision_date) FROM perm_cases
+ *       -> SEARCH, 1 row read
+ *
+ * This function asks six tables, so the combined form was reading about 1.45
+ * million rows every time `/perm-decision-activity` regenerated - the exact
+ * shape that took this database to 11.6 billion rows read in August. Twelve
+ * one-row statements cost twelve rows.
+ *
+ * An earlier version of this comment asserted the combined form was "a seek at
+ * each end, not a scan". It is not, and only an EXPLAIN said so.
+ *
+ * It is deliberately measured on every regeneration rather than hardcoded: the
+ * decided window moves when a quarterly file lands, and a fixed date would
  * silently under-report coverage for months.
  */
 export async function getCoverageWindows(): Promise<CoverageWindows> {
   const [decided, observed] = await Promise.all([
     Promise.all(
-      CHANGE_PROGRAMS.map((p) =>
-        rows<{ lo: string | null; hi: string | null }>(
-          `SELECT MIN(decision_date) AS lo, MAX(decision_date) AS hi
-             FROM ${PUBLISHED[p].table}`,
-        ).catch(() => []),
-      ),
+      CHANGE_PROGRAMS.map(async (p) => {
+        const [lo, hi] = await Promise.all([
+          rows<{ v: string | null }>(
+            `SELECT MIN(decision_date) AS v FROM ${PUBLISHED[p].table}`,
+          ).catch(() => []),
+          rows<{ v: string | null }>(
+            `SELECT MAX(decision_date) AS v FROM ${PUBLISHED[p].table}`,
+          ).catch(() => []),
+        ]);
+        return [{ lo: lo[0]?.v ?? null, hi: hi[0]?.v ?? null }];
+      }),
     ),
     Promise.all(
-      CHANGE_PROGRAMS.map((p) =>
-        rows<{ lo: number | null; hi: number | null }>(
-          `SELECT MIN(changed_at) AS lo, MAX(changed_at) AS hi
-             FROM ${p}_case_events`,
-        ).catch(() => []),
-      ),
+      CHANGE_PROGRAMS.map(async (p) => {
+        const [lo, hi] = await Promise.all([
+          rows<{ v: number | null }>(
+            `SELECT MIN(changed_at) AS v FROM ${p}_case_events`,
+          ).catch(() => []),
+          rows<{ v: number | null }>(
+            `SELECT MAX(changed_at) AS v FROM ${p}_case_events`,
+          ).catch(() => []),
+        ]);
+        return [{ lo: lo[0]?.v ?? null, hi: hi[0]?.v ?? null }];
+      }),
     ),
   ]);
 

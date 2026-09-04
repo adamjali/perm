@@ -384,12 +384,6 @@ export function UnifiedCaseSearch({
                   aria-describedby={`${uid}-q-hint`}
                   className={CONTROL}
                 />
-                <span id={`${uid}-q-hint`} className="mt-1 block text-sm leading-snug text-foreground/70">
-                  An employer is matched from the start of the name. All four
-                  case-number prefixes work: G- and A- for PERM, P- for a wage
-                  request, I- for an H-1B LCA. Or leave this empty and search by
-                  law firm, worksite state or occupation instead.
-                </span>
               </div>{" "}
               <div className="flex items-end">
                 <button type="submit" className={BUTTON} disabled={pending} aria-busy={pending}>
@@ -397,6 +391,19 @@ export function UnifiedCaseSearch({
                 </button>
               </div>
             </div>{" "}
+            {/* THE HINT SITS BELOW THE GRID, NOT INSIDE THE INPUT'S CELL.
+                Inside it, the cell was label + input + three lines of hint and
+                the button's `items-end` pinned it to the bottom of all of
+                that, so it hung level with the last line of the hint instead
+                of the input and read as though it had fallen out of the row.
+                Out here it spans the full width and the button lines up with
+                the field it submits. */}
+            <p id={`${uid}-q-hint`} className="mt-1 text-sm leading-snug text-foreground/70">
+              An employer is matched from the start of the name. All four
+              case-number prefixes work: G- and A- for PERM, P- for a wage
+              request, I- for an H-1B LCA. Or leave this empty and search by law
+              firm, worksite state or occupation instead.
+            </p>{" "}
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
               <Field
                 label={FILTER_LABEL.firm}
@@ -1035,9 +1042,21 @@ export function UnifiedCaseSearch({
                       {r.decidedOn ? (
                         r.decidedOn
                       ) : r.seenDecidedOn ? (
-                        <span className="font-sans text-xs font-normal normal-case text-foreground/70">
-                          first seen decided{" "}
-                          <span className="tabular-nums">{r.seenDecidedOn}</span>
+                        <span className="text-foreground/70">
+                          {r.seenDecidedOn}
+                          {/* A MARKER, NOT A SENTENCE IN A DATE COLUMN. The
+                              words read as clutter at column width, and a bare
+                              date here would read as DOL's own determination
+                              date, which this is not. `abbr` gives the hover
+                              natively; the footnote under the table is what
+                              carries it for a keyboard and a phone, where a
+                              title attribute is invisible. */}
+                          <abbr
+                            title="Not DOL's determination date. DOL publishes none until the case reaches a quarterly file, so this is the day our daily check first saw it final: an upper bound."
+                            className="ml-0.5 cursor-help align-super text-[0.65rem] font-bold text-primary no-underline"
+                          >
+                            *
+                          </abbr>
                         </span>
                       ) : (
                         "—"
@@ -1049,6 +1068,20 @@ export function UnifiedCaseSearch({
               </tbody>
             </table>
           </div>{" "}
+
+          {/* THE FOOTNOTE THE ASTERISK POINTS AT, rendered only when a row in
+              this answer actually carries one. A `title` is invisible to a
+              keyboard and to a phone, so the marker cannot be the only place
+              the disclaimer lives. */}
+          {data.rows.some((r) => !r.decidedOn && r.seenDecidedOn) ? (
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-foreground/70">
+              <span className="font-bold text-primary">*</span>{" "}
+              Not DOL&apos;s determination date. DOL publishes none until a case
+              reaches a quarterly file, so this is the day our daily check first
+              saw the case final. It is an upper bound: the decision happened at
+              some point between that check and the one before it.
+            </p>
+          ) : null}{" "}
 
           {data.windowed ? (
             <p className="mt-4 max-w-3xl border-2 border-border bg-tint-primary p-4 text-base leading-relaxed">
