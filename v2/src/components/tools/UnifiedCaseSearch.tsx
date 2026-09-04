@@ -389,7 +389,8 @@ export function UnifiedCaseSearch({
                 <span id={`${uid}-q-hint`} className="mt-1 block text-sm leading-snug text-foreground/70">
                   An employer is matched from the start of the name. All four
                   case-number prefixes work: G- and A- for PERM, P- for a wage
-                  request, I- for an H-1B LCA.
+                  request, I- for an H-1B LCA. Or leave this empty and search by
+                  law firm, worksite state or occupation instead.
                 </span>
               </div>{" "}
               <div className="flex items-end">

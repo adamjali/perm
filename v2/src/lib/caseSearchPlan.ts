@@ -255,7 +255,20 @@ export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterS
   const all = (state: FilterState): Record<FilterKey, FilterState> =>
     Object.fromEntries(FILTER_KEYS.map((k) => [k, state])) as Record<FilterKey, FilterState>;
 
-  if (lead === null) return all({ on: false, why: "no-lead" });
+  if (lead === null) {
+    // THE THREE LEAD-CAPABLE FIELDS STAY OPEN ON AN EMPTY FORM, because
+    // filling one is how a lead comes into existence. Turning them off with
+    // everything else was a deadlock: the law-firm box was disabled because
+    // there was no lead, and there could be no lead because the box was
+    // disabled. The employer box was the only way in, so "search by law firm
+    // alone" was unreachable even though `chooseLead` has always supported it.
+    // Reported by a reader who tried exactly that.
+    const out = all({ on: false, why: "no-lead" });
+    out.firm = { on: true };
+    out.state = { on: true };
+    out.occupation = { on: true };
+    return out;
+  }
 
   if (lead.kind === "case") {
     const out = all({ on: false, why: "one-case" });

@@ -66,10 +66,29 @@ describe("chooseLead", () => {
 });
 
 describe("filterAvailability", () => {
-  it("turns everything off with a reason when nothing leads", () => {
+  it("leaves the three lead-capable fields open on an empty form", () => {
+    // THE DEADLOCK THIS PINS. Every filter used to be off when nothing led,
+    // including law firm, worksite state and occupation. But those three ARE
+    // leads: filling one is how a lead comes into existence. Off, the employer
+    // box was the only way into the search, so "find every case this firm
+    // filed" was unreachable even though `chooseLead` has always accepted a
+    // firm on its own. A reader hit it and reported it.
     const can = filterAvailability(null);
-    for (const k of FILTER_KEYS) {
-      expect(can[k]).toEqual({ on: false, why: "no-lead" });
+    for (const k of ["firm", "state", "occupation"] as const) {
+      expect([k, can[k].on]).toEqual([k, true]);
+    }
+  });
+
+  it("still turns the non-lead filters off, with a reason", () => {
+    // The other half of the same rule: a filter that cannot start a search has
+    // nothing to narrow yet, and must say so rather than look merely broken.
+    const can = filterAvailability(null);
+    const rest = FILTER_KEYS.filter(
+      (k) => k !== "firm" && k !== "state" && k !== "occupation",
+    );
+    expect(rest.length).toBeGreaterThan(3);
+    for (const k of rest) {
+      expect([k, can[k]]).toEqual([k, { on: false, why: "no-lead" }]);
     }
   });
 
