@@ -102,7 +102,12 @@ function stripComments(source: string): string {
  */
 function localConstants(source: string): Map<string, string> {
   const out = new Map<string, string>();
-  const re = /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*((?:"[^"]*"|'[^']*'|`[^`]*`)(?:\s*\+\s*(?:"[^"]*"|'[^']*'|`[^`]*`))*)\s*;/g;
+  // ONE NON-GREEDY RUN TO THE SEMICOLON, not a repeated group of alternated
+  // string literals. The nested quantifier that shape needs is the classic
+  // backtracking blow-up, and `security/detect-unsafe-regex` says so. This
+  // reads a whole `const X = ...;` and strips the quotes afterwards, which is
+  // all the check needs: it only asks whether `min-w-0` is in there.
+  const re = /\bconst\s+([A-Za-z_$][\w$]*)\s*=\s*([^;]{0,2000});/g;
   for (const m of source.matchAll(re)) {
     out.set(m[1]!, m[2]!.replace(/["'`]/g, " "));
   }

@@ -168,13 +168,11 @@ export interface FiscalYearOption {
 function Field({
   label,
   state,
-  filterKey,
   describedBy,
   children,
 }: {
   label: string;
   state: FilterState;
-  filterKey: FilterKey;
   describedBy: string;
   children: React.ReactNode;
 }) {
@@ -184,7 +182,7 @@ function Field({
       {children}
       {state.on || !state.why ? null : (
         <span id={describedBy} className="mt-1 block text-sm leading-snug text-foreground/70">
-          {refusalText(state.why, filterKey)}
+          {refusalText(state.why)}
         </span>
       )}
     </div>
@@ -403,7 +401,6 @@ export function UnifiedCaseSearch({
               <Field
                 label={FILTER_LABEL.firm}
                 state={can.firm}
-                filterKey="firm"
                 describedBy={`${uid}-firm-why`}
               >
                 <input
@@ -421,7 +418,6 @@ export function UnifiedCaseSearch({
               <Field
                 label={FILTER_LABEL.state}
                 state={can.state}
-                filterKey="state"
                 describedBy={`${uid}-state-why`}
               >
                 <select
@@ -443,7 +439,6 @@ export function UnifiedCaseSearch({
               <Field
                 label={FILTER_LABEL.occupation}
                 state={can.occupation}
-                filterKey="occupation"
                 describedBy={`${uid}-occ-why`}
               >
                 <input
@@ -502,14 +497,13 @@ export function UnifiedCaseSearch({
             </div>{" "}
             {can.outcome.on ? null : (
               <p id={`${uid}-outcome-why`} className="mt-2 text-sm leading-snug text-foreground/70">
-                {refusalText(can.outcome.why ?? "no-lead", "outcome")}
+                {refusalText(can.outcome.why ?? "no-lead")}
               </p>
             )}{" "}
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
               <Field
                 label="Job title contains"
                 state={can.title}
-                filterKey="title"
                 describedBy={`${uid}-title-why`}
               >
                 <input
@@ -533,7 +527,6 @@ export function UnifiedCaseSearch({
               <Field
                 label="Filed from"
                 state={can.filed}
-                filterKey="filed"
                 describedBy={`${uid}-filed-why`}
               >
                 <input
@@ -562,7 +555,6 @@ export function UnifiedCaseSearch({
               <Field
                 label="Filed to"
                 state={can.filed}
-                filterKey="filed"
                 describedBy={`${uid}-filed2-why`}
               >
                 <input
@@ -591,7 +583,6 @@ export function UnifiedCaseSearch({
               <Field
                 label={FILTER_LABEL.fiscalYear}
                 state={can.fiscalYear}
-                filterKey="fiscalYear"
                 describedBy={`${uid}-fy-why`}
               >
                 <select
@@ -613,7 +604,6 @@ export function UnifiedCaseSearch({
               <Field
                 label="Decided from"
                 state={can.decided}
-                filterKey="decided"
                 describedBy={`${uid}-dec-why`}
               >
                 <input
@@ -642,7 +632,6 @@ export function UnifiedCaseSearch({
               <Field
                 label="Decided to"
                 state={can.decided}
-                filterKey="decided"
                 describedBy={`${uid}-dec2-why`}
               >
                 <input
@@ -671,7 +660,6 @@ export function UnifiedCaseSearch({
               <Field
                 label="Wage at least"
                 state={can.wage}
-                filterKey="wage"
                 describedBy={`${uid}-wage-why`}
               >
                 <input
@@ -691,7 +679,6 @@ export function UnifiedCaseSearch({
               <Field
                 label="Wage at most"
                 state={can.wage}
-                filterKey="wage"
                 describedBy={`${uid}-wage2-why`}
               >
                 <input
@@ -732,7 +719,7 @@ export function UnifiedCaseSearch({
               </div>
               {can.programs.on ? null : (
                 <p id={`${uid}-programs-why`} className="mt-2 text-sm leading-snug text-foreground/70">
-                  {refusalText(can.programs.why ?? "no-lead", "programs")}
+                  {refusalText(can.programs.why ?? "no-lead")}
                 </p>
               )}
               {can.programs.on && programs.length === 0 ? (
@@ -891,7 +878,7 @@ export function UnifiedCaseSearch({
             {droppedList.map((k) => (
               <li key={k} className="text-sm leading-relaxed">
                 <b className="font-bold">{FILTER_LABEL[k]}:</b>{" "}
-                {refusalText(filterAvailability(data?.lead ?? null)[k].why ?? "no-lead", k)}
+                {refusalText(filterAvailability(data?.lead ?? null)[k].why ?? "no-lead")}
               </li>
             ))}
           </ul>

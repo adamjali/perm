@@ -144,7 +144,7 @@ export interface FilterState {
 }
 
 /** Ready to print. Second person, and it names the alternative every time. */
-export function refusalText(why: Refusal, key: FilterKey): string {
+export function refusalText(why: Refusal): string {
   switch (why) {
     case "no-lead":
       return (

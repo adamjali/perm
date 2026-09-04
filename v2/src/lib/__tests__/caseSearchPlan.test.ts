@@ -9,7 +9,6 @@ import {
   filterAvailability,
   isOutcome,
   refusalText,
-  type FilterKey,
   type Lead,
 } from "../caseSearchPlan";
 
@@ -179,7 +178,7 @@ describe("availableOutcomes", () => {
 describe("refusalText", () => {
   it("names the alternative in every reason, never just the refusal", () => {
     for (const why of ["no-lead", "one-case", "number-names-program"] as const) {
-      const text = refusalText(why, "wage");
+      const text = refusalText(why);
       expect(text.length).toBeGreaterThan(20);
       // No em-dash: house style, and it is the loudest machine-written tell.
       expect(text).not.toContain("—");
@@ -187,7 +186,7 @@ describe("refusalText", () => {
     // Every reason names a way forward. `walks-the-slice` and `perm-only` are
     // gone: nothing sets them any more, and a refusal reason no code can
     // produce is documentation that lies.
-    expect(refusalText("no-lead", "wage")).toContain("law firm");
+    expect(refusalText("no-lead")).toContain("law firm");
   });
 });
 
