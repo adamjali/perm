@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { PageBasics } from "@/components/data/PageBasics";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, PWD_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
@@ -146,6 +147,7 @@ export default async function PwdCasesPage() {
           </FinePrint>
         </div>
       </section>
+      <PageBasics page="pwd-cases" />{" "}
     </div>
   );
 }

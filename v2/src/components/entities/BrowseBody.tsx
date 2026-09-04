@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -128,6 +129,54 @@ export function browseStaticParams(): Array<{ letter: string }> {
 // ---------------------------------------------------------------------------
 
 /** The A-Z landing page for one kind. */
+/**
+ * One paragraph per kind, and they must stay genuinely DIFFERENT.
+ *
+ * These three indexes render from one component, so before this existed they
+ * served the same ~470 words with a noun swapped: measured against production,
+ * each shared 67-72% of its five-word runs with its two siblings, the highest
+ * duplication anywhere on the site. Google's crawl-budget guidance is to
+ * "eliminate duplicate content to focus crawling on unique content rather than
+ * unique URLs", and these pages exist ONLY to be crawled through - they are what
+ * puts every entity page two hops from its hub. A duplicate cluster is therefore
+ * a risk to the 30,000 pages behind them, not just to their own ranking.
+ *
+ * So each note states a fact that is TRUE OF THAT INDEX AND NOT THE OTHER TWO,
+ * measured rather than written to fill space. Three variants of one sentence
+ * would just move the duplication.
+ */
+const BROWSE_NOTE: Record<EntityKind, ReactNode> = {
+  employer: (
+    <>
+      DOL spells one company several ways, so a sponsor can sit under the same
+      letter more than once: <b className="font-bold">DISH NETWORK LLC</b> and{" "}
+      <b className="font-bold">DISH NETWORK L.L.C.</b> are one employer filing
+      under two names. Around 5,000 of the names here carry more than one
+      spelling. Each employer page pools them and says which other spellings DOL
+      printed.
+    </>
+  ),
+  attorney: (
+    <>
+      A practice can appear here several times over, and unlike the employer
+      index these are not pooled. DOL prints Fragomen under six different
+      spellings, and each one takes its own page with its own rank, so a firm
+      page counts the filings under the spelling it matched rather than
+      everything the practice filed. Read a single firm&apos;s total as a floor.
+    </>
+  ),
+  occupation: (
+    <>
+      Occupations are grouped by the title DOL prints, but the six-digit SOC
+      code underneath is what the filings actually join on, and DOL writes the
+      same code two ways: <b className="font-bold">15-1252.00</b> on most rows
+      and <b className="font-bold">15-1252</b> on the rest. Both spellings are
+      pooled here, which is worth about a quarter of the cases on a busy
+      occupation.
+    </>
+  ),
+};
+
 export async function BrowseIndexBody({ kind }: { kind: EntityKind }) {
   const cfg = BROWSE_KINDS[kind];
   const counts = await browseCounts(kind);
@@ -178,6 +227,9 @@ export async function BrowseIndexBody({ kind }: { kind: EntityKind }) {
           name it three times or more. Below that it stays searchable on the
           main page and takes no page of its own, because a record of one case
           is not a page.
+        </p>{" "}
+        <p className="mt-3 max-w-2xl text-base text-foreground/70">
+          {BROWSE_NOTE[kind]}
         </p>
         <BrowseIndexGrid
           base={cfg.base}

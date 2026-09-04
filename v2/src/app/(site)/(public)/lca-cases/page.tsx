@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { PageBasics } from "@/components/data/PageBasics";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, LCA_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
@@ -127,6 +128,7 @@ export default async function LcaCasesPage() {
           </p>
         </div>
       </section>
+      <PageBasics page="lca-cases" />{" "}
     </div>
   );
 }

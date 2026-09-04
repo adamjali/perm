@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 
+import { PageBasics } from "@/components/data/PageBasics";
 import { FinePrint } from "@/components/data/FinePrint";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { UnifiedCaseSearch } from "@/components/tools/UnifiedCaseSearch";
@@ -232,6 +233,7 @@ export default async function CaseSearchPage() {
           </FinePrint>
         </div>
       </section>
+      <PageBasics page="case-search" />{" "}
     </div>
   );
 }

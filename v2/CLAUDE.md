@@ -2501,3 +2501,51 @@ recommendation of mine.** Speed Insights carries real RUM (211 samples on `/`
 scoring 80) and PageSpeed's "No Data" is CrUX, a different and much larger
 sample - so it is the only real-user measurement this site has. $1.81 of a $14
 bill against $13.20 of builds: the lever is deploy count, not add-ons.
+
+## Three pages Google never indexed, and the metric that nearly padded them (2026-09-04)
+
+`/pwd-cases`, `/lca-cases` and `/case-search` sat in "Discovered - currently not
+indexed" for weeks while brand-new guides were indexed overnight. Everything
+usually blamed was ruled out by measurement first:
+
+| suspect | measurement | verdict |
+|---|---|---|
+| orphaned | `/case-search` has **181** inbound links and is not indexed; the guide had **5** and was | ruled out |
+| missing from the sitemap | all three present, same entry shape as the indexed ones | ruled out |
+| technical defect | self-canonical, `index, follow`, exactly one `h1` on each | ruled out |
+| too new | older than the guides that were indexed | ruled out |
+
+What correlated perfectly was `PageBasics`: **all nine data pages carrying it are
+indexed, and the three without it are not.** `/pwd-cases` and `/lca-cases` were
+also **75.2% identical** in served text. Google's crawl-budget guidance is to
+"eliminate duplicate content to focus crawling on unique content rather than
+unique URLs".
+
+So all three got a `PageBasics` block, and the three A-Z `browse` indexes got a
+per-kind note, because a sweep of all 39 public pages found **those were worse**
+(67-72% shared) than the pages actually reported. They render from one component
+and served the same ~470 words with a noun swapped.
+
+**THE FIRST MEASUREMENT WAS MOSTLY MEASURING CHROME, and acting on it would have
+meant padding pages for nothing.** Header, nav, footer and the shared provenance
+block are ~300 words that every page carries on purpose. On a 530-word index
+they drown the body copy, so every short page reads as ~60% duplicated whatever
+it says. Dropping the 5-grams that appear on more than half the pages (that is
+chrome, by definition) gives the real number:
+
+| page | raw | chrome excluded |
+|---|---|---|
+| `/pwd-cases` | 60.6% -> 41.1% | **14.9%** |
+| `/lca-cases` | 66.6% -> 44.4% | **16.2%** |
+| the three `browse` indexes | 72% -> 63% | **32-36%** |
+
+The browse trio's remainder is one genuinely identical sentence stating one
+genuinely identical rule (an entity earns a page at three filings). Rewriting
+that three ways would move the duplication rather than remove it, so it stays.
+`scripts/` has no gate for this on purpose: the threshold that would catch a
+real duplicate cluster also flags every short page, which is how the first run
+of nearly every gate in this repo has gone.
+
+Re-measure with `dup2.py`'s approach (chrome-excluded 5-grams) against a BUILT
+site, never the source, and never against a metric that has not been shown to
+separate chrome from copy.

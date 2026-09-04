@@ -192,6 +192,138 @@ export const BASICS: Record<string, BasicsEntry[]> = {
       ),
     },
   ],
+  "pwd-cases": [
+    {
+      q: "What is a prevailing wage determination?",
+      a: (
+        <>
+          Before an employer can file a PERM, it has to ask the Department of
+          Labor what the job legally has to pay. That request is form ETA-9141,
+          DOL answers with a prevailing wage determination, and the PERM
+          offer cannot come in under it. Case numbers start with{" "}
+          <b className="font-bold">P-</b>. PERM Tracker holds 634,638 decided
+          wage requests, covering determinations from October 2023 to June
+          2026.
+        </>
+      ),
+    },
+    {
+      q: "Can I look up a pending wage request?",
+      a: (
+        <>
+          Yes. DOL answers per case for anything still moving, so a{" "}
+          <b className="font-bold">P-</b> number that has no decision yet still
+          resolves here, and PERM Tracker asks DOL directly if it has not seen
+          the number before. What a pending record cannot show is the wage
+          itself: DOL publishes that only when the case reaches a quarterly
+          disclosure file. Look one up on{" "}
+          <Link href="/perm-case-status" className={link}>
+            case status
+          </Link>
+          .
+        </>
+      ),
+    },
+    {
+      q: "How long does a prevailing wage determination take?",
+      a: (
+        <>
+          DOL publishes the filing month it is currently working rather than an
+          average wait, and it runs two separate queues: one for jobs priced
+          from the OEWS survey and a slower one for everything else. The{" "}
+          <Link href="/tools/pwd-calculator" className={link}>
+            wage-request calculator
+          </Link>{" "}
+          reads today&apos;s published position and estimates from it, and{" "}
+          <Link href="/perm-processing-times" className={link}>
+            processing times
+          </Link>{" "}
+          carries DOL&apos;s own figure with the date it published it.
+        </>
+      ),
+    },
+  ],
+  "lca-cases": [
+    {
+      q: "What is an LCA?",
+      a: (
+        <>
+          A Labor Condition Application, form ETA-9035, is what an employer
+          files before petitioning for an H-1B. It commits them to a wage and a
+          named worksite, and DOL certifies it in days rather than months.
+          Numbers start with <b className="font-bold">I-200</b> or{" "}
+          <b className="font-bold">I-203</b>. PERM Tracker holds 437,496
+          certified LCAs from DOL&apos;s FY2026 disclosure file, decided
+          October 2025 to June 2026.
+        </>
+      ),
+    },
+    {
+      q: "Is an LCA the same as an H-1B approval?",
+      a: (
+        <>
+          No, and the gap matters. An LCA is a wage-and-worksite promise
+          certified by the Department of Labor; the H-1B petition itself is
+          decided later by USCIS, a different agency. A certified LCA means the
+          employer cleared the first step, not that anyone has been approved to
+          work.
+        </>
+      ),
+    },
+    {
+      q: "What does an LCA show that a PERM does not?",
+      a: (
+        <>
+          The wage an employer offered for a specific job at a specific
+          worksite, published within months rather than years, which makes it
+          the freshest public read on what a sponsor pays. A{" "}
+          <Link href="/perm-cases" className={link}>
+            PERM filing
+          </Link>{" "}
+          is the permanent-residence route and takes far longer to appear. The
+          two answer different questions about the same employer.
+        </>
+      ),
+    },
+  ],
+  "case-search": [
+    {
+      q: "Can I search PERM, wage requests and LCAs at once?",
+      a: (
+        <>
+          That is what this page is for. DOL runs the three programs on one
+          case-number counter but publishes them in three separate files, so an
+          employer&apos;s record is normally split across three searches. Here
+          one employer name reaches all three, and each result says which
+          program it came from.
+        </>
+      ),
+    },
+    {
+      q: "What can I search by without a case number?",
+      a: (
+        <>
+          An employer name, a law firm, a worksite state or an occupation, and
+          they combine: every case a firm filed in Texas for one occupation is
+          a single query. DOL names the law firm on 91% of wage-request records
+          and about three quarters of LCAs, so a firm search reaches all three
+          programs rather than PERM alone.
+        </>
+      ),
+    },
+    {
+      q: "Why do some results have no wage or law firm?",
+      a: (
+        <>
+          Because DOL returns five fields on a case that is still moving: the
+          number, the employer, the job title, the filing date and the status.
+          The wage, the worksite, the occupation and the firm arrive only when
+          the case is published in a quarterly disclosure file. A blank column
+          on an open filing is DOL withholding it, not a gap in the record.
+        </>
+      ),
+    },
+  ],
   "perm-decision-activity": [
     {
       q: "How many PERM cases does DOL decide a day?",
