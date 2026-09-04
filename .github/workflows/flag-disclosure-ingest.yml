@@ -131,3 +131,22 @@ jobs:
           # `timeout` rather than the job cap, so a hang FAILS and notifies
           # instead of being cancelled silently (see pwd-status-direct.yml).
           timeout 230m python3 scripts/ingest_flag_disclosure.py --program "$PROGRAM" $EXTRA
+
+      # THE PAGES BUILT FROM THIS FILE SIT ON A WEEK-LONG WINDOW, because the
+      # data behind them changes four times a year and a daily window meant
+      # ~364 expiries to express four real changes. That is only correct if a
+      # load expires them, which is this step. `if: success()` so a failed or
+      # refused load never claims fresh pages.
+      - name: Expire the pages built from the disclosure files
+        if: success()
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET not set; skipping"; exit 0
+          fi
+          # -f so a 4xx/5xx is visible in the log rather than a silent 403 body
+          # scrolling past as if it were a success.
+          curl -fsS -X POST https://permtracker.app/api/revalidate-disclosure \
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" \
+            || echo "revalidation call failed"

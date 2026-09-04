@@ -338,6 +338,23 @@ jobs:
           python3 scripts/ingest_i140_trends.py || \
             echo "i140-trends fetch failed (USCIS likely 403'd the runner); run from a home connection."
 
+      # THE AGGREGATE PAGES BUILT FROM THIS CORPUS SIT ON A WEEK-LONG WINDOW,
+      # because the quarterly file behind them changes four times a year and a
+      # daily window meant ~364 expiries to express four real changes. That is
+      # only correct if a load expires them, which is this step. `success()`
+      # rather than `always()`: a failed load must never claim fresh pages.
+      - name: Expire the pages built from the quarterly corpus
+        if: success()
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET not set; skipping"; exit 0
+          fi
+          curl -fsS -X POST https://permtracker.app/api/revalidate-disclosure \
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" \
+            || echo "revalidation call failed"
+
       - name: Remove credentials
         if: ${{ always() }}
         working-directory: v2

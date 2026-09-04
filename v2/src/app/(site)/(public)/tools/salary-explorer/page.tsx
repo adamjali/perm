@@ -51,7 +51,14 @@ export const metadata: Metadata = {
 
 // The disclosure files are quarterly, so a day bounds staleness far below the
 // data's own cadence.
-export const revalidate = 86400;
+// QUARTERLY DATA, WEEKLY WINDOW, AND A TRIGGER. This reads DOL's quarterly
+// disclosure files, which change four times a year; a one-day window meant
+// ~364 expiries a year to express four real changes, and every expiry a
+// visitor walks into is a paid ISR render of an identical page.
+// `POST /api/revalidate-disclosure` expires this the moment a file lands, so
+// the long window costs no freshness. It stays a WEEK rather than a month so a
+// trigger that never fires bounds the staleness instead of stranding the page.
+export const revalidate = 604800;
 
 const FAQS = [
   {
