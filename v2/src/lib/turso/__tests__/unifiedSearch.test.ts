@@ -300,14 +300,23 @@ describe("unifiedSearch", () => {
     expect(readFlagPublished.mock.calls[0]?.[0]).toBe("pwd");
   });
 
-  it("ignores the program chips under a FIRM lead, which really is PERM-only", async () => {
-    // DOL publishes the firm for all three programs; this site has ingested it
-    // for one. Honouring ["pwd"] here would return an empty answer that reads
-    // as "this firm files no wage requests".
+  it("honours the program chips under a firm lead, now that the firm is ingested", async () => {
+    // THIS ASSERTED THE OPPOSITE, and the reason was true when it was written:
+    // DOL publishes the firm for all three programs and this site had ingested
+    // it for one, so honouring ["pwd"] would have returned an empty answer that
+    // reads as "this firm files no wage requests". The ingest reads the column
+    // now and the backfill filled it - 91.5% of wage-request rows, 74.6% of LCA
+    // rows - so the chips choose between three real sources.
     await unifiedSearch({ lead: firmLead, programs: ["pwd"] });
+    expect(readPermPublished).not.toHaveBeenCalled();
+    expect(readFlagPublished).toHaveBeenCalledTimes(1);
+    expect(readFlagPublished.mock.calls[0]?.[0]).toBe("pwd");
+  });
+
+  it("asks all three programs for a firm when no chip narrows it", async () => {
+    await unifiedSearch({ lead: firmLead });
     expect(readPermPublished).toHaveBeenCalledTimes(1);
-    expect(readFlagPublished).not.toHaveBeenCalled();
-    expect(readFlagLive).not.toHaveBeenCalled();
+    expect(readFlagPublished).toHaveBeenCalledTimes(2);
   });
 
   it("stops asking the live tables once a published-only filter is set", async () => {

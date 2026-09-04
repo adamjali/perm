@@ -382,24 +382,26 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // already told the reader was PERM-only. `filterAvailability` turns the chips
   // off for exactly that lead and leaves them on for the others; this is the
   // same rule on the server side, which is where it is enforced.
-  const chipsApply = args.lead.kind !== "firm";
-  const wanted = (p: Program) => (chipsApply ? want.has(p) : p === "perm");
+  // THE PROGRAM CHIPS APPLY TO EVERY LEAD NOW. A firm used to be forced to
+  // `perm` here, because `pwd_cases` and `lca_cases` carried no firm column -
+  // DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` for all three programs and this
+  // site had never ingested it. It is ingested and backfilled now (91.5% of
+  // wage-request rows, 74.6% of LCA rows carry a firm), so the chips choose
+  // between three real sources for a firm exactly as they do for a state.
+  const wanted = (p: Program) => want.has(p);
   const askPublished = (p: Program) => wanted(p) && !skipped.published;
   const askLive = (p: Program) => wanted(p) && !skipped.live && employer !== null;
-  // `pwd_cases` and `lca_cases` carry a worksite state and a SOC code, and now
-  // an index on each, so those two leads reach them. They carry no firm column,
-  // so a firm lead does not.
-  const flagCanLead =
-    args.lead.kind === "employer" ||
-    args.lead.kind === "state" ||
-    args.lead.kind === "occupation";
+
 
   const flagLive = (p: FlagProgramKey) =>
     askLive(p) && employer
       ? readFlagLive(p, employer, narrow, PER_SOURCE).catch(none<FlagCaseRow>)
       : none<FlagCaseRow>();
+  // EVERY LEAD THAT REACHES HERE REACHES THE FLAG TABLES. There used to be a
+  // `flagCanLead` guard excluding a firm; the typechecker now says a case-number
+  // lead cannot arrive at all, so any such guard is dead by construction.
   const flagPublished = (p: FlagProgramKey) =>
-    askPublished(p) && flagCanLead
+    askPublished(p)
       ? readFlagPublished(p, args.lead, narrow, PER_SOURCE).catch(none<FlagDisclosedRow>)
       : none<FlagDisclosedRow>();
 
