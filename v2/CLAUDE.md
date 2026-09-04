@@ -2502,29 +2502,36 @@ scoring 80) and PageSpeed's "No Data" is CrUX, a different and much larger
 sample - so it is the only real-user measurement this site has. $1.81 of a $14
 bill against $13.20 of builds: the lever is deploy count, not add-ons.
 
-## Three pages Google never indexed, and the metric that nearly padded them (2026-09-04)
+## I "fixed" the indexing of six pages that were already indexed (2026-09-04)
 
-`/pwd-cases`, `/lca-cases` and `/case-search` sat in "Discovered - currently not
-indexed" for weeks while brand-new guides were indexed overnight. Everything
-usually blamed was ruled out by measurement first:
+**READ THIS BEFORE BUILDING ANY INDEXING THEORY. The premise was never checked
+against Search Console, and it was false.** I believed `/pwd-cases`,
+`/lca-cases` and `/case-search` were stuck in "Discovered - currently not
+indexed". Inspected in GSC the same day: all three answer **"URL is on Google /
+Page is indexed"**, and so do all three `/browse` hubs. Six for six. The
+correlation I built on it (every data page carrying `PageBasics` is indexed, the
+three without it are not) was real arithmetic over a made-up dependent variable.
 
-| suspect | measurement | verdict |
-|---|---|---|
-| orphaned | `/case-search` has **181** inbound links and is not indexed; the guide had **5** and was | ruled out |
-| missing from the sitemap | all three present, same entry shape as the indexed ones | ruled out |
-| technical defect | self-canonical, `index, follow`, exactly one `h1` on each | ruled out |
-| too new | older than the guides that were indexed | ruled out |
+**What IS unindexed is a different population and two orders of magnitude
+bigger: 19,931 URLs, "Discovered - currently not indexed", last crawled `N/A`.**
+The examples are almost entirely `/perm-attorneys/<slug>` and its siblings.
+Google has never spent a crawl on them, which is a crawl-BUDGET decision about
+the entity long tail, not a defect on any hub page.
 
-What correlated perfectly was `PageBasics`: **all nine data pages carrying it are
-indexed, and the three without it are not.** `/pwd-cases` and `/lca-cases` were
-also **75.2% identical** in served text. Google's crawl-budget guidance is to
-"eliminate duplicate content to focus crawling on unique content rather than
-unique URLs".
+The lever Google documents for that is duplicate content ("eliminate duplicate
+content to focus crawling on unique content rather than unique URLs"), and the
+entity pages are where it bites. Measured over 8 attorney pages, chrome and
+shared template excluded: each serves ~1,430 words of which only **~350
+five-word runs are its own**, so roughly **three quarters of every entity page
+is boilerplate**. That is the real thing to attack, and it is untouched.
 
-So all three got a `PageBasics` block, and the three A-Z `browse` indexes got a
-per-kind note, because a sweep of all 39 public pages found **those were worse**
-(67-72% shared) than the pages actually reported. They render from one component
-and served the same ~470 words with a noun swapped.
+**The work that came out of the wrong premise still stands on its own**, because
+the duplication it removed was measured rather than assumed. `/pwd-cases` and
+`/lca-cases` were **75.2% identical**; they got a `PageBasics` block each. A
+sweep of all 39 public pages then found the three A-Z `browse` indexes were
+**worse** (67-72% shared) than the pages I had been asked about: they render from
+one component and served the same ~470 words with a noun swapped. Each got a
+per-kind note. None of that was wasted, and none of it was what I claimed it was.
 
 **THE FIRST MEASUREMENT WAS MOSTLY MEASURING CHROME, and acting on it would have
 meant padding pages for nothing.** Header, nav, footer and the shared provenance
