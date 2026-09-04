@@ -1385,6 +1385,112 @@ days. `changes.test.ts` reads the SQL the module issues rather than mocking a
 result set, because the defect lives in the predicate - shaped fixture output
 would pass with either filter deleted. Both were probed by reverting them.
 
+## Maximum combinability: what it cost, and the two bugs under it (2026-09-04)
+
+Adam: *"you should be able to pick a firm and then the state and occupation and
+such, maximum possibility."* Two things were in the way and only one of them
+was a real limit.
+
+### The filters were switched off for a cost that no longer exists
+
+`filterAvailability` turned everything off under a firm, state or occupation
+lead except the outcome and a decided-date range. The measurement behind it was
+real: a SELECTIVE second equality walked the lead's whole slice.
+
+| combination | before | after |
+|---|---|---|
+| biggest firm + `state='WY'` | 48,166 rows / 17.11 s | **5 rows / 0.55 s** |
+| `state='CA'` + a rare SOC | 67,743 rows / 8.82 s | **0 rows / 0.43 s** |
+| firm + `state='CA'` | 408 rows / 1.62 s | 100 rows / 0.66 s |
+
+Three composite indexes close it, `decision_date` last so the ordering stays
+free: `idx_pc_att_state_dec`, `idx_pc_att_soc_dec`, `idx_pc_state_soc_dec`.
+`permLeadIndex` prefers a **pair of equalities over the outcome**, because no
+status bucket narrows like that.
+
+**A slice is smaller than it sounds, and that is why this was affordable.**
+Measured over `perm_cases`: the biggest firm is 48,165 rows and the MEAN firm
+is **66**; the biggest state 67,742 and the mean 6,677; the biggest occupation
+76,524 and the mean 451. The guard was protecting against a case an order of
+magnitude smaller than the entity-page reads this database already does.
+
+### The occupation lead was losing a quarter of its cases
+
+Not performance. `perm_cases` holds **302,081 dotted** codes (`15-1252.00`) and
+**71,858 bare** (`15-1252`), and the lead matched exactly, so it answered with
+whichever spelling it resolved to:
+
+| SOC | dotted | bare | an exact match misses |
+|---|---|---|---|
+| 13-2011 Accountants | 3,686 | 1,207 | **24.7%** |
+| 29-1141 Nurses | 9 | 4 | **31%** |
+
+It matches `substr(soc_code, 1, 7)` now, on `idx_pc_socg_dec`. A test then
+caught the follow-on immediately: the expression yields seven characters, so
+binding the lead's own ten-character value matches NOTHING. `socGroup()` the
+needle as well as the column. The employer path had the mirror defect - it used
+`soc_code = ?` while the equality leads used the group, so one occupation
+answered differently depending on which box the reader filled.
+
+### The law firm: a missing INGEST, not a missing index
+
+DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` in both the ETA-9035 and ETA-9141
+FY2026 Q3 record layouts. This site had never mapped the column, so a firm lead
+read the PERM file alone and said "this firm files no wage requests" by
+omission. **Measured after the backfill: Fragomen has 45,011 wage requests,
+none of which were findable before.** DOL fills the column on **91.0%** of the
+FY2026 wage-request rows.
+
+**A FULL RELOAD IS NOT AFFORDABLE.** `pwd_cases` is 634,638 rows and
+`lca_cases` 437,496, and `INSERT OR REPLACE` deletes and reinserts, so every
+index is rewritten per row: ~10.7M writes against a 10M/month plan, the whole
+month's budget for two columns. `--backfill-attorney` writes only those two
+with `UPDATE`, and creates the firm indexes AFTER the pass rather than before,
+so it costs one write per row - about 1.07M.
+
+**Three bugs in it, none of which a typecheck could see, all found by
+dispatching it:**
+
+1. **`CREATE TABLE IF NOT EXISTS` can never ADD a column.** `table_ddl` is
+   split from `index_ddl` now, with `ensure_columns` between: an index naming a
+   column the live table has not got is a hard error, and the first run died on
+   `no such column: attorney_slug` six seconds in.
+2. **The backfill sat after the sha-match branch, which returns early.** During
+   a backfill the file is unchanged BY DEFINITION, so it reported
+   "unchanged; skipping" and never ran.
+3. **500 separate UPDATEs per request measured 986 rows / 20 s** - 3.6 hours
+   for `pwd_cases`, over the workflow's own 230-minute timeout. The cost is per
+   STATEMENT. One `UPDATE ... SET x = CASE case_number WHEN ... END WHERE
+   case_number IN (...)` per 200 rows: **1,233 rows/s**, 147,244 rows in 148
+   seconds. Proved against a real SQLite first - each name and slug lands on
+   its own case number, and a row the file does not mention keeps its value.
+
+**A quarterly file only carries its own quarter's determinations**, so one
+backfill covers one file. `--fy 2024` and `--fy 2025` fill the history.
+
+**GitHub's concurrency group keeps at most ONE pending run**, so dispatching
+three at once cancels the middle. Dispatch sequentially.
+
+### Two DOL links went to a page that cannot answer them
+
+Reported by Adam. Two PERM surfaces told someone holding a case number that
+"DOL's own system" and "DOL's own status page" were the authority on that case,
+and linked to `flag.dol.gov/processingtimes`, which publishes queue averages
+and cannot look a case up. The wage-request and LCA equivalents already used
+`case-status-search`, so the three programs disagreed. Both use the shared
+`DOL_CASE_STATUS_URL` now.
+
+`dol-outbound-links.test.ts` gates the class, because `audit_internal_links.py`
+only sees internal links. **Its first version reported three findings and all
+three were false** - a schema `description` four lines above an unrelated
+`isBasedOn`, and two paragraphs where one sentence names the case-status search
+and the NEXT one links to processing times. Scoped to the sentence containing
+the link, and probed both directions.
+
+**`perm-only` and `walks-the-slice` are deleted, not left behind.** Nothing
+sets them any more, and a refusal reason no code can produce is documentation
+that lies.
+
 ## The day feed asked one question when it holds two (2026-09-03)
 
 `/perm-decision-activity` offered a `<select>` of days, built from
