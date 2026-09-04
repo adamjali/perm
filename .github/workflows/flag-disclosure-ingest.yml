@@ -42,6 +42,11 @@ on:
         description: "History: load this fiscal year's newest file (e.g. 2025) instead of the newest overall"
         required: false
         default: ""
+      backfill_attorney:
+        description: "Write ONLY the law-firm columns onto existing rows, then index them. Ten times cheaper than force."
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -92,6 +97,7 @@ jobs:
           PROGRAM: ${{ matrix.program }}
           FORCE: ${{ inputs.force }}
           FY: ${{ inputs.fy }}
+          BACKFILL_ATTORNEY: ${{ inputs.backfill_attorney }}
         run: |
           case "$PROGRAM" in
             pw|lca) ;;
@@ -104,6 +110,16 @@ jobs:
           EXTRA=""
           if [ "$FORCE" = "true" ]; then
             EXTRA="--force"
+          fi
+          # MUTUALLY EXCLUSIVE. A backfill writes only the two firm columns and
+          # returns before the ordinary load runs, so pairing it with --force
+          # would silently ignore the force and look like a no-op reload.
+          if [ "$BACKFILL_ATTORNEY" = "true" ]; then
+            if [ "$FORCE" = "true" ]; then
+              echo "::error::pick one of force or backfill_attorney, not both"
+              exit 1
+            fi
+            EXTRA="--backfill-attorney"
           fi
           if [ -n "$FY" ]; then
             case "$FY" in

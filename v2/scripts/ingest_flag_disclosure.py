@@ -142,6 +142,11 @@ PROGRAMS: dict[str, dict] = {
             "wage_unit": ["PWD_UNIT_OF_PAY"],
             "state": ["PRIMARY_WORKSITE_STATE"],
             "visa": ["VISA_CLASS"],
+            # The REPRESENTING firm, not the employer. Both files carry it
+            # under the same name; the ETA-9035 layout calls it "Name of Law
+            # Firm representing the Employer submitting the Labor Condition
+            # Application", the ETA-9141 one the same for a wage request.
+            "attorney": ["LAWFIRM_NAME_BUSINESS_NAME"],
         },
         "event_dates": [
             ["REDETERMINATION_DATE"],
@@ -174,6 +179,11 @@ PROGRAMS: dict[str, dict] = {
             "wage_unit": ["WAGE_UNIT_OF_PAY"],
             "state": ["WORKSITE_STATE"],
             "visa": ["VISA_CLASS"],
+            # The REPRESENTING firm, not the employer. Both files carry it
+            # under the same name; the ETA-9035 layout calls it "Name of Law
+            # Firm representing the Employer submitting the Labor Condition
+            # Application", the ETA-9141 one the same for a wage request.
+            "attorney": ["LAWFIRM_NAME_BUSINESS_NAME"],
         },
         "event_dates": [],
     },
@@ -189,6 +199,7 @@ COLUMNS = (
     "case_number", "case_status", "received_date", "decision_date",
     "employer_name", "employer_slug", "job_title", "soc_code", "soc_title",
     "wage", "wage_unit", "worksite_state", "visa_class",
+    "attorney_name", "attorney_slug",
     "source_file", "fiscal_year",
 )
 
@@ -225,6 +236,8 @@ def table_ddl(table: str) -> list[str]:
              wage_unit       TEXT,
              worksite_state  TEXT,
              visa_class      TEXT,
+             attorney_name   TEXT,
+             attorney_slug   TEXT,
              source_file     TEXT,
              fiscal_year     INTEGER)""",
         # The employer searches are a PREFIX RANGE on employer_slug, so rows
@@ -236,6 +249,14 @@ def table_ddl(table: str) -> list[str]:
         # read never touches rows belonging to anybody else.
         f"CREATE INDEX IF NOT EXISTS {table}_emp ON {table} (employer_slug, received_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_decided ON {table} (decision_date)",
+        # THE FIRM LEAD, added 2026-09-03. DOL publishes the representing law
+        # firm for both of these programs - `LAWFIRM_NAME_BUSINESS_NAME` is in
+        # the ETA-9035 and ETA-9141 record layouts - and this ingest simply
+        # never read the column, so the unified search's firm lead answered
+        # from the PERM file alone and said "this firm files no wage requests"
+        # by omission. Same shape as `idx_pc_att_dec` and `idx_pc_att_st_dec`.
+        f"CREATE INDEX IF NOT EXISTS {table}_att_dec ON {table} (attorney_slug, decision_date)",
+        f"CREATE INDEX IF NOT EXISTS {table}_att_st_dec ON {table} (attorney_slug, case_status, decision_date)",
         # THE STATE AND OCCUPATION LEADS OF THE UNIFIED CASE SEARCH. Both
         # columns were here from the first load and neither had an index, so
         # `src/lib/turso/unifiedSearch.ts` read the PERM file alone for those
@@ -479,6 +500,7 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
     # A fiscal year the filename did not declare (a local probe file) falls
     # back to the decision date's; a row with neither carries NULL.
     year: int | None = fy or (int(fiscal_year(decided)) if decided else None)
+    firm = clean_text(rec.get("attorney"), NAME_LEN)
     return {
         "case_number": case_no,
         "case_status": status.upper() if status else None,
@@ -493,6 +515,11 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
         "wage_unit": unit.upper() if unit else None,
         "worksite_state": parse_state(rec.get("state")),
         "visa_class": clean_text(rec.get("visa"), 40),
+        "attorney_name": firm,
+        # THE SAME SLUG FUNCTION THE PERM INGEST AND THE READ LAYER USE. A firm
+        # slugged differently here would be a law firm whose wage requests
+        # cannot be found from its own page.
+        "attorney_slug": _search_slug(firm) if firm else None,
         "source_file": source_file,
         "fiscal_year": year,
     }
@@ -669,8 +696,92 @@ def write_summary_doc(db: Turso, program: str, table: str) -> dict:
     return doc
 
 
+def ensure_columns(db: Turso, table: str) -> None:
+    """Add any column in `COLUMNS` the live table is missing.
+
+    `CREATE TABLE IF NOT EXISTS` is a no-op on a table that already exists, so
+    it can create a table with new columns but never ADD one. Both of these
+    tables were loaded before the law firm was read, so without this the very
+    next INSERT names a column that is not there and the load dies with a
+    syntax error that reads like a typo.
+
+    THE ALTERNATIVE WAS A FULL RELOAD AND IT IS NOT AFFORDABLE. Measured:
+    pwd_cases is 634,638 rows and lca_cases 437,496, and each row written costs
+    one table write plus one per index - nine of them now - so reloading both
+    to gain two columns is roughly 10.7M writes against a 10M/month plan. An
+    ALTER is metadata only, and the backfill that follows rewrites each row
+    once.
+
+    Idempotent by inspection rather than by catching an error, so a genuine
+    failure is not swallowed as "column already there".
+    """
+    res = db.execute(f"SELECT name FROM pragma_table_info('{table}')")
+    have = {
+        str(row[0]["value"])
+        for row in res["response"]["result"]["rows"]
+        if row and row[0].get("type") != "null"
+    }
+    if not have:
+        return  # the table does not exist yet; the DDL above will create it
+    missing = [c for c in COLUMNS if c not in have]
+    for col in missing:
+        kind = "REAL" if col == "wage" else "INTEGER" if col == "fiscal_year" else "TEXT"
+        log(f"  adding missing column {table}.{col} {kind}")
+        db.script([f"ALTER TABLE {table} ADD COLUMN {col} {kind}"])
+
+
 def count_for_file(db: Turso, table: str, source_file: str) -> int:
     return int(db.scalar(f"SELECT count(*) FROM {table} WHERE source_file = ?", [source_file]) or 0)
+
+
+def backfill_attorney(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> int:
+    """Write ONLY the two attorney columns onto rows that already exist.
+
+    WHY NOT JUST RELOAD THE FILE. `INSERT OR REPLACE` deletes and reinserts, so
+    every index on the table is rewritten for every row. These two tables carry
+    1,072,134 rows between them and nine indexes each, which is about 10.7M
+    writes against a 10M/month plan - the whole month's budget to gain two
+    columns. An `UPDATE` of two columns rewrites the table row and only the
+    indexes that contain them, and the two attorney indexes are created AFTER
+    this runs, so the backfill costs one write per row: about 1.07M, ten times
+    cheaper for the same result.
+
+    A case in the file that is not in the table is simply not updated. That is
+    correct rather than a gap: this is a backfill of rows the ordinary load
+    already wrote, and a genuinely new case arrives through that load with its
+    firm already on it.
+    """
+    pending: list[dict] = []
+    seen = 0
+    t0 = time.time()
+
+    def flush() -> None:
+        nonlocal pending
+        if not pending:
+            return
+        db.pipeline(pending + [{"type": "close"}])
+        pending = []
+        if pause > 0:
+            time.sleep(pause)
+
+    for row in rows:
+        seen += 1
+        pending.append({
+            "type": "execute",
+            "stmt": {
+                "sql": (f"UPDATE {table} SET attorney_name = ?, attorney_slug = ? "
+                        "WHERE case_number = ?"),
+                "args": [lit(row["attorney_name"]), lit(row["attorney_slug"]),
+                         lit(row["case_number"])],
+            },
+        })
+        if len(pending) >= ROWS_PER_STMT:
+            flush()
+            if seen % 50_000 == 0:
+                log(f"  {seen:,} rows in {time.time() - t0:,.0f}s")
+    flush()
+    log(f"  backfilled {seen:,} rows in {time.time() - t0:,.0f}s")
+    return seen
 
 
 def write_cases(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> int:
@@ -734,6 +845,11 @@ def main() -> int:
     ap.add_argument("--pause", type=float, default=WRITE_PAUSE_S, metavar="SECONDS",
                     help="Idle between write requests so a load cannot starve the live site "
                          f"(default {WRITE_PAUSE_S}; 0 disables).")
+    ap.add_argument("--backfill-attorney", action="store_true",
+                    help="Write ONLY the law-firm columns onto rows that already "
+                         "exist, then create their indexes. Ten times cheaper "
+                         "than a --force reload and the only affordable way to "
+                         "add a column to these tables.")
     ap.add_argument("--fy", type=int, metavar="YYYY",
                     help="Load that fiscal year's newest file instead of the newest overall "
                          "(history, one year per run).")
@@ -785,6 +901,7 @@ def main() -> int:
         prior = read_load_record(db, args.program, name)
         if prior and prior.get("sha256") == sha and not args.force:
             db.script(table_ddl(table))
+            ensure_columns(db, table)
             have = count_for_file(db, table, name)
             if have == int(prior.get("rows") or -1):
                 log(f"{name} unchanged since {prior.get('loadedAt')} (sha256 match, "
@@ -802,8 +919,44 @@ def main() -> int:
             log(f"  {name} hash matches the last load but the table holds {have:,} of "
                 f"{int(prior.get('rows') or 0):,} rows; reloading")
 
+        if args.backfill_attorney:
+            # THE INDEXES ARE CREATED AFTER, DELIBERATELY. An UPDATE rewrites
+            # the table row plus every index containing a changed column, so
+            # creating `<table>_att_dec` first would put both attorney indexes
+            # in the path of all 1.07M updates and undo the saving this mode
+            # exists for. Building them once at the end is a single pass.
+            log(f"Backfilling the law firm onto {table} from {name}")
+            # A backfill only ever writes onto rows the ordinary load already
+            # wrote. Against an empty or missing table every UPDATE would match
+            # nothing and the run would report success having done nothing,
+            # which is the failure mode this whole script is built to refuse.
+            existing = int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
+            if existing == 0:
+                raise SystemExit(
+                    f"FATAL: {table} holds no rows, so there is nothing to "
+                    "backfill onto. Run the ordinary load first.")
+            ensure_columns(db, table)
+            n = backfill_attorney(db, table, iter_cases(path, cfg, stats),
+                                  pause=args.pause)
+            stats.report()
+            filled = int(db.scalar(
+                f"SELECT count(*) FROM {table} WHERE attorney_slug IS NOT NULL") or 0)
+            total = int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
+            pct = (100.0 * filled / total) if total else 0.0
+            log(f"  {table}: {filled:,} of {total:,} rows now carry a firm ({pct:.1f}%)")
+            log("  creating the firm indexes")
+            db.script([
+                f"CREATE INDEX IF NOT EXISTS {table}_att_dec ON {table} (attorney_slug, decision_date)",
+                f"CREATE INDEX IF NOT EXISTS {table}_att_st_dec ON {table} (attorney_slug, case_status, decision_date)",
+            ])
+            record_run(db, script, status="ok", rows_written=n,
+                       note=f"attorney backfill from {name}: {filled:,}/{total:,} filled",
+                       started_at=started)
+            return 0
+
         log(f"Loading {name} into {table}")
         db.script(table_ddl(table))
+        ensure_columns(db, table)
         written = 0
         try:
             written = write_cases(db, table, iter_cases(path, cfg, stats), pause=args.pause)
