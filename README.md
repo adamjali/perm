@@ -1,234 +1,204 @@
 # PERM Tracker
 
-**Free, modern case management for immigration attorneys tracking Permanent Labor Certification (PERM) cases.**
+**Federal labor-certification data, read from the source, for the people waiting on a case and the attorneys filing them.**
 
 ![Status](https://img.shields.io/badge/Status-Production-success?style=for-the-badge)
-![Stack](https://img.shields.io/badge/Stack-Next.js%20%2B%20Convex-blue?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-3600%2B%20Passing-brightgreen?style=for-the-badge)
-![Coverage](https://img.shields.io/badge/Coverage-75%25%2B-blue?style=for-the-badge)
+![Stack](https://img.shields.io/badge/Stack-Next.js%20%2B%20Convex%20%2B%20Turso-blue?style=for-the-badge)
+![Tests](https://img.shields.io/badge/Tests-6%2C444%20Passing-brightgreen?style=for-the-badge)
+![Data](https://img.shields.io/badge/Source-DOL%20first--party-informational?style=for-the-badge)
+
+**Live:** https://permtracker.app
+
+![PERM Tracker homepage](docs/images/homepage-2026-09.jpg)
 
 ---
 
-## Live Application
+## What this is
 
-**URL:** https://permtracker.app
+Two products sharing one corpus.
 
-**Test Credentials:** See `v2/.env` (gitignored)
+**The public side** answers the question most people arrive with: *where is my case, and when is it likely to move?* Anyone can look up a case number across all three Department of Labor programs, search by employer, law firm, worksite state or occupation, and read what DOL has published about wages, queue position and decision activity. No account required.
+
+**The application** is case management for immigration attorneys: deadline calculation under 20 CFR 656.40, cascade logic, recruitment windows, notifications and calendar sync.
+
+The public side isn't marketing for the app. It's the larger half by traffic and by page count, and it's what the data pipeline exists to serve.
 
 ---
 
-## Screenshots
+## Where the data comes from
 
-### Homepage
-![Homepage](docs/images/screenshot-homepage.png)
+Every dataset has a first-party source of record. There are **zero live third-party data dependencies**.
 
-### Dashboard
-![Dashboard](docs/images/screenshot-dashboard.png)
-*Deadline Hub showing overdue, upcoming, and future deadlines at a glance*
+| Dataset | Source | Cadence |
+|---|---|---|
+| Per-case status, all three programs | DOL `flag.dol.gov` batch API | Daily full sweep + daily pending sweep |
+| New filings | DOL, found by a nightly serial prober and by visitor lookups | Nightly; lookups instant |
+| Decided cases, wages, worksites | DOL quarterly disclosure files | Quarterly, checked monthly |
+| Processing times | DOL FLAG | Daily |
+| Visa bulletin | US State Department | Monthly |
+| I-140 counts, I-485 inventory | USCIS | Quarterly / monthly |
 
-### Cases
-![Cases](docs/images/screenshot-cases.png)
-*Case management with filtering, search, status badges, and calendar sync*
+DOL runs three foreign-labor programs off one case-number counter, and this reads all three:
 
-### Calendar & AI Assistant
-![Calendar](docs/images/screenshot-calendar.png)
-*Calendar view with deadline color-coding and AI chat assistant for natural language case management*
+| Program | Prefix | What it is |
+|---|---|---|
+| PERM | `G-100-` | The permanent labor certification itself |
+| Prevailing wage determination | `P-100-` | ETA-9141, the wage a job must legally pay |
+| H-1B labor condition application | `I-200-`, `I-203-` | ETA-9035, the wage and worksite commitment |
+
+**Each program is published twice and needs both halves.** The live endpoint covers pending cases but never returns the wage; the quarterly file carries the wage but only for decided cases. Reading one and not the other is how a page ends up claiming a determination was issued when there isn't one on it.
+
+---
+
+## What's in the corpus
+
+Figures as of September 2026.
+
+| Table | Rows |
+|---|---|
+| `perm_cases` (decided PERM, published) | 373,939 |
+| `pwd_cases` (decided wage requests) | 634,638 |
+| `lca_cases` (certified LCAs) | 437,496 |
+| `perm_case_status` (live, pending included) | ~414,000 |
+| `perm_live_recent` (searchable remainder) | ~137,000 |
+
+The site publishes **13,761 URLs**: 182 content and data pages, plus 9,646 employer, 2,919 law-firm and 1,014 occupation pages. An entity earns its own page at five or more filings; below that it stays searchable and takes no page.
 
 ---
 
 ## Features
 
-### Case Management
-- Full CRUD with real-time sync, duplicate detection, bulk operations
-- Smart date validation per 20 CFR 656.40(c) regulations
-- Auto-calculations (PWD expiration, ETA 9089 windows, I-140 deadlines)
-- Cascade logic - dependent dates auto-calculate
-- RFI/RFE tracking with due dates
+### Public
+- Case lookup by number across PERM, PWD and LCA, which asks DOL live when the corpus hasn't seen the number
+- Employer, law-firm, state and occupation search, all combinable
+- Decision activity by day, reaching back to October 2023 through the published files
+- Queue position and a stage-aware decision estimate, labelled an estimate and withheld when the date has already passed
+- Nine calculators (deadlines, filing windows, priority dates, salary, I-140, I-485)
+- Email alerts on a case, a queue month or visa-bulletin movement, all double opt-in
 
-### Dashboard & UX
-- Real-time case counts, upcoming deadlines, recent activity
-- Timeline visualization with milestone tracking
-- Calendar view with deadline color coding
-- Privacy mode for screen sharing
-- Dark/light mode, responsive design, PWA support
-
-### Notifications
-- In-app notification bell with unread badge
-- Email notifications via Resend
-- Push notifications via Web Push
-- Daily deadline reminders (cron), weekly digest
-
-### AI Chat Assistant
-- Natural language case queries and updates
-- Multi-provider fallback (Gemini, OpenRouter, Groq, Cerebras)
-- Web search integration for PERM regulations
-- Tool confirmation for destructive actions
-
-### Google Calendar Sync
-- One-click OAuth connection
-- Automatic deadline event creation
-- Bulk sync for all cases
+### Application
+- Case CRUD with real-time sync, duplicate detection and bulk operations
+- Date validation and auto-calculation per 20 CFR 656.40(c), with cascade logic for dependent dates
+- RFI/RFE tracking, deadline hub, timeline view
+- Notifications by email, web push and in-app
+- Google Calendar sync
+- AI assistant with multi-provider fallback
 
 ---
 
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
-|-------|------------|
-| **Frontend** | Next.js 16 + React + TypeScript |
-| **Backend** | Convex (serverless functions) |
-| **Database** | Convex (built-in) |
-| **Styling** | Tailwind CSS + shadcn/ui |
-| **Authentication** | Convex Auth + Google OAuth |
-| **Email** | Resend |
-| **Push Notifications** | Web Push (VAPID) |
-| **Hosting** | Vercel (frontend) + Convex Cloud (backend) |
+|---|---|
+| Frontend | Next.js 16.3 (App Router), React 19.2, TypeScript 6 (strict) |
+| Application backend | Convex 1.45 |
+| Public data | Turso / libSQL |
+| Styling | Tailwind CSS 4 + shadcn/ui |
+| Auth | Convex Auth + Google OAuth |
+| Email | Resend |
+| AI | AI SDK 7, multi-provider fallback |
+| Hosting | Vercel (frontend), Convex Cloud (app backend), Turso (data) |
+| Ingest | Python, 9 scripts on 15 GitHub Actions workflows |
+
+**Two datastores, on purpose.** Convex holds user data and drives the authenticated app in real time. Turso holds the public federal corpus, which is read-heavy, append-mostly and far too big to sit in a document store. The production Turso token is deliberately read-only; writes ride a separate credential.
 
 ---
 
-## Quick Start
+## Quick start
 
-### Prerequisites
-- Node.js 18+
-- pnpm (recommended) or npm
-
-### Local Development
+**Prerequisites:** Node.js 18+, pnpm, Python 3.12+ for the ingest scripts.
 
 ```bash
-# Navigate to v2 directory
 cd v2
-
-# Install dependencies
 pnpm install
-
-# Start Convex dev server (Terminal 1)
-npx convex dev
-
-# Start Next.js dev server (Terminal 2)
-pnpm dev
+npx convex dev     # Terminal 1
+pnpm dev           # Terminal 2
 ```
 
-**Local URLs:**
-- Frontend: http://localhost:3000
-- Convex Dashboard: https://dashboard.convex.dev
+http://localhost:3000
 
-### Environment Variables
-
-Copy `.env.example` to `.env.local` and fill in values:
-
-```env
-# Convex
-CONVEX_DEPLOYMENT=dev:your-deployment
-NEXT_PUBLIC_CONVEX_URL=https://your-deployment.convex.cloud
-
-# Google OAuth
-GOOGLE_CLIENT_ID=your_google_client_id
-GOOGLE_CLIENT_SECRET=your_google_client_secret
-
-# Push Notifications
-NEXT_PUBLIC_VAPID_PUBLIC_KEY=your_vapid_public_key
-```
-
-Server-side secrets (Convex Dashboard):
-- `RESEND_API_KEY` - Email delivery
-- `VAPID_PRIVATE_KEY` - Push notifications
-- `JWT_PRIVATE_KEY` - Auth tokens
+Copy `.env.example` to `.env.local` and fill it in. Server-side secrets live in the Convex dashboard, not in the repo.
 
 ---
 
 ## Testing
 
-### Test Commands
+| Command | What it runs | Time |
+|---|---|---|
+| `pnpm test` | Watch mode | instant |
+| `pnpm test:fast` | 2 of 4 projects, ~1,300 tests | ~40s |
+| `pnpm test:run` | **All 4 projects. The pre-push gate.** | ~10 min |
+| `pnpm test:e2e` | Playwright | ~2 min |
+| `pnpm typecheck` | Both typecheckers, app and Convex | ~1 min |
 
-| Command | Description | Time |
-|---------|-------------|------|
-| `pnpm test` | Watch mode (development) | Instant |
-| `pnpm test:fast` | Unit + PERM tests only | ~30s |
-| `pnpm test:run` | Full suite (CI) | ~9 min |
-| `pnpm test:e2e` | Playwright E2E tests | ~2 min |
-
-### Coverage
-
-- **3600+ tests** passing
-- **100% coverage** on PERM business logic
-- Component, hook, and integration tests included
+**Baseline: 332 files, 6,444 tests.** A run reporting meaningfully fewer is a broken run, not a pass. `test:fast` skips the `components` and `convex` projects, so it isn't the gate.
 
 ---
 
-## Project Structure
+## Project structure
 
 ```
 v2/
-├── convex/                  # Convex backend
-│   ├── lib/perm/           # Central PERM business logic
-│   ├── cases.ts            # Case CRUD
-│   ├── notifications.ts    # Notifications
-│   ├── scheduledJobs.ts    # Cron jobs
-│   └── schema.ts           # Database schema
+├── convex/                # Application backend
+│   └── lib/perm/          # Central PERM business logic (canonical)
 ├── src/
-│   ├── app/                # Next.js pages
-│   ├── components/         # React components
-│   └── lib/perm/           # Frontend re-exports
-└── test-utils/             # Test utilities
+│   ├── app/               # Routes: (public), (auth), (authenticated), api
+│   ├── components/        # React components
+│   ├── lib/turso/         # Public-data read layer (server-only)
+│   └── lib/perm/          # Frontend re-exports of the Convex logic
+├── content/               # MDX: blog (14), guides (33), changelog (8)
+├── scripts/               # Python ingest and audit scripts
+└── test-utils/
 ```
+
+**All PERM business logic lives in `convex/lib/perm/` and nowhere else.** Deadline, validation and cascade rules are never reimplemented in a component.
 
 ---
 
 ## Documentation
 
-- **[v2/CLAUDE.md](v2/CLAUDE.md)** - Developer guide with API reference
-- **[perm_flow.md](perm_flow.md)** - PERM process workflow (canonical source)
-- **[.planning/](/.planning)** - Architecture and planning docs
+| | |
+|---|---|
+| [v2/CLAUDE.md](v2/CLAUDE.md) | **Primary developer guide.** Patterns, gotchas, post-mortems |
+| [perm_flow.md](perm_flow.md) | The PERM process itself, canonical |
+| [v2/docs/API.md](v2/docs/API.md) | Convex API reference |
+| [v2/TEST_README.md](v2/TEST_README.md) | Test infrastructure |
+| [.planning/codebase/](.planning/codebase/) | Seven codebase deep-dives |
+
+Some documents under `.planning/codebase/` are dated snapshots and their counts have drifted. `v2/CLAUDE.md` and `pnpm test:run` are current; treat the rest as orientation.
 
 ---
 
 ## Deployment
 
-### Automatic Deployment
+Pushing to `main` triggers a Vercel production build. Convex functions deploy separately with `npx convex deploy -y` from `v2/`.
 
-Push to main branch triggers:
-- **Vercel:** Frontend rebuild and deploy
-- **Convex:** Backend functions sync
-
-```bash
-git add .
-git commit -m "feat: your feature"
-git push origin main
-```
-
-### Manual Convex Deploy
-
-```bash
-cd v2
-npx convex deploy --prod
-```
+`convex/_generated/` is committed, because Vercel builds from git and would otherwise typecheck against a stale API.
 
 ---
 
 ## Security
 
-- **Convex Auth** - Secure session management
-- **Row-Level Security** - Users only access their own data
-- **HTTPS** - Enforced in production
-- **Activity Timeout** - Auto-logout after inactivity
+- Convex Auth with row-level access: users reach only their own data
+- Production Turso credential is read-only; writes use a separate token
+- Public HTTP endpoints are rate-limited with a global budget on the shared resource, not just per-identity
+- Action tokens are purpose-scoped, so a link meaning one thing cannot be replayed as another
+- Seven security headers, HTTPS enforced, activity timeout
 
 ---
 
 ## License
 
-This project is free to use for immigration attorneys and law firms.
+**All rights reserved.** See [LICENSE](LICENSE). The source is published for reference. It isn't open source, and you don't get permission to use, copy, modify or distribute it.
 
 ---
 
 ## Acknowledgments
 
-- **DOL PERM Program:** https://flag.dol.gov/programs/perm
-- **20 CFR 656.40:** PERM regulations
-- **Convex:** Serverless backend platform
-- **Vercel:** Frontend hosting
+- [DOL Office of Foreign Labor Certification](https://flag.dol.gov/programs/perm)
+- [20 CFR 656](https://www.ecfr.gov/current/title-20/chapter-V/part-656)
+- US Department of State visa bulletin, USCIS processing data
 
 ---
 
-**Built with Claude Code**
-**Last Updated:** April 2026
-**Version:** 2.0
+**Built with Claude Code** · **Last updated:** September 2026

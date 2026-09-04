@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
-> **Stack:** Next.js 16.3.4 + Convex 1.42.3 + React 19.2.7 + AI SDK 7 + TypeScript (strict)
-> **Status:** Production | **Last Updated:** 2026-09-01
+> **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
+> **Status:** Production | **Last Updated:** 2026-09-04
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 4 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 4 projects. Baseline 306 files / ~6,096 tests (~10min). Run this before every push.** |
+| `pnpm test:run` | **All 4 projects. Baseline 332 files / 6,444 tests (~10min). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -358,7 +358,7 @@ Full env vars, rate limits, webhooks: [INTEGRATIONS.md](../.planning/codebase/IN
 
 ## Content Hub (MDX)
 
-Content in `content/{blog,tutorials,guides,changelog,resources}/*.mdx`. Processed by `next-mdx-remote` + `gray-matter` + `reading-time`. MDX components registered in `src/lib/content/mdx-components.tsx`: `Callout`, `ProductCTA`, `StepByStep`/`Step`, `ComparisonTable`, `ScreenshotFigure`, `VideoFigure`, `VideoPlayer`.
+Content in `content/{blog,guides,changelog}/*.mdx` (14, 33 and 8 pieces; the `tutorials` and `resources` directories named in earlier drafts do not exist). Processed by `next-mdx-remote` + `gray-matter` + `reading-time`. MDX components registered in `src/lib/content/mdx-components.tsx`: `Callout`, `ProductCTA`, `StepByStep`/`Step`, `ComparisonTable`, `ScreenshotFigure`, `VideoFigure`, `VideoPlayer`.
 
 ---
 
