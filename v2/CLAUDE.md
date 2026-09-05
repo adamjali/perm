@@ -2648,5 +2648,5 @@ directions: one obscure firm page had become **indexed with nobody requesting
 it**, the household-name firm was unchanged, and a third had gone back to
 **unknown to Google**. Google is working the queue on its own, prominence does
 not predict the order, and the duplication theory looks weaker still. Re-inspect
-a handful in a week and read the trend rather than spending the 4/day quota on
-it.
+a handful in a week and read the trend rather than spending the quota on it.
+(The quota is ~11/day, not the 4 first recorded here - see below.)
