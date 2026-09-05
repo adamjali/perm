@@ -1,89 +1,64 @@
 # GSC indexing priority list
 
-**Written 2026-09-05. Quota is 4 requests/day on a ROLLING 24 HOURS**, not a
-midnight reset: four were spent at 12:07 EDT on 2026-09-04, so the next window
-opens around **12:07 EDT on 2026-09-05**. Nothing could be requested overnight.
+**Run completed 2026-09-05, 19:05-19:40 EDT. 11 requests submitted, 12th
+refused.** See "What was submitted" below. Next window opens ~19:40 EDT on
+2026-09-06 (rolling 24h from these requests).
 
-## Read this before spending any of it
+## The quota is ~11/day, not 4
 
-Three findings from 2026-09-04 change what these requests are worth:
+Corrected by running it to exhaustion. On 09-04 the run stopped after 4 and that
+was recorded as the cap; it was not - the quota was simply already part-spent
+that day. **A refused request costs nothing, so the way to learn the cap is to
+keep going until it refuses**, not to infer it from where a previous run stopped.
 
-1. **Google is working the queue on its own.** `perm-attorneys/alma-law-pllc`
-   went from "Discovered - currently not indexed" to **indexed** in ~11 hours
-   with nobody requesting it.
-2. **Prominence does not predict the order.** That obscure firm indexed while
-   `akin-gump-strauss-hauer-feld-llp`, a household name, did not. So the
-   big-name-vs-obscure experiment is dead; do not spend quota proving it.
-3. **The Pages report is batched and stale** (its footer read "Last update:
-   8/27/26" while being read on 09-04). URL Inspection is live. **When they
-   disagree, the live one wins.**
+The window is a **rolling 24 hours from the requests themselves**, settled by two
+refused tests at 01:50 and 05:50 on 09-05 following requests at 12:07 on 09-04
+(the second is past 03:00 EDT, which rules out a midnight-Pacific reset).
 
-So the highest-value request is no longer "jump an unindexed page up the queue".
-It is **"tell Google a page it already indexed has materially changed"**, because
-that is the thing Google has no other fast way to learn.
+## What was submitted, 2026-09-05
 
-## Tier 1 - request these first (4 = one day's quota)
-
-| # | URL | why now |
+| # | URL | state when requested |
 |---|---|---|
-| 1 | `/perm-processing-times` | The Dataset `creator` type was fixed after Search Console flagged it on 09-02. This is the one page that carried the error, and a recrawl is how the "Done fixing?" validation clears. |
-| 2 | `/` | Its JSON-LD description changed tonight to name all three programs and the no-case-number path. GSC also reports homepage clicks **down 66%**, so it is the page most worth re-reading. |
-| 3 | `/case-search` | The most distinctive capability on the site (one employer across PERM + PWD + LCA) and it was missing from `llms.txt` entirely until tonight. |
-| 4 | `/faq` | Impressions **up 758%** per GSC. Feeding momentum on a page already climbing beats pushing one that is flat. |
+| 1 | `/perm-processing-times` | indexed - recrawl for the Dataset `creator` fix |
+| 2 | `/` | indexed - recrawl for the new JSON-LD description |
+| 3 | `/case-search` | **indexed** (was NOT on 09-04; the 09-04 request worked) |
+| 4 | `/faq` | indexed - impressions up 758% |
+| 5 | `/perm-attorneys/browse/a` | **unknown to Google** (was "discovered" on 09-04 - went backwards) |
+| 6 | `/for-attorneys` | indexed |
+| 7 | `/tools/salary-explorer` | not indexed |
+| 8 | `/pwd-cases` | indexed - recrawl for the new PageBasics copy |
+| 9 | `/lca-cases` | indexed - recrawl for the new PageBasics copy |
+| 10 | `/tools/i140-trends` | not indexed |
+| 11 | `/tools/i485-queue-position` | indexed |
+| 12 | `/perm-employers/browse/a` | **QUOTA EXCEEDED - not submitted** |
 
-## Tier 2 - the next day, if Tier 1 looks healthy
+## Next run, in priority order
 
-| # | URL | why |
-|---|---|---|
-| 5 | `/for-attorneys` | Carries the whole attorney pitch; one of the two audiences. |
-| 6 | `/perm-attorneys/browse/a` | A letter page, still never crawled. These are the crawl path to ~13,600 entity pages, so one indexed letter page is worth more than one indexed entity page. |
-| 7 | `/tools/salary-explorer` | Real calculator, newly added to `llms.txt`. |
-| 8 | `/pwd-cases` or `/lca-cases` | Only if still not reflecting the new `PageBasics` copy. Both were requested on 09-04, so give them time first. |
+1. `/perm-employers/browse/a` - the one that hit the wall
+2. `/perm-wages/browse/a`
+3. More letter pages (`/b`, `/c`, ...). **These are the highest structural
+   value**: each letter page links ~151 entity pages, so one indexed letter page
+   exposes far more than one indexed entity page. And they are moving the WRONG
+   way - `/perm-attorneys/browse/a` went from "discovered" to "unknown" in a day.
+4. `/methodology`, `/perm-denial-risk`, `/perm-decision-activity` if letters run out.
 
 ## How to run it
 
 1. `https://search.google.com/search-console`, property `sc-domain:permtracker.app`.
-2. Paste the URL into the **inspect bar at the top**. Do NOT construct an inspect
-   URL by hand - `/search-console/inspect?...&id=<url>` 404s; GSC uses an opaque
-   id.
-3. **Zoom the URL line and confirm which page is loaded before clicking
-   anything.** A navigation silently failed on 09-04 and the next click would
-   have re-requested the previous URL and burned a slot.
-4. Click REQUEST INDEXING. It works both by element `ref` and at coordinate
-   (1253-1261, 363). A live test runs first and takes a minute or two.
-5. Quota exhaustion shows as a red **"Quota Exceeded"** modal. Stop there.
+2. Paste into the **inspect bar at the top**. Do NOT construct an inspect URL -
+   `/search-console/inspect?...&id=<url>` 404s; GSC uses an opaque id.
+3. **The first click on the search bar after a page load does not register.**
+   Click, type, and if the URL line does not change, do the whole thing again.
+4. **Zoom the URL line and confirm the right page is loaded before clicking
+   REQUEST INDEXING.** A silent navigation failure would otherwise re-request the
+   previous URL and burn a slot.
+5. REQUEST INDEXING sits at ~(1253-1261, 363). A live test runs first, 30-60s.
+6. Stop at the red **"Quota Exceeded"** modal.
 
-## Where this was left off
+## Still open
 
-**2026-09-05, 01:50 EDT: nothing requested. Quota TESTED and still exhausted.**
-Not inferred - `/perm-processing-times` was inspected (it is indexed) and REQUEST
-INDEXING was clicked, which returned the red "Quota Exceeded" modal. A refused
-request costs nothing, so testing beats reasoning about the reset time.
-
-**SETTLED 2026-09-05 by a second test at 05:50 EDT: still refused.** That is
-**17.7 hours** after the 12:07 requests, and it is past 03:00 EDT, so a
-midnight-Pacific reset is ruled out. **The quota is a ROLLING 24 HOURS from the
-requests themselves. It reopens about 12:07 EDT**, i.e. roughly the same clock
-time the previous day's four were spent.
-
-Practical consequence: the window is set by when you last spent it, so spending
-all four early in the day means waiting until that same hour the next day. Two
-tests, four minutes of work, replaced a guess.
-
-Tier 1 is untouched and ready. Inspections are free and unlimited
-- re-inspect before requesting, because some of these may have indexed on their
-own in the meantime, which changes the request from "index this" to "recrawl
-this" and is still worth doing for 1-3.
-
-Previously requested on 2026-09-04 (all succeeded): `/pwd-cases`, `/lca-cases`,
-`/case-search`, `/perm-employers/browse`. A fifth (`/perm-attorneys/browse`) hit
-the quota wall.
-
-
-## One thing to check on the next pass
-
-`/perm-processing-times` still shows **Datasets: 1 valid item detected -
-Non-critical issues detected** in its inspection panel. That is the `creator`
-error, and it is expected: the fix deployed at ~01:00 EDT on 09-05 and Google has
-not recrawled since. Requesting indexing on that URL (Tier 1 #1) is what tells it
-to look. The "Done fixing?" validation in the Datasets report can then be started.
+`/perm-processing-times` showed **Datasets: 1 valid item - Non-critical issues
+detected** at request time. That is the `creator` error and it is expected: the
+fix went live ~01:00 on 09-05 and Google had not recrawled. Request #1 above is
+what tells it to look. Once it recrawls, start the "Done fixing?" validation in
+the Datasets report.
