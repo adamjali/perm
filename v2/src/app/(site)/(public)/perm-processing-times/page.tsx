@@ -263,8 +263,14 @@ export default async function PermProcessingTimesPage() {
     url: `${SITE}/perm-processing-times`,
     ...(snapshot ? { dateModified: snapshot.permAsOf } : {}),
     isBasedOn: DOL_SOURCE,
+    // "Organization", NOT "GovernmentOrganization". Search Console flagged this
+    // on 2026-09-02 as "Invalid object type for field creator". The subtype is
+    // perfectly valid schema.org - GovernmentOrganization IS an Organization -
+    // but Google's Dataset parser matches the type literally and does not walk
+    // the hierarchy, so the more precise answer was the rejected one. The name
+    // still says which agency, so no information is lost.
     creator: {
-      "@type": "GovernmentOrganization",
+      "@type": "Organization",
       name: "Office of Foreign Labor Certification, US Department of Labor",
       url: DOL_SOURCE,
     },

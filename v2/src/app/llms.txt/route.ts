@@ -116,6 +116,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Find an H-1B labor condition application (ETA-9035) by employer, job title and filing month, with the case number, filing date and DOL's current status. Live from DOL's daily check.",
   },
   {
+    path: "/case-search",
+    label: "Search all three DOL programs at once",
+    blurb:
+      "One employer, law firm, worksite state or occupation searched across PERM, prevailing wage requests and H-1B LCAs together. DOL runs the three off one case-number counter but publishes them in three separate files, so an employer's record is normally split across three searches; this returns all three, each result labelled with the program it came from.",
+  },
+  {
     path: "/calculators",
     label: "PERM calculators",
     blurb: "Every calculator in one place, with what each one answers.",
@@ -152,6 +158,24 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/tools/green-card-timeline",
     label: "Green card timeline",
     blurb: "The employment-based stages end to end, with what governs each one.",
+  },
+  {
+    path: "/tools/salary-explorer",
+    label: "PERM salary explorer",
+    blurb:
+      "What sponsorship actually pays, by occupation, state and year, from the wage committed to on each certified filing. Not a survey estimate: every figure came off a federal form.",
+  },
+  {
+    path: "/tools/i140-trends",
+    label: "I-140 filing trends",
+    blurb:
+      "USCIS I-140 receipts, approvals and denials over time by petition subtype, with the quarter each figure was published for.",
+  },
+  {
+    path: "/tools/i485-queue-position",
+    label: "I-485 queue position",
+    blurb:
+      "Where an adjustment-of-status filing sits against USCIS's published pending inventory, by category and country of chargeability.",
   },
   {
     path: "/methodology",
