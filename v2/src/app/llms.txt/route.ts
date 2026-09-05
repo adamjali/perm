@@ -33,9 +33,9 @@ export const revalidate = 86400;
 const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
     path: "/perm-case-status",
-    label: "PERM case status lookup",
+    label: "Case status lookup (PERM, prevailing wage and LCA)",
     blurb:
-      "Check any PERM case number for its live DOL status, its place in the queue, and a stage-aware decision estimate. Works for pending cases, free, no account. Email alerts when the status changes.",
+      "Check a case number for its live DOL status, its place in the queue, and a stage-aware decision estimate. Takes all three DOL programs: PERM (G-), prevailing wage requests (P-) and H-1B LCAs (I-200 and I-203). Works for PENDING cases, not just decided ones, because it asks DOL directly rather than reading the quarterly files. Free, no account, and it emails when the status changes. No case number? Search by employer name instead.",
   },
   {
     path: "/tools",
@@ -232,7 +232,7 @@ export async function GET() {
   const lines: string[] = [
     "# PERM Tracker",
     "",
-    "> PERM Tracker (permtracker.app) is a free web app for the US Department of Labor PERM (Program Electronic Review Management) labor certification process, for both the person waiting on a case and the attorney managing one. Without an account: check any PERM case number for its live DOL status and a stage-aware decision estimate (with email alerts on changes), use timeline calculators for every green-card stage (PWD, PERM, I-140, I-485), and browse DOL's own disclosure and queue data as searchable datasets. With a free account: case-management software that computes every interdependent PERM deadline per case.",
+    "> PERM Tracker (permtracker.app) is a free web app for the US Department of Labor PERM (Program Electronic Review Management) labor certification process, for both the person waiting on a case and the attorney managing one. Without an account: look a case up by NUMBER across all three DOL programs - PERM (G-), prevailing wage request (P-) and H-1B LCA (I-200/I-203) - for its live DOL status and a stage-aware decision estimate (with email alerts on changes); or, with no case number at all, find it by employer name, law firm, worksite state or occupation. Use timeline calculators for every green-card stage (PWD, PERM, I-140, I-485), and browse DOL's own disclosure and queue data as searchable datasets. With a free account: case-management software that computes every interdependent PERM deadline per case.",
     "",
     "Every figure on this site is measured from a named federal source and carries the window it was measured over. Nothing is modelled. Where the data cannot support a number, the site says so rather than estimating one: there is no per-case denial-risk score, and processing-time estimates are withheld for filing cohorts too young to measure.",
     "",

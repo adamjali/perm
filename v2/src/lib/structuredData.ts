@@ -49,7 +49,7 @@ export function getSoftwareApplicationSchema(baseUrl: string) {
       priceCurrency: 'USD',
     },
     description:
-      'Free PERM tracking for green-card applicants and immigration attorneys. Check any PERM case number for its live DOL status and a decision estimate, follow the queue with live data, and compute every case deadline automatically.',
+      'Free labor-certification tracking for green-card applicants and immigration attorneys. Look up a case by number across all three DOL programs - PERM (G-), prevailing wage request (P-) and H-1B LCA (I-200/I-203) - for its live DOL status and a decision estimate, or find it by employer name with no case number at all. Follow the queue with live data and compute every case deadline automatically.',
     disambiguatingDescription:
       'Two sides, both free: a public tracker for the person waiting (per-case DOL status, timelines for PWD, PERM, I-140 and I-485, and open datasets), and case-management software for attorneys and firms (deadlines computed per case, reminders, calendar sync).',
     audience: [

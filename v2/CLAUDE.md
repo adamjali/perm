@@ -282,6 +282,48 @@ learned from a real defect in `convex/queueAlerts.ts`:
 
 ---
 
+## An audit that walks PAGES cannot see routes, libs or generated files (2026-09-05)
+
+The September audit fixed **41** places where a reader would form the wrong
+belief about what this site can look up, after Google's AI Mode twice said it
+could not check a pending `P-` case. It walked live pages. Two of the most
+machine-read surfaces on the site are not pages, and both still said **"check any
+PERM case number"** afterwards:
+
+- **`llms.txt`** is a route handler (`src/app/llms.txt/route.ts`). Its blockquote
+  summary is the single most quotable line on the site for an LLM, and it also
+  omitted `/case-search` entirely - the one capability, searching one employer
+  across all three programs, that nothing else on the internet does.
+- **the JSON-LD `description`** in `src/lib/structuredData.ts`, which renders on
+  EVERY page.
+
+**Enumerate surfaces by how they are READ, not by whether they are pages.** A
+sweep of the live pages themselves came back clean (0 findings, with a control
+proving the scan was alive), so the page audit had held perfectly; its scope was
+the defect. `three-programs-in-machine-copy.test.ts` gates both surfaces on the
+three prefixes being present, deliberately not on phrasing - a gate that judged
+framing semantically would flag every honest mention of PERM on a PERM site.
+
+**Google's Dataset parser does not walk the schema.org class hierarchy.** Search
+Console flagged `creator` on `/perm-processing-times` as "Invalid object type".
+The value was `GovernmentOrganization`, which IS an `Organization` by schema.org's
+own definition - **the more precise answer was the rejected one**. Exactly one
+item was affected because every other Dataset takes its creator as an `@id`
+reference to the shared Organization node in `getDatasetSchema`; only that page
+hand-rolled an inline creator. `dataset-creator-type.test.ts` gates inline
+creators to the bare types.
+
+**What was measured and left alone**, because measurement said it was fine:
+`pnpm audit:pages` returns **0 findings across 61 URLs covering all 39
+templates**; robots.txt allows every AI crawler (it names eleven SEO scrapers to
+block and zero AI ones); the "as of" date in `llms.txt` is DOL's own stamp rather
+than our staleness; and content freshness is strong (guides median age 2 days,
+`dateModified` exposed in JSON-LD) against the ~90-day decay window the current
+AEO guidance describes. Core Web Vitals reads "No data" in Search Console because
+CrUX needs more traffic than 2,261 clicks a quarter, which no code change fixes.
+
+---
+
 ## A refusal must not leave the trace of a success (2026-09-04)
 
 All three subscribe mutations wrote the row FIRST and checked the global daily
