@@ -18,6 +18,12 @@
 #    deploy cold-starts the ISR cache, so a docs-only build is not just wasted
 #    minutes, it is a full regeneration of ~21,000 entity pages.
 #
+# 4. Agent tooling is not runtime code. `npx convex ai-files update` rewrites
+#    `.agents/`, `convex/_generated/ai/` and `skills-lock.json`; none of it ships.
+#    NARROW ON PURPOSE: only the `_generated/ai/` SUBDIRECTORY is skipped, never
+#    `_generated/` itself, which holds the API bindings the build compiles
+#    against and must always trigger one.
+#
 # Paths from `git diff --name-only` are repo-root relative regardless of cwd.
 BASE="${VERCEL_GIT_PREVIOUS_SHA:-}"
 if [ -z "$BASE" ]; then
@@ -28,7 +34,7 @@ fi
 git rev-parse "$BASE" >/dev/null 2>&1 || exit 1
 
 if git diff --name-only "$BASE" HEAD \
-  | grep -qvE '^(v2/scripts/|\.github/|\.planning/|v2/docs/|docs/)|\.md$|/__tests__/|\.test\.tsx?$|^v2/vitest\.'; then
+  | grep -qvE '^(v2/scripts/|\.github/|\.planning/|v2/docs/|docs/|v2/\.agents/|v2/convex/_generated/ai/)|\.md$|/__tests__/|\.test\.tsx?$|^v2/vitest\.|^v2/skills-lock\.json$'; then
   exit 1
 fi
 exit 0
