@@ -55,8 +55,18 @@ that is the thing Google has no other fast way to learn.
 
 ## Where this was left off
 
-**2026-09-05, 01:00 EDT: nothing requested. Quota exhausted since 12:07 the
-previous day.** Tier 1 is untouched and ready. Inspections are free and unlimited
+**2026-09-05, 01:50 EDT: nothing requested. Quota TESTED and still exhausted.**
+Not inferred - `/perm-processing-times` was inspected (it is indexed) and REQUEST
+INDEXING was clicked, which returned the red "Quota Exceeded" modal. A refused
+request costs nothing, so testing beats reasoning about the reset time.
+
+That also narrows the reset window: still exhausted at **01:50 EDT**, from
+requests made at **12:07 EDT the previous day**. That is 13.7 hours, which rules
+out any reset earlier than 01:50 and is consistent with either a rolling 24 hours
+(opens ~12:07) or a midnight-Pacific reset (opens 03:00 EDT). **Try again after
+03:00 EDT; if refused, it is the rolling window and noon is the time.**
+
+Tier 1 is untouched and ready. Inspections are free and unlimited
 - re-inspect before requesting, because some of these may have indexed on their
 own in the meantime, which changes the request from "index this" to "recrawl
 this" and is still worth doing for 1-3.
@@ -64,3 +74,12 @@ this" and is still worth doing for 1-3.
 Previously requested on 2026-09-04 (all succeeded): `/pwd-cases`, `/lca-cases`,
 `/case-search`, `/perm-employers/browse`. A fifth (`/perm-attorneys/browse`) hit
 the quota wall.
+
+
+## One thing to check on the next pass
+
+`/perm-processing-times` still shows **Datasets: 1 valid item detected -
+Non-critical issues detected** in its inspection panel. That is the `creator`
+error, and it is expected: the fix deployed at ~01:00 EDT on 09-05 and Google has
+not recrawled since. Requesting indexing on that URL (Tier 1 #1) is what tells it
+to look. The "Done fixing?" validation in the Datasets report can then be started.
