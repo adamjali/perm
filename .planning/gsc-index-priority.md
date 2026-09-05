@@ -60,11 +60,15 @@ Not inferred - `/perm-processing-times` was inspected (it is indexed) and REQUES
 INDEXING was clicked, which returned the red "Quota Exceeded" modal. A refused
 request costs nothing, so testing beats reasoning about the reset time.
 
-That also narrows the reset window: still exhausted at **01:50 EDT**, from
-requests made at **12:07 EDT the previous day**. That is 13.7 hours, which rules
-out any reset earlier than 01:50 and is consistent with either a rolling 24 hours
-(opens ~12:07) or a midnight-Pacific reset (opens 03:00 EDT). **Try again after
-03:00 EDT; if refused, it is the rolling window and noon is the time.**
+**SETTLED 2026-09-05 by a second test at 05:50 EDT: still refused.** That is
+**17.7 hours** after the 12:07 requests, and it is past 03:00 EDT, so a
+midnight-Pacific reset is ruled out. **The quota is a ROLLING 24 HOURS from the
+requests themselves. It reopens about 12:07 EDT**, i.e. roughly the same clock
+time the previous day's four were spent.
+
+Practical consequence: the window is set by when you last spent it, so spending
+all four early in the day means waiting until that same hour the next day. Two
+tests, four minutes of work, replaced a guess.
 
 Tier 1 is untouched and ready. Inspections are free and unlimited
 - re-inspect before requesting, because some of these may have indexed on their
