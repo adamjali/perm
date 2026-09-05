@@ -439,6 +439,31 @@ export const subscribe = internalMutation({
       return { ok: true, message: NEUTRAL_REPLY };
     }
 
+    // BEFORE THE WRITE, AND THAT ORDER IS THE FIX. This used to sit after it,
+    // so an exhausted budget still stamped `lastConfirmationSentAt` on the row
+    // while sending nothing. The compensating `clearConfirmationCooldown` is
+    // only reachable from inside `sendConfirmation`, which this branch returns
+    // before scheduling - so the stamp stood, and the caller's retry a minute
+    // later was swallowed by the ten-minute cooldown and answered "check your
+    // inbox" for an email that was never sent.
+    //
+    // Still charged BELOW the cooldown and ceiling checks, which is what the
+    // old comment here was protecting: both of those return earlier and send
+    // nothing, so neither consumes the budget. A mutation is one transaction,
+    // so a later throw rolls the recorded attempt back with everything else.
+    const budget = await checkAndRecordRateLimit(
+      ctx,
+      "all",
+      "case_subscribe_global",
+      CONFIRMATION_GLOBAL_BUDGET,
+    );
+    if (!budget.allowed) {
+      log.error("confirmation budget exhausted; refusing to send", {
+        limit: CONFIRMATION_GLOBAL_BUDGET.limit,
+      });
+      return { ok: false, message: THROTTLED_REPLY, throttled: true };
+    }
+
     if (existing) {
       // This endpoint is unauthenticated, so the caller has proved nothing
       // except that they can type an address. The request is STAGED and applied
@@ -461,21 +486,6 @@ export const subscribe = internalMutation({
         // replayed confirm token could activate it.
         pendingCaseNumber: caseNumber,
       });
-    }
-
-    // Charged here, not at the top, so requests absorbed by the cooldown (which
-    // send nothing) do not consume the budget.
-    const budget = await checkAndRecordRateLimit(
-      ctx,
-      "all",
-      "case_subscribe_global",
-      CONFIRMATION_GLOBAL_BUDGET,
-    );
-    if (!budget.allowed) {
-      log.error("confirmation budget exhausted; refusing to send", {
-        limit: CONFIRMATION_GLOBAL_BUDGET.limit,
-      });
-      return { ok: false, message: THROTTLED_REPLY, throttled: true };
     }
 
     // Stage the product-news opt-in in THIS transaction, next to the schedule

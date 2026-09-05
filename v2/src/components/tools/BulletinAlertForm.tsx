@@ -197,7 +197,8 @@ export function BulletinAlertForm({ source }: { source: string }) {
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
         Double opt-in: you confirm by email first, so an address can&apos;t be
         signed up by someone who doesn&apos;t control it, and one click opts
-        out.
+        out. We send one confirmation every 10 minutes per address - if nothing
+        lands, wait that long before trying again.
       </p>
     </form>
   );

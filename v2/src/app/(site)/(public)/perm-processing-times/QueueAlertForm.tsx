@@ -295,7 +295,9 @@ export function QueueAlertForm({
       </Button>{" "}
 
       <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-        You confirm by email first, and one click opts out.
+        You confirm by email first, and one click opts out. We send one
+        confirmation every 10 minutes per address - if nothing lands, wait that
+        long before trying again.
       </p>
     </form>
   );

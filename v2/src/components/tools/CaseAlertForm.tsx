@@ -196,7 +196,8 @@ export function CaseAlertForm({
         ) : (
           <>
             Double opt-in, so nothing arrives until you confirm. One address can
-            watch 25 cases.
+            watch 25 cases, and we send one confirmation every 10 minutes - if
+            nothing lands, wait that long before trying again.
           </>
         )}
       </p>

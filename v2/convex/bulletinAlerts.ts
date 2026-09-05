@@ -159,6 +159,11 @@ export const subscribe = internalMutation({
     const now = Date.now();
     const series = `${args.category}|${args.country}`;
 
+    // HOISTED OUT OF THE WRITE BRANCH so the budget check can sit between the
+    // two. With the budget checked after the write, an exhausted budget still
+    // stamped `lastConfirmationSentAt` while sending nothing, and the caller's
+    // retry was then swallowed by this cooldown and told "check your inbox"
+    // for an email that never went out.
     if (existing) {
       const withinCooldown =
         existing.lastConfirmationSentAt !== undefined &&
@@ -166,6 +171,22 @@ export const subscribe = internalMutation({
       if (withinCooldown) {
         return { ok: true, message: NEUTRAL_REPLY };
       }
+    }
+
+    // Charged after the cooldown, which returns above and sends nothing, and
+    // BEFORE the write, so a refusal here leaves no row and no stamp behind.
+    const budget = await checkAndRecordRateLimit(
+      ctx,
+      "all",
+      "bulletin_subscribe_global",
+      CONFIRMATION_GLOBAL_BUDGET,
+    );
+    if (!budget.allowed) {
+      log.error("bulletin confirmation budget exhausted; refusing to send");
+      return { ok: false, message: THROTTLED_REPLY, throttled: true };
+    }
+
+    if (existing) {
       // Staged, never applied live: an unauthenticated POST proves nothing.
       // For an existing (email, series) row the "change" is a re-request of
       // the same series, which is what lets a fresh confirm click resurrect
@@ -184,17 +205,6 @@ export const subscribe = internalMutation({
         source: args.source,
         lastConfirmationSentAt: now,
       });
-    }
-
-    const budget = await checkAndRecordRateLimit(
-      ctx,
-      "all",
-      "bulletin_subscribe_global",
-      CONFIRMATION_GLOBAL_BUDGET,
-    );
-    if (!budget.allowed) {
-      log.error("bulletin confirmation budget exhausted; refusing to send");
-      return { ok: false, message: THROTTLED_REPLY, throttled: true };
     }
 
     // Stage the product-news opt-in in THIS transaction, next to the schedule

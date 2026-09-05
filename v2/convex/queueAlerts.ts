@@ -334,14 +334,13 @@ export const subscribe = internalMutation({
 
     const now = Date.now();
 
+    // HOISTED OUT OF THE WRITE BRANCH so the budget check can sit between the
+    // two. It used to live immediately above the patch, which forced the
+    // budget check below the write - and an exhausted budget then stamped
+    // `lastConfirmationSentAt` while sending nothing, so the caller's retry
+    // was swallowed by this very cooldown and answered "check your inbox" for
+    // an email that never went out.
     if (existing) {
-      // This endpoint is unauthenticated, so the caller has proved nothing
-      // except that they can type an address. Writing straight to
-      // `filingMonth`, clearing `unsubscribedAt` or resetting `notifiedAt`
-      // here would let anyone who knows an address rewrite that person's
-      // subscription, resurrect an opt-out they are legally entitled to keep,
-      // and trigger another send. So the request is STAGED and applied only
-      // when someone with access to the inbox clicks confirm.
       const withinCooldown =
         existing.lastConfirmationSentAt !== undefined &&
         now - existing.lastConfirmationSentAt < CONFIRMATION_COOLDOWN_MS;
@@ -351,7 +350,32 @@ export const subscribe = internalMutation({
         // never be used to probe whether an address is on the list.
         return { ok: true, message: NEUTRAL_REPLY };
       }
+    }
 
+    // Charged after the cooldown, which returns above and sends nothing, and
+    // BEFORE the write, so a refusal here leaves no row and no stamp behind.
+    const budget = await checkAndRecordRateLimit(
+      ctx,
+      "all",
+      "queue_subscribe_global",
+      CONFIRMATION_GLOBAL_BUDGET,
+    );
+    if (!budget.allowed) {
+      log.error("confirmation budget exhausted; refusing to send", {
+        windowMs: CONFIRMATION_GLOBAL_BUDGET.windowMs,
+        limit: CONFIRMATION_GLOBAL_BUDGET.limit,
+      });
+      return { ok: false, message: THROTTLED_REPLY, throttled: true };
+    }
+
+    if (existing) {
+      // This endpoint is unauthenticated, so the caller has proved nothing
+      // except that they can type an address. Writing straight to
+      // `filingMonth`, clearing `unsubscribedAt` or resetting `notifiedAt`
+      // here would let anyone who knows an address rewrite that person's
+      // subscription, resurrect an opt-out they are legally entitled to keep,
+      // and trigger another send. So the request is STAGED and applied only
+      // when someone with access to the inbox clicks confirm.
       await ctx.db.patch(existing._id, {
         pendingFilingMonth: args.filingMonth,
         lastConfirmationSentAt: now,
@@ -366,22 +390,6 @@ export const subscribe = internalMutation({
         source: args.source,
         lastConfirmationSentAt: now,
       });
-    }
-
-    // Charged here, not at the top, so requests that were absorbed by the
-    // per-address cooldown (which send nothing) do not consume the budget.
-    const budget = await checkAndRecordRateLimit(
-      ctx,
-      "all",
-      "queue_subscribe_global",
-      CONFIRMATION_GLOBAL_BUDGET,
-    );
-    if (!budget.allowed) {
-      log.error("confirmation budget exhausted; refusing to send", {
-        windowMs: CONFIRMATION_GLOBAL_BUDGET.windowMs,
-        limit: CONFIRMATION_GLOBAL_BUDGET.limit,
-      });
-      return { ok: false, message: THROTTLED_REPLY, throttled: true };
     }
 
     // Stage the product-news opt-in in THIS transaction, next to the schedule
