@@ -282,6 +282,45 @@ learned from a real defect in `convex/queueAlerts.ts`:
 
 ---
 
+## A refusal must not leave the trace of a success (2026-09-04)
+
+All three subscribe mutations wrote the row FIRST and checked the global daily
+confirmation budget SECOND. So a refusal still stamped `lastConfirmationSentAt`,
+and `clearConfirmationCooldown` - which exists for exactly this - is only
+reachable from inside `sendConfirmation`, which the refusal branch returns before
+ever scheduling.
+
+The orphan row was not the problem. **The retry was:**
+
+1. Budget exhausted, user told "we're busy, try later". Row stamped anyway.
+2. They retry a minute later.
+3. The 10-minute per-address cooldown sees the stamp the REFUSED attempt left,
+   absorbs the request, and answers with the **success** message.
+4. They wait for a confirmation email that was never sent and never will be.
+
+**Charge a budget BEFORE the side effect it guards, not after.** Fixed by moving
+the check above the write rather than compensating below it: nothing written,
+nothing stamped. `queueAlerts` and `bulletinAlerts` needed their cooldown hoisted
+out of the `if (existing)` branch first so the check could sit between cooldown
+and write, preserving the invariant that a cooldown-absorbed request never
+consumes budget. If a guard genuinely must run late, its compensation belongs on
+the same branch, never in a function that branch does not reach.
+
+**The three daily budgets are NOT equal: caseAlerts 15, queueAlerts 18,
+bulletinAlerts 6.** A test counting to a hardcoded 15 passed against caseAlerts
+and silently never exhausted queueAlerts.
+`convex/__tests__/subscribeBudgetOrder.test.ts` fills until the endpoint actually
+refuses and THROWS if 40 calls do not exhaust it, so a vacuous pass is
+impossible. Probed by reverting the reorder.
+
+**A silent limit is disclosed STATICALLY or not at all.** The cooldown told the
+user nothing and logged nothing. It is now stated in all three forms as fixed
+text, never conditional: a reply that varied with state would let anyone type an
+address and learn whether it is watching a case, which for immigration filings is
+a real leak. That constraint forbids a *conditional* message, not a *static* one.
+
+---
+
 ## Action tokens (`convex/lib/unsubscribeToken.ts`)
 
 `makeUnsubscribeToken(email, secret, purpose?)` signs `<purpose>:<email>`.
@@ -2556,3 +2595,16 @@ of nearly every gate in this repo has gone.
 Re-measure with `dup2.py`'s approach (chrome-excluded 5-grams) against a BUILT
 site, never the source, and never against a metric that has not been shown to
 separate chrome from copy.
+
+**AND THE FIGURE THIS WHOLE SECTION RESTS ON WAS NINE DAYS STALE.** The Pages
+report footer reads **"Last update: 8/27/26"**, so "19,931 discovered, currently
+not indexed" describes 27 August, not the day it was read. **Read a dashboard's
+own last-updated stamp before treating anything on it as current.** URL
+Inspection is live, the Pages report is not, and re-inspecting three pages from
+that same examples list ~11 hours later found them disagreeing in both
+directions: one obscure firm page had become **indexed with nobody requesting
+it**, the household-name firm was unchanged, and a third had gone back to
+**unknown to Google**. Google is working the queue on its own, prominence does
+not predict the order, and the duplication theory looks weaker still. Re-inspect
+a handful in a week and read the trend rather than spending the 4/day quota on
+it.
