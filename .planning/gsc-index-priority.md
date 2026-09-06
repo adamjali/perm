@@ -1,8 +1,8 @@
 # GSC indexing priority list
 
-**Next window opens ~19:40 EDT on 2026-09-06.** The quota is ~11/day on a
+**Next window opens ~7:40 PM EDT on 2026-09-06.** The quota is ~11/day on a
 **rolling 24 hours from the requests themselves**, so it reopens at the hour it
-was spent. All 11 were used at 19:40 on 09-05.
+was spent. All 11 were used at 7:40 PM on 09-05.
 
 ## Spend it on letter pages. Here is why.
 
@@ -42,8 +42,8 @@ densest) over completing one kind alphabetically.
 
 The 12th, `/perm-employers/browse/a`, was refused.
 
-**One caveat on those 11.** They were requested at 19:40, and the footer
-whitespace fix deployed after ~22:15. If Google's priority crawl reached them in
+**One caveat on those 11.** They were requested at 7:40 PM, and the footer
+whitespace fix deployed after ~10:15 PM. If Google's priority crawl reached them in
 between, it read the pre-fix footer. Not worth re-requesting: the change is three
 characters in nav text, the SERP was already clean, and Google recrawls indexed
 pages on its own.
