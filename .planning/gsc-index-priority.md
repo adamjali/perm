@@ -1,64 +1,90 @@
 # GSC indexing priority list
 
-**Run completed 2026-09-05, 19:05-19:40 EDT. 11 requests submitted, 12th
-refused.** See "What was submitted" below. Next window opens ~19:40 EDT on
-2026-09-06 (rolling 24h from these requests).
+**Next window opens ~19:40 EDT on 2026-09-06.** The quota is ~11/day on a
+**rolling 24 hours from the requests themselves**, so it reopens at the hour it
+was spent. All 11 were used at 19:40 on 09-05.
 
-## The quota is ~11/day, not 4
+## Spend it on letter pages. Here is why.
 
-Corrected by running it to exhaustion. On 09-04 the run stopped after 4 and that
-was recorded as the cap; it was not - the quota was simply already part-spent
-that day. **A refused request costs nothing, so the way to learn the cap is to
-keep going until it refuses**, not to infer it from where a previous run stopped.
+The instinct is to request whatever changed. Resist it, for a measured reason.
 
-The window is a **rolling 24 hours from the requests themselves**, settled by two
-refused tests at 01:50 and 05:50 on 09-05 following requests at 12:07 on 09-04
-(the second is past 03:00 EDT, which rules out a midnight-Pacific reset).
+**The orphan audit passed perfectly** (2026-09-05): all **13,579** entity pages
+are linked from the A-Z letter pages, sets matching exactly - 9,646/9,646
+employers, 2,919/2,919 attorneys, 1,014/1,014 occupations. Measured with 78
+fetches rather than 13,579, because the letter pages are the only internal path,
+so covering all 78 is complete rather than a sample.
 
-## What was submitted, 2026-09-05
+**And Google still cannot use any of it, because the letter pages themselves are
+uncrawled.** `/perm-attorneys/browse/a` reads **"URL is unknown to Google"**, and
+it went BACKWARDS from "discovered - currently not indexed" in a single day.
+`amy-link-pa` did the same.
 
-| # | URL | state when requested |
+So: 13,579 correctly-linked pages behind a door Google has not opened. **One
+crawled letter page exposes ~151 entity pages.** No other request comes close to
+that leverage, and the layer is actively degrading rather than merely waiting.
+
+## Next run, in order
+
+| # | URL | why |
 |---|---|---|
-| 1 | `/perm-processing-times` | indexed - recrawl for the Dataset `creator` fix |
-| 2 | `/` | indexed - recrawl for the new JSON-LD description |
-| 3 | `/case-search` | **indexed** (was NOT on 09-04; the 09-04 request worked) |
-| 4 | `/faq` | indexed - impressions up 758% |
-| 5 | `/perm-attorneys/browse/a` | **unknown to Google** (was "discovered" on 09-04 - went backwards) |
-| 6 | `/for-attorneys` | indexed |
-| 7 | `/tools/salary-explorer` | not indexed |
-| 8 | `/pwd-cases` | indexed - recrawl for the new PageBasics copy |
-| 9 | `/lca-cases` | indexed - recrawl for the new PageBasics copy |
-| 10 | `/tools/i140-trends` | not indexed |
-| 11 | `/tools/i485-queue-position` | indexed |
-| 12 | `/perm-employers/browse/a` | **QUOTA EXCEEDED - not submitted** |
+| 1 | `/perm-employers/browse/a` | hit the quota wall on 09-05 |
+| 2 | `/perm-wages/browse/a` | third kind, never requested |
+| 3-11 | `/perm-attorneys/browse/{b,c,d,...}`, then employers, then wages | ~151 entities exposed each |
 
-## Next run, in priority order
+Prefer the letters with the most entities behind them (a, b, c, m, s are usually
+densest) over completing one kind alphabetically.
 
-1. `/perm-employers/browse/a` - the one that hit the wall
-2. `/perm-wages/browse/a`
-3. More letter pages (`/b`, `/c`, ...). **These are the highest structural
-   value**: each letter page links ~151 entity pages, so one indexed letter page
-   exposes far more than one indexed entity page. And they are moving the WRONG
-   way - `/perm-attorneys/browse/a` went from "discovered" to "unknown" in a day.
-4. `/methodology`, `/perm-denial-risk`, `/perm-decision-activity` if letters run out.
+## What was requested on 2026-09-05 (all 11 succeeded)
+
+`/perm-processing-times` - `/` - `/case-search` - `/faq` -
+`/perm-attorneys/browse/a` - `/for-attorneys` - `/tools/salary-explorer` -
+`/pwd-cases` - `/lca-cases` - `/tools/i140-trends` - `/tools/i485-queue-position`
+
+The 12th, `/perm-employers/browse/a`, was refused.
+
+**One caveat on those 11.** They were requested at 19:40, and the footer
+whitespace fix deployed after ~22:15. If Google's priority crawl reached them in
+between, it read the pre-fix footer. Not worth re-requesting: the change is three
+characters in nav text, the SERP was already clean, and Google recrawls indexed
+pages on its own.
+
+## What changed on 2026-09-05 and is now live
+
+- `llms.txt` and the site-wide JSON-LD `description` corrected: both said "check
+  any PERM case number" when the site takes G-, P- and I- numbers and will also
+  find a case by employer name. Both are covered by the 11 above.
+- Dataset `creator` fixed from `GovernmentOrganization` to `Organization`.
+  Google matches `@type` literally and does not walk the schema.org hierarchy,
+  so the more precise type was the rejected one. **Once `/perm-processing-times`
+  recrawls, start the "Done fixing?" validation in the Datasets report.**
+- Four pages added to `llms.txt` (`/case-search`, salary-explorer, i140-trends,
+  i485-queue-position).
+- Three footer glue points fixed. Site-wide but low value; no request needed.
 
 ## How to run it
 
 1. `https://search.google.com/search-console`, property `sc-domain:permtracker.app`.
 2. Paste into the **inspect bar at the top**. Do NOT construct an inspect URL -
-   `/search-console/inspect?...&id=<url>` 404s; GSC uses an opaque id.
-3. **The first click on the search bar after a page load does not register.**
-   Click, type, and if the URL line does not change, do the whole thing again.
+   GSC uses an opaque id and a hand-built one 404s.
+3. **The first click on the search bar after a page load never registers.** If
+   the URL line does not change, do the whole sequence again.
 4. **Zoom the URL line and confirm the right page is loaded before clicking
-   REQUEST INDEXING.** A silent navigation failure would otherwise re-request the
-   previous URL and burn a slot.
+   REQUEST INDEXING**, or a silently failed navigation re-requests the previous
+   page and burns a slot.
 5. REQUEST INDEXING sits at ~(1253-1261, 363). A live test runs first, 30-60s.
-6. Stop at the red **"Quota Exceeded"** modal.
+6. **Keep going until the red "Quota Exceeded" modal.** A refused request costs
+   nothing, so the cap is learned by hitting it - that is how the recorded cap
+   was corrected from 4 to ~11.
 
-## Still open
+## Closed, do not re-litigate
 
-`/perm-processing-times` showed **Datasets: 1 valid item - Non-critical issues
-detected** at request time. That is the `creator` error and it is expected: the
-fix went live ~01:00 on 09-05 and Google had not recrawled. Request #1 above is
-what tells it to look. Once it recrawls, start the "Done fixing?" validation in
-the Datasets report.
+- **Glued text.** The fleet handoff reported 167 joins. Ground truth is 317, and
+  it is not a defect: permtracker measures **34.7 per 1k words against
+  react.dev's 171.9 and stripe.com's 182.9**. It is a property of adjacent block
+  elements. The class that actually damaged a SERP - one phrase split across
+  inline siblings - is **zero** here, zero on Tampa Trucks, and now zero on NEFL
+  (its brand lockup reads "North East Florida Junk Removal" again). The live
+  SERP is clean.
+- **Orphans.** Zero across all 13,579 generated pages.
+- **Canonical without a trailing slash.** Leave it. RFC 3986 makes an empty path
+  equivalent to `/`, and the homepage is indexed, which settles it empirically.

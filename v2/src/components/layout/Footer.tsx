@@ -157,8 +157,15 @@ export default function Footer({ audience = "public" }: FooterProps) {
                 );
               })}
             </div>
-          </div>
+          </div>{" "}
 
+          {/* A whitespace text node between grid items. The column above ends in
+              link text and the next begins with a heading, so textContent runs them
+              together ("...attorneys.Product", "Sign InLearn", "Processing
+              TimesCalculators") for anything that walks the DOM. Whitespace-only
+              nodes are not laid out as grid items, so this costs nothing visually.
+              Measured: these are the only three glued boundaries in the footer;
+              the Legal column does not glue and is left alone. */}
           {/* Product column */}
           <div>
             <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
@@ -233,7 +240,7 @@ export default function Footer({ audience = "public" }: FooterProps) {
                 </>
               )}
             </nav>
-          </div>
+          </div>{" "}
 
           {/* Learn column */}
           <div>
@@ -270,7 +277,7 @@ export default function Footer({ audience = "public" }: FooterProps) {
                 Processing Times
               </NavLink>
             </nav>
-          </div>
+          </div>{" "}
 
           {/* Calculators column. The suite shipped reachable from exactly
               one inbound link, which is the orphan-page defect: a page can
