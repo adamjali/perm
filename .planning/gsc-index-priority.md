@@ -55,8 +55,17 @@ pages on its own.
   find a case by employer name. Both are covered by the 11 above.
 - Dataset `creator` fixed from `GovernmentOrganization` to `Organization`.
   Google matches `@type` literally and does not walk the schema.org hierarchy,
-  so the more precise type was the rejected one. **Once `/perm-processing-times`
-  recrawls, start the "Done fixing?" validation in the Datasets report.**
+  so the more precise type was the rejected one. **Validation STARTED 2026-09-05**
+  and is now running - nothing further to do but watch it.
+
+  Where the button lives, because the report path is not guessable: left sidebar
+  -> **Enhancements -> Datasets** (real URL `/search-console/r/datasets`; a
+  hand-built `/search-console/structured-data/dataset` 404s). Invalid/Valid at
+  the top will read 0/9 - the `creator` issue is NON-CRITICAL so it sits further
+  down under **"Improve item appearance"**. Click the issue row, and the detail
+  page carries **"Done fixing?  VALIDATE FIX"** on its right. Google then
+  recrawls the affected items itself; the row goes Not Started -> Started ->
+  Passed, typically over days.
 - Four pages added to `llms.txt` (`/case-search`, salary-explorer, i140-trends,
   i485-queue-position).
 - Three footer glue points fixed. Site-wide but low value; no request needed.
