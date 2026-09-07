@@ -2943,25 +2943,35 @@ the other.
 | `pwd-weekly-full` | pwd-status-direct.yml, mode=full | 10:40 Sundays |
 | `case-status-pending` | case-status-direct.yml, mode=pending | 19:40 daily |
 
-**Two secrets, two owners.** `CRON_SECRET` was generated here and added to
-the production environment on Sep 7. `GITHUB_DISPATCH_TOKEN` is a
-fine-grained personal access token that only Adam can create (GitHub asks
-for his password to mint one): repository access limited to `adamjali/perm`,
-permission Actions: read and write, nothing else. Until it exists the route
-answers **500 "GITHUB_DISPATCH_TOKEN is not set"** and nothing is dispatched.
-**Vercel binds env at deploy time**, so adding the token needs a redeploy
-before the route can see it. The Firewall bypasses `/api/cron/*` for the
+**Two secrets.** `CRON_SECRET` was generated here and added to the
+production environment on Sep 7. `GITHUB_DISPATCH_TOKEN` is the fine-grained
+personal access token `permtracker-cron-dispatch` (no expiry, repository
+access limited to `adamjali/perm`, permission Actions: read and write,
+Metadata read-only), created 9:24 AM Sep 7 with Adam approving GitHub's
+sudo prompt on his phone. It reached Vercel by Cmd+C in the token page and
+`pbpaste | vercel env add GITHUB_DISPATCH_TOKEN production --sensitive`,
+so the value never passed through a transcript. If the token is ever
+missing the route answers **500 "GITHUB_DISPATCH_TOKEN is not set"** and
+nothing is dispatched. **Vercel binds env at deploy time**, and
+`vercel redeploy` of a docs-only commit is SKIPPED by the ignore rule (a
+9-second "Canceled" deployment), so binding a new variable needs a build
+that carries a change under `src/`. The Firewall bypasses `/api/cron/*` for the
 `vercel-cron/1.0` user agent every cron invocation carries (rule 10); a
 rule keyed on the `authorization` header was tried first and never
 matched, so the WAF evidently cannot see that header. Measured, not
 assumed: with the secret and a curl user agent the route was challenged,
 with the secret and `vercel-cron/1.0` it answered.
 
-**GitHub's `schedule:` blocks stay in the four workflows as a fallback until
-a Vercel-driven dispatch has been seen to run.** Then remove them, or the
-sweep runs twice a day: once on time from Vercel, once hours later from
-GitHub, and the workflow's concurrency group queues the second rather than
-dropping it. The route's 20-minute guard only covers Vercel's own duplicates.
+**Proven 9:40 AM Sep 7 and the `schedule:` blocks removed.** A dispatch
+through the route answered 200 at 13:40:43 UTC, GitHub created run
+34128732840 one second later and it finished green. The three data
+workflows (case-status-direct, pwd-status-direct, processing-times-ingest)
+no longer carry a `schedule:` at all, or the sweep would run twice a day:
+once on time from Vercel, once hours later from GitHub, with the concurrency
+group queueing the second rather than dropping it. `ingest-health` keeps its
+GitHub schedule as a second, independent clock on purpose: if Vercel's cron
+ever stops, the late GitHub run is what reports the silence. The route's
+20-minute guard covers Vercel's own duplicate deliveries only.
 The PWD daily pass carries its resumer step on the dispatched run too
 (`inputs.mode == 'pending'`), not only on the `schedule` event.
 

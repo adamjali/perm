@@ -32,9 +32,10 @@ name: Case status (direct from DOL)
 # is down - and it flushes as it goes, so a shutdown mid-run keeps the work.
 
 on:
-  schedule:
-    - cron: "40 19 * * *"      # 15:40 ET - pending only, the mid-day refresh
-    - cron: "10 8 * * *"       # 04:10 ET - EVERY case, daily
+  # No `schedule:` any more. GitHub fired these crons 2 to 7.5 hours late on
+  # every one of nine measured days (Sep 7 2026), so Vercel's clock drives them
+  # through /api/cron/dispatch: case-status-full at 08:10 UTC, case-status-pending
+  # at 19:40 UTC (v2/vercel.json). Both arrive here as workflow_dispatch.
   workflow_dispatch:
     inputs:
       mode:
