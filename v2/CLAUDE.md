@@ -2843,3 +2843,49 @@ health check fails when a day's live DOL lookups exceed five times the
 Also fixed on the way: a failure row recorded under the bare filename (the
 pre-Sep-6 hook shape) could never be superseded because every later run is
 mode-keyed; a later clean run of the same script now clears it.
+
+## The Firewall as of Sep 7 2026: Challenge mode, nine rules, and the order that makes them safe
+
+Bot Protection is in **Challenge** (was Log). Vercel evaluates only requests that
+are neither a verified bot nor a real browser, and verification is by IP range,
+reverse DNS or Web Bot Auth, never by user agent. Its own log for the day before
+the flip: 25.4k requests it would have challenged, every one a browser user
+agent (one literally HeadlessChrome) from Tencent, Azure, AWS, Datacamp and
+Google Cloud addresses. Verified crawlers never reach that evaluation, and the
+directory covers Googlebot, Google-InspectionTool, Bingbot, Applebot, GPTBot,
+OAI-SearchBot, ChatGPT-User, ClaudeBot, Claude-SearchBot, PerplexityBot,
+Meta's three crawlers, facebookexternalhit, Twitterbot, LinkedInBot, Chrome
+Lighthouse, Ahrefs and Semrush. **A challenge answers HTTP 429**, not 403.
+
+Custom rules run top to bottom, before the managed ruleset, and **a Bypass
+skips every rule after it, managed ones included**, so order is the design:
+
+| # | rule | why it sits here |
+|---|---|---|
+| 1 | Deny AS 32934 on `/perm-case-status?case=` (previews exempt) | Meta's crawler |
+| 2 | AS 32934, 30/min keyed on JA4, 429 | Meta AI may still index, not 40x a day |
+| 3 | `/api/*`, 60/min per IP, 429 | backstop |
+| 4 | `/perm-case-status?case=`, 20/min per IP, 429 | the expensive path, any network |
+| 5 | Bypass when `x-permtracker-audit` exists | the site's own audit scripts skip Bot Protection AND rule 6, because `audit_all_pages.py` walks 61 URLs faster than 300 a minute |
+| 6 | 300/min per IP on paths not under `/_next/`, 429 | a runaway script that passes the challenge |
+| 7 | Bypass user agents WhatsApp, facebookexternalhit, Slackbot, Discordbot, TelegramBot, SkypeUriPreview | link previews the directory does not verify; iMessage claims facebookexternalhit from Apple addresses, so it is unverified too |
+| 8 | Bypass `/feed.xml`, `/llms.txt`, `/robots.txt`, `/sitemap.xml`, `/sitemaps/*` | cheap static files read by unverified tools |
+| 9 | Bypass `/api/revalidate-*` when `x-revalidate-secret` exists | the nightly POSTs from GitHub Actions |
+
+AI Bots stays on **Log**. `scripts/probe_firewall.sh` proves all of it from
+the laptop in one run and is the thing to re-run after any change.
+
+**What Challenge mode deliberately costs:** a script calling `/api/*` without
+the audit header is challenged (Vercel: "Direct API calls from scripts, cURL
+or Postman will fail"). The site's own pages call those routes from a browser
+that already holds a challenge session, so nothing on the site breaks; the
+change is that third parties cannot script the JSON routes any more. A bypass
+on those paths would re-open the exact vector rule 4 closes, so it is not
+added. `docs/API.md` documents Convex functions, not those routes, so no
+published contract changed.
+
+**Two traps in the rule editor.** The natural-language generator inverts
+negative operators ("does not start with" came out as "Starts with"; last night
+"does not contain" came out as "Contains"): read the generated condition and
+fix the operator through its dropdown by reference. And the page drops any text
+typed in the same automation batch as its own load; type in a later step.
