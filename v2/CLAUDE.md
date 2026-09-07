@@ -3015,6 +3015,14 @@ launchd hands a job almost no PATH (node lives under nvm here).
 Proven Sep 7, 10:20 AM: both agents kicked through `launchctl kickstart`
 finished rc=0, I-485 fetched four months from USCIS, the I-140 store was
 correctly refused as unchanged, trends verified 66 rows, and the health
-check read every run clean. Needs the Mac logged in and not shut down;
-optional and Adam's to run, a scheduled wake so a closed lid does not delay
-a run: `sudo pmset repeat wakeorpoweron MTWRFSU 10:25:00`.
+check read every run clean. Needs the Mac logged in and not shut down.
+
+**The Mac wakes itself at 10:25 AM every day (set by Adam, Sep 7 2026,
+10:37 AM ET):** `pmset -g sched` reads "wakepoweron at 10:25AM every day".
+It covers the asleep case only: FileVault is on, so a powered-off Mac stops
+at the disk-unlock screen, and a logged-out Mac has no session for the
+agents to run in. Reverse it with `sudo pmset repeat cancel`; remove the
+agents with `launchctl bootout gui/$(id -u)/app.permtracker.i485` (and
+`.i140`) and delete the two plists from `~/Library/LaunchAgents`. GitHub's
+own attempts and the health check's freshness budgets are unaffected by
+either.
