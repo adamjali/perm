@@ -10,6 +10,12 @@
  * `workflow_dispatch` for it. The schedules are the same UTC strings the
  * workflows used to carry in their own `schedule:` blocks.
  *
+ * Deployment note: Vercel binds environment variables at build time, and
+ * `vercel redeploy` of a docs-only commit is skipped by the ignore rule
+ * (it reads as a 9-second "Canceled" deployment), so the build that
+ * bound GITHUB_DISPATCH_TOKEN on Sep 7 2026 had to carry a change under
+ * src/. This comment is that change.
+ *
  * Kept in a sibling of the route on purpose: a `route.ts` may export only
  * handler names, and `vercel.json` has to agree with this table, which the
  * test next door enforces.
