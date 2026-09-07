@@ -44,6 +44,7 @@ export const FINAL_STATUSES = new Set([
   "DENIED",
   "WITHDRAWN",
   "CERTIFIED-EXPIRED",
+  "DENIED - BALCA DISMISSED",
 ]);
 
 /**
@@ -55,8 +56,21 @@ export const FINAL_STATUSES = new Set([
 export const DISCOVERY_SOURCE =
   "flag.dol.gov/recaptcha/caseStatus (DOL, via lookup)";
 
-/** Requests we are willing to send DOL for strangers per rolling UTC day. */
-export const DAILY_DISCOVERY_CAP = 2000;
+/**
+ * Requests we are willing to send DOL for strangers per rolling UTC day.
+ *
+ * 100,000, not 2,000, since Sep 6 2026: a per-client limit now lives in
+ * front of this page (Vercel Firewall: the Meta crawler that was spending
+ * 2,000 by 5 AM every day is denied on this path and rate-limited by TLS
+ * fingerprint everywhere else, and /api/* is capped per IP). With the
+ * identity-rotation case handled at the edge, this global cap is only the
+ * guarantee against a runaway - a bug that loops, or a client the firewall
+ * has not seen yet - and a guarantee should be far above any honest day.
+ * Humans do 50 to 200 live lookups a day. Zero was declined on purpose: an
+ * unbounded call path to a .gov endpoint the whole product depends on is
+ * how the product ends.
+ */
+export const DAILY_DISCOVERY_CAP = 100_000;
 
 const ENDPOINT = "https://flag.dol.gov/recaptcha/caseStatus";
 
@@ -158,6 +172,15 @@ export interface DiscoveredCase {
 /** The PERM prefixes. Everything else DOL serves belongs in another table. */
 export const PERM_PREFIX_RE = /^[GA]-/;
 
+let lastRefusalLogDay = "";
+/** Say "budget refused" once per UTC day; a flood must not become a log flood. */
+export function logBudgetRefusal(tag: string, caseNumber: string, now: Date): void {
+  const day = now.toISOString().slice(0, 10);
+  if (day === lastRefusalLogDay) return;
+  lastRefusalLogDay = day;
+  console.error(`[${tag}] daily budget refused (first refusal today; further ones this day are not logged)`, caseNumber);
+}
+
 export async function discoverCase(
   caseNumber: string,
   f: typeof fetch = fetch,
@@ -182,7 +205,7 @@ export async function discoverCase(
   // caught and NAMED in the function logs instead.
   try {
     if (!(await underDailyBudget(now))) {
-      console.error("[caseDiscovery] daily budget refused", caseNumber);
+      logBudgetRefusal("caseDiscovery", caseNumber, now);
       return null;
     }
   } catch (e) {

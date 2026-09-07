@@ -19,8 +19,8 @@ A DOL case number looks like `G-100-26125-868956`. Every part of it means someth
 
 ```
 G  -  100  -  26125  -  868956
-│      │        │         └── serial, assigned in order that day
-│      │        └── filing day: year 26, day 125 of the fiscal year
+│      │        │         └── serial: one counter shared by every program, six digits, wraps at 999999
+│      │        └── filing day: calendar year 2026, day 125 of the year (May 5)
 │      └── a three-digit segment, see below
 └── the letter: which program this filing belongs to
 ```
@@ -66,7 +66,9 @@ DOL doesn't publish a key for it, and nothing in the public record maps a value 
 
 ## The date segment, which is genuinely useful
 
-The five digits after the middle segment are a date: the first two are the fiscal year, the next three the day within it. So `26125` is day 125 of fiscal 2026.
+The five digits after the middle segment are a date: the first two are the calendar year, the next three the day of that year. So `26125` is day 125 of 2026, which is May 5 (not the fiscal year, which is how this is usually explained; a fiscal reading would put it in February).
+
+The serial after it is not per day and not per program. DOL runs one counter across PERM, prevailing wage requests and LCAs alike, so a PERM filed at 2 PM and a wage request filed at 2:01 PM get neighbouring numbers. It is six digits, zero-padded (`070550`, never `70550`), and it wraps: on June 10, 2026 it ran up to `999997` and restarted at `000001`. The counter advances roughly 2,000 to 3,000 a day, of which about a tenth are PERM.
 
 This is why a filing date can be read straight off the number without looking anything up. It's right about 95% of the time and off by a day for the rest, because the counter rolls at a moment that doesn't perfectly align with the calendar.
 

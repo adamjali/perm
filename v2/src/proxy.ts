@@ -136,6 +136,30 @@ export default handler;
 export const proxy = handler;
 
 export const config = {
-  // Match all routes except static files and Next.js internals
-  matcher: ["/((?!.*\\..*|_next).*)", "/", "/(api|trpc)(.*)"],
+  // ONLY WHERE THIS FILE HAS WORK TO DO. It used to match every non-file
+  // path, so the login check ran on every public page and on every CDN hit
+  // before the ISR cache could answer: 85 to 93 percent of all function
+  // invocations on Sep 6 2026, on pages with no login at all. Public pages
+  // are static or ISR and need nothing from here.
+  //
+  // What still must run through it: the authenticated app (redirect to
+  // /login), /login and /signup (redirect to /dashboard), the Convex Auth
+  // endpoint and its IP rate limit, the chat and Google-calendar routes, and
+  // any path carrying ?code= - that is where Convex Auth's OAuth exchange
+  // lands after Google sign-in, and it is matched by query, not by path.
+  matcher: [
+    "/dashboard/:path*",
+    "/cases/:path*",
+    "/calendar/:path*",
+    "/timeline/:path*",
+    "/settings/:path*",
+    "/notifications/:path*",
+    "/admin/:path*",
+    "/login",
+    "/signup",
+    "/api/auth/:path*",
+    "/api/chat/:path*",
+    "/api/google/:path*",
+    { source: "/:path*", has: [{ type: "query", key: "code" }] },
+  ],
 };

@@ -65,8 +65,8 @@ const NOT_FIXTURE = "employer_name IS NOT ?";
 
 /** Days between filing and the moment we observed the case at this stage. */
 const AGE_DAYS = `CASE
-  WHEN filing_date IS NOT NULL AND filing_date <> '' AND last_checked_at IS NOT NULL
-  THEN CAST(julianday(substr(last_checked_at, 1, 10)) - julianday(filing_date) AS INTEGER)
+  WHEN filing_date IS NOT NULL AND filing_date <> ''
+  THEN CAST(julianday('now') - julianday(filing_date) AS INTEGER)
 END`;
 
 /**

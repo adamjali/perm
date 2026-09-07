@@ -63,7 +63,7 @@ export default function ForAttorneysPage() {
             <div className="flex flex-col gap-6">
               <ScrollReveal direction="up">
                 <div className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
-                  <span className="pulse-dot h-2 w-2 bg-primary" />
+                  <span className="h-2 w-2 bg-primary" aria-hidden="true" />
                   Case Management Reimagined
                 </div>
               </ScrollReveal>

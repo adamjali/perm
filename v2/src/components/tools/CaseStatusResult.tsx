@@ -512,7 +512,7 @@ function TheRecord({
     { label: "Employer", value: employerName ?? "Not recorded" },
     { label: "Job title", value: jobTitle ?? "Not recorded" },
     {
-      label: "Status seen",
+      label: "Checked against DOL",
       value: check
         ? `${formatAsOf(check.date)} (${check.ageDays === 0 ? "today" : `${check.ageDays} days ago`})`
         : "Not recorded",

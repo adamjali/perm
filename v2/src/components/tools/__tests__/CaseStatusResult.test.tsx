@@ -442,7 +442,7 @@ describe("CaseStatusResult, decided case", () => {
     const filed = screen.getByText("Filed").nextElementSibling;
     expect(filed).toHaveTextContent("January 11, 2024");
     expect(filed).not.toHaveTextContent(/days ago/);
-    expect(screen.getByText("Status seen").nextElementSibling).toHaveTextContent(
+    expect(screen.getByText("Checked against DOL").nextElementSibling).toHaveTextContent(
       /days ago/,
     );
   });

@@ -439,9 +439,11 @@ export default function PrivacyPage() {
               Session Replay
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              In addition to event analytics, PostHog records session replays, playbacks of page interactions (clicks, scrolls, navigation, and
-              on-screen content), which we use to diagnose usability issues and
-              improve the product.
+              PostHog can also record session replays: playbacks of page
+              interactions (clicks, scrolls, navigation and on-screen content).{" "}
+              <strong>Session replay is switched off as of September 6, 2026</strong>{" "}
+              and no replays are being recorded. If we turn it back on, this
+              section will say so first, and the rules below will apply.
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
@@ -466,9 +468,11 @@ export default function PrivacyPage() {
               </li>
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              This is separate from the masked, error-diagnosis replays described
-              in Section 8. You can opt out of all analytics and replay by
-              enabling Global Privacy Control in your browser.
+              Enabling Global Privacy Control in your browser opts you out of
+              PostHog analytics (and replay, whenever it is on). The only other
+              analytics on the site is Ahrefs Web Analytics (Section 13), which
+              sets no cookies and collects no personal data, so there is nothing
+              for GPC to switch off there.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -504,28 +508,10 @@ export default function PrivacyPage() {
               Session Replay
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              To help diagnose errors, Sentry records anonymized session replays
-              of page interactions for <strong>10% of normal sessions</strong> and{" "}
-              <strong>100% of sessions where an error occurs</strong>.
+              Sentry does not record session replays for this site. That
+              feature was removed on August 29, 2026; Sentry receives error
+              reports and performance timings only.
             </p>{" "}
-            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>
-                <strong>All text content is masked</strong>: replaced with
-                asterisks so no readable text is captured
-              </li>{" "}
-              <li>
-                <strong>All images and media are blocked</strong>: replaced with
-                blank placeholders
-              </li>{" "}
-              <li>
-                <strong>Form input values aren’t recorded</strong>: keystrokes
-                are redacted
-              </li>{" "}
-              <li>
-                Only page structure, mouse movements, clicks, and scrolls are
-                captured
-              </li>
-            </ul>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Privacy Protections
@@ -849,8 +835,8 @@ export default function PrivacyPage() {
                 authentication (SOC 2 Type II, hosted on AWS)
               </li>{" "}
               <li>
-                <strong>Vercel:</strong> Frontend hosting, deployment, and
-                performance monitoring (Speed Insights)
+                <strong>Vercel:</strong> Frontend hosting, deployment, and the
+                edge firewall (rate limiting and bot mitigation)
               </li>{" "}
               <li>
                 <strong>Resend:</strong> Transactional email delivery
@@ -867,8 +853,20 @@ export default function PrivacyPage() {
                 session replay (see Section 7)
               </li>{" "}
               <li>
-                <strong>Sentry:</strong> Error tracking, performance monitoring,
-                and session replay (see Section 8)
+                <strong>Sentry:</strong> Error tracking and performance
+                monitoring (see Section 8)
+              </li>{" "}
+              <li>
+                <strong>Ahrefs Web Analytics:</strong> Cookieless, aggregate
+                page-view analytics loaded on every page. It sets no cookies,
+                stores no identifiers on your device and collects no personal
+                data; we see page counts and referrers, not people.
+              </li>{" "}
+              <li>
+                <strong>Senja:</strong> The reviews widget on the homepage is
+                served from Senja&apos;s servers, which receive your browser&apos;s
+                standard request data (IP address, user agent) when it loads.
+                No account data is sent to Senja.
               </li>{" "}
               <li>
                 <strong>AI Providers:</strong> Google Gemini, OpenRouter, Mistral

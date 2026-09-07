@@ -23,7 +23,7 @@ import { quartersFor, totalsFor } from "@/lib/i140Trends";
 
 const TITLE = "I-140 Trends by Category";
 const DESCRIPTION =
-  "USCIS I-140 receipts, approvals, denials and pending petitions by employment-based category, quarter by quarter, with denial rates measured over decided petitions.";
+  "USCIS I-140 receipts, approvals, denials and pending petitions by employment-based category, quarter by quarter, with denial rates over decided petitions.";
 
 export const metadata: Metadata = {
   title: TITLE,

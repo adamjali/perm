@@ -96,6 +96,8 @@ UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
 FINAL_STATUSES = {
     "CERTIFIED", "CERTIFIED - EXPIRED", "DENIED", "WITHDRAWN",
     "CERTIFIED-EXPIRED",
+    # An appeal dismissed by BALCA ends the case (9 rows sat pending forever).
+    "DENIED - BALCA DISMISSED",
 }
 
 
@@ -167,6 +169,7 @@ DECISION_BUCKETS = {
     "CERTIFIED - EXPIRED": "certified",
     "CERTIFIED-EXPIRED": "certified",
     "DENIED": "denied",
+    "DENIED - BALCA DISMISSED": "denied",
     "WITHDRAWN": "withdrawn",
 }
 
@@ -518,9 +521,13 @@ def _rows(db, sql: str, args: list | None = None) -> list[list]:
 TEST_FIXTURE_EMPLOYER = "bah-test-company-name"
 
 # Same expression as AGE_DAYS in src/lib/turso/rfi.ts.
+# Age NOW, from the filing date. It used to be filing_date to last_checked_at,
+# a column this sweep never writes: the mirror's July stamp for 66,771 rows and
+# NULL for 12,187, so every stage median was short by the stamp's age and the
+# NULL rows were dropped. Must stay byte-identical to AGE_DAYS in rfi.ts.
 _AGE_DAYS = """CASE
-  WHEN filing_date IS NOT NULL AND filing_date <> '' AND last_checked_at IS NOT NULL
-  THEN CAST(julianday(substr(last_checked_at, 1, 10)) - julianday(filing_date) AS INTEGER)
+  WHEN filing_date IS NOT NULL AND filing_date <> ''
+  THEN CAST(julianday('now') - julianday(filing_date) AS INTEGER)
 END"""
 
 
