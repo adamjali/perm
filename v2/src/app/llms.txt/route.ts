@@ -178,6 +178,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Where an adjustment-of-status filing sits against USCIS's published pending inventory, by category and country of chargeability.",
   },
   {
+    path: "/visa-bulletin",
+    label: "The next visa bulletin",
+    blurb:
+      "What every earlier bulletin for the coming month did, per employment category and country, beside USCIS's count of I-485 applications ahead of each cutoff. Measured from the archive, not predicted, and it rolls forward when the next bulletin lands.",
+  },
+  {
     path: "/methodology",
     label: "Methodology",
     blurb:

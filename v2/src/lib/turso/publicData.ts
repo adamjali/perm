@@ -634,12 +634,27 @@ export async function getI485Options(): Promise<
 }
 
 /** Month-over-month movement in the whole pending inventory. */
-export async function getI485Trend(): Promise<{ asOf: string; total: number }[]> {
-  const r = await rows<{ as_of: string; total: number }>(
-    `SELECT as_of, coalesce(sum(count), 0) AS total
-       FROM i485_inventory GROUP BY as_of ORDER BY as_of`,
+export async function getI485Trend(): Promise<
+  { asOf: string; total: number; available: number; awaiting: number }[]
+> {
+  // USCIS reports two pending statuses: a visa number already available, and
+  // awaiting one. Both are ahead of the reader; the split is what the trend
+  // chart shows, because "available but unadjudicated" is the backlog USCIS
+  // owns and "awaiting" is the one the bulletin owns.
+  const r = await rows<{ as_of: string; status: string; total: number }>(
+    `SELECT as_of, status, coalesce(sum(count), 0) AS total
+       FROM i485_inventory GROUP BY as_of, status ORDER BY as_of`,
   );
-  return r.map((x) => ({ asOf: x.as_of, total: Number(x.total) || 0 }));
+  const by = new Map<string, { asOf: string; total: number; available: number; awaiting: number }>();
+  for (const x of r) {
+    const row = by.get(x.as_of) ?? { asOf: x.as_of, total: 0, available: 0, awaiting: 0 };
+    const n = Number(x.total) || 0;
+    row.total += n;
+    if (x.status === "available") row.available += n;
+    else row.awaiting += n;
+    by.set(x.as_of, row);
+  }
+  return [...by.values()];
 }
 
 /**

@@ -38,6 +38,7 @@ export const PAGE_CARD_ALT = {
   "pwd-cases": "Find a prevailing wage request. Pending from DOL's daily check, decided with the wage set, searched by employer.",
   "security": "How your data is protected. Encryption at rest, isolated accounts, short sessions, and no client data on the public pages.",
   "terms": "Terms of service. The terms for using PERM Tracker, its data and its case management.",
+  "visa-bulletin": "The next visa bulletin, from the last 84. What every earlier bulletin for this month did, per category and country, beside the I-485 inventory ahead of each cutoff.",
   "tools": "Live PERM data and free calculators. DOL's own figures, each with its date, and calculators built on them.",
 } as const;
 

@@ -3132,3 +3132,39 @@ Regenerate a card when a page's look changes: capture it, then
 `node scripts/make-page-cards.mjs <spec.json> <shots-dir> --only <slug>`. The
 three spec files used on Sep 7 are in the session scratchpad; the card fields
 are `slug, ground, eyebrow, title, label, shot, crop` or `motif`.
+
+## The next visa bulletin, computed rather than predicted (2026-09-07)
+
+`/visa-bulletin` answers the seasonal question ("what will October do, when
+does it come out") from the archive instead of with a dated article. It reads
+the 84-month bulletin series and USCIS's monthly I-485 inventory, both of which
+the ingests keep current, and it changes state on its own: before a bulletin it
+tabulates what every earlier bulletin for that calendar month did per category
+and country (`sameMonthMoves` in `src/lib/bulletinNext.ts`, measured against
+the month before, non-date transitions NAMED rather than numbered), beside the
+inventory ahead of each cutoff (`computeI485Position` at the cutoff's own
+month); the day a bulletin lands it leads with "what the {month} bulletin did"
+and rolls forward. The only publication evidence the archive carries is the
+Internet Archive's first-capture day (`archiveFloorDays`), printed as a floor.
+It prints NO spillover figure: the number is not published on the day and
+every number on the internet for it is a guess.
+
+Two things this page must never do: forecast (the pace doc in
+`src/lib/turso/bulletin.ts` explains why), and pair a move across a gap (a year
+whose prior month is missing is skipped, or two moves read as one).
+
+**The I-485 tool prints one "when" line now**, `monthsToReach`: the gap
+between the final-action cutoff and the reader's date divided by the pace
+measured over the archived window, with the window and its retrogression count
+printed beside it, and withheld when the category is current, shut or did not
+advance (EB-2 India in September 2026 is shut, and the line says so). **Its
+trend chart splits USCIS's two pending statuses** (visa number available vs
+awaiting one), which is the part USCIS owns against the part the bulletin owns.
+
+**Family-based categories are NOT in the I-485 tool and cannot be**: USCIS
+publishes the inventory by priority date and country for employment-based
+categories only. A rival's "family-based" analyzer is not built on an inventory
+that exists; the honest counterpart would be family-based CUTOFF history, which
+needs the bulletin ingest to parse the family charts and the 84 months
+re-fetched from the Archive. Not done; recorded so nobody builds counts that
+have no source.

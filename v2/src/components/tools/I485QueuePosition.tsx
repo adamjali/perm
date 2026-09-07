@@ -33,12 +33,13 @@ import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "reac
 import { useRouter, useSearchParams } from "next/navigation";
 import { UsersIcon, InfoIcon } from "@phosphor-icons/react";
 
-import {
+import { pairKey,
   certaintySplit,
   computeI485Position,
   type I485CellTable,
 } from "@/lib/i485/position";
 import { formatAsOf, formatAsOfShort, formatMonth } from "@/lib/dolFormat";
+import { monthsToReach, type PaceBasis } from "@/lib/bulletinNext";
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -47,8 +48,17 @@ export interface I485QueuePositionProps {
   options: readonly { country: string; categories: readonly string[] }[];
   /** USCIS's own as-of date for the release, `YYYY-MM-DD`. */
   asOf: string | null;
-  /** Counted pending inventory per release, oldest first. */
-  trend: readonly { asOf: string; total: number }[];
+  /** Counted pending inventory per release, oldest first, split by USCIS's two pending statuses. */
+  trend: readonly { asOf: string; total: number; available?: number; awaiting?: number }[];
+  /**
+   * The measured final-action pace per `country|category` pair (USCIS
+   * spellings), from the bulletin archive. Feeds the one "when" line the tool
+   * prints: the gap between the cutoff and the reader's date divided by how
+   * fast that cutoff moved over the window, with the window and its
+   * retrogressions printed beside it. Withheld when the category is current,
+   * shut, or did not advance.
+   */
+  pace?: Record<string, PaceBasis> | null;
   /**
    * The newest Dates for Filing chart, `{ EB1: { india: "15JAN15", ... } }`.
    *
@@ -149,6 +159,7 @@ export function I485QueuePosition({
   trend,
   filingChart,
   filingChartMonth,
+  pace,
   className,
 }: I485QueuePositionProps) {
   const countryId = useId();
@@ -457,6 +468,35 @@ export function I485QueuePosition({
                   </div>
                 </div>{" "}
 
+                {(() => {
+                  const cell = pace?.[pairKey(country, activeCategory)];
+                  const reach = cell
+                    ? monthsToReach(cell, `${year}-${String(clampedMonth).padStart(2, "0")}-01`)
+                    : null;
+                  if (!cell) return null;
+                  if (!reach) {
+                    return (
+                      <p className="mt-5 text-sm leading-relaxed text-foreground/70">
+                        No pace to divide by: over the archived window this category was{" "}
+                        {cell.latest.kind === "current" ? "current" : cell.latest.kind === "unavailable" ? "unavailable" : "not advancing"}, so no months-to-reach figure is printed.
+                      </p>
+                    );
+                  }
+                  return (
+                    <p className="mt-5 text-base leading-relaxed text-foreground/85">
+                      {reach.months === 0 ? (
+                        <>The final action cutoff is already past this priority date.</>
+                      ) : (
+                        <>
+                          At the pace the final action cutoff moved over the last {reach.basis.spanMonths} months
+                          ({Math.round(reach.basis.movedDays / reach.basis.spanMonths)} days per calendar month), it would reach this date in about{" "}
+                          <strong className="font-semibold">{reach.months >= 24 ? `${(reach.months / 12).toFixed(1)} years` : `${reach.months} months`}</strong>.
+                          {reach.basis.retrogressions > 0 ? ` It retrogressed ${reach.basis.retrogressions} ${reach.basis.retrogressions === 1 ? "time" : "times"} inside that window, which is why this is arithmetic and not a promise.` : " That is arithmetic over a closed window, not a promise."}
+                        </>
+                      )}
+                    </p>
+                  );
+                })()}{" "}
                 {/* The certainty bar, as an axis. Scaled to the ceiling, no
                     empty track, and both ticks at their own coordinates. */}
                 <div className="mt-6">
@@ -579,10 +619,16 @@ export function I485QueuePosition({
                       <span className="truncate text-sm text-foreground/70">
                         {formatAsOfShort(t.asOf)}
                       </span>{" "}
-                      <span className="h-6 w-full border-2 border-border bg-muted">
+                      <span className="flex h-6 w-full border-2 border-border bg-muted">
+                        <span
+                          className="block h-full bg-primary"
+                          title="visa number available, not yet adjudicated"
+                          style={{ width: `${Math.max(((t.available ?? t.total) / max) * 100, 1)}%` }}
+                        />{" "}
                         <span
                           className="block h-full bg-foreground/45"
-                          style={{ width: `${Math.max((t.total / max) * 100, 1.5)}%` }}
+                          title="awaiting a visa number"
+                          style={{ width: `${Math.max(((t.awaiting ?? 0) / max) * 100, 0)}%` }}
                         />
                       </span>{" "}
                       <span className="text-right text-sm tabular-nums">
@@ -595,7 +641,8 @@ export function I485QueuePosition({
             );
           })()}{" "}
           <p className="mt-4 text-sm text-foreground/60">
-            Each release counts what was pending on its own date, so a month
+            Lime is pending with a visa number already available, the part USCIS
+            owns; grey is awaiting a number, the part the bulletin owns. Each release counts what was pending on its own date, so a month
             moves with both new filings and decisions. USCIS keeps no archive of
             past releases, so this series can only grow forward from the ones
             already captured.

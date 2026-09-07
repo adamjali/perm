@@ -180,6 +180,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/calculators`, lastModified: "2026-08-24", images: [`${base}/og/calculators.jpg`] },
     { url: `${base}/methodology`, lastModified: "2026-08-24", images: [`${base}/og/methodology.jpg`] },
     { url: `${base}/about`, lastModified: "2026-09-07", images: [`${base}/og/about.jpg`] },
+    { url: `${base}/visa-bulletin`, lastModified: dol ?? "2026-09-07", images: [`${base}/og/visa-bulletin.jpg`] },
     { url: `${base}/perm-by-state`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-by-state.jpg`] },
     { url: `${base}/perm-wages`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-wages.jpg`] },
     { url: `${base}/perm-employers`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-employers.jpg`] },

@@ -3,6 +3,18 @@ import { Suspense } from "react";
 import Link from "next/link";
 
 import { I485QueuePosition } from "@/components/tools/I485QueuePosition";
+import { getBulletinBoard } from "@/lib/turso/bulletin";
+import type { PaceBasis } from "@/lib/bulletinNext";
+import type { CountryKey } from "@/lib/perm";
+
+/** The bulletin's country keys, spelled the way USCIS's inventory does. */
+const I485_COUNTRY: Record<CountryKey, string> = {
+  worldwide: "Rest of the World",
+  china: "China",
+  india: "India",
+  mexico: "Mexico",
+  philippines: "Philippines",
+};
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -85,6 +97,15 @@ const FAQS = [
 ];
 
 export default async function I485QueuePositionPage() {
+  const board = await getBulletinBoard().catch(() => null);
+  // Keyed the way the tool keys its own table (USCIS spellings), so the
+  // client picks the cell with the same pairKey it already uses.
+  const pace: Record<string, PaceBasis> = {};
+  for (const c of board?.finalAction ?? []) {
+    const country = I485_COUNTRY[c.country];
+    const category = c.category === "EB5" ? "EB5U" : c.category;
+    pace[`${country}|${category}`] = { latest: c.latest, movedDays: c.movedDays, spanMonths: c.spanMonths, retrogressions: c.retrogressions };
+  }
   const [cells, options, trend, freshness, bulletins] = await Promise.all([
     // Every read is defaulted rather than allowed to throw. A frontend
     // deployed ahead of its data hits exactly this window, and the component
@@ -176,6 +197,7 @@ export default async function I485QueuePositionPage() {
             trend={trend}
             filingChart={newestBulletin?.datesForFiling ?? null}
             filingChartMonth={newestBulletin?.bulletinMonth ?? null}
+            pace={pace}
           />
         </Suspense>
       </section>{" "}

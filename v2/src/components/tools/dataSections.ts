@@ -44,6 +44,7 @@ export type DataSection =
   | "risk"
   | "rfi-audit"
   | "visa-bulletin"
+  | "visa-bulletin-next"
   | "methodology";
 
 export type DataGroup =
@@ -112,6 +113,10 @@ export const SECTIONS: DataNavSection[] = [
   // data: a different agency, a different dataset and a different question from
   // anything else on this rail, and the old filing put a calculator on the
   // reference shelf under a label that named neither.
+  // The seasonal question first: what the next bulletin could do, from the
+  // archive, rolling forward on its own. The month-by-month history sits
+  // under it.
+  { key: "visa-bulletin-next", group: "Visa bulletin", label: "Next bulletin", href: "/visa-bulletin" },
   { key: "visa-bulletin", group: "Visa bulletin", label: "Priority dates", href: "/tools/priority-date-calculator" },
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
 ];
