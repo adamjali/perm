@@ -165,7 +165,17 @@ jobs:
         run: |
           AFTER="$(python3 scripts/ingest_pwd_status_direct.py --progress)"
           TARGET="$(python3 scripts/ingest_pwd_status_direct.py --day-code "$TO_IN")"
+          # A --to in the future can never be reached: day codes past today
+          # hold no serials yet. The Sep 7 2026 backfill was dispatched
+          # --to 2026-09-08, finished every real day, and the leg that found
+          # nothing left to do was recorded as a FAILURE by the guard below.
+          # Cap the target at today, and trust the record's own flag first.
+          TODAY="$(python3 scripts/ingest_pwd_status_direct.py --day-code "$(date -u +%F)")"
+          if [ "$TARGET" -gt "$TODAY" ]; then TARGET="$TODAY"; fi
           echo "frontier before: ${BACKFILL_BEFORE:-none}  after: ${AFTER:-none}  target: $TARGET"
+          if python3 scripts/ingest_pwd_status_direct.py --progress-json | grep -q '"complete": true'; then
+            echo "backfill recorded complete; nothing to chain"; exit 0
+          fi
           # Completion is checked BEFORE the no-progress guard: the leg that
           # finishes the range legitimately makes no progress past --to.
           if [ -n "$AFTER" ] && [ "$AFTER" -ge "$TARGET" ]; then
