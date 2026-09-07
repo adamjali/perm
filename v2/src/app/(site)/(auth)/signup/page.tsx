@@ -11,8 +11,15 @@ import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { ProductShot } from "@/components/marketing/ProductShot";
 import { SignupPageClient } from "./SignupPageClient";
 
-// Daily, the same window every data page uses. It was `force-static`, which is
-// right for a bare form and wrong the moment the page prints a live figure.
+// Daily, the same window every data page uses, AND force-static. The (auth)
+// layout's Convex provider reads cookies, and one cookie read makes a route
+// dynamic no matter what `revalidate` says: measured Sep 6 2026, /signup
+// served `private, no-cache, no-store` and a MISS on every hit, a paid
+// render each time. force-static makes the cookie read a no-op at render
+// (the same shape /login uses), while `revalidate` keeps the live DOL figure
+// on the left refreshing daily and on the DOL-change hook. Signed-in
+// visitors never reach this render: the proxy redirects them to /dashboard.
+export const dynamic = "force-static";
 export const revalidate = 86400;
 
 export const metadata: Metadata = {

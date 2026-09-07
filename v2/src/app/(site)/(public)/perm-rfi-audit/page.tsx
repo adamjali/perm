@@ -205,21 +205,14 @@ export default async function PermRfiAuditPage() {
           }
         >
           {/*
-            THE LAG IS DIRECTIONAL AND THE DIRECTION IS THE USEFUL PART.
-            Measured: all 1,348 cases at the review and appeal stages were
-            re-checked within the last week, so those rows are current. The
-            94,432-case analyst-review queue is not: 76,110 of them were last
-            read before 1 August or carry no timestamp at all. A case that
-            moved from analyst review to an RFI since its last read still
-            reads as analyst review here. So the review counts are a FLOOR,
-            and saying only "these numbers may be stale" would have got the
-            direction wrong as often as right.
+            A "the analyst queue was not read this week" paragraph used to sit
+            here, from the era when only the review stages were re-checked
+            weekly. The full sweep has read every pending case nightly since
+            Aug 28 (Sep 6 2026: 414,346 of 414,358 answered), so the claim
+            had become false while the tile beside it said "checked today".
+            Two freshness claims on one page that disagree discredit both;
+            the tile carries the stamp, so this carries none.
           */}
-          <p className="mb-6 max-w-3xl border-l-4 border-border bg-secondary px-4 py-3 text-sm leading-relaxed">
-            Review and appeal stages were read this week. The 94,000-case
-            analyst queue was not, so a case that has moved since its own last
-            read is still counted there. These are a floor, not a total.
-          </p>{" "}
           <StageCensus
             stages={stages}
             smallRecords={smallRecords}

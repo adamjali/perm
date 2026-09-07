@@ -3,6 +3,7 @@ import "server-only";
 import { slugify } from "@/lib/entitySlug";
 import { one } from "./client";
 import { discoverCase } from "./caseDiscovery";
+import { getSweepCoverage, laterDate } from "./sweepCoverage";
 import {
   aheadPendingFrom,
   getLiveCensus,
@@ -165,6 +166,18 @@ export async function lookupCase(input: string): Promise<CaseLookupResult | null
       job_title: found.jobTitle,
       last_checked_at: found.lastCheckedAt,
     };
+  }
+
+  // The check date is the sweep's, not the row's: the sweep re-asks DOL
+  // about every pending case nightly and never wrote last_checked_at (that
+  // column is the mirror's July stamp, or NULL). A visitor-discovered row
+  // carries a fresher stamp than this morning's sweep; take the later.
+  const coverage = live ? await getSweepCoverage() : null;
+  if (live) {
+    live.last_checked_at = laterDate(
+      live.last_checked_at as string | null,
+      coverage?.finishedOn,
+    );
   }
 
   const filing =

@@ -183,6 +183,7 @@ const LANDED_WELL: Record<Exclude<FlagProgram, "perm">, ReadonlySet<string>> = {
     "DETERMINATION ISSUED",
     "REDETERMINATION AFFIRMED",
     "REDETERMINATION MODIFIED",
+    "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
   ]),
   lca: new Set(["CERTIFIED"]),
 };

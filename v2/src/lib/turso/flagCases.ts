@@ -4,7 +4,8 @@ import { exec, one, rows } from "./client";
 import { slugify } from "@/lib/entitySlug";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
 import { LIVE_SEARCH_MAX, narrowingClauses } from "./cases";
-import { fetchDolCase, underDailyBudget } from "./caseDiscovery";
+import { fetchDolCase, logBudgetRefusal, underDailyBudget } from "./caseDiscovery";
+import { laterDate } from "./sweepCoverage";
 
 /**
  * One read layer for every non-PERM program DOL's case-status endpoint
@@ -351,7 +352,7 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     // an ordinary miss, never an error, and never a silent one.
     try {
       if (!(await underDailyBudget(now, config.budgetPrefix))) {
-        console.error(`[${config.key}Discovery] daily budget refused`, caseNumber);
+        logBudgetRefusal(`${config.key}Discovery`, caseNumber, now);
         return null;
       }
     } catch (e) {
@@ -415,7 +416,25 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     const cn = normalise(input);
     if (!cn) return null;
     const r = await one<FlagDbRow>(`SELECT ${FLAG_COLS} FROM ${table} WHERE case_number = ?`, [cn]);
-    if (r) return toFlagRow(r);
+    if (r) {
+      const row = toFlagRow(r);
+      // A pending row is re-asked of DOL by the daily sweep, which no longer
+      // stamps rows it found unchanged (that was ~300k no-op writes a week).
+      // Its honest check date is the sweep's own: the summary doc is written
+      // at the end of every sweep. A final row keeps its stamp; it is not
+      // re-checked, and saying otherwise would be the older lie in reverse.
+      if (!row.isFinal) {
+        const summary = await getSummary();
+        if (summary?.computedAt) {
+          row.lastCheckedAt = laterDate(row.lastCheckedAt, new Date(summary.computedAt).toISOString());
+        }
+      }
+      return row;
+    }
+    // A case the quarterly file already holds is decided; the page renders
+    // the file's record. Asking DOL live for it spent a budget unit and a
+    // request on an answer we had, on every lookup of every decided case.
+    if (await lookupDisclosed(cn)) return null;
     return discover(cn);
   };
 

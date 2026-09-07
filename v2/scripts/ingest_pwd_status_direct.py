@@ -89,8 +89,13 @@ PROGRAMS: dict[str, dict] = {
         "table": "pwd_case_status",
         "events": "pwd_case_events",
         "prefixes": ["P-100-"],
+        # RETURNED UNPROCESSED (274 rows) and CENTER DIRECTOR REVIEW AFFIRMED
+        # DETERMINATION (1) were unknown to this set and so counted as pending
+        # forever; both are terminal. Mirror pwdCases.ts, pinned by its test.
         "final": {"DETERMINATION ISSUED", "REDETERMINATION AFFIRMED",
-                  "REDETERMINATION MODIFIED", "WITHDRAWN", "DENIED"},
+                  "REDETERMINATION MODIFIED", "WITHDRAWN", "DENIED",
+                  "RETURNED UNPROCESSED",
+                  "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION"},
         "pending": {"IN PROCESS"},
         "doc": "pwd_live_summary",
         "freshness": "pwd-status",

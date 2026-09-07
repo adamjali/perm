@@ -38,6 +38,8 @@ export const PWD_FINAL_STATUSES: ReadonlySet<string> = new Set([
   "REDETERMINATION MODIFIED",
   "WITHDRAWN",
   "DENIED",
+  "RETURNED UNPROCESSED",
+  "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
 ]);
 
 export const PWD_DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, via lookup)";
