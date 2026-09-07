@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import statistics
 import time
 import sys
 import pathlib
@@ -125,6 +126,22 @@ def check_runs(db) -> int:
         key = run_key(script)
         if key not in newest:                       # rows arrive newest first
             newest[key] = (str(status), str(note or ""), int(finished))
+
+    # A LEGACY ROW HAS NO MODE, SO NO LATER RUN CAN SHARE ITS KEY. The failure
+    # hooks recorded the bare filename until Sep 6 2026; a failure written in
+    # that shape would stay BROKEN for the whole window even after the script
+    # ran clean in every mode, because nothing keys on the bare name any more.
+    # Any later clean run of the same FILENAME supersedes it. Mode-keyed rows
+    # keep their exact-key rule: that is the whole point of keying by mode.
+    for key in list(newest):
+        status, note, finished = newest[key]
+        if " " in key or status not in BROKEN_STATUSES:
+            continue
+        later = [(k, v) for k, v in newest.items()
+                 if k.startswith(key + " ") and v[0] == "ok" and v[2] > finished]
+        if later:
+            by = ", ".join(k.split()[1] for k, _ in later)
+            newest[key] = ("ok", f"legacy failure superseded by a clean {by} run", finished)
 
     print(f"\ningests with a run in {RUN_FAILURE_WINDOW_DAYS}d: {len(newest)} "
           f"({len(rows)} runs)")
@@ -258,6 +275,97 @@ def check_discovery_yield(db) -> int:
     return 0
 
 
+# A backfill that has not advanced its frontier in this long has stopped
+# chaining and the daily resumer (pwd-status-direct.yml) is not reviving it.
+BACKFILL_STALL_DAYS = 7
+
+
+def check_backfill(db) -> int:
+    """Report an incomplete PWD/LCA backfill, and fail when it has stalled.
+
+    The record is `perm_docs['flag_backfill_progress']`, written by the
+    backfill legs. `lastDayDoneAt` moves only when the frontier does, so a
+    leg that restarts every day and dies before moving cannot keep this green.
+    """
+    try:
+        res = db.execute("SELECT json FROM perm_docs WHERE key = ?", ["flag_backfill_progress"])
+        rows = res["response"]["result"]["rows"]
+    except RuntimeError as exc:
+        print(f"backfill          : unreadable ({str(exc)[:120]})")
+        return 0
+    if not rows:
+        print("backfill          : none on record")
+        return 0
+    try:
+        doc = json.loads(rows[0][0]["value"])
+    except (TypeError, ValueError, KeyError):
+        print("backfill          : record unreadable")
+        return 1
+    if doc.get("complete"):
+        print(f"backfill          : complete through {doc.get('to')}  ok")
+        return 0
+    moved_at = doc.get("lastDayDoneAt")
+    if not moved_at:
+        print(f"backfill          : incomplete at {doc.get('lastDayDone')}, no movement stamp "
+              "(pre-dates the resumer); cannot judge")
+        return 0
+    age = (NOW_MS - int(moved_at)) / 86_400_000
+    stalled = age > BACKFILL_STALL_DAYS
+    print(f"backfill          : incomplete, frontier {doc.get('lastDayDone')} last moved "
+          f"{age:.1f}d ago (target {doc.get('to')})  {'STALLED' if stalled else 'ok'}")
+    if stalled:
+        print(f"\nThe PWD/LCA backfill has not advanced in {BACKFILL_STALL_DAYS} days and the "
+              "daily resumer is not reviving it. Dispatch pwd-status-direct.yml with "
+              "mode=backfill by hand and read that run's log.")
+        return 1
+    return 0
+
+
+# Lookup demand: the count of live DOL lookups the case page made, per UTC
+# day, in perm_docs['discovery_budget_<date>']. It is the number a crawler on
+# `/perm-case-status?case=` moves - Meta's spent 2,000 a day before 5 AM in
+# September 2026 - and the one thing on this site that alerts on nothing
+# else. Vercel's only firewall alert fires at 100,000 requests per 10
+# minutes, ten times that crawler's rate. Judged against the site's own
+# recent median with a floor, because the organic rate is single digits.
+LOOKUP_DEMAND_FLOOR = 500
+LOOKUP_DEMAND_MULTIPLE = 5
+LOOKUP_DEMAND_HISTORY = 30
+
+
+def check_lookup_demand(db) -> int:
+    try:
+        res = db.execute(
+            "SELECT key, json FROM perm_docs WHERE key LIKE 'discovery_budget_%' "
+            "ORDER BY key DESC LIMIT ?", [LOOKUP_DEMAND_HISTORY + 1])
+        rows = [[c["value"] for c in r] for r in res["response"]["result"]["rows"]]
+    except RuntimeError as exc:
+        print(f"lookup demand     : unreadable ({str(exc)[:120]})")
+        return 0
+    counts = []
+    for key, raw in rows:
+        try:
+            counts.append((str(key)[-10:], int(str(raw).strip('"'))))
+        except (TypeError, ValueError):
+            continue
+    if len(counts) < 8:
+        print(f"lookup demand     : {len(counts)} day(s) on record; 8 needed to judge")
+        return 0
+    (day, latest), history = counts[0], [n for _, n in counts[1:]]
+    median = statistics.median(history)
+    limit = max(LOOKUP_DEMAND_FLOOR, LOOKUP_DEMAND_MULTIPLE * median)
+    spike = latest > limit
+    print(f"lookup demand     : {latest:,} DOL lookups on {day} (median of the last "
+          f"{len(history)} days {median:.0f}, limit {limit:,.0f})  {'SPIKE' if spike else 'ok'}")
+    if spike:
+        print("\nSomething is driving live case lookups far above this site's own rate. "
+              "Read the Vercel Firewall Traffic tab grouped by ASN and JA4 before "
+              "anything else; the last time this happened it was one crawler on "
+              "rotating addresses.")
+        return 1
+    return 0
+
+
 def main() -> int:
     db = Turso()
     res = db.execute(
@@ -329,6 +437,8 @@ def main() -> int:
     print()
     frontier_bad = check_frontier(db)
     yield_bad = check_discovery_yield(db)
+    backfill_bad = check_backfill(db)
+    demand_bad = check_lookup_demand(db)
 
     print()
     if unparseable:
@@ -344,10 +454,11 @@ def main() -> int:
         return 1
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
-    if runs_bad or frontier_bad or yield_bad or unparseable:
+    if runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad or unparseable:
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
-          "most recent run finished clean, and the discovery frontier is moving.")
+          "most recent run finished clean, the discovery frontier is moving, no "
+          "backfill has stalled, and lookup demand is at its normal rate.")
     return 0
 
 

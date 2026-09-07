@@ -34,6 +34,15 @@ that file was a defect first:
   `lib_gov_data.iter_rows` resolves each cell from its own `r="A1"` reference.
   `scripts/test_flag_disclosure.py` builds a fixture with a blank cell in the
   middle of a row and asserts the columns after it land correctly.
+* **A load is guarded BEFORE it writes** (`lib_load_guard.py`). A pre-pass
+  over the workbook records which columns resolved, the blank share per
+  column and the median wage per unit, and compares them with the previous
+  load of the same program (the bare `flag_disclosure_<program>` record).
+  A column DOL renamed used to land as NULL under a green run; now a lost
+  column, a blank share up 25 points, a median wage moved by half, or more
+  than 1% of rows with impossible values refuses the file with nothing
+  written. `--accept-drift` overrides the drift half after a human looked;
+  the impossible-values half has no override.
 * **Columns are resolved by HEADER NAME, per file.** Every name below was read
   off DOL's own record layouts for FY2026 Q3 (`PW_Record_Layout_FY2026_Q3.pdf`
   and `LCA_Record_Layout_FY2026_Q3.pdf`, both under `/pdfs/FY26Q3/`), not
@@ -96,6 +105,7 @@ from ingest_perm_disclosure import (  # noqa: E402
     fiscal_year,
     to_iso,
 )
+from lib_load_guard import Fingerprint, drift_findings, sanity_findings  # noqa: E402
 from lib_gov_data import (  # noqa: E402
     BROWSER_HEADERS,
     discover_links,
@@ -895,6 +905,11 @@ def main() -> int:
                          "exist, then create their indexes. Ten times cheaper "
                          "than a --force reload and the only affordable way to "
                          "add a column to these tables.")
+    ap.add_argument("--accept-drift", action="store_true",
+                    help="Load despite the fingerprint differing from the previous load "
+                         "(a lost column, a blank-share jump, a moved median). For a "
+                         "human who has read the --dry-run output and agrees DOL really "
+                         "changed the file. Never overrides impossible values.")
     ap.add_argument("--fy", type=int, metavar="YYYY",
                     help="Load that fiscal year's newest file instead of the newest overall "
                          "(history, one year per run).")
@@ -928,15 +943,24 @@ def main() -> int:
 
         if args.dry_run:
             shown = 0
+            guard = Fingerprint()
             for row in iter_cases(path, cfg, stats):
+                guard.see(row)
                 if shown < args.dump_rows:
                     print("ROW " + json.dumps(row, sort_keys=True, separators=(",", ":")), flush=True)
                     shown += 1
+            guard.resolved = stats.resolved
+            fp = guard.to_doc()
             log("")
             log(f"file              {name}")
             log(f"fiscal year       {file_fiscal_year(name) or '(not in filename)'}")
             log(f"resolved          {stats.resolved}")
             stats.report()
+            log(f"guard blank share {fp['blankShare']}")
+            log(f"guard median wage {fp['wageMedian']}")
+            log(f"guard impossible  {fp['badShare']:.2%} {fp['bad']}")
+            for finding in sanity_findings(fp):
+                log(f"guard SANITY      {finding}")
             log("DRY RUN: nothing written")
             return 0
 
@@ -1008,6 +1032,39 @@ def main() -> int:
             log(f"  {name} hash matches the last load but the table holds {have:,} of "
                 f"{int(prior.get('rows') or 0):,} rows; reloading")
 
+        # THE GUARD PASS, BEFORE ANY WRITE. One extra parse of the workbook
+        # (about a minute for 150k rows) buys a refusal that leaves nothing
+        # behind: a column DOL renamed, a blank share that jumped, a median
+        # wage that moved by half, or rows whose values cannot be right. The
+        # baseline is the previous load of this PROGRAM, whichever file it
+        # was, because the shape of the file is what is being compared.
+        guard = Fingerprint()
+        pre = ParseStats()
+        for row in iter_cases(path, cfg, pre):
+            guard.see(row)
+        guard.resolved = pre.resolved
+        fingerprint = guard.to_doc()
+        baseline = _read_doc(db, load_record_key(args.program)) or {}
+        findings = sanity_findings(fingerprint)
+        drift = drift_findings(baseline.get("fingerprint"), fingerprint)
+        log(f"  guard: {pre.kept:,} rows, impossible {fingerprint['badShare']:.2%}, "
+            f"baseline {baseline.get('file') or 'none'}, "
+            + (f"{len(drift)} drift finding(s)" if drift else "no drift"))
+        for finding in drift:
+            log(f"    DRIFT: {finding}")
+        if drift and args.accept_drift:
+            log("    --accept-drift: loading anyway on a human's say-so")
+        elif drift:
+            findings.extend(drift)
+        if findings:
+            note = "; ".join(findings)
+            record_run(db, script, status="failed", rows_written=0,
+                       note=f"{name}: guard refused: {note[:150]}", started_at=started)
+            raise SystemExit(
+                f"FATAL: {name} refused before any write: {note}. "
+                "Run --dry-run to see the fingerprint; --accept-drift overrides "
+                "the drift half only, never impossible values.")
+
         log(f"Loading {name} into {table}")
         db.script(table_ddl(table))
         ensure_columns(db, table)
@@ -1034,6 +1091,7 @@ def main() -> int:
         write_load_record(db, args.program, {
             "file": name, "sha256": sha, "rows": stats.kept,
             "asOf": stats.last_decided or None,
+            "fingerprint": fingerprint,
             "loadedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         }, latest=args.fy is None)
         write_summary_doc(db, args.program, table)

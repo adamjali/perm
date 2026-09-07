@@ -29,7 +29,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from ingest_perm_disclosure import entity_key  # noqa: E402
 from lib_turso import Turso, lit  # noqa: E402
-from store_entities import with_unique_slugs  # noqa: E402
+from store_entities import plan_aliases, plan_sticky_slugs  # noqa: E402
 
 SCHEMA = [
     # ONLY these two are ours to rebuild wholesale: every row in them is
@@ -132,6 +132,12 @@ def chunked(rows, n):
         yield buf
 
 
+def identity_key(kind: str, name: str, code) -> str:
+    """What makes a stored entity row THIS row across rebuilds: the name, and
+    for an occupation the SOC code as well (two codes share a title)."""
+    return f"{code or ''}|{name}" if kind == "occupation" else name
+
+
 def insert_many(db, table, columns, rows, per_stmt=400, per_req=4):
     ph = "(" + ",".join("?" * len(columns)) + ")"
     head = f"INSERT OR REPLACE INTO {table} ({','.join(columns)}) VALUES "
@@ -149,8 +155,12 @@ def insert_many(db, table, columns, rows, per_stmt=400, per_req=4):
 
 
 def main() -> int:
-    art = pathlib.Path(sys.argv[1] if len(sys.argv) > 1
-                       else "/tmp/ingest-artifact/federal-payloads")
+    positional = [a for a in sys.argv[1:] if not a.startswith("--")]
+    art = pathlib.Path(positional[0] if positional else "/tmp/ingest-artifact/federal-payloads")
+    # --allow-vanished: proceed when an entity has left the source entirely
+    # and its slug can redirect nowhere. Off by default, because a page
+    # Google holds turning into a 404 with nobody noticing is the failure.
+    allow_vanished = "--allow-vanished" in sys.argv
     payload = json.load(open(art / "perm-payload.json"))
     wages = json.load(open(art / "perm-wages.json"))
     meta = json.load(open(art / "perm-cases.ndjson.gz.meta.json"))
@@ -192,27 +202,71 @@ def main() -> int:
             return 0        # first run: the table does not exist yet
 
     bulletins_before = count_or_zero("visa_bulletins")
-    docs_before = count_or_zero("perm_docs")
 
-    log("  creating schema")
-    db.script(SCHEMA)
+    # STICKY SLUGS: read what every entity is called NOW, before the schema
+    # drops the table. A rebuild used to assign `-2`/`-3` in volume order,
+    # and volume order changes every quarter, so two spellings of one firm
+    # swapped URLs and every inbound link swapped with them. An entity keeps
+    # the slug it holds; only newcomers are assigned; every slug that no
+    # entity kept gets an alias row, or the run refuses.
+    prior_slug: dict[str, dict[str, str]] = {}     # kind -> name -> slug
+    prior_key: dict[str, dict[str, str]] = {}      # kind -> slug -> merge key
+    try:
+        res = db.execute("SELECT kind, name, slug, merge_key, code FROM perm_entities")
+        for r in res["response"]["result"]["rows"]:
+            kind, name, slug, key, code = (None if c["type"] == "null" else c["value"] for c in r)
+            prior_slug.setdefault(kind, {})[identity_key(kind, name, code)] = slug
+            prior_key.setdefault(kind, {})[slug] = key or ""
+    except Exception:  # noqa: BLE001 - first run: no table yet
+        pass
+    log(f"  prior entities: {sum(len(v) for v in prior_slug.values()):,} slugs held")
 
-    # ---- entities: ALL of them, not a top-100 --------------------------
-    total_entities = 0
+    planned: dict[str, list] = {}
+    alias_rows: list[tuple[str, str, str]] = []
+    unresolved_all: list[tuple[str, str]] = []
     for kind, src, name_of in (
         ("employer", "topEmployers", lambda r: r["name"]),
         ("attorney", "topAttorneys", lambda r: r["name"]),
         ("occupation", "topOccupations", lambda r: r["title"]),
     ):
         rows = payload.get(src) or []
-        # Sort by volume BEFORE slugging, exactly as store_entities.py does:
-        # the busier entity must keep the clean slug or pages reassign
-        # themselves between ingests.
+        # Volume order still decides RANK and which newcomer gets the clean
+        # slug; it no longer moves a slug an entity already holds.
         ordered = sorted(rows, key=lambda r: -r["total"])
+        assigned, vanished = plan_sticky_slugs(
+            ordered, name_of, prior_slug.get(kind, {}),
+            key_of=lambda r, k=kind, n=name_of: identity_key(k, n(r), r.get("code")))
+        key_slug: dict[str, str] = {}
+        for slug, item in assigned:            # busiest first, so first wins
+            key_slug.setdefault(entity_key(name_of(item)), slug)
+        aliases, unresolved = plan_aliases(vanished, prior_key.get(kind, {}), key_slug)
+        alias_rows.extend((kind, old, target) for old, target in aliases)
+        unresolved_all.extend((kind, old) for old in unresolved)
+        planned[kind] = [(slug, name_of(item), item) for slug, item in assigned]
+        kept = sum(1 for slug, item in assigned if prior_slug.get(kind, {}).get(name_of(item)) == slug)
+        log(f"    {kind:11s} {len(assigned):>6,} slugs: {kept:,} kept, "
+            f"{len(assigned) - kept:,} new, {len(aliases):,} aliased, {len(unresolved):,} unresolved")
+    if unresolved_all:
+        sample = ", ".join(f"{k}:{s}" for k, s in unresolved_all[:8])
+        if not allow_vanished:
+            log(f"  FATAL: {len(unresolved_all)} slug(s) held live pages and now redirect "
+                f"nowhere ({sample}). Nothing written. Read the parser's log: an entity "
+                "that left the source entirely is either DOL dropping it or a mapping "
+                "change. Re-run with --allow-vanished once that is understood.")
+            return 1
+        log(f"  --allow-vanished: {len(unresolved_all)} slug(s) will 404 ({sample})")
+    docs_before = count_or_zero("perm_docs")
+
+    log("  creating schema")
+    db.script(SCHEMA)
+
+    # ---- entities: ALL of them, not a top-100, with the slugs planned above
+    total_entities = 0
+    for kind, rows_planned in planned.items():
         out = []
-        for rank, (slug, item) in enumerate(with_unique_slugs(ordered, name_of), start=1):
+        for rank, (slug, name, item) in enumerate(rows_planned, start=1):
             out.append((
-                kind, slug, name_of(item), entity_key(name_of(item)), rank,
+                kind, slug, name, entity_key(name), rank,
                 item["total"], item.get("certified"), item.get("denied"),
                 item.get("medianDays"), item.get("medianAnnualWage"),
                 item.get("state"), item.get("code"),
@@ -223,6 +277,22 @@ def main() -> int:
                          "median_annual_wage", "state", "code"], out)
         total_entities += n
         log(f"    {kind:11s} {n:>6,}")
+
+    # ---- aliases for the slugs nobody kept -----------------------------
+    # A row per vanished slug pointing at the entity that absorbed it, and
+    # any older alias that pointed AT a vanished slug is re-pointed so no
+    # chain forms. reconcile_entity_aliases.py runs after this and drops
+    # anything that ended up inconsistent.
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_entity_alias (
+        kind TEXT NOT NULL, slug TEXT NOT NULL, target_slug TEXT NOT NULL,
+        PRIMARY KEY (kind, slug))""")
+    if alias_rows:
+        insert_many(db, "perm_entity_alias", ["kind", "slug", "target_slug"], alias_rows)
+        for kind, old, target in alias_rows:
+            db.execute("UPDATE perm_entity_alias SET target_slug = ? "
+                       "WHERE kind = ? AND target_slug = ? AND slug <> ?",
+                       [target, kind, old, target])
+        log(f"    aliases     {len(alias_rows):>6,} written for slugs no entity kept")
 
     # ---- wage cells ----------------------------------------------------
     wrows = [(

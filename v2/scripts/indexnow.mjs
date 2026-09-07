@@ -22,7 +22,9 @@ const locs = (xml) =>
   [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1].trim()).filter(Boolean);
 
 const get = async (url) => {
-  const r = await fetch(url, { headers: { "User-Agent": "permtracker-indexnow/1.0" } });
+  // x-permtracker-audit: the Firewall's bypass for the site's own scripts
+  // (Bot Protection challenges a non-browser fetch of the sitemap otherwise).
+  const r = await fetch(url, { headers: { "User-Agent": "permtracker-indexnow/1.0", "x-permtracker-audit": "1" } });
   if (!r.ok) throw new Error(`fetch failed: HTTP ${r.status} for ${url}`);
   return r.text();
 };

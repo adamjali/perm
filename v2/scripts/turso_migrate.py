@@ -39,6 +39,7 @@ import time
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from ingest_perm_disclosure import entity_key  # noqa: E402
+from lib_load_guard import drift_findings, sanity_findings  # noqa: E402
 from lib_turso import Turso, lit  # noqa: E402
 from store_entities import with_unique_slugs  # noqa: E402
 
@@ -259,6 +260,38 @@ def main() -> int:
 
     employers, firms = slug_maps(json.load(open(payload_path)))
 
+    # THE LOAD GUARD, BEFORE ANY WRITE. The parser recorded the file's shape
+    # in the artifact's meta (which columns resolved per fiscal year, blank
+    # shares, the median wage, impossible values); the previous load's shape
+    # is in perm_docs. A column DOL renamed used to land as NULL under a
+    # green run. `--accept-drift` overrides the drift half for a human who
+    # has read the parser's log; nothing overrides impossible values.
+    meta_path = pathlib.Path(str(cases) + ".meta.json")
+    fingerprint = None
+    if meta_path.exists():
+        fingerprint = json.load(open(meta_path)).get("fingerprint")
+    if fingerprint:
+        baseline = read_fingerprint(db)
+        findings = sanity_findings(fingerprint)
+        drift = drift_findings(baseline, fingerprint)
+        log(f"  guard: {int(fingerprint.get('rows') or 0):,} rows, impossible "
+            f"{float(fingerprint.get('badShare') or 0):.2%}, baseline "
+            f"{'present' if baseline else 'none'}, "
+            + (f"{len(drift)} drift finding(s)" if drift else "no drift"))
+        for finding in drift:
+            log(f"    DRIFT: {finding}")
+        if drift and "--accept-drift" in sys.argv:
+            log("    --accept-drift: loading anyway on a human's say-so")
+        elif drift:
+            findings.extend(drift)
+        if findings:
+            log("  FATAL: refused before any write: " + "; ".join(findings))
+            log("  Re-run the parser with --dump-header on the newest file, read the "
+                "columns, then pass --accept-drift to this loader if DOL really changed it.")
+            return 1
+    else:
+        log("  guard: the artifact carries no fingerprint (an older parser); loading unguarded")
+
     incremental = "--incremental" in sys.argv
     if incremental:
         log("  incremental: reading existing fingerprints")
@@ -320,6 +353,7 @@ def main() -> int:
         # Rebuilding them would undo the entire point of the incremental path.
         got = int(db.scalar("SELECT count(*) FROM perm_cases") or 0)
         log(f"  VERIFY count(*) = {got:,}")
+        write_fingerprint(db, fingerprint)
         return 0
 
     log("  building indexes")
@@ -334,7 +368,36 @@ def main() -> int:
     log(f"  VERIFY count(*) = {got:,}  (streamed {sent:,})")
     if got != sent:
         log("  FATAL: row count disagrees with what was streamed"); return 1
+    write_fingerprint(db, fingerprint)
     return 0
+
+
+FINGERPRINT_KEY = "perm_cases_fingerprint"
+
+
+def read_fingerprint(db) -> dict | None:
+    try:
+        raw = db.scalar("SELECT json FROM perm_docs WHERE key = ?", [FINGERPRINT_KEY])
+    except Exception:  # noqa: BLE001 - a database that has never had perm_docs
+        return None
+    if not raw:
+        return None
+    try:
+        doc = json.loads(raw)
+    except (TypeError, ValueError):
+        return None
+    return doc if isinstance(doc, dict) else None
+
+
+def write_fingerprint(db, fingerprint: dict | None) -> None:
+    """Recorded only after VERIFY passed: a refused or failed load must not
+    become the baseline the next load is judged against."""
+    if not fingerprint:
+        return
+    db.execute("CREATE TABLE IF NOT EXISTS perm_docs (key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)")
+    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
+               [FINGERPRINT_KEY, json.dumps(fingerprint, separators=(",", ":")), int(time.time() * 1000)])
+    log("  guard: fingerprint recorded as the baseline for the next load")
 
 
 if __name__ == "__main__":

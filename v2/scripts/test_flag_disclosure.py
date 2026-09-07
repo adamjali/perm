@@ -390,6 +390,15 @@ def check_fixture(tmp: str, writer_name: str, write) -> None:
     check(f"[{writer_name}] --dry-run says it wrote nothing", "DRY RUN: nothing written" in proc.stdout, True)
 
     # The wrong program on a file is a mapping failure and must FAIL.
+    out = proc.stdout + proc.stderr
+    # The fixture carries one deliberately impossible unit (FORTNIGHT, the
+    # check_units probe), so the guard MUST report it: one row of four is 25%.
+    check(f"[{writer_name}] the dry run prints the guard's impossible-value share",
+          "guard impossible  25.00% {'wage_unit_unknown': 1}" in out, True)
+    check(f"[{writer_name}] and the blank share per column",
+          "guard blank share {" in out and "'wage': 0.5" in out, True)
+    check(f"[{writer_name}] and the sanity finding a real load would be refused on",
+          "guard SANITY      25.00% of rows carry impossible values" in out, True)
     proc = run_cli("--program", "lca", "--dry-run", "--file", pw_path, cwd=tmp)
     check(f"[{writer_name}] wrong --program exits non-zero", proc.returncode != 0, True)
     check(f"[{writer_name}] wrong --program names the unresolved fields",

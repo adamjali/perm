@@ -206,6 +206,80 @@ def main() -> int:
     check("yield: a null rows_written counts as zero",
           health.check_discovery_yield(DocDB(runs=[("ok", None, 1)] * 4)) == 1)
 
+    # ---- legacy bare-key failures --------------------------------------
+    class RunsDB:
+        def __init__(self, rows):
+            self.rows = rows            # newest first: (script, status, note, finished)
+        def execute(self, sql, args=None):
+            assert sql.startswith("SELECT script, status, note, finished_at FROM ingest_runs")
+            return {"response": {"result": {"rows": [[
+                {"type": "text", "value": sc}, {"type": "text", "value": st},
+                {"type": "text", "value": n}, {"type": "integer", "value": str(int(f))}]
+                for sc, st, n, f in self.rows]}}}
+
+    h = 3_600_000
+    check("runs: a bare-key failure with no later clean run stays BROKEN",
+          health.check_runs(RunsDB([("ingest_pwd_status_direct.py", "failed", "timeout", NOW - 30 * h)])) == 1)
+    check("runs: a bare-key failure is superseded by a later clean --full run",
+          health.check_runs(RunsDB([("ingest_pwd_status_direct.py --full", "ok", "", NOW - 2 * h),
+                                    ("ingest_pwd_status_direct.py", "failed", "timeout", NOW - 30 * h)])) == 0)
+    check("runs: a clean run BEFORE the bare failure does not supersede it",
+          health.check_runs(RunsDB([("ingest_pwd_status_direct.py", "failed", "timeout", NOW - 2 * h),
+                                    ("ingest_pwd_status_direct.py --full", "ok", "", NOW - 30 * h)])) == 1)
+    check("runs: a mode-keyed --full failure is NOT cleared by a clean --pending run",
+          health.check_runs(RunsDB([("ingest_pwd_status_direct.py --pending", "ok", "", NOW - 2 * h),
+                                    ("ingest_pwd_status_direct.py --full", "failed", "timeout", NOW - 30 * h)])) == 1)
+    check("runs: a clean run of a DIFFERENT script does not supersede",
+          health.check_runs(RunsDB([("ingest_case_status_direct.py --full", "ok", "", NOW - 2 * h),
+                                    ("ingest_pwd_status_direct.py", "failed", "timeout", NOW - 30 * h)])) == 1)
+
+    # ---- the stalled-backfill line ----------------------------------------
+    class ProgressDB:
+        def __init__(self, doc):
+            self.doc = doc
+        def execute(self, sql, args=None):
+            assert "flag_backfill_progress" in (args or [""])[0]
+            rows = [[{"type": "text", "value": _json.dumps(self.doc)}]] if self.doc is not None else []
+            return {"response": {"result": {"rows": rows}}}
+
+    day = 86_400_000
+    check("backfill: no record passes", health.check_backfill(ProgressDB(None)) == 0)
+    check("backfill: complete passes",
+          health.check_backfill(ProgressDB({"complete": True, "to": "2026-09-08"})) == 0)
+    check("backfill: incomplete and moved 2 days ago passes",
+          health.check_backfill(ProgressDB({"lastDayDone": "26194", "lastDayDoneAt": NOW - 2 * day})) == 0)
+    check("backfill: incomplete and not moved in 8 days FAILS (the Sep 3 stall)",
+          health.check_backfill(ProgressDB({"lastDayDone": "26161", "lastDayDoneAt": NOW - 8 * day})) == 1)
+    check("backfill: a pre-resumer record without a movement stamp is not judged",
+          health.check_backfill(ProgressDB({"lastDayDone": "26161"})) == 0)
+
+    # ---- the lookup-demand line -------------------------------------------
+    class DemandDB:
+        def __init__(self, counts):
+            self.counts = counts        # newest first: [(date, count), ...]
+        def execute(self, sql, args=None):
+            assert "discovery_budget_" in sql
+            rows = [[{"type": "text", "value": f"discovery_budget_{d}"},
+                     {"type": "text", "value": str(n)}] for d, n in self.counts[: int(args[0])]]
+            return {"response": {"result": {"rows": rows}}}
+
+    def days(counts):
+        return [(f"2026-09-{i:02d}", n) for i, n in zip(range(30, 0, -1), counts)]
+
+    quiet = days([3] + [4, 2, 5, 3, 1, 2, 4, 3, 5, 2])
+    check("demand: single digits every day passes", health.check_lookup_demand(DemandDB(quiet)) == 0)
+    check("demand: fewer than 8 days is not judged", health.check_lookup_demand(DemandDB(quiet[:5])) == 0)
+    check("demand: 499 on a single-digit median passes (the 500 floor)",
+          health.check_lookup_demand(DemandDB(days([499] + [3] * 10))) == 0)
+    check("demand: 2,000 on a single-digit median FAILS (the Meta crawler)",
+          health.check_lookup_demand(DemandDB(days([2000] + [3] * 10))) == 1)
+    check("demand: 4x a busy median (300 on 100) passes",
+          health.check_lookup_demand(DemandDB(days([300] + [100] * 10))) == 0)
+    check("demand: 6x a busy median (600 on 100) FAILS",
+          health.check_lookup_demand(DemandDB(days([600] + [100] * 10))) == 1)
+    check("demand: a quoted JSON count is read",
+          health.check_lookup_demand(DemandDB(days(['"7"'] + [3] * 10))) == 0)
+
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 

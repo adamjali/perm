@@ -36,7 +36,8 @@ from lib_turso import Turso  # noqa: E402
 
 BASE = "https://permtrack.app/api"
 UA = {"User-Agent": "permtracker.app cross-check (contact: notifications@permtracker.app)",
-      "Accept": "application/json"}
+      "Accept": "application/json",
+      "x-permtracker-audit": "1"}   # the Firewall's bypass for the site's own audits
 
 # Their spelling -> ours, for the bulletin comparison.
 COUNTRY = {"Rest of World": "worldwide", "China": "china", "India": "india",

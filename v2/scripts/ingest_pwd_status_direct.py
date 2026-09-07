@@ -624,19 +624,68 @@ def write_summary_doc(db: Turso, program: str = "pwd") -> bool:
     return ok
 
 
-def read_progress(db: Turso) -> str | None:
+def read_progress_doc(db: Turso) -> dict:
+    """The whole backfill record: lastDayDone, when it last moved, the range
+    it was dispatched for, and whether it finished. Empty when none exists."""
     got = _rows(db, "SELECT json FROM perm_docs WHERE key = ?", [PROGRESS_KEY])
     if not got:
-        return None
+        return {}
     try:
-        return json.loads(got[0][0]).get("lastDayDone")
+        doc = json.loads(got[0][0])
     except (TypeError, ValueError):
-        return None
+        return {}
+    return doc if isinstance(doc, dict) else {}
 
 
-def write_progress(db: Turso, last_day: str) -> None:
+def read_progress(db: Turso) -> str | None:
+    return read_progress_doc(db).get("lastDayDone")
+
+
+def write_progress(db: Turso, last_day: str | None = None, **fields) -> None:
+    """Merge into the record. `lastDayDoneAt` moves ONLY when lastDayDone
+    does: it is what the health check judges a stalled backfill by, and a
+    leg that restarts every day without advancing must not refresh it."""
+    doc = read_progress_doc(db)
+    now_ms = int(time.time() * 1000)
+    if last_day is not None and last_day != doc.get("lastDayDone"):
+        doc["lastDayDone"] = last_day
+        doc["lastDayDoneAt"] = now_ms
+    doc.update(fields)
     db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-               [PROGRESS_KEY, json.dumps({"lastDayDone": last_day}), int(time.time() * 1000)])
+               [PROGRESS_KEY, json.dumps(doc), now_ms])
+
+
+# A leg that ran inside this window means the chain is alive (legs take up
+# to 170 minutes and dispatch their successor themselves). Outside it, an
+# incomplete backfill has stopped chaining - a leg died before moving the
+# frontier, DOL refused for a night - and the daily job re-dispatches ONE
+# leg. One a day, so a DOL outage cannot loop it.
+RESUME_QUIET_HOURS = 20
+BACKFILL_SCRIPT = "ingest_pwd_status_direct.py --backfill"
+
+
+def resume_decision(doc: dict, last_run_ms: int | None, now_ms: int) -> tuple[str, str]:
+    """('dispatch' | 'noop', reason). Pure, so the daily job's choice is testable."""
+    if not doc:
+        return "noop", "no backfill on record"
+    if doc.get("complete"):
+        return "noop", f"backfill complete through {doc.get('to')}"
+    if not (doc.get("from") and doc.get("to")):
+        return "noop", "backfill has no range recorded (it pre-dates the resumer)"
+    if last_run_ms is not None and now_ms - last_run_ms < RESUME_QUIET_HOURS * 3_600_000:
+        hours = (now_ms - last_run_ms) / 3_600_000
+        return "noop", f"a leg ran {hours:.1f}h ago; the chain is alive"
+    return "dispatch", (f"incomplete: last day done {doc.get('lastDayDone') or 'none'}, "
+                        f"target {doc['to']}")
+
+
+def last_backfill_run_ms(db: Turso) -> int | None:
+    try:
+        got = _rows(db, "SELECT started_at FROM ingest_runs WHERE script = ? "
+                        "ORDER BY started_at DESC LIMIT 1", [BACKFILL_SCRIPT])
+    except Exception:  # noqa: BLE001 - a database with no runs yet
+        return None
+    return int(got[0][0]) if got and got[0][0] is not None else None
 
 
 # ---------------------------------------------------------------------------
@@ -688,6 +737,11 @@ def main() -> int:
                     help="Print the backfill frontier (last day code done) and exit.")
     ap.add_argument("--day-code", metavar="YYYY-MM-DD",
                     help="Print the day code for a date and exit.")
+    ap.add_argument("--progress-json", action="store_true",
+                    help="Print the whole backfill record as JSON and exit.")
+    ap.add_argument("--resume-check", action="store_true",
+                    help="Print 'dispatch from=.. to=..' when an incomplete backfill has "
+                         "stopped chaining, else 'noop: <reason>'. Read-only.")
     args = ap.parse_args()
 
     if args.day_code:
@@ -695,6 +749,18 @@ def main() -> int:
         return 0
     if args.progress:
         print(read_progress(Turso()) or "")
+        return 0
+    if args.progress_json:
+        print(json.dumps(read_progress_doc(Turso()), sort_keys=True))
+        return 0
+    if args.resume_check:
+        db = Turso()
+        doc = read_progress_doc(db)
+        verdict, reason = resume_decision(doc, last_backfill_run_ms(db), int(time.time() * 1000))
+        if verdict == "dispatch":
+            print(f"dispatch from={doc['from']} to={doc['to']} ({reason})")
+        else:
+            print(f"noop: {reason}")
         return 0
 
     db = Turso()
@@ -776,6 +842,10 @@ def main() -> int:
             d += datetime.timedelta(days=1)
         log(f"BACKFILL {start}..{end}: {len(codes)} day codes"
             + (f" (resuming after {resume})" if resume else ""))
+        # The range is recorded so a leg that dies can be re-dispatched by
+        # the daily job (--resume-check) without a human remembering it.
+        write_progress(db, **{"from": args.from_, "to": args.to, "complete": False})
+        stopped = False
         total_req = 0
         total_added = {name: 0 for name in PROGRAMS}
         cap = args.cap or BACKFILL_REQUEST_CAP
@@ -790,7 +860,11 @@ def main() -> int:
                 write_progress(db, max(done))
             if total_req >= cap or len(done) < len(windows):
                 log(f"backfill: stopped at cap ({total_req} requests); re-run to resume")
+                stopped = True
                 break
+        if not stopped:
+            write_progress(db, complete=True)
+            log(f"backfill: complete through {end}")
         log(f"backfill: {total_req} requests, new cases {total_added}")
         failed = finish_docs()
         record_run(db, "ingest_pwd_status_direct.py --backfill",

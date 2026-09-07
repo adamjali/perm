@@ -135,6 +135,8 @@ jobs:
           python3 scripts/test_live_recent.py
           python3 scripts/test_flag_disclosure.py
           python3 scripts/test_pwd_status.py
+          python3 scripts/test_load_guard.py
+          python3 scripts/test_sticky_slugs.py
 
       # The observed-decision series: our own half of `daily_decisions`.
       #

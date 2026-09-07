@@ -12,7 +12,8 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from ingest_pwd_status_direct import (  # noqa: E402
-    BATCH, PREFIX, PWD_FINAL, candidate_batches, day_code, is_final, serial_of,
+    BATCH, PREFIX, PWD_FINAL, RESUME_QUIET_HOURS, candidate_batches, day_code,
+    is_final, resume_decision, serial_of,
 )
 
 FAILURES: list[str] = []
@@ -56,6 +57,25 @@ def main() -> int:
     check("the final set names the observed outcomes",
           {"DETERMINATION ISSUED", "REDETERMINATION AFFIRMED", "REDETERMINATION MODIFIED",
            "WITHDRAWN"} <= PWD_FINAL, True)
+
+    print("backfill resumer")
+    H = 3_600_000
+    now = 1_788_800_000_000
+    doc = {"lastDayDone": "26194", "from": "2026-06-10", "to": "2026-09-08", "complete": False}
+    check("no record: noop", resume_decision({}, None, now)[0], "noop")
+    check("complete: noop", resume_decision({**doc, "complete": True}, None, now)[0], "noop")
+    check("no range recorded (pre-resumer doc): noop",
+          resume_decision({"lastDayDone": "26194"}, None, now)[0], "noop")
+    check("a leg ran 2h ago: noop, the chain is alive",
+          resume_decision(doc, now - 2 * H, now)[0], "noop")
+    check("a leg ran just inside the quiet window: still noop",
+          resume_decision(doc, now - (RESUME_QUIET_HOURS * H - 1), now)[0], "noop")
+    check("a leg ran 26h ago and the range is incomplete: dispatch",
+          resume_decision(doc, now - 26 * H, now)[0], "dispatch")
+    check("no leg ever recorded but a range exists: dispatch",
+          resume_decision(doc, None, now)[0], "dispatch")
+    check("the dispatch reason names the frontier and the target",
+          resume_decision(doc, None, now)[1], "incomplete: last day done 26194, target 2026-09-08")
 
     print()
     if FAILURES:

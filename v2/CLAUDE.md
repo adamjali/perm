@@ -2782,3 +2782,64 @@ crawler and the proxy are fixed. Vercel Support confirmed non-commercial use.
   columns the parser has emitted since Sep 4, so CI was red from **Thu Sep 3,
   10:44 PM ET** and vitest had not run in CI for 25 pushes. Green again on
   `22b42a8b`.
+
+## The four exposures closed on Sep 7 2026, and what each one costs to keep
+
+Adam asked whether "the same things can't happen again, or the same class, or
+even not like it". The honest list of what was still exposed after the Sep 6
+work, and the fix for each:
+
+**A parser that emits plausible wrong values.** Both loaders resolve columns
+by header name and refused only when a REQUIRED column was missing; a column
+DOL renamed logged "(no column for ['wage']; those land as NULL)" and the run
+reported success. `scripts/lib_load_guard.py` now fingerprints every load
+(which columns resolved, blank share per column, median wage per unit,
+rows with impossible values) and the loaders compare it with the previous
+load of the same program BEFORE writing: a lost column, a blank share up 25
+points, a median moved by half, or over 1% impossible rows refuses the file
+with nothing written. Thresholds are MEASURED margins: over 634,638 PW and
+437,496 LCA rows the worst impossible-value share is 0.06% and blank shares
+are stable to under a point between quarters. `ingest_flag_disclosure.py`
+does one extra parse pass (about a minute) and stores the fingerprint in
+the load record; the PERM parser puts its fingerprint (resolved columns
+keyed per FISCAL YEAR, because a quarter's filename changes every quarter)
+into `perm-cases.ndjson.gz.meta.json` and `turso_migrate.py` judges it
+against `perm_docs['perm_cases_fingerprint']`, recorded only after VERIFY.
+`--accept-drift` overrides the drift half for a human who read the log;
+nothing overrides impossible values. The first guarded load of each program
+has no baseline and records one. `test_load_guard.py` probes every branch.
+
+**A backfill that stops chaining.** A leg that died before moving the
+frontier printed "no progress; not chaining" (by design) and nothing ever
+restarted it. The progress record now carries `from`, `to`, `complete` and
+`lastDayDoneAt` (moved only when the frontier moves); the scheduled daily
+PWD run asks `--resume-check` and dispatches ONE leg when an incomplete
+backfill has been quiet 20 hours. One a day, so an outage cannot loop it.
+`check_backfill` in the health check fails at 7 days without movement.
+
+**Slug suffixes that shifted each quarter.** `turso_migrate_public.py`
+dropped the entity table and reassigned `-2`/`-3` by volume order, so two
+spellings of one firm swapped URLs when the busier one changed.
+`plan_sticky_slugs` reads the live slugs first: an entity keeps its slug,
+newcomers get the first free suffix, every prior slug stays reserved, and
+each slug nobody kept gets an alias row to the busiest holder of its merge
+key or the run REFUSES (`--allow-vanished` to proceed). Occupations are
+keyed by SOC code as well as title: 54 titles sit under two codes each, and
+keyed by title alone the pair swapped every rebuild. Live control over the
+real table: reversed volume order keeps 78,600 of 78,600 slugs.
+
+**A crawler on paths the four rules do not cover, with no alert.** Vercel's
+only firewall alert fires at 100,000 requests per 10 minutes, ten times the
+Meta crawler's rate. Two things: Bot Protection moved from Log to
+CHALLENGE (verified bots, Googlebot to PerplexityBot to facebookexternalhit,
+are excluded by IP range and reverse DNS, never by user agent; the bypass
+rules cover what the directory lacks: WhatsApp, Slack, Discord, Telegram
+previews, `/feed.xml`, `/llms.txt`, the revalidate POSTs by secret header,
+and the site's own audit scripts by `x-permtracker-audit`), plus rule 5, 300
+requests a minute per IP on page paths. And `check_lookup_demand` in the
+health check fails when a day's live DOL lookups exceed five times the
+30-day median with a floor of 500, the number that crawler moved first.
+
+Also fixed on the way: a failure row recorded under the bare filename (the
+pre-Sep-6 hook shape) could never be superseded because every later run is
+mode-keyed; a later clean run of the same script now clears it.

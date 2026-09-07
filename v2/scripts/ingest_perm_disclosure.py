@@ -280,6 +280,7 @@ from entity_identity import ENTITY_NOISE as _ENTITY_NOISE  # noqa: E402
 from entity_identity import entity_key, typo_aliases  # noqa: E402
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from lib_load_guard import Fingerprint  # noqa: E402
 from lib_turso import Turso  # noqa: E402
 
 __all_identity__ = (entity_key, typo_aliases, _ENTITY_NOISE)
@@ -351,6 +352,15 @@ def norm_status(raw: str) -> str | None:
         return "withdrawn"
     return None
 
+# The columns the load guard watches on a PERM row. `visa_class` and
+# `wage_unit` are not PERM columns (the wage is annualised by the parser), so
+# tracking them would report a 100% blank share that means nothing.
+PERM_TRACKED = (
+    "case_status", "received_date", "decision_date", "employer_name",
+    "job_title", "soc_code", "soc_title", "wage", "worksite_state", "attorney_name",
+)
+
+
 class CaseWriter:
     """Streams one JSON line per decided case, and counts the facets as it goes.
 
@@ -383,11 +393,26 @@ class CaseWriter:
         self.last_decision = ""
         self.first_received = ""
         self.last_received = ""
+        # The load guard's view of the file: which columns resolved, per
+        # fiscal year (a quarter's file replaces the previous quarter's under
+        # the same year, so the year is the stable key), blank shares, the
+        # median wage, and rows whose values cannot be right. Compared by
+        # turso_migrate.py against the previous load BEFORE it writes.
+        self.guard = Fingerprint(tracked=PERM_TRACKED)
+        self.resolved_by_fy: dict[str, list[str]] = {}
 
     def write(self, row: dict) -> None:
         self._fh.write(json.dumps(row, separators=(",", ":")) + "\n")
         self.total += 1
         status, decided, received = row["status"], row["decisionDate"], row["receivedDate"]
+        wage = row.get("wage")
+        self.guard.see({
+            "case_status": status, "received_date": received, "decision_date": decided,
+            "employer_name": row.get("employerName"), "job_title": row.get("jobTitle"),
+            "soc_code": row.get("socCode"), "soc_title": row.get("socTitle"),
+            "wage": wage, "wage_unit": "YEAR" if wage is not None else None,
+            "worksite_state": row.get("state"), "attorney_name": row.get("attorneyName"),
+        })
         self.by_status[status] += 1
         # A row with no resolvable state still counts nationally; it just has
         # no state facet. Bucketing it under "" instead would put it in a
@@ -783,6 +808,9 @@ def parse_file(
                         "file without those fields. Run --dump-header on it and add "
                         "the real names to COLUMN_CANDIDATES before trusting this run."
                     )
+                if cases is not None:
+                    fy_key = str(file_fiscal_year(os.path.basename(path)) or os.path.basename(path))
+                    cases.resolved_by_fy[fy_key] = sorted(resolved)
                 if dump_header:
                     # The primary source for what a column is really called.
                     # A guessed name degrades to an empty column, which reads
@@ -1458,6 +1486,12 @@ def main() -> int:
     if cases is not None:
         meta = cases.close()
         meta["sourceFiles"] = [name for name, _ in files]
+        # Resolved columns are keyed "<fy>::<column>" so the generic drift
+        # check ("resolved last time and not now") works per fiscal year.
+        cases.guard.resolved = [
+            f"{fy}::{col}" for fy, cols in sorted(cases.resolved_by_fy.items()) for col in cols
+        ]
+        meta["fingerprint"] = cases.guard.to_doc()
         meta_path = args.cases_out + ".meta.json"
         with open(meta_path, "w") as fh:
             json.dump(meta, fh, separators=(",", ":"))

@@ -30,6 +30,10 @@ try {
     const height = s.height ?? 800;
     const page = await browser.newPage({
       viewport: { width, height },
+      // The Firewall's bypass for the site's own tooling: headless Chrome
+      // may not pass Bot Protection's challenge, and a challenge page is
+      // not a screenshot of the product.
+      extraHTTPHeaders: { "x-permtracker-audit": "1" },
       deviceScaleFactor: 2, // retina, so the figure is not soft on a good screen
       colorScheme: s.dark ? "dark" : "light",
     });

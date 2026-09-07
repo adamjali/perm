@@ -127,6 +127,31 @@ jobs:
       # forever), and only while the frontier is short of --to. GITHUB_TOKEN
       # may dispatch workflows; it is one of the two events it is allowed to
       # trigger.
+      # THE RESUMER. A backfill chains itself leg to leg, and the chain has
+      # two ways to die that nothing restarted: a leg killed before it moved
+      # the frontier ("no progress; not chaining", by design), and a leg that
+      # failed outright. Both left the cursor stranded (Sep 3 2026, day code
+      # 26161, for four days). The scheduled daily run now asks the record
+      # whether an incomplete backfill has gone quiet and dispatches ONE leg.
+      # One a day, so a DOL outage cannot loop it; the health check reports a
+      # frontier that has not moved in 7 days.
+      - name: Resume an incomplete backfill
+        if: github.event_name == 'schedule' && !cancelled()
+        working-directory: v2
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DECISION="$(python3 scripts/ingest_pwd_status_direct.py --resume-check)"
+          echo "$DECISION"
+          case "$DECISION" in
+            dispatch\ *)
+              FROM="$(printf '%s' "$DECISION" | sed -n 's/.*from=\([^ ]*\).*/\1/p')"
+              TO="$(printf '%s' "$DECISION" | sed -n 's/.*to=\([^ ]*\).*/\1/p')"
+              gh workflow run pwd-status-direct.yml --repo "$GITHUB_REPOSITORY" \
+                -f mode=backfill -f from="$FROM" -f to="$TO"
+              echo "dispatched a backfill leg $FROM..$TO" ;;
+          esac
+
       - name: Chain the next backfill leg
         # `!cancelled()`: a leg cancelled by a person must not dispatch its
         # successor; `success()` (the implicit default) would also skip on a

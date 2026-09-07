@@ -68,7 +68,8 @@ def words(s: str) -> set[str]:
 
 def fetch(url: str, timeout: int = 45) -> str | None:
     try:
-        req = urllib.request.Request(url, headers={"User-Agent": "permtracker-link-audit"})
+        req = urllib.request.Request(url, headers={"User-Agent": "permtracker-link-audit",
+                                                   "x-permtracker-audit": "1"})
         return urllib.request.urlopen(req, timeout=timeout).read().decode("utf8", "ignore")
     except Exception:
         return None
