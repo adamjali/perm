@@ -136,7 +136,7 @@ jobs:
       # One a day, so a DOL outage cannot loop it; the health check reports a
       # frontier that has not moved in 7 days.
       - name: Resume an incomplete backfill
-        if: github.event_name == 'schedule' && !cancelled()
+        if: (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'pending')) && !cancelled()
         working-directory: v2
         env:
           GH_TOKEN: ${{ github.token }}

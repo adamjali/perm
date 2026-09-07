@@ -1,4 +1,30 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "ignoreCommand": "sh \"$(git rev-parse --show-toplevel)/v2/scripts/vercel-ignore.sh\""
+  "ignoreCommand": "sh \"$(git rev-parse --show-toplevel)/v2/scripts/vercel-ignore.sh\"",
+  "crons": [
+    {
+      "path": "/api/cron/dispatch/processing-times",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/dispatch/case-status-full",
+      "schedule": "10 8 * * *"
+    },
+    {
+      "path": "/api/cron/dispatch/pwd-daily",
+      "schedule": "40 9 * * *"
+    },
+    {
+      "path": "/api/cron/dispatch/ingest-health",
+      "schedule": "0 10 * * *"
+    },
+    {
+      "path": "/api/cron/dispatch/pwd-weekly-full",
+      "schedule": "40 10 * * 0"
+    },
+    {
+      "path": "/api/cron/dispatch/case-status-pending",
+      "schedule": "40 19 * * *"
+    }
+  ]
 }
