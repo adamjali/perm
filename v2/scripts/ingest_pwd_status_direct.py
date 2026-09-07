@@ -76,8 +76,9 @@ from lib_turso import (  # noqa: E402
     Turso, lit, record_run, record_sweep, run_independently, stamp_freshness,
 )
 from ingest_case_status_direct import (  # noqa: E402
-    BATCH, CASE_RE, PACE_S, _rows, decode_filing_date, log, lookup_with_retry,
+    BATCH, PACE_S, _rows, decode_filing_date, log, lookup_with_retry,
 )
+from lib_flag_serials import SERIAL_MOD, case_number, day_code, serial_of  # noqa: E402
 from build_entity_detail import _search_slug  # noqa: E402
 
 PERM_PREFIX = "G-100-"
@@ -93,6 +94,12 @@ PROGRAMS: dict[str, dict] = {
         "pending": {"IN PROCESS"},
         "doc": "pwd_live_summary",
         "freshness": "pwd-status",
+        # The weekly full pass re-checks filings this recent. Determinations
+        # that later move (redetermination, withdrawal) do so within months
+        # of filing; a 2024 determination is frozen. The old full pass walked
+        # ALL 96k rows and could never finish beside LCA's 310k.
+        "full_window_days": 180,
+        "freshness_max_age": 3,     # the daily pending pass checks thousands
     },
     "lca": {
         "label": "LCA",
@@ -107,6 +114,13 @@ PROGRAMS: dict[str, dict] = {
         "pending": {"IN PROCESS"},
         "doc": "lca_live_summary",
         "freshness": "lca-status",
+        # LCAs certify within a week and then only ever withdraw; 90 days of
+        # filings is ~90k rows, about 50 minutes, against 310k for all of them.
+        "full_window_days": 90,
+        # The daily pending pass finds 0 LCAs (they are final in days), so
+        # only the weekly pass can honestly stamp this row. A 3-day budget
+        # would read as stale six days a week for a table that is fine.
+        "freshness_max_age": 8,
     },
 }
 PREFIX_TO_PROGRAM = {p: name for name, cfg in PROGRAMS.items() for p in cfg["prefixes"]}
@@ -126,6 +140,15 @@ DISCOVERY_DAY_WINDOW = 7
 DISCOVERY_REQUEST_CAP = 2000
 BACKFILL_REQUEST_CAP = 9000
 EDGE_PAD = 300
+# THE COUNTER WRAPS. On 2026-06-10 serials ran 998,922 to 999,997 and restarted
+# at 1, so that day's MIN/MAX read as (1, 999,997): a million-serial window.
+# The backfill walked I-200 from serial 1, burned its 4,500-request cap
+# 225,000 serials in, wrote no progress, and sat on day 26161 from Thu Sep 3.
+# A jump this big between two consecutive known serials is the wrap; each
+# side is probed as its own cluster, and no window may exceed MAX_WINDOW.
+CLUSTER_GAP = 50_000
+MAX_WINDOW = 20_000
+_KNOWN_CACHE: dict[str, set[int]] = {}
 PROGRESS_KEY = "flag_backfill_progress"
 
 
@@ -180,13 +203,7 @@ def ensure_schema(db: Turso) -> None:
 # Serial windows
 # ---------------------------------------------------------------------------
 
-def day_code(d: datetime.date) -> str:
-    return f"{d.year % 100:02d}{d.timetuple().tm_yday:03d}"
-
-
-def serial_of(case_number: str) -> int | None:
-    m = CASE_RE.match(case_number)
-    return int(m.group(3)) if m else None
+# day_code and serial_of come from lib_flag_serials (shared with the PERM prober).
 
 
 def _serial_stats(db: Turso, table: str, prefixes: list[str], codes: list[str]):
@@ -213,13 +230,41 @@ def _serial_stats(db: Turso, table: str, prefixes: list[str], codes: list[str]):
     return out
 
 
-def day_windows(db: Turso, codes: list[str]) -> dict[str, tuple[int, int]]:
-    """Per day code, the serial range to probe: what the PERM corpus and our
+def cluster_serials(serials: list[int], gap: int = CLUSTER_GAP) -> list[tuple[int, int]]:
+    """Sorted serials -> (lo, hi) runs, split wherever two neighbours are more
+    than `gap` apart. One run for an ordinary day; two on the day the counter
+    wraps (one near 999,999, one near 0)."""
+    if not serials:
+        return []
+    out: list[tuple[int, int]] = []
+    lo = prev = serials[0]
+    for s in serials[1:]:
+        if s - prev > gap:
+            out.append((lo, prev))
+            lo = s
+        prev = s
+    out.append((lo, prev))
+    return out
+
+
+def cached_known(db: Turso, code: str) -> set[int]:
+    if code not in _KNOWN_CACHE:
+        _KNOWN_CACHE[code] = known_serials(db, code)
+    return _KNOWN_CACHE[code]
+
+
+def day_windows(db: Turso, codes: list[str]) -> dict[str, list[tuple[int, int]]]:
+    """Per day code, the serial ranges to probe: what the PERM corpus and our
     own tables already know for that day, padded at both edges.
 
     The PERM sample under-reads the day's true edges (a day's first filing is
     rarely a PERM), so each edge is padded by EDGE_PAD and, where the next
     day is known, the top edge stops just under the next day's floor.
+
+    A day whose MIN/MAX are more than MAX_WINDOW apart is read in full and
+    split into clusters (see CLUSTER_GAP); every window is clamped to
+    MAX_WINDOW and the clamp is logged as a workflow warning, because a
+    silently narrowed window is a hole the next run cannot see.
     """
     if not codes:
         return {}
@@ -235,12 +280,26 @@ def day_windows(db: Turso, codes: list[str]) -> dict[str, tuple[int, int]]:
             cur[0] = min(cur[0], int(lo))
             cur[1] = max(cur[1], int(hi))
     ordered = sorted(out.items())
-    windows: dict[str, tuple[int, int]] = {}
+    windows: dict[str, list[tuple[int, int]]] = {}
     for i, (day, (lo, hi)) in enumerate(ordered):
-        top = hi + EDGE_PAD
-        if i + 1 < len(ordered):
-            top = min(top, max(hi, ordered[i + 1][1][0] - 1))
-        windows[day] = (max(1, lo - EDGE_PAD), top)
+        next_floor = ordered[i + 1][1][0] - 1 if i + 1 < len(ordered) else None
+        if hi - lo > MAX_WINDOW:
+            clusters = cluster_serials(sorted(cached_known(db, day)))
+            log(f"::warning::{day}: known serials span {lo:,}-{hi:,}; "
+                f"probing {len(clusters)} cluster(s) instead")
+        else:
+            clusters = [(lo, hi)]
+        spans: list[tuple[int, int]] = []
+        for clo, chi in clusters:
+            bottom = max(0, clo - EDGE_PAD)
+            top = min(chi + EDGE_PAD, SERIAL_MOD - 1)
+            if next_floor is not None and chi < next_floor:
+                top = min(top, max(chi, next_floor))
+            if top - bottom > MAX_WINDOW:
+                log(f"::warning::{day}: window {bottom:,}-{top:,} clamped to {MAX_WINDOW:,} serials")
+                top = bottom + MAX_WINDOW
+            spans.append((bottom, top))
+        windows[day] = spans
     return windows
 
 
@@ -260,11 +319,17 @@ def known_serials(db: Turso, code: str) -> set[int]:
 
 
 def candidate_batches(code: str, lo: int, hi: int, known: set[int], prefix: str = PREFIX):
+    """Unknown serials in [lo, hi] as padded case numbers, BATCH at a time.
+
+    PADDED. DOL issues "P-100-26161-003499"; this used to format the serial
+    bare, so every candidate below 100,000 was a number DOL has never seen,
+    and the post-wrap half of June 2026 could not be found by construction.
+    """
     chunk: list[str] = []
     for s in range(lo, hi + 1):
         if s in known:
             continue
-        chunk.append(f"{prefix}{code}-{s}")
+        chunk.append(case_number(prefix, code, s))
         if len(chunk) == BATCH:
             yield chunk
             chunk = []
@@ -335,7 +400,7 @@ def insert_hits(db: Turso, hits: list[dict], source: str) -> int:
     return sum(1 for n in _run_pipeline(db, stmts) if n) if stmts else 0
 
 
-def probe_days(db: Turso, windows: dict[str, tuple[int, int]], cap: int,
+def probe_days(db: Turso, windows: dict[str, list[tuple[int, int]]], cap: int,
                source: str) -> tuple[int, dict[str, int], list[str]]:
     """Every unknown serial in each window, each prefix in turn, claimed
     serials dropped as they hit. Returns (requests, added per program, days done)."""
@@ -343,14 +408,15 @@ def probe_days(db: Turso, windows: dict[str, tuple[int, int]], cap: int,
     added = {name: 0 for name in PROGRAMS}
     done: list[str] = []
     for code in sorted(windows):
-        lo, hi = windows[code]
-        known = known_serials(db, code)
-        log(f"  {code}: serials {lo:,}-{hi:,}, {len(known):,} already known")
+        known = cached_known(db, code)
+        spans = windows[code]
+        log(f"  {code}: {', '.join(f'{lo:,}-{hi:,}' for lo, hi in spans)}, "
+            f"{len(known):,} already known")
         stopped = False
         claimed: set[int] = set(known)
         for prefix in DISCOVERY_ORDER:
             program = PREFIX_TO_PROGRAM[prefix]
-            for chunk in candidate_batches(code, lo, hi, claimed, prefix):
+            for chunk in (c for lo, hi in spans for c in candidate_batches(code, lo, hi, claimed, prefix)):
                 if requests >= cap:
                     log(f"  request cap {cap} reached inside {code} ({prefix}); resume later")
                     stopped = True
@@ -382,15 +448,37 @@ def probe_days(db: Turso, windows: dict[str, tuple[int, int]], cap: int,
 # Sweeps
 # ---------------------------------------------------------------------------
 
-def sweep(db: Turso, program: str, pending_only: bool, limit: int | None) -> dict:
+def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
+          window_days: int | None = None) -> dict:
+    """Re-ask DOL about a set of cases and record what moved.
+
+    pending_only  every non-final row (the daily pass; index case_status_final)
+    window_days   every row FILED within the last N days (the weekly pass;
+                  index <table>_filed). The weekly pass used to walk every
+                  row: 96k PWD + 310k LCA needs ~230 minutes against a 170
+                  minute timeout, so it died at 65% every Sunday and, because
+                  it walked in case-number order, the same newest rows were
+                  the ones never re-checked.
+    neither       every row (only --limit sampling uses this now)
+    """
     cfg = PROGRAMS[program]
     table, events = cfg["table"], cfg["events"]
-    where = "WHERE is_final = 0 OR is_final = '0'" if pending_only else ""
+    args: list = []
+    if pending_only:
+        where = "WHERE is_final = 0 OR is_final = '0'"
+        order = "case_number"
+    elif window_days:
+        cutoff = (datetime.date.today() - datetime.timedelta(days=window_days)).isoformat()
+        where, args = "WHERE filing_date >= ?", [cutoff]
+        order = "filing_date, case_number"      # the index's own order: no sort
+        log(f"{program}: rolling window, filed on or after {cutoff}")
+    else:
+        where, order = "", "case_number"
     rows = {
         r[0]: r[1:] for r in _rows(
             db,
             f"SELECT case_number, current_status, employer_name, job_title "
-            f"FROM {table} {where} ORDER BY case_number LIMIT {limit or 10**9}")
+            f"FROM {table} {where} ORDER BY {order} LIMIT {limit or 10**9}", args)
     }
     todo = sorted(rows)
     log(f"{program}: {len(todo):,} cases to check, {BATCH} per request "
@@ -460,11 +548,11 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None) -> dic
                     f"INSERT OR IGNORE INTO {events} (case_number, changed_at, from_status, "
                     f"to_status, to_final, source) VALUES (?,?,?,?,?,?)",
                     [cn, stamp, old_status, new_status, fin, SOURCE]))
-            else:
-                pending_writes.append(_stmt(
-                    f"UPDATE {table} SET last_checked_at=?, visa_type=COALESCE(visa_type, ?) "
-                    f"WHERE case_number=?",
-                    [now_iso, visa, cn]))
+            # An unchanged row is not written. This branch used to stamp
+            # last_checked_at on every row it looked at: ~300,000 UPDATEs a
+            # Sunday to record 54 transitions, each one maintaining every
+            # index on the table. The sweep's own timestamp lives in
+            # sweep_runs, and that is what "last checked" on the site reads.
         missing += len(chunk) - len(seen)
         # Written as it goes, so a shutdown mid-run keeps the work.
         if len(pending_writes) >= 400:
@@ -653,7 +741,8 @@ def main() -> int:
                 continue
             stamp_freshness(db, PROGRAMS[name]["freshness"],
                             source="flag.dol.gov case status (DOL, direct)",
-                            cadence="Daily", note=note, max_age_days=3)
+                            cadence="Daily", note=note,
+                            max_age_days=PROGRAMS[name].get("freshness_max_age", 3))
         return failed
 
     if args.discover:
@@ -715,20 +804,30 @@ def main() -> int:
     if args.pending or args.full:
         results = {}
         for name in programs_from(args.program):
-            results[name] = sweep(db, name, pending_only=not args.full, limit=args.limit)
-        added = None
-        if args.full or not args.limit:
-            codes = [day_code(today - datetime.timedelta(days=i)) for i in range(args.days)]
-            windows = day_windows(db, codes)
-            requests, added, _ = probe_days(db, windows, DISCOVERY_REQUEST_CAP, DISCOVERY_SOURCE)
-            log(f"discover: {requests} requests, new cases {added}")
+            results[name] = sweep(db, name, pending_only=not args.full, limit=args.limit,
+                                  window_days=PROGRAMS[name]["full_window_days"] if args.full else None)
+        # Discovery is the unified serial walk in ingest_case_status_direct.py
+        # (its nightly full sweep, or --discover). It asks every busy prefix
+        # for each span and hands P-/I- hits to insert_hits above, so these
+        # tables' frontiers move with PERM's instead of being seeded FROM it.
+        # The day-window probe (day_windows/probe_days) now serves --discover
+        # and --backfill only. The old in-pass probe printed "discover: 0
+        # requests" for three days, recorded ok, and stamped freshness.
+        log("discover: delegated to ingest_case_status_direct.py --discover (the serial walk)")
         # Was a second copy of finish_docs's loop, drifted: this one stamped
         # freshness for a program whose doc had just been declined, the other
         # did not. Two callers is enough to share.
         def _note(name: str) -> str | None:
             res = results.get(name)
-            return None if res is None else (
-                f"{res['checked']:,} checked, {res['moved']:,} moved")
+            if res is None:
+                return None
+            if res["checked"] == 0:
+                # Nothing was asked, so nothing is fresher. The LCA pending
+                # pass is 0 every day (LCAs are final within a week); it is
+                # the weekly window pass that earns that table its stamp.
+                log(f"  {name}: 0 checked; not stamping {PROGRAMS[name]['freshness']}")
+                return None
+            return f"{res['checked']:,} checked, {res['moved']:,} moved"
 
         failed = finish_docs(_note)
         record_run(db, f"ingest_pwd_status_direct.py --{'full' if args.full else 'pending'} "

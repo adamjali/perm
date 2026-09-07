@@ -8,11 +8,17 @@ name: PWD case status (direct from DOL)
 # range to probe for that day's wage requests.
 #
 # THREE PASSES:
-#   pending   daily 05:40 ET  - every IN PROCESS request (~50k at steady
-#                               state, ~1,000 requests) plus discovery of the
-#                               last week's filings (~300 requests)
-#   full      Sundays 06:40 ET - every request, so a determination that later
-#                               moves (redetermination, withdrawal) is seen
+#   pending   daily 05:40 ET  - every IN PROCESS request (~8k PWD, 0 LCA:
+#                               LCAs are final within a week). Discovery of
+#                               new filings is NOT here any more: it is the
+#                               unified serial walk in case-status-direct.yml,
+#                               which asks every busy prefix per span and
+#                               writes P-/I- hits into these tables.
+#   full      Sundays 06:40 ET - every request FILED in the last 180 days
+#                               (PWD) / 90 days (LCA), so a determination
+#                               that later moves is seen. Walking every row
+#                               needed ~230 min against a 170 min timeout and
+#                               died at 65% every Sunday (first run Sep 6 2026).
 #   backfill  dispatch only    - walks earlier filing days, resumable, ~60
 #                               requests per day code; run it a few times
 #                               with --from/--to until the range is covered
@@ -95,6 +101,11 @@ jobs:
             fi
           fi
           echo "mode: $MODE"
+          # The failure hook below records the MODE too, so a killed weekly
+          # run and Monday's clean daily run are separate rows to the health
+          # check (filename-only keys let the daily pass hide the weekly
+          # failure on Sep 6 2026).
+          echo "MODE=$MODE" >> "$GITHUB_ENV"
           # `timeout` rather than the job cap, so a hang FAILS and notifies
           # instead of being cancelled silently (see case-status-direct.yml).
           case "$MODE" in
@@ -106,7 +117,7 @@ jobs:
               timeout 170m python3 scripts/ingest_pwd_status_direct.py \
                 --backfill --from "$FROM_IN" --to "$TO_IN" --cap 4500 ;;
             discover)
-              timeout 60m python3 scripts/ingest_pwd_status_direct.py --discover ;;
+              timeout 90m python3 scripts/ingest_pwd_status_direct.py --discover ;;
             *)
               timeout 170m python3 scripts/ingest_pwd_status_direct.py --"$MODE" ;;
           esac
@@ -117,7 +128,10 @@ jobs:
       # may dispatch workflows; it is one of the two events it is allowed to
       # trigger.
       - name: Chain the next backfill leg
-        if: github.event.inputs.mode == 'backfill'
+        # `!cancelled()`: a leg cancelled by a person must not dispatch its
+        # successor; `success()` (the implicit default) would also skip on a
+        # cap-stop that exited 0, which is the case that MUST chain.
+        if: github.event.inputs.mode == 'backfill' && !cancelled()
         working-directory: v2
         env:
           GH_TOKEN: ${{ github.token }}
@@ -127,11 +141,13 @@ jobs:
           AFTER="$(python3 scripts/ingest_pwd_status_direct.py --progress)"
           TARGET="$(python3 scripts/ingest_pwd_status_direct.py --day-code "$TO_IN")"
           echo "frontier before: ${BACKFILL_BEFORE:-none}  after: ${AFTER:-none}  target: $TARGET"
+          # Completion is checked BEFORE the no-progress guard: the leg that
+          # finishes the range legitimately makes no progress past --to.
+          if [ -n "$AFTER" ] && [ "$AFTER" -ge "$TARGET" ]; then
+            echo "backfill complete through $TO_IN"; exit 0
+          fi
           if [ -z "$AFTER" ] || [ "$AFTER" = "${BACKFILL_BEFORE:-}" ]; then
             echo "::error::backfill made no progress this leg; not chaining"; exit 1
-          fi
-          if [ "$AFTER" -ge "$TARGET" ]; then
-            echo "backfill complete through $TO_IN"; exit 0
           fi
           gh workflow run pwd-status-direct.yml --repo "$GITHUB_REPOSITORY" \
             -f mode=backfill -f from="$FROM_IN" -f to="$TO_IN"
@@ -165,7 +181,7 @@ jobs:
           # Env vars, not .env.local: a job that died before the sweep step
           # ever wrote that file still has to be able to report itself.
           python3 scripts/record_ingest_failure.py \
-            --script ingest_pwd_status_direct.py \
+            --script "ingest_pwd_status_direct.py --${MODE:-unknown}" \
             --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
             --note "pwd-status-direct: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 

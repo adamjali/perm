@@ -1,0 +1,73 @@
+name: Backup observations
+
+# Weekly dump of the Turso tables that cannot be rebuilt from DOL's files:
+# per-case status rows, the event log, precomputed docs, the audit trail and
+# the small federal series whose sources keep no archive. See
+# scripts/dump_observations.py for the reasoning and the table list.
+#
+# The artifact is public, like the repository: the rows are DOL's public data
+# plus this project's own timestamps, and none of these tables hold user data.
+# 90 days is the longest retention GitHub offers; the 13 weekly artifacts
+# that implies are about 1.5 GB.
+#
+# Restore: download the artifact, then load each .jsonl.gz with INSERT OR
+# IGNORE by primary key (a dump is a snapshot, never a replacement).
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"        # Sundays 03:00 UTC = 11:00 PM Saturday ET, before the sweeps
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-observations
+  cancel-in-progress: false
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Dump
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          # Exits non-zero on a short table, so an empty dump cannot upload
+          # as if it were a backup.
+          python3 scripts/dump_observations.py --out "${RUNNER_TEMP}/observations"
+
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: observations-${{ github.run_id }}
+          path: ${{ runner.temp }}/observations
+          retention-days: 90
+          if-no-files-found: error
+
+      - name: Record the failure where the health check will see it
+        if: failure() || cancelled()
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          python3 scripts/record_ingest_failure.py \
+            --script dump_observations.py \
+            --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
+            --note "backup-observations: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+      - name: Remove credentials
+        if: always()
+        working-directory: v2
+        run: rm -f .env.local

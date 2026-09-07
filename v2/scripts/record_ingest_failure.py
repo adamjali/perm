@@ -51,11 +51,26 @@ def main() -> int:
 
     try:
         from lib_turso import Turso, record_run
-        record_run(Turso(), args.script, status=args.status,
-                   note=args.note[:500])
-        print(f"recorded {args.status} for {args.script}")
-    except Exception as exc:  # noqa: BLE001 - see the docstring
-        print(f"::warning::could not record the failure: "
+        db = Turso()
+        record_run(db, args.script, status=args.status, note=args.note[:500])
+        # Read it back. "recorded" used to print whether or not the row
+        # landed, so a hook that could not write looked exactly like one that
+        # had; the health check then had nothing to find and stayed green.
+        res = db.execute(
+            "SELECT status FROM ingest_runs WHERE script = ? "
+            "ORDER BY finished_at DESC LIMIT 1", [args.script])
+        rows = res["response"]["result"]["rows"]
+        landed = bool(rows) and rows[0][0].get("value") == args.status
+        if landed:
+            print(f"recorded {args.status} for {args.script} (verified)")
+        else:
+            print(f"::error::wrote the failure row for {args.script} but could not "
+                  f"read it back; check_ingest_health.py may not see this failure")
+    # SystemExit is what lib_turso.env() raises for a missing credential, and
+    # `except Exception` let it straight through, so a runner with no secrets
+    # died here silently. Catch both; never let the recorder itself fail the job.
+    except (Exception, SystemExit) as exc:  # noqa: BLE001 - see the docstring
+        print(f"::error::could not record the failure: "
               f"{type(exc).__name__}: {exc}")
     return 0
 

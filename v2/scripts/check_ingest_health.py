@@ -33,11 +33,13 @@ own copy of the list it is checking.
 from __future__ import annotations
 
 import datetime
+import json
 import time
 import sys
 import pathlib
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
+from lib_flag_serials import code_to_date  # noqa: E402
 from lib_turso import Turso  # noqa: E402
 
 
@@ -94,17 +96,15 @@ BROKEN_STATUSES = frozenset({"failed", "partial"})
 def check_runs(db) -> int:
     """Fail when an ingest's most recent run did not finish clean.
 
-    KEYED ON THE SCRIPT FILENAME, not the full argv. `record_run` writes
-    "ingest_pwd_status_direct.py --pending --program all" on one pass and
-    "... --backfill" on another, and the workflow's failure hook cannot know
-    which mode was running when the runner was killed. Normalising on the
-    filename means any later successful run of that script clears the flag,
-    which is the question worth answering: has this ingest recovered?
-
-    The per-pass distinction is not lost, it is just the OTHER check's job -
-    `data_freshness` carries `perm-case-status-full` and `perm-case-status`
-    separately, so a full pass that fails every night while the pending pass
-    succeeds still trips the budget above.
+    KEYED ON THE SCRIPT FILENAME PLUS ITS MODE FLAG (see run_key). It used
+    to key on the filename alone, so that any later clean run of the script
+    cleared the flag. That answered "has this script recovered?" for a
+    script with one job and was wrong for one with two: on Sun Sep 6 2026
+    the weekly PWD/LCA full sweep died on its timeout at 12:38 PM, Monday's
+    daily pending pass ran clean at 5:40 AM, this check ran at 6:00 AM and
+    saw only the pass. The weekly job could fail every week and never be
+    reported. The workflow failure hooks now pass the mode too, so a killed
+    run and its later clean run share a key.
     """
     cutoff = int(NOW_MS - RUN_FAILURE_WINDOW_DAYS * 86_400_000)
     try:
@@ -122,7 +122,7 @@ def check_runs(db) -> int:
 
     newest: dict[str, tuple[str, str, int]] = {}
     for script, status, note, finished in rows:
-        key = str(script).split()[0] if script else "?"
+        key = run_key(script)
         if key not in newest:                       # rows arrive newest first
             newest[key] = (str(status), str(note or ""), int(finished))
 
@@ -145,6 +145,117 @@ def check_runs(db) -> int:
     print("\nThe ingest's own work may have succeeded; something after it did "
           "not. Read the note, then the Actions run it names.")
     return 1
+
+
+def run_key(script) -> str:
+    """'ingest_pwd_status_direct.py --full --program all' -> 'ingest_pwd_status_direct.py --full'.
+
+    The filename plus the first mode flag, so the daily and the weekly pass
+    of one script are separate recovery questions. A bare filename (the old
+    failure-hook shape) keys on its own.
+    """
+    if not script:
+        return "?"
+    parts = str(script).split()
+    if len(parts) > 1 and parts[1].startswith("--"):
+        return f"{parts[0]} {parts[1]}"
+    return parts[0]
+
+
+# Measured normal lag between a filing and the walk recording it: 0 to 2
+# days. A Friday filing first seen after a Monday holiday is 4. Five is the
+# smallest budget that never fires on a calendar.
+FRONTIER_MAX_DAYS = 5
+FRONTIER_DOC = "discovery_frontier"
+# Consecutive discovery walks that inserted nothing before that is an alarm.
+# A three-day weekend is three quiet walks at most.
+DISCOVERY_DRY_RUNS = 4
+
+
+def check_frontier(db) -> int:
+    """Fail when the discovery walk's cursor has not moved in FRONTIER_MAX_DAYS.
+
+    WHY THIS IS ITS OWN CHECK. Every other line in this report measures that
+    a JOB RAN: `data_freshness` is stamped by the sweep, `ingest_runs` says
+    it exited clean. From Aug 31 to Sep 6 2026 the PERM prober ran every
+    night, exited 0, stamped itself fresh, and recorded nothing, because it
+    was asking DOL for case numbers that could not exist. Seven days, all
+    green. The walk's cursor is the one number that only moves when a
+    filing is actually recorded, so it is the one to judge.
+
+    MAX(filing_date) on the PWD/LCA tables is printed for context and NOT
+    judged: a visitor looking up a fresh case inserts a row with a fresh
+    filing date, so that number stays green with the prober dead (the two
+    G-200-26246 rows found on Sep 6 were exactly that).
+    """
+    today = datetime.date.today()
+    try:
+        res = db.execute("SELECT json FROM perm_docs WHERE key = ?", [FRONTIER_DOC])
+        rows = res["response"]["result"]["rows"]
+    except RuntimeError as exc:
+        print(f"frontier          : unreadable ({str(exc)[:120]})")
+        return 1
+    if not rows or rows[0][0].get("type") == "null":
+        print("frontier          : MISSING - the discovery walk has never recorded a cursor")
+        return 1
+    try:
+        doc = json.loads(rows[0][0]["value"])
+        code, serial = str(doc["day_code"]), int(doc["serial"])
+    except (ValueError, KeyError, TypeError) as exc:
+        print(f"frontier          : unreadable doc ({type(exc).__name__}: {exc})")
+        return 1
+    d = code_to_date(code)
+    if d is None:
+        print(f"frontier          : impossible day code {code!r}")
+        return 1
+    age = (today - d).days
+    stalled = age > FRONTIER_MAX_DAYS
+    print(f"frontier          : {code}:{serial:06d} = {d.isoformat()}  "
+          f"{age:>3}d  budget {FRONTIER_MAX_DAYS}d  {'STALLED' if stalled else 'ok'}")
+    for table in ("pwd_case_status", "lca_case_status"):
+        try:
+            r = db.execute(f"SELECT MAX(filing_date) FROM {table}")["response"]["result"]["rows"]
+            print(f"  {table:18s} newest filing {r[0][0].get('value') if r else None}  (context only)")
+        except RuntimeError:
+            pass
+    if stalled:
+        print(f"\nDiscovery has not recorded a filing newer than {d.isoformat()}. The "
+              f"sweeps can run clean forever over a corpus that stopped growing; "
+              f"this is the line that says so.")
+        return 1
+    return 0
+
+
+def check_discovery_yield(db) -> int:
+    """Fail when the last DISCOVERY_DRY_RUNS walks all recorded zero insertions.
+
+    A second, independent view of the same failure: the cursor above could
+    in principle move on hits that INSERT OR IGNORE then discards (a visitor
+    found them first). Zero insertions across four walks means the corpus
+    is not growing through this path whatever the cursor says.
+    """
+    try:
+        res = db.execute(
+            "SELECT status, rows_written, finished_at FROM ingest_runs WHERE script = ? "
+            "ORDER BY finished_at DESC LIMIT ?",
+            ["ingest_case_status_direct.py --discover", DISCOVERY_DRY_RUNS])
+        rows = [[None if c["type"] == "null" else c["value"] for c in r]
+                for r in res["response"]["result"]["rows"]]
+    except RuntimeError as exc:
+        print(f"discovery yield   : unreadable ({str(exc)[:120]})")
+        return 0
+    if len(rows) < DISCOVERY_DRY_RUNS:
+        print(f"discovery yield   : {len(rows)} walk(s) on record; {DISCOVERY_DRY_RUNS} needed to judge")
+        return 0
+    writes = [int(r[1] or 0) for r in rows]
+    dry = not any(writes)
+    print(f"discovery yield   : last {len(rows)} walks inserted {writes}  {'DRY' if dry else 'ok'}")
+    if dry:
+        print(f"\nThe discovery walk has inserted nothing on its last {DISCOVERY_DRY_RUNS} "
+              f"runs. Either DOL stopped issuing (it has not) or the walk is asking "
+              f"for numbers that cannot exist.")
+        return 1
+    return 0
 
 
 def main() -> int:
@@ -215,6 +326,9 @@ def main() -> int:
     # are independent defects and the report must show both, or fixing the
     # loud one hides the quiet one until tomorrow.
     runs_bad = check_runs(db)
+    print()
+    frontier_bad = check_frontier(db)
+    yield_bad = check_discovery_yield(db)
 
     print()
     if unparseable:
@@ -228,16 +342,12 @@ def main() -> int:
               "still serving the last good numbers under their own as-of date, "
               "which is why nothing else would have told us.")
         return 1
-    if runs_bad:
-        return 1
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
-    if unparseable:
+    if runs_bad or frontier_bad or yield_bad or unparseable:
         return 1
-    if runs_bad:
-        return 1
-    print("All datasets within their declared freshness budgets, and every "
-          "ingest's most recent run finished clean.")
+    print("All datasets within their declared freshness budgets, every ingest's "
+          "most recent run finished clean, and the discovery frontier is moving.")
     return 0
 
 

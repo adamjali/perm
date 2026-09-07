@@ -32,7 +32,6 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from ingest_perm_disclosure import entity_key, merge_entities  # noqa: E402
 from lib_turso import Turso, lit  # noqa: E402
-from store_entities import with_unique_slugs  # noqa: E402
 
 ART = pathlib.Path("/tmp/ingest-artifact/federal-payloads/perm-cases.ndjson.gz")
 PAGE_FLOOR = 3  # mirrors MIN_TOTAL_FOR_PAGE; storage floor is 1

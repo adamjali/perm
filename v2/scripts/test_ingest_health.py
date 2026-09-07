@@ -98,17 +98,29 @@ def main() -> int:
           health.BROKEN_STATUSES == frozenset({"failed", "partial"}),
           str(sorted(health.BROKEN_STATUSES)))
 
-    # --- recovery, keyed on the FILENAME ------------------------------------
-    # `record_run` writes the full argv ("... --pending --program all"), and
-    # the workflow hook cannot know which mode was running when the runner was
-    # killed. Keying on the filename is what lets a later success clear the
-    # flag; keying on the full string would leave an ingest red forever the
-    # first time the two strings drifted, and drift silently.
-    check("a later success under DIFFERENT argv clears the failure",
-          run([("ingest_pwd_status_direct.py --backfill", "failed", "x",
+    # --- recovery, keyed on FILENAME + MODE ---------------------------------
+    # `record_run` writes the full argv ("... --pending --program all"). The
+    # key is the filename plus its first mode flag: a later clean run of the
+    # SAME mode clears a failure, a clean run of a DIFFERENT mode does not.
+    # Filename-only keying let Monday's daily pass erase Sunday's weekly
+    # failure before the health cron looked (Sep 6 2026); the workflow hooks
+    # now record the mode too, so a killed run and its recovery share a key.
+    check("run_key keeps the filename and the first mode flag",
+          health.run_key("ingest_pwd_status_direct.py --full --program all")
+          == "ingest_pwd_status_direct.py --full",
+          health.run_key("ingest_pwd_status_direct.py --full --program all"))
+    check("run_key of a bare filename is the filename",
+          health.run_key("ingest_case_status_direct.py") == "ingest_case_status_direct.py")
+    check("a later success of the SAME mode clears its failure",
+          run([("ingest_pwd_status_direct.py --backfill --from a", "failed", "x",
+                int(NOW - 5 * H)),
+               ("ingest_pwd_status_direct.py --backfill --from a", "ok", "y",
+                int(NOW - 1 * H))]) == 0)
+    check("a daily pass does NOT clear a weekly failure (the Sep 6 masking)",
+          run([("ingest_pwd_status_direct.py --full --program all", "failed", "x",
                 int(NOW - 5 * H)),
                ("ingest_pwd_status_direct.py --pending --program all", "ok", "y",
-                int(NOW - 1 * H))]) == 0)
+                int(NOW - 1 * H))]) == 1)
     check("an OLDER success does not clear a NEWER failure",
           run([("ingest_pwd_status_direct.py --pending", "ok", "y",
                 int(NOW - 5 * H)),
@@ -151,6 +163,48 @@ def main() -> int:
     health.BROKEN_STATUSES = real
     check("PROBE: widening the broken set really does change the verdict",
           broke == 1, "the verdict is not gated on BROKEN_STATUSES")
+
+    # --- the frontier: progress, not activity -------------------------------
+    import json as _json
+    import datetime as _dt
+
+    class DocDB:
+        def __init__(self, doc=None, runs=()):
+            self.doc, self.runs = doc, list(runs)
+        def execute(self, sql, args=None):
+            if sql.startswith("SELECT json FROM perm_docs"):
+                rows = [[{"type": "text", "value": _json.dumps(self.doc)}]] if self.doc is not None else []
+                return {"response": {"result": {"rows": rows}}}
+            if sql.startswith("SELECT MAX(filing_date)"):
+                return {"response": {"result": {"rows": [[{"type": "text", "value": "2026-09-05"}]]}}}
+            if "FROM ingest_runs WHERE script = ?" in sql:
+                rows = [[{"type": "text", "value": st},
+                         {"type": "integer", "value": str(rw)} if rw is not None else {"type": "null", "value": None},
+                         {"type": "integer", "value": str(f)}] for st, rw, f in self.runs[: int(args[1])]]
+                return {"response": {"result": {"rows": rows}}}
+            raise AssertionError("unexpected sql: " + sql[:60])
+
+    def code(days_ago):
+        d = _dt.date.today() - _dt.timedelta(days=days_ago)
+        return f"{d.year % 100:02d}{d.timetuple().tm_yday:03d}"
+
+    check("frontier: a missing cursor doc fails", health.check_frontier(DocDB(None)) == 1)
+    check("frontier: a cursor 2 days old passes",
+          health.check_frontier(DocDB({"day_code": code(2), "serial": 200246})) == 0)
+    check("frontier: a cursor 5 days old (a Friday after a Monday holiday) passes",
+          health.check_frontier(DocDB({"day_code": code(5), "serial": 1})) == 0)
+    check("frontier: a cursor 9 days old fails (the Aug 28 stall)",
+          health.check_frontier(DocDB({"day_code": code(9), "serial": 200246})) == 1)
+    check("frontier: an unreadable doc fails", health.check_frontier(DocDB({"nope": 1})) == 1)
+
+    z = [("ok", 0, int(NOW - i * 24 * H)) for i in range(4)]
+    check("yield: four dry walks fail", health.check_discovery_yield(DocDB(runs=z)) == 1)
+    check("yield: one productive walk in four passes",
+          health.check_discovery_yield(DocDB(runs=[("ok", 0, 1), ("ok", 108, 2), ("ok", 0, 3), ("ok", 0, 4)])) == 0)
+    check("yield: fewer than four walks on record is not judged",
+          health.check_discovery_yield(DocDB(runs=z[:2])) == 0)
+    check("yield: a null rows_written counts as zero",
+          health.check_discovery_yield(DocDB(runs=[("ok", None, 1)] * 4)) == 1)
 
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0

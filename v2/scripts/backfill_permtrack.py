@@ -31,7 +31,7 @@ import urllib.parse
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, lit  # noqa: E402
+from lib_turso import Turso  # noqa: E402
 
 BASE = "https://permtrack.app/api/stats"
 UA = {"User-Agent": "permtracker.app data-backfill (contact: notifications@permtracker.app)",

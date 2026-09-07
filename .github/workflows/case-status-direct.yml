@@ -42,7 +42,15 @@ on:
         required: true
         default: pending
         type: choice
-        options: [pending, full]
+        options: [pending, full, discover]
+      discover_cap:
+        description: "discover only: request cap for this walk (400 is ~2 days of serials; 2000 catches up a 9-day gap)"
+        required: false
+        default: "400"
+      frontier:
+        description: "discover only: reset the walk cursor to YYDDD:SERIAL first, e.g. 26240:200246"
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -66,6 +74,8 @@ jobs:
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          CAP_IN: ${{ github.event.inputs.discover_cap }}
+          FRONTIER_IN: ${{ github.event.inputs.frontier }}
         run: |
           printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
             "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
@@ -83,6 +93,16 @@ jobs:
             fi
           fi
           echo "mode: $MODE"
+          echo "MODE=$MODE" >> "$GITHUB_ENV"
+          if [ "$MODE" = "discover" ]; then
+            # The serial walk on its own: recovers a gap, or re-runs the
+            # night's discovery. It records its own ingest_runs row and
+            # refreshes the census when it inserted anything.
+            timeout 60m python3 scripts/ingest_case_status_direct.py --discover \
+              --discover-cap "${CAP_IN:-400}" ${FRONTIER_IN:+--frontier "$FRONTIER_IN"}
+            python3 scripts/build_entity_detail.py --live-recent-only || true
+            exit 0
+          fi
           # `timeout`, not the job's timeout-minutes, is what makes a hung sweep
           # NOTIFY. A job that hits timeout-minutes is CANCELLED, and GitHub
           # sends nothing for a cancellation - which is how the 2026-08-28 full
@@ -169,7 +189,7 @@ jobs:
           # Env vars, not .env.local: a job that died before the sweep step
           # ever wrote that file still has to be able to report itself.
           python3 scripts/record_ingest_failure.py \
-            --script ingest_case_status_direct.py \
+            --script "ingest_case_status_direct.py --${MODE:-unknown}" \
             --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
             --note "case-status-direct: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 

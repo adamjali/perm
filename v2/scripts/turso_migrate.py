@@ -290,7 +290,7 @@ def main() -> int:
         batch = []
 
     def flush_request():
-        nonlocal sent, pending
+        nonlocal pending
         if not pending:
             return
         db.pipeline(pending + [{"type": "close"}])

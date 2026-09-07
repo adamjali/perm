@@ -44,7 +44,9 @@ def main() -> int:
     check("batches never exceed the ceiling", max(len(b) for b in batches), BATCH)
     check("known serials are skipped", all(f"{PREFIX}26240-{s}" not in flat for s in (5, 6, 7)), True)
     check("every other serial is present exactly once", len(flat), 117)
-    check("candidates carry the P- prefix and the day code", flat[0], "P-100-26240-1")
+    # Padded: DOL issues "P-100-26240-000001". Bare "-1" was a number DOL had
+    # never seen, which is why the post-wrap half of June 2026 stayed empty.
+    check("candidates carry the P- prefix, the day code and a padded serial", flat[0], "P-100-26240-000001")
 
     # Finality: the observed vocabulary, and unknown statuses stay pending.
     check("issued is final", is_final("DETERMINATION ISSUED"), 1)

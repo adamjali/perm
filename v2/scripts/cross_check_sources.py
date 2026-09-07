@@ -29,7 +29,6 @@ import datetime as dt
 import json
 import pathlib
 import sys
-import time
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))

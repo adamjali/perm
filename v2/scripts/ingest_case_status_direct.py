@@ -69,7 +69,6 @@ import argparse
 import datetime
 import json
 import pathlib
-import re
 import subprocess
 import sys
 import time
@@ -79,6 +78,13 @@ from lib_turso import (  # noqa: E402
     Turso, last_complete_sweep, record_run, record_sweep, run_independently,
     stamp_freshness,
 )
+from lib_flag_serials import (  # noqa: E402
+    CASE_RE, case_number, code_of, day_code, day_codes_between, decode_filing_date,
+    fmt_serial, newer, recent_day_codes, serial_add, serial_gap, serial_of, serial_span,
+)
+# CASE_RE, decode_filing_date and recent_day_codes are re-exported: the PWD
+# prober and the tests import them from here.
+__all__ = ["CASE_RE", "decode_filing_date", "recent_day_codes"]
 
 URL = "https://flag.dol.gov/recaptcha/caseStatus"
 BATCH = 50                      # measured ceiling; larger is silently truncated
@@ -166,152 +172,257 @@ DECISION_BUCKETS = {
 
 
 # ---------------------------------------------------------------------------
-# Discovery: the corpus was a closed set, and this is the systematic half of
-# opening it (the demand half is the web lookup's discoverCase). DOL case
-# numbers are sequential - G-100-<YYDDD><serial> where YYDDD is the filing
-# day and the serial increments globally - so new filings live in a narrow,
-# predictable window past our highest known serial. Each full sweep walks
-# that window across the last few filing days and records what DOL confirms.
+# Discovery: walk the shared serial counter forward from the last confirmed
+# filing, carrying the day code. The corpus was a closed set; this is the
+# systematic half of opening it (the demand half is the web lookup's
+# discoverCase).
 #
-# Measured before building (2026-08-28): one 50-number probe past the known
-# max found five real cases filed the previous day. ~460 filings arrive per
-# business day, so the whole day's discovery fits in a few dozen requests
-# against the ~10,000 the sweep already makes.
+# WHY A SERIAL-MAJOR WALK THAT CARRIES ITS DAY CODE. The first version
+# anchored day codes to TODAY and serials to the last known max, and gave up
+# on a day code after two empty 50-number batches. On Sun Aug 30 2026 it
+# walked into the Aug 28 overnight lull (serials 200,247-200,394 are all LCA
+# and PWD), met two empties, abandoned the rest of that business day, and
+# because the frontier only ever moved on a hit it asked the same 100 serials
+# every night after. On Sep 2 the 5-day window dropped the frontier's own day
+# code and every number asked from then on was a (day code, serial) pair that
+# cannot exist. Seven runs printed "10 requests, 0 new cases recorded" and
+# recorded themselves as ok. ~2,500 PERM filings went unrecorded before a
+# human noticed, because nothing measured whether the frontier MOVED.
+#
+# This walk cannot fail that way:
+#   - the cursor is a (day_code, serial) pair persisted in perm_docs and
+#     advanced only by evidence, never by the calendar;
+#   - every span of serials is asked under the cursor's day code and then
+#     under each later code up to today, so a day boundary is crossed by a
+#     hit, not guessed;
+#   - every span is asked for ALL FIVE busy prefixes at once (PERM's G-100 and
+#     G-200, LCA's I-200 and I-203, PWD's P-100: about 70% of the counter), so
+#     "issued to another program" and "not yet issued" are different answers.
+#     Measured 2026-09-06: DOL returns NOTHING for a G-100 number whose serial
+#     belongs to an I-200, so existence is never implied, only asked;
+#   - PWD and LCA hits are handed to the PWD prober's inserter, so those
+#     tables' frontiers move with this one instead of being seeded from it;
+#   - serials are six digits wide and wrap at 1,000,000 (lib_flag_serials);
+#   - a run that stops on its request cap records "partial", and a run that
+#     finds nothing still records itself, so the health check can see a
+#     frontier that has stopped moving.
+#
+# Cost at steady state: ~2,150 serials a day at 10 per request is ~215
+# requests a night, against the ~10,000 the sweep already makes. Catching up
+# a 9-day gap is ~1,900 requests, about 15 minutes at PACE_S.
 # ---------------------------------------------------------------------------
 
 DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, discovered)"
-DISCOVERY_DAY_WINDOW = 5        # probe filings from the last N calendar days
-DISCOVERY_SERIAL_SPAN = 1500    # how far past the known max serial to look
-DISCOVERY_REQUEST_CAP = 120     # discovery's own polite budget per run
-DISCOVERY_DRY_STREAK = 2        # stop a day code after this many empty batches
+# G-100 + G-200 are ~97% of PERM filings (G-200 alone is 22-30%; the first
+# prober asked G-100 only). G-300/G-400 are rare (6,853 and 89 rows) and
+# reached by the web lookup; they still count toward the frontier.
+PERM_PREFIXES = ("G-100-", "G-200-")
+FRONTIER_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-")
+DISCOVERY_PREFIXES = ("G-100-", "G-200-", "I-200-", "P-100-", "I-203-")
+DISCOVERY_STEP = BATCH // len(DISCOVERY_PREFIXES)   # 10 serials x 5 prefixes = 50
+DISCOVERY_REQUEST_CAP = 400      # ~4,000 serials, about two days, per run
+DISCOVERY_UNISSUED_STREAK = 2    # spans no prefix claims before calling it the edge
+DISCOVERY_MAX_DAYS_AHEAD = 21    # later day codes a span is re-asked under
+FRONTIER_DOC = "discovery_frontier"
 
-CASE_RE = re.compile(r"^[A-Za-z]-\d{3}-(\d{2})(\d{3})-(\d+)$")
 
-
-def decode_filing_date(case_number: str) -> str | None:
-    """ISO date from the number's own YYDDD segment, or None off-shape.
-
-    Exact for 94.6% of the corpus and equal to DOL's submittedDate for
-    409,127 of 414,050 rows; a None (bad day-of-year) must stay None - a
-    plausible wrong date is invisible downstream in a way a null is not.
-    """
-    m = CASE_RE.match(case_number)
-    if not m:
-        return None
-    year, doy = 2000 + int(m.group(1)), int(m.group(2))
-    if not 1 <= doy <= 366:
+def _frontier_doc(db) -> tuple[str, int] | None:
+    rows = _rows(db, "SELECT json FROM perm_docs WHERE key = ?", [FRONTIER_DOC])
+    if not rows or not rows[0][0]:
         return None
     try:
-        d = datetime.date(year, 1, 1) + datetime.timedelta(days=doy - 1)
-    except OverflowError:
+        d = json.loads(rows[0][0])
+        return str(d["day_code"]), int(d["serial"])
+    except (ValueError, KeyError, TypeError):
         return None
-    if d.year != year:
-        return None
-    return d.isoformat()
 
 
-def recent_day_codes(today: datetime.date, window: int) -> list[str]:
-    """YYDDD codes for `today` back through `window` days, newest first.
-
-    Built from real dates so the year boundary is free: Jan 1 looks back
-    into the previous year's codes rather than at "00-2".
-    """
-    return [
-        f"{d.year % 100:02d}{d.timetuple().tm_yday:03d}"
-        for d in (today - datetime.timedelta(days=i) for i in range(window))
-    ]
-
-
-def discovery_batches(max_serial: int, day_codes: list[str],
-                      span: int, batch: int = BATCH):
-    """Candidate batches, day-major: every unknown serial under each code.
-
-    A serial exists under exactly one day code, so most candidates miss by
-    construction; the waste is bounded by the caps and buys not having to
-    guess which day each serial belongs to.
-    """
-    for code in day_codes:
-        chunk: list[str] = []
-        for serial in range(max_serial + 1, max_serial + 1 + span):
-            chunk.append(f"G-100-{code}-{serial}")
-            if len(chunk) == batch:
-                yield code, chunk
-                chunk = []
-        if chunk:
-            yield code, chunk
+def _frontier_from_rows(db, today: datetime.date) -> tuple[str, int] | None:
+    """Newest (day_code, serial) among rows the SWEEP or the PROBER wrote,
+    across every PERM office code, this year and last so January is not
+    blind. Visitor-lookup rows are excluded on purpose: a visitor finding a
+    case a week ahead of the walk must not make the walk skip the week."""
+    best = None
+    years = sorted({f"{today.year % 100:02d}", f"{(today.year - 1) % 100:02d}"})
+    for prefix in FRONTIER_PREFIXES:
+        for yy in years:
+            for (cn,) in _rows(
+                    db,
+                    "SELECT case_number FROM perm_case_status "
+                    "WHERE case_number >= ? AND case_number < ? AND source IN (?, ?) "
+                    "ORDER BY case_number DESC LIMIT 50",
+                    [f"{prefix}{yy}", f"{prefix}{int(yy) + 1:02d}", SOURCE, DISCOVERY_SOURCE]):
+                code, serial = code_of(cn), serial_of(cn)
+                if code is None or serial is None:
+                    continue
+                best = (code, serial) if best is None else newer(best, (code, serial))
+    return best
 
 
-def run_discovery(db) -> int:
-    """Probe past the known serial frontier and record what DOL confirms."""
-    codes = recent_day_codes(datetime.date.today(), DISCOVERY_DAY_WINDOW)
-    prefixes = sorted({c[:2] for c in codes})
-    tails: list[str] = []
-    for yy in prefixes:
-        tails += [r[0] for r in _rows(
-            db,
-            "SELECT case_number FROM perm_case_status "
-            "WHERE case_number >= ? AND case_number < ? "
-            "ORDER BY case_number DESC LIMIT 300",
-            [f"G-100-{yy}", f"G-100-{int(yy) + 1:02d}"])]
-    serials = [int(m.group(3)) for t in tails if (m := CASE_RE.match(t))]
-    if not serials:
-        log("discovery: no serial frontier found; skipping")
-        return 0
-    frontier = max(serials)
-    log(f"discovery: frontier serial {frontier:,}, probing "
-        f"{DISCOVERY_SERIAL_SPAN} serials x {len(codes)} day codes")
+def _write_frontier(db, code: str, serial: int, note: str) -> None:
+    doc = {"day_code": code, "serial": serial,
+           "shape": case_number("G-100-", code, serial),
+           "updated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+           "note": note}
+    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
+               [FRONTIER_DOC, json.dumps(doc), int(time.time() * 1000)])
 
+
+def parse_frontier(text: str) -> tuple[str, int]:
+    """'26240:200246' -> ('26240', 200246), for the --frontier override."""
+    code, _, serial = text.partition(":")
+    if len(code) != 5 or not code.isdigit() or not serial.isdigit():
+        raise ValueError(f"frontier must be YYDDD:SERIAL, got {text!r}")
+    return code, int(serial)
+
+
+def _furthest(span_start: int, serials: list[int]) -> int:
+    """The serial furthest along the ring from the span's first serial, so a
+    span that wraps (999,995 .. 000004) picks 4, not 999,999."""
+    return max(serials, key=lambda s: serial_gap(span_start, s))
+
+
+def _insert_perm_hits(db, hits: list[dict], now_iso: str, stamp: int) -> int:
     inserted = 0
-    requests = 0
+    for v in hits:
+        cn = v["caseNumber"]
+        status_str = (v.get("caseStatus") or "").strip()
+        if not status_str:
+            continue
+        is_final = 1 if status_str.upper() in FINAL_STATUSES else 0
+        res = db.execute(
+            "INSERT OR IGNORE INTO perm_case_status "
+            "(case_number, filing_date, current_status, is_final, "
+            " is_disclosed, employer_name, job_title, submitted_date, "
+            " last_checked_at, verified, source, fetched_at) "
+            "VALUES (?,?,?,?,0,?,?,?,?,1,?,?)",
+            [cn, decode_filing_date(cn), status_str, is_final,
+             v.get("employerName"), v.get("jobTitle"),
+             v.get("submittedDate"), now_iso, DISCOVERY_SOURCE, stamp])
+        # OR IGNORE reports 0 affected rows for an already-known case (the
+        # web lookup may have found it first); count only genuine additions.
+        affected = (res.get("response", {}).get("result", {})
+                    .get("affected_row_count", 0))
+        inserted += 1 if affected else 0
+    return inserted
+
+
+def _insert_other_hits(db, hits: list[dict]) -> int:
+    """PWD and LCA hits go to their own tables through the PWD prober's
+    inserter (program routing, slugs, status vocabularies live there).
+    Imported lazily: that module imports THIS one at its top."""
+    if not hits:
+        return 0
+    from ingest_pwd_status_direct import insert_hits  # noqa: PLC0415
+    return insert_hits(db, hits, DISCOVERY_SOURCE)
+
+
+def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
+                  cap: int = DISCOVERY_REQUEST_CAP,
+                  frontier_override: tuple[str, int] | None = None) -> dict:
+    """Walk the counter forward from the frontier; record what DOL confirms.
+
+    Returns {requests, inserted, inserted_other, frontier_before,
+    frontier_after, status, note}. status is "ok" when the walk reached the
+    edge of what DOL has issued, "partial" when it stopped on the request
+    cap with more to walk, "failed" when DOL stopped answering.
+    """
+    lookup = lookup or lookup_with_retry
+    today = today or datetime.date.today()
+    today_code = day_code(today)
+    start = frontier_override or _frontier_doc(db)
+    if start is None:
+        start = _frontier_from_rows(db, today)
+        if start is None:
+            log("discovery: no serial frontier found; skipping")
+            return {"requests": 0, "inserted": 0, "inserted_other": 0,
+                    "frontier_before": None, "frontier_after": None,
+                    "status": "failed", "note": "no frontier"}
+        _write_frontier(db, *start, note="initialised from the newest sweep/prober row")
+    if frontier_override:
+        _write_frontier(db, *start, note="set by --frontier")
+    if start[0] > today_code:
+        log(f"discovery: frontier day {start[0]} is after today {today_code}; refusing")
+        return {"requests": 0, "inserted": 0, "inserted_other": 0,
+                "frontier_before": start, "frontier_after": start,
+                "status": "failed", "note": "frontier in the future"}
+
+    code, serial = start
+    log(f"discovery: frontier {code}:{fmt_serial(serial)}, walking toward {today_code} "
+        f"({DISCOVERY_STEP} serials x {len(DISCOVERY_PREFIXES)} prefixes per request, cap {cap})")
+    requests = inserted = inserted_other = 0
+    unissued = 0
+    stopped: str | None = None
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
     stamp = int(time.time() * 1000)
-    dry = 0
-    current_code = None
-    for code, chunk in discovery_batches(frontier, codes, DISCOVERY_SERIAL_SPAN):
-        if code != current_code:
-            current_code, dry = code, 0
-        if dry >= DISCOVERY_DRY_STREAK:
-            continue        # this day code has gone quiet; skip its remainder
-        if requests >= DISCOVERY_REQUEST_CAP:
-            log(f"discovery: request cap {DISCOVERY_REQUEST_CAP} reached")
-            break
-        try:
-            got = lookup_with_retry(chunk)
-        except Exception as exc:  # noqa: BLE001
-            log(f"discovery: batch failed ({exc}); stopping cleanly")
-            break
-        requests += 1
-        wanted = set(chunk)
-        hits = [v for v in got if v.get("caseNumber") in wanted]
-        if not hits:
-            dry += 1
-        else:
-            dry = 0
-        for v in hits:
-            cn = v["caseNumber"]
-            status_str = (v.get("caseStatus") or "").strip()
-            if not status_str:
-                continue
-            is_final = 1 if status_str.upper() in FINAL_STATUSES else 0
-            res = db.execute(
-                "INSERT OR IGNORE INTO perm_case_status "
-                "(case_number, filing_date, current_status, is_final, "
-                " is_disclosed, employer_name, job_title, submitted_date, "
-                " last_checked_at, verified, source, fetched_at) "
-                "VALUES (?,?,?,?,0,?,?,?,?,1,?,?)",
-                [cn, decode_filing_date(cn), status_str, is_final,
-                 v.get("employerName"), v.get("jobTitle"),
-                 v.get("submittedDate"), now_iso, DISCOVERY_SOURCE, stamp])
-            # OR IGNORE reports 0 affected rows for an already-known case
-            # (the web lookup may have discovered it first); count only
-            # genuine additions or the log overstates the find.
-            affected = (res.get("response", {}).get("result", {})
-                        .get("affected_row_count", 0))
-            inserted += 1 if affected else 0
-        time.sleep(PACE_S)
 
-    log(f"discovery: {requests} requests, {inserted} new cases recorded")
-    return inserted
+    while requests < cap and unissued < DISCOVERY_UNISSUED_STREAK:
+        span = serial_span(serial_add(serial, 1), DISCOVERY_STEP)
+        codes = day_codes_between(code, today_code)[:DISCOVERY_MAX_DAYS_AHEAD + 1]
+        claimed: list[dict] = []
+        claimed_code: str | None = None
+        for c in codes:
+            if requests >= cap:
+                break
+            asked = [case_number(pfx, c, s) for s in span for pfx in DISCOVERY_PREFIXES]
+            try:
+                got = lookup(asked)
+            except Exception as exc:  # noqa: BLE001
+                stopped = f"batch failed ({exc})"
+                break
+            requests += 1
+            time.sleep(PACE_S)
+            wanted = set(asked)
+            found = [v for v in got if v.get("caseNumber") in wanted]
+            if found:
+                claimed, claimed_code = found, c
+                break
+        if stopped:
+            break
+        if not claimed:
+            if requests >= cap:
+                break
+            unissued += 1
+            continue
+        unissued = 0
+        perm = [v for v in claimed if v["caseNumber"][:6] in PERM_PREFIXES]
+        other = [v for v in claimed if v["caseNumber"][:6] not in PERM_PREFIXES]
+        inserted += _insert_perm_hits(db, perm, now_iso, stamp)
+        inserted_other += _insert_other_hits(db, other)
+        top = _furthest(span[0], [serial_of(v["caseNumber"]) for v in claimed])
+        code, serial = claimed_code, top
+        _write_frontier(db, code, serial, note=f"{requests} requests this run")
+
+    if stopped:
+        status = "failed"
+    elif unissued >= DISCOVERY_UNISSUED_STREAK:
+        status = "ok"
+    else:
+        status = "partial"
+    log(f"discovery: {requests} requests, {inserted} new PERM cases, "
+        f"{inserted_other} new PWD/LCA cases; frontier {start[0]}:{fmt_serial(start[1])} -> "
+        f"{code}:{fmt_serial(serial)}; {status}"
+        + (f" ({stopped})" if stopped else ""))
+    return {"requests": requests, "inserted": inserted, "inserted_other": inserted_other,
+            "frontier_before": start, "frontier_after": (code, serial),
+            "status": status, "note": stopped or ""}
+
+
+def discover_and_record(db, **kw) -> dict:
+    """run_discovery, plus its own ingest_runs row. The full sweep runs
+    discovery as one tail step and used to discard the result, so seven
+    nights of "0 new cases" left no row anywhere a check could read. Every
+    walk now records requests, insertions and the frontier it moved to."""
+    res = run_discovery(db, **kw)
+    fb, fa = res["frontier_before"], res["frontier_after"]
+    record_run(db, "ingest_case_status_direct.py --discover", status=res["status"],
+               rows_written=res["inserted"] + res["inserted_other"],
+               note=f"{res['inserted']} PERM + {res['inserted_other']} PWD/LCA in "
+                    f"{res['requests']} requests; frontier "
+                    f"{fb[0] + ':' + fmt_serial(fb[1]) if fb else 'none'} -> "
+                    f"{fa[0] + ':' + fmt_serial(fa[1]) if fa else 'none'}"
+                    + (f"; {res['note']}" if res['note'] else ""))
+    return res
 
 
 def log(m: str) -> None:
@@ -1112,7 +1223,7 @@ def tail_steps(db, *, discover: bool) -> list[tuple[str, object]]:
     """
     steps: list[tuple[str, object]] = []
     if discover:
-        steps.append(("discovery", lambda: run_discovery(db)))
+        steps.append(("discovery", lambda: discover_and_record(db)))
     steps += [
         ("live_census", lambda: write_live_census(db)),
         ("sweep_coverage", lambda: write_sweep_coverage(db)),
@@ -1141,6 +1252,12 @@ def main() -> int:
     )
     ap.add_argument("--limit", type=int, help="Stop after this many cases.")
     ap.add_argument("--offset", type=int, default=0)
+    ap.add_argument("--discover-cap", type=int, default=DISCOVERY_REQUEST_CAP,
+                    help="Discovery request cap for this run (default %(default)s). "
+                         "Raise it to catch up a gap in one run.")
+    ap.add_argument("--frontier", type=parse_frontier, default=None,
+                    help="Reset the walk cursor to YYDDD:SERIAL before walking, e.g. "
+                         "26240:200246. Persisted; use to recover a gap the doc has skipped.")
     ap.add_argument(
         "--discover", action="store_true",
         help="Only probe past the serial frontier for new filings, record "
@@ -1156,18 +1273,25 @@ def main() -> int:
     db = Turso()
 
     if args.discover and not (args.full or args.pending):
-        found = run_discovery(db)
-        if found:
+        res = run_discovery(db, cap=args.discover_cap, frontier_override=args.frontier)
+        failed: list[tuple[str, str]] = []
+        if res["inserted"]:
             failed = run_independently(tail_steps(db, discover=False))
             log("census refreshed" if not failed
                 else f"census refreshed; {len(failed)} doc write(s) failed")
-            record_run(db, "ingest_case_status_direct.py --discover",
-                       status="ok" if not failed else "partial",
-                       rows_written=found,
-                       note=f"discovery only: {found} filings"
-                            + (f"; failed: {', '.join(k for k, _ in failed)}"
-                               if failed else ""))
-        return 0
+        # A run that found nothing still records itself: the frontier not
+        # moving is exactly the signal check_ingest_health.py has to see.
+        status = res["status"] if not failed else "partial"
+        fb, fa = res["frontier_before"], res["frontier_after"]
+        record_run(db, "ingest_case_status_direct.py --discover", status=status,
+                   rows_written=res["inserted"] + res["inserted_other"],
+                   note=f"discovery only: {res['inserted']} PERM + {res['inserted_other']} PWD/LCA "
+                        f"in {res['requests']} requests; frontier "
+                        f"{fb[0] + ':' + fmt_serial(fb[1]) if fb else 'none'} -> "
+                        f"{fa[0] + ':' + fmt_serial(fa[1]) if fa else 'none'}"
+                        + (f"; {res['note']}" if res['note'] else "")
+                        + (f"; failed: {', '.join(k for k, _ in failed)}" if failed else ""))
+        return 0 if status != "failed" else 1
 
     # The RFI blend reads "cases that ENTERED an RFI since <a fixed date>".
     # `changed_at > <freeze>` matches more of the table every day, so with only

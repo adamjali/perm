@@ -25,7 +25,14 @@ name: USCIS I-485 inventory
 
 on:
   schedule:
-    - cron: "0 8 6 * *"
+    # The 6th through the 10th, daily: www.uscis.gov 403s GitHub's datacenter
+    # runners on some days and not others (Sep 6 2026: four 403s from the
+    # runner, 200 from a home connection with identical headers). Five tries
+    # cost nothing when the first succeeds - the script is idempotent per
+    # as_of - and turn a 403 month into a late month rather than a lost one.
+    # If all five fail, run it from any residential machine:
+    #   cd v2 && python3 scripts/ingest_i485_inventory.py
+    - cron: "0 8 6-10 * *"
   workflow_dispatch:
 
 permissions:
@@ -58,6 +65,21 @@ jobs:
           # primary-key collision, so a silently-dropped category fails the
           # run instead of shrinking the backlog without comment.
           python3 scripts/ingest_i485_inventory.py
+
+      # Without this, a 403 month leaves no row anywhere the health check
+      # reads: the workflow's only run ever (Sep 6 2026) failed and ingest
+      # health stayed green on a stale max_age_days of 75.
+      - name: Record the failure where the health check will see it
+        if: failure() || cancelled()
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          python3 scripts/record_ingest_failure.py \
+            --script ingest_i485_inventory.py \
+            --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
+            --note "i485-inventory-ingest: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
       - name: Remove credentials
         if: always()

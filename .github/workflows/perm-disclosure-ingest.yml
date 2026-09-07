@@ -205,48 +205,16 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      # The entity arrays are now uncapped, and uncapped they do not fit in a
-      # Convex document: 12,000 employer rows measured 1.14 MB against a 1 MB
-      # limit. So the full set goes to its own table, and the aggregate
-      # document keeps only what the index pages render.
-      - name: Store every entity in its own table
-        working-directory: v2
-        env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: |
-          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
-            echo "CONVEX_DEPLOY_KEY absent; skipping (payload is in the artifact)" >&2
-            exit 0
-          fi
-          python3 scripts/store_entities.py --payload "${RUNNER_TEMP}/perm-payload.json" --prod
-
-      # Case rows are the biggest write this job makes. Kept separate from the
-      # entity step so a failure here is legible as its own failure rather
-      # than taking the entity write down with it, and skipped without error
-      # when the ingest produced no case stream.
-      - name: Store case-level rows
-        working-directory: v2
-        env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: |
-          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
-            echo "CONVEX_DEPLOY_KEY absent; skipping (stream is in the artifact)" >&2
-            exit 0
-          fi
-          if [ ! -s "${RUNNER_TEMP}/perm-cases.ndjson.gz" ]; then
-            echo "No case stream produced; skipping" >&2
-            exit 0
-          fi
-          # Wage cells go in the same invocation: store_cases.py owns both
-          # writers, and both need the chunked clearBatch/insertChunk dance
-          # rather than a single call.
-          WAGES=""
-          if [ -s "${RUNNER_TEMP}/perm-wages.json" ]; then
-            WAGES="--wages ${RUNNER_TEMP}/perm-wages.json"
-          fi
-          python3 scripts/store_cases.py \
-            --cases "${RUNNER_TEMP}/perm-cases.ndjson.gz" $WAGES --prod
-
+      # Two steps used to run here: "Store every entity in its own table" and
+      # "Store case-level rows", writing ~455,000 documents into Convex tables
+      # (permEntities, permCases, permWageStats) that NOTHING reads. Every
+      # page that shows entities, cases or wages reads Turso (below), and no
+      # `api.permCases`/`api.permEntities`/`api.permWageStats` call exists in
+      # the app. Those writes are what pushed the Convex deployment past its
+      # plan on 2026-08-25. Removed 2026-09-06; the payload artifact above
+      # still carries the data. `uscisI140:storeStats` in the next step is
+      # kept because /tools/i140-calculator and /tools/green-card-timeline
+      # read `api.uscisI140.getLatest`.
       - name: Store aggregates in Convex
         working-directory: v2
         env:
