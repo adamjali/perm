@@ -6,6 +6,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
@@ -14,7 +15,7 @@ import { FAQPageClient } from "./FAQPageClient";
 
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "Frequently Asked Questions",
   description:
     "Answers to common questions about PERM labor certification, deadlines, recruitment, and case management with PERM Tracker.",
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
       "What applicants and attorneys ask about PERM Tracker and the PERM labor certification process.",
     url: "/faq",
   },
-};
+}, "faq");
 
 // Comprehensive FAQ data — all plain text for structured data compatibility
 const faqData = [

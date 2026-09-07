@@ -15,7 +15,7 @@
  * product was. Both sides of the product, in both descriptions, always.
  */
 
-import { GITHUB_REPO_URL } from "@/lib/constants/externalLinks";
+import { FOUNDED, ORGANIZATION_SAME_AS, PEOPLE } from './constants/about';
 
 /**
  * Single source for the schema.org `@id` fragments used to cross-link entities
@@ -103,11 +103,23 @@ export function getOrganizationSchema(baseUrl: string) {
       email: 'support@permtracker.app',
       contactType: 'customer support',
     },
-    // Real brand attestation (verified HTTP 200). One real sameAs URL is
-    // strictly better than a bare placeholder for entity disambiguation.
-    // Must stay a brand-owned URL: this is machine-readable and served on every
-    // page, so anything personal here publishes that association to crawlers.
-    sameAs: [GITHUB_REPO_URL],
+    // Every brand-owned surface that names the brand (GitHub, Medium, Product
+    // Hunt), each verified live on 2026-09-07. Brand-owned URLs only on the
+    // Organization; the people are their own nodes below, with their own
+    // profiles, so a personal profile is never asserted as the brand's.
+    sameAs: [...ORGANIZATION_SAME_AS],
+    // Registration month of the domain (RDAP). Google's site-names doc counts
+    // "web references" and the home page's own text among the sources it
+    // corroborates a name against; a founding date and named founders are the
+    // two facts an About page carries that a product page does not.
+    foundingDate: FOUNDED,
+    founder: PEOPLE.map((p) => ({
+      '@type': 'Person' as const,
+      '@id': `${baseUrl}/about#${p.name.toLowerCase().replace(/[^a-z]+/g, '-')}`,
+      name: p.name,
+      jobTitle: p.jobTitle,
+      sameAs: [...p.sameAs],
+    })),
   };
 }
 

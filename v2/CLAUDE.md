@@ -3026,3 +3026,109 @@ agents with `launchctl bootout gui/$(id -u)/app.permtracker.i485` (and
 `.i140`) and delete the two plists from `~/Library/LaunchAgents`. GitHub's
 own attempts and the health check's freshness budgets are unaffected by
 either.
+
+## The brand query, the About page, and the 60-day title freeze (2026-09-07)
+
+Search Console, exact query "perm tracker", the homepage's own daily line:
+**690 to 849 impressions a day through Aug 24, 410 on Aug 26, then 1 to 27 a
+day from Aug 27 on**, while the query itself kept 300 to 670 a day site-wide
+going to `/faq` and `/terms`. The homepage title was rewritten on Aug 24 and
+the product's self-description removed on Aug 26; the drop lands one crawl
+later. The Aug 29 fix (the brand inside the H1, lowercase domain as
+`alternateName`) moved nothing in nine days, so **the H1 was not the cause**.
+Terms ranking for a brand query is the tell: Google could not find a page that
+describes the brand and took the page that says the name most often.
+
+What Google's site-names doc lists that we lacked, and what shipped:
+
+- **`/about`** (`src/app/(site)/(public)/about/page.tsx`): who builds it (a
+  professor of anatomy and physiology, with an immigration attorney), since
+  when (domain Nov 2025 per RDAP, live Jan 2026 per the Wayback Machine),
+  the data sources, and what it is not. `AboutPage` schema whose `mainEntity`
+  is the shared Organization `@id`.
+- **`src/lib/constants/about.ts`** is the single source for the About page,
+  the homepage block and the Organization schema (`founder` Person nodes,
+  `foundingDate`, `sameAs` to GitHub, Medium and Product Hunt; X and LinkedIn
+  sit on the Person nodes, because a person's handle is not the brand). The three
+  cannot drift; `about-surfaces.test.ts` asserts it and that every surface
+  links the route (Learn menu, footer, sitemap, llms.txt, homepage block).
+- **The homepage carries an "About PERM Tracker" H2 again**, plain
+  server-rendered prose with no Motion wrapper, and **its FAQ dropped from
+  eight to three**: six were byte-identical to `/faq`, and Google chose `/faq`
+  for "what is PERM Tracker". One page answers each question now.
+- **Homepage title: `PERM Tracker: PERM Processing Times, Case Status and
+  Alerts`, FROZEN until 2026-11-07.** Three rewrites in six days cost the brand
+  query. The scoreboard is that daily line, read weekly.
+- Product Hunt (`producthunt.com/products/perm-tracker`) and its maker profile
+  were edited the same day to the current definition; they had said "for
+  immigration attorneys" since February and are among the few outside
+  references Google has for the name.
+
+**Two facts the About page deliberately does not claim**: the builder has not
+been a PERM beneficiary (the page says he watched family, friends and
+colleagues wait and worked through the process with them), and nobody is
+credited with reviewing the deadline logic. `about-surfaces.test.ts` fails on
+a first-person waiting claim.
+
+**"PERM Tracker" is a generic name shared with a rival**, and Google's doc
+says it will not show a generic or shared site name, so the SERP prints the
+domain for us and for permtrack.app alike; keeping the name is Adam's call and
+the fix is entity confidence, not markup. Registration order (RDAP): permupdate
+Mar 2025, **permtracker.app Nov 25 2025**, permtrack.app Mar 22 2026,
+perm-timeline Mar 26, immilane Apr 11, permqueue Apr 27 2026. Being first
+carries no weight with Google; references, an About page and stability do.
+
+## Social cards: one real picture per page, and the illustration that was there (2026-09-07)
+
+Adam noticed Google Images showed permtrack.app as "actual screenshots" and us
+as something random. Measured: every one of our ~13,758 URLs declared the same
+`og:image`, `public/og-image-base.png`, an AI-drawn isometric laptop whose
+screen read "Immigration Case Tracking Dashboard, Client J. Doe, I-140,
+Biometrics, Interview, Approved" (USCIS steps, an invented client, the old
+"Deadline Tracking" tagline). The homepage had one `<img>` (a decorative
+background, no alt), every chart is inline SVG, and the only real screenshots
+were inside the guides. permtrack.app has no images in its pages either; what
+Google shows for it is three per-page social images that are real screenshots
+(`og-timeline.jpg`, `og-cases.jpg`, `og-map.jpg`) beside a text default.
+
+What ships now:
+
+- **`public/og/<slug>.jpg`, one 1200x630 card per public page (27)**,
+  rendered by `scripts/make-page-cards.mjs` in Chrome with the site's own
+  fonts: the house frame (paper, ink or lime ground with the dot texture), the
+  page's title and a one-line label on the left, and a REAL screenshot of the
+  page inset on the right with a hard shadow. Indexes and legal pages get a
+  drawn motif instead, because a screenshot of a list of cards or of legal
+  prose says nothing. **Nothing on a card is a live figure**: a static image
+  of a number that moves weekly is wrong by the second week, so the label
+  states what the page is. Screenshots were captured from the local build
+  through the Chrome extension at 1440 wide (`scratchpad/og-shots/`), header
+  and rail cropped off (`crop: [300, 68, 1140, 688]` for rail pages).
+- **`src/lib/pageCards.ts`** is the registry (slug -> alt text) and
+  **`withSocialCard(metadata, slug)`** in `socialCard.ts` wires a card into a
+  page on BOTH surfaces. Twitter is set explicitly because the root layout's
+  file-convention image otherwise wins there: a page overriding only
+  `openGraph.images` ships the new picture to WhatsApp and Slack and the old
+  one to X. The three `generateMetadata` pages (`perm-case-status`,
+  `perm-queue/[month]`, `perm-rfi-audit/[stage]`) wrap their return the same
+  way with their parent's card.
+- **The root `/opengraph-image` serves `public/og/home.jpg`** and the
+  illustration is deleted. Any page without its own card falls back to the
+  real homepage.
+- **Entity pages generate their own card per entity** (`src/lib/entityOg.tsx`,
+  `opengraph-image.tsx` under `perm-employers`, `perm-attorneys` and
+  `perm-wages` `[slug]`): the name, the kind and the filing count from DOL's
+  files, cached 30 days like the page. No approval rate and no rank on the
+  card, because the page withholds those below its population floors and a
+  card cannot carry the footnote.
+- **The sitemap carries `<image:image>` for every static page's card** and
+  the `urlset` declares the image namespace. Entity cards are not in the
+  sitemap: 13k image URLs that each cost a generation is the ISR bill again.
+- **`social-cards.test.ts`** holds the three parts together: a registry entry,
+  a file at exactly 1200x630 under the 300 KB cap (read from the JPEG's own
+  SOF marker), and a page that names the slug through `withSocialCard`.
+
+Regenerate a card when a page's look changes: capture it, then
+`node scripts/make-page-cards.mjs <spec.json> <shots-dir> --only <slug>`. The
+three spec files used on Sep 7 are in the session scratchpad; the card fields
+are `slug, ground, eyebrow, title, label, shot, crop` or `motif`.

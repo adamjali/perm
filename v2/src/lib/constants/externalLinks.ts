@@ -19,6 +19,19 @@
 /** Canonical source repository. Change this one line if the repo moves. */
 export const GITHUB_REPO_URL = "https://github.com/adamjali/perm";
 
+/**
+ * The brand's other owned surfaces. Each one is a page Google can read and
+ * corroborate the name against ("web references to the site" is the last
+ * source in its site-names doc), and each is emitted as an Organization
+ * `sameAs` in structured data. Measured 2026-09-07: every one resolves and
+ * names PERM Tracker, and none of them was declared in the markup before.
+ */
+export const MEDIUM_PROFILE_URL = "https://medium.com/@permtracker";
+export const PRODUCT_HUNT_URL = "https://www.producthunt.com/products/perm-tracker";
+export const X_PROFILE_URL = "https://x.com/adamj3ali";
+/** A personal profile, declared on the Person node, never on the Organization. */
+export const LINKEDIN_SABRINA_URL = "https://www.linkedin.com/in/sabrina-soltau-5b2682171";
+
 /** Issue list. */
 export const GITHUB_ISSUES_URL = `${GITHUB_REPO_URL}/issues`;
 
@@ -49,14 +62,14 @@ export const SOCIAL_LINKS = [
   // x.com rather than twitter.com: twitter.com only 301s here, and the footer
   // glyph is already the X mark. Label names the platform but keeps the old
   // name for recognition, since the icon alone is still ambiguous to many users.
-  { href: "https://x.com/adamj3ali", label: "X (formerly Twitter)", icon: "twitter" },
+  { href: X_PROFILE_URL, label: "X (formerly Twitter)", icon: "twitter" },
   // A personal profile, not a company page, and the only entry here that points
   // at a named individual. She is already the public voice of the product's
   // email (every message signs off "Sabrina S. / PERM Tracker Team"), so this is
   // consistent with how the brand already presents itself. Swap it for a company
   // page if one is ever created.
   {
-    href: "https://www.linkedin.com/in/sabrina-soltau-5b2682171",
+    href: LINKEDIN_SABRINA_URL,
     label: "LinkedIn",
     icon: "linkedin",
   },

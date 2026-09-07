@@ -22,12 +22,14 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import {
   HeroSection,
   StageStrip,
   AttorneyPanel,
   ToolsSection,
   TestimonialsSection,
+  AboutSection,
   FAQSection,
   CTASection,
 } from "@/components/home";
@@ -56,12 +58,19 @@ import { getProcessingTimes } from "@/lib/turso/processingTimes";
 // cadence. The ingest should also revalidate on demand.
 export const revalidate = 86400;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   // `absolute` bypasses the root layout's `title.template: "%s | PERM Tracker"`
   // (Next.js docs § Template). Without this, Next.js appends " | PERM Tracker"
   // to a literal that already starts with the brand → "...| PERM Tracker | PERM
   // Tracker" doubled. Using `absolute` is the documented escape hatch.
-  title: { absolute: "PERM Tracker - Live PERM Data and Deadlines" },
+  // LEADS WITH THE NAME, THEN THE THREE PHRASES PEOPLE SEARCH. Search Console
+  // (28 days to 2026-09-05): "perm tracker" 15.6K impressions, and the
+  // homepage lost that query on Aug 27 after two title rewrites in three days.
+  // "Deadlines", the previous title's last word, is not a searched phrase;
+  // "processing times" and "case status" are the two largest non-brand
+  // clusters. 59 characters. FROZEN UNTIL 2026-11-07: every rewrite resets
+  // Google's read of the page, and the last three cost the brand query.
+  title: { absolute: "PERM Tracker: PERM Processing Times, Case Status and Alerts" },
   // LEADS WITH THE PHRASE THIS PAGE ACTUALLY RANKS FOR, and that is the whole
   // edit. Measured in GSC 2026-08-30: "perm tracker" brought 1,088 of the
   // site's 2,300 clicks in the last three months, and the previous
@@ -87,7 +96,7 @@ export const metadata: Metadata = {
     // Spread openGraphBase to preserve siteName / locale / type / images that
     // Next.js's shallow merge would otherwise drop from the parent layout.
     ...openGraphBase,
-    title: "PERM Tracker - Live PERM Data and Case Deadlines",
+    title: "PERM Tracker: PERM Processing Times, Case Status and Alerts",
     // THE SOCIAL DESCRIPTION DRIFTED FROM THE META ONE. The `description` above
     // was rewritten to lead with the free case lookup; this one still opened
     // with "Every PERM filing window, PWD expiration and audit deadline,
@@ -98,7 +107,7 @@ export const metadata: Metadata = {
       "See where DOL's PERM queue stands today and look up any case number free, no account. Deadlines computed for the cases you track.",
     url: "/",
   },
-};
+}, "home");
 
 export default async function HomePage() {
   // Two independent federal sources with two different as-of stamps, and they
@@ -160,6 +169,7 @@ export default async function HomePage() {
       />
       <AttorneyPanel />
       <TestimonialsSection />
+      <AboutSection />
       <FAQSection />
       <SectionDivider kind="step" fill="var(--primary)" />
       <CTASection eyebrow="If you manage cases" />

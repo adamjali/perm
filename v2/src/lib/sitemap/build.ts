@@ -53,6 +53,8 @@ import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
 export interface Entry {
   url: string;
   lastModified: string;
+  /** Absolute image URLs for the image sitemap extension. The page's social card, so image search knows the picture exists. */
+  images?: string[];
 }
 
 /** Children stay well under any limit in play: 5,000 URLs is ~550 KB. */
@@ -150,15 +152,15 @@ export async function pagesEntries(): Promise<Entry[]> {
   // post ships. /login and /signup stay out - their metadata sets
   // robots:{index:false} and advertising them here would contradict that.
   const statics: Entry[] = [
-    { url: base, lastModified: latest },
-    { url: `${base}/blog`, lastModified: latest },
-    { url: `${base}/guides`, lastModified: latest },
-    { url: `${base}/changelog`, lastModified: latest },
-    { url: `${base}/faq`, lastModified: "2026-08-24" },
-    { url: `${base}/for-attorneys`, lastModified: "2026-08-28" },
+    { url: base, lastModified: latest, images: [`${base}/og/home.jpg`] },
+    { url: `${base}/blog`, lastModified: latest, images: [`${base}/og/blog.jpg`] },
+    { url: `${base}/guides`, lastModified: latest, images: [`${base}/og/guides.jpg`] },
+    { url: `${base}/changelog`, lastModified: latest, images: [`${base}/og/changelog.jpg`] },
+    { url: `${base}/faq`, lastModified: "2026-08-24", images: [`${base}/og/faq.jpg`] },
+    { url: `${base}/for-attorneys`, lastModified: "2026-08-28", images: [`${base}/og/for-attorneys.jpg`] },
     { url: `${base}/email-preferences`, lastModified: "2026-08-28" },
-    { url: `${base}/perm-processing-times`, lastModified: dol ?? latest },
-    { url: `${base}/tools`, lastModified: "2026-08-23" },
+    { url: `${base}/perm-processing-times`, lastModified: dol ?? latest, images: [`${base}/og/perm-processing-times.jpg`] },
+    { url: `${base}/tools`, lastModified: "2026-08-23", images: [`${base}/og/tools.jpg`] },
     { url: `${base}/tools/green-card-timeline`, lastModified: dol ?? "2026-08-23" },
     { url: `${base}/tools/perm-timeline-calculator`, lastModified: dol ?? "2026-08-23" },
     { url: `${base}/tools/pwd-calculator`, lastModified: dol ?? "2026-08-23" },
@@ -171,16 +173,17 @@ export async function pagesEntries(): Promise<Entry[]> {
     // be listed for search, and one that is listed must not still be calling
     // itself provisional.
     ...(MIRROR_COMPLETE
-      ? [{ url: `${base}/perm-queue`, lastModified: "2026-08-26" }]
+      ? [{ url: `${base}/perm-queue`, lastModified: "2026-08-26", images: [`${base}/og/perm-queue.jpg`] }]
       : []),
     { url: `${base}/tools/priority-date-calculator`, lastModified: "2026-08-23" },
     { url: `${base}/tools/perm-deadline-calculator`, lastModified: "2026-08-23" },
-    { url: `${base}/calculators`, lastModified: "2026-08-24" },
-    { url: `${base}/methodology`, lastModified: "2026-08-24" },
-    { url: `${base}/perm-by-state`, lastModified: dol ?? "2026-08-24" },
-    { url: `${base}/perm-wages`, lastModified: dol ?? "2026-08-24" },
-    { url: `${base}/perm-employers`, lastModified: dol ?? "2026-08-24" },
-    { url: `${base}/perm-attorneys`, lastModified: dol ?? "2026-08-24" },
+    { url: `${base}/calculators`, lastModified: "2026-08-24", images: [`${base}/og/calculators.jpg`] },
+    { url: `${base}/methodology`, lastModified: "2026-08-24", images: [`${base}/og/methodology.jpg`] },
+    { url: `${base}/about`, lastModified: "2026-09-07", images: [`${base}/og/about.jpg`] },
+    { url: `${base}/perm-by-state`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-by-state.jpg`] },
+    { url: `${base}/perm-wages`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-wages.jpg`] },
+    { url: `${base}/perm-employers`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-employers.jpg`] },
+    { url: `${base}/perm-attorneys`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-attorneys.jpg`] },
     // The A-Z index pages. Written literally rather than generated from
     // BROWSE_KINDS because `scripts/audit_page_registration.py` matches a
     // template literal here against every static route in the app tree, and a
@@ -190,15 +193,15 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-attorneys/browse`, lastModified: dol ?? "2026-08-24" },
     { url: `${base}/perm-wages/browse`, lastModified: dol ?? "2026-08-24" },
     { url: `${base}/perm-cases`, lastModified: dol ?? "2026-08-24" },
-    { url: `${base}/pwd-cases`, lastModified: "2026-09-02" },
-    { url: `${base}/lca-cases`, lastModified: "2026-09-02" },
-    { url: `${base}/case-search`, lastModified: "2026-09-03" },
+    { url: `${base}/pwd-cases`, lastModified: "2026-09-02", images: [`${base}/og/pwd-cases.jpg`] },
+    { url: `${base}/lca-cases`, lastModified: "2026-09-02", images: [`${base}/og/lca-cases.jpg`] },
+    { url: `${base}/case-search`, lastModified: "2026-09-03", images: [`${base}/og/case-search.jpg`] },
     // The bare path only. A `?case=` result sets robots:{index:false} and
     // canonicalises back here, so advertising one would contradict the page's
     // own directive and open ~412,000 URLs of crawl space.
-    { url: `${base}/perm-case-status`, lastModified: "2026-08-27" },
-    { url: `${base}/perm-denial-risk`, lastModified: dol ?? "2026-08-24" },
-    { url: `${base}/perm-rfi-audit`, lastModified: "2026-08-27" },
+    { url: `${base}/perm-case-status`, lastModified: "2026-08-27", images: [`${base}/og/perm-case-status.jpg`] },
+    { url: `${base}/perm-denial-risk`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-denial-risk.jpg`] },
+    { url: `${base}/perm-rfi-audit`, lastModified: "2026-08-27", images: [`${base}/og/perm-rfi-audit.jpg`] },
     // One page per review stage. Listed from `reviewStages()`, the same
     // function the route's `generateStaticParams` reads, so the sitemap and
     // the router cannot come to disagree about which of these exist - a
@@ -209,11 +212,11 @@ export async function pagesEntries(): Promise<Entry[]> {
       url: `${base}/perm-rfi-audit/${s.slug}`,
       lastModified: "2026-08-30",
     })),
-    { url: `${base}/perm-decision-activity`, lastModified: "2026-08-27" },
-    { url: `${base}/contact`, lastModified: "2026-08-24" },
-    { url: `${base}/terms`, lastModified: "2026-06-15" },
-    { url: `${base}/privacy`, lastModified: "2026-08-24" },
-    { url: `${base}/security`, lastModified: "2026-06-15" },
+    { url: `${base}/perm-decision-activity`, lastModified: "2026-08-27", images: [`${base}/og/perm-decision-activity.jpg`] },
+    { url: `${base}/contact`, lastModified: "2026-08-24", images: [`${base}/og/contact.jpg`] },
+    { url: `${base}/terms`, lastModified: "2026-06-15", images: [`${base}/og/terms.jpg`] },
+    { url: `${base}/privacy`, lastModified: "2026-08-24", images: [`${base}/og/privacy.jpg`] },
+    { url: `${base}/security`, lastModified: "2026-06-15", images: [`${base}/og/security.jpg`] },
   ];
 
   const content: Entry[] = allPosts.map((post) => ({
@@ -353,9 +356,14 @@ const esc = (s: string) =>
 export function urlsetXml(entries: Entry[]): string {
   return (
     '<?xml version="1.0" encoding="UTF-8"?>\n' +
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' +
     entries
-      .map((e) => `<url><loc>${esc(e.url)}</loc><lastmod>${e.lastModified}</lastmod></url>`)
+      .map(
+        (e) =>
+          `<url><loc>${esc(e.url)}</loc><lastmod>${e.lastModified}</lastmod>${(e.images ?? [])
+            .map((i) => `<image:image><image:loc>${esc(i)}</image:loc></image:image>`)
+            .join("")}</url>`,
+      )
       .join("\n") +
     "\n</urlset>\n"
   );

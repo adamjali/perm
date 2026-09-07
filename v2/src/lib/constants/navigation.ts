@@ -139,5 +139,6 @@ export const LEARN_NAV_LINKS = [
   { href: "/guides", label: "Guides" },
   { href: "/faq", label: "FAQ" },
   { href: "/methodology", label: "Methodology" },
+  { href: "/about", label: "About" },
   { href: "/changelog", label: "Changelog" },
 ] as const satisfies readonly NavLink[];

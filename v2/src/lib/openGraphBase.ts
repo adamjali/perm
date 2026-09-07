@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SOCIAL_CARD_SIZE, SOCIAL_CARD_CONTENT_TYPE } from "./socialCard";
+import { PAGE_CARD_ALT } from "./pageCards";
 
 /**
  * Shared Open Graph defaults that every per-page `openGraph` override must
@@ -54,7 +55,7 @@ export const socialCardImage = {
   // whole site was reorganised away from, and the exact framing measured as the
   // cause of AI overviews calling this attorney-only software. It is also what
   // a screen reader announces for the card.
-  alt: "PERM Tracker - live DOL PERM data and case deadlines, for applicants and attorneys",
+  alt: PAGE_CARD_ALT.home,
 } as const;
 
 export const openGraphBase = {
@@ -62,4 +63,17 @@ export const openGraphBase = {
   locale: "en_US",
   type: "website",
   images: [socialCardImage],
+} satisfies NonNullable<Metadata["openGraph"]>;
+
+/**
+ * The base WITHOUT the site-wide image, for a segment that ships its own
+ * file-convention image (an `opengraph-image.tsx` beside the page). Measured
+ * 2026-09-07: a config `images` in the same segment beats the file, so an
+ * entity page that spread `openGraphBase` kept pointing at the root card while
+ * its generated card sat unused at `.../opengraph-image-<hash>`.
+ */
+export const openGraphBaseNoImage = {
+  siteName: openGraphBase.siteName,
+  locale: openGraphBase.locale,
+  type: openGraphBase.type,
 } satisfies NonNullable<Metadata["openGraph"]>;

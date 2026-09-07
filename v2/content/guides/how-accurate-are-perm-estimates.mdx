@@ -1,0 +1,120 @@
+---
+title: "How Accurate Are PERM Approval Estimates?"
+description: "PERM estimators disagree by months on the same case. What an estimate can and can't know, and what we measured: a 50-day median miss and a 27-day alphabet."
+date: "2026-09-07"
+author: "Adam J Ali"
+image: "/images/content/cards/how-accurate-are-perm-estimates.webp"
+imageAlt: "27 days, the whole alphabet A to Z measured over 339,518 decided cases, beside a window with two ends"
+tags: ["perm", "processing-times", "estimate", "timeline", "employer-initial", "methodology"]
+category: "data"
+seoTitle: "How Accurate Are PERM Approval Estimates? What We Measured"
+seoDescription: "Six PERM estimators gave 335 to 503 days for one case on one day. What an estimate can know, what it can't, and our measured error and alphabet effect."
+featured: true
+published: true
+---
+
+On one day in August 2026, six public PERM tools were asked the same headline question, how long a PERM takes, and answered between 335 and 503 days. DOL's own published average that day was 372. The spread is not a rounding difference; it is five months on a wait that people plan their lives around. This guide is what an estimate can know, what it cannot, and what we measured when we checked our own.
+
+## What an estimate actually is
+
+Every PERM estimator does the same arithmetic underneath. DOL works cases roughly in filing order and publishes which filing month it is deciding now. Your case has a filing month. The estimate is the distance between the two, converted to days using how fast the queue has been moving. Everything else a tool adds, an employer's initial, a "confidence" label, a colour, sits on top of that one subtraction.
+
+That is also why estimates fail the same way. When DOL's queue slows, every tool built on the previous pace is late together. When DOL reorders work, as it did after the October 2025 shutdown, every tool is wrong in the same direction at once.
+
+## What we measured
+
+Two numbers, both against decided cases in DOL's own disclosure files, and both printed on the pages that use them.
+
+<Callout type="stat" stat="50 days" title="Our median miss, give or take">
+Measured against cases that have since been decided, the middle of our estimator's error is about 50 days. Half of estimates land closer than that, half further. We print the range on every estimate for that reason, and the single most likely date only next to it.
+</Callout>
+
+The second number is the one every rival talks about and nobody publishes: how much the employer's initial moves a decision. DOL works each filing month alphabetically by employer, so a company starting with A is reached before one starting with Z. That ordering is real. Its size is the question, so we measured it over 339,518 decided cases.
+
+<div className="my-8 overflow-x-auto overscroll-x-none">
+<svg viewBox="0 0 760 250" className="w-full min-w-[640px] text-foreground" role="img" aria-labelledby="alphabet-chart-title">
+<title id="alphabet-chart-title">How much the employer's initial moves a PERM decision. Measured over 339,518 decided cases: from 11 days early for A to 16 days late for Z, a 27-day span. A rival estimator's claim: plus or minus 80 days, a 160-day span.</title>
+<line x1="60" y1="60" x2="700" y2="60" stroke="currentColor" strokeWidth="2" />
+<line x1="380" y1="52" x2="380" y2="200" stroke="currentColor" strokeWidth="2" strokeDasharray="4 4" />
+<text x="60" y="44" fontSize="13" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">-80 days</text>
+<text x="380" y="44" fontSize="13" textAnchor="middle" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">on time</text>
+<text x="700" y="44" fontSize="13" textAnchor="end" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">+80 days</text>
+<rect x="60" y="84" width="640" height="40" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="8 6" />
+<text x="380" y="110" fontSize="14" fontWeight="700" textAnchor="middle" fill="currentColor">a rival's claim: plus or minus 80 days</text>
+<rect x="334" y="150" width="109" height="40" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
+<text x="322" y="176" fontSize="14" fontWeight="700" textAnchor="end" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">A -11</text>
+<text x="455" y="176" fontSize="14" fontWeight="700" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">Z +16</text>
+<text x="388" y="176" fontSize="14" fontWeight="700" textAnchor="middle" fill="#000000">27 days</text>
+<text x="60" y="230" fontSize="13" fill="currentColor">Measured: the whole alphabet, A to Z, over 339,518 decided PERM cases. Same scale as the claim above it.</text>
+</svg>
+</div>
+
+The measured effect is 27 days end to end: A decides about 11 days earlier than the average case in its month, Z about 16 days later. The published claim of plus or minus 80 days is the same effect inflated roughly six times. And in 6 of the 30 filing months we could check, the order ran backwards, with later letters decided first. So the initial is worth showing, with its size, and not worth building a forecast on.
+
+## What each estimator uses
+
+<ComparisonTable
+  headers={["Input", "Can any tool know it?", "What we do with it"]}
+  rows={[
+    ["DOL's published queue position", "Yes, it is public and weekly", "The anchor of every estimate, with DOL's own as-of date printed"],
+    ["How fast the queue has moved", "Yes, from DOL's decided cases", "Measured per stage from the disclosure files, shown as a range"],
+    ["The employer's initial", "Yes, it is on the record", "Applied at its measured size, at most 16 days, and printed as its own line"],
+    ["An audit, an RFI, or a hold", "No, until DOL issues it", "Nothing. When one appears on a case, the estimate is withdrawn for that case"],
+    ["Which analyst gets the file", "No", "Nothing"],
+  ]}
+/>
+
+The two rows marked "No" are the ones that produce the big misses, and they are the same for every tool. An audit adds months and is invisible until it is issued. No estimator, including this one, can see it coming.
+
+## How to read ours
+
+<StepByStep>
+<Step number={1} title="Start from the most likely date">
+
+The estimate leads with the single date the strongest model gives, then the window under it. The window is the honest part; the date is the anchor so you have something to plan against.
+
+<ScreenshotFigure
+  src="/images/content/shots/timeline-calculator.webp"
+  alt="The PERM processing time calculator with a filing month chosen and the most likely decision month printed beneath it"
+  caption="Pick the month DOL received the case, or paste the number. The most likely month comes first, the window right under it."
+/>
+
+</Step>
+<Step number={2} title="Read the line about the employer's initial">
+
+If the initial moved the estimate, its own line says by how many days and reminds you that the whole alphabet is about four weeks. A tool that folds this in silently is choosing to look precise.
+
+</Step>
+<Step number={3} title="Check where DOL's queue is right now">
+
+The estimate is anchored to DOL's published position. The [processing times page](/perm-processing-times) shows that position with DOL's own as-of date, and the [queue page](/perm-queue) shows how it has moved month by month. If DOL has not moved in weeks, expect every estimate, ours included, to drift late.
+
+<ScreenshotFigure
+  src="/images/content/shots/queue-frontier.webp"
+  alt="The queue page showing which filing month DOL is deciding and how the frontier has moved"
+  caption="The frontier is the whole estimate. Watch it move, not the countdown."
+/>
+
+</Step>
+</StepByStep>
+
+## When we refuse to give a date
+
+<Callout type="important" title="If DOL has already passed your filing month">
+Every filing-anchored model's date has elapsed, and printing a new one would be invention. The page says the queue passed your month, by how much, and that a case still pending at that point is usually in an audit, a request for information, or a hold. The per-case lookup is the next step, because it shows the status DOL actually holds.
+</Callout>
+
+We also print no estimate for a filing month too new to have a measured history, and no estimate at all for the stages an audit adds. A blank is a true answer; a confident wrong date is not.
+
+## What this cannot tell you
+
+- Your decision date. It gives a range measured from cases like yours, and half of them missed the middle by more than 50 days.
+- Whether your case will be audited. Nothing can, until DOL issues it.
+- Anything about a case DOL has not received. An estimate needs a filing month, which needs a filing.
+- How another tool got its number. Where a rival publishes a method we describe it; where it does not, we say so on the [methodology page](/methodology).
+
+## Related
+
+- [How the PERM queue works](/guides/how-the-perm-queue-works)
+- [Where your filing month sits](/guides/where-your-filing-month-sits)
+- [PERM processing times in 2026](/blog/perm-processing-times-2026)

@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
@@ -14,7 +15,7 @@ import Link from "next/link";
 // Force static generation for instant loading
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "Terms of Service",
   description:
     "Terms of Service for PERM Tracker. Read our terms for using our PERM labor certification case management software.",
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-};
+}, "terms");
 
 const SECTIONS = [
   { id: "agreement-to-terms", title: "1. Agreement to Terms" },

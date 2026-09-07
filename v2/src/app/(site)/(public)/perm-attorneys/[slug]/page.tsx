@@ -21,7 +21,7 @@ import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { openGraphBase } from "@/lib/openGraphBase";
+import { openGraphBaseNoImage } from "@/lib/openGraphBase";
 import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
@@ -225,11 +225,15 @@ export async function generateMetadata({
     description,
     alternates: { canonical: `${BASE}/${found.canonicalSlug}` },
     openGraph: {
-      ...openGraphBase,
+      ...openGraphBaseNoImage,
       title: `${title} | PERM Tracker`,
       description,
       url: `${BASE}/${found.canonicalSlug}`,
     },
+    // A segment-level `twitter` so the root layout's twitter.images does not
+    // win: the file-convention card beside this page then fills twitter:image
+    // as well as og:image. Title and description resolve from the page's own.
+    twitter: { card: "summary_large_image" },
   };
 }
 

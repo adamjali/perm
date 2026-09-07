@@ -8,6 +8,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
@@ -35,7 +36,7 @@ const TITLE = "Live PERM Data Overview";
 const DESCRIPTION =
   "Where DOL's PERM queue stands today: the month under review, the average to a determination, and the wage backlog, from DOL's own figures.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools" },
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools",
   },
-};
+}, "tools");
 
 // Live figures on top; hourly revalidation matches the other data pages.
 // The disclosure files are quarterly, so an hourly window bought

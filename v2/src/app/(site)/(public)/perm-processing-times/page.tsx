@@ -31,6 +31,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 
@@ -66,19 +67,24 @@ const SITE = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
 // DOL refreshes the queue weekly; six hours is well inside that.
 export const revalidate = 21600;
 
-export const metadata: Metadata = {
-  title: "PERM Processing Times",
+export const metadata: Metadata = withSocialCard({
+  // The phrase people search, verbatim, then the year and the source. Search
+  // Console: "perm processing time(s)" is the largest non-brand cluster and
+  // this page had never been crawled as of 2026-09-02; "2026" answers the
+  // "perm processing times 2026" variant law-firm blogs rank on. Update the
+  // year in January.
+  title: "PERM Processing Times 2026 (DOL Data)",
   description:
-    "Where DOL's PERM queue stands, from the Department's own published figures: analyst review, audit review and prevailing wage, with their as-of date.",
+    "PERM processing times now: the filing month DOL is deciding, average days to a decision, and the audit and prevailing wage queues, with DOL's own as-of date.",
   alternates: { canonical: "/perm-processing-times" },
   openGraph: {
     ...openGraphBase,
-    title: "PERM Processing Times | PERM Tracker",
+    title: "PERM Processing Times 2026 (DOL Data) | PERM Tracker",
     description:
       "DOL's published PERM and prevailing-wage queue positions, refreshed weekly and cited with DOL's own as-of date.",
     url: "/perm-processing-times",
   },
-};
+}, "perm-processing-times");
 
 /** Questions taken from Google's own People Also Ask for this query set. */
 const FAQ = [

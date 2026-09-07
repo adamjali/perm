@@ -42,6 +42,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -115,7 +116,7 @@ export async function generateMetadata({
       155,
     );
 
-  return {
+  return withSocialCard({
     title,
     description,
     alternates: { canonical: `/perm-rfi-audit/${stage}` },
@@ -125,7 +126,7 @@ export async function generateMetadata({
       description,
       url: `/perm-rfi-audit/${stage}`,
     },
-  };
+  }, "perm-rfi-audit");
 }
 
 const int = (n: number) => n.toLocaleString("en-US");

@@ -3,6 +3,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { getAllPosts, getAllTags } from "@/lib/content";
 import { generateItemListSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
@@ -11,7 +12,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "Guides",
   description:
     "Comprehensive reference guides for the PERM labor certification process. Filing requirements, recruitment checklists, and best practices.",
@@ -22,7 +23,7 @@ export const metadata: Metadata = {
     description: "Comprehensive PERM process guides and references.",
     url: "/guides",
   },
-};
+}, "guides");
 
 export default function GuidesPage() {
   const posts = getAllPosts("guides");

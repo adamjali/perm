@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import Image from "next/image";
 import { MagnifyingGlassIcon, RocketLaunchIcon } from "@phosphor-icons/react/ssr";
@@ -30,7 +31,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
  * revalidates on the public tree's default schedule.
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "PERM Software for Attorneys and Firms",
   description:
     "Track every PERM case's deadlines automatically: filing windows, wage expirations, recruitment clocks and audit responses, with reminders. Free.",
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
       "Every deadline computed per case, with reminders, calendar sync and a client-ready timeline. Free.",
     url: "/for-attorneys",
   },
-};
+}, "for-attorneys");
 
 export default function ForAttorneysPage() {
   return (

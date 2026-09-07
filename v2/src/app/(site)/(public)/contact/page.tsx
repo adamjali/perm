@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { ChatTextIcon, EnvelopeIcon as Mail } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -27,7 +28,7 @@ const GithubIcon = ({ className }: { className?: string }) => (
 // Force static generation for instant loading
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "Contact",
   description:
     "Contact PERM Tracker support for help with your immigration case management. Email, feature requests, and bug reports.",
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
       "Get in touch with PERM Tracker support for help with your immigration case management.",
     url: "/contact",
   },
-};
+}, "contact");
 
 export default function ContactPage() {
   return (

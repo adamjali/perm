@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { getDatasetSchema } from "@/lib/structuredData";
 import Link from "next/link";
@@ -54,7 +55,7 @@ const TITLE = "PERM Queue Backlog";
 const DESCRIPTION =
   "How many PERM cases are still undecided in every filing month, which DOL queue they sit in, and where DOL says its analyst review has reached.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-queue" },
@@ -65,7 +66,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/perm-queue",
   },
-};
+}, "perm-queue");
 
 // SIX HOURS, NOT ONE (changed 2026-09-01 on cost evidence). The reasoning for
 // an hour was sound about the reader and wrong about the data: this is a queue

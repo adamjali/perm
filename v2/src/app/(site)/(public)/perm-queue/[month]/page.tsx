@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { Fragment } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -61,13 +62,13 @@ export async function generateMetadata({
   if (!peek || peek.total === 0) notFound();
   const label = formatMonth(month) ?? month;
   const title = `PERM Cases Filed ${label}`;
-  return {
+  return withSocialCard({
     title,
     description: `How many PERM cases filed in ${label} are still undecided, which of DOL's queues they're sitting in, and how much of the backlog sits in front of them.`,
     alternates: { canonical: `/perm-queue/${month}` },
     robots: MIRROR_COMPLETE ? undefined : { index: false, follow: true },
     openGraph: { ...openGraphBase, title: `${title} | PERM Tracker`, url: `/perm-queue/${month}` },
-  };
+  }, "perm-queue");
 }
 
 // Six hours, matching /perm-queue. This route is ~39 generated pages, so the

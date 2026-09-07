@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -24,7 +25,7 @@ const TITLE = "LCA Case Search";
 const DESCRIPTION =
   "Find an H-1B labor condition application (ETA-9035) by employer, job title and filing month, with DOL's current status. Live from DOL's daily check.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/lca-cases" },
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/lca-cases",
   },
-};
+}, "lca-cases");
 
 export const revalidate = 86400;
 

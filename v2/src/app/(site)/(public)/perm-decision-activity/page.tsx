@@ -17,6 +17,7 @@
 
 import { Fragment } from "react";
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -48,7 +49,7 @@ const TITLE = "PERM Decision Activity";
 const DESCRIPTION =
   "How many PERM decisions DOL issues each day and week, the shape of its working week, and what happened to the cases it decided.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-decision-activity" },
@@ -58,7 +59,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/perm-decision-activity",
   },
-};
+}, "perm-decision-activity");
 
 // SIX HOURS, NOT ONE (changed 2026-09-01 on cost evidence). The old comment
 // said it plainly and then picked the wrong number: "the live scan moves daily

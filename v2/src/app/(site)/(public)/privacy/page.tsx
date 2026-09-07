@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
@@ -14,7 +15,7 @@ import Link from "next/link";
 // Force static generation for instant loading
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "Privacy Policy",
   description:
     "Privacy Policy for PERM Tracker. Learn how we protect your immigration case data with bank-level encryption and row-level security.",
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-};
+}, "privacy");
 
 const SECTIONS = [
   { id: "introduction", title: "1. Introduction" },

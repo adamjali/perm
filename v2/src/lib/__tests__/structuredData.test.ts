@@ -9,6 +9,7 @@ import {
   getHomepageRatingPartialSchema,
 } from "../structuredData";
 import { GITHUB_REPO_URL } from "@/lib/constants/externalLinks";
+import { ORGANIZATION_SAME_AS, PEOPLE } from "@/lib/constants/about";
 
 const BASE = "https://permtracker.app";
 
@@ -95,8 +96,20 @@ describe("getOrganizationSchema", () => {
     expect(schema.url).toBe(BASE);
   });
 
+  it("names both founders as Person nodes that agree with the About facts", () => {
+    const founders = (schema as { founder?: { name: string; jobTitle: string; sameAs: string[] }[] }).founder ?? [];
+    expect(founders.map((f) => f.name)).toEqual(PEOPLE.map((p) => p.name));
+    expect(founders.map((f) => f.jobTitle)).toEqual(PEOPLE.map((p) => p.jobTitle));
+    for (const f of founders) expect(f.sameAs.length).toBeGreaterThan(0);
+    expect((schema as { foundingDate?: string }).foundingDate).toMatch(/^\d{4}-\d{2}$/);
+  });
+
   it("sameAs contains the real brand repo, not a placeholder", () => {
-    expect(schema.sameAs).toEqual([GITHUB_REPO_URL]);
+    expect(schema.sameAs).toEqual([...ORGANIZATION_SAME_AS]);
+    expect(schema.sameAs[0]).toBe(GITHUB_REPO_URL);
+    // Every owned surface, and nothing personal on the brand node.
+    expect(schema.sameAs).toHaveLength(3);
+    expect(schema.sameAs.some((u) => u.includes("linkedin.com"))).toBe(false);
     // Defensive: prevent regression to the placeholder bare URL
     expect(schema.sameAs).not.toContain("https://github.com");
   });
@@ -114,7 +127,11 @@ describe("getOrganizationSchema", () => {
     const sameAs = (schema as { sameAs?: string[] }).sameAs ?? [];
     expect(sameAs.length).toBeGreaterThan(0);
     for (const url of sameAs) {
-      expect(url.startsWith(GITHUB_REPO_URL)).toBe(true);
+      // Each is a page that carries the brand's own name (the repo, the
+      // Medium publication, the Product Hunt product page). A person's handle
+      // (x.com, linkedin.com) belongs on a Person node, never here.
+      expect(ORGANIZATION_SAME_AS).toContain(url);
+      expect(url).not.toMatch(/x\.com|twitter\.com|linkedin\.com/);
     }
   });
 });

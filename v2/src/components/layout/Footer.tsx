@@ -330,6 +330,13 @@ export default function Footer({ audience = "public" }: FooterProps) {
                 Security
               </NavLink>{" "}
               <NavLink
+                href="/about"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                About
+              </NavLink>{" "}
+              <NavLink
                 href="/contact"
                 className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
                 spinnerClassName="text-(--primary)"

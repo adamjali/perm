@@ -13,13 +13,14 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 import { CheckCircleIcon as CheckCircle2, ShieldIcon } from "@phosphor-icons/react/ssr";
 
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "Security",
   description:
     "Security posture, incident history, and vulnerability disclosure for PERM Tracker: encryption, access control, and how to report an issue.",
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
-};
+}, "security");
 
 export default function SecurityPage() {
   return (

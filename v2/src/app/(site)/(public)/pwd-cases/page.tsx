@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -30,7 +31,7 @@ const TITLE = "PWD Case Search";
 const DESCRIPTION =
   "Find a prevailing wage request (ETA-9141) by employer, job title and filing month: DOL's live status for pending ones, the wage DOL set for decided ones.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/pwd-cases" },
@@ -40,7 +41,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/pwd-cases",
   },
-};
+}, "pwd-cases");
 
 // The table grows nightly; a day bounds the header counts' staleness under
 // the data's own cadence. The lists themselves are fetched by the browser.

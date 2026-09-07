@@ -32,3 +32,31 @@ export const SOCIAL_CARD_CONTENT_TYPE = "image/jpeg" as const;
  * Current output is ~204 KB at JPEG q95. Enforced by scripts/verify-og-size.mjs.
  */
 export const SOCIAL_CARD_MAX_BYTES = 300 * 1024;
+
+import type { Metadata } from "next";
+import { PAGE_CARD_ALT, pageCardUrl, type PageCardSlug } from "./pageCards";
+
+/**
+ * Give a page its own social card, on both the Open Graph and the Twitter
+ * surfaces. Twitter is set explicitly because the root layout's file-convention
+ * image otherwise wins there: a page that overrides only `openGraph.images`
+ * ships the new picture to Facebook, WhatsApp and Slack and the old one to X.
+ */
+export function withSocialCard(meta: Metadata, slug: PageCardSlug): Metadata {
+  const image = {
+    url: pageCardUrl(slug),
+    width: SOCIAL_CARD_SIZE.width,
+    height: SOCIAL_CARD_SIZE.height,
+    alt: PAGE_CARD_ALT[slug],
+    type: SOCIAL_CARD_CONTENT_TYPE,
+  };
+  return {
+    ...meta,
+    openGraph: { ...(meta.openGraph ?? {}), images: [image] },
+    twitter: {
+      card: "summary_large_image",
+      ...(meta.twitter ?? {}),
+      images: [{ url: image.url, alt: image.alt }],
+    },
+  };
+}

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -32,7 +33,7 @@ const TITLE = "Search Every DOL Case";
 const DESCRIPTION =
   "One search across PERM applications, prevailing wage requests and H-1B LCAs: find every filing an employer has made, with status, dates and wage, sortable.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/case-search" },
@@ -42,7 +43,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/case-search",
   },
-};
+}, "case-search");
 
 // The counts move once a night; the search itself is live through the route.
 export const revalidate = 86400;

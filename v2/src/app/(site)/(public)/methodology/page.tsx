@@ -8,6 +8,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 
@@ -21,7 +22,7 @@ const TITLE = "How These Numbers Are Computed";
 const DESCRIPTION =
   "Why PERM estimators disagree by months on the same case, where our figures come from, and what we refuse to publish.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/methodology" },
@@ -31,7 +32,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/methodology",
   },
-};
+}, "methodology");
 
 /**
  * Not `force-static` any more, and the reason is a defect this page had.

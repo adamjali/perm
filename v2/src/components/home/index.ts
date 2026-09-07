@@ -12,6 +12,7 @@ export { HowItWorks } from "./HowItWorks";
 export { StatsSection } from "./StatsSection";
 export { SecuritySection } from "./SecuritySection";
 export { FAQSection } from "./FAQSection";
+export { AboutSection } from "./AboutSection";
 export { CTASection } from "./CTASection";
 export { TestimonialsSection } from "./TestimonialsSection";
 export { ScrollProgress } from "./DecorativeElements";

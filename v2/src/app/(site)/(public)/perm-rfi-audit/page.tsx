@@ -24,6 +24,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { FinePrint } from "@/components/data/FinePrint";
 
@@ -61,7 +62,7 @@ const TITLE = "PERM RFI, Audits and Appeals";
 const DESCRIPTION =
   "What an RFI, NORD, audit or BALCA appeal means, how many PERM cases sit at each stage right now, and what the data shows happens after an RFI.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-rfi-audit" },
@@ -71,7 +72,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/perm-rfi-audit",
   },
-};
+}, "perm-rfi-audit");
 
 // The mirror refreshes daily and the census query is a full pass over 412,865
 // rows. A day bounds staleness at the data's own cadence and keeps the read

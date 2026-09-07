@@ -14,6 +14,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -42,7 +43,7 @@ const TITLE = "PERM Denial Rates";
 const DESCRIPTION =
   "PERM denial rates measured from DOL's own files: by offered wage, by fiscal year, by occupation, by state, and by the factors the ETA-9089 records.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-denial-risk" },
@@ -52,7 +53,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/perm-denial-risk",
   },
-};
+}, "perm-denial-risk");
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178

@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { ArrowRightIcon, CalendarBlankIcon as CalendarRange, CalendarCheckIcon, CalendarDotIcon as CalendarClock, ChartBarIcon, CurrencyDollarIcon, FileTextIcon, PathIcon as Route, ScalesIcon as Scale, UsersIcon } from "@phosphor-icons/react/ssr";
 
@@ -27,7 +28,7 @@ const TITLE = "PERM Calculators";
 const DESCRIPTION =
   "Free PERM calculators built on DOL's own published data: decision-time estimates, the wage queue, the I-140 backlog, and every statutory deadline.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/calculators" },
@@ -37,7 +38,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/calculators",
   },
-};
+}, "calculators");
 
 export const dynamic = "force-static";
 

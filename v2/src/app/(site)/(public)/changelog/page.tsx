@@ -6,6 +6,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { getAllPosts } from "@/lib/content";
 import { generateBreadcrumbSchema, generateItemListSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
@@ -14,7 +15,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "Changelog",
   description:
     "Product updates, new features, and improvements to PERM Tracker. See what’s new and what’s coming next.",
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
     description: "PERM Tracker product updates and new features.",
     url: "/changelog",
   },
-};
+}, "changelog");
 
 export default function ChangelogPage() {
   const posts = getAllPosts("changelog");

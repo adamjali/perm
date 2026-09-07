@@ -5,6 +5,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import { getAllPosts, getAllTags } from "@/lib/content";
 import { generateItemListSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
@@ -13,7 +14,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "Blog",
   description:
     "Insights on PERM labor certification, DOL processing data, and practical guidance for applicants and attorneys.",
@@ -25,7 +26,7 @@ export const metadata: Metadata = {
       "Insights on PERM labor certification, immigration practice tips, and industry trends.",
     url: "/blog",
   },
-};
+}, "blog");
 
 export default function BlogPage() {
   const posts = getAllPosts("blog");

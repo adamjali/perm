@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { Suspense } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
@@ -69,7 +70,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { case: raw } = await searchParams;
   const hasCase = typeof raw === "string" && raw.trim().length > 0;
-  return {
+  return withSocialCard({
     title: TITLE,
     description: DESCRIPTION,
     // The bare path on every variant. A result page is one of ~412,000, and
@@ -82,7 +83,7 @@ export async function generateMetadata({
       description: DESCRIPTION,
       url: "/perm-case-status",
     },
-  };
+  }, "perm-case-status");
 }
 
 const FAQS = [

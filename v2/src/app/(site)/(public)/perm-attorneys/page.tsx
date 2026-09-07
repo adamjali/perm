@@ -8,6 +8,7 @@
  */
 
 import type { Metadata } from "next";
+import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
 import { getDatasetSchema } from "@/lib/structuredData";
@@ -24,7 +25,7 @@ const TITLE = "Every PERM Law Firm, Ranked";
 const DESCRIPTION =
   "Every law firm filing PERM cases: volume, approval rate and median processing days per firm, searchable and sortable, from DOL's own disclosure files.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-attorneys" },
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/perm-attorneys",
   },
-};
+}, "perm-attorneys");
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178
