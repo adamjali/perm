@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-09-04
+> **Status:** Production | **Last Updated:** 2026-09-07
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -2650,3 +2650,135 @@ it**, the household-name firm was unchanged, and a third had gone back to
 not predict the order, and the duplication theory looks weaker still. Re-inspect
 a handful in a week and read the trend rather than spending the quota on it.
 (The quota is ~11/day, not the 4 first recorded here - see below.)
+
+## Discovery is one serial walk, and it carries its day code (2026-09-06)
+
+The nightly PERM prober had recorded nothing since **Sun Aug 30, 9:46 AM ET**
+and every run said "ok". It anchored day codes to TODAY and serials to its
+last hit, and abandoned a day after two empty 50-number batches. On Aug 30 it
+walked into the Aug 28 overnight lull (serials 200,247 to 200,394 are all LCA
+and PWD), met two empties, and stopped; because the frontier only moved on a
+hit, every night after asked the same 100 serials, and from Sep 2 the 5-day
+window no longer contained the frontier's own day code. Seven runs printed
+"10 requests, 0 new cases recorded" and stamped freshness. ~2,500 PERM
+filings were missing before a human noticed. The PWD/LCA prober seeded its
+windows from PERM's recent rows, so it printed "discover: 0 requests" too.
+
+**Three measured facts about DOL's counter drive the design** (all in
+`scripts/lib_flag_serials.py`, pinned by `test_flag_serials.py`):
+
+- **One counter across every program.** A serial exists under exactly one
+  prefix, and DOL returns NOTHING for `G-100-26240-200300` when that serial is
+  an `I-200` (probed Sep 6). Existence is never implied; it is asked.
+- **Six digits, zero-padded.** `P-100-26161-003499`. The PWD backfill
+  formatted serials bare and asked for numbers DOL never issued, which is why
+  the post-wrap half of June 2026 could not be found by construction.
+- **It wraps at 1,000,000.** 999,997 on Jun 10 2026, then 000001. A day's
+  MIN/MAX read as (1, 999,997); the backfill walked from serial 1, burned its
+  4,500-request cap, and sat on day 26161 from Sep 3.
+
+`run_discovery` in `ingest_case_status_direct.py` is now a serial-major walk:
+the cursor is a `(day_code, serial)` pair in `perm_docs['discovery_frontier']`,
+advanced only by confirmed hits; each 10-serial span is asked for **all five
+busy prefixes at once** (G-100, G-200, I-200, P-100, I-203: ~70% of the
+counter) under the cursor's day code and then under each later code up to
+today; PERM hits are inserted here and P-/I- hits handed to the PWD module's
+`insert_hits`, so those tables' frontiers move WITH PERM's. G-200 is 22 to 30%
+of PERM filings and the old prober never asked for it. Two consecutive spans
+that no prefix claims are the edge. ~215 requests a night at steady state.
+Recovery: dispatch `case-status-direct.yml` with `mode=discover`,
+`discover_cap`, and `frontier=YYDDD:SERIAL`; the run records "partial" on
+its cap and resumes from the doc.
+
+The PWD prober's `day_windows` splits a day at any serial gap over 50,000,
+clamps every window to 20,000 with a `::warning::`, and pads candidates. Its
+daily in-pass discovery is gone (delegated to the walk); `--discover` and
+`--backfill` keep the day-window probe.
+
+## The health check measures progress now, not activity
+
+Every line in `check_ingest_health.py` used to answer "did the job run" and
+"did it exit 0", the two questions a deadlock passes. `lca-status` read
+"2026-09-06 ok" with the note "0 checked, 0 moved" over a table whose newest
+filing was Aug 27. Three changes, each pinned by `test_ingest_health.py`:
+
+- **Runs are keyed by filename AND mode.** Filename-only let Monday's clean
+  `--pending` row erase Sunday's failed `--full` row before the 6 AM cron
+  looked; the weekly job could fail every week and never be reported. The
+  workflow failure hooks record the mode (`--script "x.py --$MODE"`).
+- **`check_frontier`** judges the walk's own cursor (5 days; measured normal
+  lag 0 to 2, a Friday filing after a Monday holiday is 4). Not
+  `MAX(filing_date)`: a visitor looking up a fresh case inserts a fresh row
+  and keeps that number green with the prober dead.
+- **`check_discovery_yield`** fails when the last four walks inserted nothing.
+  Every walk now records its own `ingest_runs` row, including the nightly one.
+
+Also: a pass that checked 0 cases stamps no freshness (the LCA daily pass is
+0 every day; its weekly window pass stamps it with an 8-day budget);
+`record_ingest_failure.py` reads its row back and catches `SystemExit`,
+which is what a missing credential raises.
+
+## The Sunday PWD/LCA sweep is a rolling window, and never writes a no-op
+
+The weekly full pass walked all 405,566 rows and needed ~230 minutes against
+a 170-minute timeout, so it died at 65% every Sunday and, walking in
+case-number order, never reached the same newest ~100k LCA rows. It re-checks
+filings from the last 180 days (PWD) and 90 days (LCA) now, on the
+`(filing_date, case_number)` index. The `else` branch that stamped
+`last_checked_at` on every unchanged row (~300,000 UPDATEs a Sunday for 54
+transitions, each maintaining every index) is gone; the site reads the
+sweep's own record instead. Four duplicate indexes on `pwd_case_status` and
+one on `pwd_case_events` (an older naming scheme, created by nothing) were
+dropped.
+
+## Meta's crawler was 65% of all traffic, and pages were never the lever
+
+The Firewall Traffic tab on Sep 6: **Facebook, Inc. (AS32934), 553,800 of
+~852,000 requests in 24 hours**, one JA4 fingerprint, dozens of rotating
+`57.141.18.x` addresses, and only 72.6k of them honest
+(`meta-externalagent/1.1`); the rest wore browser user agents and ignored
+`robots.txt`. It spent the 2,000/day DOL lookup budget by 5 AM daily.
+Entity pages were **2.6%** of requests. Three rules, dashboard only:
+
+1. Deny AS 32934 on `/perm-case-status?case=` (link-preview agents exempt).
+2. Rate-limit AS 32934 **keyed on JA4** to 30/min, 429 (Meta AI may still
+   index the data pages; Adam's audience lives on WhatsApp and Facebook).
+3. Rate-limit `/api/*` to 60/min per IP, 429.
+
+Function-log rate fell from ~17 req/s to ~0.35 req/s within two hours. The
+managed "Bot Protection" and "AI Bots" toggles stay in **Log**: enforcing
+them would challenge the nightly `/api/revalidate-*` POSTs and the AI
+crawlers this site wants. **Vercel Hobby is unreachable regardless of pages:**
+its 1M edge-requests/month cap counts cached hits and pauses the project when
+exceeded; humans alone are ~2M. The floor is Pro at ~$20 flat once the
+crawler and the proxy are fixed. Vercel Support confirmed non-commercial use.
+
+## Corrections to earlier claims in this file, measured 2026-09-06
+
+- "A quarterly file only carries its own quarter's determinations" is wrong
+  for PW and LCA: the Qn file is **cumulative for the fiscal year**
+  (FY2026_Q3 holds 147,226 PW rows against 249,486 for all of FY2025).
+- `/signup` was fully dynamic despite `revalidate = 86400`: the (auth)
+  layout's cookie read wins. It now carries `force-static` beside the daily
+  window, the shape `/login` already had.
+- Sentry Session Replay was removed Aug 29; the privacy policy said otherwise
+  until Sep 6, and omitted Ahrefs Web Analytics and the Senja widget.
+- "Ten leaked P-/I- rows deleted 2026-09-02": two `P-100-` rows survived
+  (written between the guard commit and its deployment) and were counted as a
+  2-case PERM review stage; deleted Sep 6. `G-200`, `G-300` and `G-400` are
+  real PERM office codes, not leaks.
+- The disclosure workflow wrote ~455,000 documents into Convex tables nothing
+  reads (`permCases`, `permEntities`, `permWageStats`); that is what tripped
+  the Convex plan on Aug 25. The steps are gone and the tables are empty.
+  `uscisI140:storeStats` stays: two tool pages read `api.uscisI140.getLatest`.
+- `AGE_DAYS` (stage medians) is now filing date to TODAY on both sides. It
+  was filing date to `last_checked_at`, a column the sweep never wrote (the
+  mirror's July stamp, or NULL for 12,187 rows).
+- The case page's "Status seen" date now comes from
+  `perm_docs['sweep_coverage']` (the sweep's own finish date) via
+  `src/lib/turso/sweepCoverage.ts`; it used to quote the mirror's stamp and
+  told pending beneficiaries their case "has not been looked at since" July.
+- The test fixture in `test_flag_disclosure.py` lacked the two attorney
+  columns the parser has emitted since Sep 4, so CI was red from **Thu Sep 3,
+  10:44 PM ET** and vitest had not run in CI for 25 pushes. Green again on
+  `22b42a8b`.

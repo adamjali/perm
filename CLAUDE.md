@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-04
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-07
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **332 files / 6,444 tests across 4 vitest
@@ -122,7 +122,7 @@ dependencies.**
 | dataset | source | cadence |
 |---|---|---|
 | per-case status | **DOL** `flag.dol.gov`, batch API | full daily 04:10 ET, pending 15:40 ET |
-| new filings | **DOL**, discovered: nightly serial prober + visitor lookups | with the full sweep; lookups instant |
+| new filings, ALL programs | **DOL**, discovered: one nightly serial walk (`--discover`, cursor in `perm_docs.discovery_frontier`) that asks G-100/G-200/I-200/P-100/I-203 per span, plus visitor lookups | with the full sweep; lookups instant. Health fails if the cursor stops moving for 5 days |
 | live remainder (`perm_live_recent`) | derived: live cases newer than the last disclosure file | rebuilt daily post-sweep |
 | decided cases | **DOL** quarterly disclosure files | quarterly + monthly check |
 | processing times | **DOL** FLAG | daily |
@@ -130,9 +130,9 @@ dependencies.**
 | I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly |
 | entities, daily decisions | derived from our own corpus | with each quarterly |
 | RFI funnel | permtrack aggregate **frozen**, plus our own observations | frozen half never re-read |
-| prevailing wage requests, live (`P-100-`) | **DOL** batch API, same counter as PERM | daily pending sweep + discovery; weekly full; backfill self-chains |
+| prevailing wage requests, live (`P-100-`) | **DOL** batch API, same counter as PERM | daily pending sweep; discovery via the unified walk; weekly rolling 180-day re-check; backfill self-chains |
 | prevailing wage DETERMINATIONS (the wage) | **DOL** quarterly PW disclosure files, FY2024-FY2026 | monthly on the 10th, `--fy` for history |
-| H-1B LCAs, live (`I-200-`, `I-203-`) | **DOL** batch API, same counter | daily pending sweep + discovery; weekly full |
+| H-1B LCAs, live (`I-200-`, `I-203-`) | **DOL** batch API, same counter | daily pending sweep (0 LCAs pend); discovery via the unified walk; weekly rolling 90-day re-check |
 | H-1B LCAs, decided (the wage offered) | **DOL** quarterly LCA disclosure files | monthly on the 10th |
 
 **The corpus grows itself (2026-08-28):** a case-number lookup that misses
