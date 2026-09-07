@@ -121,13 +121,13 @@ dependencies.**
 
 | dataset | source | cadence |
 |---|---|---|
-| per-case status | **DOL** `flag.dol.gov`, batch API | full daily 04:10 ET, pending 15:40 ET |
+| per-case status | **DOL** `flag.dol.gov`, batch API | full daily 4:10 AM ET, pending 3:40 PM ET, **fired by Vercel cron since Sep 7 2026** (GitHub's own `schedule` ran 2 to 7.5 hours late) |
 | new filings, ALL programs | **DOL**, discovered: one nightly serial walk (`--discover`, cursor in `perm_docs.discovery_frontier`) that asks G-100/G-200/I-200/P-100/I-203 per span, plus visitor lookups | with the full sweep; lookups instant. Health fails if the cursor stops moving for 5 days |
 | live remainder (`perm_live_recent`) | derived: live cases newer than the last disclosure file | rebuilt daily post-sweep |
 | decided cases | **DOL** quarterly disclosure files | quarterly + monthly check |
 | processing times | **DOL** FLAG | daily |
 | visa bulletin | **State Dept** (84 months, 2019-10 →) | monthly, one human minute |
-| I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly |
+| I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly; GitHub tries first, **Adam's Mac retries the day after** when `www.uscis.gov` 403s the datacenter runner |
 | entities, daily decisions | derived from our own corpus | with each quarterly |
 | RFI funnel | permtrack aggregate **frozen**, plus our own observations | frozen half never re-read |
 | prevailing wage requests, live (`P-100-`) | **DOL** batch API, same counter as PERM | daily pending sweep; discovery via the unified walk; weekly rolling 180-day re-check; backfill self-chains |
@@ -145,3 +145,15 @@ The permtrack mirror survives as a dispatchable fallback with **no schedule**,
 because two writers with different notions of truth pointed at one table is a
 flip-flop, not redundancy. Detail: [`v2/CLAUDE.md`](v2/CLAUDE.md), sections
 "Per-case status comes from DOL directly" and "The RFI funnel is BLENDED".
+
+## Two clocks and two networks run the ingests (2026-09-07)
+
+GitHub's `schedule` trigger fired every cron here hours late for nine days
+running, so the six daily and weekly jobs are dispatched by **Vercel cron**
+through `/api/cron/dispatch/<job>` (`workflow_dispatch` with a fine-grained
+token). `ingest-health` keeps a late GitHub schedule as a second, independent
+clock. And because `www.uscis.gov` 403s GitHub's runners on some days, two
+**launchd agents on Adam's Mac** retry the I-485 and I-140 fetches the day
+after GitHub's attempt. Schedules, secrets, proofs and reversal:
+[`v2/CLAUDE.md`](v2/CLAUDE.md), sections "Vercel's clock dispatches the
+GitHub jobs" and "The residential runner".

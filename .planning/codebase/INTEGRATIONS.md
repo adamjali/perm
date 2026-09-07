@@ -291,6 +291,18 @@
 | `rate-limit-cleanup` | Hourly :15 | `scheduledJobs.cleanupRateLimits` | Purge rate limit records > 24h |
 | `conversation-ttl-cleanup` | Daily 3 AM UTC | `scheduledJobs.cleanupExpiredConversations` | Delete AI conversations > 90 days (SOC 2) |
 
+### Vercel cron dispatches the GitHub ingest workflows (added 2026-09-07)
+
+Six entries in `v2/vercel.json` call `/api/cron/dispatch/<job>`
+(`src/app/api/cron/dispatch/[job]/route.ts`, job table in `../jobs.ts`). The
+route checks `Authorization: Bearer <CRON_SECRET>`, refuses unknown jobs, skips a
+workflow with a run inside the last 20 minutes, and fires `workflow_dispatch` on
+`adamjali/perm` with `GITHUB_DISPATCH_TOKEN`. Reason: GitHub's `schedule` fired
+2 to 7.5 hours late every day. The data workflows carry no `schedule:` any more;
+`ingest-health.yml` keeps one as a second clock. Two launchd agents on Adam's Mac
+(`v2/scripts/launchd/`) retry the USCIS fetches the day after GitHub's attempt.
+Detail: `v2/CLAUDE.md`.
+
 ## CI/CD & Deployment
 
 ### Vercel (Frontend)
@@ -315,6 +327,18 @@
 - **Dependabot:** Automated dependency updates
 
 ## Environment Variables Inventory
+
+### Added after this snapshot (2026-08-28 to 2026-09-07; verify in Vercel before relying on the lists below)
+
+| Variable | Where | Purpose |
+|---|---|---|
+| `CRON_SECRET` | Vercel production | Vercel adds it as a Bearer header to every cron invocation; `/api/cron/dispatch/[job]` refuses anything else |
+| `GITHUB_DISPATCH_TOKEN` | Vercel production (sensitive) | fine-grained PAT `permtracker-cron-dispatch`, repo `adamjali/perm` only, Actions read/write; a missing value answers 500 "GITHUB_DISPATCH_TOKEN is not set" |
+| `REVALIDATE_SECRET` | Vercel production + GitHub Actions | guards `POST /api/revalidate-live-employers` and `/api/revalidate-dol` |
+| `TURSO_RW_AUTH_TOKEN` | Vercel production | the ONLY write credential the web app holds; the default `TURSO_AUTH_TOKEN` in production is read-only on purpose |
+
+Vercel binds env at deploy time: a new variable needs a build carrying a change
+under `src/`, because a docs-only redeploy is skipped by `ignoreCommand`.
 
 ### Required (App Won't Function Without These)
 

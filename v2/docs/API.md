@@ -2535,6 +2535,12 @@ Custom drag-drop case ordering with filter snapshot persistence.
 
 ## Scheduled Jobs
 
+> The jobs below are Convex crons (deadline reminders, cleanup, the weekly
+> digest). The federal-data ingests are NOT Convex crons: they are GitHub
+> Actions workflows dispatched by Vercel cron through
+> `/api/cron/dispatch/<job>` since 2026-09-07, plus two launchd agents on
+> Adam's Mac for the USCIS fetches. See `v2/CLAUDE.md`.
+
 Automated background tasks running on Convex cron scheduler.
 
 **Module Location:** `convex/crons.ts` (scheduling) + `convex/scheduledJobs.ts` (handlers)

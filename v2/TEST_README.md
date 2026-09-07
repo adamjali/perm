@@ -393,3 +393,32 @@ The PERM Engine is a comprehensive TypeScript library for PERM deadline calculat
 ---
 
 *Last updated: 2026-01-16*
+
+## Python ingest tests (CI, added to this doc 2026-09-07)
+
+The ingest scripts have no typechecker; pyflakes plus these self-contained
+tests are their gate, and `.github/workflows/test.yml` runs every one of them.
+Run any of them locally with the miniconda python (the system `python3` is
+3.9 and lacks the libraries):
+
+```bash
+/usr/local/Caskroom/miniconda/base/bin/python3 scripts/test_load_guard.py
+```
+
+| file | pins |
+|---|---|
+| `test_case_status_direct.py` | the DOL batch endpoint's 50-number ceiling and the reconcile-vs-event rule |
+| `test_check_invariants.py` | the invariant checks the health workflow runs |
+| `test_entity_identity.py` | entity merge keys and slug rules against the TypeScript fixtures |
+| `test_flag_disclosure.py` | the PW and LCA disclosure parsers, including the two attorney columns |
+| `test_flag_serials.py` | one serial counter across programs, six digits, wraps at 1,000,000 |
+| `test_ingest_health.py` | runs keyed by mode, the frontier and yield checks, backfill and demand alarms |
+| `test_ingest_resilience.py` | retry and backoff in the fetch helpers |
+| `test_live_recent.py` | the two-sided diff normaliser (`live_norm`) |
+| `test_load_guard.py` | load fingerprints, sanity findings and drift refusal (35 checks) |
+| `test_observed_decisions.py` | the decision-activity filters |
+| `test_pwd_status.py` | the PWD and LCA prober's day windows, insert paths and progress record |
+| `test_sticky_slugs.py` | slugs survive rebuilds, newcomers take the first free suffix, vanished slugs get aliases (17 checks) |
+| `test_sweep_runs.py` | the sweep's own run records |
+| `test_turso_load.py` | the PERM loader and its fingerprint gate |
+| `test_visa_bulletin.py` | the bulletin parser, column-by-name and the `C`/`U` cells |
