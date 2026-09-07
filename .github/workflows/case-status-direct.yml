@@ -44,7 +44,7 @@ on:
         type: choice
         options: [pending, full, discover]
       discover_cap:
-        description: "discover only: request cap for this walk (400 is ~2 days of serials; 2000 catches up a 9-day gap)"
+        description: "discover only: request cap for this walk. ~1.4 s each, so keep it under ~4,000 for the 100m window; 400 is ~2 days of serials"
         required: false
         default: "400"
       frontier:
@@ -98,7 +98,10 @@ jobs:
             # The serial walk on its own: recovers a gap, or re-runs the
             # night's discovery. It records its own ingest_runs row and
             # refreshes the census when it inserted anything.
-            timeout 60m python3 scripts/ingest_case_status_direct.py --discover \
+            # Measured Sep 7 2026: ~1.4 s per request (0.35 s pace + DOL's
+            # latency), so 60m held ~2,400 requests and a 2,500 cap was killed
+            # 124 with its cursor safe. 100m under the 120m job cap.
+            timeout 100m python3 scripts/ingest_case_status_direct.py --discover \
               --discover-cap "${CAP_IN:-400}" ${FRONTIER_IN:+--frontier "$FRONTIER_IN"}
             python3 scripts/build_entity_detail.py --live-recent-only || true
             exit 0
