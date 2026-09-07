@@ -288,6 +288,10 @@ jobs:
           # 2. Everything else the public pages read: entities, wage cells and
           #    stats, the disclosure-stats document.
           python3 scripts/turso_migrate_public.py "${RUNNER_TEMP}"
+          # The loader re-slugs perm_entities with its own slugifier; the
+          # alias table remembers slugs from another one. Reconcile or the
+          # two drift: 62 aliases pointed live pages at 404s on Sep 6 2026.
+          python3 scripts/reconcile_entity_aliases.py
           # 3. Derived from the freshly-loaded perm_cases (each reads it back
           #    out of Turso, so they run only after the two loads above).
           python3 scripts/build_entity_detail.py

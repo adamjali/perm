@@ -171,7 +171,20 @@ jobs:
         working-directory: v2
         run: python3 scripts/test_turso_load.py
 
+      - name: Serial arithmetic and data-invariant contracts
+        if: ${{ !cancelled() }}
+        working-directory: v2
+        run: |
+          python3 scripts/test_flag_serials.py
+          python3 scripts/test_check_invariants.py
+
       - name: Run full test suite
+        # ALWAYS RUNS, even when a Python contract above failed. From Sep 3 to
+        # Sep 6 2026 one stale Python fixture failed first and this step never
+        # executed, so vitest did not run in CI for 25 pushes while the badge
+        # said only "tests failed". A failed step still fails the job; this
+        # only stops one gate from hiding another.
+        if: ${{ !cancelled() }}
         # --retry=2 re-runs only individual tests that fail, a safety net against
         # rare CI-environment hiccups. The suite is deterministic (per-file
         # isolation for mock-stateful unit + convex tests, scheduler noise

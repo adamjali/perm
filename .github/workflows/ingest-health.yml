@@ -56,6 +56,22 @@ jobs:
             "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
           python3 scripts/check_ingest_health.py
 
+      # The health check asks whether the jobs ran and moved. This asks whether
+      # the data they wrote has the shape the code assumes: no foreign prefixes
+      # in the PERM tables, every new status in a known vocabulary, filing
+      # dates that agree with the case number, a consistent alias table, no
+      # duplicate indexes. Each of those was broken and green on Sep 6 2026.
+      - name: Check the data's invariants
+        if: ${{ !cancelled() }}
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          python3 scripts/check_invariants.py
+
       - name: Remove credentials
         if: always()
         working-directory: v2
