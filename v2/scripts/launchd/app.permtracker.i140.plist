@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- The residential backstop for the two I-140 fetches from www.uscis.gov
+       (quarterly counts, then trends). GitHub's Federal data ingest tries on
+       the 8th of Jan/Apr/Jul/Oct at 06:00 UTC and on the 20th of every month
+       at 07:00 UTC, both best-effort; this Mac tries the following days.
+       Installed by scripts/launchd/install.sh, which fills in __REPO__. -->
+  <key>Label</key><string>app.permtracker.i140</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/v2/scripts/residential_job.sh</string>
+    <string>i140</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Month</key><integer>1</integer><key>Day</key><integer>9</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Month</key><integer>1</integer><key>Day</key><integer>11</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Month</key><integer>4</integer><key>Day</key><integer>9</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Month</key><integer>4</integer><key>Day</key><integer>11</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Month</key><integer>7</integer><key>Day</key><integer>9</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Month</key><integer>7</integer><key>Day</key><integer>11</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Month</key><integer>10</integer><key>Day</key><integer>9</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Month</key><integer>10</integer><key>Day</key><integer>11</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>45</integer></dict>
+    <dict><key>Day</key><integer>21</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>45</integer></dict>
+  </array>
+  <key>StandardOutPath</key><string>__HOME__/Library/Logs/permtracker/launchd-i140.out</string>
+  <key>StandardErrorPath</key><string>__HOME__/Library/Logs/permtracker/launchd-i140.err</string>
+  <key>ProcessType</key><string>Background</string>
+  <key>ExitTimeOut</key><integer>1500</integer>
+  <key>RunAtLoad</key><false/>
+</dict>
+</plist>

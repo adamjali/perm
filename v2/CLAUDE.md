@@ -2978,3 +2978,43 @@ The PWD daily pass carries its resumer step on the dispatched run too
 Prove a dispatch with `npx vercel crons ls` and a manual invocation, then read
 `gh run list --event workflow_dispatch`. A green Vercel cron log line is not a
 run; the run is.
+
+## The residential runner: www.uscis.gov from this Mac (2026-09-07)
+
+`www.uscis.gov` serves residential addresses and 403s GitHub's datacenter
+runners on some days (four refusals with backoff on Sep 7). Three fetches
+depend on it: the I-485 inventory (monthly), the I-140 quarterly counts and
+the I-140 trends (both best-effort in the Federal data ingest). Nothing else
+on the site treats datacenter and residential addresses differently: DOL's
+disclosure files are the opposite case (they 403 this laptop, not GitHub),
+`flag.dol.gov` serves both, and `egov.uscis.gov` and `travel.state.gov`
+challenge every script from any address, so only a browser clears them.
+
+`scripts/residential_job.sh <i485|i140>` is the runner, driven by two launchd
+agents (`scripts/launchd/*.plist`, installed by `scripts/launchd/install.sh`,
+which fills the repo path and reloads them; safe to re-run). GitHub keeps
+trying first; the Mac tries the day after:
+
+| job | GitHub tries | this Mac tries (local time) |
+|---|---|---|
+| `i485` | 04:00 ET, 6th to 10th | 10:30, 6th to 10th |
+| `i140` (counts, Convex store, trends) | 8th of Jan/Apr/Jul/Oct, 20th monthly | 10:45 on the 9th and 11th of those months, and the 21st monthly |
+
+Three levels of retry: the scripts' own four attempts with backoff, five
+calendar days a month from each side, and launchd running a job that fell
+due while the Mac slept as soon as it wakes. Failures are recorded through
+`record_ingest_failure.py` under the bare script name, so the health check
+sees them and a later clean run from either side supersedes them; a whole
+month lost trips the dataset's own freshness budget (45 days for I-485, 135
+for the I-140 pair). Logs are one file per run in
+`~/Library/Logs/permtracker/`, pruned at 60 days by the wrapper; a lock
+directory keeps one run per job. The wrapper fast-forwards `main` first so
+the laptop runs the same code as the runner, and names every path because
+launchd hands a job almost no PATH (node lives under nvm here).
+
+Proven Sep 7, 10:20 AM: both agents kicked through `launchctl kickstart`
+finished rc=0, I-485 fetched four months from USCIS, the I-140 store was
+correctly refused as unchanged, trends verified 66 rows, and the health
+check read every run clean. Needs the Mac logged in and not shut down;
+optional and Adam's to run, a scheduled wake so a closed lid does not delay
+a run: `sudo pmset repeat wakeorpoweron MTWRFSU 10:25:00`.
