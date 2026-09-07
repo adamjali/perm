@@ -2889,3 +2889,32 @@ negative operators ("does not start with" came out as "Starts with"; last night
 "does not contain" came out as "Contains"): read the generated condition and
 fix the operator through its dropdown by reference. And the page drops any text
 typed in the same automation batch as its own load; type in a later step.
+
+## GitHub's scheduler runs this repo's crons hours late, every day (measured 2026-09-07)
+
+Every "04:10 ET" and "06:00 ET" in this file is the DECLARED time. The
+measured time is two to seven and a half hours later, on every one of the
+last nine days:
+
+| workflow | cron (UTC) | measured delay, Aug 29 to Sep 6 |
+|---|---|---|
+| processing-times-ingest | 07:00 | +239 to +452 min |
+| case-status-direct, daily full | 08:10 | +219 to +277 min |
+| case-status-direct, pending | 19:40 | +118 to +137 min |
+| pwd-status-direct, daily | 09:40 | +140 to +190 min |
+| ingest-health | 10:00 | +196 to +444 min |
+
+So the "4:10 AM" sweep has been finishing around 9 to 10 AM ET, and the
+health check reads it around 9:30 to 10:30 AM, and on Mon Sep 7 at 8:45 AM
+nothing scheduled had fired at all yet. GitHub documents that `schedule`
+"can be delayed during periods of high loads" and that delayed runs may be
+dropped; it does not document delays of this size. The weekly CodeQL cron on
+the same repo fired 3 minutes late the same morning, so it is per-workflow
+queueing, not the repo being disabled (every workflow reads `active`).
+
+Consequences: any freshness budget or "checked today" claim must allow for
+a run landing in the afternoon; a dispatch by hand is the reliable way to get
+a sweep at a chosen time; and the fix, if the delay matters, is to trigger
+`workflow_dispatch` from a precise external clock (a Vercel cron job hitting
+a small route that calls the GitHub API with a fine-grained token scoped to
+`actions: write` on this repo) rather than trusting `schedule`.
