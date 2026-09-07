@@ -2871,7 +2871,7 @@ skips every rule after it, managed ones included**, so order is the design:
 | 7 | Bypass user agents WhatsApp, facebookexternalhit, Slackbot, Discordbot, TelegramBot, SkypeUriPreview | link previews the directory does not verify; iMessage claims facebookexternalhit from Apple addresses, so it is unverified too |
 | 8 | Bypass `/feed.xml`, `/llms.txt`, `/robots.txt`, `/sitemap.xml`, `/sitemaps/*` | cheap static files read by unverified tools |
 | 9 | Bypass `/api/revalidate-*` when `x-revalidate-secret` exists | the nightly POSTs from GitHub Actions |
-| 10 | Bypass `/api/cron/*` when an `authorization` header exists | Vercel's own cron invocations of the dispatcher (added 9:05 AM Sep 7) |
+| 10 | Bypass `/api/cron/*` when the user agent contains `vercel-cron` | Vercel's own cron invocations of the dispatcher. **A condition on the `authorization` header never matched** (measured 9:08 AM Sep 7: the secret-bearing request was still challenged), while the same request with Vercel's documented `vercel-cron/1.0` user agent passed. Spoofable, and harmless: the route itself demands `CRON_SECRET` |
 
 AI Bots stays on **Log**. `scripts/probe_firewall.sh` proves all of it from
 the laptop in one run and is the thing to re-run after any change.
@@ -2950,9 +2950,12 @@ for his password to mint one): repository access limited to `adamjali/perm`,
 permission Actions: read and write, nothing else. Until it exists the route
 answers **500 "GITHUB_DISPATCH_TOKEN is not set"** and nothing is dispatched.
 **Vercel binds env at deploy time**, so adding the token needs a redeploy
-before the route can see it. The Firewall bypasses `/api/cron/*` when an
-authorization header is present (rule 10), because Bot Protection would
-otherwise challenge Vercel's own cron request.
+before the route can see it. The Firewall bypasses `/api/cron/*` for the
+`vercel-cron/1.0` user agent every cron invocation carries (rule 10); a
+rule keyed on the `authorization` header was tried first and never
+matched, so the WAF evidently cannot see that header. Measured, not
+assumed: with the secret and a curl user agent the route was challenged,
+with the secret and `vercel-cron/1.0` it answered.
 
 **GitHub's `schedule:` blocks stay in the four workflows as a fallback until
 a Vercel-driven dispatch has been seen to run.** Then remove them, or the
