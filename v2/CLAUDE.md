@@ -2871,6 +2871,7 @@ skips every rule after it, managed ones included**, so order is the design:
 | 7 | Bypass user agents WhatsApp, facebookexternalhit, Slackbot, Discordbot, TelegramBot, SkypeUriPreview | link previews the directory does not verify; iMessage claims facebookexternalhit from Apple addresses, so it is unverified too |
 | 8 | Bypass `/feed.xml`, `/llms.txt`, `/robots.txt`, `/sitemap.xml`, `/sitemaps/*` | cheap static files read by unverified tools |
 | 9 | Bypass `/api/revalidate-*` when `x-revalidate-secret` exists | the nightly POSTs from GitHub Actions |
+| 10 | Bypass `/api/cron/*` when an `authorization` header exists | Vercel's own cron invocations of the dispatcher (added 9:05 AM Sep 7) |
 
 AI Bots stays on **Log**. `scripts/probe_firewall.sh` proves all of it from
 the laptop in one run and is the thing to re-run after any change.
@@ -2918,3 +2919,49 @@ a sweep at a chosen time; and the fix, if the delay matters, is to trigger
 `workflow_dispatch` from a precise external clock (a Vercel cron job hitting
 a small route that calls the GitHub API with a fine-grained token scoped to
 `actions: write` on this repo) rather than trusting `schedule`.
+
+## Vercel's clock dispatches the GitHub jobs (2026-09-07)
+
+Because GitHub's `schedule` fired every cron here hours late (previous
+section), the daily ingest jobs are now Vercel cron jobs. `vercel.json`
+carries six entries pointing at `/api/cron/dispatch/<job>`; the route
+(`src/app/api/cron/dispatch/[job]/route.ts`, table in `../jobs.ts`)
+verifies the `Authorization: Bearer <CRON_SECRET>` header Vercel adds to
+every cron invocation, refuses unknown jobs, skips a workflow that already
+has a run inside 20 minutes (Vercel documents that cron delivery can
+duplicate), and fires `workflow_dispatch` on `adamjali/perm` with the job's
+inputs. Pro invokes within the minute; the test next to the route holds the
+job table and `vercel.json` together so a job cannot exist in one and not
+the other.
+
+| job | workflow, inputs | UTC |
+|---|---|---|
+| `processing-times` | processing-times-ingest.yml | 07:00 daily |
+| `case-status-full` | case-status-direct.yml, mode=full | 08:10 daily |
+| `pwd-daily` | pwd-status-direct.yml, mode=pending | 09:40 daily |
+| `ingest-health` | ingest-health.yml | 10:00 daily |
+| `pwd-weekly-full` | pwd-status-direct.yml, mode=full | 10:40 Sundays |
+| `case-status-pending` | case-status-direct.yml, mode=pending | 19:40 daily |
+
+**Two secrets, two owners.** `CRON_SECRET` was generated here and added to
+the production environment on Sep 7. `GITHUB_DISPATCH_TOKEN` is a
+fine-grained personal access token that only Adam can create (GitHub asks
+for his password to mint one): repository access limited to `adamjali/perm`,
+permission Actions: read and write, nothing else. Until it exists the route
+answers **500 "GITHUB_DISPATCH_TOKEN is not set"** and nothing is dispatched.
+**Vercel binds env at deploy time**, so adding the token needs a redeploy
+before the route can see it. The Firewall bypasses `/api/cron/*` when an
+authorization header is present (rule 10), because Bot Protection would
+otherwise challenge Vercel's own cron request.
+
+**GitHub's `schedule:` blocks stay in the four workflows as a fallback until
+a Vercel-driven dispatch has been seen to run.** Then remove them, or the
+sweep runs twice a day: once on time from Vercel, once hours later from
+GitHub, and the workflow's concurrency group queues the second rather than
+dropping it. The route's 20-minute guard only covers Vercel's own duplicates.
+The PWD daily pass carries its resumer step on the dispatched run too
+(`inputs.mode == 'pending'`), not only on the `schedule` event.
+
+Prove a dispatch with `npx vercel crons ls` and a manual invocation, then read
+`gh run list --event workflow_dispatch`. A green Vercel cron log line is not a
+run; the run is.
