@@ -325,7 +325,8 @@ export function FilterableStatTable<T>({
           </label>
 
           {facets.map((f) => (
-            <label key={f.key} className="flex min-h-[44px] items-center gap-2 border-2 border-border bg-card px-3 shadow-hard-sm focus-within:ring-2 focus-within:ring-primary">
+            <Fragment key={f.key}>{" "}
+            <label className="flex min-h-[44px] items-center gap-2 border-2 border-border bg-card px-3 shadow-hard-sm focus-within:ring-2 focus-within:ring-primary">
               <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {f.label}
               </span>{" "}
@@ -348,6 +349,7 @@ export function FilterableStatTable<T>({
                 ))}
               </select>
             </label>
+            </Fragment>
           ))}
 
           {" "}

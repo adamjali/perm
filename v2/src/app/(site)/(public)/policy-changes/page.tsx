@@ -21,7 +21,7 @@ import { listPolicyNotices, type PolicyNotice } from "@/lib/turso/policyNotices"
 
 const TITLE = "Immigration Policy Changes on the Record";
 const DESCRIPTION =
-  "Rules, proposed rules and notices from USCIS, DHS, State and DOL that touch PERM, prevailing wages, H-1B, I-140, adjustment of status and the visa bulletin, read from the Federal Register and linked to it.";
+  "Every Federal Register rule, proposed rule and notice from USCIS, DHS, State and DOL that touches PERM, wages, H-1B, the I-140 or the I-485, linked.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,

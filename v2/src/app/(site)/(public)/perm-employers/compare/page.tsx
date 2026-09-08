@@ -28,7 +28,7 @@ import { entityFacets, entityPending, resolveEntity, type EntityFacets, type Ent
 
 const TITLE = "Compare Two Employers";
 const DESCRIPTION =
-  "Two PERM sponsors side by side from DOL's own files: filings, certifications and denials with their interval, median days, median wage, pending cases now, and the occupations and states each files for.";
+  "Two PERM sponsors side by side, from DOL's files: filings, approval rate, median days and wage, and the occupations and states each files for.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
