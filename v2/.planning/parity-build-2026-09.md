@@ -7,9 +7,9 @@ docs not live GROUP BYs, every ingest gets fingerprint + health line + budget,
 no silent failures, no crowding, internal links both ways, SEO kit per page.
 
 ## Batches (tick as committed)
-- [ ] 1 Rail: CTA under Overview, 40px rows, sticky only when it fits; drawer re-checked
-- [ ] 2 Sign-up ~52/48, wider form; About + Contact full width two-column
-- [ ] 3 Bulletin: this-month table with deltas; EB-5 set-aside rows in ingest; EB-5 in tools
+- [x] 1 Rail: CTA under Overview, 40px rows, sticky only when it fits; drawer re-checked
+- [x] 2 Sign-up ~52/48, wider form; About + Contact full width two-column
+- [x] 3 Bulletin (Aug+Sep 2026 set-asides need a human-saved page): this-month table with deltas; EB-5 set-aside rows in ingest; EB-5 in tools
 - [ ] 4 LCA salary explorer (facets, percentiles from nightly docs) + compare your offer
 - [ ] 5 Employer facets (state, active 12mo, industry/NAICS) + side-by-side compare
 - [ ] 6 Supply-scenario calculator + Table V ingest + EB limit history fact
