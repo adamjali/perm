@@ -51,6 +51,67 @@ function cutoffOf(b: BulletinMonth | undefined, chart: ChartKind, category: stri
   return parseCutoff(b[chart]?.[category]?.[country]);
 }
 
+/** The name of a category as the bulletin prints it, for every code the archive holds. */
+export const CATEGORY_LABEL: Record<string, string> = {
+  EB1: "EB-1 priority workers",
+  EB2: "EB-2 advanced degree and NIW",
+  EB3: "EB-3 skilled and professional",
+  EW3: "EB-3 other workers",
+  EB4: "EB-4 special immigrants",
+  EB5: "EB-5 unreserved",
+  EB5R: "EB-5 rural set-aside",
+  EB5HU: "EB-5 high-unemployment set-aside",
+  EB5I: "EB-5 infrastructure set-aside",
+};
+
+export const COUNTRY_LABEL: Record<CountryKey, string> = {
+  worldwide: "All other countries",
+  china: "China",
+  india: "India",
+  mexico: "Mexico",
+  philippines: "Philippines",
+};
+
+const MONTH_NAMES = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
+] as const;
+
+/** "2026-09" -> "September 2026". A value outside 1..12 prints as a defect. */
+export function bulletinMonthLabel(ym: string): string {
+  const n = Number(ym.slice(5, 7));
+  return `${MONTH_NAMES[n - 1] ?? `month ${n}`} ${ym.slice(0, 4)}`;
+}
+
+/** A cutoff as a reader says it: "Jun 1, 2013", "Current", "Unavailable". */
+export function cutoffLabel(c: Cutoff | null): string {
+  if (!c) return "not listed";
+  if (c.kind === "current") return "Current";
+  if (c.kind === "unavailable") return "Unavailable";
+  const [y, m, d] = c.iso.split("-");
+  return `${(MONTH_NAMES[Number(m) - 1] ?? "").slice(0, 3)} ${Number(d)}, ${y}`;
+}
+
+/** What a move means in words, with the signed day count where there is one. */
+export function moveLabel(kind: MoveKind, movedDays: number | null): string {
+  switch (kind) {
+    case "advanced": return `+${movedDays} days`;
+    case "retrogressed": return `${movedDays} days`;
+    case "held": return "unchanged";
+    case "opened": return "reopened";
+    case "shut": return "became unavailable";
+    case "current": return "current";
+    case "went-current": return "became current";
+    case "retrogressed-from-current": return "a cutoff returned";
+    case "unavailable": return "unavailable";
+    default: return "";
+  }
+}
+
+export function classifyMove(from: Cutoff | null, to: Cutoff | null): { kind: MoveKind; movedDays: number | null } {
+  return classify(from, to);
+}
+
 function classify(from: Cutoff | null, to: Cutoff | null): { kind: MoveKind; movedDays: number | null } {
   if (!from || !to) return { kind: "unknown", movedDays: null };
   if (from.kind === "date" && to.kind === "date") {

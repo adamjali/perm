@@ -63,10 +63,25 @@ def main() -> int:
           f"got {vb.month_from_page(page)}")
 
     parsed = vb.parse_bulletin(page)
+
+    # The three EB-5 set-aside rows (added 2026-09-07). Both charts print the
+
+    # label differently ("5th Set Aside: Rural (20%, ...)" vs "5th Set Aside:
+
+    # (Rural: NR, RR - 20%)"), so both tables must resolve all three.
+
+    for chart in ("finalAction", "datesForFiling"):
+
+        for code in ("EB5R", "EB5HU", "EB5I"):
+
+            check(f"{chart} carries {code}", code in (parsed or {}).get(chart, {}), "set-aside row not parsed")
+
+    check("nine categories per chart from May 2022 on", vb.expected_categories("2022-05") == 9 and vb.expected_categories("2022-04") == 6)
+
     check("both charts parsed", bool(parsed))
     if parsed:
         fa = parsed["finalAction"]
-        check("all six categories", sorted(fa) == ["EB1", "EB2", "EB3", "EB4", "EB5", "EW3"],
+        check("all nine categories", sorted(fa) == ["EB1", "EB2", "EB3", "EB4", "EB5", "EB5HU", "EB5I", "EB5R", "EW3"],
               f"got {sorted(fa)}")
         check("every country column present",
               all(set(r) == {"worldwide", "china", "india", "mexico", "philippines"}
@@ -109,8 +124,8 @@ def main() -> int:
     check("the six-column layout parses at all", bool(old))
     if old:
         fa6 = old["finalAction"]
-        check("six-column: all six categories",
-              sorted(fa6) == ["EB1", "EB2", "EB3", "EB4", "EB5", "EW3"], str(sorted(fa6)))
+        check("six-column: all nine categories (Feb 2023 is after the 2022 split)",
+              sorted(fa6) == ["EB1", "EB2", "EB3", "EB4", "EB5", "EB5HU", "EB5I", "EB5R", "EW3"], str(sorted(fa6)))
         # The whole point: India from India's column, not El Salvador's.
         check("six-column: EB3 India is 15JUN12, not El Salvador's C",
               fa6["EB3"]["india"] == "15JUN12", fa6["EB3"]["india"])

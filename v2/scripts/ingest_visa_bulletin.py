@@ -165,7 +165,32 @@ CATEGORY_ROWS = [
     ("EW3", ["Other Workers"]),
     ("EB4", ["4th"]),
     ("EB5", ["5th Unreserved", "5th Non-Regional Center", "5th Regional Center"]),
+    # THE THREE SET-ASIDES (added 2026-09-07). The bulletin prints the label
+    # in two shapes, one per chart in the same month: the final-action table
+    # says "5th Set Aside: Rural (20%, including NR, RR)" and the
+    # dates-for-filing table "5th Set Aside: (Rural: NR, RR - 20%)". Both
+    # start with the phrase and the name, in that order, so both are listed;
+    # the hyphenated spelling appears in some 2022 months. These codes match
+    # USCIS's inventory workbook (EB5R, EB5HU, EB5I), which is what lets the
+    # I-485 tool pair a set-aside cutoff with its own inventory.
+    ("EB5R", ["5th Set Aside: Rural", "5th Set Aside: (Rural", "5th Set-Aside: Rural", "5th Set-Aside: (Rural"]),
+    ("EB5HU", ["5th Set Aside: High Unemployment", "5th Set Aside: (High Unemployment",
+               "5th Set-Aside: High Unemployment", "5th Set-Aside: (High Unemployment"]),
+    ("EB5I", ["5th Set Aside: Infrastructure", "5th Set Aside: (Infrastructure",
+              "5th Set-Aside: Infrastructure", "5th Set-Aside: (Infrastructure"]),
 ]
+
+# How many categories a complete parse of a given month yields. Six before the
+# EB-5 Reform and Integrity Act split the category (the May 2022 bulletin is
+# the first with set-aside rows), nine from then on. The backfill compares a
+# stored row's count with this rather than with a constant, so a parser that
+# learns a new row repairs its own history without re-fetching months that
+# were already complete for their era.
+SET_ASIDES_FROM = "2022-05"
+
+
+def expected_categories(month: str) -> int:
+    return 9 if month >= SET_ASIDES_FROM else 6
 
 # Column order is fixed across every bulletin, but is asserted rather than
 # assumed: a silently reordered column would swap India's cutoff for China's.
@@ -488,7 +513,7 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
         # missing from every pre-2022-05 bulletin because DOL had renamed the
         # row, a rank-only skip meant fixing the parser fixed nothing, and the
         # 18 short months would have sat there looking fine.
-        if current is not None and rank_of(current[0]) >= 2 and current[1] >= 6:
+        if current is not None and rank_of(current[0]) >= 2 and current[1] >= expected_categories(month):
             skipped += 1
             continue
         try:

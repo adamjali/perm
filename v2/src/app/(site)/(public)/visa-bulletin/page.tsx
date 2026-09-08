@@ -68,6 +68,9 @@ const CATEGORIES: readonly { key: string; label: string; i485: string }[] = [
   { key: "EW3", label: "EB-3 other workers", i485: "EW3" },
   { key: "EB4", label: "EB-4 special immigrants", i485: "EB4" },
   { key: "EB5", label: "EB-5 unreserved", i485: "EB5U" },
+  { key: "EB5R", label: "EB-5 rural set-aside", i485: "EB5R" },
+  { key: "EB5HU", label: "EB-5 high-unemployment set-aside", i485: "EB5HU" },
+  { key: "EB5I", label: "EB-5 infrastructure set-aside", i485: "EB5I" },
 ];
 
 const COUNTRY_LABEL: Record<CountryKey, string> = {
@@ -366,6 +369,7 @@ export default async function VisaBulletinPage() {
       <ToolPageFooter
         currentHref="/visa-bulletin"
         reading={[
+          { href: `/visa-bulletin/${last.bulletinMonth}`, label: `The ${monthLabel(last.bulletinMonth)} bulletin, every cutoff`, note: "both charts, all nine categories, five countries, and what each cell did since the month before" },
           { href: "/tools/priority-date-calculator", label: "Priority dates, every bulletin since 2019", note: "the month-by-month cutoffs both tables above are summarised from" },
           { href: "/tools/i485-queue-position", label: "I-485 queue position", note: "the inventory ahead of your own priority date, not just the cutoff" },
           { href: "/tools/green-card-timeline", label: "Green card timeline", note: "the whole road from PERM to adjustment, with the wait at each stage" },

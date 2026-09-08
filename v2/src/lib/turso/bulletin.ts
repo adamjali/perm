@@ -98,7 +98,7 @@ export function categoriesIn(bulletins: readonly BulletinMonth[]): string[] {
   // Bulletin order, not alphabetical: EB-1 through EB-5 then the other-worker
   // lines, which is how the State Department prints them and how a reader
   // looking for their own row will scan.
-  const ORDER = ["EB1", "EB2", "EB3", "EW3", "EB4", "EB5"];
+  const ORDER = ["EB1", "EB2", "EB3", "EW3", "EB4", "EB5", "EB5R", "EB5HU", "EB5I"];
   return [...seen].sort((a, z) => {
     const ia = ORDER.indexOf(a);
     const iz = ORDER.indexOf(z);

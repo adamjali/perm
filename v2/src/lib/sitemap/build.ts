@@ -13,7 +13,7 @@ import { hasOwnPage, type EntityKind } from "@/lib/entityPayload";
 import { captureError } from "@/lib/sentry";
 import { browseCounts } from "@/lib/turso/entityBrowse";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import { countPageworthy, getFreshness } from "@/lib/turso/publicData";
+import { countPageworthy, getFreshness, getVisaBulletins } from "@/lib/turso/publicData";
 import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
 
 /**
@@ -117,6 +117,16 @@ async function corpusAsOf(): Promise<string | null> {
  */
 export async function pagesEntries(): Promise<Entry[]> {
   const base = baseUrl();
+  // Sorted ascending; an archive read that fails leaves the static list intact
+  // rather than failing the whole sitemap. try/catch rather than `.catch`:
+  // a test that mocks the module without this export would throw
+  // synchronously on the call itself, before any promise existed.
+  let bulletinMonths: string[] = [];
+  try {
+    bulletinMonths = (await getVisaBulletins()).map((r) => r.bulletinMonth).sort();
+  } catch {
+    bulletinMonths = [];
+  }
   const allPosts = getAllPosts();
   if (allPosts.length === 0) {
     captureError(
@@ -181,6 +191,14 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/methodology`, lastModified: "2026-08-24", images: [`${base}/og/methodology.jpg`] },
     { url: `${base}/about`, lastModified: "2026-09-07", images: [`${base}/og/about.jpg`] },
     { url: `${base}/visa-bulletin`, lastModified: dol ?? "2026-09-07", images: [`${base}/og/visa-bulletin.jpg`] },
+    // One page per archived bulletin. An older month's table is that month's
+    // bulletin and nothing else, so its lastmod is the bulletin's own month;
+    // the newest one carries the DOL stamp because its "since" column moves
+    // with the next parse. Never the clock.
+    ...bulletinMonths.map((m, i) => ({
+      url: `${base}/visa-bulletin/${m}`,
+      lastModified: i === bulletinMonths.length - 1 ? (dol ?? "2026-09-07") : `${m}-01`,
+    })),
     { url: `${base}/perm-by-state`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-by-state.jpg`] },
     { url: `${base}/perm-wages`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-wages.jpg`] },
     { url: `${base}/perm-employers`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-employers.jpg`] },
