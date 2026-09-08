@@ -3235,3 +3235,40 @@ BEFORE each send through the shared rate-limit table, and reschedules itself
 - **Flipping it on is a Resend decision first.** The ledger in
   `convex/caseAlerts.ts` puts the worst day at exactly 100 with the cap at 30,
   which is the free tier's whole allowance.
+
+## The rendered audits against a LOCAL build: the sitemap points at localhost:3000 (2026-09-08)
+
+`.env.local` sets `NEXT_PUBLIC_APP_URL=http://localhost:3000`, so a local
+production build's sitemap carries `http://localhost:3000/...` in every
+`<loc>`. `audit_ssr_visibility.py` and `audit_internal_links.py` fetch those
+locs as written, so serving the build on port 3100 makes every page report
+`Connection refused` and the link crawl find zero targets, while the server
+itself is fine (same pid before and after, curl 200). Serve the build on
+**port 3000** (`PORT=3000 pnpm start`) and pass `--base http://localhost:3000`;
+`audit_glued_text.py` and `audit_all_pages.py` rewrite paths onto the base and
+work on any port. Both were green on the first run against 3000. The
+visibility audit over all 275 pages takes longer than the 10-minute tool
+ceiling here; run it in the background to a log.
+
+Two gates that had been lying quietly: `audit_page_registration.py` opened
+`DataNav.tsx`, deleted on Aug 30, and had crashed on every run since (it now
+checks every data-reading page is reachable from the rail map in
+`dataSections.ts`, by href or by prefix); and the social-card gate resolved a
+slug to a directory of the same name, which no page under `/tools` or
+`/perm-employers` satisfies (it now searches the public tree and requires
+exactly one page to name the card).
+
+**An edit script that asserts BEFORE writing aborts every edit after the
+failing one, and a commit message written from the plan then lies.** A
+five-description fix landed as three, twice, because a length assertion on
+the first string raised before the loop reached the rest, and the commit
+named all five. Make each edit independent (report and continue), and write
+the message from `git diff`, not from the intent.
+
+**The homepage's About block carries the record ledger** (`RecordStrip.tsx`):
+five counts from `perm_docs` point reads, each with the date it is true for,
+set as a definition list in the same 800px measure as the prose. The first
+version was a five-card strip in a wider band and Adam called it slop on
+sight: two left edges, uneven wrapping, a stock stat kit. The rule that came
+out of it: a row of figures under prose is a LEDGER in the prose's own
+column, not a band of cards.
