@@ -161,7 +161,7 @@ export default async function HomePage() {
         figures={deriveFigures(disclosure)}
       />
       <StageStrip />
-      <SectionDivider kind="comb" fill="var(--background)" />
+      <SectionDivider kind="comb" />
       <ToolsSection
         pwdPending={pwdPending}
         frontierMonth={analyst?.priorityDate ?? null}

@@ -8,7 +8,7 @@ import {
   getFAQPageSchema,
   getHomepageRatingPartialSchema,
 } from "../structuredData";
-import { GITHUB_REPO_URL } from "@/lib/constants/externalLinks";
+import { MEDIUM_PROFILE_URL } from "@/lib/constants/externalLinks";
 import { ORGANIZATION_SAME_AS, PEOPLE } from "@/lib/constants/about";
 
 const BASE = "https://permtracker.app";
@@ -96,7 +96,7 @@ describe("getOrganizationSchema", () => {
     expect(schema.url).toBe(BASE);
   });
 
-  it("names both founders as Person nodes that agree with the About facts", () => {
+  it("names the founder as a Person node that agrees with the About facts", () => {
     const founders = (schema as { founder?: { name: string; jobTitle: string; sameAs: string[] }[] }).founder ?? [];
     expect(founders.map((f) => f.name)).toEqual(PEOPLE.map((p) => p.name));
     expect(founders.map((f) => f.jobTitle)).toEqual(PEOPLE.map((p) => p.jobTitle));
@@ -104,14 +104,16 @@ describe("getOrganizationSchema", () => {
     expect((schema as { foundingDate?: string }).foundingDate).toMatch(/^\d{4}-\d{2}$/);
   });
 
-  it("sameAs contains the real brand repo, not a placeholder", () => {
+  it("sameAs lists the brand-owned pages and nothing personal", () => {
     expect(schema.sameAs).toEqual([...ORGANIZATION_SAME_AS]);
-    expect(schema.sameAs[0]).toBe(GITHUB_REPO_URL);
-    // Every owned surface, and nothing personal on the brand node.
-    expect(schema.sameAs).toHaveLength(3);
-    expect(schema.sameAs.some((u) => u.includes("linkedin.com"))).toBe(false);
-    // Defensive: prevent regression to the placeholder bare URL
-    expect(schema.sameAs).not.toContain("https://github.com");
+    expect(schema.sameAs[0]).toBe(MEDIUM_PROFILE_URL);
+    // Every owned surface, and nothing personal on the brand node: no
+    // LinkedIn, and no GitHub or X at all, since those URLs carried a personal
+    // handle (site owner's decision, 2026-09-07).
+    expect(schema.sameAs).toHaveLength(2);
+    for (const u of schema.sameAs) {
+      expect(u).not.toMatch(/linkedin\.com|github\.com|x\.com|twitter\.com/);
+    }
   });
 
   // This markup is served on every page and read by crawlers, so a foreign

@@ -1,52 +1,47 @@
 /**
  * External Links
  *
- * Single source of truth for every off-site URL the app renders: the source
- * repository, its issue entry points, and social profiles.
+ * Single source of truth for every off-site URL the app renders: the brand's
+ * owned pages, the one personal profile the site names, and where a bug
+ * report or an idea goes.
  *
- * These were previously hardcoded across Footer, the contact page, and the
- * settings Support section, and had drifted into placeholders that did not
- * resolve, a bare `https://github.com`, and `https://github.com/issues`,
- * which is not a real page. Centralizing them means the repo can move again
- * without hunting call sites, and `GITHUB_REPO_URL` is the only line to edit.
- *
- * The repo must stay brand-owned. This URL is rendered publicly and is also
- * emitted as the Organization `sameAs` in structured data (see
- * `src/lib/structuredData.ts`), so a personal account here republishes a
- * brand-to-person association to crawlers.
+ * NO PERSONAL HANDLE ANYWHERE ON THE PUBLIC SITE (site owner's decision,
+ * 2026-09-07). The source repository and an X account used to be linked from
+ * the footer, the About page, the contact page, the settings support panel and
+ * the Organization schema; every one of those URLs carried a personal GitHub
+ * or X handle. They are gone from this file so they cannot come back through
+ * a call site. The repository still exists and the deploy pipeline still
+ * targets it (`src/app/api/cron/dispatch/jobs.ts`), it is simply not a public
+ * link any more. Bug reports and feature requests go to the support mailbox.
  */
 
-/** Canonical source repository. Change this one line if the repo moves. */
-export const GITHUB_REPO_URL = "https://github.com/adamjali/perm";
-
 /**
- * The brand's other owned surfaces. Each one is a page Google can read and
+ * The brand's owned surfaces. Each one is a page Google can read and
  * corroborate the name against ("web references to the site" is the last
  * source in its site-names doc), and each is emitted as an Organization
- * `sameAs` in structured data. Measured 2026-09-07: every one resolves and
- * names PERM Tracker, and none of them was declared in the markup before.
+ * `sameAs` in structured data. Measured 2026-09-07: both resolve and name
+ * PERM Tracker.
  */
 export const MEDIUM_PROFILE_URL = "https://medium.com/@permtracker";
 export const PRODUCT_HUNT_URL = "https://www.producthunt.com/products/perm-tracker";
-export const X_PROFILE_URL = "https://x.com/adamj3ali";
 /** A personal profile, declared on the Person node, never on the Organization. */
 export const LINKEDIN_SABRINA_URL = "https://www.linkedin.com/in/sabrina-soltau-5b2682171";
 
-/** Issue list. */
-export const GITHUB_ISSUES_URL = `${GITHUB_REPO_URL}/issues`;
+/** The one support address, also rendered on the contact page. */
+export const SUPPORT_EMAIL_ADDRESS = "support@permtracker.app";
 
 /**
- * Issue entry points, pinned to the templates in `.github/ISSUE_TEMPLATE/`.
- * Using `?template=` lands the reporter on the structured form (which applies
- * the `bug` / `enhancement` labels) rather than an empty issue body.
+ * Where a bug report or an idea goes: the support mailbox, with the subject
+ * pre-filled so the two arrive sorted. These replaced links into the source
+ * repository's issue templates on 2026-09-07 (see the header comment).
  */
-export const GITHUB_BUG_REPORT_URL = `${GITHUB_ISSUES_URL}/new?template=bug_report.yml`;
-export const GITHUB_FEATURE_REQUEST_URL = `${GITHUB_ISSUES_URL}/new?template=feature_request.yml`;
+export const BUG_REPORT_URL = `mailto:${SUPPORT_EMAIL_ADDRESS}?subject=Bug%20report`;
+export const FEATURE_REQUEST_URL = `mailto:${SUPPORT_EMAIL_ADDRESS}?subject=Feature%20request`;
 
 export interface SocialLink {
   href: string;
   label: string;
-  icon: "github" | "twitter" | "linkedin";
+  icon: "linkedin";
 }
 
 /**
@@ -58,16 +53,11 @@ export interface SocialLink {
  * which is what these used to do.
  */
 export const SOCIAL_LINKS = [
-  { href: GITHUB_REPO_URL, label: "GitHub", icon: "github" },
-  // x.com rather than twitter.com: twitter.com only 301s here, and the footer
-  // glyph is already the X mark. Label names the platform but keeps the old
-  // name for recognition, since the icon alone is still ambiguous to many users.
-  { href: X_PROFILE_URL, label: "X (formerly Twitter)", icon: "twitter" },
-  // A personal profile, not a company page, and the only entry here that points
-  // at a named individual. She is already the public voice of the product's
-  // email (every message signs off "Sabrina S. / PERM Tracker Team"), so this is
-  // consistent with how the brand already presents itself. Swap it for a company
-  // page if one is ever created.
+  // A personal profile, not a company page. She is the one person the site
+  // names, the public voice of the product's email (every message signs off
+  // "Sabrina S. / PERM Tracker Team") and the byline on every article, so
+  // this is consistent with how the brand presents itself everywhere else.
+  // Swap it for a company page if one is ever created.
   {
     href: LINKEDIN_SABRINA_URL,
     label: "LinkedIn",
@@ -78,23 +68,23 @@ export const SOCIAL_LINKS = [
 /**
  * The byline on articles, and the profile that corroborates it.
  *
- * Approved by the site owner on 2026-08-29 before shipping, because publishing
- * a person's name is an identity decision rather than an SEO one.
+ * Publishing a person's name is an identity decision rather than an SEO one,
+ * so this was approved by the site owner before shipping (2026-08-29), and
+ * changed to Sabrina Soltau on the owner's decision on 2026-09-07 so that one
+ * person is named everywhere: bylines, the About page, the Organization
+ * schema and the footer.
  *
  * WHY A PERSON AT ALL. Articles credited `Organization: "PERM Tracker Team"`,
  * which asserts no expertise and names nobody accountable. This is immigration
  * guidance - the category where Google weighs experience and accountability
  * hardest - and the competitor outranking us credits a named individual with a
  * profile link. `sameAs` is what turns a name into a checkable identity rather
- * than a string.
- *
- * The profile is the project's own GitHub, which is a real, owned, verifiable
- * destination. It is a weaker authority signal than a professional profile
- * would be, and that is a known, accepted trade rather than an oversight.
+ * than a string. The profile is a professional one (an immigration attorney's
+ * LinkedIn), which is the stronger form of that signal.
  */
 export const ARTICLE_AUTHOR = {
-  name: "Adam J Ali",
-  url: "https://github.com/adamjali",
+  name: "Sabrina Soltau",
+  url: LINKEDIN_SABRINA_URL,
 } as const;
 
 /**

@@ -52,8 +52,8 @@ import { handleOperationError } from "@/lib/errors";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import DeleteNowDialog from "./DeleteNowDialog";
 import {
-  GITHUB_BUG_REPORT_URL,
-  GITHUB_FEATURE_REQUEST_URL,
+  BUG_REPORT_URL,
+  FEATURE_REQUEST_URL,
 } from "@/lib/constants/externalLinks";
 
 // ============================================================================
@@ -250,7 +250,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
 
           {/* Report Bug */}
           <a
-            href={GITHUB_BUG_REPORT_URL}
+            href={BUG_REPORT_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex flex-col items-center gap-3 border-2 border-border bg-card p-4 shadow-hard-sm transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-hard-sm"
@@ -264,14 +264,14 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                 <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
               <span className="text-xs text-muted-foreground">
-                GitHub Issues
+                By email
               </span>
             </div>
           </a>{" "}
 
           {/* Request Feature */}
           <a
-            href={GITHUB_FEATURE_REQUEST_URL}
+            href={FEATURE_REQUEST_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="group flex flex-col items-center gap-3 border-2 border-border bg-card p-4 shadow-hard-sm transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-hard-sm"
@@ -285,7 +285,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                 <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
               <span className="text-xs text-muted-foreground">
-                GitHub Issues
+                By email
               </span>
             </div>
           </a>

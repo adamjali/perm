@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { ABOUT_ONE_LINER, ADAM, SABRINA } from "@/lib/constants/about";
+import { ABOUT_ONE_LINER, SABRINA } from "@/lib/constants/about";
 
 /**
  * "About PERM Tracker", on the homepage, in plain server-rendered prose.
@@ -26,10 +26,10 @@ export function AboutSection() {
         </h2>{" "}
         <p className="mt-5 text-base leading-relaxed text-foreground/90 sm:text-lg">
           {ABOUT_ONE_LINER} Look up a case, see where the queue stands, and
-          track your deadlines. It&apos;s built by {ADAM.name}, a professor of
-          anatomy and physiology who builds software, and {SABRINA.name}, an
-          immigration attorney, with ongoing input from both sides of a filing:
-          the people waiting on a case and the attorneys who file for them.
+          track your deadlines. It&apos;s run by {SABRINA.name}, an immigration
+          attorney who files these cases, with ongoing input from both sides of
+          a filing: the people waiting on a case and the attorneys who file for
+          them.
           It&apos;s not a law firm, and nothing here is legal advice.{" "}
           <Link
             href="/about"

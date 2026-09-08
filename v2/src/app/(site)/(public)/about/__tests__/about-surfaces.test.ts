@@ -32,8 +32,9 @@ describe("the About surfaces", () => {
     expect(read("src/components/home/AboutSection.tsx")).toContain("ABOUT_ONE_LINER");
   });
 
-  it("names two people with roles, and the schema founders match them", () => {
-    expect(PEOPLE).toHaveLength(2);
+  it("names one person with a role, and the schema founder matches", () => {
+    expect(PEOPLE).toHaveLength(1);
+    expect(PEOPLE[0]?.name).toBe("Sabrina Soltau");
     const org = getOrganizationSchema("https://permtracker.app") as {
       founder: { name: string; jobTitle: string }[];
     };
@@ -41,12 +42,22 @@ describe("the About surfaces", () => {
     expect(org.founder.map((f) => f.jobTitle)).toEqual(PEOPLE.map((p) => p.jobTitle));
   });
 
-  it("makes no beneficiary claim for the builder", () => {
-    // Approved wording is "watched ... wait" and "worked through the process
-    // with them"; a first-person waiting claim would be false.
+  it("makes no beneficiary claim for the person named", () => {
+    // Approved wording: she FILES these cases. A first-person waiting claim
+    // would be false, and no other person is named anywhere on the surfaces.
     const page = read("src/app/(site)/(public)/about/page.tsx");
-    expect(page).not.toMatch(/waited on (his|my) own/i);
-    expect(page).toMatch(/watching family, friends and colleagues/);
+    expect(page).not.toMatch(/waited on (her|his|my) own/i);
+    expect(page).toMatch(/files these cases/);
+    for (const rel of [
+      "src/app/(site)/(public)/about/page.tsx",
+      "src/components/home/AboutSection.tsx",
+      "src/lib/constants/about.ts",
+      "src/lib/constants/externalLinks.ts",
+      "src/app/llms.txt/route.ts",
+      "src/lib/pageCards.ts",
+    ]) {
+      expect(read(rel)).not.toMatch(/adamjali|adamj3ali|Adam J Ali|professor/i);
+    }
   });
 
   it("is reachable: Learn menu, homepage block, sitemap and llms.txt all name /about", () => {

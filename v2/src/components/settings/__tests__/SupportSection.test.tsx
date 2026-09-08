@@ -10,8 +10,8 @@ import SupportSection from "../SupportSection";
 // asserted a link that went nowhere. Importing means the test tracks the single
 // source of truth instead of restating it.
 import {
-  GITHUB_BUG_REPORT_URL,
-  GITHUB_FEATURE_REQUEST_URL,
+  BUG_REPORT_URL,
+  FEATURE_REQUEST_URL,
 } from "@/lib/constants/externalLinks";
 
 const SUPPORT_EMAIL = "support@permtracker.app";
@@ -86,12 +86,12 @@ describe("SupportSection", () => {
       expect(screen.getByText(SUPPORT_EMAIL)).toBeInTheDocument();
     });
 
-    it("GitHub links have correct hrefs with labels", () => {
+    it("bug and feature links point at the support mailbox with labels", () => {
       renderWithProviders(<SupportSection profile={defaultProfile} />);
       const bugLink = screen.getByRole("link", { name: /report a bug/i });
-      expect(bugLink).toHaveAttribute("href", GITHUB_BUG_REPORT_URL);
+      expect(bugLink).toHaveAttribute("href", BUG_REPORT_URL);
       const featureLink = screen.getByRole("link", { name: /request feature/i });
-      expect(featureLink).toHaveAttribute("href", GITHUB_FEATURE_REQUEST_URL);
+      expect(featureLink).toHaveAttribute("href", FEATURE_REQUEST_URL);
     });
 
     it("external links open in new tab with noopener noreferrer", () => {

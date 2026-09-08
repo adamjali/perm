@@ -25,6 +25,15 @@
  *
  * Each silhouette encodes something about the bands it joins. A shape that
  * encodes nothing is decoration and does not belong here.
+ *
+ * NO FILL ON A SEAM INTO A TRANSPARENT BAND. `fill` is the colour of the band
+ * arriving BELOW the seam, and it exists so the silhouette reads as the top
+ * edge of that band. When the arriving section has no background of its own
+ * (the dotted page ground shows through it), there is no band to extend, and
+ * a fill of `--background` paints an opaque strip over the dot grid: a white
+ * bar with a jagged top, which is exactly what it looked like on the homepage
+ * and on /for-attorneys under the `comb` seam (reported 2026-09-07). Omit
+ * `fill` there and only the stroked edge is drawn.
  */
 
 /**
@@ -67,8 +76,11 @@ export function SectionDivider({
   className,
 }: {
   kind?: SectionDividerKind;
-  /** CSS colour of the band BELOW the seam. */
-  fill: string;
+  /**
+   * CSS colour of the OPAQUE band below the seam. Leave it out when the
+   * section below is transparent; the edge is then drawn on its own.
+   */
+  fill?: string;
   className?: string;
 }) {
   const edge = EDGES[kind];
@@ -79,7 +91,7 @@ export function SectionDivider({
         preserveAspectRatio="none"
         className="block h-10 w-full sm:h-14"
       >
-        <path d={fillPath(edge)} fill={fill} />
+        {fill ? <path d={fillPath(edge)} fill={fill} /> : null}
         <path
           d={edge}
           fill="none"

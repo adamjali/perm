@@ -26,21 +26,19 @@ import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { SCHEMA_IDS } from "@/lib/structuredData";
 import {
   ABOUT_ONE_LINER,
-  ADAM,
   FOUNDED,
   LIVE_SINCE,
   SABRINA,
 } from "@/lib/constants/about";
 import {
-  GITHUB_REPO_URL,
+  LINKEDIN_SABRINA_URL,
   MEDIUM_PROFILE_URL,
   PRODUCT_HUNT_URL,
-  X_PROFILE_URL,
 } from "@/lib/constants/externalLinks";
 
 const TITLE = "About PERM Tracker";
 const DESCRIPTION =
-  "Who builds PERM Tracker, a professor and an immigration attorney, since when, where every figure comes from, and what the site is not.";
+  "Who runs PERM Tracker, an immigration attorney who files these cases, since when, where every figure comes from, and what the site is not.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -110,7 +108,7 @@ export default function AboutPage() {
 
       <figure className="mt-10 overflow-x-auto overscroll-x-none border-2 border-border bg-card p-4 shadow-hard sm:p-6">
         <svg viewBox="0 0 760 300" className="w-full min-w-[640px] text-foreground" role="img" aria-labelledby="data-flow-title">
-          <title id="data-flow-title">How the site works: DOL's case index is asked every night and on every lookup, DOL's disclosure files are read each quarter, USCIS and the State Department each month; all of it lands in the pages: case status, processing times, wages and deadlines.</title>
+          <title id="data-flow-title">How the site works: DOL&apos;s case index is asked every night and on every lookup, DOL&apos;s disclosure files are read each quarter, USCIS and the State Department each month; all of it lands in the pages: case status, processing times, wages and deadlines.</title>
           <text x="20" y="28" fontSize="13" fontWeight="700" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">FEDERAL SOURCES</text>
           <rect x="20" y="44" width="200" height="56" fill="var(--primary)" stroke="currentColor" strokeWidth="3" />
           <text x="32" y="68" fontSize="14" fontWeight="700" fill="#000000">DOL case-status index</text>
@@ -161,34 +159,29 @@ export default function AboutPage() {
       </p>{" "}
 
       <h2 className={h2}>Who&apos;s behind it</h2>{" "}
-      <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {[ADAM, SABRINA].map((person) => (
-          <div key={person.name} className="border-2 border-border bg-card p-4 shadow-hard">
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-border bg-primary font-heading text-lg font-black text-primary-foreground" aria-hidden="true">
-                {person.name.split(" ").filter((w) => w.length > 1).map((w) => w[0]).join("")}
-              </div>{" "}
-              <div>
-                <p className="font-heading text-base font-bold leading-tight">{person.name}</p>{" "}
-                <p className="text-sm text-muted-foreground">{person.jobTitle}</p>
-              </div>
-            </div>
+      <div className="mt-5 max-w-sm border-2 border-border bg-card p-4 shadow-hard">
+        <div className="flex items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-border bg-primary font-heading text-lg font-black text-primary-foreground" aria-hidden="true">
+            {SABRINA.name.split(" ").filter((w) => w.length > 1).map((w) => w[0]).join("")}
+          </div>{" "}
+          <div>
+            <p className="font-heading text-base font-bold leading-tight">{SABRINA.name}</p>{" "}
+            <p className="text-sm text-muted-foreground">{SABRINA.jobTitle}</p>
           </div>
-        ))}
+        </div>
       </div>{" "}
       <p className={p}>
-        <strong className="font-semibold">{ADAM.name}</strong> builds and runs PERM
-        Tracker. He&apos;s a professor of anatomy and physiology who builds software,
-        and he started this after watching family, friends and colleagues wait on
-        PERM cases with no way to see where they stood. He&apos;s worked through
-        the process with them and still does, and their questions shape what the
-        site answers first.
+        <strong className="font-semibold">{SABRINA.name}</strong> runs PERM Tracker.
+        She&apos;s an immigration attorney who files these cases, and she started
+        it because the people she files for had no way to see where a case stood
+        between the filing and the decision. She still files them, and her
+        clients&apos; questions shape what the site answers first.
       </p>{" "}
       <p className={p}>
-        <strong className="font-semibold">{SABRINA.name}</strong> is an immigration
-        attorney who files these cases. She brings the attorney&apos;s side of the
-        process, which deadlines matter and what an audit actually asks for, and
-        she&apos;s the voice of the product&apos;s email.
+        She brings both sides of a filing to the site: the attorney&apos;s, which
+        deadlines matter and what an audit actually asks for, and her
+        clients&apos;, what it&apos;s like to wait on a case with nothing to check.
+        She&apos;s also the voice of the product&apos;s email.
       </p>{" "}
       <p className={p}>
         Both sides of a filing have a say in what the site does: the people
@@ -223,11 +216,11 @@ export default function AboutPage() {
       <p className={p}>
         <a href="mailto:support@permtracker.app" className={link}>support@permtracker.app</a>.
         PERM Tracker is also on{" "}
-        <a href={GITHUB_REPO_URL} className={link} rel="me noopener" target="_blank">GitHub</a>,{" "}
-        <a href={X_PROFILE_URL} className={link} rel="me noopener" target="_blank">X</a>,{" "}
         <a href={MEDIUM_PROFILE_URL} className={link} rel="me noopener" target="_blank">Medium</a>{" "}
         and{" "}
-        <a href={PRODUCT_HUNT_URL} className={link} rel="me noopener" target="_blank">Product Hunt</a>.
+        <a href={PRODUCT_HUNT_URL} className={link} rel="me noopener" target="_blank">Product Hunt</a>,
+        and {SABRINA.name} is on{" "}
+        <a href={LINKEDIN_SABRINA_URL} className={link} rel="me noopener" target="_blank">LinkedIn</a>.
       </p>
     </div>
   );

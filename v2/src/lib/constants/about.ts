@@ -1,24 +1,22 @@
 /**
  * Who is behind PERM Tracker, stated once.
  *
- * Read by the About page, the homepage's "About PERM Tracker" block and the
- * Organization schema, so the three cannot disagree. Every line here is a
- * public factual claim approved by the site owner on 2026-09-07; change it
+ * Read by the About page, the homepage's "About PERM Tracker" block, the
+ * Organization schema and the article bylines, so none of them can disagree.
+ * Every line here is a public factual claim approved by the site owner
+ * (2026-09-07: one named person, Sabrina Soltau, on every surface); change it
  * here and nowhere else.
  *
- * Two claims were deliberately NOT made. The builder has not been a PERM
- * beneficiary himself and the page does not say he was; it says what is true,
- * that he watched family, friends and colleagues wait and worked through the
- * process with them. And no one is credited with reviewing the deadline logic,
- * because that review is not something either person has attested to.
+ * Two claims are deliberately NOT made. The page never says she waited on a
+ * PERM case of her own; it says what is true, that she files them. And no one
+ * is credited with reviewing the deadline logic, because that review is not
+ * something anyone has attested to.
  */
 
 import {
-  GITHUB_REPO_URL,
   LINKEDIN_SABRINA_URL,
   MEDIUM_PROFILE_URL,
   PRODUCT_HUNT_URL,
-  X_PROFILE_URL,
 } from "./externalLinks";
 
 export interface AboutPerson {
@@ -29,20 +27,14 @@ export interface AboutPerson {
   sameAs: readonly string[];
 }
 
-export const ADAM: AboutPerson = {
-  name: "Adam J Ali",
-  jobTitle: "Professor of anatomy and physiology",
-  sameAs: ["https://github.com/adamjali", X_PROFILE_URL],
-};
-
 export const SABRINA: AboutPerson = {
   name: "Sabrina Soltau",
   jobTitle: "Immigration attorney",
   sameAs: [LINKEDIN_SABRINA_URL],
 };
 
-/** In display order: the builder first, then the attorney. */
-export const PEOPLE: readonly AboutPerson[] = [ADAM, SABRINA];
+/** Everyone the site names, in display order. One person, by decision. */
+export const PEOPLE: readonly AboutPerson[] = [SABRINA];
 
 /** Domain registered (RDAP, Squarespace Domains): 2025-11-25. */
 export const FOUNDED = "2025-11";
@@ -52,14 +44,14 @@ export const LIVE_SINCE = "2026-01";
 /**
  * The brand's owned surfaces, emitted as the Organization `sameAs`.
  *
- * BRAND-OWNED ONLY: the repo, the Medium publication and the Product Hunt
- * product page all carry the brand's name and nothing else. The X account is
- * a person's handle, so it sits on that person's node above and is linked
- * from the footer, never asserted as the organization itself; the same holds
- * for the LinkedIn profile. `structuredData.test.ts` pins the rule.
+ * BRAND-OWNED ONLY: the Medium publication and the Product Hunt product page
+ * both carry the brand's name and nothing else. A personal profile sits on
+ * that person's node above and is linked from the footer, never asserted as
+ * the organization itself. `structuredData.test.ts` pins the rule. The source
+ * repository is no longer listed: its URL carries a personal handle, and the
+ * site names one person only.
  */
 export const ORGANIZATION_SAME_AS: readonly string[] = [
-  GITHUB_REPO_URL,
   MEDIUM_PROFILE_URL,
   PRODUCT_HUNT_URL,
 ];

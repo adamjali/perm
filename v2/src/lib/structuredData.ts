@@ -103,10 +103,10 @@ export function getOrganizationSchema(baseUrl: string) {
       email: 'support@permtracker.app',
       contactType: 'customer support',
     },
-    // Every brand-owned surface that names the brand (GitHub, Medium, Product
-    // Hunt), each verified live on 2026-09-07. Brand-owned URLs only on the
-    // Organization; the people are their own nodes below, with their own
-    // profiles, so a personal profile is never asserted as the brand's.
+    // Every brand-owned surface that names the brand (Medium, Product Hunt),
+    // each verified live on 2026-09-07. Brand-owned URLs only on the
+    // Organization; the person is her own node below, with her own profile,
+    // so a personal profile is never asserted as the brand's.
     sameAs: [...ORGANIZATION_SAME_AS],
     // Registration month of the domain (RDAP). Google's site-names doc counts
     // "web references" and the home page's own text among the sources it

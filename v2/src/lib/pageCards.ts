@@ -12,7 +12,7 @@
  */
 
 export const PAGE_CARD_ALT = {
-  "about": "About PERM Tracker. A free, independent site on DOL's own data, built by a professor who builds software and an immigration attorney.",
+  "about": "About PERM Tracker. A free, independent site on DOL's own data, run by an immigration attorney who files these cases.",
   "blog": "PERM Tracker blog. What DOL's own files show about processing times, denials, wages and the queue.",
   "calculators": "PERM calculators. Seven calculators for your case and two explorers for the field, all free, on data the government publishes.",
   "case-search": "Search every DOL case an employer filed. PERM, prevailing wage and H-1B LCA, open and decided, in one search.",

@@ -128,7 +128,7 @@ export default function ForAttorneysPage() {
       <StakesSection />
       <SectionDivider kind="tape" fill="var(--muted)" />
       <HowItWorks />
-      <SectionDivider kind="comb" fill="var(--background)" />
+      <SectionDivider kind="comb" />
       <FeaturesGrid />
       <SectionDivider kind="ledger" fill="var(--muted)" />
       <SecuritySection />

@@ -3041,17 +3041,28 @@ describes the brand and took the page that says the name most often.
 
 What Google's site-names doc lists that we lacked, and what shipped:
 
-- **`/about`** (`src/app/(site)/(public)/about/page.tsx`): who builds it (a
-  professor of anatomy and physiology, with an immigration attorney), since
+- **`/about`** (`src/app/(site)/(public)/about/page.tsx`): who runs it, since
   when (domain Nov 2025 per RDAP, live Jan 2026 per the Wayback Machine),
   the data sources, and what it is not. `AboutPage` schema whose `mainEntity`
   is the shared Organization `@id`.
 - **`src/lib/constants/about.ts`** is the single source for the About page,
-  the homepage block and the Organization schema (`founder` Person nodes,
-  `foundingDate`, `sameAs` to GitHub, Medium and Product Hunt; X and LinkedIn
-  sit on the Person nodes, because a person's handle is not the brand). The three
-  cannot drift; `about-surfaces.test.ts` asserts it and that every surface
-  links the route (Learn menu, footer, sitemap, llms.txt, homepage block).
+  the homepage block, the Organization schema (`founder` Person node,
+  `foundingDate`, `sameAs` to Medium and Product Hunt; LinkedIn sits on the
+  Person node, because a person's profile is not the brand) and, through
+  `ARTICLE_AUTHOR`, every byline. They cannot drift; `about-surfaces.test.ts`
+  asserts it and that every surface links the route (Learn menu, footer,
+  sitemap, llms.txt, homepage block).
+- **ONE PERSON IS NAMED, EVERYWHERE: Sabrina Soltau, immigration attorney
+  (owner's decision, Sep 7 2026, 8:43 PM ET).** The page had launched that
+  afternoon naming two people; the second, and every link that carried a
+  personal GitHub or X handle (footer, About contact line, contact page and
+  settings "report a bug" links into the repo's issue templates, the repo in
+  the Organization `sameAs`), were removed the same evening. Bug reports and
+  ideas go to `mailto:support@permtracker.app` with a pre-filled subject.
+  `about-surfaces.test.ts` greps the six identity surfaces for the old
+  handles and title. The repository still lives under the personal handle
+  and the cron dispatcher still targets it; that is a GitHub-side move
+  (transfer to a brand-named org), not a site edit.
 - **The homepage carries an "About PERM Tracker" H2 again**, plain
   server-rendered prose with no Motion wrapper, and **its FAQ dropped from
   eight to three**: six were byte-identical to `/faq`, and Google chose `/faq`
@@ -3064,11 +3075,11 @@ What Google's site-names doc lists that we lacked, and what shipped:
   immigration attorneys" since February and are among the few outside
   references Google has for the name.
 
-**Two facts the About page deliberately does not claim**: the builder has not
-been a PERM beneficiary (the page says he watched family, friends and
-colleagues wait and worked through the process with them), and nobody is
-credited with reviewing the deadline logic. `about-surfaces.test.ts` fails on
-a first-person waiting claim.
+**Two facts the About page deliberately does not claim**: that the person
+named has waited on a PERM case of her own (the page says she files them, and
+that her clients' questions shape the site), and that anybody reviewed the
+deadline logic. `about-surfaces.test.ts` fails on a first-person waiting
+claim.
 
 **"PERM Tracker" is a generic name shared with a rival**, and Google's doc
 says it will not show a generic or shared site name, so the SERP prints the
