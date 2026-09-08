@@ -8,6 +8,7 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 import {
   getLcaWageByState,
   getLcaWageFilterOptions,
@@ -31,7 +32,7 @@ const TITLE = "H-1B Salary Explorer";
 const DESCRIPTION =
   "The wage attested on certified H-1B LCAs, by occupation, worksite state and year, from DOL's own disclosure files. Median, average and percentiles.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/lca-wages" },
@@ -41,7 +42,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/lca-wages",
   },
-};
+}, "lca-wages");
 
 // Quarterly files, a weekly window, and POST /api/revalidate-disclosure
 // expires it the day a file lands.

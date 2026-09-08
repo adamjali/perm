@@ -5,6 +5,7 @@ import Link from "next/link";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 import { listPolicyNotices, type PolicyNotice } from "@/lib/turso/policyNotices";
 
 /**
@@ -22,12 +23,12 @@ const TITLE = "Immigration Policy Changes on the Record";
 const DESCRIPTION =
   "Rules, proposed rules and notices from USCIS, DHS, State and DOL that touch PERM, prevailing wages, H-1B, I-140, adjustment of status and the visa bulletin, read from the Federal Register and linked to it.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/policy-changes" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/policy-changes" },
-};
+}, "policy-changes");
 
 // The feed refreshes daily with the processing-times job.
 export const revalidate = 21600;

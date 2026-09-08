@@ -5,6 +5,7 @@ import Link from "next/link";
 import { EmployerComparePicker } from "@/components/entities/EmployerComparePicker";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 import { approvalRate } from "@/lib/entityPayload";
 import { wilsonInterval } from "@/lib/wageLadder";
 import { stateName } from "@/lib/usStateNames";
@@ -29,13 +30,13 @@ const TITLE = "Compare Two Employers";
 const DESCRIPTION =
   "Two PERM sponsors side by side from DOL's own files: filings, certifications and denials with their interval, median days, median wage, pending cases now, and the occupations and states each files for.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-employers/compare" },
   robots: { index: false, follow: true },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/perm-employers/compare" },
-};
+}, "employer-compare");
 
 const SLUG_RE = /^[a-z0-9-]{1,120}$/;
 const MIN_FOR_RATE = 30;

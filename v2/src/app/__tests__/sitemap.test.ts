@@ -386,7 +386,8 @@ describe("sitemap.ts", () => {
     // and 28 extra URLs is exactly the shape of the truncation bug this test
     // was written to catch, so it has to count the thing it names.
     const count = (p: string) =>
-      entries.filter((e) => e.url.includes(p) && !e.url.includes(`${p}browse`))
+      // ...and the static compare page under the employer prefix.
+      entries.filter((e) => e.url.includes(p) && !e.url.includes(`${p}browse`) && !e.url.includes(`${p}compare`))
         .length;
 
     expect(count("/perm-employers/")).toBe(2500);

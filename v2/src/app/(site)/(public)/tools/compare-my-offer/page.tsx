@@ -7,6 +7,7 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 import { getLcaWageFilterOptions } from "@/lib/turso/lcaWages";
 import { MIN_FOR_MEDIAN } from "@/lib/wageStats";
 
@@ -23,7 +24,7 @@ const TITLE = "Compare My Offer";
 const DESCRIPTION =
   "Where your salary sits among certified H-1B LCAs and PERM offers for the same occupation and state, as a percentile from DOL's own filings. Your number stays in your browser.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/compare-my-offer" },
@@ -33,7 +34,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/compare-my-offer",
   },
-};
+}, "compare-my-offer");
 
 // The selector lists change with the quarterly files; a week bounds it and
 // the disclosure revalidation expires it sooner.

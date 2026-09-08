@@ -8,7 +8,7 @@
  * through `withSocialCard`. A slug missing any one of the three fails here,
  * rather than shipping a link preview with no picture.
  */
-import { existsSync, readFileSync, statSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -46,11 +46,28 @@ describe("page social cards", () => {
     expect(statSync(file).size).toBeLessThan(SOCIAL_CARD_MAX_BYTES);
   });
 
+  // A slug names a page, not a directory: /tools/compare-my-offer carries the
+  // "compare-my-offer" card, and /perm-employers/compare carries
+  // "employer-compare". The direct path is tried first; otherwise the public
+  // tree is searched for the one page that names the slug through
+  // withSocialCard, and exactly one must.
+  const publicRoot = path.join(ROOT, "src/app/(site)/(public)");
+  const publicPages = (readdirSync(publicRoot, { recursive: true }) as string[])
+    .filter((f) => f.endsWith("page.tsx"))
+    .map((f) => path.join(publicRoot, f));
+  const pagesNaming = (slug: string) =>
+    publicPages.filter((f) => {
+      const src = readFileSync(f, "utf8");
+      return src.includes("withSocialCard(") && src.includes(`"${slug}"`);
+    });
+
   it.each(slugs)("the %s page wires its card through withSocialCard", (slug) => {
-    const page = path.join(ROOT, "src/app/(site)/(public)", slug === "home" ? "page.tsx" : `${slug}/page.tsx`);
-    expect(existsSync(page)).toBe(true);
-    expect(readFileSync(page, "utf8")).toContain(`withSocialCard(`);
-    expect(readFileSync(page, "utf8")).toContain(`"${slug}"`);
+    const direct = path.join(publicRoot, slug === "home" ? "page.tsx" : `${slug}/page.tsx`);
+    const candidates = existsSync(direct) ? [direct] : pagesNaming(slug);
+    expect(candidates.length, `pages naming card "${slug}"`).toBe(1);
+    const src = readFileSync(candidates[0]!, "utf8");
+    expect(src).toContain(`withSocialCard(`);
+    expect(src).toContain(`"${slug}"`);
   });
 
   it("the root social image is the home card, not an illustration", () => {
