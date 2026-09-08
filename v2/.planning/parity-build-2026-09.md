@@ -11,7 +11,7 @@ no silent failures, no crowding, internal links both ways, SEO kit per page.
 - [x] 2 Sign-up ~52/48, wider form; About + Contact full width two-column
 - [x] 3 Bulletin (Aug+Sep 2026 set-asides need a human-saved page): this-month table with deltas; EB-5 set-aside rows in ingest; EB-5 in tools
 - [x] 4 LCA salary explorer (facets, percentiles from nightly docs) + compare your offer
-- [ ] 5 Employer facets (state, active 12mo, industry/NAICS) + side-by-side compare
+- [x] 5 Employer (industry facet skipped: no NAICS in the tables) facets (state, active 12mo, industry/NAICS) + side-by-side compare
 - [ ] 6 Supply-scenario calculator + Table V ingest + EB limit history fact
 - [ ] 7 Policy-changes feed (Federal Register API, DOL/USCIS notices)
 - [ ] 8 Civil surgeon crawl (Mac runner, weekly) + finder by ZIP + I-693 guide
