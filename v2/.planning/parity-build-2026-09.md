@@ -14,7 +14,7 @@ no silent failures, no crowding, internal links both ways, SEO kit per page.
 - [x] 5 Employer (industry facet skipped: no NAICS in the tables) facets (state, active 12mo, industry/NAICS) + side-by-side compare
 - [x] 6 Supply scenario on the I-485 tool (Table V and the FY limit page are unreachable by script and not archived; no issuance anchors yet)
 - [x] 7 Policy-changes feed (Federal Register API, DOL/USCIS notices)
-- [ ] 8 Civil surgeon crawl (Mac runner, weekly) + finder by ZIP + I-693 guide
+- [x] 8 I-693 guide (finder NOT built: the locator form 403s a scripted search from a residential IP)
 - [ ] 9 Digest built, flag OFF; interest checkbox on 2 alert forms + bulletin page; admin preview
 - [ ] 10 Homepage dated numbers row
 - [ ] 11 SEO kit sweep (titles, descriptions, schema, sitemap, cards, llms.txt), gates, Lighthouse, phone check
