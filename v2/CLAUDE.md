@@ -1149,6 +1149,22 @@ Full teardown and the remaining gap list:
 plus the 2026-08-24 live delta in the auto-memory
 `permtrack-gap-closure.md`.
 
+## greencardclock.com, re-measured Sep 7 2026
+
+Full doc set: `~/.claude/explanations/20260907_greencardclock_teardown/`. The
+short version: on PERM this site is decisively better (live status of every
+pending case, DOL's frontier, an estimator that withholds immature cohorts;
+theirs tells a March-2026 filer the case was decided in eight days and its new
+"alphabet patterns" report zero pending, because it reads disclosure files
+only). On the bulletin and the I-485 inventory both sites hold the same federal
+tables; they divide the count by a supply guess to make a forecast, we print
+the count and the measured pace, and their India queue position is a quarter of
+USCIS's published sum with no stated method. They are ahead on LCA salary
+tooling (explorer facets, percentiles, compare-your-offer, sponsor discovery)
+and on content cadence with printed corrections. Everything worth closing can
+be built from `lca_cases`, `perm_cases` and the bulletin archive in about a
+week; a weekly digest is blocked by the Resend 100/day cap, not by code.
+
 ## Auditing every page: read the sitemap, and decode before you measure
 
 `pnpm audit:pages` (scripts/audit_all_pages.py) walks every URL in
