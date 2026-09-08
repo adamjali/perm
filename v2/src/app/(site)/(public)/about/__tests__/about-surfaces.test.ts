@@ -90,7 +90,7 @@ describe("the About surfaces", () => {
     expect(read("src/components/home/AboutSection.tsx")).toContain('href="/about"');
     expect(read("src/lib/sitemap/build.ts")).toContain("${base}/about");
     expect(read("src/app/llms.txt/route.ts")).toContain("/about)");
-    expect(read("src/app/(site)/(public)/page.tsx")).toContain("<AboutSection />");
+    expect(read("src/app/(site)/(public)/page.tsx")).toMatch(/<AboutSection\b/);
   });
 
   it("the homepage FAQ no longer duplicates the definitional /faq answers", () => {
