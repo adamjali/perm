@@ -156,7 +156,6 @@ export function DataRail() {
         current={onOverview}
         kind="home"
       />{" "}
-      <RailAction />{" "}
       {GROUPS.map((g) => {
         const isOpen = g === open;
         const items = SECTIONS.filter((s) => s.group === g);
@@ -396,6 +395,7 @@ export function DataRail() {
               </button>
               <div id="data-rail-desktop" className="flex flex-1 flex-col">
                 {body}
+                <RailFooter />
               </div>
             </>
           ) : (
@@ -573,6 +573,7 @@ export function DataRail() {
         )}
       >
         {body}
+        <RailFooter />
       </nav>
     </>
   );
@@ -660,7 +661,7 @@ function Tab({
         // takes a larger step on the type scale and a taller row. The leaves
         // keep the indent. Neither has to give up the selected shape to say
         // where it sits.
-        kind === "home" ? "min-h-12 pl-4 text-base" : "pl-9 text-sm",
+        kind === "home" ? "min-h-11 pl-4 text-base" : "pl-9 text-sm",
         // WHERE THE ROW STOPS, and the two kinds get there differently because
         // they live in different boxes. A leaf sits inside a clip box that is
         // 16px wider than the rail, so its margin subtracts back down: 2px
@@ -728,32 +729,32 @@ function Tab({
 }
 
 /**
- * The action, directly under Overview.
+ * What sits under the last section: the lookup, pinned to the foot of the rail.
  *
  * Adam: "we do need to add something to the bottom of that side thing though",
- * and then, once a group was open on an 817px window: "this should be moved
- * up so the bottom fits always... proper sizing even with any expanded/open."
- * Pinned at the foot of the rail it was the first thing to fall off screen,
- * because a sticky column taller than the viewport hides its bottom, not its
- * top. Under Overview it is on screen in every state, and Overview plus the
- * lookup is the whole surface in one glance: the map, then the one thing a
- * reader of these pages reliably wants next, their own case. Every figure
- * here is an aggregate, and the question under every aggregate is "where does
- * that leave me".
+ * and, when a first fix moved it up under Overview: "that's not what I wanted,
+ * I still want it at the bottom, just all fit even when any is expanded."
+ * So it stays at the bottom (`mt-auto` in a flex column with a viewport-based
+ * min height) and the RAIL got shorter instead: 40px rows at `lg` and up
+ * (globals.css), a two-line block here, and the nav drops `sticky` when a
+ * viewport is too short for it (measured above), so nothing is ever cut off.
+ * Measured: Overview plus six groups plus one open group of six plus this
+ * block is about 740px at 1440x812, inside the 741px under the header.
  *
- * It repeats a destination that also appears under Case tools, and that is
- * fine: a list entry and a call to action are different things doing
- * different jobs, and only one of them is findable by someone who has not
- * thought to open a group. Kept to three lines so it does not crowd the list.
+ * IT IS THE ACTION, NOT ANOTHER LINK. Every figure on these pages is an
+ * aggregate, and the question underneath every aggregate is "where does that
+ * leave me". It repeats a destination that also appears under Case tools,
+ * and that is fine: a list entry and a call to action are different things
+ * doing different jobs.
  */
-function RailAction() {
+function RailFooter() {
   return (
-    <div className="mb-1 border-y-2 border-border px-4 py-3">
+    <div className="mt-auto border-t-2 border-border px-4 pb-2 pt-3">
       <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
         Track a case
       </p>{" "}
-      <p className="mt-1.5 text-sm leading-snug text-foreground/75">
-        Any PERM, prevailing wage or LCA number: its DOL record and its place in the queue.
+      <p className="mt-1 text-sm leading-snug text-foreground/75">
+        Its DOL record and its place in the queue.
       </p>{" "}
       <Link
         href="/perm-case-status"
@@ -767,9 +768,7 @@ function RailAction() {
       >
         {/* /perm-case-status is the one genuinely dynamic page on this
             surface - a miss there asks DOL live, measured at ~3.5s - and this
-            was a bare <Link> with no signal at all. That is the shape of the
-            complaint: press it, and for three seconds nothing on screen says
-            anything happened. */}
+            was a bare <Link> with no signal at all. */}
         <LinkPending />
         Check my case
       </Link>

@@ -2668,3 +2668,14 @@ html[data-pre="on"] body::before {
   .rail-tab { transition: none; }
   .rail-tab:hover { transform: none; }
 }
+
+/* Desktop rail rows are 40px so Overview, six groups, an open group and the
+   lookup block fit under the header on an 812px window (measured 2026-09-08).
+   The 44px floor stays on the touch drawer below `lg`. */
+@media (min-width: 64rem) {
+  /* Leaves 36px, group headers 40px: a seven-item group (Employers and wages)
+     plus everything else measures 704px against the 741px under the header. */
+  .rail-row { min-height: 2.25rem; padding-top: 0.25rem; padding-bottom: 0.25rem; }
+  .rail-tab { min-height: 2.5rem; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+}
+
