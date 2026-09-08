@@ -219,3 +219,15 @@ export function monthsToReach(
   const months = gapDays <= 0 ? 0 : Math.round((gapDays / perMonth) * 10) / 10;
   return { months, gapDays: Math.max(gapDays, 0), basis: { movedDays: cell.movedDays, spanMonths: cell.spanMonths, retrogressions: cell.retrogressions.length } };
 }
+
+/**
+ * A supply scenario: how long a queue of `ahead` applications takes to clear
+ * at `perYear` visa numbers a year. Arithmetic on a number the reader chose,
+ * which is the whole point: nobody publishes next year's supply for one
+ * category and country, so the site never picks one. Null when the supply is
+ * not a positive number.
+ */
+export function scenarioMonths(ahead: number, perYear: number): number | null {
+  if (!(perYear > 0) || !(ahead >= 0)) return null;
+  return ahead / (perYear / 12);
+}

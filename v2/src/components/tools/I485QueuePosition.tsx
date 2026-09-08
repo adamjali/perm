@@ -39,7 +39,7 @@ import { pairKey,
   type I485CellTable,
 } from "@/lib/i485/position";
 import { formatAsOf, formatAsOfShort, formatMonth } from "@/lib/dolFormat";
-import { monthsToReach, type PaceBasis } from "@/lib/bulletinNext";
+import { monthsToReach, scenarioMonths, type PaceBasis } from "@/lib/bulletinNext";
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -497,6 +497,7 @@ export function I485QueuePosition({
                     </p>
                   );
                 })()}{" "}
+                <SupplyScenario low={position.low} high={position.high} />{" "}
                 {/* The certainty bar, as an axis. Scaled to the ceiling, no
                     empty track, and both ticks at their own coordinates. */}
                 <div className="mt-6">
@@ -681,6 +682,77 @@ export function I485QueuePosition({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * "If the supply were": the reader picks a number of visas a year and the
+ * queue ahead is divided by it. It is what a rival prints as low, base and
+ * high scenarios with the supply chosen for the reader; here the supply is
+ * the reader's own input, the anchors are the statute's figures rather than
+ * anyone's expectation, and the result says what it assumes.
+ */
+const SUPPLY_ANCHORS = [
+  { label: "7% of one category", value: 2803, note: "7% of the 40,040 a category gets from the 140,000 floor; the rule of thumb many trackers use as a floor" },
+  { label: "Per-country cap", value: 25620, note: "the statutory 7% of the 366,000 family and employment total, across every preference category" },
+  { label: "A whole category", value: 40040, note: "28.6% of the 140,000 employment floor, before any unused family numbers are added" },
+] as const;
+
+function SupplyScenario({ low, high }: { low: number; high: number }) {
+  const id = useId();
+  const [supply, setSupply] = useState("");
+  const perYear = Number(supply.replace(/[^0-9]/g, ""));
+  const lo = scenarioMonths(low, perYear);
+  const hi = scenarioMonths(high, perYear);
+  const fmt = (m: number) => (m >= 24 ? `${(m / 12).toFixed(1)} years` : `${Math.max(1, Math.round(m))} months`);
+  const int = (n: number) => n.toLocaleString("en-US");
+  return (
+    <div className="mt-6 border-2 border-border bg-background p-4 sm:p-5">
+      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+        If the supply were
+      </p>{" "}
+      <p className="mt-2 text-sm leading-relaxed text-foreground/75">
+        A scenario, not a forecast. You choose how many visa numbers a year
+        reach this category and country, and the queue ahead is divided by it.
+        Nobody publishes that supply in advance; the anchors are the statute&apos;s
+        figures, not anyone&apos;s expectation.
+      </p>{" "}
+      <div className="mt-3 flex flex-wrap items-end gap-3">
+        <div className="min-w-0">
+          <Label htmlFor={id} className="text-sm font-bold">Numbers a year</Label>{" "}
+          <input
+            id={id}
+            inputMode="numeric"
+            autoComplete="off"
+            value={supply}
+            onChange={(e) => setSupply(e.target.value)}
+            placeholder="7,235"
+            className="mt-1 block min-h-11 w-40 border-2 border-border bg-card px-3 text-base tabular-nums focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          />
+        </div>{" "}
+        {SUPPLY_ANCHORS.map((a) => (
+          <Fragment key={a.value}>{" "}
+            <button
+              type="button"
+              onClick={() => setSupply(String(a.value))}
+              title={a.note}
+              className="min-h-11 border-2 border-border bg-card px-3 text-sm font-semibold transition-colors hover:bg-tint-primary"
+            >
+              {a.label}: {int(a.value)}
+            </button>
+          </Fragment>
+        ))}
+      </div>{" "}
+      {lo !== null && hi !== null ? (
+        <p className="mt-3 text-base leading-relaxed text-foreground/85" aria-live="polite">
+          At {int(perYear)} a year, the {low === high ? int(low) : `${int(low)} to ${int(high)}`} ahead
+          would take about{" "}
+          <strong className="font-semibold">{low === high ? fmt(lo) : `${fmt(lo)} to ${fmt(hi)}`}</strong>.
+          That assumes every number goes to an applicant ahead of you and none to anyone
+          behind, which is why it is a scenario.
+        </p>
+      ) : null}
     </div>
   );
 }

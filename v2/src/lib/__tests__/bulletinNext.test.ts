@@ -6,6 +6,7 @@ import {
   nextBulletinMonth,
   sameMonthMoves,
   summariseMoves,
+  scenarioMonths,
 } from "@/lib/bulletinNext";
 
 function month(bulletinMonth: string, fa: Record<string, Record<string, string>>): BulletinMonth {
@@ -101,5 +102,17 @@ describe("monthsToReach", () => {
 
   it("says zero when the date is already behind the cutoff", () => {
     expect(monthsToReach({ latest: { kind: "date", iso: "2013-02-01" }, movedDays: 365, spanMonths: 12, retrogressions: [] }, "2012-01-01")).toMatchObject({ months: 0 });
+  });
+});
+
+describe("scenarioMonths", () => {
+  it("divides the queue ahead by a monthly share of the supply", () => {
+    expect(scenarioMonths(5911, 7235)).toBeCloseTo(9.8, 1);
+    expect(scenarioMonths(0, 2803)).toBe(0);
+  });
+  it("refuses a supply that is not a positive number", () => {
+    expect(scenarioMonths(5911, 0)).toBeNull();
+    expect(scenarioMonths(5911, -5)).toBeNull();
+    expect(scenarioMonths(5911, Number.NaN)).toBeNull();
   });
 });
