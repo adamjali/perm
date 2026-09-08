@@ -41,5 +41,7 @@ export const DISCLOSURE_PAGES = [
   "/perm-attorneys/browse",
   "/methodology",
   "/tools/salary-explorer",
+  "/lca-wages",
+  "/tools/compare-my-offer",
   "/tools/i140-trends",
 ] as const;

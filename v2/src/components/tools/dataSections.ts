@@ -35,6 +35,8 @@ export type DataSection =
   | "activity"
   | "by-state"
   | "wages"
+  | "lca-wages"
+  | "compare-offer"
   | "employers"
   | "attorneys"
   | "cases"
@@ -101,6 +103,8 @@ export const SECTIONS: DataNavSection[] = [
   { key: "employers", group: "Employers and wages", label: "Employers", href: "/perm-employers" },
   { key: "attorneys", group: "Employers and wages", label: "Law firms", href: "/perm-attorneys" },
   { key: "wages", group: "Employers and wages", label: "Wages", href: "/perm-wages" },
+  { key: "lca-wages", group: "Employers and wages", label: "H-1B salaries", href: "/lca-wages" },
+  { key: "compare-offer", group: "Employers and wages", label: "Compare my offer", href: "/tools/compare-my-offer" },
   { key: "by-state", group: "Employers and wages", label: "By state", href: "/perm-by-state" },
 
   { key: "risk", group: "Denials and audits", label: "Denial rates", href: "/perm-denial-risk" },

@@ -130,3 +130,46 @@ export function clampBins(
   }
   return { bins: kept, below, above };
 }
+
+/**
+ * Where an offer sits in a histogram: the cumulative share of rows below it,
+ * interpolated inside its bin. Used by "compare my offer", where the offer
+ * itself never leaves the browser, so this runs on the client over a payload
+ * the wages routes already return. Null under the median floor, so a thin
+ * selection cannot place anything.
+ */
+export interface OfferPayload {
+  stats: WagePercentiles;
+  bins: WageBin[];
+  binWidth: number;
+  below: number;
+  above: number;
+}
+
+export interface PlacedOffer {
+  percentile: number;
+  n: number;
+  p25: number | null;
+  p50: number | null;
+  p75: number | null;
+}
+
+/** Cumulative share of rows below `offer`, interpolated inside its bin. */
+export function placeOffer(payload: OfferPayload, offer: number): PlacedOffer | null {
+  const { stats, bins, binWidth, below } = payload;
+  if (stats.n < MIN_FOR_MEDIAN || binWidth <= 0) return null;
+  let cumulative = below;
+  for (const b of bins) {
+    const to = b.from + binWidth;
+    if (offer >= to) {
+      cumulative += b.count;
+    } else if (offer > b.from) {
+      cumulative += b.count * ((offer - b.from) / binWidth);
+      break;
+    } else {
+      break;
+    }
+  }
+  const percentile = Math.max(0, Math.min(100, Math.round((cumulative / stats.n) * 100)));
+  return { percentile, n: stats.n, p25: stats.p25, p50: stats.p50, p75: stats.p75 };
+}

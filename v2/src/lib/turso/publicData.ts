@@ -986,8 +986,8 @@ function wageWhere(f: WageFilters): { sql: string; args: unknown[] } {
     args.push(status);
   }
   if (f.socCode) {
-    parts.push("soc_code = ?");
-    args.push(f.socCode);
+    parts.push("substr(soc_code, 1, 7) = ?");
+    args.push(f.socCode.trim().slice(0, 7));
   }
   if (f.state) {
     parts.push("state = ?");
@@ -1043,7 +1043,7 @@ function percentileExpr(p: number, name: string): string {
   );
 }
 
-const PERCENTILE_SELECT = (
+export const PERCENTILE_SELECT = (
   [
     [0.05, "p5"],
     [0.25, "p25"],
@@ -1072,7 +1072,7 @@ function statePercentileExpr(p: number, name: string): string {
   return `ROUND(${lo} + (${hi} - ${lo}) * ${frac}) AS ${name}`;
 }
 
-const STATE_PERCENTILE_SELECT = (
+export const STATE_PERCENTILE_SELECT = (
   [
     [0.05, "p5"],
     [0.25, "p25"],

@@ -45,6 +45,13 @@ export interface StateWageRow extends WagePercentiles {
 
 export interface SalaryExplorerProps {
   occupations: readonly WageOption[];
+  /** The JSON route the filtered views come from. Default: the PERM wages route. */
+  apiPath?: string;
+  /** The question at the top, in the reader's words. */
+  heading?: string;
+  /** What one row is called: "case" for PERM, "LCA" for H-1B filings. */
+  noun?: string;
+  nounPlural?: string;
   states: readonly WageOption[];
   fiscalYears: readonly string[];
   /** Rendered before any fetch, so the default view needs no JavaScript. */
@@ -73,6 +80,10 @@ const int = (n: number) => n.toLocaleString("en-US");
 
 export function SalaryExplorer({
   occupations,
+  apiPath = "/api/perm-wages",
+  heading = "What does this job pay on a PERM?",
+  noun = "case",
+  nounPlural = "cases",
   states,
   fiscalYears,
   initial,
@@ -118,7 +129,7 @@ export function SalaryExplorer({
     if (fy) qs.set("fy", fy);
     qs.set("status", status);
     setLoading(true);
-    fetch(`/api/perm-wages?${qs.toString()}`, { signal: ctl.signal })
+    fetch(`${apiPath}?${qs.toString()}`, { signal: ctl.signal })
       .then(async (r) => {
         if (!r.ok) throw new Error(`${r.status}`);
         return r.json();
@@ -135,7 +146,7 @@ export function SalaryExplorer({
       })
       .finally(() => setLoading(false));
     return () => ctl.abort();
-  }, [soc, state, fy, status, isDefault, initial]);
+  }, [soc, state, fy, status, isDefault, initial, apiPath]);
 
   const report = useMemo(() => reportability(data.stats.n), [data.stats.n]);
   const subject = useMemo(() => {
@@ -154,11 +165,11 @@ export function SalaryExplorer({
           own UA stylesheet and runs it off the card. */}
       <div className="border-b-2 border-border p-6 sm:p-8">
         <h2 className="font-heading text-2xl font-black leading-tight">
-          What does this job pay on a PERM?
+          {heading}
         </h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           Every offered wage in DOL&apos;s disclosure files, filtered. The
-          figures describe the cases you select, not the whole corpus.
+          figures describe the {nounPlural} you select, not the whole corpus.
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-4">
@@ -277,7 +288,7 @@ export function SalaryExplorer({
 
       <div className={cn("p-6 sm:p-8", loading && "opacity-60")} aria-busy={loading}>
         <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          {int(data.stats.n)} {data.stats.n === 1 ? "case" : "cases"} with a usable wage
+          {int(data.stats.n)} {data.stats.n === 1 ? noun : nounPlural} with a usable wage
         </p>
 
         {report.showMiddle ? (
@@ -305,7 +316,7 @@ export function SalaryExplorer({
                 ))}
             </div>
             <p className="mt-3 text-base text-foreground/70">
-              Half of these cases fall between{" "}
+              Half of these {nounPlural} fall between{" "}
               <b className="font-bold text-foreground tabular-nums">{usd(data.stats.p25)}</b> and{" "}
               <b className="font-bold text-foreground tabular-nums">{usd(data.stats.p75)}</b>, the
               25th and 75th percentiles.
@@ -319,7 +330,7 @@ export function SalaryExplorer({
                   {data.below > 0 || data.above > 0 ? (
                     <>
                       {" "}
-                      {int(data.below + data.above)} cases sit outside this range and are counted
+                      {int(data.below + data.above)} {nounPlural} sit outside this range and are counted
                       but not drawn, so the axis is not stretched by a handful of outliers.
                     </>
                   ) : null}
@@ -332,7 +343,7 @@ export function SalaryExplorer({
                       {" "}
                       <li
                         className="grid grid-cols-[6rem_1fr_4rem] items-center gap-2 [&>*]:min-w-0 sm:grid-cols-[8rem_1fr_5rem] sm:gap-3"
-                        aria-label={`${usd(b.from)} to ${usd(b.from + data.binWidth)}: ${int(b.count)} cases`}
+                        aria-label={`${usd(b.from)} to ${usd(b.from + data.binWidth)}: ${int(b.count)} ${nounPlural}`}
                       >
                         <span className="text-sm tabular-nums text-foreground/70">{usd(b.from)}</span>{" "}
                         <span className="block h-5 w-full border-2 border-border bg-muted">
@@ -355,7 +366,7 @@ export function SalaryExplorer({
               <div className="mt-10">
                 <h3 className="font-heading text-xl font-black">By worksite state</h3>{" "}
                 <p className="mt-2 text-base text-foreground/70">
-                  States with at least {MIN_FOR_MEDIAN} matching cases, most first.
+                  States with at least {MIN_FOR_MEDIAN} matching {nounPlural}, most first.
                 </p>
                 <div className="mt-4 overflow-x-auto">
                   <table className="w-full min-w-[36rem] border-2 border-border text-left text-sm">

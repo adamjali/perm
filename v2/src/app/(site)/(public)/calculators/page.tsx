@@ -140,6 +140,22 @@ const EXPLORERS = [
       "What certified PERM jobs actually pay, as a percentile ladder rather than one average.",
   },
   {
+    href: "/lca-wages",
+    icon: CurrencyDollarIcon,
+    kind: "Distribution",
+    name: "H-1B salary explorer",
+    blurb:
+      "The wage attested on certified H-1B LCAs, by occupation and worksite state, annualised from the unit each filing quoted.",
+  },
+  {
+    href: "/tools/compare-my-offer",
+    icon: CurrencyDollarIcon,
+    kind: "Percentile",
+    name: "Compare my offer",
+    blurb:
+      "Where your offer sits among certified H-1B LCAs and PERM offers for the same job and state. The number stays in your browser.",
+  },
+  {
     href: "/tools/i140-trends",
     icon: ChartBarIcon,
     kind: "Series",

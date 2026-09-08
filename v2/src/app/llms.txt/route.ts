@@ -166,6 +166,18 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "What sponsorship actually pays, by occupation, state and year, from the wage committed to on each certified filing. Not a survey estimate: every figure came off a federal form.",
   },
   {
+    path: "/lca-wages",
+    label: "H-1B salary explorer",
+    blurb:
+      "The wage attested on certified H-1B LCAs, by occupation, worksite state and year, annualised from the unit each filing quoted: median, average and percentiles over the filings you select, from DOL's own disclosure files.",
+  },
+  {
+    path: "/tools/compare-my-offer",
+    label: "Compare my offer",
+    blurb:
+      "Where an offered salary sits among certified H-1B LCAs and PERM offers for the same occupation and state, as a percentile. The offer is placed in the browser and never sent to the site.",
+  },
+  {
     path: "/tools/i140-trends",
     label: "I-140 filing trends",
     blurb:
