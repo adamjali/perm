@@ -18,6 +18,7 @@
 
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
+import Image from "next/image";
 import Link from "next/link";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -160,10 +161,18 @@ export default function AboutPage() {
 
       <h2 className={h2}>Who&apos;s behind it</h2>{" "}
       <div className="mt-5 max-w-sm border-2 border-border bg-card p-4 shadow-hard">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center border-2 border-border bg-primary font-heading text-lg font-black text-primary-foreground" aria-hidden="true">
-            {SABRINA.name.split(" ").filter((w) => w.length > 1).map((w) => w[0]).join("")}
-          </div>{" "}
+        <div className="flex items-center gap-4">
+          {/* Her portrait, cropped to the card by object-fit rather than by a
+              second file, with the source's real 640x800 declared so the box
+              is reserved at the right aspect before the bytes arrive. */}
+          <Image
+            src={SABRINA.image}
+            alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
+            width={SABRINA.imageSize[0]}
+            height={SABRINA.imageSize[1]}
+            sizes="96px"
+            className="h-24 w-[4.8rem] shrink-0 border-2 border-border object-cover object-top"
+          />{" "}
           <div>
             <p className="font-heading text-base font-bold leading-tight">{SABRINA.name}</p>{" "}
             <p className="text-sm text-muted-foreground">{SABRINA.jobTitle}</p>

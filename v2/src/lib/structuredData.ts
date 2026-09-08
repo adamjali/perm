@@ -118,6 +118,7 @@ export function getOrganizationSchema(baseUrl: string) {
       '@id': `${baseUrl}/about#${p.name.toLowerCase().replace(/[^a-z]+/g, '-')}`,
       name: p.name,
       jobTitle: p.jobTitle,
+      image: `${baseUrl}${p.image}`,
       sameAs: [...p.sameAs],
     })),
   };

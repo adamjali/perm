@@ -25,12 +25,22 @@ export interface AboutPerson {
   jobTitle: string;
   /** Profiles the person owns; emitted as the Person node's `sameAs`. */
   sameAs: readonly string[];
+  /**
+   * Site-relative path of the portrait shown on the About page and emitted
+   * as the Person node's `image`. Supplied by the site owner on 2026-09-07;
+   * a 640x800 JPEG under `public/about/`.
+   */
+  image: string;
+  /** Intrinsic size of that file, so the layout reserves the right box. */
+  imageSize: readonly [number, number];
 }
 
 export const SABRINA: AboutPerson = {
   name: "Sabrina Soltau",
   jobTitle: "Immigration attorney",
   sameAs: [LINKEDIN_SABRINA_URL],
+  image: "/about/sabrina-soltau.jpg",
+  imageSize: [640, 800],
 };
 
 /** Everyone the site names, in display order. One person, by decision. */

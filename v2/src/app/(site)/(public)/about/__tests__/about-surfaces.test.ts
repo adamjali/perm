@@ -7,7 +7,7 @@
  * /faq). A page nothing links to is the class of defect this site keeps
  * meeting, so the links are asserted here rather than assumed.
  */
-import { readFileSync } from "node:fs";
+import fs, { readFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
@@ -40,6 +40,29 @@ describe("the About surfaces", () => {
     };
     expect(org.founder.map((f) => f.name)).toEqual(PEOPLE.map((p) => p.name));
     expect(org.founder.map((f) => f.jobTitle)).toEqual(PEOPLE.map((p) => p.jobTitle));
+  });
+
+  it("ships the portrait it declares, at the size it declares", () => {
+    for (const p of PEOPLE) {
+      const file = path.join(ROOT, "public", p.image);
+      expect(fs.existsSync(file), `${p.image} missing under public/`).toBe(true);
+      // JPEG SOF0/SOF2 header carries height then width; assert the declared
+      // size is the file's, because a wrong width/height on an <img> is a
+      // confidently wrong space reservation (CLS), worse than none.
+      const buf = fs.readFileSync(file);
+      let i = 2;
+      let size: [number, number] | null = null;
+      while (i < buf.length - 9) {
+        if (buf[i] !== 0xff) { i++; continue; }
+        const marker = buf[i + 1];
+        if (marker === 0xc0 || marker === 0xc2) {
+          size = [buf.readUInt16BE(i + 7), buf.readUInt16BE(i + 5)];
+          break;
+        }
+        i += 2 + buf.readUInt16BE(i + 2);
+      }
+      expect(size).toEqual([...p.imageSize]);
+    }
   });
 
   it("makes no beneficiary claim for the person named", () => {
