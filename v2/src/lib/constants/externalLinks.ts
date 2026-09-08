@@ -5,14 +5,16 @@
  * owned pages, the one personal profile the site names, and where a bug
  * report or an idea goes.
  *
- * NO PERSONAL HANDLE ANYWHERE ON THE PUBLIC SITE (site owner's decision,
- * 2026-09-07). The source repository and an X account used to be linked from
- * the footer, the About page, the contact page, the settings support panel and
- * the Organization schema; every one of those URLs carried a personal GitHub
- * or X handle. They are gone from this file so they cannot come back through
- * a call site. The repository still exists and the deploy pipeline still
+ * NO GITHUB HANDLE ANYWHERE ON THE PUBLIC SITE (site owner's decision,
+ * 2026-09-07). The source repository used to be linked from the footer, the
+ * About page, the contact page, the settings support panel and the
+ * Organization schema, and every one of those URLs carried a personal GitHub
+ * handle. They are gone from this file so they cannot come back through a
+ * call site. The repository still exists and the deploy pipeline still
  * targets it (`src/app/api/cron/dispatch/jobs.ts`), it is simply not a public
  * link any more. Bug reports and feature requests go to the support mailbox.
+ * The X account stays linked (owner's decision, same evening, 9:12 PM ET):
+ * footer and About contact line only, never on the Organization node.
  */
 
 /**
@@ -26,6 +28,12 @@ export const MEDIUM_PROFILE_URL = "https://medium.com/@permtracker";
 export const PRODUCT_HUNT_URL = "https://www.producthunt.com/products/perm-tracker";
 /** A personal profile, declared on the Person node, never on the Organization. */
 export const LINKEDIN_SABRINA_URL = "https://www.linkedin.com/in/sabrina-soltau-5b2682171";
+/**
+ * The X account the product posts from. A personal handle, so it is linked
+ * (footer, About contact line) and never asserted as the Organization's
+ * `sameAs`; `structuredData.test.ts` pins that.
+ */
+export const X_PROFILE_URL = "https://x.com/adamj3ali";
 
 /** The one support address, also rendered on the contact page. */
 export const SUPPORT_EMAIL_ADDRESS = "support@permtracker.app";
@@ -41,7 +49,7 @@ export const FEATURE_REQUEST_URL = `mailto:${SUPPORT_EMAIL_ADDRESS}?subject=Feat
 export interface SocialLink {
   href: string;
   label: string;
-  icon: "linkedin";
+  icon: "twitter" | "linkedin";
 }
 
 /**
@@ -53,6 +61,10 @@ export interface SocialLink {
  * which is what these used to do.
  */
 export const SOCIAL_LINKS = [
+  // x.com rather than twitter.com: twitter.com only 301s here, and the footer
+  // glyph is already the X mark. Label names the platform but keeps the old
+  // name for recognition, since the icon alone is still ambiguous to many users.
+  { href: X_PROFILE_URL, label: "X (formerly Twitter)", icon: "twitter" },
   // A personal profile, not a company page. She is the one person the site
   // names, the public voice of the product's email (every message signs off
   // "Sabrina S. / PERM Tracker Team") and the byline on every article, so

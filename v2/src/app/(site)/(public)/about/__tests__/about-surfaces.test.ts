@@ -79,7 +79,9 @@ describe("the About surfaces", () => {
       "src/app/llms.txt/route.ts",
       "src/lib/pageCards.ts",
     ]) {
-      expect(read(rel)).not.toMatch(/adamjali|adamj3ali|Adam J Ali|professor/i);
+      // The X handle is allowed (kept linked on the owner's decision); the
+      // GitHub handle, the second name and the old title are not.
+      expect(read(rel)).not.toMatch(/adamjali|Adam J Ali|professor/i);
     }
   });
 

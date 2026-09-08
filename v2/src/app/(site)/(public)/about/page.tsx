@@ -35,6 +35,7 @@ import {
   LINKEDIN_SABRINA_URL,
   MEDIUM_PROFILE_URL,
   PRODUCT_HUNT_URL,
+  X_PROFILE_URL,
 } from "@/lib/constants/externalLinks";
 
 const TITLE = "About PERM Tracker";
@@ -225,6 +226,7 @@ export default function AboutPage() {
       <p className={p}>
         <a href="mailto:support@permtracker.app" className={link}>support@permtracker.app</a>.
         PERM Tracker is also on{" "}
+        <a href={X_PROFILE_URL} className={link} rel="me noopener" target="_blank">X</a>,{" "}
         <a href={MEDIUM_PROFILE_URL} className={link} rel="me noopener" target="_blank">Medium</a>{" "}
         and{" "}
         <a href={PRODUCT_HUNT_URL} className={link} rel="me noopener" target="_blank">Product Hunt</a>,
