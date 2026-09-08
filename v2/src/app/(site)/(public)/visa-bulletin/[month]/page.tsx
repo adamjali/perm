@@ -193,9 +193,9 @@ function ChartTable({ title, rows, since }: { title: string; rows: Cell[][]; sin
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead className="bg-foreground text-background">
             <tr>
-              <th scope="col" className="px-3 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">Category </th>{" "}
+              <th scope="col" className="px-3 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">Category </th>
               {BOARD_COUNTRIES.map((c) => (
-                <Fragment key={c}>{" "}
+                <Fragment key={c}>
                   <th scope="col" className="px-3 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">{COUNTRY_LABEL[c]} </th>
                 </Fragment>
               ))}
@@ -206,13 +206,13 @@ function ChartTable({ title, rows, since }: { title: string; rows: Cell[][]; sin
               const first = row[0];
               if (!first) return null;
               return (
-                <Fragment key={first.category}>{" "}
+                <Fragment key={first.category}>
                   <tr className="border-t-2 border-border align-top">
                     <th scope="row" className="px-3 py-3 text-left font-semibold">
                       {CATEGORY_LABEL[first.category] ?? first.category}{" "}
-                    </th>{" "}
+                    </th>
                     {row.map((cell) => (
-                      <Fragment key={cell.country}>{" "}
+                      <Fragment key={cell.country}>
                         <td className="px-3 py-3">
                           <span className="font-heading font-bold">{cell.label}</span>{" "}
                           {cell.move ? (

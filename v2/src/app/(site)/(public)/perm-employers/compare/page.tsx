@@ -130,9 +130,9 @@ export default async function CompareEmployersPage({
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead className="bg-foreground text-background">
               <tr>
-                <th scope="col" className="px-4 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">Measure </th>{" "}
+                <th scope="col" className="px-4 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">Measure </th>
                 {[left, right].map((s) => (
-                  <Fragment key={s.entity.canonicalSlug}>{" "}
+                  <Fragment key={s.entity.canonicalSlug}>
                     <th scope="col" className="px-4 py-3 text-left">
                       <Link href={`/perm-employers/${s.entity.canonicalSlug}`} className="font-heading text-base font-black underline decoration-primary decoration-2 underline-offset-2">
                         {s.entity.row.name}
@@ -144,25 +144,25 @@ export default async function CompareEmployersPage({
             </thead>
             <tbody>
               {rows.map((r) => (
-                <Fragment key={r.label}>{" "}
+                <Fragment key={r.label}>
                   <tr className="border-t-2 border-border align-top">
                     <th scope="row" className="px-4 py-3 text-left font-semibold">
                       {r.label}{" "}
                       {r.note ? <span className="block text-xs font-normal text-muted-foreground">{r.note}</span> : null}
-                    </th>{" "}
-                    <td className="px-4 py-3 font-heading font-bold">{r.value(left)} </td>{" "}
+                    </th>
+                    <td className="px-4 py-3 font-heading font-bold">{r.value(left)} </td>
                     <td className="px-4 py-3 font-heading font-bold">{r.value(right)} </td>
                   </tr>
                 </Fragment>
-              ))}{" "}
+              ))}
               <tr className="border-t-2 border-border align-top">
-                <th scope="row" className="px-4 py-3 text-left font-semibold">Top occupations filed </th>{" "}
-                <td className="px-4 py-3">{facetList(left, "occupation")} </td>{" "}
+                <th scope="row" className="px-4 py-3 text-left font-semibold">Top occupations filed </th>
+                <td className="px-4 py-3">{facetList(left, "occupation")} </td>
                 <td className="px-4 py-3">{facetList(right, "occupation")} </td>
-              </tr>{" "}
+              </tr>
               <tr className="border-t-2 border-border align-top">
-                <th scope="row" className="px-4 py-3 text-left font-semibold">Top worksite states </th>{" "}
-                <td className="px-4 py-3">{facetList(left, "state")} </td>{" "}
+                <th scope="row" className="px-4 py-3 text-left font-semibold">Top worksite states </th>
+                <td className="px-4 py-3">{facetList(left, "state")} </td>
                 <td className="px-4 py-3">{facetList(right, "state")} </td>
               </tr>
             </tbody>
