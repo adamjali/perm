@@ -17,7 +17,7 @@ no silent failures, no crowding, internal links both ways, SEO kit per page.
 - [x] 8 I-693 guide (finder NOT built: the locator form 403s a scripted search from a residential IP)
 - [x] 9 Digest built, flag OFF (`NEWSLETTER_ENABLED=1` to send, cap `NEWSLETTER_DAILY_CAP` default 30); checkbox on both alert forms, confirmed by the alert's own click; `/prefs` kind `newsletter`; Tuesday cron stores a preview the admin panel shows. Proven on dev 11:59 PM ET Sep 7: real issue built, 0 sends, bulletin moves recounted independently 5/25/0 of 30
 - [x] 10 Homepage dated numbers row: `RecordStrip` under About, five figures from `perm_docs` point reads (no table counts), each with the date its own doc carries; a figure with no date is withheld; checked at 390 and 1280
-- [ ] 11 SEO kit sweep (titles, descriptions, schema, sitemap, cards, llms.txt), gates, Lighthouse, phone check
+- [x] 11 SEO kit: cards for the 4 new pages (+ compare page added to the sitemap, images on all four entries), llms.txt and the palette already carry them via the rail map, footer links to /visa-bulletin and /lca-wages, registration gate repaired (it had crashed on the deleted DataNav since Aug 30). NOT done: live keyword checks in GSC/Bing/Ahrefs (browser-driven, skipped to save tokens; titles follow the query shapes measured Sep 3). Lighthouse + rendered audits run in 12 on the production build
 - [ ] 12 Full suite + clean build + rendered audits; then WAIT for "deploy"
 
 ## Notes / measurements

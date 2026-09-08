@@ -40,9 +40,9 @@ export function AboutSection({ record = [] }: { record?: RecordFigure[] }) {
           >
             More about us &rarr;
           </Link>
-        </p>
-      </div>{" "}
-      <RecordStrip record={record} />
+        </p>{" "}
+        <RecordStrip record={record} />
+      </div>
     </section>
   );
 }
