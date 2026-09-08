@@ -3062,7 +3062,13 @@ What Google's site-names doc lists that we lacked, and what shipped:
   `about-surfaces.test.ts` greps the six identity surfaces for the old
   handles and title. The repository still lives under the personal handle
   and the cron dispatcher still targets it; that is a GitHub-side move
-  (transfer to a brand-named org), not a site edit.
+  (transfer to a brand-named org), not a site edit. Her portrait
+  (`public/about/sabrina-soltau.jpg`, 640x800, supplied by the owner) is on
+  the About card and on her Person node as `image`; the test asserts the
+  JPEG header matches the declared size. Medium (`@permtracker`: About text,
+  short bio, pronoun removed) and the Product Hunt maker bio were edited the
+  same evening and verified on their public pages; both accounts keep the
+  brand's green PT avatar.
 - **The homepage carries an "About PERM Tracker" H2 again**, plain
   server-rendered prose with no Motion wrapper, and **its FAQ dropped from
   eight to three**: six were byte-identical to `/faq`, and Google chose `/faq`
