@@ -1,6 +1,9 @@
 import Link from "next/link";
 
 import { ABOUT_ONE_LINER, SABRINA } from "@/lib/constants/about";
+import type { RecordFigure } from "@/lib/recordCounts";
+
+import { RecordStrip } from "./RecordStrip";
 
 /**
  * "About PERM Tracker", on the homepage, in plain server-rendered prose.
@@ -14,7 +17,7 @@ import { ABOUT_ONE_LINER, SABRINA } from "@/lib/constants/about";
  * serializes as an inline `opacity:0` in the prerendered HTML, and this is the
  * one passage on the page that most needs to be readable before hydration.
  */
-export function AboutSection() {
+export function AboutSection({ record = [] }: { record?: RecordFigure[] }) {
   return (
     <section id="about" className="relative py-16 sm:py-20">
       <div className="mx-auto max-w-[800px] px-4 sm:px-8">
@@ -38,7 +41,8 @@ export function AboutSection() {
             More about us &rarr;
           </Link>
         </p>
-      </div>
+      </div>{" "}
+      <RecordStrip record={record} />
     </section>
   );
 }

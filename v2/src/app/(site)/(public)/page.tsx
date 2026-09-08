@@ -50,6 +50,7 @@ import { SectionDivider } from "@/components/home/SectionDivider";
 import { deriveFigures } from "@/components/home/dataPageFigures";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { getRecordCounts } from "@/lib/turso/recordCounts";
 
 // One live DOL figure on the page: hourly ISR, same as the data pages.
 // The disclosure files are quarterly, so an hourly window bought
@@ -114,9 +115,10 @@ export default async function HomePage() {
   // must not be conflated: the processing-times snapshot is DOL's weekly queue
   // page, the disclosure stats are its quarterly determination files. Fetched
   // in parallel, server-side, once per revalidate window.
-  const [snapshot, disclosure] = await Promise.all([
+  const [snapshot, disclosure, record] = await Promise.all([
     getProcessingTimes(),
     getDisclosureStats(),
+    getRecordCounts(),
   ]);
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)
@@ -169,7 +171,7 @@ export default async function HomePage() {
       />
       <AttorneyPanel />
       <TestimonialsSection />
-      <AboutSection />
+      <AboutSection record={record} />
       <FAQSection />
       <SectionDivider kind="step" fill="var(--primary)" />
       <CTASection eyebrow="If you manage cases" />
