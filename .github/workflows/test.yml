@@ -81,6 +81,9 @@ jobs:
       - name: Visa bulletin parser contract
         working-directory: v2
         run: python3 scripts/test_visa_bulletin.py
+      - name: Policy feed selection rules
+        working-directory: v2
+        run: python3 scripts/test_policy_notices.py
 
       # The ingest that talks to DOL unattended. Every case in here is a
       # defect that happened or would have shipped silently - the batch

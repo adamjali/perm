@@ -203,6 +203,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-wages`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-wages.jpg`] },
     { url: `${base}/lca-wages`, lastModified: dol ?? "2026-09-08" },
     { url: `${base}/tools/compare-my-offer`, lastModified: "2026-09-08" },
+    { url: `${base}/policy-changes`, lastModified: dol ?? "2026-09-08" },
     { url: `${base}/perm-employers`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-employers.jpg`] },
     { url: `${base}/perm-attorneys`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-attorneys.jpg`] },
     // The A-Z index pages. Written literally rather than generated from

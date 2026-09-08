@@ -172,6 +172,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "The wage attested on certified H-1B LCAs, by occupation, worksite state and year, annualised from the unit each filing quoted: median, average and percentiles over the filings you select, from DOL's own disclosure files.",
   },
   {
+    path: "/policy-changes",
+    label: "Policy changes on the record",
+    blurb:
+      "Every Federal Register rule, proposed rule and notice from USCIS, DHS, State and DOL's ETA that matches PERM, prevailing wage, H-1B, I-140, adjustment of status, the visa bulletin or EB-5, with the Register's own abstract and a link to the document. No summaries, no predictions.",
+  },
+  {
     path: "/perm-employers/compare",
     label: "Compare two employers",
     blurb:

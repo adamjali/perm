@@ -103,6 +103,7 @@ function label(d: string): string {
     "lca-status": "LCA statuses",
     "pw-disclosure": "Wage determinations",
     "lca-disclosure": "LCA disclosures",
+    "policy-notices": "Federal Register notices",
     "i140-trends": "I-140 filings by category",
     "rfi-funnel": "RFI and audit outcomes",
     entities: "Employers and firms",

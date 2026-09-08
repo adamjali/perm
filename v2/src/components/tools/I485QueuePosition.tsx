@@ -705,7 +705,12 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
   const perYear = Number(supply.replace(/[^0-9]/g, ""));
   const lo = scenarioMonths(low, perYear);
   const hi = scenarioMonths(high, perYear);
-  const fmt = (m: number) => (m >= 24 ? `${(m / 12).toFixed(1)} years` : `${Math.max(1, Math.round(m))} months`);
+  const fmt = (m: number) => {
+    if (m < 1) return "under a month";
+    if (m >= 24) return `${(m / 12).toFixed(1)} years`;
+    const r = Math.round(m);
+    return `${r} ${r === 1 ? "month" : "months"}`;
+  };
   const int = (n: number) => n.toLocaleString("en-US");
   return (
     <div className="mt-6 border-2 border-border bg-background p-4 sm:p-5">
@@ -748,7 +753,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
         <p className="mt-3 text-base leading-relaxed text-foreground/85" aria-live="polite">
           At {int(perYear)} a year, the {low === high ? int(low) : `${int(low)} to ${int(high)}`} ahead
           would take about{" "}
-          <strong className="font-semibold">{low === high ? fmt(lo) : `${fmt(lo)} to ${fmt(hi)}`}</strong>.
+          <strong className="font-semibold">{fmt(lo) === fmt(hi) ? fmt(lo) : `${fmt(lo)} to ${fmt(hi)}`}</strong>.
           That assumes every number goes to an applicant ahead of you and none to anyone
           behind, which is why it is a scenario.
         </p>

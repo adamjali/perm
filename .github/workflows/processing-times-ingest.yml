@@ -94,6 +94,20 @@ jobs:
       # Never fails the run: the ingest above has already stored the data, and a
       # page staying one window staler is not a reason to report a successful
       # federal-data fetch as failed. Same rule the employer-page expiry uses.
+      # The Federal Register feed rides the same daily clock. It cannot fail
+      # the run: the processing times above are already stored, and a feed
+      # that missed a day is recorded through the failure hook and shows on
+      # the health check as its own dataset.
+      - name: Federal Register notices
+        if: always()
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          python3 scripts/ingest_policy_notices.py \
+            || python3 scripts/record_ingest_failure.py --script ingest_policy_notices.py --note "policy feed failed" || true
+
       - name: Expire the DOL pages
         if: steps.ingest.outputs.dol_changed == 'true'
         env:
