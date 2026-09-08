@@ -186,6 +186,20 @@ export default function Footer({ audience = "public" }: FooterProps) {
                 Processing time calculator
               </NavLink>{" "}
               <NavLink
+                href="/visa-bulletin"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                Visa bulletin
+              </NavLink>{" "}
+              <NavLink
+                href="/lca-wages"
+                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                spinnerClassName="text-(--primary)"
+              >
+                H-1B salaries
+              </NavLink>{" "}
+              <NavLink
                 href="/tools"
                 className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
                 spinnerClassName="text-(--primary)"
