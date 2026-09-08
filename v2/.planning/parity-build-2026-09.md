@@ -12,7 +12,7 @@ no silent failures, no crowding, internal links both ways, SEO kit per page.
 - [x] 3 Bulletin (Aug+Sep 2026 set-asides need a human-saved page): this-month table with deltas; EB-5 set-aside rows in ingest; EB-5 in tools
 - [x] 4 LCA salary explorer (facets, percentiles from nightly docs) + compare your offer
 - [x] 5 Employer (industry facet skipped: no NAICS in the tables) facets (state, active 12mo, industry/NAICS) + side-by-side compare
-- [ ] 6 Supply-scenario calculator + Table V ingest + EB limit history fact
+- [x] 6 Supply scenario on the I-485 tool (Table V and the FY limit page are unreachable by script and not archived; no issuance anchors yet)
 - [ ] 7 Policy-changes feed (Federal Register API, DOL/USCIS notices)
 - [ ] 8 Civil surgeon crawl (Mac runner, weekly) + finder by ZIP + I-693 guide
 - [ ] 9 Digest built, flag OFF; interest checkbox on 2 alert forms + bulletin page; admin preview
