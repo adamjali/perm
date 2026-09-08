@@ -75,7 +75,7 @@ export const metadata: Metadata = withSocialCard({
   // year in January.
   title: "PERM Processing Times 2026 (DOL Data)",
   description:
-    "PERM processing times now: the filing month DOL is deciding, average days to a decision, and the audit and prevailing wage queues, with DOL's own as-of date.",
+    "PERM processing times now: the filing month DOL is deciding, average days to a decision, the audit and prevailing wage queues, with DOL's own as-of date.",
   alternates: { canonical: "/perm-processing-times" },
   openGraph: {
     ...openGraphBase,

@@ -45,7 +45,7 @@ import type { CountryKey, Cutoff } from "@/lib/perm";
 
 const TITLE = "The Next Visa Bulletin, From the Last 84";
 const DESCRIPTION =
-  "What every earlier bulletin for this calendar month did, per employment category and country, beside the I-485 inventory ahead of each cutoff. Measured, not predicted.";
+  "What every earlier bulletin for this month did, per category and country, beside the I-485 inventory ahead of each cutoff. Measured, not predicted.";
 
 export const metadata: Metadata = withSocialCard(
   {
