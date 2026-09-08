@@ -35,6 +35,7 @@ interface EntityDbRow {
   median_annual_wage: number | null;
   state: string | null;
   code: string | null;
+  recent_12m: number | null;
 }
 
 function toEntityRow(r: EntityDbRow): EntityRow {
@@ -49,11 +50,12 @@ function toEntityRow(r: EntityDbRow): EntityRow {
     medianAnnualWage: r.median_annual_wage,
     state: r.state,
     code: r.code,
+    recent12m: r.recent_12m ?? null,
   };
 }
 
 const ENTITY_COLS =
-  "slug, name, rank, total, certified, denied, median_days, median_annual_wage, state, code";
+  "slug, name, rank, total, certified, denied, median_days, median_annual_wage, state, code, recent_12m";
 
 /** The head of one kind, plus how many exist in total. */
 export async function getEntitySeed(

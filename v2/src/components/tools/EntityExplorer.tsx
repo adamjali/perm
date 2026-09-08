@@ -13,6 +13,7 @@ import {
   EMPLOYER_CSV,
   OCCUPATION_COLUMNS,
   OCCUPATION_CSV,
+  recentFacet,
   socFacet,
   stateFacet,
 } from "./entityColumns";
@@ -30,7 +31,7 @@ const CONFIG = {
   employer: {
     columns: EMPLOYER_COLUMNS,
     csv: EMPLOYER_CSV,
-    facets: [stateFacet],
+    facets: [stateFacet, recentFacet],
     noun: "employers",
     placeholder: "Microsoft, Deloitte, a hospital…",
     caption:
@@ -40,7 +41,7 @@ const CONFIG = {
   attorney: {
     columns: ATTORNEY_COLUMNS,
     csv: ATTORNEY_CSV,
-    facets: [stateFacet],
+    facets: [stateFacet, recentFacet],
     noun: "law firms",
     placeholder: "Fragomen, Berry Appleman…",
     caption:

@@ -21,6 +21,7 @@ const FULL: EntityRow = {
   medianAnnualWage: 150139,
   state: "WA",
   code: "15-1252.00",
+  recent12m: 812,
 };
 
 const SPARSE: EntityRow = {
@@ -34,6 +35,7 @@ const SPARSE: EntityRow = {
   medianAnnualWage: null,
   state: null,
   code: null,
+  recent12m: null,
 };
 
 describe("entityPayload", () => {
@@ -46,8 +48,8 @@ describe("entityPayload", () => {
     // would shift every field after it AND JSON.stringify would drop it,
     // silently renaming the columns of every row in the payload.
     const packed = packRow(SPARSE);
-    expect(packed).toHaveLength(10);
-    expect(JSON.parse(JSON.stringify(packed))).toHaveLength(10);
+    expect(packed).toHaveLength(11);
+    expect(JSON.parse(JSON.stringify(packed))).toHaveLength(11);
     expect(unpackRow(JSON.parse(JSON.stringify(packed)))).toEqual(SPARSE);
   });
 

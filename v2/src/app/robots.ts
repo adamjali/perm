@@ -27,6 +27,9 @@ export default function robots(): MetadataRoute.Robots {
     // render that can ask DOL live, and a crawler walking thousands of them is
     // pure cost (measured 2026-09-02 in Turso rows read and DOL requests).
     '/perm-case-status?',
+    // A pair of employers is a dynamic render per request, and the number of
+    // pairs is the square of the employer count.
+    '/perm-employers/compare?',
   ]
 
   // High-volume crawlers that bring this product NOTHING back. Measured

@@ -646,6 +646,13 @@ def main() -> int:
             log("\nDRY RUN - nothing written")
             return 0
         ok = write_live_recent(db, live) and write_live_remainder_doc(db, live)
+        # The "filed in the last 12 months" facet reads this column; it moves
+        # with the live remainder, so it refreshes here every night.
+        if ok:
+            try:
+                refresh_recent_12m(db)
+            except Exception as exc:  # noqa: BLE001 - a facet must not fail the rebuild
+                log(f"  recent_12m refresh FAILED: {exc}")
         # STAMP FRESHNESS AND AUDIT THE RUN. This table is the only thing that
         # makes cases newer than the last disclosure file findable, it rebuilds
         # under `|| true` in the sweep workflow, and it had no monitoring at
@@ -702,3 +709,76 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+# ---------------------------------------------------------------------------
+# recent_12m: filings received in the last 12 months, per employer and firm
+# ---------------------------------------------------------------------------
+
+RECENT_WINDOW_DAYS = 365
+
+
+def refresh_recent_12m(db: Turso) -> tuple[int, int]:
+    """Refresh perm_entities.recent_12m for employers and law firms.
+
+    The count is filings RECEIVED in the last 365 days, from both halves of the
+    corpus: the published files (perm_cases.received_date, on idx_pc_received)
+    and the live remainder (perm_live_recent.filing_date, indexed). The live
+    table carries no attorney, so a firm's count is the published half only,
+    which is said on the page. Only rows whose value changed are written, in
+    one UPDATE ... CASE per 200 slugs (the pattern the attorney backfill
+    measured at ~1,200 rows/s against ~50/s for one statement per row), so a
+    quiet night costs a few hundred writes rather than 33,700.
+
+    Returns (rows_changed, rows_examined).
+    """
+    def rows_of(res):
+        out = []
+        for r in res["response"]["result"]["rows"]:
+            out.append([None if c["type"] == "null" else c["value"] for c in r])
+        return out
+
+    cols = {r[1] for r in rows_of(db.execute("PRAGMA table_info(perm_entities)"))}
+    if "recent_12m" not in cols:
+        db.execute("ALTER TABLE perm_entities ADD COLUMN recent_12m INTEGER")
+        log("  added perm_entities.recent_12m")
+    cutoff = (datetime.date.today() - datetime.timedelta(days=RECENT_WINDOW_DAYS)).isoformat()
+    counts: dict[tuple[str, str], int] = defaultdict(int)
+    for kind, col, table, date_col in (
+        ("employer", "employer_slug", "perm_cases", "received_date"),
+        ("attorney", "attorney_slug", "perm_cases", "received_date"),
+        ("employer", "employer_slug", "perm_live_recent", "filing_date"),
+    ):
+        res = db.execute(
+            f"SELECT {col}, COUNT(*) FROM {table} WHERE {date_col} >= ? "
+            f"AND {col} IS NOT NULL AND {col} <> '' GROUP BY {col}", [cutoff])
+        for slug, n in rows_of(res):
+            counts[(kind, slug)] += int(n)
+    current = {}
+    for kind, slug, val in rows_of(db.execute(
+            "SELECT kind, slug, recent_12m FROM perm_entities WHERE kind IN ('employer', 'attorney')")):
+        current[(kind, slug)] = None if val is None else int(val)
+    changed = [(k, s, counts.get((k, s), 0)) for (k, s), have in current.items()
+               if have != counts.get((k, s), 0)]
+    for i in range(0, len(changed), 200):
+        chunk = changed[i:i + 200]
+        cases = " ".join(f"WHEN {lit_sql(s)} THEN {n}" for _k, s, n in chunk)
+        slugs = ", ".join(lit_sql(s) for _k, s, _n in chunk)
+        for kind in ("employer", "attorney"):
+            sub = [c for c in chunk if c[0] == kind]
+            if not sub:
+                continue
+            cases = " ".join(f"WHEN {lit_sql(s)} THEN {n}" for _k, s, n in sub)
+            slugs = ", ".join(lit_sql(s) for _k, s, _n in sub)
+            db.execute(
+                f"UPDATE perm_entities SET recent_12m = CASE slug {cases} END "
+                f"WHERE kind = '{kind}' AND slug IN ({slugs})")
+    log(f"  recent_12m: {len(changed):,} of {len(current):,} entities changed "
+        f"(window from {cutoff})")
+    return len(changed), len(current)
+
+
+def lit_sql(s: str) -> str:
+    """A string as a single-quoted SQL literal. Slugs are [a-z0-9-] but the
+    quote is doubled anyway, because a rule that holds today is not a parser."""
+    return "'" + str(s).replace("'", "''") + "'"

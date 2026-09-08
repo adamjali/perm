@@ -30,6 +30,13 @@ export interface EntityRow {
   medianAnnualWage: number | null;
   state: string | null;
   code: string | null;
+  /**
+   * Filings received in the last 12 months, published and live together,
+   * refreshed nightly by build_entity_detail.py. Null until the first
+   * refresh after the column was added (Sep 8 2026), never 0 by default:
+   * "none" is a claim and "not computed yet" is not.
+   */
+  recent12m: number | null;
 }
 
 /**
@@ -48,6 +55,7 @@ export type PackedRow = [
   medianAnnualWage: number | null,
   state: string | null,
   code: string | null,
+  recent12m: number | null,
 ];
 
 /**
@@ -103,6 +111,7 @@ export function packRow(r: EntityRow): PackedRow {
     r.medianAnnualWage,
     r.state,
     r.code,
+    r.recent12m,
   ];
 }
 
@@ -118,6 +127,7 @@ export function unpackRow(p: PackedRow): EntityRow {
     medianAnnualWage: p[7],
     state: p[8],
     code: p[9],
+    recent12m: p[10] ?? null,
   };
 }
 

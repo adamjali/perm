@@ -172,6 +172,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "The wage attested on certified H-1B LCAs, by occupation, worksite state and year, annualised from the unit each filing quoted: median, average and percentiles over the filings you select, from DOL's own disclosure files.",
   },
   {
+    path: "/perm-employers/compare",
+    label: "Compare two employers",
+    blurb:
+      "Two PERM sponsors side by side from DOL's own files: filings, certification and denial counts with their interval, median days, median wage, what is pending now, and the occupations and states each files for.",
+  },
+  {
     path: "/tools/compare-my-offer",
     label: "Compare my offer",
     blurb:

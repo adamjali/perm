@@ -127,6 +127,16 @@ const daysCol: StatColumn<EntityRow> = {
   render: (e) => fmtDays(e.medianDays),
 };
 
+/** Filings received in the last 12 months, published and live; null until computed. */
+const recentCol: StatColumn<EntityRow> = {
+  key: "recent",
+  label: "Last 12 months",
+  numeric: true,
+  secondary: true,
+  sortValue: (e) => e.recent12m,
+  render: (e) => (e.recent12m === null ? "n/a" : fmtInt(e.recent12m)),
+};
+
 const wageCol: StatColumn<EntityRow> = {
   key: "wage",
   label: "Median wage",
@@ -144,6 +154,17 @@ export const stateFacet: Facet<EntityRow> = {
   format: (v) => `${v} · ${stateName(v)}`,
 };
 
+/**
+ * "Still filing" as a fact, not a score: any filing received in the last 12
+ * months. Null (not computed yet) does not apply to the facet at all.
+ */
+export const recentFacet: Facet<EntityRow> = {
+  key: "recent",
+  label: "Filed in the last 12 months",
+  value: (e) => (e.recent12m === null ? null : e.recent12m > 0 ? "yes" : "no"),
+  format: (v) => (v === "yes" ? "Yes, active" : "No filings"),
+};
+
 export const socFacet: Facet<EntityRow> = {
   key: "family",
   label: "Job family",
@@ -155,6 +176,7 @@ export const EMPLOYER_COLUMNS: StatColumn<EntityRow>[] = [
   nameCol("/perm-employers", "Employer"),
   stateCol,
   totalCol,
+  recentCol,
   certifiedCol,
   deniedCol,
   approvalCol,
@@ -166,6 +188,7 @@ export const ATTORNEY_COLUMNS: StatColumn<EntityRow>[] = [
   nameCol("/perm-attorneys", "Law firm"),
   stateCol,
   totalCol,
+  recentCol,
   certifiedCol,
   deniedCol,
   approvalCol,
