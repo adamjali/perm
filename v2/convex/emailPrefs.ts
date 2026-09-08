@@ -154,6 +154,30 @@ export const confirmNewsForEmail = internalMutation({
   },
 });
 
+/** The digest list, confirmed by the same click and under the same rules. */
+export const confirmNewsletterForEmail = internalMutation({
+  args: { email: v.string() },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const email = args.email.trim().toLowerCase();
+    const row = await ctx.db
+      .query("newsletterSubscribers")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+    if (!row) return null;
+    if (row.unsubscribedAt !== undefined && row.createdAt <= row.unsubscribedAt) {
+      return null;
+    }
+    if (row.confirmedAt === undefined || row.unsubscribedAt !== undefined) {
+      await ctx.db.patch(row._id, {
+        confirmedAt: row.confirmedAt ?? Date.now(),
+        unsubscribedAt: undefined,
+      });
+    }
+    return null;
+  },
+});
+
 // ============================================================================
 // The magic link
 // ============================================================================
@@ -290,6 +314,7 @@ const stateValidator = v.object({
     }),
   ),
   news: v.boolean(),
+  newsletter: v.boolean(),
   /** Null when no account exists for the address. */
   weeklyDigest: v.union(v.boolean(), v.null()),
 });
@@ -309,6 +334,10 @@ async function stateForEmail(ctx: MutationCtx, email: string) {
     .collect();
   const news = await ctx.db
     .query("newsSubscribers")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .first();
+  const newsletter = await ctx.db
+    .query("newsletterSubscribers")
     .withIndex("by_email", (q) => q.eq("email", email))
     .first();
 
@@ -350,6 +379,8 @@ async function stateForEmail(ctx: MutationCtx, email: string) {
       active: r.unsubscribedAt === undefined && r.confirmedAt !== undefined,
     })),
     news: news !== null && news.confirmedAt !== undefined && news.unsubscribedAt === undefined,
+    newsletter:
+      newsletter !== null && newsletter.confirmedAt !== undefined && newsletter.unsubscribedAt === undefined,
     weeklyDigest,
   };
 }
@@ -382,9 +413,10 @@ export const disableByToken = internalMutation({
       v.literal("case"),
       v.literal("bulletin"),
       v.literal("news"),
+      v.literal("newsletter"),
       v.literal("digest"),
     ),
-    /** Row id for the row-backed kinds; ignored for news/digest. */
+    /** Row id for the row-backed kinds; ignored for news/newsletter/digest. */
     id: v.optional(v.string()),
   },
   returns: v.union(stateValidator, v.null()),
@@ -396,6 +428,14 @@ export const disableByToken = internalMutation({
     if (args.kind === "news") {
       const row = await ctx.db
         .query("newsSubscribers")
+        .withIndex("by_email", (q) => q.eq("email", email))
+        .first();
+      if (row && row.unsubscribedAt === undefined) {
+        await ctx.db.patch(row._id, { unsubscribedAt: now });
+      }
+    } else if (args.kind === "newsletter") {
+      const row = await ctx.db
+        .query("newsletterSubscribers")
         .withIndex("by_email", (q) => q.eq("email", email))
         .first();
       if (row && row.unsubscribedAt === undefined) {
@@ -502,6 +542,13 @@ export const unsubscribeAllByToken = internalMutation({
       .first();
     if (news && news.unsubscribedAt === undefined) {
       await ctx.db.patch(news._id, { unsubscribedAt: now });
+    }
+    const newsletterRow = await ctx.db
+      .query("newsletterSubscribers")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+    if (newsletterRow && newsletterRow.unsubscribedAt === undefined) {
+      await ctx.db.patch(newsletterRow._id, { unsubscribedAt: now });
     }
     await ctx.runMutation(internal.notifications.unsubscribeWeeklyByEmail, { email });
     // Resend contact removal is an action (external API); scheduled, and

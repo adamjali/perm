@@ -25,12 +25,15 @@ export interface BulletinAlertConfirmProps {
    * the email said so.
    */
   includesNews?: boolean;
+  /** Optional, default off: links already in inboxes predate it. */
+  includesNewsletter?: boolean;
 }
 
 export function BulletinAlertConfirm({
   seriesLabel,
   confirmUrl,
   includesNews = false,
+  includesNewsletter = false,
 }: BulletinAlertConfirmProps) {
   return (
     <EmailLayout
@@ -53,6 +56,12 @@ export function BulletinAlertConfirm({
         <Text className="em-text-secondary" style={styles.newsNote}>
           You also asked for occasional product news. The same click confirms
           that.
+        </Text>
+      ) : null}
+      {includesNewsletter ? (
+        <Text className="em-text-secondary" style={styles.newsNote}>
+          You also asked for the weekly bulletin digest, once it launches. The
+          same click confirms that.
         </Text>
       ) : null}
 

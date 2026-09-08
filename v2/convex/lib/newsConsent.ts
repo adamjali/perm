@@ -45,6 +45,31 @@ function isPlausibleEmail(email: string): boolean {
  * `emailPrefs.stageNews` (the internalMutation wrapper) or directly from a
  * mutation that is already in a transaction.
  */
+/** The digest list, staged the same way: inert until the alert's confirm click. */
+export async function stageNewsletterFor(
+  ctx: MutationCtx,
+  rawEmail: string,
+  source?: string,
+): Promise<void> {
+  const email = rawEmail.trim().toLowerCase();
+  if (!isPlausibleEmail(email)) return;
+  const existing = await ctx.db
+    .query("newsletterSubscribers")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .first();
+  if (existing) {
+    if (existing.unsubscribedAt !== undefined) {
+      await ctx.db.patch(existing._id, { createdAt: Date.now() });
+    }
+    return;
+  }
+  await ctx.db.insert("newsletterSubscribers", {
+    email,
+    createdAt: Date.now(),
+    source,
+  });
+}
+
 export async function stageNewsFor(
   ctx: MutationCtx,
   rawEmail: string,

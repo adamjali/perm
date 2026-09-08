@@ -308,4 +308,20 @@ crons.daily(
   {}
 );
 
+/**
+ * The weekly bulletin digest. Composes Tuesday's issue from what the ingests
+ * already hold (DOL's queue, the newest bulletin's moves, the week's Federal
+ * Register documents) and stores it as a preview. Sending is gated on the
+ * NEWSLETTER_ENABLED deployment variable: with it unset the cron costs one
+ * stored document a week and zero emails, and the admin panel shows what
+ * would have gone out. 13:00 UTC is 9 AM Eastern, after the 08:10 UTC sweep
+ * and clear of every bulk email job above.
+ */
+crons.cron(
+  "weekly-bulletin-digest",
+  "0 13 * * 2",
+  internal.newsletter.buildIssue,
+  {}
+);
+
 export default crons;

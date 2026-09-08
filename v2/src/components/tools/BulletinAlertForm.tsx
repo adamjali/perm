@@ -45,6 +45,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
   const [category, setCategory] = useState("EB2");
   const [country, setCountry] = useState("india");
   const [news, setNews] = useState(false);
+  const [newsletter, setNewsletter] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
 
@@ -65,6 +66,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
           country,
           source,
           news: news || undefined,
+          newsletter: newsletter || undefined,
         }),
       });
       const body = (await res.json().catch(() => null)) as
@@ -180,6 +182,23 @@ export function BulletinAlertForm({ source }: { source: string }) {
         >
           Also send occasional product news. The same confirmation covers it,
           and it&apos;s off by default.
+        </label>
+      </div>{" "}
+      <div className="mt-3 flex items-start gap-2.5">
+        <input
+          id={`${newsId}-newsletter`}
+          type="checkbox"
+          checked={newsletter}
+          onChange={(e) => setNewsletter(e.target.checked)}
+          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none border-2 border-border bg-background checked:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
+        />{" "}
+        <label
+          htmlFor={`${newsId}-newsletter`}
+          className="cursor-pointer text-sm leading-relaxed text-muted-foreground"
+        >
+          Also send the weekly bulletin digest once it launches: the cutoffs,
+          DOL&apos;s queue and any new rule, every Tuesday. Same confirmation, off
+          by default.
         </label>
       </div>
       {status === "error" && message ? (

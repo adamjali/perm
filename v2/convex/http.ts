@@ -497,7 +497,7 @@ http.route({
       return json({ ok: false, message: "Malformed request." }, 400);
     }
 
-    const { email, caseNumber, source, news } = body as Record<string, unknown>;
+    const { email, caseNumber, source, news, newsletter } = body as Record<string, unknown>;
     if (typeof email !== "string" || typeof caseNumber !== "string") {
       return json({ ok: false, message: "Email and case number are both required." }, 400);
     }
@@ -514,6 +514,7 @@ http.route({
       // Same staged news opt-in as the queue-alert route; the case-alert
       // confirm click completes both, and the confirmation email says so.
       news: news === true,
+      newsletter: newsletter === true,
       ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
     });
 
@@ -716,7 +717,7 @@ http.route({
       return json({ ok: false, message: "Malformed request." }, 400);
     }
 
-    const { email, category, country, source, news } = body as Record<string, unknown>;
+    const { email, category, country, source, news, newsletter } = body as Record<string, unknown>;
     if (
       typeof email !== "string" ||
       typeof category !== "string" ||
@@ -738,6 +739,7 @@ http.route({
       // Same staged news opt-in as the sibling routes; the bulletin-alert
       // confirm click completes both, and the confirmation email says so.
       news: news === true,
+      newsletter: newsletter === true,
       ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
     });
 
@@ -840,6 +842,7 @@ type PrefsState = {
   caseAlerts: { id: string; caseNumber: string; active: boolean; closed: boolean }[];
   bulletinAlerts: { id: string; category: string; country: string; active: boolean }[];
   news: boolean;
+  newsletter: boolean;
   weeklyDigest: boolean | null;
 };
 
@@ -891,6 +894,9 @@ function prefsPage(state: PrefsState, token: string): Response {
   const newsRow = state.news
     ? [row("Product news", "Occasional updates about new data and tools", offButton("news"))]
     : [];
+  const newsletterRow = state.newsletter
+    ? [row("Weekly bulletin digest", "DOL's queue, the bulletin and the Federal Register, every Tuesday", offButton("newsletter"))]
+    : [];
   const digestRow =
     state.weeklyDigest === true
       ? [
@@ -902,7 +908,8 @@ function prefsPage(state: PrefsState, token: string): Response {
         ]
       : [];
 
-  const allRows = [...queueRows, ...caseRows, ...bulletinRows, ...newsRow, ...digestRow];
+  const allRows = [...queueRows, ...caseRows, ...bulletinRows, ...newsRow,
+    ...newsletterRow, ...digestRow];
   const body =
     allRows.length > 0
       ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${allRows.join("")}</table>
@@ -1013,6 +1020,7 @@ http.route({
       kind === "case" ||
       kind === "bulletin" ||
       kind === "news" ||
+      kind === "newsletter" ||
       kind === "digest"
     ) {
       state = await ctx.runMutation(internal.emailPrefs.disableByToken, {

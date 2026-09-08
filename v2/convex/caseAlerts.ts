@@ -110,6 +110,13 @@
  * same 18 alerts, which is the correct shape - the scarce thing is Resend's
  * shared 100/day, and it does not care which program an email is about.
  *
+ * The weekly bulletin digest (convex/newsletter.ts) claims its own line:
+ * NEWSLETTER_DAILY_CAP (default 30) sends a day, charged through the same
+ * global rate-limit table under "newsletter_send", and it is OFF until
+ * NEWSLETTER_ENABLED=1 is set in the deployment. With it on, the worst day is
+ * 18 + 10 + 18 + 6 + 12 + 6 + 30 = 100, exactly the Resend cap: flipping it on
+ * means moving Resend off the free tier first, or lowering the cap.
+ *
  * @module convex/caseAlerts
  */
 
@@ -158,7 +165,7 @@ import {
   checkRateLimit,
   recordRateLimitAttempt,
 } from "./lib/rateLimit";
-import { stageNewsFor } from "./lib/newsConsent";
+import { stageNewsFor, stageNewsletterFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 
 const log = createLogger("CaseAlerts");
@@ -351,6 +358,8 @@ export const subscribe = internalMutation({
      * confirmation so the email can say so. See convex/emailPrefs.ts.
      */
     news: v.optional(v.boolean()),
+    /** The weekly bulletin digest, staged the same way as news. */
+    newsletter: v.optional(v.boolean()),
     /** Caller IP from the HTTP layer, or "unknown" when none is resolvable. */
     ip: v.optional(v.string()),
   },
@@ -499,11 +508,16 @@ export const subscribe = internalMutation({
     if (includesNews) {
       await stageNewsFor(ctx, email, args.source);
     }
+    const includesNewsletter = args.newsletter === true;
+    if (includesNewsletter) {
+      await stageNewsletterFor(ctx, email, args.source);
+    }
 
     await ctx.scheduler.runAfter(0, internal.caseAlerts.sendConfirmation, {
       email,
       caseNumber,
       includesNews,
+      includesNewsletter,
     });
 
     return { ok: true, message: NEUTRAL_REPLY };
@@ -594,11 +608,13 @@ export const sendConfirmation = internalAction({
      * renders, and absent means "say nothing", which is the safe direction.
      */
     includesNews: v.optional(v.boolean()),
+    includesNewsletter: v.optional(v.boolean()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
       const includesNews = args.includesNews === true;
+      const includesNewsletter = args.includesNewsletter === true;
       const program = programOf(args.caseNumber);
       const noun = programNoun(program);
       const token = await makeUnsubscribeToken(
@@ -654,6 +670,7 @@ export const sendConfirmation = internalAction({
             asOf,
             confirmUrl,
             includesNews,
+            includesNewsletter,
             nounWithArticle: programNounWithArticle(program),
           });
         },
@@ -687,6 +704,12 @@ export const sendConfirmation = internalAction({
           ...(includesNews
             ? [
                 "You also asked for occasional product news. The same click confirms that.",
+                "",
+              ]
+            : []),
+          ...(includesNewsletter
+            ? [
+                "You also asked for the weekly bulletin digest, once it launches. The same click confirms that.",
                 "",
               ]
             : []),
@@ -808,6 +831,9 @@ export const confirmByToken = internalMutation({
     // the address: the confirmation email named both, and the click proves
     // the same inbox for both. No staged news row means a no-op.
     await ctx.runMutation(internal.emailPrefs.confirmNewsForEmail, {
+      email: all[0]!.email,
+    });
+    await ctx.runMutation(internal.emailPrefs.confirmNewsletterForEmail, {
       email: all[0]!.email,
     });
 

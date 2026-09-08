@@ -1581,6 +1581,40 @@ export default defineSchema({
   }).index("by_email", ["email"]),
 
   /**
+   * The weekly bulletin digest list. Same shape and the same double opt-in
+   * as `newsSubscribers` (staged by a checkbox, confirmed by the alert's own
+   * confirm click, which names it). Built out on 2026-09-08 and switched OFF
+   * by the NEWSLETTER_ENABLED environment variable: issues are composed every
+   * Tuesday and kept in `newsletterIssues` for the admin preview, and nothing
+   * is sent until the flag is set, because Resend's free plan caps the whole
+   * account at 100 mails a day and this list is the one that would blow it.
+   */
+  newsletterSubscribers: defineTable({
+    email: v.string(),
+    confirmedAt: v.optional(v.number()),
+    unsubscribedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    source: v.optional(v.string()),
+  }).index("by_email", ["email"]),
+
+  /** One row per composed issue, newest first by weekOf. */
+  newsletterIssues: defineTable({
+    /** The Tuesday it was composed for, YYYY-MM-DD. */
+    weekOf: v.string(),
+    /** The DigestData the parts are rendered from, as JSON. */
+    data: v.string(),
+    subject: v.string(),
+    text: v.string(),
+    html: v.string(),
+    builtAt: v.number(),
+    /** preview: composed, flag off. sending: in progress. sent: done. */
+    status: v.union(v.literal("preview"), v.literal("sending"), v.literal("sent")),
+    sentCount: v.number(),
+    /** The last address sent to, so a daily batch resumes where it stopped. */
+    cursor: v.optional(v.string()),
+  }).index("by_weekOf", ["weekOf"]),
+
+  /**
    * One row per PERM entity: employer, law firm, or occupation.
    *
    * These used to live as arrays inside the permDisclosureStats document,

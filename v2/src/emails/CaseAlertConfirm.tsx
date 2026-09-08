@@ -64,6 +64,8 @@ export interface CaseAlertConfirmProps {
    * things is only consent for the second if the email said so.
    */
   includesNews?: boolean;
+  /** Optional, default off: links already in inboxes predate it. */
+  includesNewsletter?: boolean;
   /**
    * What to call this filing, with its article: "a PERM case", "a prevailing
    * wage request", "an LCA". From `programNounWithArticle` at the call site.
@@ -84,6 +86,7 @@ export function CaseAlertConfirm({
   asOf = null,
   confirmUrl,
   includesNews = false,
+  includesNewsletter = false,
   nounWithArticle = "a PERM case",
 }: CaseAlertConfirmProps) {
   const known = currentStatus !== null;
@@ -144,6 +147,12 @@ export function CaseAlertConfirm({
         <Text className="em-text-secondary" style={styles.newsNote}>
           You also asked for occasional product news. The same click confirms
           that.
+        </Text>
+      ) : null}
+      {includesNewsletter ? (
+        <Text className="em-text-secondary" style={styles.newsNote}>
+          You also asked for the weekly bulletin digest, once it launches. The
+          same click confirms that.
         </Text>
       ) : null}
 

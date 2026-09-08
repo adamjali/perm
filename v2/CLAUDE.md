@@ -3201,3 +3201,37 @@ that exists; the honest counterpart would be family-based CUTOFF history, which
 needs the bulletin ingest to parse the family charts and the 84 months
 re-fetched from the Archive. Not done; recorded so nobody builds counts that
 have no source.
+
+## The weekly digest is built OFF, and the flag is the only switch (2026-09-08)
+
+`convex/newsletter.ts` composes a Tuesday issue from the record the ingests
+already hold (DOL's queue, the newest bulletin's final-action moves against
+the month before, the week's Federal Register documents) and stores it as a
+`newsletterIssues` row with status `preview`. **Nothing is sent unless the
+deployment carries `NEWSLETTER_ENABLED=1`.** With it set, `sendBatch` mails
+confirmed subscribers under `NEWSLETTER_DAILY_CAP` (default 30) charged
+BEFORE each send through the shared rate-limit table, and reschedules itself
+24 hours later for the rest, guarded on having made progress.
+
+- **Consent is the alert forms' second checkbox**, staged by
+  `stageNewsletterFor` and confirmed by the SAME click that confirms the
+  alert. The preference center (`/prefs`, kind `newsletter`) turns it off;
+  nothing can turn it on but the owning flow. The confirmation emails name
+  the digest when it was ticked (an optional prop, because links already in
+  inboxes predate it).
+- **The composition is pure** (`convex/lib/newsletterCompose.ts`, tested) and
+  the HTML (`src/emails/BulletinWeekly.tsx`) renders from the same object, so
+  the two parts cannot disagree. A section with nothing to say is left out.
+- **The admin panel shows the latest issue's text** and the list's staged and
+  confirmed counts (`summarizeNewsletter` in `convex/lib/newsletterSummary.ts`,
+  a plain helper: `adminSignals` reading it through `ctx.runQuery(internal.…)`
+  closed a type cycle through `_generated/api` that typed the whole query
+  `any` and surfaced as implicit-any errors in unrelated tests).
+- **Proven on the dev deployment 2026-09-07, 11:59 PM ET, flag off:** one
+  issue built from real data ("DOL at November 2025, 5 cutoffs moved in the
+  September 2026 bulletin"), status `preview`, zero sends, and an independent
+  Python recount of the two bulletin blobs agreed exactly (5 advanced, 25
+  held, 0 back, of 30).
+- **Flipping it on is a Resend decision first.** The ledger in
+  `convex/caseAlerts.ts` puts the worst day at exactly 100 with the cap at 30,
+  which is the free tier's whole allowance.

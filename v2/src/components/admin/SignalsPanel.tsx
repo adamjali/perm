@@ -97,7 +97,7 @@ export function SignalsPanel({ skip }: { skip: boolean }) {
     );
   }
 
-  const { totals, recentUsers, subscriptions, recentCases } = signals;
+  const { totals, recentUsers, subscriptions, recentCases, newsletter } = signals;
 
   return (
     <Card>
@@ -170,6 +170,38 @@ export function SignalsPanel({ skip }: { skip: boolean }) {
             rows={subscriptions.bulletinAlerts}
           />
           <SubList title="Product news list" rows={subscriptions.news} />
+        </div>{" "}
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Weekly bulletin digest
+          </p>{" "}
+          <p className="mt-1 text-sm">
+            Sending is{" "}
+            <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${newsletter.enabled ? "bg-primary/20 text-foreground" : "bg-muted text-muted-foreground"}`}>
+              {newsletter.enabled ? `on, ${newsletter.dailyCap} a day` : "off"}
+            </span>{" "}
+            · {newsletter.confirmed} confirmed of {newsletter.staged} who ticked the box
+          </p>{" "}
+          {newsletter.latest ? (
+            <details className="mt-2 border-2 border-border bg-background p-3">
+              <summary className="cursor-pointer text-sm">
+                <span className="font-medium">{newsletter.latest.subject}</span>{" "}
+                <span className="text-xs text-muted-foreground">
+                  · {newsletter.latest.status}
+                  {newsletter.latest.sentCount > 0 ? ` · ${newsletter.latest.sentCount} sent` : ""}
+                  {" · built "}
+                  {when(newsletter.latest.builtAt)}
+                </span>
+              </summary>{" "}
+              <pre className="mt-3 max-h-80 overflow-auto whitespace-pre-wrap font-mono text-xs leading-relaxed">
+                {newsletter.latest.text}
+              </pre>
+            </details>
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">
+              No issue composed yet. The cron builds one every Tuesday at 9 AM Eastern.
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

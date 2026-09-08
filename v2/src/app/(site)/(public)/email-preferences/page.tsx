@@ -53,6 +53,11 @@ const KINDS = [
     what: "Occasional notes about new data and tools. Only if you ticked the box on an alert form.",
     from: null,
   },
+  {
+    name: "Weekly bulletin digest",
+    what: "Once it launches: the visa bulletin cutoffs, DOL's queue and any new rule, every Tuesday. Only if you ticked the box on an alert form.",
+    from: null,
+  },
 ] as const;
 
 export default function EmailPreferencesPage() {

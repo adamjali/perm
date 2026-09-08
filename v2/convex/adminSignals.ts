@@ -20,6 +20,9 @@
  */
 
 import { v } from "convex/values";
+import { summarizeNewsletter } from "./lib/newsletterSummary";
+import { adminSummaryValidator } from "./lib/newsletterValidators";
+
 
 import { query } from "./_generated/server";
 import { requireAdmin } from "./lib/admin";
@@ -72,6 +75,7 @@ export const getSignals = query({
       bulletinAlerts: subValidator,
       news: subValidator,
     }),
+    newsletter: adminSummaryValidator,
     recentCases: v.array(
       v.object({
         email: v.string(),
@@ -169,6 +173,7 @@ export const getSignals = query({
         news,
       },
       recentCases,
+      newsletter: await summarizeNewsletter(ctx),
     };
   },
 });
