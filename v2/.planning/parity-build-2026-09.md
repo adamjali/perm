@@ -13,7 +13,7 @@ no silent failures, no crowding, internal links both ways, SEO kit per page.
 - [x] 4 LCA salary explorer (facets, percentiles from nightly docs) + compare your offer
 - [x] 5 Employer (industry facet skipped: no NAICS in the tables) facets (state, active 12mo, industry/NAICS) + side-by-side compare
 - [x] 6 Supply scenario on the I-485 tool (Table V and the FY limit page are unreachable by script and not archived; no issuance anchors yet)
-- [ ] 7 Policy-changes feed (Federal Register API, DOL/USCIS notices)
+- [x] 7 Policy-changes feed (Federal Register API, DOL/USCIS notices)
 - [ ] 8 Civil surgeon crawl (Mac runner, weekly) + finder by ZIP + I-693 guide
 - [ ] 9 Digest built, flag OFF; interest checkbox on 2 alert forms + bulletin page; admin preview
 - [ ] 10 Homepage dated numbers row
