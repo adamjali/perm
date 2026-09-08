@@ -39,12 +39,19 @@ export const metadata: Metadata = withSocialCard({
 
 export default function ContactPage() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-16 sm:px-8">
-      <div className="card-brutalist p-8">
-        <h1 className="font-heading text-4xl font-black mb-4">Contact Us</h1>{" "}
-        <p className="text-foreground/60 mb-8">
-          Questions, feature requests and bug reports all land in the same inbox.
-        </p>{" "}
+    // FULL WIDTH, TWO COLUMNS. Adam: "nothing should be so narrow, it can all
+    // take up full page... about and contact should take full width". A
+    // 768px card in a 1400px frame was the narrow thing. The routes and the
+    // figure read on the left, the form sits on the right and stays in view
+    // while the routes scroll, and below `lg` it all stacks in source order:
+    // where a question goes first, the catch-all form last.
+    <div className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
+      <h1 className="font-heading text-4xl font-black sm:text-5xl">Contact Us</h1>{" "}
+      <p className="mt-3 max-w-2xl text-lg text-foreground/70">
+        Questions, feature requests and bug reports all land in the same inbox.
+      </p>{" "}
+      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14">
+      <div className="min-w-0">
 
         {/* THE FORM MOVED TO THE BOTTOM, on Adam's call. It was the first
             thing on the page, which asks a reader to start typing before the
@@ -56,7 +63,7 @@ export default function ContactPage() {
         {/* The figure before the routes, because its point is the thing the
             headings below cannot say at a glance: these are three doors into
             one inbox, not three different teams. */}
-        <figure className="mt-8 border-2 border-border bg-background p-6 shadow-hard-sm">
+        <figure className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <RoutingFigure className="h-auto w-full text-foreground" />{" "}
           <figcaption className="mt-4 border-t-2 border-border pt-3 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
             Three ways in, one inbox
@@ -138,28 +145,35 @@ export default function ContactPage() {
           </p>
         </div>
 
-        {/* The form, last: everything above says where a question goes, and
-            this is the catch-all for the ones that do not have a better
-            route. */}
-        <h2 className="mt-12 font-heading text-2xl font-black">
-          Or write to us here
-        </h2>{" "}
-        <p className="mt-2 text-foreground/60">
-          Goes to the same inbox as the address above. No account needed.
-        </p>{" "}
-        <div className="mt-6">
-          <ContactForm />
-        </div>
+      </div>
 
-        {/* Back link */}
-        <div className="mt-8 text-center">
-          <Link
-            href="/"
-            className="hover-underline text-foreground/60 text-sm"
-          >
-            &larr; Back to Home
-          </Link>
+      {/* The form, in its own column: everything on the left says where a
+          question goes, and this is the catch-all for the ones that do not
+          have a better route. Sticky on desktop so it is in reach from any of
+          the routes; a normal block below `lg`. */}
+      <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+        <div className="card-brutalist p-6 sm:p-8">
+          <h2 className="font-heading text-2xl font-black">
+            Or write to us here
+          </h2>{" "}
+          <p className="mt-2 text-foreground/60">
+            Goes to the same inbox as the address above. No account needed.
+          </p>{" "}
+          <div className="mt-6">
+            <ContactForm />
+          </div>
         </div>
+      </div>
+      </div>
+
+      {/* Back link */}
+      <div className="mt-10 text-center">
+        <Link
+          href="/"
+          className="hover-underline text-foreground/60 text-sm"
+        >
+          &larr; Back to Home
+        </Link>
       </div>
     </div>
   );

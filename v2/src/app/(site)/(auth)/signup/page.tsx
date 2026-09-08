@@ -116,15 +116,17 @@ export default async function SignupPage() {
     // on. The min-height subtracts the same expression, so the split fills
     // exactly what is left of the viewport.
     //
-    // 3:2, not 2:1. Adam: "make sign up a bit bigger actually, less than half
-    // but more than 1/3" - 40% is the natural stop between those two, and a
-    // 576px column at 1440 gives the 448px card real air rather than pinning it
-    // to its own gutter. `minmax(23rem,2fr)` keeps the guard: a fixed fraction
+    // 13:12, just short of half. It was 3:2 ("less than half but more than
+    // 1/3", Aug 31); on Sep 7 Adam moved it: "more sign up and less the image
+    // media side thing, still mostly it but closer to half, and the sign up
+    // box can be wider and bigger". The pitch keeps the larger share by a
+    // hair, the form column takes about 48% and the card inside it grows from
+    // 448px to 576px. `minmax(28rem,12fr)` keeps the guard: a fixed fraction
     // of a 1024px screen can fall under the card's own width, so the ratio
     // holds wherever there is room and degrades to a usable measure before it
     // starts crushing the form.
     <div
-      className="-mx-4 -mb-8 flex flex-col-reverse sm:-mx-8 sm:-mb-12 lg:grid lg:grid-cols-[3fr_minmax(23rem,2fr)] lg:items-stretch"
+      className="-mx-4 -mb-8 flex flex-col-reverse sm:-mx-8 sm:-mb-12 lg:grid lg:grid-cols-[minmax(0,13fr)_minmax(28rem,12fr)] lg:items-stretch"
       style={{
         marginTop: "calc(-1 * var(--auth-pad-top, 1.5rem))",
         minHeight:
@@ -232,8 +234,8 @@ export default async function SignupPage() {
           "sign up can be in a container square thing". It lost the box while it
           was the whole page; beside a solid two-thirds panel it needs an edge
           of its own or it floats on the dotted ground. */}
-      <div className="flex items-center justify-center px-4 py-12 sm:px-6 lg:py-16">
-        <div className="w-full max-w-md">
+      <div className="flex items-center justify-center px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
+        <div className="w-full max-w-xl">
           <SignupPageClient />
         </div>
       </div>

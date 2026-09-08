@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import Link, { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { CaretRightIcon, CircleNotchIcon, HouseIcon } from "@phosphor-icons/react";
@@ -83,6 +83,35 @@ export function DataRail() {
 
   const [open, setOpen] = useState<DataGroup | null>(active?.group ?? null);
 
+  // STICKY ONLY WHEN IT FITS. A sticky element taller than the viewport pins
+  // its top and never shows its bottom until the page runs out, which is what
+  // Adam's screenshot showed: with a group open, the rail's last rows and the
+  // lookup block sat below the fold on an 817px window. A scroll box is not an
+  // option (it clips the tab that protrudes past the spine), so the rail
+  // measures itself against the space under the header and, when it is
+  // taller, stops being sticky and scrolls with the page. Measured on every
+  // resize of the nav (a group opening) and of the window.
+  const navRef = useRef<HTMLElement>(null);
+  const [fits, setFits] = useState(true);
+  useEffect(() => {
+    const el = navRef.current;
+    if (!el) return;
+    const check = () => {
+      const root = getComputedStyle(document.documentElement);
+      const header = parseFloat(root.getPropertyValue("--site-header-max-h")) || 72;
+      const banner = parseFloat(root.getPropertyValue("--security-banner-h")) || 0;
+      setFits(el.scrollHeight <= window.innerHeight - header - banner);
+    };
+    check();
+    const ro = new ResizeObserver(check);
+    ro.observe(el);
+    window.addEventListener("resize", check);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", check);
+    };
+  }, [railOpen]);
+
   // Client-side navigation changes the pathname without remounting, so the
   // open group has to follow it. Without this, walking from Queue into
   // another group leaves the rail insisting you are still in Queue.
@@ -127,6 +156,7 @@ export function DataRail() {
         current={onOverview}
         kind="home"
       />{" "}
+      <RailAction />{" "}
       {GROUPS.map((g) => {
         const isOpen = g === open;
         const items = SECTIONS.filter((s) => s.group === g);
@@ -276,9 +306,10 @@ export function DataRail() {
           NO `overflow-y` HERE, deliberately. Setting one axis to `auto` makes
           the other compute to `auto` as well rather than staying `visible`, so
           it would clip the active tab exactly where it protrudes - the one
-          detail the design is built around. The rail is at most Overview plus
-          five groups plus one open group's items, and only one group is ever
-          open, so it fits any realistic viewport without scrolling. */}
+          detail the design is built around. When the open group makes the rail
+          taller than the viewport it drops `sticky` instead (measured above),
+          and the lookup block sits under Overview so it is on screen either
+          way. */}
       <div
         className={cn(
           "-ml-4 hidden bg-background sm:-ml-6 lg:block lg:shrink-0 lg:self-stretch",
@@ -312,10 +343,15 @@ export function DataRail() {
             and not `height` for exactly that reason, and no `overflow` - a
             scroll container would clip the protrusion. */}
         <nav
+          ref={navRef}
           aria-label="Data sections"
-          className="sticky flex flex-col py-2"
+          className={cn("flex flex-col py-2", fits ? "sticky" : "relative")}
           style={{
-            top: "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))",
+            // `top` only while sticky: on a `relative` element the same value
+            // would shift the rail down by a header's height.
+            top: fits
+              ? "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))"
+              : undefined,
             minHeight: "calc(100dvh - var(--site-header-max-h, 4.5rem) - 2rem - var(--security-banner-h, 0px))",
           }}
         >
@@ -360,7 +396,6 @@ export function DataRail() {
               </button>
               <div id="data-rail-desktop" className="flex flex-1 flex-col">
                 {body}
-                <RailFooter />
               </div>
             </>
           ) : (
@@ -538,7 +573,6 @@ export function DataRail() {
         )}
       >
         {body}
-        <RailFooter />
       </nav>
     </>
   );
@@ -694,43 +728,37 @@ function Tab({
 }
 
 /**
- * What sits under the last section.
+ * The action, directly under Overview.
  *
- * Adam: "we do need to add something to the bottom of that side thing though."
- * The tabs ran out two thirds of the way up and left the column empty under
- * them, which on a rail that now runs the full height of the page is a large
- * amount of nothing.
- *
- * IT IS THE ACTION, NOT ANOTHER LINK. A second copy of the nav list, a logo, or
- * a "resources" block would be filler dressed as content. The one thing a
- * reader of these pages reliably wants next is their own case: every figure
- * here is an aggregate, and the question underneath every aggregate is "where
- * does that leave me". So the bottom of the rail is the lookup, phrased as what
- * it does rather than as a slogan.
+ * Adam: "we do need to add something to the bottom of that side thing though",
+ * and then, once a group was open on an 817px window: "this should be moved
+ * up so the bottom fits always... proper sizing even with any expanded/open."
+ * Pinned at the foot of the rail it was the first thing to fall off screen,
+ * because a sticky column taller than the viewport hides its bottom, not its
+ * top. Under Overview it is on screen in every state, and Overview plus the
+ * lookup is the whole surface in one glance: the map, then the one thing a
+ * reader of these pages reliably wants next, their own case. Every figure
+ * here is an aggregate, and the question under every aggregate is "where does
+ * that leave me".
  *
  * It repeats a destination that also appears under Case tools, and that is
- * fine - a list entry and a call to action are different things doing different
- * jobs, and only one of them is findable by someone who has not thought to open
- * a group.
+ * fine: a list entry and a call to action are different things doing
+ * different jobs, and only one of them is findable by someone who has not
+ * thought to open a group. Kept to three lines so it does not crowd the list.
  */
-function RailFooter() {
+function RailAction() {
   return (
-    // `mt-auto` is what pins it to the bottom of the panel rather than letting
-    // it trail the last tab. Adam: "the thing added below the tabs in side
-    // panel should be near the bottom." Both navs are flex columns with a
-    // height to push against, so this resolves to the foot of the rail on a
-    // tall viewport and collapses to a normal gap on a short one.
-    <div className="mt-auto border-t-2 border-border px-4 pb-2 pt-5">
+    <div className="mb-1 border-y-2 border-border px-4 py-3">
       <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
         Track a case
       </p>{" "}
-      <p className="mt-2 text-sm text-foreground/75">
-        Look up a PERM, prevailing wage or LCA case number for its DOL record and its place in the queue.
+      <p className="mt-1.5 text-sm leading-snug text-foreground/75">
+        Any PERM, prevailing wage or LCA number: its DOL record and its place in the queue.
       </p>{" "}
       <Link
         href="/perm-case-status"
         className={cn(
-          "mt-3 flex min-h-11 items-center justify-center gap-2 border-2 border-border bg-primary px-3",
+          "mt-2.5 flex min-h-11 items-center justify-center gap-2 border-2 border-border bg-primary px-3",
           "font-heading text-sm font-black text-black shadow-hard-sm",
           "transition-transform duration-150 ease-out hover:-translate-y-[1px] active:translate-y-0",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",

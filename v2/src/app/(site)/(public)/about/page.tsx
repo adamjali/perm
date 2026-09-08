@@ -93,7 +93,13 @@ export default function AboutPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
+    // FULL WIDTH, NOT FULL-WIDTH PROSE. Adam: "about and contact should take
+    // full width". A 768px column in a 1400px frame was the narrow thing; a
+    // 1400px line of prose would be the unreadable thing (a 200-character
+    // measure). So the frame is the site's, and inside it the reading column
+    // keeps a book measure while an aside carries the person, the dates and
+    // the contact links beside it. Below `lg` the aside follows the prose.
+    <div className="mx-auto w-full max-w-[1400px] px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
       <JsonLdScript schema={breadcrumb} />
       <JsonLdScript schema={aboutSchema} />
 
@@ -103,12 +109,14 @@ export default function AboutPage() {
       <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
         About PERM Tracker
       </h1>{" "}
-      <p className="mt-5 text-lg leading-relaxed text-foreground/90 sm:text-xl">
+      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90 sm:text-xl">
         {ABOUT_ONE_LINER} It&apos;s not a law firm, it isn&apos;t affiliated with
         the Department of Labor, and nothing on it is legal advice.
       </p>{" "}
 
-      <figure className="mt-10 overflow-x-auto overscroll-x-none border-2 border-border bg-card p-4 shadow-hard sm:p-6">
+      <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-16">
+      <div className="min-w-0 max-w-[46rem]">
+      <figure className="overflow-x-auto overscroll-x-none border-2 border-border bg-card p-4 shadow-hard sm:p-6">
         <svg viewBox="0 0 760 300" className="w-full min-w-[640px] text-foreground" role="img" aria-labelledby="data-flow-title">
           <title id="data-flow-title">How the site works: DOL&apos;s case index is asked every night and on every lookup, DOL&apos;s disclosure files are read each quarter, USCIS and the State Department each month; all of it lands in the pages: case status, processing times, wages and deadlines.</title>
           <text x="20" y="28" fontSize="13" fontWeight="700" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">FEDERAL SOURCES</text>
@@ -161,25 +169,6 @@ export default function AboutPage() {
       </p>{" "}
 
       <h2 className={h2}>Who&apos;s behind it</h2>{" "}
-      <div className="mt-5 max-w-sm border-2 border-border bg-card p-4 shadow-hard">
-        <div className="flex items-center gap-4">
-          {/* Her portrait, cropped to the card by object-fit rather than by a
-              second file, with the source's real 640x800 declared so the box
-              is reserved at the right aspect before the bytes arrive. */}
-          <Image
-            src={SABRINA.image}
-            alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
-            width={SABRINA.imageSize[0]}
-            height={SABRINA.imageSize[1]}
-            sizes="96px"
-            className="h-24 w-[4.8rem] shrink-0 border-2 border-border object-cover object-top"
-          />{" "}
-          <div>
-            <p className="font-heading text-base font-bold leading-tight">{SABRINA.name}</p>{" "}
-            <p className="text-sm text-muted-foreground">{SABRINA.jobTitle}</p>
-          </div>
-        </div>
-      </div>{" "}
       <p className={p}>
         <strong className="font-semibold">{SABRINA.name}</strong> runs PERM Tracker.
         She&apos;s an immigration attorney who files these cases, and she started
@@ -198,13 +187,6 @@ export default function AboutPage() {
         waiting on a case and the attorneys who file for them.
       </p>{" "}
 
-      <h2 className={h2}>Since when</h2>{" "}
-      <p className={p}>
-        The domain was registered in {monthLabel(FOUNDED)} and the site went live
-        in {monthLabel(LIVE_SINCE)}. It reads DOL&apos;s quarterly disclosure files
-        and asks DOL&apos;s own case-status system every day.
-      </p>{" "}
-
       <h2 className={h2}>Where the data comes from</h2>{" "}
       <p className={p}>
         Every figure comes from a named federal source: DOL&apos;s FLAG system and
@@ -220,19 +202,58 @@ export default function AboutPage() {
         you, and can&apos;t see inside DOL beyond what DOL publishes. A pending case
         shows the status DOL reports and nothing more. Your attorney has the file;
         this site tells you where the queue is.
-      </p>{" "}
-
-      <h2 className={h2}>Contact</h2>{" "}
-      <p className={p}>
-        <a href="mailto:support@permtracker.app" className={link}>support@permtracker.app</a>.
-        PERM Tracker is also on{" "}
-        <a href={X_PROFILE_URL} className={link} rel="me noopener" target="_blank">X</a>,{" "}
-        <a href={MEDIUM_PROFILE_URL} className={link} rel="me noopener" target="_blank">Medium</a>{" "}
-        and{" "}
-        <a href={PRODUCT_HUNT_URL} className={link} rel="me noopener" target="_blank">Product Hunt</a>,
-        and {SABRINA.name} is on{" "}
-        <a href={LINKEDIN_SABRINA_URL} className={link} rel="me noopener" target="_blank">LinkedIn</a>.
       </p>
+      </div>
+
+      {/* The aside: the person, the dates, the ways in. Sticky on desktop so
+          the face and the contact stay beside whatever paragraph is being
+          read; a normal block below `lg`. */}
+      <aside className="min-w-0 lg:sticky lg:top-24 lg:self-start">
+        <div className="border-2 border-border bg-card p-5 shadow-hard">
+          {/* Her portrait, cropped to the card by object-fit rather than by a
+              second file, with the source's real 640x800 declared so the box
+              is reserved at the right aspect before the bytes arrive. */}
+          <Image
+            src={SABRINA.image}
+            alt={`${SABRINA.name}, ${SABRINA.jobTitle.toLowerCase()}`}
+            width={SABRINA.imageSize[0]}
+            height={SABRINA.imageSize[1]}
+            sizes="(min-width: 1024px) 20rem, 100vw"
+            className="aspect-[4/5] w-full border-2 border-border object-cover object-top"
+            priority
+          />{" "}
+          <p className="mt-4 font-heading text-lg font-bold leading-tight">{SABRINA.name}</p>{" "}
+          <p className="text-sm text-muted-foreground">{SABRINA.jobTitle}</p>
+        </div>{" "}
+
+        <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            Since when
+          </p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-foreground/85">
+            Domain registered {monthLabel(FOUNDED)}. Live since {monthLabel(LIVE_SINCE)}.
+            Reads DOL&apos;s quarterly disclosure files and asks DOL&apos;s own
+            case-status system every day.
+          </p>
+        </div>{" "}
+
+        <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">
+          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            Contact
+          </p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-foreground/85">
+            <a href="mailto:support@permtracker.app" className={link}>support@permtracker.app</a>.
+            PERM Tracker is also on{" "}
+            <a href={X_PROFILE_URL} className={link} rel="me noopener" target="_blank">X</a>,{" "}
+            <a href={MEDIUM_PROFILE_URL} className={link} rel="me noopener" target="_blank">Medium</a>{" "}
+            and{" "}
+            <a href={PRODUCT_HUNT_URL} className={link} rel="me noopener" target="_blank">Product Hunt</a>,
+            and {SABRINA.name} is on{" "}
+            <a href={LINKEDIN_SABRINA_URL} className={link} rel="me noopener" target="_blank">LinkedIn</a>.
+          </p>
+        </div>
+      </aside>
+      </div>
     </div>
   );
 }
