@@ -530,12 +530,21 @@ def main() -> int:
         # this is what makes a single state going quiet visible without the
         # whole job crying wolf: Texas needs a browser fetch, and its row ages
         # out at 45 days if nobody does one.
+        # AS OF WHAT THE TABLE HOLDS, not what this batch parsed. Texas has two
+        # feeds and the portal trails the agency spreadsheet by two months, so
+        # stamping the batch's own newest date let a routine portal run push
+        # the row BACKWARDS from 2026-09-04 to 2026-06-23 while the table still
+        # held every September notice. A freshness row that understates the
+        # data is as useless as one that overstates it.
+        held = db.execute(
+            "SELECT MAX(notice_date), COUNT(*) FROM warn_notices WHERE state = ?", [st.upper()]
+        )["response"]["result"]["rows"][0]
+        newest, count = held[0].get("value"), held[1].get("value")
         stamp_freshness(
             db, f"{DATASET}-{st}",
-            as_of=max(r["notice_date"] for r in rows),
+            as_of=newest or max(r["notice_date"] for r in rows),
             source=STATES[st]["page"], cadence="Weekly",
-            note=f"{STATES[st]['name']}: {len(rows)} notices"
-                 + (" (browser-only source; needs --state tx --from-file)" if STATES[st].get("browser_only") else ""),
+            note=f"{STATES[st]['name']}: {count} notices held ({len(rows)} in this load)",
             max_age_days=STATES[st]["days"],
         )
     note = "; ".join(f"{STATES[st]['name']} {len(rows)}" for st, rows in parsed.items())
