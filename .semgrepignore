@@ -18,3 +18,13 @@ out/
 dist/
 build/
 coverage/
+
+# TEST FIXTURES ARE CAPTURED THIRD-PARTY DATA, NOT OUR SOURCE. A saved page
+# from a government site is checked in so a parser can be tested against the
+# real thing; it is never served and never executed. Scanning it with code
+# rules reports THEIR markup as our defect: one saved State Department
+# bulletin raised 95 `missing-integrity` alerts on 2026-09-09, every one of
+# them about script tags the State Department wrote. Same reasoning as the
+# lockfiles above.
+**/__fixtures__/
+**/fixtures/
