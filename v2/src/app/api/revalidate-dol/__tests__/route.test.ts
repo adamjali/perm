@@ -176,24 +176,19 @@ describe("the path list has not drifted from the pages that read the snapshot", 
 });
 
 describe("every badge is revalidated when DOL republishes", () => {
-  it("lists one /badge/<kind>.svg path for every BADGE_KIND", async () => {
-    // The badge routes are `force-static` with a daily window, so a kind that
-    // is missing here keeps serving last week's month for up to a day after
-    // DOL moves - on somebody else's page, where nobody can see it is stale.
-    // The paths file said "keep in step with BADGE_KINDS" in a comment, which
-    // is not a thing that fails.
+  it("derives one /badge/<kind>.svg path for every kind", async () => {
+    // DOL_PAGES spreads BADGE_KINDS rather than listing them, so this cannot
+    // drift by construction. It is asserted anyway because the derivation is
+    // the POINT: someone tidying the file back into a literal list would
+    // reintroduce exactly the gap that shipped six unrevalidated badges, and
+    // this is where they would find out.
     const { BADGE_KINDS } = await import("@/lib/badge");
     const { DOL_PAGES } = await import("../paths");
 
-    expect(BADGE_KINDS.length, "no badge kinds found").toBeGreaterThan(0);
+    expect(BADGE_KINDS.length, "no badge kinds found").toBeGreaterThan(10);
 
     const listed = (DOL_PAGES as readonly string[]).filter((p) => p.startsWith("/badge/"));
     const expected = BADGE_KINDS.map((k) => `/badge/${k}.svg`);
-
-    const missing = expected.filter((p) => !listed.includes(p));
-    expect(missing, `badges that would serve a stale figure: ${missing.join(", ")}`).toEqual([]);
-
-    const stale = listed.filter((p) => !expected.includes(p));
-    expect(stale, `paths for badges that no longer exist: ${stale.join(", ")}`).toEqual([]);
+    expect(listed.sort()).toEqual(expected.sort());
   });
 });

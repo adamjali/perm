@@ -28,6 +28,8 @@
  * `route.test.ts` re-derives this list from the app tree, so a page added later
  * cannot quietly start serving a stale figure.
  */
+import { BADGE_KINDS } from "@/lib/badge";
+
 export const DOL_PAGES = [
   "/",
   "/tools",
@@ -41,21 +43,16 @@ export const DOL_PAGES = [
   "/tools/perm-timeline-calculator",
   // The catalogue page reads the snapshot ITSELF now (2026-09-09). It used to
   // render `<img src="/badge/x.svg">` and hold no figure of its own, so it was
-  // correctly absent; it now prints DOL's as-of date and renders every badge
-  // inline from one read. `route.test.ts` caught the omission the same day the
-  // page changed, which is exactly what that test is for.
+  // correctly absent; it now prints federal figures inline from one read.
   "/badges",
-  // Every badge carries DOL's queue month or average days, and a hot-linked
-  // badge showing last week's month for a day is the staleness this endpoint
-  // exists to end. Literal paths, because a dynamic segment cannot be handed
-  // to revalidatePath. Keep in step with BADGE_KINDS.
-  "/badge/perm-queue.svg",
-  "/badge/perm-audits.svg",
-  "/badge/perm-recon.svg",
-  "/badge/perm-days.svg",
-  "/badge/pwd-queue.svg",
-  "/badge/pwd-perm-survey.svg",
-  "/badge/pwd-h1b.svg",
-  "/badge/pwd-h2b.svg",
-  "/badge/pwd-cw1.svg",
-] as const;
+  // Every badge's canonical path, DERIVED rather than hand-listed. A hand list
+  // fell behind the registry the same day six kinds were added, and the file
+  // said "keep in step with BADGE_KINDS" in a comment, which is not a thing
+  // that fails. Deriving makes the drift impossible instead of detectable.
+  //
+  // Only the canonical `<kind>.svg` form is expired here. The style and theme
+  // variants are the same figure in another shape and self-heal within their
+  // own 24-hour window; expiring ~200 of them on the four days a month DOL
+  // moves is the cost mistake `/perm-queue/[month]` is already excluded for.
+  ...BADGE_KINDS.map((k) => `/badge/${k}.svg`),
+];
