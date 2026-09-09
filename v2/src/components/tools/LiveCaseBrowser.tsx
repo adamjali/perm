@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -10,7 +10,7 @@ import { PendingLink } from "@/components/ui/pending-link";
 import { formatMonth } from "@/lib/dolFormat";
 // Type-only: `@/lib/turso/liveCases` imports `server-only`, and a value import
 // here would be a build error. A type import compiles to nothing.
-import type { LiveKind, LiveListPage, LiveRemainderSummary } from "@/lib/turso/liveCases";
+import type { LiveKind, LiveListPage, LiveRemainderSummary, LiveSort } from "@/lib/turso/liveCases";
 
 /**
  * The live half of the case corpus, browsable.
@@ -37,7 +37,6 @@ import type { LiveKind, LiveListPage, LiveRemainderSummary } from "@/lib/turso/l
  * of three, is a person.
  */
 
-const SMALL_COHORT = 20;
 const PAGE_SIZE = 50;
 
 const KIND_LABEL: Record<LiveKind, string> = {
@@ -71,40 +70,71 @@ function statusClass(status: string | null, isFinal: boolean): string {
 export function LiveCaseBrowser({
   summary,
   publishedThrough,
+  fixedMonth,
+  seed,
 }: {
   summary: LiveRemainderSummary | null;
   /** The published table's last decision date, for the headline. */
   publishedThrough: string | null;
+  /** Pin the month (the queue-month pages): the month control is hidden and the filter cannot change. */
+  fixedMonth?: string;
+  /** The first page, server-rendered, so the rows read before hydration and the first fetch is skipped. */
+  seed?: LiveListPage | null;
 }) {
   const params = useSearchParams();
   // `?filed=YYYY-MM` is how the month pages hand a cohort to this list.
   const filedParam = params.get("filed");
-  const initialMonth = filedParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(filedParam) ? filedParam : "";
+  const initialMonth =
+    fixedMonth ?? (filedParam && /^\d{4}-(0[1-9]|1[0-2])$/.test(filedParam) ? filedParam : "");
 
   const [kind, setKind] = useState<LiveKind>("all");
   const [month, setMonth] = useState<string>(initialMonth);
   const [cursors, setCursors] = useState<string[]>([]);
+  const [qInput, setQInput] = useState("");
+  const [q, setQ] = useState("");
+  const [sort, setSort] = useState<LiveSort>("filed");
+  // Search settles 300ms after the last keystroke, and only at 2+ characters
+  // (the route refuses shorter), so a person typing does not fire a request
+  // per letter.
+  useEffect(() => {
+    const t = setTimeout(() => setQ(qInput.trim().length >= 2 ? qInput.trim() : ""), 300);
+    return () => clearTimeout(t);
+  }, [qInput]);
+  useEffect(() => {
+    setCursors([]);
+  }, [q, sort]);
 
   const months = useMemo(
     () => (summary ? [...summary.byMonth].sort((a, b) => (a.month < b.month ? 1 : -1)) : []),
     [summary],
   );
-  const cohort = month ? months.find((m) => m.month === month) ?? null : null;
-  const withheld = cohort !== null && cohort.total < SMALL_COHORT;
+  // On a pinned month the figures in the intro and on the chips are that
+  // month's, not the whole remainder's: a page about November 2025 must not
+  // open with 140,000 cases.
+  const cohort = fixedMonth ? months.find((m) => m.month === fixedMonth) ?? null : null;
+  const counts = cohort ?? summary;
+  // Every month lists, however small (owner's call, Sep 8 2026).
+  const withheld = false as boolean;
+  const pristine =
+    Boolean(seed) && kind === "all" && month === initialMonth && cursors.length === 0 && q === "" && sort === "filed";
 
   const url = useMemo(() => {
-    if (withheld) return "skip" as const;
+    if (withheld || pristine) return "skip" as const;
     const p = new URLSearchParams();
     p.set("action", "live");
     p.set("kind", kind);
     if (month) p.set("month", month);
+    if (q) p.set("q", q);
+    if (sort !== "filed") p.set("sort", sort);
     p.set("numItems", String(PAGE_SIZE));
     const cursor = cursors[cursors.length - 1];
     if (cursor) p.set("cursor", cursor);
     return `/api/perm-cases?${p.toString()}`;
-  }, [kind, month, cursors, withheld]);
+  }, [kind, month, q, sort, cursors, withheld, pristine]);
 
-  const { data: page, failed } = usePublicQuery<LiveListPage>(url);
+  const fetched = usePublicQuery<LiveListPage>(url);
+  const page = pristine ? seed ?? undefined : fetched.data;
+  const failed = pristine ? false : fetched.failed;
 
   const reset = useCallback(() => setCursors([]), []);
   const pickKind = (k: LiveKind) => {
@@ -129,7 +159,13 @@ export function LiveCaseBrowser({
           Live from DOL&apos;s daily check
         </h2>{" "}
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
-          {summary ? (
+          {cohort ? (
+            <>
+              {fmtInt(cohort.total)} live {cohort.total === 1 ? "case was" : "cases were"} filed in{" "}
+              {formatMonth(cohort.month) ?? cohort.month}: {fmtInt(cohort.pending)} still waiting,{" "}
+              {fmtInt(cohort.decided)} decided since DOL&apos;s last published file.
+            </>
+          ) : summary ? (
             <>
               DOL&apos;s published files end on {longDate(publishedThrough ?? summary.publishedThrough)}.
               A daily check of DOL&apos;s case system adds {fmtInt(summary.total)} cases
@@ -160,12 +196,35 @@ export function LiveCaseBrowser({
                 }
               >
                 {KIND_LABEL[k]}
-                {summary && k !== "all" ? ` · ${fmtInt(summary[k])}` : ""}
+                {counts && k !== "all" ? ` · ${fmtInt(counts[k])}` : ""}
               </button>
               </Fragment>
             ))}
           </div>{" "}
-          <label className="ml-auto flex min-h-[44px] items-center gap-2 text-sm font-bold">
+          <label className="flex min-h-[44px] flex-1 items-center gap-2 border-2 border-border bg-card px-3 text-sm font-bold sm:max-w-md">
+            <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">Search</span>{" "}
+            <input
+              type="search"
+              value={qInput}
+              onChange={(e) => setQInput(e.target.value)}
+              placeholder="Case number, employer or job title"
+              aria-label="Search the live cases"
+              className="w-full min-w-0 bg-transparent py-2 text-base font-medium outline-none placeholder:text-muted-foreground"
+            />
+          </label>{" "}
+          <label className="flex min-h-[44px] items-center gap-2 text-sm font-bold">
+            <span>Sort by</span>{" "}
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as LiveSort)}
+              className="min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <option value="filed">Filing date</option>
+              <option value="employer">Employer</option>
+              <option value="status">Status</option>
+            </select>
+          </label>{" "}
+          <label className={`ml-auto flex min-h-[44px] items-center gap-2 text-sm font-bold${fixedMonth ? " hidden" : ""}`}>
             <span>Filed in</span>{" "}
             <select
               value={month}
@@ -182,15 +241,6 @@ export function LiveCaseBrowser({
           </label>
         </div>
 
-        {withheld && cohort ? (
-          <p className="mt-5 text-base leading-relaxed text-foreground/80">
-            {fmtInt(cohort.total)} live {cohort.total === 1 ? "case was" : "cases were"} filed in{" "}
-            {formatMonth(cohort.month) ?? cohort.month}: {fmtInt(cohort.pending)} waiting,{" "}
-            {fmtInt(cohort.decided)} decided. Rows aren&apos;t listed for a month this
-            small. A case number beside an employer and job title is close to
-            naming a person.
-          </p>
-        ) : null}
 
         {failed ? (
           <p className="mt-5 text-base text-foreground/80">

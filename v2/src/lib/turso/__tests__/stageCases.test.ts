@@ -25,14 +25,13 @@ const {
 } = await import("../rfi");
 
 describe("stageListing", () => {
-  it("withholds the rows for a cohort small enough to identify people", () => {
-    // The floor the audit page already uses. Measured 2026-08-30, four stages
-    // sit under it: DETERMINATION ISSUED 9, DENIED - BALCA DISMISSED 9,
-    // REQUEST FOR REVIEW 5, SUPERVISED RECRUITMENT 2. A case number printed
-    // beside an employer and a job title, in a cohort of two, is a person.
+  it("lists every non-empty cohort, however small, and only an empty stage is withheld", () => {
+    // The under-20 floor was removed on Sep 8 2026 at the owner's call: DOL
+    // serves every one of these rows through its own lookup already.
     expect(stageListing(0)).toBe("too-small");
-    expect(stageListing(2)).toBe("too-small");
-    expect(stageListing(SMALL_STAGE_MAX - 1)).toBe("too-small");
+    expect(stageListing(1)).toBe("list");
+    expect(stageListing(2)).toBe("list");
+    expect(stageListing(SMALL_STAGE_MAX - 1)).toBe("list");
   });
 
   it("sends the 93,219-case queue somewhere better instead of listing it", () => {

@@ -20,7 +20,7 @@ import {
 } from "@/lib/turso/backlog";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { getLiveRemainderSummary, listLiveCases } from "@/lib/turso/liveCases";
-import { SMALL_STAGE_MAX } from "@/lib/turso/rfi";
+import { LiveCaseBrowser } from "@/components/tools/LiveCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -84,7 +84,7 @@ export const revalidate = 21600;
  * belongs in the paginated browser, not in a prerendered page whose size is
  * an ISR write unit every 8 KB.
  */
-const MONTH_LIST_MAX = 100;
+const MONTH_LIST_MAX = 50;
 
 const int = (n: number) => n.toLocaleString("en-US");
 
@@ -121,10 +121,13 @@ export default async function CohortPage({
   // totals differ on purpose and the copy says which is which.
   const remainder = await getLiveRemainderSummary();
   const liveMonth = remainder?.byMonth.find((m) => m.month === month) ?? null;
-  const liveRows =
-    liveMonth && liveMonth.total >= SMALL_STAGE_MAX
-      ? (await listLiveCases({ kind: "all", month, numItems: MONTH_LIST_MAX })).rows
-      : [];
+  // The first page of the month's live cases, server-rendered as the
+  // browser's seed: the rows read before hydration and crawlers see them.
+  // Every month lists, however small (owner's call, Sep 8 2026).
+  const seedPage = liveMonth && liveMonth.total > 0
+    ? await listLiveCases({ kind: "all", month, numItems: MONTH_LIST_MAX })
+    : null;
+  const liveRows = seedPage?.rows ?? [];
 
   const split = groupByStage(backlog.statuses);
   const label = formatMonth(month) ?? month;
@@ -291,47 +294,18 @@ export default async function CohortPage({
             has them, with the wage, firm and decision date.
           </p>
         )}
-        {liveRows.length > 0 ? (
-          <ol className="mt-5 divide-y divide-border/60">
-            {liveRows.map((r) => (
-              <Fragment key={r.caseNumber}>{" "}
-              <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
-                <Link
-                  href={`/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`}
-                  className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2"
-                >
-                  {r.caseNumber}
-                </Link>{" "}
-                {r.employerSlug ? (
-                  <Link
-                    href={`/perm-employers/${r.employerSlug}`}
-                    className="font-medium underline decoration-border decoration-2 underline-offset-2 hover:text-primary"
-                  >
-                    {r.employerName}
-                  </Link>
-                ) : (
-                  <span className="font-medium">{r.employerName}</span>
-                )}{" "}
-                {r.jobTitle ? <span className="text-foreground/70">{r.jobTitle}</span> : null}{" "}
-                <span className="ml-auto font-mono text-xs font-bold uppercase text-foreground/80">
-                  {r.filingDate ? `${r.filingDate} · ` : ""}
-                  {r.status ?? ""}
-                </span>
-              </li>
-              </Fragment>
-            ))}
-          </ol>
-        ) : liveMonth && liveMonth.total > 0 ? (
-          <p className="mt-3 text-sm leading-relaxed text-foreground/70">
-            Rows aren&apos;t listed for a month this small. A case number beside
-            an employer and job title is close to naming a person.
-          </p>
+        {liveMonth && liveMonth.total > 0 ? (
+          <div className="mt-5">
+            <LiveCaseBrowser
+              summary={remainder}
+              publishedThrough={remainder?.publishedThrough ?? null}
+              fixedMonth={month}
+              seed={seedPage}
+            />
+          </div>
         ) : null}
         {liveMonth && liveRows.length > 0 ? (
           <p className="mt-4 text-base leading-relaxed">
-            {liveMonth.total > liveRows.length
-              ? `The newest ${int(liveRows.length)} are above. `
-              : ""}
             <Link
               href={`/perm-cases?filed=${month}#live`}
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"

@@ -95,7 +95,8 @@ export interface FilterableStatTableProps<T> {
   searchRemote?: (text: string, localHasRows: boolean) => Promise<RemoteSearchResult<T>>;
 }
 
-const PAGE_SIZES = [25, 50, 100, 250] as const;
+/** `0` means every row on one page: the "show all" a reader asks for when a cohort is a few thousand rows. */
+const PAGE_SIZES = [25, 50, 100, 250, 0] as const;
 
 /**
  * Order two cells, nulls ALWAYS last.
@@ -248,7 +249,8 @@ export function FilterableStatTable<T>({
   // that has to survive the table having answered.
   const remoteExtra = remote?.extra ?? null;
 
-  const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
+  const effectiveSize = pageSize === 0 ? Math.max(1, shown.length) : pageSize;
+  const pageCount = Math.max(1, Math.ceil(shown.length / effectiveSize));
   // A filter that shortens the list can strand the viewer on a page past the
   // end, which renders as an empty table over a non-empty result.
   const safePage = Math.min(page, pageCount - 1);
@@ -257,8 +259,8 @@ export function FilterableStatTable<T>({
   }, [page, safePage]);
 
   const pageRows = useMemo(
-    () => shown.slice(safePage * pageSize, safePage * pageSize + pageSize),
-    [shown, safePage, pageSize],
+    () => shown.slice(safePage * effectiveSize, safePage * effectiveSize + effectiveSize),
+    [shown, safePage, effectiveSize],
   );
 
   const facetOptions = useMemo(() => {
@@ -433,7 +435,7 @@ export function FilterableStatTable<T>({
                 {PAGE_SIZES.map((n) => (
                   <Fragment key={n}>
                     {" "}
-                    <option value={n}>{n}</option>
+                    <option value={n}>{n === 0 ? "All" : n}</option>
                   </Fragment>
                 ))}
               </select>

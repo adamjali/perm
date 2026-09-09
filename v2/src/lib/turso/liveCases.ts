@@ -64,7 +64,12 @@ export interface LivePlan {
  * for a date column, but this one is compared as text and a later ingest
  * could carry a timestamp; the half-open form is correct under both.
  */
-export function planLiveSql(kind: LiveKind, month: string | null | undefined): LivePlan {
+/** LIKE with the two wildcards escaped, so a typed `%` matches a percent sign. */
+export function likeContains(text: string): string {
+  return `%${text.replace(/[\\%_]/g, (c) => `\\${c}`)}%`;
+}
+
+export function planLiveSql(kind: LiveKind, month: string | null | undefined, q?: string | null): LivePlan {
   const conds: string[] = [];
   const params: (string | number)[] = [];
   if (kind === "pending") {
@@ -79,7 +84,22 @@ export function planLiveSql(kind: LiveKind, month: string | null | undefined): L
     conds.push("filing_date >= ?", "filing_date < ?");
     params.push(`${month}-01`, `${monthAfter(month)}-01`);
   }
+  const needle = (q ?? "").trim();
+  if (needle) {
+    // Bounded by the month (or kind) predicate that precedes it: the scan
+    // is over one month's rows, never the whole remainder.
+    const like = likeContains(needle);
+    conds.push("(employer_name LIKE ? ESCAPE '\\' OR case_number LIKE ? ESCAPE '\\' OR job_title LIKE ? ESCAPE '\\')");
+    params.push(like, like, like);
+  }
   return { where: conds.length ? conds.join(" AND ") : "1", params };
+}
+
+/** The ORDER BY for a sort key; the direction applies to the leading column, the case number breaks ties. */
+export function liveOrderBy(sort: LiveSort | undefined, dir: "ASC" | "DESC"): string {
+  if (sort === "employer") return `employer_name ${dir}, filing_date ${dir}, case_number ${dir}`;
+  if (sort === "status") return `status ${dir}, filing_date ${dir}, case_number ${dir}`;
+  return `filing_date ${dir}, case_number ${dir}`;
 }
 
 export interface LiveListRow {
@@ -105,10 +125,19 @@ interface LiveListDbRow {
   decided_seen: string | null;
 }
 
+export type LiveSort = "filed" | "employer" | "status";
+export const LIVE_SORTS = ["filed", "employer", "status"] as const;
+export function isLiveSort(v: string): v is LiveSort {
+  return (LIVE_SORTS as readonly string[]).includes(v);
+}
+
 export interface LiveListArgs {
   kind: LiveKind;
   month?: string | null;
   order?: "newest" | "oldest";
+  /** Free text over the case number, employer and job title; a contains-match, `%` and `_` literal. */
+  q?: string | null;
+  sort?: LiveSort;
   numItems?: number;
   cursor?: string | null;
 }
@@ -161,7 +190,7 @@ const toRow = (r: LiveListDbRow): LiveListRow => ({
  */
 export async function listLiveCases(args: LiveListArgs): Promise<LiveListPage> {
   const month = args.month || null;
-  const plan = planLiveSql(args.kind, month);
+  const plan = planLiveSql(args.kind, month, args.q);
   const take = clamp(args.numItems);
   const offset = parseCursor(args.cursor);
   const order = args.order === "oldest" ? "oldest" : "newest";
@@ -169,7 +198,7 @@ export async function listLiveCases(args: LiveListArgs): Promise<LiveListPage> {
 
   const found = await rows<LiveListDbRow>(
     `SELECT ${LIVE_COLS} FROM perm_live_recent WHERE ${plan.where} ` +
-      `ORDER BY filing_date ${dir}, case_number ${dir} LIMIT ? OFFSET ?`,
+      `ORDER BY ${liveOrderBy(args.sort, dir)} LIMIT ? OFFSET ?`,
     [...plan.params, take + 1, offset],
   );
 

@@ -49,6 +49,7 @@ import { notFound } from "next/navigation";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { StageCaseBrowser } from "@/components/rfi/StageCaseBrowser";
 import { stageEntry } from "@/components/rfi/StageGlossary";
 import {
   GROUP_STYLE,
@@ -88,6 +89,8 @@ export const dynamicParams = false;
  * states the remainder in words rather than trailing off.
  */
 const MAX_ROWS = 250;
+/** Matches the feed's ceiling in `api/stage-cases/route.ts`; a cohort above it has no page. */
+const STAGE_FEED_MAX = 25_000;
 
 export function generateStaticParams() {
   return reviewStages().map((s) => ({ stage: s.slug }));
@@ -154,8 +157,11 @@ export default async function StagePage({
   const listing = stageListing(cases);
   // Only read the rows the page is actually going to print. A stage below the
   // floor or above the ceiling never issues this query at all.
-  const records =
-    listing === "list" ? await listStageCases(status, MAX_ROWS, 0) : [];
+  // The whole cohort, once: the browser is seeded with the oldest MAX_ROWS
+  // and the compact list below the table carries every case number so the
+  // numbers are in the page's own HTML for anyone who searches theirs.
+  const allRecords = listing === "list" ? await listStageCases(status, STAGE_FEED_MAX, 0) : [];
+  const records = allRecords.slice(0, MAX_ROWS);
   // THE FALLBACK HAS TO MATCH THE HUB'S FALLBACK, not merely exist.
   //
   // Fixing the dates for stages that have rows left this line disagreeing for
@@ -316,11 +322,7 @@ export default async function StagePage({
 
         <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
           <h2 className="font-heading text-xl font-black sm:text-2xl">
-            {listing === "list"
-              ? records.length >= cases
-                ? `All ${int(cases)} of them`
-                : `The ${int(records.length)} that have waited longest`
-              : "The cases themselves"}
+            {listing === "list" ? `All ${int(cases)} of them` : "The cases themselves"}
           </h2>{" "}
 
           {listing === "too-large" ? (
@@ -346,98 +348,70 @@ export default async function StagePage({
               real question, so the page gives it plainly and sends them
               somewhere that has something on it. */}
           {listing === "too-small" ? (
-            cases === 0 ? (
-              <p className="mt-2 max-w-3xl text-base leading-relaxed">
-                No case is at this stage today. That can change any day, and
-                this page is rebuilt daily.{" "}
-                <Link
-                  href="/perm-rfi-audit"
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  The other stages
-                </Link>{" "}
-                are where the pending cases are.
-              </p>
-            ) : (
-              <p className="mt-2 max-w-3xl text-base leading-relaxed">
-                Only {int(cases)} {cases === 1 ? "case is" : "cases are"} at
-                this stage, and at that size a case number printed beside an
-                employer and a job title identifies a person. The audit page
-                lists these records without case numbers, which is as far as
-                it should go.{" "}
-                <Link
-                  href="/perm-rfi-audit"
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  See them on the audit page
-                </Link>
-                .
-              </p>
-            )
+            <p className="mt-2 max-w-3xl text-base leading-relaxed">
+              No case is at this stage today. That can change any day, and
+              this page is rebuilt daily.{" "}
+              <Link
+                href="/perm-rfi-audit"
+                className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              >
+                The other stages
+              </Link>{" "}
+              are where the pending cases are.
+            </p>
           ) : null}
 
           {listing === "list" ? (
             <>
               <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-                Oldest filing first. DOL&apos;s live record carries the case
-                number, employer and job title; the wage, law firm and worksite
-                arrive only with publication, so they are absent rather than
-                blank.
-              </p>
-              <ul className="mt-4 divide-y divide-border/60">
-                {records.map((c) => (
-                  <Fragment key={c.caseNumber}>{" "}
-                  <li className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base">
-                    <Link
-                      href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                      className="font-mono text-sm font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                    >
-                      {c.caseNumber}
-                    </Link>{" "}
-                    {/* Linked only when the nightly rebuild resolved a slug
-                        for this case. `/perm-employers?q=` was the first
-                        version of this and it was wrong in the quiet way: the
-                        `?q=` search is an API route, so that URL returns 200,
-                        renders the plain index, and silently drops what the
-                        link promised to search for. */}
-                    {c.employer && c.employerSlug ? (
+                Longest wait first. Search by case number, employer or job
+                title, sort any column, or filter to a filing year. DOL&apos;s
+                live record carries the case number, employer and job title;
+                the wage, law firm and worksite arrive only with publication,
+                so they are absent rather than blank.
+              </p>{" "}
+              <div className="mt-4">
+                <StageCaseBrowser
+                  slug={stage}
+                  status={status}
+                  seed={records}
+                  totalCount={cases}
+                  asOf={asOf ?? null}
+                />
+              </div>{" "}
+              <p className="mt-4 text-sm text-foreground/70">
+                <a
+                  href={`/api/stage-cases?stage=${encodeURIComponent(stage)}&format=csv`}
+                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  Download all {int(cases)} as CSV
+                </a>
+              </p>{" "}
+              {/* Every case number in the page's own HTML, compactly, so a
+                  person who searches their number finds this page. The
+                  lookup URLs themselves are kept out of crawlers on purpose
+                  (each is a live render), so this list is the only place
+                  a pending number is indexable. */}
+              <details className="mt-6 border-t-2 border-border pt-4">
+                <summary className="cursor-pointer text-sm font-bold">
+                  All {int(allRecords.length)} case numbers at this stage, as text
+                </summary>{" "}
+                <p className="mt-3 font-mono text-xs leading-relaxed text-foreground/80">
+                  {allRecords.map((c, i) => (
+                    <Fragment key={c.caseNumber}>
+                      {i > 0 ? ", " : ""}
                       <Link
-                        href={`/perm-employers/${c.employerSlug}`}
+                        href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
                         className="underline underline-offset-2 hover:text-primary"
                       >
-                        {c.employer}
+                        {c.caseNumber}
                       </Link>
-                    ) : c.employer ? (
-                      <span>{c.employer}</span>
-                    ) : null}{" "}
-                    {c.jobTitle ? (
-                      <span className="text-foreground/70">{c.jobTitle}</span>
-                    ) : null}{" "}
-                    <span className="ml-auto text-sm tabular-nums text-foreground/70">
-                      {c.filingDate ? `filed ${c.filingDate}` : ""}
-                    </span>
-                  </li>
-                  </Fragment>
-                ))}
-              </ul>{" "}
-              {records.length < cases ? (
-                <p className="mt-5 max-w-3xl text-sm leading-relaxed text-foreground/70">
-                  {int(cases - records.length)} newer cases are not listed.
-                  No page two on purpose: to find one case, ask DOL directly
-                  through{" "}
-                  <Link
-                    href="/perm-case-status"
-                    className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                  >
-                    the case lookup
-                  </Link>
-                  , which reads the live record at the moment you ask rather
-                  than whenever this page was last built.
+                    </Fragment>
+                  ))}
                 </p>
-              ) : null}
+              </details>
             </>
           ) : null}
-
           <p className="mt-5 border-t-2 border-border pt-3 font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
             {asOf
               ? `DOL live case record, as of ${formatAsOf(asOf) ?? asOf}`

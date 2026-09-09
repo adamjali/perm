@@ -432,13 +432,11 @@ export type StageListing = "list" | "too-small" | "too-large";
 
 export function stageListing(cases: number): StageListing {
   if (cases > LISTABLE_STAGE_MAX) return "too-large";
-  // The same floor `getSmallStageRecords` uses, and for the same reason. At
-  // this size the cohort is small enough that a case number, an employer and
-  // a job title together identify a person, and the audit page already prints
-  // these records WITHOUT case numbers. A second, more identifying copy of
-  // four people's applications is not more browsable, it is just more
-  // exposed.
-  if (cases < SMALL_STAGE_MAX) return "too-small";
+  // The floor that withheld cohorts under SMALL_STAGE_MAX was removed on
+  // Sep 8 2026 at the owner's call: DOL publishes every one of these rows
+  // through its own lookup, so the list adds reach, not exposure. An empty
+  // stage still gets its own sentence rather than an empty table.
+  if (cases === 0) return "too-small";
   return "list";
 }
 

@@ -64,7 +64,6 @@ export const LCA_PROGRAM: FlagBrowserProgram = {
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const PAGE_SIZE = 50;
-const SMALL_COHORT = 20;
 
 const CONTROL =
   "w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
@@ -294,7 +293,9 @@ export function FlagCaseBrowser({
     [summary],
   );
   const cohort = month ? months.find((m) => m.month === month) ?? null : null;
-  const withheld = cohort !== null && cohort.total < SMALL_COHORT;
+  // Every month lists, however small (owner's call, Sep 8 2026). `withheld`
+  // survives as a constant so the render branches below need no rewrite.
+  const withheld = false as boolean;
   const listUrl = useMemo(() => {
     if (withheld) return "skip" as const;
     const p = new URLSearchParams({ action: "list", kind, numItems: String(PAGE_SIZE) });
@@ -493,12 +494,6 @@ export function FlagCaseBrowser({
             </select>
           </label>
         </div>{" "}
-        {withheld && cohort ? (
-          <p className="mt-4 text-base leading-relaxed text-foreground/80">
-            {fmt(cohort.total)} {program.nouns} were filed in {formatMonth(cohort.month) ?? cohort.month}. Rows aren&apos;t
-            listed for a month this small. A case number beside an employer and job title is close to naming a person.
-          </p>
-        ) : null}
         {listFailed ? <p className="mt-4 text-base text-foreground/80">The list didn&apos;t load.</p> : null}
         {!withheld && !listFailed && page === undefined ? (
           <p className="mt-4 text-base text-foreground/70">Loading…</p>

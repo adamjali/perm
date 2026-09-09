@@ -18,6 +18,7 @@ import {
   LIVE_DEFAULT_ITEMS,
   MONTH_RE,
   isLiveKind,
+  isLiveSort,
   listLiveCases,
 } from "@/lib/turso/liveCases";
 
@@ -199,11 +200,17 @@ export async function GET(request: Request) {
     const cursor = p.get("cursor");
     if (cursor && cursor.length > MAX_CURSOR) return bad("cursor too long");
     const order = p.get("order") === "oldest" ? "oldest" : "newest";
+    const q = (p.get("q") ?? "").trim();
+    if (q && (q.length < 2 || q.length > MAX_TEXT)) return bad("q must be 2..120 chars");
+    const sortRaw = p.get("sort") ?? "filed";
+    if (!isLiveSort(sortRaw)) return bad("sort must be filed, employer or status");
     const rawItems = Number(p.get("numItems") ?? LIVE_DEFAULT_ITEMS);
     const page = await listLiveCases({
       kind,
       month: month ?? null,
       order,
+      q: q || null,
+      sort: sortRaw,
       cursor: cursor ?? null,
       ...(Number.isFinite(rawItems) ? { numItems: Math.floor(rawItems) } : {}),
     });
