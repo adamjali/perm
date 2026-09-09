@@ -3384,6 +3384,47 @@ actually requested, the JSON body, the content type. What remains is the
 credentials, which are Adam's to create (an X developer app under the persona,
 four secrets on the repo), then one dispatch with `post=true`.
 
+## WARN, measured from a runner, and three bugs the measurement found (2026-09-09)
+
+**Texas refuses data-center addresses exactly as it refuses this laptop.** A
+throwaway probe branch ran on GitHub runner 52.155.33.249: both the WARN page
+and `warn-act-listings-2026-twc.xlsx` answered **HTTP 202 with zero bytes and
+`text/html`**. `urlopen` does NOT raise on that, it returns `b""`, and the
+parser's `startswith(b"PK")` guard is what turns it into a refusal message.
+So Texas is loaded by hand from a browser fetch, permanently, and the page
+says so.
+
+**An expected refusal must not mark a run partial.** `check_ingest_health.py`
+counts `partial` in `BROKEN_STATUSES`, so classifying Texas as a failure would
+have painted the weekly WARN run red **forever**, which is precisely the alarm
+fatigue that let the I-485 outage sit unread for four days. States carry a
+`browser_only` flag; their refusal is logged and named in the run note, and the
+run still records `ok`. Staleness is not lost: **each state stamps its own
+`warn-notices-<st>` freshness row**, written only when that state actually
+writes, with its own budget (21 days for the three automated ones, 45 for
+Texas). The health check reads every row in that table dynamically, so a single
+state going quiet surfaces on its own without the job crying wolf.
+
+**Three bugs, each found by a measurement rather than by review:**
+1. **An id component a parser forgets to name is invisible.** `assign_ids`
+   pops one private key, `_extra`; `parse_california` still emitted `_address`,
+   so the address dropped out of every hash, every id changed, and the next
+   load wrote a **duplicate of every row** (384 rows for 192 notices). The test
+   is general: **no parsed row may retain a key starting with `_`**, plus every
+   row has a unique id. It immediately found the second instance,
+   `parse_washington_page` never calling `assign_ids` at all, so
+   `--state wa --from-file` would have written rows with no id.
+2. **libSQL returns integers as STRINGS, again.** The change check compared a
+   stored `'42'` with a parsed `42`, so nothing ever matched and an identical
+   re-run rewrote all 566 rows while logging "wrote 566". Same defect
+   `live_norm()` exists for in `build_entity_detail.py`. `_cmp()` now shapes
+   both sides; an unchanged load writes **0**.
+3. **A single-state run must not stamp the dataset-wide freshness row**, or
+   `--state tx` moves the whole dataset's `as_of` to whatever one state holds.
+
+Loaded: California 192, New York 194, Texas 96, Washington 180, 174 matched to
+a PERM sponsor.
+
 ## The spillover, from the Department's own two PDFs (2026-09-09)
 
 `scripts/ingest_visa_limits.py` reads two files the State Department publishes

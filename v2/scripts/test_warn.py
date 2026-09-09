@@ -14,7 +14,7 @@ import sys
 import warnings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ingest_warn import parse_california, parse_new_york, parse_texas, parse_washington_page  # noqa: E402
+from ingest_warn import _cmp, assign_ids, parse_california, parse_new_york, parse_texas, parse_washington_page  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIXTURE = os.path.join(HERE, "fixtures", "ca_warn_2026-09-08.xlsx")
@@ -33,6 +33,7 @@ def main() -> int:
     f: list[str] = []
     warnings.simplefilter("ignore")
     rows = parse_california(open(FIXTURE, "rb").read())
+    ca = rows
     check(len(rows) == 192, f"192 notices in the Sep 8 2026 report (got {len(rows)})", f)
     dates = sorted(r["notice_date"] for r in rows)
     check(dates[0] == "2026-06-26" and dates[-1] == "2026-09-02", f"notice dates run 2026-06-26 to 2026-09-02 (got {dates[0]} to {dates[-1]})", f)
@@ -73,6 +74,32 @@ def main() -> int:
     check(wa[0]["source_url"].startswith("https://fortress.wa.gov/esd/file/WARN/Public/DownloadFile.aspx"), "Washington row links its notice PDF", f)
     check(all(r["notice_date"] <= wa[0]["notice_date"] for r in wa), "Washington page is newest-first", f)
     check(all(r["state"] in ("TX", "NY", "WA") for r in tx + ny + wa), "every new-state row carries its state", f)
+
+    # THE ID COMPONENT A PARSER FORGETS TO NAME IS INVISIBLE. assign_ids reads
+    # one private key, `_extra`, and pops it. A parser that emits a different
+    # name (parse_california emitted `_address` for one commit on 2026-09-09)
+    # keeps that key AND silently drops its component from the hash, so every
+    # id changes and the next load writes a duplicate of every row: California
+    # went to 384 rows for 192 notices. A leftover underscore key is the tell.
+    for label, parsed_rows in (("California", ca), ("Texas", tx), ("New York", ny), ("Washington", wa)):
+        leftover = sorted({k for r in parsed_rows for k in r if k.startswith("_")})
+        check(not leftover, f"{label} leaves no leftover private key (found {leftover})", f)
+        check(all(r.get("id") for r in parsed_rows), f"{label} gives every row an id", f)
+        check(len({r["id"] for r in parsed_rows}) == len(parsed_rows), f"{label} ids are unique", f)
+    a, b = (
+        {"state": "XX", "notice_date": "2026-01-01", "company": "A", "effective_date": None, "county": None, "employees": 1, "_extra": "one"},
+        {"state": "XX", "notice_date": "2026-01-01", "company": "A", "effective_date": None, "county": None, "employees": 1, "_extra": "two"},
+    )
+    ids = [r["id"] for r in assign_ids([a, b])]
+    check(ids[0] != ids[1], "two rows differing only in _extra get different ids", f)
+
+    # libSQL hands integers back as strings, so the change check has to put
+    # both sides through the same shape or nothing ever matches and every row
+    # is rewritten on every run while the log says "wrote 566".
+    check(_cmp("42", "acme") == _cmp(42, "acme"), "a stored string count equals the parsed int", f)
+    check(_cmp(None, None) == _cmp("", None), "an absent count and an empty one agree", f)
+    check(_cmp(42, "acme") != _cmp(43, "acme"), "a real count change is still seen", f)
+    check(_cmp(42, None) != _cmp(42, "acme"), "a newly matched sponsor is still seen", f)
     check(all(r["source_url"].startswith("https://edd.ca.gov/") for r in rows), "every row cites EDD", f)
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0

@@ -106,12 +106,14 @@ export default async function LayoffsPage() {
       <section className="mt-10 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">What is read, and what is not</h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          Four states are read weekly, each from the record it publishes. California&apos;s Employment Development
-          Department posts its WARN report as a spreadsheet; Texas posts one spreadsheet per year; New York&apos;s
-          current notices sit in a public dashboard that also serves them as a table; and Washington keeps a searchable
-          database of every notice received, walked newest first. Texas answers automated requests with a challenge
-          page on some days, so its file is fetched by hand when the weekly run cannot get it, and a gap there shows as
-          a stale date, never as a silent zero. Every other state, and the notices those four published before the
+          Four states are read, each from the record it publishes. California&apos;s Employment Development Department
+          posts its WARN report as a spreadsheet; New York&apos;s current notices sit in a public dashboard that also
+          serves them as a table; Washington keeps a searchable database of every notice received, walked newest
+          first. Those three refresh weekly on their own. Texas posts one spreadsheet per calendar year and turns
+          automated requests away, answering an empty challenge page to a data-center address and to a home connection
+          alike, so its file is fetched in a browser and loaded by hand. Its notices carry their own date here, and
+          that date is checked against a longer budget, so a Texas that stops being refreshed reports itself as stale
+          rather than shrinking to a silent zero. Every other state, and the notices those four published before the
           window read here, show nothing, so a sponsor with layoffs elsewhere is not cleared by this page. A match
           means the filer&apos;s
           normalised name equals a PERM employer&apos;s, the same rule that groups DOL&apos;s own spellings of one

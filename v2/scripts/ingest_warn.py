@@ -158,7 +158,7 @@ def parse_california(xlsx_bytes: bytes) -> list[dict]:
                 "county": county,
                 "industry": str(r[c_industry]).strip() if c_industry is not None and r[c_industry] else None,
                 "source_url": CA_PAGE,
-                "_address": str(r[c_address]).strip() if c_address is not None and r[c_address] else "",
+                "_extra": str(r[c_address]).strip() if c_address is not None and r[c_address] else "",
             }
         )
     return assign_ids(out)
@@ -301,7 +301,11 @@ def parse_washington_page(page_html: str) -> list[dict]:
             "source_url": ("https://fortress.wa.gov" + link.group(1)) if link and link.group(1).startswith("/") else WA_PAGE,
             "_extra": link.group(1) if link else "",
         })
-    return out
+    # Assigned HERE, not in fetch_washington, so the `--from-file` path (one
+    # saved page) produces ids as well. The sequence number therefore restarts
+    # per page, which is safe: `_extra` is the notice's own PDF link and is
+    # unique per notice, so two rows can never collide across pages.
+    return assign_ids(out)
 
 
 def fetch_washington(days: int = WA_DAYS, max_pages: int = WA_MAX_PAGES) -> list[dict]:
@@ -330,7 +334,7 @@ def fetch_washington(days: int = WA_DAYS, max_pages: int = WA_MAX_PAGES) -> list
         if min(r["notice_date"] for r in got) < floor:
             break
         time.sleep(0.3)
-    return assign_ids(rows)
+    return rows   # each page assigned its own ids in parse_washington_page
 
 
 def match_employers(db: Turso, rows: list[dict]) -> int:
@@ -352,17 +356,30 @@ def match_employers(db: Turso, rows: list[dict]) -> int:
     return n
 
 
+def _cmp(employees, slug) -> tuple:
+    """Both sides of the change check, in one shape.
+
+    **libSQL returns integers as STRINGS**, so a stored `employees` of '42'
+    never equals the parsed int 42 and every row reads as changed: measured
+    2026-09-09, an identical re-run rewrote all 566 rows and logged "wrote
+    566" as though it had done useful work. That is not a slow diff, it is NO
+    diff, and it is the same defect `live_norm()` exists for in
+    build_entity_detail.py. Normalise both sides or do not compare at all.
+    """
+    return (None if employees is None or employees == "" else int(employees), slug or None)
+
+
 def write(db: Turso, rows: list[dict], state: str) -> int:
     db.script(DDL)
     res = db.execute("SELECT id, employees, employer_slug FROM warn_notices WHERE state = ?", [state])
     have = {}
     for r in res["response"]["result"]["rows"]:
         vals = [None if c["type"] == "null" else c["value"] for c in r]
-        have[vals[0]] = (vals[1], vals[2])
+        have[vals[0]] = _cmp(vals[1], vals[2])
     now = int(time.time() * 1000)
     written = 0
     for r in rows:
-        if have.get(r["id"]) == (r["employees"], r.get("employer_slug")):
+        if have.get(r["id"]) == _cmp(r["employees"], r.get("employer_slug")):
             continue
         db.execute(
             "INSERT OR REPLACE INTO warn_notices VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
@@ -383,11 +400,19 @@ def load_texas(from_file: str | None) -> list[dict]:
     return parse_texas(raw)
 
 
+# `browser_only` states refuse automated clients as a matter of policy, so a
+# refusal from a scheduled run is EXPECTED and must not mark the run partial:
+# a job that reports failure every single week teaches everyone to skip its
+# alert, which is exactly how the I-485 outage of Sep 6 to 9 2026 sat unread
+# for four days. Measured 2026-09-09 from GitHub runner 52.155.33.249 and from
+# a residential address alike: Texas answers HTTP 202 with zero bytes for both
+# its WARN page and its spreadsheet. Staleness is still reported, by the state's
+# own freshness row below, which only moves when that state actually writes.
 STATES: dict[str, dict] = {
-    "ca": {"name": "California", "page": CA_PAGE, "load": lambda f: parse_california(open(f, "rb").read() if f else fetch(CA_URL))},
-    "tx": {"name": "Texas", "page": TX_PAGE, "load": load_texas},
-    "ny": {"name": "New York", "page": NY_PAGE, "load": lambda f: parse_new_york(open(f, "rb").read() if f else fetch(NY_CSV))},
-    "wa": {"name": "Washington", "page": WA_PAGE, "load": lambda f: parse_washington_page(open(f, encoding="utf8").read()) if f else fetch_washington()},
+    "ca": {"name": "California", "page": CA_PAGE, "days": 21, "load": lambda f: parse_california(open(f, "rb").read() if f else fetch(CA_URL))},
+    "tx": {"name": "Texas", "page": TX_PAGE, "days": 45, "browser_only": True, "load": load_texas},
+    "ny": {"name": "New York", "page": NY_PAGE, "days": 21, "load": lambda f: parse_new_york(open(f, "rb").read() if f else fetch(NY_CSV))},
+    "wa": {"name": "Washington", "page": WA_PAGE, "days": 21, "load": lambda f: parse_washington_page(open(f, encoding="utf8").read()) if f else fetch_washington()},
 }
 
 
@@ -402,17 +427,19 @@ def main() -> int:
     started = time.time()
     wanted = list(STATES) if a.state == "all" else [a.state]
     parsed: dict[str, list[dict]] = {}
-    failed: list[str] = []
+    failed: list[str] = []     # unexpected: these make the run partial
+    refused: list[str] = []    # expected: a browser-only source turning a script away
     for st in wanted:
+        asked_by_hand = a.from_file is not None
         try:
             rows = STATES[st]["load"](a.from_file)
         except Exception as e:  # one state's outage must not cost the others
             log(f"{STATES[st]['name']}: {type(e).__name__}: {str(e)[:200]}")
-            failed.append(st)
+            (failed if asked_by_hand or not STATES[st].get("browser_only") else refused).append(st)
             continue
         if not rows:
             log(f"{STATES[st]['name']}: no rows parsed; refusing to write it")
-            failed.append(st)
+            (failed if asked_by_hand or not STATES[st].get("browser_only") else refused).append(st)
             continue
         parsed[st] = rows
         log(f"{STATES[st]['name']}: {len(rows)} notices, {min(r['notice_date'] for r in rows)} to {max(r['notice_date'] for r in rows)}")
@@ -430,8 +457,29 @@ def main() -> int:
     written = 0
     for st, rows in parsed.items():
         written += write(db, rows, st.upper())
-    note = "; ".join(f"{STATES[st]['name']} {len(rows)}" for st, rows in parsed.items()) + (f"; failed: {', '.join(STATES[st]['name'] for st in failed)}" if failed else "")
-    stamp_freshness(db, DATASET, as_of=max(r["notice_date"] for r in every), source=CA_PAGE, cadence="Weekly", note=note)
+        # ONE FRESHNESS ROW PER STATE, stamped only when that state actually
+        # wrote. The health check reads every row in that table dynamically, so
+        # this is what makes a single state going quiet visible without the
+        # whole job crying wolf: Texas needs a browser fetch, and its row ages
+        # out at 45 days if nobody does one.
+        stamp_freshness(
+            db, f"{DATASET}-{st}",
+            as_of=max(r["notice_date"] for r in rows),
+            source=STATES[st]["page"], cadence="Weekly",
+            note=f"{STATES[st]['name']}: {len(rows)} notices"
+                 + (" (browser-only source; needs --state tx --from-file)" if STATES[st].get("browser_only") else ""),
+            max_age_days=STATES[st]["days"],
+        )
+    note = "; ".join(f"{STATES[st]['name']} {len(rows)}" for st, rows in parsed.items())
+    if refused:
+        note += f"; refused as expected (browser-only): {', '.join(STATES[st]['name'] for st in refused)}"
+    if failed:
+        note += f"; FAILED: {', '.join(STATES[st]['name'] for st in failed)}"
+    # The dataset-wide row speaks for every state, so only an all-states run may
+    # write it: a `--state tx` run that stamped it would move the whole
+    # dataset's as_of to whatever one state happened to hold.
+    if a.state == "all":
+        stamp_freshness(db, DATASET, as_of=max(r["notice_date"] for r in every), source=CA_PAGE, cadence="Weekly", note=note, max_age_days=MAX_AGE_DAYS)
     record_run(db, "ingest_warn.py", status="partial" if failed else "ok", rows_written=written, note=f"{note}; {matched} matched", started_at=started)
     log(f"wrote {written}; {note}")
     return 0
