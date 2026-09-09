@@ -98,7 +98,7 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
       </p>{" "}
       {summary ? (
         reported.length > 0 ? (
-          <dl className="mt-4 grid gap-px border-2 border-border bg-border">
+          <dl className="mt-4 grid grid-cols-1 gap-px border-2 border-border bg-border [&>*]:min-w-0">
             {reported.map((k) => (
               <div key={k.kind} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 bg-card px-4 py-3">
                 <dt className="font-heading text-base font-black">{k.label}</dt>{" "}

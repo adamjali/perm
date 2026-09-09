@@ -71,7 +71,7 @@ export function RfiDeadlineCalculator() {
             </p>
           ) : null}{" "}
           <dl className="border-t-2 border-border">
-            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
               <dt className="text-base">
                 Response due ({RFI_DUE_DAYS} calendar days from the letter)
                 {result.left >= 0 ? <span className="text-foreground/70"> · {result.left} {result.left === 1 ? "day" : "days"} from today</span> : null}

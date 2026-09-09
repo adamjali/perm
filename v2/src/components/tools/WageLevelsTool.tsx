@@ -165,7 +165,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
           </p>{" "}
           <dl className="mt-3 border-t-2 border-border">
             {result.levels.map((l) => (
-              <div key={l.level} className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-baseline sm:gap-x-6">
+              <div key={l.level} className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto_auto] sm:items-baseline sm:gap-x-6">
                 <dt className="text-base">Level {l.level}</dt>{" "}
                 <dd className="font-mono text-sm tabular-nums text-foreground/70">{usd(l.hourly, 2)} an hour</dd>{" "}
                 <dd className="font-heading text-xl font-black tabular-nums">{usd(l.yearly)} a year</dd>

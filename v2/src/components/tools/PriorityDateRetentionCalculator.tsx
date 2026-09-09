@@ -79,18 +79,18 @@ export function PriorityDateRetentionCalculator() {
             </p>
           ))}{" "}
           <dl className="border-t-2 border-border">
-            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
               <dt className="text-base">An employer withdrawal no longer revokes the I-140 from ({RETENTION_DAYS} days after approval)</dt>{" "}
               <dd className="font-heading text-xl font-black tabular-nums">{long(result.r.withdrawalSafeFrom)}</dd>
             </div>{" "}
             {result.r.portableFrom ? (
-              <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+              <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">The job can change to a same-or-similar one under 204(j) from ({RETENTION_DAYS} days after the I-485 was filed)</dt>{" "}
                 <dd className="font-heading text-xl font-black tabular-nums">{long(result.r.portableFrom)}</dd>
               </div>
             ) : null}{" "}
             {result.r.withdrawal ? (
-              <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+              <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">
                   A withdrawal on {long(result.r.withdrawal.on)}, {int(result.r.withdrawal.daysAfterApproval)} days after approval
                 </dt>{" "}
@@ -99,7 +99,7 @@ export function PriorityDateRetentionCalculator() {
                 </dd>
               </div>
             ) : null}{" "}
-            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
               <dt className="text-base">The priority date, for a future EB-1, EB-2 or EB-3 petition</dt>{" "}
               <dd className="font-heading text-xl font-black">Retained</dd>
             </div>

@@ -108,11 +108,11 @@ export function H1bMaxOutCalculator() {
             </ul>
           ) : null}{" "}
           <dl className="border-t-2 border-border">
-            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
               <dt className="text-base">Last day in H-1B status (six-year limit{Number(outside) > 0 ? `, plus ${int(Math.floor(Number(outside)))} recaptured days` : ""})</dt>{" "}
               <dd className="font-heading text-xl font-black tabular-nums">{long(result.r.maxOutDate)}</dd>
             </div>{" "}
-            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+            <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
               <dt className="text-base">
                 Last day to file the PERM for the 365-day rule
                 {result.r.daysOfMargin !== null && result.r.daysOfMargin >= 0 ? (
@@ -122,7 +122,7 @@ export function H1bMaxOutCalculator() {
               <dd className="font-heading text-xl font-black tabular-nums">{long(result.r.permFileBy)}</dd>
             </div>{" "}
             {result.r.perm ? (
-              <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
+              <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">
                   A PERM filed {long(result.r.perm.filed)} is {int(result.r.perm.daysBeforeMaxOut)} days before the limit
                 </dt>{" "}
