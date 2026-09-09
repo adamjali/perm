@@ -81,7 +81,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
             {ORDER.map((cat) => (
               <tr key={cat} className="border-t-2 border-border align-top">
                 <td className="p-3">
-                  <span className="font-semibold">{CATEGORY[cat]?.label ?? cat}</span>
+                  <span className="font-semibold">{CATEGORY[cat]?.label ?? cat}</span>{" "}
                   <span className="block text-xs text-muted-foreground">{CATEGORY[cat]?.who ?? ""}</span>
                 </td>
                 {BOARD_COUNTRIES.map((country) => (
