@@ -42,7 +42,7 @@ from concurrent.futures import ThreadPoolExecutor
 TOPICS: dict[str, set[str]] = {
     "processing time": {"/perm-processing-times"},
     "processing times": {"/perm-processing-times"},
-    "visa bulletin": {"/tools/priority-date-calculator", "/guides/how-the-visa-bulletin-works"},
+    "visa bulletin": {"/tools/priority-date-calculator", "/guides/how-the-visa-bulletin-works", "/visa-bulletin", "/visa-bulletin/family"},
     "prevailing wage request": {"/pwd-cases", "/tools/pwd-calculator"},
     "wage request": {"/pwd-cases", "/tools/pwd-calculator"},
     "case status": {"/perm-case-status"},
@@ -89,7 +89,7 @@ def page_identity(h: str) -> tuple[str, str]:
 
 
 LINK_RE = re.compile(
-    r'<a\s[^>]*?href="(/[^"#?]*)[^"]*"[^>]*>([\s\S]{0,300}?)</a>', re.I
+    r'<a\s[^>]*?href="(/[^"#]*)[^"]*"[^>]*>([\s\S]{0,300}?)</a>', re.I
 )
 
 
@@ -98,7 +98,15 @@ def links_on(h: str) -> list[tuple[str, str]]:
     for m in LINK_RE.finditer(strip_noise(h)):
         text = re.sub(r"\s+", " ", html.unescape(re.sub(r"(?s)<[^>]+>", " ", m.group(2)))).strip()
         if text:
-            out.append((m.group(1).rstrip("/") or "/", text))
+            href = m.group(1)
+            # A page is the same page whatever its query string, so the query
+            # is dropped and one fetch covers every variant. An API route is
+            # NOT: /api/stage-cases answers 400 to a bare request and 200 to
+            # the CSV link the stage page renders, so the audit reported a
+            # working download as DEAD until it fetched the href as written.
+            if not href.startswith("/api/"):
+                href = href.split("?", 1)[0]
+            out.append((href.rstrip("/") or "/", text))
     return out
 
 

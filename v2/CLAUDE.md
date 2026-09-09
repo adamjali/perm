@@ -3258,6 +3258,23 @@ slug to a directory of the same name, which no page under `/tools` or
 `/perm-employers` satisfies (it now searches the public tree and requires
 exactly one page to name the card).
 
+**The link audit reported a working CSV download as DEAD (2026-09-09).** Its
+href regex stopped at `?`, so `/api/stage-cases?stage=…&format=csv` was fetched
+as `/api/stage-cases`, which answers 400 by design. A page is the same page under
+any query string; an API route is not. It keeps the query for `/api/` hrefs now
+and drops it everywhere else. Same run: two "topic mismatch" findings were the
+allowlist, not the links. `TOPICS["visa bulletin"]` predated `/visa-bulletin`
+and its family page, so a correct link to the bulletin page was flagged for not
+pointing at the calculator. **When a gate flags a page that shipped after the
+gate was written, suspect the gate's own list first.**
+
+**Every mapped item and every table cell carries its own space.** The rendered
+glued audit found 257 pairs on five new pages that the source gate passed clean:
+176 on `/layoffs` alone, all table cells. The fix shape is `{" "}` INSIDE the
+cell (`<td>…{" "}</td>`) and inside each mapped `<li>`, or a keyed `Fragment`
+with a leading space for a strip of `<a>`s, never text between `<tr>` or
+`<option>` siblings, which React rejects at hydration.
+
 **An edit script that asserts BEFORE writing aborts every edit after the
 failing one, and a commit message written from the plan then lies.** A
 five-description fix landed as three, twice, because a length assertion on

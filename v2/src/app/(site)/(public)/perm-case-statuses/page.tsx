@@ -33,7 +33,7 @@ import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 
 const TITLE = "PERM Case Status Meanings: Every DOL Status Explained";
 const DESCRIPTION =
-  "What each FLAG case status means for a PERM, a prevailing wage request or an H-1B LCA: analyst review, RFI issued, on hold, appeals, certified and expired, with the regulation and today's count.";
+  "What each DOL case status means for a PERM, a wage request or an LCA: analyst review, RFI issued, on hold, appeals, certified, with the rule and the count.";
 const PATH = "/perm-case-statuses";
 
 export const metadata: Metadata = {
@@ -170,7 +170,7 @@ export default async function PermCaseStatusesPage() {
               <a href={`#${a.anchor}`} className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                 {a.program === "perm" ? "" : a.program === "pwd" ? "Wage request: " : "LCA: "}
                 {a.label}
-              </a>
+              </a>{" "}
             </li>
           ))}
         </ul>

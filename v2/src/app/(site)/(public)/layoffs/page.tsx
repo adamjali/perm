@@ -15,7 +15,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 
 const TITLE = "Layoff Notices Against PERM Sponsors";
 const DESCRIPTION =
-  "WARN Act layoff and closing notices as the states publish them, matched by name to the employers in DOL's PERM record. California's report so far; each notice links to the state's own file.";
+  "WARN Act layoff and closing notices as the states publish them, matched by name to the employers in DOL's PERM record. California so far.";
 const PATH = "/layoffs";
 
 export const metadata: Metadata = {
@@ -71,29 +71,29 @@ export default async function LayoffsPage() {
         <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b-2 border-border">
-              <th scope="col" className="py-2 pr-3 font-bold">Notice</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Employer, as filed</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Sponsor record</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Kind</th>
-              <th scope="col" className="py-2 pr-3 text-right font-bold">Employees</th>
-              <th scope="col" className="py-2 pr-3 font-bold">County</th>
-              <th scope="col" className="py-2 font-bold">Effective</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Notice{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Employer, as filed{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Sponsor record{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Kind{" "}</th>
+              <th scope="col" className="py-2 pr-3 text-right font-bold">Employees{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">County{" "}</th>
+              <th scope="col" className="py-2 font-bold">Effective{" "}</th>
             </tr>
           </thead>
           <tbody>
             {matched.map((r) => (
               <tr key={r.id} className="border-b border-border/40 align-top">
-                <td className="py-2 pr-3 tabular-nums">{long(r.noticeDate)}</td>
-                <td className="py-2 pr-3">{r.company}</td>
+                <td className="py-2 pr-3 tabular-nums">{long(r.noticeDate)}{" "}</td>
+                <td className="py-2 pr-3">{r.company}{" "}</td>
                 <td className="py-2 pr-3">
                   <Link href={`/perm-employers/${r.employerSlug}`} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                     PERM record
                   </Link>
-                </td>
-                <td className="py-2 pr-3">{r.kind ?? ""}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{r.employees?.toLocaleString("en-US") ?? ""}</td>
-                <td className="py-2 pr-3">{r.county ?? ""}</td>
-                <td className="py-2 tabular-nums">{r.effectiveDate ? long(r.effectiveDate) : ""}</td>
+                {" "}</td>
+                <td className="py-2 pr-3">{r.kind ?? ""}{" "}</td>
+                <td className="py-2 pr-3 text-right tabular-nums">{r.employees?.toLocaleString("en-US") ?? ""}{" "}</td>
+                <td className="py-2 pr-3">{r.county ?? ""}{" "}</td>
+                <td className="py-2 tabular-nums">{r.effectiveDate ? long(r.effectiveDate) : ""}{" "}</td>
               </tr>
             ))}
           </tbody>

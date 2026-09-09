@@ -71,7 +71,7 @@ export default function CorrectionsPage() {
                   </>
                 ) : null}
               </dd>
-            </dl>
+            </dl>{" "}
           </li>
         ))}
       </ol>

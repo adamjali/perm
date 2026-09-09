@@ -14,9 +14,9 @@ import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
  * page that makes the estimator answerable for its numbers.
  */
 
-const TITLE = "PERM Estimate Scorecard: Predictions Written Down Before the Outcome";
+const TITLE = "PERM Estimate Scorecard";
 const DESCRIPTION =
-  "Every decision-date estimate this site recorded for a real PERM case, with the anchor and window as printed, the day DOL decided, and the error in days. Scored from the record, never edited.";
+  "Every decision-date estimate this site recorded for a real PERM case, with its anchor and window, the day DOL decided, and the error in days. Never edited.";
 const PATH = "/estimate-scorecard";
 
 export const metadata: Metadata = {
@@ -76,14 +76,14 @@ export default async function EstimateScorecardPage() {
         <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
           <thead>
             <tr className="border-b-2 border-border">
-              <th scope="col" className="py-2 pr-3 font-bold">Recorded</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Case</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Filed</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Anchor</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Window</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Status now</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Decided</th>
-              <th scope="col" className="py-2 text-right font-bold">Error</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Recorded{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Case{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Filed{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Anchor{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Window{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Status now{" "}</th>
+              <th scope="col" className="py-2 pr-3 font-bold">Decided{" "}</th>
+              <th scope="col" className="py-2 text-right font-bold">Error{" "}</th>
             </tr>
           </thead>
           <tbody>
@@ -92,24 +92,24 @@ export default async function EstimateScorecardPage() {
               const toAnchor = daysToAnchor(p, today);
               return (
                 <tr key={p.caseNumber} className="border-b border-border/40 align-top">
-                  <td className="py-3 pr-3 tabular-nums">{p.recorded}</td>
+                  <td className="py-3 pr-3 tabular-nums">{p.recorded}{" "}</td>
                   <td className="py-3 pr-3 font-mono text-xs">
                     <Link href={`/perm-case-status?case=${p.caseNumber}`} className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                       {p.caseNumber}
                     </Link>
-                  </td>
-                  <td className="py-3 pr-3 tabular-nums">{p.filed}</td>
-                  <td className="py-3 pr-3">{p.anchor}</td>
+                  {" "}</td>
+                  <td className="py-3 pr-3 tabular-nums">{p.filed}{" "}</td>
+                  <td className="py-3 pr-3">{p.anchor}{" "}</td>
                   <td className="py-3 pr-3 tabular-nums">
                     {p.windowFrom} to {p.windowTo}
-                  </td>
-                  <td className="py-3 pr-3">{r.status ?? "not in the index"}</td>
+                  {" "}</td>
+                  <td className="py-3 pr-3">{r.status ?? "not in the index"}{" "}</td>
                   <td className="py-3 pr-3 tabular-nums">
                     {r.decidedOn ? long(r.decidedOn) : toAnchor >= 0 ? `pending, ${toAnchor} days to the anchor` : `pending, ${-toAnchor} days past the anchor`}
-                  </td>
+                  {" "}</td>
                   <td className="py-3 text-right tabular-nums">
                     {r.score ? `${signed(r.score.errorDays)} days, ${r.score.inWindow ? "inside" : "outside"} the window` : "not yet"}
-                  </td>
+                  {" "}</td>
                 </tr>
               );
             })}

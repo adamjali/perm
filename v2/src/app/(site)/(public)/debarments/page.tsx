@@ -28,7 +28,7 @@ import {
 
 const TITLE = "Employers and Agents Debarred From PERM, H-1B, H-2A and H-2B";
 const DESCRIPTION =
-  "DOL's debarment lists in one place: every employer, attorney and agent barred from PERM, H-1B, H-2A or H-2B filings, with the period and the violation as DOL published them.";
+  "DOL's debarment lists in one place: every employer, attorney and agent barred from PERM, H-1B, H-2A or H-2B filings, with the period and the violation.";
 
 export const metadata: Metadata = {
   title: TITLE,

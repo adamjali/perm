@@ -12,7 +12,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 
 const TITLE = "PERM Queue Badges";
 const DESCRIPTION =
-  "Three embeddable SVG badges regenerated every day from DOL's own published figures: the PERM queue month, the average decision days, and the wage-request month. Markdown and HTML included.";
+  "Three embeddable SVG badges, regenerated daily from DOL's own figures: the PERM queue month, the average decision days and the wage-request month.";
 const PATH = "/badges";
 const ORIGIN = "https://permtracker.app";
 

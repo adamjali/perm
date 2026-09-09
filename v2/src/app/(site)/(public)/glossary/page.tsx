@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Fragment } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { GLOSSARY, glossaryLetters, glossarySorted } from "@/lib/glossary";
@@ -13,7 +14,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
  */
 
 const TITLE = "PERM and Green Card Glossary";
-const DESCRIPTION = `${GLOSSARY.length} terms from the employment-based green card, defined in plain words with the regulation each one comes from: PERM, PWD, priority date, cutoff, retrogression, RFI, audit, BALCA, portability and the rest.`;
+const DESCRIPTION = `${GLOSSARY.length} employment green card terms in plain words, each with the regulation it comes from: PERM, PWD, priority date, cutoff, RFI, audit, BALCA and more.`;
 const PATH = "/glossary";
 
 export const metadata: Metadata = {
@@ -91,13 +92,18 @@ export default function GlossaryPage() {
 
       <nav aria-label="Jump to a letter" className="mt-8 flex flex-wrap gap-2">
         {letters.map((l) => (
-          <a
-            key={l}
-            href={`#letter-${l}`}
-            className="flex size-11 items-center justify-center border-2 border-border bg-card font-heading text-base font-black shadow-hard-sm hover:-translate-y-[1px] hover:bg-tint-primary"
-          >
-            {l}
-          </a>
+          // Mapped siblings arrive with nothing between them; the space is part
+          // of each iteration or it does not exist, and a whitespace-only node
+          // is not a flex item.
+          <Fragment key={l}>
+            {" "}
+            <a
+              href={`#letter-${l}`}
+              className="flex size-11 items-center justify-center border-2 border-border bg-card font-heading text-base font-black shadow-hard-sm hover:-translate-y-[1px] hover:bg-tint-primary"
+            >
+              {l}
+            </a>
+          </Fragment>
         ))}
       </nav>
 
@@ -143,20 +149,22 @@ export default function GlossaryPage() {
                           </a>
                         ) : null}{" "}
                         {(t.see ?? []).map((s) => (
-                          <Link
-                            key={s.href}
-                            href={s.href}
-                            className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                          >
-                            {s.label}
-                          </Link>
+                          <Fragment key={s.href}>
+                            {" "}
+                            <Link
+                              href={s.href}
+                              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                            >
+                              {s.label}
+                            </Link>
+                          </Fragment>
                         ))}
                       </p>
                     ) : null}
-                  </dd>
+                  </dd>{" "}
                 </div>
               ))}
-            </dl>
+            </dl>{" "}
           </section>
         ))}
       </div>

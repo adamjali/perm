@@ -34,7 +34,7 @@ import { getEmployerStages } from "@/lib/turso/employerStages";
 
 const TITLE = "PERM Employers With Cases On Hold, Audited or Under Appeal";
 const DESCRIPTION =
-  "Every employer with pending PERM cases DOL has pulled aside: on hold, at RFI or NORD, or under appeal. Counts and shares from DOL's live record, dated, no verdicts.";
+  "Every employer with pending PERM cases DOL has pulled aside: on hold, at RFI or NORD, or under appeal. Counts and shares from DOL's live record, dated.";
 
 export const metadata: Metadata = {
   title: TITLE,

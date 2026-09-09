@@ -207,7 +207,7 @@ export function LiveCaseBrowser({
               type="search"
               value={qInput}
               onChange={(e) => setQInput(e.target.value)}
-              placeholder="Case number, employer or job title"
+              placeholder="Case number or employer"
               aria-label="Search the live cases"
               className="w-full min-w-0 bg-transparent py-2 text-base font-medium outline-none placeholder:text-muted-foreground"
             />
