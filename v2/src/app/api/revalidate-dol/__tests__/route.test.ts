@@ -90,6 +90,8 @@ describe("the path list has not drifted from the pages that read the snapshot", 
     "/perm-queue/[month]":
       "~39 generated pages on a 1h window; they self-heal, and expiring a whole generated tail in one call is the employer-page cost mistake",
     "/perm-case-status": "fully dynamic (no revalidate), so there is no cached copy to expire",
+    "/badge/[kind]":
+      "its three literal URLs are in DOL_PAGES; a dynamic segment cannot be handed to revalidatePath",
   };
 
   function walk(dir: string, out: string[] = []): string[] {
@@ -159,7 +161,16 @@ describe("the path list has not drifted from the pages that read the snapshot", 
             .replace(/^\/+|\/+$/g, ""),
       ),
     );
-    const orphans = (DOL_PAGES as readonly string[]).filter((p) => !routes.has(p));
+    // A literal path can be served by a dynamic route (the badges are
+    // /badge/<kind>.svg under /badge/[kind]): a bracketed segment matches one
+    // non-empty path segment, compared segment by segment.
+    const servedBy = (route: string, path: string) => {
+      const rs = route.split("/");
+      const ps = path.split("/");
+      return rs.length === ps.length && rs.every((seg, i) => (seg.startsWith("[") ? (ps[i] ?? "") !== "" : seg === ps[i]));
+    };
+    const served = (p: string) => routes.has(p) || [...routes].some((r) => servedBy(r, p));
+    const orphans = (DOL_PAGES as readonly string[]).filter((p) => !served(p));
     expect(orphans, `DOL_PAGES lists paths with no page: ${orphans.join(", ")}`).toEqual([]);
   });
 });

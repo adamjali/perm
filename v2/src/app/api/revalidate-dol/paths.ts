@@ -39,4 +39,11 @@ export const DOL_PAGES = [
   "/tools/pwd-calculator",
   "/tools/green-card-timeline",
   "/tools/perm-timeline-calculator",
+  // The three badges carry DOL's queue month and average days (2026-09-08);
+  // a hot-linked badge showing last week's month for a day is the exact
+  // staleness this endpoint exists to end. Literal paths, because the
+  // dynamic segment cannot be handed to revalidatePath.
+  "/badge/perm-queue.svg",
+  "/badge/perm-days.svg",
+  "/badge/pwd-queue.svg",
 ] as const;
