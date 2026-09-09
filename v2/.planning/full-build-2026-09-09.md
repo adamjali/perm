@@ -28,9 +28,9 @@ left off.
 - [x] C4 calculators: rfi-deadline, pwd-validity, h1b-six-year-limit, priority-date-retention, green-card-fees (G-1055 05/29/26); canonical logic + 16 tests; five tiles on /calculators (95d7c611)
 - [x] C5 data notes: a blog post tagged `data-note`; first note on the 1,854 holds (1,831 Cognizant, filed Dec 17 2025 to Feb 13 2026; one case left hold in 14 days of observation), figures read from the event log and the live index Sep 8
 - [x] C6 comparisons and checklists: PERM vs NIW, EB-2 vs EB-3, document checklist by stage (the recruitment checklist already existed); cards rendered; audit green
-- [ ] C7 prose on state and occupation pages from the record
-- [ ] C8 corrections log page
-- [ ] C9 estimate scorecard page from the prediction ledger
+- [x] C7 prose on state and occupation pages: verified already present from the Sep 4 duplication work (every occupation page leads with its own figures, wage and days against the field, top state and employer; the state index prints each state's leaders and concentration with measured prose). Nothing further added; the duplication measure is chrome-excluded 5-grams against a built site
+- [x] C8 corrections log: `/corrections`, 14 dated entries (what it said, what was true, what changed) from Aug 23 to Sep 7, never removed; linked from the rail's Reference group
+- [x] C9 estimate scorecard: `/estimate-scorecard`, structured ledger + live status and first final-status transition from the event log; scores itself when DOL decides (1fa7e348)
 
 ## D. Data sources
 - [ ] D1 OIG and OFLC enforcement notices in the policy feed
