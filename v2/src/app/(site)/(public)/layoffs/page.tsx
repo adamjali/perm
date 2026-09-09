@@ -5,25 +5,27 @@ import { getFreshness } from "@/lib/turso/publicData";
 import { recentWarn } from "@/lib/turso/warn";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * WARN layoff notices against the sponsor record. Every row is a filing as
  * the state printed it; a sponsor link means the filer's normalised name
- * equals a PERM employer's merge key, and nothing looser. California only so
- * far, and the page says which states are not read and why.
+ * equals a PERM employer's merge key, and nothing looser. Four states are read
+ * (California, Texas, New York, Washington) and the page says which record
+ * each comes from and what is still not covered.
  */
 
 const TITLE = "Layoff Notices Against PERM Sponsors";
 const DESCRIPTION =
-  "WARN Act layoff and closing notices as the states publish them, matched by name to the employers in DOL's PERM record. California so far.";
+  "WARN Act layoff and closing notices as the states publish them, matched by name to the employers in DOL's PERM record. California, Texas, New York and Washington.";
 const PATH = "/layoffs";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/layoffs" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
-};
+}, "layoffs");
 
 export const revalidate = 21600;
 
@@ -104,10 +106,14 @@ export default async function LayoffsPage() {
       <section className="mt-10 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">What is read, and what is not</h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          California&apos;s Employment Development Department publishes its WARN report as a spreadsheet with a stable
-          shape, so it is read weekly and every row above links to it. Texas answers scripts with a challenge page,
-          Washington keeps its notices behind a search form, and New York publishes an HTML list; none of the three is
-          read yet, so a sponsor with layoffs in those states shows nothing here. A match means the filer&apos;s
+          Four states are read weekly, each from the record it publishes. California&apos;s Employment Development
+          Department posts its WARN report as a spreadsheet; Texas posts one spreadsheet per year; New York&apos;s
+          current notices sit in a public dashboard that also serves them as a table; and Washington keeps a searchable
+          database of every notice received, walked newest first. Texas answers automated requests with a challenge
+          page on some days, so its file is fetched by hand when the weekly run cannot get it, and a gap there shows as
+          a stale date, never as a silent zero. Every other state, and the notices those four published before the
+          window read here, show nothing, so a sponsor with layoffs elsewhere is not cleared by this page. A match
+          means the filer&apos;s
           normalised name equals a PERM employer&apos;s, the same rule that groups DOL&apos;s own spellings of one
           company; a subsidiary filing under its own name does not match its parent, on purpose.
         </p>{" "}

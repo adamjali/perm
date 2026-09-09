@@ -214,7 +214,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
     path: "/layoffs",
     label: "Layoff notices against sponsors",
-    blurb: "WARN Act layoff and closing notices as the states publish them (California so far), matched by name to the employers in DOL's PERM record, each linked to the state's own file.",
+    blurb: "WARN Act layoff and closing notices as the states publish them (California, Texas, New York and Washington), matched by name to the employers in DOL's PERM record, each linked to the state's own file.",
   },
   {
     path: "/badges",

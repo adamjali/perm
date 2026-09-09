@@ -10,7 +10,7 @@ import type { WarnNotice as Notice } from "@/lib/turso/warn";
  */
 
 const long = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-const STATE_NAME: Record<string, string> = { CA: "California" };
+const STATE_NAME: Record<string, string> = { CA: "California", TX: "Texas", NY: "New York", WA: "Washington" };
 
 export function WarnNoticeBand({ rows, pageName }: { rows: Notice[]; pageName: string }) {
   if (rows.length === 0) return null;

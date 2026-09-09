@@ -31,8 +31,10 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import hashlib
+import html
 import io
 import json
+import re
 import os
 import sys
 import time
@@ -44,6 +46,24 @@ from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
 
 CA_URL = "https://edd.ca.gov/siteassets/files/jobs_and_training/warn/warn_report1.xlsx"
 CA_PAGE = "https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/"
+# Texas: one spreadsheet per calendar year, linked from the WARN page. The
+# site answers scripts with a bot challenge (HTTP 202 and a 2 KB page, measured
+# from a residential address 2026-09-09); a real browser gets the file. The
+# runner tries anyway, and `--state tx --from-file <xlsx>` is the fallback.
+TX_URL = "https://www.twc.texas.gov/sites/default/files/oei/docs/warn-act-listings-{year}-twc.xlsx"
+TX_PAGE = "https://www.twc.texas.gov/data-reports/warn-notice"
+# New York: the current notices live in a Tableau Public dashboard, and Tableau
+# Public serves any view as CSV. 194 rows for 2026 on 2026-09-09; the legacy
+# HTML list holds 2023 to 2025 as one page per notice and is not read.
+NY_CSV = "https://public.tableau.com/views/WorkerAdjustmentRetrainingNotificationWARN/WARN.csv?:showVizHome=no"
+NY_PAGE = "https://dol.ny.gov/warn-dashboard"
+# Washington: an ASP.NET grid of 15 rows a page, newest received first, paged
+# by WebForms postback (`__EVENTTARGET=ucPSW$gvMain`, `__EVENTARGUMENT=Page$N`).
+# Each page's hidden fields sign the next request, so the walk is sequential.
+WA_URL = "https://fortress.wa.gov/esd/file/WARN/Public/SearchWARN.aspx"
+WA_PAGE = "https://esd.wa.gov/employer-requirements/layoffs-and-employee-notifications/worker-adjustment-and-retraining-notification-warn-layoff-and-closure-database"
+WA_DAYS = 400   # walk back this far on every run; the grid is newest-first
+WA_MAX_PAGES = 80
 DATASET = "warn-notices"
 MAX_AGE_DAYS = 21
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"
@@ -76,11 +96,13 @@ def _date(v) -> str | None:
         return None
     if isinstance(v, (dt.datetime, dt.date)):
         return v.date().isoformat() if isinstance(v, dt.datetime) else v.isoformat()
-    s = str(v).strip()[:10]
-    try:
-        return dt.date.fromisoformat(s).isoformat()
-    except ValueError:
-        return None
+    s = str(v).strip()
+    for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y"):
+        try:
+            return dt.datetime.strptime(s[:10] if fmt == "%Y-%m-%d" else s, fmt).date().isoformat()
+        except ValueError:
+            continue
+    return None
 
 
 def _int(v) -> int | None:
@@ -139,17 +161,176 @@ def parse_california(xlsx_bytes: bytes) -> list[dict]:
                 "_address": str(r[c_address]).strip() if c_address is not None and r[c_address] else "",
             }
         )
-    # One employer can file several notices on one day for several sites, and
-    # the report has printed identical rows outright; the address and count
-    # separate the first, a sequence number the second. Row order is stable
-    # between downloads of the same report, so the ids are stable too.
+    return assign_ids(out)
+
+
+def assign_ids(rows: list[dict]) -> list[dict]:
+    """A stable id per notice.
+
+    One employer can file several notices on one day for several sites, and a
+    report can print identical rows outright; the parser's `_extra` field (an
+    address, a city, an index) separates the first and a sequence number the
+    second. Row order is stable between downloads of the same report, so the
+    ids are stable too.
+    """
     seen: dict[str, int] = {}
-    for row in out:
-        base = "|".join([row["state"], row["notice_date"], row["company"], row["effective_date"] or "", row["county"] or "", row.pop("_address"), str(row["employees"])])
+    for row in rows:
+        base = "|".join([row["state"], row["notice_date"], row["company"], row["effective_date"] or "", row["county"] or "", row.pop("_extra", "") or "", str(row["employees"] or "")])
         n = seen.get(base, 0)
         seen[base] = n + 1
         row["id"] = hashlib.sha1(f"{base}|{n}".encode()).hexdigest()[:16]
+    return rows
+
+
+def parse_texas(xlsx_bytes: bytes) -> list[dict]:
+    """TWC's yearly listing: one sheet, one header row, columns by name.
+
+    Header as shipped 2026-09-09: NOTICE_DATE, JOB_SITE_NAME, COUNTY_NAME,
+    WDA_NAME, TOTAL_LAYOFF_NUMBER, LayOff_Date, WFDD_RECEIVED_DATE, CITY_NAME.
+    Texas does not say whether a notice is a layoff or a closure, so `kind`
+    is null rather than guessed.
+    """
+    import openpyxl
+
+    if not xlsx_bytes.startswith(b"PK"):
+        raise ValueError("not a spreadsheet: Texas answered with a page, most likely its bot challenge; fetch the file in a browser and pass --from-file")
+    wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes), read_only=True, data_only=True)
+    rows = [r for r in wb[wb.sheetnames[0]].iter_rows(values_only=True)]
+    header_i = next((i for i, r in enumerate(rows) if r and any(isinstance(c, str) and "notice_date" in c.lower() for c in r)), None)
+    if header_i is None:
+        raise ValueError("no header row naming NOTICE_DATE")
+    header = [str(c or "").lower().strip() for c in rows[header_i]]
+
+    def col(needle: str) -> int | None:
+        return next((i for i, h in enumerate(header) if needle in h), None)
+
+    c_notice, c_company, c_county, c_n, c_eff, c_city = col("notice_date"), col("job_site_name"), col("county"), col("total_layoff"), col("layoff_date"), col("city")
+    if c_notice is None or c_company is None:
+        raise ValueError(f"notice or company column missing; header={header}")
+    out: list[dict] = []
+    for r in rows[header_i + 1 :]:
+        if not r or r[c_company] in (None, ""):
+            continue
+        notice = _date(r[c_notice])
+        if not notice:
+            continue
+        out.append({
+            "state": "TX",
+            "notice_date": notice,
+            "effective_date": _date(r[c_eff]) if c_eff is not None else None,
+            "company": str(r[c_company]).strip(),
+            "kind": None,
+            "employees": _int(r[c_n]) if c_n is not None else None,
+            "county": str(r[c_county]).strip() if c_county is not None and r[c_county] else None,
+            "industry": None,
+            "source_url": TX_PAGE,
+            "_extra": str(r[c_city]).strip() if c_city is not None and r[c_city] else "",
+        })
+    return assign_ids(out)
+
+
+def parse_new_york(csv_bytes: bytes) -> list[dict]:
+    """The Tableau Public view as CSV. Headers carry stray spaces; they are stripped."""
+    import csv
+
+    text = csv_bytes.decode("utf-8-sig", "replace")
+    reader = csv.reader(io.StringIO(text))
+    header = [h.strip().lower() for h in next(reader, [])]
+
+    def col(*needles: str) -> int | None:
+        return next((i for i, h in enumerate(header) if all(n in h for n in needles)), None)
+
+    c_company, c_start, c_notice, c_addr = col("business"), col("layoff/closure starts"), col("date of warn"), col("address")
+    c_county, c_lc, c_pt, c_n, c_index = col("county"), col("layoff or closure"), col("permanent"), col("affected workers"), col("index")
+    if c_company is None or c_notice is None:
+        raise ValueError(f"company or notice-date column missing; header={header}")
+    out: list[dict] = []
+    for r in reader:
+        if len(r) <= max(c_company, c_notice) or not r[c_company].strip():
+            continue
+        notice = _date(r[c_notice])
+        if not notice:
+            continue
+        kind = ", ".join(x for x in [r[c_lc].strip() if c_lc is not None else "", r[c_pt].strip() if c_pt is not None else ""] if x) or None
+        out.append({
+            "state": "NY",
+            "notice_date": notice,
+            "effective_date": _date(r[c_start]) if c_start is not None else None,
+            "company": r[c_company].strip(),
+            "kind": kind,
+            "employees": _int(r[c_n]) if c_n is not None else None,
+            "county": r[c_county].strip() if c_county is not None and r[c_county].strip() else None,
+            "industry": None,
+            "source_url": NY_PAGE,
+            "_extra": "|".join(x for x in [r[c_addr].strip() if c_addr is not None else "", r[c_index].strip() if c_index is not None else ""]),
+        })
+    return assign_ids(out)
+
+
+WA_ROW_RE = re.compile(r"<tr[^>]*>(.*?)</tr>", re.S)
+WA_CELL_RE = re.compile(r"<td[^>]*>(.*?)</td>", re.S)
+WA_HIDDEN_RE = re.compile(r'<input[^>]+type="hidden"[^>]+name="([^"]+)"[^>]+value="([^"]*)"')
+
+
+def parse_washington_page(page_html: str) -> list[dict]:
+    """One grid page: Company, Location, Layoff Start Date, # of Workers, Closure/Layoff, Type, Received Date, Notice.
+
+    Washington prints no separate notice date, so `notice_date` is the date
+    ESD received the notice. The location is a city or a list of counties and
+    is kept as printed in `county`. The notice PDF link is the row's source.
+    """
+    out: list[dict] = []
+    for row in WA_ROW_RE.findall(page_html):
+        cells = WA_CELL_RE.findall(row)
+        if len(cells) != 8:
+            continue
+        text = [html.unescape(re.sub(r"<[^>]+>", "", c)).strip() for c in cells[:7]]
+        received = _date(text[6])
+        if not received or not text[0]:
+            continue
+        link = re.search(r"href=['\"]([^'\"]+)['\"]", cells[7])
+        out.append({
+            "state": "WA",
+            "notice_date": received,
+            "effective_date": _date(text[2]),
+            "company": text[0],
+            "kind": ", ".join(x for x in [text[4], text[5]] if x) or None,
+            "employees": _int(text[3]),
+            "county": text[1] or None,
+            "industry": None,
+            "source_url": ("https://fortress.wa.gov" + link.group(1)) if link and link.group(1).startswith("/") else WA_PAGE,
+            "_extra": link.group(1) if link else "",
+        })
     return out
+
+
+def fetch_washington(days: int = WA_DAYS, max_pages: int = WA_MAX_PAGES) -> list[dict]:
+    """Walk the grid newest-first until a page's oldest receipt is older than `days`."""
+    import http.cookiejar
+    import urllib.parse
+
+    jar = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+
+    def get(data: bytes | None = None) -> str:
+        headers = {"User-Agent": UA, **({"Content-Type": "application/x-www-form-urlencoded"} if data else {})}
+        return opener.open(urllib.request.Request(WA_URL, data=data, headers=headers), timeout=60).read().decode("utf8", "ignore")
+
+    floor = (dt.date.today() - dt.timedelta(days=days)).isoformat()
+    page_html = get()
+    rows: list[dict] = []
+    for n in range(1, max_pages + 1):
+        if n > 1:
+            form = {**dict(WA_HIDDEN_RE.findall(page_html)), "__EVENTTARGET": "ucPSW$gvMain", "__EVENTARGUMENT": f"Page${n}", "ucPSW$txtSearch": ""}
+            page_html = get(urllib.parse.urlencode(form).encode())
+        got = parse_washington_page(page_html)
+        if not got:
+            break
+        rows.extend(got)
+        if min(r["notice_date"] for r in got) < floor:
+            break
+        time.sleep(0.3)
+    return assign_ids(rows)
 
 
 def match_employers(db: Turso, rows: list[dict]) -> int:
@@ -171,9 +352,9 @@ def match_employers(db: Turso, rows: list[dict]) -> int:
     return n
 
 
-def write(db: Turso, rows: list[dict]) -> int:
+def write(db: Turso, rows: list[dict], state: str) -> int:
     db.script(DDL)
-    res = db.execute("SELECT id, employees, employer_slug FROM warn_notices WHERE state = 'CA'")
+    res = db.execute("SELECT id, employees, employer_slug FROM warn_notices WHERE state = ?", [state])
     have = {}
     for r in res["response"]["result"]["rows"]:
         vals = [None if c["type"] == "null" else c["value"] for c in r]
@@ -197,29 +378,62 @@ def fetch(url: str) -> bytes:
         return r.read()
 
 
+def load_texas(from_file: str | None) -> list[dict]:
+    raw = open(from_file, "rb").read() if from_file else fetch(TX_URL.format(year=dt.date.today().year))
+    return parse_texas(raw)
+
+
+STATES: dict[str, dict] = {
+    "ca": {"name": "California", "page": CA_PAGE, "load": lambda f: parse_california(open(f, "rb").read() if f else fetch(CA_URL))},
+    "tx": {"name": "Texas", "page": TX_PAGE, "load": load_texas},
+    "ny": {"name": "New York", "page": NY_PAGE, "load": lambda f: parse_new_york(open(f, "rb").read() if f else fetch(NY_CSV))},
+    "wa": {"name": "Washington", "page": WA_PAGE, "load": lambda f: parse_washington_page(open(f, encoding="utf8").read()) if f else fetch_washington()},
+}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--from-file")
+    ap.add_argument("--state", choices=[*STATES, "all"], default="all")
+    ap.add_argument("--from-file", help="parse this file instead of fetching; needs --state")
     a = ap.parse_args()
+    if a.from_file and a.state == "all":
+        ap.error("--from-file needs one --state")
     started = time.time()
-    raw = open(a.from_file, "rb").read() if a.from_file else fetch(CA_URL)
-    rows = parse_california(raw)
-    log(f"California: {len(rows)} notices, {min(r['notice_date'] for r in rows)} to {max(r['notice_date'] for r in rows)}")
-    if not rows:
-        log("no rows parsed; refusing to write")
+    wanted = list(STATES) if a.state == "all" else [a.state]
+    parsed: dict[str, list[dict]] = {}
+    failed: list[str] = []
+    for st in wanted:
+        try:
+            rows = STATES[st]["load"](a.from_file)
+        except Exception as e:  # one state's outage must not cost the others
+            log(f"{STATES[st]['name']}: {type(e).__name__}: {str(e)[:200]}")
+            failed.append(st)
+            continue
+        if not rows:
+            log(f"{STATES[st]['name']}: no rows parsed; refusing to write it")
+            failed.append(st)
+            continue
+        parsed[st] = rows
+        log(f"{STATES[st]['name']}: {len(rows)} notices, {min(r['notice_date'] for r in rows)} to {max(r['notice_date'] for r in rows)}")
+    if not parsed:
+        log("nothing parsed for any state")
         return 1
     db = Turso()
-    matched = match_employers(db, rows)
-    log(f"matched {matched} of {len(rows)} to a PERM sponsor by merge key")
+    every = [r for rows in parsed.values() for r in rows]
+    matched = match_employers(db, every)
+    log(f"matched {matched} of {len(every)} to a PERM sponsor by merge key")
     if a.dry_run:
-        for r in [x for x in rows if x.get("employer_slug")][:8]:
+        for r in [x for x in every if x.get("employer_slug")][:8]:
             print(json.dumps(r))
         return 0
-    written = write(db, rows)
-    stamp_freshness(db, DATASET, as_of=max(r["notice_date"] for r in rows), source=CA_PAGE, cadence="Weekly", note=f"California: {len(rows)} notices, {matched} matched, {written} written", max_age_days=MAX_AGE_DAYS)
-    record_run(db, "ingest_warn.py", status="ok", rows_written=written, note=f"CA {len(rows)} parsed, {matched} matched", started_at=started)
-    log(f"wrote {written}")
+    written = 0
+    for st, rows in parsed.items():
+        written += write(db, rows, st.upper())
+    note = "; ".join(f"{STATES[st]['name']} {len(rows)}" for st, rows in parsed.items()) + (f"; failed: {', '.join(STATES[st]['name'] for st in failed)}" if failed else "")
+    stamp_freshness(db, DATASET, as_of=max(r["notice_date"] for r in every), source=CA_PAGE, cadence="Weekly", note=note)
+    record_run(db, "ingest_warn.py", status="partial" if failed else "ok", rows_written=written, note=f"{note}; {matched} matched", started_at=started)
+    log(f"wrote {written}; {note}")
     return 0
 
 

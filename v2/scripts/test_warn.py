@@ -14,10 +14,13 @@ import sys
 import warnings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ingest_warn import parse_california  # noqa: E402
+from ingest_warn import parse_california, parse_new_york, parse_texas, parse_washington_page  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIXTURE = os.path.join(HERE, "fixtures", "ca_warn_2026-09-08.xlsx")
+TX_FIXTURE = os.path.join(HERE, "fixtures", "tx_warn_2026-09-09.xlsx")
+NY_FIXTURE = os.path.join(HERE, "fixtures", "ny_warn_2026-09-09.csv")
+WA_FIXTURE = os.path.join(HERE, "fixtures", "wa_warn_page_2026-09-09.html")
 
 
 def check(cond: bool, msg: str, failures: list[str]) -> None:
@@ -43,6 +46,33 @@ def main() -> int:
     ids = [r["id"] for r in rows]
     check(len(set(ids)) == len(ids), "ids are unique", f)
     check(ids == [r["id"] for r in parse_california(open(FIXTURE, "rb").read())], "ids are stable across parses", f)
+
+    # Texas: the yearly spreadsheet, columns by name, no layoff/closure kind.
+    tx = parse_texas(open(TX_FIXTURE, "rb").read())
+    check(len(tx) == 96, f"Texas fixture parses 96 notices, got {len(tx)}", f)
+    check(tx[0]["company"] == "Keystone Tower Systems" and tx[0]["notice_date"] == "2026-09-04" and tx[0]["effective_date"] == "2026-11-02", "Texas first row: company and both dates", f)
+    check(tx[0]["employees"] == 79 and tx[0]["county"] == "Gray" and tx[0]["kind"] is None and tx[0]["state"] == "TX", "Texas first row: count, county, no kind", f)
+    check(len({r["id"] for r in tx}) == len(tx), "Texas ids are unique", f)
+    check([r["id"] for r in tx] == [r["id"] for r in parse_texas(open(TX_FIXTURE, "rb").read())], "Texas ids are stable across parses", f)
+    try:
+        parse_texas(b"<html>challenge</html>")
+        check(False, "Texas refuses a challenge page", f)
+    except ValueError as e:
+        check("challenge" in str(e), "Texas names the challenge page in its refusal", f)
+    # New York: the Tableau CSV, headers with stray spaces.
+    ny = parse_new_york(open(NY_FIXTURE, "rb").read())
+    check(len(ny) == 8, f"New York fixture parses 8 notices, got {len(ny)}", f)
+    check(ny[0]["company"] == "420 Park FB LLC" and ny[0]["notice_date"] == "2026-04-06" and ny[0]["effective_date"] == "2026-07-06", "New York first row: company, notice date, start date", f)
+    check(ny[0]["kind"] == "Closure, Permanent" and ny[0]["employees"] == 42 and ny[0]["county"] == "New York", "New York first row: kind, count, county", f)
+    check(len({r["id"] for r in ny}) == len(ny), "New York ids are unique", f)
+    # Washington: one grid page, received date as the notice date, PDF link as the source.
+    wa = parse_washington_page(open(WA_FIXTURE, encoding="utf8").read())
+    check(len(wa) == 15, f"Washington page parses 15 notices, got {len(wa)}", f)
+    check(wa[0]["company"] == "Gilbert Orchards, Inc." and wa[0]["notice_date"] == "2026-09-03" and wa[0]["effective_date"] == "2026-11-22", "Washington first row: company, received and start dates in ISO", f)
+    check(wa[0]["employees"] == 518 and wa[0]["kind"] == "Layoff, Permanent" and wa[0]["county"] == "Yakima, Franklin and Grant Counties", "Washington first row: count, kind, location", f)
+    check(wa[0]["source_url"].startswith("https://fortress.wa.gov/esd/file/WARN/Public/DownloadFile.aspx"), "Washington row links its notice PDF", f)
+    check(all(r["notice_date"] <= wa[0]["notice_date"] for r in wa), "Washington page is newest-first", f)
+    check(all(r["state"] in ("TX", "NY", "WA") for r in tx + ny + wa), "every new-state row carries its state", f)
     check(all(r["source_url"].startswith("https://edd.ca.gov/") for r in rows), "every row cites EDD", f)
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0

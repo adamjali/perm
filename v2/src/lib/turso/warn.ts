@@ -6,7 +6,8 @@ import { rows } from "@/lib/turso/client";
 
 /**
  * WARN notices, as the states publish them, matched to PERM sponsors by the
- * entity merge key. California only so far (scripts/ingest_warn.py says why).
+ * entity merge key. California, Texas, New York and Washington, each from the
+ * record its state publishes (scripts/ingest_warn.py names the sources).
  * A notice is one filing with the state's own numbers; nothing here is a
  * layoff count for a company.
  */

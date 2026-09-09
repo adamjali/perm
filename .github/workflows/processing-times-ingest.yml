@@ -129,7 +129,8 @@ jobs:
 
       # California's WARN report (a 50 KB spreadsheet), matched to sponsors by
       # merge key. Weekly would do; daily is cheap and keeps the freshness row
-      # honest. Other states are not read; scripts/ingest_warn.py says why.
+      # honest. Four states: California, Texas, New York and Washington; Texas's
+      # site challenges scripts on some days and then the run records partial.
       - name: WARN notices
         if: always()
         env:
