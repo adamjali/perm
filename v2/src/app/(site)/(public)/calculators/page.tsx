@@ -21,6 +21,7 @@ import {
   ScaleBarsMini,
   TapeMini,
   TwoBarsMini,
+  WageLevelsMini,
   WindowSpansMini,
 } from "@/components/tools/MiniDiagrams";
 
@@ -167,6 +168,16 @@ const TOOLS = [
     tone: "pop",
     blurb:
       "When an employer's withdrawal stops revoking the I-140, when a pending I-485 becomes portable, and whether the priority date is kept.",
+  },
+  {
+    href: "/tools/wage-levels",
+    viz: "levels" as const,
+    icon: CurrencyDollarIcon,
+    kind: "Live",
+    name: "Prevailing wage levels",
+    tone: "tint",
+    blurb:
+      "DOL's four wage levels for an occupation in an area, read live from the OFLC wage search, with the series year.",
   },
   {
     href: "/tools/green-card-fees",
@@ -336,6 +347,7 @@ export default function CalculatorsPage() {
                   {t.viz === "steps" ? <BulletinStepsMini /> : null}
                   {t.viz === "scale" ? <ScaleBarsMini /> : null}
                   {t.viz === "range" ? <CertaintyRangeMini /> : null}
+                  {t.viz === "levels" ? <WageLevelsMini /> : null}
                 </div>{" "}
                 <p
                   className={

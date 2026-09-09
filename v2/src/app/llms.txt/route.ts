@@ -252,6 +252,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "From an I-140 approval date: when an employer's withdrawal stops revoking it, when a pending I-485 becomes portable under INA 204(j), and whether the priority date is kept.",
   },
   {
+    path: "/tools/wage-levels",
+    label: "Prevailing wage levels",
+    blurb: "DOL's four OEWS prevailing wage levels for any occupation in any metro or non-metro area, read live from the OFLC wage search with the series year each figure belongs to.",
+  },
+  {
     path: "/tools/green-card-fees",
     label: "Green card government fees",
     blurb: "USCIS filing fees for the employment-based green card, from Form G-1055 with its edition date: I-140 and the asylum program fee tier, premium processing, I-485, I-765 and I-131 per person.",

@@ -590,7 +590,20 @@ export default async function OccupationPage({
               that band is unremarkable whichever occupation it belongs to.
             </>
           ) : null}
-        </p>
+        </p>{" "}
+        {row.code ? (
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/70">
+            The floor itself, DOL&apos;s four prevailing wage levels for SOC {row.code.trim().slice(0, 7)} in any
+            metro or non-metro area, is one lookup away:{" "}
+            <Link
+              href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              prevailing wage levels
+            </Link>
+            , read live from the OFLC wage search.
+          </p>
+        ) : null}
       </section>
 
       <LimitsPanel

@@ -34,7 +34,7 @@ left off.
 
 ## D. Data sources
 - [x] D1 OFLC announcements in the policy feed: `scripts/ingest_oflc_news.py` parses OFLC's announcements page (31 notices of 2026, seeded from a browser capture on Sep 8; runs daily on the runner beside the debarment lists, since www.dol.gov refuses the laptop) into `policy_notices` as type 'OFLC announcement' with topic tags. DOL OIG left out: its site is a search page with no parseable report list and its foreign-labor audits are rare PDFs; noted in the script's docstring
-- [ ] D2 OEWS wage levels from the FLC Data Center: tool + levels on occupation pages
+- [x] D2 OEWS wage levels: the FLC Data Center redirects to flag.dol.gov's wage search, whose `/recaptcha/wageSearch` answers scripts (same open pattern as case status; 0.3 s). `/tools/wage-levels` + `/api/wage-levels` and `/api/wage-areas` (validated, 8 s timeout, cached a day / a week at the CDN), `WageLevelsTool` (state, DOL's areas, SOC, series), every occupation page links it with its SOC prefilled. 10 tests; verified in the browser (15-1252, Bakersfield, 2026 series: Level I $94,245 to Level IV $173,202)
 - [ ] D3 family-based cutoff history from the bulletin archive
 - [x] D4 WARN notices: `scripts/ingest_warn.py` reads California's EDD spreadsheet (192 notices Jun 26 to Sep 2 2026; 31 matched to a PERM sponsor by exact merge key), daily on the runner; `warn_notices` table, `/layoffs` page, a band on matched employer pages. Partial by design: Texas (challenge page), Washington (search form) and New York (HTML list) are not read and the page says so
 - [ ] D5 spillover arithmetic from State's Table V (needs the PDF saved by Adam once a year)

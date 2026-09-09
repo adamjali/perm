@@ -208,6 +208,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/h1b-six-year-limit`, lastModified: "2026-09-09" },
     { url: `${base}/tools/priority-date-retention`, lastModified: "2026-09-09" },
     { url: `${base}/tools/green-card-fees`, lastModified: "2026-09-09" },
+    { url: `${base}/tools/wage-levels`, lastModified: "2026-09-09" },
     { url: `${base}/perm-employers/compare`, lastModified: dol ?? "2026-09-08", images: [`${base}/og/employer-compare.jpg`] },
     { url: `${base}/policy-changes`, lastModified: dol ?? "2026-09-08", images: [`${base}/og/policy-changes.jpg`] },
     { url: `${base}/debarments`, lastModified: dol ?? "2026-09-09" },

@@ -83,6 +83,7 @@ export const TOOL_NAV_LINKS = [
   { href: "/tools/h1b-six-year-limit", label: "H-1B six-year limit" },
   { href: "/tools/priority-date-retention", label: "Priority date retention" },
   { href: "/tools/green-card-fees", label: "Green card fees" },
+  { href: "/tools/wage-levels", label: "Wage levels" },
 ] as const satisfies readonly NavLink[];
 
 /**
