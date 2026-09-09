@@ -30,6 +30,7 @@ export type DataSection =
   | "overview"
   | "case-status"
   | "case-statuses"
+  | "glossary"
   | "calculators"
   | "queue"
   | "processing-times"
@@ -133,6 +134,7 @@ export const SECTIONS: DataNavSection[] = [
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
   { key: "policy-changes", group: "Reference", label: "Policy changes", href: "/policy-changes" },
   { key: "debarments", group: "Reference", label: "Debarments", href: "/debarments" },
+  { key: "glossary", group: "Reference", label: "Glossary", href: "/glossary" },
 ];
 
 export const GROUPS: DataGroup[] = [

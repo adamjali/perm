@@ -22,10 +22,10 @@ left off.
 - [x] B3 DOL debarment list (OFLC PDF parsed with pdfplumber on the GitHub runner; WHD H-1B page; `/debarments`; notices on employer and firm pages; OFLC half seeded from the laptop, H-1B rows arrive with the first runner pass): ingest + page + flag on employer and firm pages
 
 ## C. Content and tools
-- [ ] C1 status dictionary: one page per DOL status with the measured wait and the cohort link
-- [ ] C2 situation guides: on hold, RFI, denied, NORD, appeal, employer layoffs, employer stopped filing
-- [ ] C3 glossary page with DefinedTerm schema
-- [ ] C4 calculators: H-1B max-out vs PERM 365-day rule, RFI response deadline, PWD validity, priority date retention and porting, total government fees
+- [x] C1 status dictionary: `/perm-case-statuses`, one hub with an anchor per DOL status (PERM from the case page's own meanings; 11 PWD and 5 LCA words new), the regulation or an admission, today's count, link from the case page's explainer (22f1c8f2)
+- [x] C2 situation guides: RFI, denied, NORD, appeal ladder, layoffs, sponsor stopped filing (on hold already existed); one measured figure each, cards rendered, audit green (c54e794b)
+- [x] C3 glossary: `/glossary`, 54 terms with cites and see-also links, DefinedTermSet, letter strip
+- [x] C4 calculators: rfi-deadline, pwd-validity, h1b-six-year-limit, priority-date-retention, green-card-fees (G-1055 05/29/26); canonical logic + 16 tests; five tiles on /calculators (95d7c611)
 - [ ] C5 data notes content type + first note (the September holds, from our own record)
 - [ ] C6 comparisons and checklists: PERM vs NIW, EB-2 vs EB-3, recruitment checklist, document list
 - [ ] C7 prose on state and occupation pages from the record
