@@ -169,7 +169,7 @@ const nextConfig: NextConfig = {
       // anyway. The RECORD is kept - `src/lib/corrections.ts` still feeds the
       // section this points at - because a site arguing its numbers are
       // checkable does not get to drop the list of times they were not.
-      { source: "/corrections", destination: "/changelog#corrections", permanent: true },
+      { source: "/corrections", destination: "/changelog", permanent: true },
       { source: "/tutorials", destination: "/guides", permanent: true },
       { source: "/resources", destination: "/guides", permanent: true },
       { source: "/tutorials/:slug", destination: "/guides/:slug", permanent: true },

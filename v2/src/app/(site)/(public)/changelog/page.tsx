@@ -7,8 +7,8 @@
 
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
-import { CorrectionsLog } from "@/components/content/CorrectionsLog";
 import { getAllPosts } from "@/lib/content";
+import { correctionsSorted } from "@/lib/corrections";
 import { generateBreadcrumbSchema, generateItemListSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ChangelogTimeline from "@/components/content/ChangelogTimeline";
@@ -57,11 +57,10 @@ export default function ChangelogPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <ContentHero type="changelog" postCount={posts.length} />
       <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
-        <ChangelogTimeline posts={posts} />
-        {/* The corrections log lives here since `/corrections` was retired.
-            Two lists, deliberately not merged: the timeline is what the site
-            gained, this is what it got wrong. */}
-        <CorrectionsLog />
+        {/* One dated history. The corrections are interleaved with the
+            release notes rather than stacked in a block of their own below
+            them - Adam: "fold them INTO the change log". */}
+        <ChangelogTimeline posts={posts} corrections={correctionsSorted()} />
       </section>
     </>
   );
