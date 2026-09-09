@@ -18,6 +18,9 @@ import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 // would otherwise fail at runtime instead of at compile time.
 import type { CasePage } from "@/lib/turso/cases";
 
+/** One shared empty result, so an empty page or search does not mint a new array identity per render. */
+const EMPTY_ROWS: CaseRow[] = [];
+
 /**
  * The case-level browser.
  *
@@ -243,14 +246,17 @@ export function CaseBrowser({
     }
   }, [dimension, stateValue, socValue, employerSlug, attorneySlug]);
 
-  const range = fiscalYear ? fiscalYearRange(fiscalYear) : null;
+  // Memoised so the filter below can depend on the object itself rather than
+  // on two of its fields; a fresh object per render was what the hooks lint
+  // flagged, and a fresh object per render is also a fresh filter per render.
+  const range = useMemo(() => (fiscalYear ? fiscalYearRange(fiscalYear) : null), [fiscalYear]);
   const filter = useMemo(
     () => ({
       slice,
       ...(status ? { status } : {}),
       ...(range ? { from: range.from, to: range.to } : {}),
     }),
-    [slice, status, range?.from, range?.to],
+    [slice, status, range],
   );
 
   // Any change to what is being asked invalidates every cursor: a cursor is a
@@ -350,7 +356,7 @@ export function CaseBrowser({
   const liveHits = searchData?.live ?? [];
   const nameSearchPending = nameQuery.length >= 2 && searchData === undefined && !nameFailed;
 
-  const rows = page?.page ?? [];
+  const rows = page?.page ?? EMPTY_ROWS;
   const isFirstPage = pageIndex === 0;
   // The whole result is in hand exactly when the first page is also the last.
   // That is the only condition under which sorting a column is a statement
@@ -436,7 +442,7 @@ export function CaseBrowser({
   ];
 
   const searching = nameQuery.length >= 2;
-  const shown: CaseRow[] = searching ? (nameHits ?? []) : sorted;
+  const shown: CaseRow[] = searching ? (nameHits ?? EMPTY_ROWS) : sorted;
 
   // Hold the last non-empty result set so a page change or a new search dims
   // the current rows in place instead of collapsing to nothing and jumping the
@@ -452,8 +458,8 @@ export function CaseBrowser({
   // `shown` is empty. The retained set is therefore never needed on the same
   // render that produces it, so updating it after commit costs nothing
   // visible, and it cannot loop: the write is guarded on `shown` being
-  // non-empty, and an empty `shown` is the only value whose identity changes
-  // every render (`page?.page ?? []`).
+  // non-empty, and an empty `shown` is the shared EMPTY_ROWS constant, so its
+  // identity is stable across renders and the effect does not re-run on it.
   const tableBusy =
     (searching ? nameSearchPending : page === undefined && !pageFailed && !awaitingValue);
   const [prevRows, setPrevRows] = useState<CaseRow[]>([]);
