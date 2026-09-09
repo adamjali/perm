@@ -26,6 +26,11 @@ function formatZodErrors<T extends FieldValues>(zodError: ZodError): FieldErrors
 
       for (let i = 0; i < pathParts.length - 1; i++) {
         const part = String(pathParts[i]);
+        // Issue paths are the schema's own field names, never user input, but
+        // a nested assignment keyed by a string is the shape prototype
+        // pollution takes, so the three keys that could reach Object's
+        // prototype are refused outright rather than trusted by provenance.
+        if (part === "__proto__" || part === "constructor" || part === "prototype") continue;
         if (!current[part]) {
           current[part] = {};
         }
@@ -33,6 +38,7 @@ function formatZodErrors<T extends FieldValues>(zodError: ZodError): FieldErrors
       }
 
       const lastPart = String(pathParts[pathParts.length - 1]);
+      if (lastPart === "__proto__" || lastPart === "constructor" || lastPart === "prototype") continue;
       current[lastPart] = {
         type: issue.code,
         message: issue.message,

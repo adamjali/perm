@@ -754,3 +754,11 @@ describe("getFeaturedPosts", () => {
     expect(featured).toEqual([]);
   });
 });
+
+describe("getPostBySlug slug guard", () => {
+  it("refuses a slug that is not a file name, so the loader cannot leave its directory", () => {
+    for (const bad of ["../package", "..%2Fpackage", "a/b", "Guide", "hello.mdx", ""]) {
+      expect(getPostBySlug("guides", bad)).toBeNull();
+    }
+  });
+});

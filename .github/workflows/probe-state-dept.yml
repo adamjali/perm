@@ -19,6 +19,9 @@ on:
     - cron: "40 11 5 * *"   # 05th monthly - after the new bulletin is out
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   probe:
     runs-on: ubuntu-latest

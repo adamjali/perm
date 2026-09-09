@@ -3,3 +3,25 @@ packages:
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
+
+# Supply-chain floors (Audit 10, 2026-09-09). A version has to be a week old
+# before pnpm will resolve to it, which is the window in which a hijacked
+# publish is usually caught and pulled; the lockfile is unaffected, so CI's
+# frozen install keeps working and only the next `pnpm update` waits. The
+# other two stop a dependency from downgrading its own security settings and
+# from pulling sub-dependencies off git or tarball URLs.
+minimumReleaseAge: 10080
+# Rolldown ships a fresh set of per-platform binaries with every release, and
+# a lockfile refresh can land hours after one; there is no older version of a
+# new binding to fall back to, so the floor would block the install outright.
+# These are optional platform packages pulled in by vite, never imported here.
+minimumReleaseAgeExclude:
+  - "@rolldown/*"
+  # A package under an ACTIVE advisory is excluded by name, because the whole
+  # point of its entry in pnpm.overrides is to take the patch now: browserslist
+  # 4.28.7 fixes two HIGH advisories and was published five days ago, so the
+  # maturity window would have kept the vulnerable version installed. Remove
+  # the name once the advisory is old enough to clear the window on its own.
+  - "browserslist"
+trustPolicy: no-downgrade
+blockExoticSubdeps: true

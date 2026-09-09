@@ -44,7 +44,9 @@ export default function StructuredData({ type, slug, meta, steps, videos }: Stru
     }
   }
 
-  const jsonLd = JSON.stringify(schemas);
+  // `<` as \u003c: JSON parsers read it back as `<`, and no string field can
+  // close the <script> element early (the same guard as JsonLdScript).
+  const jsonLd = JSON.stringify(schemas).replace(/</g, "\\u003c");
 
   // JSON-LD content is generated server-side from trusted frontmatter data (not user input).
   // This is the recommended Next.js pattern for structured data:

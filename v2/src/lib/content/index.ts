@@ -30,7 +30,14 @@ export function getPostSlugs(type: ContentType): string[] {
 }
 
 /** Read and parse a single MDX post by slug and type */
+const SLUG_RE = /^[a-z0-9][a-z0-9-]*$/;
+
 export function getPostBySlug(type: ContentType, slug: string): Post | null {
+  // Every real slug is a file name under content/<type>/, lowercase letters,
+  // digits and dashes. Anything else (a dot, a slash, an encoded parent) is
+  // refused before it reaches path.join, so the loader cannot be pointed
+  // outside its directory even by a caller that forgot dynamicParams.
+  if (!SLUG_RE.test(slug)) return null;
   const filePath = path.join(CONTENT_DIR, type, `${slug}.mdx`);
   // eslint-disable-next-line security/detect-non-literal-fs-filename -- path is confined to content/<ContentType>/<slug>.mdx; slug originates from generateStaticParams over the content/ dir, not arbitrary user input
   if (!fs.existsSync(filePath)) return null;

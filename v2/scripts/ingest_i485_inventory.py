@@ -48,8 +48,13 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_gov_data import fetch, log, read_shared_strings, iter_rows  # noqa: E402
 from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
 
+# THE FULL LISTING, NOT THE LANDING PAGE. The bare data page shows the ten
+# newest items, and on 2026-09-09 the quarterly performance files had pushed
+# every monthly inventory off it, so discovery reported "no eb_inventory link"
+# from GitHub and from the Mac alike while July 2026's file sat on page 2.
+# `items_per_page=100` is the page's own control and lists them all.
 DATA_PAGE = ("https://www.uscis.gov/tools/reports-and-studies/"
-             "immigration-and-citizenship-data")
+             "immigration-and-citizenship-data?items_per_page=100")
 HOST = "https://www.uscis.gov"
 
 MONTHS = {m: i + 1 for i, m in enumerate(
@@ -108,8 +113,10 @@ def discover_workbooks() -> list[tuple[str, str]]:
     """
     html = fetch(DATA_PAGE).decode("utf8", "ignore")
     found = re.findall(
+        # Two spellings on the same page: `eb_inventory_july_2026_v1.0.xlsx`
+        # and `eb_inventory_march_2026.xlsx`. The version suffix is optional.
         r'href="(/sites/default/files/document/data/eb_inventory_'
-        r'([a-z]+)_(\d{4})_v[\d.]+\.xlsx)"', html, re.I)
+        r'([a-z]+)_(\d{4})(?:_v[\d.]+)?\.xlsx)"', html, re.I)
     if not found:
         raise SystemExit("no eb_inventory link on the USCIS data page")
     seen: dict[str, tuple[int, int, str]] = {}

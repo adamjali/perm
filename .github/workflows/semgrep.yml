@@ -21,15 +21,24 @@ jobs:
     if: github.actor != 'dependabot[bot]'
 
     steps:
-      - uses: actions/checkout@v7
-
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Run Semgrep
-        run: semgrep ci --sarif-output=semgrep.sarif
+        # Two rules are structurally wrong for this repository and are excluded
+        # rather than dismissed one alert at a time (Audit 10, 2026-09-09):
+        # sqlalchemy-execute-raw-query fires on every `db.execute(sql)` of the
+        # libSQL HTTP helper in scripts/lib_turso.py, and there is no SQLAlchemy
+        # here; dynamic-urllib-use-detected fires on every ingest that fetches
+        # a URL held in a constant or read from our own tables. Real SQL and
+        # URL findings still come from CodeQL and the formatted-sql-query rule.
+        run: >-
+          semgrep ci --sarif-output=semgrep.sarif
+          --exclude-rule=python.sqlalchemy.security.sqlalchemy-execute-raw-query.sqlalchemy-execute-raw-query
+          --exclude-rule=python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
         env:
           SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
 
       - name: Upload SARIF to GitHub Code Scanning
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@b96794f015dfd88f77b49b1c93e0fa7110f94c63 # v4
         with:
           sarif_file: semgrep.sarif
         if: always() && hashFiles('semgrep.sarif') != ''

@@ -11,6 +11,8 @@ updates:
       day: "tuesday"
       time: "09:00"
     open-pull-requests-limit: 5
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
     commit-message:
@@ -59,6 +61,8 @@ updates:
       day: "tuesday"
       time: "09:00"
     open-pull-requests-limit: 3
+    cooldown:
+      default-days: 7
     labels:
       - "dependencies"
       - "github-actions"
