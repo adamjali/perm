@@ -344,7 +344,7 @@ export function DataRail() {
         <nav
           ref={navRef}
           aria-label="Data sections"
-          className={cn("flex flex-col py-2", fits ? "sticky" : "relative")}
+          className={cn("flex flex-col py-2 lg:py-1", fits ? "sticky" : "relative")}
           style={{
             // `top` only while sticky: on a `relative` element the same value
             // would shift the rail down by a header's height.
@@ -749,17 +749,29 @@ function Tab({
  */
 function RailFooter() {
   return (
-    <div className="mt-auto border-t-2 border-border px-4 pb-2 pt-3">
+    // The padding tightens at `lg` and nowhere else. This block is 135px on
+    // desktop, the single largest non-navigation item in the rail, and the
+    // rail has to fit under the header with its largest group open. The COPY
+    // is untouched - it says what the destination is, which is the whole
+    // reason it is not just another list row - only the air around it.
+    <div className="mt-auto border-t-2 border-border px-4 pb-2 pt-3 lg:pb-1 lg:pt-2">
       <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
         Track a case
       </p>{" "}
-      <p className="mt-1 text-sm leading-snug text-foreground/75">
+      {/* THE SENTENCE IS MOBILE-ONLY. In the touch drawer it earns its place:
+          the drawer scrolls, so it costs nothing, and a promo block wants a
+          line saying what it is. On the desktop rail it costs two lines
+          (~40px) out of a column that has to fit under the header with its
+          largest group open, and it is explaining a button already labelled
+          "Check my case" under an eyebrow already reading "Track a case".
+          The eyebrow and the button both survive on every viewport. */}
+      <p className="mt-1 text-sm leading-snug text-foreground/75 lg:hidden">
         Its DOL record and its place in the queue.
       </p>{" "}
       <Link
         href="/perm-case-status"
         className={cn(
-          "mt-2.5 flex min-h-11 items-center justify-center gap-2 border-2 border-border bg-primary px-3",
+          "mt-2.5 flex min-h-11 items-center justify-center gap-2 border-2 border-border bg-primary px-3 lg:mt-2",
           "font-heading text-sm font-black text-black shadow-hard-sm",
           "transition-transform duration-150 ease-out hover:-translate-y-[1px] active:translate-y-0",
           "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
