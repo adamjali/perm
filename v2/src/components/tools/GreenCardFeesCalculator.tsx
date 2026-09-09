@@ -121,7 +121,7 @@ export function GreenCardFeesCalculator() {
         . Check the current edition before paying; a fee paid short is a rejected filing.
       </p>{" "}
       <div className="mt-5 border-t-2 border-border pt-4">
-        <h3 className="font-heading text-base font-black">Not in the total</h3>{" "}
+        <h2 className="font-heading text-base font-black">Not in the total</h2>{" "}
         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-foreground/70">
           <li>The PERM and the prevailing wage request: DOL charges no filing fee for either.</li>{" "}
           <li>Recruitment costs and attorney fees, which 20 CFR 656.12 puts on the employer for the PERM stage.</li>{" "}
