@@ -127,6 +127,20 @@ jobs:
           python3 scripts/ingest_oflc_news.py \
             || python3 scripts/record_ingest_failure.py --script ingest_oflc_news.py --note "OFLC announcements failed"
 
+      # California's WARN report (a 50 KB spreadsheet), matched to sponsors by
+      # merge key. Weekly would do; daily is cheap and keeps the freshness row
+      # honest. Other states are not read; scripts/ingest_warn.py says why.
+      - name: WARN notices
+        if: always()
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          python3 -m pip install --quiet --user openpyxl \
+            || python3 -m pip install --quiet --break-system-packages openpyxl
+          python3 scripts/ingest_warn.py \
+            || python3 scripts/record_ingest_failure.py --script ingest_warn.py --note "WARN notices failed"
+
       - name: Debarment lists
         if: always()
         working-directory: v2

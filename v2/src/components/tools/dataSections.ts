@@ -34,6 +34,7 @@ export type DataSection =
   | "scorecard"
   | "corrections"
   | "badges"
+  | "layoffs"
   | "calculators"
   | "queue"
   | "processing-times"
@@ -115,6 +116,7 @@ export const SECTIONS: DataNavSection[] = [
   { key: "wages", group: "Employers and wages", label: "Wages", href: "/perm-wages" },
   { key: "lca-wages", group: "Employers and wages", label: "H-1B salaries", href: "/lca-wages" },
   { key: "compare-offer", group: "Employers and wages", label: "Compare my offer", href: "/tools/compare-my-offer" },
+  { key: "layoffs", group: "Employers and wages", label: "Layoff notices", href: "/layoffs" },
   { key: "compare-employers", group: "Employers and wages", label: "Compare employers", href: "/perm-employers/compare" },
   { key: "by-state", group: "Employers and wages", label: "By state", href: "/perm-by-state" },
 

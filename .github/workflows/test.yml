@@ -90,6 +90,11 @@ jobs:
       - name: Social post composer tests
         run: python3 scripts/test_social_post.py
 
+      - name: WARN parser tests
+        run: |
+          python3 -m pip install --quiet openpyxl
+          python3 scripts/test_warn.py
+
       - name: Debarment parser tests
         working-directory: v2
         run: python3 scripts/test_debarments.py

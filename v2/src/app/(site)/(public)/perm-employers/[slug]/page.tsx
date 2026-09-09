@@ -63,6 +63,8 @@ import { getEmployerStages } from "@/lib/turso/employerStages";
 import { EmployerPrograms } from "@/components/entities/EmployerPrograms";
 import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
 import { debarmentsForSlug } from "@/lib/turso/debarments";
+import { warnForSlug } from "@/lib/turso/warn";
+import { WarnNoticeBand } from "@/components/entities/WarnNotice";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import {
@@ -363,7 +365,7 @@ export default async function EmployerPage({
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305
   // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn] =
     await Promise.all([
       getDisclosureStats(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -395,6 +397,7 @@ export default async function EmployerPage({
       getEmployerPrograms(canonicalSlug).catch(() => null),
       getEmployerStages().catch(() => null),
       debarmentsForSlug(canonicalSlug).catch(() => []),
+      warnForSlug(canonicalSlug).catch(() => []),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -475,6 +478,7 @@ export default async function EmployerPage({
       {/* The doubt goes ABOVE the figures. A caveat under a number reads as a
           footnote to a fact; over it, the number arrives already qualified. */}
       <DebarmentNotice rows={debarments} pageName={row.name} today={new Date().toISOString().slice(0, 10)} />{" "}
+      <WarnNoticeBand rows={warn} pageName={row.name} />{" "}
       <ReliabilityBand
         reliability={reliability}
         baselineDenialPct={baselineDenialPct}
