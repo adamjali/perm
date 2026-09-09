@@ -26,6 +26,7 @@ import { StageBar, StageLegend } from "@/components/queue/StageBar";
 import { groupByStage, prettyStatus } from "@/components/queue/stages";
 import type { StatusCount } from "@/lib/liveQueue";
 import { getStatusMeaning, KIND_LABEL } from "@/lib/permStatus";
+import { statusAnchor } from "@/lib/statusDictionary";
 import { isApproval } from "@/lib/caseStatusVocabulary";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
 import type { CaseLookupResult } from "@/lib/turso/caseLookup";
@@ -931,6 +932,14 @@ function StatusExplainer({
         <div className="px-6 py-5">
           <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
             {meaning.summary}
+          </p>{" "}
+          <p className="mt-2 text-sm">
+            <Link
+              href={`/perm-case-statuses#${statusAnchor(meaning.status)}`}
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              Every status, side by side
+            </Link>
           </p>
 
           {meaning.deadline ? (

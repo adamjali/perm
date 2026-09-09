@@ -29,6 +29,7 @@
 export type DataSection =
   | "overview"
   | "case-status"
+  | "case-statuses"
   | "calculators"
   | "queue"
   | "processing-times"
@@ -87,6 +88,7 @@ export const OVERVIEW = {
 export const SECTIONS: DataNavSection[] = [
   { key: "all-cases", group: "Case tools", label: "Search all programs", href: "/case-search" },
   { key: "case-status", group: "Case tools", label: "Case status", href: "/perm-case-status" },
+  { key: "case-statuses", group: "Case tools", label: "Status meanings", href: "/perm-case-statuses" },
   // Moved out of "Who files". It searches the case corpus, and somebody
   // holding a case number is the highest-intent reader on this surface; the
   // two lookups belong together.

@@ -202,6 +202,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Where an offered salary sits among certified H-1B LCAs and PERM offers for the same occupation and state, as a percentile. The offer is placed in the browser and never sent to the site.",
   },
   {
+    path: "/perm-case-statuses",
+    label: "Every case status, explained",
+    blurb: "What each DOL FLAG status means for a PERM, a prevailing wage request or an H-1B LCA (analyst review, RFI issued, on hold, appeals, certified, expired), with the regulation that defines it or a note that none does, and today's count.",
+  },
+  {
     path: "/tools/rfi-deadline",
     label: "RFI response deadline",
     blurb: "The last day to answer a PERM request for information, counted from the date on DOL's letter under 20 CFR 656.20(b), with the calendar around it.",
