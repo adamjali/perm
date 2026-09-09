@@ -26,8 +26,8 @@ left off.
 - [x] C2 situation guides: RFI, denied, NORD, appeal ladder, layoffs, sponsor stopped filing (on hold already existed); one measured figure each, cards rendered, audit green (c54e794b)
 - [x] C3 glossary: `/glossary`, 54 terms with cites and see-also links, DefinedTermSet, letter strip
 - [x] C4 calculators: rfi-deadline, pwd-validity, h1b-six-year-limit, priority-date-retention, green-card-fees (G-1055 05/29/26); canonical logic + 16 tests; five tiles on /calculators (95d7c611)
-- [ ] C5 data notes content type + first note (the September holds, from our own record)
-- [ ] C6 comparisons and checklists: PERM vs NIW, EB-2 vs EB-3, recruitment checklist, document list
+- [x] C5 data notes: a blog post tagged `data-note`; first note on the 1,854 holds (1,831 Cognizant, filed Dec 17 2025 to Feb 13 2026; one case left hold in 14 days of observation), figures read from the event log and the live index Sep 8
+- [x] C6 comparisons and checklists: PERM vs NIW, EB-2 vs EB-3, document checklist by stage (the recruitment checklist already existed); cards rendered; audit green
 - [ ] C7 prose on state and occupation pages from the record
 - [ ] C8 corrections log page
 - [ ] C9 estimate scorecard page from the prediction ledger
