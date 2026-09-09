@@ -48,5 +48,5 @@ left off.
 - [x] E6 translations: scaffold only, `src/lib/i18n.ts` (LOCALES with one entry; `languageAlternates` returns nothing until a second locale exists; the test refuses a locale with no route directory). No machine translation of legal deadlines, by design; a reviewer's name goes in the frontmatter when one exists
 
 ## F. Close
-- [ ] F1 full suite, clean build, rendered audits, Lighthouse control, phone shots
+- [ ] F1 close: per-batch typecheck, lint, scoped tests and browser checks done for every item; the full suite, a clean production build and the rendered audits on port 3000 run last (in progress Sep 9, ~12:20 AM ET); Lighthouse control and phone shots after; social cards for the new pages left for a later pass
 - [ ] F2 WAIT for "deploy"; then push, Convex deploy, GSC queue

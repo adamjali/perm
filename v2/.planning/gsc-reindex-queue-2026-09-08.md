@@ -29,3 +29,31 @@ Second day, if the quota allows: /visa-bulletin/2026-08, /pwd-cases,
 
 IndexNow already told Bing about all of these on the deploy (the workflow
 ran green at 1:44 AM ET).
+
+## Added Sep 9 2026 (the full build), in priority order, after the nine above
+
+Request top-down, ~11 a day. Each is a new URL; none is indexed yet.
+
+12. https://permtracker.app/tools/wage-levels
+13. https://permtracker.app/perm-case-statuses
+14. https://permtracker.app/guides/perm-rfi-issued-what-to-do
+15. https://permtracker.app/guides/perm-denied-what-happens-next
+16. https://permtracker.app/guides/employer-layoffs-and-your-perm
+17. https://permtracker.app/tools/green-card-fees
+18. https://permtracker.app/tools/h1b-six-year-limit
+19. https://permtracker.app/guides/perm-vs-niw
+20. https://permtracker.app/guides/eb2-vs-eb3-perm
+21. https://permtracker.app/visa-bulletin/family
+22. https://permtracker.app/tools/priority-date-retention
+23. https://permtracker.app/tools/rfi-deadline
+24. https://permtracker.app/tools/pwd-validity
+25. https://permtracker.app/glossary
+26. https://permtracker.app/guides/perm-appeal-reconsideration-balca
+27. https://permtracker.app/guides/perm-nord-issued-meaning
+28. https://permtracker.app/guides/employer-stopped-filing-perms
+29. https://permtracker.app/guides/perm-document-checklist
+30. https://permtracker.app/layoffs
+31. https://permtracker.app/blog/data-note-application-on-hold-september-2026
+32. https://permtracker.app/estimate-scorecard
+33. https://permtracker.app/corrections
+34. https://permtracker.app/badges
