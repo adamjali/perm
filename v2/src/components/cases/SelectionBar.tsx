@@ -3,7 +3,7 @@
  * Fixed bottom bar for bulk actions on selected cases.
  *
  * Design:
- * - Fixed at bottom of screen (z-[60], above footer's z-50)
+ * - Fixed at bottom of screen (z-[60], above the page and the footer)
  * - Neobrutalist: 4px black top border, hard shadow
  * - Left: Selected count
  * - Middle: Select All | Deselect All

@@ -34,11 +34,10 @@ export function DataShell({ children }: { children: React.ReactNode }) {
   if (!isDataPath(pathname)) return <>{children}</>;
 
   return (
-    // WIDER THAN THE PAGES INSIDE IT, on Adam's note: "feel free to take all
-    // the space width wise left and right we dont need to be contained." The
-    // rail takes a fixed column and the content keeps whatever measure its own
-    // page sets, so prose does not stretch to 1,600px just because the frame
-    // could.
+    // FULL WIDTH, on Adam's note: "feel free to take all the space width wise
+    // left and right we dont need to be contained." The rail takes a fixed
+    // column and the content keeps whatever measure its own page sets, so
+    // prose does not stretch to the monitor just because the frame could.
     // `lg:flex`, NOT `flex`. The row only exists where the rail does.
     //
     // This shipped as an unconditional `flex` and desktop looked perfect,
@@ -55,7 +54,22 @@ export function DataShell({ children }: { children: React.ReactNode }) {
     // below `lg` is the whole fix, and it is far cheaper than the alternative:
     // insetting the text column by the handle's 44px width would take a 390px
     // screen's measure down by a tenth for every reader, scrolled or not.
-    <div className="mx-auto w-full max-w-[1600px] px-4 max-lg:pt-3 sm:px-6 lg:flex lg:gap-8">
+    // NO `mx-auto max-w-[1600px]` HERE, and that is the fix rather than an
+    // omission. The rail cancels the shell's own padding with `-ml-4 sm:-ml-6`
+    // so its current tab can run from the screen edge, which is the whole
+    // shape of the design. A fixed negative margin cannot cancel a VARIABLE
+    // auto margin, so as soon as the viewport passed 1600px the centring put
+    // the rail back inside the page: measured at 1920px it sat 155px from the
+    // left edge, and at 2560px it would be ~480px. Adam, on a wider screen:
+    // "the side panel ... wasn't aligned snapped glued touching the left side
+    // there was space".
+    //
+    // Dropping the cap is safe because every one of the 32 data pages already
+    // sets its own measure (max-w-3xl through max-w-7xl), which is what the
+    // note above always said. Below 1600px this changes nothing at all - the
+    // shell was never wide enough to be centred - and above it the rail is
+    // flush and the content lands within ~7px of where it used to.
+    <div className="w-full px-4 max-lg:pt-3 sm:px-6 lg:flex lg:gap-8">
       <DataRail />
       {/* `min-w-0` is the load-bearing class here. A flex item's default
           minimum is its content, so one wide table or a long unbroken case

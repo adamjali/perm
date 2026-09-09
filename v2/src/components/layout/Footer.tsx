@@ -107,7 +107,24 @@ export default function Footer({ audience = "public" }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="relative z-50 border-t-3 border-black bg-black dark:border-white dark:bg-black">
+    // `z-10`, NOT `z-50`. The footer only has to clear the ambient canvas
+    // (`AmbientMurmuration`, `fixed inset-0 z-0`) and the dot ground; it has
+    // no business outranking the header.
+    //
+    // At `z-50` it TIED with the header, which is `fixed z-50`, and the
+    // footer is the last child of `(site)/layout.tsx`, so DOM order decided
+    // it and the footer won. Measured on production: with the Learn menu
+    // open over the footer, `elementFromPoint` at a point 40px inside the
+    // overlap returned the footer, not the menu link. The menu was not
+    // clipped - it rendered all six items at full height - it was covered,
+    // and its clicks went to the footer behind it.
+    //
+    // The same tie beat the back-to-top button (fixed 2026-09-09) and the
+    // mobile data drawer at `z-40`, which an open drawer scrolled to the
+    // bottom of a page could not paint over. Raising each of those past the
+    // footer one at a time treats the symptom; the footer is what is wrong.
+    // Gated by `footer-stacking.test.ts`.
+    <footer className="relative z-10 border-t-3 border-black bg-black dark:border-white dark:bg-black">
       <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8">
         {/* Multi-column grid */}
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">

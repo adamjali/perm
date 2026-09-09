@@ -16,18 +16,17 @@ import { ArrowUpIcon } from "@phosphor-icons/react";
  * All scroll-linked values use motion values (zero re-renders).
  * State only changes on visibility threshold crossing.
  *
- * IT SITS AT `z-[60]` BECAUSE THE FOOTER IS `relative z-50`. At an equal
- * z-index the later element in DOM order wins, and the footer is rendered
- * after this button in `(site)/layout.tsx` (`{children}` then `<Footer>`),
- * so a `z-50` button was painted over by the footer at exactly the moment
- * it is most wanted: the bottom of a long page. Nothing about the button
- * changed on scroll, which is why it read as the button disappearing.
+ * IT SITS AT `z-[60]`, the house layer for bottom-fixed chrome, alongside
+ * SelectionBar, ChatWidget and ReadingProgress. It does not collide with the
+ * chat button, which sits at `bottom-20` (80px) while this one spans 24px to
+ * 68px, and it stays below the search palette at `z-[100]`.
  *
- * `z-[60]` is the house layer for bottom-fixed chrome that has to clear the
- * footer, already used by SelectionBar, ChatWidget and ReadingProgress for
- * this same reason. It does not collide with the chat button, which sits at
- * `bottom-20` (80px) while this one spans 24px to 68px, and it stays below
- * the search palette at `z-[100]`.
+ * It shipped at `z-50` against a footer that was ALSO `z-50`, and at an equal
+ * z-index the later element in DOM order wins - the footer is rendered after
+ * this button in `(site)/layout.tsx`. So the footer covered it at the bottom
+ * of every long page, exactly where a back-to-top control is reached for.
+ * The footer is `z-10` now (see Footer.tsx), which is the real fix; this
+ * button keeps `z-[60]` on its own merits, not to escape the footer.
  */
 export function ScrollToTop() {
   const [visible, setVisible] = useState(false);
