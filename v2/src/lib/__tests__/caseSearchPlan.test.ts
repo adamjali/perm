@@ -211,19 +211,26 @@ describe("the shared vocabulary", () => {
 
 describe("the review stage: a live-record lead and a live-record narrow", () => {
   it("leads after an employer and before the published-only leads", () => {
-    expect(chooseLead({ employer: "Cognizant", stage: "APPLICATION ON HOLD" })).toEqual({
+    const hold = { status: "APPLICATION ON HOLD", program: "perm" as const };
+    expect(chooseLead({ employer: "Cognizant", stage: hold })).toEqual({
       kind: "employer",
       value: "Cognizant",
     });
-    expect(chooseLead({ stage: "APPLICATION ON HOLD", firmSlug: "fragomen", state: "TX" })).toEqual({
+    expect(chooseLead({ stage: hold, firmSlug: "fragomen", state: "TX" })).toEqual({
       kind: "stage",
       value: "APPLICATION ON HOLD",
+      program: "perm",
     });
-    expect(chooseLead({ caseNumber: "G-100-26030-100001", stage: "RFI ISSUED" })?.kind).toBe("case");
+    expect(chooseLead({ caseNumber: "G-100-26030-100001", stage: hold })?.kind).toBe("case");
+    expect(chooseLead({ stage: { status: "IN PROCESS", program: "pwd" } })).toEqual({
+      kind: "stage",
+      value: "IN PROCESS",
+      program: "pwd",
+    });
   });
 
   it("as a lead keeps only what the live record carries, with a reason on everything else", () => {
-    const can = filterAvailability({ kind: "stage", value: "RFI ISSUED" });
+    const can = filterAvailability({ kind: "stage", value: "RFI ISSUED", program: "perm" });
     expect(can.stage.on).toBe(true);
     expect(can.title.on).toBe(true);
     expect(can.filed.on).toBe(true);
@@ -233,7 +240,7 @@ describe("the review stage: a live-record lead and a live-record narrow", () => 
     for (const k of ["firm", "state", "occupation", "fiscalYear", "wage"] as const) {
       expect([k, can[k]]).toEqual([k, { on: false, why: "stage-live-only" }]);
     }
-    expect(availableOutcomes({ kind: "stage", value: "RFI ISSUED" })).toEqual(["open"]);
+    expect(availableOutcomes({ kind: "stage", value: "RFI ISSUED", program: "perm" })).toEqual(["open"]);
     // Every refusal has words, so no control can be greyed without a sentence.
     for (const why of ["stage-live-only", "stage-pending", "stage-perm", "lead-published-only"] as const) {
       expect(refusalText(why).length).toBeGreaterThan(30);

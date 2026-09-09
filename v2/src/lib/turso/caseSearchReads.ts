@@ -69,11 +69,13 @@ export interface UnifiedNarrow {
   /** Case-insensitive "contains" on the job title. `%` and `_` are literal. */
   title?: string;
   /**
-   * A DOL review stage as its status string, e.g. `APPLICATION ON HOLD`.
-   * Live record only: applied with an employer lead through
-   * `readPermEmployerStage`; as a lead of its own it is `readPermStage`.
+   * A DOL review stage as its status string and program, e.g.
+   * `{ status: "APPLICATION ON HOLD", program: "perm" }`. Live record only:
+   * applied with an employer lead through `readPermEmployerStage` or
+   * `readFlagEmployerStage`; as a lead of its own it is `readPermStage` or
+   * `readFlagStage`.
    */
-  stage?: string;
+  stage?: { status: string; program: "perm" | "pwd" | "lca" };
   /** Filing month, `YYYY-MM`, inclusive both ends. */
   from?: string;
   to?: string;
@@ -1255,4 +1257,65 @@ export async function readPermEmployerStage(
     ],
   );
   return { rows: found.slice(0, limit).map(toStageRow), windowed: found.length > limit };
+}
+
+
+/**
+ * Every pending wage request or LCA at one live status, oldest first.
+ *
+ * Served by `<live>_stage (current_status, is_final, filing_date)`, the same
+ * shape as PERM's. The live table for these programs IS the full live corpus
+ * (pending and decided alike), so no join is needed for the slug; the wage
+ * request read pins `visa_type` to PERM as the other wage-request reads do.
+ */
+export async function readFlagStage(
+  program: FlagProgramKey,
+  status: string,
+  narrow: UnifiedNarrow,
+  limit: number,
+): Promise<SliceResult<FlagCaseRow>> {
+  const t = FLAG_TABLES[program];
+  const conds = ["current_status = ?", "is_final = 0"];
+  const params: (string | number)[] = [status];
+  if (t.visaType) {
+    conds.push("visa_type = ?");
+    params.push(t.visaType);
+  }
+  const rest = stageNarrowing(narrow);
+  conds.push(...rest.conds.map((c) => c.replace(/\bc\./g, "")));
+  params.push(...rest.params);
+  const found = await rows<FlagDbRow>(
+    `SELECT ${FLAG_COLS} FROM ${t.live} INDEXED BY ${t.live}_stage WHERE ${conds.join(" AND ")} ` +
+      `ORDER BY filing_date, case_number LIMIT ?`,
+    [...params, limit + 1],
+  );
+  return { rows: found.slice(0, limit).map(toFlagRow), windowed: found.length > limit };
+}
+
+/** An employer's pending wage requests or LCAs at one live status, from the employer side. */
+export async function readFlagEmployerStage(
+  program: FlagProgramKey,
+  employerText: string,
+  status: string,
+  narrow: UnifiedNarrow,
+  limit: number,
+): Promise<SliceResult<FlagCaseRow>> {
+  const t = FLAG_TABLES[program];
+  const range = slugRange(employerText);
+  if (!range) return { rows: [], windowed: false };
+  const conds = ["employer_slug >= ?", "employer_slug < ?", "current_status = ?", "is_final = 0"];
+  const params: (string | number)[] = [range.lo, range.hi, status];
+  if (t.visaType) {
+    conds.push("visa_type = ?");
+    params.push(t.visaType);
+  }
+  const rest = stageNarrowing(narrow);
+  conds.push(...rest.conds.map((c) => c.replace(/\bc\./g, "")));
+  params.push(...rest.params);
+  const found = await rows<FlagDbRow>(
+    `SELECT ${FLAG_COLS} FROM ${t.live} INDEXED BY ${t.live}_emp WHERE ${conds.join(" AND ")} ` +
+      `ORDER BY filing_date, case_number LIMIT ?`,
+    [...params, limit + 1],
+  );
+  return { rows: found.slice(0, limit).map(toFlagRow), windowed: found.length > limit };
 }

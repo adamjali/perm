@@ -35,6 +35,8 @@ const {
   readPermLive,
   readPermPublished,
   readPermStage,
+  readFlagEmployerStage,
+  readFlagStage,
   socGroup,
 } = await import("../caseSearchReads");
 
@@ -697,5 +699,31 @@ describe("the stage readers", () => {
     const out = await readPermEmployerStage("x", "RFI ISSUED", {}, 100);
     expect(out).toEqual({ rows: [], windowed: false });
     expect(rows).not.toHaveBeenCalled();
+  });
+});
+
+describe("the wage-request and LCA stage readers", () => {
+  beforeEach(() => {
+    rows.mockReset();
+    rows.mockResolvedValue([]);
+  });
+
+  it("reads a wage-request stage through its own index with the PERM visa type pinned", async () => {
+    await readFlagStage("pwd", "RFI ISSUED", { from: "2026-01" }, 50);
+    const [sql, args] = rows.mock.calls[0]!;
+    expect(sql).toContain("FROM pwd_case_status INDEXED BY pwd_case_status_stage");
+    expect(sql).toContain("current_status = ? AND is_final = 0 AND visa_type = ? AND filing_date >= ?");
+    expect(sql).not.toContain("c.");
+    expect(args).toEqual(["RFI ISSUED", "PERM", "2026-01-01", 51]);
+  });
+
+  it("reads an employer's LCA stage from the employer index, no visa type", async () => {
+    await readFlagEmployerStage("lca", "Cognizant", "IN PROCESS", {}, 50);
+    const [sql, args] = rows.mock.calls[0]!;
+    expect(sql).toContain("FROM lca_case_status INDEXED BY lca_case_status_emp");
+    expect(sql).toContain("employer_slug >= ? AND employer_slug < ? AND current_status = ? AND is_final = 0");
+    // `visa_type` is one of the columns returned; it must not be a predicate here.
+    expect(sql).not.toContain("visa_type = ?");
+    expect(args).toEqual(["cognizant", "cognizanu", "IN PROCESS", 51]);
   });
 });

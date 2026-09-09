@@ -8,6 +8,8 @@ import {
   lookupUnifiedCase,
   readFlagLive,
   readFlagPublished,
+  readFlagEmployerStage,
+  readFlagStage,
   readPermEmployerStage,
   readPermLive,
   readPermStage,
@@ -453,7 +455,10 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   const skipped = skippedSources(narrow, args.lead);
   const want = new Set<Program>(args.programs?.length ? args.programs : PROGRAMS);
   const employer = args.lead.kind === "employer" ? args.lead.value : null;
-  const stage = args.lead.kind === "stage" ? args.lead.value : narrow.stage ?? null;
+  const stage: { status: string; program: Program } | null =
+    args.lead.kind === "stage"
+      ? { status: args.lead.value, program: args.lead.program }
+      : (narrow.stage ?? null);
 
   // THE PROGRAM CHIPS MEAN SOMETHING FOR EVERY LEAD BUT A FIRM. A firm lead
   // reads published PERM and nothing else - DOL publishes the firm for the
@@ -469,15 +474,19 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // wage-request rows, 74.6% of LCA rows carry a firm), so the chips choose
   // between three real sources for a firm exactly as they do for a state.
   // A stage is a PERM status, so a stage search reads PERM whatever the program chips say.
-  const wanted = (p: Program) => want.has(p) && (stage === null || p === "perm");
+  const wanted = (p: Program) => want.has(p) && (stage === null || p === stage.program);
   const askPublished = (p: Program) => wanted(p) && !skipped.published;
   const askLive = (p: Program) => wanted(p) && !skipped.live && (employer !== null || stage !== null);
 
 
   const flagLive = (p: FlagProgramKey) =>
-    askLive(p) && employer
-      ? readFlagLive(p, employer, narrow, PER_SOURCE).catch(none<FlagCaseRow>)
-      : none<FlagCaseRow>();
+    askLive(p) && stage !== null && employer === null
+      ? readFlagStage(p, stage.status, narrow, stageLimit(args.limit)).catch(none<FlagCaseRow>)
+      : askLive(p) && stage !== null && employer !== null
+        ? readFlagEmployerStage(p, employer, stage.status, narrow, stageLimit(args.limit)).catch(none<FlagCaseRow>)
+        : askLive(p) && employer
+          ? readFlagLive(p, employer, narrow, PER_SOURCE).catch(none<FlagCaseRow>)
+          : none<FlagCaseRow>();
   // EVERY LEAD THAT REACHES HERE REACHES THE FLAG TABLES. There used to be a
   // `flagCanLead` guard excluding a firm; the typechecker now says a case-number
   // lead cannot arrive at all, so any such guard is dead by construction.
@@ -497,9 +506,9 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
     // A stage search has one source, so it may fill the whole answer rather
     // than one source's share of it.
     askLive("perm") && stage !== null && employer === null
-      ? readPermStage(stage, narrow, stageLimit(args.limit)).catch(none<LiveCaseRow>)
+      ? readPermStage(stage.status, narrow, stageLimit(args.limit)).catch(none<LiveCaseRow>)
       : askLive("perm") && stage !== null && employer !== null
-        ? readPermEmployerStage(employer, stage, narrow, stageLimit(args.limit)).catch(none<LiveCaseRow>)
+        ? readPermEmployerStage(employer, stage.status, narrow, stageLimit(args.limit)).catch(none<LiveCaseRow>)
         : askLive("perm") && employer
           ? readPermLive(employer, narrow, PER_SOURCE).catch(none<LiveCaseRow>)
           : none<LiveCaseRow>(),

@@ -4,7 +4,7 @@ import { Fragment, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-import { searchStages } from "@/lib/searchStages";
+import { STAGE_PROGRAM_LABEL, searchStages } from "@/lib/searchStages";
 import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { usePublicQuery } from "@/lib/usePublicQuery";
@@ -224,6 +224,7 @@ export function UnifiedCaseSearch({
   const [wMaxInput, setWMaxInput] = useState("");
   const [programs, setPrograms] = useState<Program[]>(ALL_PROGRAMS);
   const [stageInput, setStageInput] = useState<string>(initialStage);
+  const stageOption = useMemo(() => stageOptions.find((o) => o.slug === stageInput) ?? null, [stageOptions, stageInput]);
 
   const [query, setQuery] = useState({ search: initial.trim() ? initial.trim() : "", n: 0 });
   // `null` means "not searched yet", which is NOT the same as "searched with
@@ -261,9 +262,9 @@ export function UnifiedCaseSearch({
         ...(firmInput.trim() ? { firmSlug: "resolved-on-the-server" } : {}),
         ...(stateInput ? { state: stateInput } : {}),
         ...(occInput.trim() ? { socCode: "resolved-on-the-server" } : {}),
-        ...(stageInput ? { stage: stageInput } : {}),
+        ...(stageOption ? { stage: { status: stageOption.status, program: stageOption.program } } : {}),
       }),
-    [typedCaseNumber, textInput, firmInput, stateInput, occInput, stageInput],
+    [typedCaseNumber, textInput, firmInput, stateInput, occInput, stageOption],
   );
 
   // An employer search narrowed to a stage loses what the live record lacks,
@@ -547,10 +548,16 @@ export function UnifiedCaseSearch({
                   className={CONTROL + " min-w-0"}
                 >
                   <option value="">Any stage</option>
-                  {stageOptions.map((o) => (
-                    <option key={o.slug} value={o.slug}>
-                      {o.label}
-                    </option>
+                  {(["perm", "pwd", "lca"] as const).map((program) => (
+                    <optgroup key={program} label={STAGE_PROGRAM_LABEL[program]}>
+                      {stageOptions
+                        .filter((o) => o.program === program)
+                        .map((o) => (
+                          <option key={o.slug} value={o.slug}>
+                            {o.label}
+                          </option>
+                        ))}
+                    </optgroup>
                   ))}
                 </select>
               </Field>{" "}

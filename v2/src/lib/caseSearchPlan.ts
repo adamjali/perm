@@ -67,7 +67,9 @@
  */
 
 /** Which field leads the search. Exactly one, and the index follows from it. */
-export type LeadKind = "case" | "employer" | "firm" | "state" | "occupation";
+export type LeadKind = "case" | "employer" | "firm" | "state" | "occupation" | "stage";
+/** The program a review stage belongs to; mirrors `Program` in the search without importing it. */
+export type StageProgram = "perm" | "pwd" | "lca";
 
 export const LEAD_KINDS: readonly LeadKind[] = [
   "case",
@@ -167,7 +169,7 @@ export function refusalText(why: Refusal): string {
     case "stage-pending":
       return "A case at a review stage is still open by definition, so the outcome is pending.";
     case "stage-perm":
-      return "Review stages are PERM statuses, so this search reads the PERM record only.";
+      return "A review stage belongs to one program, so this search reads that program's record only.";
     case "lead-published-only":
       return (
         "A law firm, state or occupation search reads DOL's published file, and no " +
@@ -209,8 +211,8 @@ export interface LeadInput {
   state?: string;
   /** A resolved SOC code such as `15-1252.00`, not free text. */
   socCode?: string;
-  /** A DOL status string resolved from a stage slug, e.g. `APPLICATION ON HOLD`. */
-  stage?: string;
+  /** A DOL status resolved from a stage slug, with the program it belongs to. */
+  stage?: { status: string; program: StageProgram };
 }
 
 export type Lead =
@@ -219,8 +221,8 @@ export type Lead =
   | { kind: "firm"; value: string }
   | { kind: "state"; value: string }
   | { kind: "occupation"; value: string }
-  /** A DOL review stage, as the status string (`APPLICATION ON HOLD`). Live record only. */
-  | { kind: "stage"; value: string };
+  /** A DOL review stage, as the status string (`APPLICATION ON HOLD`) and its program. Live record only. */
+  | { kind: "stage"; value: string; program: StageProgram };
 
 export function chooseLead(input: LeadInput): Lead | null {
   if (input.caseNumber) return { kind: "case", value: input.caseNumber };
@@ -229,7 +231,7 @@ export function chooseLead(input: LeadInput): Lead | null {
   // A stage leads before the published-only leads: it is a live-record fact
   // with its own index, and a firm, state or occupation cannot narrow it
   // (DOL names those only at publication), so they are dropped with a reason.
-  if (input.stage) return { kind: "stage", value: input.stage };
+  if (input.stage) return { kind: "stage", value: input.stage.status, program: input.stage.program };
   if (input.firmSlug) return { kind: "firm", value: input.firmSlug };
   if (input.state) return { kind: "state", value: input.state };
   if (input.socCode) return { kind: "occupation", value: input.socCode };

@@ -14,7 +14,7 @@ left off.
 - [x] A2 stage pages: client browser (search, sort, filing-year facet, show all, CSV), compact static case-number list for the index, the two tiny stages listed, link into search prefilled
 - [x] A3 queue-month pages: server-paged browser with search and sort over /api/perm-cases
 - [x] A4 case search: `stage` filter, enable/disable follows the selection, live band answers, EXPLAIN + combinability tests
-- [ ] A5 PWD and LCA stage filters in case search
+- [x] A5 PWD and LCA stage filters in case search (their live tables' own stage and employer indexes; a stage carries its program)
 
 ## B. Employer views
 - [ ] B1 employer anomaly view: employers by held, RFI'd and appealed share of pending, precomputed by the sweep, dated
