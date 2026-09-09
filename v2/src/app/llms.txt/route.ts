@@ -207,6 +207,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "What each DOL FLAG status means for a PERM, a prevailing wage request or an H-1B LCA (analyst review, RFI issued, on hold, appeals, certified, expired), with the regulation that defines it or a note that none does, and today's count.",
   },
   {
+    path: "/visa-bulletin/family",
+    label: "Family-sponsored cutoff history",
+    blurb: "Every family-sponsored cutoff (F1, F2A, F2B, F3, F4) from the visa bulletin archive by country: the latest final action and dates-for-filing cutoffs, how far each moved, and every retrogression. No queue position, because USCIS publishes no family inventory.",
+  },
+  {
     path: "/layoffs",
     label: "Layoff notices against sponsors",
     blurb: "WARN Act layoff and closing notices as the states publish them (California so far), matched by name to the employers in DOL's PERM record, each linked to the state's own file.",

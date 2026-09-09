@@ -96,6 +96,23 @@ def main() -> int:
         # publish the wrong chart under the right heading.
         check("the two charts differ",
               parsed["finalAction"] != parsed["datesForFiling"])
+        # The trimmed fixture carries no family tables, and that must be a
+        # null rather than an empty chart: null is what the backfill refills.
+        check("no family chart on a page without one", "familyFinalAction" not in parsed)
+
+    # --- the FAMILY charts (added 2026-09-08), on the untrimmed July 2026 page --
+    full = (HERE / "__fixtures__" / "visa-bulletin-2026-07-family.html").read_text()
+    fam = vb.parse_bulletin(full)
+    check("family charts parsed from the full page", bool(fam) and "familyFinalAction" in fam and "familyDatesForFiling" in fam)
+    if fam and "familyFinalAction" in fam:
+        ffa = fam["familyFinalAction"]
+        check("five family categories", sorted(ffa) == ["F1", "F2A", "F2B", "F3", "F4"], f"got {sorted(ffa)}")
+        check("F2A is not read as F2B", ffa["F2A"]["worldwide"] == "01JAN25" and ffa["F2B"]["worldwide"] == "22NOV17",
+              f"{ffa['F2A']['worldwide']} / {ffa['F2B']['worldwide']}")
+        check("F1 Mexico is its own cell, not worldwide's", ffa["F1"]["mexico"] == "08NOV07", ffa["F1"]["mexico"])
+        check("the employment charts on the full page still match the trimmed one",
+              fam["finalAction"]["EB3"]["india"] == "01JAN14" and fam["finalAction"]["EB2"]["india"] == "U")
+        check("family final action and dates for filing differ", fam["familyFinalAction"] != fam["familyDatesForFiling"])
 
     # --- the guards ------------------------------------------------------
     refuses("refuses a Cloudflare challenge page",

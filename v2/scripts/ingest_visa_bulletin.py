@@ -188,6 +188,17 @@ CATEGORY_ROWS = [
 # were already complete for their era.
 SET_ASIDES_FROM = "2022-05"
 
+# The family-sponsored chart, read the same way (added 2026-09-08). Same
+# country columns; the row labels are the preference codes themselves. F2A
+# and F2B are distinct rows and must not be prefix-matched to "F2".
+FAMILY_ROWS = [
+    ("F1", ["F1"]),
+    ("F2A", ["F2A"]),
+    ("F2B", ["F2B"]),
+    ("F3", ["F3"]),
+    ("F4", ["F4"]),
+]
+
 
 def expected_categories(month: str) -> int:
     return 9 if month >= SET_ASIDES_FROM else 6
@@ -286,6 +297,7 @@ def parse_bulletin(page: str) -> dict | None:
     """Extract both employment-based charts, or None if they are not present."""
     tables = re.findall(r"<table.*?</table>", page, re.S | re.I)
     eb = []
+    fb = []
     for tbl in tables:
         rows = [
             c for c in (text_cells(tr) for tr in re.findall(r"<tr.*?</tr>", tbl, re.S | re.I))
@@ -301,10 +313,12 @@ def parse_bulletin(page: str) -> dict | None:
         first_cell = rows[0][0].upper().replace("- ", "-").replace(" ", "")
         if first_cell.startswith("EMPLOYMENT") and "INDIA" in head:
             eb.append(rows)
+        elif first_cell.startswith("FAMILY") and "INDIA" in head:
+            fb.append(rows)
     if len(eb) < 2:
         return None
 
-    def chart(rows: list[list[str]]) -> dict[str, dict[str, str]]:
+    def chart(rows: list[list[str]], category_rows=CATEGORY_ROWS) -> dict[str, dict[str, str]]:
         """Resolve each country to its OWN column, by header name.
 
         POSITION IS NOT STABLE ACROSS YEARS. Bulletins before roughly April
@@ -333,7 +347,7 @@ def parse_bulletin(page: str) -> dict | None:
             else:
                 raise ValueError(f"no column matched {heading}; header={header}")
         out: dict[str, dict[str, str]] = {}
-        for code, labels in CATEGORY_ROWS:
+        for code, labels in category_rows:
             done = False
             for label in labels:          # alternates in preference order
                 for r in rows[1:]:
@@ -341,6 +355,9 @@ def parse_bulletin(page: str) -> dict | None:
                     # "5th Unreserved" and "5th Non-Regional" share "5th un"?
                     # No - but "5th Reg" and "5th Res" would, and a prefix
                     # short enough to be convenient is short enough to collide.
+                    # A family code is matched whole ("F2A" must not take
+                    # the "F2B" row), which `startswith` on a bare code
+                    # already guarantees: no family label is a prefix of another.
                     if r and r[0].strip().lower().startswith(label.lower()):
                         out[code] = {c: (r[i] if i < len(r) else "") for c, i in idx.items()}
                         done = True
@@ -350,7 +367,15 @@ def parse_bulletin(page: str) -> dict | None:
         return out
 
     # The bulletin always prints final action first, then dates for filing.
-    return {"finalAction": chart(eb[0]), "datesForFiling": chart(eb[1])}
+    out = {"finalAction": chart(eb[0]), "datesForFiling": chart(eb[1])}
+    # The family charts precede the employment ones on the page and share
+    # the country columns. Absent from a month is a real state (an old
+    # capture trimmed to the employment tables), stored as null and repaired
+    # by the backfill, never as an empty chart.
+    if len(fb) >= 2:
+        out["familyFinalAction"] = chart(fb[0], FAMILY_ROWS)
+        out["familyDatesForFiling"] = chart(fb[1], FAMILY_ROWS)
+    return out
 
 
 def month_from_page(page: str) -> str | None:
@@ -371,6 +396,20 @@ def month_from_page(page: str) -> str | None:
         if m.lower() in MONTHS
     }
     return hits.pop() if len(hits) == 1 else None
+
+
+def ensure_family_columns(db: Turso) -> None:
+    """The two family columns arrived 2026-09-08; add them to a table that predates them."""
+    for col in ("family_final_action", "family_dates_for_filing"):
+        try:
+            db.execute(f"ALTER TABLE visa_bulletins ADD COLUMN {col} TEXT")
+        except Exception as e:  # noqa: BLE001
+            if "duplicate column" not in str(e).lower():
+                raise
+
+
+def family_json(parsed: dict, key: str) -> str | None:
+    return json.dumps(parsed[key]) if parsed.get(key) else None
 
 
 def ingest_saved_page(path: str, month: str | None) -> int:
@@ -421,16 +460,19 @@ def ingest_saved_page(path: str, month: str | None) -> int:
     log(f"month {m}  categories {', '.join(cats)}")
 
     db = Turso()
+    ensure_family_columns(db)
     prior = db.scalar(
         "SELECT source_url FROM visa_bulletins WHERE bulletin_month = ?", [m]
     )
     db.execute(
         "INSERT OR REPLACE INTO visa_bulletins "
         "(bulletin_month, source_url, archived_at, final_action, "
-        " dates_for_filing, computed_at) VALUES (?,?,?,?,?,?)",
+        " dates_for_filing, computed_at, family_final_action, family_dates_for_filing) "
+        "VALUES (?,?,?,?,?,?,?,?)",
         [m, SAVED_PAGE_SOURCE, datetime.datetime.now(datetime.timezone.utc).isoformat(),
          json.dumps(parsed["finalAction"]), json.dumps(parsed["datesForFiling"]),
-         int(time.time() * 1000)],
+         int(time.time() * 1000), family_json(parsed, "familyFinalAction"),
+         family_json(parsed, "familyDatesForFiling")],
     )
     # Say when a mirrored row has been replaced by the real thing. Silently
     # overwriting one source with another is how provenance stops meaning
@@ -493,7 +535,8 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
     half the categories for two thirds of its length.
     """
     db = Turso()
-    res = db.execute("SELECT bulletin_month, source_url, final_action FROM visa_bulletins")
+    ensure_family_columns(db)
+    res = db.execute("SELECT bulletin_month, source_url, final_action, family_final_action FROM visa_bulletins")
     have = {}
     for r in res["response"]["result"]["rows"]:
         src = r[1]["value"] if r[1]["type"] != "null" else ""
@@ -501,7 +544,8 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
             cats = len(json.loads(r[2]["value"])) if r[2]["type"] != "null" else 0
         except Exception:  # noqa: BLE001
             cats = 0
-        have[r[0]["value"]] = (src, cats)
+        has_family = r[3]["type"] != "null"
+        have[r[0]["value"]] = (src, cats, has_family)
     log(f"holding {len(have)} months before this run")
 
     snaps = discover_snapshots(limit, years)
@@ -513,7 +557,10 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
         # missing from every pre-2022-05 bulletin because DOL had renamed the
         # row, a rank-only skip meant fixing the parser fixed nothing, and the
         # 18 short months would have sat there looking fine.
-        if current is not None and rank_of(current[0]) >= 2 and current[1] >= expected_categories(month):
+        # A row without the family charts is incomplete in the same sense
+        # (added 2026-09-08): re-fetching it is how the family history fills
+        # in behind a parser that learned to read them.
+        if current is not None and rank_of(current[0]) >= 2 and current[1] >= expected_categories(month) and current[2]:
             skipped += 1
             continue
         try:
@@ -529,10 +576,12 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
         cats = len(parsed["finalAction"])
         db.execute(
             "INSERT OR REPLACE INTO visa_bulletins (bulletin_month, source_url, "
-            "archived_at, final_action, dates_for_filing, computed_at) "
-            "VALUES (?,?,?,?,?,?)",
+            "archived_at, final_action, dates_for_filing, computed_at, "
+            "family_final_action, family_dates_for_filing) "
+            "VALUES (?,?,?,?,?,?,?,?)",
             [month, url, ts, json.dumps(parsed["finalAction"]),
-             json.dumps(parsed["datesForFiling"]), int(time.time() * 1000)],
+             json.dumps(parsed["datesForFiling"]), int(time.time() * 1000),
+             family_json(parsed, "familyFinalAction"), family_json(parsed, "familyDatesForFiling")],
         )
         if current is None:
             log(f"  {month}: ADDED ({cats} categories)")

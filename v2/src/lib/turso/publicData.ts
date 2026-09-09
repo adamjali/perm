@@ -366,6 +366,27 @@ export async function getVisaBulletins(): Promise<
 }
 
 /**
+ * The family-sponsored charts (F1, F2A, F2B, F3, F4), in the same shape as
+ * the employment ones so `summariseBulletins` can read them. Only months the
+ * parser has read the family tables for; a month captured from a browser
+ * before the parser learned them is absent here, not empty, and the archive
+ * backfill refills it.
+ */
+export async function getFamilyBulletinSeries(): Promise<Array<BulletinMonth & { archivedAt: string; sourceUrl: string }>> {
+  const r = await rows<Record<string, string | null>>(
+    "SELECT bulletin_month, source_url, archived_at, family_final_action, family_dates_for_filing " +
+      "FROM visa_bulletins WHERE family_final_action IS NOT NULL ORDER BY bulletin_month",
+  ).catch(() => [] as Record<string, string | null>[]);
+  return r.map((x) => ({
+    bulletinMonth: x.bulletin_month as string,
+    sourceUrl: x.source_url ?? "",
+    archivedAt: x.archived_at ?? "",
+    finalAction: x.family_final_action ? (JSON.parse(x.family_final_action) as BulletinMonth["finalAction"]) : {},
+    datesForFiling: x.family_dates_for_filing ? (JSON.parse(x.family_dates_for_filing) as BulletinMonth["datesForFiling"]) : {},
+  }));
+}
+
+/**
  * The bulletin series in the shape the priority-date chart expects: ascending
  * by month, with `archivedAt` and `sourceUrl` as plain strings.
  *

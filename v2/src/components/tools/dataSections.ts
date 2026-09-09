@@ -35,6 +35,7 @@ export type DataSection =
   | "corrections"
   | "badges"
   | "layoffs"
+  | "visa-bulletin-family"
   | "calculators"
   | "queue"
   | "processing-times"
@@ -136,6 +137,7 @@ export const SECTIONS: DataNavSection[] = [
   // under it.
   { key: "visa-bulletin-next", group: "Visa bulletin", label: "Next bulletin", href: "/visa-bulletin" },
   { key: "visa-bulletin", group: "Visa bulletin", label: "Priority dates", href: "/tools/priority-date-calculator" },
+  { key: "visa-bulletin-family", group: "Visa bulletin", label: "Family cutoffs", href: "/visa-bulletin/family" },
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
   { key: "policy-changes", group: "Reference", label: "Policy changes", href: "/policy-changes" },
   { key: "debarments", group: "Reference", label: "Debarments", href: "/debarments" },
