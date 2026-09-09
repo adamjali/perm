@@ -69,8 +69,12 @@ export const CONTENT_TYPE_CONFIG: Record<
   changelog: {
     label: "Update",
     plural: "Changelog",
+    // Names the corrections log, which moved onto this page when
+    // `/corrections` was retired. This string is the changelog's one line in
+    // `llms.txt` and on the content hub, so leaving it out is how the record
+    // becomes undiscoverable to anything that reads the site by machine.
     description:
-      "Product updates, new features, and improvements to PERM Tracker.",
+      "Product updates and new features, plus the corrections log: every published claim this site got wrong, with what it said, what was true and what changed.",
     icon: "Sparkles",
   },
 };

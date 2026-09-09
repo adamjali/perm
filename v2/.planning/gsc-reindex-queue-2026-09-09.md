@@ -36,7 +36,7 @@ Every URL below was checked live on 2026-09-09 before being queued: HTTP
 ## Tier 2 — new, narrower demand
 
 12. [ ] https://permtracker.app/estimate-scorecard
-13. [ ] https://permtracker.app/corrections
+13. ~~https://permtracker.app/corrections~~ — page retired 2026-09-09, folded into `/changelog#corrections` and 301'd. Never requested, so no quota was spent on it.
 14. [ ] https://permtracker.app/debarments
 15. [ ] https://permtracker.app/badges
 

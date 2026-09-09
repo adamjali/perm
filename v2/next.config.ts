@@ -164,6 +164,12 @@ const nextConfig: NextConfig = {
       // links land on the data surface.
       // Content consolidated 2026-08-24: tutorials and resources merged into
       // guides. Fourteen articles never justified five sections.
+      // `/corrections` retired 2026-09-09. Fourteen entries did not earn a
+      // page, and a reader looking for "what changed" goes to the changelog
+      // anyway. The RECORD is kept - `src/lib/corrections.ts` still feeds the
+      // section this points at - because a site arguing its numbers are
+      // checkable does not get to drop the list of times they were not.
+      { source: "/corrections", destination: "/changelog#corrections", permanent: true },
       { source: "/tutorials", destination: "/guides", permanent: true },
       { source: "/resources", destination: "/guides", permanent: true },
       { source: "/tutorials/:slug", destination: "/guides/:slug", permanent: true },

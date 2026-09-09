@@ -215,7 +215,6 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-case-statuses`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/perm-case-statuses.jpg`] },
     { url: `${base}/glossary`, lastModified: "2026-09-09", images: [`${base}/og/glossary.jpg`] },
     { url: `${base}/estimate-scorecard`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/estimate-scorecard.jpg`] },
-    { url: `${base}/corrections`, lastModified: "2026-09-09", images: [`${base}/og/corrections.jpg`] },
     { url: `${base}/badges`, lastModified: "2026-09-09", images: [`${base}/og/badges.jpg`] },
     { url: `${base}/layoffs`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/layoffs.jpg`] },
     { url: `${base}/visa-bulletin/family`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/visa-bulletin-family.jpg`] },

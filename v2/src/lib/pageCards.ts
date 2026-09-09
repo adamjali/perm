@@ -13,7 +13,6 @@
 
 export const PAGE_CARD_ALT = {
   "badges": "PERM queue badges. Three embeddable SVG badges, regenerated daily from DOL's own figures: the queue month, the decision days and the wage-request month.",
-  "corrections": "Corrections. Every published claim this site got wrong, dated: what it said, what was true and what changed. Entries are never removed.",
   "debarments": "Debarred from PERM, H-1B, H-2A and H-2B. Every employer and agent DOL has barred from the programs, from DOL's own lists.",
   "email-preferences": "Email preferences. Turn any PERM Tracker alert off from one page, no account needed.",
   "estimate-scorecard": "PERM estimate scorecard. Every decision-date estimate this site made for a real case, recorded before the outcome and scored against DOL's decision.",

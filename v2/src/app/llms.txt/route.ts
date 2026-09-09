@@ -222,11 +222,6 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "Three embeddable SVG badges regenerated daily from DOL's own published figures (the PERM queue month, the average decision days, the wage-request month), with the markdown and HTML to embed them.",
   },
   {
-    path: "/corrections",
-    label: "Corrections",
-    blurb: "Every published claim this site got wrong, dated, with what it said, what was true and what changed; entries are added and never removed.",
-  },
-  {
     path: "/estimate-scorecard",
     label: "Estimate scorecard",
     blurb: "Every decision-date estimate the site recorded for a real PERM case before the outcome, with the anchor and window as printed, the day DOL decided, and the error in days; scored from the record and never edited.",
