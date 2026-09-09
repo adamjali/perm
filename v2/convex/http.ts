@@ -1101,8 +1101,90 @@ http.route({
     }
     const summary = await ctx.runQuery(internal.caseMilestones.summary, { caseNumber });
     return new Response(JSON.stringify(summary), {
-      headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=300" },
+      headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=60" },
     });
+  }),
+});
+
+
+/**
+ * Browser push alerts for a case, no account and no email. The subscription
+ * the browser hands back is the only thing stored. POST subscribes; a second
+ * POST to /stop with the endpoint closes every row for that browser. Both
+ * limits live in the internal mutation; the address is hashed here.
+ */
+http.route({
+  path: "/case-alert/push",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/case-alert/push",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) return json({ ok: false, message: "Malformed request." }, 400);
+    const { caseNumber, subscription } = body as Record<string, unknown>;
+    if (typeof caseNumber !== "string" || typeof subscription !== "string") {
+      return json({ ok: false, message: "A case number and a browser subscription are both required." }, 400);
+    }
+    if (caseNumber.length > 24 || subscription.length > 2000) return json({ ok: false, message: "Malformed request." }, 400);
+    const forwarded = req.headers.get("x-forwarded-for") ?? "";
+    const ip = forwarded.split(",")[0]?.trim() || "unknown";
+    const ipHash = await sha256Hex(`push:${ip}`);
+    let endpoint: string | null = null;
+    try {
+      const parsed = JSON.parse(subscription) as { endpoint?: unknown };
+      endpoint = typeof parsed.endpoint === "string" && parsed.endpoint.length <= 1000 ? parsed.endpoint : null;
+    } catch {
+      endpoint = null;
+    }
+    if (!endpoint) return json({ ok: false, message: "The browser did not hand back a usable subscription." }, 400);
+    const endpointHash = await sha256Hex(endpoint);
+    const result = await ctx.runMutation(internal.casePushAlerts.subscribe, { caseNumber, subscription, endpointHash, ipHash });
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/case-alert/push/stop",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/case-alert/push/stop",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    const endpoint = typeof body === "object" && body !== null ? (body as Record<string, unknown>).endpoint : null;
+    if (typeof endpoint !== "string" || endpoint.length === 0 || endpoint.length > 1000) {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    const endpointHash = await sha256Hex(endpoint);
+    const result = await ctx.runMutation(internal.casePushAlerts.stop, { endpointHash });
+    return json(result, 200);
   }),
 });
 

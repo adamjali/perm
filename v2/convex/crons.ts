@@ -288,6 +288,16 @@ crons.cron(
   {}
 );
 
+// The browser-push twin of the sweep above, twenty minutes later so the two
+// never read the status tables in the same minute. Web push costs nothing per
+// message, so it has no Resend line; its own limits are in casePushAlerts.ts.
+crons.cron(
+  "case-status-push-alerts",
+  "20 11,23 * * *",
+  internal.casePushAlertsSweep.sweep,
+  {}
+);
+
 // ============================================================================
 // VISA BULLETIN ALERTS
 // ============================================================================

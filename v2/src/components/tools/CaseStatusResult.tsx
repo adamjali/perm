@@ -6,6 +6,7 @@ import { FigurePlate } from "@/components/tools/FigurePlate";
 import { InsightLede, Verdict } from "@/components/tools/Insight";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { CaseMilestones } from "@/components/tools/CaseMilestones";
+import { CasePushAlert } from "@/components/tools/CasePushAlert";
 import { CaseEstimate } from "@/components/tools/CaseEstimate";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
 import { QueueTape } from "@/components/tools/QueueTape";
@@ -284,7 +285,10 @@ export function CaseStatusResult({
           purpose: "email me when this changes" is the next step after reading
           a window. */}
       {!isFinal ? (
-        <CaseAlertForm caseNumber={result.caseNumber} className="mt-8" />
+        <>
+          <CaseAlertForm caseNumber={result.caseNumber} className="mt-8" />{" "}
+          <CasePushAlert caseNumber={result.caseNumber} className="mt-4" />
+        </>
       ) : null}{" "}
       {/* After DOL: the I-140 and I-485 have no federal per-case record, so
           this is the only trace of them, as labelled user reports. Rendered for

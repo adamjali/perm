@@ -78,7 +78,8 @@ export function CaseMilestones({ caseNumber, className }: { caseNumber: string; 
       const body = (await res.json().catch(() => null)) as { ok?: boolean; message?: string } | null;
       setState({ kind: res.ok ? "done" : "refused", message: body?.message ?? "That did not go through. Try again in a moment." });
       if (res.ok && summaryUrl) {
-        const s = (await fetch(summaryUrl).then((r) => (r.ok ? r.json() : null)).catch(() => null)) as Summary | null;
+        // Past the browser cache: the GET is cached for a minute, and the count has to move now.
+        const s = (await fetch(summaryUrl, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).catch(() => null)) as Summary | null;
         if (s) setSummary(s);
       }
     } catch {

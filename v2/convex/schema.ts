@@ -1943,6 +1943,30 @@ export default defineSchema({
     .index("by_case", ["caseNumber"])
     .index("by_case_ip_kind", ["caseNumber", "ipHash", "kind"]),
 
+  /**
+   * Browser push subscriptions for case-status changes, with no account and
+   * no email. A row is one browser watching one case; the subscription JSON
+   * is the browser's delivery address and identifies a device, not a person.
+   * Seeded on the first sweep like the email alerts, so a subscription taken
+   * out the day after a change is not told about it.
+   */
+  caseStatusPushAlerts: defineTable({
+    caseNumber: v.string(),
+    /** The PushSubscription JSON the browser handed back. */
+    subscription: v.string(),
+    /** SHA-256 of the subscription endpoint: the identity for dedupe and for "stop". */
+    endpointHash: v.string(),
+    lastSeenStatus: v.optional(v.string()),
+    createdAt: v.number(),
+    lastCheckedAt: v.optional(v.number()),
+    /** Set when the case reached a final status, the browser revoked, or the person stopped it. */
+    closedAt: v.optional(v.number()),
+    failures: v.number(),
+  })
+    .index("by_closed", ["closedAt"])
+    .index("by_endpoint", ["endpointHash"])
+    .index("by_endpoint_case", ["endpointHash", "caseNumber"]),
+
   contactMessages: defineTable({
     name: v.string(),
     email: v.string(),

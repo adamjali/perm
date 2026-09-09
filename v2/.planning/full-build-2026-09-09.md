@@ -41,9 +41,9 @@ left off.
 
 ## E. Growth
 - [x] E1 badges: `/badge/<perm-queue|perm-days|pwd-queue>.svg`, static route regenerated daily from DOL's processing-times snapshot (no estimates; a missing figure renders 'no figure today'); `/badges` page with markdown and HTML snippets. AT DEPLOY: add a Firewall bypass for `/badge/*` so GitHub's camo proxy and other server-side fetchers are not challenged
-- [ ] E2 web push alerts for people without an account
+- [x] E2 web push for people without an account: `caseStatusPushAlerts` (one browser, one case; ten cases per browser; 5/hour per address; 200/day global charged before the write), `/case-alert/push` and `/case-alert/push/stop` on Convex HTTP, `casePushAlertsSweep.sweep` (Node runtime, web-push, seeds silently, closes on 404/410 or a final status) at 11:20 and 23:20 UTC; `CasePushAlert` control under the email form. 6 convex tests. Probed on the dev deployment: subscribe 200, bad shape 400, stop closed 1. NEEDS `VAPID_PRIVATE_KEY` + `NEXT_PUBLIC_VAPID_PUBLIC_KEY` in prod Convex env (already present for account push) and the SW, which serwist registers in production only
 - [x] E3 user-reported milestones: `caseMilestones` table, `/milestone/report` (internal mutation, per-IP 6/hour, global 300/day charged before the write, one row per case+reporter+kind) and `/milestone/summary` on Convex HTTP; `CaseMilestones` section on every PERM case page, labelled unverified; 5 convex tests incl. the budget refusing at exactly 300
-- [ ] E4 digest ON at a cap that keeps the worst day under Resend's free 100 (set at deploy)
+- [x] E4 digest ON at deploy: set on prod Convex `NEWSLETTER_ENABLED=1` and `NEWSLETTER_DAILY_CAP=15` (ledger in convex/caseAlerts.ts: 70 worst-case list mail + 15 = 85 of Resend's 100). Not set until the deploy step, per the hold
 - [ ] E5 auto-posts to X and LinkedIn (needs Adam's API keys; scaffold only)
 - [ ] E6 translations of the situation guides (needs a reviewer; hreflang scaffold only)
 
