@@ -6,7 +6,33 @@
  * were true for. No estimates, no counts of our own.
  */
 
-export const BADGE_KINDS = ["perm-queue", "perm-days", "pwd-queue"] as const;
+/**
+ * THE FIRST THREE IDS ARE FROZEN. `perm-queue`, `perm-days` and `pwd-queue`
+ * are already pasted into READMEs and forum signatures as
+ * `permtracker.app/badge/<id>.svg`; renaming one breaks an image somebody
+ * else owns. New kinds get new ids and nothing is ever re-pointed.
+ *
+ * Every kind here is a figure DOL PUBLISHES, not one this site derives. That
+ * is the whole constraint: a badge is a claim rendered on someone else's
+ * page, where there is no room for a caveat, so it carries only numbers whose
+ * source is a federal table and the date that table was published.
+ */
+export const BADGE_KINDS = [
+  // The three PERM queues DOL prints, by the month each is working.
+  "perm-queue",
+  "perm-audits",
+  "perm-recon",
+  // Average calendar days to a determination.
+  "perm-days",
+  // The prevailing-wage centre, by program and by which wage source the
+  // request used. DOL publishes an OEWS column and a non-OEWS (employer
+  // survey) column for each program, and they move independently.
+  "pwd-queue",
+  "pwd-perm-survey",
+  "pwd-h1b",
+  "pwd-h2b",
+  "pwd-cw1",
+] as const;
 export type BadgeKind = (typeof BADGE_KINDS)[number];
 
 export interface BadgeSpec {
@@ -32,32 +58,117 @@ export function shortMonth(ym: string | null | undefined): string | null {
 }
 
 export interface BadgeInputs {
-  /** Analyst review queue month, "YYYY-MM". */
-  analystReviewMonth: string | null;
-  /** Analyst review average calendar days. */
+  /** Month each PERM queue is working, "YYYY-MM", keyed by DOL's own row name. */
+  permQueueMonths: Partial<Record<"analyst" | "audit" | "recon", string | null>>;
+  /** Average calendar days to an Analyst Review determination. */
   analystReviewDays: number | null;
-  /** PERM prevailing wage OEWS receipt month, "YYYY-MM". */
-  pwdOewsMonth: string | null;
+  /** Wage-request receipt month by program and wage source, "YYYY-MM". */
+  pwdMonths: Partial<Record<"perm-oews" | "perm-survey" | "h1b" | "h2b" | "cw1", string | null>>;
   /** DOL's as-of date, ISO. */
   asOf: string | null;
 }
 
+/**
+ * What each kind is, in one table, so adding a badge is adding a row.
+ *
+ * `pick` returns the figure or null. A null renders the "no figure today"
+ * badge rather than yesterday's number: DOL prints "--" for a queue with no
+ * determinations that month, and an embed that quietly kept showing the last
+ * real value would be wrong on exactly the days it mattered.
+ */
+const SPECS: Record<BadgeKind, {
+  label: string;
+  href: string;
+  /** Reads the figure out of the inputs. */
+  pick: (i: BadgeInputs) => string | null;
+  /** Turns the figure into the badge's right-hand segment. */
+  value: (v: string) => string;
+  /** Plain-language alt text; the figure is substituted in. */
+  alt: (v: string) => string;
+}> = {
+  "perm-queue": {
+    label: "PERM queue", href: "/perm-queue",
+    pick: (i) => shortMonth(i.permQueueMonths.analyst),
+    value: (v) => `at ${v}`,
+    alt: (v) => `PERM queue: DOL analysts are working ${v}`,
+  },
+  "perm-audits": {
+    label: "PERM audits", href: "/perm-rfi-audit",
+    pick: (i) => shortMonth(i.permQueueMonths.audit),
+    value: (v) => `at ${v}`,
+    alt: (v) => `PERM audit review: DOL is working ${v}`,
+  },
+  "perm-recon": {
+    label: "PERM recon", href: "/perm-rfi-audit",
+    pick: (i) => shortMonth(i.permQueueMonths.recon),
+    value: (v) => `at ${v}`,
+    alt: (v) => `PERM reconsideration requests: DOL is working ${v}`,
+  },
+  "perm-days": {
+    label: "PERM decision", href: "/perm-processing-times",
+    pick: (i) => (i.analystReviewDays !== null && Number.isFinite(i.analystReviewDays) ? String(Math.round(i.analystReviewDays)) : null),
+    value: (v) => `${v} days avg`,
+    alt: (v) => `PERM decision: ${v} days on average`,
+  },
+  "pwd-queue": {
+    label: "PERM wage", href: "/tools/pwd-calculator",
+    pick: (i) => shortMonth(i.pwdMonths["perm-oews"]),
+    value: (v) => `at ${v}`,
+    alt: (v) => `PERM prevailing wage requests on OEWS wages: DOL is working ${v}`,
+  },
+  "pwd-perm-survey": {
+    label: "PERM wage, survey", href: "/tools/pwd-calculator",
+    pick: (i) => shortMonth(i.pwdMonths["perm-survey"]),
+    value: (v) => `at ${v}`,
+    alt: (v) => `PERM prevailing wage requests on an employer survey: DOL is working ${v}`,
+  },
+  "pwd-h1b": {
+    label: "H-1B wage", href: "/lca-cases",
+    pick: (i) => shortMonth(i.pwdMonths.h1b),
+    value: (v) => `at ${v}`,
+    alt: (v) => `H-1B prevailing wage requests: DOL is working ${v}`,
+  },
+  "pwd-h2b": {
+    label: "H-2B wage", href: "/tools/pwd-calculator",
+    pick: (i) => shortMonth(i.pwdMonths.h2b),
+    value: (v) => `at ${v}`,
+    alt: (v) => `H-2B prevailing wage requests: DOL is working ${v}`,
+  },
+  "pwd-cw1": {
+    label: "CW-1 wage", href: "/tools/pwd-calculator",
+    pick: (i) => shortMonth(i.pwdMonths.cw1),
+    value: (v) => `at ${v}`,
+    alt: (v) => `CW-1 prevailing wage requests: DOL is working ${v}`,
+  },
+};
+
 /** The spec for one kind, or null when DOL published no figure for it. */
 export function badgeSpec(kind: BadgeKind, i: BadgeInputs): BadgeSpec | null {
+  const def = SPECS[kind];
+  const figure = def.pick(i);
+  if (figure === null) return null;
   const stamp = i.asOf ? `, DOL ${i.asOf}` : "";
-  if (kind === "perm-queue") {
-    const m = shortMonth(i.analystReviewMonth);
-    return m ? { kind, label: "PERM queue", value: `at ${m}`, href: "/perm-queue", alt: `PERM queue: DOL is working ${m}${stamp}` } : null;
-  }
-  if (kind === "perm-days") {
-    const d = i.analystReviewDays;
-    return d !== null && Number.isFinite(d)
-      ? { kind, label: "PERM decision", value: `${Math.round(d)} days avg`, href: "/perm-processing-times", alt: `PERM decision: ${Math.round(d)} days on average${stamp}` }
-      : null;
-  }
-  const m = shortMonth(i.pwdOewsMonth);
-  return m ? { kind, label: "Wage requests", value: `at ${m}`, href: "/tools/pwd-calculator", alt: `Prevailing wage queue: DOL is working ${m}${stamp}` } : null;
+  return {
+    kind,
+    label: def.label,
+    value: def.value(figure),
+    href: def.href,
+    alt: `${def.alt(figure)}${stamp}`,
+  };
 }
+
+/** What the badge measures, for the catalogue page. Not rendered into the SVG. */
+export const BADGE_MEANING: Record<BadgeKind, string> = {
+  "perm-queue": "The filing month DOL's analysts are working through. The single number most people waiting on a PERM want.",
+  "perm-audits": "The filing month DOL is working in audit review, for cases that were audited rather than decided straight through.",
+  "perm-recon": "The month DOL is working for reconsideration requests, filed after a denial.",
+  "perm-days": "DOL's published average calendar days from filing to an analyst-review determination.",
+  "pwd-queue": "The month the National Prevailing Wage Center is working for PERM requests set on OEWS wages.",
+  "pwd-perm-survey": "The same queue for PERM requests set on an employer-provided survey instead of OEWS. It moves on its own.",
+  "pwd-h1b": "The wage-request queue for H-1B, H-1B1 and E-3 petitions.",
+  "pwd-h2b": "The wage-request queue for H-2B seasonal labour.",
+  "pwd-cw1": "The wage-request queue for CW-1, the Northern Mariana Islands transitional worker.",
+};
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 

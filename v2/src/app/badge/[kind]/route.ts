@@ -1,4 +1,5 @@
 import { BADGE_KINDS, badgeSpec, renderBadgeSvg, renderUnavailableSvg, type BadgeKind } from "@/lib/badge";
+import { badgeInputsFrom } from "@/lib/badgeInputs";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 
 /**
@@ -29,14 +30,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ kind: s
   if (!BADGE_KINDS.includes(kind)) return new Response("Not found", { status: 404 });
 
   const snap = await getProcessingTimes().catch(() => null);
-  const analyst = snap?.permQueues.find((q) => /analyst review/i.test(q.queue)) ?? null;
-  const days = snap?.permAverageDays.find((d) => /analyst review/i.test(d.determination)) ?? null;
-  const pwd = snap?.pwdQueues.find((p) => /^perm$/i.test(p.program.trim())) ?? null;
-  const spec = badgeSpec(kind, {
-    analystReviewMonth: analyst?.priorityDate ?? null,
-    analystReviewDays: days?.calendarDays ?? null,
-    pwdOewsMonth: pwd?.oewsReceiptDate ?? null,
-    asOf: snap?.permAsOf ?? null,
-  });
+  const spec = badgeSpec(kind, badgeInputsFrom(snap));
   return new Response(spec ? renderBadgeSvg(spec) : renderUnavailableSvg(kind), { headers: HEADERS });
 }
