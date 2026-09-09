@@ -7,6 +7,8 @@ const readPermLive = vi.fn();
 const readFlagLive = vi.fn();
 const readFlagPublished = vi.fn();
 const lookupUnifiedCase = vi.fn();
+const readPermStage = vi.fn();
+const readPermEmployerStage = vi.fn();
 
 vi.mock("../caseSearchReads", () => ({
   readPermPublished,
@@ -14,6 +16,8 @@ vi.mock("../caseSearchReads", () => ({
   readFlagLive,
   readFlagPublished,
   lookupUnifiedCase,
+  readPermStage,
+  readPermEmployerStage,
 }));
 
 const { dedupeToOnePerCase, skippedSources, unifiedSearch } = await import("../unifiedSearch");
@@ -442,5 +446,40 @@ describe("unifiedSearch with a case number", () => {
     });
     expect(rows).toEqual([]);
     expect(truncated).toBe(false);
+  });
+});
+
+describe("a review stage in the search", () => {
+  const none = { rows: [], windowed: false };
+  beforeEach(() => {
+    for (const fn of [readPermPublished, readPermLive, readFlagLive, readFlagPublished, readPermStage, readPermEmployerStage]) {
+      fn.mockReset();
+      fn.mockResolvedValue(none);
+    }
+  });
+
+  it("as a lead reads the live stage only: no published half, no other program, whatever the chips say", async () => {
+    const stageLead: Lead = { kind: "stage", value: "APPLICATION ON HOLD" };
+    const result = await unifiedSearch({ lead: stageLead, programs: ["perm", "pwd", "lca"] });
+    expect(readPermStage).toHaveBeenCalledWith("APPLICATION ON HOLD", {}, 300);
+    expect(readPermPublished).not.toHaveBeenCalled();
+    expect(readPermLive).not.toHaveBeenCalled();
+    expect(readFlagLive).not.toHaveBeenCalled();
+    expect(readFlagPublished).not.toHaveBeenCalled();
+    expect(result.skipped.published).toBe(true);
+  });
+
+  it("narrowing an employer to a stage reads the employer's stage rows and skips the published half", async () => {
+    await unifiedSearch({ lead: employerLead, narrow: { stage: "RFI ISSUED", title: "engineer" } });
+    expect(readPermEmployerStage).toHaveBeenCalledWith("acme", "RFI ISSUED", { stage: "RFI ISSUED", title: "engineer" }, 300);
+    expect(readPermLive).not.toHaveBeenCalled();
+    expect(readPermPublished).not.toHaveBeenCalled();
+    expect(skippedSources({ stage: "RFI ISSUED" }, employerLead).published).toBe(true);
+  });
+
+  it("a published-only lead with a stage in the narrow still skips the live half and the stage does nothing", async () => {
+    await unifiedSearch({ lead: stateLead, narrow: { stage: "RFI ISSUED" } });
+    expect(readPermStage).not.toHaveBeenCalled();
+    expect(readPermEmployerStage).not.toHaveBeenCalled();
   });
 });

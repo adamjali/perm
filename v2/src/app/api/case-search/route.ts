@@ -5,11 +5,13 @@ import {
   availableOutcomes,
   chooseLead,
   filterAvailability,
+  withStageNarrow,
   isOutcome,
   type FilterKey,
   type Outcome,
 } from "@/lib/caseSearchPlan";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
+import { searchStageFromSlug } from "@/lib/searchStages";
 import { searchByName } from "@/lib/turso/entities";
 import type { UnifiedNarrow } from "@/lib/turso/caseSearchReads";
 import {
@@ -124,6 +126,10 @@ export async function GET(request: Request): Promise<NextResponse> {
   const title = (p.get("title") ?? "").trim().slice(0, 80);
   const state = (p.get("state") ?? "").trim().toUpperCase();
   const fy = (p.get("fy") ?? "").trim();
+  const stageSlug = (p.get("stage") ?? "").trim().toLowerCase();
+  if (stageSlug && !/^[a-z0-9-]{1,60}$/.test(stageSlug)) return bad("stage must be a stage slug");
+  const stage = stageSlug ? searchStageFromSlug(stageSlug) : null;
+  if (stageSlug && !stage) return bad("unknown stage");
 
   if (state && !STATE_RE.test(state)) return bad("state must be two letters");
   if (fy && !FY_RE.test(fy)) return bad("fy must be a four-digit year");
@@ -172,6 +178,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       ...(firm ? { firmSlug: firm.key } : {}),
       ...(state ? { state } : {}),
       ...(occupation ? { socCode: occupation.key } : {}),
+      ...(stage ? { stage } : {}),
     });
 
     if (!lead) {
@@ -192,7 +199,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     // THE ROUTE DROPS WHAT THE LEAD CANNOT CARRY. See the header: the greyed
     // control in the browser is an explanation, this is the enforcement.
-    const can = filterAvailability(lead);
+    const can = withStageNarrow(filterAvailability(lead), stage !== null && lead.kind === "employer");
     const dropped = new Set<FilterKey>();
 
     /** Keep a value only if this lead's index can carry that filter. */
@@ -231,6 +238,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       narrow.socCode = occupation.key;
     }
     if (fy && allowed("fiscalYear")) narrow.fiscalYear = fy;
+    if (stage && lead.kind !== "stage" && allowed("stage")) narrow.stage = stage;
     if ((wMin !== null || wMax !== null) && allowed("wage")) {
       if (wMin !== null) narrow.wageMin = wMin;
       if (wMax !== null) narrow.wageMax = wMax;

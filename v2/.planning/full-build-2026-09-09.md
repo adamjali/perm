@@ -13,7 +13,7 @@ left off.
 - [x] A1 `/api/stage-cases` (stage or month, JSON + CSV, allowlist, 6h edge cache) + tests
 - [x] A2 stage pages: client browser (search, sort, filing-year facet, show all, CSV), compact static case-number list for the index, the two tiny stages listed, link into search prefilled
 - [x] A3 queue-month pages: server-paged browser with search and sort over /api/perm-cases
-- [ ] A4 case search: `stage` filter, enable/disable follows the selection, live band answers, EXPLAIN + combinability tests
+- [x] A4 case search: `stage` filter, enable/disable follows the selection, live band answers, EXPLAIN + combinability tests
 - [ ] A5 PWD and LCA stage filters in case search
 
 ## B. Employer views

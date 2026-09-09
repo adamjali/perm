@@ -385,7 +385,15 @@ export default async function StagePage({
                   className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
                 >
                   Download all {int(cases)} as CSV
-                </a>
+                </a>{" "}
+                or{" "}
+                <Link
+                  href={`/case-search?stage=${encodeURIComponent(stage)}`}
+                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                >
+                  open this stage in case search
+                </Link>
+                , where it combines with an employer, a job title or a filing month.
               </p>{" "}
               {/* Every case number in the page's own HTML, compactly, so a
                   person who searches their number finds this page. The

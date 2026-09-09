@@ -31,8 +31,10 @@ const {
   programForCaseNumber,
   readFlagLive,
   readFlagPublished,
+  readPermEmployerStage,
   readPermLive,
   readPermPublished,
+  readPermStage,
   socGroup,
 } = await import("../caseSearchReads");
 
@@ -646,5 +648,54 @@ describe("lookupUnifiedCase", () => {
     const out = await lookupUnifiedCase("G-100-26125-868956");
     expect(out.program).toBe("perm");
     expect(out.permPublished).toBeNull();
+  });
+});
+
+describe("the stage readers", () => {
+  beforeEach(() => {
+    rows.mockReset();
+    rows.mockResolvedValue([]);
+  });
+
+  it("reads a stage through its own index, oldest first, fixture excluded, month and title narrowed", async () => {
+    await readPermStage("APPLICATION ON HOLD", { from: "2026-01", to: "2026-01", title: "analyst" }, 100);
+    const [sql, args] = rows.mock.calls[0]!;
+    expect(sql).toContain("FROM perm_case_status c INDEXED BY case_status_stage");
+    expect(sql).toContain("c.current_status = ? AND c.is_final = 0 AND c.employer_name IS NOT ?");
+    expect(sql).toContain("c.filing_date >= ?");
+    expect(sql).toContain("c.filing_date < ?");
+    expect(sql).toContain("c.job_title LIKE ? ESCAPE");
+    expect(sql).toContain("ORDER BY c.filing_date, c.case_number LIMIT ?");
+    // The slug comes from whichever table holds the case.
+    expect(sql).toContain("COALESCE(l.employer_slug, p.employer_slug) AS employer_slug");
+    expect(args).toEqual(["APPLICATION ON HOLD", "bah-test-company-name", "2026-01-01", "2026-02-01", "%analyst%", 101]);
+  });
+
+  it("reads an employer's stage from the employer side, both halves unioned, never from the stage side", async () => {
+    await readPermEmployerStage("Cognizant", "ANALYST REVIEW", {}, 100);
+    const [sql, args] = rows.mock.calls[0]!;
+    expect(sql).toContain("FROM perm_live_recent l INDEXED BY perm_live_recent_emp");
+    expect(sql).toContain("FROM perm_cases p INDEXED BY idx_pc_emp_dec");
+    expect(sql).toContain("UNION");
+    expect(sql).not.toContain("INDEXED BY case_status_stage");
+    expect(args).toEqual(["cognizant", "cognizanu", "ANALYST REVIEW", "cognizant", "cognizanu", "ANALYST REVIEW", 101]);
+  });
+
+  it("reports windowed when a row past the limit came back, and maps the live row shape", async () => {
+    rows.mockResolvedValue([
+      { case_number: "G-100-26030-100001", filing_date: "2026-01-30", status: "RFI ISSUED", is_final: "0", employer_name: "Acme", employer_slug: "acme", job_title: "Dev" },
+      { case_number: "G-100-26030-100002", filing_date: "2026-01-31", status: "RFI ISSUED", is_final: 0, employer_name: "Acme", employer_slug: null, job_title: null },
+    ]);
+    const out = await readPermStage("RFI ISSUED", {}, 1);
+    expect(out.windowed).toBe(true);
+    expect(out.rows).toEqual([
+      { caseNumber: "G-100-26030-100001", filingDate: "2026-01-30", status: "RFI ISSUED", isFinal: false, employerName: "Acme", employerSlug: "acme", jobTitle: "Dev" },
+    ]);
+  });
+
+  it("refuses an employer needle too short to bound the slice", async () => {
+    const out = await readPermEmployerStage("x", "RFI ISSUED", {}, 100);
+    expect(out).toEqual({ rows: [], windowed: false });
+    expect(rows).not.toHaveBeenCalled();
   });
 });

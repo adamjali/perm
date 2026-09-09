@@ -1,6 +1,7 @@
 import "server-only";
 
 import { one, rows } from "./client";
+import { TEST_FIXTURE_EMPLOYER } from "./rfi";
 import {
   CASE_COLS,
   narrowingClauses,
@@ -67,6 +68,12 @@ export interface UnifiedNarrow {
   outcome?: Outcome;
   /** Case-insensitive "contains" on the job title. `%` and `_` are literal. */
   title?: string;
+  /**
+   * A DOL review stage as its status string, e.g. `APPLICATION ON HOLD`.
+   * Live record only: applied with an employer lead through
+   * `readPermEmployerStage`; as a lead of its own it is `readPermStage`.
+   */
+  stage?: string;
   /** Filing month, `YYYY-MM`, inclusive both ends. */
   from?: string;
   to?: string;
@@ -345,6 +352,8 @@ export function permLeadIndex(
   const hasFirm = narrow.firmSlug !== undefined && narrow.firmSlug !== "";
 
   switch (lead.kind) {
+    case "stage":
+      throw new Error("a stage lead reads the live record only; it never reaches the published index");
     case "employer":
       // A RANGE, so the status column of the three-column index can never be
       // seeked. The narrower index is the cheaper walk.
@@ -813,6 +822,8 @@ export function flagLeadIndex(
 ): string | null {
   const t = FLAG_TABLES[program].published;
   switch (lead.kind) {
+    case "stage":
+      return null;
     case "employer":
       return `${t}_emp`;
     case "state":
@@ -1109,4 +1120,139 @@ export async function firstSeenDecided(
     out.set(String(r.case_number), new Date(ms).toISOString().slice(0, 10));
   }
   return out;
+}
+
+
+// ---------------------------------------------------------------------------
+// Review stages: a live-record fact, read from the full live corpus
+// ---------------------------------------------------------------------------
+
+/**
+ * The columns every stage read returns, mapped to the live row shape the
+ * unified search already renders. The slug comes from `perm_live_recent`
+ * when the case is in the remainder and from `perm_cases` when DOL has
+ * published it (a denied case can sit at RECONSIDERATION APPEALS live while
+ * its published row says denied), so the two are coalesced.
+ */
+const STAGE_COLS =
+  "c.case_number, c.filing_date, c.current_status AS status, c.is_final, c.employer_name, " +
+  "COALESCE(l.employer_slug, p.employer_slug) AS employer_slug, c.job_title";
+
+interface StageDbRow {
+  case_number: string;
+  filing_date: string | null;
+  status: string | null;
+  is_final: number | string;
+  employer_name: string | null;
+  employer_slug: string | null;
+  job_title: string | null;
+}
+
+const toStageRow = (r: StageDbRow): LiveCaseRow => ({
+  caseNumber: String(r.case_number),
+  filingDate: r.filing_date == null ? null : String(r.filing_date),
+  status: r.status == null ? null : String(r.status),
+  isFinal: Number(r.is_final) === 1,
+  employerName: r.employer_name == null ? null : String(r.employer_name),
+  employerSlug: r.employer_slug == null ? null : String(r.employer_slug),
+  jobTitle: r.job_title == null ? null : String(r.job_title),
+});
+
+/** Title and filing-month narrowing on the live status table's own columns. */
+function stageNarrowing(narrow: UnifiedNarrow): { conds: string[]; params: (string | number)[] } {
+  const conds: string[] = [];
+  const params: (string | number)[] = [];
+  if (narrow.from) {
+    conds.push("c.filing_date >= ?");
+    params.push(`${narrow.from}-01`);
+  }
+  if (narrow.to) {
+    conds.push("c.filing_date < ?");
+    params.push(`${monthAfterYm(narrow.to)}-01`);
+  }
+  if (narrow.title) {
+    conds.push("c.job_title LIKE ? ESCAPE '\\'");
+    params.push(`%${narrow.title.replace(/[\\%_]/g, (ch) => `\\${ch}`)}%`);
+  }
+  return { conds, params };
+}
+
+function monthAfterYm(ym: string): string {
+  const y = Number(ym.slice(0, 4));
+  const m = Number(ym.slice(5, 7));
+  return m === 12 ? `${y + 1}-01` : `${y}-${String(m + 1).padStart(2, "0")}`;
+}
+
+/**
+ * Every pending case at one stage, oldest filing first.
+ *
+ * Served by `case_status_stage (current_status, is_final, filing_date)`: the
+ * two equalities bound the read to the stage and the trailing column supplies
+ * the order and the month narrowing, so a 90,000-case stage with a LIMIT of
+ * 100 reads 100 rows. The two LEFT JOINs are primary-key lookups per row
+ * returned, never per row scanned.
+ */
+export async function readPermStage(
+  status: string,
+  narrow: UnifiedNarrow,
+  limit: number,
+): Promise<SliceResult<LiveCaseRow>> {
+  const rest = stageNarrowing(narrow);
+  const found = await rows<StageDbRow>(
+    `SELECT ${STAGE_COLS}
+       FROM perm_case_status c INDEXED BY case_status_stage
+       LEFT JOIN perm_live_recent l ON l.case_number = c.case_number
+       LEFT JOIN perm_cases p ON p.case_number = c.case_number
+      WHERE c.current_status = ? AND c.is_final = 0 AND c.employer_name IS NOT ?` +
+      (rest.conds.length ? ` AND ${rest.conds.join(" AND ")}` : "") +
+      ` ORDER BY c.filing_date, c.case_number LIMIT ?`,
+    [status, TEST_FIXTURE_EMPLOYER, ...rest.params, limit + 1],
+  );
+  return { rows: found.slice(0, limit).map(toStageRow), windowed: found.length > limit };
+}
+
+/**
+ * An employer's pending cases at one stage.
+ *
+ * Read from the EMPLOYER side, never the stage side: the employer's live rows
+ * come off `perm_live_recent_emp` and its published rows off
+ * `idx_pc_emp_dec`, each a bounded slice, and the current status is one
+ * primary-key lookup per row. Started from the stage, an analyst-review
+ * search for one employer would scan 90,000 rows. The two halves are
+ * unioned because a case DOL has published can still be at an appeal
+ * stage live, and it belongs in this answer.
+ */
+export async function readPermEmployerStage(
+  employerText: string,
+  status: string,
+  narrow: UnifiedNarrow,
+  limit: number,
+): Promise<SliceResult<LiveCaseRow>> {
+  const range = slugRange(employerText);
+  if (!range) return { rows: [], windowed: false };
+  const rest = stageNarrowing(narrow);
+  const restSql = rest.conds.length ? ` AND ${rest.conds.join(" AND ")}` : "";
+  const found = await rows<StageDbRow>(
+    `SELECT * FROM (
+       SELECT ${STAGE_COLS}
+         FROM perm_live_recent l INDEXED BY perm_live_recent_emp
+         JOIN perm_case_status c ON c.case_number = l.case_number
+         LEFT JOIN perm_cases p ON p.case_number = l.case_number
+        WHERE l.employer_slug >= ? AND l.employer_slug < ?
+          AND c.current_status = ? AND c.is_final = 0${restSql}
+       UNION
+       SELECT ${STAGE_COLS}
+         FROM perm_cases p INDEXED BY idx_pc_emp_dec
+         JOIN perm_case_status c ON c.case_number = p.case_number
+         LEFT JOIN perm_live_recent l ON l.case_number = p.case_number
+        WHERE p.employer_slug >= ? AND p.employer_slug < ?
+          AND c.current_status = ? AND c.is_final = 0${restSql}
+     ) ORDER BY filing_date, case_number LIMIT ?`,
+    [
+      range.lo, range.hi, status, ...rest.params,
+      range.lo, range.hi, status, ...rest.params,
+      limit + 1,
+    ],
+  );
+  return { rows: found.slice(0, limit).map(toStageRow), windowed: found.length > limit };
 }

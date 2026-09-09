@@ -8,7 +8,9 @@ import {
   lookupUnifiedCase,
   readFlagLive,
   readFlagPublished,
+  readPermEmployerStage,
   readPermLive,
+  readPermStage,
   readPermPublished,
   type FlagProgramKey,
   type SliceResult,
@@ -106,6 +108,10 @@ export interface UnifiedSearchArgs {
 }
 
 export const UNIFIED_MAX = 300;
+/** One-source searches (a stage) fill the whole answer, bounded by UNIFIED_MAX. */
+function stageLimit(limit: number | undefined): number {
+  return Math.min(Math.max(1, Math.floor(limit ?? UNIFIED_MAX)), UNIFIED_MAX);
+}
 export const PER_SOURCE = 100;
 
 /**
@@ -341,9 +347,12 @@ export function skippedSources(narrow: UnifiedNarrow, lead: Lead): SkippedSource
   if (leadIsPublishedOnly && because.length === 0) {
     because.push(labels[lead.kind] ?? lead.kind);
   }
+  // A review stage is a live-record fact: no published row carries one, so
+  // the published half has nothing to say the moment a stage is asked for.
+  const stageAsked = lead.kind === "stage" || narrow.stage !== undefined;
   return {
     live: because.length > 0 || leadIsPublishedOnly,
-    published: narrow.outcome === "open",
+    published: narrow.outcome === "open" || stageAsked,
     because,
   };
 }
@@ -444,6 +453,7 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   const skipped = skippedSources(narrow, args.lead);
   const want = new Set<Program>(args.programs?.length ? args.programs : PROGRAMS);
   const employer = args.lead.kind === "employer" ? args.lead.value : null;
+  const stage = args.lead.kind === "stage" ? args.lead.value : narrow.stage ?? null;
 
   // THE PROGRAM CHIPS MEAN SOMETHING FOR EVERY LEAD BUT A FIRM. A firm lead
   // reads published PERM and nothing else - DOL publishes the firm for the
@@ -458,9 +468,10 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // site had never ingested it. It is ingested and backfilled now (91.5% of
   // wage-request rows, 74.6% of LCA rows carry a firm), so the chips choose
   // between three real sources for a firm exactly as they do for a state.
-  const wanted = (p: Program) => want.has(p);
+  // A stage is a PERM status, so a stage search reads PERM whatever the program chips say.
+  const wanted = (p: Program) => want.has(p) && (stage === null || p === "perm");
   const askPublished = (p: Program) => wanted(p) && !skipped.published;
-  const askLive = (p: Program) => wanted(p) && !skipped.live && employer !== null;
+  const askLive = (p: Program) => wanted(p) && !skipped.live && (employer !== null || stage !== null);
 
 
   const flagLive = (p: FlagProgramKey) =>
@@ -481,9 +492,17 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
     askPublished("perm")
       ? readPermPublished({ lead: args.lead, narrow, limit: PER_SOURCE }).catch(none<PermCaseRow>)
       : none<PermCaseRow>(),
-    askLive("perm") && employer
-      ? readPermLive(employer, narrow, PER_SOURCE).catch(none<LiveCaseRow>)
-      : none<LiveCaseRow>(),
+    // Three shapes of the live PERM read: a stage on its own, an employer
+    // narrowed to a stage, or the employer's whole live slice.
+    // A stage search has one source, so it may fill the whole answer rather
+    // than one source's share of it.
+    askLive("perm") && stage !== null && employer === null
+      ? readPermStage(stage, narrow, stageLimit(args.limit)).catch(none<LiveCaseRow>)
+      : askLive("perm") && stage !== null && employer !== null
+        ? readPermEmployerStage(employer, stage, narrow, stageLimit(args.limit)).catch(none<LiveCaseRow>)
+        : askLive("perm") && employer
+          ? readPermLive(employer, narrow, PER_SOURCE).catch(none<LiveCaseRow>)
+          : none<LiveCaseRow>(),
     flagLive("pwd"),
     flagPublished("pwd"),
     flagLive("lca"),

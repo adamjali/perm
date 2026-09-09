@@ -60,7 +60,7 @@ const PENDING = "is_final = 0";
  * record to move the number. Deciding which of those are genuine is not a
  * judgement a data page gets to make silently.
  */
-const TEST_FIXTURE_EMPLOYER = "bah-test-company-name";
+export const TEST_FIXTURE_EMPLOYER = "bah-test-company-name";
 const NOT_FIXTURE = "employer_name IS NOT ?";
 
 /** Days between filing and the moment we observed the case at this stage. */

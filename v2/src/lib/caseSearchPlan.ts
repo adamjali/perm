@@ -113,7 +113,8 @@ export type FilterKey =
   | "state"
   | "occupation"
   | "fiscalYear"
-  | "wage";
+  | "wage"
+  | "stage";
 
 export const FILTER_KEYS: readonly FilterKey[] = [
   "programs",
@@ -126,6 +127,7 @@ export const FILTER_KEYS: readonly FilterKey[] = [
   "occupation",
   "fiscalYear",
   "wage",
+  "stage",
 ];
 
 /** Why a control is off. One of these is always shown beside a disabled field. */
@@ -136,7 +138,10 @@ export type Refusal =
   | "one-case"
   /** The number itself says which program it belongs to. */
   | "number-names-program"
-  ;
+  | "stage-live-only"
+  | "stage-pending"
+  | "stage-perm"
+  | "lead-published-only";
 
 export interface FilterState {
   on: boolean;
@@ -155,6 +160,19 @@ export function refusalText(why: Refusal): string {
       return "A case number finds one case, so there is nothing left to narrow.";
     case "number-names-program":
       return "The case number already says which program it is.";
+    case "stage-live-only":
+      // Short on purpose: it prints under up to seven controls at once. The
+      // full explanation sits once, under the stage select.
+      return "Not on DOL's live record; it arrives when DOL publishes the case.";
+    case "stage-pending":
+      return "A case at a review stage is still open by definition, so the outcome is pending.";
+    case "stage-perm":
+      return "Review stages are PERM statuses, so this search reads the PERM record only.";
+    case "lead-published-only":
+      return (
+        "A law firm, state or occupation search reads DOL's published file, and no " +
+        "published row carries a review stage. Search by employer, or by stage alone."
+      );
   }
 }
 
@@ -168,6 +186,7 @@ export const FILTER_LABEL: Record<FilterKey, string> = {
   state: "Worksite state",
   occupation: "Occupation",
   fiscalYear: "Fiscal year",
+  stage: "Review stage",
   wage: "Wage",
 };
 
@@ -190,6 +209,8 @@ export interface LeadInput {
   state?: string;
   /** A resolved SOC code such as `15-1252.00`, not free text. */
   socCode?: string;
+  /** A DOL status string resolved from a stage slug, e.g. `APPLICATION ON HOLD`. */
+  stage?: string;
 }
 
 export type Lead =
@@ -197,12 +218,18 @@ export type Lead =
   | { kind: "employer"; value: string }
   | { kind: "firm"; value: string }
   | { kind: "state"; value: string }
-  | { kind: "occupation"; value: string };
+  | { kind: "occupation"; value: string }
+  /** A DOL review stage, as the status string (`APPLICATION ON HOLD`). Live record only. */
+  | { kind: "stage"; value: string };
 
 export function chooseLead(input: LeadInput): Lead | null {
   if (input.caseNumber) return { kind: "case", value: input.caseNumber };
   const employer = (input.employer ?? "").trim();
   if (employer.length >= 2) return { kind: "employer", value: employer };
+  // A stage leads before the published-only leads: it is a live-record fact
+  // with its own index, and a firm, state or occupation cannot narrow it
+  // (DOL names those only at publication), so they are dropped with a reason.
+  if (input.stage) return { kind: "stage", value: input.stage };
   if (input.firmSlug) return { kind: "firm", value: input.firmSlug };
   if (input.state) return { kind: "state", value: input.state };
   if (input.socCode) return { kind: "occupation", value: input.socCode };
@@ -263,6 +290,16 @@ export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterS
   }
 
   if (lead.kind === "employer") return all({ on: true });
+  if (lead.kind === "stage") {
+    const out = all({ on: false, why: "stage-live-only" });
+    out.stage = { on: true };
+    out.title = { on: true };
+    out.filed = { on: true };
+    out.outcome = { on: false, why: "stage-pending" };
+    out.decided = { on: false, why: "stage-pending" };
+    out.programs = { on: false, why: "stage-perm" };
+    return out;
+  }
 
   // firm | state | occupation: EVERY filter, because the index now carries the
   // combinations that used to be walks.
@@ -284,6 +321,7 @@ export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterS
   // So the restriction is gone rather than relaxed. A control is disabled here
   // only when the data genuinely cannot answer it, which is the next line.
   const out = all({ on: true });
+  out.stage = { on: false, why: "lead-published-only" };
   // ALL THREE LEADS NOW REACH ALL THREE PROGRAMS. The firm used to be the odd
   // one out: DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` in the ETA-9035 and
   // ETA-9141 files, and this site had simply never ingested the column, so a
@@ -305,6 +343,7 @@ export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterS
 export function availableOutcomes(lead: Lead | null): readonly Outcome[] {
   if (lead === null) return OUTCOMES;
   if (lead.kind === "employer" || lead.kind === "case") return OUTCOMES;
+  if (lead.kind === "stage") return OUTCOMES.filter((o) => o === "open");
   return OUTCOMES.filter((o) => o !== "open");
 }
 
@@ -344,3 +383,28 @@ export const PUBLISHED_ONLY_FILTERS: readonly FilterKey[] = [
   "fiscalYear",
   "wage",
 ];
+
+/**
+ * An employer search narrowed to a review stage keeps only what the live
+ * record carries. The route uses this to DROP the rest with a reason, and the
+ * form uses it to grey the same controls, so the two cannot disagree about
+ * what a stage takes away. A stage LEAD gets the same answer from
+ * `filterAvailability` directly; this is for the employer-plus-stage shape.
+ */
+export function withStageNarrow(
+  can: Record<FilterKey, FilterState>,
+  stageChosen: boolean,
+): Record<FilterKey, FilterState> {
+  if (!stageChosen) return can;
+  return {
+    ...can,
+    outcome: { on: false, why: "stage-pending" },
+    decided: { on: false, why: "stage-pending" },
+    programs: { on: false, why: "stage-perm" },
+    firm: { on: false, why: "stage-live-only" },
+    state: { on: false, why: "stage-live-only" },
+    occupation: { on: false, why: "stage-live-only" },
+    fiscalYear: { on: false, why: "stage-live-only" },
+    wage: { on: false, why: "stage-live-only" },
+  };
+}

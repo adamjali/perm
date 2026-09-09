@@ -9,6 +9,7 @@ import {
   filterAvailability,
   isOutcome,
   refusalText,
+  withStageNarrow,
   type Lead,
 } from "../caseSearchPlan";
 
@@ -118,8 +119,12 @@ describe("filterAvailability", () => {
       const can = filterAvailability(leads[kind]!);
       for (const k of FILTER_KEYS) {
         if (k === "programs") continue; // its own rule, asserted below
+        if (k === "stage") continue; // live-record only, asserted below
         expect([kind, k, can[k].on]).toEqual([kind, k, true]);
       }
+      // A review stage lives on the live record and no published row carries
+      // one, so the three published-only leads cannot take it.
+      expect(can.stage).toEqual({ on: false, why: "lead-published-only" });
     },
   );
 
@@ -201,5 +206,50 @@ describe("the shared vocabulary", () => {
     for (const o of OUTCOMES) expect(isOutcome(o)).toBe(true);
     expect(isOutcome("pending")).toBe(false);
     expect(isOutcome("")).toBe(false);
+  });
+});
+
+describe("the review stage: a live-record lead and a live-record narrow", () => {
+  it("leads after an employer and before the published-only leads", () => {
+    expect(chooseLead({ employer: "Cognizant", stage: "APPLICATION ON HOLD" })).toEqual({
+      kind: "employer",
+      value: "Cognizant",
+    });
+    expect(chooseLead({ stage: "APPLICATION ON HOLD", firmSlug: "fragomen", state: "TX" })).toEqual({
+      kind: "stage",
+      value: "APPLICATION ON HOLD",
+    });
+    expect(chooseLead({ caseNumber: "G-100-26030-100001", stage: "RFI ISSUED" })?.kind).toBe("case");
+  });
+
+  it("as a lead keeps only what the live record carries, with a reason on everything else", () => {
+    const can = filterAvailability({ kind: "stage", value: "RFI ISSUED" });
+    expect(can.stage.on).toBe(true);
+    expect(can.title.on).toBe(true);
+    expect(can.filed.on).toBe(true);
+    expect(can.outcome).toEqual({ on: false, why: "stage-pending" });
+    expect(can.decided).toEqual({ on: false, why: "stage-pending" });
+    expect(can.programs).toEqual({ on: false, why: "stage-perm" });
+    for (const k of ["firm", "state", "occupation", "fiscalYear", "wage"] as const) {
+      expect([k, can[k]]).toEqual([k, { on: false, why: "stage-live-only" }]);
+    }
+    expect(availableOutcomes({ kind: "stage", value: "RFI ISSUED" })).toEqual(["open"]);
+    // Every refusal has words, so no control can be greyed without a sentence.
+    for (const why of ["stage-live-only", "stage-pending", "stage-perm", "lead-published-only"] as const) {
+      expect(refusalText(why).length).toBeGreaterThan(30);
+    }
+  });
+
+  it("narrowing an employer search to a stage takes away the same things, through one rule", () => {
+    const base = filterAvailability({ kind: "employer", value: "Cognizant" });
+    expect(withStageNarrow(base, false)).toBe(base);
+    const narrowed = withStageNarrow(base, true);
+    expect(narrowed.stage.on).toBe(true);
+    expect(narrowed.title.on).toBe(true);
+    expect(narrowed.filed.on).toBe(true);
+    expect(narrowed.outcome.why).toBe("stage-pending");
+    expect(narrowed.programs.why).toBe("stage-perm");
+    expect(narrowed.state.why).toBe("stage-live-only");
+    expect(narrowed.wage.why).toBe("stage-live-only");
   });
 });

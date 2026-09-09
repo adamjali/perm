@@ -3,6 +3,8 @@
 import { Fragment, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+
+import { searchStages } from "@/lib/searchStages";
 import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { usePublicQuery } from "@/lib/usePublicQuery";
@@ -16,6 +18,7 @@ import {
   OUTCOME_LABEL,
   availableOutcomes,
   chooseLead,
+  withStageNarrow,
   filterAvailability,
   refusalText,
   type FilterKey,
@@ -198,6 +201,9 @@ export function UnifiedCaseSearch({
 }) {
   const params = useSearchParams();
   const initial = params.get("q") ?? "";
+  // `?stage=<slug>` is how the stage pages hand a cohort to this search.
+  const stageOptions = useMemo(() => searchStages(), []);
+  const initialStage = stageOptions.some((o) => o.slug === params.get("stage")) ? (params.get("stage") ?? "") : "";
   const uid = useId();
 
   // The lead fields.
@@ -217,6 +223,7 @@ export function UnifiedCaseSearch({
   const [wMinInput, setWMinInput] = useState("");
   const [wMaxInput, setWMaxInput] = useState("");
   const [programs, setPrograms] = useState<Program[]>(ALL_PROGRAMS);
+  const [stageInput, setStageInput] = useState<string>(initialStage);
 
   const [query, setQuery] = useState({ search: initial.trim() ? initial.trim() : "", n: 0 });
   // `null` means "not searched yet", which is NOT the same as "searched with
@@ -224,7 +231,12 @@ export function UnifiedCaseSearch({
   // answers `needsLead`, so pressing Search with nothing filled in explains
   // itself instead of doing nothing at all.
   const [submitted, setSubmitted] = useState<string | null>(
-    initial.trim() ? new URLSearchParams({ q: initial.trim() }).toString() : null,
+    initial.trim() || initialStage
+      ? new URLSearchParams({
+          ...(initial.trim() ? { q: initial.trim() } : {}),
+          ...(initialStage ? { stage: initialStage } : {}),
+        }).toString()
+      : null,
   );
 
   // A CASE NUMBER TYPED HERE MUST NOT BE RUN AS AN EMPLOYER NAME. Shape only:
@@ -249,11 +261,18 @@ export function UnifiedCaseSearch({
         ...(firmInput.trim() ? { firmSlug: "resolved-on-the-server" } : {}),
         ...(stateInput ? { state: stateInput } : {}),
         ...(occInput.trim() ? { socCode: "resolved-on-the-server" } : {}),
+        ...(stageInput ? { stage: stageInput } : {}),
       }),
-    [typedCaseNumber, textInput, firmInput, stateInput, occInput],
+    [typedCaseNumber, textInput, firmInput, stateInput, occInput, stageInput],
   );
 
-  const can = useMemo(() => filterAvailability(lead), [lead]);
+  // An employer search narrowed to a stage loses what the live record lacks,
+  // through the same rule the route applies, so the greyed controls and the
+  // dropped filters are one list.
+  const can = useMemo(
+    () => withStageNarrow(filterAvailability(lead), Boolean(stageInput) && lead?.kind === "employer"),
+    [lead, stageInput],
+  );
   const outcomes = useMemo(() => availableOutcomes(lead), [lead]);
 
   // Narrowing applied AFTER the answer arrives: not a new request, so flipping
@@ -299,6 +318,7 @@ export function UnifiedCaseSearch({
     if (MONTH_RE.test(dFromInput)) s.set("dfrom", dFromInput);
     if (MONTH_RE.test(dToInput)) s.set("dto", dToInput);
     if (fyInput) s.set("fy", fyInput);
+    if (stageInput && can.stage.on) s.set("stage", stageInput);
     if (wMinInput.trim()) s.set("wmin", wMinInput.trim());
     if (wMaxInput.trim()) s.set("wmax", wMaxInput.trim());
     if (programs.length && programs.length < ALL_PROGRAMS.length) {
@@ -507,6 +527,42 @@ export function UnifiedCaseSearch({
                 {refusalText(can.outcome.why ?? "no-lead")}
               </p>
             )}{" "}
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
+              <Field
+                label={FILTER_LABEL.stage}
+                state={can.stage}
+                describedBy={`${uid}-stage-why`}
+              >
+                <select
+                  value={stageInput}
+                  onChange={(e) => {
+                    setStageInput(e.target.value);
+                    // A stage is open by definition; a decided outcome beside
+                    // it would be a contradiction the route drops anyway.
+                    if (e.target.value) setOutcome("");
+                  }}
+                  disabled={!can.stage.on}
+                  aria-label={FILTER_LABEL.stage}
+                  aria-describedby={can.stage.on ? undefined : `${uid}-stage-why`}
+                  className={CONTROL + " min-w-0"}
+                >
+                  <option value="">Any stage</option>
+                  {stageOptions.map((o) => (
+                    <option key={o.slug} value={o.slug}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </Field>{" "}
+              {stageInput ? (
+                <p className="text-sm leading-snug text-foreground/70 sm:self-end">
+                  A review stage is a fact of DOL&apos;s live record, which carries
+                  the case number, employer, job title and filing date. The wage,
+                  law firm, worksite state and occupation arrive only when DOL
+                  publishes the case, so those filters wait.
+                </p>
+              ) : null}
+            </div>{" "}
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
               <Field
                 label="Job title contains"
