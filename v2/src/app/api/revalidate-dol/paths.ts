@@ -39,11 +39,23 @@ export const DOL_PAGES = [
   "/tools/pwd-calculator",
   "/tools/green-card-timeline",
   "/tools/perm-timeline-calculator",
-  // The three badges carry DOL's queue month and average days (2026-09-08);
-  // a hot-linked badge showing last week's month for a day is the exact
-  // staleness this endpoint exists to end. Literal paths, because the
-  // dynamic segment cannot be handed to revalidatePath.
+  // The catalogue page reads the snapshot ITSELF now (2026-09-09). It used to
+  // render `<img src="/badge/x.svg">` and hold no figure of its own, so it was
+  // correctly absent; it now prints DOL's as-of date and renders every badge
+  // inline from one read. `route.test.ts` caught the omission the same day the
+  // page changed, which is exactly what that test is for.
+  "/badges",
+  // Every badge carries DOL's queue month or average days, and a hot-linked
+  // badge showing last week's month for a day is the staleness this endpoint
+  // exists to end. Literal paths, because a dynamic segment cannot be handed
+  // to revalidatePath. Keep in step with BADGE_KINDS.
   "/badge/perm-queue.svg",
+  "/badge/perm-audits.svg",
+  "/badge/perm-recon.svg",
   "/badge/perm-days.svg",
   "/badge/pwd-queue.svg",
+  "/badge/pwd-perm-survey.svg",
+  "/badge/pwd-h1b.svg",
+  "/badge/pwd-h2b.svg",
+  "/badge/pwd-cw1.svg",
 ] as const;
