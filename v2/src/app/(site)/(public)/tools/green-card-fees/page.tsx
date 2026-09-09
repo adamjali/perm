@@ -7,6 +7,7 @@ import { GreenCardFeesCalculator } from "@/components/tools/GreenCardFeesCalcula
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { FEE_SCHEDULE } from "@/lib/perm";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * USCIS government fees for the employment-based green card.
@@ -20,12 +21,12 @@ import { FEE_SCHEDULE } from "@/lib/perm";
 const TITLE = "Employment-Based Green Card Government Fees Calculator";
 const DESCRIPTION = `USCIS filing fees for an employment-based green card from Form G-1055 (edition ${FEE_SCHEDULE.edition}): I-140 and the asylum program fee, premium processing, I-485, work permit and advance parole per person.`;
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/green-card-fees" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/tools/green-card-fees" },
-};
+}, "green-card-fees");
 
 export const dynamic = "force-static";
 

@@ -7,6 +7,7 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { WageLevelsTool } from "@/components/tools/WageLevelsTool";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { SOC_RE } from "@/lib/wageLevels";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * DOL's four prevailing wage levels for an occupation in an area, read live
@@ -18,12 +19,12 @@ const TITLE = "Prevailing Wage Levels by Occupation and Area";
 const DESCRIPTION =
   "DOL's four OEWS prevailing wage levels for any occupation in any metro or non-metro area, read live from the OFLC wage search, with the series year each figure belongs to.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/wage-levels" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/tools/wage-levels" },
-};
+}, "wage-levels");
 
 export const dynamic = "force-dynamic";
 

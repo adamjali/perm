@@ -19,6 +19,7 @@ import { getStateLadders, MIN_CASES_FOR_LADDER } from "@/lib/turso/wages";
 import { LadderCombViews } from "@/components/wages/LadderViews";
 import { SplitLadderNote } from "@/components/wages/SplitLadderNote";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * PERM salary explorer.
@@ -37,7 +38,7 @@ const TITLE = "PERM Salary Explorer";
 const DESCRIPTION =
   "Offered wages on PERM cases, by occupation, state and year, from DOL's own disclosure files. Median, average and percentiles over the cases you select.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/salary-explorer" },
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/salary-explorer",
   },
-};
+}, "salary-explorer");
 
 // The disclosure files are quarterly, so a day bounds staleness far below the
 // data's own cadence.

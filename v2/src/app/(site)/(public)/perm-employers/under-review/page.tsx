@@ -12,6 +12,7 @@ import { QUEUE_STATUS, SHARE_FLOOR, nationalShare, rankByReview, rankByShare, ty
 import { openGraphBase } from "@/lib/openGraphBase";
 import { searchStageSlug } from "@/lib/searchStages";
 import { getEmployerStages } from "@/lib/turso/employerStages";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * Employers by the PERM cases DOL has pulled aside.
@@ -36,12 +37,12 @@ const TITLE = "PERM Employers With Cases On Hold, Audited or Under Appeal";
 const DESCRIPTION =
   "Every employer with pending PERM cases DOL has pulled aside: on hold, at RFI or NORD, or under appeal. Counts and shares from DOL's live record, dated.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-employers/under-review" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/perm-employers/under-review" },
-};
+}, "perm-employers-under-review");
 
 // The document is rewritten by the 4:10 AM ET sweep; six hours keeps the
 // page within a working day of it without a rebuild per visit.

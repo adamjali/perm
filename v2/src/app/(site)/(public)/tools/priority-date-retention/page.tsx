@@ -6,6 +6,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { PriorityDateRetentionCalculator } from "@/components/tools/PriorityDateRetentionCalculator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * Priority date retention and I-485 portability, from the dates on the record.
@@ -20,12 +21,12 @@ const TITLE = "Priority Date Retention and I-485 Portability Calculator";
 const DESCRIPTION =
   "From an I-140 approval date: when an employer's withdrawal stops revoking it, when an I-485 becomes portable under 204(j), and whether the priority date is kept. Citations included.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/priority-date-retention" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/tools/priority-date-retention" },
-};
+}, "priority-date-retention");
 
 export const dynamic = "force-static";
 

@@ -7,6 +7,7 @@ import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * Public PERM deadline calculator.
@@ -22,7 +23,7 @@ const TITLE = "PERM Deadline Calculator";
 const DESCRIPTION =
   "Work out every PERM deadline from the prevailing wage determination: recruitment window, notice of filing, quiet period and the ETA-9089 filing window.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/perm-deadline-calculator" },
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/perm-deadline-calculator",
   },
-};
+}, "perm-deadline-calculator");
 
 export const dynamic = "force-static";
 

@@ -13,6 +13,7 @@ import { currentMonthUtc } from "@/lib/dolFormat";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { withSocialCard } from "@/lib/socialCard";
 /**
  * Prevailing wage determination queue calculator.
  *
@@ -26,7 +27,7 @@ const TITLE = "PWD Processing Time Calculator";
 const DESCRIPTION =
   "How many prevailing wage requests sit ahead of yours, from DOL's own published backlog. The first PERM step, and the one that sets every deadline.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/pwd-calculator" },
@@ -36,7 +37,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/pwd-calculator",
   },
-};
+}, "pwd-calculator");
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178

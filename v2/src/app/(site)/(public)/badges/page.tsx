@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { BADGE_KINDS, type BadgeKind } from "@/lib/badge";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * The embeddable badges and how to embed them. Each badge carries one figure
@@ -16,12 +17,12 @@ const DESCRIPTION =
 const PATH = "/badges";
 const ORIGIN = "https://permtracker.app";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/badges" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
-};
+}, "badges");
 
 export const dynamic = "force-static";
 

@@ -5,6 +5,7 @@ import { Fragment } from "react";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { GLOSSARY, glossaryLetters, glossarySorted } from "@/lib/glossary";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * The glossary: every term the site uses, defined once, each pointing at the
@@ -17,7 +18,7 @@ const TITLE = "PERM and Green Card Glossary";
 const DESCRIPTION = `${GLOSSARY.length} employment green card terms in plain words, each with the regulation it comes from: PERM, PWD, priority date, cutoff, RFI, audit, BALCA and more.`;
 const PATH = "/glossary";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/glossary" },
@@ -27,7 +28,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: PATH,
   },
-};
+}, "glossary");
 
 export const dynamic = "force-static";
 

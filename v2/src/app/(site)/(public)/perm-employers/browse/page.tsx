@@ -20,15 +20,16 @@ import {
   BrowseIndexBody,
   browseIndexMetadata,
 } from "@/components/entities/BrowseBody";
+import { withSocialCard } from "@/lib/socialCard";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   ...browseIndexMetadata("employer"),
   // Spelled out rather than inherited from the helper, because
   // `scripts/audit_page_registration.py` reads the canonical out of the page
   // FILE. A registration gate that cannot see a route's canonical reports the
   // route as unregistered, and the value is identical either way.
   alternates: { canonical: "/perm-employers/browse" },
-};
+}, "perm-employers-browse");
 
 // Quarterly data, same window as the hub it belongs to.
 // QUARTERLY DATA, WEEKLY WINDOW, AND A TRIGGER. This reads DOL's quarterly

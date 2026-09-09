@@ -19,6 +19,7 @@ import { getLcaSummary } from "@/lib/turso/lcaCases";
 import { getLiveCensus, statusTotalFrom } from "@/lib/turso/liveCensus";
 import { getPwdSummary } from "@/lib/turso/pwdCases";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * Every status word FLAG can show, with what it means, what the regulation
@@ -36,12 +37,12 @@ const DESCRIPTION =
   "What each DOL case status means for a PERM, a wage request or an LCA: analyst review, RFI issued, on hold, appeals, certified, with the rule and the count.";
 const PATH = "/perm-case-statuses";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-case-statuses" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
-};
+}, "perm-case-statuses");
 
 export const revalidate = 21600;
 

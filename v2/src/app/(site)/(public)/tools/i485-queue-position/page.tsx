@@ -30,6 +30,7 @@ import {
   type DatasetFreshness,
 } from "@/lib/turso/publicData";
 import type { I485CellTable } from "@/lib/i485/position";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * Queue position inside USCIS's employment-based I-485 pending inventory.
@@ -48,7 +49,7 @@ const TITLE = "I-485 Queue Position Calculator";
 const DESCRIPTION =
   "How many employment-based I-485 applications USCIS had pending ahead of a priority date, published as a range because USCIS withholds its smallest counts.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/i485-queue-position" },
@@ -58,7 +59,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/i485-queue-position",
   },
-};
+}, "i485-queue-position");
 
 // USCIS publishes this monthly, so a day bounds staleness well below the
 // data's own cadence and costs one regeneration a day. The ingest revalidates

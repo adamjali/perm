@@ -14,6 +14,7 @@ import { currentMonthUtc } from "@/lib/dolFormat";
 import { getEstimatorData } from "@/lib/turso/estimate";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { withSocialCard } from "@/lib/socialCard";
 /**
  * PERM decision-date calculator.
  *
@@ -28,7 +29,7 @@ const TITLE = "PERM Processing Time Calculator";
 const DESCRIPTION =
   "Estimate when the Department of Labor will decide your PERM case, from DOL's own published queue data and disclosure files, with every source shown.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/perm-timeline-calculator" },
@@ -38,7 +39,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/perm-timeline-calculator",
   },
-};
+}, "perm-timeline-calculator");
 
 // DOL publishes weekly and the disclosure files are quarterly, so an hour of
 // cache costs nothing in freshness and keeps this page static for crawlers.

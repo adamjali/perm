@@ -9,6 +9,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getI140Trends } from "@/lib/turso/publicData";
 import { quartersFor, totalsFor } from "@/lib/i140Trends";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * I-140 outcomes by category, quarter by quarter.
@@ -25,7 +26,7 @@ const TITLE = "I-140 Trends by Category";
 const DESCRIPTION =
   "USCIS I-140 receipts, approvals, denials and pending petitions by employment-based category, quarter by quarter, with denial rates over decided petitions.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/i140-trends" },
@@ -35,7 +36,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/i140-trends",
   },
-};
+}, "i140-trends");
 
 // USCIS publishes quarterly, so a day bounds staleness far below its cadence.
 // QUARTERLY DATA, WEEKLY WINDOW, AND A TRIGGER. This reads DOL's quarterly

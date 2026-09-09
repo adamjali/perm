@@ -21,6 +21,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { getEstimatorData } from "@/lib/turso/estimate";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { withSocialCard } from "@/lib/socialCard";
 /**
  * The whole employment-based green card in one view.
  *
@@ -33,7 +34,7 @@ const TITLE = "Employment Green Card Timeline";
 const DESCRIPTION =
   "Every stage of an employment-based green card, drawn to scale from published DOL and USCIS figures, from the prevailing wage queue to the visa number wait.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/green-card-timeline" },
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/green-card-timeline",
   },
-};
+}, "green-card-timeline");
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178

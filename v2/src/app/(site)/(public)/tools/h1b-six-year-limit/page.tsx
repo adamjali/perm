@@ -6,6 +6,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { H1bMaxOutCalculator } from "@/components/tools/H1bMaxOutCalculator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * The H-1B six-year limit against the PERM 365-day rule, as a calculator.
@@ -22,12 +23,12 @@ const TITLE = "H-1B Six-Year Limit and the PERM 365-Day Rule Calculator";
 const DESCRIPTION =
   "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Two dates, with the citations.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/h1b-six-year-limit" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/tools/h1b-six-year-limit" },
-};
+}, "h1b-six-year-limit");
 
 export const dynamic = "force-static";
 

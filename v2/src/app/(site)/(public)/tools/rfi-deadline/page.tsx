@@ -6,6 +6,7 @@ import { FaqList } from "@/components/tools/FaqList";
 import { RfiDeadlineCalculator } from "@/components/tools/RfiDeadlineCalculator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * The RFI and audit response deadline as a calculator.
@@ -20,12 +21,12 @@ const TITLE = "PERM RFI and Audit Response Deadline Calculator";
 const DESCRIPTION =
   "The last day to answer a PERM audit letter or request for information: 30 calendar days from the date on DOL's letter under 20 CFR 656.20, with the weekday and days left.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/rfi-deadline" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/tools/rfi-deadline" },
-};
+}, "rfi-deadline");
 
 export const dynamic = "force-static";
 

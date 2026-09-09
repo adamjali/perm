@@ -11,6 +11,7 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { withSocialCard } from "@/lib/socialCard";
 /**
  * I-140 queue calculator.
  *
@@ -24,7 +25,7 @@ const TITLE = "I-140 Processing Time and Queue Calculator";
 const DESCRIPTION =
   "How many I-140 petitions are waiting in your category, how fast USCIS clears them, and how that compares to the processing time USCIS publishes.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/i140-calculator" },
@@ -34,7 +35,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/i140-calculator",
   },
-};
+}, "i140-calculator");
 
 // USCIS publishes quarterly, so an hour of cache costs nothing in freshness.
 // The disclosure files are quarterly, so an hourly window bought

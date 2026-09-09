@@ -6,6 +6,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { daysToAnchor, summarizeScores } from "@/lib/predictionLedger";
 import { getScorecard } from "@/lib/turso/scorecard";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * The estimate scorecard: every prediction this site made for a real case,
@@ -19,12 +20,12 @@ const DESCRIPTION =
   "Every decision-date estimate this site recorded for a real PERM case, with its anchor and window, the day DOL decided, and the error in days. Never edited.";
 const PATH = "/estimate-scorecard";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/estimate-scorecard" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
-};
+}, "estimate-scorecard");
 
 export const revalidate = 21600;
 

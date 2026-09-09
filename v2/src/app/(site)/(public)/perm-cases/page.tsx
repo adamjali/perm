@@ -29,11 +29,12 @@ import { listByKind } from "@/lib/turso/entities";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
+import { withSocialCard } from "@/lib/socialCard";
 const TITLE = "PERM Case Search";
 const DESCRIPTION =
   "Search every PERM case in DOL's published disclosure window by case number, employer, law firm, state or occupation, with the wage and the days it took.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/perm-cases" },
@@ -43,7 +44,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/perm-cases",
   },
-};
+}, "perm-cases");
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178

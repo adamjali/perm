@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { correctionsSorted } from "@/lib/corrections";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * The corrections log. A site that publishes numbers gets some wrong; the
@@ -15,12 +16,12 @@ const DESCRIPTION =
   "Every published claim this site got wrong, dated: what it said, what was true, and what changed. Entries are added and never removed.";
 const PATH = "/corrections";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: `${TITLE}: What This Site Got Wrong, and When`,
   description: DESCRIPTION,
   alternates: { canonical: "/corrections" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
-};
+}, "corrections");
 
 export const dynamic = "force-static";
 

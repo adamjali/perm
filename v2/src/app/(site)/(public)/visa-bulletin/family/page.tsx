@@ -7,6 +7,7 @@ import { formatMonth } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { BOARD_COUNTRIES, summariseBulletins, type BoardCell } from "@/lib/turso/bulletin";
 import { getFamilyBulletinSeries } from "@/lib/turso/publicData";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * Family-sponsored cutoff history from the bulletin archive.
@@ -23,12 +24,12 @@ const DESCRIPTION =
   "Every family-sponsored cutoff date (F1, F2A, F2B, F3, F4) from the visa bulletin archive by country: the latest final action and dates-for-filing cutoffs, how far each moved over the months held, and every retrogression.";
 const PATH = "/visa-bulletin/family";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/visa-bulletin/family" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
-};
+}, "visa-bulletin-family");
 
 export const revalidate = 86400;
 

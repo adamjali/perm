@@ -5,6 +5,7 @@ import Link from "next/link";
 import { PrefsRequestForm } from "@/components/prefs/PrefsRequestForm";
 import { AlertLanesFigure } from "@/components/marketing/PageFigures";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * The one page about everything we email.
@@ -16,7 +17,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
  * off. Turning things ON always happens from the pages that own them.
  */
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: "Email Preferences",
   description:
     "See everything PERM Tracker sends to your address - case status alerts, queue milestones, visa bulletin movements - and turn any of it off with one link.",
@@ -30,7 +31,7 @@ export const metadata: Metadata = {
       "One link to see and stop everything PERM Tracker emails you.",
     url: "/email-preferences",
   },
-};
+}, "email-preferences");
 
 const KINDS = [
   {

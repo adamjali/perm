@@ -12,6 +12,7 @@ import { getVisaBulletinSeries } from "@/lib/turso/publicData";
 import { getBulletinBoard, categoriesIn } from "@/lib/turso/bulletin";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { withSocialCard } from "@/lib/socialCard";
 /**
  * Priority dates against the visa bulletin.
  *
@@ -34,7 +35,7 @@ const TITLE = "Visa Bulletin Priority Date Calculator";
 const DESCRIPTION =
   "Check an employment-based priority date against the visa bulletin, and see how the cutoff has moved month by month, including the months it went backwards.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/tools/priority-date-calculator" },
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
     description: DESCRIPTION,
     url: "/tools/priority-date-calculator",
   },
-};
+}, "priority-date-calculator");
 
 // The disclosure files are quarterly, so an hourly window bought
 // nothing and cost a regeneration per page per hour across 21,178

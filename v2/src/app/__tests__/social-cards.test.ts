@@ -58,7 +58,11 @@ describe("page social cards", () => {
   const pagesNaming = (slug: string) =>
     publicPages.filter((f) => {
       const src = readFileSync(f, "utf8");
-      return src.includes("withSocialCard(") && src.includes(`"${slug}"`);
+      // The slug must be the card ARGUMENT, `}, "slug")`, not any string on
+      // the page: the methodology page names every dataset, including
+      // "i140-trends", and wires its own card, so a bare substring test
+      // counted it as a second page for the trends card.
+      return src.includes("withSocialCard(") && new RegExp(`\\}\\s*,\\s*"${slug}"\\s*\\)`).test(src);
     });
 
   it.each(slugs)("the %s page wires its card through withSocialCard", (slug) => {

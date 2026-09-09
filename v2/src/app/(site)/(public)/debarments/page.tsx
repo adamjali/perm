@@ -12,6 +12,7 @@ import {
   type Debarment,
   type DebarmentProgram,
 } from "@/lib/turso/debarments";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * DOL's debarment lists, as published.
@@ -30,12 +31,12 @@ const TITLE = "Employers and Agents Debarred From PERM, H-1B, H-2A and H-2B";
 const DESCRIPTION =
   "DOL's debarment lists in one place: every employer, attorney and agent barred from PERM, H-1B, H-2A or H-2B filings, with the period and the violation.";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: "/debarments" },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: "/debarments" },
-};
+}, "debarments");
 
 // The lists move a few times a year; the ingest runs daily and this page
 // follows it within a working day.
