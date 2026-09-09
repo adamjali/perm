@@ -40,9 +40,9 @@ left off.
 - [ ] D5 spillover arithmetic from State's Table V (needs the PDF saved by Adam once a year)
 
 ## E. Growth
-- [ ] E1 embeddable badges (daily static SVG)
+- [x] E1 badges: `/badge/<perm-queue|perm-days|pwd-queue>.svg`, static route regenerated daily from DOL's processing-times snapshot (no estimates; a missing figure renders 'no figure today'); `/badges` page with markdown and HTML snippets. AT DEPLOY: add a Firewall bypass for `/badge/*` so GitHub's camo proxy and other server-side fetchers are not challenged
 - [ ] E2 web push alerts for people without an account
-- [ ] E3 user-reported milestones (I-140, I-485), own table, shown beside the record with counts
+- [x] E3 user-reported milestones: `caseMilestones` table, `/milestone/report` (internal mutation, per-IP 6/hour, global 300/day charged before the write, one row per case+reporter+kind) and `/milestone/summary` on Convex HTTP; `CaseMilestones` section on every PERM case page, labelled unverified; 5 convex tests incl. the budget refusing at exactly 300
 - [ ] E4 digest ON at a cap that keeps the worst day under Resend's free 100 (set at deploy)
 - [ ] E5 auto-posts to X and LinkedIn (needs Adam's API keys; scaffold only)
 - [ ] E6 translations of the situation guides (needs a reviewer; hreflang scaffold only)

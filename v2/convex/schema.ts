@@ -1918,6 +1918,31 @@ export default defineSchema({
     contentHash: v.string(),
   }).index("by_computed", ["computedAt"]),
 
+  /**
+   * Milestones people report for a case after DOL: the I-140 and I-485
+   * stages, which have no federal per-case record. Unverified user reports,
+   * labelled as such wherever they render and never blended into an estimate.
+   * One row per (case, reporter, kind): a repeat from the same address updates
+   * its own row, so a count cannot be inflated by clicking.
+   */
+  caseMilestones: defineTable({
+    /** Normalised PERM case number, "G-100-25324-425560" or the older "A-" form. */
+    caseNumber: v.string(),
+    kind: v.union(
+      v.literal("i140-filed"),
+      v.literal("i140-approved"),
+      v.literal("i485-filed"),
+      v.literal("i485-approved"),
+    ),
+    /** ISO date the reporter gave. */
+    eventDate: v.string(),
+    submittedAt: v.number(),
+    /** SHA-256 of the forwarded address, computed by the HTTP layer; dedupe only. */
+    ipHash: v.string(),
+  })
+    .index("by_case", ["caseNumber"])
+    .index("by_case_ip_kind", ["caseNumber", "ipHash", "kind"]),
+
   contactMessages: defineTable({
     name: v.string(),
     email: v.string(),

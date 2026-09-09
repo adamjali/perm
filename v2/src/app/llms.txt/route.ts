@@ -207,6 +207,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "What each DOL FLAG status means for a PERM, a prevailing wage request or an H-1B LCA (analyst review, RFI issued, on hold, appeals, certified, expired), with the regulation that defines it or a note that none does, and today's count.",
   },
   {
+    path: "/badges",
+    label: "Badges",
+    blurb: "Three embeddable SVG badges regenerated daily from DOL's own published figures (the PERM queue month, the average decision days, the wage-request month), with the markdown and HTML to embed them.",
+  },
+  {
     path: "/corrections",
     label: "Corrections",
     blurb: "Every published claim this site got wrong, dated, with what it said, what was true and what changed; entries are added and never removed.",

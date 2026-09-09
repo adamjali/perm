@@ -5,6 +5,7 @@ import { WarningIcon } from "@phosphor-icons/react/ssr";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { InsightLede, Verdict } from "@/components/tools/Insight";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
+import { CaseMilestones } from "@/components/tools/CaseMilestones";
 import { CaseEstimate } from "@/components/tools/CaseEstimate";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
 import { QueueTape } from "@/components/tools/QueueTape";
@@ -285,6 +286,11 @@ export function CaseStatusResult({
       {!isFinal ? (
         <CaseAlertForm caseNumber={result.caseNumber} className="mt-8" />
       ) : null}{" "}
+      {/* After DOL: the I-140 and I-485 have no federal per-case record, so
+          this is the only trace of them, as labelled user reports. Rendered for
+          decided cases too, because a certified PERM is exactly the case whose
+          next stage people want to compare notes on. */}
+      <CaseMilestones caseNumber={result.caseNumber} className="mt-8" />{" "}
       {!isFinal && wall ? (
         <Position
           wall={wall}
