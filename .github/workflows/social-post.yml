@@ -1,0 +1,52 @@
+name: Social post (scaffold, dispatch only)
+
+# A weekly post for X and LinkedIn composed from the record. SCAFFOLD: it
+# has no schedule and posts nothing until the API credentials exist as
+# repository secrets (X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN,
+# X_ACCESS_SECRET, LINKEDIN_ACCESS_TOKEN, LINKEDIN_AUTHOR_URN). Without them
+# a dispatch prints the draft into the run log and exits 0. When keys arrive:
+# dispatch once with post=true, read what the APIs returned, and only then
+# add a `schedule:` (Tuesdays, after the digest, would be the natural slot).
+
+on:
+  workflow_dispatch:
+    inputs:
+      post:
+        description: "Post to X and LinkedIn (needs the secrets); otherwise print the draft"
+        type: boolean
+        default: false
+
+concurrency:
+  group: social-post
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: v2
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compose (and post, if asked and configured)
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+          LINKEDIN_ACCESS_TOKEN: ${{ secrets.LINKEDIN_ACCESS_TOKEN }}
+          LINKEDIN_AUTHOR_URN: ${{ secrets.LINKEDIN_AUTHOR_URN }}
+        run: |
+          if [ "${{ inputs.post }}" = "true" ]; then
+            python3 scripts/social_post.py --post
+          else
+            python3 scripts/social_post.py
+          fi
