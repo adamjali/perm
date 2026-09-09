@@ -3384,6 +3384,23 @@ actually requested, the JSON body, the content type. What remains is the
 credentials, which are Adam's to create (an X developer app under the persona,
 four secrets on the repo), then one dispatch with `post=true`.
 
+## Dismissing a code-scanning alert: 280 characters, and reasons with SPACES
+
+Two rounds of ~100 dismissals failed before the message was read. The API
+caps `dismissed_comment` at **280 characters** and answers 422 with the exact
+count; a probe with a five-character comment succeeded, which made it look
+like a secondary rate limit and sent the next attempt down the wrong path.
+`dismissed_reason` must also be one of `"false positive"`, `"won't fix"`,
+`"used in tests"`, `"mitigated"` **with spaces**, not underscores. And
+`?per_page=100` is one PAGE, not the total: the count read 100, then 61 after
+96 dismissals, because more were waiting behind it. Walk the pages.
+
+**Semgrep scans test fixtures as if they were our source.** One saved State
+Department bulletin, checked in so the parser can run against the real page,
+raised **95 `missing-integrity` alerts** about script tags the State
+Department wrote. `.semgrepignore` excludes `**/__fixtures__/` and
+`**/fixtures/` now, for the reason it already excluded lockfiles.
+
 ## Pressure needs a PAUSE; a dropped socket does not (2026-09-09)
 
 Two production builds failed prerendering `/tools/salary-explorer` on
