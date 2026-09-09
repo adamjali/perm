@@ -19,10 +19,12 @@ interface ShareButtonsProps {
 export default function ShareButtons({ title, url }: ShareButtonsProps) {
   const [copied, setCopied] = React.useState(false);
 
-  const fullUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}${url}`
-      : `https://permtracker.app${url}`;
+  // The canonical origin on both server and client. Reading
+  // `window.location.origin` here made the server render one href and the
+  // client another, which React reports as a hydration mismatch it will not
+  // patch, so the client's value was silently discarded anyway. A share link
+  // should carry the canonical host regardless of where the page was opened.
+  const fullUrl = `https://permtracker.app${url}`;
 
   const handleCopy = async () => {
     try {
