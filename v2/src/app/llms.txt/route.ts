@@ -50,6 +50,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Every filing month's pending census: how many cases are undecided, in which DOL queue, and how far each month has progressed.",
   },
   {
+    path: "/perm-employers/under-review",
+    label: "PERM employers with cases on hold, audited or under appeal",
+    blurb:
+      "Every employer with pending PERM cases DOL has pulled aside, by count and by share of their own queue, from the live record, dated.",
+  },
+  {
     path: "/perm-rfi-audit",
     label: "PERM RFIs, audits and appeals",
     blurb:

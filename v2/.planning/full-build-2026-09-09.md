@@ -17,7 +17,7 @@ left off.
 - [x] A5 PWD and LCA stage filters in case search (their live tables' own stage and employer indexes; a stage carries its program)
 
 ## B. Employer views
-- [ ] B1 employer anomaly view: employers by held, RFI'd and appealed share of pending, precomputed by the sweep, dated
+- [x] B1 employer anomaly view (`/perm-employers/under-review`, doc `employer_stages` written by the sweep, 1,000 employers, two rankings with a share floor of 25): employers by held, RFI'd and appealed share of pending, precomputed by the sweep, dated
 - [ ] B2 employer pipeline section on employer pages: PERM, PWD, LCA counts, wage gap, pending and held share
 - [ ] B3 DOL debarment list: ingest + page + flag on employer and firm pages
 

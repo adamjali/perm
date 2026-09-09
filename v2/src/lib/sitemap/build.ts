@@ -225,6 +225,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-case-status`, lastModified: "2026-08-27", images: [`${base}/og/perm-case-status.jpg`] },
     { url: `${base}/perm-denial-risk`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-denial-risk.jpg`] },
     { url: `${base}/perm-rfi-audit`, lastModified: "2026-08-27", images: [`${base}/og/perm-rfi-audit.jpg`] },
+    { url: `${base}/perm-employers/under-review`, lastModified: dol ?? "2026-09-09" },
     // One page per review stage. Listed from `reviewStages()`, the same
     // function the route's `generateStaticParams` reads, so the sitemap and
     // the router cannot come to disagree about which of these exist - a

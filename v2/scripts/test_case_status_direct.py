@@ -246,6 +246,28 @@ def main() -> int:
         check("parse_frontier rejects junk", True)
 
     print(f"\n  {len(failures)} failure(s)")
+    # --- the per-employer stage census ------------------------------------
+    rows = [
+        ("Cognizant", "cognizant", "APPLICATION ON HOLD", 1831),
+        ("Cognizant", "cognizant", "ANALYST REVIEW", 1),
+        ("COGNIZANT", "cognizant", "RFI ISSUED", 2),          # a spelling, same slug
+        ("Tiny LLC", None, "APPLICATION ON HOLD", 2),        # below the floor
+        ("Clean Co", "clean-co", "ANALYST REVIEW", 900),
+        ("", None, "RFI ISSUED", 3),                          # nameless rows are dropped
+    ]
+    folded = csd.employer_stage_rows(rows)
+    check("employer_stage_rows keys by slug across spellings",
+          [r["name"] for r in folded] == ["Cognizant", "Clean Co"], str([r["name"] for r in folded]))
+    cog = folded[0]
+    check("employer_stage_rows sums pending and review, review excludes analyst review",
+          cog["pending"] == 1834 and cog["review"] == 1833, f"{cog['pending']} / {cog['review']}")
+    check("employer_stage_rows share is review over pending",
+          abs(cog["share"] - 1833 / 1834) < 1e-3, str(cog["share"]))
+    check("employer_stage_rows drops employers under the floor",
+          all(r["pending"] >= csd.EMPLOYER_STAGES_MIN_PENDING for r in folded), "")
+    check("employer_stage_rows orders by review desc then pending",
+          folded[-1]["name"] == "Clean Co" and folded[-1]["review"] == 0, "")
+
     return 1 if failures else 0
 
 

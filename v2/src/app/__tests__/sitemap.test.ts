@@ -385,9 +385,10 @@ describe("sitemap.ts", () => {
     // that now sit under the same prefix, which inflated this by 28 per kind -
     // and 28 extra URLs is exactly the shape of the truncation bug this test
     // was written to catch, so it has to count the thing it names.
+    const STATIC_UNDER_PREFIX = ["browse", "compare", "under-review"];
     const count = (p: string) =>
-      // ...and the static compare page under the employer prefix.
-      entries.filter((e) => e.url.includes(p) && !e.url.includes(`${p}browse`) && !e.url.includes(`${p}compare`))
+      // ...and the static pages that live under an entity prefix.
+      entries.filter((e) => e.url.includes(p) && !STATIC_UNDER_PREFIX.some((x) => e.url.includes(`${p}${x}`)))
         .length;
 
     expect(count("/perm-employers/")).toBe(2500);

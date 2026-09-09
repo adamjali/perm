@@ -692,6 +692,91 @@ def write_review_stages(db) -> None:
         f"seen {seen_from or 'never'}..{seen_to or 'never'})")
 
 
+QUEUE_STATUS = "ANALYST REVIEW"
+EMPLOYER_STAGES_MIN_PENDING = 5
+EMPLOYER_STAGES_CAP = 1000
+
+
+def employer_stage_rows(rows) -> list[dict]:
+    """Fold (employer_name, employer_slug, status, n) rows into one row per employer.
+
+    Pure, so the test can drive it with a handful of tuples. An employer is
+    keyed by slug when the nightly rebuild resolved one and by name otherwise,
+    which is the same identity the stage pages link with. `review` is every
+    pending case at a status other than analyst review: on hold, RFI, NORD,
+    supervised recruitment, or an appeal - the cases DOL pulled aside rather
+    than the ordinary queue. `share` is review / pending, and the page only
+    ranks by share above a floor, because 2 of 2 is not a signal.
+    """
+    by_key: dict[str, dict] = {}
+    for employer_name, employer_slug, status, n in rows:
+        name = (employer_name or "").strip()
+        if not name:
+            continue
+        key = employer_slug or f"name:{name.lower()}"
+        row = by_key.get(key)
+        if row is None:
+            row = {"name": name, "slug": employer_slug, "pending": 0,
+                   "review": 0, "byStatus": {}}
+            by_key[key] = row
+        n = int(n or 0)
+        row["pending"] += n
+        if status != QUEUE_STATUS:
+            row["review"] += n
+        row["byStatus"][status] = row["byStatus"].get(status, 0) + n
+    out = [r for r in by_key.values() if r["pending"] >= EMPLOYER_STAGES_MIN_PENDING]
+    for r in out:
+        r["share"] = round(r["review"] / r["pending"], 4) if r["pending"] else 0.0
+    out.sort(key=lambda r: (-r["review"], -r["pending"], r["name"].lower()))
+    return out[:EMPLOYER_STAGES_CAP]
+
+
+def write_employer_stages(db) -> None:
+    """Precompute per-employer pending counts by status into perm_docs['employer_stages'].
+
+    WHY. On Sep 5 2026 a reader found by hand, from this site's employer and
+    stage pages, that 1,831 of the 1,855 PERM cases on hold nationwide belonged
+    to one employer; the Inspector General confirmed the suspension three days
+    later. The question every follow-up asked was "who's next", and answering
+    it from the live table on a page render is a 97,000-row group-by. Once a
+    sweep, it is one doc read. Raw counts only; the floor and the ranking
+    rules live in TypeScript beside their tests.
+    """
+    rows = _rows(db, """
+        SELECT c.employer_name, l.employer_slug, c.current_status, COUNT(*) AS n
+          FROM perm_case_status c
+          LEFT JOIN perm_live_recent l ON l.case_number = c.case_number
+         WHERE c.is_final = 0 AND c.employer_name IS NOT ?
+         GROUP BY c.employer_name, l.employer_slug, c.current_status""",
+        [TEST_FIXTURE_EMPLOYER])
+    nationwide: dict[str, int] = {}
+    for _name, _slug, status, n in rows:
+        nationwide[str(status)] = nationwide.get(str(status), 0) + int(n or 0)
+    pending_total = int(db.scalar(
+        "SELECT COUNT(*) FROM perm_case_status "
+        "WHERE is_final = 0 AND employer_name IS NOT ?",
+        [TEST_FIXTURE_EMPLOYER]) or 0)
+    if sum(nationwide.values()) != pending_total:
+        log(f"NOT writing employer_stages: statuses {sum(nationwide.values()):,} "
+            f"!= pending {pending_total:,} (a concurrent write landed mid-run)")
+        return
+    employers = employer_stage_rows(rows)
+    doc = {"asOf": time.strftime("%Y-%m-%d"), "source": SOURCE,
+           "pendingTotal": pending_total, "nationwide": nationwide,
+           "minPending": EMPLOYER_STAGES_MIN_PENDING, "employers": employers}
+    payload = json.dumps(doc, separators=(",", ":"))
+    db.execute(
+        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
+        "VALUES (?, ?, ?)",
+        ["employer_stages", payload, int(time.time() * 1000)])
+    got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?",
+                    ["employer_stages"])
+    if int(got or 0) != len(payload):
+        raise SystemExit("FATAL: employer_stages read-back does not match write")
+    log(f"wrote     employer_stages ({len(employers)} employers with >= "
+        f"{EMPLOYER_STAGES_MIN_PENDING} pending, {len(payload):,} bytes)")
+
+
 def write_sweep_coverage(db) -> None:
     """Project the newest COMPLETE sweep into perm_docs['sweep_coverage'].
 
@@ -1235,6 +1320,7 @@ def tail_steps(db, *, discover: bool) -> list[tuple[str, object]]:
         ("live_census", lambda: write_live_census(db)),
         ("sweep_coverage", lambda: write_sweep_coverage(db)),
         ("review_stages", lambda: write_review_stages(db)),
+        ("employer_stages", lambda: write_employer_stages(db)),
         ("stage_cohorts", lambda: write_stage_cohorts(db)),
         ("decided_month_percentiles", lambda: write_decided_percentiles(db)),
         # LAST, because it reads `perm_case_events`, which `flush()` has

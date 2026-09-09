@@ -47,6 +47,7 @@ export type DataSection =
   | "lca-cases"
   | "risk"
   | "rfi-audit"
+  | "employers-under-review"
   | "visa-bulletin"
   | "visa-bulletin-next"
   | "methodology";
@@ -115,6 +116,7 @@ export const SECTIONS: DataNavSection[] = [
   // page had ZERO inbound links from anywhere in the app, so a borrowed entry
   // would have left it unreachable by navigation, not merely mislabelled.
   { key: "rfi-audit", group: "Denials and audits", label: "RFI and audits", href: "/perm-rfi-audit" },
+  { key: "employers-under-review", group: "Denials and audits", label: "Employers under review", href: "/perm-employers/under-review" },
 
   // Its own group, not "Reference". This is a calculator over State Department
   // data: a different agency, a different dataset and a different question from
