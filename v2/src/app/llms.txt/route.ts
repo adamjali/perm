@@ -207,6 +207,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "What each DOL FLAG status means for a PERM, a prevailing wage request or an H-1B LCA (analyst review, RFI issued, on hold, appeals, certified, expired), with the regulation that defines it or a note that none does, and today's count.",
   },
   {
+    path: "/estimate-scorecard",
+    label: "Estimate scorecard",
+    blurb: "Every decision-date estimate the site recorded for a real PERM case before the outcome, with the anchor and window as printed, the day DOL decided, and the error in days; scored from the record and never edited.",
+  },
+  {
     path: "/glossary",
     label: "Glossary",
     blurb: "Every term of the employment-based green card defined in plain words with the regulation it comes from (PERM, PWD, priority date, cutoff, retrogression, RFI, audit, BALCA, portability), each linked to the page where it meets real data.",
