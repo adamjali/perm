@@ -1,0 +1,468 @@
+Archive
+
+Calendar Year 2026
+Announcements
+September 2, 2026. OFLC Announces Updates to Implementation of the H-2A Adverse Effect Wage Rate Methodology for Non-Range Occupations Interim Final Rule; Compliance with District Court Order
+
+This notice is provided to comply with the August 26, 2026 Order of the United States District Court for the Eastern District of California entered in United Farm Workers, et al. v. DOL, et al., No. 25-cv-01614-KES-EGC ("Order"), requiring the U.S. Department of Labor (the "Department") to provide public notice that certain employers may be required to make back wage adjustment payments. The Department is complying with the Court's Order by providing this notice. The Department's compliance with the Order shall not be construed to waive its rights to seek further review of and relief from the Order. Nor shall the Department's compliance be construed as an admission that a Court has the authority under law to compel DOL or employers to cause back wage adjustments for the reasons set forth in the Court's Order.
+
+Congress charged the Department with administering the H-2A program. In doing so, the Department is obligated to "balance the competing goals of the statute—providing an adequate labor supply and protecting the jobs of domestic workers." AFL-CIO v. Dole, 923 F.2d 182, 187 (D.C. Cir. 1991). In carrying out that responsibility, courts have recognized that the Department has broad discretion to determine the appropriate methodology for establishing the Adverse Effect Wage Rate ("AEWR"). As one court explained, the "choice of [AEWR] methodology" for achieving those twin aims "is really a policy decision taken within the bounds of a rather broad congressional delegation" to the Department. Kansas, et al. v. U.S. Department of Labor, 749 F. Supp. 3d 1363, 1374 (S.D. Ga. 2024) (quoting Dole, 923 F.2d at 187).
+
+The Department will continue to exercise that delegated authority by advocating for reasoned approaches to establishing the AEWR methodology that appropriately balances these statutory objectives and promotes continuity and predictability in the H-2A program. To be clear, no employer is under an obligation at this time to pay any back wages. The Department will also continue to preserve and advance its position against the future imposition of any back wage-adjustment obligations on the regulated community as a result of this decision.
+
+The lawsuit at issue challenges the legality of the Department's Interim Final Rule, Adverse Effect Wage Rate Methodology for the Temporary Employment of H–2A Nonimmigrants in Non-Range Occupations in the United States, 90 Fed. Reg. 47914 (Oct. 2, 2025) ("IFR"). The IFR established the methodology that the Department uses to calculate the AEWRs. The Court concluded that the methodology established in the IFR is unlawful but did not vacate the IFR and left in place the AEWRs previously issued under the IFR. The Court directed the Department to "promptly produce a new methodology for calculating" AEWRs and "to promptly publish new AEWRs under that methodology." Op. 27-28. The current AEWRs will remain in effect until the publication of new AEWRs. OFLC will notify the public when a new AEWR methodology is set and provide relevant transition procedures at that time.
+
+The Order also requires the Department to "notify state workforce agencies, employers, and the public" that:
+
+Employers who hired or otherwise utilized H-2A labor that was governed by AEWRs published under the IFR between the date [of this notification] and the date on which a new AEWR methodology is issued pursuant to this Order (the "backpay period") may be required to make wage adjustment payments to qualifying H-2A workers and U.S. farmworkers in corresponding employment who worked during the backpay period, if those workers received an hourly wage below the new, applicable AEWRs generated under the new methodology.
+
+Op. at 28.
+
+In other words, the Eastern District of California ordered the Department to provide notice that certain employers "may" be required to make back wage adjustment payments in the future. Again, no such payment obligation exists at this time. The period potentially subject to such an adjustment would run from the issuance of this notice, September 2, 2026, and end when the Department issues new AEWRs under a new methodology.
+
+This announcement applies to (1) employers previously granted temporary labor certification where the certified end date of employment on the H-2A Application for Temporary Employment Certification remains valid as of the date of this announcement, including any approved extensions, (2) employers with pending H-2A Applications for Temporary Employment Certification, and (3) employers who file new H-2A Applications for Temporary Employment Certification after the date of this announcement until the OFLC Administrator publishes a new AEWR methodology.
+
+The current AEWRs remain applicable at this time, and employers should continue to adhere to all applicable laws. Accordingly, and as part of their regulatory obligations to maintain accurate and adequate earnings records (see 20 C.F.R. § 655.122(j)), the Department reminds employers to record the names, and permanent home addresses, Social Security Number (SSN) if they have been issued one, and, where available, the Form I-94 Arrival/Departure Record Number, permanent email address and phone number of all H-2A workers and U.S. workers in corresponding employment who may later be entitled to backpay and make reasonable efforts to ensure that such information for each worker remains current.
+
+Following the Court's ruling, the Department is considering appropriate next steps in the litigation and with respect to the Department's AEWR methodology. The Department's compliance with the Court's notice requirement does not alter its position concerning whether back wage-adjustment obligations may lawfully be imposed. The Department will continue to fight through the appropriate litigation process while fulfilling its statutory responsibilities through both administering the H-2A program and through rulemaking.
+
+The Department will continue to work to provide as much certainty as practicable to American farmers, workers, and other H-2A program stakeholders and will provide further notice if the Court issues a ruling regarding potential backpay.
+
+August 14, 2026. OFLC Releases Public Disclosure Data and Selected Program Statistics for Q3 of Fiscal Year 2026.
+
+The Office of Foreign Labor Certification (OFLC) has released a comprehensive set of public disclosure data (through the third quarter of fiscal year 2026) drawn from employer applications requesting prevailing wage determinations and labor certifications for the PERM, LCA (H-1B, H-1B1, E-3), H-2A, H-2B, CW-1, and Prevailing Wage programs.
+
+The public disclosure files include all final determinations OFLC issued for these programs during the October 1, 2025 through June 30, 2026 reporting period of fiscal year 2026.
+
+OFLC has also released selected program statistics for the third quarter of fiscal year 2026 for the PERM, LCA (H-1B, H-1B1, E-3), H-2A, H-2B, CW-1, and Prevailing Wage programs.
+
+View the public disclosure files and corresponding record layouts containing detailed descriptions of each available data element.
+View the selected program statistics containing key program information.
+
+August 14, 2026. OFLC Releases the H-2B Foreign Labor Recruiter List for Q3 of Fiscal Year 2026
+
+The Office of Foreign Labor Certification (OFLC) has published an updated list of the names of foreign labor recruiters for the H-2B program as required by 20 CFR 655.9(c).
+
+The list contains the name and location of persons or entities identified on Appendix C of the Form ETA-9142B that were hired by, or working for, the recruiter that employers have indicated they engaged, or planned to engage, in the recruitment of prospective H-2B workers to perform the work described on their H-2B application.
+
+The H-2B Foreign Labor Recruiter List includes only those names and locations associated with H-2B applications that were processed or issued a final decision during the October 1, 2025 through June 30, 2026.
+
+By publishing the foreign labor recruiter list, OFLC is ensuring greater transparency for the H-2B worker recruitment process and facilitating information sharing between the U.S. Department of Labor and other agencies.
+
+View the foreign labor recruiter list
+View FAQs regarding the foreign labor recruiting list
+
+August 6, 2026. OFLC Announces a Webinar on August 20, 2026, to Provide H-2B Prevailing Wage Determination General Filing Tips and Instructions on Conducting Surveys.
+
+As part of the Office of Foreign Labor Certification's (OFLC) efforts to increase public engagement, OFLC's National Prevailing Wage Center will host a two-hour webinar on Thursday, August 20, 2026. The presentation will provide general filing tips and trends for the H-2B Prevailing Wage Determination process.
+
+Meeting Details:
+
+Thursday, August 20, 2026: 1:00 PM | (UTC-04:00) Eastern Time (US & Canada) | 2 hrs
+Join from the meeting link:
+https://usdol.webex.com/usdol/j.php?MTID=m1872fc3c45ef1fc52584f99ec2be580f
+
+Join by meeting number:
+Meeting number (access code): 2821 267 4861
+Meeting password: NPWC2026
+
+Tap to join from a mobile device (attendees only):
+US Toll Free: 1-877-465-7975, Code: 28212674861
+US Toll: +1-210-795-0506, Code: 28212674861
+
+Join by phone:
+1-877-465-7975 US Toll Free
+1-210-795-0506 US Toll
+
+Join from a video system or application:
+Dial 28212674861@usdol.webex.com
+You can also dial 207.182.190.20 and enter your meeting number.
+
+August 5, 2026. The U.S. Department of Labor's Office of Foreign Labor Certification (OFLC) is announcing accommodations for employers and their representatives impacted by Typhoon Bavi in the Commonwealth of the Northern Mariana Islands.
+For complete details, please refer to the full guidance document
+
+August 3, 2026. Employment and Training Administration Publishes Federal Register Notice (FRN) Updating the H-2A Hourly Adverse Effect Wage Rates (AEWR) for All Non-Range Occupations
+
+The Employment and Training Administration (ETA) has published an FRN announcing the AEWRs for the employment of all non-range H-2A job opportunities. AEWRs are the minimum wage rates the Department of Labor (DOL) has determined must be offered, advertised in recruitment, and paid by employers to H-2A workers and workers in corresponding employment for a particular occupation and area so that the wages and working conditions of workers in the United States similarly employed will not be adversely affected. The interim final rule, Adverse Effect Wage Rate Methodology for the Temporary Employment of H-2A Nonimmigrants in Non-Range Occupations in the United States, 90 FR 47914 (Oct. 2, 2025), established the methodology for setting hourly AEWRs, based on Bureau of Labor Statistics' (BLS) Occupational Employment and Wage Statistics (OEWS) survey.
+
+The final rule, Improving Protections for Workers in Temporary Agricultural Employment in the United States, 89 FR 33898 (April 29, 2024), revised the regulation at 20 CFR 655.120(b)(2) to state “[t]he updated AEWR will be effective as of the date of publication of the notice in the Federal Register.” This FRN has two effective dates in light of the District Court's decision in Kansas, et al. v. U.S. Department of Labor, No. 2:24-cv-00076-LGW-BWC (S.D. Ga., Aug. 26, 2024), which enjoined DOL from enforcing this regulatory requirement for 17 covered states and with respect to certain entities. For those persons covered by the Kansas decision, the Department applies a two-week delayed effective date in applying the new AEWRs. In any states or territories not covered by the Kansas decision, the regulatory requirement remains applicable and the new AEWR rates will be immediately effective.
+
+Important Note: In the event an employer's job opportunity requires the performance of agricultural labor or services that are not encompassed in a single SOC code's description and tasks, the occupational classification and applicable AEWR will be determined based on the majority (i.e., more than 50 percent) of the workdays during the contract period the worker will spend performing the agricultural labor or services, including duties that are closely and directly related, as well as the qualifications listed in the job order. 20 CFR 655.120(b)(7).
+
+View the FRN announcing the updated Hourly AEWRs for non-range occupations
+View the AEWR page on FLAG for the new rates, by State
+
+July 20, 2026. OFLC Announces Webinar on July 29, 2026, to Provide Technical Assistance to Stakeholders on the Process for Performing Surveys in Support of Form ETA-9141, Application for Prevailing Wage Determination, for the Permanent and Labor Condition Application Programs.
+
+The Office of Foreign Labor Certification invites interested stakeholders to participate in a webinar providing technical assistance and helpful tips for using surveys to complete an Application for Prevailing Wage Determination (Form ETA-9141) for the Permanent and Labor Condition Application programs. The webinar will educate employers, attorneys, and agents on key survey concepts, format and structure, and calculating the prevailing wage.
+
+Wednesday, July 29, 2026 | 1:00 PM | (UTC-04:00) Eastern Time (US & Canada) | 2 hrs
+
+Join from the meeting link:
+https://usdol.webex.com/usdol/j.php?MTID=m18128623999f186d7afc343cc71e7e52
+
+Join by meeting number:
+Meeting number (access code): 2819 680 6467
+Meeting password: NPWC2026
+
+Tap to join from a mobile device (attendees only):
+US Toll Free: 1-877-465-7975, 28196806467
+US Toll: 1-210-795-0506, 28196806467
+
+Join by phone:
+US Toll Free: 1-877-465-7975
+US Toll: 1-210-795-0506
+
+Join from a video system or application:
+Dial: 28196806467@usdol.webex.com
+
+July 13, 2026. OFLC Announces Webinar on July 22, 2026, to Provide Technical Assistance to Stakeholders on the Process for Filing Form ETA-9141, Application for Prevailing Wage Determination, for the Permanent and Labor Condition Application Programs.
+
+The Office of Foreign Labor Certification invites interested stakeholders to participate in a webinar providing technical assistance and helpful tips for preparing an Application for Prevailing Wage Determination (Form ETA-9141) for the permanent and labor condition application programs. The webinar will cover Occupational Employment and Wage Statistics (OEWS) prevailing wage requests. Employers, attorneys, and agents will receive guidance on best practices for completing and submitting Form ETA-9141, as well as an overview of the most common post-filing issues encountered by filers.
+
+Wednesday, July 22, 2026 | 1:00 PM | (UTC-04:00) Eastern Time (US & Canada) | 2 hrs
+
+Join from the meeting link:
+https://usdol.webex.com/usdol/j.php?MTID=m2bd03295276521cab9e68c98b0b0ba23
+
+Join by meeting number:
+Meeting number (access code): 2825 937 6227
+Meeting password: NPWC2026
+
+Tap to join from a mobile device (attendees only):
+US Toll Free: 1-877-465-7975, 28259376227
+US Toll: 1-210-795-0506, 28259376227
+
+Join by phone:
+US Toll Free: 1-877-465-7975
+US Toll: 1-210-795-0506
+
+Join from a video system or application:
+Dial: 28259376227@usdol.webex.com
+
+July 8, 2026. OFLC Publishes List of Randomized H-2B Applications Submitted July 3-5, 2026, for Employers Seeking H-2B Workers Starting October 1, 2026
+
+To keep the public informed regarding the submission and assignment of H-2B applications for review, the Office of Foreign Labor Certification (OFLC) is publishing the Assignment Groups for 2,625 H-2B applications covering 51,158 worker positions with a work start date of October 1, 2026 received during the July 3-5 filing period. OFLC completed the randomization process on July 6, 2026. Due to the number of applications filed and the number of worker positions requested, cases were randomized into two groups, assignment group A (1,881 cases) and assignment group B (744 cases). Cases in Group A are being assigned to the National Processing Cener analysts for issuance for Notices of Acceptance or Deficiency. Group A includes enough worker positions to reach the H-2B semi-annual visa allotment of 33,000. One additional Assignment Group was created for the remaining applications and associated worker positions. Each filing was randomly given a unique number in accordance with OFLC's randomization process and placed into a group for assignment to analysts for review and processing.
+
+On July 6, 2026, OFLC provided written notice to each employer (and the employer's authorized attorney or agent) informing them about the Assignment Group for their application(s).
+
+View the assignment groups for H-2B Applications submitted July 3 – 5
+
+June 29, 2026. OFLC Issues Technical Release Notes for the Occupational Employment and Wage Statistics Update for the July 2026 through June 2027 Wage Year
+
+The Office of Foreign Labor Certification has published the latest prevailing wage data from the Occupational Employment and Wage Statistics (OEWS) as generated by the Bureau of Labor Statistics for the new wage year from July 2026 through June 2027. These wages are effective on July 1, 2026. Prevailing wage determinations issued from the National Prevailing Wage Center reflect the 2018 SOC codes.
+
+O*NET’s most recent release (30.3) combines occupations from Job Zone 1 and Job Zone 2 into a consolidated Job Zone 1-2. If a Job Zone 1-2 occupation fell within Job Zone 1 or Job Zone 2 during the previous wage year (Wage Year 2025-26), OFLC will continue to apply the same Job Zone used during Wage Year 2025-26. If a Job Zone 1-2 occupation fell within Job Zone 3 during Wage Year 2025-26, OFLC will apply Job Zone 2 to that occupation.
+
+View the Technical Release Notes for the OEWS Update for July 2026 through June 2027 Wage Year
+View the July 2026 through June 2027 Wage Year Job Zones Data
+View the July 2026 through June 2027 Wage Year Education Data
+June 26, 2026. Office of Foreign Labor Certification Announces Reminder of three-day filing window for the H-2B Program with work start dates of October 1, 2026
+
+The Office of Foreign Labor Certification (OFLC) reminds employers and other interested stakeholders that the three-day filing window to submit an H-2B Application for Temporary Employment Certification (Form ETA-9142B and appendices) requesting a work start date of October 1, 2026, will open on July 3, 2026, at 12:00 a.m. Eastern Time, and close on July 5, 2026, at 11:59 p.m. Eastern Time. This three-day period is the earliest an employer may file an application for an October 1, 2026, work start date, which is the first day of the semi-annual visa allotment for the first half of Fiscal Year 2027. Employers seeking start dates of October 2, 2026, or later must comply with the timeliness requirements at 20 CFR 655.15(b).
+
+In accordance with regulatory requirements and OFLC’s standard operating procedures, H-2B applications requesting October 1, 2026, work start dates will be denied if they are filed before July 3, 2026, at 12:00 a.m. Eastern Time.
+
+After the three-day filing window has closed, OFLC will randomly order applications for assignment to analysts for review and processing all H-2B applications requesting a work start date of October 1, 2026, that are filed during the three-day filing window (July 3-5, 2026) using the randomization procedures published in the Federal Register on March 4, 2019.
+
+Helpful Filing Tips
+
+Only one H-2B Application for Temporary Employment Certification per job opportunity should be filed to prevent duplicate filings and delayed processing. 20 CFR 655.15(f).
+If “yes” is selected for “Board, Lodging, or Other Facilities” under section F.d.5, Form ETA-9142B, and deductions other than those required by law may be made from the worker’s pay, include details about the deductions and amounts to cover the reasonable cost of board, lodging, and other facilities in section F.d.6.
+The employer must submit with its H-2B Application for Temporary Employment Certification a copy of the job order being submitted concurrently to the SWA serving the area of intended employment, as set forth in 20 CFR 655.16. The job order submitted must be a copy of the actual job order or a completed job order form used by the SWA for posting in its job clearance systems (as defined by 20 CFR 655.5
+Original signatures and dates on Appendix B must be current. In addition, it is permissible for employers to use the version of Appendix B that expires on June 30, 2026, as long as it has recent signatures.
+
+June 25, 2026. OFLC Publishes Updated Wage Data for the Commonwealth of Northern Mariana Islands
+
+The Office of Foreign Labor Certification (OFLC) received the 2026 Commonwealth of Northern Mariana Islands (CNMI) Prevailing Wage Study survey from the Governor of the CNMI for the CW-1 program. OFLC has approved the 2026 CNMI Prevailing Wage Study survey for 408 occupations and will issue updated CW-1 prevailing wages using this data from July 1, 2026 through June 30, 2027. The updated wage table includes prevailing wage data for a total of 848 occupations.
+
+View the Updated CW-1 Wage Table for July 2026 through 2027 Wage Year
+
+June 25, 2026. Office of Foreign Labor Certification Announces Publication of an Updated Appendix A to the Preamble–Education and Training Categories by O*NET–SOC Occupations for July 2026 through June 2027 Wage Year
+
+On November 15, 2021, the Employment and Training Administration issued a Federal Register notice (FRN) informing the public that the Office of Foreign Labor Certification (OFLC) was updating Appendix A to the Preamble–Education and Training Categories by Occupational Information Network (O*NET)–Standard Occupational Classification (SOC) Occupations. Appendix A is a list of professional occupations that serves as a guide for employers to distinguish between professional and non-professional occupations in order to comply with the professional recruitment requirements of the PERM program. The FRN stated that OFLC intends to review BLS’s occupational and education data each year to publish a new list of occupations on its website, even when BLS data remain the same from the previous year.
+
+View the November 15, 2021, Federal Register notice
+
+OFLC is releasing this year's Appendix A, which implements the new list of professional occupations for the July 2026 through June 2027 wage year and will be effective starting July 1, 2026.
+
+View the list of professional occupations in Appendix A
+View the complete list of Typical Entry-Level Educational Requirement Data, May 2025 on BLS website
+
+June 4, 2026. OFLC Announces Webinar on June 17, 2026, to update Stakeholders on the H-2B Application Process for Start Dates of October 1, 2026, or later.
+
+The Office of Foreign Labor Certification (OFLC) invites stakeholders to participate in a webinar covering best practices and helpful tips for preparing H-2B Applications for Temporary Employment Certification (Form ETA-9142B and appendices) during the three-day filing window of July 3–5, 2026, for applications requesting a work start date of October 1, 2026. This three-day period is the earliest an employer may file an application for an October 1, 2026, start date — the first day of the semi-annual visa allotment for the first half of Fiscal Year 2027. The webinar will cover:
+
+Regulatory timeframes and filing requirements for H-2B applications with a start date of October 1, 2026, or later.
+Procedures OFLC uses to randomly select H-2B applications for review and processing.
+Helpful tips and reminders to avoid deficiencies during the application process.
+
+This webinar will be recorded and posted to the OFLC website along with presentation materials for future reference. Please note there is a 1,000-participant limit. If you experience audio difficulties when joining by computer, use the phone dial-in details below.
+
+Details of the webinar are as follows:
+
+Wednesday, June 17, 2026: 2:00 PM | (UTC-04:00) Eastern Time (US & Canada) | 1 hr
+
+Join from the meeting link:
+https://usdol.webex.com/usdol/j.php?MTID=mb2a0e900bce957a49ccd854225317415
+
+Join by meeting number:
+Meeting number (access code): 2826 447 2917
+Meeting password: OFLCH2B
+
+Tap to join from a mobile device (attendees only):
+US Toll Free: 1-877-465-7975, Code: 2826 447 2917
+US Toll: 1-210-795-0506, Code: 2826 447 2917
+
+Join by phone:
+US Toll Free: 1-877-465-7975
+US Toll: 1-210-795-0506
+
+Join from a video system or application
+Dial 28264472917@usdol.webex.com
+
+May 22, 2026. Office of Foreign Labor Certification Announces Solicitation of Input for the Annual Determination of Labor Supply States to Enhance U.S. Worker Recruitment
+
+The 2022 H-2A Final Rule, which became effective on November 14, 2022, implemented a new process for the Office of Foreign Labor Certification (OFLC) Administrator's determination of labor supply states (LSS). LSS are additional states in which an employer's job order will be circulated and, if appropriate, where additional positive recruitment may be required of the employer. Consistent with 20 CFR 655.154, the OFLC Administrator will solicit public input about LSS and related recruitment mechanisms to make a determination that identifies whether there are areas of traditional or expected labor supply for each state with respect to the availability of qualified workers and the appropriate and effective means of recruiting those workers. The solicitation period will be open for a period of 60 days. The determination can include specific geographic area(s) of the United States in which a significant number of qualified workers have been identified and who, if recruited through additional positive employer recruitment activities, would be willing to make themselves available for work in the state.
+
+The OFLC Administrator will also consider data and information about labor flow trends (e.g., applicant referral information contained in the agricultural recruitment clearance system) from the public to inform a determination regarding expanded interstate circulation of H-2A job orders by State Workforce Agencies (SWAs) on behalf of employers. These determinations are important for ensuring that agricultural job opportunities are more broadly available to qualified workers in the United States.
+
+All previously determined LSS requirements will remain in full effect, unless the OFLC Administrator receives information indicating that a previous LSS is no longer a source for qualified workers.
+
+View the previously determined LSS requirements on FLAG
+
+To make a determination regarding labor supply and the positive recruitment needed to reach qualified workers within a State, the OFLC Administrator requests information from the public regarding the availability of qualified workers, and the appropriate, effective methods of contacting those workers. Information that could be helpful to the OFLC Administrator's determination include, but are not limited to, the following:
+
+The type of qualified workers available (e.g., tomato harvest workers);
+The State and geographic area(s) within the State where the workers may be located (e.g., city, county, regional non-metropolitan area);
+The methods for apprising the workers of a job opportunity (e.g., local newspaper or periodical, posting with a particular community organization engaged with those workers); and/or
+Most current information for the person(s) or entity (e.g., worker union, community-based organization) to be contacted for assistance in circulating the job opportunity to those workers.
+
+DEADLINE FOR PUBLIC INPUT: OFLC is seeking information, and particularly welcomes specific information, on or before July 21, 2026.
+
+HOW TO SUBMIT INFORMATION: OFLC will only consider electronic submissions to the email box, oflc.h2alaborsupply@dol.gov, for making determinations as to the labor supply States. Any submissions sent by mail or other correspondence will not be accepted. The OFLC Administrator will publish on the OFLC website its determinations after careful review of all information received.
+
+In addition, the Department will continue to satisfy its multi-state recruitment statutory requirement, and the broader statutory obligation regarding U.S. worker availability, through a combination of other recruitment activities, including:
+
+Posting job opportunities on DOL's electronic job registry, SeasonalJobs.dol.gov, which broadcasts the job offer continuously to prospective applicants during the recruitment period;
+Interstate clearance of the job order through the SWAs, which engages the Wagner-Peyser recruitment system in labor supply States; and
+Employer contact with former U.S. workers, wherever they are located.
+
+May 15, 2026. OFLC Releases the H-2B Foreign Labor Recruiter List for Q2 of Fiscal Year 2026
+
+The Office of Foreign Labor Certification (OFLC) has published an updated list of the names of foreign labor recruiters for the H-2B program as required by 20 CFR 655.9(c).
+
+The list contains the name and location of persons or entities identified on Appendix C of the Form ETA-9142B that were hired by, or working for, the recruiter that employers have indicated they engaged, or planned to engage, in the recruitment of prospective H-2B workers to perform the work described on their H-2B application.
+
+The H-2B Foreign Labor Recruiter List includes only those names and locations associated with H-2B applications that were processed or issued a final decision during the October 1, 2025 through March 31, 2026.
+
+By publishing the foreign labor recruiter list, OFLC is ensuring greater transparency for the H-2B worker recruitment process and facilitating information sharing between the U.S. Department of Labor and other agencies.
+
+View the foreign labor recruiter list
+View FAQs regarding the foreign labor recruiting list
+
+May 15, 2026. OFLC Releases Public Disclosure Data and Selected Program Statistics for Q2 of Fiscal Year 2026.
+
+The Office of Foreign Labor Certification (OFLC) has released a comprehensive set of public disclosure data (through the second quarter of fiscal year 2026) drawn from employer applications requesting prevailing wage determinations and labor certifications for the PERM, LCA (H-1B, H-1B1, E-3), H-2A, H-2B, CW-1, and Prevailing Wage programs.
+
+The public disclosure files include all final determinations OFLC issued for these programs during the October 1, 2025 through March 31, 2026 reporting period of fiscal year 2026.
+
+OFLC has also released selected program statistics for the second quarter of fiscal year 2026 for the PERM, LCA (H-1B, H-1B1, E-3), H-2A, H-2B, CW-1, and Prevailing Wage programs.
+
+View the public disclosure files and corresponding record layouts containing detailed descriptions of each available data element.
+View the selected program statistics containing key program information.
+
+May 14, 2026. Office of Foreign Labor Certification Publishes Frequently Asked Questions about English Language Proficiency Requirements for Operators of Commercial Motor Vehicles
+
+The Office of Foreign Labor Certification has issued Frequently Asked Questions (FAQ) which remind employers about the U.S. Department of Transportation’s English language proficiency requirements for operators of commercial motor vehicles in the United States and their obligations under these requirements when submitting foreign labor applications to OFLC. The FAQs can be found here.
+
+April 7, 2026. Office of Foreign Labor Certification Publishes the 2026 Update to Allowable Charges for H-2A Workers’ Meals and H-2A and H-2B Travel Subsistence Reimbursement, Including Lodging
+
+The Employment and Training Administration has issued a notice in the Federal Register to announce the annual updated dollar amount H-2A employers may charge workers, other than workers in herding or production of livestock on the range occupations, for providing meals and the maximum and minimum rate at which H-2A and H-2B workers must be reimbursed for travel-related subsistence expenses, including lodging. The notice also includes a reminder of the continuing obligation of H-2A and H-2B employers to pay certain transportation-related expenses workers incur while traveling to and from H-2A and H-2B employment.
+
+View the Federal Register notice announcing the 2026 Update to Allowable Charges for Meals and Travel Subsistence Reimbursement
+Visit the Meals & Subsistence page for the new rate and additional information
+
+March 24, 2026. Employment and Training Administration Publishes 60-Day Paperwork Reduction Act Federal Register Notice on the Form ETA-9141 and Related Forms for the Prevailing Wage Determination Program
+
+The Employment and Training Administration (ETA) has published a 60-day PRA Federal Register notice (FRN) announcing an extension of the current information collection (IC) for the Office of Foreign Labor Certification’s Form ETA-9141, Application for Prevailing Wage Determination.
+
+ETA is seeking to extend the following forms without changes: Form ETA-9141, Application for Prevailing Wage Determination; Form ETA-9141, General Instructions; Form ETA-9141, Appendix A, Request for Additional Worksite(s); Form ETA-9165, Employer-Provided Survey Attestations to Accompany H-2B Prevailing Wage Determination Request Based on a Non-OEWS Survey; and Form ETA-9165, General Instructions.
+
+The FRN informs the public of the request for three-year approval of the information collection under OMB Control Number 1205-0508 and invites comments from the public for 60 days. Written comments must be submitted in accordance with the Federal Register notice instructions. The deadline to submit comments is Tuesday, May 26, 2026.
+
+View Federal Register Notice
+
+March 17, 2026. OFLC Announces 60-Day Public Comment Period on the Form ETA-9142B and Related Forms for the H-2B Temporary Non-agricultural Program
+
+The Employment and Training Administration (ETA) published a 60-day notice in the Federal Register announcing a revision to the information collection for the Office of Foreign Labor Certification’s H-2B forms. The H-2B forms include the Form ETA-9142B, Application for Temporary Employment Certification, its accompanying appendices, related forms, and instructions (OMB Control Number 1205-0509).
+
+OFLC seeks to renew the following forms without changes: Form ETA-9142B, Application for Temporary Employment Certification; Form ETA-9142B appendices, Appendix A - Additional Place(s) of Employment and Wage Information, Appendix C - Foreign Labor Recruiter Information, and Appendix D – Joint Employer/Job Contractor Information; Form ETA-9142B, Final Determination; Form ETA-9142B, Seafood Attestation; and accompanying form instructions. A non-substantive change was made to update a footnote citation for Appendix B - Employer and Attorney/Agent Declaration for H-2B Employers to reflect the most recent appropriations bill.
+
+OFLC has characterized this action as a revision, however, because OFLC seeks to eliminate the Form ETA-9155, H-2B Registration, and its accompanying instructions. The Form ETA-9155 was not implemented and is not in use.
+
+The Federal Register notice informs the public of the request for three-year approval of the information collection under OMB Control Number 1205-0509 and invites comments from the public for 60 days. Written comments must be submitted in accordance with the Federal Register notice instructions. The deadline to submit comments is Monday, May 18, 2026 .
+
+View Federal Register Notice
+
+March 17th, 2026. OFLC Announces Webinar on March 25, 2026, to Provide Technical Assistance to Stakeholders on the Process for Filing CW-1 Applications for Employment in the Commonwealth of the Northern Mariana Islands
+
+Foreign Labor Certification invites interested stakeholders to participate in a webinar that provides technical assistance and helpful tips for preparing the CW-1 Application for Prevailing Wage Determination (Form ETA-9141C), the Application for Temporary Employment Certification (Form ETA-9142C), the CW-1 Job Vacancy Announcement, and recruitment reports. The webinar also will cover some of the most pressing and common post-filing issues employers encounter.
+
+Meeting Details:
+
+Wednesday, March 25, 2026: 7:00 PM | (UTC-05:00) Eastern Time (US & Canada) | 1 hr.
+Thursday, March 26, 2026, 9:00AM | Chamorro Standard Time | 1 hr.
+
+Join from the meeting link:
+https://usdol.webex.com/usdol/j.php?MTID=m444c1dc91876dfebf4601bb6bc01e5be
+
+Join by meeting number:
+Meeting number (access code): 2825 203 2141
+Meeting password: OFLC2026
+
+join from a mobile device:
+US Toll Free: 1-877-465-7975, code: 28252032141
+US Toll: 1-210-795-0506, code: 28252032141
+
+Join by phone:
+US Toll Free: 1-877-465-7975
+US Toll: 1-210-795-0506
+
+March 11, 2026. OFLC Announces a Webinar on March 19, 2026, to Provide H-2B Prevailing Wage Determination General Filing Tips and Instructions on Conducting Surveys.
+
+As part of the Office of Foreign Labor Certification's (OFLC) on-going efforts to increase public engagement, OFLC's National Prevailing Wage Center will host a two-hour webinar on Thursday March 19th, 2026. The first half of the presentation will provide general filing tips and trends for the H-2B Prevailing Wage Determination process. The second half will educate surveyors on H-2B survey concepts. *Please note, this event has a maximum of 1000 participants.
+
+Meeting Details:
+
+Thursday, March 19, 2026: 1:00 PM | (UTC-05:00) Eastern Time (US & Canada) | 2 hrs
+
+Join from the meeting link:
+https://usdol.webex.com/usdol/j.php?MTID=m82e93372cc6ec7b1b0fdb7aed9ff3b77
+
+Join by meeting number:
+Meeting number (access code): 2831 483 1278
+Meeting password: NPWC2026
+
+Tap to join from a mobile device:
+US Toll Free: 1-877-465-7975, 2831 483 1278
+US Toll: 210-795-0506, 2831 483 1278
+
+Join by phone:
+US Toll Free: 1-877-465-7975
+US Toll : 1-210-795-0506
+Access code: 2831 483 1278
+
+February 13, 2026. OFLC Releases Public Disclosure Data and Selected Program Statistics for Q1 of Fiscal Year 2026.
+
+The Office of Foreign Labor Certification (OFLC) has released a comprehensive set of public disclosure data (through the first quarter of fiscal year 2026) drawn from employer applications requesting prevailing wage determinations and labor certifications for the PERM, LCA (H-1B, H-1B1, E-3), H-2A, H-2B, CW-1, and Prevailing Wage programs.
+
+The public disclosure files include all final determinations OFLC issued for these programs during the October 1, 2025 through December 31, 2025 reporting period of fiscal year 2026.
+
+OFLC has also released selected program statistics for the first quarter of fiscal year 2026 for the PERM, LCA (H-1B, H-1B1, E-3), H-2A, H-2B, CW-1, and Prevailing Wage programs.
+
+View the public disclosure files and corresponding record layouts containing detailed descriptions of each available data element.
+View the selected program statistics containing key program information.
+
+February 13, 2026. OFLC Releases the H-2B Foreign Labor Recruiter List for Q1 of Fiscal Year 2026
+
+The Office of Foreign Labor Certification (OFLC) has published an updated list of the names of foreign labor recruiters for the H-2B program as required by 20 CFR 655.9(c).
+
+The list contains the name and location of persons or entities identified on Appendix C of the Form ETA-9142B that were hired by, or working for, the recruiter that employers have indicated they engaged, or planned to engage, in the recruitment of prospective H-2B workers to perform the work described on their H-2B application.
+
+The H-2B Foreign Labor Recruiter List includes only those names and locations associated with H-2B applications that were processed or issued a final decision during the October 1, 2025 through December 31, 2025.
+
+By publishing the foreign labor recruiter list, OFLC is ensuring greater transparency for the H-2B worker recruitment process and facilitating information sharing between the U.S. Department of Labor and other agencies.
+
+View the foreign labor recruiter list
+View FAQs regarding the foreign labor recruiting list
+
+February 6, 2026. Employment and Training Administration Publishes Federal Register Notice Revising CW-1 Information Collection
+
+On February 3, 2026, the Employment and Training Administration (ETA) published a 60-day Federal Register notice (FRN), under the Paperwork Reduction Act, proposing to revise the information collection, OMB Control Number 1205-0534, CW-1 Application for Temporary Employment Certification. The 60-day FRN did not make any substantive changes to the information collection; only minor changes were made, such as to update addresses in the instructions and to correct formatting.
+
+Interested stakeholders must follow the instructions in the FRN on the proper submission of comments. Comments must be received by no later than Monday, April 6, 2026.
+
+View the Federal Register notice
+
+January 20, 2026. Employment and Training Administration Publishes Federal Register Notice (FRN) Updating the H-2A Monthly Adverse Effect Wage Rate (AEWR) for Herding or Production of Livestock on the Range
+
+The Employment and Training Administration has published a FRN announcing the new AEWR for herding or production of livestock on the range for the H-2A program. The AEWR is the minimum wage rate the Department of Labor has determined must be offered, advertised in recruitment, and paid by employers to H-2A workers and workers in corresponding employment, so that the wages of workers in the United States similarly employed will not be adversely affected. The notice announces the new national monthly AEWR for herding or production of livestock on the range, which will be effective as of February 3, 2026.
+
+View the FRN announcing the adjustment to monthly AEWR for herding or production of livestock on the range
+View the AEWR page on FLAG for the new rate for herding or production of livestock on the range
+
+January 5, 2026. OFLC Publishes List of Randomized H-2B Applications Submitted January 1-3 for Employers Seeking H-2B Workers Starting April 1, 2026
+
+To keep the public informed regarding the submission and assignment of H-2B applications for review, the Office of Foreign Labor Certification (OFLC) published the assignment group(s) for 10,062 H-2B applications covering 162,603 worker positions with the start date of work of April 1, 2026.
+
+Following the randomization procedures published in the Federal Register on March 4, 2019, OFLC completed the randomization process on January 4, 2026, and assigned to National Processing Center analysts all H-2B applications placed in Assignment Group A for issuance of Notices of Deficiency or Acceptance. Group A includes enough worker positions to reach the H-2B semi-annual visa allotment of 33,000.
+
+On January 4, 2026, OFLC provided written notice to each employer (and the employer's authorized attorney or agent) informing them about the Assignment Group for their application(s).
+
+View the Assignment Groups for H-2B Applications Submitted January 1-3, 2026
+
+Calendar Year 2025
+December 29, 2025. Office of Foreign Labor Certification Reminds Stakeholders of the H-2B Application Filing Timeline for the 2026 Peak Filing Season
+
+The Office of Foreign Labor Certification (OFLC) reminds employers and other interested stakeholders that the filing window to submit an H-2B Application for Temporary Employment Certification (Form ETA-9142B and appendices) requesting work start dates of April 1, 2026, or later, will open on January 1, 2026, at 12:00 a.m. Eastern Time.
+
+Following OFLC's standard operating procedures, H-2B applications requesting an April 1, 2026, work start date will be denied if they are filed before January 1, 2026, at 12:00 a.m. Eastern Time.
+
+OFLC will randomly order for processing all H-2B applications requesting a work start date of April 1, 2026, that are filed during the initial three calendar days (January 1-3, 2026) using the randomization procedures published in the Federal Register on March 4, 2019.
+
+If OFLC identifies multiple applications that appear to have been filed for the same job opportunity, OFLC will issue a Notice of Deficiency. If multiple filings are submitted during the three-day filing window, all applications will receive a Notice of Deficiency requesting that the employer demonstrate that the job opportunities are not the same. Employers that fail to establish a bona fide need for each application will receive a non-acceptance denial for each application.
+
+IMPORTANT REMINDER: Employers are reminded that Foreign Labor Application Gateway (FLAG) System user accounts are solely for the use of the individual for whom they were created. Sharing the same user account is forbidden and is grounds for terminating FLAG access. Passwords or any other authentication mechanism should never be shared or stored in any place easily accessible. If stored, a password may not be stored in a clear-text or readable format.
+
+December 17, 2025. Employment and Training Administration Reopens Public and Extends Comment Period on Proposed Revisions to H-2A Temporary Agricultural Labor Certification Program (OMB 1205-0466)
+
+Due to the recent lapse in appropriations, on Wednesday, December 17, 2025], the Employment and Training Administration (ETA) published a Federal Register notice (FRN), to reopen the 60-day comment period that was announced through the Paperwork Reduction Act (PRA) FRN, “Agency Information Collection Activities; Comment request; Revision of H-2A Temporary Agricultural Labor Certification Program,” which proposes to revise the application forms, instructions, appendices, and other information associated with the H-2A Temporary Agricultural Program as covered under Office of Management and Budget (OMB) control number 1205-0466 (OMB 1205-0466) that was published on September 10, 2025 at 90 FR 43640. The Department of Labor (Department) is reopening the comment period for an additional 30 days to allow the public to request documents for review and submit public comments.
+
+The proposed revisions to the information collection requirements for OMB 1205-0466 support the changes that ETA and the Wage and Hour Division (WHD) proposed through its notice of proposed rulemaking (NPRM), Recission of Final Rule: Improving Protections for Workers in Temporary Agricultural Employment in the United States (Jul. 2, 2025). Through this NPRM, ETA and WHD proposed to amend their regulations governing the certification of agricultural labor or services performed by temporary foreign workers in H-2A nonimmigrant status by substantially rescinding the H-2A provisions contained within the final rule published by the Department on April 29, 2024. ETA is proposing to continue using the forms in effect as of June 27, 2024, with the addition of “some of the assurances” approved by OMB on July 11, 2024.
+
+Written comments and requests for documents must be submitted in accordance with the instructions provided in the FRN. The deadline to submit comments and requests is Friday, January 16, 2026.
+
+View the Federal Register notice
+View the NPRM, Rescission of Final Rule: Improving Protections for Workers in Temporary Agricultural Employment in the United States
+View the Federal Register notice, Agency Information Collection Activities; Comment request; Revision of H-2A Temporary Agricultural Labor Certification Program
+View the Forms page to see the proposed revised H-2A forms, instructions, and appendices (as shown at the top of the Forms page, listing the Form ETA-750/750A and Addenda and the Form ETA-9142A and Appendices, as were in effect on June 27, 2024)
+
+December 9, 2025. OFLC Announces Webinar on December 17, 2025, to Update Stakeholders on the Process for Filing H-2B Applications with a Start Date of April 1, 2026, or Later
+
+The Office of Foreign Labor Certification (OFLC) invites stakeholders to participate in a webinar that provides best practices and helpful tips for preparing H-2B Applications for Temporary Employment Certification (Form ETA-9142B and appendices). The webinar will discuss:
+
+Regulatory timeframes and filing requirements for H-2B applications with a start date of need of April 1, 2026, or later;
+Procedures OFLC uses to randomly select H-2B applications for review and processing;
+Helpful hints and reminders to avoid deficiencies during application process.
+
+This webinar will be recorded and posted to the OFLC website along with presentation materials for future reference. Please be advised there is a 1000-person participant limit to this webinar. *Also note, if you are experiencing audio difficulties using a computer, please combine the presentation with the ”Join by Phone” details indicated below.
+
+Details of the webinar are as follows:
+
+Wednesday, December 17, 2025
+
+2:00 PM | (UTC-05:00) Eastern Time (US & Canada) | 1 hr
+
+Join from the meeting link:
+
+https://usdol.webex.com/usdol/j.php?MTID=mdbe0d257542bd16dd2b737c7a6a549b4
+
+Join by meeting number:
+
+Meeting number (access code): 2828 144 8593
+
+Meeting password: H2B2026
+
+Tap to join from a mobile device (attendees only):
+
+1-877-465-7975, # US Toll Free
+
+1-210-795-0506, # US Toll
+
+December 2, 2025. Office of Foreign Labor Certification Announces Delay in Publication of 2026 H-2A Monthly Adverse Effect Wage Rate (AEWR) for Herding or Production of Livestock on the Range
+
+Due to the recent lapse in appropriations, the Employment and Training Administration (ETA) is delaying publication of the Federal Register Notice (FRN) announcing the new monthly Adverse Effect Wage Rate (AEWR) for herding or production of livestock on the range under the H-2A program. The monthly AEWR is based on the Employment Cost Index (ECI) produced by the Department of Labor’s Bureau of Labor Statistics (BLS), which has not yet been published due to the funding lapse. Once the BLS releases the ECI, ETA will move promptly, consistent with Departmental procedures, to publish the FRN.
+
+
+[output truncated at 50000 of 835946 characters. Pass a larger max_chars (default 50000) to see more, or use read_page with a ref_id to focus on a smaller section.]

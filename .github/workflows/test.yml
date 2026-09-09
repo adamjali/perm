@@ -84,6 +84,9 @@ jobs:
       - name: Policy feed selection rules
         working-directory: v2
         run: python3 scripts/test_policy_notices.py
+      - name: OFLC announcements parser tests
+        run: python3 scripts/test_oflc_news.py
+
       - name: Debarment parser tests
         working-directory: v2
         run: python3 scripts/test_debarments.py

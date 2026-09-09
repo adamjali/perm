@@ -33,7 +33,7 @@ left off.
 - [x] C9 estimate scorecard: `/estimate-scorecard`, structured ledger + live status and first final-status transition from the event log; scores itself when DOL decides (1fa7e348)
 
 ## D. Data sources
-- [ ] D1 OIG and OFLC enforcement notices in the policy feed
+- [x] D1 OFLC announcements in the policy feed: `scripts/ingest_oflc_news.py` parses OFLC's announcements page (31 notices of 2026, seeded from a browser capture on Sep 8; runs daily on the runner beside the debarment lists, since www.dol.gov refuses the laptop) into `policy_notices` as type 'OFLC announcement' with topic tags. DOL OIG left out: its site is a search page with no parseable report list and its foreign-labor audits are rare PDFs; noted in the script's docstring
 - [ ] D2 OEWS wage levels from the FLC Data Center: tool + levels on occupation pages
 - [ ] D3 family-based cutoff history from the bulletin archive
 - [ ] D4 layoffs against filings: WARN notices for the states with machine-readable data, matched to employer slugs (partial by design)
@@ -45,7 +45,7 @@ left off.
 - [x] E3 user-reported milestones: `caseMilestones` table, `/milestone/report` (internal mutation, per-IP 6/hour, global 300/day charged before the write, one row per case+reporter+kind) and `/milestone/summary` on Convex HTTP; `CaseMilestones` section on every PERM case page, labelled unverified; 5 convex tests incl. the budget refusing at exactly 300
 - [x] E4 digest ON at deploy: set on prod Convex `NEWSLETTER_ENABLED=1` and `NEWSLETTER_DAILY_CAP=15` (ledger in convex/caseAlerts.ts: 70 worst-case list mail + 15 = 85 of Resend's 100). Not set until the deploy step, per the hold
 - [ ] E5 auto-posts to X and LinkedIn (needs Adam's API keys; scaffold only)
-- [ ] E6 translations of the situation guides (needs a reviewer; hreflang scaffold only)
+- [x] E6 translations: scaffold only, `src/lib/i18n.ts` (LOCALES with one entry; `languageAlternates` returns nothing until a second locale exists; the test refuses a locale with no route directory). No machine translation of legal deadlines, by design; a reviewer's name goes in the frontmatter when one exists
 
 ## F. Close
 - [ ] F1 full suite, clean build, rendered audits, Lighthouse control, phone shots

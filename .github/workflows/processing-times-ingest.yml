@@ -114,6 +114,19 @@ jobs:
       # addresses, so this step has no laptop backstop. pdfplumber is the
       # one non-stdlib dependency, installed here rather than pinned in the
       # repo because nothing else in the tree reads a PDF.
+      # OFLC's own announcements page, into the policy feed. Same host and
+      # header rules as the debarment lists: the runner answers, a laptop does
+      # not, so there is no residential backstop. A parse of zero rows refuses
+      # to write rather than emptying the feed's OFLC half.
+      - name: OFLC announcements
+        if: always()
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          python3 scripts/ingest_oflc_news.py \
+            || python3 scripts/record_ingest_failure.py --script ingest_oflc_news.py --note "OFLC announcements failed"
+
       - name: Debarment lists
         if: always()
         working-directory: v2
