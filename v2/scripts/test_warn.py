@@ -14,11 +14,12 @@ import sys
 import warnings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ingest_warn import _cmp, assign_ids, parse_california, parse_new_york, parse_texas, parse_washington_page  # noqa: E402
+from ingest_warn import TX_DATA_PAGE, TX_PAGE, _cmp, assign_ids, rank_of, parse_california, parse_new_york, parse_texas, parse_texas_api, parse_washington_page  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIXTURE = os.path.join(HERE, "fixtures", "ca_warn_2026-09-08.xlsx")
 TX_FIXTURE = os.path.join(HERE, "fixtures", "tx_warn_2026-09-09.xlsx")
+TX_API_FIXTURE = os.path.join(HERE, "fixtures", "tx_warn_portal_2026-09-09.json")
 NY_FIXTURE = os.path.join(HERE, "fixtures", "ny_warn_2026-09-09.csv")
 WA_FIXTURE = os.path.join(HERE, "fixtures", "wa_warn_page_2026-09-09.html")
 
@@ -100,6 +101,30 @@ def main() -> int:
     check(_cmp(None, None) == _cmp("", None), "an absent count and an empty one agree", f)
     check(_cmp(42, "acme") != _cmp(43, "acme"), "a real count change is still seen", f)
     check(_cmp(42, None) != _cmp(42, "acme"), "a newly matched sponsor is still seen", f)
+
+    # THE TWO TEXAS SOURCES MUST AGREE ON A NOTICE'S IDENTITY. The open data
+    # portal is the automatic feed and the yearly spreadsheet is the top-up for
+    # the most recent weeks; if the same notice hashed differently from each,
+    # every overlapping week would accumulate a duplicate. Texas revised
+    # FreshRealm from 176 to 161 between the two, which is exactly why the
+    # worker count is not part of the identity.
+    api = parse_texas_api(open(TX_API_FIXTURE, "rb").read())
+    check(len(api) == 69, f"Texas portal fixture parses 69 notices, got {len(api)}", f)
+    by_id = {r["id"] for r in api}
+    shared = [r for r in tx if r["notice_date"] <= max(x["notice_date"] for x in api)]
+    matched = len({r["id"] for r in shared} & by_id)
+    check(matched >= 69, f"the spreadsheet and the portal agree on {matched} of the notices they share", f)
+    fresh_sheet = next(r for r in tx if "FreshRealm" in r["company"])
+    fresh_api = next(r for r in api if "FreshRealm" in r["company"])
+    check(fresh_sheet["id"] == fresh_api["id"], "a revised worker count does not change a notice's id", f)
+    check(fresh_sheet["employees"] != fresh_api["employees"], "the two sources really do disagree on that count", f)
+
+    # A STALER SOURCE MUST NOT OVERWRITE A FRESHER ONE. The weekly portal run
+    # reverted the spreadsheet's corrected count every time until write()
+    # started comparing ranks: the two-writers flip-flop, the same one the
+    # bulletin ingest guards against.
+    check(rank_of(TX_PAGE) > rank_of(TX_DATA_PAGE), "the agency spreadsheet outranks the open data portal", f)
+    check(rank_of("") == rank_of("https://edd.ca.gov/anything"), "a single-source state has one flat rank", f)
     check(all(r["source_url"].startswith("https://edd.ca.gov/") for r in rows), "every row cites EDD", f)
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0

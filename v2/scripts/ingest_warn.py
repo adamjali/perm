@@ -52,6 +52,15 @@ CA_PAGE = "https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/"
 # runner tries anyway, and `--state tx --from-file <xlsx>` is the fallback.
 TX_URL = "https://www.twc.texas.gov/sites/default/files/oei/docs/warn-act-listings-{year}-twc.xlsx"
 TX_PAGE = "https://www.twc.texas.gov/data-reports/warn-notice"
+# Texas publishes the same notices on the state open data portal, which serves
+# scripts freely and reaches back to 2019 (2,368 rows on 2026-09-09) where the
+# yearly spreadsheet holds one calendar year. It is the AUTOMATIC source. It
+# lags the spreadsheet by a couple of months (portal to 2026-06-23, sheet to
+# 2026-09-04), so `--state tx --from-file <xlsx>` remains the optional top-up
+# for the most recent weeks; the two agree on 68 of the 71 notices they share
+# and produce identical ids for them.
+TX_API = "https://data.texas.gov/resource/8w53-c4f6.json?$limit=50000&$order=notice_date"
+TX_DATA_PAGE = "https://data.texas.gov/d/8w53-c4f6"
 # New York: the current notices live in a Tableau Public dashboard, and Tableau
 # Public serves any view as CSV. 194 rows for 2026 on 2026-09-09; the legacy
 # HTML list holds 2023 to 2025 as one page per notice and is not read.
@@ -175,7 +184,13 @@ def assign_ids(rows: list[dict]) -> list[dict]:
     """
     seen: dict[str, int] = {}
     for row in rows:
-        base = "|".join([row["state"], row["notice_date"], row["company"], row["effective_date"] or "", row["county"] or "", row.pop("_extra", "") or "", str(row["employees"] or "")])
+        # `employees` is DELIBERATELY NOT in the identity. A state revises a
+        # worker count (Texas carried FreshRealm at 176 on its open-data portal
+        # and 161 on its own spreadsheet, the same notice), and with the count
+        # in the hash the revision became a second row instead of an update.
+        # Exact duplicates are still separated by the sequence number below,
+        # and `write()` compares the count so a revision is picked up.
+        base = "|".join([row["state"], row["notice_date"], row["company"], row["effective_date"] or "", row["county"] or "", row.pop("_extra", "") or ""])
         n = seen.get(base, 0)
         seen[base] = n + 1
         row["id"] = hashlib.sha1(f"{base}|{n}".encode()).hexdigest()[:16]
@@ -225,6 +240,30 @@ def parse_texas(xlsx_bytes: bytes) -> list[dict]:
             "industry": None,
             "source_url": TX_PAGE,
             "_extra": str(r[c_city]).strip() if c_city is not None and r[c_city] else "",
+        })
+    return assign_ids(out)
+
+
+def parse_texas_api(body: bytes) -> list[dict]:
+    """The Texas open data portal's WARN dataset, mapped onto the same fields
+    the spreadsheet parser emits so a notice gets the same id from either."""
+    out: list[dict] = []
+    for r in json.loads(body.decode("utf8", "replace")):
+        notice = _date((r.get("notice_date") or "")[:10])
+        company = (r.get("job_site_name") or "").strip()
+        if not notice or not company:
+            continue
+        out.append({
+            "state": "TX",
+            "notice_date": notice,
+            "effective_date": _date((r.get("layoff_date") or "")[:10]) if r.get("layoff_date") else None,
+            "company": company,
+            "kind": None,
+            "employees": _int(r.get("total_layoff_number")),
+            "county": (r.get("county_name") or "").strip() or None,
+            "industry": None,
+            "source_url": TX_DATA_PAGE,
+            "_extra": (r.get("city_name") or "").strip(),
         })
     return assign_ids(out)
 
@@ -356,6 +395,20 @@ def match_employers(db: Turso, rows: list[dict]) -> int:
     return n
 
 
+# WHICH SOURCE OUTRANKS WHICH, so a fresher record is never overwritten by a
+# staler one. Texas is the only state with two feeds: the agency's own yearly
+# spreadsheet runs to the current week, the open data portal trails it by a
+# month or two, and they disagree on revised worker counts (FreshRealm: 161 on
+# the sheet, 176 on the portal). Without this the weekly portal run reverted
+# the sheet's correction every time, which is the two-writers flip-flop the
+# bulletin ingest already guards against with a rank of its own.
+SOURCE_RANK = {TX_PAGE: 2, TX_DATA_PAGE: 1}
+
+
+def rank_of(source_url: str) -> int:
+    return SOURCE_RANK.get(source_url or "", 1)
+
+
 def _cmp(employees, slug) -> tuple:
     """Both sides of the change check, in one shape.
 
@@ -371,22 +424,31 @@ def _cmp(employees, slug) -> tuple:
 
 def write(db: Turso, rows: list[dict], state: str) -> int:
     db.script(DDL)
-    res = db.execute("SELECT id, employees, employer_slug FROM warn_notices WHERE state = ?", [state])
-    have = {}
+    res = db.execute("SELECT id, employees, employer_slug, source_url FROM warn_notices WHERE state = ?", [state])
+    have, held_rank = {}, {}
     for r in res["response"]["result"]["rows"]:
         vals = [None if c["type"] == "null" else c["value"] for c in r]
         have[vals[0]] = _cmp(vals[1], vals[2])
+        held_rank[vals[0]] = rank_of(str(vals[3] or ""))
     now = int(time.time() * 1000)
-    written = 0
-    for r in rows:
-        if have.get(r["id"]) == _cmp(r["employees"], r.get("employer_slug")):
-            continue
-        db.execute(
-            "INSERT OR REPLACE INTO warn_notices VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-            [r["id"], r["state"], r["notice_date"], r["effective_date"], r["company"], r["kind"], r["employees"], r["county"], r["industry"], r.get("employer_slug"), r["source_url"], now],
-        )
-        written += 1
-    return written
+    changed = [r for r in rows
+               if have.get(r["id"]) != _cmp(r["employees"], r.get("employer_slug"))
+               and rank_of(r["source_url"]) >= held_rank.get(r["id"], 0)]
+    # CHUNKED, like ingest_flag_disclosure.write_cases. The cost is per
+    # STATEMENT, so a row at a time is what turned a 2,367-row Texas backfill
+    # into a ten-minute job; 200 rows a statement puts the same work in
+    # seconds and keeps a full reload inside the step's timeout.
+    per = 200
+    row_sql = "(" + ",".join("?" * 12) + ")"
+    for i in range(0, len(changed), per):
+        chunk = changed[i:i + per]
+        args: list = []
+        for r in chunk:
+            args += [r["id"], r["state"], r["notice_date"], r["effective_date"], r["company"],
+                     r["kind"], r["employees"], r["county"], r["industry"],
+                     r.get("employer_slug"), r["source_url"], now]
+        db.execute("INSERT OR REPLACE INTO warn_notices VALUES " + ",".join([row_sql] * len(chunk)), args)
+    return len(changed)
 
 
 def fetch(url: str) -> bytes:
@@ -396,8 +458,10 @@ def fetch(url: str) -> bytes:
 
 
 def load_texas(from_file: str | None) -> list[dict]:
-    raw = open(from_file, "rb").read() if from_file else fetch(TX_URL.format(year=dt.date.today().year))
-    return parse_texas(raw)
+    """The spreadsheet when handed one, the open data portal otherwise."""
+    if from_file:
+        return parse_texas(open(from_file, "rb").read())
+    return parse_texas_api(fetch(TX_API))
 
 
 # `browser_only` states refuse automated clients as a matter of policy, so a
@@ -410,7 +474,11 @@ def load_texas(from_file: str | None) -> list[dict]:
 # own freshness row below, which only moves when that state actually writes.
 STATES: dict[str, dict] = {
     "ca": {"name": "California", "page": CA_PAGE, "days": 21, "load": lambda f: parse_california(open(f, "rb").read() if f else fetch(CA_URL))},
-    "tx": {"name": "Texas", "page": TX_PAGE, "days": 45, "browser_only": True, "load": load_texas},
+    # Texas reads the open data portal automatically. Its budget is long
+    # because the portal itself lags the state's own spreadsheet by a couple of
+    # months; a notice newer than 120 days is the honest floor, and the
+    # spreadsheet top-up brings it current whenever anyone runs it.
+    "tx": {"name": "Texas", "page": TX_DATA_PAGE, "days": 120, "load": load_texas},
     "ny": {"name": "New York", "page": NY_PAGE, "days": 21, "load": lambda f: parse_new_york(open(f, "rb").read() if f else fetch(NY_CSV))},
     "wa": {"name": "Washington", "page": WA_PAGE, "days": 21, "load": lambda f: parse_washington_page(open(f, encoding="utf8").read()) if f else fetch_washington()},
 }

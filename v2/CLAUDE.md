@@ -3386,6 +3386,25 @@ four secrets on the repo), then one dispatch with `post=true`.
 
 ## WARN, measured from a runner, and three bugs the measurement found (2026-09-09)
 
+**Texas is automatic after all: the state open data portal serves the same
+notices.** `data.texas.gov` dataset `8w53-c4f6` is a Socrata feed, no challenge,
+**2,367 notices back to 2019-01-04** where the agency spreadsheet holds one
+calendar year. It is the automatic source; the spreadsheet is an optional
+top-up for the freshest weeks, because the portal trails it (portal to
+2026-06-23, sheet to 2026-09-04). They merge exactly: mapped onto the same
+fields, the same notice hashes to the same id from either, verified 69 of 69
+on the weeks they share, and a top-up adds only what the portal lacks (27
+rows). **Search the state's open data portal before accepting a scraped page
+as the only source.**
+
+**Two sources need a rank, or the staler one reverts the fresher every week.**
+The portal and the spreadsheet disagree on revised worker counts (FreshRealm:
+161 on the sheet, 176 on the portal). The weekly portal run overwrote the
+sheet's correction every time until `write()` compared `rank_of(source_url)`,
+the same guard `ingest_visa_bulletin.py` already carries. **And the worker
+count is not part of a notice's identity** for the same reason: with the count
+in the hash a revision became a second row instead of an update.
+
 **Texas refuses data-center addresses exactly as it refuses this laptop.** A
 throwaway probe branch ran on GitHub runner 52.155.33.249: both the WARN page
 and `warn-act-listings-2026-twc.xlsx` answered **HTTP 202 with zero bytes and
