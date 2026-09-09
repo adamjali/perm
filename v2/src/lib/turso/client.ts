@@ -153,11 +153,25 @@ async function withDeadline<T>(
       return await Promise.race([run(), timer]);
     } catch (e) {
       const chain = causeChain(e);
+      // PRESSURE NEEDS A PAUSE; A DROPPED SOCKET DOES NOT. An immediate retry
+      // is exactly right for `other side closed`, because the point is to ride
+      // a new connection. It is close to useless for SQLITE_NOMEM: the server
+      // ran out of room to answer, and a few milliseconds later it still has
+      // none. Measured 2026-09-09: two production builds failed prerendering
+      // /tools/salary-explorer on SQLITE_NOMEM with both attempts inside the
+      // same instant, while a redeploy minutes later succeeded and the two
+      // window-function queries behind that page ran in 0.8s and 2.8s by hand.
+      // So pressure gets a third attempt and a real wait between tries.
+      const pressure = retryTransient && TRANSIENT_SQLITE.test(chain);
       const retryable =
         chain.includes("turso query deadline") ||
-        (retryTransient &&
-          (TRANSIENT_NETWORK.test(chain) || TRANSIENT_SQLITE.test(chain)));
-      if (attempt >= 2 || !retryable) throw e;
+        (retryTransient && TRANSIENT_NETWORK.test(chain)) ||
+        pressure;
+      const maxAttempts = pressure ? 3 : 2;
+      if (attempt >= maxAttempts || !retryable) throw e;
+      if (pressure) {
+        await new Promise((r) => setTimeout(r, attempt * 1500).unref?.());
+      }
     }
   }
 }

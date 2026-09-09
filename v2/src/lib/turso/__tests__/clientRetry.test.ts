@@ -120,10 +120,37 @@ describe("reads retry far-end pressure, which is not a network error", () => {
     expect(execute).toHaveBeenCalledTimes(2);
   });
 
-  it("still gives up after ONE retry", async () => {
+  it("gives PRESSURE a third attempt, because a pause is the whole point", async () => {
+    // A dropped socket is fixed by a new connection, so one immediate retry
+    // is right. Memory pressure is not: the far end has no room, and a few
+    // milliseconds later it still has none. Two production builds failed
+    // prerendering /tools/salary-explorer on 2026-09-09 with both attempts
+    // inside the same instant, and a redeploy minutes later succeeded.
     const { rows } = await import("../client");
     execute.mockRejectedValue(libsql("SQLITE_NOMEM"));
     await expect(rows("SELECT 1")).rejects.toThrow("out of memory");
+    expect(execute).toHaveBeenCalledTimes(3);
+  });
+
+  it("recovers when the pressure clears on the third attempt", async () => {
+    const { rows } = await import("../client");
+    execute
+      .mockRejectedValueOnce(libsql("SQLITE_NOMEM"))
+      .mockRejectedValueOnce(libsql("SQLITE_NOMEM"))
+      .mockResolvedValueOnce(OK);
+    await expect(rows("SELECT 1")).resolves.toEqual([]);
+    expect(execute).toHaveBeenCalledTimes(3);
+  });
+
+  it("does NOT give a dropped connection a third attempt", async () => {
+    // The extra attempt is for pressure only; widening it for every transient
+    // error would just make a genuinely broken far end slower to report.
+    const { rows } = await import("../client");
+    const dropped = Object.assign(new TypeError("fetch failed"), {
+      cause: new Error("other side closed"),
+    });
+    execute.mockRejectedValue(dropped);
+    await expect(rows("SELECT 1")).rejects.toThrow("fetch failed");
     expect(execute).toHaveBeenCalledTimes(2);
   });
 

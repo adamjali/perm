@@ -3384,6 +3384,25 @@ actually requested, the JSON body, the content type. What remains is the
 credentials, which are Adam's to create (an X developer app under the persona,
 four secrets on the repo), then one dispatch with `post=true`.
 
+## Pressure needs a PAUSE; a dropped socket does not (2026-09-09)
+
+Two production builds failed prerendering `/tools/salary-explorer` on
+`SQLITE_NOMEM`, with a successful redeploy in between. The retry was already
+allow-listing that code (added 2026-09-03 for this same page) and it still did
+not help, because **`withDeadline` retried immediately and only once.** An
+instant retry is exactly right for `other side closed` (the point is to ride a
+new connection) and close to useless for memory pressure: the far end ran out
+of room to answer, and milliseconds later it still has none.
+
+Pressure now gets a third attempt with a real wait (1.5 s, then 3 s); network
+errors and the deadline keep their single immediate retry, pinned by a test
+that a dropped connection still stops at two. The queries themselves are not
+the defect: by hand, the two window functions behind that page ran in **0.8 s
+and 2.8 s**. They are simply the largest memory consumer in a build that
+prerenders many pages at once, so they are the first to lose under contention.
+The deeper fix, if it recurs, is the established one: precompute into
+`perm_docs` the way `review_stages` and `live_census` were.
+
 ## The due-check routine, and why the manual steps stay manual (2026-09-09)
 
 Three things cannot be automated, and the obstacle is a browser challenge or
