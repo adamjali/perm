@@ -3384,6 +3384,34 @@ actually requested, the JSON body, the content type. What remains is the
 credentials, which are Adam's to create (an X developer app under the persona,
 four secrets on the repo), then one dispatch with `post=true`.
 
+## The due-check routine, and why the manual steps stay manual (2026-09-09)
+
+Three things cannot be automated, and the obstacle is a browser challenge or
+Adam's own account, never a missing scheduler:
+
+| task | why not | how often |
+|---|---|---|
+| the current visa bulletin | travel.state.gov 403s every script as policy, and USCIS's chart page carries **no cutoff dates**, only a link back to State (checked 2026-09-09) | monthly, mid-month |
+| Search Console reindex | no API; Google's Indexing API is `JobPosting`/`BroadcastEvent` only | after each deploy |
+| Table V and the limits sheet | same Cloudflare | yearly |
+
+A Claude routine changes none of that: it runs headless on a data-center
+address, which is exactly what gets refused, and routines cannot push to main
+anyway (Anthropic's git proxy rewrites every routine push onto a `claude/*`
+branch). **What a routine CAN do is the part that actually failed: reading the
+alert.** `trig_01U2UC9qeUvdft461DoV785m` ("PERM Tracker Due Check") runs
+Mondays and Thursdays at 9 AM ET on `claude-opus-5`, push notifications on, and needs **no
+secrets at all**: it reads the ingest-health conclusion from GitHub's public
+API, reads "the newest bulletin we hold is <Month Year>" off our own
+`/visa-bulletin` page, and asks the Internet Archive's CDX index whether State
+has published the next month. A capture is proof it is out; an empty result
+after the 18th is stated as probable, never certain, because the Archive lags
+publication by a few days. Silent one-liner when nothing is due. **Proved by a manual fire on 2026-09-09: 62 seconds, and it returned "nothing due. Health check green, newest bulletin September 2026."** The one thing that needed a second attempt is worth keeping: our own page is server-rendered React, so a sentence in the copy is split by JSON punctuation in the raw HTML and a naive `grep` for it matches nothing; strip `\`, `"` and `,` first.
+
+**Our own firewall challenges a bare script with HTTP 429**, so anything
+reading permtracker.app from outside needs the `x-permtracker-audit` header
+(Firewall rule 5). That is why the routine sends it.
+
 ## WARN, measured from a runner, and three bugs the measurement found (2026-09-09)
 
 **Texas is automatic after all: the state open data portal serves the same
