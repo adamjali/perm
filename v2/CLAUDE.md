@@ -3272,3 +3272,49 @@ version was a five-card strip in a wider band and Adam called it slop on
 sight: two left edges, uneven wrapping, a stock stat kit. The rule that came
 out of it: a row of figures under prose is a LEDGER in the prose's own
 column, not a band of cards.
+
+## The full build of Sep 8 2026: what landed, and the five things it taught (2026-09-09)
+
+Ledger: `.planning/full-build-2026-09-09.md`, every item ticked or marked left
+off. Shipped in twelve commits after the parity build: five statutory
+calculators, the status dictionary, six situation guides, the glossary, the
+corrections log, the estimate scorecard, comparisons and a document checklist,
+the first data note, badges, user-reported milestones, account-free push
+alerts, the social-post and translation scaffolds, OFLC announcements and
+California WARN notices in the record, the prevailing wage levels tool, and the
+family-sponsored bulletin charts. Deploy was HELD throughout.
+
+- **`flag.dol.gov/recaptcha/wageSearch` is an open JSON endpoint, like the
+  case-status one.** The FLC Data Center redirects to FLAG's wage search; its
+  bundle names `/flag/api/getAreaOptions?state=&year=` and a POST to
+  `/recaptcha/wageSearch` with `{collectionType:"alc", year, socCode, area,
+  areaType:"bls_area", rdFlag:"BOTH"}` that answers the four OEWS levels in a
+  quarter second, no captcha in the flow. `/tools/wage-levels` reads it through
+  two validated, CDN-cached routes. The series year is the July that opened it.
+- **Whitespace text nodes inside `<tr>`, `<thead>` or `<select>` are a
+  hydration error, not a glued-text fix.** The `{" "}` habit that keeps
+  adjacent text apart is wrong between `<th>`/`<td>` siblings and between
+  `<option>`s; React reports "whitespace text nodes cannot be a child of <tr>"
+  and the client tree diverges. Put the space between text-bearing inline
+  siblings only.
+- **The bulletin's family charts parse with the same code as the employment
+  ones**, keyed by row label (F1, F2A, F2B, F3, F4) and country heading. The
+  fixtures were trimmed to the employment tables, so the family checks run on
+  the full July 2026 replay. **`web.archive.org/web/<ts>id_/<url>` served a
+  2 KB stub for a page the plain replay served whole**: the ingest uses the
+  plain replay and so must anything that reads the archive.
+- **A refetch after a write must bypass the browser cache when the GET is
+  cached.** The milestone summary carried `max-age=300`; the count did not
+  move after a successful report until the refetch used `cache: "no-store"`.
+- **DOL OIG has no parseable report list** (a search page and yearly PDFs);
+  the OFLC announcements page is a browser-visible list that scripts can read
+  only from GitHub's runners, so its parser runs there and its fixture is the
+  page text captured in a browser. WARN: California publishes a spreadsheet,
+  Texas a challenge page, Washington a search form, New York an HTML list;
+  only California is read and the page says so.
+
+**Deploy checklist for this batch:** `npx convex deploy -y` (three new tables,
+two new HTTP route families, a cron); set `NEWSLETTER_ENABLED=1` and
+`NEWSLETTER_DAILY_CAP=15` on prod Convex; add a Firewall bypass for `/badge/*`
+so GitHub's camo proxy is not challenged; then push and the GSC queue in
+`.planning/gsc-reindex-queue-2026-09-08.md` plus the new pages.
