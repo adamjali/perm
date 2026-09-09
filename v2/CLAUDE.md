@@ -3341,7 +3341,48 @@ family-sponsored bulletin charts. Deploy was HELD throughout.
   only from GitHub's runners, so its parser runs there and its fixture is the
   page text captured in a browser. WARN: California publishes a spreadsheet,
   Texas a challenge page, Washington a search form, New York an HTML list;
-  only California is read and the page says so.
+  only California is read and the page says so. **Superseded 2026-09-09**:
+  all four are read now, see "WARN in four states" below.
+
+## WARN in four states, social cards for every page, and the posting request proved (2026-09-09)
+
+**WARN.** Measured from this laptop on Sep 9: New York's current notices are a
+Tableau Public dashboard, and Tableau Public serves any view as CSV
+(`.../views/<workbook>/<sheet>.csv?:showVizHome=no`, 194 rows for 2026); the
+"legacy" HTML list is one page per notice for 2023 to 2025 and is not read.
+Washington's database is an ASP.NET grid at `fortress.wa.gov`, 15 rows a page
+newest first, paged by WebForms postback (`__EVENTTARGET=ucPSW$gvMain`,
+`__EVENTARGUMENT=Page$N`, each page's hidden fields signing the next request;
+jumping past the visible pager answers 500, so the walk is sequential). Texas
+posts one spreadsheet per year (`warn-act-listings-<year>-twc.xlsx`) behind a
+bot challenge that answers scripts with HTTP 202 and a 2 KB page; the real
+browser gets the file, so `--state tx --from-file` is the fallback and the run
+records `partial` when the runner is challenged. `ingest_warn.py` loads each
+state on its own, refuses a state with zero rows, writes per state, and one
+state's outage cannot cost the others. Ids are shared through `assign_ids`
+(state, dates, company, county, an extra like the address or city, a sequence
+number). Fixtures: the real Texas 2026 file, eight New York rows, one
+Washington page. Live dry run: CA 192, NY 194, WA 180, TX challenged, 131 of
+566 matched to a PERM sponsor. Open question: whether GitHub's runner is
+challenged by Texas too; the first weekly run answers it.
+
+**Social cards.** Every public page now names a card: 29 more, rendered by
+`make-page-cards.mjs` from 1440-wide captures taken by `scripts/shoot.mjs`
+(serial, one Chrome). **The captures are 2x (2880x1600), so the crop is in
+capture pixels: `[600, 136, 2280, 1376]`, double the extension's
+`[300, 68, 1140, 688]`.** The three A-to-Z browse pages and the preference
+center take drawn motifs (`grid`, `window`). The card gate's "exactly one page
+names the slug" used a bare substring and counted the methodology page, which
+lists every dataset name, as a second page for `i140-trends`; it matches the
+slug as the card argument now.
+
+**Posting.** `post_to_x` and `post_to_linkedin` take their URL as a parameter,
+and `test_social_post.py` points the real request at a local server and reads
+back what X would receive: the OAuth 1.0a header with all seven parameters and
+a signature recomputed from the header's own nonce and timestamp over the URL
+actually requested, the JSON body, the content type. What remains is the
+credentials, which are Adam's to create (an X developer app under the persona,
+four secrets on the repo), then one dispatch with `post=true`.
 
 **Deploy checklist for this batch:** `npx convex deploy -y` (three new tables,
 two new HTTP route families, a cron); set `NEWSLETTER_ENABLED=1` and

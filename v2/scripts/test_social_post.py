@@ -16,7 +16,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from social_post import X_LIMIT, compose, cutoff_words, moved_count, oauth1_signature, signature_base_string  # noqa: E402
+from social_post import X_LIMIT, compose, post_to_linkedin, post_to_x, cutoff_words, moved_count, oauth1_signature, signature_base_string  # noqa: E402
 
 SNAPSHOT = {
     "permAsOf": "2026-08-31",
@@ -81,3 +81,77 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+# ---------------------------------------------------------------- the HTTP request itself
+
+def _serve_once():
+    """A local HTTP server that records one request and answers like the API."""
+    import http.server
+    import json as _json
+    import threading
+
+    seen: dict = {}
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            n = int(self.headers.get("Content-Length", "0"))
+            seen["path"] = self.path
+            seen["headers"] = {k.lower(): v for k, v in self.headers.items()}
+            seen["body"] = self.rfile.read(n).decode()
+            self.send_response(201)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("x-restli-id", "urn:li:share:1")
+            self.end_headers()
+            self.wfile.write(_json.dumps({"data": {"id": "1", "text": "ok"}}).encode())
+
+        def log_message(self, *a):
+            pass
+
+    srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.handle_request, daemon=True).start()
+    return srv, seen
+
+
+def test_post_to_x_sends_a_signed_json_request():
+    """The request X receives: OAuth 1.0a header, JSON body, nothing else."""
+    import json as _json
+    import urllib.parse
+
+    srv, seen = _serve_once()
+    url = f"http://127.0.0.1:{srv.server_port}/2/tweets"
+    creds = {"key": "ck", "secret": "cs", "token": "tk", "token_secret": "ts"}
+    out = post_to_x("DOL is working November 2025.", creds, url=url)
+    srv.server_close()
+    assert out == {"data": {"id": "1", "text": "ok"}}
+    assert seen["path"] == "/2/tweets"
+    assert seen["headers"]["content-type"] == "application/json"
+    assert _json.loads(seen["body"]) == {"text": "DOL is working November 2025."}
+    auth = seen["headers"]["authorization"]
+    assert auth.startswith("OAuth ")
+    parts = dict(kv.split("=", 1) for kv in auth[6:].split(", "))
+    for k in ("oauth_consumer_key", "oauth_nonce", "oauth_signature", "oauth_signature_method", "oauth_timestamp", "oauth_token", "oauth_version"):
+        assert k in parts, k
+    assert parts["oauth_consumer_key"] == '"ck"' and parts["oauth_token"] == '"tk"'
+    assert parts["oauth_signature_method"] == '"HMAC-SHA1"' and parts["oauth_version"] == '"1.0"'
+    # The signature is recomputable from the header's own nonce and timestamp,
+    # over the URL the request actually went to, so a header that names one
+    # URL and signs another cannot pass.
+    sig_params = {k: urllib.parse.unquote(v.strip('"')) for k, v in parts.items() if k != "oauth_signature"}
+    expected = oauth1_signature("POST", url, sig_params, "cs", "ts")
+    assert urllib.parse.unquote(parts["oauth_signature"].strip('"')) == expected
+
+
+def test_post_to_linkedin_sends_the_versioned_bearer_request():
+    import json as _json
+
+    srv, seen = _serve_once()
+    url = f"http://127.0.0.1:{srv.server_port}/rest/posts"
+    out = post_to_linkedin("A post.", "tok", "urn:li:person:abc", url=url)
+    srv.server_close()
+    assert out == {"status": 201, "id": "urn:li:share:1"}
+    assert seen["headers"]["authorization"] == "Bearer tok"
+    assert seen["headers"]["linkedin-version"] == "202601"
+    assert seen["headers"]["x-restli-protocol-version"] == "2.0.0"
+    body = _json.loads(seen["body"])
+    assert body["author"] == "urn:li:person:abc" and body["commentary"] == "A post." and body["visibility"] == "PUBLIC"

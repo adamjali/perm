@@ -147,9 +147,18 @@ def oauth1_header(method: str, url: str, body_params: dict[str, str], creds: dic
     return "OAuth " + ", ".join(f'{_pct(k)}="{_pct(v)}"' for k, v in sorted(oauth.items()))
 
 
-def post_to_x(text: str, creds: dict[str, str]) -> dict:
-    """POST /2/tweets with a JSON body; only the oauth_* params sign a JSON request."""
-    url = "https://api.twitter.com/2/tweets"
+X_TWEETS_URL = "https://api.twitter.com/2/tweets"
+LINKEDIN_POSTS_URL = "https://api.linkedin.com/rest/posts"
+
+
+def post_to_x(text: str, creds: dict[str, str], url: str = X_TWEETS_URL) -> dict:
+    """POST /2/tweets with a JSON body; only the oauth_* params sign a JSON request.
+
+    `url` is a parameter so test_social_post.py can point the real request at
+    a local server and read back exactly what X would receive: the header, the
+    body and the content type. The signing was proved against RFC 5849's
+    worked example; this is what proves the request that carries it.
+    """
     req = urllib.request.Request(url, data=json.dumps({"text": text}).encode(), method="POST")
     req.add_header("Authorization", oauth1_header("POST", url, {}, creds))
     req.add_header("Content-Type", "application/json")
@@ -159,8 +168,7 @@ def post_to_x(text: str, creds: dict[str, str]) -> dict:
 
 # ---------------------------------------------------------------- LinkedIn
 
-def post_to_linkedin(text: str, token: str, author_urn: str) -> dict:
-    url = "https://api.linkedin.com/rest/posts"
+def post_to_linkedin(text: str, token: str, author_urn: str, url: str = LINKEDIN_POSTS_URL) -> dict:
     body = {"author": author_urn, "commentary": text, "visibility": "PUBLIC", "distribution": {"feedDistribution": "MAIN_FEED", "targetEntities": [], "thirdPartyDistributionChannels": []}, "lifecycleState": "PUBLISHED"}
     req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST")
     req.add_header("Authorization", f"Bearer {token}")
