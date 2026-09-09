@@ -17,7 +17,7 @@ import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "Layoff Notices Against PERM Sponsors";
 const DESCRIPTION =
-  "WARN Act layoff and closing notices as the states publish them, matched by name to the employers in DOL's PERM record. California, Texas, New York and Washington.";
+  "WARN Act layoff and closing notices from California, Texas, New York and Washington, as each state publishes them, matched by name to DOL's PERM employers.";
 const PATH = "/layoffs";
 
 export const metadata: Metadata = withSocialCard({

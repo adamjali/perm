@@ -92,8 +92,17 @@ CONTROL = "PERM"
 
 
 def _fetch(url: str) -> str:
+    # `x-permtracker-audit` is what Firewall rule 5 bypasses. Without it this
+    # audit is CHALLENGED by our own WAF when pointed at production: every
+    # fetch answers 429 and the run reports "0 glued pairs" over nothing at
+    # all. The scanned-count control is what caught that; the header is what
+    # fixes it. The other three audits already send it.
     req = urllib.request.Request(
-        url, headers={"User-Agent": "Mozilla/5.0 (permtracker glue audit)"}
+        url,
+        headers={
+            "User-Agent": "Mozilla/5.0 (permtracker glue audit)",
+            "x-permtracker-audit": "1",
+        },
     )
     with urllib.request.urlopen(req, timeout=30) as r:
         return r.read().decode("utf-8", "replace")
@@ -190,8 +199,11 @@ def main() -> int:
     for path in pages:
         url = f"{args.base}{path}"
         try:
-            with urllib.request.urlopen(url, timeout=30) as r:
-                body = r.read().decode("utf-8", "replace")
+            # THROUGH `_fetch`, not a bare urlopen. There were two fetch paths
+            # here and only the sitemap one carried the firewall bypass header,
+            # so against production every page answered 429 and the run
+            # reported "0 glued pairs" having scanned nothing.
+            body = _fetch(url)
         except Exception as exc:  # noqa: BLE001 - one bad page must not hide the rest
             print(f"  {path}: FETCH FAILED {exc}")
             continue
