@@ -2692,3 +2692,21 @@ html[data-pre="on"] body::before {
   .rail-tab { min-height: 2.375rem; padding-top: 0.375rem; padding-bottom: 0.375rem; }
 }
 
+/* THE FOOTER COLUMNS ARE `<details>`: an accordion on a phone, a plain column
+   at `lg`. Collapsing is native; EXPANDING at a breakpoint is the half CSS
+   cannot do by default, because a closed `<details>` has its content hidden by
+   the user agent. Both rules below are needed, and both were probed in a
+   browser before shipping: engines that hide the content by display on the
+   slot need the first, and engines that use `::details-content` need the
+   second.
+
+   The links are in the HTML either way - a closed `<details>` hides its
+   content, it does not remove it - so a crawler sees the whole footer on every
+   viewport. */
+.footer-col > summary { list-style: none; }
+.footer-col > summary::-webkit-details-marker { display: none; }
+
+@media (min-width: 64rem) {
+  .footer-col:not([open]) > .footer-col-body { display: flex; }
+  .footer-col::details-content { content-visibility: visible; }
+}

@@ -64,13 +64,13 @@
  * is gone rather than left as an unreachable second layout.
  */
 
-import { HeartIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, HeartIcon } from "@phosphor-icons/react";
 
 import { NavLink } from "@/components/ui/nav-link";
 import { LawGavelSVG } from "@/components/illustrations";
 import { Fragment } from "react";
 import { SOCIAL_LINKS } from "@/lib/constants/externalLinks";
-import { TOOL_NAV_LINKS } from "@/lib/constants/navigation";
+import { FOOTER_COLUMNS } from "@/lib/constants/navigation";
 
 // Brand icons as inline SVGs: neither lucide nor Phosphor ships brand marks
 const TwitterIcon = ({ className }: { className?: string }) => (
@@ -106,6 +106,13 @@ interface FooterProps {
 export default function Footer({ audience = "public" }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
+  // The signed-in app drops Sign Up and Sign In. That is the whole reason
+  // `audience` exists: the app used to be offered both.
+  const columns = FOOTER_COLUMNS.map((col) => ({
+    ...col,
+    links: audience === "public" && col.publicOnly ? [...col.links, ...col.publicOnly] : col.links,
+  }));
+
   return (
     // `z-10`, NOT `z-50`. The footer only has to clear the ambient canvas
     // (`AmbientMurmuration`, `fixed inset-0 z-0`) and the dot ground; it has
@@ -127,7 +134,13 @@ export default function Footer({ audience = "public" }: FooterProps) {
     <footer className="relative z-10 border-t-3 border-black bg-black dark:border-white dark:bg-black">
       <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8">
         {/* Multi-column grid */}
-        <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {/* SIX cells, not five: the brand block plus five link columns. At
+            `xl:grid-cols-5` the sixth wrapped to a second row, so the footer
+            stayed 754px tall on a 1440px screen even after the calculators
+            column dropped from sixteen links to seven - the tallest column set
+            a row height and then there were two rows of it. Measured. The
+            gap tightens too; 40px between columns was most of the rest. */}
+        <div className="grid gap-x-8 gap-y-1 sm:grid-cols-2 sm:gap-y-6 lg:grid-cols-3 lg:gap-y-10 xl:grid-cols-6">
           {/* Brand column */}
           <div className="lg:col-span-1">
             <div className="font-heading text-xl font-bold text-white mb-4">
@@ -168,206 +181,59 @@ export default function Footer({ audience = "public" }: FooterProps) {
             </div>
           </div>{" "}
 
-          {/* A whitespace text node between grid items. The column above ends in
-              link text and the next begins with a heading, so textContent runs them
-              together ("...attorneys.Product", "Sign InLearn", "Processing
-              TimesCalculators") for anything that walks the DOM. Whitespace-only
-              nodes are not laid out as grid items, so this costs nothing visually.
-              Measured: these are the only three glued boundaries in the footer;
-              the Legal column does not glue and is left alone. */}
-          {/* Product column */}
-          <div>
-            <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
-              Product
-            </p>{" "}
-            <nav className="footer-links flex flex-col gap-3" aria-label="Product links">
-              <NavLink
-                href="/perm-case-status"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Track my case
-              </NavLink>{" "}
-              <NavLink
-                href="/case-search"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Search every case
-              </NavLink>{" "}
-              <NavLink
-                href="/tools/perm-timeline-calculator"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Processing time calculator
-              </NavLink>{" "}
-              <NavLink
-                href="/visa-bulletin"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Visa bulletin
-              </NavLink>{" "}
-              <NavLink
-                href="/lca-wages"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                H-1B salaries
-              </NavLink>{" "}
-              <NavLink
-                href="/tools"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Data
-              </NavLink>{" "}
-              <NavLink
-                href="/for-attorneys"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                For attorneys
-              </NavLink>{" "}
-              <NavLink
-                href="/email-preferences"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Email preferences
-              </NavLink>{" "}
-              <NavLink
-                href="/faq"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                FAQ
-              </NavLink>{" "}
-              {audience === "public" && (
-                <>
+          {/* Every column is a `<details>`: an accordion on a phone, a plain
+              column at `lg`. Adam: "footer too big, maybe have it have
+              expandable stuff? industry standard best practices?" Measured
+              before this: 760px on desktop (101% of the viewport) and 1,882px
+              at 500px wide, which is 285% of a phone screen and 22% of the
+              whole page.
+
+              The links stay in the HTML when a column is shut, because the
+              content of a closed `<details>` is parsed and indexed - it is
+              hidden, not absent - so nothing here costs a crawler anything.
+              The desktop expansion is CSS only (`.footer-col` in globals.css),
+              so there is no JS, no hydration flash and no second copy of the
+              markup for a second breakpoint. */}
+          {columns.map((col) => (
+            <details key={col.title} className="footer-col group border-b border-white/10 pb-3 last:border-0 lg:border-0 lg:pb-0">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between py-2 lg:min-h-0 lg:pointer-events-none lg:py-0">
+                <span className="font-heading text-sm font-bold uppercase tracking-wider text-white">
+                  {col.title}
+                </span>{" "}
+                <CaretDownIcon
+                  className="h-4 w-4 shrink-0 text-white/60 transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none lg:hidden"
+                  aria-hidden="true"
+                />
+              </summary>
+              <nav className="footer-col-body footer-links mt-3 flex flex-col gap-3 lg:mt-4" aria-label={col.ariaLabel}>
+                {col.links.map((link) => (
+                  <Fragment key={link.href}>
+                    <NavLink
+                      href={link.href}
+                      // 44px rows on touch, the craft floor, and only inside
+                      // an accordion that starts shut - so the tap target is
+                      // real where a finger is used and costs no height where
+                      // the column is collapsed. At `lg` they go back to a
+                      // dense text list, which is what a pointer wants.
+                      className="hover-underline flex min-h-11 items-center text-sm text-white/60 transition-colors hover:text-(--primary) lg:block lg:min-h-0"
+                      spinnerClassName="text-(--primary)"
+                    >
+                      {link.label}
+                    </NavLink>{" "}
+                  </Fragment>
+                ))}
+                {col.more ? (
                   <NavLink
-                    href="/signup"
-                    className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
+                    href={col.more.href}
+                    className="hover-underline flex min-h-11 items-center text-sm font-bold text-white/80 transition-colors hover:text-(--primary) lg:block lg:min-h-0"
                     spinnerClassName="text-(--primary)"
                   >
-                    Sign Up Free
-                  </NavLink>{" "}
-                  <NavLink
-                    href="/login"
-                    className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                    spinnerClassName="text-(--primary)"
-                  >
-                    Sign In
+                    {col.more.label}
                   </NavLink>
-                </>
-              )}
-            </nav>
-          </div>{" "}
-
-          {/* Learn column */}
-          <div>
-            <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
-              Learn
-            </p>{" "}
-            <nav className="footer-links flex flex-col gap-3" aria-label="Content links">
-              <NavLink
-                href="/blog"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Blog
-              </NavLink>{" "}
-              <NavLink
-                href="/guides"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Guides
-              </NavLink>{" "}
-              <NavLink
-                href="/changelog"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Changelog
-              </NavLink>{" "}
-              <NavLink
-                href="/perm-processing-times"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Processing Times
-              </NavLink>
-            </nav>
-          </div>{" "}
-
-          {/* Calculators column. The suite shipped reachable from exactly
-              one inbound link, which is the orphan-page defect: a page can
-              return 200, sit in the sitemap, and still be invisible because
-              nothing indexable points at it. */}
-          <div>
-            <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
-              Calculators
-            </p>{" "}
-            <nav className="footer-links flex flex-col gap-3" aria-label="Calculator links">
-              {TOOL_NAV_LINKS.map((link) => (
-                <Fragment key={link.href}>
-                  <NavLink
-                    href={link.href}
-                    className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                    spinnerClassName="text-(--primary)"
-                  >
-                    {link.label}
-                  </NavLink>{" "}
-                </Fragment>
-              ))}
-            </nav>
-          </div>
-
-          {/* Legal column */}
-          <div>
-            <p className="font-heading text-sm font-bold uppercase tracking-wider text-white mb-4">
-              Legal
-            </p>{" "}
-            <nav className="footer-links flex flex-col gap-3" aria-label="Legal links">
-              <NavLink
-                href="/privacy"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Privacy Policy
-              </NavLink>{" "}
-              <NavLink
-                href="/terms"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Terms of Service
-              </NavLink>{" "}
-              <NavLink
-                href="/security"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Security
-              </NavLink>{" "}
-              <NavLink
-                href="/about"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                About
-              </NavLink>{" "}
-              <NavLink
-                href="/contact"
-                className="hover-underline text-sm text-white/60 transition-colors hover:text-(--primary)"
-                spinnerClassName="text-(--primary)"
-              >
-                Contact
-              </NavLink>
-            </nav>
-          </div>
+                ) : null}
+              </nav>
+            </details>
+          ))}
         </div>
 
         {/* Bottom bar with illustration */}

@@ -149,3 +149,93 @@ export const LEARN_NAV_LINKS = [
   { href: "/about", label: "About" },
   { href: "/changelog", label: "Changelog" },
 ] as const satisfies readonly NavLink[];
+
+/**
+ * The footer, as data rather than 200 lines of hand-written anchors.
+ *
+ * TWO DEFECTS MADE THIS A LIST INSTEAD OF MARKUP.
+ *
+ * The columns had drifted from the Learn dropdown: FAQ sat under Product,
+ * About under Legal, "Processing Times" under Learn, and Methodology appeared
+ * in the dropdown and NOWHERE in the footer. Adam: "drop down learn isnt same
+ * as footer, ensure footer is correct everywhere adn vice versa". The Learn
+ * column is now literally `LEARN_NAV_LINKS`, so the two cannot disagree, and
+ * `footer-nav-parity.test.ts` asserts it.
+ *
+ * And the whole Reference cluster - the glossary, the scorecard, policy
+ * changes, debarments, badges - was reachable only from the data rail. Pages
+ * that exist, are in the sitemap, and had no footer link pointing at them.
+ *
+ * The calculators column listed all sixteen tools, which is most of why the
+ * footer measured 760px on desktop and 1,882px on a phone. It shows six and
+ * links to the hub.
+ */
+export interface FooterColumn {
+  title: string;
+  /** Accessible name for the column's <nav>. */
+  ariaLabel: string;
+  links: readonly NavLink[];
+  /** A trailing link to the full set, when the column is a sample. */
+  more?: NavLink;
+  /** Appended only for logged-out visitors. */
+  publicOnly?: readonly NavLink[];
+}
+
+export const FOOTER_COLUMNS: readonly FooterColumn[] = [
+  {
+    title: "Product",
+    ariaLabel: "Product links",
+    links: [
+      { href: "/perm-case-status", label: "Track my case" },
+      { href: "/case-search", label: "Search every case" },
+      // The page that bears the name and answers the question, with DOL's own
+      // figure. The CALCULATOR of the same name lives under Calculators; two
+      // links reading "Processing time..." in one footer was the ambiguity
+      // this file already warns about above.
+      { href: "/perm-processing-times", label: "Processing times" },
+      { href: "/visa-bulletin", label: "Visa bulletin" },
+      { href: "/lca-wages", label: "H-1B salaries" },
+      { href: "/tools", label: "Data" },
+      { href: "/for-attorneys", label: "For attorneys" },
+      { href: "/email-preferences", label: "Email preferences" },
+    ],
+    publicOnly: [
+      { href: "/signup", label: "Sign Up Free" },
+      { href: "/login", label: "Sign In" },
+    ],
+  },
+  {
+    // Not a hand-kept copy: the dropdown's own list.
+    title: "Learn",
+    ariaLabel: "Content links",
+    links: LEARN_NAV_LINKS,
+  },
+  {
+    title: "Reference",
+    ariaLabel: "Reference links",
+    links: [
+      { href: "/glossary", label: "Glossary" },
+      { href: "/perm-case-statuses", label: "Status meanings" },
+      { href: "/policy-changes", label: "Policy changes" },
+      { href: "/debarments", label: "Debarments" },
+      { href: "/estimate-scorecard", label: "Estimate scorecard" },
+      { href: "/badges", label: "Badges" },
+    ],
+  },
+  {
+    title: "Calculators",
+    ariaLabel: "Calculator links",
+    links: TOOL_NAV_LINKS.slice(0, 6),
+    more: { href: "/calculators", label: `All ${TOOL_NAV_LINKS.length} calculators` },
+  },
+  {
+    title: "Legal",
+    ariaLabel: "Legal links",
+    links: [
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/terms", label: "Terms of Service" },
+      { href: "/security", label: "Security" },
+      { href: "/contact", label: "Contact" },
+    ],
+  },
+] as const;
