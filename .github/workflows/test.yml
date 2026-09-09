@@ -94,6 +94,10 @@ jobs:
         run: |
           python3 -m pip install --quiet openpyxl
           python3 scripts/test_warn.py
+      - name: Visa limits and Table V parser tests
+        run: |
+          python3 -m pip install --quiet openpyxl pdfplumber
+          python3 scripts/test_visa_limits.py
 
       - name: Debarment parser tests
         working-directory: v2

@@ -56,3 +56,6 @@ left off.
 - [x] G2 social cards for every public page without one: 29 cards (25 from real screenshots, 4 motifs), registry, page wiring, sitemap images; gate green after tightening its slug match
 - [x] G3 WARN notices for Texas, New York and Washington: parsers with fixtures and checks, per-state loads and writes, soft failure per state; live dry run CA 192 / NY 194 / WA 180 / TX challenged (file fallback); page copy, notice component, llms.txt and workflow comment updated
 - [x] G4 the posting request proved against a local server (OAuth header, signature, body); posting itself waits on Adam's X developer app and the four repository secrets
+- [x] G5 the two newest bulletins re-read with the family charts (August and September 2026 now carry all five family categories; the family page reads to September 2026)
+- [x] G6 D5 built: the Department's Annual Numerical Limits sheet (FY2026: 186,000 employment, 46,000 spilled over, estimated) and Table V (FY2024: 215,959 family used, 10,041 unused) parsed, stored, and rendered on /visa-bulletin as "The spillover, as the Department set it"; once a year per file, browser-fetched
+- [x] G7 dependencies updated within range, jsdom dropped, browserslist pinned past two advisories; majors (motion 13, svix 2, vitest 5 plugins, @types/node 26) deferred with reasons; Dependabot PRs to close after the full suite

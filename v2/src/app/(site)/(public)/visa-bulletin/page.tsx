@@ -31,6 +31,8 @@ import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
 import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { getVisaBulletinSeries, getI485Cells } from "@/lib/turso/publicData";
+import { getVisaAnnualLimits } from "@/lib/turso/visaLimits";
+import { fmtNumber, latestLimits, latestUsage } from "@/lib/visaLimits";
 import { getBulletinBoard, BOARD_COUNTRIES, type BoardCell } from "@/lib/turso/bulletin";
 import { computeI485Position } from "@/lib/i485/position";
 import {
@@ -154,11 +156,14 @@ interface Row {
 }
 
 export default async function VisaBulletinPage() {
-  const [series, board, cells] = await Promise.all([
+  const [series, board, cells, limitsDoc] = await Promise.all([
     getVisaBulletinSeries().catch(() => []),
     getBulletinBoard().catch(() => null),
     getI485Cells().catch(() => ({}) as Record<string, [number, number, number, number][]>),
+    getVisaAnnualLimits().catch(() => null),
   ]);
+  const spill = latestLimits(limitsDoc);
+  const usage = latestUsage(limitsDoc);
   const breadcrumb = generateBreadcrumbSchema([
     { name: "Home", href: "/" },
     { name: "Visa bulletin", href: "/visa-bulletin" },
@@ -244,6 +249,55 @@ export default async function VisaBulletinPage() {
           : " Too few captures fall before the bulletin's own month to say more than \"mid-month\"."}
         {" "}Expect {monthLabel(next)} in {monthName(targetMonth === 1 ? 12 : targetMonth - 1)}; the day is the Department&apos;s.
       </p>
+
+      {spill ? (
+        <>
+          <h2 className="mt-12 font-heading text-2xl font-black tracking-tight">The spillover, as the Department set it</h2>{" "}
+          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
+            For fiscal year {spill.fiscalYear}, the State Department set the employment-based limit at{" "}
+            {fmtNumber(spill.employmentTotal)} worldwide: the statutory {fmtNumber(spill.employmentBase)} plus{" "}
+            {fmtNumber(spill.spillover)} family-sponsored numbers that went unused in fiscal year {spill.fiscalYear - 1}.
+            {spill.estimated ? " The Department marks that sheet estimated, pending its official determination." : ""}
+            {spill.perCountry !== null ? ` No single country can take more than ${fmtNumber(spill.perCountry)} of the employment total.` : ""}
+          </p>{" "}
+          <div className="mt-4 max-w-3xl overflow-x-auto">
+            <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
+              <thead>
+                <tr className="border-b-2 border-border">
+                  <th scope="col" className="py-2 pr-3 font-bold">Category, fiscal year {spill.fiscalYear}{" "}</th>
+                  <th scope="col" className="py-2 pr-3 text-right font-bold">Worldwide{" "}</th>
+                  <th scope="col" className="py-2 text-right font-bold">Any one country{" "}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {spill.rows.map((r) => (
+                  <tr key={r.label} className={r.label.startsWith("All") ? "border-t-2 border-border font-bold" : "border-b border-border/40"}>
+                    <td className="py-2 pr-3">{r.label}{" "}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{fmtNumber(r.worldwide)}{" "}</td>
+                    <td className="py-2 text-right tabular-nums">{r.foreignState === null ? "" : fmtNumber(r.foreignState)}{" "}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>{" "}
+          {usage ? (
+            <p className="mt-4 max-w-3xl text-base leading-relaxed text-foreground/85">
+              The year before is counted, not estimated. In fiscal year {usage.fiscalYear}, {fmtNumber(usage.familyUsed)} family-sponsored
+              and {fmtNumber(usage.employmentUsed)} employment-based numbers were used, by Table V of the Department&apos;s Report of the
+              Visa Office {usage.fiscalYear}; the {fmtNumber(usage.familyUnused)} family numbers left unused against the{" "}
+              {fmtNumber(usage.familyBase)} floor are what fell to the employment side for fiscal year {usage.fiscalYear + 1}.
+            </p>
+          ) : null}{" "}
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            Both figures are read from the Department&apos;s own PDFs, the{" "}
+            <a href={spill.source} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">
+              annual numerical limits
+            </a>{" "}
+            and the annual report, and nothing here is a forecast. The spillover for the fiscal year about to open is not published on
+            bulletin day; this page prints it when the Department posts its sheet, usually in the first weeks of the fiscal year.
+          </p>
+        </>
+      ) : null}
 
       {latestMoves.some((s) => s.rows.some((r) => r.move)) ? (
         <>

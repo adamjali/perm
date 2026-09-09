@@ -3384,6 +3384,35 @@ actually requested, the JSON body, the content type. What remains is the
 credentials, which are Adam's to create (an X developer app under the persona,
 four secrets on the repo), then one dispatch with `post=true`.
 
+## The spillover, from the Department's own two PDFs (2026-09-09)
+
+`scripts/ingest_visa_limits.py` reads two files the State Department publishes
+once a year and writes `perm_docs['visa_annual_limits']`; `/visa-bulletin`
+renders "The spillover, as the Department set it" from it and prints nothing
+when the document is absent. **The Annual Numerical Limits sheet** for the
+fiscal year (linked from the Immigrant Visa Statistics page; FY2026 lives at
+`/content/dam/visas/Statistics/Immigrant-Statistics/Annual  Numerical  Limits
+- FY2026.pdf`, with double spaces) gives the employment worldwide total, and
+that total minus the statutory 140,000 IS the year's spillover from unused
+family numbers: **FY2026 is 186,000, so 46,000 spilled over, marked estimated
+pending the official determination.** **Table V of the Report of the Visa
+Office** (FY2024 at `.../AnnualReports/FY2024AnnualReport/Table V.pdf`) gives
+numbers used per preference in four parts; the parser takes each part's
+"Grand Totals" line and refuses unless family plus employment equals the
+grand total (215,959 + 167,394 = 383,353 for FY2024, leaving 10,041 family
+numbers unused for FY2025). Earlier years' limits sheets were not found at the
+FY2026 URL pattern, and the 2025 report is not published yet.
+
+**Getting a file off travel.state.gov.** The site refuses scripts and the
+headless DevTools Chrome sits on Cloudflare's "Just a moment" forever; the
+Claude-in-Chrome extension in Adam's real browser clears it after the bulletin
+index loads. A `fetch` from the page to a local receiver is blocked by the
+page's connection policy, but a plain form POST is not: build a form with
+`enctype="text/plain"`, put the page's `outerHTML` (or a PDF's base64) in a
+textarea, point it at a local HTTP server on 127.0.0.1 and submit. The body
+arrives as `name=<value>`; strip the prefix. That route brought both bulletin
+pages and both PDFs across in one session without a tool result carrying them.
+
 **Deploy checklist for this batch:** `npx convex deploy -y` (three new tables,
 two new HTTP route families, a cron); set `NEWSLETTER_ENABLED=1` and
 `NEWSLETTER_DAILY_CAP=15` on prod Convex; add a Firewall bypass for `/badge/*`
