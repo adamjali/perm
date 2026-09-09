@@ -57,3 +57,7 @@ Request top-down, ~11 a day. Each is a new URL; none is indexed yet.
 32. https://permtracker.app/estimate-scorecard
 33. https://permtracker.app/corrections
 34. https://permtracker.app/badges
+35. https://permtracker.app/visa-bulletin  (the spillover section, Sep 9)
+36. https://permtracker.app/visa-bulletin/family  (family charts through September 2026, Sep 9)
+37. https://permtracker.app/layoffs  (four states, Sep 9)
+38. https://permtracker.app/tools/green-card-fees  (fixed labels and heading, Sep 9)
