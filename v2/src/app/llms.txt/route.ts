@@ -50,6 +50,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Every filing month's pending census: how many cases are undecided, in which DOL queue, and how far each month has progressed.",
   },
   {
+    path: "/debarments",
+    label: "DOL debarment lists",
+    blurb:
+      "Every employer, attorney and agent barred from PERM, H-1B, H-2A or H-2B filings, with the period and the violation as DOL published them.",
+  },
+  {
     path: "/perm-employers/under-review",
     label: "PERM employers with cases on hold, audited or under appeal",
     blurb:

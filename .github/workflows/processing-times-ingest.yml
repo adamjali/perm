@@ -108,6 +108,24 @@ jobs:
           python3 scripts/ingest_policy_notices.py \
             || python3 scripts/record_ingest_failure.py --script ingest_policy_notices.py --note "policy feed failed" || true
 
+      # DOL's debarment lists: the OFLC program-debarments PDF (PERM, H-2A,
+      # H-2B) and the Wage and Hour H-1B page. www.dol.gov answers this
+      # runner with a full browser header set and refuses residential
+      # addresses, so this step has no laptop backstop. pdfplumber is the
+      # one non-stdlib dependency, installed here rather than pinned in the
+      # repo because nothing else in the tree reads a PDF.
+      - name: Debarment lists
+        if: always()
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          python3 -m pip install --quiet --user pdfplumber \
+            || python3 -m pip install --quiet --break-system-packages pdfplumber
+          python3 scripts/ingest_debarments.py \
+            || python3 scripts/record_ingest_failure.py --script ingest_debarments.py --note "debarment lists failed" || true
+
       - name: Expire the DOL pages
         if: steps.ingest.outputs.dol_changed == 'true'
         env:

@@ -39,6 +39,7 @@ export type DataSection =
   | "compare-offer"
   | "compare-employers"
   | "policy-changes"
+  | "debarments"
   | "employers"
   | "attorneys"
   | "cases"
@@ -129,6 +130,7 @@ export const SECTIONS: DataNavSection[] = [
   { key: "visa-bulletin", group: "Visa bulletin", label: "Priority dates", href: "/tools/priority-date-calculator" },
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
   { key: "policy-changes", group: "Reference", label: "Policy changes", href: "/policy-changes" },
+  { key: "debarments", group: "Reference", label: "Debarments", href: "/debarments" },
 ];
 
 export const GROUPS: DataGroup[] = [

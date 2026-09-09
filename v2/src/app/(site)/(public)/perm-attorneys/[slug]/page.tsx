@@ -40,6 +40,8 @@ import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
+import { debarmentsForSlug } from "@/lib/turso/debarments";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
@@ -259,7 +261,7 @@ export default async function AttorneyPage({
   // memoises on them, so all 3,736 share one cohort read. The peer window is
   // wide because the state filter thins it hard: California holds 604 firms
   // and Wyoming a handful.
-  const [stats, dist, near, facets, variants, absorbed, freshness] = await Promise.all([
+  const [stats, dist, near, facets, variants, absorbed, freshness, debarments] = await Promise.all([
     getDisclosureStats(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -275,6 +277,7 @@ export default async function AttorneyPage({
     // An 11-row table, React-cached, on a page that regenerates daily. It is
     // here only so the Dataset can state WHEN its figures were last true.
     getFreshness(),
+    debarmentsForSlug(canonicalSlug).catch(() => []),
   ]);
   const band = await sizeBand(KIND, row.rank);
 
@@ -356,6 +359,7 @@ export default async function AttorneyPage({
 
       {/* The doubt goes ABOVE the figures, so a number computed from thin
           input cannot read as more authoritative than the doubt about it. */}
+      <DebarmentNotice rows={debarments} pageName={row.name} today={new Date().toISOString().slice(0, 10)} />{" "}
       <ReliabilityBand
         reliability={reliability}
         baselineDenialPct={baselineDenialPct}

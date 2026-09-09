@@ -58,6 +58,11 @@ import { searchLcaCases, searchLcaDisclosed } from "@/lib/turso/lcaCases";
 import { unifiedRows } from "@/lib/flagMerge";
 import { formatWage } from "@/lib/wageFormat";
 import { liveEmployerRecord } from "@/lib/turso/liveEmployers";
+import { getEmployerPrograms } from "@/lib/turso/employerPrograms";
+import { getEmployerStages } from "@/lib/turso/employerStages";
+import { EmployerPrograms } from "@/components/entities/EmployerPrograms";
+import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
+import { debarmentsForSlug } from "@/lib/turso/debarments";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import {
@@ -358,7 +363,7 @@ export default async function EmployerPage({
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305
   // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments] =
     await Promise.all([
       getDisclosureStats(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -387,6 +392,9 @@ export default async function EmployerPage({
       searchLcaCases({ text: row.name, limit: 5 }).catch(() => []),
       searchPwdDeterminations({ text: row.name, limit: 5 }).catch(() => []),
       searchLcaDisclosed({ text: row.name, limit: 5 }).catch(() => []),
+      getEmployerPrograms(canonicalSlug).catch(() => null),
+      getEmployerStages().catch(() => null),
+      debarmentsForSlug(canonicalSlug).catch(() => []),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -466,6 +474,7 @@ export default async function EmployerPage({
 
       {/* The doubt goes ABOVE the figures. A caveat under a number reads as a
           footnote to a fact; over it, the number arrives already qualified. */}
+      <DebarmentNotice rows={debarments} pageName={row.name} today={new Date().toISOString().slice(0, 10)} />{" "}
       <ReliabilityBand
         reliability={reliability}
         baselineDenialPct={baselineDenialPct}
@@ -551,7 +560,26 @@ export default async function EmployerPage({
           asOf={mirrorAsOf}
           className="mt-10"
         />
-      ) : null}
+      ) : null}{" "}
+      <EmployerPrograms
+        name={row.name}
+        perm={
+          programs
+            ? { ...programs.perm, pending: pending ? pending.pending : programs.perm.pending }
+            : {
+                program: "perm",
+                published: row.total,
+                pending: pending ? pending.pending : null,
+                medianAnnualWage: row.medianAnnualWage,
+                wageN: row.certified + row.denied,
+              }
+        }
+        pwd={programs?.pwd ?? null}
+        lca={programs?.lca ?? null}
+        stages={stagesDoc?.employers.find((e) => e.slug === canonicalSlug) ?? null}
+        searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
+        matchedPrefix={programs?.matchedPrefix ?? null}
+      />
 
       {/* The newest individual filings, live from DOL - visible here months
           before the disclosure files publish them. Firm and wage arrive

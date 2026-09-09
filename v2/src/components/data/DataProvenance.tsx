@@ -104,6 +104,7 @@ function label(d: string): string {
     "pw-disclosure": "Wage determinations",
     "lca-disclosure": "LCA disclosures",
     "policy-notices": "Federal Register notices",
+    debarments: "DOL debarment lists",
     "i140-trends": "I-140 filings by category",
     "rfi-funnel": "RFI and audit outcomes",
     entities: "Employers and firms",

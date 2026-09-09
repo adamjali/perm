@@ -18,8 +18,8 @@ left off.
 
 ## B. Employer views
 - [x] B1 employer anomaly view (`/perm-employers/under-review`, doc `employer_stages` written by the sweep, 1,000 employers, two rankings with a share floor of 25): employers by held, RFI'd and appealed share of pending, precomputed by the sweep, dated
-- [ ] B2 employer pipeline section on employer pages: PERM, PWD, LCA counts, wage gap, pending and held share
-- [ ] B3 DOL debarment list: ingest + page + flag on employer and firm pages
+- [x] B2 employer pipeline section (joined on the entity's merge key: the three files spell one employer three ways) on employer pages: PERM, PWD, LCA counts, wage gap, pending and held share
+- [x] B3 DOL debarment list (OFLC PDF parsed with pdfplumber on the GitHub runner; WHD H-1B page; `/debarments`; notices on employer and firm pages; OFLC half seeded from the laptop, H-1B rows arrive with the first runner pass): ingest + page + flag on employer and firm pages
 
 ## C. Content and tools
 - [ ] C1 status dictionary: one page per DOL status with the measured wait and the cohort link

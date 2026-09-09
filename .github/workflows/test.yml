@@ -84,6 +84,9 @@ jobs:
       - name: Policy feed selection rules
         working-directory: v2
         run: python3 scripts/test_policy_notices.py
+      - name: Debarment parser tests
+        working-directory: v2
+        run: python3 scripts/test_debarments.py
 
       # The ingest that talks to DOL unattended. Every case in here is a
       # defect that happened or would have shipped silently - the batch
