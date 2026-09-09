@@ -147,6 +147,22 @@ export {
   calculateI140FilingDeadline,
   // RFI
   calculateRFIDueDate,
+  // H-1B six-year limit and priority date retention: statutory arithmetic
+  // with citations, same class as the deadlines above.
+  calculateH1bMaxOut,
+  H1B_MAX_YEARS,
+  PERM_ADVANCE_DAYS,
+  type H1bMaxOutInput,
+  type H1bMaxOutResult,
+  calculatePriorityDateRetention,
+  RETENTION_DAYS,
+  type RetentionInput,
+  type RetentionResult,
+  calculateGreenCardFees,
+  FEE_SCHEDULE,
+  type FeeInput,
+  type FeeLine,
+  type FeeResult,
   // Queue estimation. Unlike everything above, these are FORECASTS over DOL's
   // queue rather than statutory arithmetic, and they are wrong by construction.
   // Callers must render every model returned, with its own label and source,

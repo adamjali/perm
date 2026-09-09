@@ -202,6 +202,31 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Where an offered salary sits among certified H-1B LCAs and PERM offers for the same occupation and state, as a percentile. The offer is placed in the browser and never sent to the site.",
   },
   {
+    path: "/tools/rfi-deadline",
+    label: "RFI response deadline",
+    blurb: "The last day to answer a PERM request for information, counted from the date on DOL's letter under 20 CFR 656.20(b), with the calendar around it.",
+  },
+  {
+    path: "/tools/pwd-validity",
+    label: "Prevailing wage determination validity",
+    blurb: "When a prevailing wage determination expires under 20 CFR 656.40(c), including the OEWS wage-year rule, and the recruitment or filing that must start inside it.",
+  },
+  {
+    path: "/tools/h1b-six-year-limit",
+    label: "H-1B six-year limit and the 365-day rule",
+    blurb: "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Dates with citations, no prediction.",
+  },
+  {
+    path: "/tools/priority-date-retention",
+    label: "Priority date retention and I-485 portability",
+    blurb: "From an I-140 approval date: when an employer's withdrawal stops revoking it, when a pending I-485 becomes portable under INA 204(j), and whether the priority date is kept.",
+  },
+  {
+    path: "/tools/green-card-fees",
+    label: "Green card government fees",
+    blurb: "USCIS filing fees for the employment-based green card, from Form G-1055 with its edition date: I-140 and the asylum program fee tier, premium processing, I-485, I-765 and I-131 per person.",
+  },
+  {
     path: "/tools/i140-trends",
     label: "I-140 filing trends",
     blurb:

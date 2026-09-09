@@ -24,6 +24,19 @@ export {
 export { calculateI140FilingDeadline } from './i140';
 export { calculateRFIDueDate } from './rfi';
 export {
+  calculateH1bMaxOut,
+  H1B_MAX_YEARS,
+  PERM_ADVANCE_DAYS,
+  type H1bMaxOutInput,
+  type H1bMaxOutResult,
+} from './h1bMaxOut';
+export {
+  calculatePriorityDateRetention,
+  RETENTION_DAYS,
+  type RetentionInput,
+  type RetentionResult,
+} from './priorityDateRetention';
+export {
   estimateQueueDecision,
   measureFrontierAdvance,
   measureFrontierAdvanceRange,
@@ -71,3 +84,11 @@ export {
   type PriorityDateInput,
   type PriorityDateEstimate,
 } from './priorityDate';
+export {
+  calculateGreenCardFees,
+  FEE_SCHEDULE,
+  type FeeInput,
+  type FeeLine,
+  type FeeResult,
+  type PetitionerKind,
+} from './greenCardFees';

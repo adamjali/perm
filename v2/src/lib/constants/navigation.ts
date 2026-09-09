@@ -78,6 +78,11 @@ export const TOOL_NAV_LINKS = [
   { href: "/tools/i140-trends", label: "I-140 trends" },
   { href: "/tools/priority-date-calculator", label: "Priority dates" },
   { href: "/tools/perm-deadline-calculator", label: "PERM deadlines" },
+  { href: "/tools/rfi-deadline", label: "RFI deadline" },
+  { href: "/tools/pwd-validity", label: "Wage determination validity" },
+  { href: "/tools/h1b-six-year-limit", label: "H-1B six-year limit" },
+  { href: "/tools/priority-date-retention", label: "Priority date retention" },
+  { href: "/tools/green-card-fees", label: "Green card fees" },
 ] as const satisfies readonly NavLink[];
 
 /**

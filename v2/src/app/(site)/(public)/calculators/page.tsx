@@ -128,6 +128,56 @@ const TOOLS = [
     blurb:
       "Every stage drawn to scale, marked by which are fixed by regulation, which are queues, and which have no published figure.",
   },
+  {
+    href: "/tools/rfi-deadline",
+    viz: "tape" as const,
+    icon: CalendarCheckIcon,
+    kind: "Exact",
+    name: "RFI and audit deadline",
+    tone: "paper",
+    blurb:
+      "Thirty calendar days from the date on DOL's letter, under 20 CFR 656.20, with the weekday and the days left.",
+  },
+  {
+    href: "/tools/pwd-validity",
+    viz: "spans" as const,
+    icon: CalendarRange,
+    kind: "Exact",
+    name: "Wage determination validity",
+    tone: "tint",
+    blurb:
+      "When a prevailing wage determination expires: 90 days, or June 30 when the wage year turns over, and which rule applied.",
+  },
+  {
+    href: "/tools/h1b-six-year-limit",
+    viz: "scale" as const,
+    icon: CalendarClock,
+    kind: "Exact",
+    name: "H-1B six-year limit",
+    tone: "ink",
+    blurb:
+      "The day H-1B status runs out, and the last day to file a PERM so one-year extensions stay open under the 365-day rule.",
+  },
+  {
+    href: "/tools/priority-date-retention",
+    viz: "steps" as const,
+    icon: FileTextIcon,
+    kind: "Exact",
+    name: "Priority date retention",
+    tone: "pop",
+    blurb:
+      "When an employer's withdrawal stops revoking the I-140, when a pending I-485 becomes portable, and whether the priority date is kept.",
+  },
+  {
+    href: "/tools/green-card-fees",
+    viz: "twobars" as const,
+    icon: CurrencyDollarIcon,
+    kind: "Schedule",
+    name: "Green card government fees",
+    tone: "paper",
+    blurb:
+      "USCIS fees for the whole employment-based case from Form G-1055, with its edition date and what the total leaves out.",
+  },
 ];
 
 const EXPLORERS = [
