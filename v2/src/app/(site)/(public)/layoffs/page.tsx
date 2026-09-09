@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getFreshness } from "@/lib/turso/publicData";
-import { recentWarn } from "@/lib/turso/warn";
+import { recentWarn, warnTotals } from "@/lib/turso/warn";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
@@ -32,10 +32,9 @@ export const revalidate = 21600;
 const long = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
 export default async function LayoffsPage() {
-  const [all, freshness] = await Promise.all([recentWarn(400), getFreshness().catch(() => ({}) as Record<string, { asOf: string | null } | undefined>)]);
+  const [all, totals, freshness] = await Promise.all([recentWarn(400), warnTotals(), getFreshness().catch(() => ({}) as Record<string, { asOf: string | null } | undefined>)]);
   const asOf = freshness["warn-notices"]?.asOf ?? null;
   const matched = all.filter((r) => r.employerSlug);
-  const employees = matched.reduce((n, r) => n + (r.employees ?? 0), 0);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
@@ -56,16 +55,16 @@ export default async function LayoffsPage() {
 
       <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
         <div className="border-2 border-border bg-card p-5 shadow-hard">
-          <p className="text-sm text-foreground/70">Notices read{asOf ? `, to ${formatAsOf(asOf)}` : ""}</p>{" "}
-          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{all.length.toLocaleString("en-US")}</p>
+          <p className="text-sm text-foreground/70">Notices held{asOf ? `, to ${formatAsOf(asOf)}` : ""}</p>{" "}
+          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{totals.notices.toLocaleString("en-US")}</p>
         </div>{" "}
         <div className="border-2 border-border bg-card p-5 shadow-hard">
           <p className="text-sm text-foreground/70">Filed by a PERM sponsor</p>{" "}
-          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{matched.length.toLocaleString("en-US")}</p>
+          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{totals.matched.toLocaleString("en-US")}</p>
         </div>{" "}
         <div className="border-2 border-border bg-card p-5 shadow-hard">
           <p className="text-sm text-foreground/70">Employees in those notices</p>{" "}
-          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{employees.toLocaleString("en-US")}</p>
+          <p className="mt-1 font-heading text-3xl font-black tabular-nums">{totals.employees.toLocaleString("en-US")}</p>
         </div>
       </section>
 
@@ -100,7 +99,13 @@ export default async function LayoffsPage() {
             ))}
           </tbody>
         </table>
-        {matched.length === 0 ? <p className="mt-4 text-sm text-foreground/70">No notice in the current report matches a PERM sponsor by name.</p> : null}
+        {matched.length === 0 ? <p className="mt-4 text-sm text-foreground/70">No notice in the current report matches a PERM sponsor by name.</p> : null}{" "}
+        <p className="mt-4 text-sm text-muted-foreground">
+          The table lists the {matched.length.toLocaleString("en-US")} sponsor-matched notices among the{" "}
+          {all.length.toLocaleString("en-US")} most recent filings. The three figures above are the whole record:{" "}
+          {totals.notices.toLocaleString("en-US")} notices held, {totals.matched.toLocaleString("en-US")} of them matched
+          to a sponsor.
+        </p>
       </section>
 
       <section className="mt-10 max-w-3xl">
