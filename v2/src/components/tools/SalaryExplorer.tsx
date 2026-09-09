@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui";
+import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import {
   MIN_FOR_MEDIAN,
   reportability,
@@ -189,7 +190,8 @@ export function SalaryExplorer({
                   {o.label} ({int(o.n)})
                 </option>
               ))}
-            </select>
+            </select>{" "}
+            <SelectedInFull label={occupations.find((o) => o.value === soc)?.label} />
           </div>
 
           <div>

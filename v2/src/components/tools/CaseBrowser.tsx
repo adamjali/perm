@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 // client is server-only, so the reads go through /api/perm-cases. See
 // src/lib/usePublicQuery.ts.
 import { usePublicQuery } from "@/lib/usePublicQuery";
+import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { Pager } from "@/components/ui/pager";
 import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 // TYPE ONLY, and that is what makes it legal here. `@/lib/turso/cases` imports
@@ -644,7 +645,8 @@ export function CaseBrowser({
                     {o.name} ({fmtInt(o.total)})
                   </option>
                 ))}
-              </select>
+              </select>{" "}
+              <SelectedInFull label={occupations.find((o) => o.code === socValue)?.name} />
             </label>
           ) : null}
 

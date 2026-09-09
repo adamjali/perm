@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import argparse
 import glob
+import html
 import os
 import re
 import sys
@@ -233,6 +234,45 @@ def scan(paths: list[str], metrics: Metrics) -> list[dict]:
     return out
 
 
+OPTION_RE = re.compile(r"<option\b[^>]*>\s*([^<{}]+?)\s*</option>")
+
+
+def scan_options(paths: list[str], metrics: Metrics) -> list[dict]:
+    """Literal <option> labels, measured like placeholders.
+
+    A native select cannot wrap its chosen option and clips it at the
+    chevron, so a label wider than the control is unreadable on a phone
+    with nothing to expand. Reported 2026-09-09 from a 390px screenshot:
+    "Employer, 26 or more full-time em..." on the fees calculator. Measured
+    at the control's default size and MEDIUM weight, which is a hair wider
+    than the regular weight a select renders at, so the check is conservative
+    rather than blind. Labels built from data (`{...}`) are not knowable from
+    source and are the reason the data-driven selects print the chosen label
+    in full beneath the control.
+    """
+    out: list[dict] = []
+    for path in paths:
+        with open(path, encoding="utf-8") as fh:
+            text = fh.read()
+        for m in OPTION_RE.finditer(text):
+            value = html.unescape(re.sub(r"\s+", " ", m.group(1))).strip()
+            if not value:
+                continue
+            out.append({
+                "file": os.path.relpath(path, ROOT),
+                "line": text.count("\n", 0, m.start()) + 1,
+                "text": value,
+                "px": metrics.width(value, DEFAULT_PX, DEFAULT_WGHT),
+                "size": DEFAULT_PX,
+                "wght": DEFAULT_WGHT,
+                "budget": BUDGET_PX,
+                "inert": False,
+                "wraps": False,
+                "option": True,
+            })
+    return out
+
+
 def scan_fallbacks(paths: list[str]) -> list[dict]:
     """`month` / `week` inputs with no placeholder for the Firefox fallback."""
     out: list[dict] = []
@@ -307,7 +347,7 @@ def main() -> int:
         return 1 if bad else 0
 
     files = collect(args.all)
-    rows = scan(files, metrics)
+    rows = scan(files, metrics) + scan_options(files, metrics)
     print(f"scanned {len(files)} files, {len(rows)} literal placeholders")
     if len(rows) < 10:
         print("FAIL: too few placeholders found; the scan is broken, not the code")

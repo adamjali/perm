@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui";
+import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { seriesYearFor, SOC_RE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
 
@@ -129,7 +130,8 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
                 {a.label}
               </option>
             ))}
-          </select>
+          </select>{" "}
+          <SelectedInFull label={areas?.find((a) => String(a.value) === area)?.label} />
         </div>{" "}
         <div>
           <Label htmlFor={yearId}>Wage series</Label>{" "}

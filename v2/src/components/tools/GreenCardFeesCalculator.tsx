@@ -55,11 +55,11 @@ export function GreenCardFeesCalculator() {
         <div>
           <Label htmlFor={petitionerId}>Petitioner</Label>{" "}
           <select id={petitionerId} value={petitioner} onChange={(e) => setPetitioner(e.target.value as FeeInput["petitioner"])} className={NUMBER}>
-            <option value="regular">Employer, 26 or more full-time employees</option>
-            <option value="small">Small employer (25 or fewer) or self-petitioner</option>
+            <option value="regular">Employer, 26+ employees</option>
+            <option value="small">Employer, 25 or fewer</option>
             <option value="nonprofit">Nonprofit</option>
           </select>{" "}
-          <p className="mt-1 text-xs text-muted-foreground">Sets the asylum program fee that USCIS charges with every I-140.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Sets the asylum program fee USCIS charges with every I-140, counted in full-time employees. A self-petitioner pays the 25-or-fewer amount.</p>
         </div>{" "}
         <div className="flex flex-col justify-end gap-3">
           <label htmlFor={onlineId} className="flex min-h-11 items-center gap-3 text-base">

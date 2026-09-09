@@ -3268,6 +3268,19 @@ and its family page, so a correct link to the bulletin page was flagged for not
 pointing at the calculator. **When a gate flags a page that shipped after the
 gate was written, suspect the gate's own list first.**
 
+**A native select clips its chosen label at the chevron, and a phone cannot
+expand it (2026-09-09).** Adam read "Employer, 26 or more full-time em" on the
+fees calculator at 390px. Two fixes, one per class of label. Literal option
+labels are measured by `scripts/audit_placeholders.py` against the same 220px
+budget as placeholders (six were over, up to 355px; all shortened, with the
+detail moved into the helper text under the control), and the scanner was
+probed with a long and a short fixture before its first real run. Labels that
+come from DOL's data (an OEWS area up to 73 characters, an occupation title up
+to 79) cannot be shortened, so the four selects that carry them render
+`SelectedInFull` beneath the control: the chosen label in full, shown only
+when it is long enough to be at risk. Helper text and descriptions wrap and
+need nothing; placeholders were already gated.
+
 **Every mapped item and every table cell carries its own space.** The rendered
 glued audit found 257 pairs on five new pages that the source gate passed clean:
 176 on `/layoffs` alone, all table cells. The fix shape is `{" "}` INSIDE the

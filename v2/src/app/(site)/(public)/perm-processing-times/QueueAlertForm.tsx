@@ -245,10 +245,8 @@ export function QueueAlertForm({
             }
             className={cn(selectClasses, "sm:max-w-sm")}
           >
-            <option value="pwd-oews">OEWS (the standard wage survey)</option>{" "}
-            <option value="pwd-nonoews">
-              Non-OEWS (an employer-provided survey)
-            </option>
+            <option value="pwd-oews">OEWS, the standard survey</option>{" "}
+            <option value="pwd-nonoews">Employer-provided survey</option>
           </select>
         </div>
       ) : null}{" "}
@@ -264,7 +262,7 @@ export function QueueAlertForm({
           className={cn(selectClasses, "sm:max-w-sm")}
         >
           <option value="">Prefer not to say</option>{" "}
-          <option value="attorney">An immigration attorney or paralegal</option>{" "}
+          <option value="attorney">Attorney or paralegal</option>{" "}
           <option value="applicant">The person the case is for</option>{" "}
           <option value="employer">The sponsoring employer</option>
         </select>

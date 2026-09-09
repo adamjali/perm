@@ -4,6 +4,7 @@ import { useId, useMemo, useState } from "react";
 import Link from "next/link";
 
 import type { WageOption } from "@/lib/turso/publicData";
+import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { MIN_FOR_MEDIAN, placeOffer, type OfferPayload as Payload, type PlacedOffer as Placed } from "@/lib/wageStats";
 
 /**
@@ -101,11 +102,12 @@ export function CompareMyOffer({ occupations, states }: Props) {
         <div className="sm:col-span-2">
           <label htmlFor={ids.soc} className={label}>Occupation </label>{" "}
           <select id={ids.soc} value={soc} onChange={(e) => setSoc(e.target.value)} className={`${field} mt-1.5`} required>
-            <option value="">Choose the occupation on the filing</option>
+            <option value="">Choose the occupation</option>
             {occupations.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
-          </select>
+          </select>{" "}
+          <SelectedInFull label={occupations.find((o) => o.value === soc)?.label} />
         </div>{" "}
         <div>
           <label htmlFor={ids.state} className={label}>Worksite state </label>{" "}
