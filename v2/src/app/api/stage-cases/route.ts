@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { STAGE_FEED_MAX } from "./limits";
+
 import { stageFromSlug, stageMeta } from "@/components/rfi/stageMeta";
 import { LISTABLE_STAGE_MAX, listStageCases } from "@/lib/turso/rfi";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
@@ -22,8 +24,6 @@ import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
  */
 
 const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=21600, stale-while-revalidate=86400" };
-/** A hard ceiling on rows, above the listable stage size so a full cohort always fits. */
-export const STAGE_FEED_MAX = 25_000;
 
 function bad(message: string, status = 400): NextResponse {
   return NextResponse.json({ error: message }, { status });

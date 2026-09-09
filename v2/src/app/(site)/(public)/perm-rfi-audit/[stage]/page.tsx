@@ -48,6 +48,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { STAGE_FEED_MAX } from "@/app/api/stage-cases/limits";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { StageCaseBrowser } from "@/components/rfi/StageCaseBrowser";
 import { stageEntry } from "@/components/rfi/StageGlossary";
@@ -89,8 +90,6 @@ export const dynamicParams = false;
  * states the remainder in words rather than trailing off.
  */
 const MAX_ROWS = 250;
-/** Matches the feed's ceiling in `api/stage-cases/route.ts`; a cohort above it has no page. */
-const STAGE_FEED_MAX = 25_000;
 
 export function generateStaticParams() {
   return reviewStages().map((s) => ({ stage: s.slug }));
