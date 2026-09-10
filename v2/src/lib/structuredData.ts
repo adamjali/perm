@@ -351,7 +351,13 @@ export function getDatasetSchema(baseUrl: string, input: DatasetSchemaInput) {
     // a fourth anonymous "PERM Tracker" that no parser can reconcile.
     creator: { '@id': SCHEMA_IDS.organization(baseUrl) },
     isBasedOn: input.isBasedOn ?? DOL_SOURCE,
-    license: `${baseUrl}/terms`,
+    // Anchored at the section, not the page. `/terms` alone pointed at a
+    // document whose only mention of licensing was the licence the USER grants
+    // US for their content; a researcher following it learned nothing about
+    // whether they may reuse the data. §6 now separates the two layers: the
+    // federal records are public domain and we claim nothing over them, the
+    // compilation is ours.
+    license: `${baseUrl}/terms#intellectual-property`,
     // Every record is a US filing. Constant, so it belongs here rather than in
     // ten call sites that could each spell it differently.
     spatialCoverage: { '@type': 'Place' as const, name: 'United States' },

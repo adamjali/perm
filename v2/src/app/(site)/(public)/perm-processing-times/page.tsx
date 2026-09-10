@@ -281,6 +281,14 @@ export default async function PermProcessingTimesPage() {
       url: DOL_SOURCE,
     },
     isAccessibleForFree: true,
+    // usa.gov/government-works, NOT this site's terms, and that is deliberate.
+    // The two are the two layers §6 of the Terms now separates. THIS dataset is
+    // DOL's own published table, transcribed: a work of the United States
+    // Government, which under 17 U.S.C. 105 carries no copyright and which we
+    // claim nothing over. The datasets that DO point at /terms#intellectual-
+    // property are our compilations - the case corpus, the resolved entities,
+    // the derived statistics - where the selection and arrangement is ours.
+    // Do not "fix" this one to match the others.
     license: "https://www.usa.gov/government-works",
   };
 

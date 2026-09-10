@@ -120,7 +120,7 @@ export default async function FamilyBulletinPage() {
     // `getDatasetSchema`, which has always emitted this; this page hand-rolls
     // its own and inherited none of the shared defaults. The same shape of
     // omission is why the `creator` note above exists.
-    license: "https://permtracker.app/terms",
+    license: "https://permtracker.app/terms#intellectual-property",
     isBasedOn: "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
     spatialCoverage: { "@type": "Place" as const, name: "United States" },
     temporalCoverage: board ? `${board.firstMonth}/${board.lastMonth}` : undefined,

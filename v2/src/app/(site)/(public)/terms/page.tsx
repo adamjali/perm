@@ -74,14 +74,14 @@ export default function TermsPage() {
               1. Agreement to Terms
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              By accessing or using PERM Tracker
-              (&quot;the Service&quot;), you agree to be bound by these Terms of Service
-              (&quot;Terms&quot;). If you don’t agree to these Terms, please don’t use the
+              By accessing or using PERM Tracker (&quot;the Service&quot;), operated by
+              PERM Tracker LLC (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), you agree to be bound by
+              these Terms of Service (&quot;Terms&quot;). If you don’t agree to these Terms, please don’t use the
               Service.
             </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
-              These Terms constitute a legally binding agreement between you and
-              PERM Tracker regarding your use of the Service.
+              These Terms constitute a legally binding agreement between you and PERM
+              Tracker LLC regarding your use of the Service.
             </p>
           </section>{" "}
 
@@ -175,6 +175,14 @@ export default function TermsPage() {
               <li>Upload false, misleading, or inaccurate information</li>{" "}
               <li>Attempt to gain unauthorized access to the Service or other accounts</li>{" "}
               <li>Use automated scripts, bots, or scrapers to access the Service</li>{" "}
+              <li>
+                Extract the compiled dataset in bulk, or redistribute it as a
+                dataset, whether by automated means or otherwise (see{" "}
+                <a href="#intellectual-property" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  Intellectual Property
+                </a>
+                )
+              </li>{" "}
               <li>Interfere with or disrupt the Service or servers</li>{" "}
               <li>Transmit viruses, malware, or other harmful code</li>{" "}
               <li>Harass, abuse, or harm other users</li>{" "}
@@ -231,6 +239,33 @@ export default function TermsPage() {
               <li>The application code and design</li>{" "}
               <li>Documentation and help content</li>
             </ul>{" "}
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              The data
+            </h3>{" "}
+            <p className="text-foreground/80 leading-relaxed">
+              <strong>The underlying records are public.</strong> Every case,
+              wage determination and cutoff date on this site comes from
+              disclosure files published by the U.S. Department of Labor, U.S.
+              Citizenship and Immigration Services and the U.S. Department of
+              State. Those are works of the United States Government, they carry
+              no copyright, and you can download them from the agencies
+              yourself. We claim nothing over them.
+            </p>{" "}
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              <strong>The compilation is ours.</strong> The selection and
+              classification of records, the resolution of employers and law
+              firms into single entities, the derived statistics, and the live
+              index of pending cases we build by checking DOL every day are our
+              original work, and are reserved to the extent the law allows.
+              Extracting the compiled dataset in bulk, or redistributing it as a
+              dataset, is not permitted under these Terms.
+            </p>{" "}
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              Quoting a figure with a link back is fine and always has been.
+              This is about wholesale copying of the corpus, not about citing
+              what it says.
+            </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Restrictions

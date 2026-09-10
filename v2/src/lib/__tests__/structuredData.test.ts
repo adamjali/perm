@@ -209,7 +209,14 @@ describe("getDatasetSchema", () => {
 
   it("always carries provenance, licence and coverage", () => {
     expect(base.isBasedOn).toContain("dol.gov");
-    expect(base.license).toBe(`${BASE_URL}/terms`);
+    // ANCHORED at the section, not the bare page. `/terms` on its own pointed
+    // at a document whose only mention of licensing was the licence the USER
+    // grants US for their content, so a researcher following the field learned
+    // nothing about reusing the data. §6 now separates the layers: the federal
+    // records are public domain, the compilation is ours. Asserting the
+    // fragment is the point - dropping it silently restores the empty answer.
+    expect(base.license).toBe(`${BASE_URL}/terms#intellectual-property`);
+    expect(base.license).toContain("#");
     expect(base.spatialCoverage).toEqual({ "@type": "Place", name: "United States" });
   });
 
