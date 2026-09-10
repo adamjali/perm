@@ -69,6 +69,28 @@ export function CaseEstimate(
             queue and the published queue position applies to it again. Nobody
             tells these readers that. Destinations only - the event log cannot
             say how long the detour lasts. */}
+        {/* HOW LONG THE STAGE TAKES, once the data can answer. Absent until
+            more than half the cases we watched ENTER this stage have been
+            watched leaving it - before that the median has not been observed
+            and any number would be extrapolation. It appears on its own, with
+            no code change and no flag, the first time a stage crosses that
+            line. Measured 2026-09-10: ANALYST REVIEW is there at 68%, RFI is
+            at 0.7%. */}
+        {est.stageDuration ? (
+          <p className="mt-3 text-base leading-relaxed text-foreground/80">
+            Cases that reach this stage leave it after{" "}
+            <b className="font-bold text-foreground">
+              about {est.stageDuration.p50.toLocaleString("en-US")} days
+            </b>
+            , at the halfway mark.{" "}
+            <span className="text-muted-foreground">
+              Measured over {est.stageDuration.eligible.toLocaleString("en-US")}{" "}
+              cases we watched arrive here and followed long enough to say. It
+              is the time spent AT this stage, not the time left until a
+              decision.
+            </span>
+          </p>
+        ) : null}{" "}
         {est.nextStep ? (
           <p className="mt-3 border-l-4 border-primary bg-tint-primary px-4 py-3 text-base leading-relaxed text-foreground/80">
             What usually happens next:{" "}

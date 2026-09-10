@@ -3905,10 +3905,42 @@ observed, **91% (327/359) return to ANALYST REVIEW**, not to a decision - an RFI
 is a detour back into the ordinary queue, where DOL's published position applies
 again. That renders on the refusal panel.
 
-**What is NOT built, and why.** "An RFI takes N days" is not measurable yet: of
-**422** cases watched entering an RFI, **3** have been seen to exit. The 327
-exits above are left-truncated, already in RFI when the log opened on
-2026-08-26. The instrument is right and needs months, so `exitMixFor` reports
+**Stage duration is BUILT and switches itself on.** `stage_stats.durations`
+carries a survival curve per stage: for each candidate day `d`, how many
+entrants were old enough to reach it and how many of those had left. The reader
+takes the median as the first `d` where at least half of the eligible had gone.
+Nothing is extrapolated, no flag exists, and a stage answers the day its own
+data crosses the line.
+
+**Its first version was wrong and its answer looked fine.** Taking the median of
+observed exits once "enough" had exited made ANALYST REVIEW reportable at 345
+entered, 236 exited, **median 3 days**. Every entrant we can see arrived within
+the last 15 days, so a long stay CANNOT have been observed: the exits are the
+fast ones by construction, and the completion share was measuring the age of the
+window rather than the stage. Conditioning on time fixes it - a day nobody has
+been observed long enough to reach has no point on the curve, so no median
+longer than the window can be produced.
+
+**And the corrected curve exposed a labelling trap.** It made ANALYST REVIEW
+genuinely reportable at **4 days**, which is a real number for the wrong
+sentence: those are RE-entries, mostly cases returning from an RFI, while the
+mean age of a pending analyst-review case is **162 days**. A reader would set
+"about 4 days" against their own months of waiting and either disbelieve the
+site or believe it. `NOT_A_DIVERSION` withholds the stages a case never visibly
+ARRIVES at - a duration is meaningful for a stage you are diverted into, not for
+the one you sit in from filing.
+
+**`changed_at` is a millisecond epoch, and `julianday()` on an integer returns
+NULL.** The first duration query ran, returned a row per stage, and produced
+zero durations - 236 observed exits with a null median. Found by reading the
+output, never by the exit code.
+
+**What is still NOT measurable, and why.** "An RFI takes N days" needs
+entrants followed past the median: of
+**422** watched entering an RFI, **3** have been seen leaving. The 327 exits
+above are left-truncated - already in RFI when the log opened on 2026-08-26, so
+their start is unknown. The curve therefore reports nothing for RFI today and
+will report it without anyone touching the code; `exitMixFor` meanwhile gives
 DESTINATIONS only and says the timing is unknown. It also refuses a stage with
 one surviving destination, because the writer drops destinations below n=3 and
 a lone survivor's "100%" is that cutoff talking.

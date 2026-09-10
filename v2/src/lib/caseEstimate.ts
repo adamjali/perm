@@ -38,6 +38,17 @@ export interface CaseEstimateInput {
    * share of the exits we watched. Optional and often absent.
    */
   stageExit?: { to: string; share: number; observed: number } | null;
+  /**
+   * How long this stage has actually been taking, or null while too few of the
+   * cases we watched enter it have left for the median to be observed. Turns
+   * itself on when the data supports it; nothing here needs a flag.
+   */
+  stageDuration?: {
+    p50: number;
+    eligible: number;
+    entered: number;
+    windowDays: number;
+  } | null;
   /** The case's filing date, `YYYY-MM-DD`, or null when unknown. */
   filingDate: string | null;
   /** Live DOL status, or null. */
@@ -113,6 +124,13 @@ export type CaseEstimate =
        * long it takes to get there.
        */
       nextStep?: { to: string; share: number; observed: number } | null;
+      /** Measured time at this stage, once enough watched entrants have left. */
+      stageDuration?: {
+        p50: number;
+        eligible: number;
+        entered: number;
+        windowDays: number;
+      } | null;
     };
 
 /**
@@ -143,6 +161,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
       note: place.note,
       age: { of: "stage", days: place.observedAgeDays },
       nextStep: input.stageExit ?? null,
+      stageDuration: input.stageDuration ?? null,
     };
   }
 
@@ -184,6 +203,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
       return {
         kind: "no-date",
         nextStep: input.stageExit ?? null,
+        stageDuration: input.stageDuration ?? null,
         note:
           `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}. ` +
           "A case still pending at that point has usually been taken out of filing order by an audit, a request for information, or a hold, and none of those can be dated from the filing month. The live status above is the accurate read.",

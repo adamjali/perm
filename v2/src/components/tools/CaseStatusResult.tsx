@@ -89,6 +89,13 @@ export interface CaseStatusResultProps {
   measuredStageAges?: ReadonlyMap<string, number>;
   /** What usually happens next at this case's stage, when measurable. */
   stageExit?: { to: string; share: number; observed: number } | null;
+  /** Measured time at this stage, once the data supports a median. */
+  stageDuration?: {
+    p50: number;
+    eligible: number;
+    entered: number;
+    windowDays: number;
+  } | null;
   /** The initial the shift came from, for the line that names it. */
   letterInitial: string | null;
   /** "YYYY-MM-DD", passed in so every elapsed figure shares one clock. */
@@ -121,6 +128,7 @@ export function CaseStatusResult({
   letterDelta,
   measuredStageAges,
   stageExit,
+  stageDuration,
   letterInitial,
   today,
 }: CaseStatusResultProps) {
@@ -286,6 +294,7 @@ export function CaseStatusResult({
         letterInitial={letterInitial}
         measuredStageAges={measuredStageAges}
         stageExit={stageExit}
+        stageDuration={stageDuration}
         today={today}
       />
       {/* Only while the case can still change. On a decided one this would

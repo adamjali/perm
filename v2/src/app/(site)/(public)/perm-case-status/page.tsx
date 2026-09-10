@@ -26,7 +26,12 @@ import { normalisePwdCaseNumber } from "@/lib/turso/pwdCases";
 import { normaliseLcaCaseNumber } from "@/lib/turso/lcaCases";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { getAlphabet } from "@/lib/turso/alphabet";
-import { getStageStats, ageByStatusFrom, exitMixFor } from "@/lib/turso/stageStats";
+import {
+  getStageStats,
+  ageByStatusFrom,
+  exitMixFor,
+  stageDurationFor,
+} from "@/lib/turso/stageStats";
 import { getLiveBacklog, getLiveMirrorSize } from "@/lib/turso/publicData";
 
 /**
@@ -424,6 +429,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       letterDelta={letterDelta}
       measuredStageAges={ageByStatusFrom(stageStats)}
       stageExit={exitMixFor(stageStats, result.live?.status ?? "")}
+      stageDuration={stageDurationFor(stageStats, result.live?.status ?? "")}
       letterInitial={letterDelta === null ? null : initial}
       today={today}
     />

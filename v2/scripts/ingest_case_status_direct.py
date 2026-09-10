@@ -958,7 +958,71 @@ def write_stage_stats(db) -> None:
            AND from_status <> to_status
          GROUP BY f, t HAVING n >= 3""")
 
+    # HOW LONG A STAGE LASTS, as a SURVIVAL CURVE rather than an average.
+    #
+    # Only cases we watched ENTER can be timed: the event log opens 2026-08-26,
+    # and pairing an exit we watched with an entry we did not would time a
+    # fragment and call it the whole.
+    #
+    # THE FIRST VERSION OF THIS WAS WRONG AND ITS ANSWER LOOKED FINE. It took
+    # the observed exits and reported their median once "enough" had exited.
+    # On 2026-09-10 that made ANALYST REVIEW reportable at 345 entered, 236
+    # exited, median 3 days - and 3 days is not how long a case sits in
+    # analyst review. Every entrant we can see entered within the last 15 days,
+    # so a long stay CANNOT have been observed yet: the exits are the fast ones
+    # by construction and the completion share measures the age of the window,
+    # not the stage.
+    #
+    # The fix is to condition on time. For each candidate duration d, count
+    # only entrants old enough to have reached d, and ask how many of THOSE had
+    # left by then. That is a survival curve, it handles the censoring
+    # correctly, and it cannot report a median longer than the window because
+    # no entrant is old enough to support one. The reader picks the median off
+    # the curve, so a stage turns itself on the day its own data crosses the
+    # line, with no flag and no edit.
+    pairs = _rows(db, """
+        WITH ins AS (
+            SELECT case_number, to_status AS stage, MIN(changed_at) AS t0
+              FROM perm_case_events
+             WHERE to_status IS NOT NULL AND to_final IN (0, '0')
+             GROUP BY case_number, to_status),
+             outs AS (
+            SELECT e.case_number, e.from_status AS stage, MIN(e.changed_at) AS t1
+              FROM perm_case_events e
+              JOIN ins i ON i.case_number = e.case_number AND i.stage = e.from_status
+             WHERE e.changed_at > i.t0
+             GROUP BY e.case_number, e.from_status)
+        SELECT ins.stage AS stage,
+               CAST((? - ins.t0) / 86400000 AS INT) AS observed_for,
+               CASE WHEN outs.t1 IS NOT NULL
+                    THEN CAST((outs.t1 - ins.t0) / 86400000 AS INT) END AS lasted
+          FROM ins LEFT JOIN outs
+            ON outs.case_number = ins.case_number AND outs.stage = ins.stage""",
+        [int(time.time() * 1000)])
+
+    by_stage: dict[str, list[tuple[int, int | None]]] = {}
+    for stage, observed_for, lasted in pairs:
+        by_stage.setdefault(str(stage), []).append(
+            (int(observed_for or 0), None if lasted is None else int(lasted)))
+
+    dur = []
+    for stage, rows_ in by_stage.items():
+        if len(rows_) < 30:
+            continue
+        horizon = max(o for o, _ in rows_)
+        curve = []
+        for d in range(1, horizon + 1):
+            eligible = [(o, l) for o, l in rows_ if o >= d]
+            if len(eligible) < 30:
+                continue
+            done = sum(1 for _, l in eligible if l is not None and l <= d)
+            curve.append({"days": d, "eligible": len(eligible), "left": done})
+        if curve:
+            dur.append({"stage": stage, "entered": len(rows_),
+                        "observedDays": horizon, "curve": curve})
+
     stages = [{"status": str(s), "pending": int(n), "meanAgeDays": int(a or 0)}
+
               for s, n, a in ages]
     moves = [{"from": str(f), "to": str(t), "n": int(n)} for f, t, n in exits]
     if not stages:
@@ -967,7 +1031,8 @@ def write_stage_stats(db) -> None:
 
     doc = {"asOf": time.strftime("%Y-%m-%d"), "source": SOURCE,
            "stages": sorted(stages, key=lambda r: -r["pending"]),
-           "exits": sorted(moves, key=lambda r: -r["n"])}
+           "exits": sorted(moves, key=lambda r: -r["n"]),
+           "durations": sorted(dur, key=lambda r: -r["entered"])}
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
@@ -975,7 +1040,14 @@ def write_stage_stats(db) -> None:
         "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
         "VALUES (?, ?, ?)",
         ["stage_stats", payload, int(time.time() * 1000)])
-    log(f"  stage_stats: {len(stages)} stages, {len(moves)} observed transitions")
+    def _median(d):
+        for pt in d["curve"]:
+            if pt["left"] / pt["eligible"] >= 0.5:
+                return pt["days"]
+        return None
+    ready = [f'{d["stage"]}~{_median(d)}d' for d in dur if _median(d) is not None]
+    log(f"  stage_stats: {len(stages)} stages, {len(moves)} transitions, "
+        f"{len(dur)} timed; median reportable for {ready or 'none yet'}")
 
 
 def write_live_census(db) -> None:
