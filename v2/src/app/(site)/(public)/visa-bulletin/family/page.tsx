@@ -108,7 +108,21 @@ export default async function FamilyBulletinPage() {
     name: "Family-sponsored visa bulletin cutoff history",
     description: DESCRIPTION,
     url: `https://permtracker.app${PATH}`,
+    // "Organization", NOT "GovernmentOrganization". Search Console rejected the
+    // subtype on /perm-processing-times as "Invalid object type for field
+    // creator": Google's Dataset parser matches the type literally and does
+    // not walk the schema.org hierarchy, so the more precise answer is the
+    // rejected one. The name still says which agency.
     creator: { "@type": "Organization" as const, name: "U.S. Department of State, Bureau of Consular Affairs" },
+    // `license` is a recommended Dataset property and Search Console emailed
+    // about it on 2026-09-10, naming this page: it is the only Dataset on the
+    // site without one. Every other page builds its schema through
+    // `getDatasetSchema`, which has always emitted this; this page hand-rolls
+    // its own and inherited none of the shared defaults. The same shape of
+    // omission is why the `creator` note above exists.
+    license: "https://permtracker.app/terms",
+    isBasedOn: "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
+    spatialCoverage: { "@type": "Place" as const, name: "United States" },
     temporalCoverage: board ? `${board.firstMonth}/${board.lastMonth}` : undefined,
   };
 
