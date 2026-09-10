@@ -218,7 +218,22 @@ export function NavLink({
         // before it can read `useLinkStatus`, and mounting it only once
         // something else already believes a navigation started is how the
         // context became the signal in the first place.
-        <span className="inline-flex items-center">
+        // `gap-[inherit]` is load-bearing, not decoration. This wrapper is
+        // ALWAYS rendered (showLoading defaults to true), so a caller whose
+        // own className says `flex items-center gap-3` ends up applying that
+        // gap to exactly ONE child - this span - while the icon and label
+        // inside it sit in a separate, gapless formatting context and touch.
+        //
+        // Measured on a phone screenshot of the signed-in drawer: SETTINGS
+        // rendered its gear 1.8px from the S, against 12.7px for the SIGN OUT
+        // button beside it, which is a plain <button> whose children ARE
+        // direct flex items. Reproduced in a browser at 0.0px vs 12.0px, and
+        // `gap: inherit` takes the parent's computed value back to 12.0px.
+        //
+        // It is inherit rather than a literal so this cannot drift from what
+        // the caller asked for, and a caller with no gap is unaffected: the
+        // parent's `normal` inherits as `normal`.
+        <span className="inline-flex items-center gap-[inherit]">
           <NavLinkSpinner size={spinnerSize} className={spinnerClassName} />
           {children}
         </span>

@@ -3828,6 +3828,48 @@ was true** and **What changed**, and that the post's own date equals its newest
 correction. Probed three ways: drop a part, delete an entry, or skew the date,
 and it goes red.
 
+## A wrapper that is always rendered eats the caller's gap (2026-09-10)
+
+Adam, from a phone screenshot of the signed-in drawer: the gear sat against
+"SETTINGS" while "SIGN OUT" beside it had normal spacing. Both rows carry the
+SAME classes - `flex items-center gap-3 py-3 px-2` - so the CSS was never the
+difference.
+
+**Measured, in this order, because the obvious answers were both wrong:**
+
+1. Read both rows: identical `gap-3`, identical `size-4`. Not a class typo.
+2. Rendered the two Phosphor glyphs side by side in a browser: **box gap 12.0px
+   and visual gap 13.5px for BOTH.** Not the icons.
+3. Measured Adam's actual screenshot (1320px wide, 3.38x): **SETTINGS 1.8px,
+   SIGN OUT 12.7px.** So it was real, and it was in the component.
+
+The cause is `NavLink`. **`showLoading` defaults to `true`**, so it ALWAYS wraps
+its children in `<span className="inline-flex items-center">` - the spinner has
+to be mounted before it can read `useLinkStatus`. That wrapper is then the
+link's only flex child, so the caller's `gap-3` applies to exactly one element
+while the icon and label sit inside a separate, gapless formatting context and
+touch. Sign Out is a plain `<button>` whose children ARE direct flex items,
+which is why it looked right.
+
+Reproduced and fixed in a browser before touching the app: direct children
+**12.0px**, today's wrapper **0.0px**, wrapper with `gap: inherit` **12.0px**.
+The screenshot's 1.8px is the gear glyph's own right-side whitespace inside its
+box, which is why it was not exactly zero.
+
+**The fix is `gap-[inherit]` on the wrapper, and inherit rather than a literal
+is the point** - it cannot drift from whatever the caller asked for, and a
+caller with no gap is unaffected because `normal` inherits as `normal`.
+
+**It was three call sites, not one**: `AuthHeader` (gap-2), `Header` (gap-3),
+`ArticleHeader` (gap-1). Fixing the call site would have left the other two.
+
+**Verified the arbitrary variant actually compiled**, because an inert class
+looks exactly like a fix: `.gap-\[inherit\] { gap: inherit; }` is in the built
+stylesheet, and on a live page the wrapper computes `gap: 4px` under
+`ArticleHeader`'s `gap-1`. `nav-link-gap.test.ts` gates the mechanism (happy-dom
+has no layout, so it asserts the wrapper exists and inherits rather than
+hardcodes); probed by reverting the class and by hardcoding `gap-3`.
+
 ## A date range has THREE states, and "not active" was rendered as "ended" (2026-09-10)
 
 Adam: *"make sure ended isn't just dates cause if future? maybe inactive is
