@@ -3828,6 +3828,59 @@ was true** and **What changed**, and that the post's own date equals its newest
 correction. Probed three ways: drop a part, delete an entry, or skew the date,
 and it goes red.
 
+## Branding a server-rendered page's URL moves every RELATIVE url on it (2026-09-10)
+
+Adam clicked "turn off" on the preferences page and got our own DEAD END 404 at
+`permtracker.app/prefs/update?token=...`. **Nothing was turned off** - the
+request never reached Convex, and the page he landed on said the opposite of
+what had happened.
+
+The preferences page is server-rendered BY CONVEX, and its buttons are
+
+```html
+<form method="POST" action="/prefs/update?token=${t}">
+```
+
+**A relative action resolves against the host the page was served from.** While
+the page lived on `giant-dragon-464.convex.site`, that POST went to
+`giant-dragon-464.convex.site/prefs/update` and worked. Rewriting `/prefs` onto
+permtracker.app moved the FORM'S TARGET onto permtracker.app too - and only
+`/prefs` had a rewrite, so the POST fell through to Next.
+
+**The screenshot alone identified it.** Convex's own failure page reads
+"Invalid or expired preferences link"; Adam saw "DEAD END / PAGE NOT FOUND",
+which is ours. A 404 in our styling means the request terminated at Next and
+never reached Convex, so no write happened.
+
+**Audited the surface instead of patching the hole.** A relative `action=` or
+`href=` appears **exactly twice** in all Convex-rendered HTML, both pointing at
+`/prefs/update`. Every other Convex route is reached by a client `fetch` that
+builds an absolute `.convex.site` URL (`/contact`, `/milestone/report`,
+`/milestone/summary`, `/prefs/request`, `/queue-alert/subscribe`), so none of
+those were ever affected by the rebrand. `/resend-inbound` is deliberately left
+off our domain: Resend is configured with the `.convex.site` URL and that
+webhook must not depend on our domain or pass our firewall.
+
+Fix is `{ source: "/prefs/:path*" }` beside the existing `/prefs`. The alert
+families already had `:path*` wildcards; `/prefs` and `/unsubscribe` were
+written as exact matches, and `/prefs` is the only one of those two with
+sub-routes.
+
+**Verified on the wire, because this is precisely the class a green test suite
+misses**: `POST /prefs/update?token=junk` now answers Convex's 400 "Invalid or
+expired preferences link" where it previously answered Next's 404, and
+`/prefsnope` still 404s so the rewrite is specific rather than a catch-all.
+
+`convex-relative-urls-rewritten.test.ts` gates the invariant: every relative
+URL inside Convex-rendered HTML must have a rewrite behind it, with a control
+asserting it found any targets at all. Probed three ways - removing the new
+rewrite, adding a relative link to an unrewritten family, and routing Resend's
+webhook through our domain - and a fourth probe was DISCARDED as a bad test,
+because `/prefs/newthing` is legitimately covered by the wildcard.
+
+**The general rule: rewriting a server-rendered page's URL is never a one-line
+change.** It re-bases every relative URL that page emits.
+
 ## A wrapper that is always rendered eats the caller's gap (2026-09-10)
 
 Adam, from a phone screenshot of the signed-in drawer: the gear sat against

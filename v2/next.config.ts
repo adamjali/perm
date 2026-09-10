@@ -163,6 +163,27 @@ const nextConfig: NextConfig = {
     const emailLinkRewrites = convexSite
       ? [
           { source: "/prefs", destination: `${convexSite}/prefs` },
+          // `/prefs/:path*` IS NOT REDUNDANT WITH THE LINE ABOVE. The
+          // preferences page is server-rendered BY CONVEX and its buttons are
+          // a relative `<form method="POST" action="/prefs/update?token=...">`.
+          // A relative action resolves against the host the page was served
+          // from, so branding the page's URL moved the form's target to
+          // permtracker.app too - and with only `/prefs` rewritten the POST
+          // fell through to Next and answered 404 "DEAD END". Reported
+          // 2026-09-10, 2:54 PM after clicking "turn off": the request never
+          // reached Convex, so nothing was turned off.
+          //
+          // Audited the surface rather than patching the one hole: a relative
+          // `action=`/`href=` appears exactly twice in all Convex-rendered
+          // HTML, both pointing at /prefs/update. Every other Convex route is
+          // reached by a client fetch that builds an absolute .convex.site URL
+          // (/contact, /milestone/*, /prefs/request, /queue-alert/subscribe),
+          // so none of those were ever affected.
+          //
+          // /resend-inbound is deliberately absent: Resend is configured with
+          // the .convex.site URL, and that webhook must not depend on our
+          // domain or pass our firewall.
+          { source: "/prefs/:path*", destination: `${convexSite}/prefs/:path*` },
           { source: "/unsubscribe", destination: `${convexSite}/unsubscribe` },
           { source: "/queue-alert/:path*", destination: `${convexSite}/queue-alert/:path*` },
           { source: "/case-alert/:path*", destination: `${convexSite}/case-alert/:path*` },
