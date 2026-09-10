@@ -23,6 +23,18 @@ import { CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } from "@phosph
 import { estimateQueueDecision, type CohortStat, type DolFrontier } from "@/lib/perm";
 import type { Pace } from "@/lib/dolPace";
 import { formatMonth } from "@/lib/dolFormat";
+
+/** "Tue 14 Oct 2026". UTC so the label cannot slide a day by timezone. */
+function fmtDay(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return d.toLocaleDateString("en-US", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
 import {
   FrontierProgressChart,
   type FrontierPoint,
@@ -37,8 +49,34 @@ import { CaseNumberField } from "@/components/tools/CaseNumberField";
 import { QueueMonthChart } from "@/components/tools/QueueMonthChart";
 import { cn } from "@/lib/utils";
 
+/**
+ * The alphabet shape this component consumes, declared HERE rather than
+ * imported from `@/lib/turso/alphabet`.
+ *
+ * That module carries `import "server-only"`, and this file is `"use client"`.
+ * A type-only import is erased at compile, but Next resolves the module graph
+ * before that erasure, so the import alone turned this route into a 404 - a
+ * clean 404 with nothing in the dev log, which reads exactly like a missing
+ * page. Verified by stashing: clean HEAD 200, the import 404.
+ *
+ * Structural, and only what is actually read. A server-only reader stays free
+ * to carry more.
+ */
+interface AlphabetForClient {
+  letters: ReadonlyArray<{ letter: string; deltaDays: number }>;
+  cases: number;
+}
+
 export interface PermTimelineEstimatorProps {
   frontier: DolFrontier | null;
+  /**
+   * The measured employer-initial ordering, or null when the doc is missing.
+   *
+   * DOL works a filing month alphabetically by employer, so this is the term
+   * that turns a MONTH into a DAY. It is never invented: with no doc, or no
+   * initial chosen, the estimate stays at month resolution and says so.
+   */
+  alphabet?: AlphabetForClient | null;
   cohorts: readonly CohortStat[];
   /** "YYYY-MM" to preselect, e.g. from a ?month= link. Ignored when invalid. */
   initialMonth?: string | null;
@@ -182,6 +220,7 @@ const POSITION_COPY: Record<string, { tone: string; heading: string }> = {
 export function PermTimelineEstimator({
   frontier,
   cohorts,
+  alphabet = null,
   frontierAdvance,
   disclosure,
   frontierHistory = [],
@@ -215,6 +254,11 @@ export function PermTimelineEstimator({
   // reading window.location in the state initializer would render different
   // HTML than the server sent. A post-mount set is hydration-safe and keeps
   // the page static.
+  // Optional, and optional is the point: the estimate is honest at month
+  // resolution, and the initial is what sharpens it to a day. Empty means
+  // "not told", never "A".
+  const [initial, setInitial] = useState<string>("");
+
   useEffect(() => {
     const m = new URLSearchParams(window.location.search).get("month");
     if (m && /^\d{4}-\d{2}$/.test(m) && options.some((o) => o.value === m)) {
@@ -223,6 +267,11 @@ export function PermTimelineEstimator({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run once; the
     // URL does not change under this page without a navigation.
   }, []);
+
+  const letterDelta = useMemo(() => {
+    if (!alphabet || !initial) return null;
+    return alphabet.letters.find((l) => l.letter === initial)?.deltaDays ?? null;
+  }, [alphabet, initial]);
 
   const estimate = useMemo(
     () =>
@@ -236,8 +285,12 @@ export function PermTimelineEstimator({
           frontierAdvance && frontierAdvance.slowest && frontierAdvance.fastest
             ? { slowest: frontierAdvance.slowest, fastest: frontierAdvance.fastest }
             : null,
+        // MEASURED OR ABSENT, never a default. `letterDeltaDays` shifts every
+        // model by the ordering DOL actually works in; with no initial chosen
+        // it is null and the calculator behaves exactly as before.
+        letterDeltaDays: letterDelta,
       }),
-    [month, today, frontier, cohorts, frontierAdvance],
+    [month, today, frontier, cohorts, frontierAdvance, letterDelta],
   );
 
   const position = POSITION_COPY[estimate.position];
@@ -251,7 +304,7 @@ export function PermTimelineEstimator({
    * one confident date would hide that. Taking the earliest and latest bound
    * any model offers does the opposite: it puts the disagreement on the page
    * as the headline, at the size a reader actually looks at, with the
-   * individual models still listed below unchanged.
+   * individual models still available, behind the disclosure below.
    *
    * Every bound is a date a model already published. Nothing here is invented.
    */
@@ -370,6 +423,45 @@ export function PermTimelineEstimator({
           </select>
         </div>
 
+        {/* OPTIONAL, AND SECOND. DOL works each filing month alphabetically by
+            employer, so this is the only input that can sharpen a month into a
+            day. Left blank the estimate is unchanged and stays monthly, which
+            is why it is not required and not defaulted to "A". */}
+        {alphabet ? (
+          <div className="mt-6">
+            <Label htmlFor={`${selectId}-initial`} className="text-sm font-bold">
+              First letter of the employer&apos;s name{" "}
+              <span className="font-normal text-muted-foreground">(optional)</span>
+            </Label>
+            <select
+              id={`${selectId}-initial`}
+              value={initial}
+              onChange={(e) => setInitial(e.target.value)}
+              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
+            >
+              <option value="">Not sure / skip</option>
+              {alphabet.letters.map((l) => (
+                <option key={l.letter} value={l.letter}>
+                  {l.letter}
+                </option>
+              ))}
+            </select>{" "}
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+              DOL works through a filing month alphabetically by employer. Across
+              the whole alphabet that is worth about{" "}
+              <b className="font-bold text-foreground">
+                {Math.round(
+                  Math.max(...alphabet.letters.map((l) => l.deltaDays)) -
+                    Math.min(...alphabet.letters.map((l) => l.deltaDays)),
+                )}{" "}
+                days
+              </b>
+              , measured over {alphabet.cases.toLocaleString("en-US")} decided
+              cases. It is a real term and a small one.
+            </p>
+          </div>
+        ) : null}
+
         <CaseNumberField
           className="mt-6"
           onDecode={handleDecode}
@@ -388,13 +480,21 @@ export function PermTimelineEstimator({
                date; one date with no range is the opposite failure (the four
                public estimators disagree by ~9 months on identical input).
                So: the most defensible model's own date, big, with the full
-               envelope right under it and the models listed below. */
+               envelope right under it, and the models behind a disclosure
+               rather than competing with it at display size. */
             <>
               <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 Most likely
               </p>{" "}
+              {/* A DAY ONLY WHEN A DAY IS EARNED. DOL publishes at MONTH
+                  resolution and works alphabetically within it, so the initial
+                  is the only thing that says where in the month a case falls.
+                  Without it the anchor is a month, because printing a day we
+                  cannot place inside the month is precision we do not have. */}
               <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-5xl">
-                Around {formatMonth(envelope.anchor.slice(0, 7))}
+                {letterDelta === null
+                  ? `Around ${formatMonth(envelope.anchor.slice(0, 7))}`
+                  : `Around ${fmtDay(envelope.anchor)}`}
               </p>{" "}
               <p className="mt-3 font-heading text-lg font-bold sm:text-xl">
                 Likely decision window:{" "}
@@ -411,7 +511,7 @@ export function PermTimelineEstimator({
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
                 {envelope.modelCount === 1
                   ? "One model has enough published data to answer for this month."
-                  : `${envelope.modelCount} models, each on its own basis, spread across ${envelope.spanMonths} months. They are listed below rather than averaged, because the spread is the honest part.`}
+                  : `The window comes from ${envelope.modelCount} models on different bases, spread across ${envelope.spanMonths} months. They are never averaged into one number, because the spread is the honest part. Open "How this was worked out" to see each.`}
               </p>
             </>
           ) : (
@@ -628,15 +728,39 @@ export function PermTimelineEstimator({
         </div>
       ) : null}
 
-      {/* Every supported model, side by side. */}
+      {/* ONE ANSWER, THEN THE WORKING. These used to render side by side, each
+          date at text-4xl, so the page showed up to four equally loud and
+          different answers and left the reader to pick. The headline above is
+          the answer; this is how it was reached, for anyone who wants it.
+          Adam, 2026-09-10: "everything should be focused on one main answer,
+          and the rest is secondary and you can see it if you'd like but not
+          the main thing". */}
       {estimate.models.length > 0 ? (
-        <div className="divide-y-2 divide-border">
-          {estimate.models.map((model) => (
+        <details className="group border-t-2 border-border">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-6 sm:p-8">
+            <span className="font-heading text-base font-black">
+              How this was worked out
+            </span>{" "}
+            <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+              {estimate.models.length}{" "}
+              {estimate.models.length === 1 ? "model" : "models"}
+              <span className="ml-2 inline-block transition-transform group-open:rotate-90">
+                &rsaquo;
+              </span>
+            </span>
+          </summary>
+          <div className="divide-y-2 divide-border border-t-2 border-border">
+          {estimate.models.map((model, i) => (
             <div key={model.id} className="p-6 sm:p-8">
               <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
                 {model.label}
+                {i === 0 ? (
+                  <span className="ml-2 text-primary">· the one above</span>
+                ) : null}
               </p>{" "}
-              <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">
+              {/* Secondary size on purpose. A model in here is the WORKING,
+                  and at display size it competes with the answer. */}
+              <p className="mt-2 font-heading text-xl font-black leading-tight sm:text-2xl">
                 {formatMonth(model.estimatedDate.slice(0, 7))}
               </p>{" "}
               {/* The separator has to sit here, before the conditional. When
@@ -654,7 +778,8 @@ export function PermTimelineEstimator({
               <p className="mt-2 text-sm text-foreground/60">Source: {model.source}</p>
             </div>
           ))}
-        </div>
+          </div>
+        </details>
       ) : (
         <div className="p-6 sm:p-8">
           <p className="text-base leading-relaxed">

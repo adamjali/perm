@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import { PermTimelineEstimator } from "@/components/tools/PermTimelineEstimator";
+import { getAlphabet } from "@/lib/turso/alphabet";
 import { getDailyDecisions, getQueueAhead } from "@/lib/turso/publicData";
 import { businessDayPace } from "@/lib/dolPace";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
@@ -71,9 +72,15 @@ const FAQS = [
 export default async function PermTimelineCalculatorPage() {
   // Wrapped: a page that cannot reach Convex must still render its explanation,
   // its FAQ and its signup rather than failing the route outright.
-  const [data, daily] = await Promise.all([
+  const [data, daily, alphabet] = await Promise.all([
     getEstimatorData(),
     getDailyDecisions(),
+    // DOL works each filing month alphabetically by employer, and that
+    // ordering is what turns "November" into a day. Measured, not assumed:
+    // A sits 11.4 days below the corpus mean and Z 15.7 above it, a 27.1-day
+    // span end to end. Null when the doc is missing, and the component then
+    // asks for nothing and shows a month.
+    getAlphabet(),
   ]);
   const pace = businessDayPace(daily, 28);
 
@@ -118,6 +125,7 @@ export default async function PermTimelineCalculatorPage() {
       <section className="mt-10">
         <PermTimelineEstimator
           frontier={data ? data.frontier : null}
+          alphabet={alphabet}
           cohorts={data ? data.cohorts : []}
           frontierAdvance={data ? data.frontierAdvance : null}
           frontierHistory={data ? data.frontierHistory : []}
