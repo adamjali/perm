@@ -398,30 +398,12 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     }
   }
 
-  // --- Model A: DOL's own published average ------------------------------
-  // Backward-looking: the mean over cases DOL actually closed recently, so it
-  // is dragged upward by old and audited cases. Authoritative and citable,
-  // which is exactly why it is listed first even though it answers a slightly
-  // different question than the forward models.
-  const avgDays = input.frontier ? input.frontier.officialAvgDays : null;
-  if (input.frontier && typeof avgDays === 'number' && avgDays > 0) {
-    models.push({
-      id: 'dol-average',
-      label: "DOL's published average",
-      basis: `DOL reports an average of ${avgDays} calendar days to a determination. That average is taken over cases decided recently, so audited and long-running cases pull it up.`,
-      estimatedDate: formatUTC(addDays(filed, avgDays)),
-      totalDays: avgDays,
-      earliestDate: null,
-      latestDate: null,
-      source: `DOL FLAG processing times, as of ${input.frontier.asOf}`,
-    });
-  }
-
-  // --- Model B: queue advance -------------------------------------------
-  // Forward-looking. How long until the frontier reaches your filing month, at
-  // the rate the frontier has actually been moving. Requires a MEASURED rate;
-  // without one the model is omitted rather than run on an assumed constant,
-  // which is the specific flaw that puts the public estimators nine months
+  // --- Model B: queue advance -- THE LEAD MODEL --------------------------
+  // Forward-looking, and listed FIRST because it is the only model that
+  // answers the question the reader is actually asking: when does DOL reach
+  // MY month. Requires a MEASURED rate; without one the model is omitted
+  // rather than run on an assumed constant, which is the specific flaw that
+  // puts the public estimators nine months
   // apart.
   const rate = input.frontierAdvanceRate;
   if (
@@ -458,6 +440,41 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       earliestDate: earliest,
       latestDate: latest,
       source: `Measured frontier movement against DOL FLAG, as of ${input.frontier.asOf}`,
+    });
+  }
+
+  // --- Model A: DOL's own published average ------------------------------
+  // Backward-looking: the mean over cases DOL actually closed recently, so it
+  // is dragged upward by old and audited cases. Authoritative and citable,
+  // which is why it is kept and cited - but it is NO LONGER THE LEAD.
+  //
+  // IT LED UNTIL 2026-09-10 AND IT WAS THE WRONG ANCHOR. For a mid-December
+  // 2025 filing it returned 15 Nov 2026 (filed + 336 days) while the queue
+  // model returned 10 Oct 2026 - DOL was adjudicating November 2025, so that
+  // case was ONE MONTH from being reached. The gap is not noise, it is the
+  // audit and RFI tail: 336 days before August 2026 is roughly September
+  // 2025, yet DOL says it is working November 2025, and those two DOL figures
+  // differ by about two months for exactly that reason. Pricing a clean case
+  // with the tail's average makes every normal case look later than it is.
+  //
+  // The coverage objection was measured rather than assumed, and it did not
+  // survive: of 95,993 pending cases against the November 2025 frontier,
+  // 86.0% were filed AFTER it (queue advance runs), 9.5% at it, and only
+  // 4.6% before it - and that 4.6% is precisely the audit/RFI/hold
+  // population, which `position === "overdue"` already answers separately
+  // and better. So this model's job is the fallback when no rate has been
+  // measured, plus a citable cross-check beside the lead.
+  const avgDays = input.frontier ? input.frontier.officialAvgDays : null;
+  if (input.frontier && typeof avgDays === 'number' && avgDays > 0) {
+    models.push({
+      id: 'dol-average',
+      label: "DOL's published average",
+      basis: `DOL reports an average of ${avgDays} calendar days to a determination. That average is taken over cases decided recently, so audited and long-running cases pull it up.`,
+      estimatedDate: formatUTC(addDays(filed, avgDays)),
+      totalDays: avgDays,
+      earliestDate: null,
+      latestDate: null,
+      source: `DOL FLAG processing times, as of ${input.frontier.asOf}`,
     });
   }
 

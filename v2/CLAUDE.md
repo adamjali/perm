@@ -3828,6 +3828,69 @@ was true** and **What changed**, and that the post's own date equals its newest
 correction. Probed three ways: drop a part, delete an entry, or skew the date,
 and it goes red.
 
+## The queue-advance model leads now, and the coverage objection did not survive (2026-09-10)
+
+Adam compared a December 2025 filing against permupdate: theirs said late
+September to early October, ours said September to December, most likely
+November. Both were right, and the whole difference was WHICH MODEL LED.
+
+| model | arithmetic | answer |
+|---|---|---|
+| DOL's published average (led until today) | filed + 336 days | **16 Nov 2026** |
+| Queue advance (permupdate's shape) | frontier at 2025-11, one month back, ~1 mo/mo | **10 Oct 2026** |
+| queue advance at the fastest observed rate | 2 mo/mo | 25 Sep 2026 |
+
+`caseEstimate.ts` and `PermTimelineEstimator` both anchor on `models[0]`, and
+DOL's average was pushed first.
+
+**It was the wrong anchor, and the site's own page proves it.** That 336-day
+figure is a mean over cases DECIDED in August 2026, so it carries the audit and
+RFI tail: 336 days before August 2026 is roughly September 2025, while DOL says
+it is adjudicating **November 2025**. Those two DOL numbers, printed on the same
+page, differ by about two months, and the difference IS the tail. Pricing a
+clean case one month from the frontier with the tail's average makes every
+normal case read later than it is.
+
+**The objection to always leading with queue advance was measured, not
+argued.** I expected it to be unusable for a large share of pending cases, since
+it requires `monthsBehind > 0`. Measured against production, against the
+November 2025 frontier, over **95,993 pending cases**:
+
+| position | share | queue advance |
+|---|---|---|
+| filed after the frontier | **86.0%** | runs |
+| filed at the frontier | 9.5% | - |
+| filed before the frontier | **4.6%** | omitted |
+
+All three buckets matter and each already has the right answer, verified by
+running the estimator at each position (frontier 2025-11, today 2026-09-10):
+
+| position | lead | date | why it is right |
+|---|---|---|---|
+| ahead, 86.0% | `queue-advance` | 2026-10-10 | counts down to the frontier arriving |
+| **at, 9.5%** | `dol-average` | 2026-10-17 | queue-advance needs `monthsBehind > 0`, so it is absent here - and the average is COHERENT at this position, because a case at the frontier has already waited about ten months and the average says eleven |
+| behind, 4.6% | **none** | - | `overdue` returns no date at all; the absence is the answer, and the caveat says the queue passed you and a still-pending case is usually in audit or RFI |
+
+**The 9.5% was the bucket worth checking and I had skipped it in the first
+write-up.** It looked like the worst case for a backward-looking average - a
+case DOL is adjudicating this month being told "November" - and measuring it
+showed the opposite: filed + 336 days lands three weeks out, which is what
+"being worked now" should say. Nothing to fix there.
+
+So the rule is simply: **queue advance leads whenever the model exists.** No
+"near the frontier" condition is needed, because the model's own precondition
+already encodes it, and when no rate has been measured it is omitted rather than
+run on an assumed constant, leaving DOL's average to lead as the citable
+fallback.
+
+**The window does not move, only the anchor.** Both consumers build the envelope
+across every model, so the honest spread is unchanged; what changes is which
+date the headline names. DOL's average is still returned and still cited.
+
+`queueEstimate.test.ts` pins the ordering, the fallback when no rate exists, and
+that the lead now anchors EARLIER than the backward-looking average, which was
+the defect. Probed by restoring the old order.
+
 ## Branding a server-rendered page's URL moves every RELATIVE url on it (2026-09-10)
 
 Adam clicked "turn off" on the preferences page and got our own DEAD END 404 at

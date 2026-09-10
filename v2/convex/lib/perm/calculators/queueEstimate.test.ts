@@ -612,3 +612,68 @@ describe('the employer-initial adjustment', () => {
     expect(overdue.models).toEqual([]);
   });
 });
+
+describe('which model leads', () => {
+  /**
+   * The lead model is `models[0]`: both the case page and the timeline
+   * calculator anchor their headline on it, and the displayed RANGE is
+   * computed across every model, so ordering moves the anchor and leaves the
+   * window alone.
+   *
+   * DOL's published average led until 2026-09-10 and it was the wrong anchor.
+   * That average is taken over cases DECIDED recently, so it carries the audit
+   * and RFI tail, and it priced a clean case one month from the frontier as if
+   * it were eleven months out. Measured against production: of 95,993 pending
+   * cases, 86.0% sit ahead of the frontier where the queue model runs, and the
+   * 4.6% behind it are the audit/RFI population that `position === "overdue"`
+   * already answers separately.
+   */
+  const AHEAD = {
+    filingDate: '2025-12-15',
+    today: TODAY,
+    frontier: FRONTIER,
+    frontierAdvanceRate: 1,
+    frontierAdvanceRange: { fastest: 2, slowest: 0.75 },
+  } as const;
+
+  it('leads with queue advance whenever the model exists', () => {
+    const r = estimateQueueDecision({ ...AHEAD });
+    expect(r.models.length).toBeGreaterThan(1);
+    expect(r.models[0]!.id).toBe('queue-advance');
+  });
+
+  it('still returns DOL\'s average, as a citable cross-check', () => {
+    const r = estimateQueueDecision({ ...AHEAD });
+    expect(r.models.map((m) => m.id)).toContain('dol-average');
+  });
+
+  it('anchors earlier than the backward-looking average, which was the bug', () => {
+    const r = estimateQueueDecision({ ...AHEAD });
+    const lead = r.models[0]!;
+    const avg = r.models.find((m) => m.id === 'dol-average')!;
+    // The whole point: the queue is about to reach this month, so the honest
+    // headline is nearer than the tail-weighted mean over finished cases.
+    expect(lead.estimatedDate < avg.estimatedDate).toBe(true);
+  });
+
+  it('falls back to DOL\'s average when no rate has been measured', () => {
+    // No frontierAdvanceRate: the queue model is omitted rather than run on an
+    // assumed constant, so the citable average leads by default.
+    const r = estimateQueueDecision({ filingDate: '2025-12-15', today: TODAY, frontier: FRONTIER });
+    expect(r.models.map((m) => m.id)).not.toContain('queue-advance');
+    expect(r.models[0]!.id).toBe('dol-average');
+  });
+
+  it('does not widen or narrow the window, only the anchor', () => {
+    // Both consumers build the envelope from every model, so a reorder must
+    // leave the span untouched.
+    const r = estimateQueueDecision({ ...AHEAD });
+    const lo = r.models.map((m) => m.earliestDate ?? m.estimatedDate).sort()[0];
+    const hi = r.models.map((m) => m.latestDate ?? m.estimatedDate).sort().at(-1);
+    expect(lo).toBeTruthy();
+    expect(hi).toBeTruthy();
+    expect(lo! <= r.models[0]!.estimatedDate).toBe(true);
+    expect(hi! >= r.models[0]!.estimatedDate).toBe(true);
+  });
+});
+
