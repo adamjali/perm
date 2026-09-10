@@ -216,13 +216,22 @@ def parse_whd_html(page: str) -> tuple[list[dict], str | None]:
     eff = re.search(r"effective as of\s+([A-Za-z]+ \d{1,2}, \d{4})", text, re.I)
     effective = parse_long_date(eff.group(1)) if eff else None
     out: list[dict] = []
+    # COUNT WHAT IS DROPPED. A row whose period will not parse is skipped, and
+    # skipping it silently is how a date-format change on DOL's page becomes a
+    # shrinking list that still logs "N rows" and reads as healthy. Same family
+    # as the disclosure load guard: refuse or report on drift, never absorb it.
+    dropped: list[str] = []
     for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", text, re.S | re.I):
         cells = [re.sub(r"<[^>]+>", " ", c) for c in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", tr, re.S | re.I)]
         cells = [re.sub(r"\s+", " ", c).strip() for c in cells]
         if len(cells) < 4:
             continue
+        # A header row reaches here too, and it is not a drop worth reporting.
+        if cells[0].lower().startswith(("employer", "name")):
+            continue
         start, end = parse_whd_period(cells[3])
         if not start or not end or not cells[0]:
+            dropped.append(f"{cells[0][:40]!r} period={cells[3][:40]!r}")
             continue
         out.append({
             "program": "h1b",
@@ -235,6 +244,10 @@ def parse_whd_html(page: str) -> tuple[list[dict], str | None]:
             "citation": None,
             "source_url": WHD_URL,
         })
+    if dropped:
+        log(f"::warning::WHD: {len(dropped)} row(s) skipped, period would not parse")
+        for d in dropped[:10]:
+            log(f"    dropped: {d}")
     return out, effective
 
 

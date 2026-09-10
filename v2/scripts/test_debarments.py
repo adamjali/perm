@@ -110,6 +110,25 @@ def main() -> int:
           and whd[0]["violation"] == "Willful violator" and whd[1]["violation"] is None, str(whd))
     check("WHD: the header row is not an entry", all(r["entity"] != "Employer Name" for r in whd), "")
 
+    # A row DOL publishes that we cannot parse must be counted and named, not
+    # absorbed: a date-format change would otherwise shrink the list while the
+    # run still logs "N rows" and reads as healthy.
+    import io, contextlib
+    buf = io.StringIO()
+    with contextlib.redirect_stdout(buf):
+        kept, _ = deb.parse_whd_html(
+            "<p>effective as of September 1, 2026</p><table>"
+            "<tr><th>Employer Name</th><th>City</th><th>Willful</th><th>Period</th></tr>"
+            "<tr><td>Good Corp</td><td>Austin, TX</td><td>Y</td><td>5/12/2025 to 5/11/2027</td></tr>"
+            "<tr><td>Indefinite Co</td><td>Reno, NV</td><td>N</td><td>Indefinite</td></tr>"
+            "</table>")
+    noise = buf.getvalue()
+    check("WHD: an unparseable period is reported, not silently dropped",
+          len(kept) == 1 and "1 row(s) skipped" in noise and "Indefinite Co" in noise,
+          f"kept={len(kept)} log={noise!r}")
+    check("WHD: the header row is not counted as a drop",
+          "Employer Name" not in noise, noise)
+
     check("dates: long and short forms, and garbage",
           deb.parse_long_date("January 16, 2029") == "2029-01-16" and deb.parse_short_date("3/4/2026") == "2026-03-04"
           and deb.parse_long_date("Employer") is None and deb.parse_whd_period("nonsense") == (None, None), "")

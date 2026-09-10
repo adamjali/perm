@@ -119,6 +119,31 @@ export function isActive(d: Debarment, today: string): boolean {
 }
 
 /**
+ * Where a debarment sits relative to today. THREE states, not two.
+ *
+ * `!isActive` was being rendered as "(ended)" on both surfaces, and it covers
+ * two opposite situations. Measured 2026-09-10 over the 105 rows we hold: 97
+ * in force, 7 ended, and **one that has not started** - Jevon Natali Farms,
+ * H-2A, barred 2026-11-01 to 2027-10-31. The page was greying that row out and
+ * captioning it "(ended)", i.e. telling a reader that an employer about to be
+ * debarred for a full year is in the clear. That is the worst direction for
+ * this particular error to run.
+ *
+ * "Inactive" would fix the falsehood and was the first suggestion, but it
+ * flattens the distinction that matters most: a FUTURE debarment is a warning
+ * and a PAST one is history, and a reader deciding whether to work with a
+ * sponsor needs those apart. Three states cost nothing to derive - both dates
+ * are `NOT NULL` and `ingest_debarments.py` skips any row missing either, so
+ * this is total.
+ */
+export type DebarmentPhase = "upcoming" | "in-force" | "ended";
+
+export function phase(d: Debarment, today: string): DebarmentPhase {
+  if (today < d.startDate) return "upcoming";
+  return today <= d.endDate ? "in-force" : "ended";
+}
+
+/**
  * Debarments whose normalised entity name matches a page's slug: the entity's
  * slug is a prefix of the page slug or the page slug a prefix of it, so
  * "hercules-staffing-llc" finds "hercules-staffing" and the reverse, while a

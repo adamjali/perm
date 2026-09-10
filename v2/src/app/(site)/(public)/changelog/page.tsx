@@ -8,7 +8,6 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import { getAllPosts } from "@/lib/content";
-import { correctionsSorted } from "@/lib/corrections";
 import { generateBreadcrumbSchema, generateItemListSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ChangelogTimeline from "@/components/content/ChangelogTimeline";
@@ -57,10 +56,13 @@ export default function ChangelogPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <ContentHero type="changelog" postCount={posts.length} />
       <section className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
-        {/* One dated history. The corrections are interleaved with the
-            release notes rather than stacked in a block of their own below
-            them - Adam: "fold them INTO the change log". */}
-        <ChangelogTimeline posts={posts} corrections={correctionsSorted()} />
+        {/* One dated history. The corrections log is ONE entry in it
+            (`content/changelog/corrections.mdx`, category "Correction"), in
+            the same shape as every release note - Adam: "all the corrections,
+            they should be under 1 changelog and follow same format as others".
+            It was briefly its own route, then a block below this timeline,
+            then fourteen interleaved special-cased rows. */}
+        <ChangelogTimeline posts={posts} />
       </section>
     </>
   );

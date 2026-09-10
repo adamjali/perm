@@ -8,6 +8,7 @@ import {
   PROGRAM_LABEL,
   getDebarmentsSummary,
   isActive,
+  phase,
   listDebarments,
   type Debarment,
   type DebarmentProgram,
@@ -49,9 +50,14 @@ const int = (n: number) => n.toLocaleString("en-US");
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 function Row({ d, today }: { d: Debarment; today: string }) {
-  const active = isActive(d, today);
+  const p = phase(d, today);
+  // An ENDED debarment is history and is dimmed. An UPCOMING one is not: it is
+  // a live warning about a sponsor who is about to be barred, so it keeps full
+  // contrast and says so. Dimming it, which is what `!isActive` used to do,
+  // read as "nothing to see here" about the one row on the page most worth
+  // reading.
   return (
-    <li className={`grid grid-cols-1 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_minmax(0,14rem)] sm:gap-x-4 ${active ? "" : "text-foreground/60"}`}>
+    <li className={`grid grid-cols-1 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_minmax(0,14rem)] sm:gap-x-4 ${p === "ended" ? "text-foreground/60" : ""}`}>
       <div>
         <span className="font-bold">{d.entity}</span>{" "}
         {d.entityType ? <span className="text-sm text-foreground/70">{d.entityType}</span> : null}{" "}
@@ -59,7 +65,12 @@ function Row({ d, today }: { d: Debarment; today: string }) {
       </div>{" "}
       <div className="font-mono text-xs tabular-nums">
         {day(d.startDate)} to {day(d.endDate)}
-        {active ? "" : " (ended)"}
+        {p === "ended" ? " (ended)" : null}
+        {/* The start date is already the first half of this cell, so the
+            label says the STATE rather than repeating it. */}
+        {p === "upcoming" ? (
+          <span className="font-bold text-foreground"> (not started)</span>
+        ) : null}
       </div>{" "}
       <div className="text-sm">
         {d.violation ?? ""}
@@ -75,6 +86,9 @@ export default async function DebarmentsPage() {
   const byProgram = new Map<DebarmentProgram, Debarment[]>();
   for (const d of all) byProgram.set(d.program, [...(byProgram.get(d.program) ?? []), d]);
   const active = all.filter((d) => isActive(d, today)).length;
+  // Counted, not assumed: a debarment whose start date has not arrived is
+  // neither in force nor ended, and it used to be described as ended.
+  const upcoming = all.filter((d) => phase(d, today) === "upcoming").length;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
@@ -109,7 +123,11 @@ export default async function DebarmentsPage() {
       ) : (
         <>
           <p className="mt-6 max-w-3xl text-base leading-relaxed text-foreground/80">
-            {int(active)} debarments in force today of {int(all.length)} on the lists.
+            {int(active)} debarments in force today of {int(all.length)} on the lists
+            {upcoming > 0
+              ? `, and ${int(upcoming)} ${upcoming === 1 ? "that has" : "that have"} been ordered but ${upcoming === 1 ? "has" : "have"} not begun`
+              : ""}
+            .
             {summary?.pdfDate ? ` OFLC's document was last modified ${day(summary.pdfDate)}.` : ""}
             {summary?.h1bEffective ? ` The H-1B list is effective as of ${day(summary.h1bEffective)}.` : ""}
           </p>{" "}

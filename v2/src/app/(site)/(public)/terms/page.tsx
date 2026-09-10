@@ -18,7 +18,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = withSocialCard({
   title: "Terms of Service",
   description:
-    "Terms of Service for PERM Tracker. Read our terms for using our PERM labor certification case management software.",
+    "Terms of Service for PERM Tracker: the public PERM, prevailing wage and LCA data, the case manager, and what you may do with the compiled dataset.",
   alternates: {
     canonical: "/terms",
   },

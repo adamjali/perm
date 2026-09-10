@@ -3743,6 +3743,125 @@ page is reachable from `SearchPalette`'s static index. Its first run found the
 three A-Z browse hubs missing (57 of 61). A palette that silently omits pages
 is worse than no palette: it answers "no results" for something the site has.
 
+## Google was printing copy the audit had already fixed, from MDX frontmatter (2026-09-10)
+
+Adam sent a screenshot of the SERP for the brand query. Our `/guides` result read:
+
+> The complete guide to tracking PERM cases, from creating your first case to
+> mastering deadlines, recruitment, notifications, and the AI assistant.
+
+That is the pre-audit, attorney-software framing, and it is the third form of
+one lesson. The September audit fixed **41** places where a reader would form a
+wrong belief; a later pass caught the two most machine-read surfaces that are
+not pages (`llms.txt`, the shared JSON-LD `description`). **MDX frontmatter is
+the third class, and it is the one Google actually prints as the snippet.**
+
+The article's BODY had already been corrected - it opens "PERM Tracker is free,
+and it has two halves", names the public lookup, and names the P- and I-
+prefixes. Only `content/guides/getting-started.mdx`'s `description` and
+`seoDescription` were stale, and those are the only two strings a searcher ever
+sees.
+
+**Swept every description-shaped string on every surface** - MDX frontmatter,
+page and route `metadata`, `generateMetadata`, `structuredData.ts`,
+`pageCards.ts`, `navigation.ts`, `dataSections.ts`, the manifest, `llms.txt`,
+layouts, OG and Twitter blocks: **164 strings across 87 files, three stale.**
+The guide's two, and `/terms`, which described the site as "PERM labor
+certification case management software". Everything else was already current.
+
+**Two things the sweep flagged and left alone, both correctly:**
+- `content/blog/best-immigration-case-management-tools.mdx` - the article's
+  SUBJECT is case-management software. It is a comparison piece.
+- Three strings inside the AUTHENTICATED app (a dashboard empty state's "Get
+  started by creating your first case", the product tour's "the AI assistant"
+  and "in real time"). That half of the product IS case-management software,
+  its activity feed IS reactive, and a gate flagging those would be wrong and
+  suppressed within a week.
+
+`public-descriptions.test.ts` gates the class: it scans frontmatter across all
+three content directories, asserts it scanned a plausible number first, carries
+the exact string Google printed as its control, and holds its one written
+exception to a stated reason. Probed both ways - restoring the real string goes
+red, and so does a NEW article shipping attorney-only framing.
+
+**Off-site properties were checked too and are current**: the GitHub repo
+description leads with the federal data and names all three programs, and
+Medium and Product Hunt were rewritten on 2026-09-07.
+
+## The corrections log is ONE changelog entry, in the same shape as the rest
+
+Adam: *"all the corrections, they should be under 1 changelog and follow same
+format as others"*. It has now moved three times: its own `/corrections` route,
+then a block below the changelog timeline, then fourteen special-cased rows
+interleaved INTO that timeline (its own dot colour, its own badge, its own
+three-part prose block), and now `content/changelog/corrections.mdx` - an
+ordinary post with the frontmatter every other one has, `category: "Correction"`.
+
+`src/lib/corrections.ts` and its test are deleted; `ChangelogTimeline` lost its
+`corrections` prop, its two-kind `Entry` union and every `isCorrection` branch,
+and is a plain list of posts again. `/corrections` still 308s, now to
+`/changelog/corrections` rather than the index above it: a reader typing that
+URL wants the corrections, and there is a page for exactly that again.
+
+**Moving typed data into prose is where a standard goes quietly missing**, so
+the gate moved with it rather than being dropped.
+`corrections-entry.test.ts` asserts the post has every frontmatter key, a
+description within the same 155-char cap, at least the fourteen entries it
+moved with, that each names its page and date and carries **It said**, **What
+was true** and **What changed**, and that the post's own date equals its newest
+correction. Probed three ways: drop a part, delete an entry, or skew the date,
+and it goes red.
+
+## A date range has THREE states, and "not active" was rendered as "ended" (2026-09-10)
+
+Adam: *"make sure ended isn't just dates cause if future? maybe inactive is
+better?"* He was right, and it was live.
+
+`isActive(d, today)` is `startDate <= today && today <= endDate`, which is
+correct. Both debarment surfaces then rendered `!isActive` as **"(ended)"** -
+and `!isActive` covers two OPPOSITE situations: a period that has run out, and
+one that **has not started**.
+
+**Measured over the 105 rows we hold: 97 in force, 7 ended, and one that had not
+begun** - Jevon Natali DBA: Jevon Natali Farms, H-2A, barred **2026-11-01 to
+2027-10-31**. `/debarments` was greying that row out and captioning it "(ended)"
+52 days before the bar took effect. `DebarmentNotice` on an entity page was
+worse, because it says it in a sentence: *"was barred from filing in the past;
+the period has ended"* - every clause false, on the page of a sponsor somebody
+may be about to sign with.
+
+**"Inactive" would have fixed the falsehood and it is still the wrong answer.**
+It is accurate for both cases, and that is the problem: a FUTURE debarment is a
+warning and a PAST one is history, and flattening them tells a reader "nothing
+here" about the single most important row on the page. `phase()` returns
+`"upcoming" | "in-force" | "ended"`.
+
+Both dates are `NOT NULL` and `ingest_debarments.py` skips any row missing
+either, so the three states are total - there is no fourth case to design for.
+
+Rendering rules that came out of it:
+- **An ended row is dimmed; an upcoming one is not.** Dimming was doing the
+  same damage as the label.
+- **The label states the STATE, not the date** ("(not started)"), because the
+  period is already the first half of the same cell.
+- **The notice's lede is ordered by what the reader needs**: in force today
+  beats barred-from-a-known-date beats finished.
+- The page's summary counts it: *"97 debarments in force today of 105 on the
+  lists, and 1 that has been ordered but has not begun."*
+
+**The general rule: any classification derived from a date range against `now`
+has three outcomes, and a boolean can only carry two.** Before rendering
+`!inRange` as a past-tense word, ask what the future case looks like. Grep for
+this shape wherever a start and an end are compared to today.
+
+**And an adjacent silent failure found while checking the same data.** The WHD
+parser drops any row whose period will not parse - `if not start or not end:
+continue` - with no count. A date-format change on DOL's page would shrink the
+list while the run logged "N rows" and read as healthy, which is the load-guard
+lesson in miniature. It now counts drops, names the first ten and prints
+`::warning::`, with a header-row exception so the table heading is not counted.
+Probed by reverting: `test_debarments.py` goes red.
+
 ## Every entity page is indexable now, and three things had to move first (2026-09-10)
 
 Adam: *"nah i want all"*, overruling a recommendation to lower the floor from 5

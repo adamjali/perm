@@ -5,7 +5,8 @@ const rows = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown[]>>();
 const one = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown>>();
 vi.mock("../client", () => ({ rows, one, exec: vi.fn() }));
 
-const { debarmentsForSlug, getDebarmentsSummary, isActive, listDebarments } = await import("../debarments");
+const { debarmentsForSlug, getDebarmentsSummary, isActive, listDebarments, phase } =
+  await import("../debarments");
 
 const db = (over: Record<string, unknown> = {}) => ({
   program: "perm",
@@ -60,3 +61,48 @@ describe("debarments", () => {
     expect(await getDebarmentsSummary()).toBeNull();
   });
 });
+
+describe("phase: a period has three states, and the middle one was missing", () => {
+  // The row shape the module returns, not the DB row shape.
+  const d = (startDate: string, endDate: string) =>
+    ({ startDate, endDate }) as Parameters<typeof phase>[0];
+
+  it("calls a period that has not begun upcoming, never ended", () => {
+    // THE REGRESSION THIS FILE EXISTS FOR. Both surfaces rendered `!isActive`
+    // as "(ended)", and on 2026-09-10 the live data held exactly this row:
+    // an H-2A employer barred 2026-11-01 to 2027-10-31, greyed out and
+    // captioned "ended" 52 days BEFORE the bar took effect.
+    expect(phase(d("2026-11-01", "2027-10-31"), "2026-09-10")).toBe("upcoming");
+    expect(isActive(d("2026-11-01", "2027-10-31"), "2026-09-10")).toBe(false);
+  });
+
+  it("separates the two things !isActive used to conflate", () => {
+    const future = d("2026-11-01", "2027-10-31");
+    const past = d("2020-01-01", "2021-01-01");
+    const today = "2026-09-10";
+    // Both are "not active", which is why one label for both was wrong.
+    expect(isActive(future, today)).toBe(isActive(past, today));
+    expect(phase(future, today)).not.toBe(phase(past, today));
+  });
+
+  it("is in force on both boundary days, inclusive", () => {
+    // A debarment that runs "to" a date is in force ON that date; an
+    // exclusive end would clear a sponsor a day early.
+    expect(phase(d("2026-09-10", "2027-01-01"), "2026-09-10")).toBe("in-force");
+    expect(phase(d("2025-01-01", "2026-09-10"), "2026-09-10")).toBe("in-force");
+    expect(phase(d("2025-01-01", "2026-09-09"), "2026-09-10")).toBe("ended");
+    expect(phase(d("2026-09-11", "2027-01-01"), "2026-09-10")).toBe("upcoming");
+  });
+
+  it("agrees with isActive wherever isActive is true", () => {
+    for (const [s, e, t] of [
+      ["2025-01-01", "2027-01-01", "2026-09-10"],
+      ["2026-09-10", "2026-09-10", "2026-09-10"],
+      ["2020-01-01", "2021-01-01", "2026-09-10"],
+      ["2026-11-01", "2027-10-31", "2026-09-10"],
+    ] as const) {
+      expect(phase(d(s, e), t) === "in-force").toBe(isActive(d(s, e), t));
+    }
+  });
+});
+

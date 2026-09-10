@@ -206,12 +206,16 @@ const nextConfig: NextConfig = {
       // links land on the data surface.
       // Content consolidated 2026-08-24: tutorials and resources merged into
       // guides. Fourteen articles never justified five sections.
-      // `/corrections` retired 2026-09-09. Fourteen entries did not earn a
-      // page, and a reader looking for "what changed" goes to the changelog
-      // anyway. The RECORD is kept - `src/lib/corrections.ts` still feeds the
-      // section this points at - because a site arguing its numbers are
-      // checkable does not get to drop the list of times they were not.
-      { source: "/corrections", destination: "/changelog", permanent: true },
+      // `/corrections` as its own top-level route retired 2026-09-09, and the
+      // log moved twice more: interleaved into the changelog timeline as
+      // fourteen special-cased rows, then (2026-09-10) into ONE ordinary
+      // changelog entry, `content/changelog/corrections.mdx`. So this now
+      // points at the log itself rather than the index above it - a reader
+      // typing /corrections wants the corrections, and there is a page for
+      // exactly that again. The RECORD is kept whatever shape it takes,
+      // because a site arguing its numbers are checkable does not get to drop
+      // the list of times they were not.
+      { source: "/corrections", destination: "/changelog/corrections", permanent: true },
       { source: "/tutorials", destination: "/guides", permanent: true },
       { source: "/resources", destination: "/guides", permanent: true },
       { source: "/tutorials/:slug", destination: "/guides/:slug", permanent: true },
