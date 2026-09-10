@@ -669,7 +669,10 @@ describe('which model leads', () => {
     // leave the span untouched.
     const r = estimateQueueDecision({ ...AHEAD });
     const lo = r.models.map((m) => m.earliestDate ?? m.estimatedDate).sort()[0];
-    const hi = r.models.map((m) => m.latestDate ?? m.estimatedDate).sort().at(-1);
+    // NOT `.at(-1)`: convex/tsconfig.json targets ES2021, where it does not
+    // exist. It typechecks green under the app config and red under Convex's.
+    const his = r.models.map((m) => m.latestDate ?? m.estimatedDate).sort();
+    const hi = his[his.length - 1];
     expect(lo).toBeTruthy();
     expect(hi).toBeTruthy();
     expect(lo! <= r.models[0]!.estimatedDate).toBe(true);

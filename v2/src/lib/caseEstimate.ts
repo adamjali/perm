@@ -71,8 +71,25 @@ export type CaseEstimate =
       kind: "no-date";
       /** Why no date exists for this case, in one sentence. */
       note: string;
-      /** Mean days cases at this stage have already been pending. Measured. */
-      observedAgeDays: number;
+      /**
+       * A measured waiting time, and WHOSE it is.
+       *
+       * This used to be a bare `observedAgeDays` documented as "mean days
+       * cases at this stage have already been pending", with two producers
+       * that meant different things: the stage branch put the measured
+       * population mean in it (170 to 714 days, from queueForecast), and the
+       * overdue branch put `today - this case's filing date` in it. The panel
+       * rendered one sentence for both - "Cases at this stage have been
+       * pending a measured average of N days" - so for every overdue case it
+       * presented that one case's own wait as a population average.
+       *
+       * It was invisible because both numbers are in the same range and both
+       * look plausible. The discriminator is here so the copy cannot claim
+       * more than the number is.
+       */
+      age:
+        | { of: "stage"; days: number }
+        | { of: "this-case"; days: number };
     };
 
 /**
@@ -101,7 +118,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
     return {
       kind: "no-date",
       note: place.note,
-      observedAgeDays: place.observedAgeDays,
+      age: { of: "stage", days: place.observedAgeDays },
     };
   }
 
@@ -145,10 +162,16 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
         note:
           `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}. ` +
           "A case still pending at that point has usually been taken out of filing order by an audit, a request for information, or a hold, and none of those can be dated from the filing month. The live status above is the accurate read.",
-        observedAgeDays: differenceInCalendarDays(
-          parseISO(input.today),
-          parseISO(input.filingDate),
-        ),
+        // THIS case's own wait, not a population statistic. The overdue
+        // branch has no measured stage to average over - that is what makes
+        // it the overdue branch.
+        age: {
+          of: "this-case",
+          days: differenceInCalendarDays(
+            parseISO(input.today),
+            parseISO(input.filingDate),
+          ),
+        },
       };
     }
     return null;

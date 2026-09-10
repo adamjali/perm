@@ -39,12 +39,29 @@ export function CaseEstimate(
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
           {est.note}
         </p>{" "}
+        {/* ONE SENTENCE PER MEANING. This block said "Cases at this stage
+            have been pending a measured average of N days" for BOTH shapes,
+            and in the overdue case N is this case's own wait, not an average
+            of anything. Both numbers sit in the same range, so it read as
+            true. */}
         <p className="mt-3 text-sm text-muted-foreground">
-          Cases at this stage have been pending a measured average of{" "}
-          <b className="font-bold text-foreground">
-            {est.observedAgeDays.toLocaleString("en-US")} days
-          </b>{" "}
-          since filing.
+          {est.age.of === "stage" ? (
+            <>
+              Cases at this stage have been pending a measured average of{" "}
+              <b className="font-bold text-foreground">
+                {est.age.days.toLocaleString("en-US")} days
+              </b>{" "}
+              since filing.
+            </>
+          ) : (
+            <>
+              This case has been pending{" "}
+              <b className="font-bold text-foreground">
+                {est.age.days.toLocaleString("en-US")} days
+              </b>{" "}
+              since it was filed.
+            </>
+          )}
         </p>
       </section>
     );

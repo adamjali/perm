@@ -121,7 +121,10 @@ describe("buildCaseEstimate", () => {
     });
     expect(e).not.toBeNull();
     if (e?.kind !== "no-date") throw new Error("expected a refusal with context");
-    expect(e.observedAgeDays).toBeGreaterThan(600);
+    // A measured stage, so the number is the POPULATION mean and the panel is
+    // allowed to call it an average.
+    expect(e.age.of).toBe("stage");
+    expect(e.age.days).toBeGreaterThan(600);
     expect(e.note.toLowerCase()).toContain("appeal");
   });
 
@@ -155,7 +158,12 @@ describe("a filing month the frontier has already passed", () => {
     expect(e).not.toBeNull();
     if (e?.kind !== "no-date") throw new Error("expected the overdue refusal");
     expect(e.note.toLowerCase()).toContain("passed this filing month");
-    expect(e.observedAgeDays).toBeGreaterThan(600);
+    // THE DISTINCTION THIS FILE EXISTS TO HOLD. The overdue branch has no
+    // measured stage to average, so the number is this case's own wait. The
+    // panel called it "a measured average" for both shapes until 2026-09-10,
+    // and it read as true because both land in the same range.
+    expect(e.age.of).toBe("this-case");
+    expect(e.age.days).toBeGreaterThan(600);
   });
 });
 
