@@ -19,7 +19,7 @@ import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "Priority Date Retention and I-485 Portability Calculator";
 const DESCRIPTION =
-  "From an I-140 approval date: when an employer's withdrawal stops revoking it, when an I-485 becomes portable under 204(j), and whether the priority date is kept. Citations included.";
+  "From an I-140 approval date: when a withdrawal stops revoking it, when an I-485 becomes portable under 204(j), and whether the priority date is kept.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,

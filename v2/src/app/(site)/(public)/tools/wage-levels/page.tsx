@@ -17,7 +17,7 @@ import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "Prevailing Wage Levels by Occupation and Area";
 const DESCRIPTION =
-  "DOL's four OEWS prevailing wage levels for any occupation in any metro or non-metro area, read live from the OFLC wage search, with the series year each figure belongs to.";
+  "DOL's four OEWS prevailing wage levels for any occupation in any area, read live from the OFLC wage search, with the series year each figure belongs to.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,

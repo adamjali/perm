@@ -22,7 +22,7 @@ import { MIN_FOR_MEDIAN } from "@/lib/wageStats";
 
 const TITLE = "Compare My Offer";
 const DESCRIPTION =
-  "Where your salary sits among certified H-1B LCAs and PERM offers for the same occupation and state, as a percentile from DOL's own filings. Your number stays in your browser.";
+  "Where your salary sits among certified H-1B LCAs and PERM offers for the same occupation and state, as a percentile from DOL's filings. Nothing is sent.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,

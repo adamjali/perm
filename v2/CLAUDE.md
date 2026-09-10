@@ -3778,7 +3778,23 @@ certification case management software". Everything else was already current.
   its activity feed IS reactive, and a gate flagging those would be wrong and
   suppressed within a week.
 
-`public-descriptions.test.ts` gates the class: it scans frontmatter across all
+**A SECOND SWEEP, of LENGTH rather than framing, found eight more.**
+`pnpm audit:pages` reported exactly one over-length description (`/badges`, 251
+chars) while **eight** were live. It samples **3 URLs per template**, and
+`/tools/*` and `/visa-bulletin/*` are not templates in the sense that matters:
+each of those pages carries its own hand-written `metadata` and merely shares a
+URL prefix. The other seven sat on URLs it never fetched (170 to 220 chars).
+
+Measured every one of the **60 static public pages** live instead of sampling
+them: eight over, none under. All shortened.
+`page-description-length.test.ts` is the durable gate - static and exhaustive
+where the live audit is live and sampled, with the 251-char string as its
+control. Neither replaces the other: the static one cannot see a description
+assembled at request time, and the live one cannot see an unsampled URL.
+Dynamic segments stay out of scope on purpose, because one `generateMetadata`
+really does serve every slug there.
+
+`public-descriptions.test.ts` gates the framing class: it scans frontmatter across all
 three content directories, asserts it scanned a plausible number first, carries
 the exact string Google printed as its control, and holds its one written
 exception to a stated reason. Probed both ways - restoring the real string goes

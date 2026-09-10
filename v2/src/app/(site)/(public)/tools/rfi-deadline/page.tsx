@@ -19,7 +19,7 @@ import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "PERM RFI and Audit Response Deadline Calculator";
 const DESCRIPTION =
-  "The last day to answer a PERM audit letter or request for information: 30 calendar days from the date on DOL's letter under 20 CFR 656.20, with the weekday and days left.";
+  "The last day to answer a PERM audit letter: 30 calendar days from the date on DOL's letter under 20 CFR 656.20, with the weekday and the days left.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,

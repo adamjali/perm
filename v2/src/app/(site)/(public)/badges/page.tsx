@@ -30,7 +30,7 @@ import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "PERM and Visa Bulletin Badges";
 const DESCRIPTION =
-  "Embeddable SVG badges carrying figures the Department of Labor and the State Department publish: the PERM and prevailing wage queues, average decision days, visa bulletin cutoffs, and counts of the record. Three shapes, two backgrounds, rebuilt daily.";
+  "Embeddable SVG badges carrying figures DOL and the State Department publish: queue positions, decision days, visa bulletin cutoffs. Rebuilt daily.";
 const PATH = "/badges";
 const ORIGIN = "https://permtracker.app";
 

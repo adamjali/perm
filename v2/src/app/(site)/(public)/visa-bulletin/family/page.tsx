@@ -21,7 +21,7 @@ import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "Family-Sponsored Visa Bulletin History";
 const DESCRIPTION =
-  "Every family-sponsored cutoff date (F1, F2A, F2B, F3, F4) from the visa bulletin archive by country: the latest final action and dates-for-filing cutoffs, how far each moved over the months held, and every retrogression.";
+  "Family-sponsored cutoffs (F1, F2A, F2B, F3, F4) by country from the visa bulletin archive: the latest dates, how far each moved, and every retrogression.";
 const PATH = "/visa-bulletin/family";
 
 export const metadata: Metadata = withSocialCard({

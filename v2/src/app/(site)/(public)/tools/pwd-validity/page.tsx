@@ -19,7 +19,7 @@ import { withSocialCard } from "@/lib/socialCard";
 
 const TITLE = "Prevailing Wage Determination Validity Calculator";
 const DESCRIPTION =
-  "When a prevailing wage determination expires under 20 CFR 656.40(c): 90 days, or June 30 when the OEWS wage year turns over. The date, the rule that applied, and the days left.";
+  "When a prevailing wage determination expires under 20 CFR 656.40(c): the date, the rule that applied, and the days left. The OEWS wage year is handled.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
