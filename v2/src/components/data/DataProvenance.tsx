@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { getFreshness, type DatasetFreshness } from "@/lib/turso/publicData";
+import { coverageFor } from "@/lib/datasetCoverage";
 
 /**
  * One line of provenance, rendered where the data is.
@@ -69,6 +70,17 @@ export async function DataProvenance({ datasets, className }: { datasets: string
             <span className="font-bold text-foreground/80">{label(r.dataset)}:</span>{" "}
             {r.source}
             {r.asOf ? <> · data through {fmt(r.asOf)}</> : null} · {r.cadence.toLowerCase()}
+            {/* CADENCE IS NOT COVERAGE, and reading one for the other is the
+                confusion this line exists to end: "quarterly" does not say
+                "decided cases only", and "daily" does not say "pending
+                included, no wage". Both errors this project keeps meeting come
+                from that gap. */}
+            {coverageFor(r.dataset) ? (
+              <>
+                {" "}
+                <span className="text-foreground/70">{coverageFor(r.dataset)}</span>
+              </>
+            ) : null}
           </p>
         )}
         </Fragment>

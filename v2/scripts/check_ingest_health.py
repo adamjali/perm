@@ -34,6 +34,7 @@ from __future__ import annotations
 
 import datetime
 import json
+import re
 import statistics
 import time
 import sys
@@ -366,6 +367,42 @@ def check_lookup_demand(db) -> int:
     return 0
 
 
+def check_coverage_stated(db) -> int:
+    """Every registered dataset says what it CONTAINS, not just how often it arrives.
+
+    The provenance line under every data page has always carried a source, an
+    as-of date and a cadence. Cadence is not coverage, and the gap between them
+    is where this project's two recurring errors live: "quarterly" does not say
+    DOL's files hold only DECIDED cases, and "daily" does not say our sweep
+    includes pending but carries no wage.
+
+    The sentences live in `src/lib/datasetCoverage.ts`. A vitest gate holds
+    their shape, but it cannot see the full registry - most ingests write
+    `data_freshness` with a plain SQL tuple rather than a helper, so scraping
+    finds only a subset. This check has the live registry, so it is the one
+    that can say a NEW dataset shipped without a sentence.
+    """
+    src = (pathlib.Path(__file__).resolve().parent.parent
+           / "src" / "lib" / "datasetCoverage.ts")
+    if not src.is_file():
+        print("coverage: datasetCoverage.ts not found; skipping")
+        return 0
+    text = src.read_text(encoding="utf8", errors="ignore")
+    stated = set(re.findall(r'^\s*"?([a-z0-9-]+)"?:\s*$|^\s*"?([a-z0-9-]+)"?:\s*"',
+                            text, re.M))
+    have = {a or b for a, b in stated if (a or b)}
+    registered = {str(r[0]) for r in db.rows("SELECT dataset FROM data_freshness")}
+    missing = sorted(registered - have)
+    if missing:
+        print(f"COVERAGE: {len(missing)} dataset(s) registered with no coverage "
+              f"sentence: {', '.join(missing)}")
+        print("  A reader sees its cadence and has to guess whether it holds "
+              "pending cases. Add a line to src/lib/datasetCoverage.ts.")
+        return 1
+    print(f"coverage: all {len(registered)} registered datasets state what they contain")
+    return 0
+
+
 def main() -> int:
     db = Turso()
     res = db.execute(
@@ -439,6 +476,7 @@ def main() -> int:
     yield_bad = check_discovery_yield(db)
     backfill_bad = check_backfill(db)
     demand_bad = check_lookup_demand(db)
+    coverage_bad = check_coverage_stated(db)
 
     print()
     if unparseable:
@@ -454,7 +492,8 @@ def main() -> int:
         return 1
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
-    if runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad or unparseable:
+    if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad
+            or coverage_bad or unparseable):
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
           "most recent run finished clean, the discovery frontier is moving, no "

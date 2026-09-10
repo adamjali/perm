@@ -40,6 +40,7 @@ RUN IT AFTER EVERY `ingest_perm_disclosure.py` RUN. It reads the same corpus.
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import sys
 import time
@@ -63,6 +64,29 @@ MIN_CASES_PER_MONTH = 200
 # and a gradient measured across a layout change is measuring the layout.
 SINCE_MONTH = "2023-01"
 
+# ...and it STOPS this far back from today, which is the guard that was missing.
+#
+# `perm_cases` holds DECIDED cases only, so a recent filing month contains just
+# the ones already finished - the fast ones. Measured 2026-09-10, the letter
+# span computed over rolling windows:
+#
+#     whole corpus (227,348 cases)   21.0 days
+#     FY2025        (75,631)         22.3 days
+#     recent 12m    (3,091)         180.9 days   <- survivorship, not signal
+#     newest 6m       (841)          93.5 days   <- survivorship, not signal
+#
+# The 200-case floor per end of the alphabet already drops every immature
+# month (2025-07 onward all fail it, 2025-01..06 all pass), so this was correct
+# BY COINCIDENCE rather than by design: if DOL's volume rose, an immature month
+# could clear 200 on both ends while still being made of its fastest cases, and
+# would enter the mean with nothing to stop it. Saying the rule out loud costs
+# one clause and removes the coincidence.
+#
+# 12 months is chosen against DOL's own published average of 336 days: a month
+# that old has had longer than the mean case takes, so what remains pending in
+# it is the genuine tail rather than everything.
+MATURITY_LAG_MONTHS = 12
+
 
 def log(msg: str) -> None:
     print(msg, flush=True)
@@ -82,6 +106,13 @@ def rows(db: Turso, sql: str, args: list | None = None) -> list[dict]:
     return out
 
 
+def maturity_cutoff() -> str:
+    """The newest filing month mature enough to measure, as `YYYY-MM-01`."""
+    today = datetime.date.today()
+    months = today.year * 12 + (today.month - 1) - MATURITY_LAG_MONTHS
+    return f"{months // 12:04d}-{months % 12 + 1:02d}-01"
+
+
 def build(db: Turso) -> dict:
     log("  reading pooled per-letter means...")
     pooled = rows(
@@ -90,8 +121,9 @@ def build(db: Turso) -> dict:
                   COUNT(*) AS n, AVG(CAST(days AS REAL)) AS mean_days
              FROM perm_cases
             WHERE days IS NOT NULL AND received_date >= ?
+              AND received_date < ?
             GROUP BY letter HAVING n >= ? ORDER BY letter""",
-        [SINCE_MONTH, MIN_CASES],
+        [SINCE_MONTH, maturity_cutoff(), MIN_CASES],
     )
     # Only A-Z. A name starting with a digit or a symbol has no position in an
     # alphabetical ordering, so a bucket for it would be a number nobody can
@@ -126,8 +158,12 @@ def build(db: Turso) -> dict:
                            THEN CAST(days AS REAL) ELSE 0 END) AS late_sum
              FROM perm_cases
             WHERE days IS NOT NULL AND received_date >= ?
+              AND received_date < ?
             GROUP BY month ORDER BY month""",
-        [SINCE_MONTH],
+        # The same cutoff as the pooled query above. Without it this series
+        # would carry immature months that the 200-per-end floor happens to
+        # drop today, and "happens to" is the part being removed.
+        [SINCE_MONTH, maturity_cutoff()],
     )
     gaps = []
     for r in per_month:
