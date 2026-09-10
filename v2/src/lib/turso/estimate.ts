@@ -18,6 +18,7 @@ import {
 } from "@/lib/perm";
 
 import { getDisclosureStats, type Cohort, type FrontierPoint } from "./publicData";
+import { getLiveCensus, receivedByMonthFrom } from "./liveCensus";
 import { getProcessingTimes, getProcessingTimesHistory } from "./processingTimes";
 
 /**
@@ -49,11 +50,50 @@ export interface EstimatorData {
   disclosure: { sourceFiles: string[]; uniqueCases: number; computedAt: number } | null;
 }
 
+/**
+ * Attach the live pending-inclusive total to each disclosure cohort.
+ *
+ * `decided` comes from DOL's quarterly files and `totalReceived` from the daily
+ * sweep, so the ratio is a real completion fraction rather than the constant
+ * 1.0 the files alone produce.
+ *
+ * THE TOTAL IS FLOORED AT `decided`. Measured on production, a few mature
+ * months read slightly OVER 1 (2024-12 at 1.03, 2025-02 at 1.08) because the
+ * live sweep has not discovered every case the files hold. A ratio above 1 is
+ * not a real reading, and left alone it would make a finished month look like
+ * a growing one; the honest floor is "at least as many as we know were
+ * decided".
+ *
+ * A month the sweep does not cover at all gets `null`, never a guess - the
+ * calculator omits the adjusted model rather than approximating it.
+ */
+export function withReceived(
+  cohorts: Cohort[],
+  received: Map<string, number>,
+): Cohort[] {
+  return cohorts.map((c) => {
+    const live = received.get(c.cohortMonth);
+    return {
+      ...c,
+      totalReceived:
+        typeof live === "number" && live > 0 ? Math.max(live, c.decided) : null,
+    };
+  });
+}
+
 export async function getEstimatorData(): Promise<EstimatorData> {
-  const [snapshot, stats] = await Promise.all([
+  // THE TWO HALVES, BOTH REQUIRED. The disclosure files supply how long
+  // DECIDED cases took; only the live sweep knows how many of a month are
+  // still pending. A percentile without that denominator cannot say whether it
+  // describes a whole month or its fastest 2%, and reading one that way is the
+  // single biggest error available here. Both are cached single-document
+  // reads, so this costs no extra queries.
+  const [snapshot, stats, census] = await Promise.all([
     getProcessingTimes(),
     getDisclosureStats(),
+    getLiveCensus(),
   ]);
+  const received = receivedByMonthFrom(census);
 
   let frontier: EstimatorData["frontier"] = null;
   if (snapshot) {
@@ -114,7 +154,7 @@ export async function getEstimatorData(): Promise<EstimatorData> {
 
   return {
     frontier,
-    cohorts: stats?.cohorts ?? [],
+    cohorts: withReceived(stats?.cohorts ?? [], received),
     frontierHistory: [...history].sort((a, b) =>
       a.decisionMonth.localeCompare(b.decisionMonth),
     ),

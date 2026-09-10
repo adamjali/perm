@@ -208,6 +208,13 @@ export async function doc<T>(key: string): Promise<T | null> {
 export interface Cohort {
   cohortMonth: string;
   decided: number;
+  /**
+   * Cases DOL received that month, PENDING INCLUDED, or null when the live
+   * sweep does not cover the month. Never comes from the disclosure files -
+   * they hold no pending rows - so it is merged in from `live_census`. See
+   * `receivedByMonthFrom`.
+   */
+  totalReceived?: number | null;
   p25: number | null;
   p50: number | null;
   p75: number | null;

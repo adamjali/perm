@@ -190,3 +190,33 @@ export function adjacentFrom(
   }
   return { previous, next };
 }
+
+/**
+ * How many cases each filing month holds, PENDING INCLUDED, from the live sweep.
+ *
+ * This is the half DOL's disclosure files cannot supply. Those files carry only
+ * DECIDED cases, so a completion fraction computed from them alone is always
+ * exactly 1.0 and can never signal that a cohort is immature - which is why the
+ * estimator judged maturity against the published frontier instead.
+ *
+ * The live census knows the denominator, so the fraction becomes real.
+ * VALIDATED against production 2026-09-10, disclosure-decided over live-total:
+ *
+ *     mature months   2024-10 0.99  2025-01 1.00  2025-04 1.00  2025-05 0.96
+ *     recent months   2025-12 0.029  2026-03 0.028  2026-06 0.024
+ *
+ * The two sources describe the same population once a month is worked through,
+ * and the recent figures are the survivorship warning the estimator was blind
+ * to: a 2026-06 percentile is computed over 2.4% of that month, the fastest
+ * 2.4%, and reading it as "how long this month takes" is how public estimators
+ * end up months apart.
+ */
+export function receivedByMonthFrom(census: LiveCensus | null): Map<string, number> {
+  const out = new Map<string, number>();
+  if (!census) return out;
+  for (const row of census.matrix) {
+    out.set(row.month, (out.get(row.month) ?? 0) + row.n);
+  }
+  return out;
+}
+

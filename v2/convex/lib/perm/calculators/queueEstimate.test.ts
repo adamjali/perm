@@ -84,6 +84,55 @@ describe('reportablePercentiles', () => {
     expect(result.map((r) => r.percentile)).toEqual([25]);
   });
 
+  it('still reports p90 for a cohort that is finished but not exactly 1.0', () => {
+    // THE CLIFF. `completionFraction * 0.9` admits p90 only at EXACTLY 1.0,
+    // and real cohorts never land there: measured on production, settled
+    // months sit at 0.96 to 0.9996, and 13 of 28 would have lost their p90
+    // the moment the live census supplied a true denominator. At 99.3%
+    // decided the 90th percentile is observed, and withholding it is not
+    // caution, it is losing a real figure.
+    const available = [
+      { percentile: 25, days: 300 },
+      { percentile: 50, days: 400 },
+      { percentile: 75, days: 520 },
+      { percentile: 90, days: 700 },
+    ];
+    for (const fraction of [0.9996, 0.993, 0.978, 0.963]) {
+      expect(
+        reportablePercentiles(fraction, available).map((r) => r.percentile),
+        `fraction ${fraction}`,
+      ).toEqual([25, 50, 75, 90]);
+    }
+  });
+
+  it('will not report the percentile it has only just reached', () => {
+    // The cushion has to be non-zero, and nothing else in this file pins that:
+    // with a margin of 0 the ceiling equals the fraction and p50 is reported
+    // at exactly 50% decided - the single noisiest point on the curve, where
+    // one slow case moves it. Observing TO a percentile is not observing PAST
+    // it.
+    const available = [
+      { percentile: 25, days: 300 },
+      { percentile: 50, days: 400 },
+    ];
+    expect(reportablePercentiles(0.5, available).map((r) => r.percentile)).toEqual([25]);
+    // ...and a little past it is fine.
+    expect(reportablePercentiles(0.56, available).map((r) => r.percentile)).toEqual([25, 50]);
+  });
+
+  it('drops the tail as the fraction falls, one percentile at a time', () => {
+    const available = [
+      { percentile: 25, days: 300 },
+      { percentile: 50, days: 400 },
+      { percentile: 75, days: 520 },
+      { percentile: 90, days: 700 },
+    ];
+    // Monotone: less observed, less reported. Never the reverse.
+    expect(reportablePercentiles(0.82, available).map((r) => r.percentile)).toEqual([25, 50, 75]);
+    expect(reportablePercentiles(0.6, available).map((r) => r.percentile)).toEqual([25, 50]);
+    expect(reportablePercentiles(0.31, available).map((r) => r.percentile)).toEqual([25]);
+  });
+
   it('reports nothing at all when almost none of the cohort has resolved', () => {
     const result = reportablePercentiles(0.1, [
       { percentile: 25, days: 90 },

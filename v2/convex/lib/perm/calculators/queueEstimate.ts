@@ -335,13 +335,36 @@ export function impliedMedianDays(
   return { days: Math.round(best.days / shape.factor), fromPercentile: best.percentile };
 }
 
+/**
+ * How far below the observed completion fraction the usable ceiling sits.
+ *
+ * Five points: enough to drop the noisiest tail, small enough that a cohort
+ * which really is finished still reports its p90.
+ */
+const TAIL_MARGIN = 0.05;
+
 export function reportablePercentiles(
   completionFraction: number,
   available: ReadonlyArray<{ percentile: number; days: number | null }>,
 ): Array<{ percentile: number; days: number }> {
   // The last few points before the observation boundary are the noisiest, so
   // the usable ceiling sits below the raw completion fraction.
-  const ceiling = completionFraction * 0.9;
+  //
+  // A MARGIN, NOT A MULTIPLIER. This was `completionFraction * 0.9`, which was
+  // harmless only while the fraction was always exactly 1.0 - DOL's files hold
+  // no pending rows, so the real fraction was never available and the call site
+  // passed 1. The moment the live census supplied a true denominator
+  // (2026-09-10) that form became a cliff: it admits p90 only at a fraction of
+  // EXACTLY 1.0, and real cohorts land at 0.96 to 0.9996. Measured over
+  // production, 13 of the 28 settled cohorts with live coverage would have
+  // silently lost their p90 - at 99.3% decided, where the 90th percentile is
+  // genuinely observed.
+  //
+  // Subtracting a fixed cushion says the intended thing directly: report a
+  // percentile once we have observed past it, less a few points for the noisy
+  // tail. Every previously-asserted behaviour is unchanged - 1.0 still reports
+  // all four, 0.4 still reports p25 alone, 0.1 still reports nothing.
+  const ceiling = completionFraction - TAIL_MARGIN;
   const out: Array<{ percentile: number; days: number }> = [];
   for (const entry of available) {
     if (entry.days === null) continue;
