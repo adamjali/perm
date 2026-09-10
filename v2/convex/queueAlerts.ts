@@ -66,6 +66,7 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { SITE_URL, actionUrl } from "./lib/links";
 import { formatAsOf, formatMonth, monthsMoved } from "../src/lib/dolFormat";
 import { measureQueuePace, paceSentence } from "../src/lib/queuePace";
 import {
@@ -154,7 +155,6 @@ const THROTTLED_REPLY =
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
 
 /** The public marketing site, used for human-facing links in email copy. */
-const SITE_URL = "https://permtracker.app";
 
 /** The DOL row whose priority date IS the answer to "have they reached me yet". */
 const ANALYST_REVIEW = /analyst review/i;
@@ -245,11 +245,6 @@ function isPlausibleFilingMonth(month: string): boolean {
  * The Convex HTTP domain, which is where confirm and unsubscribe actually run.
  * These are different hosts and conflating them produces links that 404.
  */
-function actionUrl(path: string, token: string): string {
-  const base = process.env.CONVEX_SITE_URL;
-  if (!base) throw new Error("CONVEX_SITE_URL is not configured");
-  return `${base}${path}?token=${encodeURIComponent(token)}`;
-}
 
 function unsubscribeSecret(): string {
   const secret = process.env.UNSUBSCRIBE_SECRET;

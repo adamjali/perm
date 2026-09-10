@@ -9,6 +9,7 @@ import {
 } from "../../../../../convex/lib/dolProcessingTimes";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { ProductShot } from "@/components/marketing/ProductShot";
+import { SignupAudienceFork } from "@/components/auth/SignupAudienceFork";
 import { SignupPageClient } from "./SignupPageClient";
 
 // Daily, the same window every data page uses, AND force-static. The (auth)
@@ -236,6 +237,11 @@ export default async function SignupPage() {
           of its own or it floats on the dotted ground. */}
       <div className="flex items-center justify-center px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
         <div className="w-full max-w-xl">
+          {/* Who the account is for, and where everyone else should go. Above
+              the form because that is where the eye already is; the left
+              panel's version of this line was at 75% opacity under a
+              screenshot, which is disclosure rather than signposting. */}
+          <SignupAudienceFork />
           <SignupPageClient />
         </div>
       </div>

@@ -54,6 +54,8 @@
  * @module convex/emailPrefs
  */
 
+import type { ReactElement } from "react";
+
 import { v } from "convex/values";
 import {
   internalAction,
@@ -63,19 +65,42 @@ import {
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { SITE_URL, actionUrl } from "./lib/links";
 import { getUserByEmail } from "./lib/auth";
 import {
   makeUnsubscribeToken,
   verifyUnsubscribeToken,
 } from "./lib/unsubscribeToken";
 import { recordError } from "./lib/errorRecording";
+
+/**
+ * Render the React template, or fall back to text only.
+ *
+ * Same shape as the alert modules: a template that fails to render must not
+ * cost the reader their email. `sendEmailWithRetry` sends the `text` body
+ * regardless, so an undefined `html` degrades to exactly the plain-text
+ * message this email used to be.
+ */
+async function renderOrTextOnly(
+  ctx: Parameters<typeof recordError>[0],
+  where: string,
+  build: () => Promise<ReactElement>,
+): Promise<string | undefined> {
+  try {
+    const { render } = await import("@react-email/render");
+    return await render(await build());
+  } catch (error) {
+    log.error("email render failed, sending text only", { where });
+    await recordError(ctx, "action", where, error);
+    return undefined;
+  }
+}
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 
 const log = createLogger("EmailPrefs");
 
-const SITE_URL = "https://permtracker.app";
 
 /**
  * Global daily budget for preference-link emails. Part of the documented
@@ -241,14 +266,18 @@ export const sendLink = internalAction({
   handler: async (ctx, args) => {
     try {
       const token = await makeUnsubscribeToken(args.email, unsubscribeSecret(), "prefs");
-      const base = process.env.CONVEX_SITE_URL;
-      if (!base) throw new Error("CONVEX_SITE_URL is not configured");
-      const url = `${base}/prefs?token=${encodeURIComponent(token)}`;
+      const url = actionUrl("/prefs", token);
+
+      const html = await renderOrTextOnly(ctx, "emailPrefs.sendLink.render", async () => {
+        const { EmailPreferencesLink } = await import("../src/emails/EmailPreferencesLink");
+        return EmailPreferencesLink({ prefsUrl: url });
+      });
 
       const result = await sendEmailWithRetry(getResend(), {
         from: FROM_EMAIL,
         to: args.email,
         subject: "Your PERM Tracker email preferences",
+        html,
         text: [
           "Here is the link to see and change everything PERM Tracker sends to this address:",
           "",

@@ -36,6 +36,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { SITE_URL, actionUrl } from "./lib/links";
 import { one as mirrorOne } from "./lib/publicMirror";
 import {
   makeUnsubscribeToken,
@@ -49,7 +50,6 @@ import { createLogger } from "./lib/logging";
 
 const log = createLogger("BulletinAlerts");
 
-const SITE_URL = "https://permtracker.app";
 
 /** Categories as the archive prints them. Country keys as the JSON stores them. */
 export const CATEGORIES = ["EB1", "EB2", "EB3", "EW3", "EB4", "EB5"] as const;
@@ -79,11 +79,6 @@ function isPlausibleEmail(email: string): boolean {
   return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
 }
 
-function actionUrl(path: string, token: string): string {
-  const base = process.env.CONVEX_SITE_URL;
-  if (!base) throw new Error("CONVEX_SITE_URL is not configured");
-  return `${base}${path}?token=${encodeURIComponent(token)}`;
-}
 
 function unsubscribeSecret(): string {
   const secret = process.env.UNSUBSCRIBE_SECRET;

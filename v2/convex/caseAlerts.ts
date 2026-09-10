@@ -131,6 +131,7 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { SITE_URL, actionUrl } from "./lib/links";
 import { formatAsOf } from "../src/lib/dolFormat";
 import {
   canonicalStatus,
@@ -230,7 +231,6 @@ const THROTTLED_REPLY =
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
 
 /** The public marketing site, for human-facing links in email copy. */
-const SITE_URL = "https://permtracker.app";
 
 /**
  * Conservative address check. Rejects the obvious, defers the rest to Resend.
@@ -249,11 +249,6 @@ function isPlausibleEmail(email: string): boolean {
  * The Convex HTTP domain, which is where confirm and unsubscribe actually run.
  * A different host from the marketing site; conflating them produces 404s.
  */
-function actionUrl(path: string, token: string): string {
-  const base = process.env.CONVEX_SITE_URL;
-  if (!base) throw new Error("CONVEX_SITE_URL is not configured");
-  return `${base}${path}?token=${encodeURIComponent(token)}`;
-}
 
 function unsubscribeSecret(): string {
   const secret = process.env.UNSUBSCRIBE_SECRET;

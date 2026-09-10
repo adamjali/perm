@@ -129,7 +129,42 @@ const nextConfig: NextConfig = {
   },
 
   async rewrites() {
+    // EMAILED LINKS ARE SERVED FROM THIS DOMAIN, and answered by Convex.
+    //
+    // Every confirm, unsubscribe and preferences link used to be addressed to
+    // `<deployment>.convex.site`. That is where the handler really lives, and a
+    // deployment name is an endpoint rather than a credential, so nothing was
+    // leaking. The problem was trust: an unfamiliar domain, a long opaque
+    // token and "click to change your email settings" is the anatomy of a
+    // phishing message, on the one email whose whole job is to be clicked.
+    //
+    // These are GET routes that RENDER a page; the mutation is behind a POST
+    // button on it (`stateByToken` says so in its own docstring: "it writes
+    // nothing"). That matters here because putting them on the main domain
+    // puts them behind mail-gateway prefetching and the Vercel firewall, and
+    // a prefetch of a non-mutating GET is harmless.
+    //
+    // The Convex origin still answers on every one of these paths, forever:
+    // links already in inboxes point there and their tokens never expire.
+    // Paths are identical on both hosts so a stale link and a fresh one differ
+    // only in origin.
+    //
+    // Guarded on the env var: without it the destination would be `undefined`
+    // and every one of these would 404, which is worse than the domain being
+    // ugly.
+    const convexSite = process.env.NEXT_PUBLIC_CONVEX_SITE_URL;
+    const emailLinkRewrites = convexSite
+      ? [
+          { source: "/prefs", destination: `${convexSite}/prefs` },
+          { source: "/unsubscribe", destination: `${convexSite}/unsubscribe` },
+          { source: "/queue-alert/:path*", destination: `${convexSite}/queue-alert/:path*` },
+          { source: "/case-alert/:path*", destination: `${convexSite}/case-alert/:path*` },
+          { source: "/bulletin-alert/:path*", destination: `${convexSite}/bulletin-alert/:path*` },
+        ]
+      : [];
+
     return [
+      ...emailLinkRewrites,
       // PostHog reverse proxy — reduces ad-blocker interference
       {
         source: "/ingest/static/:path*",

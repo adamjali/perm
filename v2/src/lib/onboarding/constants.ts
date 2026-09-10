@@ -27,6 +27,14 @@ export const ONBOARDING_ROLES: {
     icon: "UserCheck",
   },
   {
+    // Listed FIRST, not last. It is the largest group arriving here and the
+    // one this wizard cannot serve, so it should be the easiest to find and
+    // the fastest to leave by.
+    role: "Waiting on my own case",
+    description: "You're the applicant — we'll take you to your case",
+    icon: "UserCheck",
+  },
+  {
     role: "Other",
     description: "Exploring PERM Tracker",
     icon: "HelpCircle",

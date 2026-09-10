@@ -20,6 +20,16 @@ export type UserRole =
   | "Paralegal"
   | "HR Professional"
   | "Employer/Petitioner"
+  /**
+   * The person the case is ABOUT, rather than anyone filing it.
+   *
+   * Added 2026-09-09. Every other role here files on someone else's behalf, so
+   * a beneficiary reaching this step had to pick "Other: Exploring PERM
+   * Tracker" and was then dropped into a caseload manager. They are the
+   * larger public audience and the site's own information architecture sends
+   * them here, so having no name for them was the defect.
+   */
+  | "Waiting on my own case"
   | "Other";
 
 /** Valid checklist item IDs */

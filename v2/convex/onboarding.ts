@@ -81,6 +81,7 @@ const roleValidator = v.union(
   v.literal("Paralegal"),
   v.literal("HR Professional"),
   v.literal("Employer/Petitioner"),
+  v.literal("Waiting on my own case"),
   v.literal("Other")
 );
 
