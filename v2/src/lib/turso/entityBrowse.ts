@@ -68,10 +68,43 @@ const BROWSE_COLS = "slug, name, total, rank";
  * paginated letter would push the tail to three. The largest real bucket is
  * employers under S at 1,605 rows.
  */
+/**
+ * The most names one letter page will render.
+ *
+ * MEASURED 2026-09-10, before the page floor dropped to 1. The live
+ * `/perm-employers/browse/s` was **600.6 KB** of HTML at 953 names, against
+ * 218.6 KB for `/browse/q` at 51 - so the chrome is ~205 KB and each name
+ * costs ~0.42 KB. At a floor of 1 that bucket holds **6,813** employers, which
+ * renders at roughly **3.1 MB**.
+ *
+ * That is not a page. It is slow on a phone, it is ~390 ISR write units every
+ * regeneration (a unit is 8 KB), and nobody reads six thousand links. So the
+ * listing is capped and the remainder is stated in words - the same shape
+ * `stageListing()` already uses for the review-stage cohorts, and for the same
+ * reason.
+ *
+ * 1,000 is chosen so that NO letter page after the floor change is heavier
+ * than the heaviest one before it: 205 + 1000 x 0.42 is about 625 KB, next to
+ * today's 600.6 KB. It is a page-weight budget, not a judgement about which
+ * entities matter.
+ *
+ * THE CAP IS ON THE RENDERED LIST, NOT ON WHAT IS INDEXED. Every entity above
+ * the page floor keeps its URL and stays in the sitemap; `getEntitySlugWindow`
+ * knows nothing about this number. A capped browse page costs a crawl hop for
+ * the names past 1,000, and the sitemap is the discovery path that matters for
+ * a corpus this size anyway.
+ */
+export const BROWSE_MAX = 1000;
+
 export const browseBucket = cache(async function browseBucket(
   kind: EntityKind,
   bucket: BrowseBucket,
-): Promise<BrowseEntry[]> {
+): Promise<{
+  entries: BrowseEntry[];
+  total: number;
+  busiest: BrowseEntry | undefined;
+  smallest: number;
+}> {
   const ranges = bucketRanges(bucket);
   const clause =
     `SELECT ${BROWSE_COLS} FROM perm_entities ` +
@@ -80,13 +113,36 @@ export const browseBucket = cache(async function browseBucket(
   const args = ranges.flatMap(([lo, hi]) => [kind, MIN_TOTAL_FOR_PAGE, lo, hi]);
 
   const found = await rows<BrowseDbRow>(sql, args);
-  return found
+  const all = found
     .map((r) => ({ slug: r.slug, name: r.name, total: r.total, rank: r.rank }))
     .sort(
       (a, b) =>
         a.name.localeCompare(b.name, "en", { sensitivity: "base" }) ||
         a.slug.localeCompare(b.slug),
     );
+  // Sorted FIRST, then cut. Cutting in SQL would take an arbitrary 1,000 by
+  // storage order and call them alphabetical, so the page would claim "the
+  // first 1,000 alphabetically" while showing a scatter.
+  //
+  // AND THE SUPERLATIVES ARE MEASURED OVER `all`, NEVER OVER THE SLICE. The
+  // page says "the busiest is X with N cases" and "the smallest carry N",
+  // which are claims about the LETTER. Reduced over the capped list they
+  // become claims about the first thousand names alphabetically, silently:
+  // "S" would have named the busiest employer whose name sorts before roughly
+  // "Sn", which is a plausible wrong answer of exactly the kind that never
+  // looks wrong on the page.
+  return {
+    entries: all.slice(0, BROWSE_MAX),
+    total: all.length,
+    busiest: all.reduce<BrowseEntry | undefined>(
+      (best, e) => (e.total > (best?.total ?? -1) ? e : best),
+      undefined,
+    ),
+    smallest: all.reduce(
+      (min, e) => Math.min(min, e.total),
+      Number.POSITIVE_INFINITY,
+    ),
+  };
 });
 
 /**

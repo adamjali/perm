@@ -75,22 +75,22 @@ export async function browseLetterMetadata(
   // brace for anything that reaches the module directly.
   if (!isBrowseBucket(letter)) notFound();
   const cfg = BROWSE_KINDS[kind];
-  const entries = await browseBucket(kind, letter);
+  const { total: bucketTotal } = await browseBucket(kind, letter);
   const label = bucketLabel(letter);
   const phrase = bucketPhrase(letter);
 
   const title = `${cfg.titleNoun} Starting With ${label}`;
   const description =
-    entries.length === 0
+    bucketTotal === 0
       ? `No ${cfg.plural} in DOL's PERM disclosure files begin with ${phrase} often enough to have a page. Every other letter is indexed here.`
-      : `${fmt(entries.length)} ${cfg.plural} whose name begins with ${phrase}, each linked to its own PERM record with filing counts, from DOL's disclosure files.`;
+      : `${fmt(bucketTotal)} ${cfg.plural} whose name begins with ${phrase}, each linked to its own PERM record with filing counts, from DOL's disclosure files.`;
 
   return {
     title,
     description,
     // A letter nobody can reach is not offered to the index either. Same rule
     // the sub-floor entity pages follow, and the sitemap omits it in step.
-    ...(entries.length === 0 ? { robots: { index: false, follow: true } } : {}),
+    ...(bucketTotal === 0 ? { robots: { index: false, follow: true } } : {}),
     alternates: { canonical: browseHref(cfg.base, letter) },
     openGraph: {
       ...openGraphBase,
@@ -299,25 +299,24 @@ export async function BrowseLetterBody({
   if (!isBrowseBucket(letter)) notFound();
   const bucket: BrowseBucket = letter;
   const cfg = BROWSE_KINDS[kind];
-  const [entries, counts] = await Promise.all([
-    browseBucket(kind, bucket),
-    browseCounts(kind),
-  ]);
+  const [{ entries, total: bucketTotal, busiest, smallest }, counts] =
+    await Promise.all([
+      browseBucket(kind, bucket),
+      browseCounts(kind),
+    ]);
+  // `entries` is the RENDERED list, capped at BROWSE_MAX; `bucketTotal` is how
+  // many the letter really holds. Every figure on this page that describes the
+  // letter reads the total, and only the list heading reads the length.
+  const shown = entries.length;
+  const capped = bucketTotal > shown;
   const total = BROWSE_BUCKETS.reduce((sum, b) => sum + (counts[b] ?? 0), 0);
   const label = bucketLabel(bucket);
   const phrase = bucketPhrase(bucket);
 
   // Measured from this bucket and nowhere else, which is what stops 81 pages
   // being one page with a letter swapped: the share, the busiest member and
-  // the floor are different numbers on every one of them.
-  const busiest = entries.reduce(
-    (best, e) => (e.total > (best?.total ?? -1) ? e : best),
-    entries[0],
-  );
-  const smallest = entries.reduce(
-    (min, e) => Math.min(min, e.total),
-    Number.POSITIVE_INFINITY,
-  );
+  // the floor are different numbers on every one of them. Both come from
+  // browseBucket, computed over the WHOLE letter rather than the capped list.
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
@@ -346,8 +345,8 @@ export async function BrowseLetterBody({
         </h1>{" "}
         {entries.length > 0 && busiest ? (
           <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-            {fmt(entries.length)} of the {fmt(total)} {cfg.plural} with a page
-            here, {pct(entries.length, total)}% of them. The busiest is{" "}
+            {fmt(bucketTotal)} of the {fmt(total)} {cfg.plural} with a page
+            here, {pct(bucketTotal, total)}% of them. The busiest is{" "}
             <Link
               href={`${cfg.base}/${busiest.slug}`}
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -374,17 +373,32 @@ export async function BrowseLetterBody({
         className="mt-8"
       />
 
-      {entries.length > 0 ? (
+      {shown > 0 ? (
         <section className="mt-10">
           <h2 className="font-heading text-2xl font-black">
-            All {fmt(entries.length)}, alphabetically
+            {capped
+              ? `The first ${fmt(shown)}, alphabetically`
+              : `All ${fmt(shown)}, alphabetically`}
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base text-foreground/70">
             The number beside each name is how many PERM cases DOL&apos;s
             current disclosure window records for it. Opening one gives that{" "}
             {cfg.singular}&apos;s certifications, denials, median days and where
             it sits against the field.
-          </p>
+          </p>{" "}
+          {capped ? (
+            <p className="mt-3 max-w-3xl border-l-4 border-primary bg-tint-primary px-4 py-3 text-base text-foreground/80">
+              This letter holds {fmt(bucketTotal)} {cfg.plural} and the list
+              below stops at {fmt(shown)}, because {fmt(bucketTotal)} names on
+              one page is several megabytes and nobody reads it. The other{" "}
+              {fmt(bucketTotal - shown)} each still have their own page, and
+              every one is in our sitemap and reachable by name.{" "}
+              <Link href={cfg.base} className="underline underline-offset-2">
+                Search {cfg.plural} by name
+              </Link>{" "}
+              to go straight to one.
+            </p>
+          ) : null}
           <BrowseList
             base={cfg.base}
             entries={entries}

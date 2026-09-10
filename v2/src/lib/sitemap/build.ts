@@ -2,18 +2,22 @@ import "server-only";
 
 import { reviewStages } from "@/components/rfi/stageMeta";
 import { getAllPosts } from "@/lib/content";
-import { fetchAllEntitiesServer } from "@/lib/entitySeed";
 import {
   BROWSE_BUCKETS,
   BROWSE_KINDS,
   browseHref,
   type BrowseBucket,
 } from "@/lib/entityBrowse";
-import { hasOwnPage, type EntityKind } from "@/lib/entityPayload";
+import { type EntityKind } from "@/lib/entityPayload";
 import { captureError } from "@/lib/sentry";
 import { browseCounts } from "@/lib/turso/entityBrowse";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import { countPageworthy, getFreshness, getVisaBulletins } from "@/lib/turso/publicData";
+import {
+  countEntityRanks,
+  getEntitySlugWindow,
+  getFreshness,
+  getVisaBulletins,
+} from "@/lib/turso/publicData";
 import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
 
 /**
@@ -338,11 +342,21 @@ async function browseEntries(dol: string | null): Promise<Entry[]> {
  */
 export async function entityEntries(kind: EntityKind, chunk: number): Promise<Entry[]> {
   const base = baseUrl();
-  const rows = await fetchAllEntitiesServer(kind);
+  // ONLY THIS CHUNK'S ROWS. This used to fetch every row of the kind and
+  // `.slice()` in JS, which was affordable at two employer chunks and is not
+  // at fourteen: each chunk revalidates daily, so it was fourteen reads of
+  // 69,204 rows a day to emit the same fourteen files. See
+  // getEntitySlugWindow for why the window is a rank RANGE and not an OFFSET.
+  const slugs = await getEntitySlugWindow(kind, chunk, SITEMAP_CHUNK);
 
-  if (rows.length < MIN_ROWS_PER_KIND) {
+  // A chunk the index asked for must not come back empty. The old guard
+  // compared a whole-kind fetch against MIN_ROWS_PER_KIND; with a window that
+  // number is only meaningful for the first chunk, since the last chunk of a
+  // kind is legitimately a remainder (occupations hold 1,410 rows in total).
+  const floor = chunk === 0 ? MIN_ROWS_PER_KIND : 1;
+  if (slugs.length < floor) {
     const detail =
-      `Sitemap child ${kind} built with only ${rows.length} rows. ` +
+      `Sitemap child ${kind} chunk ${chunk} built with only ${slugs.length} rows. ` +
       `The Turso read failed or returned almost nothing.`;
     captureError(new Error(detail));
     // Throw, do not emit. The previous version REPORTED this and shipped the
@@ -355,19 +369,17 @@ export async function entityEntries(kind: EntityKind, chunk: number): Promise<En
 
   // The CORPUS date, not the processing-times one. See corpusAsOf.
   const dol = (await corpusAsOf()) ?? (await permAsOf()) ?? "2026-08-24";
-  // Only entities that HAVE a page. A sitemap must never advertise a 404.
-  const pageworthy = rows.filter(hasOwnPage);
-  const start = chunk * SITEMAP_CHUNK;
-  return pageworthy.slice(start, start + SITEMAP_CHUNK).map(({ slug }) => ({
+  return slugs.map((slug) => ({
     url: `${base}/${KIND_PATH[kind]}/${slug}`,
     lastModified: dol,
   }));
 }
 
+
 /** Every child sitemap name, in the order the index lists them. */
 export async function childNames(): Promise<string[]> {
   const kinds: EntityKind[] = ["employer", "attorney", "occupation"];
-  const counts = await Promise.all(kinds.map((k) => countPageworthy(k)));
+  const counts = await Promise.all(kinds.map((k) => countEntityRanks(k)));
   const names = ["pages"];
   kinds.forEach((kind, i) => {
     const n = Math.max(1, Math.ceil((counts[i] ?? 0) / SITEMAP_CHUNK));

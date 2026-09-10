@@ -46,6 +46,12 @@ export async function fetchEntitySeed(
  * Two callers: the `/api/perm-entities/[kind]` route that the index tables
  * lazy-load, and the sitemap.
  */
+/**
+ * The BULK dump's rows. Not the sitemap's - that reads its own rank window
+ * (`getEntitySlugWindow`) and stopped sharing this function on 2026-09-10,
+ * when the page floor dropped to 1 and a shared whole-table fetch became
+ * fourteen full reads a day. This keeps the higher `MIN_TOTAL_FOR_BULK`.
+ */
 export async function fetchAllEntitiesServer(
   kind: EntityKind,
 ): Promise<EntityRow[]> {

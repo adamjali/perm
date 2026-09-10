@@ -27,9 +27,14 @@ vi.mock("@/lib/turso/processingTimes", () => ({
 vi.mock("@/lib/turso/publicData", () => ({
   getDisclosureStats: vi.fn(async () => null),
   // Drives how many child sitemaps the index lists.
-  countPageworthy: vi.fn(async (kind: string) =>
+  countEntityRanks: vi.fn(async (kind: string) =>
     kind === "employer" ? 600 : 200,
   ),
+  // ONE chunk's slugs. The builder stopped fetching a whole kind and slicing
+  // in JS on 2026-09-10 (fourteen employer chunks meant fourteen full-table
+  // reads a day), so the seam this file mocks moved with it.
+  getEntitySlugWindow: vi.fn(),
+  countPageworthy: vi.fn(async () => 0),
   // DELIBERATELY a different date from the processing-times mock above. Entity
   // URLs must stamp from the quarterly DISCLOSURE corpus, not from DOL's
   // daily-moving processing-times figure, and two identical dates would let
@@ -37,9 +42,6 @@ vi.mock("@/lib/turso/publicData", () => ({
   getFreshness: vi.fn(async () => ({
     "perm-cases": { asOf: "2026-06-30" },
   })),
-}));
-vi.mock("@/lib/entitySeed", () => ({
-  fetchAllEntitiesServer: vi.fn(),
 }));
 // The A-Z letter pages are listed from the same per-bucket counts the pages
 // themselves render, so a letter with nothing in it is omitted here and
@@ -56,27 +58,33 @@ function bucketCounts(empty: string[] = []): Record<BrowseBucket, number> {
   ) as Record<BrowseBucket, number>;
 }
 
-/** `n` entity rows of one kind, all above the page threshold. */
-function entityRows(kind: string, from: number, count: number) {
-  return Array.from({ length: count }, (_, i) => ({
-    slug: `${kind}-${from + i}`,
-    name: `${kind} ${from + i}`,
-    rank: from + i,
-    total: 500,
-    certified: 400,
-    denied: 10,
-    medianDays: 200,
-    medianAnnualWage: 100000,
-    state: null,
-    code: null,
-  }));
+/**
+ * A corpus of `sizes[kind]` ranked entities, served the way Turso serves it:
+ * `countEntityRanks` answers the size and `getEntitySlugWindow` answers one
+ * rank window. Arranging BOTH from one object is the point - a fixture where
+ * the count and the windows disagree would let a builder that emits the wrong
+ * number of chunks, or drops the last one, pass.
+ */
+function arrangeEntities(sizes: Record<string, number>) {
+  const size = (kind: string) => sizes[kind] ?? 0;
+  vi.mocked(countEntityRanks).mockImplementation(async (kind: string) =>
+    size(kind),
+  );
+  vi.mocked(getEntitySlugWindow).mockImplementation(
+    async (kind: string, chunk: number, per: number) => {
+      const lo = chunk * per;
+      const hi = Math.min(lo + per, size(kind));
+      return Array.from({ length: Math.max(0, hi - lo) }, (_, i) =>
+        `${kind}-${lo + i + 1}`,
+      );
+    },
+  );
 }
 
 import { getAllPosts } from "@/lib/content";
 import { captureError } from "@/lib/sentry";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import { fetchAllEntitiesServer } from "@/lib/entitySeed";
-import { countPageworthy } from "@/lib/turso/publicData";
+import { countEntityRanks, getEntitySlugWindow } from "@/lib/turso/publicData";
 import { browseCounts } from "@/lib/turso/entityBrowse";
 import { BROWSE_BUCKETS, type BrowseBucket } from "@/lib/entityBrowse";
 import {
@@ -85,6 +93,7 @@ import {
   indexXml,
   pagesEntries,
   parseChildName,
+  SITEMAP_CHUNK,
   urlsetXml,
 } from "@/lib/sitemap/build";
 import { revalidate } from "../sitemap.xml/route";
@@ -128,9 +137,7 @@ describe("sitemap.ts", () => {
     // A healthy default. Below 500 total the sitemap now THROWS rather than
     // emit a truncated file, so every test that is not about that guard has
     // to start from a corpus that clears it.
-    vi.mocked(fetchAllEntitiesServer).mockImplementation(async (kind: string) =>
-      entityRows(kind, 1, kind === "employer" ? 600 : 200),
-    );
+    arrangeEntities({ employer: 600, attorney: 200, occupation: 200 });
     vi.mocked(getProcessingTimes).mockResolvedValue({
       permAsOf: "2026-08-20",
     } as never);
@@ -281,7 +288,7 @@ describe("sitemap.ts", () => {
     // Throwing is the safer failure: on revalidation Next keeps serving the
     // last good sitemap, so a transient outage costs freshness instead of
     // every entity URL.
-    vi.mocked(fetchAllEntitiesServer).mockResolvedValue([]);
+    arrangeEntities({ employer: 0, attorney: 0, occupation: 0 });
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     await expect(sitemap()).rejects.toThrow(/built with only 0 rows/i);
     const messages = vi
@@ -376,9 +383,7 @@ describe("sitemap.ts", () => {
     // attorneys, which the summed guard tolerated and the per-kind guard
     // correctly does not: 3 law firms where there are 3,736 is exactly the
     // catastrophic read this now refuses to publish.
-    vi.mocked(fetchAllEntitiesServer).mockImplementation(async (kind: string) =>
-      entityRows(kind, 1, kind === "employer" ? 2500 : kind === "attorney" ? 300 : 200),
-    );
+    arrangeEntities({ employer: 2500, attorney: 300, occupation: 200 });
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     const entries = await sitemap();
     // DETAIL URLs only. A bare `includes` also matched the A-Z letter pages
@@ -414,7 +419,7 @@ describe("sitemap index and chunking", () => {
 
   it("chunks a kind into children of at most SITEMAP_CHUNK URLs", async () => {
     // 16,305 employers is what production actually holds.
-    vi.mocked(countPageworthy).mockImplementation(async (kind: string) =>
+    vi.mocked(countEntityRanks).mockImplementation(async (kind: string) =>
       kind === "employer" ? 16305 : kind === "attorney" ? 3736 : 1137,
     );
     const names = await childNames();
@@ -429,7 +434,7 @@ describe("sitemap index and chunking", () => {
     // A kind that reads as empty must still HAVE a child URL: the child then
     // throws and Next serves the last good copy. Omitting it from the index
     // would quietly retire a whole section instead.
-    vi.mocked(countPageworthy).mockResolvedValue(0);
+    vi.mocked(countEntityRanks).mockResolvedValue(0);
     const names = await childNames();
     for (const k of ["employer", "attorney", "occupation"]) {
       expect(names.filter((n) => n.startsWith(`${k}-`))).toHaveLength(1);
@@ -445,7 +450,7 @@ describe("sitemap index and chunking", () => {
   });
 
   it("emits a sitemapindex, not a urlset", async () => {
-    vi.mocked(countPageworthy).mockResolvedValue(100);
+    vi.mocked(countEntityRanks).mockResolvedValue(100);
     const xml = indexXml(await childNames(), "2026-08-20");
     expect(xml).toContain("<sitemapindex");
     expect(xml).not.toContain("<urlset");
@@ -475,10 +480,37 @@ describe("entity lastmod tracks the corpus, not the daily figure", () => {
     // implementations but CI shuffles test order, so inheriting another
     // describe's arrangement is the order-dependency this file already got
     // caught by once.
-    vi.mocked(fetchAllEntitiesServer).mockImplementation(async (kind: string) =>
-      entityRows(kind, 1, kind === "employer" ? 600 : 200),
-    );
+    arrangeEntities({ employer: 600, attorney: 200, occupation: 200 });
     vi.mocked(browseCounts).mockResolvedValue(bucketCounts());
+  });
+
+  it("gives each chunk its own slice, covering every rank exactly once", async () => {
+    // THE CHUNK ARGUMENT WAS UNTESTED UNTIL THIS EXISTED, and it is new: the
+    // builder used to fetch a whole kind and `.slice()` in JS, so paging was
+    // arithmetic on an array it already held. It is a rank window in SQL now,
+    // and a builder that passed a constant 0 - the obvious way to get this
+    // wrong - shipped fifteen identical employer files listing the same 5,000
+    // URLs, with 66,000 entities absent. Probed: every fixture in this file
+    // held fewer rows than one chunk, so that mutation passed 23/23.
+    const per = SITEMAP_CHUNK;
+    arrangeEntities({ employer: per * 2 + 7, attorney: 10, occupation: 10 });
+
+    const chunks = await Promise.all([
+      entityEntries("employer", 0),
+      entityEntries("employer", 1),
+      entityEntries("employer", 2),
+    ]);
+    expect(chunks.map((c) => c.length)).toEqual([per, per, 7]);
+
+    // Union covers every rank, and no URL appears in two files. A sitemap
+    // that repeats a URL across children is not merely wasteful: it is the
+    // exact artefact a constant-chunk bug produces, and it looks fine in any
+    // single file.
+    const urls = chunks.flat().map((e) => e.url);
+    expect(new Set(urls).size).toBe(urls.length);
+    expect(urls).toContain(`https://permtracker.app/perm-employers/employer-1`);
+    expect(urls).toContain(`https://permtracker.app/perm-employers/employer-${per + 1}`);
+    expect(urls).toContain(`https://permtracker.app/perm-employers/employer-${per * 2 + 7}`);
   });
 
   it("stamps entity URLs with the disclosure as-of, never the processing-times one", async () => {

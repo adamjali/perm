@@ -3542,3 +3542,90 @@ two new HTTP route families, a cron); set `NEWSLETTER_ENABLED=1` and
 `NEWSLETTER_DAILY_CAP=15` on prod Convex; add a Firewall bypass for `/badge/*`
 so GitHub's camo proxy is not challenged; then push and the GSC queue in
 `.planning/gsc-reindex-queue-2026-09-08.md` plus the new pages.
+
+## Every entity page is indexable now, and three things had to move first (2026-09-10)
+
+Adam: *"nah i want all"*, overruling a recommendation to lower the floor from 5
+to 3 as a measured experiment. `MIN_TOTAL_FOR_PAGE` is **1**, so the sitemap
+advertises **78,600** entity URLs (71,512 employers, 5,678 attorneys, 1,410
+occupations) across **18 child files** instead of 13,579 across 3.
+
+**The floor existed for a cost reason that turned out to be pointing
+elsewhere.** It was raised 3 -> 5 on 2026-09-01 to cut the crawlable surface
+35%, on the belief that crawls of the entity tail drove the ISR bill. Measured
+again: builds were 66% of that bill and are fixed, the crawler that mattered
+(Meta, 553,800 requests a day) is answered by the firewall for 81 cents, and
+what remains scales with **deploy count**, because every deployment cold-starts
+the whole ISR cache. The 2026-09-01 decision was sound on the evidence it had;
+the evidence changed.
+
+**What this does NOT buy, so nobody reads the page count as a result.** Google
+already holds 19,931 of these URLs in "Discovered - currently not indexed" with
+no crawl date: it has seen the tail and declined it. Adding URLs to a sitemap
+does not change that, and ~75% of an entity page is boilerplate, which is the
+thing that actually gates indexing. This is a cheap bet, not a fix.
+
+**Three things had to change with it, each measured on production:**
+
+1. **The sitemap read the whole kind per chunk.** `entityEntries` fetched every
+   row and `.slice()`d in JS - affordable at two employer chunks, and at
+   fifteen it is ~1,085,000 rows a day to emit the same files. `LIMIT/OFFSET`
+   is NOT the fix: `idx_pe_kind_total` orders by `total`, so `ORDER BY rank`
+   on top of it is `USE TEMP B-TREE FOR ORDER BY` and every chunk still sorts
+   all 71,512 rows. **Measured on employer chunk 12: OFFSET 4,858 ms, rank
+   range 459 ms.** `getEntitySlugWindow` reads `WHERE rank > lo AND rank <= hi`
+   off `idx_pe_kind_rank`. Ranks are dense 1..N per kind (re-verified: MAX(rank)
+   == COUNT(*) for all three), so the windows partition the kind exactly -
+   proved by rebuilding both multi-chunk kinds window-by-window and diffing
+   against the old whole-fetch: **byte-identical, zero duplicates**. Chunk count
+   comes from `countEntityRanks` (MAX(rank), one index read) rather than a
+   989 ms `count(*)`, because the windows must cover every rank whatever
+   fraction of them earns a URL.
+
+2. **The bulk dump keeps its own floor.** `MIN_TOTAL_FOR_BULK = 5`.
+   `/api/perm-entities/<kind>` hands its whole result to one caller in one
+   response and the search palette downloads it as a client-side slice; at the
+   page floor that is 69,204 employers instead of 9,176 - a page-weight problem
+   and a one-request copy of the compilation that §4 of the Terms tells other
+   people not to take. They were one constant only because they used to want
+   the same answer.
+
+3. **The A-Z browse pages had no cap and would have shipped a 3 MB page.**
+   Measured live BEFORE the change: `/perm-employers/browse/s` is **600.6 KB**
+   at 953 names against 218.6 KB at 51, so chrome is ~205 KB and a name costs
+   ~0.42 KB. At floor 1 that bucket holds **6,813**, which renders at ~3.1 MB
+   and ~390 ISR write units per regeneration. `BROWSE_MAX = 1000` caps the
+   RENDERED list only - every entity keeps its URL and stays in the sitemap -
+   and the page states the remainder in words, the shape `stageListing()`
+   already uses.
+
+**The cap introduced a wrong answer that had to be caught separately.** The page
+says "the busiest is X" and "the smallest carry N" as claims about the LETTER,
+and both were `entries.reduce(...)`. Over a capped slice they silently become
+claims about the first thousand names alphabetically: **S would have named
+Salesforce at 1,373 filings, when the real busiest is Stoughton Trailers at
+1,878, sitting at alphabetical position 5,568 of 6,813.** They are computed over
+the full set inside `browseBucket` now. The sort also happens BEFORE the cut -
+cutting in SQL would take an arbitrary 1,000 by storage order and label them
+"the first 1,000 alphabetically".
+
+**Every gate here was probed by reverting it, and two were blind on the first
+run**, which is the usual rate in this repo:
+
+- `live-only-employers-unindexed.test.ts` asserted the window reads
+  `MIN_TOTAL_FOR_PAGE` with `/getEntitySlugWindow[\s\S]*?MIN_TOTAL_FOR_PAGE/`.
+  `[\s\S]*?` runs PAST the end of the function into `countPageworthy` 300
+  lines later, so it passed over a window whose floor had been replaced with a
+  bare `1`. Assertions are sliced to the function body (`fnBody`) now.
+- `sitemap.test.ts` was blind to a builder that ignores its `chunk` argument -
+  the mutation that ships fifteen identical employer files - because every
+  fixture held fewer rows than one chunk. It now arranges a corpus spanning
+  three chunks and asserts the union covers every rank exactly once.
+
+**Its floor assertion (`floor >= 3`) is deleted, not relaxed.** It was written
+to keep the crawlable surface small; a test that forbids the number the owner
+chose is a stale opinion with a red light. What replaced it is the invariant
+the number stood in for and which holds at any value: the sitemap and the
+page's own `robots: noindex` must read the SAME constant, or one of them is
+wrong about every entity in the gap.
+

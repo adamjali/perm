@@ -30,6 +30,25 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = join(__dirname, "..", "..");
 
+/**
+ * One exported function's body, from its signature to the closing brace in
+ * column 0.
+ *
+ * Needed because the obvious assertion does not work. A test here first read
+ * `/getEntitySlugWindow[\s\S]*?MIN_TOTAL_FOR_PAGE/` over the whole file, and
+ * `[\s\S]*?` happily runs PAST the end of that function into the next one
+ * that mentions the same constant - `countPageworthy`, 300 lines later. So it
+ * passed over a window whose floor had been replaced with a bare `1`, which
+ * is precisely the drift it was written to catch. Probed: with the body
+ * sliced out first, that mutation goes red.
+ */
+function fnBody(src: string, name: string): string {
+  const start = src.indexOf(`export async function ${name}(`);
+  if (start === -1) return "";
+  const end = src.indexOf("\n}", start);
+  return end === -1 ? src.slice(start) : src.slice(start, end + 2);
+}
+
 function source(rel: string): string {
   return readFileSync(join(ROOT, rel), "utf8");
 }
@@ -42,32 +61,87 @@ describe("the sitemap cannot reach the live-only employers", () => {
     // path typo here would do exactly that - the file would read as empty and
     // both assertions below would pass over nothing. Assert something that
     // must be present in the same run.
-    expect(sitemap).toContain("fetchAllEntitiesServer");
-    expect(sitemap).toContain("hasOwnPage");
+    expect(sitemap).toContain("getEntitySlugWindow");
+    expect(sitemap).toContain("countEntityRanks");
 
     expect(sitemap).not.toContain("perm_live_recent");
     expect(sitemap).not.toContain("liveEmployers");
   });
 
-  it("still filters entity URLs to those that have a page at all", () => {
+  it("advertises exactly the entities whose page is indexable", () => {
     // The live-only pages are a NEW class of URL that exists without a
     // perm_entities row. This is the pre-existing floor for the rows that DO
     // have one, and the change must not have loosened it: a sitemap that
     // advertises a page we withhold is a 404 in Google's index.
+    //
+    // THIS USED TO PIN `floor >= 3`, AND THAT ASSERTION IS GONE ON PURPOSE.
+    // It was written to keep the crawlable surface small, because the ISR
+    // bill was believed to be driven by crawls of the entity tail. Measured
+    // again on 2026-09-10, it was not: builds were 66% of that bill and are
+    // fixed, the crawler that mattered is answered by the firewall for 81
+    // cents, and what remains scales with deploy count. The floor is 1 now,
+    // by the owner's decision on evidence. A test that forbids the number the
+    // owner chose is not a guard, it is a stale opinion with a red light.
+    //
+    // What survives is the invariant the number was standing in for, and it
+    // holds at ANY floor: the sitemap and the page's own noindex must read the
+    // SAME constant. If they ever diverge, one of them is wrong about every
+    // entity in the gap - either we list URLs that render noindex (Google
+    // calls that a crawl of pages we told it to ignore) or we withhold URLs
+    // that are perfectly indexable.
     const sitemap = source("lib/sitemap/build.ts");
-    expect(sitemap).toContain("rows.filter(hasOwnPage)");
+    const publicData = source("lib/turso/publicData.ts");
+    const payload = source("lib/entityPayload.ts");
 
-    // Assert the INVARIANT, not the number. The rule this test exists to
-    // protect is "the floor must not be LOOSENED", and pinning the literal 3
-    // also failed on a deliberate TIGHTENING (3 -> 5 on 2026-09-01, to cut the
-    // crawlable surface by 35% for ISR cost). A floor that only ever moves up
-    // is the thing worth guarding; a specific value is not.
+    // The sitemap's rows come from the window, and the window applies the
+    // floor in SQL. Neither half is optional.
+    expect(sitemap).toContain("getEntitySlugWindow(kind, chunk, SITEMAP_CHUNK)");
+    const window = fnBody(publicData, "getEntitySlugWindow");
+    expect(window).toContain("total >= ?");
+    expect(window).toContain("MIN_TOTAL_FOR_PAGE");
+    expect(window).not.toMatch(/total >= \?[\s\S]{0,80}?,\s*\d+\s*\]/);
+
+    // And the page's noindex decision comes from the same constant, through
+    // hasOwnPage, rather than from a second literal that could drift.
+    expect(payload).toMatch(/hasOwnPage[\s\S]*?row\.total >= MIN_TOTAL_FOR_PAGE/);
+    for (const kind of ["perm-employers", "perm-attorneys", "perm-wages"]) {
+      expect(source(`app/(site)/(public)/${kind}/[slug]/page.tsx`)).toContain(
+        "!hasOwnPage(row)",
+      );
+    }
+
+    // The floor is still a real integer, so a botched edit cannot leave it
+    // undefined and quietly make `total >= undefined` false for every row.
     const floor = Number(
-      /MIN_TOTAL_FOR_PAGE\s*=\s*(\d+)/.exec(source("lib/entityPayload.ts"))?.[1],
+      /MIN_TOTAL_FOR_PAGE\s*=\s*(\d+)/.exec(payload)?.[1],
     );
     expect(Number.isInteger(floor)).toBe(true);
-    expect(floor).toBeGreaterThanOrEqual(3);
+    expect(floor).toBeGreaterThanOrEqual(1);
   });
+
+  it("keeps the BULK dump's floor separate from the page floor", () => {
+    // These were one constant until 2026-09-10 because they wanted the same
+    // answer; at a page floor of 1 they stop wanting it. The bulk endpoint
+    // hands its whole result to one caller in one response, and at the page
+    // floor that is 69,204 employers rather than 9,176 - a payload the search
+    // palette downloads, and a single-request copy of the compilation that §4
+    // of the Terms tells other people not to take.
+    const payload = source("lib/entityPayload.ts");
+    const publicData = source("lib/turso/publicData.ts");
+
+    const bulk = Number(/MIN_TOTAL_FOR_BULK\s*=\s*(\d+)/.exec(payload)?.[1]);
+    const page = Number(/MIN_TOTAL_FOR_PAGE\s*=\s*(\d+)/.exec(payload)?.[1]);
+    expect(Number.isInteger(bulk)).toBe(true);
+    expect(bulk).toBeGreaterThanOrEqual(page);
+
+    // The dump reads the bulk floor and the sitemap window reads the page
+    // floor. Asserting the constants alone would pass over a getAllEntities
+    // that had been quietly repointed at the page floor.
+    const dump = fnBody(publicData, "getAllEntities");
+    expect(dump).toContain("MIN_TOTAL_FOR_BULK");
+    expect(dump).not.toContain("MIN_TOTAL_FOR_PAGE");
+  });
+
 });
 
 describe("the search returns live-only employers as their own shape", () => {

@@ -19,7 +19,12 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 
 import type { BulletinMonth } from "@/lib/perm";
-import { MIN_TOTAL_FOR_PAGE, type EntityKind, type EntityRow } from "@/lib/entityPayload";
+import {
+  MIN_TOTAL_FOR_BULK,
+  MIN_TOTAL_FOR_PAGE,
+  type EntityKind,
+  type EntityRow,
+} from "@/lib/entityPayload";
 
 import { one, rows } from "./client";
 import { getLiveCensus, type CensusMatrixRow } from "./liveCensus";
@@ -78,26 +83,89 @@ export async function getEntitySeed(
 }
 
 /**
- * Every row of one kind, in one query.
+ * Every row of one kind that belongs in the BULK dump, in one query.
  *
  * The Convex version paged in 2,000-row batches with a rank cursor, a
  * 40,000-row runaway guard and a duplicate-rank check, because that backend
  * capped a single read. None of that is needed here, and the guards went with
  * it rather than being carried over as decoration.
+ *
+ * IT READS `MIN_TOTAL_FOR_BULK`, NOT THE PAGE FLOOR, and that stopped being a
+ * distinction without a difference on 2026-09-10 when the page floor went to
+ * 1. Its only caller is `/api/perm-entities/<kind>`, which the search palette
+ * downloads as a client-side slice: at the page floor that response is 69,204
+ * employers rather than 9,176, which is both a page-weight problem and a
+ * one-request copy of the compilation that §4 of the Terms tells other people
+ * not to take. The sitemap used to share this function and no longer does -
+ * it reads its own rank window (`getEntitySlugWindow`), because slicing a
+ * whole-table fetch in JS meant fourteen full reads a day to emit fourteen
+ * files.
  */
 export async function getAllEntities(kind: EntityKind): Promise<EntityRow[]> {
-  // Pageworthy rows only. Storage floor dropped to 1 on 2026-08-26 (71,748
-  // employers instead of 16,305 - an attorney searched a 2-case firm she
-  // knows and found nothing), but this feeds the bulk /api dump and the
-  // sitemap: returning every row would quadruple a ~900 KB payload for rows
-  // that have no ranked place in the index table. Search reaches the whole
-  // corpus through searchByName; a sub-floor entity's page still renders on
-  // demand via getEntityBySlug.
   const all = await rows<EntityDbRow>(
     `SELECT ${ENTITY_COLS} FROM perm_entities WHERE kind = ? AND total >= ? ORDER BY rank`,
-    [kind, MIN_TOTAL_FOR_PAGE],
+    [kind, MIN_TOTAL_FOR_BULK],
   );
   return all.map(toEntityRow);
+}
+
+/**
+ * The slugs for ONE sitemap chunk, read as a rank window.
+ *
+ * MEASURED 2026-09-10 on production, employer chunk 12 of 14:
+ *
+ *     LIMIT 5000 OFFSET 60000 ORDER BY rank      4,858 ms
+ *     WHERE rank > 60000 AND rank <= 65000         459 ms
+ *
+ * The offset form is not a paged read at all. `idx_pe_kind_total` orders by
+ * `total`, so an `ORDER BY rank` on top of it is `USE TEMP B-TREE FOR ORDER
+ * BY`: SQLite reads all 71,512 rows of the kind and sorts them before
+ * discarding all but 5,000. Every chunk pays for the whole table, which is
+ * the same defect in a different costume as the JS `.slice()` this replaced.
+ * The rank range is served by `idx_pe_kind_rank` directly and touches exactly
+ * the 5,000 index entries it returns.
+ *
+ * RANKS ARE DENSE 1..N PER KIND, verified again here before relying on it
+ * (employer 71,512, attorney 5,678, occupation 1,410, each with MAX(rank) ==
+ * COUNT(*)), so the windows partition the kind exactly: no slug is emitted
+ * twice and none is skipped.
+ *
+ * The floor still applies INSIDE the window rather than defining it. Today it
+ * removes nothing - no row anywhere has `total < 1` - but if the floor is ever
+ * raised again a window will contain sub-floor rows and its chunk will come
+ * back short. That is correct output, not a bug, and it is why the chunk COUNT
+ * comes from `countEntityRanks` (how many ranks exist) rather than from the
+ * pageworthy count: the windows have to cover every rank, whatever fraction of
+ * them earns a URL.
+ */
+export async function getEntitySlugWindow(
+  kind: EntityKind,
+  chunk: number,
+  size: number,
+): Promise<string[]> {
+  const lo = chunk * size;
+  const found = await rows<{ slug: string }>(
+    `SELECT slug FROM perm_entities
+      WHERE kind = ? AND rank > ? AND rank <= ? AND total >= ?
+      ORDER BY rank`,
+    [kind, lo, lo + size, MIN_TOTAL_FOR_PAGE],
+  );
+  return found.map((r) => r.slug);
+}
+
+/**
+ * How many ranks one kind holds, which is how many chunks the index lists.
+ *
+ * `MAX(rank)` off the top of `idx_pe_kind_rank`, not `count(*)`: ranks are
+ * dense, so the two agree, and one is a single index read while the other
+ * walked 71,512 covering-index entries in 989 ms.
+ */
+export async function countEntityRanks(kind: EntityKind): Promise<number> {
+  const r = await one<{ n: number }>(
+    "SELECT max(rank) AS n FROM perm_entities WHERE kind = ?",
+    [kind],
+  );
+  return r?.n ?? 0;
 }
 
 /** One entity by slug. `null` means no such page, which callers turn into a 404. */

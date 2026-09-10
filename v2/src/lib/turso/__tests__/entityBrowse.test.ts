@@ -29,7 +29,9 @@ vi.mock("server-only", () => ({}));
 const rows = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown[]>>();
 vi.mock("../client", () => ({ rows, one: vi.fn() }));
 
-const { browseBucket, browseCounts } = await import("../entityBrowse");
+const { BROWSE_MAX, browseBucket, browseCounts } = await import(
+  "../entityBrowse"
+);
 
 /** The SQL of the last call, whitespace collapsed for matching. */
 function lastSql(): string {
@@ -90,7 +92,63 @@ describe("browseBucket's predicate", () => {
       { slug: "beta-llc", name: "BETA LLC", total: 12, rank: 400 },
     ]);
     const out = await browseBucket("employer", "a");
-    expect(out.map((e) => e.slug)).toEqual(["acme-inc", "beta-llc", "zeta-corp"]);
+    expect(out.entries.map((e) => e.slug)).toEqual([
+      "acme-inc",
+      "beta-llc",
+      "zeta-corp",
+    ]);
+    expect(out.total).toBe(3);
+  });
+
+  it("caps the rendered list AFTER sorting, and reports the true total", async () => {
+    // Cutting in SQL, or before the sort, would take an arbitrary BROWSE_MAX
+    // rows by storage order and present them as "the first N alphabetically".
+    // Reversed input is the arrangement that catches it: if the cut happened
+    // first this keeps the LAST names in the alphabet.
+    rows.mockReset();
+    rows.mockResolvedValue(
+      Array.from({ length: BROWSE_MAX + 25 }, (_, i) => {
+        const n = BROWSE_MAX + 24 - i;
+        return {
+          slug: `e-${String(n).padStart(5, "0")}`,
+          name: `E ${String(n).padStart(5, "0")}`,
+          total: 3,
+          rank: n,
+        };
+      }),
+    );
+    const out = await browseBucket("employer", "e");
+    expect(out.total).toBe(BROWSE_MAX + 25);
+    expect(out.entries).toHaveLength(BROWSE_MAX);
+    expect(out.entries[0]?.slug).toBe("e-00000");
+    expect(out.entries[BROWSE_MAX - 1]?.slug).toBe(
+      `e-${String(BROWSE_MAX - 1).padStart(5, "0")}`,
+    );
+  });
+
+  it("takes the busiest and smallest from the whole letter, not the capped list", () => {
+    // The page renders "the busiest is X with N cases" and "the smallest carry
+    // N" as claims about the LETTER. Reduced over the capped slice they quietly
+    // become claims about the first BROWSE_MAX names alphabetically instead -
+    // a plausible wrong answer that reads perfectly on the page.
+    //
+    // The fixture puts BOTH extremes past the cap, which is the only
+    // arrangement that separates the two implementations.
+    rows.mockReset();
+    rows.mockResolvedValue(
+      Array.from({ length: BROWSE_MAX + 10 }, (_, i) => ({
+        slug: `e-${String(i).padStart(5, "0")}`,
+        name: `E ${String(i).padStart(5, "0")}`,
+        total: i === BROWSE_MAX + 5 ? 9999 : i === BROWSE_MAX + 6 ? 1 : 50,
+        rank: i + 1,
+      })),
+    );
+    return browseBucket("employer", "e").then((out) => {
+      expect(out.entries).toHaveLength(BROWSE_MAX);
+      expect(out.busiest?.total).toBe(9999);
+      expect(out.busiest?.slug).toBe(`e-${String(BROWSE_MAX + 5).padStart(5, "0")}`);
+      expect(out.smallest).toBe(1);
+    });
   });
 });
 

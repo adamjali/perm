@@ -156,26 +156,61 @@ export function approvalRate(r: {
  * tables all read this constant, so a row that links somewhere and a page that
  * is indexed cannot disagree.
  *
- * RAISED 3 -> 5 ON 2026-09-01, on cost evidence, with the SEO trade accepted
- * deliberately. Entity pages ARE the crawlable surface: 20,960 of the ~21,110
- * URLs in the sitemap. Every crawler visit to a page whose ISR window has
- * lapsed is a paid regeneration, and Vercel bills those in 8 KB units against
- * pages that are 220-330 KB, so the surface size is the bill.
+ * DROPPED TO 1 ON 2026-09-10, on Adam's call, after the cost evidence that
+ * justified the floor turned out to be pointing at something else.
  *
- *     >= 3   attorney 3,514   employer 16,309   occupation 1,137   = 20,960
- *     >= 5   attorney 2,919   employer  9,646   occupation 1,014   = 13,579
+ * The floor was raised 3 -> 5 on 2026-09-01 because entity pages were the
+ * crawlable surface and every lapsed-window crawl was a paid ISR regeneration.
+ * The cut was real (20,960 -> 13,579 indexed pages, 35%) and the reasoning was
+ * sound on the evidence available. It was aimed at the wrong cause. Measured
+ * again on 2026-09-10:
  *
- * That is 7,381 fewer indexed pages, a 35% cut to the crawlable surface. The
- * employer bucket carries almost all of it (16,309 -> 9,646) because most
- * sponsors file a handful of cases, which is exactly the population whose page
- * shows three rows and little else.
+ *     Build CPU Minutes        $13.20 (66% of the bill)  ->  $0.35
+ *     Function Invocations     crawler REQUESTS          ->  $2.41
+ *     Firewall rate limiting   the scraper defence       ->  $0.81
+ *     ISR Writes               $2.29                     ->  $23.84
  *
- * FIVE RATHER THAN TEN, deliberately. Ten would cut 62% but starts removing
- * pages with a real table, a median and an approval rate on them - genuine
- * content with genuine search value. Three and four rows is thin; ten is not.
- * If more is needed later this is one constant, and nothing 404s either way.
+ * Builds were the bill and are now fixed. Crawler requests were never it. The
+ * scraper that WAS driving regenerations - Meta at 553,800 requests a day - is
+ * answered by the firewall for 81 cents. What is left is ISR writes, and those
+ * scale with DEPLOY COUNT, because every deployment cold-starts the whole ISR
+ * cache; roughly twenty production deploys in two days is what $23.84 buys.
+ * Page count is a multiplier on that, not the driver.
+ *
+ * So the floor is 1 and the surface is 76,147 pages. Two things make that
+ * affordable, and both are in this commit rather than assumed:
+ *
+ *   - the sitemap now reads ONLY its own chunk from SQL. It used to fetch
+ *     every row of a kind and slice in JS, so fourteen employer chunks would
+ *     have meant fourteen full-table reads a day.
+ *   - the bulk API dump keeps its own, higher floor (MIN_TOTAL_FOR_BULK).
+ *     That endpoint feeds the search palette's client-side slice, and at a
+ *     floor of 1 it becomes a multi-megabyte public dump of the whole
+ *     compilation - which is both a page-weight problem and the exact thing
+ *     §4 of the Terms now prohibits other people from doing.
+ *
+ * WHAT THIS DOES NOT BUY, stated plainly so the next person does not read the
+ * page count as a result: Google already holds 19,931 of these URLs in
+ * "Discovered, currently not indexed" with no crawl date. It has seen the tail
+ * and declined it. Adding URLs to a sitemap does not change that decision, and
+ * roughly 75% of an entity page is boilerplate, which is the thing that
+ * actually gates indexing. This is a bet that costs little now that the cost
+ * model is understood, not a fix for the indexing problem.
  */
-export const MIN_TOTAL_FOR_PAGE = 5;
+export const MIN_TOTAL_FOR_PAGE = 1;
+
+/**
+ * The floor for the BULK dump at `/api/perm-entities/<kind>`.
+ *
+ * Deliberately NOT `MIN_TOTAL_FOR_PAGE`. They were one constant because they
+ * used to want the same answer; they no longer do. A page is cheap to publish
+ * and is the point of the site. A single JSON response carrying every row of
+ * the compilation is a different object: at a floor of 1 it is 69,204
+ * employers instead of 9,176, it is downloaded by the search palette on the
+ * client, and it hands anybody the compiled corpus in one request - which is
+ * precisely what §4 of the Terms now tells other people not to do.
+ */
+export const MIN_TOTAL_FOR_BULK = 5;
 
 /** Does this entity have a page, or is it search-only? */
 export function hasOwnPage(row: { total: number }): boolean {
