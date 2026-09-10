@@ -26,6 +26,7 @@ import { normalisePwdCaseNumber } from "@/lib/turso/pwdCases";
 import { normaliseLcaCaseNumber } from "@/lib/turso/lcaCases";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { getAlphabet } from "@/lib/turso/alphabet";
+import { getStageStats, ageByStatusFrom, exitMixFor } from "@/lib/turso/stageStats";
 import { getLiveBacklog, getLiveMirrorSize } from "@/lib/turso/publicData";
 
 /**
@@ -380,7 +381,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
   }
 
   const isDecided = result.decided !== null;
-  const [monthBacklog, wage, duration, alphabet] = await Promise.all([
+  const [monthBacklog, wage, duration, alphabet, stageStats] = await Promise.all([
     month ? getMonthBacklog(month).catch(() => null) : Promise.resolve(null),
     // Only for a decided case: a pending one has no wage in DOL's files, and
     // asking for one is a round trip that can only ever return null.
@@ -391,6 +392,9 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       ? getCohortDuration(month).catch(() => null)
       : Promise.resolve(null),
     getAlphabet().catch(() => null),
+    // Measured stage ages. Absent, the estimate falls back to the table in
+    // queueForecast, which is exactly what shipped before this existed.
+    getStageStats().catch(() => null),
   ]);
 
   // The employer's initial costs the reader nothing to supply here: DOL names
@@ -418,6 +422,8 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       duration={duration}
       estimator={estimator}
       letterDelta={letterDelta}
+      measuredStageAges={ageByStatusFrom(stageStats)}
+      stageExit={exitMixFor(stageStats, result.live?.status ?? "")}
       letterInitial={letterDelta === null ? null : initial}
       today={today}
     />

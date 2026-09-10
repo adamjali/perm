@@ -67,3 +67,40 @@ describe("CaseEstimate refusal panel", () => {
     expect(body).toMatch(/This case has been pending/);
   });
 });
+
+describe("what happens next", () => {
+  it("tells an RFI case it rejoins the queue, which is the useful part", () => {
+    render(
+      <CaseEstimate
+        caseNumber="A-33333-33333"
+        filingDate="2025-01-15"
+        status={null}
+        isFinal={false}
+        estimator={ESTIMATOR}
+        today={TODAY}
+        stageExit={{ to: "ANALYST REVIEW", share: 327 / 359, observed: 359 }}
+      />,
+    );
+    const body = document.body.textContent ?? "";
+    expect(body).toMatch(/91% of the 359 cases/);
+    expect(body).toMatch(/back into the ordinary queue/);
+    // And it must not imply we know the timing, which we do not: 422 RFI
+    // entries watched, 3 exits seen.
+    expect(body).toMatch(/not something we can measure yet/);
+  });
+
+  it("says nothing at all when the exits are not measurable", () => {
+    render(
+      <CaseEstimate
+        caseNumber="A-44444-44444"
+        filingDate="2025-01-15"
+        status={null}
+        isFinal={false}
+        estimator={ESTIMATOR}
+        today={TODAY}
+      />,
+    );
+    expect(document.body.textContent ?? "").not.toMatch(/What usually happens next/);
+  });
+});
+

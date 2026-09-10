@@ -192,9 +192,30 @@ const STAGE_PLACEMENT: Readonly<Record<string, StagePlacement>> = {
  * median: a stage we have not measured is one we should not silently treat
  * as ordinary.
  */
-export function placeCaseInCohort(status: string | null | undefined): StagePlacement | null {
+export function placeCaseInCohort(
+  status: string | null | undefined,
+  /**
+   * Measured ages per status, from `stage_stats`. Optional: with none, the
+   * table's own numbers are used exactly as before.
+   *
+   * ONLY THE AGE IS OVERRIDDEN. The percentile and the note say what a stage
+   * MEANS - an RFI sits in the slow tail of its month, an appeal is a separate
+   * proceeding that no percentile of that month describes - and that is
+   * editorial judgement, not something a nightly aggregate gets to decide.
+   * The age is a measurement and had been hardcoded since it was first typed;
+   * checked on 2026-09-10 it had drifted on every stage and by 85 days on
+   * RECONSIDERATION APPEALS.
+   */
+  measuredAges?: ReadonlyMap<string, number>,
+): StagePlacement | null {
   if (!status) return null;
-  return STAGE_PLACEMENT[status.trim().toUpperCase()] ?? null;
+  const key = status.trim().toUpperCase();
+  const base = STAGE_PLACEMENT[key];
+  if (!base) return null;
+  const live = measuredAges?.get(key);
+  return typeof live === "number" && live > 0
+    ? { ...base, observedAgeDays: live }
+    : base;
 }
 
 /** Cohort percentile factors, measured over 18 matured cohorts. */

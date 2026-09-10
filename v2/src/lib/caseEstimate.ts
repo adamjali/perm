@@ -27,6 +27,17 @@ import {
 import type { EstimatorData } from "@/lib/turso/estimate";
 
 export interface CaseEstimateInput {
+  /**
+   * Measured stage ages from `stage_stats`, keyed by status. Optional: absent,
+   * `placeCaseInCohort` falls back to its own table, which is what shipped
+   * before this existed.
+   */
+  measuredStageAges?: ReadonlyMap<string, number>;
+  /**
+   * Where cases at this status have actually been observed to go next, as a
+   * share of the exits we watched. Optional and often absent.
+   */
+  stageExit?: { to: string; share: number; observed: number } | null;
   /** The case's filing date, `YYYY-MM-DD`, or null when unknown. */
   filingDate: string | null;
   /** Live DOL status, or null. */
@@ -90,6 +101,18 @@ export type CaseEstimate =
       age:
         | { of: "stage"; days: number }
         | { of: "this-case"; days: number };
+      /**
+       * What usually happens NEXT at this stage, when we have watched enough
+       * exits to say. This is the most useful true thing available to a reader
+       * whose case has no date: of the RFI exits observed, about nine in ten
+       * return to ANALYST REVIEW rather than to a decision, so an RFI is a
+       * detour back into the ordinary queue and not an endpoint.
+       *
+       * Destinations only. The event log opens 2026-08-26 and cannot see an
+       * entry before it, so it can say WHERE a case goes and nothing about how
+       * long it takes to get there.
+       */
+      nextStep?: { to: string; share: number; observed: number } | null;
     };
 
 /**
@@ -113,12 +136,13 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
 
   // Appeals first: they are a different proceeding, and even a perfect cohort
   // model has no standing to date them. The measured age is the honest read.
-  const place = placeCaseInCohort(input.status);
+  const place = placeCaseInCohort(input.status, input.measuredStageAges);
   if (place && place.percentile === null) {
     return {
       kind: "no-date",
       note: place.note,
       age: { of: "stage", days: place.observedAgeDays },
+      nextStep: input.stageExit ?? null,
     };
   }
 
@@ -159,6 +183,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
           : null;
       return {
         kind: "no-date",
+        nextStep: input.stageExit ?? null,
         note:
           `DOL's queue ${passedBy ? `passed this filing month ${passedBy} month${passedBy === 1 ? "" : "s"} ago` : "has passed this filing month"}. ` +
           "A case still pending at that point has usually been taken out of filing order by an audit, a request for information, or a hold, and none of those can be dated from the filing month. The live status above is the accurate read.",

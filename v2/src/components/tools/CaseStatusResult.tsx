@@ -85,6 +85,10 @@ export interface CaseStatusResultProps {
    * document is unavailable or the name does not start with a letter.
    */
   letterDelta: number | null;
+  /** Measured stage ages, so the estimate reads today's numbers not a table. */
+  measuredStageAges?: ReadonlyMap<string, number>;
+  /** What usually happens next at this case's stage, when measurable. */
+  stageExit?: { to: string; share: number; observed: number } | null;
   /** The initial the shift came from, for the line that names it. */
   letterInitial: string | null;
   /** "YYYY-MM-DD", passed in so every elapsed figure shares one clock. */
@@ -115,6 +119,8 @@ export function CaseStatusResult({
   duration,
   estimator,
   letterDelta,
+  measuredStageAges,
+  stageExit,
   letterInitial,
   today,
 }: CaseStatusResultProps) {
@@ -278,6 +284,8 @@ export function CaseStatusResult({
         estimator={estimator}
         letterDeltaDays={letterDelta}
         letterInitial={letterInitial}
+        measuredStageAges={measuredStageAges}
+        stageExit={stageExit}
         today={today}
       />
       {/* Only while the case can still change. On a decided one this would

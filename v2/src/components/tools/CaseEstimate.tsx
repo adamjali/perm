@@ -62,7 +62,32 @@ export function CaseEstimate(
               since it was filed.
             </>
           )}
-        </p>
+        </p>{" "}
+        {/* THE MOST USEFUL TRUE THING WE HAVE FOR A CASE WITH NO DATE. An RFI
+            is not an endpoint: of the exits we have watched, about nine in ten
+            return to ANALYST REVIEW, which means the case rejoins the ordinary
+            queue and the published queue position applies to it again. Nobody
+            tells these readers that. Destinations only - the event log cannot
+            say how long the detour lasts. */}
+        {est.nextStep ? (
+          <p className="mt-3 border-l-4 border-primary bg-tint-primary px-4 py-3 text-base leading-relaxed text-foreground/80">
+            What usually happens next:{" "}
+            <b className="font-bold text-foreground">
+              {Math.round(est.nextStep.share * 100)}%
+            </b>{" "}
+            of the {est.nextStep.observed.toLocaleString("en-US")} cases we have
+            watched leave this stage went to{" "}
+            <b className="font-bold text-foreground">
+              {est.nextStep.to.toLowerCase()}
+            </b>
+            {est.nextStep.to.toUpperCase() === "ANALYST REVIEW"
+              ? " - back into the ordinary queue, where DOL's published position applies again."
+              : "."}{" "}
+            <span className="text-muted-foreground">
+              How long that takes is not something we can measure yet.
+            </span>
+          </p>
+        ) : null}
       </section>
     );
   }

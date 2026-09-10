@@ -3828,6 +3828,98 @@ was true** and **What changed**, and that the post's own date equals its newest
 correction. Probed three ways: drop a part, delete an entry, or skew the date,
 and it goes red.
 
+## The estimator rework: one answer, an actual day, and stage data that updates itself (2026-09-10)
+
+Adam approved four phases: one main answer with the rest secondary, an actual
+day rather than a month, live-pending combined with the DOL quarterly files,
+and something that keeps itself current. The foundation turned out to be the
+third one, and it was broken in a way nothing could have surfaced by reading.
+
+**`totalReceived` was designed, typed, tested and never supplied.**
+`CohortStat.totalReceived` is documented as "including ones still pending...
+DOL's disclosure files cannot supply it". The calculator reads it. Tests
+exercise it. **No production caller ever set it**, and the read-layer `Cohort`
+had no such field at all - so `completionFraction` was always null, the call
+site passed `1.0`, and the survivorship gate could never fire. The code says so
+itself: *"the frontier gate is the one that fires in practice, because DOL's
+files carry no pending rows for the fraction gate to work from."*
+
+The denominator existed the whole time. `live_census` is written daily and
+already read on these pages; summing its matrix per month gives cases received
+INCLUDING pending, at no extra query. Validated before wiring, disclosure-decided
+over live-total:
+
+| | |
+|---|---|
+| mature months | 2024-10 **0.99**, 2025-01 **1.00**, 2025-04 **1.00**, 2025-05 0.96 |
+| recent months | 2025-12 **0.029**, 2026-03 0.028, 2026-06 **0.024** |
+
+The two sources describe the same population once a month is worked through,
+and the recent figures are the warning the estimator was blind to: a 2026-06
+percentile is computed over the fastest 2.4% of that month. Totals are floored
+at `decided` (a few mature months read 1.03 and 1.08 because the sweep has not
+found every case the files hold), and a month with no live coverage gets null.
+
+**Fixing the denominator exposed a cliff.** `reportablePercentiles` used
+`completionFraction * 0.9`, which admits p90 only at EXACTLY 1.0 - harmless
+while the fraction was always 1, and with real fractions of 0.96 to 0.9996 it
+would have silently dropped p90 from **13 of the 28** settled cohorts, at 99.3%
+decided where it is genuinely observed. A fixed cushion says the intended thing:
+report a percentile once you have observed PAST it, less a few points of noisy
+tail. Every prior assertion holds; production goes 15/13 to 24/4.
+
+**One answer.** The calculator rendered every model side by side at `text-4xl`,
+so a reader met up to four equally loud and different dates. The models now sit
+behind a "How this was worked out" disclosure at secondary size, with the lead
+marked "the one above". The window still spans every model.
+
+**An actual day, and the initial is what earns it.** The engine already computed
+a full ISO date and the UI threw it away with `formatMonth(d.slice(0, 7))`. But
+DOL publishes at MONTH resolution, so the input that places a case INSIDE its
+month is the employer initial, not the filing date: 27 days end to end, A -11.4
+to Z +15.7, over 339,518 decided cases. Optional selector, blank by default,
+absent entirely when the measurement is missing.
+
+**Coverage, not cadence.** `datasetCoverage.ts` states what each of the 29
+datasets CONTAINS, rendered inline by `DataProvenance`. "Quarterly" never said
+"decided only" and "daily" never said "pending included, no wage", and that gap
+is where both recurring errors live. Two gates, because the ids are registered
+two different ways: vitest holds the sentences' shape, and
+`check_ingest_health.py` has the live registry and fails on a new dataset that
+ships unstated.
+
+**Stage ages are measured now.** `queueForecast`'s `observedAgeDays` had been
+typed once and never revisited; against the live table every value had drifted:
+
+    ANALYST REVIEW  170->162   ON HOLD 223->229   RFI 375->362
+    NORD 697->684   BALCA 714->716   RECONSIDERATION 624->539
+    REQUEST FOR REVIEW  absent from the table entirely, 506 days
+
+`stage_stats` is written by the daily sweep and preferred over the table, which
+survives as the fallback. **The percentile does NOT move**: that says what a
+stage MEANS (an RFI sits in the slow tail; an appeal is a separate proceeding
+no percentile describes) and is editorial judgement, not a nightly aggregate.
+
+**And the useful thing nobody was telling the stuck cases.** Of the RFI exits
+observed, **91% (327/359) return to ANALYST REVIEW**, not to a decision - an RFI
+is a detour back into the ordinary queue, where DOL's published position applies
+again. That renders on the refusal panel.
+
+**What is NOT built, and why.** "An RFI takes N days" is not measurable yet: of
+**422** cases watched entering an RFI, **3** have been seen to exit. The 327
+exits above are left-truncated, already in RFI when the log opened on
+2026-08-26. The instrument is right and needs months, so `exitMixFor` reports
+DESTINATIONS only and says the timing is unknown. It also refuses a stage with
+one surviving destination, because the writer drops destinations below n=3 and
+a lone survivor's "100%" is that cutoff talking.
+
+**A type-only import 404'd a whole route.** `import type { Alphabet }` from
+`@/lib/turso/alphabet` into a `"use client"` component: the type is erased at
+compile, but Next resolves the module graph first and that module carries
+`import "server-only"`. Clean 404, nothing in the dev log, reads exactly like a
+missing page. Found by stashing - clean HEAD 200, mine 404. Declare the shape
+in the client file instead.
+
 ## The queue-advance model leads now, and the coverage objection did not survive (2026-09-10)
 
 Adam compared a December 2025 filing against permupdate: theirs said late

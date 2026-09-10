@@ -908,6 +908,76 @@ def write_stage_cohorts(db) -> None:
         f"{len(payload):,} bytes)")
 
 
+def write_stage_stats(db) -> None:
+    """Precompute what each review stage looks like right now.
+
+    WHY THIS IS DATA AND NOT A TABLE IN THE CODE. `queueForecast.ts` carried a
+    hardcoded `observedAgeDays` per stage - 170, 223, 375, 697, 624, 714 - typed
+    once and never revisited. Measured against the live table on 2026-09-10 it
+    had drifted, and one of them badly:
+
+        ANALYST REVIEW            170 -> 162   (-8)
+        APPLICATION ON HOLD       223 -> 229   (+6)
+        RFI ISSUED                375 -> 362   (-13)
+        NORD ISSUED               697 -> 684   (-13)
+        BALCA APPEALS             714 -> 716   (+2)
+        RECONSIDERATION APPEALS   624 -> 539   (-85)
+        REQUEST FOR REVIEW          - -> 506   (absent from the table entirely)
+
+    A number that only moves when somebody edits it is not a measurement.
+
+    WHAT STAYS IN CODE: the percentile each stage maps to (an RFI sits in the
+    slow tail of its month, an appeal is a different proceeding with no
+    percentile at all). That is editorial judgement about what a stage MEANS,
+    and it does not belong in a nightly aggregate. Only the measurement moves.
+
+    The exit mix is here too, and it is the useful thing nobody is told: of the
+    RFI exits we have watched, about nine in ten return to ANALYST REVIEW
+    rather than to a decision. An RFI is not an endpoint, it is a detour back
+    into the ordinary queue.
+
+    Ages are pending-only and measured from the filing date, so this says how
+    long cases at a stage have ALREADY waited - never how much longer they
+    have, which needs exit timing the event log is still too young to supply
+    (422 RFI entries watched, 3 exits seen).
+    """
+    ages = _rows(db, """
+        SELECT current_status AS s, COUNT(*) AS n,
+               CAST(AVG(julianday('now') - julianday(filing_date)) AS INT) AS mean_age
+          FROM perm_case_status
+         WHERE is_final IN (0, '0') AND filing_date IS NOT NULL AND filing_date <> ''
+         GROUP BY s HAVING n >= 5""")
+
+    # Where a stage's cases go when they leave it. Left-truncated - the event
+    # log opens 2026-08-26 and cannot see an entry before that - so this is
+    # honest about DESTINATIONS and says nothing about how long the stage runs.
+    exits = _rows(db, """
+        SELECT from_status AS f, to_status AS t, COUNT(*) AS n
+          FROM perm_case_events
+         WHERE from_status IS NOT NULL AND to_status IS NOT NULL
+           AND from_status <> to_status
+         GROUP BY f, t HAVING n >= 3""")
+
+    stages = [{"status": str(s), "pending": int(n), "meanAgeDays": int(a or 0)}
+              for s, n, a in ages]
+    moves = [{"from": str(f), "to": str(t), "n": int(n)} for f, t, n in exits]
+    if not stages:
+        log("NOT writing stage_stats: no pending stages returned")
+        return
+
+    doc = {"asOf": time.strftime("%Y-%m-%d"), "source": SOURCE,
+           "stages": sorted(stages, key=lambda r: -r["pending"]),
+           "exits": sorted(moves, key=lambda r: -r["n"])}
+    payload = json.dumps(doc, separators=(",", ":"))
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
+        key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
+    db.execute(
+        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
+        "VALUES (?, ?, ?)",
+        ["stage_stats", payload, int(time.time() * 1000)])
+    log(f"  stage_stats: {len(stages)} stages, {len(moves)} observed transitions")
+
+
 def write_live_census(db) -> None:
     """Precompute the mirror census into perm_docs['live_census'].
 
@@ -1318,6 +1388,9 @@ def tail_steps(db, *, discover: bool) -> list[tuple[str, object]]:
         steps.append(("discovery", lambda: discover_and_record(db)))
     steps += [
         ("live_census", lambda: write_live_census(db)),
+        # After live_census, before the event-log readers below: it wants both
+        # the current statuses and whatever transitions this run recorded.
+        ("stage_stats", lambda: write_stage_stats(db)),
         ("sweep_coverage", lambda: write_sweep_coverage(db)),
         ("review_stages", lambda: write_review_stages(db)),
         ("employer_stages", lambda: write_employer_stages(db)),
