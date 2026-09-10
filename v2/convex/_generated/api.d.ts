@@ -73,6 +73,7 @@ import type * as lib_emailBlocklist from "../lib/emailBlocklist.js";
 import type * as lib_errorRecording from "../lib/errorRecording.js";
 import type * as lib_formatDate from "../lib/formatDate.js";
 import type * as lib_googleHelpers from "../lib/googleHelpers.js";
+import type * as lib_links from "../lib/links.js";
 import type * as lib_logging from "../lib/logging.js";
 import type * as lib_nameValidation from "../lib/nameValidation.js";
 import type * as lib_newsConsent from "../lib/newsConsent.js";
@@ -242,6 +243,7 @@ declare const fullApi: ApiFromModules<{
   "lib/errorRecording": typeof lib_errorRecording;
   "lib/formatDate": typeof lib_formatDate;
   "lib/googleHelpers": typeof lib_googleHelpers;
+  "lib/links": typeof lib_links;
   "lib/logging": typeof lib_logging;
   "lib/nameValidation": typeof lib_nameValidation;
   "lib/newsConsent": typeof lib_newsConsent;
