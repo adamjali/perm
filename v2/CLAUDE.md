@@ -1772,6 +1772,9 @@ The script now walks the index one level down, batches at IndexNow's documented
 10,000-URL limit, and **refuses to report success if the walk yields under 100
 URLs**, because silently submitting a handful was the original bug. Verified
 before and after: 5 URLs then, 13,758 across five child sitemaps now.
+**78,913 across nineteen children as of 2026-09-10**, after the entity floor
+dropped to 1 - the walk and the 10,000-URL batching handled it unchanged, which
+is the check that the fix generalised rather than fitting one shape.
 
 **Where to check this, not the workflow log:**
 `bing.com/webmasters/indexnow` lists every URL Bing received and when.
@@ -1893,7 +1896,10 @@ an ISR page is date-only (`.slice(0,10)`) on a page that revalidates daily.
    cost more than the previous five days combined.
 1. **Crawlable surface.** Entity pages ARE the sitemap (20,960 of ~21,110 URLs)
    and each crawler visit to a lapsed page is a paid regeneration. Cut 35% by
-   raising `MIN_TOTAL_FOR_PAGE` 3 -> 5 (16,309 -> 9,646 employers). Nothing
+   raising `MIN_TOTAL_FOR_PAGE` 3 -> 5 (16,309 -> 9,646 employers). **REVERSED
+   2026-09-10: the floor is 1 and the surface is 78,600 URLs** - builds were
+   the bill, not crawls; see "Every entity page is indexable now". This
+   paragraph is kept as the record of what was believed and why. Nothing
    404s: sub-floor pages still render, they go `noindex` and leave the sitemap.
 2. **Windows shorter than the data.** `/perm-queue`, `/perm-queue/[month]`
    (~39 pages) and `/perm-decision-activity` sat on `revalidate = 3600` while
@@ -3542,6 +3548,200 @@ two new HTTP route families, a cron); set `NEWSLETTER_ENABLED=1` and
 `NEWSLETTER_DAILY_CAP=15` on prod Convex; add a Firewall bypass for `/badge/*`
 so GitHub's camo proxy is not challenged; then push and the GSC queue in
 `.planning/gsc-reindex-queue-2026-09-08.md` plus the new pages.
+
+## Equal z-index is not a tie: the later element in DOM order wins (2026-09-09)
+
+Two bugs reported separately were one defect. The back-to-top button was
+painted over by the footer at the bottom of every long page, and the header's
+Learn dropdown was clipped. Both because `Footer` carried `relative z-50` and
+so did `AuthHeader` - and at an equal z-index the painting order is DOM order,
+so the footer, rendered last in `(site)/layout.tsx`, won both fights.
+
+**The fix is the footer, not the things it covered.** It is `z-10` now. Raising
+the button to `z-[60]` alone would have left the dropdown clipped, because the
+dropdown cannot outrank its own header's stacking context by raising itself.
+
+House layers, and nothing may hardcode a competing value:
+
+| layer | who |
+|---|---|
+| `z-[100]` | the Cmd+K search palette |
+| `z-[60]` | bottom-fixed chrome: ScrollToTop, SelectionBar, ChatWidget, ReadingProgress, and the mobile data drawer |
+| `z-50` | `AuthHeader` and its dropdowns |
+| `z-10` | `Footer` |
+
+`scroll-to-top-stacking.test.tsx` and `footer-stacking.test.ts` pin the
+relationship rather than the numbers. **`elementFromPoint` is the decisive
+check** - a computed z-index tells you what a rule says, not who actually
+receives the click.
+
+## A fixed negative margin cannot cancel a variable auto margin (2026-09-09)
+
+The data rail was reported as "not snapped to the left edge at some screen
+sizes". `DataShell` wrapped everything in `mx-auto max-w-[1600px]`, and the
+rail tried to reach the viewport edge with a negative margin. Above 1600px
+`mx-auto` contributes `(vw - 1600) / 2` per side - a number that changes with
+every pixel of window width - and no constant can subtract it. Measured: a
+**155px gap at 1920**.
+
+**The fix is to delete the centring wrapper, not to compute against it.** The
+shell is `w-full` now and each page sets its own measure (`max-w-3xl` through
+`max-w-7xl`), which is what a full-height spine down the screen edge requires.
+`rail-fits.test.ts` gates it.
+
+Related and already documented above: `lg:flex`, never bare `flex`, on that
+shell.
+
+## A `<details>` accordion needs TWO rules to re-expand at a breakpoint
+
+The footer is six `<details>` columns: an accordion on a phone (1,882px tall
+became 630px) and a plain six-column block on desktop (760px became 550px).
+**Collapsing is free and expanding is not.** A closed `<details>` hides its
+content in the UA shadow tree, so `display` on your own element is only half
+of it:
+
+```css
+@media (min-width: 64rem) {
+  .footer-col:not([open]) > .footer-col-body { display: flex; }
+  .footer-col::details-content { content-visibility: visible; }
+}
+```
+
+Engines that hide the slot need the first; engines that use `::details-content`
+need the second. Ship both.
+
+**SEO is not affected either way**: the links are in the HTML whether the
+element is open or shut, which is the whole reason this is a `<details>` and
+not a JS disclosure.
+
+**And the footer had a layout bug that survived trimming links**:
+`xl:grid-cols-5` with six cells wraps to two rows, so the footer stayed 754px
+after the content shrank. Count the cells before choosing the track count.
+
+## Nav parity comes from ONE source, or the two copies drift
+
+The Learn dropdown and the footer's Learn column had diverged. Both now render
+from `FOOTER_COLUMNS` in `src/lib/constants/navigation.ts`, whose Learn column
+IS `LEARN_NAV_LINKS` (the same array the header spreads) and whose Calculators
+column is `TOOL_NAV_LINKS.slice(0, 6)` plus an explicit "All N calculators"
+link that counts the array rather than restating a number.
+`footer-nav-parity.test.ts` gates it.
+
+## The badge endpoint: 35 figures, and two traps worth keeping
+
+`/badge/<kind>[.<style>][.<theme>].svg` serves shields-style SVG badges of
+DOL's own published figures. `BADGE_DEFS` in `src/lib/badge.ts` holds 35
+definitions across four groups; `src/lib/badgeRender.ts` draws three shapes
+(`shield`, `card` with a sparkline, `bar`) on two grounds.
+
+- **The first three ids are FROZEN** (`perm-queue`, `perm-days`, `pwd-queue`).
+  They are pasted into READMEs we do not control; a renamed id is a broken
+  image in somebody else's repo.
+- **Every figure is one DOL publishes, and each carries its date.** No
+  estimates, no derived rates. A badge is the least-supervised surface on the
+  site: it renders inside someone else's page where nobody will ever see our
+  caveats.
+- **A cross-origin SVG must contain no `<script>`, `<style>`, `<foreignObject>`,
+  `xlink:href` or `<image>`** or sanitisers (GitHub's camo included) drop it.
+- **`route.ts` may export ONLY the known handler names**, so `parseBadgePath`
+  lives in a sibling `parse.ts`. That failure appears only in `next build`,
+  during route type generation - never in dev, typecheck or tests.
+- **`DOL_PAGES` is DERIVED from `BADGE_KINDS`.** Adding six badges without
+  adding them to the revalidation list shipped six endpoints serving figures
+  up to a day stale; the full suite caught it, and the fix was to stop keeping
+  a second list by hand.
+
+## Every emailed link is branded, and the guard nearly made them all 404
+
+The preference-centre email pointed at the raw Convex deployment host, so a
+subscriber got a link on a domain they had never heard of and an unstyled
+plain-text page. Two halves:
+
+- **`src/emails/EmailPreferencesLink.tsx`** is a real React Email template. The
+  off-only rule sits ABOVE the button, because a person clicking through must
+  read what the link can do before they act, not after.
+- **`convex/lib/links.ts`** is the one place `SITE_URL` and `actionUrl` live
+  (they had been copy-pasted into four modules), and `next.config.ts` rewrites
+  `/prefs`, `/unsubscribe`, `/queue-alert/*`, `/case-alert/*` and
+  `/bulletin-alert/*` onto the Convex site host.
+
+**THE REWRITE IS GUARDED ON AN ENV VAR, AND THE OBVIOUS ONE IS NOT ON
+PRODUCTION.** `NEXT_PUBLIC_CONVEX_SITE_URL` is not set in Vercel prod, so a
+rewrite array guarded on it would have been silently empty and every branded
+link in every email would have 404'd - with a green build and no error. It
+derives the host instead:
+
+```ts
+const convexSite =
+  process.env.NEXT_PUBLIC_CONVEX_SITE_URL ??
+  process.env.NEXT_PUBLIC_CONVEX_URL?.replace(".convex.cloud", ".convex.site");
+```
+
+**Check that a guarded config actually registers in the environment it ships
+to.** `vercel env ls` before trusting a `?:` in `next.config.ts`, and remember
+that env binds at DEPLOY time here.
+
+## The sign-up fork: say who the product is for, before the form
+
+Beneficiaries were signing up for an attorney case-management tool. `/signup`
+now leads with `SignupAudienceFork`, a caution bar (repeating 45-degree tape,
+an offset lime slab, a black warning tile breaking the top edge) carrying two
+doors - `/perm-case-status` for someone waiting on their own case,
+`/perm-queue` for the queue - each firing
+`analytics.capture("signup_fork_taken", { door })` so the split is measured
+rather than assumed.
+
+The onboarding role step gained **"Waiting on my own case", listed FIRST**, and
+`RoleStep` routes it to `/perm-case-status` instead of into the app.
+
+**The paid beneficiary product is PARKED, deliberately.** This is signposting,
+not a tier. Nothing here promises a plan, a price or a feature.
+
+## A gate that excludes files by a string will exclude the comment explaining it
+
+`dataset-license.test.ts` skips pages that build their Dataset through the
+shared helper, and it did that with `src.includes("getDatasetSchema")`. **The
+one page it needed to check carries a comment naming `getDatasetSchema`**, so
+the gate skipped exactly the file it was written for. Probing found it - the
+mutation dropped the finding count 1 -> 0 and the test stayed green.
+
+Match a CALL, not a mention: `/getDatasetSchema\s*\(/`.
+
+Same family as the `[\s\S]*?` assertion that ran past its own function, and as
+`no-glued-jsx-text.test.ts` matching its own fixtures. **A gate's exclusion
+list is code and gets probed like code.**
+
+The underlying defect: Search Console reported "Missing field 'license'" on
+Datasets. Fourteen of sixteen pages inherit `license` from `getDatasetSchema`;
+`/visa-bulletin/family` hand-rolled its Dataset and had none. Every Dataset now
+carries `license: ${baseUrl}/terms#intellectual-property`.
+
+## What is licensed, and what cannot be (2026-09-10)
+
+Three different things, and conflating them is what makes a data site's legal
+page wrong:
+
+| thing | status |
+|---|---|
+| DOL's and State's underlying figures | **17 U.S.C. §105**: no copyright in a work of the United States Government. Nobody can license them, us included |
+| our COMPILATION of them | **Feist, 499 U.S. 340**: "facts are not copyrightable"; a compilation earns thin protection through "selection, coordination, or arrangement" |
+| our code, prose, design | ordinary copyright, `LICENSE` at the repo root, all rights reserved |
+
+So `/terms` §6 states the two layers separately, §4 names bulk extraction of
+the compilation as the thing not permitted, and the Organization is **PERM
+Tracker LLC** in the agreement and binding clauses. `structuredData.ts` points
+every Dataset's `license` at that anchor.
+
+**GitHub showing "other" for the licence means nothing legally.** Their
+`licensee` library could not match our custom text against a known SPDX
+licence, so it labels it `other`. It is not a defect and not a warning.
+
+## The search palette must cover every page, and a test says so
+
+`palette-covers-every-page.test.ts` walks the public app tree and asserts each
+page is reachable from `SearchPalette`'s static index. Its first run found the
+three A-Z browse hubs missing (57 of 61). A palette that silently omits pages
+is worse than no palette: it answers "no results" for something the site has.
 
 ## Every entity page is indexable now, and three things had to move first (2026-09-10)
 
