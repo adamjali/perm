@@ -149,10 +149,17 @@ const nextConfig: NextConfig = {
     // Paths are identical on both hosts so a stale link and a fresh one differ
     // only in origin.
     //
-    // Guarded on the env var: without it the destination would be `undefined`
-    // and every one of these would 404, which is worse than the domain being
-    // ugly.
-    const convexSite = process.env.NEXT_PUBLIC_CONVEX_SITE_URL;
+    // DERIVED FROM THE CLOUD URL, not from an env var of its own. Checked on
+    // 2026-09-09: production has NEXT_PUBLIC_CONVEX_URL and does NOT have
+    // NEXT_PUBLIC_CONVEX_SITE_URL, so a rewrite keyed on the latter would have
+    // silently not registered and every emailed link would have 404'd. Convex
+    // serves HTTP actions from the `.convex.site` twin of the `.convex.cloud`
+    // deployment, which is the same derivation ContactForm and QueueAlertForm
+    // already do client-side. One variable to keep in sync instead of two, and
+    // the one that must exist for the app to work at all.
+    const convexSite =
+      process.env.NEXT_PUBLIC_CONVEX_SITE_URL ??
+      process.env.NEXT_PUBLIC_CONVEX_URL?.replace(".convex.cloud", ".convex.site");
     const emailLinkRewrites = convexSite
       ? [
           { source: "/prefs", destination: `${convexSite}/prefs` },

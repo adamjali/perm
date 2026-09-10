@@ -80,6 +80,20 @@ function staticIndex(): { label: string; href: string; group: string; keywords: 
   for (const l of LEARN_NAV_LINKS) {
     out.push({ label: l.label, href: l.href, group: "Learn", keywords: "" });
   }
+  // THE A-TO-Z HUBS, which are in no nav list and were therefore in no index.
+  // They are not in PUBLIC_NAV_LINKS (not top-level), not in SECTIONS (the
+  // rail lists the entity indexes, not their alphabetical hubs) and not in
+  // TOOL_NAV_LINKS, so a search that derives from those four lists could not
+  // see them - the one blind spot in an index that is otherwise incapable of
+  // going stale. Found by walking every public route against the index rather
+  // than by anyone noticing they were missing.
+  for (const [label, href, noun] of [
+    ["Browse employers A to Z", "/perm-employers/browse", "employers companies sponsors"],
+    ["Browse law firms A to Z", "/perm-attorneys/browse", "attorneys law firms counsel"],
+    ["Browse occupations A to Z", "/perm-wages/browse", "occupations job titles soc wages"],
+  ] as const) {
+    out.push({ label, href, group: "Data", keywords: `browse alphabetical index ${noun}` });
+  }
   // De-dupe by href: the nav lists overlap on purpose (Data appears in both
   // PUBLIC_NAV_LINKS and SECTIONS), and two rows for one page read as a bug.
   const seen = new Set<string>();
