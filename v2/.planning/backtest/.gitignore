@@ -1,0 +1,9 @@
+# regenerable: `node .planning/backtest/pull.mjs` refetches from Turso, the
+# run*.mjs scripts rebuild the rest. 19MB of intermediate state does not belong
+# in git, and a stale copy is worse than none.
+decided.json
+pending.json
+pendstatus.json
+flat.json
+fixed.json
+nested.json
