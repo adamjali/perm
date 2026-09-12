@@ -119,6 +119,7 @@ jobs:
       # to write rather than emptying the feed's OFLC half.
       - name: OFLC announcements
         if: always()
+        working-directory: v2
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
@@ -132,6 +133,7 @@ jobs:
       # site challenges scripts on some days and then the run records partial.
       - name: WARN notices
         if: always()
+        working-directory: v2
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
