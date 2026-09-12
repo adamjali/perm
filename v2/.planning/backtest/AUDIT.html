@@ -1,0 +1,211 @@
+<title>PERM Backtest Audit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;700&family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--paper:#F4F6F7;--panel:#FFFFFF;--ink:#101619;--ink-2:#4A5559;--ink-3:#78868B;
+ --rule:#D8E0E2;--gridY:#C3CFD2;--teal:#0E5C6B;--rust:#A8482B;--amber:#8A6A12;--shade:#E9EDEE}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+ --paper:#0E1316;--panel:#151C20;--ink:#E4EBED;--ink-2:#A2B0B5;--ink-3:#7A888D;
+ --rule:#242F34;--gridY:#313E44;--teal:#4FB8CB;--rust:#E08360;--amber:#D9AE3E;--shade:#1A2226}}
+:root[data-theme="dark"]{--paper:#0E1316;--panel:#151C20;--ink:#E4EBED;--ink-2:#A2B0B5;--ink-3:#7A888D;
+ --rule:#242F34;--gridY:#313E44;--teal:#4FB8CB;--rust:#E08360;--amber:#D9AE3E;--shade:#1A2226}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font:400 16px/1.62 "IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+ -webkit-font-smoothing:antialiased;padding:0 0 5rem}
+.wrap{max-width:1160px;margin:0 auto;padding:0 24px}.col{max-width:70ch}
+h1{font:700 clamp(28px,4vw,40px)/1.13 Bitter,Georgia,serif;letter-spacing:-.015em;text-wrap:balance;margin:2.6rem 0 .5rem}
+h2{font:700 clamp(20px,2.3vw,25px)/1.25 Bitter,Georgia,serif;letter-spacing:-.01em;text-wrap:balance;
+ margin:3rem 0 .8rem;padding-top:1.3rem;border-top:1px solid var(--rule)}
+h3{font:600 15.5px/1.35 "IBM Plex Sans",sans-serif;margin:1.8rem 0 .5rem}
+p{margin:0 0 1rem;color:var(--ink-2)}strong{color:var(--ink);font-weight:600}
+.stamp{font:400 12.5px/1.4 "IBM Plex Mono",monospace;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase}
+.lede{font-size:18px;color:var(--ink-2);max-width:64ch}
+pre{background:var(--panel);border:1px solid var(--rule);padding:15px 17px;overflow-x:auto;
+ font:400 13.5px/1.6 "IBM Plex Mono",monospace;color:var(--ink-2);margin:1.2rem 0}
+pre b{color:var(--teal);font-weight:600} pre i{color:var(--rust);font-style:normal;font-weight:600}
+code{font:400 .92em "IBM Plex Mono",monospace;background:var(--shade);padding:1px 5px}
+.tw{overflow-x:auto;margin:1.3rem 0}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14.5px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+td.n{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+thead th{font:600 11.5px/1.3 "IBM Plex Sans",sans-serif;letter-spacing:.06em;text-transform:uppercase;
+ color:var(--ink-3);border-bottom:1px solid var(--gridY);white-space:nowrap}
+tr.win td{background:var(--shade);color:var(--ink);font-weight:600}
+.ok{color:var(--teal);font-weight:600}.bad{color:var(--rust);font-weight:600}
+ul{margin:0 0 1rem;padding-left:1.15rem;color:var(--ink-2)}li{margin:0 0 .5rem}
+.note{border-left:3px solid var(--amber);padding:2px 0 2px 16px;margin:1.4rem 0;color:var(--ink-2);font-size:15px}
+.kill{border-left:3px solid var(--rust);padding:2px 0 2px 16px;margin:1.4rem 0;color:var(--ink-2);font-size:15px}
+.keep{border-left:3px solid var(--teal);padding:2px 0 2px 16px;margin:1.4rem 0;color:var(--ink-2);font-size:15px}
+</style>
+<div class="wrap">
+<p class="stamp">Backtest audit &middot; 12 Sep 2026 &middot; harness in <code>v2/.planning/backtest/</code></p>
+<h1>Backtest audit: what survives, and what I got wrong</h1>
+<p class="lede col">A rebuilt backtest with nested rolling-origin selection, measured censoring, and a queue-reconstruction sensitivity test. The headline: the simplest model wins, almost everything I proposed earlier does not survive, and your 90-day range cap turns out to be achievable honestly.</p>
+
+<div class="col">
+<h2>The finding, up front</h2>
+</div>
+<pre><b>A flat 365-day trailing rate</b>, with a bias correction and band that both vary by
+<b>predicted</b> horizon, fitted only on earlier forecast origins.
+
+  median absolute error   <b>18 days</b>
+  80% band width          <b>77 days</b>   (fits inside a 90-day product cap)
+  actual coverage         <b>80%</b>       (out of sample, not fitted on the test)
+  within +/-45 days       <b>93%</b>
+
+Stable across all three queue-reconstruction assumptions (17-18d, 74-77d, 80%).</pre>
+<div class="col">
+<p>No blend, no horizon-switched windows, no seasonal index. The thing that carries almost all the value is <strong>correcting the bias, not choosing the rate</strong>.</p>
+</div>
+
+<div class="col">
+<h2>1. Origins and maturity</h2>
+<p>34 twice-monthly origins, 1 Oct 2024 to 15 Feb 2026. An origin is <strong>mature</strong> only if under 25% of its queue is still unresolved today and it has at least 365 days of rate history behind it.</p>
+</div>
+<pre>censoring, measured directly as "share of the T-queue still pending today":
+
+  2024-10-01   <b>0.2%</b>      2025-09-01   2.7%      2025-12-15   16.6%
+  2025-03-01   0.8%      2025-11-15   6.2%      2026-01-01   22.1%
+  2025-06-01   1.4%      2025-12-01  10.7%      2026-01-15  <i>26.0% IMMATURE</i>
+                                                2026-02-15  <i>35.6% IMMATURE</i>
+
+<b>31 of 34 origins are mature.</b> The other three are reported and never scored.</pre>
+<div class="col">
+<p class="note"><strong>Why this matters.</strong> Slow cases are exactly the ones still unresolved, so scoring a recent origin quietly drops its hardest cases and flatters every model. That is the bias the old analysis had and never measured.</p>
+
+<h2>2. Queue reconstruction, and its one honest weakness</h2>
+</div>
+<pre>blocking(T, x) = |{decided : received &lt; x AND decision &gt; T}|   <b>unresolved at T, later resolved</b>
+               + |{pending today : filing &lt; x}|              <b>unresolved at T, still unresolved</b></pre>
+<div class="col">
+<p>The second term is the correction the old backtest lacked entirely. The decided-only file cannot see a case that is still open, so every historical queue was undercounted, which made every prediction too early.</p>
+<p class="note"><strong>The weakness, stated plainly.</strong> I cannot reconstruct <em>status</em> history. In production we count only <code>ANALYST REVIEW</code> as blocking, because appeals and holds are out of filing order. Historically there are no status snapshots, so the backtest counts every unresolved case. I ran the whole comparison at three assumptions &mdash; 100%, 93.93% (today&rsquo;s measured analyst share) and 85% &mdash; and the winner did not change. Before bias correction the rankings <em>did</em> move; after it they do not, because a constant scale factor is precisely what a bias correction absorbs.</p>
+
+<h2>3. Leakage table</h2>
+</div>
+<div class="tw">
+<table>
+<thead><tr><th>Input</th><th>Latest information it touches</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>Filing date / cases ahead</td><td>origin T</td><td class="ok">clean</td></tr>
+<tr><td>Still-pending correction</td><td><strong>today</strong></td><td>reconstruction aid, not outcome leakage &mdash; it asserts only that a case was open <em>at T</em>, which production would also know. Covered by the sensitivity test.</td></tr>
+<tr><td>Daily rate history</td><td>origin T</td><td class="ok">clean &mdash; <code>paceAt</code> refuses rather than guessing when history is short</td></tr>
+<tr><td>Window / blend parameters</td><td>origins &lt; k</td><td class="ok">clean, nested</td></tr>
+<tr><td>Bias correction</td><td>origins &lt; k</td><td class="ok">clean, nested</td></tr>
+<tr><td>Band quantiles</td><td>origins &lt; k</td><td class="ok">clean, nested</td></tr>
+<tr><td>Horizon used for binning</td><td><strong>predicted</strong>, never true</td><td class="ok">clean &mdash; this is what the old analysis got wrong</td></tr>
+<tr><td>Seasonal index</td><td>&mdash;</td><td class="bad">removed entirely, see §6</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="col">
+<h2>4. Model ladder, scored on held-out origins</h2>
+<p>Candidate space: flat windows 3&ndash;730 days on a log grid; two-timescale blends over 4 short &times; 3 long &times; 4 decay constants; the frozen production schedule as benchmark. 59 configurations.</p>
+</div>
+<div class="tw">
+<table>
+<thead><tr><th>Model</th><th>Median error</th><th>80% band</th><th>Coverage</th><th>&plusmn;45d</th></tr></thead>
+<tbody>
+<tr class="win"><td><strong>flat 365</strong></td><td class="n">18d</td><td class="n">77d</td><td class="n">80%</td><td class="n">93%</td></tr>
+<tr><td>blend 14/365, &tau;=45</td><td class="n">20d</td><td class="n">78d</td><td class="n">75%</td><td class="n">84%</td></tr>
+<tr><td>flat 270</td><td class="n">25d</td><td class="n">99d</td><td class="n">82%</td><td class="n">85%</td></tr>
+</tbody>
+</table>
+</div>
+<div class="col">
+<p class="kill"><strong>The blend does not earn its complexity.</strong> Your idea was conceptually better than my horizon switch &mdash; and it is &mdash; but it loses to a plain 365-day average on every measure that matters. It is also unavailable at two origins, because the October 2025 shutdown drives the median of any short window to zero.</p>
+<p class="kill"><strong>The frozen 10/14/365/270 schedule is not supported.</strong> Under nested selection it scores 29d against 39d for a nested-selected flat &mdash; but that comparison flatters it, because its constants were fitted on overlapping data in an earlier session. On a fair fixed-config run over all 31 mature origins it lands at <strong>49d median, 91d P90</strong>, mid-table.</p>
+
+<h2>5. The window plateau</h2>
+<p>Per-origin flat-window sweep, before any correction. The winning window swings by <em>origin</em>, not by horizon:</p>
+</div>
+<pre>  origin      56d   90d  180d  270d  365d
+  2024-10-01  104   156    38   <b>32</b>    40
+  2024-12-15   <b>74</b>   114   168    65    72
+  2025-03-15   <b>18</b>    53    83   123    68
+  2025-06-15   29    32    <b>16</b>    28    51
+  2025-11-01  140    29    14   <b>12</b>    16
+
+  med-of-medians  67    60    47    40    51
+  wins            2/31  1/31  1/31  8/31 10/31</pre>
+<div class="col">
+<p>There is no sharp optimum. 240, 270 and 365 all sit within 11 days of one another and split the wins between them. <strong>The correct reading is &ldquo;somewhere around a year is robust&rdquo;, not &ldquo;365 is uniquely right&rdquo;</strong> &mdash; and 365 is chosen because it is the simplest point in that plateau and it is what the bias correction was calibrated against, not because it beat 270 by a handful of days.</p>
+
+<h2>6. Seasonality: removed</h2>
+<p>Comparing each month against its own 12-month neighbourhood, so the changing level cancels:</p>
+</div>
+<pre>  month  2024   2025   2026    verdict
+  <i>July   0.49   1.05     -     sign flips</i>
+  <i>Aug    0.62   1.11     -     sign flips</i>
+  <i>Apr    1.61   1.10   0.91    decaying, not seasonal</i>
+  <b>Dec    0.63   0.85   0.87    consistent, slow</b>
+  <b>Jan    0.67   0.92   0.87    consistent, slow</b></pre>
+<div class="col">
+<p class="kill"><strong>&ldquo;June 1.27 / July 0.78&rdquo; was mostly the shape of 2024, not a season.</strong> The monthly index is deleted. Only December and January survive, and those are plainly holidays consuming working days. They are not reinstated as a multiplier until they independently improve held-out origins, which has not been tested yet.</p>
+
+<h2>7. Your 90-day cap: achievable, and honest</h2>
+<p>Coverage by <strong>predicted</strong> horizon, everything fitted on prior origins:</p>
+</div>
+<div class="tw col">
+<table>
+<thead><tr><th>Predicted</th><th>Bias removed</th><th>80% width</th><th>Coverage of &plusmn;45d</th></tr></thead>
+<tbody>
+<tr><td>0&ndash;2 months</td><td class="n">&minus;1d</td><td class="n">62d</td><td class="n">92%</td></tr>
+<tr><td>2&ndash;4 months</td><td class="n">+9d</td><td class="n">79d</td><td class="n">87%</td></tr>
+<tr><td>4&ndash;7 months</td><td class="n">+20d</td><td class="n">87d</td><td class="n">83%</td></tr>
+<tr><td>7&ndash;11 months</td><td class="n">+42d</td><td class="n">88d</td><td class="n">82%</td></tr>
+<tr><td>11&ndash;16 months</td><td class="n">+81d</td><td class="n">67d</td><td class="n">91%</td></tr>
+<tr><td>16 months+</td><td class="n">+112d</td><td class="n">60d</td><td class="n">92%</td></tr>
+</tbody>
+</table>
+</div>
+<div class="col">
+<p class="keep"><strong>An 80% band is 60&ndash;88 days wide at every horizon.</strong> So the range you wanted &mdash; never more than about December-to-February &mdash; is not a compromise. It is what an honest 80% interval actually measures, once the bias is removed. Narrower near the front (62 days inside two months) and wider in the middle, exactly the shape you asked for.</p>
+<p>The bias is the whole story: it runs from &minus;1 day to <strong>+112 days</strong>. Uncorrected, this model is catastrophically late for distant cases. Corrected, it is the best thing tested.</p>
+
+<h2>8. Where it fails, and I am not hiding it</h2>
+</div>
+<pre>  test origin   median error   coverage of its own 80% band
+  2025-06-01         18d                   80%
+  2025-07-01         22d                   73%
+  <i>2025-08-01         36d                   50%</i>
+  <i>2025-09-15         56d                   27%</i>
+  <i>2025-10-01         53d                   39%</i>
+  2025-11-01         13d                   95%
+  2025-12-01          8d                   96%</pre>
+<div class="col">
+<p>Coverage collapses for forecasts issued in August and September 2025, because they were walking their queues straight into the <strong>October 2025 OFLC shutdown</strong>. That delay stays in the test error on purpose &mdash; it is real forecast risk, and deleting it would be exactly the flattering assumption this audit exists to remove.</p>
+<p>So the honest claim is not &ldquo;80% always&rdquo;. It is: <strong>80% in the median origin, 90%+ in calm periods, and about 30&ndash;50% across an unforecastable federal shock.</strong> A disclosure line should say so.</p>
+
+<h2>9. Scoreboard on the old conclusions</h2>
+</div>
+<div class="tw">
+<table>
+<thead><tr><th>Claim</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><td>&ldquo;28 days is the right window, and I can prove it&rdquo;</td><td class="bad">Dead. Measured the wrong thing (pace at 1-month horizon, not date accuracy).</td></tr>
+<tr><td>&ldquo;10/14/365/270 adaptive schedule&rdquo;</td><td class="bad">Dead. Mid-table on a fair run; the horizon effect was largely a per-origin regime artifact.</td></tr>
+<tr><td>&ldquo;Seasonal index June 1.27 / July 0.78&rdquo;</td><td class="bad">Dead. Confounded with the changing level; only Dec/Jan survive.</td></tr>
+<tr><td>&ldquo;56,966 independent predictions&rdquo;</td><td class="bad">Dead. About 31 independent rate environments.</td></tr>
+<tr><td>&ldquo;Band of 21 months&rdquo; (the original complaint)</td><td class="bad">Dead, and rightly. 77 days is the honest figure.</td></tr>
+<tr><td>Queue position &divide; pace as the core method</td><td class="ok">Survives.</td></tr>
+<tr><td>Blocking counts only the filing-order queue</td><td class="ok">Survives in production; untestable historically, covered by sensitivity.</td></tr>
+<tr><td>Day-of-filing places you inside your month</td><td class="ok">Survives &mdash; it is a count, and the backtest uses exact filing dates throughout.</td></tr>
+<tr><td>Employer letter is weak (r&sup2;=0.16, ~2 days)</td><td class="ok">Unchanged; measured on the live in-progress month.</td></tr>
+<tr><td>Special statuses use DOL&rsquo;s own published frontiers</td><td class="ok">Unchanged; not a queue-model question.</td></tr>
+</tbody>
+</table>
+</div>
+
+<div class="col">
+<h2>What I have NOT done</h2>
+<ul>
+<li><strong>Not shipped anything.</strong> No production constant has changed. The estimator is exactly as it was.</li>
+<li><strong>Not tested a three-timescale blend</strong> &mdash; two components already failed to beat one, so a third has nothing to earn its place against.</li>
+<li><strong>Not tested regime detection or damped trend.</strong> They are plausible and unmeasured, and the same rule applies: beat a flat 365 on held-out origins or stay out.</li>
+<li><strong>Not re-tested Dec/Jan holidays as a multiplier.</strong> Next candidate, and the only survivor of the seasonal work.</li>
+<li><strong>Not extended the search past 730 days.</strong> The optimum is interior, so the range is wide enough.</li>
+</ul>
+<p class="stamp" style="margin-top:2.4rem">373,939 decided cases, 95,383 live pending. 31 mature origins of 34. Harness, data and every script committed under <code>v2/.planning/backtest/</code> so any number here can be re-run.</p>
+</div>
+</div>
