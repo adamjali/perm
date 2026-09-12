@@ -47,12 +47,12 @@ ul{margin:0 0 1rem;padding-left:1.15rem;color:var(--ink-2)}li{margin:0 0 .5rem}
 <pre><b>A flat 365-day trailing rate</b>, with a bias correction and band that both vary by
 <b>predicted</b> horizon, fitted only on earlier forecast origins.
 
-  median absolute error   <b>18 days</b>
-  80% band width          <b>77 days</b>   (fits inside a 90-day product cap)
-  actual coverage         <b>80%</b>       (out of sample, not fitted on the test)
-  within +/-45 days       <b>93%</b>
+  median absolute error   <b>19 days</b>
+  80% band width          <b>95 days</b>   (second pass; the 77d below was optimistic)
+  within +/-45 days       <b>78-89%</b>    depending on horizon
 
-Stable across all three queue-reconstruction assumptions (17-18d, 74-77d, 80%).</pre>
+<i>REVISED BY A SECOND AUDIT -- see the last section. The first pass missed
+47,061 cases and reported a 77-day band. The corrected figure is 95 days.</i></pre>
 <div class="col">
 <p>No blend, no horizon-switched windows, no seasonal index. The thing that carries almost all the value is <strong>correcting the bias, not choosing the rate</strong>.</p>
 </div>
@@ -197,6 +197,114 @@ Stable across all three queue-reconstruction assumptions (17-18d, 74-77d, 80%).<
 </table>
 </div>
 
+
+<div class="col">
+<h2>SECOND AUDIT: the first pass was still wrong, and here is what changed</h2>
+<p>Two challenges were put to the first report: that the huge bias correction might be
+learning historical regime change rather than a stable property, and that the band was
+<em>not</em> the monotonic shape it claimed &mdash; it got <strong>narrower</strong> past
+eleven months. Both were right to ask. Chasing the second one found a much bigger problem.</p>
+
+<h3>The 47,061 cases nobody could see</h3>
+<p>My censoring measure counted cases still pending today. It did not count the third
+population: <strong>cases that are final today but were decided after the disclosure file
+ends</strong>. They appear in neither source the backtest read.</p>
+</div>
+<pre>filed 2025-06  <b>5,782</b>      filed 2025-09  <b>12,456</b>
+filed 2025-07  <b>9,099</b>      filed 2025-11   <b>6,791</b>
+filed 2025-08  <b>8,951</b>      ...
+
+TOTAL 47,061 -- <b>20.2%</b> of the relevant filing population.</pre>
+<div class="col">
+<p>These are slow cases, concentrated in exactly the filing months a long-horizon forecast is
+about. Leaving them out did two things at once: it <strong>undercounted every historical
+queue</strong>, and it <strong>deleted the slow tail from the truth set</strong>. That is
+what made far-horizon bands look impossibly narrow. Both are now fixed: they are added to
+blocking, and scored as right-censored observations at their lower bound, which is the most
+favourable assumption available.</p>
+<p class="kill"><strong>Correcting it changed the answer.</strong> The band is 95 days, not
+77. And the window question stopped being a plateau.</p>
+
+<h3>1. Which window &mdash; no longer a plateau</h3>
+<p>Every window now gets its own nested bias and range calibration, scored with forecast
+origins as the resampling unit:</p>
+</div>
+<div class="tw col">
+<table><thead><tr><th>Comparison</th><th>Median paired diff</th><th>Wins</th></tr></thead><tbody>
+<tr class="win"><td>flat 365 vs flat 270</td><td class="n">&minus;7d (se 1.4)</td><td class="n">17/19</td></tr>
+<tr class="win"><td>flat 365 vs flat 240</td><td class="n">&minus;11d (se 1.8)</td><td class="n">18/19</td></tr>
+<tr><td>flat 450 vs flat 365</td><td class="n">+5d (se 2.0)</td><td class="n">7/19</td></tr>
+<tr><td>flat 540 vs flat 365</td><td class="n">&minus;5d (se 3.9)</td><td class="n">13/18</td></tr>
+<tr><td>flat 730 vs flat 365</td><td class="n">+8d (se 3.7)</td><td class="n">1/6</td></tr>
+</tbody></table></div>
+<div class="col">
+<p><strong>365 beats 270 and 240 by five to six standard errors.</strong> The one-standard-error
+rule does not rescue the shorter windows here &mdash; they are genuinely worse. Going longer
+does not help either: 450 is worse, 540 is indistinguishable (&minus;5 &plusmn; 3.9), 730 is
+worse on thin data. The non-monotonic pattern across 365/450/540 is the signature of noise,
+so <strong>365 is chosen as the shortest of the indistinguishable long windows</strong>.</p>
+
+<h3>2. Is the bias correction stable? Yes in calm, no across a shock</h3>
+<p>The far-horizon correction barely moves as the training cutoff advances:</p>
+</div>
+<pre>  cutoff        0-2mo  2-4mo  4-7mo  7-11mo  11-16mo  16mo+
+  &lt;2025-03-15      -2     11     32     65      86     <b>108</b>
+  &lt;2025-07-15       2     20     37     51      81     <b>111</b>
+  &lt;2025-11-15      -1      7     16     39      81     <b>111</b>
+  &lt;2026-01-01      -1      7     19     44      83     <b>111</b></pre>
+<div class="col">
+<p>The +111-day correction is stable to about three days. The <em>mid-range</em> is the
+unstable part (4&ndash;7 months swings 32 &rarr; 16). So the worry was reasonable and the answer
+is mostly reassuring &mdash; with one caveat: nested stability inside a single era is not proof
+it survives a regime change, and every origin here is from one era.</p>
+<p class="note"><strong>But the correction is a fair-weather instrument.</strong> It helps in
+13 of 19 held-out origins and hurts in 6 &mdash; and the 6 are <em>all</em> the origins
+forecasting into the October 2025 shutdown, where it turns 23d of error into 42d. It makes a
+good model better in calm periods and a bad situation worse in a shock.</p>
+
+<h3>3. The monotonic band: 95 days, not 90</h3>
+</div>
+<div class="tw col">
+<table><thead><tr><th>Predicted</th><th>Bias</th><th>80% width</th><th>Monotone-enforced</th><th>&plusmn;45d coverage</th></tr></thead><tbody>
+<tr><td>0&ndash;2 months</td><td class="n">&minus;1d</td><td class="n">68d</td><td class="n">68d</td><td class="n">89%</td></tr>
+<tr><td>2&ndash;4 months</td><td class="n">+7d</td><td class="n">84d</td><td class="n">84d</td><td class="n">85%</td></tr>
+<tr><td>4&ndash;7 months</td><td class="n">+19d</td><td class="n">90d</td><td class="n">90d</td><td class="n">81%</td></tr>
+<tr><td>7&ndash;11 months</td><td class="n">+44d</td><td class="n">95d</td><td class="n">95d</td><td class="n">78%</td></tr>
+<tr><td>11&ndash;16 months</td><td class="n">+83d</td><td class="n">87d</td><td class="n">95d</td><td class="n">82%</td></tr>
+<tr><td>16 months+</td><td class="n">+111d</td><td class="n">73d</td><td class="n">95d</td><td class="n">87%</td></tr>
+</tbody></table></div>
+<div class="col">
+<p>A genuine 80% interval peaks at <strong>95 days</strong>. So the 90-day product cap is
+<em>five days</em> short of honest, not the comfortable fit the first pass claimed. Two honest
+options: publish 95 days and call it 80%, or cap at 90 and label the real coverage, which is
+about 78% at the widest point. I would publish 95 and keep the round number out of it.</p>
+<p>The residual narrowing at 11&ndash;16 and 16+ months is smaller than before but has not gone
+away, and those bins draw on only <strong>17&ndash;19 independent origins</strong> against 31
+for the near bins. The monotone constraint holds the width at 95 rather than letting it fall,
+which is the right treatment for a shape we cannot yet justify.</p>
+
+<h3>4. Holidays: real, tiny, and worth keeping anyway</h3>
+</div>
+<pre>  ordinary weekday    <b>522</b>/day
+  federal holiday      <b>10</b>/day    ratio <b>0.02</b>
+  Dec 24 - Jan 1      <b>113</b>/day    ratio <b>0.22</b>
+
+paired improvement <b>-1 day</b> (se 0.22), wins 13/19 origins</pre>
+<div class="col">
+<p>Measured as future calendar dates, never as a monthly multiplier, and normalised to mean 1
+over a year so it redistributes rather than adds. Statistically real (four standard errors) and
+practically worth one day. I would keep it, mostly because a queue simulation that spends
+decisions on Christmas Day is wrong on its face, and the list is static and free.</p>
+
+<h3>What remains uncertain</h3>
+<ul>
+<li><strong>One era.</strong> All 31 origins sit inside a single stretch of DOL history. Nested stability is not the same as surviving a regime change.</li>
+<li><strong>Long horizons rest on 17&ndash;19 origins</strong>, and their censored members are scored at a lower bound, so their errors are still optimistic by an unknown amount.</li>
+<li><strong>Shocks break everything</strong>, the bias correction worst of all. Coverage falls to 27&ndash;50% across the shutdown.</li>
+<li><strong>Status history does not exist</strong>, so the backtest counts every unresolved case as blocking while production counts only analyst review. Sensitivity-tested; the ranking held.</li>
+</ul>
+<p class="keep"><strong>Verdict: cleared to rebuild.</strong> Flat 365-day rate, nested horizon-dependent bias correction, monotone 95-day 80% band, explicit holiday calendar. Not because it is elegant, but because it is the only configuration that survived being attacked twice.</p>
+</div>
 <div class="col">
 <h2>What I have NOT done</h2>
 <ul>

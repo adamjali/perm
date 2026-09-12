@@ -3,11 +3,28 @@ import {D,S,MO,CORPUS_END,load,lbRecv,paceAt} from "./lib.mjs";
 export const B=load();
 const {recv,ddec,praw,daily,dayLo}=B;
 
+/* Two populations the decided-only file cannot see at any historical origin:
+   (a) cases still pending today,
+   (b) cases FINAL today but decided after the file ends (2026-06-30).
+   Both were unresolved at every origin in this study, so both belong in blocking.
+   (b) was missed entirely in the first audit: 47,060 cases, 20% of the relevant
+   population, concentrated in exactly the filing months a long-horizon forecast
+   is about. Leaving it out undercounts the queue AND deletes the slow tail from
+   the truth set, which is what made far-horizon bands look impossibly narrow. */
 /** cumulative count of still-pending-today cases filed before day x */
-const pendDays=praw.map(p=>p[0]), pendCum=[]; {let s=0;for(const p of praw){pendCum.push(s);s+=p[1];}}
+import fs2 from "fs";
+const censRaw=JSON.parse(fs2.readFileSync(".planning/backtest/censored.json","utf8"))
+  .map(([d,n])=>[D(d),n]).filter(([d])=>!isNaN(d)).sort((a,b)=>a[0]-b[0]);
+export const CENS=censRaw;
+const merged=(()=>{const m=new Map();
+  for(const [d,n] of praw) m.set(d,(m.get(d)||0)+n);
+  for(const [d,n] of censRaw) m.set(d,(m.get(d)||0)+n);
+  return [...m.entries()].sort((a,b)=>a[0]-b[0]);})();
+const pendDays=merged.map(p=>p[0]), pendCum=[]; {let s=0;for(const p of merged){pendCum.push(s);s+=p[1];}}
+const MERGED=merged;
 export function pendingBefore(x){
   let lo=0,hi=pendDays.length; while(lo<hi){const m=(lo+hi)>>1; if(pendDays[m]<x)lo=m+1;else hi=m;}
-  return lo===0?0:pendCum[lo-1]+praw[lo-1][1];
+  return lo===0?0:pendCum[lo-1]+MERGED[lo-1][1];
 }
 
 /** Build the origin's state once: prefix count of "unresolved at T" over the received-sorted array. */
