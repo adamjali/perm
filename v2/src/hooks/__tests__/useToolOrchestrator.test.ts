@@ -128,7 +128,17 @@ function createDefaultOptions(
 // Tests
 // =============================================================================
 
-describe('useToolOrchestrator', () => {
+// A GENEROUS TIMEOUT, AND THE REASON IS THE IMPORT, NOT THE CODE. Each test
+// here does a dynamic `await import('../useToolOrchestrator')` after the
+// module registry is reset, and that pulls a large dependency graph. Measured
+// 2026-09-13: the file passes ALONE in 3.8s with the first test alone taking
+// 3,490ms - 70% of the default 5s budget - so under the full parallel suite
+// it tips over and fails as a flake rather than a defect. CI hides it behind
+// `--retry=2`; locally, with `bail: 1`, it truncates the whole run.
+//
+// Raising the budget is the honest fix. Mocking the module away would make
+// the test stop exercising the thing it exists for.
+describe('useToolOrchestrator', { timeout: 30_000 }, () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Reset modules to clear ref state between tests

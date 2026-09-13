@@ -511,9 +511,15 @@ export function PermTimelineEstimator({
             When will DOL decide my PERM?
           </h2>
         </div>
+        {/* FOLLOWS THE TENSE, like the label and the helper line below it.
+            This said "Pick the month DOL received your ETA-9089" - wrong twice
+            over once the control became a date field that reaches forward:
+            it asks for a month when a day is what changes the answer, and it
+            is past tense for someone who has not filed. */}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          Pick the month DOL received your ETA-9089. Every figure comes from
-          DOL&apos;s own published data.
+          {isFuture
+            ? "Pick the date you expect DOL to receive your ETA-9089. Every figure comes from DOL's own published data."
+            : "Pick the date DOL received your ETA-9089. Every figure comes from DOL's own published data."}
         </p>
 
         {/* `grid-cols-1` AND `[&>*]:min-w-0`, both required: below the

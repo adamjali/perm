@@ -207,4 +207,20 @@ describe("a filing date in the FUTURE", () => {
       Date.parse(far.replace(/^Around (\w{3}, )?/, "")),
     );
   });
+
+  it("makes the INTRO copy follow the tense too, not just the label", () => {
+    // It said "Pick the month DOL received your ETA-9089" - wrong twice over
+    // once the control became a date field that reaches forward: it asks for
+    // a month when a day is what changes the answer, and it is past tense for
+    // someone who has not filed yet.
+    renderFuture();
+    expect(screen.getByText(/Pick the date DOL received/i)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), {
+      target: { value: future },
+    });
+    expect(screen.queryByText(/Pick the date DOL received/i)).toBeNull();
+    expect(screen.getByText(/expect DOL to receive/i)).toBeTruthy();
+    // and it must never say "month" again
+    expect(screen.queryByText(/Pick the month/i)).toBeNull();
+  });
 });
