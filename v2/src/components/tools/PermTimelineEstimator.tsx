@@ -27,7 +27,7 @@ import {
   type MeasuredPace,
 } from "@/lib/perm";
 import type { Pace } from "@/lib/dolPace";
-import { formatMonth } from "@/lib/dolFormat";
+import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 
 /** "Tue 14 Oct 2026". UTC so the label cannot slide a day by timezone. */
 function fmtDay(iso: string): string {
@@ -268,6 +268,47 @@ export function PermTimelineEstimator({
     return options[0] ? options[0].value : "2025-01";
   });
 
+  /**
+   * The DAY of the filing month, or "" for "I only know the month".
+   *
+   * WHY IT EXISTS NOW AND DID NOT BEFORE. Until the decision-pace model landed
+   * every estimate was anchored to a month, so a day could not change the
+   * answer and asking for one would have been a form field that did nothing.
+   * `casesAheadOfDay` prorates the filing month by day, so the day is now
+   * load-bearing: a month carrying ~15,000 pending at DOL's ~625 a day is
+   * about three weeks of spread between filing on the 1st and the 31st.
+   *
+   * OPTIONAL, and blank is a real answer rather than a missing one - plenty of
+   * people remember the month and not the day. Blank reads as the 15th, the
+   * midpoint, which is what the calculator did before this control existed, so
+   * nobody's answer moved by adding it.
+   */
+  const [day, setDay] = useState<string>("");
+
+  /** Days in the chosen month, from the calendar rather than a constant. */
+  const daysInMonth = useMemo(() => {
+    const m = /^(\d{4})-(\d{2})$/.exec(month);
+    if (!m) return 31;
+    return new Date(Date.UTC(Number(m[1]), Number(m[2]), 0)).getUTCDate();
+  }, [month]);
+
+  /**
+   * The day actually used, which is "" whenever the chosen day cannot exist in
+   * the chosen month.
+   *
+   * DERIVED, NOT REPAIRED BY AN EFFECT. The first version cleared the day in a
+   * `useEffect`, which runs AFTER the render that already built the date - so
+   * picking the 31st and then February rendered `2026-02-31` once, and
+   * `validateISODate` threw before the effect could fire. A test caught it.
+   * Deriving makes the invalid state unrepresentable instead of transient.
+   */
+  const effectiveDay = day && Number(day) <= daysInMonth ? day : "";
+
+  /** What every model is anchored to. The 15th when no day is given. */
+  const filingDate = effectiveDay
+    ? `${month}-${effectiveDay.padStart(2, "0")}`
+    : `${month}-15`;
+
   // ?month= prefill, read AFTER mount on purpose. Reading searchParams
   // server-side would opt the whole route into dynamic rendering - the exact
   // defect that once made every public page a server render per visit - and
@@ -296,7 +337,7 @@ export function PermTimelineEstimator({
   const estimate = useMemo(
     () =>
       estimateQueueDecision({
-        filingDate: `${month}-15`,
+        filingDate,
         today,
         frontier,
         cohorts,
@@ -313,15 +354,18 @@ export function PermTimelineEstimator({
         // `casesAheadOfDay` prorates that month's own pending accordingly.
         // Absent months or pace, the model is omitted and the month-granular
         // ones answer exactly as they did before.
-        casesAhead: months.length ? casesAheadOfDay(months, `${month}-15`) : null,
+        casesAhead: months.length ? casesAheadOfDay(months, filingDate) : null,
         decisionPace,
         sweepAgeDays,
       }),
-    [month, today, frontier, cohorts, frontierAdvance, letterDelta,
+    // `month` is deliberately absent: `filingDate` is derived from it, so
+    // listing both re-runs the memo twice for one change.
+    [filingDate, today, frontier, cohorts, frontierAdvance, letterDelta,
      months, decisionPace, sweepAgeDays],
   );
 
   const position = POSITION_COPY[estimate.position];
+
 
   /**
    * The span every model agrees the answer lies inside.
@@ -366,6 +410,44 @@ export function PermTimelineEstimator({
   }, [estimate.models, today]);
 
   /**
+   * The answer as the LEAD model states it, when that model can place a case
+   * inside its filing month - and the cross-model envelope otherwise.
+   *
+   * WHY THIS EXISTS NOW. The display used to print a month unless the employer
+   * initial was supplied, on the reasoning that "DOL publishes at MONTH
+   * resolution and works alphabetically within it, so the initial is the only
+   * thing that says where in the month a case falls". That was true of every
+   * model anchored to a filing month. It is NOT true of decision-pace, which
+   * counts the undecided cases filed before yours - that number places you
+   * inside the month directly, and it moves with the day you filed.
+   *
+   * So a day is printed when a day is earned, and the two things that earn one
+   * are now the counting model and the measured initial, not the initial
+   * alone. Leaving it as it was meant a reader could pick their filing day,
+   * watch the arithmetic change underneath, and still be shown a month.
+   *
+   * It also settles a split between this page and the case page, which has
+   * always shown the leading model's own band rather than a span across
+   * models. Two surfaces describing one estimate should not disagree about
+   * what the estimate is.
+   */
+  const lead = estimate.models[0] ?? null;
+  const leadIsCounting = lead?.id === "decision-pace";
+  const dayEarned = leadIsCounting || letterDelta !== null;
+  const shown = useMemo(() => {
+    if (leadIsCounting && lead?.earliestDate && lead?.latestDate) {
+      return {
+        anchor: lead.estimatedDate,
+        earliest: lead.earliestDate,
+        latest: lead.latestDate,
+        fromLead: true,
+      };
+    }
+    return envelope ? { ...envelope, fromLead: false } : null;
+  }, [leadIsCounting, lead, envelope]);
+
+
+  /**
    * How far through the wait this case is, as a fraction.
    *
    * Domain runs from the filing month to the LATEST bound, so the bar can
@@ -405,10 +487,14 @@ export function PermTimelineEstimator({
    */
   const [caseWarning, setCaseWarning] = useState<string | null>(null);
 
-  function handleDecode(parsed: { filingMonth: string }) {
+  function handleDecode(parsed: { filingMonth: string; filingDate: string }) {
     if (options.some((o) => o.value === parsed.filingMonth)) {
       setCaseWarning(null);
       setMonth(parsed.filingMonth);
+      // The case number encodes the day, and it was being discarded. Nobody
+      // holding their number should have to guess a day the number states.
+      const d = /^\d{4}-\d{2}-(\d{2})$/.exec(parsed.filingDate);
+      setDay(d ? String(Number(d[1])) : "");
       return;
     }
     setCaseWarning(
@@ -433,23 +519,60 @@ export function PermTimelineEstimator({
           DOL&apos;s own published data.
         </p>
 
-        <div className="mt-6">
-          <Label htmlFor={selectId} className="text-sm font-bold">
-            Month DOL received your case
-          </Label>
-          <select
-            id={selectId}
-            value={month}
-            onChange={(e) => setMonth(e.target.value)}
-            className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
-          >
-            {options.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
+        {/* `grid-cols-1` AND `[&>*]:min-w-0`, both required: below the
+            breakpoint a grid with no column track sizes its items to their
+            content, and a select's content contribution comes from the user
+            agent. That pair is what fixed the form overflow across /tools. */}
+        <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:max-w-md sm:grid-cols-[minmax(0,1fr)_7rem]">
+          <div>
+            <Label htmlFor={selectId} className="text-sm font-bold">
+              Month DOL received your case
+            </Label>
+            <select
+              id={selectId}
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            >
+              {options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <Label htmlFor={`${selectId}-day`} className="text-sm font-bold">
+              Day{" "}
+              <span className="font-normal text-muted-foreground">
+                (optional)
+              </span>
+            </Label>
+            <select
+              id={`${selectId}-day`}
+              value={effectiveDay}
+              onChange={(e) => setDay(e.target.value)}
+              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+            >
+              <option value="">Any</option>
+              {Array.from({ length: daysInMonth }, (_, i) => String(i + 1)).map(
+                (d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ),
+              )}
+            </select>
+          </div>
         </div>
+        {/* SAY WHAT BLANK MEANS. Someone who leaves the day alone should know
+            the answer is still a real one and what it assumes, rather than
+            wondering whether they under-filled the form. */}
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+          {effectiveDay
+            ? `Counting the cases filed before ${formatAsOf(filingDate) ?? filingDate}.`
+            : "Leave the day blank and this reads the middle of the month. A busy month carries around 15,000 cases, so filing on the 1st rather than the 31st is worth roughly three weeks."}
+        </p>
 
         {/* OPTIONAL, AND SECOND. DOL works each filing month alphabetically by
             employer, so this is the only input that can sharpen a month into a
@@ -500,9 +623,9 @@ export function PermTimelineEstimator({
       {/* THE ANSWER, at the size the question was asked. Everything in this
           band is a bound some model below already published, or arithmetic on
           the month the reader picked. */}
-      {envelope || estimate.position === "overdue" ? (
+      {shown || estimate.position === "overdue" ? (
         <div className="border-b-2 border-border p-6 sm:p-8">
-          {envelope ? (
+          {shown ? (
             /* The anchor leads and the window follows. A range-only headline
                read as "we don't know" next to rivals printing one confident
                date; one date with no range is the opposite failure (the four
@@ -520,26 +643,34 @@ export function PermTimelineEstimator({
                   Without it the anchor is a month, because printing a day we
                   cannot place inside the month is precision we do not have. */}
               <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-5xl">
-                {letterDelta === null
-                  ? `Around ${formatMonth(envelope.anchor.slice(0, 7))}`
-                  : `Around ${fmtDay(envelope.anchor)}`}
+                {dayEarned
+                  ? `Around ${fmtDay(shown.anchor)}`
+                  : `Around ${formatMonth(shown.anchor.slice(0, 7))}`}
               </p>{" "}
               <p className="mt-3 font-heading text-lg font-bold sm:text-xl">
                 Likely decision window:{" "}
-                {envelope.earliest.slice(0, 7) === envelope.latest.slice(0, 7) ? (
-                  formatMonth(envelope.earliest.slice(0, 7))
+                {dayEarned ? (
+                  <>
+                    {fmtDay(shown.earliest)}
+                    <span className="text-muted-foreground"> to </span>
+                    {fmtDay(shown.latest)}
+                  </>
+                ) : shown.earliest.slice(0, 7) === shown.latest.slice(0, 7) ? (
+                  formatMonth(shown.earliest.slice(0, 7))
                 ) : (
                   <>
-                    {formatMonth(envelope.earliest.slice(0, 7))}
+                    {formatMonth(shown.earliest.slice(0, 7))}
                     <span className="text-muted-foreground"> to </span>
-                    {formatMonth(envelope.latest.slice(0, 7))}
+                    {formatMonth(shown.latest.slice(0, 7))}
                   </>
                 )}
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
-                {envelope.modelCount === 1
-                  ? "One model has enough published data to answer for this month."
-                  : `The window comes from ${envelope.modelCount} models on different bases, spread across ${envelope.spanMonths} months. They are never averaged into one number, because the spread is the honest part. Open "How this was worked out" to see each.`}
+                {shown.fromLead
+                  ? "If DOL holds its recent pace. That is a pace scenario, not a confidence interval - tested against past cases it contained the real decision date about 57% of the time, and closer to 41% within two months of a decision. The other models are under “How this was worked out” below."
+                  : envelope && envelope.modelCount === 1
+                    ? "One model has enough published data to answer for this month."
+                    : `The window comes from ${envelope?.modelCount ?? 0} models on different bases, spread across ${envelope?.spanMonths ?? 0} months. They are never averaged into one number, because the spread is the honest part. Open "How this was worked out" to see each.`}
               </p>
             </>
           ) : (
