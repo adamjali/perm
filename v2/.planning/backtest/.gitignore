@@ -12,3 +12,4 @@ scoped.json
 weights.tmp.json
 final.mjs
 final2.mjs
+*.tmp.json
