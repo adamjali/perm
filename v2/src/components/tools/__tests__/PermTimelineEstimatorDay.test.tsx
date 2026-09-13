@@ -186,9 +186,12 @@ describe("a filing date in the FUTURE", () => {
     });
     // Today's backlog is counted; the arrivals before you are projected, and
     // the rate's own window is named rather than hidden.
-    expect(screen.getByText(/cases already waiting/i)).toBeTruthy();
-    expect(screen.getByText(/expected to be filed before you/i)).toBeTruthy();
-    expect(screen.getByText(/settled months/i)).toBeTruthy();
+    expect(screen.getByText(/waiting now/i)).toBeTruthy();
+    expect(screen.getByText(/filed before you get there/i)).toBeTruthy();
+    // The rate's own window moved to "How this was worked out" with the
+    // other explanations - it explains a number, so it belongs beside
+    // the number rather than under the control that feeds it.
+    expect(screen.getByText(/a day filed before you/i)).toBeTruthy();
   });
 
   it("gives a LATER answer the further out you file", () => {
@@ -214,13 +217,84 @@ describe("a filing date in the FUTURE", () => {
     // a month when a day is what changes the answer, and it is past tense for
     // someone who has not filed yet.
     renderFuture();
-    expect(screen.getByText(/Pick the date DOL received/i)).toBeTruthy();
+    // The intro paragraph is gone - it restated the heading. The tense now
+    // lives in the label, which is where it belongs.
+    expect(screen.getByLabelText(/DOL received your case/i)).toBeTruthy();
     fireEvent.change(screen.getByLabelText(/DOL received your case/i), {
       target: { value: future },
     });
-    expect(screen.queryByText(/Pick the date DOL received/i)).toBeNull();
-    expect(screen.getByText(/expect DOL to receive/i)).toBeTruthy();
+    expect(screen.queryByLabelText(/DOL received your case/i)).toBeNull();
+    expect(screen.getByLabelText(/expect to file/i)).toBeTruthy();
     // and it must never say "month" again
     expect(screen.queryByText(/Pick the month/i)).toBeNull();
+  });
+});
+
+describe("the page is empty until a date is chosen", () => {
+  /**
+   * It used to open on DOL's current frontier month and show a complete
+   * answer - a date, a window, a queue position - for a month the reader had
+   * never picked. That reads as "your estimate" rather than "an example", and
+   * a reader took it for their own.
+   */
+  function renderBare() {
+    return render(
+      <PermTimelineEstimator
+        today="2026-09-13"
+        frontier={{ analystQueueMonth: "2025-11", officialAvgDays: 336, asOf: "2026-08-31" }}
+        cohorts={[]}
+        frontierAdvance={{ rate: 1.0, slowest: 0.8, fastest: 2.0 }}
+        disclosure={null}
+        months={MONTHS}
+        decisionPace={PACE}
+        sweepAgeDays={0}
+      />,
+    );
+  }
+
+  it("starts with the field empty", () => {
+    renderBare();
+    expect((screen.getByLabelText(/DOL received your case/i) as HTMLInputElement).value).toBe("");
+  });
+
+  it("shows no date, no window and no queue until one is given", () => {
+    renderBare();
+    expect(screen.queryByText(/^Around /)).toBeNull();
+    expect(screen.queryByText(/Likely decision window/)).toBeNull();
+  });
+
+  it("says what picking a date will do, rather than showing an empty frame", () => {
+    renderBare();
+    expect(screen.getByText(/Pick a date above/i)).toBeTruthy();
+  });
+
+  it("fills in once a date is chosen, and empties again when cleared", () => {
+    renderBare();
+    const field = screen.getByLabelText(/DOL received your case/i);
+    fireEvent.change(field, { target: { value: "2025-12-15" } });
+    expect(screen.getByText(/^Around /)).toBeTruthy();
+    // Clearable, and everything downstream goes with it.
+    fireEvent.change(field, { target: { value: "" } });
+    expect(screen.queryByText(/^Around /)).toBeNull();
+    expect(screen.getByText(/Pick a date above/i)).toBeTruthy();
+  });
+
+  it("still honours a date asked for by the caller", () => {
+    // `?month=` and the homepage hand-off are a choice made elsewhere; the
+    // bare page is not.
+    render(
+      <PermTimelineEstimator
+        today="2026-09-13"
+        frontier={{ analystQueueMonth: "2025-11", officialAvgDays: 336, asOf: "2026-08-31" }}
+        cohorts={[]}
+        frontierAdvance={{ rate: 1.0, slowest: 0.8, fastest: 2.0 }}
+        disclosure={null}
+        months={MONTHS}
+        decisionPace={PACE}
+        sweepAgeDays={0}
+        initialMonth="2025-12"
+      />,
+    );
+    expect(screen.getAllByText(/^Around /)[0]).toBeTruthy();
   });
 });

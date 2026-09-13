@@ -25,6 +25,7 @@ const FRONTIER = {
 function renderEstimator(extra: Record<string, unknown> = {}) {
   return render(
     <PermTimelineEstimator
+      initialMonth="2025-09"
       frontier={FRONTIER}
       cohorts={[]}
       frontierAdvance={null}

@@ -829,3 +829,168 @@ describe('estimateQueueDecision: decision pace', () => {
     expect(gap).toBeLessThan(45);
   });
 });
+
+describe('the employer initial must never make the answer LATER', () => {
+  /**
+   * REPORTED FROM THE LIVE PAGE. Filed 2025-11-04 with no initial gave
+   * "around 21 September 2026". Choosing A - the FASTEST letter, 11 days
+   * under the corpus mean - gave the 25th, four days LATER, with the window
+   * collapsed to a single day.
+   *
+   * The cause was the elapsed filter, not the arithmetic. A pulled
+   * decision-pace back to 10 September, four days before today; the filter
+   * dropped it as "already passed"; and a slower month-anchored model with no
+   * band took over. A faster letter producing a later date is exactly
+   * backwards, and the collapsed range is what a model with no bounds looks
+   * like when it is promoted by accident.
+   */
+  const ask = (letterDeltaDays: number | null) =>
+    estimateQueueDecision({
+      filingDate: '2025-11-04',
+      today: TODAY,
+      frontier: FRONTIER,
+      frontierAdvanceRate: 1.8,
+      frontierAdvanceRange: { slowest: 1.05, fastest: 2.0 },
+      // A realistic queue. With only a few hundred ahead the horizon is
+      // shorter than the shift itself, which is a different (degenerate)
+      // case and not the one reported.
+      casesAhead: 30_000,
+      decisionPace: PACE,
+      sweepAgeDays: 0,
+      letterDeltaDays,
+    });
+
+  it('a fast initial is never later than no initial', () => {
+    const none = ask(null).models[0]!;
+    const fast = ask(-11).models[0]!;
+    expect(fast.estimatedDate <= none.estimatedDate).toBe(true);
+  });
+
+  it('a slow initial is never earlier than no initial', () => {
+    const none = ask(null).models[0]!;
+    const slow = ask(16).models[0]!;
+    expect(slow.estimatedDate >= none.estimatedDate).toBe(true);
+  });
+
+  it('keeps the SAME model leading whichever initial is chosen', () => {
+    // The swap is what produced the collapsed window: a different model, on a
+    // different basis, with no band.
+    expect(ask(-11).models[0]!.id).toBe(ask(null).models[0]!.id);
+    expect(ask(16).models[0]!.id).toBe(ask(null).models[0]!.id);
+  });
+
+  it('keeps the band rather than collapsing it to one day', () => {
+    const m = ask(-11).models[0]!;
+    expect(m.earliestDate).not.toBeNull();
+    expect(m.latestDate).not.toBeNull();
+    expect(m.earliestDate).not.toBe(m.latestDate);
+  });
+
+  it('floors a shifted date at today rather than dropping the model', () => {
+    // Pulled well behind us, it should say "about now", not vanish.
+    const r = ask(-400);
+    const m = r.models[0];
+    if (m) expect(m.estimatedDate >= TODAY).toBe(true);
+  });
+
+  /**
+   * THE FIXTURE HAS TO MAKE THE SHIFT CROSS TODAY, or none of this is tested.
+   * A first version used 30,000 cases ahead - months out - where an 11-day
+   * shift can never reach the elapsed filter, and it passed cheerfully
+   * against the broken build. Probed by restoring the old filter and watching
+   * it stay green.
+   *
+   * At ~646 decisions a day, ~3,900 ahead is about six days out: a fast
+   * initial pulls it five days BEHIND today, which is exactly the condition
+   * that dropped the model on the live page.
+   */
+  const nearAsk = (letterDeltaDays: number | null) =>
+    estimateQueueDecision({
+      filingDate: '2025-11-04',
+      today: TODAY,
+      frontier: FRONTIER,
+      frontierAdvanceRate: 1.8,
+      frontierAdvanceRange: { slowest: 1.05, fastest: 2.0 },
+      casesAhead: 3_900,
+      decisionPace: PACE,
+      sweepAgeDays: 0,
+      letterDeltaDays,
+    });
+
+  it('does not DROP the leading model when a fast initial crosses today', () => {
+    expect(nearAsk(null).models[0]!.id).toBe('decision-pace');
+    expect(nearAsk(-11).models[0]!.id).toBe('decision-pace');
+  });
+
+  it('and the crossed date is floored at today, never shown in the past', () => {
+    const m = nearAsk(-11).models[0]!;
+    expect(m.estimatedDate).toBe(TODAY);
+    expect(m.earliestDate === null || m.earliestDate >= TODAY).toBe(true);
+  });
+});
+
+describe('the range means "given what we do not know"', () => {
+  /**
+   * REPORTED: with no initial the page printed "19 to 26 September", and
+   * choosing Z then returned 7 October - outside the range it had just shown.
+   * The range was not wrong about the pace; it was silent about the alphabet.
+   *
+   * With no initial there are two unknowns, the rate and the employer's
+   * position in the filing month, and the band only ever carried the first.
+   */
+  const SPREAD = { min: -11, max: 16 };
+  const ask = (letterDeltaDays: number | null) =>
+    estimateQueueDecision({
+      filingDate: '2025-11-04',
+      today: TODAY,
+      frontier: FRONTIER,
+      frontierAdvanceRate: 1.8,
+      frontierAdvanceRange: { slowest: 1.05, fastest: 2.0 },
+      casesAhead: 30_000,
+      decisionPace: PACE,
+      sweepAgeDays: 0,
+      letterSpreadDays: SPREAD,
+      letterDeltaDays,
+    });
+
+  it('EVERY letter lands inside the no-letter range', () => {
+    const none = ask(null).models[0]!;
+    for (const d of [SPREAD.min, 0, SPREAD.max]) {
+      const m = ask(d).models[0]!;
+      expect(m.estimatedDate >= none.earliestDate!).toBe(true);
+      expect(m.estimatedDate <= none.latestDate!).toBe(true);
+    }
+  });
+
+  it('choosing a letter NARROWS the range', () => {
+    const none = ask(null).models[0]!;
+    const days = (a: string, b: string) =>
+      (Date.parse(b) - Date.parse(a)) / 86_400_000;
+    const wide = days(none.earliestDate!, none.latestDate!);
+    for (const d of [SPREAD.min, SPREAD.max]) {
+      const m = ask(d).models[0]!;
+      expect(days(m.earliestDate!, m.latestDate!)).toBeLessThan(wide);
+    }
+  });
+
+  it('does not widen when the spread is not measured', () => {
+    const withSpread = ask(null).models[0]!;
+    const without = estimateQueueDecision({
+      filingDate: '2025-11-04', today: TODAY, frontier: FRONTIER,
+      frontierAdvanceRate: 1.8,
+      frontierAdvanceRange: { slowest: 1.05, fastest: 2.0 },
+      casesAhead: 30_000, decisionPace: PACE, sweepAgeDays: 0,
+      letterDeltaDays: null,
+    }).models[0]!;
+    expect(without.earliestDate! > withSpread.earliestDate!).toBe(true);
+  });
+
+  it('never double-counts: a chosen letter does not also get the spread', () => {
+    // Once the letter is known that unknown is gone.
+    const a = ask(SPREAD.min).models[0]!;
+    const days = (x: string, y: string) => (Date.parse(y) - Date.parse(x)) / 86_400_000;
+    expect(days(a.earliestDate!, a.latestDate!)).toBeLessThan(
+      Math.abs(SPREAD.max - SPREAD.min) + 30,
+    );
+  });
+});

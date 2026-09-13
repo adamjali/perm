@@ -37,6 +37,7 @@ const ALPHABET = {
 function renderEstimator(extra: Record<string, unknown> = {}) {
   return render(
     <PermTimelineEstimator
+      initialMonth="2025-09"
       frontier={FRONTIER}
       cohorts={[]}
       frontierAdvance={null}
@@ -79,7 +80,7 @@ describe("the employer initial", () => {
     const select = screen.getByLabelText(/First letter of the employer/);
     // Blank, not "A". A defaulted initial would silently shift every estimate.
     expect((select as HTMLSelectElement).value).toBe("");
-    expect(screen.getByText(/Not sure \/ skip/)).toBeInTheDocument();
+    expect(screen.getByText(/^Any$/)).toBeInTheDocument();
   });
 
   it("keeps the anchor at a month while no initial is given", () => {
@@ -122,9 +123,22 @@ describe("the employer initial", () => {
   });
 
   it("states the size of the term and what it was measured over", () => {
-    renderEstimator({ alphabet: ALPHABET });
     // The number is the guard against it reading as a lever: 27 days, not 160.
-    expect(screen.getByText(/worth about/)).toBeInTheDocument();
-    expect(screen.getByText(/339,518 decided cases/)).toBeInTheDocument();
+    renderEstimator({ alphabet: ALPHABET });
+    // The explanation moved beside the number it moves - it explains a term
+    // that only exists once a letter is chosen, so choose one.
+    fireEvent.change(screen.getByLabelText(/First letter of the employer/), {
+      target: { value: "A" },
+    });
+    const body = document.body.textContent ?? "";
+    expect(body).toContain("whole alphabet is worth about");
+    expect(body).toContain("339,518 decided cases");
+  });
+
+  it("does NOT explain the alphabet before a letter is chosen", () => {
+    // Three lines of prose about a term nobody has invoked yet is exactly the
+    // clutter this page was carrying.
+    renderEstimator({ alphabet: ALPHABET });
+    expect(document.body.textContent).not.toContain("whole alphabet is worth about");
   });
 });

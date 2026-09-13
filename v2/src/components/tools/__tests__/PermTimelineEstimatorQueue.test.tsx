@@ -40,6 +40,7 @@ const MONTHS: MonthQueue[] = [
 function renderQueue(extra: Record<string, unknown> = {}) {
   return render(
     <PermTimelineEstimator
+      initialMonth="2025-09"
       frontier={null}
       cohorts={[]}
       frontierAdvance={null}
@@ -100,6 +101,7 @@ describe("PermTimelineEstimator queue band", () => {
   it("renders no queue band at all when the series is absent", () => {
     render(
       <PermTimelineEstimator
+      initialMonth="2025-09"
         frontier={null}
         cohorts={[]}
         frontierAdvance={null}

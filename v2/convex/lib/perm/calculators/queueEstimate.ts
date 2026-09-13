@@ -129,6 +129,26 @@ export interface QueueEstimateInput {
    */
   letterDeltaDays?: number | null;
   /**
+   * The MEASURED span of the whole alphabet, when no initial has been given.
+   *
+   * WHY THE BAND HAS TO KNOW ABOUT THIS. The band answers "where could this
+   * land, given what we do not know". Without an initial there are TWO
+   * unknowns - how fast DOL runs, and where in the filing month this employer
+   * sits alphabetically - and the band was only ever expressing the first.
+   *
+   * The result was incoherent and a reader caught it: with no initial the
+   * range read 19 to 26 September, and choosing Z then returned 7 October,
+   * outside the range the same page had just printed. The range was not
+   * wrong about the pace; it was silent about the alphabet.
+   *
+   * So with no initial the band widens by this span (measured: A about 11
+   * days under the corpus mean, Z about 16 over, 27 days end to end), and
+   * choosing an initial NARROWS it back to the pace alone. Every letter's
+   * answer then falls inside the no-letter range, and telling us one more
+   * thing visibly tightens it, which is how information should behave.
+   */
+  letterSpreadDays?: { min: number; max: number } | null;
+  /**
    * Undecided cases filed before this one, from the live census.
    *
    * The counting input the month-granular models cannot have: `queue-advance`
@@ -732,9 +752,75 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     totalDays: m.totalDays + delta,
     earliestDate: shift(m.earliestDate),
     latestDate: shift(m.latestDate),
+    // Kept so the elapsed filter below can ask about BOTH dates.
+    unshiftedDate: m.estimatedDate,
   }));
 
-  const liveModels = adjusted.filter((m) => m.estimatedDate >= input.today);
+  /*
+   * THE SHIFT MUST NOT BE ABLE TO DELETE A MODEL, IN EITHER DIRECTION.
+   *
+   * The elapsed filter is right in principle: a date that has already passed
+   * is not a forecast. But the letter shift moves a date by up to 16 days
+   * either way, and a model sitting a few days in the future disappears
+   * entirely when a fast initial pulls it back past today.
+   *
+   * Measured on the live page: filed 2025-11-04 with no initial gave "around
+   * 21 September 2026" from the decision-pace model. Choosing A - the FASTEST
+   * letter, 11 days under the mean - should have given about the 10th.
+   * Instead it gave the 25th, LATER, with the window collapsed to a single
+   * day: A pushed decision-pace to 10 September, four days before today, the
+   * filter dropped it, and a slower month-anchored model with no band took
+   * over. A faster letter produced a later answer, which is exactly backwards.
+   *
+   * So a model survives if EITHER its shifted or its unshifted date is still
+   * ahead, and the date it shows is floored at today. A model the initial
+   * pulls to just behind us is saying "about now", which is true and useful;
+   * silently swapping it for a different model is neither.
+   */
+  /*
+   * WITH NO INITIAL, THE BAND CARRIES THE ALPHABET TOO.
+   *
+   * The pace band alone says "if DOL runs fast or slow". It cannot say "and
+   * we do not know where in the month you sit", which is worth about 27 days
+   * and is the larger unknown at short horizons. Widening here means every
+   * letter's answer lands inside the no-letter range, and choosing a letter
+   * narrows the range instead of contradicting it.
+   *
+   * Only when no initial was given: once we know the letter that unknown is
+   * gone, and re-adding it would be double-counting.
+   */
+  const spread = delta === 0 ? (input.letterSpreadDays ?? null) : null;
+  const widened: EstimateModel[] =
+    spread && Number.isFinite(spread.min) && Number.isFinite(spread.max)
+      ? adjusted.map((m) => ({
+          ...m,
+          earliestDate: m.earliestDate
+            ? formatUTC(addDays(validateISODate(m.earliestDate, 'band start'), Math.round(spread.min)))
+            : formatUTC(addDays(validateISODate(m.estimatedDate, 'model date'), Math.round(spread.min))),
+          latestDate: m.latestDate
+            ? formatUTC(addDays(validateISODate(m.latestDate, 'band end'), Math.round(spread.max)))
+            : formatUTC(addDays(validateISODate(m.estimatedDate, 'model date'), Math.round(spread.max))),
+        }))
+      : adjusted;
+
+  const liveModels = widened
+    .filter((m) => {
+      const unshifted = (m as { unshiftedDate?: string }).unshiftedDate ?? m.estimatedDate;
+      return m.estimatedDate >= input.today || unshifted >= input.today;
+    })
+    .map(({ ...m }) => {
+      delete (m as { unshiftedDate?: string }).unshiftedDate;
+      if (m.estimatedDate >= input.today) return m;
+      // Floored, and the band floored with it so it cannot open in the past.
+      const floor = (iso: string | null) =>
+        iso === null ? null : iso < input.today ? input.today : iso;
+      return {
+        ...m,
+        estimatedDate: input.today,
+        earliestDate: floor(m.earliestDate),
+        latestDate: floor(m.latestDate),
+      };
+    });
 
   return {
     filingDate: input.filingDate,

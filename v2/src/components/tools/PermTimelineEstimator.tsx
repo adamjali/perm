@@ -18,7 +18,7 @@
 
 import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } from "@phosphor-icons/react";
+import { CalendarDotIcon as CalendarClock, CaretRightIcon as CaretRight, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 
 import {
   estimateQueueDecision,
@@ -256,20 +256,41 @@ export function PermTimelineEstimator({
    * `month` derives from it, so every consumer below (the queue band, the
    * frontier chart, the stages line) is unchanged.
    */
-  const [filedOn, setFiledOn] = useState<string>(() => {
-    if (initialMonth && /^\d{4}-\d{2}$/.test(initialMonth)) return `${initialMonth}-15`;
-    // THE MONTH DOL IS ACTUALLY WORKING, so the empty state shows a real
-    // answer rather than an empty frame. This is the default the month picker
-    // had; an arbitrary offset from today would move every existing test and,
-    // worse, open the page on a month nobody chose.
-    if (frontier) return `${frontier.analystQueueMonth}-15`;
-    return `${today.slice(0, 7)}-15`;
-  });
+  /**
+   * EMPTY UNTIL SOMEBODY PICKS A DATE.
+   *
+   * It used to open on DOL's current frontier month, so the page showed a
+   * full answer - a date, a window, a queue position - for a month the reader
+   * had never chosen. That reads as "here is your estimate" when it is really
+   * "here is an example", and a reader took it for their own.
+   *
+   * A prefill is still honoured when it was ASKED for: `?date=`, `?month=`,
+   * or the `initialMonth` prop that the homepage hand-off uses. Those are a
+   * choice made elsewhere; the bare page is not.
+   */
+  const [filedOn, setFiledOn] = useState<string>(() =>
+    initialMonth && /^\d{4}-\d{2}$/.test(initialMonth) ? `${initialMonth}-15` : "",
+  );
 
-  const month = filedOn.slice(0, 7);
+  /** Nothing downstream may render an answer without one. */
+  const hasDate = /^\d{4}-\d{2}-\d{2}$/.test(filedOn);
+
+  /**
+   * A safe date for the arithmetic while the field is empty.
+   *
+   * The calculator is a pure function over a valid date and would throw on
+   * "". Computing against the frontier keeps every hook unconditional - React
+   * requires that - and the RENDER is gated on `hasDate`, so none of it
+   * reaches the page until a date is chosen.
+   */
+  const effectiveFiledOn = hasDate
+    ? filedOn
+    : `${frontier ? frontier.analystQueueMonth : today.slice(0, 7)}-15`;
+
+  const month = effectiveFiledOn.slice(0, 7);
 
   /** A date after today is a plan, not a record, and reads differently. */
-  const isFuture = filedOn > today;
+  const isFuture = hasDate && filedOn > today;
 
   /**
    * How fast cases are arriving, over months that have stopped growing.
@@ -285,7 +306,7 @@ export function PermTimelineEstimator({
   );
 
   /** What every model is anchored to. */
-  const filingDate = filedOn;
+  const filingDate = effectiveFiledOn;
 
   // ?month= prefill, read AFTER mount on purpose. Reading searchParams
   // server-side would opt the whole route into dynamic rendering - the exact
@@ -321,6 +342,21 @@ export function PermTimelineEstimator({
     return alphabet.letters.find((l) => l.letter === initial)?.deltaDays ?? null;
   }, [alphabet, initial]);
 
+  /**
+   * The measured span of the whole alphabet, for when no initial is chosen.
+   *
+   * Without an initial the reader's position in the filing month is unknown,
+   * and the band has to say so - otherwise choosing a letter returns a date
+   * outside the range the page just printed, which is what a reader caught.
+   * Derived from the same doc the per-letter shift comes from; null when the
+   * measurement is absent, and then nothing widens.
+   */
+  const letterSpread = useMemo(() => {
+    if (!alphabet || alphabet.letters.length === 0) return null;
+    const d = alphabet.letters.map((l) => l.deltaDays);
+    return { min: Math.min(...d), max: Math.max(...d) };
+  }, [alphabet]);
+
   const estimate = useMemo(
     () =>
       estimateQueueDecision({
@@ -337,6 +373,7 @@ export function PermTimelineEstimator({
         // model by the ordering DOL actually works in; with no initial chosen
         // it is null and the calculator behaves exactly as before.
         letterDeltaDays: letterDelta,
+        letterSpreadDays: letterSpread,
         // The picker chooses a MONTH, so the 15th is the honest midpoint and
         // `casesAheadOfDay` prorates that month's own pending accordingly.
         // Absent months or pace, the model is omitted and the month-granular
@@ -360,7 +397,7 @@ export function PermTimelineEstimator({
     // inside, and a memo that reads a value it does not depend on is the
     // shape that goes stale the first time the derivation changes.
     [filingDate, today, frontier, cohorts, frontierAdvance, letterDelta,
-     months, decisionPace, sweepAgeDays, filingRate],
+     months, decisionPace, sweepAgeDays, filingRate, letterSpread],
   );
 
   const position = POSITION_COPY[estimate.position];
@@ -511,16 +548,11 @@ export function PermTimelineEstimator({
             When will DOL decide my PERM?
           </h2>
         </div>
-        {/* FOLLOWS THE TENSE, like the label and the helper line below it.
-            This said "Pick the month DOL received your ETA-9089" - wrong twice
-            over once the control became a date field that reaches forward:
-            it asks for a month when a day is what changes the answer, and it
-            is past tense for someone who has not filed. */}
-        <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          {isFuture
-            ? "Pick the date you expect DOL to receive your ETA-9089. Every figure comes from DOL's own published data."
-            : "Pick the date DOL received your ETA-9089. Every figure comes from DOL's own published data."}
-        </p>
+        {/* NO INTRO PARAGRAPH. It restated the heading ("When will DOL
+            decide my PERM?" / "Pick the date DOL received your ETA-9089")
+            and then added a provenance claim that the page makes again at
+            the bottom. A label the reader is about to read does not need a
+            paragraph introducing it. */}
 
         {/* `grid-cols-1` AND `[&>*]:min-w-0`, both required: below the
             breakpoint a grid with no column track sizes its items to their
@@ -537,59 +569,92 @@ export function PermTimelineEstimator({
               value={filedOn}
               onChange={(e) => {
                 const v = e.target.value;
-                if (/^\d{4}-\d{2}-\d{2}$/.test(v)) setFiledOn(v);
+                // EMPTY IS A VALID STATE, not an invalid one. The first
+                // version only accepted a complete date, so clearing the
+                // field left the old answer on screen with nothing in the
+                // box - the page said one thing and the control said another.
+                if (v === "" || /^\d{4}-\d{2}-\d{2}$/.test(v)) setFiledOn(v);
               }}
-              className="mt-2 min-h-[44px] w-full border-2 border-border text-base font-bold"
+              // NO BORDER OR HEIGHT HERE. `DateInput` already carries
+              // `border-2` and `shadow-hard-sm`; stacking another border on
+              // top drew the heavy double-edged box a reader called out, and
+              // `min-h-[44px]` fought its own `h-11`. Let the control style
+              // itself.
+              className="mt-2"
             />
           </div>
         </div>
-        {/* THE LABEL AND THIS LINE BOTH FOLLOW THE TENSE. A future date is a
-            different question - "when would I hear" rather than "when will I
-            hear" - and the count behind it is a different thing too: today's
-            backlog plus the people expected to file before you. Saying which
-            half is counted and which is assumed is the whole point. */}
-        <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          {isFuture
-            ? filingRate
-              ? `Counting the ${pendingNow.toLocaleString("en-US")} cases already waiting, plus about ${Math.round(filingRate.perDay).toLocaleString("en-US")} a day expected to be filed before you get there. That rate is the average of ${filingRate.monthsUsed} settled months, ${formatMonth(filingRate.from)} to ${formatMonth(filingRate.to)}.`
-              : `Counting the ${pendingNow.toLocaleString("en-US")} cases already waiting. We have too little settled data to project how many more will be filed before you.`
-            : "Any date DOL stamped on your receipt. If you only know the month, the 15th is a fair midpoint."}
-        </p>
-
-        {alphabet ? (
-          <div className="mt-6">
-            <Label htmlFor={`${selectId}-initial`} className="text-sm font-bold">
-              First letter of the employer&apos;s name{" "}
-              <span className="font-normal text-muted-foreground">(optional)</span>
-            </Label>
-            <select
-              id={`${selectId}-initial`}
-              value={initial}
-              onChange={(e) => setInitial(e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 sm:max-w-xs"
-            >
-              <option value="">Not sure / skip</option>
-              {alphabet.letters.map((l) => (
-                <option key={l.letter} value={l.letter}>
-                  {l.letter}
-                </option>
-              ))}
-            </select>{" "}
-            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-              DOL works through a filing month alphabetically by employer. Across
-              the whole alphabet that is worth about{" "}
-              <b className="font-bold text-foreground">
-                {Math.round(
-                  Math.max(...alphabet.letters.map((l) => l.deltaDays)) -
-                    Math.min(...alphabet.letters.map((l) => l.deltaDays)),
-                )}{" "}
-                days
-              </b>
-              , measured over {alphabet.cases.toLocaleString("en-US")} decided
-              cases. It is a real term and a small one.
-            </p>
-          </div>
+        {/* ONE LINE, AND ONLY WHEN IT EARNS ITS PLACE. This was three
+            sentences under every state. The midpoint hint is only useful
+            while the field is EMPTY; the future-date arithmetic is only
+            useful once a future date is actually chosen. Neither needs to
+            be on screen the rest of the time. */}
+        {!hasDate ? (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Only know the month? The 15th is a fair midpoint.
+          </p>
+        ) : isFuture ? (
+          <p className="mt-2 max-w-md text-sm text-muted-foreground">
+            {filingRate
+              ? `${pendingNow.toLocaleString("en-US")} waiting now, plus about ${Math.round(filingRate.perDay).toLocaleString("en-US")} a day filed before you get there.`
+              : `${pendingNow.toLocaleString("en-US")} waiting now. Too little settled data to project the rest.`}
+          </p>
         ) : null}
+
+        {/* SECONDARY INPUTS ARE DISCLOSURES, NOT PEERS.
+            All three fields used to sit at the same weight with a paragraph
+            each - ten lines of grey prose before any answer existed. The
+            reader knows one thing for certain (when they filed); the other
+            two are refinements, and a refinement should not compete with the
+            question. Both are one line closed.
+
+            The alphabet's own explanation moved OUT of here: it explains a
+            number, so it belongs beside the number it moves, under "How this
+            was worked out", not under the control that feeds it. */}
+        <details className="group mt-6 border-t-2 border-border pt-4">
+            <summary className="cursor-pointer list-none text-sm font-bold marker:content-none">
+              <span className="inline-flex items-center gap-2">
+                <CaretRight
+                  className="h-3.5 w-3.5 transition-transform group-open:rotate-90"
+                  aria-hidden="true"
+                />
+                Narrow it down
+                <span className="font-normal text-muted-foreground">
+                  employer initial, or a case number
+                </span>
+              </span>
+            </summary>
+
+            {/* `grid-cols-1` and `[&>*]:min-w-0` are not optional around a
+                form control: below the breakpoint a grid with no column track
+                sizes its items to their content, and on iOS a select's
+                content contribution comes from the user agent. The gate
+                caught this the moment the disclosure was added. */}
+            <div className="mt-4 grid grid-cols-1 gap-5 [&>*]:min-w-0 sm:max-w-md">
+              {alphabet ? (
+                <div>
+                  <Label htmlFor={`${selectId}-initial`} className="text-sm font-bold">
+                    First letter of the employer&apos;s name
+                  </Label>
+                  <select
+                    id={`${selectId}-initial`}
+                    value={initial}
+                    onChange={(e) => setInitial(e.target.value)}
+                    className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                  >
+                    <option value="">Any</option>
+                    {alphabet.letters.map((l) => (
+                      <option key={l.letter} value={l.letter}>
+                        {l.letter}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : null}
+
+      
+            </div>
+        </details>
 
         <CaseNumberField
           className="mt-6"
@@ -601,7 +666,19 @@ export function PermTimelineEstimator({
       {/* THE ANSWER, at the size the question was asked. Everything in this
           band is a bound some model below already published, or arithmetic on
           the month the reader picked. */}
-      {shown || estimate.position === "overdue" ? (
+      {/* NOTHING BELOW RENDERS UNTIL A DATE IS CHOSEN. The page used to open
+          on DOL's current frontier month and show a complete answer for a
+          month nobody had picked - a date, a window, a queue position - which
+          reads as "your estimate" rather than "an example". */}
+      {!hasDate ? (
+        <div className="border-b-2 border-border p-6 sm:p-8">
+          <p className="text-base text-foreground/70">
+            Pick a date above and this fills in: when DOL is likely to decide,
+            the range around it, and where the case sits in the queue.
+          </p>
+        </div>
+      ) : null}
+      {hasDate && (shown || estimate.position === "overdue") ? (
         <div className="border-b-2 border-border p-6 sm:p-8">
           {shown ? (
             /* The anchor leads and the window follows. A range-only headline
@@ -776,7 +853,7 @@ export function PermTimelineEstimator({
 
       {/* Where this case sits relative to DOL's published frontier. Skipped
           when the overdue hero above has already said exactly this. */}
-      {frontier && position && !(estimate.position === "overdue" && !envelope) ? (
+      {hasDate && frontier && position && !(estimate.position === "overdue" && !envelope) ? (
         <div className={cn("border-b-2 border-border p-6 sm:p-8", position.tone)}>
           <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
             Queue position
@@ -797,7 +874,7 @@ export function PermTimelineEstimator({
 
       {/* The queue itself, drawn. This is the only band on the page built on
           pending counts, which is why it carries its own attribution. */}
-      {months.length > 0 ? (
+      {hasDate && months.length > 0 ? (
         <div className="border-b-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-xl font-black leading-tight sm:text-2xl">
             How far DOL has got through each month
@@ -872,7 +949,7 @@ export function PermTimelineEstimator({
           Adam, 2026-09-10: "everything should be focused on one main answer,
           and the rest is secondary and you can see it if you'd like but not
           the main thing". */}
-      {estimate.models.length > 0 ? (
+      {hasDate && estimate.models.length > 0 ? (
         <details className="group border-t-2 border-border">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-6 sm:p-8">
             <span className="font-heading text-base font-black">
@@ -926,9 +1003,33 @@ export function PermTimelineEstimator({
         </div>
       )}
 
+      {/* THE ALPHABET'S EXPLANATION, BESIDE THE NUMBER IT MOVES.
+          It used to sit under the letter select as three lines of prose that
+          every reader saw whether or not they had chosen a letter. It
+          explains a term that only exists once a letter IS chosen, so it
+          belongs here and only then. Relocated, not deleted - the
+          measurement is the reason anyone should believe the shift is small. */}
+      {hasDate && alphabet && letterDelta !== null ? (
+        <p className="border-t-2 border-border px-6 py-4 text-sm text-muted-foreground sm:px-8">
+          DOL works a filing month alphabetically by employer.{" "}
+          <span className="font-bold text-foreground">
+            {initial || "This initial"} moves it{" "}
+            {Math.abs(Math.round(letterDelta))}{" "}
+            {Math.abs(Math.round(letterDelta)) === 1 ? "day" : "days"}{" "}
+            {letterDelta < 0 ? "earlier" : "later"}
+          </span>
+          . The whole alphabet is worth about{" "}
+          {Math.round(
+            Math.max(...alphabet.letters.map((l) => l.deltaDays)) -
+              Math.min(...alphabet.letters.map((l) => l.deltaDays)),
+          )}{" "}
+          days, over {alphabet.cases.toLocaleString("en-US")} decided cases.
+        </p>
+      ) : null}
+
       {/* The models above give dates. This gives the reasoning behind them, and
           it is the one series on the page that DOL does not publish. */}
-      {frontierHistory.length >= 2 ? (
+      {hasDate && frontierHistory.length >= 2 ? (
         <div className="border-t-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-lg font-black">How fast the queue is moving</h3>
           <FrontierProgressChart
@@ -940,7 +1041,7 @@ export function PermTimelineEstimator({
       ) : null}
 
       {/* Caveats. Not boilerplate: each one is generated for this case. */}
-      {estimate.caveats.length > 0 ? (
+      {hasDate && estimate.caveats.length > 0 ? (
         <div className="border-t-2 border-border bg-muted p-6 sm:p-8">
           <div className="flex items-start gap-3">
             <WarningIcon
