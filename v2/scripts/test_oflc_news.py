@@ -40,6 +40,23 @@ def main() -> int:
     check(bool(first.get("abstract")) and len(first["abstract"]) <= 604, "abstract is the first paragraph, capped", failures)
     q3 = [r for r in rows if "Public Disclosure Data" in r["title"]]
     check(bool(q3) and "disclosure-data" in q3[0]["topics"], "the disclosure-data release is tagged disclosure-data", failures)
+    # DOL'S OWN PAGE CARRIES TYPOS AND A FOUR-DIGIT YEAR PARSES CLEANLY.
+    # "April 4, 2103." is really 2013 - the H-2B adjudication suspension after
+    # CATA v. Solis. It stored fine, and because freshness is stamped from
+    # MAX(publication_date), that one row dated the whole dataset to the year
+    # 2103. A future as_of can never exceed its budget, so the health check
+    # printed "ok" for a feed it could no longer vouch for, for ten days.
+    typo = parse_announcements(
+        "April 4, 2103. Typo'd year straight from DOL\n"
+        "Body.\n"
+        "January 5, 1999. Older than the archive itself\n"
+        "Body.\n"
+        "September 2, 2026. A genuine announcement\n"
+        "Body.\n"
+    )
+    check({r["publication_date"] for r in typo} == {"2026-09-02"},
+          "an implausible year is dropped and the real row survives", failures)
+
     ids = [r["document_number"] for r in rows]
     check(len(set(ids)) == len(ids), "document numbers are unique", failures)
     check(all(re.fullmatch(r"oflc-\d{4}-\d{2}-\d{2}-[0-9a-f]{8}", i) for i in ids), "document numbers carry the date and a title digest", failures)

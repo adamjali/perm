@@ -46,9 +46,17 @@ from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
 
 URL = "https://www.dol.gov/agencies/eta/foreign-labor/news"
 DATASET = "policy-notices-oflc"
+# BUDGET SET FROM DOL'S ACTUAL CADENCE, NOT FROM A GUESS. Measured over 95
+# gaps between OFLC posting days since 2024: median 7, p90 22, p95 29, max 39.
+# The 10 days this used to carry would have fired on 35% of ordinary quiet
+# spells - a false alarm a third of the time, which trains the reader to skim
+# past the real one. 45 days sits above the observed maximum with margin.
+# This budget only has to catch "DOL stopped publishing at all"; the separate
+# `fetched_at` run-age guard in check_ingest_health is what catches "our
+# ingest stopped", and that one is monotonic.
 TYPE = "OFLC announcement"
 AGENCIES = ["Office of Foreign Labor Certification"]
-MAX_AGE_DAYS = 10
+MAX_AGE_DAYS = 45
 ABSTRACT_CHARS = 600
 
 # The same topic vocabulary the Federal Register feed tags with, matched on
@@ -64,6 +72,11 @@ TOPICS: dict[str, str] = {
 }
 
 MONTHS = "January|February|March|April|May|June|July|August|September|October|November|December"
+# OFLC's announcement archive starts in 2005; nothing it publishes is dated
+# ahead of today by more than a couple of days.
+EARLIEST = dt.date(2005, 1, 1)
+DATE_SLACK_DAYS = 3
+
 HEAD = re.compile(rf"^(?P<month>{MONTHS}) (?P<day>\d{{1,2}}), (?P<year>\d{{4}})\.\s+(?P<title>\S.*)$")
 
 BROWSER_HEADERS = {
@@ -104,6 +117,7 @@ def parse_announcements(text: str) -> list[dict]:
     """Every "Month D, YYYY. Title" head with the paragraphs under it."""
     lines = text.splitlines()
     heads: list[tuple[int, dict]] = []
+    implausible: list[tuple[str, str]] = []
     for i, ln in enumerate(lines):
         m = HEAD.match(ln.strip())
         if not m:
@@ -112,7 +126,22 @@ def parse_announcements(text: str) -> list[dict]:
             date = dt.datetime.strptime(f"{m['month']} {m['day']} {m['year']}", "%B %d %Y").date()
         except ValueError:
             continue
+        # DOL'S OWN PAGE CARRIES TYPOS, AND A FOUR-DIGIT YEAR PARSES CLEANLY.
+        # "April 4, 2103." is really 2013 - the H-2B adjudication suspension
+        # after CATA v. Solis. The regex demands \d{4} so strptime accepted it,
+        # the row stored fine, and because freshness is stamped from MAX
+        # (publication_date) that single row dated the whole dataset to the
+        # year 2103. A future as_of can never exceed its budget, so the
+        # health check printed "ok" for a feed it could no longer vouch for.
+        # Bound it to the plausible window and count what is dropped: silence
+        # here is what let one typo sit in the record for days.
+        if not (EARLIEST <= date <= dt.date.today() + dt.timedelta(days=DATE_SLACK_DAYS)):
+            implausible.append((date.isoformat(), m["title"].strip()[:70]))
+            continue
         heads.append((i, {"date": date.isoformat(), "title": m["title"].strip().rstrip(".") + ("." if m["title"].strip().endswith(".") else "")}))
+    if implausible:
+        print(f"::warning::dropped {len(implausible)} announcement(s) with an "
+              f"implausible date: " + "; ".join(f"{d} {t!r}" for d, t in implausible[:5]))
     out: list[dict] = []
     for n, (i, head) in enumerate(heads):
         end = heads[n + 1][0] if n + 1 < len(heads) else len(lines)

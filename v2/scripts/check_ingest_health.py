@@ -391,7 +391,8 @@ def check_coverage_stated(db) -> int:
     stated = set(re.findall(r'^\s*"?([a-z0-9-]+)"?:\s*$|^\s*"?([a-z0-9-]+)"?:\s*"',
                             text, re.M))
     have = {a or b for a, b in stated if (a or b)}
-    registered = {str(r[0]) for r in db.rows("SELECT dataset FROM data_freshness")}
+    res = db.execute("SELECT dataset FROM data_freshness")
+    registered = {str(r[0].get("value")) for r in res["response"]["result"]["rows"]}
     missing = sorted(registered - have)
     if missing:
         print(f"COVERAGE: {len(missing)} dataset(s) registered with no coverage "
