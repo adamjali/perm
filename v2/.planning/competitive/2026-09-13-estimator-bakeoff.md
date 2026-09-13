@@ -175,3 +175,65 @@ permupdate tells every one of them their case completed on or before today:
 - **Our own "queue-clear" branch was fixed by the same investigation**: it used
   to imply immediacy for a clear queue, and the measured median wait in that
   position is 34 days with a p90 of 149.
+
+
+---
+
+# FINAL three-way, our shipping model (13 Sep 2026)
+
+Our model after removing the bias correction and fixing the pace (632/day, was
+reading 688). No fitted parameters: a count divided by a measured rate.
+
+| filed | L | status | OURS | our band | permtrack | permupdate | truth |
+|---|---|---|---|---|---|---|---|
+| 2025-11-02 | C | analyst | **16 Sep** | 14–20 Sep | 17 Oct | 15 Sep | **8 Sep** |
+| 2025-05-22 | M | analyst | **REFUSED** | overdue | 9 Oct | 13 Sep | **10 Sep** |
+| 2025-11-02 | S | analyst | 23 Sep | 20–27 Sep | 17 Oct | 21 Sep | |
+| 2026-01-01 | S | analyst | 30 Oct | 22 Oct – 17 Nov | 13 Oct | 28 Oct | |
+| 2026-03-01 | A | analyst | 10 Nov | 1 Nov – 3 Dec | 3 Nov | 12 Nov | |
+| 2026-05-01 | T | analyst | 12 Dec | 27 Nov – 16 Jan | 21 Nov | 11 Dec | |
+| 2026-07-01 | F | analyst | 3 Jan 2027 | 16 Dec – 16 Feb | 18 Dec | 2 Jan | |
+| 2026-09-01 | G | analyst | 28 Jan | 6 Jan – 22 Mar | 15 Jan | 14 Jan | |
+| **2026-09-12** | L | analyst | **29 Jan** | 6 Jan – 23 Mar | 21 Jan | 14 Jan | |
+| 2023-06-05 | S | BALCA | **REFUSED** | side-queue | 17 Oct | 13 Sep | |
+
+## Accuracy on the two known outcomes
+
+    filed 2025-11-02, certified 8 Sep    ours +8    permupdate +7    permtrack +39
+    filed 2025-05-22, certified 10 Sep   ours --    permupdate +3    permtrack +29
+
+We are now level with permupdate on the frontier case (+8 against +7) after the
+pace fix; before it we were at +9 with a rate 11% too high, and the two errors
+happened to partly cancel.
+
+## We now track permupdate to within a day or two
+
+    2025-11-02 C   ours 16 Sep   permupdate 15 Sep    1 day
+    2025-11-02 S        23 Sep              21 Sep    2
+    2026-01-01 S        30 Oct              28 Oct    2
+    2026-03-01 A        10 Nov              12 Nov    2
+    2026-05-01 T        12 Dec              11 Dec    1
+    2026-07-01 F         3 Jan               2 Jan    1
+    2026-09-01 G        28 Jan              14 Jan   14
+    2026-09-12 L        29 Jan              14 Jan   15
+
+Six of eight inside two days, from independent data and an independent model.
+That is the strongest evidence either estimator is sound.
+
+## The two that diverge are theirs, not ours
+
+The September cases. permupdate returns `raw_queue_position: 80,002` for a
+1 September filing AND for a 12 September filing - the same number eleven days
+and several thousand filings apart. Ours reads 86,900 and 87,412; permtrack
+89,530 and 93,342, both of which move sensibly. Their September queue looks
+capped or not yet loaded, and that is what the 14-day gap is.
+
+## Where the three genuinely differ, after all of this
+
+- **The date: nobody is meaningfully better.** Six of eight within two days.
+- **The band:** ours is two-sided and measured (57% coverage, stated).
+  permupdate's is one-sided +15% behind a hardcoded `confidence_level: 0.8` that
+  measures 8-15%. permtrack's is a pace scenario with no coverage claim.
+- **Refusals:** only ours. The 2023 BALCA case gets 17 Oct from permtrack and
+  "today" from permupdate; it has been in appeals for three years and three
+  months.
