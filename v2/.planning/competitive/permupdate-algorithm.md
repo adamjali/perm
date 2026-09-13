@@ -126,3 +126,26 @@ cross-checked against theirs: our mean 574.6 against their 566.4, **+1.4%**.
 A case cannot only ever be late, and 15% of the remaining days is not a
 confidence interval. Ours is narrower in the middle and honest about what it
 is, which is the opposite trade from theirs.
+
+
+## Correction, same day: permtrack's real predictor
+
+The table above compares us against permupdate only. A first attempt to add
+permtrack used `/api/estimate`, which is their RISK model (a grade plus
+percentiles over decided cases) and reported them five to nine months late.
+Their decision predictor is `/api/watchlist/predict`, and it is the same shape
+as ours - cases ahead over a measured weekday/weekend pace.
+
+All three, same day, same filing dates:
+
+| filed | permtrack | permupdate | permtracker |
+|---|---|---|---|
+| 2025-11-20 | 2026-09-19 | 2026-09-20 | 2026-09-27 |
+| 2026-01-15 | 2026-10-17 | 2026-10-26 | 2026-11-02 |
+| 2026-03-16 | 2026-11-06 | 2026-11-17 | 2026-11-25 |
+| 2026-06-15 | 2026-12-09 | 2026-12-23 | 2027-01-01 |
+
+**We are consistently the latest**, by 8 to 23 days against permtrack. The
+pace is not the reason - all three measure DOL within a few percent of each
+other (permtrack 644/day, us 625, permupdate's own feed 566 against their
+hardcoded 650). The reason is the queue count, and that is the open question.

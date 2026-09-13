@@ -23,7 +23,7 @@
  */
 
 const PERMUPDATE = "https://perm-backend-production.up.railway.app/api/predictions/from-date";
-const PERMTRACK = "https://permtrack.app/api/estimate";
+const PERMTRACK = "https://permtrack.app/api/watchlist/predict";
 const UA = "permtracker-benchmark/1.0 (+https://permtracker.app)";
 
 const iso = (d) => d.toISOString().slice(0, 10);
@@ -52,20 +52,29 @@ async function permupdate(filed, letter) {
 }
 
 async function permtrack(filed) {
+  // THEIR DECISION PREDICTOR, not `/api/estimate`. That one answers a
+  // different question - a risk grade plus percentiles over decided cases -
+  // and reading `filed + p50` off it reports them as five to nine MONTHS
+  // later than they actually say. Their real model is the same shape as
+  // ours: cases ahead divided by a measured weekday/weekend pace.
   const r = await fetch(`${PERMTRACK}?filing_date=${filed}`, {
     headers: { "User-Agent": UA },
   });
   if (!r.ok) throw new Error(`permtrack HTTP ${r.status}`);
-  const j = await r.json();
-  const proc = j.processing ?? {};
-  if (typeof proc.p50 !== "number") throw new Error("permtrack: no p50 in response");
+  const text = await r.text();
+  // Unknown paths on this host return the SPA shell with a 200, so a status
+  // code proves nothing here - the body has to be checked.
+  if (/^\s*<!doctype/i.test(text)) throw new Error("permtrack: got the SPA shell, not JSON");
+  const j = JSON.parse(text);
+  const p = j.prediction ?? {};
+  if (!p.estimated_date) throw new Error("permtrack: no estimated_date in response");
   return {
     site: "permtrack",
-    anchorIso: plus(filed, proc.p50),
-    upperIso: typeof proc.p90 === "number" ? plus(filed, proc.p90) : null,
-    lowerIso: null,
+    anchorIso: p.estimated_date,
+    upperIso: p.late_date ?? null,
+    lowerIso: p.early_date ?? null,
     model:
-      "filed + p50 of their decided-case percentiles (p90 as the upper), a filing-anchored model that carries the audit tail",
+      "cases ahead / their measured pace (weekday and weekend averaged onto the calendar), from /api/watchlist/predict - the same shape as ours",
   };
 }
 

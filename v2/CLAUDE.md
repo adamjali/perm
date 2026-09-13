@@ -4533,3 +4533,99 @@ Not done, because it is a sustained load on DOL and a real write budget
 (118,580 rows took 760 seconds and ~13 minutes of runner time for ONE quarter),
 and because it is a decision about how much history the product wants rather
 than a defect to fix.
+
+## permtrack is NOT off, I read the wrong endpoint (2026-09-13)
+
+I recorded permtrack as five to nine MONTHS later than everyone else and wrote
+that into the ledger. That was my error, and the owner caught it by remembering
+they had measured ~39 days earlier in the same session.
+
+permtrack publishes TWO models and I took the wrong one:
+
+| endpoint | what it answers |
+|---|---|
+| `/api/estimate?filing_date=` | a risk GRADE plus percentiles over decided cases (`p50` 468 days) |
+| `/api/watchlist/predict?filing_date=` or `?case_number=` | **the decision predictor** |
+
+Reading `filed + p50` off the first is how a competitor ends up looking absurd,
+and it looked entirely plausible in isolation because a percentile over decided
+cases really is that large - it carries the audit tail, which is the same defect
+that made DOL's published average the wrong anchor for us.
+
+**Their real model is the same shape as ours, and their numbers are close to
+ours.** From `/api/watchlist/predict`:
+
+```
+queue_position 15,866   effective_queue 14,238
+pace { weekday_avg 804, weekend_avg 243, overall_avg 644, data_days 28 }
+prediction { estimated_date 2026-10-02, early 2026-10-01, late 2026-10-12 }
+```
+
+Their pace against ours: **644 vs 625 overall, 804 vs 789 weekday, 243 vs 213
+weekend.** Three independent measurements of DOL's rate - theirs, ours, and
+permupdate's published daily volume - now agree inside a few percent. That is
+the strongest evidence the rate is right that any of us has.
+
+**And on the date we are the LATEST of the three, not the closest.** For a
+2025-12-15 filing: permtrack 2 Oct, permupdate 6 Oct, us 12 Oct. The earlier
+"we track them within 6 to 16 days" note was written against permupdate alone
+and is still true; it is not the whole picture.
+
+**The difference is cases-ahead, and it is worth investigating rather than
+celebrating.** Ours 18,308 against their 15,866. Comparing month by month, the
+gap is NOT a uniform offset:
+
+- their `month_queue` **stops at 2025-12** and that final month is half our
+  size (7,535 against 14,891, while November is 15,270 against 15,034). The
+  response is truncated at the frontier, so their count cannot include the rest
+  of the filing month - which for a mid-December filer means their queue
+  position is an undercount by construction;
+- but we also hold **more old pending than they do** - 501 against 96 for June
+  2025, 403 against 182 for July. Fifteen-month-old cases we still call pending
+  and they do not. Either they have decided them and we have not swept them, or
+  we hold rows they never had. **That inflates our queue position and pushes
+  every date later, and it is the thing to check next.**
+
+`predictionLedger.test.ts` now carries a wrong-endpoint detector: any recorded
+rival anchor more than 270 days from ours fails. That bound is far wider than
+any genuine disagreement (the three sit within about three weeks today), so it
+fires on a model mix-up rather than on a rival being wrong.
+
+
+### Why our queue is bigger, measured - and why it is NOT being changed yet
+
+Two candidates, and only one survived checking.
+
+**Not staleness.** Eight of our June-2025 rows that we still call pending were
+asked of DOL live: **8 of 8 matched exactly**. They are real, current, and
+almost all `RECONSIDERATION APPEALS` or `RFI ISSUED`.
+
+**The live difference is what "pending" counts.** Of 96,615 pending cases,
+**5,675 (5.9%) are not in filing order at all**:
+
+    ANALYST REVIEW           90,940   94.1%   <- the ordinary queue
+    RECONSIDERATION APPEALS   2,413    2.5%
+    APPLICATION ON HOLD       1,854    1.9%
+    RFI ISSUED                  901    0.9%
+    BALCA APPEALS               373    0.4%
+    NORD ISSUED                 120    0.1%
+
+permtrack discounts 10.3% between `queue_position` and `effective_queue`, which
+is plainly the same idea. And there is an internal inconsistency in ours worth
+naming: `estimateByPace` REFUSES to date a case in one of those statuses - it
+says the case is not in filing order - while `casesAheadOfDay` happily counts
+those same cases as competition for everyone else.
+
+**It is still not changed, and the reason is a measurement that cuts the other
+way.** Of the RFI exits we have observed, **91% (327/359) return to ANALYST
+REVIEW** rather than to a decision. Those cases come back and do consume
+analyst capacity later, so excluding them outright would undercount. Whether
+they re-enter at their filing position or behind it is not something we know.
+
+So the choice is genuinely uncertain, and the ledger is the instrument that
+settles it rather than an argument. The four predictions recorded on
+2026-09-13 include the full pending count. **If all four land late, the count
+is too big and the side-queue should come out; if they scatter, it is noise.**
+Tuning the queue downward now because two rivals sit earlier would be fitting
+to competitors rather than to outcomes, which is the thing this repo keeps
+learning not to do.

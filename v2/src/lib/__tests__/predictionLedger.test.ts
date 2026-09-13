@@ -108,3 +108,55 @@ describe("three-way scoring", () => {
     expect(scoreAll(bare, "2026-10-15")).toHaveLength(1);
   });
 });
+
+describe("recorded rival predictions are plausible", () => {
+  /**
+   * A WRONG-ENDPOINT DETECTOR, NOT A DISAGREEMENT DETECTOR.
+   *
+   * permtrack publishes two models. `/api/estimate` gives a risk grade plus
+   * percentiles over decided cases; `/api/watchlist/predict` is the actual
+   * decision predictor. Reading `filed + p50` off the first one recorded them
+   * as five to NINE MONTHS later than they say - and it looked entirely
+   * plausible in isolation, because a percentile over decided cases really is
+   * that large.
+   *
+   * 270 days is deliberately far wider than any genuine disagreement observed
+   * (the three sites currently sit within about three weeks of each other), so
+   * this fires on a model mix-up rather than on a rival being wrong.
+   */
+  const MAX_PLAUSIBLE_GAP_DAYS = 270;
+
+  it("no rival anchor sits absurdly far from ours", () => {
+    const offenders: string[] = [];
+    for (const p of PREDICTIONS) {
+      for (const r of p.rivals ?? []) {
+        const gap = Math.abs(
+          (Date.parse(`${r.anchorIso}T00:00:00Z`) - Date.parse(`${p.anchorIso}T00:00:00Z`)) / 86_400_000,
+        );
+        if (gap > MAX_PLAUSIBLE_GAP_DAYS) {
+          offenders.push(`${p.caseNumber} ${r.site} ${r.anchorIso} vs ours ${p.anchorIso} (${Math.round(gap)}d)`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("every recorded rival names which of their models it came from", () => {
+    // The mix-up above was invisible because the entry did not say WHICH
+    // model produced the number. Now it has to.
+    for (const p of PREDICTIONS) {
+      for (const r of p.rivals ?? []) {
+        expect(r.model.length).toBeGreaterThan(20);
+      }
+    }
+  });
+
+  it("a rival band, when recorded, brackets that rival's own anchor", () => {
+    for (const p of PREDICTIONS) {
+      for (const r of p.rivals ?? []) {
+        if (r.lowerIso) expect(r.lowerIso <= r.anchorIso).toBe(true);
+        if (r.upperIso) expect(r.upperIso >= r.anchorIso).toBe(true);
+      }
+    }
+  });
+});

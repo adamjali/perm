@@ -90,10 +90,10 @@ export const PREDICTIONS: Prediction[] = [
       },
       {
         site: "permtrack",
-        anchorIso: "2027-03-03",
-        upperIso: "2027-04-13",
-        lowerIso: null,
-        model: "filed + p50 of their decided-case percentiles (p90 as the upper), a filing-anchored model that carries the audit tail",
+        anchorIso: "2026-09-19",
+        upperIso: "2026-09-23",
+        lowerIso: "2026-09-18",
+        model: "cases ahead / their measured pace (644 a calendar day: 804 weekday, 243 weekend), from /api/watchlist/predict - the same shape as ours",
       },
     ]
   },
@@ -118,10 +118,10 @@ export const PREDICTIONS: Prediction[] = [
       },
       {
         site: "permtrack",
-        anchorIso: "2027-04-28",
-        upperIso: "2027-06-08",
-        lowerIso: null,
-        model: "filed + p50 of their decided-case percentiles (p90 as the upper), a filing-anchored model that carries the audit tail",
+        anchorIso: "2026-10-17",
+        upperIso: "2026-11-05",
+        lowerIso: "2026-10-15",
+        model: "cases ahead / their measured pace (644 a calendar day: 804 weekday, 243 weekend), from /api/watchlist/predict - the same shape as ours",
       },
     ]
   },
@@ -146,10 +146,10 @@ export const PREDICTIONS: Prediction[] = [
       },
       {
         site: "permtrack",
-        anchorIso: "2027-06-27",
-        upperIso: "2027-08-07",
-        lowerIso: null,
-        model: "filed + p50 of their decided-case percentiles (p90 as the upper), a filing-anchored model that carries the audit tail",
+        anchorIso: "2026-11-06",
+        upperIso: "2026-12-10",
+        lowerIso: "2026-11-03",
+        model: "cases ahead / their measured pace (644 a calendar day: 804 weekday, 243 weekend), from /api/watchlist/predict - the same shape as ours",
       },
     ]
   },
@@ -174,10 +174,10 @@ export const PREDICTIONS: Prediction[] = [
       },
       {
         site: "permtrack",
-        anchorIso: "2027-09-26",
-        upperIso: "2027-11-06",
-        lowerIso: null,
-        model: "filed + p50 of their decided-case percentiles (p90 as the upper), a filing-anchored model that carries the audit tail",
+        anchorIso: "2026-12-09",
+        upperIso: "2027-02-02",
+        lowerIso: "2026-12-02",
+        model: "cases ahead / their measured pace (644 a calendar day: 804 weekday, 243 weekend), from /api/watchlist/predict - the same shape as ours",
       },
     ]
   },
