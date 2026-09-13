@@ -129,3 +129,49 @@ A date in the past is worse than no date. That single row is the clearest
 argument for the refusal branch: the arithmetic still produces a number for a
 case the model does not describe, and only an explicit refusal stops it
 reaching a reader.
+
+
+---
+
+# permupdate's overdue "accuracy" is a constant, not a method (13 Sep 2026)
+
+The three-case outcome test made permupdate look best: +6 days on a frontier
+case and +2 days on a 476-day overdue case where we refused. Before copying
+anything, the overdue win was checked.
+
+    G-100-25142-006665   filed 22 May 2025, CERTIFIED 10 Sep 2026
+      permupdate  ->  12 Sep 2026   (+2 days, looks excellent)
+
+    G-100-25154-044786   filed  3 Jun 2025, STILL PENDING
+      permupdate  ->  12 Sep 2026   (already wrong)
+
+    G-100-23156-079587   filed  4 Jun 2023, BALCA APPEALS,
+                         pending three years and three months
+      permupdate  ->  12 Sep 2026   ("Estimated PERM completion date")
+
+**The same date for all three.** It is a floor: anything at or past the front of
+the queue is told "yesterday". The +2 was a case decided to match the constant,
+not a model that knew anything about it.
+
+**4,271 live cases sit past DOL's frontier and are still pending**, and
+permupdate tells every one of them their case completed on or before today:
+
+    RECONSIDERATION APPEALS   2,401   56.2%
+    RFI ISSUED                  688   16.1%
+    ANALYST REVIEW              657   15.4%
+    BALCA APPEALS               372    8.7%
+    NORD ISSUED                 129    3.0%
+
+84.6% of them are in a side proceeding. Some were filed in June 2023.
+
+## What this does and does not change
+
+- **Do not copy the overdue behaviour.** Our refusal is the better answer and
+  this is the evidence for it. A date in the past, given to someone whose case
+  has been in appeals for three years, is the worst output of the three sites.
+- **Their frontier-case edge stands, and is small.** +6 against our +9 on one
+  case. That is one draw, not a ranking, and nothing here says our method is
+  better on ordinary cases - only that it is not worse.
+- **Our own "queue-clear" branch was fixed by the same investigation**: it used
+  to imply immediacy for a clear queue, and the measured median wait in that
+  position is 34 days with a p90 of 149.
