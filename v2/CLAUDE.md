@@ -4323,3 +4323,34 @@ would go red precisely when the system started working. Probes only reach zero
 for a bad reason: `held_serials` returning nothing (a renamed column, a changed
 type) makes every day look contiguous and the sweep exits clean having asked
 DOL nothing.
+
+## The decision-pace estimator is ported, tested, and deliberately not wired
+
+`convex/lib/perm/calculators/decisionPace.ts` is the model the estimator
+investigation settled on - `day = today + casesAhead / 28-day calendar pace`,
+band from that pace's own p10/p90 weekday spread, floored at 55% of the horizon
+and grown late-heavy. **Zero fitted parameters**: the +111-day "bias" that
+started this turned out to be DOL's acceleration wearing a calibration costume,
+and deleting the whole correction cost nothing at the horizons that exist (86%
+of the live queue is under four months).
+
+**It produces no number a reader sees, and that is the finding, not an
+oversight.** The backtest fed it DOL's own `decision_date` from the quarterly
+disclosure files. Production cannot: those files end **2026-06-30**, so "the
+last 28 days" does not exist in them. The only daily-resolution source we hold
+is `perm_case_events`, which records when OUR SWEEP SAW a change, and it begins
+**2026-08-27**. Measured 2026-09-13: **the two ranges do not overlap by a single
+day**, so substituting one for the other cannot be validated at all. It becomes
+checkable when DOL publishes FY2026 Q4 (July-September), which is also the first
+quarter the event log covers.
+
+Until then `estimateQueueDecision` keeps leading with queue-advance, which is
+anchored on DOL's own published frontier and needs no substitution. The input
+accumulates in `perm_case_events` on its own - no doc is written for it,
+because a doc would only be a second copy of a table we already retain.
+
+The band is a **pace scenario, not a confidence interval**: measured coverage is
+57-58% overall and 41% at the near horizon, and any surface that renders it must
+say so. A rival ships `confidence_level: 0.8` as a hardcoded constant against
+real coverage of 8-15%; that is the most checkable lie a queue estimator can
+tell and we are not going to ship our own version of it.

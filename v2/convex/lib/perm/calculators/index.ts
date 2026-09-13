@@ -52,6 +52,25 @@ export {
   type EstimateModel,
   type EstimateModelId,
 } from './queueEstimate';
+// Decision-pace estimation: cases-ahead divided by DOL's measured daily rate,
+// the shape both rivals use. Exported and tested but NOT yet feeding any
+// rendered number - the substitution it would need in production (our
+// observation dates for DOL's decision dates) has zero days of overlap to be
+// validated against until FY2026 Q4 publishes. See the module header.
+export {
+  measurePace,
+  estimateByPace,
+  MIN_WEEKDAYS,
+  COLLAPSE_FRACTION,
+  MAX_HORIZON_DAYS,
+  MIN_BAND_FRACTION,
+  MIN_BAND_DAYS,
+  type DecisionDay,
+  type MeasuredPace,
+  type PaceEstimateInput,
+  type PaceEstimate,
+  type PaceRefusal,
+} from './decisionPace';
 export {
   estimatePwdQueue,
   measurePwdClearance,

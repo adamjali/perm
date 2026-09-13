@@ -170,6 +170,8 @@ export {
   estimateQueueDecision,
   measureFrontierAdvance,
   measureFrontierAdvanceRange,
+  measurePace,
+  estimateByPace,
   estimatePwdQueue,
   estimateI140Queue,
   buildGreenCardTimeline,
