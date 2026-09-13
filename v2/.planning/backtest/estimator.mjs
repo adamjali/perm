@@ -102,15 +102,30 @@ export function estimate(input) {
     return { kind: "refused", reason: "pace-unmeasurable",
       detail: "Too few working days observed to measure DOL's pace." };
 
-  // A case at the very front: the queue ahead is smaller than a single day's
-  // output, so the honest answer is "any day now", not a date with a band.
-  // `pace` is an object; comparing casesAhead against it coerced to NaN and the
-  // branch never fired. Caught by an edge test asserting casesAhead:0 is
-  // "imminent" - it was returning a date built from a division by zero's worth
-  // of queue instead.
+  // A case with almost nothing ahead of it is NOT about to be decided, and
+  // assuming so was a bug here until it was measured. Actual days to decision,
+  // by how much work sits ahead (31 origins, real outcomes):
+  //
+  //   queue ahead      n       p25   MEDIAN    p75    p90
+  //   <1 day          708       12      34      81    149
+  //   1-3 days      1,504        6      18      44     99
+  //   3-10 days     5,057        5      12      26     52
+  //   10-30 days   14,201       13      23      37     60
+  //
+  // The relationship is U-shaped. A case with LESS than a day's work ahead
+  // waits LONGER (median 34) than one with three to ten days (median 12),
+  // because "nothing ahead and still pending" is what being stuck looks like:
+  // an audit, an RFI, something outside filing order the queue cannot see.
+  //
+  // (The comparison also used to be `casesAhead <= pace`, against the pace
+  // OBJECT, which coerced to NaN so this branch never ran at all.)
   if (casesAhead <= pace.pace) {
-    return { kind: "imminent", casesAhead, pace: pace.pace,
-      detail: "Fewer cases are ahead of you than DOL decides in a day." };
+    return { kind: "queue-clear", casesAhead, pace: pace.pace,
+      medianDays: 34, p75Days: 81, p90Days: 149,
+      detail: "DOL has essentially cleared the filing queue ahead of you. Cases "
+            + "in this position were decided in a median of 34 days, though a "
+            + "quarter took more than 81 - a case that reaches the front and "
+            + "stays pending is usually held by something outside filing order." };
   }
 
   const rawDays = Math.round(casesAhead / pace.pace);

@@ -17,7 +17,7 @@ for(const T of origins){
   const st=E.originState(T), lower=CORPUS_END-T+1;
   const push=(ahead,truth)=>{
     const r=estimate({today:T,casesAhead:ahead,pace,status:"ANALYST REVIEW",monthsBehindFrontier:1,sweepAgeDays:0});
-    if(r.kind==="imminent"){imminent++;return;}
+    if(r.kind==="queue-clear"){imminent++;return;}
     if(r.kind!=="estimate"){refused++;return;}
     const h=r.day-T, b=bin(h); if(b<0)return;
     const o=res[b]; o.n++; o.err.push(h-truth); o.w.push(r.late-r.early);

@@ -36,9 +36,11 @@ T_("refusals are ordered: stale beats side-queue",
    estimate({...base,casesAhead:50000,status:"RFI ISSUED",sweepAgeDays:9}).reason==="stale-data");
 
 console.log("\n--- boundaries ---");
-T_("zero ahead -> imminent, not a date", estimate({...base,casesAhead:0}).kind==="imminent");
-T_("fewer ahead than one day's output -> imminent",
-   estimate({...base,casesAhead:Math.floor(normal.pace)-1}).kind==="imminent");
+T_("zero ahead -> queue-clear, not a date", estimate({...base,casesAhead:0}).kind==="queue-clear");
+T_("fewer ahead than one day's output -> queue-clear",
+   estimate({...base,casesAhead:Math.floor(normal.pace)-1}).kind==="queue-clear");
+T_("queue-clear carries the measured wait, not a promise of immediacy",
+   estimate({...base,casesAhead:10}).medianDays===34);
 const justOver=estimate({...base,casesAhead:Math.ceil(normal.pace)+1});
 T_("just over one day's output -> a real estimate", justOver.kind==="estimate", justOver);
 const huge=estimate({...base,casesAhead:5_000_000});
