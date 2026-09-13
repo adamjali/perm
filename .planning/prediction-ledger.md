@@ -44,12 +44,17 @@ days), band from that rate's own p10/p90 spread. Recorded across four filing
 months on purpose, because a model only ever scored near the frontier is never
 tested at the horizon where it can be most wrong.
 
-| case | filed | anchor | window |
-|---|---|---|---|
-| G-300-25324-425356 | 2025-11-20 | 27 Sep 2026 | 25 Sep - 3 Oct 2026 |
-| G-200-26015-564165 | 2026-01-15 | 2 Nov 2026 | 23 Oct - 20 Nov 2026 |
-| G-200-26075-707139 | 2026-03-16 | 25 Nov 2026 | 12 Nov - 22 Dec 2026 |
-| G-300-26166-017385 | 2026-06-15 | 1 Jan 2027 | 11 Dec 2026 - 10 Feb 2027 |
+| case | filed | anchor | window | permtrack | permupdate |
+|---|---|---|---|---|---|
+| G-300-25324-425356 | 2025-11-20 | 2 Oct 2026 | 30 Sep - 8 Oct | 19 Sep | 20 Sep |
+| G-200-26015-564165 | 2026-01-15 | 10 Nov 2026 | 31 Oct - 28 Nov | 17 Oct | 26 Oct |
+| G-200-26075-707139 | 2026-03-16 | 15 Nov 2026 | 2 Nov - 12 Dec | 6 Nov | 17 Nov |
+| G-300-26166-017385 | 2026-06-15 | 21 Dec 2026 | 30 Nov - 30 Jan | 9 Dec | 23 Dec |
+
+**Taken from the live page, not from a harness.** A first draft of these came
+from calling the calculator directly and was 3 to 5 days out, because the page
+also applies the measured stage adjustment and the employer-initial shift. The
+ledger records the anchor a reader actually saw.
 
 permupdate, queried the same day for the same filing dates, sat 6 to 16 days
 earlier throughout. The residual is almost entirely their divisor: they use a
