@@ -79,8 +79,9 @@ from lib_turso import (  # noqa: E402
     stamp_freshness,
 )
 from lib_flag_serials import (  # noqa: E402
-    CASE_RE, case_number, code_of, day_code, day_codes_between, decode_filing_date,
-    fmt_serial, newer, recent_day_codes, serial_add, serial_gap, serial_of, serial_span,
+    ALL_FLAG_PREFIXES, CASE_RE, PERM_OFFICE_PREFIXES, case_number, code_of,
+    day_code, day_codes_between, decode_filing_date, fmt_serial, newer,
+    recent_day_codes, serial_add, serial_gap, serial_of, serial_span,
 )
 # CASE_RE, decode_filing_date and recent_day_codes are re-exported: the PWD
 # prober and the tests import them from here.
@@ -229,14 +230,20 @@ DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, discovered)"
 # REVIEW. G-300 is 6,854 live rows and is still being filed (105 in August
 # 2026, 102 of them pending), and our newest G-300 filing was 2026-08-26
 # against 2026-09-12 for G-100/G-200 - a 17-day hole in 1.9% of PERM.
-PERM_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-")
-FRONTIER_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-")
-# The WALK deliberately asks five and not seven. A sixth prefix takes the
-# serials per request from 10 to 8 and so costs ~25% more requests every
-# night, to chase 1.9% of filings. The gap sweep already asks all eight
-# prefixes over the trailing 90 day codes, which is the cheaper place to
-# catch a sparse office code - so G-300/G-400 are recovered there, not here.
-DISCOVERY_PREFIXES = ("G-100-", "G-200-", "I-200-", "P-100-", "I-203-")
+PERM_PREFIXES = PERM_OFFICE_PREFIXES
+FRONTIER_PREFIXES = PERM_OFFICE_PREFIXES
+# EVERY PREFIX, not the five busiest. This asked G-100/G-200/I-200/P-100/I-203
+# only - about 70% of the counter - so a span whose serials all belonged to
+# G-300, I-201 or I-202 answered empty under all five and counted toward the
+# "unissued" streak that ends a day. A sparse office code was therefore not
+# just undiscovered, it could end the walk early and hide the serials behind
+# it. Measured 2026-09-13: G-300 alone is 6,854 live rows, still being filed,
+# and our newest was 17 days behind G-100's.
+#
+# The cost is real and bounded: eight prefixes at DOL's 50-number ceiling is 6
+# serials a request instead of 10, so a steady night goes from ~215 requests
+# to ~360. Against the ~10,000 the daily sweep already makes, that is noise.
+DISCOVERY_PREFIXES = ALL_FLAG_PREFIXES
 DISCOVERY_STEP = BATCH // len(DISCOVERY_PREFIXES)   # 10 serials x 5 prefixes = 50
 DISCOVERY_REQUEST_CAP = 400      # ~4,000 serials, about two days, per run
 DISCOVERY_UNISSUED_STREAK = 2    # spans no prefix claims before calling it the edge

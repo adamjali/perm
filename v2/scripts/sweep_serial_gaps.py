@@ -31,14 +31,17 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_turso import Turso, record_run  # noqa: E402
-from lib_flag_serials import case_number, day_code, prefix_of  # noqa: E402
+from lib_flag_serials import (  # noqa: E402
+    ALL_FLAG_PREFIXES, case_number, day_code, prefix_of,
+)
 import ingest_case_status_direct as core  # noqa: E402
 
 # Every prefix we have ever seen on this counter, in measured hit-rate order.
 # A serial belongs to exactly one of them; the walk drops it the moment one
 # claims it, so asking in frequency order keeps the request count down.
-PREFIXES = ("G-100-", "I-200-", "P-100-", "G-200-", "I-203-",
-            "I-201-", "I-202-", "G-300-")
+# Shared with the nightly walk so the two cannot drift: a prefix the sweep
+# asks for and the walk does not is a case only one of them can ever find.
+PREFIXES = ALL_FLAG_PREFIXES
 
 # A day's own span only. Holes are read BETWEEN the lowest and highest serial we
 # already hold for that day: outside that range we cannot tell a hole from the
@@ -99,20 +102,101 @@ def settled_misses(db, code: str) -> set[int]:
     return {int(r[0]) for r in rows if r[0] is not None}
 
 
-def holes(serials: list[int], skip: set[int] | None = None) -> list[int]:
-    """Serials inside the day's own span that we neither hold nor have retired.
+# A span this wide is a WRAP, not a day. The counter rolls at 1,000,000, so the
+# day it rolls on reads MIN 1 / MAX 999,997 and its neighbours look absurd too.
+# Three such days exist in our history (24136, 25141, 26161).
+MAX_PLAUSIBLE_SPAN = 200_000
 
-    The span is bounded by what we hold on BOTH ends on purpose: past the
-    highest serial we know for a day there is no way to tell a hole from the
-    end of that day's issuance, and probing past the edge is how a prober
-    spends its whole budget on numbers that were never issued.
+
+def day_bounds(db) -> dict[int, tuple[int, int, int]]:
+    """{day_code: (min_serial, max_serial, held_count)} for every day we hold.
+
+    ONE query for the whole history rather than three per day. The caller needs
+    every day, not just the ones being swept, because a day's true span is
+    defined by its NEIGHBOURS.
     """
-    if len(serials) < 2:
+    sql = """
+      WITH s AS (
+        SELECT CAST(substr(case_number,7,5) AS INT) d,
+               CAST(substr(case_number,13) AS INT) n FROM perm_case_status
+        UNION SELECT CAST(substr(case_number,7,5) AS INT),
+               CAST(substr(case_number,13) AS INT) FROM pwd_case_status
+        UNION SELECT CAST(substr(case_number,7,5) AS INT),
+               CAST(substr(case_number,13) AS INT) FROM lca_case_status)
+      SELECT d, MIN(n), MAX(n), COUNT(*) FROM s GROUP BY d ORDER BY d
+    """
+    out: dict[int, tuple[int, int, int]] = {}
+    for r in core._rows(db, sql, []):
+        # libSQL returns integers as STRINGS. Comparing or ranging over those
+        # compares lexically ("9" > "10"), so the coercion is load-bearing.
+        d, lo, hi, n = (int(x) for x in r[:4])
+        out[d] = (lo, hi, n)
+    return out
+
+
+def true_span(bounds: dict[int, tuple[int, int, int]], code: str) -> tuple[int, int] | None:
+    """The serial range day `code` really owns, bounded by its neighbours.
+
+    FLAG issues case numbers from ONE global sequential counter, so every
+    serial between the previous day's highest and the next day's lowest
+    belongs to this day. That makes the day's true span EXACT rather than
+    guessed - which matters because the earlier version read holes only
+    between a day's own lowest and highest KNOWN serial, and was therefore
+    structurally blind to anything issued before the first case we happen to
+    hold or after the last one. Measured over 2026: 1,102 serials sat in
+    those inter-day regions, invisible by construction.
+
+    Falls back to the day's own span at a wrap boundary, where the counter
+    rolls and MIN/MAX stop meaning anything.
+    """
+    n = int(code)
+    if n not in bounds:
+        return None
+    lo, hi, _ = bounds[n]
+    days = sorted(bounds)
+    i = days.index(n)
+    if i > 0:
+        prev_hi = bounds[days[i - 1]][1]
+        if 0 < lo - prev_hi <= MAX_PLAUSIBLE_SPAN:
+            lo = prev_hi + 1
+    if i + 1 < len(days):
+        next_lo = bounds[days[i + 1]][0]
+        if 0 < next_lo - hi <= MAX_PLAUSIBLE_SPAN:
+            hi = next_lo - 1
+    if hi < lo or hi - lo + 1 > MAX_PLAUSIBLE_SPAN:
+        # THE DAY THE COUNTER WRAPS HAS NO USABLE SPAN, and falling back to
+        # its own MIN/MAX does not help: on a wrap day those ARE 0 and
+        # 999,999, so the "fallback" hands back the whole million. Measured
+        # 2026-09-13, after this exact fallback sent a sweep to probe
+        # 1,000,000 serials on day 26161 and it sat there for 44 minutes.
+        #
+        # A wrap day's serials sit in two clusters, one before the roll and
+        # one after, and there is no way to say which unissued numbers between
+        # them belong to this day. Three day codes in the whole history are
+        # like this (24136, 25141, 26161), so they are SKIPPED and named
+        # rather than guessed at.
+        return None
+    return lo, hi
+
+
+def holes(serials: list[int], skip: set[int] | None = None,
+          span: tuple[int, int] | None = None) -> list[int]:
+    """Serials in the day's span that we neither hold nor have retired.
+
+    `span` is the neighbour-derived range when the caller has one; without it
+    the day's own lowest and highest known serial are used, which is correct
+    but blind to both inter-day edges.
+    """
+    if span is None:
+        if len(serials) < 2:
+            return []
+        span = (serials[0], serials[-1])
+    lo, hi = span
+    if hi < lo:
         return []
     have = set(serials)
     skip = skip or set()
-    return [s for s in range(serials[0], serials[-1] + 1)
-            if s not in have and s not in skip]
+    return [s for s in range(lo, hi + 1) if s not in have and s not in skip]
 
 
 def record_misses(db, code: str, serials: list[int], stamp: int) -> None:
@@ -132,18 +216,32 @@ def record_misses(db, code: str, serials: list[int], stamp: int) -> None:
             f"misses = misses + 1, last_probed_at = excluded.last_probed_at", [])
 
 
-def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False) -> dict:
+def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
+          bounds: dict[int, tuple[int, int, int]] | None = None) -> dict:
     lookup = lookup or core.lookup_with_retry
+    # Built once for the whole run. Without it each day is probed only between
+    # its own known serials and the inter-day regions are never asked about.
+    if bounds is None:
+        bounds = day_bounds(db)
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
     stamp = int(core.time.time() * 1000)
     requests = probed = found = ins_perm = ins_other = retired = 0
+    skipped: list[str] = []
     if not dry:
         db.execute(MISS_DDL, [])
     per_day: list[tuple[str, int, int]] = []
     for code in codes:
         if requests >= cap:
             break
-        gaps = holes(held_serials(db, code), settled_misses(db, code))
+        span = true_span(bounds, code)
+        if span is None:
+            # Either we hold nothing for this day, or it is a wrap day whose
+            # span cannot be read. Named, because a silently skipped day and a
+            # day with no holes look identical in the totals.
+            if int(code) in bounds:
+                skipped.append(code)
+            continue
+        gaps = holes(held_serials(db, code), settled_misses(db, code), span)
         if not gaps:
             continue
         day_found = 0
@@ -180,7 +278,8 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False) -> 
     return {"requests": requests, "probed": probed, "found": found,
             "missed": retired,
             "inserted_perm": ins_perm, "inserted_other": ins_other,
-            "days_with_finds": per_day, "capped": requests >= cap}
+            "days_with_finds": per_day, "skipped": skipped,
+            "capped": requests >= cap}
 
 
 def main() -> int:
@@ -196,7 +295,11 @@ def main() -> int:
     db = Turso()
     today = datetime.date.today()
     if a.frm and a.to:
-        codes = [str(c) for c in range(int(a.frm), int(a.to) + 1)]
+        # NEWEST FIRST here too, matching the default path below. An explicit
+        # range used to run oldest-first, which puts the days that matter most
+        # - the recent ones, where the pending cases are - at the END of a run
+        # that can be interrupted or hit its cap. Same work, better order.
+        codes = [str(c) for c in range(int(a.to), int(a.frm) - 1, -1)]
     else:
         # Newest first: a hole in the last fortnight matters more than one in a
         # day code from three months ago, and a capped run should spend its
@@ -214,6 +317,9 @@ def main() -> int:
              f"(retired at {MISS_LIMIT})")
     for code, gaps, found in r["days_with_finds"][:12]:
         core.log(f"    {code}: {found} of {gaps} holes were real")
+    if r["skipped"]:
+        core.log(f"  skipped {len(r['skipped'])} day code(s) whose serial span is "
+                 f"unreadable (the counter wrapped): {', '.join(r['skipped'])}")
     if r["capped"]:
         core.log("  stopped on the request cap; the next run resumes from the same window")
     if r["probed"] and not r["found"]:

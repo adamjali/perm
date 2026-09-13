@@ -4324,33 +4324,77 @@ for a bad reason: `held_serials` returning nothing (a renamed column, a changed
 type) makes every day look contiguous and the sweep exits clean having asked
 DOL nothing.
 
-## The decision-pace estimator is ported, tested, and deliberately not wired
+## Every prefix, every hole, and the day a neighbour bounds (2026-09-13)
 
-`convex/lib/perm/calculators/decisionPace.ts` is the model the estimator
-investigation settled on - `day = today + casesAhead / 28-day calendar pace`,
-band from that pace's own p10/p90 weekday spread, floored at 55% of the horizon
-and grown late-heavy. **Zero fitted parameters**: the +111-day "bias" that
-started this turned out to be DOL's acceleration wearing a calibration costume,
-and deleting the whole correction cost nothing at the horizons that exist (86%
-of the live queue is under four months).
+Three changes turn the gap sweep from a partial patch into the thing that
+closes the corpus, and they came from the owner's instruction to fill
+everything rather than the cheapest slice.
 
-**It produces no number a reader sees, and that is the finding, not an
-oversight.** The backtest fed it DOL's own `decision_date` from the quarterly
-disclosure files. Production cannot: those files end **2026-06-30**, so "the
-last 28 days" does not exist in them. The only daily-resolution source we hold
-is `perm_case_events`, which records when OUR SWEEP SAW a change, and it begins
-**2026-08-27**. Measured 2026-09-13: **the two ranges do not overlap by a single
-day**, so substituting one for the other cannot be validated at all. It becomes
-checkable when DOL publishes FY2026 Q4 (July-September), which is also the first
-quarter the event log covers.
+**The walk asks EVERY prefix now, not the five busiest.** It asked
+G-100/G-200/I-200/P-100/I-203, about 70% of the counter, so a span whose
+serials all belonged to G-300, I-201 or I-202 answered empty under all five and
+counted toward the "unissued" streak that ENDS a day. A sparse office code was
+therefore not merely undiscovered - it could end the walk early and hide the
+serials behind it. Nine prefixes at DOL's 50-number ceiling is 5 serials a
+request instead of 10, so a steady night goes from ~215 requests to ~430,
+against the ~10,000 the daily sweep already makes.
 
-Until then `estimateQueueDecision` keeps leading with queue-advance, which is
-anchored on DOL's own published frontier and needs no substitution. The input
-accumulates in `perm_case_events` on its own - no doc is written for it,
-because a doc would only be a second copy of a table we already retain.
+**Both the walk and the sweep now read one canonical tuple**
+(`ALL_FLAG_PREFIXES` in `lib_flag_serials.py`). They had drifted to five and
+eight, which means a case the sweep could find was one the walk would never
+look for. `PERM_OFFICE_PREFIXES` is the routing half, and a gate asserts no
+asked prefix is homeless and that the two sets match.
 
-The band is a **pace scenario, not a confidence interval**: measured coverage is
-57-58% overall and 41% at the near horizon, and any surface that renders it must
-say so. A rival ships `confidence_level: 0.8` as a hardcoded constant against
-real coverage of 8-15%; that is the most checkable lie a queue estimator can
-tell and we are not going to ship our own version of it.
+**A day's true span is bounded by its NEIGHBOURS, not by its own first and
+last known serial.** FLAG issues from one global sequential counter, so every
+serial between the previous day's highest and the next day's lowest belongs to
+this day - which makes the span exact rather than guessed. The old reading was
+structurally blind to anything issued before the first case we happen to hold
+or after the last: measured across 2026, **1,102 serials sat in those inter-day
+regions**, invisible by construction. A wrap day (the counter rolls at
+1,000,000; three such days exist) falls back to its own span instead of
+probing a million numbers.
+
+**Explicit `--from/--to` ranges now run newest-first**, matching the default.
+They ran oldest-first, which puts the days that matter most - the recent ones,
+where the pending cases are - at the END of a run that can be interrupted or
+hit its cap.
+
+### What filling it actually costs, measured
+
+| | holes | requests | wall clock at 3 req/s |
+|---|---|---|---|
+| 2026 (every pending case lives here) | **73,681** | 14,736 | **~2 hours** |
+| all history, 1,306 day codes | **2,313,871** | 385,645 | **~37 hours** |
+
+So "fill everything tonight" is 2026, and it was run to completion. The older
+years are 600-800k holes each and are almost entirely serials issued to
+programs and prefixes outside our three - those cases are long decided and
+present in the disclosure files, which is the record for them. The nightly
+sweep works backward through the trailing 90 days and the miss ledger retires
+what DOL denies three times, so the remaining tail closes on its own.
+
+### The wrap day, and the assertion that rubber-stamped it (2026-09-13)
+
+Neighbour-bounding needs a fallback for the day the counter rolls at
+1,000,000, and the first one was `return bounds[n][0], bounds[n][1]` - the
+day's own MIN and MAX. **On a wrap day those ARE 0 and 999,999**, so the
+"fallback" handed back the whole million and the sweep sat on day 26161
+probing serials for 44 minutes. Three day codes in the entire history are like
+this (24136, 25141, 26161).
+
+**The test asserted `... or sp == (1, 999_000)`**, which accepted precisely the
+broken answer. An assertion with an `or` branch that matches the bug is not a
+gate, it is a rubber stamp - and it is the same family as the vacuous
+`min(floor, width) <= width` caught in the estimator tests the same night.
+Wrap days are SKIPPED now, named in the log so a skipped day and a day with no
+holes cannot look alike, and the test asserts `is None`.
+
+**Three of my own progress instruments read wrong before this was found**, and
+each was wrong for its own reason, which is worth remembering: `lsof` showed no
+TCP because the lookups are forked `curl` children rather than sockets on the
+parent; a file-mtime probe sampled every four seconds "showed" a four-second
+request cadence that was my own sample interval; and `MAX(last_probed_at)` over
+the whole table does not move mid-day-code, because misses are flushed per day.
+The reading that settled it was `GROUP BY day_code ORDER BY MAX(last_probed_at)`
+- which named the stuck day directly.

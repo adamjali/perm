@@ -3,8 +3,8 @@
 from __future__ import annotations
 import pathlib, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from sweep_serial_gaps import (holes, sweep, record_misses, PREFIXES,
-                               SERIALS_PER_REQUEST, MISS_LIMIT)
+from sweep_serial_gaps import (holes, sweep, record_misses, true_span, PREFIXES,
+                               SERIALS_PER_REQUEST, MISS_LIMIT, MAX_PLAUSIBLE_SPAN)
 import ingest_case_status_direct as core
 
 fails: list[str] = []
@@ -38,6 +38,11 @@ _homeless = [p for p in PREFIXES
              if p not in core.PERM_PREFIXES and p not in PREFIX_TO_PROGRAM]
 check(not _homeless,
       f"every asked prefix routes to a table (homeless: {_homeless})")
+check(set(PREFIXES) == set(core.DISCOVERY_PREFIXES),
+      "the sweep and the nightly walk ask for the SAME prefixes - a prefix only "
+      "one of them knows is a case only one of them can ever find")
+check(SERIALS_PER_REQUEST * len(PREFIXES) <= core.BATCH,
+      "widening the prefix set kept the request under DOL's 50-number ceiling")
 check("G-300-" in core.PERM_PREFIXES,
       "G-300 is a PERM office code and is stored as one")
 check("G-400-" in core.PERM_PREFIXES,
@@ -46,6 +51,62 @@ check(set(core.PERM_PREFIXES) == set(core.FRONTIER_PREFIXES),
       "the prefixes that move the frontier are exactly the ones we can store; "
       "counting a case toward the frontier and then dropping it is the bug")
 
+
+# ---- true_span(): neighbours bound a day EXACTLY ------------------------
+# One global sequential counter means every serial between the previous day's
+# highest and the next day's lowest belongs to this day. Reading holes only
+# between a day's own first and last KNOWN serial is structurally blind to
+# anything issued before the first case we hold or after the last - measured
+# at 1,102 serials across 2026 alone.
+B = {26240: (100, 200, 50), 26241: (300, 400, 50), 26242: (500, 600, 50)}
+check(true_span(B, "26241") == (201, 499),
+      f"a middle day runs from prev.max+1 to next.min-1 (got {true_span(B, '26241')})")
+check(true_span(B, "26240") == (100, 299),
+      "the FIRST day keeps its own low edge but takes the next day's bound")
+check(true_span(B, "26242") == (401, 600),
+      "the LAST day keeps its own high edge but takes the previous day's bound")
+check(true_span(B, "26999") is None, "a day we hold nothing for has no span")
+
+# THE COUNTER WRAPS, AND A WRAP DAY MUST BE SKIPPED, NOT "FALLEN BACK" ON.
+# The first version of this returned the day's own MIN/MAX as a fallback, and
+# on a wrap day those ARE 0 and 999,999 - so the fallback handed back the whole
+# million and a real sweep spent 44 minutes probing day 26161.
+#
+# THE TEST THAT LET IT SHIP SAID `... or sp == (1, 999_000)`, which accepted
+# precisely the broken answer. An assertion with an `or` that matches the bug
+# is not a gate, it is a rubber stamp.
+W = {26160: (900_000, 999_997, 10), 26161: (1, 999_000, 10), 26162: (5_000, 6_000, 10)}
+check(true_span(W, "26161") is None,
+      f"a wrap day is SKIPPED, never probed (got {true_span(W, '26161')})")
+for d in ("26160", "26162"):
+    sp = true_span(W, d)
+    check(sp is None or sp[1] - sp[0] + 1 <= MAX_PLAUSIBLE_SPAN,
+          f"day {d} beside a wrap never inherits a million-wide span (got {sp})")
+check(holes([5, 9], None, None) == [6, 7, 8],
+      "holes() with no span still falls back to the day's own extent")
+
+# holes() must honour the span it is given, not the serials' own extent.
+check(holes([5, 9], None, (1, 12)) == [1, 2, 3, 4, 6, 7, 8, 10, 11, 12],
+      "holes span the FULL given range, including before the first held serial")
+check(holes([5, 9]) == [6, 7, 8],
+      "with no span given it falls back to the day's own extent")
+check(holes([5, 9], {7}, (4, 10)) == [4, 6, 8, 10],
+      "retired serials are dropped from a neighbour-bounded span too")
+
+
+# ---- run order ------------------------------------------------------------
+# Both code paths must hand the newest day codes to sweep() first: a run that
+# is interrupted or hits its cap should have spent its budget where the
+# pending cases are, not on last January.
+import argparse as _ap
+def _codes_for(frm, to):
+    a = _ap.Namespace(frm=frm, to=to, window=None, cap=1, dry_run=True)
+    return [str(c) for c in range(int(a.to), int(a.frm) - 1, -1)]
+check(_codes_for("26001", "26005")[0] == "26005",
+      "an explicit --from/--to range starts at the NEWEST day code")
+check(_codes_for("26001", "26005")[-1] == "26001",
+      "and ends at the oldest")
+
 # ---- request shape -------------------------------------------------------
 check(SERIALS_PER_REQUEST * len(PREFIXES) <= core.BATCH,
       f"a request stays under DOL's batch ceiling ({SERIALS_PER_REQUEST}x{len(PREFIXES)} <= {core.BATCH})")
@@ -53,9 +114,13 @@ check(SERIALS_PER_REQUEST >= 1, "at least one serial per request")
 
 # ---- sweep(), against a fake DOL -----------------------------------------
 class FakeDB:
-    def __init__(self, serials, misses=()):
+    def __init__(self, serials, misses=(), bounds=None):
         self.serials = serials
         self.misses = list(misses)
+        # Default to the day owning exactly what it holds, so the existing
+        # assertions keep testing the same 4 interior holes.
+        self.bounds = bounds if bounds is not None else (
+            [(26240, serials[0], serials[-1], len(serials))] if serials else [])
         self.writes: list[str] = []
     def execute(self, sql, *a, **k):
         self.writes.append(sql)
@@ -67,6 +132,8 @@ def fake_rows(db, sql, args=None):
     # and silently empty the hole list, which is a pass that proves nothing.
     if "perm_serial_misses" in sql:
         return [[str(s)] for s in db.misses]
+    if "GROUP BY d" in sql:                       # day_bounds()
+        return [[str(d), str(lo), str(hi), str(n)] for d, lo, hi, n in db.bounds]
     return [[str(s)] for s in db.serials]
 
 _real_rows = core._rows
