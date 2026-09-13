@@ -62,21 +62,24 @@ function anchorText(): string {
   return el.textContent ?? "";
 }
 
-describe("the day input", () => {
-  it("offers a day, and defaults to not requiring one", () => {
+describe("the filing-date field", () => {
+  it("is ONE date field, not a month list plus a day list", () => {
+    // The owner asked for an unbounded forward range and a <select> cannot
+    // hold one - you cannot enumerate every future month. A date field can,
+    // and it collapses two controls into the thing a person actually knows.
     renderTool();
-    const day = screen.getByLabelText(/^Day/i) as HTMLSelectElement;
-    expect(day.value).toBe("");
-    // Blank must read as a real answer, not a missing one.
-    expect(screen.getByText(/middle of the month/i)).toBeTruthy();
+    const el = screen.getByLabelText(/DOL received your case/i) as HTMLInputElement;
+    expect(el.tagName).toBe("INPUT");
+    expect(screen.queryByLabelText(/^Day/i)).toBeNull();
   });
+
 
   it("CHANGES THE ANSWER - the control is wired, not decorative", () => {
     renderTool();
     const before = anchorText();
-    fireEvent.change(screen.getByLabelText(/^Day/i), { target: { value: "1" } });
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), { target: { value: "2025-12-01" } });
     const first = anchorText();
-    fireEvent.change(screen.getByLabelText(/^Day/i), { target: { value: "28" } });
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), { target: { value: "2025-12-28" } });
     const last = anchorText();
     expect(first).not.toBe(last);
     // The 1st must not be LATER than the 28th: fewer cases were filed ahead.
@@ -86,33 +89,8 @@ describe("the day input", () => {
     expect(before).not.toBe("");
   });
 
-  it("offers only days the chosen month actually has", () => {
-    renderTool();
-    fireEvent.change(screen.getByLabelText(/month DOL received/i), {
-      target: { value: "2026-02" },
-    });
-    const day = screen.getByLabelText(/^Day/i) as HTMLSelectElement;
-    const values = Array.from(day.options).map((o) => o.value).filter(Boolean);
-    // February 2026 is not a leap year.
-    expect(values).toHaveLength(28);
-    expect(values).not.toContain("30");
-  });
 
-  it("clears a day the new month cannot have, rather than silently clamping", () => {
-    renderTool();
-    fireEvent.change(screen.getByLabelText(/^Day/i), { target: { value: "31" } });
-    fireEvent.change(screen.getByLabelText(/month DOL received/i), {
-      target: { value: "2026-02" },
-    });
-    // "the 28th" is not what they said, so it goes back to Any.
-    expect((screen.getByLabelText(/^Day/i) as HTMLSelectElement).value).toBe("");
-  });
 
-  it("names the date it is counting to once a day is chosen", () => {
-    renderTool();
-    fireEvent.change(screen.getByLabelText(/^Day/i), { target: { value: "3" } });
-    expect(screen.getByText(/Counting the cases filed before/i)).toBeTruthy();
-  });
 });
 
 describe("the answer is shown at the resolution it earned", () => {
@@ -160,5 +138,73 @@ describe("the answer is shown at the resolution it earned", () => {
     );
     const headline = screen.getAllByText(/^Around /)[0]?.textContent ?? "";
     expect(headline).not.toMatch(/Around (\w{3}, )?\w{3} \d{1,2}, \d{4}/);
+  });
+});
+
+describe("a filing date in the FUTURE", () => {
+  const future = "2027-03-15";
+
+  function renderFuture() {
+    return render(
+      <PermTimelineEstimator
+        today="2026-09-13"
+        frontier={{ analystQueueMonth: "2025-11", officialAvgDays: 336, asOf: "2026-08-31" }}
+        cohorts={[]}
+        frontierAdvance={{ rate: 1.0, slowest: 0.8, fastest: 2.0 }}
+        disclosure={null}
+        months={MONTHS}
+        decisionPace={PACE}
+        sweepAgeDays={0}
+        initialMonth="2025-12"
+      />,
+    );
+  }
+
+  it("accepts a date past today at all", () => {
+    // The month list stopped at the current month, so this was impossible.
+    renderFuture();
+    const el = screen.getByLabelText(/DOL received your case/i) as HTMLInputElement;
+    fireEvent.change(el, { target: { value: future } });
+    expect(screen.getByLabelText(/expect to file/i)).toBeTruthy();
+  });
+
+  it("switches the label to the future tense", () => {
+    renderFuture();
+    expect(screen.getByLabelText(/DOL received your case/i)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), {
+      target: { value: future },
+    });
+    // "Date DOL received your case" is wrong for someone who has not filed.
+    expect(screen.queryByLabelText(/DOL received your case/i)).toBeNull();
+    expect(screen.getByLabelText(/Date you expect to file/i)).toBeTruthy();
+  });
+
+  it("says which half is counted and which is assumed", () => {
+    renderFuture();
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), {
+      target: { value: future },
+    });
+    // Today's backlog is counted; the arrivals before you are projected, and
+    // the rate's own window is named rather than hidden.
+    expect(screen.getByText(/cases already waiting/i)).toBeTruthy();
+    expect(screen.getByText(/expected to be filed before you/i)).toBeTruthy();
+    expect(screen.getByText(/settled months/i)).toBeTruthy();
+  });
+
+  it("gives a LATER answer the further out you file", () => {
+    // Counting only today's backlog gives every future date the same answer,
+    // which is what both rivals ship and is transparently wrong.
+    renderFuture();
+    const field = screen.getByLabelText(/DOL received your case/i);
+    fireEvent.change(field, { target: { value: "2026-11-15" } });
+    const near = screen.getByText(/^Around /).textContent ?? "";
+    fireEvent.change(screen.getByLabelText(/expect to file/i), {
+      target: { value: "2027-09-15" },
+    });
+    const far = screen.getByText(/^Around /).textContent ?? "";
+    expect(near).not.toBe(far);
+    expect(Date.parse(near.replace(/^Around (\w{3}, )?/, ""))).toBeLessThan(
+      Date.parse(far.replace(/^Around (\w{3}, )?/, "")),
+    );
   });
 });

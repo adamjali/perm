@@ -26,7 +26,11 @@ import {
   type ChartKind,
 } from "@/lib/perm";
 import { formatMonth, formatMonthShort, formatAsOf } from "@/lib/dolFormat";
-import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
+import {
+  dropCollidingTicks,
+  evenTickIndices,
+  tickAnchor,
+} from "@/components/tools/chartTicks";
 import { DateInput } from "@/components/forms/DateInput";
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
@@ -511,7 +515,28 @@ export function PriorityDateEstimator({
     if (run.length > 1) lineSegments.push(run.join(" "));
   }
 
-  const xTickIndices = evenTickIndices(series.length, 7);
+  /**
+   * Seven evenly spaced ticks, minus any whose LABEL would collide.
+   *
+   * Even spacing is not enough on its own. `tickAnchor` turns the two end
+   * labels inward so they stay inside the canvas, which moves each of them
+   * half a label width toward the middle - and that closed the gap to its
+   * neighbour. Measured on this very chart: "May 2025" ended at x 638.5 and
+   * "Sep 2026", anchored end, began at 635.2. Three units of overlap, on
+   * ticks that were perfectly evenly spaced.
+   */
+  const xTickIndices = dropCollidingTicks(
+    evenTickIndices(series.length, 7),
+    {
+      length: series.length,
+      x0: PAD_L,
+      x1: W - PAD_R,
+      labels: evenTickIndices(series.length, 7).map(
+        (i) => formatMonthShort(series[i]!.month) ?? "",
+      ),
+      fontPx: 15,
+    },
+  );
   const yTicks = yDomain
     ? [yDomain.lo, (yDomain.lo + yDomain.hi) / 2, yDomain.hi]
     : [];

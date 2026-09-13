@@ -4,7 +4,7 @@ import { Fragment, useMemo, useState } from "react";
 import { evenTickIndices } from "@/components/tools/chartTicks";
 import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverLayer";
 
-import { formatMonthShort, formatMonth } from "@/lib/dolFormat";
+import { formatAsOf, formatMonthShort, formatMonth } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
 import { DataView, ScopeSelect } from "./DataView";
 
@@ -40,7 +40,54 @@ export interface QueueHistoryChartProps {
 
 const W = 720;
 const H = 260;
-const PAD = { top: 18, right: 16, bottom: 40, left: 64 };
+/**
+ * `left` is sized to the WIDEST y label, measured rather than guessed.
+ *
+ * This axis is unusual: the y values are MONTHS ("Nov 2025"), not numbers, so
+ * the labels are eight characters wide where most charts here have three or
+ * four. At 12px in the mono face that is 57.6px, and the labels are drawn at
+ * `left - 8` with `textAnchor="end"`, so they extend leftward from there.
+ *
+ * At left: 64 they started at x = -1.6 and hung outside the viewBox - measured
+ * with `getBBox()` on the live page, which is the only way this repo trusts
+ * text metrics after a characters-times-7 estimate reported every label at the
+ * wrong place. 76 puts the widest label at x = 10.4, clear of the edge, and
+ * costs 12px of a 640px plot.
+ */
+/**
+ * "2026-08-20" to "20 Aug 2026".
+ *
+ * The x axis carries DOL's own as-of dates. `formatAsOf` gives "August 20,
+ * 2026", which is right in prose and 13 characters too wide when three of
+ * them share a 720-unit axis - the end ones are anchored to the edges, so a
+ * long label there runs straight out of the viewBox. This is the same
+ * information at a width the axis can hold.
+ */
+function formatAsOfShort(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  if (!m) return iso;
+  const name = MONTH_ABBR[Number(m[2]) - 1];
+  return name ? `${Number(m[3])} ${name} ${m[1]}` : iso;
+}
+
+const MONTH_ABBR = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+];
+
+export const Y_LABEL_GAP = 8;
+export const PAD = { top: 18, right: 16, bottom: 40, left: 76 };
+
+/**
+ * Width of one character of the y labels, at their own font size.
+ *
+ * MEASURED, not assumed: `getBBox()` on the live chart gave 57.6px for the
+ * eight-character "Sep 2025" at `fontSize=12` in `var(--font-mono)`, so the
+ * advance is 0.6em. A proportional face would make this meaningless, which is
+ * why the labels are mono and why the test below pins both together.
+ */
+export const Y_LABEL_FONT_PX = 12;
+export const MONO_ADVANCE_EM = 0.6;
 
 /** Windows offered, in readings. Only those the record can actually fill. */
 const WINDOWS = [6, 12, 26] as const;
@@ -217,7 +264,7 @@ function QueueHistorySvg({
             />
             {labelled.has(m) ? (
               <text
-                x={PAD.left - 8}
+                x={PAD.left - Y_LABEL_GAP}
                 y={py(m) + 4}
                 textAnchor="end"
                 fontSize="12"
@@ -253,7 +300,12 @@ function QueueHistorySvg({
             fill="var(--foreground)"
             fillOpacity="0.7"
           >
-            {p.asOf}
+            {/* FORMATTED, not the raw ISO string. These are DOL's own as-of
+                dates and they were rendering as "2026-08-20" - the only raw
+                ISO dates anywhere on the site, against `formatAsOf` used
+                everywhere else. Short form, because three of these sit under
+                a 720-unit axis and the full "August 20, 2026" collides. */}
+            {formatAsOfShort(p.asOf)}
           </text>
         ))}
 
@@ -419,7 +471,8 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
           options={options}
         />{" "}
         <p className="text-sm text-foreground/70">
-          {first.asOf} to {last.asOf}
+          {formatAsOf(first.asOf) ?? first.asOf} to{" "}
+          {formatAsOf(last.asOf) ?? last.asOf}
           {spanMonths > 0 ? (
             <>
               {" "}

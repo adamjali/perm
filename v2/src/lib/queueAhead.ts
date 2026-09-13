@@ -71,6 +71,72 @@ export function deriveQueueAhead(
 }
 
 /**
+ * A month is not counted as settled until it has stopped growing.
+ *
+ * MEASURED 2026-09-13 and it is not a small effect: over one week the
+ * August-2026 filing month gained 1,261 cases (+16.4%), June gained 463
+ * (+4.6%), and July gained 40 (+0.4%). DOL keeps indexing a month for weeks
+ * after it ends and our own discovery keeps finding cases in it, so the two
+ * or three newest months are always undercounts.
+ *
+ * Averaging them in makes the filing rate look SLOWER than it is, which makes
+ * a future estimate look sooner than it should - the error points the
+ * flattering way, which is the kind that survives review. Two months is where
+ * growth fell under 1% in the measurement above.
+ */
+export const SETTLED_MONTH_LAG = 2;
+
+export interface FilingRate {
+  /** Cases received per CALENDAR day. */
+  perDay: number;
+  /** The months averaged, inclusive, as `YYYY-MM`. */
+  from: string;
+  to: string;
+  monthsUsed: number;
+}
+
+/**
+ * How fast cases are arriving, measured over months that have stopped growing.
+ *
+ * CALENDAR days, not working days, because the only thing this is ever
+ * multiplied by is calendar days between today and a future filing date - the
+ * same reason the decision pace is a calendar rate.
+ *
+ * Returns null rather than a guess when there are too few settled months.
+ * `window` is how many settled months to average; filings are seasonal (Feb
+ * 2026 ran 5,492 against June's 10,627, roughly half) so a short window is
+ * noisy and a long one lags. Six is a compromise and the caller states it.
+ */
+export function measureFilingRate(
+  months: readonly MonthQueue[],
+  today: string,
+  window = 6,
+): FilingRate | null {
+  const m = /^(\d{4})-(\d{2})/.exec(today);
+  if (!m) return null;
+  // The newest month that is allowed to count, as YYYY-MM.
+  const cutoff = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1 - SETTLED_MONTH_LAG, 1))
+    .toISOString()
+    .slice(0, 7);
+  const settled = months
+    .filter((x) => x.filingMonth <= cutoff && x.total > 0)
+    .sort((a, b) => (a.filingMonth < b.filingMonth ? -1 : 1))
+    .slice(-window);
+  if (settled.length < 3) return null;
+  const total = settled.reduce((a, x) => a + x.total, 0);
+  const first = settled[0]!;
+  const last = settled[settled.length - 1]!;
+  return {
+    // 30.44 is the mean calendar month. The window spans whole months, so
+    // there is no day-count to take from the calendar here.
+    perDay: total / settled.length / 30.44,
+    from: first.filingMonth,
+    to: last.filingMonth,
+    monthsUsed: settled.length,
+  };
+}
+
+/**
  * Undecided cases filed before a given DAY, from month-granular counts.
  *
  * WHY PRORATION RATHER THAN A CLEAN MONTH BOUNDARY. The census counts pending
@@ -89,6 +155,76 @@ export function deriveQueueAhead(
  * would read as "nothing ahead of you", which is the one answer this must
  * never invent.
  */
+export interface AheadOptions {
+  /** `YYYY-MM-DD`. Required to answer for a date after the census ends. */
+  today?: string;
+  /** Cases arriving per calendar day, from `measureFilingRate`. */
+  filingRate?: number | null;
+}
+
+export interface AheadResult {
+  total: number;
+  /** Undecided cases that already exist. */
+  pending: number;
+  /**
+   * Cases expected to be filed between today and a future filing date.
+   *
+   * Zero for any date that is not in the future. Kept separate from `pending`
+   * because one is counted and the other is projected, and a reader is owed
+   * the difference.
+   */
+  projected: number;
+}
+
+/**
+ * The same count, decomposed, and able to answer for a date in the FUTURE.
+ *
+ * WHY THE FUTURE NEEDS ITS OWN BRANCH. `casesAheadOfDay` returns null for any
+ * month the census does not hold, which is right for a date BEFORE our data
+ * (we genuinely do not know) and wrong for one after it (we know exactly:
+ * every pending case is ahead of you, because you have not filed yet). Those
+ * two were lumped together and both answered null.
+ *
+ * AND TODAY'S BACKLOG ALONE IS NOT THE ANSWER FOR A FUTURE DATE. People keep
+ * filing between now and then - about 264 a calendar day, measured - and every
+ * one of them is ahead of you. Counting only today's pending gives EVERY
+ * future date the same answer: 95,326 ahead whether you file next month or
+ * next year, which is transparently wrong and is what both rivals ship
+ * (permtrack returns its whole backlog for a November date, with
+ * `your_position_in_month: 0`). At a year out that understates the queue by
+ * roughly 100,000 cases.
+ *
+ * The projection is returned SEPARATELY so the caller can say which half is
+ * counted and which is assumed. It is never folded in silently.
+ */
+export function aheadOfDay(
+  months: readonly MonthQueue[],
+  filingDate: string,
+  opts: AheadOptions = {},
+): AheadResult | null {
+  const counted = casesAheadOfDay(months, filingDate);
+  if (counted !== null) return { total: counted, pending: counted, projected: 0 };
+
+  // Not in the census. Two opposite reasons, and only one is answerable.
+  const newest = months.reduce<string>((a, m) => (m.filingMonth > a ? m.filingMonth : a), "");
+  if (!newest || filingDate.slice(0, 7) <= newest) return null; // before our data
+
+  const pending = months.reduce((a, m) => a + m.pending, 0);
+  const { today, filingRate } = opts;
+  if (!today || !filingRate || !(filingRate > 0)) {
+    // Answerable but not projectable: say what we counted and nothing more.
+    return { total: pending, pending, projected: 0 };
+  }
+  const days = Math.max(
+    0,
+    Math.round(
+      (Date.parse(`${filingDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000,
+    ),
+  );
+  const projected = Math.round(filingRate * days);
+  return { total: pending + projected, pending, projected };
+}
+
 export function casesAheadOfDay(
   months: readonly MonthQueue[],
   filingDate: string,

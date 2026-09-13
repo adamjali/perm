@@ -31,3 +31,66 @@ export function tickAnchor(index: number, total: number): "start" | "middle" | "
   if (index === total - 1) return "end";
   return "middle";
 }
+
+/**
+ * Estimated width of a tick label, in viewBox units.
+ *
+ * The charts here label axes in the mono face, whose advance is 0.6em -
+ * measured with `getBBox()` on the live priority-date chart, where "May 2025"
+ * at 16px came back 71.1px wide against 8 x 16 x 0.6 = 76.8. Rounding up is
+ * the safe direction for a collision check.
+ */
+export function tickLabelWidth(label: string, fontPx: number): number {
+  return label.length * fontPx * 0.6;
+}
+
+/**
+ * Drop interior ticks whose labels would collide, END ANCHORING INCLUDED.
+ *
+ * THIS IS THE BIT `evenTickIndices` CANNOT KNOW. It spaces ticks evenly and
+ * that is correct, but `tickAnchor` then turns the two END labels inward so
+ * they stay inside the canvas - which moves each of them half a label width
+ * toward the middle and closes the gap to its neighbour. Measured on the
+ * priority-date chart: "May 2025" ended at x 638.5 and "Sep 2026", anchored
+ * end, began at 635.2. Three pixels of overlap, on evenly spaced ticks.
+ *
+ * So the check has to be done on the BOXES the labels will actually occupy,
+ * not on the tick positions. An interior label that collides is dropped
+ * rather than shifted: a tick label that no longer sits over its tick is
+ * worse than one fewer label.
+ */
+export function dropCollidingTicks(
+  indices: readonly number[],
+  opts: {
+    /** Series length, so an index can be turned into a position. */
+    length: number;
+    /** Left and right edges of the plot, in viewBox units. */
+    x0: number;
+    x1: number;
+    labels: readonly string[];
+    fontPx: number;
+    /** Minimum clear space between two labels. */
+    gap?: number;
+  },
+): number[] {
+  const { length, x0, x1, labels, fontPx, gap = 6 } = opts;
+  if (indices.length < 3 || length < 2) return [...indices];
+  const boxes = indices.map((idx, i) => {
+    const x = x0 + (idx / (length - 1)) * (x1 - x0);
+    const w = tickLabelWidth(labels[i] ?? "", fontPx);
+    const anchor = tickAnchor(i, indices.length);
+    const left = anchor === "start" ? x : anchor === "end" ? x - w : x - w / 2;
+    return { idx, left, right: left + w };
+  });
+  // Walk inward from each end, keeping the ends themselves.
+  const keep = new Set<number>([0, boxes.length - 1]);
+  let lastRight = boxes[0]!.right;
+  for (let i = 1; i < boxes.length - 1; i++) {
+    const b = boxes[i]!;
+    if (b.left - lastRight >= gap && boxes[boxes.length - 1]!.left - b.right >= gap) {
+      keep.add(i);
+      lastRight = b.right;
+    }
+  }
+  return boxes.filter((_, i) => keep.has(i)).map((b) => b.idx);
+}

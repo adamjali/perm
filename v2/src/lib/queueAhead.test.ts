@@ -6,7 +6,15 @@ import {
   deriveQueueAhead,
   findVolumeAnomalies,
   type MonthQueue,
+  aheadOfDay,
+  measureFilingRate,
 } from "./queueAhead";
+
+/** A MonthQueue fixture: total received, and how many are still pending. */
+const m = (filingMonth: string, total: number, pending: number): MonthQueue => ({
+  filingMonth, total, pending, decided: total - pending,
+  decidedPct: total > 0 ? ((total - pending) / total) * 100 : null,
+});
 
 /**
  * A month row, with decidedPct derived rather than passed, so a fixture can
@@ -172,5 +180,85 @@ describe("casesAheadOfDay", () => {
 
   it("returns null on a malformed date", () => {
     expect(casesAheadOfDay(months, "2026-01")).toBeNull();
+  });
+});
+
+describe("measureFilingRate", () => {
+  // Real 2026 shape: the newest months are still growing and must not count.
+  const MONTHS: MonthQueue[] = [
+    m("2026-02", 5_492, 5_000), m("2026-03", 7_036, 6_500),
+    m("2026-04", 7_306, 6_000), m("2026-05", 8_661, 5_000),
+    m("2026-06", 10_627, 4_000), m("2026-07", 9_167, 2_000),
+    m("2026-08", 8_940, 200), m("2026-09", 3_873, 40),
+  ];
+
+  it("EXCLUDES the months that are still filling in", () => {
+    // Measured: over one week August gained 1,261 cases (+16.4%) and June 463
+    // (+4.6%), while July gained 40 (+0.4%). Counting the unsettled ones makes
+    // filings look slower, which makes a future estimate look SOONER - the
+    // error points the flattering way, which is the kind that survives review.
+    const r = measureFilingRate(MONTHS, "2026-09-13")!;
+    expect(r.to).toBe("2026-07");
+    expect(r.from).toBe("2026-02");
+    expect(r.monthsUsed).toBe(6);
+  });
+
+  it("gives a calendar-day rate, not a working-day one", () => {
+    const r = measureFilingRate(MONTHS, "2026-09-13")!;
+    // 48,289 over 6 months / 30.44
+    expect(Math.round(r.perDay)).toBe(264);
+  });
+
+  it("returns null rather than guessing from too little", () => {
+    expect(measureFilingRate(MONTHS.slice(-3), "2026-09-13")).toBeNull();
+    expect(measureFilingRate(MONTHS, "nonsense")).toBeNull();
+  });
+});
+
+describe("aheadOfDay: past, present and future", () => {
+  const MONTHS: MonthQueue[] = [
+    m("2026-06", 10_000, 4_000), m("2026-07", 10_000, 2_000),
+    m("2026-08", 10_000, 500), m("2026-09", 4_000, 100),
+  ];
+  const pending = MONTHS.reduce((a, x) => a + x.pending, 0);
+
+  it("a date inside the census counts, and projects nothing", () => {
+    const r = aheadOfDay(MONTHS, "2026-08-15")!;
+    expect(r.projected).toBe(0);
+    expect(r.total).toBe(r.pending);
+  });
+
+  it("a date BEFORE our data is still refused", () => {
+    // We genuinely do not know. Null, never 0.
+    expect(aheadOfDay(MONTHS, "2019-05-15")).toBeNull();
+  });
+
+  it("a FUTURE date counts every pending case", () => {
+    const r = aheadOfDay(MONTHS, "2026-11-15", { today: "2026-09-13", filingRate: 264 })!;
+    expect(r.pending).toBe(pending);
+  });
+
+  it("and ADDS the people who will file before you", () => {
+    // Without this every future date gives the same answer, which is what
+    // both rivals ship and is transparently wrong.
+    const near = aheadOfDay(MONTHS, "2026-10-13", { today: "2026-09-13", filingRate: 264 })!;
+    const far = aheadOfDay(MONTHS, "2027-09-13", { today: "2026-09-13", filingRate: 264 })!;
+    expect(near.total).toBeLessThan(far.total);
+    expect(far.projected).toBeGreaterThan(90_000);
+    expect(near.projected).toBe(Math.round(264 * 30));
+  });
+
+  it("keeps counted and projected SEPARATE", () => {
+    const r = aheadOfDay(MONTHS, "2026-12-13", { today: "2026-09-13", filingRate: 264 })!;
+    expect(r.total).toBe(r.pending + r.projected);
+    expect(r.pending).toBe(pending);
+    expect(r.projected).toBeGreaterThan(0);
+  });
+
+  it("answers a future date without a rate, projecting nothing", () => {
+    // Answerable but not projectable: say what was counted and no more.
+    const r = aheadOfDay(MONTHS, "2026-11-15", { today: "2026-09-13" })!;
+    expect(r.total).toBe(pending);
+    expect(r.projected).toBe(0);
   });
 });

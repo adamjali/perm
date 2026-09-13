@@ -27,7 +27,8 @@ import {
   type MeasuredPace,
 } from "@/lib/perm";
 import type { Pace } from "@/lib/dolPace";
-import { formatAsOf, formatMonth } from "@/lib/dolFormat";
+import { formatMonth } from "@/lib/dolFormat";
+import { DateInput } from "@/components/forms/DateInput";
 
 /** "Tue 14 Oct 2026". UTC so the label cannot slide a day by timezone. */
 function fmtDay(iso: string): string {
@@ -46,10 +47,11 @@ import {
 } from "@/components/tools/FrontierProgressChart";
 import { Label } from "@/components/ui";
 import {
-  casesAheadOfDay,
   deriveQueueAhead,
   findVolumeAnomalies,
   type MonthQueue,
+  aheadOfDay,
+  measureFilingRate,
 } from "@/lib/queueAhead";
 import { CaseNumberField } from "@/components/tools/CaseNumberField";
 import { QueueMonthChart } from "@/components/tools/QueueMonthChart";
@@ -203,23 +205,6 @@ function StagesLine({
   );
 }
 
-/** Filing months a live PERM case could plausibly carry, newest first. */
-function filingMonthOptions(today: string): { value: string; label: string }[] {
-  const m = /^(\d{4})-(\d{2})/.exec(today);
-  const newestYear = m ? Number(m[1]) : 2026;
-  const newestMonth = m ? Number(m[2]) - 1 : 11;
-
-  const options: { value: string; label: string }[] = [];
-  for (let year = newestYear; year >= 2020; year--) {
-    const start = year === newestYear ? newestMonth : 11;
-    for (let mo = start; mo >= 0; mo--) {
-      const value = `${year}-${String(mo + 1).padStart(2, "0")}`;
-      options.push({ value, label: formatMonth(value) || value });
-    }
-  }
-  return options;
-}
-
 const POSITION_COPY: Record<string, { tone: string; heading: string }> = {
   "awaiting-queue": {
     tone: "bg-tint-primary",
@@ -254,60 +239,53 @@ export function PermTimelineEstimator({
   className,
 }: PermTimelineEstimatorProps) {
   const selectId = useId();
-  const options = useMemo(() => filingMonthOptions(today), [today]);
   // Default to the caller's prefill (the homepage's "estimate from your
   // filing month" path arrives with ?month=), else a month DOL is plausibly
   // working, so the empty state shows a real answer rather than an empty
   // frame. The prefill must exist in the option list or it is ignored - a
   // month the select cannot show would desynchronise control and estimate.
-  const [month, setMonth] = useState<string>(() => {
-    if (initialMonth && options.some((o) => o.value === initialMonth)) {
-      return initialMonth;
-    }
-    if (frontier) return frontier.analystQueueMonth;
-    return options[0] ? options[0].value : "2025-01";
+  /**
+   * The filing date, as one ISO string. THE source of truth.
+   *
+   * WAS TWO SELECTS - a month list and a day list - and the month list could
+   * only ever offer months that already exist. The owner asked for an
+   * unbounded forward range, and a `<select>` cannot hold one: you cannot
+   * enumerate every future month. A date field can, and it collapses the two
+   * controls into the one thing a person actually knows.
+   *
+   * `month` derives from it, so every consumer below (the queue band, the
+   * frontier chart, the stages line) is unchanged.
+   */
+  const [filedOn, setFiledOn] = useState<string>(() => {
+    if (initialMonth && /^\d{4}-\d{2}$/.test(initialMonth)) return `${initialMonth}-15`;
+    // THE MONTH DOL IS ACTUALLY WORKING, so the empty state shows a real
+    // answer rather than an empty frame. This is the default the month picker
+    // had; an arbitrary offset from today would move every existing test and,
+    // worse, open the page on a month nobody chose.
+    if (frontier) return `${frontier.analystQueueMonth}-15`;
+    return `${today.slice(0, 7)}-15`;
   });
 
-  /**
-   * The DAY of the filing month, or "" for "I only know the month".
-   *
-   * WHY IT EXISTS NOW AND DID NOT BEFORE. Until the decision-pace model landed
-   * every estimate was anchored to a month, so a day could not change the
-   * answer and asking for one would have been a form field that did nothing.
-   * `casesAheadOfDay` prorates the filing month by day, so the day is now
-   * load-bearing: a month carrying ~15,000 pending at DOL's ~625 a day is
-   * about three weeks of spread between filing on the 1st and the 31st.
-   *
-   * OPTIONAL, and blank is a real answer rather than a missing one - plenty of
-   * people remember the month and not the day. Blank reads as the 15th, the
-   * midpoint, which is what the calculator did before this control existed, so
-   * nobody's answer moved by adding it.
-   */
-  const [day, setDay] = useState<string>("");
+  const month = filedOn.slice(0, 7);
 
-  /** Days in the chosen month, from the calendar rather than a constant. */
-  const daysInMonth = useMemo(() => {
-    const m = /^(\d{4})-(\d{2})$/.exec(month);
-    if (!m) return 31;
-    return new Date(Date.UTC(Number(m[1]), Number(m[2]), 0)).getUTCDate();
-  }, [month]);
+  /** A date after today is a plan, not a record, and reads differently. */
+  const isFuture = filedOn > today;
 
   /**
-   * The day actually used, which is "" whenever the chosen day cannot exist in
-   * the chosen month.
+   * How fast cases are arriving, over months that have stopped growing.
    *
-   * DERIVED, NOT REPAIRED BY AN EFFECT. The first version cleared the day in a
-   * `useEffect`, which runs AFTER the render that already built the date - so
-   * picking the 31st and then February rendered `2026-02-31` once, and
-   * `validateISODate` threw before the effect could fire. A test caught it.
-   * Deriving makes the invalid state unrepresentable instead of transient.
+   * Only ever used for a FUTURE date: today's backlog alone would give every
+   * future date the same answer. Null when there is too little settled data,
+   * and the copy says so rather than inventing a rate.
    */
-  const effectiveDay = day && Number(day) <= daysInMonth ? day : "";
+  const filingRate = useMemo(() => measureFilingRate(months, today), [months, today]);
+  const pendingNow = useMemo(
+    () => months.reduce((a, m) => a + m.pending, 0),
+    [months],
+  );
 
-  /** What every model is anchored to. The 15th when no day is given. */
-  const filingDate = effectiveDay
-    ? `${month}-${effectiveDay.padStart(2, "0")}`
-    : `${month}-15`;
+  /** What every model is anchored to. */
+  const filingDate = filedOn;
 
   // ?month= prefill, read AFTER mount on purpose. Reading searchParams
   // server-side would opt the whole route into dynamic rendering - the exact
@@ -321,12 +299,21 @@ export function PermTimelineEstimator({
   const [initial, setInitial] = useState<string>("");
 
   useEffect(() => {
-    const m = new URLSearchParams(window.location.search).get("month");
-    if (m && /^\d{4}-\d{2}$/.test(m) && options.some((o) => o.value === m)) {
-      setMonth(m);
+    const q = new URLSearchParams(window.location.search);
+    // `?date=` is new and exact; `?month=` is the existing contract that
+    // links elsewhere on the site still use, and it lands on the 15th - the
+    // same midpoint the picker used before a day could be given at all.
+    const d = q.get("date");
+    if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) {
+      setFiledOn(d);
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once; the
-    // URL does not change under this page without a navigation.
+    const m = q.get("month");
+    if (m && /^\d{4}-\d{2}$/.test(m)) setFiledOn(`${m}-15`);
+    // No disable needed any more: this used to close over `options`, the
+    // month list, and had to suppress the dependency warning. The field takes
+    // any date, the list is gone, and the effect now closes over nothing but
+    // a setter - which React guarantees is stable. Runs once, as intended.
   }, []);
 
   const letterDelta = useMemo(() => {
@@ -354,14 +341,26 @@ export function PermTimelineEstimator({
         // `casesAheadOfDay` prorates that month's own pending accordingly.
         // Absent months or pace, the model is omitted and the month-granular
         // ones answer exactly as they did before.
-        casesAhead: months.length ? casesAheadOfDay(months, filingDate) : null,
+        // `aheadOfDay` rather than `casesAheadOfDay`: the second returns null
+        // for any month the census lacks, which is right for a date BEFORE
+        // our data and wrong for one after it. A future filer has every
+        // pending case ahead of them, plus whoever files in the meantime.
+        casesAhead: months.length
+          ? (aheadOfDay(months, filingDate, {
+              today,
+              filingRate: filingRate ? filingRate.perDay : null,
+            })?.total ?? null)
+          : null,
         decisionPace,
         sweepAgeDays,
       }),
     // `month` is deliberately absent: `filingDate` is derived from it, so
-    // listing both re-runs the memo twice for one change.
+    // listing both re-runs the memo twice for one change. `filingRate` IS
+    // listed even though it derives from `months` and `today` - it is read
+    // inside, and a memo that reads a value it does not depend on is the
+    // shape that goes stale the first time the derivation changes.
     [filingDate, today, frontier, cohorts, frontierAdvance, letterDelta,
-     months, decisionPace, sweepAgeDays],
+     months, decisionPace, sweepAgeDays, filingRate],
   );
 
   const position = POSITION_COPY[estimate.position];
@@ -488,18 +487,16 @@ export function PermTimelineEstimator({
   const [caseWarning, setCaseWarning] = useState<string | null>(null);
 
   function handleDecode(parsed: { filingMonth: string; filingDate: string }) {
-    if (options.some((o) => o.value === parsed.filingMonth)) {
-      setCaseWarning(null);
-      setMonth(parsed.filingMonth);
-      // The case number encodes the day, and it was being discarded. Nobody
-      // holding their number should have to guess a day the number states.
-      const d = /^\d{4}-\d{2}-(\d{2})$/.exec(parsed.filingDate);
-      setDay(d ? String(Number(d[1])) : "");
-      return;
+    // THE WARNING IS GONE BECAUSE THE RANGE IS. It existed to say "that month
+    // is outside the range this calculator covers" - a dropdown of months
+    // that already exist. The field takes any date now, so a decoded number
+    // is simply accepted, day and all.
+    setCaseWarning(null);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(parsed.filingDate)) {
+      setFiledOn(parsed.filingDate);
+    } else if (/^\d{4}-\d{2}$/.test(parsed.filingMonth)) {
+      setFiledOn(`${parsed.filingMonth}-15`);
     }
-    setCaseWarning(
-      "That month is outside the range this calculator covers, so the figures below still show the month picked above.",
-    );
   }
 
   return (
@@ -521,63 +518,38 @@ export function PermTimelineEstimator({
 
         {/* `grid-cols-1` AND `[&>*]:min-w-0`, both required: below the
             breakpoint a grid with no column track sizes its items to their
-            content, and a select's content contribution comes from the user
-            agent. That pair is what fixed the form overflow across /tools. */}
-        <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 sm:max-w-md sm:grid-cols-[minmax(0,1fr)_7rem]">
+            content, and on iOS a date control's content contribution comes
+            from the user agent rather than from us. That pair is what fixed
+            the form overflow across /tools and it is not optional here. */}
+        <div className="mt-6 grid grid-cols-1 [&>*]:min-w-0 sm:max-w-xs">
           <div>
             <Label htmlFor={selectId} className="text-sm font-bold">
-              Month DOL received your case
+              {isFuture ? "Date you expect to file" : "Date DOL received your case"}
             </Label>
-            <select
+            <DateInput
               id={selectId}
-              value={month}
-              onChange={(e) => setMonth(e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              {options.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <Label htmlFor={`${selectId}-day`} className="text-sm font-bold">
-              Day{" "}
-              <span className="font-normal text-muted-foreground">
-                (optional)
-              </span>
-            </Label>
-            <select
-              id={`${selectId}-day`}
-              value={effectiveDay}
-              onChange={(e) => setDay(e.target.value)}
-              className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-            >
-              <option value="">Any</option>
-              {Array.from({ length: daysInMonth }, (_, i) => String(i + 1)).map(
-                (d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ),
-              )}
-            </select>
+              value={filedOn}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (/^\d{4}-\d{2}-\d{2}$/.test(v)) setFiledOn(v);
+              }}
+              className="mt-2 min-h-[44px] w-full border-2 border-border text-base font-bold"
+            />
           </div>
         </div>
-        {/* SAY WHAT BLANK MEANS. Someone who leaves the day alone should know
-            the answer is still a real one and what it assumes, rather than
-            wondering whether they under-filled the form. */}
+        {/* THE LABEL AND THIS LINE BOTH FOLLOW THE TENSE. A future date is a
+            different question - "when would I hear" rather than "when will I
+            hear" - and the count behind it is a different thing too: today's
+            backlog plus the people expected to file before you. Saying which
+            half is counted and which is assumed is the whole point. */}
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          {effectiveDay
-            ? `Counting the cases filed before ${formatAsOf(filingDate) ?? filingDate}.`
-            : "Leave the day blank and this reads the middle of the month. A busy month carries around 15,000 cases, so filing on the 1st rather than the 31st is worth roughly three weeks."}
+          {isFuture
+            ? filingRate
+              ? `Counting the ${pendingNow.toLocaleString("en-US")} cases already waiting, plus about ${Math.round(filingRate.perDay).toLocaleString("en-US")} a day expected to be filed before you get there. That rate is the average of ${filingRate.monthsUsed} settled months, ${formatMonth(filingRate.from)} to ${formatMonth(filingRate.to)}.`
+              : `Counting the ${pendingNow.toLocaleString("en-US")} cases already waiting. We have too little settled data to project how many more will be filed before you.`
+            : "Any date DOL stamped on your receipt. If you only know the month, the 15th is a fair midpoint."}
         </p>
 
-        {/* OPTIONAL, AND SECOND. DOL works each filing month alphabetically by
-            employer, so this is the only input that can sharpen a month into a
-            day. Left blank the estimate is unchanged and stays monthly, which
-            is why it is not required and not defaulted to "A". */}
         {alphabet ? (
           <div className="mt-6">
             <Label htmlFor={`${selectId}-initial`} className="text-sm font-bold">

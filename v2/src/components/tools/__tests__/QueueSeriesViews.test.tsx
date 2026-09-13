@@ -51,13 +51,17 @@ describe("QueueHistoryChart", () => {
 
   it("re-scopes to the chosen window, and says which dates it now spans", () => {
     render(<QueueHistoryChart points={READINGS} />);
-    expect(screen.getByText(/2026-01-05 to 2026-08-03/)).toBeInTheDocument();
+    // FORMATTED, not raw ISO. These were rendering as "2026-01-05", the only
+    // raw ISO dates anywhere on the site, against `formatAsOf` used
+    // everywhere else. The assertion moved with the fix rather than being
+    // relaxed - it still pins the exact span, just as a reader sees it.
+    expect(screen.getByText(/January 5, 2026 to August 3, 2026/)).toBeInTheDocument();
     expect(screen.getByText(/advanced 9 months across it/)).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("combobox", { name: /Readings/ }), {
       target: { value: "6" },
     });
-    expect(screen.getByText(/2026-03-02 to 2026-08-03/)).toBeInTheDocument();
+    expect(screen.getByText(/March 2, 2026 to August 3, 2026/)).toBeInTheDocument();
     expect(screen.getByText(/advanced 6 months across it/)).toBeInTheDocument();
   });
 
@@ -104,16 +108,23 @@ describe("QueueHistoryChart", () => {
       { asOf: "2026-08-28", frontierMonth: "2025-11" },
     ];
     const { container } = render(<QueueHistoryChart points={CLUSTERED} />);
+    // The x labels are DOL's own as-of dates, formatted - they used to render
+    // as raw ISO ("2026-08-20"), the only raw ISO on the site.
     const labels = [...container.querySelectorAll("svg text")]
       .map((t) => t.textContent ?? "")
-      .filter((t) => /^\d{4}-\d{2}-\d{2}$/.test(t));
+      .filter((t) => /^\d{1,2} [A-Z][a-z]{2} \d{4}$/.test(t));
 
     // Both ends must still be labelled - dropping a tick must not cost the
     // reader the span the chart covers.
-    expect(labels).toContain("2026-08-20");
-    expect(labels).toContain("2026-08-28");
+    expect(labels).toContain("20 Aug 2026");
+    expect(labels).toContain("28 Aug 2026");
     // ...and the crowded middle one is gone rather than overprinted.
-    expect(labels).not.toContain("2026-08-27");
+    expect(labels).not.toContain("27 Aug 2026");
+    // And none of them is a bare ISO string any more.
+    const raw = [...container.querySelectorAll("svg text")]
+      .map((t) => t.textContent ?? "")
+      .filter((t) => /^\d{4}-\d{2}-\d{2}$/.test(t));
+    expect(raw).toEqual([]);
   });
 
   it("keeps the middle x label when the readings are spread out", () => {
@@ -127,8 +138,8 @@ describe("QueueHistoryChart", () => {
     const { container } = render(<QueueHistoryChart points={SPREAD} />);
     const labels = [...container.querySelectorAll("svg text")]
       .map((t) => t.textContent ?? "")
-      .filter((t) => /^\d{4}-\d{2}-\d{2}$/.test(t));
-    expect(labels).toContain("2026-06-15");
+      .filter((t) => /^\d{1,2} [A-Z][a-z]{2} \d{4}$/.test(t));
+    expect(labels).toContain("15 Jun 2026");
   });
 
   it("renders nothing rather than an empty frame on a single reading", () => {

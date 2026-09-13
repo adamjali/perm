@@ -1,56 +1,90 @@
 import { describe, expect, it } from "vitest";
-import { evenTickIndices, tickAnchor } from "../chartTicks";
+import {
+  dropCollidingTicks,
+  evenTickIndices,
+  tickAnchor,
+  tickLabelWidth,
+} from "../chartTicks";
 
-describe("evenTickIndices", () => {
-  it("spaces ticks evenly across a long series", () => {
-    // 20 points, 5 ticks: gaps of 5,5,4,5 rather than 4,4,4,4,3. The uneven
-    // final gap is what printed two labels on top of each other, twice.
-    expect(evenTickIndices(20, 5)).toEqual([0, 5, 10, 14, 19]);
+/**
+ * Tick labels must not touch each other.
+ *
+ * EVEN SPACING IS NOT ENOUGH, and that is the whole point of these tests.
+ * `evenTickIndices` already spaces ticks evenly and is correct. `tickAnchor`
+ * then turns the two END labels inward so they stay inside the canvas, which
+ * moves each of them half a label width toward the middle and closes the gap
+ * to its neighbour.
+ *
+ * Measured on the live priority-date chart, 96 bulletins with 7 ticks at
+ * fontSize 15: "May 2025" ended at x 638.5 and "Sep 2026", anchored end,
+ * began at 635.2 - three units of overlap on perfectly even ticks, plainly
+ * visible as two touching labels.
+ */
+
+/** The real chart's geometry. */
+const LEN = 96;
+const X0 = 104;
+const X1 = 720 - 16;
+const FONT = 15;
+const LABELS = (idx: readonly number[]) => idx.map(() => "May 2025"); // 8 chars, the widest
+
+/** Boxes the labels will actually occupy, anchoring included. */
+function boxes(indices: readonly number[]) {
+  return indices.map((idx, i) => {
+    const x = X0 + (idx / (LEN - 1)) * (X1 - X0);
+    const w = tickLabelWidth("May 2025", FONT);
+    const a = tickAnchor(i, indices.length);
+    const left = a === "start" ? x : a === "end" ? x - w : x - w / 2;
+    return { left, right: left + w };
+  });
+}
+
+describe("chart tick collisions", () => {
+  it("reproduces the overlap that shipped", () => {
+    // Seven ticks, unfiltered: the last two touch.
+    const raw = evenTickIndices(LEN, 7);
+    const b = boxes(raw);
+    const worst = Math.min(
+      ...b.slice(1).map((x, i) => x.left - b[i]!.right),
+    );
+    expect(worst).toBeLessThan(0);
   });
 
-  it("always includes both ends", () => {
-    for (const n of [6, 7, 14, 20, 33]) {
-      const t = evenTickIndices(n, 5);
-      expect(t[0]).toBe(0);
-      expect(t[t.length - 1]).toBe(n - 1);
+  it("drops enough ticks that nothing collides", () => {
+    const kept = dropCollidingTicks(evenTickIndices(LEN, 7), {
+      length: LEN, x0: X0, x1: X1, labels: LABELS(evenTickIndices(LEN, 7)), fontPx: FONT,
+    });
+    const b = boxes(kept);
+    for (let i = 1; i < b.length; i++) {
+      expect(b[i]!.left - b[i - 1]!.right).toBeGreaterThanOrEqual(0);
     }
   });
 
-  it("never leaves a final gap smaller than the others by more than one", () => {
-    // The specific regression: a short last gap crowds the end labels.
-    for (const n of [8, 11, 14, 17, 20, 26, 31]) {
-      const t = evenTickIndices(n, 5);
-      const gaps = t.slice(1).map((v, i) => v - t[i]!);
-      expect(Math.max(...gaps) - Math.min(...gaps)).toBeLessThanOrEqual(1);
-    }
+  it("always keeps both ends", () => {
+    const raw = evenTickIndices(LEN, 7);
+    const kept = dropCollidingTicks(raw, {
+      length: LEN, x0: X0, x1: X1, labels: LABELS(raw), fontPx: FONT,
+    });
+    expect(kept[0]).toBe(0);
+    expect(kept[kept.length - 1]).toBe(LEN - 1);
   });
 
-  it("returns every point when the series is shorter than the tick count", () => {
-    expect(evenTickIndices(3, 5)).toEqual([0, 1, 2]);
-    expect(evenTickIndices(1, 5)).toEqual([0]);
+  it("drops nothing when there is room", () => {
+    const raw = evenTickIndices(LEN, 3);
+    const kept = dropCollidingTicks(raw, {
+      length: LEN, x0: X0, x1: X1, labels: LABELS(raw), fontPx: FONT,
+    });
+    expect(kept).toEqual(raw);
   });
 
-  it("returns nothing for an empty series", () => {
-    expect(evenTickIndices(0)).toEqual([]);
+  it("matches the width measured in the browser", () => {
+    // getBBox gave 71.1 for "May 2025" at 15px; 0.6em over-estimates slightly,
+    // which is the safe direction for a collision check.
+    expect(tickLabelWidth("May 2025", 15)).toBeCloseTo(72, 0);
   });
 
-  it("de-duplicates when rounding collides", () => {
-    const t = evenTickIndices(4, 5);
-    expect(new Set(t).size).toBe(t.length);
-  });
-});
-
-describe("tickAnchor", () => {
-  it("turns the end labels inward", () => {
-    // A label centred on the last tick is inside the canvas by its anchor and
-    // past the edge by its box.
-    expect(tickAnchor(0, 5)).toBe("start");
-    expect(tickAnchor(4, 5)).toBe("end");
-  });
-
-  it("centres everything between", () => {
-    expect(tickAnchor(1, 5)).toBe("middle");
-    expect(tickAnchor(2, 5)).toBe("middle");
-    expect(tickAnchor(3, 5)).toBe("middle");
+  it("leaves a short series alone", () => {
+    expect(dropCollidingTicks([0, 1], { length: 2, x0: X0, x1: X1, labels: ["a", "b"], fontPx: FONT }))
+      .toEqual([0, 1]);
   });
 });

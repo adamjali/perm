@@ -65,8 +65,8 @@ describe("PermTimelineEstimator envelope headline", () => {
     // only exists for a month AHEAD of the frontier. At the default month the
     // queue is already there and there is genuinely one model, which is the
     // first test.
-    fireEvent.change(screen.getByLabelText(/Month DOL received/i), {
-      target: { value: "2026-03" },
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), {
+      target: { value: "2026-03-15" },
     });
     // The window line carries the range; the anchor above it is one month.
     expect(screen.getByText(/^Around /)).toBeInTheDocument();

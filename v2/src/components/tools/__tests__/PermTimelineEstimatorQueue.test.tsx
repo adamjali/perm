@@ -56,8 +56,8 @@ function renderQueue(extra: Record<string, unknown> = {}) {
 describe("PermTimelineEstimator queue band", () => {
   it("counts only pending cases from earlier months", () => {
     renderQueue();
-    fireEvent.change(screen.getByLabelText(/Month DOL received/i), {
-      target: { value: "2025-08" },
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), {
+      target: { value: "2025-08-15" },
     });
     // June contributes 0 pending, July 2,000. August's own 6,000 is separate.
     // Scoped to the card: 2,000 legitimately appears twice on the page,
@@ -74,8 +74,8 @@ describe("PermTimelineEstimator queue band", () => {
 
   it("splits the chosen month's pending across DOL's separate queues", () => {
     renderQueue();
-    fireEvent.change(screen.getByLabelText(/Month DOL received/i), {
-      target: { value: "2025-08" },
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), {
+      target: { value: "2025-08-15" },
     });
     expect(screen.getByText(/6,000 still undecided in August 2025/)).toBeInTheDocument();
     expect(screen.getByText(/4,000 in analyst review/)).toBeInTheDocument();
@@ -84,8 +84,8 @@ describe("PermTimelineEstimator queue band", () => {
 
   it("states the remainder rather than leaving the buckets not adding up", () => {
     renderQueue();
-    fireEvent.change(screen.getByLabelText(/Month DOL received/i), {
-      target: { value: "2025-08" },
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), {
+      target: { value: "2025-08-15" },
     });
     // 4,000 + 1,000 + 500 = 5,500 of 6,000 pending, so 500 sit elsewhere.
     expect(screen.getByText(/500 in none of those three/)).toBeInTheDocument();
