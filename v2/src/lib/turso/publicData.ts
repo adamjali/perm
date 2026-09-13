@@ -1259,13 +1259,63 @@ export async function getWageByState(
 }
 
 /**
+ * The salary explorer's filter dropdowns.
+ *
+ * PRECOMPUTED, because computing them per render is what was timing out. The
+ * state facet is a GROUP BY over the whole of perm_cases that no index can
+ * serve past its first predicate: about 1.5s idle, and far worse under a
+ * concurrent disclosure load - this repo measured an ordinary GROUP BY state
+ * going from ~0.3s to a worst of 59.2s while a 147k-row file was written.
+ *
+ * Sentry's week to 2026-09-12 carried 11 occurrences of "turso query deadline
+ * (20000ms, attempt 2): SELECT state, CO..." plus 4 SQLITE_NOMEM, all on this
+ * page. The facets only change when perm_cases is reloaded, which is
+ * quarterly, so there was never a reason to recompute them per request.
+ *
+ * `build_wage_bands.py` writes perm_docs['wage_filter_options'] on the same
+ * quarterly run that rebuilds the table. The live queries stay as the
+ * doc-missing fallback so a fresh database still renders - degraded to slow,
+ * never to empty.
+ *
+ * The doc's own `minCases` is checked against the caller's: a doc built under
+ * a different floor would offer a state the page then refuses a median for,
+ * which reads to a visitor as broken filtering rather than a stale document.
+ */
+export async function getWageFilterOptions(minCases: number): Promise<{
+  occupations: { value: string; label: string; n: number }[];
+  states: { value: string; label: string; n: number }[];
+  fiscalYears: string[];
+}> {
+  const pre = await doc<{
+    minCases: number;
+    occupations: { value: string; label: string; n: number }[];
+    states: { value: string; label: string; n: number }[];
+    fiscalYears: string[];
+  }>("wage_filter_options");
+  if (
+    pre &&
+    pre.minCases === minCases &&
+    pre.occupations?.length &&
+    pre.states?.length &&
+    pre.fiscalYears?.length
+  ) {
+    return {
+      occupations: pre.occupations,
+      states: pre.states,
+      fiscalYears: pre.fiscalYears,
+    };
+  }
+  return getWageFilterOptionsLive(minCases);
+}
+
+/**
  * What the filters may be set to.
  *
  * Occupations carry their case count and are ordered by it, because a list of
  * 4,893 SOC codes in alphabetical order is a list nobody can use. The count
  * also lets the picker show which choices will actually support a figure.
  */
-export async function getWageFilterOptions(minCases: number): Promise<{
+async function getWageFilterOptionsLive(minCases: number): Promise<{
   occupations: WageOption[];
   states: WageOption[];
   fiscalYears: string[];

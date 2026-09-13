@@ -63,6 +63,10 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/turso/__tests__/pwdCases.test.ts",
   "src/lib/turso/__tests__/lcaCases.test.ts",
   "src/lib/turso/__tests__/entityReads.test.ts",
+  // Added 2026-09-13. Mocks ../client like its siblings above, so it needs the
+  // isolated pool for the same reason: in the shared registry whichever file
+  // registers its factory first wins and the rest see a `rows` nobody called.
+  "src/lib/turso/__tests__/wageFilterOptions.test.ts",
   // Added 2026-08-30. This file mocks `@/lib/turso/client`, and so do four
   // other files in the same project. With `isolate: false` they share one
   // module registry per worker, so whichever registers its factory first
