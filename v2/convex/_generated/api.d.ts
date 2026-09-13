@@ -81,6 +81,7 @@ import type * as lib_newsletterCompose from "../lib/newsletterCompose.js";
 import type * as lib_newsletterSummary from "../lib/newsletterSummary.js";
 import type * as lib_newsletterValidators from "../lib/newsletterValidators.js";
 import type * as lib_notificationHelpers from "../lib/notificationHelpers.js";
+import type * as lib_perm_calculators_decisionPace from "../lib/perm/calculators/decisionPace.js";
 import type * as lib_perm_calculators_eta9089 from "../lib/perm/calculators/eta9089.js";
 import type * as lib_perm_calculators_greenCardFees from "../lib/perm/calculators/greenCardFees.js";
 import type * as lib_perm_calculators_greenCardTimeline from "../lib/perm/calculators/greenCardTimeline.js";
@@ -251,6 +252,7 @@ declare const fullApi: ApiFromModules<{
   "lib/newsletterSummary": typeof lib_newsletterSummary;
   "lib/newsletterValidators": typeof lib_newsletterValidators;
   "lib/notificationHelpers": typeof lib_notificationHelpers;
+  "lib/perm/calculators/decisionPace": typeof lib_perm_calculators_decisionPace;
   "lib/perm/calculators/eta9089": typeof lib_perm_calculators_eta9089;
   "lib/perm/calculators/greenCardFees": typeof lib_perm_calculators_greenCardFees;
   "lib/perm/calculators/greenCardTimeline": typeof lib_perm_calculators_greenCardTimeline;
