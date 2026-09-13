@@ -4398,3 +4398,86 @@ request cadence that was my own sample interval; and `MAX(last_probed_at)` over
 the whole table does not move mid-day-code, because misses are flushed per day.
 The reading that settled it was `GROUP BY day_code ORDER BY MAX(last_probed_at)`
 - which named the stuck day directly.
+
+## The decision-pace estimator is WIRED, and it leads (2026-09-13)
+
+`convex/lib/perm/calculators/decisionPace.ts` is the model the estimator
+investigation settled on, and it is now the lead model on both surfaces that
+date a case:
+
+    day  = today + casesAhead / 28-day calendar pace
+    band = casesAhead / {p90, p10} weekday pace, floored at 55% of the
+           horizon and grown late-heavy
+
+**Zero fitted parameters.** The +111-day "bias" that started this turned out to
+be DOL's acceleration wearing a calibration costume; deleting the whole
+correction cost nothing at the horizons that exist (86% of the live queue is
+under four months) and covered slightly more.
+
+### The substitution, and why it is defensible now
+
+The backtest fed the model DOL's own `decision_date` from the quarterly files.
+Production cannot: those end 2026-06-30. The only daily-resolution source is
+`daily_decisions` under `sweep-observed`, which the sweep already writes from
+`perm_case_events` and which is dated by when **our sweep saw** a case become
+final. Those two ranges do not overlap by a single day, so the substitution
+cannot be validated against our own history at all.
+
+**It is validated against an independent third party instead.** permupdate
+publishes `GET /api/data/daily-volume`, 30 days of counts. Measured 2026-09-13
+over the 16 days both series cover: **our mean 574.6/day against their 566.4,
++1.4%**. Individual days diverge by more, because a day boundary falls in a
+different place for each of us - but the model divides by a 28-day MEAN, and
+the mean is the quantity that agrees.
+
+One consequence stated rather than discovered later: our day-boundary noise
+inflates the weekday spread the BAND is built from, so the band is wider than
+DOL's true daily variation would give. That errs toward claiming less.
+
+### What it changed, measured against the rival the same day
+
+| filed | permupdate | ours | gap |
+|---|---|---|---|
+| 2025-12-15 | 2026-10-06 | 2026-10-12 | +6d |
+| 2026-02-15 | 2026-11-08 | 2026-11-16 | +8d |
+| 2026-05-15 | 2026-12-09 | 2026-12-17 | +8d |
+| 2026-08-15 | 2027-01-14 | 2027-01-30 | +16d |
+
+**We track them within 6 to 16 days across the whole live range.** Before this
+the same July-2026 input had them at December and us at 27 January, and the
+difference was never about the queue: we led with DOL's published average, a
+backward-looking mean dragged up by the audit tail.
+
+The residual gap is the divisor, and ours is the defensible one: they divide by
+a hardcoded **650/day**, we measure **625**. Their own published feed averages
+**566**, so their constant disagrees with their own data by 15%.
+
+### Three things that had to be right, each of which was wrong first
+
+1. **`casesAhead` must prorate the filing month.** The census counts pending by
+   MONTH and "filed before yours" is a question about a day. Counting only
+   strictly-earlier months drops several thousand cases - one to two weeks of
+   the answer at 625/day. `casesAheadOfDay` prorates by day-of-month, states
+   the uniform-filing assumption, and uses the calendar length of the month
+   rather than 30.44. It returns **null**, never 0, for a month the series does
+   not hold: 0 reads as "nothing ahead of you".
+2. **The band is not a confidence interval and must not read as one.** The UI
+   said *"Most likely between"*, a probability claim, over a band whose
+   measured coverage is 57-58% overall and **41% at the near horizon** - under
+   half, so it was false for exactly the cases most people look up. Each model
+   now labels its own band (`est.modelId`), and the coverage figure is a
+   caveat on the page. A rival ships `confidence_level: 0.8` as a constant
+   against real coverage of 8-15%.
+3. **`through` was read off the SQL ordering.** It gates the staleness guard,
+   so taking it from `rows[0]` made that guard silently depend on an ORDER BY
+   three lines away. It is the maximum now. Found only because a probe showed
+   the test asserting it was blind - and investigating THAT showed the comment
+   justifying `days.reverse()` was also wrong: `measurePace` is order-invariant
+   and the test now pins that with an explicit shuffle.
+
+### What is still NOT claimed
+
+The model is checkable against our own history when DOL publishes FY2026 Q4
+(July-September), the first quarter the event log covers. Until then the
+validation is the third-party cross-check above, and the band's coverage is
+quoted from the backtest rather than from live outcomes.

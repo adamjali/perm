@@ -1,6 +1,7 @@
 import { addDays, differenceInCalendarMonths } from 'date-fns';
 import { formatUTC, validateISODate } from '../dates/dateUtils';
 import { monthStart, monthsBetween } from '../dates/monthUtils';
+import { estimateByPace, type MeasuredPace } from './decisionPace';
 
 /**
  * PERM decision-date estimation.
@@ -127,14 +128,35 @@ export interface QueueEstimateInput {
    * one.
    */
   letterDeltaDays?: number | null;
+  /**
+   * Undecided cases filed before this one, from the live census.
+   *
+   * The counting input the month-granular models cannot have: `queue-advance`
+   * approximates a wait as months x 30.44, and this divides the actual number
+   * of cases in front of you by the actual rate DOL is clearing them. Omit it
+   * and the decision-pace model is simply not returned.
+   */
+  casesAhead?: number | null;
+  /**
+   * DOL's recent decision rate, measured by `measurePace` over the observed
+   * daily series. Never a constant: a rival divides by a hardcoded 650/day,
+   * and the same window measured here gives 625.
+   */
+  decisionPace?: MeasuredPace | null;
+  /**
+   * Days since our sweep last read DOL. Past three days the pace and the
+   * queue position are both too old to date a case from, and the model is
+   * withheld rather than run on stale counts.
+   */
+  sweepAgeDays?: number | null;
 }
 
 // ============================================================================
 // OUTPUT TYPES
 // ============================================================================
 
-export type EstimateModelId = 'dol-average' | 'queue-advance' | 'cohort-percentile'
-  | 'cohort-shape';
+export type EstimateModelId = 'decision-pace' | 'dol-average' | 'queue-advance'
+  | 'cohort-percentile' | 'cohort-shape';
 
 export interface EstimateModel {
   id: EstimateModelId;
@@ -418,6 +440,79 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       caveats.push(
         `DOL's analyst-review queue passed ${filingMonth} about ${Math.abs(monthsBehind)} month(s) ago. A case from this month that is still pending is usually in audit, supervised recruitment, or awaiting a response to a request for information.`,
       );
+    }
+  }
+
+  // --- Model 0: decision pace -- THE LEAD MODEL WHEN IT IS AVAILABLE -----
+  //
+  // The only model that counts. `queue-advance` below answers "when does DOL
+  // reach my MONTH" and converts months to days at 30.44; this one divides
+  // the actual number of undecided cases filed before yours by the actual
+  // rate DOL is clearing them, so it lands on a day rather than a month and
+  // it moves the moment DOL speeds up or slows down.
+  //
+  // It leads because both rivals use this shape and because its two inputs
+  // are measured rather than assumed. The rate in particular: permupdate
+  // divides by a hardcoded 650/day, and the same window measured against our
+  // own observed series gives 625.
+  //
+  // THE RATE IS VALIDATED AGAINST AN INDEPENDENT SOURCE, which matters
+  // because our daily series is dated by when our SWEEP SAW a change, not by
+  // DOL's own decision date (DOL publishes no decision timestamp on the live
+  // endpoint). Measured 2026-09-13 over the 16 days both series cover, our
+  // mean is 574.6/day against permupdate's published 566.4 - a difference of
+  // +1.4%. Individual days diverge by more because a day boundary falls in a
+  // different place for each of us; the model divides by a 28-day mean, and
+  // that is the quantity that agrees.
+  //
+  // One honest consequence: our day-boundary noise inflates the weekday
+  // spread the BAND is built from, so the band is somewhat wider than DOL's
+  // true daily variation would give. That errs toward saying less, which is
+  // the right direction for a number someone plans around.
+  if (
+    typeof input.casesAhead === 'number' &&
+    input.decisionPace &&
+    monthsBehind !== null
+  ) {
+    const paced = estimateByPace({
+      // Day numbers since the epoch; the calculator works in ISO strings.
+      today: Math.floor(today.getTime() / 86_400_000),
+      casesAhead: input.casesAhead,
+      pace: input.decisionPace,
+      // The caller has already decided this case is in filing order; the
+      // status refusals live on the surfaces that know the status.
+      status: 'ANALYST REVIEW',
+      monthsBehindFrontier: monthsBehind,
+      sweepAgeDays: input.sweepAgeDays ?? 0,
+    });
+    // Only a dated estimate becomes a model. Every other kind - a stale
+    // sweep, an overdue case, a cleared queue, a horizon we cannot measure
+    // against - is a reason NOT to print a date, and the models below are
+    // the honest fallback rather than a second opinion to average in.
+    if (paced.kind === 'estimate') {
+      // STATE THE COVERAGE WHEREVER THE BAND IS SHOWN. Measured across ~88,000
+      // backtested predictions the band contains the real outcome 57-58% of
+      // the time overall and 41% at the near horizon. That is a pace
+      // scenario, not a confidence interval, and the difference is the whole
+      // reason this sentence exists: a rival publishes `confidence_level:
+      // 0.8` as a hardcoded constant against real coverage of 8-15%, which
+      // is the most checkable false claim a queue estimator can make.
+      caveats.push(
+        'The range is what happens if DOL keeps to its recent pace, not a confidence interval. Tested against past cases it contained the real decision date about 57% of the time, and closer to 41% for cases within two months of a decision.',
+      );
+      const toISO = (d: number) => formatUTC(new Date(d * 86_400_000));
+      models.push({
+        id: 'decision-pace',
+        label: 'Cases ahead of you, at DOL\'s measured pace',
+        basis: `${input.casesAhead.toLocaleString()} undecided cases were filed before yours, and DOL has been deciding about ${Math.round(paced.pace).toLocaleString()} a day including weekends. That is ${paced.rawDays.toLocaleString()} days of work.`,
+        estimatedDate: toISO(paced.day),
+        totalDays: Math.round(
+          (paced.day * 86_400_000 - filed.getTime()) / 86_400_000,
+        ),
+        earliestDate: toISO(paced.early),
+        latestDate: toISO(paced.late),
+        source: 'Our own count of DOL\'s live queue, and the decision rate we have observed over the last 28 days',
+      });
     }
   }
 

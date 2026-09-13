@@ -43,6 +43,54 @@ export const PREDICTIONS: Prediction[] = [
     note:
       "The product's first real alert subscriber's case, recorded as /perm-case-status showed it on August 28, 2026. The next day the estimator gained a measured employer-initial shift, worth +2 days for this employer; the prediction of record is the earlier one and the shift does not move it outside its window.",
   },
+  {
+    recorded: "2026-09-13",
+    caseNumber: "G-300-25324-425356",
+    filed: "2025-11-20",
+    statusAtPrediction: "ANALYST REVIEW",
+    anchor: "Around 27 September 2026",
+    anchorIso: "2026-09-27",
+    windowFrom: "2026-09-25",
+    windowTo: "2026-10-03",
+    note:
+      "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. permupdate, queried the same day for the same filing dates, sat 6 to 16 days earlier.",
+  },
+  {
+    recorded: "2026-09-13",
+    caseNumber: "G-200-26015-564165",
+    filed: "2026-01-15",
+    statusAtPrediction: "ANALYST REVIEW",
+    anchor: "Around 2 November 2026",
+    anchorIso: "2026-11-02",
+    windowFrom: "2026-10-23",
+    windowTo: "2026-11-20",
+    note:
+      "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. permupdate, queried the same day for the same filing dates, sat 6 to 16 days earlier.",
+  },
+  {
+    recorded: "2026-09-13",
+    caseNumber: "G-200-26075-707139",
+    filed: "2026-03-16",
+    statusAtPrediction: "ANALYST REVIEW",
+    anchor: "Around 25 November 2026",
+    anchorIso: "2026-11-25",
+    windowFrom: "2026-11-12",
+    windowTo: "2026-12-22",
+    note:
+      "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. permupdate, queried the same day for the same filing dates, sat 6 to 16 days earlier.",
+  },
+  {
+    recorded: "2026-09-13",
+    caseNumber: "G-300-26166-017385",
+    filed: "2026-06-15",
+    statusAtPrediction: "ANALYST REVIEW",
+    anchor: "Around 1 January 2027",
+    anchorIso: "2027-01-01",
+    windowFrom: "2026-12-11",
+    windowTo: "2027-02-10",
+    note:
+      "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. permupdate, queried the same day for the same filing dates, sat 6 to 16 days earlier.",
+  },
 ];
 
 export interface Score {

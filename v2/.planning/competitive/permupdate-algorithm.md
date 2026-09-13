@@ -78,3 +78,51 @@ volumes (their `weekly_volumes` run 4,598 and 4,296, i.e. 657 and 614 per day),
 we read 688 from our own 28-day event log. We may be reading slightly high, and
 that is worth a cross-check - it is the only place their answer is better
 grounded than ours.
+
+---
+
+## After wiring our own decision-pace model (13 Sep 2026, both queried the same day)
+
+Same filing dates, letter M, today 2026-09-13:
+
+| filed | permupdate | permtracker (decision-pace) | gap |
+|---|---|---|---|
+| 2025-12-15 | 2026-10-06 | 2026-10-12 | +6d |
+| 2026-02-15 | 2026-11-08 | 2026-11-16 | +8d |
+| 2026-05-15 | 2026-12-09 | 2026-12-17 | +8d |
+| 2026-07-15 | 2027-01-06 | (between the rows above and below) | - |
+| 2026-08-15 | 2027-01-14 | 2027-01-30 | +16d |
+
+**We now track them within 6 to 16 days across the whole live range.** Before
+this the same July-2026 input had them at December and us at 27 January, and
+the difference was never a disagreement about the queue - it was that we led
+with DOL's published average, a backward-looking mean dragged up by the audit
+tail, while they divide cases-ahead by a daily rate.
+
+The residual gap is almost entirely the divisor, and ours is the defensible one:
+
+| | divisor | where it comes from |
+|---|---|---|
+| permupdate | **650/day** | `weekly_processing_rate 4,552 / 7`, a constant in the payload |
+| permtracker | **625/day** | `measurePace` over our own last 28 observed days |
+
+650/625 = 1.04, so a 130-day horizon differs by about five days, which is most
+of the gap. The rest is that our cases-ahead prorates the filing month by the
+day rather than counting whole months.
+
+**Their own published feed disagrees with their own divisor by 15%.**
+`GET /api/data/daily-volume` returns 30 days of counts averaging **566/day**
+over the 16 days it overlaps our series, while the estimator divides by 650.
+Ours sits between the two at 625 and is measured from our own data, then
+cross-checked against theirs: our mean 574.6 against their 566.4, **+1.4%**.
+
+**The band is where we are straightforwardly better, and it is not close.**
+
+| | shape | claim |
+|---|---|---|
+| permupdate | one-sided, `remaining x 1.15` | `confidence_level: 0.8`, a hardcoded constant; measured coverage 8-15% |
+| permtracker | two-sided, from the p10/p90 of the rate itself | stated as a pace scenario; measured coverage 57-58%, 41% near-horizon, printed on the page |
+
+A case cannot only ever be late, and 15% of the remaining days is not a
+confidence interval. Ours is narrower in the middle and honest about what it
+is, which is the opposite trade from theirs.

@@ -135,7 +135,20 @@ export function CaseEstimate(
       </p>
       {est.earliestDate && est.latestDate ? (
         <p className="mt-1 text-base text-foreground/80">
-          Most likely between <b>{fmtDate(est.earliestDate)}</b> and{" "}
+          {/* THE BAND IS NOT A CONFIDENCE INTERVAL AND MUST NOT READ AS ONE.
+              This said "Most likely between", which is a probability claim,
+              over a band whose measured coverage is 57-58% overall and 41%
+              at the near horizon - under half, so "most likely" was false
+              for the very cases most people look up. Each model's band means
+              something different, so each gets its own words: decision-pace
+              is a scenario on DOL's recent rate, queue-advance is the spread
+              of DOL's own observed frontier movement. */}
+          {est.modelId === "decision-pace"
+            ? "If DOL holds its recent pace: "
+            : est.modelId === "queue-advance"
+              ? "At the fastest and slowest the queue has moved: "
+              : "Between "}
+          <b>{fmtDate(est.earliestDate)}</b> and{" "}
           <b>{fmtDate(est.latestDate)}</b> ·{" "}
           {est.totalDays.toLocaleString("en-US")} days from filing
         </p>

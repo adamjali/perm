@@ -35,3 +35,29 @@ original entry is still the thing to score. If a future amendment ever WOULD
 move a prediction across its own stated bounds, the honest move is a new dated
 entry, not an edit to the old one - a ledger that rewrites its own predictions
 scores nothing.
+
+## 13 September 2026 - the decision-pace model's first four
+
+The model became the lead on this date: cases ahead from the live census
+divided by DOL's measured pace (625 a calendar day over the last 28 observed
+days), band from that rate's own p10/p90 spread. Recorded across four filing
+months on purpose, because a model only ever scored near the frontier is never
+tested at the horizon where it can be most wrong.
+
+| case | filed | anchor | window |
+|---|---|---|---|
+| G-300-25324-425356 | 2025-11-20 | 27 Sep 2026 | 25 Sep - 3 Oct 2026 |
+| G-200-26015-564165 | 2026-01-15 | 2 Nov 2026 | 23 Oct - 20 Nov 2026 |
+| G-200-26075-707139 | 2026-03-16 | 25 Nov 2026 | 12 Nov - 22 Dec 2026 |
+| G-300-26166-017385 | 2026-06-15 | 1 Jan 2027 | 11 Dec 2026 - 10 Feb 2027 |
+
+permupdate, queried the same day for the same filing dates, sat 6 to 16 days
+earlier throughout. The residual is almost entirely their divisor: they use a
+hardcoded 650/day, our measured figure is 625, and their own published
+`daily-volume` feed averages 566.
+
+**What a miss would mean.** The band is a pace scenario with measured coverage
+of 57-58%, so roughly two of these four landing outside their window is the
+EXPECTED outcome, not a failure. What would be a real signal is a consistent
+direction - all four late, or all four early - because that is the divisor or
+the cases-ahead count being wrong rather than the pace varying.

@@ -80,6 +80,11 @@ export interface CaseStatusResultProps {
   duration: CohortDuration | null;
   /** Estimator data for the stage-aware estimate block. Null degrades to no block. */
   estimator: Parameters<typeof CaseEstimate>[0]["estimator"];
+  /** Undecided cases filed before this one, or null when uncountable. */
+  casesAhead?: number | null;
+  /** DOL's measured decision rate, or null when unmeasurable. */
+  decisionPace?: Parameters<typeof CaseEstimate>[0]["decisionPace"];
+  sweepAgeDays?: number | null;
   /**
    * Measured day-shift for the employer's initial, or null when the alphabet
    * document is unavailable or the name does not start with a letter.
@@ -125,6 +130,9 @@ export function CaseStatusResult({
   wage,
   duration,
   estimator,
+  casesAhead = null,
+  decisionPace = null,
+  sweepAgeDays = null,
   letterDelta,
   measuredStageAges,
   stageExit,
@@ -290,6 +298,9 @@ export function CaseStatusResult({
         status={status}
         isFinal={isFinal}
         estimator={estimator}
+        casesAhead={casesAhead}
+        decisionPace={decisionPace}
+        sweepAgeDays={sweepAgeDays}
         letterDeltaDays={letterDelta}
         letterInitial={letterInitial}
         measuredStageAges={measuredStageAges}

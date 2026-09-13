@@ -206,6 +206,10 @@ export {
   type CohortStat,
   type DolFrontier,
   type EstimateModel,
+  type DecisionDay,
+  type MeasuredPace,
+  type PaceEstimate,
+  type PaceEstimateInput,
   type EstimateModelId,
 } from './calculators';
 

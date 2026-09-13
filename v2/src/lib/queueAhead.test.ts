@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  casesAheadOfDay,
   deriveActiveRange,
   deriveQueueAhead,
   findVolumeAnomalies,
@@ -126,5 +127,50 @@ describe("findVolumeAnomalies", () => {
       month("2025-08", 14_000, 0),
     ];
     expect(findVolumeAnomalies(dip)).toEqual([]);
+  });
+});
+
+describe("casesAheadOfDay", () => {
+  const months = [
+    { filingMonth: "2025-11", total: 100, pending: 4000, decided: 0, decidedPct: 0 },
+    { filingMonth: "2025-12", total: 100, pending: 6000, decided: 0, decidedPct: 0 },
+    { filingMonth: "2026-01", total: 100, pending: 3100, decided: 0, decidedPct: 0 },
+  ];
+
+  it("counts every earlier month in full", () => {
+    // 1 Dec: nothing of December is ahead, all of November is.
+    expect(casesAheadOfDay(months, "2025-12-01")).toBe(4000);
+  });
+
+  it("PRORATES the filing month rather than dropping it", () => {
+    // Dropping it is the bug this exists for: at DOL's ~625/day, December's
+    // 6,000 pending is nearly ten days of the answer.
+    const mid = casesAheadOfDay(months, "2025-12-16");
+    expect(mid).toBeGreaterThan(4000);
+    expect(mid).toBe(4000 + Math.round(6000 * (15 / 31)));
+  });
+
+  it("excludes cases filed on your own day", () => {
+    // (day - 1): a case filed the same day is not ahead of you.
+    expect(casesAheadOfDay(months, "2025-12-01")).toBe(4000);
+  });
+
+  it("uses the real length of the month, not 30.44", () => {
+    const feb = [
+      { filingMonth: "2026-01", total: 1, pending: 1000, decided: 0, decidedPct: 0 },
+      { filingMonth: "2026-02", total: 1, pending: 2800, decided: 0, decidedPct: 0 },
+    ];
+    // 2026 is not a leap year, so February is 28 days.
+    expect(casesAheadOfDay(feb, "2026-02-15")).toBe(1000 + Math.round(2800 * (14 / 28)));
+  });
+
+  it("returns null for a month the series does not hold", () => {
+    // Never 0 - that reads as "nothing ahead of you", the one answer this
+    // must not invent.
+    expect(casesAheadOfDay(months, "2030-06-15")).toBeNull();
+  });
+
+  it("returns null on a malformed date", () => {
+    expect(casesAheadOfDay(months, "2026-01")).toBeNull();
   });
 });
