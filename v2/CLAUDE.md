@@ -2181,7 +2181,7 @@ case the helper's own comment says it exists for.
 | surface | access |
 |---|---|
 | **PostHog** | MCP, connected — project 322551. **Exception autocapture is OFF**, so its error counts are a floor, not coverage |
-| **Sentry** | **No MCP exists.** Read the alert emails; the Gmail OAuth token under `~/emails/gmail-cleanup/` works |
+| **Sentry** | **No MCP exists.** Read the alert emails; the Gmail OAuth token under `~/emails/gmail-cleanup/` works. **SEARCH `from:getsentry.com`, NOT `sentry.io`** - they send from `noreply@md.getsentry.com`, so a `from:sentry.io` filter returns nothing and reads as "no alerts". That exact query said the inbox was clean on 2026-09-13 while a weekly report listing 44 errors sat in it. They land in `CATEGORY_UPDATES`, not the primary tab. The weekly report is the highest-value one: it ranks issues by count and is the only place the span p95s appear |
 | **Convex** | `mcp__convex__logs` with `status: "failure"`, and `mcp__convex__insights` |
 
 **Check Sentry's `environment` tag first.** The DEV environment reports to the
