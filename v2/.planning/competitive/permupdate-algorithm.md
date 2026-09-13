@@ -149,3 +149,51 @@ All three, same day, same filing dates:
 pace is not the reason - all three measure DOL within a few percent of each
 other (permtrack 644/day, us 625, permupdate's own feed 566 against their
 hardcoded 650). The reason is the queue count, and that is the open question.
+
+
+## permtrack divides by the WEEKDAY rate and calls the result calendar days (13 Sep 2026)
+
+Their API publishes both numbers and predicts with the optimistic one:
+
+    pace { weekday_avg 804, weekend_avg 243, overall_avg 644, data_days 28 }
+
+`overall_avg` is the honest calendar rate. Their prediction does not use it.
+Fitting the divisor against `estimated_date` for seven filing dates, all
+queried the same minute:
+
+| filed | actual days | queue/weekday 804 | queue/calendar 644 |
+|---|---|---|---|
+| 2025-12-15 | 19 | **19.7** | 24.6 |
+| 2026-01-15 | 34 | **34.8** | 43.4 |
+| 2026-03-16 | 54 | **54.1** | 67.5 |
+| 2026-05-15 | 75 | 71.6 | 89.4 |
+| 2026-06-15 | 87 | 81.8 | 102.1 |
+| 2026-08-15 | 116 | 105.1 | 131.3 |
+
+`queue / weekday_avg` fits inside a day out to two months and drifts to about
++11 at four; `queue / overall_avg` is 4 to 15 days late everywhere and never
+close. They divide by the weekday rate.
+
+**804 / 644 = 1.25, so the published prediction is 25% optimistic against
+their own published pace.** This is the same error this project measured and
+removed from its own estimator: a weekday mean projected across calendar days
+assumes every future week contains five working days and no holiday. Our note
+on it reads "the data was never wrong; the projection was."
+
+**And their `effective_queue` is not a percentage.** It is `queue_position`
+minus a CONSTANT 1,628, identical across every filing date tested - so it is
+10.3% of one particular queue and 27% of a short one. An earlier note here
+called it "a 10% discount"; that was arithmetic on a single case. It is a
+fixed pool, and nothing in the payload says what it is. The prediction appears
+to use `queue_position`, not `effective_queue`.
+
+### So the three divisors are
+
+| | divisor used | where it comes from |
+|---|---|---|
+| permupdate | 650 | a constant in the payload; their own daily-volume feed averages **566** |
+| permtracker | **625** | measured over our last 28 observed days |
+| permtrack | **~804** | their weekday average, while publishing 644 as the pace |
+
+Ours is the only one of the three that both measures the rate and divides by
+the rate it measured.
