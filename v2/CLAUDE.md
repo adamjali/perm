@@ -4500,3 +4500,36 @@ The model is checkable against our own history when DOL publishes FY2026 Q4
 (July-September), the first quarter the event log covers. Until then the
 validation is the third-party cross-check above, and the band's coverage is
 quoted from the backtest rather than from live outcomes.
+
+## The quarterly files are cumulative for PW and NOT for LCA (2026-09-13)
+
+This file already recorded, under the Sep 6 corrections, that "a quarterly file
+only carries its own quarter's determinations" is wrong for PW and LCA because
+"the Qn file is **cumulative for the fiscal year**". That is true for PW and
+**false for LCA**, measured by loading one:
+
+    LCA_Disclosure_Data_FY2025_Q4.xlsx  ->  118,580 rows, 2025-07-01 .. 2025-09-30
+    LCA_Disclosure_Data_FY2026_Q3.xlsx  ->  435,610 rows, 2025-10-01 .. 2026-06-30
+
+FY2025 Q4 holds one QUARTER. So `--fy 2025`, which takes that fiscal year's
+newest file, moved LCA coverage back by three months rather than by a year, and
+`lca_cases` still begins 2025-07-01.
+
+**This is why the serial sweep finds so much in the older years.** A random
+sample of holes came back 79.2% real for 2025 and 86.7% for 2024, almost all
+`I-200` and `P-100`. Those LCAs are not hidden and not undiscoverable - they
+are simply in quarterly files nobody has loaded, and `--fy` can only ever reach
+one file per fiscal year.
+
+**The cheap route exists and is one flag away**: `ingest_flag_disclosure.py`
+takes `--file`, so each earlier quarter can be loaded directly once its URL is
+discovered from DOL's performance page. That is a handful of file loads against
+~800,000 serial probes for the same period, and the file carries the wage, the
+worksite and the SOC that the live endpoint never returns. **Discover the URL,
+never construct it** - DOL moved the current-year files to `/media/` while the
+archive stayed under `/sites/dolgov/files/ETA/oflc/pdfs/`.
+
+Not done, because it is a sustained load on DOL and a real write budget
+(118,580 rows took 760 seconds and ~13 minutes of runner time for ONE quarter),
+and because it is a decision about how much history the product wants rather
+than a defect to fix.
