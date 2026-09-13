@@ -4367,12 +4367,31 @@ hit its cap.
 | 2026 (every pending case lives here) | **73,681** | 14,736 | **~2 hours** |
 | all history, 1,306 day codes | **2,313,871** | 385,645 | **~37 hours** |
 
-So "fill everything tonight" is 2026, and it was run to completion. The older
-years are 600-800k holes each and are almost entirely serials issued to
-programs and prefixes outside our three - those cases are long decided and
-present in the disclosure files, which is the record for them. The nightly
-sweep works backward through the trailing 90 days and the miss ledger retires
-what DOL denies three times, so the remaining tail closes on its own.
+So "fill everything tonight" is 2026, and that is what was run.
+
+**THE CLAIM I FIRST WROTE HERE ABOUT THE OLDER YEARS WAS WRONG, AND MEASURING
+IT IS WHAT SHOWED THAT.** I recorded that 2023-2025 was "almost entirely
+serials issued to programs and prefixes outside our three" and that those
+cases were "long decided and present in the disclosure files". Probed: a
+random sample of 120 holes across four 2025 day codes came back **79.2% real**,
+and 120 across four 2024 day codes **86.7% real**. They are overwhelmingly
+`I-200` (H-1B LCAs) and `P-100` (prevailing wage) - squarely our programs.
+
+They are missing for a completely different reason, and it has a much cheaper
+fix than probing: **the LCA disclosure table only ever had FY2026 Q3 loaded**
+(`lca_cases` decisions run 2025-10-01 to 2026-06-30, one load record). PW has
+FY2024, FY2025 and FY2026. So the older LCAs were never absent because DOL
+hides them - we simply never loaded those fiscal years.
+
+`ingest_flag_disclosure.py --program lca --fy 2025` is one file against
+~130,000 serial probes for the same period, and it carries the WAGE, the
+worksite and the SOC, none of which the live endpoint ever returns. That is
+the right instrument. **It must run on GitHub**: `www.dol.gov` 403s this
+laptop, which is the mirror image of USCIS 403ing the runners.
+
+The serial sweep still earns its place for the live remainder - pending cases
+and filings newer than the last published quarter - which is exactly what no
+disclosure file can contain.
 
 ### The wrap day, and the assertion that rubber-stamped it (2026-09-13)
 
