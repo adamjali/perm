@@ -25,6 +25,9 @@ import { lookupCase } from "@/lib/turso/caseLookup";
 import { normalisePwdCaseNumber } from "@/lib/turso/pwdCases";
 import { normaliseLcaCaseNumber } from "@/lib/turso/lcaCases";
 import { getEstimatorData } from "@/lib/turso/estimate";
+import { casesAheadOfDay } from "@/lib/queueAhead";
+import { getDecisionPace } from "@/lib/turso/decisionPace";
+import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { getAlphabet } from "@/lib/turso/alphabet";
 import {
   getStageStats,
@@ -340,15 +343,55 @@ export default async function PermCaseStatusPage({
 async function Lookup({ caseNumber }: { caseNumber: string }) {
   const today = todayUtc();
 
-  const [result, backlog, estimator, mirrorSize] = await Promise.all([
-    lookupCase(caseNumber).catch(() => null),
-    getLiveBacklog().catch((): CohortMonth[] => []),
-    getEstimatorData().catch(() => null),
-    getLiveMirrorSize().catch(() => 0),
-  ]);
+  const [result, backlog, estimator, mirrorSize, decisionPace, sweep] =
+    await Promise.all([
+      lookupCase(caseNumber).catch(() => null),
+      getLiveBacklog().catch((): CohortMonth[] => []),
+      getEstimatorData().catch(() => null),
+      getLiveMirrorSize().catch(() => 0),
+      // Both defaulted to null rather than allowed to throw: without them the
+      // decision-pace model is omitted and the month-granular models answer,
+      // which is exactly the behaviour that shipped before this existed.
+      getDecisionPace().catch(() => null),
+      getSweepCoverage().catch(() => null),
+    ]);
+
+  // Inputs to the decision-pace model, both null-safe. Without either the
+  // model is omitted and the month-granular ones answer exactly as they did
+  // before this existed.
+  //
+  // A MISSING SWEEP RECORD IS NOT TREATED AS STALE, and the reason is that
+  // the pace carries its own guard: `getDecisionPace` refuses a series whose
+  // newest day is more than three days old, and that series is written by the
+  // same sweep. So a sweep that stopped takes the pace with it, and this
+  // figure is the belt to that pair of braces rather than the only check.
+  const sweepAgeDays = sweep
+    ? Math.floor(
+        (Date.parse(`${today}T00:00:00Z`) -
+          Date.parse(`${sweep.finishedOn}T00:00:00Z`)) /
+          86_400_000,
+      )
+    : null;
 
   const publishedFront = estimator?.frontier?.analystQueueMonth ?? null;
   const publishedAsOf = estimator?.frontier?.asOf ?? null;
+
+  // DOL gives the filing date on the live record, so this costs the reader
+  // no input. `casesAheadOfDay` prorates the filing month by the day rather
+  // than counting whole months - at DOL's ~625 decisions a day, a month's
+  // pending is one to two weeks of the answer.
+  const casesAhead = result?.live?.filingDate
+    ? casesAheadOfDay(
+        backlog.map((m) => ({
+          filingMonth: m.month,
+          total: m.total,
+          pending: m.pending,
+          decided: m.decided,
+          decidedPct: m.decidedPct,
+        })),
+        result.live.filingDate,
+      )
+    : null;
 
   const found = !!result && (result.live !== null || result.decided !== null);
   const parsed = parseCaseNumber(caseNumber);
@@ -426,6 +469,9 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       wage={wage}
       duration={duration}
       estimator={estimator}
+      casesAhead={casesAhead}
+      decisionPace={decisionPace?.pace ?? null}
+      sweepAgeDays={sweepAgeDays}
       letterDelta={letterDelta}
       measuredStageAges={ageByStatusFrom(stageStats)}
       stageExit={exitMixFor(stageStats, result.live?.status ?? "")}

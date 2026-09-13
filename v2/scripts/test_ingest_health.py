@@ -280,6 +280,37 @@ def main() -> int:
     check("demand: a quoted JSON count is read",
           health.check_lookup_demand(DemandDB(days(['"7"'] + [3] * 10))) == 0)
 
+    # --- the serial gap sweep ------------------------------------------------
+    # Probed, not found: a sweep that recovers nothing is the goal state. The
+    # gate exists for the two ways the sweep goes quiet without erroring - it
+    # stops being dispatched, or held_serials stops returning rows.
+    class GapDB:
+        def __init__(self, runs):
+            self.runs = runs            # newest first: [(status, probed, age_days)]
+        def execute(self, sql, args=None):
+            assert "sweep_serial_gaps.py" in str(args), "read the wrong script key"
+            rows = [[{"type": "text", "value": st},
+                     {"type": "integer", "value": str(pr)},
+                     {"type": "integer", "value": str(int(health.NOW_MS - age * 86_400_000))},
+                     {"type": "text", "value": "note"}] for st, pr, age in self.runs]
+            return {"response": {"result": {"rows": rows}}}
+
+    fresh = [("ok", 1400, 0.4), ("ok", 1500, 1.4), ("ok", 1200, 2.4),
+             ("ok", 1300, 3.4), ("ok", 1100, 4.4)]
+    check("gap sweep: a daily run probing holes passes", health.check_gap_sweep(GapDB(fresh)) == 0)
+    check("gap sweep: never run is not a failure (it is new)",
+          health.check_gap_sweep(GapDB([])) == 0)
+    check("gap sweep: a run 5 days old FAILS",
+          health.check_gap_sweep(GapDB([("ok", 1400, 5.2)] + fresh[1:])) == 1)
+    check("gap sweep: 3 days old is inside the budget",
+          health.check_gap_sweep(GapDB([("ok", 1400, 2.9)] + fresh[1:])) == 0)
+    check("gap sweep: ZERO probes across three runs FAILS (held_serials broke)",
+          health.check_gap_sweep(GapDB([("ok", 0, 0.4), ("ok", 0, 1.4), ("ok", 0, 2.4)])) == 1)
+    check("gap sweep: zero probes on ONE run is not judged",
+          health.check_gap_sweep(GapDB([("ok", 0, 0.4), ("ok", 900, 1.4)])) == 0)
+    check("gap sweep: a capped `partial` run still counts as having run",
+          health.check_gap_sweep(GapDB([("partial", 1200, 0.4)] + fresh[1:])) == 0)
+
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 

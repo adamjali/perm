@@ -76,6 +76,18 @@ def decode_filing_date(case_number: str) -> str | None:
     return d.isoformat() if d else None
 
 
+# EVERY PREFIX FLAG IS KNOWN TO ISSUE ON THIS COUNTER, in one place so the
+# nightly walk and the gap sweep cannot drift apart. They did: the walk asked
+# five and the sweep eight, so a case the sweep could find was one the walk
+# would never look for, and a prefix added to one was silently absent from the
+# other. PERM's office codes are G-100/G-200/G-300/G-400; H-1B LCAs are I-200
+# and I-203 (I-201/I-202 are rare but real); prevailing wage is P-100.
+ALL_FLAG_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-",
+                     "I-200-", "I-203-", "I-201-", "I-202-", "P-100-")
+
+PERM_OFFICE_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-")
+
+
 def prefix_of(case_number: str) -> str | None:
     """'G-100-26240-200246' -> 'G-100-'."""
     m = CASE_RE.match(case_number)

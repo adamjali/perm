@@ -71,6 +71,46 @@ export function deriveQueueAhead(
 }
 
 /**
+ * Undecided cases filed before a given DAY, from month-granular counts.
+ *
+ * WHY PRORATION RATHER THAN A CLEAN MONTH BOUNDARY. The census counts pending
+ * cases by filing MONTH, and "filed before yours" is a question about a day.
+ * Counting only strictly-earlier months drops every case filed earlier in your
+ * own month, and that is not a rounding error: a recent month carries several
+ * thousand pending, which at DOL's measured ~625 decisions a day is one to two
+ * weeks of the answer.
+ *
+ * So the same month is prorated by how far through it the filing date sits.
+ * The assumption is uniform filing within a month, which is stated rather than
+ * hidden and is roughly true - DOL receives on business days, and months are
+ * mostly business days. It is a far smaller error than dropping the month.
+ *
+ * Returns null when the month is not in the series at all, because a zero
+ * would read as "nothing ahead of you", which is the one answer this must
+ * never invent.
+ */
+export function casesAheadOfDay(
+  months: readonly MonthQueue[],
+  filingDate: string,
+): number | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(filingDate);
+  if (!m) return null;
+  const filingMonth = `${m[1]}-${m[2]}`;
+  const day = Number(m[3]);
+  const year = Number(m[1]);
+  const mo = Number(m[2]);
+  if (!Number.isFinite(day) || day < 1) return null;
+  const { ahead, sameMonth, subject } = deriveQueueAhead(months, filingMonth);
+  if (!subject) return null;
+  // Days in the filing month, from the calendar rather than a 30.44 constant:
+  // this divides a real count, so February must be 28 or 29.
+  const daysInMonth = new Date(Date.UTC(year, mo, 0)).getUTCDate();
+  // (day - 1), not day: cases filed on your own day are not ahead of you.
+  const share = Math.min(1, Math.max(0, (day - 1) / daysInMonth));
+  return ahead + Math.round(sameMonth * share);
+}
+
+/**
  * The band DOL is visibly working: months it has started and not finished.
  *
  * A month at 0% has not been reached and one at ~100% is done, so the months

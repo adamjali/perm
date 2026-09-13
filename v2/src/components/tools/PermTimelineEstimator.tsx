@@ -20,7 +20,12 @@ import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 
-import { estimateQueueDecision, type CohortStat, type DolFrontier } from "@/lib/perm";
+import {
+  estimateQueueDecision,
+  type CohortStat,
+  type DolFrontier,
+  type MeasuredPace,
+} from "@/lib/perm";
 import type { Pace } from "@/lib/dolPace";
 import { formatMonth } from "@/lib/dolFormat";
 
@@ -41,6 +46,7 @@ import {
 } from "@/components/tools/FrontierProgressChart";
 import { Label } from "@/components/ui";
 import {
+  casesAheadOfDay,
   deriveQueueAhead,
   findVolumeAnomalies,
   type MonthQueue,
@@ -115,6 +121,18 @@ export interface PermTimelineEstimatorProps {
    * as an absent card rather than a zero.
    */
   pace?: Pace | null;
+  /**
+   * DOL's decision rate as `measurePace` reads it, distinct from `pace` above.
+   *
+   * `pace` is the display figure - decisions per WORKING day over a long
+   * series, shown as a stat. This is the CALENDAR rate the decision-pace
+   * model divides by, measured over the last 28 observed days with its own
+   * p10/p90 band. They are different numbers on purpose and both are real;
+   * the model needs the calendar one because a wait spans weekends.
+   */
+  decisionPace?: MeasuredPace | null;
+  /** Days since our sweep last read DOL; past 3 the model withholds. */
+  sweepAgeDays?: number | null;
   /**
    * Every filing month's queue progress, including PENDING counts.
    *
@@ -226,6 +244,8 @@ export function PermTimelineEstimator({
   frontierHistory = [],
   today,
   pace = null,
+  decisionPace = null,
+  sweepAgeDays = null,
   months = [],
   activeRange = null,
   queueSource = null,
@@ -289,8 +309,16 @@ export function PermTimelineEstimator({
         // model by the ordering DOL actually works in; with no initial chosen
         // it is null and the calculator behaves exactly as before.
         letterDeltaDays: letterDelta,
+        // The picker chooses a MONTH, so the 15th is the honest midpoint and
+        // `casesAheadOfDay` prorates that month's own pending accordingly.
+        // Absent months or pace, the model is omitted and the month-granular
+        // ones answer exactly as they did before.
+        casesAhead: months.length ? casesAheadOfDay(months, `${month}-15`) : null,
+        decisionPace,
+        sweepAgeDays,
       }),
-    [month, today, frontier, cohorts, frontierAdvance, letterDelta],
+    [month, today, frontier, cohorts, frontierAdvance, letterDelta,
+     months, decisionPace, sweepAgeDays],
   );
 
   const position = POSITION_COPY[estimate.position];

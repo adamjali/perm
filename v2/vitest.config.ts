@@ -55,6 +55,7 @@ const ISOLATED_UNIT_FILES = [
   // share `../cases` underneath. In the shared pool the first file to load
   // `cases.ts` binds it to ITS mock; every later file's mock then sees no
   // calls (6 failures on 2026-09-02 that each passed alone).
+  "src/lib/turso/__tests__/decisionPace.test.ts",
   "src/lib/turso/__tests__/liveCases.test.ts",
   "src/lib/turso/__tests__/unifiedSearch.test.ts",
   "src/lib/turso/__tests__/caseSearchReads.test.ts",

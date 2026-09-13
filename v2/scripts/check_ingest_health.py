@@ -334,6 +334,60 @@ LOOKUP_DEMAND_MULTIPLE = 5
 LOOKUP_DEMAND_HISTORY = 30
 
 
+# The gap sweep rides the daily FULL pass, so two missed days is a real signal
+# and a weekend is not: the full pass runs every day.
+GAP_SWEEP_MAX_AGE_DAYS = 3
+
+
+def check_gap_sweep(db) -> int:
+    """Fail when the serial gap sweep has stopped running.
+
+    THE NUMBER HERE IS HOLES PROBED, NOT CASES FOUND, and the distinction is
+    the whole design. The walk is forward-only, so anything it skips is lost
+    permanently unless something re-asks; the sweep is that something. But a
+    sweep that recovers nothing is the goal state, not a failure - as the
+    corpus closes, the holes it probes turn out to be serials DOL never
+    issued. Alerting on finds would therefore go red precisely when the
+    system started working.
+
+    Probes DO go to zero for a bad reason: `held_serials` returning nothing
+    (a renamed column, a changed type) makes every day look contiguous and
+    the sweep exits clean having asked DOL nothing. That is invisible in the
+    log, which is why it is checked here.
+    """
+    try:
+        res = db.execute(
+            "SELECT status, rows_written, finished_at, note FROM ingest_runs "
+            "WHERE script = ? ORDER BY finished_at DESC LIMIT 5",
+            ["sweep_serial_gaps.py"])
+        rows = [[None if c["type"] == "null" else c["value"] for c in r]
+                for r in res["response"]["result"]["rows"]]
+    except RuntimeError as exc:
+        print(f"gap sweep         : unreadable ({str(exc)[:120]})")
+        return 0
+    if not rows:
+        print("gap sweep         : never run")
+        return 0
+
+    last_ms = rows[0][2]
+    age = (NOW_MS - int(last_ms)) / 86_400_000 if last_ms is not None else None
+    probes = [int(r[1] or 0) for r in rows]
+    age_s = f"{age:.1f}d" if age is not None else "?"
+    print(f"gap sweep         : last run {age_s} ago, probed {probes}")
+
+    if age is not None and age > GAP_SWEEP_MAX_AGE_DAYS:
+        print(f"\nThe serial gap sweep has not run in {age:.1f} days. The discovery "
+              f"walk only moves forward, so every day it is absent is a day whose "
+              f"skipped serials nothing will ever re-ask for.")
+        return 1
+    if len(probes) >= 3 and not any(probes):
+        print("\nThe gap sweep has probed ZERO holes on its last three runs. Either "
+              "every day code we hold is perfectly contiguous (possible, and worth "
+              "confirming by hand) or `held_serials` has stopped returning rows.")
+        return 1
+    return 0
+
+
 def check_lookup_demand(db) -> int:
     try:
         res = db.execute(
@@ -476,6 +530,7 @@ def main() -> int:
     frontier_bad = check_frontier(db)
     yield_bad = check_discovery_yield(db)
     backfill_bad = check_backfill(db)
+    gapsweep_bad = check_gap_sweep(db)
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
 
@@ -487,18 +542,38 @@ def main() -> int:
         print(f"STALE: {len(stale)} dataset(s) past their own budget")
         for dataset, age, budget, source in stale:
             print(f"  {dataset}: {age} days old, budget {budget} - source: {source}")
-        print("\nAn ingest has stopped, or its source changed shape. The site is "
-              "still serving the last good numbers under their own as-of date, "
-              "which is why nothing else would have told us.")
+        # NAME WHICH HALF BROKE. A row is stale for two opposite reasons and
+        # they need opposite responses: our ingest stopped running (fix us),
+        # or the SOURCE stopped publishing while our ingest keeps fetching
+        # cleanly (fix nothing, watch it). Measured 2026-09-13: DOL had not
+        # republished its processing times since 2026-08-31, the workflow was
+        # green that morning and had read DOL's own unchanged as-of stamp an
+        # hour earlier - and this message still said "an ingest has stopped",
+        # which is a 20-minute detour through Actions logs to learn nothing.
+        # `(has not RUN)` is appended above only for the fetched_at case, so
+        # the two are already distinguishable here.
+        not_run = [d for d, *_ in stale if d.endswith("(has not RUN)")]
+        source_paused = [d for d, *_ in stale if not d.endswith("(has not RUN)")]
+        if not_run:
+            print(f"\nOUR INGEST HAS STOPPED for: {', '.join(not_run)}. It has not "
+                  "fetched in twice its data budget, so this is ours to fix.")
+        if source_paused:
+            print(f"\nTHE SOURCE HAS NOT REPUBLISHED for: {', '.join(source_paused)}. "
+                  "Our ingest is still fetching (it has a recent run above); the "
+                  "agency's own as-of stamp has not moved. Check the agency's page "
+                  "before touching any code - the site is meanwhile serving the last "
+                  "good numbers under their own as-of date, which is honest but "
+                  "invisible.")
         return 1
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
     if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad
-            or coverage_bad or unparseable):
+            or coverage_bad or gapsweep_bad or unparseable):
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
-          "most recent run finished clean, the discovery frontier is moving, no "
-          "backfill has stalled, and lookup demand is at its normal rate.")
+          "most recent run finished clean, the discovery frontier is moving, the "
+          "gap sweep is re-asking what the walk skipped, no backfill has "
+          "stalled, and lookup demand is at its normal rate.")
     return 0
 
 

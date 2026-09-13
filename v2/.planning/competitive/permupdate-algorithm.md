@@ -78,3 +78,122 @@ volumes (their `weekly_volumes` run 4,598 and 4,296, i.e. 657 and 614 per day),
 we read 688 from our own 28-day event log. We may be reading slightly high, and
 that is worth a cross-check - it is the only place their answer is better
 grounded than ours.
+
+---
+
+## After wiring our own decision-pace model (13 Sep 2026, both queried the same day)
+
+Same filing dates, letter M, today 2026-09-13:
+
+| filed | permupdate | permtracker (decision-pace) | gap |
+|---|---|---|---|
+| 2025-12-15 | 2026-10-06 | 2026-10-12 | +6d |
+| 2026-02-15 | 2026-11-08 | 2026-11-16 | +8d |
+| 2026-05-15 | 2026-12-09 | 2026-12-17 | +8d |
+| 2026-07-15 | 2027-01-06 | (between the rows above and below) | - |
+| 2026-08-15 | 2027-01-14 | 2027-01-30 | +16d |
+
+**We now track them within 6 to 16 days across the whole live range.** Before
+this the same July-2026 input had them at December and us at 27 January, and
+the difference was never a disagreement about the queue - it was that we led
+with DOL's published average, a backward-looking mean dragged up by the audit
+tail, while they divide cases-ahead by a daily rate.
+
+The residual gap is almost entirely the divisor, and ours is the defensible one:
+
+| | divisor | where it comes from |
+|---|---|---|
+| permupdate | **650/day** | `weekly_processing_rate 4,552 / 7`, a constant in the payload |
+| permtracker | **625/day** | `measurePace` over our own last 28 observed days |
+
+650/625 = 1.04, so a 130-day horizon differs by about five days, which is most
+of the gap. The rest is that our cases-ahead prorates the filing month by the
+day rather than counting whole months.
+
+**Their own published feed disagrees with their own divisor by 15%.**
+`GET /api/data/daily-volume` returns 30 days of counts averaging **566/day**
+over the 16 days it overlaps our series, while the estimator divides by 650.
+Ours sits between the two at 625 and is measured from our own data, then
+cross-checked against theirs: our mean 574.6 against their 566.4, **+1.4%**.
+
+**The band is where we are straightforwardly better, and it is not close.**
+
+| | shape | claim |
+|---|---|---|
+| permupdate | one-sided, `remaining x 1.15` | `confidence_level: 0.8`, a hardcoded constant; measured coverage 8-15% |
+| permtracker | two-sided, from the p10/p90 of the rate itself | stated as a pace scenario; measured coverage 57-58%, 41% near-horizon, printed on the page |
+
+A case cannot only ever be late, and 15% of the remaining days is not a
+confidence interval. Ours is narrower in the middle and honest about what it
+is, which is the opposite trade from theirs.
+
+
+## Correction, same day: permtrack's real predictor
+
+The table above compares us against permupdate only. A first attempt to add
+permtrack used `/api/estimate`, which is their RISK model (a grade plus
+percentiles over decided cases) and reported them five to nine months late.
+Their decision predictor is `/api/watchlist/predict`, and it is the same shape
+as ours - cases ahead over a measured weekday/weekend pace.
+
+All three, same day, same filing dates:
+
+| filed | permtrack | permupdate | permtracker |
+|---|---|---|---|
+| 2025-11-20 | 2026-09-19 | 2026-09-20 | 2026-09-27 |
+| 2026-01-15 | 2026-10-17 | 2026-10-26 | 2026-11-02 |
+| 2026-03-16 | 2026-11-06 | 2026-11-17 | 2026-11-25 |
+| 2026-06-15 | 2026-12-09 | 2026-12-23 | 2027-01-01 |
+
+**We are consistently the latest**, by 8 to 23 days against permtrack. The
+pace is not the reason - all three measure DOL within a few percent of each
+other (permtrack 644/day, us 625, permupdate's own feed 566 against their
+hardcoded 650). The reason is the queue count, and that is the open question.
+
+
+## permtrack divides by the WEEKDAY rate and calls the result calendar days (13 Sep 2026)
+
+Their API publishes both numbers and predicts with the optimistic one:
+
+    pace { weekday_avg 804, weekend_avg 243, overall_avg 644, data_days 28 }
+
+`overall_avg` is the honest calendar rate. Their prediction does not use it.
+Fitting the divisor against `estimated_date` for seven filing dates, all
+queried the same minute:
+
+| filed | actual days | queue/weekday 804 | queue/calendar 644 |
+|---|---|---|---|
+| 2025-12-15 | 19 | **19.7** | 24.6 |
+| 2026-01-15 | 34 | **34.8** | 43.4 |
+| 2026-03-16 | 54 | **54.1** | 67.5 |
+| 2026-05-15 | 75 | 71.6 | 89.4 |
+| 2026-06-15 | 87 | 81.8 | 102.1 |
+| 2026-08-15 | 116 | 105.1 | 131.3 |
+
+`queue / weekday_avg` fits inside a day out to two months and drifts to about
++11 at four; `queue / overall_avg` is 4 to 15 days late everywhere and never
+close. They divide by the weekday rate.
+
+**804 / 644 = 1.25, so the published prediction is 25% optimistic against
+their own published pace.** This is the same error this project measured and
+removed from its own estimator: a weekday mean projected across calendar days
+assumes every future week contains five working days and no holiday. Our note
+on it reads "the data was never wrong; the projection was."
+
+**And their `effective_queue` is not a percentage.** It is `queue_position`
+minus a CONSTANT 1,628, identical across every filing date tested - so it is
+10.3% of one particular queue and 27% of a short one. An earlier note here
+called it "a 10% discount"; that was arithmetic on a single case. It is a
+fixed pool, and nothing in the payload says what it is. The prediction appears
+to use `queue_position`, not `effective_queue`.
+
+### So the three divisors are
+
+| | divisor used | where it comes from |
+|---|---|---|
+| permupdate | 650 | a constant in the payload; their own daily-volume feed averages **566** |
+| permtracker | **625** | measured over our last 28 observed days |
+| permtrack | **~804** | their weekday average, while publishing 644 as the pace |
+
+Ours is the only one of the three that both measures the rate and divides by
+the rate it measured.

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { measurePace } from './decisionPace';
 import {
   estimateQueueDecision,
   measureFrontierAdvance,
@@ -8,6 +9,7 @@ import {
   type CohortStat,
   impliedMedianDays,
   type DolFrontier,
+  type QueueEstimateInput,
 } from './queueEstimate';
 
 /**
@@ -729,3 +731,101 @@ describe('which model leads', () => {
   });
 });
 
+
+// ============================================================================
+// DECISION PACE - the counting model, and the lead when it can run
+// ============================================================================
+
+/**
+ * A pace built from a real-shaped window: weekdays near 800, weekends near a
+ * third of that, which is what the live observed series actually looks like
+ * (weekdays 700-1000, weekends 165-256, measured 2026-09-13).
+ */
+const PACE_DAYS = Array.from({ length: 28 }, (_, i) => {
+  const dayOfWeek = (i + 1) % 7;
+  const weekend = dayOfWeek === 0 || dayOfWeek === 6;
+  return { dayOfWeek, n: weekend ? 260 : 800 };
+});
+const PACE = measurePace(PACE_DAYS)!;
+
+const paceAsk = (over: Partial<QueueEstimateInput> = {}) =>
+  estimateQueueDecision({
+    filingDate: '2025-12-15',
+    today: TODAY,
+    frontier: FRONTIER,
+    frontierAdvanceRate: 1.8,
+    frontierAdvanceRange: { slowest: 1.05, fastest: 2.0 },
+    casesAhead: 30_000,
+    decisionPace: PACE,
+    sweepAgeDays: 0,
+    ...over,
+  });
+
+describe('estimateQueueDecision: decision pace', () => {
+  it('LEADS when it can run', () => {
+    // It is the only model that counts actual cases rather than converting
+    // months at 30.44, and both rivals use this shape.
+    expect(paceAsk().models[0]?.id).toBe('decision-pace');
+  });
+
+  it('divides the cases ahead by the measured calendar rate', () => {
+    const m = paceAsk().models.find((x) => x.id === 'decision-pace')!;
+    const days = Math.round(30_000 / PACE.pace);
+    const expected = new Date(Date.parse(`${TODAY}T00:00:00Z`) + days * 86_400_000);
+    expect(m.estimatedDate).toBe(expected.toISOString().slice(0, 10));
+  });
+
+  it('is OMITTED, never faked, when the queue position is unknown', () => {
+    const r = paceAsk({ casesAhead: null });
+    expect(r.models.some((m) => m.id === 'decision-pace')).toBe(false);
+    // and the month-granular model takes over rather than nothing being shown
+    expect(r.models[0]?.id).toBe('queue-advance');
+  });
+
+  it('is OMITTED when the pace could not be measured', () => {
+    const r = paceAsk({ decisionPace: null });
+    expect(r.models.some((m) => m.id === 'decision-pace')).toBe(false);
+  });
+
+  it('is OMITTED when our sweep is stale, rather than dating off old counts', () => {
+    const r = paceAsk({ sweepAgeDays: 9 });
+    expect(r.models.some((m) => m.id === 'decision-pace')).toBe(false);
+    expect(r.models[0]?.id).toBe('queue-advance');
+  });
+
+  it('carries a band, and the band brackets the date', () => {
+    const m = paceAsk().models.find((x) => x.id === 'decision-pace')!;
+    expect(m.earliestDate).not.toBeNull();
+    expect(m.latestDate).not.toBeNull();
+    expect(m.earliestDate! <= m.estimatedDate).toBe(true);
+    expect(m.latestDate! >= m.estimatedDate).toBe(true);
+  });
+
+  it('states the measured coverage instead of implying confidence', () => {
+    // A rival ships confidence_level: 0.8 against real coverage of 8-15%.
+    // Whatever this says, it must NOT claim a confidence interval.
+    const caveats = paceAsk().caveats.join(' ');
+    expect(caveats).toContain('not a confidence interval');
+    expect(caveats).toMatch(/57%/);
+  });
+
+  it('does not fire for a case the queue has already passed', () => {
+    // Filed long before the frontier: the absence of a date is the answer,
+    // and `position === "overdue"` owns it.
+    const r = paceAsk({ filingDate: '2024-01-15' });
+    expect(r.models.some((m) => m.id === 'decision-pace')).toBe(false);
+  });
+
+  it('agrees with queue-advance to within a few weeks on a real shape', () => {
+    // THE CROSS-CHECK THAT MATTERS. Two independent models - one counting
+    // cases, one counting months - should not disagree wildly. If they ever
+    // do, one of the two inputs is wrong, and this is where it shows.
+    const r = paceAsk();
+    const pace = r.models.find((m) => m.id === 'decision-pace')!;
+    const queue = r.models.find((m) => m.id === 'queue-advance')!;
+    const gap = Math.abs(
+      (Date.parse(pace.estimatedDate) - Date.parse(queue.estimatedDate)) / 86_400_000,
+    );
+    expect(gap).toBeLessThan(45);
+  });
+});

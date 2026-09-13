@@ -19,7 +19,11 @@
 
 import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 
-import { estimateQueueDecision } from "@/lib/perm";
+import {
+  estimateQueueDecision,
+  type EstimateModelId,
+  type MeasuredPace,
+} from "@/lib/perm";
 import {
   COHORT_PERCENTILE_FACTOR,
   placeCaseInCohort,
@@ -66,6 +70,23 @@ export interface CaseEstimateInput {
    * screen. It is looked up from `perm_docs.alphabet` and never invented.
    */
   letterDeltaDays?: number | null;
+  /**
+   * Undecided cases filed before this one, from the live census, or null.
+   *
+   * With it the decision-pace model runs and leads; without it the estimate
+   * falls back to the month-granular models exactly as it did before. Never
+   * approximated here - the census is the only thing that can count it.
+   */
+  casesAhead?: number | null;
+  /**
+   * DOL's measured decision rate and how long ago we measured it.
+   *
+   * `sweepAgeDays` is passed through rather than checked here because the
+   * calculator's own refusal ladder owns that decision, and duplicating it
+   * is how two surfaces end up disagreeing about whether a case is datable.
+   */
+  decisionPace?: MeasuredPace | null;
+  sweepAgeDays?: number | null;
   /** `YYYY-MM-DD`, injected so the function stays pure. */
   today: string;
 }
@@ -73,6 +94,18 @@ export interface CaseEstimateInput {
 export type CaseEstimate =
   | {
       kind: "date";
+      /**
+       * WHICH model produced the date and band.
+       *
+       * The UI needs it because a band's MEANING comes from its model, and
+       * these two are not the same kind of claim. `decision-pace` gives a
+       * pace scenario whose coverage is measured at 57-58% overall and 41%
+       * at the near horizon - so "most likely between" would be false for
+       * it. `queue-advance` gives the spread of DOL's own observed frontier
+       * movement. Labelling both the same way is how a scenario gets read as
+       * a confidence interval.
+       */
+      modelId: EstimateModelId;
       /** Stage-adjusted central estimate, `YYYY-MM-DD`. */
       estimatedDate: string;
       /** The unadjusted model date, for the delta line. */
@@ -176,6 +209,9 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
     frontierAdvanceRate: input.estimator.frontierAdvance
       ? input.estimator.frontierAdvance.rate
       : null,
+    casesAhead: input.casesAhead ?? null,
+    decisionPace: input.decisionPace ?? null,
+    sweepAgeDays: input.sweepAgeDays ?? null,
     frontierAdvanceRange:
       input.estimator.frontierAdvance &&
       input.estimator.frontierAdvance.slowest &&
@@ -244,6 +280,7 @@ export function buildCaseEstimate(input: CaseEstimateInput): CaseEstimate | null
 
   return {
     kind: "date",
+    modelId: model.id,
     estimatedDate: format(addDays(filing, totalDays), "yyyy-MM-dd"),
     modelDate: model.estimatedDate,
     earliestDate: shiftDate(model.earliestDate),

@@ -4246,3 +4246,393 @@ the number stood in for and which holds at any value: the sitemap and the
 page's own `robots: noindex` must read the SAME constant, or one of them is
 wrong about every entity in the gap.
 
+
+## The walk only moves forward, so something has to look back (2026-09-13)
+
+FLAG issues case numbers from ONE counter shared by every program, so for a
+given filing day the serials we hold should be contiguous. They are not.
+`run_discovery` advances a cursor and never returns to it, so anything missed
+on the night is missed permanently, as is anything DOL indexes into a range the
+walk has already passed. There was no second look. An independent check against
+permtrack's published July figure put us 1.2% short; the serial probe put it at
+up to 5%.
+
+`scripts/sweep_serial_gaps.py` is the second look. It reads the holes out of
+our own tables, asks DOL for each one under every prefix we know, and inserts
+what comes back. Nothing guesses: a hole is filled only when DOL answers. It
+rides the daily FULL pass (`case-status-direct.yml`, `mode == 'full'`) at 600
+requests and `timeout 25m`.
+
+**A hole is read strictly INSIDE a day's own span.** Past the highest serial we
+hold for a day there is no way to tell a hole from the end of that day's
+issuance, and probing past the edge is how a prober spends its whole budget on
+numbers DOL never issued.
+
+**First real run, trailing 90 day codes: 7,129 holes probed, 251 confirmed,
+195 inserted.** Those are cases that existed and that nothing would ever have
+found.
+
+### Three defects it surfaced, each invisible in a green log
+
+1. **WITHOUT A MEMORY THE SWEEP NEVER CONVERGES.** 6,878 of those 7,129 holes
+   are serials DOL never issued, and a sweep with no record re-asks every one
+   of them tomorrow night, and the night after, forever - spending the whole
+   budget re-confirming known absences and never reaching a hole nobody has
+   looked at. `perm_serial_misses` bumps a counter per empty serial and drops
+   it after `MISS_LIMIT = 3`. **Not after one**, because misses are not
+   permanent: the 251 found above were cases that EXISTED and had not been
+   indexed when the walk went past, so DOL's index demonstrably lags and a
+   serial has to get several chances. Writes are batched 200 to a statement
+   (the cost is per STATEMENT: 500 single-row writes measured 986 rows in 20
+   seconds against 1,233 rows/s batched).
+
+2. **A PREFIX THAT IS ASKED BUT ROUTED NOWHERE IS A CASE FOUND AND DROPPED,
+   EVERY NIGHT, IN SILENCE.** `PERM_PREFIXES` held G-100 and G-200 only, so a
+   G-300 hit fell through to the PWD/LCA inserter, whose `PREFIX_TO_PROGRAM`
+   does not know the prefix and silently `continue`s. The case was not stored
+   AND not recorded as a miss - it was claimed, just not kept - so it was
+   re-found and re-dropped indefinitely. The tell was two consecutive runs over
+   one day code reporting **"confirmed 1, inserted 0"**, which reads exactly
+   like an already-known case. It was `G-300-26254-230507`, College of William
+   and Mary, ANALYST REVIEW, filed 2026-09-11.
+
+   Measured: **G-300 is 6,854 live rows and still being filed** (105 in August
+   2026, 102 of them pending), and our newest G-300 filing was **2026-08-26
+   against 2026-09-12 for G-100/G-200** - a 17-day hole in 1.9% of PERM. The
+   fix is the routing constant, not the ask: `PERM_PREFIXES` is now every PERM
+   office code, and `test_serial_gaps.py` asserts no asked prefix is homeless
+   and that `PERM_PREFIXES == FRONTIER_PREFIXES` - counting a case toward the
+   frontier and then having nowhere to put it is the whole bug.
+
+   `DISCOVERY_PREFIXES` deliberately stays at five. A sixth takes the walk from
+   10 serials per request to 8 and costs ~25% more requests nightly to chase
+   1.9% of filings; the sweep already asks all eight over 90 day codes, which
+   is the cheaper place to catch a sparse office code.
+
+3. **A DRY RUN DOES NOT EXERCISE THE INSERT PATH.** The first real run died on
+   `AttributeError: module 'ingest_case_status_direct' has no attribute
+   'prefix_of'` - it lives in `lib_flag_serials` - six seconds in, after a dry
+   run and a 12-check test suite had both passed. Dry mode returns before ever
+   touching it. `test_serial_gaps.py` now drives the writing path against a
+   fake DOL.
+
+**`check_gap_sweep` in the health check keys on HOLES PROBED, not cases found.**
+A sweep that recovers nothing is the goal state - as the corpus closes, the
+holes it probes turn out to be serials DOL never issued - so alerting on finds
+would go red precisely when the system started working. Probes only reach zero
+for a bad reason: `held_serials` returning nothing (a renamed column, a changed
+type) makes every day look contiguous and the sweep exits clean having asked
+DOL nothing.
+
+## Every prefix, every hole, and the day a neighbour bounds (2026-09-13)
+
+Three changes turn the gap sweep from a partial patch into the thing that
+closes the corpus, and they came from the owner's instruction to fill
+everything rather than the cheapest slice.
+
+**The walk asks EVERY prefix now, not the five busiest.** It asked
+G-100/G-200/I-200/P-100/I-203, about 70% of the counter, so a span whose
+serials all belonged to G-300, I-201 or I-202 answered empty under all five and
+counted toward the "unissued" streak that ENDS a day. A sparse office code was
+therefore not merely undiscovered - it could end the walk early and hide the
+serials behind it. Nine prefixes at DOL's 50-number ceiling is 5 serials a
+request instead of 10, so a steady night goes from ~215 requests to ~430,
+against the ~10,000 the daily sweep already makes.
+
+**Both the walk and the sweep now read one canonical tuple**
+(`ALL_FLAG_PREFIXES` in `lib_flag_serials.py`). They had drifted to five and
+eight, which means a case the sweep could find was one the walk would never
+look for. `PERM_OFFICE_PREFIXES` is the routing half, and a gate asserts no
+asked prefix is homeless and that the two sets match.
+
+**A day's true span is bounded by its NEIGHBOURS, not by its own first and
+last known serial.** FLAG issues from one global sequential counter, so every
+serial between the previous day's highest and the next day's lowest belongs to
+this day - which makes the span exact rather than guessed. The old reading was
+structurally blind to anything issued before the first case we happen to hold
+or after the last: measured across 2026, **1,102 serials sat in those inter-day
+regions**, invisible by construction. A wrap day (the counter rolls at
+1,000,000; three such days exist) falls back to its own span instead of
+probing a million numbers.
+
+**Explicit `--from/--to` ranges now run newest-first**, matching the default.
+They ran oldest-first, which puts the days that matter most - the recent ones,
+where the pending cases are - at the END of a run that can be interrupted or
+hit its cap.
+
+### What filling it actually costs, measured
+
+| | holes | requests | wall clock at 3 req/s |
+|---|---|---|---|
+| 2026 (every pending case lives here) | **73,681** | 14,736 | **~2 hours** |
+| all history, 1,306 day codes | **2,313,871** | 385,645 | **~37 hours** |
+
+So "fill everything tonight" is 2026, and that is what was run.
+
+**THE CLAIM I FIRST WROTE HERE ABOUT THE OLDER YEARS WAS WRONG, AND MEASURING
+IT IS WHAT SHOWED THAT.** I recorded that 2023-2025 was "almost entirely
+serials issued to programs and prefixes outside our three" and that those
+cases were "long decided and present in the disclosure files". Probed: a
+random sample of 120 holes across four 2025 day codes came back **79.2% real**,
+and 120 across four 2024 day codes **86.7% real**. They are overwhelmingly
+`I-200` (H-1B LCAs) and `P-100` (prevailing wage) - squarely our programs.
+
+They are missing for a completely different reason, and it has a much cheaper
+fix than probing: **the LCA disclosure table only ever had FY2026 Q3 loaded**
+(`lca_cases` decisions run 2025-10-01 to 2026-06-30, one load record). PW has
+FY2024, FY2025 and FY2026. So the older LCAs were never absent because DOL
+hides them - we simply never loaded those fiscal years.
+
+`ingest_flag_disclosure.py --program lca --fy 2025` is one file against
+~130,000 serial probes for the same period, and it carries the WAGE, the
+worksite and the SOC, none of which the live endpoint ever returns. That is
+the right instrument. **It must run on GitHub**: `www.dol.gov` 403s this
+laptop, which is the mirror image of USCIS 403ing the runners.
+
+The serial sweep still earns its place for the live remainder - pending cases
+and filings newer than the last published quarter - which is exactly what no
+disclosure file can contain.
+
+### The wrap day, and the assertion that rubber-stamped it (2026-09-13)
+
+Neighbour-bounding needs a fallback for the day the counter rolls at
+1,000,000, and the first one was `return bounds[n][0], bounds[n][1]` - the
+day's own MIN and MAX. **On a wrap day those ARE 0 and 999,999**, so the
+"fallback" handed back the whole million and the sweep sat on day 26161
+probing serials for 44 minutes. Three day codes in the entire history are like
+this (24136, 25141, 26161).
+
+**The test asserted `... or sp == (1, 999_000)`**, which accepted precisely the
+broken answer. An assertion with an `or` branch that matches the bug is not a
+gate, it is a rubber stamp - and it is the same family as the vacuous
+`min(floor, width) <= width` caught in the estimator tests the same night.
+Wrap days are SKIPPED now, named in the log so a skipped day and a day with no
+holes cannot look alike, and the test asserts `is None`.
+
+**Three of my own progress instruments read wrong before this was found**, and
+each was wrong for its own reason, which is worth remembering: `lsof` showed no
+TCP because the lookups are forked `curl` children rather than sockets on the
+parent; a file-mtime probe sampled every four seconds "showed" a four-second
+request cadence that was my own sample interval; and `MAX(last_probed_at)` over
+the whole table does not move mid-day-code, because misses are flushed per day.
+The reading that settled it was `GROUP BY day_code ORDER BY MAX(last_probed_at)`
+- which named the stuck day directly.
+
+## The decision-pace estimator is WIRED, and it leads (2026-09-13)
+
+`convex/lib/perm/calculators/decisionPace.ts` is the model the estimator
+investigation settled on, and it is now the lead model on both surfaces that
+date a case:
+
+    day  = today + casesAhead / 28-day calendar pace
+    band = casesAhead / {p90, p10} weekday pace, floored at 55% of the
+           horizon and grown late-heavy
+
+**Zero fitted parameters.** The +111-day "bias" that started this turned out to
+be DOL's acceleration wearing a calibration costume; deleting the whole
+correction cost nothing at the horizons that exist (86% of the live queue is
+under four months) and covered slightly more.
+
+### The substitution, and why it is defensible now
+
+The backtest fed the model DOL's own `decision_date` from the quarterly files.
+Production cannot: those end 2026-06-30. The only daily-resolution source is
+`daily_decisions` under `sweep-observed`, which the sweep already writes from
+`perm_case_events` and which is dated by when **our sweep saw** a case become
+final. Those two ranges do not overlap by a single day, so the substitution
+cannot be validated against our own history at all.
+
+**It is validated against an independent third party instead.** permupdate
+publishes `GET /api/data/daily-volume`, 30 days of counts. Measured 2026-09-13
+over the 16 days both series cover: **our mean 574.6/day against their 566.4,
++1.4%**. Individual days diverge by more, because a day boundary falls in a
+different place for each of us - but the model divides by a 28-day MEAN, and
+the mean is the quantity that agrees.
+
+One consequence stated rather than discovered later: our day-boundary noise
+inflates the weekday spread the BAND is built from, so the band is wider than
+DOL's true daily variation would give. That errs toward claiming less.
+
+### What it changed, measured against the rival the same day
+
+| filed | permupdate | ours | gap |
+|---|---|---|---|
+| 2025-12-15 | 2026-10-06 | 2026-10-12 | +6d |
+| 2026-02-15 | 2026-11-08 | 2026-11-16 | +8d |
+| 2026-05-15 | 2026-12-09 | 2026-12-17 | +8d |
+| 2026-08-15 | 2027-01-14 | 2027-01-30 | +16d |
+
+**We track them within 6 to 16 days across the whole live range.** Before this
+the same July-2026 input had them at December and us at 27 January, and the
+difference was never about the queue: we led with DOL's published average, a
+backward-looking mean dragged up by the audit tail.
+
+The residual gap is the divisor, and ours is the defensible one: they divide by
+a hardcoded **650/day**, we measure **625**. Their own published feed averages
+**566**, so their constant disagrees with their own data by 15%.
+
+### Three things that had to be right, each of which was wrong first
+
+1. **`casesAhead` must prorate the filing month.** The census counts pending by
+   MONTH and "filed before yours" is a question about a day. Counting only
+   strictly-earlier months drops several thousand cases - one to two weeks of
+   the answer at 625/day. `casesAheadOfDay` prorates by day-of-month, states
+   the uniform-filing assumption, and uses the calendar length of the month
+   rather than 30.44. It returns **null**, never 0, for a month the series does
+   not hold: 0 reads as "nothing ahead of you".
+2. **The band is not a confidence interval and must not read as one.** The UI
+   said *"Most likely between"*, a probability claim, over a band whose
+   measured coverage is 57-58% overall and **41% at the near horizon** - under
+   half, so it was false for exactly the cases most people look up. Each model
+   now labels its own band (`est.modelId`), and the coverage figure is a
+   caveat on the page. A rival ships `confidence_level: 0.8` as a constant
+   against real coverage of 8-15%.
+3. **`through` was read off the SQL ordering.** It gates the staleness guard,
+   so taking it from `rows[0]` made that guard silently depend on an ORDER BY
+   three lines away. It is the maximum now. Found only because a probe showed
+   the test asserting it was blind - and investigating THAT showed the comment
+   justifying `days.reverse()` was also wrong: `measurePace` is order-invariant
+   and the test now pins that with an explicit shuffle.
+
+### What is still NOT claimed
+
+The model is checkable against our own history when DOL publishes FY2026 Q4
+(July-September), the first quarter the event log covers. Until then the
+validation is the third-party cross-check above, and the band's coverage is
+quoted from the backtest rather than from live outcomes.
+
+## The quarterly files are cumulative for PW and NOT for LCA (2026-09-13)
+
+This file already recorded, under the Sep 6 corrections, that "a quarterly file
+only carries its own quarter's determinations" is wrong for PW and LCA because
+"the Qn file is **cumulative for the fiscal year**". That is true for PW and
+**false for LCA**, measured by loading one:
+
+    LCA_Disclosure_Data_FY2025_Q4.xlsx  ->  118,580 rows, 2025-07-01 .. 2025-09-30
+    LCA_Disclosure_Data_FY2026_Q3.xlsx  ->  435,610 rows, 2025-10-01 .. 2026-06-30
+
+FY2025 Q4 holds one QUARTER. So `--fy 2025`, which takes that fiscal year's
+newest file, moved LCA coverage back by three months rather than by a year, and
+`lca_cases` still begins 2025-07-01.
+
+**This is why the serial sweep finds so much in the older years.** A random
+sample of holes came back 79.2% real for 2025 and 86.7% for 2024, almost all
+`I-200` and `P-100`. Those LCAs are not hidden and not undiscoverable - they
+are simply in quarterly files nobody has loaded, and `--fy` can only ever reach
+one file per fiscal year.
+
+**The cheap route exists and is one flag away**: `ingest_flag_disclosure.py`
+takes `--file`, so each earlier quarter can be loaded directly once its URL is
+discovered from DOL's performance page. That is a handful of file loads against
+~800,000 serial probes for the same period, and the file carries the wage, the
+worksite and the SOC that the live endpoint never returns. **Discover the URL,
+never construct it** - DOL moved the current-year files to `/media/` while the
+archive stayed under `/sites/dolgov/files/ETA/oflc/pdfs/`.
+
+Not done, because it is a sustained load on DOL and a real write budget
+(118,580 rows took 760 seconds and ~13 minutes of runner time for ONE quarter),
+and because it is a decision about how much history the product wants rather
+than a defect to fix.
+
+## permtrack is NOT off, I read the wrong endpoint (2026-09-13)
+
+I recorded permtrack as five to nine MONTHS later than everyone else and wrote
+that into the ledger. That was my error, and the owner caught it by remembering
+they had measured ~39 days earlier in the same session.
+
+permtrack publishes TWO models and I took the wrong one:
+
+| endpoint | what it answers |
+|---|---|
+| `/api/estimate?filing_date=` | a risk GRADE plus percentiles over decided cases (`p50` 468 days) |
+| `/api/watchlist/predict?filing_date=` or `?case_number=` | **the decision predictor** |
+
+Reading `filed + p50` off the first is how a competitor ends up looking absurd,
+and it looked entirely plausible in isolation because a percentile over decided
+cases really is that large - it carries the audit tail, which is the same defect
+that made DOL's published average the wrong anchor for us.
+
+**Their real model is the same shape as ours, and their numbers are close to
+ours.** From `/api/watchlist/predict`:
+
+```
+queue_position 15,866   effective_queue 14,238
+pace { weekday_avg 804, weekend_avg 243, overall_avg 644, data_days 28 }
+prediction { estimated_date 2026-10-02, early 2026-10-01, late 2026-10-12 }
+```
+
+Their pace against ours: **644 vs 625 overall, 804 vs 789 weekday, 243 vs 213
+weekend.** Three independent measurements of DOL's rate - theirs, ours, and
+permupdate's published daily volume - now agree inside a few percent. That is
+the strongest evidence the rate is right that any of us has.
+
+**On the date, permtrack usually runs EARLIER than us - but "we are the latest
+of the three" is an overstatement I made from four cases and it is wrong.**
+Over the fuller six-case bakeoff the latest date was permupdate's 3 times,
+ours twice and permtrack's once. What IS supported: permtrack ran earlier than
+us in 5 of those 6, and in all 4 of the ledger cases. Mean gaps there were
+|ours - permupdate| 5.5 days and |ours - permtrack| 11.8 days.
+
+**Being later is not being wrong, and being earlier is not being right.** In
+that same bakeoff permtrack printed a date for a case five months past the
+frontier where we refused, and permupdate printed a date **in the past**. None
+of the three has been scored against an outcome under the current model.
+
+**The difference is cases-ahead, and it is worth investigating rather than
+celebrating.** Ours 18,308 against their 15,866. Comparing month by month, the
+gap is NOT a uniform offset:
+
+- their `month_queue` **stops at 2025-12** and that final month is half our
+  size (7,535 against 14,891, while November is 15,270 against 15,034). The
+  response is truncated at the frontier, so their count cannot include the rest
+  of the filing month - which for a mid-December filer means their queue
+  position is an undercount by construction;
+- but we also hold **more old pending than they do** - 501 against 96 for June
+  2025, 403 against 182 for July. Fifteen-month-old cases we still call pending
+  and they do not. Either they have decided them and we have not swept them, or
+  we hold rows they never had. **That inflates our queue position and pushes
+  every date later, and it is the thing to check next.**
+
+`predictionLedger.test.ts` now carries a wrong-endpoint detector: any recorded
+rival anchor more than 270 days from ours fails. That bound is far wider than
+any genuine disagreement (the three sit within about three weeks today), so it
+fires on a model mix-up rather than on a rival being wrong.
+
+
+### Why our queue is bigger, measured - and why it is NOT being changed yet
+
+Two candidates, and only one survived checking.
+
+**Not staleness.** Eight of our June-2025 rows that we still call pending were
+asked of DOL live: **8 of 8 matched exactly**. They are real, current, and
+almost all `RECONSIDERATION APPEALS` or `RFI ISSUED`.
+
+**The live difference is what "pending" counts.** Of 96,615 pending cases,
+**5,675 (5.9%) are not in filing order at all**:
+
+    ANALYST REVIEW           90,940   94.1%   <- the ordinary queue
+    RECONSIDERATION APPEALS   2,413    2.5%
+    APPLICATION ON HOLD       1,854    1.9%
+    RFI ISSUED                  901    0.9%
+    BALCA APPEALS               373    0.4%
+    NORD ISSUED                 120    0.1%
+
+permtrack discounts 10.3% between `queue_position` and `effective_queue`, which
+is plainly the same idea. And there is an internal inconsistency in ours worth
+naming: `estimateByPace` REFUSES to date a case in one of those statuses - it
+says the case is not in filing order - while `casesAheadOfDay` happily counts
+those same cases as competition for everyone else.
+
+**It is still not changed, and the reason is a measurement that cuts the other
+way.** Of the RFI exits we have observed, **91% (327/359) return to ANALYST
+REVIEW** rather than to a decision. Those cases come back and do consume
+analyst capacity later, so excluding them outright would undercount. Whether
+they re-enter at their filing position or behind it is not something we know.
+
+So the choice is genuinely uncertain, and the ledger is the instrument that
+settles it rather than an argument. The four predictions recorded on
+2026-09-13 include the full pending count. **If all four land late, the count
+is too big and the side-queue should come out; if they scatter, it is noise.**
+Tuning the queue downward now because two rivals sit earlier would be fitting
+to competitors rather than to outcomes, which is the thing this repo keeps
+learning not to do.

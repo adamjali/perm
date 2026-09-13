@@ -42,6 +42,15 @@ on:
         description: "History: load this fiscal year's newest file (e.g. 2025) instead of the newest overall"
         required: false
         default: ""
+      name:
+        description: "History: load this exact discovered file (LCA files are per-quarter, so fy reaches only one of each year)"
+        required: false
+        default: ""
+      list_only:
+        description: "Discover and print every file DOL publishes, then stop"
+        required: false
+        type: boolean
+        default: false
       backfill_attorney:
         description: "Write ONLY the law-firm columns onto existing rows, then index them. Ten times cheaper than force."
         required: false
@@ -97,6 +106,8 @@ jobs:
           FORCE: ${{ inputs.force }}
           FY: ${{ inputs.fy }}
           BACKFILL_ATTORNEY: ${{ inputs.backfill_attorney }}
+          NAME: ${{ inputs.name }}
+          LIST_ONLY: ${{ inputs.list_only }}
         run: |
           case "$PROGRAM" in
             pw|lca) ;;
@@ -124,6 +135,22 @@ jobs:
             case "$FY" in
               20[0-9][0-9]) EXTRA="$EXTRA --fy $FY" ;;
               *) echo "::error::fy must be a four-digit year, got '$FY'"; exit 1 ;;
+            esac
+          fi
+          # Discovery only: no download, no writes. Run this first to find out
+          # which quarters exist before deciding to load any of them.
+          if [ "$LIST_ONLY" = "true" ]; then
+            python3 scripts/ingest_flag_disclosure.py --program "$PROGRAM" ${FY:+--fy "$FY"} --list
+            exit 0
+          fi
+          # A SPECIFIC quarter. Checked against DOL's own naming before it can
+          # reach a command, like every other input here - the script then
+          # refuses any name its discovery did not return, so a typo cannot
+          # become a constructed URL.
+          if [ -n "$NAME" ]; then
+            case "$NAME" in
+              *_Disclosure_Data_FY[0-9][0-9][0-9][0-9]*.xlsx) EXTRA="$EXTRA --name $NAME" ;;
+              *) echo "::error::name must be a DOL disclosure filename, got '$NAME'"; exit 1 ;;
             esac
           fi
           echo "program: $PROGRAM ${EXTRA:+($EXTRA)}"

@@ -12,6 +12,8 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { currentMonthUtc } from "@/lib/dolFormat";
+import { getDecisionPace } from "@/lib/turso/decisionPace";
+import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { getEstimatorData } from "@/lib/turso/estimate";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -72,7 +74,7 @@ const FAQS = [
 export default async function PermTimelineCalculatorPage() {
   // Wrapped: a page that cannot reach Convex must still render its explanation,
   // its FAQ and its signup rather than failing the route outright.
-  const [data, daily, alphabet] = await Promise.all([
+  const [data, daily, alphabet, decisionPace, sweep] = await Promise.all([
     getEstimatorData(),
     getDailyDecisions(),
     // DOL works each filing month alphabetically by employer, and that
@@ -81,6 +83,12 @@ export default async function PermTimelineCalculatorPage() {
     // span end to end. Null when the doc is missing, and the component then
     // asks for nothing and shows a month.
     getAlphabet(),
+    // The CALENDAR rate the decision-pace model divides by, distinct from
+    // `pace` below (decisions per WORKING day, a display figure over a much
+    // longer series). Both null-safe: without either the model is omitted and
+    // the month-granular ones answer as before.
+    getDecisionPace().catch(() => null),
+    getSweepCoverage().catch(() => null),
   ]);
   const pace = businessDayPace(daily, 28);
 
@@ -132,6 +140,16 @@ export default async function PermTimelineCalculatorPage() {
           disclosure={data ? data.disclosure : null}
           today={today}
           pace={pace}
+          decisionPace={decisionPace ? decisionPace.pace : null}
+          sweepAgeDays={
+            sweep
+              ? Math.floor(
+                  (Date.parse(`${today}T00:00:00Z`) -
+                    Date.parse(`${sweep.finishedOn}T00:00:00Z`)) /
+                    86_400_000,
+                )
+              : null
+          }
           months={queue ? queue.months : []}
           activeRange={queue ? queue.activeRange : null}
           queueSource={queue ? queue.source : null}

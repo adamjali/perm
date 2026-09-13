@@ -170,6 +170,8 @@ export {
   estimateQueueDecision,
   measureFrontierAdvance,
   measureFrontierAdvanceRange,
+  measurePace,
+  estimateByPace,
   estimatePwdQueue,
   estimateI140Queue,
   buildGreenCardTimeline,
@@ -204,6 +206,10 @@ export {
   type CohortStat,
   type DolFrontier,
   type EstimateModel,
+  type DecisionDay,
+  type MeasuredPace,
+  type PaceEstimate,
+  type PaceEstimateInput,
   type EstimateModelId,
 } from './calculators';
 

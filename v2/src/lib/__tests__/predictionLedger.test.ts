@@ -3,7 +3,9 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { daysToAnchor, PREDICTIONS, scorePrediction, summarizeScores } from "../predictionLedger";
+import { daysToAnchor, PREDICTIONS, scorePrediction, summarizeScores,
+  scoreAll,
+} from "../predictionLedger";
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -47,5 +49,114 @@ describe("predictionLedger", () => {
     if (!existsSync(md)) return;
     const text = readFileSync(md, "utf8");
     for (const p of PREDICTIONS) expect(text, `${p.caseNumber} missing from the markdown ledger`).toContain(p.caseNumber);
+  });
+});
+
+describe("three-way scoring", () => {
+  const p: Prediction = {
+    recorded: "2026-09-13",
+    caseNumber: "G-100-00000-000000",
+    filed: "2025-12-15",
+    statusAtPrediction: "ANALYST REVIEW",
+    anchor: "Around 12 October 2026",
+    anchorIso: "2026-10-12",
+    windowFrom: "2026-10-07",
+    windowTo: "2026-10-23",
+    rivals: [
+      { site: "permupdate", anchorIso: "2026-10-06", upperIso: "2026-10-09", lowerIso: null, model: "x" },
+      { site: "permtrack", anchorIso: "2027-03-28", upperIso: null, lowerIso: null, model: "y" },
+    ],
+  };
+
+  it("scores every site against the same outcome", () => {
+    const all = scoreAll(p, "2026-10-15");
+    expect(all.map((a) => a.site)).toEqual(["permtracker", "permupdate", "permtrack"]);
+    expect(all[0]!.score.errorDays).toBe(3); // DOL decided 3 days after our anchor
+    expect(all[1]!.score.errorDays).toBe(9);
+    expect(all[2]!.score.absErrorDays).toBe(164);
+  });
+
+  it("puts OUR row first and labels it like the others", () => {
+    // A comparison that renders our own row differently invites exactly the
+    // reading it should not.
+    expect(scoreAll(p, "2026-10-15")[0]!.site).toBe("permtracker");
+  });
+
+  it("treats a ONE-SIDED rival band as at-or-before, not between", () => {
+    // permupdate publishes an upper bound and no lower one. Scoring it as
+    // two-sided would flatter them on every early decision.
+    const early = scoreAll(p, "2026-09-20");
+    expect(early.find((a) => a.site === "permupdate")!.score.inWindow).toBe(true);
+    const late = scoreAll(p, "2026-10-15");
+    expect(late.find((a) => a.site === "permupdate")!.score.inWindow).toBe(false);
+  });
+
+  it("reports inWindow as NULL, not false, when a site publishes no bound", () => {
+    // Absent is not a miss.
+    const all = scoreAll(p, "2026-10-15");
+    expect(all.find((a) => a.site === "permtrack")!.score.inWindow).toBeNull();
+  });
+
+  it("scores our own two-sided window as between, not at-or-before", () => {
+    // Ours has both bounds, so a decision BEFORE windowFrom is a miss.
+    expect(scoreAll(p, "2026-09-20")[0]!.score.inWindow).toBe(false);
+    expect(scoreAll(p, "2026-10-15")[0]!.score.inWindow).toBe(true);
+  });
+
+  it("works for a prediction with no rivals recorded", () => {
+    const bare = { ...p, rivals: undefined };
+    expect(scoreAll(bare, "2026-10-15")).toHaveLength(1);
+  });
+});
+
+describe("recorded rival predictions are plausible", () => {
+  /**
+   * A WRONG-ENDPOINT DETECTOR, NOT A DISAGREEMENT DETECTOR.
+   *
+   * permtrack publishes two models. `/api/estimate` gives a risk grade plus
+   * percentiles over decided cases; `/api/watchlist/predict` is the actual
+   * decision predictor. Reading `filed + p50` off the first one recorded them
+   * as five to NINE MONTHS later than they say - and it looked entirely
+   * plausible in isolation, because a percentile over decided cases really is
+   * that large.
+   *
+   * 270 days is deliberately far wider than any genuine disagreement observed
+   * (the three sites currently sit within about three weeks of each other), so
+   * this fires on a model mix-up rather than on a rival being wrong.
+   */
+  const MAX_PLAUSIBLE_GAP_DAYS = 270;
+
+  it("no rival anchor sits absurdly far from ours", () => {
+    const offenders: string[] = [];
+    for (const p of PREDICTIONS) {
+      for (const r of p.rivals ?? []) {
+        const gap = Math.abs(
+          (Date.parse(`${r.anchorIso}T00:00:00Z`) - Date.parse(`${p.anchorIso}T00:00:00Z`)) / 86_400_000,
+        );
+        if (gap > MAX_PLAUSIBLE_GAP_DAYS) {
+          offenders.push(`${p.caseNumber} ${r.site} ${r.anchorIso} vs ours ${p.anchorIso} (${Math.round(gap)}d)`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it("every recorded rival names which of their models it came from", () => {
+    // The mix-up above was invisible because the entry did not say WHICH
+    // model produced the number. Now it has to.
+    for (const p of PREDICTIONS) {
+      for (const r of p.rivals ?? []) {
+        expect(r.model.length).toBeGreaterThan(20);
+      }
+    }
+  });
+
+  it("a rival band, when recorded, brackets that rival's own anchor", () => {
+    for (const p of PREDICTIONS) {
+      for (const r of p.rivals ?? []) {
+        if (r.lowerIso) expect(r.lowerIso <= r.anchorIso).toBe(true);
+        if (r.upperIso) expect(r.upperIso >= r.anchorIso).toBe(true);
+      }
+    }
   });
 });
