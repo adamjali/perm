@@ -144,6 +144,12 @@ jobs:
         run: |
           python3 scripts/test_ingest_resilience.py
           python3 scripts/test_ingest_health.py
+          # The forward-only walk's second look, and the doc the LCA salary
+          # explorer reads instead of a query it can no longer afford. Both
+          # were written this week and neither was in a workflow, which is
+          # the "wired is not proven" rule applied to tests themselves.
+          python3 scripts/test_serial_gaps.py
+          python3 scripts/test_lca_facets.py
 
       # The nightly diff on perm_live_recent (~137k rows). A diff that never
       # matches is not slow, it is absent - and it logs "ok" while rewriting

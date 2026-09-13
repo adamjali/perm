@@ -68,7 +68,88 @@ def run(rows) -> int:
     return health.check_runs(FakeDB(rows))
 
 
+class FakeDocsDB:
+    """Serves `perm_docs` rows: (key, computed_at_ms, bytes)."""
+
+    def __init__(self, rows):
+        self.rows = rows
+
+    def execute(self, sql, args=None):
+        if "perm_docs" not in sql:
+            raise AssertionError(f"read the wrong table: {sql[:60]}")
+        asked = set(args or [])
+        out = []
+        for key, at, size in self.rows:
+            if key not in asked:
+                continue
+            out.append([
+                {"type": "text", "value": key},
+                {"type": "null"} if at is None else {"type": "integer", "value": str(at)},
+                {"type": "integer", "value": str(size)},
+            ])
+        return {"response": {"result": {"rows": out}}}
+
+
+def docs(rows) -> int:
+    return health.check_precomputed_docs(FakeDocsDB(rows))
+
+
+def all_fresh() -> list:
+    return [(k, int(NOW - H), 20_000) for k in health.PRECOMPUTED_DOCS]
+
+
 def main() -> int:
+    # --- precomputed docs: the fallbacks that fail silently -----------------
+    check("all docs present and fresh passes", docs(all_fresh()) == 0)
+    check("a MISSING doc fails",
+          docs([r for r in all_fresh() if r[0] != "lca_filter_options"]) == 1)
+    check("an EMPTY doc fails",
+          docs([("lca_filter_options", int(NOW - H), 12) if r[0] == "lca_filter_options"
+                else r for r in all_fresh()]) == 1)
+    check("a doc with no computed_at fails",
+          docs([("live_census", None, 20_000) if r[0] == "live_census" else r
+                for r in all_fresh()]) == 1)
+    # Budgets differ per doc, so a single hardcoded age cannot exhaust them:
+    # 6 days is stale for review_stages (5) and fine for alphabet (100). Drive
+    # each one past ITS OWN budget, the same lesson as the three unequal
+    # subscribe budgets.
+    for key, (budget, _what) in health.PRECOMPUTED_DOCS.items():
+        aged = [(k, int(NOW - (budget + 2) * 86_400_000) if k == key else int(NOW - H),
+                 20_000) for k in health.PRECOMPUTED_DOCS]
+        check(f"{key} stale past its own {budget}d budget fails", docs(aged) == 1)
+    check("an unreadable perm_docs fails",
+          health.check_precomputed_docs(
+              type("Boom", (), {"execute": lambda *a, **k: (_ for _ in ()).throw(
+                  RuntimeError("no such table"))})()) == 1)
+    # A DOC NOBODY READS IS A CHECK THAT CAN ONLY CRY WOLF. If the reader is
+    # deleted and the key stays here, the sweep goes red forever for a page
+    # that no longer depends on it - the fastest way to teach someone to skim
+    # past a red health check. Every key must appear in a `doc(...)` call under
+    # src/ or convex/.
+    import re as _re
+    roots = [pathlib.Path(__file__).resolve().parents[1] / d for d in ("src", "convex")]
+    corpus = "".join(
+        f.read_text(errors="ignore")
+        for r in roots if r.is_dir()
+        for f in r.rglob("*.ts") if f.is_file()
+    )
+    # TWO SHAPES, BOTH REAL. `doc("live_census")` is the helper; `WHERE key =
+    # 'review_stages'` is a hand-written read, which liveCensus.ts and rfi.ts
+    # both use because they also want `computed_at` for their staleness cutoff.
+    # The first version of this gate matched only the helper and reported two
+    # perfectly-read docs as unread - the gate was the defect, as usual.
+    unread = [
+        k for k in health.PRECOMPUTED_DOCS
+        if not _re.search(
+            rf"""doc(?:<[^>]*>)?\(\s*["']{_re.escape(k)}["']"""
+            rf"""|key\s*=\s*["']{_re.escape(k)}["']""",
+            corpus,
+        )
+    ]
+    check("every checked doc is actually read by a doc() call", not unread,
+          f"read by nothing: {unread}")
+    print()
+
     # --- the two outcomes that mean something is broken ---------------------
     check("a failed run fails the check",
           run([("ingest_case_status_direct.py", "failed", "died in the tail",

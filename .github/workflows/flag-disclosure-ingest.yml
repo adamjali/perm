@@ -158,6 +158,27 @@ jobs:
           # instead of being cancelled silently (see pwd-status-direct.yml).
           timeout 230m python3 scripts/ingest_flag_disclosure.py --program "$PROGRAM" $EXTRA
 
+      # THE LCA SALARY EXPLORER CANNOT BE COMPUTED AT BUILD TIME ANY MORE, so
+      # the doc it reads has to be rebuilt HERE, after the load and BEFORE the
+      # expiry below - expiring first would regenerate those pages against the
+      # previous quarter's figures.
+      #
+      # Measured against production at 1.96M rows on 2026-09-13, after the
+      # FY2021-FY2025 backfill: the by-state window function takes 33.6 s
+      # against the read layer's 20 s deadline, and the three build-time
+      # queries together ~44 s of a 90 s prerender budget. The deploy of
+      # ded503e5 died on exactly that. The reader keeps the live query as its
+      # doc-missing fallback, so a skipped build here is a slow page, never an
+      # empty one.
+      - name: Rebuild the LCA salary explorer's precomputed doc
+        if: success() && matrix.program == 'lca'
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          timeout 30m python3 scripts/build_lca_facets.py
+
       # THE PAGES BUILT FROM THIS FILE SIT ON A WEEK-LONG WINDOW, because the
       # data behind them changes four times a year and a daily window meant
       # ~364 expiries to express four real changes. That is only correct if a

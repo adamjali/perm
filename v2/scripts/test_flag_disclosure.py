@@ -492,10 +492,72 @@ def check_units() -> None:
     check("text: truncation honours the limit", clean_text("x" * 100, 80), "x" * 80)
 
 
+def check_freshness_is_keyed_on_the_file() -> None:
+    """A history load must stamp NOTHING, however it was selected.
+
+    THE DEFECT, 2026-09-13. The guard read `if args.fy: return 0`, so it
+    skipped stamping for `--fy 2024` and stamped happily for
+    `--name LCA_Disclosure_Data_FY2022_Q4.xlsx` - which is history just the
+    same, and is how the LCA back catalogue was actually loaded. The result:
+    `data_freshness['lca-disclosure']` read **as_of 2022-09-30, 1,444 days
+    old**, and the "latest quarter" load record pointed at FY2022_Q4. DOL had
+    published nothing new.
+
+    The fix keys on the FILE - is this the newest name DOL lists - so these
+    assert the shape of that decision rather than the flag that reached it.
+    """
+    src = pathlib.Path(__file__).resolve().parent / "ingest_flag_disclosure.py"
+    body = src.read_text()
+
+    for bad, why in (
+        ("if args.fy:\n                    return 0", "the unchanged-file branch"),
+        ("latest=args.fy is None", "the load record"),
+    ):
+        check(f"freshness: {why} no longer keys on --fy", bad in body, False)
+    check("freshness: the unchanged branch keys on the file",
+          "if not file_is_newest():" in body, True)
+    check("freshness: the load record keys on the file",
+          "latest=file_is_newest()" in body, True)
+
+    # Scope the rest to the function body. `[\s\S]*?` running past the end of
+    # the block it meant to check is a defect this repo has shipped before.
+    # Scope to the block. `[\s\S]*?` running past the end of the function it
+    # meant to check is a defect this repo has shipped before.
+    seg = body[body.index("newest_name: str | None = None"):]
+    seg = seg[:seg.index("stats = ParseStats()")]
+    check("freshness: the verdict compares this file's NAME to DOL's newest",
+          "verdict = found is not None and name == found" in seg, True)
+    check("freshness: newest_name starts unknown, so unknown means history",
+          "newest_name: str | None = None" in seg, True)
+    check("freshness: the --name branch reuses its own listing",
+          "newest_name = pick_latest(list(byname))" in seg, True)
+
+    # THE LOOKUP IS LAZY, AND THAT IS NOT AN OPTIMISATION.
+    #
+    # The first draft asked `discover_latest(cfg)` eagerly on the `--file`
+    # branch. `--file` is also what `--dry-run` uses, and the parser fixtures
+    # below run with no network by design - so every one of them spawned a real
+    # request to www.dol.gov and the subprocess timed out at 120 s. Found by
+    # probing the gate, not by reading it.
+    #
+    # A host that 403s sustained traffic must not be asked a question whose
+    # answer nothing is going to use.
+    selection = seg[:seg.index("newest_cache: list = []")]
+    check("freshness: the file-selection block makes NO network call",
+          "discover_latest(cfg)" in selection, False)
+    check("freshness: the lookup is deferred behind a callable",
+          "def file_is_newest()" in seg, True)
+    check("freshness: the deferred lookup is cached, so it runs at most once",
+          "if newest_cache:" in seg, True)
+    check("freshness: only --file sets needs_lookup",
+          seg.count("needs_lookup = True"), 1)
+
+
 def main() -> int:
     print("flag disclosure parser contract")
     check_units()
     check_discovery()
+    check_freshness_is_keyed_on_the_file()
     with tempfile.TemporaryDirectory() as tmp:
         for writer_name, write in available_writers():
             check_fixture(tmp, writer_name, write)

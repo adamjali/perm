@@ -1,7 +1,12 @@
 import "server-only";
 
 import { one, rows } from "./client";
-import { PERCENTILE_SELECT, STATE_PERCENTILE_SELECT, type WageOption } from "./publicData";
+import {
+  doc,
+  PERCENTILE_SELECT,
+  STATE_PERCENTILE_SELECT,
+  type WageOption,
+} from "./publicData";
 
 /**
  * H-1B LCA wages: the same five-point ladder the PERM salary explorer draws,
@@ -91,9 +96,46 @@ function where(f: LcaWageFilters): { sql: string; args: (string | number)[] } {
   return { sql: parts.join(" AND "), args };
 }
 
+/**
+ * The one selection worth precomputing: certified, whole corpus, no facet.
+ *
+ * `/lca-wages` and `/tools/compare-my-offer` both render exactly this at build
+ * time, and it is the only selection that walks every row of `lca_cases`. Every
+ * other selection is narrowed by an indexed equality and is served live.
+ *
+ * Measured against production at 1.96M rows, 2026-09-13: the by-state window
+ * function takes **33.6 s**, past the read layer's own 20 s deadline, and the
+ * stats and histogram about 5 s each. Serially that is ~44 s of a build's 90 s
+ * prerender budget for one page, which is what failed the deploy of ded503e5.
+ */
+export function isDefaultLcaFilter(f: LcaWageFilters): boolean {
+  return f.status === "certified" && !f.socCode && !f.state && !f.fiscalYear;
+}
+
+interface LcaDefaultView {
+  minCases: number;
+  binWidth: number;
+  stats: LcaWagePercentileRow;
+  histogram: { from: number; count: number }[];
+  byState: LcaWageStateRow[];
+}
+
+/**
+ * One doc read, shared by the three default-view readers below. React caches
+ * `doc()` per request, so asking three times costs one round trip.
+ */
+async function defaultView(): Promise<LcaDefaultView | null> {
+  const pre = await doc<LcaDefaultView>("lca_filter_options");
+  return pre?.stats && pre.byState?.length ? pre : null;
+}
+
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 export async function getLcaWageStats(f: LcaWageFilters): Promise<LcaWagePercentileRow> {
+  if (isDefaultLcaFilter(f)) {
+    const pre = await defaultView();
+    if (pre) return pre.stats;
+  }
   const w = where(f);
   const r = await one<Record<string, unknown>>(
     `WITH f AS (SELECT (${ANNUAL_WAGE_SQL}) AS wage FROM lca_cases WHERE ${w.sql}),
@@ -118,6 +160,14 @@ export async function getLcaWageHistogram(
   f: LcaWageFilters,
   width: number,
 ): Promise<{ from: number; count: number }[]> {
+  if (isDefaultLcaFilter(f)) {
+    const pre = await defaultView();
+    // The width must MATCH, not merely exist: bins are stored at the width the
+    // builder used, and `binWidth()` is ours to change. A mismatch means the
+    // doc's bins are the wrong shape, so serve the slow truth and let the next
+    // build of the doc fix it.
+    if (pre && pre.binWidth === width) return pre.histogram;
+  }
   const w = where(f);
   const r = await rows<Record<string, unknown>>(
     `SELECT CAST((${ANNUAL_WAGE_SQL}) / ? AS INTEGER) * ? AS bin, COUNT(*) AS n
@@ -132,6 +182,13 @@ export async function getLcaWageByState(
   f: LcaWageFilters,
   minCases: number,
 ): Promise<LcaWageStateRow[]> {
+  // `where({...f, state: null})` drops the state, so a per-state selection has
+  // the same by-state answer as the default view - which is the point of the
+  // panel. Hence isDefaultLcaFilter on f WITHOUT its state.
+  if (isDefaultLcaFilter({ ...f, state: null })) {
+    const pre = await defaultView();
+    if (pre && pre.minCases === minCases) return pre.byState;
+  }
   const w = where({ ...f, state: null });
   const r = await rows<Record<string, unknown>>(
     `WITH o AS (
@@ -163,6 +220,48 @@ export async function getLcaWageByState(
  * page render, not per request.
  */
 export async function getLcaWageFilterOptions(minCases: number): Promise<{
+  occupations: WageOption[];
+  states: WageOption[];
+  fiscalYears: string[];
+}> {
+  /*
+   * PRECOMPUTED, WITH THE LIVE QUERY AS THE FALLBACK - the same shape
+   * `getWageFilterOptions` has carried for PERM since the salary explorer
+   * started blowing its deadline.
+   *
+   * WHY IT BECAME NECESSARY. The live version is a triple-nested GROUP BY
+   * over every row of `lca_cases`, plus a sibling aggregate on worksite
+   * state. That was affordable at 437,000 rows. Loading the LCA disclosure
+   * history took the table to 1.96M on 2026-09-13, and the very next
+   * production build died: "/lca-wages took more than 180 seconds", with
+   * `turso query deadline (90000ms, attempt 2)` on this exact statement. A
+   * bare COUNT over the table measures 16.8s now with nothing else running,
+   * so this is the table's size, not contention.
+   *
+   * The doc's own `minCases` is checked against the caller's for the same
+   * reason as PERM's: a doc built under a different floor offers a state the
+   * page then refuses a median for, which reads as broken filtering rather
+   * than a stale document.
+   */
+  const pre = await doc<{
+    minCases: number;
+    occupations: WageOption[];
+    states: WageOption[];
+    fiscalYears: string[];
+  }>("lca_filter_options");
+  if (
+    pre &&
+    pre.minCases === minCases &&
+    pre.occupations?.length &&
+    pre.states?.length &&
+    pre.fiscalYears?.length
+  ) {
+    return { occupations: pre.occupations, states: pre.states, fiscalYears: pre.fiscalYears };
+  }
+  return getLcaWageFilterOptionsLive(minCases);
+}
+
+export async function getLcaWageFilterOptionsLive(minCases: number): Promise<{
   occupations: WageOption[];
   states: WageOption[];
   fiscalYears: string[];

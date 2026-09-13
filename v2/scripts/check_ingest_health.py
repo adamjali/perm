@@ -339,6 +339,80 @@ LOOKUP_DEMAND_HISTORY = 30
 GAP_SWEEP_MAX_AGE_DAYS = 3
 
 
+# The docs the site reads INSTEAD of a query it can no longer afford. Each is
+# the only thing standing between a page and a query that blows the read
+# deadline, and each degrades silently: the reader falls back to the slow live
+# query, so the page still renders and nobody notices until a build times out.
+# That is exactly how the deploy of ded503e5 failed.
+#
+# `max_age_days` is generous where the underlying data moves quarterly, and the
+# floor is "has this been rebuilt since the data under it last moved", not a
+# cadence.
+#
+# SCOPE, DELIBERATELY: docs whose absence is SILENT, meaning the reader falls
+# back to an expensive query and the page stays correct. Docs whose absence
+# shows an empty state are already visible to a reader and to `audit_all_pages`
+# - `lca_live_summary` and `flag_disclosure_summary_lca` are that kind and are
+# not listed here. Adding them would trade a real alarm for a noisier one.
+PRECOMPUTED_DOCS = {
+    "lca_filter_options": (100, "the H-1B salary explorer's facets and default view"),
+    "live_census": (8, "the case lookup's queue position"),
+    "review_stages": (5, "the review-stage cohort pages"),
+    "wage_filter_options": (100, "the PERM salary explorer's facets"),
+    "alphabet": (100, "the employer-initial term in every estimate"),
+}
+
+
+def check_precomputed_docs(db) -> int:
+    """Fail when a doc the read layer depends on has gone missing or stale.
+
+    A MISSING DOC IS NOT AN OUTAGE, WHICH IS THE PROBLEM. Every reader here
+    falls back to the live query it was written to replace, so the page is
+    correct and slow, and the only symptom is a prerender that takes 44 s
+    instead of 0.2 s - invisible until a build dies under contention.
+    """
+    print("precomputed docs")
+    bad = 0
+    try:
+        res = db.execute(
+            "SELECT key, computed_at, length(json) AS bytes FROM perm_docs "
+            "WHERE key IN (" + ",".join("?" * len(PRECOMPUTED_DOCS)) + ")",
+            list(PRECOMPUTED_DOCS),
+        )
+        rows = {
+            str(r[0]["value"]): (
+                int(r[1]["value"]) if r[1]["type"] != "null" else None,
+                int(r[2]["value"]) if r[2]["type"] != "null" else 0,
+            )
+            for r in res["response"]["result"]["rows"]
+        }
+    except Exception as e:  # noqa: BLE001 - a probe failing is itself a finding
+        print(f"  FAIL: could not read perm_docs: {e}")
+        return 1
+
+    for key, (budget, what) in sorted(PRECOMPUTED_DOCS.items()):
+        got = rows.get(key)
+        if got is None:
+            print(f"  {key:22s} MISSING - {what} is being served by its slow fallback")
+            bad = 1
+            continue
+        computed_at, size = got
+        if not computed_at or size < 100:
+            print(f"  {key:22s} EMPTY ({size} bytes) - {what}")
+            bad = 1
+            continue
+        age = (NOW_MS - computed_at) / 86_400_000
+        verdict = "ok" if age <= budget else "STALE"
+        if age > budget:
+            bad = 1
+        print(f"  {key:22s} {age:5.1f}d / {budget}d  {size:>9,}B  {verdict}")
+
+    if bad:
+        print("  A doc missing or stale means its page is running the query the "
+              "doc exists to replace. Rebuild it before the next deploy.")
+    return bad
+
+
 def check_gap_sweep(db) -> int:
     """Fail when the serial gap sweep has stopped running.
 
@@ -533,6 +607,7 @@ def main() -> int:
     gapsweep_bad = check_gap_sweep(db)
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
+    docs_bad = check_precomputed_docs(db)
 
     print()
     if unparseable:
@@ -568,12 +643,13 @@ def main() -> int:
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
     if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad
-            or coverage_bad or gapsweep_bad or unparseable):
+            or coverage_bad or gapsweep_bad or docs_bad or unparseable):
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
           "most recent run finished clean, the discovery frontier is moving, the "
           "gap sweep is re-asking what the walk skipped, no backfill has "
-          "stalled, and lookup demand is at its normal rate.")
+          "stalled, every precomputed doc is present and current, and lookup "
+          "demand is at its normal rate.")
     return 0
 
 

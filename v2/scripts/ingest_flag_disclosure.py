@@ -969,11 +969,21 @@ def main() -> int:
     started = time.time()
 
     with tempfile.TemporaryDirectory() as tmp:
+        newest_name: str | None = None
+        needs_lookup = False
         if args.file:
             path = args.file
             name = os.path.basename(path)
             sha = sha256_of(path)
             log(f"Using local file {name} ({os.path.getsize(path) / 1e6:.1f} MB)")
+            # Deliberately NOT discovered here. A local file has no listing of
+            # its own, so answering "is this the newest" needs a request to
+            # www.dol.gov - and `--file` is also the path `--dry-run` uses,
+            # where nothing is written and the question does not arise. Asking
+            # eagerly made the offline parser tests spawn a real network call
+            # and time out at 120 s. It is asked lazily below, once, only if a
+            # write is actually about to happen.
+            needs_lookup = True
         elif args.name:
             # A SPECIFIC quarter, discovered rather than constructed. LCA files
             # are per-quarter, so `--fy` reaches one of each year and every
@@ -981,6 +991,12 @@ def main() -> int:
             # page - building it by hand is how a hardcoded path turns a moved
             # file into a styled 404 that reads like a dead link.
             byname = dict(discover_all(cfg, args.fy))
+            # A year-less listing is EVERY file DOL lists, so the newest is
+            # already in hand. ONE EXTRA REQUEST TO www.dol.gov IS NOT FREE -
+            # that host 403s sustained traffic and this branch is about to
+            # download a file from it.
+            if args.fy is None:
+                newest_name = pick_latest(list(byname))
             if args.name not in byname:
                 raise SystemExit(
                     f"FATAL: DOL's page does not list {args.name}. It lists: "
@@ -992,10 +1008,53 @@ def main() -> int:
             log(f"  {size / 1e6:.1f} MB  sha256 {sha[:16]}")
         else:
             name, url = discover_latest(cfg, args.fy)
+            # With no --fy this IS DOL's newest, by definition of the call.
+            if args.fy is None:
+                newest_name = name
             path = os.path.join(tmp, name)
             log(f"Downloading {name}")
             sha, size = download(url, path, referer=PERFORMANCE_PAGE)
             log(f"  {size / 1e6:.1f} MB  sha256 {sha[:16]}")
+
+        # IS THIS THE NEWEST FILE DOL PUBLISHES?
+        #
+        # Everything below that used to ask `args.fy` was asking the wrong
+        # question. `--fy 2024` is history - but so is
+        # `--name LCA_Disclosure_Data_FY2022_Q4.xlsx`, and the `--name` path
+        # sets no `fy` at all. So loading the LCA back catalogue one quarter at
+        # a time stamped `data_freshness` with each old quarter's own last
+        # decision date, and `write_load_record` replaced the "latest quarter"
+        # pointer with it too. Measured 2026-09-13 after the FY2021-FY2025
+        # backfill: `lca-disclosure` read **as_of 2022-09-30, 1,444 days old**,
+        # and the health check reported a source that had stopped publishing.
+        # DOL had published nothing new; we had overwritten our own record of
+        # the newest quarter with the oldest file we happened to load last.
+        #
+        # An unknown `newest_name` counts as HISTORY, never as newest:
+        # declining to stamp leaves the previous good value in place, while
+        # wrongly stamping destroys it - which is the failure being fixed.
+        #
+        # Resolved LAZILY and at most once. The `--file` branch is the only one
+        # that would need a network request for the answer, and it is also the
+        # dry-run path, where nothing is written and the answer is never used.
+        newest_cache: list = []
+
+        def file_is_newest() -> bool:
+            if newest_cache:
+                return newest_cache[0]
+            found = newest_name
+            if found is None and needs_lookup:
+                try:
+                    found, _ = discover_latest(cfg)
+                except Exception as e:  # noqa: BLE001
+                    log(f"  could not determine DOL's newest file ({e})")
+            verdict = found is not None and name == found
+            if not verdict:
+                log(f"  {name} is not DOL's newest file"
+                    + (f" ({found})" if found else " (newest unknown)")
+                    + "; freshness stays on the newest quarter")
+            newest_cache.append(verdict)
+            return verdict
 
         stats = ParseStats()
         if args.dump_header:
@@ -1082,7 +1141,10 @@ def main() -> int:
                 log(f"{name} unchanged since {prior.get('loadedAt')} (sha256 match, "
                     f"{have:,} rows still present); skipping the write")
                 write_summary_doc(db, args.program, table)
-                if args.fy:
+                if not file_is_newest():
+                    record_run(db, script, status="ok", rows_written=0,
+                               note=f"{name} unchanged (sha256 match, history)",
+                               started_at=started)
                     return 0
                 stamp_freshness(db, cfg["freshness"], as_of=prior.get("asOf"),
                                 source=cfg["source"], cadence="Quarterly",
@@ -1155,14 +1217,14 @@ def main() -> int:
             "asOf": stats.last_decided or None,
             "fingerprint": fingerprint,
             "loadedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        }, latest=args.fy is None)
+        }, latest=file_is_newest())
         write_summary_doc(db, args.program, table)
-        if args.fy:
-            # A history year is not "the latest data": the freshness row
-            # describes the newest quarter and stays with it.
+        if not file_is_newest():
+            # History is not "the latest data". Keyed on the FILE, not on which
+            # flag selected it - see the note above `is_newest`.
             record_run(db, script, status="ok", rows_written=written,
-                       note=f"{name}: {stats.kept:,} cases (FY{args.fy})", started_at=started)
-            log(f"loaded FY{args.fy}; freshness left on the newest quarter")
+                       note=f"{name}: {stats.kept:,} cases (history)", started_at=started)
+            log(f"loaded {name}; freshness left on the newest quarter")
             return 0
         stamp_freshness(db, cfg["freshness"], as_of=stats.last_decided or None,
                         source=cfg["source"], cadence="Quarterly",

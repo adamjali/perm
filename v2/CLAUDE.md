@@ -4636,3 +4636,155 @@ is too big and the side-queue should come out; if they scatter, it is noise.**
 Tuning the queue downward now because two rivals sit earlier would be fitting
 to competitors rather than to outcomes, which is the thing this repo keeps
 learning not to do.
+
+## A doc-missing fallback fails SILENTLY, and that is what killed the deploy (2026-09-13)
+
+Loading the LCA disclosure history took `lca_cases` from 437,496 rows to
+**1.96M**, and the next production build died:
+
+    Failed to build /(site)/(public)/lca-wages/page (attempt 1 of 3)
+      because it took more than 180 seconds
+    Error: turso query deadline (90000ms, attempt 2): WITH t AS (SELECT
+      substr(soc_code, 1, 7) AS code, soc_title AS title, COUNT(*) A
+
+`/lca-wages` runs four aggregates over the whole table at build time. Measured
+against production with the loader stopped, so this is SIZE and not contention
+(a bare `COUNT(*)` is **16.8 s**):
+
+| query | time | against |
+|---|---|---|
+| filter options | blew 90 s | the build's own deadline |
+| `getLcaWageByState` | **33.6 s** | the read layer's 20 s deadline |
+| `getLcaWageHistogram` | 5.2 s | |
+| `getLcaWageStats` | 4.8 s | |
+
+PERM had had `wage_filter_options` since its salary explorer hit the same wall.
+LCA's twin was never built, and the second half - the stats, histogram and
+by-state panel - had no precomputed form on EITHER program.
+`scripts/build_lca_facets.py` writes all of it into
+`perm_docs['lca_filter_options']`, and the four readers prefer the doc and keep
+their live query as the fallback.
+
+**THE FALLBACK IS WHY THIS WENT UNNOTICED AND IS STILL THE RIGHT DESIGN.** A
+missing doc is a correct, slow page. Nothing errors, nothing logs, nothing looks
+wrong - until a build runs several of those prerenders at once and one of them
+passes 180 seconds. So the doc needs an alarm of its own:
+`check_precomputed_docs` in `check_ingest_health.py` holds the five docs the
+read layer depends on (`lca_filter_options`, `live_census`, `review_stages`,
+`wage_filter_options`, `alphabet`) with a budget each, and fails when one is
+missing, empty or stale. Its own test asserts every key in that list is read by
+a real `doc(...)` call or `key = '...'` SQL under `src/` or `convex/` - a doc
+nobody reads is a check that can only cry wolf.
+
+**A DOC THAT DISAGREES WITH ITS OWN FALLBACK IS WORSE THAN NO DOC**, because
+both look right. Three things hold them together, and the middle one is the only
+one that catches a bad port:
+
+1. **The doc is rebuilt where the data lands.** `flag-disclosure-ingest.yml`
+   runs the builder after an `lca` load and BEFORE the revalidation step -
+   expiring first regenerates those pages against the previous quarter.
+2. **The percentile SQL is DERIVED from the TypeScript, not restated beside
+   it.** `test_lca_facets.py` reads `percentileExpr` / `statePercentileExpr` out
+   of `publicData.ts`, resolves their template literals with the same locals the
+   TS declares, and compares the strings. The first version hand-wrote the
+   expectation, which is tautological: probing it showed that changing the
+   quantile list on EITHER side moved answer and expectation together and stayed
+   green. The quantile arrays are now read out of the TS too.
+3. **A whole-table control.** The doc's by-state rows were compared against a
+   live run of the same query: **55 states x 7 fields, 385 values, all
+   identical**.
+
+**And be honest about what a guard does not catch.** `verify_median` asks for
+the two wages at the interpolation's own ranks with a plain `ORDER BY / OFFSET`
+and checks p50 lands between them. On the real corpus it printed *"p50 116,376
+verified between ranked 116,376 and 116,376"* - both neighbours hold the same
+wage, because that is a fat mode, so on THIS population it cannot tell an
+interpolating port from a nearest-rank one. It catches a query built over the
+wrong ROWS (a changed band, a dropped status clause); the string equality in (2)
+is what catches a wrong port.
+
+**The width is checked, not assumed.** `binWidth()` is ours to change, so the
+doc stores the width it binned at and the reader falls back on a mismatch rather
+than redrawing the histogram at half scale with nothing erroring.
+
+**`getLcaWageByState` drops the state from its own WHERE**, so a per-state
+selection has the same by-state answer as the default view - which is what makes
+the panel a comparison. The doc therefore serves the state pages too, and
+`isDefaultLcaFilter({ ...f, state: null })` is deliberate, not a slip.
+
+### Two traps hit while probing this
+
+**`cp` does not reliably invalidate a `.pyc`.** Probing by mutation, restoring
+the good file and re-running kept reporting the MUTATED value: Python caches on
+(mtime, size), the mutation was the same byte length (`0.05` -> `0.06`) and the
+restore landed in the same second. Every probe loop here now clears
+`scripts/__pycache__` first. A restore that silently does not take makes a probe
+report the opposite of the truth.
+
+**`pgrep -f <script>` matches the polling loop's own command line.** Three
+`until pgrep -f build_lca_facets; do sleep; done` loops never exited, because
+each one's own `eval` string contains the name it is grepping for. The repo's
+own note says to grep the behaviour and not the vocabulary; this is that rule
+applied to a process list. Prefer `Monitor`, or match on a pid captured at spawn.
+
+## A guard keyed on the FLAG, not the data, let history overwrite the present (2026-09-13)
+
+Found by running `check_ingest_health.py` before a deploy rather than after.
+`lca-disclosure` read **as_of 2022-09-30, 1,444 days old**, and the check said
+the SOURCE had stopped publishing. DOL had published nothing new. We had
+overwritten our own record of the newest quarter with the oldest file we
+happened to load last.
+
+`ingest_flag_disclosure.py` had the right rule and the wrong test:
+
+```python
+if args.fy:          # "this is a history load, don't stamp"
+    return 0
+stamp_freshness(...)
+...
+write_load_record(db, program, record, latest=args.fy is None)
+```
+
+`--fy 2024` is history and was handled. But **`--name LCA_..._FY2022_Q4.xlsx`
+is history too**, and that path sets no `fy` at all - and it is how the LCA back
+catalogue is actually loaded, one quarter at a time, because LCA files are
+per-quarter and `--fy` reaches only one of each year. So every one of those
+loads stamped freshness with its own quarter's last decision date AND replaced
+the "latest quarter" pointer. Both wrong, both silent, both green.
+
+**The guard now asks about the FILE: `is_newest = name == newest_name`**, where
+`newest_name` is the newest name DOL lists. Consequences worth keeping:
+
+- **An unknown newest counts as HISTORY, never as newest.** Declining to stamp
+  leaves the last good value; wrongly stamping destroys it. The asymmetry
+  decides the default.
+- **It must not cost an extra request, and the lookup is LAZY.** The first
+  draft called `discover_latest(cfg)` unconditionally, doubling the listing
+  request to `www.dol.gov` on the scheduled path - a host that 403s sustained
+  traffic. The second draft asked only on `--file`, which looked fine and was
+  worse: **`--file` is also what `--dry-run` uses**, so every offline parser
+  fixture spawned a real request to a government host and the subprocess timed
+  out at 120 s. Found by probing the gate, not by reading it. The `--name` and
+  default branches now carry the answer out of the listing they already did,
+  and `--file` resolves it behind a cached callable that runs at most once, and
+  only if a write is actually about to happen. **Do not ask a host that rate-
+  limits you a question whose answer nothing is going to use.**
+- **Repair, and say so in the record.** The correct per-file load record for
+  FY2026_Q3 had survived, so the freshness row and the latest pointer were
+  rebuilt from it, and the row's `note` says it was repaired and when. A
+  silently-corrected record is how the next person concludes it never broke.
+
+**Swept for the same shape rather than assuming it was unique.** Every script
+calling `stamp_freshness` was checked for a stamp guarded on a history FLAG:
+`ingest_pwd_status_direct.py` guards on whether the summary doc was actually
+written this run, which is data-derived and correct; nothing else keys on one.
+The defect was contained to this file.
+
+**And the probe clobbered the fix.** The mutate-restore loop that proves a gate
+was left running in the background while the source was edited again, so its
+`cp /tmp/<snapshot>` put back a version from before the later edit - producing a
+file with half of each. The working tree is a shared resource: the repo's own
+"do not edit a repo another session is working in" rule applies to your own
+background jobs. Re-applied from a clean `git checkout` with an assertion on
+every marker, and the probe loop now runs only when nothing else is writing.
+
