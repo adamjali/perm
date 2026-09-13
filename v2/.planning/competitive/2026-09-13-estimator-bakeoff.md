@@ -53,6 +53,29 @@ worth about 2 days in queue terms). Only their marketing copy says 80%.
 permupdate printing the alphabet term as "-80 to +80 days". Their live tool does
 not: it is 5 days across A to M. That note is wrong and is retracted here.
 
+## Data: all three use BOTH halves. We are not distinctive here.
+
+Corrects an impression earlier notes gave.
+
+| | quarterly disclosure | live FLAG per-case | live PENDING census |
+|---|---|---|---|
+| ours | to 2026-06-30 | twice daily | 94,967 PERM + PWD + LCA |
+| permtrack | `oflc_through 2026-06-30` | `flag_checked` nightly | yes - `/api/watchlist/predict` returns `month_queue` with `{total, pending, decided_pct}` per month back to 2023-10 |
+| permupdate | yes | "Last Sync 9/12/2026 8:23 PM EDT" | yes - "Monthly Backlog" by month with "To Be Processed", and a per-letter "Certified / Under Review" split |
+
+Everyone holds the decided file and everyone scans DOL's live lookup nightly.
+"We use live data and they only use the quarterly file" is not true and must not
+be said.
+
+Two places our data IS different, one good and one not:
+
+- **Good:** we carry the live pending census for PWD and LCA as well. Neither of
+  them touches those programs at all.
+- **Not good:** on PERM completeness we are currently BEHIND permtrack. July 2026
+  pending reads 8,927 for us against their 9,032 - we are 1.2% short. That
+  independently corroborates the serial-space gap found on 12 Sep and places it
+  at the low end of the 2-5% estimate. The gap sweep closes it.
+
 ## What this means for us
 
 We are not more accurate because our formula is cleverer - the formulas are the
