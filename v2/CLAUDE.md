@@ -4566,10 +4566,17 @@ weekend.** Three independent measurements of DOL's rate - theirs, ours, and
 permupdate's published daily volume - now agree inside a few percent. That is
 the strongest evidence the rate is right that any of us has.
 
-**And on the date we are the LATEST of the three, not the closest.** For a
-2025-12-15 filing: permtrack 2 Oct, permupdate 6 Oct, us 12 Oct. The earlier
-"we track them within 6 to 16 days" note was written against permupdate alone
-and is still true; it is not the whole picture.
+**On the date, permtrack usually runs EARLIER than us - but "we are the latest
+of the three" is an overstatement I made from four cases and it is wrong.**
+Over the fuller six-case bakeoff the latest date was permupdate's 3 times,
+ours twice and permtrack's once. What IS supported: permtrack ran earlier than
+us in 5 of those 6, and in all 4 of the ledger cases. Mean gaps there were
+|ours - permupdate| 5.5 days and |ours - permtrack| 11.8 days.
+
+**Being later is not being wrong, and being earlier is not being right.** In
+that same bakeoff permtrack printed a date for a case five months past the
+frontier where we refused, and permupdate printed a date **in the past**. None
+of the three has been scored against an outcome under the current model.
 
 **The difference is cases-ahead, and it is worth investigating rather than
 celebrating.** Ours 18,308 against their 15,866. Comparing month by month, the
