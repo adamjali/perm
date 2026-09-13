@@ -60,6 +60,16 @@ export const MAX_HORIZON_DAYS = 1400;
  *
  * 0.55 is the most coverage available while the widest band stays under 90
  * days. Going to 0.70 buys 8 points and costs 21 days of width.
+ *
+ * AND AT 0.55 THE FLOOR BINDS AT EVERY HORIZON, so read the first paragraph
+ * carefully: the band is in practice `0.55 x horizon` grown late-heavy, and
+ * the p10/p90 spread decides only how that growth splits, not how wide it is.
+ * The measured spread runs 35-52% of the horizon, entirely below the floor -
+ * verified against production 2026-09-13, where a 110-day horizon gave 37
+ * days from the spread and 61 from the floor. That is a defensible choice
+ * because 0.55 was swept rather than picked, but it is a constant fraction
+ * with a measured justification, not a live measurement, and it must not be
+ * described to a reader as the latter.
  */
 export const MIN_BAND_FRACTION = 0.55;
 
