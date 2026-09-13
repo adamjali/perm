@@ -41,14 +41,32 @@ export const MAX_HORIZON_DAYS = 1400;   // beyond this we do not pretend
 export const MIN_BAND_FRACTION = 0.55;
 export const MIN_BAND_DAYS = 7;
 
-/** Bias and (for reference only) error offsets, from 31 backtest origins. */
-export const CALIBRATION = [
-  { max: 60,       bias: -2 },
-  { max: 120,      bias:  1 },
-  { max: 190,      bias: -7 },
-  { max: Infinity, bias: -31 },
-];
-const biasFor = (d) => CALIBRATION.find((c) => d < c.max).bias;
+/*
+ * THERE IS NO BIAS CORRECTION, AND THAT IS A DELIBERATE REMOVAL.
+ *
+ * An earlier version subtracted a measured median error per horizon bucket
+ * (-2, +1, -7, -31 days). Tested by simply deleting it, over ~90,000 backtest
+ * predictions:
+ *
+ *                 with correction        without
+ *   0-2mo          -2d,  41% in band     -4d,  42%
+ *   2-4mo          -4d,  53%             -4d,  53%
+ *   4-6mo          +3d,  57%             -4d,  58%
+ *   overall              56%                   58%
+ *
+ * It earns nothing at the horizons that exist. Today's entire live queue is
+ * under six months (86% under four), and across that whole range the corrected
+ * and uncorrected models are within two days of each other while the
+ * uncorrected one covers slightly MORE. The only bucket where the correction
+ * helps is 6-9 months, which holds 0% of the live population.
+ *
+ * So the model has NO fitted parameters. It is a count divided by a measured
+ * rate, with a band from that rate's own spread. Every number in it can be
+ * pointed at in the data. That is worth more than two days of median error,
+ * especially since a fitted correction is the thing that has been wrong
+ * repeatedly here - most memorably a +111-day "bias" that turned out to be
+ * DOL's acceleration wearing a calibration costume.
+ */
 
 /**
  * @param {{dayOfWeek:number, n:number}[]} days  last 28 calendar days of decisions
@@ -61,20 +79,64 @@ export function measurePace(days) {
   const sorted = [...wd].sort((a, b) => a - b);
   const median = sorted[Math.floor(sorted.length / 2)];
   if (!(median > 0)) return null;
-  const active = sorted.filter((x) => x >= median * COLLAPSE_FRACTION);
-  if (active.length < MIN_WEEKDAYS) return null;
-  // A window with no observed weekend cannot be converted to a calendar rate
-  // from its own data; fall back to the weekday rate scaled by the long-run
-  // weekend share rather than inventing a zero.
-  const weekendMean = we.length ? we.reduce((a, b) => a + b, 0) / we.length : null;
-  const weekdayMean = active.reduce((a, b) => a + b, 0) / active.length;
-  const cal = (w) => weekendMean === null ? w * (5 / 7) : (w * 5 + weekendMean * 2) / 7;
-  const q = (p) => active[Math.floor(p * (active.length - 1))];
+
+  /* THE CENTRAL RATE IS A PLAIN CALENDAR MEAN OVER EVERY OBSERVED DAY.
+   *
+   * It used to be rebuilt as (weekdayMean * 5 + weekendMean * 2) / 7 from a
+   * weekday mean that EXCLUDED collapsed days. That reads 11% high, and the
+   * error is structural rather than small: dropping Labor Day from the weekday
+   * average produces "a typical working weekday", and projecting five of those
+   * into every future week silently assumes no future week contains a holiday.
+   *
+   * Caught by cross-checking against permupdate's published daily_volume over
+   * 16 overlapping days: our raw counts match theirs to 0.7% (619/day against
+   * 623), while our reconstruction was claiming 688. The data was never wrong;
+   * the projection was.
+   *
+   * Federal holidays are a normal part of the calendar and belong in a calendar
+   * rate. Only a SUSTAINED collapse - three or more consecutive near-dead days,
+   * i.e. a shutdown - is excluded, because that is not a rate at all.
+   */
+  const runLen = [];
+  let run = 0;
+  for (const d of days) {
+    if (d.n < median * COLLAPSE_FRACTION) run++; else run = 0;
+    runLen.push(run);
+  }
+  for (let i = days.length - 2; i >= 0; i--)
+    if (runLen[i + 1] > runLen[i] && runLen[i] > 0) runLen[i] = runLen[i + 1];
+  const kept = days.filter((_, i) => runLen[i] < 3);
+  const keptWd = kept.filter((d) => d.dayOfWeek !== 0 && d.dayOfWeek !== 6);
+  const keptWe = kept.filter((d) => d.dayOfWeek === 0 || d.dayOfWeek === 6);
+  if (keptWd.length < MIN_WEEKDAYS) return null;
+  // A 28-day window with no weekend day in it means the feed is broken, not
+  // that DOL worked every weekend. Refuse rather than project a weekday rate
+  // across calendar days that include weekends.
+  if (keptWe.length < 2) return null;
+  const wdAll = keptWd.reduce((a, d) => a + d.n, 0) / keptWd.length;
+  const weAll = keptWe.reduce((a, d) => a + d.n, 0) / keptWe.length;
+  // The 5:2 mix, not the window's own mix, so an unbalanced window cannot
+  // tilt the rate. Holidays stay IN the weekday population on purpose.
+  const pace = (wdAll * 5 + weAll * 2) / 7;
+
+  /* The band still comes from the WEEKDAY spread, because that is where DOL's
+   * variation lives - a weekend is quiet by definition, not by effort. Each
+   * weekday quantile is converted onto the calendar rate by the same ratio the
+   * central rate carries, so fast/slow stay on one scale with `pace`.
+   */
+  const activeWd = sorted.filter((x) => x >= median * COLLAPSE_FRACTION);
+  if (activeWd.length < MIN_WEEKDAYS) return null;
+  const wdMean = activeWd.reduce((a, b) => a + b, 0) / activeWd.length;
+  const q = (p) => activeWd[Math.floor(p * (activeWd.length - 1))];
+  const scale = pace / wdMean;
   return {
-    pace: cal(weekdayMean),
-    fast: cal(q(0.9)),
-    slow: cal(q(0.1)),
-    weekdayMean, weekendMean, weekdaysUsed: active.length,
+    pace,
+    fast: q(0.9) * scale,
+    slow: q(0.1) * scale,
+    weekdayMean: wdMean,
+    weekendMean: weAll,
+    weekdaysUsed: activeWd.length,
+    daysUsed: kept.length,
   };
 }
 
@@ -133,7 +195,7 @@ export function estimate(input) {
     return { kind: "refused", reason: "beyond-horizon", rawDays,
       detail: "The queue ahead is longer than anything we can measure against." };
 
-  const day = today + rawDays - biasFor(rawDays);
+  const day = today + rawDays;
   // Scenario edges. Clip at tomorrow: a pending case cannot be decided in the past.
   let early = today + Math.round(casesAhead / pace.fast);
   let late  = today + Math.round(casesAhead / pace.slow);
@@ -154,6 +216,6 @@ export function estimate(input) {
     day,
     early: Math.min(early, day),          // the band must bracket the estimate
     late:  Math.max(late,  day),
-    casesAhead, rawDays, bias: biasFor(rawDays), pace: pace.pace,
+    casesAhead, rawDays, pace: pace.pace,
   };
 }

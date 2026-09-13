@@ -1,7 +1,9 @@
 import fs from "fs";
 import {S,CORPUS_END} from "./lib.mjs";
 import * as E from "./engine.mjs";
-import {measurePace, estimate} from "./estimator.mjs";
+import {measurePace, estimate as est0} from "./estimator.mjs";
+const NOBIAS=process.env.NOBIAS==="1";
+const estimate=(i)=>{const r=est0(i); if(NOBIAS&&r.kind==="estimate"){r.day+=r.bias; r.bias=0;} return r;};
 const origins=JSON.parse(fs.readFileSync(".planning/backtest/origins.json","utf8")).filter(o=>o.mature).map(o=>o.t);
 const STRIDE=37;
 const q=(a,p)=>{const s=[...a].sort((x,y)=>x-y);return s.length?s[Math.floor(p*(s.length-1))]:NaN;};

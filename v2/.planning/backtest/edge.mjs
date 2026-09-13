@@ -20,9 +20,23 @@ const shutdown=mk(800).map((d,i)=> i<14 ? {...d,n:1} : d);
 T_("a half-shutdown window still measures from the live half",
    measurePace(shutdown)!==null);
 const noWeekend=Array.from({length:20},(_,i)=>({dayOfWeek:(i%5)+1,n:800}));
-const nw=measurePace(noWeekend);
-T_("no weekend observed -> scales by 5/7 rather than assuming zero",
-   nw && Math.abs(nw.pace-800*5/7)<1, nw);
+T_("no weekend in the window -> refuses (a broken feed, not a 7-day DOL)",
+   measurePace(noWeekend)===null, measurePace(noWeekend));
+// A federal holiday is a normal calendar day and must stay IN the rate; only a
+// sustained collapse is excluded. Otherwise we project 5 clean weekdays into
+// every future week and read ~11% high.
+const withHol=mk(800); withHol[3].n=2;
+T_("an isolated holiday stays in the rate (it is part of the calendar)",
+   measurePace(withHol).pace < measurePace(mk(800)).pace, 
+   {withHoliday:measurePace(withHol).pace.toFixed(1), clean:measurePace(mk(800)).pace.toFixed(1)});
+const shut2=mk(800).map((d,i)=> i>=5&&i<=11 ? {...d,n:1} : d);
+// The right assertion is that the collapse leaves the rate UNCHANGED, not that
+// it is above some number I guessed: a clean fixture here paces at 647, and my
+// first assertion of >700 was reasoning about a weekday-only rate.
+T_("a sustained collapse IS excluded (rate matches the clean window)",
+   Math.abs(measurePace(shut2).pace - measurePace(mk(800)).pace) < 1,
+   {collapsed:measurePace(shut2).pace.toFixed(2), clean:measurePace(mk(800)).pace.toFixed(2),
+    daysUsed:measurePace(shut2).daysUsed});
 
 console.log("\n--- refusals ---");
 const base={today:T,pace:normal,status:"ANALYST REVIEW",monthsBehindFrontier:2,sweepAgeDays:0};
@@ -59,12 +73,11 @@ for(const ahead of [2000,10000,40000,70000,120000,250000]){
 const widths=[2000,10000,40000,70000,120000].map(a=>{const r=estimate({...base,casesAhead:a});return r.late-r.early;});
 T_("band widens monotonically with the queue", widths.every((w,i)=>i===0||w>=widths[i-1]), widths);
 
-console.log("\n--- bias ---");
-const biases=[30,90,150,300].map(d=>{
-  const r=estimate({...base,casesAhead:Math.round(d*normal.pace)});
-  return r.kind==="estimate"?r.bias:null;});
-T_("bias never exceeds 31 days in magnitude", biases.every(b=>b===null||Math.abs(b)<=31), biases);
-console.log(`        bias by horizon (30/90/150/300 days): ${biases.join(", ")}`);
+console.log("\n--- no fitted parameters ---");
+const r1=estimate({...base,casesAhead:60000});
+T_("the estimate is exactly today + queue/pace, nothing added",
+   r1.day===T+Math.round(60000/normal.pace), {day:r1.day, expect:T+Math.round(60000/normal.pace)});
+T_("no bias field is emitted at all", !("bias" in r1), Object.keys(r1));
 
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);
