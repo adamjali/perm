@@ -216,11 +216,26 @@ DECISION_BUCKETS = {
 # ---------------------------------------------------------------------------
 
 DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, discovered)"
-# G-100 + G-200 are ~97% of PERM filings (G-200 alone is 22-30%; the first
-# prober asked G-100 only). G-300/G-400 are rare (6,853 and 89 rows) and
-# reached by the web lookup; they still count toward the frontier.
-PERM_PREFIXES = ("G-100-", "G-200-")
+# EVERY PERM OFFICE CODE BELONGS HERE, because this tuple decides where a
+# confirmed hit is STORED, not which numbers get asked for. It held G-100 and
+# G-200 only, so a G-300 hit fell through to the PWD/LCA inserter, whose
+# PREFIX_TO_PROGRAM does not know the prefix and silently `continue`s past it.
+# The case was then found again the next night, dropped again, and never
+# recorded as a miss either - because it was CLAIMED, just not stored.
+#
+# Measured 2026-09-13, which is how it surfaced: the gap sweep reported
+# "confirmed 1, inserted 0" on two consecutive runs over the same day code.
+# The case was G-300-26254-230507, College of William and Mary, in ANALYST
+# REVIEW. G-300 is 6,854 live rows and is still being filed (105 in August
+# 2026, 102 of them pending), and our newest G-300 filing was 2026-08-26
+# against 2026-09-12 for G-100/G-200 - a 17-day hole in 1.9% of PERM.
+PERM_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-")
 FRONTIER_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-")
+# The WALK deliberately asks five and not seven. A sixth prefix takes the
+# serials per request from 10 to 8 and so costs ~25% more requests every
+# night, to chase 1.9% of filings. The gap sweep already asks all eight
+# prefixes over the trailing 90 day codes, which is the cheaper place to
+# catch a sparse office code - so G-300/G-400 are recovered there, not here.
 DISCOVERY_PREFIXES = ("G-100-", "G-200-", "I-200-", "P-100-", "I-203-")
 DISCOVERY_STEP = BATCH // len(DISCOVERY_PREFIXES)   # 10 serials x 5 prefixes = 50
 DISCOVERY_REQUEST_CAP = 400      # ~4,000 serials, about two days, per run

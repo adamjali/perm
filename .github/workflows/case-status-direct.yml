@@ -122,6 +122,38 @@ jobs:
           # mark the sweep failed - the band just stays a day staler.
           python3 scripts/build_entity_detail.py --live-recent-only || true
 
+      # SECOND LOOK AT THE SERIAL SPACE.
+      #
+      # `run_discovery` advances a cursor and never goes back, so anything it
+      # missed on the night is missed permanently, as is anything DOL files
+      # into a range the walk has already passed. Measured 12 Sep 2026 we held
+      # 88-92% of each day's serial span, and probing the holes by hand found
+      # real PERM cases in them. An independent check against permtrack's
+      # published July figure put us 1.2% short.
+      #
+      # This re-asks DOL about the holes in the trailing 90 day codes. It never
+      # probes outside the span we already hold, so it cannot burn budget on
+      # serials DOL never issued, and it only writes what DOL confirms.
+      #
+      # Runs on the FULL pass only (once a day). ~1.4 s per request, so a 600
+      # cap is ~14 minutes; `timeout 25m` makes a hang exit 124 and go red
+      # rather than hanging the job to a silent cancellation.
+      #
+      # `|| record_ingest_failure` rather than `|| true`: unlike the entity
+      # rebuild, a gap sweep that stops running is a slow corpus leak with no
+      # other symptom, so it must reach the health check.
+      - name: Sweep the serial gaps
+        if: env.MODE == 'full'
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          timeout 25m python3 scripts/sweep_serial_gaps.py --window 90 --cap 600 \
+            || python3 scripts/record_ingest_failure.py \
+                 --script "sweep_serial_gaps.py" \
+                 --note "gap sweep: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
       # Expire the employer pages whose live rows just moved.
       #
       # /perm-employers/[slug] caches for 30 days, which is right for the

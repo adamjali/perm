@@ -4246,3 +4246,80 @@ the number stood in for and which holds at any value: the sitemap and the
 page's own `robots: noindex` must read the SAME constant, or one of them is
 wrong about every entity in the gap.
 
+
+## The walk only moves forward, so something has to look back (2026-09-13)
+
+FLAG issues case numbers from ONE counter shared by every program, so for a
+given filing day the serials we hold should be contiguous. They are not.
+`run_discovery` advances a cursor and never returns to it, so anything missed
+on the night is missed permanently, as is anything DOL indexes into a range the
+walk has already passed. There was no second look. An independent check against
+permtrack's published July figure put us 1.2% short; the serial probe put it at
+up to 5%.
+
+`scripts/sweep_serial_gaps.py` is the second look. It reads the holes out of
+our own tables, asks DOL for each one under every prefix we know, and inserts
+what comes back. Nothing guesses: a hole is filled only when DOL answers. It
+rides the daily FULL pass (`case-status-direct.yml`, `mode == 'full'`) at 600
+requests and `timeout 25m`.
+
+**A hole is read strictly INSIDE a day's own span.** Past the highest serial we
+hold for a day there is no way to tell a hole from the end of that day's
+issuance, and probing past the edge is how a prober spends its whole budget on
+numbers DOL never issued.
+
+**First real run, trailing 90 day codes: 7,129 holes probed, 251 confirmed,
+195 inserted.** Those are cases that existed and that nothing would ever have
+found.
+
+### Three defects it surfaced, each invisible in a green log
+
+1. **WITHOUT A MEMORY THE SWEEP NEVER CONVERGES.** 6,878 of those 7,129 holes
+   are serials DOL never issued, and a sweep with no record re-asks every one
+   of them tomorrow night, and the night after, forever - spending the whole
+   budget re-confirming known absences and never reaching a hole nobody has
+   looked at. `perm_serial_misses` bumps a counter per empty serial and drops
+   it after `MISS_LIMIT = 3`. **Not after one**, because misses are not
+   permanent: the 251 found above were cases that EXISTED and had not been
+   indexed when the walk went past, so DOL's index demonstrably lags and a
+   serial has to get several chances. Writes are batched 200 to a statement
+   (the cost is per STATEMENT: 500 single-row writes measured 986 rows in 20
+   seconds against 1,233 rows/s batched).
+
+2. **A PREFIX THAT IS ASKED BUT ROUTED NOWHERE IS A CASE FOUND AND DROPPED,
+   EVERY NIGHT, IN SILENCE.** `PERM_PREFIXES` held G-100 and G-200 only, so a
+   G-300 hit fell through to the PWD/LCA inserter, whose `PREFIX_TO_PROGRAM`
+   does not know the prefix and silently `continue`s. The case was not stored
+   AND not recorded as a miss - it was claimed, just not kept - so it was
+   re-found and re-dropped indefinitely. The tell was two consecutive runs over
+   one day code reporting **"confirmed 1, inserted 0"**, which reads exactly
+   like an already-known case. It was `G-300-26254-230507`, College of William
+   and Mary, ANALYST REVIEW, filed 2026-09-11.
+
+   Measured: **G-300 is 6,854 live rows and still being filed** (105 in August
+   2026, 102 of them pending), and our newest G-300 filing was **2026-08-26
+   against 2026-09-12 for G-100/G-200** - a 17-day hole in 1.9% of PERM. The
+   fix is the routing constant, not the ask: `PERM_PREFIXES` is now every PERM
+   office code, and `test_serial_gaps.py` asserts no asked prefix is homeless
+   and that `PERM_PREFIXES == FRONTIER_PREFIXES` - counting a case toward the
+   frontier and then having nowhere to put it is the whole bug.
+
+   `DISCOVERY_PREFIXES` deliberately stays at five. A sixth takes the walk from
+   10 serials per request to 8 and costs ~25% more requests nightly to chase
+   1.9% of filings; the sweep already asks all eight over 90 day codes, which
+   is the cheaper place to catch a sparse office code.
+
+3. **A DRY RUN DOES NOT EXERCISE THE INSERT PATH.** The first real run died on
+   `AttributeError: module 'ingest_case_status_direct' has no attribute
+   'prefix_of'` - it lives in `lib_flag_serials` - six seconds in, after a dry
+   run and a 12-check test suite had both passed. Dry mode returns before ever
+   touching it. `test_serial_gaps.py` now drives the writing path against a
+   fake DOL.
+
+**`check_gap_sweep` in the health check keys on HOLES PROBED, not cases found.**
+A sweep that recovers nothing is the goal state - as the corpus closes, the
+holes it probes turn out to be serials DOL never issued - so alerting on finds
+would go red precisely when the system started working. Probes only reach zero
+for a bad reason: `held_serials` returning nothing (a renamed column, a changed
+type) makes every day look contiguous and the sweep exits clean having asked
+DOL nothing.
