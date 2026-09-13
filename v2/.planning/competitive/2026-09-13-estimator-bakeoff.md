@@ -88,3 +88,44 @@ same and the inputs agree to within 5%. The differences worth having are:
 
 Claiming a large accuracy edge over these two would not survive contact with
 these numbers.
+
+
+---
+
+# Three-way, seven real cases, 13 Sep 2026
+
+Each case driven through all three live surfaces. permtrack via its
+`/api/watchlist/predict`; permupdate through its own case-number predictor in a
+browser (their prediction is client-side, no API).
+
+| filed | letter | OURS | band | permtrack | permupdate |
+|---|---|---|---|---|---|
+| 2025-11-02 | S | 24 Sep 2026 | 20–27 Sep | 17 Oct 2026 | 20 Sep 2026 |
+| 2026-01-01 | S | 28 Oct 2026 | 18 Oct – 11 Nov | 13 Oct 2026 | 27 Oct 2026 |
+| 2026-03-01 | A | 8 Nov 2026 | 27 Oct – 26 Nov | 3 Nov 2026 | 11 Nov 2026 |
+| 2026-05-01 | T | 4 Dec 2026 | 21 Nov – 6 Jan | 21 Nov 2026 | 10 Dec 2026 |
+| 2026-07-01 | F | 24 Dec 2026 | 8 Dec – 3 Feb | 18 Dec 2026 | 1 Jan 2027 |
+| 2026-09-01 | G | 24 Jan 2027 | 27 Dec – 6 Mar | 15 Jan 2027 | 13 Jan 2027 |
+| **2025-06-03** | I | **REFUSED (overdue)** | — | 9 Oct 2026 | **12 Sep 2026** |
+
+    mean |ours - permupdate|   5.5 days
+    mean |ours - permtrack|   11.8 days
+    queue counts, ours vs permupdate: mean gap 2,103 of ~50,000
+
+**We are closest to permupdate** (5.5 days mean) and permtrack runs earliest of
+the three, consistent with the optimistic pace lean visible in its own API.
+
+## The overdue case is the only real separation
+
+`G-100-25154-044786`, filed 3 Jun 2025, still in ANALYST REVIEW five months past
+DOL's published frontier. Something is unusual about it by definition.
+
+- **ours** refuses: the queue has passed this month, so a filing-order date
+  cannot describe it.
+- **permtrack** prints 9 Oct 2026 with a band.
+- **permupdate** prints **12 Sep 2026 - yesterday.** "Remaining: 0 days."
+
+A date in the past is worse than no date. That single row is the clearest
+argument for the refusal branch: the arithmetic still produces a number for a
+case the model does not describe, and only an explicit refusal stops it
+reaching a reader.
