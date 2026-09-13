@@ -383,6 +383,40 @@ def discover_latest(cfg: dict, fy: int | None = None) -> tuple[str, str]:
     return name, url
 
 
+def discover_all(cfg: dict, fy: int | None = None) -> list[tuple[str, str]]:
+    """Every disclosure file DOL lists for this program, OLDEST FIRST.
+
+    `discover_latest` answers "what is the current quarter", which is the right
+    question for the monthly run and the wrong one for history. LCA files are
+    per-QUARTER (measured 2026-09-13: FY2025_Q4 holds 118,580 rows covering
+    2025-07-01 to 2025-09-30 alone), so `--fy` reaches exactly one quarter of
+    each year and the rest are unreachable without this.
+
+    Oldest first so a run that is cut short leaves the record contiguous from
+    the back rather than full of holes, and so the next run continues rather
+    than repeating.
+    """
+    log(f"Discovering {cfg['label']} disclosure files from {PERFORMANCE_PAGE}")
+    html = fetch(PERFORMANCE_PAGE).decode("utf-8", "replace")
+    found = discover_links(html, cfg["file_pattern"], HOST)
+    if not found:
+        raise SystemExit(
+            f"FATAL: no {cfg['label']} disclosure links on DOL's performance "
+            "page. The page layout changed or the fetch was blocked. Refusing "
+            "to report success."
+        )
+    if fy is not None:
+        wanted = names_for_year(found, fy)
+        if not wanted:
+            raise SystemExit(
+                f"FATAL: DOL's page lists {len(found)} {cfg['label']} files and none "
+                f"is FY{fy}: " + ", ".join(sorted(found)))
+        found = {n: found[n] for n in wanted}
+    names = sorted(found, key=file_sort_key)
+    log(f"  found {len(names)} file(s): " + ", ".join(names))
+    return [(n, normalise_url(found[n])) for n in names]
+
+
 def download(url: str, dest: str, referer: str, attempts: int = 4) -> tuple[str, int]:
     """Stream `url` to `dest`, returning (sha256, bytes).
 
@@ -910,6 +944,11 @@ def main() -> int:
                          "(a lost column, a blank-share jump, a moved median). For a "
                          "human who has read the --dry-run output and agrees DOL really "
                          "changed the file. Never overrides impossible values.")
+    ap.add_argument("--name", metavar="FILENAME",
+                    help="Load this specific discovered file (LCA files are "
+                         "per-quarter, so --fy reaches only one of each year).")
+    ap.add_argument("--list", action="store_true",
+                    help="List every disclosure file DOL publishes and exit.")
     ap.add_argument("--fy", type=int, metavar="YYYY",
                     help="Load that fiscal year's newest file instead of the newest overall "
                          "(history, one year per run).")
@@ -919,6 +958,13 @@ def main() -> int:
 
     cfg = PROGRAMS[args.program]
     table = cfg["table"]
+    if args.list:
+        # Discovery only: no credentials, no download, no writes. This is how
+        # you find out what quarters exist before deciding to load them.
+        for n, u in discover_all(PROGRAMS[args.program], args.fy):
+            print(f"{n}\t{u}")
+        return 0
+
     script = f"ingest_flag_disclosure.py --program {args.program}" + (f" --fy {args.fy}" if args.fy else "")
     started = time.time()
 
@@ -928,6 +974,22 @@ def main() -> int:
             name = os.path.basename(path)
             sha = sha256_of(path)
             log(f"Using local file {name} ({os.path.getsize(path) / 1e6:.1f} MB)")
+        elif args.name:
+            # A SPECIFIC quarter, discovered rather than constructed. LCA files
+            # are per-quarter, so `--fy` reaches one of each year and every
+            # earlier quarter needs naming. The URL still comes from DOL's own
+            # page - building it by hand is how a hardcoded path turns a moved
+            # file into a styled 404 that reads like a dead link.
+            byname = dict(discover_all(cfg, args.fy))
+            if args.name not in byname:
+                raise SystemExit(
+                    f"FATAL: DOL's page does not list {args.name}. It lists: "
+                    + ", ".join(sorted(byname)))
+            name, url = args.name, byname[args.name]
+            path = os.path.join(tmp, name)
+            log(f"Downloading {name}")
+            sha, size = download(url, path, referer=PERFORMANCE_PAGE)
+            log(f"  {size / 1e6:.1f} MB  sha256 {sha[:16]}")
         else:
             name, url = discover_latest(cfg, args.fy)
             path = os.path.join(tmp, name)

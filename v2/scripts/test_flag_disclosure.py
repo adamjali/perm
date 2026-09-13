@@ -419,6 +419,27 @@ def check_discovery() -> None:
                         "LCA_Disclosure_Data_FY2026_Q3.xlsx"])
     newest = pick_latest(lca)
     check("LCA: the newest file is FY2026 Q3", newest, "LCA_Disclosure_Data_FY2026_Q3.xlsx")
+
+    # HISTORY NEEDS EVERY QUARTER, NOT THE NEWEST OF EACH YEAR. LCA files are
+    # per-QUARTER - measured 2026-09-13, FY2025_Q4 holds 118,580 rows covering
+    # 2025-07-01 to 2025-09-30 alone - so `--fy` reaches exactly one quarter of
+    # each fiscal year and every earlier one is unreachable without naming it.
+    # That is why `--name` and `--list` exist.
+    many = {
+        "LCA_Disclosure_Data_FY2024_Q2.xlsx": "/a",
+        "LCA_Disclosure_Data_FY2024_Q4.xlsx": "/b",
+        "LCA_Disclosure_Data_FY2023_Q1.xlsx": "/c",
+        "LCA_Disclosure_Data_FY2025_Q4.xlsx": "/d",
+    }
+    ordered = sorted(many, key=file_sort_key)
+    check("discovery orders OLDEST first, so a cut-short run stays contiguous",
+          ordered[0], "LCA_Disclosure_Data_FY2023_Q1.xlsx")
+    check("and newest last", ordered[-1], "LCA_Disclosure_Data_FY2025_Q4.xlsx")
+    check("a fiscal year can hold SEVERAL files",
+          sorted(names_for_year(many, 2024)),
+          ["LCA_Disclosure_Data_FY2024_Q2.xlsx", "LCA_Disclosure_Data_FY2024_Q4.xlsx"])
+    check("--fy 2024 reaches Q4 only, which is exactly why --name exists",
+          pick_latest(names_for_year(many, 2024)), "LCA_Disclosure_Data_FY2024_Q4.xlsx")
     check("LCA: the double-slash href is normalised",
           normalise_url(lca[newest]), "https://www.dol.gov/media/LCA_Disclosure_Data_FY2026_Q3.xlsx")
 
