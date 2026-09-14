@@ -453,7 +453,7 @@ export function USStateMap({
         {active && activeName ? (
           <div>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className="font-heading text-xl font-black">{activeName}</h3>{" "}
+              <h2 className="font-heading text-xl font-black">{activeName}</h2>{" "}
               <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 {pinned === activeAbbr
                   ? "Pinned. Another state replaces it"
@@ -504,7 +504,7 @@ export function USStateMap({
           </div>
         ) : (
           <div>
-            <h3 className="font-heading text-xl font-black">The whole country</h3>{" "}
+            <h2 className="font-heading text-xl font-black">The whole country</h2>{" "}
             <p className="mt-2 text-base leading-relaxed text-foreground/70">
               {fmtInt(national.total)} PERM filings across {states.length} states and
               territories in the current disclosure window, {fmtInt(national.certified)}{" "}

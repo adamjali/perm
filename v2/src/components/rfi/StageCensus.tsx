@@ -114,7 +114,7 @@ function StageRow({
             so a stage with no route renders as plain text rather than as a
             link into a 404 - the queue group is the case that matters, and
             /perm-queue is where it belongs. */}
-        <h4 className="font-heading text-sm font-bold">
+        <span className="font-heading text-sm font-bold">
           {stageFromSlug(stageSlug(stage.status)) ? (
             <Link
               href={`/perm-rfi-audit/${stageSlug(stage.status)}`}
@@ -125,7 +125,7 @@ function StageRow({
           ) : (
             meta.label
           )}
-        </h4>{" "}
+        </span>{" "}
         <span className="ml-auto font-mono text-lg font-bold tabular-nums">
           {stage.cases.toLocaleString()}
         </span>{" "}

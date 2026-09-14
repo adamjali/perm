@@ -242,7 +242,7 @@ export default async function GreenCardTimelinePage() {
             href={t.href}
             className="group flex flex-col border-2 border-border bg-card p-6 shadow-hard transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 active:translate-y-0 active:shadow-hard-sm"
           >
-            <h2 className="font-heading text-lg font-black">{t.name}</h2>{" "}
+            <span className="font-heading text-lg font-black">{t.name}</span>{" "}
             <p className="mt-2 flex-1 text-base leading-relaxed text-foreground/70">{t.blurb}</p>{" "}
             <span className="mt-4 inline-flex items-center gap-2 font-bold text-foreground underline decoration-primary decoration-2 underline-offset-4">
               Open

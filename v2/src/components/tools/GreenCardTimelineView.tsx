@@ -97,7 +97,12 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
               <Icon className="mt-1 h-5 w-5 shrink-0 text-foreground/60" aria-hidden="true" />
               <div>
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-                  <h3 className="font-heading text-lg font-black">{stage.label}</h3>{" "}
+                  {/* <h2>, NOT <h3>. These five stages are the page's own sections
+                      and they follow its <h1> directly, so an <h3> skipped a
+                      level - assistive technology reads the outline as a tree
+                      and a missing level is a broken branch. The class still
+                      carries the size, so nothing moves on screen. */}
+                  <h2 className="font-heading text-lg font-black">{stage.label}</h2>{" "}
                   <span className="text-base font-bold tabular-nums">
                     {stage.months === null ? "No published figure" : months(stage.months)}
                   </span>

@@ -385,7 +385,9 @@ export default async function PermDenialRiskPage() {
               </p>
               <div className="mt-8 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2">
                 <div>
-                  <h3 className="font-heading text-lg font-black">By offered wage</h3>{" "}
+                  <h3 className="font-heading text-lg font-black">
+                    Which wage bands hold the denials
+                  </h3>{" "}
                   <DenialReach
                     className="mt-4"
                     label="Denial reach by offered wage"
@@ -402,7 +404,7 @@ export default async function PermDenialRiskPage() {
                 </div>
                 <div>
                   <h3 className="font-heading text-lg font-black">
-                    By what the form declares
+                    Which declared factors hold them
                   </h3>{" "}
                   <DenialReach
                     className="mt-4"

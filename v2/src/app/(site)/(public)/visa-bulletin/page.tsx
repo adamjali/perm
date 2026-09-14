@@ -368,8 +368,10 @@ export default async function VisaBulletinPage() {
                           <span className="text-muted-foreground">none held</span>
                         ) : (
                           <>
-                            <span className="font-semibold">{sum.count}</span> bulletins: {sum.advanced} advanced, {sum.held} unchanged, {sum.retrogressed} retrogressed
-                            {sum.count - sum.advanced - sum.held - sum.retrogressed > 0 ? `, ${sum.count - sum.advanced - sum.held - sum.retrogressed} opened, shut or current` : ""}
+                            <span className="font-semibold">{sum.count}</span>
+                            {" · "}
+                            {sum.advanced} advanced, {sum.held} unchanged, {sum.retrogressed} back
+                            {sum.count - sum.advanced - sum.held - sum.retrogressed > 0 ? `, ${sum.count - sum.advanced - sum.held - sum.retrogressed} other` : ""}
                             {" "}
                             {sum.medianDays !== null ? (
                               <span className="block text-xs text-muted-foreground">median {sum.medianDays > 0 ? "+" : ""}{sum.medianDays} days, range {sum.minDays} to {sum.maxDays}</span>
@@ -378,12 +380,12 @@ export default async function VisaBulletinPage() {
                         )}
                       {" "}</td>
                       <td className="p-3 font-mono text-xs leading-relaxed">
-                        {r.moves.map((m) => (
+                        {r.moves.map((m, i) => (
                           // Mapped siblings arrive with nothing between them; the
                           // space is part of each iteration or it does not exist.
                           <Fragment key={m.bulletinMonth}>
-                            {" "}
-                            <span className="block">{m.bulletinMonth.slice(0, 4)}: {moveLabel(m)}</span>
+                            {i > 0 ? <span className="text-muted-foreground"> · </span> : null}
+                            <span className="whitespace-nowrap">{m.bulletinMonth.slice(0, 4)} {moveLabel(m)}</span>
                           </Fragment>
                         ))}
                       {" "}</td>

@@ -81,6 +81,63 @@ def words(text: str) -> list[str]:
     return [w for w in text.split() if any(c.isalpha() for c in w)]
 
 
+# PROSE IS THE THING BEING COMPLAINED ABOUT; DATA IS THE PRODUCT.
+#
+# `/debarments` reads as one of the wordiest pages on the site at 2,112 visible
+# words, and every one of them past the lede is a row in a table of 105 real
+# debarments. `/perm-rfi-audit` read similarly and half of it was explanatory
+# prose. Those two need opposite responses, and a single word count cannot tell
+# them apart - which is how "trim the long pages" turns into deleting the data.
+#
+# So count paragraphs separately from cells. A page whose weight is <td> and
+# <li> is doing its job; a page whose weight is <p> is the one to look at.
+PROSE_TAGS = ("p", "blockquote", "dd")
+DATA_TAGS = ("td", "th", "li", "option", "figcaption", "caption")
+
+
+def _region_words(html: str, tags: tuple[str, ...]) -> int:
+    """Words that lie inside ANY of `tags`, counting each word exactly once.
+
+    A MASK, NOT A SUM OF MATCHES. Counting `<dd>` and `<p>` separately
+    double-counts a paragraph nested in a definition, and on the live glossary
+    that reported 4,692 prose words on a page with 2,825 visible ones - a
+    figure that is impossible on its face and would have been believed if the
+    arithmetic had not been checked. Tracking depth over the string counts the
+    overlap once, whatever nests inside whatever.
+    """
+    pattern = "|".join(tags)
+    depth = 0
+    kept: list[str] = []
+    pos = 0
+    for m in re.finditer(rf"<(/?)({pattern})\b[^>]*>", html, flags=re.I):
+        if depth > 0:
+            kept.append(html[pos:m.start()])
+        closing = m.group(1) == "/"
+        depth = max(0, depth - 1) if closing else depth + 1
+        pos = m.end()
+    if depth > 0:
+        kept.append(html[pos:])
+    return len(words(detext(" ".join(kept))))
+
+
+def by_role(html: str) -> tuple[int, int]:
+    """(prose words, data words), each word attributed to exactly one owner."""
+    data = _region_words(html, DATA_TAGS)
+
+    # A <p> INSIDE a <td> belongs to the cell. The first version tested whether
+    # the paragraph CONTAINED a `</td>`, which is backwards - the cell closes
+    # after the paragraph, not inside it - so such text was counted twice.
+    # Caught by a fixture, not by reading.
+    stripped = html
+    for _ in range(10):
+        before = stripped
+        for tag in DATA_TAGS:
+            stripped = re.sub(rf"<{tag}\b[^>]*>[\s\S]*?</{tag}>", " ", stripped, flags=re.I)
+        if stripped == before:
+            break
+    return _region_words(stripped, PROSE_TAGS), data
+
+
 def drop_closed_details(html: str) -> str:
     """Remove the BODY of every `<details>` that has no `open` attribute.
 
@@ -133,34 +190,42 @@ def main() -> int:
         if html is None:
             continue
         clean = strip_noise(html)
+        visible_html = drop_closed_details(clean)
         got[p] = (words(detext(clean)),
-                  words(detext(drop_closed_details(clean))))
+                  words(detext(visible_html)),
+                  by_role(visible_html))
 
     if not got:
         print("FAIL: nothing fetched - the audit has no subject")
         return 2
-    if not any(CONTROL in " ".join(dom) for dom, _ in got.values()):
+    if not any(CONTROL in " ".join(dom) for dom, _, _ in got.values()):
         print(f"FAIL: the control string {CONTROL!r} appears on no page. "
               "A scan that cannot see known content cannot be trusted to have "
               "seen anything.")
         return 2
 
     grams: collections.Counter = collections.Counter()
-    for _, (_, vis) in got.items():
+    for _, (_, vis, _role) in got.items():
         grams.update({" ".join(vis[i:i + 5]) for i in range(len(vis) - 4)})
     chrome = {g for g, n in grams.items() if n > len(got) / 2}
 
     print(f"pages scanned: {len(got)}   control found: yes\n")
-    print(f"{'page':26s} {'visible':>8s} {'own':>6s} {'dom':>7s} {'collapsed':>10s}")
+    print(f"{'page':26s} {'visible':>8s} {'prose':>7s} {'data':>6s} "
+          f"{'prose%':>7s} {'dom':>7s} {'collapsed':>10s}")
     rows = []
-    for p, (dom, vis) in got.items():
+    for p, (dom, vis, (prose, data)) in got.items():
         own = sum(1 for i in range(len(vis) - 4)
                   if " ".join(vis[i:i + 5]) not in chrome)
-        rows.append((own, len(vis), len(dom), p))
-    for own, vis, dom, p in sorted(rows, reverse=True):
-        print(f"{p:26s} {vis:8d} {own:6d} {dom:7d} {dom - vis:10d}")
+        rows.append((own, len(vis), len(dom), prose, data, p))
+    # Ordered by PROSE, because that is the column the complaint was about.
+    for own, vis, dom, prose, data, p in sorted(rows, key=lambda r: -r[3]):
+        share = f"{100 * prose / (prose + data):.0f}%" if prose + data else "-"
+        print(f"{p:26s} {vis:8d} {prose:7d} {data:6d} {share:>7s} {dom:7d} "
+              f"{dom - vis:10d}")
     print("\nvisible = what a reader meets · dom = what a crawler reads")
     print("collapsed = kept for search, removed from the page")
+    print("prose = <p>/<dd> · data = <td>/<li>. A page heavy in DATA is doing")
+    print("its job; a page heavy in PROSE is the one to look at.")
     return 0
 
 

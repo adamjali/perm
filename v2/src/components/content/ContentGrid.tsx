@@ -58,7 +58,7 @@ export default function ContentGrid({ posts, showType }: ContentGridProps) {
               ease: [0.4, 0, 0.2, 1],
             }}
           >
-            <ContentCard post={post} showType={showType} />
+            <ContentCard headingLevel={2} post={post} showType={showType} />
           </motion.div>
         ))}
       </AnimatePresence>

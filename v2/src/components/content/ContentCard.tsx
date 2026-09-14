@@ -20,9 +20,26 @@ interface ContentCardProps {
   post: PostSummary;
   /** Show content type badge (useful on mixed listings) */
   showType?: boolean;
+  /**
+   * Where this card's title sits in the page outline.
+   *
+   * IT GENUINELY DIFFERS BY CONTEXT, which is why it is a prop rather than a
+   * constant. On `/blog` and `/guides` the grid IS the page, so each title is
+   * a section directly under the <h1> and must be an <h2>; as an <h3> the
+   * outline skipped a level on both index pages. Under "Related posts" on an
+   * article, the cards sit beneath an <h2> and <h3> is correct.
+   *
+   * Default 3 so the related-posts strip keeps the level it already had.
+   */
+  headingLevel?: 2 | 3;
 }
 
-export default function ContentCard({ post, showType }: ContentCardProps) {
+export default function ContentCard({
+  post,
+  showType,
+  headingLevel = 3,
+}: ContentCardProps) {
+  const Heading = headingLevel === 2 ? "h2" : "h3";
   const { slug, type, meta } = post;
   const href = `/${type}/${slug}`;
   const config = CONTENT_TYPE_CONFIG[type];
@@ -82,9 +99,9 @@ export default function ContentCard({ post, showType }: ContentCardProps) {
             )}
 
             {/* Title */}
-            <h3 className="mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200 group-hover:text-primary sm:text-lg">
+            <Heading className="mb-2 font-heading text-base font-bold leading-tight transition-colors duration-200 group-hover:text-primary sm:text-lg">
               {meta.title}
-            </h3>{" "}
+            </Heading>{" "}
 
             {/* Description */}
             <p className="mb-4 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
