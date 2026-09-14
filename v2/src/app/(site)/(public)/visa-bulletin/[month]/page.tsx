@@ -193,10 +193,10 @@ function ChartTable({ title, rows, since }: { title: string; rows: Cell[][]; sin
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead className="bg-foreground text-background">
             <tr>
-              <th scope="col" className="px-3 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">Category </th>
+              <th scope="col" className="px-3 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">Category{" "} </th>
               {BOARD_COUNTRIES.map((c) => (
                 <Fragment key={c}>
-                  <th scope="col" className="px-3 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">{COUNTRY_LABEL[c]} </th>
+                  <th scope="col" className="px-3 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">{COUNTRY_LABEL[c]}{" "} </th>
                 </Fragment>
               ))}
             </tr>
@@ -217,7 +217,7 @@ function ChartTable({ title, rows, since }: { title: string; rows: Cell[][]; sin
                           <span className="font-heading font-bold">{cell.label}</span>{" "}
                           {cell.move ? (
                             <span className={`mt-0.5 block font-mono text-xs font-bold ${moveClass(cell.kind)}`}>{cell.move} </span>
-                          ) : null}
+                          ) : null}{" "}
                         </td>
                       </Fragment>
                     ))}

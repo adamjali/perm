@@ -281,7 +281,7 @@ function FrontierTable({
               Advanced
             {" "}</th>
             <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
-              Decisions
+              Decisions{" "}
             </th>
           </tr>
         </thead>

@@ -66,7 +66,7 @@ function shield(spec: BadgeSpec, p: Palette): string {
     `<rect width="${lw}" height="20" fill="${p.ground}"/>`,
     `<rect x="${lw}" width="${vw}" height="20" fill="${p.accent}"/>`,
     `<g font-family="${FONT}" font-size="11" text-anchor="middle">`,
-    `<text x="${lw / 2}" y="14" fill="${p.ink}">${esc(spec.label)}</text>`,
+    `<text x="${lw / 2}" y="14" fill="${p.ink}">${esc(spec.label)} </text>`,
     `<text x="${lw + vw / 2}" y="14" fill="${p.accentInk}" font-weight="bold">${esc(spec.value)}</text>`,
     `</g></svg>`,
   ].join("");
@@ -106,10 +106,10 @@ function card(spec: BadgeSpec, p: Palette): string {
 
   parts.push(
     `<rect width="${w}" height="4" fill="${p.accent}"/>`,
-    `<text x="16" y="34" font-family="${FONT}" font-size="13" font-weight="bold" fill="${p.muted}">${esc(spec.label)}</text>`,
+    `<text x="16" y="34" font-family="${FONT}" font-size="13" font-weight="bold" fill="${p.muted}">${esc(spec.label)} </text>`,
     `<text x="16" y="78" font-family="${FONT}" font-size="${valueSize}" font-weight="bold" fill="${p.ink}">${esc(spec.value)}</text>`,
     `<line x1="16" y1="92" x2="${w - 16}" y2="92" stroke="${p.rule}" stroke-width="1"/>`,
-    `<text x="16" y="107" font-family="${MONO}" font-size="10" fill="${p.muted}">${esc(footer)}</text>`,
+    `<text x="16" y="107" font-family="${MONO}" font-size="10" fill="${p.muted}">${esc(footer)} </text>`,
     `</svg>`,
   );
   return parts.join("");
@@ -132,7 +132,7 @@ function bar(spec: BadgeSpec, p: Palette): string {
   return [
     open(w, h, spec.alt),
     `<rect width="${w}" height="${h}" fill="${p.ground}"/>`,
-    `<text x="16" y="22" font-family="${FONT}" font-size="12" font-weight="bold" fill="${p.muted}">${esc(spec.label)}</text>`,
+    `<text x="16" y="22" font-family="${FONT}" font-size="12" font-weight="bold" fill="${p.muted}">${esc(spec.label)} </text>`,
     `<text x="16" y="44" font-family="${FONT}" font-size="18" font-weight="bold" fill="${p.ink}">${esc(spec.value)}</text>`,
     `<text x="${w - 16}" y="44" font-family="${MONO}" font-size="11" fill="${p.muted}" text-anchor="end">${esc(pct)} of pending</text>`,
     `<rect x="16" y="52" width="${track}" height="6" fill="${p.rule}"/>`,

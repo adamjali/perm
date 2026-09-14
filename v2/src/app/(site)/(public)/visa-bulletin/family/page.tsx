@@ -70,10 +70,10 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
         <table className="w-full min-w-[720px] border-2 border-border text-sm">
           <thead className="bg-foreground text-background">
             <tr>
-              <th className="p-3 text-left font-mono text-xs uppercase tracking-wider">Category</th>
+              <th className="p-3 text-left font-mono text-xs uppercase tracking-wider">Category{" "}</th>
               {BOARD_COUNTRIES.map((c) => (
                 <th key={c} className="p-3 text-left font-mono text-xs uppercase tracking-wider">
-                  {COUNTRY_LABEL[c]}
+                  {COUNTRY_LABEL[c]}{" "}
                 </th>
               ))}
             </tr>
@@ -83,11 +83,11 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
               <tr key={cat} className="border-t-2 border-border align-top">
                 <td className="p-3">
                   <span className="font-semibold">{CATEGORY[cat]?.label ?? cat}</span>{" "}
-                  <span className="block text-xs text-muted-foreground">{CATEGORY[cat]?.who ?? ""}</span>
+                  <span className="block text-xs text-muted-foreground">{CATEGORY[cat]?.who ?? ""}</span>{" "}
                 </td>
                 {BOARD_COUNTRIES.map((country) => (
                   <td key={country} className="p-3">
-                    <Movement cell={cells.find((x) => x.category === cat && x.country === country) ?? null} />
+                    <Movement cell={cells.find((x) => x.category === cat && x.country === country) ?? null} />{" "}
                   </td>
                 ))}
               </tr>

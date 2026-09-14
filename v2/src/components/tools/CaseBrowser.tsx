@@ -1075,7 +1075,7 @@ function CaseTable({
                   </button>
                 ) : (
                   c.label
-                )}
+                )}{" "}
               </th>
             );
           })}
@@ -1126,7 +1126,7 @@ function CaseTable({
                     )}
                   </span>
                 </>
-              ) : null}
+              ) : null}{" "}
             </td>
             <td className="hidden px-3 py-3 sm:table-cell">{r.jobTitle || "—"}{" "}</td>
             <td className="whitespace-nowrap px-3 py-3">{r.state || "—"}{" "}</td>
@@ -1137,7 +1137,7 @@ function CaseTable({
                   {" "}
                   <span className="block font-mono text-sm text-foreground/60">{r.socCode}</span>
                 </>
-              ) : null}
+              ) : null}{" "}
             </td>
             <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">
               {fmtWage(r.wage)}

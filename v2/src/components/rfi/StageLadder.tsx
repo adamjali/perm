@@ -243,11 +243,11 @@ export function StageLadderTable({ stages }: { stages: ReviewStage[] }) {
               stops "StageCasesMedian day" reaching an extractor has to live
               inside the cell's own content.
             */}
-            <th className="py-2 pr-3 font-bold">Stage </th>
-            <th className="py-2 pr-3 text-right font-bold">Cases </th>
-            <th className="py-2 pr-3 text-right font-bold">Median day </th>
-            <th className="py-2 pr-3 text-right font-bold">Middle 80% </th>
-            <th className="py-2 text-right font-bold">Employer names </th>
+            <th className="py-2 pr-3 font-bold">Stage{" "} </th>
+            <th className="py-2 pr-3 text-right font-bold">Cases{" "} </th>
+            <th className="py-2 pr-3 text-right font-bold">Median day{" "} </th>
+            <th className="py-2 pr-3 text-right font-bold">Middle 80%{" "} </th>
+            <th className="py-2 text-right font-bold">Employer names{" "} </th>
           </tr>
         </thead>
         <tbody>

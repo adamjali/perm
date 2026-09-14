@@ -108,8 +108,17 @@ export default async function BadgesPage() {
             <li
               key={v.path}
               className="inline-flex"
-              /* Our own string from the renderer, which escapes its content. */
-              dangerouslySetInnerHTML={{ __html: v.svg }}
+              /* Our own string from the renderer, which escapes its content.
+                 THE TRAILING SPACE IS LOAD-BEARING. Each <li> holds one badge
+                 and nothing else, so badge N's last <text> sits directly
+                 against badge N+1's first and an extractor reads
+                 "PERM queue at Nov 2025PERM audit review: ...". It goes inside
+                 the markup rather than between the <li> elements: the SVG is
+                 injected as innerHTML, so there is no JSX child to sit beside
+                 it, and a text node between list items is not a place to put
+                 one. A trailing space collapses in the flex row, so nothing
+                 moves. */
+              dangerouslySetInnerHTML={{ __html: `${v.svg} ` }}
             />
           ))}
         </ul>{" "}

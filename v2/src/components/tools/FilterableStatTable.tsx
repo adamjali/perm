@@ -481,7 +481,7 @@ export function FilterableStatTable<T>({
                             that. Inside, it still separates the columns for
                             anything walking the DOM and costs no layout. */}
                         {" "}
-                      </button>
+                      </button>{" "}
                     </th>
                   </Fragment>
                 );

@@ -156,7 +156,7 @@ function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
               Cases
             {" "}</th>
             <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">
-              Share
+              Share{" "}
             </th>
           </tr>
         </thead>

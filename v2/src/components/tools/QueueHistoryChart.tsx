@@ -380,7 +380,7 @@ function QueueHistoryTable({
               Moved
             {" "}</th>
             <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
-              Days since last
+              Days since last{" "}
             </th>
           </tr>
         </thead>
@@ -658,7 +658,7 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                     Change
                   {" "}</th>
                   <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
-                    Share of window
+                    Share of window{" "}
                   </th>
                 </tr>
               </thead>

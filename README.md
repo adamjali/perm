@@ -4,7 +4,7 @@
 
 ![Status](https://img.shields.io/badge/Status-Production-success?style=for-the-badge)
 ![Stack](https://img.shields.io/badge/Stack-Next.js%20%2B%20Convex%20%2B%20Turso-blue?style=for-the-badge)
-![Tests](https://img.shields.io/badge/Tests-6%2C444%20Passing-brightgreen?style=for-the-badge)
+[![Tests](https://github.com/adamjali/perm/actions/workflows/test.yml/badge.svg)](https://github.com/adamjali/perm/actions/workflows/test.yml)
 ![Data](https://img.shields.io/badge/Source-DOL%20first--party-informational?style=for-the-badge)
 
 **Live:** https://permtracker.app
@@ -52,17 +52,17 @@ DOL runs three foreign-labor programs off one case-number counter, and this read
 
 ## What's in the corpus
 
-Figures as of September 2026.
+Figures measured 2026-09-13.
 
 | Table | Rows |
 |---|---|
 | `perm_cases` (decided PERM, published) | 373,939 |
 | `pwd_cases` (decided wage requests) | 634,638 |
-| `lca_cases` (certified LCAs) | 437,496 |
-| `perm_case_status` (live, pending included) | ~414,000 |
-| `perm_live_recent` (searchable remainder) | ~137,000 |
+| `lca_cases` (certified LCAs) | 2,381,382 |
+| `perm_case_status` (live, pending included) | 420,752 |
+| `perm_live_recent` (searchable remainder) | 143,444 |
 
-The site publishes **13,761 URLs**: 182 content and data pages, plus 9,646 employer, 2,919 law-firm and 1,014 occupation pages. An entity earns its own page at five or more filings; below that it stays searchable and takes no page.
+The site publishes **78,914 URLs** across 19 sitemaps: content and data pages, plus 71,512 employer, 5,678 law-firm and 1,410 occupation pages. Every entity earns a page, down to a single filing.
 
 ---
 
@@ -73,7 +73,7 @@ The site publishes **13,761 URLs**: 182 content and data pages, plus 9,646 emplo
 - Employer, law-firm, state and occupation search, all combinable
 - Decision activity by day, reaching back to October 2023 through the published files
 - Queue position and a stage-aware decision estimate, labelled an estimate and withheld when the date has already passed
-- Nine calculators (deadlines, filing windows, priority dates, salary, I-140, I-485)
+- Sixteen calculators (deadlines, filing windows, priority dates, salary, wage levels, I-140, I-485)
 - Email alerts on a case, a queue month or visa-bulletin movement, all double opt-in
 
 ### Application

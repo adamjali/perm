@@ -93,7 +93,7 @@ function Chip({
         (active ? "bg-primary text-black" : "bg-background text-foreground")
       }
     >
-      {children}
+      {children}{" "}
     </button>
   );
 }

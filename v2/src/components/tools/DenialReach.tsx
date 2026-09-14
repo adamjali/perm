@@ -163,7 +163,7 @@ export function DenialReach({
               Share of cases
             {" "}</th>
             <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">
-              Share of denials
+              Share of denials{" "}
             </th>
           </tr>
         </thead>

@@ -71,7 +71,7 @@ export function SortableHeader<T>({
                   <span aria-hidden="true" className={active ? "" : "opacity-30"}>
                     {active ? (sort.dir === 1 ? "↑" : "↓") : "↕"}
                   </span>
-                </button>
+                </button>{" "}
             </th>
             </Fragment>
           );

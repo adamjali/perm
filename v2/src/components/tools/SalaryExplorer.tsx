@@ -383,7 +383,7 @@ export function SalaryExplorer({
                               i > 0 && "text-right",
                             )}
                           >
-                            {h}
+                            {h}{" "}
                           </th>
                         ))}
                       </tr>
@@ -395,7 +395,7 @@ export function SalaryExplorer({
                           className={cn("border-t-2 border-border", i % 2 === 1 && "bg-muted")}
                         >
                           <th scope="row" className="px-3 py-2 font-bold">
-                            {r.state}
+                            {r.state}{" "}
                           </th>
                           <td className="px-3 py-2 text-right tabular-nums">{int(r.n)}{" "}</td>
                           <td className="px-3 py-2 text-right tabular-nums">

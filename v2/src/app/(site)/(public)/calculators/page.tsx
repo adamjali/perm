@@ -271,7 +271,7 @@ export default function CalculatorsPage() {
               <tr>
                 <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Your situation{" "}</th>
                 <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Ask{" "}</th>
-                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Use</th>
+                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Use{" "}</th>
               </tr>
             </thead>
             <tbody className="bg-card">

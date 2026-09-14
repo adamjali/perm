@@ -256,7 +256,7 @@ export default async function MethodologyPage() {
                   Source
                 {" "}</th>
                 <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">
-                  Reported
+                  Reported{" "}
                 </th>
               </tr>
             </thead>

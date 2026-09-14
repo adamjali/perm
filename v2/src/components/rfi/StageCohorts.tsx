@@ -239,8 +239,8 @@ export function StageCohortsTable({
             {/* The space lives INSIDE each cell: a whitespace text node is
                 not legal as a child of <tr> or <tbody> and React warns that it
                 will cause a hydration error. */}
-            <th className="py-2 pr-3 font-bold">Filed </th>
-            <th className="py-2 pr-3 text-right font-bold">Cases filed </th>
+            <th className="py-2 pr-3 font-bold">Filed{" "} </th>
+            <th className="py-2 pr-3 text-right font-bold">Cases filed{" "} </th>
             {rows.map((r) => (
               <th key={r.status} className="py-2 pr-3 text-right font-bold">
                 {stageMeta(r.status).label}{" "}

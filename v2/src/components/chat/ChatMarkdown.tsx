@@ -186,7 +186,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
           isUser ? 'border-current/20' : 'border-border'
         )}
       >
-        {children}
+        {children}{" "}
       </th>
     ),
 
