@@ -353,11 +353,16 @@ export default async function PermDenialRiskPage() {
               What these rates can and can’t tell you
             </h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-              Each bar is a group’s rate, not the odds on one case, and the
-              factors aren’t independent, so we don’t blend them into a score.
-              A rate over a small group is mostly noise, so the occupation and
-              state rankings carry a minimum population and a 95% range.
+              Each bar is a group’s rate, not the odds on one case.
             </p>{" "}
+            <FinePrint summary="Why there is no single score" className="mt-3">
+              <p>
+                The factors aren’t independent, so we don’t blend them into a
+                score. A rate over a small group is mostly noise, so the
+                occupation and state rankings carry a minimum population and a
+                95% range.
+              </p>
+            </FinePrint>{" "}
             <FinePrint summary="Which window each cut covers">
               <p>
                 Only the year cut splits the window. The wage, occupation and
@@ -375,13 +380,10 @@ export default async function PermDenialRiskPage() {
                 Where the denials actually are
               </h2>{" "}
               <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-                A rate is not a share. The three factors the ETA-9089 asks about
-                carry the highest rates here and{" "}
-                <strong>{flagShare.toFixed(1)}% of all denials</strong>. The{" "}
-                {topWageByShare.bucket.toLowerCase()} band carries a middling
-                rate and{" "}
-                <strong>{topWageShare.toFixed(0)}% of them</strong>, on{" "}
-                {topWageReach.toFixed(0)}% of decided cases.
+                A rate is not a share: the declared factors carry the highest
+                rates and <strong>{flagShare.toFixed(1)}% of all denials</strong>;
+                the {topWageByShare.bucket.toLowerCase()} band a middling rate
+                and <strong>{topWageShare.toFixed(0)}% of them</strong>.
               </p>
               <div className="mt-8 grid [&>*]:min-w-0 grid-cols-1 gap-8 lg:grid-cols-2">
                 <div>
@@ -487,10 +489,8 @@ export default async function PermDenialRiskPage() {
               </div>
               {wageEnds ? (
                 <p className="mt-4 text-sm leading-relaxed text-foreground/60">
-                  The rate falls as the wage rises, {wageEnds.first.denialRate}%
-                  to {wageEnds.lowest.denialRate}% at{" "}
-                  {wageEnds.lowest.bucket.toLowerCase()}, a{" "}
-                  {wageEnds.multiple}-fold difference.{" "}
+                  {wageEnds.first.denialRate}% down to {wageEnds.lowest.denialRate}%
+                  at {wageEnds.lowest.bucket.toLowerCase()}, {wageEnds.multiple}-fold.{" "}
                   {wageMonotonic
                     ? "It falls at every step."
                     : wageEnds.turnsUp

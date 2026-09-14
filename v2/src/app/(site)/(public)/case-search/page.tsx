@@ -121,10 +121,8 @@ export default async function CaseSearchPage() {
           Search every case an employer has filed
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          The PERM, the wage request before it and the H-1B condition
-          application beside it are three separate DOL programs with three
-          separate numbers. Type the employer once and see all of them, open
-          and decided.
+          Three DOL programs, three case numbers, one employer name: every
+          filing, open and decided.
         </p>
       </header>
 
@@ -181,6 +179,7 @@ export default async function CaseSearchPage() {
             takes all three prefixes and asks DOL live. Paste one into the box
             above and it hands you straight there.
           </p>{" "}
+          <FinePrint summary="Live versus published, merged records, and why a filing might be missing">
           <p>
             <b className="font-bold">A number is live, a name is not.</b> A case
             number is answered by asking DOL at that moment, so a filing made
@@ -204,7 +203,8 @@ export default async function CaseSearchPage() {
             absent from anything still open. And an employer DOL spells several
             ways answers to the spelling on the filing, so a shorter name
             usually finds more.
-          </p>{" "}
+          </p>
+          </FinePrint>{" "}
           {/* Mechanism, not correction: it says why the search is shaped this
               way rather than changing how a result reads, so it collapses. */}
           <FinePrint summary="Why a name works differently from a number">

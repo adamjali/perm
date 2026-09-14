@@ -219,6 +219,7 @@ export default async function PermQueuePage() {
             </p>
           ) : null}
 
+          <FinePrint summary="How this position was measured, and how fast it moves">
           {agrees ? (
             <p>
               That&rsquo;s the month DOL publishes as its analyst-review
@@ -280,6 +281,7 @@ export default async function PermQueuePage() {
               works from the percentile spread of decided cases instead.
             </p>
           ) : null}
+          </FinePrint>
         </div>
       </section>{" "}
 
@@ -288,9 +290,9 @@ export default async function PermQueuePage() {
           What those {int(census.pending)} cases were doing
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-          Analyst review moves in filing order, so the month is the whole
-          story. The other two queues don&rsquo;t, which is the answer when DOL
-          has passed your month and you still have nothing.
+          Analyst review moves in filing order; the other two queues
+          don&rsquo;t, which is the answer when DOL has passed your month and
+          you still have nothing.
         </p>{" "}
 
         <StageLegend stages={stages} className="mt-6" />
@@ -331,15 +333,13 @@ export default async function PermQueuePage() {
             Your employer&rsquo;s first letter, and what it is worth
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-            Within a filing month DOL works alphabetically by employer, so an
-            A company is decided before a Z company. Every estimator uses that;
-            none publishes its size. Measured:{" "}
+            Within a filing month DOL works alphabetically by employer. Measured:{" "}
             <b>
               the whole alphabet is about {Math.round(alphabet.spreadDays)} days
             </b>
             , and in {alphabet.monthsReversed} of {alphabet.monthsMeasured}{" "}
             filing months the back half was decided <b>faster</b> than the
-            front. Your filing month is worth far more than your initial.
+            front.
           </p>{" "}
 
           <div className="mt-8 border-t-2 border-border pt-6">

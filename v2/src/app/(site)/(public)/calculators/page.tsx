@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { FinePrint } from "@/components/data/FinePrint";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { ArrowRightIcon, CalendarBlankIcon as CalendarRange, CalendarCheckIcon, CalendarDotIcon as CalendarClock, ChartBarIcon, CurrencyDollarIcon, FileTextIcon, PathIcon as Route, ScalesIcon as Scale, UsersIcon } from "@phosphor-icons/react/ssr";
@@ -433,11 +434,15 @@ export default function CalculatorsPage() {
           Why some of these refuse to give you a number
         </h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
-          A queue estimate is a forecast. Where DOL publishes enough, you get a
-          figure and its source. Where it doesn’t, you get the count that’s real
-          and what’s missing. The deadline calculator is the exception: those
-          dates are arithmetic in the regulations, so they’re exact.
+          A queue estimate is a forecast; a deadline is arithmetic in the
+          regulations, so those dates are exact.
         </p>{" "}
+        <FinePrint summary="What you get when DOL has not published enough" className="mt-3">
+          <p>
+            Where DOL publishes enough, you get a figure and its source. Where
+            it doesn’t, you get the count that’s real and what’s missing.
+          </p>
+        </FinePrint>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           Public estimators disagree with each other by months on the same
           filing date.{" "}
