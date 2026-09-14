@@ -1,5 +1,5 @@
-import { Fragment } from "react";
 import Link from "next/link";
+import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
 import { formatAsOf } from "@/lib/dolFormat";
 
@@ -67,6 +67,26 @@ export interface Entry {
   status: string | null;
   /** Heading, when there is no status string to take a label from. */
   term?: string;
+  /**
+   * ONE LINE, AND REQUIRED, because it is the only definition most readers
+   * will see.
+   *
+   * The list below used to render every entry fully expanded: ten terms, each
+   * with a definition, a deadline, a what-follows and a sourcing note, stacked
+   * down the page. Measured 2026-09-13, that section was over half of
+   * `/perm-rfi-audit`'s 3,411 rendered words - against 670 for a comparable
+   * gov.uk service page. Someone arriving to find out what "NORD ISSUED" means
+   * had to scroll past nine definitions they did not want.
+   *
+   * Collapsed, the same content is a dictionary index. The gloss is what makes
+   * that index usable, so it is not optional: an entry added without one does
+   * not compile, rather than quietly rendering a term with nothing beside it.
+   *
+   * Keep it short enough to sit on one line beside the term at a phone width,
+   * and make it a definition rather than a teaser. `glossary-gloss.test.ts`
+   * caps the length and requires it to end in a full stop.
+   */
+  gloss: string;
   what: string;
   next?: string;
   deadline?: string;
@@ -99,6 +119,8 @@ const ECFR =
 export const ENTRIES: Entry[] = [
   {
     status: "RFI ISSUED",
+    gloss:
+      "The analyst wants something clarified before deciding.",
     what:
       "The analyst reviewing the application wants something clarified before deciding it. In DOL's queue language this is a request for information, and it is lighter than an audit: it asks a question rather than calling in the whole recruitment file.",
     next:
@@ -109,6 +131,8 @@ export const ENTRIES: Entry[] = [
   {
     status: null,
     term: "Audit",
+    gloss:
+      "A formal demand for the documentation behind the application.",
     what:
       "A formal demand for the documentation behind the application: the recruitment report, the tear sheets, the notice of filing, the resumes, and why each U.S. applicant was rejected. The certifying officer can order one after reviewing the case, and some applications are selected at random for quality control.",
     next:
@@ -119,6 +143,8 @@ export const ENTRIES: Entry[] = [
   },
   {
     status: "PENDING AUDIT RESPONSE",
+    gloss:
+      "The audit letter has gone out; DOL is waiting on documents.",
     what:
       "An audit letter has gone out and DOL is waiting on the employer's documents.",
     next: "The certifying officer decides once the response arrives.",
@@ -127,6 +153,8 @@ export const ENTRIES: Entry[] = [
   },
   {
     status: "NORD ISSUED",
+    gloss:
+      "A deficiency DOL found in the recruitment run before filing.",
     what:
       "A notice about a deficiency DOL found in the recruitment the employer ran before filing.",
     next: "The employer responds and the analyst decides.",
@@ -135,6 +163,8 @@ export const ENTRIES: Entry[] = [
   },
   {
     status: "SUPERVISED RECRUITMENT",
+    gloss:
+      "DOL takes over the recruitment and approves every step.",
     what:
       "DOL takes over the recruitment. The employer drafts an advertisement, the certifying officer approves it and decides where it runs, applicants send their resumes to the officer rather than to the employer, and the employer reports back on each one.",
     next:
@@ -145,12 +175,16 @@ export const ENTRIES: Entry[] = [
   },
   {
     status: "APPLICATION ON HOLD",
+    gloss:
+      "Not moving, and no determination has been made.",
     what: "The application is not moving and no determination has been made.",
     unsourced:
       "DOL publishes no definition of this status. It is worth knowing that almost every case carrying it belongs to a single employer, so it is unlikely to describe a condition that applies broadly.",
   },
   {
     status: "RECONSIDERATION APPEALS",
+    gloss:
+      "After a denial, the same officer is asked to look again.",
     what:
       "After a denial, the employer asks the same certifying officer to look again. The request can only carry documents DOL already received, or documents the employer had no earlier chance to submit that existed when the application was filed and were kept on file.",
     next:
@@ -160,6 +194,8 @@ export const ENTRIES: Entry[] = [
   },
   {
     status: "REQUEST FOR REVIEW",
+    gloss:
+      "Asks a judge to look at the denial, not the officer.",
     what:
       "The step that puts a denial in front of the Board. It goes to the certifying officer who issued the denial rather than to the Board directly, and the officer forwards the file. Reconsideration asks that officer to change their mind; a request for review asks a judge to.",
     deadline:
@@ -168,6 +204,8 @@ export const ENTRIES: Entry[] = [
   },
   {
     status: "BALCA APPEALS",
+    gloss:
+      "Before the Board, a panel of administrative law judges.",
     what:
       "The case is before the Board of Alien Labor Certification Appeals, a panel of administrative law judges sitting outside the office that denied it. The Board reviews the record the decision was made on, plus the request for review and any briefs, and everyone gets 30 days to file a statement of position.",
     next:
@@ -176,6 +214,8 @@ export const ENTRIES: Entry[] = [
   },
   {
     status: "ANALYST REVIEW",
+    gloss:
+      "The ordinary queue: in line for a human analyst.",
     what:
       "The ordinary queue. The case is in line for a human analyst and nothing has been asked of the employer.",
     unsourced:
@@ -233,55 +273,70 @@ export function StageGlossary({
 }) {
   return (
     <div>
-      <dl className="grid gap-px border-2 border-border bg-border">
+      {/*
+        A DICTIONARY INDEX, NOT A WALL. Each entry is a native `<details>`: the
+        term, its FLAG status string, its live count and a one-line gloss stay
+        visible, and the sourced definition, deadline and what-follows open on
+        demand.
+
+        THIS COSTS NOTHING IN SEARCH, which is the only reason it is safe.
+        `<details>` keeps every word in the DOM whether open or shut, so Google,
+        Bing and the answer engines read the full definitions either way - the
+        same property the footer's link columns rely on. It is keyboard-operable
+        and screen-reader-correct with no JavaScript and works before hydration.
+
+        The `<dl>` is gone rather than wrapped. `<dt>`/`<dd>` must be direct
+        children of the list or its `<div>`, so a `<details>` between them is
+        invalid markup; the `<h3>` in each summary keeps the heading outline,
+        which is the part an extractor actually reads.
+      */}
+      <div className="grid gap-px border-2 border-border bg-border">
         {ENTRIES.map((e) => {
           const meta = e.status ? stageMeta(e.status) : null;
           const label = e.term ?? meta?.label ?? e.status ?? "";
           return (
-            <Fragment key={label}>{" "}
-            <div className="bg-card p-4 sm:p-5">
-              <dt className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                {meta ? (
-                  <span
-                    className="inline-block h-3 w-3 shrink-0 border border-border"
-                    style={{ backgroundColor: GROUP_STYLE[meta.group].fill }}
-                    aria-hidden="true"
-                  />
-                ) : null}{" "}
-                <h3 className="font-heading text-base font-black">{label}</h3>{" "}
-                {e.status ? (
-                  <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {e.status}
-                  </code>
-                ) : null}{" "}
-                {/* THE COUNT, BESIDE THE DEFINITION. A reader told "RFI
-                    ISSUED" could learn here what it means and not how many
-                    people are in it, though the number was already computed
-                    and sitting in the census doc.
-
-                    THE DATE NOW ACTUALLY TRAVELS WITH IT. The line above said
-                    so from the day the count was added and it was not true:
-                    `asOf` was accepted, typed, documented, and never rendered,
-                    so every one of these numbers was published as a bare claim
-                    about now. A prop that exists to keep a figure honest and
-                    is never read is worse than no prop, because the docstring
-                    then reads as evidence the rule is being followed.
-
-                    AND THE COUNT IS THE LINK. A number with nowhere to go was
-                    the whole of the gap here: the census could say 974 cases
-                    are at this stage and nothing could say which. Only the
-                    stages that HAVE a page get a link - the queue group does
-                    not, because /perm-queue is the honest destination for
-                    93,219 cases and this is not it. */}
-                {e.status && counts && counts[e.status] !== undefined ? (
-                  <CountBadge
-                    status={e.status}
-                    n={counts[e.status]!}
-                    asOf={asOfByStatus?.[e.status] ?? asOf ?? null}
-                  />
-                ) : null}
-              </dt>{" "}
-              <dd className="mt-2 grid gap-2 text-sm leading-relaxed">
+            <details key={label} className="group bg-card">
+              <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
+                <span className="min-w-0">
+                  <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                    {meta ? (
+                      <span
+                        className="inline-block h-3 w-3 shrink-0 self-center border border-border"
+                        style={{ backgroundColor: GROUP_STYLE[meta.group].fill }}
+                        aria-hidden="true"
+                      />
+                    ) : null}{" "}
+                    <h3 className="font-heading text-base font-black">{label}</h3>{" "}
+                    {e.status ? (
+                      <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+                        {e.status}
+                      </code>
+                    ) : null}{" "}
+                    {/* THE COUNT, BESIDE THE DEFINITION, and it stays visible
+                        when the entry is shut - a reader scanning for "how many
+                        are in this" should not have to open ten doors. The date
+                        travels with it: a bare count is a claim about now.
+                        Only stages that HAVE a page get a link; the queue group
+                        does not, because /perm-queue is the honest destination
+                        for 93,219 cases and this is not it. */}
+                    {e.status && counts && counts[e.status] !== undefined ? (
+                      <CountBadge
+                        status={e.status}
+                        n={counts[e.status]!}
+                        asOf={asOfByStatus?.[e.status] ?? asOf ?? null}
+                      />
+                    ) : null}
+                  </span>{" "}
+                  <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                    {e.gloss}
+                  </span>
+                </span>{" "}
+                <CaretDownIcon
+                  className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+                  aria-hidden="true"
+                />
+              </summary>{" "}
+              <div className="grid gap-2 border-t-2 border-border/40 px-4 pb-4 pt-3 text-sm leading-relaxed sm:px-5 sm:pb-5">
                 <p>{e.what}</p>{" "}
                 {e.deadline ? (
                   <p className="border-l-2 border-[var(--data-warn)] bg-[var(--data-warn)]/10 px-3 py-2">
@@ -319,12 +374,11 @@ export function StageGlossary({
                     {e.unsourced}
                   </p>
                 ) : null}
-              </dd>
-            </div>
-            </Fragment>
+              </div>
+            </details>
           );
         })}
-      </dl>
+      </div>
 
       <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         An audit has no status string of its own in the case-status feed, which
