@@ -4930,16 +4930,31 @@ put the count back to the original. And moving the leads into `<summary>`
 blinded the instrument's prose column to them until `summary` was added to its
 prose tags - it read 80 prose words on a page showing 56 lead sentences.
 
-**Pages checked and NOT converted, with the numbers, because there was no wall
-to collapse:** `/calculators` (539 prose words: a routing table and illustrated
-tool cards), `/perm-queue` (738; three chart sections with a two-sentence lede
-each and 363 words already behind FinePrint), `/perm-denial-risk` (909; chart
-captions of 15-47 words each - its defect was two duplicated headings, fixed),
-`/case-search` (531; four caveats a searcher needs, with the database-index
-explanation already behind `<details>`), and `/` (446; the brand-query page
-whose title is FROZEN to 2026-11-07 and whose About and FAQ were rebuilt on
-purpose on Sep 7). Cutting further on these means cutting the captions
-themselves, which is a different instruction.
+**The five chart pages, done on a second instruction** (*"lets do 1, 3, 4 for
+now"*), under a stricter rule because their prose is captions, not a list: a
+caption of up to ~30 words under its heading stays; anything longer keeps its
+first sentence and puts the rest behind FinePrint; a multi-paragraph narrative
+keeps its first paragraph. Measured in PRODUCTION, visible words before -> after:
+
+| page | visible | DOM | why it moved that much |
+|---|---|---|---|
+| `/case-search` | 790 -> 630 (-20%) | 1,026 -> 1,017 | three of four caveats collapsed; lede is one sentence |
+| `/perm-queue` | 1,186 -> 1,045 (-12%) | 1,549 -> 1,524 | the five-paragraph narrative under the h1 keeps one |
+| `/perm-denial-risk` | 2,336 -> 2,292 (-2%) | 2,457 -> 2,447 | its words are 1,241 of DATA and captions under 30 |
+| `/calculators` | 1,024 -> 1,006 (-2%) | 1,086 -> 1,091 | a routing table, illustrated cards, one 45-word caveat |
+| `/` | not edited | | every paragraph is 16 words or under except the About block, rebuilt 2026-09-07 for the brand query with the title frozen to 2026-11-07 |
+
+The small DOM drops are the tightening rewrites, ten to twenty-five words each,
+and they are cuts, not collapses - said so in the commit. The next cut on the
+two -2% pages is captions under 30 words or the PageBasics Q&A layer, and that
+is a decision, not a defect.
+
+**MEASURE THE PRODUCT, NOT THE DEV SERVER.** On dev, `/case-search` read 1,108
+visible / 1,495 DOM after the cut - UP from 790. Production, same instrument,
+same minute: 630 / 1,017. Dev mode renders extra text on that page (the
+`useSearchParams` boundary's fallback plus dev-only markup); the number that
+describes the site is the one taken from the site. Every after-state in this
+section is from production.
 
 **The heading outline is part of the same job.** `scripts/audit_headings.py`
 walks the sitemap (not a hand-kept list - the first run against one I typed
