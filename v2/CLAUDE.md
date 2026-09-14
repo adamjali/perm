@@ -4788,3 +4788,91 @@ file with half of each. The working tree is a shared resource: the repo's own
 background jobs. Re-applied from a clean `git checkout` with an assertion on
 every marker, and the probe loop now runs only when nothing else is writing.
 
+## Killing the dev server mid-write corrupts the types the PRE-PUSH hook reads (2026-09-13)
+
+`git push` was refused by the pre-push hook with 38 errors, every one in
+`.next/dev/types/routes.d.ts` and `.next/dev/types/validator.ts`:
+
+    .next/dev/types/routes.d.ts(182,11): error TS1002: Unterminated string literal.
+
+`pnpm typecheck` had exited 0 minutes earlier, and no source file was at fault.
+Next writes those route types continuously while `next dev` runs, and the server
+had been killed (`pkill -f "next dev"`) part-way through a write, leaving a
+truncated file that `tsgo` then parsed on the next invocation.
+
+**`rm -rf .next/dev/types` and re-run.** They are generated and gitignored.
+Do NOT reach for `rm -rf .next` - the build cache is expensive here and is not
+what broke.
+
+Two things worth keeping from it:
+
+- **A green typecheck is only green for the tree as it stood at that moment.**
+  This one passed, then a background process corrupted an input to the same
+  check. The pre-push hook is the gate that matters because it runs last.
+- **Read the paths in a failure before believing it is yours.** Thirty-eight
+  errors naming only `.next/` is a generated-artifact problem; the same output
+  skimmed reads like a broken change and invites reverting real work.
+
+## A test whose subject reads the clock, and which does not set the clock (2026-09-13)
+
+CI went red with five assertions in `src/lib/__tests__/permCaseNumber.test.ts`,
+all `expected undefined to be '<a date>'`, while the identical suite had just
+passed locally at **6,957 / 0**.
+
+**The failure pattern named the cause before any code was read.** Every 2024
+case number decoded; every 2025 and 2026 one returned null, and so did
+`G-100-24366` (31 December 2024). `parseCaseNumber` refuses a date more than a
+day in the future, because a case number from the future is a typo. So the
+environment believed it was some day between 2 July and 30 December 2024.
+
+Two conditions had to meet, and neither is visible from a local run:
+
+- the `unit` project runs **`isolate: false`** for speed, so every file in a
+  worker shares one environment and a mocked `Date` outlives the file that set
+  it;
+- **`sequence.shuffle` is CI-only**, so the order that puts the leaker first
+  never happens locally.
+
+`src/lib/utils/__tests__/date.test.ts` sets `2024-12-24` in each test and
+restores with `vi.useRealTimers()` in a **`beforeEach`, not an `afterEach`** -
+which protects its own tests and leaves the clock mocked once the file ends.
+
+**Three separate things went wrong in diagnosing it, all worth keeping:**
+
+1. **A first probe cleared the guilty file.** Running `date.test.ts` then a
+   probe file reported `2026`, so I ruled it out. The probe was fine and the
+   conclusion was wrong: nothing reproduced the cross-file hop locally, even
+   single-worker with the leaker first.
+2. **`vi.setSystemTime` WITHOUT `vi.useFakeTimers` mocks Date only**, so
+   `vi.isFakeTimers()` answers **false** while `new Date()` still answers 2024.
+   A guard that tests for fake timers first sees nothing. Restore
+   unconditionally.
+3. **`reporters: process.env.CI ? ["json", "github-actions"] : ["default"]`**,
+   so running a diagnostic under `CI=1` printed no console output at all and
+   the guard looked like it had found nothing. Reproduce CI's *shuffle* with
+   `--sequence.shuffle=true` and leave `CI` unset, or the instrument is mute.
+
+**THE FIX THAT DOES NOT DEPEND ON THE DIAGNOSIS: the test pins its own clock.**
+A test whose subject reads `new Date()` and which never fixes the date is
+order-dependent by construction, whatever else is cleaned up. Proved by a
+hostile control - a 2024-12-24 clock forced before EVERY test, strictly harsher
+than any real leak - under which the unpinned file reproduces the exact CI error
+and the pinned one passes 17/17.
+
+Two more, because the class is worth closing rather than the instance:
+`date.test.ts` now restores on the way out, and `vitest.setup.ts` carries a
+global **`afterAll`** (per file) `vi.useRealTimers()`.
+
+**THE FIRST VERSION OF THAT GLOBAL WAS AN `afterEach`, AND IT BROKE A CORRECT
+FILE.** `convex/lib/perm/validators/pwd.test.ts` freezes one clock in a
+`beforeAll` and restores it in `afterAll`; its later tests rely on that clock,
+and a per-test reset handed them the real date mid-file, so a
+"determination date in the future" rule fired at three shuffle seeds that had
+passed before. A file owning its clock for its own duration is legitimate.
+What must never happen is that clock reaching the NEXT file - and `afterAll`
+in a setup file runs at the end of every test file, which is exactly that
+boundary and nothing narrower. Measured: seeds 3, 11 and 2024 all 3,044/3,044
+after the rescope. (The diagnostic's line about `pwd.test.ts` "leaving fake
+timers on" was reporting mid-file state, not a leak - the same instrument,
+misread.)
+

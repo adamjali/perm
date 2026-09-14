@@ -1,4 +1,4 @@
-import { describe, test, expect, beforeEach, vi } from "vitest";
+import { describe, test, expect, afterEach, beforeEach, vi } from "vitest";
 import {
   formatDistanceToNow,
   formatDate,
@@ -8,6 +8,16 @@ import {
   safeFormatShortDate,
   formatCountdown,
 } from "../date";
+
+// RESTORE ON THE WAY OUT TOO. Each test here calls `vi.setSystemTime` and the
+// `beforeEach` below restores real timers before the NEXT one - which protects
+// this file and leaves the clock mocked at 2024-12-24 once the last test ends.
+// With `isolate: false` on this project, that is the next file's problem.
+// Measured 2026-09-13: a diagnostic afterEach reported `year=2024` after every
+// test in this file.
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe("formatDistanceToNow", () => {
   beforeEach(() => {

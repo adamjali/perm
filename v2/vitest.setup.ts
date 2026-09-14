@@ -1,4 +1,4 @@
-import { beforeAll, vi } from "vitest";
+import { afterAll, beforeAll, vi } from "vitest";
 import "@testing-library/jest-dom/vitest";
 import React from "react";
 
@@ -126,3 +126,46 @@ beforeAll(() => {
     };
   }
 });
+
+/**
+ * NO TEST MAY LEAVE THE CLOCK MOCKED FOR THE NEXT ONE.
+ *
+ * CI went red on `permCaseNumber.test.ts` with `expected undefined to be
+ * '2025-07-09'` while the same suite passed locally at 6,957/0. The parser
+ * refuses a date more than a day in the future, and every 2024 case passed
+ * while every 2025/2026 one failed - a fake clock somewhere in 2024.
+ *
+ * THE MECHANISM, and both halves matter:
+ *
+ *  - The `unit` project runs `isolate: false` for speed, so every file in a
+ *    worker shares one environment. A mocked Date outlives the file that set
+ *    it.
+ *  - `src/lib/utils/__tests__/date.test.ts` calls `vi.setSystemTime()` in each
+ *    test and restores with `vi.useRealTimers()` in a `beforeEach`, not an
+ *    `afterEach`. That protects its OWN tests and leaves the clock at
+ *    2024-12-24 when the file ends.
+ *
+ * It only bites under `sequence.shuffle`, which is CI-only, which is why a
+ * local run could never see it.
+ *
+ * `vi.setSystemTime` WITHOUT `vi.useFakeTimers` mocks Date only, so
+ * `vi.isFakeTimers()` reports false while `new Date()` still answers 2024 -
+ * the reason a first probe of mine looked clean. Restore unconditionally
+ * rather than testing for fake timers first.
+ *
+ * This is the repair rather than a fix to one file, because the next file to
+ * do it would fail somewhere else entirely and take another CI run to find.
+ *
+ * PER FILE, NOT PER TEST. The first version was an `afterEach`, and it broke
+ * `convex/lib/perm/validators/pwd.test.ts` at three shuffle seeds: that file
+ * installs one fake clock in a `beforeAll` and its later tests rely on it, so a
+ * per-test reset handed them the real date mid-file and a "determination date
+ * in the future" rule fired. A file owning its clock for its own duration is
+ * legitimate. What must never happen is that clock reaching the NEXT file -
+ * and `afterAll` in a setup file runs at the end of every test file, which is
+ * exactly that boundary and nothing narrower.
+ */
+afterAll(() => {
+  vi.useRealTimers();
+});
+

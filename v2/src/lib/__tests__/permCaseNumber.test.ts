@@ -1,7 +1,33 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { parseCaseNumber } from "../permCaseNumber";
 
 describe("parseCaseNumber", () => {
+  /**
+   * PIN THE CLOCK, because the subject reads it.
+   *
+   * `parseCaseNumber` refuses a date more than a day in the future - a case
+   * number from the future is a typo, not a filing - so every expectation
+   * below silently depends on what `new Date()` says. CI failed on exactly
+   * that: five assertions returned null while the same suite passed locally,
+   * and the pattern named the cause precisely - every 2024 date decoded and
+   * every 2025/2026 one did not, which is a clock somewhere in 2024.
+   *
+   * The `unit` project runs `isolate: false`, so files share an environment
+   * and a mocked Date can outlive the file that set it; `sequence.shuffle` is
+   * CI-only, so the order that exposes it never happens locally.
+   *
+   * Fixing whoever leaked it is worth doing and is NOT what makes this test
+   * correct. A test whose subject reads the clock and which does not fix the
+   * clock is order-dependent by construction, whatever else is cleaned up.
+   */
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-13T12:00:00Z"));
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   // Every one of these is a real case number with the receipt date DOL
   // recorded for it, taken from our own corpus rather than invented.
   it.each([
