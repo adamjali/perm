@@ -1,5 +1,67 @@
 # GSC indexing priority list
 
+**Run of 2026-09-14, 1:44 AM to 2:12 AM EDT: 11 accepted, the 12th refused.**
+The cap today was 11, the same as 2026-09-05. The rolling window reopens at
+roughly **1:45 AM EDT on 2026-09-15**; do not start before then.
+
+What each inspection SAID before the request, which is the part worth keeping:
+
+| # | URL | Google's verdict | last crawl | enhancements | result |
+|---|---|---|---|---|---|
+| 1 | `/perm-case-statuses` | indexed | Sep 9, 2:32 PM | HTTPS | accepted |
+| 2 | `/glossary` | indexed | Sep 9, 2:33 PM | HTTPS | accepted |
+| 3 | `/perm-rfi-audit` | indexed; referring page `/perm-queue/2024-07` | Sep 7, 2:15 AM | HTTPS | accepted |
+| 4 | `/case-search` | indexed | not captured | HTTPS, **Breadcrumbs 1 valid** | accepted |
+| 5 | `/perm-queue` | indexed | not captured | HTTPS, **Datasets 1 valid** | accepted |
+| 6 | `/perm-denial-risk` | indexed | not captured | HTTPS, **Datasets 1 valid** (none on Aug 31, so it has been re-crawled since) | accepted |
+| 7 | `/lca-wages` | indexed | not captured | HTTPS | accepted |
+| 8 | `/badges` | indexed | not captured | HTTPS | accepted |
+| 9 | `/methodology` | indexed | not captured | HTTPS, Breadcrumbs 1 valid | accepted |
+| 10 | `/debarments` | indexed | not captured | HTTPS | accepted |
+| 11 | `/calculators` | indexed | not captured | HTTPS | accepted |
+| 12 | `/perm-by-state` | indexed | not captured | HTTPS, Datasets 1 valid | **Quota Exceeded** |
+
+Every one of the twelve is indexed, every one carries the sitemap, and the
+only referring page Google reported was on `/perm-rfi-audit`. Every accepted
+request read "URL was added to a priority crawl queue".
+
+## Next run, in order (all verified 200 / one H1 / canonical self / no noindex)
+
+| # | URL | changed |
+|---|---|---|
+| 1 | `/perm-by-state` | h1->h3 fixed; refused today |
+| 2 | `/tools/green-card-timeline` | duplicate heading and level skip fixed |
+| 3 | `/blog` | card heading level |
+| 4 | `/guides` | card heading level |
+| 5 | `/pwd-cases` | Q&A layer collapsed, -29% visible |
+| 6 | `/lca-cases` | Q&A layer collapsed, -27% visible |
+| 7 | `/perm-wages` | Q&A layer collapsed |
+| 8 | `/perm-attorneys` | Q&A layer collapsed |
+| 9 | `/perm-employers` | Q&A layer collapsed |
+| 10 | `/perm-cases` | Q&A layer collapsed |
+| 11 | `/perm-decision-activity` | Q&A layer collapsed |
+| 12 | `/visa-bulletin` | two table cells compressed |
+
+Then the letter pages, per the leverage argument below.
+
+## Driving it on 2026-09-14: two findings that reverse earlier notes
+
+- **The REQUEST INDEXING button fires on a COORDINATE click at (1254, 363)
+  and NOT on a `find` ref click.** Two ref clicks on #2 did nothing
+  (`Indexing requested` count 0, verified by innerText before re-clicking,
+  because a duplicate costs a slot); the coordinate click fired it at once.
+  Earlier notes said the reverse. Read the artefact, not the note.
+- **The Page-indexing chevron click at 2 to 3 s after the 15 s screenshot
+  usually misses**, so last-crawl was captured on #1 to #3 only. It is not
+  gating; the verdict and enhancements are on the first screen.
+- What did hold: type, wait 2 s, ZOOM the bar, and only then Return; a changed
+  `id=` in the tab URL proves the navigation; poll the modal at 28 s and 48 s
+  with a zoom, never with `wait` alone; the wall is a red "Quota Exceeded"
+  modal, and the innerText count of it is the stop signal.
+
+---
+
+
 **Next window opens ~7:40 PM EDT on 2026-09-06.** The quota is ~11/day on a
 **rolling 24 hours from the requests themselves**, so it reopens at the hour it
 was spent. All 11 were used at 7:40 PM on 09-05.
