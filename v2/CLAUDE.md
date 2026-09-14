@@ -4913,10 +4913,22 @@ nav or a DefinedTermSet `@id` lands on the visible row whether or not the
 browser auto-expands it. `splitLead` cuts on ". " so "20 CFR 656.40" is never a
 sentence boundary.
 
-**Pages converted:** `/perm-rfi-audit` (the ten-entry status dictionary),
-`/glossary` (56 terms, 95% prose), `/perm-case-statuses` (91%, with its jump
-nav and schema anchors preserved), `/methodology` (87%; the "every figure,
-traced" register), `/debarments` (the regulation behind the list, on demand).
+**Pages converted, measured after (visible words, and DOM before -> after):**
+
+| page | visible | DOM |
+|---|---|---|
+| `/perm-rfi-audit` | 3,277 -> 2,431 | 3,411 -> 3,505 (glosses are new content) |
+| `/glossary` | 2,825 -> 1,573 | 2,887 -> **2,887, to the word** |
+| `/perm-case-statuses` | 2,583 -> 1,272 | 2,645 -> **2,645, to the word** |
+| `/methodology` | 1,778 -> 1,025 | 1,840 -> 1,885 |
+| `/debarments` | 2,112 -> 1,979 (the rows stay) | 2,174 -> 2,185 |
+
+DOM parity to the word on both dictionary pages is the proof that this was
+collapsing and not deleting. The glossary's first version rendered each lead
+sentence twice (desktop summary, mobile body) and read 3,941; rendering it once
+put the count back to the original. And moving the leads into `<summary>`
+blinded the instrument's prose column to them until `summary` was added to its
+prose tags - it read 80 prose words on a page showing 56 lead sentences.
 
 **Pages checked and NOT converted, with the numbers, because there was no wall
 to collapse:** `/calculators` (539 prose words: a routing table and illustrated
