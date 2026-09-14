@@ -91,7 +91,12 @@ def words(text: str) -> list[str]:
 #
 # So count paragraphs separately from cells. A page whose weight is <td> and
 # <li> is doing its job; a page whose weight is <p> is the one to look at.
-PROSE_TAGS = ("p", "blockquote", "dd")
+# `summary` is here on purpose: collapsing a definition list moves each entry's
+# lead sentence INTO its <summary>, and that sentence is precisely what the
+# reader now faces. Measured on /glossary after the conversion, without it the
+# column read 80 prose words on a page showing 56 lead sentences - blind to
+# exactly the text the change made visible.
+PROSE_TAGS = ("p", "blockquote", "dd", "summary")
 DATA_TAGS = ("td", "th", "li", "option", "figcaption", "caption")
 
 

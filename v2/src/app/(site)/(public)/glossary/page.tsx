@@ -162,7 +162,7 @@ export default function GlossaryPage() {
                         </span>
                       ) : null}
                     </span>{" "}
-                    <span className="hidden text-base leading-relaxed text-foreground/85 sm:block">
+                    <span className="mt-1 block text-base leading-relaxed text-foreground/85 sm:mt-0">
                       {lead}
                     </span>{" "}
                     <CaretDownIcon
@@ -171,10 +171,11 @@ export default function GlossaryPage() {
                     />
                   </summary>{" "}
                   <div className="max-w-3xl pb-4 sm:ml-[calc(14rem+2rem)]">
-                    <p className="text-base leading-relaxed text-foreground/85">
-                      <span className="sm:hidden">{lead} </span>
-                      {rest.join(" ")}
-                    </p>{" "}
+                    {rest.length > 0 ? (
+                      <p className="text-base leading-relaxed text-foreground/85">
+                        {rest.join(" ")}
+                      </p>
+                    ) : null}{" "}
                     {t.cite || (t.see && t.see.length > 0) ? (
                       <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                         {t.cite ? (
