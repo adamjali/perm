@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { FinePrint } from "@/components/data/FinePrint";
 import { Fragment } from "react";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -170,6 +171,9 @@ export default async function DebarmentsPage() {
 
       <section className="mt-10 max-w-3xl">
         <h2 className="font-heading text-xl font-black sm:text-2xl">What a debarment is, and is not</h2>{" "}
+        {/* The regulation behind the list, on demand. The rows above are what
+            a reader came for; this stays in the DOM for search either way. */}
+        <FinePrint summary="The rule, and what this page does not count as one" className="mt-3">
         <p className="mt-3 text-base leading-relaxed text-foreground/85">
           Under 20 CFR 656.31(f), DOL may debar an employer, attorney or agent
           from PERM for one to three years for conduct the regulation lists,
@@ -187,6 +191,7 @@ export default async function DebarmentsPage() {
           Farm Labor Contractor listing is a separate register at the Wage and
           Hour Division and is not reproduced here.
         </p>
+        </FinePrint>
       </section>{" "}
 
       <DataProvenance datasets={["debarments"]} />

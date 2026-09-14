@@ -10,6 +10,7 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
+import { DisclosureList } from "@/components/tools/FaqList";
 import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
@@ -343,32 +344,34 @@ export default async function MethodologyPage() {
           Where a figure needs a rule that isn&apos;t obvious, the rule is here
           rather than in a footnote on the page that uses it.
         </p>
-        <div className="mt-6 divide-y-2 divide-border border-2 border-border bg-card shadow-hard">
-          {TRACE.map((t) => (
-            <div key={t.figure} className="p-6 sm:p-8">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <h3 className="font-heading text-lg font-black leading-tight">
-                  {t.figure}
-                </h3>{" "}
-                <Link
-                  href={t.where.href}
-                  className="font-mono text-xs font-bold uppercase tracking-wider underline underline-offset-2 hover:text-primary"
-                >
-                  {t.where.label}
-                </Link>
-              </div>{" "}
-              <p className="mt-3 text-base leading-relaxed text-foreground/70">
-                {t.how}
-              </p>{" "}
-              <p className="mt-2 text-base leading-relaxed">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Counted over
-                </span>{" "}
-                <span className="text-foreground/70">{t.population}</span>
-              </p>
-            </div>
-          ))}
-        </div>
+        {/* A REGISTER, NOT AN ESSAY. Each figure's rule stays in the DOM for
+            search and opens on demand; the figure and where it lives are the
+            row a reader scans. Measured 2026-09-13: this page was 87% prose. */}
+        <DisclosureList
+          items={TRACE.map((t) => ({
+            term: t.figure,
+            hint: t.where.label,
+            body: (
+              <>
+                <p className="text-base leading-relaxed text-foreground/70">{t.how}</p>{" "}
+                <p className="mt-2 text-base leading-relaxed">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Counted over
+                  </span>{" "}
+                  <span className="text-foreground/70">{t.population}</span>
+                </p>{" "}
+                <p className="mt-2">
+                  <Link
+                    href={t.where.href}
+                    className="font-mono text-xs font-bold uppercase tracking-wider underline underline-offset-2 hover:text-primary"
+                  >
+                    Open {t.where.label}
+                  </Link>
+                </p>
+              </>
+            ),
+          }))}
+        />
       </section>
 
       <section className="mt-12 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">

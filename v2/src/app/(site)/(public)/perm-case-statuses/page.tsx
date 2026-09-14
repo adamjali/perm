@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { stageFromSlug } from "@/components/rfi/stageMeta";
@@ -77,17 +78,41 @@ function Source({ cite, unsourced }: { cite?: { label: string; href: string } | 
   );
 }
 
+/** The first sentence and the rest; ". " so "656.40" is not a boundary. */
+function splitLead(text: string): [string, string] {
+  const i = text.indexOf(". ");
+  return i < 0 ? [text, ""] : [text.slice(0, i + 1), text.slice(i + 2)];
+}
+
+/**
+ * ONE ENTRY, COLLAPSED TO ITS FIRST SENTENCE. Measured 2026-09-13: this page
+ * carried 2,005 visible prose words, 91% of everything on it. The status, its
+ * FLAG string, its live count and one sentence stay visible; the rest, the
+ * clock and the source open on demand and stay in the DOM for every crawler.
+ * The anchor is on the <details> itself: the "Jump to a status" nav and the
+ * DefinedTermSet @ids both point at it, and a fragment jump lands on the
+ * visible row whether or not the browser auto-expands the body.
+ */
 function FlagEntry({ e, anchor, n, asOf }: { e: FlagStatusEntry; anchor: string; n: number | null; asOf: string | null }) {
+  const [lead, rest] = splitLead(e.summary);
   return (
-    <article id={anchor} className="scroll-mt-28 bg-card p-4 sm:p-5">
-      <h3 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-        <span className="font-heading text-base font-black">{e.label}</span>{" "}
-        <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">{e.status}</code>{" "}
-        <Count n={n} asOf={asOf} />
-      </h3>{" "}
-      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/80">{e.summary}</p>{" "}
-      <Source cite={e.cite} unsourced={e.unsourced} />
-    </article>
+    <details id={anchor} className="group scroll-mt-28 bg-card">
+      <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0">
+          <h3 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+            <span className="font-heading text-base font-black">{e.label}</span>{" "}
+            <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">{e.status}</code>{" "}
+            <Count n={n} asOf={asOf} />
+          </h3>{" "}
+          <span className="mt-1 block text-sm leading-relaxed text-foreground/80">{lead}</span>
+        </span>{" "}
+        <CaretDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
+      </summary>{" "}
+      <div className="max-w-3xl border-t-2 border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+        {rest ? <p className="text-sm leading-relaxed text-foreground/80">{rest}</p> : null}{" "}
+        <Source cite={e.cite} unsourced={e.unsourced} />
+      </div>
+    </details>
   );
 }
 
@@ -188,20 +213,27 @@ export default async function PermCaseStatusesPage() {
           <div key={g.kind} className="mt-8">
             <h3 className="font-heading text-xl font-black">{KIND_HEADING[g.kind].title}</h3>{" "}
             <p className="mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">{KIND_HEADING[g.kind].lede}</p>{" "}
-            <dl className="mt-4 grid gap-px border-2 border-border bg-border">
+            <div className="mt-4 grid gap-px border-2 border-border bg-border">
               {g.entries.map((m) => {
                 const anchor = statusAnchor(m.status);
                 const stagePage = stageFromSlug(anchor) ? `/perm-rfi-audit/${anchor}` : undefined;
+                const [lead, rest] = splitLead(m.summary);
                 return (
-                  <div key={m.status} id={anchor} className="scroll-mt-28 bg-card p-4 sm:p-5">
-                    <dt className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
-                      <span className="font-heading text-base font-black">{m.label}</span>{" "}
-                      <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">{m.status}</code>{" "}
-                      <span className="font-mono text-[11px] text-foreground/60">{KIND_LABEL[m.kind]}</span>{" "}
-                      <Count n={permCount(m.status)} asOf={permAsOf} href={stagePage} />
-                    </dt>{" "}
-                    <dd className="mt-2 max-w-3xl">
-                      <p className="text-sm leading-relaxed text-foreground/80">{m.summary}</p>{" "}
+                  <details key={m.status} id={anchor} className="group scroll-mt-28 bg-card">
+                    <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 p-4 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:p-5 [&::-webkit-details-marker]:hidden">
+                      <span className="min-w-0">
+                        <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                          <span className="font-heading text-base font-black">{m.label}</span>{" "}
+                          <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">{m.status}</code>{" "}
+                          <span className="font-mono text-[11px] text-foreground/60">{KIND_LABEL[m.kind]}</span>{" "}
+                          <Count n={permCount(m.status)} asOf={permAsOf} href={stagePage} />
+                        </span>{" "}
+                        <span className="mt-1 block text-sm leading-relaxed text-foreground/80">{lead}</span>
+                      </span>{" "}
+                      <CaretDownIcon className="mt-0.5 h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
+                    </summary>{" "}
+                    <div className="max-w-3xl border-t-2 border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5">
+                      {rest ? <p className="text-sm leading-relaxed text-foreground/80">{rest}</p> : null}{" "}
                       {m.deadline ? (
                         <p className="mt-2 text-sm leading-relaxed">
                           <b className="font-bold">The clock:</b> {m.deadline}
@@ -213,11 +245,11 @@ export default async function PermCaseStatusesPage() {
                         </p>
                       ) : null}{" "}
                       <Source cite={m.cite} unsourced="DOL's FLAG workflow uses the word and no section of 20 CFR 656 defines it." />
-                    </dd>
-                  </div>
+                    </div>
+                  </details>
                 );
               })}
-            </dl>
+            </div>
           </div>
         ))}
       </section>

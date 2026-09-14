@@ -3,7 +3,23 @@ import Link from "next/link";
 import { Fragment } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { CaretDownIcon } from "@phosphor-icons/react/ssr";
+
 import { GLOSSARY, glossaryLetters, glossarySorted } from "@/lib/glossary";
+
+/**
+ * The first sentence, and everything after it.
+ *
+ * Splits on ". " (a period FOLLOWED BY A SPACE), so a section number like
+ * "20 CFR 656.40" inside a sentence is not a boundary. A one-sentence
+ * definition comes back whole as the lead with nothing after it - the entry
+ * still collapses, holding only its citations.
+ */
+function splitLead(definition: string): string[] {
+  const i = definition.indexOf(". ");
+  if (i < 0) return [definition];
+  return [definition.slice(0, i + 1), definition.slice(i + 2)];
+}
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
@@ -117,26 +133,47 @@ export default function GlossaryPage() {
             >
               {g.letter}
             </h2>{" "}
-            <dl>
-              {g.terms.map((t) => (
-                <div
+            {/* A DICTIONARY INDEX, NOT A WALL. Measured 2026-09-13: this
+                page carried 2,386 visible prose words, 95% of everything on
+                it, against 670 for a comparable gov.uk service page. The
+                definitions are the content and stay in the DOM whether open
+                or shut - <details> keeps its body for every crawler - so the
+                first sentence of each is the row a reader scans and the rest
+                opens on demand. The A-Z nav targets the <h2>s above, which
+                sit outside any <details>; the per-term id sits on the
+                <details> itself so a shared link lands on the visible row. */}
+            <div className="divide-y divide-border/40">
+              {g.terms.map((t) => {
+                const [lead, ...rest] = splitLead(t.definition);
+                return (
+                <details
                   key={t.slug}
                   id={t.slug}
-                  className="scroll-mt-28 border-b border-border/40 py-5 sm:grid sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-8"
+                  className="group scroll-mt-28 py-1"
                 >
-                  <dt>
-                    <span className="font-heading text-lg font-black">
-                      {t.term}
+                  <summary className="flex min-h-[44px] cursor-pointer list-none items-start justify-between gap-3 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:grid sm:grid-cols-[14rem_minmax(0,1fr)_1.25rem] sm:gap-x-8 [&::-webkit-details-marker]:hidden">
+                    <span className="min-w-0">
+                      <span className="font-heading text-lg font-black">
+                        {t.term}
+                      </span>{" "}
+                      {t.aka && t.aka.length > 0 ? (
+                        <span className="mt-1 block text-sm text-foreground/60">
+                          {t.aka.join(", ")}
+                        </span>
+                      ) : null}
                     </span>{" "}
-                    {t.aka && t.aka.length > 0 ? (
-                      <span className="mt-1 block text-sm text-foreground/60">
-                        {t.aka.join(", ")}
-                      </span>
-                    ) : null}
-                  </dt>{" "}
-                  <dd className="mt-2 max-w-3xl sm:mt-0">
+                    <span className="hidden text-base leading-relaxed text-foreground/85 sm:block">
+                      {lead}
+                    </span>{" "}
+                    <CaretDownIcon
+                      className="mt-1 h-5 w-5 shrink-0 justify-self-end text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+                      aria-hidden="true"
+                    />
+                  </summary>{" "}
+                  <div className="max-w-3xl pb-4 sm:ml-[calc(14rem+2rem)]">
                     <p className="text-base leading-relaxed text-foreground/85">
-                      {t.definition}
+                      <span className="sm:hidden">{lead} </span>
+                      {rest.join(" ")}
                     </p>{" "}
                     {t.cite || (t.see && t.see.length > 0) ? (
                       <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
@@ -162,10 +199,11 @@ export default function GlossaryPage() {
                         ))}
                       </p>
                     ) : null}
-                  </dd>{" "}
-                </div>
-              ))}
-            </dl>{" "}
+                  </div>
+                </details>
+                );
+              })}
+            </div>{" "}
           </section>
         ))}
       </div>
