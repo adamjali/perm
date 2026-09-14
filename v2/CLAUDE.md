@@ -4876,3 +4876,66 @@ after the rescope. (The diagnostic's line about `pwd.test.ts` "leaving fake
 timers on" was reporting mid-file state, not a leak - the same instrument,
 misread.)
 
+## The design pass: measure prose against data, then collapse the walls (2026-09-13)
+
+Adam: *"the MAIN thing is just not so much text plz... visual heavy not word
+heavy, no fluff"*, and then, when I proposed leaving four pages alone: *"no you
+shouldn't leave anything alone check and fix everything plz."*
+
+**"Too much text" has no scale until something known-good is put through the
+same instrument.** `scripts/audit_visible_text.py` counts, per page, the words
+a reader FACES (excluding the body of any closed `<details>`), the words in the
+DOM (what a crawler reads), and splits the visible ones into PROSE (`<p>`,
+`<dd>`) and DATA (`<td>`, `<li>`). Controls, same instrument: gov.uk's
+visas-and-immigration browse page **670** words, stripe.com's payments docs
+**470**, react.dev/learn **2,087**. Our own best pages already sat at parity
+(`/about` 496, `/lca-cases` 653, `/tools` 715).
+
+**The prose/data split is what turns a word count into a decision.**
+`/debarments` reads as one of the wordiest pages on the site at 2,112 visible
+words and is **16% prose** - 105 real debarment rows. `/glossary` at 2,825 is
+**95% prose**. Those need opposite responses, and "trim the long pages"
+without the distinction deletes the data. The split was wrong twice before it
+was right (a backwards nesting test double-counted a `<p>` inside a `<td>`;
+overlapping prose tags then reported 4,692 prose words on a page with 2,825
+visible ones, impossible on its face). It uses a depth mask now.
+
+**What got collapsed, and what makes that safe.** Every list-of-definitions
+wall became native `<details>`: the term, its status string, its live count
+and the FIRST SENTENCE stay visible, the rest opens on demand. Measured on
+`/perm-rfi-audit`: visible 3,277 -> 2,431, DOM 3,411 -> **3,505** - less for a
+reader and MORE for search, because `<details>` keeps its body in the DOM open
+or shut. `collapsed-dictionaries.test.ts` and `glossaryGloss.test.ts` assert
+the three things that make it safe rather than assuming them: the long-form
+field must still RENDER (trimming it is deleting, not collapsing), no entry may
+be `open`, and an anchor id stays on the `<details>` element so a jump from a
+nav or a DefinedTermSet `@id` lands on the visible row whether or not the
+browser auto-expands it. `splitLead` cuts on ". " so "20 CFR 656.40" is never a
+sentence boundary.
+
+**Pages converted:** `/perm-rfi-audit` (the ten-entry status dictionary),
+`/glossary` (56 terms, 95% prose), `/perm-case-statuses` (91%, with its jump
+nav and schema anchors preserved), `/methodology` (87%; the "every figure,
+traced" register), `/debarments` (the regulation behind the list, on demand).
+
+**Pages checked and NOT converted, with the numbers, because there was no wall
+to collapse:** `/calculators` (539 prose words: a routing table and illustrated
+tool cards), `/perm-queue` (738; three chart sections with a two-sentence lede
+each and 363 words already behind FinePrint), `/perm-denial-risk` (909; chart
+captions of 15-47 words each - its defect was two duplicated headings, fixed),
+`/case-search` (531; four caveats a searcher needs, with the database-index
+explanation already behind `<details>`), and `/` (446; the brand-query page
+whose title is FROZEN to 2026-11-07 and whose About and FAQ were rebuilt on
+purpose on Sep 7). Cutting further on these means cutting the captions
+themselves, which is a different instruction.
+
+**The heading outline is part of the same job.** `scripts/audit_headings.py`
+walks the sitemap (not a hand-kept list - the first run against one I typed
+from memory reported two 404s that were my own guessed paths) and found 7 of
+165 pages with a finding: the same eight stage names as headings twice on
+`/perm-rfi-audit`, "By offered wage" appearing twice over two different
+quantities on `/perm-denial-risk`, and h1->h3 skips on `/blog`, `/guides`,
+`/perm-by-state` and `/tools/green-card-timeline`. A row label beside a number
+is a `<span>`, not an `<h4>`; a card title's level is a prop, because it
+genuinely differs between an index page and a "Related posts" strip.
+
