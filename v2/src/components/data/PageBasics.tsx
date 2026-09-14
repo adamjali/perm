@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 import type { ReactNode } from "react";
 
 /**
@@ -380,14 +381,28 @@ export function PageBasics({ page }: { page: keyof typeof BASICS | string }) {
       <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
         The basics
       </p>{" "}
-      <div className="mt-4 grid grid-cols-1 gap-6 [&>*]:min-w-0 md:grid-cols-2">
+      {/* QUESTIONS VISIBLE, ANSWERS ON DEMAND. This is the answer-engine
+          layer: questions phrased the way people search, each an <h3> so the
+          outline carries them, with the answer in the DOM whether open or
+          shut - native <details> keeps its body for every crawler, which is
+          the only reason collapsing it is safe. Measured 2026-09-14: as open
+          prose it was 100 to 250 words on each of twelve pages, and on the
+          chart pages it was most of what remained after the captions were
+          cut. The <h3> sits INSIDE the <summary> so the heading survives. */}
+      <div className="mt-4 divide-y-2 divide-border border-2 border-border bg-card shadow-hard">
         {entries.map((e) => (
-          <div key={e.q}>
-            <h3 className="font-heading text-lg font-black">{e.q}</h3>{" "}
-            <p className="mt-2 max-w-prose text-base leading-relaxed text-foreground/70">
+          <details key={e.q} className="group">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
+              <h3 className="font-heading text-base font-bold">{e.q}</h3>{" "}
+              <CaretDownIcon
+                className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none"
+                aria-hidden="true"
+              />
+            </summary>{" "}
+            <p className="max-w-prose border-t-2 border-border/40 px-5 pb-4 pt-3 text-base leading-relaxed text-foreground/70 sm:px-6">
               {e.a}
             </p>
-          </div>
+          </details>
         ))}
       </div>
     </section>

@@ -256,9 +256,9 @@ export default function CalculatorsPage() {
           PERM calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          {TOOLS.length} calculators that answer about your case, and{" "}
-          {EXPLORERS.length} explorers that describe the field you filed into.
-          All free, on data the government publishes.
+          {TOOLS.length} calculators about your case, {EXPLORERS.length}{" "}
+          explorers about the field you filed into. Free, on the
+          government&apos;s own data.
         </p>
       </header>
 

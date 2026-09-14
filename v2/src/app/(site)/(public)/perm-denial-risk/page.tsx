@@ -500,8 +500,7 @@ export default async function PermDenialRiskPage() {
               ) : null}
               {wagePeak && wagePeak.hiddenByCoarse ? (
                 <p className="mt-3 text-sm leading-relaxed text-foreground/60">
-                  Where you draw the bands changes the picture. The highest rate
-                  in the data is <strong>{wagePeak.fine.denialRate}%</strong> at{" "}
+                  The highest rate in the data is <strong>{wagePeak.fine.denialRate}%</strong> at{" "}
                   {wagePeak.fine.bucket.toLowerCase()}, on{" "}
                   {wagePeak.fine.decided.toLocaleString("en-US")} decided cases.
                   Averaged into five wide bands it disappears inside a bucket
@@ -566,8 +565,8 @@ export default async function PermDenialRiskPage() {
                 />
               </div>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-foreground/60">
-                Only occupations with the most cases on record, so a rare job
-                isn’t here. Volume, median wage and processing days sit on the{" "}
+                Only the occupations with the most cases; a rare job isn’t here.
+                Volume, median wage and processing days sit on the{" "}
                 <Link
                   href="/perm-wages"
                   className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -629,8 +628,8 @@ export default async function PermDenialRiskPage() {
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Filing a case?</h2>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-            None of these is a reason to file differently than the regulations
-            require, only to document what applies. The{" "}
+            None of these changes what the regulations require, only what to
+            document. The{" "}
             <Link href="/tools/perm-deadline-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               deadline calculator
             </Link>{" "}
