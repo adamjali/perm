@@ -4949,6 +4949,32 @@ and they are cuts, not collapses - said so in the commit. The next cut on the
 two -2% pages is captions under 30 words or the PageBasics Q&A layer, and that
 is a decision, not a defect.
 
+**The last cut, on the third instruction** (*"continue and finish plz"*): the
+PageBasics Q&A layer collapses AT THE COMPONENT - each question an `<h3>`
+inside a native `<details>` summary, so the outline carries it and the answer
+is in the DOM for every crawler - across all twelve pages that render it, and
+the captions under 30 words on `/perm-denial-risk` and `/calculators` are
+TIGHTENED, not collapsed (a twenty-word caption behind a toggle is worse than
+the caption). Production, visible before -> after, DOM before -> after:
+
+| page | visible | DOM |
+|---|---|---|
+| `/case-search` | 790 -> 462 (-42%) | 1,026 -> 1,017 |
+| `/pwd-cases` | 626 -> 444 (-29%) | 715 -> **715** |
+| `/lca-cases` | 568 -> 413 (-27%) | 653 -> **653** |
+| `/perm-rfi-audit` | 3,277 -> 2,332 (-29%) | 3,411 -> 3,505 |
+| `/perm-queue` | 1,186 -> 956 (-19%) | 1,549 -> 1,524 |
+| `/calculators` | 1,024 -> 913 (-11%) | 1,086 -> **1,086** |
+| `/perm-denial-risk` | 2,336 -> 2,276 (-3%) | 2,457 -> 2,431 |
+
+Three pages hold their DOM to the word; the small drops are the caption
+tightenings and the rewritten ledes, ten to twenty-five words each, and they
+are cuts. `/perm-denial-risk` moves 3% because 1,241 of its words are table
+rows and its captions were already under 30 words - what is left there is the
+data. No test asserted on PageBasics' old markup; the collapse is verified as
+SERVED by counting `<details>` inside each page's "The basics" block in
+production (7 or 8 per page, none open).
+
 **MEASURE THE PRODUCT, NOT THE DEV SERVER.** On dev, `/case-search` read 1,108
 visible / 1,495 DOM after the cut - UP from 790. Production, same instrument,
 same minute: 630 / 1,017. Dev mode renders extra text on that page (the
