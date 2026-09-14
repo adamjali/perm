@@ -133,7 +133,7 @@ dependencies.**
 | prevailing wage requests, live (`P-100-`) | **DOL** batch API, same counter as PERM | daily pending sweep; discovery via the unified walk; weekly rolling 180-day re-check; backfill self-chains |
 | prevailing wage DETERMINATIONS (the wage) | **DOL** quarterly PW disclosure files, FY2024-FY2026 | monthly on the 10th, `--fy` for history |
 | H-1B LCAs, live (`I-200-`, `I-203-`) | **DOL** batch API, same counter | daily pending sweep (0 LCAs pend); discovery via the unified walk; weekly rolling 90-day re-check |
-| H-1B LCAs, decided (the wage offered) | **DOL** quarterly LCA disclosure files | monthly on the 10th |
+| H-1B LCAs, decided (the wage offered) | **DOL** quarterly LCA disclosure files; **per-quarter files, history FY2022 Q4 to FY2026 Q3 loaded 2026-09-14** (2.38M rows) | monthly on the 10th |
 
 **The corpus grows itself (2026-08-28):** a case-number lookup that misses
 asks DOL live and records the answer; a nightly prober walks the sequential

@@ -4529,10 +4529,11 @@ worksite and the SOC that the live endpoint never returns. **Discover the URL,
 never construct it** - DOL moved the current-year files to `/media/` while the
 archive stayed under `/sites/dolgov/files/ETA/oflc/pdfs/`.
 
-Not done, because it is a sustained load on DOL and a real write budget
-(118,580 rows took 760 seconds and ~13 minutes of runner time for ONE quarter),
-and because it is a decision about how much history the product wants rather
-than a defect to fix.
+**DONE 2026-09-13/14 ("yes full all").** Every LCA quarter from FY2022 Q4
+through FY2026 Q3 is loaded by `--name`, 51 months with zero gaps,
+`lca_cases` at 2,381,382 rows. Each quarter cost roughly 13 minutes of runner
+time and a real slice of the write budget, which is why it was a decision and
+not a default. The freshness guard below is what that load broke first.
 
 ## permtrack is NOT off, I read the wrong endpoint (2026-09-13)
 
@@ -4992,3 +4993,73 @@ quantities on `/perm-denial-risk`, and h1->h3 skips on `/blog`, `/guides`,
 is a `<span>`, not an `<h4>`; a card title's level is a prop, because it
 genuinely differs between an index page and a "Related posts" strip.
 
+## Glued text, fourth container: `<th>`, SVG `<text>`, injected markup, toggle rows (2026-09-13)
+
+The rendered audit against production found 99 pairs the source gate passed,
+in four shapes the earlier sweeps never touched:
+
+| shape | fix |
+|---|---|
+| `<th>` header cells (every `<td>` had been fixed, no `<th>` had) | `{h}{" "}` inside the cell, same as `<td>` |
+| SVG `<text>` in the badge renderer, one badge running into the next | a trailing space inside the `<text>` element |
+| `dangerouslySetInnerHTML` of a badge SVG on `/badges` | `__html: \`${v.svg} \`` |
+| a row of toggle `<button>`s (chart mode, table mode) | `{children}{" "}` in the button |
+
+39 cells across 18 files, then **0 glued on 74 of 74 production pages** by
+`audit_glued_text.py` over the sitemap. The source gate cannot see any of
+these (a header cell and a data cell are the same shape to it; SVG and
+injected strings are not JSX). The rendered audit is the authority; run it
+against PRODUCTION, because dev renders `/case-search` with extra copy and
+reports a number the live site does not have.
+
+## The dictionaries collapse; the words stay (2026-09-13)
+
+Adam: "not so much text... visual heavy". Five reference pages (`/glossary`,
+`/perm-case-statuses`, `/perm-rfi-audit`'s stage glossary, `/methodology`,
+`/debarments`) and the `PageBasics` Q&A layer on twelve data pages now render
+each entry as a native `<details>`: the lead sentence in `<summary>`, the rest
+in the body. Measured on production after deploy:
+
+| page | visible before | after | DOM (unchanged) |
+|---|---|---|---|
+| `/glossary` | 2,825 | 1,573 | 2,887 |
+| `/perm-case-statuses` | 2,583 | 1,272 | 2,645 |
+| `/perm-rfi-audit` | 3,277 | 2,332 | |
+| `/methodology` | 1,778 | 1,025 | |
+| `/case-search` | 790 | 462 | |
+
+**Why `<details>` and not a JS disclosure**: the text is in the HTML whether
+open or shut, so Google (textContent-shaped) and the Cmd+K palette lose
+nothing, and the DOM word count is the proof: it matched the audit's
+prediction to the word. Rules: the anchor `id` sits on the `<details>`, so
+`/glossary#pwd` still lands; a `<h3>` inside `<summary>` keeps the outline
+(the headings audit reads it); the lead renders ONCE (the first pass rendered
+it in both halves, DOM 3,941 instead of 2,887, caught by the count);
+`splitLead()` splits on `". "` because "20 CFR 656.40" contains a period.
+`DisclosureList` in `FaqList.tsx` is the shared shape; nine hand-rolled
+`<details>` remain and could migrate to it.
+
+`scripts/audit_visible_text.py` measures visible against DOM and prose
+against data (a depth mask, because overlapping tags double-count: its first
+version reported 4,692 prose words on a 2,825-word page, and the impossible
+arithmetic is what exposed it). `scripts/audit_headings.py` reads the sitemap,
+re-bases child sitemaps that point at localhost, and found 7 outline defects
+across 165 pages. A hand-typed URL list in its first version invented two 404s.
+
+## Rich Results and DefinedTermSet: what is and is not a rich-result type (2026-09-14)
+
+Google's Rich Results test on `/perm-case-statuses`: **2 valid items, 0
+errors**, the missing `aggregateRating` is optional and deliberately absent (a
+self-serving rating on a reference page would be exactly the markup the
+2026-08-13 scope lesson warns about). `DefinedTermSet` is NOT a rich-result
+type, so the test says nothing about it; validate it by fetching the page and
+asserting every `DefinedTerm.url` anchor resolves to a `<details id=...>` in
+the same HTML (32 of 32 did). `validator.schema.org` cannot be driven through
+the extension (hash navigation, see the global ladder); curl and parse.
+
+## README figures, and `vercel ls` (2026-09-13)
+
+The README claimed 306 test files and a cadence that had changed. Every count
+in it now matches `pnpm test:run`'s baseline and the CI badge reads the test
+workflow's own status. And `vercel ls | grep -m1 perm-` matches the HEADER
+row, not the newest deployment; skip the first line or match the URL shape.
