@@ -5063,3 +5063,62 @@ The README claimed 306 test files and a cadence that had changed. Every count
 in it now matches `pnpm test:run`'s baseline and the CI badge reads the test
 workflow's own status. And `vercel ls | grep -m1 perm-` matches the HEADER
 row, not the newest deployment; skip the first line or match the URL shape.
+
+## The health check went red for a condition nobody can act on (2026-09-15)
+
+The due-check routine reported the ingest health check red for four days, 8 runs
+in a row, and pushed a notification. Cause: `processing-times` read as of
+2026-08-31, 14 days against a 10-day budget. **That date is DOL's own stamp.**
+`processing-times-ingest` ran every day, and every run logged "DOL as-of
+2026-08-31 is unchanged"; DOL moved the figure 08-28 -> 08-31 on Sep 5 and has
+held it since, longer than its usual roughly-weekly rhythm. `check_ingest_health.py`
+already prints "THE SOURCE HAS NOT REPUBLISHED for: processing-times... check
+the agency's page before touching any code" for exactly this (added Sep 13),
+and still returns 1 for it.
+
+**Two changes worth making, neither applied yet:**
+- Source-paused should be a printed warning up to a longer second budget (say
+  three times the first), and a failure only past that; our-ingest-stopped
+  stays a failure at once. Same text, different exit codes.
+- The routine should quote the check's own verdict line instead of linking the
+  Actions log. That is a paragraph in its prompt, standing config, so it waits
+  for Adam's go. Its date format also wants `%A`: it printed "Sun Sep 14" on a
+  Monday because the model supplied a weekday the command never printed.
+
+**And the three real failures in the same window, already fixed.** The
+OFLC-announcements and WARN steps added to `processing-times-ingest.yml` on Sep 8
+lacked the `working-directory: v2` every sibling step carries, ran from the repo
+root, and died on "can't open file" at 3:00 AM on Sep 10, 11 and 12. Fixed in
+`566ff3a6` (Sep 12, 8:09 AM EDT). **The `|| python3 scripts/record_ingest_failure.py`
+fallback on the same line died the same way**, so nothing was recorded and the
+health check's failed-runs line could not see three days of failures. A recorder
+that shares the step's working directory shares its failure mode.
+
+## Who has actually been sent mail, and how to answer it (2026-09-14)
+
+Two records, two windows. **Resend's `list-emails`** is the record of what left:
+100 a page, newest first, five days took two pages; every row carries recipient,
+subject, status and time. **The alert tables' own stamps** are the all-time
+record per subscriber: `caseStatusAlerts.lastAlertSentAt` (+ `alertCount`),
+`dolQueueAlerts.notifiedAt`, `bulletinAlerts.lastAlertSentAt`,
+`newsletterIssues.sentCount`, and `userProfiles.reengagementNudgeSentAt` (keyed
+by user id; join `users` for the address). Read them with
+
+```bash
+npx convex data caseStatusAlerts --prod --limit 5000 --format jsonl
+```
+
+which is read-only and needs no function. The two agreed exactly on the overlap
+(6 status alerts in the window, 6 in the table).
+
+Measured 2026-09-14: **147 sends in five days, all delivered**, Thu 42 / Fri 20 /
+Sat 9 / Sun 11 / **Mon 65**, against the shared 100-a-day cap; Monday carries the
+52 weekly summaries plus the 10 AM deadline reminders and the 7 AM/7 PM alert
+sweeps, and the ledger's worst case of 70 held. All-time subscriber-facing sends:
+**9 case-status alerts (every one CERTIFIED, 3 of them LCAs), 2 queue-month
+alerts, 0 bulletin alerts (7 confirmed live, no bulletin has moved since), 0
+digests (flag off, one preview issue)** against 83 / 17 / 8 / 17 subscriptions.
+The LCA path is proven end to end in production: confirmed Sep 10, told of
+certification Sep 14. One leak worth closing: the inbound webhook forwards spam
+("casino leads for sale") to the owner's Gmail through the same Resend quota.
+
