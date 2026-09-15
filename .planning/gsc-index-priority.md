@@ -1,63 +1,61 @@
 # GSC indexing priority list
 
-**Run of 2026-09-14, 1:44 AM to 2:12 AM EDT: 11 accepted, the 12th refused.**
-The cap today was 11, the same as 2026-09-05. The rolling window reopens at
-roughly **1:45 AM EDT on 2026-09-15**; do not start before then.
+**Run of 2026-09-15, 9:10 AM to 9:48 AM EDT: 11 accepted, the 12th refused.**
+The cap was 11 for the third run running (Sep 5, Sep 14, Sep 15). The window
+reopens at roughly **9:10 AM EDT on 2026-09-16**; do not start before then.
 
-What each inspection SAID before the request, which is the part worth keeping:
+| # | URL | Google's verdict | enhancements | result |
+|---|---|---|---|---|
+| 1 | `/perm-by-state` | indexed | HTTPS, Datasets 1 valid | accepted |
+| 2 | `/tools/green-card-timeline` | indexed | HTTPS | accepted |
+| 3 | `/blog` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
+| 4 | `/guides` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
+| 5 | `/pwd-cases` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
+| 6 | `/lca-cases` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
+| 7 | `/perm-wages` | indexed | HTTPS, Datasets 1 valid | accepted |
+| 8 | `/perm-attorneys` | indexed | HTTPS, Datasets 1 valid | accepted |
+| 9 | `/perm-employers` | indexed | HTTPS, Datasets 1 valid | accepted |
+| 10 | `/perm-cases` | indexed | HTTPS, Datasets 1 valid | accepted |
+| 11 | `/perm-decision-activity` | indexed | HTTPS, Datasets 1 valid | accepted |
+| 12 | `/visa-bulletin` | indexed | HTTPS, Breadcrumbs 1 valid | **Quota Exceeded** |
 
-| # | URL | Google's verdict | last crawl | enhancements | result |
-|---|---|---|---|---|---|
-| 1 | `/perm-case-statuses` | indexed | Sep 9, 2:32 PM | HTTPS | accepted |
-| 2 | `/glossary` | indexed | Sep 9, 2:33 PM | HTTPS | accepted |
-| 3 | `/perm-rfi-audit` | indexed; referring page `/perm-queue/2024-07` | Sep 7, 2:15 AM | HTTPS | accepted |
-| 4 | `/case-search` | indexed | not captured | HTTPS, **Breadcrumbs 1 valid** | accepted |
-| 5 | `/perm-queue` | indexed | not captured | HTTPS, **Datasets 1 valid** | accepted |
-| 6 | `/perm-denial-risk` | indexed | not captured | HTTPS, **Datasets 1 valid** (none on Aug 31, so it has been re-crawled since) | accepted |
-| 7 | `/lca-wages` | indexed | not captured | HTTPS | accepted |
-| 8 | `/badges` | indexed | not captured | HTTPS | accepted |
-| 9 | `/methodology` | indexed | not captured | HTTPS, Breadcrumbs 1 valid | accepted |
-| 10 | `/debarments` | indexed | not captured | HTTPS | accepted |
-| 11 | `/calculators` | indexed | not captured | HTTPS | accepted |
-| 12 | `/perm-by-state` | indexed | not captured | HTTPS, Datasets 1 valid | **Quota Exceeded** |
+Every one of the twelve is indexed. Across the two runs, all 23 queued pages
+are indexed and 22 have a fresh request in; only `/visa-bulletin` remains.
 
-Every one of the twelve is indexed, every one carries the sitemap, and the
-only referring page Google reported was on `/perm-rfi-audit`. Every accepted
-request read "URL was added to a priority crawl queue".
-
-## Next run, in order (all verified 200 / one H1 / canonical self / no noindex)
+## Next run, in order
 
 | # | URL | changed |
 |---|---|---|
-| 1 | `/perm-by-state` | h1->h3 fixed; refused today |
-| 2 | `/tools/green-card-timeline` | duplicate heading and level skip fixed |
-| 3 | `/blog` | card heading level |
-| 4 | `/guides` | card heading level |
-| 5 | `/pwd-cases` | Q&A layer collapsed, -29% visible |
-| 6 | `/lca-cases` | Q&A layer collapsed, -27% visible |
-| 7 | `/perm-wages` | Q&A layer collapsed |
-| 8 | `/perm-attorneys` | Q&A layer collapsed |
-| 9 | `/perm-employers` | Q&A layer collapsed |
-| 10 | `/perm-cases` | Q&A layer collapsed |
-| 11 | `/perm-decision-activity` | Q&A layer collapsed |
-| 12 | `/visa-bulletin` | two table cells compressed |
+| 1 | `/visa-bulletin` | two table cells compressed; refused today |
+| 2 | `/perm-employers/browse/a` | A-Z browse cap and per-kind note |
+| 3 | `/perm-wages/browse/a` | A-Z browse cap and per-kind note |
+| 4 | `/perm-attorneys/browse/a` | A-Z browse cap and per-kind note |
+| 5 | `/perm-case-status` | stage-aware estimate lead, one answer |
+| 6 | `/tools/perm-timeline-estimator` | queue-advance model leads, an actual day |
+| 7 | `/perm-queue/2025-11` | the month DOL is adjudicating |
+| 8 | `/for-attorneys` | SSR visibility fix |
+| 9 | `/about` | new page, Sep 7 |
+| 10 | `/changelog/corrections` | corrections log moved here |
+| 11 | `/layoffs` | 176 glued cells fixed |
 
-Then the letter pages, per the leverage argument below.
+## Driving it on 2026-09-15: four measured facts
 
-## Driving it on 2026-09-14: two findings that reverse earlier notes
-
-- **The REQUEST INDEXING button fires on a COORDINATE click at (1254, 363)
-  and NOT on a `find` ref click.** Two ref clicks on #2 did nothing
-  (`Indexing requested` count 0, verified by innerText before re-clicking,
-  because a duplicate costs a slot); the coordinate click fired it at once.
-  Earlier notes said the reverse. Read the artefact, not the note.
-- **The Page-indexing chevron click at 2 to 3 s after the 15 s screenshot
-  usually misses**, so last-crawl was captured on #1 to #3 only. It is not
-  gating; the verdict and enhancements are on the first screen.
-- What did hold: type, wait 2 s, ZOOM the bar, and only then Return; a changed
-  `id=` in the tab URL proves the navigation; poll the modal at 28 s and 48 s
-  with a zoom, never with `wait` alone; the wall is a red "Quota Exceeded"
-  modal, and the innerText count of it is the stop signal.
+- **The `browser_batch` ceiling is about 50 seconds of waits, not "about two
+  minutes."** A batch with 68 s of waits timed out and reported NOTHING, and so
+  did a 75 s merged shape (request + poll + dismiss + next inspection). The 48 s
+  shape (click, 28 s, zoom, 20 s, zoom, JS count) worked every time. When a
+  batch times out, the request has usually landed: read the state (JS counts,
+  a zoom) before touching anything.
+- **A heavy page's live test runs past 48 s.** `/guides`, `/perm-wages`,
+  `/perm-decision-activity` and `/visa-bulletin` were still "Testing" at the
+  second zoom. Poll again in a fresh batch, never re-click.
+- **The modal can paint a beat after the zoom.** `/perm-cases` read "no modal,
+  requested 0" at 48 s and showed "Indexing requested" one call later. The
+  durable reads are the innerText count and the button row flipping to
+  "REQUEST AGAIN"; a single zoom is not a verdict either way.
+- **The quota refusal can come AFTER the live test.** Yesterday it was
+  immediate; today `/visa-bulletin` ran its live test for ~50 s and then
+  answered "Quota Exceeded". So "still testing" does not mean "not refused".
 
 ---
 
