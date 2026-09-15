@@ -13,9 +13,11 @@ or a token expired, the site would keep serving the last good numbers under
 their own as-of date and NOTHING would tell us. That is worse than an outage,
 because an outage is visible.
 
-This runs in CI on a schedule and EXITS NON-ZERO when any dataset is past its
-own declared budget, which turns the run red and triggers GitHub's own
-notification. No new alerting infrastructure, no extra credential.
+This runs in CI on a schedule and EXITS NON-ZERO when OUR ingest has stopped
+fetching, or when a source has been silent past SOURCE_PAUSED_GRACE times its
+budget; a source that is merely late is a printed `::warning::`, not a red
+run (2026-09-15, below). Red turns on GitHub's own notification. No new
+alerting infrastructure, no extra credential.
 
 TWO CHECKS, BECAUSE FRESHNESS ALONE MISSES A RUN THAT FAILED LATE. A sweep
 stamps `data_freshness` when its own work is done and then writes several
@@ -93,6 +95,12 @@ RUN_FAILURE_WINDOW_DAYS = 3
 # sweep in `timeout` set below the job cap precisely so a hang exits 124 and
 # lands as `failed`.
 BROKEN_STATUSES = frozenset({"failed", "partial"})
+# The gap sweep used to record `partial` when it stopped on its own request
+# cap, and this check painted that BROKEN (2026-09-15). The sweep records `ok`
+# now and names the cap in its note; this phrase must stay byte-identical to
+# `CAP_NOTE` in sweep_serial_gaps.py (test_ingest_health pins it), so that a
+# row written by the older code is read for what it was: a designed stop.
+SWEEP_CAP_NOTE = "stopped on the request cap"
 
 
 def check_runs(db) -> int:
@@ -150,8 +158,9 @@ def check_runs(db) -> int:
     for key in sorted(newest):
         status, note, finished = newest[key]
         age_h = (NOW_MS - finished) / 3_600_000
-        broken = status in BROKEN_STATUSES
-        verdict = "BROKEN" if broken else ("ok" if status == "ok" else status)
+        capped = status == "partial" and SWEEP_CAP_NOTE in note
+        broken = status in BROKEN_STATUSES and not capped
+        verdict = "BROKEN" if broken else ("ok (capped)" if capped else ("ok" if status == "ok" else status))
         print(f"{key:38s} {status:8s} {age_h:5.1f}h ago  {verdict}")
         if broken:
             bad.append((key, status, note))
@@ -184,6 +193,35 @@ def run_key(script) -> str:
 # days. A Friday filing first seen after a Monday holiday is 4. Five is the
 # smallest budget that never fires on a calendar.
 FRONTIER_MAX_DAYS = 5
+
+# A DATASET IS STALE FOR TWO OPPOSITE REASONS AND THEY NEED TWO EXIT CODES.
+# Measured 2026-09-15: this check sat red for four days and paged the owner
+# because DOL had not republished its processing-times figure for 14 days
+# against a 10-day budget. Our ingest ran every day and logged "DOL as-of
+# unchanged"; the text below even said so, and the run still exited 1. A red
+# light everyone learns to ignore is how the September I-485 outage went
+# unread for four days. So: our-ingest-stopped fails at once; the-source-is-
+# late is a `::warning::` until it has been silent for SOURCE_PAUSED_GRACE
+# times its budget, when the page may have moved or the parser may be reading
+# a stale element, and a human should look.
+SOURCE_PAUSED_GRACE = 3
+
+
+def freshness_verdict(stale):
+    """Split stale rows into (failing, watching).
+
+    A row is (dataset, age_days, budget_days, source); the ingest-dead rows
+    carry the ` (has not RUN)` suffix the loop below appends. Failing means
+    exit 1; watching means a printed warning and a green run.
+    """
+    failing, watching = [], []
+    for row in stale:
+        dataset, age, budget, _source = row
+        if dataset.endswith("(has not RUN)") or age > budget * SOURCE_PAUSED_GRACE:
+            failing.append(row)
+        else:
+            watching.append(row)
+    return failing, watching
 FRONTIER_DOC = "discovery_frontier"
 # Consecutive discovery walks that inserted nothing before that is an alarm.
 # A three-day weekend is three quiet walks at most.
@@ -627,19 +665,31 @@ def main() -> int:
         # which is a 20-minute detour through Actions logs to learn nothing.
         # `(has not RUN)` is appended above only for the fetched_at case, so
         # the two are already distinguishable here.
-        not_run = [d for d, *_ in stale if d.endswith("(has not RUN)")]
-        source_paused = [d for d, *_ in stale if not d.endswith("(has not RUN)")]
+        failing, watching = freshness_verdict(stale)
+        not_run = [d for d, *_ in failing if d.endswith("(has not RUN)")]
+        silent = [d for d, *_ in failing if not d.endswith("(has not RUN)")]
         if not_run:
             print(f"\nOUR INGEST HAS STOPPED for: {', '.join(not_run)}. It has not "
                   "fetched in twice its data budget, so this is ours to fix.")
-        if source_paused:
-            print(f"\nTHE SOURCE HAS NOT REPUBLISHED for: {', '.join(source_paused)}. "
+        if watching:
+            names = ", ".join(d for d, *_ in watching)
+            print(f"\nTHE SOURCE HAS NOT REPUBLISHED for: {names}. "
                   "Our ingest is still fetching (it has a recent run above); the "
                   "agency's own as-of stamp has not moved. Check the agency's page "
                   "before touching any code - the site is meanwhile serving the last "
                   "good numbers under their own as-of date, which is honest but "
-                  "invisible.")
-        return 1
+                  "invisible. This is a WARNING, not a failure, until "
+                  f"{SOURCE_PAUSED_GRACE}x the budget.")
+            for d, age, budget, _src in watching:
+                print(f"::warning::{d} is {age} days old against a {budget}-day "
+                      "budget; the agency has not republished and our ingest is "
+                      f"fine. Becomes a failure at {budget * SOURCE_PAUSED_GRACE} days.")
+        if silent:
+            print(f"\nTHE SOURCE HAS BEEN SILENT PAST {SOURCE_PAUSED_GRACE}x ITS BUDGET "
+                  f"for: {', '.join(silent)}. Long enough that the page may have moved "
+                  "or the parser may be reading a stale element: a human should look.")
+        if failing:
+            return 1
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
     if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad

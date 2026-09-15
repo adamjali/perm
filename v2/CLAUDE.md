@@ -5076,14 +5076,37 @@ already prints "THE SOURCE HAS NOT REPUBLISHED for: processing-times... check
 the agency's page before touching any code" for exactly this (added Sep 13),
 and still returns 1 for it.
 
-**Two changes worth making, neither applied yet:**
-- Source-paused should be a printed warning up to a longer second budget (say
-  three times the first), and a failure only past that; our-ingest-stopped
-  stays a failure at once. Same text, different exit codes.
-- The routine should quote the check's own verdict line instead of linking the
-  Actions log. That is a paragraph in its prompt, standing config, so it waits
-  for Adam's go. Its date format also wants `%A`: it printed "Sun Sep 14" on a
-  Monday because the model supplied a weekday the command never printed.
+**Both halves are fixed (2026-09-15, 9:45 to 10:00 AM EDT), and a third defect
+of the same family came out of the fix:**
+- `freshness_verdict()` splits a stale row into failing and watching: our
+  ingest not running fails at once; a source that has not republished is a
+  printed `::warning::` (visible in the run summary) until it has been silent
+  for `SOURCE_PAUSED_GRACE` (3) times its budget, then it fails, because by
+  then the page may have moved or the parser may be reading a stale element.
+  Pinned by `check_freshness_verdict` in the test, probed at grace 0, at a
+  dropped ingest-dead branch, and at an off-by-one boundary: each flips
+  exactly the assertion it targets.
+- **The gap sweep was the second red.** `sweep_serial_gaps.py` recorded
+  `partial` when it stopped on its own 600-request cap, and `check_runs`
+  counts every `partial` as BROKEN, so a night with many holes (Sep 15: 2,998
+  probed, 2,113 found) painted the check red for doing its job. It records
+  `ok` now and names the cap in its note (`CAP_NOTE`, the WARN ingest's
+  browser-only precedent); the reader tolerates an older `partial` carrying
+  that exact phrase (`SWEEP_CAP_NOTE`, pinned byte-identical by a test that
+  reads the sweep's source). Today's row was re-recorded with a note saying
+  why. Live run after both fixes, DOL still late and the sweep still capped:
+  **exit 0**, one warning, "All datasets within their declared budgets".
+- **The due-check routine reads the verdict now.** Its prompt downloads the
+  newest run's log (public, no token) and prints each verdict line from its
+  keyword onward, classifies THE SOURCE HAS NOT REPUBLISHED and a cap stop as
+  watch items, OUR INGEST HAS STOPPED and RUNS BROKEN as tasks, and takes its
+  whole timestamp from `date '+%A %b %-d, %-I:%M %p %Z'` so no weekday is
+  ever invented. Proved by a manual fire at 9:46 AM EDT (155 s): "Tuesday Sep
+  15, 9:46 AM EDT - nothing due ... Watching: DOL has not republished
+  processing-times for 15 days; our ingest is fine." Two prompt lessons from
+  that fire: print a matched line from its KEYWORD, not its tail (the tail cut
+  off the dataset's name), and give the Internet Archive a 45-second limit
+  (it answered 504 for 75 s).
 
 **And the three real failures in the same window, already fixed.** The
 OFLC-announcements and WARN steps added to `processing-times-ingest.yml` on Sep 8

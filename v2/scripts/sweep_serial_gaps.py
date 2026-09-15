@@ -216,6 +216,28 @@ def record_misses(db, code: str, serials: list[int], stamp: int) -> None:
             f"misses = misses + 1, last_probed_at = excluded.last_probed_at", [])
 
 
+# A STOP ON THE SWEEP'S OWN CAP IS NOT A FAILURE, AND MUST NOT BE RECORDED AS
+# ONE (2026-09-15). This used to write `partial` when the cap stopped the run,
+# and the health check counts every `partial` as BROKEN, so a night with many
+# holes to probe painted the whole check red and paged the owner for a job
+# that had done exactly what it was built to do. Same shape as the WARN
+# ingest's browser-only refusal: an expected stop records `ok` and NAMES the
+# stop in its note. `CAP_NOTE` is read back by check_ingest_health.py (a test
+# pins the two strings equal), so a row written before this change is not
+# misread either.
+CAP_NOTE = "stopped on the request cap"
+
+
+def run_record(r: dict, cap: int) -> tuple[str, str]:
+    """The (status, note) a finished sweep records; `ok` whether or not it capped."""
+    note = (f"probed {r['probed']}, found {r['found']}, "
+            f"inserted {r['inserted_perm']}+{r['inserted_other']}, "
+            f"missed {r['missed']}")
+    if r["capped"]:
+        note += f"; {CAP_NOTE} ({cap}) and resumes from the same window"
+    return "ok", note
+
+
 def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
           bounds: dict[int, tuple[int, int, int]] | None = None) -> dict:
     lookup = lookup or core.lookup_with_retry
@@ -326,18 +348,14 @@ def main() -> int:
         core.log("  every hole probed was genuinely unissued - the walk is not missing cases here")
 
     if not a.dry_run:
-        record_run(db, "sweep_serial_gaps.py",
-                   status="partial" if r["capped"] else "ok",
-                   # `probed`, NOT `found`. A sweep that finds nothing is the
-                   # SUCCESS case once the corpus is contiguous, so recording
-                   # finds here would make a healthy sweep look dead. Probes
-                   # only reach zero when the walk left no holes at all, or
-                   # when `held_serials` broke - and the second is the defect
-                   # this number exists to expose.
-                   rows_written=r["probed"],
-                   note=f"probed {r['probed']}, found {r['found']}, "
-                        f"inserted {r['inserted_perm']}+{r['inserted_other']}, "
-                        f"missed {r['missed']}")
+        status, note = run_record(r, a.cap)
+        # `probed`, NOT `found`. A sweep that finds nothing is the SUCCESS
+        # case once the corpus is contiguous, so recording finds here would
+        # make a healthy sweep look dead. Probes only reach zero when the walk
+        # left no holes at all, or when `held_serials` broke - and the second
+        # is the defect this number exists to expose.
+        record_run(db, "sweep_serial_gaps.py", status=status,
+                   rows_written=r["probed"], note=note)
     return 0
 
 

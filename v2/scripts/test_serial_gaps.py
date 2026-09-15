@@ -216,5 +216,16 @@ try:
 finally:
     core._rows = _real_rows
 
+# --- A stop on the cap records `ok` and names the cap (2026-09-15)
+import sweep_serial_gaps as sg  # noqa: E402
+_base = {"probed": 2998, "found": 2113, "inserted_perm": 400, "inserted_other": 1713, "missed": 885}
+_st, _note = sg.run_record({**_base, "capped": True}, 600)
+check(_st == "ok" and sg.CAP_NOTE in _note and "600" in _note, "a capped sweep records ok and names its cap")
+_st2, _note2 = sg.run_record({**_base, "capped": False}, 600)
+check(_st2 == "ok" and sg.CAP_NOTE not in _note2 and "probed 2998" in _note2, "an uncapped sweep records ok without the cap phrase")
+
+
 print(f"\n{'ALL PASS' if not fails else str(len(fails)) + ' FAILURE(S)'}")
 raise SystemExit(1 if fails else 0)
+
+

@@ -25,6 +25,7 @@ surviving Python could have written.
 from __future__ import annotations
 
 import pathlib
+import re
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
@@ -392,8 +393,40 @@ def main() -> int:
     check("gap sweep: a capped `partial` run still counts as having run",
           health.check_gap_sweep(GapDB([("partial", 1200, 0.4)] + fresh[1:])) == 0)
 
+    check_freshness_verdict()
+    check_capped_partial_is_not_broken()
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
+
+
+# --- The stale split: warn on a late source, fail on a dead ingest (2026-09-15)
+def check_freshness_verdict() -> None:
+    g = health.SOURCE_PAUSED_GRACE
+    late = ("processing-times", 14, 10, "flag.dol.gov")            # DOL late: watch
+    dead = ("i485-inventory (has not RUN)", 30, 14, "uscis.gov")   # ours: fail
+    silent = ("processing-times", 10 * g + 1, 10, "flag.dol.gov")  # past grace: fail
+    edge = ("processing-times", 10 * g, 10, "flag.dol.gov")        # at grace: watch
+    failing, watching = health.freshness_verdict([late, dead, silent, edge])
+    check("a source merely late is watched, not failed", late in watching)
+    check("an ingest that has not run fails", dead in failing)
+    check("a source silent past the grace fails", silent in failing)
+    check("exactly at the grace boundary still watches", edge in watching)
+    check("every row lands in exactly one bucket",
+          len(failing) + len(watching) == 4 and not set(failing) & set(watching))
+    check("grace is measured, not zero", g >= 2)
+
+
+# --- A `partial` that names the sweep's cap is a designed stop (2026-09-15)
+def check_capped_partial_is_not_broken() -> None:
+    sweep_src = (pathlib.Path(__file__).resolve().parent / "sweep_serial_gaps.py").read_text()
+    m = re.search(r'^CAP_NOTE = "([^"]+)"', sweep_src, re.M)
+    check("the reader's cap phrase is byte-identical to the sweep's CAP_NOTE",
+          bool(m) and m.group(1) == health.SWEEP_CAP_NOTE)
+    capped_note = f"probed 2998, found 2113; {health.SWEEP_CAP_NOTE} (600) and resumes"
+    check("a partial run that stopped on its own cap does not fail the check",
+          run([("sweep_serial_gaps.py", "partial", capped_note, int(NOW) - 3 * 3_600_000)]) == 0)
+    check("a partial run WITHOUT the cap phrase still fails",
+          run([("sweep_serial_gaps.py", "partial", "probed 2998, found 2113", int(NOW) - 3 * 3_600_000)]) == 1)
 
 
 if __name__ == "__main__":
