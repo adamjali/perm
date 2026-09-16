@@ -3696,6 +3696,11 @@ The onboarding role step gained **"Waiting on my own case", listed FIRST**, and
 
 **The paid beneficiary product is PARKED, deliberately.** This is signposting,
 not a tier. Nothing here promises a plan, a price or a feature.
+**Re-decided 2026-09-16 with numbers** (`../.planning/monetization-2026-09-16.md`):
+no tier, no AdSense, no donation link until confirmed case-alert subscribers pass
+~1,000 or monthly visitors pass ~30,000. permtrack's one $9.99 plan is roughly our
+free product; the only paid delta is hourly checks on watched cases. AdSense never
+goes on the data pages. The attorney app, per seat, is the half that can pay.
 
 ## A gate that excludes files by a string will exclude the comment explaining it
 
