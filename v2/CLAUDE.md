@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 4 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 4 projects. Baseline 332 files / 6,444 tests (~10min). Run this before every push.** |
+| `pnpm test:run` | **All 4 projects. Baseline 391 files / 7,034 tests (~12.5 min, 2026-09-16). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -5314,6 +5314,27 @@ block it; the stale devtools profile lock from Sep 14 had to be cleared
 first. A production build wipes `.next/` on start, so a scratch log or
 capture under `.next/` is gone the moment the build begins; and the build
 outlives the Bash tool's 10-minute cap only when launched detached.
+
+**Five smaller things from the same day, each of which cost a retry:**
+- **Two writers sharing a table must both NAME their columns.** The OFLC
+  writer inserted into `policy_notices` positionally (`VALUES (?,?,?,?,?,?,?,?,?)`),
+  which the Federal Register feed's eight new columns would have broken on the
+  next run with "table has 17 columns but 9 values were supplied".
+- **The Vercel CLI prints its tables to STDERR.** `npx vercel inspect <url>
+  2>/dev/null | grep Ready` is an empty pipe, and a wait loop on it runs to
+  the tool's ceiling. Use `2>&1`.
+- **Calling a template FUNCTION returns its child element, not an element of
+  the template.** `CaseStatusChanged(props)` yields the `<EmailLayout>`
+  element, so overriding `props` on that result changes nothing and a test
+  built that way passes for the wrong reason. Build the props object and call
+  the function again with the override.
+- **`next/image` rewrites `src` through its loader**, so a static render
+  contains `/_next/image?url=%2Fimages%2F...`; a test that looks for the raw
+  path finds nothing. Match on the file name.
+- **The Next dev overlay's "1 Issue" badge is readable without a browser
+  click**: `document.querySelector("nextjs-portal").shadowRoot`, click the
+  button whose text matches `Issue`, read the dialog text. The console was
+  empty while the overlay carried React's duplicate-key error.
 
 ## Every email has a way out, and it is the right one for who gets it (2026-09-16)
 
