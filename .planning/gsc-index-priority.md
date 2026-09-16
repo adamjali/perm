@@ -159,3 +159,9 @@ pages on its own.
 - **Orphans.** Zero across all 13,579 generated pages.
 - **Canonical without a trailing slash.** Leave it. RFC 3986 makes an empty path
   equivalent to `/`, and the homepage is indexed, which settles it empirically.
+
+## Queue after the Sep 16 deploy
+
+1. `/policy-changes` (rebuilt: strip, dates, printed first pages; new card)
+2. `/perm-queue/2025-11`, `/perm-queue/2025-12`, `/perm-queue/2026-01` (now in `sitemaps/pages.xml`; let the sitemap carry the other 37)
+3. then the standing list above

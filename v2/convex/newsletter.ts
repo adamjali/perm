@@ -18,7 +18,7 @@
  * The preference center turns it off; nothing here can turn it on.
  *
  * Budget: NEWSLETTER_DAILY_CAP sends a day (default 30), charged BEFORE each
- * send through the shared rate-limit table. The line is claimed in
+ * attempt (a retry is an attempt) through the shared rate-limit table. The line is claimed in
  * convex/caseAlerts.ts's ledger; with the flag on, the worst day reaches
  * Resend's 100 exactly, so flipping it on means moving Resend off the free
  * tier or lowering the cap.
@@ -32,13 +32,17 @@ import type { Doc } from "./_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
+import { actionUrl } from "./lib/links";
+import { oneClickUnsubscribeUrl } from "./lib/prefsLink";
 import { createLogger } from "./lib/logging";
 import {
+  caseLookupUrl,
   composeSubject,
   composeText,
   type DigestData,
   type DigestNotice,
 } from "./lib/newsletterCompose";
+import { RETRY_DELAY_MS, runSendLoop } from "./lib/newsletterSend";
 import { parseCutoff } from "./lib/perm/calculators/priorityDate";
 import { one, rows } from "./lib/publicMirror";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
@@ -54,12 +58,6 @@ function unsubscribeSecret(): string {
   const secret = process.env.UNSUBSCRIBE_SECRET;
   if (!secret) throw new Error("UNSUBSCRIBE_SECRET is not configured");
   return secret;
-}
-
-function prefsBase(): string {
-  const base = process.env.CONVEX_SITE_URL;
-  if (!base) throw new Error("CONVEX_SITE_URL is not configured");
-  return base;
 }
 
 // ---------------------------------------------------------------------------
@@ -250,6 +248,26 @@ export const issueForWeek = internalQuery({
   },
 });
 
+/** The bulletin month the newest EARLIER issue carried, or null. */
+export const previousBulletinMonth = internalQuery({
+  args: { weekOf: v.string() },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, { weekOf }) => {
+    const prev = await ctx.db
+      .query("newsletterIssues")
+      .withIndex("by_weekOf", (q) => q.lt("weekOf", weekOf))
+      .order("desc")
+      .first();
+    if (!prev) return null;
+    try {
+      const d = JSON.parse(prev.data) as { bulletinMonth?: unknown };
+      return typeof d.bulletinMonth === "string" ? d.bulletinMonth : null;
+    } catch {
+      return null;
+    }
+  },
+});
+
 export const markProgress = internalMutation({
   args: {
     weekOf: v.string(),
@@ -293,6 +311,31 @@ export const confirmedAfter = internalQuery({
   },
 });
 
+/**
+ * The recipient's own case, for the personalised opening.
+ *
+ * The newest confirmed, still-open case alert on this address: not
+ * unsubscribed, not retired by a final status. Read by email through the
+ * existing index; a person watching several cases gets the one they added
+ * most recently. Null when they watch nothing, and the issue opens generically.
+ */
+export const watchedCaseFor = internalQuery({
+  args: { email: v.string() },
+  returns: v.union(v.null(), v.object({ caseNumber: v.string(), status: v.union(v.null(), v.string()) })),
+  handler: async (ctx, { email }) => {
+    const rows = await ctx.db
+      .query("caseStatusAlerts")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .take(50);
+    const open = rows
+      .filter((r) => r.confirmedAt !== undefined && r.unsubscribedAt === undefined && r.caseClosedAt === undefined)
+      .sort((a, b) => b.createdAt - a.createdAt);
+    const pick = open[0];
+    if (!pick) return null;
+    return { caseNumber: pick.caseNumber, status: pick.lastSeenStatus ?? null };
+  },
+});
+
 /** Charge one send against the global daily cap, BEFORE the send. */
 export const chargeSend = internalMutation({
   args: {},
@@ -324,11 +367,16 @@ export const buildIssue = internalAction({
         readBulletin(),
         readNotices(since),
       ]);
+      // The bulletin lands once a month and the issue goes out every week, so
+      // without this the second and third issues restate the same moves as
+      // news. The previous issue is the record of what was already said.
+      const previousMonth = await ctx.runQuery(internal.newsletter.previousBulletinMonth, { weekOf });
       const data: DigestData = {
         weekOf,
         ...queue,
         pendingCases: pending,
         ...bulletin,
+        bulletinRepeat: bulletin.bulletinMonth !== null && previousMonth === bulletin.bulletinMonth,
         notices,
       };
       const subject = composeSubject(data);
@@ -355,73 +403,98 @@ export const buildIssue = internalAction({
 });
 
 /**
- * Send up to the daily cap, then reschedule for the rest tomorrow. Charges
- * the budget before each send; a refusal leaves no trace of a success.
+ * Send up to the daily cap, then reschedule for the rest tomorrow.
+ *
+ * The loop itself is `lib/newsletterSend.runSendLoop`, which owns the two
+ * rules that were wrong here before 2026-09-16: the budget is charged before
+ * every attempt, the retry included, and the cursor moves only once an
+ * address is actually handled. A single transient `{ error }` used to advance
+ * the cursor and drop that subscriber from the issue for good.
+ *
+ * Each recipient gets their own render: the preferences link is purpose-
+ * scoped to the address, and the opening carries their watched case when
+ * they have one. The stored issue stays generic.
  */
 export const sendBatch = internalAction({
   args: { weekOf: v.string() },
-  returns: v.object({ sent: v.number(), done: v.boolean() }),
+  returns: v.object({ sent: v.number(), failed: v.number(), done: v.boolean() }),
   handler: async (ctx, { weekOf }) => {
     if (!sendingEnabled()) {
       log.info("sending disabled; nothing sent", { weekOf });
-      return { sent: 0, done: true };
+      return { sent: 0, failed: 0, done: true };
     }
     const issue = await ctx.runQuery(internal.newsletter.issueForWeek, { weekOf });
-    if (!issue || issue.status === "sent") return { sent: 0, done: true };
+    if (!issue || issue.status === "sent") return { sent: 0, failed: 0, done: true };
     const data = JSON.parse(issue.data) as DigestData;
     const resend = getResend();
-    let cursor = issue.cursor;
-    let sent = 0;
-    let budgetHit = false;
+    const secret = unsubscribeSecret();
 
-    while (!budgetHit) {
-      const batch = await ctx.runQuery(internal.newsletter.confirmedAfter, { after: cursor, limit: BATCH });
-      if (batch.length === 0) break;
-      for (const email of batch) {
-        const charge = await ctx.runMutation(internal.newsletter.chargeSend, {});
-        if (!charge.allowed) {
-          budgetHit = true;
-          break;
-        }
-        const token = await makeUnsubscribeToken(email, unsubscribeSecret(), "prefs");
-        const prefsUrl = `${prefsBase()}/prefs?token=${encodeURIComponent(token)}`;
-        const personal: DigestData = { ...data, prefsUrl };
-        const result = await sendEmailWithRetry(resend, {
-          from: FROM_EMAIL,
-          to: email,
-          subject: issue.subject,
-          text: composeText(personal),
-          html: await renderHtml(personal),
-        });
-        if (result.error) {
-          log.warn("send failed", { weekOf, error: String(result.error) });
+    const personalise = async (email: string): Promise<{ token: string; data: DigestData }> => {
+      const token = await makeUnsubscribeToken(email, secret, "prefs");
+      const watched = await ctx.runQuery(internal.newsletter.watchedCaseFor, { email });
+      return {
+        token,
+        data: {
+          ...data,
+          prefsUrl: actionUrl("/prefs", token),
+          watchedCase: watched ? { ...watched, url: caseLookupUrl(watched.caseNumber) } : null,
+        },
+      };
+    };
+
+    const result = await runSendLoop(
+      {
+        nextBatch: (after, limit) => ctx.runQuery(internal.newsletter.confirmedAfter, { after, limit }),
+        charge: () => ctx.runMutation(internal.newsletter.chargeSend, {}),
+        send: async (email) => {
+          const { token, data: personal } = await personalise(email);
+          // The header Gmail and Apple Mail turn into their own Unsubscribe
+          // button. Every other subscriber mail carried it; the digest did not.
+          const oneClick = oneClickUnsubscribeUrl(token, "newsletter");
+          return await sendEmailWithRetry(resend, {
+            from: FROM_EMAIL,
+            to: email,
+            subject: issue.subject,
+            headers: {
+              "List-Unsubscribe": `<${oneClick}>`,
+              "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+            },
+            text: composeText(personal),
+            html: await renderHtml(personal),
+          });
+        },
+        wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+        onFailure: async (email, error, attempt) => {
+          if (attempt === 1) {
+            log.warn("send failed once; retrying", { weekOf, error: String(error) });
+            return;
+          }
+          log.warn("send failed twice; skipping this address", { weekOf, error: String(error) });
           await recordError(
             ctx,
             "action",
             `newsletter.sendBatch ${weekOf}`,
-            new Error(`newsletter send failed: ${String(result.error)}`),
+            new Error(`newsletter send failed twice for one address: ${String(error)}`),
           );
-        } else {
-          sent += 1;
-        }
-        cursor = email;
-      }
-      if (batch.length < BATCH) break;
-    }
+          void email;
+        },
+      },
+      { cursor: issue.cursor, batch: BATCH, retryDelayMs: RETRY_DELAY_MS },
+    );
 
-    const done = !budgetHit;
+    const done = !result.budgetHit;
     await ctx.runMutation(internal.newsletter.markProgress, {
       weekOf,
-      sent,
-      cursor,
+      sent: result.sent,
+      cursor: result.cursor,
       status: done ? "sent" : "sending",
     });
-    log.info("batch finished", { weekOf, sent, done });
+    log.info("batch finished", { weekOf, sent: result.sent, failed: result.failed, done });
     // Progress-guarded: a day that sent nothing does not spin a timer.
-    if (!done && sent > 0) {
+    if (!done && result.sent > 0) {
       await ctx.scheduler.runAfter(DAY_MS, internal.newsletter.sendBatch, { weekOf });
     }
-    return { sent, done };
+    return { sent: result.sent, failed: result.failed, done };
   },
 });
 

@@ -32,6 +32,8 @@ export interface EmailLayoutProps {
   children: React.ReactNode;
   /** Optional settings URL override */
   settingsUrl?: string;
+  /** The settings link's text. Subscriber mail says "Email preferences" and points at the magic-link page. */
+  settingsLabel?: string;
   /** Optional footer text override (default: notification-related text) */
   footerText?: string;
   /** Hide "Manage notification settings" link (for auth emails) */
@@ -243,6 +245,7 @@ export function EmailLayout({
   previewText,
   children,
   settingsUrl = "https://permtracker.app/settings",
+  settingsLabel = "Manage notification settings",
   footerText,
   hideSettingsLink = false,
   footerExtra,
@@ -278,7 +281,7 @@ export function EmailLayout({
               {!hideSettingsLink && (
                 <>
                   <Link href={settingsUrl} className="em-link" style={styles.footerLink}>
-                    Manage notification settings
+                    {settingsLabel}
                   </Link>
                   {" | "}
                 </>

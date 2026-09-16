@@ -182,6 +182,9 @@ export function SignalsPanel({ skip }: { skip: boolean }) {
             </span>{" "}
             · {newsletter.confirmed} confirmed of {newsletter.staged} who ticked the box
           </p>{" "}
+          <p className={`mt-1 text-sm ${newsletter.health.level === "warn" ? "font-semibold text-destructive" : "text-muted-foreground"}`}>
+            {newsletter.health.message}
+          </p>{" "}
           {newsletter.latest ? (
             <details className="mt-2 border-2 border-border bg-background p-3">
               <summary className="cursor-pointer text-sm">

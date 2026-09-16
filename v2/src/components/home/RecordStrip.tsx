@@ -38,7 +38,9 @@ export function RecordStrip({ record }: { record: RecordFigure[] }) {
       <dl className="mt-4 border-t-2 border-border">
         {record.map((f) => (
           <div
-            key={f.href}
+            // Several figures may point at one section (the policy page sends
+            // three at #register), so the key is the pair, not the route alone.
+            key={`${f.href} ${f.label}`}
             className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4"
           >
             <dt className="font-heading text-xl font-black tabular-nums tracking-tight sm:text-2xl">
@@ -52,7 +54,7 @@ export function RecordStrip({ record }: { record: RecordFigure[] }) {
                 {f.label}
               </Link>
             </dd>{" "}
-            <dd className="font-mono text-xs text-muted-foreground sm:whitespace-nowrap sm:text-right">
+            <dd className="font-mono text-sm text-muted-foreground sm:whitespace-nowrap sm:text-right">
               {asOfLine(f)}
             </dd>
           </div>

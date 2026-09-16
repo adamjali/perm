@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { composeSubject, composeText, type DigestData } from "../newsletterCompose";
+import {
+  caseLookupUrl,
+  CHECK_CASE_URL,
+  composeSubject,
+  composeText,
+  SIGNUP_URL,
+  SUBJECT_MAX,
+  type DigestData,
+} from "../newsletterCompose";
 
 const full: DigestData = {
   weekOf: "2026-09-08",
@@ -19,13 +27,14 @@ const full: DigestData = {
 describe("newsletter composition", () => {
   it("leads the subject with DOL's frontier, then the bulletin, then the notice count", () => {
     expect(composeSubject(full)).toBe(
-      "DOL at November 2025, 5 cutoffs moved in the September 2026 bulletin, 1 new notice (week of Sep 8, 2026)",
+      "DOL at Nov 2025, 5 cutoffs moved (Sep bulletin), 1 new notice · week of Sep 8",
     );
+    expect(composeSubject(full).length).toBeLessThanOrEqual(SUBJECT_MAX);
   });
 
   it("says a bulletin was unchanged rather than inventing movement", () => {
     expect(composeSubject({ ...full, bulletinMoves: { advanced: 0, held: 30, retrogressed: 0, total: 30 }, notices: [] })).toBe(
-      "DOL at November 2025, September 2026 bulletin unchanged (week of Sep 8, 2026)",
+      "DOL at Nov 2025, Sep bulletin unchanged · week of Sep 8",
     );
   });
 
@@ -50,7 +59,75 @@ describe("newsletter composition", () => {
 
   it("falls back to a plain subject when nothing moved and nothing is held", () => {
     expect(composeSubject({ ...full, frontierMonth: null, bulletinMonth: null, bulletinMoves: null, notices: [] })).toBe(
-      "The week in PERM and the visa bulletin (week of Sep 8, 2026)",
+      "The week in PERM and the visa bulletin · week of Sep 8",
     );
+  });
+});
+
+describe("newsletter composition, September 2026 fixes", () => {
+  const manyNotices: DigestData = {
+    ...full,
+    notices: Array.from({ length: 12 }, (_, i) => ({
+      title: `Notice ${i}`,
+      url: `https://www.federalregister.gov/d/2026-${i}`,
+      publicationDate: "2026-08-25",
+      type: "Notice",
+    })),
+    bulletinMoves: { advanced: 14, held: 12, retrogressed: 4, total: 30 },
+  };
+
+  it("caps the subject at SUBJECT_MAX by dropping the LAST movement parts, never the week suffix", () => {
+    const s = composeSubject(manyNotices);
+    expect(s.length).toBeLessThanOrEqual(SUBJECT_MAX);
+    expect(s.endsWith("· week of Sep 8")).toBe(true);
+    expect(s.startsWith("DOL at Nov 2025")).toBe(true);
+    // Twelve notices tipped it over, so the notice count is what went.
+    expect(s).not.toContain("notices");
+    expect(s).toContain("14 cutoffs moved");
+  });
+
+  it("still hard-cuts a single over-long part rather than exceeding the cap", () => {
+    const s = composeSubject({ ...full, frontierMonth: null, bulletinMonth: null, bulletinMoves: null, notices: [], weekOf: "2026-09-08" });
+    expect(s.length).toBeLessThanOrEqual(SUBJECT_MAX);
+  });
+
+  it("opens with the recipient's own watched case when there is one, and links its lookup", () => {
+    const text = composeText({
+      ...full,
+      watchedCase: { caseNumber: "G-100-26120-123456", status: "ANALYST REVIEW", url: caseLookupUrl("G-100-26120-123456") },
+    });
+    const lines = text.split("\n");
+    expect(lines[0]).toBe("PERM Tracker, the week of Sep 8, 2026");
+    expect(lines[2]).toBe("YOUR CASE");
+    expect(text).toContain("G-100-26120-123456");
+    expect(text).toContain("ANALYST REVIEW");
+    expect(text).toContain("https://permtracker.app/perm-case-status?case=G-100-26120-123456");
+    // The generic issue never carries it.
+    expect(composeText(full)).not.toContain("YOUR CASE");
+  });
+
+  it("carries the two doors and the opt-out link in the plain-text part", () => {
+    const text = composeText(full);
+    expect(text).toContain(CHECK_CASE_URL);
+    expect(text).toContain(SIGNUP_URL);
+    expect(text).toContain("Manage or stop this email: https://permtracker.app/prefs?token=abc");
+  });
+
+  it("builds every URL on the public site, never on a Convex host", () => {
+    const text = composeText({ ...full, watchedCase: { caseNumber: "P-100-26125-868956", status: null, url: caseLookupUrl("P-100-26125-868956") } });
+    expect(text).not.toMatch(/convex\.(site|cloud)/);
+    expect(caseLookupUrl("P-100-26125-868956")).toBe("https://permtracker.app/perm-case-status?case=P-100-26125-868956");
+  });
+});
+
+describe("a bulletin already reported last week", () => {
+  it("says so in the subject and the text instead of restating the same moves as news", () => {
+    const repeat: DigestData = { ...full, bulletinRepeat: true };
+    expect(composeSubject(repeat)).toContain("Sep bulletin, same as last week");
+    const text = composeText(repeat);
+    expect(text).toContain("Same bulletin as last week's issue");
+    expect(text).not.toContain("Final action dates: 5 advanced");
+    // The first issue for a bulletin still reports the moves.
+    expect(composeText(full)).toContain("Final action dates: 5 advanced");
   });
 });

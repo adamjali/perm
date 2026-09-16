@@ -21,6 +21,8 @@ export interface BulletinMovedProps {
   toCutoff: string;
   /** Absolute, purpose-scoped opt-out URL. Pairs with List-Unsubscribe. */
   unsubscribeUrl: string;
+  /** The address's preference page, every alert it holds, as a magic link scoped by token. Optional for callers that predate it. */
+  prefsUrl?: string;
 }
 
 export function BulletinMoved({
@@ -29,11 +31,14 @@ export function BulletinMoved({
   fromCutoff,
   toCutoff,
   unsubscribeUrl,
+  prefsUrl,
 }: BulletinMovedProps) {
   return (
     <EmailLayout
       previewText={`${seriesLabel}: ${fromCutoff} to ${toCutoff}.`}
-      hideSettingsLink
+      hideSettingsLink={!prefsUrl}
+      settingsUrl={prefsUrl}
+      settingsLabel="Email preferences"
       footerText={`You asked to be told when the final-action cutoff for ${seriesLabel} moves. These alerts repeat whenever it does.`}
       footerExtra={
         <Text className="em-text-secondary" style={styles.footerExtra}>

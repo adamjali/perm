@@ -67,6 +67,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
 import { SITE_URL, actionUrl } from "./lib/links";
+import { prefsLink } from "./lib/prefsLink";
 import { formatAsOf, formatMonth, monthsMoved } from "../src/lib/dolFormat";
 import { measureQueuePace, paceSentence } from "../src/lib/queuePace";
 import {
@@ -880,6 +881,7 @@ export const notifyQueueReached = internalAction({
           "queue-unsubscribe",
         );
         const unsubUrl = actionUrl("/queue-alert/unsubscribe", token);
+        const prefsUrl = await prefsLink(row.email, unsubscribeSecret(), `queue:${row._id}`);
 
         const filingLabel = formatMonth(row.filingMonth) ?? row.filingMonth;
         // How far DOL has run PAST this subscriber's month. 0 means it landed
@@ -899,6 +901,7 @@ export const notifyQueueReached = internalAction({
               monthsPast,
               paceLine,
               unsubscribeUrl: unsubUrl,
+              prefsUrl,
               queueName: label,
               monthNoun,
             });

@@ -78,7 +78,7 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   debarments:
     "Employers and agents DOL has barred, for the period DOL states. Includes bars that have not started yet.",
   "policy-notices":
-    "Federal Register documents that touch these programs. Proposed and final rules, not guidance or internal memos.",
+    "Federal Register rules, proposed rules and notices that touch these programs, with the Register's own dates. Not guidance or internal memos.",
   "policy-notices-oflc":
     "Announcements OFLC posts on its own page, which is where program changes appear before the Federal Register.",
   "warn-notices":

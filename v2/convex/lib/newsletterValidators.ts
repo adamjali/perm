@@ -19,6 +19,11 @@ export const adminSummaryValidator = v.object({
   dailyCap: v.number(),
   staged: v.number(),
   confirmed: v.number(),
+  /** One line for the panel: off (with the preview count), ok, or a warning that the Tuesday build has stopped. */
+  health: v.object({
+    level: v.union(v.literal("off"), v.literal("ok"), v.literal("warn")),
+    message: v.string(),
+  }),
   latest: v.union(
     v.null(),
     v.object({

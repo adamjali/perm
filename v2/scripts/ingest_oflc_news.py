@@ -216,7 +216,10 @@ def write(db: Turso, rows: list[dict]) -> int:
         if have.get(row["document_number"]) == key:
             continue
         db.execute(
-            "INSERT OR REPLACE INTO policy_notices VALUES (?,?,?,?,?,?,?,?,?)",
+            # Named columns: the Federal Register feed widened this table on
+            # 2026-09-16 and a positional insert would fail on the count.
+            "INSERT OR REPLACE INTO policy_notices (document_number, publication_date, type, title, "
+            "abstract, html_url, agencies, topics, fetched_at) VALUES (?,?,?,?,?,?,?,?,?)",
             [
                 row["document_number"], row["publication_date"], row["type"], row["title"], row["abstract"],
                 row["html_url"], json.dumps(row["agencies"]), json.dumps(row["topics"]), now,

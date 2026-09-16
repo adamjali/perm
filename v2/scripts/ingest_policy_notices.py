@@ -67,7 +67,23 @@ FORMS_OF_INTEREST = re.compile(
 )
 
 FIELDS = ["title", "type", "abstract", "document_number", "html_url",
-          "publication_date", "agencies", "excerpts"]
+          "publication_date", "agencies", "excerpts",
+          # The dates a reader actually needs, from the Register's own record:
+          # when a rule takes effect, when comments on a proposal close and
+          # where to file one, the citation, and the DATES paragraph verbatim
+          # for the documents whose effective date is stated in words.
+          "effective_on", "comments_close_on", "comment_url", "citation",
+          "action", "dates", "correction_of", "pdf_url"]
+
+# Columns added 2026-09-16, after the table already existed in production.
+# `CREATE TABLE IF NOT EXISTS` can never ADD a column, so `ensure_columns`
+# runs before every write. All nullable: the OFLC feed shares this table and
+# writes none of them.
+EXTRA_COLUMNS = [
+    ("effective_on", "TEXT"), ("comments_close_on", "TEXT"), ("comment_url", "TEXT"),
+    ("citation", "TEXT"), ("action", "TEXT"), ("dates", "TEXT"),
+    ("correction_of", "TEXT"), ("pdf_url", "TEXT"),
+]
 
 DATASET = "policy-notices"
 # The Register publishes every business day; a newest document older than
@@ -117,6 +133,16 @@ AGENCIES_OF_INTEREST = (
 # Omnibus listings that match every term and say nothing specific.
 OMNIBUS = re.compile(r"unified agenda|regulatory agenda|agenda of regulations|semiannual regulatory", re.I)
 
+# Agency housekeeping that matches a term by accident. A Labor Department
+# notice appointing members to its Performance Review Board matched "labor
+# certification" on 2026-09-10 and sat beside the H-1B fee rule for six days.
+# Board appointments and meeting notices change nothing a filing runs under.
+PERSONNEL = re.compile(
+    r"senior executive service|performance review board|appointment of members"
+    r"|membership of the|notice of (?:a |an )?(?:open |public |closed )?meeting|advisory (?:committee|council|board)",
+    re.I,
+)
+
 
 def keep(doc: dict) -> bool:
     """The exclusion rules, and nothing else: no judgement of importance."""
@@ -126,9 +152,43 @@ def keep(doc: dict) -> bool:
         return False
     if OMNIBUS.search(title):
         return False
+    if PERSONNEL.search(title):
+        return False
     if title.lower().startswith("agency information collection"):
         return bool(FORMS_OF_INTEREST.search(title) or FORMS_OF_INTEREST.search(doc.get("abstract") or ""))
     return True
+
+
+def shape(d: dict) -> dict:
+    """One Register document as the row the table holds. Pure, so a test can drive it.
+
+    `correction_of` arrives as the parent document's API URL; the row keeps
+    the parent's NUMBER, which is what the page joins on. Empty strings from
+    the API become NULL so a stored row and a freshly shaped one compare
+    equal in `write()`.
+    """
+    def opt(key: str) -> str | None:
+        v = d.get(key)
+        return v if isinstance(v, str) and v.strip() else None
+    parent = opt("correction_of")
+    return {
+        "document_number": d.get("document_number") or "",
+        "title": d.get("title") or "",
+        "type": d.get("type") or "",
+        "abstract": d.get("abstract") or "",
+        "html_url": d.get("html_url") or "",
+        "publication_date": d.get("publication_date") or "",
+        "agencies": [a.get("name") for a in (d.get("agencies") or []) if a.get("name")],
+        "topics": [],
+        "effective_on": opt("effective_on"),
+        "comments_close_on": opt("comments_close_on"),
+        "comment_url": opt("comment_url"),
+        "citation": opt("citation"),
+        "action": opt("action"),
+        "dates": opt("dates"),
+        "correction_of": parent.rstrip("/").rsplit("/", 1)[-1] if parent else None,
+        "pdf_url": opt("pdf_url"),
+    }
 
 
 def collect(days: int) -> tuple[list[dict], str | None]:
@@ -142,16 +202,7 @@ def collect(days: int) -> tuple[list[dict], str | None]:
                 num = d.get("document_number")
                 if not num:
                     continue
-                row = by_number.setdefault(num, {
-                    "document_number": num,
-                    "title": d.get("title") or "",
-                    "type": d.get("type") or "",
-                    "abstract": d.get("abstract") or "",
-                    "html_url": d.get("html_url") or "",
-                    "publication_date": d.get("publication_date") or "",
-                    "agencies": [a.get("name") for a in (d.get("agencies") or []) if a.get("name")],
-                    "topics": [],
-                })
+                row = by_number.setdefault(num, shape(d))
                 if topic not in row["topics"]:
                     row["topics"].append(topic)
             total_pages = int(res.get("total_pages") or 1)
@@ -184,25 +235,55 @@ DDL = [
 ]
 
 
+EXTRA_NAMES = [name for name, _ in EXTRA_COLUMNS]
+
+
+def ensure_columns(db: Turso) -> list[str]:
+    """Add any column the live table lacks. Returns the names added."""
+    res = db.execute("PRAGMA table_info(policy_notices)")
+    have = set()
+    for r in res["response"]["result"]["rows"]:
+        vals = [None if c["type"] == "null" else c["value"] for c in r]
+        have.add(vals[1])
+    added = []
+    for name, typ in EXTRA_COLUMNS:
+        if name not in have:
+            db.execute(f"ALTER TABLE policy_notices ADD COLUMN {name} {typ}")
+            added.append(name)
+    return added
+
+
+def signature(r: dict) -> tuple:
+    """What a row is compared on. A changed effective date or a new
+    correction is a change worth writing, not only a changed title."""
+    return (r["title"], r["abstract"], json.dumps(r["topics"])) + tuple(r.get(n) for n in EXTRA_NAMES)
+
+
 def write(db: Turso, rows: list[dict]) -> int:
     """Upsert, writing only rows that are new or changed."""
     db.script(DDL)
-    res = db.execute("SELECT document_number, title, abstract, topics FROM policy_notices")
+    added = ensure_columns(db)
+    if added:
+        log(f"  added columns: {', '.join(added)}")
+    res = db.execute(
+        "SELECT document_number, title, abstract, topics, " + ", ".join(EXTRA_NAMES) + " FROM policy_notices"
+    )
     have = {}
     for r in res["response"]["result"]["rows"]:
         vals = [None if c["type"] == "null" else c["value"] for c in r]
-        have[vals[0]] = (vals[1], vals[2], vals[3])
+        have[vals[0]] = tuple(vals[1:])
     now = int(time.time() * 1000)
     written = 0
+    cols = ["document_number", "publication_date", "type", "title", "abstract", "html_url",
+            "agencies", "topics", "fetched_at"] + EXTRA_NAMES
     for r in rows:
-        sig = (r["title"], r["abstract"], json.dumps(r["topics"]))
-        if have.get(r["document_number"]) == sig:
+        if have.get(r["document_number"]) == signature(r):
             continue
         db.execute(
-            "INSERT OR REPLACE INTO policy_notices (document_number, publication_date, type, title, "
-            "abstract, html_url, agencies, topics, fetched_at) VALUES (?,?,?,?,?,?,?,?,?)",
+            f"INSERT OR REPLACE INTO policy_notices ({', '.join(cols)}) VALUES ({', '.join('?' * len(cols))})",
             [r["document_number"], r["publication_date"], r["type"], r["title"], r["abstract"],
-             r["html_url"], json.dumps(r["agencies"]), json.dumps(r["topics"]), now])
+             r["html_url"], json.dumps(r["agencies"]), json.dumps(r["topics"]), now]
+            + [r.get(n) for n in EXTRA_NAMES])
         written += 1
     return written
 

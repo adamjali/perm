@@ -5225,3 +5225,138 @@ quick regex said 44 and 41 on the untouched production page - the instrument,
 not the page). Scoreboard: the homepage's daily line for the exact query,
 weekly; a reversal should show inside two to three weeks.
 
+
+## The Sep 16 batch: month pages in the sitemap, the policy page rebuilt, the digest repaired (2026-09-16)
+
+One push after one gate, because every deploy cold-starts the ISR cache.
+Ledger: sitemap family, policy page, digest fixes (flag still off), two
+shared-component floors, and the notes below.
+
+**The `/perm-queue/<month>` family is in the sitemap now.** Forty generated,
+indexable, linked pages that no sitemap advertised, and Search Console had
+`/perm-queue/2025-11`, the month DOL was adjudicating, as "URL is unknown".
+`pagesEntries()` lists every month with at least one case from the SAME
+census the hub builds its strip from and the month route peeks before
+rendering (an empty month 404s there, so it is omitted here), gated on
+`MIRROR_COMPLETE` like the hub, stamped with the sweep's own finish date.
+`sitemap.test.ts` gained the family test, the census-read-fails test, and a
+**tree-walking coverage test**: every `[param]` directory under the public
+tree must have at least one URL in the sitemap, so the class cannot recur.
+Probed by emptying the block: two tests red.
+
+**`/policy-changes` is visual now, and every date on it is the Register's.**
+The ingest asks the Federal Register API for `effective_on`,
+`comments_close_on`, `comment_url`, `citation`, `action`, `dates` (the
+DATES paragraph verbatim), `correction_of` and `pdf_url`; `ensure_columns`
+adds them to the live table (`CREATE TABLE IF NOT EXISTS` never adds a
+column), and the write signature includes them so a moved effective date is
+a write. Three rules in `keep()` now, the third new: agency housekeeping
+(Performance Review Board appointments, advisory-committee meetings) is
+dropped; a Labor Department SES appointment notice had matched "labor
+certification" and sat beside the H-1B fee rule for six days. Corrections
+(`C1-<number>`) are folded into the document they correct by the read layer,
+not deleted. `src/lib/policyFeed.ts` is the pure half: feed partition,
+comment-window state (open THROUGH the close date), effective-date state
+(UPCOMING vs IN EFFECT, never a bare boolean), the ledger, and the
+twelve-month strip geometry; 16 tests. The page: a ledger (`RecordStrip`),
+an SVG strip (marks by type, comment windows as bars on their own lanes,
+OFLC ticks, today), then every document as a collapsed `<details>` whose
+summary is badge, date, agency, title and the one date that matters, whose
+body is the abstract whole, the DATES paragraph, citation, links, and the
+first page as printed. OFLC's announcements are partitioned by topic tag:
+the 250 on this site's programs are listed (eight rows, then folded by
+year), the 354 on H-2A, H-2B and CW-1 are counted and linked. Measured on
+the dev render: visible words 2,270 with lead sentences on every row, 1,254
+without them; DOM 8,559 either way; glue 0 with a control.
+
+**The visual is the printed first page, not a screenshot, and the reason is
+policy.** `federalregister.gov` answers a headless browser with a CAPTCHA
+interstitial ("programmatic access to these sites is limited to our
+developer APIs"): 21 captures, 21 identical files, caught because the byte
+sizes matched before anyone looked. Not defeated. `govinfo.gov` serves the
+same document's PDF to a plain request, and `scripts/render_policy_pdfs.py`
+renders page one at 100 dpi in sixteen grays, lossless WebP (86 KB against
+177 KB lossy on the same page; a lossy encode spends its bytes on the edges
+of letters), writing `src/lib/policyShots.ts` as the typed manifest so every
+`<img>` declares the file's real size, which `policy-changes.test.tsx`
+re-reads from the WebP header. Re-run it when the feed gains a document; a
+document without a capture renders no figure.
+
+**Strip rules that came out of measuring it.** Marks are not links: at 390px
+a mark is 11px and a hit area big enough overlaps its neighbours, so the
+list is the navigation and each mark carries a `<title>`. SVG `<text>` and
+`<title>` glue like any text: a trailing space inside each. Labels sit at
+each month's middle so the end labels stay inside the box (measured at
+1440: first label at 30, last at 926 of 976). Closed comment windows are
+`fill-foreground/35`, not `fill-border`: the border token is ink in light
+mode and a closed window drew as black as a proposed rule's mark. Overlapping
+windows get lanes by interval, marks by proximity. The container scrolls at
+`min-w-[880px]` so the 16-unit labels never fall under 14px.
+
+**Two shared components moved to the 14px label floor:** `RecordStrip`'s
+date column and `FinePrint`'s summary were 12px mono. `RecordStrip` also
+keys rows on route plus label now; three ledger figures pointing at one
+`#register` anchor threw React's duplicate-key error on the dev overlay.
+
+**The digest, still off, is fixed for the day it is switched on** (fork
+agent, 23 + 5 tests): `sendBatch` retries a `{error}` once before advancing
+the cursor (it used to skip a failed address forever), the preferences link
+is built through `links.ts` (it was on the raw Convex host), the subject is
+capped at 78 characters dropping movement parts first, `summarizeNewsletter`
+carries a `health` line the admin panel shows (off with the preview count,
+ok inside 8 days, warn past it), the recipient's own watched case opens the
+issue, two doors close it, and the figures are email-safe tables.
+
+**Instruments this batch relied on:** the chrome-devtools MCP for real
+viewports (390 mobile, 768 tablet, 1440; light and dark), with the
+same-origin iframe sweep unusable here because the site's frame headers
+block it; the stale devtools profile lock from Sep 14 had to be cleared
+first. A production build wipes `.next/` on start, so a scratch log or
+capture under `.next/` is gone the moment the build begins; and the build
+outlives the Bash tool's 10-minute cap only when launched detached.
+
+## Every email has a way out, and it is the right one for who gets it (2026-09-16)
+
+Adam asked whether every email links to the preference page, "maybe prefilled
+per email". The preference page (`/prefs?token=`) already IS the prefilled
+version: the token is signed for one address, the page lists every alert that
+address holds by name, and it is off-only. The gap was that only the digest
+linked to it. Surveyed all 22 templates and their senders; the rule that came
+out, gated by `src/emails/__tests__/footer-links.test.tsx`:
+
+| who gets it | in the footer | header |
+|---|---|---|
+| subscriber mail, no account (case status, queue month, bulletin moved, the digest) | "Stop these alerts" (one click, per kind) AND "Email preferences" (the magic link, `focus=` on the row the email was about) | `List-Unsubscribe` + one-click |
+| account mail about the user's own cases (deadline reminders and digest, RFI/RFE, status, auto-closure, weekly summary, nudge) | "Manage notification settings" into the signed-in Settings page, which already existed in the shared layout | the weekly summary and nudge carry one; the rest are transactional |
+| confirmations, codes, resets, welcome, deletion | nothing: there is no subscription to manage yet | none |
+
+**The token page must never be a door into an account.** It never expires and
+anyone who sees the email can use it, which is acceptable for turning subscriber
+mail off and unacceptable for account settings; the two stay separate on
+purpose, and the test asserts account mail never carries `/prefs?token=`.
+
+`EmailLayout` grew a `settingsLabel`; the three alert templates take an optional
+`prefsUrl` (optional because mail already built by older callers must still
+render) and show the preference link only when given. `convex/lib/prefsLink.ts`
+builds the link and the one-click URL in one place; the senders pass
+`focus=case:<id>` and so on, and `/prefs` marks that row. **`POST
+/prefs/unsubscribe?token=&kind=`** is the one-click target for every
+preference-center kind (RFC 8058: the client POSTs `List-Unsubscribe=One-Click`
+and expects the address off, no page); GET renders a confirm button so a mail
+gateway prefetching the link never unsubscribes anyone. The digest's
+`List-Unsubscribe` header points there; it was the one subscriber email without
+one.
+
+**The digest says "same as last week" instead of restating a bulletin.** The
+bulletin lands monthly and the issue goes weekly, so issues two and three of a
+month used to report the same five moves as news. `buildIssue` reads the
+previous issue's bulletin month (`previousBulletinMonth`) and sets
+`bulletinRepeat`; the subject, the text and the HTML each say so in one line.
+
+**Go-live plan for the digest, decided with Adam:** this batch deploys the fixes;
+the Tuesday 9:00 AM ET cron (`weekly-bulletin-digest`) builds the Sep 22 issue
+under the new composition; he reads it on `/admin` (or asks for it); if it
+reads right, `NEWSLETTER_ENABLED=1` on prod Convex and the first real send is
+Tue Sep 29, 9:00 AM ET, to the 11 confirmed subscribers. Three reminders carry
+it: the due-check routine's self-retiring Check 4 (Sep 22 to 29), a calendar
+event Tue Sep 22 9:30 AM ET, and the batch ledger.

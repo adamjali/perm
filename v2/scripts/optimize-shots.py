@@ -12,7 +12,8 @@ assumed.
 import sys, pathlib
 from PIL import Image
 
-SHOTS = pathlib.Path("public/images/content/shots")
+# An optional directory argument; the default is the articles' shots dir.
+SHOTS = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path("public/images/content/shots")
 MAX_W = 1600          # 2x the 800px figure width ScreenshotFigure renders at
 QUALITY = 82
 

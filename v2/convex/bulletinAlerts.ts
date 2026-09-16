@@ -37,6 +37,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
 import { SITE_URL, actionUrl } from "./lib/links";
+import { prefsLink } from "./lib/prefsLink";
 import { one as mirrorOne } from "./lib/publicMirror";
 import {
   makeUnsubscribeToken,
@@ -589,6 +590,7 @@ export const sweep = internalAction({
           "bulletin-unsubscribe",
         );
         const unsubUrl = actionUrl("/bulletin-alert/unsubscribe", token);
+        const prefsUrl = await prefsLink(sub.email, unsubscribeSecret(), `bulletin:${sub._id}`);
         const label = seriesLabel(sub.category, sub.country);
         const fromWords = cutoffInWords(sub.lastSeenCutoff);
         const toWords = cutoffInWords(cutoff);
@@ -604,6 +606,7 @@ export const sweep = internalAction({
               fromCutoff: fromWords,
               toCutoff: toWords,
               unsubscribeUrl: unsubUrl,
+              prefsUrl,
             });
           },
         );

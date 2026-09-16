@@ -111,6 +111,8 @@ export interface CaseStatusChangedProps {
   caseUrl: string;
   /** Absolute, purpose-scoped opt-out URL. Pairs with List-Unsubscribe. */
   unsubscribeUrl: string;
+  /** The address's preference page, every alert it holds, as a magic link scoped by token. Optional for callers that predate it. */
+  prefsUrl?: string;
 }
 
 export function CaseStatusChanged({
@@ -132,6 +134,7 @@ export function CaseStatusChanged({
   employerUrl = null,
   caseUrl,
   unsubscribeUrl,
+  prefsUrl,
 }: CaseStatusChangedProps) {
   // Three figure groups in one email is a spec sheet. When the RFI funnel is
   // showing it is the more useful of the two, so the employer record stands
@@ -145,7 +148,9 @@ export function CaseStatusChanged({
         `${caseNumber}${employerName ? ` at ${employerName}` : ""}.` +
         (observedAt ? ` DOL last checked it on ${observedAt}.` : "")
       }
-      hideSettingsLink
+      hideSettingsLink={!prefsUrl}
+      settingsUrl={prefsUrl}
+      settingsLabel="Email preferences"
       footerText={
         isFinal
           ? `You asked to be told when DOL's status for ${caseNumber} changed. It has reached a final status, so this is the last alert for this case.`

@@ -42,6 +42,19 @@ vi.mock("@/lib/turso/publicData", () => ({
   getFreshness: vi.fn(async () => ({
     "perm-cases": { asOf: "2026-06-30" },
   })),
+  // One archived bulletin, so the `/visa-bulletin/<month>` family has a URL
+  // for the coverage test below to find.
+  getVisaBulletins: vi.fn(async () => [{ bulletinMonth: "2026-09" }]),
+}));
+// The `/perm-queue/<month>` pages are listed from the same census the hub
+// builds its month strip from and the month route peeks before rendering.
+// Mocked at that module; `beforeEach` arranges a census with one EMPTY month,
+// because the route 404s an empty month and the sitemap must omit it.
+vi.mock("@/lib/turso/backlog", () => ({
+  getBacklogCensus: vi.fn(),
+}));
+vi.mock("@/lib/turso/sweepCoverage", () => ({
+  getSweepCoverage: vi.fn(async () => ({ finishedOn: "2026-09-15" })),
 }));
 // The A-Z letter pages are listed from the same per-bucket counts the pages
 // themselves render, so a letter with nothing in it is omitted here and
@@ -86,6 +99,9 @@ import { captureError } from "@/lib/sentry";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { countEntityRanks, getEntitySlugWindow } from "@/lib/turso/publicData";
 import { browseCounts } from "@/lib/turso/entityBrowse";
+import { getBacklogCensus } from "@/lib/turso/backlog";
+import { readdirSync, statSync } from "node:fs";
+import { join, relative } from "node:path";
 import { BROWSE_BUCKETS, type BrowseBucket } from "@/lib/entityBrowse";
 import {
   childNames,
@@ -108,6 +124,23 @@ async function sitemap() {
     out.push(...(await entityEntries(parsed.kind, parsed.chunk)));
   }
   return out.map((e) => ({ url: e.url, lastModified: e.lastModified }));
+}
+
+/** A backlog census whose months carry the given totals; everything else empty. */
+function queueCensus(months: [string, number][]) {
+  return {
+    statuses: [],
+    pending: 0,
+    decided: 0,
+    total: months.reduce((a, [, n]) => a + n, 0),
+    months: months.map(([month, total]) => ({
+      month,
+      total,
+      pending: total,
+      decided: 0,
+      statuses: [],
+    })),
+  } as never;
 }
 
 function mkPost(
@@ -142,7 +175,66 @@ describe("sitemap.ts", () => {
       permAsOf: "2026-08-20",
     } as never);
     vi.mocked(browseCounts).mockResolvedValue(bucketCounts());
+    vi.mocked(getBacklogCensus).mockResolvedValue(queueCensus([
+      ["2025-11", 5],
+      ["2025-12", 3],
+      ["2026-09", 0],
+    ]));
     vi.clearAllMocks();
+  });
+
+  it("lists every /perm-queue month holding a case, from the census, and OMITS an empty month (that page 404s)", async () => {
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    const entries = await sitemap();
+    const byUrl = new Map(entries.map((e) => [e.url, e.lastModified]));
+    expect(byUrl.get("https://permtracker.app/perm-queue/2025-11")).toBe("2026-09-15");
+    expect(byUrl.get("https://permtracker.app/perm-queue/2025-12")).toBe("2026-09-15");
+    expect(byUrl.has("https://permtracker.app/perm-queue/2026-09")).toBe(false);
+    // The hub is still there beside its children.
+    expect(byUrl.has("https://permtracker.app/perm-queue")).toBe(true);
+  });
+
+  it("still builds, without month URLs, when the census read fails: a missing family is not a reason to lose the sitemap", async () => {
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    vi.mocked(getBacklogCensus).mockRejectedValue(new Error("turso down"));
+    const entries = await sitemap();
+    const urls = entries.map((e) => e.url);
+    expect(urls).toContain("https://permtracker.app/perm-queue");
+    expect(urls.filter((u) => u.startsWith("https://permtracker.app/perm-queue/"))).toEqual([]);
+  });
+
+  it("every dynamic public segment has at least one URL in the sitemap (the class that hid the month pages)", async () => {
+    // Walk the public app tree for `[param]` directories and require a URL
+    // under each one's parent path. A generated family that nothing lists is
+    // exactly how ~40 month pages went unadvertised for three weeks; this
+    // reads the TREE rather than a hand-kept list so a new family cannot
+    // slip past it. Deliberate exclusions would be named here with a reason;
+    // today there are none.
+    vi.mocked(getAllPosts).mockReturnValue([
+      mkPost("a", "blog", "2026-01-01"),
+      mkPost("g", "guides", "2026-01-01"),
+      mkPost("c", "changelog", "2026-01-01"),
+    ]);
+    const root = join(process.cwd(), "src/app/(site)/(public)");
+    const families: string[] = [];
+    const walk = (dir: string) => {
+      for (const name of readdirSync(dir)) {
+        const full = join(dir, name);
+        if (!statSync(full).isDirectory()) continue;
+        if (/^\[.+\]$/.test(name)) {
+          families.push(relative(root, dir).replace(/\\/g, "/"));
+          continue;
+        }
+        walk(full);
+      }
+    };
+    walk(root);
+    expect(families.length).toBeGreaterThanOrEqual(10);
+    const urls = (await sitemap()).map((e) => e.url);
+    const missing = families.filter(
+      (prefix) => !urls.some((u) => u.startsWith(`https://permtracker.app/${prefix}/`)),
+    );
+    expect(missing).toEqual([]);
   });
 
   it("opts into daily ISR via revalidate=86400", async () => {

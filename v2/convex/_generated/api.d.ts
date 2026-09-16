@@ -78,6 +78,7 @@ import type * as lib_logging from "../lib/logging.js";
 import type * as lib_nameValidation from "../lib/nameValidation.js";
 import type * as lib_newsConsent from "../lib/newsConsent.js";
 import type * as lib_newsletterCompose from "../lib/newsletterCompose.js";
+import type * as lib_newsletterSend from "../lib/newsletterSend.js";
 import type * as lib_newsletterSummary from "../lib/newsletterSummary.js";
 import type * as lib_newsletterValidators from "../lib/newsletterValidators.js";
 import type * as lib_notificationHelpers from "../lib/notificationHelpers.js";
@@ -249,6 +250,7 @@ declare const fullApi: ApiFromModules<{
   "lib/nameValidation": typeof lib_nameValidation;
   "lib/newsConsent": typeof lib_newsConsent;
   "lib/newsletterCompose": typeof lib_newsletterCompose;
+  "lib/newsletterSend": typeof lib_newsletterSend;
   "lib/newsletterSummary": typeof lib_newsletterSummary;
   "lib/newsletterValidators": typeof lib_newsletterValidators;
   "lib/notificationHelpers": typeof lib_notificationHelpers;

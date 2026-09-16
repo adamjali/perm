@@ -52,6 +52,8 @@ export interface QueueReachedProps {
   paceLine?: string | null;
   /** Absolute, purpose-scoped opt-out URL. Pairs with List-Unsubscribe. */
   unsubscribeUrl: string;
+  /** The address's preference page, every alert it holds, as a magic link scoped by token. Optional for callers that predate it. */
+  prefsUrl?: string;
   /**
    * Which DOL queue reached the month, in prose. Defaults to the PERM
    * wording so existing callers read exactly as before.
@@ -70,6 +72,7 @@ export function QueueReached({
   unsubscribeUrl,
   queueName = "PERM queue",
   monthNoun = "filing month",
+  prefsUrl,
 }: QueueReachedProps) {
   const hasMovedPast = monthsPast > 0;
   const isPwd = queueName.toLowerCase().includes("prevailing");
@@ -77,7 +80,9 @@ export function QueueReached({
   return (
     <EmailLayout
       previewText={`The Department of Labor’s published figure, as of ${asOf}.`}
-      hideSettingsLink
+      hideSettingsLink={!prefsUrl}
+      settingsUrl={prefsUrl}
+      settingsLabel="Email preferences"
       footerText={`You asked to be told when the Department of Labor’s ${queueName} reached ${filingMonth}. This alert doesn’t repeat.`}
       footerExtra={
         <Text className="em-text-secondary" style={styles.footerExtra}>

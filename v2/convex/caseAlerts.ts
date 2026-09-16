@@ -132,6 +132,7 @@ import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
 import { SITE_URL, actionUrl } from "./lib/links";
+import { prefsLink } from "./lib/prefsLink";
 import { formatAsOf } from "../src/lib/dolFormat";
 import {
   canonicalStatus,
@@ -1415,6 +1416,7 @@ export const sweepCaseChanges = internalAction({
           "case-unsubscribe",
         );
         const unsubUrl = actionUrl("/case-alert/unsubscribe", token);
+        const prefsUrl = await prefsLink(sub.email, unsubscribeSecret(), `case:${sub._id}`);
         const caseUrl = casePageUrl(sub.caseNumber);
         const noun = programNoun(program);
         // The map is keyed off this same list, so the fallback is unreachable.
@@ -1523,6 +1525,7 @@ export const sweepCaseChanges = internalAction({
                 : null,
               caseUrl,
               unsubscribeUrl: unsubUrl,
+              prefsUrl,
             });
           },
         );

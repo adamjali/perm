@@ -16,7 +16,9 @@ import { chromium } from "playwright-core";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
-const OUT = "public/images/content/shots";
+// SHOT_OUT overrides the destination (the policy page keeps its Federal
+// Register captures under public/images/policy). Default is the articles' dir.
+const OUT = process.env.SHOT_OUT || "public/images/content/shots";
 const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 const shots = JSON.parse(readFileSync(process.argv[2] ?? "shots.json", "utf8"));

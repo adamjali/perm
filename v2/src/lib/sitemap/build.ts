@@ -11,7 +11,9 @@ import {
 import { type EntityKind } from "@/lib/entityPayload";
 import { captureError } from "@/lib/sentry";
 import { browseCounts } from "@/lib/turso/entityBrowse";
+import { getBacklogCensus } from "@/lib/turso/backlog";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
+import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import {
   countEntityRanks,
   getEntitySlugWindow,
@@ -131,6 +133,25 @@ export async function pagesEntries(): Promise<Entry[]> {
   } catch {
     bulletinMonths = [];
   }
+  // One URL per filing month holding at least one case, read from the SAME
+  // census `/perm-queue` builds its month strip from and the month route
+  // peeks before rendering (a month whose total is zero 404s there). Listing
+  // them from that read is what keeps this file and the router from
+  // disagreeing. Until 2026-09-16 the sitemap listed `/perm-queue` alone and
+  // the ~40 month pages were never advertised: Search Console had
+  // `/perm-queue/2025-11`, the month DOL was adjudicating, as "URL is unknown
+  // to Google", with no referring sitemap and no referring page. The lastmod
+  // is the sweep's own finish date, because the pending counts on every one
+  // of these pages move when the sweep runs and at no other time.
+  let queueMonths: string[] = [];
+  let queueAsOf: string | null = null;
+  try {
+    const census = await getBacklogCensus();
+    queueMonths = census.months.filter((m) => m.total > 0).map((m) => m.month);
+    queueAsOf = (await getSweepCoverage())?.finishedOn ?? null;
+  } catch {
+    queueMonths = [];
+  }
   const allPosts = getAllPosts();
   if (allPosts.length === 0) {
     captureError(
@@ -191,6 +212,15 @@ export async function pagesEntries(): Promise<Entry[]> {
     // itself provisional.
     ...(MIRROR_COMPLETE
       ? [{ url: `${base}/perm-queue`, lastModified: "2026-08-26", images: [`${base}/og/perm-queue.jpg`] }]
+      : []),
+    // The month pages share the hub's gate: the route noindexes them on the
+    // same constant, and a sitemap must never advertise a page that asks not
+    // to be indexed.
+    ...(MIRROR_COMPLETE
+      ? queueMonths.map((m) => ({
+          url: `${base}/perm-queue/${m}`,
+          lastModified: queueAsOf ?? "2026-08-26",
+        }))
       : []),
     { url: `${base}/tools/priority-date-calculator`, lastModified: "2026-08-23", images: [`${base}/og/priority-date-calculator.jpg`] },
     { url: `${base}/tools/perm-deadline-calculator`, lastModified: "2026-08-23", images: [`${base}/og/perm-deadline-calculator.jpg`] },

@@ -846,9 +846,18 @@ type PrefsState = {
   weeklyDigest: boolean | null;
 };
 
-function prefsPage(state: PrefsState, token: string): Response {
+/** `kind` or `kind:id`, the row an email was about. Anything else is ignored. */
+function isFocus(s: string): boolean {
+  const [kind, id, extra] = s.split(":");
+  if (extra !== undefined) return false;
+  if (!["queue", "case", "bulletin", "news", "newsletter", "digest"].includes(kind ?? "")) return false;
+  return id === undefined || /^[A-Za-z0-9_-]{1,64}$/.test(id);
+}
+
+function prefsPage(state: PrefsState, token: string, focus?: string | null): Response {
   const esc = escapeHtml;
   const t = encodeURIComponent(token);
+  const focused = focus && isFocus(focus) ? focus : null;
   const offButton = (kind: string, id?: string) =>
     `<form method="POST" action="/prefs/update?token=${t}" style="margin:0;display:inline;">
        <input type="hidden" name="kind" value="${esc(kind)}"/>
@@ -863,10 +872,11 @@ function prefsPage(state: PrefsState, token: string): Response {
         ? "PWD queue (non-OEWS)"
         : "PERM queue";
 
-  const row = (label: string, detail: string, control: string) =>
-    `<tr><td style="padding:10px 0;border-bottom:1px solid #e4e4e7;">
+  const row = (label: string, detail: string, control: string, key?: string) =>
+    `<tr${key && key === focused ? ' id="focus"' : ""}><td style="padding:10px 0;border-bottom:1px solid #e4e4e7;">
        <div style="font-size:14px;font-weight:600;color:#18181b;">${label}</div>
        <div style="font-size:12px;color:#52525b;margin-top:2px;">${detail}</div>
+       ${key && key === focused ? '<div style="display:inline-block;margin-top:6px;background:#22c55e;color:#18181b;border:2px solid #000001;font-size:12px;font-weight:700;padding:2px 8px;">The email you came from was about this one</div>' : ""}
      </td><td style="padding:10px 0;border-bottom:1px solid #e4e4e7;text-align:right;vertical-align:middle;">${control}</td></tr>`;
 
 
@@ -877,11 +887,12 @@ function prefsPage(state: PrefsState, token: string): Response {
         `${queueLabelFor(a.queue)} alert`,
         `Month ${esc(a.filingMonth)}${a.notified ? " (already sent)" : ""}`,
         offButton("queue", a.id),
+        `queue:${a.id}`,
       ),
     );
   const caseRows = state.caseAlerts
     .filter((a) => a.active)
-    .map((a) => row("Case status alert", esc(a.caseNumber), offButton("case", a.id)));
+    .map((a) => row("Case status alert", esc(a.caseNumber), offButton("case", a.id), `case:${a.id}`));
   const bulletinRows = state.bulletinAlerts
     .filter((a) => a.active)
     .map((a) =>
@@ -889,13 +900,14 @@ function prefsPage(state: PrefsState, token: string): Response {
         "Visa bulletin alert",
         `${esc(a.category)} ${esc(a.country === "worldwide" ? "all countries" : a.country)}`,
         offButton("bulletin", a.id),
+        `bulletin:${a.id}`,
       ),
     );
   const newsRow = state.news
-    ? [row("Product news", "Occasional updates about new data and tools", offButton("news"))]
+    ? [row("Product news", "Occasional updates about new data and tools", offButton("news"), "news")]
     : [];
   const newsletterRow = state.newsletter
-    ? [row("Weekly bulletin digest", "DOL's queue, the bulletin and the Federal Register, every Tuesday", offButton("newsletter"))]
+    ? [row("Weekly bulletin digest", "DOL's queue, the bulletin and the Federal Register, every Tuesday", offButton("newsletter"), "newsletter")]
     : [];
   const digestRow =
     state.weeklyDigest === true
@@ -904,6 +916,7 @@ function prefsPage(state: PrefsState, token: string): Response {
             "Weekly digest",
             "Your account's Monday summary email",
             offButton("digest"),
+            "digest",
           ),
         ]
       : [];
@@ -984,11 +997,77 @@ http.route({
   path: "/prefs",
   method: "GET",
   handler: httpAction(async (ctx, req) => {
-    const token = new URL(req.url).searchParams.get("token");
+    const url = new URL(req.url);
+    const token = url.searchParams.get("token");
     if (!token) return new Response("Invalid preferences link.", { status: 400 });
     const state = await ctx.runMutation(internal.emailPrefs.stateByToken, { token });
     if (!state) return new Response("Invalid or expired preferences link.", { status: 400 });
-    return prefsPage(state, token);
+    return prefsPage(state, token, url.searchParams.get("focus"));
+  }),
+});
+
+// ============================================================================
+// One-click unsubscribe for the preference-center kinds.
+//
+// The `List-Unsubscribe` header on subscriber mail needs a URL a mail client
+// can POST to (RFC 8058: the client sends `List-Unsubscribe=One-Click` as the
+// body and expects the address to be off afterwards, no page, no second
+// click). The per-kind alert routes already had one; the weekly digest had
+// none, because its opt-out was the preference page. This route serves any
+// kind the page knows, keyed on the same `prefs` token. GET renders a confirm
+// page with a POST button, so a mail gateway prefetching the link never
+// unsubscribes anyone.
+// ============================================================================
+
+const ONE_CLICK_KINDS = ["queue", "case", "bulletin", "news", "newsletter", "digest"] as const;
+type OneClickKind = (typeof ONE_CLICK_KINDS)[number];
+const KIND_WORDS: Record<OneClickKind, string> = {
+  queue: "the queue-month alert",
+  case: "the case status alert",
+  bulletin: "the visa bulletin alert",
+  news: "product news",
+  newsletter: "the weekly bulletin digest",
+  digest: "your account's weekly summary",
+};
+
+function oneClickParams(req: Request): { token: string; kind: OneClickKind; id?: string } | null {
+  const url = new URL(req.url);
+  const token = url.searchParams.get("token");
+  const kind = url.searchParams.get("kind") ?? "";
+  const id = url.searchParams.get("id") ?? undefined;
+  if (!token || !(ONE_CLICK_KINDS as readonly string[]).includes(kind)) return null;
+  return { token, kind: kind as OneClickKind, id: id?.slice(0, 64) };
+}
+
+http.route({
+  path: "/prefs/unsubscribe",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const p = oneClickParams(req);
+    if (!p) return new Response("Invalid unsubscribe link.", { status: 400 });
+    const state = await ctx.runMutation(internal.emailPrefs.stateByToken, { token: p.token });
+    if (!state) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    const action = `/prefs/unsubscribe?token=${encodeURIComponent(p.token)}&kind=${p.kind}${p.id ? `&id=${encodeURIComponent(p.id)}` : ""}`;
+    return unsubscribePage(
+      "Stop these emails?",
+      `This turns off ${KIND_WORDS[p.kind]} for ${escapeHtml(state.email)}. Everything else you get stays as it is, and all of it is on your <a href="/prefs?token=${encodeURIComponent(p.token)}">email preferences</a> page.`,
+      { action, label: "Turn off" },
+    );
+  }),
+});
+
+http.route({
+  path: "/prefs/unsubscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const p = oneClickParams(req);
+    if (!p) return new Response("Invalid unsubscribe link.", { status: 400 });
+    const state = await ctx.runMutation(internal.emailPrefs.disableByToken, { token: p.token, kind: p.kind, id: p.id });
+    if (!state) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    return unsubscribePage(
+      "Turned off",
+      `${KIND_WORDS[p.kind].charAt(0).toUpperCase()}${KIND_WORDS[p.kind].slice(1)} won't be sent to ${escapeHtml(state.email)} any more. Anything else you get is on your <a href="/prefs?token=${encodeURIComponent(p.token)}">email preferences</a> page.`,
+    );
   }),
 });
 
