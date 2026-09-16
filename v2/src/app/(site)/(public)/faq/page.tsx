@@ -32,46 +32,15 @@ export const metadata: Metadata = withSocialCard({
 // Comprehensive FAQ data — all plain text for structured data compatibility
 const faqData = [
   {
-    category: "About PERM Tracker",
+    // The four brand-defining questions (what it does, is it free, client
+    // data, import) live on the HOMEPAGE since 2026-09-15; see
+    // components/home/faqData.tsx. This page keeps the process questions.
+    category: "Using PERM Tracker",
     items: [
-      {
-        question: "What exactly does PERM Tracker do?",
-        // LEADS WITH THE LOOKUP, NOT THE SOFTWARE, and that order is the whole
-        // point. This answer used to open "PERM Tracker automates deadline
-        // management for PERM labor certification cases", which is the
-        // practitioner pitch - and Google prints this answer as the site's FAQ
-        // snippet, so the first thing a searcher read about us was software for
-        // law firms. That framing is the measured cause of AI overviews
-        // describing this as attorney-only, and the rest of the site was
-        // reordered to fix it while this sat here unchanged.
-        //
-        // It also fixes the snippet mechanically. The old text put a colon
-        // before a list, and Google's cut landed on it - the listing ended
-        // "auto-calculates every critical deadline:" with nothing after it. A
-        // complete sentence first means the truncation lands on a finished
-        // thought whatever length Google allows.
-        answer:
-          "PERM Tracker follows your case through the Department of Labor and tells you where it stands. Look up a case number to see its federal record and where the queue has reached, get an email when the status changes, and track the deadlines around it: PWD expiration, the 30-180 day ETA 9089 filing window, and I-140 filing cutoffs. The lookup takes all three DOL numbers, not just PERM: a PERM case (G- or A-), a prevailing wage request (P-), or an H-1B labor condition application (I-), pending ones included. Without a number, search all three programs at once by employer, law firm, worksite state or occupation. No account is needed for any of that. Attorneys manage full caseloads on the same data.",
-      },
       {
         question: "How is this different from using a spreadsheet?",
         answer:
           "Spreadsheets require manual deadline math, don’t send reminders, and break when regulations change. PERM Tracker auto-calculates 11 deadline types per case based on DOL regulations (20 CFR 656), sends proactive alerts, validates compliance, and updates all downstream dates when one date changes.",
-      },
-      {
-        question: "Is PERM Tracker really free?",
-        answer:
-          "Yes, currently free, with no credit card and no case limit. Looking up a case number and reading the data pages needs no account at all. We may introduce optional premium features in the future, but the data, the calculators and the core deadline tracking stay free.",
-      },
-      {
-        question: "Is my client data secure?",
-        answer:
-          "Yes. Case data is encrypted at rest with AES-256-GCM, sessions expire after 15 minutes of inactivity, and access is isolated per account: no other firm can see your cases. Privacy Mode hides sensitive fields during screen sharing. The public data pages carry no client data at all, only DOL's published records.",
-      },
-      {
-        question: "Can I import my existing cases?",
-        answer:
-          "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data at any time.",
       },
       {
         question: "What happens if DOL changes regulations?",

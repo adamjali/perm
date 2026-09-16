@@ -166,7 +166,10 @@ export async function pagesEntries(): Promise<Entry[]> {
   // post ships. /login and /signup stay out - their metadata sets
   // robots:{index:false} and advertising them here would contradict that.
   const statics: Entry[] = [
-    { url: base, lastModified: latest, images: [`${base}/og/home.jpg`] },
+    // `${base}/` with the slash: it is the form Google inspects and the
+    // form the canonical declares; without it the homepage inspection read
+    // "no referring sitemaps" (2026-09-15).
+    { url: `${base}/`, lastModified: latest, images: [`${base}/og/home.jpg`] },
     { url: `${base}/blog`, lastModified: latest, images: [`${base}/og/blog.jpg`] },
     { url: `${base}/guides`, lastModified: latest, images: [`${base}/og/guides.jpg`] },
     { url: `${base}/changelog`, lastModified: latest, images: [`${base}/og/changelog.jpg`] },

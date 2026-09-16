@@ -93,12 +93,36 @@ describe("the About surfaces", () => {
     expect(read("src/app/(site)/(public)/page.tsx")).toMatch(/<AboutSection\b/);
   });
 
-  it("the homepage FAQ no longer duplicates the definitional /faq answers", () => {
+  it("the four brand-defining questions live on the homepage and NOT on /faq", () => {
+    // Reversed on 2026-09-15. The Sep 7 trim moved every definitional
+    // question to /faq, after which /faq kept the brand query, because it
+    // was the only page whose first answer defined the product. The page
+    // that should own the name answers what the name is; /faq keeps the
+    // PERM-process questions. One page per question, asserted both ways.
     const faqPage = read("src/app/(site)/(public)/faq/page.tsx");
-    for (const q of HOME_FAQS.map((f) => f.question)) {
-      expect(faqPage).not.toContain(`"${q}"`);
+    const home = read("src/components/home/faqData.tsx");
+    for (const q of [
+      "What exactly does PERM Tracker do?",
+      "Is PERM Tracker really free?",
+      "Is my client data secure?",
+      "Can I import my existing cases?",
+    ]) {
+      expect(home, `homepage FAQ lacks "${q}"`).toContain(`"${q}"`);
+      expect(faqPage, `/faq still carries "${q}"`).not.toContain(`"${q}"`);
     }
-    expect(HOME_FAQS.some((f) => /What exactly does PERM Tracker do/.test(f.question))).toBe(false);
+    // Three per audience, so neither side reads as the whole product.
+    expect(home).toContain("Can I check my PERM status without an account?");
+    expect(home).toContain("What does the case-management app do for attorneys and HR teams?");
     expect(ABOUT_ONE_LINER).toMatch(/^PERM Tracker is a free, independent website/);
+  });
+
+  it("the homepage states BOTH halves in prose above the fold, from the shared constant", () => {
+    const hero = read("src/components/home/HeroSection.tsx");
+    expect(hero).toContain("ABOUT_ONE_LINER");
+    expect(hero).toMatch(/case-management app for attorneys, paralegals and\s+HR teams/);
+    const blocks = read("src/components/home/AudienceBlocks.tsx");
+    expect(blocks).toContain("ABOUT_TWO_HALVES.waiting");
+    expect(blocks).toContain("ABOUT_TWO_HALVES.practice");
+    expect(read("src/app/(site)/(public)/page.tsx")).toMatch(/<AudienceBlocks\b/);
   });
 });

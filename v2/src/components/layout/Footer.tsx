@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 // KEEP "use client" HERE. Making this a server component was tried on
 // 2026-09-01, got all the way to a green build, was MEASURED, and made every
 // page BIGGER. Do not try it again without reading this.
@@ -243,7 +245,15 @@ export default function Footer({ audience = "public" }: FooterProps) {
               <LawGavelSVG size={28} className="text-white" />
             </div>{" "}
             <div className="mono text-xs text-white/70">
-              &copy; {currentYear} PERM Tracker. All rights reserved.
+              {/* The brand name links home from every page: until 2026-09-15
+                  the header logo was the only link to "/" whose text was the
+                  site's name, and Google ties a phrase to a page partly by
+                  what links to it with those words. */}
+              &copy; {currentYear}{" "}
+              <Link href="/" className="underline decoration-white/30 underline-offset-2 transition-colors hover:text-white hover:decoration-white">
+                PERM Tracker
+              </Link>
+              . All rights reserved.
             </div>
           </div>{" "}
           <div className="flex items-center gap-1 text-xs text-white/70">

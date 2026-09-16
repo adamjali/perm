@@ -1,3 +1,4 @@
+import { ABOUT_ONE_LINER } from "@/lib/constants/about";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -260,6 +261,22 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
               </>
             )}
           </h1>{" "}
+          {/* THE DEFINITION, BOTH HALVES, DIRECTLY UNDER THE H1 (2026-09-15).
+              Google chose /faq over this page for the query "perm tracker"
+              from Aug 25: /faq's first heading and answer define the product,
+              and the homepage's definition sat fourth section down. Google
+              needs the page it shows for the name to be the page that most
+              plainly says what the name is. Plain server-rendered prose, no
+              Motion wrapper, and it names BOTH audiences so an answer engine
+              lifting it cannot describe one side only. The stat H1 keeps the
+              hook; this carries the identity. */}
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80 sm:text-lg">
+            {ABOUT_ONE_LINER}{" "}
+            Two halves, both free: a public lookup of any PERM, wage-request or
+            LCA case with DOL&apos;s queue position, alerts and every filing
+            searchable, and a case-management app for attorneys, paralegals and
+            HR teams that computes every deadline per case.
+          </p>{" "}
           {/* THE SUBHEAD IS GONE, on Adam's call 2026-08-30.
               ("thats down from 17 months.... dols own files, take that whole
               thing out.")

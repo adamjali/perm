@@ -27,6 +27,7 @@ import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { SCHEMA_IDS } from "@/lib/structuredData";
 import {
   ABOUT_ONE_LINER,
+  ABOUT_TWO_HALVES,
   FOUNDED,
   LIVE_SINCE,
   SABRINA,
@@ -112,6 +113,15 @@ export default function AboutPage() {
       <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90 sm:text-xl">
         {ABOUT_ONE_LINER} It&apos;s not a law firm, it isn&apos;t affiliated with
         the Department of Labor, and nothing on it is legal advice.
+      </p>{" "}
+      <p className="mt-4 max-w-3xl text-base leading-relaxed text-foreground/80 sm:text-lg">
+        {/* Both halves, stated in full, and the brand name linking home: the
+            homepage is the page that should own the name (2026-09-15). */}
+        <Link href="/" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary">
+          PERM Tracker
+        </Link>{" "}
+        has two halves, both free. {ABOUT_TWO_HALVES.waiting}{" "}
+        {ABOUT_TWO_HALVES.practice}
       </p>{" "}
 
       <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16">

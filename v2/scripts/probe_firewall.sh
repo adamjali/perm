@@ -6,6 +6,12 @@
 #   robots.txt, the sitemaps and a revalidate POST carrying its secret header
 #   all pass with no mitigation. A revalidate POST WITHOUT the header is
 #   challenged, which is correct: only the cron carries it.
+# Sep 15 2026 baseline (INVERTED: allow all, restrict some). Rules 11 and 12
+#   bypass the challenge for AI assistant agents and for every path outside
+#   the restricted set, so a plain script now gets 200 on any PAGE and 429 on
+#   /api, /ingest, employer compare, the consent endpoints and a case lookup
+#   carrying ?case=. An AI assistant agent passes the lookup too (rule 4's
+#   20/min per IP still binds). A CHECKPOINT on a page is a regression.
 # Probe the live Firewall from this laptop. Each line: label, HTTP status,
 # the x-vercel-mitigated header (challenge/deny/rate-limit or empty), and
 # whether the body is the Security Checkpoint page.
@@ -32,3 +38,10 @@ probe "curl, /sitemap.xml"                "$H/sitemap.xml"
 probe "POST revalidate, wrong secret"     -X POST -H "x-revalidate-secret: not-the-secret" "$H/api/revalidate-dol"
 probe "POST revalidate, no header"        -X POST "$H/api/revalidate-dol"
 probe "curl, /api/perm-cases?q=fragomen"  "$H/api/perm-cases?q=fragomen"
+# --- the inverted model (Sep 15 2026): pages open, the expensive set challenged
+probe "curl, /perm-queue (page: open)"    "$H/perm-queue"
+probe "curl, lookup ?case= (restricted)"  "$H/perm-case-status?case=G-100-26012-553496"
+probe "Claude-User UA, lookup ?case="     -A "Claude-User/1.0 (+https://support.anthropic.com/)" "$H/perm-case-status?case=G-100-26012-553496"
+probe "curl, employer compare (restr.)"   "$H/perm-employers/compare?a=x&b=y"
+probe "curl, /prefs (restricted)"         "$H/prefs?token=x"
+

@@ -156,7 +156,8 @@ describe("sitemap.ts", () => {
       mkPost("third", "tutorials", "2026-01-20"),
     ]);
     const entries = await sitemap();
-    const root = entries.find((e) => e.url === "https://permtracker.app");
+    // With the trailing slash since 2026-09-15: the form Google inspects and the canonical declares.
+    const root = entries.find((e) => e.url === "https://permtracker.app/");
     expect(root).toBeDefined();
     // The second post has the most recent `updated` (2026-03-04) — that should win.
     expect(root!.lastModified).toBe("2026-03-04");
@@ -173,7 +174,7 @@ describe("sitemap.ts", () => {
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     const urls = new Set((await sitemap()).map((e) => e.url));
     for (const path of [
-      "https://permtracker.app",
+      "https://permtracker.app/",
       "https://permtracker.app/blog",
       "https://permtracker.app/guides",
       "https://permtracker.app/changelog",
@@ -265,7 +266,7 @@ describe("sitemap.ts", () => {
     // lastmod on the homepage, produced by a degraded build.
     vi.mocked(getAllPosts).mockReturnValue([]);
     const entries = await sitemap();
-    const home = entries.find((e) => e.url === "https://permtracker.app");
+    const home = entries.find((e) => e.url === "https://permtracker.app/");
     expect(home).toBeDefined();
 
     const stamped = String(home!.lastModified);

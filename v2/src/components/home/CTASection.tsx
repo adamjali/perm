@@ -10,17 +10,24 @@
  */
 
 import Image from "next/image";
-import { CircleNotchIcon, RocketIcon } from "@phosphor-icons/react";
+import { CircleNotchIcon, MagnifyingGlassIcon, RocketIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { RocketLaunchSVG } from "@/components/illustrations";
 
+/**
+ * TWO DOORS, one per audience (2026-09-15). The closing call used to speak to
+ * the practitioner only ("Start Tracking Cases"), so the last thing on a page
+ * built for both sides addressed one. The primary button is now the lookup,
+ * which needs no account and is what most visitors came for; the practice's
+ * door sits beside it at equal weight.
+ */
 export function CTASection({
-  eyebrow = "For a caseload",
+  eyebrow = "Both sides of a filing",
 }: {
-  /** The audience line above the heading. Defaults to the practitioner read. */
+  /** The audience line above the heading. */
   eyebrow?: string;
 }) {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
@@ -115,10 +122,11 @@ export function CTASection({
               {eyebrow}
             </p>{" "}
             <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
-              Every PERM deadline, computed per case
+              Check a case, or track a caseload
             </h2>{" "}
             <p className="mx-auto mt-3 max-w-lg text-base text-black/70">
-              Free, and setup takes a few minutes.
+              Both free. The lookup needs no account; the app takes a few
+              minutes to set up.
             </p>
           </div>{" "}
 
@@ -127,11 +135,27 @@ export function CTASection({
               this link drifted with the button and was the harder of the two
               to click. One magnetic element, one button. */}
           <div className="mt-6 flex flex-col items-center gap-5">
-            <MagneticButton>
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
+              <MagneticButton>
+                <Button
+                  size="lg"
+                  className="h-12 border-3 border-black bg-black px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
+                  style={{ boxShadow: "4px 4px 0px #000" }}
+                  onClick={() => navigateTo("/perm-case-status")}
+                  disabled={isNavigating}
+                >
+                  {isNavigating && targetPath === "/perm-case-status" ? (
+                    <CircleNotchIcon className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <MagnifyingGlassIcon className="mr-2 h-5 w-5" />
+                  )}
+                  Check my case
+                </Button>
+              </MagneticButton>{" "}
               <Button
                 size="lg"
-                className="h-12 border-3 border-black bg-black px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
-                style={{ boxShadow: "4px 4px 0px #000" }}
+                variant="outline"
+                className="h-12 border-3 border-black bg-transparent px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-black transition-all duration-150 hover:bg-black hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:text-black dark:hover:bg-black dark:hover:text-white"
                 onClick={() => navigateTo("/signup")}
                 disabled={isNavigating}
               >
@@ -140,9 +164,9 @@ export function CTASection({
                 ) : (
                   <RocketIcon className="mr-2 h-5 w-5" />
                 )}
-                Start Tracking Cases
+                Start tracking cases
               </Button>
-            </MagneticButton>{" "}
+            </div>{" "}
             <a
               href="/tools"
               className="inline-flex min-h-[44px] items-center font-bold text-black underline decoration-black/40 decoration-2 underline-offset-4 transition-colors hover:decoration-black"

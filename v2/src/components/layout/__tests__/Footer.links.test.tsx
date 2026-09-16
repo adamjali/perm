@@ -21,7 +21,9 @@ describe("Footer", () => {
       expect(screen.getByRole("link", { name: /contact/i })).toHaveAttribute("href", "/contact");
 
       const currentYear = new Date().getFullYear();
-      expect(screen.getByText(new RegExp(`© ${currentYear} PERM Tracker`, "i"))).toBeInTheDocument();
+      // The brand name is a link home since 2026-09-15, so the line is split across elements.
+      expect(screen.getByText(new RegExp(`© ${currentYear}`))).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: "PERM Tracker" })).toHaveAttribute("href", "/");
     });
   }
 

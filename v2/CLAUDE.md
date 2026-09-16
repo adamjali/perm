@@ -5145,3 +5145,78 @@ The LCA path is proven end to end in production: confirmed Sep 10, told of
 certification Sep 14. One leak worth closing: the inbound webhook forwards spam
 ("casino leads for sale") to the owner's Gmail through the same Resend quota.
 
+## The firewall, inverted: allow all, restrict the expensive set (2026-09-15)
+
+Adam: *"instead of restrict all and allow some it's allow all and restrict some."*
+Bot Protection stays in Challenge (its browser session is what lets the site's
+own API calls through), and two bypass rules below the rate limits carry the
+inversion. Applied through the REST API (`PATCH
+/v1/security/firewall/config`, actions `rules.update` / `rules.insert`, the
+CLI's own token), which avoids the editor's operator-inversion trap entirely;
+config version 13 -> 16.
+
+| # | rule | change |
+|---|---|---|
+| 1 | Meta deny on `/perm-case-status?case=` | `meta-externalfetcher` (Meta AI's on-demand fetcher) added to the exemptions beside the two preview agents |
+| 2-10 | unchanged | |
+| 11 | **Bypass AI assistants and AI crawlers** | user agent contains Claude-User, ClaudeBot, Claude-SearchBot, ChatGPT-User, OAI-SearchBot, GPTBot, PerplexityBot, Perplexity-User, meta-externalfetcher, Amazonbot, DuckAssistBot or Google-Extended |
+| 12 | **Allow every cheap path** | two OR groups: every path NOT under `/api/`, `/ingest/`, `/perm-employers/compare`, `/prefs`, `/unsubscribe`, `/queue-alert`, `/case-alert`, `/bulletin-alert` and not `/perm-case-status`; or that lookup path WITHOUT a `case` query |
+
+**Measured after:** a plain script gets 200 on every page and 429 on the
+restricted set; a script claiming any listed assistant passes the live lookup
+(rule 4's 20/min per IP still binds); a browser-looking script on `/api` is
+still challenged; a real Claude fetch read `/perm-queue` and a live case page
+where it got 429 before. `scripts/probe_firewall.sh` carries five new lines.
+What this costs: unverified scrapers read cached pages, bounded by 300/min per
+IP; the lookup budget and the API stay behind the challenge for anyone not on
+the list. Vercel's `Claude-User` verification did not cover the addresses a
+Claude Code session fetches from, which is why the user-agent rule exists.
+
+**Why the Meta deny stays.** Rule 1 blocks exactly one thing: non-preview,
+non-fetcher requests from AS 32934 for a case lookup carrying `?case=`. That is
+the shape of the Sep 6 crawler (553,800 requests a day, browser user agents,
+the DOL budget gone by 5 AM). Rule 2 bounds volume; rule 1 bounds the BUDGET,
+which a client can drain under the volume cap (30/min x 24h = 43,200, the
+budget is 2,000). People browsing inside Meta's apps are on their own phones'
+networks and never meet either rule.
+
+## The homepage owns the brand query again: both halves, at the top (2026-09-15)
+
+Search Console, exact query "perm tracker", 3 months: `/faq` 885 clicks at
+position 5.8, the homepage 787 at 6.2, and the two daily lines are mirror
+images from Aug 25 - the homepage fell to near zero the day its title was
+rewritten and its self-description removed, and `/faq` rose the same day.
+Google had swapped which page represents the site for its own name. Not a
+canonical problem (Google's chosen canonical is the homepage, crawled that
+afternoon). `/faq` simply defined the product first and said the name 60 times
+to the homepage's 34.
+
+Adam's brief: *"make sure homepage has BOTH sides of everything... not just
+benef and not just att."* Measured before: four sections for the person
+waiting, one short panel for the practitioner, a definition describing only the
+data site, a closing call speaking only to attorneys. What shipped:
+
+- **The definition directly under the H1**, both halves in one sentence, plain
+  server prose (`ABOUT_ONE_LINER` plus the two-halves sentence).
+- **`AudienceBlocks`** replaces `AttorneyPanel`: one H2 ("Both sides of a PERM
+  filing"), two mirrored H3 cards of equal shape and list length, each fed by
+  `ABOUT_TWO_HALVES` in `constants/about.ts` so no surface can drift to one
+  side. The attorney card carries what `/for-attorneys` kept to itself.
+- **Six FAQ entries, three per side.** The four brand-defining questions moved
+  OFF `/faq` and onto the homepage (reversing the Sep 7 trim, which had moved
+  them the other way and handed `/faq` the query); `/faq` keeps the process
+  questions. `about-surfaces.test.ts` asserts the split in both directions.
+- **Two-door closing call**: check a case, start tracking cases.
+- **The brand name links home from the footer and the About page**; the header
+  logo had been the only such link.
+- **Homepage URL with its trailing slash** in the sitemap: the canonical form
+  and the one Google inspects; without it the inspection read "no referring
+  sitemaps".
+- **Title unchanged**, frozen until 2026-11-07.
+
+Verified on the dev render: both halves present in order, outline
+1-2-2-2-3-3-3-3-2-3-3-2-2-2-2 with no skips, the repo's glue audit at 0 (a
+quick regex said 44 and 41 on the untouched production page - the instrument,
+not the page). Scoreboard: the homepage's daily line for the exact query,
+weekly; a reversal should show inside two to three weeks.
+

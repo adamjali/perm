@@ -72,3 +72,17 @@ export const ORGANIZATION_SAME_AS: readonly string[] = [
  */
 export const ABOUT_ONE_LINER =
   "PERM Tracker is a free, independent website that follows the PERM labor certification process using the Department of Labor's own published data.";
+
+/**
+ * The two halves, each stated in full. The homepage lede, the mirrored
+ * audience blocks and the FAQ read from these so no surface can drift into
+ * describing one audience only - the measured cause of AI overviews calling
+ * this site attorney-only (Sep 2026) was exactly that drift, and the fix is
+ * parallel statements, not absence.
+ */
+export const ABOUT_TWO_HALVES = {
+  waiting:
+    "For anyone waiting on a case: look up any PERM, prevailing wage or H-1B LCA number, pending ones included, see the federal record and where DOL's queue stands, get an estimate, set a free email alert for a status change, a queue milestone or a visa bulletin move, and search every filing by employer, law firm, state and occupation. No account needed.",
+  practice:
+    "For attorneys, paralegals and HR teams: a free case-management app that computes every deadline per case under 20 CFR 656 (wage expiration, recruitment clocks, the ETA 9089 filing window, audit and RFI responses, the I-140 cutoff), with reminders, calendar sync, CSV import, an AI assistant over your caseload, and client data encrypted and isolated per account.",
+} as const;

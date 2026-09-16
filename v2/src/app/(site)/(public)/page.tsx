@@ -9,10 +9,10 @@
  * 2. LiveDataBand - DOL's live queue position + the tape
  * 3. StageStrip - PWD / PERM / I-140 / I-485, each with its timeline + data
  * 4. ToolsSection - the four calculators, laid out as the process (#tools)
- * 5. AttorneyPanel - the practitioner door, slimmed; full pitch on /for-attorneys
+ * 5. AudienceBlocks - both audiences, equal H2s, full capability lists (2026-09-15)
  * 6. TestimonialsSection - Value props + trust badges
  * 7. FAQSection - Common questions (#faq)
- * 8. CTASection - Single CTA with loss-frame
+ * 8. CTASection - two doors: check a case, start tracking cases
  * (Footer is rendered by PublicLayout)
  *
  * The practitioner lower half (Stakes, HowItWorks, FeaturesGrid, Security)
@@ -26,7 +26,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import {
   HeroSection,
   StageStrip,
-  AttorneyPanel,
+  AudienceBlocks,
   ToolsSection,
   TestimonialsSection,
   AboutSection,
@@ -169,12 +169,12 @@ export default async function HomePage() {
         frontierMonth={analyst?.priorityDate ?? null}
         averageDays={analystAvg?.calendarDays ?? null}
       />
-      <AttorneyPanel />
+      <AudienceBlocks />
       <TestimonialsSection />
       <AboutSection record={record} />
       <FAQSection />
       <SectionDivider kind="step" fill="var(--primary)" />
-      <CTASection eyebrow="If you manage cases" />
+      <CTASection />
     </>
   );
 }
