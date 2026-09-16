@@ -1,61 +1,63 @@
 # GSC indexing priority list
 
-**Run of 2026-09-15, 9:10 AM to 9:48 AM EDT: 11 accepted, the 12th refused.**
-The cap was 11 for the third run running (Sep 5, Sep 14, Sep 15). The window
-reopens at roughly **9:10 AM EDT on 2026-09-16**; do not start before then.
+**Run of 2026-09-16, 11:55 AM to 12:38 PM EDT: 11 accepted, the 12th refused.** The
+cap was 11 for the FOURTH run running (Sep 5, 14, 15, 16); treat it as the number.
+Window reopens about **11:55 AM EDT on 2026-09-17**. Order today: `/` and `/faq` first, because the homepage was
+rebuilt for the brand query the night before, then the Sep 15 leftovers.
 
 | # | URL | Google's verdict | enhancements | result |
 |---|---|---|---|---|
-| 1 | `/perm-by-state` | indexed | HTTPS, Datasets 1 valid | accepted |
-| 2 | `/tools/green-card-timeline` | indexed | HTTPS | accepted |
-| 3 | `/blog` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
-| 4 | `/guides` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
-| 5 | `/pwd-cases` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
-| 6 | `/lca-cases` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
-| 7 | `/perm-wages` | indexed | HTTPS, Datasets 1 valid | accepted |
-| 8 | `/perm-attorneys` | indexed | HTTPS, Datasets 1 valid | accepted |
-| 9 | `/perm-employers` | indexed | HTTPS, Datasets 1 valid | accepted |
-| 10 | `/perm-cases` | indexed | HTTPS, Datasets 1 valid | accepted |
-| 11 | `/perm-decision-activity` | indexed | HTTPS, Datasets 1 valid | accepted |
-| 12 | `/visa-bulletin` | indexed | HTTPS, Breadcrumbs 1 valid | **Quota Exceeded** |
-
-Every one of the twelve is indexed. Across the two runs, all 23 queued pages
-are indexed and 22 have a fresh request in; only `/visa-bulletin` remains.
+| 1 | `/` | indexed | HTTPS, Review snippets 1 valid | accepted |
+| 2 | `/faq` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
+| 3 | `/visa-bulletin` | indexed | HTTPS, Breadcrumbs 1 valid | accepted (refused yesterday) |
+| 4 | `/perm-employers/browse/a` | indexed | HTTPS | accepted |
+| 5 | `/perm-wages/browse/a` | indexed | HTTPS | accepted |
+| 6 | `/perm-attorneys/browse/a` | indexed | HTTPS | accepted |
+| 7 | `/perm-case-status` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
+| 8 | `/tools/perm-timeline-calculator` | indexed | HTTPS | accepted |
+| 9 | `/perm-queue/2025-11` | **unknown to Google**, no referring sitemap, no referring page | none | accepted |
+| 10 | `/for-attorneys` | indexed | HTTPS (video: none indexed) | accepted (modal painted late; read by count) |
+| 11 | `/about` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
+| 12 | `/changelog/corrections` | indexed | HTTPS, Breadcrumbs 1 valid | **Quota Exceeded** after a ~70 s live test |
 
 ## Next run, in order
 
 | # | URL | changed |
 |---|---|---|
-| 1 | `/visa-bulletin` | two table cells compressed; refused today |
-| 2 | `/perm-employers/browse/a` | A-Z browse cap and per-kind note |
-| 3 | `/perm-wages/browse/a` | A-Z browse cap and per-kind note |
-| 4 | `/perm-attorneys/browse/a` | A-Z browse cap and per-kind note |
-| 5 | `/perm-case-status` | stage-aware estimate lead, one answer |
-| 6 | `/tools/perm-timeline-estimator` | queue-advance model leads, an actual day |
-| 7 | `/perm-queue/2025-11` | the month DOL is adjudicating |
-| 8 | `/for-attorneys` | SSR visibility fix |
-| 9 | `/about` | new page, Sep 7 |
-| 10 | `/changelog/corrections` | corrections log moved here |
-| 11 | `/layoffs` | 176 glued cells fixed |
+| 1 | `/changelog/corrections` | refused today |
+| 2 | `/layoffs` | 176 glued cells fixed |
+| 3 | `/perm-queue/2025-12`, `/perm-queue/2026-01` | month pages Google has never seen (see the sitemap finding); one or two per day until the sitemap lists them |
+| 4 | `/tools/salary-explorer` | precomputed doc, faster page |
+| 5 | `/lca-wages` | precomputed doc |
+| 6 | `/glossary`, `/perm-case-statuses` | re-request after Sep 14 only if their crawl date has not moved | (the last two spill to the next
+window if the cap is 11 again).
 
-## Driving it on 2026-09-15: four measured facts
+## Finding: the ~39 `/perm-queue/<month>` pages are in NO sitemap (2026-09-16)
 
-- **The `browser_batch` ceiling is about 50 seconds of waits, not "about two
-  minutes."** A batch with 68 s of waits timed out and reported NOTHING, and so
-  did a 75 s merged shape (request + poll + dismiss + next inspection). The 48 s
-  shape (click, 28 s, zoom, 20 s, zoom, JS count) worked every time. When a
-  batch times out, the request has usually landed: read the state (JS counts,
-  a zoom) before touching anything.
-- **A heavy page's live test runs past 48 s.** `/guides`, `/perm-wages`,
-  `/perm-decision-activity` and `/visa-bulletin` were still "Testing" at the
-  second zoom. Poll again in a fresh batch, never re-click.
-- **The modal can paint a beat after the zoom.** `/perm-cases` read "no modal,
-  requested 0" at 48 s and showed "Indexing requested" one call later. The
-  durable reads are the innerText count and the button row flipping to
-  "REQUEST AGAIN"; a single zoom is not a verdict either way.
-- **The quota refusal can come AFTER the live test.** Yesterday it was
-  immediate; today `/visa-bulletin` ran its live test for ~50 s and then
-  answered "Quota Exceeded". So "still testing" does not mean "not refused".
+`/perm-queue/2025-11`, the month DOL is adjudicating, is "URL is unknown to
+Google". It is indexable (no robots meta served; `MIRROR_COMPLETE` is true) and
+linked from `/perm-queue`'s month strip, but `src/lib/sitemap/build.ts` lists
+only `/perm-queue` itself. The month pages are generated (`generateStaticParams`)
+and never advertised. Fix, separately from this run: list them from the same
+month source the route uses, the way the stage pages are listed from
+`reviewStages()`, so the sitemap and the router cannot disagree.
+
+## Driving it on 2026-09-16
+
+- **Never `tabs_close_mcp` inside a batch that also acts on a sibling tab.** The
+  batch fails "not in the same group", and if it was the group's last tab the
+  whole group is destroyed with the GSC state in it. Close tabs in their own call.
+- **A domain the extension refuses inside a batch can pass standalone**: a
+  batch reports the first refused item and stops, so a just-granted permission
+  reads as still refused. Retry `navigate` on its own before asking for a grant.
+- **The viewport is 756px tall this session (was 812)**, so the Dismiss button
+  sits at (939, 450), not (938, 478). Read it with `getBoundingClientRect`
+  instead of a memorised coordinate; the request button at (1261, 363) is
+  unchanged because it sits above the fold in both.
+- **Type only after a screenshot on a SETTLED page**: the first attempt typed
+  into a still-loading page and the text was silently lost (the zoom showed an
+  empty bar). The screenshot between the click and the type is what forces
+  the paint.
 
 ---
 
