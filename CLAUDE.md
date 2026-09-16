@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-07
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-16
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **391 files / 7,034 tests across 4 vitest

@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-09-07
+> **Status:** Production | **Last Updated:** 2026-09-16
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
