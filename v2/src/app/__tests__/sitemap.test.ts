@@ -35,6 +35,10 @@ vi.mock("@/lib/turso/publicData", () => ({
   // reads a day), so the seam this file mocks moved with it.
   getEntitySlugWindow: vi.fn(),
   countPageworthy: vi.fn(async () => 0),
+  // The live-only employer family. Zero by default so the older expectations
+  // hold; the family test below arranges a corpus.
+  countLiveOnlyRanks: vi.fn(async () => 0),
+  getLiveOnlySlugWindow: vi.fn(async () => []),
   // DELIBERATELY a different date from the processing-times mock above. Entity
   // URLs must stamp from the quarterly DISCLOSURE corpus, not from DOL's
   // daily-moving processing-times figure, and two identical dates would let
@@ -97,7 +101,7 @@ function arrangeEntities(sizes: Record<string, number>) {
 import { getAllPosts } from "@/lib/content";
 import { captureError } from "@/lib/sentry";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
-import { countEntityRanks, getEntitySlugWindow } from "@/lib/turso/publicData";
+import { countEntityRanks, countLiveOnlyRanks, getEntitySlugWindow, getLiveOnlySlugWindow } from "@/lib/turso/publicData";
 import { browseCounts } from "@/lib/turso/entityBrowse";
 import { getBacklogCensus } from "@/lib/turso/backlog";
 import { readdirSync, statSync } from "node:fs";
@@ -107,6 +111,7 @@ import {
   childNames,
   entityEntries,
   indexXml,
+  liveEmployerEntries,
   pagesEntries,
   parseChildName,
   SITEMAP_CHUNK,
@@ -201,6 +206,38 @@ describe("sitemap.ts", () => {
     const urls = entries.map((e) => e.url);
     expect(urls).toContain("https://permtracker.app/perm-queue");
     expect(urls.filter((u) => u.startsWith("https://permtracker.app/perm-queue/"))).toEqual([]);
+  });
+
+  it("lists the live-only employers as their own child family, partitioned exactly by rank window", async () => {
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    const size = 12_000;
+    vi.mocked(countLiveOnlyRanks).mockResolvedValue(size);
+    vi.mocked(getLiveOnlySlugWindow).mockImplementation(async (chunk: number, per: number) => {
+      const lo = chunk * per;
+      const hi = Math.min(lo + per, size);
+      return Array.from({ length: Math.max(0, hi - lo) }, (_, i) => `live-${lo + i + 1}`);
+    });
+    const names = await childNames();
+    expect(names.filter((n) => n.startsWith("live-employer-"))).toEqual([
+      "live-employer-1", "live-employer-2", "live-employer-3",
+    ]);
+    expect(parseChildName("live-employer-2")).toEqual({ kind: "live-employer", chunk: 1 });
+    const all: string[] = [];
+    for (const c of [0, 1, 2]) all.push(...(await liveEmployerEntries(c)).map((e) => e.url));
+    expect(all).toHaveLength(size);
+    expect(new Set(all).size).toBe(size);
+    expect(all[0]).toBe("https://permtracker.app/perm-employers/live-1");
+    expect(all[size - 1]).toBe("https://permtracker.app/perm-employers/live-12000");
+    // Stamped with the sweep's finish date: these pages move when it runs.
+    expect((await liveEmployerEntries(0))[0]!.lastModified).toBe("2026-09-15");
+  });
+
+  it("lists NO live-only children when the nightly table cannot be read, and keeps the other families", async () => {
+    vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
+    vi.mocked(countLiveOnlyRanks).mockRejectedValue(new Error("no such table: perm_live_only_index"));
+    const names = await childNames();
+    expect(names.some((n) => n.startsWith("live-employer-"))).toBe(false);
+    expect(names).toContain("employer-1");
   });
 
   it("every dynamic public segment has at least one URL in the sitemap (the class that hid the month pages)", async () => {

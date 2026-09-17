@@ -22,7 +22,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from build_entity_detail import LIVE_COLS, live_norm  # noqa: E402
+from build_entity_detail import LIVE_COLS, live_norm, live_only_rows  # noqa: E402
 
 FAILURES: list[str] = []
 
@@ -62,6 +62,25 @@ def built_row(case: str, filing: str, status: str, is_final: int,
 
 ARGS = ("G-100-26077-713598", "2026-03-09", "ANALYST REVIEW", 0,
         "Syracuse University", "syracuse-university", "Lecturer")
+
+
+def check_live_only_rows() -> None:
+    """The sitemap's live-only family: published slugs excluded, ranks dense,
+    ordered by first filing then slug, name by majority spelling."""
+    live = [
+        {"employer_slug": "acme-llc", "employer_name": "ACME LLC", "filing_date": "2026-05-02"},
+        {"employer_slug": "acme-llc", "employer_name": "Acme LLC", "filing_date": "2026-04-30"},
+        {"employer_slug": "acme-llc", "employer_name": "ACME LLC", "filing_date": "2026-06-01"},
+        {"employer_slug": "big-published-co", "employer_name": "Big Published Co", "filing_date": "2026-01-01"},
+        {"employer_slug": "zeta-inc", "employer_name": "Zeta Inc", "filing_date": "2026-04-30"},
+        {"employer_slug": "", "employer_name": "no slug", "filing_date": "2026-01-01"},
+    ]
+    rows = live_only_rows(live, {"big-published-co"})
+    check("published employers are excluded, no-slug rows dropped", [r[0] for r in rows], ["acme-llc", "zeta-inc"])
+    check("ranks dense from 1, by first filing then slug", [(r[0], r[4]) for r in rows], [("acme-llc", 1), ("zeta-inc", 2)])
+    check("cases counted", rows[0][2], 3)
+    check("majority spelling kept", rows[0][1], "ACME LLC")
+    check("first filing kept", rows[0][3], "2026-04-30")
 
 
 def main() -> int:
@@ -117,6 +136,7 @@ def main() -> int:
     if FAILURES:
         print(f"{len(FAILURES)} failure(s): {', '.join(FAILURES)}")
         return 1
+    check_live_only_rows()
     print("all checks passed")
     return 0
 

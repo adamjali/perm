@@ -168,6 +168,34 @@ export async function countEntityRanks(kind: EntityKind): Promise<number> {
   return r?.n ?? 0;
 }
 
+/**
+ * The live-only employers, for the `live-employer-N.xml` sitemap children.
+ *
+ * `perm_live_only_index` is written by `build_entity_detail.py` every night
+ * beside `perm_live_recent`: one row per employer the live feed names and the
+ * published files do not, with a dense rank ordered by first filing then slug
+ * so a night's new arrivals mostly append and the windows stay stable. Read
+ * exactly as the entity windows are: a rank RANGE off the rank index, never an
+ * OFFSET that sorts the whole table per chunk.
+ *
+ * A missing table (the first deploy before the first nightly run) reads as
+ * zero ranks, so the index lists no live children rather than failing every
+ * sitemap on the site; `captureError` names it.
+ */
+export async function getLiveOnlySlugWindow(chunk: number, size: number): Promise<string[]> {
+  const lo = chunk * size;
+  const found = await rows<{ slug: string }>(
+    "SELECT slug FROM perm_live_only_index WHERE rank > ? AND rank <= ? ORDER BY rank",
+    [lo, lo + size],
+  );
+  return found.map((r) => r.slug);
+}
+
+export async function countLiveOnlyRanks(): Promise<number> {
+  const r = await one<{ n: number }>("SELECT max(rank) AS n FROM perm_live_only_index");
+  return r?.n ?? 0;
+}
+
 /** One entity by slug. `null` means no such page, which callers turn into a 404. */
 export async function getEntityBySlug(
   kind: EntityKind,

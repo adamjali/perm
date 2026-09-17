@@ -220,13 +220,17 @@ export async function generateMetadata({
   if (!found) {
     const record = await liveEmployerRecord(slug);
     if (!record) notFound();
-    // NOINDEX, ALWAYS, and this is the load-bearing line of the whole
-    // feature. 17,681 of these employers hold exactly one case, so the page
-    // is a heading and one row by construction. Twenty thousand of those is
-    // the scaled-thin-content shape Google's policy names, whatever we meant
-    // by it. They exist so a person who is looking can find them; they are
-    // not offered to an index, and the sitemap - built from perm_entities,
-    // which by definition holds none of these - never lists one.
+    // INDEXABLE, BY THE OWNER'S DECISION (2026-09-17, 1:56 AM EDT). These
+    // pages carried `robots: noindex` from the day they shipped: 18,284 of
+    // the 22,313 live-only employers hold exactly one case, so the page is a
+    // heading and one row, and twenty thousand of those is the thin-content
+    // shape Google's policy names. The recommendation on record was to index
+    // only the 678 with five or more cases. Adam chose everything, with the
+    // cost stated: Google is already declining 63,218 published tail pages,
+    // so the realistic outcome is a larger "discovered, not indexed" figure,
+    // not a larger index, and no penalty either way. The sitemap lists these
+    // from `perm_live_only_index`, rebuilt nightly with the live remainder,
+    // so the page and the sitemap read one source and cannot disagree.
     // Same title rule as the published pages: DOL's printed name is never
     // cut, the brand suffix goes first and the qualifier second. A legal
     // entity name can run past what Google shows on its own, and these names
@@ -258,7 +262,6 @@ export async function generateMetadata({
         `${record.name.slice(0, 140)}: PERM cases in DOL's live record.`,
       ].find((d) => d.length <= 155) ?? "PERM cases in DOL's live record.";
     return {
-      robots: { index: false, follow: true },
       title: absolute ? { absolute: title } : title,
       description,
       alternates: { canonical: `${BASE}/${slug}` },

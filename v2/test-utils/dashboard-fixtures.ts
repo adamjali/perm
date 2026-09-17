@@ -159,7 +159,11 @@ export const recruitmentFixtures = {
         { method: "Campus recruitment", date: daysAgo(65) },
         { method: "Employee referral program", date: daysAgo(60) },
       ],
-      noticeOfFilingStartDate: daysAgo(90), noticeOfFilingEndDate: daysAgo(74),
+      // 24 calendar days, not 16: the rule wants 10 BUSINESS days, and a
+      // 16-day span holds exactly 10 only when no federal holiday falls inside
+      // it. Measured 2026-09-17: the span landed on the observed Independence
+      // Day and the validator counted 9. Wide enough now for two holidays.
+      noticeOfFilingStartDate: daysAgo(98), noticeOfFilingEndDate: daysAgo(74),
       recruitmentApplicantsCount: 8, recruitmentSummaryCustom: "Completed all required recruitment steps",
       isProfessionalOccupation: true, priorityLevel: "high",
     }),

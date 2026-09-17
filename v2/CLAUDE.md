@@ -5381,3 +5381,48 @@ reads right, `NEWSLETTER_ENABLED=1` on prod Convex and the first real send is
 Tue Sep 29, 9:00 AM ET, to the 11 confirmed subscribers. Three reminders carry
 it: the due-check routine's self-retiring Check 4 (Sep 22 to 29), a calendar
 event Tue Sep 22 9:30 AM ET, and the batch ledger.
+
+## The live-only employer pages are indexable and advertised (2026-09-17, 1:56 AM EDT)
+
+Adam: *"everything"*, after the middle path (index only the 678 live-only
+employers with five or more cases) was recommended and the arithmetic laid out.
+Recorded so the reasoning survives the reversal:
+
+| set | pages |
+|---|---|
+| live-only employers (in the live feed, in no published file) | 22,313 |
+| with 2 or more cases | 4,029 |
+| with 5 or more | 678 |
+| with 10 or more | 204 |
+| with exactly one case | 18,284 |
+
+**What changed.** The page's live-only branch emits no `robots` directive (it
+carried `index: false, follow: true` from the day it shipped). The sitemap
+gained a fourth child family, `live-employer-N.xml`, listed from
+`perm_live_only_index`: a table `build_entity_detail.py` writes every night
+beside the live remainder, one row per live-only employer with a dense rank
+ordered by first filing then slug (so a night's arrivals mostly append and
+the rank windows stay stable), diffed on write like the live table. The
+sitemap reads it through a rank window exactly as the entity children do,
+stamps the sweep's finish date, and lists no live children at all when the
+table cannot be read, so a failure in this family cannot take the other
+three down. `live-only-employers-indexed.test.ts` replaces the file that
+pinned the opposite decision and asserts the invariant that survives it: the
+page and the sitemap read one source, and the page never asks not to be
+indexed.
+
+**What was said would happen, so it can be checked against the 9/27 report.**
+Google is already declining 63,218 published tail pages ("Discovered,
+currently not indexed") and refused 84 crawled ones on Sep 15; these pages
+are thinner, so the expected outcome is a larger discovered-not-indexed
+figure and a small gain in the index, with no penalty (Google does not punish
+a site for pages it chooses not to index). The one real cost is crawl: a site
+of ~100,000 daily-changing URLs is the shape Google's crawl-budget guidance
+addresses, and every crawl spent on a one-case page is one not spent on the
+published tail. The upside is search presence for a new sponsor's own
+workers, who type the company name plus PERM, and those pages are the only
+ones on the internet naming such a sponsor before DOL publishes it.
+
+**Seeded by hand** once with `build_entity_detail.py --live-recent-only`
+before the deploy, so the sitemap index listed the family from its first
+build rather than after the next nightly run.

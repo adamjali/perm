@@ -98,13 +98,15 @@ describe("entity detail routes: the miss is decided in metadata", () => {
   });
 
   /**
-   * The live-only page is a 200 and is NOINDEX, and both halves matter.
+   * The live-only page is a 200 and, since 2026-09-17, INDEXABLE.
    *
    * 200 because a search result that 404s on click is worse than no result -
-   * that is the whole reason the page exists. Noindex because 17,681 of these
-   * employers hold exactly one case, so the page is a heading and one row by
-   * construction, and twenty thousand of those is the scaled-thin-content
-   * shape Google's own policy names whatever we meant by it.
+   * that is the whole reason the page exists. It carried `robots: noindex`
+   * from the day it shipped (18,284 of these employers hold one case); the
+   * owner chose to index everything, with the cost on record in the page's
+   * generateMetadata. What this pins now is that no robots directive is
+   * emitted, so the sitemap's live-employer family never advertises a page
+   * that asks not to be indexed.
    */
   const liveRecord = (over: Record<string, unknown> = {}) => ({
     slug: "lorenz-bus-service-inc",
@@ -129,14 +131,14 @@ describe("entity detail routes: the miss is decided in metadata", () => {
     }));
   };
 
-  it("an employer known only to the live feed gets a page, and it is noindex", async () => {
+  it("an employer known only to the live feed gets a page, and it is indexable", async () => {
     vi.resetModules();
     mockLive(liveRecord());
     const { generateMetadata } = await import(
       "../(site)/(public)/perm-employers/[slug]/page"
     );
     const meta = await generateMetadata(params("lorenz-bus-service-inc"));
-    expect(meta.robots).toEqual({ index: false, follow: true });
+    expect(meta.robots).toBeUndefined();
     expect(String(meta.description)).toMatch(/Lorenz Bus Service Inc/);
     // The description must not promise a figure the page refuses to print.
     expect(String(meta.description)).not.toMatch(/approved|median|rank/i);

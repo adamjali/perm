@@ -16,8 +16,10 @@ import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import {
   countEntityRanks,
+  countLiveOnlyRanks,
   getEntitySlugWindow,
   getFreshness,
+  getLiveOnlySlugWindow,
   getVisaBulletins,
 } from "@/lib/turso/publicData";
 import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
@@ -409,6 +411,33 @@ export async function entityEntries(kind: EntityKind, chunk: number): Promise<En
 }
 
 
+/**
+ * One chunk of the live-only employers: pages the live feed names and the
+ * published files do not. Indexable since 2026-09-17 by the owner's decision
+ * (the page's `generateMetadata` carries the reasoning); listed from
+ * `perm_live_only_index`, the nightly table, through a rank window. Stamped
+ * with the sweep's own finish date, because these pages move when the sweep
+ * runs and at no other time.
+ */
+export async function liveEmployerEntries(chunk: number): Promise<Entry[]> {
+  const base = baseUrl();
+  const slugs = await getLiveOnlySlugWindow(chunk, SITEMAP_CHUNK);
+  const floor = chunk === 0 ? MIN_ROWS_PER_KIND : 1;
+  if (slugs.length < floor) {
+    const detail =
+      `Sitemap child live-employer chunk ${chunk} built with only ${slugs.length} rows. ` +
+      `The Turso read failed or the nightly table is empty.`;
+    captureError(new Error(detail));
+    throw new Error(detail);
+  }
+  const swept = (await getSweepCoverage().catch(() => null))?.finishedOn ?? null;
+  const lastModified = swept ?? (await corpusAsOf()) ?? "2026-09-17";
+  return slugs.map((slug) => ({ url: `${base}/perm-employers/${slug}`, lastModified }));
+}
+
+/** The child-sitemap families: three entity kinds plus the live-only employers. */
+export type ChildKind = EntityKind | "live-employer";
+
 /** Every child sitemap name, in the order the index lists them. */
 export async function childNames(): Promise<string[]> {
   const kinds: EntityKind[] = ["employer", "attorney", "occupation"];
@@ -418,18 +447,26 @@ export async function childNames(): Promise<string[]> {
     const n = Math.max(1, Math.ceil((counts[i] ?? 0) / SITEMAP_CHUNK));
     for (let c = 0; c < n; c += 1) names.push(`${kind}-${c + 1}`);
   });
+  // The live-only family degrades to NO children when its table cannot be
+  // read: before the first nightly run there is nothing to list, and a family
+  // of four that fails must not take the other three families with it.
+  const live = await countLiveOnlyRanks().catch((e: unknown) => {
+    captureError(e instanceof Error ? e : new Error(`live-only count failed: ${String(e)}`));
+    return 0;
+  });
+  for (let c = 0; c < Math.ceil(live / SITEMAP_CHUNK); c += 1) names.push(`live-employer-${c + 1}`);
   return names;
 }
 
-/** `employer-3` -> { kind: "employer", chunk: 2 }. Null for anything else. */
+/** `employer-3` -> { kind: "employer", chunk: 2 }; `live-employer-1` -> { kind: "live-employer", chunk: 0 }. Null for anything else. */
 export function parseChildName(
   name: string,
-): { kind: EntityKind; chunk: number } | null {
-  const m = /^(employer|attorney|occupation)-(\d+)$/.exec(name);
+): { kind: ChildKind; chunk: number } | null {
+  const m = /^(employer|attorney|occupation|live-employer)-(\d+)$/.exec(name);
   if (!m) return null;
   const chunk = Number(m[2]) - 1;
   if (!Number.isInteger(chunk) || chunk < 0 || chunk > 999) return null;
-  return { kind: m[1] as EntityKind, chunk };
+  return { kind: m[1] as ChildKind, chunk };
 }
 
 const esc = (s: string) =>

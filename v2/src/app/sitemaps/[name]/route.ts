@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import {
   entityEntries,
+  liveEmployerEntries,
   pagesEntries,
   parseChildName,
   urlsetXml,
@@ -29,6 +30,7 @@ export async function GET(
       // An unparseable name is a 404, not an empty sitemap. An empty urlset
       // for a typo would be indexed as a legitimately empty section.
       if (!parsed) notFound();
+      if (parsed.kind === "live-employer") return liveEmployerEntries(parsed.chunk);
       return entityEntries(parsed.kind, parsed.chunk);
     })();
 

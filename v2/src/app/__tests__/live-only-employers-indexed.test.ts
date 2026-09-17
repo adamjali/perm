@@ -4,43 +4,34 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 /**
- * Employers known only to the live feed are findable, and NOT indexable.
+ * Employers known only to the live feed are findable AND, since 2026-09-17,
+ * indexable and advertised.
  *
- * The feature they belong to says: if we hold information about something, a
- * person should be able to find it everywhere they would reasonably look. A
- * case is findable by number and that lookup names its employer, so the
- * employer had to become findable by name - 21,495 of them on 2026-08-30,
- * 23% of the 93,007 employers we hold (and 57% of the 37,813 the live feed
- * names), previously reachable only by knowing a case number.
+ * This file used to pin the opposite: the sitemap was built from
+ * `perm_entities`, an employer is live-only precisely because it has no row
+ * there, and the page carried `robots: noindex`. The reasoning (18,284 of
+ * 22,313 live-only employers hold exactly one case) is still true and is
+ * recorded in the page's generateMetadata; the owner chose to index everything
+ * with that cost stated. A test that forbids the owner's decision is a stale
+ * opinion with a red light, so what this pins is the invariant that survives
+ * the reversal: the sitemap and the page must read ONE source for this class
+ * of URL, and neither half may quietly drop out.
  *
- * That argument is about PEOPLE and it does not extend to crawlers. 17,681 of
- * those employers hold exactly one case, so the page is a heading and one row
- * by construction. Twenty thousand of those is the scaled-thin-content shape
- * Google's own policy names, whatever we intended by it. Two mechanisms keep
- * them out of the index and this file pins the one that is easy to break
- * later; `not-found-status.test.ts` pins the other (`robots: index: false` on
- * the page itself).
- *
- * The mechanism here is structural rather than a flag: the sitemap is built
- * from `perm_entities`, and an employer is live-only precisely BECAUSE it has
- * no row there. So the gate is that the sitemap builder never learns to read
- * the live table. It cannot regress by accident; it can only regress by
- * someone adding the import.
+ * - The page emits no robots directive on its live-only branch.
+ * - The sitemap lists the live-only employers from `perm_live_only_index`,
+ *   the table the nightly live-remainder rebuild writes, through a rank
+ *   window (never a whole-table read per chunk), under its own child family.
+ * - `childNames()` degrades to no live children when the table is missing,
+ *   so a family of four failing cannot take the other three with it.
  */
 
 const ROOT = join(__dirname, "..", "..");
 
 /**
  * One exported function's body, from its signature to the closing brace in
- * column 0.
- *
- * Needed because the obvious assertion does not work. A test here first read
- * `/getEntitySlugWindow[\s\S]*?MIN_TOTAL_FOR_PAGE/` over the whole file, and
- * `[\s\S]*?` happily runs PAST the end of that function into the next one
- * that mentions the same constant - `countPageworthy`, 300 lines later. So it
- * passed over a window whose floor had been replaced with a bare `1`, which
- * is precisely the drift it was written to catch. Probed: with the body
- * sliced out first, that mutation goes red.
+ * column 0. Needed because `[\s\S]*?` over a whole file runs past the end of
+ * the function it was meant to scope, into the next one that mentions the
+ * same name; sliced first, the mutations these assertions exist for go red.
  */
 function fnBody(src: string, name: string): string {
   const start = src.indexOf(`export async function ${name}(`);
@@ -53,19 +44,41 @@ function source(rel: string): string {
   return readFileSync(join(ROOT, rel), "utf8");
 }
 
-describe("the sitemap cannot reach the live-only employers", () => {
-  it("never reads perm_live_recent, directly or through its module", () => {
+describe("the sitemap reaches the live-only employers, and the page lets them in", () => {
+  it("lists them from the nightly table through a rank window, as a child family of their own", () => {
     const sitemap = source("lib/sitemap/build.ts");
-
-    // THE CONTROL. A sweep that cannot match reports everything clean, and a
-    // path typo here would do exactly that - the file would read as empty and
-    // both assertions below would pass over nothing. Assert something that
-    // must be present in the same run.
+    const publicData = source("lib/turso/publicData.ts");
+    // THE CONTROL: something that must be present in the same run.
     expect(sitemap).toContain("getEntitySlugWindow");
-    expect(sitemap).toContain("countEntityRanks");
 
-    expect(sitemap).not.toContain("perm_live_recent");
-    expect(sitemap).not.toContain("liveEmployers");
+    expect(sitemap).toContain("getLiveOnlySlugWindow(chunk, SITEMAP_CHUNK)");
+    expect(sitemap).toContain("countLiveOnlyRanks()");
+    expect(sitemap).toMatch(/live-employer-\$\{c \+ 1\}/);
+    expect(sitemap).toMatch(/\^\(employer\|attorney\|occupation\|live-employer\)-/);
+    const window = fnBody(publicData, "getLiveOnlySlugWindow");
+    expect(window).toContain("FROM perm_live_only_index");
+    expect(window).toContain("rank > ? AND rank <= ?");
+    expect(window).not.toMatch(/OFFSET/);
+    // The route dispatches the family; a name the index lists must be served.
+    expect(source("app/sitemaps/[name]/route.ts")).toContain('parsed.kind === "live-employer"');
+  });
+
+  it("the live-only page emits no robots directive, so the sitemap never advertises a noindex page", () => {
+    const page = source("app/(site)/(public)/perm-employers/[slug]/page.tsx");
+    const start = page.indexOf("const record = await liveEmployerRecord(slug);");
+    const end = page.indexOf("const row = found.subject;");
+    expect(start).toBeGreaterThan(0);
+    expect(end).toBeGreaterThan(start);
+    const liveBranch = page.slice(start, end);
+    expect(liveBranch).toContain("alternates: { canonical:");
+    expect(liveBranch).not.toContain("index: false");
+  });
+
+  it("the nightly rebuild writes the table the sitemap reads, on both of its paths", () => {
+    const py = source("../scripts/build_entity_detail.py");
+    expect(py).toContain("CREATE TABLE IF NOT EXISTS perm_live_only_index");
+    // Once on --live-recent-only, once on the full rebuild.
+    expect(py.match(/write_live_only_index\(db, live, maps\)/g)?.length).toBe(2);
   });
 
   it("advertises exactly the entities whose page is indexable", () => {

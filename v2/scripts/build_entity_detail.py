@@ -394,6 +394,73 @@ def write_live_recent(db: Turso, live: list[dict]) -> bool:
     return ok
 
 
+LIVE_ONLY_DDL = [
+    """CREATE TABLE IF NOT EXISTS perm_live_only_index (
+        slug TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        cases INTEGER NOT NULL,
+        first_filed TEXT,
+        rank INTEGER NOT NULL)""",
+    "CREATE INDEX IF NOT EXISTS perm_live_only_rank ON perm_live_only_index (rank)",
+]
+
+
+def live_only_rows(live: list[dict], published_slugs: set[str]) -> list[list]:
+    """One row per live-only employer, ranked densely for the sitemap windows.
+
+    Live-only means the live feed names the employer and `perm_entities` has
+    no row for its slug, which is exactly the page the sitemap could not list
+    until 2026-09-17 (it was built from perm_entities alone). Ordered by first
+    filing then slug so that a night's new arrivals mostly APPEND and the rank
+    windows the sitemap reads stay stable; ordering by case count would
+    reshuffle every rank whenever any count moved.
+    """
+    by_slug: dict[str, dict] = {}
+    for row in live:
+        slug = row.get("employer_slug")
+        if not slug or slug in published_slugs:
+            continue
+        rec = by_slug.setdefault(slug, {"names": {}, "cases": 0, "first": None})
+        rec["cases"] += 1
+        name = row.get("employer_name") or slug
+        rec["names"][name] = rec["names"].get(name, 0) + 1
+        filed = row.get("filing_date")
+        if filed and (rec["first"] is None or filed < rec["first"]):
+            rec["first"] = filed
+    ordered = sorted(by_slug.items(), key=lambda kv: (kv[1]["first"] or "9999", kv[0]))
+    out = []
+    for rank, (slug, rec) in enumerate(ordered, start=1):
+        name = max(rec["names"], key=lambda n: (rec["names"][n], n))
+        out.append([slug, name, rec["cases"], rec["first"], rank])
+    return out
+
+
+def write_live_only_index(db: Turso, live: list[dict], maps) -> bool:
+    """Write only the rows that changed, the same discipline as the live table."""
+    for ddl in LIVE_ONLY_DDL:
+        db.execute(ddl)
+    published = {v[0] for v in maps["employer"].values()}
+    want = live_only_rows(live, published)
+    stored: dict[str, tuple] = {}
+    for r in rows_of(db.execute("SELECT slug, name, cases, first_filed, rank FROM perm_live_only_index")):
+        vals = [cell(c) for c in r]
+        stored[str(vals[0])] = (str(vals[1]), int(vals[2] or 0), vals[3], int(vals[4] or 0))
+    changed = [w for w in want if stored.get(w[0]) != (w[1], w[2], w[3], w[4])]
+    wanted = {w[0] for w in want}
+    gone = [k for k in stored if k not in wanted]
+    for i in range(0, len(gone), 500):
+        chunk = gone[i:i + 500]
+        db.execute(f"DELETE FROM perm_live_only_index WHERE slug IN ({','.join('?' for _ in chunk)})", chunk)
+    if changed:
+        write_rows(db, "perm_live_only_index", ["slug", "name", "cases", "first_filed", "rank"], changed)
+    got = int(db.scalar("SELECT count(*) FROM perm_live_only_index") or 0)
+    top = int(db.scalar("SELECT max(rank) FROM perm_live_only_index") or 0)
+    ok = got == len(want) and top == len(want)
+    log(f"  {'ok ' if ok else 'MISMATCH'} perm_live_only_index   {got:>7,} of {len(want):,} "
+        f"({len(changed):,} written, {len(gone):,} removed; max rank {top:,})")
+    return ok
+
+
 # The employer pages carry `revalidate = 2592000`. Thirty days is right for the
 # quarterly disclosure figures that fill most of that page and wrong for the
 # live band on it, and a route segment gets exactly one window. So the pages
@@ -646,6 +713,9 @@ def main() -> int:
             log("\nDRY RUN - nothing written")
             return 0
         ok = write_live_recent(db, live) and write_live_remainder_doc(db, live)
+        # The sitemap's live-only family reads this table; it must move with
+        # the live remainder or the sitemap advertises yesterday's employers.
+        ok = write_live_only_index(db, live, maps) and ok
         # The "filed in the last 12 months" facet reads this column; it moves
         # with the live remainder, so it refreshes here every night.
         if ok:
@@ -689,6 +759,7 @@ def main() -> int:
     live, _ = build_live_recent(db, maps)
     write_live_recent(db, live)
     write_live_remainder_doc(db, live)
+    write_live_only_index(db, live, maps)
 
     log("VERIFY")
     ok = True
