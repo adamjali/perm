@@ -1,5 +1,48 @@
 # GSC indexing priority list
 
+**Run of 2026-09-17, 12:52 to 1:24 PM EDT: 11 accepted, the 12th refused.** The cap
+was 11 for the FIFTH run running (Sep 5, 14, 15, 16, 17). **The window rolls 24 hours
+from the LAST accepted request of the previous run, not the first.** Yesterday's run
+was 11:55 AM to 12:38 PM; today the first request was refused at 11:19, 11:56 and
+11:58 AM (refusals cost nothing) and accepted at 12:52 PM. Today's last acceptance was
+1:21 PM, so the window reopens about **1:25 PM EDT on 2026-09-18**; try at 1:30 PM.
+
+Six of the queued pages turned out to be indexed already and were SKIPPED without
+spending a slot (`/perm-queue/2026-01`, `/tools/salary-explorer`, `/lca-wages`,
+`/perm-queue/2026-03`, `/perm-queue/2026-07`, `/perm-queue/2026-08`). The Sep 13
+Pages report that fed the queue was stale on all of them. `/layoffs` is indexed too
+and got a slot on purpose, for the 176 glued cells fixed on Sep 16.
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/policy-changes` | accepted (verdict not logged before compaction) | 12:52 PM |
+| 2 | `/changelog/corrections` | indexed (refused yesterday) | 12:54 PM |
+| 3 | `/perm-queue/2025-12` | **unknown to Google**, no referring sitemap | 12:55 PM |
+| 4 | `/perm-employers/lgs-staffing-llc-f-k-a-labor-guys-llc` | **unknown** (live-only page, indexable since Sep 16) | 1:03 PM |
+| 5 | `/perm-employers/lorenz-bus-service-inc` | **unknown** (live-only page) | 1:05 PM |
+| 6 | `/perm-queue/2026-02` | **unknown** | 1:08 PM |
+| 7 | `/perm-queue/2026-04` | **unknown** | 1:11 PM |
+| 8 | `/perm-queue/2026-05` | **unknown** | 1:13 PM |
+| 9 | `/perm-queue/2026-06` | **unknown** | 1:15 PM |
+| 10 | `/perm-queue/2025-10` | **unknown** | 1:18 PM |
+| 11 | `/layoffs` | indexed; re-requested for the glued-cell fix | 1:21 PM |
+| 12 | `/perm-queue/2026-08` | indexed | **Quota Exceeded**, 1:24 PM |
+
+**What the month pages taught.** All 40 `/perm-queue/<month>` URLs have been in
+`sitemaps/pages.xml` since Sep 16 and every inspection still said "No referring
+sitemaps detected": Google has not reprocessed the sitemap yet. On its own Google had
+already indexed 2026-01, 2026-03, 2026-07 and 2026-08, and had never seen 2025-10,
+2025-12, 2026-02, 2026-04, 2026-05 or 2026-06. Nothing about a month predicts which;
+inspect before requesting.
+
+**Two driving facts measured today.** (1) On the INDEXED layout, a click on REQUEST
+INDEXING issued in the same batch as the inspection load does not register (twice:
+`/layoffs`, `/perm-queue/2026-08`); the same click in its own batch lands every time.
+On the "not on Google" layout the click has always been in its own batch. Inspect in
+one batch, click in the next. (2) A batch carrying 70 s of waits died with "did not
+respond in time" while the click inside it had landed; 40 s of waits plus the count
+is the safe shape, with a separate 30 s batch when the live test is still running.
+
 **Run of 2026-09-16, 11:55 AM to 12:38 PM EDT: 11 accepted, the 12th refused.** The
 cap was 11 for the FOURTH run running (Sep 5, 14, 15, 16); treat it as the number.
 Window reopens about **11:55 AM EDT on 2026-09-17**. Order today: `/` and `/faq` first, because the homepage was
@@ -160,8 +203,16 @@ pages on its own.
 - **Canonical without a trailing slash.** Leave it. RFC 3986 makes an empty path
   equivalent to `/`, and the homepage is indexed, which settles it empirically.
 
-## Queue after the Sep 16 deploy
+## Queue after the Sep 17 run (window opens ~1:25 PM EDT Sep 18)
 
-1. `/policy-changes` (rebuilt: strip, dates, printed first pages; new card)
-2. `/perm-queue/2025-11`, `/perm-queue/2025-12`, `/perm-queue/2026-01` (now in `sitemaps/pages.xml`; let the sitemap carry the other 37)
-3. then the standing list above
+Inspect first; skip anything that reads "URL is on Google" unless its served text
+changed since the last crawl.
+
+1. `/perm-queue/2026-09`, `/perm-queue/2025-09`, `/perm-queue/2025-08`, `/perm-queue/2025-07`
+   (request only the ones Google calls unknown; the sitemap carries the rest once
+   Google reprocesses `pages.xml`)
+2. two more live-only employer pages from `sitemaps/live-employer-1.xml` (spot checks
+   that the family is crawlable; the 9/27 Pages report is the real scoreboard)
+3. `/glossary`, `/perm-case-statuses`: only if their last crawl predates Sep 14
+4. `/tools/salary-explorer`, `/lca-wages`: low value, the precomputed doc changed speed
+   and not text; take them only if slots are left
