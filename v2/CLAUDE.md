@@ -5434,3 +5434,102 @@ ones on the internet naming such a sponsor before DOL publishes it.
 **Seeded by hand** once with `build_entity_detail.py --live-recent-only`
 before the deploy, so the sitemap index listed the family from its first
 build rather than after the next nightly run.
+
+## No third-party tracker is named on any public surface (2026-09-18)
+
+Adam: *"just say third party"*, then *"fully scrub from all public stuff so even
+claude md and such"*. One live page named a rival (the `/perm-rfi-audit`
+provenance strip); the **public** repo named two across 46 files. Both are now
+zero, verified by a 354-page production sweep and a repo-wide grep.
+
+**The site and the repo have to agree, and that is what made the repo pass
+load-bearing.** `scripts/ingest_rfi_funnel.py` carried the rival's watchlist endpoint as a
+hardcoded `BASE`. Saying "a third party" on the
+page while the public repo identifies them in ten seconds reads as concealment,
+which is worse than naming them outright.
+
+**The RFI figures did not move**, and that was the gate: 3,824 ever issued,
+3,213 in the frozen base, 2,151 base resolved, 2,155 total, 33-day median,
+byte-identical before and after. Only the attribution wording changed, to
+"third-party aggregate of DOL FLAG case statuses, frozen at first observation
+and never re-read".
+
+**The visible string lived in the DATABASE, not in code.** It was
+`data_freshness.source` for dataset `rfi-funnel`, so the site-facing half was a
+one-row `UPDATE` needing no deploy. Whenever a provenance line looks wrong,
+check `data_freshness` before grepping `src/`.
+
+**SCRUB THE WRITER, NOT JUST THE VALUE.** `ingest_visa_bulletin.py` wrote the
+name into `data_freshness` on *every* run, so the next bulletin ingest would
+have put it straight back. A value-only scrub would have silently expired.
+
+**What looked dead and was not.** `isMirror` on `/tools/priority-date-calculator`
+matches zero rows today, and its own comment says it exists so the count
+"cannot drift when the ingest changes". It is an integrity counter, not dead
+code; it now tests for `"mirror"` rather than a provider name. **Read the call
+sites before deleting on a data-level "never fires".**
+
+**Migration, measured first.** 48 of 164,157 `perm_case_events.source` rows
+carried the old mirror label and **no production code matched that literal** -
+only `test_observed_decisions.py` did, and its `MIRROR` constant must stay
+byte-identical to the column. Now
+`"retired mirror (third party; underlying: flag.dol.gov case status)"`.
+
+**The cross-check survives, its endpoint moved.** `cross_check_sources.py` reads
+`CROSS_CHECK_API` (a GitHub Actions secret, wired into
+`processing-times-ingest.yml`) and **skips clean when unset**, so a missing
+optional check can never fail a run or redden the health check. Its own UA has
+identified us to them daily for months: the scrub removes the name from OUR
+surfaces, it does not hide the activity from them.
+
+**Deleted** (nothing dispatches or health-checks them, verified):
+`mirror_case_status.py`, its one-off backfill, `ingest_rfi_funnel.py`,
+`.github/workflows/case-status-mirror.yml`. The competitive teardowns moved out
+of the repo to `~/.claude/explanations/20260918_competitive_docs/` - genericising
+a teardown makes it worthless, so it leaves rather than gets rewritten. Prediction
+ledger labels are `rival-a` / `rival-b`; `capture_rival_predictions.mjs` takes
+`RIVAL_A_API` / `RIVAL_B_API` from the environment. **Git history is deliberately
+untouched** (22 commits still contain the names).
+
+### Two claims measurement showed were wrong
+
+**"Our half overtakes theirs in ~74 days" was wrong** and is corrected above: it
+conflated RFIs ever ISSUED (611 watched in 23 days) with RESOLUTIONS, which are
+the denominator the approval rate is built on. **The frozen base holds 2,151
+resolved and ours holds 4** - our share of the published rate is **0.19%** and
+moves slowly, because an RFI takes months to resolve.
+
+**And `RfiOutcomes` claimed that share "grows every day".** It does not; it grew
+four times in 23 days. Corrected in the same paragraph.
+
+## The security audit, and what it found (2026-09-18)
+
+Asked "is anything public that shouldn't be". Method worth repeating: GitHub
+secret-scanning alerts (`gh api repos/<o>/<r>/secret-scanning/alerts`), the fork
+list, a scan of every tracked file for secret-SHAPED values, a live probe of
+`/admin`, `/api/*`, `/.env`, `/.git/config` and source maps, and a sweep of every
+URL in `sitemaps/pages.xml`.
+
+**Clean:** no secret ever committed (only `.env.example` in the whole history),
+zero secret-scanning alerts, **zero forks**, `/admin` redirects with a 15-byte
+body, `.env`/`.git`/source maps all 404, and every `NEXT_PUBLIC_*` is a value
+meant to be public (PostHog project key, Sentry DSN, Turnstile *site* key, VAPID
+*public* key).
+
+**Two structural facts worth knowing.** `giant-dragon-464.convex.site` answers
+directly and **bypasses all twelve Vercel firewall rules** - the bot challenge
+and the rate limits protect none of the Convex HTTP routes. They carry their own
+budgets and cooldowns, so this is defence-in-depth working as designed, but it is
+the one door the WAF does not cover. And `authRateLimit.checkAuthRateLimit` /
+`checkIpRateLimit` are publicly callable by design, so a caller can deliberately
+burn a specific email's or IP's login-attempt budget. Low severity, no data
+exposure, but it is a thing that can be done.
+
+**THE PUBLIC-FUNCTION AUDIT WAS MOSTLY THE AUDIT, AGAIN.** A first pass grepping
+for `getCurrentUserId|requireAdmin|getUserIdentity` reported **24 public mutations
+with no auth guard**. Twenty of those were the grep missing this repo's real
+helpers - `verifyOwnership`, `requireProfile`, `getAuthUserId`, `resolveCallerEmail`.
+The true count is **three, all unauthenticated by design** (two pre-login rate
+limiters and Turnstile verification) plus `sendTestPush`, which is guarded through
+`getCurrentUserPushProfile`. Never report a guard audit without first checking the
+vocabulary against the codebase's own helpers.
