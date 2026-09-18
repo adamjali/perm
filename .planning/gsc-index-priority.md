@@ -261,6 +261,12 @@ pages on its own.
 
 Inspect first; skip anything already on Google.
 
+0. **`/perm-rfi-audit` FIRST.** Its indexed copy still carries the old provenance line
+   naming a third-party tracker; the live page was changed 2026-09-18 and no longer
+   does. Google's cached copy of pages like this is what fed an AI Mode answer claiming
+   this site "mirrors" a rival's data infrastructure, so displacing the stale text is
+   worth more than adding a page Google has never seen. Same argument applies to any
+   month page whose last crawl predates 2026-08-27.
 1. `/perm-queue/2025-04` (refused today), then `2025-03`, `2025-02`, `2025-01`
 2. two more pages from `sitemaps/live-employer-1.xml`, if the family is still undiscovered
 3. `/perm-queue/2024-12` and backwards while slots last
