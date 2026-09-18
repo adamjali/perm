@@ -125,7 +125,7 @@ describe("WebSite schema site-name candidates", () => {
     // "add your domain or subdomain name as your alternative name", and it
     // "needs to be in all lowercase ... for our system to detect this as a
     // site name preference." Google declines our primary name for two reasons
-    // markup cannot fix - it is generic, and permtrack.app declares the
+    // markup cannot fix - it is generic, and the rival tracker declares the
     // identical string - so the backup is the only lever we actually hold.
     expect(schema.alternateName).toContain("permtracker.app");
   });

@@ -113,7 +113,7 @@ jobs:
         run: python3 scripts/test_case_status_direct.py
 
       # The sweep's own record of what it checked, and the freshness claim it
-      # replaced. `perm_case_status.last_checked_at` is permtrack's column,
+      # replaced. `perm_case_status.last_checked_at` is the rival tracker's column,
       # never written by our PERM sweep, and the review-stage doc used to
       # publish MIN/MAX of it as "when we read these stages" - 66,771 pending
       # cases carrying a July date on a morning the sweep had checked every
@@ -167,10 +167,10 @@ jobs:
       # The observed-decision series: our own half of `daily_decisions`.
       #
       # `daily_decisions` held three sources and read one. Two are now deleted:
-      # `permtrack` was the rival's series, overlapping ours on 88 dates and
+      # `rival-b` was the rival's series, overlapping ours on 88 dates and
       # double-counting 42,056 decisions in anything that summed the table, and
       # `flag-live` was labelled as our own per-case scan while actually being
-      # mirrored from permtrack's daily-summary endpoint two days before our
+      # mirrored from the rival tracker's daily-summary endpoint two days before our
       # first sweep ever ran. `sweep-observed` replaces them, derived from
       # `perm_case_events` on every sweep.
       #

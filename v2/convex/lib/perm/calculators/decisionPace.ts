@@ -4,7 +4,7 @@
  *   day   = today + (cases ahead / 28-day calendar pace)
  *   band  = cases ahead / {p90, p10} weekday pace, floored, late-heavy
  *
- * This is the shape permtrack and permupdate both use, measured here across
+ * This is the shape the rival tracker and the rival dashboard both use, measured here across
  * ~88,000 backtested predictions before being written down. It has ZERO
  * fitted parameters: a count divided by a measured rate, with a band from
  * that rate's own spread. Every number in it can be pointed at in the data.
@@ -127,7 +127,7 @@ export function measurePace(days: readonly DecisionDay[]): MeasuredPace | null {
    * five of those into every future week silently assumes no future week
    * contains a holiday.
    *
-   * Caught by cross-checking against permupdate's published daily_volume
+   * Caught by cross-checking against the rival dashboard's published daily_volume
    * over 16 overlapping days: our raw counts match theirs to 0.7% (619/day
    * against 623) while our reconstruction was claiming 688. The data was
    * never wrong; the projection was.

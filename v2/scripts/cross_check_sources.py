@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Cross-check our figures against permtrack.app's public API.
+"""Cross-check our figures against a third-party tracker's public API.
 
-Adam asked for a live sync from permtrack and the attorney requested it. What
+Adam asked for a live sync from that tracker and the attorney requested it. What
 measurement found instead is worth stating plainly, because it changes what is
 worth building:
 
@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import datetime as dt
 import json
+import os
 import pathlib
 import sys
 import urllib.request
@@ -34,10 +35,12 @@ import urllib.request
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_turso import Turso  # noqa: E402
 
-BASE = "https://permtrack.app/api"
+# The endpoint is configuration, not source: it names a third party, so it
+# lives in the CROSS_CHECK_API Actions secret rather than in a public repo.
+# Absent, this check skips cleanly instead of failing the run.
+BASE = os.environ.get("CROSS_CHECK_API", "").rstrip("/")
 UA = {"User-Agent": "permtracker.app cross-check (contact: notifications@permtracker.app)",
-      "Accept": "application/json",
-      "x-permtracker-audit": "1"}   # the Firewall's bypass for the site's own audits
+      "Accept": "application/json"}
 
 # Their spelling -> ours, for the bulletin comparison.
 COUNTRY = {"Rest of World": "worldwide", "China": "china", "India": "india",
@@ -75,7 +78,14 @@ def main() -> int:
     db = Turso()
     findings: list[str] = []
 
-    log("CROSS-CHECK vs permtrack.app public API")
+    if not BASE:
+        # No endpoint configured (CROSS_CHECK_API unset). A missing optional
+        # cross-check is not a failure: skip clean so the run stays green and
+        # the health check cannot go red over a nice-to-have.
+        log("cross-check: CROSS_CHECK_API not set, skipping")
+        return 0
+
+    log("CROSS-CHECK vs third-party public API")
 
     # -- 1. What is actually live on their side ----------------------------
     tl = get("stats/timeline-data")

@@ -4,7 +4,7 @@ import * as E from "./engine.mjs";
 const origins=JSON.parse(fs.readFileSync(".planning/backtest/origins.json","utf8")).filter(o=>o.mature).map(o=>o.t);
 const STRIDE=37;
 const q=(a,p)=>{const s=[...a].sort((x,y)=>x-y);return s.length?s[Math.floor(p*(s.length-1))]:NaN;};
-// permupdate, in their own words on /how-it-works:
+// the rival dashboard, in their own words on /how-it-works:
 //   "the actual processing speed observed from the last three weeks"
 //   "adds a 15% buffer to provide realistic upper-bound estimates"
 //   "our estimates come with about an 80% confidence level"
@@ -28,7 +28,7 @@ for(const T of origins){
   for(const [d,c] of E.CENS){ if(d>T)break; const a=E.blocking(st,d);
     const reps=Math.max(1,Math.round(c/STRIDE)); for(let k=0;k<reps;k++) push(a,lower); }
 }
-console.log("permupdate's method, reconstructed from their own stated parameters");
+console.log("the rival dashboard's method, reconstructed from their own stated parameters");
 console.log("(21-day pace, 15% buffer, advertised as ~80% confidence)\n");
 console.log("  horizon    n        median err   coverage of +0..+15%   coverage of +/-15%");
 for(let i=0;i<BINS.length;i++){

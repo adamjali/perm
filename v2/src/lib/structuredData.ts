@@ -150,7 +150,7 @@ export function getWebSiteSchema(baseUrl: string) {
     // second choice for when it declines the primary name.
     //
     // It declines it for two documented reasons, neither fixable by markup:
-    // "PERM Tracker" is generic (it IS the search query), and permtrack.app
+    // "PERM Tracker" is generic (it IS the search query), and the rival tracker
     // declares the byte-identical string, while Google "generally won't use the
     // same site name for two different sites."
     alternateName: ['PERMTracker', 'permtracker.app'],

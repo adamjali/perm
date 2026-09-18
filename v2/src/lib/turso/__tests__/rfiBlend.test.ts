@@ -28,7 +28,7 @@ const BASE: RfiFunnel = {
   stillOpen: 1_062,
   medianDaysToDecision: 33,
   observedAt: 1_787_800_000_000,
-  source: "permtrack.app aggregate, frozen",
+  source: "third-party aggregate, frozen",
 };
 
 const NONE: RfiObserved = {
@@ -130,9 +130,10 @@ describe("DIRECT_EVENT_SOURCE", () => {
 
   it("does not match the retired mirror's source string", () => {
     // The whole point of the filter: mirror rows recorded a difference against
-    // permtrack's copy, not an observation of DOL, and their age relative to
-    // the frozen base is unknowable.
-    expect(DIRECT_EVENT_SOURCE).not.toContain("permtrack");
+    // a rival's copy, not an observation of DOL, and their age relative to the
+    // frozen base is unknowable. Asserting the exact DOL string is a stronger
+    // guard than a substring check and names no third party.
+    expect(DIRECT_EVENT_SOURCE).toBe("flag.dol.gov/recaptcha/caseStatus (DOL, direct)");
     expect(DIRECT_EVENT_SOURCE).not.toContain("mirror");
   });
 });

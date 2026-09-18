@@ -500,15 +500,15 @@ def ingest_saved_page(path: str, month: str | None) -> int:
 # Department's own document, and the mirror is a third party's summary of it
 # that carries HALF THE CATEGORIES (EB1/EB2/EB3 only, no EB4, EB5 or EW3).
 # ORDER IS LOAD-BEARING, and the mirror clause MUST come before the
-# travel.state.gov one. The mirror records itself as
-#   "permtrack.app/api/stats/visa-bulletin (mirror; original: travel.state.gov)"
+# travel.state.gov one. A mirror records itself as
+#   "<third party> (mirror; original: travel.state.gov)"
 # because naming the original is good provenance - and that means a plain
 # substring test for "travel.state.gov" matches the MIRROR too, ranks it as
 # the real page, and makes the backfill skip every month that most needs
 # upgrading while reporting success. Caught by a unit test before it ran.
 SOURCE_RANK = [
     (lambda u: "saved from a browser" in u, 3),   # primary, a person fetched it
-    (lambda u: "mirror" in u.lower() or "permtrack" in u.lower(), 1),
+    (lambda u: "mirror" in u.lower(), 1),
     (lambda u: "travel.state.gov" in u, 2),       # the real page, via the archive
     (lambda u: True, 1),
 ]
@@ -717,7 +717,7 @@ def main() -> int:
     n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
     db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
                ["visa-bulletin", str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10], int(time.time() * 1000),
-                "State Dept via Internet Archive; gaps via permtrack.app mirror", "Monthly", f"{n:,} bulletins", BULLETIN_MAX_AGE_DAYS])
+                "State Dept via Internet Archive", "Monthly", f"{n:,} bulletins", BULLETIN_MAX_AGE_DAYS])
 
     return 0
 

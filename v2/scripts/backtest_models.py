@@ -66,7 +66,7 @@ def load(db: Turso):
     # sources are not interchangeable: `dol-disclosure` is dated by DOL's own
     # decision date, `sweep-observed` by when our sweep saw the change. An
     # unfiltered `sum(total) GROUP BY date` adds whichever ones overlap - and
-    # it already did: the retired `permtrack` series covered 88 of these dates
+    # it already did: the retired `rival-b` series covered 88 of these dates
     # and injected 42,056 phantom decisions into this backtest's pace curve
     # (measured 2026-09-03, before those rows were deleted). This model is
     # backtested against DOL's own dating, so that is the series it reads.
@@ -152,8 +152,8 @@ def main() -> int:
 
             preds: dict[str, float | None] = {}
             # --- the field: pending / pace, in each of its shipped windows ---
-            for lbl, w, nz in (("permtrack 7d cal", 7, False),
-                               ("permupdate 21d", 21, True),
+            for lbl, w, nz in (("the rival tracker 7d cal", 7, False),
+                               ("the rival dashboard 21d", 21, True),
                                ("permqueue 28d", 28, True),
                                ("56d working", 56, True)):
                 p = pace(obs, w, nz)
@@ -178,7 +178,7 @@ def main() -> int:
     print(f"{'model':30s} {'obs@':>5s} {'n':>3s} {'median':>7s} {'mean':>6s} {'p90':>6s} {'<=14d':>6s}")
     print("-" * 72)
     order = ["ours: shape-corrected", "ours: raw cohort median", "56d working",
-             "permqueue 28d", "permupdate 21d", "permtrack 7d cal",
+             "permqueue 28d", "the rival dashboard 21d", "the rival tracker 7d cal",
              "control: last cohort's median"]
     for frac in OBSERVE_AT:
         for lbl in order:

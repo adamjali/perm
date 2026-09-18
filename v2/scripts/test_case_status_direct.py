@@ -50,7 +50,7 @@ def main() -> int:
     # --- politeness -------------------------------------------------------
     check("paces requests", csd.PACE_S >= 0.2, str(csd.PACE_S))
     check("provenance names DOL, not a mirror",
-          "flag.dol.gov" in csd.SOURCE and "permtrack" not in csd.SOURCE.lower())
+          "flag.dol.gov" in csd.SOURCE and "mirror" not in csd.SOURCE.lower())
 
     # --- retry ------------------------------------------------------------
     # A single transient failure silently skips FIFTY cases, and the caller

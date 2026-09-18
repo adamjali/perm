@@ -11,9 +11,9 @@ was given is empty.
 
 WHAT THIS FILE IS ABOUT. `daily_decisions` held three sources and read one.
 `dol-disclosure` is DOL's own dating and stops at the last published quarter;
-`permtrack` was the rival's series, backfilled once, overlapping ours on 88
+`rival-b` was the rival's series, backfilled once, overlapping ours on 88
 dates; `flag-live` was labelled as our own per-case scan and was in fact
-mirrored from permtrack's `daily-summary` endpoint on 2026-08-27T03:25Z, two
+mirrored from the rival tracker's `daily-summary` endpoint on 2026-08-27T03:25Z, two
 days before our first sweep ever ran. Both are deleted. `sweep-observed`
 replaces them with our own observations out of `perm_case_events`.
 
@@ -26,7 +26,7 @@ Three things have to hold and each was measured, not assumed:
      timestamps, 58 rows and 94,523. Dropping the second leaves 57 decisions,
      which is a plausible number and a lie.
   3. NOTHING UNIONS THE SOURCES. `sum(total) GROUP BY date` across this table
-     was already wrong before today: permtrack overlapped `dol-disclosure` on
+     was already wrong before today: the rival tracker overlapped `dol-disclosure` on
      88 dates and injected 42,056 phantom decisions into it.
 """
 from __future__ import annotations
@@ -220,7 +220,7 @@ def main() -> int:
     # A day the sweep ran and saw nothing decided is a REAL zero. A day it did
     # not run at all is absent. Storing the second as zero draws a trough that
     # is indistinguishable from a holiday - the lesson ingest_rfi_funnel.py
-    # already had to learn from permtrack's `has_data` flag.
+    # already had to learn from the rival tracker's `has_data` flag.
     quiet, _ = csd.fold_observed_decisions(
         [(ts("2026-08-30"), csd.SOURCE, 4), (ts("2026-08-31"), csd.SOURCE, 7)],
         [(ts("2026-08-31"), "CERTIFIED", 2)], "2026-09-01")
@@ -231,9 +231,12 @@ def main() -> int:
 
     # A DAY ONLY THE RETIRED MIRROR WROTE IS NOT A DAY WE OBSERVED. This is
     # production's 2026-08-27 exactly: one 48-row timestamp from
-    # permtrack.app's watchlist diff, and no DOL sweep of our own until the
+    # the rival tracker's watchlist diff, and no DOL sweep of our own until the
     # next UTC day. Publishing it put a 0 at the head of the series.
-    MIRROR = "permtrack.app/api/watchlist (mirror; underlying: flag.dol.gov case status)"
+    # Byte-identical to the value stored in `perm_case_events.source` for the
+    # 48 rows the retired mirror wrote. Migrated 2026-09-18; if this string
+    # and the column ever disagree the filter silently matches nothing.
+    MIRROR = "retired mirror (third party; underlying: flag.dol.gov case status)"
     mixed, _ = csd.fold_observed_decisions(
         [(ts("2026-08-27", 3), MIRROR, 48), (ts("2026-08-28", 3), csd.SOURCE, 6)],
         [(ts("2026-08-27", 3), "CERTIFIED", 2),

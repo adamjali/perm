@@ -5,7 +5,7 @@
  * screen showed an invented "Immigration Case Tracking Dashboard" with
  * I-140, biometrics and interview steps, none of which is PERM. Google Images
  * showed that for the site, and the rival's per-page screenshots for theirs
- * (measured 2026-09-07: permtrack.app ships og-timeline, og-cases, og-map).
+ * (measured 2026-09-07: the rival tracker ships og-timeline, og-cases, og-map).
  *
  * Each card here is the house frame (the same grounds, dots and type as the
  * article cards in make-article-cards.mjs) with a real screenshot of the page

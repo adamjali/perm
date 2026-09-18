@@ -14,7 +14,7 @@ Revisit a beneficiary paid tier when EITHER:
 
 ## What was measured, 2026-09-16
 
-**permtrack.app's paid product, from its own JS bundle** (`/assets/index-*.js`):
+**the rival tracker's paid product, from its own JS bundle** (`/assets/index-*.js`):
 price map `tracker: $4.99, daily: $9.99`, but only ONE plan renders on the subscribe
 page: "Daily", $9.99 a month, 3-day free trial, no charge until day 4, Stripe checkout
 behind `/api/subscribe/checkout`. Features verbatim: case status checked every hour
@@ -22,7 +22,7 @@ behind `/api/subscribe/checkout`. Features verbatim: case status checked every h
 queue position and estimated review date; cohort progress and employer approval rate;
 auto-cancels when the case is certified or denied. Their `/pricing` and `/pro` both
 redirect to the homepage. They also run a "Help keep PermTrack free" modal (Telegram
-channel `t.me/permtrack`, `buymeacoffee.com/permtrack`). permupdate: no paid tier found.
+channel a Telegram channel and a Buy Me a Coffee page). The rival dashboard: no paid tier found.
 
 **Their $9.99 list is roughly our free product.** Live lookup that asks DOL, free case
 alerts, queue position and estimate on the case page, employer approval rate on the
@@ -51,7 +51,7 @@ Adam's real identity on Stripe's private side; PERM Tracker LLC is the party in 
 Terms already.
 
 **Willingness to pay:** no evidence found (Reddit unreachable to the researcher; nothing
-quotable elsewhere). permtrack charging proves somebody pays, not how many.
+quotable elsewhere). Their charging proves somebody pays, not how many.
 
 **The site's own promise, in three places:** "Optional paid features may come later;
 the data, the lookup, the calculators and the core deadline tracking stay free" and

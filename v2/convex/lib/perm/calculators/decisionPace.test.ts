@@ -72,7 +72,7 @@ describe("measurePace", () => {
 
   it("keeps an isolated holiday IN the rate", () => {
     // A federal holiday is part of the calendar. Dropping it is exactly how
-    // the rate read 11% high against permupdate's published daily volume.
+    // the rate read 11% high against the rival dashboard's published daily volume.
     const withHoliday = mk(800);
     withHoliday[3] = { ...withHoliday[3]!, n: 2 };
     const held = measurePace(withHoliday) as MeasuredPace;

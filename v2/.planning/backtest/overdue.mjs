@@ -6,7 +6,7 @@ const origins=JSON.parse(fs.readFileSync(".planning/backtest/origins.json","utf8
 const q=(a,p)=>{const s=[...a].sort((x,y)=>x-y);return s.length?s[Math.floor(p*(s.length-1))]:NaN;};
 // AN OVERDUE CASE WITH ALMOST NOTHING AHEAD: is it about to be decided, or stuck?
 // Real outcome on 13 Sep said "about to be": a 476-day case with 74 ahead was
-// certified 3 days later, and our refusal declined to say so while permupdate
+// certified 3 days later, and our refusal declined to say so while the rival dashboard
 // called it to within 2 days. One case is not evidence. This is the measurement.
 const buckets = [[0,1],[1,3],[3,10],[10,30],[30,1e9]];  // multiples of a day's output ahead
 const LBL=["<1 day","1-3 days","3-10 days","10-30 days","30+ days"];

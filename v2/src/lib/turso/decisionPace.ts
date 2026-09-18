@@ -17,7 +17,7 @@ import { rows } from "./client";
  *
  * IT IS VALIDATED AGAINST AN INDEPENDENT SOURCE, which is what makes it
  * usable as a rate rather than merely available. Measured 2026-09-13 over the
- * 16 days our series and permupdate's published `daily-volume` both cover:
+ * 16 days our series and the rival dashboard's published `daily-volume` both cover:
  * our mean 574.6/day against their 566.4, a difference of **+1.4%**.
  * Individual days diverge by more, because a day boundary falls in a
  * different place for each of us - but the model divides by a 28-day mean,

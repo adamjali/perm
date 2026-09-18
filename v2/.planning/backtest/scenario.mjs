@@ -6,14 +6,14 @@ const STRIDE=37, W=28;
 const QLO=Number(process.env.QLO||'0.25'), QHI=Number(process.env.QHI||'0.75');
 const q=(a,p)=>{const s=[...a].sort((x,y)=>x-y);return s.length?s[Math.floor(p*(s.length-1))]:NaN;};
 const med=a=>q(a,.5);
-// permtrack's shape: a band from the SPREAD OF THE PACE ITSELF, not from forecast error.
+// the rival tracker's shape: a band from the SPREAD OF THE PACE ITSELF, not from forecast error.
 // early = queue / fast pace, late = queue / slow pace.
 // They publish pace p25/p75; we use the same quantiles of daily counts in the window.
 function paceQuantiles(T){
   // WEEKDAY AND WEEKEND ARE DIFFERENT POPULATIONS AND MUST NOT BE POOLED.
   // A first version took p25/p75 over ALL days in the window; the p25 landed on
   // a Saturday, so the "slow" scenario was literally "every day is a weekend"
-  // and the band came out 208 days wide (5 Dec to 1 Jul). permtrack avoids this
+  // and the band came out 208 days wide (5 Dec to 1 Jul). The rival tracker avoids this
   // by publishing weekday quantiles (p25 775 / p75 953 around a weekday_avg of
   // 804) and a separate weekend_avg. Same construction here.
   const wd=[], we=[];
@@ -59,4 +59,4 @@ for(let i=0;i<BINS.length;i++){
   const r=res[i]; if(r.n<500){console.log(`  ${LBL[i].padEnd(9)} (too few)`);continue;}
   console.log(`  ${LBL[i].padEnd(9)} ${String(r.n).padStart(7)}  ${String(med(r.err)).padStart(10)}d  ${String(med(r.w)).padStart(10)}d  ${(100*r.inSc/r.n).toFixed(0).padStart(15)}%`);
 }
-//console.log("\n  permtrack ships this shape and calls it nothing. permupdate calls its own '80%'.");
+//console.log("\n  the rival tracker ships this shape and calls it nothing. The rival dashboard calls its own '80%'.");

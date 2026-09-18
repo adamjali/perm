@@ -10,7 +10,7 @@ ANALYST REVIEW on a single day.
 The cause is structural rather than a bug. `run_discovery` advances a cursor and
 never goes back, so anything missed on the night is missed permanently, as is
 anything DOL files into a serial range the walk has already passed. There was no
-second look. An independent check against permtrack's published July figure put
+second look. An independent check against the rival tracker's published July figure put
 us 1.2% short; the serial probe put it at up to 5%.
 
 This is the second look. It reads the holes out of our own tables, asks DOL for

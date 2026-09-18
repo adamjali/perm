@@ -190,7 +190,7 @@ export interface AheadResult {
  * one of them is ahead of you. Counting only today's pending gives EVERY
  * future date the same answer: 95,326 ahead whether you file next month or
  * next year, which is transparently wrong and is what both rivals ship
- * (permtrack returns its whole backlog for a November date, with
+ * (the rival tracker returns its whole backlog for a November date, with
  * `your_position_in_month: 0`). At a year out that understates the queue by
  * roughly 100,000 cases.
  *

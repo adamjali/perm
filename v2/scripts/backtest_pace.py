@@ -15,7 +15,7 @@ and compare against when the cohort actually reached the target.
 
 WHAT THE FIRST RUN ESTABLISHED (2026-08-27, 40 pairs):
 
-  * Pace-estimator choice barely matters. 7d-calendar (permtrack's shape),
+  * Pace-estimator choice barely matters. 7d-calendar (the rival tracker's shape),
     28d-working (ours), 56d, 90d, mean vs median - all land at median 6-9d,
     mean 26d, 85% within 30 days. A claim that one is meaningfully better
     than another is not supported.
@@ -71,7 +71,7 @@ def main() -> int:
              GROUP BY 1, 2"""):
         by_month[m].append((d, int(n)))
     # One source, deliberately - see the note in backtest_models.py. The
-    # unfiltered form summed `dol-disclosure` and the retired `permtrack`
+    # unfiltered form summed `dol-disclosure` and the retired `rival-b`
     # series together on 88 overlapping dates, roughly doubling the measured
     # pace across Dec 2025 - Mar 2026, which is inside this backtest's window.
     daily = {d: int(n) for d, n in rows(db,
@@ -87,7 +87,7 @@ def main() -> int:
         return sum(v) / len(v) if v else None
 
     variants = {
-        "7d calendar (permtrack)": lambda t: pace(t, 7, False),
+        "7d calendar (the rival tracker)": lambda t: pace(t, 7, False),
         "28d working (ours)":      lambda t: pace(t, 28, True),
         "56d working":             lambda t: pace(t, 56, True),
         "90d working":             lambda t: pace(t, 90, True),

@@ -88,7 +88,7 @@ export function measurePace(days) {
    * average produces "a typical working weekday", and projecting five of those
    * into every future week silently assumes no future week contains a holiday.
    *
-   * Caught by cross-checking against permupdate's published daily_volume over
+   * Caught by cross-checking against the rival dashboard's published daily_volume over
    * 16 overlapping days: our raw counts match theirs to 0.7% (619/day against
    * 623), while our reconstruction was claiming 688. The data was never wrong;
    * the projection was.

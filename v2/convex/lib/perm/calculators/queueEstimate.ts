@@ -472,7 +472,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
   // it moves the moment DOL speeds up or slows down.
   //
   // It leads because both rivals use this shape and because its two inputs
-  // are measured rather than assumed. The rate in particular: permupdate
+  // are measured rather than assumed. The rate in particular: the rival dashboard
   // divides by a hardcoded 650/day, and the same window measured against our
   // own observed series gives 625.
   //
@@ -480,7 +480,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
   // because our daily series is dated by when our SWEEP SAW a change, not by
   // DOL's own decision date (DOL publishes no decision timestamp on the live
   // endpoint). Measured 2026-09-13 over the 16 days both series cover, our
-  // mean is 574.6/day against permupdate's published 566.4 - a difference of
+  // mean is 574.6/day against the rival dashboard's published 566.4 - a difference of
   // +1.4%. Individual days diverge by more because a day boundary falls in a
   // different place for each of us; the model divides by a 28-day mean, and
   // that is the quantity that agrees.

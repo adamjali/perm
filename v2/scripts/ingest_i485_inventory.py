@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """USCIS employment-based I-485 pending inventory -> Turso.
 
-Closes the one substantive gap against permtrack: queue position for an
+Closes the one substantive gap against the rival tracker: queue position for an
 adjustment-of-status application. Built first-party from USCIS rather than
 from their API, which turned out to matter more than expected.
 
@@ -14,7 +14,7 @@ estimated at 5") is what identified the source: that suppression rule is
 USCIS's, not theirs.
 
 THE SUPPRESSION IS THE INTERESTING PART. USCIS replaces any cell holding 1-10
-applications with the letter `D`. permtrack resolves every `D` to 5 and
+applications with the letter `D`. The rival tracker resolves every `D` to 5 and
 publishes one number with a plus-or-minus note. We keep the `D` count itself
 and report a RANGE - low counts every suppressed cell as 1, high as 10 - so
 the uncertainty is a property of the answer instead of a footnote under it.

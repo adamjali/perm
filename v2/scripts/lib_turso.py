@@ -435,7 +435,7 @@ def record_sweep(
         # primary key, so re-sending it is a no-op:
         #   grep -rn "INSERT INTO" scripts/*.py | grep -viE "OR IGNORE|OR REPLACE"
         # returns this line, record_run's below, and three scripts that no
-        # workflow runs (rebuild_entities, backfill_permtrack, test_turso_load).
+        # workflow runs (rebuild_entities, the one-off backfill, test_turso_load).
         db.execute(
             f"INSERT INTO sweep_runs ({', '.join(cols)}) "
             f"VALUES ({', '.join('?' * len(cols))})",

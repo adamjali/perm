@@ -216,7 +216,10 @@ function Provenance({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }) {
       {observed.newIssued.toLocaleString()} more be issued and{" "}
       {observed.resolved.toLocaleString()} resolve ourselves{since}.{" "}
       {observed.resolved > 0
-        ? `Our own observations are ${observedShare.toFixed(1)}% of the resolved total, and that share grows every day.`
+        // NOT "grows every day": measured 2026-09-18, ours was 4 resolutions
+        // against a frozen 2,151 in the 23 days since we started watching.
+        // An RFI takes months to resolve, so this share moves slowly.
+        ? `Our own observations are ${observedShare.toFixed(1)}% of the resolved total. An RFI takes months to resolve, so that share moves slowly.`
         : "None of ours have resolved yet, so the percentage above is still entirely theirs."}{" "}
       The two windows do not overlap: the frozen half is never re-read, so no
       case is counted twice.

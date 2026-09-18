@@ -7,10 +7,10 @@
  *                   Derived from our own case corpus by decision date.
  *   flag-live        14 days, 2026-08-13 onward, 9,457 decisions.
  *                   From the per-case scan of flag.dol.gov.
- *   permtrack        88 days, 2025-12-31 to 2026-03-31. The RIVAL'S series,
+ *   rival-b          88 days, 2025-12-31 to 2026-03-31. The RIVAL'S series,
  *                   backfilled once for comparison.
  *
- * The permtrack rows OVERLAP ours on all 88 of their dates, so the table holds
+ * The rival's rows OVERLAP ours on all 88 of their dates, so the table holds
  * 1,049 rows across 961 distinct dates. A query that reads the whole table and
  * sums by date double-counts a quarter of FY2026. Nothing here reads that
  * source; `getDailyDecisions` in publicData.ts defends the same boundary with

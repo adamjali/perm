@@ -118,7 +118,7 @@ async function main() {
   //
   // THIS INGEST WROTE DATA FOR MONTHS AND NEVER RECORDED THAT IT HAD. The
   // `processing-times` row in data_freshness was created once by
-  // backfill_permtrack.py, a one-off that is in no workflow, so `as_of` stayed
+  // a one-off backfill script (since removed), a one-off that is in no workflow, so `as_of` stayed
   // frozen at whatever that run left while this job refreshed the data daily
   // underneath it. Measured 2026-08-29: the table held DOL's 2026-08-28
   // snapshot while the freshness row still claimed 2026-08-20, one day short

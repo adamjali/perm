@@ -16,7 +16,7 @@
 /**
  * What a rival published for the SAME case on the same day.
  *
- * WHY RECORD THEIRS AT ALL. "We match or beat permupdate" is a claim, and a
+ * WHY RECORD THEIRS AT ALL. "We match or beat the rivals" is a claim, and a
  * claim about accuracy is only worth anything if it was written down before
  * the outcome. Scoring ourselves alone answers "were we close"; scoring all
  * three answers "were we closer", which is the question actually being asked.
@@ -26,12 +26,12 @@
  * rewrite what they said on the day - that is the whole point of a ledger.
  */
 export interface RivalPrediction {
-  site: "permupdate" | "permtrack";
+  site: "rival-a" | "rival-b";
   /** Their headline date, ISO. */
   anchorIso: string;
   /** Their upper bound, or null where they publish none. */
   upperIso: string | null;
-  /** Their lower bound. permupdate publishes NO lower bound; theirs is null. */
+  /** Their lower bound. rival-a publishes NO lower bound; theirs is null. */
   lowerIso: string | null;
   /** Which of their models this is, named as plainly as their API allows. */
   model: string;
@@ -82,14 +82,14 @@ export const PREDICTIONS: Prediction[] = [
       "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. Recorded from the LIVE PAGE, not from a harness: an earlier draft of these entries came from calling the calculator directly and was 3 to 5 days out, because the page also applies the measured stage adjustment and the employer-initial shift. This interface says the anchor is the one the page printed, so it has to be.",
     rivals: [
       {
-        site: "permupdate",
+        site: "rival-a",
         anchorIso: "2026-09-20",
         upperIso: "2026-09-21",
         lowerIso: null,
         model: "cases ahead / 650 a day; upper bound is remaining x 1.15, and they publish no lower bound",
       },
       {
-        site: "permtrack",
+        site: "rival-b",
         anchorIso: "2026-09-19",
         upperIso: "2026-09-23",
         lowerIso: "2026-09-18",
@@ -110,14 +110,14 @@ export const PREDICTIONS: Prediction[] = [
       "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. Recorded from the LIVE PAGE, not from a harness: an earlier draft of these entries came from calling the calculator directly and was 3 to 5 days out, because the page also applies the measured stage adjustment and the employer-initial shift. This interface says the anchor is the one the page printed, so it has to be.",
     rivals: [
       {
-        site: "permupdate",
+        site: "rival-a",
         anchorIso: "2026-10-26",
         upperIso: "2026-11-01",
         lowerIso: null,
         model: "cases ahead / 650 a day; upper bound is remaining x 1.15, and they publish no lower bound",
       },
       {
-        site: "permtrack",
+        site: "rival-b",
         anchorIso: "2026-10-17",
         upperIso: "2026-11-05",
         lowerIso: "2026-10-15",
@@ -138,14 +138,14 @@ export const PREDICTIONS: Prediction[] = [
       "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. Recorded from the LIVE PAGE, not from a harness: an earlier draft of these entries came from calling the calculator directly and was 3 to 5 days out, because the page also applies the measured stage adjustment and the employer-initial shift. This interface says the anchor is the one the page printed, so it has to be.",
     rivals: [
       {
-        site: "permupdate",
+        site: "rival-a",
         anchorIso: "2026-11-17",
         upperIso: "2026-11-26",
         lowerIso: null,
         model: "cases ahead / 650 a day; upper bound is remaining x 1.15, and they publish no lower bound",
       },
       {
-        site: "permtrack",
+        site: "rival-b",
         anchorIso: "2026-11-06",
         upperIso: "2026-12-10",
         lowerIso: "2026-11-03",
@@ -166,14 +166,14 @@ export const PREDICTIONS: Prediction[] = [
       "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. Recorded from the LIVE PAGE, not from a harness: an earlier draft of these entries came from calling the calculator directly and was 3 to 5 days out, because the page also applies the measured stage adjustment and the employer-initial shift. This interface says the anchor is the one the page printed, so it has to be.",
     rivals: [
       {
-        site: "permupdate",
+        site: "rival-a",
         anchorIso: "2026-12-23",
         upperIso: "2027-01-07",
         lowerIso: null,
         model: "cases ahead / 650 a day; upper bound is remaining x 1.15, and they publish no lower bound",
       },
       {
-        site: "permtrack",
+        site: "rival-b",
         anchorIso: "2026-12-09",
         upperIso: "2027-02-02",
         lowerIso: "2026-12-02",
@@ -207,7 +207,7 @@ export function scorePrediction(p: Prediction, decidedOn: string): Score {
  * Score one rival's published answer against the same outcome.
  *
  * DELIBERATELY THE SAME ARITHMETIC AS OURS, and separate only because their
- * band is a different shape: permupdate publishes an upper bound and no lower
+ * band is a different shape: rival-a publishes an upper bound and no lower
  * one, so "inside the window" for them means at-or-before that bound rather
  * than between two. Scoring a one-sided band as if it were two-sided would
  * flatter them on every early decision and is the sort of quiet thumb on the

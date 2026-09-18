@@ -5,7 +5,7 @@ name: Ingest health
 # Before this, a dead ingest was silent. Four of the six ingest workflows mark
 # their step `continue-on-error: true`, so a failed run exits GREEN and GitHub
 # sends nothing. The other signal - the staleness warning `DataProvenance`
-# renders - appears on a page, and nobody watches pages. So if permtrack
+# renders - appears on a page, and nobody watches pages. So if the rival tracker
 # changed shape, DOL moved a file, or a token expired, the site would keep
 # serving the last good numbers under their own as-of date indefinitely and
 # nothing would say otherwise. That is worse than an outage: an outage is

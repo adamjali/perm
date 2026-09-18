@@ -1,10 +1,10 @@
-# Visual parity against permtrack.app
+# Visual parity against the rival tracker
 
 Adam's directive: *"look at every single visual they have and all data, their
 charts, graphs, make sure we have matching if not better, EVERY single one, if
 not lmk why not."*
 
-Built from the 2026-06-19 teardown (`DETAILED-permtrack.md`, 33 routes and the
+Built from the 2026-06-19 teardown (`the rival teardown doc`, 33 routes and the
 full API catalog) plus the 2026-08-24 live delta. Every row is one thing a
 visitor can see on their site.
 

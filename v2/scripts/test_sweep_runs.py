@@ -9,7 +9,7 @@ deliberate rather than convenient - the defect these tests guard is inside a
 CTE with three window functions, and a canned fixture would pass with the
 query deleted.
 
-WHAT THIS FILE IS ABOUT. `perm_case_status.last_checked_at` is permtrack's
+WHAT THIS FILE IS ABOUT. `perm_case_status.last_checked_at` is the rival tracker's
 column, inherited from the mirror seed, and the PERM sweep has never written
 it. `write_review_stages` used to take MIN/MAX of it and publish that as
 `seenFrom`/`seenTo`, which `/perm-rfi-audit` renders as a sentence about when

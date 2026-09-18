@@ -2,7 +2,7 @@
 /**
  * What every public PERM estimator says today, for one filing date.
  *
- * WHY THIS EXISTS. "We match or beat permupdate" is a claim, and a claim about
+ * WHY THIS EXISTS. "We match or beat the rivals" is a claim, and a claim about
  * accuracy is worth nothing unless it was written down BEFORE the outcome.
  * `src/lib/predictionLedger.ts` records ours; this captures theirs on the same
  * day, in the shape that file wants, so the three can be scored side by side
@@ -22,25 +22,27 @@
  * number a reader sees - that is the point of recording it.
  */
 
-const PERMUPDATE = "https://perm-backend-production.up.railway.app/api/predictions/from-date";
-const PERMTRACK = "https://permtrack.app/api/watchlist/predict";
+// Endpoints name third parties, so they are configuration rather than
+// source: set RIVAL_A_API / RIVAL_B_API when running this locally.
+const RIVAL_A = process.env.RIVAL_A_API ?? "";
+const RIVAL_B = process.env.RIVAL_B_API ?? "";
 const UA = "permtracker-benchmark/1.0 (+https://permtracker.app)";
 
 const iso = (d) => d.toISOString().slice(0, 10);
 const plus = (isoDate, days) =>
   iso(new Date(Date.parse(`${isoDate}T00:00:00Z`) + days * 86_400_000));
 
-async function permupdate(filed, letter) {
-  const r = await fetch(PERMUPDATE, {
+async function rivalA(filed, letter) {
+  const r = await fetch(RIVAL_A, {
     method: "POST",
     headers: { "Content-Type": "application/json", "User-Agent": UA },
     body: JSON.stringify({ submit_date: filed, employer_first_letter: letter }),
   });
-  if (!r.ok) throw new Error(`permupdate HTTP ${r.status}`);
+  if (!r.ok) throw new Error(`rival-a HTTP ${r.status}`);
   const j = await r.json();
   const p = j.prediction ?? j;
   return {
-    site: "permupdate",
+    site: "rival-a",
     anchorIso: p.estimated_completion_date ?? null,
     // One-sided and upward only. Recording a null lower bound is deliberate:
     // scoring their band as two-sided would flatter them on every early call.
@@ -51,25 +53,25 @@ async function permupdate(filed, letter) {
   };
 }
 
-async function permtrack(filed) {
+async function rivalB(filed) {
   // THEIR DECISION PREDICTOR, not `/api/estimate`. That one answers a
   // different question - a risk grade plus percentiles over decided cases -
   // and reading `filed + p50` off it reports them as five to nine MONTHS
   // later than they actually say. Their real model is the same shape as
   // ours: cases ahead divided by a measured weekday/weekend pace.
-  const r = await fetch(`${PERMTRACK}?filing_date=${filed}`, {
+  const r = await fetch(`${RIVAL_B}?filing_date=${filed}`, {
     headers: { "User-Agent": UA },
   });
-  if (!r.ok) throw new Error(`permtrack HTTP ${r.status}`);
+  if (!r.ok) throw new Error(`rival-b HTTP ${r.status}`);
   const text = await r.text();
   // Unknown paths on this host return the SPA shell with a 200, so a status
   // code proves nothing here - the body has to be checked.
-  if (/^\s*<!doctype/i.test(text)) throw new Error("permtrack: got the SPA shell, not JSON");
+  if (/^\s*<!doctype/i.test(text)) throw new Error("rival-b: got the SPA shell, not JSON");
   const j = JSON.parse(text);
   const p = j.prediction ?? {};
-  if (!p.estimated_date) throw new Error("permtrack: no estimated_date in response");
+  if (!p.estimated_date) throw new Error("rival-b: no estimated_date in response");
   return {
-    site: "permtrack",
+    site: "rival-b",
     anchorIso: p.estimated_date,
     upperIso: p.late_date ?? null,
     lowerIso: p.early_date ?? null,
@@ -94,7 +96,7 @@ if (dates.length === 0) {
 let failed = 0;
 for (const filed of dates) {
   const out = [];
-  for (const fn of [() => permupdate(filed, letter), () => permtrack(filed)]) {
+  for (const fn of [() => rivalA(filed, letter), () => rivalB(filed)]) {
     try {
       const v = await fn();
       if (!v.anchorIso) throw new Error("no anchor date in response");

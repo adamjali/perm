@@ -179,13 +179,14 @@ jobs:
       # is worth a red run. continue-on-error because their availability is
       # not our correctness: if their API is down or changed shape, our data
       # is unaffected and the ingest above has already succeeded.
-      - name: Cross-check against permtrack public API
+      - name: Cross-check against the rival tracker public API
         if: always()
         continue-on-error: true
         working-directory: v2
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          CROSS_CHECK_API: ${{ secrets.CROSS_CHECK_API }}
         run: python3 scripts/cross_check_sources.py
 
       - name: Remove credentials

@@ -41,7 +41,7 @@ the billing question is settled.
 ## DONE AND DEPLOYED
 
 - **373,939 cases** ingested (FY2024+FY2025+FY2026, all four DOL files, the
-  FY2024 old-form/new-form pair not split). Beats permtrack's 321,725 on
+  FY2024 old-form/new-form pair not split). Beats the rival tracker's 321,725 on
   coverage AND is three months fresher.
 - Entity pages read the entity table, not the 250-row aggregate: search,
   state and job-family filters, sort, paging, CSV.

@@ -129,7 +129,7 @@ dependencies.**
 | visa bulletin | **State Dept** (84 months, 2019-10 →) | monthly, one human minute |
 | I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly; GitHub tries first, **Adam's Mac retries the day after** when `www.uscis.gov` 403s the datacenter runner |
 | entities, daily decisions | derived from our own corpus | with each quarterly |
-| RFI funnel | permtrack aggregate **frozen**, plus our own observations | frozen half never re-read |
+| RFI funnel | the rival tracker aggregate **frozen**, plus our own observations | frozen half never re-read |
 | prevailing wage requests, live (`P-100-`) | **DOL** batch API, same counter as PERM | daily pending sweep; discovery via the unified walk; weekly rolling 180-day re-check; backfill self-chains |
 | prevailing wage DETERMINATIONS (the wage) | **DOL** quarterly PW disclosure files, FY2024-FY2026 | monthly on the 10th, `--fy` for history |
 | H-1B LCAs, live (`I-200-`, `I-203-`) | **DOL** batch API, same counter | daily pending sweep (0 LCAs pend); discovery via the unified walk; weekly rolling 90-day re-check |
@@ -141,7 +141,7 @@ serial space for new filings (first run: 108 cases). The case search and
 employer pages read both worlds - published files for decided detail, the
 live remainder for anything newer. Detail: [`v2/CLAUDE.md`](v2/CLAUDE.md).
 
-The permtrack mirror survives as a dispatchable fallback with **no schedule**,
+The rival mirror is **deleted** (script and workflow, 2026-09-18),
 because two writers with different notions of truth pointed at one table is a
 flip-flop, not redundancy. Detail: [`v2/CLAUDE.md`](v2/CLAUDE.md), sections
 "Per-case status comes from DOL directly" and "The RFI funnel is BLENDED".

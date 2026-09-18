@@ -63,14 +63,14 @@ describe("three-way scoring", () => {
     windowFrom: "2026-10-07",
     windowTo: "2026-10-23",
     rivals: [
-      { site: "permupdate", anchorIso: "2026-10-06", upperIso: "2026-10-09", lowerIso: null, model: "x" },
-      { site: "permtrack", anchorIso: "2027-03-28", upperIso: null, lowerIso: null, model: "y" },
+      { site: "rival-a", anchorIso: "2026-10-06", upperIso: "2026-10-09", lowerIso: null, model: "x" },
+      { site: "rival-b", anchorIso: "2027-03-28", upperIso: null, lowerIso: null, model: "y" },
     ],
   };
 
   it("scores every site against the same outcome", () => {
     const all = scoreAll(p, "2026-10-15");
-    expect(all.map((a) => a.site)).toEqual(["permtracker", "permupdate", "permtrack"]);
+    expect(all.map((a) => a.site)).toEqual(["permtracker", "rival-a", "rival-b"]);
     expect(all[0]!.score.errorDays).toBe(3); // DOL decided 3 days after our anchor
     expect(all[1]!.score.errorDays).toBe(9);
     expect(all[2]!.score.absErrorDays).toBe(164);
@@ -83,18 +83,18 @@ describe("three-way scoring", () => {
   });
 
   it("treats a ONE-SIDED rival band as at-or-before, not between", () => {
-    // permupdate publishes an upper bound and no lower one. Scoring it as
+    // rival-a publishes an upper bound and no lower one. Scoring it as
     // two-sided would flatter them on every early decision.
     const early = scoreAll(p, "2026-09-20");
-    expect(early.find((a) => a.site === "permupdate")!.score.inWindow).toBe(true);
+    expect(early.find((a) => a.site === "rival-a")!.score.inWindow).toBe(true);
     const late = scoreAll(p, "2026-10-15");
-    expect(late.find((a) => a.site === "permupdate")!.score.inWindow).toBe(false);
+    expect(late.find((a) => a.site === "rival-a")!.score.inWindow).toBe(false);
   });
 
   it("reports inWindow as NULL, not false, when a site publishes no bound", () => {
     // Absent is not a miss.
     const all = scoreAll(p, "2026-10-15");
-    expect(all.find((a) => a.site === "permtrack")!.score.inWindow).toBeNull();
+    expect(all.find((a) => a.site === "rival-b")!.score.inWindow).toBeNull();
   });
 
   it("scores our own two-sided window as between, not at-or-before", () => {
@@ -113,7 +113,7 @@ describe("recorded rival predictions are plausible", () => {
   /**
    * A WRONG-ENDPOINT DETECTOR, NOT A DISAGREEMENT DETECTOR.
    *
-   * permtrack publishes two models. `/api/estimate` gives a risk grade plus
+   * rival-b publishes two models. Its estimate endpoint gives a risk grade plus
    * percentiles over decided cases; `/api/watchlist/predict` is the actual
    * decision predictor. Reading `filed + p50` off the first one recorded them
    * as five to NINE MONTHS later than they say - and it looked entirely

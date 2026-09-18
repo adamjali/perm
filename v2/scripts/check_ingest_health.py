@@ -8,7 +8,7 @@ other channel is GitHub emailing on a red scheduled run - and FOUR of the six
 ingests mark their step `continue-on-error: true`, so a failed ingest exits
 green and sends nothing.
 
-Net effect before this script: if permtrack changed shape, or DOL moved a file,
+Net effect before this script: if the rival tracker changed shape, or DOL moved a file,
 or a token expired, the site would keep serving the last good numbers under
 their own as-of date and NOTHING would tell us. That is worse than an outage,
 because an outage is visible.

@@ -853,7 +853,7 @@ export interface BlendedRfiFunnel extends RfiFunnel {
 /**
  * Only events WE observed at DOL count toward our half.
  *
- * `perm_case_events` also holds rows written by the old permtrack mirror,
+ * `perm_case_events` also holds rows written by the old rival mirror,
  * which recorded a "transition" whenever THEIR copy differed from OUR copy.
  * A difference like that is not necessarily something that moved after the
  * freeze - if our stored copy was staler than the snapshot their frozen

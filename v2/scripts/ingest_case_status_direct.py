@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Per-case PERM status, straight from DOL instead of a competitor's mirror.
 
-WHAT THIS REPLACES. `mirror_case_status.py` reads permtrack.app's watchlist
+WHAT THIS REPLACES. `mirror_case_status.py` reads the rival tracker's watchlist
 API - their copy of data they scanned out of flag.dol.gov. It works, and it
 made us dependent on a competitor continuing to serve us, at whatever
 freshness they choose.
@@ -22,7 +22,7 @@ concluded the opposite FROM THE PATH NAME ALONE, which is not evidence.
 `robots.txt` does not disallow it (stock Drupal; blocks /core/, /profiles/,
 /README.txt only).
 
-WHAT WE LOSE, AND WHY IT IS NOTHING. permtrack returns four fields DOL does
+WHAT WE LOSE, AND WHY IT IS NOTHING. The rival tracker returns four fields DOL does
 not, and three of them are derived rather than sourced:
   filing_date     - decodes from the case number's YYDDD segment (94.6% exact,
                     the rest off by one day) and equals submitted_date for
@@ -32,7 +32,7 @@ not, and three of them are derived rather than sourced:
                     hold ourselves in `perm_cases`. We can compute it better.
   last_checked_at - THEIR bookkeeping about when THEY looked. Meaningless once
     /verified       we do the looking.
-And DOL returns `visaType`, which permtrack does not.
+And DOL returns `visaType`, which the rival tracker does not.
 
 AND THE SITE WAS QUOTING `last_checked_at` BACK AS IF IT WERE OURS. This
 script has never written that column, so it still holds the mirror seed:
@@ -124,7 +124,7 @@ FINAL_STATUSES = {
 # THE TWO MUST NEVER BE UNIONED. They answer different questions and a
 # `sum(total) GROUP BY date` across the table silently adds them. Measured
 # before this change, that union was already wrong for another reason: the
-# retired `permtrack` series overlapped `dol-disclosure` on 88 dates and
+# retired `rival-b` series overlapped `dol-disclosure` on 88 dates and
 # injected 42,056 phantom decisions into every unfiltered read. Those rows are
 # gone and every reader is pinned to a source; `test_observed_decisions.py`
 # scans for a query that forgets.
@@ -152,7 +152,7 @@ BULK_WRITE_ROWS = 5000
 # comparable at all, so `total` here is the sum of the three buckets and not a
 # count of anything else.
 #
-# An expired certification is filed as CERTIFIED, which is also what permtrack
+# An expired certification is filed as CERTIFIED, which is also what the rival tracker
 # did with their `certified_expired`. The ORDINARY expiry - a case moving
 # CERTIFIED -> CERTIFIED - EXPIRED - never reaches this map, because the pair
 # filter drops it as a clock running out rather than a decision. What does
@@ -584,7 +584,7 @@ def write_review_stages(db) -> None:
     `seenFrom`/`seenTo` ARE OUR SWEEP'S DATES, NOT `last_checked_at`.
 
     They used to be MIN/MAX of `substr(last_checked_at, 1, 10)`, and this
-    script has never written that column - it is permtrack's field, inherited
+    script has never written that column - it is the rival tracker's field, inherited
     from the mirror seed, and the header of this file says as much. Measured
     2026-09-03: 66,771 pending cases carried a 2026-07 timestamp and 12,187
     carried none, so the doc published `seenTo` 2026-08-31 for the largest
@@ -818,7 +818,7 @@ def write_sweep_coverage(db) -> None:
     NOTHING READS THIS YET. It is written so the remaining half of the same
     defect can be fixed without adding a query shape: `/perm-case-status`
     prints "checked N days ago" for a pending case from
-    `perm_case_status.last_checked_at` - permtrack's field again - and for a
+    `perm_case_status.last_checked_at` - the rival tracker's field again - and for a
     pending PERM case the honest answer is this doc's `finishedOn`, because
     the sweep asks DOL about every pending case every day. See
     src/lib/casePosition.ts `statusCheckAge` and src/lib/turso/caseLookup.ts.
@@ -1239,12 +1239,12 @@ def fold_observed_decisions(
     for ts, src, _n in stamp_totals:
         # ELIGIBILITY IS OUR SWEEP HAVING RUN, NOT MERELY A ROW EXISTING.
         # 2026-08-27 carries exactly one timestamp: 48 rows written by the
-        # retired permtrack mirror, comparing their copy against ours. Our own
+        # retired rival mirror, comparing their copy against ours. Our own
         # DOL sweep did not write an event until 2026-08-27T21:16Z, the next
         # day in UTC. Treating that stamp as an observation published
         # `2026-08-27 = 0`, a zero-decision day at the head of the series and
         # a false trough - the exact failure `ingest_rfi_funnel.py` guarded
-        # against with permtrack's own `has_data` flag, arriving by a
+        # against with the rival tracker's own `has_data` flag, arriving by a
         # different door.
         #
         # This decides which days are MEASURABLE, not which rows COUNT: a

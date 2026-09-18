@@ -1,6 +1,6 @@
 name: Case status (direct from DOL)
 
-# Per-case PERM status, straight from flag.dol.gov instead of permtrack's
+# Per-case PERM status, straight from flag.dol.gov instead of the rival tracker's
 # mirror of it. See scripts/ingest_case_status_direct.py for the measurement
 # that established the endpoint is open (the path is NAMED recaptcha and
 # nothing in the flow is a captcha) and that nothing is lost by switching.
@@ -128,7 +128,7 @@ jobs:
       # missed on the night is missed permanently, as is anything DOL files
       # into a range the walk has already passed. Measured 12 Sep 2026 we held
       # 88-92% of each day's serial span, and probing the holes by hand found
-      # real PERM cases in them. An independent check against permtrack's
+      # real PERM cases in them. An independent check against the rival tracker's
       # published July figure put us 1.2% short.
       #
       # This re-asks DOL about the holes in the trailing 90 day codes. It never

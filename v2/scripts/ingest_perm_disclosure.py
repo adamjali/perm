@@ -1527,7 +1527,7 @@ def main() -> int:
     # STAMP OUR OWN FRESHNESS ROW.
     #
     # This ingest wrote data and never recorded that it had. The row for this
-    # dataset was created once by `backfill_permtrack.py`, a one-off that is in
+    # dataset was created once by `a one-off backfill script (since removed)`, a one-off that is in
     # no workflow, so `as_of` stayed frozen at whatever that run left while the
     # data underneath refreshed on schedule. That makes the freshness table -
     # which `DataProvenance` renders to readers and `check_ingest_health.py`

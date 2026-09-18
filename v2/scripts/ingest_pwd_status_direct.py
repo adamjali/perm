@@ -53,7 +53,7 @@ and that was checked rather than assumed: this script WRITES
 `last_checked_at` itself on every case it looks at - both the changed branch
 and the unchanged one - so `pwd_case_status` / `lca_case_status` already carry
 our own observation date, and `/pwd-cases` and `/lca-cases` print it honestly.
-`perm_case_status.last_checked_at` is permtrack's, inherited from the mirror
+`perm_case_status.last_checked_at` is the rival tracker's, inherited from the mirror
 seed and never written by the PERM sweep, which is what made the review-stage
 pages cite a retired competitor's timestamp. So this file gets the run record
 (useful: it is the only thing that can say a nightly probe stopped finishing)

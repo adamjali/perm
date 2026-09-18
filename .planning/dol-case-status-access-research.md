@@ -34,7 +34,7 @@ a policy choice, not a tech gap. This is the argument to make.
 Practitioner sources claim the PUBLIC form returns only FINAL determinations for
 PERM (Certified/Denied/Withdrawn/Expired) and that pending statuses (Analyst
 Review, RFI, Audit) show ONLY inside the logged-in FLAG account. Unverified. If
-true, permtrack's live pending data comes from authenticated automation (the
+true, the rival tracker's live pending data comes from authenticated automation (the
 prohibited category), and our mirror inherits that exposure. One case number in
 each state settles it.
 
@@ -55,7 +55,7 @@ unpaid. Good for a one-time snapshot at most.
    events; forwarding her own mail is her call. Parse the mailbox. Confirm which
    events email out and what fields they carry before scoping.
 3. **The statistical product we already have** — quarterly disclosure (fresher
-   than permtrack), processing frontier, Selected Statistics inventory, I-140,
+   than the rival tracker), processing frontier, Selected Statistics inventory, I-140,
    visa bulletin. "We estimate from published data and show you the data."
 4. **Ask OFLC directly**, via the PERM Help Desk and AILA's DOL Liaison
    Committee, citing the SeasonalJobs precedent. Low cost, creates a record.
@@ -64,8 +64,8 @@ unpaid. Good for a one-time snapshot at most.
 ## Not recommended
 Automating the public endpoint at any volume. DOL published it carries anti-abuse
 verification; our audience is compliance-bound attorneys. It is the one build
-that could cost us the audience outright. permtrack doing it is a fact about
-permtrack's risk, not evidence the route is open.
+that could cost us the audience outright. them doing it is a fact about
+their risk, not evidence the route is open.
 
 ## USCIS contrast (proves the point)
 USCIS runs a real Case Status API (developer.uscis.gov, OAuth, for case-mgmt

@@ -945,10 +945,10 @@ never overwrite a better one:
 |---|---|---|
 | 3 | `--from-file`, a page saved from a browser | the current month |
 | 2 | Internet Archive | history, capped at 2026-07 (State now 403s their crawler too) |
-| 1 | permtrack mirror | nothing any more; **0 rows** |
+| 1 | the rival tracker mirror | nothing any more; **0 rows** |
 
 **Its clause ORDER is load-bearing.** The mirror records itself as
-`permtrack.app/... (mirror; original: travel.state.gov)` - naming the original
+`<third party> (mirror; original: travel.state.gov)` - naming the original
 is good provenance - so a plain substring test for `travel.state.gov` matches
 the MIRROR too and ranks it as the real page. That would have made the
 backfill skip every month that most needed upgrading, while reporting success.
@@ -1021,7 +1021,7 @@ had been duplicated rather than shared. Two callers is enough.
 
 ## Per-case status comes from DOL directly (2026-08-27)
 
-`scripts/ingest_case_status_direct.py`. This replaced mirroring permtrack.
+`scripts/ingest_case_status_direct.py`. This replaced mirroring the rival tracker.
 
 ```
 POST https://flag.dol.gov/recaptcha/caseStatus
@@ -1039,7 +1039,7 @@ mistake cost the premise of a whole feature.
 
 **Nothing was lost by switching**, verified field by field rather than
 assumed. Status, employer, job title and submitted date matched the mirror
-**8/8 exactly**. The four fields permtrack adds are derived or bookkeeping:
+**8/8 exactly**. The four fields the rival tracker adds are derived or bookkeeping:
 `filing_date` decodes from the case number's YYDDD segment (94.6% exact, rest
 off by one day) and equals `submitted_date` for 409,127 of 414,050 rows;
 `is_final` is a function of the status; `is_disclosed` **we compute better** -
@@ -1059,7 +1059,7 @@ return at all.
   fabricated a one-day surge in the table that feeds the alert sweep and the
   RFI funnel. `--reconcile` corrects statuses and writes no events.
 - **TWO WRITERS WITH DIFFERENT NOTIONS OF TRUTH ARE NOT REDUNDANCY.** The old
-  mirror would have compared permtrack's stale values against our
+  mirror would have compared the rival tracker's stale values against our
   DOL-corrected rows, called the difference a change, and reverted all 1,328
   corrections - twice a day, forever, logging healthy writes. Its schedule is
   removed; `workflow_dispatch` kept as a fallback.
@@ -1100,7 +1100,7 @@ averaging version.
    nothing erroring.
 2. **A TIMESTAMP CANNOT TELL AN OBSERVATION FROM A RECONCILIATION.**
    `perm_case_events` also holds mirror rows that logged a difference against
-   permtrack's copy, written at 19:16 on the freeze date - "after" a 03:25
+   the rival tracker's copy, written at 19:16 on the freeze date - "after" a 03:25
    freeze by any time test - while describing changes of unknown age. The
    filter is therefore on SOURCE. `DIRECT_EVENT_SOURCE` must stay
    byte-identical to `SOURCE` in the Python ingest; a drift silently zeroes
@@ -1110,14 +1110,22 @@ averaging version.
    events. Resolution reads from the case's CURRENT status, joined to the
    cases we watched ENTER an RFI.
 
-**Our half overtakes theirs in ~74 days.** The disclosure fires when EITHER
+**Our half does NOT overtake theirs on any useful horizon, and the ~74-day
+figure this file used to carry was wrong.** It conflated RFIs ever ISSUED
+(which we do accrue fast: 611 watched in the 23 days to 2026-09-18) with
+RESOLUTIONS, which are the denominator the approval rate is built on. Measured
+2026-09-18: the frozen base holds **2,151 resolved** and ours holds **4**, so our
+share of the published rate is **0.19%**. An RFI takes a long time to resolve and
+we only started watching on 2026-08-26. Treat the outcome percentages as a
+third-party figure indefinitely, not as one about to become ours.
+The disclosure fires when EITHER
 half is non-empty: gating it on resolutions alone left a blended `everIssued`
 rendering as single-source the moment we watched one RFI be issued.
 
 ## The rival's whole API is public, and its data is a quarter stale (2026-08-24)
 
-permtrack.app is the namesake competitor. Every endpoint under
-`permtrack.app/api/*` answers unauthenticated - all stats, the 321,725-row
+the rival tracker is the namesake competitor. Every endpoint under
+Their whole `/api/*` surface answers unauthenticated - all stats, the 321,725-row
 case browser, the risk estimator, and the "PRO" decision predictor - so the
 product is readable end to end without touching anything gated.
 
@@ -1145,9 +1153,9 @@ precision the data cannot support. `/perm-denial-risk` says that on the page,
 above the bars.
 
 Full teardown and the remaining gap list:
-`~/.claude/explanations/20260619_perm_competitor_teardown/DETAILED-permtrack.md`
+`~/.claude/explanations/20260619_perm_competitor_teardown/the rival teardown doc`
 plus the 2026-08-24 live delta in the auto-memory
-`permtrack-gap-closure.md`.
+`the rival tracker-gap-closure.md`.
 
 ## greencardclock.com, re-measured Sep 7 2026
 
@@ -1274,7 +1282,7 @@ positions read as current ones, which is worse than an empty state.
 
 **Do not add per-request aggregate queries to the lookup path.** Fold from
 the census, or precompute a new doc in the ingest. `perm_month_stats` is a
-frozen orphan (its permtrack writer was retired 08-27) - `getQueueAhead`
+frozen orphan (its the rival tracker writer was retired 08-27) - `getQueueAhead`
 reads the census now; do not resurrect the table.
 
 ## One email system: three alert tables, one consent surface (2026-08-28)
@@ -1688,7 +1696,7 @@ publishes is its SIZE, and the size is the whole question.
 | per-month A-I vs S-Z gap | median **+8.2d**, range **-7 to +36** |
 | months where the order REVERSED | **6 of 30** |
 
-permupdate prints this same term as **-80 to +80 days** and its FAQ calls the
+the rival dashboard prints this same term as **-80 to +80 days** and its FAQ calls the
 initial roughly 80% of the outcome - the same effect inflated about sixfold.
 
 `estimateQueueDecision` accepts `letterDeltaDays` and shifts every model by it,
@@ -3111,22 +3119,22 @@ claim.
 
 **"PERM Tracker" is a generic name shared with a rival**, and Google's doc
 says it will not show a generic or shared site name, so the SERP prints the
-domain for us and for permtrack.app alike; keeping the name is Adam's call and
-the fix is entity confidence, not markup. Registration order (RDAP): permupdate
-Mar 2025, **permtracker.app Nov 25 2025**, permtrack.app Mar 22 2026,
+domain for us and for the rival tracker alike; keeping the name is Adam's call and
+the fix is entity confidence, not markup. Registration order (RDAP): the rival dashboard
+Mar 2025, **permtracker.app Nov 25 2025**, the rival tracker Mar 22 2026,
 perm-timeline Mar 26, immilane Apr 11, permqueue Apr 27 2026. Being first
 carries no weight with Google; references, an About page and stability do.
 
 ## Social cards: one real picture per page, and the illustration that was there (2026-09-07)
 
-Adam noticed Google Images showed permtrack.app as "actual screenshots" and us
+Adam noticed Google Images showed the rival tracker as "actual screenshots" and us
 as something random. Measured: every one of our ~13,758 URLs declared the same
 `og:image`, `public/og-image-base.png`, an AI-drawn isometric laptop whose
 screen read "Immigration Case Tracking Dashboard, Client J. Doe, I-140,
 Biometrics, Interview, Approved" (USCIS steps, an invented client, the old
 "Deadline Tracking" tagline). The homepage had one `<img>` (a decorative
 background, no alt), every chart is inline SVG, and the only real screenshots
-were inside the guides. permtrack.app has no images in its pages either; what
+were inside the guides. The rival tracker has no images in its pages either; what
 Google shows for it is three per-page social images that are real screenshots
 (`og-timeline.jpg`, `og-cases.jpg`, `og-map.jpg`) beside a text default.
 
@@ -3698,7 +3706,7 @@ The onboarding role step gained **"Waiting on my own case", listed FIRST**, and
 not a tier. Nothing here promises a plan, a price or a feature.
 **Re-decided 2026-09-16 with numbers** (`../.planning/monetization-2026-09-16.md`):
 no tier, no AdSense, no donation link until confirmed case-alert subscribers pass
-~1,000 or monthly visitors pass ~30,000. permtrack's one $9.99 plan is roughly our
+~1,000 or monthly visitors pass ~30,000. The rival tracker's one $9.99 plan is roughly our
 free product; the only paid delta is hourly checks on watched cases. AdSense never
 goes on the data pages. The attorney app, per seat, is the half that can pay.
 
@@ -3959,14 +3967,14 @@ in the client file instead.
 
 ## The queue-advance model leads now, and the coverage objection did not survive (2026-09-10)
 
-Adam compared a December 2025 filing against permupdate: theirs said late
+Adam compared a December 2025 filing against the rival dashboard: theirs said late
 September to early October, ours said September to December, most likely
 November. Both were right, and the whole difference was WHICH MODEL LED.
 
 | model | arithmetic | answer |
 |---|---|---|
 | DOL's published average (led until today) | filed + 336 days | **16 Nov 2026** |
-| Queue advance (permupdate's shape) | frontier at 2025-11, one month back, ~1 mo/mo | **10 Oct 2026** |
+| Queue advance (the rival dashboard's shape) | frontier at 2025-11, one month back, ~1 mo/mo | **10 Oct 2026** |
 | queue advance at the fastest observed rate | 2 mo/mo | 25 Sep 2026 |
 
 `caseEstimate.ts` and `PermTimelineEstimator` both anchor on `models[0]`, and
@@ -4259,7 +4267,7 @@ given filing day the serials we hold should be contiguous. They are not.
 `run_discovery` advances a cursor and never returns to it, so anything missed
 on the night is missed permanently, as is anything DOL indexes into a range the
 walk has already passed. There was no second look. An independent check against
-permtrack's published July figure put us 1.2% short; the serial probe put it at
+the rival tracker's published July figure put us 1.2% short; the serial probe put it at
 up to 5%.
 
 `scripts/sweep_serial_gaps.py` is the second look. It reads the holes out of
@@ -4447,7 +4455,7 @@ Production cannot: those end 2026-06-30. The only daily-resolution source is
 final. Those two ranges do not overlap by a single day, so the substitution
 cannot be validated against our own history at all.
 
-**It is validated against an independent third party instead.** permupdate
+**It is validated against an independent third party instead.** the rival dashboard
 publishes `GET /api/data/daily-volume`, 30 days of counts. Measured 2026-09-13
 over the 16 days both series cover: **our mean 574.6/day against their 566.4,
 +1.4%**. Individual days diverge by more, because a day boundary falls in a
@@ -4460,7 +4468,7 @@ DOL's true daily variation would give. That errs toward claiming less.
 
 ### What it changed, measured against the rival the same day
 
-| filed | permupdate | ours | gap |
+| filed | the rival dashboard | ours | gap |
 |---|---|---|---|
 | 2025-12-15 | 2026-10-06 | 2026-10-12 | +6d |
 | 2026-02-15 | 2026-11-08 | 2026-11-16 | +8d |
@@ -4540,13 +4548,13 @@ through FY2026 Q3 is loaded by `--name`, 51 months with zero gaps,
 time and a real slice of the write budget, which is why it was a decision and
 not a default. The freshness guard below is what that load broke first.
 
-## permtrack is NOT off, I read the wrong endpoint (2026-09-13)
+## the rival tracker is NOT off, I read the wrong endpoint (2026-09-13)
 
-I recorded permtrack as five to nine MONTHS later than everyone else and wrote
+I recorded the rival tracker as five to nine MONTHS later than everyone else and wrote
 that into the ledger. That was my error, and the owner caught it by remembering
 they had measured ~39 days earlier in the same session.
 
-permtrack publishes TWO models and I took the wrong one:
+the rival tracker publishes TWO models and I took the wrong one:
 
 | endpoint | what it answers |
 |---|---|
@@ -4569,19 +4577,19 @@ prediction { estimated_date 2026-10-02, early 2026-10-01, late 2026-10-12 }
 
 Their pace against ours: **644 vs 625 overall, 804 vs 789 weekday, 243 vs 213
 weekend.** Three independent measurements of DOL's rate - theirs, ours, and
-permupdate's published daily volume - now agree inside a few percent. That is
+the rival dashboard's published daily volume - now agree inside a few percent. That is
 the strongest evidence the rate is right that any of us has.
 
-**On the date, permtrack usually runs EARLIER than us - but "we are the latest
+**On the date, the rival tracker usually runs EARLIER than us - but "we are the latest
 of the three" is an overstatement I made from four cases and it is wrong.**
-Over the fuller six-case bakeoff the latest date was permupdate's 3 times,
-ours twice and permtrack's once. What IS supported: permtrack ran earlier than
+Over the fuller six-case bakeoff the latest date was the rival dashboard's 3 times,
+ours twice and the rival tracker's once. What IS supported: the rival tracker ran earlier than
 us in 5 of those 6, and in all 4 of the ledger cases. Mean gaps there were
-|ours - permupdate| 5.5 days and |ours - permtrack| 11.8 days.
+|ours - the rival dashboard| 5.5 days and |ours - the rival tracker| 11.8 days.
 
 **Being later is not being wrong, and being earlier is not being right.** In
-that same bakeoff permtrack printed a date for a case five months past the
-frontier where we refused, and permupdate printed a date **in the past**. None
+that same bakeoff the rival tracker printed a date for a case five months past the
+frontier where we refused, and the rival dashboard printed a date **in the past**. None
 of the three has been scored against an outcome under the current model.
 
 **The difference is cases-ahead, and it is worth investigating rather than
@@ -4623,7 +4631,7 @@ almost all `RECONSIDERATION APPEALS` or `RFI ISSUED`.
     BALCA APPEALS               373    0.4%
     NORD ISSUED                 120    0.1%
 
-permtrack discounts 10.3% between `queue_position` and `effective_queue`, which
+the rival tracker discounts 10.3% between `queue_position` and `effective_queue`, which
 is plainly the same idea. And there is an internal inconsistency in ours worth
 naming: `estimateByPace` REFUSES to date a case in one of those statuses - it
 says the case is not in filing order - while `casesAheadOfDay` happily counts

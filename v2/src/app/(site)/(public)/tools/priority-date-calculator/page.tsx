@@ -203,7 +203,10 @@ export default async function PriorityDateCalculatorPage() {
   // archive of its page, including the newest two, which are the ones a
   // verdict is drawn from. Counted here rather than asserted, so it cannot
   // drift when the ingest changes.
-  const isMirror = (url: string) => url.includes("permtrack");
+  // A mirror records itself as "<source> (mirror; original: ...)", so the
+  // word is the shape to test for, not any one provider's name. Matches
+  // SOURCE_RANK in the ingest, and counts zero today.
+  const isMirror = (url: string) => url.toLowerCase().includes("mirror");
   const provenance =
     bulletins.length > 0
       ? {

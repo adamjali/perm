@@ -557,7 +557,7 @@ export interface DailyDecisions {
  *
  * Two sources live in this table and they are not interchangeable.
  * "dol-disclosure" is ours, derived from our own case corpus, and runs to 947
- * days. "permtrack" is the rival's series, backfilled for comparison, and runs
+ * days. "rival-b" is the rival's series, backfilled for comparison, and runs
  * to 88. The default is ours; pass the other only when the point IS the
  * comparison.
  */
@@ -904,7 +904,7 @@ function toMonthStat(r: Record<string, unknown>): MonthQueueStat {
  */
 export async function getQueueAhead(filingMonth: string): Promise<QueueAhead | null> {
   // FROM THE LIVE CENSUS, NOT perm_month_stats. That table was filled daily
-  // from permtrack's aggregate and froze when the mirror schedule was
+  // from the rival tracker's aggregate and froze when the mirror schedule was
   // removed (2026-08-27) - nothing writes it any more, so reading it served
   // a queue position that silently aged. The census doc is our own mirror,
   // recomputed twice a day, and carries its own source attribution.
@@ -1011,7 +1011,7 @@ export async function getMonthQueueStats(): Promise<MonthQueueStat[]> {
   /*
    * COMPUTED FROM OUR OWN ROWS, not read from a mirrored aggregate.
    *
-   * This used to read `perm_month_stats`, filled daily from permtrack's
+   * This used to read `perm_month_stats`, filled daily from the rival tracker's
    * pre-computed per-month endpoint - the same cases we already hold, counted
    * by somebody else and shipped back. Measured across ten months before the
    * switch: pending matched EXACTLY on eight, and the two that differed (by 2
