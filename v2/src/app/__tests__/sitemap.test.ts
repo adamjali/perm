@@ -186,6 +186,16 @@ describe("sitemap.ts", () => {
       ["2026-09", 0],
     ]));
     vi.clearAllMocks();
+    // EVERY TEST ARRANGES ITS OWN LIVE-ONLY STATE. `vi.clearAllMocks()` clears
+    // CALLS and keeps IMPLEMENTATIONS, so the 12,000-row arrangement in the
+    // live-only test leaked into whatever ran next. In source order the count
+    // and the window mock stayed a matched pair; under CI's `sequence.shuffle`
+    // they came apart, a child got emitted for a window that returned nothing,
+    // and the "0 rows" guard threw. CI was red from 2026-09-17 to 09-19 while
+    // every local run passed. Reset both to the safe default here and let the
+    // tests that care opt in.
+    vi.mocked(countLiveOnlyRanks).mockResolvedValue(0);
+    vi.mocked(getLiveOnlySlugWindow).mockResolvedValue([]);
   });
 
   it("lists every /perm-queue month holding a case, from the census, and OMITS an empty month (that page 404s)", async () => {

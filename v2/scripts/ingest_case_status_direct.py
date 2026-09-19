@@ -244,9 +244,16 @@ FRONTIER_PREFIXES = PERM_OFFICE_PREFIXES
 # serials a request instead of 10, so a steady night goes from ~215 requests
 # to ~360. Against the ~10,000 the daily sweep already makes, that is noise.
 DISCOVERY_PREFIXES = ALL_FLAG_PREFIXES
-DISCOVERY_STEP = BATCH // len(DISCOVERY_PREFIXES)   # 10 serials x 5 prefixes = 50
+DISCOVERY_STEP = BATCH // len(DISCOVERY_PREFIXES)   # serials per request, at the 50 ceiling
 DISCOVERY_REQUEST_CAP = 400      # ~4,000 serials, about two days, per run
-DISCOVERY_UNISSUED_STREAK = 2    # spans no prefix claims before calling it the edge
+# HOW FAR A GAP THE WALK WILL STEP OVER, IN SERIALS, NOT IN SPANS. It was two
+# SPANS, and that silently halved on 2026-09-13 when DISCOVERY_PREFIXES went
+# from five prefixes to nine: the span is BATCH // len(prefixes), so it went
+# 10 serials -> 5 and the tolerance went 20 -> 10. The frontier stopped moving
+# that same morning and stayed stuck for six days. Expressed in serials it
+# cannot drift with the prefix count again.
+DISCOVERY_UNISSUED_SERIALS = 50
+DISCOVERY_UNISSUED_STREAK = max(2, -(-DISCOVERY_UNISSUED_SERIALS // DISCOVERY_STEP))
 DISCOVERY_MAX_DAYS_AHEAD = 21    # later day codes a span is re-asked under
 FRONTIER_DOC = "discovery_frontier"
 
@@ -373,6 +380,12 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
                 "status": "failed", "note": "frontier in the future"}
 
     code, serial = start
+    # TWO CURSORS, DELIBERATELY. `code`/`serial` is the CONFIRMED frontier and
+    # moves only on a hit; `probe_code`/`probe_serial` is where the walk is
+    # looking and steps over gaps. Sharing one variable made the returned
+    # frontier report wherever probing happened to stop, which is not a place
+    # DOL confirmed anything.
+    probe_code, probe_serial = start
     log(f"discovery: frontier {code}:{fmt_serial(serial)}, walking toward {today_code} "
         f"({DISCOVERY_STEP} serials x {len(DISCOVERY_PREFIXES)} prefixes per request, cap {cap})")
     requests = inserted = inserted_other = 0
@@ -382,8 +395,8 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
     stamp = int(time.time() * 1000)
 
     while requests < cap and unissued < DISCOVERY_UNISSUED_STREAK:
-        span = serial_span(serial_add(serial, 1), DISCOVERY_STEP)
-        codes = day_codes_between(code, today_code)[:DISCOVERY_MAX_DAYS_AHEAD + 1]
+        span = serial_span(serial_add(probe_serial, 1), DISCOVERY_STEP)
+        codes = day_codes_between(probe_code, today_code)[:DISCOVERY_MAX_DAYS_AHEAD + 1]
         claimed: list[dict] = []
         claimed_code: str | None = None
         for c in codes:
@@ -407,6 +420,15 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
         if not claimed:
             if requests >= cap:
                 break
+            # STEP OVER THE GAP. This used to `continue` WITHOUT touching
+            # `serial`, so the next iteration rebuilt the identical span and
+            # asked DOL the same five numbers a second time - two "spans", one
+            # range, and then the edge. The walk could not cross a gap of even
+            # one unissued serial. Measured 2026-09-19: the frontier sat at
+            # 26255:231396 for six days while G-100-26255-231407 waited two
+            # spans ahead. `serial` is the probe cursor only; the frontier doc
+            # is still written solely on a confirmed hit, below.
+            probe_serial = serial_add(probe_serial, DISCOVERY_STEP)
             unissued += 1
             continue
         unissued = 0
@@ -416,6 +438,7 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
         inserted_other += _insert_other_hits(db, other)
         top = _furthest(span[0], [serial_of(v["caseNumber"]) for v in claimed])
         code, serial = claimed_code, top
+        probe_code, probe_serial = claimed_code, top
         _write_frontier(db, code, serial, note=f"{requests} requests this run")
 
     if stopped:

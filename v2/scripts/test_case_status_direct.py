@@ -209,6 +209,23 @@ def main() -> int:
     check("frontier doc persisted with the final cursor",
           _json.loads(db.docs[csd.FRONTIER_DOC])["serial"] == 150, db.docs.get(csd.FRONTIER_DOC))
 
+    # 3b. A GAP IN THE ISSUED SERIALS IS STEPPED OVER, NOT TREATED AS THE EDGE.
+    # The regression this exists for: the empty-span branch used to `continue`
+    # without advancing `serial`, so the walk rebuilt the identical span and
+    # asked the same numbers twice. That is one range, not two spans, and it
+    # could not cross a gap of even one serial. Live, it left the frontier at
+    # 26255:231396 for six days with a real case two spans ahead.
+    u = dict([perm(f"G-100-26240-{s:06d}") for s in range(101, 106)]
+             + [perm(f"G-100-26240-{s:06d}") for s in range(116, 121)])
+    db = WalkDB(); look = fake_dol(u)
+    r = csd.run_discovery(db, lookup=look, today=T, frontier_override=("26240", 100))
+    check("walk steps over a 10-serial gap and keeps going",
+          r["frontier_after"] == ("26240", 120) and r["inserted"] == 10,
+          f"{r['frontier_after']} inserted={r['inserted']}")
+    asked_serials = {int(n.rsplit("-", 1)[1]) for b in look.asked for n in b}
+    check("the walk actually probed inside the gap rather than re-asking one span",
+          {106, 111} <= asked_serials, sorted(asked_serials)[:12])
+
     # 4. The counter wraps at 1,000,000 inside one day; the walk asks 000000 next.
     u = dict([perm(f"G-100-26161-{s:06d}") for s in (999996, 999997, 999998, 999999, 0, 1, 2, 3)])
     db = WalkDB(); look = fake_dol(u)

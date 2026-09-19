@@ -5533,3 +5533,54 @@ The true count is **three, all unauthenticated by design** (two pre-login rate
 limiters and Turnstile verification) plus `sendTestPush`, which is guarded through
 `getCurrentUserPushProfile`. Never report a guard audit without first checking the
 vocabulary against the codebase's own helpers.
+
+## The discovery walk could not cross a gap of one serial (2026-09-19)
+
+The frontier sat at `26255:231396` from **13 to 19 September** while
+`G-100-26255-231407` waited two spans ahead. Six days of new filings were
+found only by the gap sweep and visitor lookups; 13 September is absent from
+the corpus entirely and the daily counts fell from ~400 to 38 and 66.
+
+**The bug was one missing line.** On a span no prefix claimed, the loop did
+`unissued += 1; continue` **without advancing `serial`**, so the next iteration
+rebuilt the identical span and asked DOL the same five numbers again. Two
+"spans" were one range asked twice, and `DISCOVERY_UNISSUED_STREAK = 2` then
+called it the edge. Sixteen requests a night, forever: two spans x eight day
+codes. The code and its own comment disagreed and the comment was believed.
+
+**What made it start failing on that date.** `DISCOVERY_STEP = BATCH //
+len(DISCOVERY_PREFIXES)`, and `a68409e6` (13 Sep) took the prefix tuple from
+five to nine. The span halved, 10 serials to 5, so the odds that the next span
+held nothing roughly doubled. **A constant expressed in SPANS silently changes
+meaning when the span changes size.** It is `DISCOVERY_UNISSUED_SERIALS = 50`
+now, with the span count derived from it.
+
+**Two cursors, deliberately.** `code`/`serial` is the CONFIRMED frontier and
+moves only on a hit; `probe_code`/`probe_serial` is where the walk is looking
+and steps over gaps. The first version of the fix advanced the single shared
+variable and the walk then REPORTED a frontier DOL had confirmed nothing at -
+three existing tests caught it, which is what they are for.
+
+Regression test: `test_case_status_direct.py` case 3b walks a 10-serial gap and
+asserts the probe actually asked inside it. Probed by reverting the advance:
+the walk stops at 105 and asks one span, exactly the live symptom.
+
+## A leaked mock pair turned CI red for two days while every local run passed
+
+`sitemap.test.ts` arranges `countLiveOnlyRanks -> 12,000` with a matching
+`getLiveOnlySlugWindow`. `vi.clearAllMocks()` clears CALLS and keeps
+IMPLEMENTATIONS, so both leaked. In source order they stayed a matched pair;
+under CI's `sequence.shuffle` they came apart, a child was emitted for a window
+that returned nothing, and the "0 rows" guard threw. Red from 2026-09-17
+(`3aa1699f`, the live-only sitemap family) to 09-19, with `pnpm test:run` green
+locally the whole time. **Production was never affected** - the live sitemap
+served all five live-employer children throughout.
+
+The fix is the rule this repo already states: every test arranges its own
+state. The `describe`'s `beforeEach` now resets both mocks to the safe default
+and the tests that care opt in.
+
+**Reproduce it with `CI=1`, and read the JSON, not the console.** Under `CI=1`
+the reporters are `json` + `github-actions`, which MUTE the summary - a run can
+look like it printed nothing at all. `coverage/test-results.json` carries
+`success`, `numFailedTests` and the failing titles.
