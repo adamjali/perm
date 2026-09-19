@@ -1,121 +1,48 @@
 # GSC indexing priority list
 
-**Run of 2026-09-18, 11:59 AM to 12:20 PM EDT: 8 URLs accepted, then Quota Exceeded.**
+**Run of 2026-09-19, 3:03 to 3:42 PM EDT: 11 accepted, the 12th refused.**
 
-**THE WINDOW MODEL RECORDED YESTERDAY IS WRONG. Probe, do not predict.** Yesterday's
-last acceptance was 1:21 PM, so "24 h from the last request" predicted a 1:25 PM opening
-today. The first request of the day was **accepted at 11:59 AM**, 82 minutes early. The
-Sep 17 note said the same thing about "24 h from the first request" and that was wrong
-too (refused at 11:56 AM the morning after an 11:55 AM first request). Nor is it a flat
-11 a day: today's allowance ran out after 8, against 11 on each of the four previous
-runs, and the only difference was starting 53 minutes earlier. Whatever Google actually
-meters, it is not reproducible from the timestamps we hold.
+**THE LIVE-ONLY EMPLOYER PAGES WORK. Both spot checks requested yesterday as "unknown to
+Google" came back INDEXED today, inside 24 hours** - `vision-infotek` and
+`ace-ny-sales-inc`. That answers the open question from the "everything" decision of
+Sep 17: Google does take these thin, live-only pages when asked. Neither needed a slot
+today. The 9/27 Pages report is still the scoreboard for the other 22,311.
 
-**The operational rule, which costs nothing and needs no model: start early, because a
-refusal is free, and stop at the wall.** Time spent predicting the window is worth less
-than one probe.
+**The cap moved again: 11 today against 8 yesterday**, and the only visible difference is
+that today started at 3:03 PM rather than 11:59 AM. Starting later seems to buy a fuller
+allowance, which is the opposite of an intuition worth acting on - the rule stays PROBE,
+DO NOT PREDICT.
 
 | # | URL | Google's verdict | accepted (EDT) |
 |---|---|---|---|
-| 1 | `/perm-queue/2026-09` | unknown to Google, no referring sitemap | 11:59 AM |
-| 2 | `/perm-queue/2025-09` | unknown | 12:02 PM |
-| 3 | `/perm-queue/2025-08` | unknown | 12:04 PM |
-| 4 | `/perm-queue/2025-07` | **Discovered, currently not indexed**; sitemap AND `/perm-queue` named as referrers | 12:06 PM |
-| 5 | `/perm-employers/vision-infotek` | unknown (live-only page, indexable since Sep 16) | 12:08 PM |
-| 6 | `/perm-employers/ace-ny-sales-inc` | unknown (live-only page) | 12:12 PM |
-| 7 | `/perm-queue/2025-06` | unknown | 12:14 PM |
-| 8 | `/perm-queue/2025-05` | Discovered, currently not indexed | 12:17 PM |
-| 9 | `/perm-queue/2025-04` | Discovered, currently not indexed | **Quota Exceeded**, 12:20 PM |
+| 1 | `/perm-rfi-audit` | indexed; recrawl to displace the stale provenance line | 3:03 PM |
+| 2 | `/perm-queue/2025-04` | **unknown** (was "Discovered" yesterday - it flips both ways) | 3:06 PM |
+| 3 | `/perm-queue/2025-03` | unknown | 3:10 PM |
+| 4 | `/perm-queue/2025-02` | unknown | 3:14 PM |
+| 5 | `/perm-queue/2025-01` | Discovered, currently not indexed | 3:17 PM |
+| 6 | `/perm-queue/2024-12` | Discovered | 3:22 PM |
+| 7 | `/perm-queue/2024-11` | Discovered | 3:25 PM |
+| 8 | `/perm-queue/2024-10` | Discovered | 3:28 PM |
+| 9 | `/perm-queue/2024-09` | Discovered | 3:32 PM |
+| 10 | `/perm-queue/2024-08` | Discovered (referrer is `/perm-queue/2024-07`, not the hub) | 3:35 PM |
+| 11 | `/perm-queue/2024-07` | Discovered | 3:39 PM |
+| 12 | `/perm-queue/2024-06` | Discovered | **Quota Exceeded**, 3:42 PM |
+| - | `/perm-employers/vision-infotek` | **INDEXED** (requested 09-18) - skipped, no slot | - |
+| - | `/perm-employers/ace-ny-sales-inc` | **INDEXED** (requested 09-18) - skipped, no slot | - |
 
-**Caveat on the count: entry 5 may have consumed two slots.** Its confirmation faded
-before the screenshot caught it, so the URL was re-inspected to read the durable row;
-during that re-inspection a second "Indexing requested" modal appeared. Google's own
-modal says a repeat submission does not change queue position, so nothing is lost but a
-slot. That is why the run may read as 9 submissions rather than 8.
+**Every 2024 month page is "Discovered - currently not indexed" and names both
+`sitemap.xml` and the `/perm-queue` hub**, so Google has read the sitemap for the older
+half of the family and is declining to spend a crawl. The 2025 months nearer the present
+are the ones still "unknown". That is the reverse of what the sitemap-propagation theory
+predicted and is worth watching rather than explaining.
 
-**Google has read `sitemap.xml` for SOME month pages and not others.** 2025-07, 2025-05
-and 2025-04 come back "Discovered - currently not indexed" and name both the sitemap and
-the `/perm-queue` hub as referrers; 2026-09, 2025-09, 2025-08 and 2025-06 are still
-"unknown to Google" with no referring sitemap. Same family, same sitemap, same hub links,
-opposite discovery state. Nothing about a month predicts which, so inspect before
-requesting and never assume the sitemap has propagated.
+## Queue after the Sep 19 run
 
-**The live-only employer family is still undiscovered.** Both spot-checked pages read
-"unknown to Google, no referring sitemaps detected", so `live-employer-1.xml` has not
-been processed yet. The two requests are the seed; the 9/27 Pages report is the
-scoreboard.
+Inspect first; skip anything already on Google.
 
-**Two more driving facts, both measured today.** A click that lands still shows nothing
-for 30 to 60 s while the live test runs, and **the confirmation can fade before any
-screenshot catches it** - so a run of "requested: 0" is not evidence the click failed.
-The durable check is to re-inspect the URL and read the row: `Indexing requested /
-REQUEST AGAIN` means it landed, `Page changed? / REQUEST INDEXING` means it did not.
-That check is free. And when a modal is open, every click on the search bar is swallowed;
-navigating fresh to the inspect URL is a cleaner reset than hunting for the Dismiss
-button, whose position moves.
-
-**Run of 2026-09-17, 12:52 to 1:24 PM EDT: 11 accepted, the 12th refused.** The cap
-was 11 for the FIFTH run running (Sep 5, 14, 15, 16, 17). **The window rolls 24 hours
-from the LAST accepted request of the previous run, not the first.** Yesterday's run
-was 11:55 AM to 12:38 PM; today the first request was refused at 11:19, 11:56 and
-11:58 AM (refusals cost nothing) and accepted at 12:52 PM. Today's last acceptance was
-1:21 PM, so the window reopens about **1:25 PM EDT on 2026-09-18**; try at 1:30 PM.
-
-Six of the queued pages turned out to be indexed already and were SKIPPED without
-spending a slot (`/perm-queue/2026-01`, `/tools/salary-explorer`, `/lca-wages`,
-`/perm-queue/2026-03`, `/perm-queue/2026-07`, `/perm-queue/2026-08`). The Sep 13
-Pages report that fed the queue was stale on all of them. `/layoffs` is indexed too
-and got a slot on purpose, for the 176 glued cells fixed on Sep 16.
-
-| # | URL | Google's verdict | accepted (EDT) |
-|---|---|---|---|
-| 1 | `/policy-changes` | accepted (verdict not logged before compaction) | 12:52 PM |
-| 2 | `/changelog/corrections` | indexed (refused yesterday) | 12:54 PM |
-| 3 | `/perm-queue/2025-12` | **unknown to Google**, no referring sitemap | 12:55 PM |
-| 4 | `/perm-employers/lgs-staffing-llc-f-k-a-labor-guys-llc` | **unknown** (live-only page, indexable since Sep 16) | 1:03 PM |
-| 5 | `/perm-employers/lorenz-bus-service-inc` | **unknown** (live-only page) | 1:05 PM |
-| 6 | `/perm-queue/2026-02` | **unknown** | 1:08 PM |
-| 7 | `/perm-queue/2026-04` | **unknown** | 1:11 PM |
-| 8 | `/perm-queue/2026-05` | **unknown** | 1:13 PM |
-| 9 | `/perm-queue/2026-06` | **unknown** | 1:15 PM |
-| 10 | `/perm-queue/2025-10` | **unknown** | 1:18 PM |
-| 11 | `/layoffs` | indexed; re-requested for the glued-cell fix | 1:21 PM |
-| 12 | `/perm-queue/2026-08` | indexed | **Quota Exceeded**, 1:24 PM |
-
-**What the month pages taught.** All 40 `/perm-queue/<month>` URLs have been in
-`sitemaps/pages.xml` since Sep 16 and every inspection still said "No referring
-sitemaps detected": Google has not reprocessed the sitemap yet. On its own Google had
-already indexed 2026-01, 2026-03, 2026-07 and 2026-08, and had never seen 2025-10,
-2025-12, 2026-02, 2026-04, 2026-05 or 2026-06. Nothing about a month predicts which;
-inspect before requesting.
-
-**Two driving facts measured today.** (1) On the INDEXED layout, a click on REQUEST
-INDEXING issued in the same batch as the inspection load does not register (twice:
-`/layoffs`, `/perm-queue/2026-08`); the same click in its own batch lands every time.
-On the "not on Google" layout the click has always been in its own batch. Inspect in
-one batch, click in the next. (2) A batch carrying 70 s of waits died with "did not
-respond in time" while the click inside it had landed; 40 s of waits plus the count
-is the safe shape, with a separate 30 s batch when the live test is still running.
-
-**Run of 2026-09-16, 11:55 AM to 12:38 PM EDT: 11 accepted, the 12th refused.** The
-cap was 11 for the FOURTH run running (Sep 5, 14, 15, 16); treat it as the number.
-Window reopens about **11:55 AM EDT on 2026-09-17**. Order today: `/` and `/faq` first, because the homepage was
-rebuilt for the brand query the night before, then the Sep 15 leftovers.
-
-| # | URL | Google's verdict | enhancements | result |
-|---|---|---|---|---|
-| 1 | `/` | indexed | HTTPS, Review snippets 1 valid | accepted |
-| 2 | `/faq` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
-| 3 | `/visa-bulletin` | indexed | HTTPS, Breadcrumbs 1 valid | accepted (refused yesterday) |
-| 4 | `/perm-employers/browse/a` | indexed | HTTPS | accepted |
-| 5 | `/perm-wages/browse/a` | indexed | HTTPS | accepted |
-| 6 | `/perm-attorneys/browse/a` | indexed | HTTPS | accepted |
-| 7 | `/perm-case-status` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
-| 8 | `/tools/perm-timeline-calculator` | indexed | HTTPS | accepted |
-| 9 | `/perm-queue/2025-11` | **unknown to Google**, no referring sitemap, no referring page | none | accepted |
-| 10 | `/for-attorneys` | indexed | HTTPS (video: none indexed) | accepted (modal painted late; read by count) |
-| 11 | `/about` | indexed | HTTPS, Breadcrumbs 1 valid | accepted |
-| 12 | `/changelog/corrections` | indexed | HTTPS, Breadcrumbs 1 valid | **Quota Exceeded** after a ~70 s live test |
+1. `/perm-queue/2024-06` (refused today), then `2024-05` back through `2023-06`
+2. two more live-only employer pages - the family is proven, so this is sampling not testing
+3. `/glossary`, `/perm-case-statuses` if their last crawl predates Sep 14
 
 ## Next run, in order
 
