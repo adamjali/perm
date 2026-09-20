@@ -234,12 +234,18 @@ jobs:
           else
             echo "USCIS payload absent; skipping (see the step above)"
           fi
-          if [ -s "${RUNNER_TEMP}/visa-bulletin.json" ]; then
-            npx --yes convex run visaBulletin:storeBulletins \
-              "$(cat "${RUNNER_TEMP}/visa-bulletin.json")" --prod
-          else
-            echo "visa bulletin payload absent; skipping (see the step above)"
-          fi
+          # THE VISA BULLETIN IS NOT MIRRORED INTO CONVEX (removed 2026-09-20).
+          # Nothing ever read the `visaBulletins` table: /visa-bulletin and its
+          # family page read Turso, which ingest_visa_bulletin.py writes
+          # directly on both of its routes, and the same payload is loaded into
+          # Turso by turso_migrate_public.py below. The 2026-09-06 audit named
+          # this table in H7 alongside permCases/permEntities/permWageStats and
+          # its step was the one that got missed. It then broke: the script has
+          # emitted the family charts since 2026-09-08 and the mutation's
+          # validator had not been told, so the first scheduled run afterwards
+          # failed the WHOLE mutation and took this job red - for a write no
+          # reader was waiting on. The payload file is still produced; it is
+          # turso_migrate_public.py's input, not Convex's.
 
       # THE PUBLIC SITE READS TURSO, NOT CONVEX, and this load was in no
       # workflow at all - only the Convex writes above were automated, and the

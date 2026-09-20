@@ -1236,7 +1236,23 @@ export default defineSchema({
     .index("by_content_hash", ["contentHash"]),
 
   /**
-   * The employment-based visa bulletin, as a series.
+   * RETIRED MIRROR, kept only so its rows are not orphaned (2026-09-20).
+   *
+   * NOTHING READS THIS TABLE and nothing writes it any more. The site's
+   * bulletin pages read Turso's `visa_bulletins`, which
+   * `scripts/ingest_visa_bulletin.py` writes directly on both of its routes;
+   * `convex/visaBulletin.ts` and the workflow step that called it are gone.
+   * The 2026-09-06 audit listed this table in H7 beside permCases,
+   * permEntities and permWageStats as a write nobody was waiting on; only its
+   * step survived that sweep, and it then failed a whole scheduled run when
+   * the family charts were added to the payload and not to the validator.
+   *
+   * `familyFinalAction` / `familyDatesForFiling` stay declared because three
+   * rows carry them, and a strict table rejects a document it cannot describe.
+   * Drop the table and its rows together, or not at all.
+   *
+   * The rest of this note is the original rationale, kept for whoever revives
+   * a mirror here:
    *
    * Sourced from the Internet Archive, because travel.state.gov refuses
    * automated clients behind a bot challenge and defeating that is not

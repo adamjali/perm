@@ -77,7 +77,8 @@ State Department relaxes. What there IS:
 Usage:
     # Archive route: the back series, automated, structurally behind.
     python3 scripts/ingest_visa_bulletin.py --out /tmp/vb.json --months 18
-    npx convex run visaBulletin:storeBulletins "$(cat /tmp/vb.json)" --prod
+    # Turso is written by this script directly, on both routes. The JSON is
+    # for turso_migrate_public.py; there is no Convex mirror any more.
 
     # Primary route: this month, from the source, needing one human minute.
     #   1. Open the bulletin in a browser.

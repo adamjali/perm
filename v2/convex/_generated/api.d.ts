@@ -169,7 +169,6 @@ import type * as turnstile from "../turnstile.js";
 import type * as uscisI140 from "../uscisI140.js";
 import type * as userCaseOrder from "../userCaseOrder.js";
 import type * as users from "../users.js";
-import type * as visaBulletin from "../visaBulletin.js";
 import type * as webSearch from "../webSearch.js";
 import type * as welcomeEmail from "../welcomeEmail.js";
 import type * as welcomeEmailHelpers from "../welcomeEmailHelpers.js";
@@ -342,7 +341,6 @@ declare const fullApi: ApiFromModules<{
   uscisI140: typeof uscisI140;
   userCaseOrder: typeof userCaseOrder;
   users: typeof users;
-  visaBulletin: typeof visaBulletin;
   webSearch: typeof webSearch;
   welcomeEmail: typeof welcomeEmail;
   welcomeEmailHelpers: typeof welcomeEmailHelpers;
