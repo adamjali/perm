@@ -1083,6 +1083,21 @@ export default defineSchema({
    * Ingestion cannot run inside Convex: a single quarterly file is 1.21 GB of
    * XML uncompressed, so it is stream-parsed outside and only the result is
    * written here.
+   *
+   * RETIRED 2026-09-20, rows kept. NOTHING READS OR WRITES THIS TABLE any
+   * more. `convex/permDisclosure.ts` is deleted and the workflow step that
+   * called `storeStats` is gone; the figures the site serves come from
+   * Turso's `disclosure_stats` document (src/lib/turso/publicData.ts). The
+   * 2026-09-06 audit listed this table in H7 beside permCases, permEntities,
+   * permWageStats and visaBulletins as a write with no reader, and this was
+   * one of the two steps that survived that sweep - the other, the visa
+   * bulletin, failed a whole scheduled run earlier the same day for exactly
+   * the reason a write nobody reads should never have been able to. Its only
+   * reader, `getLatest`, had zero call sites anywhere.
+   *
+   * The rows stay because dropping a table means deleting production data and
+   * the only gain would be tidiness. Drop the table and its rows together, or
+   * not at all.
    */
   permDisclosureStats: defineTable({
     /** Filenames unioned for this snapshot, e.g. `PERM_Disclosure_Data_FY2026_Q3.xlsx`. */

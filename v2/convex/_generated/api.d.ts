@@ -151,7 +151,6 @@ import type * as notificationActions from "../notificationActions.js";
 import type * as notifications from "../notifications.js";
 import type * as onboarding from "../onboarding.js";
 import type * as permCases from "../permCases.js";
-import type * as permDisclosure from "../permDisclosure.js";
 import type * as permEntities from "../permEntities.js";
 import type * as permWageStats from "../permWageStats.js";
 import type * as pushNotifications from "../pushNotifications.js";
@@ -323,7 +322,6 @@ declare const fullApi: ApiFromModules<{
   notifications: typeof notifications;
   onboarding: typeof onboarding;
   permCases: typeof permCases;
-  permDisclosure: typeof permDisclosure;
   permEntities: typeof permEntities;
   permWageStats: typeof permWageStats;
   pushNotifications: typeof pushNotifications;

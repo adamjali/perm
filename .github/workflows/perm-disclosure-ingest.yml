@@ -32,7 +32,7 @@ name: Federal data ingest
 #
 # Manual run:
 #   python3 v2/scripts/ingest_perm_disclosure.py --out /tmp/perm.json
-#   npx convex run permDisclosure:storeStats "$(cat /tmp/perm.json)" --prod
+#   (the reduced payload is loaded into Turso; there is no Convex mirror)
 
 on:
   schedule:
@@ -157,40 +157,6 @@ jobs:
       # (secret missing) or fails, `gh run download` retrieves them and
       # `npx convex run ...:storeStats` finishes the job from any machine
       # with Convex CLI auth.
-      - name: Split the payload
-        working-directory: v2
-        run: |
-          python3 - <<'PY'
-          import json, os
-          src = os.environ["RUNNER_TEMP"] + "/perm-payload.json"
-          p = json.load(open(src))
-          full = {k: p.get(k) or [] for k in ("topEmployers", "topAttorneys", "topOccupations")}
-          for k, v in full.items():
-              print(f"{k:16s} {len(v):,} entities")
-          # The aggregate document carries the head of each list; the table
-          # carries all of it. One order, so ranks and slugs agree.
-          TOP = 250
-          for k in full:
-              p[k] = sorted(full[k], key=lambda r: -r["total"])[:TOP]
-          out = os.environ["RUNNER_TEMP"] + "/perm-aggregate.json"
-          json.dump(p, open(out, "w"))
-          n = os.path.getsize(out)
-          print(f"aggregate document {n/1024/1024:.2f} MB ({n:,} bytes)")
-          # TWO ceilings, and the binding one is not the document limit.
-          # The next step passes this file as a single shell argument, and
-          # Linux caps ONE argument at MAX_ARG_STRLEN = 131,072 bytes however
-          # much ARG_MAX allows in total. The wage payload hit exactly this at
-          # 632 KB with "Argument list too long", and this file is already at
-          # 86% of it. Convex's 1 MB document limit is the looser one.
-          ARG_LIMIT = 131_072
-          if n > ARG_LIMIT * 0.95:
-              raise SystemExit(
-                  f"FATAL: aggregate is {n:,} bytes, at or past the "
-                  f"{ARG_LIMIT:,}-byte single-argument limit the store step "
-                  f"passes it through. Chunk it like permEntities does."
-              )
-          PY
-
       - name: Upload payload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
@@ -211,7 +177,23 @@ jobs:
       # `api.permCases`/`api.permEntities`/`api.permWageStats` call exists in
       # the app. Those writes are what pushed the Convex deployment past its
       # plan on 2026-08-25. Removed 2026-09-06; the payload artifact above
-      # still carries the data. `uscisI140:storeStats` in the next step is
+      # still carries the data.
+      #
+      # `permDisclosure:storeStats` WENT THE SAME WAY ON 2026-09-20, and with
+      # it the "Split the payload" step, which existed only to build the
+      # `perm-aggregate.json` that step passed in. The 2026-09-06 audit named
+      # `permDisclosureStats` in that same finding and this was one of the two
+      # steps that survived the sweep. The comment here used to read "DOL is
+      # required - the job exists for this payload", which was false: the job
+      # exists for the Turso load below. `permDisclosure:getLatest` was the
+      # table's only reader and had zero call sites anywhere, and the figures
+      # the site actually serves come from Turso's `disclosure_stats`
+      # (src/lib/turso/publicData.ts).
+      #
+      # `perm-payload.json` is deliberately untouched - it IS load-bearing,
+      # read by turso_migrate.py and turso_migrate_public.py.
+      #
+      # `uscisI140:storeStats` in the next step is
       # kept because /tools/i140-calculator and /tools/green-card-timeline
       # read `api.uscisI140.getLatest`.
       - name: Store aggregates in Convex
@@ -225,9 +207,6 @@ jobs:
             echo "store them manually with npx convex run ...:storeStats." >&2
             exit 1
           fi
-          # DOL is required - the job exists for this payload.
-          npx --yes convex run permDisclosure:storeStats \
-            "$(cat "${RUNNER_TEMP}/perm-aggregate.json")" --prod
           if [ -s "${RUNNER_TEMP}/uscis-payload.json" ]; then
             npx --yes convex run uscisI140:storeStats \
               "$(cat "${RUNNER_TEMP}/uscis-payload.json")" --prod
