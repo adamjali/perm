@@ -5584,3 +5584,52 @@ and the tests that care opt in.
 the reporters are `json` + `github-actions`, which MUTE the summary - a run can
 look like it printed nothing at all. `coverage/test-results.json` carries
 `success`, `numFailedTests` and the failing titles.
+
+## Two red lights on 2026-09-20, and only one of them was a defect in the thing it named
+
+Both surfaced the same morning, both from checks that had been quietly right.
+
+**A stop on your OWN budget is not a failure, and this is the second job to
+learn it.** The discovery walk recorded `partial` when it exhausted its
+400-request cap, and `check_ingest_health.py` counts every `partial` as BROKEN.
+So the nights the walk is catching up - exactly the nights it does the most
+useful work - painted the whole check red: today's run inserted 74 PERM and 334
+PWD/LCA cases and moved the frontier 1,761 serials, and was reported as a broken
+ingest. `sweep_serial_gaps.py` had this identical defect fixed on 2026-09-15 and
+the walk was not swept with it. It records `ok` and NAMES the cap now
+(`CAP_NOTE`, byte-identical to the sweep's and to the reader's
+`SWEEP_CAP_NOTE` - `test_ingest_health.py` pins all three, not two), `failed` is
+reserved for DOL going away, and a new `capped` flag keeps "ran out of budget"
+distinguishable from "reached the edge of what DOL has issued".
+**When you fix an alarm-fatigue defect, grep for every other producer of the
+same status before closing it.**
+
+**A dead mirror can still take CI down.** `ingest_visa_bulletin.py` has emitted
+`familyFinalAction` / `familyDatesForFiling` since the family charts shipped
+2026-09-08. Neither `storeBulletins`' args validator nor the `visaBulletins`
+table declared them, and Convex rejects an extra field outright, so the first
+scheduled run afterwards failed the whole mutation with
+`ArgumentValidationError: Object contains extra field familyDatesForFiling` and
+took `Federal data ingest` red. The USCIS 403s in the same log are the
+documented datacenter refusal the Mac's launchd agents cover; this was the only
+fatal step, and the Turso load sits AFTER it in the job.
+
+**The site was never affected, and that is the uncomfortable part.**
+`/visa-bulletin` and its family page read the bulletin from Turso, which the
+same script writes directly. Nothing in `src/` reads `api.visaBulletin` at all -
+the only readers of the table are inside `convex/visaBulletin.ts` itself. It is
+the **fourth** write-only Convex mirror, and the 2026-09-06 sweep that emptied
+`permCases`, `permEntities` and `permWageStats` missed it. Fixed minimally (both
+fields optional on both sides, deployed, and proven by replaying three real
+months out of Turso: `inserted 2, updated 1` - the mirror was two months behind).
+**Removing it is still the better answer and is an open question**, not a
+decision taken here.
+
+**Timers for the GSC queue (session-only).** `CronCreate` fires
+`7 15,17,19 * * *` into this session: gate cheaply on the ledger, run the queue
+until Quota Exceeded, then a status round. It exists because the quota window is
+rolling 24h from the FIRST request, so it drifts a few minutes later each day
+and a single fixed attempt eventually lands early. The catches: the jobs live
+only as long as this Claude session, recurring jobs auto-expire after 7 days,
+they fire only while the REPL is idle, and they need Chrome open with the
+extension connected.
