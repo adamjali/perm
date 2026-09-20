@@ -5618,12 +5618,27 @@ fatal step, and the Turso load sits AFTER it in the job.
 `/visa-bulletin` and its family page read the bulletin from Turso, which the
 same script writes directly. Nothing in `src/` reads `api.visaBulletin` at all -
 the only readers of the table are inside `convex/visaBulletin.ts` itself. It is
-the **fourth** write-only Convex mirror, and the 2026-09-06 sweep that emptied
-`permCases`, `permEntities` and `permWageStats` missed it. Fixed minimally (both
-fields optional on both sides, deployed, and proven by replaying three real
-months out of Turso: `inserted 2, updated 1` - the mirror was two months behind).
-**Removing it is still the better answer and is an open question**, not a
-decision taken here.
+the **fourth** write-only Convex mirror, and the 2026-09-06 audit named it in H7 beside
+`permCases`, `permEntities` and `permWageStats`, and only its step survived that
+sweep. **Retired the same day**: the workflow's Convex store step and
+`convex/visaBulletin.ts` are gone, and `npx convex run visaBulletin:storeBulletins`
+now answers "Could not find function".
+
+**The TABLE is kept, with its rows.** The 09-06 precedent was to leave
+`convex/schema.ts` alone; dropping a table means deleting production data, and
+the only gain is tidiness. Its doc comment says plainly that it is retired
+rather than describing an ingest that no longer runs, and the optional family
+fields stay declared because three rows carry them and a strict table rejects a
+document it cannot describe.
+
+**THE PAYLOAD FILE WAS NOT CONVEX-ONLY, AND ONE MORE GREP IS WHAT CAUGHT
+THAT.** `turso_migrate_public.py` reads the same `visa-bulletin.json` from the
+artifact, so deleting the fetch step or `--out` alongside the dead write would
+have broken a live Turso load whose own test pins "a MISSING visa-bulletin.json
+must not fail the load". **Before deleting a producer, grep for every consumer
+of what it produces, not just the one you are removing.** The same pass also
+found the script writes Turso directly on BOTH routes, which is why the pages
+that actually serve the bulletin never depended on the Convex path at all.
 
 **Timers for the GSC queue (session-only).** `CronCreate` fires
 `7 15,17,19 * * *` into this session: gate cheaply on the ledger, run the queue
