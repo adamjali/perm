@@ -1,6 +1,67 @@
 # GSC indexing priority list
 
-**Run of 2026-09-19, 3:03 to 3:42 PM EDT: 11 accepted, the 12th refused.**
+**Run of 2026-09-20, 3:18 to 3:42 PM EDT: 11 accepted, the 12th refused.**
+
+**The cap was 11 for the THIRD run running** (8 on Sep 18, 11 on the 17th, 19th and 20th).
+Today's first request was accepted at 3:18 PM against yesterday's 3:03 PM start, so the
+window had already reopened - and a probe at **1:29 PM was refused**, which brackets the
+opening between 1:29 and 3:18 PM. Still no model worth writing down: probe early, a
+refusal is free, stop at the wall.
+
+**FIVE PAGES WERE SKIPPED WITHOUT SPENDING A SLOT, because inspecting is free and they
+were already current.** That is the whole argument for inspect-before-request: a fifth of
+today's candidates needed nothing.
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/perm-queue/2024-06` | Discovered, currently not indexed | 3:18 PM |
+| 2 | `/perm-queue/2024-05` | Discovered | 3:20 PM |
+| 3 | `/perm-queue/2024-04` | Discovered | 3:22 PM |
+| 4 | `/perm-queue/2024-03` | Discovered | 3:23 PM |
+| 5 | `/perm-queue/2024-02` | Discovered | 3:25 PM |
+| 6 | `/perm-queue/2023-12` | Discovered | 3:27 PM |
+| 7 | `/perm-queue/2023-11` | Discovered | 3:29 PM |
+| 8 | `/perm-queue/2023-10` | Discovered | 3:31 PM |
+| 9 | `/perm-employers/regency-unlimited-inc` | **unknown to Google** | 3:32 PM |
+| 10 | `/perm-employers/elite-prep-academy-a-nj-nonprofit-corporation` | unknown | 3:34 PM |
+| 11 | `/perm-employers/dimash-llc` | unknown | 3:40 PM |
+| 12 | `/perm-employers/sonoma-family-meal` | unknown | **Quota Exceeded**, 3:42 PM |
+| - | `/perm-queue/2024-01` | **INDEXED already** - skipped | - |
+| - | `/perm-queue/2026-01` | **INDEXED already** - skipped | - |
+| - | `/glossary` | indexed, crawled **Sep 14 1:53 AM** - after the collapse shipped, so current | - |
+| - | `/perm-case-statuses` | indexed, crawled **Sep 14 1:46 AM** - current | - |
+| - | `/policy-changes` | indexed, crawled **Sep 17 12:54 PM** - after the Sep 16 rebuild, current | - |
+
+**THE MONTH-PAGE SITEMAP FAMILY IS WORKING ON ITS OWN.** `/perm-queue/2026-01` and
+`/perm-queue/2024-01` are indexed with nobody requesting them, and the ledger's older note
+calling 2026-01 a page "Google has never seen" is now stale. Every 2024 and 2023 month
+named both `sitemap.xml` and the `/perm-queue` hub as its discovery source. The family
+was added to the sitemap on Sep 16; that is a four-day turnaround from advertised to
+partly indexed.
+
+**THE LIVE-EMPLOYER SITEMAP FAMILY IS NOT DISCOVERED YET.** All four live-only employer
+pages inspected today read **"No referring sitemaps detected"** and **"URL is unknown to
+Google"**, three days after `live-employer-1.xml` shipped on Sep 17. That is the opposite
+of the month pages and worth watching rather than explaining - the two families were added
+one day apart. Nothing to do about it: requesting four of 22,311 by hand is sampling, and
+the 9/27 Pages report is the scoreboard.
+
+One oddity, noted not acted on: `/perm-case-statuses` reported its sitemap as **"Temporary
+processing error"** while every other page named `sitemap.xml` cleanly. Almost certainly
+transient on Google's side; re-read it next run before treating it as a defect.
+
+## Queue after the Sep 20 run
+
+The `/perm-queue/<month>` family is **DONE** - every month from 2023-10 (the earliest with
+data) through the present is either requested or already indexed. Do not re-walk it.
+
+1. live-only employer pages, sampled from `sitemaps/live-employer-*.xml`. This is now the
+   only large unindexed population (22,311), and a request converts within 24 hours
+   (proved Sep 18 to 19). Sampling, not testing - do not try to walk it by hand.
+2. any page whose content materially changed since its last crawl. Inspect first: three of
+   today's five skips were pages that had changed and been recrawled already.
+3. nothing else is pending. If 1 and 2 are dry, spend nothing rather than re-requesting.
+
 
 **THE LIVE-ONLY EMPLOYER PAGES WORK. Both spot checks requested yesterday as "unknown to
 Google" came back INDEXED today, inside 24 hours** - `vision-infotek` and
@@ -36,13 +97,6 @@ half of the family and is declining to spend a crawl. The 2025 months nearer the
 are the ones still "unknown". That is the reverse of what the sitemap-propagation theory
 predicted and is worth watching rather than explaining.
 
-## Queue after the Sep 19 run
-
-Inspect first; skip anything already on Google.
-
-1. `/perm-queue/2024-06` (refused today), then `2024-05` back through `2023-06`
-2. two more live-only employer pages - the family is proven, so this is sampling not testing
-3. `/glossary`, `/perm-case-statuses` if their last crawl predates Sep 14
 
 ## Next run, in order
 
