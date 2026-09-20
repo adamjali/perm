@@ -27,6 +27,16 @@ export const storeBulletins = internalMutation({
         sourceUrl: v.string(),
         finalAction: chartValidator,
         datesForFiling: chartValidator,
+        // OPTIONAL, because the ingest emits them only for the months whose
+        // FAMILY charts parsed - and because a required field here would
+        // reject the whole array. `ingest_visa_bulletin.py` started emitting
+        // them on 2026-09-08 and nothing added them here, so the first
+        // scheduled run afterwards (2026-09-20) failed the WHOLE mutation with
+        // "Object contains extra field `familyDatesForFiling`". The site was
+        // unaffected: it reads the bulletin from Turso, which the same script
+        // writes directly.
+        familyFinalAction: v.optional(chartValidator),
+        familyDatesForFiling: v.optional(chartValidator),
       }),
     ),
     contentHash: v.string(),

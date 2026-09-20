@@ -1267,6 +1267,14 @@ export default defineSchema({
      */
     finalAction: v.any(),
     datesForFiling: v.any(),
+    /**
+     * The FAMILY-sponsored charts, present only for the months whose family
+     * tables parsed. Optional because the run of archived bulletins is not
+     * uniform and because a strict table rejects an extra field outright -
+     * which is how the 2026-09-20 ingest failed its whole mutation.
+     */
+    familyFinalAction: v.optional(v.any()),
+    familyDatesForFiling: v.optional(v.any()),
     computedAt: v.number(),
   })
     .index("by_month", ["bulletinMonth"])
