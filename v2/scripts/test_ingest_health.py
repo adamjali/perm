@@ -418,10 +418,15 @@ def check_freshness_verdict() -> None:
 
 # --- A `partial` that names the sweep's cap is a designed stop (2026-09-15)
 def check_capped_partial_is_not_broken() -> None:
-    sweep_src = (pathlib.Path(__file__).resolve().parent / "sweep_serial_gaps.py").read_text()
-    m = re.search(r'^CAP_NOTE = "([^"]+)"', sweep_src, re.M)
-    check("the reader's cap phrase is byte-identical to the sweep's CAP_NOTE",
-          bool(m) and m.group(1) == health.SWEEP_CAP_NOTE)
+    # BOTH producers of the phrase are pinned. The walk gained its own
+    # CAP_NOTE on 2026-09-20 and a third spelling would silently un-tolerate
+    # whichever row it wrote.
+    here = pathlib.Path(__file__).resolve().parent
+    for producer in ("sweep_serial_gaps.py", "ingest_case_status_direct.py"):
+        m = re.search(r'^CAP_NOTE = "([^"]+)"', (here / producer).read_text(), re.M)
+        check(f"the reader's cap phrase is byte-identical to {producer}'s CAP_NOTE",
+              bool(m) and m.group(1) == health.SWEEP_CAP_NOTE,
+              m.group(1) if m else "no CAP_NOTE found")
     capped_note = f"probed 2998, found 2113; {health.SWEEP_CAP_NOTE} (600) and resumes"
     check("a partial run that stopped on its own cap does not fail the check",
           run([("sweep_serial_gaps.py", "partial", capped_note, int(NOW) - 3 * 3_600_000)]) == 0)

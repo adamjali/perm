@@ -242,10 +242,26 @@ def main() -> int:
           r["frontier_before"] == ("26241", 200300), str(r["frontier_before"]))
 
     # 6. The request cap stops the walk with more to do, and says so.
+    #    A stop on our OWN budget is not a failure (2026-09-20): it records
+    #    `ok` and NAMES the cap, because check_ingest_health.py counts every
+    #    `partial` as BROKEN and the catching-up nights are exactly the
+    #    productive ones. `capped` is what tells a budget stop from a finish.
     u = dict([perm(f"G-100-26240-{s:06d}") for s in range(101, 400)])
     db = WalkDB(); look = fake_dol(u)
     r = csd.run_discovery(db, lookup=look, today=T, cap=3, frontier_override=("26240", 100))
-    check("request cap yields partial, not ok", r["status"] == "partial" and r["requests"] == 3, f"{r['status']} {r['requests']}")
+    check("a stop on the request cap records ok, not partial",
+          r["status"] == "ok" and r["capped"] is True and r["requests"] == 3,
+          f"{r['status']} capped={r.get('capped')} {r['requests']}")
+    check("and the cap stop names itself in the note",
+          csd.CAP_NOTE in r["note"], r["note"])
+
+    # 6b. Reaching the edge of what DOL has issued is ok and NOT capped, so a
+    #     reader can tell "finished" from "ran out of budget".
+    db = WalkDB(); look = fake_dol(dict([perm("G-100-26240-000101")]))
+    r = csd.run_discovery(db, lookup=look, today=T, frontier_override=("26240", 100))
+    check("reaching the edge is ok and not capped",
+          r["status"] == "ok" and r["capped"] is False and r["note"] == "",
+          f"{r['status']} capped={r.get('capped')} note={r['note']!r}")
 
     # 7. DOL going away mid-walk is a failure, never an ok.
     def dying(nums):

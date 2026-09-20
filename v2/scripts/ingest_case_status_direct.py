@@ -207,9 +207,10 @@ DECISION_BUCKETS = {
 #   - PWD and LCA hits are handed to the PWD prober's inserter, so those
 #     tables' frontiers move with this one instead of being seeded from it;
 #   - serials are six digits wide and wrap at 1,000,000 (lib_flag_serials);
-#   - a run that stops on its request cap records "partial", and a run that
-#     finds nothing still records itself, so the health check can see a
-#     frontier that has stopped moving.
+#   - a run that stops on its own request cap records "ok" and NAMES the cap
+#     in its note (see CAP_NOTE), because an expected stop is not a failure;
+#     and a run that finds nothing still records itself, so the health check
+#     can see a frontier that has stopped moving.
 #
 # Cost at steady state: ~2,150 serials a day at 10 per request is ~215
 # requests a night, against the ~10,000 the sweep already makes. Catching up
@@ -217,6 +218,16 @@ DECISION_BUCKETS = {
 # ---------------------------------------------------------------------------
 
 DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, discovered)"
+
+# A STOP ON THE WALK'S OWN REQUEST CAP IS NOT A FAILURE, AND MUST NOT BE
+# RECORDED AS ONE (2026-09-20). It used to write `partial`, which
+# check_ingest_health.py counts as BROKEN, so the nights when the walk is
+# catching up - exactly the nights it is doing the most useful work - painted
+# the whole health check red. Same fix, and the same wording, as
+# sweep_serial_gaps.CAP_NOTE on 2026-09-15: record `ok` and name the stop.
+# `check_ingest_health.SWEEP_CAP_NOTE` is this same string, so a `partial` row
+# written before this change is tolerated too rather than misread.
+CAP_NOTE = "stopped on the request cap"
 # EVERY PERM OFFICE CODE BELONGS HERE, because this tuple decides where a
 # confirmed hit is STORED, not which numbers get asked for. It held G-100 and
 # G-200 only, so a G-300 hit fell through to the PWD/LCA inserter, whose
@@ -355,9 +366,10 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
     """Walk the counter forward from the frontier; record what DOL confirms.
 
     Returns {requests, inserted, inserted_other, frontier_before,
-    frontier_after, status, note}. status is "ok" when the walk reached the
-    edge of what DOL has issued, "partial" when it stopped on the request
-    cap with more to walk, "failed" when DOL stopped answering.
+    frontier_after, status, capped, note}. status is "ok" when the walk
+    reached the edge of what DOL has issued AND when it stopped on its own
+    request cap (`capped` tells those apart, and the note names the cap);
+    "failed" only when DOL stopped answering.
     """
     lookup = lookup or lookup_with_retry
     today = today or datetime.date.today()
@@ -441,19 +453,20 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
         probe_code, probe_serial = claimed_code, top
         _write_frontier(db, code, serial, note=f"{requests} requests this run")
 
-    if stopped:
-        status = "failed"
-    elif unissued >= DISCOVERY_UNISSUED_STREAK:
-        status = "ok"
-    else:
-        status = "partial"
+    # `capped` is the walk stopping on its own budget with more serials to
+    # ask about - the ordinary state while it catches up. Only DOL going away
+    # is a failure.
+    capped = not stopped and unissued < DISCOVERY_UNISSUED_STREAK
+    status = "failed" if stopped else "ok"
+    note = stopped or (f"{CAP_NOTE} ({cap}) and resumes from the frontier above"
+                       if capped else "")
     log(f"discovery: {requests} requests, {inserted} new PERM cases, "
         f"{inserted_other} new PWD/LCA cases; frontier {start[0]}:{fmt_serial(start[1])} -> "
         f"{code}:{fmt_serial(serial)}; {status}"
-        + (f" ({stopped})" if stopped else ""))
+        + (f" ({note})" if note else ""))
     return {"requests": requests, "inserted": inserted, "inserted_other": inserted_other,
             "frontier_before": start, "frontier_after": (code, serial),
-            "status": status, "note": stopped or ""}
+            "status": status, "capped": capped, "note": note}
 
 
 def discover_and_record(db, **kw) -> dict:
