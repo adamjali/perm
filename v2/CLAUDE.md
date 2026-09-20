@@ -5640,6 +5640,35 @@ of what it produces, not just the one you are removing.** The same pass also
 found the script writes Turso directly on BOTH routes, which is why the pages
 that actually serve the bulletin never depended on the Convex path at all.
 
+**AND THE SWEEP FOR SIBLINGS FOUND ONE MORE, STILL ARMED.** `visaBulletins`
+was not alone: `permDisclosure:storeStats` was in the SAME workflow one step
+above it, writing `permDisclosureStats` - a table whose only reader,
+`getLatest`, has zero call sites anywhere, while the figures the site serves
+come from Turso's `disclosure_stats` doc. Both were named in the 09-06 audit's
+H7 and both steps survived that sweep. Retired the same day, along with the
+"Split the payload" step that existed only to build its payload.
+`perm-payload.json` was left alone because it IS load-bearing (two Turso
+loaders read it) - the second time in one day that grepping for every consumer
+of a produced file, not just the one being removed, changed the shape of a cut.
+
+**The instrument that found it was a REACHABILITY WALK, not a grep.** A
+grep-shaped pass had already been fooled by `api.permEntities.getBySlug`
+appearing in a COMMENT. Stripping comments, then walking transitively from real
+entry points (src `api.*`/`internal.*` calls, `convex/http.ts`, `crons.ts`, and
+`convex run` in workflows and scripts) over all 354 exported Convex functions
+returned 79 unreachable. Checked against three findings by hand plus a control:
+it correctly separated dead `apiUsage:getUsage` from live
+`apiUsage:getUsageInternal`, and kept `uscisI140:getLatest` reachable on its two
+real call sites. Most of the other 79 are deliberate hand-run admin tools
+(migrations, incident cleanup, onboarding resets) and are not defects.
+
+**The rest of the surface is clean, measured the same day**: of 35 Convex
+tables, ZERO are write-only; the 19 Turso tables the ingests write are all read
+(the three the app does not read - `ingest_runs`, `perm_serial_misses`,
+`sweep_runs` - are monitoring state the health check reads); `permCases`,
+`permEntities` and `permWageStats` are dead but DISARMED, their tables empty
+and nothing dispatching them.
+
 **Timers for the GSC queue (session-only).** `CronCreate` fires
 `7 15,17,19 * * *` into this session: gate cheaply on the ledger, run the queue
 until Quota Exceeded, then a status round. It exists because the quota window is
