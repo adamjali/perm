@@ -18,7 +18,7 @@ import { withSocialCard } from "@/lib/socialCard";
  * figure with a fence around it.
  */
 
-const TITLE = "Employment-Based Green Card Government Fees Calculator";
+const TITLE = "Green Card Government Fees Calculator";
 const DESCRIPTION = `USCIS filing fees for an employment-based green card, from Form G-1055 (${FEE_SCHEDULE.edition}): I-140, the asylum program fee, premium processing, I-485, work permit.`;
 
 export const metadata: Metadata = withSocialCard({

@@ -19,7 +19,7 @@ import { withSocialCard } from "@/lib/socialCard";
  * holding the passport can.
  */
 
-const TITLE = "H-1B Six-Year Limit and the PERM 365-Day Rule Calculator";
+const TITLE = "H-1B Six-Year Limit Calculator";
 const DESCRIPTION =
   "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Two dates, with the citations.";
 

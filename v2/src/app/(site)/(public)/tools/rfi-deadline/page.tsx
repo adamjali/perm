@@ -17,7 +17,7 @@ import { withSocialCard } from "@/lib/socialCard";
  * case tracker runs on, so the two cannot disagree.
  */
 
-const TITLE = "PERM RFI and Audit Response Deadline Calculator";
+const TITLE = "PERM RFI and Audit Deadline Calculator";
 const DESCRIPTION =
   "The last day to answer a PERM audit letter: 30 calendar days from the date on DOL's letter under 20 CFR 656.20, with the weekday and the days left.";
 

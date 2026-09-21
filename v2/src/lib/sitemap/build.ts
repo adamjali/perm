@@ -248,7 +248,13 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/priority-date-retention`, lastModified: "2026-09-09", images: [`${base}/og/priority-date-retention.jpg`] },
     { url: `${base}/tools/green-card-fees`, lastModified: "2026-09-09", images: [`${base}/og/green-card-fees.jpg`] },
     { url: `${base}/tools/wage-levels`, lastModified: "2026-09-09", images: [`${base}/og/wage-levels.jpg`] },
-    { url: `${base}/perm-employers/compare`, lastModified: dol ?? "2026-09-08", images: [`${base}/og/employer-compare.jpg`] },
+    // `/perm-employers/compare` IS DELIBERATELY ABSENT (2026-09-21). The page
+    // sets `robots: { index: false }` - it is a tool that renders whatever two
+    // slugs the query names, so there is nothing stable to index - and it was
+    // listed here anyway, which is a sitemap telling Google to index a page
+    // that tells Google not to. Ahrefs' only ERROR on the whole site. robots.txt
+    // already disallowed `/perm-employers/compare?`; the bare path is what was
+    // advertised. `sitemap-excludes-noindex.test.ts` keeps the class shut.
     { url: `${base}/policy-changes`, lastModified: dol ?? "2026-09-08", images: [`${base}/og/policy-changes.jpg`] },
     { url: `${base}/debarments`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/debarments.jpg`] },
     { url: `${base}/perm-case-statuses`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/perm-case-statuses.jpg`] },

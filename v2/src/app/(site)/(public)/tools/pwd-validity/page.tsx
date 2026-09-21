@@ -17,7 +17,7 @@ import { withSocialCard } from "@/lib/socialCard";
  * canonical calculator and names the case that applied.
  */
 
-const TITLE = "Prevailing Wage Determination Validity Calculator";
+const TITLE = "Prevailing Wage Validity Calculator";
 const DESCRIPTION =
   "When a prevailing wage determination expires under 20 CFR 656.40(c): the date, the rule that applied, and the days left. The OEWS wage year is handled.";
 

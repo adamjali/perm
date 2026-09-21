@@ -108,7 +108,16 @@ export async function generateMetadata({
   if (!loaded) notFound();
   const label = bulletinMonthLabel(month);
   const since = loaded.prevMonth ? ` since ${bulletinMonthLabel(loaded.prevMonth)}` : "";
-  const title = `Visa Bulletin ${label}: Every EB Cutoff and What Moved`;
+  // SHORT ENOUGH TO SURVIVE A SERP (2026-09-21). This read "Visa Bulletin
+  // {label}: Every EB Cutoff and What Moved", which with the brand suffix is
+  // 73-75 characters on all 96 month pages - Google cuts a title around 60,
+  // so the descriptive tail was never shown and the brand was cut off with
+  // it. The searched phrase is "visa bulletin <month> <year>"; that now leads,
+  // a short qualifier follows, and the sentence the tail used to carry is in
+  // the description below, where there is room for it. Same shape as the
+  // sibling month family, /perm-queue/[month] ("PERM Cases Filed {label}").
+  // Worst case: "September 2026" -> 55 characters including " | PERM Tracker".
+  const title = `Visa Bulletin ${label}: EB Cutoffs`;
   return withSocialCard(
     {
       title,

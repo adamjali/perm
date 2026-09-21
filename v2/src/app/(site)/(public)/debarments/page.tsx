@@ -29,7 +29,7 @@ import { withSocialCard } from "@/lib/socialCard";
  * record.
  */
 
-const TITLE = "Employers and Agents Debarred From PERM, H-1B, H-2A and H-2B";
+const TITLE = "Debarred PERM and H-1B Employers and Agents";
 const DESCRIPTION =
   "DOL's debarment lists in one place: every employer, attorney and agent barred from PERM, H-1B, H-2A or H-2B filings, with the period and the violation.";
 

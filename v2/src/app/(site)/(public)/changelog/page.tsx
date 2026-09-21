@@ -18,7 +18,7 @@ export const dynamic = "force-static";
 export const metadata: Metadata = withSocialCard({
   title: "Changelog",
   description:
-    "Product updates, new features, and improvements to PERM Tracker. See what’s new and what’s coming next.",
+    "Every change to PERM Tracker, newest first: new datasets and tools, what each one measures, and the corrections we have published since launch.",
   alternates: { canonical: "/changelog" },
   openGraph: {
     ...openGraphBase,

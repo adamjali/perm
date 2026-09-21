@@ -237,7 +237,10 @@ export async function generateMetadata({
     // are the least curated in the corpus - they come straight off the
     // application with no merge pass behind them.
     const { title, absolute } = entityTitle(record.name, [
-      `PERM Filings: ${fmt(record.cases)} Live Cases`,
+      // SINGULAR WHEN THERE IS ONE, and there usually is: 18,284 of the
+      // 22,467 live-only employers hold exactly one case, so "1 Live Cases"
+      // was the title on about four fifths of this family.
+      `PERM Filings: ${fmt(record.cases)} Live Case${record.cases === 1 ? "" : "s"}`,
       "PERM Filings",
     ]);
     // No rate, no median, no rank - not even as a phrase. A snippet is where
@@ -265,6 +268,23 @@ export async function generateMetadata({
       title: absolute ? { absolute: title } : title,
       description,
       alternates: { canonical: `${BASE}/${slug}` },
+      // THE SAME OG BLOCK THE PUBLISHED BRANCH BUILDS, and it was missing
+      // here from the day these pages shipped (fixed 2026-09-21). Without it
+      // the page inherits the ROOT layout's Open Graph, so every one of the
+      // 22,467 live-only employers told a scraper `og:url` was the homepage
+      // and `og:title` was the site's generic tagline - while its canonical
+      // correctly named itself. Ahrefs caught 396 of them in a 5,000-URL
+      // sample; the defect was the whole branch. A share of one of these
+      // pages on WhatsApp, Slack or X rendered as the homepage card.
+      openGraph: {
+        ...openGraphBaseNoImage,
+        title: `${title} | PERM Tracker`,
+        description,
+        url: `${BASE}/${slug}`,
+      },
+      // Segment-level, for the same reason as the published branch: without
+      // it the root layout's twitter.images wins over this route's own card.
+      twitter: { card: "summary_large_image" },
     };
   }
   const row = found.subject;

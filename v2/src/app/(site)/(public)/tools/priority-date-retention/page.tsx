@@ -17,7 +17,7 @@ import { withSocialCard } from "@/lib/socialCard";
  * plainly what the rule leaves to USCIS.
  */
 
-const TITLE = "Priority Date Retention and I-485 Portability Calculator";
+const TITLE = "Priority Date Retention Calculator";
 const DESCRIPTION =
   "From an I-140 approval date: when a withdrawal stops revoking it, when an I-485 becomes portable under 204(j), and whether the priority date is kept.";
 

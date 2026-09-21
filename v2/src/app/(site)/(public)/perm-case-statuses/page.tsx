@@ -33,7 +33,7 @@ import { withSocialCard } from "@/lib/socialCard";
  * census doc the sweep writes, never computed on a render.
  */
 
-const TITLE = "PERM Case Status Meanings: Every DOL Status Explained";
+const TITLE = "PERM Case Status Meanings: Every DOL Status";
 const DESCRIPTION =
   "What each DOL case status means for a PERM, a wage request or an LCA: analyst review, RFI issued, on hold, appeals, certified, with the rule and the count.";
 const PATH = "/perm-case-statuses";

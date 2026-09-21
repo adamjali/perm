@@ -33,7 +33,7 @@ import { withSocialCard } from "@/lib/socialCard";
  * holds are new.
  */
 
-const TITLE = "PERM Employers With Cases On Hold, Audited or Under Appeal";
+const TITLE = "PERM Employers With Cases On Hold or Audited";
 const DESCRIPTION =
   "Every employer with pending PERM cases DOL has pulled aside: on hold, at RFI or NORD, or under appeal. Counts and shares from DOL's live record, dated.";
 
