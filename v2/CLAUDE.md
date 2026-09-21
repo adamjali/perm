@@ -5758,3 +5758,12 @@ the script:
 **The gate that caught both is one line: `git diff -U0 | grep -E "^\+title:"`,**
 a count of the field that must NOT change. Assert it is empty, the way the
 scrub asserted 614 occurrences of our own domain before and after.
+
+**And do not push docs while a build is in flight.** `vercel-ignore.sh` diffs
+against `VERCEL_GIT_PREVIOUS_SHA`, the last commit Vercel DEPLOYED - not the
+last one pushed. A docs-only push made while the code build is still running
+therefore diffs against the previously deployed commit, sees the `src/` changes
+still in flight, and starts a SECOND full production build. That is the script
+working exactly as rule 1 intends (an incomplete diff must never skip), and it
+still costs a second cold ISR cache over ~78,600 pages. Land the docs commit in
+the same push as the code, or wait for Ready.
