@@ -1,6 +1,49 @@
 # GSC indexing priority list
 
-**Run of 2026-09-20, 3:18 to 3:42 PM EDT: 11 accepted, the 12th refused.**
+**Run of 2026-09-21, 3:17 to 3:39 PM EDT: 11 accepted, the 12th refused.**
+
+**The cap has now been 11 on four consecutive runs** (Sep 17, 19, 20, 21; only
+Sep 18 differed at 8, and that run started at 11:56 AM). Rule unchanged: probe
+early, a refusal is free, stop at the wall.
+
+**EVERY SLOT WENT TO A PAGE WHOSE TITLE CHANGED THIS MORNING.** 134 static
+pages had titles past ~60 characters and were rewritten and deployed at
+12:21 PM; a new title reaches a searcher only when Google recrawls, so the
+highest-value request today is a page that is ALREADY INDEXED and whose SERP
+listing is now stale. That is the ledger's own "prefer a stale indexed page
+over an unknown one", applied to a change we made rather than to one we
+found.
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/perm-case-statuses` | indexed, title stale | 3:17 PM |
+| 2 | `/debarments` | indexed, title stale | 3:20 PM |
+| 3 | `/guides/eb2-vs-eb3-perm` | indexed, title stale | 3:21 PM |
+| 4 | `/blog/what-is-perm-labor-certification` | indexed, title stale | 3:23 PM |
+| 5 | `/guides/how-the-perm-queue-works` | indexed, title stale | 3:25 PM |
+| 6 | `/guides/look-up-a-sponsor` | indexed, title stale | 3:27 PM |
+| 7 | `/guides/perm-case-number-format` | indexed, title stale | 3:29 PM |
+| 8 | `/guides/the-perm-deadlines-that-matter` | indexed, title stale | ~3:31 PM |
+| 9 | `/guides/perm-denied-what-happens-next` | indexed, title stale | 3:33 PM |
+| 10 | `/tools/rfi-deadline` | indexed, title stale | 3:35 PM |
+| 11 | `/perm-employers/under-review` | indexed, title stale | 3:37 PM |
+| 12 | `/guides/what-an-lca-is` | **unknown to Google** | **Quota Exceeded**, 3:39 PM |
+
+**THE EXTENSION DISCONNECTED DURING SLOT 8 AND THE REQUEST HAD ALREADY
+LANDED.** Every tool call failed with "Browser extension is not connected"
+while the live test was running. `tabs_context_mcp` answered normally a moment
+later, and re-reading the page showed "Indexing requested". This is the
+documented not-a-failure case: read the durable state, never re-click, because
+a duplicate costs a slot off an 11-slot day.
+
+**A FINDING FOR THE NEXT RUN: `/guides/what-an-lca-is` is unknown to Google**
+and reports "No referring sitemaps detected" even though it IS in `pages.xml`
+(all 45 guides are, verified). It also has exactly ONE internal incoming link,
+from `look-up-an-lca-by-number.mdx` - which is the population Ahrefs counted as
+1,814 "only one dofollow incoming internal link". Worth checking whether the
+guides index links every guide; a guide reachable from one sibling and nothing
+else is the shape that does not get crawled. First slot next run.
+
 
 **The cap was 11 for the THIRD run running** (8 on Sep 18, 11 on the 17th, 19th and 20th).
 Today's first request was accepted at 3:18 PM against yesterday's 3:03 PM start, so the
