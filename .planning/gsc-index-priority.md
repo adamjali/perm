@@ -50,6 +50,30 @@ One oddity, noted not acted on: `/perm-case-statuses` reported its sitemap as **
 processing error"** while every other page named `sitemap.xml` cleanly. Almost certainly
 transient on Google's side; re-read it next run before treating it as a defect.
 
+## The sitemap index was resubmitted on 2026-09-21, and that was the real blocker
+
+Google's "Sitemaps read" list held **19 of the 24 children**. The five
+`live-employer-*.xml` files, shipped Sep 17, were absent - so all **22,467**
+live-only employer pages were invisible to Google no matter how many were
+requested by hand. The proof was arithmetic: GSC's "Total discovered pages"
+read **78,954**, which is EXACTLY the sum of the 19 children it lists.
+
+The index's own "Last read" had been stuck at **Sep 11**. Google re-fetches
+children it already knows on its own schedule, but discovers a NEW child only
+by re-reading the index. Resubmitting `https://permtracker.app/sitemap.xml`
+(the FULL URL - a Domain property rejects a bare path as "Invalid sitemap
+address") moved Last read to **Sep 21**.
+
+**This is why the two families behaved so differently.** Month pages were added
+to an EXISTING child, `pages.xml`, and indexed themselves within days with
+nobody requesting them. Live-only employers were a new child and did nothing.
+
+**So hand-requesting live-only employer pages is no longer the lever** - four
+were spent on them on Sep 20, and the sitemap now does that work for all
+22,467. Re-read the Sitemaps drilldown in a few days: the five children
+appearing with a Last read date is the signal, and the 9/27 Pages report is the
+scoreboard. Spend slots on pages that CHANGED instead.
+
 ## Queue after the Sep 20 run
 
 The `/perm-queue/<month>` family is **DONE** - every month from 2023-10 (the earliest with
