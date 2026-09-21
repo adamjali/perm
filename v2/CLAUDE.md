@@ -5677,3 +5677,84 @@ and a single fixed attempt eventually lands early. The catches: the jobs live
 only as long as this Claude session, recurring jobs auto-expire after 7 days,
 they fire only while the REPL is idle, and they need Chrome open with the
 extension connected.
+
+## A sitemap INDEX and its children are read on different clocks (2026-09-21)
+
+Google had never seen 22,467 pages, and nothing in any report said so. The
+five `live-employer-*.xml` children shipped 2026-09-17; Search Console's
+"Sitemaps read" list held **19 of the 24**, and the five new ones were absent.
+
+**The proof is arithmetic, and it is the way to detect this class:** GSC's
+"Total discovered pages" was **78,954**, and the sum of the 19 children it
+lists is **78,954 exactly**. A child Google has not read contributes zero, so
+comparing the headline figure against the sum of the rows names the missing
+ones without guessing.
+
+**Why it happened, and the rule that follows.** Google re-fetches children it
+already knows on its own schedule (these were read Sep 14 to 20) but discovers
+a NEW child only by re-reading the INDEX - and the index's own "Last read" had
+been stuck at **Sep 11**. So:
+
+- **Adding URLs to an EXISTING child propagates on its own.** The ~40
+  `/perm-queue/<month>` pages went into `pages.xml` on Sep 16 and were indexed
+  within days with nobody requesting them.
+- **Adding a NEW child does not.** Resubmit the index in Search Console the
+  same day you add one (paste the FULL URL - a Domain property rejects a bare
+  path with "Invalid sitemap address"). That moved Last read to Sep 21.
+- IndexNow is unaffected: `scripts/indexnow.mjs` walks the index itself every
+  deploy and had been submitting all five children (101,394 URLs, accepted).
+  Bing knew; only Google did not.
+
+## A metadata branch that returns no `openGraph` inherits the ROOT layout's
+
+Next 16 merges metadata SHALLOWLY, which `openGraphBase.ts` already documents
+for the case where a page overrides `openGraph` and loses `siteName`. The
+mirror case bit here: `perm-employers/[slug]` returns two different objects,
+and the live-only branch returned `title`, `description` and `alternates` with
+no `openGraph` at all. So every one of 22,467 pages served a correct canonical
+naming itself and an `og:url` naming the HOMEPAGE, with the site's generic
+tagline as `og:title`. Shared on WhatsApp or Slack they rendered as the
+homepage card.
+
+**When one route has several metadata branches, diff them field by field.** The
+published branch had been right since the day it shipped, which is exactly what
+makes the other one easy to miss - the file looks like it handles OG.
+
+## A third-party audit's counts are a sample of its own crawl cap
+
+Ahrefs reported 23 issues over permtracker. Its dashboard said, in its own
+words, *"The crawl has reached the maximum number of internal pages"* - 5,002
+of ~78,600, **6% of the site**. Consequences worth internalising before acting
+on any of it:
+
+- **Every delta is mostly resampling.** `+396`, `+285`, `+84`, `+4,606`,
+  `+547` all arrived the week the live-only employer pages became indexable:
+  its crawler followed them and its 6% shifted onto that new population.
+- **Its counts UNDERSTATE a systematic defect.** It found 88 over-length
+  titles; measuring all 354 static pages found **134**, 96 of them one
+  template.
+- **Five of its issues were artefacts of the cap itself** (indexable-page-not-
+  in-sitemap, pages-removed-from-sitemaps) or of features it cannot observe
+  ("changed pages not submitted to IndexNow", while our own run submitted
+  101,394 URLs and was accepted).
+- **But its one ERROR was real and exactly right.** `/perm-employers/compare`
+  was `noindex` AND listed in `pages.xml`. Read the errors closely and treat
+  the warning COUNTS as shape, not size.
+
+## Scope a bulk replace by FILE, not by string - the third instance
+
+Trimming 38 over-length titles with a repo-wide string replace went wrong in
+two ways in one pass, and both were found by reading the diff rather than by
+the script:
+
+1. One guide's `seoTitle` was **byte-identical to a blog post's display H1**,
+   so the replace rewrote the blog's visible heading and left the guide
+   unfixed. Same family as `permtrack` corrupting `permtracker.app`, and as
+   `have` contracting where it is not an auxiliary.
+2. Five changelog posts define no `seoTitle`, so the script changed their
+   editorial `title` - the headline shown on the timeline. The right fix was
+   to ADD a short `seoTitle` and leave the headline alone.
+
+**The gate that caught both is one line: `git diff -U0 | grep -E "^\+title:"`,**
+a count of the field that must NOT change. Assert it is empty, the way the
+scrub asserted 614 occurrences of our own domain before and after.
