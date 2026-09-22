@@ -227,6 +227,18 @@ def record_misses(db, code: str, serials: list[int], stamp: int) -> None:
 # misread either.
 CAP_NOTE = "stopped on the request cap"
 
+# A REFUSAL FROM DOL IS A STOP TOO (2026-09-22). flag.dol.gov answered HTTP
+# 403 about eighty seconds into the sweep, on the tail of the ~10,000
+# requests the main sweep had just made in the same job, and after the retry
+# helper's own 52 seconds of backoff. The sweep crashed, the failure hook
+# recorded `failed`, and the health check went red for a refusal nobody can
+# act on - the main sweep had succeeded minutes earlier and DOL answered 200
+# again by the afternoon. Same rule as the cap: keep what was found, record
+# only the misses DOL actually answered, name the refusal, resume tomorrow.
+# A refusal that recurs is still caught: the main sweep fails first on a
+# persistent one, and check_gap_sweep fires when three runs probe nothing.
+REFUSAL_NOTE = "stopped on a DOL refusal"
+
 
 def run_record(r: dict, cap: int) -> tuple[str, str]:
     """The (status, note) a finished sweep records; `ok` whether or not it capped."""
@@ -235,6 +247,9 @@ def run_record(r: dict, cap: int) -> tuple[str, str]:
             f"missed {r['missed']}")
     if r["capped"]:
         note += f"; {CAP_NOTE} ({cap}) and resumes from the same window"
+    if r.get("refused"):
+        note += (f"; {REFUSAL_NOTE} ({r['refused']}) after {r['requests']} "
+                 f"requests and resumes from the same window")
     return "ok", note
 
 
@@ -252,8 +267,9 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
     if not dry:
         db.execute(MISS_DDL, [])
     per_day: list[tuple[str, int, int]] = []
+    refused: str | None = None
     for code in codes:
-        if requests >= cap:
+        if requests >= cap or refused:
             break
         span = true_span(bounds, code)
         if span is None:
@@ -273,9 +289,19 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
                 break
             chunk = gaps[i:i + SERIALS_PER_REQUEST]
             nums = [case_number(p, code, s) for s in chunk for p in PREFIXES]
-            probed += len(chunk)
             requests += 1
-            hits = lookup(nums)
+            try:
+                hits = lookup(nums)
+            except RuntimeError as exc:
+                # The HTTP-status shape `lookup` raises, after its retries.
+                # Only that: a code defect in the insert path must still
+                # propagate, or a bug becomes a quiet nightly "ok". The
+                # serials in this chunk were never answered, so they are not
+                # probed and not misses; the day's answered chunks still
+                # reach the miss ledger below.
+                refused = str(exc)
+                break
+            probed += len(chunk)
             # Every serial in the chunk that DOL did not claim under ANY
             # prefix is a miss. Read it off the answer rather than assuming
             # an empty response means the whole chunk was empty.
@@ -301,7 +327,7 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
             "missed": retired,
             "inserted_perm": ins_perm, "inserted_other": ins_other,
             "days_with_finds": per_day, "skipped": skipped,
-            "capped": requests >= cap}
+            "capped": requests >= cap, "refused": refused}
 
 
 def main() -> int:
@@ -344,6 +370,9 @@ def main() -> int:
                  f"unreadable (the counter wrapped): {', '.join(r['skipped'])}")
     if r["capped"]:
         core.log("  stopped on the request cap; the next run resumes from the same window")
+    if r["refused"]:
+        core.log(f"  stopped on a DOL refusal ({r['refused']}) after {r['requests']} "
+                 "requests; the next run resumes from the same window")
     if r["probed"] and not r["found"]:
         core.log("  every hole probed was genuinely unissued - the walk is not missing cases here")
 

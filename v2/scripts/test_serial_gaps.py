@@ -213,6 +213,45 @@ try:
     # a day with no holes costs no requests
     rz = sweep(FakeDB([1, 2, 3, 4]), ["26240"], cap=99, lookup=fake_lookup, dry=True)
     check(rz["requests"] == 0, "a contiguous day costs zero requests")
+
+    # ---- a DOL refusal is a STOP, not a crash (2026-09-22) ----------------
+    # flag.dol.gov answered HTTP 403 on the tail of a 10,000-request morning,
+    # the sweep crashed, the hook recorded `failed`, the health check went red.
+    calls = {"n": 0}
+    def refusing_lookup(nums):
+        calls["n"] += 1
+        if calls["n"] == 2:
+            raise RuntimeError("HTTP 403")
+        return []
+    rdb = FakeDB(list(range(0, 400, 2)))
+    rr = sweep(rdb, ["26240"], cap=99, lookup=refusing_lookup, dry=False)
+    check(rr["refused"] == "HTTP 403",
+          f"a refusal is reported, not raised (got {rr.get('refused')!r})")
+    check(rr["requests"] == 2,
+          f"the refused request is counted as attempted (got {rr['requests']})")
+    check(rr["probed"] == SERIALS_PER_REQUEST,
+          f"only serials DOL actually answered count as probed (got {rr['probed']})")
+    check(rr["missed"] == SERIALS_PER_REQUEST,
+          f"misses are recorded for the answered chunk only (got {rr['missed']})")
+    check(not rr["capped"], "a refusal is not reported as the cap")
+    check(any("INSERT INTO perm_serial_misses" in w for w in rdb.writes),
+          "the answered chunk's misses still reach the ledger")
+    # It ends the RUN, not just the day: the same day twice has holes both
+    # times, and without the outer stop the second pass would keep asking.
+    calls["n"] = 0
+    rr2 = sweep(FakeDB(list(range(0, 400, 2))), ["26240", "26240"], cap=99,
+                lookup=refusing_lookup, dry=True)
+    check(rr2["requests"] == 2,
+          f"a refusal ends the run, not only the day (got {rr2['requests']})")
+    # A CODE DEFECT STILL PROPAGATES. Tolerating every exception would turn a
+    # bug in the insert path into a quiet nightly "ok".
+    def broken_lookup(nums):
+        raise KeyError("caseNumber")
+    try:
+        sweep(FakeDB([100, 105]), ["26240"], cap=99, lookup=broken_lookup, dry=True)
+        check(False, "a non-HTTP exception must propagate")
+    except KeyError:
+        check(True, "a non-HTTP exception propagates")
 finally:
     core._rows = _real_rows
 
@@ -223,6 +262,10 @@ _st, _note = sg.run_record({**_base, "capped": True}, 600)
 check(_st == "ok" and sg.CAP_NOTE in _note and "600" in _note, "a capped sweep records ok and names its cap")
 _st2, _note2 = sg.run_record({**_base, "capped": False}, 600)
 check(_st2 == "ok" and sg.CAP_NOTE not in _note2 and "probed 2998" in _note2, "an uncapped sweep records ok without the cap phrase")
+_st3, _note3 = sg.run_record({**_base, "capped": False, "refused": "HTTP 403", "requests": 14}, 600)
+check(_st3 == "ok" and sg.REFUSAL_NOTE in _note3 and "HTTP 403" in _note3 and "after 14 requests" in _note3,
+      "a refused sweep records ok and names the refusal and where it stopped")
+check(sg.CAP_NOTE not in _note3, "a refusal is not described as the cap")
 
 
 print(f"\n{'ALL PASS' if not fails else str(len(fails)) + ' FAILURE(S)'}")
