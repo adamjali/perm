@@ -1,5 +1,82 @@
 # GSC indexing priority list
 
+**Run of 2026-09-22, 3:20 to 3:53 PM EDT: 11 accepted, the 12th refused.**
+
+**The cap has now been 11 on FIVE consecutive runs** (Sep 17, 19, 20, 21, 22). Today's
+first request was accepted at 3:20 PM against yesterday's 3:17 PM start; no earlier probe
+was made. Rule unchanged: probe early, a refusal is free, stop at the wall.
+
+**Slots went to the title-change queue** (134 titles rewritten Sep 21, 12:21 PM), plus two
+pages Google had never seen. Inspect-first held again: every indexed page requested had a
+last crawl between Sep 3 and Sep 12, so every one of those listings still carries the old
+title.
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/guides/what-an-lca-is` | Discovered, not indexed (was "unknown" yesterday; now names `sitemap.xml` and `/pwd-cases`) | 3:20 PM |
+| 2 | `/guides/perm-rfi-issued-what-to-do` | indexed, crawled Sep 12, title stale | 3:28 PM |
+| 3 | `/guides/perm-application-on-hold-meaning` | indexed, crawled Sep 3 | 3:30 PM |
+| 4 | `/guides/perm-appeal-reconsideration-balca` | indexed, crawled Sep 10 | 3:31 PM |
+| 5 | `/guides/how-the-visa-bulletin-works` | **unknown to Google**, "no referring sitemaps" | 3:33 PM |
+| 6 | `/guides/find-a-dol-case-number-by-employer` | indexed, crawled Sep 3 | 3:37 PM |
+| 7 | `/guides/check-perm-received-without-receipt` | indexed, crawled Sep 8 | 3:41 PM |
+| 8 | `/visa-bulletin/2026-09` | **Discovered, never crawled** - the current month | 3:45 PM |
+| 9 | `/tools/h1b-six-year-limit` | indexed, crawled Sep 9 | 3:47 PM |
+| 10 | `/tools/pwd-validity` | indexed, crawled Sep 9 | 3:49 PM |
+| 11 | `/guides/i693-medical-exam` | indexed, crawled Sep 8 | 3:51 PM |
+| 12 | `/guides/how-dol-sets-a-prevailing-wage` | indexed, crawled Sep 3 | **Quota Exceeded**, 3:53 PM |
+| - | `/perm-employers/ziggy-lsv-inc` (from `live-employer-1.xml`) | inspected only: **Discovered**, names `sitemap.xml` | no slot |
+
+**THE LIVE-EMPLOYER SITEMAP FAMILY IS DISCOVERED, ONE DAY AFTER THE INDEX RESUBMIT.**
+Yesterday every live-only page inspected read "unknown to Google, no referring sitemaps";
+today a page sampled from `live-employer-1.xml` reads "Discovered - currently not indexed"
+with `sitemap.xml` named. That is the signal the Sep 21 note said to wait for, and it cost
+no slot. The 9/27 Pages report remains the scoreboard for the other 22,466.
+
+**The guides index links every guide.** Measured: 45 guides in `pages.xml`, 45 distinct
+guide hrefs on `/guides`, including both guides Google calls unknown. So `what-an-lca-is`
+and `how-the-visa-bulletin-works` are not orphans; Google has simply not crawled them.
+Closes the question left open on Sep 21.
+
+**THE BULLETIN MONTH PAGES ARE A CHAIN, AND THE CURRENT MONTH HAD NEVER BEEN CRAWLED.**
+`/visa-bulletin` links exactly ONE month page (the newest, `2026-09`); each month page links
+only its previous and next month. So `2025-03` is eighteen hops from the hub, and all 97
+month pages in `pages.xml` are reachable only by walking that list. Even the first hop had
+not been taken: `/visa-bulletin/2026-09` was "Discovered, never crawled" on Sep 22. Same
+family as the `/perm-queue/<month>` finding of Sep 16, one layer up: those were in no
+sitemap, these are in the sitemap but link-deep. The fix shape is a month strip or archive
+on the hub, the way `/perm-queue` lists its months. **Not done - a decision for Adam.**
+
+**"Temporary processing error" for Sitemaps appeared on three pages today**
+(`perm-rfi-issued-what-to-do`, `perm-application-on-hold-meaning`, `pwd-validity`) while the
+rest named `sitemap.xml` cleanly. Second day running for the same string; still reads as
+transient on Google's side and is still not acted on.
+
+**A STRAY RETURN RE-SUBMITTED SLOT 7'S PAGE, AND IT COST NOTHING - BY LUCK.** After
+Dismiss, the search-bar click did not register, so the Return meant for the bar went to the
+still-focused REQUEST AGAIN button. Google answered "Oops! Something went wrong", and 11
+were accepted afterwards, so no slot was consumed. The rest of the run split every
+inspection into two batches: dismiss and focus, assert the active element is the INPUT,
+then type. Codified in `v2/CLAUDE.md`.
+
+## Queue after the Sep 22 run
+
+Inspect first; skip anything crawled after Sep 21, 12:21 PM (the title deploy).
+
+1. `/guides/how-dol-sets-a-prevailing-wage` - refused today, crawled Sep 3
+2. `/visa-bulletin/2026-08`, then `2026-07` - re-inspect `2026-09` first: if it converted
+   inside 24 hours the way live-only employers did, the chain is worth requesting one hop
+   at a time until the hub is fixed
+3. `/tools/green-card-fees`, `/tools/priority-date-retention` - titles changed
+4. `/guides/explore-perm-wages`, `/guides/waiting-on-your-green-card`,
+   `/guides/employer-stopped-filing-perms`, `/guides/how-accurate-are-perm-estimates`
+5. blog: `perm-salary-data-by-occupation`, `what-an-employers-perm-record-shows`,
+   `what-law-firm-volume-tells-you`, `data-note-application-on-hold-september-2026`,
+   `best-immigration-case-management-tools`
+6. `/changelog` and its five posts, lowest value; and `/debarments`, `/perm-case-statuses`
+   only if a re-inspection shows their Sep 21 request has not been crawled yet
+7. one live-only employer sample, inspect only, to watch the family convert
+
 **Run of 2026-09-21, 3:17 to 3:39 PM EDT: 11 accepted, the 12th refused.**
 
 **The cap has now been 11 on four consecutive runs** (Sep 17, 19, 20, 21; only

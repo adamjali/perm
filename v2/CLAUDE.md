@@ -5767,3 +5767,39 @@ still in flight, and starts a SECOND full production build. That is the script
 working exactly as rule 1 intends (an incomplete diff must never skip), and it
 still costs a second cold ISR cache over ~78,600 pages. Land the docs commit in
 the same push as the code, or wait for Ready.
+
+## A refusal from DOL is a stop, not a crash: the third producer of the same false red (2026-09-22)
+
+`flag.dol.gov` answered **HTTP 403** about 84 seconds into the 4:10 AM gap
+sweep, on the tail of the ~10,000 requests the main sweep had just made in the
+same job, and after `lookup_with_retry`'s four attempts (52 seconds of
+backoff). `sweep_serial_gaps.py` raised, the failure hook recorded `failed`,
+and the health check went red for a refusal nobody can act on: the main sweep
+had finished clean minutes earlier and DOL answered 200 again by 3:36 PM.
+
+This is the SAME class fixed for the sweep's own cap on Sep 15 and the walk's
+cap on Sep 20, and the Sep 20 note said to grep for every other producer of
+the status before closing it. The grep was for `partial`; this producer raised
+an exception, so it was not a `partial` and the grep could not see it. **The
+class is "a stop the job cannot help", not one status string.** A refusal now
+records `ok`, keeps what was found, records only the misses DOL actually
+answered, names the refusal and where it stopped (`REFUSAL_NOTE`), and resumes
+from the same window tomorrow. Only `RuntimeError` (the HTTP-status shape
+`lookup` raises) is caught; a code defect in the insert path still propagates,
+pinned by a test that raises `KeyError` and expects it back. A persistent
+refusal is still caught twice: the main sweep fails first, and
+`check_gap_sweep` fires when three runs probe nothing.
+
+Probed by running the new tests against HEAD's sweep in an isolated copy: the
+test crashes on the `RuntimeError`, which is the live symptom. Today's row was
+re-recorded `ok` with a note naming the run, the cause and the fix, as on
+Sep 15; the original `failed` row stays in the table below it.
+
+**Two GSC driving rules from the same afternoon.** A `Dismiss` click that
+lands leaves focus on the `REQUEST AGAIN` button, and if the next search-bar
+click does not register, the `Return` meant for the bar re-submits the page
+just requested (Google answered "Something went wrong"; no slot was visibly
+lost, but that is luck). Split every inspection into two batches: dismiss and
+focus, then assert `document.activeElement.tagName === "INPUT"`, and only then
+type. And the expand-chevron click on an indexed page never registers inside
+the batch that navigated there; click it standalone.
