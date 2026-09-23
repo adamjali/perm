@@ -6034,7 +6034,7 @@ was wrong twice over:
 current-year list, so `prune()` deletes held rows inside the load's own notice-date range
 that the load no longer carries, guarded by coverage measured on (company, notice date)
 pairs, which do not depend on the id scheme: a load covering under 90% of the pairs held
-is treated as truncated and deletes nothing. The re-key ran from this Mac at 5:45 PM EDT
+is treated as truncated and deletes nothing. The re-key ran from this Mac at about 5:38 PM EDT
 Sep 23: 197 written, 258 old-id rows pruned at 99% coverage (60 duplicates, 1 notice New
 York withdrew, and the 197 old ids of the current notices); a second run wrote 0. The 258
 pre-fix rows are backed up at `node_modules/.cache/qa/warn-ny-backup-2026-09-23.json`.
