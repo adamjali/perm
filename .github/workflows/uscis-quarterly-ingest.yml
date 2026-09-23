@@ -1,0 +1,93 @@
+name: USCIS quarterly data
+
+# Fetches USCIS's four quarterly performance workbooks (every form's median
+# processing time and workload, the I-485 by field office, approved
+# employment-based petitions awaiting a visa number, and I-140 receipts by
+# class and country) plus the historical median factsheet, and stores them in
+# Turso. Behind /uscis-processing-times, /i485-by-field-office and
+# /i140-awaiting-visa, and the quarterly median shown beside USCIS's 80th
+# percentile on the I-140 pages.
+#
+# MONTHLY POLL, QUARTERLY DATA. USCIS posts a quarter roughly 80 to 90 days
+# after it ends, on no fixed day, so the job reads the listing on the 15th
+# and 16th of every month and loads only files it has not recorded by name.
+# A month with nothing new costs one listing request. Two days rather than
+# one because www.uscis.gov 403s GitHub's datacenter runners on some days and
+# not others; the Mac's launchd agent (app.permtracker.quarterly) tries on
+# the 17th as the residential backstop.
+#
+# EVERY LISTED QUARTER IS LOADED. USCIS carries the recent four quarters and
+# no archive, so a quarter missed on every attempt is gone; taking every
+# listed file each run means a failed month is repaired by the next one.
+#
+# Manual run:
+#   cd v2 && python3 scripts/ingest_uscis_quarterly.py
+
+on:
+  schedule:
+    - cron: "0 8 15,16 * *"   # 4:00 AM ET (EDT) on the 15th and 16th
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Reload every listed file, even ones already recorded"
+        type: boolean
+        default: false
+      accept_drift:
+        description: "Load a quarter that lost keys the previous one carried"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: uscis-quarterly-ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+
+      - name: Install the PDF reader for the factsheet
+        run: python3 -m pip install --quiet pdfplumber
+
+      - name: Discover, parse, reconcile and store
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          FORCE: ${{ inputs.force == true && '--force' || '' }}
+          ACCEPT_DRIFT: ${{ inputs.accept_drift == true && '--accept-drift' || '' }}
+        run: |
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          # Every workbook is reconciled against its own published totals and
+          # every store counts back parsed == stored, so a shifted column or a
+          # primary-key collision fails the run rather than shrinking a figure
+          # without comment.
+          python3 scripts/ingest_uscis_quarterly.py $FORCE $ACCEPT_DRIFT
+
+      # A failed month leaves a row where the health check reads, or a 403
+      # month is invisible until the 200-day freshness budget lapses.
+      - name: Record the failure where the health check will see it
+        if: failure() || cancelled()
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          python3 scripts/record_ingest_failure.py \
+            --script ingest_uscis_quarterly.py \
+            --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
+            --note "uscis-quarterly-ingest: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+      - name: Remove credentials
+        if: always()
+        working-directory: v2
+        run: rm -f .env.local

@@ -32,6 +32,15 @@ describe("BulletinWeekly", () => {
     expect(html).toContain("went backwards");
   });
 
+  it("sets the queue stamp's provenance in its own paragraph, clear of the offset shadow", async () => {
+    // Sep 22 2026 preview: "DOL's own stamp: Aug 31, 2026." rendered as a bare
+    // text node straight after the stamp table, and the table's 6px box-shadow
+    // painted over it. The line has to sit in a <p> with a top margin.
+    const html = await render(BulletinWeekly(base));
+    expect(html).not.toMatch(/<\/table>\s*DOL&#x27;s own stamp/);
+    expect(html).toMatch(/<p[^>]*margin-top:14px[^>]*>DOL&#x27;s own stamp/);
+  });
+
   it("opens with the recipient's watched case when one is supplied, and not otherwise", async () => {
     const personal = await render(
       BulletinWeekly({
@@ -80,5 +89,34 @@ describe("BulletinWeekly, repeated bulletin", () => {
     expect(html).toContain("Same bulletin as last week");
     expect(html).not.toContain("went backwards");
     expect(html).toContain("Email preferences");
+  });
+});
+
+describe("the USCIS quarterly section (2026-09-22)", () => {
+  const medians = [
+    { form: "I-140", label: "I-140", medianMonths: 3.9 },
+    { form: "I-485", label: "I-485 (employment)", medianMonths: 6 },
+    { form: "I-765", label: "I-765 EAD", medianMonths: 6.4 },
+    { form: "I-131", label: "I-131 advance parole", medianMonths: 5.8 },
+  ];
+
+  it("renders the four medians in a table the week the quarter lands, after the bulletin and before the notices", async () => {
+    const html = await render(BulletinWeekly({ ...base, uscisQuarter: "FY2026 Q3", uscisMedians: medians }));
+    // React's SSR puts a comment node between adjacent text nodes, so the
+    // eyebrow's two halves are asserted separately.
+    expect(html).toContain("USCIS&#x27;s quarterly medians,");
+    expect(html).toContain("FY2026 Q3");
+    expect(html).toContain("I-485 (employment), months");
+    expect(html).toContain(">6<");
+    expect(html).toContain(">5.8<");
+    expect(html).toContain("/uscis-processing-times");
+    expect(html.indexOf("visa bulletin")).toBeLessThan(html.indexOf("quarterly medians"));
+    expect(html).toContain("USCIS&#x27;s, the State Department&#x27;s");
+  });
+
+  it("is silent once the previous issue carried the quarter", async () => {
+    const html = await render(BulletinWeekly({ ...base, uscisQuarter: "FY2026 Q3", uscisMedians: medians, uscisRepeat: true }));
+    expect(html).not.toContain("quarterly medians");
+    expect(html).not.toContain("/uscis-processing-times");
   });
 });

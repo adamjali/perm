@@ -67,6 +67,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Cutoff dates as the State Department published them each month. Nothing here is forecast.",
   "visa-annual-limits":
     "The State Department's annual numerical limits and the prior year's usage.",
+  "uscis-case-status":
+    "USCIS's own case status text and dated history for a receipt number, read from its Case Status API at lookup time and kept twelve months after the last lookup. Nothing is estimated.",
   "i485-inventory":
     "USCIS's count of pending I-485s by priority date and country. Employment-based only: USCIS does not publish a family-based equivalent.",
   "uscis-i140-counts":
@@ -91,6 +93,16 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Texas WARN notices from the state open data portal, which reaches further back than the agency spreadsheet does.",
   "warn-notices-wa":
     "Washington WARN notices, read a page at a time from the state's own searchable database.",
+
+  // --- USCIS quarterly performance workbooks --------------------------------
+  "uscis-form-quarters":
+    "Every USCIS form's receipts, approvals, denials, pending count and MEDIAN months to a decision, per quarter, as USCIS publishes them. The median is not the 80th-percentile figure on USCIS's processing-times page.",
+  "uscis-i485-offices":
+    "I-485 applications received, approved, denied and pending at each USCIS field office and service center in the quarter, by category. Cells USCIS withholds as too small are left blank, never zero.",
+  "uscis-eb-awaiting-visa":
+    "Approved I-140, I-360 and I-526 petitions whose beneficiary is still waiting for a visa number, by preference and country of birth, as of the month USCIS states. Primary beneficiaries only, dependents excluded.",
+  "uscis-i140-class-country":
+    "I-140 petitions by the fiscal year USCIS received them and their current status, all countries and the top five, with approvals by class. Counted by filing year, so a recent year is mostly still pending.",
 };
 
 /** The coverage sentence for a dataset, or null when nobody has written one. */

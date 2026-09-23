@@ -120,6 +120,10 @@ function label(d: string): string {
     "i140-trends": "I-140 filings by category",
     "rfi-funnel": "RFI and audit outcomes",
     entities: "Employers and firms",
+    "uscis-form-quarters": "USCIS quarterly form data",
+    "uscis-i485-offices": "I-485 by field office",
+    "uscis-eb-awaiting-visa": "Petitions awaiting a visa",
+    "uscis-i140-class-country": "I-140 by class and country",
   };
   return names[d] ?? d;
 }

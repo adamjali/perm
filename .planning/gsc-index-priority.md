@@ -59,7 +59,7 @@ were accepted afterwards, so no slot was consumed. The rest of the run split eve
 inspection into two batches: dismiss and focus, assert the active element is the INPUT,
 then type. Codified in `v2/CLAUDE.md`.
 
-## Queue after the Sep 22 run
+## Queue after the Sep 22 run (written before the evening deploy; the deploy queue at the end of this file goes first, then this list in its order)
 
 Inspect first; skip anything crawled after Sep 21, 12:21 PM (the title deploy).
 
@@ -396,3 +396,24 @@ Inspect first; skip anything already on Google.
 2. two more pages from `sitemaps/live-employer-1.xml`, if the family is still undiscovered
 3. `/perm-queue/2024-12` and backwards while slots last
 4. `/glossary`, `/perm-case-statuses`: only if their last crawl predates Sep 14
+
+## Queue after the Sep 22 deploy (probe from ~3:15 PM EDT Sep 23; earlier costs nothing)
+
+Inspect first; skip anything already on Google. New pages first, because a page Google
+has never seen cannot be found by anyone; the privacy page second, because its indexed
+copy predates section 18 and USCIS reads policies before it grants access.
+
+1. `/uscis-case-status`, `/uscis-processing-times`, `/i485-by-field-office`, `/i140-awaiting-visa`
+2. `/privacy` (section 18 is new), `/accessibility` (new)
+3. the seven guides: `/guides/uscis-receipt-number`, `/guides/i485-vs-i485j-supplement-j`,
+   `/guides/what-emma-told-you`, `/guides/uscis-processing-times-median-vs-80-percent`,
+   `/guides/fastest-field-office-eb-i485`, `/guides/approved-i140-no-visa-number-eb2-india`,
+   `/guides/ead-and-advance-parole-timelines`
+4. `/visa-bulletin` (the month strip is new; its recrawl is what exposes the 96 month pages)
+5. `/terms`, `/about` (the Florida LLC wording), `/methodology` (two new entries), `/glossary`
+6. left over from Sep 18: `/perm-queue/2025-04` and backwards
+7. then the pre-deploy Sep 22 list above (the wage guide refused today, the August and July bulletin pages, the two retitled tools), in its order
+
+That is 21 URLs against a cap that has been 8 to 11. Two runs. Resubmit the sitemap
+INDEX in Search Console the same afternoon: no new child was added, so this is
+belt-and-braces only, but `pages.xml` gained 15 URLs.

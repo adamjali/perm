@@ -38,7 +38,7 @@ export function WarnNoticeBand({ rows, pageName }: { rows: Notice[]; pageName: s
             <a href={r.sourceUrl} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">
               {STATE_NAME[r.state] ?? r.state} WARN report
             </a>
-          </li>
+          {" "}</li>
         ))}
       </ul>
     </section>

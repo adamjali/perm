@@ -38,6 +38,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Check a case number for its live DOL status, its place in the queue, and a stage-aware decision estimate. Takes all three DOL programs: PERM (G-), prevailing wage requests (P-) and H-1B LCAs (I-200 and I-203). Works for PENDING cases, not just decided ones, because it asks DOL directly rather than reading the quarterly files. Free, no account, and it emails when the status changes. No case number? Search by employer name instead.",
   },
   {
+    path: "/uscis-case-status",
+    label: "USCIS case status by receipt number",
+    blurb:
+      "Decode a USCIS receipt number (three letters and ten digits, like EAC2190123456): the office behind the prefix and the conventional reading of the digits. Live status from USCIS's Case Status API once USCIS issues API access; until then the page says so and links USCIS's own status page. USCIS's record of the I-140 or I-485, distinct from the DOL PERM lookup.",
+  },
+  {
     path: "/tools",
     label: "Data overview",
     blurb:
@@ -274,6 +280,24 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Where an adjustment-of-status filing sits against USCIS's published pending inventory, by category and country of chargeability.",
   },
   {
+    path: "/uscis-processing-times",
+    label: "USCIS processing times, the median, by form",
+    blurb:
+      "The median months USCIS took to decide every form last quarter, from its quarterly performance workbook, beside receipts, completions and pending, and the historical medians back to FY2016. A different number from USCIS's processing-times page, and both are shown.",
+  },
+  {
+    path: "/i485-by-field-office",
+    label: "The I-485 by USCIS field office",
+    blurb:
+      "Employment-based I-485 applications received, approved, denied and pending at every USCIS field office and service center per quarter, the busiest offices, and quarters of work at each office's pace. From USCIS's quarterly count; withheld cells stay withheld.",
+  },
+  {
+    path: "/i140-awaiting-visa",
+    label: "Approved I-140s awaiting a visa number",
+    blurb:
+      "USCIS's quarterly count of approved I-140, I-360 and I-526 petitions waiting for a visa number, by preference and country of birth, with the movement since the previous count and I-140 receipts by fiscal year for India and the top five countries.",
+  },
+  {
     path: "/visa-bulletin",
     label: "The next visa bulletin",
     blurb:
@@ -439,6 +463,7 @@ export async function GET() {
     `- [Terms of Service](${BASE_URL}/terms)`,
     `- [Privacy Policy](${BASE_URL}/privacy)`,
     `- [Security](${BASE_URL}/security)`,
+    `- [Accessibility](${BASE_URL}/accessibility)`,
     "",
   );
 

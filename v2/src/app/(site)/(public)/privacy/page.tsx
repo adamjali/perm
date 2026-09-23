@@ -53,8 +53,9 @@ const SECTIONS = [
   { id: "your-rights", title: "15. Your Rights" },
   { id: "international-data-transfers", title: "16. International Data Transfers" },
   { id: "childrens-privacy", title: "17. Children's Privacy" },
-  { id: "changes-to-this-policy", title: "18. Changes to This Policy" },
-  { id: "contact-us", title: "19. Contact Us" },
+  { id: "uscis-case-status", title: "18. USCIS Case Status Lookups" },
+  { id: "changes-to-this-policy", title: "19. Changes to This Policy" },
+  { id: "contact-us", title: "20. Contact Us" },
 ] as const;
 
 export default function PrivacyPage() {
@@ -63,7 +64,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: August 24, 2026
+          Effective Date: February 17, 2026 | Last Updated: September 22, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -890,6 +891,12 @@ export default function PrivacyPage() {
                 <strong>Browser Push Services:</strong> Google FCM, Mozilla Push
                 Service, and Apple APNs for push notification delivery (see
                 Section 10)
+              </li>{" "}
+              <li>
+                <strong>USCIS (U.S. Citizenship and Immigration Services):</strong>{" "}
+                the Case Status API behind the USCIS receipt lookup, once USCIS
+                has granted access. What is sent and what is stored is in
+                Section 18.
               </li>
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
@@ -949,6 +956,10 @@ export default function PrivacyPage() {
               <li>
                 <strong>Rate limit records</strong> are automatically cleaned up
                 after 24 hours
+              </li>{" "}
+              <li>
+                <strong>USCIS case-status lookups</strong> are deleted twelve
+                months after the last lookup of that receipt (see Section 18)
               </li>{" "}
               <li>Some data may be retained longer if required by law</li>
             </ul>{" "}
@@ -1125,8 +1136,35 @@ export default function PrivacyPage() {
           </section>{" "}
 
           <section>
+            <h2 id="uscis-case-status" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
+              18. USCIS Case Status Lookups
+            </h2>{" "}
+            <p className="text-foreground/80 leading-relaxed">
+              The USCIS case status lookup lets you enter a receipt number and see what
+              USCIS says about that case. It runs on USCIS&apos;s Case Status API under
+              credentials issued to PERM Tracker LLC, and it&apos;s available only once
+              USCIS has granted that access; until then the page says so and looks
+              nothing up.
+            </p>{" "}
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">What you give and what we send</h3>{" "}
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>You type a receipt number (thirteen characters, such as IOE0912345678). No account is needed and no name is asked for.</li>{" "}
+              <li>We send that receipt number to USCIS over an encrypted connection with our API credentials. USCIS&apos;s own terms of use and privacy policy apply to what USCIS does with the request.</li>{" "}
+              <li>USCIS answers with the form type, the current status text, and a dated history of status changes. It doesn&apos;t return your name or any other identifier.</li>
+            </ul>{" "}
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">What we store</h3>{" "}
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>The receipt number, the form type, the status text, the dated history, and the time of the lookup.</li>{" "}
+              <li>We store it so a later lookup of the same receipt can show what changed, and so we can count lookups by form type and status. Counts are published only in aggregate; a receipt number is never published or shared.</li>{" "}
+              <li>A receipt number identifies a case rather than a person, and we treat it as personal data anyway: it&apos;s encrypted at rest with the rest of the database, it&apos;s not sold, and it&apos;s not used for advertising.</li>{" "}
+              <li>Stored lookups are deleted twelve months after the last lookup of that receipt, or sooner if you ask at <a href="mailto:support@permtracker.app?subject=USCIS%20lookup%20deletion" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">support@permtracker.app</a> with the receipt number.</li>{" "}
+              <li>No email or notification is sent from a lookup. If alerts on USCIS receipts are ever offered they will be a separate, opt-in subscription described here first.</li>
+            </ul>
+          </section>{" "}
+
+          <section>
             <h2 id="changes-to-this-policy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              18. Changes to This Policy
+              19. Changes to This Policy
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We may update this Privacy Policy from time to time. We’ll notify
@@ -1145,7 +1183,7 @@ export default function PrivacyPage() {
 
           <section>
             <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              19. Contact Us
+              20. Contact Us
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
               If you have any questions about this Privacy Policy or our data

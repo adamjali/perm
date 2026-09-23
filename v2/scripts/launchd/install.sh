@@ -12,7 +12,7 @@ REPO="$(git -C "$(dirname "$0")" rev-parse --show-toplevel)"
 DEST="$HOME/Library/LaunchAgents"
 LOGS="$HOME/Library/Logs/permtracker"
 mkdir -p "$DEST" "$LOGS"
-for name in app.permtracker.i485 app.permtracker.i140; do
+for name in app.permtracker.i485 app.permtracker.i140 app.permtracker.quarterly; do
   src="$REPO/v2/scripts/launchd/$name.plist"
   dst="$DEST/$name.plist"
   sed -e "s#__REPO__#$REPO#g" -e "s#__HOME__#$HOME#g" "$src" > "$dst"

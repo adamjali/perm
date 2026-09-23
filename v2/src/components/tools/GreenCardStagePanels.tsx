@@ -25,6 +25,8 @@ export interface I140SubtypePanelProps {
   /** The subtype code the timeline bar itself is drawn from. */
   activeCode: string | null;
   asOf: string;
+  /** USCIS's quarterly median over every I-140 decided in a quarter, if held. */
+  quarterlyMedian?: { months: number; quarterLabel: string } | null;
   className?: string;
 }
 
@@ -32,6 +34,7 @@ export function I140SubtypePanel({
   subtypes,
   activeCode,
   asOf,
+  quarterlyMedian = null,
   className,
 }: I140SubtypePanelProps) {
   if (subtypes.length === 0) return null;
@@ -77,7 +80,16 @@ export function I140SubtypePanel({
       <p className="mt-3 text-sm text-muted-foreground">
         USCIS, as of {asOf}. The bar above uses{" "}
         {activeCode ? "the category with the most cases pending" : "no single category"}.
-      </p>
+      </p>{" "}
+      {quarterlyMedian ? (
+        <p className="mt-2 text-sm text-muted-foreground">
+          USCIS&apos;s quarterly median over every I-140 decided in {quarterlyMedian.quarterLabel}:{" "}
+          <b className="font-bold text-foreground">
+            {Number.isInteger(quarterlyMedian.months) ? quarterlyMedian.months : quarterlyMedian.months.toFixed(1)} months
+          </b>
+          . A different measurement from the ranges above, which are per subtype over the slow tail.
+        </p>
+      ) : null}
     </div>
   );
 }

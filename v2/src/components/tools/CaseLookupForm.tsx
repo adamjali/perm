@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
+import { looksLikeReceipt } from "@/lib/uscis/receipt";
 
 /**
  * The one input on the page, as a plain GET form.
@@ -42,8 +43,11 @@ export function CaseLookupForm({ defaultValue = "", className }: CaseLookupFormP
   // And the hint stays quiet until they have TYPED something. On a submitted
   // bad value the server already renders the withholding notice below, so
   // firing this one as well puts two warnings about one typo on the screen.
+  // A USCIS receipt is a different agency's number. The server redirects a
+  // complete one to its own page; the hint says so before the round trip.
+  const isReceipt = edited && looksLikeReceipt(value);
   const malformed =
-    edited && value.trim().length > 0 && normaliseCaseNumber(value) === null;
+    edited && !isReceipt && value.trim().length > 0 && normaliseCaseNumber(value) === null;
 
   return (
     <form method="get" action="/perm-case-status" className={className}>
@@ -81,7 +85,13 @@ export function CaseLookupForm({ defaultValue = "", className }: CaseLookupFormP
         </button>
       </div>
       <p id={helpId} className="mt-2 text-sm text-muted-foreground">
-        {malformed ? (
+        {isReceipt ? (
+          <span className="font-bold text-data-warn-ink">
+            That looks like a USCIS receipt number (three letters, ten digits),
+            which is USCIS&apos;s record rather than DOL&apos;s. Submitting takes
+            you to the USCIS page.
+          </span>
+        ) : malformed ? (
           <span className="font-bold text-data-bad-ink">
             That is not the shape of a PERM case number. They look like
             G-100-26125-868956.

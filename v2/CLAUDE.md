@@ -5803,3 +5803,152 @@ lost, but that is luck). Split every inspection into two batches: dismiss and
 focus, then assert `document.activeElement.tagName === "INPUT"`, and only then
 type. And the expand-chevron click on an indexed page never registers inside
 the batch that navigated there; click it standalone.
+
+## The legal entity is a Florida LLC, and its name is one constant (2026-09-22)
+
+PERM Tracker LLC was filed in Florida on Sep 22 2026 through Northwest Registered
+Agent (manager-managed; the manager is the attorney named on the About page; no
+members listed publicly). Three surfaces bind or describe it and they had drifted:
+the Terms named the LLC under the laws of the District of Columbia, the About page
+named no entity, the Organization node had no `legalName`. All three read
+`LEGAL_NAME` / `LEGAL_FORM` from `src/lib/constants/about.ts` now, the Terms say
+Florida, and `legal-name.test.ts` holds them together.
+
+**`.planning/` is tracked in a PUBLIC repo.** The operating agreement names the
+owner, so it lives in the owner's Documents folder, never here, and the plan that
+references it (`.planning/llc-and-uscis-plan.md`) says "the owner". Same rule as the
+persona: a real name in a committed file is a real name in public history forever.
+
+## A bare string child renders BESIDE the stamp, not inside it (2026-09-22)
+
+`QueueStamp` took `children` and rendered them as a sibling of its offset lime
+table. A string child therefore became a bare text node right after `</table>`,
+and because the slab is offset with negative margins, "DOL's own stamp ..." sat
+UNDER the lime block in the Sep 22 digest preview. The owner saw it before I did.
+Fix: a string child gets its own `<Text>` with a top margin; element children pass
+through. The test asserts the paragraph shape (`<p ... margin-top:14px>DOL's own
+stamp`) and that nothing text-shaped follows the table directly; it was probed red
+against the old component.
+
+**Render the stored issue with the real template before calling a digest fixed.**
+`npx convex data newsletterIssues --prod --format jsonl` gives the issue's `data`
+JSON; an entry under `node_modules/.cache/qa/` (so `node_modules` resolves) that
+imports `BulletinWeekly` and `@react-email/render`, bundled with
+`node_modules/.bin/esbuild --bundle --platform=node --format=cjs --jsx=automatic
+--alias:@=./src`, renders the same HTML Convex will send. The unit test proves the
+shape; the render is what the owner reads.
+
+## The bulletin hub links every month it holds (2026-09-22)
+
+The hub linked one month page (the newest) and each month page linked only its two
+neighbours, so 96 of the 97 `/visa-bulletin/<month>` pages hung off an eighteen-hop
+chain, and Search Console read the current month as "Discovered, never crawled"
+while it sat in `pages.xml`. `BulletinMonthStrip` puts every month one hop from
+the hub as plain links (years descending, months ascending, keyed Fragments with a
+leading space so the list is not one glued word). Same defect as the
+`/perm-queue/<month>` family on Sep 16, one layer up: those were in no sitemap,
+these were in the sitemap but link-deep. A sitemap entry is not a link.
+
+## Seven USCIS guides in one pass, and five small instruments (2026-09-22)
+
+The guides (`content/guides/uscis-receipt-number`, `i485-vs-i485j-supplement-j`,
+`what-emma-told-you`, `uscis-processing-times-median-vs-80-percent`,
+`fastest-field-office-eb-i485`, `approved-i140-no-visa-number-eb2-india`,
+`ead-and-advance-parole-timelines`) each carry a "What this can't tell you"
+section and say plainly which facts have no primary page: USCIS's "80% of cases
+over six months" definition survives only in the Internet Archive's Jan 30 2024
+capture of `egov.uscis.gov/processing-times/more-info` (live and later captures
+403); no USCIS page uses the term "combo card"; the ten receipt digits are
+decoded nowhere official; and the sanctioned Case Status API returns human text,
+never the FTA/H008 codes Reddit trades in.
+
+- **Count description lengths with the script, never by eye.** By-eye counts were
+  over on 9 of 14 fields by 1 to 11 characters. `page-description-length.test.ts`
+  and `audit_articles.py` are the instruments; `content-frontmatter.test.ts` caps
+  `description` only, so `seoDescription` is held by the audit alone.
+- **`audit_articles.py` reads the whole file, comments included.** A pending
+  figure spec inside an MDX comment must not carry `src="/images/content/shots/…"`
+  or the audit reports a missing shot for a figure that is not there yet.
+- **`json.dump` reformats a hand-styled JSON file.** `article-shots.json` is one
+  spec per line; append in that style and check the diff is additions only.
+- **In the I-485 field-office file, the "Texas" and "California" rows under the
+  state headers are service centers** (SSC, WSC), not field offices.
+- **Glossary `see` links are gated on the page existing**, so a glossary entry for
+  a page another lane is still building goes red until that lane lands; that is
+  the gate working, not a wrong link.
+
+## The USCIS Torch client, and what its lane taught (2026-09-22)
+
+`src/lib/uscis/` (receipt parser, OAuth client-credentials client, route
+handler), `src/lib/turso/uscisCaseStatus.ts` (the stored lookups),
+`/api/uscis-case-status` and `/uscis-case-status` are built and dark: with no
+`USCIS_CLIENT_ID` / `USCIS_CLIENT_SECRET` / `USCIS_ENV` on Vercel the page
+renders its waiting state and links USCIS's own status page. The plug-and-play
+sequence is `.planning/llc-and-uscis-plan.md`.
+
+- **USCIS's daily quota resets at midnight EASTERN**, so its budget key is the ET
+  date. DOL's is the UTC date. Two budgets, two clocks, and a key computed on
+  the wrong one under-counts for four hours every night.
+- **A privacy bullet is a schema.** Section 18 lists exactly what is stored; the
+  table's columns are held to that list by a test, and the raw JSON column that
+  would have quietly stored more was dropped for it.
+- **A nightly delete needs a clock in the app, not on GitHub.** The retention
+  constant lives in TypeScript with its test; `HOUSEKEEPING_JOBS` in
+  `api/cron/dispatch/jobs.ts` is the second cron table, and the dispatch test
+  holds `vercel.json` to the union of both, so a housekeeping cron cannot exist
+  in one and not the other (probed by dropping the entry).
+- **`not.toMatch(/ip/)` matches "receipt".** Substring negatives need word
+  boundaries or they fail on the vocabulary of the thing under test.
+- **A probe harness that parses the summary line is itself a gate**: one of ten
+  revert-probes read green in the harness and red by hand. Read the assertion,
+  not the harness's one-line verdict.
+
+## The USCIS quarterly workbooks: reconcile against the file's own totals (2026-09-22)
+
+`scripts/ingest_uscis_quarterly.py` loads the four quarterly workbooks USCIS
+publishes (all forms, I-485 by field office, EB approved awaiting a visa, I-140
+by class and country) plus the FY2016 to FY2024 median factsheet, into
+`uscis_form_quarters`, `uscis_i485_offices`, `uscis_eb_awaiting_visa`,
+`uscis_i140_class_country` and `perm_docs.uscis_historical_pt`. GitHub tries on
+the 15th and 16th; the Mac's launchd agent retries on the 17th
+(`residential_job.sh quarterly`; `install.sh` loads three labels now, so re-run
+it after pulling). Pages: `/uscis-processing-times`, `/i485-by-field-office`,
+`/i140-awaiting-visa`, under a "USCIS" rail group.
+
+- **The files carry their own totals**: a TOTAL row per category, a TOTAL column
+  per year, classes against approved, offices against the Total row. Every
+  sheet is reconciled against them before anything is written, so a shifted
+  column cannot pass.
+- **Footnote markers are typed into the cells.** A form is `[A-Z]{1,2}-\d{3}[A-Z]?`
+  and anything after it is a footnote (`I-6007` is I-600 with note 7); a median
+  with two decimals is glue (`9.16` is 9.1 with note 6).
+- **Discover, never construct, again.** FY2025 Q4 spells the awaiting-visa file
+  `performance_data`, later quarters `performancedata`; FY2026 Q1 sits under
+  `/document/reports/`. Files are identified by name so a `_v2` re-issue reloads.
+- **A freshness `as_of` must be a date the health check can age.** "As of June
+  2026" and "FY2026 Q3" read as UNREADABLE, so the stamp is the quarter's last
+  day, with a 200-day budget.
+- **USCIS leaves a class-approval cell blank where the count is zero**
+  (Philippines E12, 2018). Read blank as zero under the TOTAL-column check, or
+  the reconciliation refuses a correct file.
+
+## The digest names USCIS's quarter once, the week it lands (2026-09-22)
+
+`buildIssue` reads the newest `uscis_form_quarters` quarter and
+`pickUscisMedians` chooses one workbook line per form BY TITLE (I-140; the
+employment-based I-485, 6.0 months in FY2026 Q3 where the busier family-based
+line is 7.0; the adjustment-of-status I-765; the inside-the-US advance parole
+I-131). `uscisRepeat` is set from the previous issue's `uscisQuarter`, the same
+mechanism as `bulletinRepeat`, except a repeated quarter is SILENT rather than
+restated: a bulletin is monthly and a "same as last week" line earns its place;
+a workbook lands four times a year and twelve repeats would be noise. The
+subject's cap drops the USCIS part before DOL's frontier and the bulletin.
+
+- **React's SSR puts `<!-- -->` between adjacent text nodes**, so `{m.label},
+  months` renders as two nodes and a test for the joined string fails. Render a
+  label as one template literal, and assert the halves separately where a
+  comment can legitimately sit.
+- **A subject test has to leave room for the part it asserts.** The full
+  fixture already fills the 78-character cap, so the USCIS part is dropped by
+  design; the assertion runs on a fixture with room and separately checks the
+  cap holds.

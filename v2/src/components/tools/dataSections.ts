@@ -35,6 +35,11 @@ export type DataSection =
   | "badges"
   | "layoffs"
   | "visa-bulletin-family"
+  // Track B's receipt page (its SECTIONS entry was added without its key).
+  | "uscis-case-status"
+  | "uscis-times"
+  | "i485-offices"
+  | "awaiting-visa"
   | "calculators"
   | "queue"
   | "processing-times"
@@ -65,6 +70,7 @@ export type DataGroup =
   | "Employers and wages"
   | "Denials and audits"
   | "Visa bulletin"
+  | "USCIS"
   | "Reference";
 
 export interface DataNavSection {
@@ -93,6 +99,7 @@ export const OVERVIEW = {
 export const SECTIONS: DataNavSection[] = [
   { key: "all-cases", group: "Case tools", label: "Search all programs", href: "/case-search" },
   { key: "case-status", group: "Case tools", label: "Case status", href: "/perm-case-status" },
+  { key: "uscis-case-status", group: "Case tools", label: "USCIS receipt", href: "/uscis-case-status" },
   { key: "case-statuses", group: "Case tools", label: "Status meanings", href: "/perm-case-statuses" },
   // Moved out of "Who files". It searches the case corpus, and somebody
   // holding a case number is the highest-intent reader on this surface; the
@@ -137,6 +144,12 @@ export const SECTIONS: DataNavSection[] = [
   { key: "visa-bulletin-next", group: "Visa bulletin", label: "Next bulletin", href: "/visa-bulletin" },
   { key: "visa-bulletin", group: "Visa bulletin", label: "Priority dates", href: "/tools/priority-date-calculator" },
   { key: "visa-bulletin-family", group: "Visa bulletin", label: "Family cutoffs", href: "/visa-bulletin/family" },
+  // USCIS's quarterly workbooks: a different agency from everything above,
+  // and the stage AFTER the labor certification. Its own group for the same
+  // reason the visa bulletin has one.
+  { key: "uscis-times", group: "USCIS", label: "Processing times", href: "/uscis-processing-times" },
+  { key: "i485-offices", group: "USCIS", label: "I-485 by office", href: "/i485-by-field-office" },
+  { key: "awaiting-visa", group: "USCIS", label: "Awaiting a visa", href: "/i140-awaiting-visa" },
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
   { key: "policy-changes", group: "Reference", label: "Policy changes", href: "/policy-changes" },
   { key: "debarments", group: "Reference", label: "Debarments", href: "/debarments" },
@@ -156,6 +169,7 @@ export const GROUPS: DataGroup[] = [
   // here leaves its pages in no list at all - which is exactly what
   // data-nav-sections.test.ts caught when this moved.
   "Visa bulletin",
+  "USCIS",
   "Reference",
 ];
 

@@ -4,6 +4,7 @@
 #
 #   bash scripts/residential_job.sh i485     # USCIS I-485 inventory (monthly)
 #   bash scripts/residential_job.sh i140     # USCIS I-140 counts + trends (quarterly)
+#   bash scripts/residential_job.sh quarterly # USCIS quarterly performance workbooks (monthly poll)
 #
 # Shape, each part of it a lesson:
 #   * ONE run at a time per job (a lock directory holding the PID; a stale
@@ -21,7 +22,7 @@
 set -uo pipefail
 
 JOB="${1:-}"
-case "$JOB" in i485|i140) ;; *) echo "usage: residential_job.sh i485|i140" >&2; exit 2;; esac
+case "$JOB" in i485|i140|quarterly) ;; *) echo "usage: residential_job.sh i485|i140|quarterly" >&2; exit 2;; esac
 
 # launchd hands a job almost no PATH. Name everything, including node,
 # which lives under nvm on this Mac (the newest installed version wins).
@@ -95,6 +96,14 @@ case "$JOB" in
     say "ingest_i140_trends.py"
     if ! "$PY" scripts/ingest_i140_trends.py; then
       rc=1; record_failure "ingest_i140_trends.py" "ingest exited non-zero"
+    fi
+    ;;
+  quarterly)
+    # Idempotent by filename: a month with nothing new reads the listing and
+    # stops, so running this after GitHub's own attempts costs one request.
+    say "ingest_uscis_quarterly.py"
+    if ! "$PY" scripts/ingest_uscis_quarterly.py; then
+      rc=1; record_failure "ingest_uscis_quarterly.py" "ingest exited non-zero"
     fi
     ;;
 esac

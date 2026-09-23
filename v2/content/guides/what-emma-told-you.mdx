@@ -1,0 +1,66 @@
+---
+title: "What Emma Told You, and Which Form It Meant"
+description: "USCIS's virtual assistant and its live agents quote dates without naming forms. How to work out which of your receipt numbers an approval belonged to."
+date: "2026-09-22"
+author: "Sabrina Soltau"
+image: "/images/content/photos/legal-desk.webp"
+imageAlt: "A chat window beside four USCIS receipt notices, one per form, laid out on a desk"
+tags: ["uscis", "emma", "case-status", "receipt-number", "i-485", "supplement-j", "explainer"]
+category: "reference"
+seoTitle: "What Emma Told You and Which Form It Meant"
+seoDescription: "USCIS's Emma and its agents quote an approval date without naming the form. How to tell if it was the I-485, the EAD, advance parole or Supplement J."
+published: true
+---
+
+"An approval notice was sent on Sep 16." That's the whole message someone got from USCIS's chat this month. No form named, no receipt number quoted. They had several filings in, so the sentence was true of exactly one of them and they had to work out which.
+
+## Who Emma is
+
+USCIS describes Emma at https://www.uscis.gov/tools/meet-emma-our-virtual-assistant (last reviewed Jun 3, 2026) as "a computer-generated virtual assistant", named after Emma Lazarus. The same page tells you what not to ask: "do not send questions about your personal situation or case", and points instead to checking case status online or calling 800-375-5283.
+
+The USCIS Contact Center page, at https://www.uscis.gov/contactcenter, explains the hand-off: "Emma, our online virtual assistant, answers questions in English and Spanish, and guides you through our website. If Emma cannot answer your question, she may connect you to live chat with an agent." It also says that "individuals who inquire about case status will be directed to check Case Status Online or to check their USCIS online account", and that live assistance about a specific case is generally for the applicant or petitioner, their attorney or accredited representative of record, or a parent or legal guardian.
+
+So the sentence that started this guide came from a live agent reached through Emma, reading whatever record holds your filings, and summarizing one of them.
+
+## Why the form matters more than the date
+
+USCIS's glossary, at https://www.uscis.gov/tools/glossary, defines the receipt number as "a unique 13-character identifier USCIS provides for each application or petition it receives". One per form. An employment-based adjustment package typically has an I-140, an I-485, an I-765 for the work permit and an I-131 for advance parole, and a Supplement J riding with the I-485. Any of those can produce "an approval notice" on a given day, and they mean very different things.
+
+| If the approval was | What actually happened |
+|---|---|
+| I-140 | The petition is approved. You still need a visa number before the green card; see [the EB-2 India wait](/guides/approved-i140-no-visa-number-eb2-india). |
+| I-485 | The green card. This is the one everyone hopes the agent meant. |
+| I-765 | A work permit card is coming. Nothing about the green card changed. |
+| I-131 | An advance parole document is coming. Nothing about the green card changed. |
+| Supplement J | USCIS confirmed the job offer or approved a port. The I-485 is still pending. See [I-485 vs I-485J](/guides/i485-vs-i485j-supplement-j). |
+
+## Four steps to tell which one it was
+
+1. **Check the visa bulletin first.** USCIS's Policy Manual (Volume 7, Part A, Chapter 6, https://www.uscis.gov/policy-manual/volume-7-part-a-chapter-6) says "an immigrant visa must be available at the time of filing the adjustment application and at the time of final adjudication". If your category and country are "U" on the Final Action Dates chart for that month, the I-485 was not approved, whatever the sentence sounded like. EB-2 India has been "U" on that chart since the Jul 2026 bulletin; [the visa bulletin page](/visa-bulletin) has the history.
+2. **Look up each receipt number, not just one.** Case Status Online answers per number. Put in all of them. The one whose text changed on or after the quoted date is the one the agent meant. [This site's USCIS case status page](/uscis-case-status) does the same lookup and dates each reading, so a change is visible as a change rather than as a sentence you have to remember.
+3. **Read the notice when it arrives.** The I-797 names the form it's about, and [the receipt number guide](/guides/uscis-receipt-number) covers the notice types. An approval of a supplement arrives as a notice about the supplement.
+4. **Match the date to what was recently filed or pending.** A Supplement J filed a few weeks ago and an I-485 pending in a closed category: the approval on Sep 16 is the supplement. That's what it was in the Reddit thread, and the person confirmed it the next day.
+
+## Codes you'll see in your online account
+
+If you open your USCIS online account with the browser's developer tools running, you'll see short status codes in the traffic behind the page. Forums try to decode them. USCIS publishes no meanings for them, and this site doesn't guess at them; the human-readable status text is what USCIS chose to publish, and that's what's read here.
+
+<ScreenshotFigure
+  src="/images/content/shots/uscis-case-status-result.webp"
+  alt="The decode panel for a USCIS receipt number: the service center behind the prefix and the conventional reading of the digits"
+  caption="Start from the receipt number itself: the panel names the office behind the prefix before any status is read. Once USCIS grants API access, the status and its dated readings sit under it, and a change between two readings is the fact; the sentence on its own is not."
+/>
+
+## What this can't tell you
+
+- **What the agent was looking at.** USCIS doesn't publish what its agents see, and this guide can't reconstruct it.
+- **Whether the approval was the I-485.** Only the notice or your account says. Step 1 can rule it out; it can't rule it in.
+- **When the card arrives.** An approval notice and a card in the mail are separate events, and USCIS's pages give no interval.
+- **Anything a DOL case number leads to.** PERM, wage request and LCA statuses come from DOL, on [the DOL case status page](/perm-case-status), not from USCIS.
+
+## Related
+
+- [How to read a USCIS receipt number](/guides/uscis-receipt-number)
+- [I-485 vs I-485J: what Supplement J is](/guides/i485-vs-i485j-supplement-j)
+- [EAD and advance parole timelines](/guides/ead-and-advance-parole-timelines)
+- [How the visa bulletin works](/guides/how-the-visa-bulletin-works)

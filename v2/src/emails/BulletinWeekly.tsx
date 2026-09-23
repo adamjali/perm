@@ -25,7 +25,7 @@
 import { Link, Section, Text } from "@react-email/components";
 
 import type { DigestData } from "../../convex/lib/newsletterCompose";
-import { CHECK_CASE_URL, dateLabel, monthLabel, SIGNUP_URL } from "../../convex/lib/newsletterCompose";
+import { CHECK_CASE_URL, dateLabel, monthLabel, monthsLabel, SIGNUP_URL, uscisIsNews } from "../../convex/lib/newsletterCompose";
 import { EmailButton, EmailLayout, FigureTable, MONO_STACK, QueueStamp, SANS_STACK } from "./components";
 
 const int = (n: number) => n.toLocaleString("en-US");
@@ -41,7 +41,7 @@ export function BulletinWeekly(d: DigestData) {
       previewText={`The week of ${dateLabel(d.weekOf)} in PERM and the visa bulletin.`}
       settingsUrl={d.prefsUrl ?? `${site}/email-preferences`}
       settingsLabel="Email preferences"
-      footerText="You asked for this digest on an alert form and confirmed it. Every figure is DOL's, the State Department's or the Federal Register's, dated as they published it."
+      footerText="You asked for this digest on an alert form and confirmed it. Every figure is DOL's, USCIS's, the State Department's or the Federal Register's, dated as they published it."
     >
       {d.watchedCase ? (
         <Section style={styles.yours}>
@@ -150,6 +150,35 @@ export function BulletinWeekly(d: DigestData) {
         </Section>
       ) : null}
 
+      {uscisIsNews(d) ? (
+        <Section>
+          <Text className="em-text-secondary" style={styles.eyebrow}>
+            USCIS&apos;s quarterly medians, {d.uscisQuarter}
+          </Text>
+          <table role="presentation" width="100%" cellPadding={0} cellSpacing={0} border={0} style={styles.figures}>
+            <tbody>
+              <tr>
+                {(d.uscisMedians ?? []).map((m, i, arr) => (
+                  <td key={m.form} className="em-stat-cell" style={i === arr.length - 1 ? styles.figureCellLast : styles.figureCell}>
+                    <Text className="em-stat-number" style={styles.figureValue}>
+                      {monthsLabel(m.medianMonths)}
+                    </Text>
+                    <Text className="em-text-secondary" style={styles.figureLabel}>
+                      {`${m.label}, months`}
+                    </Text>
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+          <Text className="em-text-secondary" style={styles.small}>
+            Median months to a decision in the quarter, from USCIS&apos;s own workbook. The 80% figure on USCIS&apos;s processing-times page is a different measure.{" "}
+            <Link href={`${site}/uscis-processing-times`} style={styles.link}>
+              Every form
+            </Link>
+          </Text>
+        </Section>
+      ) : null}
       {d.notices.length > 0 ? (
         <Section>
           <Text className="em-text-secondary" style={styles.eyebrow}>

@@ -5,8 +5,10 @@ import {
   CHECK_CASE_URL,
   composeSubject,
   composeText,
+  pickUscisMedians,
   SIGNUP_URL,
   SUBJECT_MAX,
+  uscisIsNews,
   type DigestData,
 } from "../newsletterCompose";
 
@@ -129,5 +131,72 @@ describe("a bulletin already reported last week", () => {
     expect(text).not.toContain("Final action dates: 5 advanced");
     // The first issue for a bulletin still reports the moves.
     expect(composeText(full)).toContain("Final action dates: 5 advanced");
+  });
+});
+
+describe("the USCIS quarterly section (2026-09-22)", () => {
+  const rowsIn = [
+    { form: "I-131", title: "Application for Travel Documents, Parole Documents, and Arrival/Departure Records", medianMonths: 14.4 },
+    { form: "I-131", title: "Application for Advance Parole Document for Aliens Inside the United States", medianMonths: 5.8 },
+    { form: "I-140", title: "Immigrant Petition for Alien Workers", medianMonths: 3.9 },
+    { form: "I-485", title: "Application to Register Permanent Residence or Adjust Status (Family)", medianMonths: 7.0 },
+    { form: "I-485", title: "Application to Register Permanent Residence or Adjust Status (Employment)", medianMonths: 6.0 },
+    { form: "I-765", title: "Application for Employment Authorization (All Other)", medianMonths: 3.3 },
+    { form: "I-765", title: "Application for Employment Authorization (Adjustment Of Status)", medianMonths: 6.4 },
+    { form: "I-129", title: "Petition for a Nonimmigrant Worker", medianMonths: 2.1 },
+  ];
+  const medians = pickUscisMedians(rowsIn);
+  const news: DigestData = { ...full, uscisQuarter: "FY2026 Q3", uscisMedians: medians };
+
+  it("picks the reader's line per form by title, not the busiest line, in the order the forms are met", () => {
+    expect(medians).toEqual([
+      { form: "I-140", label: "I-140", medianMonths: 3.9 },
+      { form: "I-485", label: "I-485 (employment)", medianMonths: 6.0 },
+      { form: "I-765", label: "I-765 EAD", medianMonths: 6.4 },
+      { form: "I-131", label: "I-131 advance parole", medianMonths: 5.8 },
+    ]);
+  });
+
+  it("leaves a form out rather than guessing when no line matches or the median is missing", () => {
+    const picked = pickUscisMedians([
+      { form: "I-485", title: "Application to Register Permanent Residence or Adjust Status (Family)", medianMonths: 7.0 },
+      { form: "I-140", title: "Immigrant Petition for Alien Workers", medianMonths: null },
+    ]);
+    expect(picked).toEqual([]);
+  });
+
+  it("is news the week the quarter lands: in the subject, and in the text between the bulletin and the notices", () => {
+    expect(uscisIsNews(news)).toBe(true);
+    // The subject cap (78) drops the USCIS part first when DOL, the bulletin
+    // and a notice already fill it; with room, it is named.
+    expect(composeSubject({ ...news, bulletinMonth: null, bulletinMoves: null, notices: [] })).toBe(
+      "DOL at Nov 2025, USCIS FY2026 Q3 medians · week of Sep 8",
+    );
+    expect(composeSubject(news).length).toBeLessThanOrEqual(SUBJECT_MAX);
+    const text = composeText(news);
+    expect(text).toContain("USCIS'S QUARTERLY MEDIANS, FY2026 Q3");
+    expect(text).toContain("I-485 (employment): 6 months to a decision");
+    expect(text).toContain("I-131 advance parole: 5.8 months to a decision");
+    expect(text).toContain("https://permtracker.app/uscis-processing-times");
+    expect(text.indexOf("VISA BULLETIN")).toBeLessThan(text.indexOf("USCIS'S QUARTERLY"));
+    expect(text.indexOf("USCIS'S QUARTERLY")).toBeLessThan(text.indexOf("ON THE RECORD"));
+    expect(text).toContain("comes from DOL, USCIS, the State Department or the Federal Register");
+  });
+
+  it("is silent, not restated, once the previous issue carried the quarter, and silent with no medians", () => {
+    const repeat: DigestData = { ...news, uscisRepeat: true };
+    expect(uscisIsNews(repeat)).toBe(false);
+    expect(composeSubject(repeat)).not.toContain("USCIS");
+    expect(composeText(repeat)).not.toContain("QUARTERLY MEDIANS");
+    const empty: DigestData = { ...news, uscisMedians: [] };
+    expect(uscisIsNews(empty)).toBe(false);
+    expect(composeText(empty)).not.toContain("QUARTERLY MEDIANS");
+  });
+
+  it("drops the USCIS part before the DOL and bulletin parts when the subject runs long", () => {
+    const long: DigestData = { ...news, notices: Array.from({ length: 4 }, (_, i) => ({ ...full.notices[0]!, title: `n${i}` })) };
+    const subject = composeSubject(long);
+    expect(subject.length).toBeLessThanOrEqual(SUBJECT_MAX);
+    expect(subject).toMatch(/^DOL at/);
   });
 });

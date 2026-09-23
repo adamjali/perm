@@ -70,6 +70,15 @@ export const ORGANIZATION_SAME_AS: readonly string[] = [
  * The one-sentence definition. The homepage block opens with it and the About
  * page's lede is it, so an engine lifting either gets the same sentence.
  */
+/**
+ * The legal entity behind the site. Formed in Florida through Northwest
+ * Registered Agent on Sep 22 2026 (state approval pending at the time of
+ * writing); the Terms bind this name, so every surface that names the
+ * operator reads it from here.
+ */
+export const LEGAL_NAME = "PERM Tracker LLC";
+export const LEGAL_FORM = "a Florida limited liability company";
+
 export const ABOUT_ONE_LINER =
   "PERM Tracker is a free, independent website that follows the PERM labor certification process using the Department of Labor's own published data.";
 

@@ -41,6 +41,7 @@ import {
   composeText,
   type DigestData,
   type DigestNotice,
+  pickUscisMedians,
 } from "./lib/newsletterCompose";
 import { RETRY_DELAY_MS, runSendLoop } from "./lib/newsletterSend";
 import { parseCutoff } from "./lib/perm/calculators/priorityDate";
@@ -119,6 +120,28 @@ async function readPending(): Promise<number | null> {
   } catch {
     return null;
   }
+}
+
+/** USCIS's newest quarterly workbook and the four medians the digest names from it. */
+async function readUscisQuarter(): Promise<Pick<DigestData, "uscisQuarter" | "uscisMedians">> {
+  const head = await one("SELECT fy, quarter FROM uscis_form_quarters ORDER BY fy DESC, quarter DESC LIMIT 1");
+  if (!head) return { uscisQuarter: null, uscisMedians: [] };
+  const fy = Number(head.fy);
+  const quarter = Number(head.quarter);
+  const lines = await rows(
+    `SELECT form, title, median_months FROM uscis_form_quarters
+      WHERE fy = ? AND quarter = ? AND form IN ('I-140', 'I-485', 'I-765', 'I-131')
+      ORDER BY form, completed DESC`,
+    [fy, quarter],
+  );
+  const medians = pickUscisMedians(
+    lines.map((r) => ({
+      form: String(r.form),
+      title: String(r.title),
+      medianMonths: r.median_months === null || r.median_months === undefined ? null : Number(r.median_months),
+    })),
+  );
+  return { uscisQuarter: `FY${fy} Q${quarter}`, uscisMedians: medians };
 }
 
 /** Newest bulletin held and how its final-action cells moved against the one before. */
@@ -268,6 +291,26 @@ export const previousBulletinMonth = internalQuery({
   },
 });
 
+/** The USCIS quarter the newest EARLIER issue carried, or null: a quarter is news once. */
+export const previousUscisQuarter = internalQuery({
+  args: { weekOf: v.string() },
+  returns: v.union(v.string(), v.null()),
+  handler: async (ctx, { weekOf }) => {
+    const prev = await ctx.db
+      .query("newsletterIssues")
+      .withIndex("by_weekOf", (q) => q.lt("weekOf", weekOf))
+      .order("desc")
+      .first();
+    if (!prev) return null;
+    try {
+      const d = JSON.parse(prev.data) as { uscisQuarter?: unknown };
+      return typeof d.uscisQuarter === "string" ? d.uscisQuarter : null;
+    } catch {
+      return null;
+    }
+  },
+});
+
 export const markProgress = internalMutation({
   args: {
     weekOf: v.string(),
@@ -361,22 +404,28 @@ export const buildIssue = internalAction({
     const weekOf = args.weekOf ?? new Date().toISOString().slice(0, 10);
     const since = new Date(Date.now() - 7 * DAY_MS).toISOString().slice(0, 10);
     try {
-      const [queue, pending, bulletin, notices] = await Promise.all([
+      const [queue, pending, bulletin, notices, uscis] = await Promise.all([
         readQueue(),
         readPending(),
         readBulletin(),
         readNotices(since),
+        readUscisQuarter(),
       ]);
       // The bulletin lands once a month and the issue goes out every week, so
       // without this the second and third issues restate the same moves as
       // news. The previous issue is the record of what was already said.
       const previousMonth = await ctx.runQuery(internal.newsletter.previousBulletinMonth, { weekOf });
+      // Same rule for USCIS's quarter, except a repeat is silent rather than
+      // restated: a workbook lands four times a year.
+      const previousQuarter = await ctx.runQuery(internal.newsletter.previousUscisQuarter, { weekOf });
       const data: DigestData = {
         weekOf,
         ...queue,
         pendingCases: pending,
         ...bulletin,
         bulletinRepeat: bulletin.bulletinMonth !== null && previousMonth === bulletin.bulletinMonth,
+        ...uscis,
+        uscisRepeat: uscis.uscisQuarter !== null && previousQuarter === uscis.uscisQuarter,
         notices,
       };
       const subject = composeSubject(data);

@@ -81,3 +81,26 @@ export const CRON_JOBS: Record<string, CronJob> = {
 };
 
 export const CRON_PATH_PREFIX = "/api/cron/dispatch/";
+
+/**
+ * Housekeeping that runs INSIDE this app rather than on GitHub. Same clock,
+ * same secret, its own route, because the work is a Turso write the app's
+ * own read layer owns (and tests): a GitHub step would restate the retention
+ * constant in a second language. The test next door holds `vercel.json` to
+ * the union of this table and CRON_JOBS.
+ */
+export interface HousekeepingJob {
+  /** The route Vercel's cron calls, under /api/cron/ so the Firewall bypass covers it. */
+  path: string;
+  /** The cron expression, UTC, exactly as it appears in vercel.json. */
+  schedule: string;
+  description: string;
+}
+
+export const HOUSEKEEPING_JOBS: Record<string, HousekeepingJob> = {
+  "prune-uscis": {
+    path: "/api/cron/prune-uscis",
+    schedule: "20 9 * * *",
+    description: "delete USCIS case-status rows nobody has looked up for twelve months (privacy policy, section 18)",
+  },
+};

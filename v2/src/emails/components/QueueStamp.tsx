@@ -84,7 +84,18 @@ export function QueueStamp({ eyebrow, month, children }: QueueStampProps) {
           </tr>
         </tbody>
       </table>
-      {children}
+      {typeof children === "string" ? (
+        // A bare string used to render as a text node flush against the table,
+        // so the 6px offset shadow painted over its first line (seen in the
+        // Sep 22 2026 digest preview: "DOL's own stamp" under "November 2025").
+        // Every caller that wraps its own <Text> keeps its style; a string gets
+        // the provenance style, which is what the block's contract promises.
+        <Text className="em-text-secondary" style={styles.provenance}>
+          {children}
+        </Text>
+      ) : (
+        children
+      )}
     </Section>
   );
 }
@@ -130,6 +141,15 @@ const styles = {
     paddingLeft: "10px",
     fontSize: "1px",
     lineHeight: "1px",
+  },
+  provenance: {
+    fontFamily: MONO_STACK,
+    color: "#5A5A5A",
+    fontSize: "13px",
+    lineHeight: "20px",
+    // 14px clears the 6px offset shadow with room to spare; the same value
+    // CaseAlertConfirm gives its own provenance lines.
+    margin: "14px 0 0 0",
   },
   stamp: {
     backgroundColor: "#2ECC40",

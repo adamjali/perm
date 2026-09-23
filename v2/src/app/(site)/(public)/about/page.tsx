@@ -29,6 +29,8 @@ import {
   ABOUT_ONE_LINER,
   ABOUT_TWO_HALVES,
   FOUNDED,
+  LEGAL_FORM,
+  LEGAL_NAME,
   LIVE_SINCE,
   SABRINA,
 } from "@/lib/constants/about";
@@ -244,6 +246,13 @@ export default function AboutPage() {
             Domain registered {monthLabel(FOUNDED)}. Live since {monthLabel(LIVE_SINCE)}.
             Reads DOL&apos;s quarterly disclosure files and asks DOL&apos;s own
             case-status system every day.
+          </p>{" "}
+          <p className="mt-2 text-sm leading-relaxed text-foreground/85">
+            Operated by {LEGAL_NAME}, {LEGAL_FORM}. That is the party named in the{" "}
+            <Link href="/terms" className="underline underline-offset-2 hover:text-primary">
+              terms
+            </Link>
+            .
           </p>
         </div>{" "}
 

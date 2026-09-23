@@ -1,0 +1,79 @@
+---
+title: "How to Read a USCIS Receipt Number"
+description: "What the 13 characters on a USCIS notice mean, which three-letter prefixes USCIS names, where the number sits on Form I-797, and what it can't tell you."
+date: "2026-09-22"
+author: "Sabrina Soltau"
+image: "/images/content/photos/passport-desk.webp"
+imageAlt: "A USCIS receipt notice on a desk, the 13-character receipt number in the top corner"
+tags: ["uscis", "receipt-number", "i-797", "i-140", "i-485", "explainer"]
+category: "reference"
+seoTitle: "How to Read a USCIS Receipt Number"
+seoDescription: "What a USCIS receipt number's 13 characters mean, which prefixes USCIS lists, where it sits on Form I-797, and why the ten digits aren't a code."
+published: true
+---
+
+A USCIS receipt number looks like `IOE0912345678`. It's the one piece of text every later notice, every case status lookup and every call to USCIS keys on, and it's easy to confuse with the DOL case number that came before it.
+
+## What USCIS says it is
+
+USCIS defines the term in its own glossary, at https://www.uscis.gov/tools/glossary: "The receipt number is a unique 13-character identifier USCIS provides for each application or petition it receives. We use it to identify and track our cases. The receipt number consists of 3 letters, such as EAC, WAC, LIN, SRC, NBC, MSC or IOE, with 10 numbers. You can find it on notices of action USCIS has sent you."
+
+Three things in that definition do real work.
+
+- **One per application or petition.** An I-140, an I-485, an I-765 and an I-131 filed together get four receipt numbers, not one. When someone tells you "your case was approved", the first question is which number they were reading.
+- **Three letters, then ten digits, no hyphens.** `IOE0912345678` is a receipt number. `G-100-26125-868956` is not; that's a DOL PERM number, and it's explained in [the PERM case number format guide](/guides/perm-case-number-format).
+- **It's on the notice.** Nobody has to derive it. If you don't have a notice, whoever filed the form has one.
+
+## The three letters
+
+USCIS names seven prefixes in the glossary and doesn't say what each stands for on that page. The one worth knowing is `IOE`. The I-140 form page, at https://www.uscis.gov/i-140, describes an online-filed petition as a "pending Form I-140 (with a receipt number that begins with IOE)", so an `IOE` number is a filing that went through the USCIS online system rather than the mail. The other six are the codes you'll see on mailed filings. USCIS's glossary lists them without mapping them to offices, and this guide won't map them either.
+
+## The ten digits
+
+You'll read in a lot of places that the ten digits encode the fiscal year, a computer workday and a sequence number. USCIS's glossary doesn't say so, and no USCIS page this site has read publishes a key. Treat that decoding as folklore: it may be right, it isn't documented, and nothing about your case depends on it. The number is an identifier, and the only thing you need to do with it is copy it exactly.
+
+## Where it sits on the notice
+
+Every USCIS notice is a Form I-797, and USCIS keeps a page describing the variants at https://www.uscis.gov/forms/filing-guidance/form-i-797-types-and-functions (last reviewed Jan 24, 2025). Form I-797 "is NOT a form you can fill out"; USCIS issues it "to communicate with applicants/petitioners or convey an immigration benefit."
+
+| Notice | What USCIS says it's for |
+|---|---|
+| I-797, Notice of Action | "Issued to communicate receipt or approval of an application or petition." |
+| I-797A | "Issued to an applicant as a replacement Form I-94." |
+| I-797B | "Issued for approval of an alien worker petition." |
+| I-797C | "Issued to communicate receipt or rejection of an applications or petitions; transfer of files; fingerprint biometric, interview and re-scheduled appointments; additional actions, and re-opening of cases." |
+| I-797D | "Accompanies benefit cards." |
+| I-797E | "Issued to request evidence." |
+| I-797F | "Transportation Letter. Issued overseas to allow applicants to travel." |
+
+The receipt notice you get first is an I-797C. USCIS's glossary says only that the number is on the notices of action, and the I-797 page doesn't describe the layout, so look for the field labeled Receipt Number. The same notice names the form it's about, and that form name is what tells you which of your filings the number belongs to. The number alone doesn't.
+
+## Telling your numbers apart
+
+If several filings went in together, keep a short table: receipt number, form, receipt date. Every later question ("was it the 485 or the 765 that got approved?") gets answered by reading the form column, and [the guide to what Emma told you](/guides/what-emma-told-you) walks through the case where an agent quoted a date without naming the form.
+
+One more distinction that trips people up: an approval notice on the Supplement J that accompanies an employment-based I-485 is a notice about the job offer, not about the green card. That one has [its own guide](/guides/i485-vs-i485j-supplement-j).
+
+## Checking a number
+
+USCIS Case Status Online takes one receipt number at a time and returns a short paragraph of plain text. This site's [USCIS case status page](/uscis-case-status) does the same lookup and keeps the date it was read, so you can see whether the text changed since the last time. It reads the same USCIS system; it doesn't know anything USCIS hasn't published about your case.
+
+<ScreenshotFigure
+  src="/images/content/shots/uscis-case-status-entry.webp"
+  alt="The USCIS case status lookup with one box for a 13-character receipt number"
+  caption="One receipt number at a time. The three letters and ten digits go in with no spaces or hyphens."
+/>
+
+## What this can't tell you
+
+- **Which form the number belongs to.** The notice says; the number doesn't. Read the form name printed on it.
+- **What the ten digits mean.** USCIS publishes no key. Anything you read about fiscal years and workdays is unverified against USCIS's own pages.
+- **The status of the case.** A receipt number is a label. Status comes from a lookup, and a lookup returns whatever USCIS has chosen to publish, which is usually one sentence.
+- **Anything about a DOL case.** PERM, prevailing wage and LCA numbers live at DOL and are looked up on [the DOL case status page](/perm-case-status), not by receipt number.
+
+## Related
+
+- [What Emma told you, and which form it meant](/guides/what-emma-told-you)
+- [I-485 vs I-485J: what Supplement J is](/guides/i485-vs-i485j-supplement-j)
+- [PERM case number format](/guides/perm-case-number-format)
+- [EAD and advance parole timelines](/guides/ead-and-advance-parole-timelines)

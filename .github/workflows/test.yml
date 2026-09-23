@@ -150,6 +150,7 @@ jobs:
           # the "wired is not proven" rule applied to tests themselves.
           python3 scripts/test_serial_gaps.py
           python3 scripts/test_lca_facets.py
+          python3 scripts/test_uscis_quarterly.py
 
       # The nightly diff on perm_live_recent (~137k rows). A diff that never
       # matches is not slow, it is absent - and it logs "ok" while rewriting

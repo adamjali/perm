@@ -371,6 +371,222 @@ export const BASICS: Record<string, BasicsEntry[]> = {
       ),
     },
   ],
+  "uscis-processing-times": [
+    {
+      q: "What is a USCIS processing time?",
+      a: (
+        <>
+          USCIS publishes two. The processing-times page gives, per form and
+          subtype, the months within which most recently completed cases
+          finished, and tells you to wait that long before asking about yours.
+          The quarterly performance data gives the median: the months it took
+          to decide half the cases finished that quarter. This page shows the
+          median for every form, dated to its quarter, and the processing-times
+          figure beside it for the I-140.
+        </>
+      ),
+    },
+    {
+      q: "How long does an I-140 take?",
+      a: (
+        <>
+          In USCIS&apos;s quarterly data the median I-140 decided in the third
+          quarter of FY2026 (April to June 2026) took 3.9 months. USCIS&apos;s
+          processing-times page gives longer figures per subtype, from a few
+          months for an advanced-degree professional to nearly three years for
+          extraordinary ability, because it measures the slow tail. The{" "}
+          <Link href="/tools/i140-calculator" className={link}>
+            I-140 queue page
+          </Link>{" "}
+          shows how many are pending in each category.
+        </>
+      ),
+    },
+    {
+      q: "How long does an employment-based I-485 take?",
+      a: (
+        <>
+          The median employment-based I-485 decided in April to June 2026 took 6
+          months, against 7 for family-based and 25.6 for asylum-based, in
+          USCIS&apos;s own quarterly data. Where a case is decided matters too:
+          the{" "}
+          <Link href="/i485-by-field-office" className={link}>
+            I-485 by field office
+          </Link>{" "}
+          page shows each office&apos;s pile.
+        </>
+      ),
+    },
+    {
+      q: "Why did USCIS processing times go up or down?",
+      a: (
+        <>
+          The median is measured over cases completed in the quarter, so a
+          quarter in which USCIS cleared old cases reads slower than one in
+          which it cleared new ones, and USCIS&apos;s I-90 note says exactly
+          that about FY2023. Read a change together with the completions count
+          beside it.
+        </>
+      ),
+    },
+  ],
+  "i485-by-field-office": [
+    {
+      q: "Which USCIS field office handles my I-485?",
+      a: (
+        <>
+          The one USCIS assigns by the applicant&apos;s address. Employment-based
+          applications are received at a service center and routed from there,
+          and many are decided at the National Benefits Center without an
+          interview; a field office decides the cases sent to it for one. USCIS
+          publishes each office&apos;s counts every quarter, which is what this
+          page shows.
+        </>
+      ),
+    },
+    {
+      q: "How many I-485 applications are pending at USCIS?",
+      a: (
+        <>
+          USCIS&apos;s quarterly data for April to June 2026 puts employment-based
+          I-485 applications pending at 268,408 across every office and service
+          center, with 611,067 family-based. Your place inside that pile by
+          priority date is on the{" "}
+          <Link href="/tools/i485-queue-position" className={link}>
+            I-485 queue position
+          </Link>{" "}
+          page, from USCIS&apos;s monthly inventory.
+        </>
+      ),
+    },
+    {
+      q: "What is a field office code?",
+      a: (
+        <>
+          USCIS&apos;s three-letter code for the office (NYC for New York, SFR for
+          San Francisco, NBC for the National Benefits Center). It appears on
+          notices and in USCIS&apos;s own data, and this page keys every office
+          by it.
+        </>
+      ),
+    },
+    {
+      q: "Does a busy office mean a longer wait?",
+      a: (
+        <>
+          Usually, but the file does not say by how much. It gives each
+          office&apos;s pending pile and its quarter&apos;s decisions; dividing
+          them is quarters of work at that pace, which this page shows as a
+          comparison between offices, never as a date for one case.
+        </>
+      ),
+    },
+  ],
+  "i140-awaiting-visa": [
+    {
+      q: "What does 'awaiting visa availability' mean on an approved I-140?",
+      a: (
+        <>
+          The petition is approved but the visa bulletin&apos;s final action date
+          for the category and country has not reached the priority date, so
+          the beneficiary cannot yet be approved for a green card. USCIS counts
+          these petitions every quarter by preference and country of birth,
+          primary beneficiaries only, and this page prints that count.
+        </>
+      ),
+    },
+    {
+      q: "How many people are waiting for an EB-2 India green card?",
+      a: (
+        <>
+          USCIS counted 356,360 approved petitions for India-born beneficiaries
+          in EB-2 as of June 2026, 91% of everyone waiting in that category,
+          before dependents. The count, not a wait in years, is what USCIS
+          publishes; how the cutoff has actually moved is on the{" "}
+          <Link href="/visa-bulletin" className={link}>
+            visa bulletin page
+          </Link>
+          .
+        </>
+      ),
+    },
+    {
+      q: "Is this the same as the I-485 backlog?",
+      a: (
+        <>
+          No. This count is approved petitions whose beneficiary has not been
+          able to file or be approved for adjustment; the{" "}
+          <Link href="/tools/i485-queue-position" className={link}>
+            I-485 inventory
+          </Link>{" "}
+          is applications already filed and pending. They sit on either side of
+          the visa bulletin line.
+        </>
+      ),
+    },
+    {
+      q: "Why are dependents not counted?",
+      a: (
+        <>
+          USCIS counts petitions, and a petition names one beneficiary. The
+          visa limit counts every person, spouse and children included, so the
+          visas these petitions will use is larger than the count shown.
+          USCIS&apos;s note on the sheet says so, and this page repeats it rather
+          than estimating a multiplier.
+        </>
+      ),
+    },
+  ],
+  "uscis-case-status": [
+    {
+      q: "What is a USCIS receipt number?",
+      a: (
+        <>
+          The 13-character identifier USCIS assigns to a filing, three letters
+          and ten digits, printed at the top of every I-797 notice. USCIS&apos;s
+          glossary names the letters as the office that took the case (EAC,
+          WAC, LIN, SRC, NBC, MSC or IOE). It is USCIS&apos;s key to the
+          petition, the way a G-100 number is DOL&apos;s key to the{" "}
+          <Link href="/perm-case-status" className={link}>
+            PERM case
+          </Link>{" "}
+          that came before it.
+        </>
+      ),
+    },
+    {
+      q: "Which USCIS forms follow a PERM?",
+      a: (
+        <>
+          The I-140 immigrant petition, filed by the employer within 180 days
+          of the PERM certification, and then the I-485 adjustment of status
+          once a visa number is available. Each gets its own receipt number.
+          The{" "}
+          <Link href="/tools/i140-calculator" className={link}>
+            I-140 queue
+          </Link>{" "}
+          and{" "}
+          <Link href="/tools/i485-queue-position" className={link}>
+            I-485 queue position
+          </Link>{" "}
+          pages read USCIS&apos;s published figures for those stages.
+        </>
+      ),
+    },
+    {
+      q: "Why does this page not show a status yet?",
+      a: (
+        <>
+          Because PERM Tracker&apos;s USCIS API access is pending, and a
+          status this site did not get from USCIS is not one it will show. The
+          page decodes the receipt and links to USCIS&apos;s own status page,
+          which answers any receipt today. When USCIS issues keys, the same
+          page reads its Case Status API and prints USCIS&apos;s own words with
+          the time they were read.
+        </>
+      ),
+    },
+  ],
 };
 
 export function PageBasics({ page }: { page: keyof typeof BASICS | string }) {

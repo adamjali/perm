@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <!-- The residential backstop for USCIS's quarterly performance workbooks
+       (scripts/ingest_uscis_quarterly.py). GitHub's "USCIS quarterly data"
+       workflow tries on the 15th and 16th of every month at 08:00 UTC; this
+       Mac tries on the 17th, after the daily 10:25 AM wake, in case
+       www.uscis.gov refused the datacenter runner both days. A month with
+       nothing new costs one listing request.
+       Installed by scripts/launchd/install.sh, which fills in __REPO__. -->
+  <key>Label</key><string>app.permtracker.quarterly</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>__REPO__/v2/scripts/residential_job.sh</string>
+    <string>quarterly</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <array>
+    <dict><key>Day</key><integer>17</integer><key>Hour</key><integer>10</integer><key>Minute</key><integer>50</integer></dict>
+  </array>
+  <key>StandardOutPath</key><string>__HOME__/Library/Logs/permtracker/launchd-quarterly.out</string>
+  <key>StandardErrorPath</key><string>__HOME__/Library/Logs/permtracker/launchd-quarterly.err</string>
+  <key>ProcessType</key><string>Background</string>
+  <key>ExitTimeOut</key><integer>1500</integer>
+  <key>RunAtLoad</key><false/>
+</dict>
+</plist>

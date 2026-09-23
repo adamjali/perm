@@ -235,6 +235,7 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
       { href: "/privacy", label: "Privacy Policy" },
       { href: "/terms", label: "Terms of Service" },
       { href: "/security", label: "Security" },
+      { href: "/accessibility", label: "Accessibility" },
       { href: "/contact", label: "Contact" },
     ],
   },

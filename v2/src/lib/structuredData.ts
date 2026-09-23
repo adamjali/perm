@@ -15,7 +15,7 @@
  * product was. Both sides of the product, in both descriptions, always.
  */
 
-import { FOUNDED, ORGANIZATION_SAME_AS, PEOPLE } from './constants/about';
+import { FOUNDED, LEGAL_NAME, ORGANIZATION_SAME_AS, PEOPLE } from './constants/about';
 
 /**
  * Single source for the schema.org `@id` fragments used to cross-link entities
@@ -96,6 +96,9 @@ export function getOrganizationSchema(baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'Organization' as const,
     name: 'PERM Tracker',
+    // The entity the Terms bind. One constant feeds this, the About page and
+    // the Terms, so the three cannot name different parties.
+    legalName: LEGAL_NAME,
     url: baseUrl,
     logo: `${baseUrl}/icon-512.png`,
     contactPoint: {

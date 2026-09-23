@@ -11,6 +11,8 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
+import { getUscisFormMedian } from "@/lib/turso/uscisQuarterly";
+import { quarterLabel } from "@/lib/uscisQuarterlyShape";
 import { withSocialCard } from "@/lib/socialCard";
 /**
  * I-140 queue calculator.
@@ -64,7 +66,13 @@ const FAQS = [
 ];
 
 export default async function I140CalculatorPage() {
-  const data = await fetchQuery(api.uscisI140.getLatest, {}).catch(() => null);
+  const [data, i140Median] = await Promise.all([
+    fetchQuery(api.uscisI140.getLatest, {}).catch(() => null),
+    // The quarterly median over every I-140 decided, from USCIS's all-forms
+    // workbook: the third official figure, beside the published range and
+    // the pending count, each measuring something different.
+    getUscisFormMedian("I-140"),
+  ]);
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -105,6 +113,15 @@ export default async function I140CalculatorPage() {
           subtypes={data ? data.subtypes : []}
           asOfQuarter={data ? data.asOfQuarter : null}
           sourceFile={data ? data.sourceFile : null}
+          quarterlyMedian={
+            i140Median
+              ? {
+                  months: i140Median.medianMonths,
+                  quarterLabel: quarterLabel(i140Median.fy, i140Median.quarter),
+                  completed: i140Median.completed,
+                }
+              : null
+          }
         />
       </section>
 

@@ -29,6 +29,59 @@ export interface WatchedCase {
   url: string;
 }
 
+export interface UscisMedian {
+  /** The form as USCIS prints it, e.g. "I-485". */
+  form: string;
+  /** Which line of the workbook, in the reader's words: "I-485 (employment)". */
+  label: string;
+  medianMonths: number;
+}
+
+/**
+ * The one workbook line per form the digest names, chosen by TITLE, because a
+ * form's busiest line is not the reader's line: in FY2026 Q3 the I-485's
+ * largest row is family-based (7.0 months) while the employment-based row is
+ * 6.0, and the busiest I-131 row is not advance parole. Order is the order a
+ * PERM beneficiary meets the forms.
+ */
+const USCIS_DIGEST_LINES: { form: string; label: string; titles: RegExp[] }[] = [
+  { form: "I-140", label: "I-140", titles: [/Immigrant Petition for Alien Workers/i, /./] },
+  { form: "I-485", label: "I-485 (employment)", titles: [/\(Employment\)/i] },
+  { form: "I-765", label: "I-765 EAD", titles: [/\(c\)\(9\)/i, /adjust/i, /All Other/i] },
+  { form: "I-131", label: "I-131 advance parole", titles: [/Advance Parole/i] },
+];
+
+export interface UscisWorkbookRow {
+  form: string;
+  title: string;
+  medianMonths: number | null;
+}
+
+/** Pick the digest's lines out of a quarter's rows; a form with no matching line is left out, never guessed. */
+export function pickUscisMedians(rowsIn: UscisWorkbookRow[]): UscisMedian[] {
+  const out: UscisMedian[] = [];
+  for (const line of USCIS_DIGEST_LINES) {
+    const candidates = rowsIn.filter((r) => r.form === line.form && r.medianMonths !== null && r.medianMonths > 0);
+    let hit: UscisWorkbookRow | undefined;
+    for (const re of line.titles) {
+      hit = candidates.find((r) => re.test(r.title));
+      if (hit) break;
+    }
+    if (hit) out.push({ form: line.form, label: line.label, medianMonths: hit.medianMonths as number });
+  }
+  return out;
+}
+
+/** The USCIS section renders only the week a quarter first lands. */
+export function uscisIsNews(d: DigestData): boolean {
+  return typeof d.uscisQuarter === "string" && d.uscisQuarter.length > 0 && !d.uscisRepeat && (d.uscisMedians?.length ?? 0) > 0;
+}
+
+/** "6" for 6.0, "5.8" for 5.8: the workbook prints one decimal and so do we. */
+export function monthsLabel(m: number): string {
+  return Number.isInteger(m) ? String(m) : m.toFixed(1);
+}
+
 export interface DigestData {
   /** ISO date the issue is composed for (a Tuesday). */
   weekOf: string;
@@ -45,6 +98,17 @@ export interface DigestData {
   bulletinMoves: { advanced: number; held: number; retrogressed: number; total: number } | null;
   /** True when the previous issue carried this same bulletin month: the moves were already reported. */
   bulletinRepeat?: boolean;
+  /**
+   * USCIS's newest quarterly workbook, as "FY2026 Q3", and the medians the
+   * digest names from it. Quarterly figures are news ONCE: the issue that
+   * first carries a quarter prints them, later issues stay silent (a bulletin
+   * repeats with a "same as last week" line because it is monthly; twelve
+   * repeats of a quarter would be noise).
+   */
+  uscisQuarter?: string | null;
+  uscisMedians?: UscisMedian[];
+  /** True when the previous issue already carried this quarter. */
+  uscisRepeat?: boolean;
   /** Federal Register documents published in the last 7 days. */
   notices: DigestNotice[];
   /** Absolute URL of the preference center for this address (per recipient). */
@@ -116,6 +180,7 @@ export function composeSubject(d: DigestData): string {
           : `${mon} bulletin unchanged`,
     );
   }
+  if (uscisIsNews(d)) parts.push(`USCIS ${d.uscisQuarter} medians`);
   if (d.notices.length > 0) parts.push(`${d.notices.length} new ${d.notices.length === 1 ? "notice" : "notices"}`);
   const suffix = ` · week of ${dateLabel(d.weekOf).replace(/,\s*\d{4}$/, "")}`;
   const fallback = "The week in PERM and the visa bulletin";
@@ -163,6 +228,13 @@ export function composeText(d: DigestData): string {
     lines.push(`${SITE_URL}/visa-bulletin/${d.bulletinMonth}`);
     lines.push("");
   }
+  if (uscisIsNews(d)) {
+    lines.push(`USCIS'S QUARTERLY MEDIANS, ${d.uscisQuarter}`);
+    for (const m of d.uscisMedians ?? []) lines.push(`${m.label}: ${monthsLabel(m.medianMonths)} months to a decision`);
+    lines.push("Median months in the quarter, from USCIS's own workbook; the 80% figure on USCIS's processing-times page is a different measure.");
+    lines.push(`${SITE_URL}/uscis-processing-times`);
+    lines.push("");
+  }
   if (d.notices.length > 0) {
     lines.push("ON THE RECORD THIS WEEK");
     for (const n of d.notices) {
@@ -175,7 +247,7 @@ export function composeText(d: DigestData): string {
   lines.push(`Check a case, any PERM, wage-request or LCA number, live from DOL: ${CHECK_CASE_URL}`);
   lines.push(`Start tracking cases, free, for attorneys, paralegals and HR teams: ${SIGNUP_URL}`);
   lines.push("");
-  lines.push("Every figure above comes from DOL, the State Department or the Federal Register, dated as they published it. Nothing is predicted.");
+  lines.push("Every figure above comes from DOL, USCIS, the State Department or the Federal Register, dated as they published it. Nothing is predicted.");
   lines.push("");
   if (d.prefsUrl) {
     lines.push(`Manage or stop this email: ${d.prefsUrl}`);

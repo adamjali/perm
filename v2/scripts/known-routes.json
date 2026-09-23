@@ -172,5 +172,10 @@
   "/tools/salary-explorer",
   "/tools/wage-levels",
   "/visa-bulletin",
-  "/visa-bulletin/family"
+  "/visa-bulletin/family",
+  "/accessibility",
+  "/uscis-case-status",
+  "/uscis-processing-times",
+  "/i485-by-field-office",
+  "/i140-awaiting-visa"
 ]

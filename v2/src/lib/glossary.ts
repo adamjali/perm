@@ -161,6 +161,13 @@ export const GLOSSARY: GlossaryTerm[] = [
     see: [{ label: "Green card fees", href: "/tools/green-card-fees" }],
   },
   {
+    term: "Emma",
+    slug: "emma",
+    definition:
+      "USCIS's computer-generated virtual assistant on uscis.gov, named for Emma Lazarus. It answers general questions in English and Spanish and can hand off to a live agent. USCIS says not to ask it about your own case, and agents reached through it quote dates without naming forms, so match any date to your receipt numbers.",
+    see: [{ label: "What Emma told you", href: "/guides/what-emma-told-you" }],
+  },
+  {
     term: "Employment-based preference categories",
     slug: "eb-categories",
     aka: ["EB-1", "EB-2", "EB-3"],
@@ -249,6 +256,16 @@ export const GLOSSARY: GlossaryTerm[] = [
       "The wage-and-conditions attestation an H-1B petition needs, filed on ETA-9035. DOL certifies it within seven working days on a review of completeness rather than of the wage, and publishes the wage attested in its quarterly files.",
     cite: CFR655("655.740"),
     see: [{ label: "H-1B salary explorer", href: "/lca-wages" }],
+  },
+  {
+    term: "Median processing time",
+    slug: "median-processing-time",
+    definition:
+      "USCIS's quarterly files report a median: the time it took to complete half the cases in the quarter. USCIS's processing times page reports a different figure, the time to complete 80% of cases over six months, so the two disagree by design.",
+    see: [
+      { label: "Median vs 80%", href: "/guides/uscis-processing-times-median-vs-80-percent" },
+      { label: "USCIS processing times", href: "/uscis-processing-times" },
+    ],
   },
   {
     term: "National interest waiver",
@@ -342,6 +359,17 @@ export const GLOSSARY: GlossaryTerm[] = [
     see: [{ label: "PERM deadline calculator", href: "/tools/perm-deadline-calculator" }],
   },
   {
+    term: "Receipt number",
+    slug: "receipt-number",
+    aka: ["USCIS receipt number"],
+    definition:
+      "The 13-character identifier USCIS assigns to each application or petition: three letters such as IOE, EAC or WAC, then ten digits. It's on every I-797 notice and is the key for USCIS case status. One per form, so an I-140, I-485, I-765 and I-131 filed together carry four.",
+    see: [
+      { label: "Reading a receipt number", href: "/guides/uscis-receipt-number" },
+      { label: "USCIS case status", href: "/uscis-case-status" },
+    ],
+  },
+  {
     term: "Reconsideration",
     slug: "reconsideration",
     definition:
@@ -423,6 +451,14 @@ export const GLOSSARY: GlossaryTerm[] = [
       "Recruitment DOL directs: the officer approves the advertisement and where it runs, applicants write to the officer, and the employer reports on each. Ordered after a failure on audit or as a two-year consequence of not responding to one.",
     cite: CFR656("656.21"),
     see: [{ label: "Every status, explained", href: "/perm-case-statuses#supervised-recruitment" }],
+  },
+  {
+    term: "Supplement J",
+    slug: "supplement-j",
+    aka: ["I-485J", "I-485 Supplement J"],
+    definition:
+      "The form filed with an employment-based I-485 to confirm the I-140 job offer is still valid, or to port under INA 204(j) to a same-or-similar job once the I-485 has been pending 180 days. An approval of it is about the job, not the green card; the I-485 still needs a visa number.",
+    see: [{ label: "I-485 vs I-485J", href: "/guides/i485-vs-i485j-supplement-j" }],
   },
   {
     term: "Three 180-day clocks",

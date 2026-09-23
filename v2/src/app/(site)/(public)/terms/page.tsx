@@ -603,12 +603,12 @@ export default function TermsPage() {
             <p className="text-foreground/80 leading-relaxed">
               These Terms shall be governed by and construed in accordance with
               the laws of the{" "}
-              <strong>District of Columbia, United States</strong>, without regard
+              <strong>State of Florida, United States</strong>, without regard
               to its conflict of law provisions.
             </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Any disputes arising from these Terms or the Service shall be
-              resolved in the courts located in the District of Columbia, and you
+              resolved in the state or federal courts located in Florida, and you
               consent to the personal jurisdiction of such courts.
             </p>{" "}
 

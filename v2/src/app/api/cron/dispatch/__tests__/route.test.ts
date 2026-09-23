@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  */
 
 const { GET } = await import("../[job]/route");
-const { CRON_JOBS, CRON_PATH_PREFIX, RECENT_RUN_WINDOW_MS, REPO } = await import("../jobs");
+const { CRON_JOBS, CRON_PATH_PREFIX, HOUSEKEEPING_JOBS, RECENT_RUN_WINDOW_MS, REPO } = await import("../jobs");
 
 const SECRET = "cron-secret-for-tests";
 const TOKEN = "github-token-for-tests";
@@ -145,13 +145,24 @@ describe("vercel.json agrees with the job table", () => {
     for (const [name, job] of Object.entries(CRON_JOBS)) {
       expect(byPath.get(`${CRON_PATH_PREFIX}${name}`), `cron for ${name}`).toBe(job.schedule);
     }
-    expect(crons.length, "a cron pointing at a job that is not in the table").toBe(Object.keys(CRON_JOBS).length);
+    for (const [name, job] of Object.entries(HOUSEKEEPING_JOBS)) {
+      expect(byPath.get(job.path), `cron for housekeeping ${name}`).toBe(job.schedule);
+    }
+    expect(crons.length, "a cron pointing at a job that is in neither table").toBe(
+      Object.keys(CRON_JOBS).length + Object.keys(HOUSEKEEPING_JOBS).length,
+    );
   });
 
-  it("every cron path resolves to a known job", () => {
+  it("every cron path resolves to a known job, dispatch or housekeeping", () => {
+    const housekeeping = new Set(Object.values(HOUSEKEEPING_JOBS).map((j) => j.path));
     for (const c of crons) {
+      if (housekeeping.has(c.path)) continue;
       expect(c.path.startsWith(CRON_PATH_PREFIX)).toBe(true);
       expect(CRON_JOBS[c.path.slice(CRON_PATH_PREFIX.length)], c.path).toBeDefined();
     }
+  });
+
+  it("every housekeeping path sits under /api/cron/ (the Firewall bypass for vercel-cron)", () => {
+    for (const j of Object.values(HOUSEKEEPING_JOBS)) expect(j.path.startsWith("/api/cron/")).toBe(true);
   });
 });

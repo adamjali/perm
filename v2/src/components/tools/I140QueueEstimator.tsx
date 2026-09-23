@@ -25,6 +25,8 @@ import {
   getI140ProcessingTime,
   type I140Category,
 } from "@/lib/processing-times/i140ProcessingTimes";
+import Link from "next/link";
+
 import { Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +34,14 @@ export interface I140QueueEstimatorProps {
   subtypes: readonly I140QuarterStats[];
   asOfQuarter: string | null;
   sourceFile: string | null;
+  /**
+   * USCIS's quarterly MEDIAN for every I-140 decided in a quarter, from the
+   * all-forms performance workbook, when the site holds one. A different
+   * measurement from the published range beside it (one median over every
+   * subtype, against a per-subtype figure over the slow tail), and shown as
+   * such rather than folded in.
+   */
+  quarterlyMedian?: { months: number; quarterLabel: string; completed: number | null } | null;
   className?: string;
 }
 
@@ -51,6 +61,7 @@ export function I140QueueEstimator({
   subtypes,
   asOfQuarter,
   sourceFile,
+  quarterlyMedian = null,
   className,
 }: I140QueueEstimatorProps) {
   const selectId = useId();
@@ -186,6 +197,25 @@ export function I140QueueEstimator({
             </p>{" "}
             <p className="mt-3 text-base leading-relaxed text-foreground/70">
               Measured over petitions already decided.
+            </p>
+          </div>
+        ) : null}
+        {quarterlyMedian ? (
+          <div className="bg-card p-6 sm:p-8">
+            <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+              USCIS quarterly median, all I-140s
+            </p>{" "}
+            <p className="mt-2 font-heading text-2xl font-black leading-none">
+              {Number.isInteger(quarterlyMedian.months) ? quarterlyMedian.months : quarterlyMedian.months.toFixed(1)} months
+            </p>{" "}
+            <p className="mt-3 text-base leading-relaxed text-foreground/70">
+              Half of every I-140 decided in {quarterlyMedian.quarterLabel} took less
+              {quarterlyMedian.completed !== null ? `, over ${quarterlyMedian.completed.toLocaleString("en-US")} decisions` : ""}.
+              One median across every subtype; the range beside it is per subtype.{" "}
+              <Link href="/uscis-processing-times" className="underline underline-offset-2 hover:text-primary">
+                Every form&apos;s median
+              </Link>
+              .
             </p>
           </div>
         ) : null}

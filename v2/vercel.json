@@ -25,6 +25,10 @@
     {
       "path": "/api/cron/dispatch/case-status-pending",
       "schedule": "40 19 * * *"
+    },
+    {
+      "path": "/api/cron/prune-uscis",
+      "schedule": "20 9 * * *"
     }
   ]
 }

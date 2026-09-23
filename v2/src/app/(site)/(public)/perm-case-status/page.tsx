@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 
@@ -15,6 +16,7 @@ import { PwdLookup } from "@/components/tools/PwdStatusResult";
 import { LcaLookup } from "@/components/tools/LcaStatusResult";
 import { buildWall, neighbourMonths } from "@/lib/casePosition";
 import { isLegacyCaseNumber, normaliseCaseNumber } from "@/lib/caseNumberShape";
+import { looksLikeReceipt, normaliseReceipt } from "@/lib/uscis/receipt";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { findFront, type CohortMonth } from "@/lib/liveQueue";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -162,6 +164,12 @@ export default async function PermCaseStatusPage({
 }) {
   const { case: raw } = await searchParams;
   const typed = typeof raw === "string" ? raw : "";
+  // A USCIS receipt (EAC2190123456) is a different agency's record and has
+  // its own page. Checked before anything DOL-shaped: a reader holding an
+  // I-140 receipt is on the wrong page, not holding a bad number, and
+  // "not the shape of a PERM case number" would be true and useless.
+  const uscisReceipt = typed.trim().length > 0 ? normaliseReceipt(typed) : null;
+  if (uscisReceipt) redirect(`/uscis-case-status?receipt=${encodeURIComponent(uscisReceipt)}`);
   // A prevailing wage number (P-100-...) takes its own path: same page, same
   // form, a different table and a different queue. Checked FIRST, because the
   // PERM shape rule accepts any letter and would otherwise send it to the
@@ -243,6 +251,24 @@ export default async function PermCaseStatusPage({
           is the most likely thing that is not a case number. Handing it to the
           cross-program search answers the question they were actually asking
           instead of stopping at "wrong shape". */}
+      {malformed && looksLikeReceipt(typed) ? (
+        <div className="mt-4 border-2 border-border bg-tint-primary p-5">
+          <p className="text-base leading-relaxed">
+            <b className="font-bold">Holding a USCIS receipt number?</b> Three
+            letters and ten digits, like EAC2190123456, is USCIS&apos;s record
+            of the I-140 or I-485, not DOL&apos;s record of the PERM. It has
+            its own page.
+          </p>{" "}
+          <p className="mt-3">
+            <Link
+              href="/uscis-case-status"
+              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
+            >
+              Check a USCIS receipt instead
+            </Link>
+          </p>
+        </div>
+      ) : null}
       {malformed && looksLikeName(typed) ? (
         <div className="mt-4 border-2 border-border bg-tint-primary p-5">
           <p className="text-base leading-relaxed">

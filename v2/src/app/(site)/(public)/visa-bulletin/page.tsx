@@ -21,6 +21,8 @@ import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
 
+import { BulletinMonthStrip } from "@/components/data/BulletinMonthStrip";
+
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
@@ -410,6 +412,8 @@ export default async function VisaBulletinPage() {
         <Link href="/tools/priority-date-calculator" className="font-semibold underline underline-offset-2">priority date page</Link>, and the queue ahead of your own date on the{" "}
         <Link href="/tools/i485-queue-position" className="font-semibold underline underline-offset-2">I-485 queue position tool</Link>.
       </p>
+
+      <BulletinMonthStrip months={series.map((b) => b.bulletinMonth)} newest={last.bulletinMonth} />
 
       <div className="mt-12">
         <BulletinAlertForm source="visa-bulletin" />

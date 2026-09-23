@@ -208,6 +208,9 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/i485-queue-position`, lastModified: "2026-08-26", images: [`${base}/og/i485-queue-position.jpg`] },
     { url: `${base}/tools/salary-explorer`, lastModified: "2026-08-26", images: [`${base}/og/salary-explorer.jpg`] },
     { url: `${base}/tools/i140-trends`, lastModified: "2026-08-27", images: [`${base}/og/i140-trends.jpg`] },
+    { url: `${base}/uscis-processing-times`, lastModified: "2026-09-22", images: [`${base}/og/uscis-processing-times.jpg`] },
+    { url: `${base}/i485-by-field-office`, lastModified: "2026-09-22", images: [`${base}/og/i485-by-field-office.jpg`] },
+    { url: `${base}/i140-awaiting-visa`, lastModified: "2026-09-22", images: [`${base}/og/i140-awaiting-visa.jpg`] },
     // Gated on MIRROR_COMPLETE together with the page's own robots directive
     // and its provisional notice: a page carrying provisional counts must not
     // be listed for search, and one that is listed must not still be calling
@@ -281,6 +284,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     // canonicalises back here, so advertising one would contradict the page's
     // own directive and open ~412,000 URLs of crawl space.
     { url: `${base}/perm-case-status`, lastModified: "2026-08-27", images: [`${base}/og/perm-case-status.jpg`] },
+    { url: `${base}/uscis-case-status`, lastModified: "2026-09-22", images: [`${base}/og/uscis-case-status.jpg`] },
     { url: `${base}/perm-denial-risk`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-denial-risk.jpg`] },
     { url: `${base}/perm-rfi-audit`, lastModified: "2026-08-27", images: [`${base}/og/perm-rfi-audit.jpg`] },
     { url: `${base}/perm-employers/under-review`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/perm-employers-under-review.jpg`] },
@@ -297,8 +301,9 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-decision-activity`, lastModified: "2026-08-27", images: [`${base}/og/perm-decision-activity.jpg`] },
     { url: `${base}/contact`, lastModified: "2026-08-24", images: [`${base}/og/contact.jpg`] },
     { url: `${base}/terms`, lastModified: "2026-06-15", images: [`${base}/og/terms.jpg`] },
-    { url: `${base}/privacy`, lastModified: "2026-08-24", images: [`${base}/og/privacy.jpg`] },
+    { url: `${base}/privacy`, lastModified: "2026-09-22", images: [`${base}/og/privacy.jpg`] },
     { url: `${base}/security`, lastModified: "2026-06-15", images: [`${base}/og/security.jpg`] },
+    { url: `${base}/accessibility`, lastModified: "2026-09-22", images: [`${base}/og/accessibility.jpg`] },
   ];
 
   const content: Entry[] = allPosts.map((post) => ({

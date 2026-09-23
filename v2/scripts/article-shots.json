@@ -202,5 +202,11 @@
   "clip": "main section",
   "wait": "main",
   "width": 414
- }
+ },
+  {"name": "uscis-case-status-entry", "url": "https://permtracker.app/uscis-case-status", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
+  {"name": "uscis-case-status-result", "url": "https://permtracker.app/uscis-case-status", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
+  {"name": "uscis-processing-times-table", "url": "https://permtracker.app/uscis-processing-times", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
+  {"name": "uscis-processing-times-i765-i131", "url": "https://permtracker.app/uscis-processing-times", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
+  {"name": "i485-by-field-office-table", "url": "https://permtracker.app/i485-by-field-office", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500},
+  {"name": "i140-awaiting-visa-eb2-india", "url": "https://permtracker.app/i140-awaiting-visa", "clip": "main section", "wait": "main", "width": 1280, "height": 820, "settle": 1500}
 ]

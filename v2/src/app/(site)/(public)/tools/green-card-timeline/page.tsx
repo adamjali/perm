@@ -19,6 +19,8 @@ import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getEstimatorData } from "@/lib/turso/estimate";
+import { getUscisFormMedian } from "@/lib/turso/uscisQuarterly";
+import { quarterLabel } from "@/lib/uscisQuarterlyShape";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";
@@ -81,10 +83,13 @@ function monthsFromDays(days: number | null): number | null {
 }
 
 export default async function GreenCardTimelinePage() {
-  const [permData, uscisData, bulletins] = await Promise.all([
+  const [permData, uscisData, bulletins, i140Median] = await Promise.all([
     getEstimatorData(),
     fetchQuery(api.uscisI140.getLatest, {}).catch(() => null),
     getVisaBulletinSeries(),
+    // USCIS's quarterly median over every I-140 decided, shown beside the
+    // per-subtype ranges so the two measurements sit together, labelled.
+    getUscisFormMedian("I-140"),
   ]);
   // The newest bulletin is the only one the panel shows: it answers "where is
   // the line NOW". The movement over time is the priority-date calculator's
@@ -176,6 +181,11 @@ export default async function GreenCardTimelinePage() {
                 subtypes={i140Subtypes}
                 activeCode={i140ActiveCode}
                 asOf={PROCESSING_TIMES_AS_OF}
+                quarterlyMedian={
+                  i140Median
+                    ? { months: i140Median.medianMonths, quarterLabel: quarterLabel(i140Median.fy, i140Median.quarter) }
+                    : null
+                }
               />
             ),
             "priority-date": <PriorityDatePanel bulletin={newestBulletin} />,

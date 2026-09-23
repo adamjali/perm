@@ -202,6 +202,22 @@ const SOURCES = [
     href: "https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data",
   },
   {
+    name: "USCIS quarterly performance workbooks",
+    seal: "/agency/dhs-seal.png",
+    sealAlt: "Seal of the US Department of Homeland Security",
+    what: "Every form's median months to a decision, the I-485 by field office, approved I-140s awaiting a visa number by category and country, and I-140 approvals by class and country. Each sheet is reconciled against USCIS's own totals before it is written.",
+    cadence: "Quarterly, when USCIS publishes; discovered from USCIS's listing, never constructed.",
+    href: "https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data",
+  },
+  {
+    name: "USCIS Case Status API",
+    seal: "/agency/dhs-seal.png",
+    sealAlt: "Seal of the US Department of Homeland Security",
+    what: "USCIS's own status text and dated history for one receipt number, read at lookup time under credentials issued to PERM Tracker LLC. Off until USCIS grants access; the lookup page says so.",
+    cadence: "On demand, per lookup.",
+    href: "https://developer.uscis.gov/api/case-status",
+  },
+  {
     name: "State Department visa bulletin",
     seal: "/agency/dos-seal.png",
     sealAlt: "Seal of the US Department of State",
