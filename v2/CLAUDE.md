@@ -5991,8 +5991,10 @@ after the flag is on: it schedules the send.
 
 The Search Console timers (`CronCreate`, `7 15,17,19 * * *`) fired Sep 20 to 22 at
 3:15, 5:15 and 7:37 PM ET (the scheduler's jitter), last at **Tue Sep 22, 5:17 PM**. The
-context continuation at 7:18 PM started a new process and deleted them, so Wed Sep 23's
-3:07 PM round never ran. Recreated at 3:52 PM Sep 23 (job `d001ea00`, expires after 7 days)
+jobs were gone after the context continuation at 7:18 PM, so Wed Sep 23's 3:07 PM round
+never ran. (Corrected 7:40 PM Sep 23: the next continuation, ~5:45 PM Sep 23, kept
+`d001ea00` alive, so a continuation does not always end the process. The check stands; the
+cause of the Sep 22 loss is not established.) Recreated at 3:52 PM Sep 23 (job `d001ea00`, expires after 7 days)
 with a one-shot catch-up at 3:58 PM. Recover the prompt from the transcript, not memory:
 
 ```bash
@@ -6044,5 +6046,15 @@ range dropped) each turned `test_warn.py` red.
 **Not re-checked for the other three states, and why:** CA, TX and WA ids hash fields the
 source does not renumber (addresses, cities, the portal's own record), the Texas
 two-source merge was verified 69 of 69 on Sep 9, and their row counts sit within one to
-nine of the distinct-notice count. Employer pages cache for 30 days, so a page rendered
-before the prune can still show a New York duplicate until the next deploy.
+nine of the distinct-notice count.
+
+**The employer pages, measured 7:35 PM Sep 23 instead of assumed.** I first wrote that a page
+cached before the prune could show a duplicate "until the next deploy". Then I compared all
+23 employer pages that carry a New York notice against the table: 20 already matched; 2
+(Citigroup Global Markets, Vimeo) were served `x-vercel-cache: STALE` with the doubled row,
+and that one visit made Vercel rebuild them (a re-fetch read `HIT`, one notice each). The
+third, Morgan Stanley, was not stale at all: its 7 rows equal the table's 7, and two of them
+read identically on the page because New York lists two separate 1-worker notices on
+2026-03-05, at 100 Park Ave and One Penn Plaza, and the band never prints the site address.
+Measure the pages before calling them stale; and a band that hides the field that tells two
+rows apart will look like a duplicate even when the data is right.
