@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-16
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-22
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **391 files / 7,034 tests across 4 vitest
@@ -128,6 +128,8 @@ dependencies.**
 | processing times | **DOL** FLAG | daily |
 | visa bulletin | **State Dept** (84 months, 2019-10 →) | monthly, one human minute |
 | I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly; GitHub tries first, **Adam's Mac retries the day after** when `www.uscis.gov` 403s the datacenter runner |
+| USCIS quarterly workbooks: every form's median, the I-485 by field office, approved EB petitions awaiting a visa number, I-140 by class and country | **USCIS** quarterly performance data, reconciled against each sheet's own totals | quarterly: GitHub on the 15th and 16th, the Mac on the 17th (`scripts/ingest_uscis_quarterly.py`, since Sep 22 2026) |
+| USCIS case status by receipt number | **USCIS** Case Status API (OAuth), on demand per lookup | built and dark until USCIS grants API access to PERM Tracker LLC; plan in `.planning/llc-and-uscis-plan.md` |
 | entities, daily decisions | derived from our own corpus | with each quarterly |
 | RFI funnel | the rival tracker aggregate **frozen**, plus our own observations | frozen half never re-read |
 | prevailing wage requests, live (`P-100-`) | **DOL** batch API, same counter as PERM | daily pending sweep; discovery via the unified walk; weekly rolling 180-day re-check; backfill self-chains |

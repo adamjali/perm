@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-09-16
+> **Status:** Production | **Last Updated:** 2026-09-22
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -5952,3 +5952,37 @@ subject's cap drops the USCIS part before DOL's frontier and the bulletin.
   fixture already fills the 78-character cap, so the USCIS part is dropped by
   design; the assertion runs on a fixture with room and separately checks the
   cap holds.
+
+## Three forks in one tree, and the captures that came from the local build (2026-09-22)
+
+The USCIS batch ran as three forks on disjoint lanes with the coordinator holding the
+registries and the deploy. Rules that held: a handoff is a claim and its tests are re-run
+before it is folded in; registry lines come back as text (sitemap `build.ts`,
+`dataSections.ts`, `pageCards.ts`, `llms.txt`, `datasetCoverage.ts`, `known-routes.json`,
+the glossary) and the coordinator applies them; no lane launches a browser. One lane
+added another lane's missing `DataSection` key to keep typecheck green, which is the
+right call when the key is the only thing standing between two lanes.
+
+**Captures come from the LOCAL production build when the live site lacks the page.**
+Track C's shot specs pointed at `https://permtracker.app/...` for pages not yet
+deployed. A scratch copy of the specs with the host rewritten to `http://localhost:3000`
+(`PORT=3000 pnpm start` on the fresh build) drove `scripts/shoot.mjs` with `SHOT_OUT`
+pointing at the scratchpad; the six PNGs were copied into
+`public/images/content/shots/`, `optimize-shots.py` made the WebPs, and the PNGs were
+deleted before the commit. Cards: 1440x900 captures, `make-page-cards.mjs` with crop
+`[600, 136, 2280, 1376]`. One clip was wrong on the contact sheet (`main section` caught
+the "access is pending" panel, not the form) and was re-shot with `main form`; a caption
+that described a figure the page cannot yet show ("two dated readings") was rewritten to
+what the figure shows. **Look at the contact sheet before the captions ship.**
+
+**`known-routes.json` is hand-styled; append in its style.** `json.dump` rewrote the
+whole file once (it happened to already be sorted, so the diff was small, but the
+next time it would not be).
+
+**The digest's new read was probed on the deployed Convex with a past-dated build.**
+`npx convex run newsletter:buildIssue '{"weekOf":"2026-09-01"}' --prod` with
+`NEWSLETTER_ENABLED` still unset stored a preview whose text carried the USCIS section
+with the four medians production holds, and sent nothing. The scratch row stays; the
+Sep 29 issue still reads the quarter as news because `previousUscisQuarter` looks at
+the newest EARLIER issue, which is Sep 22's. Never run `buildIssue` for the current week
+after the flag is on: it schedules the send.
