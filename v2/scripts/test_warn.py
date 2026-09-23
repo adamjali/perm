@@ -16,7 +16,7 @@ import sys
 import warnings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ingest_warn import PRUNE_MIN_COVERAGE, TX_DATA_PAGE, TX_PAGE, _cmp, assign_ids, prune_plan, rank_of, parse_california, parse_new_york, parse_texas, parse_texas_api, parse_washington_page  # noqa: E402
+from ingest_warn import CA_PAGE, PRUNE_MIN_COVERAGE, TX_DATA_PAGE, TX_PAGE, _cmp, _site, assign_ids, prune_plan, rank_of, parse_california, parse_new_york, parse_texas, parse_texas_api, parse_washington_page, write  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIXTURE = os.path.join(HERE, "fixtures", "ca_warn_2026-09-08.xlsx")
@@ -165,6 +165,64 @@ def main() -> int:
     stale, cov = prune_plan(wide, load)
     check(stale == [] and cov < PRUNE_MIN_COVERAGE, f"a load covering {cov:.0%} of what is held is treated as truncated and prunes nothing", f)
     check(prune_plan(held, []) == ([], 0.0), "an empty load prunes nothing", f)
+
+    # The site: display only, so two notices one company filed the same day
+    # for different sites stop printing identically. Never part of the id.
+    check(_site("17030 Green Drive  City of Industry CA 91745") == "17030 Green Drive, City of Industry CA 91745", "the double-space street/city gap becomes a comma", f)
+    check(_site("Flushing,  NY") == "Flushing, NY", "a comma already before the gap is not doubled", f)
+    check(_site(None) is None and _site("   ") is None, "an absent or blank site is None", f)
+    mc = next((r for r in ca if r["company"].startswith("McDonald")), None)
+    check(mc is not None and mc["site"] == "17030 Green Drive, City of Industry CA 91745", "California's site is its Address column", f)
+    check(all(r["site"] and "  " not in r["site"] for r in ca), "every California row carries a site with no double spaces", f)
+    check(tx[0]["site"] == "Pampa", "Texas's site is the city", f)
+    tp = parse_texas_api(open(TX_API_FIXTURE, "rb").read())
+    check(tp[0]["site"] == "Frisco", "the Texas portal's site is its city_name", f)
+    check(ny[0]["site"] == "420 Park Ave S, New York, NY, 10016", "New York's site is the impacted site address", f)
+    check(all(r["site"] is None for r in wa), "Washington has no site field; its location stays in county", f)
+    check([r["id"] for r in ny] == [r["id"] for r in parse_new_york(open(NY_FIXTURE, "rb").read())], "adding the site did not move a New York id", f)
+    check(_cmp(42, "acme", None) != _cmp(42, "acme", "100 Park Ave, New York, NY, 10017"), "a held row without a site reads as changed, so it is filled once", f)
+    check(_cmp("42", "acme", "x") == _cmp(42, "acme", "x"), "the string/int normalisation still holds with a site", f)
+
+    # write(), against a fake database that records what it is told.
+    class FakeDb:
+        def __init__(self, held_rows, cols):
+            self.held_rows, self.cols, self.sql = held_rows, cols, []
+
+        def script(self, stmts):
+            pass
+
+        def execute(self, sql, args=None):
+            self.sql.append((sql, args or []))
+            cell = lambda v: {"type": "null"} if v is None else {"type": "text", "value": str(v)}
+            if sql.startswith("PRAGMA"):
+                rows = [[cell(i), cell(c)] for i, c in enumerate(self.cols)]
+            elif sql.startswith("SELECT"):
+                rows = [[cell(v) for v in h] for h in self.held_rows]
+            else:
+                rows = []
+            return {"response": {"result": {"rows": rows}}}
+
+    all_cols = ["id", "state", "notice_date", "effective_date", "company", "kind", "employees", "county",
+                "industry", "employer_slug", "source_url", "fetched_at", "site"]
+    base = {"state": "CA", "notice_date": "2026-03-05", "effective_date": None, "company": "Acme", "kind": None,
+            "county": "X", "industry": None, "employer_slug": None}
+    row = dict(base, id="a", employees=5, source_url=CA_PAGE, site="1 Main St, Town CA 90000")
+    db = FakeDb([("a", "5", None, CA_PAGE, None)], all_cols)
+    n = write(db, [row], "CA")
+    ins = [q for q, _ in db.sql if q.startswith("INSERT")]
+    check(n == 1 and len(ins) == 1 and "fetched_at, site)" in ins[0], "a held row gaining a site is rewritten, through an INSERT that names its columns", f)
+    check(len(next(a for q, a in db.sql if q.startswith("INSERT"))) == 13, "the INSERT carries 13 values, the site last", f)
+    db = FakeDb([("a", "5", None, CA_PAGE, "1 Main St, Town CA 90000")], all_cols)
+    check(write(db, [row], "CA") == 0 and not any(q.startswith(("INSERT", "UPDATE")) for q, _ in db.sql), "an unchanged row with its site writes nothing", f)
+    tx_row = dict(base, state="TX", id="t", employees=176, source_url=TX_DATA_PAGE, site="Austin")
+    db = FakeDb([("t", "161", None, TX_PAGE, None)], all_cols)
+    n = write(db, [tx_row], "TX")
+    upd = [(q, a) for q, a in db.sql if q.startswith("UPDATE")]
+    check(n == 1 and not any(q.startswith("INSERT") for q, _ in db.sql), "the portal still cannot overwrite the spreadsheet's row", f)
+    check(len(upd) == 1 and "site IS NULL" in upd[0][0] and upd[0][1] == ["t", "Austin", "t"], "but it fills the site the spreadsheet's row lacks, and only the site", f)
+    db = FakeDb([], all_cols[:-1])
+    write(db, [], "CA")
+    check(any(q == "ALTER TABLE warn_notices ADD COLUMN site TEXT" for q, _ in db.sql), "a live table without the column gets it added", f)
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0
 

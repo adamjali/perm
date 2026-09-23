@@ -90,7 +90,8 @@ DDL = [
         industry TEXT,
         employer_slug TEXT,
         source_url TEXT NOT NULL,
-        fetched_at INTEGER NOT NULL)""",
+        fetched_at INTEGER NOT NULL,
+        site TEXT)""",
     "CREATE INDEX IF NOT EXISTS warn_notices_slug ON warn_notices (employer_slug, notice_date DESC)",
     "CREATE INDEX IF NOT EXISTS warn_notices_date ON warn_notices (notice_date DESC)",
 ]
@@ -119,6 +120,27 @@ def _int(v) -> int | None:
         return int(float(str(v).replace(",", "")))
     except (TypeError, ValueError):
         return None
+
+
+def _site(v) -> str | None:
+    """The notice's site as the state printed it, for display only.
+
+    California and New York join the street to the city with a double space
+    ("420 Park Ave S  New York, NY, 10016"); that gap becomes a comma and any
+    other run of whitespace one space. It exists because one company can file
+    several notices on one day for different sites, and without the site they
+    print identically: Morgan Stanley filed seven with New York on 2026-03-05,
+    two of them for one worker each (100 Park Ave and One Penn Plaza), and the
+    page read as a duplicate. The id does NOT use this field; it hashes the raw
+    `_extra`, and changing that would mint a new id for every held notice.
+    """
+    if v is None:
+        return None
+    s = str(v).strip()
+    if not s:
+        return None
+    s = re.sub(r",?\s{2,}", ", ", s)
+    return re.sub(r"\s+", " ", s)
 
 
 def parse_california(xlsx_bytes: bytes) -> list[dict]:
@@ -167,6 +189,7 @@ def parse_california(xlsx_bytes: bytes) -> list[dict]:
                 "county": county,
                 "industry": str(r[c_industry]).strip() if c_industry is not None and r[c_industry] else None,
                 "source_url": CA_PAGE,
+                "site": _site(r[c_address]) if c_address is not None else None,
                 "_extra": str(r[c_address]).strip() if c_address is not None and r[c_address] else "",
             }
         )
@@ -239,6 +262,7 @@ def parse_texas(xlsx_bytes: bytes) -> list[dict]:
             "county": str(r[c_county]).strip() if c_county is not None and r[c_county] else None,
             "industry": None,
             "source_url": TX_PAGE,
+            "site": _site(r[c_city]) if c_city is not None else None,
             "_extra": str(r[c_city]).strip() if c_city is not None and r[c_city] else "",
         })
     return assign_ids(out)
@@ -263,6 +287,7 @@ def parse_texas_api(body: bytes) -> list[dict]:
             "county": (r.get("county_name") or "").strip() or None,
             "industry": None,
             "source_url": TX_DATA_PAGE,
+            "site": _site(r.get("city_name")),
             "_extra": (r.get("city_name") or "").strip(),
         })
     return assign_ids(out)
@@ -310,6 +335,7 @@ def parse_new_york(csv_bytes: bytes) -> list[dict]:
             # stamped from (see NY_POSTING_NOTE). Not stored; write() names its
             # columns and ignores it.
             "posted_date": _date(r[c_posted]) if c_posted is not None else None,
+            "site": _site(r[c_addr]) if c_addr is not None else None,
             # The ADDRESS separates one company's sites filed the same day. The
             # dashboard's "Index" column used to be in here too, and it is a
             # POSITION, not an id: Amazon's Jan 28 notice was Index 23 on Sep 9
@@ -353,6 +379,8 @@ def parse_washington_page(page_html: str) -> list[dict]:
             "county": text[1] or None,
             "industry": None,
             "source_url": ("https://fortress.wa.gov" + link.group(1)) if link and link.group(1).startswith("/") else WA_PAGE,
+            # Washington's only place field is the location already kept in `county`.
+            "site": None,
             "_extra": link.group(1) if link else "",
         })
     # Assigned HERE, not in fetch_washington, so the `--from-file` path (one
@@ -424,7 +452,7 @@ def rank_of(source_url: str) -> int:
     return SOURCE_RANK.get(source_url or "", 1)
 
 
-def _cmp(employees, slug) -> tuple:
+def _cmp(employees, slug, site=None) -> tuple:
     """Both sides of the change check, in one shape.
 
     **libSQL returns integers as STRINGS**, so a stored `employees` of '42'
@@ -434,36 +462,72 @@ def _cmp(employees, slug) -> tuple:
     diff, and it is the same defect `live_norm()` exists for in
     build_entity_detail.py. Normalise both sides or do not compare at all.
     """
-    return (None if employees is None or employees == "" else int(employees), slug or None)
+    return (None if employees is None or employees == "" else int(employees), slug or None, site or None)
+
+
+# Columns added after the table first shipped. `CREATE TABLE IF NOT EXISTS`
+# can never add one to a live table, so each is ALTERed in when missing.
+EXTRA_COLUMNS = [("site", "TEXT")]
+
+# Named, never positional: a positional INSERT breaks the moment a column is
+# added (the OFLC writer did exactly that to policy_notices on 2026-09-16).
+INSERT_COLS = ("id, state, notice_date, effective_date, company, kind, employees, county, "
+               "industry, employer_slug, source_url, fetched_at, site")
+
+
+def ensure_columns(db: Turso) -> list[str]:
+    """Add any column the live table lacks. Returns the names added."""
+    res = db.execute("PRAGMA table_info(warn_notices)")
+    have = {(None if r[1]["type"] == "null" else r[1]["value"]) for r in res["response"]["result"]["rows"]}
+    added = []
+    for name, typ in EXTRA_COLUMNS:
+        if name not in have:
+            db.execute(f"ALTER TABLE warn_notices ADD COLUMN {name} {typ}")
+            added.append(name)
+    return added
 
 
 def write(db: Turso, rows: list[dict], state: str) -> int:
     db.script(DDL)
-    res = db.execute("SELECT id, employees, employer_slug, source_url FROM warn_notices WHERE state = ?", [state])
-    have, held_rank = {}, {}
+    ensure_columns(db)
+    res = db.execute("SELECT id, employees, employer_slug, source_url, site FROM warn_notices WHERE state = ?", [state])
+    have, held_rank, held_site = {}, {}, {}
     for r in res["response"]["result"]["rows"]:
         vals = [None if c["type"] == "null" else c["value"] for c in r]
-        have[vals[0]] = _cmp(vals[1], vals[2])
+        have[vals[0]] = _cmp(vals[1], vals[2], vals[4])
         held_rank[vals[0]] = rank_of(str(vals[3] or ""))
+        held_site[vals[0]] = vals[4]
     now = int(time.time() * 1000)
-    changed = [r for r in rows
-               if have.get(r["id"]) != _cmp(r["employees"], r.get("employer_slug"))
-               and rank_of(r["source_url"]) >= held_rank.get(r["id"], 0)]
+    differs = [r for r in rows if have.get(r["id"]) != _cmp(r["employees"], r.get("employer_slug"), r.get("site"))]
+    changed = [r for r in differs if rank_of(r["source_url"]) >= held_rank.get(r["id"], 0)]
+    # A lower-ranked source may not overwrite a better one's row (the rank
+    # guard below), but it may FILL a site the held row lacks: the id hashes
+    # the same city or address, so the two sources agree on it by construction.
+    # Without this, Texas notices first loaded from the spreadsheet would never
+    # get a site from the weekly portal run.
+    fills = [r for r in differs if r not in changed and r["id"] in held_site
+             and held_site[r["id"]] is None and r.get("site")]
     # CHUNKED, like ingest_flag_disclosure.write_cases. The cost is per
     # STATEMENT, so a row at a time is what turned a 2,367-row Texas backfill
     # into a ten-minute job; 200 rows a statement puts the same work in
     # seconds and keeps a full reload inside the step's timeout.
     per = 200
-    row_sql = "(" + ",".join("?" * 12) + ")"
+    row_sql = "(" + ",".join("?" * 13) + ")"
     for i in range(0, len(changed), per):
         chunk = changed[i:i + per]
         args: list = []
         for r in chunk:
             args += [r["id"], r["state"], r["notice_date"], r["effective_date"], r["company"],
                      r["kind"], r["employees"], r["county"], r["industry"],
-                     r.get("employer_slug"), r["source_url"], now]
-        db.execute("INSERT OR REPLACE INTO warn_notices VALUES " + ",".join([row_sql] * len(chunk)), args)
-    return len(changed)
+                     r.get("employer_slug"), r["source_url"], now, r.get("site")]
+        db.execute(f"INSERT OR REPLACE INTO warn_notices ({INSERT_COLS}) VALUES " + ",".join([row_sql] * len(chunk)), args)
+    for i in range(0, len(fills), per):
+        chunk = fills[i:i + per]
+        whens = " ".join("WHEN ? THEN ?" for _ in chunk)
+        args = [v for r in chunk for v in (r["id"], r["site"])] + [r["id"] for r in chunk]
+        db.execute(f"UPDATE warn_notices SET site = CASE id {whens} END "
+                   f"WHERE site IS NULL AND id IN ({','.join('?' * len(chunk))})", args)
+    return len(changed) + len(fills)
 
 
 # A snapshot load that covers less than this share of the (company, notice
