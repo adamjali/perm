@@ -5986,3 +5986,29 @@ with the four medians production holds, and sent nothing. The scratch row stays;
 Sep 29 issue still reads the quarter as news because `previousUscisQuarter` looks at
 the newest EARLIER issue, which is Sep 22's. Never run `buildIssue` for the current week
 after the flag is on: it schedules the send.
+
+## The GSC timers die with the session, and a continuation counts (2026-09-23)
+
+The Search Console timers (`CronCreate`, `7 15,17,19 * * *`) fired Sep 20 to 22 at
+3:15, 5:15 and 7:37 PM ET (the scheduler's jitter), last at **Tue Sep 22, 5:17 PM**. The
+context continuation at 7:18 PM started a new process and deleted them, so Wed Sep 23's
+3:07 PM round never ran. Recreated at 3:52 PM Sep 23 (job `d001ea00`, expires after 7 days)
+with a one-shot catch-up at 3:58 PM. Recover the prompt from the transcript, not memory:
+
+```bash
+/usr/local/Caskroom/miniconda/base/bin/python3 - <<'PY'
+import json, glob, os
+last = None
+for f in glob.glob(os.path.expanduser("~/.claude/projects/-Users-adammohamed-cc-perm-tracker-v2/*.jsonl")):
+    for line in open(f, errors="ignore"):
+        if '"CronCreate"' in line:
+            for b in (json.loads(line).get("message") or {}).get("content") or []:
+                if isinstance(b, dict) and b.get("name") == "CronCreate":
+                    last = b["input"]
+print(last["cron"]); print(last["prompt"])
+PY
+```
+
+Then point its queue line at the ledger's newest "## Queue after ..." section before
+recreating it. The rounds now commit ONLY the ledger file, so a round can't sweep another
+change in the working tree into its docs commit.
