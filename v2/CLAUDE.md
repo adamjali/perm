@@ -6012,3 +6012,37 @@ PY
 Then point its queue line at the ledger's newest "## Queue after ..." section before
 recreating it. The rounds now commit ONLY the ledger file, so a round can't sweep another
 change in the working tree into its docs commit.
+
+## New York's WARN "Index" is a position, and a position in an id breeds duplicates (2026-09-23)
+
+Adam asked whether everything was good after the GSC timers died. The health check
+called `warn-notices-ny` "the source has not republished" (29 days against 21), and it
+was wrong twice over:
+
+- **New York was publishing.** Its Tableau CSV carries a `Date Posted` column: rows went
+  up Sep 8, 14, 15 and 22. It posts each notice a **median of 62 days** after the notice
+  date (p90 115), so a stamp keyed on the newest NOTICE date could never read green
+  against a 21-day budget. NY's freshness is now stamped from its own posted date
+  (`"stamp": "posted_date"` in its `STATES` entry); the note names both dates.
+- **The table held 258 New York rows for the 197 New York lists.** The row id hashed the
+  dashboard's `Index` column, and that column is a POSITION: the same Amazon notice was
+  Index 23 on Sep 9 and 25 on Sep 23, because later postings sort in ahead of it. Each
+  shift minted a new id for an unchanged notice, so employer pages listed the same notice
+  twice. The id now uses the address only.
+
+**A snapshot state prunes what its source stops listing.** New York's file is its whole
+current-year list, so `prune()` deletes held rows inside the load's own notice-date range
+that the load no longer carries, guarded by coverage measured on (company, notice date)
+pairs, which do not depend on the id scheme: a load covering under 90% of the pairs held
+is treated as truncated and deletes nothing. The re-key ran from this Mac at 5:45 PM EDT
+Sep 23: 197 written, 258 old-id rows pruned at 99% coverage (60 duplicates, 1 notice New
+York withdrew, and the 197 old ids of the current notices); a second run wrote 0. The 258
+pre-fix rows are backed up at `node_modules/.cache/qa/warn-ny-backup-2026-09-23.json`.
+Three probes in an isolated copy (Index back in the id, the coverage guard off, the date
+range dropped) each turned `test_warn.py` red.
+
+**Not re-checked for the other three states, and why:** CA, TX and WA ids hash fields the
+source does not renumber (addresses, cities, the portal's own record), the Texas
+two-source merge was verified 69 of 69 on Sep 9, and their row counts sit within one to
+nine of the distinct-notice count. Employer pages cache for 30 days, so a page rendered
+before the prune can still show a New York duplicate until the next deploy.

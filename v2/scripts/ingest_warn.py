@@ -269,7 +269,11 @@ def parse_texas_api(body: bytes) -> list[dict]:
 
 
 def parse_new_york(csv_bytes: bytes) -> list[dict]:
-    """The Tableau Public view as CSV. Headers carry stray spaces; they are stripped."""
+    """The Tableau Public view as CSV. Headers carry stray spaces; they are stripped.
+
+    The view is New York's WHOLE current-year list on every download, which is
+    why its state entry is a snapshot (see prune_plan).
+    """
     import csv
 
     text = csv_bytes.decode("utf-8-sig", "replace")
@@ -280,7 +284,8 @@ def parse_new_york(csv_bytes: bytes) -> list[dict]:
         return next((i for i, h in enumerate(header) if all(n in h for n in needles)), None)
 
     c_company, c_start, c_notice, c_addr = col("business"), col("layoff/closure starts"), col("date of warn"), col("address")
-    c_county, c_lc, c_pt, c_n, c_index = col("county"), col("layoff or closure"), col("permanent"), col("affected workers"), col("index")
+    c_county, c_lc, c_pt, c_n = col("county"), col("layoff or closure"), col("permanent"), col("affected workers")
+    c_posted = col("date posted")
     if c_company is None or c_notice is None:
         raise ValueError(f"company or notice-date column missing; header={header}")
     out: list[dict] = []
@@ -301,7 +306,17 @@ def parse_new_york(csv_bytes: bytes) -> list[dict]:
             "county": r[c_county].strip() if c_county is not None and r[c_county].strip() else None,
             "industry": None,
             "source_url": NY_PAGE,
-            "_extra": "|".join(x for x in [r[c_addr].strip() if c_addr is not None else "", r[c_index].strip() if c_index is not None else ""]),
+            # When New York PUBLISHED the notice, which is what its freshness is
+            # stamped from (see NY_POSTING_NOTE). Not stored; write() names its
+            # columns and ignores it.
+            "posted_date": _date(r[c_posted]) if c_posted is not None else None,
+            # The ADDRESS separates one company's sites filed the same day. The
+            # dashboard's "Index" column used to be in here too, and it is a
+            # POSITION, not an id: Amazon's Jan 28 notice was Index 23 on Sep 9
+            # and 25 on Sep 23, because notices posted later sort in ahead of it.
+            # Every shift minted a new id for an unchanged notice, and by Sep 23
+            # the table held 258 New York rows for the 197 New York lists.
+            "_extra": r[c_addr].strip() if c_addr is not None else "",
         })
     return assign_ids(out)
 
@@ -451,6 +466,53 @@ def write(db: Turso, rows: list[dict], state: str) -> int:
     return len(changed)
 
 
+# A snapshot load that covers less than this share of the (company, notice
+# date) pairs already held in its date range is treated as a truncated
+# download, and nothing is deleted. Measured on New York 2026-09-23: 162 of the
+# 163 pairs held, the one missing a notice New York withdrew.
+PRUNE_MIN_COVERAGE = 0.9
+
+
+def prune_plan(held: list[tuple[str, str, str]], rows: list[dict]) -> tuple[list[str], float]:
+    """Which held ids a snapshot load no longer carries, and how much it covers.
+
+    `held` is (id, company, notice_date) for every row of the state. Only rows
+    inside the load's own notice-date range are candidates, so history older
+    than the file is never touched. Coverage is measured on (company, notice
+    date) pairs, which do not depend on the id scheme, so it still reads true
+    on the run that re-keys a whole state. Returns ([], coverage) when the
+    load looks truncated; the caller logs it and deletes nothing.
+    """
+    if not rows:
+        return [], 0.0
+    lo = min(r["notice_date"] for r in rows)
+    hi = max(r["notice_date"] for r in rows)
+    ids = {r["id"] for r in rows}
+    in_range = [h for h in held if lo <= h[2] <= hi]
+    held_keys = {(c.lower(), d) for _, c, d in in_range}
+    load_keys = {(r["company"].lower(), r["notice_date"]) for r in rows}
+    coverage = len(held_keys & load_keys) / len(held_keys) if held_keys else 1.0
+    if coverage < PRUNE_MIN_COVERAGE:
+        return [], coverage
+    return sorted(i for i, _, _ in in_range if i not in ids), coverage
+
+
+def prune(db: Turso, rows: list[dict], state: str) -> int:
+    res = db.execute("SELECT id, company, notice_date FROM warn_notices WHERE state = ?", [state])
+    held = [tuple(c["value"] for c in r) for r in res["response"]["result"]["rows"]]
+    stale, coverage = prune_plan(held, rows)
+    if not stale:
+        if coverage < PRUNE_MIN_COVERAGE:
+            log(f"::warning::{state}: this load covers {coverage:.0%} of the notices held in its range; "
+                f"treated as truncated, nothing pruned")
+        return 0
+    for i in range(0, len(stale), 200):
+        chunk = stale[i:i + 200]
+        db.execute(f"DELETE FROM warn_notices WHERE id IN ({','.join('?' * len(chunk))})", chunk)
+    log(f"{state}: pruned {len(stale)} rows the source no longer lists (coverage {coverage:.0%})")
+    return len(stale)
+
+
 def fetch(url: str) -> bytes:
     req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "*/*"})
     with urllib.request.urlopen(req, timeout=60) as r:
@@ -479,7 +541,14 @@ STATES: dict[str, dict] = {
     # months; a notice newer than 120 days is the honest floor, and the
     # spreadsheet top-up brings it current whenever anyone runs it.
     "tx": {"name": "Texas", "page": TX_DATA_PAGE, "days": 120, "load": load_texas},
-    "ny": {"name": "New York", "page": NY_PAGE, "days": 21, "load": lambda f: parse_new_york(open(f, "rb").read() if f else fetch(NY_CSV))},
+    # New York: a snapshot (the file is the whole current-year list, so a row it
+    # no longer carries is pruned), stamped from its own "Date Posted". It posts
+    # a notice a MEDIAN OF 62 DAYS after the notice date (p90 115, measured
+    # 2026-09-23 over 197 notices), so a notice-date stamp could never read
+    # green against a 21-day budget and reported "not republished" the day
+    # after New York posted.
+    "ny": {"name": "New York", "page": NY_PAGE, "days": 21, "snapshot": True, "stamp": "posted_date",
+           "load": lambda f: parse_new_york(open(f, "rb").read() if f else fetch(NY_CSV))},
     "wa": {"name": "Washington", "page": WA_PAGE, "days": 21, "load": lambda f: parse_washington_page(open(f, encoding="utf8").read()) if f else fetch_washington()},
 }
 
@@ -522,9 +591,11 @@ def main() -> int:
         for r in [x for x in every if x.get("employer_slug")][:8]:
             print(json.dumps(r))
         return 0
-    written = 0
+    written = pruned = 0
     for st, rows in parsed.items():
         written += write(db, rows, st.upper())
+        if STATES[st].get("snapshot"):
+            pruned += prune(db, rows, st.upper())
         # ONE FRESHNESS ROW PER STATE, stamped only when that state actually
         # wrote. The health check reads every row in that table dynamically, so
         # this is what makes a single state going quiet visible without the
@@ -540,11 +611,18 @@ def main() -> int:
             "SELECT MAX(notice_date), COUNT(*) FROM warn_notices WHERE state = ?", [st.upper()]
         )["response"]["result"]["rows"][0]
         newest, count = held[0].get("value"), held[1].get("value")
+        as_of = newest or max(r["notice_date"] for r in rows)
+        note = f"{STATES[st]['name']}: {count} notices held ({len(rows)} in this load)"
+        stamp_key = STATES[st].get("stamp")
+        posted = [r[stamp_key] for r in rows if stamp_key and r.get(stamp_key)]
+        if posted:
+            as_of = max(posted)
+            note += f"; last posted {as_of}, newest notice dated {newest}"
         stamp_freshness(
             db, f"{DATASET}-{st}",
-            as_of=newest or max(r["notice_date"] for r in rows),
+            as_of=as_of,
             source=STATES[st]["page"], cadence="Weekly",
-            note=f"{STATES[st]['name']}: {count} notices held ({len(rows)} in this load)",
+            note=note,
             max_age_days=STATES[st]["days"],
         )
     note = "; ".join(f"{STATES[st]['name']} {len(rows)}" for st, rows in parsed.items())
@@ -557,6 +635,8 @@ def main() -> int:
     # dataset's as_of to whatever one state happened to hold.
     if a.state == "all":
         stamp_freshness(db, DATASET, as_of=max(r["notice_date"] for r in every), source=CA_PAGE, cadence="Weekly", note=note, max_age_days=MAX_AGE_DAYS)
+    if pruned:
+        note += f"; pruned {pruned} the source no longer lists"
     record_run(db, "ingest_warn.py", status="partial" if failed else "ok", rows_written=written, note=f"{note}; {matched} matched", started_at=started)
     log(f"wrote {written}; {note}")
     return 0

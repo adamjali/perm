@@ -9,12 +9,14 @@ land as None and read as a quiet Tuesday.
 """
 from __future__ import annotations
 
+import csv
+import io
 import os
 import sys
 import warnings
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ingest_warn import TX_DATA_PAGE, TX_PAGE, _cmp, assign_ids, rank_of, parse_california, parse_new_york, parse_texas, parse_texas_api, parse_washington_page  # noqa: E402
+from ingest_warn import PRUNE_MIN_COVERAGE, TX_DATA_PAGE, TX_PAGE, _cmp, assign_ids, prune_plan, rank_of, parse_california, parse_new_york, parse_texas, parse_texas_api, parse_washington_page  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIXTURE = os.path.join(HERE, "fixtures", "ca_warn_2026-09-08.xlsx")
@@ -67,6 +69,21 @@ def main() -> int:
     check(ny[0]["company"] == "420 Park FB LLC" and ny[0]["notice_date"] == "2026-04-06" and ny[0]["effective_date"] == "2026-07-06", "New York first row: company, notice date, start date", f)
     check(ny[0]["kind"] == "Closure, Permanent" and ny[0]["employees"] == 42 and ny[0]["county"] == "New York", "New York first row: kind, count, county", f)
     check(len({r["id"] for r in ny}) == len(ny), "New York ids are unique", f)
+    # THE DASHBOARD'S "Index" COLUMN IS A POSITION, NOT AN ID. The same Amazon
+    # notice was Index 23 on Sep 9 and 25 on Sep 23 because later postings sort
+    # in ahead of it, and with Index in the hash every shift minted a second row:
+    # 258 New York rows held for the 197 New York lists. Renumbering the column
+    # must leave every id where it was.
+    raw = open(NY_FIXTURE, "rb").read().decode("utf-8-sig")
+    lines = list(csv.reader(io.StringIO(raw)))
+    ix = [h.strip().lower() for h in lines[0]].index("index")
+    for row in lines[1:]:
+        row[ix] = str(int(row[ix]) + 100)
+    buf = io.StringIO()
+    csv.writer(buf).writerows(lines)
+    shifted = parse_new_york(buf.getvalue().encode())
+    check([r["id"] for r in shifted] == [r["id"] for r in ny], "renumbering New York's Index column leaves every id unchanged", f)
+    check(ny[0]["posted_date"] == "2026-05-26", "New York rows carry the date New York posted them", f)
     # Washington: one grid page, received date as the notice date, PDF link as the source.
     wa = parse_washington_page(open(WA_FIXTURE, encoding="utf8").read())
     check(len(wa) == 15, f"Washington page parses 15 notices, got {len(wa)}", f)
@@ -126,6 +143,28 @@ def main() -> int:
     check(rank_of(TX_PAGE) > rank_of(TX_DATA_PAGE), "the agency spreadsheet outranks the open data portal", f)
     check(rank_of("") == rank_of("https://edd.ca.gov/anything"), "a single-source state has one flat rank", f)
     check(all(r["source_url"].startswith("https://edd.ca.gov/") for r in rows), "every row cites EDD", f)
+    # A SNAPSHOT LOAD PRUNES WHAT THE SOURCE NO LONGER LISTS, AND ONLY THAT.
+    # New York's file is its whole current-year list, so a held row it no
+    # longer carries is a duplicate or a withdrawn notice. Three things must
+    # hold: an orphan inside the load's date range goes, a row older than the
+    # file stays, and a truncated download deletes nothing.
+    load = [
+        {"id": "new-a", "company": "Acme", "notice_date": "2026-03-01"},
+        {"id": "new-b", "company": "Beta", "notice_date": "2026-06-01"},
+    ]
+    held = [
+        ("new-a", "Acme", "2026-03-01"),
+        ("new-b", "Beta", "2026-06-01"),
+        ("old-a", "Acme", "2026-03-01"),       # the same notice under a stale id
+        ("hist-z", "Zeta", "2025-11-30"),     # older than the file: history
+    ]
+    stale, cov = prune_plan(held, load)
+    check(stale == ["old-a"], f"the prune removes the stale id and nothing else (got {stale})", f)
+    check(cov == 1.0, f"a re-keyed load still reads full coverage by company and date (got {cov})", f)
+    wide = [(f"k{i}", f"Co{i}", "2026-04-01") for i in range(20)] + [("new-a", "Acme", "2026-03-01"), ("new-b", "Beta", "2026-06-01")]
+    stale, cov = prune_plan(wide, load)
+    check(stale == [] and cov < PRUNE_MIN_COVERAGE, f"a load covering {cov:.0%} of what is held is treated as truncated and prunes nothing", f)
+    check(prune_plan(held, []) == ([], 0.0), "an empty load prunes nothing", f)
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0
 
