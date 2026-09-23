@@ -1,5 +1,48 @@
 # GSC indexing priority list
 
+**Run of 2026-09-23, 3:59 to 4:24 PM EDT: 11 accepted, the 12th refused.**
+
+**Started by hand, not by the timer.** The session timers died at the context continuation
+at 7:18 PM on Sep 22 (their last fire was 5:17 PM that day), so today's 3:07 PM fire never
+happened. Found at 3:45 PM when Adam asked whether the timers were working; recreated
+(`7 15,17,19 * * *`, job d001ea00) and this round run straight away. **The cap was 11 for
+the SIXTH consecutive run** (Sep 17, 19, 20, 21, 22, 23).
+
+**Every slot went to last night's deploy.** Nine of the eleven pages already read
+"Discovered" through `sitemap.xml` less than 20 hours after the deploy, because they
+landed in an EXISTING child (`pages.xml`), which Google re-reads on its own. Two were still
+"unknown to Google, no referring sitemaps".
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/uscis-case-status` | **unknown to Google**, no referring sitemaps | 3:59 PM |
+| 2 | `/uscis-processing-times` | Discovered, not indexed (`sitemap.xml`) | 4:02 PM |
+| 3 | `/i485-by-field-office` | Discovered; the live test took about 2.5 minutes (564 KB page) | 4:05 PM |
+| 4 | `/i140-awaiting-visa` | Discovered | 4:07 PM |
+| 5 | `/privacy` | indexed, crawled **Sep 10**, so Google's copy predates section 18 | 4:09 PM |
+| 6 | `/accessibility` | Discovered | 4:11 PM |
+| 7 | `/guides/uscis-receipt-number` | Discovered | 4:13 PM |
+| 8 | `/guides/i485-vs-i485j-supplement-j` | Discovered | 4:15 PM |
+| 9 | `/guides/what-emma-told-you` | Discovered | 4:17 PM |
+| 10 | `/guides/uscis-processing-times-median-vs-80-percent` | Discovered | 4:19 PM |
+| 11 | `/guides/fastest-field-office-eb-i485` | Discovered | 4:22 PM |
+| 12 | `/guides/approved-i140-no-visa-number-eb2-india` | **unknown to Google** | **Quota Exceeded**, 4:24 PM |
+
+**Sitemap index resubmitted at 4:26 PM** (the Sep 22 queue asked for it "the same
+afternoon" and it was missed). Search Console read it at once: Submitted and Last read both
+Sep 23, 101,522 discovered pages, Success.
+
+**The FIRST REQUEST INDEXING click of the round did not register**: no live test, count of
+"Indexing requested" still 0, so no slot spent. A zoom of the button taken immediately
+before the second click made it land, and every click after that was preceded by one.
+Same cause as every other lost click in this ledger: the hidden automation tab does not
+paint until something forces it.
+
+**Not missed: the October 2026 visa bulletin.** The due-check could not settle it on Monday
+(Internet Archive offline) and the Archive was offline again today, so it was checked at the
+source in Adam's Chrome at 4:27 PM: travel.state.gov lists **Current: September 2026,
+Upcoming: Coming Soon**. We hold September 2026.
+
 **Run of 2026-09-22, 3:20 to 3:53 PM EDT: 11 accepted, the 12th refused.**
 
 **The cap has now been 11 on FIVE consecutive runs** (Sep 17, 19, 20, 21, 22). Today's
@@ -397,23 +440,16 @@ Inspect first; skip anything already on Google.
 3. `/perm-queue/2024-12` and backwards while slots last
 4. `/glossary`, `/perm-case-statuses`: only if their last crawl predates Sep 14
 
-## Queue after the Sep 22 deploy (probe from ~3:15 PM EDT Sep 23; earlier costs nothing)
+## Queue after the Sep 23 run (the timer probes from 3:07 PM EDT Sep 24; a refusal is free)
 
-Inspect first; skip anything already on Google. New pages first, because a page Google
-has never seen cannot be found by anyone; the privacy page second, because its indexed
-copy predates section 18 and USCIS reads policies before it grants access.
+Inspect first; skip anything already on Google. Today's first request was accepted at
+3:59 PM, later than usual because the timer had died, so tomorrow's 3:07 PM probe may be
+refused; the 5:07 PM fire tries again.
 
-1. `/uscis-case-status`, `/uscis-processing-times`, `/i485-by-field-office`, `/i140-awaiting-visa`
-2. `/privacy` (section 18 is new), `/accessibility` (new)
-3. the seven guides: `/guides/uscis-receipt-number`, `/guides/i485-vs-i485j-supplement-j`,
-   `/guides/what-emma-told-you`, `/guides/uscis-processing-times-median-vs-80-percent`,
-   `/guides/fastest-field-office-eb-i485`, `/guides/approved-i140-no-visa-number-eb2-india`,
+1. `/guides/approved-i140-no-visa-number-eb2-india` (unknown to Google; refused at 12 today),
    `/guides/ead-and-advance-parole-timelines`
-4. `/visa-bulletin` (the month strip is new; its recrawl is what exposes the 96 month pages)
-5. `/terms`, `/about` (the Florida LLC wording), `/methodology` (two new entries), `/glossary`
-6. left over from Sep 18: `/perm-queue/2025-04` and backwards
-7. then the pre-deploy Sep 22 list above (the wage guide refused today, the August and July bulletin pages, the two retitled tools), in its order
-
-That is 21 URLs against a cap that has been 8 to 11. Two runs. Resubmit the sitemap
-INDEX in Search Console the same afternoon: no new child was added, so this is
-belt-and-braces only, but `pages.xml` gained 15 URLs.
+2. `/visa-bulletin` (the month strip is new; its recrawl is what exposes the 96 month pages)
+3. `/terms`, `/about` (the Florida LLC wording), `/methodology` (two new entries), `/glossary`
+4. left over from Sep 18: `/perm-queue/2025-04` and backwards
+5. then the pre-deploy Sep 22 list above (the wage guide refused on Sep 22, the August and
+   July bulletin pages, the two retitled tools), in its order
