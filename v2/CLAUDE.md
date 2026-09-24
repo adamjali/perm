@@ -170,7 +170,9 @@ import { toast } from "@/lib/toast";
 
 // DON'T: Put client init (posthog.init, etc.) in a ROOT instrumentation-client.ts
 // With a src/ app dir, Next.js loads ONLY src/instrumentation-client.ts — root is ignored → silent outage
-// DO: keep posthog.init() + initBotId() together in src/instrumentation-client.ts  // see CONCERNS TD-06
+// DO: keep posthog.init() in src/instrumentation-client.ts, the ONE file Next loads  // see CONCERNS TD-06
+// (BotID no longer starts there: it guards only the signed-in chat, so it starts in
+// the (authenticated) layout via components/security/BotIdInit.tsx since 2026-09-23)
 ```
 
 SWC minifier bug details: [CONCERNS.md TD-01](../.planning/codebase/CONCERNS.md).
@@ -429,7 +431,7 @@ Full conventions: [CONVENTIONS.md](../.planning/codebase/CONVENTIONS.md).
 ## Integrations (quick reference — details in INTEGRATIONS.md)
 
 - **Sentry** — lazy-loaded client (`SentryClientInit`). Frontend: `captureError` from `@/lib/sentry`. Backend: `recordError` from `convex/lib/errorRecording` (writes DB + admin email + Sentry in one call).
-- **PostHog** — always import `@/lib/analytics` (wrapper with try/catch), never raw `posthog-js`. Client init (`posthog.init`) lives in `src/instrumentation-client.ts` **alongside BotID** — Next.js loads only that ONE file (a root `instrumentation-client.ts` is silently ignored), so splitting them kills one. Proxied via `/ingest/*` (incl. `/ingest/array` for lazy bundles). Internal opt-out: `POSTHOG_EXCLUDED_EMAILS` Convex env var. See [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md).
+- **PostHog** — always import `@/lib/analytics` (wrapper with try/catch), never raw `posthog-js`. Client init (`posthog.init`) lives in `src/instrumentation-client.ts` — Next.js loads only that ONE file (a root `instrumentation-client.ts` is silently ignored; a second one is how PostHog once went dark). BotID moved OUT on 2026-09-23 to `components/security/BotIdInit.tsx` in the (authenticated) layout, because it guards only the signed-in chat; `botid-scope.test.ts` keeps it there. Proxied via `/ingest/*` (incl. `/ingest/array` for lazy bundles). Internal opt-out: `POSTHOG_EXCLUDED_EMAILS` Convex env var. See [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md).
 - **Resend Email** — transactional via Resend MCP tools (list/send/contacts), `curl` for threaded replies (needs `In-Reply-To` header which MCP doesn't expose), or `admin.sendAdminEmail` mutation for UI sends (auth-required, auto-renders `AdminEmail` React template). `FROM_EMAIL = notifications@permtracker.app`.
 - **AI Chat** — multi-provider fallback (Groq→Mistral→Gemini→OpenRouter→Cerebras) via custom `FallbackModel` in `src/lib/ai/providers.ts`. API route: `src/app/api/chat/route.ts`.
 
@@ -462,7 +464,7 @@ Content in `content/{blog,guides,changelog}/*.mdx` (14, 33 and 8 pieces; the `tu
 | Auth callback not firing | `createOrUpdateUser` skips password sign-ins — use `LoginTracker` |
 | Toast during sign-out | Import `@/lib/toast`, not `sonner` |
 | Pull-to-refresh dead on mobile | `overscroll-behavior-y: none` on html/body kills the gesture (its documented purpose). Removed 2026-08-24; theme the bounce region with `html { background-color }` instead. `contain` is no escape hatch on the root |
-| PostHog/analytics silently not capturing | Client init must be in `src/instrumentation-client.ts` (the only one Next.js loads; a root one is ignored) — PostHog + BotID coexist there. [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md) |
+| PostHog/analytics silently not capturing | Client init must be in `src/instrumentation-client.ts` (the only one Next.js loads; a root one is ignored). BotID starts in the (authenticated) layout instead, since 2026-09-23. [CONCERNS.md TD-06](../.planning/codebase/CONCERNS.md) |
 | Convex action can't call another action | `ctx.scheduler.runAfter(0, ...)` instead |
 | Sitemap dates stale | Update `lastModified` in `src/app/sitemap.ts` |
 | Typecheck green locally, Convex plugin hook fails | You ran `typecheck:app` only. `pnpm typecheck` runs both — see "Two typecheckers" |

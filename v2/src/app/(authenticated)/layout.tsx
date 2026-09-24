@@ -22,6 +22,7 @@ import Footer from "@/components/layout/Footer";
 import SignOutOverlay from "@/components/layout/SignOutOverlay";
 import InactivityTimeoutProvider from "@/components/layout/InactivityTimeoutProvider";
 import { ChatWidgetConnected } from "@/components/chat/ChatWidgetConnected";
+import { BotIdInit } from "@/components/security/BotIdInit";
 import { PendingTermsHandler } from "@/components/auth/PendingTermsHandler";
 import { LoginTracker } from "@/components/auth/LoginTracker";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
@@ -109,7 +110,9 @@ export default function AuthenticatedLayout({
         {/* Sign-out loading overlay */}
         <SignOutOverlay />
 
-        {/* Chat Widget */}
+        {/* Chat Widget, and the bot check that protects its API route. BotID
+            starts only here because the chat is the only route it guards. */}
+        <BotIdInit />
         <ChatWidgetConnected />
       </div>
 

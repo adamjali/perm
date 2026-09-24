@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
  * The case-number redaction that runs in PostHog's before_send.
  *
  * The function itself lives in src/instrumentation-client.ts, which cannot be
- * imported here: the module's top level calls posthog.init() and initBotId()
- * as import side effects. So the implementation is mirrored below and pinned
+ * imported here: the module's top level calls posthog.init() as an import
+ * side effect. So the implementation is mirrored below and pinned
  * character-for-character against the source by the first test, which is the
  * cheap version of the alternative (exporting it and giving that file an
  * import graph it does not otherwise need).

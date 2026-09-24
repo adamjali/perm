@@ -3,19 +3,19 @@
  *
  * Next.js loads exactly ONE `instrumentation-client` file, and because this app
  * lives under `src/`, it must be THIS file (`src/instrumentation-client.ts`);
- * a root-level `instrumentation-client.ts` is silently ignored. Both PostHog
- * and Vercel BotID need to initialize here, so they live together in this one
- * file. (Splitting them across two files drops whichever one isn't here, that
- * is exactly the regression that took PostHog analytics offline once BotID
- * added its own `src/instrumentation-client.ts`.)
+ * a root-level `instrumentation-client.ts` is silently ignored. (A second
+ * copy is how PostHog analytics once went offline: BotID added its own file
+ * and one of the two was dropped. Never add another.)
  *
- * Each initializer is wrapped in its own try/catch so a failure in one never
- * prevents the other from running or breaks the client module's side-effect
- * import.
+ * Vercel BotID USED to start here too and no longer does: it protects only
+ * the signed-in AI chat, so it starts in the (authenticated) layout through
+ * src/components/security/BotIdInit.tsx, and public pages never load it.
+ *
+ * The initializer is wrapped in try/catch so a failure never breaks the
+ * client module's side-effect import.
  */
 
 import posthog from "posthog-js";
-import { initBotId } from "botid/client/core";
 
 /**
  * Strip `case=<number>` out of every URL-shaped property on an event.
@@ -191,43 +191,7 @@ if (posthogKey) {
   );
 }
 
-// ---------------------------------------------------------------------------
-// Vercel BotID — passively collects browser/TLS/interaction signals on every
-// page load. The server-side checkBotId() call in each protected route's
-// handler verifies the caller had a real browser.
-//
-// Direct-API attackers (curl, bare fetch, scripts without a real browser
-// loading this file) never collect signals, so checkBotId() returns
-// isBot=true and the route returns 403 before any work is done.
-//
-// Every path listed here MUST have a matching server-side checkBotId() call,
-// otherwise the collected signals go unconsumed and the entry is dead config
-// that implies a protection that isn't enforced.
-//
-// NOTE: /api/auth is intentionally NOT protected by BotID. That route is owned
-// by @convex-dev/auth's proxy (src/proxy.ts) and has no route handler we can
-// add checkBotId() to. checkBotId() also relies on @vercel/request-context /
-// next/headers and throws on its response-header mutation path outside a real
-// route handler, so it can't run cleanly in the auth middleware. Auth is
-// instead guarded by Cloudflare Turnstile + per-IP + per-email rate limits +
-// server-side name validation (see docs/SECURITY.md). Listing "/api/auth/*"
-// here was a no-op (nothing consumed the signals), so it's removed.
-// ---------------------------------------------------------------------------
-try {
-  initBotId({
-    protect: [
-      // AI chat — biggest AI-cost protection target. One abusive burst can
-      // burn through Gemini/OpenRouter/Mistral/Groq/Cerebras free-tier
-      // quotas in minutes. Enforced by checkBotId() in src/app/api/chat/route.ts.
-      { path: "/api/chat", method: "POST" },
-    ],
-  });
-} catch (error) {
-  // Don't crash the client bundle if BotID init fails. The server-side
-  // checkBotId() call will treat the request as unverifiable (isBot=true)
-  // and reject it — which is the correct behavior on init failure anyway.
-  console.warn(
-    "[instrumentation-client] BotID init failed:",
-    error instanceof Error ? error.message : String(error),
-  );
-}
+// Vercel BotID is NOT started here. It protects only POST /api/chat, the
+// signed-in AI chat, so it starts in the (authenticated) layout through
+// src/components/security/BotIdInit.tsx and public pages never load it. Why
+// /api/auth is not protected is in that component's comment.
