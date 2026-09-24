@@ -85,7 +85,10 @@ export default async function LayoffsPage() {
             {matched.map((r) => (
               <tr key={r.id} className="border-b border-border/40 align-top">
                 <td className="py-2 pr-3 tabular-nums">{long(r.noticeDate)}{" "}</td>
-                <td className="py-2 pr-3">{r.company}{" "}</td>
+                <td className="py-2 pr-3">
+                  {r.company}{" "}
+                  {r.site ? <span className="block text-foreground/70">{r.site}{" "}</span> : null}
+                </td>
                 <td className="py-2 pr-3">
                   <Link href={`/perm-employers/${r.employerSlug}`} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                     PERM record

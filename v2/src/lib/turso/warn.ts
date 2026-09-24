@@ -24,6 +24,13 @@ export interface WarnNotice {
   industry: string | null;
   employerSlug: string | null;
   sourceUrl: string;
+  /**
+   * Where the notice applies, as the state printed it: the address in
+   * California and New York, the city in Texas, null in Washington (whose
+   * location is already `county`). Display only; it is what tells apart two
+   * notices one company filed the same day for different sites.
+   */
+  site: string | null;
 }
 
 interface DbRow {
@@ -38,9 +45,10 @@ interface DbRow {
   industry: string | null;
   employer_slug: string | null;
   source_url: string;
+  site: string | null;
 }
 
-const COLS = "id, state, notice_date, effective_date, company, kind, employees, county, industry, employer_slug, source_url";
+const COLS = "id, state, notice_date, effective_date, company, kind, employees, county, industry, employer_slug, source_url, site";
 
 function hydrate(r: DbRow): WarnNotice {
   const n = r.employees === null || r.employees === undefined ? null : Number(r.employees);
@@ -56,6 +64,7 @@ function hydrate(r: DbRow): WarnNotice {
     industry: r.industry ?? null,
     employerSlug: r.employer_slug ?? null,
     sourceUrl: r.source_url,
+    site: r.site ?? null,
   };
 }
 

@@ -7,6 +7,11 @@ import type { WarnNotice as Notice } from "@/lib/turso/warn";
  * state printed it, with the state named, because a notice is a public
  * filing and not a finding of anything. The layoff rule the reader may be
  * wondering about is linked rather than restated.
+ *
+ * The site sits on a second line where the state gives one. Without it, two
+ * notices a company filed the same day for different sites print identically
+ * and read as a duplicate: Morgan Stanley's two one-worker New York notices of
+ * 2026-03-05 are 100 Park Ave and One Penn Plaza.
  */
 
 const long = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -37,7 +42,8 @@ export function WarnNoticeBand({ rows, pageName }: { rows: Notice[]; pageName: s
             {r.effectiveDate ? `, effective ${long(r.effectiveDate)}` : ""}.{" "}
             <a href={r.sourceUrl} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">
               {STATE_NAME[r.state] ?? r.state} WARN report
-            </a>
+            </a>{" "}
+            {r.site ? <span className="block text-foreground/70">{r.site}</span> : null}
           {" "}</li>
         ))}
       </ul>
