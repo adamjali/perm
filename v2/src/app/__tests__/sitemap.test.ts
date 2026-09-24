@@ -225,7 +225,12 @@ describe("sitemap.ts", () => {
     vi.mocked(getLiveOnlySlugWindow).mockImplementation(async (chunk: number, per: number) => {
       const lo = chunk * per;
       const hi = Math.min(lo + per, size);
-      return Array.from({ length: Math.max(0, hi - lo) }, (_, i) => `live-${lo + i + 1}`);
+      // Every third row has no date yet, so the fallback path is exercised
+      // beside the per-page one.
+      return Array.from({ length: Math.max(0, hi - lo) }, (_, i) => ({
+        slug: `live-${lo + i + 1}`,
+        lastChanged: (lo + i) % 3 === 2 ? null : `2026-08-${String(10 + ((lo + i) % 15)).padStart(2, "0")}`,
+      }));
     });
     const names = await childNames();
     expect(names.filter((n) => n.startsWith("live-employer-"))).toEqual([
@@ -238,8 +243,14 @@ describe("sitemap.ts", () => {
     expect(new Set(all).size).toBe(size);
     expect(all[0]).toBe("https://permtracker.app/perm-employers/live-1");
     expect(all[size - 1]).toBe("https://permtracker.app/perm-employers/live-12000");
-    // Stamped with the sweep's finish date: these pages move when it runs.
-    expect((await liveEmployerEntries(0))[0]!.lastModified).toBe("2026-09-15");
+    // LASTMOD IS PER PAGE: each URL carries the day that employer's page last
+    // changed, and only an undated row falls back to the sweep's finish date.
+    // It used to be the sweep date on every URL, a nightly timestamp.
+    const first = await liveEmployerEntries(0);
+    expect(first[0]!.lastModified).toBe("2026-08-10");
+    expect(first[1]!.lastModified).toBe("2026-08-11");
+    expect(first[2]!.lastModified).toBe("2026-09-15");
+    expect(new Set(first.map((e) => e.lastModified)).size).toBeGreaterThan(2);
   });
 
   it("lists NO live-only children when the nightly table cannot be read, and keeps the other families", async () => {

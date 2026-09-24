@@ -181,14 +181,24 @@ export async function countEntityRanks(kind: EntityKind): Promise<number> {
  * A missing table (the first deploy before the first nightly run) reads as
  * zero ranks, so the index lists no live children rather than failing every
  * sitemap on the site; `captureError` names it.
+ *
+ * Each row carries `lastChanged`: the Eastern day any of that employer's cases
+ * last changed as the page shows it, written by the nightly builder since
+ * 2026-09-23 (`last_changed`, from perm_case_status.fetched_at). It is the
+ * page's sitemap lastmod, in place of one nightly date on every URL.
  */
-export async function getLiveOnlySlugWindow(chunk: number, size: number): Promise<string[]> {
+export interface LiveOnlySlug {
+  slug: string;
+  lastChanged: string | null;
+}
+
+export async function getLiveOnlySlugWindow(chunk: number, size: number): Promise<LiveOnlySlug[]> {
   const lo = chunk * size;
-  const found = await rows<{ slug: string }>(
-    "SELECT slug FROM perm_live_only_index WHERE rank > ? AND rank <= ? ORDER BY rank",
+  const found = await rows<{ slug: string; last_changed: string | null }>(
+    "SELECT slug, last_changed FROM perm_live_only_index WHERE rank > ? AND rank <= ? ORDER BY rank",
     [lo, lo + size],
   );
-  return found.map((r) => r.slug);
+  return found.map((r) => ({ slug: r.slug, lastChanged: r.last_changed ?? null }));
 }
 
 export async function countLiveOnlyRanks(): Promise<number> {

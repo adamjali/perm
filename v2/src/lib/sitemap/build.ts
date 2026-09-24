@@ -426,9 +426,16 @@ export async function entityEntries(kind: EntityKind, chunk: number): Promise<En
  * One chunk of the live-only employers: pages the live feed names and the
  * published files do not. Indexable since 2026-09-17 by the owner's decision
  * (the page's `generateMetadata` carries the reasoning); listed from
- * `perm_live_only_index`, the nightly table, through a rank window. Stamped
- * with the sweep's own finish date, because these pages move when the sweep
- * runs and at no other time.
+ * `perm_live_only_index`, the nightly table, through a rank window.
+ *
+ * LASTMOD IS PER PAGE. Each URL carries the day that employer's page last
+ * changed (`last_changed`: the newest perm_case_status.fetched_at among its
+ * cases, an Eastern date). It used to be the sweep's finish date on all
+ * ~22,600 URLs, which moved every night whether a page changed or not; Google
+ * uses lastmod only when it is "consistently and verifiably accurate", and a
+ * nightly all-rows date reads as a timestamp (outside audit, 2026-09-23). The
+ * sweep date survives only as the fallback for a row the builder has not
+ * dated yet.
  */
 export async function liveEmployerEntries(chunk: number): Promise<Entry[]> {
   const base = baseUrl();
@@ -442,8 +449,11 @@ export async function liveEmployerEntries(chunk: number): Promise<Entry[]> {
     throw new Error(detail);
   }
   const swept = (await getSweepCoverage().catch(() => null))?.finishedOn ?? null;
-  const lastModified = swept ?? (await corpusAsOf()) ?? "2026-09-17";
-  return slugs.map((slug) => ({ url: `${base}/perm-employers/${slug}`, lastModified }));
+  const fallback = swept ?? (await corpusAsOf()) ?? "2026-09-17";
+  return slugs.map(({ slug, lastChanged }) => ({
+    url: `${base}/perm-employers/${slug}`,
+    lastModified: lastChanged ?? fallback,
+  }));
 }
 
 /** The child-sitemap families: three entity kinds plus the live-only employers. */
