@@ -165,6 +165,14 @@ jobs:
           python3 scripts/test_load_guard.py
           python3 scripts/test_sticky_slugs.py
 
+      # Nothing may follow a script's `if __name__ == "__main__":` guard: a
+      # definition below it never runs when the script runs. That froze the
+      # 12-month counts for sixteen days (build_entity_detail.py) and kept
+      # two posting tests out of CI (test_social_post.py). No network.
+      - name: Main guard is last in every script
+        working-directory: v2
+        run: python3 scripts/test_main_guard.py
+
       # The observed-decision series: our own half of `daily_decisions`.
       #
       # `daily_decisions` held three sources and read one. Two are now deleted:

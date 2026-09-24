@@ -75,12 +75,21 @@ def main() -> int:
     sig = oauth1_signature("POST", "http://example.com/request", RFC_PAIRS, "j49sk3j29djd", "dh893hdasih9")
     check(len(sig) == 28 and sig.endswith("="), "HMAC-SHA1 signature is 20 bytes, base64", f)
 
+    # The two HTTP tests below were written pytest-style and defined AFTER the
+    # __main__ guard, so `python3 scripts/test_social_post.py` (how CI runs
+    # this file) never reached them: until 2026-09-23 the posting requests
+    # were proven only by hand. main() runs them now.
+    for test in (test_post_to_x_sends_a_signed_json_request,
+                 test_post_to_linkedin_sends_the_versioned_bearer_request):
+        try:
+            test()
+            check(True, test.__name__.replace("_", " "), f)
+        except AssertionError as exc:
+            check(False, f"{test.__name__}: {exc}", f)
+
     print("\nALL PASS" if not f else f"\n{len(f)} FAILURE(S)")
     return 1 if f else 0
 
-
-if __name__ == "__main__":
-    sys.exit(main())
 
 
 # ---------------------------------------------------------------- the HTTP request itself
@@ -155,3 +164,7 @@ def test_post_to_linkedin_sends_the_versioned_bearer_request():
     assert seen["headers"]["x-restli-protocol-version"] == "2.0.0"
     body = _json.loads(seen["body"])
     assert body["author"] == "urn:li:person:abc" and body["commentary"] == "A post." and body["visibility"] == "PUBLIC"
+
+
+if __name__ == "__main__":
+    sys.exit(main())

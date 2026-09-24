@@ -825,9 +825,6 @@ def main() -> int:
     return 0 if ok else 1
 
 
-if __name__ == "__main__":
-    sys.exit(main())
-
 
 # ---------------------------------------------------------------------------
 # recent_12m: filings received in the last 12 months, per employer and firm
@@ -900,3 +897,13 @@ def lit_sql(s: str) -> str:
     """A string as a single-quoted SQL literal. Slugs are [a-z0-9-] but the
     quote is doubled anyway, because a rule that holds today is not a parser."""
     return "'" + str(s).replace("'", "''") + "'"
+
+
+# LAST, AND IT MUST STAY LAST. Until 2026-09-23 this guard sat above
+# refresh_recent_12m, so running the script exited inside main() before Python
+# ever reached that definition: every nightly call raised NameError, the
+# try/except logged "recent_12m refresh FAILED" and the run still said ok, and
+# the 12-month counts froze at their Sep 7 values. test_main_guard.py holds
+# every script to this shape.
+if __name__ == "__main__":
+    sys.exit(main())
