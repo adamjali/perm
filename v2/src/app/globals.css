@@ -1807,9 +1807,14 @@ body[data-scroll-locked] {
   margin-bottom: 1.25em;
 }
 
-/* Links */
+/* Links. --primary-text, NEVER --primary: this rule is UNLAYERED, so it beats
+   the layered `.text-primary` remap regardless of specificity, and with
+   var(--primary) it painted every in-article link #2ECC40 on #FAFAFA, 2.05:1
+   against the 4.5:1 floor (measured in the browser 2026-09-23 on a guide; the
+   MDX renderer's own `text-primary` class never got a say). --primary-text is
+   #1D8229 in light (4.53:1) and the lime itself in dark (9.26:1). */
 .prose-neobrutalist a {
-  color: var(--primary);
+  color: var(--primary-text);
   font-weight: 600;
   text-decoration: underline;
   text-decoration-thickness: 2px;

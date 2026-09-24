@@ -66,14 +66,20 @@ const trustBadges: TrustBadge[] = [
  * on the whole document runs on every React commit for the life of the page.
  * It searches the shadow root too, because the embed is configured
  * `data-mode="shadow"` and may render either way depending on their build.
- * Self-disconnects once labelled, and gives up after a bounded window so a
- * widget that never loads does not leave an observer running.
+ * Self-disconnects once labelled, or when the section unmounts.
+ *
+ * NO TIMER. It used to give up after 20 seconds, and the embed is LAZY
+ * (`data-lazyload`: Senja renders when the section scrolls into view), so the
+ * link can arrive minutes after mount. An outside Lighthouse run on 2026-09-23
+ * (throttled mobile) still flagged the unnamed link a month after this hook
+ * shipped, and a real reader who scrolls down after 20 seconds met the same
+ * unnamed link. An idle observer on this one small container costs nothing.
  *
  * If Senja renames the class this silently stops working and we are back to
  * exactly today's behaviour, which is the right way for a patch on somebody
  * else's DOM to fail.
  */
-function useLabelSenjaAttribution(ref: React.RefObject<HTMLDivElement | null>) {
+export function useLabelSenjaAttribution(ref: React.RefObject<HTMLDivElement | null>) {
   useEffect(() => {
     const host = ref.current;
     if (!host) return;
@@ -103,12 +109,8 @@ function useLabelSenjaAttribution(ref: React.RefObject<HTMLDivElement | null>) {
       if (label()) observer.disconnect();
     });
     observer.observe(host, { childList: true, subtree: true });
-    const giveUp = setTimeout(() => observer.disconnect(), 20_000);
 
-    return () => {
-      observer.disconnect();
-      clearTimeout(giveUp);
-    };
+    return () => observer.disconnect();
   }, [ref]);
 }
 

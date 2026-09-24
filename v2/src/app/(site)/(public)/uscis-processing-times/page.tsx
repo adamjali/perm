@@ -161,7 +161,12 @@ function MedianHistoryChart({ years, series }: { years: number[]; series: Array<
               className={SERIES_CLASSES[si % SERIES_CLASSES.length]}
               points={s.months.map((m, i) => `${x(i)},${y(m)}`).join(" ")}
             >
-              <title>{s.label}{" "}</title>
+              {/* ONE string child, with the anti-glue space inside it. As
+                  `{s.label}{" "}` (two children) React 19 rendered this <title>
+                  differently on the server and the client: React error #418 on
+                  every load (outside audit, 2026-09-23; the dev overlay named
+                  this node). */}
+              <title>{`${s.label} `}</title>
             </polyline>
           </g>
         ))}

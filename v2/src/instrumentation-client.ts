@@ -81,6 +81,13 @@ if (posthogKey) {
       //      maskAllInputs + maskTextSelector below defend the app recording too.
       disable_session_recording: true,
       session_recording: { maskAllInputs: true, maskTextSelector: "*" },
+      // SURVEYS OFF. The Surveys product is not enabled on this project (the
+      // PostHog project record says so, 2026-09-23), yet posthog-js fetched
+      // /ingest/static/<version>/surveys.js (34 KB, 83% unused) on every page
+      // load. `disable_surveys` is the SDK's own switch for the whole module
+      // (@posthog/types: "disable all surveys functionality", default false).
+      // Turn it back on here if a survey is ever built.
+      disable_surveys: true,
       debug: process.env.NODE_ENV === "development",
       before_send: (event) => {
         if (!event) return event;

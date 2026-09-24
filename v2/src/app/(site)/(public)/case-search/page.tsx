@@ -138,15 +138,18 @@ export default async function CaseSearchPage() {
             <dd className="mt-1 font-heading text-3xl font-black tabular-nums">
               {b.n === null ? "—" : fmt(b.n)}
             </dd>{" "}
-            <p className="mt-2 text-sm leading-relaxed text-foreground/70">{b.note}</p>{" "}
-            <p className="mt-2 text-sm">
+            {/* More <dd>s, not <p>s: a <div> inside a <dl> may hold only dt and dd
+                elements, and the two <p>s here failed axe's definition-list rule
+                (outside audit, 2026-09-23). A dt may take several dds. */}
+            <dd className="mt-2 text-sm leading-relaxed text-foreground/70">{b.note}</dd>{" "}
+            <dd className="mt-2 text-sm">
               <Link
                 href={b.href}
                 className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
               >
                 Browse just this program
               </Link>
-            </p>
+            </dd>
           </div>
         ))}
       </dl>
