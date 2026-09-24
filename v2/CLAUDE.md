@@ -6059,7 +6059,7 @@ read identically on the page because New York lists two separate 1-worker notice
 Measure the pages before calling them stale; and a band that hides the field that tells two
 rows apart will look like a duplicate even when the data is right.
 
-**So each notice now stores a `site` (2cf549d7, 8:10 PM Sep 23).** Display only: the
+**So each notice now stores a `site` (2cf549d7, 7:57 PM Sep 23).** Display only: the
 address in California and New York (their double-space street/city gap becomes a
 comma), the city in Texas, null in Washington, whose location is already `county`. The
 id still hashes the raw `_extra`, so no held id moved. `write()` names its columns
