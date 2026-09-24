@@ -263,6 +263,63 @@ def main() -> int:
           r["status"] == "ok" and r["capped"] is False and r["note"] == "",
           f"{r['status']} capped={r.get('capped')} note={r['note']!r}")
 
+    # 6c. THE TIME BUDGET STOPS THE WALK THE WAY THE CAP DOES (2026-09-24). The
+    #     walk rides both passes now, and the budget, not the request cap, is
+    #     what keeps a slow DOL from pushing the step into `timeout 105m`. A
+    #     fake clock ticks once per read; with the deadline at 4, four
+    #     requests go out, then the walk stops, records ok, names the budget,
+    #     and leaves the frontier on the last confirmed hit.
+    ticks = iter(range(10_000))
+    u = dict([perm(f"G-100-26240-{s:06d}") for s in range(101, 400)])
+    db = WalkDB(); look = fake_dol(u)
+    r = csd.run_discovery(db, lookup=look, today=T, frontier_override=("26240", 100),
+                          deadline=4, clock=lambda: next(ticks))
+    check("a stop on the time budget records ok and counts as capped",
+          r["status"] == "ok" and r["capped"] is True and r["requests"] == 4,
+          f"{r['status']} capped={r.get('capped')} requests={r['requests']}")
+    check("the budget stop names the budget, not the request cap",
+          csd.BUDGET_NOTE in r["note"] and csd.CAP_NOTE not in r["note"], r["note"])
+    check("a budget stop leaves the frontier on the last confirmed hit",
+          r["frontier_after"] == ("26240", 120) and _json.loads(db.docs[csd.FRONTIER_DOC])["serial"] == 120,
+          str(r["frontier_after"]))
+    ticks = iter(range(10_000))
+    db = WalkDB(); look = fake_dol(dict([perm("G-100-26240-000101")]))
+    r = csd.run_discovery(db, lookup=look, today=T, frontier_override=("26240", 100),
+                          deadline=10_000, clock=lambda: next(ticks))
+    check("a walk that reaches the edge inside its budget is not capped",
+          r["status"] == "ok" and r["capped"] is False and r["note"] == "",
+          f"capped={r.get('capped')} note={r['note']!r}")
+
+    # 6d. BOTH PASSES WALK, a --limit test run does not, and each budget fits
+    #     inside the workflow timeout it has to stop before. The budgets are
+    #     read against the YAML itself so the two cannot drift apart.
+    names = [n for n, _ in csd.tail_steps(WalkDB(), discover=True, cap=7, deadline=1.0)]
+    check("tail_steps puts the walk first when asked, ahead of the census",
+          names[:2] == ["discovery", "live_census"], str(names[:2]))
+    check("a run that is not a real pass does not walk",
+          "discovery" not in [n for n, _ in csd.tail_steps(WalkDB(), discover=False)])
+    seen: dict = {}
+    real_dar = csd.discover_and_record
+    csd.discover_and_record = lambda _db, **kw: seen.update(kw) or {}
+    try:
+        dict(csd.tail_steps(WalkDB(), discover=True, cap=7, deadline=1.0))["discovery"]()
+    finally:
+        csd.discover_and_record = real_dar
+    check("the walk step carries the pass's cap and deadline",
+          seen == {"cap": 7, "deadline": 1.0}, str(seen))
+    import pathlib as _pl, re as _re
+    wf = (_pl.Path(__file__).resolve().parents[2] / ".github/workflows/case-status-direct.yml").read_text()
+    m_pass = _re.search(r'timeout (\d+)m python3 scripts/ingest_case_status_direct.py --"\$MODE"', wf)
+    m_disc = _re.search(r"timeout (\d+)m python3 scripts/ingest_case_status_direct.py --discover", wf)
+    check("found both step timeouts in the workflow", bool(m_pass and m_disc), "regex found nothing")
+    if m_pass and m_disc:
+        step, disc = int(m_pass.group(1)), int(m_disc.group(1))
+        b = csd.DISCOVERY_BUDGET_MIN
+        check("the full and pending walks stop 10+ minutes inside the pass's step timeout",
+              step - max(b["full"], b["pending"]) >= 10, f"step {step}m, budgets {b}")
+        check("a dispatched --discover run stops before its step timeout",
+              0 < disc - b["discover"] <= 10, f"step {disc}m, budget {b['discover']}m")
+
     # 7. DOL going away mid-walk is a failure, never an ok.
     def dying(nums):
         raise RuntimeError("DOL 503")

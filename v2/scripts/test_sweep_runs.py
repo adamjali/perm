@@ -288,9 +288,13 @@ def main() -> int:
           0 <= o["write_sweep_coverage(db)"] < o["write_review_stages(db)"], str(o))
 
     body = src[src.index("def main()"):]
-    m = after(body, "record_sweep(", "tail_steps(db, discover=bool(args.full))")
+    # The anchor is the sweep path's own assignment, `steps = tail_steps(`: the
+    # --discover path calls tail_steps inside run_independently(...) earlier in
+    # main, and the argument list changed on 2026-09-24 when both passes began
+    # to walk, which is what broke the previous literal anchor.
+    m = after(body, "record_sweep(", "steps = tail_steps(")
     check("main() records the sweep before it runs the doc writers",
-          0 <= m["record_sweep("] < m["tail_steps(db, discover=bool(args.full))"],
+          0 <= m["record_sweep("] < m["steps = tail_steps("],
           str(m))
     check("write_sweep_coverage and write_review_stages are both scheduled",
           all(v >= 0 for v in o.values()), str(o))

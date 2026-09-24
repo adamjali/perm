@@ -101,6 +101,9 @@ BROKEN_STATUSES = frozenset({"failed", "partial"})
 # `CAP_NOTE` in sweep_serial_gaps.py (test_ingest_health pins it), so that a
 # row written by the older code is read for what it was: a designed stop.
 SWEEP_CAP_NOTE = "stopped on the request cap"
+# The walk's other designed stop (2026-09-24): its time budget. Byte-identical
+# to ingest_case_status_direct.BUDGET_NOTE; test_ingest_health.py pins it.
+BUDGET_NOTE = "stopped on its time budget"
 
 
 def check_runs(db) -> int:
@@ -500,6 +503,50 @@ def check_gap_sweep(db) -> int:
     return 0
 
 
+# A JOB THAT STOPS ON ITS OWN BUDGET EVERY RUN IS NOT KEEPING UP (2026-09-24).
+# Both jobs below record a budget stop as `ok`, correctly: one capped run is a
+# job doing its work. But the walk stopped on its 400-request cap every night
+# for at least a week, holding the corpus 2 to 4 days behind DOL, and nothing
+# here said so: the frontier check's 5-day budget read "ok" throughout, and
+# the gap sweep was capped every night over a backlog of 29,297 holes. The
+# streak is the leading signal both lag checks miss. A WARNING, not a
+# failure: a streak is capacity running short, not data going wrong, and the
+# frontier check still fails if the lag itself gets long.
+CAP_STREAK_RUNS = 3
+CAP_STREAK_JOBS = (("walk", "ingest_case_status_direct.py --discover"),
+                   ("gap sweep", "sweep_serial_gaps.py"))
+
+
+def check_cap_streak(db) -> int:
+    """Warn when a job has stopped on its own cap or time budget on each of
+    its last CAP_STREAK_RUNS runs. Never fails the check; see above."""
+    for label, script in CAP_STREAK_JOBS:
+        try:
+            res = db.execute(
+                "SELECT note FROM ingest_runs WHERE script = ? "
+                "ORDER BY finished_at DESC LIMIT ?", [script, CAP_STREAK_RUNS])
+            notes = [(r[0].get("value") or "") if r[0]["type"] != "null" else ""
+                     for r in res["response"]["result"]["rows"]]
+        except RuntimeError as exc:
+            print(f"cap streak        : {label} unreadable ({str(exc)[:100]})")
+            continue
+        if len(notes) < CAP_STREAK_RUNS:
+            print(f"cap streak        : {label} has {len(notes)} run(s) on record; "
+                  f"{CAP_STREAK_RUNS} needed to judge")
+            continue
+        stopped = sum(1 for n in notes if SWEEP_CAP_NOTE in n or BUDGET_NOTE in n)
+        if stopped == len(notes):
+            print(f"cap streak        : {label} stopped on its own budget on each of "
+                  f"its last {len(notes)} runs  BEHIND")
+            print(f"::warning::the {label} has stopped on its own cap or time budget on "
+                  f"each of its last {len(notes)} runs, so it is not keeping up with "
+                  "DOL; raise its budget or run it more often")
+        else:
+            print(f"cap streak        : {label} finished its work on "
+                  f"{len(notes) - stopped} of its last {len(notes)} runs  ok")
+    return 0
+
+
 def check_lookup_demand(db) -> int:
     try:
         res = db.execute(
@@ -643,6 +690,7 @@ def main() -> int:
     yield_bad = check_discovery_yield(db)
     backfill_bad = check_backfill(db)
     gapsweep_bad = check_gap_sweep(db)
+    check_cap_streak(db)        # a warning only; see CAP_STREAK_RUNS
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
     docs_bad = check_precomputed_docs(db)

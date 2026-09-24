@@ -212,9 +212,11 @@ DECISION_BUCKETS = {
 #     and a run that finds nothing still records itself, so the health check
 #     can see a frontier that has stopped moving.
 #
-# Cost at steady state: ~2,150 serials a day at 10 per request is ~215
-# requests a night, against the ~10,000 the sweep already makes. Catching up
-# a 9-day gap is ~1,900 requests, about 15 minutes at PACE_S.
+# Cost, measured 2026-09-24: nine prefixes at the 50-number ceiling is 5
+# serials a request, and a weekday issues 3,000 to 5,300 serials, so keeping
+# pace takes 600 to 1,100 requests a day at ~1.4 s each (PACE_S plus DOL's
+# latency). See DISCOVERY_REQUEST_CAP for why one 400-request walk a night
+# could not do that.
 # ---------------------------------------------------------------------------
 
 DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, discovered)"
@@ -256,7 +258,28 @@ FRONTIER_PREFIXES = PERM_OFFICE_PREFIXES
 # to ~360. Against the ~10,000 the daily sweep already makes, that is noise.
 DISCOVERY_PREFIXES = ALL_FLAG_PREFIXES
 DISCOVERY_STEP = BATCH // len(DISCOVERY_PREFIXES)   # serials per request, at the 50 ceiling
-DISCOVERY_REQUEST_CAP = 400      # ~4,000 serials, about two days, per run
+# THE WALK HAS TO OUT-RUN THE COUNTER, AND AT 400 A NIGHT IT COULD NOT
+# (2026-09-24). 400 requests reach at most 2,000 serials, and the day spans we
+# hold measure 2,963 (Sep 18), 2,968 (Sep 21), 3,595 (Sep 22) and 5,253
+# (Sep 23). The walk stopped on its cap every night for at least a week and
+# held a 2 to 4 day lag, which the frontier check (5-day budget) read as ok.
+# It now runs on BOTH passes, 4:10 AM and 3:40 PM, and the TIME BUDGET is
+# what bounds it, so a slow DOL can never push the step into the workflow's
+# `timeout 105m`; the request cap is only a sanity bound. At ~1.4 s a
+# request, 2,000 is ~47 minutes and ~10,000 serials: a backlog of days
+# clears in one run and a normal run stops at the edge well short of it.
+DISCOVERY_REQUEST_CAP = 2000
+# Minutes after the PROCESS started (not after the walk did), so the walk
+# spends only what the pass has left. The full sweep takes 60 to 72 minutes,
+# so the 4:10 AM walk gets ~20 to 30; the pending sweep takes ~17, so the
+# 3:40 PM walk gets the cap. Both leave room under `timeout 105m` for the
+# census docs and the live-table rebuild that follow. A dispatched
+# `--discover` run stops at 95, inside that step's `timeout 100m`, so a big
+# catch-up ends by its own clock and records itself instead of being killed.
+DISCOVERY_BUDGET_MIN = {"full": 90, "pending": 75, "discover": 95}
+# The note a walk writes when the budget, not the cap, stopped it. Pinned
+# byte-identical by test_ingest_health.py, whose streak check reads it.
+BUDGET_NOTE = "stopped on its time budget"
 # HOW FAR A GAP THE WALK WILL STEP OVER, IN SERIALS, NOT IN SPANS. It was two
 # SPANS, and that silently halved on 2026-09-13 when DISCOVERY_PREFIXES went
 # from five prefixes to nine: the span is BATCH // len(prefixes), so it went
@@ -362,14 +385,17 @@ def _insert_other_hits(db, hits: list[dict]) -> int:
 
 def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
                   cap: int = DISCOVERY_REQUEST_CAP,
-                  frontier_override: tuple[str, int] | None = None) -> dict:
+                  frontier_override: tuple[str, int] | None = None,
+                  deadline: float | None = None, clock=time.monotonic) -> dict:
     """Walk the counter forward from the frontier; record what DOL confirms.
 
     Returns {requests, inserted, inserted_other, frontier_before,
     frontier_after, status, capped, note}. status is "ok" when the walk
     reached the edge of what DOL has issued AND when it stopped on its own
-    request cap (`capped` tells those apart, and the note names the cap);
-    "failed" only when DOL stopped answering.
+    request cap or time budget (`capped` tells those apart from reaching the
+    edge, and the note names which one); "failed" only when DOL stopped
+    answering. `deadline` is a `clock()` value; past it, no new request is
+    made, and the frontier stays at the last confirmed hit.
     """
     lookup = lookup or lookup_with_retry
     today = today or datetime.date.today()
@@ -403,6 +429,7 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
     requests = inserted = inserted_other = 0
     unissued = 0
     stopped: str | None = None
+    timed_out = False
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
     stamp = int(time.time() * 1000)
 
@@ -413,6 +440,9 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
         claimed_code: str | None = None
         for c in codes:
             if requests >= cap:
+                break
+            if deadline is not None and clock() >= deadline:
+                timed_out = True
                 break
             asked = [case_number(pfx, c, s) for s in span for pfx in DISCOVERY_PREFIXES]
             try:
@@ -427,7 +457,7 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
             if found:
                 claimed, claimed_code = found, c
                 break
-        if stopped:
+        if stopped or timed_out:
             break
         if not claimed:
             if requests >= cap:
@@ -458,8 +488,14 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
     # is a failure.
     capped = not stopped and unissued < DISCOVERY_UNISSUED_STREAK
     status = "failed" if stopped else "ok"
-    note = stopped or (f"{CAP_NOTE} ({cap}) and resumes from the frontier above"
-                       if capped else "")
+    if stopped:
+        note = stopped
+    elif capped and timed_out:
+        note = f"{BUDGET_NOTE} after {requests} requests and resumes from the frontier above"
+    elif capped:
+        note = f"{CAP_NOTE} ({cap}) and resumes from the frontier above"
+    else:
+        note = ""
     log(f"discovery: {requests} requests, {inserted} new PERM cases, "
         f"{inserted_other} new PWD/LCA cases; frontier {start[0]}:{fmt_serial(start[1])} -> "
         f"{code}:{fmt_serial(serial)}; {status}"
@@ -1496,7 +1532,8 @@ def sweep_is_complete(limit, offset, truncated: bool, failed_batches: int) -> bo
     return not limit and not offset and not truncated and failed_batches == 0
 
 
-def tail_steps(db, *, discover: bool) -> list[tuple[str, object]]:
+def tail_steps(db, *, discover: bool, cap: int = DISCOVERY_REQUEST_CAP,
+               deadline: float | None = None) -> list[tuple[str, object]]:
     """The precomputed docs written after a sweep, as INDEPENDENT steps.
 
     ORDER IS LOAD-BEARING and `run_independently` preserves it: discovery
@@ -1515,7 +1552,8 @@ def tail_steps(db, *, discover: bool) -> list[tuple[str, object]]:
     """
     steps: list[tuple[str, object]] = []
     if discover:
-        steps.append(("discovery", lambda: discover_and_record(db)))
+        steps.append(("discovery",
+                      lambda: discover_and_record(db, cap=cap, deadline=deadline)))
     steps += [
         ("live_census", lambda: write_live_census(db)),
         # After live_census, before the event-log readers below: it wants both
@@ -1536,6 +1574,7 @@ def tail_steps(db, *, discover: bool) -> list[tuple[str, object]]:
 
 
 def main() -> int:
+    t0 = time.monotonic()          # the discovery budget counts from here
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--pending", action="store_true",
                     help="Every non-final case (the 12-hourly sweep).")
@@ -1569,7 +1608,8 @@ def main() -> int:
     db = Turso()
 
     if args.discover and not (args.full or args.pending):
-        res = run_discovery(db, cap=args.discover_cap, frontier_override=args.frontier)
+        res = run_discovery(db, cap=args.discover_cap, frontier_override=args.frontier,
+                            deadline=t0 + DISCOVERY_BUDGET_MIN["discover"] * 60)
         failed: list[tuple[str, str]] = []
         if res["inserted"]:
             failed = run_independently(tail_steps(db, discover=False))
@@ -1762,12 +1802,20 @@ def main() -> int:
         log(f"recorded  sweep: asked {asked:,}, answered {checked:,}, "
             f"changed {moved:,}, {requests:,} requests, "
             f"{'COMPLETE' if complete else 'PARTIAL'}")
-        # Discovery rides the full sweep so the census below already carries
-        # the day's new filings. The pending sweep skips it: twice-daily
-        # probing buys little and doubles the polite load. write_sweep_coverage
+        # Discovery rides BOTH passes so the census below already carries the
+        # day's new filings. It used to ride the full pass only, on the
+        # reasoning that twice-daily probing "buys little and doubles the
+        # polite load"; measured 2026-09-24, one 400-request walk a night
+        # covered at most 2,000 serials against 3,000 to 5,300 issued each
+        # weekday, so the corpus ran 2 to 4 days behind DOL. The time budget
+        # (DISCOVERY_BUDGET_MIN) is what keeps either pass under its step
+        # timeout. A `--limit` test run does not walk. write_sweep_coverage
         # runs before write_review_stages, which reads that row back, so the
         # doc's dates are this run's rather than yesterday's.
-        steps = tail_steps(db, discover=bool(args.full))
+        mode = "full" if args.full else "pending"
+        walk = bool(args.full or args.pending)
+        steps = tail_steps(db, discover=walk, cap=args.discover_cap,
+                           deadline=t0 + DISCOVERY_BUDGET_MIN[mode] * 60)
         failed = run_independently(steps)
 
         # RECORDED AFTER THE TAIL, NOT BEFORE IT. This call used to sit above

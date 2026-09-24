@@ -6114,3 +6114,45 @@ re-measured before it was changed. What it taught, beyond the commits:
   15-second convex test timed out at a load average near 100 (another session's ffmpeg render);
   it passed alone in 9.4 s and the rerun with `--testTimeout=45000` passed 408 of 408. Check
   `uptime` before re-reading a timeout as a regression.
+
+## The walk could not keep up with the counter, and the frontier check said ok (2026-09-24)
+
+Adam, reading the status round: *"can we increase that then? so it catches up? and never falls
+behind?"* Measured before changing anything:
+
+- **The walk was capped every night and could not have kept pace.** Nine prefixes at DOL's
+  50-number ceiling is 5 serials a request, so 400 requests reach at most 2,000 serials, and the
+  day spans we hold measure 2,963 (Sep 18), 2,968 (Sep 21), 3,595 (Sep 22) and 5,253 (Sep 23).
+  The frontier sat 2 to 4 days behind DOL all week; `check_frontier`'s 5-day budget read `ok`.
+- **The gap sweep was capped every night too** (600 requests), over 29,297 un-probed holes in its
+  90-day window. About 11,750 of them were simply ahead of the walk, which is where the nightly
+  sweep's big hit counts came from (2,147 real cases in 2,997 probes on Sep 24): the sweep works
+  newest-first, so it spent its budget on serials the walk had not reached yet.
+- **Given-up serials really are empty.** 100 serials the sweep had retired (Aug 18 to Sep 15),
+  asked under all nine prefixes and every day code within three days: one was real,
+  `I-200-26256-231557`, and the catch-up sweep had found it minutes earlier. It had been probed
+  under Saturday's and Monday's codes, because a day's span widens as its serials fill in, and
+  Sunday's span only covered it later. The sweep's 90-day window is what makes that self-correct.
+- **`sweep_serial_gaps.py --dry-run` still asks DOL**; it only skips the writes. Count holes with
+  `holes(held_serials(...), settled_misses(...), true_span(...))` instead, which reads our tables
+  only. A 5-minute dry run here spent ~200 read-only requests before its timeout.
+
+**The fix:** the walk rides BOTH passes now (the pending pass had been kept walk-free on the
+reasoning that twice-daily probing "buys little"), and a TIME budget bounds it, counted from
+process start: `DISCOVERY_BUDGET_MIN` is full 90, pending 75, dispatched `--discover` 95, each
+inside its step's `timeout`, with a 2,000-request cap as a sanity bound. A budget stop records
+`ok` with `BUDGET_NOTE` in its note, exactly as a cap stop names `CAP_NOTE`. The job cap is 150
+minutes, because the 4:10 AM walk now spends the slack inside its step. Capacity is roughly
+2,000 to 3,000 requests a day against the 600 to 1,100 a weekday needs, so a backlog of days
+clears in one run and an ordinary run stops at the edge.
+
+**The monitor that would have said so:** `check_cap_streak` prints a `::warning::` (it never
+fails the check) when the walk or the gap sweep has stopped on its own cap or budget on each of
+its last three runs. A capped run is a job doing its work; three in a row is a job that is not
+keeping up, and that is the leading signal both lag checks missed.
+
+**Tests, each probed by breaking the code in an isolated copy:** the budget stop (deleting the
+deadline check turns three checks red), the pass-through of cap and deadline into the walk step
+(dropping it turns one red), and each budget against the workflow's own step timeouts, read from
+the YAML so the two cannot drift (a full budget of 100 against a 105-minute step turns one red).
+The streak warning and the budget phrase are pinned in `test_ingest_health.py` the same way.

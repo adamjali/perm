@@ -393,6 +393,44 @@ def main() -> int:
     check("gap sweep: a capped `partial` run still counts as having run",
           health.check_gap_sweep(GapDB([("partial", 1200, 0.4)] + fresh[1:])) == 0)
 
+    # --- the cap streak (2026-09-24) ---------------------------------------
+    # A capped run is a job doing its work; three in a row is a job that is
+    # not keeping up. The walk was capped every night for a week while the
+    # frontier check read "ok". Warning only, so it must never return 1.
+    import io as _io, contextlib as _ctx
+
+    class StreakDB:
+        def __init__(self, by_script):
+            self.by_script = by_script   # script -> [note, ...], newest first
+        def execute(self, sql, args=None):
+            notes = self.by_script.get(args[0], [])[: args[1]]
+            return {"response": {"result": {"rows": [[{"type": "text", "value": n}] for n in notes]}}}
+
+    def streak(by_script):
+        buf = _io.StringIO()
+        with _ctx.redirect_stdout(buf):
+            rc = health.check_cap_streak(StreakDB(by_script))
+        return rc, buf.getvalue()
+
+    walk = "ingest_case_status_direct.py --discover"
+    capped = f"54 PERM + 144 PWD/LCA in 400 requests; {health.SWEEP_CAP_NOTE} (400) and resumes"
+    budget = f"12 PERM in 900 requests; {health.BUDGET_NOTE} after 900 requests and resumes"
+    edge = "31 PERM + 90 PWD/LCA in 212 requests; frontier 26267:258000 -> 26267:259100"
+    rc, out = streak({walk: [capped] * 3})
+    check("streak: three capped walks warn", rc == 0 and "::warning::the walk" in out, out)
+    rc, out = streak({walk: [budget, capped, budget]})
+    check("streak: a time-budget stop counts the same as a cap stop",
+          "::warning::the walk" in out, out)
+    rc, out = streak({walk: [edge, capped, capped]})
+    check("streak: one walk that reached the edge clears it",
+          "::warning" not in out and "1 of its last 3" in out, out)
+    rc, out = streak({walk: [capped, capped]})
+    check("streak: fewer than three runs is not judged", "::warning" not in out, out)
+    rc, out = streak({"sweep_serial_gaps.py":
+                      [f"probed 2997, found 2147; {health.SWEEP_CAP_NOTE} (600) and resumes"] * 3})
+    check("streak: a capped gap sweep warns too", "::warning::the gap sweep" in out, out)
+    check("streak: it never fails the check", rc == 0)
+
     check_freshness_verdict()
     check_capped_partial_is_not_broken()
     print(f"\n  {len(failures)} failure(s)")
@@ -427,6 +465,10 @@ def check_capped_partial_is_not_broken() -> None:
         check(f"the reader's cap phrase is byte-identical to {producer}'s CAP_NOTE",
               bool(m) and m.group(1) == health.SWEEP_CAP_NOTE,
               m.group(1) if m else "no CAP_NOTE found")
+    m = re.search(r'^BUDGET_NOTE = "([^"]+)"',
+                  (here / "ingest_case_status_direct.py").read_text(), re.M)
+    check("the reader's budget phrase is byte-identical to the walk's BUDGET_NOTE",
+          bool(m) and m.group(1) == health.BUDGET_NOTE, m.group(1) if m else "no BUDGET_NOTE found")
     capped_note = f"probed 2998, found 2113; {health.SWEEP_CAP_NOTE} (600) and resumes"
     check("a partial run that stopped on its own cap does not fail the check",
           run([("sweep_serial_gaps.py", "partial", capped_note, int(NOW) - 3 * 3_600_000)]) == 0)

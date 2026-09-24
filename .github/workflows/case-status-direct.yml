@@ -45,9 +45,9 @@ on:
         type: choice
         options: [pending, full, discover]
       discover_cap:
-        description: "discover only: request cap for this walk. ~1.4 s each, so keep it under ~4,000 for the 100m window; 400 is ~2 days of serials"
+        description: "discover only: request cap for this walk. ~1.4 s each and 5 serials each; the walk also stops on its own 95-minute budget. 2,000 is ~10,000 serials, two to three weekdays"
         required: false
-        default: "400"
+        default: "2000"
       frontier:
         description: "discover only: reset the walk cursor to YYDDD:SERIAL first, e.g. 26240:200246"
         required: false
@@ -63,7 +63,11 @@ concurrency:
 jobs:
   sweep:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # 150, not 120 (2026-09-24): the 4:10 AM walk now spends the slack inside
+    # the main step (up to 90 minutes after the script started), and the gap
+    # sweep follows it, so 120 left too little margin. The step-level
+    # `timeout` commands below are still what catch a genuine hang.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -101,9 +105,10 @@ jobs:
             # refreshes the census when it inserted anything.
             # Measured Sep 7 2026: ~1.4 s per request (0.35 s pace + DOL's
             # latency), so 60m held ~2,400 requests and a 2,500 cap was killed
-            # 124 with its cursor safe. 100m under the 120m job cap.
+            # 124 with its cursor safe. 100m under the 150m job cap, and the
+            # script stops itself at 95 (DISCOVERY_BUDGET_MIN["discover"]).
             timeout 100m python3 scripts/ingest_case_status_direct.py --discover \
-              --discover-cap "${CAP_IN:-400}" ${FRONTIER_IN:+--frontier "$FRONTIER_IN"}
+              --discover-cap "${CAP_IN:-2000}" ${FRONTIER_IN:+--frontier "$FRONTIER_IN"}
             python3 scripts/build_entity_detail.py --live-recent-only || true
             exit 0
           fi
@@ -111,7 +116,7 @@ jobs:
           # NOTIFY. A job that hits timeout-minutes is CANCELLED, and GitHub
           # sends nothing for a cancellation - which is how the 2026-08-28 full
           # sweep died two-thirds through with no alert. `timeout 105m` exits
-          # 124 (a real failure, red, notified) below the 120m job cap, which
+          # 124 (a real failure, red, notified) below the 150m job cap, which
           # is a genuine hang: the full pass is ~85 min and the script already
           # stops itself cleanly after three consecutive far-end failures.
           timeout 105m python3 scripts/ingest_case_status_direct.py --"$MODE"

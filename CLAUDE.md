@@ -122,7 +122,7 @@ dependencies.**
 | dataset | source | cadence |
 |---|---|---|
 | per-case status | **DOL** `flag.dol.gov`, batch API | full daily 4:10 AM ET, pending 3:40 PM ET, **fired by Vercel cron since Sep 7 2026** (GitHub's own `schedule` ran 2 to 7.5 hours late) |
-| new filings, ALL programs | **DOL**, discovered: one nightly serial walk (`--discover`, cursor in `perm_docs.discovery_frontier`) that asks G-100/G-200/I-200/P-100/I-203 per span, plus visitor lookups | with the full sweep; lookups instant. Health fails if the cursor stops moving for 5 days |
+| new filings, ALL programs | **DOL**, discovered: a serial walk (`--discover`, cursor in `perm_docs.discovery_frontier`) that asks all nine FLAG prefixes per span, plus visitor lookups | on BOTH passes since Sep 24 2026 (4:10 AM and 3:40 PM ET), each bounded by a time budget; lookups instant. Health fails if the cursor stops moving for 5 days, and warns when a walk stops on its own budget three runs running |
 | live remainder (`perm_live_recent`) | derived: live cases newer than the last disclosure file | rebuilt daily post-sweep |
 | decided cases | **DOL** quarterly disclosure files | quarterly + monthly check |
 | processing times | **DOL** FLAG | daily |
