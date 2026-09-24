@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-09-22
+> **Status:** Production | **Last Updated:** 2026-09-24
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -6069,8 +6069,10 @@ id still hashes the raw `_extra`, so no held id moved. `write()` names its colum
 portal FILL a site the spreadsheet's row lacks without overwriting anything else. Filled
 the same evening: CA 269/269, NY 197/197, TX 2,394/2,394 (27 spreadsheet-only rows from
 the Sep 9 fixture, the file Texas serves only to a browser). The page half (the band's
-second line and the `/layoffs` company cell) rides the Sep 23 audit batch (below),
-because a pushed branch builds a Vercel preview and a push to main deploys.
+second line and the `/layoffs` company cell) shipped with the Sep 23 audit batch (below),
+live at 11:43 PM EDT (`d4ac9ecb`). Until then it waited on a LOCAL branch, because a pushed
+branch builds a Vercel preview, and the GSC timer pushes `main` on its own: code left
+unpushed on `main` rides the timer's next push into production without anyone deciding.
 
 ## The Sep 23 audit batch: BotID's scope, per-page sitemap dates, a guard that hid a failure (2026-09-23)
 

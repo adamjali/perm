@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-22
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-24
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **391 files / 7,034 tests across 4 vitest
@@ -159,3 +159,18 @@ clock. And because `www.uscis.gov` 403s GitHub's runners on some days, two
 after GitHub's attempt. Schedules, secrets, proofs and reversal:
 [`v2/CLAUDE.md`](v2/CLAUDE.md), sections "Vercel's clock dispatches the
 GitHub jobs" and "The residential runner".
+
+## Sep 23 2026, in four lines
+
+Each is detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under its date.
+
+- **BotID runs only in the signed-in app**, where the one route it guards (`POST /api/chat`)
+  lives. Public pages don't load it: the Vercel firewall guards the site, and each public
+  endpoint charges its own budget.
+- **Live-only employer URLs carry their own sitemap date**: the newest `fetched_at` among the
+  employer's cases, an Eastern date, where every URL used to say "today".
+- **New York's WARN notices are keyed without the dashboard's `Index` column** (a position that
+  shifts as notices post), the snapshot is pruned, and each notice's site shows on employer
+  pages and `/layoffs`.
+- **Nothing may follow a script's `__main__` guard.** A nightly refresh defined below one failed
+  silently for sixteen days; `scripts/test_main_guard.py` enforces the rule in CI.
