@@ -164,6 +164,19 @@ try:
     check(rw["inserted_perm"] + rw["inserted_other"] >= 1,
           f"a confirmed hit is actually inserted (got {rw['inserted_perm']}+{rw['inserted_other']})")
 
+    # ---- near matches are not finds (2026-09-24) -------------------------
+    # DOL's endpoint is a search: for numbers that do not exist it returns
+    # scored neighbours. A catch-up over 17,545 empty holes reported 497
+    # "real" because those were counted and stored. Exact matches only.
+    def neighbour_lookup(nums):
+        return [{"caseNumber": "G-100-26265-252001", "caseStatus": "ANALYST REVIEW",
+                 "employerName": "Elsewhere", "jobTitle": "Z", "submittedDate": "2026-09-22"}]
+    rn = sweep(FakeDB([100, 105]), ["26240"], cap=99, lookup=neighbour_lookup, dry=False)
+    check(rn["found"] == 0, f"a near match DOL volunteers is not counted as found (got {rn['found']})")
+    check(rn["inserted_perm"] + rn["inserted_other"] == 0,
+          f"and is not stored (got {rn['inserted_perm']}+{rn['inserted_other']})")
+    check(rn["missed"] == 4, f"so every asked hole still counts as a miss (got {rn['missed']})")
+
     # ---- the miss ledger: the sweep must CONVERGE -------------------------
     # The first real run probed 7,129 holes for 251 cases. With no memory the
     # other 6,878 are re-asked every night forever and the budget never

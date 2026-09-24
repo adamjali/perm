@@ -6128,23 +6128,43 @@ behind?"* Measured before changing anything:
   90-day window. About 11,750 of them were simply ahead of the walk, which is where the nightly
   sweep's big hit counts came from (2,147 real cases in 2,997 probes on Sep 24): the sweep works
   newest-first, so it spent its budget on serials the walk had not reached yet.
-- **Given-up serials really are empty.** 100 serials the sweep had retired (Aug 18 to Sep 15),
-  asked under all nine prefixes and every day code within three days: one was real,
-  `I-200-26256-231557`, and the catch-up sweep had found it minutes earlier. It had been probed
-  under Saturday's and Monday's codes, because a day's span widens as its serials fill in, and
-  Sunday's span only covered it later. The sweep's 90-day window is what makes that self-correct.
+- **Behind the frontier, nothing had been missed.** The catch-up swept all 17,545 older holes
+  (Jun 27 to Sep 20) in 3,534 requests and every asked serial came back empty. And 100 serials
+  the sweep had given up on (Aug 18 to Sep 15), asked under all nine prefixes and every day code
+  within three days, held no missing case: the one hit, `I-200-26256-231557`, has been stored
+  since Sep 19 (the walk found it under Sunday's code), and its "given up" rows are its serial
+  asked under Saturday's and Monday's codes, where it does not exist. A probe of retired serials
+  has to exclude cases already held, or a stored case reads as a missed one; this one did not,
+  and I reported it as a miss for about ten minutes before checking.
+- **The sweep counted DOL's near matches as finds.** The endpoint is a search: for a number that
+  does not exist it returns scored neighbours from other serials and days. So the catch-up
+  logged "DOL confirmed 497 of them as real cases" and "inserted 23 PERM, 88 PWD/LCA" while
+  every one of the 17,545 asked serials came back empty; the inserts were neighbours in the
+  walk's own region, racing it. `sweep()` now keeps exact matches only, as the walk always has
+  (`test_serial_gaps.py` pins it; removing the filter turns two checks red).
 - **`sweep_serial_gaps.py --dry-run` still asks DOL**; it only skips the writes. Count holes with
   `holes(held_serials(...), settled_misses(...), true_span(...))` instead, which reads our tables
   only. A 5-minute dry run here spent ~200 read-only requests before its timeout.
+
+**The catch-up, run from the Mac 4:39 to 5:37 PM EDT Sep 24:** the walk went from
+`26264:249921` to `26267:259759` (today's filings) in 2,259 requests and stopped at DOL's edge,
+not its cap, storing **1,100 PERM and 5,413 PWD/LCA cases** filed Sep 21 to 24; the census
+refreshed itself. The sweep over the older days ran beside it on a disjoint range (days
+up to Sep 20, the walk's from Sep 21), so the two never wrote the same rows. Employer
+pages and the case search show the new cases after the next full pass rebuilds
+`perm_live_recent` and revalidates the changed employers; a lookup by number shows them now.
 
 **The fix:** the walk rides BOTH passes now (the pending pass had been kept walk-free on the
 reasoning that twice-daily probing "buys little"), and a TIME budget bounds it, counted from
 process start: `DISCOVERY_BUDGET_MIN` is full 90, pending 75, dispatched `--discover` 95, each
 inside its step's `timeout`, with a 2,000-request cap as a sanity bound. A budget stop records
 `ok` with `BUDGET_NOTE` in its note, exactly as a cap stop names `CAP_NOTE`. The job cap is 150
-minutes, because the 4:10 AM walk now spends the slack inside its step. Capacity is roughly
-2,000 to 3,000 requests a day against the 600 to 1,100 a weekday needs, so a backlog of days
-clears in one run and an ordinary run stops at the edge.
+minutes, because the 4:10 AM walk now spends the slack inside its step. Measured on the
+catch-up with nothing else running: ~1.36 s and ~4.9 serials a request, so a weekday's 3,000 to
+5,300 serials need 600 to 1,100 requests, and the two walks can make about 2,600 to 3,000 a day
+(the 3:40 PM walk up to its 2,000 cap, the 4:10 AM walk whatever its budget leaves). A day
+code change costs extra requests, and a sweep running beside the walk slowed it to ~2 s and
+~3.4 serials a request.
 
 **The monitor that would have said so:** `check_cap_streak` prints a `::warning::` (it never
 fails the check) when the walk or the gap sweep has stopped on its own cap or budget on each of

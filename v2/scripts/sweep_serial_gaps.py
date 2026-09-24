@@ -301,6 +301,16 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
                 # reach the miss ledger below.
                 refused = str(exc)
                 break
+            # ONLY EXACT MATCHES COUNT (2026-09-24). The endpoint is a SEARCH:
+            # asked about numbers that do not exist, it answers with scored
+            # near matches from other serials, days and prefixes. Counted,
+            # those made a catch-up over 17,545 genuinely empty holes report
+            # "DOL confirmed 497 of them as real cases" while every asked
+            # serial came back empty; stored, they raced the walk for serials
+            # it had not reached yet. The walk has always kept exact matches
+            # only, and the sweep now does the same.
+            wanted = set(nums)
+            hits = [h for h in hits if h.get("caseNumber") in wanted]
             probed += len(chunk)
             # Every serial in the chunk that DOL did not claim under ANY
             # prefix is a miss. Read it off the answer rather than assuming
