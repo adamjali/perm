@@ -6069,5 +6069,46 @@ id still hashes the raw `_extra`, so no held id moved. `write()` names its colum
 portal FILL a site the spreadsheet's row lacks without overwriting anything else. Filled
 the same evening: CA 269/269, NY 197/197, TX 2,394/2,394 (27 spreadsheet-only rows from
 the Sep 9 fixture, the file Texas serves only to a browser). The page half (the band's
-second line and the `/layoffs` company cell) waits on local branch `warn-site-display`
-(80a44c1f) for the next deploy, because a pushed branch builds a Vercel preview.
+second line and the `/layoffs` company cell) rides the Sep 23 audit batch (below),
+because a pushed branch builds a Vercel preview and a push to main deploys.
+
+## The Sep 23 audit batch: BotID's scope, per-page sitemap dates, a guard that hid a failure (2026-09-23)
+
+An outside production audit (another session, read-only here) listed eight items; each was
+re-measured before it was changed. What it taught, beyond the commits:
+
+- **An UNLAYERED rule beats a layered remap, whatever the specificity.** In-article links were
+  #2ECC40 on #FAFAFA (2.05:1) although `.text-primary` maps to `--primary-text`: the
+  `.prose-neobrutalist a { color: var(--primary) }` rule sits outside `@layer`, so it won. It
+  paints with `--primary-text` now; `prose-link-contrast.test.ts` checks the rule and the token's
+  contrast, with the lime itself as the failing control.
+- **A JSX `<title>` takes ONE child.** `<title>{s.label}{" "}</title>` threw React #418 on every
+  load of /uscis-processing-times. Put the anti-glue space inside one template literal.
+  `svg-title-single-child.test.ts` scans every `<title>`; its first version matched the word
+  "<title>" in two comments, so it strips comments first.
+- **A file-based OG image attaches to EVERY page in its segment**, so the card route must resolve
+  exactly as the page does: published record, then the live-only record, 404 only when both miss.
+  ~22,600 live-only employer pages advertised a 404 card until it did.
+- **BotID starts only in the signed-in app.** It guards one route, `POST /api/chat` (AI quota).
+  At init it only wraps fetch and XMLHttpRequest; its challenge scripts (c.js, Kasada's p.js)
+  load when a protected request fires. `components/security/BotIdInit.tsx` starts it once from the
+  (authenticated) layout; `botid-scope.test.ts` keeps the BotID client out of public code and the
+  protected list equal to the routes calling `checkBotId()`. Basic checks are free; Deep Analysis
+  is $1 per 1,000 `checkBotId()` calls on Pro (Vercel's BotID page).
+- **Live-only employer URLs carry their own lastmod.** `perm_live_only_index.last_changed` is the
+  newest `perm_case_status.fetched_at` among an employer's cases, as an Eastern date (fetched_at
+  is written on first record and again only when status, employer or title changes). The sweep's
+  finish date is only the fallback. First fill: 22,599 dated, 29 distinct days, 1,459 in the
+  last week, where every URL used to say "today".
+- **Nothing may follow a script's `if __name__ == "__main__":` guard.** `refresh_recent_12m` was
+  defined below it from Sep 7 to Sep 23, so every nightly call raised NameError inside a
+  try/except that logged "FAILED" while the run said ok; 3,224 of 77,190 twelve-month counts were
+  stale when the fix ran. `scripts/test_main_guard.py` (in CI) parses all 88 scripts; its first
+  run also found `test_social_post.py`'s two HTTP tests below the guard, never run by CI.
+- **The Senja label hook must not give up on a timer**: the embed is lazy, so the link can arrive
+  long after mount. And **`disable_surveys: true`** keeps posthog-js from loading surveys.js on
+  every page; the Surveys product is off on the project.
+- **A local full-suite timeout under a loaded machine is not a failure of the change.** One
+  15-second convex test timed out at a load average near 100 (another session's ffmpeg render);
+  it passed alone in 9.4 s and the rerun with `--testTimeout=45000` passed 408 of 408. Check
+  `uptime` before re-reading a timeout as a regression.
