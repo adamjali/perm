@@ -5252,7 +5252,9 @@ rendering (an empty month 404s there, so it is omitted here), gated on
 `sitemap.test.ts` gained the family test, the census-read-fails test, and a
 **tree-walking coverage test**: every `[param]` directory under the public
 tree must have at least one URL in the sitemap, so the class cannot recur.
-Probed by emptying the block: two tests red.
+Probed by emptying the block: two tests red. **Sep 24: the family indexed on its own.** Four of
+four month pages sampled in Search Console were "URL is on Google" without a request, 2025-03
+crawled Sep 19 with `/perm-queue` as the referring page, so the months left the GSC queue.
 
 **`/policy-changes` is visual now, and every date on it is the Register's.**
 The ingest asks the Federal Register API for `effective_on`,
@@ -6165,6 +6167,16 @@ catch-up with nothing else running: ~1.36 s and ~4.9 serials a request, so a wee
 (the 3:40 PM walk up to its 2,000 cap, the 4:10 AM walk whatever its budget leaves). A day
 code change costs extra requests, and a sweep running beside the walk slowed it to ~2 s and
 ~3.4 serials a request.
+
+**Rates, measured the same evening.** The walk sleeps `PACE_S` (0.35 s) between requests and
+ran at ~1.36 s a request on its own; `sweep()` has no pause at all and ran 3,534 requests in 25
+minutes, ~0.4 s each, ~2.4 a second against DOL. Both are within what DOL tolerated here, and a
+sweep beside the walk slowed the walk to ~2 s a request.
+
+**Left alone on purpose:** three comments under `src/` still say the corpus changes "once a
+night" (`case-search/page.tsx`, `api/case-search/route.ts`, `api/perm-cases/route.ts`). The live
+tables now rebuild after both passes, but an edit under `src/` is a production build and a cold
+ISR cache, so they wait for the next change that deploys anyway.
 
 **The monitor that would have said so:** `check_cap_streak` prints a `::warning::` (it never
 fails the check) when the walk or the gap sweep has stopped on its own cap or budget on each of

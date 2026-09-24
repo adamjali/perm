@@ -1596,8 +1596,8 @@ def main() -> int:
     ap.add_argument(
         "--discover", action="store_true",
         help="Only probe past the serial frontier for new filings, record "
-             "them, refresh the census, and exit. The full sweep also runs "
-             "discovery on its own.")
+             "them, refresh the census, and exit. Both the --full and the "
+             "--pending sweep also walk on their own, under a time budget.")
     ap.add_argument(
         "--reconcile", action="store_true",
         help="Correct statuses but write NO events. Use this for the first "
