@@ -6058,3 +6058,14 @@ read identically on the page because New York lists two separate 1-worker notice
 2026-03-05, at 100 Park Ave and One Penn Plaza, and the band never prints the site address.
 Measure the pages before calling them stale; and a band that hides the field that tells two
 rows apart will look like a duplicate even when the data is right.
+
+**So each notice now stores a `site` (2cf549d7, 8:10 PM Sep 23).** Display only: the
+address in California and New York (their double-space street/city gap becomes a
+comma), the city in Texas, null in Washington, whose location is already `county`. The
+id still hashes the raw `_extra`, so no held id moved. `write()` names its columns
+(`INSERT_COLS`), ALTERs the column into a live table, and lets the lower-ranked Texas
+portal FILL a site the spreadsheet's row lacks without overwriting anything else. Filled
+the same evening: CA 269/269, NY 197/197, TX 2,394/2,394 (27 spreadsheet-only rows from
+the Sep 9 fixture, the file Texas serves only to a browser). The page half (the band's
+second line and the `/layoffs` company cell) waits on local branch `warn-site-display`
+(80a44c1f) for the next deploy, because a pushed branch builds a Vercel preview.
