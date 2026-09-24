@@ -22,7 +22,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from build_entity_detail import LIVE_COLS, live_norm, live_only_rows  # noqa: E402
+from build_entity_detail import LIVE_COLS, et_date, live_norm, live_only_rows  # noqa: E402
 
 FAILURES: list[str] = []
 
@@ -68,9 +68,9 @@ def check_live_only_rows() -> None:
     """The sitemap's live-only family: published slugs excluded, ranks dense,
     ordered by first filing then slug, name by majority spelling."""
     live = [
-        {"employer_slug": "acme-llc", "employer_name": "ACME LLC", "filing_date": "2026-05-02"},
-        {"employer_slug": "acme-llc", "employer_name": "Acme LLC", "filing_date": "2026-04-30"},
-        {"employer_slug": "acme-llc", "employer_name": "ACME LLC", "filing_date": "2026-06-01"},
+        {"employer_slug": "acme-llc", "employer_name": "ACME LLC", "filing_date": "2026-05-02", "changed_on": "2026-09-20"},
+        {"employer_slug": "acme-llc", "employer_name": "Acme LLC", "filing_date": "2026-04-30", "changed_on": "2026-08-27"},
+        {"employer_slug": "acme-llc", "employer_name": "ACME LLC", "filing_date": "2026-06-01", "changed_on": None},
         {"employer_slug": "big-published-co", "employer_name": "Big Published Co", "filing_date": "2026-01-01"},
         {"employer_slug": "zeta-inc", "employer_name": "Zeta Inc", "filing_date": "2026-04-30"},
         {"employer_slug": "", "employer_name": "no slug", "filing_date": "2026-01-01"},
@@ -81,6 +81,18 @@ def check_live_only_rows() -> None:
     check("cases counted", rows[0][2], 3)
     check("majority spelling kept", rows[0][1], "ACME LLC")
     check("first filing kept", rows[0][3], "2026-04-30")
+    # The sitemap's lastmod: the newest day any case changed, per employer.
+    check("last_changed is the newest change among the employer's cases", rows[0][5], "2026-09-20")
+    check("a case with no change stamp falls back to its filing date", rows[1][5], "2026-04-30")
+
+
+def check_et_date() -> None:
+    """fetched_at is epoch milliseconds, dated on the site's Eastern clock."""
+    import datetime as dt
+    late = int(dt.datetime(2026, 9, 24, 3, 30, tzinfo=dt.timezone.utc).timestamp() * 1000)
+    check("11:30 PM Eastern stays on the Eastern date, not UTC's tomorrow", et_date(late), "2026-09-23")
+    check("seconds are tolerated", et_date(late // 1000), "2026-09-23")
+    check("an absent stamp is None", (et_date(None), et_date("")), (None, None))
 
 
 def main() -> int:
@@ -137,6 +149,7 @@ def main() -> int:
         print(f"{len(FAILURES)} failure(s): {', '.join(FAILURES)}")
         return 1
     check_live_only_rows()
+    check_et_date()
     print("all checks passed")
     return 0
 

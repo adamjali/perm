@@ -46,6 +46,7 @@ import json
 import pathlib
 import sys
 from collections import Counter, defaultdict
+from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import entity_key  # noqa: E402
@@ -172,7 +173,7 @@ def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
     """
     got = rows_of(db.execute(
         "SELECT s.case_number, s.filing_date, s.current_status, s.is_final, "
-        "s.employer_name, s.job_title FROM perm_case_status s "
+        "s.employer_name, s.job_title, s.fetched_at FROM perm_case_status s "
         "WHERE NOT EXISTS (SELECT 1 FROM perm_cases c "
         "                   WHERE c.case_number = s.case_number)"))
     boundary = str(db.scalar("SELECT MAX(decision_date) FROM perm_cases") or "")[:7]
@@ -196,6 +197,10 @@ def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
             "employer_slug": hit[0] if hit is not None else _search_slug(name),
             "job_title": cell(r[5]),
             "decided_seen": seen.get(str(case)) if fin else None,
+            # When this case last changed as the page shows it (see et_date).
+            # Carried for the live-only index; NOT a perm_live_recent column,
+            # so live_norm and the diffed write never see it.
+            "changed_on": et_date(cell(r[6])),
         })
     log(f"  live-recent: {len(out):,} cases absent from the disclosure corpus "
         f"(published through {boundary}), {matched:,} matched to a known entity")
@@ -400,9 +405,38 @@ LIVE_ONLY_DDL = [
         name TEXT NOT NULL,
         cases INTEGER NOT NULL,
         first_filed TEXT,
-        rank INTEGER NOT NULL)""",
+        rank INTEGER NOT NULL,
+        last_changed TEXT)""",
     "CREATE INDEX IF NOT EXISTS perm_live_only_rank ON perm_live_only_index (rank)",
 ]
+
+ET = ZoneInfo("America/New_York")
+
+
+def et_date(stamp) -> str | None:
+    """A perm_case_status.fetched_at stamp as the EASTERN calendar date.
+
+    fetched_at is written when a case is first recorded (the nightly walk, the
+    gap sweep, a visitor's lookup) and rewritten only when its status, employer
+    or job title changes: the sweep writes changed rows and nothing else. So the
+    newest fetched_at among an employer's cases is the day that employer's
+    live-only page last changed. Milliseconds, with seconds tolerated the way
+    decided_seen_map tolerates them. Eastern because the site's day is Eastern:
+    in UTC a change after 8 PM ET would be dated tomorrow.
+    """
+    if stamp is None or stamp == "":
+        return None
+    n = int(stamp)
+    secs = n / 1000 if n > 10_000_000_000 else n
+    return datetime.datetime.fromtimestamp(secs, tz=ET).strftime("%Y-%m-%d")
+
+
+def ensure_live_only_columns(db: Turso) -> None:
+    """`CREATE TABLE IF NOT EXISTS` never adds a column to a live table."""
+    have = {cell(r[1]) for r in rows_of(db.execute("PRAGMA table_info(perm_live_only_index)"))}
+    if "last_changed" not in have:
+        db.execute("ALTER TABLE perm_live_only_index ADD COLUMN last_changed TEXT")
+        log("  added column perm_live_only_index.last_changed")
 
 
 def live_only_rows(live: list[dict], published_slugs: set[str]) -> list[list]:
@@ -414,24 +448,34 @@ def live_only_rows(live: list[dict], published_slugs: set[str]) -> list[list]:
     filing then slug so that a night's new arrivals mostly APPEND and the rank
     windows the sitemap reads stay stable; ordering by case count would
     reshuffle every rank whenever any count moved.
+
+    `last_changed` is the sitemap's lastmod for the page: the newest day any
+    of the employer's cases changed as the page shows it (its `changed_on`,
+    falling back to its filing date). It used to be the sweep's finish date on
+    all ~22,600 URLs, a date that moved every night whether a page changed or
+    not; Google uses lastmod only when it is "consistently and verifiably
+    accurate", and a nightly all-rows date reads as a timestamp.
     """
     by_slug: dict[str, dict] = {}
     for row in live:
         slug = row.get("employer_slug")
         if not slug or slug in published_slugs:
             continue
-        rec = by_slug.setdefault(slug, {"names": {}, "cases": 0, "first": None})
+        rec = by_slug.setdefault(slug, {"names": {}, "cases": 0, "first": None, "last": None})
         rec["cases"] += 1
         name = row.get("employer_name") or slug
         rec["names"][name] = rec["names"].get(name, 0) + 1
         filed = row.get("filing_date")
         if filed and (rec["first"] is None or filed < rec["first"]):
             rec["first"] = filed
+        touched = row.get("changed_on") or filed
+        if touched and (rec["last"] is None or touched > rec["last"]):
+            rec["last"] = touched
     ordered = sorted(by_slug.items(), key=lambda kv: (kv[1]["first"] or "9999", kv[0]))
     out = []
     for rank, (slug, rec) in enumerate(ordered, start=1):
         name = max(rec["names"], key=lambda n: (rec["names"][n], n))
-        out.append([slug, name, rec["cases"], rec["first"], rank])
+        out.append([slug, name, rec["cases"], rec["first"], rank, rec["last"]])
     return out
 
 
@@ -439,20 +483,23 @@ def write_live_only_index(db: Turso, live: list[dict], maps) -> bool:
     """Write only the rows that changed, the same discipline as the live table."""
     for ddl in LIVE_ONLY_DDL:
         db.execute(ddl)
+    ensure_live_only_columns(db)
     published = {v[0] for v in maps["employer"].values()}
     want = live_only_rows(live, published)
     stored: dict[str, tuple] = {}
-    for r in rows_of(db.execute("SELECT slug, name, cases, first_filed, rank FROM perm_live_only_index")):
+    for r in rows_of(db.execute(
+            "SELECT slug, name, cases, first_filed, rank, last_changed FROM perm_live_only_index")):
         vals = [cell(c) for c in r]
-        stored[str(vals[0])] = (str(vals[1]), int(vals[2] or 0), vals[3], int(vals[4] or 0))
-    changed = [w for w in want if stored.get(w[0]) != (w[1], w[2], w[3], w[4])]
+        stored[str(vals[0])] = (str(vals[1]), int(vals[2] or 0), vals[3], int(vals[4] or 0), vals[5])
+    changed = [w for w in want if stored.get(w[0]) != (w[1], w[2], w[3], w[4], w[5])]
     wanted = {w[0] for w in want}
     gone = [k for k in stored if k not in wanted]
     for i in range(0, len(gone), 500):
         chunk = gone[i:i + 500]
         db.execute(f"DELETE FROM perm_live_only_index WHERE slug IN ({','.join('?' for _ in chunk)})", chunk)
     if changed:
-        write_rows(db, "perm_live_only_index", ["slug", "name", "cases", "first_filed", "rank"], changed)
+        write_rows(db, "perm_live_only_index",
+                   ["slug", "name", "cases", "first_filed", "rank", "last_changed"], changed)
     got = int(db.scalar("SELECT count(*) FROM perm_live_only_index") or 0)
     top = int(db.scalar("SELECT max(rank) FROM perm_live_only_index") or 0)
     ok = got == len(want) and top == len(want)
