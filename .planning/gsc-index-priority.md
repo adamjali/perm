@@ -1,5 +1,43 @@
 # GSC indexing priority list
 
+**Run of 2026-09-24, 3:41 to 4:07 PM EDT: 11 accepted, the 12th refused.**
+
+**The cap was 11 for the SEVENTH consecutive run** (Sep 17, 19, 20, 21, 22, 23, 24). The
+timer's round started at 3:37 PM and the first request was accepted at 3:41 PM, 18 minutes
+before 24 hours had passed since yesterday's first (3:59 PM), so the window is still not
+"24 hours from the first request". Probe, don't predict.
+
+**No lost clicks today.** Every REQUEST INDEXING click was preceded by a zoom of the button
+and all twelve registered; every Dismiss was followed by a focus check on the search INPUT
+before typing, and it held all thirteen times.
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/guides/approved-i140-no-visa-number-eb2-india` | Discovered, not indexed (was **unknown** yesterday; now names `sitemap.xml`) | 3:41 PM |
+| 2 | `/guides/ead-and-advance-parole-timelines` | Discovered, not indexed | 3:43 PM |
+| 3 | `/visa-bulletin` | indexed, crawled **Sep 16**, before the Sep 22 month strip | 3:45 PM |
+| 4 | `/terms` | indexed, crawled Sep 11, before the Florida LLC wording | 3:47 PM |
+| 5 | `/about` | indexed, crawled Sep 16 | 3:49 PM |
+| 6 | `/methodology` | indexed, crawled Sep 14 | 3:51 PM |
+| 7 | `/glossary` | indexed, crawled Sep 14 | 3:53 PM |
+| 8 | `/guides/how-dol-sets-a-prevailing-wage` | indexed, crawled Sep 3 (refused on Sep 22) | 3:59 PM |
+| 9 | `/tools/priority-date-retention` | indexed, crawled Sep 9, title stale | 4:01 PM |
+| 10 | `/guides/explore-perm-wages` | Discovered, **never crawled** | 4:03 PM |
+| 11 | `/guides/waiting-on-your-green-card` | indexed, crawled Sep 3 | 4:06 PM |
+| 12 | `/guides/employer-stopped-filing-perms` | indexed, crawled Sep 9 | **Quota Exceeded**, 4:07 PM |
+
+**Inspected, no slot spent:**
+- **The `/perm-queue/<month>` family is indexing on its own.** 2025-04, 2025-03, 2025-02 and
+  2024-06 are all "URL is on Google"; 2025-03 was crawled Sep 19 with `/perm-queue` as the
+  referring page. Four of four sampled, so the month family leaves the queue.
+- `/tools/green-card-fees`: indexed, crawled **Sep 24, 1:47 AM**, after the title change.
+- `/visa-bulletin/2026-08` and `2026-07` were not inspected: they were queued "until the hub
+  is fixed", the hub has linked every month since the Sep 22 deploy, and `/visa-bulletin`
+  itself was requested today.
+- "Temporary processing error" under Sitemaps again, on `/visa-bulletin`,
+  `/tools/green-card-fees` and `/tools/priority-date-retention`; still transient on Google's
+  side and still not acted on.
+
 **Run of 2026-09-23, 3:59 to 4:24 PM EDT: 11 accepted, the 12th refused.**
 
 **Started by hand, not by the timer.** The session timers died at the context continuation
@@ -453,3 +491,18 @@ refused; the 5:07 PM fire tries again.
 4. left over from Sep 18: `/perm-queue/2025-04` and backwards
 5. then the pre-deploy Sep 22 list above (the wage guide refused on Sep 22, the August and
    July bulletin pages, the two retitled tools), in its order
+
+## Queue after the Sep 24 run (the timer probes from 3:07 PM EDT Sep 25; a refusal is free)
+
+Inspect first; skip anything crawled after Sep 21, 12:21 PM (the title deploy).
+
+1. `/guides/employer-stopped-filing-perms` (refused today, crawled Sep 9),
+   `/guides/how-accurate-are-perm-estimates`
+2. blog: `perm-salary-data-by-occupation`, `what-an-employers-perm-record-shows`,
+   `what-law-firm-volume-tells-you`, `data-note-application-on-hold-september-2026`,
+   `best-immigration-case-management-tools`
+3. `/changelog` and its five posts, lowest value; `/debarments` and `/perm-case-statuses` only
+   if a re-inspection shows their Sep 21 request has not been crawled yet
+4. one live-only employer sample, inspect only, to watch the family convert
+5. dropped today: the `/perm-queue/<month>` family (indexed on its own), `/tools/green-card-fees`
+   (crawled Sep 24), and `/visa-bulletin/2026-08` and `2026-07` (reachable from the hub now)
