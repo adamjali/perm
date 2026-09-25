@@ -1,5 +1,32 @@
 # GSC indexing priority list
 
+**Run of 2026-09-25, 3:41 to 4:01 PM EDT: 11 accepted, the 12th refused.**
+
+**The cap was 11 for the EIGHTH consecutive run** (Sep 17, 19, 20, 21, 22, 23, 24, 25). The first
+request was accepted at 3:41 PM, the same minute as yesterday's first. Every slot went to a page
+whose title changed on Sep 21 (or that Google had never crawled); every indexed page on the list
+was last crawled between Aug 17 and Sep 12.
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/guides/employer-stopped-filing-perms` | indexed, crawled Sep 9 (refused on Sep 24) | 3:41 PM |
+| 2 | `/guides/how-accurate-are-perm-estimates` | indexed, crawled Sep 8 | 3:43 PM |
+| 3 | `/blog/perm-salary-data-by-occupation` | indexed, crawled **Aug 26** | 3:45 PM |
+| 4 | `/blog/what-an-employers-perm-record-shows` | indexed, crawled Sep 3 | 3:46 PM |
+| 5 | `/blog/what-law-firm-volume-tells-you` | indexed, crawled Sep 8 | 3:48 PM |
+| 6 | `/blog/data-note-application-on-hold-september-2026` | indexed, crawled Sep 12 | 3:50 PM |
+| 7 | `/blog/best-immigration-case-management-tools` | indexed, crawled **Aug 17** | 3:52 PM |
+| 8 | `/changelog` | indexed, crawled Sep 11 | 3:54 PM |
+| 9 | `/changelog/case-status-and-first-party-data` | indexed, crawled Sep 10 | 3:56 PM |
+| 10 | `/changelog/every-case-every-sponsor` | Discovered, **never crawled** | 3:58 PM |
+| 11 | `/changelog/law-firms-and-denial-rates` | indexed, crawled Sep 4 | 4:00 PM |
+| 12 | `/changelog/the-whole-field-three-ways` | indexed, crawled Sep 3 | **Quota Exceeded**, 4:01 PM |
+
+The six changelog posts that carry the short `seoTitle` added on Sep 21 are
+`case-status-and-first-party-data`, `every-case-every-sponsor`, `law-firms-and-denial-rates`,
+`live-data-and-two-doors`, `march-2026-timeline-and-ux` and `the-whole-field-three-ways`
+(`git grep seoTitle -- v2/content/changelog`); the ledger had only said "its five posts".
+
 **Run of 2026-09-24, 3:41 to 4:07 PM EDT: 11 accepted, the 12th refused.**
 
 **The cap was 11 for the SEVENTH consecutive run** (Sep 17, 19, 20, 21, 22, 23, 24). The
@@ -506,3 +533,17 @@ Inspect first; skip anything crawled after Sep 21, 12:21 PM (the title deploy).
 4. one live-only employer sample, inspect only, to watch the family convert
 5. dropped today: the `/perm-queue/<month>` family (indexed on its own), `/tools/green-card-fees`
    (crawled Sep 24), and `/visa-bulletin/2026-08` and `2026-07` (reachable from the hub now)
+
+## Queue after the Sep 25 run (the timer probes from 3:07 PM EDT Sep 26; a refusal is free)
+
+Inspect first; skip anything crawled after Sep 21, 12:21 PM (the title deploy).
+
+1. `/changelog/the-whole-field-three-ways` (refused today, crawled Sep 3),
+   `/changelog/live-data-and-two-doors`, `/changelog/march-2026-timeline-and-ux`
+2. `/debarments` and `/perm-case-statuses` only if a re-inspection shows their Sep 21 request
+   has not been crawled yet
+3. one live-only employer sample, inspect only, to watch the family convert
+4. **then the queue is exhausted**: every page from the Sep 21 title deploy and the Sep 22
+   deploy that this ledger listed has been requested. Before a run after this one, rebuild the
+   queue (re-inspect a sample of the pages requested Sep 21 to 25 to see whether the recrawls
+   landed, and check Search Console's Pages report for anything newly "Crawled, not indexed").
