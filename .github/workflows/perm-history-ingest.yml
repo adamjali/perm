@@ -1,0 +1,68 @@
+name: PERM history ingest (FY2008 to FY2023)
+
+# Dispatch only. DOL does not revise closed years, so this runs once and then
+# only to retry a year that failed: every workbook it loads is recorded in
+# perm_docs['perm_history'] and skipped next time unless `force` is set. It
+# runs here because www.dol.gov refuses this project's laptop and serves
+# GitHub's runners.
+on:
+  workflow_dispatch:
+    inputs:
+      from_fy:
+        description: "First fiscal year (2008 or later)"
+        required: false
+        default: "2008"
+      to_fy:
+        description: "Last fiscal year (2023 or earlier)"
+        required: false
+        default: "2023"
+      force:
+        description: "Reload workbooks already recorded"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: perm-history-ingest
+  cancel-in-progress: false
+
+jobs:
+  history:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 150
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+
+      - name: Load closed-year PERM decisions
+        working-directory: v2
+        env:
+          FROM_FY: ${{ github.event.inputs.from_fy || '2008' }}
+          TO_FY: ${{ github.event.inputs.to_fy || '2023' }}
+          FORCE: ${{ github.event.inputs.force }}
+        run: |
+          for v in "$FROM_FY" "$TO_FY"; do
+            case "$v" in ''|*[!0-9]*) echo "FATAL: fiscal years must be 4-digit" >&2; exit 1 ;; esac
+          done
+          extra=""
+          [ "$FORCE" = "true" ] && extra="--force"
+          # A failed year leaves the run red on purpose (the years that did
+          # load are kept and skipped on the retry).
+          python3 scripts/ingest_perm_history.py --from-fy "$FROM_FY" --to-fy "$TO_FY" $extra || {
+            python3 scripts/record_ingest_failure.py --script ingest_perm_history.py \
+              --note "run ${GITHUB_RUN_ID} failed; see the log" || true
+            exit 1
+          }
+
+      - name: Remove credentials
+        if: ${{ always() }}
+        working-directory: v2
+        run: rm -f .env.local

@@ -279,6 +279,10 @@ jobs:
           # 3. Derived from the freshly-loaded perm_cases (each reads it back
           #    out of Turso, so they run only after the two loads above).
           python3 scripts/build_entity_detail.py
+          # FY2024 onward of each employer's year-by-year record, from the
+          # rows just loaded (FY2008 to FY2023 were loaded once by
+          # perm-history-ingest.yml and never change).
+          python3 scripts/ingest_perm_history.py --current
           python3 scripts/build_alphabet.py
           python3 scripts/build_state_profiles.py
           python3 scripts/build_wage_bands.py

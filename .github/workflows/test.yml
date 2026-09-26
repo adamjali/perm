@@ -230,7 +230,9 @@ jobs:
       - name: PERM industry and city columns
         if: ${{ !cancelled() }}
         working-directory: v2
-        run: python3 scripts/test_perm_extras.py
+        run: |
+          python3 scripts/test_perm_extras.py
+          python3 scripts/test_perm_history.py
 
       - name: Serial arithmetic and data-invariant contracts
         if: ${{ !cancelled() }}
