@@ -61,6 +61,11 @@ SCHEMA = [
          median_annual_wage REAL,
          state              TEXT,
          code               TEXT,
+         -- Filled by build_entity_detail.refresh_recent_12m. Declared HERE
+         -- because this script drops and recreates the table, and the
+         -- readers select it: without it every entity page rendered between
+         -- this load and the next refresh failed (found Sep 26 2026).
+         recent_12m         INTEGER,
          PRIMARY KEY (kind, slug)
        )""",
     """CREATE TABLE perm_wage_stats (

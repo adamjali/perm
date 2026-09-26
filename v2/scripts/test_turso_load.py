@@ -165,6 +165,14 @@ def main() -> int:
             if missing:
                 failures.append(f"1. perm_docs lost keys: {sorted(missing)}")
             print(f"  [1] normal load          bulletins={vb} docs={len(keys)} rc={r.returncode}")
+            # The entity readers select recent_12m. This load recreates the
+            # table, and without the column every entity page failed until
+            # the nightly refresh re-added it (Sep 26 2026).
+            con = sqlite3.connect(DB)
+            ecols = {row[1] for row in con.execute("PRAGMA table_info(perm_entities)")}
+            con.close()
+            if "recent_12m" not in ecols:
+                failures.append(f"1. perm_entities lost recent_12m: {sorted(ecols)}")
 
             # --- 2. the Archive is down: no artifact at all
             seed(DB)

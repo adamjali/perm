@@ -1071,6 +1071,12 @@ def main() -> int:
     write_live_recent(db, live)
     write_live_remainder_doc(db, live)
     write_live_only_index(db, live, maps)
+    # The quarterly load recreates perm_entities, so its recent_12m values
+    # are empty until this runs; the nightly pass refreshes it too.
+    try:
+        refresh_recent_12m(db)
+    except Exception as exc:  # noqa: BLE001 - a facet must not fail the rebuild
+        log(f"  recent_12m refresh FAILED: {exc}")
 
     log("VERIFY")
     ok = True
