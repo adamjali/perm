@@ -12,24 +12,32 @@ import { formatWage } from "@/lib/wageFormat";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { SortableHeader } from "@/components/tools/SortableHeader";
 import { LinkPending, PendingLink } from "@/components/ui/pending-link";
+import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { nextSort, sortRows, type SortColumn, type SortState } from "@/lib/tableSort";
 import {
   FILTER_LABEL,
+  OLD_FORM_NOTE,
+  ORDER_LABEL,
   OUTCOME_LABEL,
+  SEARCH_ORDERS,
   availableOutcomes,
   chooseLead,
   withStageNarrow,
   filterAvailability,
+  isFieldValue,
+  orderToSort,
   refusalText,
   type FilterKey,
   type FilterState,
   type Lead,
   type Outcome,
+  type SearchOrder,
 } from "@/lib/caseSearchPlan";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
 // runtime import of a "server-only" module.
 import type { Program, UnifiedCase } from "@/lib/turso/unifiedSearch";
+import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/turso/caseSearchReads";
 
 /**
  * Every DOL filing this site holds, in one search, with every filter the
@@ -64,10 +72,17 @@ import type { Program, UnifiedCase } from "@/lib/turso/unifiedSearch";
  * the route uses too - it DROPS what this greys out, because a greyed control
  * is a courtesy and a public endpoint needs a control.
  *
- * SORTING IS CLIENT-SIDE AND HONEST ABOUT IT. The server returns the newest
- * 300 matches; sorting reorders that set, it does not re-query. Sorting by
- * wage therefore shows the highest wage AMONG THE MATCHES SHOWN, not across
- * the whole corpus, and the footnote says so.
+ * THE ORDER CONTROL GOES TO THE SERVER; A COLUMN CLICK DOES NOT. The chosen
+ * order is sent with the search, and the answer says whether it covers every
+ * match or only the rows fetched (each source's newest, or oldest-decided for
+ * that order). A column header reorders the rows on the page and re-queries
+ * nothing. The footnote says which of the two the reader is looking at.
+ *
+ * THE WORKER AND JOB FILTERS READ PUBLISHED PERM ONLY. Industry, worksite city,
+ * the worker's citizenship, birth country, visa and education, and the
+ * education the job requires are columns of DOL's PERM file alone, and the
+ * worker's fields exist only for cases filed on DOL's old form. The group says
+ * both, and the answer names the filters that narrowed it to one program.
  */
 
 const PROGRAM_LABEL: Record<Program, string> = {
@@ -83,7 +98,30 @@ const PROGRAM_BLURB: Record<Program, string> = {
 };
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+/** A typed NAICS code. A sector range comes only from the list. */
+const NAICS_CODE_RE = /^\d{2,6}$/;
 const ALL_PROGRAMS: Program[] = ["perm", "pwd", "lca"];
+const WORKER_KEYS: CaseFieldKey[] = ["citizenship", "birthCountry", "visaClass", "education", "jobEducation"];
+/** The route's parameter for each worker and job field. */
+const WORKER_PARAM: Record<CaseFieldKey, string> = {
+  citizenship: "cit",
+  birthCountry: "bcountry",
+  visaClass: "visa",
+  education: "edu",
+  jobEducation: "jobedu",
+};
+const WORKER_PLACEHOLDER: Record<CaseFieldKey, string> = {
+  citizenship: "e.g. India",
+  birthCountry: "e.g. India",
+  visaClass: "e.g. H-1B",
+  education: "e.g. Master's",
+  jobEducation: "e.g. Bachelor's",
+};
+/** Countries read better in title case; a visa class or a degree is shown as DOL printed it. */
+const WORKER_DISPLAY: Partial<Record<CaseFieldKey, (v: string) => string>> = {
+  citizenship: (v) => titleCase(v),
+  birthCountry: (v) => titleCase(v),
+};
 
 const CONTROL =
   "w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium " +
@@ -149,6 +187,10 @@ interface SearchResponse {
   resolved: { firm: ResolvedEntity | null; occupation: ResolvedEntity | null };
   dropped: FilterKey[];
   needsLead: boolean;
+  /** Absent on a `needsLead` answer, which ran no search. */
+  permOnly?: string[];
+  order?: SearchOrder;
+  orderScope?: "complete" | "fetched";
 }
 
 export interface StateOption {
@@ -159,6 +201,113 @@ export interface FiscalYearOption {
   fiscalYear: string;
   total: number;
 }
+export interface IndustryOption {
+  /** A 2-digit NAICS sector, or a range such as `31-33`. */
+  code: string;
+  title: string;
+}
+
+const SMALL_WORDS = new Set(["and", "of", "the", "de", "du", "da"]);
+/**
+ * DOL prints countries and cities in capitals. Shown in title case so a list of
+ * two hundred is readable; the VALUE sent to the search stays as printed.
+ */
+function titleCase(v: string): string {
+  return v
+    .toLowerCase()
+    .replace(/\p{L}[\p{L}']*/gu, (w, i: number) => (i > 0 && SMALL_WORDS.has(w) ? w : w[0]!.toUpperCase() + w.slice(1)));
+}
+
+/** A worker or job filter's control: a list when the site holds one, else a text box. */
+function Choice({
+  id,
+  label,
+  value,
+  onChange,
+  options,
+  disabled,
+  describedBy,
+  placeholder,
+  display = (v) => v,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  options: FieldOption[];
+  disabled: boolean;
+  describedBy: string | undefined;
+  placeholder: string;
+  display?: (v: string) => string;
+}) {
+  if (options.length === 0) {
+    return (
+      <input
+        id={id}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        maxLength={60}
+        autoComplete="off"
+        disabled={disabled}
+        aria-label={label}
+        aria-describedby={describedBy}
+        className={CONTROL + " min-w-0"}
+      />
+    );
+  }
+  const chosen = options.find((o) => o.value === value);
+  return (
+    <>
+      <select
+        id={id}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        aria-label={label}
+        aria-describedby={describedBy}
+        className={CONTROL + " min-w-0"}
+      >
+        <option value="">Any</option>
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {display(o.value)}
+            {o.n === null ? "" : ` (${fmt(o.n)})`}
+          </option>
+        ))}
+      </select>
+      <SelectedInFull label={chosen ? display(chosen.value) : null} />
+    </>
+  );
+}
+
+/**
+ * What a published PERM row adds under its job title: where and in what
+ * industry, and, for a case on DOL's old form, who the worker was and what the
+ * job asked for. Blocks, not columns, so a phone-width table gains no width.
+ */
+function RowDetails({ r }: { r: UnifiedCase }) {
+  const where = [r.city ? titleCase(r.city) : null, r.industryTitle ?? null].filter(Boolean) as string[];
+  const who = [
+    r.citizenship ? `${titleCase(r.citizenship)} citizen` : null,
+    r.birthCountry && r.birthCountry !== r.citizenship ? `born in ${titleCase(r.birthCountry)}` : null,
+    r.visaClass ? `${r.visaClass} at filing` : null,
+    r.education ? `${r.education}${r.major ? ` in ${titleCase(r.major)}` : ""}` : null,
+  ].filter(Boolean) as string[];
+  if (where.length === 0 && who.length === 0 && !r.jobEducation) return null;
+  return (
+    <span className="mt-1 block text-sm leading-snug text-foreground/70">
+      {where.length > 0 ? <span className="block">{where.join(" · ")}</span> : null}{" "}
+      {who.length > 0 ? <span className="block">Worker: {who.join(", ")}</span> : null}{" "}
+      {r.jobEducation ? <span className="block">Job requires: {r.jobEducation}</span> : null}
+    </span>
+  );
+}
+
+const NO_FIELD_OPTIONS: CaseFieldOptions = {
+  citizenship: [], birthCountry: [], visaClass: [], education: [], jobEducation: [],
+};
 
 /**
  * A labelled control that can be refused.
@@ -168,6 +317,9 @@ export interface FiscalYearOption {
  * keyboard and to a phone, and this sentence is the whole point of the
  * control being on screen at all.
  */
+/** The per-control form of the no-lead reason; the full sentence prints once. */
+const NO_LEAD_SHORT = "Search by employer, case number, law firm, state or occupation first.";
+
 function Field({
   label,
   state,
@@ -183,7 +335,13 @@ function Field({
     <div className="block min-w-0">
       <span className="mb-1 block text-sm font-bold">{label}</span>{" "}
       {children}
-      {state.on || !state.why ? null : (
+      {state.on || !state.why ? null : state.why === "no-lead" ? (
+        // Said once, under "Narrow it", rather than under all nineteen
+        // controls; the control still carries it for a screen reader.
+        <span id={describedBy} className="sr-only">
+          {NO_LEAD_SHORT}
+        </span>
+      ) : (
         <span id={describedBy} className="mt-1 block text-sm leading-snug text-foreground/70">
           {refusalText(state.why)}
         </span>
@@ -195,9 +353,16 @@ function Field({
 export function UnifiedCaseSearch({
   states = [],
   fiscalYears = [],
+  industries = [],
+  fieldOptions = NO_FIELD_OPTIONS,
+  publishedFrom = null,
 }: {
   states?: StateOption[];
   fiscalYears?: FiscalYearOption[];
+  industries?: IndustryOption[];
+  fieldOptions?: CaseFieldOptions;
+  /** The first fiscal year of published PERM cases the search reaches, once the history is loaded. */
+  publishedFrom?: string | null;
 }) {
   const params = useSearchParams();
   const initial = params.get("q") ?? "";
@@ -224,6 +389,15 @@ export function UnifiedCaseSearch({
   const [wMaxInput, setWMaxInput] = useState("");
   const [programs, setPrograms] = useState<Program[]>(ALL_PROGRAMS);
   const [stageInput, setStageInput] = useState<string>(initialStage);
+  // The worker, job and industry fields: published PERM only.
+  const [industryInput, setIndustryInput] = useState("");
+  const [naicsInput, setNaicsInput] = useState("");
+  const [cityInput, setCityInput] = useState("");
+  const [worker, setWorker] = useState<Record<CaseFieldKey, string>>({
+    citizenship: "", birthCountry: "", visaClass: "", education: "", jobEducation: "",
+  });
+  const setWorkerField = (k: CaseFieldKey, v: string) => setWorker((cur) => ({ ...cur, [k]: v }));
+  const [orderInput, setOrderInput] = useState<SearchOrder>("filed-desc");
   const stageOption = useMemo(() => stageOptions.find((o) => o.slug === stageInput) ?? null, [stageOptions, stageInput]);
 
   const [query, setQuery] = useState({ search: initial.trim() ? initial.trim() : "", n: 0 });
@@ -279,7 +453,7 @@ export function UnifiedCaseSearch({
   // Narrowing applied AFTER the answer arrives: not a new request, so flipping
   // between them costs nothing and cannot re-bill a Turso read.
   const [stage, setStage] = useState<"all" | "pending" | "decided">("all");
-  const [sort, setSort] = useState<SortState>({ key: "filed", dir: -1 });
+  const [sort, setSort] = useState<SortState>(orderToSort("filed-desc"));
 
   const url = useMemo(() => {
     if (submitted === null) return "skip" as const;
@@ -325,11 +499,23 @@ export function UnifiedCaseSearch({
     if (programs.length && programs.length < ALL_PROGRAMS.length) {
       s.set("programs", programs.join(","));
     }
+    // A typed code wins over the sector list; a malformed one is named in the
+    // warning above the answer rather than sent for the route to refuse.
+    const naics = naicsInput.trim() ? (NAICS_CODE_RE.test(naicsInput.trim()) ? naicsInput.trim() : "") : industryInput;
+    if (naics) s.set("naics", naics);
+    if (isFieldValue(cityInput)) s.set("city", cityInput.trim());
+    for (const k of WORKER_KEYS) {
+      if (isFieldValue(worker[k])) s.set(WORKER_PARAM[k], worker[k].trim());
+    }
+    if (orderInput !== "filed-desc") s.set("order", orderInput);
     return s.toString();
   };
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    // The table shows the order that was asked for, whatever column a click
+    // had chosen since.
+    setSort(orderToSort(orderInput));
     setSubmitted(buildParams());
     setQuery((cur) => ({ search: textInput.trim(), n: cur.n + 1 }));
   };
@@ -368,6 +554,13 @@ export function UnifiedCaseSearch({
   )
     .filter(([, v]) => v.trim() !== "" && !MONTH_RE.test(v))
     .map(([label]) => label);
+
+  /** Worker, job and industry boxes holding something the search would refuse. */
+  const unreadFields = [
+    ...(naicsInput.trim() && !NAICS_CODE_RE.test(naicsInput.trim()) ? ["NAICS code"] : []),
+    ...(cityInput.trim() && !isFieldValue(cityInput) ? [FILTER_LABEL.city] : []),
+    ...WORKER_KEYS.filter((k) => worker[k].trim() && !isFieldValue(worker[k])).map((k) => FILTER_LABEL[k]),
+  ];
 
   return (
     <div className="space-y-8">
@@ -488,6 +681,9 @@ export function UnifiedCaseSearch({
             <legend className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Narrow it
             </legend>{" "}
+            {can.outcome.why === "no-lead" ? (
+              <p className="mt-2 text-sm leading-snug text-foreground/70">{refusalText("no-lead")}</p>
+            ) : null}{" "}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <span className="text-sm font-bold">{FILTER_LABEL.outcome}:</span>{" "}
               {/* THE REASON WAS ON SCREEN AND NOT WIRED TO THE CONTROLS. The
@@ -524,8 +720,11 @@ export function UnifiedCaseSearch({
               ))}
             </div>{" "}
             {can.outcome.on ? null : (
-              <p id={`${uid}-outcome-why`} className="mt-2 text-sm leading-snug text-foreground/70">
-                {refusalText(can.outcome.why ?? "no-lead")}
+              <p
+                id={`${uid}-outcome-why`}
+                className={can.outcome.why === "no-lead" ? "sr-only" : "mt-2 text-sm leading-snug text-foreground/70"}
+              >
+                {can.outcome.why === "no-lead" ? NO_LEAD_SHORT : refusalText(can.outcome.why ?? "no-lead")}
               </p>
             )}{" "}
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
@@ -788,8 +987,11 @@ export function UnifiedCaseSearch({
                 ))}
               </div>
               {can.programs.on ? null : (
-                <p id={`${uid}-programs-why`} className="mt-2 text-sm leading-snug text-foreground/70">
-                  {refusalText(can.programs.why ?? "no-lead")}
+                <p
+                  id={`${uid}-programs-why`}
+                  className={can.programs.why === "no-lead" ? "sr-only" : "mt-2 text-sm leading-snug text-foreground/70"}
+                >
+                  {can.programs.why === "no-lead" ? NO_LEAD_SHORT : refusalText(can.programs.why ?? "no-lead")}
                 </p>
               )}
               {can.programs.on && programs.length === 0 ? (
@@ -797,6 +999,120 @@ export function UnifiedCaseSearch({
               ) : null}
             </div>
           </fieldset>
+
+          <fieldset className="min-w-0">
+            <legend className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Worker and job
+            </legend>{" "}
+            <p className="mb-3 mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">
+              These are fields of DOL&apos;s published PERM file alone, so setting
+              one leaves out wage requests, LCAs and filings still open.{" "}
+              {OLD_FORM_NOTE}
+            </p>{" "}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+              <Field label={FILTER_LABEL.industry} state={can.industry} describedBy={`${uid}-ind-why`}>
+                <select
+                  value={industryInput}
+                  onChange={(e) => setIndustryInput(e.target.value)}
+                  disabled={!can.industry.on}
+                  aria-label={FILTER_LABEL.industry}
+                  aria-describedby={can.industry.on ? undefined : `${uid}-ind-why`}
+                  className={CONTROL + " min-w-0"}
+                >
+                  <option value="">Any industry</option>
+                  {industries.map((o) => (
+                    <option key={o.code} value={o.code}>
+                      {o.code} {o.title}
+                    </option>
+                  ))}
+                </select>
+                <SelectedInFull
+                  label={(() => {
+                    const hit = industries.find((o) => o.code === industryInput);
+                    return hit ? `${hit.code} ${hit.title}` : null;
+                  })()}
+                />
+              </Field>{" "}
+              <Field label="Or a NAICS code" state={can.industry} describedBy={`${uid}-naics-why`}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={naicsInput}
+                  onChange={(e) => setNaicsInput(e.target.value)}
+                  placeholder="e.g. 5415"
+                  maxLength={6}
+                  autoComplete="off"
+                  disabled={!can.industry.on}
+                  aria-label="NAICS code, 2 to 6 digits"
+                  aria-describedby={can.industry.on ? undefined : `${uid}-naics-why`}
+                  className={CONTROL + " min-w-0"}
+                />
+              </Field>{" "}
+              <Field label={FILTER_LABEL.city} state={can.city} describedBy={`${uid}-city-why`}>
+                <input
+                  type="text"
+                  value={cityInput}
+                  onChange={(e) => setCityInput(e.target.value)}
+                  placeholder="e.g. Seattle"
+                  maxLength={60}
+                  autoComplete="off"
+                  disabled={!can.city.on}
+                  aria-label={FILTER_LABEL.city}
+                  aria-describedby={can.city.on ? undefined : `${uid}-city-why`}
+                  className={CONTROL + " min-w-0"}
+                />
+              </Field>{" "}
+              {WORKER_KEYS.map((k) => (
+                <Fragment key={k}>
+                  <Field label={FILTER_LABEL[k]} state={can[k]} describedBy={`${uid}-${k}-why`}>
+                    <Choice
+                      id={`${uid}-${k}`}
+                      label={FILTER_LABEL[k]}
+                      value={worker[k]}
+                      onChange={(v) => setWorkerField(k, v)}
+                      options={fieldOptions[k]}
+                      disabled={!can[k].on}
+                      describedBy={can[k].on ? undefined : `${uid}-${k}-why`}
+                      placeholder={WORKER_PLACEHOLDER[k]}
+                      {...(WORKER_DISPLAY[k] ? { display: WORKER_DISPLAY[k] } : {})}
+                    />
+                  </Field>{" "}
+                </Fragment>
+              ))}
+            </div>
+          </fieldset>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
+            <div className="block min-w-0">
+              <label className="mb-1 block text-sm font-bold" htmlFor={`${uid}-order`}>
+                Order the answer by
+              </label>{" "}
+              <select
+                id={`${uid}-order`}
+                value={orderInput}
+                onChange={(e) => {
+                  const v = e.target.value as SearchOrder;
+                  setOrderInput(v);
+                  // Rows already on screen take the new order at once; the
+                  // next search asks the server for it.
+                  setSort(orderToSort(v));
+                }}
+                aria-describedby={`${uid}-order-hint`}
+                className={CONTROL + " min-w-0"}
+              >
+                {SEARCH_ORDERS.map((o) => (
+                  <option key={o} value={o}>
+                    {ORDER_LABEL[o]}
+                  </option>
+                ))}
+              </select>
+            </div>{" "}
+            <p id={`${uid}-order-hint`} className="text-sm leading-snug text-foreground/70 sm:self-end">
+              Oldest decision first reads the published PERM file from its
+              first case{publishedFrom ? ` in FY${publishedFrom}` : ""}. Every
+              other order arranges the newest matches the search fetched.
+            </p>
+          </div>
         </form>
       </section>
 
@@ -834,6 +1150,21 @@ export function UnifiedCaseSearch({
             </b>{" "}
             Those boxes take a month written as YYYY-MM, so 2026-03 rather than
             March 2026. Anything else is left out of the search.
+          </span>
+        </p>
+      ) : null}
+
+      {unreadFields.length > 0 ? (
+        <p className="flex items-start gap-2 border-2 border-border bg-data-warn/8 p-4 text-base leading-relaxed">
+          <WarningIcon className="mt-1 size-4 shrink-0 text-data-warn-ink" weight="fill" aria-hidden="true" />{" "}
+          <span>
+            <b className="font-bold">
+              {unreadFields.length === 1
+                ? `"${unreadFields[0]}" was not used.`
+                : `${unreadFields.slice(0, -1).join(", ")} and ${unreadFields.at(-1)} were not used.`}
+            </b>{" "}
+            A NAICS code is 2 to 6 digits. The other boxes take up to 60 letters,
+            digits, spaces and the punctuation names use (. , &apos; ( ) &amp; / -).
           </span>
         </p>
       ) : null}
@@ -983,6 +1314,18 @@ export function UnifiedCaseSearch({
         </div>
       ) : null}
 
+      {data && !data.needsLead && (data.permOnly?.length ?? 0) > 0 ? (
+        <div className="border-2 border-border bg-card p-4">
+          <p className="text-base leading-relaxed">
+            <b className="font-bold">Only published PERM cases are in this answer.</b>{" "}
+            The {data.permOnly?.join(", ")}{" "}
+            {data.permOnly?.length === 1 ? "is a field" : "are fields"} of
+            DOL&apos;s PERM file alone; wage requests and LCAs don&apos;t carry{" "}
+            {data.permOnly?.length === 1 ? "it" : "them"}.
+          </p>
+        </div>
+      ) : null}
+
       {searching && data && !data.needsLead && data.rows.length === 0 ? (
         <div className="border-2 border-border bg-tint-primary p-5">
           <p className="text-base leading-relaxed">
@@ -1028,7 +1371,19 @@ export function UnifiedCaseSearch({
               {ALL_PROGRAMS.filter((p) => data.counts[p] > 0)
                 .map((p) => `${fmt(data.counts[p])} ${PROGRAM_LABEL[p]}`)
                 .join(" · ")}
-            </p>
+            </p>{" "}
+            {/* The same search as CSV: the route runs every guard again and
+                returns these rows, never more. A plain link, so the browser's
+                own session carries it and the file saves where downloads go. */}
+            {submitted !== null ? (
+              <a
+                href={`/api/case-search?${submitted}&format=csv`}
+                download="permtracker-case-search.csv"
+                className="inline-flex min-h-[44px] items-center border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                Download CSV ({fmt(data.rows.length)} rows)
+              </a>
+            ) : null}
           </div>{" "}
 
           <div className="mt-4 overflow-x-auto">
@@ -1053,7 +1408,10 @@ export function UnifiedCaseSearch({
                         className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
                       >
                         {r.caseNumber}
-                      </PendingLink>
+                      </PendingLink>{" "}
+                      {r.era === "history" ? (
+                        <span className="mt-1 block font-sans text-sm text-foreground/70">FY2016 to FY2023 file</span>
+                      ) : null}
                     {" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm">{PROGRAM_LABEL[r.program]}{" "}</td>
                     <td className="px-3 py-3">
@@ -1073,7 +1431,10 @@ export function UnifiedCaseSearch({
                         (r.employerName ?? "—")
                       )}
                     {" "}</td>
-                    <td className="px-3 py-3 text-sm">{r.jobTitle ?? "—"}{" "}</td>
+                    <td className="px-3 py-3 text-sm">
+                      {r.jobTitle ?? "—"}{" "}
+                      <RowDetails r={r} />
+                    {" "}</td>
                     <td className="px-3 py-3 text-sm">{r.socTitle ?? "—"}{" "}</td>
                     <td className="whitespace-nowrap px-3 py-3 text-sm">{r.state ?? "—"}{" "}</td>
                     <td className="px-3 py-3 text-sm">
@@ -1160,13 +1521,17 @@ export function UnifiedCaseSearch({
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-foreground/70">
             Showing {fmt(shown.length)} of {fmt(data.rows.length)} filings.
             {data.truncated || data.capped
-              ? " More matched than fit one answer: these are the newest, and a job title, a filing month or an outcome brings the rest into reach."
+              ? data.order === "decided-asc"
+                ? " More matched than fit one answer: these are the oldest decisions, and a filing month, a decision month or a fiscal year brings the rest into reach."
+                : " More matched than fit one answer: these are the newest, and a job title, a filing month or an outcome brings the rest into reach."
               : ""}{" "}
-            Sorting reorders what is on this page rather than re-running the
-            search, so &ldquo;highest wage&rdquo; means highest among these rows,
-            not across the whole corpus. A wage, a law firm, a worksite and an
-            occupation appear once DOL has published the case in a quarterly
-            file; open filings carry none of them.
+            {data.orderScope === "complete"
+              ? `${ORDER_LABEL[data.order ?? "filed-desc"]} covers every match, because every match is here.`
+              : `${ORDER_LABEL[data.order ?? "filed-desc"]} arranges the rows fetched, not every case that matched, so "highest wage" means highest among these rows.`}{" "}
+            A column header reorders this page without searching again. A wage,
+            a law firm, a worksite and an occupation appear once DOL has
+            published the case in a quarterly file; open filings carry none of
+            them.
           </p>
         </section>
       ) : null}

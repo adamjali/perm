@@ -24,7 +24,9 @@ vi.mock("../caseSearchReads", () => ({
   readFlagEmployerStage,
 }));
 
-const { dedupeToOnePerCase, skippedSources, unifiedSearch } = await import("../unifiedSearch");
+const { compareBy, dedupeToOnePerCase, permOnlyFilters, skippedSources, unifiedSearch } = await import(
+  "../unifiedSearch"
+);
 type UnifiedCase = Parameters<typeof dedupeToOnePerCase>[0][number];
 
 const employerLead: Lead = { kind: "employer", value: "acme" };
@@ -498,5 +500,112 @@ describe("a review stage in the search", () => {
     await unifiedSearch({ lead: employerLead, narrow: { stage: { status: "IN PROCESS", program: "lca" } } });
     expect(readFlagEmployerStage).toHaveBeenCalledWith("lca", "acme", "IN PROCESS", expect.anything(), 300);
     expect(readPermEmployerStage).not.toHaveBeenCalled();
+  });
+});
+
+describe("filters only published PERM can answer", () => {
+  it("reads published PERM alone, skips the live half, and names the filter", async () => {
+    readPermPublished.mockResolvedValue(slice([permPub("A-19001-00001")]));
+    const out = await unifiedSearch({ lead: employerLead, narrow: { citizenship: "INDIA" } });
+    expect(readPermPublished).toHaveBeenCalledOnce();
+    expect(readFlagPublished).not.toHaveBeenCalled();
+    expect(readFlagLive).not.toHaveBeenCalled();
+    expect(readPermLive).not.toHaveBeenCalled();
+    expect(out.permOnly).toEqual(["citizenship"]);
+    expect(out.skipped.live).toBe(true);
+    expect(out.skipped.because).toContain("citizenship");
+  });
+
+  it("leaves the other programs in when none is set", async () => {
+    await unifiedSearch({ lead: employerLead, narrow: {} });
+    expect(readFlagPublished).toHaveBeenCalledTimes(2);
+  });
+
+  it("names every PERM-only filter in words", () => {
+    expect(
+      permOnlyFilters({ naics: "54", city: "Austin", visaClass: "H-1B", jobEducation: "Master's" }),
+    ).toEqual(["industry", "worksite city", "visa at filing", "education the job requires"]);
+    expect(permOnlyFilters({ state: "TX" })).toEqual([]);
+  });
+});
+
+describe("the order of the merged answer", () => {
+  const r = (caseNumber: string, over: Partial<UnifiedCase>): UnifiedCase =>
+    ({
+      caseNumber, program: "perm", half: "published", status: "certified", isFinal: true,
+      filedOn: null, decidedOn: null, employerName: null, employerSlug: null, jobTitle: null,
+      wage: null, wageUnit: null, state: null, firmName: null, firmSlug: null, socCode: null,
+      socTitle: null, days: null, ...over,
+    }) as UnifiedCase;
+
+  it("puts a row with no wage last in both directions", () => {
+    const rows = [r("a", {}), r("b", { wage: 50 }), r("c", { wage: 90 })];
+    expect([...rows].sort(compareBy("wage-desc")).map((x) => x.caseNumber)).toEqual(["c", "b", "a"]);
+    expect([...rows].sort(compareBy("wage-asc")).map((x) => x.caseNumber)).toEqual(["b", "c", "a"]);
+  });
+
+  it("orders by decision and by days as asked", () => {
+    const rows = [
+      r("a", { decidedOn: "2019-01-01", days: 300 }),
+      r("b", { decidedOn: "2025-01-01", days: 100 }),
+    ];
+    expect([...rows].sort(compareBy("decided-asc"))[0]?.caseNumber).toBe("a");
+    expect([...rows].sort(compareBy("decided-desc"))[0]?.caseNumber).toBe("b");
+    expect([...rows].sort(compareBy("days-asc"))[0]?.caseNumber).toBe("b");
+  });
+
+  it("asks the published PERM read for the oldest decisions when the order is oldest-decided", async () => {
+    readPermPublished.mockResolvedValue(slice([]));
+    await unifiedSearch({ lead: stateLead, order: "decided-asc", narrow: { title: "eng" } });
+    expect(readPermPublished.mock.calls.at(-1)?.[0].narrow).toEqual({ title: "eng", decidedOrder: "asc" });
+    await unifiedSearch({ lead: stateLead, order: "wage-desc", narrow: { title: "eng" } });
+    expect(readPermPublished.mock.calls.at(-1)?.[0].narrow).toEqual({ title: "eng" });
+  });
+
+  it("says the order covers every match only when nothing was capped or cut", async () => {
+    readPermPublished.mockResolvedValue(slice([permPub("G-1")]));
+    const small = await unifiedSearch({ lead: stateLead, order: "wage-desc" });
+    expect(small.order).toBe("wage-desc");
+    expect(small.orderScope).toBe("complete");
+    readPermPublished.mockResolvedValue(
+      slice(Array.from({ length: 100 }, (_, i) => permPub(`G-${i}`))),
+    );
+    const capped = await unifiedSearch({ lead: stateLead, order: "wage-desc" });
+    expect(capped.orderScope).toBe("fetched");
+  });
+});
+
+describe("the published PERM row's new fields", () => {
+  it("carries the industry with Census's title, the city, the worker's fields and the era", async () => {
+    readPermPublished.mockResolvedValue(
+      slice([
+        permPub("A-19001-00001", {
+          table: "perm_cases_history",
+          extras: {
+            naics: "541511", worksiteCity: "Austin", citizenship: "INDIA", birthCountry: "INDIA",
+            visaClass: "H-1B", education: "Master's", major: "Computer Science",
+            institution: "Some University", jobEducation: "Bachelor's",
+          },
+        }),
+      ]),
+    );
+    const out = await unifiedSearch({ lead: stateLead });
+    expect(out.rows[0]).toMatchObject({
+      era: "history",
+      industryCode: "541511",
+      industryTitle: "Custom Computer Programming Services",
+      city: "Austin",
+      citizenship: "INDIA",
+      visaClass: "H-1B",
+      education: "Master's",
+      jobEducation: "Bachelor's",
+    });
+  });
+
+  it("leaves them empty on a row that has none", async () => {
+    readPermPublished.mockResolvedValue(slice([permPub("G-1")]));
+    const out = await unifiedSearch({ lead: stateLead });
+    expect(out.rows[0]).toMatchObject({ industryCode: null, citizenship: null });
+    expect(out.rows[0]?.era).toBeUndefined();
   });
 });

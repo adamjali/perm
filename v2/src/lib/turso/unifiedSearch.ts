@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { LiveCaseRow, PermCaseRow } from "./cases";
+import type { LiveCaseRow } from "./cases";
 import type { FlagCaseRow, FlagDisclosedRow } from "./flagCases";
 import {
   SLICE_CAP,
@@ -15,12 +15,20 @@ import {
   readPermStage,
   readPermPublished,
   type FlagProgramKey,
+  type PermSearchRow,
   type SliceResult,
   type UnifiedNarrow,
 } from "./caseSearchReads";
+import { naicsTitle } from "@/lib/naicsTitles";
 
 export { SLICE_CAP };
-import { PUBLISHED_ONLY_FILTERS, type Lead } from "@/lib/caseSearchPlan";
+import {
+  PERM_ONLY_FILTERS,
+  PUBLISHED_ONLY_FILTERS,
+  type FilterKey,
+  type Lead,
+  type SearchOrder,
+} from "@/lib/caseSearchPlan";
 
 /**
  * One search across every DOL filing this site holds.
@@ -100,13 +108,35 @@ export interface UnifiedCase {
   socTitle: string | null;
   /** Published only. Calendar days from filing to decision. */
   days: number | null;
+  /**
+   * Published PERM only, and set only where DOL's file carries them. `era` is
+   * "history" for a case decided before FY2024 (from `perm_cases_history`).
+   * The industry is the employer's NAICS code with Census's title; the
+   * worker's five are on cases filed on DOL's old form only.
+   */
+  era?: "history";
+  industryCode?: string | null;
+  industryTitle?: string | null;
+  city?: string | null;
+  citizenship?: string | null;
+  birthCountry?: string | null;
+  visaClass?: string | null;
+  education?: string | null;
+  major?: string | null;
+  institution?: string | null;
+  jobEducation?: string | null;
 }
+
+// The order vocabulary lives in the pure plan module, because the page's sort
+// control needs it in the browser and this module is server-only.
+export { SEARCH_ORDERS, isSearchOrder, type SearchOrder } from "@/lib/caseSearchPlan";
 
 export interface UnifiedSearchArgs {
   lead: Lead;
   narrow?: UnifiedNarrow;
   programs?: readonly Program[];
   limit?: number;
+  order?: SearchOrder;
 }
 
 export const UNIFIED_MAX = 300;
@@ -136,7 +166,7 @@ export interface SkippedSources {
  * carries a decision, a wage and a state; the live row carries none of those
  * and is the only one that can be pending.
  */
-const fromPermPublished = (r: PermCaseRow): UnifiedCase => ({
+const fromPermPublished = (r: PermSearchRow): UnifiedCase => ({
   caseNumber: r.caseNumber,
   program: "perm",
   half: "published",
@@ -157,6 +187,17 @@ const fromPermPublished = (r: PermCaseRow): UnifiedCase => ({
   socCode: r.socCode || null,
   socTitle: r.socTitle || null,
   days: r.days || null,
+  ...(r.table === "perm_cases_history" ? { era: "history" as const } : {}),
+  industryCode: r.extras?.naics ?? null,
+  industryTitle: naicsTitle(r.extras?.naics)?.title ?? null,
+  city: r.extras?.worksiteCity ?? null,
+  citizenship: r.extras?.citizenship ?? null,
+  birthCountry: r.extras?.birthCountry ?? null,
+  visaClass: r.extras?.visaClass ?? null,
+  education: r.extras?.education ?? null,
+  major: r.extras?.major ?? null,
+  institution: r.extras?.institution ?? null,
+  jobEducation: r.extras?.jobEducation ?? null,
 });
 
 const fromPermLive = (r: LiveCaseRow): UnifiedCase => ({
@@ -306,8 +347,65 @@ export interface UnifiedSearchResult {
   windowed: boolean;
   /** Which halves the filters made unanswerable, and which filters did it. */
   skipped: SkippedSources;
+  /**
+   * The filters only published PERM can answer, when any is set: the wage
+   * request and LCA records were not read, and the page names these as why.
+   */
+  permOnly: string[];
+  /** The order the rows are in, and whether it covers everything that matched. */
+  order: SearchOrder;
+  /**
+   * "complete" when no source hit its row cap and nothing was cut, so the
+   * order is over every match; "fetched" when it is over the rows fetched.
+   */
+  orderScope: "complete" | "fetched";
   /** The lead the server actually used, echoed so the page can name it. */
   lead: Lead;
+}
+
+/** The words the page uses for each filter when it explains a source it skipped. */
+const FILTER_WORDS: Partial<Record<FilterKey, string>> = {
+  firm: "law firm",
+  state: "worksite state",
+  occupation: "occupation",
+  fiscalYear: "fiscal year",
+  wage: "wage",
+  industry: "industry",
+  city: "worksite city",
+  citizenship: "citizenship",
+  birthCountry: "country of birth",
+  visaClass: "visa at filing",
+  education: "worker's education",
+  jobEducation: "education the job requires",
+};
+
+/** Which filter keys this narrow sets, by the plan module's names. */
+function filtersSet(narrow: UnifiedNarrow): Partial<Record<FilterKey, boolean>> {
+  return {
+    firm: narrow.firmSlug !== undefined,
+    state: narrow.state !== undefined,
+    occupation: narrow.socCode !== undefined,
+    fiscalYear: narrow.fiscalYear !== undefined,
+    wage: narrow.wageMin !== undefined || narrow.wageMax !== undefined,
+    industry: narrow.naics !== undefined,
+    city: narrow.city !== undefined,
+    citizenship: narrow.citizenship !== undefined,
+    birthCountry: narrow.birthCountry !== undefined,
+    visaClass: narrow.visaClass !== undefined,
+    education: narrow.education !== undefined,
+    jobEducation: narrow.jobEducation !== undefined,
+  };
+}
+
+/**
+ * The PERM-only filters a narrow sets, in words. Non-empty means the wage
+ * request and LCA records cannot answer this search: their tables here carry
+ * none of these columns, so reading them would return rows the filter never
+ * touched.
+ */
+export function permOnlyFilters(narrow: UnifiedNarrow): string[] {
+  const set = filtersSet(narrow);
+  return PERM_ONLY_FILTERS.filter((k) => set[k]).map((k) => FILTER_WORDS[k] ?? k);
 }
 
 /**
@@ -319,20 +417,8 @@ export interface UnifiedSearchResult {
  */
 export function skippedSources(narrow: UnifiedNarrow, lead: Lead): SkippedSources {
   const because: string[] = [];
-  const labels: Record<string, string> = {
-    firm: "law firm",
-    state: "worksite state",
-    occupation: "occupation",
-    fiscalYear: "fiscal year",
-    wage: "wage",
-  };
-  const set: Record<string, boolean> = {
-    firm: narrow.firmSlug !== undefined,
-    state: narrow.state !== undefined,
-    occupation: narrow.socCode !== undefined,
-    fiscalYear: narrow.fiscalYear !== undefined,
-    wage: narrow.wageMin !== undefined || narrow.wageMax !== undefined,
-  };
+  const labels = FILTER_WORDS;
+  const set = filtersSet(narrow);
   for (const key of PUBLISHED_ONLY_FILTERS) {
     if (set[key]) because.push(labels[key] ?? key);
   }
@@ -347,7 +433,7 @@ export function skippedSources(narrow: UnifiedNarrow, lead: Lead): SkippedSource
   // reason: a reader searched a law firm, got only decided cases back, and had
   // to ask why. The label names the lead, because that is the thing to change.
   if (leadIsPublishedOnly && because.length === 0) {
-    because.push(labels[lead.kind] ?? lead.kind);
+    because.push(labels[lead.kind as FilterKey] ?? lead.kind);
   }
   // A review stage is a live-record fact: no published row carries one, so
   // the published half has nothing to say the moment a stage is asked for.
@@ -404,15 +490,39 @@ async function addSeenDecided(rows: UnifiedCase[]): Promise<void> {
   }
 }
 
+/**
+ * An order over the merged rows. A row without the sort key goes last in both
+ * directions: "no wage published" is not a low wage, and ranking it first in an
+ * ascending sort would read as one.
+ */
+export function compareBy(order: SearchOrder): (a: UnifiedCase, b: UnifiedCase) => number {
+  if (order === "filed-desc") return byNewestFiling;
+  const [key, dir] = order.split("-") as ["filed" | "decided" | "wage" | "days", "asc" | "desc"];
+  const get = (r: UnifiedCase): string | number | null =>
+    key === "filed" ? r.filedOn : key === "decided" ? r.decidedOn : key === "wage" ? r.wage : r.days;
+  const sign = dir === "asc" ? 1 : -1;
+  return (a, b) => {
+    const x = get(a);
+    const y = get(b);
+    if (x === null && y === null) return a.caseNumber < b.caseNumber ? 1 : -1;
+    if (x === null) return 1;
+    if (y === null) return -1;
+    if (x !== y) return (x < y ? -1 : 1) * sign;
+    return a.caseNumber < b.caseNumber ? 1 : -1;
+  };
+}
+
 async function finish(
   collected: UnifiedCase[],
   args: UnifiedSearchArgs,
   capped: boolean,
   windowed: boolean,
   skipped: SkippedSources,
+  permOnly: string[] = [],
 ): Promise<UnifiedSearchResult> {
   const all = dedupeToOnePerCase(collected);
-  all.sort(byNewestFiling);
+  const order = args.order ?? "filed-desc";
+  all.sort(compareBy(order));
   const take = Math.min(Math.max(1, Math.floor(args.limit ?? UNIFIED_MAX)), UNIFIED_MAX);
   const rows = all.slice(0, take);
   await addSeenDecided(rows);
@@ -425,6 +535,9 @@ async function finish(
     capped,
     windowed,
     skipped,
+    permOnly,
+    order,
+    orderScope: capped || all.length > take ? "fetched" : "complete",
     lead: args.lead,
   };
 }
@@ -451,7 +564,12 @@ async function searchOneCase(args: UnifiedSearchArgs): Promise<UnifiedSearchResu
 export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSearchResult> {
   if (args.lead.kind === "case") return searchOneCase(args);
 
-  const narrow = args.narrow ?? {};
+  // OLDEST-DECIDED FIRST IS THE ONE ORDER THE READS THEMSELVES CHANGE FOR: the
+  // published PERM index serves it in either direction, so the sources start
+  // from the oldest decision rather than handing back the newest and sorting
+  // those. Every other order rearranges what the sources returned.
+  const narrow: UnifiedNarrow =
+    args.order === "decided-asc" ? { ...args.narrow, decidedOrder: "asc" } : (args.narrow ?? {});
   const skipped = skippedSources(narrow, args.lead);
   const want = new Set<Program>(args.programs?.length ? args.programs : PROGRAMS);
   const employer = args.lead.kind === "employer" ? args.lead.value : null;
@@ -474,7 +592,12 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // wage-request rows, 74.6% of LCA rows carry a firm), so the chips choose
   // between three real sources for a firm exactly as they do for a state.
   // A stage is a PERM status, so a stage search reads PERM whatever the program chips say.
-  const wanted = (p: Program) => want.has(p) && (stage === null || p === stage.program);
+  // A FILTER ONLY PUBLISHED PERM CARRIES rules the other programs out: their
+  // tables here have no industry, city or worker column, so reading them would
+  // return rows the filter never touched. The answer names the filters.
+  const permOnly = permOnlyFilters(narrow);
+  const wanted = (p: Program) =>
+    want.has(p) && (stage === null || p === stage.program) && (permOnly.length === 0 || p === "perm");
   const askPublished = (p: Program) => wanted(p) && !skipped.published;
   const askLive = (p: Program) => wanted(p) && !skipped.live && (employer !== null || stage !== null);
 
@@ -499,8 +622,8 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // should narrow the answer, never blank the page.
   const [permPub, permLive, pwdLive, pwdPub, lcaLive, lcaPub] = await Promise.all([
     askPublished("perm")
-      ? readPermPublished({ lead: args.lead, narrow, limit: PER_SOURCE }).catch(none<PermCaseRow>)
-      : none<PermCaseRow>(),
+      ? readPermPublished({ lead: args.lead, narrow, limit: PER_SOURCE }).catch(none<PermSearchRow>)
+      : none<PermSearchRow>(),
     // Three shapes of the live PERM read: a stage on its own, an employer
     // narrowed to a stage, or the employer's whole live slice.
     // A stage search has one source, so it may fill the whole answer rather
@@ -534,5 +657,5 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // Different claim from `capped`, and a much more important one to print.
   const windowed = halves.some((half) => half.windowed);
 
-  return await finish(collected, args, capped, windowed, skipped);
+  return await finish(collected, args, capped, windowed, skipped, permOnly);
 }

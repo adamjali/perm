@@ -25,6 +25,7 @@ import {
 } from "./flagCases";
 import type { Lead, Outcome } from "@/lib/caseSearchPlan";
 import type { ChangeProgram } from "@/lib/changeProgram";
+import { tableColumns } from "./tableColumns";
 
 /**
  * Every read the unified case search makes, and the index each one rides.
@@ -98,6 +99,32 @@ export interface UnifiedNarrow {
   /** Annualised wage bounds. Published halves only. */
   wageMin?: number;
   wageMax?: number;
+  /**
+   * The employer's NAICS code, as a PREFIX: `54` is the sector, `5415` a
+   * group, `541511` one industry. Published PERM only, 2 to 6 digits.
+   */
+  naics?: string;
+  /** Worksite city, compared case-insensitively. Published PERM only. */
+  city?: string;
+  /**
+   * The worker's country of citizenship, of birth, and visa at filing, UPPER
+   * CASE as DOL prints them. Published PERM only, and only on cases filed on
+   * DOL's old form: the form in use since mid-2023 does not carry them.
+   */
+  citizenship?: string;
+  birthCountry?: string;
+  visaClass?: string;
+  /** The worker's education and the job's minimum, compared case-insensitively. Old-form only. */
+  education?: string;
+  jobEducation?: string;
+  /**
+   * Which end of the decided record the published PERM reads take. `desc`
+   * (the default) is the newest hundred decisions; `asc` the OLDEST, which is
+   * the only way to reach an employer's FY2016 cases when it has thousands
+   * since. Both are exact: the index ends in `decision_date`, so SQLite walks
+   * it from either end.
+   */
+  decidedOrder?: "asc" | "desc";
 }
 
 /**
@@ -244,7 +271,14 @@ export interface SliceResult<T> {
 
 interface EmployerSlicePlan {
   table: string;
-  index: string;
+  /**
+   * The index pass one is pinned to. `null` lets SQLite choose, which is what
+   * `perm_cases_history` gets: its indexes may be dropped to save writes, and
+   * an `INDEXED BY` naming a missing index fails the statement outright.
+   */
+  index: string | null;
+  /** Which end of the date the reads take. Newest first unless asked. */
+  dir?: "ASC" | "DESC";
   columns: string;
   /** The date the index ends in, which is therefore the free ordering. */
   orderColumn: string;
@@ -293,6 +327,8 @@ async function readEmployerSlice<Db, Out>(
 ): Promise<SliceResult<Out>> {
   const hasRest = plan.restConds.length > 0;
   const window = hasRest ? SLICE_CAP : plan.limit;
+  const dir = plan.dir ?? "DESC";
+  const pin = plan.index ? `INDEXED BY ${plan.index} ` : "";
 
   const firstConds = [
     `${"employer_slug"} >= ?`,
@@ -300,9 +336,9 @@ async function readEmployerSlice<Db, Out>(
     ...plan.coveredConds,
   ];
   const ids = await rows<{ rowid: number }>(
-    `SELECT rowid FROM ${plan.table} INDEXED BY ${plan.index} ` +
+    `SELECT rowid FROM ${plan.table} ${pin}` +
       `WHERE ${firstConds.join(" AND ")} ` +
-      `ORDER BY ${plan.orderColumn} DESC LIMIT ?`,
+      `ORDER BY ${plan.orderColumn} ${dir} LIMIT ?`,
     [plan.range.lo, plan.range.hi, ...plan.coveredParams, window],
   );
   if (ids.length === 0) return { rows: [], windowed: false };
@@ -319,7 +355,7 @@ async function readEmployerSlice<Db, Out>(
   const conds = [`rowid IN (${placeholders})`, ...plan.restConds];
   const found = await rows<Db>(
     `SELECT ${plan.columns} FROM ${plan.table} NOT INDEXED WHERE ${conds.join(" AND ")} ` +
-      `ORDER BY ${plan.orderColumn} DESC, case_number DESC LIMIT ?`,
+      `ORDER BY ${plan.orderColumn} ${dir}, case_number ${dir} LIMIT ?`,
     [...ids.map((r) => r.rowid), ...plan.restParams, plan.limit],
   );
   return { rows: found.map(map), windowed: hasRest && ids.length >= SLICE_CAP };
@@ -401,9 +437,224 @@ export interface PermReadArgs {
  * employer prefix is a range, so it goes through `readEmployerSlice` and its
  * two passes; see the measurement there.
  */
-export async function readPermPublished(args: PermReadArgs): Promise<SliceResult<PermCaseRow>> {
+/** The two tables published PERM lives in. */
+export type PermTable = "perm_cases" | "perm_cases_history";
+export const HISTORY_TABLE: PermTable = "perm_cases_history";
+
+/**
+ * The first decision day `perm_cases` holds, FY2024's first day. Everything
+ * decided before it is in `perm_cases_history` (FY2016 on) or nowhere, so a
+ * date or fiscal-year filter that falls wholly on one side reads one table.
+ */
+export const CURRENT_DECIDED_FROM = "2023-10-01";
+const CURRENT_FIRST_FY = 2024;
+
+/**
+ * The columns beyond the fifteen every published PERM row has always had.
+ * Filled by the loaders from DOL's files; the worker's five are on OLD-form
+ * cases only. See `tableColumns` for why their presence is asked, not assumed.
+ */
+export const PERM_EXTRA_COLS = [
+  "naics",
+  "worksite_city",
+  "citizenship",
+  "birth_country",
+  "visa_class",
+  "education",
+  "major",
+  "institution",
+  "job_education",
+] as const;
+type ExtraCol = (typeof PERM_EXTRA_COLS)[number];
+
+export interface PermExtras {
+  naics: string | null;
+  worksiteCity: string | null;
+  citizenship: string | null;
+  birthCountry: string | null;
+  visaClass: string | null;
+  education: string | null;
+  major: string | null;
+  institution: string | null;
+  jobEducation: string | null;
+}
+
+export type SearchDbRow = CaseDbRow & Partial<Record<ExtraCol, string | null>>;
+
+/** A published PERM row with the extra columns and the table it came from. */
+export type PermSearchRow = PermCaseRow & { extras: PermExtras; table: PermTable };
+
+/** `CASE_COLS` plus each extra column, or a NULL in its place when the table lacks it. */
+export function searchColumns(present: Set<string>): string {
+  return [
+    CASE_COLS,
+    ...PERM_EXTRA_COLS.map((c) => (present.has(c) ? c : `NULL AS ${c}`)),
+  ].join(", ");
+}
+
+const toSearchRow =
+  (table: PermTable) =>
+  (r: SearchDbRow): PermSearchRow => ({
+    ...toCaseRow(r),
+    table,
+    extras: {
+      naics: r.naics ?? null,
+      worksiteCity: r.worksite_city ?? null,
+      citizenship: r.citizenship ?? null,
+      birthCountry: r.birth_country ?? null,
+      visaClass: r.visa_class ?? null,
+      education: r.education ?? null,
+      major: r.major ?? null,
+      institution: r.institution ?? null,
+      jobEducation: r.job_education ?? null,
+    },
+  });
+
+/** Upper case with runs of whitespace collapsed, the form every needle below is compared in. */
+export function foldText(v: string): string {
+  return v.replace(/\s+/g, " ").trim().toUpperCase();
+}
+
+/**
+ * The industry, city and worker filters as SQL, or `impossible` when this
+ * table lacks a column one of them needs: a filter the table cannot answer
+ * matches nothing there, rather than being quietly ignored.
+ *
+ * None of these columns is indexed on `perm_cases`, so each is a per-row test
+ * against whatever the lead's index already narrowed to, the same cost shape
+ * as the title filter. `citizenship` is compared as stored (upper case, and
+ * `perm_cases_history` indexes it); the free-text columns fold both sides.
+ */
+export function extraNarrowing(
+  narrow: UnifiedNarrow,
+  present: Set<string>,
+): { conds: string[]; params: (string | number)[]; impossible: boolean } {
+  const conds: string[] = [];
+  const params: (string | number)[] = [];
+  let impossible = false;
+  const need = (col: ExtraCol) => {
+    if (!present.has(col)) impossible = true;
+  };
+  if (narrow.naics) {
+    need("naics");
+    // A SECTOR RANGE such as `31-33`: Census gives Manufacturing three 2-digit
+    // codes under one title, so the sector is all three.
+    const range = /^(\d{2})-(\d{2})$/.exec(narrow.naics);
+    const lo = range ? Number(range[1]) : 0;
+    const hi = range ? Number(range[2]) : 0;
+    if (range && lo <= hi && hi - lo <= 9) {
+      const codes: string[] = [];
+      for (let c = lo; c <= hi; c++) codes.push(String(c));
+      conds.push(`substr(naics, 1, 2) IN (${codes.map(() => "?").join(", ")})`);
+      params.push(...codes);
+    } else if (/^\d{2,6}$/.test(narrow.naics)) {
+      // A prefix, compared by length rather than with LIKE: a code is digits
+      // only, and `substr` says exactly what is meant.
+      conds.push("substr(naics, 1, ?) = ?");
+      params.push(narrow.naics.length, narrow.naics);
+    } else {
+      impossible = true;
+    }
+  }
+  if (narrow.city) {
+    need("worksite_city");
+    conds.push("upper(worksite_city) = ?");
+    params.push(foldText(narrow.city));
+  }
+  if (narrow.citizenship) {
+    need("citizenship");
+    conds.push("citizenship = ?");
+    params.push(foldText(narrow.citizenship));
+  }
+  if (narrow.birthCountry) {
+    need("birth_country");
+    conds.push("birth_country = ?");
+    params.push(foldText(narrow.birthCountry));
+  }
+  if (narrow.visaClass) {
+    need("visa_class");
+    conds.push("upper(visa_class) = ?");
+    params.push(foldText(narrow.visaClass));
+  }
+  if (narrow.education) {
+    need("education");
+    conds.push("upper(education) = ?");
+    params.push(foldText(narrow.education));
+  }
+  if (narrow.jobEducation) {
+    need("job_education");
+    conds.push("upper(job_education) = ?");
+    params.push(foldText(narrow.jobEducation));
+  }
+  return { conds, params, impossible };
+}
+
+/** Whether a filter set can match anything in the current table, or in history. */
+export function permTablesFor(narrow: UnifiedNarrow): { current: boolean; history: boolean } {
+  let current = true;
+  let history = true;
+  if (narrow.fiscalYear) {
+    const fy = Number(narrow.fiscalYear);
+    current = fy >= CURRENT_FIRST_FY;
+    history = fy < CURRENT_FIRST_FY;
+  }
+  // Decided months, `YYYY-MM`: the current table starts in 2023-10.
+  if (narrow.decidedTo && narrow.decidedTo < CURRENT_DECIDED_FROM.slice(0, 7)) current = false;
+  if (narrow.decidedFrom && narrow.decidedFrom >= CURRENT_DECIDED_FROM.slice(0, 7)) history = false;
+  return { current, history };
+}
+
+/**
+ * Published PERM cases under one lead, from the current table and the history
+ * together, merged in decision order.
+ *
+ * Each table is read exactly as the current one always was (the history
+ * unpinned, see `readPermTable`), each capped at `limit`, then the two lists
+ * are merged and cut to `limit` again. A case that DOL decided in both eras
+ * (reconsidered, then decided again) is kept once, from the current table.
+ *
+ * A table the filters rule out is not read at all: a fiscal year or a decided
+ * range on one side of FY2024 costs nothing on the other.
+ */
+export async function readPermPublished(args: PermReadArgs): Promise<SliceResult<PermSearchRow>> {
+  if (args.narrow.outcome === "open") return { rows: [], windowed: false };
+  const want = permTablesFor(args.narrow);
+  const [cur, hist] = await Promise.all([
+    tableColumns("perm_cases"),
+    want.history ? tableColumns(HISTORY_TABLE) : Promise.resolve(new Set<string>()),
+  ]);
+  const none: SliceResult<PermSearchRow> = { rows: [], windowed: false };
+  // An unknown answer about the current table (an empty set) still means the
+  // table is there: only the extra columns are in doubt, so they read as NULL.
+  const [a, b] = await Promise.all([
+    want.current ? readPermTable("perm_cases", cur, args) : Promise.resolve(none),
+    want.history && hist.size > 0 ? readPermTable(HISTORY_TABLE, hist, args) : Promise.resolve(none),
+  ]);
+  if (b.rows.length === 0) return a;
+  if (a.rows.length === 0) return b;
+  const seen = new Set(a.rows.map((r) => r.caseNumber));
+  const asc = args.narrow.decidedOrder === "asc";
+  const merged = [...a.rows, ...b.rows.filter((r) => !seen.has(r.caseNumber))].sort((x, y) => {
+    if (x.decisionDate !== y.decisionDate) {
+      return (x.decisionDate < y.decisionDate ? -1 : 1) * (asc ? 1 : -1);
+    }
+    return (x.caseNumber < y.caseNumber ? -1 : 1) * (asc ? 1 : -1);
+  });
+  return { rows: merged.slice(0, args.limit), windowed: a.windowed || b.windowed };
+}
+
+async function readPermTable(
+  table: PermTable,
+  present: Set<string>,
+  args: PermReadArgs,
+): Promise<SliceResult<PermSearchRow>> {
   const { lead, narrow, limit } = args;
-  const empty: SliceResult<PermCaseRow> = { rows: [], windowed: false };
+  const empty: SliceResult<PermSearchRow> = { rows: [], windowed: false };
+  const dir = narrow.decidedOrder === "asc" ? "ASC" : "DESC";
+  const extra = extraNarrowing(narrow, present);
+  if (extra.impossible) return empty;
+  const columns = searchColumns(present);
+  const map = toSearchRow(table);
 
   if (narrow.outcome === "open") {
     // Every row in a disclosure file has a decision on it, so this can only
@@ -414,6 +665,9 @@ export async function readPermPublished(args: PermReadArgs): Promise<SliceResult
   }
   const bucket = narrow.outcome ? OUTCOME_STATUSES.perm_cases[narrow.outcome] : undefined;
   const index = permLeadIndex(lead, bucket !== undefined, narrow);
+  // Only the current table is pinned. The history table's indexes may be
+  // dropped to save writes, and `INDEXED BY` a missing index fails outright.
+  const pinned = table === "perm_cases" ? index : null;
 
   const status = bucket ? statusClause("status", bucket) : null;
 
@@ -482,12 +736,15 @@ export async function readPermPublished(args: PermReadArgs): Promise<SliceResult
     );
     restConds.push(...rest.conds);
     restParams.push(...rest.params);
+    restConds.push(...extra.conds);
+    restParams.push(...extra.params);
 
-    return readEmployerSlice<CaseDbRow, PermCaseRow>(
+    return readEmployerSlice<SearchDbRow, PermSearchRow>(
       {
-        table: "perm_cases",
-        index,
-        columns: CASE_COLS,
+        table,
+        index: pinned,
+        dir,
+        columns,
         orderColumn: "decision_date",
         range,
         coveredConds: covered.conds,
@@ -496,7 +753,7 @@ export async function readPermPublished(args: PermReadArgs): Promise<SliceResult
         restParams,
         limit,
       },
-      toCaseRow,
+      map,
     );
   }
 
@@ -586,13 +843,15 @@ export async function readPermPublished(args: PermReadArgs): Promise<SliceResult
   const common = commonNarrowing(narrow, "received_date", "decision_date");
   conds.push(...common.conds);
   params.push(...common.params);
+  conds.push(...extra.conds);
+  params.push(...extra.params);
 
-  const found = await rows<CaseDbRow>(
-    `SELECT ${CASE_COLS} FROM perm_cases INDEXED BY ${index} ` +
-      `WHERE ${conds.join(" AND ")} ORDER BY decision_date DESC LIMIT ?`,
+  const found = await rows<SearchDbRow>(
+    `SELECT ${columns} FROM ${table} ${pinned ? `INDEXED BY ${pinned} ` : ""}` +
+      `WHERE ${conds.join(" AND ")} ORDER BY decision_date ${dir} LIMIT ?`,
     [...params, limit],
   );
-  return { rows: found.map(toCaseRow), windowed: false };
+  return { rows: found.map(map), windowed: false };
 }
 
 // ---------------------------------------------------------------------------
@@ -1019,7 +1278,7 @@ export function programForCaseNumber(caseNumber: string): "perm" | FlagProgramKe
 
 export interface CaseLookupResult {
   program: "perm" | FlagProgramKey;
-  permPublished: PermCaseRow | null;
+  permPublished: PermSearchRow | null;
   permLive: LiveCaseRow | null;
   flagPublished: FlagDisclosedRow | null;
   flagLive: FlagCaseRow | null;
@@ -1047,10 +1306,15 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
   };
 
   if (program === "perm") {
+    const [cur, hist] = await Promise.all([
+      tableColumns("perm_cases"),
+      tableColumns(HISTORY_TABLE),
+    ]);
     const [pub, live] = await Promise.all([
-      one<CaseDbRow>(`SELECT ${CASE_COLS} FROM perm_cases WHERE case_number = ?`, [
-        caseNumber,
-      ]).catch(() => null),
+      one<SearchDbRow>(
+        `SELECT ${searchColumns(cur)} FROM perm_cases WHERE case_number = ?`,
+        [caseNumber],
+      ).catch(() => null),
       one<LiveDbRow>(
         `SELECT case_number, filing_date, current_status AS status, is_final,
                 employer_name, job_title
@@ -1058,9 +1322,24 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
         [caseNumber],
       ).catch(() => null),
     ]);
+    // THE FY2016 TO FY2023 DECISIONS, when the current table has no row. A
+    // case decided before FY2024 is in `perm_cases_history` or nowhere, and
+    // asking DOL live about it is not this search's job (see above); the
+    // status page's lookup reads the same table in the same order.
+    const old =
+      pub || hist.size === 0
+        ? null
+        : await one<SearchDbRow>(
+            `SELECT ${searchColumns(hist)} FROM ${HISTORY_TABLE} WHERE case_number = ?`,
+            [caseNumber],
+          ).catch(() => null);
     return {
       ...blank,
-      permPublished: pub ? toCaseRow(pub) : null,
+      permPublished: pub
+        ? toSearchRow("perm_cases")(pub)
+        : old
+          ? toSearchRow(HISTORY_TABLE)(old)
+          : null,
       permLive: live ? toLiveRow(live) : null,
     };
   }
@@ -1318,4 +1597,86 @@ export async function readFlagEmployerStage(
     [...params, limit + 1],
   );
   return { rows: found.slice(0, limit).map(toFlagRow), windowed: found.length > limit };
+}
+
+/**
+ * The fiscal years the history table holds case rows for, with how many, from
+ * the history ingest's own record (`perm_docs['perm_history']`): one point
+ * read, never a count over the table. The record is per FILE, and DOL's yearly
+ * file is that year's determinations, so its case-row count is the year's.
+ * Years the current table owns (FY2024 on) are left to its own list.
+ */
+export async function getPermHistoryYears(): Promise<{ fiscalYear: string; total: number }[]> {
+  try {
+    const r = await rows<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'perm_history'");
+    const doc = JSON.parse(r[0]?.json ?? "{}") as { files?: Record<string, { fy?: unknown; caseRows?: unknown }> };
+    const byYear = new Map<number, number>();
+    for (const f of Object.values(doc.files ?? {})) {
+      const fy = Number(f.fy);
+      const n = Number(f.caseRows);
+      if (!Number.isInteger(fy) || fy >= 2024 || !(n > 0)) continue;
+      byYear.set(fy, (byYear.get(fy) ?? 0) + n);
+    }
+    return [...byYear.entries()]
+      .sort((a, b) => b[0] - a[0])
+      .map(([fy, total]) => ({ fiscalYear: String(fy), total }));
+  } catch {
+    return [];
+  }
+}
+
+export interface FieldOption {
+  value: string;
+  /** Cases carrying the value, or null where the source gives no count. */
+  n: number | null;
+}
+export type CaseFieldKey = "citizenship" | "birthCountry" | "visaClass" | "education" | "jobEducation";
+export type CaseFieldOptions = Record<CaseFieldKey, FieldOption[]>;
+const FIELD_KEYS: CaseFieldKey[] = ["citizenship", "birthCountry", "visaClass", "education", "jobEducation"];
+/** More than any real vocabulary (about 200 countries), and a bound on a doc nobody checked. */
+const MAX_OPTIONS = 400;
+
+/**
+ * The choices for the worker and job filters, so the page offers the values
+ * DOL actually printed instead of asking a reader to guess a spelling that an
+ * equality filter will then miss.
+ *
+ * NEVER A SCAN PER REQUEST. The lists come from `perm_docs['case_field_options']`,
+ * which the ingest writes after a load. Until it exists, citizenship falls back
+ * to `perm_country_years` (about 200 countries x 8 years, grouped once per page
+ * render, and the page renders once a day), and country of birth borrows those
+ * names without a count. The rest stay free text until the doc lands.
+ */
+export async function getCaseFieldOptions(): Promise<CaseFieldOptions> {
+  const out: CaseFieldOptions = {
+    citizenship: [], birthCountry: [], visaClass: [], education: [], jobEducation: [],
+  };
+  try {
+    const r = await rows<{ json: string }>("SELECT json FROM perm_docs WHERE key = 'case_field_options'");
+    const doc = JSON.parse(r[0]?.json ?? "{}") as Record<string, unknown>;
+    for (const k of FIELD_KEYS) {
+      const list = Array.isArray(doc[k]) ? (doc[k] as unknown[]) : [];
+      out[k] = list
+        .filter((e): e is { value: string; n?: unknown } =>
+          typeof e === "object" && e !== null && typeof (e as { value?: unknown }).value === "string" &&
+          (e as { value: string }).value.trim() !== "")
+        .slice(0, MAX_OPTIONS)
+        .map((e) => ({ value: e.value, n: typeof e.n === "number" && Number.isFinite(e.n) ? e.n : null }));
+    }
+  } catch {
+    // A missing or broken doc leaves the fallbacks below to answer.
+  }
+  if (out.citizenship.length === 0) {
+    const countries = await rows<{ country: string; n: number | string }>(
+      `SELECT country, SUM(certified + denied + withdrawn) AS n FROM perm_country_years
+       WHERE fy >= 2016 AND country != '' GROUP BY country ORDER BY n DESC LIMIT ${MAX_OPTIONS}`,
+    ).catch(() => []);
+    out.citizenship = countries
+      .filter((c) => typeof c.country === "string" && c.country)
+      .map((c) => ({ value: c.country, n: Number(c.n) }));
+  }
+  if (out.birthCountry.length === 0) {
+    out.birthCountry = out.citizenship.map((c) => ({ value: c.value, n: null }));
+  }
+  return out;
 }

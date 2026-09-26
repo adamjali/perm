@@ -17,7 +17,7 @@ const SHOW_FROM = 26;
 export function SelectedInFull({ label }: { label: string | null | undefined }) {
   if (!label || label.length < SHOW_FROM) return null;
   return (
-    <p className="mt-1 text-xs leading-relaxed text-muted-foreground" data-selected-in-full>
+    <p className="mt-1 text-sm leading-relaxed text-muted-foreground" data-selected-in-full>
       Selected: <span className="font-bold text-foreground/80">{label}</span>
     </p>
   );

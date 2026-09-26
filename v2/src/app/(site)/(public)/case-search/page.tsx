@@ -9,7 +9,9 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { UnifiedCaseSearch } from "@/components/tools/UnifiedCaseSearch";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { naicsSectors } from "@/lib/naicsTitles";
 import { getMeta } from "@/lib/turso/cases";
+import { getCaseFieldOptions, getPermHistoryYears } from "@/lib/turso/caseSearchReads";
 import { getLiveRemainderSummary } from "@/lib/turso/liveCases";
 import { getPwdSummary, getPwdDisclosureSummary } from "@/lib/turso/pwdCases";
 import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
@@ -26,7 +28,8 @@ import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
  *
  * STATIC. Every control lives in the client component and the results come
  * from `/api/case-search`, so no `searchParams` is read here and the page is
- * prerendered. The header counts are the only server read.
+ * prerendered. The header counts and the option lists are the only server
+ * reads, each a `perm_docs` point read or one small grouped table, once a day.
  */
 
 const TITLE = "Search Every DOL Case";
@@ -52,14 +55,19 @@ export const revalidate = 86400;
 const fmt = (n: number) => n.toLocaleString("en-US");
 
 export default async function CaseSearchPage() {
-  const [permMeta, permLive, pwd, pwdFile, lca, lcaFile] = await Promise.all([
+  const [permMeta, permLive, pwd, pwdFile, lca, lcaFile, historyYears, fieldOptions] = await Promise.all([
     getMeta().catch(() => null),
     getLiveRemainderSummary().catch(() => null),
     getPwdSummary().catch(() => null),
     getPwdDisclosureSummary().catch(() => null),
     getLcaSummary().catch(() => null),
     getLcaDisclosureSummary().catch(() => null),
+    getPermHistoryYears(),
+    getCaseFieldOptions(),
   ]);
+  // DOL's FY2016 to FY2023 files, held in their own table; empty until loaded.
+  const historyTotal = historyYears.reduce((n, y) => n + y.total, 0);
+  const firstYear = historyYears.at(-1)?.fiscalYear ?? null;
 
   // Each program's holdings are its live rows plus its published file. A
   // single total across the three would be the more impressive number and the
@@ -71,12 +79,16 @@ export default async function CaseSearchPage() {
       // The published file plus the live remainder, which is exactly what the
       // search reads. `perm_live_recent` holds only cases `perm_cases` does
       // not, so the two cannot double-count.
+      // The history table's rows are cases decided before the current table's
+      // first file, so the three cannot double-count either.
       n:
-        permMeta || permLive
-          ? (permMeta?.totalCases ?? 0) + (permLive?.total ?? 0)
+        permMeta || permLive || historyTotal
+          ? (permMeta?.totalCases ?? 0) + (permLive?.total ?? 0) + historyTotal
           : null,
       href: "/perm-cases",
-      note: "Decided cases DOL has published, plus everything still open from the daily check.",
+      note: firstYear
+        ? `Decided cases DOL has published since FY${firstYear}, plus everything still open from the daily check.`
+        : "Decided cases DOL has published, plus everything still open from the daily check.",
     },
     {
       label: "Wage requests",
@@ -99,10 +111,15 @@ export default async function CaseSearchPage() {
     .filter((s) => s.state)
     .map((s) => ({ code: s.state, total: s.total }))
     .sort((a, b) => b.total - a.total);
-  const fiscalYearOptions = (permMeta?.byFiscalYear ?? [])
+  // The current file's years and the history table's, one list: a year is in
+  // exactly one table, and the route reads whichever holds it.
+  const currentYears = (permMeta?.byFiscalYear ?? [])
     .filter((f) => f.fiscalYear)
-    .map((f) => ({ fiscalYear: f.fiscalYear, total: f.total }))
-    .sort((a, b) => (a.fiscalYear < b.fiscalYear ? 1 : -1));
+    .map((f) => ({ fiscalYear: f.fiscalYear, total: f.total }));
+  const fiscalYearOptions = [
+    ...currentYears,
+    ...historyYears.filter((h) => !currentYears.some((c) => c.fiscalYear === h.fiscalYear)),
+  ].sort((a, b) => (a.fiscalYear < b.fiscalYear ? 1 : -1));
 
   const breadcrumbSchema = generateBreadcrumbSchema([
     { name: "Data", href: "/tools" },
@@ -160,7 +177,13 @@ export default async function CaseSearchPage() {
           {/* The state and fiscal-year lists come from the same `perm_docs`
               row the header counts do, so the options and the totals beside
               them cannot disagree, and neither costs a query of its own. */}
-          <UnifiedCaseSearch states={stateOptions} fiscalYears={fiscalYearOptions} />
+          <UnifiedCaseSearch
+            states={stateOptions}
+            fiscalYears={fiscalYearOptions}
+            industries={naicsSectors()}
+            fieldOptions={fieldOptions}
+            publishedFrom={firstYear}
+          />
         </Suspense>
       </div>
 
@@ -170,9 +193,10 @@ export default async function CaseSearchPage() {
           <p>
             <b className="font-bold">One field has to lead.</b> An employer name
             reaches all three programs and both halves of each. A law firm, a
-            worksite state or an occupation reads DOL&apos;s published PERM
-            file, because that is the only table holding those columns with an
-            index on them. Everything else narrows whichever of those you gave.
+            worksite state or an occupation reads DOL&apos;s published files,
+            because that is the only place those columns exist with an index on
+            them{firstYear ? `, and for PERM they reach back to FY${firstYear}` : ""}.
+            Everything else narrows whichever of those you gave.
             With a case number,{" "}
             <Link
               href="/perm-case-status"

@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import {
   FILTER_KEYS,
+  ORDER_LABEL,
   OUTCOMES,
+  SEARCH_ORDERS,
   PUBLISHED_ONLY_FILTERS,
   availableOutcomes,
   chooseLead,
   filterAvailability,
   isOutcome,
+  isSearchOrder,
+  orderToSort,
   refusalText,
   withStageNarrow,
   type Lead,
@@ -258,5 +262,23 @@ describe("the review stage: a live-record lead and a live-record narrow", () => 
     expect(narrowed.programs.why).toBe("stage-perm");
     expect(narrowed.state.why).toBe("stage-live-only");
     expect(narrowed.wage.why).toBe("stage-live-only");
+  });
+});
+
+describe("the orders", () => {
+  it("names every order and maps each to the table column that shows it", () => {
+    for (const o of SEARCH_ORDERS) {
+      expect(ORDER_LABEL[o]).toBeTruthy();
+      const sort = orderToSort(o);
+      expect(o.startsWith(sort.key)).toBe(true);
+      expect(sort.dir).toBe(o.endsWith("-asc") ? 1 : -1);
+    }
+    expect(orderToSort("days-asc")).toEqual({ key: "days", dir: 1 });
+  });
+
+  it("accepts only its own names", () => {
+    expect(isSearchOrder("wage-desc")).toBe(true);
+    expect(isSearchOrder("wage")).toBe(false);
+    expect(isSearchOrder("constructor")).toBe(false);
   });
 });

@@ -116,7 +116,14 @@ export type FilterKey =
   | "occupation"
   | "fiscalYear"
   | "wage"
-  | "stage";
+  | "stage"
+  | "industry"
+  | "city"
+  | "citizenship"
+  | "birthCountry"
+  | "visaClass"
+  | "education"
+  | "jobEducation";
 
 export const FILTER_KEYS: readonly FilterKey[] = [
   "programs",
@@ -130,7 +137,49 @@ export const FILTER_KEYS: readonly FilterKey[] = [
   "fiscalYear",
   "wage",
   "stage",
+  "industry",
+  "city",
+  "citizenship",
+  "birthCountry",
+  "visaClass",
+  "education",
+  "jobEducation",
 ];
+
+/**
+ * The filters only DOL's published PERM file can answer, because no other
+ * record this site holds carries the column: not the live check (DOL names
+ * none of them before publication), and not the wage-request or LCA files
+ * (DOL's LCA file does print a worksite city and an industry code; this site
+ * has not mapped them into the search yet). A search that sets one reads
+ * published PERM and says so rather than returning other programs unfiltered.
+ */
+export const PERM_ONLY_FILTERS: readonly FilterKey[] = [
+  "industry",
+  "city",
+  "citizenship",
+  "birthCountry",
+  "visaClass",
+  "education",
+  "jobEducation",
+];
+
+/**
+ * The filters DOL fills only on cases filed on its OLD ETA-9089 (the worker's
+ * details moved to an appendix of the form in use since mid-2023, which DOL
+ * does not publish). Said on the page next to the controls.
+ */
+export const OLD_FORM_FILTERS: readonly FilterKey[] = [
+  "citizenship",
+  "birthCountry",
+  "visaClass",
+  "education",
+  "jobEducation",
+];
+
+export const OLD_FORM_NOTE =
+  "DOL publishes the worker's citizenship, education and visa for cases filed on its old form " +
+  "(decided through about early FY2025); the form in use since mid-2023 doesn't carry them.";
 
 /** Why a control is off. One of these is always shown beside a disabled field. */
 export type Refusal =
@@ -190,6 +239,13 @@ export const FILTER_LABEL: Record<FilterKey, string> = {
   fiscalYear: "Fiscal year",
   stage: "Review stage",
   wage: "Wage",
+  industry: "Industry",
+  city: "Worksite city",
+  citizenship: "Citizenship",
+  birthCountry: "Country of birth",
+  visaClass: "Visa at filing",
+  education: "Worker's education",
+  jobEducation: "Education the job requires",
 };
 
 /**
@@ -384,6 +440,7 @@ export const PUBLISHED_ONLY_FILTERS: readonly FilterKey[] = [
   "occupation",
   "fiscalYear",
   "wage",
+  ...PERM_ONLY_FILTERS,
 ];
 
 /**
@@ -408,5 +465,75 @@ export function withStageNarrow(
     occupation: { on: false, why: "stage-live-only" },
     fiscalYear: { on: false, why: "stage-live-only" },
     wage: { on: false, why: "stage-live-only" },
+    ...Object.fromEntries(PERM_ONLY_FILTERS.map((k) => [k, { on: false, why: "stage-live-only" as const }])),
   };
+}
+
+/**
+ * How the merged answer is ordered. Every order rearranges the rows the
+ * sources returned; `decided-asc` also makes the published PERM reads start
+ * from the OLDEST decision, which the index serves exactly, so it is the one
+ * way to reach an employer's FY2016 cases.
+ */
+export type SearchOrder =
+  | "filed-desc"
+  | "filed-asc"
+  | "decided-desc"
+  | "decided-asc"
+  | "wage-desc"
+  | "wage-asc"
+  | "days-asc"
+  | "days-desc";
+export const SEARCH_ORDERS: readonly SearchOrder[] = [
+  "filed-desc",
+  "filed-asc",
+  "decided-desc",
+  "decided-asc",
+  "wage-desc",
+  "wage-asc",
+  "days-asc",
+  "days-desc",
+];
+export function isSearchOrder(v: string): v is SearchOrder {
+  return (SEARCH_ORDERS as readonly string[]).includes(v);
+}
+
+/** What each order is called on the page's control. */
+export const ORDER_LABEL: Record<SearchOrder, string> = {
+  "filed-desc": "Newest filing first",
+  "filed-asc": "Oldest filing first",
+  "decided-desc": "Newest decision first",
+  "decided-asc": "Oldest decision first",
+  "wage-desc": "Highest wage first",
+  "wage-asc": "Lowest wage first",
+  "days-asc": "Fastest decision first",
+  "days-desc": "Slowest decision first",
+};
+
+/**
+ * The table's column sort that shows the same order, so the header arrow and
+ * the control agree. The column keys are the results table's.
+ */
+export function orderToSort(order: SearchOrder): { key: "filed" | "decided" | "wage" | "days"; dir: 1 | -1 } {
+  const [key, dir] = order.split("-") as ["filed" | "decided" | "wage" | "days", "asc" | "desc"];
+  return { key, dir: dir === "asc" ? 1 : -1 };
+}
+
+/** A NAICS code (2 to 6 digits) or a sector range such as `31-33`. */
+export const NAICS_RE = /^(\d{2,6}|\d{2}-\d{2})$/;
+/** Longest real worker or job value, with room: "SAINT VINCENT AND THE GRENADINES" is 32. */
+export const MAX_FIELD = 60;
+/**
+ * The worker and job fields as DOL prints them: letters (any script, since a
+ * city or a country can carry an accent), digits, spaces and the punctuation
+ * real values use ("KOREA, SOUTH", "CONGO (KINSHASA)", "Master's", "H-1B").
+ * Test it only after checking the length against `MAX_FIELD`. The form checks
+ * with it too, so a value the route would refuse is flagged before it is sent.
+ */
+export const FIELD_RE = /^[\p{L}\p{N} .,'\u2019()&/-]+$/u;
+
+/** A worker or job field the route will take, after trimming. */
+export function isFieldValue(v: string): boolean {
+  const t = v.trim();
+  return t.length > 0 && t.length <= MAX_FIELD && FIELD_RE.test(t);
 }

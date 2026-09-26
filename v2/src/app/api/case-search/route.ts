@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 
 import {
   FILTER_KEYS,
+  FIELD_RE,
+  MAX_FIELD,
+  NAICS_RE,
   availableOutcomes,
   chooseLead,
   filterAvailability,
@@ -18,9 +21,12 @@ import {
   PROGRAMS,
   UNIFIED_MAX,
   isProgram,
+  isSearchOrder,
   unifiedSearch,
   type Program,
+  type SearchOrder,
 } from "@/lib/turso/unifiedSearch";
+import { casesToCsv } from "@/lib/caseSearchCsv";
 
 /**
  * One search across PERM, prevailing wage requests and H-1B LCAs.
@@ -50,6 +56,13 @@ import {
  * `perm_entities` first and the answer names which one it used, with the other
  * matches offered - DOL prints one firm under several spellings and the reader
  * has to be able to see that rather than wonder.
+ *
+ * ## `format=csv` is the same answer, not a bigger one
+ *
+ * The download runs through every guard above and the same `unifiedSearch`
+ * call, so it holds at most `UNIFIED_MAX` rows (300, well under the 1,000-row
+ * ceiling a download is held to) and costs what the JSON answer costs. A refusal is still a JSON
+ * 400: a CSV of an error would open in a spreadsheet as one odd cell.
  */
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -80,6 +93,17 @@ function month(p: URLSearchParams, key: string): { ok: true; value: string } | {
   const raw = (p.get(key) ?? "").trim();
   if (!raw) return { ok: true, value: "" };
   return MONTH_RE.test(raw) ? { ok: true, value: raw } : { ok: false };
+}
+
+/**
+ * A worker or job field: empty, a value, or "bad". The length cap runs
+ * before the character test, as the house rule for public endpoints says.
+ */
+function field(p: URLSearchParams, key: string): string | "bad" {
+  const raw = (p.get(key) ?? "").trim();
+  if (!raw) return "";
+  if (raw.length > MAX_FIELD || !FIELD_RE.test(raw)) return "bad";
+  return raw.replace(/\s+/g, " ");
 }
 
 function wage(p: URLSearchParams, key: string): number | null | "bad" {
@@ -146,6 +170,28 @@ export async function GET(request: Request): Promise<NextResponse> {
   const wMax = wage(p, "wmax");
   if (wMin === "bad" || wMax === "bad") return bad("wage bounds must be whole dollars");
 
+  const naicsRaw = (p.get("naics") ?? "").trim();
+  if (naicsRaw && (naicsRaw.length > 7 || !NAICS_RE.test(naicsRaw))) {
+    return bad("naics must be a 2 to 6 digit code or a sector range such as 31-33");
+  }
+  const city = field(p, "city");
+  const citizenship = field(p, "cit");
+  const birthCountry = field(p, "bcountry");
+  const visaClass = field(p, "visa");
+  const education = field(p, "edu");
+  const jobEducation = field(p, "jobedu");
+  if ([city, citizenship, birthCountry, visaClass, education, jobEducation].includes("bad")) {
+    return bad(`worker and job fields must be at most ${MAX_FIELD} letters, digits, spaces or . , ' ( ) & / -`);
+  }
+
+  const orderRaw = (p.get("order") ?? "").trim();
+  if (orderRaw && (orderRaw.length > 20 || !isSearchOrder(orderRaw))) return bad("unknown order");
+  const order: SearchOrder | undefined = orderRaw && isSearchOrder(orderRaw) ? orderRaw : undefined;
+
+  const formatRaw = (p.get("format") ?? "").trim();
+  if (formatRaw && formatRaw !== "json" && formatRaw !== "csv") return bad("format must be json or csv");
+  const csv = formatRaw === "csv";
+
   const outcomeRaw = (p.get("outcome") ?? "").trim();
   if (outcomeRaw && !isOutcome(outcomeRaw)) return bad("unknown outcome");
   const outcome: Outcome | undefined = outcomeRaw && isOutcome(outcomeRaw) ? outcomeRaw : undefined;
@@ -182,6 +228,9 @@ export async function GET(request: Request): Promise<NextResponse> {
     });
 
     if (!lead) {
+      // A download of nothing is a refusal, not an empty file: a spreadsheet
+      // with a header row and no cases reads as "nothing matched".
+      if (csv) return bad("a download needs an employer, case number, law firm, state, occupation or stage");
       // Not a 400: nothing was malformed, there is simply no column an index
       // can lead with. The page renders this as guidance, not as an error.
       return NextResponse.json({
@@ -243,8 +292,26 @@ export async function GET(request: Request): Promise<NextResponse> {
       if (wMin !== null) narrow.wageMin = wMin;
       if (wMax !== null) narrow.wageMax = wMax;
     }
+    // The worker, job and industry filters exist on published PERM only;
+    // `unifiedSearch` reads that one source when any is set and says so.
+    if (naicsRaw && allowed("industry")) narrow.naics = naicsRaw;
+    if (city && allowed("city")) narrow.city = city;
+    if (citizenship && allowed("citizenship")) narrow.citizenship = citizenship;
+    if (birthCountry && allowed("birthCountry")) narrow.birthCountry = birthCountry;
+    if (visaClass && allowed("visaClass")) narrow.visaClass = visaClass;
+    if (education && allowed("education")) narrow.education = education;
+    if (jobEducation && allowed("jobEducation")) narrow.jobEducation = jobEducation;
 
-    const result = await unifiedSearch({ lead, narrow, programs, limit });
+    const result = await unifiedSearch({ lead, narrow, programs, limit, ...(order ? { order } : {}) });
+    if (csv) {
+      return new NextResponse(casesToCsv(result.rows), {
+        headers: {
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="permtracker-case-search.csv"`,
+          "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600",
+        },
+      });
+    }
     return NextResponse.json(
       {
         ...result,

@@ -22,10 +22,22 @@ const rows = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown[]>>();
 const one = vi.fn<(sql: string, args?: unknown[]) => Promise<unknown>>();
 vi.mock("../client", () => ({ rows, one, exec: vi.fn() }));
 
+/**
+ * Which columns each table has. The default is the world before the history
+ * load: `perm_cases` unknown (so its extra columns read as NULL) and no history
+ * table at all, which keeps every older assertion below about ONE table's SQL.
+ * The history tests set it.
+ */
+const columns: Record<string, Set<string>> = {};
+const tableColumns = vi.fn(async (t: string) => columns[t] ?? new Set<string>());
+vi.mock("../tableColumns", () => ({ tableColumns }));
+
 const {
   OUTCOME_STATUSES,
   SLICE_CAP,
   flagLeadIndex,
+  getCaseFieldOptions,
+  getPermHistoryYears,
   lookupUnifiedCase,
   permLeadIndex,
   programForCaseNumber,
@@ -48,6 +60,7 @@ const {
  * past it would silently assert on the wrong statement.
  */
 beforeEach(() => {
+  for (const k of Object.keys(columns)) delete columns[k];
   rows.mockReset();
   // Keyed on the statement rather than on call order, so a test that issues
   // more than one read still gets rowids from every first pass. Returning
@@ -725,5 +738,244 @@ describe("the wage-request and LCA stage readers", () => {
     // `visa_type` is one of the columns returned; it must not be a predicate here.
     expect(sql).not.toContain("visa_type = ?");
     expect(args).toEqual(["cognizant", "cognizanu", "IN PROCESS", 51]);
+  });
+});
+
+describe("published PERM across the current table and the FY2016-FY2023 history", () => {
+  const BASE = [
+    "case_number", "status", "received_date", "decision_date", "days", "employer_name",
+    "employer_slug", "state", "job_title", "soc_code", "soc_title", "attorney_name",
+    "attorney_slug", "wage",
+  ];
+  const WITH_EXTRAS = new Set([
+    ...BASE, "naics", "worksite_city", "citizenship", "birth_country", "visa_class",
+    "education", "major", "institution", "job_education",
+  ]);
+  const dbRow = (case_number: string, decision_date: string, extra: Record<string, unknown> = {}) => ({
+    case_number, status: "certified", received_date: "2020-01-02", decision_date, days: 100,
+    employer_name: "ACME", employer_slug: "acme", state: "CA", job_title: "Engineer",
+    soc_code: "15-1252.00", soc_title: "Software Developers", attorney_name: null,
+    attorney_slug: null, wage: 100000, ...extra,
+  });
+  const sqls = () => rows.mock.calls.map((c) => String(c[0]));
+  const onTable = (t: string) => sqls().filter((s) => new RegExp(`FROM ${t}\\b`).test(s));
+
+  beforeEach(() => {
+    columns.perm_cases = WITH_EXTRAS;
+    columns.perm_cases_history = WITH_EXTRAS;
+  });
+
+  it("reads both tables under an equality lead, pinning only the current one", async () => {
+    await readPermPublished({ lead: state, narrow: {}, limit: 100 });
+    const cur = onTable("perm_cases");
+    const hist = onTable("perm_cases_history");
+    expect(cur).toHaveLength(1);
+    expect(hist).toHaveLength(1);
+    expect(cur[0]).toMatch(/FROM perm_cases INDEXED BY idx_pc_state_dec WHERE state = \?/);
+    // Unpinned: its indexes may be dropped for the write budget, and INDEXED
+    // BY a missing index fails the statement.
+    expect(hist[0]).not.toMatch(/INDEXED BY/);
+    expect(hist[0]).toMatch(/FROM perm_cases_history WHERE state = \? ORDER BY decision_date DESC LIMIT \?/);
+  });
+
+  it("merges newest-decided first, cuts to the limit, and keeps a case once, from the current table", async () => {
+    rows.mockImplementation(async (sql: string) => {
+      if (/FROM perm_cases_history/.test(sql)) {
+        // The duplicate sits INSIDE the limit, so a merge that forgot to
+        // dedupe would print it twice rather than lose it off the end.
+        return [dbRow("G-DUP", "2023-09-01"), dbRow("A-1", "2023-05-01"), dbRow("A-2", "2022-01-01")];
+      }
+      return [dbRow("G-1", "2025-02-01"), dbRow("G-DUP", "2024-03-01", { status: "denied" })];
+    });
+    const out = await readPermPublished({ lead: state, narrow: {}, limit: 5 });
+    expect(out.rows.map((r) => r.caseNumber)).toEqual(["G-1", "G-DUP", "A-1", "A-2"]);
+    expect(out.rows.find((r) => r.caseNumber === "G-DUP")?.status).toBe("denied");
+    expect(out.rows.find((r) => r.caseNumber === "A-1")?.table).toBe("perm_cases_history");
+  });
+
+  it.each([
+    [{ fiscalYear: "2019" }, false, true],
+    [{ fiscalYear: "2025" }, true, false],
+    [{ decidedTo: "2023-05" }, false, true],
+    [{ decidedFrom: "2024-01" }, true, false],
+    [{ decidedFrom: "2023-06", decidedTo: "2023-12" }, true, true],
+  ])("reads only the table a date filter can reach (%o)", async (narrow, current, history) => {
+    await readPermPublished({ lead: state, narrow, limit: 100 });
+    expect(onTable("perm_cases").length > 0).toBe(current);
+    expect(onTable("perm_cases_history").length > 0).toBe(history);
+  });
+
+  it("skips the history entirely when the table is not there yet", async () => {
+    delete columns.perm_cases_history;
+    await readPermPublished({ lead: state, narrow: {}, limit: 100 });
+    expect(onTable("perm_cases_history")).toHaveLength(0);
+    expect(onTable("perm_cases")).toHaveLength(1);
+  });
+
+  it("walks from the oldest decision when asked, on both tables and both passes", async () => {
+    await readPermPublished({ lead: state, narrow: { decidedOrder: "asc" }, limit: 100 });
+    for (const s of sqls()) expect(s).toMatch(/ORDER BY decision_date ASC LIMIT/);
+    rows.mockClear();
+    await readPermPublished({ lead: employer, narrow: { decidedOrder: "asc" }, limit: 100 });
+    const first = sqls().filter((s) => s.startsWith("SELECT rowid"));
+    expect(first).toHaveLength(2);
+    for (const s of first) expect(s).toMatch(/ORDER BY decision_date ASC LIMIT \?/);
+    // The history's first pass is not pinned either.
+    expect(first.find((s) => s.includes("perm_cases_history"))).not.toMatch(/INDEXED BY/);
+  });
+
+  it("filters industry by prefix, city and the worker's fields case-insensitively", async () => {
+    await readPermPublished({
+      lead: state,
+      narrow: {
+        naics: "5415", city: " san  jose ", citizenship: "india", birthCountry: "India",
+        visaClass: "h-1b", education: "master's", jobEducation: "bachelor's",
+      },
+      limit: 100,
+    });
+    const [sql, args] = rows.mock.calls.find((c) => /FROM perm_cases INDEXED/.test(String(c[0])))!;
+    expect(String(sql)).toMatch(/substr\(naics, 1, \?\) = \?/);
+    expect(String(sql)).toMatch(/upper\(worksite_city\) = \?/);
+    expect(String(sql)).toMatch(/citizenship = \? AND birth_country = \? AND upper\(visa_class\) = \?/);
+    expect(String(sql)).toMatch(/upper\(education\) = \? AND upper\(job_education\) = \?/);
+    expect(args).toEqual(
+      expect.arrayContaining([4, "5415", "SAN JOSE", "INDIA", "H-1B", "MASTER'S", "BACHELOR'S"]),
+    );
+  });
+
+  it("reads a sector range as each of its 2-digit codes", async () => {
+    await readPermPublished({ lead: state, narrow: { naics: "31-33" }, limit: 100 });
+    const [sql, args] = rows.mock.calls.find((c) => /FROM perm_cases INDEXED/.test(String(c[0])))!;
+    expect(String(sql)).toMatch(/substr\(naics, 1, 2\) IN \(\?, \?, \?\)/);
+    expect(args).toEqual(expect.arrayContaining(["31", "32", "33"]));
+  });
+
+  it("puts the new filters in the second pass of an employer read, over the window", async () => {
+    await readPermPublished({ lead: employer, narrow: { citizenship: "CHINA" }, limit: 100 });
+    const second = rows.mock.calls.find((c) => /FROM perm_cases NOT INDEXED/.test(String(c[0])))!;
+    expect(String(second[0])).toMatch(/citizenship = \?/);
+    expect(second[1]).toContain("CHINA");
+  });
+
+  it("does not read a table that lacks a filter's column, and says nothing matched there", async () => {
+    columns.perm_cases = new Set(BASE); // before the loader adds the worker columns
+    await readPermPublished({ lead: state, narrow: { citizenship: "INDIA" }, limit: 100 });
+    expect(onTable("perm_cases")).toHaveLength(0);
+    expect(onTable("perm_cases_history")).toHaveLength(1);
+  });
+
+  it("selects a missing extra column as NULL rather than naming it", async () => {
+    columns.perm_cases = new Set([...BASE, "naics"]);
+    await readPermPublished({ lead: state, narrow: {}, limit: 100 });
+    const cur = onTable("perm_cases")[0]!;
+    expect(cur).toMatch(/, naics, NULL AS worksite_city, NULL AS citizenship/);
+  });
+
+  it("maps the extra columns onto the row", async () => {
+    rows.mockImplementation(async (sql: string) =>
+      /FROM perm_cases_history/.test(sql)
+        ? [dbRow("A-9", "2019-06-01", { citizenship: "INDIA", visa_class: "H-1B", naics: "541511", worksite_city: "Austin" })]
+        : [],
+    );
+    const out = await readPermPublished({ lead: state, narrow: {}, limit: 100 });
+    expect(out.rows[0]?.extras).toMatchObject({
+      citizenship: "INDIA", visaClass: "H-1B", naics: "541511", worksiteCity: "Austin", education: null,
+    });
+  });
+});
+
+describe("lookupUnifiedCase and the history", () => {
+  const WITH = new Set(["case_number", "status", "decision_date"]);
+  it("falls back to perm_cases_history when the current table has no row", async () => {
+    columns.perm_cases_history = WITH;
+    one.mockImplementation(async (sql: string) =>
+      /FROM perm_cases_history/.test(sql)
+        ? { case_number: "A-20001-11111", status: "certified", decision_date: "2021-03-01" }
+        : null,
+    );
+    const out = await lookupUnifiedCase("A-20001-11111");
+    expect(out.permPublished?.caseNumber).toBe("A-20001-11111");
+    expect(out.permPublished?.table).toBe("perm_cases_history");
+  });
+
+  it("never reads the history when the current table answers", async () => {
+    columns.perm_cases_history = WITH;
+    one.mockImplementation(async (sql: string) =>
+      /FROM perm_cases WHERE/.test(sql) ? { case_number: "G-1", status: "denied" } : null,
+    );
+    await lookupUnifiedCase("G-100-26125-868956");
+    expect(one.mock.calls.some((c) => /perm_cases_history/.test(String(c[0])))).toBe(false);
+  });
+});
+
+describe("getPermHistoryYears", () => {
+  const doc = (files: Record<string, unknown>) => [{ json: JSON.stringify({ files }) }];
+
+  it("sums the history load's case rows by fiscal year, newest first, from one point read", async () => {
+    rows.mockResolvedValue(
+      doc({
+        "PERM_FY2015.xlsx": { fy: 2015, caseRows: 0 },
+        "PERM_FY2019.xlsx": { fy: 2019, caseRows: 90_000 },
+        "PERM_FY2016.xlsx": { fy: 2016, caseRows: 120_000 },
+        "PERM_FY2019_v2.xlsx": { fy: 2019, caseRows: 10 },
+      }),
+    );
+    expect(await getPermHistoryYears()).toEqual([
+      { fiscalYear: "2019", total: 90_010 },
+      { fiscalYear: "2016", total: 120_000 },
+    ]);
+    expect(rows).toHaveBeenCalledTimes(1);
+    expect(String(rows.mock.calls[0]?.[0])).toMatch(/FROM perm_docs WHERE key = 'perm_history'/);
+  });
+
+  it("holds no year the current table owns, and reads a missing or broken doc as nothing loaded", async () => {
+    rows.mockResolvedValue(doc({ "PERM_FY2024.xlsx": { fy: 2024, caseRows: 5 } }));
+    expect(await getPermHistoryYears()).toEqual([]);
+    rows.mockResolvedValue([{ json: "{not json" }]);
+    expect(await getPermHistoryYears()).toEqual([]);
+    rows.mockRejectedValue(new Error("down"));
+    expect(await getPermHistoryYears()).toEqual([]);
+  });
+});
+
+describe("getCaseFieldOptions", () => {
+  it("takes every list from the precomputed doc when it is there, and reads nothing else", async () => {
+    rows.mockImplementation(async (sql: string) =>
+      /case_field_options/.test(sql)
+        ? [{ json: JSON.stringify({
+            citizenship: [{ value: "INDIA", n: 5 }, { value: 7, n: 1 }, { value: "CHINA", n: "x" }],
+            birthCountry: [{ value: "INDIA", n: 4 }],
+            visaClass: [{ value: "H-1B", n: 3 }],
+            education: [{ value: "Master's", n: 2 }],
+            jobEducation: [{ value: "Bachelor's", n: 1 }],
+          }) }]
+        : [],
+    );
+    const out = await getCaseFieldOptions();
+    // A malformed entry is dropped, never rendered as a blank option.
+    expect(out.citizenship).toEqual([{ value: "INDIA", n: 5 }, { value: "CHINA", n: null }]);
+    expect(out.education).toEqual([{ value: "Master's", n: 2 }]);
+    expect(rows.mock.calls.some((c) => /perm_country_years/.test(String(c[0])))).toBe(false);
+  });
+
+  it("falls back to the national country table, bounded and grouped once, when the doc is missing", async () => {
+    rows.mockImplementation(async (sql: string) =>
+      /perm_country_years/.test(sql) ? [{ country: "INDIA", n: "120" }, { country: "CHINA", n: 40 }] : [],
+    );
+    const out = await getCaseFieldOptions();
+    expect(out.citizenship).toEqual([{ value: "INDIA", n: 120 }, { value: "CHINA", n: 40 }]);
+    // Birth country takes the same country names without a count it does not have.
+    expect(out.birthCountry).toEqual([{ value: "INDIA", n: null }, { value: "CHINA", n: null }]);
+    expect(out.visaClass).toEqual([]);
+    const sql = String(rows.mock.calls.find((c) => /perm_country_years/.test(String(c[0])))?.[0]);
+    expect(sql).toMatch(/fy >= 2016/);
+    expect(sql).toMatch(/LIMIT \d+/);
+  });
+
+  it("answers empty lists, never throws, when neither source can be read", async () => {
+    rows.mockRejectedValue(new Error("down"));
+    expect(await getCaseFieldOptions()).toEqual({
+      citizenship: [], birthCountry: [], visaClass: [], education: [], jobEducation: [],
+    });
   });
 });
