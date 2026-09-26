@@ -17,6 +17,7 @@
  */
 import "server-only";
 import { unstable_cache } from "next/cache";
+import { cache } from "react";
 
 import type { BulletinMonth } from "@/lib/perm";
 import {
@@ -74,12 +75,9 @@ export async function getEntitySeed(
     ),
     // Pageworthy count, so the header's "N employers" matches what the table
     // can actually enumerate; the sub-floor corpus is reachable via search.
-    one<{ n: number }>(
-      "SELECT count(*) AS n FROM perm_entities WHERE kind = ? AND total >= ?",
-      [kind, MIN_TOTAL_FOR_PAGE],
-    ),
+    countPageworthy(kind),
   ]);
-  return { rows: head.map(toEntityRow), total: count?.n ?? head.length };
+  return { rows: head.map(toEntityRow), total: count || head.length };
 }
 
 /**
@@ -529,14 +527,31 @@ export async function getVisaBulletinSeries(): Promise<
  * them, and that count is of PAGEWORTHY rows, not of all rows: everything
  * below the threshold is stored and searchable but has no URL. Counting in
  * SQL rather than fetching 16,305 rows to call .filter().length on them.
+ *
+ * ONE ROW READ, NOT A COUNT. `count(*) ... WHERE kind = ? AND total >= ?`
+ * walks every index entry of the kind (71,512 for employers), and every
+ * entity page, the case page's estimate and llms.txt asked it three times
+ * per render: 67.25 billion of the 98.4 billion rows Turso billed from
+ * Sep 2 to Sep 26 2026 (2.64M runs, measured in its Top Queries panel).
+ * Ranks are dense 1..N per kind and ordered by total, so the pageworthy
+ * count is the last rank whenever the last-ranked entity clears the floor,
+ * which it does at a floor of 1 (every entity holds at least one filing;
+ * measured the same day: no rank/total inversions, minimum total 1). The
+ * count survives as the fallback for a floor the tail does not clear.
  */
-export async function countPageworthy(kind: EntityKind): Promise<number> {
+export const countPageworthy = cache(async (kind: EntityKind): Promise<number> => {
+  const last = await one<{ rank: number; total: number }>(
+    "SELECT rank, total FROM perm_entities WHERE kind = ? ORDER BY rank DESC LIMIT 1",
+    [kind],
+  );
+  if (!last) return 0;
+  if (Number(last.total) >= MIN_TOTAL_FOR_PAGE) return Number(last.rank);
   const r = await one<{ n: number }>(
     "SELECT count(*) AS n FROM perm_entities WHERE kind = ? AND total >= ?",
     [kind, MIN_TOTAL_FOR_PAGE],
   );
-  return r?.n ?? 0;
-}
+  return Number(r?.n ?? 0);
+});
 
 export interface DatasetFreshness {
   dataset: string;

@@ -28,6 +28,7 @@ vi.mock("../client", () => ({ rows, one }));
 
 const { nameVariants } = await import("../entityDetail");
 const { fieldDistribution } = await import("../entities");
+const { countPageworthy, getEntitySeed } = await import("../publicData");
 
 beforeEach(() => {
   rows.mockReset();
@@ -56,5 +57,34 @@ describe("fieldDistribution", () => {
     expect(sizeSql).toMatch(/SELECT rank AS n FROM perm_entities WHERE kind = \? ORDER BY rank DESC LIMIT 1/);
     expect(sizeSql).not.toMatch(/count\(\*\)/i);
     expect(d.kindTotal).toBe(71512);
+  });
+});
+
+describe("countPageworthy", () => {
+  // 67.25B of the 98.4B rows billed Sep 2 to Sep 26 2026 were a count(*)
+  // over the kind, three per entity-page render. The last rank is the count
+  // whenever the tail clears the floor.
+  it("reads the last-ranked row, not a count, when the tail clears the floor", async () => {
+    one.mockResolvedValueOnce({ rank: 71512, total: 1 });
+    expect(await countPageworthy("employer")).toBe(71512);
+    expect(one).toHaveBeenCalledTimes(1);
+    const [sql, args] = one.mock.calls[0]!;
+    expect(sql).toMatch(/SELECT rank, total FROM perm_entities WHERE kind = \? ORDER BY rank DESC LIMIT 1/);
+    expect(sql).not.toMatch(/count\(\*\)/i);
+    expect(args).toEqual(["employer"]);
+  });
+
+  it("falls back to counting when the last-ranked entity is under the floor", async () => {
+    one.mockResolvedValueOnce({ rank: 900, total: 0 }).mockResolvedValueOnce({ n: "850" });
+    expect(await countPageworthy("attorney")).toBe(850);
+    expect(one.mock.calls[1]![0]).toMatch(/count\(\*\)/i);
+  });
+
+  it("is what the seed prints as the kind's size", async () => {
+    rows.mockResolvedValueOnce([]);
+    one.mockResolvedValueOnce({ rank: 1410, total: 3 });
+    const seed = await getEntitySeed("occupation", 10);
+    expect(seed.total).toBe(1410);
+    expect(one.mock.calls.every(([sql]) => !/count\(\*\)/i.test(sql))).toBe(true);
   });
 });
