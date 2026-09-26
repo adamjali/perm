@@ -27,7 +27,7 @@ import type { PaceBasis } from "@/lib/bulletinNext";
 
 const TITLE = "Green Card Line: People Ahead of Your Date";
 const DESCRIPTION =
-  "How many people stand ahead of your priority date in the EB-2, EB-3 and EB-3 Other Workers lines, counted from USCIS and State Department figures.";
+  "How many people stand ahead of your priority date in EB-2, EB-3 and EB-3 Other Workers, and how many years that is at last year's green card pace.";
 const PATH = "/tools/green-card-line";
 
 export const metadata: Metadata = withSocialCard({
@@ -60,8 +60,8 @@ const FAQS = [
     a: "Yes. USCIS's count of approved petitions is primary applicants only, so each one is multiplied by the number of people DHS measured getting green cards per principal in this category in fiscal 2023 and 2024: about 2.0 for EB-2 and EB-3, and 2.3 to 2.5 for EB-3 Other Workers. The yearly green card figure beside it counts families too, so the two are in the same units.",
   },
   {
-    q: "Why doesn't it say how many years I'll wait?",
-    a: "Because the yearly supply isn't fixed and the bulletin doesn't move at a steady rate. The page prints what the line got in fiscal 2024, from Table V of the State Department's Report of the Visa Office, the newest year published. Unused family numbers spill into employment categories after the fact, so next year's number can be quite different.",
+    q: "Where do the years come from?",
+    a: "The people ahead divided by the green cards the line got in fiscal 2024, from Table V of the State Department's Report of the Visa Office, the newest year published. That's one real year's pace, not a forecast. Unused family numbers spill into employment categories after the fact, the bulletin doesn't move at a steady rate, and the count runs high where people give up or hold two petitions, so read it as how long at last year's pace, never as a date.",
   },
   {
     q: "Why doesn't it subtract people who give up?",
@@ -128,7 +128,7 @@ export default async function GreenCardLinePage() {
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           Everyone ahead of your priority date in EB-2, EB-3 or EB-3 Other Workers, counted from what USCIS and the
-          State Department publish, beside the green cards that line got last year.
+          State Department publish, and how many years that is at the pace the line got green cards last year.
         </p>
       </header>
 

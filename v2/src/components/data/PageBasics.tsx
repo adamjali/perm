@@ -502,7 +502,12 @@ export const BASICS: Record<string, BasicsEntry[]> = {
           USCIS counted 356,360 approved petitions for India-born beneficiaries
           in EB-2 as of June 2026, 91% of everyone waiting in that category,
           before dependents. The count, not a wait in years, is what USCIS
-          publishes; how the cutoff has actually moved is on the{" "}
+          publishes; the{" "}
+          <Link href="/tools/green-card-line" className={link}>
+            green card line
+          </Link>{" "}
+          divides it by last year&apos;s green cards, and how the cutoff has
+          actually moved is on the{" "}
           <Link href="/visa-bulletin" className={link}>
             visa bulletin page
           </Link>

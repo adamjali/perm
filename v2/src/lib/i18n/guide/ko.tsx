@@ -5,7 +5,7 @@ import type { GuideCopy } from "./types";
 /**
  * Korean, formal polite register. Terms follow what Korean applicants in the
  * US use: 노동허가 for PERM, 문호 for bulletin cutoffs, 적정임금 for the
- * prevailing wage, 워크퍼밋 and 여행허가서 for the EAD and advance parole,
+ * prevailing wage, 워크퍼밋 and 사전여행허가서 for the EAD and advance parole,
  * 비숙련직 for EB-3 Other Workers, 승인일/접수일 기준 for the two charts.
  */
 export const ko: GuideCopy = {
@@ -14,7 +14,7 @@ export const ko: GuideCopy = {
     "미국 노동부 케이스를 직접 조회하는 방법, 노동부 심사가 몇 월까지 왔는지, PERM 이후의 절차, 출생 국가별 영주권 문호를 안내합니다.",
   eyebrow: "PERM Tracker 한국어",
   h1: "취업이민 영주권을 기다리는 분들께",
-  lede: "케이스 상태를 직접 조회하는 방법, 미국 노동부(DOL) 심사가 오늘 어디까지 왔는지, PERM 이후에 남은 절차, 그리고 출생 국가별 영주권 문호(비자 블레틴의 기준일)를 정리했습니다. 이 페이지는 법률 자문이 아니며, 케이스는 담당 변호사가 가장 잘 압니다.",
+  lede: "케이스 상태를 직접 조회하는 방법, 미국 노동부(DOL) 심사가 오늘 어디까지 왔는지, PERM 이후에 남은 절차, 그리고 출생 국가별 영주권 문호(비자 블러틴의 기준일)를 정리했습니다. 이 페이지는 법률 자문이 아니며, 케이스는 담당 변호사가 가장 잘 압니다.",
   translationNote: (
     <>
       이 페이지는 <En href={ENGLISH_GUIDE}>영문 가이드</En>를 번역해 정리한 것입니다. 케이스 번호, 서류 이름, 날짜, 그리고 노동부와 이민국이 쓰는 상태 표현은 기관이 표기하는 그대로 영어로 두고 옆에 설명을 붙였습니다. 이 가이드에서 연결되는 데이터 페이지는 영어로 되어 있습니다.
@@ -68,7 +68,7 @@ export const ko: GuideCopy = {
   },
   steps: {
     h2: "PERM 이후의 절차",
-    intro: "노동부가 PERM을 승인하면 케이스는 미국 이민국(USCIS)으로 넘어가고, 그다음은 비자 블레틴의 문호에 달려 있습니다.",
+    intro: "노동부가 PERM을 승인하면 케이스는 미국 이민국(USCIS)으로 넘어가고, 그다음은 비자 블러틴의 문호에 달려 있습니다.",
     items: [
       {
         form: "ETA-9089",
@@ -92,7 +92,7 @@ export const ko: GuideCopy = {
       {
         form: "I-485",
         name: "신분조정, 미국 내(이민국)",
-        body: "문호가 열리면 I-485를 제출해 미국을 떠나지 않고 영주권을 받습니다. 대부분 I-765(워크퍼밋, EAD)와 I-131(여행허가서, advance parole)을 함께 제출합니다. 이민국은 매달 비자 블레틴의 두 표 가운데 어느 쪽을 받는지 발표합니다. 승인일 기준(Final Action Date) 아니면 접수일 기준(Date for Filing)입니다.",
+        body: "문호가 열리면 I-485를 제출해 미국을 떠나지 않고 영주권을 받습니다. 대부분 I-765(워크퍼밋, EAD)와 I-131(사전여행허가서, advance parole)을 함께 제출합니다. 이민국은 매달 비자 블러틴의 두 표 가운데 어느 쪽을 적용하는지 발표합니다. 승인일 기준(Final Action Date) 아니면 접수일 기준(Date for Filing)입니다.",
       },
       {
         form: "DS-260",
@@ -106,7 +106,7 @@ export const ko: GuideCopy = {
     h2: "EB-3 비숙련직(Other Workers)",
     body: [
       "EB-3 비숙련직은 EB-3 가운데 2년 미만의 훈련이나 경력이 필요한 직책을 위한 부분입니다. 카테고리를 정하는 것은 본인의 학력이 아니라 PERM에 적힌 직책의 요건입니다. 학위가 있는 사람이라도 경력 6개월을 요구하는 직책이면 비숙련직입니다.",
-      "비자 블레틴에 별도의 줄이 있고 연간 쿼터가 최대 10,000개라서, 문호가 보통 나머지 EB-3보다 몇 년 뒤처져 있습니다. 아래 표에서 EB-3와 EB-3 비숙련직 두 줄을 비교해 보세요.",
+      "비자 블러틴에 별도의 줄이 있고 연간 쿼터가 최대 10,000개라서, 문호가 보통 나머지 EB-3보다 몇 년 뒤처져 있습니다. 아래 표에서 EB-3와 EB-3 비숙련직 두 줄을 비교해 보세요.",
       <>
         더 알아보기: <En href="/guides/eb3-other-workers">EB-3 비숙련직 전체 가이드</En>(영어), 그리고 <En href="/tools/green-card-line?category=EW3">그 줄에서 내 앞에 몇 명이 있는지</En>(영어).
       </>,
@@ -115,15 +115,15 @@ export const ko: GuideCopy = {
   cutoffs: {
     h2: "출생 국가별 영주권 문호",
     intro: (m) => (
-      <>국무부의 {m} 비자 블레틴 자료이며, 이 사이트에 있는 가장 최근 호입니다. 표의 날짜는 그보다 앞선 우선일자를 가진 사람이 다음 단계로 진행할 수 있다는 뜻입니다.</>
+      <>국무부의 {m} 비자 블러틴 자료이며, 이 사이트에 있는 가장 최근 호입니다. 표의 날짜는 그보다 앞선 우선일자를 가진 사람이 다음 단계로 진행할 수 있다는 뜻입니다.</>
     ),
     birth: "어느 표를 볼지는 국적이 아니라 출생 국가로 정해집니다. 한국에서 태어났다면 '그 밖의 모든 국가' 표를 보면 됩니다. 경우에 따라 배우자의 출생 국가를 기준으로 할 수도 있으니 변호사와 상의하세요.",
     head: { category: "카테고리", finalAction: "승인일 기준(Final Action)", datesForFiling: "접수일 기준(Date for Filing)" },
     countryName: { worldwide: "그 밖의 모든 국가(한국 포함)" },
     category: {
-      EB1: "EB-1 (우선 근로자)",
-      EB2: "EB-2 (고학력 전문직)",
-      EB3: "EB-3 (전문직·숙련직)",
+      EB1: "EB-1 (1순위, 우선 근로자)",
+      EB2: "EB-2 (2순위, 고학력 전문직)",
+      EB3: "EB-3 (3순위, 전문직·숙련직)",
       EW3: "EB-3 비숙련직",
     },
     current: "커런트: 모든 우선일자 진행 가능",
@@ -133,12 +133,12 @@ export const ko: GuideCopy = {
       "승인일 기준(Final Action Date): 영주권을 실제로 승인할 수 있는 시점입니다.",
       "접수일 기준(Date for Filing): 이민국이 그달에 이 표를 받는다면 I-485를 미리 제출할 수 있는 시점입니다.",
       <>
-        매달의 전체 자료는 <En href="/visa-bulletin">비자 블레틴 페이지</En>(영어)에 있고, <En href="/tools/priority-date-calculator">우선일자 계산기</En>(영어)로 본인의 날짜를 비교할 수 있습니다.
+        매달의 전체 자료는 <En href="/visa-bulletin">비자 블러틴 페이지</En>(영어)에 있고, <En href="/tools/priority-date-calculator">우선일자 계산기</En>(영어)로 본인의 날짜를 비교할 수 있습니다.
       </>,
     ],
     missing: (
       <>
-        지금은 비자 블레틴을 읽을 수 없습니다. 매달의 자료는 <En href="/visa-bulletin">비자 블레틴 페이지</En>(영어)에 있습니다.
+        지금은 비자 블러틴을 읽을 수 없습니다. 매달의 자료는 <En href="/visa-bulletin">비자 블러틴 페이지</En>(영어)에 있습니다.
       </>
     ),
   },
@@ -174,7 +174,7 @@ export const ko: GuideCopy = {
       { href: "/perm-case-status", label: "케이스 조회" },
       { href: "/perm-queue", label: "접수 월별 PERM 대기열" },
       { href: "/tools/perm-timeline-calculator", label: "PERM 기간 계산기" },
-      { href: "/visa-bulletin", label: "비자 블레틴" },
+      { href: "/visa-bulletin", label: "비자 블러틴" },
       { href: "/tools/priority-date-calculator", label: "우선일자 계산기" },
       { href: "/tools/green-card-line", label: "영주권 대기줄에서 내 위치" },
       { href: "/tools/which-green-card", label: "나에게 맞는 취업 이민 영주권 종류" },

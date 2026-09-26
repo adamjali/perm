@@ -41,11 +41,11 @@ describe("GreenCardLine", () => {
     expect(screen.queryByText("people ahead of you")).not.toBeInTheDocument();
   });
 
-  it("gives a range, last year's green cards as a fact, and the three groups", () => {
+  it("gives a range, years at last year's green cards, and the three groups", () => {
     const { container } = renderLine();
     setDate("2024-06-01");
     expect(screen.getByText("people ahead of you")).toBeInTheDocument();
-    expect(screen.getByText(/green cards went to this line and country in fiscal 2024/i)).toBeInTheDocument();
+    expect(screen.getByText(/green cards\s+went to this line and country that year/i)).toBeInTheDocument();
     for (const g of [/current, not finished/i, /approved, waiting for the bulletin/i, /waiting for I-140 approval/i]) {
       expect(screen.getByText(g)).toBeInTheDocument();
     }
@@ -55,19 +55,20 @@ describe("GreenCardLine", () => {
     expect(details.every((d) => !d.open)).toBe(true);
   });
 
-  it("doesn't turn the count into years unless the page asks it to", () => {
-    // The site's published rule (the EB-2 India guide) is that it doesn't
-    // divide a count by a yearly supply. Reversing it is one prop, on purpose.
+  it("prints years at last year's pace by default, labelled as that year's pace", () => {
+    // The owner turned this on 2026-09-26. The figure must always name the
+    // year it divides by, so it can never read as a date.
     renderLine();
     setDate("2024-06-01");
-    expect(screen.queryByText(/years$/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/pace:/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/at FY2024's pace/i)).toBeInTheDocument();
+    expect(screen.getByText(/State's Table V/i)).toBeInTheDocument();
   });
 
-  it("prints years at last year's pace when the page opts in", () => {
-    render(<GreenCardLine snapshot={lineSnapshot()} pace={{}} defaultCategory="EW3" defaultCountry="worldwide" showYears />);
+  it("prints the supply as a bare fact when a page turns years off", () => {
+    render(<GreenCardLine snapshot={lineSnapshot()} pace={{}} defaultCategory="EW3" defaultCountry="worldwide" showYears={false} />);
     setDate("2024-06-01");
-    expect(screen.getByText(/at FY2024's pace/i)).toBeInTheDocument();
+    expect(screen.queryByText(/pace:/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/green cards went to this line and country in fiscal 2024/i)).toBeInTheDocument();
   });
 
   it("says nothing about supply rather than invent one it doesn't hold", () => {

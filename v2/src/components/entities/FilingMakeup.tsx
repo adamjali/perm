@@ -294,3 +294,107 @@ export function PartyMix({
     </Shell>
   );
 }
+
+/**
+ * Cities as bars, because the question is "how concentrated", and a bar says
+ * that before a number does. The worksite city is DOL's own field
+ * (`PRIMARY_WORKSITE_CITY`), grouped across the spellings filers typed.
+ */
+export function CityMix({
+  rows,
+  total,
+  className,
+}: {
+  rows: FacetRow[];
+  total: number;
+  className?: string;
+}) {
+  if (rows.length === 0) return null;
+  const top = rows[0]?.n ?? 0;
+  const shown = rows.reduce((a, r) => a + r.n, 0);
+  return (
+    <Shell
+      title="Where the work is"
+      note={
+        <>
+          The worksite city on the application, which is where the job is.{" "}
+          {rows.length === 1 ? "This city covers" : `These ${rows.length} cities cover`}{" "}
+          {fmt(shown)} of {fmt(total)} filings.
+        </>
+      }
+      className={className}
+    >
+      <ul className="space-y-2.5">
+        {rows.map((r) => (
+          <Fragment key={r.key ?? r.label}>
+            {" "}
+            <li>
+              <span className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
+                <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{fmt(r.n)}</span>
+              </span>{" "}
+              <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
+                <span
+                  className="block h-full bg-foreground"
+                  style={{ width: `${top > 0 ? Math.max(2, (r.n / top) * 100) : 0}%` }}
+                />
+              </span>
+            </li>
+          </Fragment>
+        ))}
+      </ul>
+    </Shell>
+  );
+}
+
+/**
+ * The industry code the employer put on the form (Form 9089 Section A, Item
+ * 13). DOL publishes the bare code; the title is the Census Bureau's. Most
+ * employers file under one code, so the lead is set large and any others sit
+ * under it with their counts.
+ */
+export function IndustryMix({
+  rows,
+  className,
+}: {
+  rows: FacetRow[];
+  className?: string;
+}) {
+  const lead = rows[0];
+  if (!lead) return null;
+  const rest = rows.slice(1);
+  return (
+    <Shell
+      title="The industry they declared"
+      note={
+        <>
+          The NAICS code the employer entered on the form, with the Census
+          Bureau&apos;s title for it. DOL publishes the code alone, and an employer
+          can file under more than one.
+        </>
+      }
+      className={className}
+    >
+      <p className="font-heading text-xl font-black leading-tight">{lead.label}</p>{" "}
+      <p className="mt-1.5 font-mono text-sm tabular-nums text-foreground/70">
+        NAICS {lead.key} &middot; {fmt(lead.n)} filings
+      </p>
+      {rest.length > 0 ? (
+        <ul className="mt-4 space-y-2 border-t-2 border-border pt-3">
+          {rest.map((r) => (
+            <Fragment key={r.key ?? r.label}>
+              {" "}
+              <li className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5">
+                <span className="min-w-0 flex-1 text-sm font-bold leading-snug">{r.label}</span>{" "}
+                <span className="font-mono text-sm tabular-nums text-foreground/70">
+                  <span className="mr-2 font-normal text-muted-foreground">{r.key}</span>
+                  {fmt(r.n)}
+                </span>
+              </li>
+            </Fragment>
+          ))}
+        </ul>
+      ) : null}
+    </Shell>
+  );
+}

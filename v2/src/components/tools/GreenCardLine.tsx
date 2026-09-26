@@ -58,10 +58,10 @@ export interface GreenCardLineProps {
   /** Hide the category select, for a page about one category. */
   lockCategory?: boolean;
   /**
-   * Divide the line by last year's visas and print years. OFF by default: the
-   * site's published rule is that it doesn't turn a count into a wait
-   * (`guides/approved-i140-no-visa-number-eb2-india`), and reversing that is
-   * the owner's call. Off, the supply is printed as a fact beside the count.
+   * Divide the line by the visas it actually got in the newest published year
+   * and print years, labelled as that year's pace. ON by default (owner's call,
+   * 2026-09-26). It's arithmetic on one measured year, never a date: the page
+   * says so beside the figure. Off, the supply is printed as a bare fact.
    */
   showYears?: boolean;
   className?: string;
@@ -73,7 +73,7 @@ export function GreenCardLine({
   defaultCategory = "EB2",
   defaultCountry = "india",
   lockCategory = false,
-  showYears = false,
+  showYears = true,
   className,
 }: GreenCardLineProps) {
   const uid = useId();

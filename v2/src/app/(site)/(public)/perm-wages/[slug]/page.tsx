@@ -39,7 +39,7 @@ import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { getLadderByYear, getOccupationStateLadders } from "@/lib/turso/wages";
 import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { PartyMix, StateMix } from "@/components/entities/FilingMakeup";
+import { CityMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
 import { aliasTarget, entityFacets } from "@/lib/turso/entityDetail";
 import {
   comparables,
@@ -505,7 +505,7 @@ export default async function OccupationPage({
       {/* Who is on the other side of these wages. The ladders above answer
           what the job pays; a reader weighing an offer also wants to know
           who files it and where the work is. */}
-      {facets.employer || facets.attorney || facets.state ? (
+      {facets.employer || facets.attorney || facets.state || facets.city ? (
         <section className="mt-12">
           <h2 className="font-heading text-2xl font-black">Who files this job</h2>{" "}
           <p className="mt-2 max-w-2xl text-base text-foreground/70">
@@ -533,6 +533,9 @@ export default async function OccupationPage({
             ) : null}
             {facets.state ? (
               <StateMix rows={facets.state} total={row.total} className="lg:col-span-2" />
+            ) : null}
+            {facets.city ? (
+              <CityMix rows={facets.city} total={row.total} className="lg:col-span-2" />
             ) : null}
           </div>
         </section>

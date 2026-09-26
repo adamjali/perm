@@ -93,7 +93,7 @@ export const ptBr: GuideCopy = {
       {
         form: "I-485",
         name: "Ajuste de status, dentro dos EUA (USCIS)",
-        body: "Quando chega a sua vez, você protocola a I-485 para receber o green card sem sair do país. A maioria protocola junto a I-765 (autorização de trabalho, a EAD) e a I-131 (advance parole, uma autorização de viagem). Todo mês o USCIS informa qual tabela do boletim aceita: as datas de ação final ou as datas para protocolo.",
+        body: "Quando chega a sua vez, você protocola a I-485 para receber o green card sem sair do país. A maioria protocola junto a I-765 (autorização de trabalho, o EAD) e a I-131 (advance parole, uma autorização de viagem). Todo mês o USCIS informa qual tabela do boletim aceita: as datas de ação final ou as datas para protocolo.",
       },
       {
         form: "DS-260",
@@ -107,7 +107,7 @@ export const ptBr: GuideCopy = {
     h2: "EB-3 Other Workers (outros trabalhadores)",
     body: [
       "EB-3 Other Workers é a parte do EB-3 para vagas que exigem menos de dois anos de treinamento ou experiência. Quem decide a categoria são os requisitos da vaga no PERM, não a sua formação: uma pessoa com diploma, numa vaga que pede seis meses de experiência, conta como Other Worker.",
-      "Ele tem a sua própria linha no Visa Bulletin e um limite de até 10.000 vistos por ano, por isso a data de corte costuma ficar anos atrás do restante do EB-3. Compare as linhas EB-3 e EB-3 Other Workers na tabela abaixo.",
+      "A categoria tem a sua própria linha no Visa Bulletin e um limite de até 10.000 vistos por ano, por isso a data de corte costuma ficar anos atrás do restante do EB-3. Compare as linhas EB-3 e EB-3 Other Workers na tabela abaixo.",
       <>
         Saiba mais: o <En href="/guides/eb3-other-workers">guia completo do EB-3 Other Workers</En> (em inglês) e <En href="/tools/green-card-line?category=EW3">quantas pessoas estão à sua frente nessa fila</En> (em inglês).
       </>,
@@ -151,10 +151,10 @@ export const ptBr: GuideCopy = {
       "APPLICATION ON HOLD": "Pendente, mas separado da fila normal. O DOL não publica o motivo.",
       "RFI ISSUED": "O DOL pediu mais informações ao empregador antes de decidir. Não é uma negativa.",
       "PENDING AUDIT RESPONSE": "O caso foi escolhido para auditoria e o DOL está esperando os documentos do empregador.",
-      "SUPERVISED RECRUITMENT": "O DOL exige que o empregador anuncie a vaga de novo, sob a supervisão dele.",
+      "SUPERVISED RECRUITMENT": "O DOL exige que o empregador anuncie a vaga de novo, sob a supervisão do próprio DOL.",
       "NORD ISSUED": "Um status pendente que o DOL não define publicamente. Pouquíssimos casos estão nele.",
       "RECONSIDERATION APPEALS": "O caso foi negado e o empregador pediu ao DOL que reconsiderasse.",
-      "BALCA APPEALS": "O empregador recorreu da negativa à junta de recursos de certificação trabalhista (BALCA).",
+      "BALCA APPEALS": "O empregador recorreu da negativa ao Conselho de Recursos de Certificação Trabalhista (BALCA).",
       CERTIFIED: "Aprovado pelo DOL. A etapa do PERM termina aqui; a próxima é a I-140.",
       "CERTIFIED - EXPIRED": "O DOL mostra isso quando passam 180 dias da certificação. Se a I-140 foi protocolada dentro desses 180 dias, a certificação foi usada a tempo.",
       DENIED: "O DOL negou o pedido. O empregador pode pedir reconsideração ou recorrer à BALCA.",

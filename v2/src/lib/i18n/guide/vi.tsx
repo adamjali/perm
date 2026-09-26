@@ -11,10 +11,10 @@ import type { GuideCopy } from "./types";
 export const vi: GuideCopy = {
   title: "Thẻ xanh qua việc làm, từng bước",
   description:
-    "Cách tự tra cứu hồ sơ với Bộ Lao động, hàng chờ đang xét đến tháng nào, các bước sau PERM và ngày ưu tiên trong Bản tin Thị thực cho quốc gia của bạn.",
+    "Cách tự tra cứu hồ sơ với Bộ Lao động, hàng chờ đang xét đến tháng nào, các bước sau PERM và ngày chốt trong Bản tin Thị thực cho quốc gia của bạn.",
   eyebrow: "PERM Tracker tiếng Việt",
   h1: "Đang chờ thẻ xanh diện việc làm",
-  lede: "Cách tự tra cứu tình trạng hồ sơ, hàng chờ của Bộ Lao động Hoa Kỳ (DOL) hôm nay đang xét đến đâu, những bước còn lại sau PERM, và các ngày ưu tiên trong Bản tin Thị thực áp dụng cho quốc gia của bạn. Trang này không phải là tư vấn pháp lý; luật sư của bạn là người hiểu rõ hồ sơ của bạn nhất.",
+  lede: "Cách tự tra cứu tình trạng hồ sơ, hàng chờ của Bộ Lao động Hoa Kỳ (DOL) hôm nay đang xét đến đâu, những bước còn lại sau PERM, và các ngày chốt trong Bản tin Thị thực áp dụng cho quốc gia của bạn. Trang này không phải là tư vấn pháp lý; luật sư của bạn là người hiểu rõ hồ sơ của bạn nhất.",
   translationNote: (
     <>
       Trang này được dịch và tóm tắt từ <En href={ENGLISH_GUIDE}>hướng dẫn tiếng Anh</En> của chúng tôi. Số hồ sơ, tên mẫu đơn, ngày tháng và các từ chỉ tình trạng mà DOL và USCIS dùng được giữ nguyên tiếng Anh, đúng như các cơ quan này ghi, kèm lời giải thích bên cạnh. Các trang dữ liệu mà hướng dẫn này dẫn tới đều bằng tiếng Anh.
@@ -26,7 +26,7 @@ export const vi: GuideCopy = {
     queue: "Hàng chờ của DOL",
     steps: "Sau PERM",
     "eb3-other-workers": "EB-3 lao động phổ thông",
-    cutoffs: "Ngày ưu tiên của nước bạn",
+    cutoffs: "Ngày chốt của nước bạn",
     statuses: "Các từ chỉ tình trạng",
   },
   check: {
@@ -115,7 +115,7 @@ export const vi: GuideCopy = {
     ],
   },
   cutoffs: {
-    h2: "Ngày ưu tiên cho quốc gia của bạn",
+    h2: "Ngày chốt cho quốc gia của bạn",
     intro: (m) => (
       <>Theo Bản tin Thị thực của Bộ Ngoại giao Hoa Kỳ, số {m}, số mới nhất mà trang này có. Một ngày ghi trong bảng nghĩa là ai có ngày ưu tiên sớm hơn ngày đó thì được đi tiếp.</>
     ),
@@ -129,7 +129,7 @@ export const vi: GuideCopy = {
       EW3: "EB-3 lao động phổ thông",
     },
     current: "đang mở: mọi ngày ưu tiên đều được",
-    unavailable: "tháng này không còn visa",
+    unavailable: "tháng này không có visa",
     notPrinted: "không công bố",
     legend: [
       "Ngày chung kết (Final Action Date): lúc thẻ xanh thật sự có thể được chấp thuận.",

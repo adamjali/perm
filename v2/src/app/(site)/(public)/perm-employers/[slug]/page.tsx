@@ -46,7 +46,7 @@ import { getEmployerWait, getFieldWait, getFiledTodayEstimate } from "@/lib/turs
 import { similarSponsors } from "@/lib/turso/similarSponsors";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
-import { OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
+import { CityMix, IndustryMix, OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
 import {
   absorbedCount,
   entityFacets,
@@ -814,7 +814,7 @@ export default async function EmployerPage({
         </FigurePlate>
       ) : null}
 
-      {facets.occupation || facets.state || facets.attorney ? (
+      {facets.occupation || facets.state || facets.attorney || facets.city || facets.industry ? (
         <section className="mt-12">
           <h2 className="font-heading text-2xl font-black">
             What they file, and where
@@ -831,7 +831,9 @@ export default async function EmployerPage({
                 className="lg:row-span-2"
               />
             ) : null}
+            {facets.industry ? <IndustryMix rows={facets.industry} /> : null}
             {facets.state ? <StateMix rows={facets.state} total={row.total} /> : null}
+            {facets.city ? <CityMix rows={facets.city} total={row.total} /> : null}
             {facets.attorney ? (
               <PartyMix
                 rows={facets.attorney}
