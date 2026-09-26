@@ -6353,6 +6353,27 @@ by how much moved. First run measured read-only: 5,982 of 59,318 rows to write, 
 pages to expire. `test_live_recent.py` also ran three check groups AFTER its verdict, so their
 failures printed FAIL and exited 0; every group now runs first, and both new checks were probed red.
 
+**Fixed on production the same night, not at 4:10 AM.** A hand run of the builder would have
+diffed tonight's run against a fresh table and expired nothing, leaving pages already rendered
+with the stale band for 30 days. So `fdc797cb` was pushed (scripts only; Vercel skipped it) and
+`case-status-direct.yml mode=discover` dispatched at 2:23 AM EDT, which runs the builder where
+`REVALIDATE_SECRET` lives: 6,010 rows written, `{"revalidated":800}`, and Adobe's band read 218
+waiting, 216 on hold, on the next request. The walk in the same run stored 207 PERM and 550
+PWD/LCA filings.
+
+**QA on production after the deploy:** glued text 0 across 82 pages (3 per template, control
+found); SSR visibility 0 findings on 25 employer pages; the follow block on a published and a
+live-only employer; 20 Follow links at 44px on the census page; an invalid address blocked by
+the browser's own validation, so nothing was sent; no console errors on the employer page, the
+census page or any of the four admin tabs; every one of the 365 public titles carries the brand
+once (two legitimately name it: "About PERM Tracker", "Launch: PERM Tracker 2.0").
+
+**Waiting for the next deploy (not worth a build and a cold ISR cache alone):** the admin title
+reads "Admin Dashboard | PERM Tracker | PERM Tracker" (the page's title already carries the brand
+the root template adds; since Feb 2); and "Latest alerts: No alert email in the last 7 days" is
+true of the outbox only, which began recording at this deploy, so it should say so until the
+week fills.
+
 **One-click unsubscribe had been challenged since the firewall inversion (found Sep 26).** Every alert
 email's `List-Unsubscribe` points at `permtracker.app/...`, and all six unsubscribe paths sit in rule
 12's challenged set. Mail providers POST one-click from their own servers, which cannot pass a
