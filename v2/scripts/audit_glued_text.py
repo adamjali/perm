@@ -45,6 +45,7 @@ import html
 import re
 import sys
 import urllib.request
+from lib_audit import audit_headers  # noqa: E402
 
 # Tags whose text an extractor concatenates with its neighbour's.
 #
@@ -101,7 +102,7 @@ def _fetch(url: str) -> str:
         url,
         headers={
             "User-Agent": "Mozilla/5.0 (permtracker glue audit)",
-            "x-permtracker-audit": "1",
+            **audit_headers(),
         },
     )
     with urllib.request.urlopen(req, timeout=30) as r:

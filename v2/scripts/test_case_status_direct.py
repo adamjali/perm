@@ -11,6 +11,7 @@ silently, which is the bar for a test in this file.
 """
 from __future__ import annotations
 
+import datetime
 import importlib.util
 import pathlib
 import sys
@@ -357,6 +358,71 @@ def main() -> int:
           all(r["pending"] >= csd.EMPLOYER_STAGES_MIN_PENDING for r in folded), "")
     check("employer_stage_rows orders by review desc then pending",
           folded[-1]["name"] == "Clean Co" and folded[-1]["review"] == 0, "")
+
+    # An appeal carries no slug from the live remainder; it must fold into
+    # the employer's slugged row by spelling, never stand as a second row.
+    split = csd.employer_stage_rows([
+        ("Juniper Networks, Inc.", "juniper-networks-inc", "ANALYST REVIEW", 4),
+        ("Juniper Networks, Inc.", None, "RECONSIDERATION APPEALS", 26),
+        ("JUNIPER  NETWORKS, INC.", None, "BALCA APPEALS", 1),   # case and spacing
+        ("Orphan Appeals LLC", None, "RECONSIDERATION APPEALS", 9),
+    ])
+    jn = [r for r in split if r["name"].startswith("Juniper")]
+    check("employer_stage_rows folds a slug-less spelling into the slugged row",
+          len(jn) == 1 and jn[0]["pending"] == 31 and jn[0]["slug"] == "juniper-networks-inc"
+          and jn[0]["byStatus"].get("RECONSIDERATION APPEALS") == 26, str(jn))
+    check("employer_stage_rows keeps a name-only employer with nothing to fold into",
+          any(r["name"] == "Orphan Appeals LLC" and r["slug"] is None for r in split), "")
+    check("strip_private removes the spelling sets before the doc is written",
+          all("_names" not in r for r in csd.strip_private(split)), "")
+
+    # Dating a hold: the latest entry per case, the day most cases share, and
+    # the cases held before the log counted apart.
+    emps = csd.employer_stage_rows([
+        ("Adobe Inc.", "adobe-inc", "APPLICATION ON HOLD", 216),
+        ("Adobe Inc.", "adobe-inc", "ANALYST REVIEW", 2),
+        ("Cognizant", "cognizant", "APPLICATION ON HOLD", 1831),
+    ])
+    held = ([("Adobe Inc.", "adobe-inc", "2026-09-24", "2026-09-24")] * 215
+            + [("Adobe Inc. ", None, None, "2026-09-24")]          # filed Sep 23, first seen held
+            + [("Cognizant", "cognizant", None, "2026-08-27")] * 1831)
+    csd.annotate_holds(emps, held, "2026-08-27")
+    ad = next(r for r in emps if r["slug"] == "adobe-inc")
+    cg = next(r for r in emps if r["slug"] == "cognizant")
+    check("annotate_holds dates a hold by the entry day most of its cases share",
+          ad["holdSince"] == "2026-09-24" and ad["holdSinceCases"] == 215
+          and ad["holdUndated"] == 1, str({k: ad.get(k) for k in ("holdSince", "holdSinceCases", "holdUndated")}))
+    check("annotate_holds leaves a hold older than the log undated, and says so",
+          cg["holdSince"] is None and cg["holdUndated"] == 1831 and cg["holdBeforeLog"] == 1831,
+          str({k: cg.get(k) for k in ("holdSince", "holdUndated", "holdBeforeLog")}))
+    check("annotate_holds never dates a case first seen after the log as held before it",
+          ad["holdBeforeLog"] == 0, str(ad.get("holdBeforeLog")))
+
+    # The feed: bulk moves only, both directions, destination kept apart.
+    today = datetime.date(2026, 9, 25)
+    ev = ([("Adobe Inc.", "adobe-inc", "2026-09-10", "on", "APPLICATION ON HOLD")] * 201
+          + [("Adobe Inc.", "adobe-inc", "2026-09-11", "off", "ANALYST REVIEW")] * 201
+          + [("Adobe Inc.", "adobe-inc", "2026-09-24", "on", "APPLICATION ON HOLD")] * 215
+          + [("Maplebear Inc.", "maplebear-inc", "2026-09-10", "on", "APPLICATION ON HOLD")] * 14
+          + [("Tiny LLC", None, "2026-09-12", "on", "APPLICATION ON HOLD")] * 2
+          + [("Old Co", "old-co", "2026-01-02", "on", "APPLICATION ON HOLD")] * 40
+          + [("Adobe Inc.", "adobe-inc", "2026-09-20", "off", "CERTIFIED")] * 6)
+    moves = csd.hold_moves(ev, today, emps)
+    got = [(m["date"], m["name"], m["dir"], m["n"]) for m in moves]
+    check("hold_moves keeps employer-wide moves, newest first",
+          got[:3] == [("2026-09-24", "Adobe Inc.", "on", 215), ("2026-09-20", "Adobe Inc.", "off", 6),
+                      ("2026-09-11", "Adobe Inc.", "off", 201)], str(got[:3]))
+    check("hold_moves drops case-level moves and anything older than its window",
+          not any(m["name"] in ("Tiny LLC", "Old Co") for m in moves), str(got))
+    check("hold_moves keeps a release's destination apart",
+          {m["to"] for m in moves if m["dir"] == "off"} == {"ANALYST REVIEW", "CERTIFIED"}, str(moves))
+
+    # Eastern dates across daylight time: 11:30 PM EDT and 11:30 PM EST both
+    # stay on their own calendar day.
+    check("et_date keeps a late-evening EDT event on its own day",
+          csd.et_date(1790307000000) == "2026-09-24", csd.et_date(1790307000000))
+    check("et_date keeps a late-evening EST event on its own day",
+          csd.et_date(1799641800000) == "2027-01-10", csd.et_date(1799641800000))
 
     return 1 if failures else 0
 

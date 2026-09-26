@@ -31,11 +31,12 @@ import collections
 import re
 import sys
 import urllib.request
+from lib_audit import audit_headers  # noqa: E402
 
 HEADERS = {
     "User-Agent": "permtracker-audit/1.0",
     # Firewall rule 5 - without it a bare script is answered 429.
-    "x-permtracker-audit": "1",
+    **audit_headers(),
 }
 
 # One page is enough to judge a template, and these are the templated families.

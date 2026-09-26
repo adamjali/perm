@@ -16,6 +16,18 @@ import { chromium } from "playwright-core";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+const AUDIT_KEY = (() => {
+  if (process.env.PERMTRACKER_AUDIT_KEY) return process.env.PERMTRACKER_AUDIT_KEY.trim();
+  try {
+    const line = readFileSync(new URL("../.env.local", import.meta.url), "utf8")
+      .split("\n")
+      .find((l) => l.startsWith("PERMTRACKER_AUDIT_KEY="));
+    return line ? line.slice("PERMTRACKER_AUDIT_KEY=".length).trim() : "";
+  } catch {
+    return "";
+  }
+})();
+
 // SHOT_OUT overrides the destination (the policy page keeps its Federal
 // Register captures under public/images/policy). Default is the articles' dir.
 const OUT = process.env.SHOT_OUT || "public/images/content/shots";
@@ -35,7 +47,9 @@ try {
       // The Firewall's bypass for the site's own tooling: headless Chrome
       // may not pass Bot Protection's challenge, and a challenge page is
       // not a screenshot of the product.
-      extraHTTPHeaders: { "x-permtracker-audit": "1" },
+      // The value lives in .env.local (rule 5 matches it exactly since Sep 25
+      // 2026); without it a capture of a public page still passes rule 12.
+      extraHTTPHeaders: AUDIT_KEY ? { "x-permtracker-audit": AUDIT_KEY } : {},
       deviceScaleFactor: 2, // retina, so the figure is not soft on a good screen
       colorScheme: s.dark ? "dark" : "light",
     });

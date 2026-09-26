@@ -23,6 +23,7 @@ from lib_sitemap_sample import describe_sampling, sample_by_shape  # noqa: E402
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
+from lib_audit import audit_headers  # noqa: E402
 
 UA = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -30,7 +31,7 @@ UA = {
     # The Firewall's bypass for the site's own audits. Bot Protection
     # (Challenge mode, Sep 7 2026) serves a JavaScript challenge to anything
     # that claims to be a browser and is not; this header is the exemption.
-    "x-permtracker-audit": "1",
+    **audit_headers(),
 }
 
 # A description past this is truncated mid-sentence in the SERP.

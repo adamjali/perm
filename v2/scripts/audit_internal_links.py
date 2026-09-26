@@ -26,6 +26,7 @@ import sys
 import urllib.request
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
+from lib_audit import audit_headers  # noqa: E402
 
 # A LABEL THAT NAMES A TOPIC IS A PROMISE ABOUT THE DESTINATION.
 #
@@ -69,7 +70,7 @@ def words(s: str) -> set[str]:
 def fetch(url: str, timeout: int = 45) -> str | None:
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "permtracker-link-audit",
-                                                   "x-permtracker-audit": "1"})
+                                                   **audit_headers()})
         return urllib.request.urlopen(req, timeout=timeout).read().decode("utf8", "ignore")
     except Exception:
         return None

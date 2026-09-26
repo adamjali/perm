@@ -72,6 +72,7 @@ import pathlib
 import subprocess
 import sys
 import time
+import zoneinfo
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_turso import (  # noqa: E402
@@ -787,8 +788,29 @@ def write_review_stages(db) -> None:
 
 
 QUEUE_STATUS = "ANALYST REVIEW"
+HOLD_STATUS = "APPLICATION ON HOLD"
 EMPLOYER_STAGES_MIN_PENDING = 5
 EMPLOYER_STAGES_CAP = 1000
+# Five or more of one employer's cases moved on one day is an action on the
+# employer. DOL's case-level holds arrive one or two at a time (the 23 cases
+# outside Cognizant's batch on Sep 8 sat across six filers and a year of
+# filing dates), so five separates the two with room on both sides.
+EMPLOYER_MOVE_MIN = 5
+EMPLOYER_MOVES_DAYS = 120
+ET = zoneinfo.ZoneInfo("America/New_York")
+
+
+def et_date(ms) -> str:
+    """The Eastern calendar date of a millisecond epoch.
+
+    A fixed -4 hours is wrong for half the year, and a UTC date is tomorrow
+    on Adam's clock for four hours every evening, so both are ruled out.
+    """
+    return datetime.datetime.fromtimestamp(int(ms) / 1000, tz=ET).date().isoformat()
+
+
+def _norm_name(name) -> str:
+    return " ".join(str(name or "").lower().split())
 
 
 def employer_stage_rows(rows) -> list[dict]:
@@ -801,28 +823,211 @@ def employer_stage_rows(rows) -> list[dict]:
     supervised recruitment, or an appeal - the cases DOL pulled aside rather
     than the ordinary queue. `share` is review / pending, and the page only
     ranks by share above a floor, because 2 of 2 is not a signal.
+
+    A NAME-KEYED ROW FOLDS INTO THE SLUG ROW THAT CARRIES THE SAME SPELLING.
+    An appeal is a case DOL already decided, so it sits in `perm_cases` and
+    not in `perm_live_recent`. Until Sep 25 2026 the slug came from the
+    remainder alone: 175 pending cases (146 of them appeals) rendered as
+    unlinked names, and seven employers sat on two rows each (Juniper's 26
+    appeals on one, the rest of its cases on another), so each row's count and
+    share was only part of the truth. The query now takes the slug from either
+    table; this fold catches what is left, a case discovered since the nightly
+    rebuild. Each row keeps its spellings in `_names` for `annotate_holds`;
+    `strip_private` removes them before the doc is written.
     """
     by_key: dict[str, dict] = {}
     for employer_name, employer_slug, status, n in rows:
         name = (employer_name or "").strip()
         if not name:
             continue
-        key = employer_slug or f"name:{name.lower()}"
+        key = employer_slug or f"name:{_norm_name(name)}"
         row = by_key.get(key)
         if row is None:
             row = {"name": name, "slug": employer_slug, "pending": 0,
-                   "review": 0, "byStatus": {}}
+                   "review": 0, "byStatus": {}, "_names": set()}
             by_key[key] = row
+        row["_names"].add(_norm_name(name))
         n = int(n or 0)
         row["pending"] += n
         if status != QUEUE_STATUS:
             row["review"] += n
         row["byStatus"][status] = row["byStatus"].get(status, 0) + n
+    by_name: dict[str, dict] = {}
+    for row in by_key.values():
+        if row["slug"]:
+            for nm in row["_names"]:
+                by_name.setdefault(nm, row)
+    for key in [k for k in by_key if k.startswith("name:")]:
+        target = by_name.get(key[len("name:"):])
+        if target is None:
+            continue
+        src = by_key.pop(key)
+        target["pending"] += src["pending"]
+        target["review"] += src["review"]
+        for st, n in src["byStatus"].items():
+            target["byStatus"][st] = target["byStatus"].get(st, 0) + n
+        target["_names"] |= src["_names"]
     out = [r for r in by_key.values() if r["pending"] >= EMPLOYER_STAGES_MIN_PENDING]
     for r in out:
         r["share"] = round(r["review"] / r["pending"], 4) if r["pending"] else 0.0
     out.sort(key=lambda r: (-r["review"], -r["pending"], r["name"].lower()))
     return out[:EMPLOYER_STAGES_CAP]
+
+
+def _row_index(employers: list[dict]) -> tuple[dict, dict]:
+    by_slug = {r["slug"]: r for r in employers if r.get("slug")}
+    by_name: dict[str, dict] = {}
+    for r in employers:
+        for nm in r.get("_names") or {_norm_name(r["name"])}:
+            by_name.setdefault(nm, r)
+    return by_slug, by_name
+
+
+def _resolve(index: tuple[dict, dict], name, slug) -> dict | None:
+    by_slug, by_name = index
+    if slug and slug in by_slug:
+        return by_slug[slug]
+    return by_name.get(_norm_name(name))
+
+
+def annotate_holds(employers: list[dict], held, log_from: str | None = None) -> None:
+    """Date each employer's current hold from the event log, in place.
+
+    `held` is (employer_name, slug, entered, first_seen) for every case at the
+    hold today: `entered` is the Eastern date of its LAST move into the hold,
+    or None when the log never saw it enter; `first_seen` is the Eastern date
+    this site first recorded the case (`fetched_at`, which moves only when the
+    status does, so for an undated hold it IS the first record).
+
+    AN UNDATED HOLD IS TWO DIFFERENT FACTS. Cognizant's 1,831 were held when
+    the log began, so "since before Aug 27" is true of them. Adobe's one
+    undated case was filed Sep 23 and first recorded already held; "since
+    before Aug 27" would be false of it. `holdBeforeLog` counts only the cases
+    first recorded on or before `log_from`; the rest of `holdUndated` were
+    already held when first recorded. A case held, released
+    and held again (Adobe: Sep 10, Sep 11, Sep 24) is dated by its latest
+    entry, because that is the hold it is in.
+
+    An employer's hold is dated by the entry day most of its held cases share
+    (ties go to the later day), with the count on that day beside it, and the
+    undated cases are counted apart: "held since Sep 24" and "held since before
+    the record began" are different statements and one must never stand in
+    for the other. Only employers with a held case get the keys.
+    """
+    index = _row_index(employers)
+    groups: dict[int, tuple[dict, list]] = {}
+    for name, slug, entered, first_seen in held:
+        row = _resolve(index, name, slug)
+        if row is None:
+            continue
+        groups.setdefault(id(row), (row, []))[1].append((entered, first_seen))
+    for row, cases in groups.values():
+        dated = [e for e, _ in cases if e]
+        row["holdUndated"] = len(cases) - len(dated)
+        row["holdBeforeLog"] = sum(1 for e, f in cases
+                                   if not e and log_from and f and f <= log_from)
+        if dated:
+            counts: dict[str, int] = {}
+            for d in dated:
+                counts[d] = counts.get(d, 0) + 1
+            day, n = max(counts.items(), key=lambda kv: (kv[1], kv[0]))
+            row["holdSince"], row["holdSinceCases"] = day, n
+        else:
+            row["holdSince"], row["holdSinceCases"] = None, 0
+
+
+def hold_moves(events, today: datetime.date, employers: list[dict] | None = None,
+               days: int = EMPLOYER_MOVES_DAYS,
+               minimum: int = EMPLOYER_MOVE_MIN) -> list[dict]:
+    """The days DOL moved one employer's cases into or out of hold, in bulk.
+
+    `events` is (employer_name, slug, et_date, direction, to_status) per case
+    move, direction "on" or "off". A group is one employer, one day, one
+    direction (and for a release, one destination, so "back to analyst
+    review" and "certified" never merge). Groups under `minimum` are case-level
+    and dropped; the feed is for actions taken on an employer. Newest first.
+    """
+    index = _row_index(employers or [])
+    cutoff = (today - datetime.timedelta(days=days)).isoformat()
+    groups: dict[tuple, dict] = {}
+    for name, slug, date, direction, to_status in events:
+        if not date or date < cutoff:
+            continue
+        row = _resolve(index, name, slug)
+        who = (row["slug"] or f"name:{_norm_name(row['name'])}") if row else (
+            slug or f"name:{_norm_name(name)}")
+        to = to_status if direction == "off" else HOLD_STATUS
+        g = groups.setdefault((who, date, direction, to), {
+            "date": date,
+            "name": row["name"] if row else str(name or "").strip(),
+            "slug": row["slug"] if row else slug,
+            "dir": direction, "to": to, "n": 0})
+        g["n"] += 1
+    out = [g for g in groups.values() if g["n"] >= minimum and g["name"]]
+    out.sort(key=lambda g: (g["date"], g["n"]), reverse=True)
+    return out
+
+
+def strip_private(employers: list[dict]) -> list[dict]:
+    return [{k: v for k, v in r.items() if not k.startswith("_")} for r in employers]
+
+
+def _slug_join(case_col: str = "c.case_number") -> str:
+    """Resolve a case's employer slug from whichever table holds the case.
+
+    Pending cases are in `perm_live_recent`; appeals of decided cases are in
+    `perm_cases`. Both carry the canonical slug the employer pages use.
+    """
+    return (f"LEFT JOIN perm_live_recent l ON l.case_number = {case_col} "
+            f"LEFT JOIN perm_cases p ON p.case_number = {case_col}")
+
+
+def hold_history(db, employers: list[dict], today: datetime.date) -> dict:
+    """Read the hold moves out of the event log and date the current holds.
+
+    Four bounded reads: moves into the hold (`case_events_status_time`), moves
+    out of it (`case_events_from_time`), the employer of every case involved
+    (primary key, in chunks), and the cases held today (`case_status_stage`).
+    Only DOL-direct events count; the retired mirror's rows describe changes
+    of unknown date.
+    """
+    ins = _rows(db, "SELECT case_number, changed_at FROM perm_case_events "
+                    "WHERE to_status = ? AND source = ?", [HOLD_STATUS, SOURCE])
+    outs = _rows(db, "SELECT case_number, changed_at, to_status FROM perm_case_events "
+                     "WHERE from_status = ? AND source = ?", [HOLD_STATUS, SOURCE])
+    held = _rows(db, f"""
+        SELECT c.case_number, c.employer_name, COALESCE(l.employer_slug, p.employer_slug),
+               c.fetched_at
+          FROM perm_case_status c {_slug_join()}
+         WHERE c.is_final = 0 AND c.current_status = ? AND c.employer_name IS NOT ?""",
+                 [HOLD_STATUS, TEST_FIXTURE_EMPLOYER])
+    meta = {cn: (name, slug) for cn, name, slug, _ in held}
+    need = sorted(({r[0] for r in ins} | {r[0] for r in outs}) - set(meta))
+    for i in range(0, len(need), 400):
+        chunk = need[i:i + 400]
+        for cn, name, slug in _rows(db, f"""
+                SELECT c.case_number, c.employer_name,
+                       COALESCE(l.employer_slug, p.employer_slug)
+                  FROM perm_case_status c {_slug_join()}
+                 WHERE c.case_number IN ({",".join("?" * len(chunk))})""", chunk):
+            meta[cn] = (name, slug)
+
+    first = _rows(db, "SELECT changed_at FROM perm_case_events WHERE source = ? "
+                      "ORDER BY changed_at LIMIT 1", [SOURCE])
+    log_from = et_date(first[0][0]) if first else None
+    last_in: dict[str, int] = {}
+    for cn, at in ins:
+        last_in[cn] = max(last_in.get(cn, 0), int(at))
+    annotate_holds(employers, [
+        (name, slug, et_date(last_in[cn]) if cn in last_in else None,
+         et_date(seen) if seen else None)
+        for cn, name, slug, seen in held], log_from)
+
+    events = [(*meta.get(cn, (None, None)), et_date(at), "on", HOLD_STATUS)
+              for cn, at in ins]
+    events += [(*meta.get(cn, (None, None)), et_date(at), "off", to)
+               for cn, at, to in outs]
+    return {"logFrom": log_from, "holdMoves": hold_moves(events, today, employers)}
 
 
 def write_employer_stages(db) -> None:
@@ -836,12 +1041,12 @@ def write_employer_stages(db) -> None:
     sweep, it is one doc read. Raw counts only; the floor and the ranking
     rules live in TypeScript beside their tests.
     """
-    rows = _rows(db, """
-        SELECT c.employer_name, l.employer_slug, c.current_status, COUNT(*) AS n
-          FROM perm_case_status c
-          LEFT JOIN perm_live_recent l ON l.case_number = c.case_number
+    rows = _rows(db, f"""
+        SELECT c.employer_name, COALESCE(l.employer_slug, p.employer_slug) AS slug,
+               c.current_status, COUNT(*) AS n
+          FROM perm_case_status c {_slug_join()}
          WHERE c.is_final = 0 AND c.employer_name IS NOT ?
-         GROUP BY c.employer_name, l.employer_slug, c.current_status""",
+         GROUP BY c.employer_name, slug, c.current_status""",
         [TEST_FIXTURE_EMPLOYER])
     nationwide: dict[str, int] = {}
     for _name, _slug, status, n in rows:
@@ -855,9 +1060,20 @@ def write_employer_stages(db) -> None:
             f"!= pending {pending_total:,} (a concurrent write landed mid-run)")
         return
     employers = employer_stage_rows(rows)
-    doc = {"asOf": time.strftime("%Y-%m-%d"), "source": SOURCE,
+    today = datetime.datetime.now(ET).date()
+    # The dates are context, never a reason to withhold the counts: a failure
+    # here writes the doc without them, the page hides the dated parts, and
+    # the next pass tries again.
+    try:
+        history = hold_history(db, employers, today)
+    except Exception as e:  # noqa: BLE001 - logged and named, never silent
+        log(f"employer_stages: hold history FAILED ({type(e).__name__}: {e}); "
+            "writing the counts without dates")
+        history = {}
+    doc = {"asOf": today.isoformat(), "source": SOURCE,
            "pendingTotal": pending_total, "nationwide": nationwide,
-           "minPending": EMPLOYER_STAGES_MIN_PENDING, "employers": employers}
+           "minPending": EMPLOYER_STAGES_MIN_PENDING,
+           "employers": strip_private(employers), **history}
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute(
         "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
@@ -868,7 +1084,9 @@ def write_employer_stages(db) -> None:
     if int(got or 0) != len(payload):
         raise SystemExit("FATAL: employer_stages read-back does not match write")
     log(f"wrote     employer_stages ({len(employers)} employers with >= "
-        f"{EMPLOYER_STAGES_MIN_PENDING} pending, {len(payload):,} bytes)")
+        f"{EMPLOYER_STAGES_MIN_PENDING} pending, "
+        f"{len(history.get('holdMoves') or [])} employer-wide hold moves, "
+        f"{len(payload):,} bytes)")
 
 
 def write_sweep_coverage(db) -> None:
@@ -1635,6 +1853,12 @@ def main() -> int:
     # to_status keeps it bounded to the RFI rows, which are a small slice.
     db.execute("""CREATE INDEX IF NOT EXISTS case_events_status_time
         ON perm_case_events (to_status, changed_at)""")
+    # The mirror of the one above, for moves OUT of a status. The employer
+    # census dates releases from hold with it, and a release of cases that were
+    # already held when the log began has no entry event to find them by, so
+    # without it that read is a scan of the whole table twice a day.
+    db.execute("""CREATE INDEX IF NOT EXISTS case_events_from_time
+        ON perm_case_events (from_status, changed_at)""")
 
     # The stage pages list the cases sitting at one FLAG status, oldest filing
     # first. The two indexes this table already had both lead somewhere else -

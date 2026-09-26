@@ -28,7 +28,11 @@ probe() {
 probe "curl, no UA, /pwd-cases"          "$H/pwd-cases"
 probe "curl as Chrome, /pwd-cases"       -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36" "$H/pwd-cases"
 probe "curl as Googlebot (unverified IP)" -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" "$H/pwd-cases"
-probe "audit header, /pwd-cases"          -H "x-permtracker-audit: 1" "$H/pwd-cases"
+# Rule 5 matches the header's VALUE since Sep 25 2026 (the key in .env.local).
+# A guessed value must be challenged on a restricted path; the real key passes.
+KEY=$(grep '^PERMTRACKER_AUDIT_KEY=' "$(dirname "$0")/../.env.local" 2>/dev/null | cut -d= -f2-)
+probe "audit header, wrong value, compare" -A "Mozilla/5.0 Chrome/148.0" -H "x-permtracker-audit: 1" "$H/perm-employers/compare"
+probe "audit header, real key, compare"    -A "Mozilla/5.0 Chrome/148.0" -H "x-permtracker-audit: ${KEY:-missing}" "$H/perm-employers/compare"
 probe "WhatsApp UA, /perm-queue"          -A "WhatsApp/2.23.20.0 A" "$H/perm-queue"
 probe "iMessage UA (facebookexternalhit)" -A "facebookexternalhit/1.1 Facebot Twitterbot/1.0" "$H/perm-queue"
 probe "curl, /feed.xml"                   "$H/feed.xml"

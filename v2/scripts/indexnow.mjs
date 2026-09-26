@@ -22,9 +22,10 @@ const locs = (xml) =>
   [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1].trim()).filter(Boolean);
 
 const get = async (url) => {
-  // x-permtracker-audit: the Firewall's bypass for the site's own scripts
-  // (Bot Protection challenges a non-browser fetch of the sitemap otherwise).
-  const r = await fetch(url, { headers: { "User-Agent": "permtracker-indexnow/1.0", "x-permtracker-audit": "1" } });
+  // Only sitemaps are fetched here, and Firewall rule 8 lets any client read
+  // them, so this runs on CI with no audit key (rule 5 wants its exact value
+  // since Sep 25 2026, and that value never leaves the owner's machine).
+  const r = await fetch(url, { headers: { "User-Agent": "permtracker-indexnow/1.0" } });
   if (!r.ok) throw new Error(`fetch failed: HTTP ${r.status} for ${url}`);
   return r.text();
 };
