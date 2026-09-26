@@ -5178,7 +5178,8 @@ config version 13 -> 16.
 | 1 | Meta deny on `/perm-case-status?case=` | `meta-externalfetcher` (Meta AI's on-demand fetcher) added to the exemptions beside the two preview agents |
 | 2-10 | unchanged | |
 | 11 | **Bypass AI assistants and AI crawlers** | user agent contains Claude-User, ClaudeBot, Claude-SearchBot, ChatGPT-User, OAI-SearchBot, GPTBot, PerplexityBot, Perplexity-User, meta-externalfetcher, Amazonbot, DuckAssistBot or Google-Extended |
-| 12 | **Allow every cheap path** | two OR groups: every path NOT under `/api/`, `/ingest/`, `/perm-employers/compare`, `/prefs`, `/unsubscribe`, `/queue-alert`, `/case-alert`, `/bulletin-alert` and not `/perm-case-status`; or that lookup path WITHOUT a `case` query |
+| 12 | **Allow every cheap path** | two OR groups: every path NOT under `/api/`, `/ingest/`, `/perm-employers/compare`, `/prefs`, `/unsubscribe`, `/queue-alert`, `/case-alert`, `/bulletin-alert`, `/employer-alert` (added Sep 26) and not `/perm-case-status`; or that lookup path WITHOUT a `case` query |
+| 13 | **Bypass one-click unsubscribe POSTs** (Sep 26 2026) | method POST AND path exactly `/prefs/unsubscribe`, `/unsubscribe`, or `/case-alert/unsubscribe` and its queue, bulletin and employer siblings. Mail providers send RFC 8058 one-click from their own servers, which cannot pass a browser challenge: measured before the rule, every one of those POSTs got 429 `challenge`, mail already in inboxes included. Each endpoint checks a purpose-scoped signed token and can only turn mail off; GETs stay challenged |
 
 **Measured after:** a plain script gets 200 on every page and 429 on the
 restricted set; a script claiming any listed assistant passes the live lookup

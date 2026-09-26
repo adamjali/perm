@@ -49,3 +49,12 @@ probe "Claude-User UA, lookup ?case="     -A "Claude-User/1.0 (+https://support.
 probe "curl, employer compare (restr.)"   "$H/perm-employers/compare?a=x&b=y"
 probe "curl, /prefs (restricted)"         "$H/prefs?token=x"
 
+probe "curl, /employer-alert (restricted)" "$H/employer-alert/confirm?token=x"
+# --- rule 13 (Sep 26 2026): one-click unsubscribe POSTs reach Convex. Mail
+#   providers send them from their own servers, which cannot pass a browser
+#   challenge. Expect 400 "Invalid or expired" for the junk token, never 429.
+#   A GET on the same paths stays challenged.
+probe "one-click POST, /prefs/unsubscribe"  -X POST --data "List-Unsubscribe=One-Click" "$H/prefs/unsubscribe?token=junk&kind=case"
+probe "one-click POST, /case-alert/unsub."  -X POST --data "List-Unsubscribe=One-Click" "$H/case-alert/unsubscribe?token=junk"
+probe "one-click POST, /employer-alert/un." -X POST --data "List-Unsubscribe=One-Click" "$H/employer-alert/unsubscribe?token=junk"
+probe "GET /prefs/unsubscribe (restricted)" "$H/prefs/unsubscribe?token=junk&kind=case"
