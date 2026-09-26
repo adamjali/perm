@@ -6514,3 +6514,28 @@ cutoff a priority date (`ngày chốt`, not `ngày ưu tiên`); Chinese `无排�
 "这一列" for a column; Portuguese "o EAD". A model's review, not a native speaker's.
 
 **Every workflow runs on `ubuntu-24.04`**, pinned ahead of `ubuntu-latest` moving to 26.04.
+
+**PERM history back to FY2008 (S6, owner's middle path).** Two tables, neither of them
+`perm_cases`, so its eighteen indexes are untouched:
+
+| table | holds | written by |
+|---|---|---|
+| `perm_employer_years` (slug, fy, certified, denied, withdrawn) | every fiscal year from FY2008 | `ingest_perm_history.py` for FY2008 to FY2023, once; `--current` for FY2024 on, after every quarterly load |
+| `perm_cases_history` (perm_cases' columns, PK + `(employer_slug, decision_date)`) | FY2020 to FY2023 cases | `ingest_perm_history.py`, once |
+
+- **DOL's file names follow no pattern** (`PERM_FY2008.xlsx`, `PERM_FY14_Q4.xlsx`,
+  `PERM_Disclosure_Data_FY17.xlsx`, `PERM_Disclosure_Data_FY2018_EOY.xlsx`), so discovery keeps
+  every `PERM_*.xlsx` DOL links and reads the year out of the name. The quarterly discovery's
+  `PERM_Disclosure_Data_` regex would have missed half of them.
+- **Old layouts:** `CASE_NO` to FY2014; no received date before FY2015 (counted on the decision
+  date, duration empty); `AGENT_FIRM_NAME` then `AGENT_ATTORNEY_FIRM_NAME`; `2007_NAICS_US_CODE`.
+  The old form DID carry `COUNTRY_OF_CITIZENSHIP` and the worker's education (FY2008's spelling is
+  `COUNTRY_OF_CITZENSHIP`); only the new form dropped them. Not loaded.
+- **Years attach to today's page by `entity_key`**, exactly as `perm_entities.merge_key` is built,
+  so a year filed under a name no current page carries is missing, and the chart says so. Each
+  workbook's matched share is recorded in `perm_docs['perm_history']`.
+- **Resumable:** each workbook is written and recorded before the next is fetched (www.dol.gov
+  refuses sustained traffic), and a recorded one is skipped unless `force`.
+- `lookupCase` reads `perm_cases_history` when `perm_cases` misses, BEFORE any live DOL question.
+  The case search is unchanged (FY2024 on); an employer's older cases are on its page.
+- `EmployerYears` renders bars from `perm_employer_years` and nothing when a page has no rows.
