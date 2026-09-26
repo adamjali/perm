@@ -145,12 +145,24 @@ export async function lookupCase(
 
   // 2. DOL's own disclosure record, which exists only once the case is
   //    decided and carries fields the mirror does not (wage, SOC, state).
-  const dec = await one<Record<string, unknown>>(
-    `SELECT status, received_date, decision_date, days, employer_name,
-            job_title, soc_title, state, wage
-       FROM perm_cases WHERE case_number = ?`,
-    [caseNumber],
-  );
+  //    Then the FY2020 to FY2023 decisions (`perm_cases_history`, loaded
+  //    once by scripts/ingest_perm_history.py), same columns, so a case
+  //    decided before the current corpus answers from DOL's record instead
+  //    of spending a live question on a number DOL's live system no longer
+  //    carries.
+  const dec =
+    (await one<Record<string, unknown>>(
+      `SELECT status, received_date, decision_date, days, employer_name,
+              job_title, soc_title, state, wage
+         FROM perm_cases WHERE case_number = ?`,
+      [caseNumber],
+    )) ??
+    (await one<Record<string, unknown>>(
+      `SELECT status, received_date, decision_date, days, employer_name,
+              job_title, soc_title, state, wage
+         FROM perm_cases_history WHERE case_number = ?`,
+      [caseNumber],
+    ).catch(() => null));
 
   if (!live && !dec) {
     // A three-way miss becomes a live DOL question. A real case filed last
