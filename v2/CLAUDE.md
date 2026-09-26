@@ -6328,8 +6328,38 @@ hash). New: every budget pool with 24-hour use and the week's refusals, the outb
 emails vs alerts inside them, bundles, failures, drops), the latest 30 alerts, who follows which
 employer, and the subscription lists searchable and collapsed to ten rows.
 
-**Not done, waiting on a clear yes:** re-checking decided cases less often (CERTIFIED - EXPIRED is
-206,415 cases that have never changed and are re-asked daily). Adam's answer was "i guess idk".
+**Decided cases keep their daily re-check, and the measurement is why.** Adam's bar was "only if for
+SURE not gunna lose anything". The event log (Aug 26 to Sep 25) shows "final" statuses moving: 105
+WITHDRAWN cases went to CERTIFIED, 2,541 DENIED went to RECONSIDERATION APPEALS and 185 to BALCA, and 47
+DENIED became CERTIFIED. Only CERTIFIED - EXPIRED (206,415 held, about 4,100 requests a night) never
+moved, and thirty days of no moves is not proof: a slower tier would date any move it did make up to a
+week late, in a log whose whole value is the day. Revisit once the log covers a year.
+
+**Deployed Sat Sep 26, Convex first (about 2:05 AM EDT), then the site (`92387de5`).** Backward
+compatibility was checked before either: the schema only adds four tables; no export, route, token
+purpose or one-click kind was removed; the branch's parser read production's census doc (written
+before decision batches existed) as 1,000 employers, 5 hold moves and an empty decision list; digest
+issues built before the deploy have no employer block and render unchanged; the Convex routes answer
+refusals correctly on production; and the employer sweep and the bundle sender were run once by hand
+with nothing to send.
+
+**The employer page's queue band was weeks stale, and the follow block made it visible (found
+Sep 26, 2:20 AM).** `LiveQueueBand` reads `perm_entity_pending`, which only the full rebuild after a
+disclosure load wrote, while the band prints the sweep's date. Adobe's page said 199 waiting (197 in
+analyst review) directly above a follow block saying 218 pending, 216 on hold. `write_pending` now
+refreshes the table in every `--live-recent-only` run, diffed with one normaliser on both sides
+(`pending_norm`), and adds each employer whose queue moved to `changed-employer-slugs.json`, weighted
+by how much moved. First run measured read-only: 5,982 of 59,318 rows to write, Adobe 8th of the
+pages to expire. `test_live_recent.py` also ran three check groups AFTER its verdict, so their
+failures printed FAIL and exited 0; every group now runs first, and both new checks were probed red.
+
+**One-click unsubscribe had been challenged since the firewall inversion (found Sep 26).** Every alert
+email's `List-Unsubscribe` points at `permtracker.app/...`, and all six unsubscribe paths sit in rule
+12's challenged set. Mail providers POST one-click from their own servers, which cannot pass a
+browser challenge: measured, each POST got `429 challenge`, including links in mail already sent.
+Firewall rule 13 bypasses exactly those POSTs (GETs stay challenged), after which the same probes
+reach Convex and answer 400 on a junk token. Whether Gmail's unsubscribe servers had been passing as
+verified bots before is unknown; the rule makes it not matter.
 
 Two traps from building it:
 - **convex-test runs scheduled functions in the background**, so a test that schedules fifteen

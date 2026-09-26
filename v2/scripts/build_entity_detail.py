@@ -13,6 +13,8 @@ waiting - DOL's disclosure files carry a decision date on every row, so a
 pending case appears in none of them. This is what lets a sponsor page say
 "1,768 of their cases are in analyst review right now" instead of only
 reciting history.
+It is refreshed with the live remainder on every sweep (`--live-recent-only`,
+diffed; since 2026-09-26), because the page prints it under the sweep's date.
 
 `perm_entity_facets` comes from `perm_cases`, the decided corpus, and says
 what an entity's filings are MADE OF: which occupations, which states, which
@@ -344,7 +346,8 @@ def live_norm(row) -> tuple:
     return tuple(out)
 
 
-def write_live_recent(db: Turso, live: list[dict]) -> bool:
+def write_live_recent(db: Turso, live: list[dict],
+                      extra_changed: dict[str, int] | None = None) -> bool:
     """Write only what changed.
 
     The set is ~137k rows and its membership barely moves: on an ordinary day
@@ -395,7 +398,7 @@ def write_live_recent(db: Turso, live: list[dict]) -> bool:
     ok = got == len(live)
     log(f"  {'ok ' if ok else 'MISMATCH'} perm_live_recent       {got:>7,} of {len(live):,} "
         f"({len(changed):,} written, {len(gone):,} removed)")
-    write_changed_slugs(changed, gone, stored)
+    write_changed_slugs(changed, gone, stored, extra_changed)
     return ok
 
 
@@ -522,7 +525,8 @@ MAX_CHANGED_SLUGS = 800
 
 
 def write_changed_slugs(changed: list[dict], gone: list[str],
-                        stored: dict[str, tuple]) -> None:
+                        stored: dict[str, tuple],
+                        extra: dict[str, int] | None = None) -> None:
     """Name the employer pages whose live content moved, busiest first.
 
     BOTH HALVES OF THE DIFF COUNT. A case that CHANGED names its employer
@@ -539,7 +543,9 @@ def write_changed_slugs(changed: list[dict], gone: list[str],
     Ranked by how many cases moved so that a truncated batch keeps the pages a
     reader is most likely to be looking at.
     """
-    counts: dict[str, int] = {}
+    # `extra` is the employers whose QUEUE moved (`write_pending`): their
+    # pages print that queue in `LiveQueueBand`, so they expire with the rest.
+    counts: dict[str, int] = dict(extra or {})
     for row in changed:
         slug = row.get("employer_slug")
         if slug:
@@ -557,6 +563,96 @@ def write_changed_slugs(changed: list[dict], gone: list[str],
         json.dump({"slugs": kept}, fh)
     extra = f", {len(ranked) - len(kept):,} over the cap not listed" if len(ranked) > len(kept) else ""
     log(f"  {len(kept):,} employer pages to expire{extra} -> {CHANGED_SLUGS_PATH}")
+
+
+PENDING_COLS = ["kind", "slug", "tracked", "pending", "stages", "oldest"]
+
+
+def pending_norm(row) -> tuple:
+    """One `perm_entity_pending` row as comparable values, from either side.
+
+    The live table's lesson again: libSQL returns integers as STRINGS, so a
+    stored `tracked` of '968' never equals a built 968, and a raw comparison
+    rewrites every row while logging success. `stages` is compared as parsed
+    JSON rather than as text, so a different key order cannot fake a change.
+    """
+    is_tuple = not isinstance(row, dict)
+    kind, slug, tracked, pend, stages, oldest = (
+        cell(row[i]) if is_tuple else row[c] for i, c in enumerate(PENDING_COLS))
+    try:
+        parsed = json.loads(stages) if isinstance(stages, str) else dict(stages or {})
+    except ValueError:
+        parsed = {}
+    return (str(kind), str(slug), int(tracked or 0), int(pend or 0),
+            tuple(sorted((str(k), int(v)) for k, v in parsed.items())),
+            "" if oldest is None else str(oldest))
+
+
+def pending_diff(stored: list, built: list[dict]):
+    """(rows to write, (kind, slug) keys to delete, slug -> how much it moved).
+
+    The weight ranks the pages to expire: a sponsor whose 200 cases went on
+    hold outranks one that gained a single filing, so a truncated expiry
+    batch keeps the pages a reader is most likely to be looking at.
+    """
+    have: dict[tuple, tuple] = {}
+    for r in stored:
+        n = pending_norm(r)
+        have[(n[0], n[1])] = n
+    changed: list[dict] = []
+    moved: dict[str, int] = {}
+    wanted: set[tuple] = set()
+    for row in built:
+        n = pending_norm(row)
+        key = (n[0], n[1])
+        wanted.add(key)
+        old = have.get(key)
+        if old == n:
+            continue
+        changed.append(row)
+        if old is None:
+            weight = max(1, n[3])
+        else:
+            a, b = dict(old[4]), dict(n[4])
+            shifted = sum(abs(a.get(k, 0) - b.get(k, 0)) for k in set(a) | set(b)) // 2
+            weight = max(1, abs(n[3] - old[3]) + shifted)
+        moved[n[1]] = moved.get(n[1], 0) + weight
+    gone = [k for k in have if k not in wanted]
+    for kind, slug in gone:
+        moved[slug] = moved.get(slug, 0) + max(1, have[(kind, slug)][3])
+    return changed, gone, moved
+
+
+def write_pending(db: Turso, pending: list[dict]) -> tuple[bool, dict[str, int]]:
+    """Refresh `perm_entity_pending` every night, writing only what moved.
+
+    WHY THIS RUNS NIGHTLY NOW (2026-09-26). The table used to be rebuilt only
+    by the full rebuild after a disclosure load, while every published
+    employer page printed it in `LiveQueueBand` under the SWEEP's date. So a
+    snapshot weeks old read as today's queue: on Sep 26 Adobe's band said 199
+    waiting, 197 in analyst review, while `perm_case_status` held 218 pending
+    with 216 on hold, and the follow block on the same page said so. Two
+    figures for one queue on one page discredit both.
+
+    Diffed like `perm_live_recent`: about 70,000 rows, of which a night moves
+    a few hundred to a few thousand.
+    """
+    db.script(DDL)
+    stored = rows_of(db.execute(
+        "SELECT " + ", ".join(PENDING_COLS) + " FROM perm_entity_pending"))
+    changed, gone, moved = pending_diff(stored, pending)
+    for i in range(0, len(gone), 250):
+        chunk = gone[i:i + 250]
+        clause = " OR ".join("(kind = ? AND slug = ?)" for _ in chunk)
+        db.execute(f"DELETE FROM perm_entity_pending WHERE {clause}",
+                   [x for key in chunk for x in key])
+    if changed:
+        write_rows(db, "perm_entity_pending", PENDING_COLS, changed)
+    got = int(db.scalar("SELECT count(*) FROM perm_entity_pending") or 0)
+    ok = got == len(pending)
+    log(f"  {'ok ' if ok else 'MISMATCH'} perm_entity_pending    {got:>7,} of {len(pending):,} "
+        f"({len(changed):,} written, {len(gone):,} removed)")
+    return ok, moved
 
 
 def build_pending(db: Turso, maps) -> list[dict]:
@@ -756,10 +852,20 @@ def main() -> int:
     if args.live_recent_only:
         log("LIVE RECENT")
         live, boundary = build_live_recent(db, maps)
+        log("PENDING")
+        pending = build_pending(db, maps)
         if args.dry_run:
             log("\nDRY RUN - nothing written")
             return 0
-        ok = write_live_recent(db, live) and write_live_remainder_doc(db, live)
+        # The queue band's table refreshes with the live remainder. Its own
+        # failure must not cost the live remainder, which is what makes the
+        # day's filings findable at all, so it is caught and reported.
+        try:
+            pending_ok, moved = write_pending(db, pending)
+        except Exception as exc:  # noqa: BLE001
+            log(f"  perm_entity_pending refresh FAILED: {exc}")
+            pending_ok, moved = False, {}
+        ok = write_live_recent(db, live, moved) and write_live_remainder_doc(db, live)
         # The sitemap's live-only family reads this table; it must move with
         # the live remainder or the sitemap advertises yesterday's employers.
         ok = write_live_only_index(db, live, maps) and ok
@@ -781,9 +887,10 @@ def main() -> int:
             stamp_freshness(db, "live-recent", source="derived from perm_case_status",
                             cadence="Daily", note=f"{len(live):,} cases", max_age_days=3)
         record_run(db, "build_entity_detail.py --live-recent-only",
-                   status="ok" if ok else "mismatch", rows_written=len(live),
-                   note=f"remainder past {boundary}")
-        return 0 if ok else 1
+                   status="ok" if ok and pending_ok else "mismatch", rows_written=len(live),
+                   note=f"remainder past {boundary}; queue band {len(pending):,} employers"
+                        + ("" if pending_ok else ", perm_entity_pending NOT refreshed"))
+        return 0 if ok and pending_ok else 1
 
     log("PENDING")
     pending = build_pending(db, maps)

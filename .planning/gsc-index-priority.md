@@ -547,3 +547,15 @@ Inspect first; skip anything crawled after Sep 21, 12:21 PM (the title deploy).
    deploy that this ledger listed has been requested. Before a run after this one, rebuild the
    queue (re-inspect a sample of the pages requested Sep 21 to 25 to see whether the recrawls
    landed, and check Search Console's Pages report for anything newly "Crawled, not indexed").
+
+## Queue after the Sep 26 deploy (the timer probes from 3:07 PM EDT Sep 26; a refusal is free)
+
+The Sep 26 deploy (`92387de5`, Ready 2:17 AM EDT) changed the pages the Adobe post sent
+people to: every employer page gained a "Follow" block (its pending mix, its dated moves), and
+the census page gained a status bar and a Follow link per row. Inspect first; request what was
+crawled before 2:17 AM Sep 26.
+
+1. `/perm-employers/under-review` (the page quoted on X to about 127,000 people)
+2. `/perm-employers/adobe-inc`, then `/perm-employers/cognizant-technology-solutions-us-corporation`
+3. `/guides/perm-application-on-hold-meaning` (inspect; its Sep 25 rewrite may already be crawled)
+4. then the Sep 25 queue above, from its item 1

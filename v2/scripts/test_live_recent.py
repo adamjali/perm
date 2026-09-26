@@ -22,7 +22,8 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from build_entity_detail import LIVE_COLS, et_date, live_norm, live_only_rows  # noqa: E402
+from build_entity_detail import (  # noqa: E402
+    LIVE_COLS, et_date, live_norm, live_only_rows, pending_diff, pending_norm)
 
 FAILURES: list[str] = []
 
@@ -95,6 +96,54 @@ def check_et_date() -> None:
     check("an absent stamp is None", (et_date(None), et_date("")), (None, None))
 
 
+def pending_row(slug: str, tracked: int, pending: int, stages: str,
+                oldest: str | None = "2025-07-02") -> list[dict]:
+    """A stored perm_entity_pending row, integers as strings as libSQL returns them."""
+    return [
+        {"type": "text", "value": "employer"},
+        {"type": "text", "value": slug},
+        {"type": "integer", "value": str(tracked)},
+        {"type": "integer", "value": str(pending)},
+        {"type": "text", "value": stages},
+        {"type": "null"} if oldest is None else {"type": "text", "value": oldest},
+    ]
+
+
+def check_pending_diff() -> None:
+    """The queue band's table, refreshed nightly since 2026-09-26."""
+    print("perm_entity_pending diff")
+    stored = [
+        pending_row("adobe-inc", 968, 199, '{"ANALYST REVIEW":197,"RFI ISSUED":2}'),
+        pending_row("steady-co", 10, 3, '{"ANALYST REVIEW":3}'),
+        pending_row("gone-co", 4, 1, '{"ANALYST REVIEW":1}'),
+    ]
+    built = [
+        # Adobe on Sep 26: 216 went on hold.
+        {"kind": "employer", "slug": "adobe-inc", "tracked": 987, "pending": 218,
+         "stages": '{"APPLICATION ON HOLD":216,"ANALYST REVIEW":2}', "oldest": "2025-07-02"},
+        # The same facts as stored, built as ints with the JSON keys reordered:
+        # must NOT read as a change, or every row is rewritten every night.
+        {"kind": "employer", "slug": "steady-co", "tracked": 10, "pending": 3,
+         "stages": '{"ANALYST REVIEW": 3}', "oldest": "2025-07-02"},
+        {"kind": "employer", "slug": "new-co", "tracked": 2, "pending": 2,
+         "stages": '{"ANALYST REVIEW":2}', "oldest": "2026-09-20"},
+    ]
+    changed, gone, moved = pending_diff(stored, built)
+    check("only the rows that moved are written",
+          sorted(r["slug"] for r in changed), ["adobe-inc", "new-co"])
+    check("an employer no longer in the mirror is deleted", gone, [("employer", "gone-co")])
+    check("every page whose band moved is expired",
+          sorted(moved), ["adobe-inc", "gone-co", "new-co"])
+    check("the big move outranks the small ones",
+          max(moved, key=moved.get), "adobe-inc")
+    check("string integers and reordered JSON normalise alike",
+          pending_norm(stored[1]), pending_norm(built[1]))
+    check("a null oldest agrees with None",
+          pending_norm(pending_row("x", 1, 0, "{}", None)),
+          pending_norm({"kind": "employer", "slug": "x", "tracked": 1, "pending": 0,
+                        "stages": "{}", "oldest": None}))
+
+
 def main() -> int:
     print("live_recent diff normaliser")
 
@@ -144,12 +193,16 @@ def main() -> int:
           live_norm(libsql_row(*decided, "2026-09-01")),
           live_norm(built_row(*decided, "2026-09-01")))
 
+    # Every group runs BEFORE the verdict. These three used to run after it,
+    # so a failure in them printed FAIL and still exited 0 (found 2026-09-26).
+    check_live_only_rows()
+    check_et_date()
+    check_pending_diff()
+
     print()
     if FAILURES:
         print(f"{len(FAILURES)} failure(s): {', '.join(FAILURES)}")
         return 1
-    check_live_only_rows()
-    check_et_date()
     print("all checks passed")
     return 0
 

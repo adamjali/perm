@@ -186,7 +186,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 25 2026".
   bulk, and the on-hold guide renders its counts live.
 - **Firewall rule 5 wants a secret value**; its header's mere presence had been a public bypass.
 
-## Sep 26 2026, in four lines
+## Sep 26 2026, in five lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 26 2026".
 
@@ -195,3 +195,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 26 2026".
 - **One alert email per person per day**: several updates wait in an outbox and go out as one.
 - **No budget moved**; every limit lives in `convex/lib/alertBudgets.ts` and refusals are counted.
 - **The admin page is four tabs**, with the budgets, the outbox and employer follows on it.
+- **One-click unsubscribe POSTs bypass the firewall** (rule 13); they had been answered with a
+  429 challenge, mail already sent included. Decided cases keep their daily re-check: "final"
+  statuses were measured moving.
