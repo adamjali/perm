@@ -559,3 +559,20 @@ crawled before 2:17 AM Sep 26.
 2. `/perm-employers/adobe-inc`, then `/perm-employers/cognizant-technology-solutions-us-corporation`
 3. `/guides/perm-application-on-hold-meaning` (inspect; its Sep 25 rewrite may already be crawled)
 4. then the Sep 25 queue above, from its item 1
+
+## Queue after the Sep 26 evening deploy (supersedes the two sections above)
+
+No round ran on Sep 26 before the evening deploy: the owner held it so the slots go to the pages
+as they ship tonight (years on the green card line, industry and city plus the year-by-year
+record on every employer page, the reviewed translations). Inspect first; request what was
+crawled before tonight's deploy.
+
+1. `/perm-employers/under-review` (quoted on X to ~127,000 people on Sep 25)
+2. `/perm-employers/adobe-inc`, `/perm-employers/cognizant-technology-solutions-us-corporation`
+3. `/tools/green-card-line` (years now shown)
+4. `/guides/approved-i140-no-visa-number-eb2-india`, `/guides/eb3-other-workers` (reworded)
+5. New since the Sep 26 afternoon deploy, likely never crawled: `/tools/eb2-vs-eb3`,
+   `/tools/which-green-card`, `/visa-bulletin/categories`, `/h1b-lottery-odds`,
+   `/green-card-timelines`, `/nvc-waiting-list`
+6. `/zh`, `/es`, `/pt-br`, `/ko`, `/vi`
+7. `/guides/perm-application-on-hold-meaning`, then the Sep 25 queue from its item 1
