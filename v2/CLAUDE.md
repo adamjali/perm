@@ -6396,7 +6396,7 @@ One build, one deploy. The checklist, with every item and what was found on the 
 
 **Only analyst review counts as "ahead".** `inLine()` in `src/lib/queueAhead.ts`. Counting every
 pending case (holds, RFIs, appeals) made every date about a week late: the standing backtest
-(`scripts/backtest_queue.py`, T0 2026-09-13, 7,112 real decisions) measured a 3-day typical miss
+(`scripts/backtest_queue.py`, T0 2026-09-13 to END 09-25, 7,135 real decisions in its stored run; the first investigation scored 7,112) measured a 3-day typical miss
 for the new count against 9 for the old, on the same cases. The employer-initial shift is gone
 from every date (it moved a date by at most 16 days against a noise floor several times that).
 The range caveat quotes the re-measured coverage (about 4 in 10 near the front), never the old one.

@@ -1,5 +1,5 @@
 import { StrictMode } from "react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 
 import { GreenCardLine, formatYears, roundPeople } from "../GreenCardLine";
@@ -21,6 +21,11 @@ function renderLine(snapshot = lineSnapshot()) {
 function setDate(value: string) {
   fireEvent.change(screen.getByLabelText(/priority date/i), { target: { value } });
 }
+
+// The tool writes its state into the URL (a shared link), and happy-dom keeps
+// one window per file, so a test that picked a date left ?pd= behind for the
+// next one. CI shuffles test order, which is how it showed (2026-09-26).
+beforeEach(() => window.history.replaceState(null, "", "/"));
 
 describe("GreenCardLine", () => {
   it("asks for a date before it says anything", () => {
