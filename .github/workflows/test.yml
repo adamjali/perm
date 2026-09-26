@@ -17,7 +17,7 @@ concurrency:
 jobs:
   test:
     name: Typecheck + Vitest
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # All app code lives in v2/ — run every step from there.
     defaults:
       run:
@@ -224,6 +224,13 @@ jobs:
       - name: Quarterly Turso load contract
         working-directory: v2
         run: python3 scripts/test_turso_load.py
+
+      # The industry and worksite-city columns (Sep 26 2026) fill by a narrow
+      # UPDATE, never a whole-row rewrite of 374k rows and their indexes.
+      - name: PERM industry and city columns
+        if: ${{ !cancelled() }}
+        working-directory: v2
+        run: python3 scripts/test_perm_extras.py
 
       - name: Serial arithmetic and data-invariant contracts
         if: ${{ !cancelled() }}

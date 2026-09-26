@@ -62,7 +62,7 @@ concurrency:
 
 jobs:
   sweep:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # 150, not 120 (2026-09-24): the 4:10 AM walk now spends the slack inside
     # the main step (up to 90 minutes after the script started), and the gap
     # sweep follows it, so 120 left too little margin. The step-level

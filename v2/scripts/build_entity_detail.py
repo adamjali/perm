@@ -52,6 +52,7 @@ from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import entity_key  # noqa: E402
+from lib_naics import naics_title, normalize_naics  # noqa: E402
 from lib_turso import Turso, lit, record_run, stamp_freshness  # noqa: E402
 
 PAGE_FLOOR = 3          # mirrors MIN_TOTAL_FOR_PAGE in src/lib/entityPayload.ts
@@ -815,7 +816,8 @@ def build_pending(db: Turso, maps) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def read_cases(db: Turso, cache: str | None):
-    cols = ["employer_name", "attorney_name", "soc_code", "soc_title", "status", "state"]
+    cols = ["employer_name", "attorney_name", "soc_code", "soc_title", "status", "state",
+            "naics", "worksite_city"]
     if cache:
         with open(cache) as f:
             for line in f:
@@ -833,8 +835,51 @@ def read_cases(db: Turso, cache: str | None):
         off += 25000
 
 
+def city_key(city: str | None, state: str | None) -> str | None:
+    """One key per city, whatever case or punctuation DOL printed it in.
+
+    "St. Louis", "ST LOUIS" and "St Louis " are one place. The state is part
+    of the key because Portland, OR and Portland, ME are not.
+    """
+    if not city or not state:
+        return None
+    k = " ".join(city.replace(".", " ").upper().split())
+    return f"{k}|{state}" if k else None
+
+
+def _title_case(s: str) -> str:
+    return " ".join("-".join(p.capitalize() for p in w.split("-")) for w in s.split())
+
+
+def city_labels(votes: dict[str, Counter]) -> dict[str, str]:
+    """The display spelling for each city key.
+
+    The most common spelling in mixed case wins, because a filer who typed
+    "McLean" knew something an all-caps "MCLEAN" hides. With only capitals (or
+    only lower case) on record, title case is the fallback. Ties go to the
+    alphabetically later spelling, so a rebuild cannot flip a label.
+    """
+    out: dict[str, str] = {}
+    for key, c in votes.items():
+        state = key.rsplit("|", 1)[1]
+        mixed = [(n, sp) for sp, n in c.items() if sp not in (sp.upper(), sp.lower())]
+        name = max(mixed)[1] if mixed else _title_case(max(c.items(), key=lambda kv: (kv[1], kv[0]))[0])
+        out[key] = f"{name}, {state}"
+    return out
+
+
+def industry_label(code: str) -> str:
+    """Census's title for the code, saying which code it belongs to on a fallback."""
+    hit = naics_title(code)
+    if not hit:
+        return "Not a code in Census's NAICS lists"
+    owner, title = hit
+    return title if owner == code else f"{title} (Census group {owner})"
+
+
 def build_facets(db: Turso, maps, cache) -> list[list]:
     emp, att, occ = maps["employer"], maps["attorney"], maps["occupation"]
+    city_votes: dict[str, Counter] = defaultdict(Counter)
     # (kind, slug, facet) -> label-key -> [n, certified, denied, display label]
     acc: dict[tuple, dict[str, list]] = defaultdict(dict)
 
@@ -863,6 +908,11 @@ def build_facets(db: Turso, maps, cache) -> list[list]:
         o = occ.get(code) if code else None
         state = r.get("state") or None
         occ_label = (o and o[0]) and (r.get("soc_title") or code)
+        raw_city = " ".join((r.get("worksite_city") or "").split())
+        ck = city_key(raw_city, state)
+        if ck:
+            city_votes[ck][raw_city] += 1
+        naics = normalize_naics(r.get("naics"))
 
         # The occupation facet's key is the occupation's SLUG, not its SOC
         # code: it is a link target, and /perm-wages/[slug] is keyed on the
@@ -875,6 +925,10 @@ def build_facets(db: Turso, maps, cache) -> list[list]:
                 add("employer", e[0], "state", state, state, cert, den)
             if a:
                 add("employer", e[0], "attorney", a[0], r["attorney_name"], cert, den)
+            if ck:
+                add("employer", e[0], "city", ck, ck, cert, den)
+            if naics:
+                add("employer", e[0], "industry", naics, naics, cert, den)
         if a and a[1] >= PAGE_FLOOR:
             if e:
                 add("attorney", a[0], "employer", e[0], r["employer_name"], cert, den)
@@ -889,7 +943,10 @@ def build_facets(db: Turso, maps, cache) -> list[list]:
                 add("occupation", o[0], "state", state, state, cert, den)
             if a:
                 add("occupation", o[0], "attorney", a[0], r["attorney_name"], cert, den)
+            if ck:
+                add("occupation", o[0], "city", ck, ck, cert, den)
     log(f"  {n:,} cases -> {len(acc):,} (entity, facet) groups")
+    labels = city_labels(city_votes)
 
     out: list[list] = []
     for (kind, slug, facet), bucket in acc.items():
@@ -897,6 +954,10 @@ def build_facets(db: Turso, maps, cache) -> list[list]:
         # "top occupations" list without the underlying counts changing.
         ranked = sorted(bucket.items(), key=lambda kv: (-kv[1][0], kv[0]))[:TOP_N]
         for pos, (key, (cnt, cert, den, label)) in enumerate(ranked):
+            if facet == "city":
+                label = labels.get(key, label)
+            elif facet == "industry":
+                label = industry_label(key)
             out.append([kind, slug, facet, pos, key, label, cnt, cert, den])
     log(f"  {len(out):,} facet rows")
     return out

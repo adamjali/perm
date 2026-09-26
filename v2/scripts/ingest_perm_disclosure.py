@@ -125,6 +125,15 @@ COLUMN_CANDIDATES: dict[str, list[str]] = {
     "layoff": ["OTHER_REQ_EMP_LAYOFF", "EMP_LAYOFF_IN_PAST_SIX_MONTHS"],
     "ownership": ["EMP_WORKER_INTEREST", "FW_OWNERSHIP_INTEREST"],
     "fulltime": ["OTHER_REQ_IS_FULLTIME_EMP", "JOB_OPP_FULL_TIME"],
+    # The employer's industry and the city the job is in. Read off
+    # PERM_Record_Layout_FY2026_Q3.pdf (Sep 26 2026): EMP_NAICS is Form 9089
+    # Section A, Item 13, a bare code with no title; the title comes from the
+    # Census Bureau's list (lib_naics.py). The new form publishes NO country
+    # of citizenship and NO education for the worker: those moved to
+    # Appendix A, which DOL does not release. The legacy names are the old
+    # form's, kept as fallbacks for the FY2024 old-form file.
+    "naics": ["EMP_NAICS", "NAICS_US_CODE", "NAICS_CODE"],
+    "worksite_city": ["PRIMARY_WORKSITE_CITY", "WORKSITE_CITY", "JOB_INFO_WORK_CITY"],
 }
 # case/status/received/decision must resolve or the file is unusable; the
 # analytical dimensions degrade gracefully (their aggregates just go absent).
@@ -281,6 +290,7 @@ from entity_identity import entity_key, typo_aliases  # noqa: E402
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_load_guard import Fingerprint  # noqa: E402
+from lib_naics import normalize_naics  # noqa: E402
 from lib_turso import Turso  # noqa: E402
 
 __all_identity__ = (entity_key, typo_aliases, _ENTITY_NOISE)
@@ -358,6 +368,7 @@ def norm_status(raw: str) -> str | None:
 PERM_TRACKED = (
     "case_status", "received_date", "decision_date", "employer_name",
     "job_title", "soc_code", "soc_title", "wage", "worksite_state", "attorney_name",
+    "naics", "worksite_city",
 )
 
 
@@ -412,6 +423,7 @@ class CaseWriter:
             "soc_code": row.get("socCode"), "soc_title": row.get("socTitle"),
             "wage": wage, "wage_unit": "YEAR" if wage is not None else None,
             "worksite_state": row.get("state"), "attorney_name": row.get("attorneyName"),
+            "naics": row.get("naics"), "worksite_city": row.get("worksiteCity"),
         })
         self.by_status[status] += 1
         # A row with no resolvable state still counts nationally; it just has
@@ -950,6 +962,8 @@ def parse_file(
                         "socTitle": " ".join((rec.get("soc_title") or "").split())[:80],
                         "attorneyName": attorney,
                         "wage": wage,
+                        "naics": normalize_naics(rec.get("naics")),
+                        "worksiteCity": " ".join((rec.get("worksite_city") or "").split())[:60] or None,
                     }
                 )
 

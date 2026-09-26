@@ -47,9 +47,17 @@ COLUMNS = [
     "case_number", "status", "received_date", "decision_date", "days",
     "fiscal_year", "employer_name", "employer_slug", "state", "job_title",
     "soc_code", "soc_title", "attorney_name", "attorney_slug", "wage",
+    "naics", "worksite_city",
 ]
-# 15 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
-# 7,500 - comfortably under, and large enough that the round trip dominates.
+# The first CORE columns are the ones every load has carried since the table
+# was made. The two after them (the employer's NAICS code and the worksite
+# city, Sep 26 2026) are unindexed, so an incremental load that finds only
+# those different UPDATEs them in place: one row write, where an INSERT OR
+# REPLACE would also rewrite all eighteen indexes.
+CORE = 15
+EXTRA = COLUMNS[CORE:]
+# 17 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
+# 8,500 - comfortably under, and large enough that the round trip dominates.
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
 
@@ -71,7 +79,9 @@ SCHEMA = [
          soc_title     TEXT,
          attorney_name TEXT,
          attorney_slug TEXT,
-         wage          REAL
+         wage          REAL,
+         naics         TEXT,
+         worksite_city TEXT
        )""",
 ]
 
@@ -182,6 +192,7 @@ def rows_from(cases_path: pathlib.Path, employers, firms):
                 r.get("socTitle"), att or None,
                 firms.get(entity_key(att), "") if att else "",
                 r.get("wage"),
+                r.get("naics"), r.get("worksiteCity"),
             )
 
 
@@ -196,8 +207,27 @@ def row_fingerprint(row: tuple) -> str:
     instead of four minutes.
     """
     import hashlib
-    return hashlib.blake2b("\x1f".join(_canon(v) for v in row[1:]).encode(),
+    return hashlib.blake2b("\x1f".join(_canon(v) for v in row[1:CORE]).encode(),
                            digest_size=8).hexdigest()
+
+
+def extras_of(row: tuple) -> tuple[str, ...]:
+    """The unindexed columns, canonicalised, compared on their own."""
+    return tuple(_canon(v) for v in row[CORE:])
+
+
+def ensure_columns(db) -> list[str]:
+    """Add the EXTRA columns to a table made before they existed.
+
+    `CREATE TABLE` only runs on a full load; an incremental load writes into
+    the live table, which would reject a column it has never had.
+    """
+    res = db.execute("PRAGMA table_info(perm_cases)")
+    have = {r[1]["value"] for r in res["response"]["result"]["rows"]}
+    added = [c for c in EXTRA if c not in have]
+    for c in added:
+        db.execute(f"ALTER TABLE perm_cases ADD COLUMN {c} TEXT")
+    return added
 
 
 def _canon(v) -> str:
@@ -220,8 +250,9 @@ def _canon(v) -> str:
     return str(int(f)) if f == int(f) else repr(f)
 
 
-def existing_fingerprints(db: Turso) -> dict[str, str]:
-    """case_number -> fingerprint for everything already stored.
+def existing_fingerprints(db: Turso) -> dict[str, tuple[str, tuple[str, ...]]]:
+    """case_number -> (fingerprint of the core columns, the extras) for
+    everything already stored.
 
     Read in pages: 373,939 rows in one response is tens of megabytes of JSON
     and the pipeline has a response cap.
@@ -238,7 +269,7 @@ def existing_fingerprints(db: Turso) -> dict[str, str]:
             break
         for r in rows:
             vals = tuple(None if c["type"] == "null" else c["value"] for c in r)
-            out[str(vals[0])] = row_fingerprint(vals)
+            out[str(vals[0])] = (row_fingerprint(vals), extras_of(vals))
         after = str(out and rows[-1][0]["value"])
         if len(rows) < page:
             break
@@ -294,6 +325,9 @@ def main() -> int:
 
     incremental = "--incremental" in sys.argv
     if incremental:
+        added = ensure_columns(db)
+        if added:
+            log(f"  added column(s) {added} to the live table")
         log("  incremental: reading existing fingerprints")
         have = existing_fingerprints(db)
         log(f"    {len(have):,} rows already stored")
@@ -330,10 +364,30 @@ def main() -> int:
         pending = []
 
     skipped = 0
+    narrow: list[tuple] = []
+    narrowed = 0
+
+    def flush_narrow():
+        nonlocal narrow, narrowed
+        if not narrow:
+            return
+        pending.append({"type": "execute", "stmt": narrow_update(narrow)})
+        narrowed += len(narrow)
+        narrow = []
+        if len(pending) >= STMTS_PER_REQUEST:
+            flush_request()
+
     for row in rows_from(cases, employers, firms):
-        if incremental and have.get(str(row[0])) == row_fingerprint(row):
-            skipped += 1
-            continue
+        if incremental:
+            stored = have.get(str(row[0]))
+            if stored and stored[0] == row_fingerprint(row):
+                if stored[1] == extras_of(row):
+                    skipped += 1
+                else:
+                    narrow.append(row)
+                    if len(narrow) >= NARROW_ROWS:
+                        flush_narrow()
+                continue
         batch.append(row)
         sent += 1
         if len(batch) >= ROWS_PER_STMT:
@@ -344,9 +398,11 @@ def main() -> int:
                     rate = sent / max(time.time() - t0, 0.001)
                     log(f"    {sent:>7,} rows  ({rate:,.0f}/s)")
     flush_stmt()
+    flush_narrow()
     flush_request()
     log(f"  wrote {sent:,} rows in {time.time() - t0:,.0f}s"
-        + (f"  ({skipped:,} unchanged, skipped)" if incremental else ""))
+        + (f"  ({skipped:,} unchanged, skipped; {narrowed:,} updated in "
+           f"{', '.join(EXTRA)} only)" if incremental else ""))
 
     if incremental:
         # The indexes already exist and were maintained by the writes above.
@@ -370,6 +426,31 @@ def main() -> int:
         log("  FATAL: row count disagrees with what was streamed"); return 1
     write_fingerprint(db, fingerprint)
     return 0
+
+
+# Rows per narrow UPDATE: two CASE arms of two parameters each plus the IN
+# list is five parameters a row, so 200 rows is 1,000.
+NARROW_ROWS = 200
+
+
+def narrow_update(rows: list[tuple]) -> dict:
+    """One UPDATE that sets only the EXTRA columns on these rows.
+
+    One statement per 200 rows, because the cost is per statement (500
+    separate UPDATEs measured 986 rows in 20 s; one CASE UPDATE per 200 rows,
+    1,233 rows a second). A row not named keeps its value, which the ELSE arm
+    makes explicit.
+    """
+    sets, args = [], []
+    for i, col in enumerate(EXTRA):
+        arms = " ".join("WHEN ? THEN ?" for _ in rows)
+        sets.append(f"{col} = CASE case_number {arms} ELSE {col} END")
+        for r in rows:
+            args += [lit(r[0]), lit(r[CORE + i])]
+    ids = ",".join("?" * len(rows))
+    args += [lit(r[0]) for r in rows]
+    return {"sql": f"UPDATE perm_cases SET {', '.join(sets)} WHERE case_number IN ({ids})",
+            "args": args}
 
 
 FINGERPRINT_KEY = "perm_cases_fingerprint"
