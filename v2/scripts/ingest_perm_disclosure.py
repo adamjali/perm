@@ -134,7 +134,42 @@ COLUMN_CANDIDATES: dict[str, list[str]] = {
     # form's, kept as fallbacks for the FY2024 old-form file.
     "naics": ["EMP_NAICS", "NAICS_US_CODE", "NAICS_CODE"],
     "worksite_city": ["PRIMARY_WORKSITE_CITY", "WORKSITE_CITY", "JOB_INFO_WORK_CITY"],
+    # The worker's side of the OLD form (to mid-2023, and the FY2024 old-form
+    # file). The new form publishes none of it. Names read off DOL's FY10,
+    # FY16 and FY2020 record layouts; FY2008 to FY2014 spell citizenship
+    # COUNTRY_OF_CITZENSHIP. Shared with ingest_perm_history.py.
+    "citizenship": ["COUNTRY_OF_CITIZENSHIP", "COUNTRY_OF_CITZENSHIP"],
+    "birth_country": ["FW_INFO_BIRTH_COUNTRY", "FOREIGN_WORKER_BIRTH_COUNTRY"],
+    "visa_class": ["CLASS_OF_ADMISSION"],
+    "education": ["FOREIGN_WORKER_INFO_EDUCATION", "FOREIGN_WORKER_EDUCATION"],
+    "major": ["FOREIGN_WORKER_INFO_MAJOR"],
+    "institution": ["FOREIGN_WORKER_INFO_INST", "FOREIGN_WORKER_INST_OF_ED"],
+    "job_education": ["JOB_INFO_EDUCATION", "MINIMUM_EDUCATION"],
 }
+
+
+def _clean(s: str | None, n: int) -> str:
+    return " ".join((s or "").split())[:n]
+
+
+def _upper(s: str | None, n: int) -> str:
+    """Country and visa values in one case whatever the year used; "N/A" is no value."""
+    v = _clean(s, n).upper()
+    return "" if v in ("N/A", "NA", "NONE", "NULL", "-") else v
+
+
+def worker_fields(rec: dict) -> dict:
+    """The old form's worker fields from a parsed record, normalised once for
+    both parsers (this one and ingest_perm_history.py)."""
+    return {
+        "citizenship": _upper(rec.get("citizenship"), 60) or None,
+        "birthCountry": _upper(rec.get("birth_country"), 60) or None,
+        "visaClass": _upper(rec.get("visa_class"), 40) or None,
+        "education": _clean(rec.get("education"), 60) or None,
+        "major": _clean(rec.get("major"), 80) or None,
+        "institution": _clean(rec.get("institution"), 80) or None,
+        "jobEducation": _clean(rec.get("job_education"), 60) or None,
+    }
 # case/status/received/decision must resolve or the file is unusable; the
 # analytical dimensions degrade gracefully (their aggregates just go absent).
 REQUIRED_FIELDS = ("case", "status", "received", "decision")
@@ -964,6 +999,7 @@ def parse_file(
                         "wage": wage,
                         "naics": normalize_naics(rec.get("naics")),
                         "worksiteCity": " ".join((rec.get("worksite_city") or "").split())[:60] or None,
+                        **worker_fields(rec),
                     }
                 )
 

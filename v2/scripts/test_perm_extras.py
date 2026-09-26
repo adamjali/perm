@@ -151,8 +151,9 @@ def main() -> int:
     load(db, incoming)
 
     cols = [r[1] for r in db.conn.execute("PRAGMA table_info(perm_cases)")]
-    check("naics and worksite_city added to the live table",
-          cols[-2:] == ["naics", "worksite_city"])
+    check(f"every added column reaches the live table (got {cols[15:]})",
+          cols[15:] == list(turso_migrate.EXTRA)
+          and cols[15:17] == ["naics", "worksite_city"] and "citizenship" in cols)
     got = {r[0]: r[1:] for r in db.conn.execute(
         "SELECT case_number, status, naics, worksite_city FROM perm_cases")}
     check("unchanged core: extras filled", got[same["caseNumber"]] == ("certified", "541511", "Seattle"))

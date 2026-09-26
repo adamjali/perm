@@ -19,6 +19,7 @@ Run:  python3 scripts/test_perm_history.py
 from __future__ import annotations
 
 import pathlib
+import re
 import sys
 import tempfile
 import zipfile
@@ -91,24 +92,41 @@ FY2010 = workbook([
     ["A-09111-00005", "", "Certified", "ACME INC", "WA", 1, "yr", 1, "x"],
 ], sheet_file="sheet3.xml")
 
+FY2021_HEAD = ["CASE_NUMBER", "CASE_STATUS", "RECEIVED_DATE", "DECISION_DATE", "EMPLOYER_NAME",
+               "WORKSITE_STATE", "WORKSITE_CITY", "PW_SOC_CODE", "PW_SOC_TITLE", "JOB_TITLE",
+               "WAGE_OFFER_FROM", "WAGE_OFFER_UNIT_OF_PAY", "AGENT_ATTORNEY_FIRM_NAME", "NAICS_CODE",
+               "COUNTRY_OF_CITIZENSHIP", "FOREIGN_WORKER_BIRTH_COUNTRY", "CLASS_OF_ADMISSION",
+               "FOREIGN_WORKER_EDUCATION", "FOREIGN_WORKER_INFO_MAJOR", "FOREIGN_WORKER_INST_OF_ED",
+               "MINIMUM_EDUCATION"]
 FY2021 = workbook([
-    ["CASE_NUMBER", "CASE_STATUS", "RECEIVED_DATE", "DECISION_DATE", "EMPLOYER_NAME",
-     "WORKSITE_STATE", "WORKSITE_CITY", "PW_SOC_CODE", "PW_SOC_TITLE", "JOB_TITLE",
-     "WAGE_OFFER_FROM", "WAGE_OFFER_UNIT_OF_PAY", "AGENT_ATTORNEY_FIRM_NAME", "NAICS_CODE"],
+    FY2021_HEAD,
     ["A-20001-11111", "Certified", "2020-01-02", "2021-03-01", "Acme Inc.", "Washington", "Seattle",
-     "15-1252.00", "Software Developers", "Engineer", 50, "Hour", "Law Firm LLP", "541511"],
+     "15-1252.00", "Software Developers", "Engineer", 50, "Hour", "Law Firm LLP", "541511",
+     "india", "INDIA", "H-1B", "Master's", "Computer Science", "Some University", "Bachelor's"],
     ["A-20001-11112", "Denied", "2020-01-02", "2021-03-02", "ACME INC", "WA", "Redmond",
-     "15-1252.00", "Software Developers", "Engineer", 120000, "Year", "N/A", "541511"],
+     "15-1252.00", "Software Developers", "Engineer", 120000, "Year", "N/A", "541511",
+     "N/A", "", "", "", "", "", ""],
 ])
+
+# FY2009 writes its headers with spaces and spells citizenship without the second I.
+FY2009 = workbook([
+    ["CASE_NUMBER", "DECISION DATE", "CASE STATUS", "EMPLOYER NAME", "COUNTRY OF CITZENSHIP"],
+    ["A-08001-00001", 39873, "Certified", "ACME INC", "CHINA"],
+    ["A-08001-00002", 39874, "Denied", "ACME INC", "CHINA"],
+])
+
+# A year whose header resolves nothing required must not cost the others.
+BROKEN = workbook([["SOMETHING", "ELSE"], ["x", "y"]])
 
 
 def seeded_db() -> SqliteTurso:
     db = SqliteTurso()
-    db.conn.execute("CREATE TABLE perm_entities (kind TEXT, slug TEXT, name TEXT, merge_key TEXT)")
+    db.conn.execute("CREATE TABLE perm_entities (kind TEXT, slug TEXT, name TEXT, merge_key TEXT, code TEXT)")
     from entity_identity import entity_key
-    db.conn.executemany("INSERT INTO perm_entities VALUES (?,?,?,?)", [
-        ("employer", "acme-inc", "ACME INC", entity_key("ACME INC")),
-        ("attorney", "law-firm-llp", "Law Firm LLP", entity_key("Law Firm LLP")),
+    db.conn.executemany("INSERT INTO perm_entities VALUES (?,?,?,?,?)", [
+        ("employer", "acme-inc", "ACME INC", entity_key("ACME INC"), None),
+        ("attorney", "law-firm-llp", "Law Firm LLP", entity_key("Law Firm LLP"), None),
+        ("occupation", "software-developers", "Software Developers", None, "15-1252.00"),
     ])
     db.conn.commit()
     return db
@@ -133,8 +151,9 @@ def main() -> int:
     ])
     db.conn.commit()
 
-    rc = run(db, ["--local", FY2010, FY2021])
-    check(f"load exits 0 (got {rc})", rc == 0)
+    h.FACET_FLOOR = 1
+    rc = run(db, ["--local", FY2010, BROKEN, FY2021, FY2009])
+    check(f"a broken year makes the run exit 1 but not stop it (got {rc})", rc == 1)
     years = {(s, fy): (c, d, w) for s, fy, c, d, w in
              db.conn.execute("SELECT slug, fy, certified, denied, withdrawn FROM perm_employer_years")}
     check("FY2010: three spellings of ACME counted on its page, expired counts as certified",
@@ -143,11 +162,18 @@ def main() -> int:
     check("a row with no decision date is not counted",
           sum(sum(v) for (s, fy), v in years.items() if fy == 2010) == 3)
     check("FY2021 counted", years.get(("acme-inc", 2021)) == (1, 1, 0))
+    check("FY2009's spaced headers read, after the broken workbook",
+          years.get(("acme-inc", 2009)) == (1, 1, 0))
+    countries = {(c, fy): (a, b, w) for c, fy, a, b, w in
+                 db.conn.execute("SELECT country, fy, certified, denied, withdrawn FROM perm_country_years")}
+    check(f"country years: CHINA FY2009 and INDIA FY2021, N/A dropped (got {countries})",
+          countries == {("CHINA", 2009): (1, 1, 0), ("INDIA", 2021): (1, 0, 0)})
     check("--current's years ride along: FY2025 and FY2026 from perm_cases",
           years.get(("acme-inc", 2025)) == (1, 1, 0) and years.get(("acme-inc", 2026)) == (0, 0, 1))
 
     rows = {r[0]: r for r in db.conn.execute(
-        "SELECT case_number, fiscal_year, employer_slug, state, wage, attorney_slug, days, naics, worksite_city "
+        "SELECT case_number, fiscal_year, employer_slug, state, wage, attorney_slug, days, naics, worksite_city, "
+        "citizenship, birth_country, visa_class, education, major, institution, job_education "
         "FROM perm_cases_history")}
     check("FY2010 is counted, never stored as rows", not any(k.startswith("A-09") for k in rows))
     a = rows.get("A-20001-11111")
@@ -155,18 +181,61 @@ def main() -> int:
           a is not None and a[1] == "2021" and a[2] == "acme-inc" and a[3] == "WA"
           and a[4] == 104000.0 and a[5] == "law-firm-llp" and a[6] == 424
           and a[7] == "541511" and a[8] == "Seattle")
+    check(f"the worker's fields stored, citizenship upper-cased (got {a[9:] if a else None})",
+          a is not None and a[9:] == ("INDIA", "INDIA", "H-1B", "Master's", "Computer Science",
+                                      "Some University", "Bachelor's"))
     b = rows.get("A-20001-11112")
     check("an 'N/A' firm is no firm", b is not None and b[5] == "")
+    check("an 'N/A' citizenship is no citizenship", b is not None and b[9] is None)
+    facets = {(k, sl, f, key): (label, n) for k, sl, f, key, label, n in db.conn.execute(
+        "SELECT kind, slug, facet, key, label, n FROM perm_history_facets")}
+    check(f"employer facets from the history rows (got {sorted(facets)[:6]})",
+          facets.get(("employer", "acme-inc", "citizenship", "INDIA")) == ("India", 1)
+          and facets.get(("employer", "acme-inc", "visa_class", "H-1B")) == ("H-1B", 1))
+    check("occupation facets map the SOC code to the occupation page",
+          facets.get(("occupation", "software-developers", "education", "Master's")) == ("Master's", 1))
 
     doc = h.read_doc(db)
-    check("each workbook is recorded in perm_docs[perm_history]",
-          len(doc.get("files", {})) == 2)
+    check("each workbook that loaded is recorded, the broken one isn't",
+          sorted(doc.get("files", {})) == sorted(
+              pathlib.Path(p).name for p in (FY2010, FY2021, FY2009)))
 
-    # Identical reload writes nothing.
-    before = db.conn.total_changes
-    rc = run(db, ["--local", FY2010, FY2021])
-    check(f"a second identical load writes no data rows (changes {db.conn.total_changes - before})",
-          rc == 0 and db.conn.total_changes - before <= 4)
+    # Identical reload writes no data rows (the facets and the doc are rebuilt).
+    touched: list[str] = []
+    orig_pipeline = db.pipeline
+
+    def watching(reqs, **kw):
+        for r in reqs:
+            sql = r.get("stmt", {}).get("sql", "") if r.get("type") == "execute" else ""
+            m = re.search(r"(?:INTO|UPDATE)\s+(perm_cases_history|perm_employer_years|perm_country_years)", sql)
+            if m:
+                touched.append(m.group(1))
+        return orig_pipeline(reqs, **kw)
+
+    db.pipeline = watching
+    rc = run(db, ["--local", FY2010, FY2021, FY2009])
+    db.pipeline = orig_pipeline
+    check(f"a second identical load writes no data rows (touched {touched})", rc == 0 and touched == [])
+
+    # A row stored before the worker's fields existed is filled by a narrow UPDATE.
+    db.conn.execute("UPDATE perm_cases_history SET citizenship = NULL, visa_class = NULL "
+                    "WHERE case_number = 'A-20001-11111'")
+    db.conn.commit()
+    sqls: list[str] = []
+
+    def spying(reqs, **kw):
+        sqls.extend(r["stmt"]["sql"][:40] for r in reqs if r.get("type") == "execute")
+        return orig_pipeline(reqs, **kw)
+
+    db.pipeline = spying
+    run(db, ["--local", FY2021])
+    db.pipeline = orig_pipeline
+    got = db.conn.execute("SELECT citizenship, visa_class FROM perm_cases_history "
+                          "WHERE case_number = 'A-20001-11111'").fetchone()
+    check(f"the missing fields filled (got {got})", got == ("INDIA", "H-1B"))
+    check("by a narrow UPDATE, not a whole-row replace",
+          any(q.startswith("UPDATE perm_cases_history") for q in sqls)
+          and not any(q.startswith("INSERT OR REPLACE INTO perm_cases_history") for q in sqls))
 
     # --current drops a year that lost its cases.
     db.conn.execute("DELETE FROM perm_cases WHERE fiscal_year = '2026'")

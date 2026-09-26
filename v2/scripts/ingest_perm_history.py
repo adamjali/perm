@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """PERM decisions from FY2008 to FY2023: a record per employer per year, and
-the cases themselves from FY2020.
+the cases themselves from FY2016.
 
 The current corpus (`perm_cases`) starts with decisions on 2023-10-01, the
 first day of FY2024, because that is where the quarterly ingest's `--since-fy`
@@ -10,10 +10,17 @@ and writes two things, chosen for what they answer and what they cost:
     perm_employer_years   slug, fiscal year, certified / denied / withdrawn.
                           FY2008 onward. An employer's track record, the thing
                           an older year is actually useful for.
-    perm_cases_history    the case rows for FY2020 to FY2023, same columns as
-                          perm_cases, two indexes, so a case decided in those
-                          years can be looked up and listed on its employer's
-                          page. Older years are counted, not stored row by row.
+    perm_cases_history    the case rows for FY2016 to FY2023, perm_cases'
+                          columns plus the worker's (citizenship, birth
+                          country, visa at filing, education, field of study,
+                          school, the job's required education: the old form
+                          carries them, the new one doesn't), so a case can be
+                          looked up, listed and searched. FY2016 is where
+                          those fields begin; older years are counted.
+    perm_country_years    decisions by country of citizenship and year,
+                          national, FY2008 onward.
+    perm_history_facets   each employer's and occupation's top values for the
+                          worker's fields, from the history rows.
 
 `--current` fills FY2024 onward of `perm_employer_years` from `perm_cases`, so
 one table carries the whole series; the quarterly ingest runs it after each
@@ -69,7 +76,7 @@ from lib_naics import normalize_naics  # noqa: E402
 from lib_turso import Turso, lit, record_run  # noqa: E402
 
 FIRST_FY, LAST_FY = 2008, 2023
-ROWS_FROM_FY = 2020
+ROWS_FROM_FY = 2016
 DOC_KEY = "perm_history"
 NS = ipd.NS
 PAUSE_BETWEEN_FILES_S = 30
@@ -86,7 +93,14 @@ COLUMNS = [
     "fiscal_year", "employer_name", "employer_slug", "state", "job_title",
     "soc_code", "soc_title", "attorney_name", "attorney_slug", "wage",
     "naics", "worksite_city",
+    "citizenship", "birth_country", "visa_class", "education", "major",
+    "institution", "job_education",
 ]
+# The first CORE columns decide whether a stored row is the same case record;
+# the rest (the worker's fields, added Sep 26) can be filled into a row that
+# is otherwise unchanged with a narrow UPDATE instead of a whole-row replace.
+CORE = 17
+EXTRA = COLUMNS[CORE:]
 
 SCHEMA = [
     """CREATE TABLE IF NOT EXISTS perm_employer_years (
@@ -114,11 +128,48 @@ SCHEMA = [
          attorney_slug TEXT,
          wage          REAL,
          naics         TEXT,
-         worksite_city TEXT
+         worksite_city TEXT,
+         citizenship   TEXT,
+         birth_country TEXT,
+         visa_class    TEXT,
+         education     TEXT,
+         major         TEXT,
+         institution   TEXT,
+         job_education TEXT
        )""",
     # An employer page lists its own cases, newest first: one equality and
     # the ordering column last, so the index supplies the order.
     "CREATE INDEX IF NOT EXISTS idx_pch_emp_dec ON perm_cases_history(employer_slug, decision_date)",
+    """CREATE TABLE IF NOT EXISTS perm_country_years (
+         country   TEXT NOT NULL,
+         fy        INTEGER NOT NULL,
+         certified INTEGER NOT NULL,
+         denied    INTEGER NOT NULL,
+         withdrawn INTEGER NOT NULL,
+         PRIMARY KEY (country, fy)
+       )""",
+    """CREATE TABLE IF NOT EXISTS perm_history_facets (
+         kind  TEXT NOT NULL,
+         slug  TEXT NOT NULL,
+         facet TEXT NOT NULL,
+         pos   INTEGER NOT NULL,
+         key   TEXT NOT NULL,
+         label TEXT NOT NULL,
+         n     INTEGER NOT NULL,
+         PRIMARY KEY (kind, slug, facet, pos)
+       )""",
+]
+
+# The master case search reads history under the same leads as perm_cases.
+# Built AFTER the rows (one pass each rather than maintained per insert), and
+# every reader must work without them: they are the first thing to drop if the
+# write budget cannot hold them.
+SEARCH_INDEXES = [
+    "CREATE INDEX IF NOT EXISTS idx_pch_dec ON perm_cases_history(decision_date)",
+    "CREATE INDEX IF NOT EXISTS idx_pch_state_dec ON perm_cases_history(state, decision_date)",
+    "CREATE INDEX IF NOT EXISTS idx_pch_socg_dec ON perm_cases_history(substr(soc_code, 1, 7), decision_date)",
+    "CREATE INDEX IF NOT EXISTS idx_pch_att_dec ON perm_cases_history(attorney_slug, decision_date)",
+    "CREATE INDEX IF NOT EXISTS idx_pch_cit_dec ON perm_cases_history(citizenship, decision_date)",
 ]
 
 
@@ -216,8 +267,14 @@ def iter_rows(path: str):
             yield cells
 
 
+def header_name(v: str) -> str:
+    """FY2009's workbook writes "CASE STATUS" where every other year writes
+    CASE_STATUS; one spelling for both."""
+    return re.sub(r"\s+", "_", v.strip().upper())
+
+
 def resolve(header_cells: dict[int, str]) -> dict[int, str]:
-    header = {v.strip().upper(): k for k, v in header_cells.items() if v}
+    header = {header_name(v): k for k, v in header_cells.items() if v}
     colmap: dict[int, str] = {}
     for field, names in CANDIDATES.items():
         for name in names:
@@ -234,10 +291,12 @@ def clean(s: str | None, n: int) -> str:
 def parse_workbook(path: str, seen: set[str]) -> dict:
     """One workbook -> counts per (employer key, fiscal year) and case rows.
 
-    Returns {counts, rows, resolved, sheetRows, kept}. `rows` holds only
-    decisions in FY2020 onward; older years are counted.
+    Returns {counts, countries, rows, resolved, sheetRows, kept}. `rows`
+    holds only decisions from ROWS_FROM_FY on; older years are counted, by
+    employer and by country of citizenship.
     """
     counts: dict[tuple[str, int], list[int]] = defaultdict(lambda: [0, 0, 0])
+    countries: dict[tuple[str, int], list[int]] = defaultdict(lambda: [0, 0, 0])
     rows: list[dict] = []
     colmap: dict[int, str] = {}
     sheet_rows = kept = 0
@@ -248,7 +307,7 @@ def parse_workbook(path: str, seen: set[str]) -> dict:
             got = set(colmap.values())
             missing = [f for f in REQUIRED if f not in got]
             if missing:
-                raise SystemExit(f"FATAL: {os.path.basename(path)} resolves none of {missing}. "
+                raise ValueError(f"{os.path.basename(path)} resolves none of {missing}. "
                                  f"Header was: {sorted(v for v in cells.values() if v)[:40]}")
             absent = sorted(f for f in CANDIDATES if f not in got)
             log(f"    resolved {sorted(got)}" + (f"; absent {absent}" if absent else ""))
@@ -268,6 +327,10 @@ def parse_workbook(path: str, seen: set[str]) -> dict:
         key = entity_key(employer) if employer else ""
         slot = {"certified": 0, "denied": 1, "withdrawn": 2}[outcome]
         counts[(key, fy)][slot] += 1
+        worker = ipd.worker_fields(rec)
+        citizenship = worker["citizenship"] or ""
+        if citizenship:
+            countries[(citizenship, fy)][slot] += 1
         if fy < ROWS_FROM_FY:
             continue
 
@@ -292,8 +355,10 @@ def parse_workbook(path: str, seen: set[str]) -> dict:
                                                                rec.get("wage_unit") or ""),
             "naics": normalize_naics(rec.get("naics")),
             "worksiteCity": clean(rec.get("worksite_city"), 60) or None,
+            **worker,
         })
-    return {"counts": counts, "rows": rows, "resolved": sorted(set(colmap.values())),
+    return {"counts": counts, "countries": countries, "rows": rows,
+            "resolved": sorted(set(colmap.values())),
             "sheetRows": sheet_rows - 1, "kept": kept}
 
 
@@ -386,15 +451,31 @@ def row_tuple(r: dict, emp: dict[str, str], att: dict[str, str]) -> tuple:
     return (r["caseNumber"], r["status"], r["receivedDate"], r["decisionDate"], r["days"],
             r["fiscalYear"], e or None, emp.get(entity_key(e), "") if e else "",
             r["state"], r["jobTitle"], r["socCode"], r["socTitle"], a or None,
-            att.get(entity_key(a), "") if a else "", r["wage"], r["naics"], r["worksiteCity"])
+            att.get(entity_key(a), "") if a else "", r["wage"], r["naics"], r["worksiteCity"],
+            r.get("citizenship"), r.get("birthCountry"), r.get("visaClass"), r.get("education"),
+            r.get("major"), r.get("institution"), r.get("jobEducation"))
 
 
 def fingerprint(t: tuple) -> str:
-    return hashlib.blake2b("\x1f".join(_canon(v) for v in t[1:]).encode(), digest_size=8).hexdigest()
+    """The core record: whether a stored row is this case as DOL published it."""
+    return hashlib.blake2b("\x1f".join(_canon(v) for v in t[1:CORE]).encode(), digest_size=8).hexdigest()
 
 
-def stored_fingerprints(db, fy: int) -> dict[str, str]:
-    out: dict[str, str] = {}
+def extras_of(t: tuple) -> tuple[str, ...]:
+    return tuple(_canon(v) for v in t[CORE:])
+
+
+def ensure_columns(db) -> list[str]:
+    """A table made before the worker's fields existed gains them in place."""
+    have = {_cell(r[1]) for r in _rows(db.execute("PRAGMA table_info(perm_cases_history)"))}
+    added = [c for c in EXTRA if c not in have]
+    for c in added:
+        db.execute(f"ALTER TABLE perm_cases_history ADD COLUMN {c} TEXT")
+    return added
+
+
+def stored_fingerprints(db, fy: int) -> dict[str, tuple[str, tuple[str, ...]]]:
+    out: dict[str, tuple[str, tuple[str, ...]]] = {}
     after = ""
     while True:
         res = db.execute(f"SELECT {','.join(COLUMNS)} FROM perm_cases_history "
@@ -403,34 +484,148 @@ def stored_fingerprints(db, fy: int) -> dict[str, str]:
         rs = _rows(res)
         for r in rs:
             t = tuple(_cell(c) for c in r)
-            out[str(t[0])] = fingerprint(t)
+            out[str(t[0])] = (fingerprint(t), extras_of(t))
         if len(rs) < 20000:
             return out
         after = str(_cell(rs[-1][0]))
 
 
+def narrow_update(rows: list[tuple]) -> dict:
+    """One UPDATE setting only the EXTRA columns, a CASE arm per row.
+
+    A row whose core record is unchanged costs one row write this way, where
+    an INSERT OR REPLACE deletes and reinserts it and every index entry.
+    """
+    sets, args = [], []
+    for i, col in enumerate(EXTRA):
+        arms = " ".join("WHEN ? THEN ?" for _ in rows)
+        sets.append(f"{col} = CASE case_number {arms} ELSE {col} END")
+        for r in rows:
+            args += [lit(r[0]), lit(r[CORE + i])]
+    args += [lit(r[0]) for r in rows]
+    return {"sql": f"UPDATE perm_cases_history SET {', '.join(sets)} "
+                   f"WHERE case_number IN ({','.join('?' * len(rows))})",
+            "args": args}
+
+
 def write_cases(db, rows: list[dict], emp, att) -> int:
-    """INSERT OR REPLACE the rows that are new or changed, 400 per statement."""
+    """New or changed rows whole (400 per statement); rows whose only change is
+    the worker's fields by a narrow UPDATE (60 per statement)."""
     by_fy: dict[int, list[tuple]] = defaultdict(list)
     for r in rows:
         by_fy[int(r["fiscalYear"])].append(row_tuple(r, emp, att))
     written = 0
+    head = f"INSERT OR REPLACE INTO perm_cases_history ({','.join(COLUMNS)}) VALUES "
+    mark = "(" + ",".join("?" * len(COLUMNS)) + ")"
     for fy, tuples in by_fy.items():
         have = stored_fingerprints(db, fy)
-        todo = [t for t in tuples if have.get(str(t[0])) != fingerprint(t)]
-        head = f"INSERT OR REPLACE INTO perm_cases_history ({','.join(COLUMNS)}) VALUES "
-        mark = "(" + ",".join("?" * len(COLUMNS)) + ")"
+        whole, narrow = [], []
+        for t in tuples:
+            stored = have.get(str(t[0]))
+            if stored is None or stored[0] != fingerprint(t):
+                whole.append(t)
+            elif stored[1] != extras_of(t):
+                narrow.append(t)
         stmts = []
-        for i in range(0, len(todo), 400):
-            chunk = todo[i:i + 400]
+        for i in range(0, len(whole), 400):
+            chunk = whole[i:i + 400]
             stmts.append({"type": "execute", "stmt": {
                 "sql": head + ",".join([mark] * len(chunk)),
                 "args": [lit(v) for t in chunk for v in t]}})
+        for i in range(0, len(narrow), 60):
+            stmts.append({"type": "execute", "stmt": narrow_update(narrow[i:i + 60])})
         for i in range(0, len(stmts), 4):
             db.pipeline(stmts[i:i + 4] + [{"type": "close"}])
-        written += len(todo)
-        log(f"    FY{fy}: {len(tuples):,} case rows, {len(todo):,} written")
+        written += len(whole) + len(narrow)
+        log(f"    FY{fy}: {len(tuples):,} case rows, {len(whole):,} written whole, "
+            f"{len(narrow):,} given the worker's fields only")
     return written
+
+
+def write_country_years(db, countries: dict[tuple[str, int], list[int]], fys: list[int]) -> int:
+    """Decisions by country of citizenship and year, national, diffed."""
+    if not fys:
+        return 0
+    marks = ",".join("?" * len(fys))
+    have = {(_cell(r[0]), int(_cell(r[1]))): tuple(int(_cell(x)) for x in r[2:])
+            for r in _rows(db.execute(
+                f"SELECT country, fy, certified, denied, withdrawn FROM perm_country_years "
+                f"WHERE fy IN ({marks})", list(fys)))}
+    changed = [(c, fy, *v) for (c, fy), v in countries.items() if have.get((c, fy)) != tuple(v)]
+    stmts = []
+    for i in range(0, len(changed), 400):
+        chunk = changed[i:i + 400]
+        stmts.append({"type": "execute", "stmt": {
+            "sql": "INSERT OR REPLACE INTO perm_country_years (country, fy, certified, denied, withdrawn) VALUES "
+                   + ",".join(["(?,?,?,?,?)"] * len(chunk)),
+            "args": [lit(v) for row in chunk for v in row]}})
+    for i in range(0, len(stmts), 4):
+        db.pipeline(stmts[i:i + 4] + [{"type": "close"}])
+    return len(changed)
+
+
+FACETS = ("citizenship", "education", "visa_class", "institution", "major")
+FACET_FLOOR = 10  # history cases an entity needs before its breakdowns are written
+FACET_TOP = 6
+
+
+def display(facet: str, value: str) -> str:
+    """Countries print in upper case in DOL's file; the page reads them in title case."""
+    if facet in ("citizenship",):
+        return " ".join(w.capitalize() if w.isalpha() else w for w in value.lower().split())
+    return value
+
+
+def build_history_facets(db, occ_slug_by_code: dict[str, str]) -> int:
+    """perm_history_facets: each employer's and occupation's top values per worker field.
+
+    Grouped in SQL (one read of the table per facet), ranked here, written
+    whole: the table is small and rebuilt only when the history is.
+    """
+    out: list[tuple] = []
+    for kind, key_col in (("employer", "employer_slug"), ("occupation", "soc_code")):
+        totals = {str(_cell(r[0])): int(_cell(r[1])) for r in _rows(db.execute(
+            f"SELECT {key_col}, COUNT(*) FROM perm_cases_history WHERE {key_col} IS NOT NULL "
+            f"AND {key_col} != '' GROUP BY {key_col}"))}
+        for facet in FACETS:
+            groups: dict[str, dict[str, int]] = defaultdict(dict)
+            for r in _rows(db.execute(
+                    f"SELECT {key_col}, {facet}, COUNT(*) FROM perm_cases_history "
+                    f"WHERE {key_col} IS NOT NULL AND {key_col} != '' AND {facet} IS NOT NULL "
+                    f"AND {facet} != '' GROUP BY {key_col}, {facet}")):
+                k, v, n = str(_cell(r[0])), str(_cell(r[1])), int(_cell(r[2]))
+                slug = k if kind == "employer" else occ_slug_by_code.get(k)
+                if not slug or totals.get(k, 0) < FACET_FLOOR:
+                    continue
+                groups[slug][v] = groups[slug].get(v, 0) + n
+            for slug, values in groups.items():
+                ranked = sorted(values.items(), key=lambda kv: (-kv[1], kv[0]))[:FACET_TOP]
+                for pos, (v, n) in enumerate(ranked):
+                    out.append((kind, slug, facet, pos, v, display(facet, v), n))
+    db.execute("DELETE FROM perm_history_facets")
+    stmts = []
+    for i in range(0, len(out), 400):
+        chunk = out[i:i + 400]
+        stmts.append({"type": "execute", "stmt": {
+            "sql": "INSERT OR REPLACE INTO perm_history_facets (kind, slug, facet, pos, key, label, n) VALUES "
+                   + ",".join(["(?,?,?,?,?,?,?)"] * len(chunk)),
+            "args": [lit(v) for row in chunk for v in row]}})
+    for i in range(0, len(stmts), 4):
+        db.pipeline(stmts[i:i + 4] + [{"type": "close"}])
+    log(f"  history facets: {len(out):,} rows")
+    return len(out)
+
+
+def occupation_slugs(db) -> dict[str, str]:
+    return {str(_cell(r[0])): str(_cell(r[1])) for r in _rows(db.execute(
+        "SELECT code, slug FROM perm_entities WHERE kind = 'occupation' AND code IS NOT NULL"))}
+
+
+def build_search_indexes(db) -> None:
+    t = time.time()
+    for stmt in SEARCH_INDEXES:
+        db.execute(stmt)
+    log(f"  search indexes ({len(SEARCH_INDEXES)}) in {time.time() - t:,.0f}s")
 
 
 def read_doc(db) -> dict:
@@ -486,7 +681,23 @@ def main() -> int:
     ap.add_argument("--force", action="store_true", help="reload files already recorded")
     ap.add_argument("--dry-run", action="store_true", help="parse and report; write nothing")
     ap.add_argument("--current", action="store_true", help="only FY2024 onward, from perm_cases")
+    ap.add_argument("--no-indexes", action="store_true",
+                    help="skip the search indexes (the write budget's first saving)")
+    ap.add_argument("--finish-only", action="store_true",
+                    help="no workbooks: current years, search indexes and facets only")
     args = ap.parse_args()
+
+    if args.finish_only:
+        db = Turso()
+        db.script(SCHEMA)
+        ensure_columns(db)
+        n = write_current_years(db)
+        if not args.no_indexes:
+            build_search_indexes(db)
+        n += build_history_facets(db, occupation_slugs(db))
+        record_run(db, "ingest_perm_history.py --finish-only", status="ok", rows_written=n,
+                   note="current years, search indexes and history facets")
+        return 0
 
     if args.current:
         db = Turso()
@@ -508,6 +719,9 @@ def main() -> int:
     db = None if args.dry_run else Turso()
     if db:
         db.script(SCHEMA)
+        added = ensure_columns(db)
+        if added:
+            log(f"  added {added} to perm_cases_history")
     doc = read_doc(db) if db else {}
     loaded = doc.setdefault("files", {})
     emp, att = slug_maps(db) if db else ({}, {})
@@ -550,6 +764,8 @@ def main() -> int:
         if not db:
             continue
         wrote_years += write_years(db, folded, sorted(by_fy))
+        wrote_years += write_country_years(db, got["countries"],
+                                           sorted({y for (_, y) in got["countries"]}))
         wrote_cases += write_cases(db, got["rows"], emp, att)
         loaded[name] = {"fy": fy, "cases": got["kept"], "caseRows": len(got["rows"]),
                         "matchedShare": match["matchedShare"], "resolved": got["resolved"],
@@ -558,6 +774,9 @@ def main() -> int:
 
     if db:
         wrote_years += write_current_years(db)
+        if not args.no_indexes:
+            build_search_indexes(db)
+        wrote_years += build_history_facets(db, occupation_slugs(db))
         years = sorted({v["fy"] for v in loaded.values()})
         status = "ok" if not failures else "partial"
         note = (f"FY{years[0]} to FY{years[-1]} held; " if years else "") + (

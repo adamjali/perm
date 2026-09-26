@@ -48,6 +48,8 @@ COLUMNS = [
     "fiscal_year", "employer_name", "employer_slug", "state", "job_title",
     "soc_code", "soc_title", "attorney_name", "attorney_slug", "wage",
     "naics", "worksite_city",
+    "citizenship", "birth_country", "visa_class", "education", "major",
+    "institution", "job_education",
 ]
 # The first CORE columns are the ones every load has carried since the table
 # was made. The two after them (the employer's NAICS code and the worksite
@@ -56,8 +58,8 @@ COLUMNS = [
 # REPLACE would also rewrite all eighteen indexes.
 CORE = 15
 EXTRA = COLUMNS[CORE:]
-# 17 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
-# 8,500 - comfortably under, and large enough that the round trip dominates.
+# 24 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
+# 12,000 - comfortably under, and large enough that the round trip dominates.
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
 
@@ -81,7 +83,14 @@ SCHEMA = [
          attorney_slug TEXT,
          wage          REAL,
          naics         TEXT,
-         worksite_city TEXT
+         worksite_city TEXT,
+         citizenship   TEXT,
+         birth_country TEXT,
+         visa_class    TEXT,
+         education     TEXT,
+         major         TEXT,
+         institution   TEXT,
+         job_education TEXT
        )""",
 ]
 
@@ -193,6 +202,9 @@ def rows_from(cases_path: pathlib.Path, employers, firms):
                 firms.get(entity_key(att), "") if att else "",
                 r.get("wage"),
                 r.get("naics"), r.get("worksiteCity"),
+                r.get("citizenship"), r.get("birthCountry"), r.get("visaClass"),
+                r.get("education"), r.get("major"), r.get("institution"),
+                r.get("jobEducation"),
             )
 
 
