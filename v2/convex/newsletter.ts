@@ -42,6 +42,8 @@ import {
   type DigestData,
   type DigestNotice,
   pickUscisMedians,
+  pickEmployerMoves,
+  type DigestEmployerMove,
 } from "./lib/newsletterCompose";
 import { RETRY_DELAY_MS, runSendLoop } from "./lib/newsletterSend";
 import { parseCutoff } from "./lib/perm/calculators/priorityDate";
@@ -50,6 +52,7 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { newsletterDailyCap as dailyCap, newsletterSendingEnabled as sendingEnabled, summarizeNewsletter } from "./lib/newsletterSummary";
 import { adminSummaryValidator, issueStatusValidator } from "./lib/newsletterValidators";
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
+import { employerMoves, parseEmployerStagesDoc } from "../src/lib/employerStages";
 
 const log = createLogger("newsletter");
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -119,6 +122,21 @@ async function readPending(): Promise<number | null> {
     return typeof n === "number" ? n : null;
   } catch {
     return null;
+  }
+}
+
+/**
+ * The week's employer-wide moves, from the census the daily sweep writes.
+ * A missing or stale doc leaves the block out rather than failing the issue.
+ */
+async function readEmployerMoves(weekOf: string): Promise<DigestEmployerMove[]> {
+  try {
+    const row = await one("SELECT json, computed_at FROM perm_docs WHERE key = 'employer_stages'");
+    if (!row || typeof row.json !== "string") return [];
+    const doc = parseEmployerStagesDoc(row.json, Number(row.computed_at), Date.now());
+    return doc ? pickEmployerMoves(employerMoves(doc), weekOf) : [];
+  } catch {
+    return [];
   }
 }
 
@@ -404,12 +422,13 @@ export const buildIssue = internalAction({
     const weekOf = args.weekOf ?? new Date().toISOString().slice(0, 10);
     const since = new Date(Date.now() - 7 * DAY_MS).toISOString().slice(0, 10);
     try {
-      const [queue, pending, bulletin, notices, uscis] = await Promise.all([
+      const [queue, pending, bulletin, notices, uscis, employerMoves] = await Promise.all([
         readQueue(),
         readPending(),
         readBulletin(),
         readNotices(since),
         readUscisQuarter(),
+        readEmployerMoves(weekOf),
       ]);
       // The bulletin lands once a month and the issue goes out every week, so
       // without this the second and third issues restate the same moves as
@@ -427,6 +446,7 @@ export const buildIssue = internalAction({
         ...uscis,
         uscisRepeat: uscis.uscisQuarter !== null && previousQuarter === uscis.uscisQuarter,
         notices,
+        employerMoves,
       };
       const subject = composeSubject(data);
       const text = composeText(data);

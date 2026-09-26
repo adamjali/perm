@@ -1159,9 +1159,9 @@ Full teardown and the remaining gap list:
 plus the 2026-08-24 live delta in the auto-memory
 `the rival tracker-gap-closure.md`.
 
-## greencardclock.com, re-measured Sep 7 2026
+## A second rival site, re-measured Sep 7 2026
 
-Full doc set: `~/.claude/explanations/20260907_greencardclock_teardown/`. The
+Full doc set: kept outside this public repository, like the other teardowns. The
 short version: on PERM this site is decisively better (live status of every
 pending case, DOL's frontier, an estimator that withholds immature cohorts;
 theirs tells a March-2026 filer the case was decided in eight days and its new
@@ -2867,7 +2867,8 @@ CHALLENGE (verified bots, Googlebot to PerplexityBot to facebookexternalhit,
 are excluded by IP range and reverse DNS, never by user agent; the bypass
 rules cover what the directory lacks: WhatsApp, Slack, Discord, Telegram
 previews, `/feed.xml`, `/llms.txt`, the revalidate POSTs by secret header,
-and the site's own audit scripts by `x-permtracker-audit`), plus rule 5, 300
+and the site's own audit scripts by `x-permtracker-audit` carrying the key in
+`.env.local`, since Sep 25 2026), plus rule 5, 300
 requests a minute per IP on page paths. And `check_lookup_demand` in the
 health check fails when a day's live DOL lookups exceed five times the
 30-day median with a floor of 500, the number that crawler moved first.
@@ -2898,7 +2899,7 @@ skips every rule after it, managed ones included**, so order is the design:
 | 2 | AS 32934, 30/min keyed on JA4, 429 | Meta AI may still index, not 40x a day |
 | 3 | `/api/*`, 60/min per IP, 429 | backstop |
 | 4 | `/perm-case-status?case=`, 20/min per IP, 429 | the expensive path, any network |
-| 5 | Bypass when `x-permtracker-audit` exists | the site's own audit scripts skip Bot Protection AND rule 6, because `audit_all_pages.py` walks 61 URLs faster than 300 a minute |
+| 5 | Bypass when `x-permtracker-audit` EQUALS the key in `.env.local` (`PERMTRACKER_AUDIT_KEY`, read by `scripts/lib_audit.py`) | the site's own audit scripts skip Bot Protection AND rule 6, because `audit_all_pages.py` walks 61 URLs faster than 300 a minute. Until Sep 25 2026 the rule matched the header's mere EXISTENCE, and this public repo printed the header in a dozen scripts: any client sending `x-permtracker-audit: 1` skipped the challenge (measured: 429 without, 200 with) | |
 | 6 | 300/min per IP on paths not under `/_next/`, 429 | a runaway script that passes the challenge |
 | 7 | Bypass user agents WhatsApp, facebookexternalhit, Slackbot, Discordbot, TelegramBot, SkypeUriPreview | link previews the directory does not verify; iMessage claims facebookexternalhit from Apple addresses, so it is unverified too |
 | 8 | Bypass `/feed.xml`, `/llms.txt`, `/robots.txt`, `/sitemap.xml`, `/sitemaps/*` | cheap static files read by unverified tools |
@@ -3124,7 +3125,7 @@ says it will not show a generic or shared site name, so the SERP prints the
 domain for us and for the rival tracker alike; keeping the name is Adam's call and
 the fix is entity confidence, not markup. Registration order (RDAP): the rival dashboard
 Mar 2025, **permtracker.app Nov 25 2025**, the rival tracker Mar 22 2026,
-perm-timeline Mar 26, immilane Apr 11, permqueue Apr 27 2026. Being first
+and three smaller rival sites between Mar 26 and Apr 27 2026. Being first
 carries no weight with Google; references, an About page and stability do.
 
 ## Social cards: one real picture per page, and the illustration that was there (2026-09-07)
@@ -3460,9 +3461,11 @@ has published the next month. A capture is proof it is out; an empty result
 after the 18th is stated as probable, never certain, because the Archive lags
 publication by a few days. Silent one-liner when nothing is due. **Proved by a manual fire on 2026-09-09: 62 seconds, and it returned "nothing due. Health check green, newest bulletin September 2026."** The one thing that needed a second attempt is worth keeping: our own page is server-rendered React, so a sentence in the copy is split by JSON punctuation in the raw HTML and a naive `grep` for it matches nothing; strip `\`, `"` and `,` first.
 
-**Our own firewall challenges a bare script with HTTP 429**, so anything
-reading permtracker.app from outside needs the `x-permtracker-audit` header
-(Firewall rule 5). That is why the routine sends it.
+**Our own firewall challenged a bare script with HTTP 429 until Sep 15**, which
+is why the routine sends `x-permtracker-audit: 1`. Since rule 12 (Sep 15) any
+client reads an ordinary page, and since Sep 25 rule 5 wants the secret key,
+so the routine's header is now inert and harmless: it reads `/visa-bulletin`
+through rule 12 like anyone else.
 
 ## WARN, measured from a runner, and three bugs the measurement found (2026-09-09)
 
@@ -6005,7 +6008,8 @@ with a one-shot catch-up at 3:58 PM. Recover the prompt from the transcript, not
 /usr/local/Caskroom/miniconda/base/bin/python3 - <<'PY'
 import json, glob, os
 last = None
-for f in glob.glob(os.path.expanduser("~/.claude/projects/-Users-adammohamed-cc-perm-tracker-v2/*.jsonl")):
+# the session transcripts live under ~/.claude/projects/<cwd with / as ->/
+for f in glob.glob(os.path.expanduser("~/.claude/projects/" + os.getcwd().replace("/", "-") + "/*.jsonl")):
     for line in open(f, errors="ignore"):
         if '"CronCreate"' in line:
             for b in (json.loads(line).get("message") or {}).get("content") or []:
@@ -6188,3 +6192,146 @@ deadline check turns three checks red), the pass-through of cap and deadline int
 (dropping it turns one red), and each budget against the workflow's own step timeouts, read from
 the YAML so the two cannot drift (a full budget of 100 against a 105-minute step turns one red).
 The streak warning and the budget phrase are pinned in `test_ingest_health.py` the same way.
+
+## Sep 25 2026: quoted to 127,000 people on X, and what checking it turned up
+
+A large X account posted, at 2:10 PM, that 100% of Adobe's pending PERM cases
+were on hold, with a screenshot of `/perm-employers/under-review`. It was the
+same account's second post built on this site (the first was Cognizant, Sep 5).
+Checked against DOL's own endpoint that night: **218 of 218 pending Adobe cases
+matched our table exactly** (216 on hold, 2 filed Sep 24 in analyst review), and
+50 of 50 random Cognizant cases were on hold. The page drew 186 visitors in the
+eight hours after the post, against 27 in the whole week before. What the
+checking found, in order of consequence:
+
+- **The census split employers across two rows.** The page's slug came from
+  `perm_live_recent` alone, and an appeal is a DECIDED case (published in
+  `perm_cases`, then appealed back to pending), so 175 pending cases rendered
+  as unlinked names and seven employers sat on two rows. Space Coast Services
+  read **100% (31 of 31)** on its appeals-only row; the truth was **44 of 143**.
+  `write_employer_stages` now takes the slug from either table and folds a
+  slug-less spelling into its slugged row; `listStageCases` had the same join
+  and the same comment claiming "a pending case cannot be in perm_cases", both
+  corrected. The case search already read both tables; the census and the
+  stage listing were the two places the knowledge had not reached.
+- **The headline said DOL did what employers did.** "Whose PERM cases DOL has
+  pulled aside" sat over 5,958 cases, 2,848 of them appeals the employers
+  filed. Every surface now names who acted (`breakdownParts` in
+  `src/lib/employerStages.ts`: "216 on hold, 3 at RFI, 26 under appeal"), and
+  `public-surface-hygiene.test.ts` fails on "DOL ... pulled" in rendered code.
+- **The page could not say WHEN, though the record could.** The sweep now
+  writes `holdSince` / `holdSinceCases` / `holdUndated` / `holdBeforeLog` per
+  employer and a `holdMoves` feed (five or more of one employer's cases moved
+  into or out of hold on one Eastern day, 120 days back) into the same doc.
+  Measured: Adobe held 201 on Sep 10, released all 201 on Sep 11, held 215 on
+  Sep 24; Maplebear held 14 on Sep 10 and released them Sep 11. **An undated
+  hold is two facts**: Cognizant's 1,831 were held when the record began
+  (Aug 27 Eastern), while Adobe's one undated case was filed Sep 23 and first
+  recorded already held. `holdBeforeLog` counts only cases first recorded on or
+  before the log's first day (`fetched_at` moves only with the status, so for
+  an undated hold it is the first record). A new index,
+  `case_events_from_time (from_status, changed_at)`, keeps the release read
+  bounded; the history is computed inside a try and the counts are written
+  without it on failure.
+- **The on-hold guide was three weeks stale under the attorney's byline.**
+  "1,855 on hold right now" had become 2,070, 99% of them two employers', and
+  it said DOL never gives a reason. It now renders `<OnHoldNow />`, an async
+  server component reading the census (names only employers with 25+ held,
+  never a reason), guides revalidate daily, and the one public explanation is
+  quoted from the Inspector General's own post
+  (`x.com/USLaborIG/status/2097321316995232030`, Sep 8 2026, 9:49 AM). **Two
+  news reports quoted two different fragments of that post**; only the post
+  itself had both. The card was redrawn without a live figure and renamed.
+- **The rule that keeps true numbers from becoming a false statement:** never
+  print one employer's explanation next to another employer's count. The
+  guide names Cognizant's suspension in its own sourced paragraph; the census
+  page and the live component carry statuses and dates only.
+
+### The public repository, audited the same night
+
+- **Firewall rule 5 was a public bypass.** It matched `x-permtracker-audit`
+  on EXISTENCE and a dozen scripts here sent it with the value "1": a scripted
+  request to a restricted page got 429 without it and 200 with any value. The
+  rule is to match the key in `.env.local` (`PERMTRACKER_AUDIT_KEY`, never in
+  the repo; `scripts/lib_audit.py` reads it), `indexnow.mjs` sends nothing
+  (rule 8 already lets anyone read sitemaps), and the hygiene test fails on a
+  hardcoded value. `.env.local` was also still mode 644; it is 600 now.
+- **A test that guards an identifier must not spell it out.** `seo.test.ts`
+  listed the very strings it kept out of the markup, which made the test the
+  one place the repository published them. It now compares SHA-256 prefixes of
+  each word. Identity findings themselves are kept outside this public file.
+- **Rivals:** four smaller competitors were still named in this file after
+  the Sep 18 scrub of the two main ones; they are generic now.
+- **`.planning/dol-case-status-access-research.md`** still said the case-status
+  route sits behind anti-abuse verification that clearing would be
+  "circumvention". It is marked superseded in place with the re-measured
+  facts: DOL's app does carry the help text "automated verification to
+  prevent abuse" (bundle re-read Sep 25), and ships no CAPTCHA code with it,
+  no site key and no token; `robots.txt` does not disallow the route.
+
+### Three instruments that reported success over nothing
+
+- **Vitest file filters are regexes, so a path containing `(site)` matches no
+  file**, and a run that matches no file exits 0 with no verdict line. Pass
+  bare file names.
+- **zsh does not split an unquoted `$T` into words**, so a list of file names
+  reached vitest as ONE filter and matched nothing, again exit 0. Use `${=T}`.
+- **The Vercel CLI token in `auth.json` expires and is refreshed only when the
+  CLI runs**; the firewall API answered 403 `invalidToken` until one
+  `npx vercel whoami`. And `gh search code` returned nothing for a word the repo
+  holds 75 times, so it is not a control for anything.
+
+## Sep 26 2026: follow an employer, and one alert email a day
+
+Adam, after the X post: capture the traffic, build off it, and *"i feel like we already have too much
+emails as it is ... just merge everything in"*. He chose a daily bundle plus a digest block, and
+triggers of "holds plus bulk decisions".
+
+**Following an employer** (`convex/employerAlerts.ts`, the card on every `/perm-employers/<slug>`,
+`#follow`): an email when DOL moves the employer's cases as a group. Two lists feed it, both written
+by the sweep into `perm_docs['employer_stages']`:
+
+- `holdMoves`: five or more of its cases on or off hold in one Eastern day (Sep 25).
+- `decisionMoves`: a batch decided on one day, at least 10 cases, at least 5% of its queue that
+  morning, AND at least 3 times its own average day over the window. **The third rule came from
+  measuring:** the first two alone passed Amazon Dev Center on 42 and 44 certifications on consecutive
+  days, its ordinary flow. With all three, 168 batches across 92 employers in the month, none more than
+  six. Certified and denied are DOL's; withdrawn is the employer's, and the sentence says so.
+
+`toldMoves` keys (`<date>|hold-on|<to>`, `<date>|decided|<to>`) are the change detector, seeded at
+confirm time so a move already on the page is not news; `followingFrom` and a 3-day freshness window
+back it up. **The employer's name in every email comes from our records**: the HTTP route looks the
+slug up in `perm_entities` then `perm_live_only_index` and refuses a slug it does not hold, so the form
+can never put a stranger's words in someone's inbox (probed: passing the body's name turns the test red).
+
+**One alert email a day** (`convex/lib/alertDelivery.ts`, `convex/alertOutbox.ts`). Every alert kind
+(case, queue, bulletin, employer) builds its full email and hands it to `deliverAlert`. An address
+following exactly one live thing, not yet mailed today and with nothing waiting, gets it at once;
+anything else waits in `alertOutbox`, and `sendBundles` (11:30, 18:00, 23:30 UTC) sends each address at
+most one email per Eastern day: the stored email for one item, `DailyUpdate` for several, its
+List-Unsubscribe a prefs one-click with the new `alerts` kind (every alert kind off, news and digests
+kept). A queued item counts as delivered for the producer's own detector; the outbox retries 6 times,
+then records `failed`. Every opt-out path drops what is still waiting for the rows it touched
+(`dropQueued`). Sent rows keep only their summary and are pruned at 30 days.
+
+**Budgets did not move.** Employer confirmations share the case confirmations' 15 a day and employer
+alerts the case alerts' 18. Every limit lives once in `convex/lib/alertBudgets.ts`; a test holds that
+table to the ledger in `convex/caseAlerts.ts` (75 a day). Each refusal is counted per pool per Eastern
+day in `budgetRefusals`, which is the admin panel's "time to move off Resend's free plan" signal.
+
+**The weekly digest** carries an "Employer-wide moves this week" block (holds first, then batches, six at
+most), read from the same doc.
+
+**The admin page is tabs now** (Overview, Alerts and email, Users, Weekly digest; the tab is in the URL
+hash). New: every budget pool with 24-hour use and the week's refusals, the outbox (waiting, oldest wait,
+emails vs alerts inside them, bundles, failures, drops), the latest 30 alerts, who follows which
+employer, and the subscription lists searchable and collapsed to ten rows.
+
+**Not done, waiting on a clear yes:** re-checking decided cases less often (CERTIFIED - EXPIRED is
+206,415 cases that have never changed and are re-asked daily). Adam's answer was "i guess idk".
+
+Two traps from building it:
+- **convex-test runs scheduled functions in the background**, so a test that schedules fifteen
+  confirmation emails has them land in the NEXT test's fetch stub (16 "sends" where 1 was expected).
+  Filter the stub by what the test is about.
+- **`npx convex codegen` uploads to the dev deployment**, crons included; the new sweeps run there too.

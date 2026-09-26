@@ -110,6 +110,15 @@
  * same 18 alerts, which is the correct shape - the scarce thing is Resend's
  * shared 100/day, and it does not care which program an email is about.
  *
+ * Following an employer (convex/employerAlerts.ts, Sep 26 2026) claimed no
+ * line either: its confirmations share the 15 and its alerts share the 18.
+ * Every limit above lives once in convex/lib/alertBudgets.ts, which the
+ * senders enforce and the admin panel reports, and a test holds that table
+ * to this one. Every ALERT (not confirmation) now leaves through
+ * `deliverAlert` (convex/lib/alertDelivery.ts), so one person gets at most one
+ * alert email a day; a bundle of several alerts spends several units and
+ * sends one email, which only ever errs low.
+ *
  * The weekly bulletin digest (convex/newsletter.ts) claims its own line:
  * NEWSLETTER_DAILY_CAP (default 30) sends a day, charged through the same
  * global rate-limit table under "newsletter_send", and it is OFF until
@@ -169,6 +178,15 @@ import {
 } from "./lib/rateLimit";
 import { stageNewsFor, stageNewsletterFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
+import { deliverAlert } from "./lib/alertDelivery";
+import { dropQueued } from "./lib/alertOutboxStore";
+import {
+  CASE_ALERT_BUDGET,
+  CASE_ALERT_KEY,
+  CASE_CONFIRMATION_BUDGET,
+  CASE_CONFIRMATION_KEY,
+  noteRefusal,
+} from "./lib/alertBudgets";
 
 const log = createLogger("CaseAlerts");
 
@@ -184,11 +202,13 @@ const CHECK_BATCH_LIMIT = 300;
 /** How many alerts one sweep may send. See the budget arithmetic above. */
 const ALERT_BATCH_LIMIT = 18;
 
-/** Global ceiling on alerts, across every subscriber, per rolling day. */
-const ALERT_GLOBAL_BUDGET = { limit: 18, windowMs: 24 * 60 * 60 * 1000 };
-
-/** Global ceiling on confirmation emails, across every caller. */
-const CONFIRMATION_GLOBAL_BUDGET = { limit: 15, windowMs: 24 * 60 * 60 * 1000 };
+/**
+ * Global ceilings on alerts and on confirmation emails, across every
+ * subscriber, per rolling day. Shared with employer alerts; see
+ * convex/lib/alertBudgets.ts.
+ */
+const ALERT_GLOBAL_BUDGET = CASE_ALERT_BUDGET;
+const CONFIRMATION_GLOBAL_BUDGET = CASE_CONFIRMATION_BUDGET;
 
 /** Minimum gap between confirmation emails to one address. */
 const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
@@ -459,10 +479,11 @@ export const subscribe = internalMutation({
     const budget = await checkAndRecordRateLimit(
       ctx,
       "all",
-      "case_subscribe_global",
+      CASE_CONFIRMATION_KEY,
       CONFIRMATION_GLOBAL_BUDGET,
     );
     if (!budget.allowed) {
+      await noteRefusal(ctx, "caseConfirm");
       log.error("confirmation budget exhausted; refusing to send", {
         limit: CONFIRMATION_GLOBAL_BUDGET.limit,
       });
@@ -852,6 +873,7 @@ export const unsubscribeByToken = internalMutation({
         pendingCaseNumber: undefined,
       });
     }
+    await dropQueued(ctx, all[0]!.email, "case");
     return true;
   },
 });
@@ -974,13 +996,17 @@ export const claimAlertBudget = internalMutation({
   returns: v.number(),
   handler: async (ctx, args) => {
     if (args.want <= 0) return 0;
-    const state = await checkRateLimit(ctx, "all", "case_alert_global", ALERT_GLOBAL_BUDGET);
-    if (!state.allowed) return 0;
+    const state = await checkRateLimit(ctx, "all", CASE_ALERT_KEY, ALERT_GLOBAL_BUDGET);
+    if (!state.allowed) {
+      await noteRefusal(ctx, "caseAlert", args.want);
+      return 0;
+    }
     // `remaining` already accounts for the notional attempt this call
     // represents, so the grant is that plus the one it was counted against.
     const granted = Math.min(args.want, state.remaining + 1);
+    await noteRefusal(ctx, "caseAlert", args.want - granted);
     for (let i = 0; i < granted; i++) {
-      await recordRateLimitAttempt(ctx, "all", "case_alert_global");
+      await recordRateLimitAttempt(ctx, "all", CASE_ALERT_KEY);
     }
     return granted;
   },
@@ -1223,6 +1249,8 @@ export const sweepCaseChanges = internalAction({
   returns: v.object({
     checked: v.number(),
     sent: v.number(),
+    /** Handed to the daily bundle rather than sent now. */
+    queued: v.number(),
     failed: v.number(),
     seeded: v.number(),
     remaining: v.boolean(),
@@ -1232,6 +1260,7 @@ export const sweepCaseChanges = internalAction({
   ): Promise<{
     checked: number;
     sent: number;
+    queued: number;
     failed: number;
     seeded: number;
     remaining: boolean;
@@ -1242,11 +1271,12 @@ export const sweepCaseChanges = internalAction({
     const batch = due.slice(0, CHECK_BATCH_LIMIT);
     let remaining = due.length > CHECK_BATCH_LIMIT;
     let sent = 0;
+    let queued = 0;
     let failed = 0;
     let seeded = 0;
 
     if (batch.length === 0) {
-      return { checked: 0, sent: 0, failed: 0, seeded: 0, remaining: false };
+      return { checked: 0, sent: 0, queued: 0, failed: 0, seeded: 0, remaining: false };
     }
 
     // One round trip for the whole batch, one statement per program table.
@@ -1267,7 +1297,7 @@ export const sweepCaseChanges = internalAction({
       });
     }
     if (statements.length === 0) {
-      return { checked: 0, sent: 0, failed: 0, seeded: 0, remaining: false };
+      return { checked: 0, sent: 0, queued: 0, failed: 0, seeded: 0, remaining: false };
     }
 
     const mirror = (await query(statements)).flat();
@@ -1345,7 +1375,7 @@ export const sweepCaseChanges = internalAction({
     });
 
     if (changed.length === 0) {
-      return { checked: batch.length, sent: 0, failed: 0, seeded, remaining };
+      return { checked: batch.length, sent: 0, queued: 0, failed: 0, seeded, remaining };
     }
 
     // Claim the budget BEFORE rendering anything. A send that the budget will
@@ -1360,7 +1390,7 @@ export const sweepCaseChanges = internalAction({
         due: changed.length,
         limit: ALERT_GLOBAL_BUDGET.limit,
       });
-      return { checked: batch.length, sent: 0, failed: 0, seeded, remaining };
+      return { checked: batch.length, sent: 0, queued: 0, failed: 0, seeded, remaining };
     }
 
     const sending = changed.slice(0, granted);
@@ -1530,14 +1560,21 @@ export const sweepCaseChanges = internalAction({
           },
         );
 
-        const result = await sendEmailWithRetry(getResend(), {
-          from: FROM_EMAIL,
-          to: sub.email,
+        // Through the daily delivery path: sent now when this is the only
+        // thing the address follows, otherwise merged into its one email of
+        // the day. See convex/lib/alertDelivery.ts.
+        const result = await deliverAlert(ctx, {
+          email: sub.email,
+          kind: "case",
+          ref: `case:${sub._id}`,
           subject: `Your ${noun} is now ${status}`,
           html,
-          headers: {
-            "List-Unsubscribe": `<${unsubUrl}>`,
-            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          listUnsubscribe: unsubUrl,
+          summary: {
+            title: sub.caseNumber,
+            line: `${sub.lastSeenStatus} to ${status}`,
+            url: caseUrl,
+            tone: !isFinal ? "neutral" : tone === "live" ? "good" : "bad",
           },
           text: [
             `DOL's status for ${noun} ${sub.caseNumber} has changed.`,
@@ -1577,20 +1614,21 @@ export const sweepCaseChanges = internalAction({
           ].join("\n"),
         });
 
-        if (result.error) {
+        if (result.status === "failed") {
           // Do NOT stamp the row. This subscriber stays due so a later sweep
           // retries them; advancing `lastSeenStatus` here would make the
           // transition look like old news and destroy the alert permanently.
+          // A QUEUED alert is stamped below: the outbox owns its retries.
           failed += 1;
           log.error("alert send failed", {
             caseNumber: sub.caseNumber,
-            error: result.error.message,
+            error: result.error,
           });
           await recordError(
             ctx,
             "action",
             "caseAlerts.sweepCaseChanges",
-            new Error(`Resend: ${result.error.name}: ${result.error.message}`),
+            new Error(`Resend: ${result.error}`),
           );
           continue;
         }
@@ -1600,7 +1638,8 @@ export const sweepCaseChanges = internalAction({
           status,
           isFinal,
         });
-        sent += 1;
+        if (result.status === "sent") sent += 1;
+        else queued += 1;
       } catch (error) {
         // One bad case must not stop the sweep for everyone behind it.
         failed += 1;
@@ -1609,9 +1648,10 @@ export const sweepCaseChanges = internalAction({
       }
     }
 
-    if (failed > 0 && sent > 0) remaining = true;
+    const delivered = sent + queued;
+    if (failed > 0 && delivered > 0) remaining = true;
 
-    if (remaining && sent > 0) {
+    if (remaining && delivered > 0) {
       await ctx.scheduler.runAfter(
         5 * 60 * 1000,
         internal.caseAlerts.sweepCaseChanges,
@@ -1624,6 +1664,6 @@ export const sweepCaseChanges = internalAction({
       });
     }
 
-    return { checked: batch.length, sent, failed, seeded, remaining };
+    return { checked: batch.length, sent, queued, failed, seeded, remaining };
   },
 });

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { ARTICLE_AUTHOR } from "@/lib/constants/externalLinks";
 import { describe, it, expect } from "vitest";
 import {
@@ -301,11 +302,19 @@ describe("article authorship", () => {
   it("never publishes a personal email or the operator's legal identity", () => {
     // This markup ships on every article and is read by crawlers. The persona
     // is the only identity that may appear in public output.
+    //
+    // THE FORBIDDEN WORDS ARE HASHED (Sep 25 2026). This file is public, and
+    // its first version spelled out the very identifiers it guarded, which
+    // made the test the one place in the repository that published them.
+    // Each word of the markup is hashed and compared; the plain words never
+    // appear here. Probe: add one of them to `org.name` and this goes red.
+    const FORBIDDEN = new Set(["5bcd94d386bd0b0f", "2281e2633a8b9dc3", "575e500ddb529cc2", "dc9e896b65bf36fe"]);
+    const digest = (w: string) => createHash("sha256").update(w).digest("hex").slice(0, 16);
     for (const schema of [person, org]) {
       const json = JSON.stringify(schema);
       expect(json).not.toMatch(/@gmail\.com/i);
-      expect(json).not.toMatch(/adamdragon/i);
-      expect(json).not.toMatch(/amohamed369/i);
+      const words = json.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+      expect(words.filter((w) => FORBIDDEN.has(digest(w)))).toEqual([]);
     }
   });
 });

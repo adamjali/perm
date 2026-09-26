@@ -5,6 +5,7 @@ import {
   CHECK_CASE_URL,
   composeSubject,
   composeText,
+  pickEmployerMoves,
   pickUscisMedians,
   SIGNUP_URL,
   SUBJECT_MAX,
@@ -198,5 +199,51 @@ describe("the USCIS quarterly section (2026-09-22)", () => {
     const subject = composeSubject(long);
     expect(subject.length).toBeLessThanOrEqual(SUBJECT_MAX);
     expect(subject).toMatch(/^DOL at/);
+  });
+});
+
+describe("the employer-wide moves block (2026-09-26)", () => {
+  const mv = (key: string, date: string, n: number, slug: string | null = "adobe-inc") => ({
+    key: `${date}|${key}`,
+    date,
+    slug,
+    name: slug ? "Adobe Inc." : "No Page LLC",
+    sentence: key.startsWith("hold-on") ? `DOL put ${n} of its cases on hold` : `DOL certified ${n} of its cases`,
+    n,
+  });
+
+  it("keeps the week ending on the issue date, holds first, biggest first, capped", () => {
+    const picked = pickEmployerMoves(
+      [
+        mv("decided|CERTIFIED", "2026-09-07", 44),
+        mv("hold-on|APPLICATION ON HOLD", "2026-09-04", 14),
+        mv("hold-on|APPLICATION ON HOLD", "2026-08-25", 900),
+        mv("decided|CERTIFIED", "2026-09-09", 50),
+        ...Array.from({ length: 8 }, (_, i) => mv("decided|CERTIFIED", "2026-09-05", 10 + i)),
+      ],
+      "2026-09-08",
+    );
+    expect(picked).toHaveLength(6);
+    expect(picked[0]!.sentence).toBe("DOL put 14 of its cases on hold");
+    expect(picked.map((m) => m.date)).not.toContain("2026-08-25");
+    expect(picked.map((m) => m.date)).not.toContain("2026-09-09");
+    expect(picked[1]!.sentence).toBe("DOL certified 44 of its cases");
+  });
+
+  it("links an employer with a page, prints one without, and says no reason is given", () => {
+    const d: DigestData = {
+      ...full,
+      employerMoves: pickEmployerMoves(
+        [mv("hold-on|APPLICATION ON HOLD", "2026-09-07", 215), mv("decided|CERTIFIED", "2026-09-06", 12, null)],
+        "2026-09-08",
+      ),
+    };
+    expect(d.employerMoves![0]!.url).toBe("https://permtracker.app/perm-employers/adobe-inc");
+    expect(d.employerMoves![1]!.url).toBeNull();
+    const text = composeText(d);
+    expect(text).toContain("EMPLOYER-WIDE MOVES THIS WEEK");
+    expect(text).toContain("Adobe Inc.: DOL put 215 of its cases on hold (recorded Sep 7, 2026).");
+    expect(text).toContain("DOL gives no reason");
+    expect(composeText(full)).not.toContain("EMPLOYER-WIDE");
   });
 });

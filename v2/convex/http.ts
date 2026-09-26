@@ -6,6 +6,7 @@ import { recordError } from "./lib/errorRecording";
 import { isLiveContactEventType } from "./marketingWebhook";
 import { Webhook } from "svix";
 import { verifyUnsubscribeToken } from "./lib/unsubscribeToken";
+import { SLUG_RE as EMPLOYER_SLUG_RE, employerNameFor } from "./employerAlerts";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
@@ -813,6 +814,137 @@ http.route({
 });
 
 // ============================================================================
+// Employer follows
+//
+// Same posture as the three sibling alert families. One extra rule: the
+// employer's NAME is looked up here from the slug, in our own records, and a
+// slug we do not hold is refused. The form never supplies words that reach
+// someone's inbox, so this endpoint cannot be used to mail a stranger text of
+// the caller's choosing under our name.
+// ============================================================================
+
+http.route({
+  path: "/employer-alert/subscribe",
+  method: "OPTIONS",
+  handler: httpAction(async (_ctx, req) => {
+    return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+  }),
+});
+
+http.route({
+  path: "/employer-alert/subscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    if (typeof body !== "object" || body === null) {
+      return json({ ok: false, message: "Malformed request." }, 400);
+    }
+    const { email, slug, source, news, newsletter } = body as Record<string, unknown>;
+    if (typeof email !== "string" || typeof slug !== "string") {
+      return json({ ok: false, message: "An email address and an employer are both required." }, 400);
+    }
+    const cleanSlug = slug.slice(0, 120);
+    if (!EMPLOYER_SLUG_RE.test(cleanSlug)) {
+      return json({ ok: false, message: "We don't know that employer." }, 400);
+    }
+    let employerName: string | null;
+    try {
+      employerName = await employerNameFor(cleanSlug);
+    } catch (error) {
+      await recordError(ctx, "webhook", "http.employerAlert.lookup", error);
+      return json({ ok: false, message: "We can't check that employer right now. Please try again shortly.", throttled: true }, 503);
+    }
+    if (!employerName) {
+      return json({ ok: false, message: "We don't know that employer." }, 400);
+    }
+
+    const result = await ctx.runMutation(internal.employerAlerts.subscribe, {
+      email: email.slice(0, 320),
+      slug: cleanSlug,
+      employerName: employerName.slice(0, 200),
+      source: typeof source === "string" ? source.slice(0, 64) : undefined,
+      news: news === true,
+      newsletter: newsletter === true,
+      ip: (req.headers.get("x-forwarded-for") ?? "").split(",")[0]?.trim() || "unknown",
+    });
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/employer-alert/confirm",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    return unsubscribePage(
+      "Follow this employer?",
+      "We'll email you when DOL moves five or more of its PERM cases on or off hold in a day, or decides a batch of them well above its usual pace. Never more than one email a day.",
+      {
+        action: `/employer-alert/confirm?token=${encodeURIComponent(token)}`,
+        label: "Confirm",
+      },
+    );
+  }),
+});
+
+http.route({
+  path: "/employer-alert/confirm",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    const result = await ctx.runMutation(internal.employerAlerts.confirmByToken, { token });
+    if (!result) return new Response("This confirmation link is no longer valid.", { status: 400 });
+    return unsubscribePage(
+      "You're following",
+      `We'll write when DOL moves ${escapeHtml(result.employers.join(", "))}'s PERM cases as a group. Every figure is on permtracker.app/perm-employers/under-review.`,
+    );
+  }),
+});
+
+http.route({
+  path: "/employer-alert/unsubscribe",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    const ok = await ctx.runMutation(internal.employerAlerts.unsubscribeByToken, { token });
+    if (!ok) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    return unsubscribePage(
+      "You're unsubscribed",
+      "You won't receive employer alerts from us. That covers every employer this address was following.",
+    );
+  }),
+});
+
+http.route({
+  path: "/employer-alert/unsubscribe",
+  method: "GET",
+  handler: httpAction(async (_ctx, req) => {
+    const token = new URL(req.url).searchParams.get("token");
+    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    return unsubscribePage(
+      "Stop your employer alerts?",
+      "You'll stop receiving alerts for every employer this address follows.",
+      { action: `/employer-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+    );
+  }),
+});
+
+// ============================================================================
 // The email preference center
 //
 // Magic link: prove the inbox, then see everything we send to that address
@@ -841,6 +973,7 @@ type PrefsState = {
   }[];
   caseAlerts: { id: string; caseNumber: string; active: boolean; closed: boolean }[];
   bulletinAlerts: { id: string; category: string; country: string; active: boolean }[];
+  employerAlerts: { id: string; slug: string; employerName: string; active: boolean }[];
   news: boolean;
   newsletter: boolean;
   weeklyDigest: boolean | null;
@@ -850,7 +983,7 @@ type PrefsState = {
 function isFocus(s: string): boolean {
   const [kind, id, extra] = s.split(":");
   if (extra !== undefined) return false;
-  if (!["queue", "case", "bulletin", "news", "newsletter", "digest"].includes(kind ?? "")) return false;
+  if (!["queue", "case", "bulletin", "employer", "news", "newsletter", "digest"].includes(kind ?? "")) return false;
   return id === undefined || /^[A-Za-z0-9_-]{1,64}$/.test(id);
 }
 
@@ -903,6 +1036,16 @@ function prefsPage(state: PrefsState, token: string, focus?: string | null): Res
         `bulletin:${a.id}`,
       ),
     );
+  const employerRows = state.employerAlerts
+    .filter((a) => a.active)
+    .map((a) =>
+      row(
+        "Employer you follow",
+        esc(a.employerName),
+        offButton("employer", a.id),
+        `employer:${a.id}`,
+      ),
+    );
   const newsRow = state.news
     ? [row("Product news", "Occasional updates about new data and tools", offButton("news"), "news")]
     : [];
@@ -921,7 +1064,7 @@ function prefsPage(state: PrefsState, token: string, focus?: string | null): Res
         ]
       : [];
 
-  const allRows = [...queueRows, ...caseRows, ...bulletinRows, ...newsRow,
+  const allRows = [...queueRows, ...caseRows, ...bulletinRows, ...employerRows, ...newsRow,
     ...newsletterRow, ...digestRow];
   const body =
     allRows.length > 0
@@ -1019,12 +1162,14 @@ http.route({
 // unsubscribes anyone.
 // ============================================================================
 
-const ONE_CLICK_KINDS = ["queue", "case", "bulletin", "news", "newsletter", "digest"] as const;
+const ONE_CLICK_KINDS = ["queue", "case", "bulletin", "employer", "news", "newsletter", "digest", "alerts"] as const;
 type OneClickKind = (typeof ONE_CLICK_KINDS)[number];
 const KIND_WORDS: Record<OneClickKind, string> = {
   queue: "the queue-month alert",
   case: "the case status alert",
   bulletin: "the visa bulletin alert",
+  employer: "the employer alert",
+  alerts: "every alert this address gets (case, queue, bulletin and employer)",
   news: "product news",
   newsletter: "the weekly bulletin digest",
   digest: "your account's weekly summary",
@@ -1098,6 +1243,7 @@ http.route({
       kind === "queue" ||
       kind === "case" ||
       kind === "bulletin" ||
+      kind === "employer" ||
       kind === "news" ||
       kind === "newsletter" ||
       kind === "digest"

@@ -14,6 +14,7 @@ import VideoPlayer from "@/components/content/VideoPlayer";
 import ScreenshotFigure from "@/components/content/ScreenshotFigure";
 import VideoFigure from "@/components/content/VideoFigure";
 import PrintableChecklist from "@/components/content/PrintableChecklist";
+import { OnHoldNow } from "@/components/content/OnHoldNow";
 import { Lightbox } from "@/components/ui/lightbox";
 
 /* ------------------------------------------------------------------ */
@@ -204,6 +205,9 @@ export const mdxComponents: MDXComponents = {
   ScreenshotFigure,
   VideoFigure,
   PrintableChecklist,
+  // Live figures: an async server component reading the sweep's census, so a
+  // guide's count is true on the day it is read (see OnHoldNow's comment).
+  OnHoldNow,
 
   // Headings
   //

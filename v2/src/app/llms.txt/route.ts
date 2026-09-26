@@ -63,9 +63,9 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   },
   {
     path: "/perm-employers/under-review",
-    label: "PERM employers with cases on hold, audited or under appeal",
+    label: "PERM employers with cases on hold, at RFI or under appeal",
     blurb:
-      "Every employer with pending PERM cases DOL has pulled aside, by count and by share of their own queue, from the live record, dated.",
+      "Every employer with PERM cases outside DOL's normal queue (on hold, at RFI or NORD, or under the employer's own appeal), by count and share, with the date each hold began and the days DOL moved an employer's cases in bulk.",
   },
   {
     path: "/perm-rfi-audit",

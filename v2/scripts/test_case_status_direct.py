@@ -417,6 +417,50 @@ def main() -> int:
     check("hold_moves keeps a release's destination apart",
           {m["to"] for m in moves if m["dir"] == "off"} == {"ANALYST REVIEW", "CERTIFIED"}, str(moves))
 
+    # Decision batches: big against the employer's own queue, one outcome each.
+    everyone = csd.employer_stage_rows([
+        ("Big Filer Inc", "big-filer", "ANALYST REVIEW", 3000),
+        ("Small Co", "small-co", "ANALYST REVIEW", 40),
+        ("Tiny LLC", None, "ANALYST REVIEW", 1),
+    ], floor=1, cap=None)
+    check("employer_stage_rows with floor=1 keeps every pending employer",
+          {r["name"] for r in everyone} == {"Big Filer Inc", "Small Co", "Tiny LLC"},
+          str([r["name"] for r in everyone]))
+    dev = ([("Big Filer Inc", "big-filer", "2026-09-24", "CERTIFIED")] * 40      # 1.3% of its queue
+           + [("Small Co", "small-co", "2026-09-24", "CERTIFIED")] * 12        # 23%
+           + [("Small Co", "small-co", "2026-09-24", "WITHDRAWN")] * 11        # 21.6%, apart
+           + [("Small Co", "small-co", "2026-09-23", "DENIED")] * 9            # under ten
+           + [("Gone Corp", "gone-corp", "2026-09-22", "CERTIFIED")] * 10      # no queue left
+           + [("Small Co", "small-co", "2026-06-01", "CERTIFIED")] * 30        # outside the window
+           + [("Small Co", "small-co", "2026-09-21", "CERTIFIED - EXPIRED")] * 50)  # a clock, not DOL
+    dm = csd.decision_moves(dev, today, everyone)
+    got = [(m["date"], m["slug"], m["to"], m["n"]) for m in dm]
+    check("decision_moves keeps batches big against the employer's own queue",
+          ("2026-09-24", "small-co", "CERTIFIED", 12) in got
+          and not any(g[1] == "big-filer" for g in got), str(got))
+    check("decision_moves keeps an employer's withdrawals apart from its certifications",
+          ("2026-09-24", "small-co", "WITHDRAWN", 11) in got, str(got))
+    check("decision_moves drops a day under ten cases",
+          not any(g[2] == "DENIED" for g in got), str(got))
+    check("decision_moves keeps an employer whose whole queue was decided",
+          ("2026-09-22", "gone-corp", "CERTIFIED", 10) in got, str(got))
+    check("decision_moves ignores expiry and anything outside its window",
+          not any(g[2] == "CERTIFIED - EXPIRED" or g[0] < "2026-07-01" for g in got), str(got))
+    check("decision_moves writes no private keys",
+          all(not k.startswith("_") for m in dm for k in m), str(dm[:1]))
+    # A queue that moves every day is its ordinary pace, not an event.
+    steady = csd.employer_stage_rows([("Steady Co", "steady-co", "ANALYST REVIEW", 100)],
+                                     floor=1, cap=None)
+    flow = [("Steady Co", "steady-co", f"2026-09-{d:02d}", "CERTIFIED")
+            for d in range(2, 26) for _ in range(12)]
+    burst = flow + [("Steady Co", "steady-co", "2026-09-25", "CERTIFIED")] * 60
+    check("decision_moves ignores an employer decided at its steady pace",
+          csd.decision_moves(flow, today, steady, "2026-09-01") == [],
+          str(csd.decision_moves(flow, today, steady, "2026-09-01")))
+    got_b = [(m["date"], m["n"]) for m in csd.decision_moves(burst, today, steady, "2026-09-01")]
+    check("decision_moves keeps a day far above the employer's own pace",
+          got_b == [("2026-09-25", 72)], str(got_b))
+
     # Eastern dates across daylight time: 11:30 PM EDT and 11:30 PM EST both
     # stay on their own calendar day.
     check("et_date keeps a late-evening EDT event on its own day",

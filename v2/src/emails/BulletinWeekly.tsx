@@ -179,6 +179,31 @@ export function BulletinWeekly(d: DigestData) {
           </Text>
         </Section>
       ) : null}
+      {(d.employerMoves?.length ?? 0) > 0 ? (
+        <Section>
+          <Text className="em-text-secondary" style={styles.eyebrow}>
+            Employer-wide moves this week
+          </Text>
+          {(d.employerMoves ?? []).map((m) => (
+            <Text key={`${m.name}-${m.date}-${m.sentence}`} className="em-text-body" style={styles.p}>
+              {m.url ? (
+                <Link href={m.url} style={styles.link}>
+                  {m.name}
+                </Link>
+              ) : (
+                m.name
+              )}
+              {`: ${m.sentence} (recorded ${dateLabel(m.date)}).`}
+            </Text>
+          ))}
+          <Text className="em-text-secondary" style={styles.small}>
+            DOL gives no reason for a hold or a batch, and neither do we.{" "}
+            <Link href={`${site}/perm-employers/under-review`} style={styles.link}>
+              Every employer, and following one
+            </Link>
+          </Text>
+        </Section>
+      ) : null}
       {d.notices.length > 0 ? (
         <Section>
           <Text className="em-text-secondary" style={styles.eyebrow}>

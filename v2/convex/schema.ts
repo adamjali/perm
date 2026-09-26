@@ -2018,4 +2018,126 @@ export default defineSchema({
   })
     .index("by_created", ["createdAt"])
     .index("by_ip_created", ["ip", "createdAt"]),
+
+  /**
+   * Someone following ONE employer's PERM cases as a group.
+   *
+   * Fourth sibling of the alert tables, same consent grammar: double opt-in,
+   * a staged `pendingSlug` that only a fresh confirm click makes live,
+   * tombstoned opt-outs, purpose-scoped tokens (`employer-confirm` /
+   * `employer-unsubscribe`). It answers "did DOL do something to this
+   * employer's cases as a group": a day when five or more of its cases went
+   * on hold or came off it, or a batch of decisions well above its own pace.
+   * Both lists are precomputed by the daily sweep into
+   * `perm_docs['employer_stages']`; this table only remembers which of those
+   * days each follower has already been told about.
+   */
+  employerAlerts: defineTable({
+    email: v.string(),
+    /** The `/perm-employers/<slug>` slug. */
+    slug: v.string(),
+    /** The employer's name as the page printed it at subscribe time. */
+    employerName: v.string(),
+    confirmedAt: v.optional(v.number()),
+    /** Staged by an unauthenticated POST; made live only by a confirm click. */
+    pendingSlug: v.optional(v.string()),
+    pendingName: v.optional(v.string()),
+    /** Throttles repeat confirmations to this address. Records intent. */
+    lastConfirmationSentAt: v.optional(v.number()),
+    /**
+     * The moves already told, as `<date>|<kind>|<to>` keys, newest last and
+     * capped. THIS is the change detector: the doc lists a move for months,
+     * and a follower hears about each one once.
+     */
+    toldMoves: v.optional(v.array(v.string())),
+    /** Only moves dated on or after this ET date are news to this follower. */
+    followingFrom: v.optional(v.string()),
+    lastCheckedAt: v.optional(v.number()),
+    lastAlertSentAt: v.optional(v.number()),
+    alertCount: v.optional(v.number()),
+    unsubscribedAt: v.optional(v.number()),
+    createdAt: v.number(),
+    source: v.optional(v.string()),
+  })
+    .index("by_email", ["email"])
+    .index("by_email_slug", ["email", "slug"])
+    /** Live rows first, least recently checked first: the sweep's round-robin. */
+    .index("by_alert_sweep", ["unsubscribedAt", "lastCheckedAt"])
+    .index("by_created", ["createdAt"]),
+
+  /**
+   * Alert email waiting for its recipient's one email of the day.
+   *
+   * Every alert kind builds its own complete email and hands it to
+   * `deliverAlert` (convex/lib/alertDelivery.ts). An address that follows one
+   * thing and has not been mailed today gets it at once; anything else waits
+   * here, and `alertOutbox.sendBundles` sends each address at most one email
+   * per Eastern day: the stored email itself when one item is waiting, one
+   * "Your PERM Tracker updates" email when several are. Sent rows keep only
+   * their summary, for the admin panel, and are pruned after 30 days.
+   */
+  alertOutbox: defineTable({
+    email: v.string(),
+    kind: v.union(
+      v.literal("case"),
+      v.literal("queue"),
+      v.literal("bulletin"),
+      v.literal("employer"),
+    ),
+    /** `<kind>:<row id>`, so an opt-out can drop what is still waiting. */
+    ref: v.string(),
+    status: v.union(
+      v.literal("queued"),
+      v.literal("sent"),
+      v.literal("dropped"),
+      v.literal("failed"),
+    ),
+    subject: v.string(),
+    /** The single-item email. Cleared once sent; a bundle renders its own. */
+    html: v.optional(v.string()),
+    text: v.optional(v.string()),
+    listUnsubscribe: v.optional(v.string()),
+    /** One line in a bundle: what moved, and where to look. */
+    summary: v.object({
+      title: v.string(),
+      line: v.string(),
+      url: v.string(),
+      tone: v.optional(v.union(v.literal("good"), v.literal("bad"), v.literal("neutral"))),
+    }),
+    createdAt: v.number(),
+    sentAt: v.optional(v.number()),
+    /** How many items went out in the email that carried this one. */
+    bundleSize: v.optional(v.number()),
+    /** True when it went straight out, never waiting. */
+    direct: v.optional(v.boolean()),
+    attempts: v.optional(v.number()),
+    lastError: v.optional(v.string()),
+  })
+    .index("by_status_created", ["status", "createdAt"])
+    .index("by_email_status", ["email", "status"])
+    .index("by_ref_status", ["ref", "status"])
+    .index("by_created", ["createdAt"]),
+
+  /**
+   * How many people a daily email budget turned away, per pool per Eastern
+   * day. The admin panel's "time to move off Resend's free plan" signal; see
+   * convex/lib/alertBudgets.ts. Pruned after 30 days.
+   */
+  budgetRefusals: defineTable({
+    day: v.string(),
+    /** A key of BUDGETS in convex/lib/alertBudgets.ts. */
+    pool: v.string(),
+    count: v.number(),
+  }).index("by_day_pool", ["day", "pool"]),
+
+  /** The last Eastern day each address was sent an alert email. One row per address. */
+  alertRecipients: defineTable({
+    email: v.string(),
+    /** YYYY-MM-DD, America/New_York. */
+    lastSentDay: v.string(),
+    lastSentAt: v.number(),
+    emailsSent: v.number(),
+  })
+    .index("by_email", ["email"])
+    .index("by_last_sent", ["lastSentAt"]),
 });

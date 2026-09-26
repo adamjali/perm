@@ -8,7 +8,9 @@ import { useAdminAuth } from "@/lib/admin/adminAuth";
 import { ShieldIcon, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
 import { AdminStatsGrid } from "@/components/admin/AdminStatsGrid";
 import { UsersTable } from "@/components/admin/UsersTable";
-import { SignalsPanel } from "@/components/admin/SignalsPanel";
+import { ActivityPanel, DigestPanel, SubscriptionsPanel } from "@/components/admin/SignalsPanel";
+import { BudgetPools, DeliveryPanel } from "@/components/admin/DeliveryPanel";
+import { AdminTabs } from "@/components/admin/AdminTabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -22,6 +24,9 @@ export default function AdminDashboardClient() {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
+  const skip = isSigningOut || authLoading || !isAdmin;
+  const signals = useQuery(api.adminSignals.getSignals, skip ? "skip" : {});
+  const delivery = useQuery(api.adminDelivery.getDelivery, skip ? "skip" : {});
 
   const dashboardData = useQuery(
     api.admin.getAdminDashboardData,
@@ -120,7 +125,7 @@ export default function AdminDashboardClient() {
               Admin Dashboard
             </h1>{" "}
             <p className="text-muted-foreground">
-              Manage users, view system stats, and perform admin actions
+              Users, alerts and email, and the weekly digest
             </p>
           </div>
         </div>
@@ -133,24 +138,55 @@ export default function AdminDashboardClient() {
         </Link>
       </div>
 
-      {/* Stats Grid */}
-      <AdminStatsGrid data={dashboardData} />
-
-      {/* Growth signals: signups, alert subscriptions, case additions */}
-      <SignalsPanel skip={isSigningOut || authLoading || !isAdmin} />
-
-      {/* Users Table */}
-      <UsersTable
-        users={dashboardData.users}
-        totalCount={dashboardData.totalCount}
-        totalPages={dashboardData.totalPages}
-        page={dashboardData.page}
-        onPageChange={handlePageChange}
-        sortField={sortField}
-        sortOrder={sortOrder}
-        onSortChange={handleSortChange}
-        search={search}
-        onSearchChange={handleSearchChange}
+      <AdminTabs
+        tabs={[
+          {
+            id: "overview",
+            label: "Overview",
+            content: (
+              <div className="space-y-8">
+                <AdminStatsGrid data={dashboardData} />
+                {delivery ? <BudgetPools pools={delivery.pools} /> : <Skeleton className="h-64" />}
+                {signals ? <ActivityPanel signals={signals} /> : <Skeleton className="h-48" />}
+              </div>
+            ),
+          },
+          {
+            id: "alerts",
+            label: "Alerts and email",
+            badge: delivery && delivery.outbox.queued > 0 ? `${delivery.outbox.queued} waiting` : null,
+            content: (
+              <div className="space-y-8">
+                {delivery ? <DeliveryPanel data={delivery} /> : <Skeleton className="h-96" />}
+                {signals ? <SubscriptionsPanel signals={signals} /> : <Skeleton className="h-64" />}
+              </div>
+            ),
+          },
+          {
+            id: "users",
+            label: "Users",
+            badge: String(dashboardData.totalCount),
+            content: (
+              <UsersTable
+                users={dashboardData.users}
+                totalCount={dashboardData.totalCount}
+                totalPages={dashboardData.totalPages}
+                page={dashboardData.page}
+                onPageChange={handlePageChange}
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSortChange={handleSortChange}
+                search={search}
+                onSearchChange={handleSearchChange}
+              />
+            ),
+          },
+          {
+            id: "digest",
+            label: "Weekly digest",
+            content: signals ? <DigestPanel signals={signals} /> : <Skeleton className="h-48" />,
+          },
+        ]}
       />
     </div>
   );

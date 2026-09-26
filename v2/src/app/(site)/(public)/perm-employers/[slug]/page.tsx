@@ -61,6 +61,8 @@ import { liveEmployerRecord } from "@/lib/turso/liveEmployers";
 import { getEmployerPrograms } from "@/lib/turso/employerPrograms";
 import { getEmployerStages } from "@/lib/turso/employerStages";
 import { EmployerPrograms } from "@/components/entities/EmployerPrograms";
+import { EmployerFollow } from "@/components/employers/EmployerFollow";
+import { employerMoves } from "@/lib/employerStages";
 import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
 import { debarmentsForSlug } from "@/lib/turso/debarments";
 import { warnForSlug } from "@/lib/turso/warn";
@@ -366,12 +368,22 @@ export default async function EmployerPage({
     // sections switched off.
     const live = await loadLiveOnly(slug);
     if (!live) notFound();
-    const fresh = await getFreshness();
+    const [fresh, liveStages] = await Promise.all([getFreshness(), getEmployerStages().catch(() => null)]);
     return (
       <UnpublishedEmployer
         record={live.record}
         cases={live.cases}
         asOf={fresh["perm-case-status"]?.asOf ?? null}
+        follow={
+          <EmployerFollow
+            slug={slug}
+            name={live.record.name}
+            row={liveStages?.employers.find((e) => e.slug === slug) ?? null}
+            moves={liveStages ? employerMoves(liveStages).filter((m) => m.slug === slug) : []}
+            logFrom={liveStages?.logFrom ?? null}
+            asOf={liveStages?.asOf ?? null}
+          />
+        }
       />
     );
   }
@@ -604,8 +616,17 @@ export default async function EmployerPage({
         pwd={programs?.pwd ?? null}
         lca={programs?.lca ?? null}
         stages={stagesDoc?.employers.find((e) => e.slug === canonicalSlug) ?? null}
+        logFrom={stagesDoc?.logFrom ?? null}
         searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
         matchedPrefix={programs?.matchedPrefix ?? null}
+      />{" "}
+      <EmployerFollow
+        slug={canonicalSlug}
+        name={row.name}
+        row={stagesDoc?.employers.find((e) => e.slug === canonicalSlug) ?? null}
+        moves={stagesDoc ? employerMoves(stagesDoc).filter((m) => m.slug === canonicalSlug) : []}
+        logFrom={stagesDoc?.logFrom ?? null}
+        asOf={stagesDoc?.asOf ?? null}
       />
 
       {/* The newest individual filings, live from DOL - visible here months

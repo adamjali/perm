@@ -77,7 +77,7 @@
 - **`minimumReleaseAge` keeps two exclusions, and that is the design, not a workaround.** The floor refused a rolldown platform binary published 5 hours earlier (no older version exists to fall back to) and the browserslist security patch published 5 days earlier. The second is the important one: **a maturity window silently defeats a security override unless the patched package is excluded by name.**
 - **PRs #33 (motion 13) and #35 (svix 2) left OPEN with a written reason each.** Motion's `initial` is an SSR inline style here, so a regression hides every public page until hydration; svix is the webhook signature verifier. Closing them as "superseded" would have been false.
 - **106 alerts dismissed individually, not in bulk.** The dismissal API takes reasons with spaces (`"false positive"`, `"used in tests"`); underscored values 422 with no partial effect, which reads exactly like a permissions failure.
-- **The GitHub advisory emails Adam is receiving are for `amohamed369/perm`, the archived predecessor**, not this repo. Archiving stopped its scheduled runs but not its Dependabot alerts, and its lockfile still carries the vulnerable browserslist. Turning alerts off there is a settings change on the personal account and is Adam's call.
+- **The GitHub advisory emails Adam is receiving are for the archived predecessor repository**, not this repo. Archiving stopped its scheduled runs but not its Dependabot alerts, and its lockfile still carries the vulnerable browserslist. Turning alerts off there is a settings change on the personal account and is Adam's call.
 
 ## Audit 9 — 2026-09-01
 - **health_before:** 100/100 by rubric; 0 dependabot alerts, 0 secret-scanning, 10 code-scanning "error" (all verified false positives), 8 open Dependabot PRs

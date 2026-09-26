@@ -1,7 +1,7 @@
 /**
  * Convex Cron Jobs Configuration
  *
- * Scheduled jobs (13 total). The count and the list are only useful if they
+ * Scheduled jobs (19 registrations). The count and the list are only useful if they
  * match the registrations below, so both are maintained here:
  * - Daily deadline reminder checks (9 AM EST / 14:00 UTC)
  * - Daily deadline enforcement (6 AM EST / 10:00 UTC)
@@ -15,7 +15,12 @@
  * - Daily re-engagement check (16:00 UTC)
  * - Daily DOL processing-times refresh (15:00 UTC)
  * - Per-case status alert sweep (11:00 and 23:00 UTC)
+ * - Its browser-push twin (11:20 and 23:20 UTC)
+ * - Employer follow alert sweep (11:15 and 23:15 UTC)
  * - Daily visa-bulletin alert sweep (17:30 UTC)
+ * - Alert bundles: one email per address per day (11:30, 18:00, 23:30 UTC)
+ * - Alert outbox pruning (04:40 UTC)
+ * - Weekly bulletin digest build (Tuesdays 13:00 UTC; sends only when enabled)
  *
  * IMPORTANT: All cron handlers use `internal` functions for security.
  * Never expose scheduled job handlers to the public API.
@@ -315,6 +320,47 @@ crons.daily(
   "bulletin-alerts",
   { hourUTC: 17, minuteUTC: 30 },
   internal.bulletinAlerts.sweep,
+  {}
+);
+
+// ============================================================================
+// EMPLOYER FOLLOWS AND THE DAILY BUNDLE
+// ============================================================================
+
+/**
+ * Tell followers about employer-wide moves. Fifteen minutes after the case
+ * sweep, by which time the 4:10 AM and 3:40 PM ET passes have written the
+ * census they read (see convex/employerAlerts.ts).
+ */
+crons.cron(
+  "employer-alerts",
+  "15 11,23 * * *",
+  internal.employerAlerts.sweep,
+  {}
+);
+
+/**
+ * Send what the sweeps queued: one email per address per Eastern day. Half an
+ * hour after each sweep, and once after the 17:30 bulletin sweep, so an
+ * address following several things hears from us once. See
+ * convex/lib/alertDelivery.ts for the rule.
+ */
+crons.cron(
+  "alert-bundles",
+  "30 11,23 * * *",
+  internal.alertOutbox.sendBundles,
+  {}
+);
+crons.daily(
+  "alert-bundles-after-bulletin",
+  { hourUTC: 18, minuteUTC: 0 },
+  internal.alertOutbox.sendBundles,
+  {}
+);
+crons.daily(
+  "alert-outbox-prune",
+  { hourUTC: 4, minuteUTC: 40 },
+  internal.alertOutbox.prune,
   {}
 );
 

@@ -84,6 +84,8 @@ export type TokenPurpose =
   | "case-unsubscribe"
   | "bulletin-confirm"
   | "bulletin-unsubscribe"
+  | "employer-confirm"
+  | "employer-unsubscribe"
   | "prefs";
 
 /** The exact string that gets signed. Kept in one place so both sides agree. */

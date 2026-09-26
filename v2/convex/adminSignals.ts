@@ -73,6 +73,7 @@ export const getSignals = query({
       caseAlerts: subValidator,
       queueAlerts: subValidator,
       bulletinAlerts: subValidator,
+      employerAlerts: subValidator,
       news: subValidator,
     }),
     newsletter: adminSummaryValidator,
@@ -134,6 +135,15 @@ export const getSignals = query({
         lastNotifiedAt: r.lastAlertSentAt ?? null,
       }),
     );
+    const employerAlerts = (await ctx.db.query("employerAlerts").order("desc").take(500)).map(
+      (r): SignalSub => ({
+        email: r.email,
+        subject: r.employerName,
+        status: status(r),
+        createdAt: r._creationTime,
+        lastNotifiedAt: r.lastAlertSentAt ?? null,
+      }),
+    );
     const news = (await ctx.db.query("newsSubscribers").order("desc").take(500)).map(
       (r): SignalSub => ({
         email: r.email,
@@ -170,6 +180,7 @@ export const getSignals = query({
         caseAlerts,
         queueAlerts,
         bulletinAlerts,
+        employerAlerts,
         news,
       },
       recentCases,

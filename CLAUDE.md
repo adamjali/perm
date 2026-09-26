@@ -174,3 +174,24 @@ Each is detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under its date.
   pages and `/layoffs`.
 - **Nothing may follow a script's `__main__` guard.** A nightly refresh defined below one failed
   silently for sixteen days; `scripts/test_main_guard.py` enforces the rule in CI.
+
+## Sep 25 2026, in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 25 2026".
+
+- **The employer census reads the slug from both tables**, because an appeal is a decided case; it had split
+  seven employers across two rows and shown one at 100% where the truth was 31%.
+- **Every surface names who acted**: on hold, RFI and NORD are DOL's; an appeal is the employer's.
+- **Holds are dated from the site's own record**, with a feed of the days DOL moved an employer's cases in
+  bulk, and the on-hold guide renders its counts live.
+- **Firewall rule 5 wants a secret value**; its header's mere presence had been a public bypass.
+
+## Sep 26 2026, in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 26 2026".
+
+- **Anyone can follow an employer** and hear when DOL moves its cases as a group: bulk holds and
+  releases, and decision batches well above that employer's own pace.
+- **One alert email per person per day**: several updates wait in an outbox and go out as one.
+- **No budget moved**; every limit lives in `convex/lib/alertBudgets.ts` and refusals are counted.
+- **The admin page is four tabs**, with the budgets, the outbox and employer follows on it.

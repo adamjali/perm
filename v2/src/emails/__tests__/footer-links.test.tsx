@@ -6,7 +6,10 @@ import { BulletinMoved } from "../BulletinMoved";
 import { BulletinWeekly } from "../BulletinWeekly";
 import { CaseAlertConfirm } from "../CaseAlertConfirm";
 import { CaseStatusChanged } from "../CaseStatusChanged";
+import { DailyUpdate } from "../DailyUpdate";
 import { DeadlineReminder } from "../DeadlineReminder";
+import { EmployerAlertConfirm } from "../EmployerAlertConfirm";
+import { EmployerMoved } from "../EmployerMoved";
 import { QueueReached } from "../QueueReached";
 import { RfiAlert } from "../RfiAlert";
 import { StatusChange } from "../StatusChange";
@@ -63,6 +66,20 @@ const subscriberMail: Array<[string, (over?: { prefsUrl?: string }) => React.Rea
       }),
   ],
   [
+    "EmployerMoved",
+    (over = {}) =>
+      EmployerMoved({
+        employerName: "Adobe Inc.",
+        employerUrl: "https://permtracker.app/perm-employers/adobe-inc",
+        moves: [{ dateLabel: "Sep 24", sentence: "DOL put 215 of its cases on hold", tone: "bad" }],
+        mix: { pending: 250, queue: 30, review: 216, appeal: 4, held: 216 },
+        asOf: "September 25, 2026",
+        unsubscribeUrl: UNSUB,
+        prefsUrl: PREFS,
+        ...over,
+      }),
+  ],
+  [
     "BulletinMoved",
     (over = {}) =>
       BulletinMoved({
@@ -102,6 +119,33 @@ describe("every email has a way out", () => {
     const html = await render(make({ prefsUrl: undefined }));
     expect(html).toContain(UNSUB);
     expect(html).not.toContain("/prefs?token=");
+  });
+
+  it("the daily bundle carries the all-alerts one-click AND the preference page", async () => {
+    const stop = "https://permtracker.app/prefs/unsubscribe?token=T&kind=alerts";
+    const html = await render(
+      DailyUpdate({
+        items: [
+          { kind: "case", title: "G-100-26001-000001", line: "ANALYST REVIEW to CERTIFIED", url: "https://permtracker.app/perm-case-status?case=G-100-26001-000001", tone: "good" },
+          { kind: "employer", title: "Adobe Inc.", line: "DOL put 215 of its cases on hold", url: "https://permtracker.app/perm-employers/adobe-inc", tone: "bad" },
+        ],
+        prefsUrl: "https://permtracker.app/prefs?token=T",
+        stopUrl: stop,
+      }),
+    );
+    expect(html).toContain(stop.replace("&", "&amp;"));
+    expect(html).toContain("https://permtracker.app/prefs?token=T");
+    expect(html).toContain("Email preferences");
+    expect(html).not.toContain("Manage notification settings");
+  });
+
+  it("the employer confirmation carries no opt-out and names the employer from our records", async () => {
+    const html = await render(
+      EmployerAlertConfirm({ employerName: "Adobe Inc.", confirmUrl: "https://permtracker.app/employer-alert/confirm?token=C" }),
+    );
+    expect(html).toContain("Adobe Inc.");
+    expect(html).not.toContain("/prefs?token=");
+    expect(html).not.toContain("unsubscribe");
   });
 
   it("the weekly digest carries the preference page under the same label", async () => {

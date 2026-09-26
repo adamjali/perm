@@ -199,7 +199,7 @@ export default async function DebarmentsPage() {
       <ToolPageFooter
         currentHref="/debarments"
         reading={[
-          { href: "/perm-employers/under-review", label: "Employers under review", note: "whose pending cases DOL has pulled aside" },
+          { href: "/perm-employers/under-review", label: "Employers under review", note: "whose PERM cases are on hold, at RFI or under appeal" },
           { href: "/policy-changes", label: "Policy changes", note: "every Federal Register rule and notice on the record" },
           { href: "/perm-rfi-audit", label: "RFIs, audits and appeals", note: "the stages before a decision, measured" },
         ]}

@@ -72,6 +72,8 @@ import {
   verifyUnsubscribeToken,
 } from "./lib/unsubscribeToken";
 import { recordError } from "./lib/errorRecording";
+import { dropQueued } from "./lib/alertOutboxStore";
+import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
 
 /**
  * Render the React template, or fall back to text only.
@@ -107,7 +109,7 @@ const log = createLogger("EmailPrefs");
  * Resend 100/day arithmetic in convex/caseAlerts.ts - every list-mail budget
  * is enumerated there and the total leaves 25/day for auth mail.
  */
-const PREFS_LINK_GLOBAL_BUDGET = { limit: 6, windowMs: 24 * 60 * 60 * 1000 };
+const PREFS_LINK_GLOBAL_BUDGET = windowFor("prefsLink");
 const PREFS_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 const PREFS_COOLDOWN_MS = 10 * 60 * 1000;
 
@@ -246,10 +248,11 @@ export const requestLink = internalMutation({
     const budget = await checkAndRecordRateLimit(
       ctx,
       "all",
-      "prefs_link_global",
+      BUDGETS.prefsLink.key,
       PREFS_LINK_GLOBAL_BUDGET,
     );
     if (!budget.allowed) {
+      await noteRefusal(ctx, "prefsLink");
       log.error("prefs link budget exhausted; refusing to send");
       return { ok: false, message: THROTTLED_REPLY, throttled: true };
     }
@@ -342,6 +345,15 @@ const stateValidator = v.object({
       active: v.boolean(),
     }),
   ),
+  employerAlerts: v.array(
+    v.object({
+      id: v.id("employerAlerts"),
+      slug: v.string(),
+      employerName: v.string(),
+      confirmed: v.boolean(),
+      active: v.boolean(),
+    }),
+  ),
   news: v.boolean(),
   newsletter: v.boolean(),
   /** Null when no account exists for the address. */
@@ -359,6 +371,10 @@ async function stateForEmail(ctx: MutationCtx, email: string) {
     .collect();
   const bulletinRows = await ctx.db
     .query("bulletinAlerts")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .collect();
+  const employerRows = await ctx.db
+    .query("employerAlerts")
     .withIndex("by_email", (q) => q.eq("email", email))
     .collect();
   const news = await ctx.db
@@ -407,11 +423,73 @@ async function stateForEmail(ctx: MutationCtx, email: string) {
       confirmed: r.confirmedAt !== undefined,
       active: r.unsubscribedAt === undefined && r.confirmedAt !== undefined,
     })),
+    employerAlerts: employerRows.map((r) => ({
+      id: r._id,
+      slug: r.slug,
+      employerName: r.employerName,
+      confirmed: r.confirmedAt !== undefined,
+      active: r.unsubscribedAt === undefined && r.confirmedAt !== undefined,
+    })),
     news: news !== null && news.confirmedAt !== undefined && news.unsubscribedAt === undefined,
     newsletter:
       newsletter !== null && newsletter.confirmedAt !== undefined && newsletter.unsubscribedAt === undefined,
     weeklyDigest,
   };
+}
+
+/**
+ * Tombstone every alert row for an address (all four kinds, staged changes
+ * dropped so a replayed confirm link cannot resurrect one), and drop every
+ * alert still waiting in the outbox. News, the digest and account mail are
+ * not alerts and are left alone.
+ */
+async function turnOffAlerts(ctx: MutationCtx, email: string, now: number): Promise<void> {
+  for (const row of await ctx.db
+    .query("dolQueueAlerts")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .collect()) {
+    if (row.unsubscribedAt === undefined || row.pendingFilingMonth !== undefined) {
+      await ctx.db.patch(row._id, {
+        unsubscribedAt: row.unsubscribedAt ?? now,
+        pendingFilingMonth: undefined,
+      });
+    }
+  }
+  for (const row of await ctx.db
+    .query("caseStatusAlerts")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .collect()) {
+    if (row.unsubscribedAt === undefined || row.pendingCaseNumber !== undefined) {
+      await ctx.db.patch(row._id, {
+        unsubscribedAt: row.unsubscribedAt ?? now,
+        pendingCaseNumber: undefined,
+      });
+    }
+  }
+  for (const row of await ctx.db
+    .query("bulletinAlerts")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .collect()) {
+    if (row.unsubscribedAt === undefined || row.pendingSeries !== undefined) {
+      await ctx.db.patch(row._id, {
+        unsubscribedAt: row.unsubscribedAt ?? now,
+        pendingSeries: undefined,
+      });
+    }
+  }
+  for (const row of await ctx.db
+    .query("employerAlerts")
+    .withIndex("by_email", (q) => q.eq("email", email))
+    .collect()) {
+    if (row.unsubscribedAt === undefined || row.pendingSlug !== undefined) {
+      await ctx.db.patch(row._id, {
+        unsubscribedAt: row.unsubscribedAt ?? now,
+        pendingSlug: undefined,
+        pendingName: undefined,
+      });
+    }
+  }
+  await dropQueued(ctx, email, "all");
 }
 
 /**
@@ -441,9 +519,12 @@ export const disableByToken = internalMutation({
       v.literal("queue"),
       v.literal("case"),
       v.literal("bulletin"),
+      v.literal("employer"),
       v.literal("news"),
       v.literal("newsletter"),
       v.literal("digest"),
+      /** Every alert kind at once (the daily bundle's one-click); not news or digests. */
+      v.literal("alerts"),
     ),
     /** Row id for the row-backed kinds; ignored for news/newsletter/digest. */
     id: v.optional(v.string()),
@@ -474,6 +555,15 @@ export const disableByToken = internalMutation({
       await ctx.runMutation(internal.notifications.unsubscribeWeeklyByEmail, {
         email,
       });
+    } else if (args.kind === "alerts") {
+      await turnOffAlerts(ctx, email, now);
+    } else if (args.kind === "employer" && args.id) {
+      const wanted = ctx.db.normalizeId("employerAlerts", args.id);
+      const row = wanted ? await ctx.db.get(wanted) : null;
+      if (row && row.email === email && row.unsubscribedAt === undefined) {
+        await ctx.db.patch(row._id, { unsubscribedAt: now, pendingSlug: undefined, pendingName: undefined });
+        await dropQueued(ctx, email, `employer:${row._id}`);
+      }
     } else if (args.id) {
       // The id names the row, the TOKEN names the address, and the address
       // wins: a row that does not belong to this email is never touched, so
@@ -494,6 +584,7 @@ export const disableByToken = internalMutation({
               unsubscribedAt: now,
               pendingFilingMonth: undefined,
             });
+            await dropQueued(ctx, email, `queue:${row._id}`);
           }
         } else if (args.kind === "case") {
           const row = await ctx.db.get(wanted as Id<"caseStatusAlerts">);
@@ -502,6 +593,7 @@ export const disableByToken = internalMutation({
               unsubscribedAt: now,
               pendingCaseNumber: undefined,
             });
+            await dropQueued(ctx, email, `case:${row._id}`);
           }
         } else {
           const row = await ctx.db.get(wanted as Id<"bulletinAlerts">);
@@ -510,6 +602,7 @@ export const disableByToken = internalMutation({
               unsubscribedAt: now,
               pendingSeries: undefined,
             });
+            await dropQueued(ctx, email, `bulletin:${row._id}`);
           }
         }
       }
@@ -532,39 +625,7 @@ export const unsubscribeAllByToken = internalMutation({
     if (!email) return null;
     const now = Date.now();
 
-    for (const row of await ctx.db
-      .query("dolQueueAlerts")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .collect()) {
-      if (row.unsubscribedAt === undefined || row.pendingFilingMonth !== undefined) {
-        await ctx.db.patch(row._id, {
-          unsubscribedAt: row.unsubscribedAt ?? now,
-          pendingFilingMonth: undefined,
-        });
-      }
-    }
-    for (const row of await ctx.db
-      .query("caseStatusAlerts")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .collect()) {
-      if (row.unsubscribedAt === undefined || row.pendingCaseNumber !== undefined) {
-        await ctx.db.patch(row._id, {
-          unsubscribedAt: row.unsubscribedAt ?? now,
-          pendingCaseNumber: undefined,
-        });
-      }
-    }
-    for (const row of await ctx.db
-      .query("bulletinAlerts")
-      .withIndex("by_email", (q) => q.eq("email", email))
-      .collect()) {
-      if (row.unsubscribedAt === undefined || row.pendingSeries !== undefined) {
-        await ctx.db.patch(row._id, {
-          unsubscribedAt: row.unsubscribedAt ?? now,
-          pendingSeries: undefined,
-        });
-      }
-    }
+    await turnOffAlerts(ctx, email, now);
     const news = await ctx.db
       .query("newsSubscribers")
       .withIndex("by_email", (q) => q.eq("email", email))

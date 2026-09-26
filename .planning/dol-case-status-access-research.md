@@ -1,5 +1,24 @@
 # Can we get daily per-case PERM status legitimately? — research 2026-08-27
 
+> **SUPERSEDED THE SAME DAY (2026-08-27), BY MEASUREMENT. Read this first.**
+> This note was written before anyone looked at the live page, and its central
+> premise was wrong. It concluded from a URL path (`/recaptcha/caseStatus`) and
+> a line of help text that DOL's case-status lookup sits behind an anti-abuse
+> verification step a client has to clear. The help text is real: DOL's own
+> app still says "The search feature includes automated verification to
+> prevent abuse" (its bundle, re-read 2026-09-25). But no verification ships
+> with it. Measured on the live page on 2026-08-27 and again on 2026-09-25: no
+> reCAPTCHA script, no site key, no challenge frame, no token of any kind; the
+> endpoint answers a plain request with no cookie in about 0.3 s, and
+> `robots.txt` does not disallow it. Nothing is being cleared, so the
+> "circumvention" worry below describes a step that does not exist on that
+> route. Whatever verification DOL applies happens on its own side, and when
+> it refuses (as it did once, on 2026-09-22), the job stops for the day. The site reads the endpoint as a public client would, paced (about two
+> requests a second at peak) and backs off rather than retrying around a refusal. The
+> measurements and the design are in `v2/CLAUDE.md`, section "Per-case status
+> comes from DOL directly". The rest of this note is kept as the record of what
+> was believed before the measurement, and is wrong where it disagrees.
+
 Full transcript: /tmp/dolresearch.jsonl (backed up). Verdicts below.
 
 ## The short version

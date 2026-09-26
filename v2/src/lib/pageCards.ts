@@ -32,7 +32,7 @@ export const PAGE_CARD_ALT = {
   "perm-cases": "PERM case search. Every decided PERM case in DOL's files, searchable by employer, state, occupation, wage and outcome.",
   "perm-deadline-calculator": "PERM deadline calculator. Every recruitment and filing deadline for a PERM, computed from the dates on your case under 20 CFR 656.",
   "perm-employers-browse": "Every PERM sponsor, A to Z. Browse the employers in DOL's disclosure files by name.",
-  "perm-employers-under-review": "Whose PERM cases DOL has pulled aside. Employers with cases on hold, sent an RFI, audited or under appeal, from DOL's live record.",
+  "perm-employers-under-review": "Employers with PERM cases on hold, at RFI or under appeal, counted and dated from DOL's live record.",
   "perm-timeline-calculator": "PERM processing time calculator. Where a filing month stands against DOL's queue, with a decision estimate that keeps its own score.",
   "perm-wages-browse": "Every PERM occupation, A to Z. Browse the occupations in DOL's disclosure files by title.",
   "priority-date-calculator": "Visa bulletin priority date calculator. Whether your priority date is current, and how the cutoff has moved, from every bulletin held.",

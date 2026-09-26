@@ -111,6 +111,13 @@ export interface DigestData {
   uscisRepeat?: boolean;
   /** Federal Register documents published in the last 7 days. */
   notices: DigestNotice[];
+  /**
+   * The week's employer-wide moves from the census (holds first, then
+   * decision batches, biggest first, at most EMPLOYER_MOVES_MAX). Each
+   * sentence names who acted; none carries a reason. Absent on issues built
+   * before Sep 26 2026.
+   */
+  employerMoves?: DigestEmployerMove[];
   /** Absolute URL of the preference center for this address (per recipient). */
   prefsUrl?: string;
   /**
@@ -119,6 +126,41 @@ export interface DigestData {
    * per-recipient render inside `sendBatch` does.
    */
   watchedCase?: WatchedCase | null;
+}
+
+export interface DigestEmployerMove {
+  name: string;
+  /** The employer page, on the public site, or null when we hold no page. */
+  url: string | null;
+  date: string;
+  /** "DOL put 215 of its cases on hold": whoever acted, no reason. */
+  sentence: string;
+}
+
+export const EMPLOYER_MOVES_MAX = 6;
+
+/**
+ * The digest's employer block from the census's move list: last seven days
+ * ending `weekOf`, holds and releases before decision batches, biggest first.
+ */
+export function pickEmployerMoves(
+  moves: { key: string; date: string; slug: string | null; name: string; sentence: string; n: number }[],
+  weekOf: string,
+): DigestEmployerMove[] {
+  const from = new Date(`${weekOf}T12:00:00Z`);
+  from.setUTCDate(from.getUTCDate() - 7);
+  const floor = from.toISOString().slice(0, 10);
+  const isHold = (k: string) => k.includes("|hold-");
+  return moves
+    .filter((m) => m.date >= floor && m.date <= weekOf)
+    .sort((a, b) => Number(isHold(b.key)) - Number(isHold(a.key)) || b.n - a.n)
+    .slice(0, EMPLOYER_MOVES_MAX)
+    .map((m) => ({
+      name: m.name,
+      url: m.slug ? `${SITE_URL}/perm-employers/${m.slug}` : null,
+      date: m.date,
+      sentence: m.sentence,
+    }));
 }
 
 /** Gmail shows about 78 characters of a subject on a desktop; mobile shows fewer. */
@@ -233,6 +275,15 @@ export function composeText(d: DigestData): string {
     for (const m of d.uscisMedians ?? []) lines.push(`${m.label}: ${monthsLabel(m.medianMonths)} months to a decision`);
     lines.push("Median months in the quarter, from USCIS's own workbook; the 80% figure on USCIS's processing-times page is a different measure.");
     lines.push(`${SITE_URL}/uscis-processing-times`);
+    lines.push("");
+  }
+  if ((d.employerMoves?.length ?? 0) > 0) {
+    lines.push("EMPLOYER-WIDE MOVES THIS WEEK");
+    for (const m of d.employerMoves ?? []) {
+      lines.push(`${m.name}: ${m.sentence} (recorded ${dateLabel(m.date)}).`);
+    }
+    lines.push("DOL gives no reason for a hold or a batch, and neither do we. Follow an employer from its page to hear when it moves.");
+    lines.push(`${SITE_URL}/perm-employers/under-review`);
     lines.push("");
   }
   if (d.notices.length > 0) {

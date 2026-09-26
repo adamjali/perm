@@ -66,6 +66,9 @@ import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { deliverAlert } from "./lib/alertDelivery";
+import { dropQueued } from "./lib/alertOutboxStore";
+import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
 import { formatAsOf, formatMonth, monthsMoved } from "../src/lib/dolFormat";
@@ -137,7 +140,7 @@ const SUBSCRIBE_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
  * throttled. That is the correct trade: a delayed marketing confirmation is
  * recoverable, a locked-out password reset is not.
  */
-const CONFIRMATION_GLOBAL_BUDGET = { limit: 18, windowMs: 24 * 60 * 60 * 1000 };
+const CONFIRMATION_GLOBAL_BUDGET = windowFor("queueConfirm");
 
 /** Shown when either limit trips. Says nothing about the address. */
 const THROTTLED_REPLY =
@@ -353,10 +356,11 @@ export const subscribe = internalMutation({
     const budget = await checkAndRecordRateLimit(
       ctx,
       "all",
-      "queue_subscribe_global",
+      BUDGETS.queueConfirm.key,
       CONFIRMATION_GLOBAL_BUDGET,
     );
     if (!budget.allowed) {
+      await noteRefusal(ctx, "queueConfirm");
       log.error("confirmation budget exhausted; refusing to send", {
         windowMs: CONFIRMATION_GLOBAL_BUDGET.windowMs,
         limit: CONFIRMATION_GLOBAL_BUDGET.limit,
@@ -728,6 +732,7 @@ export const unsubscribeByToken = internalMutation({
         pendingFilingMonth: undefined,
       });
     }
+    await dropQueued(ctx, rows[0]!.email, "queue");
     return true;
   },
 });
@@ -908,17 +913,22 @@ export const notifyQueueReached = internalAction({
           },
         );
 
-        const result = await sendEmailWithRetry(getResend(), {
-          from: FROM_EMAIL,
-          to: row.email,
+        // Through the daily delivery path; see convex/lib/alertDelivery.ts.
+        const result = await deliverAlert(ctx, {
+          email: row.email,
+          kind: "queue",
+          ref: `queue:${row._id}`,
           subject:
             queue === "perm"
               ? `DOL has reached ${frontierLabel} in the PERM queue`
               : `DOL has reached ${frontierLabel} in the prevailing-wage queue`,
           html,
-          headers: {
-            "List-Unsubscribe": `<${unsubUrl}>`,
-            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          listUnsubscribe: unsubUrl,
+          summary: {
+            title: label.charAt(0).toUpperCase() + label.slice(1),
+            line: `DOL has reached ${frontierLabel}. You asked about ${filingLabel}`,
+            url: `${SITE_URL}/perm-processing-times`,
+            tone: "good",
           },
           text: [
             `The Department of Labor's ${label} has reached ${frontierLabel}.`,
@@ -944,20 +954,21 @@ export const notifyQueueReached = internalAction({
           ].join("\n"),
         });
 
-        if (result.error) {
+        if (result.status === "failed") {
           // Do NOT mark notified. This subscriber stays due so a later sweep
           // retries them; stamping here would consume their one alert on a
-          // send that never left the building.
+          // send that never left the building. A QUEUED alert is marked: the
+          // outbox owns its retries from here.
           failed += 1;
           log.error("alert send failed", {
             email: row.email,
-            error: result.error.message,
+            error: result.error,
           });
           await recordError(
             ctx,
             "action",
             "queueAlerts.notifyQueueReached",
-            new Error(`Resend: ${result.error.name}: ${result.error.message}`),
+            new Error(`Resend: ${result.error}`),
           );
           continue;
         }

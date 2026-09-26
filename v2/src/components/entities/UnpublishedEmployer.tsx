@@ -1,4 +1,4 @@
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import Link from "next/link";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -66,12 +66,15 @@ export function UnpublishedEmployer({
   record,
   cases,
   asOf,
+  follow,
 }: {
   record: LiveEmployerRecord;
   /** The newest cases, already capped by the caller. */
   cases: LiveCaseRow[];
   /** As-of date of the live case corpus, ISO. */
   asOf: string | null;
+  /** The follow card, rendered above the case list. */
+  follow?: ReactNode;
 }) {
   const { name, cases: total, pending, firstFiling, lastFiling, stages, otherNames } =
     record;
@@ -213,6 +216,7 @@ export function UnpublishedEmployer({
         </section>
       ) : null}
 
+      {follow}{" "}
       <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-xl font-black sm:text-2xl">
           {listed === total

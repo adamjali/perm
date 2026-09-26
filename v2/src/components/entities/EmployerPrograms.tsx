@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import type { EmployerStageRow } from "@/lib/employerStages";
+import { breakdownParts, holdSincePhrase, type EmployerStageRow } from "@/lib/employerStages";
 import { PROGRAM_LABEL, WAGE_FLOOR, wageGap, wageGapSentence, type ProgramLine } from "@/lib/employerPrograms";
 
 /**
@@ -9,9 +9,10 @@ import { PROGRAM_LABEL, WAGE_FLOOR, wageGap, wageGapSentence, type ProgramLine }
  * Three rows in the prose's own measure: what DOL has published, what its
  * live record shows still open, and the median wage on the published rows.
  * Under it, one sentence about the gap between the H-1B wage and the PERM
- * wage when both sides clear the floor, and one about how much of the PERM
- * queue DOL has pulled aside when the employer is in that census. Plain
- * server markup; every figure carries the count it rests on.
+ * wage when both sides clear the floor, and one about how many of its PERM
+ * cases sit outside DOL's normal queue when the employer is in that census,
+ * each count named by who acted and the hold dated from this site's record.
+ * Plain server markup; every figure carries the count it rests on.
  */
 
 const int = (n: number) => n.toLocaleString("en-US");
@@ -25,6 +26,7 @@ export function EmployerPrograms({
   pwd,
   lca,
   stages,
+  logFrom = null,
   searchHref,
   matchedPrefix = null,
 }: {
@@ -32,8 +34,10 @@ export function EmployerPrograms({
   perm: ProgramLine;
   pwd: ProgramLine | null;
   lca: ProgramLine | null;
-  /** This employer's row in the pulled-aside census, when it has five or more pending cases. */
+  /** This employer's row in the outside-the-queue census, when it has five or more pending cases. */
   stages: EmployerStageRow | null;
+  /** The first day of the site's status-change record, which dates a hold. */
+  logFrom?: string | null;
   /** The unified search prefilled with this employer. */
   searchHref: string;
   /** The normalised-name prefix the three files were joined on. */
@@ -90,10 +94,13 @@ export function EmployerPrograms({
       {gap ? <p className="mt-4 max-w-3xl text-base leading-relaxed text-foreground/85">{wageGapSentence(gap)}</p> : null}{" "}
       {stages && stages.review > 0 ? (
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
-          Of its {int(stages.pending)} pending PERM cases, DOL has pulled {int(stages.review)} aside ({pct(stages.share)}):
-          {(stages.byStatus["APPLICATION ON HOLD"] ?? 0) > 0 ? ` ${int(stages.byStatus["APPLICATION ON HOLD"] ?? 0)} on hold,` : ""}
-          {(stages.byStatus["RFI ISSUED"] ?? 0) > 0 ? ` ${int(stages.byStatus["RFI ISSUED"] ?? 0)} at RFI,` : ""}{" "}
-          the rest in review or on appeal.{" "}
+          {(() => {
+            const parts = breakdownParts(stages);
+            const since = holdSincePhrase(stages, logFrom);
+            return `Of its ${int(stages.pending)} pending PERM cases, ${int(stages.review)} (${pct(stages.share)}) sit outside DOL's normal queue${
+              parts.length ? `: ${parts.join(", ")}` : ""
+            }.${since ? ` The hold, from this site's daily record: ${since}.` : ""}`;
+          })()}{" "}
           <Link href="/perm-employers/under-review" className={LINK}>
             Where that sits among every employer
           </Link>

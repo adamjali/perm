@@ -456,11 +456,16 @@ export interface StageCase {
    * name-derived slug where none does, and stores the answer. Joining to it
    * on the case number is exact.
    *
-   * The join is safe by construction: a PENDING case cannot be in
-   * `perm_cases`, which holds only decided cases, so it is in the remainder
-   * by definition. A LEFT JOIN anyway - a case discovered since last night's
-   * rebuild has no row yet, and the honest render for that is an unlinked
-   * name rather than a guessed URL.
+   * TWO TABLES, BECAUSE AN APPEAL IS A DECIDED CASE (corrected Sep 25 2026).
+   * This comment used to say a pending case cannot be in `perm_cases`. An
+   * appeal can: DOL denied it, the quarterly file published the denial, and
+   * the employer's reconsideration request put it back to pending. Such a
+   * case is in `perm_cases` and not in the remainder, so a join to the
+   * remainder alone left every appeal stage's employers unlinked. Both
+   * tables carry the canonical slug; the remainder wins when both have it.
+   * LEFT JOINs anyway - a case discovered since last night's rebuild has no
+   * row yet, and the honest render for that is an unlinked name rather than
+   * a guessed URL.
    */
   employerSlug: string | null;
   jobTitle: string | null;
@@ -493,9 +498,10 @@ export async function listStageCases(
 ): Promise<StageCase[]> {
   const r = await rows<Record<string, unknown>>(
     `SELECT c.case_number, c.filing_date, c.employer_name, c.job_title,
-            l.employer_slug
+            COALESCE(l.employer_slug, p.employer_slug) AS employer_slug
        FROM perm_case_status c
        LEFT JOIN perm_live_recent l ON l.case_number = c.case_number
+       LEFT JOIN perm_cases p ON p.case_number = c.case_number
       WHERE c.current_status = ? AND c.${PENDING} AND c.${NOT_FIXTURE}
    ORDER BY c.filing_date, c.case_number
       LIMIT ? OFFSET ?`,

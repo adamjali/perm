@@ -797,6 +797,19 @@ EMPLOYER_STAGES_CAP = 1000
 # filing dates), so five separates the two with room on both sides.
 EMPLOYER_MOVE_MIN = 5
 EMPLOYER_MOVES_DAYS = 120
+# A day of decisions is an employer-wide event when it is big in absolute
+# terms AND against the employer's own queue. Ten is under what one analyst
+# decides in a day, so a busy filer's ordinary flow (Amazon decides dozens a
+# day out of thousands pending) never reaches 5% of its queue; a batch does.
+DECISION_STATUSES = ("CERTIFIED", "DENIED", "WITHDRAWN")
+DECISION_MOVE_MIN = 10
+DECISION_MOVE_SHARE = 0.05
+DECISION_MOVES_DAYS = 60
+# ...and it must stand out against the employer's OWN pace: measured Sep 26
+# 2026, the two rules above passed Amazon Dev Center on 42 and 44
+# certifications on consecutive days, its ordinary flow. Three times its
+# average day over the window (zero days included) keeps the batches.
+DECISION_MOVE_PACE = 3.0
 ET = zoneinfo.ZoneInfo("America/New_York")
 
 
@@ -813,7 +826,8 @@ def _norm_name(name) -> str:
     return " ".join(str(name or "").lower().split())
 
 
-def employer_stage_rows(rows) -> list[dict]:
+def employer_stage_rows(rows, floor: int = EMPLOYER_STAGES_MIN_PENDING,
+                        cap: int | None = EMPLOYER_STAGES_CAP) -> list[dict]:
     """Fold (employer_name, employer_slug, status, n) rows into one row per employer.
 
     Pure, so the test can drive it with a handful of tuples. An employer is
@@ -867,11 +881,11 @@ def employer_stage_rows(rows) -> list[dict]:
         for st, n in src["byStatus"].items():
             target["byStatus"][st] = target["byStatus"].get(st, 0) + n
         target["_names"] |= src["_names"]
-    out = [r for r in by_key.values() if r["pending"] >= EMPLOYER_STAGES_MIN_PENDING]
+    out = [r for r in by_key.values() if r["pending"] >= floor]
     for r in out:
         r["share"] = round(r["review"] / r["pending"], 4) if r["pending"] else 0.0
     out.sort(key=lambda r: (-r["review"], -r["pending"], r["name"].lower()))
-    return out[:EMPLOYER_STAGES_CAP]
+    return out if cap is None else out[:cap]
 
 
 def _row_index(employers: list[dict]) -> tuple[dict, dict]:
@@ -968,6 +982,58 @@ def hold_moves(events, today: datetime.date, employers: list[dict] | None = None
     return out
 
 
+def decision_moves(events, today: datetime.date, employers: list[dict] | None = None,
+                   log_from: str | None = None,
+                   days: int = DECISION_MOVES_DAYS,
+                   minimum: int = DECISION_MOVE_MIN,
+                   share: float = DECISION_MOVE_SHARE,
+                   pace: float = DECISION_MOVE_PACE) -> list[dict]:
+    """The days one employer's cases were decided in bulk, for the follow alerts.
+
+    `events` is (employer_name, slug, et_date, to_status) per case reaching a
+    decision. A group is one employer, one day, one outcome, so a batch of
+    certifications and a batch of withdrawals never merge: DOL certifies and
+    denies, the EMPLOYER withdraws, and the copy downstream names who acted.
+
+    A group counts when it holds at least `minimum` cases AND at least `share`
+    of the employer's queue as it stood that morning (pending now plus the
+    group). Pending comes from `employers`, which here is every employer with
+    a pending case, not the floored census; an employer whose whole queue was
+    decided has no row and 0 pending, so its batch always counts. And it must
+    reach `pace` times the employer's average day for that outcome across the
+    window, counted from the later of the cutoff and `log_from` (the first day
+    the record holds), zero days included: a big filer decided every weekday
+    is its queue moving, not an event. The date is the day this site recorded
+    the decision, which the copy says.
+    """
+    index = _row_index(employers or [])
+    cutoff = (today - datetime.timedelta(days=days)).isoformat()
+    start = max(cutoff, log_from or cutoff)
+    window_days = max(1, (today - datetime.date.fromisoformat(start)).days + 1)
+    totals: dict[tuple, int] = {}
+    groups: dict[tuple, dict] = {}
+    for name, slug, date, to_status in events:
+        if not date or date < cutoff or to_status not in DECISION_STATUSES:
+            continue
+        row = _resolve(index, name, slug)
+        who = (row["slug"] or f"name:{_norm_name(row['name'])}") if row else (
+            slug or f"name:{_norm_name(name)}")
+        g = groups.setdefault((who, date, to_status), {
+            "date": date,
+            "name": row["name"] if row else str(name or "").strip(),
+            "slug": row["slug"] if row else slug,
+            "to": to_status, "n": 0,
+            "_pending": row["pending"] if row else 0, "_who": (who, to_status)})
+        g["n"] += 1
+        totals[(who, to_status)] = totals.get((who, to_status), 0) + 1
+    out = [g for g in groups.values()
+           if g["name"] and g["n"] >= minimum
+           and g["n"] >= share * (g["_pending"] + g["n"])
+           and g["n"] >= pace * totals[g["_who"]] / window_days]
+    out.sort(key=lambda g: (g["date"], g["n"]), reverse=True)
+    return strip_private(out)
+
+
 def strip_private(employers: list[dict]) -> list[dict]:
     return [{k: v for k, v in r.items() if not k.startswith("_")} for r in employers]
 
@@ -983,11 +1049,16 @@ def _slug_join(case_col: str = "c.case_number") -> str:
 
 
 def hold_history(db, employers: list[dict], today: datetime.date) -> dict:
-    """Read the hold moves out of the event log and date the current holds.
+    """Read the hold and decision moves out of the event log; date the current holds.
 
-    Four bounded reads: moves into the hold (`case_events_status_time`), moves
+    Five bounded reads: moves into the hold (`case_events_status_time`), moves
     out of it (`case_events_from_time`), the employer of every case involved
-    (primary key, in chunks), and the cases held today (`case_status_stage`).
+    (primary key, in chunks), the cases held today (`case_status_stage`), and
+    the last `DECISION_MOVES_DAYS` of decisions with their employers (one
+    join driven by `case_events_status_time`). `employers` is EVERY employer
+    with a pending case, so a name resolves to its slug and a batch is judged
+    against the employer's real queue; annotating those rows in place also
+    annotates the floored census, which holds the same dicts.
     Only DOL-direct events count; the retired mirror's rows describe changes
     of unknown date.
     """
@@ -1027,7 +1098,22 @@ def hold_history(db, employers: list[dict], today: datetime.date) -> dict:
               for cn, at in ins]
     events += [(*meta.get(cn, (None, None)), et_date(at), "off", to)
                for cn, at, to in outs]
-    return {"logFrom": log_from, "holdMoves": hold_moves(events, today, employers)}
+    since_ms = int((time.time() - (DECISION_MOVES_DAYS + 1) * 86400) * 1000)
+    decided = _rows(db, f"""
+        SELECT c.employer_name, COALESCE(l.employer_slug, p.employer_slug),
+               e.changed_at, e.to_status
+          FROM perm_case_events e
+          JOIN perm_case_status c ON c.case_number = e.case_number
+          {_slug_join("e.case_number")}
+         WHERE e.to_status IN ({",".join("?" * len(DECISION_STATUSES))})
+           AND e.changed_at >= ? AND e.source = ?
+           AND c.employer_name IS NOT ?""",
+        [*DECISION_STATUSES, since_ms, SOURCE, TEST_FIXTURE_EMPLOYER])
+    return {"logFrom": log_from,
+            "holdMoves": hold_moves(events, today, employers),
+            "decisionMoves": decision_moves(
+                [(name, slug, et_date(at), to) for name, slug, at, to in decided],
+                today, employers, log_from)}
 
 
 def write_employer_stages(db) -> None:
@@ -1059,13 +1145,15 @@ def write_employer_stages(db) -> None:
         log(f"NOT writing employer_stages: statuses {sum(nationwide.values()):,} "
             f"!= pending {pending_total:,} (a concurrent write landed mid-run)")
         return
-    employers = employer_stage_rows(rows)
+    everyone = employer_stage_rows(rows, floor=1, cap=None)
+    employers = [r for r in everyone
+                 if r["pending"] >= EMPLOYER_STAGES_MIN_PENDING][:EMPLOYER_STAGES_CAP]
     today = datetime.datetime.now(ET).date()
     # The dates are context, never a reason to withhold the counts: a failure
     # here writes the doc without them, the page hides the dated parts, and
     # the next pass tries again.
     try:
-        history = hold_history(db, employers, today)
+        history = hold_history(db, everyone, today)
     except Exception as e:  # noqa: BLE001 - logged and named, never silent
         log(f"employer_stages: hold history FAILED ({type(e).__name__}: {e}); "
             "writing the counts without dates")
@@ -1086,6 +1174,7 @@ def write_employer_stages(db) -> None:
     log(f"wrote     employer_stages ({len(employers)} employers with >= "
         f"{EMPLOYER_STAGES_MIN_PENDING} pending, "
         f"{len(history.get('holdMoves') or [])} employer-wide hold moves, "
+        f"{len(history.get('decisionMoves') or [])} decision batches, "
         f"{len(payload):,} bytes)")
 
 

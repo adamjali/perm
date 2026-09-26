@@ -36,6 +36,10 @@ import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { deliverAlert } from "./lib/alertDelivery";
+import { dropQueued } from "./lib/alertOutboxStore";
+import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
+import { monthLabel } from "./lib/newsletterCompose";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
 import { one as mirrorOne } from "./lib/publicMirror";
@@ -67,8 +71,8 @@ const countryValidator = v.union(...COUNTRIES.map((c) => v.literal(c)));
 
 /** Alerts one sweep may send; the remainder reschedules. Budget arithmetic in caseAlerts.ts. */
 const ALERT_BATCH_LIMIT = 12;
-const ALERT_GLOBAL_BUDGET = { limit: 12, windowMs: 24 * 60 * 60 * 1000 };
-const CONFIRMATION_GLOBAL_BUDGET = { limit: 6, windowMs: 24 * 60 * 60 * 1000 };
+const ALERT_GLOBAL_BUDGET = windowFor("bulletinAlert");
+const CONFIRMATION_GLOBAL_BUDGET = windowFor("bulletinConfirm");
 const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
 const SUBSCRIBE_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
 const RESUME_DELAY_MS = 5 * 60 * 1000;
@@ -176,10 +180,11 @@ export const subscribe = internalMutation({
     const budget = await checkAndRecordRateLimit(
       ctx,
       "all",
-      "bulletin_subscribe_global",
+      BUDGETS.bulletinConfirm.key,
       CONFIRMATION_GLOBAL_BUDGET,
     );
     if (!budget.allowed) {
+      await noteRefusal(ctx, "bulletinConfirm");
       log.error("bulletin confirmation budget exhausted; refusing to send");
       return { ok: false, message: THROTTLED_REPLY, throttled: true };
     }
@@ -437,6 +442,7 @@ export const unsubscribeByToken = internalMutation({
         pendingSeries: undefined,
       });
     }
+    await dropQueued(ctx, rows[0]!.email, "bulletin");
     return true;
   },
 });
@@ -611,14 +617,19 @@ export const sweep = internalAction({
           },
         );
 
-        const result = await sendEmailWithRetry(getResend(), {
-          from: FROM_EMAIL,
-          to: sub.email,
+        // Through the daily delivery path; see convex/lib/alertDelivery.ts.
+        const result = await deliverAlert(ctx, {
+          email: sub.email,
+          kind: "bulletin",
+          ref: `bulletin:${sub._id}`,
           subject: `${label} moved in the ${latest.month} visa bulletin`,
           html,
-          headers: {
-            "List-Unsubscribe": `<${unsubUrl}>`,
-            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          listUnsubscribe: unsubUrl,
+          summary: {
+            title: label,
+            line: `${fromWords} to ${toWords} in the ${monthLabel(latest.month)} bulletin`,
+            url: `${SITE_URL}/visa-bulletin`,
+            tone: "neutral",
           },
           text: [
             `The State Department's ${latest.month} visa bulletin changed the final-action cutoff for ${label}.`,
@@ -637,14 +648,14 @@ export const sweep = internalAction({
           ].join("\n"),
         });
 
-        if (result.error) {
+        if (result.status === "failed") {
           failed += 1;
-          log.error("bulletin alert send failed", { error: result.error.message });
+          log.error("bulletin alert send failed", { error: result.error });
           await recordError(
             ctx,
             "action",
             "bulletinAlerts.sweep",
-            new Error(`Resend: ${result.error.name}: ${result.error.message}`),
+            new Error(`Resend: ${result.error}`),
           );
           continue; // lastSeen NOT advanced; retried next run
         }
@@ -681,9 +692,10 @@ export const claimAlertBudget = internalMutation({
     const r = await checkAndRecordRateLimit(
       ctx,
       "all",
-      "bulletin_alert_global",
+      BUDGETS.bulletinAlert.key,
       ALERT_GLOBAL_BUDGET,
     );
+    if (!r.allowed) await noteRefusal(ctx, "bulletinAlert");
     return r.allowed;
   },
 });
