@@ -6476,3 +6476,41 @@ build's route table (`○` vs `ƒ`) for any page that gains a data read.
 (it globs), so a scan of the app tree silently skipped 101 of 153 files: copy them to flat names
 first. `git diff --name-only` prints repo-root paths from inside `v2/`; add `--relative`. And no
 workflow runs eslint, which is how a `Date.now()` in render reached `main`.
+
+## Sep 26 2026 (evening): industry and worksite city, years on, translations reviewed
+
+**DOL's PERM file publishes the employer's industry and the worksite city, and never did the
+worker's citizenship or education.** Read off `PERM_Record_Layout_FY2026_Q3.pdf` (the record
+layout WebFetch saves as a PDF; the laptop cannot reach dol.gov): `EMP_NAICS` (Form 9089 Section
+A, Item 13, a bare code) and `PRIMARY_WORKSITE_CITY` / `_COUNTY` / `_POSTAL_CODE`. The new form
+moved the worker's details to Appendix A, which DOL does not release; only the FY2024 old-form
+file (the `A-` numbers) could carry citizenship, and nothing filed since mid-2024 will.
+
+- `perm_cases` gains `naics` and `worksite_city`, unindexed. **An incremental load that finds
+  only those two different UPDATEs them in place** (`narrow_update`, one CASE statement per 200
+  rows); without it every stored row reads as changed and an INSERT OR REPLACE rewrites 374k
+  rows and eighteen indexes each. `ensure_columns` adds them to a live table.
+  `scripts/test_perm_extras.py` runs the real loader on in-memory SQLite; disabling the narrow
+  path turns two checks red.
+- **NAICS titles are the Census Bureau's** (`scripts/data/naics_titles.json`, built by
+  `build_naics_titles.py` from the 2022 and 2017 "2-6 digit" lists, 2022 winning). A code Census
+  never defined takes its nearest parent's title and the label names that parent.
+- `build_entity_detail.py` writes a `city` facet (employers and occupations; key `CITY|ST`, the
+  label the most common mixed-case spelling, so MCLEAN reads McLean) and an `industry` facet
+  (employers). `CityMix` and `IndustryMix` in `FilingMakeup.tsx` render them, and nothing when a
+  page has none. Facets exist only for entities at `PAGE_FLOOR` (3) filings, while pages exist
+  from 1; that gap predates this and costs writes to close.
+- **Order that makes the pages show it:** push the scripts first (Vercel skips), dispatch
+  `perm-disclosure-ingest.yml`, and deploy the site after it finishes, so the fresh ISR cache
+  renders with the facets. Deploy first and the 30-day employer pages wait a month.
+
+**The green card line prints years by default** (owner, Sep 26), labelled with the fiscal year
+it divides by; `showYears={false}` turns it off. The EB-2 India guide's "why this site won't"
+became "why no years figure is a date".
+
+**Translation review** of the five guides: Korean `비자 블러틴` (the Korean-American press
+spelling, not 블레틴), `사전여행허가서`, 1순위/2순위/3순위; Vietnamese headings had called the
+cutoff a priority date (`ngày chốt`, not `ngày ưu tiên`); Chinese `无排期` for Current and
+"这一列" for a column; Portuguese "o EAD". A model's review, not a native speaker's.
+
+**Every workflow runs on `ubuntu-24.04`**, pinned ahead of `ubuntu-latest` moving to 26.04.
