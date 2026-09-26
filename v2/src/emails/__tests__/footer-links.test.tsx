@@ -106,11 +106,16 @@ const digest: DigestData = {
   prefsUrl: "https://permtracker.app/prefs?token=T",
 };
 
+/** A URL as React writes it into an href: EVERY "&" becomes "&amp;". A
+ * `.replace("&", ...)` escaped only the first, which passed while the test
+ * URLs carried a single "&" and would fail the day one carries two. */
+const inAttr = (url: string): string => url.split("&").join("&amp;");
+
 describe("every email has a way out", () => {
   it.each(subscriberMail)("%s carries the one-click stop AND the preference page", async (_name, make) => {
     const html = await render(make());
     expect(html).toContain(UNSUB);
-    expect(html).toContain(PREFS.replace("&", "&amp;"));
+    expect(html).toContain(inAttr(PREFS));
     expect(html).toContain("Email preferences");
     expect(html).not.toContain("Manage notification settings");
   });
@@ -133,7 +138,7 @@ describe("every email has a way out", () => {
         stopUrl: stop,
       }),
     );
-    expect(html).toContain(stop.replace("&", "&amp;"));
+    expect(html).toContain(inAttr(stop));
     expect(html).toContain("https://permtracker.app/prefs?token=T");
     expect(html).toContain("Email preferences");
     expect(html).not.toContain("Manage notification settings");
