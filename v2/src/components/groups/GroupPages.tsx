@@ -1,0 +1,210 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+import { DataProvenance } from "@/components/data/DataProvenance";
+import { JsonLdScript } from "@/components/seo/JsonLdScript";
+import { generateBreadcrumbSchema } from "@/lib/content/seo";
+import { naicsSectorTitle } from "@/lib/naicsSectors";
+import { openGraphBase } from "@/lib/openGraphBase";
+import type { PageCardSlug } from "@/lib/pageCards";
+import { withSocialCard } from "@/lib/socialCard";
+import { countryYears, getGroup, GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
+
+import { GroupIndexTable, type GroupIndexRow } from "./GroupIndexTable";
+import { GroupView } from "./GroupView";
+
+/**
+ * The shared body of the six browse routes (an index and a detail page per
+ * kind). Route files stay thin because Next wants their segment config
+ * (revalidate, dynamicParams) written as literals in each file.
+ */
+
+interface KindCopy {
+  indexTitle: string;
+  indexH1: string;
+  indexLede: string;
+  indexDescription: string;
+  noun: string;
+  facetLabel: string | null;
+  card: PageCardSlug;
+  detailTitle: (label: string) => string;
+  detailH1: (label: string) => string;
+  coverage: string;
+}
+
+const COPY: Record<GroupKind, KindCopy> = {
+  city: {
+    indexTitle: "PERM Jobs by City",
+    indexH1: "PERM sponsorship by city",
+    indexLede:
+      "Every worksite city with 20 or more PERM decisions since FY2016: how many, how many were approved, what they paid and who filed them.",
+    indexDescription:
+      "PERM decisions by worksite city since FY2016: approval rates, median certified wages and the employers and jobs behind them, from DOL's files.",
+    noun: "cities",
+    facetLabel: "State",
+    card: "perm-cities",
+    detailTitle: (l) => `PERM Jobs in ${l}`,
+    detailH1: (l) => `PERM jobs in ${l}`,
+    coverage:
+      "The worksite city on each application, from DOL's decided cases since FY2016. Spellings of one city are pooled; a city counts as one place per state.",
+  },
+  industry: {
+    indexTitle: "PERM by Industry",
+    indexH1: "PERM sponsorship by industry",
+    indexLede:
+      "Every industry, by the NAICS code the employer put on the form, with 20 or more PERM decisions since FY2016. The titles are the Census Bureau's.",
+    indexDescription:
+      "PERM decisions by industry (the employer's NAICS code) since FY2016: approval rates, median certified wages, top sponsors and jobs, from DOL's files.",
+    noun: "industries",
+    facetLabel: "Sector",
+    card: "perm-industries",
+    detailTitle: (l) => `PERM in ${l}`.slice(0, 60),
+    detailH1: (l) => `PERM in ${l}`,
+    coverage:
+      "The industry is the NAICS code the employer entered on the form. DOL publishes the code alone; the title is the Census Bureau's, and a code Census never defined takes its parent group's title.",
+  },
+  country: {
+    indexTitle: "PERM by Country of Citizenship",
+    indexH1: "PERM by the worker's country of citizenship",
+    indexLede:
+      "Every country with 20 or more PERM decisions on DOL's old form, FY2016 to about early FY2025, with each country's yearly record back to FY2008.",
+    indexDescription:
+      "PERM decisions by the worker's country of citizenship, FY2008 to FY2023, with approval rates, wages, sponsors and jobs, from DOL's old-form files.",
+    noun: "countries",
+    facetLabel: null,
+    card: "perm-countries",
+    detailTitle: (l) => `PERM Cases for Citizens of ${l}`.slice(0, 60),
+    detailH1: (l) => `PERM cases for citizens of ${l}`,
+    coverage:
+      "DOL printed the worker's citizenship, education and visa on its old form, used for cases decided through about early FY2025; the form in use since mid-2023 doesn't carry them. So these pages describe FY2008 to FY2023 (years) and FY2016 to early FY2025 (everything else).",
+  },
+};
+
+function fmt(n: number): string {
+  return n.toLocaleString("en-US");
+}
+
+export function groupIndexMetadata(kind: GroupKind): Metadata {
+  const c = COPY[kind];
+  const path = GROUP_PATH[kind];
+  return withSocialCard(
+    {
+      title: c.indexTitle,
+      description: c.indexDescription,
+      alternates: { canonical: path },
+      openGraph: { ...openGraphBase, title: `${c.indexTitle} | PERM Tracker`, description: c.indexDescription, url: path },
+    },
+    c.card,
+  );
+}
+
+export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
+  const c = COPY[kind];
+  const path = GROUP_PATH[kind];
+  const groups = await listGroups(kind);
+  const rows: GroupIndexRow[] = groups.map((g) => ({
+    slug: g.slug,
+    label: g.label,
+    total: g.total,
+    certified: g.certified,
+    denied: g.denied,
+    withdrawn: g.withdrawn,
+    medianWage: g.medianWage,
+    fyFrom: g.fyFrom,
+    fyTo: g.fyTo,
+    facet: kind === "city" ? g.key.split("|")[1] ?? null : kind === "industry" ? naicsSectorTitle(g.key) : null,
+  }));
+  const breadcrumb = generateBreadcrumbSchema([
+    { name: "Data", href: "/perm-employers" },
+    { name: c.indexH1, href: path },
+  ]);
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <div className="pt-10 sm:pt-12" />
+      <JsonLdScript schema={breadcrumb} />
+      <header>
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">{c.indexH1}</h1>{" "}
+        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">{c.indexLede}</p>
+      </header>
+      {rows.length === 0 ? (
+        <p className="mt-10 max-w-2xl text-base text-foreground/80">
+          This breakdown hasn&apos;t been built yet. DOL&apos;s case files are on the{" "}
+          <Link href="/case-search" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+            case search
+          </Link>
+          .
+        </p>
+      ) : (
+        <div className="mt-8">
+          <GroupIndexTable
+            rows={rows}
+            basePath={path}
+            noun={c.noun}
+            facetLabel={c.facetLabel}
+            caption={`${fmt(rows.length)} ${c.noun}, busiest first`}
+          />
+        </div>
+      )}
+      <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">{c.coverage}</p>
+      <DataProvenance datasets={["perm-cases"]} />
+    </div>
+  );
+}
+
+export async function groupDetailMetadata(kind: GroupKind, slug: string): Promise<Metadata> {
+  const g = await getGroup(kind, slug);
+  // notFound() here, at the earliest point, so a junk slug answers 404 and
+  // not a 200 streamed before the page could decide (the soft-404 rule).
+  if (!g) notFound();
+  const c = COPY[kind];
+  const path = `${GROUP_PATH[kind]}/${slug}`;
+  const title = c.detailTitle(g.label);
+  const description = `${fmt(g.total)} PERM decisions${g.fyFrom && g.fyTo ? `, FY${g.fyFrom} to FY${g.fyTo}` : ""}: approval rate, wages, sponsors and jobs, from DOL's own files.`;
+  return withSocialCard(
+    {
+      title: { absolute: title.length > 44 ? title : `${title} | PERM Tracker` },
+      description,
+      alternates: { canonical: path },
+      openGraph: { ...openGraphBase, title, description, url: path },
+    },
+    c.card,
+  );
+}
+
+export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: string }) {
+  const g = await getGroup(kind, slug);
+  if (!g) notFound();
+  const c = COPY[kind];
+  const years = kind === "country" ? await countryYears(g.key) : undefined;
+  const breadcrumb = generateBreadcrumbSchema([
+    { name: c.indexH1, href: GROUP_PATH[kind] },
+    { name: g.label, href: `${GROUP_PATH[kind]}/${slug}` },
+  ]);
+  return (
+    <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <div className="pt-10 sm:pt-12" />
+      <JsonLdScript schema={breadcrumb} />
+      <header>
+        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+          <Link href={GROUP_PATH[kind]} className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
+            {c.indexH1}
+          </Link>
+        </p>{" "}
+        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">{c.detailH1(g.label)}</h1>{" "}
+        {kind === "industry" ? (
+          <p className="mt-3 font-mono text-sm tabular-nums text-foreground/70">NAICS {g.key}</p>
+        ) : null}
+      </header>
+      <GroupView kind={kind} group={g} yearsOverride={years} />
+      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">{c.coverage}</p>
+      <DataProvenance datasets={["perm-cases"]} />
+    </div>
+  );
+}
+
+/** The busiest groups, prerendered at build; the rest render on first visit. */
+export async function groupStaticParams(kind: GroupKind, n = 25): Promise<{ slug: string }[]> {
+  const groups = await listGroups(kind).catch(() => []);
+  return groups.slice(0, n).map((g) => ({ slug: g.slug }));
+}

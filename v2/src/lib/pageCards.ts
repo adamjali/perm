@@ -12,6 +12,9 @@
  */
 
 export const PAGE_CARD_ALT = {
+  "perm-cities": "PERM jobs by city. Every worksite city with 20 or more PERM decisions since FY2016, with approval rates, wages and sponsors, from DOL's files.",
+  "perm-industries": "PERM by industry. Every industry by the employer's NAICS code, with approval rates, wages, sponsors and jobs, from DOL's files.",
+  "perm-countries": "PERM by country of citizenship. Each country's PERM decisions by year from FY2008, with sponsors, jobs and education, from DOL's old-form files.",
   "badges": "PERM queue badges. Three embeddable SVG badges, regenerated daily from DOL's own figures: the queue month, the decision days and the wage-request month.",
   "debarments": "Debarred from PERM, H-1B, H-2A and H-2B. Every employer and agent DOL has barred from the programs, from DOL's own lists.",
   "email-preferences": "Email preferences. Turn any PERM Tracker alert off from one page, no account needed.",

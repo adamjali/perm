@@ -315,6 +315,24 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "USCIS's H-1B cap registration and selection counts for FY2021 to FY2026, the share selected each year, and DHS's own estimate (90 FR 60864) of a beneficiary's chance at each OEWS wage level under the weighted lottery that began with FY2027. Labelled as an estimate; no FY2027 count is published yet.",
   },
   {
+    path: "/perm-cities",
+    label: "PERM by worksite city",
+    blurb:
+      "Every worksite city with 20 or more PERM decisions since FY2016 (DOL's closed-year and current files), with the approval rate, the median certified wage, decisions by year, and the employers, occupations, industries and countries of citizenship behind them. One page per city.",
+  },
+  {
+    path: "/perm-industries",
+    label: "PERM by industry",
+    blurb:
+      "Every industry by the NAICS code the employer entered on the form, with 20 or more PERM decisions since FY2016, titled from the Census Bureau's NAICS lists: approval rate, median wage, top sponsors, jobs, cities and countries of citizenship. One page per six-digit code.",
+  },
+  {
+    path: "/perm-countries",
+    label: "PERM by the worker's country of citizenship",
+    blurb:
+      "Each country's PERM decisions by fiscal year from FY2008, and its sponsors, jobs, cities, industries, education and visa at filing from FY2016. From DOL's old-form files; the form in use since mid-2023 doesn't publish citizenship.",
+  },
+  {
     path: "/nvc-waiting-list",
     label: "The NVC immigrant visa waiting list",
     blurb:

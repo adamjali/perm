@@ -21,7 +21,7 @@ describe("EmployerYears", () => {
   it("draws no chart for a single year, and still lists that year's cases", () => {
     render(<EmployerYears years={[{ fy: 2021, certified: 1, denied: 0, withdrawn: 0 }]} cases={CASES} />);
     expect(screen.queryByText(/Year by year since/)).not.toBeInTheDocument();
-    expect(screen.getByText("Decided in FY2020 to FY2023")).toBeInTheDocument();
+    expect(screen.getByText("Decided in FY2016 to FY2023")).toBeInTheDocument();
   });
 
   it("draws every year from the first to the last, a missing year as zero", () => {

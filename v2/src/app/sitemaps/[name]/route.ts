@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import {
   entityEntries,
+  groupEntries,
   liveEmployerEntries,
   pagesEntries,
   parseChildName,
@@ -25,7 +26,7 @@ export async function GET(
   const key = name.slice(0, -4);
 
   const entries =
-    key === "pages" ? await pagesEntries() : await (async () => {
+    key === "pages" ? await pagesEntries() : key === "groups" ? await groupEntries() : await (async () => {
       const parsed = parseChildName(key);
       // An unparseable name is a 404, not an empty sitemap. An empty urlset
       // for a typo would be indexed as a legitimately empty section.

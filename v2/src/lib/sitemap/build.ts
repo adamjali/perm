@@ -14,6 +14,7 @@ import { browseCounts } from "@/lib/turso/entityBrowse";
 import { getBacklogCensus } from "@/lib/turso/backlog";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
+import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
 import {
   countEntityRanks,
   countLiveOnlyRanks,
@@ -228,6 +229,9 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/which-green-card`, lastModified: "2026-09-26", images: [`${base}/og/which-green-card.jpg`] },
     { url: `${base}/h1b-lottery-odds`, lastModified: "2026-09-26", images: [`${base}/og/h1b-lottery-odds.jpg`] },
     { url: `${base}/nvc-waiting-list`, lastModified: "2026-09-26", images: [`${base}/og/nvc-waiting-list.jpg`] },
+    { url: `${base}/perm-cities`, lastModified: "2026-09-26", images: [`${base}/og/perm-cities.jpg`] },
+    { url: `${base}/perm-industries`, lastModified: "2026-09-26", images: [`${base}/og/perm-industries.jpg`] },
+    { url: `${base}/perm-countries`, lastModified: "2026-09-26", images: [`${base}/og/perm-countries.jpg`] },
     { url: `${base}/green-card-timelines`, lastModified: "2026-09-26", images: [`${base}/og/green-card-timelines.jpg`] },
     // The guide for the person waiting, in five languages. Their hreflang
     // alternates are in each page's own head (src/lib/i18n/locales.ts).
@@ -493,6 +497,22 @@ export async function liveEmployerEntries(chunk: number): Promise<Entry[]> {
   }));
 }
 
+/**
+ * Every city, industry and country page (perm_groups, a few thousand rows).
+ * Dated by the published corpus, the only thing that moves these figures.
+ * An empty table lists nothing rather than throwing: this family is new, and
+ * a missing build must not take the sitemap index down with it.
+ */
+export async function groupEntries(): Promise<Entry[]> {
+  const base = baseUrl();
+  const asOf = (await corpusAsOf()) ?? "2026-09-26";
+  const kinds: GroupKind[] = ["city", "industry", "country"];
+  const lists = await Promise.all(kinds.map((k) => listGroups(k).catch(() => [])));
+  return kinds.flatMap((k, i) =>
+    (lists[i] ?? []).map((g) => ({ url: `${base}${GROUP_PATH[k]}/${g.slug}`, lastModified: asOf })),
+  );
+}
+
 /** The child-sitemap families: three entity kinds plus the live-only employers. */
 export type ChildKind = EntityKind | "live-employer";
 
@@ -500,7 +520,7 @@ export type ChildKind = EntityKind | "live-employer";
 export async function childNames(): Promise<string[]> {
   const kinds: EntityKind[] = ["employer", "attorney", "occupation"];
   const counts = await Promise.all(kinds.map((k) => countEntityRanks(k)));
-  const names = ["pages"];
+  const names = ["pages", "groups"];
   kinds.forEach((kind, i) => {
     const n = Math.max(1, Math.ceil((counts[i] ?? 0) / SITEMAP_CHUNK));
     for (let c = 0; c < n; c += 1) names.push(`${kind}-${c + 1}`);

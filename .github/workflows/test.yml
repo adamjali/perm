@@ -233,6 +233,7 @@ jobs:
         run: |
           python3 scripts/test_perm_extras.py
           python3 scripts/test_perm_history.py
+          python3 scripts/test_groups.py
 
       - name: Serial arithmetic and data-invariant contracts
         if: ${{ !cancelled() }}

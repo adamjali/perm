@@ -44,6 +44,9 @@ export type DataSection =
   | "timelines"
   | "h1b-lottery"
   | "nvc-waiting-list"
+  | "by-city"
+  | "by-industry"
+  | "by-country"
   | "calculators"
   | "queue"
   | "processing-times"
@@ -72,6 +75,7 @@ export type DataGroup =
   | "Case tools"
   | "Queue"
   | "Employers and wages"
+  | "Breakdowns"
   | "Denials and audits"
   | "Visa bulletin"
   | "USCIS"
@@ -104,7 +108,6 @@ export const SECTIONS: DataNavSection[] = [
   { key: "all-cases", group: "Case tools", label: "Search all programs", href: "/case-search" },
   { key: "case-status", group: "Case tools", label: "Case status", href: "/perm-case-status" },
   { key: "uscis-case-status", group: "Case tools", label: "USCIS receipt", href: "/uscis-case-status" },
-  { key: "case-statuses", group: "Case tools", label: "Status meanings", href: "/perm-case-statuses" },
   // Moved out of "Who files". It searches the case corpus, and somebody
   // holding a case number is the highest-intent reader on this surface; the
   // two lookups belong together.
@@ -129,7 +132,12 @@ export const SECTIONS: DataNavSection[] = [
   { key: "compare-offer", group: "Employers and wages", label: "Compare my offer", href: "/tools/compare-my-offer" },
   { key: "layoffs", group: "Employers and wages", label: "Layoff notices", href: "/layoffs" },
   { key: "compare-employers", group: "Employers and wages", label: "Compare employers", href: "/perm-employers/compare" },
-  { key: "by-state", group: "Employers and wages", label: "By state", href: "/perm-by-state" },
+  // Every decided case sliced one way: by where the job is, what the
+  // employer does, and where the worker is a citizen of.
+  { key: "by-state", group: "Breakdowns", label: "By state", href: "/perm-by-state" },
+  { key: "by-city", group: "Breakdowns", label: "By city", href: "/perm-cities" },
+  { key: "by-industry", group: "Breakdowns", label: "By industry", href: "/perm-industries" },
+  { key: "by-country", group: "Breakdowns", label: "By citizenship", href: "/perm-countries" },
 
   { key: "risk", group: "Denials and audits", label: "Denial rates", href: "/perm-denial-risk" },
   // Its own key rather than borrowing "risk". Measured before adding: this
@@ -161,6 +169,7 @@ export const SECTIONS: DataNavSection[] = [
   { key: "timelines", group: "USCIS", label: "Green card timelines", href: "/green-card-timelines" },
   // USCIS runs the H-1B cap registration, so its odds sit with USCIS's data.
   { key: "h1b-lottery", group: "USCIS", label: "H-1B lottery odds", href: "/h1b-lottery-odds" },
+  { key: "case-statuses", group: "Reference", label: "Status meanings", href: "/perm-case-statuses" },
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
   { key: "policy-changes", group: "Reference", label: "Policy changes", href: "/policy-changes" },
   { key: "debarments", group: "Reference", label: "Debarments", href: "/debarments" },
@@ -173,6 +182,7 @@ export const GROUPS: DataGroup[] = [
   "Case tools",
   "Queue",
   "Employers and wages",
+  "Breakdowns",
   "Denials and audits",
   // Its own group rather than a line in Reference: State Department data, a
   // different agency and a different question from everything above it. The

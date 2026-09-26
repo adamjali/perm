@@ -39,7 +39,7 @@ import {
 } from "@/components/tools/EntityContext";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { getDatasetSchema } from "@/lib/structuredData";
-import { employerHistoryCases, employerYears } from "@/lib/turso/employerHistory";
+import { employerHistoryCases, employerYears, workerFacets } from "@/lib/turso/employerHistory";
 import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
 import { EmployerWait } from "@/components/entities/EmployerWait";
@@ -48,6 +48,7 @@ import { similarSponsors } from "@/lib/turso/similarSponsors";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { EmployerYears } from "@/components/entities/EmployerYears";
+import { WorkerMix } from "@/components/entities/WorkerMix";
 import { CityMix, IndustryMix, OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
 import {
   absorbedCount,
@@ -420,7 +421,7 @@ export default async function EmployerPage({
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305
   // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers] =
     await Promise.all([
       getDisclosureStats(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -460,6 +461,7 @@ export default async function EmployerPage({
       // indexed read (scripts/ingest_perm_history.py writes both tables).
       employerYears(canonicalSlug),
       employerHistoryCases(canonicalSlug, 25),
+      workerFacets("employer", canonicalSlug),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -864,6 +866,8 @@ export default async function EmployerPage({
         cases={historyCases}
         lastYearPartial={throughMonth ? `DOL's newest file runs through ${throughMonth}` : undefined}
       />
+
+      <WorkerMix facets={workers} subject="employer" />
 
       {band ? (
         <SizeBandNote

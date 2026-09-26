@@ -57,6 +57,13 @@ vi.mock("@/lib/turso/publicData", () => ({
 // builds its month strip from and the month route peeks before rendering.
 // Mocked at that module; `beforeEach` arranges a census with one EMPTY month,
 // because the route 404s an empty month and the sitemap must omit it.
+vi.mock("@/lib/turso/groups", () => ({
+  GROUP_PATH: { city: "/perm-cities", industry: "/perm-industries", country: "/perm-countries" },
+  listGroups: vi.fn(async (kind: string) => [
+    { kind, slug: kind === "city" ? "seattle-wa" : kind === "industry" ? "541511" : "india", key: "k",
+      label: "L", total: 30, certified: 20, denied: 5, withdrawn: 5, medianWage: null, fyFrom: 2016, fyTo: 2026 },
+  ]),
+}));
 vi.mock("@/lib/turso/backlog", () => ({
   getBacklogCensus: vi.fn(),
 }));
@@ -113,6 +120,7 @@ import { BROWSE_BUCKETS, type BrowseBucket } from "@/lib/entityBrowse";
 import {
   childNames,
   entityEntries,
+  groupEntries,
   indexXml,
   liveEmployerEntries,
   pagesEntries,
@@ -128,6 +136,7 @@ async function sitemap() {
   const out = [];
   for (const n of names) {
     if (n === "pages") { out.push(...(await pagesEntries())); continue; }
+    if (n === "groups") { out.push(...(await groupEntries())); continue; }
     const parsed = parseChildName(n)!;
     out.push(...(await entityEntries(parsed.kind, parsed.chunk)));
   }

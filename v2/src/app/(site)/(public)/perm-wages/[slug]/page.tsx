@@ -40,6 +40,8 @@ import { getLadderByYear, getOccupationStateLadders } from "@/lib/turso/wages";
 import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { CityMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
+import { WorkerMix } from "@/components/entities/WorkerMix";
+import { workerFacets } from "@/lib/turso/employerHistory";
 import { aliasTarget, entityFacets } from "@/lib/turso/entityDetail";
 import {
   comparables,
@@ -251,7 +253,7 @@ export default async function OccupationPage({
   // The materialised wage cells are keyed by SOC code, so an occupation with
   // no code on file simply has no ladder rather than a wrong one.
   const wageKey = row.code ?? "";
-  const [stats, dist, near, ladderYears, stateLadders, facets, freshness] = await Promise.all([
+  const [stats, dist, near, ladderYears, stateLadders, facets, freshness, workers] = await Promise.all([
     getDisclosureStats(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -271,6 +273,7 @@ export default async function OccupationPage({
     // An 11-row table, React-cached, on a page that regenerates monthly. It is
     // here only so the Dataset can state WHEN its figures were last true.
     getFreshness(),
+    workerFacets("occupation", slug),
   ]);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
@@ -540,6 +543,8 @@ export default async function OccupationPage({
           </div>
         </section>
       ) : null}
+
+      <WorkerMix facets={workers} subject="occupation" />
 
       <RankLadder
         rank={row.rank}

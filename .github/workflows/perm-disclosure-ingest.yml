@@ -283,6 +283,8 @@ jobs:
           # rows just loaded (FY2008 to FY2023 were loaded once by
           # perm-history-ingest.yml and never change).
           python3 scripts/ingest_perm_history.py --current
+          # The city, industry and country pages read both case tables.
+          python3 scripts/build_groups.py
           python3 scripts/build_alphabet.py
           python3 scripts/build_state_profiles.py
           python3 scripts/build_wage_bands.py

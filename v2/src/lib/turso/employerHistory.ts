@@ -67,3 +67,34 @@ export async function employerHistoryCases(slug: string, limit = 25): Promise<Hi
     wage: r.wage == null ? null : Number(r.wage),
   }));
 }
+
+export type WorkerFacet = "citizenship" | "education" | "visa_class" | "institution" | "major";
+
+export interface WorkerFacetRow {
+  key: string;
+  label: string;
+  n: number;
+}
+
+/**
+ * The worker's side of an employer's or occupation's FY2016 to FY2023 cases:
+ * top countries of citizenship, education, visa at filing, schools and fields
+ * of study. From `perm_history_facets` (ingest_perm_history.py), written only
+ * for entities with 10 or more history cases. DOL publishes these fields on
+ * its old form only, so nothing here describes a case filed on the new one.
+ */
+export async function workerFacets(
+  kind: "employer" | "occupation",
+  slug: string,
+): Promise<Partial<Record<WorkerFacet, WorkerFacetRow[]>>> {
+  const got = await rows<{ facet: string; key: string; label: string; n: number }>(
+    "SELECT facet, key, label, n FROM perm_history_facets WHERE kind = ? AND slug = ? ORDER BY facet, pos",
+    [kind, slug],
+  ).catch(() => []);
+  const out: Partial<Record<WorkerFacet, WorkerFacetRow[]>> = {};
+  for (const r of got) {
+    const f = r.facet as WorkerFacet;
+    (out[f] ??= []).push({ key: r.key, label: r.label, n: Number(r.n) });
+  }
+  return out;
+}

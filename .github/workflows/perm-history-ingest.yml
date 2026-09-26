@@ -76,6 +76,15 @@ jobs:
             exit 1
           }
 
+      - name: Rebuild the city, industry and country pages
+        working-directory: v2
+        run: |
+          python3 scripts/build_groups.py || {
+            python3 scripts/record_ingest_failure.py --script build_groups.py \
+              --note "run ${GITHUB_RUN_ID} failed; see the log" || true
+            exit 1
+          }
+
       - name: Remove credentials
         if: ${{ always() }}
         working-directory: v2
