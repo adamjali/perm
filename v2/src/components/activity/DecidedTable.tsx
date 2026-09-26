@@ -48,7 +48,12 @@ export const DECIDED_COLUMNS: SortColumn<DecidedCase>[] = [
   { key: "title", label: "Job title", get: (r) => r.jobTitle },
   { key: "soc", label: "Occupation", get: (r) => r.socTitle ?? r.socCode },
   { key: "state", label: "State", get: (r) => r.state },
+  { key: "city", label: "City", get: (r) => r.worksiteCity },
   { key: "wage", label: "Wage", descFirst: true, get: (r) => r.wage },
+  { key: "firm", label: "Law firm", get: (r) => r.attorneyName },
+  { key: "citizenship", label: "Citizenship", get: (r) => r.citizenship },
+  { key: "visa", label: "Visa", get: (r) => r.visaClass },
+  { key: "education", label: "Education", get: (r) => r.education },
   { key: "status", label: "Outcome", get: (r) => r.status },
 ];
 
@@ -83,7 +88,7 @@ export function DecidedTable({
 }) {
   return (
     <div className="mt-4 overflow-x-auto">
-      <table className="w-full min-w-[1180px] border-collapse text-left text-base">
+      <table className="w-full min-w-[1720px] border-collapse text-left text-base">
         <caption className="sr-only">{caption}</caption>
         <SortableHeader
           columns={DECIDED_COLUMNS}
@@ -130,9 +135,27 @@ export function DecidedTable({
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
                 {c.state ?? ""}{" "}
               </td>
+              <td className="px-3 py-3 text-sm text-foreground/80">
+                {c.worksiteCity ?? ""}{" "}
+              </td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm tabular-nums">
                 {wageText(c)}{" "}
               </td>
+              <td className="px-3 py-3 text-sm text-foreground/80">
+                {c.attorneySlug ? (
+                  <Link
+                    href={`/perm-attorneys/${c.attorneySlug}`}
+                    className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  >
+                    {c.attorneyName}
+                  </Link>
+                ) : (
+                  (c.attorneyName ?? "")
+                )}{" "}
+              </td>
+              <td className="px-3 py-3 text-sm text-foreground/80">{c.citizenship ?? ""}{" "}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{c.visaClass ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-sm text-foreground/80">{c.education ?? ""}{" "}</td>
               <td
                 className={
                   "whitespace-nowrap px-3 py-3 text-sm font-bold " + toneOf(c.status)

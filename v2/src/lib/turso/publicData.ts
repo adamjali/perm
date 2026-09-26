@@ -1093,6 +1093,13 @@ export interface WageFilters {
   fiscalYear?: string | null;
   /** Defaults to certified: a denied case's offered wage was never agreed. */
   status?: WageStatusFilter;
+  /**
+   * Worksite city as DOL prints it, matched without case. A narrowing only:
+   * the route refuses it without a state (see `placeFilterRefusal`).
+   */
+  city?: string | null;
+  /** NAICS sector codes (two digits each); refused without a state or occupation. */
+  sectorCodes?: readonly string[] | null;
 }
 
 export interface WagePercentileRow {
@@ -1142,6 +1149,14 @@ function wageWhere(f: WageFilters): { sql: string; args: unknown[] } {
   if (f.fiscalYear) {
     parts.push("fiscal_year = ?");
     args.push(f.fiscalYear);
+  }
+  if (f.city) {
+    parts.push("worksite_city = ? COLLATE NOCASE");
+    args.push(f.city);
+  }
+  if (f.sectorCodes && f.sectorCodes.length > 0) {
+    parts.push(`substr(naics, 1, 2) IN (${f.sectorCodes.map(() => "?").join(", ")})`);
+    args.push(...f.sectorCodes);
   }
   return { sql: parts.join(" AND "), args };
 }

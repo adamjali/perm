@@ -147,6 +147,7 @@ export default async function SalaryExplorerPage() {
             states={options.states}
             fiscalYears={options.fiscalYears}
             initial={{ stats, bins, binWidth: width, below, above, byState }}
+            placeFilters
           />
         </Suspense>
       </section>

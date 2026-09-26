@@ -16,6 +16,14 @@ import { formatWage } from "@/lib/wageFormat";
 import { mergeHalves } from "@/lib/flagMerge";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { SortableHeader } from "@/components/tools/SortableHeader";
+import {
+  FLAG_FILTER_FIELDS,
+  anyFlagFilter,
+  flagFacetOptions,
+  passesFlagFilters,
+  type FlagFilterItem,
+  type FlagFilters,
+} from "@/lib/flagFilter";
 import { nextSort, sortRows, type SortColumn, type SortState } from "@/lib/tableSort";
 
 /**
@@ -41,6 +49,13 @@ export interface FlagBrowserProgram {
   decidedLabel: string;
   /** What the wage column holds: the wage DOL SET (PWD) or the wage OFFERED (LCA). */
   wageLabel: string;
+  /**
+   * The label for widening the search past the program's default visa class,
+   * or absent when there is no default. Wage requests default to PERM ones;
+   * DOL's file also holds H-2B, H-1B and other requests, and the API answers
+   * them on `visa=all`.
+   */
+  allVisasLabel?: string;
 }
 
 export const PWD_PROGRAM: FlagBrowserProgram = {
@@ -50,6 +65,7 @@ export const PWD_PROGRAM: FlagBrowserProgram = {
   pendingLabel: "In process",
   decidedLabel: "Issued",
   wageLabel: "Wage set",
+  allVisasLabel: "Include wage requests for other visas (H-2B, H-1B and the rest)",
 };
 
 export const LCA_PROGRAM: FlagBrowserProgram = {
@@ -103,12 +119,16 @@ function Rows({
       { key: "title", label: "Job title", get: (r) => r.jobTitle },
     ];
     if (withWage) {
-      cols.push({
-        key: "wage",
-        label: wageLabel ?? "Wage",
-        descFirst: true,
-        get: (r) => wages?.get(r.caseNumber)?.wage ?? null,
-      });
+      cols.push(
+        {
+          key: "wage",
+          label: wageLabel ?? "Wage",
+          descFirst: true,
+          get: (r) => wages?.get(r.caseNumber)?.wage ?? null,
+        },
+        { key: "state", label: "State", get: (r) => wages?.get(r.caseNumber)?.worksiteState ?? null },
+        { key: "firm", label: "Law firm", get: (r) => wages?.get(r.caseNumber)?.attorneyName ?? null },
+      );
     }
     cols.push(
       { key: "filed", label: "Filed", descFirst: true, get: (r) => r.filingDate },
@@ -119,7 +139,7 @@ function Rows({
   const ordered = useMemo(() => sortRows(rows, columns, sort), [rows, columns, sort]);
   return (
     <div className="mt-4 overflow-x-auto">
-      <table className="w-full min-w-[820px] border-collapse text-left text-base">
+      <table className={"w-full border-collapse text-left text-base " + (withWage ? "min-w-[1100px]" : "min-w-[820px]")}>
         <caption className="sr-only">{caption}</caption>
         <SortableHeader
           columns={columns}
@@ -154,6 +174,16 @@ function Rows({
                   {formatWage(wages?.get(r.caseNumber)?.wage ?? null, wages?.get(r.caseNumber)?.wageUnit ?? null) ?? ""}
                 {" "}</td>
               ) : null}
+              {withWage ? (
+                <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">
+                  {wages?.get(r.caseNumber)?.worksiteState ?? ""}
+                {" "}</td>
+              ) : null}
+              {withWage ? (
+                <td className="px-3 py-3 text-sm text-foreground/80">
+                  {wages?.get(r.caseNumber)?.attorneyName ?? ""}
+                {" "}</td>
+              ) : null}
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.filingDate ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">
                 {r.lastCheckedAt?.slice(0, 10) ?? ""}
@@ -182,6 +212,10 @@ function DisclosedRows({
       { key: "employer", label: "Employer", get: (r) => r.employerName },
       { key: "title", label: "Job title", get: (r) => r.jobTitle },
       { key: "wage", label: wageLabel, descFirst: true, get: (r) => r.wage },
+      { key: "state", label: "State", get: (r) => r.worksiteState },
+      { key: "soc", label: "Occupation", get: (r) => r.socTitle ?? r.socCode },
+      { key: "firm", label: "Law firm", get: (r) => r.attorneyName },
+      { key: "visa", label: "Visa", get: (r) => r.visaClass },
       { key: "received", label: "Received", descFirst: true, get: (r) => r.receivedDate },
       { key: "decided", label: "Decided", descFirst: true, get: (r) => r.decisionDate },
     ],
@@ -190,7 +224,7 @@ function DisclosedRows({
   const ordered = useMemo(() => sortRows(rows, columns, sort), [rows, columns, sort]);
   return (
     <div className="mt-4 overflow-x-auto">
-      <table className="w-full min-w-[820px] border-collapse text-left text-base">
+      <table className="w-full min-w-[1180px] border-collapse text-left text-base">
         <caption className="sr-only">{caption}</caption>
         <SortableHeader
           columns={columns}
@@ -221,12 +255,119 @@ function DisclosedRows({
               <td className="px-3 py-3 font-bold">{r.employerName ?? ""}{" "}</td>
               <td className="px-3 py-3 text-foreground/80">{r.jobTitle ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{formatWage(r.wage, r.wageUnit) ?? ""}{" "}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.worksiteState ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-sm text-foreground/80">{r.socTitle ?? r.socCode ?? ""}{" "}</td>
+              <td className="px-3 py-3 text-sm text-foreground/80">{r.attorneyName ?? ""}{" "}</td>
+              <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.visaClass ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm">{r.receivedDate ?? ""}{" "}</td>
               <td className="whitespace-nowrap px-3 py-3 font-mono text-sm text-foreground/80">{r.decisionDate ?? ""}{" "}</td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+function money(v: string): number | undefined {
+  if (v.trim() === "") return undefined;
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+
+/** More values than this and a select stops being a way to choose. */
+const MAX_OPTIONS = 250;
+const FILTER_LABEL = "mb-1 block text-sm font-bold";
+
+/**
+ * Narrow one search's loaded rows. Every field past the status comes from
+ * DOL's quarterly file, so a row the file doesn't hold yet (anything pending)
+ * drops under those filters; the note says so. A field no loaded row carries
+ * isn't offered.
+ */
+function FlagSearchFilters({
+  items,
+  value,
+  onChange,
+}: {
+  items: readonly FlagFilterItem[];
+  value: FlagFilters;
+  onChange: (next: FlagFilters) => void;
+}) {
+  const id = useId();
+  const fields = FLAG_FILTER_FIELDS.map((f) => ({ f, opts: flagFacetOptions(items, f) })).filter(
+    (x) => x.opts.length > 1 || (x.opts.length === 1 && value[x.f.key] !== undefined),
+  );
+  const hasWage = items.some((i) => i.file?.wage != null);
+  if (fields.length === 0 && !hasWage) return null;
+  return (
+    <div className="mt-4 border-2 border-border bg-background p-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+        {fields.map(({ f, opts }) => (
+          <Fragment key={f.key}>
+            {" "}
+            <label className="block" htmlFor={`${id}-${f.key}`}>
+              <span className={FILTER_LABEL}>{f.label}</span>{" "}
+              <select
+                id={`${id}-${f.key}`}
+                value={value[f.key] ?? ""}
+                onChange={(e) => onChange({ ...value, [f.key]: e.target.value || undefined })}
+                className={CONTROL}
+              >
+                <option value="">Any ({fmt(opts.length)})</option>
+                {opts.slice(0, MAX_OPTIONS).map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {`${o.value} (${fmt(o.n)})`}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </Fragment>
+        ))}{" "}
+        {hasWage ? (
+          <>
+            <label className="block" htmlFor={`${id}-wmin`}>
+              <span className={FILTER_LABEL}>Wage at least</span>{" "}
+              <input
+                id={`${id}-wmin`}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1000}
+                value={value.wageMin ?? ""}
+                onChange={(e) => onChange({ ...value, wageMin: money(e.target.value) })}
+                className={CONTROL}
+              />
+            </label>{" "}
+            <label className="block" htmlFor={`${id}-wmax`}>
+              <span className={FILTER_LABEL}>Wage at most</span>{" "}
+              <input
+                id={`${id}-wmax`}
+                type="number"
+                inputMode="numeric"
+                min={0}
+                step={1000}
+                value={value.wageMax ?? ""}
+                onChange={(e) => onChange({ ...value, wageMax: money(e.target.value) })}
+                className={CONTROL}
+              />
+            </label>
+          </>
+        ) : null}
+      </div>{" "}
+      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-2xl text-sm leading-relaxed text-foreground/80">
+          These narrow the rows already loaded. The state, occupation, law firm,
+          visa class and wage come from DOL&apos;s quarterly file, so a filing
+          still in process drops under them until DOL publishes it. Wages are as
+          filed, so an hourly and a yearly figure compare as numbers.
+        </p>{" "}
+        {anyFlagFilter(value) ? (
+          <button type="button" onClick={() => onChange({})} className={CHIP + "bg-card"}>
+            Clear these filters
+          </button>
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -258,13 +399,16 @@ export function FlagCaseBrowser({
   const [titleInput, setTitleInput] = useState("");
   const [fromInput, setFromInput] = useState("");
   const [toInput, setToInput] = useState("");
-  const [query, setQuery] = useState<{ employer: string; title: string; from: string; to: string; n: number }>({
+  const [allVisasInput, setAllVisasInput] = useState(false);
+  const [query, setQuery] = useState<{ employer: string; title: string; from: string; to: string; allVisas: boolean; n: number }>({
     employer: initial.trim(),
     title: "",
     from: "",
     to: "",
+    allVisas: false,
     n: 0,
   });
+  const [filters, setFilters] = useState<FlagFilters>({});
 
   const searchUrl = useMemo(() => {
     if (query.employer.length < 2) return "skip" as const;
@@ -272,6 +416,7 @@ export function FlagCaseBrowser({
     if (query.title) p.set("title", query.title);
     if (query.from) p.set("from", query.from);
     if (query.to) p.set("to", query.to);
+    if (query.allVisas) p.set("visa", "all");
     p.set("s", String(query.n));
     return `${program.api}?${p.toString()}`;
   }, [query, program.api]);
@@ -282,11 +427,35 @@ export function FlagCaseBrowser({
     [search],
   );
   const found = search ? search.cases.length + (halves?.fileOnly.length ?? 0) : 0;
+  const filterItems = useMemo<FlagFilterItem[]>(() => {
+    if (!search || !halves) return [];
+    return [
+      ...search.cases.map((c) => ({ status: c.status, file: halves.wages.get(c.caseNumber) ?? null })),
+      ...halves.fileOnly.map((d) => ({ status: d.status, file: d })),
+    ];
+  }, [search, halves]);
+  const shownLive = useMemo(
+    () =>
+      search && halves
+        ? search.cases.filter((c) =>
+            passesFlagFilters({ status: c.status, file: halves.wages.get(c.caseNumber) ?? null }, filters),
+          )
+        : [],
+    [search, halves, filters],
+  );
+  const shownFile = useMemo(
+    () => (halves ? halves.fileOnly.filter((d) => passesFlagFilters({ status: d.status, file: d }, filters)) : []),
+    [halves, filters],
+  );
+  const filtering = anyFlagFilter(filters);
   const searchPending = searching && search === undefined && !searchFailed;
 
   // --- browse -----------------------------------------------------------
   const [kind, setKind] = useState<FlagKind>("all");
   const [month, setMonth] = useState("");
+  // The API reads `order=oldest` from the same index; the oldest filings
+  // still in process are the ones people are most likely to be asking about.
+  const [order, setOrder] = useState<"newest" | "oldest">("newest");
   const [cursors, setCursors] = useState<string[]>([]);
   const months = useMemo(
     () => (summary ? [...summary.byMonth].sort((a, b) => (a.month < b.month ? 1 : -1)) : []),
@@ -300,10 +469,11 @@ export function FlagCaseBrowser({
     if (withheld) return "skip" as const;
     const p = new URLSearchParams({ action: "list", kind, numItems: String(PAGE_SIZE) });
     if (month) p.set("month", month);
+    if (order === "oldest") p.set("order", "oldest");
     const cursor = cursors[cursors.length - 1];
     if (cursor) p.set("cursor", cursor);
     return `${program.api}?${p.toString()}`;
-  }, [kind, month, cursors, withheld, program.api]);
+  }, [kind, month, order, cursors, withheld, program.api]);
   const { data: page, failed: listFailed } = usePublicQuery<FlagListPage>(listUrl);
 
   return (
@@ -323,8 +493,10 @@ export function FlagCaseBrowser({
               title: titleInput.trim(),
               from: MONTH_RE.test(fromInput) ? fromInput : "",
               to: MONTH_RE.test(toInput) ? toInput : "",
+              allVisas: allVisasInput,
               n: q.n + 1,
             }));
+            setFilters({});
           }}
         >
           <label className="block sm:col-span-2">
@@ -368,7 +540,18 @@ export function FlagCaseBrowser({
               <span className="mb-1 block text-sm font-bold">Filed to</span>{" "}
               <input type="month" value={toInput} onChange={(e) => setToInput(e.target.value)} placeholder="YYYY-MM" className={CONTROL + " min-w-0"} />
             </label>
-          </div>
+          </div>{" "}
+          {program.allVisasLabel ? (
+            <label className="flex min-h-[44px] items-center gap-3 text-base sm:col-span-3">
+              <input
+                type="checkbox"
+                checked={allVisasInput}
+                onChange={(e) => setAllVisasInput(e.target.checked)}
+                className="size-5 shrink-0 accent-foreground"
+              />{" "}
+              <span>{program.allVisasLabel}</span>
+            </label>
+          ) : null}
         </form>{" "}
         {typedCaseNumber ? (
           <p className="mt-4 border-2 border-primary bg-tint-primary p-4 text-base leading-relaxed">
@@ -399,9 +582,20 @@ export function FlagCaseBrowser({
             asks DOL directly.
           </p>
         ) : null}
-        {searching && search && search.cases.length > 0 ? (
+        {searching && search && found > 1 ? (
+          <FlagSearchFilters items={filterItems} value={filters} onChange={setFilters} />
+        ) : null}
+        {searching && search && filtering && shownLive.length + shownFile.length === 0 && found > 0 ? (
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
+            None of the {fmt(found)} loaded {found === 1 ? program.noun : program.nouns} match those filters.
+            A filing still in process has no state, occupation, firm, visa class or wage until DOL&apos;s
+            quarterly file publishes it.
+          </p>
+        ) : null}
+        {searching && search && shownLive.length > 0 ? (
           <>
             <p className="mt-4 text-sm text-foreground/70">
+              {filtering ? `${fmt(shownLive.length)} of ` : ""}
               {fmt(search.cases.length)} {search.cases.length === 1 ? program.noun : program.nouns} from DOL&apos;s
               daily check, newest filing first
               {search.cases.length >= 200 ? " (the first 200; narrow by title or month for the rest)" : ""}.
@@ -410,26 +604,27 @@ export function FlagCaseBrowser({
                 : ""}
             </p>{" "}
             <Rows
-              rows={search.cases}
+              rows={shownLive}
               caption={`${program.nouns} matching the search`}
               wages={halves?.wages}
               wageLabel={program.wageLabel}
             />
           </>
         ) : null}
-        {searching && halves && halves.fileOnly.length > 0 ? (
+        {searching && halves && shownFile.length > 0 ? (
           <>
             <h3 className="mt-8 font-heading text-lg font-black">
-              {search && search.cases.length > 0 ? "Earlier, from DOL\u2019s quarterly file" : "From DOL\u2019s quarterly file"}
+              {shownLive.length > 0 ? "Earlier, from DOL\u2019s quarterly file" : "From DOL\u2019s quarterly file"}
             </h3>{" "}
             <p className="mt-1 text-sm text-foreground/70">
+              {filtering ? `${fmt(shownFile.length)} of ` : ""}
               {fmt(halves.fileOnly.length)} decided {halves.fileOnly.length === 1 ? program.noun : program.nouns} with the{" "}
               {program.wageLabel.toLowerCase()}
               {disclosure?.latestDecision ? `, decisions through ${disclosure.latestDecision}` : ""}
               {halves.fileOnly.length >= 200 ? " (the first 200; narrow by title or month for the rest)" : ""}.
             </p>{" "}
             <DisclosedRows
-              rows={halves.fileOnly}
+              rows={shownFile}
               caption={`decided ${program.nouns} from DOL's quarterly file`}
               wageLabel={program.wageLabel}
             />
@@ -453,7 +648,7 @@ export function FlagCaseBrowser({
         {summary ? (
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
             {fmt(summary.total)} {program.nouns} so far: {fmt(summary.pending)} still in process,{" "}
-            {fmt(summary.decided)} {program.decidedLabel.toLowerCase()}. Newest filing first.
+            {fmt(summary.decided)} {program.decidedLabel.toLowerCase()}.
           </p>
         ) : null}{" "}
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -476,6 +671,20 @@ export function FlagCaseBrowser({
             ))}
           </div>{" "}
           <label className="ml-auto flex min-h-[44px] items-center gap-2 text-sm font-bold">
+            <span>Order</span>{" "}
+            <select
+              value={order}
+              onChange={(e) => {
+                setOrder(e.target.value === "oldest" ? "oldest" : "newest");
+                setCursors([]);
+              }}
+              className="min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary"
+            >
+              <option value="newest">{"Newest filing first "}</option>
+              <option value="oldest">{"Oldest filing first "}</option>
+            </select>
+          </label>{" "}
+          <label className="flex min-h-[44px] items-center gap-2 text-sm font-bold">
             <span>Filed in</span>{" "}
             <select
               value={month}
@@ -512,8 +721,8 @@ export function FlagCaseBrowser({
             hasNext={Boolean(page && !page.isDone)}
             loading={page === undefined}
             noun={program.noun.toLowerCase()}
-            previousLabel="Newer"
-            nextLabel="Older"
+            previousLabel={order === "oldest" ? "Older" : "Newer"}
+            nextLabel={order === "oldest" ? "Newer" : "Older"}
             labelClassName="text-sm font-bold"
             buttonClassName={CHIP + "bg-card disabled:opacity-40 disabled:hover:bg-card"}
             onPrevious={() => setCursors((c) => c.slice(0, -1))}

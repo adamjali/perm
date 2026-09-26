@@ -113,10 +113,20 @@ export const warnTotals = cache(async (): Promise<WarnTotals> => {
   };
 });
 
-/** The newest notices, matched and unmatched, for the layoffs page. Indexed on notice_date. */
-export const recentWarn = cache(async (limit = 300): Promise<WarnNotice[]> => {
-  const r = await rows<DbRow>(`SELECT ${COLS} FROM warn_notices ORDER BY notice_date DESC, company LIMIT ?`, [Math.min(limit, 1000)]).catch(
-    () => [] as DbRow[],
-  );
+/**
+ * Every notice matched to a sponsor, newest first, for the layoffs table.
+ *
+ * The page used to take the newest 400 notices of all four states and keep
+ * the matched ones, so a matched notice older than the 400th filing anywhere
+ * never reached the table: measured 2026-09-26, 258 matched notices held and
+ * the table could show only the ones inside that window. The whole table is
+ * about 3,100 rows, so reading the matched set outright is a walk of the date
+ * index the page's six-hour window pays for four times a day.
+ */
+export const matchedWarn = cache(async (limit = 2000): Promise<WarnNotice[]> => {
+  const r = await rows<DbRow>(
+    `SELECT ${COLS} FROM warn_notices WHERE employer_slug IS NOT NULL ORDER BY notice_date DESC, company LIMIT ?`,
+    [Math.min(limit, 5000)],
+  ).catch(() => [] as DbRow[]);
   return r.map(hydrate);
 });

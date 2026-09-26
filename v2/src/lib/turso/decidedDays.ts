@@ -87,9 +87,23 @@ export interface DecidedCase {
    * "per year".
    */
   wageUnit: string | null;
-  /** PERM only: DOL names the attorney or agent on that file alone. */
+  /** The law firm on the filing (all three programs since the Sep 4 backfill). */
   attorneyName: string | null;
   attorneySlug: string | null;
+  /** Worksite city. PERM only. */
+  worksiteCity: string | null;
+  /** The employer's NAICS code. PERM only. */
+  naics: string | null;
+  /** Worker's country of citizenship. PERM, DOL's old form only. */
+  citizenship: string | null;
+  /**
+   * PERM: the worker's class of admission when the case was filed (H-1B, L-1).
+   * LCA and wage requests: the visa the filing is for. Same column name in DOL's
+   * files, different question, and the page says which.
+   */
+  visaClass: string | null;
+  /** Worker's highest education. PERM, DOL's old form only. */
+  education: string | null;
 }
 
 export interface DecidedFeed {
@@ -127,39 +141,95 @@ export const DECIDED_ROW_CAP = 1000;
  */
 export const RANGE_MAX_DAYS_UNINDEXED = 92;
 
+/**
+ * The narrows that live in an optional column, and the column each reads.
+ * `city`, `naics`, `citizenship` and `education` exist on PERM rows only;
+ * `visa_class` on all three. A table that has not gained a column yet (a load
+ * still to run) is detected by `columnsOf` and treated as not carrying it.
+ */
+const OPTIONAL: Record<"city" | "naics" | "citizenship" | "visaClass" | "education", string> = {
+  city: "worksite_city",
+  naics: "naics",
+  citizenship: "citizenship",
+  visaClass: "visa_class",
+  education: "education",
+};
+
 /** Column names differ across the three published tables. One map, not three. */
 const PUBLISHED: Record<
   ChangeProgram,
   {
-    table: string;
+    /** Newest first; PERM's older decisions live in their own table. */
+    tables: readonly string[];
     status: string;
     state: string;
-    hasAttorney: boolean;
     hasWageUnit: boolean;
+    /** Which optional narrows this program can be asked at all. */
+    optional: readonly (keyof typeof OPTIONAL)[];
   }
 > = {
   perm: {
-    table: "perm_cases",
+    tables: ["perm_cases", "perm_cases_history"],
     status: "status",
     state: "state",
-    hasAttorney: true,
     hasWageUnit: false,
+    optional: ["city", "naics", "citizenship", "visaClass", "education"],
   },
   pwd: {
-    table: "pwd_cases",
+    tables: ["pwd_cases"],
     status: "case_status",
     state: "worksite_state",
-    hasAttorney: false,
     hasWageUnit: true,
+    optional: ["visaClass"],
   },
   lca: {
-    table: "lca_cases",
+    tables: ["lca_cases"],
     status: "case_status",
     state: "worksite_state",
-    hasAttorney: false,
     hasWageUnit: true,
+    optional: ["visaClass"],
   },
 };
+
+/**
+ * The last decision date `perm_cases_history` can hold (FY2023's end). The
+ * current table starts the next day, so a range entirely after this never
+ * asks the history table at all.
+ */
+export const PERM_HISTORY_LAST = "2023-09-30";
+
+/**
+ * A table's columns, from its schema. `PRAGMA table_info` reads the schema,
+ * not the rows, so it costs nothing that Turso bills; memoised per process for
+ * ten minutes so a busy page asks once.
+ *
+ * WHY PROBE AT ALL. The optional columns arrive with loads that run on their
+ * own schedule. Selecting a column a table doesn't have yet is an error, and
+ * the feed catches errors as "no rows", so a deploy that landed before its
+ * load would have emptied the PERM half without a word.
+ */
+const columnCache = new Map<string, { at: number; cols: Promise<Set<string>> }>();
+
+export function columnsOf(table: string): Promise<Set<string>> {
+  const hit = columnCache.get(table);
+  if (hit && Date.now() - hit.at < 600_000) return hit.cols;
+  const cols = rows<{ name: string }>(`PRAGMA table_info(${table})`)
+    .then((r) => new Set(r.map((c) => String(c.name))))
+    .catch(() => new Set<string>());
+  columnCache.set(table, { at: Date.now(), cols });
+  return cols;
+}
+
+/** Test seam: forget the memoised schemas. */
+export function resetColumnCache(): void {
+  columnCache.clear();
+}
+
+/** The tables a program's range touches, newest first. */
+function tablesFor(program: ChangeProgram, range: DateRange): string[] {
+  const meta = PUBLISHED[program];
+  return meta.tables.filter((t) => t !== "perm_cases_history" || range.from <= PERM_HISTORY_LAST);
+}
 
 /**
  * The two windows, measured rather than assumed.
@@ -187,15 +257,16 @@ const PUBLISHED: Record<
  * silently under-report coverage for months.
  */
 export async function getCoverageWindows(): Promise<CoverageWindows> {
-  const [decided, observed] = await Promise.all([
+  const [decided, observed, historyFrom] = await Promise.all([
     Promise.all(
       CHANGE_PROGRAMS.map(async (p) => {
+        const table = PUBLISHED[p].tables[0]!;
         const [lo, hi] = await Promise.all([
           rows<{ v: string | null }>(
-            `SELECT MIN(decision_date) AS v FROM ${PUBLISHED[p].table}`,
+            `SELECT MIN(decision_date) AS v FROM ${table}`,
           ).catch(() => []),
           rows<{ v: string | null }>(
-            `SELECT MAX(decision_date) AS v FROM ${PUBLISHED[p].table}`,
+            `SELECT MAX(decision_date) AS v FROM ${table}`,
           ).catch(() => []),
         ]);
         return [{ lo: lo[0]?.v ?? null, hi: hi[0]?.v ?? null }];
@@ -214,15 +285,25 @@ export async function getCoverageWindows(): Promise<CoverageWindows> {
         return [{ lo: lo[0]?.v ?? null, hi: hi[0]?.v ?? null }];
       }),
     ),
+    historyStart(),
   ]);
+
+  // PERM's own window reaches into the history table. Its start comes from the
+  // ingest's record (one point read), not from MIN over ~870,000 rows.
+  const byProgram: Partial<Record<ChangeProgram, DateRange>> = {};
+  CHANGE_PROGRAMS.forEach((p, i) => {
+    const lo = decided[i]?.[0]?.lo ?? null;
+    const hi = decided[i]?.[0]?.hi ?? null;
+    const from = p === "perm" && historyFrom && (!lo || historyFrom < lo) ? historyFrom : lo;
+    if (from && hi) byProgram[p] = { from, to: hi };
+  });
 
   let dLo: string | null = null;
   let dHi: string | null = null;
-  for (const r of decided) {
-    const lo = r[0]?.lo ?? null;
-    const hi = r[0]?.hi ?? null;
-    if (lo && (!dLo || lo < dLo)) dLo = lo;
-    if (hi && (!dHi || hi > dHi)) dHi = hi;
+  for (const w of Object.values(byProgram)) {
+    if (!w) continue;
+    if (!dLo || w.from < dLo) dLo = w.from;
+    if (!dHi || w.to > dHi) dHi = w.to;
   }
 
   let oLo: number | null = null;
@@ -236,6 +317,7 @@ export async function getCoverageWindows(): Promise<CoverageWindows> {
 
   return {
     decided: dLo && dHi ? { from: dLo, to: dHi } : null,
+    decidedByProgram: byProgram,
     observed:
       oLo !== null && oHi !== null
         ? {
@@ -246,11 +328,44 @@ export async function getCoverageWindows(): Promise<CoverageWindows> {
   };
 }
 
-/** Build the WHERE tail and its arguments for one program. */
+/**
+ * The first day `perm_cases_history` holds rows for, from the history ingest's
+ * record in `perm_docs['perm_history']`: the earliest fiscal year it stored
+ * case rows for starts the October before. Null when nothing is loaded.
+ */
+async function historyStart(): Promise<string | null> {
+  const r = await rows<{ json: string }>(
+    "SELECT json FROM perm_docs WHERE key = 'perm_history'",
+  ).catch(() => []);
+  try {
+    const doc = JSON.parse(r[0]?.json ?? "{}") as {
+      files?: Record<string, { fy?: number; caseRows?: number }>;
+    };
+    const years = Object.values(doc.files ?? {})
+      .filter((f) => (f.caseRows ?? 0) > 0 && Number.isFinite(f.fy))
+      .map((f) => Number(f.fy));
+    if (years.length === 0) return null;
+    return `${Math.min(...years) - 1}-10-01`;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Build the WHERE tail and its arguments for one program and table.
+ *
+ * Three answers: a clause; `"refuse"` when a needle can't be served at all (an
+ * employer too short for a prefix range), which the caller turns into a 400;
+ * and `"skip"` when THIS table can't answer a filter that was asked (a wage
+ * request has no citizenship). Skipping returns nothing for that table. The
+ * old behaviour ignored the filter instead, and a law-firm filter on the wage
+ * requests returned every wage request of the day under the firm's name.
+ */
 function narrowClause(
   program: ChangeProgram,
   n: DecidedNarrow,
-): { sql: string; args: unknown[] } | null {
+  cols: Set<string>,
+): { sql: string; args: unknown[] } | "refuse" | "skip" {
   const meta = PUBLISHED[program];
   const parts: string[] = [];
   const args: unknown[] = [];
@@ -260,7 +375,7 @@ function narrowClause(
     // means the needle was too short or too long to be served, and the caller
     // turns that into a refusal rather than dropping the filter silently.
     const r = slugRange(n.employer);
-    if (!r) return null;
+    if (!r) return "refuse";
     parts.push("employer_slug >= ? AND employer_slug < ?");
     args.push(r.lo, r.hi);
   }
@@ -272,7 +387,8 @@ function narrowClause(
     parts.push("soc_code = ?");
     args.push(n.socCode);
   }
-  if (n.attorney && meta.hasAttorney) {
+  if (n.attorney) {
+    if (!cols.has("attorney_slug")) return "skip";
     parts.push("attorney_slug = ?");
     args.push(n.attorney);
   }
@@ -288,19 +404,34 @@ function narrowClause(
     parts.push("wage IS NOT NULL AND wage <= ?");
     args.push(n.maxWage);
   }
+  for (const key of Object.keys(OPTIONAL) as (keyof typeof OPTIONAL)[]) {
+    const v = n[key];
+    if (v === undefined) continue;
+    const col = OPTIONAL[key];
+    if (!meta.optional.includes(key) || !cols.has(col)) return "skip";
+    if (key === "naics") {
+      // Leading digits: "5415" is the whole computer-systems group.
+      parts.push("naics LIKE ?");
+      args.push(`${v}%`);
+    } else {
+      parts.push(`${col} = ? COLLATE NOCASE`);
+      args.push(v);
+    }
+  }
   return { sql: parts.length ? ` AND ${parts.join(" AND ")}` : "", args };
 }
 
-function selectFor(program: ChangeProgram): string {
+function selectFor(program: ChangeProgram, table: string, cols: Set<string>): string {
   const meta = PUBLISHED[program];
-  const attorney = meta.hasAttorney
-    ? "attorney_name, attorney_slug"
-    : "NULL AS attorney_name, NULL AS attorney_slug";
+  const has = (c: string) => (cols.has(c) ? c : `NULL AS ${c}`);
   const unit = meta.hasWageUnit ? "wage_unit" : "NULL AS wage_unit";
+  const optional = ["attorney_name", "attorney_slug", ...Object.values(OPTIONAL)]
+    .map(has)
+    .join(", ");
   return `SELECT case_number, ${meta.status} AS status, decision_date,
                  received_date, employer_name, employer_slug, job_title,
-                 soc_code, soc_title, ${meta.state} AS state, wage, ${unit}, ${attorney}
-            FROM ${meta.table}
+                 soc_code, soc_title, ${meta.state} AS state, wage, ${unit}, ${optional}
+            FROM ${table}
            WHERE decision_date >= ? AND decision_date <= ?`;
 }
 
@@ -330,6 +461,11 @@ function toCase(program: ChangeProgram, r: Record<string, unknown>): DecidedCase
     wageUnit: str(r.wage_unit),
     attorneyName: str(r.attorney_name),
     attorneySlug: str(r.attorney_slug),
+    worksiteCity: str(r.worksite_city),
+    naics: str(r.naics),
+    citizenship: str(r.citizenship),
+    visaClass: str(r.visa_class),
+    education: str(r.education),
   };
 }
 
@@ -389,16 +525,30 @@ export async function getDecidedFeed(args: {
 
   const fetched = await Promise.all(
     programs.map(async (p) => {
-      const clause = narrowClause(p, narrow);
-      if (!clause) return { program: p, r: [] as Record<string, unknown>[] };
-      const { sql, args: nArgs } = clause;
-      // cap + 1 so a full page is distinguishable from an exactly-full one.
-      const r = await rows<Record<string, unknown>>(
-        `${selectFor(p)}${sql}
-          ORDER BY decision_date DESC, case_number DESC
-          LIMIT ?`,
-        [range.from, range.to, ...nArgs, cap + 1],
-      ).catch(() => []);
+      const perTable = await Promise.all(
+        tablesFor(p, range).map(async (table) => {
+          const cols = await columnsOf(table);
+          const clause = narrowClause(p, narrow, cols);
+          if (clause === "refuse" || clause === "skip") return [] as Record<string, unknown>[];
+          const { sql, args: nArgs } = clause;
+          // cap + 1 so a full page is distinguishable from an exactly-full one.
+          return rows<Record<string, unknown>>(
+            `${selectFor(p, table, cols)}${sql}
+              ORDER BY decision_date DESC, case_number DESC
+              LIMIT ?`,
+            [range.from, range.to, ...nArgs, cap + 1],
+          ).catch(() => []);
+        }),
+      );
+      // Two tables for PERM are merged newest first before the cap applies,
+      // so the cap cuts the oldest rows of the whole range, not of each table.
+      const r = perTable
+        .flat()
+        .sort((a, b) =>
+          String(b.decision_date) === String(a.decision_date)
+            ? String(b.case_number).localeCompare(String(a.case_number))
+            : String(b.decision_date).localeCompare(String(a.decision_date)),
+        );
       return { program: p, r };
     }),
   );
@@ -441,15 +591,18 @@ async function countDay(
   const out: Record<ChangeProgram, number> = { perm: 0, pwd: 0, lca: 0 };
   await Promise.all(
     programs.map(async (p) => {
-      const clause = narrowClause(p, narrow);
-      if (!clause) return;
-      const { sql, args } = clause;
-      const r = await rows<{ n: number }>(
-        `SELECT COUNT(*) AS n FROM ${PUBLISHED[p].table}
-          WHERE decision_date >= ? AND decision_date <= ?${sql}`,
-        [date, date, ...args],
-      ).catch(() => []);
-      out[p] = Number(r[0]?.n ?? 0);
+      for (const table of tablesFor(p, { from: date, to: date })) {
+        const cols = await columnsOf(table);
+        const clause = narrowClause(p, narrow, cols);
+        if (clause === "refuse" || clause === "skip") continue;
+        const { sql, args } = clause;
+        const r = await rows<{ n: number }>(
+          `SELECT COUNT(*) AS n FROM ${table}
+            WHERE decision_date >= ? AND decision_date <= ?${sql}`,
+          [date, date, ...args],
+        ).catch(() => []);
+        out[p] += Number(r[0]?.n ?? 0);
+      }
     }),
   );
   return out;

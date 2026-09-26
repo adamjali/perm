@@ -8,6 +8,7 @@ import {
   type WageStatusFilter,
 } from "@/lib/turso/publicData";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
+import { MAX_CITY, placeFilterRefusal, sectorCodes } from "@/lib/wagePlaceFilters";
 
 /**
  * The salary explorer's data, for a page with no ConvexProvider.
@@ -53,20 +54,34 @@ export async function GET(request: Request) {
   const state = p.get("state");
   const fiscalYear = p.get("fy");
   const statusRaw = p.get("status") ?? "certified";
+  const cityRaw = p.get("city");
+  const sector = p.get("sector");
 
   if (socCode !== null && socCode.length > MAX_CODE) return bad("soc too long");
   if (state !== null && state.length > MAX_STATE) return bad("state too long");
   if (fiscalYear !== null && fiscalYear.length > MAX_YEAR) return bad("fy too long");
   if (statusRaw.length > MAX_CODE) return bad("status too long");
+  if (cityRaw !== null && cityRaw.length > MAX_CITY) return bad("city too long");
+  if (sector !== null && sector.length > MAX_CODE) return bad("sector too long");
   if (!(STATUSES as readonly string[]).includes(statusRaw)) {
     return bad(`status must be one of ${STATUSES.join(", ")}`);
   }
+
+  const city = cityRaw ? cityRaw.replace(/\s+/g, " ").trim() : "";
+  const codes = sector ? sectorCodes(sector) : null;
+  if (sector && !codes) return bad("unknown sector");
+  // A city or an industry narrows a slice an index serves; alone, either one
+  // walks the whole table (lib/wagePlaceFilters.ts has the measurement).
+  const refusal = placeFilterRefusal({ state, soc: socCode, city, sector });
+  if (refusal) return bad(refusal);
 
   const filters: WageFilters = {
     socCode: socCode || null,
     state: state || null,
     fiscalYear: fiscalYear || null,
     status: statusRaw as WageStatusFilter,
+    city: city || null,
+    sectorCodes: codes,
   };
 
   const stats = await getWageStats(filters);

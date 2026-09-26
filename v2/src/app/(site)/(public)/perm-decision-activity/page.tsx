@@ -33,7 +33,7 @@ import { WeekdayShape } from "@/components/activity/WeekdayShape";
 import { ChangeFeedBrowser } from "@/components/activity/ChangeFeedBrowser";
 import { getActivitySeries } from "@/lib/turso/activity";
 import { getChangeActivity } from "@/lib/turso/changes";
-import { getCoverageWindows } from "@/lib/turso/decidedDays";
+import { getCoverageWindows, type CoverageWindows } from "@/lib/turso/decidedDays";
 import { getLiveMirrorSize } from "@/lib/turso/publicData";
 import {
   fillZeros,
@@ -82,6 +82,14 @@ function longDate(iso: string): string {
   });
 }
 
+/** "October 2015" from an ISO date, or null. */
+function monthYear(iso: string | undefined): string | null {
+  if (!iso) return null;
+  return new Date(`${iso.slice(0, 10)}T12:00:00Z`).toLocaleDateString("en-US", {
+    month: "long", year: "numeric", timeZone: "UTC",
+  });
+}
+
 export default async function DecisionActivityPage() {
   const [series, mirrorSize, activity, windows] = await Promise.all([
     getActivitySeries(),
@@ -100,7 +108,7 @@ export default async function DecisionActivityPage() {
     // per visitor. Six index seeks. It moves only when a quarterly file
     // lands or the sweep runs, so a hardcoded pair of dates would silently
     // under-report coverage for months.
-    getCoverageWindows().catch(() => ({ decided: null, observed: null })),
+    getCoverageWindows().catch((): CoverageWindows => ({ decided: null, observed: null })),
   ]);
 
   const disclosure = series.find((s) => s.source === "dol-disclosure");
@@ -212,9 +220,19 @@ export default async function DecisionActivityPage() {
             The cases DOL moved, day by day
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
-            Pick any date back to October 2023. On a date DOL has published,
-            you get every PERM, prevailing wage and LCA case it decided, with
-            the outcome, wage, worksite and occupation on each. On a date newer
+            Pick any date back to{" "}
+            {monthYear(windows.decidedByProgram?.perm?.from ?? windows.decided?.from) ?? "October 2023"}{" "}
+            for PERM
+            {windows.decidedByProgram?.lca?.from
+              ? `, ${monthYear(windows.decidedByProgram.lca.from)} for LCAs`
+              : ""}
+            {windows.decidedByProgram?.pwd?.from
+              ? ` and ${monthYear(windows.decidedByProgram.pwd.from)} for wage requests`
+              : ""}
+            . On a date DOL has published, you get every case it decided, with
+            the outcome, wage, worksite, occupation and law firm on each, and
+            on PERM cases filed on DOL&apos;s old form, the worker&apos;s
+            citizenship, visa and education. On a date newer
             than its last file, you get what our own daily check saw change,
             with what each case changed from and to. Search, filter and sort
             either one, and pick a range to cross both.

@@ -8,6 +8,8 @@ import { nextSort, sortRows, type SortState } from "@/lib/tableSort";
 import { CHANGE_PROGRAMS, PROGRAM_LABEL, type ChangeProgram } from "@/lib/changeProgram";
 import { CHANGE_COLUMNS, ChangeTable } from "./ChangeTable";
 import { DECIDED_COLUMNS, DecidedTable } from "./DecidedTable";
+import { DecidedFilters } from "./DecidedFilters";
+import { applyDecidedFilters, anyDecidedFilter, type DecidedFilters as DecidedFilterState } from "@/lib/decidedFilter";
 import { coverageFor, daysInRange, type CoverageWindows } from "@/lib/dateCoverage";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
@@ -154,6 +156,8 @@ export function ChangeFeedBrowser({
   });
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState<number>(50);
+  // The decided half's own filters, over the rows already loaded.
+  const [decidedFilters, setDecidedFilters] = useState<DecidedFilterState>({});
 
   // ALWAYS THE WHOLE DAY. One URL shape means one cache entry per day rather
   // than one per row cap, and it is the request that makes every control below
@@ -246,7 +250,7 @@ export function ChangeFeedBrowser({
   // status rather than a transition.
   const decidedRows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const kept = (decided?.cases ?? []).filter((c) => {
+    const kept = applyDecidedFilters(decided?.cases ?? [], decidedFilters).filter((c) => {
       if (program !== "" && c.program !== program) return false;
       if (toStatus !== "" && c.status !== toStatus) return false;
       if (q === "") return true;
@@ -259,7 +263,7 @@ export function ChangeFeedBrowser({
       );
     });
     return sortRows(kept, DECIDED_COLUMNS, decidedSort);
-  }, [decided, search, program, toStatus, decidedSort]);
+  }, [decided, search, program, toStatus, decidedSort, decidedFilters]);
 
   const pages = Math.max(1, Math.ceil(ordered.length / pageSize));
   // Clamped rather than reset by an effect: a filter that shrinks the result
@@ -701,7 +705,21 @@ export function ChangeFeedBrowser({
                   </>
                 ) : null}
               </p>
-              {decidedRows.length === 0 ? (
+              {decided.cases.length > 0 ? (
+                <DecidedFilters
+                  rows={decided.cases}
+                  value={decidedFilters}
+                  onChange={setDecidedFilters}
+                />
+              ) : null}
+              {decidedRows.length === 0 && decided.cases.length > 0 ? (
+                <p className="mt-4 border-2 border-border bg-card p-4 text-base">
+                  None of the {fmt(decided.cases.length)} decisions loaded for
+                  these dates match
+                  {anyDecidedFilter(decidedFilters) ? " those filters" : " that search"}.
+                  Clearing them brings the rows back.
+                </p>
+              ) : decidedRows.length === 0 ? (
                 <p className="mt-4 border-2 border-border bg-card p-4 text-base">
                   DOL published no decisions for these dates. That is a real
                   answer, not a missing one.
@@ -713,7 +731,7 @@ export function ChangeFeedBrowser({
                   onSort={(k) =>
                     setDecidedSort((cur) => nextSort(cur, k, DECIDED_COLUMNS))
                   }
-                  caption={`Cases DOL decided, with the outcome, wage, worksite and occupation on each`}
+                  caption={`Cases DOL decided, with the outcome, wage, worksite, occupation, law firm and, on DOL's old form, the worker's citizenship, visa and education`}
                 />
               )}
             </>

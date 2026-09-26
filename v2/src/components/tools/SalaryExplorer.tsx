@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
@@ -12,6 +13,7 @@ import {
   type WagePercentiles,
 } from "@/lib/wageStats";
 import { cn } from "@/lib/utils";
+import { MAX_CITY, WAGE_SECTORS } from "@/lib/wagePlaceFilters";
 
 /**
  * Offered wages in DOL's disclosure files, filtered.
@@ -57,6 +59,12 @@ export interface SalaryExplorerProps {
   fiscalYears: readonly string[];
   /** Rendered before any fetch, so the default view needs no JavaScript. */
   initial: ExplorerPayload;
+  /**
+   * Offer the worksite-city and industry narrowings. Only the PERM route
+   * accepts them (`lib/wagePlaceFilters.ts`); the LCA table carries neither
+   * column until its backfill has run.
+   */
+  placeFilters?: boolean;
 }
 
 export interface ExplorerPayload {
@@ -79,6 +87,52 @@ const usd = (n: number | null) =>
   n === null ? "n/a" : `$${Math.round(n).toLocaleString("en-US")}`;
 const int = (n: number) => n.toLocaleString("en-US");
 
+const FIELD =
+  "mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50";
+
+/**
+ * A city as typed, committed on Enter or on leaving the field, so a reader
+ * typing "Seattle" doesn't fire six requests. Keyed on the committed value by
+ * the parent, so a cleared state resets it without an effect.
+ */
+function CityField({
+  id,
+  value,
+  disabled,
+  onCommit,
+}: {
+  id: string;
+  value: string;
+  disabled: boolean;
+  onCommit: (v: string) => void;
+}) {
+  const [text, setText] = useState(value);
+  const commit = () => {
+    const v = text.replace(/\s+/g, " ").trim();
+    if (v !== value) onCommit(v);
+  };
+  return (
+    <input
+      id={id}
+      type="text"
+      value={text}
+      disabled={disabled}
+      maxLength={MAX_CITY}
+      autoComplete="off"
+      placeholder={disabled ? "Choose a state first" : "e.g. Seattle"}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          commit();
+        }
+      }}
+      className={FIELD}
+    />
+  );
+}
+
 export function SalaryExplorer({
   occupations,
   apiPath = "/api/perm-wages",
@@ -88,17 +142,22 @@ export function SalaryExplorer({
   states,
   fiscalYears,
   initial,
+  placeFilters = false,
 }: SalaryExplorerProps) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
-  const ids = { soc: useId(), state: useId(), fy: useId(), status: useId() };
+  const ids = { soc: useId(), state: useId(), fy: useId(), status: useId(), city: useId(), sector: useId() };
 
   const soc = params.get("soc") ?? "";
   const state = params.get("state") ?? "";
   const fy = params.get("fy") ?? "";
   const status = params.get("status") ?? "certified";
-  const isDefault = !soc && !state && !fy && status === "certified";
+  // Read only where the route accepts them, so a stray parameter on the LCA
+  // page can't send a request its route would refuse.
+  const city = placeFilters && state ? params.get("city") ?? "" : "";
+  const sector = placeFilters && (state || soc) ? params.get("sector") ?? "" : "";
+  const isDefault = !soc && !state && !fy && status === "certified" && !city && !sector;
 
   const [data, setData] = useState<ExplorerPayload>(initial);
   const [loading, setLoading] = useState(false);
@@ -109,6 +168,10 @@ export function SalaryExplorer({
       const next = new URLSearchParams(params.toString());
       if (value) next.set(key, value);
       else next.delete(key);
+      // A narrowing outlives nothing it narrows: a city goes with its state,
+      // an industry with the last of state and occupation.
+      if (!next.get("state")) next.delete("city");
+      if (!next.get("state") && !next.get("soc")) next.delete("sector");
       const qs = next.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
@@ -128,6 +191,8 @@ export function SalaryExplorer({
     if (soc) qs.set("soc", soc);
     if (state) qs.set("state", state);
     if (fy) qs.set("fy", fy);
+    if (city) qs.set("city", city);
+    if (sector) qs.set("sector", sector);
     qs.set("status", status);
     setLoading(true);
     fetch(`${apiPath}?${qs.toString()}`, { signal: ctl.signal })
@@ -147,14 +212,17 @@ export function SalaryExplorer({
       })
       .finally(() => setLoading(false));
     return () => ctl.abort();
-  }, [soc, state, fy, status, isDefault, initial, apiPath]);
+  }, [soc, state, fy, status, city, sector, isDefault, initial, apiPath]);
 
   const report = useMemo(() => reportability(data.stats.n), [data.stats.n]);
   const subject = useMemo(() => {
     const occ = occupations.find((o) => o.value === soc)?.label;
     const parts = [occ ?? "All occupations", state || "every state", fy ? `FY${fy}` : "all years"];
+    if (city) parts.splice(2, 0, city);
+    const sectorLabel = WAGE_SECTORS.find((x) => x.value === sector)?.label;
+    if (sectorLabel) parts.push(sectorLabel);
     return parts.join(" · ");
-  }, [occupations, soc, state, fy]);
+  }, [occupations, soc, state, fy, city, sector]);
 
   const maxBin = Math.max(1, ...data.bins.map((b) => b.count));
 
@@ -249,7 +317,62 @@ export function SalaryExplorer({
               ))}
             </select>
           </div>
+
+          {placeFilters ? (
+            <>
+              <div>
+                <Label htmlFor={ids.city} className="text-sm font-bold">
+                  Worksite city
+                </Label>
+                <CityField
+                  key={`${state}|${city}`}
+                  id={ids.city}
+                  value={city}
+                  disabled={!state}
+                  onCommit={(v) => setParam("city", v)}
+                />
+              </div>
+
+              <div>
+                <Label htmlFor={ids.sector} className="text-sm font-bold">
+                  Industry
+                </Label>
+                <select
+                  id={ids.sector}
+                  value={sector}
+                  disabled={!state && !soc}
+                  onChange={(e) => setParam("sector", e.target.value)}
+                  className={FIELD}
+                >
+                  <option value="">
+                    {!state && !soc ? "Choose a state or an occupation first " : "Every industry "}
+                  </option>
+                  {WAGE_SECTORS.map((x) => (
+                    <option key={x.value} value={x.value}>
+                      {`${x.label} `}
+                    </option>
+                  ))}
+                </select>{" "}
+                <SelectedInFull label={WAGE_SECTORS.find((x) => x.value === sector)?.label} />
+              </div>
+            </>
+          ) : null}
         </div>
+        {placeFilters ? (
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-foreground/70">
+            A city narrows a state, and an industry narrows a state or an
+            occupation, so each stays a quick read. City is as DOL prints it.
+            For a city or an industry across the whole country, see the{" "}
+            <Link href="/perm-cities" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+              city
+            </Link>{" "}
+            and{" "}
+            <Link href="/perm-industries" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+              industry
+            </Link>{" "}
+            pages.
+          </p>
+        ) : null}
 
         <p className="mt-4 font-mono text-sm text-muted-foreground">{subject}</p>{" "}
         {/* A DIMMED PANEL IS NOT A LOADING STATE. Changing a filter refetches,

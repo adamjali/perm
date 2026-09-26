@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { getFreshness } from "@/lib/turso/publicData";
-import { recentWarn, warnTotals } from "@/lib/turso/warn";
+import { matchedWarn, warnTotals } from "@/lib/turso/warn";
+import { WarnTable } from "@/components/warn/WarnTable";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
@@ -29,12 +30,10 @@ export const metadata: Metadata = withSocialCard({
 
 export const revalidate = 21600;
 
-const long = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
 export default async function LayoffsPage() {
-  const [all, totals, freshness] = await Promise.all([recentWarn(400), warnTotals(), getFreshness().catch(() => ({}) as Record<string, { asOf: string | null } | undefined>)]);
+  const [matched, totals, freshness] = await Promise.all([matchedWarn(), warnTotals(), getFreshness().catch(() => ({}) as Record<string, { asOf: string | null } | undefined>)]);
   const asOf = freshness["warn-notices"]?.asOf ?? null;
-  const matched = all.filter((r) => r.employerSlug);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
@@ -68,46 +67,16 @@ export default async function LayoffsPage() {
         </div>
       </section>
 
-      <section className="mt-10 overflow-x-auto">
-        <table className="w-full min-w-[56rem] border-collapse text-left text-sm">
-          <thead>
-            <tr className="border-b-2 border-border">
-              <th scope="col" className="py-2 pr-3 font-bold">Notice{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Employer, as filed{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Sponsor record{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">Kind{" "}</th>
-              <th scope="col" className="py-2 pr-3 text-right font-bold">Employees{" "}</th>
-              <th scope="col" className="py-2 pr-3 font-bold">County{" "}</th>
-              <th scope="col" className="py-2 font-bold">Effective{" "}</th>
-            </tr>
-          </thead>
-          <tbody translate="no">
-            {matched.map((r) => (
-              <tr key={r.id} className="border-b border-border/40 align-top">
-                <td className="py-2 pr-3 tabular-nums">{long(r.noticeDate)}{" "}</td>
-                <td className="py-2 pr-3">
-                  {r.company}{" "}
-                  {r.site ? <span className="block text-foreground/70">{r.site}{" "}</span> : null}
-                </td>
-                <td className="py-2 pr-3">
-                  <Link href={`/perm-employers/${r.employerSlug}`} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-                    PERM record
-                  </Link>
-                {" "}</td>
-                <td className="py-2 pr-3">{r.kind ?? ""}{" "}</td>
-                <td className="py-2 pr-3 text-right tabular-nums">{r.employees?.toLocaleString("en-US") ?? ""}{" "}</td>
-                <td className="py-2 pr-3">{r.county ?? ""}{" "}</td>
-                <td className="py-2 tabular-nums">{r.effectiveDate ? long(r.effectiveDate) : ""}{" "}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        {matched.length === 0 ? <p className="mt-4 text-sm text-foreground/70">No notice in the current report matches a PERM sponsor by name.</p> : null}{" "}
+      <section className="mt-10">
+        {matched.length === 0 ? (
+          <p className="text-sm text-foreground/70">No notice held matches a PERM sponsor by name.</p>
+        ) : (
+          <WarnTable rows={matched} />
+        )}{" "}
         <p className="mt-4 text-sm text-muted-foreground">
-          The table lists the {matched.length.toLocaleString("en-US")} sponsor-matched notices among the{" "}
-          {all.length.toLocaleString("en-US")} most recent filings. The three figures above are the whole record:{" "}
-          {totals.notices.toLocaleString("en-US")} notices held, {totals.matched.toLocaleString("en-US")} of them matched
-          to a sponsor.
+          The table lists every one of the {matched.length.toLocaleString("en-US")} notices matched to a sponsor, out of{" "}
+          {totals.notices.toLocaleString("en-US")} held across the four states. Search by employer, site or county,
+          filter by state, kind, size or year, and sort on any column.
         </p>
       </section>
 

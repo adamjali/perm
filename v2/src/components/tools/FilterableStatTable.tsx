@@ -342,12 +342,12 @@ export function FilterableStatTable<T>({
                 }}
                 className="min-w-0 bg-transparent py-2 text-base outline-none"
               >
-                <option value="">All</option>
+                {/* The space that keeps option labels from gluing in the DOM sits
+                    INSIDE each option: a whitespace text node between options
+                    is invalid in a <select> and React reports it at hydration. */}
+                <option value="">{"All "}</option>
                 {(facetOptions[f.key] ?? []).map((o) => (
-                  <Fragment key={o}>
-                    {" "}
-                    <option value={o}>{f.format ? f.format(o) : o}</option>
-                  </Fragment>
+                  <option key={o} value={o}>{`${f.format ? f.format(o) : o} `}</option>
                 ))}
               </select>
             </label>
@@ -433,10 +433,7 @@ export function FilterableStatTable<T>({
                 className="border-2 border-border bg-card px-2 py-1.5 text-base outline-none focus-visible:ring-2 focus-visible:ring-primary"
               >
                 {PAGE_SIZES.map((n) => (
-                  <Fragment key={n}>
-                    {" "}
-                    <option value={n}>{n === 0 ? "All" : n}</option>
-                  </Fragment>
+                  <option key={n} value={n}>{`${n === 0 ? "All" : n} `}</option>
                 ))}
               </select>
             </label>

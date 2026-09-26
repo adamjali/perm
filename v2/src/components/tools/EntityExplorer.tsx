@@ -13,7 +13,9 @@ import {
   EMPLOYER_CSV,
   OCCUPATION_COLUMNS,
   OCCUPATION_CSV,
+  approvalFacet,
   recentFacet,
+  sizeFacet,
   socFacet,
   stateFacet,
 } from "./entityColumns";
@@ -31,7 +33,7 @@ const CONFIG = {
   employer: {
     columns: EMPLOYER_COLUMNS,
     csv: EMPLOYER_CSV,
-    facets: [stateFacet, recentFacet],
+    facets: [stateFacet, recentFacet, sizeFacet, approvalFacet],
     noun: "employers",
     placeholder: "Microsoft, Deloitte, a hospital…",
     caption:
@@ -41,7 +43,7 @@ const CONFIG = {
   attorney: {
     columns: ATTORNEY_COLUMNS,
     csv: ATTORNEY_CSV,
-    facets: [stateFacet, recentFacet],
+    facets: [stateFacet, recentFacet, sizeFacet, approvalFacet],
     noun: "law firms",
     placeholder: "Fragomen, Berry Appleman…",
     caption:
@@ -51,7 +53,7 @@ const CONFIG = {
   occupation: {
     columns: OCCUPATION_COLUMNS,
     csv: OCCUPATION_CSV,
-    facets: [socFacet],
+    facets: [socFacet, sizeFacet, approvalFacet],
     noun: "occupations",
     placeholder: "Software developers, 15-1252…",
     caption:

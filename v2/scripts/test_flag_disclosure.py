@@ -58,6 +58,7 @@ from ingest_flag_disclosure import (  # noqa: E402
     pick_latest,
 )
 from lib_gov_data import discover_links  # noqa: E402
+import ingest_flag_disclosure as fd  # noqa: E402
 
 SCRIPT = pathlib.Path(__file__).resolve().parent / "ingest_flag_disclosure.py"
 FAILURES: list[str] = []
@@ -184,7 +185,7 @@ PW_HEADER = [
     "REDETERMINATION_DATE", "WITHDRAWAL_DATE", "VISA_CLASS",
     "EMPLOYER_LEGAL_BUSINESS_NAME", "EMPLOYER_POC_EMAIL", "JOB_TITLE",
     "PRIMARY_WORKSITE_STATE", "PWD_SOC_CODE", "PWD_SOC_TITLE",
-    "PWD_WAGE_RATE", "PWD_UNIT_OF_PAY",
+    "PWD_WAGE_RATE", "PWD_UNIT_OF_PAY", "PRIMARY_WORKSITE_CITY", "NAICS_CODE",
 ]
 # Column J (index 9) on sheet row 3 is the empty-cell probe.
 PROBE_COL = PW_HEADER.index("JOB_TITLE")
@@ -194,27 +195,27 @@ PW_ROWS = [
     PW_HEADER,
     ["P-100-25300-123456", "Determination Issued", D(2025, 10, 27), D(2026, 3, 2), None, None,
      "PERM", "Acme Robotics, Inc.", "poc@example.com", "Software Engineer", "CA",
-     "15-1252", "Software Developers", 145600, "Year"],
+     "15-1252", "Software Developers", 145600, "Year", "San Jose", 541511],
     # THE PROBE: job title blank, so its cell is absent from the XML.
     ["P-100-25301-000002", "Determination Issued", "2025-11-03", "2026-04-15", None, None,
      "H-1B", "Globex Corporation", "poc@example.com", None, "California",
-     "13-2011", "Accountants and Auditors", "$38.50", "Hour"],
+     "13-2011", "Accountants and Auditors", "$38.50", "Hour", "  Los   Angeles ", "541211.0"],
     # Withdrawn before determination: the date is in WITHDRAWAL_DATE only.
     ["P-100-25302-000003", "Withdrawn", D(2025, 12, 1), None, None, D(2026, 1, 20),
      "PERM", "  Initech   LLC ", "", "Analyst", "New York",
-     "13-1111", "Management Analysts", "", ""],
+     "13-1111", "Management Analysts", "", "", "", ""],
     # A duplicate case number: first occurrence wins, this one is counted.
     ["P-100-25300-123456", "Redetermination Affirmed", D(2025, 10, 27), D(2026, 6, 1), D(2026, 6, 1), None,
      "PERM", "Acme Robotics, Inc.", "poc@example.com", "Software Engineer", "CA",
-     "15-1252", "Software Developers", 145600, "Year"],
+     "15-1252", "Software Developers", 145600, "Year", "San Jose", 541511],
     # No case number: skipped and counted.
     ["", "Determination Issued", D(2025, 10, 1), D(2026, 1, 1), None, None,
-     "PERM", "Nobody Corp", "", "Clerk", "TX", "43-9061", "Office Clerks", 40000, "Year"],
+     "PERM", "Nobody Corp", "", "Clerk", "TX", "43-9061", "Office Clerks", 40000, "Year", "Austin", 1],
     # A redetermination later than the determination; a foreign worksite;
     # an unparseable wage; an unmapped unit.
     ["P-100-25303-000006", "Redetermination Modified", D(2025, 12, 15), D(2026, 2, 1), D(2026, 5, 5), None,
      "H-2B", "Wayne Enterprises", "", "Welder", "Ontario",
-     "51-4121", "Welders, Cutters, Solderers, and Brazers", "n/a", "Fortnight"],
+     "51-4121", "Welders, Cutters, Solderers, and Brazers", "n/a", "Fortnight", "Toronto", "junk"],
 ]
 
 PW_EXPECTED = [
@@ -224,21 +225,24 @@ PW_EXPECTED = [
      "job_title": "Software Engineer", "soc_code": "15-1252", "soc_title": "Software Developers",
      "wage": 145600.0, "wage_unit": "YEAR", "worksite_state": "CA", "visa_class": "PERM",
      "attorney_name": None, "attorney_slug": None,
-     "source_file": PW_FILE, "fiscal_year": 2026},
+     "source_file": PW_FILE, "fiscal_year": 2026,
+     "worksite_city": "San Jose", "naics": "541511"},
     {"case_number": "P-100-25301-000002", "case_status": "DETERMINATION ISSUED",
      "received_date": "2025-11-03", "decision_date": "2026-04-15",
      "employer_name": "Globex Corporation", "employer_slug": "globex-corporation",
      "job_title": None, "soc_code": "13-2011", "soc_title": "Accountants and Auditors",
      "wage": 38.5, "wage_unit": "HOUR", "worksite_state": "CA", "visa_class": "H-1B",
      "attorney_name": None, "attorney_slug": None,
-     "source_file": PW_FILE, "fiscal_year": 2026},
+     "source_file": PW_FILE, "fiscal_year": 2026,
+     "worksite_city": "Los Angeles", "naics": "541211"},
     {"case_number": "P-100-25302-000003", "case_status": "WITHDRAWN",
      "received_date": "2025-12-01", "decision_date": "2026-01-20",
      "employer_name": "Initech LLC", "employer_slug": "initech-llc",
      "job_title": "Analyst", "soc_code": "13-1111", "soc_title": "Management Analysts",
      "wage": None, "wage_unit": None, "worksite_state": "NY", "visa_class": "PERM",
      "attorney_name": None, "attorney_slug": None,
-     "source_file": PW_FILE, "fiscal_year": 2026},
+     "source_file": PW_FILE, "fiscal_year": 2026,
+     "worksite_city": None, "naics": None},
     {"case_number": "P-100-25303-000006", "case_status": "REDETERMINATION MODIFIED",
      "received_date": "2025-12-15", "decision_date": "2026-05-05",
      "employer_name": "Wayne Enterprises", "employer_slug": "wayne-enterprises",
@@ -246,7 +250,8 @@ PW_EXPECTED = [
      "soc_title": "Welders, Cutters, Solderers, and Brazers",
      "wage": None, "wage_unit": "FORTNIGHT", "worksite_state": None, "visa_class": "H-2B",
      "attorney_name": None, "attorney_slug": None,
-     "source_file": PW_FILE, "fiscal_year": 2026},
+     "source_file": PW_FILE, "fiscal_year": 2026,
+     "worksite_city": "Toronto", "naics": None},
 ]
 
 LCA_FILE = "LCA_Disclosure_Data_FY2026_Q3.xlsx"
@@ -254,7 +259,7 @@ LCA_HEADER = [
     "CASE_NUMBER", "CASE_STATUS", "RECEIVED_DATE", "DECISION_DATE", "VISA_CLASS",
     "JOB_TITLE", "SOC_CODE", "SOC_TITLE", "EMPLOYER_NAME", "WORKSITE_STATE",
     "WAGE_RATE_OF_PAY_FROM", "WAGE_RATE_OF_PAY_TO", "WAGE_UNIT_OF_PAY",
-    "PREVAILING_WAGE", "PW_UNIT_OF_PAY",
+    "PREVAILING_WAGE", "PW_UNIT_OF_PAY", "WORKSITE_CITY", "NAICS_CODE",
 ]
 LCA_ROWS = [
     LCA_HEADER,
@@ -262,10 +267,10 @@ LCA_ROWS = [
     # purpose: reading the wrong column must be visible.
     ["I-200-26010-111111", "Certified", D(2026, 1, 10), D(2026, 1, 17), "H-1B",
      "Data Scientist", "15-2051", "Data Scientists", "Hooli, Inc.", "TX",
-     150000, 180000, "Year", 128000, "Year"],
+     150000, 180000, "Year", 128000, "Year", "Austin", 541511],
     ["I-203-26011-222222", "Certified - Withdrawn", "2026-01-11", "2026-02-20", "E-3 Australian",
      "Nurse", "29-1141", "Registered Nurses", "Pied Piper LLC", "Washington",
-     "48.00", "", "Hour", "45.10", "Hour"],
+     "48.00", "", "Hour", "45.10", "Hour", "Seattle", "622110"],
 ]
 LCA_EXPECTED = [
     {"case_number": "I-200-26010-111111", "case_status": "CERTIFIED",
@@ -274,14 +279,16 @@ LCA_EXPECTED = [
      "job_title": "Data Scientist", "soc_code": "15-2051", "soc_title": "Data Scientists",
      "wage": 150000.0, "wage_unit": "YEAR", "worksite_state": "TX", "visa_class": "H-1B",
      "attorney_name": None, "attorney_slug": None,
-     "source_file": LCA_FILE, "fiscal_year": 2026},
+     "source_file": LCA_FILE, "fiscal_year": 2026,
+     "worksite_city": "Austin", "naics": "541511"},
     {"case_number": "I-203-26011-222222", "case_status": "CERTIFIED - WITHDRAWN",
      "received_date": "2026-01-11", "decision_date": "2026-02-20",
      "employer_name": "Pied Piper LLC", "employer_slug": "pied-piper-llc",
      "job_title": "Nurse", "soc_code": "29-1141", "soc_title": "Registered Nurses",
      "wage": 48.0, "wage_unit": "HOUR", "worksite_state": "WA", "visa_class": "E-3 Australian",
      "attorney_name": None, "attorney_slug": None,
-     "source_file": LCA_FILE, "fiscal_year": 2026},
+     "source_file": LCA_FILE, "fiscal_year": 2026,
+     "worksite_city": "Seattle", "naics": "622110"},
 ]
 
 # The performance page as it was on 2026-09-02, hrefs verbatim: the misspelled
@@ -553,9 +560,30 @@ def check_freshness_is_keyed_on_the_file() -> None:
           seg.count("needs_lookup = True"), 1)
 
 
+def check_backfill_place() -> None:
+    """--backfill-place writes the city and NAICS onto existing rows and nothing else."""
+    from lib_sqlite_shim import SqliteTurso
+    db = SqliteTurso()
+    db.script(fd.table_ddl("lca_cases"))
+    db.conn.execute("INSERT INTO lca_cases (case_number, case_status, wage, worksite_city, naics) "
+                    "VALUES ('I-1', 'CERTIFIED', 100, NULL, NULL), ('I-2', 'CERTIFIED', 200, 'Keep', '11')")
+    db.conn.commit()
+    rows = [{"case_number": "I-1", "worksite_city": "Austin", "naics": "541511", "wage": 999}]
+    n = fd.backfill_columns(db, "lca_cases", iter(rows), fd.BACKFILL_GROUPS["place"], pause=0)
+    got = {r[0]: r[1:] for r in db.conn.execute(
+        "SELECT case_number, worksite_city, naics, wage FROM lca_cases")}
+    check("backfill_place: one row sent", n, 1)
+    check("backfill_place: city and NAICS written", got["I-1"][:2], ("Austin", "541511"))
+    check("backfill_place: no other column touched", got["I-1"][2], 100.0)
+    check("backfill_place: a row the file doesn't name keeps its values", got["I-2"], ("Keep", "11", 200.0))
+    check("backfill_attorney still writes only the firm",
+          fd.BACKFILL_GROUPS["attorney"], ("attorney_name", "attorney_slug"))
+
+
 def main() -> int:
     print("flag disclosure parser contract")
     check_units()
+    check_backfill_place()
     check_discovery()
     check_freshness_is_keyed_on_the_file()
     with tempfile.TemporaryDirectory() as tmp:

@@ -2,6 +2,7 @@
 
 import { PendingLink } from "@/components/ui/pending-link";
 
+import { MIN_DECIDED_FOR_RATE } from "@/components/tools/EntityContext";
 import { approvalRate, type EntityRow } from "@/lib/entityPayload";
 import { socGroup } from "@/lib/socGroups";
 import { stateName } from "@/lib/usStateNames";
@@ -163,6 +164,38 @@ export const recentFacet: Facet<EntityRow> = {
   label: "Filed in the last 12 months",
   value: (e) => (e.recent12m === null ? null : e.recent12m > 0 ? "yes" : "no"),
   format: (v) => (v === "yes" ? "Yes, active" : "No filings"),
+};
+
+/**
+ * Approval rate in bands, with the site's floor: an entity with fewer decided
+ * cases than `MIN_DECIDED_FOR_RATE` has no rate to band, which is its own
+ * choice rather than a place at the bottom.
+ */
+export const approvalFacet: Facet<EntityRow> = {
+  key: "approval",
+  label: "Approval rate",
+  value: (e) => {
+    if (e.certified + e.denied < MIN_DECIDED_FOR_RATE) return "few";
+    const a = approvalRate(e) ?? 0;
+    return a >= 0.99 ? "99" : a >= 0.95 ? "95" : a >= 0.9 ? "90" : "under";
+  },
+  format: (v) =>
+    ({
+      "99": "99% or more",
+      "95": "95% to 99%",
+      "90": "90% to 95%",
+      under: "Under 90%",
+      few: `Too few decided to rate (under ${MIN_DECIDED_FOR_RATE})`,
+    })[v] ?? v,
+};
+
+/** Filings in bands, so "the big sponsors" or "the one-case ones" is a click. */
+export const sizeFacet: Facet<EntityRow> = {
+  key: "size",
+  label: "Size",
+  value: (e) => (e.total >= 500 ? "500" : e.total >= 50 ? "50" : e.total >= 5 ? "5" : "1"),
+  format: (v) =>
+    ({ "500": "500 or more filings", "50": "50 to 499", "5": "5 to 49", "1": "1 to 4" })[v] ?? v,
 };
 
 export const socFacet: Facet<EntityRow> = {

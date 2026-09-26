@@ -50,6 +50,26 @@ interface EntityHit {
 }
 
 /** Static destinations, built once from the same constants the navs use. */
+/**
+ * The words people type for a rail page whose label doesn't carry them. A
+ * section label is short ("By city"), and without these the palette's fuzzy
+ * match can't tie "worksite", "naics" or "nationality" to the page that
+ * filters by it.
+ */
+const SECTION_KEYWORDS: Readonly<Record<string, string>> = {
+  "by-city": "city cities town metro worksite location",
+  "by-industry": "industry industries naics sector",
+  "by-country": "country countries citizenship nationality birth",
+  "by-state": "state states worksite location",
+  activity: "decided decisions day certified denied withdrawn citizenship education visa",
+  "pwd-cases": "prevailing wage request p-100 pwd",
+  "lca-cases": "lca h-1b labor condition i-200",
+  "employers-under-review": "on hold rfi audit appeals census",
+  "compare-employers": "compare sponsors side by side",
+  layoffs: "warn layoff notices",
+  debarments: "debarred barred banned sponsors",
+};
+
 function staticIndex(): { label: string; href: string; group: string; keywords: string }[] {
   const out: { label: string; href: string; group: string; keywords: string }[] = [];
   for (const l of PUBLIC_NAV_LINKS) {
@@ -69,12 +89,21 @@ function staticIndex(): { label: string; href: string; group: string; keywords: 
       keywords: "calculator estimate timeline predictor",
     });
   }
+  // The three breakdowns by name, ahead of the rail's entries so these labels
+  // win the de-dupe below: "By city" says little out of the rail's context.
+  for (const [label, href, keywords] of [
+    ["PERM jobs by city", "/perm-cities", "city cities town metro worksite location"],
+    ["PERM by industry", "/perm-industries", "industry industries naics sector"],
+    ["PERM by country of citizenship", "/perm-countries", "country countries citizenship nationality birth"],
+  ] as const) {
+    out.push({ label, href, group: "Data", keywords: `data statistics breakdown ${keywords}` });
+  }
   for (const s of SECTIONS) {
     out.push({
       label: s.label,
       href: s.href,
       group: "Data",
-      keywords: "data statistics queue",
+      keywords: `data statistics ${SECTION_KEYWORDS[s.key] ?? "queue"}`,
     });
   }
   for (const l of LEARN_NAV_LINKS) {

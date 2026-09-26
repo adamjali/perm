@@ -16,7 +16,6 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Fragment } from "react";
 
 import { withSocialCard } from "@/lib/socialCard";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -29,10 +28,10 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
 import { RecordStrip } from "@/components/home/RecordStrip";
 import { BarRows, QuarterlyEmpty, type BarRow } from "@/components/data/BarRows";
+import { OfficeTable } from "@/components/uscis/OfficeTable";
 import type { RecordFigure } from "@/lib/recordCounts";
 import { getI485Offices } from "@/lib/turso/uscisQuarterly";
 import {
-  groupByState,
   quarterLabel,
   quartersOfWork,
   rankOffices,
@@ -283,51 +282,12 @@ export default async function I485ByFieldOfficePage() {
             <h2 className="font-heading text-2xl font-black">Every office, by state</h2>{" "}
             <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
               {fieldOffices.length} field offices and {serviceCenters.length} service
-              centers. Open a state for its offices; every column is USCIS&apos;s, for
-              the employment-based half, and the family-based pending count is beside
-              it for scale.
+              centers, busiest first. Search for yours, filter by state, or sort on
+              any column; every count is USCIS&apos;s, for the employment-based half,
+              with the family-based pending count beside it for scale.
             </p>{" "}
-            <div className="mt-4 space-y-3">
-              {groupByState(data.offices).map(({ state, offices }) => (
-                <Fragment key={state}>{" "}
-                <details className="group border-2 border-border bg-card">
-                  <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 font-heading text-lg font-bold [&::-webkit-details-marker]:hidden">
-                    <span>{state}</span>{" "}
-                    <span className="font-mono text-sm font-bold text-muted-foreground">
-                      {offices.length} {offices.length === 1 ? "office" : "offices"} · {sumMeasure(offices, "empPending").total.toLocaleString("en-US")} EB pending
-                    </span>
-                  </summary>{" "}
-                  <div className="overflow-x-auto border-t-2 border-border">
-                    <table className="min-w-[720px] w-full text-sm">
-                      <thead>
-                        <tr className="border-b border-border text-left">
-                          <th className="px-4 py-2 font-bold">Office{" "}</th>
-                          <th className="px-2 py-2 font-bold">Code{" "}</th>
-                          <th className="px-2 py-2 text-right font-bold">EB received{" "}</th>
-                          <th className="px-2 py-2 text-right font-bold">EB approved{" "}</th>
-                          <th className="px-2 py-2 text-right font-bold">EB denied{" "}</th>
-                          <th className="px-2 py-2 text-right font-bold">EB pending{" "}</th>
-                          <th className="px-4 py-2 text-right font-bold">Family pending{" "}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {offices.map((o) => (
-                          <tr key={o.code} className="border-b border-border/50">
-                            <td className="px-4 py-1.5 font-semibold">{o.office}{" "}</td>
-                            <td className="px-2 py-1.5 font-mono">{o.code}{" "}</td>
-                            <td className="px-2 py-1.5 text-right font-mono tabular-nums">{fmt(o.empReceived)}{" "}</td>
-                            <td className="px-2 py-1.5 text-right font-mono tabular-nums">{fmt(o.empApproved)}{" "}</td>
-                            <td className="px-2 py-1.5 text-right font-mono tabular-nums">{fmt(o.empDenied)}{" "}</td>
-                            <td className="px-2 py-1.5 text-right font-mono font-bold tabular-nums">{fmt(o.empPending)}{" "}</td>
-                            <td className="px-4 py-1.5 text-right font-mono tabular-nums text-muted-foreground">{fmt(o.famPending)}{" "}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </details>
-                </Fragment>
-              ))}
+            <div className="mt-4">
+              <OfficeTable rows={[...fieldOffices, ...serviceCenters]} />
             </div>{" "}
             <FinePrint summary="What the columns mean, in USCIS's words" className="mt-4">
               <p>

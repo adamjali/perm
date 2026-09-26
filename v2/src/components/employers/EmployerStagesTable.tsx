@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 
-import { FilterableStatTable, type CsvSpec, type StatColumn } from "@/components/tools/FilterableStatTable";
+import { FilterableStatTable, type CsvSpec, type Facet, type StatColumn } from "@/components/tools/FilterableStatTable";
 import { HOLD_STATUS, longDate, type EmployerStageRow } from "@/lib/employerStages";
 
 /**
@@ -46,6 +46,29 @@ function holdCell(r: EmployerStageRow, logFrom: string | null): { text: string; 
   if (logFrom && (r.holdBeforeLog ?? 0) === held) return { text: `before ${longDate(logFrom)}`, sort: "0000" };
   return { text: "", sort: "" };
 }
+
+/**
+ * The employer's largest group outside the normal queue. Ties go to the group
+ * earlier in this list, so a row can't change groups between renders.
+ */
+export function largestGroup(r: EmployerStageRow): string | null {
+  const groups: [string, number][] = [
+    ["On hold", at(r, HOLD)],
+    ["RFI", at(r, RFI)],
+    ["Appeals", appeals(r)],
+    ["Other review", other(r)],
+  ];
+  let best: [string, number] | null = null;
+  for (const g of groups) if (g[1] > 0 && (!best || g[1] > best[1])) best = g;
+  return best ? best[0] : null;
+}
+
+/** Filters by what kind of review an employer's cases are in. */
+export const STAGE_FACETS: Facet<EmployerStageRow>[] = [
+  { key: "largest", label: "Largest group outside the queue", value: largestGroup },
+  { key: "hold", label: "Cases on hold", value: (r) => (at(r, HOLD) > 0 ? "Some on hold" : "None on hold") },
+  { key: "appeals", label: "Appeals", value: (r) => (appeals(r) > 0 ? "Has appeals" : "No appeals") },
+];
 
 function columns(logFrom: string | null): StatColumn<EmployerStageRow>[] {
   return [
@@ -123,6 +146,7 @@ export function EmployerStagesTable({
       initialSort="review"
       caption={`Employers with five or more pending PERM cases, by cases outside the normal queue, as of ${asOf}`}
       noun="employers"
+      facets={STAGE_FACETS}
       csv={csv}
       pageSize={50}
     />

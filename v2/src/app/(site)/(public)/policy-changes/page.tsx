@@ -4,13 +4,14 @@ import Link from "next/link";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { RecordStrip } from "@/components/home/RecordStrip";
-import { DocRow } from "@/components/policy/DocRow";
+import { DocRow, typeLabel } from "@/components/policy/DocRow";
+import { PolicySearch, type PolicyItem } from "@/components/policy/PolicySearch";
 import { monthYear } from "@/components/policy/format";
 import { OflcArchive } from "@/components/policy/OflcArchive";
 import { PolicyStrip, StripLegend } from "@/components/policy/PolicyStrip";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { buildFeed, buildStrip, feedLedger } from "@/lib/policyFeed";
+import { buildFeed, buildStrip, commentWindow, feedLedger } from "@/lib/policyFeed";
 import type { RecordFigure } from "@/lib/recordCounts";
 import { withSocialCard } from "@/lib/socialCard";
 import { listPolicyNotices } from "@/lib/turso/policyNotices";
@@ -83,6 +84,24 @@ export default async function PolicyChangesPage() {
   push(ledger.oflc, "OFLC announcements on these programs", "#oflc", feed.oflc[0]?.publicationDate ?? null);
   const earlier = strip.earlierRegister + strip.earlierOflc;
   const empty = feed.register.length === 0 && feed.oflc.length === 0;
+  // Everything the lists below hold, as strings the search can match. The
+  // OFLC years folded under their summaries are included on purpose: those
+  // are the titles a reader can't otherwise find without opening every year.
+  const searchable: PolicyItem[] = [...feed.register, ...feed.oflc]
+    .map((n) => ({
+      id: n.documentNumber,
+      date: n.publicationDate,
+      kind: typeLabel(n.type),
+      title: n.title,
+      url: n.url,
+      agencies: n.agencies.join(", "),
+      text: [n.title, n.abstract, n.agencies.join(" "), n.citation, n.documentNumber]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase(),
+      commentsOpen: commentWindow(n, today)?.state === "open",
+    }))
+    .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
@@ -122,6 +141,7 @@ export default async function PolicyChangesPage() {
             ) : null}
           </section>{" "}
 
+          <PolicySearch items={searchable}>
           <section className="mt-12" id="register">
             <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">In the Federal Register</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
@@ -153,7 +173,8 @@ export default async function PolicyChangesPage() {
               ) : null}
             </p>{" "}
             <OflcArchive items={feed.oflc} today={today} />
-          </section>{" "}
+          </section>
+          </PolicySearch>{" "}
 
           <section className="mt-12">
             <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl">How documents are selected</h2>{" "}

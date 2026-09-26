@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { FinePrint } from "@/components/data/FinePrint";
-import { Fragment } from "react";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
+import { DebarmentBrowser } from "@/components/debarments/DebarmentBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
 import {
   PROGRAM_LABEL,
@@ -49,37 +49,6 @@ const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "
 const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
 const int = (n: number) => n.toLocaleString("en-US");
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
-
-function Row({ d, today }: { d: Debarment; today: string }) {
-  const p = phase(d, today);
-  // An ENDED debarment is history and is dimmed. An UPCOMING one is not: it is
-  // a live warning about a sponsor who is about to be barred, so it keeps full
-  // contrast and says so. Dimming it, which is what `!isActive` used to do,
-  // read as "nothing to see here" about the one row on the page most worth
-  // reading.
-  return (
-    <li className={`grid grid-cols-1 gap-y-1 py-3 sm:grid-cols-[minmax(0,1fr)_11rem_minmax(0,14rem)] sm:gap-x-4 ${p === "ended" ? "text-foreground/60" : ""}`}>
-      <div>
-        <span className="font-bold">{d.entity}</span>{" "}
-        {d.entityType ? <span className="text-sm text-foreground/70">{d.entityType}</span> : null}{" "}
-        {d.location ? <span className="text-sm text-foreground/70">· {d.location}</span> : null}
-      </div>{" "}
-      <div className="font-mono text-xs tabular-nums">
-        {day(d.startDate)} to {day(d.endDate)}
-        {p === "ended" ? " (ended)" : null}
-        {/* The start date is already the first half of this cell, so the
-            label says the STATE rather than repeating it. */}
-        {p === "upcoming" ? (
-          <span className="font-bold text-foreground"> (not started)</span>
-        ) : null}
-      </div>{" "}
-      <div className="text-sm">
-        {d.violation ?? ""}
-        {d.citation ? <span className="text-foreground/60"> · {d.citation}</span> : null}
-      </div>
-    </li>
-  );
-}
 
 export default async function DebarmentsPage() {
   const [all, summary] = await Promise.all([listDebarments(), getDebarmentsSummary()]);
@@ -132,40 +101,22 @@ export default async function DebarmentsPage() {
             {summary?.pdfDate ? ` OFLC's document was last modified ${day(summary.pdfDate)}.` : ""}
             {summary?.h1bEffective ? ` The H-1B list is effective as of ${day(summary.h1bEffective)}.` : ""}
           </p>{" "}
-          {ORDER.map((program) => {
-            const list = byProgram.get(program) ?? [];
-            return (
-              <Fragment key={program}>{" "}
-              <section className="mt-10">
-                <h2 className="font-heading text-xl font-black sm:text-2xl">{PROGRAM_LABEL[program]}</h2>{" "}
-                <p className="mt-1 text-sm text-foreground/70">
-                  {list.length === 0
-                    ? program === "h1b" && !summary?.h1bEffective
-                      ? "Not read yet from the Wage and Hour page. "
-                      : "No entries on DOL's list. "
-                    : `${int(list.filter((d) => isActive(d, today)).length)} in force, ${int(list.length)} listed. `}
-                  <a
-                    href={list[0]?.sourceUrl ?? (program === "h1b" ? "https://www.dol.gov/agencies/whd/immigration/h1b/debarment" : "https://www.dol.gov/agencies/eta/foreign-labor/program-debarments")}
-                    className={LINK}
-                    rel="noopener"
-                    target="_blank"
-                  >
-                    DOL&apos;s list
-                  </a>
-                </p>{" "}
-                {list.length > 0 ? (
-                  <ul className="mt-3 divide-y-2 divide-border border-y-2 border-border">
-                    {list.map((d) => (
-                      <Fragment key={`${d.program}-${d.entity}-${d.startDate}`}>{" "}
-                      <Row d={d} today={today} />
-                      </Fragment>
-                    ))}
-                  </ul>
-                ) : null}
-              </section>
-              </Fragment>
-            );
-          })}
+          <DebarmentBrowser
+            rows={all.map((d) => ({ ...d, phase: phase(d, today) }))}
+            sections={ORDER.map((program) => ({
+              program,
+              label: PROGRAM_LABEL[program],
+              sourceUrl:
+                byProgram.get(program)?.[0]?.sourceUrl ??
+                (program === "h1b"
+                  ? "https://www.dol.gov/agencies/whd/immigration/h1b/debarment"
+                  : "https://www.dol.gov/agencies/eta/foreign-labor/program-debarments"),
+              emptyNote:
+                program === "h1b" && !summary?.h1bEffective
+                  ? "Not read yet from the Wage and Hour page."
+                  : "No entries on DOL's list.",
+            }))}
+          />
         </>
       )}{" "}
 

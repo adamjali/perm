@@ -56,6 +56,11 @@ on:
         required: false
         type: boolean
         default: false
+      backfill_place:
+        description: "Write ONLY the worksite city and NAICS columns onto existing rows (one file per run; pair with name for LCA quarters)."
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -106,6 +111,7 @@ jobs:
           FORCE: ${{ inputs.force }}
           FY: ${{ inputs.fy }}
           BACKFILL_ATTORNEY: ${{ inputs.backfill_attorney }}
+          BACKFILL_PLACE: ${{ inputs.backfill_place }}
           NAME: ${{ inputs.name }}
           LIST_ONLY: ${{ inputs.list_only }}
         run: |
@@ -130,6 +136,13 @@ jobs:
               exit 1
             fi
             EXTRA="--backfill-attorney"
+          fi
+          if [ "$BACKFILL_PLACE" = "true" ]; then
+            if [ "$FORCE" = "true" ] || [ "$BACKFILL_ATTORNEY" = "true" ]; then
+              echo "::error::backfill_place runs alone, without force or backfill_attorney"
+              exit 1
+            fi
+            EXTRA="--backfill-place"
           fi
           if [ -n "$FY" ]; then
             case "$FY" in

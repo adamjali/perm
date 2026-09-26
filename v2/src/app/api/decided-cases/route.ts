@@ -64,6 +64,12 @@ function clean(v: string | null): string | undefined {
   return s;
 }
 
+/** A NAICS code's leading digits, two to six of them, or nothing. */
+function naicsPrefix(v: string | null): string | undefined {
+  const s = clean(v);
+  return s && /^\d{2,6}$/.test(s) ? s : undefined;
+}
+
 function money(v: string | null): number | undefined {
   if (v === null || v.trim() === "") return undefined;
   const n = Number(v);
@@ -107,6 +113,13 @@ export async function GET(request: Request): Promise<NextResponse> {
     status: clean(p.get("status")),
     minWage: money(p.get("minWage")),
     maxWage: money(p.get("maxWage")),
+    // PERM's published columns. Each is tested row by row, so a range
+    // carrying one is held to the unindexed limit in getDecidedFeed.
+    city: clean(p.get("city")),
+    naics: naicsPrefix(p.get("naics")),
+    citizenship: clean(p.get("citizenship")),
+    visaClass: clean(p.get("visa")),
+    education: clean(p.get("education")),
   };
 
   const raw = Number(p.get("limit") ?? DECIDED_ROW_CAP);

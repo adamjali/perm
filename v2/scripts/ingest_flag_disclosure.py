@@ -106,6 +106,7 @@ from ingest_perm_disclosure import (  # noqa: E402
     to_iso,
 )
 from lib_load_guard import Fingerprint, drift_findings, sanity_findings  # noqa: E402
+from lib_naics import normalize_naics  # noqa: E402
 from lib_gov_data import (  # noqa: E402
     BROWSER_HEADERS,
     discover_links,
@@ -152,6 +153,10 @@ PROGRAMS: dict[str, dict] = {
             "wage_unit": ["PWD_UNIT_OF_PAY"],
             "state": ["PRIMARY_WORKSITE_STATE"],
             "visa": ["VISA_CLASS"],
+            # Read off PW_Record_Layout_FY2026_Q3.pdf (Sep 26 2026): the
+            # employer's NAICS code and the primary worksite's city.
+            "city": ["PRIMARY_WORKSITE_CITY"],
+            "naics": ["NAICS_CODE"],
             # The REPRESENTING firm, not the employer. Both files carry it
             # under the same name; the ETA-9035 layout calls it "Name of Law
             # Firm representing the Employer submitting the Labor Condition
@@ -189,6 +194,11 @@ PROGRAMS: dict[str, dict] = {
             "wage_unit": ["WAGE_UNIT_OF_PAY"],
             "state": ["WORKSITE_STATE"],
             "visa": ["VISA_CLASS"],
+            # Read off LCA_Record_Layout_FY2026_Q3.pdf (Sep 26 2026): NAICS_CODE
+            # is Form ETA-9035 Section C, Item 13; WORKSITE_CITY is the FIRST
+            # worksite location (the Worksites companion file lists the rest).
+            "city": ["WORKSITE_CITY"],
+            "naics": ["NAICS_CODE"],
             # The REPRESENTING firm, not the employer. Both files carry it
             # under the same name; the ETA-9035 layout calls it "Name of Law
             # Firm representing the Employer submitting the Labor Condition
@@ -211,6 +221,7 @@ COLUMNS = (
     "wage", "wage_unit", "worksite_state", "visa_class",
     "attorney_name", "attorney_slug",
     "source_file", "fiscal_year",
+    "worksite_city", "naics",
 )
 
 ROWS_PER_STMT = 500
@@ -257,7 +268,9 @@ def table_ddl(table: str) -> list[str]:
              attorney_name   TEXT,
              attorney_slug   TEXT,
              source_file     TEXT,
-             fiscal_year     INTEGER)""",
+             fiscal_year     INTEGER,
+             worksite_city   TEXT,
+             naics           TEXT)""",
     ]
 
 
@@ -580,6 +593,8 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
         "attorney_slug": _search_slug(firm) if firm else None,
         "source_file": source_file,
         "fiscal_year": year,
+        "worksite_city": clean_text(rec.get("city"), 60),
+        "naics": normalize_naics(rec.get("naics")),
     }
 
 
@@ -801,7 +816,20 @@ BACKFILL_ROWS_PER_STMT = 200
 BACKFILL_STMTS_PER_REQUEST = 8
 
 
+# The column groups a narrow backfill can write, by the flag that asks for it.
+BACKFILL_GROUPS: dict[str, tuple[str, ...]] = {
+    "attorney": ("attorney_name", "attorney_slug"),
+    "place": ("worksite_city", "naics"),
+}
+
+
 def backfill_attorney(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> int:
+    """The law-firm backfill (kept by name; the workflow and its log use it)."""
+    return backfill_columns(db, table, rows, BACKFILL_GROUPS["attorney"], pause)
+
+
+def backfill_columns(db: Turso, table: str, rows, cols: tuple[str, ...],
+                     pause: float = WRITE_PAUSE_S) -> int:
     """Write ONLY the two attorney columns onto rows that already exist.
 
     WHY NOT JUST RELOAD THE FILE. `INSERT OR REPLACE` deletes and reinserts, so
@@ -835,15 +863,12 @@ def backfill_attorney(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S)
             return
         whens = " ".join(["WHEN ? THEN ?"] * len(batch))
         holes = ",".join(["?"] * len(batch))
-        sql = (f"UPDATE {table} SET "
-               f"attorney_name = CASE case_number {whens} END, "
-               f"attorney_slug = CASE case_number {whens} END "
-               f"WHERE case_number IN ({holes})")
+        sets = ", ".join(f"{c} = CASE case_number {whens} END" for c in cols)
+        sql = f"UPDATE {table} SET {sets} WHERE case_number IN ({holes})"
         args: list = []
-        for r in batch:
-            args += [lit(r["case_number"]), lit(r["attorney_name"])]
-        for r in batch:
-            args += [lit(r["case_number"]), lit(r["attorney_slug"])]
+        for c in cols:
+            for r in batch:
+                args += [lit(r["case_number"]), lit(r[c])]
         args += [lit(r["case_number"]) for r in batch]
         pending.append({"type": "execute", "stmt": {"sql": sql, "args": args}})
         batch = []
@@ -939,6 +964,10 @@ def main() -> int:
                          "exist, then create their indexes. Ten times cheaper "
                          "than a --force reload and the only affordable way to "
                          "add a column to these tables.")
+    ap.add_argument("--backfill-place", action="store_true",
+                    help="Write ONLY the worksite city and NAICS columns onto rows "
+                         "that already exist (one write per row). Neither column is "
+                         "indexed: both are narrowing filters, not search leads.")
     ap.add_argument("--accept-drift", action="store_true",
                     help="Load despite the fingerprint differing from the previous load "
                          "(a lost column, a blank-share jump, a moved median). For a "
@@ -1095,6 +1124,29 @@ def main() -> int:
         # after the sha-match branch meant it returned "unchanged; skipping"
         # and never ran. Caught by dispatching it once rather than by reading
         # the flow.
+        if args.backfill_place:
+            if args.backfill_attorney or args.force:
+                raise SystemExit("FATAL: --backfill-place runs alone, without --force "
+                                 "or --backfill-attorney")
+            log(f"Backfilling worksite city and NAICS onto {table} from {name}")
+            existing = int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
+            if existing == 0:
+                raise SystemExit(
+                    f"FATAL: {table} holds no rows, so there is nothing to "
+                    "backfill onto. Run the ordinary load first.")
+            ensure_columns(db, table)
+            n = backfill_columns(db, table, iter_cases(path, cfg, stats),
+                                 BACKFILL_GROUPS["place"], pause=args.pause)
+            stats.report()
+            filled = int(db.scalar(
+                f"SELECT count(*) FROM {table} WHERE source_file = ? AND naics IS NOT NULL",
+                [name]) or 0)
+            log(f"  {table}: {filled:,} of {n:,} rows from {name} now carry an industry code")
+            record_run(db, script, status="ok", rows_written=n,
+                       note=f"city and NAICS backfill from {name}: {filled:,}/{n:,} with NAICS",
+                       started_at=started)
+            return 0
+
         if args.backfill_attorney:
             # THE INDEXES ARE CREATED AFTER, DELIBERATELY. An UPDATE rewrites
             # the table row plus every index containing a changed column, so

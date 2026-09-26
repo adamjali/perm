@@ -110,6 +110,16 @@ describe("filters are capped before they reach SQL", () => {
     expect(getDecidedFeed.mock.calls[0]?.[0].narrow.minWage).toBe(150_000);
   });
 
+  it("passes the PERM-only filters through, and drops a NAICS that isn't digits", async () => {
+    await GET(get("from=2020-03-12&city=Seattle&naics=5415&citizenship=INDIA&visa=H-1B&education=Master%27s"));
+    expect(getDecidedFeed.mock.calls[0][0].narrow).toMatchObject({
+      city: "Seattle", naics: "5415", citizenship: "INDIA", visaClass: "H-1B", education: "Master's",
+    });
+    getDecidedFeed.mockClear();
+    await GET(get("from=2020-03-12&naics=54%25"));
+    expect(getDecidedFeed.mock.calls[0][0].narrow.naics).toBeUndefined();
+  });
+
   it("ignores a program it does not recognise instead of querying a table", async () => {
     await GET(get("from=2025-03-12&program=perm&program=sqlinjection"));
     expect(getDecidedFeed.mock.calls[0]?.[0].programs).toEqual(["perm"]);

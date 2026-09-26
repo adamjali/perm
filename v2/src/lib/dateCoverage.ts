@@ -9,8 +9,14 @@
  *
  * The two records are not interchangeable and their windows do not meet:
  *
- *   decided   published quarterly files, 2023-10-01 -> 2026-06-30
- *   observed  our own sweep's event log,  2026-08-26 -> today
+ *   decided   published files: PERM from FY2016 (the history table, loaded
+ *             Sep 26 2026) and the quarterly files to 2026-06-30
+ *   observed  our own sweep's event log, 2026-08-26 -> today
+ *
+ * The decided window is the widest program's; `decidedByProgram` carries each
+ * program's own, because PERM reaches back to 2015-10-01 while wage requests
+ * start 2023-10-01, and a page that shows one span for all three would promise
+ * wage requests nobody holds.
  *
  * The gap between them is real, and `uncoveredDays` is what lets a page say
  * "we hold nothing for that day" instead of rendering an empty table, which a
@@ -29,6 +35,8 @@ export interface CoverageWindows {
   decided: DateRange | null;
   /** Our own observations, from the sweep's event log. */
   observed: DateRange | null;
+  /** Each program's own published window, where it differs from `decided`. */
+  decidedByProgram?: Partial<Record<"perm" | "pwd" | "lca", DateRange>>;
 }
 
 /** How a chosen date or range lands against those windows. */
@@ -110,15 +118,37 @@ export interface DecidedNarrow {
   employer?: string;
   state?: string;
   socCode?: string;
-  /** PERM only; the wage-request and LCA files carry no attorney column. */
+  /**
+   * The law firm's slug. All three programs carry it: the wage-request and LCA
+   * tables gained `attorney_slug` in the Sep 4 2026 backfill.
+   */
   attorney?: string;
   status?: string;
   minWage?: number;
   maxWage?: number;
+  /** Worksite city, exact, case-insensitive. PERM only. */
+  city?: string;
+  /** NAICS code or its leading digits ("5415" matches 541511). PERM only. */
+  naics?: string;
+  /** Worker's country of citizenship, as DOL prints it. PERM, old form only. */
+  citizenship?: string;
+  /** Class of admission at filing (PERM) or the visa the filing is for (LCA, PWD). */
+  visaClass?: string;
+  /** Worker's highest education. PERM, old form only. */
+  education?: string;
 }
+
+/**
+ * The narrows that no index leads with. Each one is tested row by row across
+ * the range, so a range carrying any of them is bounded (see
+ * `RANGE_MAX_DAYS_UNINDEXED`).
+ */
+export const UNINDEXED_NARROWS = [
+  "minWage", "maxWage", "city", "naics", "citizenship", "visaClass", "education",
+] as const;
 
 /** True when a narrow can be served by an index rather than a row-by-row walk. */
 export function narrowIsIndexed(n: DecidedNarrow): boolean {
-  return n.minWage === undefined && n.maxWage === undefined;
+  return UNINDEXED_NARROWS.every((k) => n[k] === undefined);
 }
 
