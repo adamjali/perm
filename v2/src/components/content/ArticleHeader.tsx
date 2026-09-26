@@ -133,7 +133,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
               {meta.tags.map((tag) => (
                 <Fragment key={tag}>
                   {" "}
-                  <span className="border border-border bg-muted px-2 py-0.5 font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+                  <span className="border border-border bg-muted px-2 py-0.5 font-mono text-sm uppercase tracking-wider text-muted-foreground">
                     {tag}
                   </span>
                 </Fragment>

@@ -1,0 +1,71 @@
+name: Watched cases (hourly)
+
+# ASKS DOL, EVERY HOUR, ABOUT ONLY THE CASES SOMEONE IS WAITING TO HEAR ABOUT.
+#
+# The full and pending sweeps check every case twice a day, so a watched case
+# could change and its subscriber hear up to twelve hours later. Two rivals
+# sell "hourly checks" as a paid plan; this makes it free. Dispatched hourly
+# at :25 by Vercel cron (/api/cron/dispatch/watched-cases), because GitHub's
+# own schedule runs hours late here.
+#
+#   1. Skip the hour if a sweep is running: it is covering these cases anyway,
+#      and a second writer mid-sweep is what the conditional writes in
+#      check_watched_cases.py exist to make harmless, not something to invite.
+#   2. Read the watched list from Convex (case numbers only, never an address).
+#   3. Ask DOL about those numbers alone (a few hundred, 50 per request) and
+#      write any move through the same tables and source the sweeps use.
+#   4. If anything moved, run the email and browser-push alert sweeps now
+#      instead of waiting for their 7 AM and 7 PM Eastern ticks. The one-email-
+#      a-day bundle rule still applies inside them.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: watched-cases
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: "22"
+
+      - name: Check watched cases
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for wf in case-status-direct.yml pwd-status-direct.yml; do
+            n=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" \
+                  "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/$wf/runs?status=in_progress&per_page=1" \
+                | python3 -c "import json,sys; print(json.load(sys.stdin).get('total_count', 0))" || echo 0)
+            if [ "${n:-0}" -gt 0 ]; then
+              echo "$wf is running; it covers these cases this hour"
+              exit 0
+            fi
+          done
+          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
+            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
+          npx --yes convex@1.46.0 run watchedCases:watchedCaseNumbers '{}' > "$RUNNER_TEMP/watched.json"
+          python3 scripts/check_watched_cases.py "$RUNNER_TEMP/watched.json" | tee "$RUNNER_TEMP/out.txt"
+          changed=$(grep -oE '^CHANGED=[0-9]+' "$RUNNER_TEMP/out.txt" | cut -d= -f2)
+          if [ "${changed:-0}" -gt 0 ]; then
+            echo "$changed watched case(s) moved; running the alert sweeps now"
+            npx --yes convex@1.46.0 run caseAlerts:sweepCaseChanges '{}'
+            npx --yes convex@1.46.0 run casePushAlertsSweep:sweep '{}'
+          fi

@@ -36,7 +36,7 @@ export function StageProgressionItem({
     <div className={cn("group cursor-pointer", className)}>
       {/* Stage tag */}
       <div
-        className="inline-block px-2.5 py-1 text-[10px] font-extrabold uppercase border-[1.5px] border-black shadow-hard-sm mb-2 text-white"
+        className="inline-block px-2.5 py-1 text-sm font-extrabold uppercase border-[1.5px] border-black shadow-hard-sm mb-2 text-white"
         style={{ backgroundColor: color }}
       >
         {label}

@@ -5,18 +5,22 @@ export default defineConfig({
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // One worker: this runs on a 2015 laptop, and parallel browsers have
+  // crashed it (v2/CLAUDE.md, "never run headless browsers in parallel").
+  workers: 1,
   reporter: "html",
 
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: process.env.BASE_URL ?? "http://localhost:3000",
     trace: "on-first-retry",
   },
 
   projects: [
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      // The installed Chrome rather than Playwright's own download, which is
+      // not installed here (and WebKit can't be on macOS 12).
+      use: { ...devices["Desktop Chrome"], channel: "chrome" },
     },
   ],
 

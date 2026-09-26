@@ -72,6 +72,11 @@ export const CRON_JOBS: Record<string, CronJob> = {
     schedule: "40 10 * * 0",
     description: "the rolling-window PWD and LCA re-check, Sundays",
   },
+  "watched-cases": {
+    workflow: "watched-cases.yml",
+    schedule: "25 * * * *",
+    description: "the cases someone has an alert on, against DOL, hourly (skips an hour a sweep is running)",
+  },
   "case-status-pending": {
     workflow: "case-status-direct.yml",
     inputs: { mode: "pending" },
@@ -102,5 +107,10 @@ export const HOUSEKEEPING_JOBS: Record<string, HousekeepingJob> = {
     path: "/api/cron/prune-uscis",
     schedule: "20 9 * * *",
     description: "delete USCIS case-status rows nobody has looked up for twelve months (privacy policy, section 18)",
+  },
+  scorecard: {
+    path: "/api/cron/scorecard",
+    schedule: "0 12 * * *",
+    description: "record today's sampled predictions, grade the decided ones, rewrite the scorecard summaries",
   },
 };

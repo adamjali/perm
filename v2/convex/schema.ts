@@ -1319,7 +1319,7 @@ export default defineSchema({
    * takes, measured over petitions already decided. This one holds how many are
    * stacked up and how fast they are clearing, which on real figures disagrees:
    * the national interest waiver shows 89,215 pending against 6,325 completed
-   * in a quarter, while USCIS publishes 29 to 32 months for the same category.
+   * in a quarter, while USCIS says 80% finish within 30 months (Sep 2026).
    * Both are true, because NIW intake is outrunning its output.
    *
    * Ingested by `scripts/ingest_uscis_i140.py` from www.uscis.gov, which serves
@@ -1981,6 +1981,75 @@ export default defineSchema({
   })
     .index("by_case", ["caseNumber"])
     .index("by_case_ip_kind", ["caseNumber", "ipHash", "kind"]),
+
+  /**
+   * A person's whole timeline after PERM, the successor to `caseMilestones`
+   * (which keeps its 14 rows and its per-case counts). Rules and field lists:
+   * `convex/lib/communityTimeline.ts`.
+   *
+   * The PERM half (`perm*`) is written ONLY by `communityTimelines.setPermHalf`,
+   * read from DOL's record in Turso by case number; the reporter never types
+   * it. Everything else is self-reported, has no free text, and is labelled as
+   * self-reported wherever it renders.
+   *
+   * No account. Whoever holds the edit key (32 random bytes the browser keeps)
+   * can change or remove the row; only its SHA-256 is stored. `public` is the
+   * opt-in to the public board, off by default; the anonymous medians use every
+   * row that is not hidden, and the form says so before saving.
+   */
+  communityTimelines: defineTable({
+    caseNumber: v.string(),
+    editKeyHash: v.string(),
+    ipHash: v.string(),
+    public: v.boolean(),
+    category: v.optional(v.union(v.literal("eb2"), v.literal("eb3"), v.literal("eb3-other"))),
+    country: v.optional(
+      v.union(v.literal("row"), v.literal("india"), v.literal("china"), v.literal("mexico"), v.literal("philippines")),
+    ),
+    route: v.optional(v.union(v.literal("adjustment"), v.literal("consular"))),
+    premium: v.optional(v.boolean()),
+    i140Center: v.optional(v.union(v.literal("nebraska"), v.literal("texas"), v.literal("other"))),
+    i140FiledOn: v.optional(v.string()),
+    i140ApprovedOn: v.optional(v.string()),
+    i485FiledOn: v.optional(v.string()),
+    eadOn: v.optional(v.string()),
+    apOn: v.optional(v.string()),
+    interviewOn: v.optional(v.string()),
+    greenCardOn: v.optional(v.string()),
+    rfeForm: v.optional(v.union(v.literal("i140"), v.literal("i485"))),
+    rfeReason: v.optional(
+      v.union(
+        v.literal("ability-to-pay"),
+        v.literal("experience"),
+        v.literal("education"),
+        v.literal("job-offer"),
+        v.literal("perm-docs"),
+        v.literal("medical"),
+        v.literal("supplement-j"),
+        v.literal("status"),
+        v.literal("civil-docs"),
+        v.literal("other"),
+      ),
+    ),
+    rfeIssuedOn: v.optional(v.string()),
+    rfeRespondedOn: v.optional(v.string()),
+    rfeOutcome: v.optional(v.union(v.literal("pending"), v.literal("approved"), v.literal("denied"))),
+    /** DOL's filing date for the case. Written by the verifier only. */
+    permFiledOn: v.optional(v.string()),
+    /** DOL's certification date. Written by the verifier only. */
+    permCertifiedOn: v.optional(v.string()),
+    permCertifiedSource: v.optional(v.union(v.literal("disclosure"), v.literal("observed"))),
+    /** When the verifier last read DOL's record for this case. */
+    permCheckedAt: v.optional(v.number()),
+    /** Set by an admin to take a row off every surface without deleting it. */
+    hiddenAt: v.optional(v.number()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_case", ["caseNumber"])
+    .index("by_case_key", ["caseNumber", "editKeyHash"])
+    .index("by_case_ip", ["caseNumber", "ipHash"])
+    .index("by_perm_checked", ["permCheckedAt"]),
 
   /**
    * Browser push subscriptions for case-status changes, with no account and

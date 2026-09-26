@@ -32,7 +32,7 @@ describe("LiveQueueBoard", () => {
     // Named twice on purpose: as the headline, and as its own row below.
     expect(screen.getAllByText("June 2025")).toHaveLength(2);
     // April has 20 open cases and must not be presented as the work front.
-    const headline = screen.getByText(/The queue is working/).parentElement;
+    const headline = screen.getByText(/Oldest month still open/).parentElement;
     expect(headline).toHaveTextContent("June 2025");
     expect(headline).not.toHaveTextContent("April 2025");
   });
@@ -83,7 +83,7 @@ describe("LiveQueueBoard", () => {
   it("says there is no front rather than inventing one", () => {
     render(<LiveQueueBoard months={[m("2025-04", 10_000, 10_000)]} />);
     expect(screen.getByText(/no work front to report/)).toBeInTheDocument();
-    expect(screen.queryByText(/The queue is working/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Oldest month still open/)).not.toBeInTheDocument();
   });
 
   it("renders nothing rather than an empty frame with no months", () => {

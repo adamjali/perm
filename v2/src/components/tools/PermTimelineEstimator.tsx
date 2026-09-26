@@ -18,7 +18,7 @@
 
 import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDotIcon as CalendarClock, CaretRightIcon as CaretRight, InfoIcon, WarningIcon } from "@phosphor-icons/react";
+import { CalendarDotIcon as CalendarClock, InfoIcon, WarningIcon } from "@phosphor-icons/react";
 
 import {
   estimateQueueDecision,
@@ -57,34 +57,8 @@ import { CaseNumberField } from "@/components/tools/CaseNumberField";
 import { QueueMonthChart } from "@/components/tools/QueueMonthChart";
 import { cn } from "@/lib/utils";
 
-/**
- * The alphabet shape this component consumes, declared HERE rather than
- * imported from `@/lib/turso/alphabet`.
- *
- * That module carries `import "server-only"`, and this file is `"use client"`.
- * A type-only import is erased at compile, but Next resolves the module graph
- * before that erasure, so the import alone turned this route into a 404 - a
- * clean 404 with nothing in the dev log, which reads exactly like a missing
- * page. Verified by stashing: clean HEAD 200, the import 404.
- *
- * Structural, and only what is actually read. A server-only reader stays free
- * to carry more.
- */
-interface AlphabetForClient {
-  letters: ReadonlyArray<{ letter: string; deltaDays: number }>;
-  cases: number;
-}
-
 export interface PermTimelineEstimatorProps {
   frontier: DolFrontier | null;
-  /**
-   * The measured employer-initial ordering, or null when the doc is missing.
-   *
-   * DOL works a filing month alphabetically by employer, so this is the term
-   * that turns a MONTH into a DAY. It is never invented: with no doc, or no
-   * initial chosen, the estimate stays at month resolution and says so.
-   */
-  alphabet?: AlphabetForClient | null;
   cohorts: readonly CohortStat[];
   /** "YYYY-MM" to preselect, e.g. from a ?month= link. Ignored when invalid. */
   initialMonth?: string | null;
@@ -223,7 +197,6 @@ const POSITION_COPY: Record<string, { tone: string; heading: string }> = {
 export function PermTimelineEstimator({
   frontier,
   cohorts,
-  alphabet = null,
   frontierAdvance,
   disclosure,
   frontierHistory = [],
@@ -314,11 +287,6 @@ export function PermTimelineEstimator({
   // reading window.location in the state initializer would render different
   // HTML than the server sent. A post-mount set is hydration-safe and keeps
   // the page static.
-  // Optional, and optional is the point: the estimate is honest at month
-  // resolution, and the initial is what sharpens it to a day. Empty means
-  // "not told", never "A".
-  const [initial, setInitial] = useState<string>("");
-
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
     // `?date=` is new and exact; `?month=` is the existing contract that
@@ -337,26 +305,6 @@ export function PermTimelineEstimator({
     // a setter - which React guarantees is stable. Runs once, as intended.
   }, []);
 
-  const letterDelta = useMemo(() => {
-    if (!alphabet || !initial) return null;
-    return alphabet.letters.find((l) => l.letter === initial)?.deltaDays ?? null;
-  }, [alphabet, initial]);
-
-  /**
-   * The measured span of the whole alphabet, for when no initial is chosen.
-   *
-   * Without an initial the reader's position in the filing month is unknown,
-   * and the band has to say so - otherwise choosing a letter returns a date
-   * outside the range the page just printed, which is what a reader caught.
-   * Derived from the same doc the per-letter shift comes from; null when the
-   * measurement is absent, and then nothing widens.
-   */
-  const letterSpread = useMemo(() => {
-    if (!alphabet || alphabet.letters.length === 0) return null;
-    const d = alphabet.letters.map((l) => l.deltaDays);
-    return { min: Math.min(...d), max: Math.max(...d) };
-  }, [alphabet]);
-
   const estimate = useMemo(
     () =>
       estimateQueueDecision({
@@ -369,11 +317,6 @@ export function PermTimelineEstimator({
           frontierAdvance && frontierAdvance.slowest && frontierAdvance.fastest
             ? { slowest: frontierAdvance.slowest, fastest: frontierAdvance.fastest }
             : null,
-        // MEASURED OR ABSENT, never a default. `letterDeltaDays` shifts every
-        // model by the ordering DOL actually works in; with no initial chosen
-        // it is null and the calculator behaves exactly as before.
-        letterDeltaDays: letterDelta,
-        letterSpreadDays: letterSpread,
         // The picker chooses a MONTH, so the 15th is the honest midpoint and
         // `casesAheadOfDay` prorates that month's own pending accordingly.
         // Absent months or pace, the model is omitted and the month-granular
@@ -396,8 +339,8 @@ export function PermTimelineEstimator({
     // listed even though it derives from `months` and `today` - it is read
     // inside, and a memo that reads a value it does not depend on is the
     // shape that goes stale the first time the derivation changes.
-    [filingDate, today, frontier, cohorts, frontierAdvance, letterDelta,
-     months, decisionPace, sweepAgeDays, filingRate, letterSpread],
+    [filingDate, today, frontier, cohorts, frontierAdvance,
+     months, decisionPace, sweepAgeDays, filingRate],
   );
 
   const position = POSITION_COPY[estimate.position];
@@ -457,9 +400,9 @@ export function PermTimelineEstimator({
    * counts the undecided cases filed before yours - that number places you
    * inside the month directly, and it moves with the day you filed.
    *
-   * So a day is printed when a day is earned, and the two things that earn one
-   * are now the counting model and the measured initial, not the initial
-   * alone. Leaving it as it was meant a reader could pick their filing day,
+   * So a day is printed when a day is earned, and the one thing that earns it
+   * is the counting model. (The employer initial used to count too; it was
+   * removed on 2026-09-26 after it scored worse than no shift at all.) Leaving it as it was meant a reader could pick their filing day,
    * watch the arithmetic change underneath, and still be shown a month.
    *
    * It also settles a split between this page and the case page, which has
@@ -469,7 +412,7 @@ export function PermTimelineEstimator({
    */
   const lead = estimate.models[0] ?? null;
   const leadIsCounting = lead?.id === "decision-pace";
-  const dayEarned = leadIsCounting || letterDelta !== null;
+  const dayEarned = leadIsCounting;
   const shown = useMemo(() => {
     if (leadIsCounting && lead?.earliestDate && lead?.latestDate) {
       return {
@@ -507,8 +450,17 @@ export function PermTimelineEstimator({
     };
   }, [envelope, month, today]);
 
-  /** Measured, not projected: pending cases filed before the chosen month. */
+  /** Measured, not projected: cases in line filed before the chosen month. */
   const queue = useMemo(() => deriveQueueAhead(months, month), [months, month]);
+
+  /** Pending but out of line (hold, RFI, appeal) in earlier months: named, not counted. */
+  const sideAhead = useMemo(
+    () =>
+      months
+        .filter((m) => m.filingMonth < month && typeof m.analystReview === "number")
+        .reduce((n, m) => n + Math.max(0, m.pending - (m.analystReview ?? 0)), 0),
+    [months, month],
+  );
 
   /** Months whose filing volume collapsed, so the chart can say why. */
   const anomalies = useMemo(() => findVolumeAnomalies(months), [months]);
@@ -601,60 +553,6 @@ export function PermTimelineEstimator({
           </p>
         ) : null}
 
-        {/* SECONDARY INPUTS ARE DISCLOSURES, NOT PEERS.
-            All three fields used to sit at the same weight with a paragraph
-            each - ten lines of grey prose before any answer existed. The
-            reader knows one thing for certain (when they filed); the other
-            two are refinements, and a refinement should not compete with the
-            question. Both are one line closed.
-
-            The alphabet's own explanation moved OUT of here: it explains a
-            number, so it belongs beside the number it moves, under "How this
-            was worked out", not under the control that feeds it. */}
-        <details className="group mt-6 border-t-2 border-border pt-4">
-            <summary className="cursor-pointer list-none text-sm font-bold marker:content-none">
-              <span className="inline-flex items-center gap-2">
-                <CaretRight
-                  className="h-3.5 w-3.5 transition-transform group-open:rotate-90"
-                  aria-hidden="true"
-                />
-                Narrow it down
-                <span className="font-normal text-muted-foreground">
-                  employer initial, or a case number
-                </span>
-              </span>
-            </summary>
-
-            {/* `grid-cols-1` and `[&>*]:min-w-0` are not optional around a
-                form control: below the breakpoint a grid with no column track
-                sizes its items to their content, and on iOS a select's
-                content contribution comes from the user agent. The gate
-                caught this the moment the disclosure was added. */}
-            <div className="mt-4 grid grid-cols-1 gap-5 [&>*]:min-w-0 sm:max-w-md">
-              {alphabet ? (
-                <div>
-                  <Label htmlFor={`${selectId}-initial`} className="text-sm font-bold">
-                    First letter of the employer&apos;s name
-                  </Label>
-                  <select
-                    id={`${selectId}-initial`}
-                    value={initial}
-                    onChange={(e) => setInitial(e.target.value)}
-                    className="mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                  >
-                    <option value="">Any</option>
-                    {alphabet.letters.map((l) => (
-                      <option key={l.letter} value={l.letter}>
-                        {l.letter}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : null}
-
-      
-            </div>
-        </details>
 
         <CaseNumberField
           className="mt-6"
@@ -692,11 +590,9 @@ export function PermTimelineEstimator({
               <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
                 Most likely
               </p>{" "}
-              {/* A DAY ONLY WHEN A DAY IS EARNED. DOL publishes at MONTH
-                  resolution and works alphabetically within it, so the initial
-                  is the only thing that says where in the month a case falls.
-                  Without it the anchor is a month, because printing a day we
-                  cannot place inside the month is precision we do not have. */}
+              {/* A DAY ONLY WHEN A DAY IS EARNED: the counting model places a
+                  case inside its filing month; the month-anchored models
+                  cannot, so they print a month. */}
               <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-5xl">
                 {dayEarned
                   ? `Around ${fmtDay(shown.anchor)}`
@@ -882,11 +778,11 @@ export function PermTimelineEstimator({
           <p className="mt-3 text-base leading-relaxed text-foreground/70">
             {activeRange ? (
               <>
-                DOL is visibly working{" "}
+                Decisions are landing in{" "}
                 <b className="font-bold text-foreground">
                   {formatMonth(activeRange.from)} to {formatMonth(activeRange.to)}
                 </b>
-                : those months have decisions in them and are not finished.
+                : those months have decisions in them and aren&apos;t finished.
                 Months above are done, months below have not been reached.
               </>
             ) : (
@@ -905,8 +801,14 @@ export function PermTimelineEstimator({
               {queue.ahead.toLocaleString("en-US")}
             </p>{" "}
             <p className="mt-1 text-sm text-foreground/70">
-              still undecided, filed before {formatMonth(month)}
-            </p>
+              in DOL&apos;s normal queue, filed before {formatMonth(month)}
+            </p>{" "}
+            {sideAhead > 0 ? (
+              <p className="mt-2 text-sm text-foreground/70">
+                Not counted: {sideAhead.toLocaleString("en-US")} on hold, at an
+                RFI or on appeal, which are out of line.
+              </p>
+            ) : null}
           </div>
 
           <QueueMonthChart
@@ -994,38 +896,17 @@ export function PermTimelineEstimator({
           ))}
           </div>
         </details>
-      ) : (
+      ) : hasDate ? (
+        // Only once a date is chosen: with none, "Pick a date above" is the
+        // whole message, and this line used to print under it as well.
         <div className="p-6 sm:p-8">
           <p className="text-base leading-relaxed">
             There isn’t enough published DOL data to put a date on this filing
             month yet.
           </p>
         </div>
-      )}
-
-      {/* THE ALPHABET'S EXPLANATION, BESIDE THE NUMBER IT MOVES.
-          It used to sit under the letter select as three lines of prose that
-          every reader saw whether or not they had chosen a letter. It
-          explains a term that only exists once a letter IS chosen, so it
-          belongs here and only then. Relocated, not deleted - the
-          measurement is the reason anyone should believe the shift is small. */}
-      {hasDate && alphabet && letterDelta !== null ? (
-        <p className="border-t-2 border-border px-6 py-4 text-sm text-muted-foreground sm:px-8">
-          DOL works a filing month alphabetically by employer.{" "}
-          <span className="font-bold text-foreground">
-            {initial || "This initial"} moves it{" "}
-            {Math.abs(Math.round(letterDelta))}{" "}
-            {Math.abs(Math.round(letterDelta)) === 1 ? "day" : "days"}{" "}
-            {letterDelta < 0 ? "earlier" : "later"}
-          </span>
-          . The whole alphabet is worth about{" "}
-          {Math.round(
-            Math.max(...alphabet.letters.map((l) => l.deltaDays)) -
-              Math.min(...alphabet.letters.map((l) => l.deltaDays)),
-          )}{" "}
-          days, over {alphabet.cases.toLocaleString("en-US")} decided cases.
-        </p>
       ) : null}
+
 
       {/* The models above give dates. This gives the reasoning behind them, and
           it is the one series on the page that DOL does not publish. */}
@@ -1063,7 +944,7 @@ export function PermTimelineEstimator({
       ) : null}
 
       {!compact && disclosure ? (
-        <div className="border-t-2 border-border p-6 text-sm leading-relaxed text-foreground/60 sm:px-8">
+        <div className="border-t-2 border-border p-6 text-sm leading-relaxed text-foreground/70 [overflow-wrap:anywhere] sm:px-8">
           <InfoIcon className="mr-2 inline h-4 w-4 align-text-bottom" aria-hidden="true" />
           Cohort figures are computed from{" "}
           {disclosure.uniqueCases.toLocaleString("en-US")} decided cases in DOL&apos;s

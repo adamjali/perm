@@ -400,7 +400,11 @@ PRECOMPUTED_DOCS = {
     "live_census": (8, "the case lookup's queue position"),
     "review_stages": (5, "the review-stage cohort pages"),
     "wage_filter_options": (100, "the PERM salary explorer's facets"),
-    "alphabet": (100, "the employer-initial term in every estimate"),
+    "alphabet": (100, "the employer-initial chart on /perm-queue (no longer in any estimate)"),
+    # Added 2026-09-26. Rebuilt after every sweep, daily and weekly respectively.
+    "recent_decision_wait": (3, "the employer pages' wait section and the fastest/slowest view"),
+    "scorecard_summary": (3, "the estimate scorecard's daily sample"),
+    "estimator_backtest": (9, "the estimate scorecard's headline backtest"),
 }
 
 
@@ -617,6 +621,57 @@ def check_coverage_stated(db) -> int:
     return 0
 
 
+# FIGURES READ BY HAND FROM A PAGE NO SCRIPT CAN REACH (2026-09-26).
+# USCIS's processing-times page (egov.uscis.gov) answers every script with a
+# Cloudflare challenge, from any address, so its "80% within N months" figures
+# for each I-140 class are read in a browser and typed into
+# src/lib/processing-times/i140ProcessingTimes.ts with the date read. Their age
+# used to be a unit test that failed after eight months, which would have
+# blocked every deploy on the day it tripped. It lives here instead: a warning
+# once the figures are older than USCIS's own six-month window, a failure only
+# when they've gone unrefreshed for most of a year.
+HAND_READ_WARN_DAYS = 120
+HAND_READ_FAIL_DAYS = 270
+
+
+def hand_read_verdict(as_of: datetime.date, today: datetime.date) -> str:
+    age = (today - as_of).days
+    if age > HAND_READ_FAIL_DAYS:
+        return "fail"
+    if age > HAND_READ_WARN_DAYS:
+        return "warn"
+    return "ok"
+
+
+def check_hand_read_figures(today: datetime.date | None = None) -> int:
+    src = (pathlib.Path(__file__).resolve().parent.parent
+           / "src" / "lib" / "processing-times" / "i140ProcessingTimes.ts")
+    if not src.is_file():
+        print("hand-read figures: i140ProcessingTimes.ts not found; skipping")
+        return 0
+    m = re.search(r'PROCESSING_TIMES_AS_OF\s*=\s*"(\d{4}-\d{2}-\d{2})"',
+                  src.read_text(encoding="utf8", errors="ignore"))
+    if not m:
+        print("HAND-READ FIGURES: PROCESSING_TIMES_AS_OF unreadable; the pages can't date them")
+        return 1
+    as_of = datetime.date.fromisoformat(m.group(1))
+    today = today or datetime.date.today()
+    verdict = hand_read_verdict(as_of, today)
+    age = (today - as_of).days
+    how = ("read the eight I-140 classes at https://egov.uscis.gov/processing-times/ "
+           "in a browser (a script gets a challenge) and update the file and its date")
+    if verdict == "fail":
+        print(f"HAND-READ FIGURES: USCIS's I-140 processing times are {age} days old "
+              f"(read {as_of}); {how}")
+        return 1
+    if verdict == "warn":
+        print(f"::warning::USCIS's I-140 processing times were read {age} days ago "
+              f"({as_of}); {how}")
+        return 0
+    print(f"hand-read figures: USCIS's I-140 processing times read {as_of} ({age} days)")
+    return 0
+
+
 def main() -> int:
     db = Turso()
     res = db.execute(
@@ -694,6 +749,7 @@ def main() -> int:
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
     docs_bad = check_precomputed_docs(db)
+    handread_bad = check_hand_read_figures()
 
     print()
     if unparseable:
@@ -741,7 +797,7 @@ def main() -> int:
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
     if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad
-            or coverage_bad or gapsweep_bad or docs_bad or unparseable):
+            or coverage_bad or gapsweep_bad or docs_bad or handread_bad or unparseable):
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
           "most recent run finished clean, the discovery frontier is moving, the "

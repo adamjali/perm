@@ -124,7 +124,7 @@ export function FieldPosition({
   return (
     <div className={cn("", className)}>
       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-        <p className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/60">
+        <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/60">
           {measure}
         </p>{" "}
         <p className="font-mono text-xs font-bold tabular-nums">
@@ -168,7 +168,7 @@ export function FieldPosition({
         ) : null}
       </div>
 
-      <div className="mt-1.5 flex justify-between font-mono text-[11px] text-foreground/60">
+      <div className="mt-1.5 flex justify-between font-mono text-sm text-foreground/60">
         <span>{format(min)}</span>{" "}
         <span>{format(max)}</span>
       </div>

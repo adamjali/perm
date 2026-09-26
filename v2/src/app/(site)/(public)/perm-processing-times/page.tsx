@@ -33,6 +33,7 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
+import { queryStatic } from "@/lib/convexStatic";
 import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -50,6 +51,8 @@ import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
 import { FreshnessDots, type Freshness } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/turso/processingTimes";
+import { StageMedians } from "@/components/community/TimelineBoard";
+import { api } from "../../../../../convex/_generated/api";
 import { getEstimatorData } from "@/lib/turso/estimate";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -134,7 +137,7 @@ function Figure({
 }
 
 export default async function PermProcessingTimesPage() {
-  const [snapshot, history, disclosure, estimator] = await Promise.all([
+  const [snapshot, history, disclosure, estimator, board] = await Promise.all([
     getProcessingTimes(),
     getProcessingTimesHistory(24),
     // The quarterly files, for the decisions-per-month series. A separate
@@ -144,7 +147,11 @@ export default async function PermProcessingTimesPage() {
     // where the queue STOOD in each past month, which DOL publishes for today
     // only and then overwrites.
     getEstimatorData(),
+    // After PERM: the community timelines' stage medians (PERM dates checked
+    // against DOL, the rest self-reported). Null leaves the section out.
+    queryStatic(api.communityTimelines.board, {}, revalidate).catch(() => null),
   ]);
+  const afterPerm = board?.metrics.filter((m) => m.median !== null) ?? [];
 
   const decisionsByMonth = disclosure?.clearanceByMonth ?? [];
   const disclosureWindow = disclosure?.sourceFiles?.length
@@ -587,6 +594,37 @@ export default async function PermProcessingTimesPage() {
           <ArrowRightIcon className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
+
+      {/* AFTER PERM, as the people waiting report it. DOL publishes nothing
+          per case once the PERM is certified, so this is the only way to show
+          the I-140, I-485 and card steps; it says which half is checked. */}
+      {board ? (
+        <section aria-labelledby="after-perm-h" className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+          <h2 id="after-perm-h" className="font-heading text-2xl font-black">After PERM, as people report it</h2>{" "}
+          {afterPerm.length > 0 ? (
+            <>
+              <p className="mt-2 max-w-2xl text-base text-foreground/70">
+                From {board.total.toLocaleString("en-US")} shared timelines: the PERM dates are checked against
+                DOL&apos;s record, and everything after is self-reported.
+              </p>
+              <div className="mt-5">
+                <StageMedians metrics={board.metrics} />
+              </div>
+            </>
+          ) : (
+            <p className="mt-2 max-w-2xl text-base text-foreground/70">
+              Not enough reports yet for a median at any step. Add yours from a certified case&apos;s page; the PERM
+              half is filled in from DOL&apos;s record.
+            </p>
+          )}{" "}
+          <Link
+            href="/green-card-timelines"
+            className="mt-4 inline-flex min-h-[44px] items-center font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+          >
+            All green card timelines
+          </Link>
+        </section>
+      ) : null}
 
       {/* Outside the snapshot gate on purpose. Someone arriving on a day DOL's
           page is unreadable is exactly the person who wants to be told when it

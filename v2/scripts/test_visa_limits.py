@@ -35,11 +35,42 @@ def main() -> int:
     check(tv["employment"]["5th_total"] == 14_924, "fifth preference total 14,924", f)
     check(tv["employment"]["total"] == 167_394 and tv["grand_total"] == 383_353, "employment total and grand total as printed", f)
     check(tv["family"]["total"] + tv["employment"]["total"] == tv["grand_total"], "the parts add up to the grand total", f)
+    # Per-country rows of Part 2 for the four chargeabilities the bulletin names,
+    # and the rest of the world as the grand total less those four (2026-09-26).
+    by = tv["employment_by_chargeability"]
+    check(by["india"]["2nd"] == 3_916 and by["india"]["3rd"] == 3_643 and by["india"]["3rd_other_workers"] == 12, "India EB-2 3,916, EB-3 3,643, other workers 12, as printed", f)
+    check(by["china"]["2nd"] == 6_556 and by["china"]["3rd_other_workers"] == 177, "China (mainland born) EB-2 6,556, other workers 177", f)
+    check(by["mexico"]["3rd_other_workers"] == 2_207 and by["philippines"]["3rd"] == 9_111, "Mexico other workers 2,207, Philippines EB-3 9,111", f)
+    check(by["row"]["2nd"] == 46_314 - 6_556 - 3_916 - 379 - 1_314, "rest of world EB-2 is the grand total less the four", f)
+    check(all(sum(by[k][c] for k in ("china", "india", "mexico", "philippines", "row")) == tv["employment"][c]
+              for c in ("1st", "2nd", "3rd", "3rd_other_workers", "3rd_total", "4th", "4th_religious", "4th_total")),
+          "the five chargeabilities add up to the grand totals in every column", f)
+    check("Taiwan" not in str(by) and "China - mainland born" == tv["chargeability_labels"]["china"], "China is the mainland-born row only; Taiwan and Hong Kong are rest of world", f)
     try:
         parse_limits(b"%PDF-1.4 nothing here")
         check(False, "a sheet with no fiscal year is refused", f)
     except Exception:
         check(True, "a sheet with no fiscal year is refused", f)
+    # --- discovery on State's own host (link finders only; offline) -------
+    import ingest_visa_limits as v
+    stats = ('<a href="/content/dam/visas/Statistics/Immigrant-Statistics/Annual%20%20Numerical%20%20Limits%20-%20FY2025.pdf">25</a>'
+             '<a href="/content/dam/visas/Statistics/Immigrant-Statistics/Annual%20%20Numerical%20%20Limits%20-%20FY2026.pdf">26</a>'
+             '<a href="/content/dam/visas/Immigrant_Numerical_Control_System_Accessible_July2025.pdf">other</a>')
+    lim = v.newest_limits_link(stats)
+    check(lim is not None and lim[0] == 2026 and lim[1].startswith("https://adoption.state.gov/") and lim[1].endswith("FY2026.pdf"),
+          "the newest limits sheet linked is taken, on State's host", f)
+    reports = ''.join(f'<a href="/content/travel/en/legal/visa-law0/visa-statistics/annual-reports/report-of-the-visa-office-{y}.html">{y}</a>'
+                      for y in (2022, 2024, 2023))
+    rep = v.newest_report_link(reports)
+    check(rep is not None and rep[0] == 2024, "the newest Report of the Visa Office is found whatever the order", f)
+    report = ('<a href="/content/dam/visas/Statistics/AnnualReports/FY2024AnnualReport/Table%20V_PartI.pdf">I</a>'
+              '<a href="/content/dam/visas/Statistics/AnnualReports/FY2024AnnualReport/Table%20V.pdf">V</a>'
+              '<a href="/content/dam/visas/Statistics/AnnualReports/FY2024AnnualReport/Table%20VI.pdf">VI</a>')
+    tv = v.table_v_link(report)
+    check(tv is not None and tv.endswith("/Table%20V.pdf"), "the whole Table V is taken, not its parts or Table VI", f)
+    check(v.newest_limits_link("<p>nothing</p>") is None and v.table_v_link("") is None,
+          "a page with no link finds nothing rather than guessing", f)
+
     print("\nALL PASS" if not f else f"\n{len(f)} FAILED")
     return 1 if f else 0
 

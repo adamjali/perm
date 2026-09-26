@@ -65,7 +65,7 @@ export async function OnHoldNow() {
             <th className="py-2 text-right font-bold">{"Cases "}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody translate="no">
           {stages.map(([status, n]) => (
             <tr key={status} className="border-b border-border">
               <td className={`py-2 pr-4 ${status === HOLD_STATUS ? "font-bold" : ""}`}>{`${stageMeta(status).label} `}</td>

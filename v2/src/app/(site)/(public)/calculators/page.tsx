@@ -10,7 +10,7 @@ import type { Metadata } from "next";
 import { FinePrint } from "@/components/data/FinePrint";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
-import { ArrowRightIcon, CalendarBlankIcon as CalendarRange, CalendarCheckIcon, CalendarDotIcon as CalendarClock, ChartBarIcon, CurrencyDollarIcon, FileTextIcon, PathIcon as Route, ScalesIcon as Scale, UsersIcon } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon, CalendarBlankIcon as CalendarRange, CalendarCheckIcon, CalendarDotIcon as CalendarClock, ChartBarIcon, CurrencyDollarIcon, FileTextIcon, PathIcon as Route, ScalesIcon as Scale, CompassIcon, UsersIcon, UsersThreeIcon } from "@phosphor-icons/react/ssr";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -109,6 +109,35 @@ const TOOLS = [
     tone: "ink",
     blurb:
       "How many employment-based adjustment applications USCIS had pending ahead of a priority date. USCIS withholds its smallest counts, so the answer is a floor and a ceiling.",
+  },
+  {
+    href: "/tools/green-card-line",
+    viz: "range" as const,
+    icon: UsersThreeIcon,
+    kind: "Range",
+    name: "Green card line",
+    tone: "paper",
+    blurb:
+      "Everyone ahead of your priority date, not just the people who've filed: approved petitions waiting, petitions pending and cases already current, by line and country.",
+  },
+  {
+    href: "/tools/eb2-vs-eb3",
+    viz: "twobars" as const,
+    icon: Scale,
+    kind: "Compare",
+    name: "EB-2 vs EB-3",
+    tone: "paper",
+    blurb:
+      "The two lines side by side for your country and priority date, and whether one really has fewer people ahead.",
+  },
+  {
+    href: "/tools/which-green-card",
+    viz: "steps" as const,
+    icon: CompassIcon,
+    kind: "Match",
+    name: "Which green card fits",
+    tone: "ink",
+    blurb: "Which employment categories your job and background point to, and what each one needs.",
   },
   {
     href: "/tools/priority-date-calculator",
@@ -287,6 +316,9 @@ export default function CalculatorsPage() {
                 { s: "PERM certified, I-140 next or pending", q: "How deep is USCIS's queue?", href: "/tools/i140-calculator", tool: "I-140 queue" },
                 { s: "I-140 approved, waiting to adjust status", q: "How deep is the green card queue at my priority date?", href: "/tools/i485-queue-position", tool: "I-485 queue position" },
                 { s: "I-140 approved, watching the bulletin", q: "Is my date current, and which way is it moving?", href: "/tools/priority-date-calculator", tool: "Priority dates" },
+                { s: "I-140 approved, years from current", q: "How many people are ahead of me in the whole line?", href: "/tools/green-card-line", tool: "Green card line" },
+                { s: "Deciding between EB-2 and EB-3", q: "Which line has fewer people ahead of my date?", href: "/tools/eb2-vs-eb3", tool: "EB-2 vs EB-3" },
+                { s: "Before the PERM", q: "Which employment green card could my job lead to?", href: "/tools/which-green-card", tool: "Which green card fits" },
                 { s: "Just starting, or explaining it to someone", q: "How long is the whole thing?", href: "/tools/green-card-timeline", tool: "Green card timeline" },
                 { s: "Writing the job offer, before any of the above", q: "What does this role pay here?", href: "/tools/salary-explorer", tool: "Salary explorer" },
                 { s: "Weighing EB-2 against EB-3", q: "Which category is USCIS clearing?", href: "/tools/i140-trends", tool: "I-140 trends" },

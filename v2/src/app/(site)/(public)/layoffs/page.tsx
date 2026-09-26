@@ -81,7 +81,7 @@ export default async function LayoffsPage() {
               <th scope="col" className="py-2 font-bold">Effective{" "}</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody translate="no">
             {matched.map((r) => (
               <tr key={r.id} className="border-b border-border/40 align-top">
                 <td className="py-2 pr-3 tabular-nums">{long(r.noticeDate)}{" "}</td>

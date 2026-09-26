@@ -1,6 +1,6 @@
 ---
 title: "How Accurate Are PERM Approval Estimates?"
-description: "PERM estimators disagree by months on the same case. What an estimate can and can't know, and what we measured: a 50-day median miss and a 27-day alphabet."
+description: "PERM estimators disagree by months on the same case. What an estimate can and can't know, and how close ours lands on real DOL decisions."
 date: "2026-09-07"
 author: "Sabrina Soltau"
 image: "/images/content/cards/how-accurate-are-perm-estimates.webp"
@@ -8,7 +8,7 @@ imageAlt: "27 days, the whole alphabet A to Z measured over 339,518 decided case
 tags: ["perm", "processing-times", "estimate", "timeline", "employer-initial", "methodology"]
 category: "data"
 seoTitle: "How Accurate Are PERM Estimates? We Measured"
-seoDescription: "Six PERM estimators gave 335 to 503 days for one case on one day. What an estimate can know, what it can't, and our measured error and alphabet effect."
+seoDescription: "Six PERM estimators gave 335 to 503 days for one case on one day. What an estimate can know, what it can't, and how close ours lands on real decisions."
 featured: true
 published: true
 ---
@@ -19,17 +19,21 @@ On one day in August 2026, six public PERM tools were asked the same headline qu
 
 Every PERM estimator does the same arithmetic underneath. DOL works cases roughly in filing order and publishes which filing month it is deciding now. Your case has a filing month. The estimate is the distance between the two, converted to days using how fast the queue has been moving. Everything else a tool adds, an employer's initial, a "confidence" label, a colour, sits on top of that one subtraction.
 
+Ours counts instead of subtracting months: the cases in DOL's normal queue filed before yours, divided by the rate DOL has actually been deciding them. Cases on hold, at a request for information or on appeal are out of line, so they aren't counted as ahead of you.
+
 That is also why estimates fail the same way. When DOL's queue slows, every tool built on the previous pace is late together. When DOL reorders work, as it did after the October 2025 shutdown, every tool is wrong in the same direction at once.
 
 ## What we measured
 
-Two numbers, both against decided cases in DOL's own disclosure files, and both printed on the pages that use them.
+We rebuilt DOL's queue as it stood on 13 September 2026, dated every case near the front the way this site dates it, and checked each date against what DOL actually did over the next two weeks.
 
-<Callout type="stat" stat="50 days" title="Our median miss, give or take">
-Measured against cases that have since been decided, the middle of our estimator's error is about 50 days. Half of estimates land closer than that, half further. We print the range on every estimate for that reason, and the single most likely date only next to it.
+<Callout type="stat" stat="3 days" title="Typical miss, 7,135 real decisions">
+Half of those dates landed within three days of DOL's decision. Counting every pending case as ahead (the rule until 26 September 2026, which also counted cases on hold or at an RFI) missed by nine. The same test reruns every Monday, and a fresh random sample is recorded every morning before DOL decides it: both are on the [estimate scorecard](/estimate-scorecard).
 </Callout>
 
-The second number is the one every rival talks about and nobody publishes: how much the employer's initial moves a decision. DOL works each filing month alphabetically by employer, so a company starting with A is reached before one starting with Z. That ordering is real. Its size is the question, so we measured it over 339,518 decided cases.
+That figure is for cases near the front of the queue, the ones DOL decided within two weeks. A date further out has more that can change before it arrives, and the daily sample will show by how much as it fills.
+
+The second number is the one every rival talks about and few publish: how much the employer's initial moves a decision. Across DOL's decided cases, a company starting with A has tended to be reached before one starting with Z. Its size is the question, so we measured it over 339,518 decided cases.
 
 <div className="my-8 overflow-x-auto overscroll-x-none">
 <svg viewBox="0 0 760 250" className="w-full min-w-[640px] text-foreground" role="img" aria-labelledby="alphabet-chart-title">
@@ -49,7 +53,7 @@ The second number is the one every rival talks about and nobody publishes: how m
 </svg>
 </div>
 
-The measured effect is 27 days end to end: A decides about 11 days earlier than the average case in its month, Z about 16 days later. The published claim of plus or minus 80 days is the same effect inflated roughly six times. And in 6 of the 30 filing months we could check, the order ran backwards, with later letters decided first. So the initial is worth showing, with its size, and not worth building a forecast on.
+Historically the effect was 27 days end to end: A about 11 days earlier than the average case in its month, Z about 16 days later. The published claim of plus or minus 80 days is the same effect inflated roughly six times. In 6 of the 30 filing months we could check, the order ran backwards. And at the front of the queue in September 2026 it didn't show at all: DOL decided about 80% of each letter's cases in the same fortnight. Adding it to our dates made them worse, so they don't use it.
 
 ## What each estimator uses
 
@@ -58,7 +62,7 @@ The measured effect is 27 days end to end: A decides about 11 days earlier than 
   rows={[
     ["DOL's published queue position", "Yes, it is public and weekly", "The anchor of every estimate, with DOL's own as-of date printed"],
     ["How fast the queue has moved", "Yes, from DOL's decided cases", "Measured per stage from the disclosure files, shown as a range"],
-    ["The employer's initial", "Yes, it is on the record", "Applied at its measured size, at most 16 days, and printed as its own line"],
+    ["The employer's initial", "Yes, it is on the record", "Not used. At the front of the queue it made dates worse, not better"],
     ["An audit, an RFI, or a hold", "No, until DOL issues it", "Nothing. When one appears on a case, the estimate is withdrawn for that case"],
     ["Which analyst gets the file", "No", "Nothing"],
   ]}
@@ -80,9 +84,9 @@ The estimate leads with the single date the strongest model gives, then the wind
 />
 
 </Step>
-<Step number={2} title="Read the line about the employer's initial">
+<Step number={2} title="Read the cases-ahead line">
 
-If the initial moved the estimate, its own line says by how many days and reminds you that the whole alphabet is about four weeks. A tool that folds this in silently is choosing to look precise.
+It says how many cases in DOL's normal queue were filed before yours and the pace DOL has been deciding them. If that count looks wrong for your month, the date will be too, and the line is there so you can check it.
 
 </Step>
 <Step number={3} title="Check where DOL's queue is right now">
@@ -108,7 +112,7 @@ We also print no estimate for a filing month too new to have a measured history,
 
 ## What this cannot tell you
 
-- Your decision date. It gives a range measured from cases like yours, and half of them missed the middle by more than 50 days.
+- Your decision date. Near the front of the queue our dates have typically landed within a few days; further out there's more room to miss, and the scorecard shows how much.
 - Whether your case will be audited. Nothing can, until DOL issues it.
 - Anything about a case DOL has not received. An estimate needs a filing month, which needs a filing.
 - How another tool got its number. Where a rival publishes a method we describe it; where it does not, we say so on the [methodology page](/methodology).

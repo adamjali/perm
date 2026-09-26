@@ -137,7 +137,7 @@ export default async function SalaryExplorerPage() {
             frame the explorer renders so the page does not jump. */}
         <Suspense
           fallback={
-            <div className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+            <div data-embed="salary-explorer" className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
               <p className="text-base text-foreground/70">Loading wage figures…</p>
             </div>
           }

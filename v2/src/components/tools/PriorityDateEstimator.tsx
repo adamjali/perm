@@ -91,6 +91,13 @@ export interface PriorityDateEstimatorProps {
    * to average the two into one unqualified claim.
    */
   provenance?: { newestIsMirror: boolean; mirrored: number; total: number } | null;
+  /**
+   * The line to open on, for a page about one line (`/visa-bulletin/categories/*`).
+   * Ignored when the archive doesn't hold the category, so it can never open
+   * on a code that renders nothing. The reader can still change both.
+   */
+  initialCategory?: string;
+  initialCountry?: CountryKey;
   className?: string;
 }
 
@@ -292,6 +299,8 @@ export function PriorityDateEstimator({
   currentBulletinMonth = null,
   currentEmploymentChart = null,
   provenance = null,
+  initialCategory,
+  initialCountry = "india",
   className,
 }: PriorityDateEstimatorProps) {
   const dateId = useId();
@@ -306,9 +315,13 @@ export function PriorityDateEstimator({
   // when the archive holds it, and falls back to whatever the archive does
   // hold rather than opening on a code that renders nothing.
   const [category, setCategory] = useState(
-    () => categoryCodes.find((c) => c === "EB2") ?? categoryCodes[0] ?? "EB2",
+    () =>
+      categoryCodes.find((c) => c === initialCategory) ??
+      categoryCodes.find((c) => c === "EB2") ??
+      categoryCodes[0] ??
+      "EB2",
   );
-  const [country, setCountry] = useState<CountryKey>("india");
+  const [country, setCountry] = useState<CountryKey>(initialCountry);
   const [chart, setChart] = useState<ChartKind>("finalAction");
 
   const pdWellFormed = DATE_RE.test(priorityDate);

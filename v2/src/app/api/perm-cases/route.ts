@@ -214,9 +214,8 @@ export async function GET(request: Request) {
       cursor: cursor ?? null,
       ...(Number.isFinite(rawItems) ? { numItems: Math.floor(rawItems) } : {}),
     });
-    // The table behind this rebuilds once a night and the sweep that feeds
-    // it runs twice a day, so half an hour bounds staleness well under the
-    // data's own cadence.
+    // The table behind this rebuilds after each of the two daily sweeps, so
+    // half an hour bounds staleness well under the data's own cadence.
     return NextResponse.json(page, {
       headers: { "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=86400" },
     });

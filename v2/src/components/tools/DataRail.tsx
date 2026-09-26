@@ -431,7 +431,7 @@ export function DataRail() {
               <CaretRightIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
               <span
                 aria-hidden="true"
-                className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-foreground/70"
+                className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-foreground/70"
                 style={{ writingMode: "vertical-rl", textOrientation: "mixed" }}
               >
                 {active?.label ?? OVERVIEW.label}
@@ -755,7 +755,7 @@ function RailFooter() {
     // is untouched - it says what the destination is, which is the whole
     // reason it is not just another list row - only the air around it.
     <div className="mt-auto border-t-2 border-border px-4 pb-2 pt-3 lg:pb-1 lg:pt-2">
-      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
         Track a case
       </p>{" "}
       {/* THE SENTENCE IS MOBILE-ONLY. In the touch drawer it earns its place:

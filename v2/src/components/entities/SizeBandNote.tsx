@@ -51,7 +51,7 @@ export function SizeBandNote({
     <section
       className={cn("border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6", className)}
     >
-      <p className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+      <p className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground">
         Against the {subject} ranked nearest
       </p>{" "}
       <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">

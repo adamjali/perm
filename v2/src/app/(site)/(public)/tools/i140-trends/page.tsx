@@ -132,7 +132,7 @@ export default async function I140TrendsPage() {
         </section>
       ) : null}
 
-      <section className="mt-8">
+      <section data-embed="i140-trends" className="mt-8">
         <I140Trends rows={rows} />
       </section>
 

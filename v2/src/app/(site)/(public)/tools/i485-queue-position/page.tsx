@@ -186,7 +186,7 @@ export default async function I485QueuePositionPage() {
             mount without its own wrap and the build failed on it. */}
         <Suspense
           fallback={
-            <div className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+            <div data-embed="i485-position" className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
               <p className="text-base text-foreground/70">Loading queue figures…</p>
             </div>
           }

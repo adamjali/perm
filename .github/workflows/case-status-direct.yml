@@ -159,6 +159,28 @@ jobs:
                  --script "sweep_serial_gaps.py" \
                  --note "gap sweep: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
+      # THE STANDING BACKTEST, weekly (Mondays, on the full pass).
+      #
+      # Rebuilds the queue as it stood 21 days ago, dates every in-line case
+      # near the front the way the site does, and scores the dates against
+      # what DOL actually decided since. /estimate-scorecard prints the result
+      # (perm_docs['estimator_backtest']). Read-only apart from that one doc,
+      # ~500k row reads a week. A failure is a warning, not a red sweep: the
+      # page keeps last week's figure and says when it was computed.
+      - name: Estimator backtest (weekly)
+        if: env.MODE == 'full'
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          if [ "$(date -u +%u)" = "1" ]; then
+            timeout 20m python3 scripts/backtest_queue.py --write \
+              || echo "::warning::estimator backtest failed; the scorecard keeps last week's figure"
+          else
+            echo "not Monday; the backtest runs weekly"
+          fi
+
       # Expire the employer pages whose live rows just moved.
       #
       # /perm-employers/[slug] caches for 30 days, which is right for the

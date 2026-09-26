@@ -312,8 +312,8 @@ export default async function CohortPage({
             >
               All {int(liveMonth.total)} live {label} filings, pending and decided
             </Link>
-            , newest first. DOL works a month alphabetically by employer, so
-            decisions won&apos;t follow this order.
+            , newest first. DOL doesn&apos;t decide a month in filing order,
+            so decisions won&apos;t follow this list.
           </p>
         ) : null}
       </section>{" "}

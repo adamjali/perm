@@ -108,47 +108,6 @@ export interface QueueEstimateInput {
    */
   frontierAdvanceRange?: { slowest: number; fastest: number } | null;
   /**
-   * Days to shift every model for the employer's initial, MEASURED.
-   *
-   * DOL works each filing month alphabetically by employer, so the initial is
-   * a real ordering term. Its size is the whole question, and it is small:
-   * measured over 339,518 decided cases the entire alphabet spans about 27
-   * days (A about 11 under the corpus mean, Z about 16 over), the per-month
-   * gap between the ends has a median of 8 days, and in 6 of 30 months the
-   * ordering RAN BACKWARDS. A rival prints this term as -80 to +80 and sells
-   * the initial as most of the answer; that is the same term inflated ~6x.
-   *
-   * It is accepted here so a reader who supplies their employer gets an answer
-   * that used it, and so the contribution can be shown as its own line rather
-   * than folded silently into a date. It is NEVER invented: the caller passes
-   * the measured delta from `perm_docs.alphabet` or passes nothing.
-   *
-   * It does not change which models run, only where they land, because the
-   * ordering acts within a filing month and every model here is anchored to
-   * one.
-   */
-  letterDeltaDays?: number | null;
-  /**
-   * The MEASURED span of the whole alphabet, when no initial has been given.
-   *
-   * WHY THE BAND HAS TO KNOW ABOUT THIS. The band answers "where could this
-   * land, given what we do not know". Without an initial there are TWO
-   * unknowns - how fast DOL runs, and where in the filing month this employer
-   * sits alphabetically - and the band was only ever expressing the first.
-   *
-   * The result was incoherent and a reader caught it: with no initial the
-   * range read 19 to 26 September, and choosing Z then returned 7 October,
-   * outside the range the same page had just printed. The range was not
-   * wrong about the pace; it was silent about the alphabet.
-   *
-   * So with no initial the band widens by this span (measured: A about 11
-   * days under the corpus mean, Z about 16 over, 27 days end to end), and
-   * choosing an initial NARROWS it back to the pace alone. Every letter's
-   * answer then falls inside the no-letter range, and telling us one more
-   * thing visibly tightens it, which is how information should behave.
-   */
-  letterSpreadDays?: { min: number; max: number } | null;
-  /**
    * Undecided cases filed before this one, from the live census.
    *
    * The counting input the month-granular models cannot have: `queue-advance`
@@ -252,13 +211,6 @@ export interface QueueEstimate {
   models: EstimateModel[];
   /** Caveats that apply to this specific case, not boilerplate. */
   caveats: string[];
-  /**
-   * The measured employer-initial shift applied to every model, in days, or
-   * null when none was supplied. Returned so a surface can SHOW the term and
-   * its size rather than folding it invisibly into a date - the difference
-   * between using an input and appearing to.
-   */
-  letterDeltaDays: number | null;
   /** Cohort context, when the disclosure data covers this filing month. */
   cohort: {
     month: string;
@@ -510,21 +462,23 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     // against - is a reason NOT to print a date, and the models below are
     // the honest fallback rather than a second opinion to average in.
     if (paced.kind === 'estimate') {
-      // STATE THE COVERAGE WHEREVER THE BAND IS SHOWN. Measured across ~88,000
-      // backtested predictions the band contains the real outcome 57-58% of
-      // the time overall and 41% at the near horizon. That is a pace
+      // STATE THE COVERAGE WHEREVER THE BAND IS SHOWN. Re-measured on the
+      // analyst-review count (2026-09-26, scripts/backtest_queue.py): 44% of
+      // 2,293 near-front cases landed inside it, and almost every miss was a
+      // case still waiting a week past its date. The old count measured
+      // 57-58% overall and 41% near, over ~88,000 predictions. That is a pace
       // scenario, not a confidence interval, and the difference is the whole
       // reason this sentence exists: a rival publishes `confidence_level:
       // 0.8` as a hardcoded constant against real coverage of 8-15%, which
       // is the most checkable false claim a queue estimator can make.
       caveats.push(
-        'The range is what happens if DOL keeps to its recent pace, not a confidence interval. Tested against past cases it contained the real decision date about 57% of the time, and closer to 41% for cases within two months of a decision.',
+        'The range is what happens if DOL keeps to its recent pace, not a confidence interval. Near the front of the queue, tested on September 2026 decisions, it held for about 4 cases in 10: most of the rest were decided within a few days of it, and some waited weeks longer.',
       );
       const toISO = (d: number) => formatUTC(new Date(d * 86_400_000));
       models.push({
         id: 'decision-pace',
         label: 'Cases ahead of you, at DOL\'s measured pace',
-        basis: `${input.casesAhead.toLocaleString()} undecided cases were filed before yours, and DOL has been deciding about ${Math.round(paced.pace).toLocaleString()} a day including weekends. That is ${paced.rawDays.toLocaleString()} days of work.`,
+        basis: `${input.casesAhead.toLocaleString()} cases in DOL's normal queue were filed before yours (cases on hold, at an RFI or on appeal are out of line and not counted), and DOL has been deciding about ${Math.round(paced.pace).toLocaleString()} a day including weekends. That is ${paced.rawDays.toLocaleString()} days of work.`,
         estimatedDate: toISO(paced.day),
         totalDays: Math.round(
           (paced.day * 86_400_000 - filed.getTime()) / 86_400_000,
@@ -735,92 +689,15 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
   // The cohort facts survive in `cohort`; `position` ('overdue') tells the
   // caller what to say instead. The rule lives here so every surface that
   // composes these models - the timeline page, the case page - inherits it.
-  // The employer's initial, applied BEFORE the elapsed filter so a case the
-  // adjustment would push into the future is not discarded on the strength of
-  // an unadjusted date. Every model shifts by the same measured number of
-  // days, because the ordering acts within a filing month and every model is
-  // anchored to one.
-  const delta =
-    typeof input.letterDeltaDays === 'number' && Number.isFinite(input.letterDeltaDays)
-      ? Math.round(input.letterDeltaDays)
-      : 0;
-  const shift = (iso: string | null): string | null =>
-    iso === null || delta === 0 ? iso : formatUTC(addDays(validateISODate(iso, 'model date'), delta));
-  const adjusted: EstimateModel[] = delta === 0 ? models : models.map((m) => ({
-    ...m,
-    estimatedDate: shift(m.estimatedDate)!,
-    totalDays: m.totalDays + delta,
-    earliestDate: shift(m.earliestDate),
-    latestDate: shift(m.latestDate),
-    // Kept so the elapsed filter below can ask about BOTH dates.
-    unshiftedDate: m.estimatedDate,
-  }));
-
-  /*
-   * THE SHIFT MUST NOT BE ABLE TO DELETE A MODEL, IN EITHER DIRECTION.
-   *
-   * The elapsed filter is right in principle: a date that has already passed
-   * is not a forecast. But the letter shift moves a date by up to 16 days
-   * either way, and a model sitting a few days in the future disappears
-   * entirely when a fast initial pulls it back past today.
-   *
-   * Measured on the live page: filed 2025-11-04 with no initial gave "around
-   * 21 September 2026" from the decision-pace model. Choosing A - the FASTEST
-   * letter, 11 days under the mean - should have given about the 10th.
-   * Instead it gave the 25th, LATER, with the window collapsed to a single
-   * day: A pushed decision-pace to 10 September, four days before today, the
-   * filter dropped it, and a slower month-anchored model with no band took
-   * over. A faster letter produced a later answer, which is exactly backwards.
-   *
-   * So a model survives if EITHER its shifted or its unshifted date is still
-   * ahead, and the date it shows is floored at today. A model the initial
-   * pulls to just behind us is saying "about now", which is true and useful;
-   * silently swapping it for a different model is neither.
-   */
-  /*
-   * WITH NO INITIAL, THE BAND CARRIES THE ALPHABET TOO.
-   *
-   * The pace band alone says "if DOL runs fast or slow". It cannot say "and
-   * we do not know where in the month you sit", which is worth about 27 days
-   * and is the larger unknown at short horizons. Widening here means every
-   * letter's answer lands inside the no-letter range, and choosing a letter
-   * narrows the range instead of contradicting it.
-   *
-   * Only when no initial was given: once we know the letter that unknown is
-   * gone, and re-adding it would be double-counting.
-   */
-  const spread = delta === 0 ? (input.letterSpreadDays ?? null) : null;
-  const widened: EstimateModel[] =
-    spread && Number.isFinite(spread.min) && Number.isFinite(spread.max)
-      ? adjusted.map((m) => ({
-          ...m,
-          earliestDate: m.earliestDate
-            ? formatUTC(addDays(validateISODate(m.earliestDate, 'band start'), Math.round(spread.min)))
-            : formatUTC(addDays(validateISODate(m.estimatedDate, 'model date'), Math.round(spread.min))),
-          latestDate: m.latestDate
-            ? formatUTC(addDays(validateISODate(m.latestDate, 'band end'), Math.round(spread.max)))
-            : formatUTC(addDays(validateISODate(m.estimatedDate, 'model date'), Math.round(spread.max))),
-        }))
-      : adjusted;
-
-  const liveModels = widened
-    .filter((m) => {
-      const unshifted = (m as { unshiftedDate?: string }).unshiftedDate ?? m.estimatedDate;
-      return m.estimatedDate >= input.today || unshifted >= input.today;
-    })
-    .map(({ ...m }) => {
-      delete (m as { unshiftedDate?: string }).unshiftedDate;
-      if (m.estimatedDate >= input.today) return m;
-      // Floored, and the band floored with it so it cannot open in the past.
-      const floor = (iso: string | null) =>
-        iso === null ? null : iso < input.today ? input.today : iso;
-      return {
-        ...m,
-        estimatedDate: input.today,
-        earliestDate: floor(m.earliestDate),
-        latestDate: floor(m.latestDate),
-      };
-    });
+  //
+  // NO EMPLOYER-LETTER SHIFT, deliberately (removed 2026-09-26). It moved
+  // every date by the letter's historical offset (A about -11 days, Z about
+  // +16), measured over decided cases from 2023 on. Scored against 7,112 real
+  // decisions after 2026-09-13 it ADDED error (typical miss 3.9 -> 6.5 days):
+  // at the current frontier DOL decided about 80% of each letter's cases in
+  // the same fortnight, U and Z included. The historical table still shows on
+  // /perm-queue as a measurement; it no longer moves anybody's date.
+  const liveModels = models.filter((m) => m.estimatedDate >= input.today);
 
   return {
     filingDate: input.filingDate,
@@ -830,7 +707,6 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     models: liveModels,
     caveats,
     cohort: cohortOut,
-    letterDeltaDays: delta === 0 ? null : delta,
   };
 }
 

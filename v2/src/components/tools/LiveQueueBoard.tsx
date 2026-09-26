@@ -42,7 +42,7 @@ export function LiveQueueBoard({ months }: { months: readonly CohortMonth[] }) {
         {front ? (
           <>
             <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-              The queue is working
+              Oldest month still open
             </p>{" "}
             <p className="mt-2 font-heading text-3xl font-black leading-[1.05] sm:text-5xl">
               {formatMonth(front.month)}

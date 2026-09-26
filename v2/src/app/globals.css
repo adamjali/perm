@@ -2652,10 +2652,13 @@ html[data-pre="on"] body::before {
   padding: 0.625rem 0.75rem 0.625rem 1rem;
   text-align: left;
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 0.75rem;
+  /* 14px and .1em (2026-09-26): the label floor. At 12px/.12em these were the
+     one mono-caps label left on every data page under the size the rest of
+     the site now holds. The longest group name still clears the rail. */
+  font-size: 0.875rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   transition-property: transform, background-color, color;
   transition-duration: 150ms;
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
@@ -2715,3 +2718,29 @@ html[data-pre="on"] body::before {
   .footer-col:not([open]) > .footer-col-body { display: flex; }
   .footer-col::details-content { content-visibility: visible; }
 }
+
+/* PRINT (2026-09-26). A case page or a calculator result is something people
+   print for an attorney or an employer, and the screen chrome prints as noise:
+   the header, the footer, the data rail, the back-to-top button, the alert
+   forms. Everything the page collapsed behind a disclosure prints open, since
+   paper has no "show more". Hard shadows go; a grey slab behind a card wastes
+   toner and adds nothing. Mark any other screen-only piece `print:hidden`. */
+@media print {
+  @page { margin: 14mm; }
+  body { background: #fff !important; color: #000 !important; }
+  header, footer, .fixed { display: none !important; }
+  main { padding-top: 0 !important; }
+  details > summary { list-style: none; }
+  details:not([open]) > *:not(summary) { display: block !important; }
+  details::details-content { content-visibility: visible !important; }
+  .shadow-hard, .shadow-hard-sm, .shadow-hard-lg { box-shadow: none !important; }
+  a { color: #000 !important; }
+  section, figure, table { break-inside: avoid-page; }
+}
+
+/* KOREAN BREAKS BETWEEN WORDS, NOT INSIDE THEM (2026-09-26). By default a
+   browser may break Hangul between any two syllables, so a heading on /ko split
+   "기다리는" as "기다 / 리는" at 390px. `keep-all` keeps each word whole and
+   breaks at the spaces Korean already has. Chinese keeps the default, where a
+   break between characters is normal. */
+:lang(ko) { word-break: keep-all; overflow-wrap: anywhere; }

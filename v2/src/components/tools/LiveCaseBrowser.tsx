@@ -269,7 +269,7 @@ export function LiveCaseBrowser({
                   ))}
                 </tr>
               </thead>
-              <tbody className="bg-card">
+              <tbody translate="no" className="bg-card">
                 {loading ? (
                   <tr>
                     <td colSpan={6} className="px-3 py-6 text-foreground/70">

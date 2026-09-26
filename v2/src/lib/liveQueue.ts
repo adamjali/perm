@@ -26,6 +26,8 @@ export interface CohortMonth {
   decided: number;
   /** decided / total as 0-100, null when the month holds nothing. */
   decidedPct: number | null;
+  /** Pending in ANALYST REVIEW, when the source carries it (see `inLine`). */
+  analystReview?: number;
 }
 
 /**

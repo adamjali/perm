@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import AdminDashboardClient from "./AdminDashboardClient";
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard | PERM Tracker",
+  title: "Admin Dashboard",
   description: "Admin dashboard for managing users and system data",
   robots: { index: false, follow: false },
 };

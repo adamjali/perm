@@ -270,14 +270,11 @@ crons.daily(
 /**
  * Look at every live case subscription and mail the ones whose case has moved.
  *
- * Twice a day rather than hourly. The upstream that feeds it
- * (`scripts/mirror_case_status.py`) refreshes at most daily, so a more frequent
- * sweep would re-read the same rows for no new information, and the sweep's own
- * cost is one bounded SQL query against the mirror plus at most
- * ALERT_BATCH_LIMIT sends. Twice a day keeps the worst-case lag between the
- * mirror recording a change and the subscriber hearing about it under twelve
- * hours, which is well inside the resolution of the underlying data: DOL
- * publishes no timestamp for a status change at all.
+ * These two ticks follow the twice-daily sweeps. Since 2026-09-26 the watched
+ * cases are ALSO checked hourly (`.github/workflows/watched-cases.yml`), and
+ * that workflow runs this sweep itself when a watched case moved, so a
+ * subscriber hears within the hour; these ticks remain the floor. DOL
+ * publishes no timestamp for a status change, so an hour is the resolution.
  *
  * 11:00 and 23:00 UTC (7am and 7pm ET), deliberately clear of the 14:00, 15:00
  * and 16:00 UTC bulk email jobs above so the two never contend for the shared
@@ -361,6 +358,18 @@ crons.daily(
   "alert-outbox-prune",
   { hourUTC: 4, minuteUTC: 40 },
   internal.alertOutbox.prune,
+  {}
+);
+
+/**
+ * Community timelines: re-read DOL's record for every case whose timeline has
+ * no certification date yet (a case certified after its owner saved). Reads
+ * only; at most 100 cases a day. 09:20 UTC is after the 08:10 UTC full sweep.
+ */
+crons.daily(
+  "community-timelines-verify",
+  { hourUTC: 9, minuteUTC: 20 },
+  internal.communityTimelines.verifySweep,
   {}
 );
 

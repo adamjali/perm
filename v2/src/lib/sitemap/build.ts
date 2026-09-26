@@ -23,6 +23,9 @@ import {
   getVisaBulletins,
 } from "@/lib/turso/publicData";
 import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
+import { lineSlugs } from "@/lib/bulletinLines";
+import { categoriesIn } from "@/lib/turso/bulletin";
+import type { BulletinMonth } from "@/lib/perm";
 
 /**
  * The sitemap, split into an index and per-kind children.
@@ -130,10 +133,24 @@ export async function pagesEntries(): Promise<Entry[]> {
   // a test that mocks the module without this export would throw
   // synchronously on the call itself, before any promise existed.
   let bulletinMonths: string[] = [];
+  // The category-by-country pages come from the SAME read, so a line page is
+  // listed only when the archive holds that line (the route 404s otherwise).
+  let bulletinLines: string[] = [];
   try {
-    bulletinMonths = (await getVisaBulletins()).map((r) => r.bulletinMonth).sort();
+    const raw = await getVisaBulletins();
+    bulletinMonths = raw.map((r) => r.bulletinMonth).sort();
+    bulletinLines = lineSlugs(
+      categoriesIn(
+        raw.map((b) => ({
+          bulletinMonth: b.bulletinMonth,
+          finalAction: (b.finalAction ?? {}) as BulletinMonth["finalAction"],
+          datesForFiling: (b.datesForFiling ?? {}) as BulletinMonth["datesForFiling"],
+        })),
+      ),
+    );
   } catch {
     bulletinMonths = [];
+    bulletinLines = [];
   }
   // One URL per filing month holding at least one case, read from the SAME
   // census `/perm-queue` builds its month strip from and the month route
@@ -206,6 +223,19 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/pwd-calculator`, lastModified: dol ?? "2026-08-23", images: [`${base}/og/pwd-calculator.jpg`] },
     { url: `${base}/tools/i140-calculator`, lastModified: "2026-08-23", images: [`${base}/og/i140-calculator.jpg`] },
     { url: `${base}/tools/i485-queue-position`, lastModified: "2026-08-26", images: [`${base}/og/i485-queue-position.jpg`] },
+    { url: `${base}/tools/green-card-line`, lastModified: "2026-09-26", images: [`${base}/og/green-card-line.jpg`] },
+    { url: `${base}/tools/eb2-vs-eb3`, lastModified: "2026-09-26", images: [`${base}/og/eb2-vs-eb3.jpg`] },
+    { url: `${base}/tools/which-green-card`, lastModified: "2026-09-26", images: [`${base}/og/which-green-card.jpg`] },
+    { url: `${base}/h1b-lottery-odds`, lastModified: "2026-09-26", images: [`${base}/og/h1b-lottery-odds.jpg`] },
+    { url: `${base}/nvc-waiting-list`, lastModified: "2026-09-26", images: [`${base}/og/nvc-waiting-list.jpg`] },
+    { url: `${base}/green-card-timelines`, lastModified: "2026-09-26", images: [`${base}/og/green-card-timelines.jpg`] },
+    // The guide for the person waiting, in five languages. Their hreflang
+    // alternates are in each page's own head (src/lib/i18n/locales.ts).
+    { url: `${base}/zh`, lastModified: "2026-09-26" },
+    { url: `${base}/es`, lastModified: "2026-09-26" },
+    { url: `${base}/pt-br`, lastModified: "2026-09-26" },
+    { url: `${base}/ko`, lastModified: "2026-09-26" },
+    { url: `${base}/vi`, lastModified: "2026-09-26" },
     { url: `${base}/tools/salary-explorer`, lastModified: "2026-08-26", images: [`${base}/og/salary-explorer.jpg`] },
     { url: `${base}/tools/i140-trends`, lastModified: "2026-08-27", images: [`${base}/og/i140-trends.jpg`] },
     { url: `${base}/uscis-processing-times`, lastModified: "2026-09-22", images: [`${base}/og/uscis-processing-times.jpg`] },
@@ -240,6 +270,13 @@ export async function pagesEntries(): Promise<Entry[]> {
     ...bulletinMonths.map((m, i) => ({
       url: `${base}/visa-bulletin/${m}`,
       lastModified: i === bulletinMonths.length - 1 ? (dol ?? "2026-09-07") : `${m}-01`,
+    })),
+    // The hub is a static page and always listed; its line pages only when
+    // the archive holds the line (the route 404s otherwise).
+    { url: `${base}/visa-bulletin/categories`, lastModified: dol ?? "2026-09-26", images: [`${base}/og/visa-bulletin-categories.jpg`] },
+    ...bulletinLines.map((slug) => ({
+      url: `${base}/visa-bulletin/categories/${slug}`,
+      lastModified: dol ?? "2026-09-26",
     })),
     { url: `${base}/perm-by-state`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-by-state.jpg`] },
     { url: `${base}/perm-wages`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-wages.jpg`] },

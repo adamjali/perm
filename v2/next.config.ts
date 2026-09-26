@@ -70,6 +70,29 @@ const withSerwist = withSerwistInit({
   ],
 });
 
+/**
+ * The site's Content-Security-Policy, with the one directive that differs
+ * between ordinary pages ('none': never framed) and /embed/* ('*': framed by
+ * any site that pastes the snippet). Kept as one function so the two policies
+ * cannot drift apart on anything else.
+ */
+function contentSecurityPolicy(frameAncestors: "'none'" | "*"): string {
+  return [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live https://browser.sentry-cdn.com https://*.senja.io https://challenges.cloudflare.com https://analytics.ahrefs.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' https://fonts.gstatic.com",
+    "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live wss://vercel.live https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io https://senja.io https://fonts.googleapis.com https://fonts.gstatic.com https://us.i.posthog.com https://us-assets.i.posthog.com https://challenges.cloudflare.com https://analytics.ahrefs.com",
+    "media-src 'self' blob: data:",
+    "frame-src 'self' https://app.supademo.com https://*.convex.cloud https://challenges.cloudflare.com",
+    "worker-src 'self' blob:",
+    `frame-ancestors ${frameAncestors}`,
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+}
+
 const nextConfig: NextConfig = {
   /*
    * Prerender budget per page, up from the 60s default. Measured 2026-08-28:
@@ -293,7 +316,6 @@ const nextConfig: NextConfig = {
             value: "max-age=63072000; includeSubDomains; preload",
           },
           { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "X-Frame-Options", value: "DENY" },
           {
             key: "Referrer-Policy",
             value: "strict-origin-when-cross-origin",
@@ -324,23 +346,28 @@ const nextConfig: NextConfig = {
             key: "Cross-Origin-Opener-Policy",
             value: "same-origin-allow-popups",
           },
-          {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live https://browser.sentry-cdn.com https://*.senja.io https://challenges.cloudflare.com https://analytics.ahrefs.com",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              "img-src 'self' data: blob: https:",
-              "font-src 'self' https://fonts.gstatic.com",
-              "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live wss://vercel.live https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io https://senja.io https://fonts.googleapis.com https://fonts.gstatic.com https://us.i.posthog.com https://us-assets.i.posthog.com https://challenges.cloudflare.com https://analytics.ahrefs.com",
-              "media-src 'self' blob: data:",
-              "frame-src 'self' https://app.supademo.com https://*.convex.cloud https://challenges.cloudflare.com",
-              "worker-src 'self' blob:",
-              "frame-ancestors 'none'",
-              "base-uri 'self'",
-              "form-action 'self'",
-            ].join("; "),
-          },
+        ],
+      },
+      {
+        // Framing, split in two. Every page EXCEPT /embed/* refuses to be
+        // framed by anyone (clickjacking), exactly as before. The negative
+        // lookahead keeps this rule off /embed and /embed/<slug> while still
+        // covering a path that merely starts with the letters (/embedded).
+        source: "/((?!embed(?:/|$)).*)",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: contentSecurityPolicy("'none'") },
+        ],
+      },
+      {
+        // /embed/* exists to be framed by other sites (src/lib/embeds.ts), so
+        // it carries no X-Frame-Options and allows any ancestor. Everything
+        // else in the policy is identical. noindex because an embed is the
+        // tool without its page; its canonical names the full tool.
+        source: "/embed/:path*",
+        headers: [
+          { key: "Content-Security-Policy", value: contentSecurityPolicy("*") },
+          { key: "X-Robots-Tag", value: "noindex, follow" },
         ],
       },
     ];

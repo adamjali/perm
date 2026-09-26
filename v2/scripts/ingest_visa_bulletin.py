@@ -165,7 +165,13 @@ CATEGORY_ROWS = [
     ("EB3", ["3rd"]),
     ("EW3", ["Other Workers"]),
     ("EB4", ["4th"]),
-    ("EB5", ["5th Unreserved", "5th Non-Regional Center", "5th Regional Center"]),
+    # "5th Targeted Employment Areas/ Regional Centers and Pilot Programs" is
+    # the single EB-5 row of bulletins before October 2015 (added 2026-09-26),
+    # and October 2015's dates-for-filing chart still used it while its final
+    # action chart had already split. Last, so a month that prints both takes
+    # the newer name. "5th Targeted" matches "5th Targeted EmploymentAreas",
+    # the unspaced form some captures carry.
+    ("EB5", ["5th Unreserved", "5th Non-Regional Center", "5th Regional Center", "5th Targeted"]),
     # THE THREE SET-ASIDES (added 2026-09-07). The bulletin prints the label
     # in two shapes, one per chart in the same month: the final-action table
     # says "5th Set Aside: Rural (20%, including NR, RR)" and the
@@ -204,6 +210,14 @@ FAMILY_ROWS = [
 def expected_categories(month: str) -> int:
     return 9 if month >= SET_ASIDES_FROM else 6
 
+
+# The Dates for Filing chart began with the October 2015 bulletin. Before it
+# the bulletin printed ONE employment chart (final action) and ONE family chart,
+# so a single chart is a whole bulletin for those months and a truncated
+# capture for every month since. Measured on the archived pages 2026-09-26:
+# January 2015 carries one of each, October 2015 two of each.
+DATES_FOR_FILING_FROM = "2015-10"
+
 # Column order is fixed across every bulletin, but is asserted rather than
 # assumed: a silently reordered column would swap India's cutoff for China's.
 COUNTRY_COLUMNS = ["worldwide", "china", "india", "mexico", "philippines"]
@@ -228,6 +242,24 @@ BULLETIN_MAX_AGE_DAYS = 20
 
 SAVED_PAGE_SOURCE = (
     "travel.state.gov (page saved from a browser; the site refuses automated clients)"
+)
+
+# THE BULLETIN IS AUTOMATIC AGAIN (2026-09-26). The State Department serves the
+# same bulletin pages from adoption.state.gov, a host of its own that answers a
+# plain request with 200 (index, month pages and PDFs), has no robots.txt rule,
+# and puts no challenge in the way; travel.state.gov answered the same minute's
+# request with 403. Reading a public page that its owner serves to anyone
+# defeats nothing. Same parser, same validation, same primary-source rank as a
+# page saved from a browser, because it is the same document.
+DIRECT_ORIGIN = "https://adoption.state.gov"
+DIRECT_INDEX = f"{DIRECT_ORIGIN}/content/travel/en/legal/visa-law0/visa-bulletin.html"
+DIRECT_SOURCE = (
+    "adoption.state.gov (the State Department's own page, served to scripts; "
+    "travel.state.gov refuses them)"
+)
+DIRECT_LINK = re.compile(
+    r"/content/travel/en/legal/visa-law0/visa-bulletin/(\d{4})/"
+    r"visa-bulletin-for-([a-z]+)-(\d{4})\.html"
 )
 
 
@@ -294,8 +326,14 @@ def text_cells(row_html: str) -> list[str]:
     ]
 
 
-def parse_bulletin(page: str) -> dict | None:
-    """Extract both employment-based charts, or None if they are not present."""
+def parse_bulletin(page: str, month: str | None = None) -> dict | None:
+    """Extract both employment-based charts, or None if they are not present.
+
+    `month` is needed only for bulletins before October 2015, which printed one
+    employment chart: with it, one chart parses (dates for filing stored as an
+    empty chart, because none existed); without it, or for a later month, one
+    chart is refused as a truncated capture.
+    """
     tables = re.findall(r"<table.*?</table>", page, re.S | re.I)
     eb = []
     fb = []
@@ -316,7 +354,8 @@ def parse_bulletin(page: str) -> dict | None:
             eb.append(rows)
         elif first_cell.startswith("FAMILY") and "INDIA" in head:
             fb.append(rows)
-    if len(eb) < 2:
+    single_era = month is not None and month < DATES_FOR_FILING_FROM
+    if len(eb) < (1 if single_era else 2):
         return None
 
     def chart(rows: list[list[str]], category_rows=CATEGORY_ROWS) -> dict[str, dict[str, str]]:
@@ -368,7 +407,8 @@ def parse_bulletin(page: str) -> dict | None:
         return out
 
     # The bulletin always prints final action first, then dates for filing.
-    out = {"finalAction": chart(eb[0]), "datesForFiling": chart(eb[1])}
+    # Before October 2015 there was no second chart to read.
+    out = {"finalAction": chart(eb[0]), "datesForFiling": chart(eb[1]) if len(eb) >= 2 else {}}
     # The family charts precede the employment ones on the page and share
     # the country columns. Absent from a month is a real state (an old
     # capture trimmed to the employment tables), stored as null and repaired
@@ -376,6 +416,8 @@ def parse_bulletin(page: str) -> dict | None:
     if len(fb) >= 2:
         out["familyFinalAction"] = chart(fb[0], FAMILY_ROWS)
         out["familyDatesForFiling"] = chart(fb[1], FAMILY_ROWS)
+    elif len(fb) == 1 and single_era:
+        out["familyFinalAction"] = chart(fb[0], FAMILY_ROWS)
     return out
 
 
@@ -449,7 +491,20 @@ def ingest_saved_page(path: str, month: str | None) -> int:
     if month and (found := month_from_page(page)) and found != month:
         raise SystemExit(f"FATAL: --month {month} but the page says {found}.")
 
-    parsed = parse_bulletin(page)   # raises on a reordered column
+    parsed = validated(page, m)   # every refusal happens before any connection
+    db = Turso()
+    write_month(db, m, parsed, SAVED_PAGE_SOURCE)
+    stamp_bulletin_freshness(db, SAVED_PAGE_SOURCE)
+    return 0
+
+
+def validated(page: str, m: str) -> dict:
+    """Parse one bulletin page, refusing anything that isn't a whole bulletin.
+
+    Shared by the saved-page and direct routes: one parser, one set of checks,
+    and no database connection until they have all passed.
+    """
+    parsed = parse_bulletin(page, m)   # raises on a reordered column
     if not parsed:
         raise SystemExit(
             "FATAL: no employment-based charts found. Save the bulletin page "
@@ -459,8 +514,11 @@ def ingest_saved_page(path: str, month: str | None) -> int:
     if len(cats) < 4:
         raise SystemExit(f"FATAL: only {len(cats)} categories parsed: {cats}")
     log(f"month {m}  categories {', '.join(cats)}")
+    return parsed
 
-    db = Turso()
+
+def write_month(db: Turso, m: str, parsed: dict, source: str) -> None:
+    """Store one validated bulletin as a primary-source row."""
     ensure_family_columns(db)
     prior = db.scalar(
         "SELECT source_url FROM visa_bulletins WHERE bulletin_month = ?", [m]
@@ -470,7 +528,7 @@ def ingest_saved_page(path: str, month: str | None) -> int:
         "(bulletin_month, source_url, archived_at, final_action, "
         " dates_for_filing, computed_at, family_final_action, family_dates_for_filing) "
         "VALUES (?,?,?,?,?,?,?,?)",
-        [m, SAVED_PAGE_SOURCE, datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        [m, source, datetime.datetime.now(datetime.timezone.utc).isoformat(),
          json.dumps(parsed["finalAction"]), json.dumps(parsed["datesForFiling"]),
          int(time.time() * 1000), family_json(parsed, "familyFinalAction"),
          family_json(parsed, "familyDatesForFiling")],
@@ -478,10 +536,12 @@ def ingest_saved_page(path: str, month: str | None) -> int:
     # Say when a mirrored row has been replaced by the real thing. Silently
     # overwriting one source with another is how provenance stops meaning
     # anything.
-    if prior and prior != SAVED_PAGE_SOURCE:
+    if prior and prior != source:
         log(f"replaced a row previously sourced from: {prior}")
     log(f"stored {m}")
 
+
+def stamp_bulletin_freshness(db: Turso, source: str) -> None:
     n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
     db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
         dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
@@ -489,9 +549,73 @@ def ingest_saved_page(path: str, month: str | None) -> int:
     db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
                ["visa-bulletin",
                 str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10],
-                int(time.time() * 1000), SAVED_PAGE_SOURCE, "Monthly",
+                int(time.time() * 1000), source, "Monthly",
                 f"{n:,} bulletins", BULLETIN_MAX_AGE_DAYS])
     log(f"visa_bulletins now holds {n} months")
+
+
+def direct_months(index_html: str) -> list[tuple[str, str]]:
+    """[(YYYY-MM, absolute url)] for every bulletin the index links, newest first."""
+    out: dict[str, str] = {}
+    for m in DIRECT_LINK.finditer(index_html):
+        month = MONTHS.get(m.group(2))
+        if not month:
+            continue
+        out[f"{m.group(3)}-{month:02d}"] = DIRECT_ORIGIN + m.group(0)
+    return sorted(out.items(), reverse=True)
+
+
+def ingest_direct(limit: int, dry_run: bool = False) -> int:
+    """Store any bulletin State's own index links that we don't already hold
+    at primary-source rank. Newest first, at most `limit` months a run.
+
+    A refusal is not a crash: it prints a warning and exits 0, because the
+    `visa-bulletin` freshness budget is the alarm that matters (it goes red
+    when a month is missed, whatever the reason), and a red run for a host that
+    changed its mind would be a page nobody can act on at 3 AM.
+    """
+    try:
+        index = fetch(DIRECT_INDEX)
+    except Exception as exc:  # noqa: BLE001
+        log(f"::warning::adoption.state.gov index unreadable ({exc}); "
+            "save the page from a browser and run --from-file")
+        return 0
+    if "Attention Required" in index or "Just a moment" in index:
+        log("::warning::adoption.state.gov answered with a challenge page; "
+            "save the page from a browser and run --from-file")
+        return 0
+    linked = direct_months(index)
+    if not linked:
+        log("::warning::no bulletin links found on State's index; the page changed shape")
+        return 0
+    log(f"State's index links {len(linked)} bulletins; newest {linked[0][0]}")
+
+    db = Turso()
+    res = db.execute("SELECT bulletin_month, source_url FROM visa_bulletins")
+    held = {
+        str(r[0]["value"])[:7]: ("" if r[1]["type"] == "null" else r[1]["value"])
+        for r in res["response"]["result"]["rows"]
+    }
+    todo = [(m, u) for m, u in linked if rank_of(held.get(m, "")) < 3][:limit]
+    if not todo:
+        log("nothing new: every linked month is already held from a primary source")
+        return 0
+    stored = 0
+    for m, url in todo:
+        log(f"  {m}  {url}")
+        page = fetch(url)
+        if month_from_page(page) not in (None, m):
+            log(f"::warning::{url} reads as {month_from_page(page)}, not {m}; skipped")
+            continue
+        parsed = validated(page, m)
+        if dry_run:
+            log("    dry run: parsed, not written")
+            continue
+        write_month(db, m, parsed, DIRECT_SOURCE)
+        stored += 1
+        time.sleep(1)
+    if stored:
+        stamp_bulletin_freshness(db, DIRECT_SOURCE)
     return 0
 
 
@@ -509,6 +633,7 @@ def ingest_saved_page(path: str, month: str | None) -> int:
 # upgrading while reporting success. Caught by a unit test before it ran.
 SOURCE_RANK = [
     (lambda u: "saved from a browser" in u, 3),   # primary, a person fetched it
+    (lambda u: u.startswith("adoption.state.gov"), 3),  # primary, State's own host
     (lambda u: "mirror" in u.lower(), 1),
     (lambda u: "travel.state.gov" in u, 2),       # the real page, via the archive
     (lambda u: True, 1),
@@ -522,7 +647,7 @@ def rank_of(source_url: str) -> int:
     return 0
 
 
-def backfill_from_archive(years: list[int], limit: int) -> int:
+def backfill_from_archive(years: list[int], limit: int, dry_run: bool = False) -> int:
     """Re-parse every bulletin the archive can still serve, straight to Turso.
 
     WHY THIS EXISTED AS A GAP. `main()` defaults to `[this_year, this_year-1]`,
@@ -534,9 +659,16 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
 
     Nothing was broken and nothing errored. The series just silently carried
     half the categories for two thirds of its length.
+
+    `dry_run` fetches and parses exactly as a real run does and writes
+    NOTHING: no row, no freshness stamp, not even the family-column ALTER. It
+    reads the held rows so its ADDED/RE-PARSED lines mean what a real run's
+    would. Added 2026-09-26 to prove the FY2015-FY2018 back series before the
+    write.
     """
     db = Turso()
-    ensure_family_columns(db)
+    if not dry_run:
+        ensure_family_columns(db)
     res = db.execute("SELECT bulletin_month, source_url, final_action, family_final_action FROM visa_bulletins")
     have = {}
     for r in res["response"]["result"]["rows"]:
@@ -565,7 +697,7 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
             skipped += 1
             continue
         try:
-            parsed = parse_bulletin(fetch(f"https://web.archive.org/web/{ts}/{url}"))
+            parsed = parse_bulletin(fetch(f"https://web.archive.org/web/{ts}/{url}"), month)
         except Exception as exc:  # noqa: BLE001 - one bad month must not end the run
             log(f"  {month}: {exc}")
             failed += 1
@@ -575,6 +707,18 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
             failed += 1
             continue
         cats = len(parsed["finalAction"])
+        if dry_run:
+            fa, dff = parsed["finalAction"], parsed["datesForFiling"]
+            log(f"  {month}: WOULD {'ADD' if current is None else 'RE-PARSE'} "
+                f"final action {len(fa)}/{expected_categories(month)} categories, "
+                f"filing {len(dff)}, family {'yes' if 'familyFinalAction' in parsed else 'no'}; "
+                f"EB2 India {fa.get('EB2', {}).get('india', '-')}, "
+                f"EB3 rest of world {fa.get('EB3', {}).get('worldwide', '-')}, "
+                f"EB5 China {fa.get('EB5', {}).get('china', '-')}")
+            added += current is None
+            upgraded += current is not None
+            time.sleep(1)
+            continue
         db.execute(
             "INSERT OR REPLACE INTO visa_bulletins (bulletin_month, source_url, "
             "archived_at, final_action, dates_for_filing, computed_at, "
@@ -600,6 +744,9 @@ def backfill_from_archive(years: list[int], limit: int) -> int:
     log(f"upgraded  {upgraded}")
     log(f"skipped   {skipped} (already from a source at least as good)")
     log(f"failed    {failed}")
+    if dry_run:
+        log("dry run: nothing written")
+        return 1 if failed else 0
 
     n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
     db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
@@ -627,6 +774,15 @@ def main() -> int:
     )
     ap.add_argument("--month", help="YYYY-MM, when the page cannot be read for it")
     ap.add_argument(
+        "--direct", action="store_true",
+        help="Read State's own index on adoption.state.gov and store any bulletin "
+             "not yet held from a primary source (at most --months a run).",
+    )
+    ap.add_argument(
+        "--dry-run", action="store_true",
+        help="With --backfill-turso: fetch and parse, write nothing.",
+    )
+    ap.add_argument(
         "--backfill-turso", action="store_true",
         help="Re-parse every bulletin the archive still serves, writing "
              "straight to Turso and never overwriting a better source.",
@@ -637,12 +793,16 @@ def main() -> int:
     # so it short-circuits before any archive lookup.
     if args.from_file:
         return ingest_saved_page(args.from_file, args.month)
+    if args.direct:
+        # Two a run is plenty for a monthly page; the backlog, if any, clears
+        # over the following days rather than in one burst.
+        return ingest_direct(2, args.dry_run)
     if args.backfill_turso:
         # The folder is the FISCAL year, so cover a wide span by default
         # rather than the two the archive route assumes.
         this_year = datetime.date.today().year
         return backfill_from_archive(
-            args.years or list(range(this_year - 4, this_year + 1)), args.months)
+            args.years or list(range(this_year - 4, this_year + 1)), args.months, args.dry_run)
     if not args.out:
         ap.error("--out is required unless --from-file or --backfill-turso is given")
 
@@ -654,7 +814,7 @@ def main() -> int:
         log(f"  {month} (snapshot {ts})")
         try:
             page = fetch(f"https://web.archive.org/web/{ts}/{url}")
-            parsed = parse_bulletin(page)
+            parsed = parse_bulletin(page, month)
         except Exception as exc:  # noqa: BLE001 - one bad month must not kill the run
             log(f"    skipped: {exc}")
             continue

@@ -5,7 +5,7 @@
  * and when does it come out") is asked in every immigration subreddit each
  * September, and the pages that answer it are dated prediction articles that
  * go stale the morning the bulletin publishes. This one is evergreen: it
- * reads the archived series (every bulletin since October 2019) and USCIS's
+ * reads the archived series (every bulletin since October 2014) and USCIS's
  * monthly I-485 inventory, both of which the ingests keep current, and it
  * changes state on its own. Before the bulletin: what every earlier bulletin
  * for that calendar month did, per category and country, beside the inventory
@@ -37,8 +37,10 @@ import { getVisaAnnualLimits } from "@/lib/turso/visaLimits";
 import { fmtNumber, latestLimits, latestUsage } from "@/lib/visaLimits";
 import { getBulletinBoard, BOARD_COUNTRIES, type BoardCell } from "@/lib/turso/bulletin";
 import { computeI485Position } from "@/lib/i485/position";
+import { BulletinRelease } from "@/components/bulletin/BulletinRelease";
+import { BULLETIN_CAPTURES_MEASURED, BULLETIN_FIRST_CAPTURES } from "@/lib/bulletinCaptures";
+import { releaseByDay, releaseSummary } from "@/lib/bulletinRelease";
 import {
-  archiveFloorDays,
   monthBefore,
   nextBulletinMonth,
   sameMonthMoves,
@@ -47,7 +49,7 @@ import {
 } from "@/lib/bulletinNext";
 import type { CountryKey, Cutoff } from "@/lib/perm";
 
-const TITLE = "The Next Visa Bulletin, From the Last 84";
+const TITLE = "The Next Visa Bulletin, From Every Past One";
 const DESCRIPTION =
   "What every earlier bulletin for this month did, per category and country, beside the I-485 inventory ahead of each cutoff. Measured, not predicted.";
 
@@ -189,8 +191,10 @@ export default async function VisaBulletinPage() {
   const next = nextBulletinMonth(last.bulletinMonth);
   const targetMonth = Number(next.slice(5, 7));
   const isFiscalStart = targetMonth === 10;
-  const floors = archiveFloorDays(series).slice(-12);
-  const floorDays = floors.map((f) => f.day);
+  // When a bulletin comes out, from each one's FIRST archive capture (a floor
+  // on publication). The stored `archived_at` is the LATEST capture, which
+  // mostly falls after the bulletin's own month began and says nothing.
+  const release = releaseSummary(BULLETIN_FIRST_CAPTURES);
   const inventoryAsOf = Object.keys(cells).length ? "USCIS's newest monthly inventory" : null;
 
   const sections = CATEGORIES.map((cat) => {
@@ -223,7 +227,7 @@ export default async function VisaBulletinPage() {
       <JsonLdScript schema={breadcrumb} />
       <JsonLdScript schema={faqSchema} />
 
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-sm">
+      <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
         Visa bulletin · {series.length} months held, {monthLabel(series[0]!.bulletinMonth)} to {monthLabel(last.bulletinMonth)}
       </p>{" "}
       <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
@@ -245,12 +249,18 @@ export default async function VisaBulletinPage() {
 
       <h2 className="mt-12 font-heading text-2xl font-black tracking-tight">When it comes out</h2>{" "}
       <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
-        The State Department announces no date. The one piece of evidence this archive holds is the day the Internet Archive first captured each bulletin, which is a floor on the publication day.
-        {floorDays.length >= 3
-          ? ` Over the last ${floorDays.length} bulletins with a usable capture, that day ran from the ${Math.min(...floorDays)}th to the ${Math.max(...floorDays)}th of the month before.`
-          : " Too few captures fall before the bulletin's own month to say more than \"mid-month\"."}
-        {" "}Expect {monthLabel(next)} in {monthName(targetMonth === 1 ? 12 : targetMonth - 1)}; the day is the Department&apos;s.
-      </p>
+        The State Department announces no date. The only evidence of the day is when the Internet Archive first
+        captured each bulletin: it was out by then. Expect {monthLabel(next)} in{" "}
+        {monthName(targetMonth === 1 ? 12 : targetMonth - 1)}; the day is the Department&apos;s.
+      </p>{" "}
+      {release ? (
+        <BulletinRelease
+          rows={releaseByDay(BULLETIN_FIRST_CAPTURES)}
+          summary={release}
+          next={next}
+          measured={BULLETIN_CAPTURES_MEASURED}
+        />
+      ) : null}
 
       {spill ? (
         <>
@@ -313,9 +323,9 @@ export default async function VisaBulletinPage() {
             <table className="w-full min-w-[640px] border-2 border-border text-sm">
               <thead className="bg-foreground text-background">
                 <tr>
-                  <th className="p-3 text-left font-mono text-xs uppercase tracking-wider">Category{" "}</th>
+                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Category{" "}</th>
                   {BOARD_COUNTRIES.map((c) => (
-                    <th key={c} className="p-3 text-left font-mono text-xs uppercase tracking-wider">{COUNTRY_LABEL[c]}{" "}</th>
+                    <th key={c} className="p-3 text-left font-mono text-sm uppercase tracking-wider">{COUNTRY_LABEL[c]}{" "}</th>
                   ))}
                 </tr>
               </thead>
@@ -326,7 +336,7 @@ export default async function VisaBulletinPage() {
                     {s.rows.map((r) => (
                       <td key={r.country} className="p-3">
                         {r.move ? <span className="font-mono">{moveLabel(r.move)}</span> : <span className="text-muted-foreground">not listed</span>}{" "}
-                        {r.move?.to ? <span className="block text-xs text-muted-foreground">now {cutoffLabel(r.move.to)}</span> : null}
+                        {r.move?.to ? <span className="block text-sm text-muted-foreground">now {cutoffLabel(r.move.to)}</span> : null}
                       {" "}</td>
                     ))}
                   </tr>
@@ -351,11 +361,11 @@ export default async function VisaBulletinPage() {
             <table className="w-full min-w-[720px] border-2 border-border text-sm">
               <thead className="bg-foreground text-background">
                 <tr>
-                  <th className="p-3 text-left font-mono text-xs uppercase tracking-wider">Country{" "}</th>
-                  <th className="p-3 text-left font-mono text-xs uppercase tracking-wider">Cutoff, {monthLabel(last.bulletinMonth)}{" "}</th>
-                  <th className="p-3 text-left font-mono text-xs uppercase tracking-wider">Earlier {monthName(targetMonth)}s{" "}</th>
-                  <th className="p-3 text-left font-mono text-xs uppercase tracking-wider">Each one{" "}</th>
-                  <th className="p-3 text-left font-mono text-xs uppercase tracking-wider">Ahead of the cutoff{" "}</th>
+                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Country{" "}</th>
+                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Cutoff, {monthLabel(last.bulletinMonth)}{" "}</th>
+                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Earlier {monthName(targetMonth)}s{" "}</th>
+                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Each one{" "}</th>
+                  <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Ahead of the cutoff{" "}</th>
                 </tr>
               </thead>
               <tbody>
@@ -376,12 +386,12 @@ export default async function VisaBulletinPage() {
                             {sum.count - sum.advanced - sum.held - sum.retrogressed > 0 ? `, ${sum.count - sum.advanced - sum.held - sum.retrogressed} other` : ""}
                             {" "}
                             {sum.medianDays !== null ? (
-                              <span className="block text-xs text-muted-foreground">median {sum.medianDays > 0 ? "+" : ""}{sum.medianDays} days, range {sum.minDays} to {sum.maxDays}</span>
+                              <span className="block text-sm text-muted-foreground">median {sum.medianDays > 0 ? "+" : ""}{sum.medianDays} days, range {sum.minDays} to {sum.maxDays}</span>
                             ) : null}
                           </>
                         )}
                       {" "}</td>
-                      <td className="p-3 font-mono text-xs leading-relaxed">
+                      <td className="p-3 font-mono text-sm leading-relaxed">
                         {r.moves.map((m, i) => (
                           // Mapped siblings arrive with nothing between them; the
                           // space is part of each iteration or it does not exist.
@@ -430,7 +440,7 @@ export default async function VisaBulletinPage() {
         currentHref="/visa-bulletin"
         reading={[
           { href: `/visa-bulletin/${last.bulletinMonth}`, label: `The ${monthLabel(last.bulletinMonth)} bulletin, every cutoff`, note: "both charts, all nine categories, five countries, and what each cell did since the month before" },
-          { href: "/tools/priority-date-calculator", label: "Priority dates, every bulletin since 2019", note: "the month-by-month cutoffs both tables above are summarised from" },
+          { href: "/tools/priority-date-calculator", label: "Priority dates, every bulletin since 2014", note: "the month-by-month cutoffs both tables above are summarised from" },
           { href: "/tools/i485-queue-position", label: "I-485 queue position", note: "the inventory ahead of your own priority date, not just the cutoff" },
           { href: "/tools/green-card-timeline", label: "Green card timeline", note: "the whole road from PERM to adjustment, with the wait at each stage" },
         ]}

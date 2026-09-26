@@ -73,7 +73,7 @@ export default function PriorityDateRetentionPage() {
           job can change. Enter the ones you have; the rules do the rest.
         </p>
       </header>
-      <section className="mt-10">
+      <section data-embed="pd-retention" className="mt-10">
         <PriorityDateRetentionCalculator />
       </section>
       <section className="mt-12">

@@ -113,6 +113,14 @@ export interface CaseStatusChangedProps {
   unsubscribeUrl: string;
   /** The address's preference page, every alert it holds, as a magic link scoped by token. Optional for callers that predate it. */
   prefsUrl?: string;
+  /**
+   * The case page's timeline form, sent only when a PERM case has just been
+   * CERTIFIED. After certification the public record stops: USCIS publishes
+   * nothing per case, so the only way the next person learns how long the
+   * I-140 and I-485 take is from people like this reader adding their dates.
+   * Optional because mail already built by older callers must still render.
+   */
+  timelineUrl?: string | null;
 }
 
 export function CaseStatusChanged({
@@ -135,6 +143,7 @@ export function CaseStatusChanged({
   caseUrl,
   unsubscribeUrl,
   prefsUrl,
+  timelineUrl = null,
 }: CaseStatusChangedProps) {
   // Three figure groups in one email is a spec sheet. When the RFI funnel is
   // showing it is the more useful of the two, so the employer record stands
@@ -241,6 +250,23 @@ export function CaseStatusChanged({
         </EmailButton>
       </Section>
 
+      {timelineUrl ? (
+        <Section style={styles.ask}>
+          <Text className="em-text-body" style={styles.body}>
+            After certification the public record stops. USCIS doesn&rsquo;t
+            publish the I-140 or the I-485 case by case, so the only way the
+            next person learns how long they take is from people who went
+            through them. When yours move, you can add the dates to this case.
+            PERM Tracker checks your PERM dates against DOL, keeps the case
+            number off the public board, and shows your timeline there only if
+            you tick the box.
+          </Text>
+          <EmailButton href={timelineUrl} variant="outline">
+            Add your dates when they come
+          </EmailButton>
+        </Section>
+      ) : null}
+
       <EmailLinkList
         label="Also on PERM Tracker"
         items={[
@@ -312,6 +338,10 @@ const styles = {
   },
   cta: {
     marginTop: "32px",
+    marginBottom: "4px",
+  },
+  ask: {
+    marginTop: "28px",
     marginBottom: "4px",
   },
   footerExtra: {

@@ -34,6 +34,12 @@ export interface TableVYear {
   fiscal_year: number;
   family: Record<string, number>;
   employment: Record<string, number | number[] | null>;
+  /**
+   * Part 2's rows for the four chargeabilities the bulletin names, plus the
+   * rest of the world as the grand total less those four (ours, labelled).
+   * Absent from documents written before 2026-09-26.
+   */
+  employment_by_chargeability?: Record<"china" | "india" | "mexico" | "philippines" | "row", Record<string, number>>;
   grand_total: number;
   family_base: number;
   family_unused: number;

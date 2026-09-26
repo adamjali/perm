@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 
 import { PermTimelineEstimator } from "../PermTimelineEstimator";
 
@@ -12,26 +12,15 @@ import { PermTimelineEstimator } from "../PermTimelineEstimator";
  * and the rest is secondary and you can see it if you'd like but not the main
  * thing."
  *
- * And the day: DOL publishes at MONTH resolution and works through a month
- * alphabetically by employer, so the initial is the only input that says where
- * inside the month a case falls. It is worth about 27 days end to end,
- * measured over 339,518 decided cases. With no initial the anchor stays a
- * month, because a day we cannot place inside the month is precision we do not
- * have.
+ * And the day: only the counting model (decision pace) places a case inside
+ * its filing month. The employer initial used to as well; it was removed on
+ * 2026-09-26 after scoring worse than no shift (typical miss 3.9 -> 6.5 days
+ * over 7,112 real decisions), so month-anchored models print a month.
  */
 const FRONTIER = {
   analystQueueMonth: "2025-09",
   officialAvgDays: 372,
   asOf: "2026-08-20",
-};
-
-/** Two ends of the real measured spread; the middle is not needed to pin behaviour. */
-const ALPHABET = {
-  cases: 339518,
-  letters: [
-    { letter: "A", deltaDays: -11.4 },
-    { letter: "Z", deltaDays: 15.7 },
-  ],
 };
 
 function renderEstimator(extra: Record<string, unknown> = {}) {
@@ -69,76 +58,32 @@ describe("one main answer", () => {
   });
 });
 
-describe("the employer initial", () => {
-  it("is absent entirely when the measurement is not available", () => {
+describe("the employer initial is gone (2026-09-26)", () => {
+  it("asks for no employer initial at all", () => {
     renderEstimator();
-    expect(screen.queryByLabelText(/First letter of the employer/)).toBeNull();
-  });
-
-  it("is optional, and defaults to telling us nothing", () => {
-    renderEstimator({ alphabet: ALPHABET });
-    const select = screen.getByLabelText(/First letter of the employer/);
-    // Blank, not "A". A defaulted initial would silently shift every estimate.
-    expect((select as HTMLSelectElement).value).toBe("");
-    expect(screen.getByText(/^Any$/)).toBeInTheDocument();
-  });
-
-  it("keeps the anchor at a month while no initial is given", () => {
-    renderEstimator({ alphabet: ALPHABET });
-    expect(screen.getByText(/^Around September 2026$/)).toBeInTheDocument();
-  });
-
-  it("sharpens the anchor to a day once an initial is chosen", () => {
-    renderEstimator({ alphabet: ALPHABET });
-    fireEvent.change(screen.getByLabelText(/First letter of the employer/), {
-      target: { value: "A" },
-    });
-    // A day, with a weekday, not a month.
-    // en-US: "Around Mon, Sep 14, 2026" - weekday, month, day, year.
-    expect(screen.getByText(/^Around \w{3}, \w{3} \d{1,2}, \d{4}$/)).toBeInTheDocument();
-    expect(screen.queryByText(/^Around September 2026$/)).toBeNull();
-  });
-
-  it("moves the date the way the measurement says, not arbitrarily", () => {
-    // A is measured 11.4 days BELOW the corpus mean and Z 15.7 above, so an
-    // A employer must land earlier than a Z one. If this ever inverts, the
-    // sign of the term has been flipped somewhere.
-    const { unmount } = renderEstimator({ alphabet: ALPHABET });
-    fireEvent.change(screen.getByLabelText(/First letter of the employer/), {
-      target: { value: "A" },
-    });
-    const early = screen.getByText(/^Around \w{3}, /).textContent ?? "";
-    unmount();
-
-    renderEstimator({ alphabet: ALPHABET });
-    fireEvent.change(screen.getByLabelText(/First letter of the employer/), {
-      target: { value: "Z" },
-    });
-    const late = screen.getByText(/^Around \w{3}, /).textContent ?? "";
-
-    expect(early).not.toEqual(late);
-    expect(Date.parse(early.replace("Around ", ""))).toBeLessThan(
-      Date.parse(late.replace("Around ", "")),
-    );
-  });
-
-  it("states the size of the term and what it was measured over", () => {
-    // The number is the guard against it reading as a lever: 27 days, not 160.
-    renderEstimator({ alphabet: ALPHABET });
-    // The explanation moved beside the number it moves - it explains a term
-    // that only exists once a letter is chosen, so choose one.
-    fireEvent.change(screen.getByLabelText(/First letter of the employer/), {
-      target: { value: "A" },
-    });
-    const body = document.body.textContent ?? "";
-    expect(body).toContain("whole alphabet is worth about");
-    expect(body).toContain("339,518 decided cases");
-  });
-
-  it("does NOT explain the alphabet before a letter is chosen", () => {
-    // Three lines of prose about a term nobody has invoked yet is exactly the
-    // clutter this page was carrying.
-    renderEstimator({ alphabet: ALPHABET });
+    expect(screen.queryByLabelText(/first letter of the employer/i)).toBeNull();
     expect(document.body.textContent).not.toContain("whole alphabet is worth about");
+  });
+
+  it("keeps the anchor at a month when the counting model cannot run", () => {
+    renderEstimator();
+    const anchor = screen.getByText(/^Around /);
+    expect(anchor.textContent).toMatch(/^Around [A-Z][a-z]+ \d{4}$/);
+  });
+});
+
+describe("with no date chosen", () => {
+  it("asks for a date and does not also say the data is missing", () => {
+    render(
+      <PermTimelineEstimator
+        frontier={FRONTIER}
+        cohorts={[]}
+        frontierAdvance={null}
+        disclosure={null}
+        today="2026-08-26"
+      />,
+    );
+    expect(document.body.textContent).toMatch(/Pick a date above/);
+    expect(document.body.textContent).not.toMatch(/isn.t enough published DOL data/);
   });
 });

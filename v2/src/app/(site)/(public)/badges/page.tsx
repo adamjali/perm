@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { BadgeCatalogue, type BadgeRow } from "@/components/badges/BadgeCatalogue";
+import { EmbedGallery } from "@/components/badges/EmbedGallery";
 import { BADGE_DEFS, BADGE_THEMES, badgeSpec } from "@/lib/badge";
 import { getBadgeData } from "@/lib/badgeData";
 import { renderBadge, renderUnavailable } from "@/lib/badgeRender";
@@ -128,6 +129,8 @@ export default async function BadgesPage() {
       </section>
 
       <BadgeCatalogue rows={rows} origin={ORIGIN} />
+
+      <EmbedGallery origin={ORIGIN} />
 
       <section className="mt-12 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">What a badge will not do</h2>{" "}

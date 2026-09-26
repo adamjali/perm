@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 /* ------------------------------------------------------------------ I-140 */
 
 export interface I140SubtypePanelProps {
-  /** Published ranges, already narrowed to the subtypes worth showing. */
+  /** Published 80% figures, already narrowed to the subtypes worth showing. */
   subtypes: readonly I140Subtype[];
   /** The subtype code the timeline bar itself is drawn from. */
   activeCode: string | null;
@@ -38,11 +38,11 @@ export function I140SubtypePanel({
   className,
 }: I140SubtypePanelProps) {
   if (subtypes.length === 0) return null;
-  const slowest = Math.max(...subtypes.map((s) => s.highMonths));
+  const slowest = Math.max(...subtypes.map((s) => s.months80));
   return (
     <div className={cn("border-2 border-border bg-background p-4", className)}>
       <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-        USCIS published times, by category
+        USCIS published times, 80% within
       </p>{" "}
       <ul className="mt-3 space-y-2">
         {subtypes.map((s) => {
@@ -60,7 +60,7 @@ export function I140SubtypePanel({
                 <div className="mt-1 h-1.5 w-full bg-muted" aria-hidden="true">
                   <div
                     className={cn("h-full", active ? "bg-primary" : "bg-foreground/30")}
-                    style={{ width: `${(s.highMonths / slowest) * 100}%` }}
+                    style={{ width: `${(s.months80 / slowest) * 100}%` }}
                   />
                 </div>
               </div>
@@ -70,7 +70,7 @@ export function I140SubtypePanel({
                   active ? "font-bold" : "text-foreground/70",
                 )}
               >
-                {s.lowMonths}&ndash;{s.highMonths} mo
+                {`${s.months80} mo`}
               </span>
             </li>
             </Fragment>
@@ -78,7 +78,8 @@ export function I140SubtypePanel({
         })}
       </ul>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
-        USCIS, as of {asOf}. The bar above uses{" "}
+        USCIS, as of {asOf}: the time it took to finish 80% of the petitions it
+        decided over the past six months. The bar above uses{" "}
         {activeCode ? "the category with the most cases pending" : "no single category"}.
       </p>{" "}
       {quarterlyMedian ? (
@@ -87,7 +88,7 @@ export function I140SubtypePanel({
           <b className="font-bold text-foreground">
             {Number.isInteger(quarterlyMedian.months) ? quarterlyMedian.months : quarterlyMedian.months.toFixed(1)} months
           </b>
-          . A different measurement from the ranges above, which are per subtype over the slow tail.
+          . A different measurement from the figures above, which are per subtype and cover 80% of cases.
         </p>
       ) : null}
     </div>

@@ -177,5 +177,17 @@
   "/uscis-case-status",
   "/uscis-processing-times",
   "/i485-by-field-office",
-  "/i140-awaiting-visa"
+  "/i140-awaiting-visa",
+  "/tools/green-card-line",
+  "/tools/eb2-vs-eb3",
+  "/tools/which-green-card",
+  "/h1b-lottery-odds",
+  "/nvc-waiting-list",
+  "/green-card-timelines",
+  "/visa-bulletin/categories",
+  "/zh",
+  "/es",
+  "/pt-br",
+  "/ko",
+  "/vi"
 ]

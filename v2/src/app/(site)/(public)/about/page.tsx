@@ -239,7 +239,7 @@ export default function AboutPage() {
         </div>{" "}
 
         <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">
-          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
             Since when
           </p>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/85">
@@ -257,7 +257,7 @@ export default function AboutPage() {
         </div>{" "}
 
         <div className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm">
-          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
             Contact
           </p>{" "}
           <p className="mt-2 text-sm leading-relaxed text-foreground/85">

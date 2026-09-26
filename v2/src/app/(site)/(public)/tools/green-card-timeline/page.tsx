@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
-import { fetchQuery } from "convex/nextjs";
+import { queryStatic } from "@/lib/convexStatic";
 
 import { api } from "../../../../../../convex/_generated/api";
 import { buildGreenCardTimeline } from "@/lib/perm";
@@ -85,10 +85,10 @@ function monthsFromDays(days: number | null): number | null {
 export default async function GreenCardTimelinePage() {
   const [permData, uscisData, bulletins, i140Median] = await Promise.all([
     getEstimatorData(),
-    fetchQuery(api.uscisI140.getLatest, {}).catch(() => null),
+    queryStatic(api.uscisI140.getLatest, {}, revalidate).catch(() => null),
     getVisaBulletinSeries(),
     // USCIS's quarterly median over every I-140 decided, shown beside the
-    // per-subtype ranges so the two measurements sit together, labelled.
+    // per-subtype 80% figures so the two measurements sit together, labelled.
     getUscisFormMedian("I-140"),
   ]);
   // The newest bulletin is the only one the panel shows: it answers "where is
@@ -98,7 +98,8 @@ export default async function GreenCardTimelinePage() {
 
   // The I-140 stage uses USCIS's PUBLISHED processing time, not the time it
   // would take to drain the whole backlog. Both are real, and they differ a
-  // lot: the national interest waiver publishes 29 to 32 months against about
+  // lot: the national interest waiver publishes 30 months (the time USCIS took
+  // to finish 80% of the petitions it decided over six months) against about
   // 42 months of queue. The published figure is what attaches to a case, so it
   // belongs in a duration timeline; the queue figure belongs on the I-140 page,
   // shown beside it with the gap explained.
@@ -118,7 +119,9 @@ export default async function GreenCardTimelinePage() {
     const range = getI140ProcessingTime(CATEGORY_OF[biggest.code] || "");
     const published = range?.subtypes.find((s) => s.code === biggest.code);
     if (published) {
-      i140Months = Math.round((published.lowMonths + published.highMonths) / 2);
+      // USCIS's 80% figure, the one number its page prints per subtype; it
+      // replaced the midpoint of the 50%/93% range the page used to show.
+      i140Months = Math.round(published.months80);
       i140Label = published.label;
       i140ActiveCode = biggest.code;
     }
@@ -126,7 +129,7 @@ export default async function GreenCardTimelinePage() {
     // reader in EB-1 is not left reading an EB-2 number.
     i140Subtypes = [...new Set(Object.values(CATEGORY_OF))]
       .flatMap((c) => getI140ProcessingTime(c)?.subtypes ?? [])
-      .sort((x, y) => x.highMonths - y.highMonths);
+      .sort((x, y) => x.months80 - y.months80);
   }
 
   const timeline = buildGreenCardTimeline({
@@ -172,7 +175,7 @@ export default async function GreenCardTimelinePage() {
       </header>
 
       <div className="pop mt-10">
-      <section className="border-2 border-border bg-card p-6 sm:p-8">
+      <section data-embed="green-card-timeline" className="border-2 border-border bg-card p-6 sm:p-8">
         <GreenCardTimelineView
           timeline={timeline}
           slots={{
@@ -194,7 +197,8 @@ export default async function GreenCardTimelinePage() {
         {i140Label ? (
           <p className="mt-6 text-sm text-foreground/60">
             The I-140 stage uses the published processing time for {i140Label},
-            the largest category by pending volume. Its queue runs longer than
+            the largest category by pending volume: the time USCIS took to finish
+            80% of the petitions it decided over the past six months. Its queue runs longer than
             that, which the{" "}
             <Link href="/tools/i140-calculator" className="underline underline-offset-2">
               I-140 calculator

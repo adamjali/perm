@@ -96,7 +96,7 @@ export default async function PwdCalculatorPage() {
         </p>
       </header>
 
-      <section className="mt-10">
+      <section data-embed="pwd-queue" className="mt-10">
         <PwdQueueEstimator
           frontier={data ? data.frontier : null}
           backlog={data ? data.backlog : []}

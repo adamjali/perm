@@ -18,6 +18,7 @@
  */
 
 import { findFront, monthsBetween, type CohortMonth } from "./liveQueue";
+import { inLine } from "./queueAhead";
 
 /** One filing month drawn on the wall. */
 export interface WallSegment {
@@ -35,7 +36,10 @@ export interface WallSegment {
 export interface Wall {
   /** The front through the subject's month, oldest first. */
   segments: WallSegment[];
-  /** Pending cases filed in STRICTLY earlier months than the subject's. */
+  /**
+   * Cases IN LINE (analyst review; see `inLine`) filed in STRICTLY earlier
+   * months than the subject's. The same count the estimate divides by.
+   */
   ahead: number;
   /**
    * The part of `ahead` that the drawn segments actually hold.
@@ -94,17 +98,17 @@ export function buildWall(
     ? [subject]
     : months.filter((x) => x.month >= front.month && x.month <= filingMonth);
 
-  const drawnTotal = drawn.reduce((n, x) => n + x.pending, 0);
+  const drawnTotal = drawn.reduce((n, x) => n + inLine(x), 0);
   const segments: WallSegment[] = drawn.map((x) => ({
     month: x.month,
-    pending: x.pending,
-    share: drawnTotal > 0 ? (x.pending / drawnTotal) * 100 : 0,
+    pending: inLine(x),
+    share: drawnTotal > 0 ? (inLine(x) / drawnTotal) * 100 : 0,
     isSubject: x.month === filingMonth,
     isFront: x.month === front.month,
   }));
 
   let ahead = 0;
-  for (const x of months) if (x.month < filingMonth) ahead += x.pending;
+  for (const x of months) if (x.month < filingMonth) ahead += inLine(x);
   const drawnAhead = segments
     .filter((s) => !s.isSubject)
     .reduce((n, s) => n + s.pending, 0);

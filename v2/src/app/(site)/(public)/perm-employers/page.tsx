@@ -18,6 +18,8 @@ import { EntityExplorer } from "@/components/tools/EntityExplorer";
 import { fetchEntitySeed } from "@/lib/entitySeed";
 import { BrowseTeaser } from "@/components/entities/BrowseBody";
 import { PendingLeaderboard } from "@/components/entities/PendingLeaderboard";
+import { WaitLeaders } from "@/components/entities/WaitLeaders";
+import { getFieldWait } from "@/lib/turso/employerWait";
 import { pendingLeaders } from "@/lib/turso/entityDetail";
 import { getFreshness } from "@/lib/turso/publicData";
 
@@ -61,8 +63,13 @@ export default async function PermEmployersPage() {
   // Seeded from the entity TABLE, not the aggregate document. The aggregate
   // is capped at 250 rows per kind to fit Convex's 1 MB document limit, so
   // a page built on it could only ever show 250 of 12,240 sponsors.
-  const [{ rows: employers, total: employerCount }, leaders, freshness] =
-    await Promise.all([fetchEntitySeed("employer"), pendingLeaders(10), getFreshness()]);
+  const [{ rows: employers, total: employerCount }, leaders, freshness, fieldWait] =
+    await Promise.all([
+      fetchEntitySeed("employer"),
+      pendingLeaders(10),
+      getFreshness(),
+      getFieldWait().catch(() => null),
+    ]);
   const mirrorAsOf = freshness["perm-case-status"]?.asOf ?? null;
 
   const topTen = employers.slice(0, 10);
@@ -129,6 +136,8 @@ export default async function PermEmployersPage() {
           </section>
 
           <PendingLeaderboard leaders={leaders} asOf={mirrorAsOf} n="01" className="mt-10" />
+
+          <WaitLeaders field={fieldWait} className="mt-10" />
 
           <section className="mt-12">
             {/* "All N sponsors" was true of the published files and reads as

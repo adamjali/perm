@@ -98,7 +98,7 @@ function Chip({
   );
 }
 
-function CopyButton({ text }: { text: string }) {
+export function CopyButton({ text }: { text: string }) {
   const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
   const copy = useCallback(async () => {
     try {

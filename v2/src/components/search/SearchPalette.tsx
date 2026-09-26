@@ -94,6 +94,24 @@ function staticIndex(): { label: string; href: string; group: string; keywords: 
   ] as const) {
     out.push({ label, href, group: "Data", keywords: `browse alphabetical index ${noun}` });
   }
+  // Pages reached from no nav list: the community timelines, the embed
+  // gallery, and the guide in five languages (added 2026-09-26).
+  out.push({
+    label: "Green card timelines",
+    href: "/green-card-timelines",
+    group: "Data",
+    keywords: "i-140 i-485 timeline community reports rfe premium ead advance parole",
+  });
+  out.push({ label: "Embed a tool", href: "/badges#embeds", group: "Go to", keywords: "embed iframe widget calculator website" });
+  for (const [label, href, keywords] of [
+    ["中文指南 (Chinese)", "/zh", "chinese 中文 绿卡 排期 劳工证"],
+    ["Guía en español (Spanish)", "/es", "spanish español green card"],
+    ["Guia em português (Portuguese)", "/pt-br", "portuguese português brasil"],
+    ["한국어 안내 (Korean)", "/ko", "korean 한국어 영주권 문호"],
+    ["Hướng dẫn tiếng Việt (Vietnamese)", "/vi", "vietnamese tiếng việt thẻ xanh"],
+  ] as const) {
+    out.push({ label, href, group: "Learn", keywords });
+  }
   // De-dupe by href: the nav lists overlap on purpose (Data appears in both
   // PUBLIC_NAV_LINKS and SECTIONS), and two rows for one page read as a bug.
   const seen = new Set<string>();

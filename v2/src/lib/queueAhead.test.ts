@@ -7,6 +7,7 @@ import {
   findVolumeAnomalies,
   type MonthQueue,
   aheadOfDay,
+  inLine,
   measureFilingRate,
 } from "./queueAhead";
 
@@ -260,5 +261,40 @@ describe("aheadOfDay: past, present and future", () => {
     const r = aheadOfDay(MONTHS, "2026-11-15", { today: "2026-09-13" })!;
     expect(r.total).toBe(pending);
     expect(r.projected).toBe(0);
+  });
+});
+
+/*
+ * THE SIDE QUEUE IS NOT AHEAD OF ANYONE (backtest 2026-09-26: counting every
+ * pending case made the typical miss 9.5 days; counting ANALYST REVIEW only,
+ * 3.9). Rows carrying `analystReview` count it; bare rows keep `pending`.
+ */
+describe("inLine: only the ordinary queue is ahead of you", () => {
+  const withStages = (filingMonth: string, pending: number, analystReview: number): MonthQueue => ({
+    filingMonth, total: pending + 1_000, pending, decided: 1_000,
+    decidedPct: (1_000 / (pending + 1_000)) * 100, analystReview,
+  });
+  const STAGED = [
+    withStages("2025-10", 900, 600),   // 300 on hold, at RFI or on appeal
+    withStages("2025-11", 5_000, 4_800),
+    withStages("2025-12", 9_000, 8_950),
+  ];
+
+  it("counts analyst review, not every pending case, when the row carries it", () => {
+    expect(inLine(STAGED[0]!)).toBe(600);
+    expect(inLine(m("2025-10", 1_000, 900))).toBe(900); // bare row: unchanged
+  });
+
+  it("feeds the month sums and the prorated day count", () => {
+    expect(deriveQueueAhead(STAGED, "2025-12").ahead).toBe(600 + 4_800);
+    expect(deriveQueueAhead(STAGED, "2025-12").sameMonth).toBe(8_950);
+    // 16 Dec: 15 of 31 days of December's in-line cases are ahead.
+    expect(casesAheadOfDay(STAGED, "2025-12-16")).toBe(600 + 4_800 + Math.round(8_950 * 15 / 31));
+  });
+
+  it("feeds a future date's counted half too", () => {
+    const r = aheadOfDay(STAGED, "2026-03-01", { today: "2026-01-31", filingRate: 300 })!;
+    expect(r.pending).toBe(600 + 4_800 + 8_950);
+    expect(r.projected).toBe(300 * 29);
   });
 });

@@ -73,7 +73,7 @@ export default function RfiDeadlinePage() {
           way the regulation counts it. Enter the letter&apos;s date.
         </p>
       </header>
-      <section className="mt-10">
+      <section data-embed="rfi-deadline" className="mt-10">
         <RfiDeadlineCalculator />
       </section>
       <section className="mt-12">

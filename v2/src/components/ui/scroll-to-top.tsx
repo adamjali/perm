@@ -5,8 +5,8 @@ import {
   motion,
   AnimatePresence,
   useScroll,
-  useTransform,
   useMotionValueEvent,
+  useReducedMotion,
 } from "motion/react";
 import { ArrowUpIcon } from "@phosphor-icons/react";
 
@@ -42,10 +42,16 @@ export function ScrollToTop() {
     }
   });
 
-  // Motion values — drive SVG + fill without re-renders
-  const perimeter = 184; // 4 × 46px path
-  const dashOffset = useTransform(scrollYProgress, [0, 1], [perimeter, 0]);
-  const fillScaleY = useTransform(scrollYProgress, [0, 1], [0, 1]);
+  // ONE progress indicator, drawn ON the border (2026-09-26). The button used
+  // to carry two: a lime fill rising behind the arrow AND a line traced inside
+  // the frame. The line was drawn in a 46-unit box inside the padding of an
+  // `overflow-hidden` button with a 3px border, so it ran just inside the
+  // black frame and was clipped at its corners - on a phone it read as a
+  // second, broken border. Now the SVG covers the border box exactly
+  // (`-inset-[3px]` from the padding box) and its stroke sits on the centre
+  // line of the 3px border, so the frame itself fills with lime as you
+  // scroll. Motion's `pathLength` handles the dash arithmetic.
+  const reduceMotion = useReducedMotion();
 
   return (
     <AnimatePresence>
@@ -55,31 +61,28 @@ export function ScrollToTop() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 10 }}
           transition={{ duration: 0.2 }}
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          className="fixed bottom-6 right-6 z-[60] flex h-11 w-11 cursor-pointer items-center justify-center overflow-hidden border-3 border-border bg-background shadow-hard transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+          onClick={() =>
+            window.scrollTo({ top: 0, behavior: reduceMotion ? "auto" : "smooth" })
+          }
+          className="fixed bottom-6 right-6 z-[60] flex h-11 w-11 cursor-pointer items-center justify-center border-3 border-border bg-background shadow-hard transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
           aria-label="Back to top"
         >
-          {/* Background fill — rises from bottom with scroll (solid primary) */}
-          <motion.div
-            className="absolute inset-0 origin-bottom bg-primary will-change-transform"
-            style={{ scaleY: fillScaleY }}
-          />
-          {/* Progress border — traces square from top-center */}
           <svg
-            className="pointer-events-none absolute -inset-px"
-            viewBox="0 0 46 46"
+            className="pointer-events-none absolute -inset-[3px] h-11 w-11"
+            viewBox="0 0 44 44"
             fill="none"
+            aria-hidden="true"
           >
+            {/* Top centre, clockwise, back to top centre: 164 units. */}
             <motion.path
-              d="M23 1 L45 1 L45 45 L1 45 L1 1 Z"
+              d="M22 1.5 L42.5 1.5 L42.5 42.5 L1.5 42.5 L1.5 1.5 L22 1.5"
               stroke="var(--primary)"
-              strokeWidth="2.5"
-              strokeLinecap="square"
-              strokeDasharray={perimeter}
-              style={{ strokeDashoffset: dashOffset }}
+              strokeWidth="3"
+              strokeLinecap="butt"
+              style={{ pathLength: scrollYProgress }}
             />
           </svg>
-          <ArrowUpIcon className="relative z-10 h-4 w-4 text-foreground" />
+          <ArrowUpIcon className="relative h-4 w-4 text-foreground" />
         </motion.button>
       )}
     </AnimatePresence>

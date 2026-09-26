@@ -10,6 +10,7 @@
  */
 
 import Link from "next/link";
+import { useState } from "react";
 import type { FunctionReturnType } from "convex/server";
 import type { api } from "../../../convex/_generated/api";
 
@@ -91,7 +92,9 @@ function Figure({ value, label, tone }: { value: string; label: string; tone?: "
 
 export function DeliveryPanel({ data }: { data: Delivery }) {
   const w = data.outbox.last7d;
-  const stale = data.outbox.oldestQueuedAt !== null && Date.now() - data.outbox.oldestQueuedAt > 26 * 3_600_000;
+  // Read the clock once at mount; a render must not call it (react-hooks/purity).
+  const [now] = useState(() => Date.now());
+  const stale = data.outbox.oldestQueuedAt !== null && now - data.outbox.oldestQueuedAt > 26 * 3_600_000;
   return (
     <div className="space-y-8">
       <section aria-labelledby="outbox-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
@@ -121,7 +124,11 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           Latest alerts
         </h2>{" "}
         {data.recent.length === 0 ? (
-          <p className="mt-2 text-sm text-muted-foreground">No alert email in the last 7 days.</p>
+          <p className="mt-2 text-sm text-muted-foreground">
+            No alert email recorded in the last 7 days. The outbox has recorded
+            sends since 26 September 2026; anything sent before that isn&apos;t
+            listed here.
+          </p>
         ) : (
           <div className="mt-3 overflow-x-auto border-2 border-border">
             <table className="w-full min-w-[720px] text-left text-sm">

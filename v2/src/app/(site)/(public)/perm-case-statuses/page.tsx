@@ -53,7 +53,7 @@ function Count({ n, asOf, href }: { n: number | null; asOf: string | null; href?
   if (n === null) return null;
   const shown = asOf ? formatAsOf(asOf) : null;
   const text = `${int(n)} now${shown ? `, as of ${shown}` : ""}`;
-  const cls = "font-mono text-[11px] font-semibold";
+  const cls = "font-mono text-sm font-semibold";
   return href ? (
     <Link href={href} className={`${cls} underline decoration-primary decoration-2 underline-offset-2 hover:text-primary`}>
       {text}
@@ -101,7 +101,7 @@ function FlagEntry({ e, anchor, n, asOf }: { e: FlagStatusEntry; anchor: string;
         <span className="min-w-0">
           <h3 className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
             <span className="font-heading text-base font-black">{e.label}</span>{" "}
-            <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">{e.status}</code>{" "}
+            <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">{e.status}</code>{" "}
             <Count n={n} asOf={asOf} />
           </h3>{" "}
           <span className="mt-1 block text-sm leading-relaxed text-foreground/80">{lead}</span>
@@ -224,8 +224,8 @@ export default async function PermCaseStatusesPage() {
                       <span className="min-w-0">
                         <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
                           <span className="font-heading text-base font-black">{m.label}</span>{" "}
-                          <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">{m.status}</code>{" "}
-                          <span className="font-mono text-[11px] text-foreground/60">{KIND_LABEL[m.kind]}</span>{" "}
+                          <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">{m.status}</code>{" "}
+                          <span className="font-mono text-sm text-foreground/60">{KIND_LABEL[m.kind]}</span>{" "}
                           <Count n={permCount(m.status)} asOf={permAsOf} href={stagePage} />
                         </span>{" "}
                         <span className="mt-1 block text-sm leading-relaxed text-foreground/80">{lead}</span>

@@ -7,6 +7,7 @@ import {
   PROCESSING_TIMES_AS_OF,
   PROCESSING_TIMES_SOURCE_URL,
   formatMonthRange,
+  formatMonths,
   getI140ProcessingTime,
   getPremiumBusinessDays,
   type I140Category,
@@ -27,8 +28,10 @@ export interface ProcessingTimeEstimateProps {
  * USCIS I-140 processing times for a category.
  *
  * Shows the subtypes rather than one figure, because within a category they
- * diverge enormously: EB-1 runs 15.5 months for an outstanding professor and
- * 34.5 for extraordinary ability. An earlier version showed one number per
+ * diverge enormously: EB-1 runs 15 months for an outstanding professor and
+ * 32.5 for extraordinary ability (USCIS's 80% figures, read 2026-09-26). Each
+ * subtype carries one number, the time USCIS took to finish 80% of the
+ * petitions it decided over six months. An earlier version showed one number per
  * category per service center and was wrong by up to 4x.
  *
  * Service center is deliberately not an input. USCIS reports I-140 under a
@@ -140,7 +143,7 @@ export function ProcessingTimeEstimate({
                 <li key={s.code} className="flex justify-between gap-4">
                   <span className="text-muted-foreground">{s.label}</span>{" "}
                   <span className="font-medium tabular-nums">
-                    {formatMonthRange(s.lowMonths, s.highMonths)}
+                    {formatMonths(s.months80)}
                   </span>
                 </li>
               ))}
@@ -154,7 +157,9 @@ export function ProcessingTimeEstimate({
         <p>
           {isPremiumProcessing
             ? "Premium processing guarantees a first review inside the window. It doesn’t guarantee approval, and the clock restarts if USCIS issues a request for evidence."
-            : "The lower figure is where half of cases finish, the upper where 93% do."}{" "}
+            : range.subtypes.length > 1
+              ? "Each figure is the time USCIS took to finish 80% of the petitions of that kind it decided over the past six months; the top line spans the fastest and slowest."
+              : "The time USCIS took to finish 80% of the petitions of this kind it decided over the past six months."}{" "}
           USCIS published these on {formatAsOf(PROCESSING_TIMES_AS_OF)}.{" "}
           <a
             href={PROCESSING_TIMES_SOURCE_URL}

@@ -479,7 +479,7 @@ export const GLOSSARY: GlossaryTerm[] = [
     term: "Visa bulletin",
     slug: "visa-bulletin",
     definition:
-      "The State Department's monthly table of cutoff dates by preference category and country of chargeability, in two charts: final action dates and dates for filing. This site holds 84 months of it and computes the next one's seasonal pattern rather than predicting it.",
+      "The State Department's monthly table of cutoff dates by preference category and country of chargeability, in two charts: final action dates and dates for filing. This site holds every bulletin since October 2014 and computes the next one's seasonal pattern rather than predicting it.",
     see: [{ label: "The next visa bulletin", href: "/visa-bulletin" }],
   },
   {

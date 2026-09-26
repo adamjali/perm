@@ -1,0 +1,997 @@
+Text of https://web.archive.org/web/20260430115356/https://travel.state.gov/content/dam/visas/Statistics/Immigrant-Statistics/WaitingList/WaitingListItem_2023_vF.pdf (fetched 2026-09-26), extracted with PyMuPDF.
+Annual Report of Immigrant Visa Applicants in the Family-sponsored and 
+Employment-based preferences Registered at the National Visa Center 
+as of November 1, 2023 
+  
+Most prospective immigrant visa applicants qualify for immigrant status under U.S. law on the basis of 
+family relationships or employer sponsorship. Entitlement to visa processing in these classes is 
+established ordinarily through U.S. Citizenship and Immigration Services (USCIS) approval of a petition 
+filed on the applicant's behalf by the sponsoring family member or employer. USCIS forwards the 
+approved petitions for applicants who will be processed at an overseas U.S. embassy or consulate to the 
+Department of State. Applicants in categories subject under law to a numerical limit are registered on 
+the visa waiting list discussed below.  Note that applications for adjustment of status under U.S. law 
+(Immigration and Nationality Act (INA) Section 245) which are pending at USCIS Offices are not included 
+in the tabulation of the immigrant waiting list data provided below. As such, the following figures ONLY 
+reflect approved petitions which the Department of State has received, and do not include the 
+significant number of applications held with the USCIS Offices.  
+Each case is assigned a priority date based on the filing date accorded to the petition; this is the 
+applicant’s place in line.  When their priority date is within the dates for filing published each month in 
+the Department of State’s Visa Bulletin, the Department of State’s National Visa Center (NVC) advises 
+the applicant to pay fees and assemble and submit documents required for visa processing (i.e., become 
+documentarily complete).  Visa issuance within each numerically limited category is possible only when 
+the applicant's priority date is within the applicable final action dates, also published in the Visa Bulletin.  
+Eligible family-based and employment-based immigrant visa applicants are subject to overall worldwide 
+annual numerical limits within their respective categories; in addition, INA 202 sets a per-country 
+maximum on the number of family and employment-based visas which may be issued in a single year to 
+applicants from any one country regardless of where they are processed.  The totals in this report reflect 
+applicants with approved petitions slated for overseas visa application at all stages of this process – 
+those that are not yet documentarily complete, those that are documentarily complete and waiting for 
+their priority date to become current, and those whose priority date is current and are waiting to be 
+scheduled for an interview. 
+The following figures are compiled from the NVC report submitted to the Department on November 1, 
+2023, and show the number of immigrant visa applicants on the visa waiting list in the various 
+preferences and subcategories subject to numerical limit. All figures reflect persons registered under 
+each numerical limitation, i.e., the totals represent not only principal applicants or petition beneficiaries, 
+but their spouses and children entitled to derivative status under INA Section 203(d) as well.  
+The Employment-based totals provided in this year’s waiting list report are considerably higher than last 
+year.  This is in part due to the Employment-based annual limit, calculated based on the procedures 
+established in INA Section 201(d), returning to baseline levels after record highs in the immediate post-
+pandemic years.  Cases not processed under these lower annual limits have been retained at NVC and 
+included in this year’s report.  Please see here for reporting on the interview-ready Immigrant Visa 
+Scheduling Backlog, a subset of this total data. 
+  
+ 
+
+Family-sponsored Preference Applicants at the NVC  
+ 
+ 
+As of  
+As of  
+% of Change  
+Category 
+Nov. 1, 2022 
+Nov. 1, 2023 
+From 2022 Totals 
+ 
+ 
+ 
+ 
+FAMILY FIRST 
+282,459 
+261,384 
+(-7.5%) 
+FAMILY SECOND TOTAL 
+795,426 
+723,622 
+(-9.0%) 
+2A-Spouses/Children: 
+383,653 
+337,958 
+(-11.9%) 
+2B-Adult Sons/Daughters: 
+411,773 
+385,664 
+(-6.3%) 
+FAMILY THIRD 
+617,140 
+588,883 
+(-4.6%) 
+FAMILY FOURTH 
+2,220,476 
+2,199,512 
+(-0.9%) 
+TOTAL 
+3,915,501 
+3,773,401 
+(-3.6%) 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+F1
+F2A
+F2B
+F3
+F4
+2022
+282,459
+383,653
+411,773
+617,140
+2,220,476
+2023
+261,384
+337,958
+385,664
+588,883
+2,199,512
+0
+500,000
+1,000,000
+1,500,000
+2,000,000
+2,500,000
+Number of Applicants on Waiting List in Family-based 
+Preference Categories as of Nov. 1, 2022 vs. Nov. 1, 2023
+
+Employment-based Preference Applicants at the NVC  
+ 
+ 
+As of  
+As of  
+% of Change  
+Category 
+Nov. 1, 2022 
+Nov. 1, 2023 
+From 2022 Totals 
+ 
+ 
+ 
+ 
+EMPLOYMENT FIRST 
+8,818 
+20,582 
+(+133.4%) 
+EMPLOYMENT SECOND 
+43,962 
+75,567 
+(+71.9%) 
+EMPLOYMENT THIRD TOTAL 
+68,567 
+122,677 
+(+78.9%) 
+  Skilled Workers: 
+41,838 
+78,207 
+(+86.9%) 
+  Other Workers: 
+26,729 
+44,470 
+(+66.4%) 
+EMPLOYMENT FOURTH TOTAL 
+1,303 
+1,951 
+(+49.7%) 
+EMPLOYMENT FIFTH TOTAL 
+45,498 
+39,883 
+(-12.3%) 
+TOTAL 
+168,148 
+260,660 
+(+55.0%) 
+ 
+ 
+ 
+ 
+GRAND TOTAL 
+4,083,649 
+4,034,061 
+(-1.2%) 
+ 
+ 
+ 
+ 
+E1
+E2
+E3
+EW
+E4
+E5
+2022
+8,818
+43,962
+41,838
+26,729
+1,303
+45,498
+2023
+20,582
+75,567
+78,207
+44,470
+1,951
+39,883
+0
+10,000
+20,000
+30,000
+40,000
+50,000
+60,000
+70,000
+80,000
+90,000
+Number of Applicants on Waiting List in Employment-based 
+Preference Categories as of Nov. 1, 2022 vs. Nov. 1, 2023
+
+Immigrant Waiting List 
+By Country 
+  
+Immigrant visa issuances during fiscal year 2024 will be limited by the terms of INA Section 201 
+to no more than 226,000 in the family-sponsored preferences and approximately 161,000 in 
+the employment-based preferences. (Visas for "Immediate Relatives" - i.e., spouses, unmarried 
+children under the age of 21 years, and parents of U.S. citizens - are not subject to numerical 
+limitation.)  
+  
+It should by no means be assumed that once an applicant is registered, the case is continually 
+included in the waiting list totals unless and until a visa is issued. Consular procedures mandate 
+a regular culling of visa cases to remove from the count those unlikely to see further action, so 
+that totals are not unreasonably inflated.  
+ 
+The ten countries with the highest number of waiting list registrants for both family and 
+employment visas in FY 2024 are listed below; together these represent 74.9% of the total. This 
+list includes all countries with at least 78,000 persons on the waiting list. INA Section 202 
+prescribes that visa issuances to nationals of any single country may not exceed seven percent 
+during a fiscal year. This limit serves to avoid the potential monopolization of the annual 
+limitation by applicants from only a few countries. That limitation is not a quota to which any 
+particular country is entitled, however. For FY 2024 the per-country limit will be approximately 
+27,090.  
+ 
+Country 
+Applicants 
+Mexico 
+1,190,444 
+India 
+290,942 
+Philippines 
+288,294 
+Dominican Republic 
+251,271 
+China - mainland born 
+230,626 
+Vietnam 
+216,653 
+Bangladesh 
+215,386 
+Pakistan 
+142,091 
+Haiti 
+116,948 
+El Salvador 
+78,212 
+All Others 
+       1,013,194  
+Worldwide Total 
+       4,034,061  
+ 
+  
+ 
+ 
+ 
+ 
+ 
+ 
+
+Family-sponsored Immigrant Waiting List by Country 
+                
+The ten countries with the highest number of Family-sponsored waiting list registrants are 
+listed below; together these represent 75.4% of the total. This list includes all countries with at 
+least 77,000 persons on the waiting list. (The per-country limit in INA 202 sets an annual 
+maximum on the amount of Family preference visas which may be issued to applicants from 
+any one country; the FY 2024 per-country limit will be 15,820.)  
+  
+Family-sponsored Preference Applicants 
+ 
+Country 
+Total 
+Mexico 
+1,179,996 
+Philippines 
+252,153 
+Dominican Republic 
+250,856 
+India 
+242,406 
+Bangladesh 
+211,168 
+Vietnam 
+210,553 
+China - mainland born 
+165,288 
+Pakistan 
+138,412 
+Haiti 
+116,855 
+El Salvador 
+77,654 
+All Others 
+928,060 
+Worldwide Total 
+3,773,401 
+ 
+  
+ 
+Mexico, 1,179,996
+Philippines, 252,153
+Dominican Republic, 
+250,856
+India, 242,406
+Bangladesh, 211,168
+Vietnam, 210,553
+China - mainland born, 
+165,288
+Pakistan, 138,412
+Haiti, 116,855
+El Salvador, 77,654
+All Others, 928,060
+Family-sponsored Immigrant Waiting List by Country
+
+Family-sponsored Immigrant Waiting List by Region 
+  
+A breakdown of the NVC waiting list by region is: 
+ 
+Region 
+Total 
+Africa 
+166,342 
+Asia 
+1,470,418 
+Europe 
+115,691 
+N. America* 
+1,844,555 
+Oceania 
+5,084 
+S. America 
+171,311 
+Family Total 
+3,773,401 
+ 
+ 
+ 
+ 
+ 
+*North America includes Canada, Mexico, Central America and the Caribbean.  
+ 
+ 
+ 
+ 
+ 
+ 
+Africa
+166,342
+Asia
+1,470,418
+Europe
+115,691
+N. America
+1,844,555
+Oceania
+5,084
+S. America
+171,311
+Family-sponsored Preference Immigrant Waiting List 
+By Region
+
+FAMILY-SPONSORED PREFERENCES 
+ 
+Family FIRST Preference: 
+  
+The worldwide Family FIRST preference numerical limitation is 23,400. The top ten countries 
+with the highest F1 waiting list totals are:  
+ 
+Country 
+Family First Preference 
+Total 
+Percent of Category 
+Waiting List 
+Mexico 
+85,950 
+32.9% 
+Dominican Republic 
+22,974 
+8.8% 
+Philippines 
+21,311 
+8.2% 
+Haiti 
+13,702 
+5.2% 
+Jamaica 
+12,656 
+4.8% 
+El Salvador 
+9,937 
+3.8% 
+Cuba 
+7,037 
+2.7% 
+Colombia 
+5,086 
+2.0% 
+Honduras 
+4,969 
+1.9% 
+Nigeria 
+4,555 
+1.7% 
+All Others 
+           73,207  
+28.0% 
+Total 
+261,384 
+100% 
+ 
+Applicants are being added to the waiting list in this category not only by the approval of new 
+FIRST preference petitions, but also through automatic conversion of pending 2B applicants 
+into FIRST preference upon the naturalization of the petitioner.  
+  
+The overall decrease in total applicants in the FIRST preference could result in gradual advances 
+in the worldwide final action date in the coming fiscal year. Only two countries, Mexico and 
+Philippines, have FIRST preference final action dates which are earlier than the worldwide date. 
+(NOTE: A Family 2B petition automatically converts to a Family FIRST petition if the petitioner 
+naturalizes. However, Section 6 of the Child Status Protection Act of 2002, Pub. L. 107-208, 
+provides relief for Family 2B applicants who would be disadvantaged by a conversion to Family 
+FIRST status due to a less favorable Family FIRST final action date.) 
+ 
+ 
+
+Family SECOND Preference:  
+  
+The total Family SECOND preference waiting list figure is 723,622. Of these, 337,958 (46.7%) are 
+spouses and children of permanent residents of the United States (the 2A class), and 385,664 
+(53.3%) are adult unmarried sons/daughters of permanent residents (the 2B class). The Family 
+SECOND preference represents 19.2% of the total Family preference waiting list. It will receive 
+114,200 visa numbers for FY 2024, just over half of the 226,000 family preference total; 77% of 
+SECOND preference numbers are provided to 2A applicants, while the remaining 23% go to the 
+2B class.   
+  
+2A: About 87,900 visa numbers are available for use during FY 2024. The top ten countries with 
+the highest 2A waiting list totals are: 
+ 
+Country 
+Family 2A Preference 
+Total 
+Percent of Category 
+Waiting List 
+Mexico 
+94,625 
+28.0% 
+Dominican Republic 
+63,595 
+18.8% 
+Haiti 
+20,410 
+6.0% 
+El Salvador 
+15,252 
+4.5% 
+Cuba 
+13,848 
+4.1% 
+Philippines 
+12,749 
+3.8% 
+Guatemala 
+8,894 
+2.6% 
+Honduras 
+8,406 
+2.5% 
+Ethiopia 
+5,914 
+1.8% 
+Vietnam 
+5,903 
+1.8% 
+All Others 
+88,362 
+26.1% 
+Total 
+337,958 
+100% 
+ 
+ 
+Upon naturalization of the petitioner, a pending 2A case is usually converted automatically into 
+the “Immediate Relative” visa category, which is not subject to numerical limit and therefore 
+has no visa waiting period. If 2A children applicants are over 21 years of age once the petitioner 
+naturalizes, their case is usually converted into the Family FIRST category. As a result, the 
+number of cases being processed in the “Immediate Relative” or Family FIRST categories may 
+increase and partially offset new F2A filings. 
+ 
+ 
+
+2B: Visa numbers for this class of adult sons and daughters will be approximately 26,260 during 
+FY 2024. The top ten countries with the highest 2B waiting list totals are:  
+ 
+Country 
+Family 2B Preference 
+Total 
+Percent of Category 
+Waiting List 
+Mexico 
+117,903 
+30.6% 
+Dominican Republic 
+66,011 
+17.1% 
+Philippines 
+40,315 
+10.5% 
+Haiti 
+20,021 
+5.2% 
+Vietnam 
+17,875 
+4.6% 
+Cuba 
+16,516 
+4.3% 
+El Salvador 
+15,528 
+4.0% 
+China - mainland born 
+10,750 
+2.8% 
+Ecuador 
+6,275 
+1.6% 
+Honduras 
+5,180 
+1.3% 
+All Others 
+69,290 
+18.0% 
+Total 
+385,664 
+100% 
+ 
+   
+  
+Some of the 2B applicants were formerly counted in the 2A waiting list and have since turned 
+21. 
+  
+Family THIRD Preference:  
+  
+The annual visa limit is 23,400. Two oversubscribed countries (Mexico and Philippines) have 
+sufficiently heavy demand in this preference to require a final action date substantially earlier 
+than the worldwide date. The top ten countries with the highest F3 waiting list totals are:  
+ 
+Country 
+Family Third 
+Preference Total 
+Percent of Category 
+Waiting List 
+Mexico 
+192,778 
+32.7% 
+Philippines 
+94,236 
+16.0% 
+India 
+31,141 
+5.3% 
+Vietnam 
+25,332 
+4.3% 
+Dominican Republic 
+16,384 
+2.8% 
+Haiti 
+15,734 
+2.7% 
+China - mainland born 
+15,242 
+2.6% 
+Pakistan 
+13,897 
+2.3% 
+Cuba 
+11,589 
+2.0% 
+Nigeria 
+11,086 
+1.9% 
+All Others 
+161,464 
+27.4% 
+Total 
+588,883 
+100% 
+ 
+   
+
+Family FOURTH Preference: 
+  
+Applicants registered in the Family FOURTH preference total 2,199,512. Annual visa issuances 
+are limited to 65,000. The waiting period for the Family FOURTH preference is longer than any 
+other category because the demand significantly exceeds the number of available visas. The 
+countries listed below have the largest number of FOURTH preference applicants: 
+ 
+Country 
+Family Fourth 
+Preference Total 
+Percent of Category 
+Waiting List 
+Mexico 
+688,740 
+31.3% 
+India 
+204,195 
+9.3% 
+Bangladesh 
+198,223 
+9.0% 
+Vietnam 
+157,073 
+7.2% 
+China - mainland born 
+132,460 
+6.0% 
+Pakistan 
+117,048 
+5.3% 
+Philippines 
+83,542 
+3.8% 
+Dominican Republic 
+81,892 
+3.7% 
+Haiti 
+46,988 
+2.2% 
+El Salvador 
+27,144 
+1.2% 
+All Others 
+462,207 
+21.0% 
+Total 
+2,199,512 
+100% 
+ 
+  
+  
+The waiting period in this preference is now over sixteen years for countries of most favorable 
+visa availability and even longer for some oversubscribed countries (notably Mexico, India, and 
+Philippines).  
+  
+
+Employment-based Immigrant Waiting List by Country 
+  
+It is important to note that normally about eighty-five percent of all Employment preference 
+immigrants are processed as adjustment of status cases at USCIS offices. Cases pending with 
+USCIS are not counted in the consular waiting list tally presented below. Therefore, in several 
+Employment categories the waiting list totals being provided below significantly understate 
+true immigrant demand. The Employment waiting list counts not only prospective workers, but 
+also their spouses and children entitled under the law to derivative preference status.  
+ 
+The five countries with the highest number of Employment-based waiting list registrants are 
+listed below; together these represent 65.2% of the total. This list includes all countries with at 
+least 9,500 persons on the waiting list. (INA 202 sets an annual maximum per country limit on 
+the amount of Employment preference visas which may be issued to applicants from any one 
+country; the FY 2024 per-country limit will be approximately 11,270.)  
+  
+Employment-based Preferences  
+ 
+Country 
+Total 
+China - mainland born 
+65,338 
+India 
+48,536 
+Philippines 
+36,141 
+Mexico 
+10,448 
+Korea, South 
+9,502 
+All Others 
+90,695 
+Worldwide Total 
+260,660 
+ 
+  
+ 
+China - mainland 
+born, 65,338
+India, 48,536
+Philippines, 
+36,141
+Mexico, 10,448
+Korea, South, 
+9,502
+All Others, 90,695
+Employment-based Immigrant Waiting List
+By Country
+
+Employment-based Immigrant Waiting List By Region 
+ 
+A breakdown of the NVC waiting list by region is:  
+ 
+Region 
+Total 
+Africa 
+           20,328  
+Asia 
+         193,940  
+Europe 
+           10,722  
+N. America* 
+           17,344  
+Oceania 
+                 459  
+S. America 
+           17,867  
+Employment Total 
+260,660 
+ 
+  
+ 
+ 
+ 
+ *North America includes Canada, Mexico, Central America and the Caribbean.  
+Africa
+20,328 
+Asia
+193,940 
+Europe
+10,722 
+N. America*
+17,344 
+Oceania
+459 
+S. America
+17,867 
+Employment-based Immigrant Waiting List By Region
+
+EMPLOYMENT-BASED PREFERENCES 
+ 
+Employment FIRST Preference: 
+  
+Top countries are:  
+Country 
+Employment First 
+Preference Total 
+Percent of Category 
+Waiting List 
+China - mainland born 
+9,787 
+47.5% 
+India 
+2,426 
+11.8% 
+Canada 
+872 
+4.2% 
+Brazil 
+840 
+4.1% 
+Russia 
+597 
+2.9% 
+Korea, South 
+510 
+2.5% 
+Great Britain and Northern Ireland 
+434 
+2.1% 
+Iran 
+362 
+1.8% 
+Mexico 
+315 
+1.5% 
+Argentina 
+239 
+1.2% 
+All Others 
+4,200 
+20.4% 
+Total 
+20,582 
+100% 
+   
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+  
+This category is "current" at present for all countries except China-mainland born and India. 
+ 
+ 
+Employment SECOND Preference: 
+ 
+Top countries are:    
+Country 
+Employment Second 
+Preference Total 
+Percent of Category 
+Waiting List 
+India 
+28,921 
+38.3% 
+China - mainland born 
+13,815 
+18.3% 
+Korea, South 
+4,740 
+6.3% 
+Brazil 
+6,024 
+8.0% 
+Iran 
+3,906 
+5.1% 
+All Others 
+18,161 
+24.0% 
+Total 
+75,567 
+100% 
+   
+Sufficiently heavy demand in the Employment Second Preference category has necessitated the 
+establishment of a final action date for all countries.  Two oversubscribed countries (China-
+mainland born and India) have enough demand to require earlier final action dates. 
+ 
+ 
+ 
+ 
+
+ 
+Employment THIRD Preference:  
+ 
+Skilled Worker/Professional Components - Top countries are: 
+ 
+Country 
+Employment Third 
+Preference: Skilled 
+Worker/Professional 
+Components 
+Percent of 
+Category Waiting 
+List 
+Philippines 
+29,798 
+38.1% 
+India 
+15,030 
+19.2% 
+Kenya 
+4,955 
+6.3% 
+China - mainland born 
+3,553 
+4.6% 
+Nigeria 
+3,005 
+3.8% 
+All Others 
+21,886 
+28.0% 
+Total 
+78,207 
+100% 
+ 
+ 
+Other Worker Components - Top Countries are:  
+ 
+Country 
+Employment Third 
+Preference: Other Worker 
+Components 
+Percent of 
+Category Waiting 
+List 
+Mexico 
+8,173 
+18.4% 
+Philippines 
+5,892 
+13.3% 
+Vietnam 
+4,911 
+11.0% 
+China - mainland born 
+4,467 
+10.0% 
+Bangladesh 
+3,064 
+6.9% 
+All Others 
+17,963 
+40.4% 
+Total 
+44,470 
+100% 
+ 
+ 
+Sufficiently heavy demand in the Employment Third Preference category has necessitated the 
+establishment of a final action date for all countries.  Two oversubscribed countries (China-
+mainland born and India) have enough demand to require earlier final action dates.  In the 
+Third “Other Worker” Preference category, demand has been sufficient to necessitate a 
+worldwide final action date, while China-mainland born, India, and Philippines require earlier 
+final action dates. 
+
+Employment FOURTH Preference:  
+ 
+Top countries are: 
+ 
+Country 
+Employment Fourth 
+Preference 
+Percent of Category 
+Waiting List 
+India 
+316 
+16.2% 
+Nigeria 
+190 
+9.7% 
+Mexico 
+111 
+5.7% 
+Brazil 
+76 
+3.9% 
+Korea, South 
+73 
+3.8% 
+All Others 
+         1,185  
+60.7% 
+Total 
+1,951 
+100% 
+ 
+The above Employment Fourth Preference category totals include the SR category.  
+ 
+Sufficiently heavy demand has required the establishment of a final action date for the 
+Employment Fourth Preference category for all countries. 
+ 
+ 
+ 
+Employment FIFTH Preference: 
+ 
+Top countries are: 
+Country 
+Employment Fifth 
+Preference 
+Percent of Category 
+Waiting List 
+China - mainland born 
+         33,676  
+84.4% 
+India 
+           1,652  
+4.2% 
+Hong Kong S.A.R. 
+               575  
+1.4% 
+Vietnam 
+               571  
+1.4% 
+Korea, South 
+               517  
+1.3% 
+All Others 
+           2,892  
+7.3% 
+Total 
+39,883 
+100% 
+ 
+The Fifth Preference (C5, I5, R5, and T5) categories are “current” at present for all countries 
+except China and India. The EB-5 Reform and Integrity Act of 2022 reserved Employment Fifth 
+Preference visas for qualified immigrants who invest in rural areas, high unemployment areas, 
+and infrastructure projects.  These set-aside categories are “current” at present for all 
+countries.  State and USCIS anticipate issuing these visas in the coming fiscal year, and final 
+action dates may be set if demand for any of these categories exceeds the annual limits. 

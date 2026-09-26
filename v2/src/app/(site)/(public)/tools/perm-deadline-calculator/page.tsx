@@ -87,7 +87,7 @@ export default function PermDeadlineCalculatorPage() {
       </header>
 
       <section className="mt-10">
-        <div className="pop mt-10">
+        <div data-embed="perm-deadlines" className="pop mt-10">
           <PermDeadlineCalculator />
         </div>
       </section>

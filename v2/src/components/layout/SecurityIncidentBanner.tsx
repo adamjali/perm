@@ -95,7 +95,7 @@ export function SecurityIncidentBanner() {
           aria-hidden="true"
         />
         <p className="flex-1 text-xs sm:text-sm text-amber-900 dark:text-amber-100">
-          <span className="font-bold mono uppercase tracking-wider text-[10px] sm:text-xs mr-2">
+          <span className="font-bold mono uppercase tracking-wider text-sm sm:text-xs mr-2">
             Security notice
           </span>
           Unsolicited emails sent on Apr 19-20 didn’t originate from PERM Tracker.{" "}

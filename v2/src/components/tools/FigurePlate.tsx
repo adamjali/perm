@@ -85,13 +85,13 @@ export function FigurePlate({
       >
         <span
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-[0.18em]",
+            "font-mono text-xs font-bold uppercase tracking-[0.1em]",
             ink ? "text-primary-on-ink" : "text-muted-foreground",
           )}
         >
           Fig {n}
         </span>{" "}
-        <span className="font-mono text-xs font-bold uppercase tracking-[0.14em]">
+        <span className="font-mono text-xs font-bold uppercase tracking-[0.1em]">
           {title}
         </span>{" "}
         {subject ? (
@@ -141,7 +141,7 @@ export function FigurePlate({
  */
 export function PlateLabel({ children }: { children: ReactNode }) {
   return (
-    <p className="mb-3 border-b border-border/40 pb-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+    <p className="mb-3 border-b border-border/40 pb-1.5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
       {children}
     </p>
   );

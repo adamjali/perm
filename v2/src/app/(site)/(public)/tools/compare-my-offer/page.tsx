@@ -91,7 +91,7 @@ export default async function CompareMyOfferPage() {
         </p>
       </header>
 
-      <section className="mt-10">
+      <section data-embed="compare-offer" className="mt-10">
         <CompareMyOffer occupations={options.occupations} states={options.states} />
       </section>
 

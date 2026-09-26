@@ -75,7 +75,7 @@ export function OutcomeMix({
                       aria-hidden="true"
                     />
                   </div>
-                  <span className="w-24 shrink-0 text-right font-mono text-[11px] tabular-nums text-foreground/60">
+                  <span className="w-24 shrink-0 text-right font-mono text-sm tabular-nums text-foreground/60">
                     {row.pct.toFixed(2)}% {row.label}
                   </span>
                 </div>

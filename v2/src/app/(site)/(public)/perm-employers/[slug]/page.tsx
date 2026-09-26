@@ -41,6 +41,9 @@ import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { getDatasetSchema } from "@/lib/structuredData";
 import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
+import { EmployerWait } from "@/components/entities/EmployerWait";
+import { getEmployerWait, getFieldWait, getFiledTodayEstimate } from "@/lib/turso/employerWait";
+import { similarSponsors } from "@/lib/turso/similarSponsors";
 import { NameSpellings } from "@/components/entities/NameSpellings";
 import { SizeBandNote } from "@/components/entities/SizeBandNote";
 import { OccupationMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup";
@@ -368,7 +371,13 @@ export default async function EmployerPage({
     // sections switched off.
     const live = await loadLiveOnly(slug);
     if (!live) notFound();
-    const [fresh, liveStages] = await Promise.all([getFreshness(), getEmployerStages().catch(() => null)]);
+    const [fresh, liveStages, liveWait, fieldWait, filedToday] = await Promise.all([
+      getFreshness(),
+      getEmployerStages().catch(() => null),
+      getEmployerWait(slug).catch(() => ({ n: 0, p25: null, p50: null, p75: null })),
+      getFieldWait().catch(() => null),
+      getFiledTodayEstimate().catch(() => null),
+    ]);
     return (
       <UnpublishedEmployer
         record={live.record}
@@ -382,6 +391,15 @@ export default async function EmployerPage({
             moves={liveStages ? employerMoves(liveStages).filter((m) => m.slug === slug) : []}
             logFrom={liveStages?.logFrom ?? null}
             asOf={liveStages?.asOf ?? null}
+          />
+        }
+        wait={
+          <EmployerWait
+            name={live.record.name}
+            mine={liveWait}
+            field={fieldWait}
+            today={filedToday}
+            className="mt-8"
           />
         }
       />
@@ -400,7 +418,7 @@ export default async function EmployerPage({
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305
   // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday] =
     await Promise.all([
       getDisclosureStats(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -433,6 +451,9 @@ export default async function EmployerPage({
       getEmployerStages().catch(() => null),
       debarmentsForSlug(canonicalSlug).catch(() => []),
       warnForSlug(canonicalSlug).catch(() => []),
+      getEmployerWait(canonicalSlug).catch(() => ({ n: 0, p25: null, p50: null, p75: null })),
+      getFieldWait().catch(() => null),
+      getFiledTodayEstimate().catch(() => null),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -484,6 +505,12 @@ export default async function EmployerPage({
   // entity long tail is what GSC has discovered and never crawled.
   const topOcc = facets.occupation?.[0];
   const topState = facets.state?.[0];
+  // Depends on the facets above, so it runs after them: one small indexed
+  // read per occupation (two at most).
+  const similar = await similarSponsors(canonicalSlug, facets.occupation ?? []).catch(() => ({
+    occupation: null,
+    sponsors: [],
+  }));
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
@@ -500,7 +527,7 @@ export default async function EmployerPage({
           · #{fmt(row.rank)}
           {kindTotal > 0 ? ` of ${fmt(kindTotal)}` : ""} by volume
         </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 translate="no" className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
           {row.name}
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
@@ -600,6 +627,7 @@ export default async function EmployerPage({
           className="mt-10"
         />
       ) : null}{" "}
+      <EmployerWait name={row.name} mine={empWait} field={fieldWait} today={filedToday} className="mt-10" />{" "}
       <EmployerPrograms
         name={row.name}
         perm={
@@ -859,6 +887,28 @@ export default async function EmployerPage({
         unit="filings"
         className="mt-12"
       />
+
+      {similar.occupation && similar.sponsors.length > 0 ? (
+        <PeerList
+          heading="Sponsors hiring for the same work"
+          note={
+            <>
+              The employers filing the most PERM cases for{" "}
+              <Link
+                href={`/perm-wages/${similar.occupation.slug}`}
+                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              >
+                {similar.occupation.label}
+              </Link>
+              , the occupation this sponsor files for most.
+            </>
+          }
+          items={similar.sponsors}
+          hrefBase={BASE}
+          unit="filings"
+          className="mt-12"
+        />
+      ) : null}
 
       <NameSpellings
         variants={variants}

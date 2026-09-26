@@ -80,6 +80,15 @@ jobs:
       - name: Visa bulletin parser contract
         working-directory: v2
         run: python3 scripts/test_visa_bulletin.py
+      - name: Bulletin capture measurement tests
+        working-directory: v2
+        run: python3 scripts/test_bulletin_captures.py
+      - name: NVC waiting list parser tests
+        working-directory: v2
+        run: python3 scripts/test_nvc_waiting_list.py
+      - name: Entity identity rules
+        working-directory: v2
+        run: python3 scripts/test_entity_identity.py
       - name: Policy feed selection rules
         working-directory: v2
         run: python3 scripts/test_policy_notices.py
@@ -151,6 +160,14 @@ jobs:
           python3 scripts/test_serial_gaps.py
           python3 scripts/test_lca_facets.py
           python3 scripts/test_uscis_quarterly.py
+          # The standing estimator backtest: what "pending on the day" means
+          # (6,500 expired certifications counted as pending on its first
+          # run), and both counting rules scored on one set of cases.
+          python3 scripts/test_backtest_queue.py
+          # The hourly watched-case check: prefix routing, and the conditional
+          # writes that make a second writer beside a sweep harmless (run on a
+          # real in-memory SQLite, including the sweep-got-there-first case).
+          python3 scripts/test_watched_cases.py
 
       # The nightly diff on perm_live_recent (~137k rows). A diff that never
       # matches is not slow, it is absent - and it logs "ok" while rewriting

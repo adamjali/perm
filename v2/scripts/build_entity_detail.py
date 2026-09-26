@@ -277,6 +277,97 @@ def decided_seen_map(db: Turso) -> dict[str, str]:
 LIVE_REMAINDER_DOC = "live_remainder"
 
 
+RECENT_WAIT_DAYS = 90
+DIRECT_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, direct)"
+
+
+def wait_summary(pairs: list[tuple[str, object]]) -> dict | None:
+    """Filing-to-decision days over observed decisions, as percentiles.
+
+    `pairs` is (filing_date, changed_at stamp) for each decision the sweep
+    WATCHED happen. Pure, so the test pins it. Null under 20 decisions: a
+    percentile over a handful is a list, not a distribution.
+    """
+    days = []
+    for filed, stamp in pairs:
+        decided = et_date(stamp)
+        if not filed or not decided:
+            continue
+        d = (datetime.date.fromisoformat(decided) - datetime.date.fromisoformat(filed[:10])).days
+        if d >= 0:
+            days.append(d)
+    if len(days) < 20:
+        return None
+    days.sort()
+    pick = lambda q: days[min(len(days) - 1, int(q * len(days)))]  # noqa: E731
+    return {"n": len(days), "p10": pick(0.10), "p25": pick(0.25), "p50": pick(0.50),
+            "p75": pick(0.75), "p90": pick(0.90)}
+
+
+EMPLOYER_RANK_MIN = 20
+
+
+def employer_waits(by_emp: dict[str, list], names: dict[str, str]) -> list[dict]:
+    """Employers with at least EMPLOYER_RANK_MIN observed decisions in the
+    window, fastest median first. Ties break on more decisions, then slug, so
+    the order is stable night to night. Pure, for the test."""
+    out = []
+    for slug, pairs in by_emp.items():
+        s = wait_summary(pairs)
+        if s is None or s["n"] < EMPLOYER_RANK_MIN:
+            continue
+        out.append({"slug": slug, "name": names.get(slug, slug), "n": s["n"], "p50": s["p50"]})
+    out.sort(key=lambda x: (x["p50"], -x["n"], x["slug"]))
+    return out
+
+
+def write_recent_wait(db: Turso) -> bool:
+    """perm_docs['recent_decision_wait']: how long the cases DOL decided in
+    the last 90 days took, filing to decision, for employer pages to compare
+    one employer against.
+
+    DECISIONS THE SWEEP WATCHED, NOT FIRST SIGHTINGS. `decided_seen` dates a
+    case the first time we saw it final, which for a case discovered late is
+    months after DOL decided it (2024 filings found on 2026-09-26 read as
+    decided that day). A final EVENT only exists when the sweep saw the case
+    pending and then decided, so it is dated to within the half day between
+    sweeps. Expirations (CERTIFIED to CERTIFIED - EXPIRED) and withdrawals are
+    left out: neither is DOL deciding a case.
+    """
+    since = int((time.time() - RECENT_WAIT_DAYS * 86_400) * 1000)
+    rows = rows_of(db.execute(
+        "SELECT s.filing_date, MIN(e.changed_at), r.employer_slug, r.employer_name "
+        "FROM perm_case_events e "
+        "JOIN perm_case_status s ON s.case_number = e.case_number "
+        "LEFT JOIN perm_live_recent r ON r.case_number = e.case_number "
+        "WHERE e.changed_at >= ? AND e.source = ? AND e.to_final = 1 "
+        "AND e.from_status NOT LIKE 'CERTIFIED%' AND e.from_status NOT LIKE 'DENIED%' "
+        "AND e.from_status NOT LIKE 'WITHDRAWN%' AND e.to_status NOT LIKE 'WITHDRAWN%' "
+        "GROUP BY e.case_number", [since, DIRECT_SOURCE]))
+    val = lambda c: None if c["type"] == "null" else c["value"]  # noqa: E731
+    pairs = [(val(r[0]), val(r[1])) for r in rows]
+    summary = wait_summary(pairs)
+    if summary is None:
+        log("  recent_decision_wait: fewer than 20 observed decisions; doc left as it was")
+        return False
+    by_emp: dict[str, list] = defaultdict(list)
+    names: dict[str, str] = {}
+    for r in rows:
+        slug = val(r[2])
+        if slug:
+            by_emp[slug].append((val(r[0]), val(r[1])))
+            names[slug] = val(r[3]) or slug
+    ranked = employer_waits(by_emp, names)
+    doc = {**summary, "windowDays": RECENT_WAIT_DAYS,
+           "computedOn": datetime.datetime.now(ZoneInfo("America/New_York")).date().isoformat(),
+           "employersRanked": len(ranked), "minDecisions": EMPLOYER_RANK_MIN,
+           "fastest": ranked[:10], "slowest": list(reversed(ranked[-10:])) if len(ranked) > 10 else []}
+    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES ('recent_decision_wait', ?, ?)",
+               [json.dumps(doc), int(time.time() * 1000)])
+    log(f"  recent_decision_wait: n={summary['n']:,}, median {summary['p50']} days")
+    return True
+
+
 def write_live_remainder_doc(db: Turso, live: list[dict]) -> bool:
     """Precompute the live remainder's counts into perm_docs['live_remainder'].
 
@@ -876,6 +967,11 @@ def main() -> int:
                 refresh_recent_12m(db)
             except Exception as exc:  # noqa: BLE001 - a facet must not fail the rebuild
                 log(f"  recent_12m refresh FAILED: {exc}")
+        # The all-employers comparison the employer pages' wait section reads.
+        try:
+            write_recent_wait(db)
+        except Exception as exc:  # noqa: BLE001 - a comparison must not fail the rebuild
+            log(f"  recent_decision_wait refresh FAILED: {exc}")
         # STAMP FRESHNESS AND AUDIT THE RUN. This table is the only thing that
         # makes cases newer than the last disclosure file findable, it rebuilds
         # under `|| true` in the sweep workflow, and it had no monitoring at

@@ -73,7 +73,7 @@ export function BulletinMoved({
       </Text>
 
       <Text className="em-text-secondary" style={styles.note}>
-        The full board and 84 months of history:{" "}
+        The full board and every bulletin since October 2014:{" "}
         <Link
           href="https://permtracker.app/tools/priority-date-calculator"
           className="em-link"

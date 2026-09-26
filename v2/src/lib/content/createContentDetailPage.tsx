@@ -18,6 +18,8 @@ import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import remarkGfm from "remark-gfm";
 import type { ContentType } from "./types";
+import { LanguageLinks } from "@/components/i18n/LanguageLinks";
+import { languageAlternates } from "@/lib/i18n/locales";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -48,7 +50,12 @@ export function createContentDetailPage(type: ContentType) {
     return {
       title: post.meta.seoTitle ?? post.meta.title,
       description: post.meta.seoDescription ?? post.meta.description,
-      alternates: { canonical: `/${type}/${slug}` },
+      // A guide with localized versions names them all (and they name it
+      // back, from the same map), so hreflang is reciprocal by construction.
+      alternates: {
+        canonical: `/${type}/${slug}`,
+        ...(languageAlternates(`/${type}/${slug}`) ? { languages: languageAlternates(`/${type}/${slug}`)! } : {}),
+      },
       openGraph: (() => {
         // CRITICAL: omit `images` here so Next.js can merge the per-slug
         // file-based opengraph-image.tsx at this route segment. Next 16.2.6
@@ -95,6 +102,11 @@ export function createContentDetailPage(type: ContentType) {
           steps={steps}
           videos={videos.length > 0 ? videos : undefined}
         />
+        {languageAlternates(`/${type}/${slug}`) ? (
+          <div className="mx-auto max-w-[1400px] px-4 pt-6 sm:px-8">
+            <LanguageLinks current="en" />
+          </div>
+        ) : null}
         <ArticleLayout meta={post.meta} type={type} slug={slug} related={related}>
           <MDXRemote
             source={post.content}

@@ -141,17 +141,18 @@ export function CaseAlertForm({
     <form
       onSubmit={submit}
       className={cn(
-        "border-2 border-border bg-card p-5 shadow-hard sm:p-6",
+        "border-2 border-border bg-card p-5 shadow-hard sm:p-6 print:hidden",
         className,
       )}
     >
-      <p className="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+      <p className="flex items-center gap-2 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
         <BellIcon className="h-4 w-4" weight="fill" aria-hidden="true" />{" "}
         Watch this case
       </p>{" "}
       <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-        Get an email when DOL&apos;s status for this {noun} changes. We&apos;ll
-        stop once it&apos;s decided.
+        Get an email when DOL&apos;s status for this {noun} changes. A watched
+        case is checked against DOL every hour, and we stop once it&apos;s
+        decided.
       </p>
       <div className="mt-4 flex flex-wrap items-stretch gap-3">
         <label htmlFor={inputId} className="sr-only">

@@ -127,7 +127,7 @@ function Rows({
           onSort={(k) => setSort((cur) => nextSort(cur, k, columns))}
           leading={["Case"]}
         />
-        <tbody className="bg-card">
+        <tbody translate="no" className="bg-card">
           {ordered.map((r) => (
             <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
@@ -198,7 +198,7 @@ function DisclosedRows({
           onSort={(k) => setSort((cur) => nextSort(cur, k, columns))}
           leading={["Case"]}
         />
-        <tbody className="bg-card">
+        <tbody translate="no" className="bg-card">
           {ordered.map((r) => (
             <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">

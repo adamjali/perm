@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-09-24
+> **Status:** Production | **Last Updated:** 2026-09-26
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -6387,3 +6387,92 @@ Two traps from building it:
   confirmation emails has them land in the NEXT test's fetch stub (16 "sends" where 1 was expected).
   Filter the stub by what the test is about.
 - **`npx convex codegen` uploads to the dev deployment**, crons included; the new sweeps run there too.
+
+## The Sep 26 2026 batch: the estimate's count, a scorecard, and the gaps a rival sweep found
+
+One build, one deploy. The checklist, with every item and what was found on the way, is
+[`../.planning/batch-2026-09-26.md`](../.planning/batch-2026-09-26.md); the estimator backtest is
+[`../.planning/estimator-backtest-2026-09-26.md`](../.planning/estimator-backtest-2026-09-26.md).
+
+**Only analyst review counts as "ahead".** `inLine()` in `src/lib/queueAhead.ts`. Counting every
+pending case (holds, RFIs, appeals) made every date about a week late: the standing backtest
+(`scripts/backtest_queue.py`, T0 2026-09-13, 7,112 real decisions) measured a 3-day typical miss
+for the new count against 9 for the old, on the same cases. The employer-initial shift is gone
+from every date (it moved a date by at most 16 days against a noise floor several times that).
+The range caveat quotes the re-measured coverage (about 4 in 10 near the front), never the old one.
+
+**The scorecard records before the outcome.** `/api/cron/scorecard` (Vercel cron, noon UTC)
+samples cases daily, stores our prediction in Turso `estimate_predictions` (id
+`<day>:<source>:<case>`, INSERT OR IGNORE), grades what has settled (30 days), and writes
+`perm_docs['scorecard_summary']` (ours only, public) and `['scorecard_rivals']` (admin only, the
+rivals as A, B, C). Rival endpoints come from `RIVAL_A_API` / `RIVAL_B_API` on Vercel; nothing in
+the repo names them. The backtest writes `perm_docs['estimator_backtest']` weekly (Mondays).
+
+**Watched cases are checked hourly.** `watched-cases.yml` (dispatched `:25` past each hour) reads
+case NUMBERS only from `watchedCases:watchedCaseNumbers`, asks DOL, and writes with conditional
+statements (`UPDATE ... WHERE current_status = <what I read>`, then the event only
+`WHERE changes() > 0`), so a sweep running at the same time can't produce a double event. It
+skips an hour when a sweep is running and runs the alert sweeps only when something moved.
+
+**New public pages** (each in the sitemap, rail or tools nav, palette, llms.txt, known-routes, and
+with its own social card): `/tools/green-card-line`, `/tools/eb2-vs-eb3`,
+`/tools/which-green-card`, `/visa-bulletin/categories` (+45 line pages), `/h1b-lottery-odds`,
+`/nvc-waiting-list`, `/green-card-timelines`, `/zh` `/es` `/pt-br` `/ko` `/vi`, and 19 embeds
+at `/embed/<slug>` (noindex, framing allowed there only). Case pages gained "cases filed next to
+yours"; employer pages a wait section and similar sponsors.
+
+**The embedded lookup asks DOL live under three caps**: 50 per site per UTC day, 5,000 across
+all sites, then the site-wide discovery budget, one `perm_docs['embed_live_<day>']` row. A live
+answer for a case we already hold is never written (the sweep must see the change to send the
+alert). Firewall rules 1 and 4 carry an `/embed/case-status?case=` group since Sep 26 (config
+version 21); `/embed/*` stays out of the challenge, because a challenge can't finish inside a
+third-party iframe.
+
+**Community timelines never take the PERM half from the reader**: `communityTimelines.verifyCase`
+reads it from DOL's record. No free text anywhere, a sha256 of a browser-held key instead of an
+account, and the public board opens at 25 shared timelines (medians need 5).
+
+**The bulletin and State's yearly PDFs are automatic again.** The State Department serves the
+same pages from its own second host, `adoption.state.gov`: a plain request gets 200 for the
+bulletin index, every month page, the statistics pages and their PDFs, it has no robots.txt
+rule, and nothing is challenged (travel.state.gov answered the same minute's requests 403).
+`processing-times-ingest.yml` runs `ingest_visa_bulletin.py --direct` (State's index, then any
+month not held from a primary source, two a run, same parser and checks as a saved page, rank 3)
+and `ingest_visa_limits.py --discover` (the newest limits sheet and Table V, followed from State's
+own links, loaded only for a fiscal year not yet held). Both warn and exit 0 on a refusal: the
+freshness budgets are the alarm and `--from-file` / `--limits` stay the fallback. **Validation
+runs before any database connection** in both routes; the refactor that added `--direct` briefly
+connected first, and only a test run WITHOUT credentials showed it.
+
+**USCIS's processing-times figures are the one source nothing can script.** Their age check moved
+from the vitest suite (which would have failed every deploy eight months after a refresh) to
+`check_hand_read_figures` in the health check: a warning past 120 days, a failure past 270.
+
+**The bulletin archive reaches October 2014** (144 bulletins after the backfill write). The
+dates-for-filing chart began with October 2015, so earlier month pages say so instead of drawing
+an empty table. Copy says "every bulletin since October 2014", never a count typed by hand.
+
+**USCIS stopped publishing per-center and per-office times.** Read in a real browser on Sep 26:
+every I-140 class and the employment I-485 list one office, Service Center Operations (plus "All
+Field Offices" for the I-485), and the page prints one figure, 80% of cases decided over the
+past six months. `src/lib/processing-times/i140ProcessingTimes.ts` holds the eight 80% figures
+(`months80`) and `PROCESSING_TIMES_AS_OF`, whose test fails when they age. `egov.uscis.gov`
+answers every script with a Cloudflare challenge, so the refresh is a browser read by hand.
+
+**State published no NVC waiting list after November 2023** (its statistics page no longer links
+the report; the 2024 and 2025 names 404). `scripts/ingest_nvc_waiting_list.py --archive` loads
+the seven reports from the Internet Archive; its freshness budget is 1,200 days, with the reason
+in the script.
+
+**Never `fetchQuery` from `convex/nextjs` on a public page.** It pins `cache: "no-store"`, and one
+no-store fetch makes the whole route dynamic whatever `revalidate` it exports: every visit a server
+render and its database reads. It had quietly made `/tools/i140-calculator` and
+`/tools/green-card-timeline` dynamic in production, and did the same to `/perm-processing-times`
+the moment a Convex read was added. Use `queryStatic(query, args, revalidate)` from
+`src/lib/convexStatic.ts`; `public-convex-reads.test.ts` fails on the old import. Check the
+build's route table (`○` vs `ƒ`) for any page that gains a data read.
+
+**Instruments that lied this time.** Impeccable's `detect` cannot open a path containing `(site)`
+(it globs), so a scan of the app tree silently skipped 101 of 153 files: copy them to flat names
+first. `git diff --name-only` prints repo-root paths from inside `v2/`; add `--relative`. And no
+workflow runs eslint, which is how a `Date.now()` in render reached `main`.

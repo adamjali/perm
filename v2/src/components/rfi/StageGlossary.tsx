@@ -30,7 +30,7 @@ function CountBadge({
   if (!hasPage) {
     return (
       <span
-        className="font-mono text-[11px] font-semibold text-foreground/70"
+        className="font-mono text-sm font-semibold text-foreground/70"
         title={shown ? `As of ${shown}` : undefined}
       >
         {dated}
@@ -40,7 +40,7 @@ function CountBadge({
   return (
     <Link
       href={`/perm-rfi-audit/${slug}`}
-      className="font-mono text-[11px] font-semibold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+      className="font-mono text-sm font-semibold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
     >
       {dated}
     </Link>
@@ -308,7 +308,7 @@ export function StageGlossary({
                     ) : null}{" "}
                     <h3 className="font-heading text-base font-black">{label}</h3>{" "}
                     {e.status ? (
-                      <code className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground">
+                      <code className="font-mono text-sm uppercase tracking-wide text-muted-foreground">
                         {e.status}
                       </code>
                     ) : null}{" "}
@@ -357,7 +357,7 @@ export function StageGlossary({
                   they are reading.
                 */}
                 {e.cite ? (
-                  <p className="font-mono text-[11px]">
+                  <p className="font-mono text-sm">
                     <a
                       className="font-bold text-primary underline"
                       href={`${ECFR}${e.cite.section}`}

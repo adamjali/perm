@@ -1556,6 +1556,13 @@ export const sweepCaseChanges = internalAction({
               caseUrl,
               unsubscribeUrl: unsubUrl,
               prefsUrl,
+              // The ask for post-PERM dates goes with a PERM case's
+              // certification only: an expiry, a denial or another program's
+              // approval has nothing after it to report here.
+              timelineUrl:
+                program === "perm" && /^CERTIFIED$/i.test(status.trim())
+                  ? `${caseUrl}#timeline`
+                  : null,
             });
           },
         );

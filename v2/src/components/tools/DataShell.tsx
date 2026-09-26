@@ -70,7 +70,11 @@ export function DataShell({ children }: { children: React.ReactNode }) {
     // shell was never wide enough to be centred - and above it the rail is
     // flush and the content lands within ~7px of where it used to.
     <div className="w-full px-4 max-lg:pt-3 sm:px-6 lg:flex lg:gap-8">
-      <DataRail />
+      {/* `contents` keeps the wrapper out of the flex layout; it exists only so
+          the rail can be left off a printed page. */}
+      <div className="contents print:hidden">
+        <DataRail />
+      </div>
       {/* `min-w-0` is the load-bearing class here. A flex item's default
           minimum is its content, so one wide table or a long unbroken case
           number would push the column past the viewport and take the whole

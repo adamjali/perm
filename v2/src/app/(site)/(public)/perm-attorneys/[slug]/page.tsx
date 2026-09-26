@@ -347,7 +347,7 @@ export default async function AttorneyPage({
           · #{fmt(row.rank)}
           {kindTotal > 0 ? ` of ${fmt(kindTotal)}` : ""} by volume
         </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 translate="no" className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
           {row.name}
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">

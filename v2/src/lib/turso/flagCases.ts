@@ -316,7 +316,8 @@ export interface FlagProgram {
   config: FlagProgramConfig;
   normalise: (input: string) => string | null;
   isNumber: (input: string) => boolean;
-  lookup: (input: string) => Promise<FlagCaseRow | null>;
+  /** `discover: false` returns the stored live row or null, never asking DOL. */
+  lookup: (input: string, opts?: { discover?: boolean }) => Promise<FlagCaseRow | null>;
   discover: (caseNumber: string, f?: typeof fetch, now?: Date) => Promise<FlagCaseRow | null>;
   search: (args: SearchFlagArgs) => Promise<FlagCaseRow[]>;
   list: (args: ListFlagArgs) => Promise<FlagListPage>;
@@ -412,7 +413,7 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     };
   };
 
-  const lookup = async (input: string): Promise<FlagCaseRow | null> => {
+  const lookup = async (input: string, opts: { discover?: boolean } = {}): Promise<FlagCaseRow | null> => {
     const cn = normalise(input);
     if (!cn) return null;
     const r = await one<FlagDbRow>(`SELECT ${FLAG_COLS} FROM ${table} WHERE case_number = ?`, [cn]);
@@ -434,6 +435,7 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     // A case the quarterly file already holds is decided; the page renders
     // the file's record. Asking DOL live for it spent a budget unit and a
     // request on an answer we had, on every lookup of every decided case.
+    if (opts.discover === false) return null;
     if (await lookupDisclosed(cn)) return null;
     return discover(cn);
   };

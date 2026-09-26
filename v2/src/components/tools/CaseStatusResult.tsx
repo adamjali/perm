@@ -9,6 +9,7 @@ import { CaseMilestones } from "@/components/tools/CaseMilestones";
 import { CasePushAlert } from "@/components/tools/CasePushAlert";
 import { CaseEstimate } from "@/components/tools/CaseEstimate";
 import { CaseNumberPlate } from "@/components/tools/CaseNumberPlate";
+import { SameDayCases } from "@/components/tools/SameDayCases";
 import { QueueTape } from "@/components/tools/QueueTape";
 import {
   CaseWall,
@@ -31,6 +32,7 @@ import { getStatusMeaning, KIND_LABEL } from "@/lib/permStatus";
 import { statusAnchor } from "@/lib/statusDictionary";
 import { isApproval } from "@/lib/caseStatusVocabulary";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
+import type { SameDay } from "@/lib/sameDay";
 import type { CaseLookupResult } from "@/lib/turso/caseLookup";
 import type { CaseWageContext, CohortDuration } from "@/lib/turso/caseContext";
 import type { CohortMonth } from "@/lib/liveQueue";
@@ -85,11 +87,6 @@ export interface CaseStatusResultProps {
   /** DOL's measured decision rate, or null when unmeasurable. */
   decisionPace?: Parameters<typeof CaseEstimate>[0]["decisionPace"];
   sweepAgeDays?: number | null;
-  /**
-   * Measured day-shift for the employer's initial, or null when the alphabet
-   * document is unavailable or the name does not start with a letter.
-   */
-  letterDelta: number | null;
   /** Measured stage ages, so the estimate reads today's numbers not a table. */
   measuredStageAges?: ReadonlyMap<string, number>;
   /** What usually happens next at this case's stage, when measurable. */
@@ -101,8 +98,8 @@ export interface CaseStatusResultProps {
     entered: number;
     windowDays: number;
   } | null;
-  /** The initial the shift came from, for the line that names it. */
-  letterInitial: string | null;
+  /** The PERM cases filed the same day, or null when unknown. */
+  sameDay?: SameDay | null;
   /** "YYYY-MM-DD", passed in so every elapsed figure shares one clock. */
   today: string;
 }
@@ -133,11 +130,10 @@ export function CaseStatusResult({
   casesAhead = null,
   decisionPace = null,
   sweepAgeDays = null,
-  letterDelta,
   measuredStageAges,
   stageExit,
   stageDuration,
-  letterInitial,
+  sameDay,
   today,
 }: CaseStatusResultProps) {
   const { live, decided, cohort, employer, statusOutlook } = result;
@@ -301,8 +297,6 @@ export function CaseStatusResult({
         casesAhead={casesAhead}
         decisionPace={decisionPace}
         sweepAgeDays={sweepAgeDays}
-        letterDeltaDays={letterDelta}
-        letterInitial={letterInitial}
         measuredStageAges={measuredStageAges}
         stageExit={stageExit}
         stageDuration={stageDuration}
@@ -323,6 +317,9 @@ export function CaseStatusResult({
           decided cases too, because a certified PERM is exactly the case whose
           next stage people want to compare notes on. */}
       <CaseMilestones caseNumber={result.caseNumber} className="mt-8" />{" "}
+      {/* The cohort a reader actually compares themselves with: the cases
+          DOL numbered the same day, and the ones right beside this number. */}
+      {sameDay ? <SameDayCases data={sameDay} className="mt-8" /> : null}{" "}
       {!isFinal && wall ? (
         <Position
           wall={wall}
@@ -488,11 +485,18 @@ function Answer({
         </>
       ) : wall && !wall.isPastFront ? (
         <>
-          DOL is working {formatMonth(wall.frontMonth)}
-          {publishedFront && publishedFront !== wall.frontMonth ? (
-            <> ({formatMonth(publishedFront)} by DOL&apos;s own published figure)</>
-          ) : null}
-          , and {int(wall.ahead)} undecided cases were filed before this one.
+          {publishedFront ? (
+            <>
+              DOL says it&apos;s working {formatMonth(publishedFront)}
+              {publishedFront !== wall.frontMonth ? (
+                <> (the oldest month still open is {formatMonth(wall.frontMonth)})</>
+              ) : null}
+            </>
+          ) : (
+            <>The oldest month still open is {formatMonth(wall.frontMonth)}</>
+          )}
+          , and {int(wall.ahead)} cases in DOL&apos;s normal queue were filed
+          before this one.
         </>
       ) : wall ? (
         <>
@@ -539,7 +543,9 @@ function TheRecord({
         ? "bg-data-warn/15"
         : "bg-tint-primary";
 
-  const rows: { label: string; value: React.ReactNode }[] = [
+  // `raw` rows are DOL's own words (a name, a title): a browser translating
+  // the page leaves them as DOL printed them, so they still match the record.
+  const rows: { label: string; value: React.ReactNode; raw?: boolean }[] = [
     {
       label: "Filed",
       value: filingDate
@@ -548,8 +554,8 @@ function TheRecord({
           }`
         : "Not recorded",
     },
-    { label: "Employer", value: employerName ?? "Not recorded" },
-    { label: "Job title", value: jobTitle ?? "Not recorded" },
+    { label: "Employer", value: employerName ?? "Not recorded", raw: !!employerName },
+    { label: "Job title", value: jobTitle ?? "Not recorded", raw: !!jobTitle },
     {
       label: "Checked against DOL",
       value: check
@@ -560,14 +566,14 @@ function TheRecord({
 
   return (
     <div className="border-2 border-border bg-card shadow-hard">
-      <p className="border-b-2 border-border px-4 py-2 font-mono text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground sm:px-5">
+      <p className="border-b-2 border-border px-4 py-2 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground sm:px-5">
         The record
       </p>
       <div className={`border-b-2 border-border px-4 py-4 sm:px-5 ${statusTone}`}>
-        <p className={`font-mono text-[11px] font-bold uppercase tracking-[0.18em] ${kind === "decided" ? "text-background/60" : "text-muted-foreground"}`}>
+        <p className={`font-mono text-sm font-bold uppercase tracking-[0.1em] ${kind === "decided" ? "text-background/80" : "text-muted-foreground"}`}>
           {kind ? KIND_LABEL[kind] : "Status"}
         </p>{" "}
-        <p className="mt-1 font-heading text-2xl font-black leading-tight">
+        <p className="mt-1 font-heading text-2xl font-black leading-tight" translate={status ? "no" : undefined}>
           {status ? prettyStatus(status) : "Not recorded"}
         </p>
       </div>
@@ -575,10 +581,12 @@ function TheRecord({
         {rows.map((r) => (
           <Fragment key={r.label}>{" "}
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 border-b border-border/50 py-2 last:border-b-0">
-            <dt className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+            <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
               {r.label}
             </dt>{" "}
-            <dd className="min-w-0 text-right text-base font-bold">{r.value}</dd>
+            <dd className="min-w-0 text-right text-base font-bold" translate={r.raw ? "no" : undefined}>
+              {r.value}
+            </dd>
           </div>
           </Fragment>
         ))}
@@ -609,7 +617,7 @@ function Stat({
         emphasis ? "border-foreground bg-card shadow-hard" : "border-border bg-background",
       )}
     >
-      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
         {label}
       </p>{" "}
       <p className="mt-1 font-heading text-4xl font-black leading-none tabular-nums">
@@ -674,8 +682,8 @@ function Position({
           }
           note={
             wall.isPastFront
-              ? `DOL is working ${formatMonth(wall.frontMonth)}, newer than this case`
-              : `DOL is working ${formatMonth(wall.frontMonth)}`
+              ? `oldest month still open: ${formatMonth(wall.frontMonth)}, newer than this case`
+              : `oldest month still open: ${formatMonth(wall.frontMonth)}`
           }
         />
       </div>
@@ -914,16 +922,16 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
             reads "$63,695$109,283 median$158,683". The rendered glue detector
             misses this one because it requires a word character on both sides
             and "$" is not one; the source gate is what caught it. */}
-        <p className="absolute bottom-0 left-0 font-mono text-[11px] tabular-nums text-foreground/70">
+        <p className="absolute bottom-0 left-0 font-mono text-sm tabular-nums text-foreground/70">
           {money(p5)}
         </p>{" "}
         <p
-          className="absolute bottom-0 -translate-x-1/2 whitespace-nowrap font-mono text-[11px] font-bold tabular-nums"
+          className="absolute bottom-0 -translate-x-1/2 whitespace-nowrap font-mono text-sm font-bold tabular-nums"
           style={{ left: `${clamp(at(p50))}%` }}
         >
           {money(p50)} median
         </p>{" "}
-        <p className="absolute bottom-0 right-0 font-mono text-[11px] tabular-nums text-foreground/70">
+        <p className="absolute bottom-0 right-0 font-mono text-sm tabular-nums text-foreground/70">
           {money(p95)}
         </p>
       </div>
@@ -1133,7 +1141,7 @@ function EmployerRecord({
                 twin. The twin version rendered every label TWICE into
                 textContent, which is what Google reads. */}
             <div className="flex min-w-0 flex-row-reverse items-baseline justify-end gap-2">
-              <dt className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              <dt className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
                 {f.label}
               </dt>{" "}
               <dd className="font-heading text-3xl font-black leading-none tabular-nums">

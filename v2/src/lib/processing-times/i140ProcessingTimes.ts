@@ -13,11 +13,20 @@
  *     asking someone to pick Texas or Nebraska offered a choice that changes
  *     nothing and implied a precision the source does not have.
  *
- * What replaced it: USCIS's own published ranges per petition subtype. The
- * subtypes within a category differ enormously (EB-1 spans 15.5 months for an
- * outstanding professor and 34.5 for extraordinary ability), so collapsing a
+ * What replaced it: USCIS's own published figure per petition subtype. The
+ * subtypes within a category differ enormously (EB-1 runs from 15 months for an
+ * outstanding professor to 32.5 for extraordinary ability), so collapsing a
  * category to one number is what produced the original error. Each category
  * reports its subtypes.
+ *
+ * **What the figure is (re-read 2026-09-26).** USCIS's processing-times page
+ * prints ONE number per subtype: "80% of cases are completed within N months",
+ * which it defines as "how long it took us to complete 80% of adjudicated cases
+ * over the past six months". This module used to store two numbers per subtype
+ * (a low and a high, documented as the 50% and 93% points); the page no longer
+ * prints a range, so each subtype now carries the single 80% figure, read in a
+ * real browser from Service Center Operations, the only office USCIS lists for
+ * any I-140 subtype.
  */
 
 // ============================================================================
@@ -38,16 +47,17 @@ export type I140Category = "EB-1" | "EB-2" | "EB-2-NIW" | "EB-3" | "";
  */
 export type ServiceCenter = "Texas" | "Nebraska" | "California" | "Vermont" | "";
 
-/** One USCIS-published petition subtype and its reported range. */
+/** One USCIS-published petition subtype and its reported figure. */
 export interface I140Subtype {
   /** USCIS's own code, e.g. `E11`. */
   code: string;
   /** Plain-language name, as USCIS labels it. */
   label: string;
-  /** Months within which 50% of cases complete, as published. */
-  lowMonths: number;
-  /** Months within which 93% of cases complete, as published. */
-  highMonths: number;
+  /**
+   * Months within which USCIS completed 80% of the petitions of this subtype it
+   * decided over the past six months, as its processing-times page prints it.
+   */
+  months80: number;
   /**
    * Business days under premium processing.
    *
@@ -57,10 +67,15 @@ export interface I140Subtype {
   premiumBusinessDays: 15 | 45;
 }
 
+/**
+ * A category's figures. `lowMonths` and `highMonths` are NOT a percentile
+ * range: they are the fastest and slowest subtype's 80% figure, so a category
+ * with one subtype (EB-2, the national interest waiver) has low == high.
+ */
 export interface ProcessingTimeRange {
-  /** Lowest published figure across the category's subtypes. */
+  /** The smallest 80% figure among the category's subtypes. */
   lowMonths: number;
-  /** Highest published figure across the category's subtypes. */
+  /** The largest 80% figure among the category's subtypes. */
   highMonths: number;
   subtypes: I140Subtype[];
 }
@@ -76,7 +91,7 @@ export interface ProcessingTimeRange {
  * sixteen months while quietly reporting numbers a quarter of the real value,
  * because nothing in the codebase could tell that it had gone stale.
  */
-export const PROCESSING_TIMES_AS_OF = "2026-08-17";
+export const PROCESSING_TIMES_AS_OF = "2026-09-26";
 
 /** Where these came from, rendered next to the figures. */
 export const PROCESSING_TIMES_SOURCE_URL =
@@ -84,20 +99,20 @@ export const PROCESSING_TIMES_SOURCE_URL =
 
 const SUBTYPES: Record<Exclude<I140Category, "">, I140Subtype[]> = {
   "EB-1": [
-    { code: "E11", label: "Extraordinary ability", lowMonths: 31, highMonths: 34.5, premiumBusinessDays: 15 },
-    { code: "E12", label: "Outstanding professor or researcher", lowMonths: 15.5, highMonths: 19, premiumBusinessDays: 15 },
-    { code: "E13", label: "Multinational executive or manager", lowMonths: 27, highMonths: 29, premiumBusinessDays: 45 },
+    { code: "E11", label: "Extraordinary ability", months80: 32.5, premiumBusinessDays: 15 },
+    { code: "E12", label: "Outstanding professor or researcher", months80: 15, premiumBusinessDays: 15 },
+    { code: "E13", label: "Multinational executive or manager", months80: 27.5, premiumBusinessDays: 45 },
   ],
   "EB-2": [
-    { code: "E21", label: "Advanced degree or exceptional ability", lowMonths: 2.5, highMonths: 7.5, premiumBusinessDays: 15 },
+    { code: "E21", label: "Advanced degree or exceptional ability", months80: 3, premiumBusinessDays: 15 },
   ],
   "EB-2-NIW": [
-    { code: "NIW", label: "National interest waiver", lowMonths: 29, highMonths: 32, premiumBusinessDays: 45 },
+    { code: "NIW", label: "National interest waiver", months80: 30, premiumBusinessDays: 45 },
   ],
   "EB-3": [
-    { code: "E31", label: "Skilled worker", lowMonths: 4, highMonths: 8.5, premiumBusinessDays: 15 },
-    { code: "EW3", label: "Unskilled worker", lowMonths: 7.5, highMonths: 12.5, premiumBusinessDays: 15 },
-    { code: "NUR", label: "Professional nurse or physical therapist", lowMonths: 24.5, highMonths: 26, premiumBusinessDays: 15 },
+    { code: "E31", label: "Skilled worker", months80: 4, premiumBusinessDays: 15 },
+    { code: "EW3", label: "Unskilled worker", months80: 9, premiumBusinessDays: 15 },
+    { code: "NUR", label: "Professional nurse or physical therapist", months80: 25.5, premiumBusinessDays: 15 },
   ],
 };
 
@@ -106,7 +121,8 @@ const SUBTYPES: Record<Exclude<I140Category, "">, I140Subtype[]> = {
 // ============================================================================
 
 /**
- * Published range for a category, plus the subtypes it spans.
+ * A category's published figures: the span of its subtypes' 80% figures, plus
+ * the subtypes themselves.
  *
  * Returns null for an unset category rather than a default: no category means
  * no answer, and a placeholder number here is what the old table effectively
@@ -118,8 +134,8 @@ export function getI140ProcessingTime(category: I140Category): ProcessingTimeRan
   if (!subtypes || subtypes.length === 0) return null;
 
   return {
-    lowMonths: Math.min(...subtypes.map((s) => s.lowMonths)),
-    highMonths: Math.max(...subtypes.map((s) => s.highMonths)),
+    lowMonths: Math.min(...subtypes.map((s) => s.months80)),
+    highMonths: Math.max(...subtypes.map((s) => s.months80)),
     subtypes,
   };
 }
@@ -139,8 +155,18 @@ export function getPremiumBusinessDays(category: I140Category): number | null {
   return only.length === 1 && only[0] !== undefined ? only[0] : null;
 }
 
-/** `"2.5 to 7.5 months"`, or `"29 to 32 months"`. */
+const fmtMonths = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
+
+/** `"3 months"`, or `"32.5 months"`. */
+export function formatMonths(n: number): string {
+  return `${fmtMonths(n)} months`;
+}
+
+/**
+ * `"15 to 32.5 months"` across a category's subtypes, or `"3 months"` when the
+ * two ends are equal: a single-subtype category must never read "3 to 3".
+ */
 export function formatMonthRange(low: number, high: number): string {
-  const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(1));
-  return `${fmt(low)} to ${fmt(high)} months`;
+  if (low === high) return formatMonths(low);
+  return `${fmtMonths(low)} to ${fmtMonths(high)} months`;
 }

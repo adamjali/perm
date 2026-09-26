@@ -45,7 +45,8 @@ export const metadata: Metadata = withSocialCard({
   },
 }, "case-search");
 
-// The counts move once a night; the search itself is live through the route.
+// The counts move twice a day, after each sweep; the search itself is live
+// through the route.
 export const revalidate = 86400;
 
 const fmt = (n: number) => n.toLocaleString("en-US");
@@ -187,8 +188,8 @@ export default async function CaseSearchPage() {
             <b className="font-bold">A number is live, a name is not.</b> A case
             number is answered by asking DOL at that moment, so a filing made
             yesterday resolves. A name is answered from this site&apos;s own
-            copy, rebuilt every night, so one from the last day or two may not
-            appear under its employer yet.
+            copy, rebuilt twice a day, so one from the last day may not appear
+            under its employer yet.
           </p>{" "}
           <p>
             <b className="font-bold">Two records per case, merged.</b> An open

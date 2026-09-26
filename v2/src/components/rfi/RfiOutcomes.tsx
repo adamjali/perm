@@ -172,7 +172,7 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-[7.5rem_1fr] items-center gap-3">
-      <div className="font-mono text-[11px] font-bold uppercase leading-tight tracking-wider">
+      <div className="font-mono text-sm font-bold uppercase leading-tight tracking-wider">
         {label}
       </div>{" "}
       <div className="flex h-9 border-2 border-border bg-secondary">

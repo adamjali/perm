@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
 import { PermTimelineEstimator } from "@/components/tools/PermTimelineEstimator";
-import { getAlphabet } from "@/lib/turso/alphabet";
 import { getDailyDecisions, getQueueAhead } from "@/lib/turso/publicData";
 import { businessDayPace } from "@/lib/dolPace";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
@@ -63,7 +62,7 @@ const FAQS = [
   },
   {
     q: "Does DOL decide PERM cases in the order they were filed?",
-    a: "Broadly, but not strictly. DOL works through filing months in order and goes alphabetically by employer name within a month. An audit, supervised recruitment, or a request for information takes a case out of that order and adds months, and none of those are predictable from a filing date.",
+    a: "Broadly, but not strictly. DOL works through filing months in order. An audit, supervised recruitment, or a request for information takes a case out of that order and adds months, and none of those are predictable from a filing date.",
   },
   {
     q: "My filing month has already passed and I have no decision. What does that mean?",
@@ -74,15 +73,9 @@ const FAQS = [
 export default async function PermTimelineCalculatorPage() {
   // Wrapped: a page that cannot reach Convex must still render its explanation,
   // its FAQ and its signup rather than failing the route outright.
-  const [data, daily, alphabet, decisionPace, sweep] = await Promise.all([
+  const [data, daily, decisionPace, sweep] = await Promise.all([
     getEstimatorData(),
     getDailyDecisions(),
-    // DOL works each filing month alphabetically by employer, and that
-    // ordering is what turns "November" into a day. Measured, not assumed:
-    // A sits 11.4 days below the corpus mean and Z 15.7 above it, a 27.1-day
-    // span end to end. Null when the doc is missing, and the component then
-    // asks for nothing and shows a month.
-    getAlphabet(),
     // The CALENDAR rate the decision-pace model divides by, distinct from
     // `pace` below (decisions per WORKING day, a display figure over a much
     // longer series). Both null-safe: without either the model is omitted and
@@ -130,10 +123,9 @@ export default async function PermTimelineCalculatorPage() {
         </p>
       </header>
 
-      <section className="mt-10">
+      <section data-embed="perm-timeline" className="mt-10">
         <PermTimelineEstimator
           frontier={data ? data.frontier : null}
-          alphabet={alphabet}
           cohorts={data ? data.cohorts : []}
           frontierAdvance={data ? data.frontierAdvance : null}
           frontierHistory={data ? data.frontierHistory : []}

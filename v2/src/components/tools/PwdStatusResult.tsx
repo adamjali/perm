@@ -153,7 +153,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
             Prevailing wage request · ETA-9141
           </p>{" "}
           <div className="mt-2 flex flex-wrap items-center gap-3">
-            <h2 className="font-heading text-2xl font-black sm:text-3xl">{disclosed.caseNumber}</h2>{" "}
+            <h2 className="font-heading text-2xl font-black sm:text-3xl" translate="no">{disclosed.caseNumber}</h2>{" "}
             <span className="border-2 border-border bg-primary px-2 py-0.5 font-mono text-xs font-bold uppercase text-primary-foreground">
               {prettyStatus(disclosed.status)}
             </span>
@@ -161,7 +161,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
             <div>
               <dt className="text-sm font-bold text-foreground/70">Employer</dt>{" "}
-              <dd className="font-medium">
+              <dd className="font-medium" translate="no">
                 {disclosed.employerName ? (
                   <Link href={`/pwd-cases?q=${encodeURIComponent(disclosed.employerName)}`} className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                     {disclosed.employerName}
@@ -240,7 +240,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           Prevailing wage request · ETA-9141
         </p>{" "}
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <h2 className="font-heading text-2xl font-black sm:text-3xl">{row.caseNumber}</h2>{" "}
+          <h2 className="font-heading text-2xl font-black sm:text-3xl" translate="no">{row.caseNumber}</h2>{" "}
           <span
             className={
               "border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chipClass(row)
@@ -252,7 +252,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
         <dl className="mt-4 grid grid-cols-1 gap-x-6 gap-y-3 text-base sm:grid-cols-2 [&>*]:min-w-0">
           <div>
             <dt className="text-sm font-bold text-foreground/70">Employer</dt>{" "}
-            <dd className="font-medium">
+            <dd className="font-medium" translate="no">
               {row.employerName ? (
                 <Link
                   href={`/pwd-cases?q=${encodeURIComponent(row.employerName)}`}

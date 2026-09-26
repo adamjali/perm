@@ -35,7 +35,7 @@ function ordinal(n: number): string {
 
 const field =
   "min-h-11 w-full border-2 border-border bg-background px-3 text-base text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary";
-const label = "block font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground";
+const label = "block font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground";
 
 interface Props {
   occupations: readonly WageOption[];

@@ -211,7 +211,7 @@ export function BrowseList({
       {entries.map((e) => (
         <Fragment key={e.slug}>{" "}
           <li>
-            <Link href={`${base}/${e.slug}`}>{e.name}</Link>{" "}
+            <Link translate="no" href={`${base}/${e.slug}`}>{e.name}</Link>{" "}
             <span title={`${fmt(e.total)} ${unit}`}>{fmt(e.total)}</span>
           </li>
         </Fragment>

@@ -35,11 +35,15 @@ export type DataSection =
   | "badges"
   | "layoffs"
   | "visa-bulletin-family"
+  | "visa-bulletin-categories"
   // Track B's receipt page (its SECTIONS entry was added without its key).
   | "uscis-case-status"
   | "uscis-times"
   | "i485-offices"
   | "awaiting-visa"
+  | "timelines"
+  | "h1b-lottery"
+  | "nvc-waiting-list"
   | "calculators"
   | "queue"
   | "processing-times"
@@ -144,12 +148,19 @@ export const SECTIONS: DataNavSection[] = [
   { key: "visa-bulletin-next", group: "Visa bulletin", label: "Next bulletin", href: "/visa-bulletin" },
   { key: "visa-bulletin", group: "Visa bulletin", label: "Priority dates", href: "/tools/priority-date-calculator" },
   { key: "visa-bulletin-family", group: "Visa bulletin", label: "Family cutoffs", href: "/visa-bulletin/family" },
+  { key: "visa-bulletin-categories", group: "Visa bulletin", label: "By category and country", href: "/visa-bulletin/categories" },
+  // State's yearly count of consular applicants waiting, the other half of the line.
+  { key: "nvc-waiting-list", group: "Visa bulletin", label: "NVC waiting list", href: "/nvc-waiting-list" },
   // USCIS's quarterly workbooks: a different agency from everything above,
   // and the stage AFTER the labor certification. Its own group for the same
   // reason the visa bulletin has one.
   { key: "uscis-times", group: "USCIS", label: "Processing times", href: "/uscis-processing-times" },
   { key: "i485-offices", group: "USCIS", label: "I-485 by office", href: "/i485-by-field-office" },
   { key: "awaiting-visa", group: "USCIS", label: "Awaiting a visa", href: "/i140-awaiting-visa" },
+  // Community reports of the steps after PERM, the PERM half checked against DOL.
+  { key: "timelines", group: "USCIS", label: "Green card timelines", href: "/green-card-timelines" },
+  // USCIS runs the H-1B cap registration, so its odds sit with USCIS's data.
+  { key: "h1b-lottery", group: "USCIS", label: "H-1B lottery odds", href: "/h1b-lottery-odds" },
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
   { key: "policy-changes", group: "Reference", label: "Policy changes", href: "/policy-changes" },
   { key: "debarments", group: "Reference", label: "Debarments", href: "/debarments" },

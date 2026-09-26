@@ -8,7 +8,7 @@
  *
  * On real FY2026 figures the national interest waiver has 89,215 pending
  * against 6,325 completed in a quarter, which is about fourteen quarters of
- * work, while USCIS publishes 29 to 32 months for the same category. Neither
+ * work, while USCIS says 80% finish within 30 months (Sep 2026). Neither
  * number is wrong. The published figure describes petitions that have already
  * finished; the queue describes the pile, and for NIW the pile is growing
  * because 12,641 arrived in the same quarter that 6,325 left. Showing one and

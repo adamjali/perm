@@ -9,7 +9,7 @@
  * countries, and beside each cell the move since the month before. Nothing
  * on it is a forecast; it is the State Department's own numbers, compared.
  *
- * One page per archived month (84 and counting, one a month), prerendered
+ * One page per archived month (every bulletin since October 2014), prerendered
  * for the newest two years and rendered on demand for the rest. A month the
  * archive does not hold is a 404 from `generateMetadata`, so a wrong URL
  * never streams a 200 with a not-found body.
@@ -191,12 +191,22 @@ function tallySentence(name: string, t: ReturnType<typeof tally>): string {
   return `${name}: ${parts.join(", ")}.`;
 }
 
-function ChartTable({ title, rows, since }: { title: string; rows: Cell[][]; since: string | null }) {
+function ChartTable({
+  title,
+  rows,
+  since,
+  first = "The first bulletin in the archive, so no move is shown.",
+}: {
+  title: string;
+  rows: Cell[][];
+  since: string | null;
+  first?: string;
+}) {
   return (
     <div className="mt-8">
       <h2 className="font-heading text-xl font-black tracking-tight sm:text-2xl">{title}</h2>{" "}
       <p className="mt-1 text-sm text-muted-foreground">
-        {since ? `Each cell shows the cutoff and its move since the ${since} bulletin.` : "The first bulletin in the archive, so no move is shown."}
+        {since ? `Each cell shows the cutoff and its move since the ${since} bulletin.` : first}
       </p>{" "}
       <div className="mt-4 overflow-x-auto overscroll-x-none border-2 border-border bg-card shadow-hard-sm">
         <table className="w-full min-w-[760px] border-collapse text-sm">
@@ -259,6 +269,11 @@ export default async function BulletinMonthPage({
   const dff = chartCells("datesForFiling", current, prev, categories);
   const faTally = tally(fa);
   const dffTally = tally(dff);
+  // The dates for filing chart began with the October 2015 bulletin, so an
+  // older month has none; say so rather than render an empty table.
+  const DFF_FROM = "2015-10";
+  const noFilingChart = Object.keys(current.datesForFiling).length === 0 && month < DFF_FROM;
+  const prevHasFiling = !!prev && Object.keys(prev.datesForFiling).length > 0;
   const hasSetAsides = categories.some((c) => c === "EB5R" || c === "EB5HU" || c === "EB5I");
   const isNewest = month === newestMonth;
 
@@ -303,18 +318,30 @@ export default async function BulletinMonthPage({
 
       {prev ? (
         <div className="mt-6 border-2 border-border bg-card p-4 shadow-hard-sm sm:p-5">
-          <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
             What moved, {categories.length * BOARD_COUNTRIES.length} cells per chart
           </p>{" "}
           <p className="mt-2 text-base leading-relaxed">
             {tallySentence("Final action dates", faTally)}{" "}
-            {tallySentence("Dates for filing", dffTally)}
+            {noFilingChart || !prevHasFiling ? null : tallySentence("Dates for filing", dffTally)}
           </p>
         </div>
       ) : null}{" "}
 
       <ChartTable title="Final action dates" rows={fa} since={sinceLabel} />{" "}
-      <ChartTable title="Dates for filing" rows={dff} since={sinceLabel} />{" "}
+      {noFilingChart ? (
+        <p className="mt-6 border-2 border-dashed border-border p-4 text-base leading-relaxed text-foreground/80">
+          The dates for filing chart began with the October 2015 bulletin. This one printed final
+          action dates only.
+        </p>
+      ) : (
+        <ChartTable
+          title="Dates for filing"
+          rows={dff}
+          since={prevHasFiling ? sinceLabel : null}
+          first={prev ? "The first bulletin to print this chart, so no move is shown." : undefined}
+        />
+      )}{" "}
 
       <p className="mt-6 text-sm leading-relaxed text-foreground/75">
         A date means applications with a priority date earlier than it can act
@@ -361,7 +388,7 @@ export default async function BulletinMonthPage({
         reading={[
           { href: "/visa-bulletin", label: "What the next bulletin usually does", note: "every earlier same-month bulletin, and the inventory ahead of each cutoff" },
           { href: "/tools/i485-queue-position", label: "I-485 queue position", note: "the inventory ahead of your own priority date, not just the cutoff" },
-          { href: "/tools/priority-date-calculator", label: "Priority dates, every bulletin since 2019", note: "the month-by-month cutoff history behind this table" },
+          { href: "/tools/priority-date-calculator", label: "Priority dates, every bulletin since 2014", note: "the month-by-month cutoff history behind this table" },
         ]}
       />
     </div>

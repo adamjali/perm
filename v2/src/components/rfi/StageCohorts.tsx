@@ -83,7 +83,7 @@ export function StageCohortsChart({
             >
               {months.map((m, i) => (
                 <Fragment key={m}>{" "}
-                <div className="text-center font-mono text-[11px] leading-tight text-muted-foreground">
+                <div className="text-center font-mono text-sm leading-tight text-muted-foreground">
                   {/*
                     A year label only where the year changes, plus the first
                     column. Printing all 25 in a 2.2rem cell overlaps them into
@@ -157,7 +157,7 @@ function Strip({
         <div className="truncate font-heading text-sm font-bold leading-tight">
           {label}
         </div>{" "}
-        <div className="font-mono text-[11px] tabular-nums text-muted-foreground">
+        <div className="font-mono text-sm tabular-nums text-muted-foreground">
           {sub}
         </div>
       </div>{" "}
@@ -180,7 +180,7 @@ function Strip({
               */}
               <span
                 className={
-                  "whitespace-nowrap font-mono text-[11px] font-bold leading-none tabular-nums " +
+                  "whitespace-nowrap font-mono text-sm font-bold leading-none tabular-nums " +
                   (isPeak ? "text-foreground" : "select-none text-transparent")
                 }
                 aria-hidden={isPeak ? undefined : "true"}
@@ -235,7 +235,7 @@ export function StageCohortsTable({
     <div className="max-h-[32rem] overflow-auto">
       <table className="w-full border-collapse text-sm">
         <thead className="sticky top-0 bg-background">
-          <tr className="border-b-2 border-border text-left font-mono text-[11px] uppercase tracking-wider">
+          <tr className="border-b-2 border-border text-left font-mono text-sm uppercase tracking-wider">
             {/* The space lives INSIDE each cell: a whitespace text node is
                 not legal as a child of <tr> or <tbody> and React warns that it
                 will cause a hydration error. */}

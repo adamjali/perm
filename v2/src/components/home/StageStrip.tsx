@@ -73,7 +73,7 @@ const STAGES = [
     agency: "Cutoffs published monthly by the State Department",
     question: "When is my priority date current?",
     detail:
-      "The bulletin decides when a visa number is available at all. We hold 84 months of its history.",
+      "The bulletin decides when a visa number is available at all. We hold every bulletin since October 2014.",
     viz: BulletinStepsMini,
     tool: { label: "Cutoff history", href: "/tools/priority-date-calculator" },
     data: null,

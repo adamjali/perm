@@ -20,7 +20,7 @@ This walks through what "roughly first in, first out" means in practice, what th
 
 DOL's analyst review queue works in filing order. An application filed in October 2025 is looked at before one filed in December 2025, whatever the employer, the job, the state, or how urgent it is for the person waiting.
 
-It's filing month order, not filing day order. DOL clears a month over several weeks, and inside that month the order is alphabetical by employer name.
+It's filing month order, not filing day order. DOL clears a month over several weeks. Inside the month it has tended to go roughly alphabetically by employer name, though not reliably (more on that below).
 
 Not every case rides that queue the whole way. On the last daily sweep, the cases DOL hadn't decided yet split like this:
 
@@ -53,9 +53,9 @@ The second thing is that the frontier is DOL's own claim about itself, not a mea
 
 ## Does the employer's first letter matter?
 
-Yes, and less than you will read elsewhere.
+Less than you'll read elsewhere, and right now not at all.
 
-Within a filing month DOL works alphabetically by employer name, so a case sponsored by an A company is decided before one sponsored by a Z company that filed the same month. Every public estimator uses this. Almost none of them says how large the effect is, which is the part that decides whether it's worth thinking about.
+Across the decided record, DOL has tended to work a filing month alphabetically by employer name, so an A company's case was usually decided before a Z company's from the same month. Every public estimator uses this. Almost none of them says how large the effect is, or checks whether it still holds.
 
 Measured against the average across the decided corpus:
 
@@ -65,7 +65,9 @@ Measured against the average across the decided corpus:
 | Z, the slowest | 15.7 days later |
 | The alphabet end to end | about 27 days |
 
-It also isn't reliable. In 6 of 30 filing months the back half of the alphabet came out faster than the front. So it's a real term and a small one, worth roughly four weeks between the extremes, and it can run backwards. Your filing month is worth far more than your initial.
+It also isn't reliable. In 6 of 30 filing months the back half of the alphabet came out faster than the front.
+
+And at the front of the queue it has stopped showing. We rebuilt the queue as it stood on 13 September 2026 and followed what DOL decided over the next two weeks: about 80% of November 2025's normal-queue cases were decided whatever the employer's initial, U and Z included. Adding the letter made our estimates worse (a typical miss of 3.9 days without it, 6.5 with it), so they no longer use it. Your filing month is what matters.
 
 <ScreenshotFigure
   src="/images/content/shots/queue.webp"
@@ -80,9 +82,9 @@ Because the queue's speed isn't stable.
 
 Over the six months of determinations to June 2026, DOL cleared 1.8 months of filing queue for every calendar month that passed. Anything above 1.0 means it's gaining on the backlog. Across the whole record on file, that rate has run between 0.33 and 2.50. A forecast built on the fast years and one built on the slow years land months apart, and both used real DOL data.
 
-The arithmetic people reach for first doesn't work either. DOL issued 19,787 determinations in June 2026, against 95,922 cases still waiting. Dividing one into the other gives about five months and means nothing. New applications keep arriving, DOL reprioritises, and one month's output isn't a rate.
+The arithmetic people reach for first doesn't work either. DOL issued 19,787 determinations in June 2026, against 95,922 cases still waiting. Dividing one into the other gives about five months and means little: it counts cases filed after yours, and cases on hold or at an RFI that aren't in the line at all.
 
-Where a date does get published here, it comes from the percentile spread of real decided cases rather than from dividing a backlog, and the median error on our own estimates is around 50 days. That's the honest size of the uncertainty. A single date quoted without one is a guess with the error bars taken off.
+What a date here does instead is count the cases in DOL's normal queue filed before yours and divide by the pace DOL has actually been deciding them over the last four weeks. Every date is graded against real decisions on the [estimate scorecard](/estimate-scorecard). A single date quoted without a range and a record behind it is a guess with the error bars taken off.
 
 ## Where does my case sit?
 

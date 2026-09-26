@@ -190,6 +190,155 @@ def main() -> int:
     refuses("refuses a family-sponsored chart", page_family, "2026-07",
             "no employment-based charts")
 
+    # --- before dates for filing existed (added 2026-09-26) -----------------
+    # The Dates for Filing chart began with the October 2015 bulletin, so an
+    # earlier bulletin prints ONE employment chart and ONE family chart. The
+    # two fixtures are real Internet Archive captures trimmed to their charts
+    # (the capture URL is in each file's first line).
+    jan15 = (HERE / "__fixtures__" / "visa-bulletin-2015-01.html").read_text()
+    p15 = vb.parse_bulletin(jan15, "2015-01")
+    check("Jan 2015: one employment chart is a whole bulletin for its era", p15 is not None)
+    if p15:
+        check("Jan 2015: final action read by column",
+              p15["finalAction"].get("EB2", {}).get("india") == "15FEB05"
+              and p15["finalAction"].get("EB3", {}).get("worldwide") == "01JUN13",
+              str(p15["finalAction"].get("EB2")))
+        check("Jan 2015: no dates-for-filing chart, stored as empty",
+              p15["datesForFiling"] == {}, str(p15["datesForFiling"])[:60])
+        check("Jan 2015: EB5 read from the Targeted Employment Areas row",
+              p15["finalAction"].get("EB5", {}).get("china") == "C", str(p15["finalAction"].get("EB5")))
+        check("Jan 2015: every category its era had",
+              len(p15["finalAction"]) == vb.expected_categories("2015-01") == 6,
+              str(sorted(p15["finalAction"])))
+        check("Jan 2015: family final action read, family filing absent",
+              "familyFinalAction" in p15 and "familyDatesForFiling" not in p15)
+    check("Jan 2015: month read off the page", vb.month_from_page(jan15) == "2015-01")
+    # A single chart is only whole BEFORE October 2015. After it, one chart is
+    # a truncated capture, and accepting it would store a month with no
+    # dates for filing that the bulletin did print.
+    check("one chart is refused for a month that printed two",
+          vb.parse_bulletin(jan15, "2016-01") is None)
+    check("one chart is refused when the month is unknown",
+          vb.parse_bulletin(jan15) is None)
+    refuses("the saved-page route refuses one chart for a two-chart month",
+            jan15.replace("January 2015", "January 2016"), None, "no employment-based charts")
+
+    oct15 = (HERE / "__fixtures__" / "visa-bulletin-2015-10.html").read_text()
+    po = vb.parse_bulletin(oct15, "2015-10")
+    check("Oct 2015: both charts, the first month with dates for filing",
+          po is not None and po["finalAction"].get("EB2", {}).get("india") == "01MAY05"
+          and po["datesForFiling"].get("EB2", {}).get("india") == "01JUL09")
+    if po:
+        check("Oct 2015: final action EB5 still from the non-regional row",
+              po["finalAction"].get("EB5", {}).get("china") == "08OCT13", str(po["finalAction"].get("EB5")))
+        check("Oct 2015: filing-chart EB5 from the Targeted Employment Areas row",
+              po["datesForFiling"].get("EB5", {}).get("china") == "01MAY15", str(po["datesForFiling"].get("EB5")))
+        check("Oct 2015: six categories on both charts",
+              len(po["finalAction"]) == 6 and len(po["datesForFiling"]) == 6,
+              f"{sorted(po['finalAction'])} / {sorted(po['datesForFiling'])}")
+
+    # --- the backfill's dry run writes nothing (added 2026-09-26) -----------
+    # A recording stand-in for the database and a fetch that serves the fixture,
+    # so the ONLY statements the dry run may send are reads.
+    class Recorder:
+        def __init__(self):
+            self.sql: list[str] = []
+
+        def execute(self, sql, args=None):
+            self.sql.append(sql)
+            return {"response": {"result": {"rows": []}}}
+
+        def scalar(self, sql, args=None):
+            self.sql.append(sql)
+            return 0
+
+    rec = Recorder()
+    saved = (vb.Turso, vb.discover_snapshots, vb.fetch, vb.time.sleep)
+    try:
+        vb.Turso = lambda: rec
+        vb.discover_snapshots = lambda limit, years: [("2015-01", "20260511180158", "https://example.invalid/jan-2015")]
+        vb.fetch = lambda url, attempts=3: jan15
+        vb.time.sleep = lambda s: None
+        rc = vb.backfill_from_archive([2015], 400, dry_run=True)
+        writes = [q for q in rec.sql if not q.lstrip().upper().startswith("SELECT")]
+        check("the dry run sends reads only", not writes and rc == 0, str(writes)[:80])
+        rec.sql.clear()
+        vb.backfill_from_archive([2015], 400)
+        check("control: the real run does write the month",
+              any("INSERT OR REPLACE INTO visa_bulletins" in q for q in rec.sql))
+    finally:
+        vb.Turso, vb.discover_snapshots, vb.fetch, vb.time.sleep = saved
+
+    # --- the direct route: State's own index on adoption.state.gov -------
+    idx = (
+        '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-july-2026.html">Jul</a>'
+        '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2027/visa-bulletin-for-october-2026.html">Oct</a>'
+        '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-june-2026.html">Jun</a>'
+        '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-smarch-2026.html">x</a>'
+    )
+    months = vb.direct_months(idx)
+    check("the index gives each linked month once, newest first, across fiscal-year folders",
+          [m for m, _ in months] == ["2026-10", "2026-07", "2026-06"], str(months)[:120])
+    check("each month keeps the absolute URL on State's host",
+          months[1][1].startswith("https://adoption.state.gov/") and months[1][1].endswith("july-2026.html"))
+    check("a page from State's own host ranks as a primary source",
+          vb.rank_of(vb.DIRECT_SOURCE) == 3)
+    check("control: a mirror still ranks below it",
+          vb.rank_of("third party (mirror; original: travel.state.gov)") == 1)
+
+    class Held(Recorder):
+        def execute(self, sql, args=None):
+            self.sql.append(sql)
+            if sql.startswith("SELECT bulletin_month, source_url"):
+                return {"response": {"result": {"rows": [
+                    [{"type": "text", "value": "2026-07"}, {"type": "text", "value": vb.SAVED_PAGE_SOURCE}],
+                    [{"type": "text", "value": "2026-06"}, {"type": "text", "value": "https://web.archive.org/x travel.state.gov"}],
+                ]}}}
+            return {"response": {"result": {"rows": []}}}
+
+    held = Held()
+    asked: list[str] = []
+    saved = (vb.Turso, vb.fetch, vb.time.sleep)
+    try:
+        vb.Turso = lambda: held
+        vb.time.sleep = lambda s: None
+
+        def fake_fetch(url, attempts=3):
+            asked.append(url)
+            return idx if url == vb.DIRECT_INDEX else page   # the July 2026 fixture
+
+        vb.fetch = fake_fetch
+        vb.ingest_direct(2)
+        pages = [u for u in asked if u != vb.DIRECT_INDEX]
+        check("a month already held from a primary source is not fetched again",
+              not any("july-2026" in u for u in pages), str(pages))
+        check("a month held only from the archive is upgraded",
+              any("june-2026" in u for u in pages), str(pages))
+        check("a page that reads as a different month is not stored under the linked one",
+              not any("INSERT OR REPLACE INTO visa_bulletins" in q for q in held.sql),
+              "stored the July fixture as October or June")
+
+        def refused(url, attempts=3):
+            raise vb.urllib.error.HTTPError(url, 403, "Forbidden", {}, None)
+
+        class Empty(Recorder):
+            pass
+
+        fresh = Empty()
+        vb.Turso = lambda: fresh
+        vb.fetch = lambda url, attempts=3: (
+            '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2026/visa-bulletin-for-july-2026.html">Jul</a>'
+            if url == vb.DIRECT_INDEX else page)
+        vb.ingest_direct(2)
+        check("control: a month not held is stored, labelled as State's own host",
+              any("INSERT OR REPLACE INTO visa_bulletins" in q for q in fresh.sql))
+
+        vb.fetch = refused
+        check("a refused index warns and exits 0 (the freshness budget is the alarm)",
+              vb.ingest_direct(2) == 0)
+    finally:
+        vb.Turso, vb.fetch, vb.time.sleep = saved
+
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 

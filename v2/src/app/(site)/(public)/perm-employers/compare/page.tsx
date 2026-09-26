@@ -143,7 +143,7 @@ export default async function CompareEmployersPage({
                 ))}
               </tr>
             </thead>
-            <tbody>
+            <tbody translate="no">
               {rows.map((r) => (
                 <Fragment key={r.label}>
                   <tr className="border-t-2 border-border align-top">

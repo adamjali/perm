@@ -1,6 +1,7 @@
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import type { TimelineWire } from "./communityTimelines";
 import { auth } from "./auth";
 import { recordError } from "./lib/errorRecording";
 import { isLiveContactEventType } from "./marketingWebhook";
@@ -1331,6 +1332,150 @@ http.route({
   }),
 });
 
+
+/**
+ * Community timelines: a person's dates after PERM (convex/communityTimelines.ts).
+ *
+ * The browser keeps a random 64-hex edit key per case; only its SHA-256 is
+ * stored, so whoever holds the key can change or remove the row and nobody
+ * else can. Reading your own row is a POST so the key never sits in a URL or
+ * an access log. Every limit lives in the internal mutation; the address is
+ * hashed here. Length caps run before any other look at the body.
+ */
+const TIMELINE_BODY_MAX = 4_000;
+const HEX64_KEY = /^[0-9a-f]{64}$/;
+
+async function timelineBody(
+  req: Request,
+): Promise<{ ok: true; body: Record<string, unknown> } | { ok: false; status: number; message: string }> {
+  const text = await req.text();
+  if (text.length > TIMELINE_BODY_MAX) return { ok: false, status: 400, message: "Malformed request." };
+  let body: unknown;
+  try {
+    body = JSON.parse(text);
+  } catch {
+    return { ok: false, status: 400, message: "Malformed request." };
+  }
+  if (typeof body !== "object" || body === null || Array.isArray(body)) {
+    return { ok: false, status: 400, message: "Malformed request." };
+  }
+  const b = body as Record<string, unknown>;
+  if (typeof b.caseNumber !== "string" || b.caseNumber.length > 24) {
+    return { ok: false, status: 400, message: "A PERM case number is required." };
+  }
+  if (typeof b.key !== "string" || !HEX64_KEY.test(b.key)) {
+    return { ok: false, status: 400, message: "Malformed request." };
+  }
+  return { ok: true, body: b };
+}
+
+const TIMELINE_FIELDS = [
+  "category", "country", "route", "i140Center",
+  "i140FiledOn", "i140ApprovedOn", "i485FiledOn", "eadOn", "apOn", "interviewOn", "greenCardOn",
+  "rfeForm", "rfeReason", "rfeIssuedOn", "rfeRespondedOn", "rfeOutcome",
+] as const;
+
+for (const path of ["/timeline/save", "/timeline/mine", "/timeline/remove"]) {
+  http.route({
+    path,
+    method: "OPTIONS",
+    handler: httpAction(async (_ctx, req) => {
+      return new Response(null, { status: 204, headers: corsHeaders(req.headers.get("Origin")) });
+    }),
+  });
+}
+
+http.route({
+  path: "/timeline/save",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    const parsed = await timelineBody(req);
+    if (!parsed.ok) return json({ ok: false, message: parsed.message }, parsed.status);
+    const b = parsed.body;
+    // Narrow every field to a short string, a boolean or nothing; the mutation
+    // validates meaning.
+    const input: Record<string, string | boolean | null> = {};
+    for (const k of TIMELINE_FIELDS) {
+      const x = b[k];
+      if (x === undefined || x === null || x === "") continue;
+      if (typeof x !== "string" || x.length > 24) return json({ ok: false, message: "Malformed request." }, 400);
+      input[k] = x;
+    }
+    if (typeof b.premium === "boolean") input.premium = b.premium;
+    input.public = b.public === true;
+    const forwarded = req.headers.get("x-forwarded-for") ?? "";
+    const ip = forwarded.split(",")[0]?.trim() || "unknown";
+    const [ipHash, editKeyHash] = await Promise.all([
+      sha256Hex(`timeline:${ip}`),
+      sha256Hex(`timeline-key:${b.key as string}`),
+    ]);
+    const result = await ctx.runMutation(internal.communityTimelines.save, {
+      caseNumber: b.caseNumber as string,
+      editKeyHash,
+      ipHash,
+      input: input as TimelineWire,
+    });
+    return json(result, result.ok ? 200 : result.throttled ? 429 : 400);
+  }),
+});
+
+http.route({
+  path: "/timeline/mine",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "no-store" } });
+    const parsed = await timelineBody(req);
+    if (!parsed.ok) return json({ ok: false, message: parsed.message }, parsed.status);
+    const editKeyHash = await sha256Hex(`timeline-key:${parsed.body.key as string}`);
+    const mine = await ctx.runQuery(internal.communityTimelines.mine, {
+      caseNumber: parsed.body.caseNumber as string,
+      editKeyHash,
+    });
+    return json({ ok: true, mine });
+  }),
+});
+
+http.route({
+  path: "/timeline/remove",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    const cors = corsHeaders(req.headers.get("Origin"));
+    const json = (body: unknown, status = 200) =>
+      new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
+    const parsed = await timelineBody(req);
+    if (!parsed.ok) return json({ ok: false, message: parsed.message }, parsed.status);
+    const editKeyHash = await sha256Hex(`timeline-key:${parsed.body.key as string}`);
+    const result = await ctx.runMutation(internal.communityTimelines.remove, {
+      caseNumber: parsed.body.caseNumber as string,
+      editKeyHash,
+    });
+    return json(result, result.ok ? 200 : 400);
+  }),
+});
+
+http.route({
+  path: "/timeline/summary",
+  method: "GET",
+  handler: httpAction(async (ctx, req) => {
+    const cors = { ...corsHeaders(req.headers.get("Origin")), "Access-Control-Allow-Methods": "GET, OPTIONS" };
+    const caseNumber = new URL(req.url).searchParams.get("case") ?? "";
+    if (caseNumber.length === 0 || caseNumber.length > 24) {
+      return new Response(JSON.stringify({ ok: false, message: "A case number is required." }), {
+        status: 400,
+        headers: { ...cors, "Content-Type": "application/json" },
+      });
+    }
+    const summary = await ctx.runQuery(internal.communityTimelines.caseSummary, { caseNumber });
+    return new Response(JSON.stringify(summary), {
+      headers: { ...cors, "Content-Type": "application/json", "Cache-Control": "public, max-age=60" },
+    });
+  }),
+});
 
 /**
  * Browser push alerts for a case, no account and no email. The subscription

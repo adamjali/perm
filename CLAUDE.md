@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-24
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-26
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **391 files / 7,034 tests across 4 vitest
@@ -126,7 +126,7 @@ dependencies.**
 | live remainder (`perm_live_recent`) | derived: live cases newer than the last disclosure file | rebuilt daily post-sweep |
 | decided cases | **DOL** quarterly disclosure files | quarterly + monthly check |
 | processing times | **DOL** FLAG | daily |
-| visa bulletin | **State Dept** (84 months, 2019-10 →) | monthly, one human minute |
+| visa bulletin | **State Dept** (every bulletin since 2014-10) | daily direct read of State's own pages on adoption.state.gov since Sep 26 2026; `--from-file` stays the fallback |
 | I-140 counts / I-485 inventory | **USCIS** | quarterly / monthly; GitHub tries first, **Adam's Mac retries the day after** when `www.uscis.gov` 403s the datacenter runner |
 | USCIS quarterly workbooks: every form's median, the I-485 by field office, approved EB petitions awaiting a visa number, I-140 by class and country | **USCIS** quarterly performance data, reconciled against each sheet's own totals | quarterly: GitHub on the 15th and 16th, the Mac on the 17th (`scripts/ingest_uscis_quarterly.py`, since Sep 22 2026) |
 | USCIS case status by receipt number | **USCIS** Case Status API (OAuth), on demand per lookup | built and dark until USCIS grants API access to PERM Tracker LLC; plan in `.planning/llc-and-uscis-plan.md` |

@@ -120,7 +120,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                 </span>{" "}
                 {entry.post.meta.updated && entry.post.meta.updated !== entry.post.meta.date ? (
                   <span className="flex items-center gap-1.5">
-                    <span className="font-heading text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    <span className="font-heading text-sm font-semibold uppercase tracking-wider text-primary">
                       Updated
                     </span>{" "}
                     <time dateTime={entry.post.meta.updated}>{fmtDate(entry.post.meta.updated)}</time>
@@ -144,7 +144,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
                   {entry.post.meta.tags.map((tag) => (
                     <React.Fragment key={tag}>
                       {" "}
-                      <span className="border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                      <span className="border border-border bg-muted px-1.5 py-0.5 font-mono text-sm uppercase tracking-wider text-muted-foreground">
                         {tag}
                       </span>
                     </React.Fragment>

@@ -169,9 +169,8 @@ export default async function FamilyBulletinPage() {
           how it moved.
         </p>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          The two newest bulletins were saved from a browser before the parser read family charts, and the State
-          Department blocks the archive&apos;s crawler, so a month can lag here until it is re-read. The employment-based
-          history is on{" "}
+          Each bulletin is read from the State Department&apos;s own pages the day it appears, both charts, family and
+          employment. The employment-based history is on{" "}
           <Link href="/tools/priority-date-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
             the priority date calculator
           </Link>{" "}

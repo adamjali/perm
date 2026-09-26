@@ -27,8 +27,16 @@
       "schedule": "40 19 * * *"
     },
     {
+      "path": "/api/cron/dispatch/watched-cases",
+      "schedule": "25 * * * *"
+    },
+    {
       "path": "/api/cron/prune-uscis",
       "schedule": "20 9 * * *"
+    },
+    {
+      "path": "/api/cron/scorecard",
+      "schedule": "0 12 * * *"
     }
   ]
 }

@@ -242,7 +242,7 @@ export function HeroSection({ waitRows = [] }: HeroSectionProps) {
                 Kept visually subordinate so the hook still leads. The stat is
                 what earns the scroll; the name is what tells Google, and a
                 first-time reader, whose site this is. */}
-            <span className="block font-mono text-xs font-semibold uppercase tracking-[0.18em] text-foreground/60 sm:text-sm">
+            <span className="block font-mono text-xs font-semibold uppercase tracking-[0.1em] text-foreground/60 sm:text-sm">
               PERM Tracker
             </span>{" "}
             {current ? (

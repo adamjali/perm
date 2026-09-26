@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   PROCESSING_TIMES_AS_OF,
   formatMonthRange,
+  formatMonths,
   getI140ProcessingTime,
   getPremiumBusinessDays,
   type I140Category,
@@ -15,18 +16,19 @@ describe("getI140ProcessingTime", () => {
   });
 
   it("spans the whole category when its subtypes disagree", () => {
-    // EB-1 runs from an outstanding professor at 15.5 months to extraordinary
-    // ability at 34.5. Collapsing that to one figure is the original bug.
+    // EB-1 runs from an outstanding professor at 15 months to extraordinary
+    // ability at 32.5 (USCIS, read 2026-09-26). Collapsing that to one figure
+    // is the original bug.
     const eb1 = getI140ProcessingTime("EB-1");
-    expect(eb1?.lowMonths).toBe(15.5);
-    expect(eb1?.highMonths).toBe(34.5);
+    expect(eb1?.lowMonths).toBe(15);
+    expect(eb1?.highMonths).toBe(32.5);
     expect(eb1?.subtypes).toHaveLength(3);
   });
 
   it.each([
-    ["EB-2", 2.5, 7.5],
-    ["EB-2-NIW", 29, 32],
-    ["EB-3", 4, 26],
+    ["EB-2", 3, 3],
+    ["EB-2-NIW", 30, 30],
+    ["EB-3", 4, 25.5],
   ])("reports %s as %s to %s months", (category, low, high) => {
     const range = getI140ProcessingTime(category as I140Category);
     expect(range?.lowMonths).toBe(low);
@@ -38,6 +40,30 @@ describe("getI140ProcessingTime", () => {
     // regression, not just the shape.
     const niw = getI140ProcessingTime("EB-2-NIW");
     expect(niw?.lowMonths).toBeGreaterThan(20);
+  });
+
+  it("gives every subtype one positive 80% figure", () => {
+    // USCIS prints one number per subtype now ("80% of cases are completed
+    // within N months"); a zero or a missing figure would render as an answer.
+    const subtypes = (["EB-1", "EB-2", "EB-2-NIW", "EB-3"] as const).flatMap(
+      (c) => getI140ProcessingTime(c)?.subtypes ?? [],
+    );
+    expect(subtypes).toHaveLength(8);
+    for (const s of subtypes) {
+      expect(Number.isFinite(s.months80), s.code).toBe(true);
+      expect(s.months80, s.code).toBeGreaterThan(0);
+    }
+  });
+
+  it("reports a one-subtype category as a single figure, low equal to high", () => {
+    // The span is across subtypes, never a percentile range: EB-2 and the
+    // waiver have one subtype each, so their two ends must be the same number.
+    for (const c of ["EB-2", "EB-2-NIW"] as const) {
+      const r = getI140ProcessingTime(c);
+      expect(r?.subtypes).toHaveLength(1);
+      expect(r?.lowMonths).toBe(r?.subtypes[0]?.months80);
+      expect(r?.highMonths).toBe(r?.lowMonths);
+    }
   });
 
   it("names every subtype with a USCIS code", () => {
@@ -70,41 +96,31 @@ describe("getPremiumBusinessDays", () => {
 
 describe("formatMonthRange", () => {
   it.each([
-    [2.5, 7.5, "2.5 to 7.5 months"],
-    [29, 32, "29 to 32 months"],
-    [4, 26, "4 to 26 months"],
+    [15, 32.5, "15 to 32.5 months"],
+    [4, 25.5, "4 to 25.5 months"],
+    [3, 3, "3 months"],
+    [27.5, 27.5, "27.5 months"],
   ])("formats %s-%s", (low, high, expected) => {
     expect(formatMonthRange(low, high)).toBe(expected);
   });
+
+  it("formats one figure", () => {
+    expect(formatMonths(3)).toBe("3 months");
+    expect(formatMonths(32.5)).toBe("32.5 months");
+  });
 });
 
-describe("staleness gate", () => {
+describe("the as-of date", () => {
   /**
-   * The defect this exists to prevent: the previous table sat untouched for
-   * sixteen months, reporting figures a quarter of the real value, and nothing
-   * in the codebase could tell it had rotted. USCIS republishes monthly.
-   *
-   * When this fails it is not flaky. It means the numbers need refreshing from
-   * the source, and the failure message says how.
+   * The previous table sat untouched for sixteen months, reporting figures a
+   * quarter of the real value, and nothing could tell it had rotted. The AGE
+   * check now lives in scripts/check_ingest_health.py (`check_hand_read_figures`:
+   * a warning past 120 days, a failure past 270). Here it failed the suite
+   * after eight months, which would have blocked every deploy on the day it
+   * tripped, for figures only a browser can refresh (USCIS challenges scripts).
+   * The health check reads this constant, so it must stay in this exact shape.
    */
-  const MAX_AGE_MONTHS = 8;
-
   it("has an as-of date in the documented format", () => {
     expect(PROCESSING_TIMES_AS_OF).toMatch(/^\d{4}-\d{2}-\d{2}$/);
-  });
-
-  it(`is no more than ${MAX_AGE_MONTHS} months old`, () => {
-    const asOf = new Date(`${PROCESSING_TIMES_AS_OF}T00:00:00Z`);
-    const ageMonths = (Date.now() - asOf.getTime()) / (1000 * 60 * 60 * 24 * 30.44);
-
-    expect(
-      ageMonths,
-      `I-140 processing times are ${ageMonths.toFixed(1)} months old ` +
-        `(as of ${PROCESSING_TIMES_AS_OF}). Refresh them from ` +
-        `https://egov.uscis.gov/processing-times/ (select Form I-140), then ` +
-        `update PROCESSING_TIMES_AS_OF and the subtype figures in ` +
-        `src/lib/processing-times/i140ProcessingTimes.ts. This test is the ` +
-        `only thing that notices when these numbers go stale.`,
-    ).toBeLessThan(MAX_AGE_MONTHS);
   });
 });

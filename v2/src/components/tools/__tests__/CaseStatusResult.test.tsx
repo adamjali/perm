@@ -674,7 +674,9 @@ describe("CaseStatusResult, wage ladder", () => {
     // the 50% an evenly-spaced axis would put it. This is the exact defect
     // this repo already has a post-mortem for on another diagram.
     const { container } = renderWage();
-    const median = Array.from(container.querySelectorAll("p")).find((el) =>
+    // Scoped to POSITIONED labels: other sections on the page (the
+    // community timeline) also print the word "median" in a paragraph.
+    const median = Array.from(container.querySelectorAll("p[style]")).find((el) =>
       el.textContent?.includes("median"),
     );
     expect(median).toBeDefined();

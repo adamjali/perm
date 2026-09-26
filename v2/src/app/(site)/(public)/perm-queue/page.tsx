@@ -315,7 +315,7 @@ export default async function PermQueuePage() {
           own page.
         </p>{" "}
 
-        <div className="mt-6">
+        <div data-embed="perm-queue" className="mt-6">
           <BacklogWall
             months={census.months}
             frontierMonth={dolMonth}
@@ -330,16 +330,18 @@ export default async function PermQueuePage() {
       {alphabet ? (
         <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
           <h2 className="font-heading text-2xl font-black sm:text-3xl">
-            Your employer&rsquo;s first letter, and what it is worth
+            Your employer&rsquo;s first letter: small, and not in our estimates
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-            Within a filing month DOL works alphabetically by employer. Measured:{" "}
+            Across decided cases DOL tended to work a filing month roughly
+            alphabetically:{" "}
             <b>
-              the whole alphabet is about {Math.round(alphabet.spreadDays)} days
+              about {Math.round(alphabet.spreadDays)} days from A to Z
             </b>
             , and in {alphabet.monthsReversed} of {alphabet.monthsMeasured}{" "}
-            filing months the back half was decided <b>faster</b> than the
-            front.
+            filing months the back half was decided <b>faster</b>. At the front
+            of the queue in September 2026 it didn&rsquo;t show at all, so no
+            estimate here uses it.
           </p>{" "}
 
           <div className="mt-8 border-t-2 border-border pt-6">

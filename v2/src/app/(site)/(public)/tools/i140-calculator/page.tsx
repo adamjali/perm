@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
-import { fetchQuery } from "convex/nextjs";
+import { queryStatic } from "@/lib/convexStatic";
 
 import { api } from "../../../../../../convex/_generated/api";
 import { I140QueueEstimator } from "@/components/tools/I140QueueEstimator";
@@ -67,7 +67,7 @@ const FAQS = [
 
 export default async function I140CalculatorPage() {
   const [data, i140Median] = await Promise.all([
-    fetchQuery(api.uscisI140.getLatest, {}).catch(() => null),
+    queryStatic(api.uscisI140.getLatest, {}, revalidate).catch(() => null),
     // The quarterly median over every I-140 decided, from USCIS's all-forms
     // workbook: the third official figure, beside the published range and
     // the pending count, each measuring something different.
@@ -108,7 +108,7 @@ export default async function I140CalculatorPage() {
         </p>
       </header>
 
-      <section className="mt-10">
+      <section data-embed="i140-queue" className="mt-10">
         <I140QueueEstimator
           subtypes={data ? data.subtypes : []}
           asOfQuarter={data ? data.asOfQuarter : null}
@@ -123,6 +123,60 @@ export default async function I140CalculatorPage() {
               : null
           }
         />
+      </section>
+
+      {/* PREMIUM, AS A DECISION. The figures live elsewhere on the site (the
+          fee in the fees calculator, the six-year limit and priority-date
+          tools); this puts the three reasons it tends to be worth paying in
+          one place, each with the rule it rests on. Checked against eCFR on
+          2026-09-26: 8 CFR 214.2(h)(13)(iii)(E), 204.5(e), 205.1(a)(3)(iii)(C);
+          the fee is 91 FR 1059 (in force March 1, 2026). */}
+      <section aria-labelledby="premium-h" className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+        <h2 id="premium-h" className="font-heading text-2xl font-black">
+          When premium processing is worth $2,965
+        </h2>{" "}
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
+          It buys a first decision within 15 business days (45 for multinational managers and national interest
+          waivers). It doesn&apos;t move the priority date, and a request for evidence stops the clock. It tends to
+          pay for itself in three situations:
+        </p>{" "}
+        <ol className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3 [&>*]:min-w-0">
+          <li className="border-2 border-border bg-background p-5">
+            <p className="font-heading text-lg font-black">The H-1B six years are running out</p>{" "}
+            <p className="mt-2 text-base leading-relaxed text-foreground/80">
+              An approved I-140 is what lets H-1B status continue past six years, in steps of up to three years, when no
+              visa number is available (8 CFR 214.2(h)(13)(iii)(E)).{" "}
+              <Link href="/tools/h1b-six-year-limit" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                Work out the date
+              </Link>
+            </p>
+          </li>{" "}
+          <li className="border-2 border-border bg-background p-5">
+            <p className="font-heading text-lg font-black">The worker might change jobs</p>{" "}
+            <p className="mt-2 text-base leading-relaxed text-foreground/80">
+              Once an I-140 has been approved for 180 days, the employer withdrawing it doesn&apos;t undo the approval
+              (8 CFR 205.1(a)(3)(iii)(C)), and the priority date carries to a new petition (8 CFR 204.5(e)). Premium starts
+              that clock months sooner.{" "}
+              <Link href="/tools/priority-date-retention" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                Check a priority date
+              </Link>
+            </p>
+          </li>{" "}
+          <li className="border-2 border-border bg-background p-5">
+            <p className="font-heading text-lg font-black">The priority date is about to be current</p>{" "}
+            <p className="mt-2 text-base leading-relaxed text-foreground/80">
+              If the bulletin reaches the date before a regular I-140 would be decided, premium can be the difference
+              between filing the green card application this month or later.{" "}
+              <Link href="/tools/priority-date-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                Is it current?
+              </Link>
+            </p>
+          </li>
+        </ol>{" "}
+        <p className="mt-4 text-sm text-muted-foreground">
+          Otherwise, a priority date that is years from current gains little from a faster I-140. The fee is the one
+          in force since March 1, 2026 (91 FR 1059). This is general information, not advice on a particular case.
+        </p>
       </section>
 
       <section className="mt-12">

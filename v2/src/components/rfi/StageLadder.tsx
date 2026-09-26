@@ -73,7 +73,7 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
                   <div className="truncate font-heading text-sm font-bold leading-tight">
                     {meta.label}
                   </div>{" "}
-                  <div className="font-mono text-[11px] tabular-nums text-muted-foreground">
+                  <div className="font-mono text-sm tabular-nums text-muted-foreground">
                     {s.cases.toLocaleString()} cases
                   </div>
                 </div>{" "}
@@ -119,7 +119,7 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
               {ticks.map((t, i) => (
                 <Fragment key={t}>{" "}
                 <span
-                  className="absolute top-0 font-mono text-[11px] tabular-nums text-muted-foreground"
+                  className="absolute top-0 font-mono text-sm tabular-nums text-muted-foreground"
                   style={{
                     left: pct(t),
                     // The last tick sits at 100% and would run past the
@@ -208,7 +208,7 @@ function Marker({
           @theme block, so `text-primary-text` compiles to nothing at all.
         */}
         <span
-          className="absolute top-1 max-w-[15rem] font-mono text-[11px] font-bold leading-tight text-primary"
+          className="absolute top-1 max-w-[15rem] font-mono text-sm font-bold leading-tight text-primary"
           style={{
             left: pct(marker.days),
             transform: flip ? "translateX(-100%)" : "none",
@@ -234,7 +234,7 @@ export function StageLadderTable({ stages }: { stages: ReviewStage[] }) {
     <div className="overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b-2 border-border text-left font-mono text-[11px] uppercase tracking-wider">
+          <tr className="border-b-2 border-border text-left font-mono text-sm uppercase tracking-wider">
             {/*
               THE SPACE GOES INSIDE THE CELL, NOT BETWEEN CELLS. A
               whitespace-only text node is not legal as a child of <tbody> or

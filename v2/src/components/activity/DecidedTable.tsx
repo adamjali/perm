@@ -91,7 +91,7 @@ export function DecidedTable({
           onSort={onSort}
           disabled={!sortable}
         />
-        <tbody className="bg-card">
+        <tbody translate="no" className="bg-card">
           {rows.map((c) => (
             <tr
               key={`${c.program}:${c.caseNumber}`}

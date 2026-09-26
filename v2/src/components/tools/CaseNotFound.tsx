@@ -279,7 +279,7 @@ function Cell({
 }) {
   return (
     <div className="min-w-0 flex-1 basis-56 border-2 border-border bg-background p-4">
-      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
         {label}
       </p>{" "}
       <p className="mt-1 font-heading text-4xl font-black leading-none tabular-nums">
@@ -313,9 +313,9 @@ export function CaseStatusEmpty({
   const facts: { label: string; value: string; note: string }[] = [];
   if (front) {
     facts.push({
-      label: "DOL is working",
+      label: "Oldest month still open",
       value: formatMonth(front) ?? front,
-      note: "the oldest filing month not substantially decided",
+      note: "the oldest filing month DOL hasn't substantially decided",
     });
   }
   if (wallTotal !== null) {
@@ -327,7 +327,7 @@ export function CaseStatusEmpty({
   }
   if (publishedFront && publishedFront !== front) {
     facts.push({
-      label: "DOL's published position",
+      label: "DOL is working",
       value: formatMonth(publishedFront) ?? publishedFront,
       note: publishedAsOf ? `as of ${formatAsOf(publishedAsOf)}` : "analyst review",
     });

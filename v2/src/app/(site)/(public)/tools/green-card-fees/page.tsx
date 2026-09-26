@@ -77,7 +77,7 @@ export default function GreenCardFeesPage() {
           page says so.
         </p>
       </header>
-      <section className="mt-10">
+      <section data-embed="green-card-fees" className="mt-10">
         <GreenCardFeesCalculator />
       </section>
       <section className="mt-12">

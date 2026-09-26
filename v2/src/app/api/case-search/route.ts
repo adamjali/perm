@@ -255,7 +255,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         needsLead: false,
       },
       {
-        // The corpus changes once a night. A short shared cache absorbs the
+        // The corpus changes twice a day. A short shared cache absorbs the
         // repeat of an identical search without letting a day-old answer stand.
         headers: { "Cache-Control": "public, s-maxage=900, stale-while-revalidate=3600" },
       },

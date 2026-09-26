@@ -23,7 +23,7 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
 from build_entity_detail import (  # noqa: E402
-    LIVE_COLS, et_date, live_norm, live_only_rows, pending_diff, pending_norm)
+    LIVE_COLS, employer_waits, et_date, live_norm, live_only_rows, pending_diff, pending_norm, wait_summary)
 
 FAILURES: list[str] = []
 
@@ -107,6 +107,26 @@ def pending_row(slug: str, tracked: int, pending: int, stages: str,
         {"type": "text", "value": stages},
         {"type": "null"} if oldest is None else {"type": "text", "value": oldest},
     ]
+
+
+def check_wait_summary() -> None:
+    import datetime as _dt
+    # 2026-09-01 12:00 Eastern, in milliseconds; filings 300 to 319 days before.
+    noon = int(_dt.datetime(2026, 9, 1, 16, 0, tzinfo=_dt.timezone.utc).timestamp() * 1000)
+    pairs = [((_dt.date(2026, 9, 1) - _dt.timedelta(days=300 + k)).isoformat(), noon) for k in range(20)]
+    s = wait_summary(pairs)
+    check("the median of 300..319 is 310", s and s["p50"], 310)
+    check("n counts every usable decision", s and s["n"], 20)
+    check("under 20 decisions is no summary", wait_summary(pairs[:19]), None)
+    # 1 AM UTC on Sep 2 is still Sep 1 in the East: the day comes from Eastern time.
+    late = int(_dt.datetime(2026, 9, 2, 1, 0, tzinfo=_dt.timezone.utc).timestamp() * 1000)
+    check("the decision day is Eastern", wait_summary([("2025-11-05", late)] * 20)["p50"], 300)
+    fast = [((_dt.date(2026, 9, 1) - _dt.timedelta(days=280)).isoformat(), noon)] * 25
+    slow = [((_dt.date(2026, 9, 1) - _dt.timedelta(days=400)).isoformat(), noon)] * 25
+    few = [((_dt.date(2026, 9, 1) - _dt.timedelta(days=100)).isoformat(), noon)] * 5
+    ranked = employer_waits({"s": slow, "f": fast, "x": few}, {"f": "Fast Co", "s": "Slow Co"})
+    check("employers under the minimum are not ranked", [r["slug"] for r in ranked], ["f", "s"])
+    check("fastest first, with its median", (ranked[0]["name"], ranked[0]["p50"]), ("Fast Co", 280))
 
 
 def check_pending_diff() -> None:
@@ -198,6 +218,7 @@ def main() -> int:
     check_live_only_rows()
     check_et_date()
     check_pending_diff()
+    check_wait_summary()
 
     print()
     if FAILURES:

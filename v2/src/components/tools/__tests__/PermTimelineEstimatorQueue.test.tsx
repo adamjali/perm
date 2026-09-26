@@ -65,7 +65,22 @@ describe("PermTimelineEstimator queue band", () => {
     // once as this total and once as July's own row in the chart below.
     const card = screen.getByText("Cases ahead of you").closest("div");
     expect(card).toHaveTextContent("2,000");
-    expect(card).toHaveTextContent("still undecided, filed before August 2025");
+    expect(card).toHaveTextContent("in DOL's normal queue, filed before August 2025");
+  });
+
+  it("counts only the normal queue ahead, and names the side queue it leaves out", () => {
+    const staged: MonthQueue[] = [
+      month("2025-06", 10_000, 9_000, { analystReview: 700 }),  // 300 on hold/RFI
+      month("2025-07", 10_000, 8_000, { analystReview: 1_900 }), // 100 on hold/RFI
+      month("2025-08", 10_000, 4_000, { analystReview: 4_000 }),
+    ];
+    renderQueue({ months: staged });
+    fireEvent.change(screen.getByLabelText(/DOL received your case/i), {
+      target: { value: "2025-08-15" },
+    });
+    const card = screen.getByText("Cases ahead of you").closest("div");
+    expect(card).toHaveTextContent("2,600");
+    expect(card).toHaveTextContent("Not counted: 400 on hold");
   });
 
   it("states the active range in words", () => {
@@ -118,6 +133,6 @@ describe("PermTimelineEstimator queue band", () => {
     fireEvent.change(screen.getByLabelText(/case number/i), {
       target: { value: "G-100-25213-100000" }, // day 213 of 2025 = 2025-08-01
     });
-    expect(screen.getByText(/still undecided, filed before August 2025/)).toBeInTheDocument();
+    expect(screen.getByText(/in DOL's normal queue, filed before August 2025/)).toBeInTheDocument();
   });
 });

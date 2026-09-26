@@ -5,8 +5,8 @@
  *
  * Shows two numbers that disagree, on purpose. USCIS publishes a processing
  * time measured over petitions it has already decided, and separately publishes
- * how many are still stacked up. For the national interest waiver those are 29
- * to 32 months and roughly 42 months of queue, and the gap is the story: NIW
+ * how many are still stacked up. For the national interest waiver those are 30
+ * months (80% of recent petitions) and roughly 42 months of queue, and the gap is the story: NIW
  * intake is outrunning its output, so the pile is growing. Reporting only the
  * published figure would understate it and reporting only the queue would
  * overstate it.
@@ -21,7 +21,7 @@ import { FileTextIcon, TrendUpIcon as TrendingUp, WarningIcon } from "@phosphor-
 
 import { estimateI140Queue, type I140QuarterStats } from "@/lib/perm";
 import {
-  formatMonthRange,
+  formatMonths,
   getI140ProcessingTime,
   type I140Category,
 } from "@/lib/processing-times/i140ProcessingTimes";
@@ -193,10 +193,11 @@ export function I140QueueEstimator({
               USCIS published time
             </p>{" "}
             <p className="mt-2 font-heading text-2xl font-black leading-none">
-              {formatMonthRange(published.lowMonths, published.highMonths)}
+              {formatMonths(published.months80)}
             </p>{" "}
             <p className="mt-3 text-base leading-relaxed text-foreground/70">
-              Measured over petitions already decided.
+              80% of the petitions USCIS decided over the past six months finished
+              within this.
             </p>
           </div>
         ) : null}
@@ -211,7 +212,7 @@ export function I140QueueEstimator({
             <p className="mt-3 text-base leading-relaxed text-foreground/70">
               Half of every I-140 decided in {quarterlyMedian.quarterLabel} took less
               {quarterlyMedian.completed !== null ? `, over ${quarterlyMedian.completed.toLocaleString("en-US")} decisions` : ""}.
-              One median across every subtype; the range beside it is per subtype.{" "}
+              One median across every subtype; the figure beside it is per subtype and covers 80% of cases.{" "}
               <Link href="/uscis-processing-times" className="underline underline-offset-2 hover:text-primary">
                 Every form&apos;s median
               </Link>

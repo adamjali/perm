@@ -121,7 +121,7 @@ export function CasePushAlert({ caseNumber, className }: { caseNumber: string; c
   }
 
   return (
-    <div className={cn("border-2 border-border bg-card p-5 shadow-hard sm:p-6", className)}>
+    <div className={cn("border-2 border-border bg-card p-5 shadow-hard sm:p-6 print:hidden", className)}>
       <h3 className="flex items-center gap-2 font-heading text-base font-black">
         <BellIcon size={18} weight="bold" aria-hidden="true" /> Or a notification in this browser
       </h3>{" "}

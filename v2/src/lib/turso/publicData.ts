@@ -1423,6 +1423,8 @@ export interface LiveCohortMonth {
   pending: number;
   decided: number;
   decidedPct: number | null;
+  /** Pending cases in ANALYST REVIEW: the ordinary line (see `inLine`). */
+  analystReview: number;
 }
 
 export interface LiveStatusCount {
@@ -1455,12 +1457,14 @@ export async function getLiveBacklog(): Promise<LiveCohortMonth[]> {
       pending: m.pending,
       decided: m.decided,
       decidedPct: m.decidedPct,
+      analystReview: m.analystReview,
     }));
   }
   const r = await rows<Record<string, unknown>>(
     `SELECT substr(filing_date, 1, 7) AS month,
             COUNT(*)                                       AS total,
-            SUM(CASE WHEN is_final = 0 THEN 1 ELSE 0 END)  AS pending
+            SUM(CASE WHEN is_final = 0 THEN 1 ELSE 0 END)  AS pending,
+            SUM(CASE WHEN current_status = 'ANALYST REVIEW' THEN 1 ELSE 0 END) AS analyst
        FROM perm_case_status
       WHERE filing_date IS NOT NULL AND filing_date <> ''
       GROUP BY month ORDER BY month`,
@@ -1475,6 +1479,7 @@ export async function getLiveBacklog(): Promise<LiveCohortMonth[]> {
       pending,
       decided,
       decidedPct: total > 0 ? (decided / total) * 100 : null,
+      analystReview: Number(x.analyst) || 0,
     };
   });
 }

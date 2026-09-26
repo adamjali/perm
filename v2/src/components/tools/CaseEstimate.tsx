@@ -21,9 +21,7 @@ import { formatAsOf } from "@/lib/dolFormat";
 
 const fmtDate = (iso: string) => formatAsOf(iso) ?? iso;
 
-export function CaseEstimate(
-  props: CaseEstimateInput & { letterInitial?: string | null },
-) {
+export function CaseEstimate(props: CaseEstimateInput) {
   const est = buildCaseEstimate(props);
   if (!est) return null;
 
@@ -168,29 +166,6 @@ export function CaseEstimate(
         </p>
       ) : null}
 
-      {/* NAMED AND SIZED, NEVER FOLDED IN. DOL works each filing month
-          alphabetically by employer, so this is a real term - and it is a
-          small one, which is exactly why it is printed with its own number
-          instead of disappearing into the date. A competitor applies the same
-          term at -80 to +80 days and tells nobody. Stating "about a week"
-          next to the letter is what stops this becoming that. */}
-      {typeof props.letterDeltaDays === "number" && props.letterInitial ? (
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-          <b className="font-bold">
-            Employers starting with {props.letterInitial}:{" "}
-            {/* A letter whose measured shift rounds to zero is the commonest
-                case in the middle of the alphabet, and "+0 days" reads as a
-                bug rather than as the finding it is. Say what it means. */}
-            {Math.round(props.letterDeltaDays) === 0
-              ? "no measurable difference."
-              : `${props.letterDeltaDays > 0 ? "+" : ""}${Math.round(props.letterDeltaDays)} days.`}
-          </b>{" "}
-          DOL works each filing month alphabetically by employer name, and this
-          case is adjusted for that. It is a small term: across our corpus the
-          whole alphabet spans about four weeks, and in a sixth of filing months
-          the order ran backwards. The filing month matters far more.
-        </p>
-      ) : null}
 
       <p className="mt-4 text-sm text-muted-foreground">
         {est.modelLabel}: {est.basis} Source: {est.source}

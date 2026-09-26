@@ -24,6 +24,7 @@ surviving Python could have written.
 """
 from __future__ import annotations
 
+import datetime
 import pathlib
 import re
 import sys
@@ -433,6 +434,7 @@ def main() -> int:
 
     check_freshness_verdict()
     check_capped_partial_is_not_broken()
+    check_hand_read_figures()
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0
 
@@ -452,6 +454,19 @@ def check_freshness_verdict() -> None:
     check("every row lands in exactly one bucket",
           len(failing) + len(watching) == 4 and not set(failing) & set(watching))
     check("grace is measured, not zero", g >= 2)
+
+
+# --- Figures read by hand from USCIS's challenged page (2026-09-26) ------
+def check_hand_read_figures() -> None:
+    d = datetime.date
+    check("fresh hand-read figures are fine", health.hand_read_verdict(d(2026, 9, 26), d(2026, 12, 1)) == "ok")
+    check("past USCIS's own window they warn",
+          health.hand_read_verdict(d(2026, 9, 26), d(2026, 9, 26) + datetime.timedelta(days=health.HAND_READ_WARN_DAYS + 1)) == "warn")
+    check("unrefreshed for most of a year they fail",
+          health.hand_read_verdict(d(2026, 9, 26), d(2026, 9, 26) + datetime.timedelta(days=health.HAND_READ_FAIL_DAYS + 1)) == "fail")
+    check("the real file's date is readable and current",
+          health.check_hand_read_figures(today=d(2026, 9, 27)) == 0)
+    check("warn comes before fail", health.HAND_READ_WARN_DAYS < health.HAND_READ_FAIL_DAYS)
 
 
 # --- A `partial` that names the sweep's cap is a designed stop (2026-09-15)

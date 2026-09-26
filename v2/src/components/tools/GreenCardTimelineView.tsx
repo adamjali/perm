@@ -92,10 +92,13 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
           return (
             <li
               key={stage.id}
-              className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 border-b-2 border-border/40 pb-4 last:border-b-0"
+              className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-1 border-b-2 border-border/40 pb-4 last:border-b-0"
             >
               <Icon className="mt-1 h-5 w-5 shrink-0 text-foreground/60" aria-hidden="true" />
-              <div>
+              {/* min-w-0 with the minmax(0,1fr) track: the stage's bulletin table
+                  scrolls in its own box instead of widening the page (it pushed
+                  the page to 446px at a 390px phone width, 2026-09-26). */}
+              <div className="min-w-0">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4">
                   {/* <h2>, NOT <h3>. These five stages are the page's own sections
                       and they follow its <h1> directly, so an <h3> skipped a
@@ -106,7 +109,7 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
                   <span className="text-base font-bold tabular-nums">
                     {stage.months === null ? "No published figure" : months(stage.months)}
                   </span>
-                </div>
+                </div>{" "}
                 <p className="mt-2 text-base leading-relaxed text-foreground/70">
                   {stage.detail}
                 </p>{" "}

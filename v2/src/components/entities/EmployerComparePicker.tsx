@@ -55,7 +55,7 @@ function Picker({
 
   return (
     <div className="min-w-0">
-      <label htmlFor={id} className="block font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <label htmlFor={id} className="block font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
         {label}
       </label>{" "}
       <input

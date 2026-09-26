@@ -1081,7 +1081,7 @@ function CaseTable({
           })}
         </tr>
       </thead>
-      <tbody className="bg-card">
+      <tbody translate="no" className="bg-card">
         {rows.map((r) => (
           <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
             <td className="whitespace-nowrap px-3 py-3 font-mono text-base">{r.caseNumber}{" "}</td>

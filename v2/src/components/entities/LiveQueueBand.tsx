@@ -112,7 +112,7 @@ export function LiveQueueBand({
         <>
           <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 sm:grid-cols-[minmax(0,15rem)_1fr] sm:gap-8">
             <div>
-              <p className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground">
                 Waiting on a decision
               </p>{" "}
               <p className="mt-1 font-heading text-5xl font-black leading-none tabular-nums">
@@ -137,7 +137,7 @@ export function LiveQueueBand({
             </div>
 
             <div>
-              <p className="mb-3 border-b border-border/40 pb-1.5 font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+              <p className="mb-3 border-b border-border/40 pb-1.5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
                 Where those {fmt(waiting)} are standing
               </p>
               <dl className="space-y-4">

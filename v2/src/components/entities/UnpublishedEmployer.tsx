@@ -67,6 +67,7 @@ export function UnpublishedEmployer({
   cases,
   asOf,
   follow,
+  wait,
 }: {
   record: LiveEmployerRecord;
   /** The newest cases, already capped by the caller. */
@@ -75,6 +76,8 @@ export function UnpublishedEmployer({
   asOf: string | null;
   /** The follow card, rendered above the case list. */
   follow?: ReactNode;
+  /** The wait section, rendered after the follow card. */
+  wait?: ReactNode;
 }) {
   const { name, cases: total, pending, firstFiling, lastFiling, stages, otherNames } =
     record;
@@ -97,7 +100,7 @@ export function UnpublishedEmployer({
           </Link>{" "}
           · Live record only
         </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 translate="no" className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
           {name}
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
@@ -217,6 +220,7 @@ export function UnpublishedEmployer({
       ) : null}
 
       {follow}{" "}
+      {wait}{" "}
       <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-xl font-black sm:text-2xl">
           {listed === total

@@ -73,7 +73,7 @@ export default function PwdValidityPage() {
           the determination date and the page says which rule applied.
         </p>
       </header>
-      <section className="mt-10">
+      <section data-embed="pwd-validity" className="mt-10">
         <PwdValidityCalculator />
       </section>
       <section className="mt-12">

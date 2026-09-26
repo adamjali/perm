@@ -254,7 +254,7 @@ export default async function PriorityDateCalculatorPage() {
         </p>
       </header>
 
-      <section className="mt-10">
+      <section data-embed="priority-date" className="mt-10">
         <PriorityDateEstimator
           bulletins={bulletins}
           categoryCodes={categoryCodes}
@@ -266,7 +266,7 @@ export default async function PriorityDateCalculatorPage() {
       </section>
 
       {board ? (
-        <section className="mt-12">
+        <section data-embed="visa-bulletin" className="mt-12">
           <BulletinBoard board={board} />
         </section>
       ) : null}

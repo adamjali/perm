@@ -65,6 +65,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   // --- other federal sources ----------------------------------------------
   "visa-bulletin":
     "Cutoff dates as the State Department published them each month. Nothing here is forecast.",
+  "nvc-waiting-list":
+    "State's yearly count of applicants waiting for an immigrant visa at the National Visa Center, each November 1 since 2016, by category, spouses and children included; consular cases only, not adjustments at USCIS.",
   "visa-annual-limits":
     "The State Department's annual numerical limits and the prior year's usage.",
   "uscis-case-status":

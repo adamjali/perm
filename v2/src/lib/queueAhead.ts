@@ -40,10 +40,31 @@ export interface MonthQueue {
   appeals?: number;
 }
 
+/**
+ * The cases in a month that are actually IN LINE: `analystReview` when the row
+ * carries it, every pending case otherwise.
+ *
+ * MEASURED 2026-09-26, and it is the largest error the estimator had. About
+ * 5,700 pending cases sit on hold, at an RFI, on appeal or at NORD. They are
+ * not in filing order (DOL is not working them as part of the line), and
+ * counting them as ahead of everybody filed later added about a week to every
+ * date. Rebuilding the queue as it stood on 2026-09-13 and scoring 7,112 real
+ * decisions: counting every pending case gave a typical miss of 9.5 days and
+ * 73% right on "decided by Sep 25"; counting ANALYST REVIEW only gave 3.9 days
+ * and 86%. The ledger's recorded case landed 15 days early against the old
+ * count. Method and figures: .planning/estimator-backtest-2026-09-26.md.
+ *
+ * The fallback to `pending` keeps every caller that passes a bare
+ * {total, pending, decided} row answering exactly as before.
+ */
+export function inLine(m: { pending: number; analystReview?: number }): number {
+  return typeof m.analystReview === "number" ? m.analystReview : m.pending;
+}
+
 export interface QueueAheadResult {
-  /** Pending cases filed BEFORE this month. */
+  /** Cases in line filed BEFORE this month (see `inLine`). */
   ahead: number;
-  /** Pending cases filed in the same month. */
+  /** Cases in line filed in the same month. */
   sameMonth: number;
   /** This month's own row, when the series holds one. */
   subject: MonthQueue | null;
@@ -56,7 +77,8 @@ export interface QueueAheadResult {
  * an earlier month is no longer in front of anybody, so counting it would
  * inflate the figure in exactly the direction that flatters a wait. Summing
  * `total` instead of `pending` here would roughly quadruple the answer and
- * still look entirely plausible on the page.
+ * still look entirely plausible on the page. And IN LINE only: a case on
+ * hold or at an RFI is pending but is not in front of anyone (see `inLine`).
  */
 export function deriveQueueAhead(
   months: readonly MonthQueue[],
@@ -64,10 +86,10 @@ export function deriveQueueAhead(
 ): QueueAheadResult {
   let ahead = 0;
   for (const m of months) {
-    if (m.filingMonth < filingMonth) ahead += m.pending;
+    if (m.filingMonth < filingMonth) ahead += inLine(m);
   }
   const subject = months.find((m) => m.filingMonth === filingMonth) ?? null;
-  return { ahead, sameMonth: subject?.pending ?? 0, subject };
+  return { ahead, sameMonth: subject ? inLine(subject) : 0, subject };
 }
 
 /**
@@ -164,7 +186,7 @@ export interface AheadOptions {
 
 export interface AheadResult {
   total: number;
-  /** Undecided cases that already exist. */
+  /** Undecided cases in line that already exist (see `inLine`). */
   pending: number;
   /**
    * Cases expected to be filed between today and a future filing date.
@@ -209,7 +231,7 @@ export function aheadOfDay(
   const newest = months.reduce<string>((a, m) => (m.filingMonth > a ? m.filingMonth : a), "");
   if (!newest || filingDate.slice(0, 7) <= newest) return null; // before our data
 
-  const pending = months.reduce((a, m) => a + m.pending, 0);
+  const pending = months.reduce((a, m) => a + inLine(m), 0);
   const { today, filingRate } = opts;
   if (!today || !filingRate || !(filingRate > 0)) {
     // Answerable but not projectable: say what we counted and nothing more.

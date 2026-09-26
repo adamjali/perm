@@ -176,25 +176,6 @@ export function summariseMoves(moves: readonly SameMonthMove[]): MoveSummary {
   };
 }
 
-/**
- * A floor on the publication day: the day of the PRIOR month on which the
- * Internet Archive first captured each bulletin. A capture taken after the
- * bulletin's own month began says nothing about when it was published and is
- * dropped. This is the only publication evidence the archive carries.
- */
-export function archiveFloorDays(
-  series: readonly { bulletinMonth: string; archivedAt: string | null }[],
-): { bulletinMonth: string; day: number }[] {
-  const out: { bulletinMonth: string; day: number }[] = [];
-  for (const s of series) {
-    if (!s.archivedAt) continue;
-    const captured = s.archivedAt.slice(0, 10);
-    if (captured.slice(0, 7) !== monthBefore(s.bulletinMonth)) continue;
-    out.push({ bulletinMonth: s.bulletinMonth, day: Number(captured.slice(8, 10)) });
-  }
-  return out.sort((a, b) => a.bulletinMonth.localeCompare(b.bulletinMonth));
-}
-
 export interface PaceBasis {
   latest: Cutoff;
   movedDays: number | null;

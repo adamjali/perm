@@ -213,6 +213,12 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "What each DOL FLAG status means for a PERM, a prevailing wage request or an H-1B LCA (analyst review, RFI issued, on hold, appeals, certified, expired), with the regulation that defines it or a note that none does, and today's count.",
   },
   {
+    path: "/visa-bulletin/categories",
+    label: "The visa bulletin by category and country",
+    blurb:
+      "One page per employment-based bulletin line (EB-1 to EB-5, Other Workers, the EB-5 set-asides) for India, China, Mexico, the Philippines and the rest of the world: both charts this month, the final action cutoff a fiscal year at a time, and USCIS's own counts behind the line. No forecast.",
+  },
+  {
     path: "/visa-bulletin/family",
     label: "Family-sponsored cutoff history",
     blurb: "Every family-sponsored cutoff (F1, F2A, F2B, F3, F4) from the visa bulletin archive by country: the latest final action and dates-for-filing cutoffs, how far each moved, and every retrogression. No queue position, because USCIS publishes no family inventory.",
@@ -225,12 +231,17 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   {
     path: "/badges",
     label: "Badges",
-    blurb: "Three embeddable SVG badges regenerated daily from DOL's own published figures (the PERM queue month, the average decision days, the wage-request month), with the markdown and HTML to embed them.",
+    blurb: "Embeddable SVG badges of DOL's own published figures, and every calculator, estimate and chart plus the case lookup as an iframe for other sites, with the HTML to copy.",
+  },
+  {
+    path: "/zh",
+    label: "The guide for the person waiting, in Simplified Chinese, Spanish, Brazilian Portuguese, Korean and Vietnamese",
+    blurb: "Checking a case, where DOL's queue is, the steps after PERM, EB-3 Other Workers and this month's cutoffs, in five languages: /zh, /es, /pt-br, /ko and /vi. Figures and DOL's status words stay as DOL prints them.",
   },
   {
     path: "/estimate-scorecard",
     label: "Estimate scorecard",
-    blurb: "Every decision-date estimate the site recorded for a real PERM case before the outcome, with the anchor and window as printed, the day DOL decided, and the error in days; scored from the record and never edited.",
+    blurb: "How close the decision-date estimates land: a weekly backtest that rebuilds DOL's queue on a past day and grades thousands of real decisions, a random sample of pending cases recorded every morning before the outcome and graded after, and the hand-recorded worked examples. Never edited.",
   },
   {
     path: "/glossary",
@@ -278,6 +289,42 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     label: "I-485 queue position",
     blurb:
       "Where an adjustment-of-status filing sits against USCIS's published pending inventory, by category and country of chargeability.",
+  },
+  {
+    path: "/tools/green-card-line",
+    label: "The green card line: people ahead of a priority date",
+    blurb:
+      "Everyone ahead of a priority date in EB-2, EB-3 and EB-3 Other Workers by country: approved I-140s waiting (USCIS's count, spread by the measured PERM time), pending I-140s, and current I-485s, with families counted from DHS and years at State's FY2024 Table V pace. A range, checked against USCIS's I-485 counts where both exist.",
+  },
+  {
+    path: "/tools/eb2-vs-eb3",
+    label: "EB-2 vs EB-3 for one priority date",
+    blurb:
+      "EB-2 and EB-3 side by side for one country and priority date: this month's final action and dates-for-filing cutoffs, and the people ahead in each line as a range. Names one line as shorter only when the ranges don't overlap, and compares people, not waits.",
+  },
+  {
+    path: "/tools/which-green-card",
+    label: "Which employment green card category fits",
+    blurb:
+      "A few questions (sponsor, the job's minimum requirement, the person's qualifications, five statements) matched against 8 CFR 204.5's definitions and USCIS's national interest waiver test: which of EB-1A, EB-1B, EB-1C, EB-2, the EB-2 waiver, EB-3 and EB-3 Other Workers could apply, and what each needs. Information, not legal advice.",
+  },
+  {
+    path: "/h1b-lottery-odds",
+    label: "H-1B lottery odds by year",
+    blurb:
+      "USCIS's H-1B cap registration and selection counts for FY2021 to FY2026, the share selected each year, and DHS's own estimate (90 FR 60864) of a beneficiary's chance at each OEWS wage level under the weighted lottery that began with FY2027. Labelled as an estimate; no FY2027 count is published yet.",
+  },
+  {
+    path: "/nvc-waiting-list",
+    label: "The NVC immigrant visa waiting list",
+    blurb:
+      "The State Department's yearly count of immigrant visa applicants waiting at the National Visa Center, by family and employment category, reconciled report against report. Consular cases only, families included; adjustments at USCIS are not in it.",
+  },
+  {
+    path: "/green-card-timelines",
+    label: "Green card timelines",
+    blurb:
+      "How long the I-140, I-485, work permit and green card took for the people who report them: the PERM dates checked against DOL's record, everything after self-reported and labelled as such.",
   },
   {
     path: "/uscis-processing-times",

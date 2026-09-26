@@ -308,9 +308,9 @@ export default async function UscisProcessingTimesPage() {
                 subject="The I-140: the quarterly median beside the processing-times page"
                 caption={
                   <>
-                    The processing-times page publishes one figure per subtype, measured
-                    over the slow tail of recently completed petitions, and tells you to
-                    wait that long before asking about a case. The quarterly file
+                    The processing-times page publishes one figure per subtype: the time
+                    USCIS took to finish 80% of the petitions it decided over the past six
+                    months, and it tells you to wait that long before asking about a case. The quarterly file
                     publishes one median over every I-140 decided in the quarter. Both
                     are USCIS&apos;s. Only the second says what the typical case took.
                   </>
@@ -334,13 +334,13 @@ export default async function UscisProcessingTimesPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">Processing-times page, by subtype</p>{" "}
+                    <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">Processing-times page, 80% within</p>{" "}
                     <ul className="mt-2 divide-y divide-border">
                       {egovSubtypes.map((s) => (
                         <Fragment key={s.code}>{" "}
                         <li className="flex items-baseline justify-between gap-4 py-2">
                           <span className="text-base">{s.label} <span className="font-mono text-sm text-muted-foreground">({s.code})</span></span>{" "}
-                          <span className="whitespace-nowrap font-mono text-base font-bold tabular-nums">{s.lowMonths} to {s.highMonths} mo</span>
+                          <span className="whitespace-nowrap font-mono text-base font-bold tabular-nums">{`${s.months80} mo`}</span>
                         </li>
                         </Fragment>
                       ))}

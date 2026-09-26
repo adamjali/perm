@@ -82,7 +82,7 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
                 employer count is what separates an occupation from one firm's
                 batch of filings.
               */}
-              <span className="order-4 col-span-2 font-mono text-[11px] tabular-nums text-muted-foreground sm:col-span-3">
+              <span className="order-4 col-span-2 font-mono text-sm tabular-nums text-muted-foreground sm:col-span-3">
                 {r.rfi.toLocaleString()} of {r.filed.toLocaleString()} filed
                 {", "}
                 {r.rfiEmployers.toLocaleString()} employers

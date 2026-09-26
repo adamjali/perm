@@ -104,7 +104,7 @@ export function PendingLeaderboard({
                 style={{ width: `${Math.max(2, (l.pending / max) * 100)}%` }}
               />
               {l.topStage ? (
-                <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+                <p className="mt-1 font-mono text-sm uppercase tracking-[0.1em] text-muted-foreground">
                   {fmt(l.topStageN)} in {l.topStage.toLowerCase()}
                 </p>
               ) : null}

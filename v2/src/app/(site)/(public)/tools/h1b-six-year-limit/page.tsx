@@ -76,7 +76,7 @@ export default function H1bSixYearLimitPage() {
           predicted.
         </p>
       </header>
-      <section className="mt-10">
+      <section data-embed="h1b-six-year" className="mt-10">
         <H1bMaxOutCalculator />
       </section>
       <section className="mt-12">

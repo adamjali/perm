@@ -172,7 +172,7 @@ const TRACE: {
     figure: "Visa bulletin cutoff history",
     where: { href: "/tools/priority-date-calculator", label: "Priority dates" },
     how: "Parsed from the published charts. A cell reading C means the category was open to every priority date and U means it was shut to all of them; those are opposites, so they are drawn as different states rather than one shaded band.",
-    population: "Employment-based charts only, read from the Internet Archive because the live site refuses automated readers. It lags the current month, which is why it is framed as a history.",
+    population: "Both charts, employment and family, as the State Department published them, read from its own pages each month as a bulletin appears. Months before the direct read came from the Internet Archive's copies of the same pages.",
   },
 ];
 
@@ -221,7 +221,7 @@ const SOURCES = [
     name: "State Department visa bulletin",
     seal: "/agency/dos-seal.png",
     sealAlt: "Seal of the US Department of State",
-    what: "Employment-based cutoff dates. The live page refuses automated readers, so our series comes from the Internet Archive and lags the current month. That’s why the priority date calculator is framed as a history.",
+    what: "Cutoff dates from every bulletin since October 2014, read from the State Department's own pages as each one appears, with older months from the Internet Archive's copies of the same pages. Nothing in it is forecast.",
     cadence: "Monthly.",
     href: "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
   },

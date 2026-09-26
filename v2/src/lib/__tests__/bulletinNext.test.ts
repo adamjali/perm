@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { BulletinMonth } from "@/lib/perm";
 import {
-  archiveFloorDays,
   monthsToReach,
   nextBulletinMonth,
   sameMonthMoves,
@@ -70,21 +69,6 @@ describe("summariseMoves", () => {
     const s = summariseMoves(sameMonthMoves(SERIES, "finalAction", "EB2", "worldwide", 10));
     expect(s.medianDays).toBeNull();
     expect(s.count).toBe(3);
-  });
-});
-
-describe("archiveFloorDays", () => {
-  it("reports the day of the prior month each bulletin was first captured, ignoring captures after its own month starts", () => {
-    const days = archiveFloorDays([
-      { bulletinMonth: "2026-08", archivedAt: "2026-07-14T10:00:00Z" },
-      { bulletinMonth: "2026-09", archivedAt: "2026-08-19T03:00:00Z" },
-      { bulletinMonth: "2026-07", archivedAt: "2026-07-02T00:00:00Z" }, // captured late, no floor
-      { bulletinMonth: "2026-06", archivedAt: null },
-    ]);
-    expect(days).toEqual([
-      { bulletinMonth: "2026-08", day: 14 },
-      { bulletinMonth: "2026-09", day: 19 },
-    ]);
   });
 });
 

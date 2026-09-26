@@ -252,17 +252,24 @@ function MonthRow({
  * The label and the rule are one flex row, so they resolve to the same
  * vertical coordinate by construction rather than by two numbers that have to
  * be kept in step.
+ *
+ * IT WRAPS. The row used to be three `shrink-0` pieces on one unbreakable
+ * line, and at 390px the badge plus "as of September 22" came to 462px: the
+ * whole page scrolled sideways (a 493px document on a phone, reported from
+ * a screenshot on 2026-09-26). Now the date drops under the rule on a narrow
+ * screen, the badge may wrap its own words, and the rule keeps a 2rem floor
+ * so it never collapses to nothing.
  */
 function FrontierRule({ month, asOf }: { month: string; asOf: string | null }) {
   const label = formatMonth(month) ?? month;
   return (
-    <li className="flex items-center gap-3 pb-1 pt-4">
-      <span className="shrink-0 border-2 border-primary bg-primary px-2 py-1 font-mono text-xs font-bold uppercase tracking-wider text-primary-foreground">
+    <li className="flex flex-wrap items-center gap-x-3 gap-y-1 pb-1 pt-4">
+      <span className="min-w-0 max-w-full border-2 border-primary bg-primary px-2 py-1 font-mono text-sm font-bold uppercase tracking-wide text-primary-foreground">
         DOL is working {label}
       </span>{" "}
-      <span className="h-0 flex-1 border-t-4 border-primary" aria-hidden="true" />{" "}
+      <span className="h-0 min-w-8 flex-1 border-t-4 border-primary" aria-hidden="true" />{" "}
       {asOf ? (
-        <span className="shrink-0 font-mono text-xs text-foreground/70">
+        <span className="ml-auto whitespace-nowrap font-mono text-sm text-foreground/70">
           as of {asOf}
         </span>
       ) : null}

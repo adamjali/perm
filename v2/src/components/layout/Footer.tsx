@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { LOCALES } from "@/lib/i18n/locales";
 
 // KEEP "use client" HERE. Making this a server component was tried on
 // 2026-09-01, got all the way to a green build, was MEASURED, and made every
@@ -238,13 +239,34 @@ export default function Footer({ audience = "public" }: FooterProps) {
           ))}
         </div>
 
+        {/* The guide for the person waiting, in five languages. The only site-
+            wide link to those pages; each name is in its own language, marked
+            with `lang` and `hrefLang` so a screen reader and a crawler both
+            know what they are. */}
+        <nav aria-label="Other languages" className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-white/80">
+          <span className="font-bold text-white">The guide in:</span>{" "}
+          {LOCALES.map((l) => (
+            <Fragment key={l.code}>
+              {" "}
+              <a
+                href={l.path}
+                lang={l.tag}
+                hrefLang={l.tag}
+                className="flex min-h-11 items-center underline decoration-white/30 underline-offset-2 transition-colors hover:text-white hover:decoration-white lg:min-h-0"
+              >
+                {l.endonym}
+              </a>
+            </Fragment>
+          ))}
+        </nav>
+
         {/* Bottom bar with illustration */}
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-6 sm:flex-row">
           <div className="flex items-center gap-3">
             <div className="opacity-30" aria-hidden="true">
               <LawGavelSVG size={28} className="text-white" />
             </div>{" "}
-            <div className="mono text-xs text-white/70">
+            <div className="mono text-sm text-white/70">
               {/* The brand name links home from every page: until 2026-09-15
                   the header logo was the only link to "/" whose text was the
                   site's name, and Google ties a phrase to a page partly by
@@ -256,7 +278,7 @@ export default function Footer({ audience = "public" }: FooterProps) {
               . All rights reserved.
             </div>
           </div>{" "}
-          <div className="flex items-center gap-1 text-xs text-white/70">
+          <div className="flex items-center gap-1 text-sm text-white/70">
             Made with <HeartIcon className="h-3 w-3 text-(--primary)" /> for everyone in the PERM line
           </div>
         </div>

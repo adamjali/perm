@@ -97,7 +97,7 @@ function Panel({
                     />
                   )}
                 </div>
-                <span className="w-20 shrink-0 text-right font-mono text-[11px] tabular-nums text-foreground/60">
+                <span className="w-20 shrink-0 text-right font-mono text-sm tabular-nums text-foreground/60">
                   {b.decided.toLocaleString("en-US")}
                 </span>
               </div>
@@ -107,7 +107,7 @@ function Panel({
                   the sub-$60k interval entirely, so the hump is a measurement
                   rather than an impression. */}
               {b.interval ? (
-                <p className="mt-0.5 font-mono text-[11px] tabular-nums text-foreground/55">
+                <p className="mt-0.5 font-mono text-sm tabular-nums text-foreground/55">
                   95% interval {b.interval.lo.toFixed(2)} to{" "}
                   {b.interval.hi.toFixed(2)}%
                 </p>

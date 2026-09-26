@@ -123,7 +123,15 @@ export function isLegacyCaseNumber(caseNumber: string): boolean {
   return /^[A-Z]-\d{5}-\d{5}$/.test(caseNumber.trim().toUpperCase());
 }
 
-export async function lookupCase(input: string): Promise<CaseLookupResult | null> {
+/**
+ * `discover: false` reads our own record only and never asks DOL: the
+ * embedded lookup (lib/turso/embedLookup.ts) decides for itself whether a
+ * live ask is allowed, under its per-site cap.
+ */
+export async function lookupCase(
+  input: string,
+  opts: { discover?: boolean } = {},
+): Promise<CaseLookupResult | null> {
   const caseNumber = normaliseLookupCaseNumber(input);
   if (!caseNumber) return null;
 
@@ -151,7 +159,7 @@ export async function lookupCase(input: string): Promise<CaseLookupResult | null
     // DOL's own endpoint, records a hit so the daily sweep owns it from
     // tomorrow, and degrades to null on a genuine miss, a timeout, or an
     // exhausted global budget - in which case the old answer stands.
-    const found = await discoverCase(caseNumber);
+    const found = opts.discover === false ? null : await discoverCase(caseNumber);
     if (!found) {
       return {
         caseNumber, live: null, decided: null, cohort: null,

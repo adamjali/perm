@@ -90,7 +90,7 @@ export default function ContentCard({
                   // items is not rendered as a flex item, so it costs nothing.
                   <Fragment key={tag}>
                     {" "}
-                    <span className="border border-border bg-muted px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                    <span className="border border-border bg-muted px-1.5 py-0.5 font-mono text-sm uppercase tracking-wider text-muted-foreground">
                       {tag}
                     </span>
                   </Fragment>

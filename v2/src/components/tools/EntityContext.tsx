@@ -227,7 +227,7 @@ export function ReliabilityBand({
     >
       <p
         className={cn(
-          "font-mono text-xs font-bold uppercase tracking-[0.14em]",
+          "font-mono text-xs font-bold uppercase tracking-[0.1em]",
           withheld ? "text-data-warn-ink" : "text-foreground/60",
         )}
       >
@@ -311,7 +311,7 @@ export function PeerList({
                 href={`${hrefBase}/${p.slug}`}
                 className="flex h-full min-h-[44px] flex-col border-2 border-border bg-card p-4 no-underline shadow-hard-sm transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
-                <span className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/60">
+                <span className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/60">
                   #{fmt(p.rank)}
                   {p.state ? ` · ${p.state}` : ""}
                 </span>{" "}
@@ -379,7 +379,7 @@ export function RankLadder({
           <Fragment key={r.label}>
             {" "}
             <div className="min-w-0">
-              <dt className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-foreground/60">
+              <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/60">
                 {r.label}
               </dt>{" "}
               <dd className="mt-1 min-w-0">
@@ -427,7 +427,7 @@ export function LimitsPanel({
           <Fragment key={i.head}>
             {" "}
             <div className="min-w-0">
-              <dt className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-foreground/70">
+              <dt className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-foreground/70">
                 {i.head}
               </dt>{" "}
               <dd className="mt-1.5 text-base leading-relaxed text-foreground/80">{i.body}</dd>
@@ -462,7 +462,7 @@ export function DisclosureNote({
     <section
       className={cn("border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6", className)}
     >
-      <p className="font-mono text-xs font-bold uppercase tracking-[0.14em] text-foreground/60">
+      <p className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-foreground/60">
         The window these figures cover
       </p>{" "}
       <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">

@@ -27,10 +27,10 @@ import { lookupCase } from "@/lib/turso/caseLookup";
 import { normalisePwdCaseNumber } from "@/lib/turso/pwdCases";
 import { normaliseLcaCaseNumber } from "@/lib/turso/lcaCases";
 import { getEstimatorData } from "@/lib/turso/estimate";
-import { casesAheadOfDay } from "@/lib/queueAhead";
+import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
 import { getDecisionPace } from "@/lib/turso/decisionPace";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
-import { getAlphabet } from "@/lib/turso/alphabet";
+import { getSameDay } from "@/lib/turso/sameDay";
 import {
   getStageStats,
   ageByStatusFrom,
@@ -104,7 +104,7 @@ const FAQS = [
   },
   {
     q: "Is this DOL's official status?",
-    a: "Close to it, and the chain is worth stating. These statuses come from DOL's own case-status search, which we sweep against every pending case twice a day and against the full corpus daily. DOL publishes no documented API for it, so this is the same endpoint their search page uses rather than a supported one. It is a sweep, not a live reading: a case decided since the last sweep will show at DOL first, and DOL is the authority for any single case."
+    a: "Close to it, and the chain is worth stating. These statuses come from DOL's own case-status search, which we sweep against every pending case twice a day and against the full corpus daily, and every hour for a case someone has an alert on. DOL publishes no documented API for it, so this is the same endpoint their search page uses rather than a supported one. It is a sweep, not a live reading: a case decided since the last sweep will show at DOL first, and DOL is the authority for any single case."
   },
   {
     q: "Is the decision date on this page a prediction for my case?",
@@ -382,42 +382,18 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       getSweepCoverage().catch(() => null),
     ]);
 
-  // Inputs to the decision-pace model, both null-safe. Without either the
-  // model is omitted and the month-granular ones answer exactly as they did
-  // before this existed.
-  //
-  // A MISSING SWEEP RECORD IS NOT TREATED AS STALE, and the reason is that
-  // the pace carries its own guard: `getDecisionPace` refuses a series whose
-  // newest day is more than three days old, and that series is written by the
-  // same sweep. So a sweep that stopped takes the pace with it, and this
-  // figure is the belt to that pair of braces rather than the only check.
-  const sweepAgeDays = sweep
-    ? Math.floor(
-        (Date.parse(`${today}T00:00:00Z`) -
-          Date.parse(`${sweep.finishedOn}T00:00:00Z`)) /
-          86_400_000,
-      )
-    : null;
+  // Inputs to the decision-pace model, both null-safe, from the SAME helper
+  // the daily scorecard records with (see caseEstimateInputs.ts): a graded
+  // number must be the number a reader was shown.
+  const { casesAhead, sweepAgeDays } = caseEstimateInputs({
+    backlog,
+    filingDate: result?.live?.filingDate ?? null,
+    sweepFinishedOn: sweep?.finishedOn ?? null,
+    today,
+  });
 
   const publishedFront = estimator?.frontier?.analystQueueMonth ?? null;
   const publishedAsOf = estimator?.frontier?.asOf ?? null;
-
-  // DOL gives the filing date on the live record, so this costs the reader
-  // no input. `casesAheadOfDay` prorates the filing month by the day rather
-  // than counting whole months - at DOL's ~625 decisions a day, a month's
-  // pending is one to two weeks of the answer.
-  const casesAhead = result?.live?.filingDate
-    ? casesAheadOfDay(
-        backlog.map((m) => ({
-          filingMonth: m.month,
-          total: m.total,
-          pending: m.pending,
-          decided: m.decided,
-          decidedPct: m.decidedPct,
-        })),
-        result.live.filingDate,
-      )
-    : null;
 
   const found = !!result && (result.live !== null || result.decided !== null);
   const parsed = parseCaseNumber(caseNumber);
@@ -455,7 +431,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
   }
 
   const isDecided = result.decided !== null;
-  const [monthBacklog, wage, duration, alphabet, stageStats] = await Promise.all([
+  const [monthBacklog, wage, duration, stageStats, sameDay] = await Promise.all([
     month ? getMonthBacklog(month).catch(() => null) : Promise.resolve(null),
     // Only for a decided case: a pending one has no wage in DOL's files, and
     // asking for one is a round trip that can only ever return null.
@@ -465,23 +441,12 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
     isDecided && month
       ? getCohortDuration(month).catch(() => null)
       : Promise.resolve(null),
-    getAlphabet().catch(() => null),
     // Measured stage ages. Absent, the estimate falls back to the table in
     // queueForecast, which is exactly what shipped before this existed.
     getStageStats().catch(() => null),
+    // Four bounded primary-key reads; a failure only drops the section.
+    getSameDay(result.caseNumber).catch(() => null),
   ]);
-
-  // The employer's initial costs the reader nothing to supply here: DOL names
-  // the employer, so it is derived from a fact already on the page. The shift
-  // itself is looked up from the measured table and is never invented - if the
-  // document is missing, the estimate simply runs without the term.
-  const employerName =
-    result.live?.employerName ?? result.decided?.employerName ?? null;
-  const initial = (employerName ?? "").trim().slice(0, 1).toUpperCase();
-  const letterDelta =
-    alphabet && initial >= "A" && initial <= "Z"
-      ? alphabet.letters.find((l) => l.letter === initial)?.deltaDays ?? null
-      : null;
 
   return (
     <CaseStatusResult
@@ -498,11 +463,10 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       casesAhead={casesAhead}
       decisionPace={decisionPace?.pace ?? null}
       sweepAgeDays={sweepAgeDays}
-      letterDelta={letterDelta}
       measuredStageAges={ageByStatusFrom(stageStats)}
       stageExit={exitMixFor(stageStats, result.live?.status ?? "")}
       stageDuration={stageDurationFor(stageStats, result.live?.status ?? "")}
-      letterInitial={letterDelta === null ? null : initial}
+      sameDay={sameDay}
       today={today}
     />
   );

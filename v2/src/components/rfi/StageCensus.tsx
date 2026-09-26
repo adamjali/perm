@@ -134,7 +134,7 @@ function StageRow({
         </span>
       </div>{" "}
 
-      <p className="mt-1 font-mono text-[11px] tabular-nums text-muted-foreground">
+      <p className="mt-1 font-mono text-sm tabular-nums text-muted-foreground">
         {stage.employerNames.toLocaleString()}{" "}
         {stage.employerNames === 1 ? "employer name" : "distinct employer names"}
         {stage.seenTo ? <> · checked {fmtDate(stage.seenFrom, stage.seenTo)}</> : null}
@@ -165,7 +165,7 @@ function StageRow({
           <ul className="mt-1.5 grid gap-0.5">
             {records.map((r, i) => (
               <Fragment key={`${r.employer ?? "?"}-${r.jobTitle ?? "?"}-${i}`}>{" "}
-              <li className="font-mono text-[11px] text-muted-foreground">
+              <li className="font-mono text-sm text-muted-foreground">
                 {r.employer ?? "No employer name"}
                 {", "}
                 {r.jobTitle ?? "no job title"}

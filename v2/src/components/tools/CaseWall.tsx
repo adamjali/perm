@@ -72,7 +72,7 @@ export function CaseWall({
               <li className="flex min-w-0 flex-1 flex-col items-center">
                 <span
                   className={cn(
-                    "font-mono text-[11px] font-bold tabular-nums",
+                    "font-mono text-sm font-bold tabular-nums",
                     s.isSubject ? "text-foreground" : "text-foreground/60",
                   )}
                 >
@@ -100,7 +100,7 @@ export function CaseWall({
                 />
                 <span
                   className={cn(
-                    "mt-1.5 w-full border-t-2 pt-1.5 text-center font-mono text-[11px] uppercase tracking-wider",
+                    "mt-1.5 w-full border-t-2 pt-1.5 text-center font-mono text-sm uppercase tracking-wider",
                     s.isSubject
                       ? "border-foreground font-bold text-foreground"
                       : "border-border text-foreground/60",
@@ -108,7 +108,7 @@ export function CaseWall({
                 >
                   {label}
                 </span>{" "}
-                <span className="mt-1 min-h-[1.25rem] text-center font-mono text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+                <span className="mt-1 min-h-[1.25rem] text-center font-mono text-sm font-bold uppercase tracking-[0.1em] text-primary">
                   {s.isSubject ? subjectMark : s.isFront ? "DOL here" : null}
                 </span>
               </li>
@@ -122,7 +122,8 @@ export function CaseWall({
         <b className="font-bold text-foreground">
           {int(wall.drawnAhead)} undecided cases
         </b>{" "}
-        sit in the months drawn here, between the month DOL is working and{" "}
+        in DOL&apos;s normal queue sit in the months drawn here, between the
+        oldest month still open and{" "}
         {ownCase ? "yours" : "this one"}.
         {wall.ahead > wall.drawnAhead ? (
           <>
@@ -180,11 +181,11 @@ export function PastFrontNote({
   return (
     <div className={className}>
       <p className="text-base leading-relaxed text-foreground/80">
-        DOL is working{" "}
+        The oldest month still open is{" "}
         <b className="font-bold text-foreground">
           {formatMonth(wall.frontMonth)}
         </b>
-        , which is {behind} {behind === 1 ? "month" : "months"} newer than this
+        , {behind} {behind === 1 ? "month" : "months"} newer than this
         case&apos;s filing month. So filing order is no longer what this case
         is waiting on.{" "}
         <b className="font-bold text-foreground">
@@ -244,7 +245,7 @@ export function CohortNeighbours({
             >
               {formatMonth(x.month)}
               {isSubject ? (
-                <span className="ml-2 border border-primary px-1.5 py-0.5 text-[10px] font-bold tracking-[0.1em] text-primary">
+                <span className="ml-2 border border-primary px-1.5 py-0.5 text-sm font-bold tracking-[0.1em] text-primary">
                   {attribution === "case" ? "Yours" : "This month"}
                 </span>
               ) : null}

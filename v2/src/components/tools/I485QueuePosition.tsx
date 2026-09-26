@@ -714,7 +714,7 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
   const int = (n: number) => n.toLocaleString("en-US");
   return (
     <div className="mt-6 border-2 border-border bg-background p-4 sm:p-5">
-      <p className="font-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
         If the supply were
       </p>{" "}
       <p className="mt-2 text-sm leading-relaxed text-foreground/75">

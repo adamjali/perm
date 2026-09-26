@@ -184,7 +184,7 @@ export function BaselineMultiple({
   return (
     <span
       className={cn(
-        "inline-flex items-center border px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums",
+        "inline-flex items-center border px-1.5 py-0.5 font-mono text-sm font-bold tabular-nums",
         direction === "bad"
           ? "border-[var(--data-bad)] text-[var(--data-bad-ink)]"
           : direction === "warn"

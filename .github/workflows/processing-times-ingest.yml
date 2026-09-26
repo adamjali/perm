@@ -155,6 +155,36 @@ jobs:
           python3 scripts/ingest_debarments.py \
             || python3 scripts/record_ingest_failure.py --script ingest_debarments.py --note "debarment lists failed" || true
 
+      # The visa bulletin, from the State Department's own host. travel.state.gov
+      # refuses scripts; adoption.state.gov serves the same pages (measured
+      # 2026-09-26). One index request a day, plus a page on the day a bulletin
+      # lands. A refusal warns and exits 0: the visa-bulletin freshness budget
+      # is the alarm, and --from-file with a browser-saved page is the fallback.
+      - name: Visa bulletin (direct)
+        if: always()
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          python3 scripts/ingest_visa_bulletin.py --direct \
+            || python3 scripts/record_ingest_failure.py --script ingest_visa_bulletin.py --note "visa bulletin direct read failed"
+
+      # The yearly spillover figures (annual limits, Table V) from the same State
+      # host. Three small page reads a day; a PDF only in the week a new fiscal
+      # year appears.
+      - name: Visa annual limits (direct)
+        if: always()
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+        run: |
+          python3 -m pip install --quiet --user pdfplumber \
+            || python3 -m pip install --quiet --break-system-packages pdfplumber
+          python3 scripts/ingest_visa_limits.py --discover \
+            || python3 scripts/record_ingest_failure.py --script ingest_visa_limits.py --note "visa limits discovery failed"
+
       - name: Expire the DOL pages
         if: steps.ingest.outputs.dol_changed == 'true'
         env:

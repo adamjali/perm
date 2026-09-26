@@ -71,7 +71,7 @@ export default async function WageLevelsPage({ searchParams }: { searchParams: P
           search. Pick the series a determination was issued in and read it against the four.
         </p>
       </header>
-      <section className="mt-10">
+      <section data-embed="wage-levels" className="mt-10">
         <WageLevelsTool initialSoc={initialSoc} />
       </section>
       <section className="mt-12">

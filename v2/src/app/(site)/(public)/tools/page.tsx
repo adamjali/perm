@@ -348,7 +348,7 @@ export default async function ToolsPage() {
             { href: "/perm-queue", label: "Queue backlog", blurb: "Every filing month's pending cases, by DOL queue." },
             { href: "/perm-decision-activity", label: "Daily activity", blurb: "How many cases DOL decides each day." },
             { href: "/perm-rfi-audit", label: "RFI and audits", blurb: "How often cases leave filing order, and what follows." },
-            { href: "/tools/priority-date-calculator", label: "Visa bulletin", blurb: "84 months of cutoff history, and whether your date is current." },
+            { href: "/tools/priority-date-calculator", label: "Visa bulletin", blurb: "Every cutoff since October 2014, and whether your date is current." },
           ].map((c) => (
             <Link
               key={c.href}

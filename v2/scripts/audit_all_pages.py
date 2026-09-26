@@ -17,6 +17,7 @@ import re
 import os
 import sys
 import time
+import unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib_sitemap_sample import describe_sampling, sample_by_shape  # noqa: E402
@@ -37,6 +38,14 @@ UA = {
 # A description past this is truncated mid-sentence in the SERP.
 DESC_MAX = 155
 DESC_MIN = 70
+
+
+def display_width(s: str) -> int:
+    """Characters as a snippet is cut: by width. Google truncates titles and
+    descriptions by pixels, and a CJK or Hangul character is full-width, about
+    two Latin ones. Counting it as one flagged /zh's 60-character description,
+    which fills a snippet, as too short (2026-09-26)."""
+    return sum(2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1 for ch in s)
 TITLE_MAX = 62
 
 # Pages whose whole job is live figures. If one of these renders its empty
@@ -130,13 +139,14 @@ def audit(base: str, path: str) -> list[str]:
     out: list[str] = []
     if status != 200:
         return [f"{path}: HTTP {status}"]
+    width = display_width
 
     m = re.search(r"<title>(.*?)</title>", html, re.S)
     title = html_mod.unescape(m.group(1)).strip() if m else ""
     if not title:
         out.append(f"{path}: no <title>")
-    elif len(title) > TITLE_MAX + 20:  # the " | PERM Tracker" suffix is free
-        out.append(f"{path}: title {len(title)} chars")
+    elif width(title) > TITLE_MAX + 20:  # the " | PERM Tracker" suffix is free
+        out.append(f"{path}: title {width(title)} wide")
 
     # Capture the opening quote and backreference it: a negated class that
     # excludes the apostrophe truncates our own contraction-heavy copy.
@@ -150,10 +160,10 @@ def audit(base: str, path: str) -> list[str]:
         # description as 160 - it made real copy look broken because our house
         # style is contraction-heavy.
         desc = html_mod.unescape(d.group(2)).strip()
-        if len(desc) > DESC_MAX:
-            out.append(f"{path}: description {len(desc)} chars (>{DESC_MAX})")
-        elif len(desc) < DESC_MIN:
-            out.append(f"{path}: description only {len(desc)} chars")
+        if width(desc) > DESC_MAX:
+            out.append(f"{path}: description {width(desc)} wide (>{DESC_MAX})")
+        elif width(desc) < DESC_MIN:
+            out.append(f"{path}: description only {width(desc)} wide")
 
     if not re.search(r"<h1[^>]*>", html):
         out.append(f"{path}: no <h1>")

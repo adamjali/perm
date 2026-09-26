@@ -48,7 +48,10 @@ vi.mock("@/lib/turso/publicData", () => ({
   })),
   // One archived bulletin, so the `/visa-bulletin/<month>` family has a URL
   // for the coverage test below to find.
-  getVisaBulletins: vi.fn(async () => [{ bulletinMonth: "2026-09" }]),
+  // One category, so the category-by-country family has URLs to list.
+  getVisaBulletins: vi.fn(async () => [
+    { bulletinMonth: "2026-09", finalAction: { EB2: { india: "2014-01-01" } }, datesForFiling: {} },
+  ]),
 }));
 // The `/perm-queue/<month>` pages are listed from the same census the hub
 // builds its month strip from and the month route peeks before rendering.

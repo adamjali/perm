@@ -525,3 +525,16 @@ describe("PriorityDateEstimator: selectors", () => {
     expect(screen.queryByText(/this cutoff has gone backwards/i)).not.toBeInTheDocument();
   });
 });
+
+describe("opening on one line, for a page about that line", () => {
+  it("starts on the line it was given", () => {
+    renderTool({ initialCategory: "EB1", initialCountry: "worldwide" });
+    expect((screen.getByLabelText(/^category$/i) as HTMLSelectElement).value).toBe("EB1");
+    expect((screen.getByLabelText(/country of birth/i) as HTMLSelectElement).value).toBe("worldwide");
+  });
+
+  it("ignores a category the archive doesn't hold rather than open on nothing", () => {
+    renderTool({ initialCategory: "EB5R" });
+    expect((screen.getByLabelText(/^category$/i) as HTMLSelectElement).value).toBe("EB2");
+  });
+});
