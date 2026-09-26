@@ -6521,7 +6521,7 @@ cutoff a priority date (`ngày chốt`, not `ngày ưu tiên`); Chinese `无排�
 | table | holds | written by |
 |---|---|---|
 | `perm_employer_years` (slug, fy, certified, denied, withdrawn) | every fiscal year from FY2008 | `ingest_perm_history.py` for FY2008 to FY2023, once; `--current` for FY2024 on, after every quarterly load |
-| `perm_cases_history` (perm_cases' columns, PK + `(employer_slug, decision_date)`) | FY2020 to FY2023 cases | `ingest_perm_history.py`, once |
+| `perm_cases_history` (perm_cases' columns plus the worker's, PK + `(employer_slug, decision_date)`, then five search indexes) | FY2016 to FY2023 cases | `ingest_perm_history.py`, once |
 
 - **DOL's file names follow no pattern** (`PERM_FY2008.xlsx`, `PERM_FY14_Q4.xlsx`,
   `PERM_Disclosure_Data_FY17.xlsx`, `PERM_Disclosure_Data_FY2018_EOY.xlsx`), so discovery keeps
@@ -6537,7 +6537,7 @@ cutoff a priority date (`ngày chốt`, not `ngày ưu tiên`); Chinese `无排�
 - **Resumable:** each workbook is written and recorded before the next is fetched (www.dol.gov
   refuses sustained traffic), and a recorded one is skipped unless `force`.
 - `lookupCase` reads `perm_cases_history` when `perm_cases` misses, BEFORE any live DOL question.
-  The case search is unchanged (FY2024 on); an employer's older cases are on its page.
+  The case search reads it too since Sep 26 (below), so a search reaches back to FY2016.
 - `EmployerYears` renders bars from `perm_employer_years` and nothing when a page has no rows.
 
 **The worker's fields, full detail like DOL's own file (owner's call, Sep 26).** DOL's OLD form
@@ -6561,3 +6561,35 @@ Census's 2017 and 2022 lists don't carry it.
 **The rail's height budget is real.** A new group costs a 38px header; "Breakdowns" (state,
 city, industry, citizenship) pushed the worst case to 729px against 700 until "Status meanings"
 moved from Case tools to Reference. `rail-fits.test.ts` prints the arithmetic.
+
+**The case search reaches FY2016 and filters on everything DOL printed** (owner: "ultimate
+flexibility and power"). `readPermPublished` reads `perm_cases` and `perm_cases_history` in
+parallel, skips a table the fiscal-year or decided-date filters rule out, and prefers the current
+row when a case is in both. New filters: industry (sector or NAICS prefix), worksite city, and the
+old form's citizenship, birth country, visa, education and required education, which restrict a
+search to published PERM and say so (`OLD_FORM_NOTE`). An "order by" choice, and a CSV of the same
+answer (300 rows, formula-leading cells prefixed so a spreadsheet can't run them). Column
+discovery (`tableColumns.ts`, `SELECT * LIMIT 1`, cached ten minutes) lets a table missing a
+column drop out of that search instead of failing it. The pick lists come from
+`perm_docs['case_field_options']`, which `build_groups.py` writes in the same pass as the groups.
+The history table carries five search indexes (`idx_pch_dec`, `_state_dec`, `_socg_dec`,
+`_att_dec`, `_cit_dec`), built after its rows (`ingest_perm_history.py --finish-only`), about 4.3
+million index writes once.
+
+**Turso: one count was two thirds of the bill (measured Sep 26).** The cycle from Sep 2 read 98.4
+billion rows against the Developer plan's 2.5 billion and wrote 50.9 million against 25 million;
+the dashboard's next invoice read $101.99 (overage is $1 per billion rows read and $1 per million
+written). Its Top Queries panel, "This month" with totals on, put one statement first: `SELECT
+count(*) FROM perm_entities WHERE kind = ? AND total >= ?`, **67.25 billion rows over 2.64
+million runs**. `getEntitySeed` asked it once per kind, and every entity page, the case page's
+estimate and llms.txt asked three kinds per render, each walking every index entry of the kind
+(71,512 for employers). `countPageworthy` now reads the last-ranked row (`idx_pe_kind_rank`,
+EXPLAIN: SEARCH, no sort) and returns its rank whenever that row clears the page floor, which it
+does at a floor of 1: ranks are dense and ordered by total, and production had no rank/total
+inversion and a minimum total of 1. The count stays as the fallback, pinned by
+`entityReads.test.ts`. Next in that panel were the LCA filter-options live fallback (7.9 billion
+over 3,030 runs; absent from the Sep 26 list, so probably the days before that doc was written on
+Sep 13 at 9:51 PM, not verified per day) and the PERM wage
+percentiles (2.76 billion over 529). **Read that panel before guessing at a Turso bill**; the
+per-day chart alone shows a flat 3 to 7 billion a day and names nothing.
+

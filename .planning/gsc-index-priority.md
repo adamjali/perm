@@ -574,5 +574,9 @@ crawled before tonight's deploy.
 5. New since the Sep 26 afternoon deploy, likely never crawled: `/tools/eb2-vs-eb3`,
    `/tools/which-green-card`, `/visa-bulletin/categories`, `/h1b-lottery-odds`,
    `/green-card-timelines`, `/nvc-waiting-list`
-6. `/zh`, `/es`, `/pt-br`, `/ko`, `/vi`
-7. `/guides/perm-application-on-hold-meaning`, then the Sep 25 queue from its item 1
+6. The three new breakdown hubs, never crawled: `/perm-cities`, `/perm-industries`,
+   `/perm-countries`, then one busy page of each (`/perm-cities/new-york-ny`,
+   `/perm-industries/541511`, `/perm-countries/india`; confirm each slug 200s first)
+7. `/case-search` (history back to FY2016, worker and industry filters)
+8. `/zh`, `/es`, `/pt-br`, `/ko`, `/vi`
+9. `/guides/perm-application-on-hold-meaning`, then the Sep 25 queue from its item 1
