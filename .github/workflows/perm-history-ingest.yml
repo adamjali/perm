@@ -21,6 +21,16 @@ on:
         type: boolean
         required: false
         default: false
+      no_indexes:
+        description: "Skip the five search indexes (the write budget's first saving)"
+        type: boolean
+        required: false
+        default: false
+      finish_only:
+        description: "No workbooks: current years, search indexes and facets only"
+        type: boolean
+        required: false
+        default: false
 
 permissions:
   contents: read
@@ -48,12 +58,16 @@ jobs:
           FROM_FY: ${{ github.event.inputs.from_fy || '2008' }}
           TO_FY: ${{ github.event.inputs.to_fy || '2023' }}
           FORCE: ${{ github.event.inputs.force }}
+          NO_INDEXES: ${{ github.event.inputs.no_indexes }}
+          FINISH_ONLY: ${{ github.event.inputs.finish_only }}
         run: |
           for v in "$FROM_FY" "$TO_FY"; do
             case "$v" in ''|*[!0-9]*) echo "FATAL: fiscal years must be 4-digit" >&2; exit 1 ;; esac
           done
           extra=""
           [ "$FORCE" = "true" ] && extra="--force"
+          [ "$NO_INDEXES" = "true" ] && extra="$extra --no-indexes"
+          [ "$FINISH_ONLY" = "true" ] && extra="$extra --finish-only"
           # A failed year leaves the run red on purpose (the years that did
           # load are kept and skipped on the retry).
           python3 scripts/ingest_perm_history.py --from-fy "$FROM_FY" --to-fy "$TO_FY" $extra || {
