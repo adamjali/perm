@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { GroupDetailPage, groupDetailMetadata, groupStaticParams } from "@/components/groups/GroupPages";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * One country's PERM record. The busiest prerender at build; the rest render
@@ -17,7 +18,7 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  return groupDetailMetadata("country", slug);
+  return withSocialCard(await groupDetailMetadata("country", slug), "perm-countries");
 }
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {

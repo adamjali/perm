@@ -60,6 +60,14 @@ def main() -> int:
     country = out.get(("country", "india"))
     check("country page: title-cased label, no country list of its own",
           country is not None and country[3] == "India" and json.loads(country[11])["countries"] == [])
+    fields = {c: g.Counter() for c in g.FIELD_OPTIONS}
+    g.aggregate(rows + [row(status="pending", visa_class="L-1")], fields)
+    doc = g.field_options_doc(fields)
+    check("field options: busiest first, values as stored, keys as the search reads them",
+          doc["citizenship"] == [{"value": "INDIA", "n": 4}, {"value": "CHINA", "n": 1}]
+          and doc["visaClass"] == [{"value": "H-1B", "n": 5}]
+          and set(doc) == {"citizenship", "birthCountry", "visaClass", "education", "jobEducation"}
+          and doc["birthCountry"] == [])
     print(f"\n{len(FAILS)} failed" if FAILS else "\nall passed")
     return 1 if FAILS else 0
 

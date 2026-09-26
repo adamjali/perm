@@ -7,8 +7,6 @@ import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { naicsSectorTitle } from "@/lib/naicsSectors";
 import { openGraphBase } from "@/lib/openGraphBase";
-import type { PageCardSlug } from "@/lib/pageCards";
-import { withSocialCard } from "@/lib/socialCard";
 import { countryYears, getGroup, GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
 
 import { GroupIndexTable, type GroupIndexRow } from "./GroupIndexTable";
@@ -27,7 +25,6 @@ interface KindCopy {
   indexDescription: string;
   noun: string;
   facetLabel: string | null;
-  card: PageCardSlug;
   detailTitle: (label: string) => string;
   detailH1: (label: string) => string;
   coverage: string;
@@ -43,7 +40,6 @@ const COPY: Record<GroupKind, KindCopy> = {
       "PERM decisions by worksite city since FY2016: approval rates, median certified wages and the employers and jobs behind them, from DOL's files.",
     noun: "cities",
     facetLabel: "State",
-    card: "perm-cities",
     detailTitle: (l) => `PERM Jobs in ${l}`,
     detailH1: (l) => `PERM jobs in ${l}`,
     coverage:
@@ -58,7 +54,6 @@ const COPY: Record<GroupKind, KindCopy> = {
       "PERM decisions by industry (the employer's NAICS code) since FY2016: approval rates, median certified wages, top sponsors and jobs, from DOL's files.",
     noun: "industries",
     facetLabel: "Sector",
-    card: "perm-industries",
     detailTitle: (l) => `PERM in ${l}`.slice(0, 60),
     detailH1: (l) => `PERM in ${l}`,
     coverage:
@@ -73,7 +68,6 @@ const COPY: Record<GroupKind, KindCopy> = {
       "PERM decisions by the worker's country of citizenship, FY2008 to FY2023, with approval rates, wages, sponsors and jobs, from DOL's old-form files.",
     noun: "countries",
     facetLabel: null,
-    card: "perm-countries",
     detailTitle: (l) => `PERM Cases for Citizens of ${l}`.slice(0, 60),
     detailH1: (l) => `PERM cases for citizens of ${l}`,
     coverage:
@@ -88,15 +82,13 @@ function fmt(n: number): string {
 export function groupIndexMetadata(kind: GroupKind): Metadata {
   const c = COPY[kind];
   const path = GROUP_PATH[kind];
-  return withSocialCard(
-    {
-      title: c.indexTitle,
-      description: c.indexDescription,
-      alternates: { canonical: path },
-      openGraph: { ...openGraphBase, title: `${c.indexTitle} | PERM Tracker`, description: c.indexDescription, url: path },
-    },
-    c.card,
-  );
+  // The route wraps this in withSocialCard with its own card slug.
+  return {
+    title: c.indexTitle,
+    description: c.indexDescription,
+    alternates: { canonical: path },
+    openGraph: { ...openGraphBase, title: `${c.indexTitle} | PERM Tracker`, description: c.indexDescription, url: path },
+  };
 }
 
 export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
@@ -161,15 +153,12 @@ export async function groupDetailMetadata(kind: GroupKind, slug: string): Promis
   const path = `${GROUP_PATH[kind]}/${slug}`;
   const title = c.detailTitle(g.label);
   const description = `${fmt(g.total)} PERM decisions${g.fyFrom && g.fyTo ? `, FY${g.fyFrom} to FY${g.fyTo}` : ""}: approval rate, wages, sponsors and jobs, from DOL's own files.`;
-  return withSocialCard(
-    {
-      title: { absolute: title.length > 44 ? title : `${title} | PERM Tracker` },
-      description,
-      alternates: { canonical: path },
-      openGraph: { ...openGraphBase, title, description, url: path },
-    },
-    c.card,
-  );
+  return {
+    title: { absolute: title.length > 44 ? title : `${title} | PERM Tracker` },
+    description,
+    alternates: { canonical: path },
+    openGraph: { ...openGraphBase, title, description, url: path },
+  };
 }
 
 export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: string }) {

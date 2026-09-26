@@ -43,7 +43,16 @@ TOP = 10
 PAGE = 25000
 
 READ_COLS = ["status", "fiscal_year", "employer_slug", "employer_name", "state", "soc_code",
-             "soc_title", "wage", "naics", "worksite_city", "citizenship", "education", "visa_class"]
+             "soc_title", "wage", "naics", "worksite_city", "citizenship", "education", "visa_class",
+             "birth_country", "job_education"]
+
+# The case search's pick lists (perm_docs['case_field_options']), counted in
+# the same pass: stored column -> the doc's key. Values are kept exactly as
+# stored, because the search matches them by equality.
+FIELD_OPTIONS = {"citizenship": "citizenship", "birth_country": "birthCountry",
+                 "visa_class": "visaClass", "education": "education",
+                 "job_education": "jobEducation"}
+FIELD_OPTIONS_MAX = 400
 
 SCHEMA = [
     """CREATE TABLE IF NOT EXISTS perm_groups (
@@ -153,13 +162,19 @@ class Group:
             self.industries[naics] += 1
 
 
-def aggregate(rows) -> tuple[dict[tuple[str, str], Group], dict[str, Counter], Counter]:
+def aggregate(rows, fields: dict[str, Counter] | None = None
+              ) -> tuple[dict[tuple[str, str], Group], dict[str, Counter], Counter]:
     groups: dict[tuple[str, str], Group] = defaultdict(Group)
     city_votes: dict[str, Counter] = defaultdict(Counter)
     soc_titles: Counter = Counter()
     for r in rows:
         if r.get("status") not in ("certified", "denied", "withdrawn"):
             continue
+        if fields is not None:
+            for col in FIELD_OPTIONS:
+                v = r.get(col)
+                if v not in (None, ""):
+                    fields[col][v] += 1
         raw_city = " ".join((r.get("worksite_city") or "").split())
         ck = city_key(raw_city, r.get("state"))
         if ck:
@@ -227,6 +242,18 @@ def build_rows(groups, city_votes, soc_titles, occ_slugs: dict[str, str]) -> lis
     return list(seen.values())
 
 
+def field_options_doc(fields: dict[str, Counter]) -> dict:
+    """Each field's values, busiest first, as the case search reads them."""
+    return {key: [{"value": v, "n": n} for v, n in fields.get(col, Counter()).most_common(FIELD_OPTIONS_MAX)]
+            for col, key in FIELD_OPTIONS.items()}
+
+
+def write_field_options(db, doc: dict) -> None:
+    db.execute("CREATE TABLE IF NOT EXISTS perm_docs (key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)")
+    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
+               ["case_field_options", json.dumps(doc, separators=(",", ":")), int(time.time() * 1000)])
+
+
 def occupation_slugs(db) -> dict[str, str]:
     out: dict[str, str] = {}
     for r in _rows(db.execute("SELECT code, slug FROM perm_entities WHERE kind = 'occupation' AND code IS NOT NULL")):
@@ -265,10 +292,13 @@ def main() -> int:
         except Exception as exc:  # noqa: BLE001 - a missing history still builds today's groups
             log(f"  perm_cases_history unreadable ({exc}); groups cover perm_cases only")
 
-    groups, votes, titles = aggregate(both())
+    fields: dict[str, Counter] = defaultdict(Counter)
+    groups, votes, titles = aggregate(both(), fields)
     rows = build_rows(groups, votes, titles, occupation_slugs(db))
     by_kind = Counter(r[0] for r in rows)
+    options = field_options_doc(fields)
     log(f"  {len(rows):,} groups over the floor of {FLOOR} ({dict(by_kind)}) in {time.time() - t:,.0f}s")
+    log("  field options: " + ", ".join(f"{k} {len(v)}" for k, v in options.items()))
     if args.dry_run:
         for kind in ("city", "industry", "country"):
             top = sorted((r for r in rows if r[0] == kind), key=lambda r: -r[4])[:5]
@@ -276,6 +306,10 @@ def main() -> int:
         return 0
     db.script(SCHEMA)
     write_groups(db, rows)
+    # An empty field list (the worker columns not loaded yet) is not written
+    # over a good doc; the search falls back to perm_country_years meanwhile.
+    if options["citizenship"]:
+        write_field_options(db, options)
     got = int(db.scalar("SELECT COUNT(*) FROM perm_groups") or 0)
     ok = got == len(rows)
     log(f"  VERIFY perm_groups {got:,} of {len(rows):,}")
