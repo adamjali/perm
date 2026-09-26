@@ -6539,3 +6539,25 @@ cutoff a priority date (`ngày chốt`, not `ngày ưu tiên`); Chinese `无排�
 - `lookupCase` reads `perm_cases_history` when `perm_cases` misses, BEFORE any live DOL question.
   The case search is unchanged (FY2024 on); an employer's older cases are on its page.
 - `EmployerYears` renders bars from `perm_employer_years` and nothing when a page has no rows.
+
+**The worker's fields, full detail like DOL's own file (owner's call, Sep 26).** DOL's OLD form
+carries the worker's citizenship, birth country, visa at filing (`CLASS_OF_ADMISSION`),
+education, field of study, school and the job's required education; the new form carries none.
+`ingest_perm_disclosure.worker_fields()` maps and normalises them once for both parsers, so they
+land on every `perm_cases_history` row (FY2016 to FY2023) and on the old-form part of FY2024 in
+`perm_cases` (unindexed, filled by the loader's narrow UPDATE). FY2009's workbook writes its
+headers with SPACES ("CASE STATUS"); `header_name()` normalises them, and one unreadable year now
+fails alone instead of stopping the run.
+
+**PERM by city, industry and country of citizenship** (`/perm-cities`, `/perm-industries`,
+`/perm-countries`, each with a page per group). `scripts/build_groups.py` reads both case tables
+and writes one `perm_groups` row per group with 20+ decisions (3,402 in the first dry run: 2,470
+cities, 826 six-digit industries, 106 countries), everything the page needs in its `detail`
+JSON, so a group page is one primary-key read. It runs after the quarterly load and after a
+history load. A link to another group is drawn only when that group clears the floor, so no
+link 404s. A code from the 2012 NAICS list (454111) is titled by its parent group, because
+Census's 2017 and 2022 lists don't carry it.
+
+**The rail's height budget is real.** A new group costs a 38px header; "Breakdowns" (state,
+city, industry, citizenship) pushed the worst case to 729px against 700 until "Status meanings"
+moved from Case tools to Reference. `rail-fits.test.ts` prints the arithmetic.
