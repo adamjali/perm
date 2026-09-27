@@ -80,6 +80,13 @@ const ISOLATED_UNIT_FILES = [
   // Mocks `@libsql/client` and calls vi.resetModules() per case, so it needs
   // its own registry - under isolate:false it poisons whatever runs next.
   "src/lib/turso/__tests__/clientRetry.test.ts",
+  // Added 2026-09-27. Each mocks ./client (and caseLookupHistory also mocks
+  // ./caseDiscovery). In the shared pool caseLookupHistory's discoverCase mock
+  // leaked into caseDiscovery.test.ts, which then read null for a real hit:
+  // green alone, red in the full run, the same signature as the others here.
+  "src/lib/turso/caseLookupHistory.test.ts",
+  "src/lib/turso/decidedDays.test.ts",
+  "src/lib/turso/__tests__/wagePlaceFilters.test.ts",
 ];
 
 export default defineConfig({
