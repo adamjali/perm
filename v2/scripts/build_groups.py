@@ -10,8 +10,8 @@ one primary-key read. Built from BOTH case tables:
     perm_cases_history   FY2016 to FY2023 (ingest_perm_history.py)
 
 so a city or an industry spans FY2016 to today. Citizenship and education
-exist only on DOL's old form, so a country's page covers FY2016 to about
-early FY2025, plus its FY2008 onward yearly counts from `perm_country_years`
+exist only on DOL's old form, so a country's page covers FY2016 to
+FY2024, plus its FY2008 onward yearly counts from `perm_country_years`
 (read by the page, not copied here).
 
 Groups under FLOOR decided cases get no row: a page of three cases is noise

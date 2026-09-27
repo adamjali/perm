@@ -309,7 +309,7 @@ export function FilterableStatTable<T>({
       <div className="flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-3">
           <label className="flex min-h-[44px] flex-1 items-center gap-2 border-2 border-border bg-card px-3 shadow-hard-sm focus-within:ring-2 focus-within:ring-primary sm:max-w-sm">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
               Search
             </span>{" "}
             <input
@@ -329,7 +329,7 @@ export function FilterableStatTable<T>({
           {facets.map((f) => (
             <Fragment key={f.key}>{" "}
             <label className="flex min-h-[44px] items-center gap-2 border-2 border-border bg-card px-3 shadow-hard-sm focus-within:ring-2 focus-within:ring-primary">
-              <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
                 {f.label}
               </span>{" "}
               <select
@@ -359,7 +359,7 @@ export function FilterableStatTable<T>({
             <button
               type="button"
               onClick={downloadCsv}
-              className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
             >
               Download CSV
             </button>
@@ -415,13 +415,13 @@ export function FilterableStatTable<T>({
               <button
                 type="button"
                 onClick={ensureAll}
-                className="min-h-[44px] border-2 border-border bg-primary px-4 font-mono text-xs font-bold uppercase tracking-wider text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-primary"
+                className="min-h-[44px] border-2 border-border bg-primary px-4 font-mono text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-hard-sm transition-transform hover:-translate-y-px focus-visible:ring-2 focus-visible:ring-primary"
               >
                 Load all {corpusSize.toLocaleString("en-US")}
               </button>
             ) : null}{" "}
             <label className="flex min-h-[44px] items-center gap-2 text-sm text-foreground/60">
-              <span className="font-mono text-xs font-bold uppercase tracking-wider">
+              <span className="font-mono text-sm font-bold uppercase tracking-wider">
                 Rows
               </span>{" "}
               <select
@@ -529,7 +529,7 @@ export function FilterableStatTable<T>({
           aria-label={`${noun} pages`}
           className="mt-4 flex flex-wrap items-center justify-between gap-3"
         >
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
             Page {safePage + 1} of {pageCount.toLocaleString("en-US")}
           </p>{" "}
           <div className="flex gap-2">
@@ -540,7 +540,7 @@ export function FilterableStatTable<T>({
                 setPage((p) => Math.max(0, p - 1));
               }}
               disabled={safePage === 0}
-              className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             >
               ← Prev
             </button>{" "}
@@ -551,7 +551,7 @@ export function FilterableStatTable<T>({
                 setPage((p) => Math.min(pageCount - 1, p + 1));
               }}
               disabled={safePage >= pageCount - 1}
-              className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
+              className="min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary"
             >
               Next →
             </button>

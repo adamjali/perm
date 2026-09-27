@@ -73,7 +73,7 @@ export function WorkerMix({
       </h2>{" "}
       <p className="mt-2 max-w-2xl text-base text-foreground/70">
         From the worker&apos;s side of each PERM, as DOL published it. DOL printed these fields on its old
-        form, used for cases decided through about early FY2025; the form in use since mid-2023 doesn&apos;t
+        form, whose last cases were decided in FY2024; the form in use since mid-2023 doesn&apos;t
         carry them. The top six of each are shown.
       </p>
       <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2 xl:grid-cols-3">

@@ -85,7 +85,8 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
         <div className="mt-2 flex min-w-[640px] gap-1.5" aria-hidden="true">
           {series.map((y) => (
             <span key={y.fy} className="flex-1 text-center font-mono text-sm tabular-nums text-foreground/70">
-              {(y.fy - first) % 2 === 0 || y.fy === last ? `FY${String(y.fy).slice(2)}` : ""}
+              {/* The space sits inside the label, so the axis never reads as one run. */}
+              {(y.fy - first) % 2 === 0 || y.fy === last ? `FY${String(y.fy).slice(2)} ` : " "}
             </span>
           ))}
         </div>
@@ -108,7 +109,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
       ) : null}
 
       <details className="mt-3 text-sm">
-        <summary className="cursor-pointer font-bold">Every year as a table</summary>
+        <summary className="inline-flex min-h-[44px] cursor-pointer items-center font-bold">Every year as a table</summary>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[360px] border-collapse text-left tabular-nums">
             <thead>

@@ -179,7 +179,7 @@ export const OLD_FORM_FILTERS: readonly FilterKey[] = [
 
 export const OLD_FORM_NOTE =
   "DOL publishes the worker's citizenship, education and visa for cases filed on its old form " +
-  "(decided through about early FY2025); the form in use since mid-2023 doesn't carry them.";
+  "(decided through FY2024); the form in use since mid-2023 doesn't carry them.";
 
 /** Why a control is off. One of these is always shown beside a disabled field. */
 export type Refusal =

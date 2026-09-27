@@ -63,7 +63,7 @@ const COPY: Record<GroupKind, KindCopy> = {
     indexTitle: "PERM by Country of Citizenship",
     indexH1: "PERM by the worker's country of citizenship",
     indexLede:
-      "Every country with 20 or more PERM decisions on DOL's old form, FY2016 to about early FY2025, with each country's yearly record back to FY2008.",
+      "Every country with 20 or more PERM decisions on DOL's old form, FY2016 to FY2024, with each country's yearly record back to FY2008.",
     indexDescription:
       "PERM decisions by the worker's country of citizenship, FY2008 to FY2023, with approval rates, wages, sponsors and jobs, from DOL's old-form files.",
     noun: "countries",
@@ -71,7 +71,7 @@ const COPY: Record<GroupKind, KindCopy> = {
     detailTitle: (l) => `PERM Cases for Citizens of ${l}`.slice(0, 60),
     detailH1: (l) => `PERM cases for citizens of ${l}`,
     coverage:
-      "DOL printed the worker's citizenship, education and visa on its old form, used for cases decided through about early FY2025; the form in use since mid-2023 doesn't carry them. So these pages describe FY2008 to FY2023 (years) and FY2016 to early FY2025 (everything else).",
+      "DOL printed the worker's citizenship, education and visa on its old form, and the last cases filed on it were decided in FY2024; the form in use since mid-2023 doesn't carry them. So these pages describe FY2008 to FY2023 (years) and FY2016 to FY2024 (everything else).",
   },
 };
 
