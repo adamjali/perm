@@ -102,12 +102,10 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
             </li>
           </Fragment>
         ))}
-      </ul>
-
+      </ul>{" "}
       {note ? (
         <p className="mt-4 border-t border-border/40 pt-3 text-sm leading-relaxed text-foreground/70">{note}</p>
-      ) : null}
-
+      ) : null}{" "}
       <details className="mt-3 text-sm">
         <summary className="inline-flex min-h-[44px] cursor-pointer items-center font-bold">Every year as a table</summary>
         <div className="mt-3 overflow-x-auto">
