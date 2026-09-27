@@ -19,36 +19,20 @@
  * defend against, and no way to aim this at anything else. A caller either
  * knows the secret and expires these ten paths, or does nothing.
  *
- * IT NOW CLEARS A TAG AS WELL AS THE PATHS, and the two do different jobs.
- * The tag drops the cached DATA, the paths drop the rendered PAGES that print
- * it. Without the tag the pages would regenerate and read the same cached
- * freshness row straight back, so the as-of stamp would not move.
- *
- * `revalidateTag` takes a SECOND argument in Next 16, a `cacheLife` profile
- * name or a `{ expire }` object; called with one argument it warns and is
- * deprecated. `{ expire: 0 }` is immediate expiry, which is what this wants:
- * DOL has published a new figure and the old one is now wrong. Read out of
- * Next 16.3.4's own `revalidate.js`, where `expire === 0` also marks the path
- * as revalidated. The named profiles are stale-while-revalidate windows
- * ("max" serves the old value for five more minutes), which is the wrong
- * semantic for a number that just changed.
- *
- * This is only safe from a Route Handler. The same source throws if
- * `revalidateTag` is called during a render, inside `use cache`, inside
- * `unstable_cache`, or inside `generateStaticParams`.
- *
- * The original reason a tag was not used. Tags attach to
- * data through `fetch` with `next.tags`, `unstable_cache`, or `cacheTag` inside
- * a `"use cache"` scope, and none of those are used: Turso is read through a raw
- * libSQL client. A tag call would return 200, log nothing, and leave every
- * prerender in place.
+ * IT CLEARS PATHS ONLY, AGAIN (Sep 27 2026). From Sep 1 it also cleared the
+ * "data-freshness" tag, because getFreshness sat in `unstable_cache` and a
+ * regenerated page would otherwise read the old stamp back. That cache's
+ * one-hour window turned out to cap every page reading it (the build printed
+ * 1h for pages declaring days), so getFreshness is a per-request read now and
+ * the tag has nothing to clear. `revalidate-disclosure` still clears the
+ * "entities" tag, which the entity cohort caches carry.
  *
  * WHAT THIS DOES NOT DO. `revalidatePath` MARKS a path stale; it does not
  * regenerate it. The next visitor pays for one render and everyone after them
  * gets it fresh, so a page nobody opens costs nothing.
  */
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 
 // The list lives in ./paths because a `route.ts` may export ONLY the known
@@ -63,10 +47,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Data first, then the pages that render it. `data-freshness` is the tag on
-  // getFreshness in src/lib/turso/publicData.ts.
-  revalidateTag("data-freshness", { expire: 0 });
-
+  // No tag to clear first: getFreshness is a per-request read since Sep 27
+  // 2026, so a regenerated page reads DOL's new stamp directly.
   for (const path of DOL_PAGES) {
     revalidatePath(path);
   }

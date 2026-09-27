@@ -34,11 +34,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // The data first, then the pages that render it. Without the tag the pages
-  // regenerate and read the same cached freshness row straight back, so the
-  // as-of stamp would not move. `{ expire: 0 }` is immediate expiry; called
-  // with one argument `revalidateTag` warns and is deprecated in Next 16.
-  revalidateTag("data-freshness", { expire: 0 });
+  // The data first, then the pages that render it. "entities" tags the entity
+  // cohort caches (fieldDistribution, sizeBand), which hold a week, so a new
+  // quarter would otherwise wait up to that long to reach the comparisons.
+  // Freshness is no longer cached across requests, so it needs no tag.
+  // `{ expire: 0 }` is immediate expiry; called with one argument
+  // `revalidateTag` warns and is deprecated in Next 16.
+  revalidateTag("entities", { expire: 0 });
 
   for (const path of DISCLOSURE_PAGES) {
     revalidatePath(path);

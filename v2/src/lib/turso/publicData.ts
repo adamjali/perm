@@ -16,7 +16,6 @@
  * reader sees.
  */
 import "server-only";
-import { unstable_cache } from "next/cache";
 import { cache } from "react";
 
 import type { BulletinMonth } from "@/lib/perm";
@@ -615,23 +614,11 @@ export async function getDailyDecisions(
  * Freshness for every dataset. Read by nearly every public page, and the SAME
  * result for all of them.
  *
- * Wrapped in `unstable_cache`, which is Vercel's Data Cache. THE POINT IS THAT
- * IT SURVIVES A DEPLOYMENT, unlike the ISR route cache: Vercel's own docs say
- * "Cached data persists across deployments unless you explicitly invalidate
- * it", while a new deployment always starts with an empty route cache. So
- * after a deploy the 13,579 entity pages still regenerate, but they do it
- * without re-running this query 13,579 times.
- *
- * That matters twice over here. It cuts the Turso rows-read bill, which
- * overran at 11.58 billion rows in two days, and it makes the unavoidable
- * post-deploy regeneration cheap.
- *
- * Small results only. Runtime Cache writes bill at the ISR write rate, so
- * caching rendered markup here would move the cost rather than remove it.
- * This is a handful of rows.
- *
- * It also makes `revalidateTag` real for the first time: nothing in this app
- * carried a cache tag before, so `revalidateTag` was a silent no-op.
+ * From Sep 1 to Sep 27 2026 this sat in `unstable_cache` for an hour, so that
+ * a deploy's cold ISR cache would not re-run it on every entity page. The
+ * trade was backwards: a Data Cache entry's window caps every page reading
+ * it, so the pages rebuilt hourly for good, a far larger bill than one
+ * ~40-row query per render. See getFreshness below.
  */
 const freshnessUncached = async (): Promise<Record<string, DatasetFreshness>> => {
   const r = await rows<Record<string, unknown>>(
@@ -683,13 +670,15 @@ const freshnessUncached = async (): Promise<Record<string, DatasetFreshness>> =>
   return out;
 };
 
-export const getFreshness = unstable_cache(
-  freshnessUncached,
-  ["data-freshness"],
-  // An hour is well inside the daily cadence of every ingest that writes here,
-  // and the tag lets an ingest clear it on demand.
-  { revalidate: 3600, tags: ["data-freshness"] },
-);
+// React's per-request cache, NOT `unstable_cache`. A Data Cache entry's
+// `revalidate` becomes the ceiling of every page that reads it, and this one
+// (an hour) sat under DataProvenance on 86 of the site's ISR pages: the build's
+// route table printed 1h for pages declaring 30 days, 6 hours and a day, and
+// Vercel billed 15.3M ISR write units against 3.8M reads for Aug 28 to Sep 28
+// 2026, $61 of the cycle's $141 (measured Sep 27). The query reads ~40 rows,
+// so running it once per render costs nothing, and the stamp is always the
+// one that was true when the page was built.
+export const getFreshness = cache(freshnessUncached);
 
 export interface I485Position {
   asOf: string;

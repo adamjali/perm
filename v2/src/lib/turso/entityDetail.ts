@@ -444,5 +444,7 @@ export const sizeBand = (kind: EntityKind, rank: number, span = 60) =>
   unstable_cache(
     () => sizeBandUncached(kind, rank, span),
     ["size-band", kind, String(rank), String(span)],
-    { revalidate: 86400, tags: ["entities"] },
+    // A week, for the same reason as fieldDistribution's: a Data Cache
+    // window caps the page's own. Cleared by the quarterly load's tag.
+    { revalidate: 604800, tags: ["entities"] },
   )();

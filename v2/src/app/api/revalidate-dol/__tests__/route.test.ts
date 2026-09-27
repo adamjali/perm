@@ -57,15 +57,9 @@ describe("POST /api/revalidate-dol", () => {
     await expect(res.json()).resolves.toMatchObject({ revalidated: DOL_PAGES.length });
     expect(revalidatePath).toHaveBeenCalledTimes(DOL_PAGES.length);
     for (const p of DOL_PAGES) expect(revalidatePath).toHaveBeenCalledWith(p);
-    // The tag drops the cached DATA; the paths drop the pages that print it.
-    // Without the tag, every regenerated page reads the same cached freshness
-    // row back and the as-of stamp never moves.
-    expect(revalidateTag).toHaveBeenCalledWith("data-freshness", { expire: 0 });
-    // `{ expire: 0 }` is immediate. A NAMED profile would be a
-    // stale-while-revalidate window, which is the wrong semantic for a figure
-    // that has just changed, and calling it with one argument is deprecated.
-    expect(revalidateTag).not.toHaveBeenCalledWith("data-freshness");
-    expect(revalidateTag).not.toHaveBeenCalledWith("data-freshness", "max");
+    // Paths only: freshness is read per request since Sep 27 2026, so no
+    // cached data stands between a regenerated page and DOL's new stamp.
+    expect(revalidateTag).not.toHaveBeenCalled();
   });
 
   it("uses LITERAL paths, never the (route, 'page') pattern form", () => {

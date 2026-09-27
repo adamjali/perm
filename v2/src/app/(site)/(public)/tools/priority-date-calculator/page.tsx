@@ -97,7 +97,8 @@ async function fetchUscisGuidance(): Promise<UscisGuidance | null> {
         "Accept-Language": "en-US,en;q=0.9",
       },
       signal: AbortSignal.timeout(6000),
-      next: { revalidate: 3600 },
+      // The page's own window: a fetch's revalidate caps the page's.
+      next: { revalidate: 86400 },
     });
     if (!res.ok) return null;
     const text = (await res.text())

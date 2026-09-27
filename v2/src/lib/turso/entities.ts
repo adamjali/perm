@@ -163,7 +163,10 @@ export function fieldDistribution(
   const value = unstable_cache(
     () => computeFieldDistribution(kind, bar),
     ["field-distribution", kind, String(bar)],
-    { revalidate: 3600, tags: ["entities"] },
+    // A week: this entry's window is the CEILING of every entity page that
+    // reads it (an hour here made the 30-day pages rebuild hourly). The
+    // quarterly load clears the tag through /api/revalidate-disclosure.
+    { revalidate: 604800, tags: ["entities"] },
   )();
   cohortCache.set(key, { at: Date.now(), value });
   // A rejected promise must not be pinned for an hour: evict it so the next
