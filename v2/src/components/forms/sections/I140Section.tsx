@@ -248,7 +248,7 @@ export function I140Section(props: I140SectionProps) {
       <div className="space-y-4">
         {/* ========== COMPLETION BADGE ========== */}
         {isApproved && (
-          <div className="flex items-center gap-2 rounded-lg border-2 border-emerald-300 bg-emerald-50 p-3 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700">
+          <div className="flex items-center gap-2 rounded-lg border-2 border-primary bg-primary/10 p-3 text-primary">
             <CheckCircle2 className="h-5 w-5" />
             <span className="font-heading font-semibold">Complete - I-140 Approved!</span>
           </div>
@@ -473,7 +473,7 @@ export function I140Section(props: I140SectionProps) {
 
         {/* ========== WARNINGS ========== */}
         {warnings?.i140FilingDate && (
-          <div className="rounded-lg border-2 border-orange-300 bg-orange-50 p-3 text-sm text-orange-800 dark:bg-orange-900/20 dark:text-orange-300 dark:border-orange-700">
+          <div className="rounded-lg border-2 border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
             <p className="font-semibold">⚠ Warning</p>{" "}
             <p>{warnings.i140FilingDate}</p>
           </div>

@@ -365,14 +365,14 @@ export function ChatPanel({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     role="alert"
-                    className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-none"
+                    className="flex items-start gap-3 p-3 bg-destructive/10 border-2 border-destructive rounded-none"
                   >
-                    <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                    <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                      <p className="text-sm font-medium text-destructive">
                         The assistant couldn’t answer that
                       </p>{" "}
-                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                      <p className="text-sm text-destructive mt-1">
                         The AI services didn’t respond. Your message is saved; try again in a moment.
                       </p>
                       {onRetry && (

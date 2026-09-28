@@ -325,7 +325,7 @@ export function ResetPasswordPageClient() {
           <div className="pt-4 text-center border-t-2 border-border">
             <button
               onClick={() => setStep("email")}
-              className="text-sm font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
+              className="text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
             >
               ← Back to email
             </button>
@@ -411,7 +411,7 @@ export function ResetPasswordPageClient() {
             Remember your password?{" "}
             <Link
               href="/login"
-              className="text-foreground font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
+              className="text-foreground font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
             >
               Sign in
             </Link>

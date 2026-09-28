@@ -62,7 +62,7 @@ export function DeadlineIndicator({
         )}
       </div>
       {isPast && (
-        <span className="text-xs font-semibold text-[var(--urgency-urgent)]">
+        <span className="text-xs font-semibold text-urgency-urgent">
           OVERDUE
         </span>
       )}

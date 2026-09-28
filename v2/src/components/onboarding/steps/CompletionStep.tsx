@@ -22,7 +22,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
       </div>
 
       <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-2">
-        {didSkip ? "Welcome aboard!" : "You\u2019re all set!"}
+        {didSkip ? "Welcome aboard" : "You\u2019re all set"}
       </h2>
 
       {onboardingCaseInfo && (
@@ -58,7 +58,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
         <Button
           onClick={onTakeTour}
           size="lg"
-          className="w-full uppercase tracking-wider font-heading text-sm"
+          className="w-full"
         >
           Take a Quick Tour
         </Button>

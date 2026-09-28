@@ -87,21 +87,21 @@ export function SecurityIncidentBanner() {
       ref={ref}
       role="region"
       aria-label="Security notice"
-      className="fixed inset-x-0 top-0 z-[60] border-b-2 border-amber-600 bg-amber-50 dark:bg-amber-950/50 dark:border-amber-500"
+      className="fixed inset-x-0 top-0 z-[60] border-b-2 border-data-warn bg-data-warn/15"
     >
       <div className="mx-auto flex max-w-[1400px] items-center gap-3 px-4 py-2 sm:px-8">
         <AlertTriangle
-          className="h-4 w-4 shrink-0 text-amber-700 dark:text-amber-400"
+          className="h-4 w-4 shrink-0 text-data-warn-ink"
           aria-hidden="true"
         />
-        <p className="flex-1 text-xs sm:text-sm text-amber-900 dark:text-amber-100">
+        <p className="flex-1 text-xs sm:text-sm text-data-warn-ink">
           <span className="font-bold mono uppercase tracking-wider text-sm sm:text-xs mr-2">
             Security notice
           </span>
           Unsolicited emails sent on Apr 19-20 didn’t originate from PERM Tracker.{" "}
           <Link
             href="/security"
-            className="font-bold underline decoration-2 underline-offset-2 hover:text-amber-950 dark:hover:text-white"
+            className="font-bold underline decoration-2 underline-offset-2 hover:text-foreground"
           >
             Learn more
           </Link>
@@ -110,7 +110,7 @@ export function SecurityIncidentBanner() {
           type="button"
           onClick={handleDismiss}
           aria-label="Dismiss security notice"
-          className="shrink-0 rounded-none p-1 text-amber-700 hover:bg-amber-100 hover:text-amber-900 dark:text-amber-400 dark:hover:bg-amber-900/50 dark:hover:text-amber-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600"
+          className="shrink-0 rounded-none p-1 text-data-warn-ink hover:bg-data-warn/15 hover:text-data-warn-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-data-warn"
         >
           <XIcon className="h-4 w-4" aria-hidden="true" />
         </button>

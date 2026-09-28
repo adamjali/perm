@@ -105,7 +105,7 @@ export function DecidedTable({
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                 <Link
                   href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="underline decoration-primary-text decoration-2 underline-offset-2 hover:text-primary-text"
                 >
                   {c.caseNumber}
                 </Link>{" "}
@@ -120,7 +120,7 @@ export function DecidedTable({
                 {c.employerSlug ? (
                   <Link
                     href={`/perm-employers/${c.employerSlug}`}
-                    className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    className="underline decoration-primary-text decoration-2 underline-offset-2 hover:text-primary-text"
                   >
                     {c.employerName}
                   </Link>
@@ -145,7 +145,7 @@ export function DecidedTable({
                 {c.attorneySlug ? (
                   <Link
                     href={`/perm-attorneys/${c.attorneySlug}`}
-                    className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                    className="underline decoration-primary-text decoration-2 underline-offset-2 hover:text-primary-text"
                   >
                     {c.attorneyName}
                   </Link>

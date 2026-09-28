@@ -93,11 +93,11 @@ const NOTIFICATION_ICONS: Record<NotificationType, PhosphorIcon> = {
 function getPriorityColor(priority: NotificationPriority): string {
   switch (priority) {
     case "urgent":
-      return "bg-[#DC2626]"; // Urgent red
+      return "bg-urgency-urgent"; // Urgent red
     case "high":
-      return "bg-[#EA580C]"; // High/soon orange
+      return "bg-urgency-soon"; // High/soon orange
     case "normal":
-      return "bg-[#059669]"; // Normal green
+      return "bg-stage-i140"; // Normal green
     case "low":
     default:
       return "bg-muted-foreground"; // Low gray
@@ -213,7 +213,7 @@ function NotificationItem({
 
       {/* Time and Delete button container */}
       <div className="shrink-0 flex flex-col items-end gap-1">
-        <span className="text-[10px] text-muted-foreground font-mono whitespace-nowrap">
+        <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
           {safeFormatDistanceToNow(notification.createdAt)}
         </span>
 
@@ -226,7 +226,7 @@ function NotificationItem({
             "rounded-sm border border-transparent",
             "text-muted-foreground",
             "opacity-0 group-hover:opacity-100",
-            "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20",
+            "hover:bg-destructive/10 hover:text-destructive-text hover:border-destructive/20",
             "transition-all duration-150",
             "focus:opacity-100 focus:outline-none focus:ring-1 focus:ring-destructive"
           )}
@@ -385,7 +385,7 @@ export default function NotificationDropdown() {
             variant="ghost"
             size="xs"
             onClick={handleMarkAllAsRead}
-            className="text-xs text-primary hover:text-primary hover:bg-primary/10"
+            className="text-xs text-primary hover:text-primary-text hover:bg-primary/10"
           >
             Mark All Read
           </Button>
@@ -460,7 +460,7 @@ export default function NotificationDropdown() {
               className={cn(
                 "group inline-flex items-center gap-1.5",
                 "text-sm text-muted-foreground uppercase tracking-wide",
-                "hover:text-primary transition-colors",
+                "hover:text-primary-text transition-colors",
                 "font-heading font-semibold",
                 navigatingToAll && "pointer-events-none opacity-70"
               )}

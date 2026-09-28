@@ -2,7 +2,7 @@
 
 /**
  * SignOutOverlay Component
- * Minimal glass-panel modal shown when user is signing out.
+ * Minimal solid modal shown when the user is signing out, drawn like every dialog.
  *
  * Features:
  * - Blocks all interaction with background
@@ -34,18 +34,18 @@ export default function SignOutOverlay() {
     >
       {/* Backdrop with blur - fast fade-in */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-md animate-in fade-in duration-150"
+        className="absolute inset-0 bg-black/60 animate-in fade-in duration-150"
         aria-hidden="true"
       />
 
       {/* Glass panel modal - slide up with scale */}
       <div
-        className="relative z-10 glass-panel border-2 border-border shadow-hard-lg
+        className="relative z-10 bg-background border-2 border-border shadow-hard-lg
                    flex flex-col items-center gap-4 px-10 py-8
                    animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-200"
       >
         {/* Spinner - Forest Green */}
-        <CircleNotchIcon className="size-8 animate-spin text-(--primary)" />
+        <CircleNotchIcon className="size-8 animate-spin text-primary" />
 
         {/* Text */}
         <div className="text-center">

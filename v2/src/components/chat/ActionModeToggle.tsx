@@ -179,7 +179,7 @@ export function ActionModeToggle({
         // Container styling
         "relative inline-flex",
         "border-2 border-border bg-background",
-        "shadow-[2px_2px_0px_#000]",
+        "shadow-hard-sm",
         // Disabled state
         disabled && "opacity-50 pointer-events-none",
         className

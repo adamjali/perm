@@ -132,10 +132,10 @@ function NavButton({
         variant === "tab" && "px-4 py-3 whitespace-nowrap",
         isActive
           ? cn(
-              "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black",
-              variant === "sidebar" && "shadow-[4px_4px_0px_#000] dark:shadow-[4px_4px_0px_rgba(255,255,255,0.3)]"
+              "border-foreground bg-foreground text-background",
+              variant === "sidebar" && "shadow-hard"
             )
-          : "border-transparent text-muted-foreground hover:border-black/50 hover:text-foreground dark:hover:border-white/50"
+          : "border-transparent text-muted-foreground hover:border-foreground/50 hover:text-foreground"
       )}
     >
       <Icon className="w-4 h-4 flex-shrink-0" />
@@ -232,7 +232,7 @@ export default function SettingsLayout({
   return (
     <div className="flex flex-col md:flex-row gap-8">
       {/* Mobile tabs */}
-      <div className="md:hidden overflow-x-auto overscroll-x-none -mx-4 px-4 pb-4 mb-4 border-b-2 border-black dark:border-white/50">
+      <div className="md:hidden overflow-x-auto overscroll-x-none -mx-4 px-4 pb-4 mb-4 border-b-2 border-border">
         <NavList
           activeSection={activeSection}
           onSectionChange={handleSectionChange}

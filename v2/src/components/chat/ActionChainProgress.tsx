@@ -88,7 +88,7 @@ function StatusIcon({ status }: { status: ActionStep['status'] }) {
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 25 }}
         >
-          <CheckIcon className="h-4 w-4 text-green-600" />
+          <CheckIcon className="h-4 w-4 text-primary" />
         </motion.div>
       );
     case 'error':
@@ -98,12 +98,12 @@ function StatusIcon({ status }: { status: ActionStep['status'] }) {
           animate={{ scale: 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 25 }}
         >
-          <XIcon className="h-4 w-4 text-red-600" />
+          <XIcon className="h-4 w-4 text-destructive" />
         </motion.div>
       );
     case 'waiting_approval':
       return (
-        <LockIcon className="h-4 w-4 text-amber-600" />
+        <LockIcon className="h-4 w-4 text-data-warn-ink" />
       );
     default:
       return null;
@@ -117,7 +117,7 @@ function ConnectorLine({ isComplete }: { isComplete: boolean }) {
       <motion.div
         className={cn(
           'w-0.5 h-6',
-          isComplete ? 'bg-green-500' : 'bg-border'
+          isComplete ? 'bg-primary' : 'bg-border'
         )}
         initial={{ scaleY: 0 }}
         animate={{ scaleY: 1 }}
@@ -146,15 +146,15 @@ function StepCard({
   const borderColor = {
     pending: 'border-l-muted-foreground',
     executing: 'border-l-primary',
-    done: 'border-l-green-500',
-    error: 'border-l-red-500',
-    waiting_approval: 'border-l-amber-500',
+    done: 'border-l-primary',
+    error: 'border-l-destructive',
+    waiting_approval: 'border-l-data-warn',
   }[step.status];
 
   const bgColor = step.status === 'error'
-    ? 'bg-red-50'
+    ? 'bg-destructive/10'
     : step.status === 'waiting_approval'
-    ? 'bg-amber-50'
+    ? 'bg-data-warn/15'
     : 'bg-card';
 
   return (
@@ -206,7 +206,7 @@ function StepCard({
           )}
           {step.error && (
             <motion.p
-              className="text-sm text-red-600"
+              className="text-sm text-destructive"
               initial={{ x: 0 }}
               animate={{ x: [0, -4, 4, -4, 4, 0] }}
               transition={{ duration: 0.4 }}
@@ -279,7 +279,7 @@ export function ActionChainProgress({
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between px-3 py-2 mb-2 border-2 border-amber-500 bg-amber-50 shadow-hard-sm"
+          className="flex items-center justify-between px-3 py-2 mb-2 border-2 border-data-warn bg-data-warn/15 shadow-hard-sm"
         >
           <span className="text-sm font-medium">
             {pendingApproval.length} actions waiting for approval

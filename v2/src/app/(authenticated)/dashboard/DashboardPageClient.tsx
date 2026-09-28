@@ -84,7 +84,8 @@ export function DashboardPageClient() {
   // Extract first name from full name
   // Extracted to local variable (React Compiler disabled; kept for SWC safety)
   const rawName = currentUser.name;
-  const firstName = rawName ? rawName.split(" ")[0] : "there";
+  // No name on file greets plainly: "Welcome back, there" read as a typo.
+  const firstName = rawName ? rawName.split(" ")[0] : null;
 
   return (
     <div className="space-y-6">
@@ -95,7 +96,7 @@ export function DashboardPageClient() {
             Dashboard
           </p>{" "}
           <h1 className="mt-2 font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">
-            Welcome back, {firstName}
+            {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
           </h1>{" "}
           <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-foreground/70">
             Every filing window, wage expiration and audit deadline in your

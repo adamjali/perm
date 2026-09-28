@@ -48,7 +48,7 @@ export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemP
     >
       {/* Left: Employer + deadline type */}
       <div className="flex-1 min-w-0">
-        <p className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary transition-colors" title={employerName}>
+        <p className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary-text transition-colors" title={employerName}>
           {employerName}
         </p>{" "}
         <p className="text-xs text-muted-foreground uppercase tracking-wide truncate" title={label}>
@@ -65,8 +65,8 @@ export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemP
         <span
           className={cn(
             "text-sm font-bold mono min-w-[4rem] text-right",
-            isUrgent && "text-red-600 dark:text-red-500",
-            isWarning && "text-orange-600 dark:text-orange-500",
+            isUrgent && "text-destructive",
+            isWarning && "text-data-warn-ink",
             !isUrgent && !isWarning && "text-muted-foreground"
           )}
           data-testid={urgencyTestId}

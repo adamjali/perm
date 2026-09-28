@@ -343,7 +343,7 @@ export default function QuietHoursSection({
                 {onNavigateToProfile && (
                   <button
                     type="button"
-                    className="text-blue-600 dark:text-blue-400 hover:underline text-xs font-medium ml-auto"
+                    className="text-data-info-ink hover:underline text-xs font-medium ml-auto"
                     onClick={onNavigateToProfile}
                   >
                     Change in Profile
@@ -352,9 +352,9 @@ export default function QuietHoursSection({
               </div>
 
               {/* Info Box - Urgent notifications bypass */}
-              <div className="flex items-start gap-2 px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border-2 border-blue-200 dark:border-blue-800 text-sm">
-                <InfoIcon className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-                <span className="text-blue-700 dark:text-blue-300">
+              <div className="flex items-start gap-2 px-3 py-2 bg-data-info/10 border-2 border-data-info text-sm">
+                <InfoIcon className="w-4 h-4 text-data-info-ink flex-shrink-0 mt-0.5" />
+                <span className="text-data-info-ink">
                   <strong>Note:</strong> Urgent notifications (overdue deadlines, critical alerts) will always be delivered, even during quiet hours.
                 </span>
               </div>
@@ -418,7 +418,7 @@ export default function QuietHoursSection({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.15 }}
-                    className="text-amber-600 dark:text-amber-400"
+                    className="text-data-warn-ink"
                   >
                     You have unsaved changes
                   </motion.span>

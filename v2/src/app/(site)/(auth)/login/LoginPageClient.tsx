@@ -351,7 +351,7 @@ export function LoginPageClient() {
           <div className="pt-4 text-center border-t-2 border-border">
             <button
               onClick={() => setStep("login")}
-              className="text-sm font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
+              className="text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
             >
               &larr; Back to sign in
             </button>
@@ -373,7 +373,7 @@ export function LoginPageClient() {
       </CardHeader>
       <CardContent className="space-y-6">
         {showExpiredBanner && (
-          <div className="flex items-center gap-2 rounded-md border-2 border-amber-500/50 bg-amber-50 dark:bg-amber-900/20 px-3 py-2.5 text-sm text-amber-700 dark:text-amber-300">
+          <div className="flex items-center gap-2 rounded-md border-2 border-data-warn/50 bg-data-warn/15 px-3 py-2.5 text-sm text-data-warn-ink">
             <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
@@ -422,7 +422,7 @@ export function LoginPageClient() {
           <div className="flex items-center justify-end">
             <NavLink
               href="/reset-password"
-              className="text-sm font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
+              className="text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
               spinnerSize={12}
             >
               Forgot password?
@@ -509,7 +509,7 @@ export function LoginPageClient() {
             href="/terms"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+            className="text-foreground underline underline-offset-2 hover:text-primary-text transition-colors"
           >
             Terms of Service
           </a>{" "}
@@ -518,7 +518,7 @@ export function LoginPageClient() {
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+            className="text-foreground underline underline-offset-2 hover:text-primary-text transition-colors"
           >
             Privacy Policy
           </a>
@@ -530,7 +530,7 @@ export function LoginPageClient() {
             Don&apos;t have an account?{" "}
             <NavLink
               href="/signup"
-              className="text-foreground font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
+              className="text-foreground font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
               spinnerSize={12}
             >
               Sign up

@@ -83,32 +83,32 @@ export default function TimeoutWarningModal({
     >
       {/* Backdrop with blur */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        className="absolute inset-0 bg-black/60 animate-in fade-in duration-150"
         aria-hidden="true"
         onClick={onExtend}
       />
 
       {/* Modal */}
       <div
-        className="relative z-10 glass-panel border-2 border-border shadow-hard-lg
+        className="relative z-10 bg-background border-2 border-border shadow-hard-lg
                    w-full max-w-md mx-4 p-8
                    animate-in fade-in slide-in-from-bottom-4 zoom-in-95 duration-300"
       >
         {/* Header with icon */}
         <div className="flex flex-col items-center gap-4 mb-6">
           <div
-            className={`p-3 rounded-full border-2 border-border ${
-              isUrgent ? "bg-red-100 dark:bg-red-900/30" : "bg-amber-100 dark:bg-amber-900/30"
+            className={`p-3 border-2 border-border ${
+              isUrgent ? "bg-destructive/10" : "bg-data-warn/15"
             }`}
           >
             <ClockIcon
-              className={`size-8 ${isUrgent ? "text-red-600" : "text-amber-600"}`}
+              className={`size-8 ${isUrgent ? "text-destructive" : "text-data-warn-ink"}`}
             />
           </div>
 
           <h2
             id="timeout-title"
-            className="font-heading text-2xl font-bold text-foreground text-center"
+            className="font-heading text-xl font-bold tracking-tight text-foreground text-center"
           >
             Session Timeout Warning
           </h2>
@@ -126,13 +126,13 @@ export default function TimeoutWarningModal({
         <div
           className={`text-center py-4 px-6 mb-6 border-2 border-border ${
             isUrgent
-              ? "bg-red-50 dark:bg-red-900/20"
+              ? "bg-destructive/10"
               : "bg-muted"
           }`}
         >
           <span
             className={`font-heading text-5xl font-bold tracking-wider ${
-              isUrgent ? "text-red-600" : "text-foreground"
+              isUrgent ? "text-destructive" : "text-foreground"
             }`}
           >
             {formattedTime}
@@ -155,7 +155,7 @@ export default function TimeoutWarningModal({
             Log Out Now
           </Button>
           <Button
-            className="flex-1 border-2 border-black dark:border-input focus-visible:border-black focus-visible:ring-black/20 dark:focus-visible:border-input dark:focus-visible:ring-white/20"
+            className="flex-1"
             onClick={onExtend}
             autoFocus
           >
@@ -165,7 +165,7 @@ export default function TimeoutWarningModal({
 
         {/* Keyboard hint */}
         <p className="mt-4 text-center text-xs text-muted-foreground">
-          Press <kbd className="mono rounded-sm border border-border bg-muted px-1.5 py-0.5">Esc</kbd> to stay logged in
+          Press <kbd className="mono border-2 border-border bg-muted px-1.5 py-0.5">Esc</kbd> to stay logged in
         </p>
       </div>
     </div>

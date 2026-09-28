@@ -289,7 +289,7 @@ export default function Header(): React.ReactElement {
                 </span>
                 <NavLink
                   href="/settings"
-                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary"
+                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary-text"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   <Settings className="size-4" />
@@ -298,7 +298,7 @@ export default function Header(): React.ReactElement {
                 <button
                   onClick={handleMobileSignOut}
                   disabled={isSigningOut}
-                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary text-left disabled:opacity-50"
+                  className="flex items-center gap-3 py-3 px-2 font-heading text-base font-semibold uppercase tracking-wide text-white transition-colors hover:text-primary-text text-left disabled:opacity-50"
                 >
                   {isSigningOut ? (
                     <CircleNotchIcon className="size-4 animate-spin" />

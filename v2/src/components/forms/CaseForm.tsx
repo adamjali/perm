@@ -612,7 +612,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
                   key={s}
                   className={cn(
                     "h-2.5 w-10 border-2 border-border rounded-sm transition-colors",
-                    sectionStates[s].isComplete ? "bg-[var(--primary)]" : "bg-muted"
+                    sectionStates[s].isComplete ? "bg-primary" : "bg-muted"
                   )}
                 />
               ))}
@@ -720,7 +720,7 @@ function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors:
               return (
                 <li key={field} className="flex items-start gap-2">
                   <span className="text-destructive font-bold shrink-0">-</span>
-                  <button type="button" onClick={() => onFieldClick(field)} className="text-sm text-left hover:underline hover:text-destructive transition-colors cursor-pointer flex-1">
+                  <button type="button" onClick={() => onFieldClick(field)} className="text-sm text-left hover:underline hover:text-destructive-text transition-colors cursor-pointer flex-1">
                     <span className="font-semibold">{label}:</span> {message}
                   </button>
                 </li>
@@ -735,14 +735,14 @@ function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors:
 
 function WarningSummary({ warnings, warningCount }: { warnings: Record<string, string>; warningCount: number }) {
   return (
-    <div className="rounded-lg border-2 border-orange-400 bg-orange-50 dark:bg-orange-950/20 p-4">
+    <div className="rounded-lg border-2 border-data-warn bg-data-warn/15 p-4">
       <div className="flex items-start gap-3">
-        <AlertTriangle className="size-5 text-orange-600 dark:text-orange-400 shrink-0 mt-0.5" />
+        <AlertTriangle className="size-5 text-data-warn-ink shrink-0 mt-0.5" />
         <div className="flex-1">
-          <h3 className="font-semibold text-orange-700 dark:text-orange-300 text-sm">{warningCount} Warning{warningCount > 1 ? "s" : ""}</h3>
+          <h3 className="font-semibold text-data-warn-ink text-sm">{warningCount} Warning{warningCount > 1 ? "s" : ""}</h3>
           <ul className="mt-1 space-y-0.5">
             {Object.entries(warnings).map(([field, message]) => (
-              <li key={field} className="text-sm text-orange-600 dark:text-orange-400">{message}</li>
+              <li key={field} className="text-sm text-data-warn-ink">{message}</li>
             ))}
           </ul>
         </div>
@@ -785,7 +785,7 @@ function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCance
             </Button>
           )}
           {isDirty && !isSubmitting && !isCancelNavigating && (
-            <div className="flex items-center gap-2 text-sm text-orange-600 dark:text-orange-400 animate-fade-in">
+            <div className="flex items-center gap-2 text-sm text-data-warn-ink animate-fade-in">
               <AlertTriangle className="size-4" /><span className="hidden sm:inline">Unsaved changes</span>
             </div>
           )}

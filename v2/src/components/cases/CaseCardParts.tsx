@@ -87,7 +87,7 @@ export function FavoriteBookmark({
         <BookmarkIcon
           className={cn(
             "w-4 h-4 mt-0.5",
- isFavorite ? "text-data-warn-ink fill-yellow-800" : "text-black/60"
+ isFavorite ? "text-data-warn-ink fill-data-warn" : "text-black/60"
           )}
         />
       )}
@@ -117,8 +117,8 @@ export function PinIndicator({
         "absolute -top-1 left-2 z-30",
         "flex items-center justify-center",
         "w-6 h-6 rounded-full",
- "bg-data-good text-white",
-        "shadow-hard-sm border border-black",
+ "bg-data-good text-black",
+        "shadow-hard-sm border-2 border-black",
         "transform rotate-45",
         "transition-all duration-150",
         isClicking && "scale-90",
@@ -168,7 +168,7 @@ export function CaseBadges({
       {duplicateOf && (
         <Badge
           variant="outline"
- className="text-sm px-2 py-0.5 text-white border-black bg-data-warn font-bold"
+ className="text-sm px-2 py-0.5 font-bold border-2 border-black bg-data-warn text-black"
           title="This case was marked as a duplicate of another case"
         >
           DUP
@@ -177,7 +177,7 @@ export function CaseBadges({
       {isProfessionalOccupation && (
         <Badge
           variant="outline"
-          className="text-sm px-2 py-0.5 bg-black/10 text-black border-2 border-black font-bold"
+          className="text-sm px-2 py-0.5 font-bold border-2 border-black bg-black/10 text-black"
         >
           PRO
         </Badge>
@@ -185,7 +185,7 @@ export function CaseBadges({
       {hasActiveRfi && (
         <Badge
           variant="outline"
-          className="text-sm px-2 py-0.5 text-white border-black bg-[var(--urgency-urgent)]"
+          className="text-sm px-2 py-0.5 font-bold border-2 border-black bg-urgency-urgent text-white"
         >
           RFI
         </Badge>
@@ -193,7 +193,7 @@ export function CaseBadges({
       {hasActiveRfe && (
         <Badge
           variant="outline"
-          className="text-sm px-2 py-0.5 text-white border-black bg-[var(--urgency-urgent)]"
+          className="text-sm px-2 py-0.5 font-bold border-2 border-black bg-urgency-urgent text-white"
         >
           RFE
         </Badge>

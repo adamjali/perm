@@ -101,7 +101,7 @@ export function WidgetHeaderAction({
       disabled={isNavigating}
       aria-label={ariaLabel}
       className={cn(
-        "text-base font-semibold text-foreground hover:text-primary hover:underline",
+        "text-base font-semibold text-foreground hover:text-primary-text hover:underline",
         "transition-colors duration-200 flex items-center gap-2",
         isNavigating && "opacity-70 cursor-wait"
       )}

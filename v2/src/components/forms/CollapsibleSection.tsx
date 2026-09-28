@@ -120,7 +120,7 @@ export function CollapsibleSection({
             <span className={cn(
               "text-xs font-medium px-2 py-1 rounded hidden sm:inline",
               !isEnabled
-                ? "bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-700"
+                ? "bg-data-warn/15 text-data-warn-ink border-2 border-data-warn"
                 : "text-muted-foreground bg-muted"
             )}>
               {statusInfo}
@@ -129,7 +129,7 @@ export function CollapsibleSection({
 
           {/* Completion indicator */}
           {isComplete && (
-            <div className="flex items-center gap-1.5 text-[var(--primary)]">
+            <div className="flex items-center gap-1.5 text-primary">
               <CheckCircle2 className="h-4 w-4" />
               {!isOpen && summary && (
                 <span className="text-xs text-muted-foreground max-w-[300px] truncate hidden sm:inline">
@@ -166,8 +166,8 @@ export function CollapsibleSection({
           >
             {/* Prerequisite warning when opened without prerequisites */}
             {!isEnabled && (
-              <div className="mx-4 mb-3 flex items-center gap-2 text-sm px-3 py-2.5 rounded-md border-2 border-amber-500/50 bg-amber-50 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-500/30">
-                <AlertTriangle className="h-4 w-4 shrink-0 text-amber-500" />
+              <div className="mx-4 mb-3 flex items-center gap-2 text-sm px-3 py-2.5 rounded-md border-2 border-data-warn/50 bg-data-warn/15 text-data-warn-ink">
+                <AlertTriangle className="h-4 w-4 shrink-0 text-data-warn-ink" />
                 <span className="font-medium">{disabledReason || "Complete earlier sections first for accurate validation."}</span>
               </div>
             )}

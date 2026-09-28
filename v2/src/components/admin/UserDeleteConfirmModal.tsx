@@ -67,9 +67,9 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md border-destructive">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="font-heading text-xl font-bold uppercase tracking-wide flex items-center gap-2 text-destructive">
+          <DialogTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="size-5" />
             Delete User
           </DialogTitle>

@@ -5,8 +5,8 @@ import { EyeIcon, EyeSlashIcon as EyeOff } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-interface PasswordInputProps
-  extends Omit<ComponentProps<"input">, "type"> {
+// `type` is accepted (AuthField passes one) and ignored: the eye toggle owns it.
+interface PasswordInputProps extends ComponentProps<"input"> {
   /** Override the initial visibility state */
   defaultVisible?: boolean;
 }
@@ -15,6 +15,10 @@ function PasswordInput({
   className,
   defaultVisible = false,
   disabled,
+  // The eye toggle owns the type. A caller's `type` used to land after it in
+  // the spread and win: AuthField passes type="text" by default, so sign-up
+  // and reset showed the password in plain text (Sep 28 2026).
+  type: _callerType,
   ...props
 }: PasswordInputProps) {
   const [visible, setVisible] = useState(defaultVisible);
@@ -22,10 +26,10 @@ function PasswordInput({
   return (
     <div className="relative w-full">
       <Input
-        type={visible ? "text" : "password"}
         className={cn("pr-11", className)}
         disabled={disabled}
         {...props}
+        type={visible ? "text" : "password"}
       />
       <button
         type="button"

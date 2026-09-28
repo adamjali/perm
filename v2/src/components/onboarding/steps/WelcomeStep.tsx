@@ -61,7 +61,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
       <Button
         onClick={onNext}
         size="lg"
-        className="w-full max-w-sm uppercase tracking-wider font-heading text-sm"
+        className="w-full max-w-sm"
       >
         Get Started
       </Button>

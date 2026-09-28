@@ -30,7 +30,7 @@ function CaseCardSkeleton({ index }: { index: number }) {
       </div>
 
       {/* Folder Body */}
-      <div className="border-2 border-border bg-[var(--manila)] shadow-hard p-6 pt-10 min-h-[180px]">
+      <div className="border-2 border-border bg-manila shadow-hard p-6 pt-10 min-h-[180px]">
         {/* Left color bar skeleton */}
         <div className="absolute left-0 top-0 bottom-0 w-1.5">
           <Skeleton variant="block" className="w-full h-full" />

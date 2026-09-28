@@ -372,7 +372,7 @@ export function RecruitmentResultsCard({
               placeholder="Enter custom recruitment results text..."
             />
           ) : (
-            <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
+            <pre className="whitespace-pre-wrap text-sm leading-relaxed font-body">
               {displayText}
             </pre>
           )}

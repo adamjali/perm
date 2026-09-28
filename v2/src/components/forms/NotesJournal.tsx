@@ -57,21 +57,21 @@ const PRIORITY_CONFIG: Record<
 > = {
   high: {
     label: "High",
-    color: "text-red-700 dark:text-red-400",
-    bgColor: "bg-red-100 dark:bg-red-900/30",
-    borderColor: "border-red-400 dark:border-red-700",
+    color: "text-destructive",
+    bgColor: "bg-destructive/10",
+    borderColor: "border-destructive",
   },
   medium: {
     label: "Medium",
-    color: "text-amber-700 dark:text-amber-400",
-    bgColor: "bg-amber-100 dark:bg-amber-900/30",
-    borderColor: "border-amber-400 dark:border-amber-700",
+    color: "text-data-warn-ink",
+    bgColor: "bg-data-warn/15",
+    borderColor: "border-data-warn",
   },
   low: {
     label: "Low",
-    color: "text-gray-600 dark:text-gray-400",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
-    borderColor: "border-gray-400 dark:border-gray-600",
+    color: "text-muted-foreground",
+    bgColor: "bg-muted",
+    borderColor: "border-border",
   },
 };
 
@@ -81,33 +81,33 @@ const CATEGORY_CONFIG: Record<
 > = {
   "follow-up": {
     label: "Follow-up",
-    color: "text-blue-700 dark:text-blue-400",
-    bgColor: "bg-blue-100 dark:bg-blue-900/30",
+    color: "text-data-info-ink",
+    bgColor: "bg-data-info/10",
   },
   document: {
     label: "Document",
-    color: "text-purple-700 dark:text-purple-400",
-    bgColor: "bg-purple-100 dark:bg-purple-900/30",
+    color: "text-stage-recruitment-ink",
+    bgColor: "bg-stage-recruitment/10",
   },
   client: {
     label: "Client",
-    color: "text-green-700 dark:text-green-400",
-    bgColor: "bg-green-100 dark:bg-green-900/30",
+    color: "text-primary",
+    bgColor: "bg-primary/10",
   },
   internal: {
     label: "Internal",
-    color: "text-gray-700 dark:text-gray-400",
-    bgColor: "bg-gray-100 dark:bg-gray-800",
+    color: "text-foreground",
+    bgColor: "bg-muted",
   },
   deadline: {
     label: "Deadline",
-    color: "text-red-700 dark:text-red-400",
-    bgColor: "bg-red-100 dark:bg-red-900/30",
+    color: "text-destructive",
+    bgColor: "bg-destructive/10",
   },
   other: {
     label: "Other",
-    color: "text-slate-700 dark:text-slate-400",
-    bgColor: "bg-slate-100 dark:bg-slate-800",
+    color: "text-foreground",
+    bgColor: "bg-muted",
   },
 };
 
@@ -400,7 +400,7 @@ export function NotesJournal({
             placeholder={`Add a note... (${shortcutKey}+Enter to save)`}
             rows={3}
             maxLength={5000}
-            className="border-2 border-border shadow-[3px_3px_0px_0px_rgba(0,0,0,0.1)] dark:shadow-[3px_3px_0px_0px_rgba(255,255,255,0.05)]"
+            className="border-2 border-border shadow-hard-sm"
           />
         </div>
 
@@ -491,8 +491,8 @@ export function NotesJournal({
                 className={cn(
                   "px-2 py-1 rounded text-xs font-medium transition-colors border-2",
                   filterBy === "highPriority"
-                    ? "bg-amber-600 text-white border-amber-600"
-                    : "bg-amber-50 text-amber-700 border-amber-300 hover:border-amber-500 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-700"
+                    ? "bg-data-warn text-black border-data-warn"
+                    : "bg-data-warn/15 text-data-warn-ink border-data-warn hover:border-data-warn"
                 )}
               >
                 High Priority ({counts.highPriority})
@@ -504,7 +504,7 @@ export function NotesJournal({
               className={cn(
                 "px-2 py-1 rounded text-xs font-medium transition-colors border-2",
                 filterBy === "pending"
-                  ? "bg-blue-600 text-white border-blue-600"
+                  ? "bg-data-info text-white border-data-info"
                   : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
               )}
             >
@@ -516,7 +516,7 @@ export function NotesJournal({
               className={cn(
                 "px-2 py-1 rounded text-xs font-medium transition-colors border-2",
                 filterBy === "done"
-                  ? "bg-green-600 text-white border-green-600"
+                  ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
               )}
             >
@@ -559,14 +559,14 @@ export function NotesJournal({
                   transition={{ duration: 0.2 }}
                   className={cn(
                     "group rounded-lg border-2 p-3 transition-all duration-150",
-                    "shadow-[4px_4px_0px_0px_rgba(0,0,0,0.15)] dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.05)]",
+                    "shadow-hard",
                     "hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)] hover:-translate-y-0.5",
                     note.status === "done"
                       ? "bg-muted/50 opacity-60 border-muted"
                       : "bg-background border-border hover:border-muted-foreground/50",
                     note.priority === "high" &&
                       note.status !== "done" &&
-                      "ring-2 ring-red-400/50"
+                      "ring-2 ring-destructive/50"
                   )}
                 >
                   <div className="flex items-start gap-3">
@@ -587,7 +587,7 @@ export function NotesJournal({
                         {/* Priority badge */}
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide",
+                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide",
                             priorityConfig.bgColor,
                             priorityConfig.color
                           )}
@@ -599,7 +599,7 @@ export function NotesJournal({
                         {/* Category badge */}
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium",
+                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium",
                             categoryConfig.bgColor,
                             categoryConfig.color
                           )}
@@ -640,7 +640,7 @@ export function NotesJournal({
                             >
                               Cancel
                             </Button>
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-xs text-muted-foreground">
                               {shortcutKey}+Enter to save · Esc to cancel
                             </span>
                           </div>
@@ -663,7 +663,7 @@ export function NotesJournal({
                       {/* Timestamp row */}
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
                         <span title={timestamp.full}>{timestamp.full}</span>{" "}
-                        <span className="px-1.5 py-0.5 rounded bg-muted text-[10px] font-medium">
+                        <span className="px-1.5 py-0.5 rounded bg-muted text-xs font-medium">
                           {timestamp.relative}
                         </span>
                       </div>
@@ -675,7 +675,7 @@ export function NotesJournal({
                       variant="ghost"
                       size="icon"
                       onClick={() => handleDelete(note.id)}
-                      className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                      className="h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive-text hover:bg-destructive/10 transition-all"
                       aria-label="Delete note"
                     >
                       <Trash2 className="h-4 w-4" />

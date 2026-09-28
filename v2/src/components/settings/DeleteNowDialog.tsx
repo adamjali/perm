@@ -127,7 +127,7 @@ export default function DeleteNowDialog({
           <div>
             <p className="text-sm font-medium mb-2">
               Type{" "}
-              <span className="font-mono bg-muted px-1.5 py-0.5 border border-border">
+              <span className="font-mono bg-muted px-1.5 py-0.5 border-2 border-border">
                 {DELETE_CONFIRMATION_TEXT}
               </span>{" "}
               to confirm:

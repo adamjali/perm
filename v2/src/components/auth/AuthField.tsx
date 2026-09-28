@@ -109,7 +109,7 @@ export function AuthField({
         {showValid && (
           <CheckCircle2
             className={cn(
-              "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-600 pointer-events-none",
+              "absolute top-1/2 -translate-y-1/2 h-4 w-4 text-primary pointer-events-none",
               "transition-opacity duration-150",
               component === "password" ? "right-12" : "right-3",
             )}
@@ -143,7 +143,7 @@ export function AuthField({
           className={cn(
             "text-xs mono transition-colors duration-150 flex items-start gap-1.5",
             helperMet
-              ? "text-emerald-600 font-semibold"
+              ? "text-primary font-semibold"
               : "text-muted-foreground",
           )}
         >

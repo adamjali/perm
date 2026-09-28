@@ -430,7 +430,7 @@ export function CalendarFilters({
                             !isGroupAllVisible(group.types)
                           )
                         }
-                        className="font-heading text-sm font-bold hover:text-primary transition-colors"
+                        className="font-heading text-sm font-bold hover:text-primary-text transition-colors"
                         aria-label={`Toggle all ${group.stage} deadline types`}
                       >
                         {group.stage}

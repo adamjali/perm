@@ -108,7 +108,7 @@ interface WarningBannerProps {
 
 function WarningBanner({ visible, children, variant = "warning" }: WarningBannerProps): React.ReactElement | null {
   const styles = variant === "warning"
-    ? "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
+    ? "bg-data-warn/15 border-data-warn text-data-warn-ink"
     : "bg-muted border-border text-muted-foreground";
 
   return (
@@ -192,21 +192,21 @@ interface PushStatusBadgeProps {
 
 function PushStatusBadge({ status, enabled }: PushStatusBadgeProps): React.ReactElement {
   if (!status?.supported) {
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border border-border">Not Supported</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-2 border-border">Not Supported</span>;
   }
   if (status.permission === "denied") {
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800">Blocked</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border-2 border-destructive">Blocked</span>;
   }
   if (enabled && status.subscribed) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-600 dark:bg-green-400" />
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary border-2 border-primary">
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
         Enabled
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border border-border">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-2 border-border">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
       Disabled
     </span>

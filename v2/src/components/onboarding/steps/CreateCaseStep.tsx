@@ -171,7 +171,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
         loading={isCreating}
         loadingText="Creating case..."
         size="lg"
-        className="w-full max-w-sm uppercase tracking-wider font-heading text-sm"
+        className="w-full max-w-sm"
       >
         Create Case
       </Button>

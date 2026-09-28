@@ -109,13 +109,13 @@ export default function DeadlineEnforcementToggle() {
 
       {/* Warning message */}
       <div
-        className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-700/50 rounded-sm"
+        className="flex items-start gap-3 p-3 bg-data-warn/15 border-2 border-data-warn rounded-sm"
         id="enforcement-description"
       >
-        <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-amber-800 dark:text-amber-200">
+        <AlertTriangle className="w-5 h-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
+        <div className="text-sm text-data-warn-ink">
           <p className="font-medium mb-1">Important</p>
-          <ul className="list-disc list-inside space-y-1 text-amber-700 dark:text-amber-300">
+          <ul className="list-disc list-inside space-y-1 text-data-warn-ink">
             <li>Cases are closed when PWD expires before ETA 9089 filing</li>{" "}
             <li>Cases are closed when filing windows pass without action</li>{" "}
             <li>You&apos;ll see a notification when cases are auto-closed</li>{" "}

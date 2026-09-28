@@ -101,10 +101,10 @@ function StatusIcon({ status }: { status: ConfirmationStatus }) {
 
   // Determine icon and color based on status
   const iconConfig = {
-    approved: { Icon: CheckCircleIcon, className: 'text-green-600 dark:text-green-400' },
-    done: { Icon: CheckCircleIcon, className: 'text-green-600 dark:text-green-400' },
+    approved: { Icon: CheckCircleIcon, className: 'text-primary ' },
+    done: { Icon: CheckCircleIcon, className: 'text-primary ' },
     denied: { Icon: XCircleIcon, className: 'text-muted-foreground' },
-    error: { Icon: XCircleIcon, className: 'text-red-600 dark:text-red-400' },
+    error: { Icon: XCircleIcon, className: 'text-destructive ' },
   }[status];
 
   if (!iconConfig) return null;
@@ -162,16 +162,16 @@ export function InChatConfirmationCard({
   // not a thick left bar.
   const BORDER_STYLES: Record<ConfirmationStatus, string> = {
     pending: 'border-primary',
-    approved: 'border-green-600 dark:border-green-500',
-    done: 'border-green-600 dark:border-green-500',
+    approved: 'border-primary ',
+    done: 'border-primary ',
     executing: 'border-primary',
     denied: 'opacity-60',
-    error: 'border-red-500',
+    error: 'border-destructive',
   };
 
   // Destructive pending state overrides default pending style
   const borderStyles = isDestructive && status === 'pending'
-    ? 'border-red-500'
+    ? 'border-destructive'
     : BORDER_STYLES[status];
 
   return (
@@ -203,7 +203,7 @@ export function InChatConfirmationCard({
               className={cn(
                 'flex-shrink-0 p-1.5 border-2 border-border',
                 isDestructive && status === 'pending'
-                  ? 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30'
+                  ? 'text-destructive  bg-destructive/10 '
                   : toolColor
               )}
             >
@@ -217,7 +217,7 @@ export function InChatConfirmationCard({
 
             {/* Destructive warning icon */}
             {isDestructive && status === 'pending' && (
-              <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400 flex-shrink-0" />
+              <AlertTriangle className="h-4 w-4 text-destructive flex-shrink-0" />
             )}
           </div>
 
@@ -225,7 +225,7 @@ export function InChatConfirmationCard({
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Duration badge */}
             {duration !== undefined && status === 'done' && (
-              <span className="font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 border border-border">
+              <span className="font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 border-2 border-border">
                 {duration}ms
               </span>
             )}
@@ -237,7 +237,7 @@ export function InChatConfirmationCard({
 
         {/* Arguments (mono font) */}
         {argEntries.length > 0 && (
-          <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5 bg-muted/50 border border-border">
+          <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5 bg-muted/50 border-2 border-border">
             {argEntries.map(([key, value]) => (
               <span key={key} className="font-mono text-xs">
                 <span className="text-muted-foreground">{key}:</span>{' '}
@@ -264,7 +264,7 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-3 py-2"
+              className="text-sm text-destructive bg-destructive/10 border-2 border-destructive px-3 py-2"
             >
               {error}
             </motion.div>
@@ -288,7 +288,7 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-xs text-green-700 dark:text-green-400 font-medium"
+              className="text-xs text-primary font-medium"
             >
               Action approved
             </motion.div>
@@ -308,7 +308,7 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-xs text-green-700 dark:text-green-400 font-medium"
+              className="text-xs text-primary font-medium"
             >
               Action completed successfully
             </motion.div>

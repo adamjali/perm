@@ -232,8 +232,8 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
             "group relative flex items-center justify-between",
             "px-4 py-3 bg-card border-2 border-border",
             "cursor-pointer transition-all duration-150 ease-out",
-            "hover:-translate-y-0.5 hover:shadow-[4px_4px_0_var(--foreground)]",
-            isOverdue && "border-red-600 dark:border-red-500",
+            "hover:-translate-y-0.5 hover:shadow-hard",
+            isOverdue && "border-destructive",
             isLoading && "pointer-events-none"
           )}
           style={{ opacity: isLoading ? 0.7 : 1 }}
@@ -276,7 +276,7 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
             <div
               className={cn(
                 "font-mono font-extrabold text-base",
-                isOverdue ? "text-red-600 dark:text-red-500" : "text-foreground"
+                isOverdue ? "text-destructive" : "text-foreground"
               )}
             >
               {countdownText}

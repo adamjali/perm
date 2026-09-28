@@ -49,7 +49,7 @@ export default function DashboardLoading() {
           {/* Secondary deadline items */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <div key={i} className="flex items-center gap-3 p-3 rounded-lg border-2 border-border">
                 <Skeleton variant="circle" className="w-10 h-10" />
                 <div className="flex-1 space-y-1">
                   <Skeleton variant="line" className="w-2/3 h-5" />
@@ -92,7 +92,7 @@ export default function DashboardLoading() {
           </div>
           <div className="space-y-3">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3 p-3 rounded-lg border border-border">
+              <div key={i} className="flex items-center gap-3 p-3 rounded-lg border-2 border-border">
                 <Skeleton variant="block" className="w-12 h-12" />
                 <div className="flex-1 space-y-1">
                   <Skeleton variant="line" className="w-3/4 h-5" />

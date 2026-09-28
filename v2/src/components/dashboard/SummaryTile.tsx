@@ -69,7 +69,7 @@ function CornerDecoration({
     // Full-width bar at top with stage label
     return (
       <div
-        className="absolute top-0 left-0 right-0 px-2 py-1 text-[9px] font-extrabold uppercase text-white text-center"
+        className="absolute top-0 left-0 right-0 px-2 py-1 text-xs font-extrabold uppercase text-white text-center"
         style={{ backgroundColor: color }}
         aria-hidden="true"
       >
@@ -82,7 +82,7 @@ function CornerDecoration({
     // Design4 stage-tag style: small badge with hard shadow, positioned top-right
     return (
       <div
-        className="absolute top-2 right-2 px-2 py-0.5 text-[10px] font-extrabold uppercase text-white border-[1.5px] border-black"
+        className="absolute top-2 right-2 px-2 py-0.5 text-xs font-extrabold uppercase text-white border-2 border-black"
         style={{
           backgroundColor: color,
           boxShadow: "var(--shadow-hard-sm)",

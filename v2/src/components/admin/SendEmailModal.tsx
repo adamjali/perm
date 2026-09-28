@@ -74,7 +74,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="font-heading text-xl font-bold uppercase tracking-wide flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2">
             <Mail className="size-5" />
             Send Email
           </DialogTitle>

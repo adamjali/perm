@@ -155,7 +155,7 @@ export const CaseListRow = memo(function CaseListRow({
           <div className="font-medium text-sm truncate flex items-center gap-1.5" title={employerName}>
             {employerName}
             {isSample && (
-              <span className="inline-flex items-center px-1.5 py-px text-sm font-bold tracking-wider uppercase border border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
+              <span className="inline-flex items-center px-1.5 py-px text-sm font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
                 SAMPLE
               </span>
             )}

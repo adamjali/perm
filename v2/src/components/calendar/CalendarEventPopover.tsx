@@ -253,7 +253,7 @@ export function CalendarEventPopover({
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className="sm:max-w-md border-2 border-border shadow-hard-lg p-0 gap-0"
+        className="sm:max-w-md border-border shadow-hard-lg p-0 gap-0"
         showCloseButton={true}
       >
         {/* Header with stage color accent */}
@@ -268,7 +268,7 @@ export function CalendarEventPopover({
                 style={{ color: stageColor }}
                 aria-hidden="true"
               />
-              <DialogTitle className="font-['Space_Grotesk'] text-lg">
+              <DialogTitle>
                 {deadlineLabel}
               </DialogTitle>
             </div>
@@ -387,7 +387,7 @@ export function CalendarEventPopover({
             disabled={isHiding}
             loading={isHiding}
             loadingText="Hiding..."
-            className="text-muted-foreground hover:text-destructive"
+            className="text-muted-foreground hover:text-destructive-text"
           >
             <EyeOff className="size-4" aria-hidden="true" />
             <span>Hide from Calendar</span>

@@ -381,7 +381,7 @@ export function ImportModal({
     const formatLabels: Record<string, { label: string; color: string }> = {
       v2: {
         label: "v2",
- color: " text-foreground",
+ color: "text-foreground",
       },
       v1: {
         label: "v1 (Legacy)",
@@ -389,11 +389,11 @@ export function ImportModal({
       },
       "perm-tracker-new": {
         label: "Firebase",
-        color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+        color: "bg-stage-recruitment/10 text-stage-recruitment-ink",
       },
       "firebase-object": {
         label: "Firebase (Object)",
-        color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+        color: "bg-stage-recruitment/10 text-stage-recruitment-ink",
       },
       unknown: {
         label: "Unknown",
@@ -435,7 +435,7 @@ export function ImportModal({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="!max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="font-heading text-2xl">
+          <DialogTitle>
             {showSuccessStep
               ? "Import Complete"
               : showDuplicateStep
@@ -885,7 +885,7 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("caseStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
+                              "h-9 w-full min-w-0 rounded-md border-2 border-border bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:opacity-50",
@@ -912,7 +912,7 @@ export function ImportModal({
                             onChange={(e) => handleEditFieldChange("progressStatus", e.target.value)}
                             disabled={isSavingEdit}
                             className={cn(
-                              "h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 py-1",
+                              "h-9 w-full min-w-0 rounded-md border-2 border-border bg-background px-3 py-1",
                               "text-sm ring-offset-background",
                               "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
                               "disabled:cursor-not-allowed disabled:opacity-50",
@@ -1009,7 +1009,7 @@ export function ImportModal({
                   variant="outline"
                   size="sm"
                   onClick={() => handleApplyToAll("replace")}
-                  className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive transition-colors duration-150"
+                  className="hover:bg-destructive/10 hover:text-destructive-text hover:border-destructive transition-colors duration-150"
                 >
                   Replace All
                 </Button>
@@ -1057,7 +1057,7 @@ export function ImportModal({
                               className={cn(
                                 "transition-all duration-150",
                                 resolutions[String(dup.index)] !== "replace" &&
-                                  "hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+                                  "hover:bg-destructive/10 hover:text-destructive-text hover:border-destructive"
                               )}
                             >
                               Replace

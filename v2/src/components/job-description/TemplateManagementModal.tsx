@@ -228,7 +228,7 @@ export function TemplateManagementModal({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="border-2 shadow-hard !max-w-[98vw] sm:!max-w-[96vw] md:!max-w-[94vw] lg:!max-w-[1400px] xl:!max-w-[1600px] w-[98vw] sm:w-[96vw] md:w-[94vw] h-[92vh] sm:h-[88vh] flex flex-col p-0 overflow-hidden">
+        <DialogContent className="!max-w-[98vw] sm:!max-w-[96vw] md:!max-w-[94vw] lg:!max-w-[1400px] xl:!max-w-[1600px] w-[98vw] sm:w-[96vw] md:w-[94vw] h-[92vh] sm:h-[88vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b-2 border-border shrink-0">
             {/* Mobile: Show back button when in detail view */}
             {isMobile && mobileView === "detail" && selectedTemplate && (
@@ -242,7 +242,7 @@ export function TemplateManagementModal({
                 Back to Templates
               </Button>
             )}
-            <DialogTitle className="font-heading text-lg sm:text-xl">
+            <DialogTitle>
               {isMobile && mobileView === "detail" && selectedTemplate
                 ? selectedTemplate.name
                 : "Manage Job Description Templates"}
@@ -571,7 +571,7 @@ export function TemplateManagementModal({
         open={!!deleteConfirmId}
         onOpenChange={(open: boolean) => !open && setDeleteConfirmId(null)}
       >
-        <AlertDialogContent className="border-2">
+        <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Permanently Delete Template?</AlertDialogTitle>
             <AlertDialogDescription className="space-y-2">

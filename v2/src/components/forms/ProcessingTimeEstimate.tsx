@@ -66,17 +66,17 @@ export function ProcessingTimeEstimate({
   if (!range) return null;
 
   const tone = isPremiumProcessing
-    ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-900/20"
-    : "border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20";
+    ? "border-data-warn bg-data-warn/15"
+    : "border-data-info bg-data-info/10";
 
   if (compact) {
     return (
       <div className={cn("rounded-md border-2 px-3 py-2", tone, className)}>
         <div className="flex items-center gap-2">
           {isPremiumProcessing ? (
-            <Zap className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+            <Zap className="h-4 w-4 text-data-warn-ink" aria-hidden="true" />
           ) : (
-            <ClockIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+            <ClockIcon className="h-4 w-4 text-data-info-ink" aria-hidden="true" />
           )}
           <span className="text-sm font-medium">
             {isPremiumProcessing
@@ -99,9 +99,9 @@ export function ProcessingTimeEstimate({
     >
       <div className="mb-3 flex items-center gap-2">
         {isPremiumProcessing ? (
-          <Zap className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+          <Zap className="h-5 w-5 text-data-warn-ink" aria-hidden="true" />
         ) : (
-          <ClockIcon className="h-5 w-5 text-blue-600 dark:text-blue-400" aria-hidden="true" />
+          <ClockIcon className="h-5 w-5 text-data-info-ink" aria-hidden="true" />
         )}
         <span className="text-sm font-semibold">
           {isPremiumProcessing ? "Premium processing" : "USCIS processing time"}

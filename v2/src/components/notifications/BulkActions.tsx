@@ -119,7 +119,7 @@ export default function BulkActions({ className }: BulkActionsProps) {
           disabled={isMarkingAllRead || unreadCount === 0}
           loading={isMarkingAllRead}
           loadingText="Marking..."
-          className="font-heading uppercase tracking-wide"
+         
         >
           <CheckCheck className="size-4 mr-2" />
           Mark All Read
@@ -138,7 +138,7 @@ export default function BulkActions({ className }: BulkActionsProps) {
           disabled={isDeletingRead || readCount === 0}
           loading={isDeletingRead}
           loadingText="Deleting..."
-          className="font-heading uppercase tracking-wide text-destructive hover:text-destructive hover:bg-destructive/10"
+          className="font-heading uppercase tracking-wide text-destructive hover:text-destructive-text hover:bg-destructive/10"
         >
           <Trash2 className="size-4 mr-2" />
           Delete Read

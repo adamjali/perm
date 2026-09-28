@@ -137,15 +137,15 @@ interface ConnectionStatusBadgeProps {
 function ConnectionStatusBadge({ connected }: ConnectionStatusBadgeProps) {
   if (connected) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-800">
-        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-green-600 dark:bg-green-400" />
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary border-2 border-primary">
+        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
         Connected
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border border-border">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-2 border-border">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
       Not Connected
     </span>
@@ -545,14 +545,14 @@ export default function CalendarSyncSection({
             <div
               className={`p-2 border-2 ${
                 isConnected
-                  ? "bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800"
+                  ? "bg-primary/10 border-primary"
                   : "bg-background border-border"
               }`}
             >
               <CloudIcon
                 className={`w-5 h-5 ${
                   isConnected
-                    ? "text-green-600 dark:text-green-400"
+                    ? "text-primary"
                     : "text-muted-foreground"
                 }`}
               />
@@ -576,7 +576,7 @@ export default function CalendarSyncSection({
               size="sm"
               onClick={handleDisconnect}
               disabled={isDisconnecting}
-              className="border-2 border-red-500 dark:border-red-500 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/50 hover:bg-red-100 dark:hover:bg-red-900/50 hover:border-red-600 dark:hover:border-red-400 transition-colors"
+              className="border-2 border-destructive text-destructive bg-destructive/10 hover:bg-destructive/10 hover:border-destructive transition-colors"
               style={{ boxShadow: "var(--shadow-hard-sm)" }}
             >
               {isDisconnecting ? (
@@ -640,7 +640,7 @@ export default function CalendarSyncSection({
                 size="sm"
                 onClick={handleSyncAll}
                 disabled={isSyncingAll || syncEligibleCount === 0}
-                className="border-2 border-emerald-500 dark:border-emerald-500 text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 hover:border-emerald-600 dark:hover:border-emerald-400 transition-colors"
+                className="border-2 border-primary text-primary bg-primary/10 hover:bg-primary/10 hover:border-primary transition-colors"
                 style={{ boxShadow: "var(--shadow-hard-sm)" }}
               >
                 {isSyncingAll ? (
@@ -748,7 +748,7 @@ export default function CalendarSyncSection({
                 size="sm"
                 onClick={handleClearAllEvents}
                 disabled={isClearingEvents || isSyncingAll}
-                className="border-2 border-amber-500 dark:border-amber-500 text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 hover:bg-amber-100 dark:hover:bg-amber-900/50 hover:border-amber-600 dark:hover:border-amber-400 transition-colors"
+                className="border-2 border-data-warn text-data-warn-ink bg-data-warn/15 hover:bg-data-warn/15 hover:border-data-warn transition-colors"
                 style={{ boxShadow: "var(--shadow-hard-sm)" }}
               >
                 {isClearingEvents ? (
@@ -795,13 +795,13 @@ export default function CalendarSyncSection({
                         <div className="relative h-3 bg-muted border-2 border-border overflow-hidden">
                           {/* Background pulse */}
                           <motion.div
-                            className="absolute inset-0 bg-amber-500/20 dark:bg-amber-500/30"
+                            className="absolute inset-0 bg-data-warn/20"
                             animate={{ opacity: [0.2, 0.4, 0.2] }}
                             transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                           />
                           {/* Progress fill */}
                           <motion.div
-                            className="absolute left-0 top-0 h-full bg-amber-500"
+                            className="absolute left-0 top-0 h-full bg-data-warn"
                             style={{ width: `${estimatedProgress}%` }}
                             transition={{ duration: 0.3, ease: "linear" }}
                           />
@@ -855,7 +855,7 @@ export default function CalendarSyncSection({
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.15 }}
-                className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-sm"
+                className="flex items-center gap-2 px-3 py-2 bg-data-warn/15 border-2 border-data-warn text-data-warn-ink text-sm"
               >
                 <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                 <span>Calendar sync is turned off for all deadline types</span>

@@ -62,7 +62,7 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
           >
             {/* Colored bar with gradient and border */}
             <div
-              className="w-6 h-2 shrink-0 border-[2px] border-foreground/80 dark:border-foreground/60"
+              className="w-6 h-2 shrink-0 border-2 border-foreground/80 dark:border-foreground/60"
               style={{
                 background: `linear-gradient(135deg, ${stage.primary}, ${stage.secondary})`,
               }}

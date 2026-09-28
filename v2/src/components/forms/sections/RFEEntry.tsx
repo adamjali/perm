@@ -56,10 +56,10 @@ export interface RFEEntryProps {
  * Memoized outside component to prevent recreation.
  */
 const URGENCY_CLASSES: Record<UrgencyLevelWithCompletion, string> = {
-  urgent: "border-red-600 bg-red-50 dark:bg-red-950/30",
-  soon: "border-orange-500 bg-orange-50 dark:bg-orange-950/30",
+  urgent: "border-destructive bg-destructive/10",
+  soon: "border-data-warn bg-data-warn/15",
   normal: "border-border bg-background",
-  completed: "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30",
+  completed: "border-primary bg-primary/10",
 };
 
 // ============================================================================
@@ -250,12 +250,12 @@ function RFEEntryComponent({
       {/* ========== STATUS BADGES ========== */}
       <div className="mb-3 flex items-center justify-between gap-2">
         {isActive && (
-          <div className="flex items-center gap-1.5 rounded-md border-2 border-red-600 bg-red-600 px-2 py-1 text-sm font-bold text-white shadow-hard-sm">
+          <div className="flex items-center gap-1.5 rounded-md border-2 border-destructive bg-destructive px-2 py-1 text-sm font-bold text-white shadow-hard-sm">
             <span>Active RFE</span>
           </div>
         )}
         {isCompleted && (
-          <div className="flex items-center gap-1.5 rounded-md border-2 border-emerald-600 bg-emerald-100 px-2 py-1 text-sm font-semibold text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300">
+          <div className="flex items-center gap-1.5 rounded-md border-2 border-primary bg-primary/10 px-2 py-1 text-sm font-semibold text-primary">
             <CheckCircle2 className="h-4 w-4" />
             <span>Completed</span>
           </div>

@@ -30,8 +30,8 @@ export function FormHelpPanel() {
           // Position: right edge when closed, left edge of panel when open
           "top-20",
           isOpen
-            ? "right-80 sm:right-96 border-red-300 bg-red-50 text-red-700 hover:bg-destructive hover:text-destructive-foreground hover:border-destructive dark:border-red-800 dark:bg-red-950/50 dark:text-red-400 dark:hover:bg-destructive dark:hover:text-destructive-foreground"
-            : "right-0 border-border bg-background text-foreground hover:bg-[var(--primary)] hover:text-[var(--primary-foreground)] hover:border-[var(--primary)] shadow-hard",
+            ? "right-80 sm:right-96 border-destructive bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground hover:border-destructive dark:hover:bg-destructive dark:hover:text-destructive-foreground"
+            : "right-0 border-border bg-background text-foreground hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-hard",
         )}
         aria-label={isOpen ? "Close help panel" : "Open help panel"}
         aria-expanded={isOpen}
@@ -157,7 +157,7 @@ export function FormHelpPanel() {
             <SectionHeading>Validation & Errors</SectionHeading>
             <ul className="space-y-1.5 text-muted-foreground list-disc pl-4">
               <li><strong className="text-foreground">Red asterisks (*)</strong>: Required fields. Must be filled before saving.</li>{" "}
-              <li><strong className="text-orange-500">Orange warnings</strong>: Advisory. They flag potential issues but don&rsquo;t prevent saving.</li>{" "}
+              <li><strong className="text-data-warn-ink">Orange warnings</strong>: Advisory. They flag potential issues but don&rsquo;t prevent saving.</li>{" "}
               <li><strong className="text-foreground">Date constraints</strong>: The date picker greys out invalid dates (e.g., can&rsquo;t set certification before filing).</li>{" "}
               <li><strong className="text-foreground">Auto-status</strong>: Case status and progress auto-update based on your dates. Toggle off in Basic Info to set manually.</li>
             </ul>
@@ -230,7 +230,7 @@ function FieldList({ items }: { items: { field: string; desc: string }[] }) {
 
 function Example({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-2 bg-muted/50 border border-border rounded px-3 py-2 text-xs text-muted-foreground">
+    <div className="mt-2 bg-muted/50 border-2 border-border rounded px-3 py-2 text-xs text-muted-foreground">
       <span className="font-bold font-mono uppercase tracking-wider text-foreground">Tip: </span>
       {children}
     </div>

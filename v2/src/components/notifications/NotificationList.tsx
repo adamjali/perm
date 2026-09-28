@@ -98,11 +98,11 @@ const NOTIFICATION_ICONS: Record<NotificationType, PhosphorIcon> = {
 function getPriorityColor(priority: NotificationPriority): string {
   switch (priority) {
     case "urgent":
-      return "bg-[#DC2626]";
+      return "bg-urgency-urgent";
     case "high":
-      return "bg-[#EA580C]";
+      return "bg-urgency-soon";
     case "normal":
-      return "bg-[#059669]";
+      return "bg-stage-i140";
     case "low":
     default:
       return "bg-muted-foreground";
@@ -282,7 +282,7 @@ function NotificationListItem({
               "flex h-8 w-8 items-center justify-center",
               "border-2 border-transparent rounded-none",
               "text-muted-foreground",
-              "hover:bg-primary/10 hover:text-primary hover:border-primary/20",
+              "hover:bg-primary/10 hover:text-primary-text hover:border-primary/20",
               "transition-all duration-150",
               "focus:outline-none focus:ring-1 focus:ring-primary"
             )}
@@ -299,7 +299,7 @@ function NotificationListItem({
             "flex h-8 w-8 items-center justify-center",
             "border-2 border-transparent rounded-none",
             "text-muted-foreground",
-            "hover:bg-destructive/10 hover:text-destructive hover:border-destructive/20",
+            "hover:bg-destructive/10 hover:text-destructive-text hover:border-destructive/20",
             "transition-all duration-150",
             "focus:outline-none focus:ring-1 focus:ring-destructive"
           )}
@@ -524,7 +524,7 @@ export default function NotificationList({
             size="lg"
             onClick={handleLoadMore}
             disabled={isLoadingMore}
-            className="font-heading uppercase tracking-wide"
+           
           >
             {isLoadingMore ? (
               <>

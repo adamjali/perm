@@ -255,7 +255,7 @@ export default function ProfileSection({
               className="sm:pr-44"
             />
             {isGoogleSignIn && (
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-xs font-medium border border-primary/20 sm:absolute sm:right-2 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2">
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-xs font-medium border-2 border-primary/20 sm:absolute sm:right-2 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2">
                 <Mail className="w-3 h-3" />
                 <span>Signed in with Google</span>
               </div>
@@ -311,7 +311,7 @@ export default function ProfileSection({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.15 }}
-                className="text-amber-600 dark:text-amber-400"
+                className="text-data-warn-ink"
               >
                 You have unsaved changes
               </motion.span>

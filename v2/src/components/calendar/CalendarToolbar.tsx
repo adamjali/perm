@@ -117,10 +117,10 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
   // Neobrutalist button base styles
   const btnBase = `
     border-2 border-border bg-card text-foreground
-    shadow-[4px_4px_0_var(--border)]
-    hover:shadow-[6px_6px_0_var(--border)]
+    shadow-hard
+    hover:shadow-hard-lg
     hover:-translate-y-0.5
-    active:shadow-[2px_2px_0_var(--border)]
+    active:shadow-hard-sm
     active:translate-y-0
     transition-all duration-150
     font-semibold
@@ -153,7 +153,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
         {isPickerOpen && (
           <div
             ref={dropdownRef}
-            className="absolute top-full mt-2 bg-card border-2 border-border shadow-[6px_6px_0_var(--border)] p-4"
+            className="absolute top-full mt-2 bg-card border-2 border-border shadow-hard-lg p-4"
             style={{ minWidth: 260, zIndex: 100 }}
           >
             {/* Year nav */}
@@ -245,7 +245,7 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
         </div>
 
         {/* View toggle - same neobrutalist style */}
-        <div className="flex border-2 border-border shadow-[4px_4px_0_var(--border)]">
+        <div className="flex border-2 border-border shadow-hard">
           {viewArray.map((v, index) => (
             <button
               key={v}

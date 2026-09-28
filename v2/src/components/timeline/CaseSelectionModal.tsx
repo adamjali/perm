@@ -201,7 +201,7 @@ export function CaseSelectionModal({
       >
         {/* Header */}
         <DialogHeader>
-          <DialogTitle className="font-display text-xl">
+          <DialogTitle>
             {title ?? "Select Cases"}
           </DialogTitle>
           <DialogDescription>

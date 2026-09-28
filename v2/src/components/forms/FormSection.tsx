@@ -58,7 +58,7 @@ export function FormSection({
   const statusIcon = React.useMemo(() => {
     switch (status) {
       case "complete":
-        return <CheckCircle2 className="h-5 w-5 text-emerald-500" />;
+        return <CheckCircle2 className="h-5 w-5 text-primary" />;
       case "has-errors":
         return <AlertCircle className="h-5 w-5 text-destructive" />;
       default:
@@ -71,7 +71,7 @@ export function FormSection({
       className={cn(
         "border-2 border-border bg-card shadow-hard-sm",
         status === "has-errors" && "border-destructive",
-        status === "complete" && "border-emerald-500/50",
+        status === "complete" && "border-primary/50",
         className
       )}
     >

@@ -84,10 +84,10 @@ export function InlineEdit({
         >
           <option value="individual">individual</option>
         </select>
-        <button onClick={handleSave} disabled={isSaving} className="text-green-600 hover:text-green-800 p-0.5">
+        <button onClick={handleSave} disabled={isSaving} className="text-primary hover:text-primary-text p-0.5">
           <CheckIcon className="size-3.5" />
         </button>
-        <button onClick={handleCancel} disabled={isSaving} className="text-red-500 hover:text-red-700 p-0.5">
+        <button onClick={handleCancel} disabled={isSaving} className="text-destructive hover:text-destructive-text p-0.5">
           <XIcon className="size-3.5" />
         </button>
       </div>
@@ -105,10 +105,10 @@ export function InlineEdit({
         disabled={isSaving}
         className="h-8 w-full min-w-0 border-2 border-primary bg-background px-2 text-sm outline-none"
       />
-      <button onClick={handleSave} disabled={isSaving} className="text-green-600 hover:text-green-800 p-0.5 flex-shrink-0">
+      <button onClick={handleSave} disabled={isSaving} className="text-primary hover:text-primary-text p-0.5 flex-shrink-0">
         <CheckIcon className="size-3.5" />
       </button>
-      <button onClick={handleCancel} disabled={isSaving} className="text-red-500 hover:text-red-700 p-0.5 flex-shrink-0">
+      <button onClick={handleCancel} disabled={isSaving} className="text-destructive hover:text-destructive-text p-0.5 flex-shrink-0">
         <XIcon className="size-3.5" />
       </button>
     </div>

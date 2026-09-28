@@ -72,14 +72,14 @@ export default function DeletionBanner() {
 
   return (
     <div
-      className="relative z-10 bg-amber-50 dark:bg-amber-950/40 border-b-2 border-amber-300 dark:border-amber-800 px-4 py-3 sm:px-6"
+      className="relative z-10 bg-data-warn/15 border-b-2 border-data-warn px-4 py-3 sm:px-6"
       role="alert"
       aria-label="Account deletion warning"
     >
       <div className="mx-auto max-w-7xl flex items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
-          <p className="text-xs sm:text-sm text-amber-800 dark:text-amber-200 min-w-0">
+          <AlertTriangle className="w-5 h-5 text-data-warn-ink flex-shrink-0" />
+          <p className="text-xs sm:text-sm text-data-warn-ink min-w-0">
             <span className="hidden sm:inline">
               Your account is scheduled for deletion on{" "}
               <strong>{deletionDate}</strong>.{" "}
@@ -89,7 +89,7 @@ export default function DeletionBanner() {
             </span>
             <Link
               href="/settings"
-              className="underline font-medium hover:text-amber-900 dark:hover:text-amber-100 whitespace-nowrap"
+              className="underline font-medium hover:text-data-warn-ink whitespace-nowrap"
             >
               Go to Settings
             </Link>{" "}
@@ -100,7 +100,7 @@ export default function DeletionBanner() {
           variant="ghost"
           size="icon-sm"
           onClick={handleDismiss}
-          className="flex-shrink-0 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+          className="flex-shrink-0 text-data-warn-ink hover:text-data-warn-ink hover:bg-data-warn/15"
           aria-label="Dismiss deletion warning"
         >
           <XIcon className="w-4 h-4" />

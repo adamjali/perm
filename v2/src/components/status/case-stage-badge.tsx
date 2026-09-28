@@ -7,15 +7,15 @@ import type { CaseStatus } from "@/lib/perm"
  * @see perm_flow.md for canonical case status definitions
  */
 const stageConfig: Record<CaseStatus, { bg: string; label: string }> = {
-  pwd: { bg: "bg-[var(--stage-pwd)]", label: "PWD" },
-  recruitment: { bg: "bg-[var(--stage-recruitment)]", label: "Recruitment" },
+  pwd: { bg: "bg-stage-pwd", label: "PWD" },
+  recruitment: { bg: "bg-stage-recruitment", label: "Recruitment" },
   eta9089: { bg: "bg-[var(--stage-eta9089)]", label: "ETA 9089" },
   i140: { bg: "bg-[var(--stage-i140)]", label: "I-140" },
-  closed: { bg: "bg-[var(--stage-closed)]", label: "Closed" },
+  closed: { bg: "bg-stage-closed", label: "Closed" },
 }
 
 /** Fallback for unknown/invalid stages (defensive coding) */
-const FALLBACK_CONFIG = { bg: "bg-gray-500", label: "Unknown" }
+const FALLBACK_CONFIG = { bg: "bg-muted-foreground", label: "Unknown" }
 
 interface CaseStageBadgeProps {
   stage: CaseStatus

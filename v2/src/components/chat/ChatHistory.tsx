@@ -157,7 +157,7 @@ export function ChatHistory({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
+                        className="h-7 w-7 text-destructive hover:text-destructive-text"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (confirm('Delete this conversation permanently?')) {

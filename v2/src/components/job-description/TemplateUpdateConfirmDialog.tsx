@@ -107,13 +107,13 @@ export function TemplateUpdateConfirmDialog({
 
   return (
     <AlertDialog open={open} onOpenChange={handleClose}>
-      <AlertDialogContent className="border-2 shadow-hard sm:max-w-[440px]">
+      <AlertDialogContent className="sm:max-w-[440px]">
         <AlertDialogHeader>
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border-2 border-amber-500 bg-amber-50 dark:bg-amber-900/20">
               <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
-            <AlertDialogTitle className="font-heading text-lg">
+            <AlertDialogTitle>
               Template Already Exists
             </AlertDialogTitle>
           </div>

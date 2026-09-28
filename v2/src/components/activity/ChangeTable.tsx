@@ -109,7 +109,7 @@ export function ChangeTable({
               <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                 <Link
                   href={`/perm-case-status?case=${encodeURIComponent(c.caseNumber)}`}
-                  className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+                  className="underline decoration-primary-text decoration-2 underline-offset-2 hover:text-primary-text"
                 >
                   {c.caseNumber}
                 </Link>{" "}

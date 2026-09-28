@@ -111,27 +111,27 @@ export function RecruitmentDeadlineIndicator({
 
   const statusConfig = {
     open: {
-      bgColor: "bg-green-50 dark:bg-green-900/20",
-      borderColor: "border-green-300 dark:border-green-700",
-      textColor: "text-green-700 dark:text-green-400",
+      bgColor: "bg-primary/10",
+      borderColor: "border-primary",
+      textColor: "text-primary",
       icon: ClockIcon,
     },
     warning: {
-      bgColor: "bg-amber-50 dark:bg-amber-900/20",
-      borderColor: "border-amber-300 dark:border-amber-700",
-      textColor: "text-amber-700 dark:text-amber-400",
+      bgColor: "bg-data-warn/15",
+      borderColor: "border-data-warn",
+      textColor: "text-data-warn-ink",
       icon: AlertTriangle,
     },
     urgent: {
-      bgColor: "bg-red-50 dark:bg-red-900/20",
-      borderColor: "border-red-300 dark:border-red-700",
-      textColor: "text-red-700 dark:text-red-400",
+      bgColor: "bg-destructive/10",
+      borderColor: "border-destructive",
+      textColor: "text-destructive",
       icon: AlertTriangle,
     },
     expired: {
-      bgColor: "bg-red-100 dark:bg-red-900/30",
-      borderColor: "border-red-400 dark:border-red-600",
-      textColor: "text-red-800 dark:text-red-300",
+      bgColor: "bg-destructive/10",
+      borderColor: "border-destructive",
+      textColor: "text-destructive",
       icon: AlertTriangle,
     },
   };

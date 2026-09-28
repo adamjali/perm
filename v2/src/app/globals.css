@@ -85,6 +85,8 @@
   --data-bad-ink: #B3271A;     /* the same meaning, as text */
   --data-none: #94A3B8;        /* not reached, no data */
   --data-none-ink: #4B5563;    /* the same meaning, as text */
+  --data-info: #2563EB;        /* neutral notice: scheduled, informational */
+  --data-info-ink: #1D4ED8;    /* the same meaning, as text (6.4:1 on paper) */
 
   /* Manila Folder Colors */
   --manila: #F5E6C8;
@@ -148,6 +150,8 @@
   --data-bad-ink: #F87171;
   --data-none: #64748B;
   --data-none-ink: #CBD5E1;
+  --data-info: #60A5FA;
+  --data-info-ink: #93C5FD;
 
   --background: #0A0A0A;
   --foreground: #FAFAFA;
@@ -283,12 +287,37 @@
   --color-data-good-ink: var(--data-good-ink);
   --color-primary-on-ink: var(--primary-on-ink);
   --color-data-bad-on-ink: var(--data-bad-on-ink);
+  --color-data-info: var(--data-info);
+  --color-data-info-ink: var(--data-info-ink);
+  /* The text forms of the accent and the destructive colour, for the variants
+     the remap below cannot reach (hover:, group-hover:, decoration-). */
+  --color-primary-text: var(--primary-text);
+  --color-destructive-text: var(--destructive-text);
   --color-manila: var(--manila);
   --color-manila-dark: var(--manila-dark);
   --color-manila-shadow: var(--manila-shadow);
-  --radius-sm: calc(var(--radius) - 2px);
-  --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  /* Square corners are the system, so the whole scale is zero: a stray
+     rounded-lg or rounded-xl cannot reintroduce a curve (rounded-lg was 2px and
+     rounded-xl the framework's 12px). rounded-full stays round for dots,
+     avatars and switch knobs. */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-4xl: 0px;
+  /* Hard offset shadows are the system; the framework's soft ones map onto
+     them so a stray shadow-sm or shadow-xl draws the house shadow instead of a
+     blur. */
+  --shadow-2xs: var(--shadow-hard-sm);
+  --shadow-xs: var(--shadow-hard-sm);
+  --shadow-sm: var(--shadow-hard-sm);
+  --shadow-md: var(--shadow-hard);
+  --shadow-lg: var(--shadow-hard);
+  --shadow-xl: var(--shadow-hard-lg);
+  --shadow-2xl: var(--shadow-hard-lg);
   --font-heading: 'Space Grotesk', system-ui, sans-serif;
   --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;

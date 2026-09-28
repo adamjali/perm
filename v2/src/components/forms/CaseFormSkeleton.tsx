@@ -143,7 +143,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
         <FormSectionSkeleton titleWidth="w-48" columns={2}>
           <div className="space-y-6">
             {/* Filing window indicator placeholder */}
-            <div className="rounded-md border border-border bg-muted/30 p-3">
+            <div className="rounded-md border-2 border-border bg-muted/30 p-3">
               <div className="flex items-center gap-2">
                 <Skeleton variant="circle" className="h-4 w-4" />
                 <Skeleton variant="line" className="h-4 w-48" />
@@ -180,7 +180,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
         <FormSectionSkeleton titleWidth="w-44" columns={2}>
           <div className="space-y-6">
             {/* Filing window indicator placeholder */}
-            <div className="rounded-md border border-border bg-muted/30 p-3">
+            <div className="rounded-md border-2 border-border bg-muted/30 p-3">
               <div className="flex items-center gap-2">
                 <Skeleton variant="circle" className="h-4 w-4" />
                 <Skeleton variant="line" className="h-4 w-52" />

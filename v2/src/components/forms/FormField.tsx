@@ -135,13 +135,13 @@ export function FormField({
         )}
         {showWarningIcon && (
           <AlertTriangle
-            className="size-4 shrink-0 text-orange-500 animate-fade-in"
+            className="size-4 shrink-0 text-data-warn-ink animate-fade-in"
             aria-label="Field has warning"
           />
         )}
         {showValidIcon && (
           <CheckCircle2
-            className="size-4 shrink-0 text-emerald-500 animate-fade-in"
+            className="size-4 shrink-0 text-primary animate-fade-in"
             aria-label="Field is valid"
           />
         )}
@@ -149,7 +149,7 @@ export function FormField({
         {/* Auto-calculated badge */}
         {autoCalculated && (
           <span
-            className="rounded bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+            className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary"
             aria-label="Auto-calculated value"
           >
             Auto
@@ -167,7 +167,7 @@ export function FormField({
             showErrorIcon
               ? "text-destructive"
               : showWarningIcon
-              ? "text-orange-600/80 dark:text-orange-400/80"
+              ? "text-data-warn-ink/80"
               : "text-muted-foreground"
           )}
         >
@@ -204,10 +204,10 @@ export function FormField({
       {/* Warning message */}
       {warning && !error && (
         <div className="flex items-start gap-1.5 animate-fade-in">
-          <AlertTriangle className="size-4 text-orange-500 shrink-0 mt-0.5" />
+          <AlertTriangle className="size-4 text-data-warn-ink shrink-0 mt-0.5" />
           <p
             id={`${name}-warning`}
-            className="text-sm font-medium text-orange-600 dark:text-orange-400"
+            className="text-sm font-medium text-data-warn-ink"
           >
             {warning}
           </p>

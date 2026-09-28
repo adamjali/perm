@@ -46,15 +46,15 @@ export default function ReengagementBanner() {
 
   return (
     <div
-      className="relative z-10 border-b-2 border-zinc-200 bg-zinc-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900/60 sm:px-6"
+      className="relative z-10 border-b-2 border-border bg-muted px-4 py-3 sm:px-6"
       role="status"
       aria-label="Weekly summary paused"
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-          <Mail className="h-5 w-5 flex-shrink-0 text-zinc-500 dark:text-zinc-400" />
-          <p className="min-w-0 text-sm text-zinc-700 dark:text-zinc-300">
-            <span className="font-medium text-zinc-900 dark:text-zinc-100">
+          <Mail className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
+          <p className="min-w-0 text-sm text-foreground">
+            <span className="font-medium text-foreground">
               Your weekly summary is paused.
             </span>{" "}
             <span className="hidden sm:inline">
@@ -72,7 +72,7 @@ export default function ReengagementBanner() {
             size="sm"
             onClick={handleDismiss}
             disabled={busy}
-            className="text-zinc-600 dark:text-zinc-400"
+            className="text-muted-foreground"
           >
             Keep it off
           </Button>

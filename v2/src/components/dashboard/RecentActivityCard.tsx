@@ -44,7 +44,7 @@ export default function RecentActivityCard({ activity }: RecentActivityCardProps
       {/* Left: Case info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary transition-colors" title={activity.employerName}>
+          <span className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary-text transition-colors" title={activity.employerName}>
             {activity.employerName}
           </span>{" "}
           <span className="text-sm text-muted-foreground mono shrink-0 truncate max-w-[120px]" title={activity.caseNumber || undefined}>

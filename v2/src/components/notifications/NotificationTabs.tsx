@@ -75,8 +75,8 @@ export default function NotificationTabs({
               "border-2 transition-all duration-150",
               // Active state
               isActive
-                ? "border-black bg-black text-white dark:border-white dark:bg-white dark:text-black"
-                : "border-transparent text-muted-foreground hover:border-black/50 hover:text-foreground dark:hover:border-white/50",
+                ? "border-foreground bg-foreground text-background"
+                : "border-transparent text-muted-foreground hover:border-foreground/50 hover:text-foreground",
               // Focus state
               "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
             )}
@@ -87,9 +87,9 @@ export default function NotificationTabs({
                 className={cn(
                   "flex items-center justify-center",
                   "min-w-[20px] h-5 px-1.5",
-                  "text-[10px] font-bold rounded-full",
+                  "text-xs font-bold rounded-full",
                   isActive
-                    ? "bg-white text-black dark:bg-black dark:text-white"
+                    ? "bg-background text-foreground"
                     : "bg-muted text-muted-foreground"
                 )}
               >

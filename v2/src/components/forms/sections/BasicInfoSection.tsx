@@ -281,7 +281,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">Status</span>
               {isAutoStatusEnabled && (
-                <span className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-700">
+                <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 border-2 border-primary">
                   Auto-updating
                 </span>
               )}
@@ -327,7 +327,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
                   }))}
                   className={cn(
                     "pl-8",
-                    isCaseStatusAutoDetected && isAutoStatusEnabled && "ring-2 ring-emerald-500/30 border-emerald-500"
+                    isCaseStatusAutoDetected && isAutoStatusEnabled && "ring-2 ring-primary/30 border-primary"
                   )}
                 />
                 {/* Color indicator dot */}
@@ -339,7 +339,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
                 {/* Auto-detected indicator */}
                 {isCaseStatusAutoDetected && isAutoStatusEnabled && (
                   <div
-                    className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500"
+                    className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-primary"
                     title="Auto-detected from form data"
                     aria-hidden="true"
                   />
@@ -365,12 +365,12 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
                     value: opt.value,
                     label: opt.label,
                   }))}
-                  className={isProgressStatusAutoDetected && isAutoStatusEnabled ? "ring-2 ring-emerald-500/30 border-emerald-500" : ""}
+                  className={isProgressStatusAutoDetected && isAutoStatusEnabled ? "ring-2 ring-primary/30 border-primary" : ""}
                 />
                 {/* Auto-detected indicator */}
                 {isProgressStatusAutoDetected && isAutoStatusEnabled && (
                   <div
-                    className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500"
+                    className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-primary"
                     title="Auto-detected from form data"
                     aria-hidden="true"
                   />

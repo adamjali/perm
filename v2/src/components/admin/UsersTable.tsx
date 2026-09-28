@@ -121,7 +121,7 @@ const COLUMNS: {
     key: "emailVerified",
     label: "Verified",
     render: (u) => (
-      <span className={u.emailVerified ? "text-green-600 dark:text-green-400" : "text-red-500"}>
+      <span className={u.emailVerified ? "text-primary" : "text-destructive"}>
         {u.emailVerified ? "Yes" : "No"}
       </span>
     ),
@@ -219,9 +219,9 @@ const COLUMNS: {
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
-    active: "bg-green-100 text-green-800 border-green-800 dark:bg-green-900/20 dark:text-green-400 dark:border-green-400",
-    pending_deletion: "bg-orange-100 text-orange-800 border-orange-800 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-400",
-    deleted: "bg-red-100 text-red-800 border-red-800 dark:bg-red-900/20 dark:text-red-400 dark:border-red-400",
+    active: "bg-primary/10 text-primary border-primary",
+    pending_deletion: "bg-data-warn/15 text-data-warn-ink border-data-warn",
+    deleted: "bg-destructive/10 text-destructive border-destructive",
   };
 
   const labels: Record<string, string> = {
@@ -231,7 +231,7 @@ function StatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <span className={`border-2 text-xs font-bold px-2 py-0.5 uppercase tracking-wide whitespace-nowrap ${styles[status] || "bg-gray-100 text-gray-800 border-gray-800 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-400"}`}>
+    <span className={`border-2 text-xs font-bold px-2 py-0.5 uppercase tracking-wide whitespace-nowrap ${styles[status] || "bg-muted text-foreground border-border"}`}>
       {labels[status] || status}
     </span>
   );
@@ -323,7 +323,7 @@ export function UsersTable({
                     >
                       <button
                         onClick={() => handleSort(col.key)}
-                        className="flex items-center gap-1 hover:text-primary transition-colors font-bold uppercase tracking-wide"
+                        className="flex items-center gap-1 hover:text-primary-text transition-colors font-bold uppercase tracking-wide"
                       >
                         {col.label}
                         <ArrowsDownUpIcon
@@ -372,7 +372,7 @@ export function UsersTable({
                           variant="ghost"
                           onClick={() => setDeleteModalUser(user)}
                           title="Delete user"
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive-text"
                         >
                           <Trash2 className="size-4" />
                         </Button>

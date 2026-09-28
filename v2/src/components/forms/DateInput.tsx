@@ -259,13 +259,13 @@ export const DateInput = React.forwardRef<HTMLInputElement, DateInputProps>(
             // Error state (highest priority)
             (error || validationState === 'error') && "border-destructive ring-2 ring-destructive/20 dark:ring-destructive/40",
             // Warning state
-            !error && validationState === 'warning' && "border-orange-500 ring-2 ring-orange-500/20",
+            !error && validationState === 'warning' && "border-data-warn ring-2 ring-data-warn/20",
             // Valid state (show green when explicitly valid)
-            !error && validationState === 'valid' && !autoCalculated && "border-emerald-500 ring-1 ring-emerald-500/20",
+            !error && validationState === 'valid' && !autoCalculated && "border-primary ring-1 ring-primary/20",
             // Normal state (no validation state)
             !error && !validationState && !autoCalculated && "border-input",
             // Auto-calculated state (overrides valid state styling)
-            autoCalculated && "ring-2 ring-emerald-500/30 border-emerald-500",
+            autoCalculated && "ring-2 ring-primary/30 border-primary",
             // Right padding for buttons
             hasValue && onClear ? "pr-16" : "pr-10",
             // Custom calendar icon styling

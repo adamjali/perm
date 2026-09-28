@@ -421,7 +421,7 @@ export function SignupPageClient() {
           <div className="pt-4 text-center border-t-2 border-border">
             <button
               onClick={() => setStep("credentials")}
-              className="text-sm font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
+              className="text-sm font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
             >
               &larr; Back to signup
             </button>
@@ -612,7 +612,7 @@ export function SignupPageClient() {
             href="/terms"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+            className="text-foreground underline underline-offset-2 hover:text-primary-text transition-colors"
           >
             Terms of Service
           </a>{" "}
@@ -621,7 +621,7 @@ export function SignupPageClient() {
             href="/privacy"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-foreground underline underline-offset-2 hover:text-primary transition-colors"
+            className="text-foreground underline underline-offset-2 hover:text-primary-text transition-colors"
           >
             Privacy Policy
           </a>
@@ -637,7 +637,7 @@ export function SignupPageClient() {
           opt out with Global Privacy Control).{" "}
           <NavLink
             href="/terms#attorney-privilege"
-            className="text-foreground/80 hover:text-primary hover:underline hover:underline-offset-2 transition-colors"
+            className="text-foreground/80 hover:text-primary-text hover:underline hover:underline-offset-2 transition-colors"
             spinnerSize={8}
           >
             Learn more
@@ -649,7 +649,7 @@ export function SignupPageClient() {
             Already have an account?{" "}
             <NavLink
               href="/login"
-              className="text-foreground font-bold hover:text-primary hover:underline hover:underline-offset-4 transition-colors"
+              className="text-foreground font-bold hover:text-primary-text hover:underline hover:underline-offset-4 transition-colors"
               spinnerSize={12}
             >
               Sign in

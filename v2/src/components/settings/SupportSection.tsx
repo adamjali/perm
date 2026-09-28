@@ -276,8 +276,8 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             rel="noopener noreferrer"
             className="group flex flex-col items-center gap-3 border-2 border-border bg-card p-4 shadow-hard-sm transition-[transform,box-shadow] duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard active:translate-x-0.5 active:translate-y-0.5 active:shadow-hard-sm"
           >
-            <div className="p-3 bg-yellow-500/10 border-2 border-yellow-500/20 group-hover:bg-yellow-500/20 transition-colors">
-              <LightbulbIcon className="h-6 w-6 text-yellow-500" />
+            <div className="p-3 bg-data-warn/10 border-2 border-data-warn/20 group-hover:bg-data-warn/20 transition-colors">
+              <LightbulbIcon className="h-6 w-6 text-data-warn-ink" />
             </div>
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
@@ -376,7 +376,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
               transition={{ duration: 0.15 }}
-              className="flex flex-col gap-3 px-4 py-3 mb-4 bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300"
+              className="flex flex-col gap-3 px-4 py-3 mb-4 bg-data-warn/15 border-2 border-data-warn text-data-warn-ink"
             >
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 flex-shrink-0" />
@@ -420,7 +420,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       </div>
 
       {/* App Info Card */}
-      <div className="bg-muted/30 border border-border p-4">
+      <div className="bg-muted/30 border-2 border-border p-4">
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <InfoIcon className="h-4 w-4" />
           <span className="font-mono text-xs">PERM Tracker v{appVersion}</span>{" "}
@@ -453,7 +453,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                 </ul>
                 <p className="font-medium">
                   To confirm, type{" "}
-                  <span className="font-mono bg-muted px-1.5 py-0.5 border border-border">
+                  <span className="font-mono bg-muted px-1.5 py-0.5 border-2 border-border">
                     {DELETE_CONFIRMATION_TEXT}
                   </span>{" "}
                   below:

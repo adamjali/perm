@@ -250,7 +250,7 @@ function TodayIndicator({ startDate, endDate, today }: TodayIndicatorProps) {
     left: `calc(${sidebarWidth}px + (100% - ${sidebarWidth}px) * ${positionPercent / 100})`,
   });
 
-  const labelBaseClasses = "text-[10px] font-bold text-destructive bg-background px-1.5 py-0.5 rounded-full whitespace-nowrap border-2 border-destructive shadow-sm";
+  const labelBaseClasses = "text-xs font-bold text-destructive bg-background px-1.5 py-0.5 rounded-full whitespace-nowrap border-2 border-destructive shadow-sm";
 
   return (
     <>

@@ -659,7 +659,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                 <div className="space-y-4 pt-2">
                   {/* Methods Warning */}
                   {filledMethodsCount < 3 && (
-                    <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-700">
+                    <div className="rounded-lg border-2 border-data-warn bg-data-warn/15 p-3 text-sm text-data-warn-ink">
                       <p className="font-semibold">
                         {filledMethodsCount}/3 required methods selected
                       </p>{" "}
@@ -678,7 +678,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                     {methods.map((method, index) => (
                       <div
                         key={index}
-                        className="grid [&>*]:min-w-0 grid-cols-1 gap-3 p-3 rounded-lg border border-border bg-muted/20"
+                        className="grid [&>*]:min-w-0 grid-cols-1 gap-3 p-3 rounded-lg border-2 border-border bg-muted/20"
                       >
                         <div className="flex items-center justify-between">
                           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -691,7 +691,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                               size="sm"
                               onClick={() => removeMethod(index)}
                               aria-label={`Remove method ${index + 1}`}
-                              className="h-6 w-6 p-0 text-destructive hover:text-destructive"
+                              className="h-6 w-6 p-0 text-destructive hover:text-destructive-text"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>

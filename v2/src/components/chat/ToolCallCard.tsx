@@ -106,10 +106,10 @@ export function ToolCallCard({
         'bg-card shadow-hard-sm',
         // Status reads from the whole outline (the site's 2px border), not a
         // thick left bar; the spinner and status icon carry "in progress".
-        status === 'success' && 'border-green-600 dark:border-green-500',
-        status === 'error' && !wasDenied && 'border-red-500',
+        status === 'success' && 'border-primary ',
+        status === 'error' && !wasDenied && 'border-destructive',
         wasDenied && 'opacity-60',
-        status === 'pending' && isAwaitingConfirmation && 'border-amber-500'
+        status === 'pending' && isAwaitingConfirmation && 'border-data-warn'
       )}
     >
 
@@ -163,7 +163,7 @@ export function ToolCallCard({
               className={cn(
                 "text-xs italic",
                 isAwaitingConfirmation
-                  ? "text-amber-600 dark:text-amber-400"
+                  ? "text-data-warn-ink"
                   : "text-muted-foreground"
               )}
             >
@@ -176,7 +176,7 @@ export function ToolCallCard({
               initial={{ opacity: 0, x: -4 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, ...springConfig }}
-              className="text-xs font-medium text-green-700 dark:text-green-400"
+              className="text-xs font-medium text-primary"
             >
               {resultSummary}
             </motion.span>
@@ -187,7 +187,7 @@ export function ToolCallCard({
               initial={{ opacity: 0, x: -4 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, ...springConfig }}
-              className="text-xs font-medium text-red-700 dark:text-red-400"
+              className="text-xs font-medium text-destructive"
             >
               {result ? summarizeToolResult(tool, result) || 'Error occurred' : 'Error occurred'}
             </motion.span>
@@ -236,10 +236,10 @@ function StatusIcon({
   const springTransition = { type: 'spring' as const, stiffness: 500, damping: 25 };
   const Icon = status === 'success' ? CheckCircleIcon : XCircleIcon;
   const className = status === 'success'
-    ? 'text-green-600 dark:text-green-400'
+    ? 'text-primary '
     : isDenied
       ? 'text-muted-foreground'
-      : 'text-red-600 dark:text-red-400';
+      : 'text-destructive ';
 
   return (
     <motion.div

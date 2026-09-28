@@ -177,7 +177,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           <ol className="mt-4 divide-y-2 divide-border border-y-2 border-border">
             {data.follows.top.map((f) => (
               <li key={f.slug} className="flex items-baseline justify-between gap-3 py-2 text-sm">
-                <Link href={`/perm-employers/${f.slug}`} className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+                <Link href={`/perm-employers/${f.slug}`} className="font-bold underline decoration-primary-text decoration-2 underline-offset-2">
                   {f.name}
                 </Link>{" "}
                 <span className="tabular-nums">{`${int(f.followers)} following`}</span>

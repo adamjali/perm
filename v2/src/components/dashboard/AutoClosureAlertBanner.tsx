@@ -118,7 +118,7 @@ export default function AutoClosureAlertBanner() {
 
   return (
     <div
-      className="mb-6 bg-amber-50 dark:bg-amber-950/50 border-2 border-black dark:border-amber-400/50 p-4 relative"
+      className="mb-6 bg-data-warn/15 border-2 border-data-warn p-4 relative"
       style={{ boxShadow: "var(--shadow-hard)" }}
       role="alert"
       aria-live="polite"
@@ -126,8 +126,8 @@ export default function AutoClosureAlertBanner() {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400" />
-          <h3 className="font-heading font-bold text-amber-900 dark:text-amber-100">
+          <AlertTriangle className="w-5 h-5 text-data-warn-ink" />
+          <h3 className="font-heading font-bold text-data-warn-ink">
             {alerts.length === 1
               ? "1 Case Auto-Closed"
               : `${alerts.length} Cases Auto-Closed`}
@@ -140,7 +140,7 @@ export default function AutoClosureAlertBanner() {
               variant="ghost"
               size="sm"
               onClick={handleDismissAll}
-              className="text-amber-700 dark:text-amber-300 hover:text-amber-900 dark:hover:text-amber-100 text-xs"
+              className="text-data-warn-ink hover:text-data-warn-ink text-xs"
             >
               Dismiss All
             </Button>
@@ -151,7 +151,7 @@ export default function AutoClosureAlertBanner() {
               variant="ghost"
               size="sm"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-amber-700 dark:text-amber-300 p-1"
+              className="text-data-warn-ink p-1"
               aria-label={isExpanded ? "Collapse alerts" : "Expand alerts"}
             >
               {isExpanded ? (
@@ -169,22 +169,22 @@ export default function AutoClosureAlertBanner() {
         {visibleAlerts.map((alert) => (
           <li
             key={alert.notificationId}
-            className="flex items-center justify-between bg-white dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 p-3 rounded-sm"
+            className="flex items-center justify-between bg-background border-2 border-data-warn p-3"
           >
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-semibold text-amber-900 dark:text-amber-100 truncate" title={alert.employerName}>
+                <span className="font-semibold text-data-warn-ink truncate" title={alert.employerName}>
                   {alert.employerName}
                 </span>{" "}
-                <span className="text-amber-700 dark:text-amber-300 text-sm truncate" title={alert.positionTitle}>
+                <span className="text-data-warn-ink text-sm truncate" title={alert.positionTitle}>
                   - {alert.positionTitle}
                 </span>
               </div>
-              <div className="flex items-center gap-2 mt-1 text-sm text-amber-600 dark:text-amber-400">
-                <span className="inline-flex items-center px-2 py-0.5 bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 text-xs font-medium rounded-sm">
+              <div className="flex items-center gap-2 mt-1 text-sm text-data-warn-ink">
+                <span className="inline-flex items-center px-2 py-0.5 bg-data-warn/15 text-data-warn-ink text-xs font-medium rounded-sm">
                   {formatClosureReason(alert.closureReason)}
                 </span>{" "}
-                <span className="text-xs text-amber-500 dark:text-amber-500">
+                <span className="text-xs text-data-warn-ink">
                   {formatTimeAgo(alert.createdAt)}
                 </span>
               </div>
@@ -194,7 +194,7 @@ export default function AutoClosureAlertBanner() {
               {alert.caseId && (
                 <Link
                   href={`/cases/${alert.caseId}`}
-                  className="p-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
+                  className="p-1.5 text-data-warn-ink hover:text-data-warn-ink transition-colors"
                   title="View case"
                 >
                   <ArrowSquareOutIcon className="w-4 h-4" />
@@ -202,7 +202,7 @@ export default function AutoClosureAlertBanner() {
               )}
               <button
                 onClick={() => handleDismissOne(alert.notificationId)}
-                className="p-1.5 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 transition-colors"
+                className="p-1.5 text-data-warn-ink hover:text-data-warn-ink transition-colors"
                 title="Dismiss alert"
                 aria-label={`Dismiss alert for ${alert.employerName} - ${alert.positionTitle}`}
               >
@@ -217,7 +217,7 @@ export default function AutoClosureAlertBanner() {
       {!isExpanded && alerts.length > 1 && (
         <button
           onClick={() => setIsExpanded(true)}
-          className="mt-2 text-sm text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-200 underline"
+          className="mt-2 text-sm text-data-warn-ink hover:text-data-warn-ink underline"
         >
           +{alerts.length - 1} more {alerts.length === 2 ? "case" : "cases"}
         </button>

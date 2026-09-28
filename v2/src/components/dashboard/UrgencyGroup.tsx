@@ -20,24 +20,24 @@ interface UrgencyGroupProps {
 // V1-style urgency gradient backgrounds and colors
 const URGENCY_STYLES: Record<UrgencyType, { gradient: string; color: string; darkGradient: string }> = {
   overdue: {
-    gradient: "bg-gradient-to-br from-red-600/15 to-red-600/5",
-    darkGradient: "dark:from-red-600/25 dark:to-red-600/10",
-    color: "text-red-600 dark:text-red-500",
+    gradient: "bg-gradient-to-br from-destructive/15 to-destructive/5",
+    darkGradient: " ",
+    color: "text-destructive",
   },
   thisWeek: {
-    gradient: "bg-gradient-to-br from-orange-500/12 to-orange-500/4",
-    darkGradient: "dark:from-orange-500/20 dark:to-orange-500/8",
-    color: "text-orange-600 dark:text-orange-500",
+    gradient: "bg-gradient-to-br from-data-warn/12 to-data-warn/4",
+    darkGradient: " ",
+    color: "text-data-warn-ink",
   },
   thisMonth: {
-    gradient: "bg-gradient-to-br from-amber-500/10 to-amber-500/3",
-    darkGradient: "dark:from-amber-500/18 dark:to-amber-500/6",
-    color: "text-amber-600 dark:text-amber-500",
+    gradient: "bg-gradient-to-br from-data-warn/10 to-data-warn/3",
+    darkGradient: " ",
+    color: "text-data-warn-ink",
   },
   later: {
-    gradient: "bg-gradient-to-br from-emerald-600/8 to-emerald-600/2",
-    darkGradient: "dark:from-emerald-600/15 dark:to-emerald-600/5",
-    color: "text-emerald-600 dark:text-emerald-500",
+    gradient: "bg-gradient-to-br from-primary/8 to-primary/2",
+    darkGradient: " ",
+    color: "text-primary",
   },
 };
 

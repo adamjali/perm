@@ -77,7 +77,7 @@ const GANTT_ROWS: Array<{
   relatedStages?: Stage[]; // Stages to also include in this row
 }> = [
   { stage: "pwd", label: "PWD", color: STAGE_COLORS.pwd, textClass: "text-stage-pwd-ink" },
-  { stage: "recruitment", label: "Recruitment", color: STAGE_COLORS.recruitment, textClass: "text-purple-600 dark:text-purple-400" },
+  { stage: "recruitment", label: "Recruitment", color: STAGE_COLORS.recruitment, textClass: "text-stage-recruitment-ink" },
   { stage: "eta9089", label: "ETA 9089", color: STAGE_COLORS.eta9089, textClass: "text-data-warn-ink", relatedStages: ["rfi"] },
   { stage: "i140", label: "I-140", color: STAGE_COLORS.i140, textClass: "text-primary", relatedStages: ["rfe"] },
 ];
@@ -564,7 +564,7 @@ export function InlineCaseTimeline({
         ))}
         {/* Range bar legend item */}
         <div className="flex items-center gap-1.5">
-          <div className="w-6 h-2.5 rounded-sm bg-muted-foreground/20 border border-muted-foreground/40" />
+          <div className="w-6 h-2.5 rounded-sm bg-muted-foreground/20 border-2 border-muted-foreground/40" />
           <span className="text-sm text-muted-foreground font-medium">Date Range</span>
         </div>
         {/* Calculated legend item */}

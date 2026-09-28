@@ -97,47 +97,47 @@ function getStatusConfig(status: WindowStatus) {
     case "recruitment_incomplete":
       return {
         label: "Recruitment Incomplete",
-        bgColor: "bg-slate-100 dark:bg-slate-800",
-        textColor: "text-slate-500 dark:text-slate-400",
-        borderColor: "border-slate-300 dark:border-slate-600",
+        bgColor: "bg-muted",
+        textColor: "text-muted-foreground",
+        borderColor: "border-border",
         icon: ClockIcon,
-        progressColor: "bg-slate-400",
+        progressColor: "bg-muted-foreground",
       };
     case "not_open":
       return {
         label: "Not Yet Open",
-        bgColor: "bg-slate-100 dark:bg-slate-800",
-        textColor: "text-slate-600 dark:text-slate-400",
-        borderColor: "border-slate-300 dark:border-slate-600",
+        bgColor: "bg-muted",
+        textColor: "text-muted-foreground",
+        borderColor: "border-border",
         icon: ClockIcon,
-        progressColor: "bg-slate-400",
+        progressColor: "bg-muted-foreground",
       };
     case "open":
       return {
         label: "OPEN",
-        bgColor: "bg-green-50 dark:bg-green-900/20",
-        textColor: "text-green-700 dark:text-green-400",
-        borderColor: "border-green-300 dark:border-green-700",
+        bgColor: "bg-primary/10",
+        textColor: "text-primary",
+        borderColor: "border-primary",
         icon: CheckCircleIcon,
-        progressColor: "bg-green-500",
+        progressColor: "bg-primary",
       };
     case "closing_soon":
       return {
         label: "Closing Soon",
-        bgColor: "bg-amber-50 dark:bg-amber-900/20",
-        textColor: "text-amber-700 dark:text-amber-400",
-        borderColor: "border-amber-300 dark:border-amber-700",
+        bgColor: "bg-data-warn/15",
+        textColor: "text-data-warn-ink",
+        borderColor: "border-data-warn",
         icon: AlertTriangle,
-        progressColor: "bg-amber-500",
+        progressColor: "bg-data-warn",
       };
     case "closed":
       return {
         label: "CLOSED",
-        bgColor: "bg-red-50 dark:bg-red-900/20",
-        textColor: "text-red-700 dark:text-red-400",
-        borderColor: "border-red-300 dark:border-red-700",
+        bgColor: "bg-destructive/10",
+        textColor: "text-destructive",
+        borderColor: "border-destructive",
         icon: XCircleIcon,
-        progressColor: "bg-red-500",
+        progressColor: "bg-destructive",
       };
   }
 }
@@ -280,7 +280,7 @@ export function FilingWindowIndicator({
       {/* Progress bar */}
       {(status === "open" || status === "closing_soon") && (
         <div className="mb-3">
-          <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div className="h-2 bg-accent rounded-full overflow-hidden">
             <motion.div
               className={cn("h-full rounded-full", config.progressColor)}
               initial={{ width: 0 }}
@@ -318,7 +318,7 @@ export function FilingWindowIndicator({
       {/* Days display */}
       {status === "not_open" && window.daysUntilOpen && window.daysUntilOpen > 0 && (
         <div className="mt-3 text-center">
-          <span className="text-3xl font-bold text-slate-600 dark:text-slate-300">
+          <span className="text-3xl font-bold text-muted-foreground">
             {window.daysUntilOpen}
           </span>{" "}
           <span className="text-sm text-muted-foreground ml-1">days until open</span>
@@ -332,7 +332,7 @@ export function FilingWindowIndicator({
             <motion.span
               className={cn(
                 "text-3xl font-bold",
-                status === "closing_soon" ? "text-amber-600 dark:text-amber-400" : "text-green-600 dark:text-green-400"
+                status === "closing_soon" ? "text-data-warn-ink" : "text-primary"
               )}
               animate={shouldPulse ? { scale: [1, 1.1, 1] } : undefined}
               transition={shouldPulse ? { repeat: Infinity, duration: 1.5 } : undefined}
@@ -345,7 +345,7 @@ export function FilingWindowIndicator({
 
       {status === "closed" && (
         <div className="mt-3 text-center">
-          <span className="text-lg font-bold text-red-600 dark:text-red-400">
+          <span className="text-lg font-bold text-destructive">
             Window has closed
           </span>
         </div>
@@ -353,9 +353,9 @@ export function FilingWindowIndicator({
 
       {/* PWD expiration warning */}
       {window.isPwdLimited && (
-        <div className="mt-3 flex items-start gap-2 rounded-md bg-amber-100 dark:bg-amber-900/30 p-2 border border-amber-300 dark:border-amber-700">
-          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-          <p className="text-xs text-amber-700 dark:text-amber-300">
+        <div className="mt-3 flex items-start gap-2 rounded-md bg-data-warn/15 p-2 border-2 border-data-warn">
+          <AlertTriangle className="h-4 w-4 text-data-warn-ink shrink-0 mt-0.5" />
+          <p className="text-xs text-data-warn-ink">
             <strong>Note:</strong> This window closes early due to PWD expiration date.
             The standard 180-day rule is limited by your PWD validity.
           </p>

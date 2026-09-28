@@ -99,11 +99,11 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
         rel="noopener noreferrer"
         className={cn(
           'underline underline-offset-2 decoration-2',
-          'hover:decoration-primary',
+          'hover:decoration-primary-text',
           'transition-colors duration-150',
           isUser
             ? 'decoration-current/50 hover:decoration-current'
-            : 'decoration-primary/50 hover:decoration-primary'
+            : 'decoration-primary/50 hover:decoration-primary-text'
         )}
       >
         {children}

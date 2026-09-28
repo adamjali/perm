@@ -74,48 +74,48 @@ export const TOOL_ICONS: Record<string, PhosphorIcon> = {
  */
 export const TOOL_COLORS: Record<string, string> = {
   // Read-only tools
-  queryCases: 'text-blue-600 dark:text-blue-400',
-  searchKnowledge: 'text-purple-600 dark:text-purple-400',
-  searchWeb: 'text-emerald-600 dark:text-emerald-400',
+  queryCases: 'text-data-info-ink ',
+  searchKnowledge: 'text-stage-recruitment-ink ',
+  searchWeb: 'text-primary ',
 
   // Case CRUD tools
-  createCase: 'text-green-600 dark:text-green-400',
-  updateCase: 'text-amber-600 dark:text-amber-400',
-  archiveCase: 'text-slate-600 dark:text-slate-400',
-  reopenCase: 'text-blue-600 dark:text-blue-400',
-  deleteCase: 'text-red-600 dark:text-red-400',
+  createCase: 'text-primary ',
+  updateCase: 'text-data-warn-ink ',
+  archiveCase: 'text-muted-foreground ',
+  reopenCase: 'text-data-info-ink ',
+  deleteCase: 'text-destructive ',
 
   // Other action tools
-  syncCalendar: 'text-teal-600 dark:text-teal-400',
-  searchCases: 'text-blue-600 dark:text-blue-400',
-  generateDocument: 'text-indigo-600 dark:text-indigo-400',
-  refreshData: 'text-cyan-600 dark:text-cyan-400',
+  syncCalendar: 'text-primary ',
+  searchCases: 'text-data-info-ink ',
+  generateDocument: 'text-data-info-ink ',
+  refreshData: 'text-data-info-ink ',
 
   // Navigation tools (slate/neutral for non-data actions)
-  navigate: 'text-slate-600 dark:text-slate-400',
-  viewCase: 'text-blue-600 dark:text-blue-400',
-  scrollTo: 'text-slate-500 dark:text-slate-400',
-  refreshPage: 'text-slate-500 dark:text-slate-400',
+  navigate: 'text-muted-foreground ',
+  viewCase: 'text-data-info-ink ',
+  scrollTo: 'text-muted-foreground ',
+  refreshPage: 'text-muted-foreground ',
 
   // Calendar sync tools
-  syncToCalendar: 'text-teal-600 dark:text-teal-400',
-  unsyncFromCalendar: 'text-orange-600 dark:text-orange-400',
+  syncToCalendar: 'text-primary ',
+  unsyncFromCalendar: 'text-data-warn-ink ',
 
   // Notification tools
-  markNotificationRead: 'text-green-600 dark:text-green-400',
-  markAllNotificationsRead: 'text-green-600 dark:text-green-400',
-  deleteNotification: 'text-red-600 dark:text-red-400',
-  clearAllNotifications: 'text-red-600 dark:text-red-400',
+  markNotificationRead: 'text-primary ',
+  markAllNotificationsRead: 'text-primary ',
+  deleteNotification: 'text-destructive ',
+  clearAllNotifications: 'text-destructive ',
 
   // Settings tools
-  updateSettings: 'text-violet-600 dark:text-violet-400',
-  getSettings: 'text-violet-600 dark:text-violet-400',
+  updateSettings: 'text-stage-recruitment-ink ',
+  getSettings: 'text-stage-recruitment-ink ',
 
   // Bulk operation tools (amber/red for destructive)
-  bulkUpdateStatus: 'text-amber-600 dark:text-amber-400',
-  bulkArchiveCases: 'text-slate-600 dark:text-slate-400',
-  bulkDeleteCases: 'text-red-600 dark:text-red-400',
-  bulkCalendarSync: 'text-teal-600 dark:text-teal-400',
+  bulkUpdateStatus: 'text-data-warn-ink ',
+  bulkArchiveCases: 'text-muted-foreground ',
+  bulkDeleteCases: 'text-destructive ',
+  bulkCalendarSync: 'text-primary ',
 } as const;
 
 /**
@@ -123,45 +123,45 @@ export const TOOL_COLORS: Record<string, string> = {
  */
 export const TOOL_BG_COLORS: Record<string, string> = {
   // Read-only tools
-  queryCases: 'bg-blue-50 dark:bg-blue-950/30',
-  searchKnowledge: 'bg-purple-50 dark:bg-purple-950/30',
-  searchWeb: 'bg-emerald-50 dark:bg-emerald-950/30',
+  queryCases: 'bg-data-info/10 ',
+  searchKnowledge: 'bg-stage-recruitment/10 ',
+  searchWeb: 'bg-primary/10 ',
 
   // Case CRUD tools
-  createCase: 'bg-green-50 dark:bg-green-950/30',
-  updateCase: 'bg-amber-50 dark:bg-amber-950/30',
-  archiveCase: 'bg-slate-50 dark:bg-slate-950/30',
-  reopenCase: 'bg-blue-50 dark:bg-blue-950/30',
-  deleteCase: 'bg-red-50 dark:bg-red-950/30',
+  createCase: 'bg-primary/10 ',
+  updateCase: 'bg-data-warn/15 ',
+  archiveCase: 'bg-muted ',
+  reopenCase: 'bg-data-info/10 ',
+  deleteCase: 'bg-destructive/10 ',
 
   // Other action tools
-  syncCalendar: 'bg-teal-50 dark:bg-teal-950/30',
+  syncCalendar: 'bg-primary/10 ',
 
   // Navigation tools
-  navigate: 'bg-slate-50 dark:bg-slate-900/30',
-  viewCase: 'bg-blue-50 dark:bg-blue-950/30',
-  scrollTo: 'bg-slate-50 dark:bg-slate-900/30',
-  refreshPage: 'bg-slate-50 dark:bg-slate-900/30',
+  navigate: 'bg-muted ',
+  viewCase: 'bg-data-info/10 ',
+  scrollTo: 'bg-muted ',
+  refreshPage: 'bg-muted ',
 
   // Calendar sync tools
-  syncToCalendar: 'bg-teal-50 dark:bg-teal-950/30',
-  unsyncFromCalendar: 'bg-orange-50 dark:bg-orange-950/30',
+  syncToCalendar: 'bg-primary/10 ',
+  unsyncFromCalendar: 'bg-data-warn/15 ',
 
   // Notification tools
-  markNotificationRead: 'bg-green-50 dark:bg-green-950/30',
-  markAllNotificationsRead: 'bg-green-50 dark:bg-green-950/30',
-  deleteNotification: 'bg-red-50 dark:bg-red-950/30',
-  clearAllNotifications: 'bg-red-50 dark:bg-red-950/30',
+  markNotificationRead: 'bg-primary/10 ',
+  markAllNotificationsRead: 'bg-primary/10 ',
+  deleteNotification: 'bg-destructive/10 ',
+  clearAllNotifications: 'bg-destructive/10 ',
 
   // Settings tools
-  updateSettings: 'bg-violet-50 dark:bg-violet-950/30',
-  getSettings: 'bg-violet-50 dark:bg-violet-950/30',
+  updateSettings: 'bg-stage-recruitment/10 ',
+  getSettings: 'bg-stage-recruitment/10 ',
 
   // Bulk operation tools
-  bulkUpdateStatus: 'bg-amber-50 dark:bg-amber-950/30',
-  bulkArchiveCases: 'bg-slate-50 dark:bg-slate-950/30',
-  bulkDeleteCases: 'bg-red-50 dark:bg-red-950/30',
-  bulkCalendarSync: 'bg-teal-50 dark:bg-teal-950/30',
+  bulkUpdateStatus: 'bg-data-warn/15 ',
+  bulkArchiveCases: 'bg-muted ',
+  bulkDeleteCases: 'bg-destructive/10 ',
+  bulkCalendarSync: 'bg-primary/10 ',
 } as const;
 
 /**
@@ -270,14 +270,14 @@ export function getToolIcon(tool: string): PhosphorIcon {
  * Get color class for a tool, with fallback
  */
 export function getToolColor(tool: string): string {
-  return TOOL_COLORS[tool] ?? 'text-gray-600 dark:text-gray-400';
+  return TOOL_COLORS[tool] ?? 'text-muted-foreground ';
 }
 
 /**
  * Get background color class for a tool, with fallback
  */
 export function getToolBgColor(tool: string): string {
-  return TOOL_BG_COLORS[tool] ?? 'bg-gray-50 dark:bg-gray-950/30';
+  return TOOL_BG_COLORS[tool] ?? 'bg-muted ';
 }
 
 /**

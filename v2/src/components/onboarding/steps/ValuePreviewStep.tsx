@@ -75,7 +75,7 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
       <Button
         onClick={onNext}
         size="lg"
-        className="w-full max-w-sm uppercase tracking-wider font-heading text-sm"
+        className="w-full max-w-sm"
       >
         Continue
       </Button>
