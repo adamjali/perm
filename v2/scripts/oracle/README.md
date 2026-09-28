@@ -102,6 +102,16 @@ zstd -dc /srv/permtracker/backups/db-<stamp>.sql.zst | sqlite3 /tmp/restore.db
    A new page against the old backend gets no pass and sends none, which the old backend
    doesn't check; the old page against the new backend would be refused. Then sign up once
    with a fresh address to prove it.
+   **The human check moves to the adamjali Cloudflare account in the same deploy.** Its new
+   widget "PERM Tracker auth forms" (site key `0x4AAAAAAFHoEQvCKKVd2AJu`, hostname
+   `permtracker.app`, which covers every subdomain) was made Sep 28; the secret sits in
+   `~/.config/permtracker/turnstile_secret_adamjali` (600) on the Mac and passed a siteverify
+   probe. Set the GitHub variable `NEXT_PUBLIC_TURNSTILE_SITE_KEY` to the new key before the
+   build, and right after the site is live run
+   `npx convex env set TURNSTILE_SECRET_KEY "$(cat ~/.config/permtracker/turnstile_secret_adamjali)" --prod`
+   and then `npx convex deploy -y`. Between those two a login or sign-up can fail once and work
+   on retry (about 3 form submits a day, so a two-minute gap is a small chance of one retry).
+   A week later delete the old "PERM Tracker Signup" widget in the personal Cloudflare account.
 8. Check Google sign-in (Convex sends Google back to permtracker.app, so it can
    only be tested on the real domain). Rollback: point the two DNS records back
    to Vercel.
