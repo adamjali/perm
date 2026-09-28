@@ -96,6 +96,12 @@ zstd -dc /srv/permtracker/backups/db-<stamp>.sql.zst | sqlite3 /tmp/restore.db
 6. Enable the timers here; remove Vercel's crons; move the Mac's launchd jobs.
 7. The privacy policy and terms on this branch already name Oracle and Cloudflare in place of
    Vercel and BotID; set both pages' "Last Updated" to the switch date in the same deploy.
+   **The one deploy merges three branches**: `build/sep28-fixes`, `fix/email-postal-address`
+   and this one. **Ship the site before `npx convex deploy`**: that batch makes a new password
+   account need a one-time pass from a passed Turnstile check (`convex/lib/turnstilePass.ts`).
+   A new page against the old backend gets no pass and sends none, which the old backend
+   doesn't check; the old page against the new backend would be refused. Then sign up once
+   with a fresh address to prove it.
 8. Check Google sign-in (Convex sends Google back to permtracker.app, so it can
    only be tested on the real domain). Rollback: point the two DNS records back
    to Vercel.
