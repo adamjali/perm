@@ -56,6 +56,26 @@ describe("EmailLayout", () => {
       );
       expect(html).toContain("Child content here");
     });
+
+    // CAN-SPAM wants a valid physical postal address in commercial email
+    // (15 U.S.C. 7704(a)(5)(A)(iii)). Every template renders through this
+    // layout, so the footer carries it and no template has to decide whether
+    // it counts as commercial. Also asserted for auth mail, which hides the
+    // settings link: the address is not tied to that switch.
+    it("prints the company's postal address in the footer, on every kind of email", async () => {
+      const { LEGAL_NAME, POSTAL_ADDRESS } = await import("../../lib/constants/about");
+      for (const hideSettingsLink of [false, true]) {
+        const html = await render(
+          EmailLayout({
+            previewText: "Preview",
+            hideSettingsLink,
+            children: React.createElement(Text, null, "Body"),
+          })
+        );
+        expect(html).toContain(`${LEGAL_NAME}, ${POSTAL_ADDRESS}`);
+      }
+      expect(POSTAL_ADDRESS).toMatch(/\b[A-Z]{2} \d{5}$/);
+    });
   });
 
   describe("Branding", () => {

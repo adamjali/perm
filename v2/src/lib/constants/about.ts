@@ -79,6 +79,16 @@ export const ORGANIZATION_SAME_AS: readonly string[] = [
 export const LEGAL_NAME = "PERM Tracker LLC";
 export const LEGAL_FORM = "a Florida limited liability company";
 
+/**
+ * The LLC's postal address, printed in every email footer. It is the principal
+ * and mailing address filed with Florida (Northwest Registered Agent's St.
+ * Petersburg office), so it is already public and is nobody's home. CAN-SPAM
+ * requires "a valid physical postal address of the sender" in commercial email
+ * (15 U.S.C. 7704(a)(5)(A)(iii)); printing it on every email means no template
+ * has to decide whether it is commercial.
+ */
+export const POSTAL_ADDRESS = "7901 4th St N, Ste 300, St. Petersburg, FL 33702";
+
 export const ABOUT_ONE_LINER =
   "PERM Tracker is a free, independent website that follows the PERM labor certification process using the Department of Labor's own published data.";
 

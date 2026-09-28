@@ -25,6 +25,8 @@ import {
 } from "@react-email/components";
 import * as React from "react";
 
+import { LEGAL_NAME, POSTAL_ADDRESS } from "../../lib/constants/about";
+
 export interface EmailLayoutProps {
   /** Preview text shown in email clients */
   previewText: string;
@@ -299,6 +301,9 @@ export function EmailLayout({
               </Link>
             </Text>
             {footerExtra}
+            <Text className="em-footer-muted" style={styles.copyright}>
+              {`${LEGAL_NAME}, ${POSTAL_ADDRESS}`}
+            </Text>
             <Text className="em-footer-muted" style={styles.copyright}>
               &copy; {new Date().getFullYear()} PERM Tracker. All rights
               reserved.
