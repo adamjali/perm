@@ -356,7 +356,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     expect(milestone).toHaveStyle({ backgroundColor: "#9333ea" });
   });
 
-  it("displays ETA 9089 milestones in orange (#ea580c)", () => {
+  it("displays ETA 9089 milestones in the stage amber (#D97706)", () => {
     const mockCase = createMockCaseData({
       eta9089FilingDate: getRelativeDate(-10),
     });
@@ -368,10 +368,10 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     const milestone = container.querySelector(
       '[role="img"][aria-label*="ETA 9089 Filed"]'
     );
-    expect(milestone).toHaveStyle({ backgroundColor: "#ea580c" });
+    expect(milestone).toHaveStyle({ backgroundColor: "#D97706" });
   });
 
-  it("displays I-140 milestones in green (#16a34a)", () => {
+  it("displays I-140 milestones in the stage teal (#059669)", () => {
     const mockCase = createMockCaseData({
       i140FilingDate: getRelativeDate(-10),
     });
@@ -383,7 +383,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     const milestone = container.querySelector(
       '[role="img"][aria-label*="I-140 Filed"]'
     );
-    expect(milestone).toHaveStyle({ backgroundColor: "#16a34a" });
+    expect(milestone).toHaveStyle({ backgroundColor: "#059669" });
   });
 });
 

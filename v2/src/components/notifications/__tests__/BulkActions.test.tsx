@@ -547,7 +547,8 @@ describe("BulkActions - Loading States", () => {
 // STYLING TESTS
 
 describe("BulkActions - Styling", () => {
-  it("buttons have uppercase font-heading styling", () => {
+  // Buttons follow the shared <Button> standard: heading face, sentence case.
+  it("buttons use the shared button face, not a local uppercase style", () => {
     (useQuery as Mock).mockReturnValue({
       total: 10,
       unread: 5,
@@ -559,10 +560,10 @@ describe("BulkActions - Styling", () => {
     const markAllButton = screen.getByRole("button", { name: /mark all read/i });
     const deleteButton = screen.getByRole("button", { name: /delete read/i });
 
-    expect(markAllButton).toHaveClass("uppercase");
     expect(markAllButton).toHaveClass("font-heading");
-    expect(deleteButton).toHaveClass("uppercase");
+    expect(markAllButton).not.toHaveClass("uppercase");
     expect(deleteButton).toHaveClass("font-heading");
+    expect(deleteButton).not.toHaveClass("uppercase");
   });
 
   it("delete button has destructive text color", () => {

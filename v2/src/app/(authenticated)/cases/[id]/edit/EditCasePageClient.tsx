@@ -139,7 +139,7 @@ function EditPageSkeleton() {
       </div>
 
       {/* Sticky footer skeleton */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 border-t-3 border-border p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-background/95 border-t-2 border-border p-4">
         <div className="flex justify-end gap-4 max-w-4xl mx-auto">
           <Skeleton variant="block" className="h-11 w-24" />
           <Skeleton variant="block" className="h-11 w-28" />

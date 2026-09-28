@@ -246,7 +246,7 @@ describe("RFEEntry", () => {
       renderRFEEntry({ entry });
 
       const entryDiv = screen.getByTestId("rfe-entry");
-      expect(entryDiv).toHaveClass("border-red-600");
+      expect(entryDiv).toHaveClass("border-destructive");
     });
 
     it("shows normal styling when due date is far away", () => {
@@ -260,8 +260,8 @@ describe("RFEEntry", () => {
 
       const entryDiv = screen.getByTestId("rfe-entry");
       // Check it doesn't have urgent styling
-      expect(entryDiv).not.toHaveClass("border-red-600");
-      expect(entryDiv).not.toHaveClass("bg-red-50");
+      expect(entryDiv).not.toHaveClass("border-destructive");
+      expect(entryDiv).not.toHaveClass("bg-destructive/10");
     });
   });
 

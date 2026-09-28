@@ -245,7 +245,7 @@ export function TimelinePageClient() {
             </p>
             <button
               onClick={() => router.push("/cases/new")}
-              className="inline-flex min-h-[44px] items-center justify-center border-3 border-border bg-primary px-6 py-3 font-heading font-bold text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+              className="inline-flex min-h-[44px] items-center justify-center border-2 border-border bg-primary px-6 py-3 font-heading font-bold text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
             >
               Add Your First Case
             </button>
@@ -304,7 +304,7 @@ export function TimelinePageClient() {
       </div>
 
       {/* Main timeline grid - overflow-x-auto for horizontal scroll, overflow-y-visible for tooltips to escape */}
-      <div className="flex-1 overflow-x-auto overscroll-x-none overflow-y-visible min-h-[400px] border-2 border-border rounded-lg bg-card">
+      <div className="flex-1 overflow-x-auto overscroll-x-none overflow-y-visible min-h-[160px] border-2 border-border bg-card shadow-hard">
         <TimelineGrid
           cases={displayedCases}
           timeRange={effectiveTimeRange}

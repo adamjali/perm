@@ -26,7 +26,7 @@
 
 import { useState, useEffect } from "react";
 import { handleOperationError } from "@/lib/errors";
-import { ArrowsClockwiseIcon as RefreshCw, BellIcon, CalendarIcon, CircleNotchIcon, ClockIcon, InfoIcon, WarningIcon as AlertTriangle, XIcon, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { ArrowsClockwiseIcon as RefreshCw, BellIcon, CalendarIcon, CircleNotchIcon, ClockIcon, InfoIcon, WarningIcon as AlertTriangle, XIcon, type Icon as PhosphorIcon, CheckIcon, ArrowRightIcon } from "@phosphor-icons/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
@@ -435,21 +435,7 @@ export default function NotificationDropdown() {
                 "font-medium cursor-default select-none"
               )}
             >
-              <svg
-                width="14"
-                height="14"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                className="opacity-70"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2.5"
-                  d="M5 13l4 4L19 7"
-                />
-              </svg>
+              <CheckIcon className="size-4 opacity-70" weight="bold" aria-hidden="true" />
               You&apos;re viewing all notifications
             </span>
           ) : (
@@ -469,21 +455,7 @@ export default function NotificationDropdown() {
               {navigatingToAll ? (
                 <CircleNotchIcon className="h-4 w-4 animate-spin" />
               ) : (
-                <svg
-                  width="16"
-                  height="16"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  className="transition-transform duration-150 group-hover:translate-x-1"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2.5"
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
+                <ArrowRightIcon className="size-4 transition-transform duration-150 group-hover:translate-x-1" weight="bold" aria-hidden="true" />
               )}
             </Link>
           )}

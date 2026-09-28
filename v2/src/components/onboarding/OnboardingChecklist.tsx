@@ -33,7 +33,7 @@ export function OnboardingChecklist() {
   return (
     <div
       data-tour="onboarding-checklist"
-      className="relative overflow-hidden border-4 border-border bg-card shadow-hard"
+      className="relative overflow-hidden border-2 border-border bg-card shadow-hard"
     >
       {/* Top accent stripe */}
       <div className="h-1.5 bg-primary" />
@@ -43,7 +43,7 @@ export function OnboardingChecklist() {
         <div className="flex items-center gap-2">
           <SparkleIcon className="w-5 h-5 text-primary" />
           <div>
-            <h3 className="font-heading font-bold text-base">
+            <h3 className="font-heading font-bold text-2xl">
               Getting Started
             </h3>{" "}
             <p className="text-xs text-muted-foreground">

@@ -158,7 +158,7 @@ const DEADLINE_TYPE_GROUPS: {
   },
   {
     stage: "ETA 9089",
-    color: "#ea580c",
+    color: "#D97706",
     types: [
       { value: "eta9089Filed", label: "ETA Filed" },
       { value: "eta9089Certified", label: "ETA Certified" },
@@ -169,7 +169,7 @@ const DEADLINE_TYPE_GROUPS: {
   },
   {
     stage: "I-140",
-    color: "#16a34a",
+    color: "#059669",
     types: [
       { value: "i140Filed", label: "I-140 Filed" },
       { value: "i140Approved", label: "I-140 Approved" },

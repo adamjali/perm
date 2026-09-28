@@ -33,14 +33,14 @@ const MAX_DISPLAY_ITEMS = 4;
 function RecentActivityLoadingSkeleton(): ReactNode {
   return (
     <section
-      className={cn(WIDGET_CONTAINER_CLASSES, "p-7")}
+      className={cn(WIDGET_CONTAINER_CLASSES, "p-5")}
       aria-label="Recent Activity"
       aria-busy={true}
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <History className="w-7 h-7 text-foreground" aria-hidden="true" />
-          <h2 className="text-3xl font-heading font-bold text-foreground">
+          <h2 className="text-2xl font-heading font-bold text-foreground">
             Recent Activity
           </h2>
         </div>
@@ -82,13 +82,12 @@ export default function RecentActivityWidget(): ReactNode {
   return (
     <section
       data-tour="recent-activity"
-      className={cn(WIDGET_CONTAINER_CLASSES, "p-7")}
+      className={WIDGET_CONTAINER_CLASSES}
       aria-label="Recent Activity"
     >
       <WidgetHeader
         icon={History}
         title="Recent Activity"
-        hasBorder={false}
         action={
           !isEmpty && (
             <WidgetHeaderAction
@@ -110,7 +109,7 @@ export default function RecentActivityWidget(): ReactNode {
           cta={{ href: "/cases/new", label: "Create your first case" }}
         />
       ) : (
-        <div className="space-y-2 mt-6">
+        <div className="space-y-3 p-5">
           {displayedActivities.map((activity) => (
             <RecentActivityCard key={activity.id} activity={activity} />
           ))}

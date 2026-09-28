@@ -364,19 +364,12 @@ export function CalendarView({
         /* The actual calendar wrapper with border */
         .calendar-container .rbc-calendar {
           font-family: "Inter", sans-serif;
-          background: #ffffff;
-          border: 3px solid #1a1a1a;
-          box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.2);
+          background: var(--card);
+          border: 2px solid var(--border);
+          box-shadow: var(--shadow-hard);
           border-radius: 0 !important;
           margin-right: 8px;
           margin-bottom: 8px;
-        }
-
-        /* Dark mode background */
-        :root.dark .calendar-container .rbc-calendar {
-          background: #1a1a1a;
-          border-color: #404040;
-          box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4);
         }
 
         /* Remove all rounded corners globally */
@@ -393,23 +386,13 @@ export function CalendarView({
           letter-spacing: 0.025em;
           padding: 12px 8px;
           text-align: center;
-          border-bottom: 2px solid #1a1a1a;
-          background: #f5f5f5;
-          color: #1a1a1a;
-        }
-
-        :root.dark .calendar-container .rbc-header {
-          background: #2a2a2a;
-          border-color: #404040;
-          color: #fafafa;
+          border-bottom: 2px solid var(--border);
+          background: color-mix(in srgb, var(--foreground) 6%, var(--card));
+          color: var(--foreground);
         }
 
         .calendar-container .rbc-header + .rbc-header {
-          border-left: 2px solid #1a1a1a;
-        }
-
-        :root.dark .calendar-container .rbc-header + .rbc-header {
-          border-left-color: #404040;
+          border-left: 2px solid var(--border);
         }
 
         /* Month view */
@@ -418,12 +401,8 @@ export function CalendarView({
         }
 
         .calendar-container .rbc-month-row {
-          border-bottom: 2px solid #e5e5e5;
+          border-bottom: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
           min-height: 135px;
-        }
-
-        :root.dark .calendar-container .rbc-month-row {
-          border-bottom-color: #404040;
         }
 
         .calendar-container .rbc-month-row + .rbc-month-row {
@@ -432,47 +411,29 @@ export function CalendarView({
 
         /* Day cells in month view - V1 style with white background */
         .calendar-container .rbc-day-bg {
-          border-right: 2px solid #e5e5e5;
-          background: #ffffff;
+          border-right: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+          background: var(--card);
           transition: background-color 0.15s ease-out;
-        }
-
-        :root.dark .calendar-container .rbc-day-bg {
-          border-right-color: #404040;
-          background: #1a1a1a;
         }
 
         .calendar-container .rbc-day-bg:last-child {
           border-right: none;
         }
 
-        /* Today cell highlight - V1 style light blue */
+        /* Today: a lime tint, the app's accent (was a stray light blue) */
         .calendar-container .rbc-day-bg.rbc-today {
-          background-color: #e6f2ff !important;
-        }
-
-        :root.dark .calendar-container .rbc-day-bg.rbc-today {
-          background-color: rgba(46, 204, 64, 0.15) !important;
+          background-color: color-mix(in srgb, var(--primary) 14%, var(--card)) !important;
         }
 
         /* Weekend cells - slightly gray like v1 */
         .calendar-container .rbc-day-bg:nth-child(1),
         .calendar-container .rbc-day-bg:nth-child(7) {
-          background-color: #fafafa;
-        }
-
-        :root.dark .calendar-container .rbc-day-bg:nth-child(1),
-        :root.dark .calendar-container .rbc-day-bg:nth-child(7) {
-          background-color: rgba(255, 255, 255, 0.02);
+          background-color: color-mix(in srgb, var(--foreground) 3%, var(--card));
         }
 
         /* Off-range (previous/next month) cells - V1 style muted */
         .calendar-container .rbc-day-bg.rbc-off-range-bg {
-          background-color: #f5f5f5;
-        }
-
-        :root.dark .calendar-container .rbc-day-bg.rbc-off-range-bg {
-          background-color: #252525;
+          background-color: color-mix(in srgb, var(--foreground) 6%, var(--card));
         }
 
         /* Month row - ensure background layer fills full height */
@@ -497,29 +458,17 @@ export function CalendarView({
 
         /* Make each day column hoverable via the background layer */
         .calendar-container .rbc-day-bg:hover {
-          background-color: #f0f9ff !important;
-        }
-
-        :root.dark .calendar-container .rbc-day-bg:hover {
-          background-color: rgba(255, 255, 255, 0.08) !important;
+          background-color: color-mix(in srgb, var(--primary) 6%, var(--card)) !important;
         }
 
         /* Preserve today styling on hover */
         .calendar-container .rbc-day-bg.rbc-today:hover {
-          background-color: #d4e9ff !important;
-        }
-
-        :root.dark .calendar-container .rbc-day-bg.rbc-today:hover {
-          background-color: rgba(46, 204, 64, 0.25) !important;
+          background-color: color-mix(in srgb, var(--primary) 24%, var(--card)) !important;
         }
 
         /* Preserve off-range styling - muted hover */
         .calendar-container .rbc-day-bg.rbc-off-range-bg:hover {
-          background-color: #ececec !important;
-        }
-
-        :root.dark .calendar-container .rbc-day-bg.rbc-off-range-bg:hover {
-          background-color: #303030 !important;
+          background-color: var(--accent) !important;
         }
 
         /* Date numbers in cells - V1 style positioned top-right */
@@ -534,19 +483,11 @@ export function CalendarView({
 
         .calendar-container .rbc-date-cell.rbc-now {
           font-weight: 800;
-          color: #000000;
-        }
-
-        :root.dark .calendar-container .rbc-date-cell.rbc-now {
-          color: #fafafa;
+          color: var(--foreground);
         }
 
         .calendar-container .rbc-date-cell.rbc-off-range {
-          color: #999999;
-        }
-
-        :root.dark .calendar-container .rbc-date-cell.rbc-off-range {
-          color: #666666;
+          color: var(--muted-foreground);
         }
 
         /* ================================================================
@@ -562,7 +503,7 @@ export function CalendarView({
         }
 
         .calendar-container .rbc-event:focus {
-          outline: 2px solid #0066ff;
+          outline: 2px solid var(--ring);
           outline-offset: 2px;
         }
 
@@ -579,13 +520,13 @@ export function CalendarView({
         .calendar-container .rbc-event:hover .calendar-event {
           opacity: 0.95;
           transform: translateY(-1px);
-          box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.25);
+          box-shadow: var(--shadow-hard-sm);
         }
 
         /* Selected event - style the inner element */
         .calendar-container .rbc-event.rbc-selected .calendar-event {
-          box-shadow: 5px 5px 0 #0066ff !important;
-          border-color: #0066ff !important;
+          box-shadow: var(--shadow-hard) !important;
+          border-color: var(--ring) !important;
           transform: translateY(-2px);
         }
 
@@ -601,31 +542,20 @@ export function CalendarView({
         .calendar-container .rbc-show-more {
           font-weight: 700;
           font-size: 0.7rem;
-          color: #1a1a1a;
-          background: #f5f5f5;
+          color: var(--foreground);
+          background: color-mix(in srgb, var(--foreground) 6%, var(--card));
           padding: 5px 10px;
           margin: 6px 8px;
-          border: 2px solid #1a1a1a;
+          border: 2px solid var(--border);
           text-align: center;
           transition: all 0.15s ease;
           cursor: pointer;
         }
 
-        :root.dark .calendar-container .rbc-show-more {
-          background: #2a2a2a;
-          color: #fafafa;
-          border-color: #404040;
-        }
-
         .calendar-container .rbc-show-more:hover {
-          background: #1a1a1a;
-          color: #ffffff;
+          background: var(--foreground);
+          color: var(--background);
           transform: translateY(-1px);
-        }
-
-        :root.dark .calendar-container .rbc-show-more:hover {
-          background: #fafafa;
-          color: #1a1a1a;
         }
 
         /* Row segments - provides spacing between events */
@@ -658,12 +588,7 @@ export function CalendarView({
 
         .calendar-container .rbc-date-cell button:hover,
         .calendar-container .rbc-date-cell a:hover {
-          background-color: #e0e0e0;
-        }
-
-        :root.dark .calendar-container .rbc-date-cell button:hover,
-        :root.dark .calendar-container .rbc-date-cell a:hover {
-          background-color: rgba(255, 255, 255, 0.15);
+          background-color: var(--accent);
         }
 
         /* Hide default toolbar - we use CalendarToolbar */
@@ -674,11 +599,11 @@ export function CalendarView({
         /* Overlay (popup) for multiple events - V1 modal style */
         /* Note: rbc-overlay may render in a portal, so we use global selectors */
         .rbc-overlay {
-          border: 3px solid #1a1a1a !important;
+          border: 2px solid var(--border) !important;
           border-radius: 0 !important;
-          box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.2) !important;
-          background: #ffffff !important;
-          color: #1a1a1a !important;
+          box-shadow: var(--shadow-hard) !important;
+          background: var(--card) !important;
+          color: var(--foreground) !important;
           padding: 0 !important;
           max-width: 320px;
           max-height: 400px;
@@ -688,27 +613,14 @@ export function CalendarView({
           z-index: 100;
         }
 
-        :root.dark .rbc-overlay {
-          background: #1a1a1a !important;
-          border-color: #404040 !important;
-          color: #fafafa !important;
-          box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.4) !important;
-        }
-
         .rbc-overlay-header {
           font-family: "Space Grotesk", sans-serif !important;
           font-weight: 700 !important;
-          border-bottom: 2px solid #1a1a1a !important;
+          border-bottom: 2px solid var(--border) !important;
           padding: 12px 16px !important;
-          background: #f5f5f5 !important;
-          color: #1a1a1a !important;
+          background: color-mix(in srgb, var(--foreground) 6%, var(--card)) !important;
+          color: var(--foreground) !important;
           flex-shrink: 0;
-        }
-
-        :root.dark .rbc-overlay-header {
-          background: #2a2a2a !important;
-          border-color: #404040 !important;
-          color: #fafafa !important;
         }
 
         /* Overlay event list area - scrollable */
@@ -733,29 +645,16 @@ export function CalendarView({
         }
 
         .rbc-overlay ::-webkit-scrollbar-track {
-          background: #f0f0f0;
+          background: color-mix(in srgb, var(--foreground) 6%, var(--card));
         }
 
         .rbc-overlay ::-webkit-scrollbar-thumb {
-          background: #c0c0c0;
-          border: 2px solid #f0f0f0;
+          background: var(--muted-foreground);
+          border: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
         }
 
         .rbc-overlay ::-webkit-scrollbar-thumb:hover {
-          background: #a0a0a0;
-        }
-
-        :root.dark .rbc-overlay ::-webkit-scrollbar-track {
-          background: #2a2a2a;
-        }
-
-        :root.dark .rbc-overlay ::-webkit-scrollbar-thumb {
-          background: #505050;
-          border-color: #2a2a2a;
-        }
-
-        :root.dark .rbc-overlay ::-webkit-scrollbar-thumb:hover {
-          background: #606060;
+          background: var(--foreground);
         }
 
         /* Events inside overlay need spacing */
@@ -772,27 +671,15 @@ export function CalendarView({
            ================================================================ */
         .calendar-container .rbc-time-view {
           border: none;
-          background: #ffffff;
-        }
-
-        :root.dark .calendar-container .rbc-time-view {
-          background: #1a1a1a;
+          background: var(--card);
         }
 
         .calendar-container .rbc-time-header {
-          border-bottom: 2px solid #1a1a1a;
-        }
-
-        :root.dark .calendar-container .rbc-time-header {
-          border-bottom-color: #404040;
+          border-bottom: 2px solid var(--border);
         }
 
         .calendar-container .rbc-time-header-content {
-          border-left: 2px solid #e5e5e5;
-        }
-
-        :root.dark .calendar-container .rbc-time-header-content {
-          border-left-color: #404040;
+          border-left: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
         }
 
         .calendar-container .rbc-time-content {
@@ -800,36 +687,20 @@ export function CalendarView({
         }
 
         .calendar-container .rbc-timeslot-group {
-          border-bottom: 1px solid #e5e5e5;
-        }
-
-        :root.dark .calendar-container .rbc-timeslot-group {
-          border-bottom-color: #404040;
+          border-bottom: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
         }
 
         .calendar-container .rbc-time-gutter {
           font-weight: 500;
-          background: #fafafa;
-        }
-
-        :root.dark .calendar-container .rbc-time-gutter {
-          background: #252525;
+          background: color-mix(in srgb, var(--foreground) 3%, var(--card));
         }
 
         .calendar-container .rbc-day-slot .rbc-time-slot {
-          border-top: 1px solid #f0f0f0;
-        }
-
-        :root.dark .calendar-container .rbc-day-slot .rbc-time-slot {
-          border-top-color: #333333;
+          border-top: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
         }
 
         .calendar-container .rbc-time-column {
-          border-left: 2px solid #e5e5e5;
-        }
-
-        :root.dark .calendar-container .rbc-time-column {
-          border-left-color: #404040;
+          border-left: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
         }
 
         .calendar-container .rbc-time-column:first-child {
@@ -838,17 +709,13 @@ export function CalendarView({
 
         /* Current time indicator */
         .calendar-container .rbc-current-time-indicator {
-          background-color: #dc2626;
+          background-color: var(--urgency-urgent);
           height: 2px;
         }
 
         /* All day section */
         .calendar-container .rbc-allday-cell {
-          border-bottom: 2px solid #e5e5e5;
-        }
-
-        :root.dark .calendar-container .rbc-allday-cell {
-          border-bottom-color: #404040;
+          border-bottom: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
         }
 
         /* ================================================================
@@ -866,31 +733,18 @@ export function CalendarView({
         .calendar-container .rbc-agenda-table thead th {
           font-family: "Space Grotesk", sans-serif;
           font-weight: 700;
-          border-bottom: 2px solid #1a1a1a;
+          border-bottom: 2px solid var(--border);
           padding: 12px 8px;
-          background: #f5f5f5;
-        }
-
-        :root.dark .calendar-container .rbc-agenda-table thead th {
-          background: #2a2a2a;
-          border-bottom-color: #404040;
+          background: color-mix(in srgb, var(--foreground) 6%, var(--card));
         }
 
         .calendar-container .rbc-agenda-table tbody tr {
-          border-bottom: 1px solid #e5e5e5;
-        }
-
-        :root.dark .calendar-container .rbc-agenda-table tbody tr {
-          border-bottom-color: #404040;
+          border-bottom: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
         }
 
         .calendar-container .rbc-agenda-table td {
           padding: 8px;
-          border-left: 2px solid #e5e5e5;
-        }
-
-        :root.dark .calendar-container .rbc-agenda-table td {
-          border-left-color: #404040;
+          border-left: 2px solid color-mix(in srgb, var(--foreground) 14%, transparent);
         }
 
         .calendar-container .rbc-agenda-table td:first-child {

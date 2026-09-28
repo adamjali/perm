@@ -83,7 +83,7 @@ export function TimelineMilestone({
       {/* Milestone dot - 16px size for better visibility */}
       <div
         className={cn(
-          "w-4 h-4 rounded-full border-3 border-foreground",
+          "w-4 h-4 rounded-full border-2 border-foreground",
           "transition-transform duration-150 ease-out",
           "group-hover:scale-150",
           milestone.isCalculated && "border-dashed"
@@ -115,7 +115,7 @@ export function TimelineMilestone({
         {/* Arrow pointer - also position-aware */}
         <div
           className={cn(
-            "absolute top-full border-3 border-transparent border-t-foreground",
+            "absolute top-full border-2 border-transparent border-t-foreground",
             tooltipAlignment === "left" && "left-2",
             tooltipAlignment === "right" && "right-2",
             tooltipAlignment === "center" && "left-1/2 -translate-x-1/2"

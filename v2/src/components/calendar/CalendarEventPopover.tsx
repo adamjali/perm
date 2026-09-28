@@ -29,6 +29,7 @@
 "use client";
 
 import * as React from "react";
+import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { motion } from "motion/react";
@@ -79,19 +80,6 @@ const contentItemVariants = {
 // Constants
 // ============================================================================
 
-/**
- * Case status display labels and colors
- */
-const CASE_STATUS_CONFIG: Record<
-  CaseStatus,
-  { label: string; color: string }
-> = {
-  pwd: { label: "PWD", color: "#0066FF" },
-  recruitment: { label: "Recruitment", color: "#9333ea" },
-  eta9089: { label: "ETA 9089", color: "#D97706" },
-  i140: { label: "I-140", color: "#059669" },
-  closed: { label: "Closed", color: "#6B7280" },
-};
 
 /**
  * Urgency text labels for popover display
@@ -172,24 +160,11 @@ function UrgencyBadge({ urgency, daysUntil }: { urgency: Urgency; daysUntil: num
 }
 
 /**
- * Renders the case status badge with stage colors
+ * The case's stage, drawn by the shared badge (fill and readable ink from the
+ * stage map; this used to put white on every colour, amber and teal included).
  */
 function CaseStatusBadge({ status }: { status: CaseStatus }) {
-  const config = CASE_STATUS_CONFIG[status];
-
-  return (
-    <Badge
-      variant="default"
-      className="border-2 font-semibold"
-      style={{
-        backgroundColor: config.color,
-        borderColor: "#1a1a1a",
-        color: "#ffffff",
-      }}
-    >
-      {config.label}
-    </Badge>
-  );
+  return <CaseStageBadge stage={status} bordered />;
 }
 
 // ============================================================================

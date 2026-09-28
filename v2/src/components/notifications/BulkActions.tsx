@@ -138,7 +138,7 @@ export default function BulkActions({ className }: BulkActionsProps) {
           disabled={isDeletingRead || readCount === 0}
           loading={isDeletingRead}
           loadingText="Deleting..."
-          className="font-heading uppercase tracking-wide text-destructive hover:text-destructive-text hover:bg-destructive/10"
+          className="text-destructive hover:text-destructive-text hover:bg-destructive/10"
         >
           <Trash2 className="size-4 mr-2" />
           Delete Read

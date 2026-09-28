@@ -72,7 +72,7 @@ export default function AdminDashboardClient() {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
         {/* Header skeleton */}
-        <div className="flex items-center gap-4 border-b-3 border-border pb-6">
+        <div className="flex items-center gap-4 border-b-2 border-border pb-6">
           <Skeleton className="h-12 w-12" />
           <div className="space-y-2">
             <Skeleton className="h-8 w-64" />
@@ -117,7 +117,7 @@ export default function AdminDashboardClient() {
   return (
     <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8 animate-in fade-in duration-300">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 border-b-3 border-border pb-6">
+      <div className="flex items-center justify-between gap-4 border-b-2 border-border pb-6">
         <div className="flex items-center gap-4">
           <div className="flex size-12 items-center justify-center border-2 border-border bg-primary shadow-hard">
             <ShieldIcon className="size-6 text-black" />

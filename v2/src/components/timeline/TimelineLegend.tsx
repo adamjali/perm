@@ -10,7 +10,7 @@
  *
  * Features:
  * - Horizontal flex layout (wraps to 2x2 grid on mobile)
- * - Colored bars with gradient and border
+ * - Flat stage swatches, framed like the timeline markers
  * - Fixed/sticky footer positioning
  * - Neobrutalist styling
  *
@@ -20,19 +20,19 @@
 
 "use client";
 
+import { STAGE_COLORS as SHARED_STAGE_COLORS } from "@/lib/timeline/types";
+
 interface StageColor {
   name: string;
-  /** Primary color */
+  /** Stage colour (from the shared map) */
   primary: string;
-  /** Secondary gradient color */
-  secondary: string;
 }
 
 const STAGE_COLORS: StageColor[] = [
-  { name: "PWD", primary: "#0066FF", secondary: "#3b82f6" },
-  { name: "Recruitment", primary: "#9333ea", secondary: "#a855f7" },
-  { name: "ETA 9089", primary: "#ea580c", secondary: "#f59e0b" },
-  { name: "I-140", primary: "#16a34a", secondary: "#22c55e" },
+  { name: "PWD", primary: SHARED_STAGE_COLORS.pwd },
+  { name: "Recruitment", primary: SHARED_STAGE_COLORS.recruitment },
+  { name: "ETA 9089", primary: SHARED_STAGE_COLORS.eta9089 },
+  { name: "I-140", primary: SHARED_STAGE_COLORS.i140 },
 ];
 
 interface TimelineLegendProps {
@@ -48,7 +48,7 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
       className={`
         ${sticky ? "sticky bottom-0 z-10" : ""}
         bg-muted/50 dark:bg-muted/30 backdrop-blur-sm
-        border-t-3 border-t-border
+        border-t-2 border-t-border
         px-4 py-3
         ${className}
       `.trim()}
@@ -60,12 +60,10 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
             key={stage.name}
             className="flex items-center gap-2 min-h-[36px]"
           >
-            {/* Colored bar with gradient and border */}
+            {/* A flat swatch in the stage colour, framed like the markers */}
             <div
-              className="w-6 h-2 shrink-0 border-2 border-foreground/80 dark:border-foreground/60"
-              style={{
-                background: `linear-gradient(135deg, ${stage.primary}, ${stage.secondary})`,
-              }}
+              className="size-4 shrink-0 border-2 border-foreground"
+              style={{ backgroundColor: stage.primary }}
               role="presentation"
               aria-hidden="true"
             />
@@ -92,13 +90,11 @@ export function TimelineLegendCompact({ className = "" }: { className?: string }
           className="flex items-center gap-1.5"
         >
           <div
-            className="w-4 h-1.5 border border-foreground/50"
-            style={{
-              background: `linear-gradient(135deg, ${stage.primary}, ${stage.secondary})`,
-            }}
+            className="size-3 border-2 border-foreground"
+            style={{ backgroundColor: stage.primary }}
             aria-hidden="true"
           />
-          <span className="text-xs font-medium text-muted-foreground">
+          <span className="text-sm font-medium text-muted-foreground">
             {stage.name}
           </span>
         </div>

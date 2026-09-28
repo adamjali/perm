@@ -10,7 +10,7 @@ import type { Stage } from "../timeline/types";
 import type { RfiEntry, RfeEntry, AdditionalRecruitmentMethod } from "../shared/types";
 
 // Re-export Stage and STAGE_COLORS for consistency
-export { STAGE_COLORS, type Stage } from "../timeline/types";
+export { STAGE_COLORS, STAGE_ON_FILL, type Stage } from "../timeline/types";
 
 // Re-export shared types for convenience
 export type { RfiEntry, RfeEntry, AdditionalRecruitmentMethod } from "../shared/types";

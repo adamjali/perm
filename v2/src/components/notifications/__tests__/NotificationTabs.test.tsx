@@ -113,8 +113,8 @@ describe("NotificationTabs", () => {
 
       const unreadTab = screen.getByRole("tab", { name: /unread/i });
       // Active tab should have dark background
-      expect(unreadTab).toHaveClass("bg-black");
-      expect(unreadTab).toHaveClass("text-white");
+      expect(unreadTab).toHaveClass("bg-foreground");
+      expect(unreadTab).toHaveClass("text-background");
     });
 
     it("applies inactive styling to non-selected tabs", () => {

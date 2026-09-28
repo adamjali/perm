@@ -81,7 +81,7 @@ export function MonitorPanel() {
               <p className="text-base">{s.summary}</p>
             </div>{" "}
             {s.lines.length > 0 ? (
-              <ul className="mt-3 space-y-1 border-l-4 border-border pl-3 font-mono text-sm">
+              <ul className="mt-3 space-y-1 border-l-2 border-border pl-3 font-mono text-sm">
                 {s.lines.map((l, i) => (
                   <li key={i}>{l} </li>
                 ))}

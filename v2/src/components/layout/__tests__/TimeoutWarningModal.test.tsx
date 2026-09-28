@@ -161,7 +161,7 @@ describe("TimeoutWarningModal", () => {
 
       // Check for red/urgent styling
       const countdown = screen.getByText("0:25");
-      expect(countdown).toHaveClass("text-red-600");
+      expect(countdown).toHaveClass("text-destructive");
     });
 
     it("does not show urgent styling when remainingSeconds > 30", () => {
@@ -170,7 +170,7 @@ describe("TimeoutWarningModal", () => {
       );
 
       const countdown = screen.getByText("1:00");
-      expect(countdown).not.toHaveClass("text-red-600");
+      expect(countdown).not.toHaveClass("text-destructive");
     });
   });
 

@@ -428,7 +428,7 @@ export function DocumentsTab({
               {/* Upload button */}
               {onUpload && (
                 <button
-                  className="flex items-center gap-2 font-mono font-bold uppercase tracking-wider border-3 border-current bg-card text-foreground shadow-hard-sm"
+                  className="font-heading flex items-center gap-2 font-bold border-2 border-current bg-card text-foreground shadow-hard-sm"
                   style={{
                     fontSize: "0.7rem",
                     padding: "3px 10px",

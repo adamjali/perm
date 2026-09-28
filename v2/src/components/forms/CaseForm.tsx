@@ -705,7 +705,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
 
 function ErrorSummary({ errors, errorCount, onDismiss, onFieldClick }: { errors: Record<string, string>; errorCount: number; onDismiss: () => void; onFieldClick: (field: string) => void }) {
   return (
-    <div className="rounded-lg border-4 border-destructive bg-destructive/10 p-4 animate-shake">
+    <div className="rounded-lg border-2 border-destructive bg-destructive/10 p-4 animate-shake">
       <div className="flex items-start gap-3">
         <XCircleIcon className="size-6 text-destructive shrink-0 mt-0.5" />
         <div className="flex-1">

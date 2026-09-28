@@ -42,9 +42,10 @@ describe("RecentActivityCard", () => {
     expect(container.querySelector('a[href="/cases/case_test123"]')).toBeInTheDocument();
   });
 
-  it("renders a placeholder dash when case number is missing", () => {
+  it("shows no case number, and no stray dash, when there is none yet", () => {
     renderWithProviders(<RecentActivityCard activity={createMockActivityItem({ caseNumber: undefined })} />);
-    expect(screen.getByText("-")).toBeInTheDocument();
+    expect(screen.queryByText("-")).not.toBeInTheDocument();
+    expect(screen.getByText("Tech Corp Inc")).toBeInTheDocument();
   });
 
   it.each([

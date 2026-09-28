@@ -74,11 +74,11 @@ export function ResetPasswordPageClient() {
   }, [emailValidation.state, turnstileToken]);
 
   const emailStepLabel = useMemo(() => {
-    if (isLoading) return "SENDING...";
+    if (isLoading) return "Sending...";
     switch (emailFirstMissing) {
-      case "email": return "ENTER YOUR EMAIL";
-      case "turnstile": return "COMPLETE SECURITY CHECK";
-      default: return "SEND RESET CODE";
+      case "email": return "Enter your email";
+      case "turnstile": return "Complete the security check";
+      default: return "Send reset code";
     }
   }, [isLoading, emailFirstMissing]);
 
@@ -90,12 +90,12 @@ export function ResetPasswordPageClient() {
   }, [code, newPasswordValidation.state, confirmValidation.state]);
 
   const resetStepLabel = useMemo(() => {
-    if (isLoading) return "RESETTING...";
+    if (isLoading) return "Resetting...";
     switch (resetFirstMissing) {
-      case "code": return "ENTER THE CODE";
-      case "password": return "ENTER A NEW PASSWORD";
-      case "confirm": return "CONFIRM YOUR PASSWORD";
-      default: return "RESET PASSWORD";
+      case "code": return "Enter the code";
+      case "password": return "Enter a new password";
+      case "confirm": return "Confirm your password";
+      default: return "Reset password";
     }
   }, [isLoading, resetFirstMissing]);
 
@@ -249,8 +249,8 @@ export function ResetPasswordPageClient() {
     return (
       <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
         <CardHeader>
-          <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
-            Reset Password
+          <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+            Reset your password
           </h1>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -315,7 +315,7 @@ export function ResetPasswordPageClient() {
               type="submit"
               className="w-full"
               loading={isLoading}
-              loadingText="RESETTING..."
+              loadingText="Resetting..."
               disabled={resetFirstMissing !== null && !isLoading}
             >
               {resetStepLabel}
@@ -338,8 +338,8 @@ export function ResetPasswordPageClient() {
   return (
     <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
       <CardHeader>
-        <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
-          Reset Password
+        <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+          Reset your password
         </h1>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -399,7 +399,7 @@ export function ResetPasswordPageClient() {
             type="submit"
             className="w-full"
             loading={isLoading}
-            loadingText="SENDING..."
+            loadingText="Sending..."
             disabled={emailFirstMissing !== null && !isLoading}
           >
             {emailStepLabel}

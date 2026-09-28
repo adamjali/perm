@@ -98,14 +98,14 @@ export function SignupPageClient() {
   }, [emailValidation.state, nameValidation.state, passwordValidation.state, confirmValidation.state, turnstileToken]);
 
   const submitLabel = useMemo(() => {
-    if (isLoading) return "CREATING...";
+    if (isLoading) return "Creating account...";
     switch (firstMissing) {
-      case "email": return "ENTER YOUR EMAIL";
-      case "name": return "FIX NAME";
-      case "password": return "ENTER A PASSWORD";
-      case "confirm": return "CONFIRM YOUR PASSWORD";
-      case "turnstile": return "COMPLETE SECURITY CHECK";
-      default: return "CREATE ACCOUNT";
+      case "email": return "Enter your email";
+      case "name": return "Fix your name";
+      case "password": return "Enter a password";
+      case "confirm": return "Confirm your password";
+      case "turnstile": return "Complete the security check";
+      default: return "Create account";
     }
   }, [isLoading, firstMissing]);
 
@@ -371,8 +371,8 @@ export function SignupPageClient() {
     return (
       <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
         <CardHeader>
-          <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
-            Verify Email
+          <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+            Verify your email
           </h1>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -412,9 +412,9 @@ export function SignupPageClient() {
               type="submit"
               className="w-full"
               loading={isLoading}
-              loadingText="VERIFYING..."
+              loadingText="Verifying..."
             >
-              VERIFY EMAIL
+              Verify email
             </Button>
           </form>
 
@@ -434,8 +434,8 @@ export function SignupPageClient() {
   return (
     <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
       <CardHeader>
-        <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
-          Sign Up
+        <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+          Sign up
         </h1>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/70">
           Track every case you&apos;re responsible for. Filing windows, wage
@@ -551,7 +551,7 @@ export function SignupPageClient() {
             type="submit"
             className="w-full"
             loading={isLoading}
-            loadingText="CREATING..."
+            loadingText="Creating account..."
             disabled={isGoogleLoading || firstMissing !== null}
           >
             {submitLabel}
@@ -575,7 +575,7 @@ export function SignupPageClient() {
           className="w-full"
           onClick={handleGoogleSignIn}
           loading={isGoogleLoading}
-          loadingText="CONNECTING..."
+          loadingText="Connecting..."
           disabled={isLoading}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -596,7 +596,7 @@ export function SignupPageClient() {
               fill="#EA4335"
             />
           </svg>
-          SIGN UP WITH GOOGLE
+          Sign up with Google
         </Button>{" "}
 
         {/* Passive consent — terms acceptance via sign-in wrap.

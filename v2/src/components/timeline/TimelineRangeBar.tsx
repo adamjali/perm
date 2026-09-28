@@ -83,7 +83,7 @@ export function TimelineRangeBar({
   return (
     <div
       className={cn(
-        "absolute top-1/2 -translate-y-1/2 h-2 group cursor-default",
+        "absolute top-1/2 -translate-y-1/2 h-3 group cursor-default",
         className
       )}
       style={{
@@ -97,11 +97,13 @@ export function TimelineRangeBar({
       aria-label={`${rangeBar.label}: ${formatISODate(rangeBar.startDate)} to ${formatISODate(rangeBar.endDate)}`}
     >
       {/* The visible bar - opacity only on this element, not the container */}
+      {/* A band in the stage colour: a clear outline over a light fill, so it
+          reads as that stage instead of a pastel */}
       <div
-        className="absolute inset-0 rounded-sm"
+        className="absolute inset-0 border-2"
         style={{
-          backgroundColor: rangeBar.color,
-          opacity: 0.3,
+          borderColor: rangeBar.color,
+          backgroundColor: `color-mix(in srgb, ${rangeBar.color} 30%, transparent)`,
         }}
       />
 
@@ -128,7 +130,7 @@ export function TimelineRangeBar({
         {/* Arrow pointer */}
         <div
           className="absolute top-full left-1/2 -translate-x-1/2
-          border-4 border-transparent border-t-foreground"
+          border-2 border-transparent border-t-foreground"
         />
       </div>
     </div>

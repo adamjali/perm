@@ -66,10 +66,10 @@ export function LoginPageClient() {
   const canSubmit = emailValidation.state === "valid" && password.length > 0 && !isLoading && !isGoogleLoading;
 
   const submitLabel = useMemo(() => {
-    if (isLoading) return "SIGNING IN...";
-    if (emailValidation.state !== "valid") return "ENTER YOUR EMAIL";
-    if (!password) return "ENTER YOUR PASSWORD";
-    return "SIGN IN";
+    if (isLoading) return "Signing in...";
+    if (emailValidation.state !== "valid") return "Enter your email";
+    if (!password) return "Enter your password";
+    return "Sign in";
   }, [isLoading, emailValidation.state, password]);
 
   const enforceRateLimit = useCallback(
@@ -307,8 +307,8 @@ export function LoginPageClient() {
     return (
       <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
         <CardHeader>
-          <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
-            Verify Email
+          <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+            Verify your email
           </h1>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -342,9 +342,9 @@ export function LoginPageClient() {
               type="submit"
               className="w-full"
               loading={isLoading}
-              loadingText="VERIFYING..."
+              loadingText="Verifying..."
             >
-              VERIFY EMAIL
+              Verify email
             </Button>
           </form>
 
@@ -367,8 +367,8 @@ export function LoginPageClient() {
   return (
     <Card className="hover:translate-y-0 hover:shadow-hard active:translate-y-0 active:shadow-hard">
       <CardHeader>
-        <h1 className="font-heading text-3xl font-black uppercase leading-none tracking-tight sm:text-4xl">
-          Sign In
+        <h1 className="font-heading text-3xl font-black leading-none tracking-tight sm:text-4xl">
+          Sign in
         </h1>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -454,7 +454,7 @@ export function LoginPageClient() {
             type="submit"
             className="w-full"
             loading={isLoading}
-            loadingText="SIGNING IN..."
+            loadingText="Signing in..."
             disabled={!canSubmit}
           >
             {submitLabel}
@@ -478,7 +478,7 @@ export function LoginPageClient() {
           className="w-full"
           onClick={handleGoogleSignIn}
           loading={isGoogleLoading}
-          loadingText="CONNECTING..."
+          loadingText="Connecting..."
           disabled={isLoading}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">
@@ -499,7 +499,7 @@ export function LoginPageClient() {
               fill="#EA4335"
             />
           </svg>
-          SIGN IN WITH GOOGLE
+          Sign in with Google
         </Button>{" "}
 
         {/* Passive consent — terms acceptance via sign-in wrap */}

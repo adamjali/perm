@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PERM_STAGES } from "@/lib/onboarding/constants";
+import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import { useOnboarding } from "../OnboardingProvider";
 import { cn } from "@/lib/utils";
 import { captureError } from "@/lib/sentry";
@@ -147,14 +148,17 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
                 key={stage.value}
                 type="button"
                 onClick={() => setCaseStatus(stage.value)}
+                aria-pressed={caseStatus === stage.value}
                 className={cn(
-                  "px-3 py-2.5 min-h-[44px] text-xs font-heading font-semibold uppercase tracking-wide border-2 transition-all duration-150 cursor-pointer",
+                  "inline-flex items-center gap-2 px-3 py-2.5 min-h-[44px] text-sm font-heading font-bold border-2 border-border transition-all duration-150 cursor-pointer",
+                  // The chosen stage shows in its own colour, as it does everywhere else.
                   caseStatus === stage.value
-                    ? "border-border bg-primary text-primary-foreground shadow-hard-sm"
-                    : "border-border bg-card text-foreground hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-hard-sm"
+                    ? cn(STAGE_VISUALS[stage.value].fill, STAGE_VISUALS[stage.value].onFill, "shadow-hard-sm")
+                    : "bg-card text-foreground hover:-translate-y-[1px] hover:shadow-hard-sm active:translate-y-0 active:shadow-hard-sm"
                 )}
               >
-                {stage.label}
+                <StageIcon stage={stage.value} />
+                {STAGE_VISUALS[stage.value].label}
               </button>
             ))}
           </div>
@@ -177,4 +181,9 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
       </Button>
     </div>
   );
+}
+
+function StageIcon({ stage }: { stage: keyof typeof STAGE_VISUALS }) {
+  const Icon = STAGE_VISUALS[stage].icon;
+  return <Icon className="size-4" weight="bold" aria-hidden="true" />;
 }

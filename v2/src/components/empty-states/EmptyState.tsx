@@ -49,7 +49,7 @@ export function EmptyState({
   return (
     <div
       data-testid={testId}
-      className="group relative flex flex-col items-center justify-center py-20 px-6 border-4 border-border bg-background shadow-hard overflow-hidden"
+      className="group relative flex flex-col items-center justify-center py-20 px-6 border-2 border-border bg-background shadow-hard overflow-hidden"
     >
       {/* Background image - subtle tint */}
       {bgImage && (
@@ -81,7 +81,7 @@ export function EmptyState({
             {illustration}
           </div>
         ) : Icon ? (
-          <div className="p-6 border-4 border-border bg-muted shadow-hard-sm">
+          <div className="p-6 border-2 border-border bg-muted shadow-hard-sm">
             <Icon className="size-24 text-muted-foreground" />
           </div>
         ) : null}

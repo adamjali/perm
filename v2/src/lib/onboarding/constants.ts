@@ -42,11 +42,12 @@ export const ONBOARDING_ROLES: {
 ];
 
 /** PERM stages for the case creation step */
+// Colours and icons come from components/status/stage-visuals (one source).
 export const PERM_STAGES = [
-  { value: "pwd", label: "PWD", color: "bg-blue-500" },
-  { value: "recruitment", label: "Recruitment", color: "bg-purple-500" },
-  { value: "eta9089", label: "ETA 9089", color: "bg-orange-500" },
-  { value: "i140", label: "I-140", color: "bg-green-600" },
+  { value: "pwd", label: "PWD" },
+  { value: "recruitment", label: "Recruitment" },
+  { value: "eta9089", label: "ETA 9089" },
+  { value: "i140", label: "I-140" },
 ] as const;
 
 /** Checklist items for the Getting Started widget */

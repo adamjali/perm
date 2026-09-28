@@ -30,17 +30,28 @@ export type Stage =
   | "rfe";
 
 /**
- * Stage colors for timeline visualization.
- * Matches the design system color palette.
- * PWD=blue, Recruitment=purple, ETA9089=orange, I-140=green, RFI/RFE=red
+ * Stage colours for the timeline and the calendar, as hex because callers
+ * append alpha digits. They are the --stage-* values in globals.css; the
+ * timeline used its own orange and green until Sep 28 2026, so one stage
+ * showed in two colours across the app.
  */
 export const STAGE_COLORS: Record<Stage, string> = {
   pwd: "#0066FF",
-  recruitment: "#9333ea",
-  eta9089: "#ea580c",
-  i140: "#16a34a",
-  rfi: "#dc2626",
-  rfe: "#dc2626",
+  recruitment: "#9333EA",
+  eta9089: "#D97706",
+  i140: "#059669",
+  rfi: "#DC2626",
+  rfe: "#DC2626",
+} as const;
+
+/** Text that reads on each stage fill (white measured 3.2:1 on the amber, 3.8:1 on the teal). */
+export const STAGE_ON_FILL: Record<Stage, string> = {
+  pwd: "#FFFFFF",
+  recruitment: "#FFFFFF",
+  eta9089: "#000000",
+  i140: "#000000",
+  rfi: "#FFFFFF",
+  rfe: "#FFFFFF",
 } as const;
 
 // ============================================================================

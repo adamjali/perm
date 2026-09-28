@@ -246,7 +246,7 @@ export function StickyFooterSkeleton({ className }: StickyFooterSkeletonProps) {
   return (
     <div
       className={cn(
-        "fixed bottom-0 left-0 right-0 bg-background/95 border-t-4 border-border p-4 z-10",
+        "fixed bottom-0 left-0 right-0 bg-background/95 border-t-2 border-border p-4 z-10",
         className
       )}
     >

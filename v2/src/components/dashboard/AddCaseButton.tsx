@@ -37,11 +37,11 @@ export default function AddCaseButton() {
         // Base styling
         "inline-flex items-center justify-center gap-2 px-6 py-3",
         // Typography
-        "font-heading font-bold uppercase text-sm tracking-wide",
+        "font-heading font-bold text-sm",
         // Colors
         "bg-primary text-primary-foreground",
         // Neobrutalist border + shadow
-        "border-4 border-border shadow-hard",
+        "border-2 border-border shadow-hard",
         // No border radius (sharp corners)
         "rounded-none",
         // Cursor pointer for clickable state
@@ -61,7 +61,7 @@ export default function AddCaseButton() {
       ) : (
         <PlusIcon className="size-5" />
       )}
-      <span className="hidden sm:inline">
+      <span>
         {isNavigating ? "Loading..." : "Add New Case"}
       </span>
     </button>

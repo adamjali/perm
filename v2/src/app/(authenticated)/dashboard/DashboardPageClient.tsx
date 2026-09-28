@@ -116,7 +116,7 @@ export function DashboardPageClient() {
 
       {/* Summary Tiles Grid */}
       <QueuePulseWidget />
-      <SummaryTilesGrid cornerVariant="tag" />
+      <SummaryTilesGrid />
 
       {/* Onboarding Checklist - shown for new users after wizard */}
       <OnboardingChecklist />

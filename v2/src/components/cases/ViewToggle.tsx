@@ -101,7 +101,7 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
           {children}
           <div
             className="absolute top-full left-1/2 -translate-x-1/2
-            border-3 border-transparent border-t-foreground"
+            border-2 border-transparent border-t-foreground"
           />
         </motion.div>
       )}

@@ -130,7 +130,7 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
           {/* Arrow pointer */}
           <div
             className="absolute top-full left-1/2 -translate-x-1/2
-            border-4 border-transparent border-t-foreground"
+            border-2 border-transparent border-t-foreground"
           />
         </motion.div>
       )}

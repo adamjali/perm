@@ -1,6 +1,6 @@
 "use client";
 
-import { SuccessCelebrationSVG } from "@/components/illustrations";
+import { CertifiedFormArt } from "@/components/illustrations/CertifiedFormArt";
 import { Button } from "@/components/ui/button";
 import { useOnboarding } from "../OnboardingProvider";
 
@@ -18,7 +18,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
   return (
     <div className="flex flex-col items-center text-center px-2">
       <div className="mb-6">
-        <SuccessCelebrationSVG className="w-32 h-32 sm:w-40 sm:h-40" />
+        <CertifiedFormArt className="w-52 sm:w-60" />
       </div>
 
       <h2 className="font-heading text-2xl sm:text-3xl font-bold mb-2">
@@ -60,7 +60,7 @@ export function CompletionStep({ onTakeTour, onSkip }: CompletionStepProps) {
           size="lg"
           className="w-full"
         >
-          Take a Quick Tour
+          Take a quick tour
         </Button>
 
         <Button

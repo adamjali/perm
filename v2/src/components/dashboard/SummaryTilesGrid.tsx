@@ -2,20 +2,15 @@
 
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
-import SummaryTile, { type CornerVariant } from "./SummaryTile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { NavigableCard } from "@/components/ui/navigable-card";
+import { PermPath, StatBlock } from "@/components/visuals/PermPath";
+import { STAGE_VISUALS } from "@/components/status/stage-visuals";
+import { CheckCircleIcon, CopyIcon } from "@phosphor-icons/react";
 
-interface SummaryTilesGridProps {
-  /** Corner decoration variant for all tiles: "none" (default), "solid", "bar", or "tag" */
-  cornerVariant?: CornerVariant;
-}
-
-function SummaryTilesGridContent({
-  cornerVariant = "none",
-}: SummaryTilesGridProps) {
+function SummaryTilesGridContent() {
   // Get signing out state to skip queries during sign out
   const { isSigningOut } = useAuthContext();
 
@@ -38,9 +33,14 @@ function SummaryTilesGridContent({
         </div>
 
         {/* Grid skeleton */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
+        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
+          {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-36" />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <Skeleton key={i} className="h-28" />
           ))}
         </div>
       </div>
@@ -65,7 +65,7 @@ function SummaryTilesGridContent({
         <NavigableCard
           href="/cases"
           loadingIndicator="spinner"
-          className="group relative bg-primary text-primary-foreground border-2 border-black                     shadow-hard-sm hover:shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5
+          className="group relative bg-primary text-primary-foreground border-2 border-border shadow-hard-sm hover:shadow-hard hover:-translate-x-0.5 hover:-translate-y-0.5
                      active:translate-x-0 active:translate-y-0 active:shadow-none
                      transition-all duration-150 px-4 py-2 overflow-hidden"
         >
@@ -75,78 +75,58 @@ function SummaryTilesGridContent({
               Total
             </span>
           </div>
-          {/* Hover shine effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent
-                          translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500" />
         </NavigableCard>
       </div>
 
-      {/* Tiles grid - 2 cols mobile, 3 cols tablet+ for wider rectangular tiles */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <SummaryTile
-          status="pwd"
-          label="PWD"
-          count={data.pwd.count}
-          subtext={data.pwd.subtext}
-          href="/cases?status=pwd"
-          cornerVariant={cornerVariant || "tag"}
-          progress={data.pwd.progress}
-        />
-        <SummaryTile
-          status="recruitment"
-          label="Recruitment"
-          count={data.recruitment.count}
-          subtext={data.recruitment.subtext}
-          href="/cases?status=recruitment"
-          cornerVariant={cornerVariant || "tag"}
-          progress={data.recruitment.progress}
-        />
-        <SummaryTile
-          status="eta9089"
-          label="ETA 9089"
-          count={data.eta9089.count}
-          subtext={data.eta9089.subtext}
-          href="/cases?status=eta9089"
-          cornerVariant={cornerVariant || "tag"}
-          progress={data.eta9089.progress}
-        />
-        <SummaryTile
-          status="i140"
-          label="I-140"
-          count={data.i140.count}
-          subtext={data.i140.subtext}
-          href="/cases?status=i140"
-          cornerVariant={cornerVariant || "tag"}
-          progress={data.i140.progress}
-        />
-        <SummaryTile
-          status="complete"
-          label="Complete"
-          count={data.complete.count}
-          subtext={data.complete.subtext}
-          href="/cases?status=i140&progress=approved"
-          cornerVariant={cornerVariant || "tag"}
-          progress={data.complete.progress}
-        />
-        <SummaryTile
-          status="closed"
-          label="Closed"
-          count={data.closed.count}
-          subtext={data.closed.subtext}
-          href="/cases?status=closed"
-          cornerVariant={cornerVariant || "tag"}
-          progress={data.closed.progress}
-        />
-        {/* Only show duplicates tile if there are any */}
-        {data.duplicates.count > 0 && (
-          <SummaryTile
-            status="duplicates"
-            label="Duplicates"
-            count={data.duplicates.count}
-            subtext={data.duplicates.subtext}
-            href="/cases?duplicates=true"
-            cornerVariant={cornerVariant || "tag"}
+      {/* The four working stages as the PERM path, each linking to its cases. */}
+      <PermPath
+        label="Cases by stage"
+        className="mb-4"
+        steps={[
+          { stage: "pwd", count: data.pwd.count, note: data.pwd.subtext, href: "/cases?status=pwd" },
+          { stage: "recruitment", count: data.recruitment.count, note: data.recruitment.subtext, href: "/cases?status=recruitment" },
+          { stage: "eta9089", count: data.eta9089.count, note: data.eta9089.subtext, href: "/cases?status=eta9089" },
+          { stage: "i140", count: data.i140.count, note: data.i140.subtext, href: "/cases?status=i140" },
+        ]}
+      />
+
+      {/* Where cases end up, drawn in the same blocks as the path above. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
+        <div data-status="complete">
+          <StatBlock
+            fill="bg-primary"
+            onFill="text-primary-foreground"
+            icon={CheckCircleIcon}
+            label="Complete"
+            count={data.complete.count}
+            note={data.complete.subtext}
+            href="/cases?status=i140&progress=approved"
           />
+        </div>
+        <div data-status="closed">
+          <StatBlock
+            fill={STAGE_VISUALS.closed.fill}
+            onFill={STAGE_VISUALS.closed.onFill}
+            icon={STAGE_VISUALS.closed.icon}
+            label="Closed"
+            count={data.closed.count}
+            note={data.closed.subtext}
+            href="/cases?status=closed"
+          />
+        </div>
+        {/* Only while there are any */}
+        {data.duplicates.count > 0 && (
+          <div data-status="duplicates">
+            <StatBlock
+              fill="bg-data-warn"
+              onFill="text-black"
+              icon={CopyIcon}
+              label="Duplicates"
+              count={data.duplicates.count}
+              note={data.duplicates.subtext}
+              href="/cases?duplicates=true"
+            />
+          </div>
         )}
       </div>
     </div>
@@ -156,10 +136,10 @@ function SummaryTilesGridContent({
 /**
  * SummaryTilesGrid wrapped with ErrorBoundary to gracefully handle query errors.
  */
-export default function SummaryTilesGrid(props: SummaryTilesGridProps) {
+export default function SummaryTilesGrid() {
   return (
     <ErrorBoundary>
-      <SummaryTilesGridContent {...props} />
+      <SummaryTilesGridContent />
     </ErrorBoundary>
   );
 }

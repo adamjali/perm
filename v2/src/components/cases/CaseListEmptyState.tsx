@@ -16,7 +16,7 @@
  * Created: 2025-12-24
  */
 
-import { FolderOpenIcon, FunnelIcon as Filter } from "@phosphor-icons/react/ssr";
+import { DocketFolderArt } from "@/components/illustrations/DocketFolderArt";
 import { Button } from "@/components/ui/button";
 
 // ============================================================================
@@ -42,18 +42,13 @@ export function CaseListEmptyState({
     return (
       <div
         data-testid="empty-state-new-user"
-        className="flex flex-col items-center justify-center py-20 px-6 border-3 border-border bg-background shadow-hard"
+        className="flex flex-col items-center justify-center py-20 px-6 border-2 border-border bg-background shadow-hard"
       >
-        {/* Empty Filing Cabinet Icon */}
-        <div className="mb-6 p-6 border-3 border-border bg-muted shadow-hard-sm">
-          <FolderOpenIcon className="size-24 text-muted-foreground" />
-        </div>
+        <DocketFolderArt variant="empty" className="mb-6 w-52" />
 
-        {/* Message */}
         <h2 className="font-heading text-2xl font-bold mb-2">No cases yet</h2>{" "}
         <p className="text-muted-foreground text-center max-w-md mb-6">
-          Get started by adding your first PERM case. Track deadlines, manage documents,
-          and stay organized.
+          Add a case and its deadlines appear here, on your calendar and in your reminders.
         </p>{" "}
 
         {/* CTA Button */}
@@ -68,19 +63,15 @@ export function CaseListEmptyState({
   return (
     <div
       data-testid="empty-state-no-results"
-      className="flex flex-col items-center justify-center py-20 px-6 border-3 border-border bg-background shadow-hard"
+      className="flex flex-col items-center justify-center py-20 px-6 border-2 border-border bg-background shadow-hard"
     >
-      {/* Filter Icon */}
-      <div className="mb-6 p-6 border-3 border-border bg-muted shadow-hard-sm">
-        <Filter className="size-24 text-muted-foreground" />
-      </div>
+      <DocketFolderArt variant="no-match" className="mb-6 w-52" />
 
-      {/* Message */}
       <h2 className="font-heading text-2xl font-bold mb-2">
-        No cases match your filters
+        No cases match these filters
       </h2>{" "}
       <p className="text-muted-foreground text-center max-w-md mb-6">
-        Try adjusting your filters to see more results.
+        Clear them to see every case again.
       </p>
 
       {/* CTA Button */}

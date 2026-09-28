@@ -73,8 +73,8 @@ describe("TimelineMilestoneMarker - Stage Colors", () => {
   it.each([
     ["pwd", "#0066FF"],
     ["recruitment", "#9333ea"],
-    ["eta9089", "#ea580c"],
-    ["i140", "#16a34a"],
+    ["eta9089", "#D97706"],
+    ["i140", "#059669"],
     ["rfi", "#dc2626"],
   ] as const)("applies %s stage color (%s)", (stage, color) => {
     const { container } = renderWithProviders(
@@ -83,7 +83,7 @@ describe("TimelineMilestoneMarker - Stage Colors", () => {
         milestone={createMockMilestone({ stage, color })}
       />
     );
-    expect(container.querySelector(".rounded-full")).toHaveStyle({ backgroundColor: color });
+    expect(container.querySelector(".size-4")).toHaveStyle({ backgroundColor: color });
   });
 });
 
@@ -191,16 +191,22 @@ describe("TimelineMilestoneMarker - Click Navigation", () => {
 
 describe("TimelineMilestoneMarker - Neobrutalist Styling", () => {
   it.each([
-    [".w-4.h-4", "16px dot size"],
-    [".border-\\[3px\\]", "3px border"],
+    [".size-4", "16px square marker"],
+    [".border-2", "2px border, the system weight"],
     [".border-foreground", "foreground border color"],
     [".shadow-hard-sm", "shadow-hard-sm"],
-    [".rounded-full", "circle shape"],
   ])("dot has %s (%s)", (selector) => {
     const { container } = renderWithProviders(
       <TimelineMilestoneMarker {...getDefaultProps()} />
     );
     expect(container.querySelector(selector)).toBeInTheDocument();
+  });
+
+  it("is square, like every other mark in the app", () => {
+    const { container } = renderWithProviders(
+      <TimelineMilestoneMarker {...getDefaultProps()} />
+    );
+    expect(container.querySelector(".rounded-full")).toBeNull();
   });
 });
 
@@ -222,7 +228,7 @@ describe("TimelineMilestoneMarker - Calculated Milestones", () => {
         milestone={createMockMilestone({ isCalculated: false })}
       />
     );
-    expect(container.querySelector(".rounded-full")).not.toHaveClass("border-dashed");
+    expect(container.querySelector(".size-4")).not.toHaveClass("border-dashed");
   });
 });
 

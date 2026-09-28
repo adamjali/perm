@@ -21,7 +21,8 @@ describe("SummaryTilesGrid", () => {
     vi.mocked(useQuery).mockReturnValue(undefined);
     const { container } = renderWithProviders(<SummaryTilesGrid />);
 
-    expect(container.querySelectorAll(".h-36").length).toBeGreaterThanOrEqual(6);
+    // Four path blocks and the outcome tiles below them.
+    expect(container.querySelectorAll(".h-36, .h-28").length).toBeGreaterThanOrEqual(6);
     expect(screen.queryByText("Case Summary")).not.toBeInTheDocument();
   });
 

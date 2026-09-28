@@ -1,5 +1,6 @@
 "use client";
 
+import { WarningIcon } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { motion } from "motion/react";
 import { itemVariants, fmtISODate } from "./case-detail-utils";
@@ -26,11 +27,7 @@ interface ResponseEntryGridProps {
  * Shared RFI/RFE entry grid used by ETA9089Tab and I140Tab.
  * The two sections are structurally identical, differing only in labels and icons.
  */
-const alertTriangleIcon = (
-  <svg className="h-3.5 w-3.5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/>
-  </svg>
-);
+const alertTriangleIcon = <WarningIcon className="h-3.5 w-3.5" weight="bold" aria-hidden="true" />;
 
 export function ResponseEntryGrid({
   type,

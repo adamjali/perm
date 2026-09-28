@@ -1,34 +1,25 @@
-/**
- * Custom Calendar Event Component - V1 Style
- *
- * Simple colorful event pills with Tippy.js tooltips.
- * Exactly matches v1 calendar design.
- *
- * Phase: 23.1 (Calendar UI)
- * Updated: 2025-12-30
- */
-
 "use client";
 
+/**
+ * CalendarEvent
+ *
+ * A deadline pill on the calendar, in its stage colour with ink that reads on
+ * it, and a case summary on hover. The summary uses the app's own tooltip
+ * (Radix) in place of Tippy, whose React wrapper read `element.ref` and warned
+ * under React 19 on every calendar render.
+ */
+
 import { forwardRef } from "react";
-import Tippy from "@tippyjs/react";
-import "tippy.js/dist/tippy.css";
 import type { EventProps } from "react-big-calendar";
 import { useRouter } from "next/navigation";
 
-import { type CalendarEvent as CalendarEventType, STAGE_COLORS } from "@/lib/calendar/types";
-
-// ============================================================================
-// Types
-// ============================================================================
+import { type CalendarEvent as CalendarEventType, STAGE_COLORS, STAGE_ON_FILL } from "@/lib/calendar/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 
 interface CalendarEventProps extends EventProps<CalendarEventType> {
   event: CalendarEventType;
 }
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
 
 function formatStatus(status: string): string {
   return status
@@ -38,130 +29,98 @@ function formatStatus(status: string): string {
     .trim();
 }
 
-function formatStage(stage: string): string {
-  const stageLabels: Record<string, string> = {
-    pwd: "PWD",
-    recruitment: "Recruitment",
-    eta9089: "ETA 9089",
-    i140: "I-140",
-    closed: "Closed",
-  };
-  return stageLabels[stage] ?? stage;
-}
-
-function getUrgencyClass(urgency: string): string {
-  if (urgency === "overdue" || urgency === "urgent") {
-    return "case-tooltip-deadline--urgent";
-  }
-  if (urgency === "soon") {
-    return "case-tooltip-deadline--warning";
-  }
-  return "case-tooltip-deadline--info";
-}
+const STAGE_LABELS: Record<string, string> = {
+  pwd: "PWD",
+  recruitment: "Recruitment",
+  eta9089: "ETA 9089",
+  i140: "I-140",
+  closed: "Closed",
+};
 
 function formatDaysText(daysUntil: number): string {
-  if (daysUntil < 0) {
-    return `${Math.abs(daysUntil)} days ago`;
-  }
-  if (daysUntil === 0) {
-    return "Today";
-  }
+  if (daysUntil < 0) return `${Math.abs(daysUntil)} days ago`;
+  if (daysUntil === 0) return "Today";
   return `${daysUntil} days`;
 }
 
-// ============================================================================
-// Tooltip Content Component
-// ============================================================================
-
-function TooltipContent({ event }: { event: CalendarEventType }) {
-  const stageColor = STAGE_COLORS[event.stage] ?? "#6B7280";
-  const urgencyClass = getUrgencyClass(event.urgency);
-  const daysText = formatDaysText(event.daysUntil);
+/** The hover summary: stage-coloured header, status and stage, the deadline. */
+function CaseSummary({ event }: { event: CalendarEventType }) {
+  const fill = STAGE_COLORS[event.stage] ?? "#6B7280";
+  const ink = STAGE_ON_FILL[event.stage] ?? "#FFFFFF";
+  const urgent = event.urgency === "urgent" || event.urgency === "overdue";
+  const soon = event.urgency === "soon";
 
   return (
-    <div className="case-tooltip">
-      {/* Header - black background with white text (v1 style) */}
-      <div
-        className="case-tooltip-header"
-        style={{ backgroundColor: stageColor }}
-      >
-        <div className="case-tooltip-employer" title={event.employerName || undefined}>
-          {event.employerName || "Unknown Employer"}
-        </div>
+    <div className="w-72">
+      <div className="border-b-2 border-border px-3 py-2" style={{ backgroundColor: fill, color: ink }}>
+        <p className="truncate font-heading text-sm font-bold" title={event.employerName || undefined}>
+          {event.employerName || "Unknown employer"}
+        </p>{" "}
         {event.positionTitle && (
-          <div className="case-tooltip-position" title={event.positionTitle}>{event.positionTitle}</div>
+          <p className="truncate text-sm" title={event.positionTitle}>
+            {event.positionTitle}
+          </p>
         )}
       </div>
-
-      {/* Body */}
-      <div className="case-tooltip-body">
-        {/* Status row */}
+      <dl className="space-y-1 px-3 py-2 text-sm">
         {event.caseStatus && (
-          <div className="case-tooltip-row">
-            <span className="case-tooltip-label">Status</span>{" "}
-            <span
-              className="case-tooltip-status"
-              style={{ color: stageColor, borderColor: stageColor }}
-            >
-              {formatStatus(event.caseStatus)}
-            </span>
+          <div className="flex items-center justify-between gap-3">
+            <dt className="text-muted-foreground">Status</dt>{" "}
+            <dd className="font-semibold">{formatStatus(event.caseStatus)}</dd>
           </div>
+        )}{" "}
+        <div className="flex items-center justify-between gap-3">
+          <dt className="text-muted-foreground">Stage</dt>{" "}
+          <dd className="font-semibold">{STAGE_LABELS[event.stage] ?? event.stage}</dd>
+        </div>
+      </dl>
+      <div
+        className={cn(
+          "flex items-center justify-between gap-3 border-t-2 border-border px-3 py-2",
+          urgent ? "bg-destructive/10" : soon ? "bg-data-warn/15" : "bg-muted",
         )}
-
-        {/* Stage row */}
-        <div className="case-tooltip-row">
-          <span className="case-tooltip-label">Stage</span>{" "}
-          <span className="case-tooltip-value">{formatStage(event.stage)}</span>
-        </div>
-
-        {/* Deadline info */}
-        <div className={`case-tooltip-deadline ${urgencyClass}`}>
-          <div className="case-tooltip-deadline-label">{event.title.split(":")[0]}</div>
-          <div className="case-tooltip-deadline-value">{daysText}</div>
-        </div>
+      >
+        <span className="font-heading text-sm font-bold">{event.title.split(":")[0]}</span>{" "}
+        <span
+          className={cn(
+            "shrink-0 font-mono text-sm font-bold",
+            urgent ? "text-destructive" : soon ? "text-data-warn-ink" : "text-foreground",
+          )}
+        >
+          {formatDaysText(event.daysUntil)}
+        </span>
       </div>
     </div>
   );
 }
 
-// ============================================================================
-// Event Pill Component (forwardRef for React 19 + Tippy compatibility)
-// ============================================================================
-
-interface EventPillProps {
-  stageColor: string;
+interface EventPillProps extends React.HTMLAttributes<HTMLDivElement> {
+  fill: string;
+  ink: string;
   isUrgent: boolean;
   title: string;
-  onClick: (e: React.MouseEvent) => void;
 }
 
-const EventPill = forwardRef<HTMLDivElement, EventPillProps>(
-  ({ stageColor, isUrgent, title, onClick }, ref) => (
-    <div
-      ref={ref}
-      className="calendar-event"
-      style={{
-        backgroundColor: stageColor,
-        borderLeft: isUrgent ? "4px solid #dc2626" : undefined,
-      }}
-      onClick={onClick}
-    >
-      {/* The calendar emoji that used to sit here rendered on EVERY pill
-          unconditionally, so it distinguished nothing, and emoji are not
-          part of this UI's vocabulary. */}
-      <span className="event-title">{title}</span>
-    </div>
-  )
-);
+const EventPill = forwardRef<HTMLDivElement, EventPillProps>(({ fill, ink, isUrgent, title, style, ...rest }, ref) => (
+  <div
+    ref={ref}
+    className="calendar-event"
+    style={{
+      ...style,
+      backgroundColor: fill,
+      color: ink,
+      // An urgent deadline gets a full red frame, not a coloured side stripe.
+      boxShadow: isUrgent ? "inset 0 0 0 2px var(--urgency-urgent)" : undefined,
+    }}
+    {...rest}
+  >
+    <span className="event-title">{title}</span>
+  </div>
+));
 EventPill.displayName = "EventPill";
-
-// ============================================================================
-// Main Component
-// ============================================================================
 
 export function CalendarEvent({ event }: CalendarEventProps) {
   const router = useRouter();
-  const stageColor = STAGE_COLORS[event.stage] ?? "#6B7280";
   const isUrgent = event.urgency === "urgent" || event.urgency === "overdue";
 
   const handleClick = (e: React.MouseEvent) => {
@@ -170,37 +129,22 @@ export function CalendarEvent({ event }: CalendarEventProps) {
   };
 
   return (
-    <Tippy
-      content={<TooltipContent event={event} />}
-      placement="top"
-      arrow={true}
-      theme="case-summary"
-      interactive={true}
-      appendTo={() => document.body}
-      maxWidth={320}
-      offset={[0, 8]}
-      delay={[200, 0]}
-      duration={[200, 150]}
-      popperOptions={{
-        modifiers: [
-          {
-            name: "flip",
-            options: { fallbackPlacements: ["bottom", "left", "right"] },
-          },
-          {
-            name: "preventOverflow",
-            options: { boundary: "viewport", padding: 10 },
-          },
-        ],
-      }}
-    >
-      <EventPill
-        stageColor={stageColor}
-        isUrgent={isUrgent}
-        title={event.title}
-        onClick={handleClick}
-      />
-    </Tippy>
+    <TooltipProvider delayDuration={200}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <EventPill
+            fill={STAGE_COLORS[event.stage] ?? "#6B7280"}
+            ink={STAGE_ON_FILL[event.stage] ?? "#FFFFFF"}
+            isUrgent={isUrgent}
+            title={event.title}
+            onClick={handleClick}
+          />
+        </TooltipTrigger>
+        <TooltipContent side="top" sideOffset={8} collisionPadding={10} className="overflow-hidden p-0 shadow-hard">
+          <CaseSummary event={event} />
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

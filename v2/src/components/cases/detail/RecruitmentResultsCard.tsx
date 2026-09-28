@@ -305,7 +305,7 @@ export function RecruitmentResultsCard({
         {status.status !== "incomplete" && (
           <div
             className={cn(
-              "border-b-3 border-border p-4",
+              "border-b-2 border-border p-4",
               config.bg
             )}
           >
@@ -359,8 +359,8 @@ export function RecruitmentResultsCard({
         {/* ── DOL Text ── */}
         <div
           className={cn(
-            "border-b-3 border-border p-4",
-            isCustom && !isEditing && "border-l-3 border-l-primary"
+            "border-b-2 border-border p-4",
+            isCustom && !isEditing && "border-l-2 border-l-primary"
           )}
         >
           {isEditing ? (

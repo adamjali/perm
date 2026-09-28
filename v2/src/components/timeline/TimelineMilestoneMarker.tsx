@@ -131,11 +131,11 @@ export function TimelineMilestoneMarker({
       role={onNavigate ? "button" : "img"}
       aria-label={`${milestone.label}: ${formatISODate(milestone.date)}${onNavigate ? " - Click to view case" : ""}`}
     >
-      {/* Milestone dot with spring scale animation - 16px size */}
+      {/* Milestone marker: a square, like every other mark in the app */}
       <motion.div
         className={cn(
-          "w-4 h-4 rounded-full",
-          "border-[3px] border-foreground",
+          "size-4",
+          "border-2 border-foreground",
           "shadow-hard-sm",
           // Dashed border for calculated milestones
           milestone.isCalculated && "border-dashed"
@@ -171,7 +171,7 @@ export function TimelineMilestoneMarker({
             {/* Arrow pointer */}
             <div
               className="absolute top-full left-1/2 -translate-x-1/2
-              border-4 border-transparent border-t-foreground"
+              border-2 border-transparent border-t-foreground"
             />
           </motion.div>
         )}

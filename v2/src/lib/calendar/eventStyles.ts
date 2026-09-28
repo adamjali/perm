@@ -7,7 +7,7 @@
  */
 
 import type { EventPropGetter } from "react-big-calendar";
-import { STAGE_COLORS, URGENCY_COLORS } from "./types";
+import { STAGE_COLORS, STAGE_ON_FILL, URGENCY_COLORS } from "./types";
 import type { CalendarEvent } from "./types";
 
 /**
@@ -20,7 +20,7 @@ export const eventStyleBase = {
   fontWeight: 600,
   fontSize: "0.7rem",
   padding: "1px 2px",
-  boxShadow: "2px 2px 0 rgba(0, 0, 0, 0.2)",
+  boxShadow: "var(--shadow-hard-sm)",
 };
 
 /**
@@ -35,14 +35,14 @@ export function createEventPropGetter(): EventPropGetter<CalendarEvent> {
     const borderColor =
       event.urgency === "overdue" || event.urgency === "urgent"
         ? urgencyColor
-        : "#1a1a1a";
+        : "#000000";
 
     return {
       style: {
         ...eventStyleBase,
         backgroundColor: stageColor,
         borderColor,
-        color: "#ffffff",
+        color: STAGE_ON_FILL[event.stage] ?? "#FFFFFF",
       },
     };
   };

@@ -85,14 +85,14 @@ export function OnboardingWizard() {
             onClick={handleSkipWizard}
             disabled={isSkipping}
             className={cn(
+              // Drawn like the dialog close control, with the app's focus ring.
               "absolute top-3 right-3 z-50",
-              "flex items-center gap-1.5 px-2.5 py-1.5",
-              "text-xs font-mono font-medium uppercase tracking-wider",
-              "text-muted-foreground hover:text-foreground",
-              "border border-transparent hover:border-border",
-              "transition-all duration-150",
-              "hover:bg-muted hover:shadow-hard-sm",
-              "disabled:opacity-50 disabled:cursor-wait"
+              "inline-flex h-11 items-center gap-1.5 px-3 md:h-9",
+              "font-heading text-sm font-bold text-muted-foreground",
+              "border-2 border-transparent transition-colors duration-150",
+              "hover:border-border hover:bg-accent hover:text-foreground",
+              "outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50",
+              "disabled:cursor-wait disabled:text-muted-foreground"
             )}
             aria-label="Skip setup and explore with sample data"
           >

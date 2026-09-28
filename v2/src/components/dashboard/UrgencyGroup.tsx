@@ -1,5 +1,6 @@
 "use client";
 
+import { CheckCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
 import type { DeadlineItem as DeadlineItemType, UrgencyGroup as UrgencyType } from "../../../convex/lib/dashboardTypes";
 import DeadlineItemCard from "./DeadlineItem";
@@ -17,28 +18,12 @@ interface UrgencyGroupProps {
   isLast?: boolean;
 }
 
-// V1-style urgency gradient backgrounds and colors
-const URGENCY_STYLES: Record<UrgencyType, { gradient: string; color: string; darkGradient: string }> = {
-  overdue: {
-    gradient: "bg-gradient-to-br from-destructive/15 to-destructive/5",
-    darkGradient: " ",
-    color: "text-destructive",
-  },
-  thisWeek: {
-    gradient: "bg-gradient-to-br from-data-warn/12 to-data-warn/4",
-    darkGradient: " ",
-    color: "text-data-warn-ink",
-  },
-  thisMonth: {
-    gradient: "bg-gradient-to-br from-data-warn/10 to-data-warn/3",
-    darkGradient: " ",
-    color: "text-data-warn-ink",
-  },
-  later: {
-    gradient: "bg-gradient-to-br from-primary/8 to-primary/2",
-    darkGradient: " ",
-    color: "text-primary",
-  },
+// Flat tints by urgency: one fill, no decorative gradient wash.
+const URGENCY_STYLES: Record<UrgencyType, { tint: string; color: string }> = {
+  overdue: { tint: "bg-destructive/10", color: "text-destructive" },
+  thisWeek: { tint: "bg-data-warn/15", color: "text-data-warn-ink" },
+  thisMonth: { tint: "bg-data-warn/10", color: "text-data-warn-ink" },
+  later: { tint: "bg-primary/10", color: "text-primary" },
 };
 
 export default function UrgencyGroup({
@@ -58,8 +43,8 @@ export default function UrgencyGroup({
   return (
     <div
       className={`
-        p-4 min-h-[120px]
-        ${style.gradient} ${style.darkGradient}
+        p-4 md:min-h-[120px]
+        ${style.tint}
         ${!isLast ? "border-r-2 border-border" : ""}
         md:border-b-0
         border-b-2 md:border-b-0 last:border-b-0
@@ -83,20 +68,10 @@ export default function UrgencyGroup({
 
       {/* Items list */}
       {items.length === 0 ? (
-        <div className="py-6 text-center text-muted-foreground text-sm opacity-60">
-          <svg
-            className="w-8 h-8 mx-auto mb-2 opacity-30"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
+        // A compact row on a phone (an empty group needn't take a screen),
+        // a centred mark from md up where the four groups sit side by side.
+        <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground md:flex-col md:justify-center md:py-6">
+          <CheckCircleIcon className="size-5 md:size-8" aria-hidden="true" />
           No deadlines
         </div>
       ) : (
