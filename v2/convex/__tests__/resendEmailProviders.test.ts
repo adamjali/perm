@@ -61,9 +61,11 @@ const providers = [
 ] as const;
 
 /** Fresh stub ctx per call so scheduler.runAfter call counts are isolated. */
-function makeCtx() {
+function makeCtx(allowed = true) {
   return {
     scheduler: { runAfter: vi.fn(async () => null) },
+    // The sending limit (convex/authMail.ts), charged through the action ctx.
+    runMutation: vi.fn(async () => allowed),
   } as never;
 }
 
@@ -152,6 +154,36 @@ describe("Resend email providers — send-failure handling (C3)", () => {
       expect(sendMock).toHaveBeenCalledTimes(1);
       // No error path → recordError never ran → no work scheduled on our ctx.
       expect(schedulerOf(ctx).runAfter).not.toHaveBeenCalled();
+    });
+
+    it("charges the sending limit before it sends", async () => {
+      sendMock.mockResolvedValue({ error: null });
+      const { provider } = await loadProvider(key);
+      const ctx = makeCtx();
+      await sendWithCtx(provider, { identifier: "User@Example.com", token: "ABCDEF123456" }, ctx);
+      const charge = (ctx as unknown as { runMutation: ReturnType<typeof vi.fn> }).runMutation;
+      expect(charge).toHaveBeenCalledTimes(1);
+      expect(charge.mock.calls[0]![1]).toEqual({ email: "User@Example.com" });
+      expect(charge.mock.invocationCallOrder[0]!).toBeLessThan(sendMock.mock.invocationCallOrder[0]!);
+    });
+
+    it("sends nothing and says 'too many' when the limit refuses", async () => {
+      const { provider } = await loadProvider(key);
+      const { AUTH_MAIL_REFUSED } = await import("../lib/authMailGate");
+      await expect(
+        sendWithCtx(provider, { identifier: "user@example.com", token: "ABCDEF123456" }, makeCtx(false)),
+      ).rejects.toThrow(AUTH_MAIL_REFUSED);
+      expect(sendMock).not.toHaveBeenCalled();
+      expect(AUTH_MAIL_REFUSED).toMatch(/too many/i);
+    });
+
+    it("refuses rather than sends when there is no ctx to charge through", async () => {
+      const { provider } = await loadProvider(key);
+      const bare = { scheduler: { runAfter: vi.fn(async () => null) } } as never;
+      await expect(
+        sendWithCtx(provider, { identifier: "user@example.com", token: "ABCDEF123456" }, bare),
+      ).rejects.toThrow(/couldn't send/i);
+      expect(sendMock).not.toHaveBeenCalled();
     });
 
     it("skips blocklisted recipients entirely (no send, no error)", async () => {

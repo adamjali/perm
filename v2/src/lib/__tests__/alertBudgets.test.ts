@@ -3,7 +3,7 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { BUDGETS } from "../../../convex/lib/alertBudgets";
+import { BUDGETS, LIST_MAIL_POOLS } from "../../../convex/lib/alertBudgets";
 
 /**
  * The budget table the senders enforce and the admin panel reports is held to
@@ -13,8 +13,11 @@ import { BUDGETS } from "../../../convex/lib/alertBudgets";
  */
 describe("the daily email budget table", () => {
   it("sums to the 75 a day the Resend ledger promises, line by line", () => {
-    expect(Object.values(BUDGETS).reduce((a, b) => a + b.limit, 0)).toBe(75);
+    expect(LIST_MAIL_POOLS.reduce((a, name) => a + BUDGETS[name].limit, 0)).toBe(75);
+    // Every pool is either list mail or the sign-in codes; nothing is uncounted.
+    expect(Object.keys(BUDGETS).sort()).toEqual([...LIST_MAIL_POOLS, "authMail"].sort());
     const ledger = readFileSync(join(process.cwd(), "convex/caseAlerts.ts"), "utf8");
+    expect(ledger).toMatch(new RegExp(`sign-in and reset codes\\s+${BUDGETS.authMail.limit}/day`));
     expect(ledger).toMatch(/worst case from list mail\s+75\/day/);
     for (const [line, n] of [
       ["queue-alert confirmations", BUDGETS.queueConfirm.limit],

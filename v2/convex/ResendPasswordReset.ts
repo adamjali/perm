@@ -4,13 +4,17 @@ import { Resend as ResendAPI } from "resend";
 import { render } from "@react-email/render";
 import { generateSecureOTP } from "./lib/crypto";
 import { isEmailBlocked } from "./lib/emailBlocklist";
+import { chargeAuthMail, type ChargeCtx } from "./lib/authMailGate";
 import { recordError } from "./lib/errorRecording";
 import { PasswordResetCode } from "../src/emails/PasswordResetCode";
 
 // See ResendOTP.ts: @convex-dev/auth passes the Convex action ctx as a 2nd arg
 // at runtime under its own @ts-expect-error (the @auth/core EmailConfig type
-// only declares one param). We type the minimum ctx surface recordError needs.
-type SendCtx = { scheduler: { runAfter: (delay: number, fn: unknown, args: unknown) => Promise<unknown> } };
+// only declares one param). We type the minimum ctx surface recordError and the
+// sending limit (convex/lib/authMailGate.ts) need.
+type SendCtx = ChargeCtx & {
+  scheduler: { runAfter: (delay: number, fn: unknown, args: unknown) => Promise<unknown> };
+};
 
 export const ResendPasswordReset = Email({
   id: "resend-password-reset",
@@ -27,6 +31,10 @@ export const ResendPasswordReset = Email({
       console.warn(`[ResendPasswordReset] Skipping: blocklisted recipient ${email}`);
       return;
     }
+
+    // Counted before anything leaves: 5 codes an hour per address and 40 a
+    // day site-wide (convex/authMail.ts). Throws a "too many" ConvexError.
+    await chargeAuthMail(ctx, email);
 
     const resend = new ResendAPI(process.env.AUTH_RESEND_KEY!);
 

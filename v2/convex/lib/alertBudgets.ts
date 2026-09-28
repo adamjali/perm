@@ -27,7 +27,28 @@ export const BUDGETS = {
   bulletinConfirm: { key: "bulletin_subscribe_global", limit: 6, label: "Bulletin alert confirmations" },
   bulletinAlert: { key: "bulletin_alert_global", limit: 12, label: "Bulletin alerts" },
   prefsLink: { key: "prefs_link_global", limit: 6, label: "Preference-page links" },
+  /**
+   * Sign-in and password-reset codes (convex/authMail.ts). Not list mail: these
+   * are the emails whose absence locks someone out, so the pool sits above the
+   * busiest measured day instead of inside the list ledger's remainder. See the
+   * ledger in convex/caseAlerts.ts.
+   */
+  authMail: { key: "auth_mail_global", limit: 40, label: "Sign-in and reset codes" },
 } as const;
+
+/** The list-mail pools, the ones the ledger's 75 a day adds up. */
+export const LIST_MAIL_POOLS = [
+  "caseConfirm",
+  "caseAlert",
+  "queueConfirm",
+  "bulletinConfirm",
+  "bulletinAlert",
+  "prefsLink",
+] as const satisfies readonly (keyof typeof BUDGETS)[];
+
+/** Codes to one address, whatever kind: enough for a few resends, not a flood. */
+export const AUTH_MAIL_ADDRESS_KEY = "auth_mail_address";
+export const AUTH_MAIL_PER_ADDRESS = { limit: 5, windowMs: 60 * 60 * 1000 };
 
 export type BudgetName = keyof typeof BUDGETS;
 

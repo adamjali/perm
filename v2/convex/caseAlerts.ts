@@ -83,6 +83,16 @@
  * Outside the list budget: the daily operator report, 1/day to the admin
  * address only (convex/dailyReport.ts). Auth mail keeps 24 on the worst day.
  *
+ *   sign-in and reset codes        40/day   (convex/authMail.ts)
+ *
+ * Enforced since Sep 28 2026, when a password-reset request turned out to be
+ * able to send mail to any registered address with nothing counting it. The
+ * pool sits ABOVE the 24 left over, on purpose: 17 accounts were made on the
+ * busiest day of September 2026, and a cap that turns a real person away
+ * from their own sign-in costs more than a day that spills past Resend's
+ * 100. Both at their ceiling is 116; Resend refuses the overflow, and that
+ * is the day to leave the free plan. Per address, 5 codes an hour.
+ *
  * That 25/day is the entire remaining headroom for AUTH mail - password
  * resets and OTP codes - and it is the number to check before adding any
  * sending path, because those are the emails whose absence locks somebody out
