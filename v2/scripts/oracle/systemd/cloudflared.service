@@ -1,0 +1,16 @@
+[Unit]
+Description=Cloudflare Tunnel (the site's only way in; the server dials out)
+After=network-online.target
+Wants=network-online.target
+[Service]
+User=cloudflared
+Group=cloudflared
+ExecStart=/usr/local/bin/cloudflared --no-autoupdate tunnel run --token-file /etc/cloudflared/token
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+[Install]
+WantedBy=multi-user.target

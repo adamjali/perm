@@ -23,7 +23,8 @@ GitHub Actions ─(ssh, deploy key)─▶ permtracker-deploy       (new releases
 | database | `permtracker-db.service` | libsql-server 0.24.33 (official image build of 2026-08-23), JWT logins: `"a":"ro"` reads, `"a":"rw"` writes |
 | database in RAM | `permtracker-dbcache.service` | `vmtouch -l` locks the file in memory: reads from RAM, and used memory stays above Oracle's idle line (measured 11% at rest, 37% locked; the rule reclaims an A1 instance whose p95 CPU, network AND memory are all under 20% for 7 days). Capped at 6 GB |
 | website | `permtracker-web@blue`, `@green` | Next.js standalone build, one copy serves, the other is the instant rollback |
-| front door | `nginx/permtracker.conf` | loopback only; the rate limits Vercel's firewall used to enforce; verified crawlers exempt via the `x-pt-verified-bot` header Cloudflare sets |
+| front door | `nginx/permtracker.conf` | loopback only; the rate limits Vercel's firewall used to enforce (nothing under `/_next/` counts, as on Vercel); verified crawlers exempt via the `x-pt-verified-bot` header Cloudflare sets, and the site's own audit scripts via `x-permtracker-audit` matching the key in `/etc/nginx/permtracker-audit-key.conf` (root, 600; never in this repo) |
+| the way in | `systemd/cloudflared.service` | remotely managed Cloudflare Tunnel `permtracker-oracle`; runs as its own `cloudflared` user; token in `/etc/cloudflared/token` (root:cloudflared 440). Its routes (staging, db; the apex and www on switch day) are set in Cloudflare, not here |
 | deploys | `bin/permtracker-deploy` | the only command the deploy key can run: `deploy <id>`, `rollback`, `status` |
 | crons | `permtracker-cron@*.timer` | the ten `vercel.json` crons, same UTC times, calling the same routes with `CRON_SECRET` |
 | USCIS fetches | `permtracker-uscis@*.timer` | the Mac's three launchd jobs, same Eastern times (`www.uscis.gov` answers this server) |
