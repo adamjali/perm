@@ -198,3 +198,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 26 2026".
 - **One-click unsubscribe POSTs bypass the firewall** (rule 13); they had been answered with a
   429 challenge, mail already sent included. Decided cases keep their daily re-check: "final"
   statuses were measured moving.
+
+## Sep 28 2026, in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 28 2026".
+
+- **Heavy salary selections are precomputed** in `wage_views` (5,000+ filings), in the SQL's own arithmetic.
+- **Firewall rule 14 lets sign-in POSTs through**: flagged browsers were being challenged mid-sign-in.
+- **A morning report is emailed daily** (health, runs, site, bills, traffic, errors) and a routine reviews it.
+- **The entity load swaps tables in one transaction**, so no page reads a half-built table.

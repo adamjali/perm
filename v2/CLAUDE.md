@@ -5180,6 +5180,7 @@ config version 13 -> 16.
 | 11 | **Bypass AI assistants and AI crawlers** | user agent contains Claude-User, ClaudeBot, Claude-SearchBot, ChatGPT-User, OAI-SearchBot, GPTBot, PerplexityBot, Perplexity-User, meta-externalfetcher, Amazonbot, DuckAssistBot or Google-Extended |
 | 12 | **Allow every cheap path** | two OR groups: every path NOT under `/api/`, `/ingest/`, `/perm-employers/compare`, `/prefs`, `/unsubscribe`, `/queue-alert`, `/case-alert`, `/bulletin-alert`, `/employer-alert` (added Sep 26) and not `/perm-case-status`; or that lookup path WITHOUT a `case` query |
 | 13 | **Bypass one-click unsubscribe POSTs** (Sep 26 2026) | method POST AND path exactly `/prefs/unsubscribe`, `/unsubscribe`, or `/case-alert/unsubscribe` and its queue, bulletin and employer siblings. Mail providers send RFC 8058 one-click from their own servers, which cannot pass a browser challenge: measured before the rule, every one of those POSTs got 429 `challenge`, mail already in inboxes included. Each endpoint checks a purpose-scoped signed token and can only turn mail off; GETs stay challenged |
+| 14 | **Bypass sign-in POSTs to the auth proxy** (Sep 28 2026) | method POST AND path exactly `/api/auth`. That route is Convex Auth's proxy for password sign-in, codes, Google sign-in and TOKEN REFRESH. A browser Bot Protection flagged got the challenge page as the fetch reply, so `signIn` threw `Unexpected token '<'` (Safari: `The string did not match the expected pattern`) and the person could not sign in (Sentry 4A, 4D, 4G); a challenged refresh also leaves a signed-in user's next mutation unauthenticated (the onboarding `Server Error`s, 4B and 46). `auth:signIn` is a public action on the Convex deployment anyway, so the challenge protected nothing; rule 3 still rate-limits `/api`. Measured after: POST reaches the app (a junk body gets Convex Auth's own 400), GET and every other `/api` path still 429 |
 
 **Measured after:** a plain script gets 200 on every page and 429 on the
 restricted set; a script claiming any listed assistant passes the live lookup
@@ -6633,3 +6634,46 @@ what it imports.
 from its TEMPLATED list: each page a cold ISR render on a fresh deploy. Stopped a few hundred pages in;
 the list now carries them, `/embed/`, `/visa-bulletin/categories/` and the bulletin months, and a
 comment saying a new [slug] family goes on it the day it ships.
+
+## Sep 28 2026: precomputed salary views, sign-in behind the firewall, the morning report
+
+**Heavy salary selections are precomputed** (`scripts/build_wage_views.py` -> Turso `wage_views`,
+read by `src/lib/turso/wageViews.ts`). Every status x occupation group x state x fiscal year holding
+5,000+ filings, PERM and LCA, in the SQL's own arithmetic (linear interpolation at (n-1)p, SQLite's
+half-away-from-zero ROUND, `binWidth` ported). `test_wage_views.py` compares every view with the live
+SQL on a fixture; the readers take a view first and run the live query on a miss, and never serve bins
+at a width the caller didn't ask for. Rebuilt after each disclosure load; `check_wage_views` in the
+health check fails when the table is missing, short or older than 125 days. The Sep 27 Top Queries
+put the PERM percentiles at 2.76B reads and the LCA explorer at 843 deadline errors (Sentry 3K).
+
+**The blended RFI funnel drives from our 900 watched RFIs, not the 400k status table** (a LEFT JOIN;
+without ANALYZE the planner had chosen the big side). Same answer, measured on production.
+
+**The entity load swaps tables atomically.** `turso_migrate_public.py` fills `perm_entities_next` and
+`perm_wage_stats_next`, verifies them, then one transaction drops, renames and indexes. The old
+drop-then-fill left pages reading a table without `recent_12m` for minutes (Sentry 4E, 4F: 497 events).
+
+**Sign-in errors are classified, not reported.** `isBlockedResponseError` (a page instead of JSON) and
+`isMaskedServerError` (Convex's production mask) in `src/lib/auth/auth-errors.ts`. At a code step a
+masked `Server Error` is Convex Auth's own "Could not verify code", so it reads as a wrong code, not a
+Sentry error. Case-form validation is a breadcrumb and a PostHog event now, never a Sentry issue, and
+it no longer ships field VALUES anywhere. Onboarding's two writes retry once (`retryOnce`). Sentry
+ignores the MetaMask extension, Safari's `sw.js load failed` and injected `executors/<n>.js` scripts.
+
+**The morning report.** `daily-monitor.yml`, dispatched by Vercel cron at 11:30 UTC (7:30 AM EDT),
+runs `scripts/daily_monitor.py` (ingest health, every workflow run and re-run, the site's pages,
+HTTPS and domain expiry, what the data did, the Turso and Vercel bills against their plans with a
+2x-the-median spike rule, PostHog traffic, new Sentry issues), then `dailyReport:send` adds accounts,
+subscribers, Resend's own 24-hour log, the outbox, budget refusals and recorded errors, stores it
+(`dailyReports`, 60 days, the admin page's Monitor tab) and emails SECURITY_ALERT_EMAIL. The Actions
+log is public: the script prints one status word per section and `test_daily_monitor.py` fails on a
+digit. A section without its secret says "off" (TURSO_PLATFORM_TOKEN, VERCEL_TOKEN,
+POSTHOG_PERSONAL_API_KEY, SENTRY_AUTH_TOKEN). The routine "PERM Tracker Daily Report Review"
+(`trig_01V1WvJPEyywHhGyVgNL9MJg`, 12:30 UTC) reads the email through the Gmail connector and pushes
+only what needs Adam; no report by then is its own alarm.
+
+**The bills the first report measured** (Sep 27, 11:59 PM EDT): Turso $143.12 over plan for Sep 2 to
+Oct 1 (110.9B reads of 2.5B included, 59.7M writes of 25M), Vercel $163.40 against $20 of credit for
+Aug 28 to Sep 28 ($62.83 of it ISR writes). Reads fell from ~1.5B to 0.41B per 4 hours after the
+Sep 27 count fix; the wage views are the next cut. Cache windows were left alone: lengthening the
+remaining daily pages saves under a dollar a month and the move to free hosting ends the cost.
