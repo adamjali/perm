@@ -29,24 +29,29 @@ import { useEffect, useRef } from "react";
 import { useConvexAuth, useMutation, useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { captureError } from "@/lib/sentry";
+import { useAuthContextOptional } from "@/lib/contexts/AuthContext";
 
 export function PendingTermsHandler() {
   const { isAuthenticated } = useConvexAuth();
+  // While signing out (including right after "Delete now" purged the
+  // account) a missing profile is expected, not a failure to repair.
+  const isSigningOut = useAuthContextOptional()?.isSigningOut ?? false;
   const ensureProfile = useMutation(api.users.ensureUserProfile);
-  const profile = useQuery(api.users.currentUserProfile);
+  const profile = useQuery(api.users.currentUserProfile, isSigningOut ? "skip" : {});
   const hasCreatedProfile = useRef(false);
 
   useEffect(() => {
-    // Wait for profile query to load
-    if (profile === undefined) return;
+    // Wait for profile query to load (it is skipped while signing out)
+    if (isSigningOut || profile === undefined) return;
 
     // If profile is null and user is authenticated, create the missing profile.
     // This is a safety net for callback failures (e.g., account re-creation after deletion).
     if (profile === null && isAuthenticated && !hasCreatedProfile.current) {
       hasCreatedProfile.current = true;
       ensureProfile({})
-        .then(() => {
-          console.log("[PendingTermsHandler] Safety net: created missing user profile");
+        .then((profileId) => {
+          // null: the server declined (the account is deleted or being deleted).
+          if (profileId) console.log("[PendingTermsHandler] Safety net: created missing user profile");
         })
         .catch((error) => {
           console.error("[PendingTermsHandler] Failed to create user profile:", error);
@@ -54,7 +59,7 @@ export function PendingTermsHandler() {
           hasCreatedProfile.current = false;
         });
     }
-  }, [profile, isAuthenticated, ensureProfile]);
+  }, [profile, isAuthenticated, ensureProfile, isSigningOut]);
 
   return null;
 }

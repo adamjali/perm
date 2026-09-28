@@ -112,6 +112,16 @@ export const ensureUserProfile = mutation({
     // Get the user record to copy name and image from auth
     const user = await ctx.db.get(userId);
 
+    // A session outlives its account by a second or two: "Delete now" purges
+    // the user while the browser is still signed in, and the client's safety
+    // net then asks for a profile. Creating one there left an orphan profile
+    // behind each deletion (three on Sep 28 2026) and opened the onboarding
+    // wizard behind the sign-out overlay. No user record, or one scheduled for
+    // deletion, gets no new profile.
+    if (!user || user.deletedAt !== undefined) {
+      return null;
+    }
+
     // Create new profile with default values
     const profileId = await ctx.db.insert("userProfiles", buildDefaultProfile(
       userId,
@@ -928,5 +938,27 @@ export const immediateAccountDeletion = action({
     await ctx.runAction(internal.accountDeletion.cleanupAndPurge, { userId });
 
     return { success: true, message: "Account permanently deleted" };
+  },
+});
+
+/**
+ * Delete profiles whose user record no longer exists.
+ *
+ * Until Sep 28 2026 "Delete now" left one behind: the account was purged while
+ * the browser was still signed in, and `ensureUserProfile` built a fresh
+ * profile for it. That path is closed; this removes what it left. Dry run by
+ * default: `npx convex run users:purgeOrphanProfiles '{"apply": true}' --prod`.
+ */
+export const purgeOrphanProfiles = internalMutation({
+  args: { apply: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const orphans: string[] = [];
+    for await (const profile of ctx.db.query("userProfiles")) {
+      if ((await ctx.db.get(profile.userId)) === null) {
+        orphans.push(profile._id);
+        if (args.apply) await ctx.db.delete(profile._id);
+      }
+    }
+    return { applied: args.apply === true, orphans };
   },
 });

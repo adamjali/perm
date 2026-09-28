@@ -139,6 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
  *   }
  * };
  */
+/** The same value, or null outside an AuthProvider (a component rendered bare in a test). */
+export function useAuthContextOptional(): AuthContextValue | null {
+  return useContext(AuthContext) ?? null;
+}
+
 export function useAuthContext(): AuthContextValue {
   const context = useContext(AuthContext);
   if (context === undefined) {

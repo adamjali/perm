@@ -37,7 +37,8 @@ export const getOnboardingState = query({
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .unique();
 
-    if (!profile) return null;
+    // An account scheduled for deletion is not onboarded again.
+    if (!profile || profile.deletedAt !== undefined) return null;
 
     return {
       onboardingStep: (profile.onboardingStep as string | undefined) ?? null,

@@ -51,6 +51,79 @@ describe("User Profile", () => {
       ).rejects.toThrow();
     });
 
+    // Sep 28 2026: "Delete now" purged the account while the browser was still
+    // signed in, the client's safety net asked for a profile, and a fresh one
+    // was created for the deleted account (three orphans in production), which
+    // also opened the onboarding wizard behind the sign-out overlay.
+    it("creates nothing for a session whose user record is gone", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Gone User");
+      await t.run(async (ctx) => {
+        await ctx.db.delete(authT.userId);
+      });
+
+      const profileId = await authT.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+
+      expect(profileId).toBeNull();
+      const count = await t.run(async (ctx) => (await ctx.db.query("userProfiles").collect()).length);
+      expect(count).toBe(0);
+    });
+
+    it("creates nothing for an account scheduled for deletion", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Leaving User");
+      await t.run(async (ctx) => {
+        await ctx.db.patch(authT.userId, { deletedAt: Date.now() + 30 * 86_400_000 });
+      });
+
+      const profileId = await authT.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+
+      expect(profileId).toBeNull();
+    });
+
+    it("purges profiles whose user is gone, dry run first", async () => {
+      const t = createTestContext();
+      const kept = await createAuthenticatedContext(t, "Kept User");
+      const gone = await createAuthenticatedContext(t, "Gone User");
+      await kept.mutation(api.users.ensureUserProfile, {});
+      await gone.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+      await t.run(async (ctx) => {
+        await ctx.db.delete(gone.userId);
+      });
+
+      const dry = await t.mutation(internal.users.purgeOrphanProfiles, {});
+      expect(dry.applied).toBe(false);
+      expect(dry.orphans).toHaveLength(1);
+      const profiles = async () => t.run(async (ctx) => (await ctx.db.query("userProfiles").collect()).length);
+      expect(await profiles()).toBe(2);
+
+      const done = await t.mutation(internal.users.purgeOrphanProfiles, { apply: true });
+      expect(done.orphans).toEqual(dry.orphans);
+      expect(await profiles()).toBe(1);
+      expect(await kept.query(api.users.currentUserProfile, {})).not.toBeNull();
+    });
+
+    it("does not onboard an account scheduled for deletion", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Leaving User");
+      await authT.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+      expect(await authT.query(api.onboarding.getOnboardingState, {})).not.toBeNull();
+
+      await t.run(async (ctx) => {
+        const profile = await ctx.db
+          .query("userProfiles")
+          .withIndex("by_user_id", (q) => q.eq("userId", authT.userId))
+          .unique();
+        await ctx.db.patch(profile!._id, { deletedAt: Date.now() + 30 * 86_400_000 });
+      });
+
+      expect(await authT.query(api.onboarding.getOnboardingState, {})).toBeNull();
+    });
+
     it("copies name from users table to fullName in profile", async () => {
       const t = createTestContext();
       const authT = await createAuthenticatedContext(t, "John Doe");

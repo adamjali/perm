@@ -18,6 +18,7 @@ import { handleOperationError } from "@/lib/errors";
 import type { ChecklistItemId, OnboardingContextValue, OnboardingStep, TourPhase } from "@/lib/onboarding/types";
 import { TOUR_PHASE_ORDER } from "@/lib/onboarding/constants";
 import { retryOnce } from "@/lib/onboarding/retryOnce";
+import { useAuthContextOptional } from "@/lib/contexts/AuthContext";
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
@@ -39,7 +40,10 @@ export function useOnboardingOptional(): OnboardingContextValue | null {
 
 export function OnboardingProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const onboardingState = useQuery(api.onboarding.getOnboardingState);
+  // Nothing onboards while signing out: after "Delete now" the account is
+  // gone, and the wizard used to open behind the sign-out overlay.
+  const isSigningOut = useAuthContextOptional()?.isSigningOut ?? false;
+  const onboardingState = useQuery(api.onboarding.getOnboardingState, isSigningOut ? "skip" : {});
 
   const updateStepOnce = useMutation(api.onboarding.updateOnboardingStep);
   // One delayed retry: see retryOnce (Sentry 4B).
