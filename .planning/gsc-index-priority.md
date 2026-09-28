@@ -1,5 +1,26 @@
 # GSC indexing priority list
 
+**Run of 2026-09-27, 9:27 to 9:43 PM EDT: 11 accepted, the 12th refused.**
+
+The cap was 11 for the ninth run running. It ran after both of the evening's deploys (8:14 and
+9:24 PM), so every page Google fetches now carries the history search, the breakdown pages'
+links and the one-hour-cap fix. Nine of the eleven had never been crawled.
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/perm-employers/under-review` | indexed, crawled Sep 21 | 9:27 PM |
+| 2 | `/perm-employers/adobe-inc` | Discovered, **never crawled** | 9:29 PM |
+| 3 | `/perm-employers/cognizant-technology-solutions-us-corporation` | indexed | 9:31 PM |
+| 4 | `/tools/green-card-line` | Discovered, never crawled | 9:32 PM |
+| 5 | `/guides/approved-i140-no-visa-number-eb2-india` | Discovered, never crawled | 9:33 PM |
+| 6 | `/guides/eb3-other-workers` | Discovered, never crawled | 9:35 PM |
+| 7 | `/tools/eb2-vs-eb3` | Discovered, never crawled | 9:36 PM |
+| 8 | `/tools/which-green-card` | Discovered, never crawled | 9:37 PM |
+| 9 | `/visa-bulletin/categories` | Discovered, never crawled | 9:39 PM |
+| 10 | `/h1b-lottery-odds` | Discovered, never crawled | 9:40 PM |
+| 11 | `/green-card-timelines` | Discovered, never crawled | 9:42 PM |
+| 12 | `/nvc-waiting-list` | Discovered, never crawled | **Quota Exceeded**, 9:43 PM |
+
 **Run of 2026-09-25, 3:41 to 4:01 PM EDT: 11 accepted, the 12th refused.**
 
 **The cap was 11 for the EIGHTH consecutive run** (Sep 17, 19, 20, 21, 22, 23, 24, 25). The first
@@ -580,3 +601,13 @@ crawled before tonight's deploy.
 7. `/case-search` (history back to FY2016, worker and industry filters)
 8. `/zh`, `/es`, `/pt-br`, `/ko`, `/vi`
 9. `/guides/perm-application-on-hold-meaning`, then the Sep 25 queue from its item 1
+
+## Queue after the Sep 27 run (the next round probes from 3:07 PM EDT Sep 28; a refusal is free)
+
+1. `/nvc-waiting-list` (refused on Sep 27, never crawled)
+2. The three breakdown hubs, never crawled: `/perm-cities`, `/perm-industries`, `/perm-countries`,
+   then `/perm-cities/new-york-ny`, `/perm-industries/541511`, `/perm-countries/india` (all 200)
+3. `/case-search` (history back to FY2016, worker and industry filters, fiscal-year seek)
+4. `/zh`, `/es`, `/pt-br`, `/ko`, `/vi`
+5. `/guides/perm-application-on-hold-meaning`, then the Sep 25 queue from its item 1
+
