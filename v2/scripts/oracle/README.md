@@ -71,6 +71,8 @@ zstd -dc /srv/permtracker/backups/db-<stamp>.sql.zst | sqlite3 /tmp/restore.db
    host with the read-write token; `REVALIDATE_SECRET` gets the server's value.
 4. `permtracker.app` and `www` DNS records become proxied CNAMEs to the tunnel.
 5. Enable the timers here; remove Vercel's crons; move the Mac's launchd jobs.
-6. Check Google sign-in (Convex sends Google back to permtracker.app, so it can
+6. The privacy policy and terms on this branch already name Oracle and Cloudflare in place of
+   Vercel and BotID; set both pages' "Last Updated" to the switch date in the same deploy.
+7. Check Google sign-in (Convex sends Google back to permtracker.app, so it can
    only be tested on the real domain). Rollback: point the two DNS records back
    to Vercel.

@@ -526,10 +526,8 @@ export default function TermsPage() {
               the Global Privacy Control (GPC) browser signal by sending no
               analytics at all from your browser. We also use Cloudflare
               Turnstile on our authentication forms (sign-up, sign-in, password
-              reset) and Vercel BotID on the AI chat in the signed-in app to
-              prevent automated abuse; both process limited device and
-              interaction signals but don’t read the contents of form fields or
-              message bodies. We additionally enforce per-IP and per-email rate
+              reset) to prevent automated abuse; it processes limited device and
+              interaction signals but doesn’t read the contents of form fields. We additionally enforce per-IP and per-email rate
               limits on these endpoints. By using the Service, you consent to
               this data collection as described in our{" "}
               <a href="/privacy" className="text-primary hover:underline">
