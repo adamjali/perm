@@ -51,6 +51,10 @@ const ISOLATED_UNIT_FILES = [
   // Mocks posthog-js; in the shared pool the mock would leak into every
   // file that imports @/lib/analytics after it.
   "src/lib/__tests__/analyticsConsent.test.ts",
+  // Both mock ../client and the wage-view module; shared-pool leaks would
+  // hand one file's mock to the other.
+  "src/lib/turso/__tests__/lcaDefaultView.test.ts",
+  "src/lib/turso/__tests__/wageViews.test.ts",
   "src/hooks/__tests__/useJobDescriptionTemplates.test.ts",
   "src/hooks/__tests__/useChatWithPersistence.test.ts",
   "src/hooks/__tests__/useToolOrchestrator.test.ts",

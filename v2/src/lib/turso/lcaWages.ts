@@ -1,6 +1,7 @@
 import "server-only";
 
 import { one, rows } from "./client";
+import { wageView } from "./wageViews";
 import {
   doc,
   PERCENTILE_SELECT,
@@ -132,6 +133,10 @@ async function defaultView(): Promise<LcaDefaultView | null> {
 const num = (v: unknown) => (v === null || v === undefined ? null : Number(v));
 
 export async function getLcaWageStats(f: LcaWageFilters): Promise<LcaWagePercentileRow> {
+  // Every selection of 5,000+ filings is precomputed (wageViews.ts). A miss
+  // is a small selection, which the live query below serves quickly.
+  const view = await wageView("lca", f);
+  if (view) return view.stats;
   if (isDefaultLcaFilter(f)) {
     const pre = await defaultView();
     if (pre) return pre.stats;
@@ -160,6 +165,10 @@ export async function getLcaWageHistogram(
   f: LcaWageFilters,
   width: number,
 ): Promise<{ from: number; count: number }[]> {
+  const view = await wageView("lca", f);
+  if (view && view.binWidth === width) {
+    return view.histogram.map(([from, count]) => ({ from, count }));
+  }
   if (isDefaultLcaFilter(f)) {
     const pre = await defaultView();
     // The width must MATCH, not merely exist: bins are stored at the width the
@@ -185,6 +194,8 @@ export async function getLcaWageByState(
   // `where({...f, state: null})` drops the state, so a per-state selection has
   // the same by-state answer as the default view - which is the point of the
   // panel. Hence isDefaultLcaFilter on f WITHOUT its state.
+  const view = await wageView("lca", { ...f, state: null });
+  if (view?.byState && view.minCases === minCases) return view.byState;
   if (isDefaultLcaFilter({ ...f, state: null })) {
     const pre = await defaultView();
     if (pre && pre.minCases === minCases) return pre.byState;

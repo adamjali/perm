@@ -458,6 +458,44 @@ def check_precomputed_docs(db) -> int:
     return bad
 
 
+# Both explorers' precomputed selections (build_wage_views.py). They change
+# only when a disclosure file loads, which is quarterly, so the budget is a
+# quarter plus a month of slack for DOL publishing late.
+WAGE_VIEW_BUDGET_DAYS = 125
+WAGE_VIEW_MIN = {"perm": 50, "lca": 300}
+
+
+def check_wage_views(db) -> int:
+    """Fail when a program's precomputed wage selections are missing or stale.
+
+    Same failure shape as a missing doc: every reader falls back to its live
+    query, so the explorer still answers, slowly, and /api/lca-wages goes back
+    to passing its 20 s deadline (Sentry JAVASCRIPT-NEXTJS-3K, 839 times).
+    """
+    print("wage views")
+    try:
+        res = db.execute(
+            "SELECT program, COUNT(*), MAX(built_at) FROM wage_views GROUP BY program", [])
+        got = {str(r[0]["value"]): (int(r[1]["value"]), int(r[2]["value"]))
+               for r in res["response"]["result"]["rows"]}
+    except Exception as e:  # noqa: BLE001 - a missing table is itself the finding
+        print(f"  FAIL: could not read wage_views: {e}")
+        return 1
+    bad = 0
+    for program, floor in WAGE_VIEW_MIN.items():
+        if program not in got:
+            print(f"  {program:5s} MISSING - the {program} explorer runs every selection live")
+            bad = 1
+            continue
+        n, built = got[program]
+        age = (NOW_MS - built) / 86_400_000
+        ok = n >= floor and age <= WAGE_VIEW_BUDGET_DAYS
+        bad |= 0 if ok else 1
+        print(f"  {program:5s} {n:5d} views, built {age:5.1f}d ago / "
+              f"{WAGE_VIEW_BUDGET_DAYS}d  {'ok' if ok else 'STALE OR THIN'}")
+    return bad
+
+
 def check_gap_sweep(db) -> int:
     """Fail when the serial gap sweep has stopped running.
 
@@ -749,6 +787,7 @@ def main() -> int:
     demand_bad = check_lookup_demand(db)
     coverage_bad = check_coverage_stated(db)
     docs_bad = check_precomputed_docs(db)
+    views_bad = check_wage_views(db)
     handread_bad = check_hand_read_figures()
 
     print()
@@ -797,7 +836,7 @@ def main() -> int:
     # An unreadable date is a real defect too: it means DataProvenance cannot
     # compute an age either, so the page silently stops warning about that row.
     if (runs_bad or frontier_bad or yield_bad or backfill_bad or demand_bad
-            or coverage_bad or gapsweep_bad or docs_bad or handread_bad or unparseable):
+            or coverage_bad or gapsweep_bad or docs_bad or views_bad or handread_bad or unparseable):
         return 1
     print("All datasets within their declared freshness budgets, every ingest's "
           "most recent run finished clean, the discovery frontier is moving, the "

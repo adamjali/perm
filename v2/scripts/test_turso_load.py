@@ -173,6 +173,19 @@ def main() -> int:
             con.close()
             if "recent_12m" not in ecols:
                 failures.append(f"1. perm_entities lost recent_12m: {sorted(ecols)}")
+            # The rebuild happens in *_next tables and is swapped in with one
+            # transaction (Sep 28 2026): nothing may be left behind, and the
+            # swapped-in table must carry its indexes.
+            con = sqlite3.connect(DB)
+            names = {r[0] for r in con.execute("SELECT name FROM sqlite_master")}
+            ents = con.execute("SELECT count(*) FROM perm_entities").fetchone()[0]
+            con.close()
+            if {"perm_entities_next", "perm_wage_stats_next"} & names:
+                failures.append("1. a *_next table survived the swap")
+            if not {"idx_pe_kind_rank", "idx_pe_kind_total", "idx_pws_soc"} <= names:
+                failures.append(f"1. indexes missing after the swap: {sorted(n for n in names if n.startswith('idx_p'))}")
+            if not ents:
+                failures.append("1. perm_entities is empty after the swap")
 
             # --- 2. the Archive is down: no artifact at all
             seed(DB)

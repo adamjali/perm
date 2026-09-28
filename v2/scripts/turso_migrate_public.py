@@ -46,9 +46,16 @@ SCHEMA = [
     # (2019-10..2026-09) built up over time and upgraded by source rank, while
     # this run's artifact carries only `--months 18` - so a drop-and-reload
     # destroyed 66 months of history and every primary-source upgrade in them.
-    "DROP TABLE IF EXISTS perm_entities",
-    "DROP TABLE IF EXISTS perm_wage_stats",
-    """CREATE TABLE perm_entities (
+    # BUILT ALONGSIDE, SWAPPED IN ONE TRANSACTION (Sep 28 2026). These two
+    # used to be dropped here and refilled over several minutes, so every
+    # entity page rendered in that window read no table or half of one:
+    # 497 "no such column" and "no such table: perm_entities" errors on Sep 26
+    # (Sentry JAVASCRIPT-NEXTJS-4E/4F). The *_next tables are filled and
+    # counted while the live ones keep serving; swap() replaces them only
+    # when VERIFY passes, so a failed load leaves the site on the old data.
+    "DROP TABLE IF EXISTS perm_entities_next",
+    "DROP TABLE IF EXISTS perm_wage_stats_next",
+    """CREATE TABLE perm_entities_next (
          kind               TEXT NOT NULL,
          slug               TEXT NOT NULL,
          name               TEXT NOT NULL,
@@ -68,7 +75,7 @@ SCHEMA = [
          recent_12m         INTEGER,
          PRIMARY KEY (kind, slug)
        )""",
-    """CREATE TABLE perm_wage_stats (
+    """CREATE TABLE perm_wage_stats_next (
          kind        TEXT NOT NULL,
          key         TEXT NOT NULL,
          soc_code    TEXT,
@@ -276,7 +283,7 @@ def main() -> int:
                 item.get("medianDays"), item.get("medianAnnualWage"),
                 item.get("state"), item.get("code"),
             ))
-        n = insert_many(db, "perm_entities",
+        n = insert_many(db, "perm_entities_next",
                         ["kind", "slug", "name", "merge_key", "rank", "total",
                          "certified", "denied", "median_days",
                          "median_annual_wage", "state", "code"], out)
@@ -306,7 +313,7 @@ def main() -> int:
         r.get("p25"), r.get("p50"), r.get("p75"), r.get("p90"), r.get("p95"),
         r.get("mean"), json.dumps(r.get("histogram")),
     ) for r in wages.get("rows", [])]
-    nw = insert_many(db, "perm_wage_stats",
+    nw = insert_many(db, "perm_wage_stats_next",
                      ["kind", "key", "soc_code", "soc_title", "state",
                       "fiscal_year", "count", "p5", "p10", "p25", "p50", "p75",
                       "p90", "p95", "mean", "histogram"], wrows)
@@ -351,10 +358,6 @@ def main() -> int:
     log(f"    bulletins   {nb:>6,} new"
         f"  ({len(have_months):,} already held, left untouched)")
 
-    log("  building indexes")
-    for s in INDEXES:
-        db.execute(s)
-
     # Verify from the TABLES, never from the counters that wrote them.
     #
     # Two different invariants, because two of these tables are rebuilt and two
@@ -365,8 +368,8 @@ def main() -> int:
     ok = True
 
     # Rebuilt wholesale: the table is exactly what this run wrote.
-    for table, expect in (("perm_entities", total_entities),
-                          ("perm_wage_stats", nw)):
+    for table, expect in (("perm_entities_next", total_entities),
+                          ("perm_wage_stats_next", nw)):
         got = int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
         flag = "ok " if got == expect else "MISMATCH"
         if got != expect:
@@ -398,7 +401,34 @@ def main() -> int:
     log(f"    {'ok ' if docs_ok else 'MISMATCH'} {'perm_docs':16s} "
         f"{docs_got:>6,} keys ({ours}/3 ours, {docs_before:,} held before)")
 
-    return 0 if ok else 1
+    if not ok:
+        log("  NOT SWAPPED: perm_entities and perm_wage_stats keep serving the "
+            "previous load. The *_next tables are left for inspection.")
+        return 1
+    swap(db)
+    for table, expect in (("perm_entities", total_entities), ("perm_wage_stats", nw)):
+        got = int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
+        if got != expect:
+            log(f"  FATAL after swap: {table} holds {got:,}, expected {expect:,}")
+            return 1
+    log(f"  swapped in: perm_entities {total_entities:,}, perm_wage_stats {nw:,}")
+    return 0
+
+
+def swap(db) -> None:
+    """Replace the live tables with the *_next ones, and index them, atomically.
+
+    One pipeline, one transaction: readers keep the old committed tables until
+    COMMIT, so no page ever sees a missing or half-indexed table. Dropping the
+    old table drops its indexes, which is what frees the names for INDEXES.
+    """
+    db.script(["BEGIN",
+               "DROP TABLE IF EXISTS perm_entities",
+               "ALTER TABLE perm_entities_next RENAME TO perm_entities",
+               "DROP TABLE IF EXISTS perm_wage_stats",
+               "ALTER TABLE perm_wage_stats_next RENAME TO perm_wage_stats",
+               *INDEXES,
+               "COMMIT"])
 
 
 if __name__ == "__main__":

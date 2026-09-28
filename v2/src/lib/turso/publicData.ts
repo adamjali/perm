@@ -27,6 +27,7 @@ import {
 } from "@/lib/entityPayload";
 
 import { one, rows } from "./client";
+import { wageView } from "./wageViews";
 import { getLiveCensus, type CensusMatrixRow } from "./liveCensus";
 
 interface EntityDbRow {
@@ -1249,7 +1250,19 @@ export const STATE_PERCENTILE_SELECT = (
   .map(([p, name]) => statePercentileExpr(p, name))
   .join(",\n            ");
 
+/**
+ * The precomputed view for a selection (wageViews.ts), or null. A city or an
+ * industry filter is never precomputed: both are narrowings the route only
+ * accepts beside a state or an occupation, so the live query stays small.
+ */
+function permView(f: WageFilters) {
+  if (f.city || (f.sectorCodes && f.sectorCodes.length > 0)) return Promise.resolve(null);
+  return wageView("perm", f);
+}
+
 export async function getWageStats(f: WageFilters): Promise<WagePercentileRow> {
+  const view = await permView(f);
+  if (view) return view.stats;
   const w = wageWhere(f);
   const r = await one<Record<string, unknown>>(
     `WITH f AS (SELECT wage FROM perm_cases WHERE ${w.sql}),
@@ -1276,6 +1289,12 @@ export async function getWageHistogram(
   f: WageFilters,
   width: number,
 ): Promise<{ from: number; count: number }[]> {
+  // Bins are stored at the width the builder used; a different width means
+  // binWidth() changed since, so the live query answers.
+  const view = await permView(f);
+  if (view && view.binWidth === width) {
+    return view.histogram.map(([from, count]) => ({ from, count }));
+  }
   const w = wageWhere(f);
   // Width is a number this module computed, never caller text, but it is
   // still bound rather than interpolated so the shape of this query cannot
@@ -1299,6 +1318,8 @@ export async function getWageByState(
   f: WageFilters,
   minCases: number,
 ): Promise<WageStateRow[]> {
+  const view = await permView({ ...f, state: null });
+  if (view?.byState && view.minCases === minCases) return view.byState;
   const w = wageWhere({ ...f, state: null });
   const r = await rows<Record<string, unknown>>(
     `WITH o AS (

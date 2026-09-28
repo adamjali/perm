@@ -905,24 +905,29 @@ export async function getBlendedRfiFunnel(): Promise<BlendedRfiFunnel | null> {
   // where they stand now. That matches what "resolved" means in the frozen
   // half - ever had an RFI, now has a final decision - and it does not depend
   // on catching one particular transition.
+  //
+  // ONE PASS, DRIVEN FROM THE SMALL SIDE (Sep 28 2026). The first version
+  // counted over a joined CTE four times, and with no statistics (Turso
+  // forbids ANALYZE) SQLite drove each count from perm_case_status's
+  // status indexes (up to ~300k rows) and probed the ~1,000 RFI cases,
+  // which read 1.3M rows per call (Turso Top Queries, Sep 27). A LEFT JOIN
+  // must walk its left side, so the RFI cases drive and each is one
+  // primary-key probe. Same counts: a case with no status row adds to
+  // new_issued and to nothing else, as before.
   const x = await one<Record<string, unknown>>(
     `WITH ours AS (
        SELECT DISTINCT case_number FROM perm_case_events
         WHERE to_status = 'RFI ISSUED' AND changed_at > ? AND source = ?
-     ),
-     now AS (
-       SELECT s.case_number, s.current_status, s.is_final
-         FROM perm_case_status s JOIN ours ON ours.case_number = s.case_number
      )
      SELECT
-       (SELECT COUNT(*) FROM ours)                                     AS new_issued,
-       (SELECT COUNT(*) FROM now WHERE is_final = 1)                   AS resolved,
-       (SELECT COUNT(*) FROM now
-         WHERE current_status IN ('CERTIFIED', 'CERTIFIED - EXPIRED')) AS certified,
-       (SELECT COUNT(*) FROM now WHERE current_status = 'DENIED')      AS denied,
-       (SELECT COUNT(*) FROM now WHERE current_status = 'WITHDRAWN')   AS withdrawn,
+       COUNT(*)                                                             AS new_issued,
+       COALESCE(SUM(s.is_final = 1), 0)                                     AS resolved,
+       COALESCE(SUM(s.current_status IN ('CERTIFIED', 'CERTIFIED - EXPIRED')), 0) AS certified,
+       COALESCE(SUM(s.current_status = 'DENIED'), 0)                        AS denied,
+       COALESCE(SUM(s.current_status = 'WITHDRAWN'), 0)                     AS withdrawn,
        (SELECT MIN(changed_at) FROM perm_case_events
-         WHERE to_status = 'RFI ISSUED' AND changed_at > ? AND source = ?) AS first_at`,
+         WHERE to_status = 'RFI ISSUED' AND changed_at > ? AND source = ?)  AS first_at
+       FROM ours LEFT JOIN perm_case_status s ON s.case_number = ours.case_number`,
     [base.observedAt, DIRECT_EVENT_SOURCE, base.observedAt, DIRECT_EVENT_SOURCE],
   );
 

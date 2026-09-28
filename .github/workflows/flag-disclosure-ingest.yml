@@ -191,6 +191,10 @@ jobs:
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           timeout 30m python3 scripts/build_lca_facets.py
+          # Every LCA selection of 5,000+ filings, precomputed (wageViews.ts).
+          # /api/lca-wages passed its 20 s deadline 839 times computing these
+          # live (Sentry JAVASCRIPT-NEXTJS-3K). About 5 minutes, 2.4M rows read.
+          timeout 30m python3 scripts/build_wage_views.py --program lca
 
       # THE PAGES BUILT FROM THIS FILE SIT ON A WEEK-LONG WINDOW, because the
       # data behind them changes four times a year and a daily window meant

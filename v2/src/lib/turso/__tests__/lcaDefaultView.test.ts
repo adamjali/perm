@@ -39,6 +39,10 @@ vi.mock("../client", () => ({
   one: (...a: unknown[]) => oneMock(...a),
 }));
 
+// The per-selection views (wageViews.ts) are tested on their own; here they
+// miss, so what is under test is the older default-view doc and its fallback.
+vi.mock("../wageViews", () => ({ wageView: async () => null }));
+
 const STATS = { n: 1_836_301, avg: 132_000, p5: 62_000, p25: 95_000, p50: 122_000, p75: 158_000, p95: 245_000 };
 const HISTOGRAM = [{ from: 60_000, count: 12 }, { from: 70_000, count: 31 }];
 const BY_STATE = [{ state: "CA", n: 400_000, avg: 160_000, p5: 70_000, p25: 110_000, p50: 145_000, p75: 190_000, p95: 290_000 }];
