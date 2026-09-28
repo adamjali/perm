@@ -158,18 +158,20 @@ export function InChatConfirmationCard({
   const showButtons = status === 'pending';
 
   // Border styles by status
+  // Status reads from the whole 2px outline, the site's own card language,
+  // not a thick left bar.
   const BORDER_STYLES: Record<ConfirmationStatus, string> = {
-    pending: 'border-l-primary border-l-4',
-    approved: 'border-l-green-500 border-l-4',
-    done: 'border-l-green-500 border-l-4',
-    executing: 'border-l-primary border-l-4 animate-pulse',
-    denied: 'border-l-muted-foreground border-l-4 opacity-60',
-    error: 'border-l-red-500 border-l-4',
+    pending: 'border-primary',
+    approved: 'border-green-600 dark:border-green-500',
+    done: 'border-green-600 dark:border-green-500',
+    executing: 'border-primary',
+    denied: 'opacity-60',
+    error: 'border-red-500',
   };
 
   // Destructive pending state overrides default pending style
   const borderStyles = isDestructive && status === 'pending'
-    ? 'border-l-red-500 border-l-4'
+    ? 'border-red-500'
     : BORDER_STYLES[status];
 
   return (
@@ -223,7 +225,7 @@ export function InChatConfirmationCard({
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Duration badge */}
             {duration !== undefined && status === 'done' && (
-              <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 border border-border">
+              <span className="font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 border border-border">
                 {duration}ms
               </span>
             )}
@@ -237,13 +239,13 @@ export function InChatConfirmationCard({
         {argEntries.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5 bg-muted/50 border border-border">
             {argEntries.map(([key, value]) => (
-              <span key={key} className="font-mono text-[11px]">
+              <span key={key} className="font-mono text-xs">
                 <span className="text-muted-foreground">{key}:</span>{' '}
                 <span className="text-foreground">{formatArgValue(value)}</span>
               </span>
             ))}
             {Object.keys(args).length > 4 && (
-              <span className="font-mono text-[11px] text-muted-foreground">
+              <span className="font-mono text-xs text-muted-foreground">
                 +{Object.keys(args).length - 4} more
               </span>
             )}
@@ -327,7 +329,7 @@ export function InChatConfirmationCard({
                 variant="outline"
                 size="sm"
                 onClick={onDeny}
-                className="gap-1.5"
+                className="gap-1.5 h-11 md:h-9 px-4"
               >
                 <XIcon className="h-3.5 w-3.5" />
                 Cancel
@@ -336,7 +338,7 @@ export function InChatConfirmationCard({
                 variant={isDestructive ? 'destructive' : 'default'}
                 size="sm"
                 onClick={onApprove}
-                className="gap-1.5"
+                className="gap-1.5 h-11 md:h-9 px-4"
               >
                 <CheckIcon className="h-3.5 w-3.5" />
                 Confirm

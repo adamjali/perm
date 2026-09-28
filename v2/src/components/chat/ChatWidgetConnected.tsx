@@ -89,8 +89,9 @@ export function ChatWidgetConnected() {
     handleSend,
     startNewConversation,
     selectConversation,
-    sendMessage,
+    sendContinuation,
     stop,
+    retry,
   } = useChatWithPersistence({
     conversationId: recentConversation?._id,
     actionMode: actionMode,
@@ -135,23 +136,13 @@ export function ChatWidgetConnected() {
     [conversationId, updateToolCallResult]
   );
 
-  // Adapter for sendMessage to match orchestrator's expected signature
-  // AI SDK's sendMessage has a complex signature; orchestrator expects simple { text? }
-  const sendContinuationMessage = useCallback(
-    (options?: { text?: string }) => {
-      if (options?.text) {
-        sendMessage({ text: options.text });
-      }
-    },
-    [sendMessage]
-  );
-
   // Memoize orchestrator messages to prevent unnecessary re-renders
   const orchestratorMessages = useMemo(() => messages.map(m => ({
     id: m.id,
     role: m.role,
     content: m.content,
     isStreaming: m.isStreaming,
+    isLive: m.isLive,
     toolCalls: m.toolCalls,
   })), [messages]);
 
@@ -165,7 +156,7 @@ export function ChatWidgetConnected() {
   } = useToolOrchestrator({
     messages: orchestratorMessages,
     status,
-    sendMessage: sendContinuationMessage,
+    sendMessage: sendContinuation,
     onPersistResult: handlePersistToolResult,
   });
 
@@ -208,6 +199,7 @@ export function ChatWidgetConnected() {
         onInputChange={setInput}
         onSend={handleSend}
         onStop={stop}
+        onRetry={retry}
         status={status}
         streamingContent={streamingContent}
         onOpenHistory={() => setIsHistoryOpen(true)}

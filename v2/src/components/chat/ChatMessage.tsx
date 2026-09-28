@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { memo, useState, useEffect, useRef } from 'react';
+import { useReducedMotion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ToolCallList, type ToolCall } from './ToolCallCard';
@@ -12,6 +13,13 @@ interface ChatMessageProps {
   content: string;
   timestamp?: number;
   isStreaming?: boolean;
+  /**
+   * Reveal text smoothly as it arrives (a live assistant reply). History and
+   * the reader's own messages show at once.
+   */
+  animateText?: boolean;
+  /** The reply was cut short with the stop button. */
+  wasStopped?: boolean;
   toolCalls?: ToolCall[];
   /** Get confirmation state for a tool call ID */
   getConfirmation?: (toolCallId: string) => ToolConfirmationState | undefined;
@@ -21,72 +29,86 @@ interface ChatMessageProps {
   onDenyConfirmation?: (toolCallId: string) => void;
 }
 
-// Characters to reveal per tick for smooth typewriter effect
-const CHARS_PER_TICK = 3;
-// Milliseconds between each tick
-const TICK_INTERVAL = 15;
+/**
+ * Text revealed at the pace it arrives, one animation frame at a time.
+ *
+ * The step grows with the backlog (a sixth of what is waiting, at least two
+ * characters), so a big chunk catches up within a few frames and a trickle
+ * reads smoothly: the displayed text never falls seconds behind the stream the
+ * way a fixed 3-characters-per-15 ms typewriter did. It runs on the same
+ * component from the first word to the last, so the end of the stream only
+ * lets it finish; it never restarts or jumps to a block.
+ */
+export function useSmoothText(content: string, enabled: boolean): string {
+  const [shown, setShown] = useState(() => (enabled ? 0 : content.length));
+  const shownRef = useRef(shown);
+  const contentRef = useRef(content);
+  const frame = useRef<number | null>(null);
+
+  useEffect(() => {
+    contentRef.current = content;
+    // Not animating, or the tab is hidden (no frames will run): show it all.
+    if (!enabled || (typeof document !== 'undefined' && document.hidden)) {
+      shownRef.current = content.length;
+      setShown(content.length);
+      return;
+    }
+    // Text that no longer extends what is shown (a rewrite): keep the common part.
+    if (shownRef.current > content.length) {
+      shownRef.current = content.length;
+      setShown(content.length);
+    }
+    if (frame.current !== null || shownRef.current >= content.length) return;
+
+    const tick = () => {
+      const target = contentRef.current.length;
+      const backlog = target - shownRef.current;
+      if (backlog <= 0) {
+        frame.current = null;
+        return;
+      }
+      shownRef.current = Math.min(target, shownRef.current + Math.max(2, Math.ceil(backlog / 6)));
+      setShown(shownRef.current);
+      frame.current = requestAnimationFrame(tick);
+    };
+    frame.current = requestAnimationFrame(tick);
+  }, [content, enabled]);
+
+  useEffect(
+    () => () => {
+      if (frame.current !== null) cancelAnimationFrame(frame.current);
+    },
+    []
+  );
+
+  return content.slice(0, shown);
+}
+
+/** Markdown re-renders only when its own text changes. */
+const MessageMarkdown = memo(ChatMarkdown);
 
 export function ChatMessage({
   role,
   content,
   timestamp,
   isStreaming = false,
+  animateText = false,
+  wasStopped = false,
   toolCalls,
   getConfirmation,
   onApproveConfirmation,
   onDenyConfirmation,
 }: ChatMessageProps) {
   const isUser = role === 'user';
-  const [displayedLength, setDisplayedLength] = useState(isStreaming ? 0 : content.length);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-  const prevContentRef = useRef(content);
+  const reduceMotion = useReducedMotion();
+  // Decided once, at mount: only a message that is live then animates.
+  const [animate] = useState(() => animateText && isStreaming && !reduceMotion);
+  const displayed = useSmoothText(content, animate);
+  const isRevealing = displayed.length < content.length;
 
-  // Typewriter effect - runs while streaming OR while catching up.
-  // IMPORTANT: displayedLength is NOT in the dependency array. Including it caused
-  // cascading re-renders (React error #185 "Maximum update depth exceeded") because
-  // every interval tick changed displayedLength → re-triggered the effect → cleared
-  // and recreated the interval. The interval self-manages via functional setState.
-  useEffect(() => {
-    // If content changed completely (new message), reset
-    if (content !== prevContentRef.current && !content.startsWith(prevContentRef.current)) {
-      setDisplayedLength(isStreaming ? 0 : content.length);
-    }
-    prevContentRef.current = content;
-
-    // Clear any existing interval before starting a new one
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    // Start typewriter interval - it self-clears when caught up
-    intervalRef.current = setInterval(() => {
-      setDisplayedLength((prev) => {
-        if (prev >= content.length) {
-          if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-            intervalRef.current = null;
-          }
-          return prev;
-        }
-        return Math.min(prev + CHARS_PER_TICK, content.length);
-      });
-    }, TICK_INTERVAL);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [isStreaming, content]);
-
-  const displayedContent = content.slice(0, displayedLength);
-  const isTyping = displayedLength < content.length;
-
-  // Only show tool calls for assistant messages
   const hasToolCalls = !isUser && toolCalls && toolCalls.length > 0;
-  // Show message bubble if there’s content OR if we’re streaming (shows cursor)
-  const showBubble = content.length > 0 || isStreaming || isTyping;
+  const showBubble = content.length > 0 || isStreaming;
+  const showCaret = isStreaming || isRevealing;
 
   return (
     <div
@@ -95,7 +117,6 @@ export function ChatMessage({
         isUser ? 'items-end' : 'items-start'
       )}
     >
-      {/* Message bubble - only show if there’s content or actively streaming */}
       {showBubble && (
         <div
           className={cn(
@@ -105,23 +126,25 @@ export function ChatMessage({
               : 'bg-card text-card-foreground border-border shadow-hard-sm'
           )}
         >
-          {/* Message content with markdown rendering */}
-          <div className="text-sm">
-            <ChatMarkdown content={displayedContent} isUser={isUser} />
-            {(isStreaming || isTyping) && (
-              <span className="inline-block ml-1 w-2 h-4 bg-current animate-blink" />
+          <div className="text-base md:text-sm break-words">
+            <MessageMarkdown content={displayed} isUser={isUser} />
+            {showCaret && (
+              <span
+                aria-hidden="true"
+                className="inline-block ml-0.5 w-2 h-4 align-text-bottom bg-current opacity-60"
+              />
             )}
           </div>
 
-          {/* Timestamp */}
-          {timestamp && (
+          {(timestamp || wasStopped) && (
             <div
               className={cn(
-                'mt-2 font-mono text-xs opacity-60',
-                isUser ? 'text-right' : 'text-left'
+                'mt-2 flex items-center gap-2 font-mono text-xs opacity-70',
+                isUser ? 'justify-end' : 'justify-start'
               )}
             >
-              {format(timestamp, 'h:mm a')}
+              {timestamp && <span>{format(timestamp, 'h:mm a')}</span>}
+              {wasStopped && <span>Stopped</span>}
             </div>
           )}
         </div>

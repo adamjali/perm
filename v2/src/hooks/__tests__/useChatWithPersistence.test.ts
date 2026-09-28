@@ -286,6 +286,145 @@ describe('useChatWithPersistence', () => {
     });
   });
 
+  describe('one list, stable ids (2026-09-28: no vanish, no duplicate)', () => {
+    type SdkMsg = { id: string; role: 'user' | 'assistant'; parts: Array<{ type: string; text?: string }> };
+    const conv = 'conv-live' as never;
+    let sdk: { messages: SdkMsg[]; status: string };
+    let persisted: Array<{ _id: string; role: string; content: string; createdAt: number }>;
+    let sendMessage: ReturnType<typeof vi.fn>;
+    let stop: ReturnType<typeof vi.fn>;
+
+    const setup = async () => {
+      const { useChat } = await import('@ai-sdk/react');
+      const { useQuery } = await import('convex/react');
+      sdk = { messages: [], status: 'ready' };
+      persisted = [];
+      sendMessage = vi.fn();
+      stop = vi.fn();
+      vi.mocked(useChat).mockImplementation(
+        () =>
+          ({
+            messages: sdk.messages,
+            setMessages: vi.fn(),
+            sendMessage,
+            regenerate: vi.fn(),
+            clearError: vi.fn(),
+            status: sdk.status,
+            error: null,
+            stop,
+          }) as never,
+      );
+      vi.mocked(useQuery).mockImplementation(((ref: unknown, args: unknown) => {
+        if (args === 'skip') return undefined;
+        if (ref === 'get') return { _id: conv, userId: 'u', createdAt: 1 };
+        if (ref === 'list') return persisted;
+        return null;
+      }) as never);
+      const { useChatWithPersistence } = await import('../useChatWithPersistence');
+      return renderHook(() => useChatWithPersistence({ conversationId: conv }));
+    };
+
+    const text = (t: string) => [{ type: 'text', text: t }];
+    const ids = (r: { current: { messages: Array<{ id: string }> } }) => r.current.messages.map((m) => m.id);
+
+    it('keeps a streamed reply on screen under one id, streaming through saved, never twice', async () => {
+      const { result, rerender } = await setup();
+      persisted = [{ _id: 'old-1', role: 'user', content: 'earlier', createdAt: 1 }];
+      rerender();
+      act(() => result.current.setInput('hi'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      expect(sendMessage).toHaveBeenCalledTimes(1);
+
+      sdk.messages = [
+        { id: 'u1', role: 'user', parts: text('hi') },
+        { id: 'a1', role: 'assistant', parts: text('Hello th') },
+      ];
+      sdk.status = 'streaming';
+      rerender();
+      expect(ids(result)).toEqual(['old-1', 'u1', 'a1']);
+      expect(result.current.messages[2]).toMatchObject({ isStreaming: true, isLive: true });
+
+      // The stream ends: the reply must not vanish in the gap before it is saved.
+      sdk.messages = [sdk.messages[0]!, { id: 'a1', role: 'assistant', parts: text('Hello there') }];
+      sdk.status = 'ready';
+      rerender();
+      expect(ids(result)).toEqual(['old-1', 'u1', 'a1']);
+      expect(result.current.messages[2]).toMatchObject({ content: 'Hello there', isStreaming: false });
+
+      // Saved copies arrive (the saved text even differs): still once each, same ids.
+      persisted = [
+        ...persisted,
+        { _id: 'p-u1', role: 'user', content: 'hi', createdAt: 2 },
+        { _id: 'p-a1', role: 'assistant', content: 'Hello there ', createdAt: 3 },
+      ];
+      rerender();
+      expect(ids(result)).toEqual(['old-1', 'u1', 'a1']);
+    });
+
+    it('never shows the internal mode-change or continuation messages', async () => {
+      const { result, rerender } = await setup();
+      act(() => result.current.setInput('go'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      sdk.messages = [
+        { id: 'u1', role: 'user', parts: text('go') },
+        { id: 'm1', role: 'user', parts: text('[System: Action mode changed from OFF to AUTO. Please respond according to the new mode.]') },
+        { id: 'c1', role: 'user', parts: text('[Tool execution completed for call_1]') },
+        { id: 'd1', role: 'user', parts: text('[User denied tool execution: call_2]') },
+        { id: 'a1', role: 'assistant', parts: text('Done.') },
+      ];
+      rerender();
+      expect(ids(result)).toEqual(['u1', 'a1']);
+    });
+
+    it('separates the text of a reply that ran in steps', async () => {
+      const { result, rerender } = await setup();
+      act(() => result.current.setInput('check'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      sdk.messages = [
+        { id: 'u1', role: 'user', parts: text('check') },
+        { id: 'a1', role: 'assistant', parts: [{ type: 'text', text: 'Let me check.' }, { type: 'step-start' }, { type: 'text', text: 'Here is what I found.' }] },
+      ];
+      rerender();
+      expect(result.current.messages.at(-1)?.content).toBe('Let me check.\n\nHere is what I found.');
+    });
+
+    it('does not start a second turn while a reply is in progress', async () => {
+      const { result, rerender } = await setup();
+      sdk.status = 'streaming';
+      rerender();
+      act(() => result.current.setInput('another'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      expect(sendMessage).not.toHaveBeenCalled();
+    });
+
+    it('stop keeps the partial reply on screen and marks it stopped', async () => {
+      const { result, rerender } = await setup();
+      act(() => result.current.setInput('hi'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      sdk.messages = [
+        { id: 'u1', role: 'user', parts: text('hi') },
+        { id: 'a1', role: 'assistant', parts: text('Half an ans') },
+      ];
+      sdk.status = 'streaming';
+      rerender();
+      act(() => result.current.stop());
+      expect(stop).toHaveBeenCalledTimes(1);
+      sdk.status = 'ready';
+      rerender();
+      expect(result.current.messages.at(-1)).toMatchObject({ id: 'a1', content: 'Half an ans', wasStopped: true });
+    });
+  });
+
   it('clears conversationId when conversation is deleted (query returns null)', async () => {
     // This test verifies the edge case where:
     // 1. User has an active conversation (conversationId is set)

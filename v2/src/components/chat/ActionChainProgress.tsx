@@ -165,7 +165,7 @@ function StepCard({
       }}
       transition={springConfig}
       className={cn(
-        'border-2 border-border border-l-4 shadow-hard-sm',
+        'border-2 border-border shadow-hard-sm',
         borderColor,
         bgColor
       )}

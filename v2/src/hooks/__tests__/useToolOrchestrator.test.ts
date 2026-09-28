@@ -351,6 +351,43 @@ describe('useToolOrchestrator', { timeout: 30_000 }, () => {
     });
   });
 
+  describe('per-message identity (2026-09-28)', () => {
+    it('runs the SECOND navigation in a conversation, not just the first', async () => {
+      const { useToolOrchestrator } = await import('../useToolOrchestrator');
+      const first = createMessage({ id: 'a1', isLive: true, toolCalls: [createToolCall({ tool: 'navigate', result: createNavigationResult('/cases/one') })] });
+      const second = createMessage({ id: 'a2', isLive: true, toolCalls: [createToolCall({ tool: 'navigate', result: createNavigationResult('/cases/two') })] });
+      const { rerender } = renderHook(
+        ({ msgs }) => useToolOrchestrator(createDefaultOptions({ messages: msgs, status: 'streaming' })),
+        { initialProps: { msgs: [first] } }
+      );
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/cases/one'));
+      rerender({ msgs: [first, createMessage({ id: 'u2', role: 'user', content: 'next' }), second] });
+      await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/cases/two'));
+      expect(mockPush).toHaveBeenCalledTimes(2);
+    });
+
+    it('registers a second permission request for the same tool in a later message', async () => {
+      const { useToolOrchestrator } = await import('../useToolOrchestrator');
+      const req = (id: string, callId: string) =>
+        createMessage({ id, isLive: true, toolCalls: [createToolCall({ tool: 'createCase', status: 'pending', result: createPermissionRequest('createCase', callId, 'Create a case') })] });
+      const { result, rerender } = renderHook(
+        ({ msgs }) => useToolOrchestrator(createDefaultOptions({ messages: msgs, status: 'ready' })),
+        { initialProps: { msgs: [req('a1', 'call_1')] } }
+      );
+      await waitFor(() => expect(result.current.hasPendingConfirmation('call_1')).toBe(true));
+      rerender({ msgs: [req('a1', 'call_1'), createMessage({ id: 'u2', role: 'user', content: 'again' }), req('a2', 'call_2')] });
+      await waitFor(() => expect(result.current.hasPendingConfirmation('call_2')).toBe(true));
+    });
+
+    it('does not replay navigation from a saved conversation when it is reopened', async () => {
+      const { useToolOrchestrator } = await import('../useToolOrchestrator');
+      const saved = createMessage({ id: 'p1', isLive: false, toolCalls: [createToolCall({ tool: 'navigate', result: createNavigationResult('/cases/old') })] });
+      renderHook(() => useToolOrchestrator(createDefaultOptions({ messages: [saved], status: 'ready' })));
+      await new Promise((r) => setTimeout(r, 50));
+      expect(mockPush).not.toHaveBeenCalled();
+    });
+  });
+
   describe('permission request registration', () => {
     it('registers permission request in confirmations map', async () => {
       const { useToolOrchestrator } = await import('../useToolOrchestrator');

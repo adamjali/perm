@@ -71,6 +71,11 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   isStreaming?: boolean;
+  /**
+   * Sent or received in this session. Only a live message's navigation runs:
+   * reopening a saved conversation must not replay an old "go to case X".
+   */
+  isLive?: boolean;
   toolCalls?: ToolCall[];
 }
 
@@ -199,11 +204,15 @@ export function useToolOrchestrator(
    * Process a tool call - extract clientAction or permission request
    */
   const processToolCall = useCallback(
-    (toolCall: ToolCall, index: number) => {
+    (toolCall: ToolCall, index: number, message: ChatMessage) => {
+      // The card's fallback id (ToolCallList): name + position in the message.
       const toolCallKey = `${toolCall.tool}-${index}`;
+      // Processed-ness is per MESSAGE. Keyed on name + position alone, the
+      // second "navigate" (or second permission request for the same tool) in a
+      // conversation matched the first and was silently skipped.
+      const processedKey = `${message.id}:${index}`;
 
-      // Skip if already processed
-      if (processedToolCalls.current.has(toolCallKey)) {
+      if (processedToolCalls.current.has(processedKey)) {
         return;
       }
 
@@ -213,7 +222,7 @@ export function useToolOrchestrator(
       }
 
       // Mark as processed
-      processedToolCalls.current.add(toolCallKey);
+      processedToolCalls.current.add(processedKey);
 
       // Parse the result
       let parsedResult: unknown;
@@ -231,7 +240,9 @@ export function useToolOrchestrator(
 
       // Check for clientAction (navigation) - execute immediately
       if (hasClientAction(parsedResult)) {
-        const actionKey = `${toolCallKey}-${parsedResult.clientAction.type}`;
+        // History: the action already ran when the message was new.
+        if (message.isLive === false) return;
+        const actionKey = `${processedKey}-${parsedResult.clientAction.type}`;
 
         // Prevent duplicate execution
         if (!executedClientActions.current.has(actionKey)) {
@@ -277,7 +288,7 @@ export function useToolOrchestrator(
     // Process each tool call
     if (lastMessage.toolCalls) {
       lastMessage.toolCalls.forEach((tc, index) => {
-        processToolCall(tc, index);
+        processToolCall(tc, index, lastMessage);
       });
     }
   }, [messages, status, processToolCall]);

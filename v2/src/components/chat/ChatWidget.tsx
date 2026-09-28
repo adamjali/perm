@@ -21,6 +21,8 @@ interface ChatWidgetProps {
   onInputChange?: (value: string) => void;
   onSend?: () => void;
   onStop?: () => void;
+  /** Try the failed turn again */
+  onRetry?: () => void;
   status?: 'ready' | 'submitted' | 'streaming' | 'error';
   streamingContent?: string;
   onOpenHistory?: () => void;
@@ -52,6 +54,7 @@ export function ChatWidget({
   onInputChange = () => {},
   onSend = () => {},
   onStop,
+  onRetry,
   status = 'ready',
   streamingContent,
   onOpenHistory,
@@ -113,6 +116,7 @@ export function ChatWidget({
             onInputChange={onInputChange}
             onSend={onSend}
             onStop={onStop}
+            onRetry={onRetry}
             onClose={() => setIsOpen(false)}
             status={status}
             streamingContent={streamingContent}

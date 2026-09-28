@@ -206,9 +206,9 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
     blockquote: ({ children }) => (
       <blockquote
         className={cn(
-          'my-2 pl-3 border-l-4',
-          'italic opacity-90',
-          isUser ? 'border-current/50' : 'border-primary'
+          // A thin neutral rule: the conventional quote mark, not a colored bar.
+          'my-2 pl-3 border-l-2 border-current/40',
+          'italic opacity-90'
         )}
       >
         {children}

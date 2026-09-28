@@ -10,23 +10,28 @@
 /**
  * useChatWithPersistence Hook
  *
- * Combines AI SDK streaming with Convex persistence.
+ * AI SDK streaming plus Convex persistence, displayed as ONE list with stable
+ * identities.
  *
- * Features:
- * - Real-time streaming via AI SDK
- * - Automatic message persistence to Convex
- * - Conversation creation/selection
- * - Status tracking (ready, submitted, streaming, error)
+ * WHERE EACH MESSAGE COMES FROM (rebuilt 2026-09-28). A message sent or
+ * received in this session is shown from the AI SDK, from its first streamed
+ * word to the end, keyed by the SDK's own id; the saved copy in Convex is never
+ * swapped in for it. Everything older comes from Convex. The earlier design
+ * showed a streaming message, hid it when the stream ended, re-showed it from
+ * an "optimistic" copy once onFinish ran, then swapped in the Convex copy after
+ * a typewriter-length timer: the reply vanished for a moment, replayed as one
+ * block, jumped again on the swap, and printed twice whenever the saved text
+ * differed from the streamed text. Session membership is decided once, when
+ * the session's first message is sent: the Convex ids present then are
+ * history, everything later is the session's own.
  *
  * @module hooks/useChatWithPersistence
  */
 
-'use client';
-
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import { useChat as useAIChat } from '@ai-sdk/react';
-import { DefaultChatTransport } from 'ai';
+import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
@@ -42,14 +47,40 @@ interface UseChatWithPersistenceOptions {
 
 export type ChatStatus = 'ready' | 'submitted' | 'streaming' | 'error';
 
-// Tool call display type (used for both streaming and persisted messages)
-type ToolCallDisplay = {
+/** Tool call as the UI shows it, live or persisted. */
+export type ToolCallDisplay = {
   tool: string;
   arguments: string;
   result?: string;
   status: 'pending' | 'success' | 'error';
   executedAt?: number;
+  /** The SDK's id for a live call; absent on persisted ones. */
+  toolCallId?: string;
 };
+
+export type DisplayMessage = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp?: number;
+  isStreaming?: boolean;
+  /** Sent or received in this session (shown from the AI SDK, not Convex). */
+  isLive?: boolean;
+  /** The reply was cut short with the stop button. */
+  wasStopped?: boolean;
+  toolCalls?: ToolCallDisplay[];
+};
+
+/**
+ * Messages the app writes into the conversation for the model's benefit only:
+ * a mode change, and the orchestrator's continuation after a confirmation.
+ * They are sent to the API and never shown.
+ */
+const INTERNAL_MESSAGE = /^\[(System:|Tool execution (completed|failed) for |User denied tool execution)/;
+
+export function isInternalMessageText(text: string): boolean {
+  return INTERNAL_MESSAGE.test(text.trimStart());
+}
 
 /**
  * Determine tool call status from AI SDK output
@@ -59,31 +90,60 @@ function determineToolStatus(
   state: string | undefined,
   output: Record<string, unknown> | undefined
 ): 'pending' | 'success' | 'error' {
-  // Explicit error state
   if (state === 'output-error') return 'error';
-
-  // Check output content for success/error
   if (state === 'output-available' && output !== undefined) {
-    // Error in output
-    if (typeof output === 'object' && 'error' in output && output.error !== undefined) {
-      return 'error';
-    }
-    // Explicit failure
-    if (output.success === false) {
-      return 'error';
-    }
-    // Permission request stays pending (UI shows confirmation dialog)
-    if (output.requiresPermission === true) {
-      return 'pending';
-    }
+    if (typeof output === 'object' && 'error' in output && output.error !== undefined) return 'error';
+    if (output.success === false) return 'error';
+    // Permission request stays pending (UI shows confirmation card)
+    if (output.requiresPermission === true) return 'pending';
     return 'success';
   }
-
-  // All other states: input-streaming, input-available, approval-requested, etc.
+  // input-streaming, input-available, approval-requested, ...
   return 'pending';
 }
 
-// Optimistic message type for immediate display
+/**
+ * The message's text. A reply that runs in steps (text, a tool call, more
+ * text) carries one text part per step; joined with nothing, one step's last
+ * sentence ran into the next one's first ("Let me check.Here's what I found").
+ */
+function textOf(message: UIMessage): string {
+  return (message.parts ?? [])
+    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+    .map((p) => p.text.trim())
+    .filter(Boolean)
+    .join('\n\n');
+}
+
+function toolCallsOf(message: UIMessage): ToolCallDisplay[] {
+  const toolCalls: ToolCallDisplay[] = [];
+  for (const part of message.parts ?? []) {
+    // AI SDK tool parts are 'tool-{name}' or 'dynamic-tool'
+    if (!part.type.startsWith('tool-') && part.type !== 'dynamic-tool') continue;
+    const toolPart = part as {
+      type: string;
+      toolCallId: string;
+      toolName?: string;
+      input?: unknown;
+      output?: unknown;
+      state?: string;
+    };
+    const output = toolPart.output as Record<string, unknown> | undefined;
+    const status = determineToolStatus(toolPart.state, output);
+    toolCalls.push({
+      tool: toolPart.toolName ?? part.type.replace('tool-', ''),
+      arguments: JSON.stringify(toolPart.input ?? {}),
+      result: toolPart.output !== undefined ? JSON.stringify(toolPart.output) : undefined,
+      status,
+      toolCallId: toolPart.toolCallId,
+    });
+  }
+  return toolCalls;
+}
+
+/** Which Convex messages are history for the current session. */
+type HistoryBoundary = { ids: Set<string> } | { before: number };
+
 interface OptimisticMessage {
   id: string;
   role: 'user';
@@ -92,36 +152,29 @@ interface OptimisticMessage {
 }
 
 export function useChatWithPersistence(options: UseChatWithPersistenceOptions = {}) {
-
   const [conversationId, setConversationId] = useState<Id<'conversations'> | null>(
     options.conversationId ?? null
   );
   const [input, setInput] = useState('');
-  // Optimistic user message - shows immediately before Convex confirms
+  // Shown only in the gap before the SDK has the message (a new conversation
+  // is created first); dropped the moment the SDK's copy exists.
   const [optimisticMessage, setOptimisticMessage] = useState<OptimisticMessage | null>(null);
-  // Optimistic assistant content - keeps content visible until Convex confirms
-  const [optimisticAssistantContent, setOptimisticAssistantContent] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryBoundary | null>(null);
+  const [stoppedIds, setStoppedIds] = useState<ReadonlySet<string>>(() => new Set());
 
-  // Get sign-out state to skip queries during sign-out
   const { isSigningOut } = useAuthContext();
-
-  // Track streaming start time for processing duration
   const streamStartTime = useRef<number | null>(null);
-
-  // Ref to track current conversationId for async callbacks (prevents stale closure)
   const conversationIdRef = useRef<Id<'conversations'> | null>(conversationId);
 
-  // Convex mutations
   const createConversation = useMutation(api.conversations.create);
   const createUserMessage = useMutation(api.conversationMessages.createUserMessage);
   const createAssistantMessage = useMutation(api.conversationMessages.createAssistantMessage);
 
-  // Keep conversationId ref synced with state for async callback access
   useEffect(() => {
     conversationIdRef.current = conversationId;
   }, [conversationId]);
 
-  // Convex queries - skip during sign-out to prevent "not authenticated" errors
+  // Skip queries during sign-out to prevent "not authenticated" errors
   const conversation = useQuery(
     api.conversations.get,
     conversationId && !isSigningOut ? { id: conversationId } : 'skip'
@@ -131,90 +184,37 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     conversationId && !isSigningOut ? { conversationId } : 'skip'
   );
 
-  // AI SDK chat hook
-  // We use setMessages to clear AI SDK state when conversation changes
   const {
-    messages: streamingMessages,
+    messages: sdkMessages,
     setMessages: setAIMessages,
     sendMessage,
+    regenerate,
+    clearError,
     status: aiStatus,
     error,
     stop,
   } = useAIChat({
     // id intentionally omitted - changing it mid-request breaks status tracking
-    // We manually clear messages instead when conversation changes
     transport: new DefaultChatTransport({ api: '/api/chat' }),
+    // One UI update per 50 ms while streaming, instead of one per token.
+    throttle: 50,
     onFinish: async ({ message, isAbort, isDisconnect, isError }) => {
-      // AI SDK v6 fires onFinish on abort/disconnect/error too. Persisting any
-      // of those would write a truncated/garbage assistant turn (or the server's
-      // sanitized error string emitted as an error part) as a clean message —
-      // corrupting history AND poisoning downstream compaction/summarization.
-      // Skip persistence unless the turn actually completed successfully.
-      if (isAbort || isDisconnect || isError) {
-        setOptimisticAssistantContent(null);
-        return;
-      }
+      // onFinish also fires on abort/disconnect/error. Persisting those would
+      // write a truncated or garbage assistant turn as a clean one, corrupting
+      // history and the compaction summaries built from it.
+      if (isAbort || isDisconnect || isError) return;
 
-      // Use ref to get current conversationId (prevents stale closure)
       const currentConversationId = conversationIdRef.current;
       if (!currentConversationId) return;
 
-      // Extract text content from message parts
-      const content = message.parts
-        .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-        .map((p) => p.text)
-        .join('');
+      const toolCalls = toolCallsOf(message).map(({ toolCallId: _id, ...tc }) => ({
+        ...tc,
+        executedAt: tc.status !== 'pending' ? Date.now() : undefined,
+      }));
 
-      // Extract tool calls from message parts
-      // AI SDK v6 uses 'tool-{toolName}' or 'dynamic-tool' type for tool parts
-      // with state: 'input-available' | 'output-available' | 'output-error' etc.
-      // See: https://ai-sdk.dev/docs/ai-sdk-ui/chatbot-message-structure
-      const toolCalls: Array<{
-        tool: string;
-        arguments: string;
-        result?: string;
-        status: 'pending' | 'success' | 'error';
-        executedAt?: number;
-      }> = [];
-
-      for (const part of message.parts) {
-        // Tool parts have type like 'tool-{name}' or 'dynamic-tool'
-        const partType = part.type;
-        if (partType.startsWith('tool-') || partType === 'dynamic-tool') {
-          // Cast to access tool-specific properties
-          const toolPart = part as {
-            type: string;
-            toolCallId: string;
-            toolName?: string;
-            input?: unknown;
-            output?: unknown;
-            state?: string;
-            errorText?: string;
-          };
-
-          // Get tool name from toolName prop (dynamic-tool) or from type (tool-{name})
-          const toolName = toolPart.toolName ?? partType.replace('tool-', '');
-          const output = toolPart.output as Record<string, unknown> | undefined;
-          const status = determineToolStatus(toolPart.state, output);
-
-          toolCalls.push({
-            tool: toolName,
-            arguments: JSON.stringify(toolPart.input ?? {}),
-            result: toolPart.output !== undefined ? JSON.stringify(toolPart.output) : undefined,
-            status,
-            executedAt: status !== 'pending' ? Date.now() : undefined,
-          });
-        }
-      }
-
-      // Keep assistant content visible while saving to Convex (prevents flash)
-      // useEffect will clear when Convex query updates with the persisted message
-      setOptimisticAssistantContent(content);
-
-      // Persist assistant message to Convex
       await createAssistantMessage({
         conversationId: currentConversationId,
-        content,
+        content: textOf(message),
         toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
         metadata: {
           processingTimeMs: Date.now() - (streamStartTime.current ?? Date.now()),
@@ -222,281 +222,144 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
       });
     },
     onError: (err) => {
-      // Log error with full context for debugging
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const errAny = err as any;
+      const errAny = err as { status?: number; statusCode?: number; cause?: { message?: string } | string; responseBody?: unknown };
       console.error('[Chat] AI SDK error:', {
         message: err.message,
         name: err.name,
         conversationId: conversationIdRef.current,
         status: errAny?.status || errAny?.statusCode,
-        cause: errAny?.cause?.message || errAny?.cause,
+        cause: typeof errAny?.cause === 'object' ? errAny.cause?.message : errAny?.cause,
         responseBody: errAny?.responseBody,
-        stack: err.stack?.split('\n').slice(0, 3).join(' | '),
       });
-      // Clear optimistic states on error to prevent stale UI
       setOptimisticMessage(null);
-      setOptimisticAssistantContent(null);
     },
   });
 
-  // Clear AI SDK messages when conversation is deleted
-  // This handles the edge case where user deletes the current conversation
-  // from ChatHistory, then returns to ChatPanel and tries to send a message
+  /** Forget the session: a different conversation, or none. */
+  const resetSession = useCallback(() => {
+    setAIMessages([]);
+    setOptimisticMessage(null);
+    setHistory(null);
+    setStoppedIds(new Set());
+  }, [setAIMessages]);
+
+  // The current conversation was deleted (from ChatHistory): drop it.
   useEffect(() => {
-    // conversation === undefined means loading/skipped (don't act yet)
-    // conversation === null means the conversation doesn't exist (was deleted)
+    // undefined = loading/skipped; null = does not exist
     if (conversationId && conversation === null) {
       setConversationId(null);
       conversationIdRef.current = null;
-      // Clear any optimistic state that referenced the deleted conversation
-      setOptimisticMessage(null);
-      setOptimisticAssistantContent(null);
-      // Clear AI SDK messages so stale context isn't sent to API
-      setAIMessages([]);
+      resetSession();
     }
-  }, [conversationId, conversation, setAIMessages]);
+  }, [conversationId, conversation, resetSession]);
 
-  // Clear AI SDK messages when conversation changes (switching conversations or starting fresh)
-  // This prevents stale messages from being sent to the API
+  // Switching conversations starts a fresh session.
   const prevConversationIdRef = useRef<Id<'conversations'> | null>(null);
   useEffect(() => {
-    // Skip on initial mount (prevConversationIdRef.current is null)
-    if (prevConversationIdRef.current !== null && prevConversationIdRef.current !== conversationId) {
-      // Conversation changed - clear AI SDK messages
-      setAIMessages([]);
-      setOptimisticMessage(null);
-      setOptimisticAssistantContent(null);
-    }
+    const prev = prevConversationIdRef.current;
+    // A null -> id change is the session's own new conversation, not a switch.
+    if (prev !== null && prev !== conversationId) resetSession();
     prevConversationIdRef.current = conversationId;
-  }, [conversationId, setAIMessages]);
+  }, [conversationId, resetSession]);
 
-  // Inject a system-like message when action mode changes mid-conversation
-  // This tells the AI the mode changed so it doesn't follow old response patterns.
-  // Uses refs for streamingMessages check to avoid re-running on every streaming chunk.
+  // Tell the model when the action mode changes mid-conversation. Internal:
+  // sent with the next request, never displayed (isInternalMessageText).
   const prevActionModeRef = useRef<string | undefined>(options.actionMode);
-  const streamingMessagesRef = useRef(streamingMessages);
+  const sdkMessagesRef = useRef(sdkMessages);
   useEffect(() => {
-    streamingMessagesRef.current = streamingMessages;
+    sdkMessagesRef.current = sdkMessages;
   });
   useEffect(() => {
     const currentMode = options.actionMode;
     const prevMode = prevActionModeRef.current;
-
-    // Only inject if mode actually changed (not initial mount) and we have messages
-    if (prevMode && currentMode && prevMode !== currentMode && streamingMessagesRef.current.length > 0) {
+    if (prevMode && currentMode && prevMode !== currentMode && sdkMessagesRef.current.length > 0) {
       const modeLabels = { off: 'OFF', confirm: 'CONFIRM', auto: 'AUTO' };
-      // Append a user message that informs the AI of the change
-      setAIMessages(prev => [
+      setAIMessages((prev) => [
         ...prev,
         {
           id: `mode-change-${Date.now()}`,
           role: 'user' as const,
           parts: [{ type: 'text' as const, text: `[System: Action mode changed from ${modeLabels[prevMode as keyof typeof modeLabels]} to ${modeLabels[currentMode]}. Please respond according to the new mode.]` }],
-          createdAt: new Date(),
-        }
+        },
       ]);
     }
     prevActionModeRef.current = currentMode;
   }, [options.actionMode, setAIMessages]);
 
-  // Map AI SDK status to our status type
-  // NOTE: AI SDK v6 can hit React's update limit during rapid streaming, triggering
-  // "Maximum update depth exceeded" errors. These are React rendering errors, NOT
-  // actual API failures - the request completes successfully. We ignore these errors.
+  // AI SDK can hit React's update limit during rapid streaming ("Maximum update
+  // depth exceeded"); that is a rendering error, not an API failure.
   const status: ChatStatus = useMemo(() => {
-    // Ignore React rendering errors - they don't indicate API failures
     const isRenderingError = error?.message?.includes('Maximum update depth');
-
     return (error && !isRenderingError) ? 'error'
       : aiStatus === 'streaming' ? 'streaming'
       : aiStatus === 'submitted' ? 'submitted'
       : 'ready';
   }, [aiStatus, error]);
 
-  // Clear optimistic user message when Convex confirms it's persisted
+  // Drop the optimistic message once the SDK holds the real one.
   useEffect(() => {
-    if (!persistedMessages || !optimisticMessage) return;
-
-    const userPersisted = persistedMessages.some(
-      (m) => m.role === 'user' && m.content === optimisticMessage.content
+    if (!optimisticMessage) return;
+    const inSdk = sdkMessages.some(
+      (m) => m.role === 'user' && textOf(m) === optimisticMessage.content
     );
-    if (userPersisted) {
-      setOptimisticMessage(null);
-    }
-  }, [persistedMessages, optimisticMessage]);
+    if (inSdk) setOptimisticMessage(null);
+  }, [sdkMessages, optimisticMessage]);
 
-  // Clear optimistic assistant content AFTER a delay to allow typewriter to finish
-  // This prevents key change from 'streaming-assistant' to Convex ID mid-typewriter
-  useEffect(() => {
-    if (!persistedMessages || !optimisticAssistantContent) return;
+  const displayMessages = useMemo((): DisplayMessage[] => {
+    const messages: DisplayMessage[] = [];
 
-    const assistantPersisted = persistedMessages.some(
-      (m) => m.role === 'assistant' && m.content === optimisticAssistantContent
-    );
-    if (assistantPersisted) {
-      // Calculate delay based on content length: 3 chars per 15ms tick
-      // Add buffer for safety
-      const typewriterDuration = Math.ceil(optimisticAssistantContent.length / 3) * 15;
-      const delay = Math.min(typewriterDuration + 500, 10000); // Max 10 seconds
-
-      const timer = setTimeout(() => {
-        setOptimisticAssistantContent(null);
-      }, delay);
-
-      return () => clearTimeout(timer);
-    }
-  }, [persistedMessages, optimisticAssistantContent]);
-
-  // Get current streaming content (extracted to separate memo for syncing)
-  const extractedStreamingContent = useMemo(() => {
-    const lastMessage = streamingMessages[streamingMessages.length - 1];
-    if (!lastMessage || lastMessage.role !== 'assistant') return null;
-
-    // AI SDK v6 uses parts array
-    return lastMessage.parts
-      ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
-      .map((p) => p.text)
-      .join('') ?? null;
-  }, [streamingMessages]);
-
-  // Extract tool calls from streaming messages in REAL-TIME (not just onFinish)
-  // This allows the UI to show tool call cards with loading state during execution
-  const extractedStreamingToolCalls = useMemo((): ToolCallDisplay[] => {
-    const lastMessage = streamingMessages[streamingMessages.length - 1];
-    if (!lastMessage || lastMessage.role !== 'assistant') return [];
-
-    const toolCalls: ToolCallDisplay[] = [];
-
-    for (const part of lastMessage.parts ?? []) {
-      const partType = part.type;
-      if (partType.startsWith('tool-') || partType === 'dynamic-tool') {
-        const toolPart = part as {
-          type: string;
-          toolCallId: string;
-          toolName?: string;
-          input?: unknown;
-          output?: unknown;
-          state?: string;
-          errorText?: string;
-        };
-
-        const toolName = toolPart.toolName ?? partType.replace('tool-', '');
-        const output = toolPart.output as Record<string, unknown> | undefined;
-        const status = determineToolStatus(toolPart.state, output);
-
-        toolCalls.push({
-          tool: toolName,
-          arguments: JSON.stringify(toolPart.input ?? {}),
-          result: toolPart.output !== undefined ? JSON.stringify(toolPart.output) : undefined,
-          status,
-          // executedAt is set in onFinish when persisting, not needed during streaming display
-        });
+    // History from Convex: everything, until this session sends; then only
+    // what existed at that moment.
+    for (const m of persistedMessages ?? []) {
+      if (history) {
+        const isHistory = 'ids' in history ? history.ids.has(m._id) : m.createdAt < history.before;
+        if (!isHistory) continue;
       }
-    }
-
-    return toolCalls;
-  }, [streamingMessages]);
-
-  // NOTE: We intentionally do NOT sync streaming content to optimistic state continuously.
-  // The onFinish callback sets optimisticAssistantContent when streaming completes.
-  // Continuous syncing causes "Maximum update depth exceeded" errors because each
-  // streaming chunk triggers a state update, which triggers re-renders, etc.
-  // Any flash between streaming end and onFinish is minimal and acceptable.
-
-  // Current streaming content - only non-null while actively streaming
-  const currentStreamingContent = status === 'streaming' ? extractedStreamingContent : null;
-
-  // Convert persisted messages to display format, including optimistic and streaming
-  const displayMessages = useMemo(() => {
-    const messages: Array<{
-      id: string;
-      role: 'user' | 'assistant';
-      content: string;
-      timestamp?: number;
-      isStreaming?: boolean;
-      toolCalls?: ToolCallDisplay[];
-    }> = [];
-
-    // Track tool calls from the persisted message we're skipping
-    // This ensures tool calls don't flash/disappear during streaming → persisted transition
-    let skippedPersistedToolCalls: ToolCallDisplay[] | undefined;
-
-    // Add persisted messages
-    // Skip persisted assistant that matches optimistic to keep 'streaming-assistant' key stable
-    if (persistedMessages) {
-      for (const m of persistedMessages) {
-        if (
-          optimisticAssistantContent &&
-          m.role === 'assistant' &&
-          m.content === optimisticAssistantContent
-        ) {
-          // Save tool calls from skipped message for use in streaming-assistant
-          skippedPersistedToolCalls = m.toolCalls as ToolCallDisplay[] | undefined;
-          continue; // Skip - will be added as streaming-assistant below
-        }
-        messages.push({
-          id: m._id,
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-          timestamp: m.createdAt,
-          // Include tool calls if present (cast to display type)
-          toolCalls: m.toolCalls as ToolCallDisplay[] | undefined,
-        });
-      }
-    }
-
-    // Add optimistic user message if not yet in persisted (prevents duplicate)
-    if (optimisticMessage) {
-      const alreadyPersisted = messages.some(
-        (m) => m.role === 'user' && m.content === optimisticMessage.content
-      );
-      if (!alreadyPersisted) {
-        messages.push(optimisticMessage);
-      }
-    }
-
-    // Add streaming OR optimistic assistant content (stable ID for smooth transition)
-    // Note: persisted version with matching content is skipped above, so no duplicate check needed
-    //
-    // CRITICAL: Only show streaming-assistant when:
-    // 1. Actively streaming (status === 'streaming') - shows real-time content + tool calls
-    // 2. OR we have optimistic content (onFinish ran, waiting for Convex to confirm)
-    //
-    // After Convex confirms and typewriter catches up, optimisticAssistantContent clears
-    // and we stop showing streaming-assistant, only showing the persisted message.
-    // This prevents duplicate tool call cards.
-    const assistantContent = currentStreamingContent ?? optimisticAssistantContent;
-    const hasStreamingToolCalls = status === 'streaming' && extractedStreamingToolCalls.length > 0;
-
-    // Use streaming tool calls during streaming, then fall back to persisted tool calls
-    // This prevents tool cards from flashing/disappearing during the transition
-    const toolCallsToShow = hasStreamingToolCalls
-      ? extractedStreamingToolCalls
-      : skippedPersistedToolCalls;
-
-    // Only show streaming-assistant if actively streaming OR waiting for Convex to confirm
-    const shouldShowStreamingAssistant =
-      status === 'streaming' || optimisticAssistantContent !== null;
-
-    if ((assistantContent || hasStreamingToolCalls || toolCallsToShow) && shouldShowStreamingAssistant) {
       messages.push({
-        id: 'streaming-assistant', // Stable ID so component isn't replaced
-        role: 'assistant',
-        content: assistantContent ?? '', // Empty string if only tool calls
-        isStreaming: status === 'streaming',
-        // Use streaming tool calls during streaming, persisted afterwards
-        toolCalls: toolCallsToShow,
+        id: m._id,
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        timestamp: m.createdAt,
+        isLive: false,
+        toolCalls: m.toolCalls as ToolCallDisplay[] | undefined,
       });
     }
 
+    // This session, from the SDK, in order, with stable ids.
+    const last = sdkMessages[sdkMessages.length - 1];
+    for (const m of sdkMessages) {
+      if (m.role !== 'user' && m.role !== 'assistant') continue;
+      const content = textOf(m);
+      if (m.role === 'user' && isInternalMessageText(content)) continue;
+      const toolCalls = m.role === 'assistant' ? toolCallsOf(m) : [];
+      const isStreaming = m === last && m.role === 'assistant' && status === 'streaming';
+      // An assistant turn with nothing to show yet is covered by the typing
+      // indicator; an empty bubble would flash in and out.
+      if (m.role === 'assistant' && !content && toolCalls.length === 0 && !isStreaming) continue;
+      messages.push({
+        id: m.id,
+        role: m.role,
+        content,
+        // Stamped when sent (user, below) or when the reply began (the route).
+        timestamp: (m.metadata as { createdAt?: number } | undefined)?.createdAt,
+        isStreaming,
+        isLive: true,
+        wasStopped: stoppedIds.has(m.id),
+        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+      });
+    }
+
+    if (optimisticMessage) messages.push(optimisticMessage);
     return messages;
-  }, [persistedMessages, optimisticMessage, optimisticAssistantContent, currentStreamingContent, status, extractedStreamingToolCalls]);
+  }, [persistedMessages, history, sdkMessages, status, stoppedIds, optimisticMessage]);
 
-  // Keep streamingContent for backwards compatibility
-  const streamingContent = currentStreamingContent ?? undefined;
+  // Text of the reply being streamed (kept for callers that scroll on it).
+  const streamingContent = useMemo(() => {
+    if (status !== 'streaming') return undefined;
+    const last = sdkMessages[sdkMessages.length - 1];
+    return last?.role === 'assistant' ? textOf(last) : undefined;
+  }, [sdkMessages, status]);
 
-  // Create new conversation
   const startNewConversation = useCallback(async () => {
     const id = await createConversation({});
     setConversationId(id);
@@ -504,19 +367,35 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     return id;
   }, [createConversation, options]);
 
-  // Select existing conversation
   const selectConversation = useCallback((id: Id<'conversations'>) => {
     setConversationId(id);
   }, []);
 
-  // Send message
+  const requestBody = useCallback(
+    (activeConversationId: Id<'conversations'>) => ({
+      conversationId: activeConversationId,
+      pageContext: options.pageContext ? serializePageContext(options.pageContext) : undefined,
+    }),
+    [options.pageContext]
+  );
+
+  const isBusy = status === 'submitted' || status === 'streaming';
+
+  /** Fix the history boundary before this session's first send, of any kind. */
+  const ensureHistory = useCallback(() => {
+    if (history) return;
+    setHistory(
+      persistedMessages
+        ? { ids: new Set(persistedMessages.map((m) => m._id as string)) }
+        : { before: Date.now() - 5_000 }
+    );
+  }, [history, persistedMessages]);
+
   const handleSend = useCallback(async () => {
-    if (!input.trim()) return;
-
     const messageContent = input.trim();
+    // One turn at a time: a second send mid-stream interleaves two replies.
+    if (!messageContent || isBusy) return;
 
-    // Use flushSync to force React to render the optimistic message IMMEDIATELY
-    // before sendMessage triggers the typing indicator
     flushSync(() => {
       setOptimisticMessage({
         id: `optimistic-${Date.now()}`,
@@ -527,38 +406,60 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
       setInput('');
     });
 
-    // Create conversation if needed (must happen before sendMessage)
+    ensureHistory();
+
     let activeConversationId = conversationId;
     if (!activeConversationId) {
       activeConversationId = await startNewConversation();
     }
 
-    // Track timing
     streamStartTime.current = Date.now();
-
-    // Start AI request with conversationId and pageContext in body
-    // This enables caching, context optimization, and page awareness on the API side
     sendMessage(
-      { text: messageContent },
-      {
-        body: {
-          conversationId: activeConversationId,
-          pageContext: options.pageContext
-            ? serializePageContext(options.pageContext)
-            : undefined,
-        },
-      }
+      { text: messageContent, metadata: { createdAt: Date.now() } },
+      { body: requestBody(activeConversationId) }
     );
 
-    // Save user message to Convex (fire and forget - don't await)
-    // This runs in parallel with the AI request
+    // Persist the user message in parallel with the AI request.
     createUserMessage({
       conversationId: activeConversationId,
       content: messageContent,
     }).catch((err: unknown) => {
       console.error('[Chat] Failed to persist user message:', err);
     });
-  }, [input, conversationId, startNewConversation, createUserMessage, sendMessage, options.pageContext]);
+  }, [input, isBusy, ensureHistory, conversationId, startNewConversation, sendMessage, requestBody, createUserMessage]);
+
+  /**
+   * An internal message for the model (the orchestrator's continuation after a
+   * confirmation). Carries the conversation like any send, and is never shown.
+   */
+  const sendContinuation = useCallback(
+    (options?: { text?: string }) => {
+      const activeConversationId = conversationIdRef.current;
+      if (!options?.text || !activeConversationId) return;
+      ensureHistory();
+      streamStartTime.current = Date.now();
+      sendMessage({ text: options.text }, { body: requestBody(activeConversationId) });
+    },
+    [ensureHistory, sendMessage, requestBody]
+  );
+
+  /** Stop the reply: keep what streamed, marked as stopped (never saved). */
+  const handleStop = useCallback(() => {
+    const last = sdkMessagesRef.current[sdkMessagesRef.current.length - 1];
+    if (last?.role === 'assistant') {
+      setStoppedIds((prev) => new Set(prev).add(last.id));
+    }
+    void stop();
+  }, [stop]);
+
+  /** Try the failed turn again. */
+  const retry = useCallback(() => {
+    const activeConversationId = conversationIdRef.current;
+    if (!activeConversationId) return;
+    clearError();
+    streamStartTime.current = Date.now();
+    void regenerate({ body: requestBody(activeConversationId) });
+  }, [clearError, regenerate, requestBody]);
 
   return {
     // State
@@ -575,9 +476,10 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     handleSend,
     startNewConversation,
     selectConversation,
-    stop,
+    stop: handleStop,
+    retry,
 
-    // For tool orchestration - allows sending continuation messages
-    sendMessage,
+    // For tool orchestration - continuation messages
+    sendContinuation,
   };
 }

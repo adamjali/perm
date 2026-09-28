@@ -1,43 +1,26 @@
 'use client';
 
-import { Fragment, useRef, useEffect, useState, useMemo, useCallback } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
-import { ChatTextIcon, ClockCounterClockwiseIcon as History, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
+import { Fragment, useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { ArrowDownIcon, ChatTextIcon, ClockCounterClockwiseIcon as History, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
 import { TypingIndicator } from './TypingIndicator';
-import { ActionModeToggle, type ActionMode } from './ActionModeToggle';
+import { ActionModeToggle, ACTION_MODE_NOTICE, type ActionMode } from './ActionModeToggle';
 import { ChatCompactionDivider } from './ChatCompactionDivider';
 import { NotLegalAdviceNotice } from '@/components/legal/NotLegalAdviceNotice';
 import { springConfig } from '@/lib/animations';
 import { cn } from '@/lib/utils';
-import { usePrevious } from '@/hooks/usePrevious';
 import type { ToolConfirmationState } from '@/lib/ai/tool-confirmation-types';
-
-interface ToolCall {
-  tool: string;
-  arguments: string;
-  result?: string;
-  status: 'pending' | 'success' | 'error';
-  executedAt?: number;
-}
-
-interface Message {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp?: number;
-  isStreaming?: boolean;
-  toolCalls?: ToolCall[];
-}
+import type { DisplayMessage } from '@/hooks/useChatWithPersistence';
 
 /**
  * Props for the ChatPanel component
  */
 interface ChatPanelProps {
   /** Array of chat messages to display */
-  messages: Message[];
+  messages: DisplayMessage[];
   /** Current value of the input field */
   input: string;
   /** Callback when input value changes */
@@ -46,11 +29,13 @@ interface ChatPanelProps {
   onSend: () => void;
   /** Callback to stop/cancel AI response generation */
   onStop?: () => void;
+  /** Try the failed turn again */
+  onRetry?: () => void;
   /** Callback when user closes the chat panel */
   onClose: () => void;
   /** Current chat status */
   status: 'ready' | 'submitted' | 'streaming' | 'error';
-  /** Content being streamed (for typewriter effect) */
+  /** Kept for callers; following the stream no longer needs it. */
   streamingContent?: string;
   /** Callback to open conversation history */
   onOpenHistory?: () => void;
@@ -80,15 +65,113 @@ interface ChatPanelProps {
   };
 }
 
+/** Within this many px of the end counts as "at the bottom". */
+const AT_BOTTOM_PX = 8;
+
+/**
+ * Follow the conversation's end while the reader is there, and let go the
+ * moment they scroll away.
+ *
+ * The old panel called smooth scrollIntoView every 150 ms while a reply
+ * streamed, so a reader who scrolled up was pulled back down before they could
+ * read anything: "it doesn't let me scroll while it's loading". Here, any
+ * upward wheel, touch drag or key releases the hold at once; reaching the
+ * bottom again re-takes it. Following is an instant scrollTop write driven by
+ * the content's own size, so it never animates against the reader.
+ */
+function useStickToBottom() {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const stuck = useRef(true);
+  const lastTop = useRef(0);
+  const [showJump, setShowJump] = useState(false);
+
+  const distanceFromBottom = () => {
+    const el = scrollRef.current;
+    return el ? el.scrollHeight - el.scrollTop - el.clientHeight : 0;
+  };
+
+  const toBottom = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    lastTop.current = el.scrollTop;
+  }, []);
+
+  const release = useCallback(() => {
+    stuck.current = false;
+  }, []);
+
+  // Reader intent, read from input rather than from scroll position, so a
+  // reply growing at the same moment cannot win the race.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY < 0) release();
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowUp' || e.key === 'PageUp' || e.key === 'Home') release();
+    };
+    el.addEventListener('wheel', onWheel, { passive: true });
+    el.addEventListener('touchmove', release, { passive: true });
+    el.addEventListener('keydown', onKey);
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('touchmove', release);
+      el.removeEventListener('keydown', onKey);
+    };
+  }, [release]);
+
+  const onScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const distance = distanceFromBottom();
+    if (distance <= AT_BOTTOM_PX) stuck.current = true;
+    // A drag of the scrollbar moves up without a wheel or touch event.
+    else if (el.scrollTop < lastTop.current - 2) stuck.current = false;
+    lastTop.current = el.scrollTop;
+    setShowJump(!stuck.current && distance > 80);
+  }, []);
+
+  // Follow content growth (streamed text, tool cards, images) while stuck.
+  useEffect(() => {
+    const content = contentRef.current;
+    if (!content || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      if (stuck.current) toBottom();
+      else setShowJump(distanceFromBottom() > 80);
+    });
+    ro.observe(content);
+    return () => ro.disconnect();
+  }, [toBottom]);
+
+  /** Take the hold and go to the end (a new message of the reader's own). */
+  const stick = useCallback(() => {
+    stuck.current = true;
+    setShowJump(false);
+    toBottom();
+  }, [toBottom]);
+
+  /** The "Jump to latest" button. */
+  const jump = useCallback(() => {
+    stuck.current = true;
+    setShowJump(false);
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  }, []);
+
+  return { scrollRef, contentRef, onScroll, showJump, stick, jump, toBottom };
+}
+
 export function ChatPanel({
   messages,
   input,
   onInputChange,
   onSend,
   onStop,
+  onRetry,
   onClose,
   status,
-  streamingContent,
   onOpenHistory,
   actionMode = 'confirm',
   onActionModeChange,
@@ -99,87 +182,45 @@ export function ChatPanel({
   onDenyConfirmation,
   summaryMetadata,
 }: ChatPanelProps) {
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  // Track if this is the initial mount (for stagger animation)
-  const [isInitialMount, setIsInitialMount] = useState(true);
-  // Hide messages briefly on open so scroll can complete first
-  const [showMessages, setShowMessages] = useState(false);
-  // Track if user has scrolled up (to pause autoscroll)
-  const [userHasScrolled, setUserHasScrolled] = useState(false);
+  const { scrollRef, contentRef, onScroll, showJump, stick, jump, toBottom } = useStickToBottom();
+  const reduceMotion = useReducedMotion();
 
-  // Get previous messages to detect new ones (state-based, safe during render)
-  const previousMessages = usePrevious(messages);
-  const previousMessageIds = useMemo(
-    () => new Set(previousMessages?.map((m) => m.id) ?? []),
-    [previousMessages]
-  );
+  // Messages present when the panel opened render still; only messages that
+  // arrive while it is open fade in.
+  const [initialIds] = useState(() => new Set(messages.map((m) => m.id)));
 
-  // Detect when user scrolls away from bottom (to pause autoscroll)
-  const handleScroll = useCallback(() => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
+  // Open at the end, before the first paint.
+  useLayoutEffect(() => {
+    toBottom();
+  }, [toBottom]);
 
-    // Consider "at bottom" if within 100px of bottom
-    const isAtBottom =
-      container.scrollHeight - container.scrollTop <= container.clientHeight + 100;
-    setUserHasScrolled(!isAtBottom);
-  }, []);
-
-  // Reset userHasScrolled when user sends a new message (optimistic message appears)
+  // A message of the reader's own takes them to the end.
+  const lastMessage = messages[messages.length - 1];
+  const lastUserId = lastMessage?.role === 'user' ? lastMessage.id : null;
   useEffect(() => {
-    const hasOptimisticUserMessage = messages.some(
-      (m) => m.role === 'user' && m.id.startsWith('optimistic-')
-    );
-    if (hasOptimisticUserMessage) {
-      setUserHasScrolled(false);
-    }
-  }, [messages]);
+    if (lastUserId) stick();
+  }, [lastUserId, stick]);
 
-  // On mount: scroll instantly, then reveal messages with slight delay
+  // Name the new mode for a few seconds after it changes (touch has no hover).
+  const [modeNotice, setModeNotice] = useState<string | null>(null);
+  const prevMode = useRef(actionMode);
   useEffect(() => {
-    // Scroll to bottom immediately (no animation on initial load)
-    messagesEndRef.current?.scrollIntoView({ behavior: 'instant' });
-    // Show messages after scroll completes
-    const showTimer = setTimeout(() => setShowMessages(true), 0);
-    // Mark initial mount complete for animation purposes
-    const mountTimer = setTimeout(() => setIsInitialMount(false), 350);
-    return () => {
-      clearTimeout(showTimer);
-      clearTimeout(mountTimer);
-    };
-  }, []);
-
-  // Auto-scroll to bottom on new messages (after initial mount)
-  // Skip if user has scrolled up to read history
-  useEffect(() => {
-    if (showMessages && !userHasScrolled) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages, streamingContent, showMessages, userHasScrolled]);
-
-  // Auto-scroll during typewriter animation (streaming-assistant message)
-  // The typewriter reveals text gradually, so we need to scroll as content grows
-  // Skip if user has scrolled up to read history
-  // Only scroll while actively streaming (not after completion during typewriter catch-up)
-  useEffect(() => {
-    const hasActiveTypewriter = messages.some((m) => m.id === 'streaming-assistant' && m.isStreaming);
-    if (!hasActiveTypewriter || !showMessages || userHasScrolled) return;
-
-    const interval = setInterval(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 150); // Scroll every 150ms while typewriter is active
-
-    return () => clearInterval(interval);
-  }, [messages, showMessages, userHasScrolled]);
+    if (prevMode.current === actionMode) return;
+    prevMode.current = actionMode;
+    setModeNotice(ACTION_MODE_NOTICE[actionMode]);
+    const t = setTimeout(() => setModeNotice(null), 3500);
+    return () => clearTimeout(t);
+  }, [actionMode]);
 
   const isProcessing = status === 'submitted' || status === 'streaming';
+  // Waiting for the first word: the reply has not produced a message yet.
+  const showTyping = status === 'submitted' || (status === 'streaming' && lastMessage?.role !== 'assistant');
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24, scale: 0.95 }}
+      initial={reduceMotion ? false : { opacity: 0, y: 24, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: 24, scale: 0.95 }}
+      exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.95 }}
       transition={springConfig}
       className={cn(
         'fixed z-[60]',
@@ -197,7 +238,7 @@ export function ChatPanel({
       <div className="flex items-center justify-between px-3 py-2 border-b-2 border-border bg-muted gap-2">
         <div className="flex items-center gap-2 flex-shrink-0">
           <ChatTextIcon className="h-5 w-5 text-primary" />
-          <h2 className="font-heading font-semibold text-sm">PERM Assistant</h2>
+          <h2 className="font-heading font-semibold text-sm max-[389px]:sr-only">PERM Assistant</h2>
         </div>
 
         {/* Action Mode Toggle (icons only, portal tooltip) */}
@@ -215,7 +256,7 @@ export function ChatPanel({
               variant="ghost"
               size="icon"
               onClick={onOpenHistory}
-              className="h-8 w-8"
+              className="h-11 w-11 md:h-8 md:w-8"
               aria-label="View history"
             >
               <History className="h-4 w-4" />
@@ -225,7 +266,7 @@ export function ChatPanel({
             variant="ghost"
             size="icon"
             onClick={onClose}
-            className="h-8 w-8"
+            className="h-11 w-11 md:h-8 md:w-8"
             aria-label="Close chat"
           >
             <XIcon className="h-4 w-4" />
@@ -233,102 +274,150 @@ export function ChatPanel({
         </div>
       </div>
 
-      {/* Messages Area */}
-      <div
-        ref={scrollContainerRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-4"
-      >
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-            <ChatTextIcon className="h-12 w-12 mb-4 opacity-30" />
-            <p className="text-sm">Start a conversation</p>{" "}
-            <p className="text-xs mt-1 opacity-70">
-              Ask about PERM process, deadlines, or the app
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4" style={{ opacity: showMessages ? 1 : 0 }}>
-            {messages.map((message, index) => {
-              // Check if this message existed in the previous render cycle
-              // New messages won’t be in previousMessageIds until after this render commits
-              const wasSeenBefore = previousMessageIds.has(message.id);
-
-              // Only apply stagger delay on initial mount, after messages become visible
-              const animationDelay = isInitialMount && showMessages ? index * 0.05 : 0;
-              // New messages (not seen before, not initial mount) appear instantly
-              const skipAnimation = !wasSeenBefore && !isInitialMount;
-
-              // Compaction seam: render divider between archived prefix (< messageCountAtSummary)
-              // and verbatim tail (>= messageCountAtSummary). Must render at the first index
-              // in the verbatim tail to appear ABOVE that message.
-              const showDividerBefore =
-                summaryMetadata !== undefined &&
-                summaryMetadata.messageCountAtSummary > 0 &&
-                summaryMetadata.messageCountAtSummary < messages.length &&
-                index === summaryMetadata.messageCountAtSummary;
-
-              return (
-                <Fragment key={message.id}>
-                  {showDividerBefore && (
-                    <ChatCompactionDivider
-                      messageCount={summaryMetadata!.messageCountAtSummary}
-                      summary={summaryMetadata!.summary}
-                      facts={summaryMetadata!.facts}
-                    />
-                  )}
-                  <motion.div
-                    initial={skipAnimation ? { opacity: 1, y: 0 } : { opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{
-                      ...springConfig,
-                      delay: animationDelay,
-                    }}
-                  >
-                    <ChatMessage
-                      role={message.role}
-                      content={message.content}
-                      timestamp={message.timestamp}
-                      isStreaming={message.isStreaming}
-                      toolCalls={message.toolCalls}
-                      getConfirmation={getConfirmation}
-                      onApproveConfirmation={onApproveConfirmation}
-                      onDenyConfirmation={onDenyConfirmation}
-                    />
-                  </motion.div>
-                </Fragment>
-              );
-            })}
-
-            {/* Typing indicator */}
-            <AnimatePresence>
-              {status === 'submitted' && <TypingIndicator />}
-            </AnimatePresence>
-
-            {/* Error message */}
-            <AnimatePresence>
-              {status === 'error' && (
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-none"
-                >
-                  <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                      Having trouble connecting
-                    </p>{" "}
-                    <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                      Our AI services are experiencing high demand. Please try again in a moment.
-                    </p>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+      {/* The mode just chosen, named */}
+      <AnimatePresence>
+        {modeNotice && (
+          <motion.p
+            role="status"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15 }}
+            className="px-3 py-2 text-sm border-b-2 border-border bg-background overflow-hidden"
+          >
+            {modeNotice}
+          </motion.p>
         )}
-        <div ref={messagesEndRef} />
+      </AnimatePresence>
+
+      {/* Messages Area */}
+      <div className="relative flex-1 min-h-0">
+        <div
+          ref={scrollRef}
+          onScroll={onScroll}
+          tabIndex={0}
+          aria-label="Conversation"
+          className="h-full overflow-y-auto overscroll-contain p-4 focus:outline-none"
+        >
+          {/* Always mounted, so the size watcher follows a first conversation too. */}
+          <div ref={contentRef} className="min-h-full flex flex-col">
+          {messages.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground">
+              <ChatTextIcon className="h-12 w-12 mb-4 opacity-30" />
+              <p className="text-sm">Start a conversation</p>{" "}
+              <p className="text-sm mt-1">
+                Ask about PERM process, deadlines, or the app
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4" aria-live="polite" aria-busy={isProcessing}>
+              {messages.map((message, index) => {
+                // Compaction seam: the divider sits between the archived prefix
+                // (< messageCountAtSummary) and the verbatim tail.
+                const showDividerBefore =
+                  summaryMetadata !== undefined &&
+                  summaryMetadata.messageCountAtSummary > 0 &&
+                  summaryMetadata.messageCountAtSummary < messages.length &&
+                  index === summaryMetadata.messageCountAtSummary;
+                const isNew = !initialIds.has(message.id) && !reduceMotion;
+
+                return (
+                  <Fragment key={message.id}>
+                    {showDividerBefore && (
+                      <ChatCompactionDivider
+                        messageCount={summaryMetadata!.messageCountAtSummary}
+                        summary={summaryMetadata!.summary}
+                        facts={summaryMetadata!.facts}
+                      />
+                    )}
+                    <motion.div
+                      initial={isNew ? { opacity: 0, y: 6 } : false}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.18, ease: 'easeOut' }}
+                    >
+                      <ChatMessage
+                        role={message.role}
+                        content={message.content}
+                        timestamp={message.timestamp}
+                        isStreaming={message.isStreaming}
+                        animateText={message.isLive === true && message.role === 'assistant'}
+                        wasStopped={message.wasStopped}
+                        toolCalls={message.toolCalls}
+                        getConfirmation={getConfirmation}
+                        onApproveConfirmation={onApproveConfirmation}
+                        onDenyConfirmation={onDenyConfirmation}
+                      />
+                    </motion.div>
+                  </Fragment>
+                );
+              })}
+
+              {/* Typing indicator */}
+              <AnimatePresence>
+                {showTyping && <TypingIndicator />}
+              </AnimatePresence>
+
+              {/* Error message */}
+              <AnimatePresence>
+                {status === 'error' && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    role="alert"
+                    className="flex items-start gap-3 p-3 bg-red-50 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 rounded-none"
+                  >
+                    <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                        The assistant couldn’t answer that
+                      </p>{" "}
+                      <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                        The AI services didn’t respond. Your message is saved; try again in a moment.
+                      </p>
+                      {onRetry && (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={onRetry}
+                          className="mt-2 h-11 md:h-9 shadow-hard-sm"
+                        >
+                          Try again
+                        </Button>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
+          </div>
+        </div>
+
+        {/* Newer content below while the reader is scrolled up */}
+        <AnimatePresence>
+          {showJump && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 6 }}
+              transition={{ duration: 0.15 }}
+              className="absolute bottom-3 left-1/2 -translate-x-1/2"
+            >
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={jump}
+                className="h-11 md:h-9 gap-1.5 bg-background shadow-hard-sm"
+              >
+                <ArrowDownIcon className="h-4 w-4" />
+                Jump to latest
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Not-legal-advice disclaimer — quiet footnote above the composer */}
@@ -342,7 +431,7 @@ export function ChatPanel({
         onStop={onStop}
         disabled={false}
         isProcessing={isProcessing}
-        placeholder={isProcessing ? 'Thinking...' : 'Type a message...'}
+        placeholder={isProcessing ? 'Answering…' : 'Type a message...'}
       />
     </motion.div>
   );

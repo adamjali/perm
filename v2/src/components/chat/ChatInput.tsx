@@ -117,7 +117,8 @@ export function ChatInput({
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (value.trim() && !disabled) {
+      // One turn at a time: Enter mid-reply would start a second, interleaved answer.
+      if (value.trim() && !disabled && !isProcessing) {
         onSend();
       }
     }
@@ -316,7 +317,8 @@ export function ChatInput({
         placeholder={placeholder}
         rows={1}
         className={cn(
-          'flex-1 resize-none px-3 py-2 text-sm',
+          // 16px on phones: iOS Safari zooms the page into any field under 16px.
+          'flex-1 resize-none px-3 py-2 text-base md:text-sm',
           'border-2 border-border bg-background rounded-none',
           'focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-0',
           'placeholder:text-muted-foreground',

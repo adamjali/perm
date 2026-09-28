@@ -69,6 +69,16 @@ const MODE_CONFIG: Record<ActionMode, ModeConfig> = {
 
 const MODES: ActionMode[] = ["off", "confirm", "auto"];
 
+/**
+ * One line naming what a mode does, shown briefly after it changes. The
+ * tooltips above appear on hover only, so a phone never saw them.
+ */
+export const ACTION_MODE_NOTICE: Record<ActionMode, string> = {
+  off: "Off: I’ll only answer questions",
+  confirm: "Confirm: I’ll ask before taking actions",
+  auto: "Auto: I’ll act right away; deletions still ask",
+};
+
 // ============================================================================
 // Tooltip Component (Portal-based)
 // ============================================================================
@@ -202,7 +212,7 @@ export function ActionModeToggle({
               className={cn(
                 // Base segment styling - icons only, compact
                 "relative flex items-center justify-center",
-                "w-9 h-8",
+                "w-10 h-11 md:w-9 md:h-8",
                 "transition-colors duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
                 // Border between segments (not on last)

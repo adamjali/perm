@@ -377,6 +377,9 @@ export async function POST(req: Request) {
         execute: async ({ writer }) => {
           // Merge the streamText result into this stream
           writer.merge(result.toUIMessageStream({
+            // When the reply began, so the client can timestamp it from its
+            // first word instead of waiting for the saved copy.
+            messageMetadata: ({ part }) => (part.type === 'start' ? { createdAt: Date.now() } : undefined),
             // AI SDK v6: the string returned here is emitted as a structured
             // ERROR PART on the stream (not assistant text), so the client can
             // render it as an error banner. The client MUST NOT persist a turn
