@@ -27,6 +27,7 @@ GitHub Actions ─(ssh, deploy key)─▶ permtracker-deploy       (new releases
 | deploys | `bin/permtracker-deploy` | the only command the deploy key can run: `deploy <id>`, `rollback`, `status` |
 | crons | `permtracker-cron@*.timer` | the ten `vercel.json` crons, same UTC times, calling the same routes with `CRON_SECRET` |
 | USCIS fetches | `permtracker-uscis@*.timer` | the Mac's three launchd jobs, same Eastern times (`www.uscis.gov` answers this server) |
+| health | `permtracker-health.timer` | every 10 minutes: memory, CPU, disk, backup age, service states and the live copy into `perm_docs['server_health']`, with 7 days of samples in `/srv/permtracker/health/` for Oracle's idle rule. The morning report's "server" section judges it |
 | backups | `permtracker-backup.timer` | 3:15 AM Eastern: full SQL dump, zstd, checked to end in COMMIT, newest 7 kept, `backups/LAST_OK` |
 
 ## Deploy, roll back, see the state

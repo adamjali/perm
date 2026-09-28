@@ -7,6 +7,7 @@ public repository (stdout carries status words, never a figure).
 from __future__ import annotations
 
 import contextlib
+import datetime as dt
 import io
 import json
 import pathlib
@@ -92,6 +93,50 @@ def main() -> int:
     check(printed.strip() == "turso=warn site=ok", f"stdout is status words only: {printed!r}")
     check(not re.search(r"\d", printed), "no digit reaches the public log")
     check(written == fake, "the full report goes to the file")
+
+    # The server section: judge the doc the server writes every 10 minutes.
+    now = dt.datetime(2026, 9, 28, 11, 30, tzinfo=dt.timezone.utc)
+    now_ms = int(now.timestamp() * 1000)
+
+    def doc(**over):
+        d = {"at": "2026-09-28T11:25:00Z",
+             "now": {"cpuPct": 3.0, "memPct": 35.0, "diskPct": 15.0, "dbBytes": 6_500_000_000},
+             "idle": {"hours": 168, "cpuP95": 6.0, "memP95": 36.0, "memMin": 33.0},
+             "backup": {"lastOk": {"at": "2026-09-28T07:16:00Z"}, "count": 7},
+             "services": {u: "active" for u in ["permtracker-db", "permtracker-dbcache", "permtracker-web@blue",
+                                                "permtracker-web@green", "nginx", "cloudflared"]},
+             "failedUnits": [], "slot": {"active": "blue", "release": "abc-1"}}
+        for k, v in over.items():
+            d[k] = {**d[k], **v} if isinstance(d.get(k), dict) and isinstance(v, dict) else v
+        return d
+
+    v = dm.server_verdict
+    check(v(None, now_ms)["status"] == "off", "no doc: the section is off, not a failure")
+    check(v(doc(), now_ms)["status"] == "ok", "a healthy server reads ok")
+    check(v(doc(at="2026-09-28T09:00:00Z"), now_ms)["status"] == "fail", "a server silent for 2.5 h fails")
+    check(v(doc(services={"nginx": "failed"}), now_ms)["status"] == "fail", "nginx down fails")
+    check(v(doc(services={"permtracker-web@blue": "failed"}), now_ms)["status"] == "fail",
+          "the LIVE copy down fails")
+    check(v(doc(services={"permtracker-web@green": "inactive"}), now_ms)["status"] == "ok",
+          "the idle copy down does not")
+    check(v(doc(services={"permtracker-dbcache": "inactive"}), now_ms)["status"] == "warn",
+          "the database falling out of memory warns")
+    check(v(doc(idle={"memP95": 12.0, "cpuP95": 4.0}), now_ms)["status"] == "fail",
+          "memory and CPU both under 20% for the window fails (Oracle can reclaim it)")
+    check(v(doc(idle={"memP95": 22.0, "cpuP95": 4.0}), now_ms)["status"] == "warn", "under 25% warns")
+    check(v(doc(idle={"memP95": 12.0, "cpuP95": 40.0}), now_ms)["status"] == "ok",
+          "busy CPU keeps it above the line")
+    check(v(doc(idle={"hours": 3, "memP95": 12.0, "cpuP95": 4.0}), now_ms)["status"] == "ok",
+          "three hours of samples is not a window")
+    check(v(doc(backup={"lastOk": {"at": "2026-09-27T03:00:00Z"}}), now_ms)["status"] == "warn",
+          "a 32 h old backup warns")
+    check(v(doc(backup={"lastOk": {"at": "2026-09-26T03:00:00Z"}}), now_ms)["status"] == "fail",
+          "a 56 h old backup fails")
+    check(v(doc(backup={"lastOk": None}), now_ms)["status"] == "fail", "no backup fails")
+    check(v(doc(now={"diskPct": 85.0}), now_ms)["status"] == "warn", "disk over 80% warns")
+    check("GB" in " ".join(v(doc(), now_ms)["lines"]) and "BB" not in " ".join(v(doc(), now_ms)["lines"]),
+          "database size reads in GB")
+    check("server" in inspect.getsource(dm.build), "build() includes the server section")
 
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0
