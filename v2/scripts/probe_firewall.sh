@@ -48,6 +48,8 @@ probe "curl, lookup ?case= (restricted)"  "$H/perm-case-status?case=G-100-26012-
 probe "Claude-User UA, lookup ?case="     -A "Claude-User/1.0 (+https://support.anthropic.com/)" "$H/perm-case-status?case=G-100-26012-553496"
 probe "curl, employer compare (restr.)"   "$H/perm-employers/compare?a=x&b=y"
 probe "curl, /prefs (restricted)"         "$H/prefs?token=x"
+probe "POST /api/auth (rule 14: app 400)" -X POST -H "content-type: application/json" --data '{"action":"auth:signIn","args":{}}' "$H/api/auth"
+probe "GET /api/auth (still challenged)"   "$H/api/auth"
 
 probe "curl, /employer-alert (restricted)" "$H/employer-alert/confirm?token=x"
 # --- rule 13 (Sep 26 2026): one-click unsubscribe POSTs reach Convex. Mail

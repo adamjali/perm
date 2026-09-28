@@ -23,6 +23,9 @@ import {
   isRateLimitError,
   isInvalidCodeError,
   isExpiredError,
+  isBlockedResponseError,
+  isMaskedServerError,
+  blockedResponseMessage,
 } from "@/lib/auth/auth-errors";
 import {
   trackTurnstileFail,
@@ -193,6 +196,14 @@ export function LoginPageClient() {
 
       const message = error instanceof Error ? error.message : String(error);
 
+      // A challenge or rate-limit page answered instead of the auth proxy.
+      // Not a code fault, so no Sentry event; PostHog counts it.
+      if (isBlockedResponseError(message)) {
+        trackLoginFailed("blocked_response");
+        toast.error(blockedResponseMessage(message));
+        return;
+      }
+
       // Only report unexpected errors to Sentry — invalid-credentials is
       // wrapped by Convex Auth as "[Request ID: xxx] Server Error" which
       // is normal login failure, not a real server bug.
@@ -241,17 +252,21 @@ export function LoginPageClient() {
       if (handleStaleDeployment(error)) return;
 
       const message = error instanceof Error ? error.message : String(error);
-      captureError(error, { operation: "signInVerification" });
 
-      if (isExpiredError(message)) {
+      if (isBlockedResponseError(message)) {
+        toast.error(blockedResponseMessage(message));
+      } else if (isExpiredError(message)) {
         toast.error("Verification code expired. Go back and sign in again to get a new code.");
-      } else if (isInvalidCodeError(message)) {
-        toast.error("Invalid verification code. Please check and try again.");
+      } else if (isInvalidCodeError(message) || isMaskedServerError(message)) {
+        // Convex masks Convex Auth's "Could not verify code" as a bare
+        // "Server Error" in production, so a wrong or stale code lands here.
+        toast.error("That code didn’t work. Check it, or go back and sign in again for a new one.");
       } else if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
+        captureError(error, { operation: "signInVerification" });
         console.warn("[Login Verification] Unhandled error type:", message);
         toast.error("Verification failed. Please try again or contact support.");
       }
@@ -269,6 +284,11 @@ export function LoginPageClient() {
       if (handleStaleDeployment(error)) return;
 
       const message = error instanceof Error ? error.message : String(error);
+      if (isBlockedResponseError(message)) {
+        toast.error(blockedResponseMessage(message));
+        setIsGoogleLoading(false);
+        return;
+      }
       captureError(error, { operation: "googleSignIn" });
 
       if (/popup|closed/i.test(message)) {

@@ -77,7 +77,15 @@ export function SentryClientInit() {
           /Minified React error #418/,
           /Minified React error #423/,
           /Minified React error #425/,
+          // A wallet extension's injected provider (Sentry 3N)
+          /MetaMask/,
+          // Safari refusing to fetch the service worker script (Sentry 49);
+          // the SW is progressive enhancement and registration is retried
+          /sw\.js load failed/,
         ],
+        // Code that isn't ours, identified by where it runs: a script some
+        // extension or tool injects as executors/<n>.js (Sentry 43).
+        denyUrls: [/executors\/\d+\.js/, /extensions\//, /^safari-(web-)?extension:/],
         tracesSampler: (samplingContext) => {
           if (samplingContext.name?.includes("/api/health")) return 0;
           return process.env.NODE_ENV === "production" ? 0.1 : 1.0;

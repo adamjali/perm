@@ -38,7 +38,7 @@ import {
 import { prepareUpdatePayload } from "@/lib/forms/prepareUpdatePayload";
 import { ConvexError } from "convex/values";
 import { analytics } from "@/lib/analytics";
-import { captureError, captureMessage, trackValidationError } from "@/lib/sentry";
+import { captureError, trackValidationError } from "@/lib/sentry";
 
 export interface UseFormSubmissionProps {
   mode: "add" | "edit";
@@ -120,34 +120,18 @@ export function useFormSubmission({
 
         toast.error(`Validation failed: ${toastMessage}`, { duration: 5000 });
 
-        // Log validation errors for admin visibility
-        const errorDetails = result.errors.map((e) => ({
-          field: e.field,
-          label: getFieldLabel(e.field),
-          message: e.message,
-          value: currentFormData[e.field as keyof CaseFormData],
-        }));
-        console.warn(
-          "[CaseForm] Validation failed on submit:",
-          { errors: errorDetails, mode, caseId }
-        );
-
-        // Send to Sentry so admin can track validation patterns
-        trackValidationError("CaseForm", result.errors.length, result.errors.map((e) => e.field));
-        captureMessage(
-          `Case form validation failed: ${result.errors.map((e) => `${getFieldLabel(e.field)}: ${e.message}`).join("; ")}`,
-          "warning",
-          {
-            operation: "validateCaseForm",
-            resourceId: caseId,
-            extra: { mode, errorDetails },
-          }
-        );
+        // A validation failure is the form doing its job, not a fault, so it
+        // is a breadcrumb and a PostHog event, never a Sentry issue (it had
+        // made four: 28, 1B, 45, 30). Field NAMES only: the values are a
+        // client's case data and must not leave the browser in telemetry.
+        const fields = result.errors.map((e) => e.field);
+        console.warn("[CaseForm] Validation failed on submit:", { fields, mode });
+        trackValidationError("CaseForm", result.errors.length, fields);
 
         analytics.capture("case_form_validation_failed", {
           mode,
           error_count: result.errors.length,
-          fields: result.errors.map((e) => e.field),
+          fields,
         });
 
         window.scrollTo({ top: 0, behavior: "smooth" });

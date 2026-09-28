@@ -21,7 +21,15 @@ import {
   validateConfirmPassword,
   fieldMessage,
 } from "@/lib/auth/signup-validation";
-import { isNetworkError, isRateLimitError, isInvalidCodeError, isExpiredError } from "@/lib/auth/auth-errors";
+import {
+  isNetworkError,
+  isRateLimitError,
+  isInvalidCodeError,
+  isExpiredError,
+  isBlockedResponseError,
+  isMaskedServerError,
+  blockedResponseMessage,
+} from "@/lib/auth/auth-errors";
 import {
   trackTurnstileFail,
   trackPasswordResetRequested,
@@ -161,7 +169,11 @@ export function ResetPasswordPageClient() {
 
       const message = error instanceof Error ? error.message : String(error);
 
-      if (isRateLimitError(message)) {
+      // Checked before everything else: the fall-through below says a code
+      // was sent, which is false when the request never reached the proxy.
+      if (isBlockedResponseError(message)) {
+        toast.error(blockedResponseMessage(message));
+      } else if (isRateLimitError(message)) {
         captureError(error, { operation: "resetPasswordRequest" });
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
@@ -210,12 +222,15 @@ export function ResetPasswordPageClient() {
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
 
-      if (isExpiredError(message)) {
+      if (isBlockedResponseError(message)) {
+        toast.error(blockedResponseMessage(message));
+      } else if (isExpiredError(message)) {
         toast.error("Reset code expired. Please request a new one.");
       } else if (lower.includes("invalid password")) {
         toast.error("Password doesn’t meet requirements. Must be at least 8 characters.");
-      } else if (isInvalidCodeError(message)) {
-        toast.error("Invalid reset code. Please check and try again.");
+      } else if (isInvalidCodeError(message) || isMaskedServerError(message)) {
+        // Convex masks "Could not verify code" as a bare "Server Error".
+        toast.error("That reset code didn’t work. Check it, or request a new one.");
       } else if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {

@@ -17,6 +17,7 @@ import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
 import type { ChecklistItemId, OnboardingContextValue, OnboardingStep, TourPhase } from "@/lib/onboarding/types";
 import { TOUR_PHASE_ORDER } from "@/lib/onboarding/constants";
+import { retryOnce } from "@/lib/onboarding/retryOnce";
 
 const OnboardingContext = createContext<OnboardingContextValue | null>(null);
 
@@ -40,7 +41,12 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const onboardingState = useQuery(api.onboarding.getOnboardingState);
 
-  const updateStep = useMutation(api.onboarding.updateOnboardingStep);
+  const updateStepOnce = useMutation(api.onboarding.updateOnboardingStep);
+  // One delayed retry: see retryOnce (Sentry 4B).
+  const updateStep = useCallback(
+    (args: Parameters<typeof updateStepOnce>[0]) => retryOnce(() => updateStepOnce(args)),
+    [updateStepOnce],
+  );
   const completeItem = useMutation(api.onboarding.completeChecklistItem);
   const dismissMutation = useMutation(api.onboarding.dismissChecklist);
   const restartTourMutation = useMutation(api.onboarding.restartTour);

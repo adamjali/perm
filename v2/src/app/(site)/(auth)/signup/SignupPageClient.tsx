@@ -23,7 +23,15 @@ import {
   fieldMessage,
 } from "@/lib/auth/signup-validation";
 import type { FieldValidation } from "@/lib/auth/signup-validation";
-import { isNetworkError, isRateLimitError, isInvalidCodeError, isExpiredError } from "@/lib/auth/auth-errors";
+import {
+  isNetworkError,
+  isRateLimitError,
+  isInvalidCodeError,
+  isExpiredError,
+  isBlockedResponseError,
+  isMaskedServerError,
+  blockedResponseMessage,
+} from "@/lib/auth/auth-errors";
 import {
   trackTurnstileFail,
   trackSignupFieldInvalid,
@@ -235,6 +243,12 @@ export function SignupPageClient() {
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
 
+      // A challenge or rate-limit page answered instead of the auth proxy.
+      if (isBlockedResponseError(message)) {
+        toast.error(blockedResponseMessage(message));
+        return;
+      }
+
       // Server-level validation rejections — surface at the right field
       if (lower.includes("names can’t contain") || lower.includes("invalid characters") || lower.includes("repeated content") || (lower.includes("names must be") && lower.includes("characters"))) {
         setNameTouched(true);
@@ -292,10 +306,14 @@ export function SignupPageClient() {
 
       const message = error instanceof Error ? error.message : String(error);
 
-      if (isExpiredError(message)) {
+      if (isBlockedResponseError(message)) {
+        toast.error(blockedResponseMessage(message));
+      } else if (isExpiredError(message)) {
         toast.error("Verification code expired. Go back and resubmit to get a new code.");
-      } else if (isInvalidCodeError(message)) {
-        toast.error("Invalid verification code. Please check and try again.");
+      } else if (isInvalidCodeError(message) || isMaskedServerError(message)) {
+        // Convex masks Convex Auth's "Could not verify code" as a bare
+        // "Server Error" in production, so a wrong or stale code lands here.
+        toast.error("That code didn’t work. Check it, or go back and resubmit for a new one.");
       } else if (isRateLimitError(message)) {
         toast.error("Too many attempts. Please wait a moment and try again.");
       } else if (isNetworkError(message)) {
@@ -319,7 +337,9 @@ export function SignupPageClient() {
       if (handleStaleDeployment(error)) return;
       const message = error instanceof Error ? error.message : String(error);
       const lower = message.toLowerCase();
-      if (lower.includes("popup") || lower.includes("closed")) {
+      if (isBlockedResponseError(message)) {
+        toast.error(blockedResponseMessage(message));
+      } else if (lower.includes("popup") || lower.includes("closed")) {
         toast.error("Sign up was cancelled. Please try again.");
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
