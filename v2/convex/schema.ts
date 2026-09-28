@@ -2192,6 +2192,18 @@ export default defineSchema({
    * day. The admin panel's "time to move off Resend's free plan" signal; see
    * convex/lib/alertBudgets.ts. Pruned after 30 days.
    */
+  /**
+   * The daily operator report (convex/dailyReport.ts), one row per Eastern
+   * day, kept 60 days for the admin page. `report` is the whole report as the
+   * email showed it; `overall` is its worst section status.
+   */
+  dailyReports: defineTable({
+    day: v.string(),
+    overall: v.string(),
+    report: v.any(),
+    createdAt: v.number(),
+  }).index("by_day", ["day"]),
+
   budgetRefusals: defineTable({
     day: v.string(),
     /** A key of BUDGETS in convex/lib/alertBudgets.ts. */

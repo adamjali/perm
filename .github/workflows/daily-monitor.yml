@@ -1,0 +1,64 @@
+name: Daily monitor
+
+# The morning report (Adam, 2026-09-27): health, price, every workflow run,
+# the ingests, failures and re-runs, the data, traffic, what was expected and
+# what was not. Emailed to the admin address every morning.
+#
+# scripts/daily_monitor.py gathers what lives outside Convex into a JSON file;
+# `dailyReport:send` adds what only Convex can see, stores the report for the
+# admin page's Monitor tab and emails it.
+#
+# THIS REPOSITORY IS PUBLIC, SO ITS LOGS ARE. The script prints one status word
+# per section and the report travels in a file and a command argument that the
+# log shows unexpanded. Nothing here may `cat` the report or echo it.
+#
+# Dispatched by Vercel's cron (daily-monitor in src/app/api/cron/dispatch/
+# jobs.ts), because GitHub's own schedule fires hours late on this repo. No
+# GitHub schedule on purpose: two clocks would mean two emails. A missing
+# morning email is itself the alarm, and the review routine says so.
+#
+# Optional secrets, each switching on one section (the report says "off" until
+# it is set): TURSO_PLATFORM_TOKEN, VERCEL_TOKEN, POSTHOG_PERSONAL_API_KEY,
+# SENTRY_AUTH_TOKEN.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: daily-monitor
+  cancel-in-progress: false
+
+jobs:
+  report:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.12"
+
+      - name: Gather the report
+        working-directory: v2
+        env:
+          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
+          TURSO_PLATFORM_TOKEN: ${{ secrets.TURSO_PLATFORM_TOKEN }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: python3 scripts/daily_monitor.py --out "${RUNNER_TEMP}/report.json"
+
+      - name: Add Convex's half, store it and email it
+        working-directory: v2
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          python3 -c 'import json,sys; json.dump({"report": json.load(open(sys.argv[1]))}, open(sys.argv[2], "w"))' \
+            "${RUNNER_TEMP}/report.json" "${RUNNER_TEMP}/args.json"
+          npx --yes convex run dailyReport:send "$(cat "${RUNNER_TEMP}/args.json")" --prod

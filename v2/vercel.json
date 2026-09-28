@@ -27,6 +27,10 @@
       "schedule": "40 19 * * *"
     },
     {
+      "path": "/api/cron/dispatch/daily-monitor",
+      "schedule": "30 11 * * *"
+    },
+    {
       "path": "/api/cron/dispatch/watched-cases",
       "schedule": "25 * * * *"
     },

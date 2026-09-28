@@ -159,6 +159,8 @@ jobs:
           # the "wired is not proven" rule applied to tests themselves.
           python3 scripts/test_serial_gaps.py
           python3 scripts/test_lca_facets.py
+          python3 scripts/test_wage_views.py
+          python3 scripts/test_daily_monitor.py
           python3 scripts/test_uscis_quarterly.py
           # The standing estimator backtest: what "pending on the day" means
           # (6,500 expired certifications counted as pending on its first

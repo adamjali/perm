@@ -82,6 +82,10 @@ export const CRON_JOBS: Record<string, CronJob> = {
     inputs: { mode: "pending" },
     schedule: "40 19 * * *",
     description: "pending PERM cases against DOL, the mid-day refresh",
+  },  "daily-monitor": {
+    workflow: "daily-monitor.yml",
+    schedule: "30 11 * * *",
+    description: "the morning operator report: health, bills, runs, traffic, emailed to the admin",
   },
 };
 

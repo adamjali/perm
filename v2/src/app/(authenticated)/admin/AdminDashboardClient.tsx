@@ -12,6 +12,7 @@ import { ActivityPanel, DigestPanel, SubscriptionsPanel } from "@/components/adm
 import { BudgetPools, DeliveryPanel } from "@/components/admin/DeliveryPanel";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { ScorecardPanel } from "@/components/admin/ScorecardPanel";
+import { MonitorPanel } from "@/components/admin/MonitorPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -191,6 +192,11 @@ export default function AdminDashboardClient() {
             id: "scorecard",
             label: "Scorecard",
             content: <ScorecardPanel />,
+          },
+          {
+            id: "monitor",
+            label: "Monitor",
+            content: <MonitorPanel />,
           },
         ]}
       />

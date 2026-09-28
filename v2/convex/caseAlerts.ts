@@ -80,6 +80,9 @@
  *   ---------------------------------------
  *   worst case from list mail      75/day, leaving 25 for mail people depend on.
  *
+ * Outside the list budget: the daily operator report, 1/day to the admin
+ * address only (convex/dailyReport.ts). Auth mail keeps 24 on the worst day.
+ *
  * That 25/day is the entire remaining headroom for AUTH mail - password
  * resets and OTP codes - and it is the number to check before adding any
  * sending path, because those are the emails whose absence locks somebody out
