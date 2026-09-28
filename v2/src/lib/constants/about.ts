@@ -89,6 +89,20 @@ export const LEGAL_FORM = "a Florida limited liability company";
  */
 export const POSTAL_ADDRESS = "7901 4th St N, Ste 300, St. Petersburg, FL 33702";
 
+/**
+ * The line that tells every visitor this isn't a law firm. The LLC is managed
+ * by an attorney, and the bar rule on "law-related services" (ABA Model Rule
+ * 5.7, which DC adopts word for word; Virginia did not adopt it) applies to a
+ * business a lawyer controls unless she takes "reasonable measures to assure
+ * that a person obtaining the law-related services knows that the services are
+ * not legal services and that the protections of the client-lawyer
+ * relationship do not exist." DC's comment [6] asks for it before the person
+ * uses the service, preferably in writing, so it sits in the footer of every
+ * page and, shorter, beside the sign-up form.
+ */
+export const NOT_LEGAL_SERVICES =
+  "PERM Tracker isn't a law firm and doesn't give legal advice. Using this site or its app doesn't make you anyone's client, and the protections of an attorney-client relationship don't apply.";
+
 export const ABOUT_ONE_LINER =
   "PERM Tracker is a free, independent website that follows the PERM labor certification process using the Department of Labor's own published data.";
 

@@ -74,6 +74,7 @@ import { LawGavelSVG } from "@/components/illustrations";
 import { Fragment } from "react";
 import { SOCIAL_LINKS } from "@/lib/constants/externalLinks";
 import { FOOTER_COLUMNS } from "@/lib/constants/navigation";
+import { NOT_LEGAL_SERVICES } from "@/lib/constants/about";
 
 // Brand icons as inline SVGs: neither lucide nor Phosphor ships brand marks
 const TwitterIcon = ({ className }: { className?: string }) => (
@@ -281,7 +282,11 @@ export default function Footer({ audience = "public" }: FooterProps) {
           <div className="flex items-center gap-1 text-sm text-white/70">
             Made with <HeartIcon className="h-3 w-3 text-(--primary)" /> for everyone in the PERM line
           </div>
-        </div>
+        </div>{" "}
+        {/* Every page, every audience: see NOT_LEGAL_SERVICES for why. */}
+        <p className="mx-auto mt-4 max-w-3xl text-center text-sm leading-relaxed text-white/70">
+          {NOT_LEGAL_SERVICES}
+        </p>
       </div>
     </footer>
   );

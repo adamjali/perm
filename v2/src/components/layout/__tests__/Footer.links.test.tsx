@@ -3,6 +3,7 @@ import { describe, it, expect } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import Footer from "../Footer";
+import { NOT_LEGAL_SERVICES } from "@/lib/constants/about";
 
 /**
  * There used to be a separate AuthFooter for /login, /signup and
@@ -24,6 +25,8 @@ describe("Footer", () => {
       // The brand name is a link home since 2026-09-15, so the line is split across elements.
       expect(screen.getByText(new RegExp(`© ${currentYear}`))).toBeInTheDocument();
       expect(screen.getByRole("link", { name: "PERM Tracker" })).toHaveAttribute("href", "/");
+      // The bar rule on law-related services: every page says this isn't a law firm.
+      expect(screen.getByText(NOT_LEGAL_SERVICES)).toBeInTheDocument();
     });
   }
 
