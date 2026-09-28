@@ -64,7 +64,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: September 22, 2026
+          Effective Date: February 17, 2026 | Last Updated: September 27, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -407,10 +407,19 @@ export default function PrivacyPage() {
               User Identification
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              When you’re logged in, analytics events are linked to your
-              account to help us understand usage patterns. Your identity is
-              reset on logout so anonymous browsing isn’t linked to your
-              account.
+              When you aren’t signed in, PostHog runs in cookie-free mode: it
+              sets no cookies and stores nothing in your browser. PostHog’s
+              servers count visits with a one-way hash of your IP address,
+              browser type and our site name, mixed with a random value that
+              changes every day and is deleted once that day is processed, so a
+              visit today can’t be linked to a visit tomorrow.
+            </p>{" "}
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              When you’re signed in, analytics events are linked to your
+              account to help us understand usage patterns, and PostHog uses a
+              cookie and local storage to keep that link. Your identity is
+              reset when you sign out, and analytics goes back to cookie-free
+              mode.
             </p>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -453,10 +462,10 @@ export default function PrivacyPage() {
                 fields, and all passwords, are redacted and not captured.
               </li>{" "}
               <li>
-                <strong>On-screen text isn’t masked by default</strong>: text
-                displayed on the pages you view, which can include case
-                information, may be captured in a replay. We never use these
-                replays for advertising and never sell them.
+                <strong>On-screen text is masked too</strong>: the recorder is
+                set to hide all text on the page, which can include case
+                information. We would never use replays for advertising and
+                never sell them.
               </li>{" "}
               <li>
                 Replays are routed first-party through{" "}
@@ -481,9 +490,10 @@ export default function PrivacyPage() {
               Surveys
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              We occasionally use PostHog Surveys to ask for in-app feedback.
-              Responses you choose to provide are processed by PostHog as our
-              data processor. Participation is always optional.
+              PostHog Surveys is switched off. If we ever use it to ask for
+              in-app feedback, responses you choose to give are processed by
+              PostHog as our data processor, and taking part is always
+              optional.
             </p>
           </section>{" "}
 
@@ -637,8 +647,8 @@ export default function PrivacyPage() {
               Vercel BotID (Invisible Bot Detection)
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              In addition to Turnstile, we use Vercel BotID on our AI chat
-              and authentication API endpoints. BotID passively observes
+              In addition to Turnstile, we use Vercel BotID on the AI chat
+              inside the signed-in app; public pages don’t load it. BotID passively observes
               browser-level signals to distinguish humans from automated
               scripts, without requiring any user interaction or showing
               any widget.
@@ -806,15 +816,18 @@ export default function PrivacyPage() {
                 during OAuth redirects
               </li>{" "}
               <li>
-                <strong>Error Monitoring:</strong> Sentry uses browser local
-                storage to temporarily buffer error and session replay data before
-                transmission
+                <strong>Error Monitoring:</strong> Sentry’s script runs only on
+                the sign-in pages and inside the app, where it reports errors.
+                It doesn’t record sessions; that feature was removed on August
+                29, 2026
               </li>{" "}
               <li>
-                <strong>Analytics:</strong> PostHog uses cookies and local
-                storage to identify your device across sessions for analytics
-                purposes. Analytics data is routed through our domain
-                (permtracker.app/ingest) rather than directly to PostHog
+                <strong>Analytics:</strong> if you aren’t signed in, PostHog
+                stores nothing in your browser (cookie-free mode, Section 7).
+                If you’re signed in, it uses a cookie and local storage to link
+                your events to your account. Analytics data is routed through
+                our domain (permtracker.app/ingest) rather than directly to
+                PostHog
               </li>
             </ul>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">

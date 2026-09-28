@@ -17,6 +17,8 @@
 
 import posthog from "posthog-js";
 
+import { isAnalyticsOff, isGpcEnabled } from "@/lib/analytics";
+
 /**
  * Strip `case=<number>` out of every URL-shaped property on an event.
  *
@@ -45,12 +47,11 @@ const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 if (posthogKey) {
   try {
     // Honor Global Privacy Control (GPC). When the browser advertises a GPC
-    // signal, opt this visitor out of ALL PostHog capture — analytics AND
-    // session replay — by default. Disclosed in the Privacy Policy (§7, §15).
-    const gpcEnabled =
-      typeof navigator !== "undefined" &&
-      (navigator as Navigator & { globalPrivacyControl?: boolean })
-        .globalPrivacyControl === true;
+    // signal, nothing is sent to PostHog at all: analytics, exceptions and
+    // replay. Enforced in before_send below, because in "on_reject" mode an
+    // opt-out only falls back to cookie-free counting. Disclosed in the
+    // Privacy Policy (§7, §15).
+    const gpcEnabled = isGpcEnabled();
 
     posthog.init(posthogKey, {
       api_host: "/ingest",
@@ -61,8 +62,15 @@ if (posthogKey) {
       // Field Core Web Vitals (LCP/CLS/FCP/INP) — replaces @vercel/speed-insights,
       // with years of retention instead of Hobby's 7-day window and no extra script.
       capture_performance: { web_vitals: true },
-      // GPC visitors are opted out of all capture (incl. session replay).
-      opt_out_capturing_by_default: gpcEnabled,
+      // COOKIE-FREE UNLESS SIGNED IN (Sep 27 2026). Consent starts pending and
+      // pending counts as a rejection, so everyone is counted with PostHog's
+      // daily-salted server hash and nothing is written to the browser. A
+      // signed-in account switches to persistence through
+      // analytics.consentForAccount() (LoginTracker); sign-out's reset()
+      // clears it again. Requires the project's cookieless_server_hash_mode,
+      // set to 2 (stateful) on Sep 27 2026, or PostHog drops these events.
+      cookieless_mode: "on_reject",
+      opt_out_capturing_by_default: true,
       // SESSION REPLAY IS OFF BY DEFAULT AND TURNED ON ONLY IN THE AUTHENTICATED
       // APP (see (authenticated)/layout.tsx), for two measured reasons:
       //   1. PERF. The public layout renders AmbientMurmuration, a full-viewport
@@ -91,6 +99,11 @@ if (posthogKey) {
       debug: process.env.NODE_ENV === "development",
       before_send: (event) => {
         if (!event) return event;
+
+        // GPC, and staff browsers switched off by analytics.optOut(): send
+        // nothing. Read on every event, so an opt-out mid-session applies at
+        // once.
+        if (gpcEnabled || isAnalyticsOff()) return null;
 
         // Case numbers never leave for a third party, on ANY event.
         //

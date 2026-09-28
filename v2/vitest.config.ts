@@ -48,6 +48,9 @@ const sharedConfig = {
 const ISOLATED_UNIT_FILES = [
   "src/lib/ai/__tests__/page-context.test.tsx",
   "src/lib/__tests__/toast.test.ts",
+  // Mocks posthog-js; in the shared pool the mock would leak into every
+  // file that imports @/lib/analytics after it.
+  "src/lib/__tests__/analyticsConsent.test.ts",
   "src/hooks/__tests__/useJobDescriptionTemplates.test.ts",
   "src/hooks/__tests__/useChatWithPersistence.test.ts",
   "src/hooks/__tests__/useToolOrchestrator.test.ts",

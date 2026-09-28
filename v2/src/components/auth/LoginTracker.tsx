@@ -70,7 +70,10 @@ export function LoginTracker() {
     // Skip all analytics for excluded users
     if (isExcluded) return;
 
-    // Always identify (idempotent) so subsequent events are attributed correctly
+    // Switch this browser from cookie-free counting to persistence first
+    // (analytics.ts), then identify (idempotent) so later events are
+    // attributed to the account.
+    analytics.consentForAccount();
     analytics.identify(profile._id, { name: profile.fullName });
 
     // Skip login recording + event if already recorded recently (by LoginPageClient)

@@ -62,7 +62,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: June 15, 2026
+          Effective Date: February 17, 2026 | Last Updated: September 27, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -513,20 +513,21 @@ export default function TermsPage() {
             </h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We use PostHog for product analytics (event tracking, feature
-              usage) and session replay, Sentry for error tracking with session
-              replay, and Vercel for performance monitoring (Speed Insights).
-              Analytics data from PostHog is routed through our domain
-              (permtracker.app/ingest) rather than directly to a third-party
-              domain. Session replays record interactions (clicks, scrolls,
-              navigation, and on-screen content) to help us diagnose and fix
-              issues. Sentry replays mask all text and block media; PostHog
-              replays mask form inputs and passwords, but on-screen text, which can include case information, isn’t masked by default. We never
-              use session replays for advertising and never sell them, and we
-              honor the Global Privacy Control (GPC) browser signal to opt your
-              session out of analytics and replay. We also use Cloudflare
+              usage and page-speed measurements) and Sentry for error
+              tracking. Analytics data from PostHog is routed through our
+              domain (permtracker.app/ingest) rather than directly to a
+              third-party domain. If you aren’t signed in, PostHog runs in
+              cookie-free mode and stores nothing in your browser; if you’re
+              signed in, your analytics events are linked to your account.
+              Session replay is switched off. If we turn it back on, it will
+              cover only the signed-in app, mask form inputs and on-screen
+              text, and our Privacy Policy will say so first. We never use
+              session replays for advertising and never sell them, and we honor
+              the Global Privacy Control (GPC) browser signal by sending no
+              analytics at all from your browser. We also use Cloudflare
               Turnstile on our authentication forms (sign-up, sign-in, password
-              reset) and Vercel BotID on our AI chat and authentication endpoints
-              to prevent automated abuse; both process limited device and
+              reset) and Vercel BotID on the AI chat in the signed-in app to
+              prevent automated abuse; both process limited device and
               interaction signals but don’t read the contents of form fields or
               message bodies. We additionally enforce per-IP and per-email rate
               limits on these endpoints. By using the Service, you consent to
