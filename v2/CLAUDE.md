@@ -6593,3 +6593,43 @@ Sep 13 at 9:51 PM, not verified per day) and the PERM wage
 percentiles (2.76 billion over 529). **Read that panel before guessing at a Turso bill**; the
 per-day chart alone shows a flat 3 to 7 billion a day and names nothing.
 
+
+## Sep 27 2026: what the bills showed, and two QA finds
+
+**A Data Cache entry's window is the ceiling of every page that reads it.** getFreshness sat in an
+hour-long `unstable_cache` under DataProvenance, so the build's route table printed **1h for 86 ISR
+pages** declaring a day, six hours or thirty days, and every visit more than an hour after a render
+rebuilt the page. Vercel billed **15.3M ISR write units against 3.8M reads** for Aug 28 to Sep 28
+($61 of $141 after the credit). getFreshness is `cache()` now; the entity cohort caches hold a week
+and `/api/revalidate-disclosure` clears their "entities" tag. After the fix the table reads 59 at 1d,
+27 at 1w, 11 at 30d, 11 at 6h, none at 1h. `isr-window-caps.test.ts` fails on any `unstable_cache`
+or fetch window under a day, probed with each of the three reverted. **Read the route table's
+Revalidate column after any change to a shared read**; `npx vercel usage --breakdown daily --json`
+shows the cost by service by day.
+
+**The Turso count** (67B of the cycle's 98B reads) and its fix are in the evening section above.
+After both fixes deployed at 8:14 PM the counter moved 0.01B in 12 minutes, against ~0.5B an hour
+before; a full day is the real measurement.
+
+**Two search defects found only by querying production after the deploy:**
+- An employer search with `fy=2019` answered **0 rows for Adobe while the history held 184**: the
+  employer read takes the newest SLICE_CAP decisions by index, then tests the year. A fiscal year
+  now rides the covering pass as its decided range (FY2019 = 2018-10 to 2019-09), intersected with
+  any decided range. `fiscalYearMonths` in `caseSearchReads.ts`.
+- **241,817 history rows (28%) carried no employer slug**, so the prefix search could not reach them
+  (Adobe's 505 as ADOBE SYSTEMS INCORPORATED). They take their own name's slug, perm_live_recent's
+  rule (`ingest_perm_history.py --fill-slugs`, 4 nameless rows left). A fallback slug is not a page:
+  history facets and `build_groups.py` link a sponsor only when `employer_page_slugs()` holds it.
+
+**Old-form worker fields end at FY2024** (92,248 `A-` cases, the last decided Sep 30 2024, none in
+FY2025). Copy that said "early FY2025" said something the data does not.
+
+**The shared `unit` pool leaked a `vi.mock` twice in one night**: caseLookupHistory.test.ts and then
+embedLookup.test.ts mocked `./caseDiscovery`, and caseDiscovery.test.ts read null for a real hit.
+Green alone, red in the full run. The victim is in the isolated pool now too, so no neighbour decides
+what it imports.
+
+**The heading audit walked the whole sitemap** because the three breakdown families were missing
+from its TEMPLATED list: each page a cold ISR render on a fresh deploy. Stopped a few hundred pages in;
+the list now carries them, `/embed/`, `/visa-bulletin/categories/` and the bulletin months, and a
+comment saying a new [slug] family goes on it the day it ships.
