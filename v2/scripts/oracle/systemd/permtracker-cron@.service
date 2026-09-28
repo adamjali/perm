@@ -1,0 +1,6 @@
+[Unit]
+Description=PERM Tracker cron job %i
+[Service]
+Type=oneshot
+User=permtracker
+ExecStart=/usr/local/bin/permtracker-cron %i

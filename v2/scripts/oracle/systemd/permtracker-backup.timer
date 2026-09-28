@@ -1,0 +1,7 @@
+[Unit]
+Description=Nightly database backup, 3:15 AM Eastern (a quiet hour, before the 4:10 AM sweep)
+[Timer]
+OnCalendar=*-*-* 03:15:00 America/New_York
+Persistent=true
+[Install]
+WantedBy=timers.target

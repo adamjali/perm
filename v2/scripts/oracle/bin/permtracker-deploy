@@ -1,0 +1,64 @@
+#!/bin/bash
+# The ONLY thing GitHub's deploy key may run on this server.
+#   deploy <release-id>   read a .tar.zst release on stdin, start it on the
+#                         idle copy, health-check it, then switch traffic
+#   rollback              switch traffic back to the other copy
+#   status                print which copy serves and what each runs
+set -euo pipefail
+A=/srv/permtracker/app
+cmd="${1:-status}"; set -- $cmd
+action="${1:-status}"; rel="${2:-}"
+port_of(){ [ "$1" = blue ] && echo 3001 || echo 3002; }
+other_of(){ [ "$1" = blue ] && echo green || echo blue; }
+active=$(cat $A/active)
+log(){ echo "[deploy $(date -u +%H:%M:%S)] $*"; logger -t permtracker-deploy "$*"; }
+
+switch_to(){ # $1 slot
+  echo "server 127.0.0.1:$(port_of "$1");" > /etc/nginx/permtracker-active-upstream.conf
+  nginx -t -q && systemctl reload nginx
+  echo "$1" > $A/active
+  log "traffic now on $1 ($(readlink $A/slots/$1 | xargs basename))"
+}
+healthy(){ # $1 port
+  for i in $(seq 1 90); do
+    if curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:$1/api/health" \
+       && curl -fsS -o /dev/null --max-time 60 -H "Host: permtracker.app" "http://127.0.0.1:$1/perm-queue"; then return 0; fi
+    sleep 2
+  done; return 1
+}
+
+case "$action" in
+  status)
+    echo "active: $active"
+    for s in blue green; do echo "$s: $(readlink $A/slots/$s 2>/dev/null | xargs -r basename) $(systemctl is-active permtracker-web@$s)"; done ;;
+  rollback)
+    to=$(other_of "$active")
+    [ -e "$A/slots/$to" ] || { log "no other copy to roll back to"; exit 1; }
+    healthy "$(port_of "$to")" || { log "other copy is not healthy; staying on $active"; exit 1; }
+    switch_to "$to" ;;
+  deploy)
+    [[ "$rel" =~ ^[0-9a-f]{7,40}(-[0-9]{1,6})?$ ]] || { log "bad release id"; exit 2; }
+    idle=$(other_of "$active")
+    tmp=$A/incoming/$rel.tar.zst
+    cat > "$tmp"
+    log "received $(stat -c %s "$tmp") bytes for $rel"
+    rm -rf "$A/releases/$rel"; install -d -o permtracker -g permtracker "$A/releases/$rel"
+    tar --zstd -xf "$tmp" -C "$A/releases/$rel"; rm -f "$tmp"
+    [ -f "$A/releases/$rel/server.js" ] || { log "release has no server.js"; exit 3; }
+    chown -R permtracker:permtracker "$A/releases/$rel"
+    cp -a --no-clobber "$A/releases/$rel/.next/static/." "$A/shared/_next/static/"
+    ln -sfn "$A/releases/$rel" "$A/slots/$idle"
+    systemctl enable -q "permtracker-web@$idle"; systemctl restart "permtracker-web@$idle"
+    if ! healthy "$(port_of "$idle")"; then
+      log "NEW RELEASE FAILED its health check on $idle; traffic stays on $active"
+      journalctl -u "permtracker-web@$idle" -n 30 --no-pager | tail -30
+      exit 4
+    fi
+    switch_to "$idle"
+    # keep the previous copy running: rollback is instant.
+    keep=$(for s in blue green; do readlink "$A/slots/$s" 2>/dev/null | xargs -r basename; done)
+    ls -1t "$A/releases" | tail -n +6 | while read r; do echo "$keep" | grep -qx "$r" || rm -rf "$A/releases/$r"; done
+    find "$A/shared/_next/static" -type f -mtime +21 -delete 2>/dev/null || true
+    log "deployed $rel" ;;
+  *) log "unknown action"; exit 2 ;;
+esac

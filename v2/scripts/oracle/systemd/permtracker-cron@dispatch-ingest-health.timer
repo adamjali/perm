@@ -1,0 +1,8 @@
+[Unit]
+Description=Schedule for permtracker-cron@dispatch-ingest-health
+[Timer]
+OnCalendar=*-*-* 10:00:00 UTC
+Persistent=true
+Unit=permtracker-cron@dispatch-ingest-health.service
+[Install]
+WantedBy=timers.target

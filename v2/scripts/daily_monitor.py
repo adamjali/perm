@@ -456,6 +456,106 @@ def sentry_section() -> dict:
                    f"{len(issues)} new issue{'s' if len(issues) != 1 else ''} in 24 h", lines)
 
 
+# ── the Oracle server ─────────────────────────────────────────────────────
+
+# Oracle reclaims an idle Always Free A1 instance: CPU (95th percentile),
+# network AND memory all under 20% for 7 days. Memory is what keeps this one
+# above it (the database is locked in RAM), so a low reading is the warning.
+IDLE_LINE = 20.0
+IDLE_MARGIN = 25.0
+SERVER_STALE_MIN = 45
+BACKUP_WARN_H, BACKUP_FAIL_H = 30, 54
+MUST_RUN = ["permtracker-db", "nginx", "cloudflared"]
+DB_DIR_RATIO = 3.0
+
+
+def server_verdict(doc: dict | None, now_ms: int) -> dict:
+    """Judge perm_docs['server_health'], which the server writes every 10 minutes."""
+    title = "The server (Oracle)"
+    if not doc:
+        return section("server", title, "off", "not reporting: it writes into its own database, "
+                                               "which the report reads from switch day on")
+    fails, warns, lines = [], [], []
+    try:
+        age_min = (now_ms / 1000 - dt.datetime.fromisoformat(doc["at"].replace("Z", "+00:00")).timestamp()) / 60
+    except (KeyError, ValueError):
+        age_min = None
+    if age_min is None or age_min > SERVER_STALE_MIN:
+        fails.append("the server has stopped reporting" + (f" ({age_min / 60:.1f} h ago)" if age_min else ""))
+
+    svc = doc.get("services") or {}
+    slot = (doc.get("slot") or {}).get("active")
+    must = MUST_RUN + ([f"permtracker-web@{slot}"] if slot else [])
+    down = [u for u in must if svc.get(u) != "active"]
+    if down:
+        fails.append("not running: " + ", ".join(down))
+    if svc.get("permtracker-dbcache") != "active":
+        warns.append("the database is no longer held in memory (permtracker-dbcache)")
+    if doc.get("failedUnits"):
+        warns.append("failed units: " + ", ".join(doc["failedUnits"][:5]))
+    if doc.get("repairCount24h"):
+        warns.append(f"the watchdog restarted something {doc['repairCount24h']} time(s) in 24 h")
+        lines.extend("Repair: " + r for r in (doc.get("repairs24h") or [])[-3:])
+
+    idle = doc.get("idle") or {}
+    cpu, mem = idle.get("cpuP95"), idle.get("memP95")
+    if mem is not None and (idle.get("hours") or 0) >= 24:
+        low = mem < IDLE_LINE and (cpu is None or cpu < IDLE_LINE)
+        near = mem < IDLE_MARGIN and (cpu is None or cpu < IDLE_MARGIN)
+        if low:
+            fails.append("under Oracle's idle line: memory and CPU both under 20%, the instance can be reclaimed")
+        elif near:
+            warns.append("near Oracle's idle line (memory and CPU both under 25%)")
+
+    b = doc.get("backup") or {}
+    last = (b.get("lastOk") or {}).get("at")
+    if not last:
+        fails.append("no backup on record")
+    else:
+        age_h = (now_ms / 1000 - dt.datetime.fromisoformat(last.replace("Z", "+00:00")).timestamp()) / 3600
+        if age_h > BACKUP_FAIL_H:
+            fails.append(f"last backup {age_h:.0f} h ago")
+        elif age_h > BACKUP_WARN_H:
+            warns.append(f"last backup {age_h:.0f} h ago")
+        lines.append(f"Backups: {b.get('count', 0)} kept, newest {et_time(last)}")
+
+    n = doc.get("now") or {}
+    # The database folder holds the data file plus the engine's own log and
+    # snapshots; the engine is meant to merge those, and this is the check that
+    # it does. Past 3x the data file, something is growing that should not be.
+    if n.get("dbDataBytes") and (n.get("dbBytes") or 0) > DB_DIR_RATIO * n["dbDataBytes"]:
+        warns.append(f"database folder is {n['dbBytes'] / n['dbDataBytes']:.1f}x its data file: "
+                     "the engine's log or snapshots are not being trimmed")
+    disk = n.get("diskPct")
+    if disk is not None and disk > 90:
+        fails.append(f"disk {disk:.0f}% full")
+    elif disk is not None and disk > 80:
+        warns.append(f"disk {disk:.0f}% full")
+
+    def pct(x):
+        return "not measured yet" if x is None else f"{x}%"
+
+    lines.insert(0, f"Now: memory {pct(n.get('memPct'))}, CPU {pct(n.get('cpuPct'))}, disk {pct(disk)}, "
+                    f"database {(n.get('dbBytes') or 0) / 1e9:.1f} GB")
+    if mem is not None:
+        lines.insert(1, f"Idle-rule window ({idle.get('hours')} h): CPU p95 {pct(cpu)}, memory p95 {pct(mem)}, "
+                        f"memory low {pct(idle.get('memMin'))}")
+    if slot:
+        lines.append(f"Live copy: {slot} ({(doc.get('slot') or {}).get('release')})")
+    status = "fail" if fails else "warn" if warns else "ok"
+    summary = (fails + warns)[0] if fails or warns else f"all services up, memory {n.get('memPct')}%"
+    return section("server", title, status, summary, fails + warns + lines)
+
+
+def server_section(now_ms: int) -> dict:
+    from lib_turso import Turso  # noqa: PLC0415 - only needed here
+
+    db = Turso(os.environ["TURSO_DATABASE_URL"], os.environ["TURSO_AUTH_TOKEN"])
+    rows = db.execute("SELECT json FROM perm_docs WHERE key = 'server_health'")["response"]["result"]["rows"]
+    doc = json.loads(rows[0][0]["value"]) if rows else None
+    return server_verdict(doc, now_ms)
+
+
 # ── assembly ──────────────────────────────────────────────────────────────
 
 
@@ -479,6 +579,7 @@ def build(now: dt.datetime) -> dict:
         guarded("vercel", "Vercel (hosting bill)", vercel_section),
         guarded("traffic", "Traffic", traffic_section),
         guarded("sentry", "Errors (Sentry)", sentry_section),
+        guarded("server", "The server (Oracle)", server_section, now_ms),
     ]
     return {"day": now.astimezone(ET).date().isoformat(), "generatedAt": now_ms, "sections": sections}
 

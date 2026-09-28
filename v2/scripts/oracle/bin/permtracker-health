@@ -1,0 +1,183 @@
+#!/usr/bin/env python3
+"""Every 10 minutes: the server's own health, written into its database.
+
+The morning report (scripts/daily_monitor.py, section "server") reads
+perm_docs['server_health']. Seven days of samples are kept on disk in
+/srv/permtracker/health/samples.jsonl because that is the window Oracle's
+idle rule is measured over: an Always Free A1 instance whose CPU (95th
+percentile), network and memory all stay under 20% for 7 days can be
+reclaimed. The database locked in RAM (permtracker-dbcache) is what keeps
+memory above that line; this is how anyone finds out if it stops.
+
+CPU and network are averages since the previous sample (about 10 minutes),
+read from the kernel's own counters. Oracle averages per minute, so its
+95th percentile runs a little higher than this one; the line is the same.
+"""
+import json
+import os
+import pathlib
+import re
+import shutil
+import subprocess
+import time
+import urllib.request
+
+APP = pathlib.Path("/srv/permtracker")
+HERE = APP / "health"
+SAMPLES = HERE / "samples.jsonl"
+STATE = HERE / "counters.json"
+WEEK_S = 7 * 86_400
+NIC_MBPS = 2_000  # A1.Flex gets 1 Gbps per OCPU; this shape has 2
+SERVICES = ["permtracker-db", "permtracker-dbcache", "permtracker-web@blue",
+            "permtracker-web@green", "nginx", "cloudflared"]
+
+
+def cpu_counters():
+    f = [int(x) for x in open("/proc/stat").readline().split()[1:]]
+    idle = f[3] + f[4]  # idle + iowait
+    return sum(f), idle
+
+
+def net_counters():
+    rx = tx = 0
+    for line in open("/proc/net/dev").readlines()[2:]:
+        name, rest = line.split(":", 1)
+        if name.strip() == "lo":
+            continue
+        v = rest.split()
+        rx, tx = rx + int(v[0]), tx + int(v[8])
+    return rx, tx
+
+
+def meminfo():
+    m = {}
+    for line in open("/proc/meminfo"):
+        k, v = line.split(":", 1)
+        m[k] = int(v.split()[0])
+    return m
+
+
+def active(unit):
+    r = subprocess.run(["systemctl", "is-active", unit], capture_output=True, text=True)
+    return r.stdout.strip() or "unknown"
+
+
+def p95(xs):
+    if not xs:
+        return None
+    s = sorted(xs)
+    return s[min(len(s) - 1, int(round(0.95 * (len(s) - 1))))]
+
+
+def main():
+    HERE.mkdir(exist_ok=True)
+    now = time.time()
+    total, idle = cpu_counters()
+    rx, tx = net_counters()
+    prev = {}
+    try:
+        prev = json.loads(STATE.read_text())
+    except (OSError, ValueError):
+        pass
+    STATE.write_text(json.dumps({"t": now, "total": total, "idle": idle, "rx": rx, "tx": tx}))
+
+    cpu = net = None
+    dt = now - prev.get("t", now)
+    if 60 < dt < 3_600 and total > prev.get("total", total):
+        cpu = round(100 * (1 - (idle - prev["idle"]) / (total - prev["total"])), 1)
+        if rx >= prev.get("rx", rx) and tx >= prev.get("tx", tx):
+            mbps = 8 * max(rx - prev["rx"], tx - prev["tx"]) / dt / 1e6
+            net = round(100 * mbps / NIC_MBPS, 3)
+
+    m = meminfo()
+    mem = round(100 * (m["MemTotal"] - m["MemAvailable"]) / m["MemTotal"], 1)
+    disk = shutil.disk_usage("/")
+
+    samples = []
+    try:
+        samples = [json.loads(x) for x in SAMPLES.read_text().splitlines() if x.strip()]
+    except (OSError, ValueError):
+        pass
+    samples = [s for s in samples if now - s["t"] <= WEEK_S]
+    samples.append({"t": round(now), "cpu": cpu, "mem": mem, "net": net})
+    tmp = SAMPLES.with_suffix(".tmp")
+    tmp.write_text("".join(json.dumps(s) + "\n" for s in samples))
+    tmp.replace(SAMPLES)
+
+    backups = sorted((APP / "backups").glob("db-*.sql.zst"))
+    last_ok = None
+    try:
+        at, size, name = (APP / "backups" / "LAST_OK").read_text().split()
+        last_ok = {"at": at, "bytes": int(size), "file": name}
+    except (OSError, ValueError):
+        pass
+
+    slot = (APP / "app" / "active").read_text().strip() if (APP / "app" / "active").exists() else None
+    release = None
+    if slot and (APP / "app" / "slots" / slot).is_symlink():
+        release = os.path.basename(os.readlink(APP / "app" / "slots" / slot))
+
+    failed = subprocess.run(["systemctl", "--failed", "--no-legend", "--plain"],
+                            capture_output=True, text=True).stdout.split("\n")
+    timers = subprocess.run(["systemctl", "list-timers", "--no-legend", "--plain", "permtracker*"],
+                            capture_output=True, text=True).stdout
+    db_bytes = sum(p.stat().st_size for p in (APP / "db" / "data.sqld").rglob("*") if p.is_file())
+    data_file = APP / "db" / "data.sqld" / "dbs" / "default" / "data"
+    data_bytes = data_file.stat().st_size if data_file.exists() else None
+
+    # The watchdog's repairs (bin/permtracker-watchdog), last 24 hours.
+    repairs = []
+    try:
+        day_ago = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now - 86_400))
+        repairs = [ln for ln in (HERE / "repairs.log").read_text().splitlines() if ln[:20] >= day_ago]
+    except OSError:
+        pass
+
+    week = [s for s in samples if s.get("cpu") is not None]
+    doc = {
+        "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
+        "now": {
+            "cpuPct": cpu, "memPct": mem, "netPct": net,
+            "load1": float(open("/proc/loadavg").read().split()[0]),
+            "diskPct": round(100 * disk.used / disk.total, 1),
+            "dbBytes": db_bytes,
+            "dbDataBytes": data_bytes,
+            "lockedMb": m.get("Mlocked", 0) // 1024,
+            "uptimeH": round(float(open("/proc/uptime").read().split()[0]) / 3600, 1),
+        },
+        "idle": {
+            "hours": round((now - samples[0]["t"]) / 3600, 1),
+            "samples": len(samples),
+            "cpuP95": p95([s["cpu"] for s in week]),
+            "memP95": p95([s["mem"] for s in samples]),
+            "memMin": min(s["mem"] for s in samples),
+            "netP95": p95([s["net"] for s in week if s.get("net") is not None]),
+        },
+        "backup": {"lastOk": last_ok, "count": len(backups)},
+        "services": {u: active(u) for u in SERVICES},
+        "failedUnits": [ln.split()[0] for ln in failed if ln.strip()],
+        "repairs24h": repairs[-5:],
+        "repairCount24h": len(repairs),
+        "timersEnabled": len(re.findall(r"permtracker[^\s]*\.timer", timers)),
+        "slot": {"active": slot, "release": release},
+    }
+
+    token = (APP / "secrets" / "db_rw.jwt").read_text().strip()
+    body = json.dumps({"requests": [
+        {"type": "execute", "stmt": {
+            "sql": "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
+            "args": [{"type": "text", "value": "server_health"},
+                     {"type": "text", "value": json.dumps(doc)},
+                     {"type": "integer", "value": str(int(now * 1000))}]}},
+        {"type": "close"}]}).encode()
+    req = urllib.request.Request("http://127.0.0.1:8080/v2/pipeline", body,
+                                 {"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        res = json.load(r)["results"][0]
+    if res.get("type") != "ok":
+        raise SystemExit(f"server_health not written: {res.get('error', {}).get('message')}")
+    print(f"cpu={cpu} mem={mem} disk={doc['now']['diskPct']} samples={len(samples)}")
+
+
+if __name__ == "__main__":
+    main()

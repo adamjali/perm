@@ -82,7 +82,9 @@ export async function POST(req: Request) {
     // call. Client-side botid instrumentation (see src/instrumentation-client.ts)
     // attaches a signed token to /api/chat requests; direct-API attackers have
     // no token and fail here. Costs nothing on Basic tier.
-    const botVerdict = await checkBotId();
+    // Vercel-only: on the self-hosted server the chat relies on sign-in
+    // (Turnstile-gated sign-up), the per-IP limit below and the user quota.
+    const botVerdict = process.env.VERCEL ? await checkBotId() : { isBot: false };
     if (botVerdict.isBot) {
       chatDebug(`[Chat API] [${sessionId}] Bot blocked`);
       return new Response(

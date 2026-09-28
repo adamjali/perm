@@ -93,7 +93,20 @@ function contentSecurityPolicy(frameAncestors: "'none'" | "*"): string {
   ].join("; ");
 }
 
+/*
+ * Vercel sets VERCEL=1 during its builds. Anywhere else (the self-hosted
+ * Oracle server, built on GitHub's ARM runners) gets a standalone server
+ * bundle and a deployment id, so a visitor mid-session during a deploy is
+ * never served chunks from a different build. BotID is Vercel's service and
+ * is only wired up there.
+ */
+const ON_VERCEL = Boolean(process.env.VERCEL);
+
 const nextConfig: NextConfig = {
+  ...(ON_VERCEL
+    ? {}
+    : { output: "standalone" as const, deploymentId: process.env.DEPLOYMENT_ID || undefined }),
+  env: { NEXT_PUBLIC_ON_VERCEL: ON_VERCEL ? "1" : "" },
   /*
    * Prerender budget per page, up from the 60s default. Measured 2026-08-28:
    * Turso (the status page's own word was "degraded") served full-table
@@ -377,7 +390,7 @@ const nextConfig: NextConfig = {
 // BotID wraps the Next config to install client-side bot-signal collection
 // + server proxy rewrites. checkBotId() server-side reads the token from
 // protected routes (see src/instrumentation-client.ts for the protect list).
-const configWithSerwist = withBotId(withSerwist(nextConfig));
+const configWithSerwist = ON_VERCEL ? withBotId(withSerwist(nextConfig)) : withSerwist(nextConfig);
 
 // Sentry configuration options
 const sentryOptions = {

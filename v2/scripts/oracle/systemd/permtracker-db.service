@@ -1,0 +1,22 @@
+[Unit]
+Description=PERM Tracker database (libsql-server), loopback only
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=permtracker
+Group=permtracker
+ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db/data.sqld --http-listen-addr 127.0.0.1:8080 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome
+Restart=always
+RestartSec=2
+LimitNOFILE=65536
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/srv/permtracker/db
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -21,7 +21,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 vi.mock("server-only", () => ({}));
 
 const execute = vi.fn();
-vi.mock("@libsql/client", () => ({
+vi.mock("@libsql/client/http", () => ({
   createClient: () => ({ execute }),
 }));
 

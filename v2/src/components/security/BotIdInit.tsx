@@ -50,7 +50,9 @@ export function BotIdInit() {
   useEffect(() => {
     // Once per page session: initBotId wraps fetch, and a second call would
     // wrap the wrapper. StrictMode runs effects twice in development.
-    if (started) return;
+    // BotID is Vercel's service: off Vercel (the self-hosted server) there is
+    // nothing to talk to, and the chat route skips checkBotId() to match.
+    if (started || !process.env.NEXT_PUBLIC_ON_VERCEL) return;
     started = true;
     try {
       initBotId({ protect: BOTID_PROTECTED });

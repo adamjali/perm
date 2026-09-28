@@ -1,0 +1,11 @@
+#!/bin/bash
+# Lock the database file in RAM. Two reasons, both measured on 2026-09-28:
+# every read then comes from memory, and the machine's used memory stays above
+# Oracle's idle line (an Always Free A1 instance is reclaimed when, over 7
+# days, p95 CPU, network AND memory are all under 20%; at rest it sat at 11%).
+# Cap: never lock more than 6 GB, half the machine.
+set -euo pipefail
+D=/srv/permtracker/db/data.sqld/dbs/default
+size=$(stat -c %s "$D/data")
+if [ "$size" -gt $((6*1024*1024*1024)) ]; then echo "database is $size bytes, over the 6 GB cap; not locking"; exec sleep infinity; fi
+exec vmtouch -l -q "$D/data"

@@ -1,0 +1,29 @@
+[Unit]
+Description=PERM Tracker website (%i copy)
+After=network-online.target permtracker-db.service
+Wants=network-online.target
+
+[Service]
+User=permtracker
+Group=permtracker
+WorkingDirectory=/srv/permtracker/app/slots/%i
+EnvironmentFile=/srv/permtracker/app/env/production.env
+EnvironmentFile=/srv/permtracker/app/env/%i.env
+Environment=NODE_ENV=production HOSTNAME=127.0.0.1 NEXT_TELEMETRY_DISABLED=1
+Environment=NODE_OPTIONS=--max-old-space-size=2560
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=2
+TimeoutStopSec=30
+KillSignal=SIGTERM
+LimitNOFILE=65536
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/srv/permtracker/app/releases
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+
+[Install]
+WantedBy=multi-user.target

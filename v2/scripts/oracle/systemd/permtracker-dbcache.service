@@ -1,0 +1,13 @@
+[Unit]
+Description=Keep the PERM Tracker database locked in RAM (speed, and Oracle's idle rule)
+After=permtracker-db.service
+Requires=permtracker-db.service
+[Service]
+ExecStart=/usr/local/bin/permtracker-dbcache
+Restart=always
+RestartSec=30
+LimitMEMLOCK=infinity
+# The file grows as data lands; a restart re-maps the whole of it.
+RuntimeMaxSec=6h
+[Install]
+WantedBy=multi-user.target

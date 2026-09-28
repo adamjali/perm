@@ -29,9 +29,13 @@
 #    opens, and two of the six each week fail on the AI SDK peer gap. Merging
 #    to main builds as usual.
 #
+# 6. The self-hosting branch never builds on Vercel. `oracle-migration` is built
+#    by GitHub's ARM runners for the Oracle server; a Vercel preview of it would
+#    be build minutes for a site Vercel will not serve.
+#
 # Paths from `git diff --name-only` are repo-root relative regardless of cwd.
 case "${VERCEL_GIT_COMMIT_REF:-}" in
-  dependabot/*) exit 0 ;;
+  dependabot/*|oracle-migration) exit 0 ;;
 esac
 BASE="${VERCEL_GIT_PREVIOUS_SHA:-}"
 if [ -z "$BASE" ]; then

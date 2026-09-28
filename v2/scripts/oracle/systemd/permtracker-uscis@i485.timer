@@ -1,0 +1,8 @@
+[Unit]
+Description=Schedule for permtracker-uscis@i485
+[Timer]
+OnCalendar=*-*-06..10 10:30:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@i485.service
+[Install]
+WantedBy=timers.target
