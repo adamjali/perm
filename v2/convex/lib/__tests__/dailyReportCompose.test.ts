@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   type DailyReport,
   type Facts,
+  RESEND_SEND_ONLY,
   convexSections,
   readReport,
   reportSubject,
@@ -82,9 +83,14 @@ describe("the Convex sections", () => {
     expect(email!.lines.join("\n")).toMatch(/caseAlert refused 3/);
   });
 
-  it("says when Resend could not be read instead of reporting zero sends", () => {
-    const [, email] = convexSections(facts(), null, NOW);
+  it("says when Resend could not be read instead of reporting zero sends, and why", () => {
+    const [, email] = convexSections(facts(), "HTTP 500", NOW);
     expect(email!.status).toBe("unknown");
+    expect(email!.lines[0]).toMatch(/could not be read: HTTP 500/);
+    // A send-only key is a setting, not a fault: it must not read as an alarm every morning.
+    const [, sendOnly] = convexSections(facts(), RESEND_SEND_ONLY, NOW);
+    expect(sendOnly!.status).toBe("ok");
+    expect(sendOnly!.lines[0]).toMatch(/can only send/);
   });
 
   it("flags an alert that has waited over a day, and many recorded errors as failing", () => {

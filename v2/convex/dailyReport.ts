@@ -23,6 +23,7 @@ import {
   type DailyReport,
   type Facts,
   type ResendDay,
+  RESEND_SEND_ONLY,
   convexSections,
   readReport,
   reportSubject,
@@ -106,17 +107,21 @@ export const facts = internalQuery({
   },
 });
 
-/** Resend's own log for the last 24 hours: every send, auth mail included. */
-async function resendDay(now: number): Promise<ResendDay | null> {
+/**
+ * Resend's own log for the last 24 hours: every send, auth mail included.
+ * On failure, the reason as a short phrase for the report line.
+ */
+async function resendDay(now: number): Promise<ResendDay | string> {
   const key = process.env.RESEND_API_KEY;
-  if (!key) return null;
+  if (!key) return "RESEND_API_KEY is not set";
   const since = now - DAY_MS;
   const out: ResendDay = { sent: 0, bounced: 0, complained: 0 };
   let after: string | null = null;
   for (let page = 0; page < 3; page++) {
     const url = `https://api.resend.com/emails?limit=100${after ? `&after=${after}` : ""}`;
     const res = await fetch(url, { headers: { Authorization: `Bearer ${key}` } });
-    if (!res.ok) return null;
+    if (res.status === 401 || res.status === 403) return RESEND_SEND_ONLY;
+    if (!res.ok) return `HTTP ${res.status}`;
     const body = (await res.json()) as {
       has_more?: boolean;
       data?: Array<{ id: string; created_at: string; last_event?: string }>;
@@ -172,11 +177,11 @@ export const send = internalAction({
     if (!outside) throw new Error("daily report: unreadable input");
     const now = Date.now();
     const f = (await ctx.runQuery(internal.dailyReport.facts, {})) as Facts;
-    let resend: ResendDay | null = null;
+    let resend: ResendDay | string;
     try {
       resend = await resendDay(now);
-    } catch {
-      resend = null;
+    } catch (e) {
+      resend = e instanceof Error ? e.name : "error";
     }
     const report: DailyReport = {
       ...outside,

@@ -123,6 +123,8 @@ export function reportText(report: DailyReport): string {
 const DAY_MS = 86_400_000;
 /** Resend's account cap, shared with every other sending path. */
 export const RESEND_DAILY_CAP = 100;
+/** Resend answers 401 or 403 to a send-only key asking for its log. */
+export const RESEND_SEND_ONLY = "the Resend key can only send, so it cannot read the send log";
 
 /** What `dailyReport.facts` returns: counts only, never an address. */
 export interface Facts {
@@ -142,7 +144,12 @@ export interface ResendDay {
 }
 
 /** The sections only Convex can see. Pure given its inputs, for the test. */
-export function convexSections(f: Facts, resend: ResendDay | null, now: number): ReportSection[] {
+/**
+ * `resend` is Resend's 24-hour count, or why it could not be read. A
+ * send-only key is a setting, not a fault: the section stays OK (its outbox
+ * lines still show) and the line says why Resend's own count is missing.
+ */
+export function convexSections(f: Facts, resend: ResendDay | string, now: number): ReportSection[] {
   const subsLine = f.subs
     .map((s) => `${s.kind} ${s.live}${s.confirmed24h ? ` (+${s.confirmed24h})` : ""}${s.left24h ? ` (-${s.left24h})` : ""}`)
     .join(", ");
@@ -156,7 +163,7 @@ export function convexSections(f: Facts, resend: ResendDay | null, now: number):
 
   const emailLines: string[] = [];
   const emailStatus: ReportSection["status"][] = [];
-  if (resend) {
+  if (typeof resend !== "string") {
     emailLines.push(`Resend sent ${resend.sent} of the ${RESEND_DAILY_CAP} a day the account allows`);
     if (resend.sent >= RESEND_DAILY_CAP * 0.8) emailStatus.push("warn");
     if (resend.bounced || resend.complained) {
@@ -164,8 +171,8 @@ export function convexSections(f: Facts, resend: ResendDay | null, now: number):
       if (resend.complained) emailStatus.push("warn");
     }
   } else {
-    emailLines.push("Resend's log could not be read");
-    emailStatus.push("unknown");
+    emailLines.push(`Resend's log could not be read: ${resend}`);
+    if (resend !== RESEND_SEND_ONLY) emailStatus.push("unknown");
   }
   emailLines.push(`Alert outbox: ${f.outbox.sent24h} sent, ${f.outbox.failed24h} failed, ${f.outbox.queued} waiting`);
   if (f.outbox.failed24h) emailStatus.push("warn");
@@ -181,7 +188,7 @@ export function convexSections(f: Facts, resend: ResendDay | null, now: number):
     key: "email",
     title: "Email",
     status: worstStatus(emailStatus),
-    summary: resend ? `${resend.sent} sent in 24 h` : "Resend unreadable",
+    summary: typeof resend !== "string" ? `${resend.sent} sent in 24 h` : `${f.outbox.sent24h} alert emails sent in 24 h (Resend's own count unread)`,
     lines: emailLines,
   };
 
