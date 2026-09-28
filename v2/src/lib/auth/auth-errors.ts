@@ -24,6 +24,9 @@ const BLOCKED_RE = /is not valid JSON|unexpected token|unexpected end of JSON|di
 // code" (signIn.js) arrives this way, so at a code step a masked error is a
 // wrong or stale code far more often than a server fault. Sentry 2Q, 44.
 const MASKED_SERVER_RE = /\[Request ID: [0-9a-f]+\] Server Error/i;
+// The sign-up's one-time Turnstile pass was missing, used or expired
+// (PASS_REFUSED in convex/lib/turnstilePass.ts, a ConvexError).
+const SECURITY_CHECK_EXPIRED_RE = /security check expired/i;
 
 /** True for transient connectivity failures (retry-friendly). */
 export function isNetworkError(message: string): boolean {
@@ -64,4 +67,9 @@ export function blockedResponseMessage(message: string): string {
   return /too many r/i.test(message)
     ? "Too many attempts from this network. Wait a minute and try again."
     : "Our security check stopped this request. Reload the page and try again. If it keeps happening, email support@permtracker.app.";
+}
+
+/** True when the server refused a sign-up for want of a live Turnstile pass. */
+export function isSecurityCheckExpired(message: string): boolean {
+  return SECURITY_CHECK_EXPIRED_RE.test(message);
 }

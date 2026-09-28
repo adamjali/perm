@@ -3,16 +3,17 @@
 /**
  * Cloudflare Turnstile server-side verification.
  *
- * Called by the signup form BEFORE @convex-dev/auth's signIn. If the token
- * doesn't verify, the client refuses to proceed — no signup attempted.
+ * Called by the sign-up, sign-in and reset forms BEFORE @convex-dev/auth's
+ * signIn. If the token doesn't verify, the client refuses to proceed.
  *
- * @convex-dev/auth's Password provider profile() callback is strictly
- * synchronous (verified via lib type signature at v0.0.91), so async fetch
- * to Cloudflare's siteverify API can't live there. This pre-flight action
- * is the cleanest alternative — runs in a Node.js action context with full
- * fetch support.
+ * A passing check also returns a one-time pass, and the sign-up must carry
+ * it: the createOrUpdateUser hook in convex/auth.ts refuses a new password
+ * account without one (convex/lib/turnstilePass.ts). Without that, a script
+ * could skip this action and call signIn directly. The check itself can't
+ * run inside the sign-up because Convex Auth's profile() is synchronous and
+ * siteverify is a fetch.
  *
- * Defense in depth (the attack vector was already closed by):
+ * Also in place:
  *   - convex/lib/nameValidation.ts (blocks the spam name pattern)
  *   - convex/users.ts (welcome + admin emails deferred to post-verify)
  *
@@ -21,7 +22,9 @@
 
 import { action } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 import { recordError } from "./lib/errorRecording";
+import { hashPass, newPass } from "./lib/turnstilePass";
 
 const VERIFY_ENDPOINT = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
@@ -33,7 +36,7 @@ export const verifyTurnstileToken = action({
   args: {
     token: v.string(),
   },
-  handler: async (ctx, args): Promise<{ success: boolean; error?: string }> => {
+  handler: async (ctx, args): Promise<{ success: boolean; error?: string; pass?: string }> => {
     const secret = process.env.TURNSTILE_SECRET_KEY;
     if (!secret) {
       // Fail open for local dev with no key; fail closed in production.
@@ -95,13 +98,16 @@ export const verifyTurnstileToken = action({
           error: "Verification failed. Please refresh the page and try again.",
         };
       }
-
-      return { success: true };
     } catch (error) {
       // Network throw reaching Cloudflare — same blocking impact, make it visible.
       console.error("[turnstile] siteverify threw:", error);
       await recordError(ctx, "action", "turnstile.siteverifyThrew", error);
       return { success: false, error: "Verification service unreachable" };
     }
+
+    // Passed. The sign-up has to carry this pass; only its hash is stored.
+    const pass = newPass();
+    await ctx.runMutation(internal.turnstilePasses.issue, { hash: await hashPass(pass) });
+    return { success: true, pass };
   },
 });

@@ -30,6 +30,7 @@ import {
   isExpiredError,
   isBlockedResponseError,
   isMaskedServerError,
+  isSecurityCheckExpired,
   blockedResponseMessage,
 } from "@/lib/auth/auth-errors";
 import {
@@ -195,8 +196,10 @@ export function SignupPageClient() {
 
       // Pre-flight Turnstile verification — must pass before signIn.
       // We already know turnstileToken is non-null here (firstMissing guarded it).
+      let turnstilePass: string | undefined;
       try {
         const verifyResult = await verifyTurnstile({ token: turnstileToken! });
+        turnstilePass = verifyResult.pass;
         if (!verifyResult.success) {
           trackTurnstileFail("signup", "siteverify_rejected");
           setTurnstileToken(null);
@@ -221,6 +224,9 @@ export function SignupPageClient() {
       if (name.trim()) formData.set("name", name.trim());
       formData.set("password", password);
       formData.set("flow", "signUp");
+      // The server refuses a new password account without the one-time pass
+      // the check just returned (convex/lib/turnstilePass.ts).
+      if (turnstilePass) formData.set("turnstilePass", turnstilePass);
 
       setVerificationEmail(email);
       const result = await signIn("password", formData);
@@ -246,6 +252,15 @@ export function SignupPageClient() {
       // A challenge or rate-limit page answered instead of the auth proxy.
       if (isBlockedResponseError(message)) {
         toast.error(blockedResponseMessage(message));
+        return;
+      }
+
+      // The one-time pass was missing, used or expired (a page open across a
+      // deploy, or a very slow submit). The widget's token is spent too.
+      if (isSecurityCheckExpired(message)) {
+        setTurnstileToken(null);
+        trackTurnstileFail("signup", "expired");
+        toast.error("The security check expired. Refresh the page and try again.");
         return;
       }
 

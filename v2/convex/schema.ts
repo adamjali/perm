@@ -2221,4 +2221,16 @@ export default defineSchema({
   })
     .index("by_email", ["email"])
     .index("by_last_sent", ["lastSentAt"]),
+
+  /**
+   * One-time passes from a passed Turnstile check (convex/lib/turnstilePass.ts).
+   * A new password account needs one. Only the SHA-256 is stored; a row is
+   * deleted when used, and expired rows are pruned as new ones are issued.
+   */
+  turnstilePasses: defineTable({
+    hash: v.string(),
+    expiresAt: v.number(),
+  })
+    .index("by_hash", ["hash"])
+    .index("by_expires", ["expiresAt"]),
 });

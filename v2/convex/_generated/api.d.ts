@@ -176,6 +176,7 @@ import type * as systemErrors from "../systemErrors.js";
 import type * as timeline from "../timeline.js";
 import type * as toolCache from "../toolCache.js";
 import type * as turnstile from "../turnstile.js";
+import type * as turnstilePasses from "../turnstilePasses.js";
 import type * as uscisI140 from "../uscisI140.js";
 import type * as userCaseOrder from "../userCaseOrder.js";
 import type * as users from "../users.js";
@@ -359,6 +360,7 @@ declare const fullApi: ApiFromModules<{
   timeline: typeof timeline;
   toolCache: typeof toolCache;
   turnstile: typeof turnstile;
+  turnstilePasses: typeof turnstilePasses;
   uscisI140: typeof uscisI140;
   userCaseOrder: typeof userCaseOrder;
   users: typeof users;
