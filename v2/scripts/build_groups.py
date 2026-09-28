@@ -192,7 +192,11 @@ def aggregate(rows, fields: dict[str, Counter] | None = None
     return groups, city_votes, soc_titles
 
 
-def build_rows(groups, city_votes, soc_titles, occ_slugs: dict[str, str]) -> list[tuple]:
+def build_rows(groups, city_votes, soc_titles, occ_slugs: dict[str, str],
+               employer_pages: set[str] | None = None) -> list[tuple]:
+    """employer_pages: the slugs an employer page answers to. A history row's
+    slug can be its name slugified (no page), and a sponsor is linked only
+    when its slug is a page; None means every slug is one (tests)."""
     labels = city_labels(city_votes)
     soc_title: dict[str, str] = {}
     for (soc, title), _ in soc_titles.most_common():
@@ -215,7 +219,8 @@ def build_rows(groups, city_votes, soc_titles, occ_slugs: dict[str, str]) -> lis
         detail = {
             "years": [{"fy": fy, "certified": g.years[fy]["certified"], "denied": g.years[fy]["denied"],
                        "withdrawn": g.years[fy]["withdrawn"]} for fy in years],
-            "employers": [{"slug": s, "name": g.emp_names.get(s, s), "n": n}
+            "employers": [{"slug": s if employer_pages is None or s in employer_pages else None,
+                           "name": g.emp_names.get(s, s), "n": n}
                           for s, n in g.employers.most_common(TOP)],
             "occupations": [{"code": s, "title": soc_title.get(s, s), "slug": occ_slugs.get(s), "n": n}
                             for s, n in g.occupations.most_common(TOP)],
@@ -294,7 +299,8 @@ def main() -> int:
 
     fields: dict[str, Counter] = defaultdict(Counter)
     groups, votes, titles = aggregate(both(), fields)
-    rows = build_rows(groups, votes, titles, occupation_slugs(db))
+    from ingest_perm_history import employer_page_slugs
+    rows = build_rows(groups, votes, titles, occupation_slugs(db), employer_page_slugs(db))
     by_kind = Counter(r[0] for r in rows)
     options = field_options_doc(fields)
     log(f"  {len(rows):,} groups over the floor of {FLOOR} ({dict(by_kind)}) in {time.time() - t:,.0f}s")

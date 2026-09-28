@@ -60,6 +60,12 @@ def main() -> int:
     country = out.get(("country", "india"))
     check("country page: title-cased label, no country list of its own",
           country is not None and country[3] == "India" and json.loads(country[11])["countries"] == [])
+    guarded = {(r[0], r[1]): r for r in g.build_rows(
+        *g.aggregate(rows + [row(employer_slug="acme-systems-old", employer_name="ACME SYSTEMS OLD")] * 1),
+        {"15-1252": "software-developers"}, {"acme-inc"})}
+    emps = json.loads(guarded[("industry", "541511")][11])["employers"]
+    check("a sponsor links only when its slug is an employer page",
+          {e["name"]: e["slug"] for e in emps} == {"ACME INC": "acme-inc", "ACME SYSTEMS OLD": None})
     fields = {c: g.Counter() for c in g.FIELD_OPTIONS}
     g.aggregate(rows + [row(status="pending", visa_class="L-1")], fields)
     doc = g.field_options_doc(fields)

@@ -74,6 +74,7 @@ import ingest_perm_disclosure as ipd  # noqa: E402
 from entity_identity import entity_key  # noqa: E402
 from lib_naics import normalize_naics  # noqa: E402
 from lib_turso import Turso, lit, record_run  # noqa: E402
+from store_entities import slugify  # noqa: E402
 
 FIRST_FY, LAST_FY = 2008, 2023
 ROWS_FROM_FY = 2016
@@ -446,10 +447,25 @@ def _canon(v) -> str:
     return str(int(f)) if f == int(f) else repr(f)
 
 
+def employer_slug_for(name: str | None, emp: dict[str, str]) -> str:
+    """The employer's page slug when it has one, else its own name slugified.
+
+    The case search finds an employer by slug PREFIX, so a row with no slug
+    was unreachable by name: 241,817 of 867,646 history rows (28%) on Sep 27
+    2026, among them 505 filed as ADOBE SYSTEMS INCORPORATED, Adobe's name
+    before 2018. The fallback is perm_live_recent's rule. It is not a page:
+    the facet and group builders check a slug against the employer pages
+    before they use it.
+    """
+    if not name:
+        return ""
+    return emp.get(entity_key(name)) or slugify(name)
+
+
 def row_tuple(r: dict, emp: dict[str, str], att: dict[str, str]) -> tuple:
     e, a = r["employerName"], r["attorneyName"]
     return (r["caseNumber"], r["status"], r["receivedDate"], r["decisionDate"], r["days"],
-            r["fiscalYear"], e or None, emp.get(entity_key(e), "") if e else "",
+            r["fiscalYear"], e or None, employer_slug_for(e, emp),
             r["state"], r["jobTitle"], r["socCode"], r["socTitle"], a or None,
             att.get(entity_key(a), "") if a else "", r["wage"], r["naics"], r["worksiteCity"],
             r.get("citizenship"), r.get("birthCountry"), r.get("visaClass"), r.get("education"),
@@ -576,6 +592,18 @@ def display(facet: str, value: str) -> str:
     return value
 
 
+def employer_page_slugs(db) -> set[str]:
+    """Every slug an employer page answers to: the published entities and the
+    live-only employers. A history row's fallback slug is neither."""
+    out = {str(_cell(r[0])) for r in _rows(db.execute(
+        "SELECT slug FROM perm_entities WHERE kind = 'employer'"))}
+    try:
+        out |= {str(_cell(r[0])) for r in _rows(db.execute("SELECT slug FROM perm_live_only_index"))}
+    except Exception:  # noqa: BLE001 - a database without the live table
+        pass
+    return out
+
+
 def build_history_facets(db, occ_slug_by_code: dict[str, str]) -> int:
     """perm_history_facets: each employer's and occupation's top values per worker field.
 
@@ -583,6 +611,7 @@ def build_history_facets(db, occ_slug_by_code: dict[str, str]) -> int:
     whole: the table is small and rebuilt only when the history is.
     """
     out: list[tuple] = []
+    pages = employer_page_slugs(db)
     for kind, key_col in (("employer", "employer_slug"), ("occupation", "soc_code")):
         totals = {str(_cell(r[0])): int(_cell(r[1])) for r in _rows(db.execute(
             f"SELECT {key_col}, COUNT(*) FROM perm_cases_history WHERE {key_col} IS NOT NULL "
@@ -594,7 +623,7 @@ def build_history_facets(db, occ_slug_by_code: dict[str, str]) -> int:
                     f"WHERE {key_col} IS NOT NULL AND {key_col} != '' AND {facet} IS NOT NULL "
                     f"AND {facet} != '' GROUP BY {key_col}, {facet}")):
                 k, v, n = str(_cell(r[0])), str(_cell(r[1])), int(_cell(r[2]))
-                slug = k if kind == "employer" else occ_slug_by_code.get(k)
+                slug = (k if k in pages else None) if kind == "employer" else occ_slug_by_code.get(k)
                 if not slug or totals.get(k, 0) < FACET_FLOOR:
                     continue
                 groups[slug][v] = groups[slug].get(v, 0) + n
@@ -619,6 +648,36 @@ def build_history_facets(db, occ_slug_by_code: dict[str, str]) -> int:
 def occupation_slugs(db) -> dict[str, str]:
     return {str(_cell(r[0])): str(_cell(r[1])) for r in _rows(db.execute(
         "SELECT code, slug FROM perm_entities WHERE kind = 'occupation' AND code IS NOT NULL"))}
+
+
+def fill_slugs(db) -> int:
+    """One pass over the rows written before the fallback existed: an UPDATE of
+    the slug alone, 200 rows per statement, keyed on the primary key."""
+    after, n = "", 0
+    while True:
+        rs = _rows(db.execute(
+            "SELECT case_number, employer_name FROM perm_cases_history "
+            "WHERE (employer_slug IS NULL OR employer_slug = '') AND employer_name IS NOT NULL "
+            "AND employer_name != '' AND case_number > ? ORDER BY case_number LIMIT 5000", [after]))
+        if not rs:
+            break
+        pairs = [(str(_cell(r[0])), slugify(str(_cell(r[1])))) for r in rs]
+        pairs = [(c, s) for c, s in pairs if s]
+        stmts = []
+        for i in range(0, len(pairs), 200):
+            chunk = pairs[i:i + 200]
+            arms = " ".join("WHEN ? THEN ?" for _ in chunk)
+            args = [lit(v) for c, s in chunk for v in (c, s)] + [lit(c) for c, _ in chunk]
+            stmts.append({"type": "execute", "stmt": {
+                "sql": f"UPDATE perm_cases_history SET employer_slug = CASE case_number {arms} "
+                       f"ELSE employer_slug END WHERE case_number IN ({','.join('?' * len(chunk))})",
+                "args": args}})
+        for i in range(0, len(stmts), 5):
+            db.pipeline(stmts[i:i + 5] + [{"type": "close"}])
+        n += len(pairs)
+        after = str(_cell(rs[-1][0]))
+        log(f"  slugs filled: {n:,}")
+    return n
 
 
 def build_search_indexes(db) -> None:
@@ -683,9 +742,18 @@ def main() -> int:
     ap.add_argument("--current", action="store_true", help="only FY2024 onward, from perm_cases")
     ap.add_argument("--no-indexes", action="store_true",
                     help="skip the search indexes (the write budget's first saving)")
+    ap.add_argument("--fill-slugs", action="store_true",
+                    help="give every history row without an employer slug its name's slug, then stop")
     ap.add_argument("--finish-only", action="store_true",
                     help="no workbooks: current years, search indexes and facets only")
     args = ap.parse_args()
+
+    if args.fill_slugs:
+        db = Turso()
+        n = fill_slugs(db)
+        record_run(db, "ingest_perm_history.py --fill-slugs", status="ok", rows_written=n,
+                   note="employer slugs for rows no page matched")
+        return 0
 
     if args.finish_only:
         db = Turso()

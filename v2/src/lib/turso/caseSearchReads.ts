@@ -589,6 +589,18 @@ export function extraNarrowing(
   return { conds, params, impossible };
 }
 
+/**
+ * A PERM fiscal year as the decided months it spans. DOL files a determination
+ * in the fiscal year it was DECIDED (Oct 1 to Sep 30), so FY2019 is decisions
+ * from 2018-10 through 2019-09 (measured: A-18318-41042, decided 2019-02-12,
+ * fiscal_year 2019). Null for anything that is not a plausible year.
+ */
+export function fiscalYearMonths(fy: string | undefined): { from: string; to: string } | null {
+  const n = Number(fy);
+  if (!fy || !Number.isInteger(n) || n < 2000 || n > 2100) return null;
+  return { from: `${n - 1}-10`, to: `${n}-09` };
+}
+
 /** Whether a filter set can match anything in the current table, or in history. */
 export function permTablesFor(narrow: UnifiedNarrow): { current: boolean; history: boolean } {
   let current = true;
@@ -678,10 +690,19 @@ async function readPermTable(
     // `idx_pc_emp_dec` is `(employer_slug, decision_date)`, so the DECIDED
     // range is the only narrowing the covering pass can carry. The filed
     // range is on `received_date`, which the index does not hold.
+    // A FISCAL YEAR RIDES THE COVERING PASS AS A DECIDED RANGE. As a plain
+    // `fiscal_year = ?` it sat in the second pass, which only sees the newest
+    // SLICE_CAP decisions the first pass took, so an older year came back empty
+    // for any busy employer: Adobe FY2019 answered 0 rows on Sep 27 2026 while
+    // the table held 184. The equality stays below as the exact test.
+    const fyMonths = fiscalYearMonths(narrow.fiscalYear);
+    const decidedFrom = [narrow.decidedFrom, fyMonths?.from].filter(Boolean).sort().pop();
+    const decidedTo = [narrow.decidedTo, fyMonths?.to].filter(Boolean).sort()[0];
+    if (decidedFrom && decidedTo && decidedFrom > decidedTo) return empty;
     const covered = commonNarrowing(
       {
-        ...(narrow.decidedFrom ? { decidedFrom: narrow.decidedFrom } : {}),
-        ...(narrow.decidedTo ? { decidedTo: narrow.decidedTo } : {}),
+        ...(decidedFrom ? { decidedFrom } : {}),
+        ...(decidedTo ? { decidedTo } : {}),
       },
       "received_date",
       "decision_date",

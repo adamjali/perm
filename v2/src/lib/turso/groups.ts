@@ -37,7 +37,8 @@ export interface GroupSummary {
 
 export interface GroupDetail {
   years: { fy: number; certified: number; denied: number; withdrawn: number }[];
-  employers: { slug: string; name: string; n: number }[];
+  /** slug is null for a sponsor with no page (a name only DOL's older files carry). */
+  employers: { slug: string | null; name: string; n: number }[];
   occupations: { code: string; title: string; slug: string | null; n: number }[];
   states: { key: string; n: number }[];
   cities: { key: string; label: string; slug: string; n: number }[];

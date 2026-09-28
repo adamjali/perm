@@ -164,6 +164,34 @@ describe("readPermPublished, employer lead", () => {
     expect(firstPass().args).toEqual(["amazon", "amazoo", "2025-01-01", "2025-04-01", 100]);
   });
 
+  it("turns a fiscal year into the first pass's decided range, so an old year is reached", async () => {
+    // Adobe FY2019 answered 0 rows on Sep 27 2026 with 184 in the table: the
+    // year was tested only over the newest window the first pass had taken.
+    columns.perm_cases_history = new Set(["case_number", "employer_slug", "decision_date", "fiscal_year"]);
+    await readPermPublished({ lead: employer, narrow: { fiscalYear: "2019" }, limit: 100 });
+    expect(firstPass().sql).toMatch(/perm_cases_history .*decision_date >= \? AND decision_date < \?/);
+    expect(firstPass().args.slice(0, 4)).toEqual(["amazon", "amazoo", "2018-10-01", "2019-10-01"]);
+    expect(secondPass().sql).toContain("fiscal_year = ?");
+  });
+
+  it("intersects a fiscal year with a decided range, and an empty intersection reads nothing", async () => {
+    columns.perm_cases_history = new Set(["case_number", "employer_slug", "decision_date", "fiscal_year"]);
+    await readPermPublished({
+      lead: employer,
+      narrow: { fiscalYear: "2019", decidedFrom: "2019-03" },
+      limit: 100,
+    });
+    expect(firstPass().args.slice(0, 4)).toEqual(["amazon", "amazoo", "2019-03-01", "2019-10-01"]);
+    rows.mockClear();
+    const out = await readPermPublished({
+      lead: employer,
+      narrow: { fiscalYear: "2019", decidedFrom: "2020-01" },
+      limit: 100,
+    });
+    expect(out.rows).toEqual([]);
+    expect(rows).not.toHaveBeenCalled();
+  });
+
   it("puts every other filter in the second pass, over the window", async () => {
     await readPermPublished({
       lead: employer,

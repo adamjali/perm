@@ -256,6 +256,11 @@ def main() -> int:
         ("PERM_Disclosure_Data_FY17.xlsx", 2017), ("PERM_FY14_Q4.xlsx", 2014),
         ("PERM_FY2008.xlsx", 2008)])
 
+    check("an employer with a page keeps its page slug",
+          h.employer_slug_for("Adobe Inc.", {h.entity_key("Adobe Inc."): "adobe-inc"}) == "adobe-inc")
+    check("an employer with no page gets its own name slugified (findable by prefix)",
+          h.employer_slug_for("ADOBE SYSTEMS INCORPORATED", {}) == "adobe-systems-incorporated")
+    check("no name, no slug", h.employer_slug_for(None, {}) == "" and h.employer_slug_for("", {}) == "")
     print(f"\n{len(FAILS)} failed" if FAILS else "\nall passed")
     return 1 if FAILS else 0
 

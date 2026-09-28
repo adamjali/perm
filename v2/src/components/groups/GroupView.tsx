@@ -86,12 +86,14 @@ export function GroupView({
       <Box key="emp" title="Top sponsors">
         <Ranked
           items={d.employers.map((e) => ({
-            key: e.slug,
+            key: e.slug ?? `name:${e.name}`,
             n: e.n,
-            label: (
+            label: e.slug ? (
               <Link href={`/perm-employers/${e.slug}`} className={LINK}>
                 {e.name}
               </Link>
+            ) : (
+              e.name
             ),
           }))}
         />
