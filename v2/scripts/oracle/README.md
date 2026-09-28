@@ -112,6 +112,11 @@ zstd -dc /srv/permtracker/backups/db-<stamp>.sql.zst | sqlite3 /tmp/restore.db
    and then `npx convex deploy -y`. Between those two a login or sign-up can fail once and work
    on retry (about 3 form submits a day, so a two-minute gap is a small chance of one retry).
    A week later delete the old "PERM Tracker Signup" widget in the personal Cloudflare account.
-8. Check Google sign-in (Convex sends Google back to permtracker.app, so it can
+8. **After every settings change, run `check_settings.py`** (`ssh permtracker 'sudo /usr/bin/python3 -' <
+   v2/scripts/oracle/check_settings.py`) and expect all PASS. It scans every env file for copy artifacts
+   and asks each service whether it accepts its key. Set values with `printf %s` or `tr -d '\n'`, never
+   `echo`: on Sep 28 nine values copied from Vercel carried a stray `\n` and every AI key was rejected.
+   Values set in GitHub or Convex on switch day get the same treatment and a live check afterwards.
+9. Check Google sign-in (Convex sends Google back to permtracker.app, so it can
    only be tested on the real domain). Rollback: point the two DNS records back
    to Vercel.
