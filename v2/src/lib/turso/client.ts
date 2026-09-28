@@ -20,7 +20,11 @@
  */
 import "server-only";
 
-import { createClient, type Client } from "@libsql/client";
+// The HTTP-only entry: the database is always remote (libsql:, https: or, on
+// the self-hosted server, http://127.0.0.1). The default entry also loads a
+// native SQLite add-on for file: URLs at import time, and the standalone build
+// tracer does not copy the linux-arm64 add-on, so every read failed there.
+import { createClient, type Client } from "@libsql/client/http";
 
 let client: Client | null = null;
 
