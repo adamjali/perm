@@ -56,16 +56,33 @@ describe("BotID scope", () => {
     }
   });
 
-  it("starts BotID once per page session, with the protected list", async () => {
+  // next.config.ts bakes NEXT_PUBLIC_ON_VERCEL = "1" into Vercel builds only.
+  async function renderTwice(onVercel: string) {
     vi.resetModules();
+    vi.stubEnv("NEXT_PUBLIC_ON_VERCEL", onVercel);
     const initBotId = vi.fn();
     vi.doMock("botid/client/core", () => ({ initBotId }));
     const { render } = await import("@testing-library/react");
     const { createElement } = await import("react");
     const { BotIdInit, BOTID_PROTECTED } = await import("@/components/security/BotIdInit");
     render(createElement("div", null, createElement(BotIdInit), createElement(BotIdInit)));
+    vi.doUnmock("botid/client/core");
+    vi.unstubAllEnvs();
+    return { initBotId, BOTID_PROTECTED };
+  }
+
+  it("starts BotID once per page session on Vercel, with the protected list", async () => {
+    const { initBotId, BOTID_PROTECTED } = await renderTwice("1");
     expect(initBotId).toHaveBeenCalledTimes(1);
     expect(initBotId).toHaveBeenCalledWith({ protect: BOTID_PROTECTED });
-    vi.doUnmock("botid/client/core");
+  });
+
+  it("never starts BotID off Vercel (the self-hosted server has no BotID service)", async () => {
+    const { initBotId } = await renderTwice("");
+    expect(initBotId).not.toHaveBeenCalled();
+  });
+
+  it("the chat route asks BotID only on Vercel", () => {
+    expect(read("app/api/chat/route.ts")).toMatch(/process\.env\.VERCEL\s*\?\s*await checkBotId\(\)\s*:\s*\{\s*isBot:\s*false\s*\}/);
   });
 });

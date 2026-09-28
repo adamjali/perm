@@ -13,7 +13,8 @@ Sentry.init({
   dsn: process.env.SENTRY_DSN,
 
   // Environment and release tracking
-  environment: process.env.NODE_ENV,
+  // SENTRY_ENVIRONMENT lets the self-hosted staging server label its own errors.
+  environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV,
   release: process.env.VERCEL_GIT_COMMIT_SHA,
 
   // Structured logging

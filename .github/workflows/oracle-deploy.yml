@@ -1,0 +1,104 @@
+name: Oracle build and deploy
+
+# Builds the site on GitHub's free ARM runner (4 cores, 16 GB; the Oracle
+# server is ARM too, so sharp and libsql get the right native binaries) and
+# ships it to the Oracle server, where `permtracker-deploy` starts it on the
+# idle copy, health-checks it and only then moves traffic to it.
+#
+# THIS REPOSITORY IS PUBLIC, SO ITS LOGS ARE. Nothing here prints a secret.
+# The deploy key can do exactly two things on the server (see
+# /home/deploy/.ssh/authorized_keys there): run the deploy script, and open a
+# tunnel to the database port, which the build uses to prerender pages with
+# the READ-ONLY token.
+
+on:
+  push:
+    branches: [oracle-migration]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: oracle-deploy
+  cancel-in-progress: false
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: v2
+    env:
+      NODE_OPTIONS: --max-old-space-size=12288
+      NEXT_TELEMETRY_DISABLED: "1"
+      DEPLOYMENT_ID: ${{ github.sha }}-${{ github.run_attempt }}
+      VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
+      NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
+      NEXT_PUBLIC_APP_URL: ${{ vars.NEXT_PUBLIC_APP_URL }}
+      NEXT_PUBLIC_CONVEX_URL: ${{ vars.NEXT_PUBLIC_CONVEX_URL }}
+      NEXT_PUBLIC_POSTHOG_HOST: ${{ vars.NEXT_PUBLIC_POSTHOG_HOST }}
+      NEXT_PUBLIC_POSTHOG_KEY: ${{ vars.NEXT_PUBLIC_POSTHOG_KEY }}
+      NEXT_PUBLIC_SENTRY_DSN: ${{ vars.NEXT_PUBLIC_SENTRY_DSN }}
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${{ vars.NEXT_PUBLIC_VAPID_PUBLIC_KEY }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Install pnpm
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
+        with:
+          package_json_file: v2/package.json
+      - name: Setup Node
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24.x
+          cache: pnpm
+          cache-dependency-path: v2/pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Open the database tunnel (read-only token, prerender only)
+        env:
+          ORACLE_DEPLOY_KEY: ${{ secrets.ORACLE_DEPLOY_KEY }}
+          ORACLE_KNOWN_HOSTS: ${{ secrets.ORACLE_KNOWN_HOSTS }}
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$ORACLE_DEPLOY_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$ORACLE_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o ExitOnForwardFailure=yes \
+            -o ServerAliveInterval=20 -f -N -L 18080:127.0.0.1:8080 "deploy@$ORACLE_HOST"
+          code=$(curl -s -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:18080/v2/pipeline -d '{}')
+          echo "database tunnel answered HTTP $code (401 = reached, login required)"
+          test "$code" = "401"
+
+      - name: Build
+        env:
+          TURSO_DATABASE_URL: http://127.0.0.1:18080
+          TURSO_AUTH_TOKEN: ${{ secrets.ORACLE_DB_RO_TOKEN }}
+        run: pnpm build
+
+      - name: Package the standalone server
+        run: |
+          S=$(dirname "$(find .next/standalone -name server.js -not -path '*/node_modules/*' | head -1)")
+          test -f "$S/server.js"
+          cp -r .next/static "$S/.next/static"
+          cp -r public "$S/public"
+          tar --zstd -cf "$RUNNER_TEMP/release.tar.zst" -C "$S" .
+          echo "release: $(du -h "$RUNNER_TEMP/release.tar.zst" | cut -f1), server at ${S#.next/standalone}"
+
+      - name: Deploy to the idle copy, health-check, switch
+        env:
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+        run: |
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=20 \
+            "deploy@$ORACLE_HOST" "deploy ${GITHUB_SHA::12}-${GITHUB_RUN_ATTEMPT}" < "$RUNNER_TEMP/release.tar.zst"
+
+      - name: Close the tunnel
+        if: always()
+        run: pkill -f "18080:127.0.0.1:8080" || true
