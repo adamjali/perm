@@ -418,7 +418,8 @@ def traffic_section() -> dict:
     key = os.environ.get("POSTHOG_PERSONAL_API_KEY")
     if not key:
         return section("traffic", "Traffic", "off", "set the POSTHOG_PERSONAL_API_KEY secret to read visits")
-    q = ("SELECT toDate(timestamp, 'America/New_York') AS d, count() AS views, "
+    # HogQL's toDate takes one argument: shift the zone first (Sep 28, a 400 on the first run).
+    q = ("SELECT toDate(toTimeZone(timestamp, 'America/New_York')) AS d, count() AS views, "
          "count(DISTINCT person_id) AS visitors FROM events WHERE event = '$pageview' "
          "AND timestamp > now() - INTERVAL 9 DAY GROUP BY d ORDER BY d")
     d = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",

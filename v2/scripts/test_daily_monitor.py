@@ -47,6 +47,9 @@ def main() -> int:
     check(by["Tests"]["cancelled"] == 1 and by["Tests"]["running"] == 1, "cancelled and still-running are told apart")
     check(dm.summarize_runs([{"name": "npm_and_yarn in /v2 for next - Update #1", "status": "completed"}]) == {},
           "Dependabot version-update runs are left out")
+    import inspect
+    check("toDate(toTimeZone(" in inspect.getsource(dm.traffic_section),
+          "the traffic query shifts the zone before toDate (HogQL's toDate takes one argument)")
     check(dm.et_time("2026-09-27T19:54:52+00:00") == "Sep 27, 3:54 PM EDT"
           and dm.et_time("2026-12-01T12:00:00Z") == "Dec 1, 7:00 AM EST" and dm.et_time("x") is None,
           "times read in Eastern, 12-hour, with the zone")
