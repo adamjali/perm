@@ -40,9 +40,16 @@ HEADERS = {
 }
 
 # One page is enough to judge a template, and these are the templated families.
+# A family missing here is WALKED, every page of it, and on a fresh deploy each
+# of those is a cold ISR render Vercel bills. The three breakdown families
+# (4,156 pages) were missing on Sep 27 2026 and the audit was stopped a few
+# hundred pages in. Add a new [slug] family the day it ships.
 TEMPLATED = ("/perm-employers/", "/perm-attorneys/", "/perm-wages/",
              "/perm-queue/", "/perm-rfi-audit/", "/blog/", "/guides/",
-             "/changelog/")
+             "/changelog/", "/perm-cities/", "/perm-industries/", "/perm-countries/",
+             "/visa-bulletin/categories/", "/embed/")
+# Families whose pages share a prefix with static pages, told apart by shape.
+TEMPLATED_RE = ((re.compile(r"^/visa-bulletin/\d{4}-\d{2}$"), "/visa-bulletin/<month>"),)
 SAMPLE_PER_TEMPLATE = 2
 
 # Some repetition is the CONTENT, not a defect. A policy feed legitimately
@@ -101,7 +108,8 @@ def page_paths(base: str) -> list[str]:
 
     kept, seen = [], collections.Counter()
     for p in paths:
-        fam = next((t for t in TEMPLATED if p.startswith(t)), None)
+        fam = next((t for t in TEMPLATED if p.startswith(t)), None) or next(
+            (name for rx, name in TEMPLATED_RE if rx.match(p)), None)
         if fam is None:
             kept.append(p)
             continue
