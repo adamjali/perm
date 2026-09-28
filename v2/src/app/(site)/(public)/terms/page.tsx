@@ -62,7 +62,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: September 27, 2026
+          Effective Date: February 17, 2026 | Last Updated: September 28, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />

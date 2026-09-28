@@ -13,7 +13,7 @@ name: Oracle build and deploy
 
 on:
   push:
-    branches: [oracle-migration]
+    branches: [main]
     # Same idea as scripts/vercel-ignore.sh: a push that cannot change the
     # built site does not rebuild it.
     paths-ignore:
