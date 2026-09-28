@@ -5,8 +5,8 @@ Wants=network-online.target
 [Service]
 User=cloudflared
 Group=cloudflared
-ExecStart=/usr/local/bin/cloudflared --no-autoupdate tunnel run --token-file /etc/cloudflared/token
-Restart=on-failure
+ExecStart=/usr/local/bin/cloudflared --no-autoupdate tunnel --metrics 127.0.0.1:20241 run --token-file /etc/cloudflared/token
+Restart=always
 RestartSec=5
 NoNewPrivileges=yes
 ProtectSystem=strict

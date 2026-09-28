@@ -122,6 +122,16 @@ def main():
     timers = subprocess.run(["systemctl", "list-timers", "--no-legend", "--plain", "permtracker*"],
                             capture_output=True, text=True).stdout
     db_bytes = sum(p.stat().st_size for p in (APP / "db" / "data.sqld").rglob("*") if p.is_file())
+    data_file = APP / "db" / "data.sqld" / "dbs" / "default" / "data"
+    data_bytes = data_file.stat().st_size if data_file.exists() else None
+
+    # The watchdog's repairs (bin/permtracker-watchdog), last 24 hours.
+    repairs = []
+    try:
+        day_ago = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now - 86_400))
+        repairs = [ln for ln in (HERE / "repairs.log").read_text().splitlines() if ln[:20] >= day_ago]
+    except OSError:
+        pass
 
     week = [s for s in samples if s.get("cpu") is not None]
     doc = {
@@ -131,6 +141,7 @@ def main():
             "load1": float(open("/proc/loadavg").read().split()[0]),
             "diskPct": round(100 * disk.used / disk.total, 1),
             "dbBytes": db_bytes,
+            "dbDataBytes": data_bytes,
             "lockedMb": m.get("Mlocked", 0) // 1024,
             "uptimeH": round(float(open("/proc/uptime").read().split()[0]) / 3600, 1),
         },
@@ -145,6 +156,8 @@ def main():
         "backup": {"lastOk": last_ok, "count": len(backups)},
         "services": {u: active(u) for u in SERVICES},
         "failedUnits": [ln.split()[0] for ln in failed if ln.strip()],
+        "repairs24h": repairs[-5:],
+        "repairCount24h": len(repairs),
         "timersEnabled": len(re.findall(r"permtracker[^\s]*\.timer", timers)),
         "slot": {"active": slot, "release": release},
     }

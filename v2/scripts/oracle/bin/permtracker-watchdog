@@ -1,0 +1,66 @@
+#!/bin/bash
+# Every 2 minutes: check each piece answers, and restart the one that stopped.
+#
+# systemd already restarts a process that EXITS. This catches the other kind of
+# failure: a process that is still running but no longer answers (a hung web
+# server, a stuck tunnel). A piece is restarted only after 3 failed checks in a
+# row (about 6 minutes), and at most once per 30 minutes, so a slow moment never
+# causes a restart and a piece that keeps failing cannot restart-loop. Every
+# repair is logged to health/repairs.log, which the health report counts and the
+# morning email shows.
+set -u
+H=/srv/permtracker/health
+STATE=$H/watchdog.state
+LOG=$H/repairs.log
+now=$(date +%s)
+
+declare -A fails last
+# shellcheck disable=SC1090
+[ -f "$STATE" ] && source "$STATE"
+
+token=$(cat /srv/permtracker/secrets/db_ro.jwt)
+port_of() { sed -n 's/^PORT=//p' "/srv/permtracker/app/env/$1.env" 2>/dev/null; }
+
+db_ok()     { curl -sf -m 10 -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
+                -d '{"requests":[{"type":"execute","stmt":{"sql":"SELECT 1"}},{"type":"close"}]}' \
+                http://127.0.0.1:8080/v2/pipeline >/dev/null; }
+web_ok()    { curl -sf -m 15 "http://127.0.0.1:$(port_of "$1")/api/health" >/dev/null; }
+nginx_ok()  { curl -sf -m 15 -H "Host: permtracker.app" http://127.0.0.1:8081/api/health >/dev/null; }
+tunnel_ok() { curl -sf -m 5 http://127.0.0.1:20241/ready >/dev/null; }
+
+note() { # name, passed?
+  if [ "$2" = 1 ]; then fails[$1]=0; else fails[$1]=$(( ${fails[$1]:-0} + 1 )); fi
+}
+
+db_ok && note db 1 || note db 0
+# Both copies: the live one serves visitors, the idle one is the instant
+# rollback, and a rollback onto a hung copy would take the site down.
+live=$(cat /srv/permtracker/app/active 2>/dev/null || echo blue)
+for s in blue green; do
+  if systemctl is-active --quiet "permtracker-web@$s"; then web_ok "$s" && note "web_$s" 1 || note "web_$s" 0; else fails[web_$s]=0; fi
+done
+# Through nginx only means something when the live copy answers directly.
+if [ "${fails[web_$live]}" = 0 ]; then nginx_ok && note nginx 1 || note nginx 0; else fails[nginx]=0; fi
+if systemctl is-enabled --quiet cloudflared; then tunnel_ok && note tunnel 1 || note tunnel 0; else fails[tunnel]=0; fi
+
+repair() { # name, unit
+  local n=$1 unit=$2
+  [ "${fails[$n]:-0}" -ge 3 ] || return 0
+  if [ $(( now - ${last[$n]:-0} )) -lt 1800 ]; then return 0; fi
+  systemctl restart "$unit"
+  echo "$(date -u +%FT%TZ) $n: restarted $unit after ${fails[$n]} failed checks" >> "$LOG"
+  last[$n]=$now; fails[$n]=0
+}
+repair db permtracker-db
+repair web_blue permtracker-web@blue
+repair web_green permtracker-web@green
+repair nginx nginx
+repair tunnel cloudflared
+
+# Keep a week of repairs; the file cannot grow past that.
+if [ -f "$LOG" ]; then
+  cutoff=$(date -u -d '7 days ago' +%FT%TZ)
+  awk -v c="$cutoff" '$1 >= c' "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+  chmod 644 "$LOG"
+fi
+{ declare -p fails; declare -p last; } > "$STATE"

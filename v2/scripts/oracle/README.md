@@ -29,7 +29,22 @@ GitHub Actions ─(ssh, deploy key)─▶ permtracker-deploy       (new releases
 | crons | `permtracker-cron@*.timer` | the ten `vercel.json` crons, same UTC times, calling the same routes with `CRON_SECRET` |
 | USCIS fetches | `permtracker-uscis@*.timer` | the Mac's three launchd jobs, same Eastern times (`www.uscis.gov` answers this server) |
 | health | `permtracker-health.timer` | every 10 minutes: memory, CPU, disk, backup age, service states and the live copy into `perm_docs['server_health']`, with 7 days of samples in `/srv/permtracker/health/` for Oracle's idle rule. The morning report's "server" section judges it |
+| watchdog | `permtracker-watchdog.timer` | every 2 minutes; restarts a piece that runs but stops answering (see below) |
 | backups | `permtracker-backup.timer` | 3:15 AM Eastern: full SQL dump, zstd, checked to end in COMMIT, newest 7 kept, `backups/LAST_OK` |
+
+## What repairs itself, and what cannot grow
+
+| failure | what happens | proven |
+|---|---|---|
+| a process exits or is killed | systemd restarts it: `permtracker-db`, both web copies and `cloudflared` always, nginx on failure (drop-ins in `systemd/dropins/`), and none of them ever stops retrying (`StartLimitIntervalSec=0`) | nginx, tunnel and database each killed with `kill -9` on Sep 28: back in seconds, site 200 throughout |
+| a process runs but stops answering | `permtracker-watchdog.timer` (every 2 min) checks the database, both web copies, nginx and the tunnel's `/ready`; after 3 failed checks in a row it restarts that piece, at most once per 30 min, and logs it to `health/repairs.log` | a web copy frozen with `SIGSTOP`: restarted on the third check, answering 200 |
+| the machine reboots | every unit is enabled and comes back (measured: 30 s) | Sep 28 |
+| security fixes | unattended-upgrades (Ubuntu security, plus `pkg.cloudflare.com` and `deb.nodesource.com`, see `conf/`); needrestart restarts whatever still runs old code; a reboot at 06:30 UTC only when an update requires one | dry run lists all origins |
+| the disk | journald capped at 1 GB and 30 days; nginx logs rotate daily, 14 kept; releases 5 kept, build files 21 days; backups 7 kept; health samples and repairs 7 days; Oracle disk backups 3 days (`permtracker-daily-keep3`, 06:00 UTC, inside the free 5) | |
+| the database folder | the engine keeps its own log and snapshots next to the data; `server_health` records both sizes and the morning report warns past 3x the data file | 1.97x on Sep 28 (one snapshot from the import) |
+
+Everything above is reported: the morning email's "server" section reads `perm_docs['server_health']`,
+including any repair in the last 24 hours.
 
 ## Deploy, roll back, see the state
 

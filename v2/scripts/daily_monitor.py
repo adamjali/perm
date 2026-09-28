@@ -466,6 +466,7 @@ IDLE_MARGIN = 25.0
 SERVER_STALE_MIN = 45
 BACKUP_WARN_H, BACKUP_FAIL_H = 30, 54
 MUST_RUN = ["permtracker-db", "nginx", "cloudflared"]
+DB_DIR_RATIO = 3.0
 
 
 def server_verdict(doc: dict | None, now_ms: int) -> dict:
@@ -492,6 +493,9 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
         warns.append("the database is no longer held in memory (permtracker-dbcache)")
     if doc.get("failedUnits"):
         warns.append("failed units: " + ", ".join(doc["failedUnits"][:5]))
+    if doc.get("repairCount24h"):
+        warns.append(f"the watchdog restarted something {doc['repairCount24h']} time(s) in 24 h")
+        lines.extend("Repair: " + r for r in (doc.get("repairs24h") or [])[-3:])
 
     idle = doc.get("idle") or {}
     cpu, mem = idle.get("cpuP95"), idle.get("memP95")
@@ -516,6 +520,12 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
         lines.append(f"Backups: {b.get('count', 0)} kept, newest {et_time(last)}")
 
     n = doc.get("now") or {}
+    # The database folder holds the data file plus the engine's own log and
+    # snapshots; the engine is meant to merge those, and this is the check that
+    # it does. Past 3x the data file, something is growing that should not be.
+    if n.get("dbDataBytes") and (n.get("dbBytes") or 0) > DB_DIR_RATIO * n["dbDataBytes"]:
+        warns.append(f"database folder is {n['dbBytes'] / n['dbDataBytes']:.1f}x its data file: "
+                     "the engine's log or snapshots are not being trimmed")
     disk = n.get("diskPct")
     if disk is not None and disk > 90:
         fails.append(f"disk {disk:.0f}% full")

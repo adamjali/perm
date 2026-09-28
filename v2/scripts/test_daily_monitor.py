@@ -137,6 +137,13 @@ def main() -> int:
     check("GB" in " ".join(v(doc(), now_ms)["lines"]) and "BB" not in " ".join(v(doc(), now_ms)["lines"]),
           "database size reads in GB")
     check("server" in inspect.getsource(dm.build), "build() includes the server section")
+    rep = v(doc(repairCount24h=2, repairs24h=["2026-09-28T17:35:39Z web_blue: restarted"]), now_ms)
+    check(rep["status"] == "warn" and any("Repair:" in ln for ln in rep["lines"]),
+          "a watchdog repair in the last day warns and names it")
+    check(v(doc(now={"dbBytes": 7_000_000_000, "dbDataBytes": 3_300_000_000}), now_ms)["status"] == "ok",
+          "a database folder at 2.1x its data file is normal (one snapshot)")
+    check(v(doc(now={"dbBytes": 11_000_000_000, "dbDataBytes": 3_300_000_000}), now_ms)["status"] == "warn",
+          "past 3x its data file, the folder is growing and warns")
 
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0

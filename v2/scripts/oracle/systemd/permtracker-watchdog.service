@@ -1,0 +1,5 @@
+[Unit]
+Description=PERM Tracker watchdog: restart whatever stopped answering
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/permtracker-watchdog
