@@ -24,6 +24,7 @@ GitHub Actions ─(ssh, deploy key)─▶ permtracker-deploy       (new releases
 | database in RAM | `permtracker-dbcache.service` | `vmtouch -l` locks the file in memory: reads from RAM, and used memory stays above Oracle's idle line (measured 11% at rest, 37% locked; the rule reclaims an A1 instance whose p95 CPU, network AND memory are all under 20% for 7 days). Capped at 6 GB |
 | website | `permtracker-web@blue`, `@green` | Next.js standalone build, one copy serves, the other is the instant rollback |
 | front door | `nginx/permtracker.conf` | loopback only; the rate limits Vercel's firewall used to enforce (nothing under `/_next/` counts, as on Vercel); verified crawlers exempt via the `x-pt-verified-bot` header Cloudflare sets, and the site's own audit scripts via `x-permtracker-audit` matching the key in `/etc/nginx/permtracker-audit-key.conf` (root, 600; never in this repo) |
+| edge cache | Cloudflare Cache Rule "PERM Tracker edge cache" + nginx `$pt_cdn_cc` | Cloudflare keeps copies only of pages the site marks shareable (`s-maxage`); nginx hands it `Cloudflare-CDN-Cache-Control: max-age=600, stale-while-revalidate=3600`, so a refreshed page shows at the edge within ~10 min and visitors never wait on a refresh. Never `/api`, `/ingest`, or anyone with a `__convexAuth` cookie. Sep 28 from Florida: cached pages 0.11-0.17 s vs Vercel's 0.20-0.29 s; live lookups, API and signed-in requests measured uncached |
 | the way in | `systemd/cloudflared.service` | remotely managed Cloudflare Tunnel `permtracker-oracle`; runs as its own `cloudflared` user; token in `/etc/cloudflared/token` (root:cloudflared 440). Its routes (staging, db; the apex and www on switch day) are set in Cloudflare, not here |
 | deploys | `bin/permtracker-deploy` | the only command the deploy key can run: `deploy <id>`, `rollback`, `status` |
 | crons | `permtracker-cron@*.timer` | the ten `vercel.json` crons, same UTC times, calling the same routes with `CRON_SECRET` |
@@ -84,10 +85,16 @@ zstd -dc /srv/permtracker/backups/db-<stamp>.sql.zst | sqlite3 /tmp/restore.db
 2. Final copy from Turso (`bin/run-import.sh`), row counts compared table by table.
 3. GitHub secrets `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` point at the database
    host with the read-write token; `REVALIDATE_SECRET` gets the server's value.
-4. `permtracker.app` and `www` DNS records become proxied CNAMEs to the tunnel.
-5. Enable the timers here; remove Vercel's crons; move the Mac's launchd jobs.
-6. The privacy policy and terms on this branch already name Oracle and Cloudflare in place of
+4. **Convex reads the database itself** (alert sweeps, the digest, employer follows: `convex/lib/publicMirror.ts`).
+   Set Convex prod `TURSO_DATABASE_URL=https://db.permtracker.app` and `TURSO_AUTH_TOKEN` to the server's
+   read-only token, moved from `secrets/db_ro.jwt` by pipe, never printed. Convex only ever reads.
+5. `permtracker.app` and `www` DNS records become proxied CNAMEs to the tunnel (add both to the tunnel's routes),
+   and both hostnames join `http.host in {...}` in the edge-cache rule.
+   On the server: `SENTRY_ENVIRONMENT=production`. In the repo: `oracle-deploy.yml` triggers on `main`, and
+   Vercel's Git connection is removed so a push deploys once.
+6. Enable the timers here; remove Vercel's crons; move the Mac's launchd jobs.
+7. The privacy policy and terms on this branch already name Oracle and Cloudflare in place of
    Vercel and BotID; set both pages' "Last Updated" to the switch date in the same deploy.
-7. Check Google sign-in (Convex sends Google back to permtracker.app, so it can
+8. Check Google sign-in (Convex sends Google back to permtracker.app, so it can
    only be tested on the real domain). Rollback: point the two DNS records back
    to Vercel.
