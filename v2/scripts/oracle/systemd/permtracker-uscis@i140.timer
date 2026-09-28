@@ -1,0 +1,9 @@
+[Unit]
+Description=Schedule for permtracker-uscis@i140
+[Timer]
+OnCalendar=*-01,04,07,10-09,11 10:45:00 America/New_York
+OnCalendar=*-*-21 10:45:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@i140.service
+[Install]
+WantedBy=timers.target

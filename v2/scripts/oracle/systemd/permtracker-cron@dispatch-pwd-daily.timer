@@ -1,0 +1,8 @@
+[Unit]
+Description=Schedule for permtracker-cron@dispatch-pwd-daily
+[Timer]
+OnCalendar=*-*-* 09:40:00 UTC
+Persistent=true
+Unit=permtracker-cron@dispatch-pwd-daily.service
+[Install]
+WantedBy=timers.target

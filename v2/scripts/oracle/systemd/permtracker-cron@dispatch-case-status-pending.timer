@@ -1,0 +1,8 @@
+[Unit]
+Description=Schedule for permtracker-cron@dispatch-case-status-pending
+[Timer]
+OnCalendar=*-*-* 19:40:00 UTC
+Persistent=true
+Unit=permtracker-cron@dispatch-case-status-pending.service
+[Install]
+WantedBy=timers.target

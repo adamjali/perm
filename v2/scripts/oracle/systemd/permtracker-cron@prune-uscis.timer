@@ -1,0 +1,8 @@
+[Unit]
+Description=Schedule for permtracker-cron@prune-uscis
+[Timer]
+OnCalendar=*-*-* 09:20:00 UTC
+Persistent=true
+Unit=permtracker-cron@prune-uscis.service
+[Install]
+WantedBy=timers.target

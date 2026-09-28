@@ -14,6 +14,14 @@ name: Oracle build and deploy
 on:
   push:
     branches: [oracle-migration]
+    # Same idea as scripts/vercel-ignore.sh: a push that cannot change the
+    # built site does not rebuild it.
+    paths-ignore:
+      - "**/*.md"
+      - "v2/scripts/**"
+      - ".planning/**"
+      - "docs/**"
+      - "v2/docs/**"
   workflow_dispatch:
 
 permissions:

@@ -1,0 +1,8 @@
+[Unit]
+Description=Schedule for permtracker-cron@scorecard
+[Timer]
+OnCalendar=*-*-* 12:00:00 UTC
+Persistent=true
+Unit=permtracker-cron@scorecard.service
+[Install]
+WantedBy=timers.target

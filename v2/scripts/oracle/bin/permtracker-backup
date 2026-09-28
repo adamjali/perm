@@ -1,0 +1,13 @@
+#!/bin/bash
+# Nightly logical backup of the database: a full SQL dump (read-only token),
+# zstd-compressed, checked to end in COMMIT, newest 7 kept. LAST_OK is what
+# the daily report reads.
+set -euo pipefail
+B=/srv/permtracker/backups; f="$B/db-$(date -u +%Y%m%d-%H%M).sql.zst"; tmp="$f.part"
+curl -sS --fail --max-time 3600 -H "Authorization: Bearer $(cat /srv/permtracker/secrets/db_ro.jwt)" \
+  http://127.0.0.1:8080/dump | zstd -q -T2 -10 -o "$tmp"
+zstd -dc "$tmp" | tail -c 200 | grep -q "COMMIT;" || { echo "dump incomplete; kept nothing"; rm -f "$tmp"; exit 1; }
+mv "$tmp" "$f"
+ls -1t "$B"/db-*.sql.zst | tail -n +8 | xargs -r rm -f
+printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$(stat -c %s "$f")" "$(basename "$f")" > "$B/LAST_OK"
+echo "backup ok: $(basename "$f") $(du -h "$f" | cut -f1)"

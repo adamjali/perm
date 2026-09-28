@@ -1,0 +1,26 @@
+#!/bin/bash
+# permtracker-uscis <i485|i140|quarterly>: the USCIS fetches that ran on the
+# Mac (scripts/residential_job.sh), moved here because www.uscis.gov answers
+# this server. Same scripts, same failure recording.
+set -uo pipefail
+job="$1"; R=/srv/permtracker/repo; V2=$R/v2
+git -C "$R" fetch -q origin main && git -C "$R" reset -q --hard origin/main
+set -a; . /srv/permtracker/app/env/uscis.env; set +a
+cd "$V2"
+fail(){ python3 scripts/record_ingest_failure.py --script "$1" --note "oracle timer ($job): $2" || echo "could not record the failure row"; }
+rc=0
+case "$job" in
+  i485) python3 scripts/ingest_i485_inventory.py || { rc=1; fail ingest_i485_inventory.py "ingest exited non-zero"; } ;;
+  i140)
+    t=$(mktemp -d)
+    if python3 scripts/ingest_uscis_i140.py --out "$t/uscis-payload.json" && [ -s "$t/uscis-payload.json" ]; then
+      if [ -n "${CONVEX_DEPLOY_KEY:-}" ]; then
+        npx --yes convex run uscisI140:storeStats "$(cat "$t/uscis-payload.json")" --prod || { rc=1; fail ingest_uscis_i140.py "payload fetched but convex storeStats failed"; }
+      else rc=1; fail ingest_uscis_i140.py "payload fetched but CONVEX_DEPLOY_KEY is not set on the server"; fi
+    else rc=1; fail ingest_uscis_i140.py "fetch or reduce failed"; fi
+    rm -rf "$t"
+    python3 scripts/ingest_i140_trends.py || { rc=1; fail ingest_i140_trends.py "ingest exited non-zero"; } ;;
+  quarterly) python3 scripts/ingest_uscis_quarterly.py || { rc=1; fail ingest_uscis_quarterly.py "ingest exited non-zero"; } ;;
+  *) echo "unknown job $job"; exit 2 ;;
+esac
+exit $rc
