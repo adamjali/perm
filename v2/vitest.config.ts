@@ -87,6 +87,12 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/turso/caseLookupHistory.test.ts",
   "src/lib/turso/decidedDays.test.ts",
   "src/lib/turso/__tests__/wagePlaceFilters.test.ts",
+  // The victim and the other leaker: it failed again in the next full run
+  // with caseLookupHistory already moved, because embedLookup.test.ts (Sep 26)
+  // mocks ./caseDiscovery in the same shared registry. Isolating the victim
+  // means no neighbour can decide what it imports.
+  "src/lib/turso/caseDiscovery.test.ts",
+  "src/lib/turso/embedLookup.test.ts",
 ];
 
 export default defineConfig({
