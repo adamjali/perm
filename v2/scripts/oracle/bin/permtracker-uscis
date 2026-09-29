@@ -1,7 +1,7 @@
 #!/bin/bash
 # permtracker-uscis <i485|i140|quarterly>: the USCIS fetches that ran on the
-# Mac (scripts/residential_job.sh), moved here because www.uscis.gov answers
-# this server. Same scripts, same failure recording.
+# Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
+# Same scripts, same failure recording.
 set -uo pipefail
 job="$1"; R=/srv/permtracker/repo; V2=$R/v2
 git -C "$R" fetch -q origin main && git -C "$R" reset -q --hard origin/main

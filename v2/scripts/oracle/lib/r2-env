@@ -1,0 +1,20 @@
+# Sourced by permtracker-backup and permtracker-restore-test (not run).
+# Turns /etc/permtracker/r2.env (root:permtracker 640, written by hand, never
+# in this repo) into rclone's settings for a remote named "r2". Best practice
+# is an Object Read & Write key for the one bucket permtracker-backups; the key
+# installed Sep 29 2026 is an account-wide admin key (the owner's choice), so
+# it could also change the bucket's lock. Swap it for a scoped one any time:
+# the file format is the same.
+set -a
+# shellcheck disable=SC1091
+. /etc/permtracker/r2.env
+set +a
+export RCLONE_CONFIG=/dev/null   # settings come only from here, no config file
+export RCLONE_CONFIG_R2_TYPE=s3
+export RCLONE_CONFIG_R2_PROVIDER=Cloudflare
+export RCLONE_CONFIG_R2_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
+export RCLONE_CONFIG_R2_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
+export RCLONE_CONFIG_R2_ENDPOINT="https://0cf55b4a97ad449347eb6b0e313d2f04.r2.cloudflarestorage.com"
+# A bucket-scoped key cannot list or create buckets, so rclone must not try.
+export RCLONE_CONFIG_R2_NO_CHECK_BUCKET=true
+export RCLONE_CONFIG_R2_ACL=private

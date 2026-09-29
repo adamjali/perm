@@ -1,0 +1,10 @@
+[Unit]
+Description=PERM Tracker monthly restore test of the off-site backup
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+User=permtracker
+Nice=19
+IOSchedulingClass=idle
+ExecStart=/usr/local/bin/permtracker-restore-test

@@ -67,9 +67,6 @@ def main() -> int:
     check(dm.spike_note(40, [100, 90, 110], "views", drop=True) is not None, "a fall is flagged for traffic")
     check(dm.spike_note(500, [100, 100], "rows") is None, "two prior days are not a baseline")
 
-    check(dm.turso_cost(2_500_000_000, 25_000_000) == 0, "usage inside the plan costs nothing")
-    check(abs(dm.turso_cost(110_896_118_519, 59_727_078) - 143.12) < 0.01,
-          "the Sep 27 cycle reproduces the $143.12 the report printed")
 
     out = ("datasets registered : 40\n::warning::i485-inventory is 53 days old against a 45-day budget\n"
            "ok row\nOUR INGEST HAS STOPPED for: lca-status (has not RUN).\n")
@@ -102,7 +99,9 @@ def main() -> int:
         d = {"at": "2026-09-28T11:25:00Z",
              "now": {"cpuPct": 3.0, "memPct": 35.0, "diskPct": 15.0, "dbBytes": 6_500_000_000},
              "idle": {"hours": 168, "cpuP95": 6.0, "memP95": 36.0, "memMin": 33.0},
-             "backup": {"lastOk": {"at": "2026-09-28T07:16:00Z"}, "count": 7},
+             "backup": {"lastOk": {"at": "2026-09-28T07:16:00Z"}, "count": 7,
+                        "offsiteOk": {"at": "2026-09-28T07:18:00Z"},
+                        "restoreOk": {"at": "2026-09-02T09:40:00Z", "tables": 44, "rows": 6_509_035}},
              "services": {u: "active" for u in ["permtracker-db", "permtracker-dbcache", "permtracker-web@blue",
                                                 "permtracker-web@green", "nginx", "cloudflared"]},
              "failedUnits": [], "slot": {"active": "blue", "release": "abc-1"}}
@@ -133,6 +132,22 @@ def main() -> int:
     check(v(doc(backup={"lastOk": {"at": "2026-09-26T03:00:00Z"}}), now_ms)["status"] == "fail",
           "a 56 h old backup fails")
     check(v(doc(backup={"lastOk": None}), now_ms)["status"] == "fail", "no backup fails")
+    # The off-site copy (R2) and the monthly restore test.
+    check(v(doc(backup={"offsiteOk": None}), now_ms)["status"] == "fail",
+          "no off-site copy fails, so a missing R2 key cannot read as fine")
+    check(v(doc(backup={"offsiteOk": {"at": "2026-09-27T03:00:00Z"}}), now_ms)["status"] == "warn",
+          "a 32 h old off-site copy warns")
+    check(v(doc(backup={"offsiteOk": {"at": "2026-09-26T03:00:00Z"}}), now_ms)["status"] == "fail",
+          "a 56 h old off-site copy fails")
+    check(v(doc(backup={"restoreOk": None}), now_ms)["status"] == "warn",
+          "an off-site copy never restore-tested warns")
+    check(v(doc(backup={"restoreOk": {"at": "2026-08-10T09:40:00Z", "tables": 44, "rows": 6_500_000}}),
+            now_ms)["status"] == "warn", "a restore test 49 days old warns")
+    check(any("Off-site copy" in ln for ln in v(doc(), now_ms)["lines"]), "the report names the off-site copy")
+    check(v(doc(backup={"offsiteOk": {"at": "2026-09-28T07:18:00Z", "bucketBytes": 8_600_000_000}}),
+            now_ms)["status"] == "warn", "an R2 bucket past 8 GB warns")
+    check(v(doc(backup={"offsiteOk": {"at": "2026-09-28T07:18:00Z", "bucketBytes": 9_700_000_000}}),
+            now_ms)["status"] == "fail", "an R2 bucket about to pass the free 10 GB fails")
     check(v(doc(now={"diskPct": 85.0}), now_ms)["status"] == "warn", "disk over 80% warns")
     check("GB" in " ".join(v(doc(), now_ms)["lines"]) and "BB" not in " ".join(v(doc(), now_ms)["lines"]),
           "database size reads in GB")

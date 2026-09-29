@@ -6677,3 +6677,61 @@ Oct 1 (110.9B reads of 2.5B included, 59.7M writes of 25M), Vercel $163.40 again
 Aug 28 to Sep 28 ($62.83 of it ISR writes). Reads fell from ~1.5B to 0.41B per 4 hours after the
 Sep 27 count fix; the wage views are the next cut. Cache windows were left alone: lengthening the
 remaining daily pages saves under a dollar a month and the move to free hosting ends the cost.
+
+## Sep 29 2026: one set of deadline rules, off Vercel, backups off the machine
+
+**Every surface asks the central deadline rules** (`convex/lib/perm/deadlines`). Before, five
+surfaces each kept their own idea of "due", "overdue" and "done", and each had a test pinning its
+own copy. The dashboard rebuilt half its list by hand and kept a filing window's OPENING in its
+Overdue column after the window had opened, so a case card could read "Filing opens: 37 days
+late". The calendar turned superseded PWD and ETA 9089 expiries red. The next-up box hid real
+misses. Google Calendar sync kept a PWD expiry after the ETA 9089 was filed, never synced the
+filing window's closing date (the settings page promised it), put the certification expiry and the
+I-140 deadline on the same day, and stored two event types in one slot, so an event could be
+orphaned and never deleted. Now:
+
+- `buildDeadlineInput(caseLike)` turns any case shape into the rules' input (stored window dates
+  win; computed ones fill gaps). `extractActiveDeadlines` drops a filing window's opening once it
+  has passed. `extractReminderDeadlines` is the list both reminder emails use (all but the opening).
+- Google Calendar events come from the same list (`calendarEventExtractor.ts`), one slot per event
+  type (`EVENT_TYPE_TO_SLOT`), and `slotsForPreference` finds every slot a toggle's events use,
+  retired slots included, so turning "Recruitment deadlines" off deletes all five of its kinds
+  (it deleted one). New slots `eta9089_filing` and `filing_window_closes`; `eta9089_expiration`
+  and `recruitment_end` are retired but kept so stored ids still get deleted. A test holds
+  `CALENDAR_EVENT_SLOTS` to the schema and the mutation.
+- Per-step recruitment deadlines exist once the PWD expiry is known, before recruitment starts
+  (that is the rule's documented behaviour), so reminders now include "Start job order by" and
+  friends the way the dashboard always did.
+- `src/lib/__tests__/deadline-agreement.test.ts` puts eleven saved-case states through the
+  dashboard, calendar, next-up box and auto-close and fails when any disagrees with the rules.
+
+**Known gap, left alone on purpose:** the I-140 deadline needs a stored `eta9089ExpirationDate`.
+The form's cascade fills it from the certification date; an import may not. Filling it inside the
+rules would change what auto-close acts on, so it waits for its own decision.
+
+**Words.** Notification titles and messages come from one phrase table (`DEADLINE_PHRASES` in
+`convex/lib/notificationHelpers.ts`): "PWD expires in 7 days", "First Sunday ad due tomorrow",
+"ETA 9089 filing window closed". Labels, closure titles, digest rows, calendar event titles and
+account email subjects are sentence case, and nothing shouts ("CASE CLOSED:", "OVERDUE"). The
+weekly digest's status map used keys that do not exist (`eta_9089`, six progress states), so it
+printed raw keys; it reads the real ones now. The single-deadline reminder email was dead since
+Aug 24 and is deleted.
+
+**Off Vercel.** BotID, `@vercel/functions` (the client IP is `x-real-ip`, which nginx sets from
+Cloudflare's own header and overwrites), `vercel.json`, `vercel-ignore.sh` and the Vercel hosts in
+the CSP are gone. `'unsafe-eval'` is in the policy in development only; the built client has two
+`Function(` calls and neither needs it (zod's probe, now skipped with `jitless`, and a global
+lookup that never runs in a browser). The cron dispatcher's clock is the server's systemd timers,
+and the dispatch test holds `scripts/oracle/systemd/permtracker-cron@*.timer` to `jobs.ts`.
+IndexNow runs after each successful Oracle deploy (it waited for Vercel's deployment events). The
+State Department probe, the Mac's launchd jobs and `residential_job.sh` are gone (the server runs
+the USCIS fetches). nginx serves noindex to any hostname but permtracker.app.
+
+**Backups.** `permtracker-backup` uploads the nightly dump to R2 bucket `permtracker-backups`
+(15-day expiry, 7-day lock, a Cloudflare budget alert at $1) and checks the size;
+`permtracker-restore-test` (2nd of each month) downloads it and loads it into SQLite, counting
+tables and rows. First run Sep 29: 165,258,822 bytes up; 44 tables and 6,511,438 rows restored.
+rclone 1.60 re-reads an upload by version id, which R2 answers 501, so uploads use `--s3-no-head`.
+The key in `/etc/permtracker/r2.env` is an account-wide admin key by the owner's choice; a bucket-
+scoped Object Read & Write key is the better swap, same file format. The morning report's Turso
+bill section is retired.

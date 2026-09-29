@@ -1,0 +1,8 @@
+[Unit]
+Description=Monthly restore test of the off-site backup (the 2nd, 5:00 AM Eastern)
+[Timer]
+OnCalendar=*-*-02 05:00:00 America/New_York
+Persistent=true
+RandomizedDelaySec=10m
+[Install]
+WantedBy=timers.target

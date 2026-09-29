@@ -207,3 +207,17 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 28 2026".
 - **Firewall rule 14 lets sign-in POSTs through**: flagged browsers were being challenged mid-sign-in.
 - **A morning report is emailed daily** (health, runs, site, bills, traffic, errors) and a routine reviews it.
 - **The entity load swaps tables in one transaction**, so no page reads a half-built table.
+
+## Sep 29 2026, in six lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
+
+- **The site runs on the Oracle server behind Cloudflare since Sep 28, 5:53 PM EDT.** Vercel and Turso
+  are no longer in the path: every Vercel/Turso section in these notes above is history.
+- **Every surface reads the central deadline rules**: dashboard, case cards, calendar, next-up box,
+  reminder emails and Google Calendar sync. `deadline-agreement.test.ts` holds them together.
+- **Notifications and emails are in sentence case**, built from one phrase table.
+- **BotID, the Vercel IP helper, `vercel.json` and the Mac's launchd jobs are gone**; the server's
+  systemd timers are the clock, and a test holds them to `jobs.ts`.
+- **Nightly backups go to Cloudflare R2** (15-day expiry, 7-day lock) and a monthly restore test
+  loads the copy; the morning report judges both.

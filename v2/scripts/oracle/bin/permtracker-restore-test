@@ -1,0 +1,33 @@
+#!/bin/bash
+# Monthly proof that the off-site backup restores. Downloads the newest copy
+# from R2 (not the local file: the point is the copy that survives losing this
+# server), loads it into a scratch SQLite database, counts tables and rows, and
+# deletes the scratch copy. RESTORE_OK records the result; the daily report
+# warns when it is more than 40 days old.
+set -euo pipefail
+. /usr/local/lib/permtracker/r2-env
+B=/srv/permtracker/backups
+work=$(mktemp -d /srv/permtracker/restore-test.XXXXXX)
+trap 'rm -rf "$work"' EXIT
+
+newest=$(rclone lsjson r2:permtracker-backups/db/ | python3 -c '
+import json, sys
+rows = [r for r in json.load(sys.stdin) if r["Name"].endswith(".sql.zst")]
+print(max(rows, key=lambda r: r["ModTime"])["Name"] if rows else "")')
+[ -n "$newest" ] || { echo "restore test: no backup in R2"; exit 1; }
+
+rclone copyto "r2:permtracker-backups/db/$newest" "$work/$newest" -q
+zstd -q -t "$work/$newest"
+zstd -dc "$work/$newest" | sqlite3 "$work/restore.db"
+
+read -r tables rows < <(python3 - "$work/restore.db" <<'PY'
+import sqlite3, sys
+db = sqlite3.connect(sys.argv[1])
+names = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")]
+print(len(names), sum(db.execute(f'SELECT count(*) FROM "{n}"').fetchone()[0] for n in names))
+PY
+)
+# The database held 44 tables and 6.5 million rows at the move (Sep 28 2026).
+[ "$tables" -ge 40 ] && [ "$rows" -ge 6000000 ] || { echo "restore test: only $tables tables / $rows rows"; exit 1; }
+printf '%s %s %s %s\n' "$(date -u +%FT%TZ)" "$newest" "$tables" "$rows" > "$B/RESTORE_OK"
+echo "restore test ok: $newest restored $tables tables, $rows rows"

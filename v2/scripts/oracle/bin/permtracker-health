@@ -111,6 +111,24 @@ def main():
         last_ok = {"at": at, "bytes": int(size), "file": name}
     except (OSError, ValueError):
         pass
+    # The copy in Cloudflare R2 (bin/permtracker-backup) and the monthly proof
+    # that it restores (bin/permtracker-restore-test).
+    offsite_ok = restore_ok = None
+    try:
+        at, size, name = (APP / "backups" / "OFFSITE_OK").read_text().split()
+        offsite_ok = {"at": at, "bytes": int(size), "file": name}
+    except (OSError, ValueError):
+        pass
+    try:
+        count, size = (APP / "backups" / "OFFSITE_SIZE").read_text().split()
+        offsite_ok = {**(offsite_ok or {}), "bucketObjects": int(count), "bucketBytes": int(size)}
+    except (OSError, ValueError):
+        pass
+    try:
+        at, name, tables, rows = (APP / "backups" / "RESTORE_OK").read_text().split()
+        restore_ok = {"at": at, "file": name, "tables": int(tables), "rows": int(rows)}
+    except (OSError, ValueError):
+        pass
 
     slot = (APP / "app" / "active").read_text().strip() if (APP / "app" / "active").exists() else None
     release = None
@@ -153,7 +171,7 @@ def main():
             "memMin": min(s["mem"] for s in samples),
             "netP95": p95([s["net"] for s in week if s.get("net") is not None]),
         },
-        "backup": {"lastOk": last_ok, "count": len(backups)},
+        "backup": {"lastOk": last_ok, "count": len(backups), "offsiteOk": offsite_ok, "restoreOk": restore_ok},
         "services": {u: active(u) for u in SERVICES},
         "failedUnits": [ln.split()[0] for ln in failed if ln.strip()],
         "repairs24h": repairs[-5:],

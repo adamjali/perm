@@ -1,7 +1,15 @@
 #!/bin/bash
 # Nightly logical backup of the database: a full SQL dump (read-only token),
-# zstd-compressed, checked to end in COMMIT, newest 7 kept. LAST_OK is what
-# the daily report reads.
+# zstd-compressed, checked to end in COMMIT, newest 7 kept here. LAST_OK is
+# what the daily report reads.
+#
+# Then the same file goes off the machine, to Cloudflare R2 (bucket
+# permtracker-backups, Standard class, the free tier): a copy that survives
+# losing this server. The bucket deletes copies after 15 days and locks each
+# one for 7, so even a stolen key cannot erase the last week. The upload is
+# checked by size against the local file; OFFSITE_OK records it, and the daily
+# report fails when it goes stale. No key in /etc/permtracker/r2.env means no
+# upload, and the report says so rather than passing quietly.
 set -euo pipefail
 B=/srv/permtracker/backups; f="$B/db-$(date -u +%Y%m%d-%H%M).sql.zst"; tmp="$f.part"
 curl -sS --fail --max-time 3600 -H "Authorization: Bearer $(cat /srv/permtracker/secrets/db_ro.jwt)" \
@@ -11,3 +19,19 @@ mv "$tmp" "$f"
 ls -1t "$B"/db-*.sql.zst | tail -n +8 | xargs -r rm -f
 printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$(stat -c %s "$f")" "$(basename "$f")" > "$B/LAST_OK"
 echo "backup ok: $(basename "$f") $(du -h "$f" | cut -f1)"
+
+# ---- off-site copy ----------------------------------------------------------
+[ -r /etc/permtracker/r2.env ] || { echo "off-site: no R2 key on this server; not uploaded"; exit 0; }
+# shellcheck disable=SC1091
+. /usr/local/lib/permtracker/r2-env
+name=$(basename "$f"); size=$(stat -c %s "$f")
+# --s3-no-head: rclone 1.60 re-reads each upload by version id, which R2 answers
+# 501 (measured Sep 29 2026: every first attempt "failed" after the object had
+# landed). The size check below is the integrity check instead.
+rclone copyto "$f" "r2:permtracker-backups/db/$name" --s3-no-head --s3-chunk-size 16M --retries 3 --low-level-retries 10 -q
+remote=$(rclone lsjson "r2:permtracker-backups/db/$name" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r[0]["Size"] if r else -1)')
+[ "$remote" = "$size" ] || { echo "off-site: uploaded size $remote does not match $size"; exit 1; }
+printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$size" "$name" > "$B/OFFSITE_OK"
+echo "off-site ok: $name ($size bytes) in R2"
+# The whole bucket, against R2's free 10 GB: the report warns long before a charge.
+rclone size r2:permtracker-backups --json | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r["count"], r["bytes"])' > "$B/OFFSITE_SIZE" || true

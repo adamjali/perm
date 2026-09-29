@@ -45,16 +45,7 @@ sys.path.insert(0, str(HERE))
 ET = ZoneInfo("America/New_York")
 REPO = "adamjali/perm"
 SITE = "https://permtracker.app"
-TURSO_ORG = "adamjali"
-TURSO_DB = "permtracker-public-data"
 POSTHOG_PROJECT = "322551"
-
-# The Turso Developer plan: what one billing cycle includes, and the price of
-# each unit past it (Turso's pricing page, read 2026-09-27).
-TURSO_INCLUDED_READS = 2_500_000_000
-TURSO_INCLUDED_WRITES = 25_000_000
-TURSO_PER_BILLION_READS = 1.00
-TURSO_PER_MILLION_WRITES = 1.00
 
 # A day is "unusual" at this multiple of the median of the seven before it.
 SPIKE = 2.0
@@ -225,58 +216,10 @@ def health_section() -> dict:
                    "the health check failed", lines or ["(no verdict line: read the Ingest health run)"])
 
 
-# ── Turso ─────────────────────────────────────────────────────────────────
-
-
-def turso_cost(reads: float, writes: float) -> float:
-    """Overage in dollars for one cycle's usage on the Developer plan."""
-    over_r = max(0.0, reads - TURSO_INCLUDED_READS) / 1e9 * TURSO_PER_BILLION_READS
-    over_w = max(0.0, writes - TURSO_INCLUDED_WRITES) / 1e6 * TURSO_PER_MILLION_WRITES
-    return over_r + over_w
-
-
-def turso_section(now: dt.datetime) -> dict:
-    tok = os.environ.get("TURSO_PLATFORM_TOKEN")
-    if not tok:
-        return section("turso", "Turso (database bill)", "off",
-                       "set the TURSO_PLATFORM_TOKEN secret to read usage")
-    base = f"https://api.turso.tech/v1/organizations/{TURSO_ORG}"
-    h = {"Authorization": f"Bearer {tok}"}
-
-    def day(i: int) -> dict:
-        a = (now - dt.timedelta(days=i + 1)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        b = (now - dt.timedelta(days=i)).strftime("%Y-%m-%dT%H:%M:%SZ")
-        return http_json(f"{base}/databases/{TURSO_DB}/usage?from={a}&to={b}", h)["database"]["usage"]
-
-    days = [day(i) for i in range(8)]
-    cycle = http_json(f"{base}/usage", h)["total"]
-    sub = http_json(f"{base}/subscription", h)["subscription"]
-    end = dt.datetime.fromisoformat(sub["current_billing_period_end"])
-    start = dt.datetime.fromisoformat(sub["current_billing_period_start"])
-    left = max(0.0, (end - now).total_seconds() / 86400)
-    r0, w0 = days[0]["rows_read"], days[0]["rows_written"]
-    proj_r = cycle["rows_read"] + r0 * left
-    proj_w = cycle["rows_written"] + w0 * left
-    cost_now = turso_cost(cycle["rows_read"], cycle["rows_written"])
-    cost_proj = turso_cost(proj_r, proj_w)
-    lines = [
-        f"Last 24 h: {fmt(r0)} rows read, {fmt(w0)} written",
-        f"This cycle ({start:%b %-d} to {end:%b %-d}): {fmt(cycle['rows_read'])} read of "
-        f"{fmt(TURSO_INCLUDED_READS)} included, {fmt(cycle['rows_written'])} written of "
-        f"{fmt(TURSO_INCLUDED_WRITES)}",
-        f"Overage so far ${cost_now:.2f}; at today's pace the cycle ends near ${cost_proj:.2f}",
-    ]
-    status = "ok"
-    for val, prior, unit in ((r0, [d["rows_read"] for d in days[1:]], "rows read"),
-                             (w0, [d["rows_written"] for d in days[1:]], "rows written")):
-        note = spike_note(val, prior, unit)
-        if note:
-            lines.append("Unusual: " + note)
-            status = "warn"
-    if cost_proj >= 5:
-        status = "warn"
-    return section("turso", "Turso (database bill)", status,
-                   f"${cost_now:.2f} over so far, heading for ${cost_proj:.2f}", lines)
+# ── Turso: retired Sep 29 2026 ──────────────────────────────────────────
+# The database moved to the site's own server on Sep 28 2026 (the "server"
+# section judges it, and the R2 lines its backups). Turso's bill section was
+# removed with the account.
 
 
 # ── Vercel ────────────────────────────────────────────────────────────────
@@ -465,6 +408,8 @@ IDLE_LINE = 20.0
 IDLE_MARGIN = 25.0
 SERVER_STALE_MIN = 45
 BACKUP_WARN_H, BACKUP_FAIL_H = 30, 54
+R2_WARN_GB, R2_FAIL_GB = 8.0, 9.5
+RESTORE_WARN_D = 40  # the restore test runs monthly; a missed month shows in about ten days
 MUST_RUN = ["permtracker-db", "nginx", "cloudflared"]
 DB_DIR_RATIO = 3.0
 
@@ -518,6 +463,36 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
         elif age_h > BACKUP_WARN_H:
             warns.append(f"last backup {age_h:.0f} h ago")
         lines.append(f"Backups: {b.get('count', 0)} kept, newest {et_time(last)}")
+
+    # The off-site copy in Cloudflare R2 and the monthly restore test. A server
+    # that has never uploaded one fails, so a missing key cannot read as fine.
+    off = (b.get("offsiteOk") or {}).get("at")
+    if not off:
+        fails.append("no off-site backup on record (R2)")
+    else:
+        off_h = (now_ms / 1000 - dt.datetime.fromisoformat(off.replace("Z", "+00:00")).timestamp()) / 3600
+        if off_h > BACKUP_FAIL_H:
+            fails.append(f"off-site backup {off_h:.0f} h old")
+        elif off_h > BACKUP_WARN_H:
+            warns.append(f"off-site backup {off_h:.0f} h old")
+        lines.append(f"Off-site copy (R2): {et_time(off)}")
+        used = (b.get("offsiteOk") or {}).get("bucketBytes")
+        if used is not None:
+            gb = used / 1e9
+            # R2's free tier is 10 GB-month; old copies auto-delete after 15 days.
+            if gb > R2_FAIL_GB:
+                fails.append(f"R2 holds {gb:.1f} GB, about to pass the free 10 GB")
+            elif gb > R2_WARN_GB:
+                warns.append(f"R2 holds {gb:.1f} GB of the free 10 GB")
+            lines.append(f"R2 bucket: {gb:.1f} GB of 10 GB free")
+    rest = b.get("restoreOk") or {}
+    if not rest.get("at"):
+        warns.append("the off-site backup has never been restore-tested")
+    else:
+        rest_d = (now_ms / 1000 - dt.datetime.fromisoformat(rest["at"].replace("Z", "+00:00")).timestamp()) / 86400
+        if rest_d > RESTORE_WARN_D:
+            warns.append(f"last restore test {rest_d:.0f} days ago")
+        lines.append(f"Restore test: {rest.get('tables')} tables, {rest.get('rows', 0):,} rows, {et_time(rest['at'])}")
 
     n = doc.get("now") or {}
     # The database folder holds the data file plus the engine's own log and
@@ -575,7 +550,6 @@ def build(now: dt.datetime) -> dict:
         guarded("github", "GitHub Actions (24 h)", github_section, since),
         guarded("site", "The site", site_section),
         guarded("data", "The data", data_section, now_ms),
-        guarded("turso", "Turso (database bill)", turso_section, now),
         guarded("vercel", "Vercel (hosting bill)", vercel_section),
         guarded("traffic", "Traffic", traffic_section),
         guarded("sentry", "Errors (Sentry)", sentry_section),
