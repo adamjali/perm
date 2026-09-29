@@ -22,23 +22,33 @@ import { etDay } from "./alertDelivery";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/**
+ * Raised Sep 29 2026 (Adam: "any limit we hit needs to be bigger"). Measured
+ * first: the case pool's 15 ran out on Sep 28 to real people (44 distinct
+ * addresses across four days, 31 of 40 checkable ones confirmed, traffic
+ * ordinary at about 1,000 visitors), because sign-ups had grown to about 14
+ * a day against a cap sized in August for 2 to 5. These are now per-kind
+ * bounds against abuse, not shares of Resend's 100: that is guarded once, by
+ * what was actually sent (convex/lib/emailLimits.ts), and a full pool queues
+ * rather than refuses (convex/confirmationQueue.ts).
+ */
 export const BUDGETS = {
-  caseConfirm: { key: "case_subscribe_global", limit: 15, label: "Case and employer confirmations" },
-  caseAlert: { key: "case_alert_global", limit: 18, label: "Case and employer alerts" },
-  queueConfirm: { key: "queue_subscribe_global", limit: 18, label: "Queue alert confirmations" },
-  bulletinConfirm: { key: "bulletin_subscribe_global", limit: 6, label: "Bulletin alert confirmations" },
-  bulletinAlert: { key: "bulletin_alert_global", limit: 12, label: "Bulletin alerts" },
-  prefsLink: { key: "prefs_link_global", limit: 6, label: "Preference-page links" },
+  caseConfirm: { key: "case_subscribe_global", limit: 60, label: "Case and employer confirmations" },
+  caseAlert: { key: "case_alert_global", limit: 60, label: "Case and employer alerts" },
+  queueConfirm: { key: "queue_subscribe_global", limit: 40, label: "Queue alert confirmations" },
+  bulletinConfirm: { key: "bulletin_subscribe_global", limit: 30, label: "Bulletin alert confirmations" },
+  bulletinAlert: { key: "bulletin_alert_global", limit: 40, label: "Bulletin alerts" },
+  prefsLink: { key: "prefs_link_global", limit: 20, label: "Preference-page links" },
   /**
    * Sign-in and password-reset codes (convex/authMail.ts). Not list mail: these
    * are the emails whose absence locks someone out, so the pool sits above the
    * busiest measured day instead of inside the list ledger's remainder. See the
    * ledger in convex/caseAlerts.ts.
    */
-  authMail: { key: "auth_mail_global", limit: 40, label: "Sign-in and reset codes" },
+  authMail: { key: "auth_mail_global", limit: 80, label: "Sign-in and reset codes" },
 } as const;
 
-/** The list-mail pools, the ones the ledger's 75 a day adds up. */
+/** The list-mail pools: everything but sign-in codes. */
 export const LIST_MAIL_POOLS = [
   "caseConfirm",
   "caseAlert",

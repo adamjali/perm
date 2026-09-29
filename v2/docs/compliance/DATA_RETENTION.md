@@ -15,7 +15,9 @@
 | System error logs | **180 days** | Daily cron (3:20 AM UTC) | `systemErrors`; `convex/retention.ts` (since Sep 29 2026) |
 | Email events (Resend webhook) | **365 days** | Daily cron (3:20 AM UTC) | `marketingEvents` |
 | AI provider usage counters | **90 days** | Daily cron (3:20 AM UTC) | `apiUsage` |
-| Queued confirmation requests | **3 days** at most | Deleted when sent; the 15-minute drain drops any older than 3 days | `confirmationQueue`: the address and the form's own fields, never the IP (since Sep 29 2026) |
+| Queued confirmation requests | **7 days** at most | Deleted when sent; the 15-minute drain drops any older than 7 days | `confirmationQueue`: the address and the form's own fields, never the IP (since Sep 29 2026) |
+| Failed emails waiting to retry | **14 days** at most | Deleted when sent; the drain drops any older than 14 days | `emailRetries`: the whole rendered email (recipient, subject, body), so it can be sent again; never sign-in codes |
+| Daily email counts | **400 days** | Daily cron (3:20 AM UTC) | `emailDays`: counts only, no addresses |
 
 ## Automated Cleanup Jobs
 

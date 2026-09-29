@@ -17,6 +17,7 @@ import { query } from "./_generated/server";
 import { requireAdmin } from "./lib/admin";
 import { BUDGETS, type BudgetName } from "./lib/alertBudgets";
 import { QUEUE_MAX } from "./confirmationQueue";
+import { LIST_CEILING, RESEND_DAILY_CAP, RETRY_MAX_ROWS, utcDay } from "./lib/emailLimits";
 import { etDay } from "./lib/alertDelivery";
 
 const DAY_MS = 86_400_000;
@@ -40,6 +41,16 @@ export const getDelivery = query({
     refusalDays: v.array(v.object({ day: v.string(), pool: v.string(), count: v.number(), queued: v.number() })),
     /** Confirmations waiting in convex/confirmationQueue.ts right now. */
     confirmationQueue: v.object({ waiting: v.number(), oldestQueuedAt: v.union(v.number(), v.null()) }),
+    /** Today's count against Resend's quota, and the failed sends waiting to retry (convex/emailLedger.ts). */
+    emailDay: v.object({
+      used: v.number(),
+      listCeiling: v.number(),
+      cap: v.number(),
+      retrying: v.number(),
+      oldestRetryAt: v.union(v.number(), v.null()),
+      retriedToday: v.number(),
+      lostToday: v.number(),
+    }),
     outbox: v.object({
       queued: v.number(),
       oldestQueuedAt: v.union(v.number(), v.null()),
@@ -114,6 +125,11 @@ export const getDelivery = query({
       .query("confirmationQueue")
       .withIndex("by_queuedAt")
       .take(QUEUE_MAX);
+    const retryRows = await ctx.db.query("emailRetries").withIndex("by_queuedAt").take(RETRY_MAX_ROWS);
+    const today = await ctx.db
+      .query("emailDays")
+      .withIndex("by_day", (q) => q.eq("day", utcDay(now)))
+      .unique();
 
     const queuedRows = await ctx.db
       .query("alertOutbox")
@@ -167,6 +183,15 @@ export const getDelivery = query({
       confirmationQueue: {
         waiting: confirmationWaiting.length,
         oldestQueuedAt: confirmationWaiting[0]?.queuedAt ?? null,
+      },
+      emailDay: {
+        used: today ? Math.max(today.sent, today.reported ?? 0) : 0,
+        listCeiling: LIST_CEILING,
+        cap: RESEND_DAILY_CAP,
+        retrying: retryRows.length,
+        oldestRetryAt: retryRows[0]?.queuedAt ?? null,
+        retriedToday: today?.retried ?? 0,
+        lostToday: today?.lost ?? 0,
       },
       outbox: {
         queued: queuedRows.length,

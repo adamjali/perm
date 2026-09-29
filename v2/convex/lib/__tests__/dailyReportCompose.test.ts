@@ -102,6 +102,19 @@ describe("the Convex sections", () => {
     expect(stale!.lines.join("\n")).toMatch(/4 confirmations waiting in the queue, the oldest for over 12 hours/);
   });
 
+  it("reports yesterday's failed sends, warns on any given up, and on retries waiting a day", () => {
+    const [, email] = convexSections(
+      facts({ retries: { waiting: 3, oldestQueuedAt: NOW - 25 * 60 * 60 * 1000, retriedYesterday: 4, lostYesterday: 1 } }),
+      { sent: 40, bounced: 0, complained: 0 },
+      NOW,
+    );
+    const text = email!.lines.join("\n");
+    expect(text).toMatch(/4 emails failed to send yesterday and went to the retry queue/);
+    expect(text).toMatch(/1 email was given up on yesterday/);
+    expect(text).toMatch(/3 failed emails waiting to retry, the oldest for over a day/);
+    expect(email!.status).toBe("warn");
+  });
+
   it("says when Resend could not be read instead of reporting zero sends, and why", () => {
     const [, email] = convexSections(facts(), "HTTP 500", NOW);
     expect(email!.status).toBe("unknown");

@@ -4,7 +4,7 @@ import { Resend as ResendAPI } from "resend";
 import { render } from "@react-email/render";
 import { generateSecureOTP } from "./lib/crypto";
 import { isEmailBlocked } from "./lib/emailBlocklist";
-import { chargeAuthMail, type ChargeCtx } from "./lib/authMailGate";
+import { chargeAuthMail, recordAuthSend, type ChargeCtx } from "./lib/authMailGate";
 import { recordError } from "./lib/errorRecording";
 import { VerificationCode } from "../src/emails/VerificationCode";
 
@@ -37,7 +37,7 @@ export const ResendOTP = Email({
       return;
     }
 
-    // Counted before anything leaves: 5 codes an hour per address and 40 a
+    // Counted before anything leaves: 5 codes an hour per address and 80 a
     // day site-wide (convex/authMail.ts). Throws a "too many" ConvexError.
     await chargeAuthMail(ctx, email);
 
@@ -45,12 +45,13 @@ export const ResendOTP = Email({
 
     const html = await render(VerificationCode({ code: token }));
 
-    const { error } = await resend.emails.send({
+    const sent = await resend.emails.send({
       from: "PERM Tracker <noreply@permtracker.app>",
       to: [email],
       subject: "PERM Tracker: Your verification code",
       html,
     });
+    const { error } = sent;
     if (error) {
       // The verification token is already stored in the DB, but the email never
       // left. Swallowing here would strand the user on the code-entry screen
@@ -65,5 +66,6 @@ export const ResendOTP = Email({
         "We couldn't send your verification code right now. Please try again in a moment.",
       );
     }
+    await recordAuthSend(ctx, sent);
   },
 });

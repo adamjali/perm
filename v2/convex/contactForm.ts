@@ -2,7 +2,7 @@ import { v } from "convex/values";
 
 import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
 
 /**
@@ -98,13 +98,13 @@ export const forward = internalAction({
 
     const esc = (t: string) =>
       t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const result = await sendEmailWithRetry(getResend(), {
+    const result = await sendOrQueue(ctx, "contact-form", getResend(), {
       from: FROM_EMAIL,
       to: CONTACT_INBOX,
       replyTo: row.email,
       subject: `Contact form: ${row.name}`,
       html: `<p><b>${esc(row.name)}</b> &lt;${esc(row.email)}&gt;</p><p style="white-space:pre-wrap">${esc(row.message)}</p>`,
-    });
+    }, { priority: "high" });
     if (result.error) {
       // The message is already stored; log and leave notifiedAt unset so a
       // later manual sweep can see exactly which forwards never went out.

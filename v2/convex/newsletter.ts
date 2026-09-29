@@ -30,7 +30,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import type { Doc } from "./_generated/dataModel";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
 import { actionUrl } from "./lib/links";
 import { oneClickUnsubscribeUrl } from "./lib/prefsLink";
@@ -520,7 +520,7 @@ export const sendBatch = internalAction({
           // The header Gmail and Apple Mail turn into their own Unsubscribe
           // button. Every other subscriber mail carried it; the digest did not.
           const oneClick = oneClickUnsubscribeUrl(token, "newsletter");
-          return await sendEmailWithRetry(resend, {
+          return await sendOrQueue(ctx, "digest", resend, {
             from: FROM_EMAIL,
             to: email,
             subject: issue.subject,

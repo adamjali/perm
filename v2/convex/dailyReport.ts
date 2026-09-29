@@ -30,7 +30,7 @@ import {
   reportText,
   worstStatus,
 } from "./lib/dailyReportCompose";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { loggers } from "./lib/logging";
 
 const log = loggers.email;
@@ -82,6 +82,11 @@ export const facts = internalQuery({
     const queued = outbox.filter((r) => r.status === "queued");
 
     const confirmationWaiting = await ctx.db.query("confirmationQueue").withIndex("by_queuedAt").take(200);
+    const retryWaiting = await ctx.db.query("emailRetries").withIndex("by_queuedAt").take(1000);
+    const yesterdayUtc = await ctx.db
+      .query("emailDays")
+      .withIndex("by_day", (q) => q.eq("day", new Date(now - DAY_MS).toISOString().slice(0, 10)))
+      .unique();
 
     const today = etDay(now);
     const yesterday = etDay(now - DAY_MS);
@@ -108,6 +113,13 @@ export const facts = internalQuery({
       confirmationQueue: {
         waiting: confirmationWaiting.length,
         oldestQueuedAt: confirmationWaiting[0]?.queuedAt ?? null,
+      },
+      retries: {
+        waiting: retryWaiting.length,
+        oldestQueuedAt: retryWaiting[0]?.queuedAt ?? null,
+        // The report runs at 7:30 AM Eastern, so "yesterday" in UTC is the day that just ended.
+        retriedYesterday: yesterdayUtc?.retried ?? 0,
+        lostYesterday: yesterdayUtc?.lost ?? 0,
       },
     };
   },
@@ -206,13 +218,13 @@ export const send = internalAction({
       return { overall, emailed: false };
     }
     const html = await render(DailyReportEmail({ report }));
-    const { error } = await sendEmailWithRetry(getResend(), {
+    const { error } = await sendOrQueue(ctx, "daily-report", getResend(), {
       from: FROM_EMAIL,
       to: [to],
       subject: reportSubject(report),
       html,
       text: reportText(report),
-    });
+    }, { priority: "high" });
     if (error) {
       log.error("daily report: send failed", { error: error.message });
       return { overall, emailed: false };

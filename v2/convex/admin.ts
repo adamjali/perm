@@ -832,11 +832,11 @@ export const sendAdminEmail = action({
     );
 
     // Initialize Resend
-    const { getResend, FROM_EMAIL, sendEmailWithRetry } = await import("./lib/email");
+    const { getResend, FROM_EMAIL, sendOrQueue } = await import("./lib/email");
     const resend = getResend();
 
     // Send email with both HTML and plain text fallback
-    const { error } = await sendEmailWithRetry(resend, {
+    const { error } = await sendOrQueue(ctx, "admin-email", resend, {
       from: FROM_EMAIL,
       to: [args.toEmail],
       subject: args.subject,

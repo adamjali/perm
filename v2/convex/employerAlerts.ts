@@ -46,7 +46,7 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
 import {
@@ -65,8 +65,6 @@ import { createLogger } from "./lib/logging";
 import {
   CASE_ALERT_BUDGET,
   CASE_ALERT_KEY,
-  CASE_CONFIRMATION_BUDGET,
-  CASE_CONFIRMATION_KEY,
   noteRefusal,
 } from "./lib/alertBudgets";
 import { deliverAlert, etDay } from "./lib/alertDelivery";
@@ -81,7 +79,7 @@ import {
   type EmployerStagesDoc,
 } from "../src/lib/employerStages";
 import { connectionThrottleReply } from "./lib/throttleReply";
-import { queueConfirmation, replayArgs } from "./confirmationQueue";
+import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 
 const log = createLogger("EmployerAlerts");
 
@@ -219,9 +217,9 @@ export const subscribe = internalMutation({
     // trip over (the Sep 4 2026 lesson in convex/caseAlerts.ts). A full pool
     // queues the request (convex/confirmationQueue.ts).
     if (!args.fromQueue) {
-      const budget = await checkAndRecordRateLimit(ctx, "all", CASE_CONFIRMATION_KEY, CASE_CONFIRMATION_BUDGET);
+      const budget = await admitConfirmation(ctx, "caseConfirm");
       if (!budget.allowed) {
-        log.warn("confirmation pool full; queueing", { limit: CASE_CONFIRMATION_BUDGET.limit });
+        log.warn("confirmation can't send now (its pool or the day's count); queueing");
         return queueConfirmation(ctx, {
           kind: "employer",
           pool: "caseConfirm",
@@ -317,7 +315,7 @@ export const sendConfirmation = internalAction({
           includesNewsletter: args.includesNewsletter === true,
         });
       });
-      const result = await sendEmailWithRetry(getResend(), {
+      const result = await sendOrQueue(ctx, "employer-confirmation", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
         subject: `Confirm: follow ${args.employerName} on PERM Tracker`,

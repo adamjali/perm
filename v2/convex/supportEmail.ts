@@ -14,7 +14,7 @@
 import { v } from "convex/values";
 import { internalMutation, internalAction, internalQuery, query } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { getResend, FROM_EMAIL, sendEmailWithRetry } from "./lib/email";
+import { getResend, FROM_EMAIL, sendOrQueue } from "./lib/email";
 import { requireAdmin } from "./lib/admin";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
@@ -150,7 +150,7 @@ export const processInboundEmail = internalAction({
     // DMARC reports are still stored above for the record.
     if (shouldForwardInbound(toEmail, CATCH_ALL_FORWARD_TO)) {
       try {
-        const { error } = await sendEmailWithRetry(resend, {
+        const { error } = await sendOrQueue(ctx, "support-forward", resend, {
           from: FROM_EMAIL,
           to: [CATCH_ALL_FORWARD_TO],
           subject: `[Fwd] ${args.subject}`,
@@ -250,7 +250,7 @@ export const replyToEmail = internalAction({
       })
     );
 
-    const { data, error } = await sendEmailWithRetry(resend, {
+    const { data, error } = await sendOrQueue(ctx, "support-reply", resend, {
       from: fromHeader,
       to: [original.fromEmail],
       subject: `Re: ${original.subject}`,

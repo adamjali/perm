@@ -4,7 +4,7 @@ import { Resend as ResendAPI } from "resend";
 import { render } from "@react-email/render";
 import { generateSecureOTP } from "./lib/crypto";
 import { isEmailBlocked } from "./lib/emailBlocklist";
-import { chargeAuthMail, type ChargeCtx } from "./lib/authMailGate";
+import { chargeAuthMail, recordAuthSend, type ChargeCtx } from "./lib/authMailGate";
 import { recordError } from "./lib/errorRecording";
 import { PasswordResetCode } from "../src/emails/PasswordResetCode";
 
@@ -32,7 +32,7 @@ export const ResendPasswordReset = Email({
       return;
     }
 
-    // Counted before anything leaves: 5 codes an hour per address and 40 a
+    // Counted before anything leaves: 5 codes an hour per address and 80 a
     // day site-wide (convex/authMail.ts). Throws a "too many" ConvexError.
     await chargeAuthMail(ctx, email);
 
@@ -40,12 +40,13 @@ export const ResendPasswordReset = Email({
 
     const html = await render(PasswordResetCode({ code: token }));
 
-    const { error } = await resend.emails.send({
+    const sent = await resend.emails.send({
       from: "PERM Tracker <noreply@permtracker.app>",
       to: [email],
       subject: "PERM Tracker: Password reset code",
       html,
     });
+    const { error } = sent;
     if (error) {
       // Same rationale as ResendOTP: record to the error pipeline AND throw a
       // ConvexError so the reset UI surfaces a real failure instead of silently
@@ -56,5 +57,6 @@ export const ResendPasswordReset = Email({
         "We couldn't send your password reset code right now. Please try again in a moment.",
       );
     }
+    await recordAuthSend(ctx, sent);
   },
 });

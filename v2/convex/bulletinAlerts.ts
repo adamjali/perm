@@ -35,7 +35,7 @@ import {
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
 import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
@@ -53,7 +53,7 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { stageNewsFor, stageNewsletterFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
-import { queueConfirmation, replayArgs } from "./confirmationQueue";
+import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 
 const log = createLogger("BulletinAlerts");
 
@@ -74,7 +74,6 @@ const countryValidator = v.union(...COUNTRIES.map((c) => v.literal(c)));
 /** Alerts one sweep may send; the remainder reschedules. Budget arithmetic in caseAlerts.ts. */
 const ALERT_BATCH_LIMIT = 12;
 const ALERT_GLOBAL_BUDGET = windowFor("bulletinAlert");
-const CONFIRMATION_GLOBAL_BUDGET = windowFor("bulletinConfirm");
 const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
 const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 const RESUME_DELAY_MS = 5 * 60 * 1000;
@@ -189,14 +188,9 @@ export const subscribe = internalMutation({
     // BEFORE the write, so a refusal here leaves no row and no stamp behind.
     // A full pool queues the request (convex/confirmationQueue.ts).
     if (!args.fromQueue) {
-      const budget = await checkAndRecordRateLimit(
-        ctx,
-        "all",
-        BUDGETS.bulletinConfirm.key,
-        CONFIRMATION_GLOBAL_BUDGET,
-      );
+      const budget = await admitConfirmation(ctx, "bulletinConfirm");
       if (!budget.allowed) {
-        log.warn("bulletin confirmation pool full; queueing");
+        log.warn("confirmation can't send now (its pool or the day's count); queueing");
         return queueConfirmation(ctx, {
           kind: "bulletin",
           pool: "bulletinConfirm",
@@ -333,7 +327,7 @@ export const sendConfirmation = internalAction({
         },
       );
 
-      const result = await sendEmailWithRetry(getResend(), {
+      const result = await sendOrQueue(ctx, "bulletin-confirmation", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
         subject: `Confirm your visa bulletin alert for ${label}`,

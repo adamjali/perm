@@ -1,15 +1,27 @@
 /**
  * Shared email configuration and helpers.
  *
- * Centralizes Resend client creation, email constants, and retry logic
- * used across 10 of 12 email-sending paths (ResendOTP and ResendPasswordReset
- * use direct sends within the @convex-dev/auth provider framework).
+ * Centralizes Resend client creation, email constants, and retry logic. Every
+ * sender goes through `sendOrQueue` (Sep 29 2026): it checks the day's count
+ * against Resend's quota, sends, records the count, and keeps a send that
+ * failed for a fixable reason in the retry queue (convex/emailLedger.ts), so
+ * no email is refused and dropped. ResendOTP and ResendPasswordReset send
+ * directly inside the @convex-dev/auth providers: a sign-in code that arrives
+ * late is useless, so those are counted but never queued.
  *
  * @module
  */
 import { Resend } from "resend";
 import { createLogger } from "./logging";
 import { isEmailBlocked } from "./emailBlocklist";
+import type { ActionCtx } from "../_generated/server";
+import { internal } from "../_generated/api";
+import {
+  LIST_CEILING,
+  RESEND_DAILY_CAP,
+  isQuotaError,
+  isRetryableSendError,
+} from "./emailLimits";
 
 const log = createLogger("Email");
 
@@ -30,11 +42,15 @@ export function getResend(): Resend {
 }
 
 /** Params accepted by sendEmailWithRetry — matches Resend's send() signature. */
-type SendEmailParams = Parameters<Resend["emails"]["send"]>[0];
+export type SendEmailParams = Parameters<Resend["emails"]["send"]>[0];
 
-/** Discriminated union: either success with data, or failure with error. */
+/**
+ * Discriminated union: either success with data, or failure with error.
+ * `quota` is Resend's own count of today's sends, from the response's
+ * `x-resend-daily-quota` header, when it sent one (free plan only).
+ */
 export type EmailSendResult =
-  | { data: { id: string }; error?: undefined }
+  | { data: { id: string }; error?: undefined; quota?: number }
   | { data?: undefined; error: { message: string; name: string } };
 
 /**
@@ -99,7 +115,7 @@ export async function sendEmailWithRetry(
     }
 
     if (!result.error) {
-      return { data: result.data! };
+      return { data: result.data!, quota: quotaHeader(result) };
     }
 
     const msg = result.error.message.toLowerCase();
@@ -113,6 +129,80 @@ export async function sendEmailWithRetry(
 
   // Unreachable, but satisfies TypeScript
   return { error: { message: "Max retries exceeded", name: "RetryError" } };
+}
+
+/** Resend's `x-resend-daily-quota` header off an SDK response, when present. */
+function quotaHeader(result: unknown): number | undefined {
+  const headers = (result as { headers?: Record<string, string> | null }).headers;
+  const raw = headers?.["x-resend-daily-quota"];
+  const n = raw === undefined ? NaN : Number(raw);
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+
+/** What an action needs to send through the ledger. */
+export type SendCtx = Pick<ActionCtx, "runMutation" | "runQuery">;
+
+/** A send that went, a send that failed for good, or one kept to retry. */
+export type SendOutcome =
+  | EmailSendResult
+  | { data?: undefined; error?: undefined; queued: true };
+
+/**
+ * Send one email through the day's count and the retry queue. Use this for
+ * every send except sign-in codes.
+ *
+ * 1. At the day's ceiling (85 of Resend's 100 for list mail; the full 100 for
+ *    `priority: "high"` admin mail), it doesn't try: the email waits for the
+ *    next UTC day in the retry queue.
+ * 2. A success records the send (and Resend's own count, when it gave one).
+ * 3. A failure a retry can fix (Resend's limits or outages, the network, a key
+ *    or domain problem) is kept and retried; the caller sees `queued: true`
+ *    and no error, because the email is no longer its to lose.
+ * 4. A failure no retry can fix (a blocklisted recipient, a malformed request)
+ *    comes back as an error, as before.
+ */
+export async function sendOrQueue(
+  ctx: SendCtx,
+  kind: string,
+  resend: Resend,
+  params: SendEmailParams,
+  opts: { priority?: "high" } = {},
+): Promise<SendOutcome> {
+  const recipients = [...toRecipientArray(params.to), ...toRecipientArray(params.cc), ...toRecipientArray(params.bcc)];
+  const firstTo = recipients[0] ?? "";
+  const keep = async (error: { name: string; message: string }, quota: boolean): Promise<SendOutcome | null> => {
+    const r: { ok: boolean; reason?: string } = await ctx.runMutation(internal.emailLedger.enqueueRetry, {
+      kind,
+      to: firstTo,
+      payload: JSON.stringify(params),
+      error: `${error.name}: ${error.message}`,
+      quota,
+    });
+    return r.ok ? { queued: true } : null;
+  };
+
+  if (!recipients.some(isEmailBlocked)) {
+    const used: number = await ctx.runQuery(internal.emailLedger.accountUsed, {});
+    const ceiling = opts.priority === "high" ? RESEND_DAILY_CAP : LIST_CEILING;
+    if (used >= ceiling) {
+      const kept = await keep({ name: "daily_ceiling", message: `today's count is ${used} of ${ceiling}` }, true);
+      if (kept) return kept;
+      return { error: { name: "daily_ceiling", message: "today's email count is full and the retry queue could not keep it" } };
+    }
+  }
+
+  const result = await sendEmailWithRetry(resend, params);
+  if (!result.error) {
+    try {
+      await ctx.runMutation(internal.emailLedger.recordSend, { quota: result.quota });
+    } catch (e) {
+      log.warn("sent, but the day's count was not recorded", { kind, error: e instanceof Error ? e.message : String(e) });
+    }
+    return result;
+  }
+  if (!isRetryableSendError(result.error)) return result;
+  const kept = await keep(result.error, isQuotaError(result.error));
+  return kept ?? result;
 }
 
 /**

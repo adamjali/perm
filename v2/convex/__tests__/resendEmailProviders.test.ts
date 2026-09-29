@@ -162,9 +162,12 @@ describe("Resend email providers — send-failure handling (C3)", () => {
       const ctx = makeCtx();
       await sendWithCtx(provider, { identifier: "User@Example.com", token: "ABCDEF123456" }, ctx);
       const charge = (ctx as unknown as { runMutation: ReturnType<typeof vi.fn> }).runMutation;
-      expect(charge).toHaveBeenCalledTimes(1);
+      // The charge, then (after the send) the day's count; a code is never queued.
+      expect(charge).toHaveBeenCalledTimes(2);
       expect(charge.mock.calls[0]![1]).toEqual({ email: "User@Example.com" });
       expect(charge.mock.invocationCallOrder[0]!).toBeLessThan(sendMock.mock.invocationCallOrder[0]!);
+      expect(charge.mock.calls[1]![1]).toEqual({});
+      expect(charge.mock.invocationCallOrder[1]!).toBeGreaterThan(sendMock.mock.invocationCallOrder[0]!);
     });
 
     it("sends nothing and says 'too many' when the limit refuses", async () => {

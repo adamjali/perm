@@ -60,7 +60,8 @@ describe("adminDelivery.getDelivery", () => {
     expect(d.outbox.last7d).toMatchObject({ emails: 2, items: 3, bundles: 1, direct: 1, failed: 1 });
     expect(d.outbox.queued).toBe(1);
     const pool = d.pools.find((p) => p.name === "caseAlert")!;
-    expect(pool).toMatchObject({ usedLast24h: 18, limit: 18, refusedLast7d: 4 });
+    expect(pool).toMatchObject({ usedLast24h: BUDGETS.caseAlert.limit, limit: BUDGETS.caseAlert.limit, refusedLast7d: 4 });
+    expect(d.emailDay).toMatchObject({ used: 0, listCeiling: 85, cap: 100, retrying: 0, lostToday: 0 });
     expect(d.follows).toMatchObject({ confirmed: 2, pending: 1 });
     expect(d.follows.top[0]).toMatchObject({ slug: "adobe-inc", followers: 2 });
   });

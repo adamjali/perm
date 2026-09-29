@@ -26,6 +26,27 @@ export type ChargeCtx = {
   ) => Promise<"ok" | "address" | "site">;
 };
 
+/**
+ * Count a code that left in the day's email count (convex/emailLedger.ts), so
+ * list mail stops short of the 100 and leaves room for the next code. Codes are
+ * never put in the retry queue: one that arrives late is useless. Best effort;
+ * a failed count never fails the sign-in.
+ */
+export async function recordAuthSend(ctx: unknown, sent: unknown): Promise<void> {
+  const run = (ctx as { runMutation?: unknown } | undefined)?.runMutation;
+  if (typeof run !== "function") return;
+  const headers = (sent as { headers?: Record<string, string> | null } | undefined)?.headers;
+  const n = Number(headers?.["x-resend-daily-quota"]);
+  try {
+    await (run as (ref: typeof internal.emailLedger.recordSend, args: { quota?: number }) => Promise<unknown>)(
+      internal.emailLedger.recordSend,
+      Number.isFinite(n) && n >= 0 ? { quota: n } : {},
+    );
+  } catch {
+    // The code went out; the count is a guard, not a gate.
+  }
+}
+
 export async function chargeAuthMail(ctx: ChargeCtx | undefined, email: string): Promise<void> {
   if (typeof ctx?.runMutation !== "function") {
     throw new ConvexError("We couldn't send your code right now. Please try again in a moment.");

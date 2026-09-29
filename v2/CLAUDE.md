@@ -6961,26 +6961,44 @@ An audit found 33 silent limits; each now names itself, gives the wait, or pages
   and every admin error email now names its deployment.
 - **The morning report** reads Resend's log with the sending key and no longer has a Vercel section.
 
-### A full confirmation pool queues; it no longer turns people away
+### No email is refused and lost: one real day count, big pools, a retry queue for every send
 
 Adam: *"for the ones refused are they queued for next days? if not fix... so this doesn't happen
-again"*. They weren't: 17 people asked for case alerts on Sep 28 and 29 after the day's 15
-confirmations were spent, were told to try later, and nothing was kept, so nobody can say who.
-Measured the same day from Resend's own list, the account sent 57 on Sep 28 (UTC), its busiest
-day of the billing cycle, and never came near 100. The pool was full; the account was not.
+again"*, then *"make limits more before limiting"*, *"any limit we hit needs to be bigger"* and
+*"for any and all email failures like resend or anything so never just refuse and lost"*. He is
+staying on Resend's free plan (100 a day, sent and received together, a UTC calendar day; 3,000 a
+month).
 
-- **`convex/confirmationQueue.ts`**: a full pool (case and employer, queue, bulletin, preference
-  links) queues the request, one row per (kind, address), without the IP, and answers
-  `queued: true` with fixed words; the forms head it "Your email is in a short queue", never
-  "Check your inbox". A drain runs at once and every 15 minutes, counts what Resend sent since
-  midnight UTC from Resend's own list (its free-plan day is a UTC calendar day; sent AND received
-  mail count), and replays requests through the same subscribe mutation (`fromQueue`) while that
-  count stays under 80, keeping 20 for sign-in codes. The replay skips only the per-IP limit and
-  the pool; every per-address check still runs.
-- **Bounds**: 100 rows in all (past that, the old refusal, counted), three days per row, five
-  failed replays. `budgetRefusals.count` is now only people who got no email; `queued` counts
-  the rest. The first queued request and the first turn-away of each Eastern day email the admin.
-- **Resend's quota headers** (`x-resend-daily-quota`) come back on sends only, not on reads, so
-  the drain counts the list instead. The SDK (6.26) does return response headers.
-- **The prefs link stamps its per-address cooldown before the pool check**, so its replay skips
-  that cooldown too, or the queue would swallow the very email it releases.
+**Why the limit was hit, measured:** normal demand from real people. 46 confirmation emails Sep 26
+to 29 went to 44 distinct addresses (38 Gmail), 31 of the 40 checkable ones confirmed, and traffic
+was ordinary (about 1,000 visitors on Sep 28, against 400 to 1,300 all month). Sign-ups had grown to
+about 14 a day against a case-confirmation cap of 15 sized in August for 2 to 5. Resend's own count
+never passed 57 that cycle. 17 attempts were refused on Sep 28 and 29 and nothing about them was
+kept, so who they were can't be recovered.
+
+- **Resend's 100 is guarded once, by what was actually sent** (`convex/lib/emailLimits.ts`,
+  `emailDays`): the day keeps the highest of this app's own count, Resend's `x-resend-daily-quota`
+  header (on sends only, not reads) and Resend's list of sent mail plus 5 for received mail. List mail
+  stops at 85; sign-in codes keep the last 15.
+- **Every send but a sign-in code goes through `sendOrQueue`** (`convex/lib/email.ts`, all 21 call
+  sites): at the ceiling it doesn't try and queues for the next UTC day; a success records the count; a
+  failure a retry can fix (Resend's limits or outages, the network, a key or domain problem) goes into
+  `emailRetries` (`convex/emailLedger.ts`) and the caller sees `queued: true`, not an error. Only a
+  blocklisted recipient or a malformed request comes back as an error. Admin mail
+  (`priority: "high"`) may use the whole 100. Retries back off 5, 15, 60, 180 minutes then every 8
+  hours; a quota refusal waits for midnight UTC; after 14 days, or past 1,000 waiting, a send is
+  counted as lost and the admin emailed once that day.
+- **Sign-in codes are counted, never queued** (`recordAuthSend`): a late code is useless, and the
+  form already says to ask again.
+- **The pools are now per-kind abuse bounds, not shares of 100**: case confirmations 15 to 60, case
+  alerts 18 to 60, queue confirmations 18 to 40, bulletin confirmations 6 to 30, bulletin alerts 12
+  to 40, preference links 6 to 20, sign-in codes 40 to 80. `src/lib/__tests__/alertBudgets.test.ts`
+  holds them to the ledger in `convex/caseAlerts.ts`.
+- **A confirmation either limit holds back waits** (`convex/confirmationQueue.ts`, `admitConfirmation`
+  checks the day's count then the pool, read-only until both pass): one row per (kind, address), 1,000
+  in all, 7 days, answered `queued: true` in fixed words and headed "Your email is in a short queue".
+  One drain (right after anything is queued, and every 15 minutes) sends due retries first, then
+  confirmations, while the day is under 85.
+- The admin page's Alerts and email tab shows today's count against 100, the retries waiting and
+  anything given up; the morning report says the same for the UTC day that just ended. `emailDays`
+  is kept 400 days (`convex/retention.ts`).

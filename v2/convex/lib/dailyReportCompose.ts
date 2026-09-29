@@ -138,6 +138,8 @@ export interface Facts {
   refusals: Array<{ day: string; pool: string; count: number; queued?: number }>;
   /** Confirmations waiting in convex/confirmationQueue.ts (absent in older callers). */
   confirmationQueue?: { waiting: number; oldestQueuedAt: number | null };
+  /** Failed sends waiting to retry (convex/emailLedger.ts), and yesterday's UTC-day counts. */
+  retries?: { waiting: number; oldestQueuedAt: number | null; retriedYesterday: number; lostYesterday: number };
 }
 
 export interface ResendDay {
@@ -190,6 +192,21 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
     }
     if (r.queued) {
       emailLines.push(`Budget ${r.pool} was full on ${r.day}; ${r.queued} waited in the queue and went out as room freed`);
+    }
+  }
+  const rq = f.retries;
+  if (rq) {
+    if (rq.retriedYesterday > 0) {
+      emailLines.push(`${rq.retriedYesterday} email${rq.retriedYesterday === 1 ? "" : "s"} failed to send yesterday and went to the retry queue`);
+    }
+    if (rq.lostYesterday > 0) {
+      emailLines.push(`${rq.lostYesterday} email${rq.lostYesterday === 1 ? " was" : "s were"} given up on yesterday`);
+      emailStatus.push("warn");
+    }
+    if (rq.waiting > 0) {
+      const stale = rq.oldestQueuedAt !== null && now - rq.oldestQueuedAt > DAY_MS;
+      emailLines.push(`${rq.waiting} failed email${rq.waiting === 1 ? "" : "s"} waiting to retry${stale ? ", the oldest for over a day" : ""}`);
+      if (stale) emailStatus.push("warn");
     }
   }
   const cq = f.confirmationQueue;

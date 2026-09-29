@@ -64,7 +64,7 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { getUserByEmail } from "./lib/auth";
 import {
@@ -73,7 +73,6 @@ import {
 } from "./lib/unsubscribeToken";
 import { recordError } from "./lib/errorRecording";
 import { dropQueued } from "./lib/alertOutboxStore";
-import { BUDGETS, windowFor } from "./lib/alertBudgets";
 
 /**
  * Render the React template, or fall back to text only.
@@ -101,7 +100,7 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
-import { queueConfirmation, replayArgs } from "./confirmationQueue";
+import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 
 const log = createLogger("EmailPrefs");
 
@@ -111,7 +110,6 @@ const log = createLogger("EmailPrefs");
  * Resend 100/day arithmetic in convex/caseAlerts.ts - every list-mail budget
  * is enumerated there and the total leaves 25/day for auth mail.
  */
-const PREFS_LINK_GLOBAL_BUDGET = windowFor("prefsLink");
 const PREFS_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 const PREFS_COOLDOWN_MS = 10 * 60 * 1000;
 
@@ -262,14 +260,9 @@ export const requestLink = internalMutation({
       }
 
       // A full pool queues the request (convex/confirmationQueue.ts).
-      const budget = await checkAndRecordRateLimit(
-        ctx,
-        "all",
-        BUDGETS.prefsLink.key,
-        PREFS_LINK_GLOBAL_BUDGET,
-      );
+      const budget = await admitConfirmation(ctx, "prefsLink");
       if (!budget.allowed) {
-        log.warn("prefs link pool full; queueing");
+        log.warn("confirmation can't send now (its pool or the day's count); queueing");
         return queueConfirmation(ctx, {
           kind: "prefs",
           pool: "prefsLink",
@@ -300,7 +293,7 @@ export const sendLink = internalAction({
         return EmailPreferencesLink({ prefsUrl: url });
       });
 
-      const result = await sendEmailWithRetry(getResend(), {
+      const result = await sendOrQueue(ctx, "prefs-link", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
         subject: "Your PERM Tracker email preferences",

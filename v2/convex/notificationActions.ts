@@ -21,13 +21,13 @@
  * @module
  */
 
-import { action, internalAction } from "./_generated/server";
+import { action, internalAction, type ActionCtx } from "./_generated/server";
 import { v } from "convex/values";
 import { render } from "@react-email/render";
 import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { loggers } from "./lib/logging";
-import { getResend, FROM_EMAIL, sendEmailWithRetry } from "./lib/email";
+import { getResend, FROM_EMAIL, sendOrQueue } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
 
 const log = loggers.email;
@@ -95,12 +95,7 @@ function buildEmailUrls(caseId?: string): { appUrl: string; caseUrl?: string; se
  * @throws Error if email sending fails
  */
 async function sendNotificationEmail(
-  ctx: {
-    runMutation: (fn: typeof internal.notifications.markEmailSent, args: { notificationId: Id<"notifications"> }) => Promise<unknown>;
-    runQuery: (fn: typeof internal.notifications.isNotificationValid, args: { notificationId: Id<"notifications"> }) => Promise<boolean>;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    scheduler: { runAfter: (delay: number, fn: any, args: any) => Promise<any> };
-  },
+  ctx: ActionCtx,
   params: {
     to: string;
     subject: string;
@@ -123,7 +118,7 @@ async function sendNotificationEmail(
   }
 
   const resend = getResend();
-  const { error } = await sendEmailWithRetry(resend, {
+  const { error } = await sendOrQueue(ctx, `notification:${params.logContext}`, resend, {
     from: FROM_EMAIL,
     to: [params.to],
     subject: params.subject,
@@ -425,7 +420,7 @@ export const sendAccountDeletionEmail = internalAction({
       : "Your PERM Tracker account is scheduled for deletion";
 
     const resend = getResend();
-    const { error } = await sendEmailWithRetry(resend, {
+    const { error } = await sendOrQueue(ctx, "notification:sendAccountDeletionEmail", resend, {
       from: FROM_EMAIL,
       to: [args.to],
       subject,
@@ -559,7 +554,7 @@ export const sendWeeklyDigestEmail = internalAction({
     }
 
     const resend = getResend();
-    const { error } = await sendEmailWithRetry(resend, {
+    const { error } = await sendOrQueue(ctx, "notification:sendWeeklyDigestEmail", resend, {
       from: FROM_EMAIL,
       to: [args.to],
       subject,
@@ -601,7 +596,7 @@ export const sendReengagementNudge = internalAction({
     );
 
     const resend = getResend();
-    const { error } = await sendEmailWithRetry(resend, {
+    const { error } = await sendOrQueue(ctx, "notification:sendReengagementNudge", resend, {
       from: FROM_EMAIL,
       to: [args.to],
       subject: "We've missed you at PERM Tracker",
@@ -663,7 +658,7 @@ export const sendDeadlineDigestEmail = internalAction({
         : `${total} PERM deadline${plural} need your attention`;
 
     const resend = getResend();
-    const { error } = await sendEmailWithRetry(resend, {
+    const { error } = await sendOrQueue(ctx, "notification:sendDeadlineDigestEmail", resend, {
       from: FROM_EMAIL,
       to: [args.to],
       subject,
@@ -719,7 +714,7 @@ export const sendTestEmail = action({
     const html = await render(TestEmail({ settingsUrl }));
 
     const resend = getResend();
-    const { error } = await sendEmailWithRetry(resend, {
+    const { error } = await sendOrQueue(ctx, "notification:sendTestEmail", resend, {
       from: FROM_EMAIL,
       to: [args.email],
       subject: "PERM Tracker: Test email successful",
@@ -780,12 +775,12 @@ export const sendAdminNotificationEmail = internalAction({
     );
 
     const resend = getResend();
-    const { error } = await sendEmailWithRetry(resend, {
+    const { error } = await sendOrQueue(ctx, "notification:sendAdminNotificationEmail", resend, {
       from: FROM_EMAIL,
       to: [toEmail],
       subject: args.subject,
       html,
-    });
+    }, { priority: "high" });
 
     if (error) {
       log.error("Failed to send admin notification email", {

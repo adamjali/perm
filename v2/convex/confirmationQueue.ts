@@ -23,7 +23,7 @@
  * 2. `drain` counts what Resend has sent since midnight UTC (its free plan's
  *    daily quota is a UTC calendar day, and Resend's own list is the count),
  *    and replays waiting requests through the same subscribe mutation with
- *    `fromQueue`, oldest first, while the day stays under DRAIN_CEILING. The
+ *    `fromQueue`, oldest first, while the day stays under LIST_CEILING. The
  *    replay re-runs every per-address check; only the per-IP limit and the
  *    pool are skipped (the first call passed the one, and the drain measured
  *    the account instead of the other).
@@ -32,7 +32,7 @@
  *
  * Bounds: QUEUE_MAX rows in all (past that, the old refusal, counted); a row
  * unsent after EXPIRE_MS is dropped and counted as turned away; the drain
- * stops at DRAIN_CEILING of the 100 so sign-in codes keep the rest. The
+ * stops at LIST_CEILING of the 100 so sign-in codes keep the rest. The
  * first queued request and the first turn-away of each Eastern day email the
  * admin, which is how the owner hears about a full pool the same day.
  */
@@ -46,32 +46,43 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { BUDGETS, noteQueued, noteRefusal, type BudgetName } from "./lib/alertBudgets";
+import { BUDGETS, noteQueued, noteRefusal, windowFor, type BudgetName } from "./lib/alertBudgets";
+import { LIST_CEILING, RECEIVED_MARGIN, msToNextUtcDay, usedToday } from "./lib/emailLimits";
+import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { siteThrottleReply } from "./lib/throttleReply";
 import { createLogger } from "./lib/logging";
+import { drainRetries } from "./emailLedger";
 
 const log = createLogger("ConfirmationQueue");
 
 export type QueueKind = Doc<"confirmationQueue">["kind"];
 
-/** Waiting requests the queue holds in all. About one day of the account's room. */
-export const QUEUE_MAX = 100;
-/** A request unsent after three days is dropped and counted as turned away. */
-export const EXPIRE_MS = 3 * 24 * 60 * 60 * 1000;
+/** Waiting requests the queue holds in all (100 until Adam asked for more, Sep 29 2026). */
+export const QUEUE_MAX = 1000;
+/** A request unsent after seven days is dropped and counted as turned away. */
+export const EXPIRE_MS = 7 * 24 * 60 * 60 * 1000;
 /** A drain's claim on a row; older than this, another drain may take it. */
 export const CLAIM_LEASE_MS = 10 * 60 * 1000;
 /** Replays of one row before it's given up (each one failed by throwing). */
 export const MAX_ATTEMPTS = 5;
+/** Emails one drain run may send (retries first, then queued confirmations). */
+export const PER_RUN = 60;
+
 /**
- * The drain sends while Resend's count for the UTC day is under this. The
- * free plan allows 100 a day, sent and received together; the other 20 are
- * for sign-in and reset codes, which lock a person out when they don't come.
+ * Whether a confirmation may send now. The day's real count comes first: past
+ * LIST_CEILING nothing more is sent today, whatever the pool says. Then the
+ * kind's own pool, which bounds abuse of that one form. Read-only until both
+ * pass, so a request sent to the queue charges nothing.
  */
-export const DRAIN_CEILING = 80;
-/** Received mail counts toward Resend's quota too; the list shows sent only. */
-export const RECEIVED_MARGIN = 5;
-/** Requests one drain run may send. */
-export const PER_RUN = 25;
+export async function admitConfirmation(
+  ctx: MutationCtx,
+  pool: BudgetName,
+): Promise<{ allowed: boolean; resetInMs: number }> {
+  const now = Date.now();
+  if ((await usedToday(ctx, now)) >= LIST_CEILING) return { allowed: false, resetInMs: msToNextUtcDay(now) };
+  const r = await checkAndRecordRateLimit(ctx, "all", BUDGETS[pool].key, windowFor(pool));
+  return { allowed: r.allowed, resetInMs: r.resetInMs };
+}
 
 /** Every address gets these same words, so the reply says nothing about the address. */
 export const QUEUED_REPLY =
@@ -162,15 +173,13 @@ async function alertAdmin(ctx: MutationCtx, what: "queued" | "turnedAway", pool:
       : `${b.label}: someone got no email`;
   const body =
     what === "queued"
-      ? `The ${b.label.toLowerCase()} pool (${b.limit} a day) filled at ${at}. New requests now wait in a queue and ` +
-        `go out as soon as Resend's own count for the day leaves room (the queue stops at ${DRAIN_CEILING} of the ` +
-        `free plan's 100, keeping the rest for sign-in codes). Nobody has been turned away. The admin page's ` +
-        `Alerts and email tab shows the queue. If this happens most days, Resend Pro (about $20 a month, no ` +
-        `daily cap) removes the limit. This email comes at most once a day.`
+      ? `At ${at} a ${b.label.toLowerCase()} request had to wait: either that pool's ${b.limit} a day were used, or ` +
+        `the whole site reached ${LIST_CEILING} of Resend's 100 for today (the rest are kept for sign-in codes). New ` +
+        `requests wait in a queue and go out as soon as there's room. Nobody has been turned away. The admin page's ` +
+        `Alerts and email tab shows the queue. This email comes at most once a day.`
       : `At ${at} a request for the ${b.label.toLowerCase()} pool got no email: the queue already held ${held} ` +
-        `(its limit is ${QUEUE_MAX}), or a queued request waited more than three days. That person was told to try ` +
-        `again later. The admin page's Alerts and email tab has the counts. Resend Pro (about $20 a month, no daily ` +
-        `cap) would have sent it. This email comes at most once a day.`;
+        `(its limit is ${QUEUE_MAX}), or a queued request waited more than seven days. That person was told to try ` +
+        `again later. The admin page's Alerts and email tab has the counts. This email comes at most once a day.`;
   await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, { subject, body });
 }
 
@@ -189,12 +198,9 @@ export function utcDayStart(now: number): number {
   return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 
-/**
- * How many waiting requests may go now, given what Resend has sent today.
- * Received mail isn't in the list, so a margin stands in for it.
- */
-export function drainRoom(sentToday: number, perRun: number = PER_RUN): number {
-  return Math.max(0, Math.min(perRun, DRAIN_CEILING - RECEIVED_MARGIN - sentToday));
+/** How many emails may go now, given what today has used (convex/lib/emailLimits.ts). */
+export function drainRoom(used: number, perRun: number = PER_RUN): number {
+  return Math.max(0, Math.min(perRun, LIST_CEILING - used));
 }
 
 interface ResendListPage {
@@ -323,19 +329,24 @@ async function replay(
 }
 
 /**
- * Send what's waiting, while Resend's count for the day leaves room. Runs
- * right after a request is queued and every 15 minutes (convex/crons.ts).
+ * Send what's waiting, while the day's count leaves room: failed sends kept in
+ * the retry queue first (convex/emailLedger.ts; they were promised earlier),
+ * then queued confirmations. Runs right after anything is queued and every 15
+ * minutes (convex/crons.ts). Both queues empty costs two reads and no call to
+ * Resend.
  */
 export const drain = internalAction({
   args: {},
-  returns: v.object({ sent: v.number(), room: v.union(v.number(), v.null()) }),
-  handler: async (ctx) => {
-    if (!(await ctx.runQuery(internal.confirmationQueue.hasWaiting, {}))) return { sent: 0, room: 0 };
+  returns: v.object({ sent: v.number(), retried: v.number(), room: v.union(v.number(), v.null()) }),
+  handler: async (ctx): Promise<{ sent: number; retried: number; room: number | null }> => {
+    const confirmations: boolean = await ctx.runQuery(internal.confirmationQueue.hasWaiting, {});
+    const retries: boolean = await ctx.runQuery(internal.emailLedger.hasDueRetry, {});
+    if (!confirmations && !retries) return { sent: 0, retried: 0, room: 0 };
 
     const key = process.env.AUTH_RESEND_KEY;
     if (!key) {
       log.error("drain: AUTH_RESEND_KEY is not set; the queue waits");
-      return { sent: 0, room: null };
+      return { sent: 0, retried: 0, room: null };
     }
     const { Resend } = await import("resend");
     const resend = new Resend(key);
@@ -347,15 +358,22 @@ export const drain = internalAction({
       }
       return data as unknown as ResendListPage;
     }, Date.now());
-    if (sentToday === null) return { sent: 0, room: null };
+    if (sentToday === null) return { sent: 0, retried: 0, room: null };
 
-    const room = drainRoom(sentToday);
+    // Resend's own list is one of the day's feeders; the day keeps the highest.
+    await ctx.runMutation(internal.emailLedger.noteReported, { count: sentToday + RECEIVED_MARGIN });
+    const used: number = await ctx.runQuery(internal.emailLedger.accountUsed, {});
+    const room = drainRoom(used);
     if (room === 0) {
-      log.info("drain: the day's room is used; the queue waits for the UTC day to turn", { sentToday });
-      return { sent: 0, room };
+      log.info("drain: the day's room is used; the queues wait for the UTC day to turn", { used });
+      return { sent: 0, retried: 0, room };
     }
 
-    const rows = await ctx.runMutation(internal.confirmationQueue.claim, { limit: room });
+    const retried: number = retries ? await drainRetries(ctx, resend, room) : 0;
+    const left = room - retried;
+    if (!confirmations || left <= 0) return { sent: 0, retried, room };
+
+    const rows = await ctx.runMutation(internal.confirmationQueue.claim, { limit: left });
     let sent = 0;
     for (const row of rows) {
       try {
@@ -370,7 +388,7 @@ export const drain = internalAction({
         await ctx.runMutation(internal.confirmationQueue.settle, { id: row.id, done: false });
       }
     }
-    if (sent > 0) log.info("drain: queued confirmations released", { sent, sentToday });
-    return { sent, room };
+    if (sent > 0 || retried > 0) log.info("drain: released", { sent, retried, used });
+    return { sent, retried, room };
   },
 });

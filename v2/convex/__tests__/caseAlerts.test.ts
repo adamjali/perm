@@ -18,6 +18,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import { MAX_CASES_PER_ADDRESS, SUBSCRIBE_IP_LIMIT } from "../caseAlerts";
+import { BUDGETS } from "../lib/alertBudgets";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 
 const SECRET = "test-unsubscribe-secret";
@@ -200,8 +201,10 @@ function stubMirrorAndResend(fixture: MirrorFixture, resendStatus = 200) {
     const body = init?.body ? JSON.parse(init.body) : {};
     sends.push(body);
     if (resendStatus >= 400) {
+      // 422 is a request no retry can fix; anything else is Resend's own limit.
+      const name = resendStatus === 422 ? "validation_error" : "rate_limit_exceeded";
       return new Response(
-        JSON.stringify({ name: "rate_limit_exceeded", message: "stubbed failure" }),
+        JSON.stringify({ name, message: "stubbed failure" }),
         { status: resendStatus, headers: { "Content-Type": "application/json" } },
       );
     }
@@ -434,19 +437,22 @@ describe("abuse limits", () => {
     // The scenario neither per-identity limit can touch: a fresh address and a
     // fresh IP on every single request. Only a budget on the shared resource
     // itself can stop this, which is why one exists.
-    for (let i = 0; i < 30; i++) {
+    const limit = BUDGETS.caseConfirm.limit;
+    for (let i = 0; i < limit + 10; i++) {
       await t.mutation(internal.caseAlerts.subscribe, {
         email: `rotator${i}@example.com`,
         caseNumber: CASE,
-        ip: `198.51.100.${i}`,
+        ip: `198.51.100.${i % 250}`,
       });
     }
 
     // Counted on the budget's own charges rather than on delivered mail: one
     // charge is exactly one scheduled confirmation, and it is observable
-    // without driving the scheduler. 15 is CONFIRMATION_GLOBAL_BUDGET, so ~85
-    // of Resend's shared 100/day stay available for password resets and OTP.
-    expect(await globalCharges(t)).toBe(15);
+    // without driving the scheduler. Past the pool, requests wait in the
+    // queue (convex/confirmationQueue.ts) instead of being refused.
+    expect(await globalCharges(t)).toBe(limit);
+    const waiting = await t.run((ctx) => ctx.db.query("confirmationQueue").take(100));
+    expect(waiting).toHaveLength(10);
   });
 
   it("does not let ten case numbers buy ten confirmation emails to one inbox", async () => {
@@ -686,15 +692,34 @@ describe("the change detector", () => {
 // ---------------------------------------------------------------------------
 
 describe("failure handling", () => {
-  it("does NOT advance lastSeenStatus when the send fails", async () => {
+  it("keeps an alert Resend refused for a fixable reason in the retry queue", async () => {
     const t = createTestContext();
-    // Resend returns `{ data: null, error }` for a 429; it does not throw. A
-    // bare try/catch would run the line after the send and stamp the row, which
+    // A 429 is Resend's own limit: since Sep 29 2026 the email is kept and
+    // retried (convex/emailLedger.ts), so the row may move on without the
+    // alert being lost.
+    stubMirrorAndResend(
+      { cases: { [CASE]: { status: "RFI ISSUED", isFinal: false } } },
+      429,
+    );
+    const id = await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
+    await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    const kept = await t.run((ctx) => ctx.db.query("emailRetries").take(10));
+    expect(kept).toHaveLength(1);
+    expect(kept[0]).toMatchObject({ to: "person@example.com" });
+    expect(JSON.parse(kept[0]!.payload).subject).toContain("is now");
+    const row = await t.run(async (ctx) => ctx.db.get(id));
+    expect(row!.lastSeenStatus).toBe("RFI ISSUED");
+  });
+
+  it("does NOT advance lastSeenStatus when the send fails for good", async () => {
+    const t = createTestContext();
+    // Resend returns `{ data: null, error }`; it does not throw. A bare
+    // try/catch would run the line after the send and stamp the row, which
     // makes the transition look like old news forever and destroys the one
     // alert this subscriber signed up for.
     stubMirrorAndResend(
       { cases: { [CASE]: { status: "RFI ISSUED", isFinal: false } } },
-      429,
+      422,
     );
     const id = await seededSubscription(t, "person@example.com", "ANALYST REVIEW");
 
@@ -758,28 +783,29 @@ describe("failure handling", () => {
 describe("the global alert budget", () => {
   it("caps sends in one day however many subscriptions are due", async () => {
     const t = createTestContext();
+    const n = BUDGETS.caseAlert.limit + 15;
     const { alerts } = stubMirrorAndResend({
       cases: Object.fromEntries(
-        Array.from({ length: 60 }, (_, i) => [
-          `G-100-2612${i % 10}-86895${i}`,
+        Array.from({ length: n }, (_, i) => [
+          `G-100-2612${i % 10}-8689${String(i).padStart(2, "0")}`,
           { status: "CERTIFIED", isFinal: true },
         ]),
       ),
     });
-    for (let i = 0; i < 60; i++) {
+    for (let i = 0; i < n; i++) {
       await seededSubscription(
         t,
         `person${i}@example.com`,
         "ANALYST REVIEW",
-        `G-100-2612${i % 10}-86895${i}`,
+        `G-100-2612${i % 10}-8689${String(i).padStart(2, "0")}`,
       );
     }
 
     // Sweep repeatedly. The batch limit alone would let the self-reschedule
-    // drain all 60 in one day; the GLOBAL budget is what stops the shared
-    // Resend quota being eaten by this one feature.
-    for (let i = 0; i < 6; i++) await t.action(internal.caseAlerts.sweepCaseChanges, {});
-    expect(alerts().length).toBeLessThanOrEqual(25);
+    // drain all of them in one day; the GLOBAL budget is what stops this one
+    // feature eating the shared Resend quota.
+    for (let i = 0; i < 8; i++) await t.action(internal.caseAlerts.sweepCaseChanges, {});
+    expect(alerts().length).toBeLessThanOrEqual(BUDGETS.caseAlert.limit);
     expect(alerts().length).toBeGreaterThan(0);
   });
 });

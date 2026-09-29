@@ -27,7 +27,7 @@
 
 import { internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./email";
 
 export type AlertKind = "case" | "queue" | "bulletin" | "employer";
 
@@ -99,7 +99,7 @@ export async function deliverAlert(ctx: ActionCtx, item: AlertItem): Promise<Del
     return { status: "queued" };
   }
 
-  const result = await sendEmailWithRetry(getResend(), {
+  const result = await sendOrQueue(ctx, "alert", getResend(), {
     from: FROM_EMAIL,
     to: item.email,
     subject: item.subject,

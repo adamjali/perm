@@ -6,8 +6,9 @@
  * Two limits, in this order. Per address, 5 codes an hour: enough for a
  * person asking again, and the one an attacker meets first, because a reset
  * can only be sent to an address that has an account. Then the whole site,
- * 40 a day: the backstop that no rotation gets around, so the codes can never
- * use up the Resend allowance the alert emails share. A refusal by the
+ * 80 a day (40 until Sep 29 2026): the backstop that no rotation gets
+ * around. List mail stops at 85 of Resend's 100 (convex/lib/emailLimits.ts),
+ * so the last 15 of every day are always free for codes. A refusal by the
  * site-wide pool is counted for the admin panel (noteRefusal); a per-address
  * refusal is one person asking too often, not a sign the pool is too small.
  *

@@ -35,7 +35,7 @@ import { QUEUED_REPLY } from "../confirmationQueue";
  * against caseAlerts and silently never exhausted queueAlerts, which is the
  * usual shape of a gate's first run being mostly the gate.
  */
-const FILL_CAP = 40;
+const FILL_CAP = 100;
 
 async function exhaust(call: (i: number) => Promise<{ ok: boolean; message: string }>) {
   for (let i = 0; i < FILL_CAP; i++) {

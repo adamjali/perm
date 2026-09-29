@@ -65,10 +65,9 @@ import {
 import { api, internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
-import { BUDGETS, windowFor } from "./lib/alertBudgets";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
 import { formatAsOf, formatMonth, monthsMoved } from "../src/lib/dolFormat";
@@ -83,7 +82,7 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
-import { queueConfirmation, replayArgs } from "./confirmationQueue";
+import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 
 const log = createLogger("QueueAlerts");
 
@@ -128,21 +127,12 @@ export const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 /**
  * Global ceiling on confirmation emails, across every caller.
  *
- * This is the control that actually protects the thing at risk. Resend's
- * account cap is 100/day and it is SHARED with password resets, OTP codes and
- * deadline reminders; exhausting it has already caused one outage here. A
- * per-IP limit alone cannot prevent that, because an attacker rotating
- * addresses through a proxy pool defeats both the per-address cooldown and the
- * per-IP counter. A global budget cannot be rotated around: whatever an
- * attacker does, queue confirmations stop at 18 in a rolling day and the rest
- * of the shared cap stays available for mail people actually depend on. The
- * full arithmetic across every list-mail budget lives in convex/caseAlerts.ts.
- *
- * The cost is that a genuine burst of signups (a Reddit thread, a launch) gets
- * throttled. That is the correct trade: a delayed marketing confirmation is
- * recoverable, a locked-out password reset is not.
+ * The pool is the kind's own bound against abuse (40 a day since Sep 29
+ * 2026; convex/lib/alertBudgets.ts). The thing actually at risk, Resend's 100
+ * a day shared with sign-in codes, is guarded once by the day's real count
+ * (convex/lib/emailLimits.ts), and a request either limit holds back waits in
+ * the queue (convex/confirmationQueue.ts) instead of being refused.
  */
-const CONFIRMATION_GLOBAL_BUDGET = windowFor("queueConfirm");
 
 
 /**
@@ -363,14 +353,9 @@ export const subscribe = internalMutation({
     // BEFORE the write, so a refusal here leaves no row and no stamp behind.
     // A full pool queues the request (convex/confirmationQueue.ts).
     if (!args.fromQueue) {
-      const budget = await checkAndRecordRateLimit(
-        ctx,
-        "all",
-        BUDGETS.queueConfirm.key,
-        CONFIRMATION_GLOBAL_BUDGET,
-      );
+      const budget = await admitConfirmation(ctx, "queueConfirm");
       if (!budget.allowed) {
-        log.warn("confirmation pool full; queueing", { limit: CONFIRMATION_GLOBAL_BUDGET.limit });
+        log.warn("confirmation can't send now (its pool or the day's count); queueing");
         return queueConfirmation(ctx, {
           kind: "queue",
           pool: "queueConfirm",
@@ -537,7 +522,7 @@ export const sendConfirmation = internalAction({
         },
       );
 
-      const result = await sendEmailWithRetry(getResend(), {
+      const result = await sendOrQueue(ctx, "queue-confirmation", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
         subject:

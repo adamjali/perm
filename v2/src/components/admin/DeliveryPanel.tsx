@@ -37,7 +37,15 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 /** Every pool as a row: label, a usage bar against the ceiling, the numbers. */
-export function BudgetPools({ pools, queue }: { pools: Delivery["pools"]; queue?: Delivery["confirmationQueue"] }) {
+export function BudgetPools({
+  pools,
+  queue,
+  day,
+}: {
+  pools: Delivery["pools"];
+  queue?: Delivery["confirmationQueue"];
+  day?: Delivery["emailDay"];
+}) {
   const refused = pools.reduce((a, p) => a + p.refusedLast7d, 0);
   const waited = pools.reduce((a, p) => a + p.queuedLast7d, 0);
   return (
@@ -47,7 +55,7 @@ export function BudgetPools({ pools, queue }: { pools: Delivery["pools"]; queue?
       </h2>{" "}
       {refused > 0 ? (
         <p className="mt-3 border-2 border-border bg-data-warn-ink px-4 py-3 text-base font-bold text-background">
-          {`${int(refused)} ${refused === 1 ? "person was" : "people were"} turned away by a full budget in the last 7 days. Resend Pro ($20 a month, 50,000 emails, no daily cap) would have sent every one.`}
+          {`${int(refused)} ${refused === 1 ? "person was" : "people were"} turned away in the last 7 days: the queue was full or a request waited more than seven days.`}
         </p>
       ) : (
         <p className="mt-2 text-sm text-muted-foreground">No one has been turned away in the last 7 days.</p>
@@ -55,6 +63,16 @@ export function BudgetPools({ pools, queue }: { pools: Delivery["pools"]; queue?
       {waited > 0 ? (
         <p className="mt-2 text-sm font-bold">
           {`${int(waited)} confirmation${waited === 1 ? "" : "s"} waited in the queue this week because a pool was full. The queue sends them as soon as Resend's count for the day leaves room.`}
+        </p>
+      ) : null}{" "}
+      {day ? (
+        <p className="mt-3 text-sm">
+          <span className="font-bold">{`Today: ${int(day.used)} of ${int(day.cap)} sent.`}</span>{" "}
+          {`List mail stops at ${int(day.listCeiling)}; the rest is kept for sign-in codes. Resend's day resets at 8 PM Eastern in summer.`}
+          {day.retrying > 0
+            ? ` ${int(day.retrying)} failed ${day.retrying === 1 ? "email is" : "emails are"} waiting to retry${day.oldestRetryAt ? `, the oldest since ${new Date(day.oldestRetryAt).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} Eastern` : ""}.`
+            : ""}
+          {day.lostToday > 0 ? ` ${int(day.lostToday)} given up on today.` : ""}
         </p>
       ) : null}{" "}
       {queue && queue.waiting > 0 ? (
@@ -89,7 +107,7 @@ export function BudgetPools({ pools, queue }: { pools: Delivery["pools"]; queue?
         })}
       </ul>
       <p className="mt-4 text-sm text-muted-foreground">
-        Rolling 24 hours, counted from the same limits the senders enforce. Resend&apos;s free plan allows 100 a day across all of these plus sign-in mail.
+        Each pool is a rolling 24-hour bound on one kind of email, counted from the same limits the senders enforce. The day&apos;s total is guarded by Resend&apos;s own count, shown above; a request either one holds back waits in a queue.
       </p>
     </section>
   );

@@ -19,6 +19,7 @@ import { etDay } from "../lib/alertDelivery";
 import { bundleSubject, MORE_TOMORROW } from "../alertOutbox";
 import { employerSubject, unheard } from "../employerAlerts";
 import { QUEUED_REPLY } from "../confirmationQueue";
+import { BUDGETS } from "../lib/alertBudgets";
 
 const SECRET = "test-unsubscribe-secret";
 const originalFetch = global.fetch;
@@ -102,7 +103,9 @@ function stub(f: Fixture) {
     if (!String(body.subject ?? "").startsWith("Confirm:")) sends.push(body);
     const status = f.resendStatus ?? 200;
     if (status >= 400) {
-      return new Response(JSON.stringify({ name: "rate_limit_exceeded", message: "stubbed failure" }), {
+      // 422 is a request no retry can fix; anything else is Resend's own trouble.
+      const name = status === 422 ? "validation_error" : "rate_limit_exceeded";
+      return new Response(JSON.stringify({ name, message: "stubbed failure" }), {
         status,
         headers: { "Content-Type": "application/json" },
       });
@@ -210,6 +213,17 @@ describe("consent", () => {
     try {
       const t = createTestContext();
       stub({});
+      // Use most of the pool first, so the last 5 of these 20 find it full.
+      await t.run(async (ctx) => {
+        for (let i = 0; i < BUDGETS.caseConfirm.limit - 15; i++) {
+          await ctx.db.insert("rateLimits", {
+            key: `${BUDGETS.caseConfirm.key}:all`,
+            timestamp: Date.now(),
+            identifier: "all",
+            action: BUDGETS.caseConfirm.key,
+          });
+        }
+      });
       let waiting = 0;
       for (let i = 0; i < 20; i++) {
         const r = await t.mutation(internal.employerAlerts.subscribe, {
@@ -223,7 +237,7 @@ describe("consent", () => {
       const charges = await t.run(async (ctx) =>
         (await ctx.db.query("rateLimits").collect()).filter((r) => r.action === "case_subscribe_global").length,
       );
-      expect(charges).toBe(15);
+      expect(charges).toBe(BUDGETS.caseConfirm.limit);
       // The five are queued, not turned away (convex/confirmationQueue.ts).
       const noted = await t.run(async (ctx) => ctx.db.query("budgetRefusals").take(10));
       expect(noted.map((r) => [r.pool, r.count, r.queued])).toEqual([["caseConfirm", 0, 5]]);
@@ -264,9 +278,19 @@ describe("the change detector", () => {
     expect(sends).toHaveLength(0);
   });
 
-  it("leaves a move unheard when the send fails, so the next sweep retries", async () => {
+  it("keeps a move's email in the retry queue when Resend fails for a fixable reason", async () => {
     const t = createTestContext();
     stub({ holdMoves: [hold(1)], resendStatus: 500 });
+    await follow(t, "f@example.com");
+    await t.action(internal.employerAlerts.sweep, {});
+    const kept = await t.run(async (ctx) => ctx.db.query("emailRetries").take(10));
+    expect(kept).toHaveLength(1);
+    expect(kept[0]).toMatchObject({ to: "f@example.com" });
+  });
+
+  it("leaves a move unheard when the send fails for good, so the next sweep retries", async () => {
+    const t = createTestContext();
+    stub({ holdMoves: [hold(1)], resendStatus: 422 });
     const id = await follow(t, "f@example.com");
     const r = await t.action(internal.employerAlerts.sweep, {});
     expect(r.failed).toBe(1);
@@ -384,9 +408,33 @@ describe("one email a day, whatever the address follows", () => {
     expect(state.news?.unsubscribedAt).toBeUndefined();
   });
 
-  it("gives up on an item after repeated failures and records it", async () => {
+  it("hands a bundle Resend couldn't take to the retry queue, and marks it sent", async () => {
     const t = createTestContext();
     stub({ resendStatus: 500 });
+    await t.run(async (ctx) => {
+      await ctx.db.insert("alertOutbox", {
+        email: "k@example.com",
+        kind: "case",
+        ref: "case:a",
+        status: "queued",
+        subject: "s",
+        text: "t",
+        listUnsubscribe: "https://permtracker.app/x",
+        summary: { title: "T", line: "L", url: "https://permtracker.app" },
+        createdAt: Date.now(),
+        attempts: 0,
+      });
+    });
+    await t.action(internal.alertOutbox.sendBundles, {});
+    const rows = await t.run(async (ctx) => ctx.db.query("alertOutbox").collect());
+    expect(rows.map((r) => r.status)).toEqual(["sent"]);
+    const kept = await t.run(async (ctx) => ctx.db.query("emailRetries").take(10));
+    expect(kept).toHaveLength(1);
+  });
+
+  it("gives up on an item after repeated failures no retry can fix, and records it", async () => {
+    const t = createTestContext();
+    stub({ resendStatus: 422 });
     await t.run(async (ctx) => {
       for (const ref of ["case:a", "employer:b"]) {
         await ctx.db.insert("alertOutbox", {

@@ -247,5 +247,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
   doc and a rate limit each say what happened and when to try again.
 - **Nothing grows forever**: a nightly prune on the sweep and a daily Convex retention job; audit logs are kept on purpose.
 - **The dev deployment's crons were the Sep 29 "[System Error]" emails** (still on Turso); `ADMIN_ERROR_EMAILS=off` there.
-- **A full confirmation pool queues instead of refusing**: sent while Resend's own count for the UTC day is under 80
-  (`convex/confirmationQueue.ts`); 17 were refused on Sep 28 and 29 while the account had sent 57 of 100.
+- **No email is refused and lost**: Resend's 100 a day is guarded once by the real count (list mail stops at 85,
+  codes keep 15), every send goes through `sendOrQueue` and a fixable failure waits in `emailRetries`; the pools
+  were raised (case confirmations 15 to 60, sign-in codes 40 to 80). The Sep 28 hit was real demand, not abuse.

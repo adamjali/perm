@@ -67,84 +67,46 @@
  *
  * ## The budget, with its arithmetic
  *
- * Resend's account cap is 100/day and it is SHARED with password resets, OTP
- * codes, deadline digests and the queue alerts. Exhausting it has already
- * caused one real outage on this product.
+ * Resend's free plan allows 100 emails a day (sent and received together,
+ * counted over a UTC calendar day) and 3,000 a month. That 100 is SHARED with
+ * sign-in and reset codes, which lock a person out when they don't arrive.
  *
- *   queue-alert confirmations      18/day   (convex/queueAlerts.ts)
- *   case-alert confirmations       15/day   (below, ALL THREE programs)
- *   case alerts                    18/day   (below, ALL THREE programs)
- *   bulletin-alert confirmations    6/day   (convex/bulletinAlerts.ts)
- *   bulletin alerts                12/day   (convex/bulletinAlerts.ts)
- *   preference-center links         6/day   (convex/emailPrefs.ts)
- *   ---------------------------------------
- *   worst case from list mail      75/day, leaving 25 for mail people depend on.
+ * Since Sep 29 2026 it is guarded ONCE, by what was actually sent: list mail
+ * stops at 85 of Resend's 100 (LIST_CEILING in convex/lib/emailLimits.ts), and
+ * every send but a sign-in code goes through `sendOrQueue`, which checks that
+ * count first and keeps anything it can't send in the retry queue
+ * (convex/emailLedger.ts). Before, fixed shares had to add up under 100
+ * (75 a day in all), and the case confirmations' 15 turned real people away on
+ * Sep 28 while the account had sent 57.
  *
- * Outside the list budget: the daily operator report, 1/day to the admin
- * address only (convex/dailyReport.ts). Auth mail keeps 24 on the worst day.
+ * The per-kind pools remain, as bounds against abuse of one form:
  *
- *   sign-in and reset codes        40/day   (convex/authMail.ts)
+ *   queue-alert confirmations      40/day   (convex/queueAlerts.ts)
+ *   case-alert confirmations       60/day   (below, ALL THREE programs)
+ *   case alerts                    60/day   (below, ALL THREE programs)
+ *   bulletin-alert confirmations   30/day   (convex/bulletinAlerts.ts)
+ *   bulletin alerts                40/day   (convex/bulletinAlerts.ts)
+ *   preference-center links        20/day   (convex/emailPrefs.ts)
+ *   sign-in and reset codes        80/day   (convex/authMail.ts)
  *
- * Enforced since Sep 28 2026, when a password-reset request turned out to be
- * able to send mail to any registered address with nothing counting it. The
- * pool sits ABOVE the 24 left over, on purpose: 17 accounts were made on the
- * busiest day of September 2026, and a cap that turns a real person away
- * from their own sign-in costs more than a day that spills past Resend's
- * 100. Both at their ceiling is 116; Resend refuses the overflow, and that
- * is the day to leave the free plan. Per address, 5 codes an hour.
+ * They add up to more than 100 on purpose: the day's real count decides, and a
+ * confirmation either limit holds back waits in convex/confirmationQueue.ts
+ * instead of being refused. Codes keep the last 15 of every day because list
+ * mail stops at 85; per address, 5 codes an hour.
  *
- * That 25/day is the entire remaining headroom for AUTH mail - password
- * resets and OTP codes - and it is the number to check before adding any
- * sending path, because those are the emails whose absence locks somebody out
- * of their own account. Every list-mail budget is enumerated here, so any new
- * sending path must claim a line in this table before it ships.
+ * Every pool is GLOBAL, keyed on the literal string "all". That is the only
+ * kind of limit that cannot be rotated around: a per-address cooldown does
+ * nothing against an attacker cycling fresh addresses, and a per-IP limit does
+ * nothing against a proxy pool. The prevailing wage and LCA programs and
+ * employer follows share the case pools. Every limit above lives once in
+ * convex/lib/alertBudgets.ts, which the senders enforce and the admin panel
+ * reports, and a test holds that table to this one. Every ALERT (not
+ * confirmation) leaves through `deliverAlert` (convex/lib/alertDelivery.ts), so
+ * one person gets at most one alert email a day.
  *
- * Rebalanced 2026-08-28 when the bulletin alerts and the preference center
- * joined the pool. The arithmetic in this table drifted from the constants
- * afterwards (it read 10/day for case confirmations against a real 15, and
- * summed to 70) and was corrected 2026-08-29; the CONSTANTS are authoritative
- * and were not touched, because lowering one throttles real signups.
- *
- * The queue-alert SEND sweep is not in that column because it is driven by a
- * monthly DOL publication rather than a daily one, so it and the case alerts
- * cannot both be at their ceiling on an ordinary day. The bulletin sweep is
- * counted because a new bulletin can land on any day the case alerts are
- * also busy.
- *
- * Both of the budgets below are GLOBAL, keyed on the literal string "all". That
- * is the only kind of limit that cannot be rotated around: a per-address
- * cooldown does nothing against an attacker cycling fresh addresses, and a
- * per-IP limit does nothing against a proxy pool. Whatever anyone does,
- * confirmations stop at 15 and alerts stop at 18 in a rolling day.
- *
- * Adding the prevailing wage and LCA programs added NO sending path and
- * claimed no new line: all three share the two budgets above, so the worst
- * case is unchanged. A P- subscription and a G- subscription compete for the
- * same 18 alerts, which is the correct shape - the scarce thing is Resend's
- * shared 100/day, and it does not care which program an email is about.
- *
- * Following an employer (convex/employerAlerts.ts, Sep 26 2026) claimed no
- * line either: its confirmations share the 15 and its alerts share the 18.
- * A full CONFIRMATION pool no longer turns people away (Sep 29 2026): the
- * request waits in convex/confirmationQueue.ts and goes out while Resend's
- * own count for the UTC day is under 80, so these confirmation lines are
- * the fast path, not the ceiling. Seventeen people were refused on Sep 28
- * and 29 while the account had sent 57 of its 100.
- *
- * Every limit above lives once in convex/lib/alertBudgets.ts, which the
- * senders enforce and the admin panel reports, and a test holds that table
- * to this one. Every ALERT (not confirmation) now leaves through
- * `deliverAlert` (convex/lib/alertDelivery.ts), so one person gets at most one
- * alert email a day; a bundle of several alerts spends several units and
- * sends one email, which only ever errs low.
- *
- * The weekly bulletin digest (convex/newsletter.ts) claims its own line:
- * NEWSLETTER_DAILY_CAP (default 30) sends a day, charged through the same
- * global rate-limit table under "newsletter_send", and it is OFF until
- * NEWSLETTER_ENABLED=1 is set in the deployment. With it on, the worst day is
- * 18 + 15 + 18 + 6 + 12 + 6 + 30 = 105, five over the Resend cap (this line
- * read 10 for case confirmations and summed to 100 until Sep 29 2026): with
- * the digest on, the worst day needs Resend off the free tier, or a lower cap.
+ * The weekly bulletin digest (convex/newsletter.ts) has its own cap,
+ * NEWSLETTER_DAILY_CAP (default 30), and goes through `sendOrQueue` like the
+ * rest, so on a heavy day the digests past 85 wait for the next UTC day.
  *
  * @module convex/caseAlerts
  */
@@ -159,7 +121,7 @@ import {
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
 import type { ReactElement } from "react";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
 import { formatAsOf } from "../src/lib/dolFormat";
@@ -203,12 +165,10 @@ import { dropQueued } from "./lib/alertOutboxStore";
 import {
   CASE_ALERT_BUDGET,
   CASE_ALERT_KEY,
-  CASE_CONFIRMATION_BUDGET,
-  CASE_CONFIRMATION_KEY,
   noteRefusal,
 } from "./lib/alertBudgets";
 import { connectionThrottleReply } from "./lib/throttleReply";
-import { queueConfirmation, replayArgs } from "./confirmationQueue";
+import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
 
 const log = createLogger("CaseAlerts");
 
@@ -230,7 +190,6 @@ const ALERT_BATCH_LIMIT = 18;
  * convex/lib/alertBudgets.ts.
  */
 const ALERT_GLOBAL_BUDGET = CASE_ALERT_BUDGET;
-const CONFIRMATION_GLOBAL_BUDGET = CASE_CONFIRMATION_BUDGET;
 
 /** Minimum gap between confirmation emails to one address. */
 const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
@@ -513,14 +472,9 @@ export const subscribe = internalMutation({
     // A full pool QUEUES the request since Sep 29 2026 (convex/confirmationQueue.ts):
     // still before the write, so the queued request leaves no row and no stamp.
     if (!args.fromQueue) {
-      const budget = await checkAndRecordRateLimit(
-        ctx,
-        "all",
-        CASE_CONFIRMATION_KEY,
-        CONFIRMATION_GLOBAL_BUDGET,
-      );
+      const budget = await admitConfirmation(ctx, "caseConfirm");
       if (!budget.allowed) {
-        log.warn("confirmation pool full; queueing", { limit: CONFIRMATION_GLOBAL_BUDGET.limit });
+        log.warn("confirmation can't send now (its pool or the day's count); queueing");
         return queueConfirmation(ctx, {
           kind: "case",
           pool: "caseConfirm",
@@ -734,7 +688,7 @@ export const sendConfirmation = internalAction({
         },
       );
 
-      const result = await sendEmailWithRetry(getResend(), {
+      const result = await sendOrQueue(ctx, "case-confirmation", getResend(), {
         from: FROM_EMAIL,
         to: args.email,
         subject: `Confirm alerts for ${noun} ${args.caseNumber}`,

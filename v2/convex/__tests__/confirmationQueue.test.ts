@@ -14,16 +14,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createTestContext, setupSchedulerTests } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import { BUDGETS, type BudgetName } from "../lib/alertBudgets";
+import { LIST_CEILING, RECEIVED_MARGIN, utcDay } from "../lib/emailLimits";
 import {
   CLAIM_LEASE_MS,
-  DRAIN_CEILING,
   EXPIRE_MS,
   MAX_ATTEMPTS,
   PER_RUN,
   QUEUED_LINK_REPLY,
   QUEUED_REPLY,
   QUEUE_MAX,
-  RECEIVED_MARGIN,
   countSentToday,
   drainRoom,
   parseResendTime,
@@ -114,6 +113,23 @@ describe("a full pool queues the request", () => {
     expect(await t.run((ctx) => ctx.db.query("employerAlerts").collect())).toHaveLength(0);
     expect(await t.run((ctx) => ctx.db.query("dolQueueAlerts").collect())).toHaveLength(0);
     expect(await t.run((ctx) => ctx.db.query("bulletinAlerts").collect())).toHaveLength(0);
+  });
+
+  it("the day's real count queues a confirmation even when its pool has room", async () => {
+    const t = createTestContext();
+    // Resend has sent 85 today: list mail stops there, whatever the pool says.
+    await t.run((ctx) => ctx.db.insert("emailDays", { day: utcDay(Date.now()), sent: 3, reported: LIST_CEILING }));
+    const r = await t.mutation(internal.caseAlerts.subscribe, { email: "late@example.com", caseNumber: "G-100-25324-425560" });
+    expect(r).toEqual({ ok: true, message: QUEUED_REPLY, queued: true });
+    // The pool was not charged for a request that didn't send.
+    const spent = await t.run((ctx) =>
+      ctx.db
+        .query("rateLimits")
+        .withIndex("by_key_and_timestamp", (q) => q.eq("key", `${BUDGETS.caseConfirm.key}:all`))
+        .collect(),
+    );
+    expect(spent).toHaveLength(0);
+    expect(await queued(t)).toHaveLength(1);
   });
 
   it("a full queue refuses, and counts the person as turned away", async () => {
@@ -276,24 +292,27 @@ describe("drain against Resend's own count", () => {
   it("sends what the day's room allows and leaves the rest queued", async () => {
     process.env.AUTH_RESEND_KEY = "re_test_key";
     const t = createTestContext();
-    await queueCases(t, 4);
-    // 72 sent today: room is 80 - 5 - 72 = 3.
-    stubSentToday(72);
+    await queueCases(t, 6);
+    // 76 sent today, plus 5 for received mail: room is 85 - 81 = 4.
+    stubSentToday(76);
     const res = await t.action(internal.confirmationQueue.drain, {});
-    expect(res).toEqual({ sent: 3, room: 3 });
-    expect(await queued(t)).toHaveLength(1);
-    expect(await t.run((ctx) => ctx.db.query("caseStatusAlerts").collect())).toHaveLength(3);
+    expect(res).toEqual({ sent: 4, retried: 0, room: 4 });
+    expect(await queued(t)).toHaveLength(2);
+    expect(await t.run((ctx) => ctx.db.query("caseStatusAlerts").collect())).toHaveLength(4);
+    // Resend's own count became part of the day's.
+    const day = await t.run((ctx) => ctx.db.query("emailDays").first());
+    expect(day?.reported).toBe(76 + RECEIVED_MARGIN);
   });
 
   it("sends nothing once the day is at the line, and nothing when Resend can't be read", async () => {
     process.env.AUTH_RESEND_KEY = "re_test_key";
     const t = createTestContext();
     await queueCases(t, 2);
-    stubSentToday(DRAIN_CEILING - RECEIVED_MARGIN);
-    expect(await t.action(internal.confirmationQueue.drain, {})).toEqual({ sent: 0, room: 0 });
+    stubSentToday(LIST_CEILING - RECEIVED_MARGIN);
+    expect(await t.action(internal.confirmationQueue.drain, {})).toEqual({ sent: 0, retried: 0, room: 0 });
 
     vi.stubGlobal("fetch", vi.fn(async () => new Response("{}", { status: 500 })));
-    expect(await t.action(internal.confirmationQueue.drain, {})).toEqual({ sent: 0, room: null });
+    expect(await t.action(internal.confirmationQueue.drain, {})).toEqual({ sent: 0, retried: 0, room: null });
     expect(await queued(t)).toHaveLength(2);
   });
 
@@ -301,7 +320,7 @@ describe("drain against Resend's own count", () => {
     process.env.AUTH_RESEND_KEY = "re_test_key";
     const t = createTestContext();
     const fetchMock = stubSentToday(0);
-    expect(await t.action(internal.confirmationQueue.drain, {})).toEqual({ sent: 0, room: 0 });
+    expect(await t.action(internal.confirmationQueue.drain, {})).toEqual({ sent: 0, retried: 0, room: 0 });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });
@@ -319,10 +338,10 @@ describe("pure helpers", () => {
     expect(utcDayStart(Date.UTC(2026, 8, 30, 0, 1))).toBe(Date.UTC(2026, 8, 30));
   });
 
-  it("room is the ceiling less the received margin less today's sends, at most one run's worth", () => {
+  it("room is the list ceiling less what today has used, at most one run's worth", () => {
     expect(drainRoom(0)).toBe(PER_RUN);
-    expect(drainRoom(DRAIN_CEILING - RECEIVED_MARGIN - 2)).toBe(2);
-    expect(drainRoom(DRAIN_CEILING)).toBe(0);
+    expect(drainRoom(LIST_CEILING - 2)).toBe(2);
+    expect(drainRoom(LIST_CEILING)).toBe(0);
     expect(drainRoom(500)).toBe(0);
   });
 

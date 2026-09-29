@@ -26,6 +26,8 @@ export const RETENTION_DAYS = {
   systemErrors: 180,
   marketingEvents: 365,
   apiUsage: 90,
+  /** One row per UTC day of email counts (convex/emailLedger.ts); a year and a bit of history. */
+  emailDays: 400,
 } as const;
 
 /** Rows one run deletes per table; a longer backlog reschedules itself. */
@@ -33,10 +35,15 @@ const BATCH = 500;
 
 export const pruneOperationalLogs = internalMutation({
   args: { now: v.optional(v.number()) },
-  returns: v.object({ systemErrors: v.number(), marketingEvents: v.number(), apiUsage: v.number() }),
+  returns: v.object({
+    systemErrors: v.number(),
+    marketingEvents: v.number(),
+    apiUsage: v.number(),
+    emailDays: v.number(),
+  }),
   handler: async (ctx, args) => {
     const now = args.now ?? Date.now();
-    const out = { systemErrors: 0, marketingEvents: 0, apiUsage: 0 };
+    const out = { systemErrors: 0, marketingEvents: 0, apiUsage: 0, emailDays: 0 };
     let more = false;
     for (const table of Object.keys(RETENTION_DAYS) as (keyof typeof RETENTION_DAYS)[]) {
       const cutoff = now - RETENTION_DAYS[table] * DAY_MS;

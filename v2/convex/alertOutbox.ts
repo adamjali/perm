@@ -16,7 +16,7 @@ import {
 } from "./_generated/server";
 import { internal } from "./_generated/api";
 import type { Doc, Id } from "./_generated/dataModel";
-import { FROM_EMAIL, getResend, sendEmailWithRetry } from "./lib/email";
+import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL } from "./lib/links";
 import { oneClickUnsubscribeUrl, prefsLink } from "./lib/prefsLink";
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
@@ -400,7 +400,7 @@ export const sendBundles = internalAction({
             });
           });
         }
-        const result = await sendEmailWithRetry(getResend(), {
+        const result = await sendOrQueue(ctx, "alert-bundle", getResend(), {
           from: FROM_EMAIL,
           to: email,
           subject,

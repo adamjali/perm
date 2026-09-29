@@ -14,6 +14,7 @@ import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import { SUBSCRIBE_IP_LIMIT } from "../queueAlerts";
 import { QUEUED_REPLY } from "../confirmationQueue";
+import { BUDGETS } from "../lib/alertBudgets";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 
 const SECRET = "test-unsubscribe-secret";
@@ -236,22 +237,20 @@ describe("abuse limits", () => {
     // Every request from a DIFFERENT IP and a different address, which defeats
     // both the per-address cooldown and the per-IP counter.
     const results = [];
-    for (let i = 0; i < 34; i++) {
+    for (let i = 0; i < BUDGETS.queueConfirm.limit + 16; i++) {
       results.push(
         await t.mutation(internal.queueAlerts.subscribe, {
           email: `flood${i}@example.com`,
           filingMonth: "2025-09",
-          ip: `198.51.100.${i}`,
+          ip: `198.51.100.${i % 250}`,
         }),
       );
     }
 
     const allowed = results.filter((r) => r.ok && r.message !== QUEUED_REPLY).length;
-    // 18/day since the 2026-08-28 rebalance: the bulletin alerts and the
-    // preference-center links joined the shared Resend pool, and the full
-    // arithmetic (totalling 70/day worst case, 30 reserved for auth mail)
-    // lives in convex/caseAlerts.ts. This pin moves ONLY when that table does.
-    expect(allowed).toBe(18);
+    // The pool's own number (convex/lib/alertBudgets.ts, held to the ledger in
+    // convex/caseAlerts.ts by src/lib/__tests__/alertBudgets.test.ts).
+    expect(allowed).toBe(BUDGETS.queueConfirm.limit);
     expect(results[results.length - 1]).toEqual({ ok: true, message: QUEUED_REPLY, queued: true });
     vi.useRealTimers();
   });

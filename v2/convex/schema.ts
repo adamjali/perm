@@ -2220,6 +2220,46 @@ export default defineSchema({
   }).index("by_day_pool", ["day", "pool"]),
 
   /**
+   * The day's email count against Resend's free-plan quota (convex/lib/emailLimits.ts).
+   * One row per UTC day, the day Resend counts by. `sent` is this app's own
+   * count after each successful send; `reported` is the highest count Resend
+   * itself gave (its `x-resend-daily-quota` header, or its list of sent mail
+   * plus a margin for received mail). The day's use is the larger of the two.
+   */
+  emailDays: defineTable({
+    day: v.string(),
+    sent: v.number(),
+    reported: v.optional(v.number()),
+    /** Sends that failed and went into the retry queue. */
+    retried: v.optional(v.number()),
+    /** Queued sends given up on (two weeks, or a queue at its ceiling). */
+    lost: v.optional(v.number()),
+    /** When the admin was emailed about failed sends today. */
+    alertedAt: v.optional(v.number()),
+  }).index("by_day", ["day"]),
+
+  /**
+   * Emails that failed to send for a reason a retry can fix: Resend's own
+   * limits or outages, the network, a key or domain problem (Sep 29 2026). The
+   * whole send is kept as JSON and tried again on a backoff; a quota refusal
+   * waits for the next UTC day. Deleted when sent; given up on after two weeks.
+   * Sign-in codes are never stored here: a late code is useless.
+   */
+  emailRetries: defineTable({
+    kind: v.string(),
+    /** First recipient, for the admin view. */
+    to: v.string(),
+    payload: v.string(),
+    queuedAt: v.number(),
+    nextAttemptAt: v.number(),
+    attempts: v.number(),
+    lastError: v.string(),
+    claimedAt: v.optional(v.number()),
+  })
+    .index("by_next", ["nextAttemptAt"])
+    .index("by_queuedAt", ["queuedAt"]),
+
+  /**
    * Confirmation requests a full pool could not send at once (Sep 29 2026).
    * One row per (kind, address): a newer request replaces the waiting one,
    * because each module's per-address cooldown would absorb a second
