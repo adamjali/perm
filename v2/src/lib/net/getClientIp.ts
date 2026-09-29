@@ -2,46 +2,31 @@
  * Trusted client-IP extraction.
  *
  * Single source of truth for resolving a request's client IP across route
- * handlers AND proxy.ts/middleware, both receive a Web `Request`, which is all
- * `ipAddress()` needs.
+ * handlers and proxy.ts; both receive a Web `Request`.
+ *
+ * The site runs behind Cloudflare, whose tunnel is the only thing that reaches
+ * nginx on the server. nginx takes the visitor's address from Cloudflare's own
+ * `CF-Connecting-IP` (trusted only from the tunnel on 127.0.0.1) and OVERWRITES
+ * both `X-Real-IP` and `X-Forwarded-For` with it, so neither header can carry a
+ * value the client sent (scripts/oracle/nginx/permtracker.conf). Reading them
+ * here is therefore safe in production. In local dev nothing sets them and the
+ * result is `undefined`, which the rate limiters treat as fail-open.
  *
  * @module lib/net/getClientIp
  */
 
-import { ipAddress } from '@vercel/functions';
-
 /**
  * Resolve the trusted client IP for a request.
- *
- * On Vercel, the platform overwrites `x-forwarded-for` at its edge with the real
- * public client IP it observed (and rejects upstream-supplied values to prevent
- * spoofing). The official `@vercel/functions` `ipAddress()` helper reads those
- * Vercel-attested headers and is the version-stable way to get the IP, it
- * insulates us from header-name churn (Next.js 16 removed `request.ip`).
- *
- * Falls back to header parsing for local dev / non-Vercel runtimes only. Off
- * Vercel these headers are NOT trustworthy, but local dev has no real client IP
- * to protect anyway, so a best-effort value (or `undefined`) is acceptable.
- *
- * NOTE: If a proxy/CDN is ever placed IN FRONT of Vercel (e.g. Cloudflare),
- * `x-forwarded-for` becomes attacker-influenceable and only
- * `x-vercel-forwarded-for` stays Vercel-attested. In that case enable Vercel's
- * Trusted Proxy (Enterprise) feature rather than parsing XFF manually.
  *
  * @param request - Any Web `Request` (route handler `Request` or `NextRequest`).
  * @returns The client IP, or `undefined` when none is available.
  */
 export function getClientIp(request: Request): string | undefined {
-  // Primary: official helper, Vercel-attested.
-  const fromHelper = ipAddress(request);
-  if (fromHelper) return fromHelper;
+  const real = request.headers.get('x-real-ip')?.trim();
+  if (real) return real;
 
-  // Fallback for local dev / non-Vercel runtimes only.
-  const vercelXff = request.headers.get('x-vercel-forwarded-for');
-  if (vercelXff) return vercelXff.split(',')[0]?.trim() || undefined;
-
+  // nginx writes the same single address here; the first hop is taken only in
+  // case something between nginx and the app ever appends one.
   const xff = request.headers.get('x-forwarded-for');
-  if (xff) return xff.split(',')[0]?.trim() || undefined;
-
-  return request.headers.get('x-real-ip') || undefined;
+  return xff?.split(',')[0]?.trim() || undefined;
 }

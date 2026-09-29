@@ -6,7 +6,13 @@ name: IndexNow
 # zero manual effort. Manual run anytime: `node v2/scripts/indexnow.mjs`.
 
 on:
-  deployment_status
+  # After each successful deploy to the server (the site left Vercel on Sep 28
+  # 2026, and Vercel's deployment events with it).
+  workflow_run:
+    workflows: ["Oracle build and deploy"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -17,13 +23,10 @@ concurrency:
 
 jobs:
   submit:
-    # Only fire on a successful Vercel *production* deployment (skip previews,
-    # failures, and in-progress states). If this job never runs, check the exact
-    # `environment` label under the repo's Deployments tab and match it below.
+    # Only after a deploy that succeeded (or a manual run).
     if: >-
-      github.event.deployment_status.state == 'success' &&
-      (github.event.deployment_status.environment == 'Production' ||
-       github.event.deployment_status.environment == 'production')
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7

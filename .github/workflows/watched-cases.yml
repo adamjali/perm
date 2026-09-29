@@ -5,7 +5,7 @@ name: Watched cases (hourly)
 # The full and pending sweeps check every case twice a day, so a watched case
 # could change and its subscriber hear up to twelve hours later. Two rivals
 # sell "hourly checks" as a paid plan; this makes it free. Dispatched hourly
-# at :25 by Vercel cron (/api/cron/dispatch/watched-cases), because GitHub's
+# at :25 by the server's timer (/api/cron/dispatch/watched-cases), because GitHub's
 # own schedule runs hours late here.
 #
 #   1. Skip the hour if a sweep is running: it is covering these cases anyway,

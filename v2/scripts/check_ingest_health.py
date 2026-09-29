@@ -367,8 +367,9 @@ def check_backfill(db) -> int:
 # day, in perm_docs['discovery_budget_<date>']. It is the number a crawler on
 # `/perm-case-status?case=` moves - Meta's spent 2,000 a day before 5 AM in
 # September 2026 - and the one thing on this site that alerts on nothing
-# else. Vercel's only firewall alert fires at 100,000 requests per 10
-# minutes, ten times that crawler's rate. Judged against the site's own
+# else. (Vercel's only firewall alert fired at 100,000 requests per 10
+# minutes, ten times that crawler's rate; the site has sat behind Cloudflare
+# since Sep 28 2026.) Judged against the site's own
 # recent median with a floor, because the organic rate is single digits.
 LOOKUP_DEMAND_FLOOR = 500
 LOOKUP_DEMAND_MULTIPLE = 5
@@ -615,7 +616,7 @@ def check_lookup_demand(db) -> int:
           f"{len(history)} days {median:.0f}, limit {limit:,.0f})  {'SPIKE' if spike else 'ok'}")
     if spike:
         print("\nSomething is driving live case lookups far above this site's own rate. "
-              "Read the Vercel Firewall Traffic tab grouped by ASN and JA4 before "
+              "Read Cloudflare's Security Events for the zone, grouped by ASN and JA4, before "
               "anything else; the last time this happened it was one crawler on "
               "rotating addresses.")
         return 1

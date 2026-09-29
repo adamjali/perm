@@ -68,7 +68,7 @@ export default function robots(): MetadataRoute.Robots {
       // AI crawlers are intentionally ALLOWED for discoverability (GEO): we WANT this
       // product surfaced in AI search/answers (ChatGPT, Claude, Perplexity, Gemini) and
       // in training corpora that feed them. Public pages are marketing/educational content
-      // meant to be found; the actual app stays behind auth (authDisallow) + BotID.
+      // meant to be found; the actual app stays behind auth (authDisallow).
       // Covers search + training bots alike: GPTBot, ChatGPT-User, OAI-SearchBot,
       // ClaudeBot, anthropic-ai, Google-Extended, PerplexityBot, CCBot, Amazonbot, etc.
       {

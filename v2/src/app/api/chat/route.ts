@@ -38,7 +38,6 @@ import type { ActionMode } from '@/lib/ai/tool-permissions';
 import { createCacheStats } from '@/lib/ai/cache';
 import { captureError } from '@/lib/sentry';
 import { getPostHogClient } from '@/lib/posthog-server';
-import { checkBotId } from 'botid/server';
 import { chatDebug, createTools, truncateForLog } from './create-tools';
 
 // Allow up to 60 seconds for streaming responses (extra time for fallbacks + tool calls)
@@ -78,26 +77,11 @@ export async function POST(req: Request) {
   chatDebug(`[Chat API] [${sessionId}] === New chat request ===`);
 
   try {
-    // BotID check — reject non-browser callers before any Convex hit or LLM
-    // call. Client-side botid instrumentation (see src/instrumentation-client.ts)
-    // attaches a signed token to /api/chat requests; direct-API attackers have
-    // no token and fail here. Costs nothing on Basic tier.
-    // Vercel-only: on the self-hosted server the chat relies on sign-in
-    // (Turnstile-gated sign-up), the per-IP limit below and the user quota.
-    const botVerdict = process.env.VERCEL ? await checkBotId() : { isBot: false };
-    if (botVerdict.isBot) {
-      chatDebug(`[Chat API] [${sessionId}] Bot blocked`);
-      return new Response(
-        JSON.stringify({ error: "Access denied" }),
-        { status: 403, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
     // Per-IP rate limit — caps one source from burning through AI quotas
-    // regardless of which authenticated user is calling. Runs AFTER BotID
-    // so we don't burn rate-limit budget on verified bots.
-    // getClientIp() reads the Vercel-attested IP (not the spoofable leftmost
-    // x-forwarded-for hop). "unknown" only when no IP is resolvable (local dev).
+    // regardless of which signed-in user is calling. The chat also needs a
+    // session (sign-up is Turnstile-gated) and carries a per-user quota.
+    // getClientIp() reads the address nginx set from Cloudflare's own header,
+    // never a client-sent one. "unknown" only when none resolves (local dev).
     const clientIp = getClientIp(req) || "unknown";
     try {
       const ipCheck = await fetchMutation(api.authRateLimit.checkIpRateLimit, {

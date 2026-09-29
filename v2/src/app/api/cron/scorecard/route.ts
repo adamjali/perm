@@ -2,10 +2,10 @@
  * The daily scorecard run: record today's predictions, grade the decided
  * ones, rewrite the summaries.
  *
- * Vercel's cron calls it with `Authorization: Bearer <CRON_SECRET>` at 12:00
- * UTC (8 AM Eastern), after the 4:10 AM sweep and the gap sweep behind it
- * have written the census and the event log this reads. Declared in
- * vercel.json against HOUSEKEEPING_JOBS in ../dispatch/jobs.ts.
+ * The server's timer calls it with `Authorization: Bearer <CRON_SECRET>` at
+ * 12:00 UTC (8 AM Eastern), after the 4:10 AM sweep and the gap sweep behind
+ * it have written the census and the event log this reads. Its timer in
+ * scripts/oracle/systemd is held to HOUSEKEEPING_JOBS in ../dispatch/jobs.ts.
  *
  * Idempotent within a day: a prediction's id is its day, source and case, and
  * rows are inserted OR IGNORE, so a second delivery of the same cron records

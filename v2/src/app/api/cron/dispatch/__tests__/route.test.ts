@@ -1,11 +1,11 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 /**
  * The guards on the cron dispatcher, and the drift guard between the job
- * table and vercel.json: a job whose schedule is in one and not the other
+ * table and the server's timers: a job whose schedule is in one and not the other
  * is a job that silently never runs, which is the exact defect this route
  * exists to end.
  */
@@ -134,35 +134,48 @@ describe("GET /api/cron/dispatch/[job]", () => {
   });
 });
 
-describe("vercel.json agrees with the job table", () => {
-  const vercelJson = JSON.parse(readFileSync(join(process.cwd(), "vercel.json"), "utf8")) as {
-    crons?: Array<{ path: string; schedule: string }>;
-  };
-  const crons = vercelJson.crons ?? [];
+describe("the server's timers agree with the job table", () => {
+  // The clock is systemd on the server (scripts/oracle/systemd): one
+  // permtracker-cron@<job>.timer per job, each running permtracker-cron, which
+  // calls this route. Vercel's crons were switched off on Sep 28 2026.
+  const dir = join(process.cwd(), "scripts/oracle/systemd");
+  const timers = new Map(
+    readdirSync(dir)
+      .filter((f) => /^permtracker-cron@.+\.timer$/.test(f))
+      .map((f) => {
+        const body = readFileSync(join(dir, f), "utf8");
+        const unit = f.slice("permtracker-cron@".length, -".timer".length);
+        expect(body, `${f} starts its own service`).toContain(`Unit=permtracker-cron@${unit}.service`);
+        return [unit, body.match(/^OnCalendar=(.+)$/m)?.[1]?.trim()] as const;
+      }),
+  );
 
-  it("declares exactly one cron per job, at the job's schedule", () => {
-    const byPath = new Map(crons.map((c) => [c.path, c.schedule]));
+  /** A job's cron expression as the OnCalendar line its timer must carry. */
+  function onCalendar(cron: string): string {
+    const [min, hour, dom, mon, dow] = cron.split(" ");
+    expect([dom, mon], `${cron}: only minute, hour and weekday are used`).toEqual(["*", "*"]);
+    const pad = (v: string | undefined) => (v === "*" ? "*" : String(v).padStart(2, "0"));
+    const day = dow === "*" ? "" : `${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][Number(dow)]} `;
+    return `${day}*-*-* ${pad(hour)}:${pad(min)}:00 UTC`;
+  }
+
+  it("has one timer per job, at the job's schedule", () => {
     for (const [name, job] of Object.entries(CRON_JOBS)) {
-      expect(byPath.get(`${CRON_PATH_PREFIX}${name}`), `cron for ${name}`).toBe(job.schedule);
+      expect(timers.get(`dispatch-${name}`), `timer for ${name}`).toBe(onCalendar(job.schedule));
     }
     for (const [name, job] of Object.entries(HOUSEKEEPING_JOBS)) {
-      expect(byPath.get(job.path), `cron for housekeeping ${name}`).toBe(job.schedule);
+      expect(timers.get(name), `timer for housekeeping ${name}`).toBe(onCalendar(job.schedule));
     }
-    expect(crons.length, "a cron pointing at a job that is in neither table").toBe(
+    expect(timers.size, "a timer for a job that is in neither table").toBe(
       Object.keys(CRON_JOBS).length + Object.keys(HOUSEKEEPING_JOBS).length,
     );
   });
 
-  it("every cron path resolves to a known job, dispatch or housekeeping", () => {
-    const housekeeping = new Set(Object.values(HOUSEKEEPING_JOBS).map((j) => j.path));
-    for (const c of crons) {
-      if (housekeeping.has(c.path)) continue;
-      expect(c.path.startsWith(CRON_PATH_PREFIX)).toBe(true);
-      expect(CRON_JOBS[c.path.slice(CRON_PATH_PREFIX.length)], c.path).toBeDefined();
-    }
-  });
-
-  it("every housekeeping path sits under /api/cron/ (the Firewall bypass for vercel-cron)", () => {
-    for (const j of Object.values(HOUSEKEEPING_JOBS)) expect(j.path.startsWith("/api/cron/")).toBe(true);
+  it("the runner calls each housekeeping job at its own path", () => {
+    const runner = readFileSync(join(process.cwd(), "scripts/oracle/bin/permtracker-cron"), "utf8");
+    const listed = runner.match(/^\s*([\w|-]+)\) path="\/api\/cron\/\$job"/m)?.[1]?.split("|").sort();
+    expect(listed).toEqual(Object.keys(HOUSEKEEPING_JOBS).sort());
+    for (const [name, j] of Object.entries(HOUSEKEEPING_JOBS)) expect(j.path).toBe(`/api/cron/${name}`);
+    expect(runner).toContain(`dispatch-*) path="${CRON_PATH_PREFIX}\${job#dispatch-}"`);
   });
 });

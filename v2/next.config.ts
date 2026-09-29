@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 import withSerwistInit from "@serwist/next";
 import bundleAnalyzer from "@next/bundle-analyzer";
-import { withBotId } from "botid/next/config";
 
 // Create bundle analyzer wrapper
 const withBundleAnalyzer = bundleAnalyzer({
@@ -79,11 +78,14 @@ const withSerwist = withSerwistInit({
 function contentSecurityPolicy(frameAncestors: "'none'" | "*"): string {
   return [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://va.vercel-scripts.com https://vercel.live https://browser.sentry-cdn.com https://*.senja.io https://challenges.cloudflare.com https://analytics.ahrefs.com",
+    // 'unsafe-eval' only in development, where hot reloading evaluates code.
+    // The live site runs nothing that needs it, so an injected string cannot
+    // be turned into running code.
+    `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"} https://browser.sentry-cdn.com https://*.senja.io https://challenges.cloudflare.com https://analytics.ahrefs.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://va.vercel-scripts.com https://vitals.vercel-insights.com https://vercel.live wss://vercel.live https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io https://senja.io https://fonts.googleapis.com https://fonts.gstatic.com https://us.i.posthog.com https://us-assets.i.posthog.com https://challenges.cloudflare.com https://analytics.ahrefs.com",
+    "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io https://senja.io https://fonts.googleapis.com https://fonts.gstatic.com https://us.i.posthog.com https://us-assets.i.posthog.com https://challenges.cloudflare.com https://analytics.ahrefs.com",
     "media-src 'self' blob: data:",
     "frame-src 'self' https://app.supademo.com https://*.convex.cloud https://challenges.cloudflare.com",
     "worker-src 'self' blob:",
@@ -94,19 +96,13 @@ function contentSecurityPolicy(frameAncestors: "'none'" | "*"): string {
 }
 
 /*
- * Vercel sets VERCEL=1 during its builds. Anywhere else (the self-hosted
- * Oracle server, built on GitHub's ARM runners) gets a standalone server
- * bundle and a deployment id, so a visitor mid-session during a deploy is
- * never served chunks from a different build. BotID is Vercel's service and
- * is only wired up there.
+ * The site runs on its own server (Oracle, built on GitHub's ARM runners): a
+ * standalone server bundle and a deployment id, so a visitor mid-session
+ * during a deploy is never served chunks from a different build.
  */
-const ON_VERCEL = Boolean(process.env.VERCEL);
-
 const nextConfig: NextConfig = {
-  ...(ON_VERCEL
-    ? {}
-    : { output: "standalone" as const, deploymentId: process.env.DEPLOYMENT_ID || undefined }),
-  env: { NEXT_PUBLIC_ON_VERCEL: ON_VERCEL ? "1" : "" },
+  output: "standalone",
+  deploymentId: process.env.DEPLOYMENT_ID || undefined,
   /*
    * Prerender budget per page, up from the 60s default. Measured 2026-08-28:
    * Turso (the status page's own word was "degraded") served full-table
@@ -387,10 +383,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-// BotID wraps the Next config to install client-side bot-signal collection
-// + server proxy rewrites. checkBotId() server-side reads the token from
-// protected routes (see src/instrumentation-client.ts for the protect list).
-const configWithSerwist = ON_VERCEL ? withBotId(withSerwist(nextConfig)) : withSerwist(nextConfig);
+const configWithSerwist = withSerwist(nextConfig);
 
 // Sentry configuration options
 const sentryOptions = {

@@ -3,9 +3,10 @@
  *
  * The privacy policy (section 18) promises that a stored lookup is deleted
  * twelve months after the last lookup of that receipt. `pruneUscisCaseStatus`
- * implements and tests that; this route is its clock. Vercel's cron calls it
- * with `Authorization: Bearer <CRON_SECRET>` (declared in vercel.json against
- * HOUSEKEEPING_JOBS in ../dispatch/jobs.ts, which the test there enforces).
+ * implements and tests that; this route is its clock. The server's timer calls
+ * it with `Authorization: Bearer <CRON_SECRET>` (its timer in
+ * scripts/oracle/systemd is held to HOUSEKEEPING_JOBS in ../dispatch/jobs.ts
+ * by the test there).
  * Never a GET without the secret: a mail gateway or a crawler must not be
  * able to run a delete, even a correct one.
  */

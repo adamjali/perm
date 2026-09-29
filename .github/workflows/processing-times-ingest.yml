@@ -32,7 +32,7 @@ name: DOL processing times
 #   cd v2 && node --experimental-strip-types scripts/ingest_processing_times.mts
 
 on:
-  # No `schedule:` any more: Vercel's clock dispatches processing-times at
+  # No `schedule:` any more: the server's timer dispatches processing-times at
   # 07:00 UTC through /api/cron/dispatch (GitHub ran this cron 4 to 7.5 hours
   # late every day, measured Sep 7 2026).
   workflow_dispatch:

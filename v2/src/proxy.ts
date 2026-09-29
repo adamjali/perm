@@ -60,8 +60,8 @@ const handler = convexAuthNextjsMiddleware(
     // alongside the per-email limit inside Convex). Only POSTs matter —
     // the sign-in/up flow is POST-only.
     if (request.method === "POST" && isConvexAuthApiRoute(request)) {
-      // getClientIp() reads the Vercel-attested IP via @vercel/functions, not
-      // the spoofable leftmost x-forwarded-for hop. "unknown" only when no IP
+      // getClientIp() reads the address nginx set from Cloudflare's own
+      // header, never a client-sent one. "unknown" only when no IP
       // is resolvable (local dev); checkIpRateLimit treats that literal as a
       // per-request fail-open so unknown-IP traffic never shares one real
       // rate-limit bucket.

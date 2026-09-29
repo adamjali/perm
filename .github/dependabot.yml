@@ -1,7 +1,6 @@
 version: 2
-# Tuesday, not Monday: each Dependabot PR spins ~6 Vercel preview builds and
-# two fail every week on the AI SDK peer gap; keeping them off Monday keeps a
-# cost-baseline day clean. vercel-ignore.sh skips dependabot/* previews anyway.
+# Tuesday, not Monday: keeps a Monday free of dependency PRs. (The site has
+# run on its own server since Sep 28 2026; PRs no longer build previews.)
 updates:
   # Frontend dependencies (npm) - v2 directory
   - package-ecosystem: "npm"

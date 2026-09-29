@@ -1,23 +1,17 @@
 /**
- * The scheduled GitHub jobs that Vercel's clock drives.
+ * The scheduled GitHub jobs that the server's clock drives.
  *
  * WHY THIS EXISTS. GitHub's `schedule` trigger ran this repo's crons two to
  * seven and a half hours late on every one of the nine days measured to
  * Sep 7 2026 (the "4:10 AM" sweep landed between 8:00 and 8:50 AM, the
- * health check between 9:15 and 10:30). Vercel invokes a cron job within
- * the minute on Pro, so each job here is a Vercel cron that calls
- * `/api/cron/dispatch/<job>`, and the route fires GitHub's
- * `workflow_dispatch` for it. The schedules are the same UTC strings the
- * workflows used to carry in their own `schedule:` blocks.
- *
- * Deployment note: Vercel binds environment variables at build time, and
- * `vercel redeploy` of a docs-only commit is skipped by the ignore rule
- * (it reads as a 9-second "Canceled" deployment), so the build that
- * bound GITHUB_DISPATCH_TOKEN on Sep 7 2026 had to carry a change under
- * src/. This comment is that change.
+ * health check between 9:15 and 10:30). So each job here has a systemd timer
+ * on the server (scripts/oracle/systemd/permtracker-cron@dispatch-<job>.timer)
+ * that calls `/api/cron/dispatch/<job>`, and the route fires GitHub's
+ * `workflow_dispatch` for it. Vercel's cron did this from Sep 7 2026 until
+ * the move to the server on Sep 28 2026.
  *
  * Kept in a sibling of the route on purpose: a `route.ts` may export only
- * handler names, and `vercel.json` has to agree with this table, which the
+ * handler names, and the timers have to agree with this table, which the
  * test next door enforces.
  */
 
@@ -26,7 +20,7 @@ export interface CronJob {
   workflow: string;
   /** `workflow_dispatch` inputs; omitted for workflows that take none. */
   inputs?: Record<string, string>;
-  /** The cron expression, UTC, exactly as it appears in vercel.json. */
+  /** When it runs, as a UTC cron expression; its timer's OnCalendar must match. */
   schedule: string;
   /** What the job is, for the log line and the docs. */
   description: string;
@@ -36,8 +30,8 @@ export const REPO = "adamjali/perm";
 export const BRANCH = "main";
 
 /**
- * A second dispatch inside this window is skipped. Vercel documents that
- * cron delivery can invoke the same scheduled run twice; a second full sweep
+ * A second dispatch inside this window is skipped. A timer that catches up
+ * after a restart (Persistent=true) can land on a scheduled run; a second full sweep
  * is ~10,000 DOL requests for nothing, and the workflow's concurrency group
  * would queue it rather than drop it.
  */
@@ -82,7 +76,8 @@ export const CRON_JOBS: Record<string, CronJob> = {
     inputs: { mode: "pending" },
     schedule: "40 19 * * *",
     description: "pending PERM cases against DOL, the mid-day refresh",
-  },  "daily-monitor": {
+  },
+  "daily-monitor": {
     workflow: "daily-monitor.yml",
     schedule: "30 11 * * *",
     description: "the morning operator report: health, bills, runs, traffic, emailed to the admin",
@@ -95,13 +90,13 @@ export const CRON_PATH_PREFIX = "/api/cron/dispatch/";
  * Housekeeping that runs INSIDE this app rather than on GitHub. Same clock,
  * same secret, its own route, because the work is a Turso write the app's
  * own read layer owns (and tests): a GitHub step would restate the retention
- * constant in a second language. The test next door holds `vercel.json` to
- * the union of this table and CRON_JOBS.
+ * constant in a second language. The test next door holds the server's
+ * timers to the union of this table and CRON_JOBS.
  */
 export interface HousekeepingJob {
-  /** The route Vercel's cron calls, under /api/cron/ so the Firewall bypass covers it. */
+  /** The route the timer calls: /api/cron/<name>, which permtracker-cron builds. */
   path: string;
-  /** The cron expression, UTC, exactly as it appears in vercel.json. */
+  /** When it runs, as a UTC cron expression; its timer's OnCalendar must match. */
   schedule: string;
   description: string;
 }

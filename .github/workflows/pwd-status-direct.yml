@@ -27,7 +27,7 @@ name: PWD case status (direct from DOL)
 # include that morning's PERM discoveries, and inside DOL's quiet hours.
 
 on:
-  # No `schedule:` any more: Vercel's clock dispatches pwd-daily (09:40 UTC)
+  # No `schedule:` any more: the server's timers dispatch pwd-daily (09:40 UTC)
   # and pwd-weekly-full (10:40 UTC Sundays) through /api/cron/dispatch, because
   # GitHub ran these crons hours late every day (measured Sep 7 2026).
   workflow_dispatch:

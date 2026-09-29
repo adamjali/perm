@@ -8,18 +8,19 @@ import {
 } from "../jobs";
 
 /**
- * Vercel's clock, GitHub's runners.
+ * The server's clock, GitHub's runners.
  *
- * Vercel invokes this with `Authorization: Bearer <CRON_SECRET>` (the
- * header is added automatically when the env var exists) on the schedules
- * in vercel.json; the route fires `workflow_dispatch` for the named job.
+ * A systemd timer on the server (scripts/oracle/systemd) runs permtracker-cron,
+ * which calls this with `Authorization: Bearer <CRON_SECRET>` on the schedules
+ * in ../jobs.ts; the route fires `workflow_dispatch` for the named job.
  * See ../jobs.ts for why GitHub's own scheduler is not trusted with this.
  *
  * Three refusals and one skip, each with its own status so monitoring can
- * tell them apart: 401 (not Vercel), 404 (not a job), 500 (the GitHub token
+ * tell them apart: 401 (no secret), 404 (not a job), 500 (the GitHub token
  * is not configured, which is the state between deploying this and Adam
  * creating the token), and 200 with `skipped` when the workflow already has
- * a run from the last 20 minutes (Vercel documents duplicate deliveries).
+ * a run from the last 20 minutes (a timer catching up after a restart can
+ * land on top of a scheduled run).
  * A GitHub refusal is 502 with GitHub's status, never a 200.
  */
 

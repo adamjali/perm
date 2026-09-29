@@ -33,9 +33,10 @@ name: Case status (direct from DOL)
 
 on:
   # No `schedule:` any more. GitHub fired these crons 2 to 7.5 hours late on
-  # every one of nine measured days (Sep 7 2026), so Vercel's clock drives them
-  # through /api/cron/dispatch: case-status-full at 08:10 UTC, case-status-pending
-  # at 19:40 UTC (v2/vercel.json). Both arrive here as workflow_dispatch.
+  # every one of nine measured days (Sep 7 2026), so the server's timers drive
+  # them through /api/cron/dispatch: case-status-full at 08:10 UTC,
+  # case-status-pending at 19:40 UTC (v2/src/app/api/cron/dispatch/jobs.ts).
+  # Both arrive here as workflow_dispatch.
   workflow_dispatch:
     inputs:
       mode:

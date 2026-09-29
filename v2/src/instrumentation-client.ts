@@ -4,20 +4,24 @@
  * Next.js loads exactly ONE `instrumentation-client` file, and because this app
  * lives under `src/`, it must be THIS file (`src/instrumentation-client.ts`);
  * a root-level `instrumentation-client.ts` is silently ignored. (A second
- * copy is how PostHog analytics once went offline: BotID added its own file
- * and one of the two was dropped. Never add another.)
- *
- * Vercel BotID USED to start here too and no longer does: it protects only
- * the signed-in AI chat, so it starts in the (authenticated) layout through
- * src/components/security/BotIdInit.tsx, and public pages never load it.
+ * copy is how PostHog analytics once went offline: a bot-check library added
+ * its own file and one of the two was dropped. Never add another.)
  *
  * The initializer is wrapped in try/catch so a failure never breaks the
  * client module's side-effect import.
  */
 
 import posthog from "posthog-js";
+import { config as zodConfig } from "zod/v4/core";
 
 import { isAnalyticsOff, isGpcEnabled } from "@/lib/analytics";
+
+// The live site's security policy has no 'unsafe-eval', so zod must not
+// compile parsers with new Function: its probe would be refused and log a
+// policy error on every page with a form. It falls back correctly either way;
+// this skips the probe. Schemas read the flag when they are built, and this
+// file runs before any app module loads.
+zodConfig({ jitless: true });
 
 /**
  * Strip `case=<number>` out of every URL-shaped property on an event.
@@ -203,8 +207,3 @@ if (posthogKey) {
     "[PostHog] NEXT_PUBLIC_POSTHOG_KEY is not set. Analytics disabled."
   );
 }
-
-// Vercel BotID is NOT started here. It protects only POST /api/chat, the
-// signed-in AI chat, so it starts in the (authenticated) layout through
-// src/components/security/BotIdInit.tsx and public pages never load it. Why
-// /api/auth is not protected is in that component's comment.

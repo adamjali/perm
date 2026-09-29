@@ -14,7 +14,6 @@ import { describe, expect, it, vi } from "vitest";
 vi.mock("@sentry/nextjs", () => ({ withSentryConfig: (c: unknown) => c }));
 vi.mock("@serwist/next", () => ({ default: () => (c: unknown) => c }));
 vi.mock("@next/bundle-analyzer", () => ({ default: () => (c: unknown) => c }));
-vi.mock("botid/next/config", () => ({ withBotId: (c: unknown) => c }));
 
 type Rule = { source: string; headers: { key: string; value: string }[] };
 
@@ -59,5 +58,28 @@ describe("framing headers", () => {
     // The two policies differ in frame-ancestors and nothing else.
     const strip = (csp: string | undefined) => csp?.replace(/frame-ancestors [^;]+/, "");
     expect(strip(embed.get("content-security-policy"))).toBe(strip(page.get("content-security-policy")));
+  });
+});
+
+describe("script policy", () => {
+  it("the live site allows no string evaluation and no Vercel hosts", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    try {
+      const csp = (await effectiveHeaders("/")).get("content-security-policy") ?? "";
+      expect(csp).toMatch(/script-src 'self'/);
+      expect(csp).not.toContain("'unsafe-eval'");
+      expect(csp).not.toMatch(/vercel/i);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("development keeps 'unsafe-eval' for hot reloading", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    try {
+      expect((await effectiveHeaders("/")).get("content-security-policy")).toContain("'unsafe-eval'");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });
