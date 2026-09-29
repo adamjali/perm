@@ -33,7 +33,7 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # Keep @types/node on v24 (matches Vercel Node 24 runtime via engines.node)
+      # Keep @types/node on v24: the server runs Node 24 (engines.node 24.x).
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
       # Ignore next major bumps only — allow minor+patch auto-update.
@@ -68,3 +68,12 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
+    # CodeQL's init, autobuild and analyze (and Semgrep's upload-sarif) must
+    # move together: init writes a config stamped with its version and
+    # autobuild refuses one from another ("Loaded a configuration file for
+    # version '4.38.1', but running version '4.38.0'", Sep 29 2026, when
+    # Dependabot bumped init alone and CodeQL failed on its PR).
+    groups:
+      codeql-action:
+        patterns:
+          - "github/codeql-action*"

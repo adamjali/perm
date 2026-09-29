@@ -139,10 +139,35 @@ def wait_for_stub() -> None:
     raise SystemExit("stub never came up")
 
 
+def check_count_kept(failures: list[str]) -> None:
+    """The load's "kept" count must use the planner's key. By the bare title an
+    occupation (keyed "<SOC code>|<title>") never matched, and the log read
+    "0 kept, 1,410 new" over 1,410 unchanged slugs on Sep 29 2026."""
+    sys.path.insert(0, str(HERE))
+    import turso_migrate_public as tmp_mod
+    from store_entities import plan_sticky_slugs
+
+    items = [{"title": "Managers, All Other", "code": "11-9199", "total": 9},
+             {"title": "Managers, All Other", "code": "11-9198", "total": 5},
+             {"title": "Actuaries", "code": "15-2011", "total": 3}]
+    prior = {"11-9199|Managers, All Other": "managers-all-other",
+             "11-9198|Managers, All Other": "managers-all-other-2",
+             "15-2011|Actuaries": "actuaries"}
+    name_of = lambda r: r["title"]  # noqa: E731
+    assigned, _ = plan_sticky_slugs(
+        items, name_of, prior,
+        key_of=lambda r: tmp_mod.identity_key("occupation", r["title"], r.get("code")))
+    kept = tmp_mod.count_kept("occupation", assigned, name_of, prior)
+    if kept != 3:
+        failures.append(f"0. kept count reads {kept} of 3 unchanged occupation slugs")
+    print(f"  [0] kept count           occupations kept={kept} of 3")
+
+
 def main() -> int:
     if shutil.which(sys.executable) is None:
         return 1
     failures: list[str] = []
+    check_count_kept(failures)
 
     stub = subprocess.Popen(
         [sys.executable, str(HERE / "turso_stub.py"),

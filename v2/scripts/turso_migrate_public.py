@@ -150,6 +150,12 @@ def identity_key(kind: str, name: str, code) -> str:
     return f"{code or ''}|{name}" if kind == "occupation" else name
 
 
+def count_kept(kind: str, assigned, name_of, prior: dict[str, str]) -> int:
+    """How many entities kept the slug they held, keyed as the planner keys them."""
+    return sum(1 for slug, item in assigned
+               if prior.get(identity_key(kind, name_of(item), item.get("code"))) == slug)
+
+
 def insert_many(db, table, columns, rows, per_stmt=400, per_req=4):
     ph = "(" + ",".join("?" * len(columns)) + ")"
     head = f"INSERT OR REPLACE INTO {table} ({','.join(columns)}) VALUES "
@@ -255,7 +261,10 @@ def main() -> int:
         alias_rows.extend((kind, old, target) for old, target in aliases)
         unresolved_all.extend((kind, old) for old in unresolved)
         planned[kind] = [(slug, name_of(item), item) for slug, item in assigned]
-        kept = sum(1 for slug, item in assigned if prior_slug.get(kind, {}).get(name_of(item)) == slug)
+        # Counted by the SAME key the planner used: by the bare name an
+        # occupation never matched (its key carries the SOC code), so the
+        # log read "0 kept, 1,410 new" over 1,410 unchanged slugs (Sep 29).
+        kept = count_kept(kind, assigned, name_of, prior_slug.get(kind, {}))
         log(f"    {kind:11s} {len(assigned):>6,} slugs: {kept:,} kept, "
             f"{len(assigned) - kept:,} new, {len(aliases):,} aliased, {len(unresolved):,} unresolved")
     if unresolved_all:
