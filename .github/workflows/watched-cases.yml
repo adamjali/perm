@@ -51,9 +51,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           for wf in case-status-direct.yml pwd-status-direct.yml; do
-            n=$(curl -fsS -H "Authorization: Bearer $GH_TOKEN" \
-                  "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/$wf/runs?status=in_progress&per_page=1" \
-                | python3 -c "import json,sys; print(json.load(sys.stdin).get('total_count', 0))" || echo 0)
+            n=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow "$wf" --status in_progress \
+                  --limit 1 --json databaseId --jq length || echo 0)
             if [ "${n:-0}" -gt 0 ]; then
               echo "$wf is running; it covers these cases this hour"
               exit 0

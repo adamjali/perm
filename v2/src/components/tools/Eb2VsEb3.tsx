@@ -286,7 +286,7 @@ function LineCard({
   const fa = snapshot.latest?.finalAction[line]?.[country] ?? null;
   const dff = snapshot.latest?.datesForFiling[line]?.[country] ?? null;
   const month = snapshot.latest?.bulletinMonth;
-  const href = `/tools/green-card-line?category=${line}&country=${country}&pd=${priorityDate}`;
+  const href = `/tools/green-card-line?category=${encodeURIComponent(line)}&country=${encodeURIComponent(country)}&pd=${encodeURIComponent(priorityDate)}`;
   return (
     <section
       className={cn(

@@ -12,11 +12,16 @@ on:
 
 jobs:
   claude:
+    # Public repo: only the owner can start this. The action also checks write
+    # access, but stopping here means a stranger's "@claude" never gets a runner
+    # or a step near the OAuth token.
     if: |
+      github.actor == github.repository_owner && (
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
       (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      )
     runs-on: ubuntu-24.04
     permissions:
       contents: read

@@ -196,7 +196,7 @@ export function VisaChooser({ className }: { className?: string }) {
                     </Link>{" "}
                     {f.bulletin !== "EB1" ? (
                       <Link
-                        href={`/tools/green-card-line?category=${f.bulletin}&country=${country}`}
+                        href={`/tools/green-card-line?category=${encodeURIComponent(f.bulletin)}&country=${encodeURIComponent(country)}`}
                         className="inline-flex min-h-[44px] items-center gap-2 font-semibold underline underline-offset-2 hover:text-primary"
                       >
                         People ahead in it

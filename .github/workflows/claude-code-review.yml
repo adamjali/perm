@@ -15,13 +15,12 @@ jobs:
     # Skip bot-created PRs (Dependabot, etc.): they run under GitHub's isolated
     # Dependabot secret store, so CLAUDE_CODE_OAUTH_TOKEN is unavailable and the
     # review would fail; this also avoids spending Opus quota on routine bumps.
-    if: github.event.pull_request.user.type != 'Bot'
-
-    # Optional: Filter by PR author
-    # if: |
-    #   github.event.pull_request.user.login == 'external-contributor' ||
-    #   github.event.pull_request.user.login == 'new-developer' ||
-    #   github.event.pull_request.author_association == 'FIRST_TIME_CONTRIBUTOR'
+    # Also only PRs the owner opens from this repository: a stranger's PR (or
+    # one from a fork) never starts a review that carries the OAuth token.
+    if: >-
+      github.event.pull_request.user.type != 'Bot' &&
+      github.event.pull_request.user.login == github.repository_owner &&
+      github.event.pull_request.head.repo.full_name == github.repository
 
     runs-on: ubuntu-24.04
     permissions:
