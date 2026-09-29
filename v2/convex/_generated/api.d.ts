@@ -118,6 +118,7 @@ import type * as lib_perm_dates_filingWindow from "../lib/perm/dates/filingWindo
 import type * as lib_perm_dates_holidays from "../lib/perm/dates/holidays.js";
 import type * as lib_perm_dates_index from "../lib/perm/dates/index.js";
 import type * as lib_perm_dates_monthUtils from "../lib/perm/dates/monthUtils.js";
+import type * as lib_perm_deadlines_buildDeadlineInput from "../lib/perm/deadlines/buildDeadlineInput.js";
 import type * as lib_perm_deadlines_extractActiveDeadlines from "../lib/perm/deadlines/extractActiveDeadlines.js";
 import type * as lib_perm_deadlines_index from "../lib/perm/deadlines/index.js";
 import type * as lib_perm_deadlines_isDeadlineActive from "../lib/perm/deadlines/isDeadlineActive.js";
@@ -305,6 +306,7 @@ declare const fullApi: ApiFromModules<{
   "lib/perm/dates/holidays": typeof lib_perm_dates_holidays;
   "lib/perm/dates/index": typeof lib_perm_dates_index;
   "lib/perm/dates/monthUtils": typeof lib_perm_dates_monthUtils;
+  "lib/perm/deadlines/buildDeadlineInput": typeof lib_perm_deadlines_buildDeadlineInput;
   "lib/perm/deadlines/extractActiveDeadlines": typeof lib_perm_deadlines_extractActiveDeadlines;
   "lib/perm/deadlines/index": typeof lib_perm_deadlines_index;
   "lib/perm/deadlines/isDeadlineActive": typeof lib_perm_deadlines_isDeadlineActive;
