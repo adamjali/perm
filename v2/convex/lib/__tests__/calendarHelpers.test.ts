@@ -14,6 +14,15 @@ import {
   ALL_CALENDAR_EVENT_TYPES,
 } from "../calendarHelpers";
 import type { CalendarEventInput, CalendarEventType } from "../calendarTypes";
+import {
+  CALENDAR_EVENT_LABELS,
+  CALENDAR_EVENT_SLOTS,
+  EVENT_TYPE_TO_PREF,
+  EVENT_TYPE_TO_SLOT,
+  slotsForPreference,
+} from "../calendarTypes";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { Id } from "../../_generated/dataModel";
 
 // TEST FIXTURES
@@ -177,58 +186,58 @@ describe("formatEventTitle", () => {
       eventType: "pwd_expiration",
       employerName: "Acme Corp",
     });
-    expect(formatEventTitle(input)).toBe("PWD Expiration: Acme Corp");
+    expect(formatEventTitle(input)).toBe("PWD expires: Acme Corp");
   });
 
   it("uses correct label for pwd_expiration", () => {
     const input = createEventInput({ eventType: "pwd_expiration" });
-    expect(formatEventTitle(input)).toContain("PWD Expiration");
+    expect(formatEventTitle(input)).toContain("PWD expires");
   });
 
   it("uses correct label for eta9089_filing", () => {
     const input = createEventInput({ eventType: "eta9089_filing" });
-    expect(formatEventTitle(input)).toContain("ETA 9089 Filing");
+    expect(formatEventTitle(input)).toContain("ETA 9089 filing date");
   });
 
-  it("uses correct label for eta9089_expiration", () => {
-    const input = createEventInput({ eventType: "eta9089_expiration" });
-    expect(formatEventTitle(input)).toContain("ETA 9089 Expiration");
+  it("uses correct label for filing_window_closes", () => {
+    const input = createEventInput({ eventType: "filing_window_closes" });
+    expect(formatEventTitle(input)).toContain("ETA 9089 filing window closes");
   });
 
   it("uses correct label for filing_window_opens", () => {
     const input = createEventInput({ eventType: "filing_window_opens" });
-    expect(formatEventTitle(input)).toContain("Ready to File");
+    expect(formatEventTitle(input)).toContain("ETA 9089 filing window opens");
   });
 
-  it("uses correct label for recruitment_expires", () => {
-    const input = createEventInput({ eventType: "recruitment_expires" });
-    expect(formatEventTitle(input)).toContain("Recruitment Expires");
+  it("uses correct label for recruitment_window_closes", () => {
+    const input = createEventInput({ eventType: "recruitment_window_closes" });
+    expect(formatEventTitle(input)).toContain("Recruitment window closes");
   });
 
   it("uses correct label for i140_deadline", () => {
     const input = createEventInput({ eventType: "i140_deadline" });
-    expect(formatEventTitle(input)).toContain("I-140 Deadline");
+    expect(formatEventTitle(input)).toContain("I-140 filing deadline");
   });
 
   it("uses correct label for rfi_due", () => {
     const input = createEventInput({ eventType: "rfi_due" });
-    expect(formatEventTitle(input)).toContain("RFI Response Due");
+    expect(formatEventTitle(input)).toContain("RFI response due");
   });
 
   it("uses correct label for rfe_due", () => {
     const input = createEventInput({ eventType: "rfe_due" });
-    expect(formatEventTitle(input)).toContain("RFE Response Due");
+    expect(formatEventTitle(input)).toContain("RFE response due");
   });
 
   it("handles employer names with special characters", () => {
     const input = createEventInput({ employerName: "O'Brien & Associates, LLC" });
-    expect(formatEventTitle(input)).toBe("PWD Expiration: O'Brien & Associates, LLC");
+    expect(formatEventTitle(input)).toBe("PWD expires: O'Brien & Associates, LLC");
   });
 
   it("handles long employer names", () => {
     const longName = "A".repeat(100);
     const input = createEventInput({ employerName: longName });
-    expect(formatEventTitle(input)).toBe(`PWD Expiration: ${longName}`);
+    expect(formatEventTitle(input)).toBe(`PWD expires: ${longName}`);
   });
 });
 
@@ -245,11 +254,11 @@ describe("formatEventDescription", () => {
 
     const desc = formatEventDescription(input);
 
-    expect(desc).toContain("PWD Expiration");
+    expect(desc).toContain("PWD expires");
     expect(desc).toContain("Employer: Acme Corp");
     expect(desc).toContain("Beneficiary: John D.");
-    expect(desc).toContain("Case Number: A-12345-67890");
-    expect(desc).toContain("Internal Reference: INT-001");
+    expect(desc).toContain("Case number: A-12345-67890");
+    expect(desc).toContain("Internal reference: INT-001");
     expect(desc).toContain("PERM Tracker");
   });
 
@@ -259,7 +268,7 @@ describe("formatEventDescription", () => {
     });
 
     const desc = formatEventDescription(input);
-    expect(desc).not.toContain("Case Number:");
+    expect(desc).not.toContain("Case number:");
   });
 
   it("omits internal case number when not provided", () => {
@@ -268,7 +277,7 @@ describe("formatEventDescription", () => {
     });
 
     const desc = formatEventDescription(input);
-    expect(desc).not.toContain("Internal Reference:");
+    expect(desc).not.toContain("Internal reference:");
   });
 
   it("adds entry ID for RFI events", () => {
@@ -278,7 +287,7 @@ describe("formatEventDescription", () => {
     });
 
     const desc = formatEventDescription(input);
-    expect(desc).toContain("RFI Entry ID: rfi-entry-123");
+    expect(desc).toContain("RFI entry ID: rfi-entry-123");
   });
 
   it("adds entry ID for RFE events", () => {
@@ -288,7 +297,7 @@ describe("formatEventDescription", () => {
     });
 
     const desc = formatEventDescription(input);
-    expect(desc).toContain("RFE Entry ID: rfe-entry-456");
+    expect(desc).toContain("RFE entry ID: rfe-entry-456");
   });
 
   it("does not add entry ID for non-RFI/RFE events even if provided", () => {
@@ -298,14 +307,14 @@ describe("formatEventDescription", () => {
     });
 
     const desc = formatEventDescription(input);
-    expect(desc).not.toContain("Entry ID:");
+    expect(desc).not.toContain("entry ID:");
   });
 
   it("includes event type label as header", () => {
     const input = createEventInput({ eventType: "i140_deadline" });
     const desc = formatEventDescription(input);
     const lines = desc.split("\n");
-    expect(lines[0]).toBe("I-140 Deadline");
+    expect(lines[0]).toBe("I-140 filing deadline");
   });
 
   it("has proper line structure", () => {
@@ -329,7 +338,7 @@ describe("formatCalendarEvent", () => {
 
     const result = formatCalendarEvent(input);
 
-    expect(result.summary).toBe("PWD Expiration: Tech Corp");
+    expect(result.summary).toBe("PWD expires: Tech Corp");
     expect(result.description).toContain("Employer: Tech Corp");
     expect(result.start).toEqual({ date: "2025-06-15" });
     expect(result.end).toEqual({ date: "2025-06-15" });
@@ -361,19 +370,18 @@ describe("formatCalendarEvent", () => {
 
 describe("getEventTypeLabel", () => {
   const expectedLabels: Record<CalendarEventType, string> = {
-    pwd_expiration: "PWD Expiration",
-    eta9089_filing: "ETA 9089 Filing",
-    eta9089_expiration: "ETA 9089 Expiration",
-    filing_window_opens: "Ready to File",
-    recruitment_expires: "Recruitment Expires",
-    recruitment_window_closes: "Recruitment Window Closes",
-    job_order_start_deadline: "Start Job Order By",
-    notice_of_filing_start_deadline: "Start Notice of Filing By",
-    first_sunday_ad_deadline: "First Sunday Ad By",
-    second_sunday_ad_deadline: "Second Sunday Ad By",
-    i140_deadline: "I-140 Deadline",
-    rfi_due: "RFI Response Due",
-    rfe_due: "RFE Response Due",
+    pwd_expiration: "PWD expires",
+    eta9089_filing: "ETA 9089 filing date",
+    filing_window_opens: "ETA 9089 filing window opens",
+    filing_window_closes: "ETA 9089 filing window closes",
+    recruitment_window_closes: "Recruitment window closes",
+    job_order_start_deadline: "Start job order by",
+    notice_of_filing_start_deadline: "Start notice of filing by",
+    first_sunday_ad_deadline: "First Sunday ad by",
+    second_sunday_ad_deadline: "Second Sunday ad by",
+    i140_deadline: "I-140 filing deadline",
+    rfi_due: "RFI response due",
+    rfe_due: "RFE response due",
   };
 
   for (const [type, label] of Object.entries(expectedLabels)) {
@@ -402,16 +410,16 @@ describe("isRfiRfeEventType", () => {
     expect(isRfiRfeEventType("eta9089_filing")).toBe(false);
   });
 
-  it("returns false for eta9089_expiration", () => {
-    expect(isRfiRfeEventType("eta9089_expiration")).toBe(false);
+  it("returns false for filing_window_closes", () => {
+    expect(isRfiRfeEventType("filing_window_closes")).toBe(false);
   });
 
   it("returns false for filing_window_opens", () => {
     expect(isRfiRfeEventType("filing_window_opens")).toBe(false);
   });
 
-  it("returns false for recruitment_expires", () => {
-    expect(isRfiRfeEventType("recruitment_expires")).toBe(false);
+  it("returns false for recruitment_window_closes", () => {
+    expect(isRfiRfeEventType("recruitment_window_closes")).toBe(false);
   });
 
   it("returns false for i140_deadline", () => {
@@ -652,23 +660,41 @@ describe("withExponentialBackoff", () => {
 // ALL_CALENDAR_EVENT_TYPES Tests
 
 describe("ALL_CALENDAR_EVENT_TYPES", () => {
-  it("contains all 13 event types", () => {
-    expect(ALL_CALENDAR_EVENT_TYPES).toHaveLength(13);
+  it("lists every event type once, each with a label, a preference and its own slot", () => {
+    expect(new Set(ALL_CALENDAR_EVENT_TYPES).size).toBe(ALL_CALENDAR_EVENT_TYPES.length);
+    expect([...ALL_CALENDAR_EVENT_TYPES].sort()).toEqual(Object.keys(CALENDAR_EVENT_LABELS).sort());
+    expect([...ALL_CALENDAR_EVENT_TYPES].sort()).toEqual(Object.keys(EVENT_TYPE_TO_PREF).sort());
+    const slots = ALL_CALENDAR_EVENT_TYPES.map((type) => EVENT_TYPE_TO_SLOT[type]);
+    // Two types in one slot: the second id overwrites the first and that
+    // Google event is never deleted.
+    expect(new Set(slots).size).toBe(slots.length);
+  });
+});
+
+// The stored event-id slots
+
+describe("calendar event slots", () => {
+  const readKeys = (file: string, anchor: string) => {
+    const src = readFileSync(join(process.cwd(), file), "utf8");
+    const start = src.indexOf(anchor);
+    const body = src.slice(start, src.indexOf("})", start));
+    return [...body.matchAll(/^\s+(\w+): v\.optional\(v\.string\(\)\)/gm)].map((m) => m[1]).sort();
+  };
+
+  it("CALENDAR_EVENT_SLOTS matches the schema and the mutation that writes it", () => {
+    const slots = [...CALENDAR_EVENT_SLOTS].sort();
+    expect(readKeys("convex/schema.ts", "calendarEventIds: v.optional(")).toEqual(slots);
+    expect(readKeys("convex/googleCalendarSync.ts", "calendarEventIds: v.object(")).toEqual(slots);
   });
 
-  it("includes all expected types", () => {
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("pwd_expiration");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("eta9089_filing");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("eta9089_expiration");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("filing_window_opens");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("recruitment_expires");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("recruitment_window_closes");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("job_order_start_deadline");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("notice_of_filing_start_deadline");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("first_sunday_ad_deadline");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("second_sunday_ad_deadline");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("i140_deadline");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("rfi_due");
-    expect(ALL_CALENDAR_EVENT_TYPES).toContain("rfe_due");
+  it("turning a preference off reaches every slot its events use, retired ones too", () => {
+    for (const type of ALL_CALENDAR_EVENT_TYPES) {
+      expect(slotsForPreference(EVENT_TYPE_TO_PREF[type])).toContain(EVENT_TYPE_TO_SLOT[type]);
+    }
+    expect(slotsForPreference("calendarSyncRecruitment")).toEqual(
+      expect.arrayContaining(["recruitment_end", "recruitment_window_closes", "job_order_start_deadline"]),
+    );
+    expect(slotsForPreference("calendarSyncEta9089")).toEqual(["eta9089_filing", "eta9089_expiration"]);
+    expect(slotsForPreference("calendarSyncFilingWindow")).toEqual(["eta9089_filing_window", "filing_window_closes"]);
   });
 });

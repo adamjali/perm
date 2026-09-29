@@ -281,10 +281,9 @@ export function ResetPasswordPageClient() {
 
             <AuthField
               id="newPassword"
-              label="New Password"
+              label="New password"
               component="password"
               autoComplete="new-password"
-              placeholder="••••••••"
               value={newPassword}
               onChange={setNewPassword}
               onBlur={() => setNewPasswordTouched(true)}
@@ -298,10 +297,9 @@ export function ResetPasswordPageClient() {
 
             <AuthField
               id="confirmPassword"
-              label="Confirm Password"
+              label="Confirm password"
               component="password"
               autoComplete="new-password"
-              placeholder="••••••••"
               value={confirmPassword}
               onChange={setConfirmPassword}
               onBlur={() => setConfirmTouched(true)}

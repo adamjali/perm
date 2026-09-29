@@ -528,7 +528,7 @@ describe("InlineCaseTimeline - Month Headers", () => {
 
 describe("InlineCaseTimeline - Calculated Milestones", () => {
   // Complete recruitment data required for isRecruitmentComplete() to return true,
-  // which gates the "Ready to File" calculated milestone via filing window active check.
+  // which gates the "Filing window opens" calculated milestone via filing window active check.
   const completeRecruitment = {
     jobOrderStartDate: getRelativeDate(-75),
     jobOrderEndDate: getRelativeDate(-45),
@@ -538,7 +538,7 @@ describe("InlineCaseTimeline - Calculated Milestones", () => {
     noticeOfFilingEndDate: getRelativeDate(-56),
   };
 
-  it("shows Ready to File calculated milestone when ETA 9089 not filed", () => {
+  it("shows the filing window opening as a calculated milestone when ETA 9089 not filed", () => {
     const mockCase = createMockCaseData({
       ...completeRecruitment,
       // eta9089FilingDate is undefined - not filed yet
@@ -546,13 +546,13 @@ describe("InlineCaseTimeline - Calculated Milestones", () => {
 
     renderWithProviders(<InlineCaseTimeline caseData={mockCase} />);
 
-    // Ready to File should appear (30 days after last recruitment)
+    // The filing window opening should appear (30 days after last recruitment)
     expect(
-      screen.getByRole("img", { name: /Ready to File/i })
+      screen.getByRole("img", { name: /Filing window opens/i })
     ).toBeInTheDocument();
   });
 
-  it("hides Ready to File when ETA 9089 is filed", () => {
+  it("hides the filing window opening when ETA 9089 is filed", () => {
     const mockCase = createMockCaseData({
       ...completeRecruitment,
       eta9089FilingDate: getRelativeDate(-10), // Filed!
@@ -560,9 +560,9 @@ describe("InlineCaseTimeline - Calculated Milestones", () => {
 
     renderWithProviders(<InlineCaseTimeline caseData={mockCase} />);
 
-    // Ready to File should NOT appear
+    // The filing window opening should NOT appear
     expect(
-      screen.queryByRole("img", { name: /Ready to File/i })
+      screen.queryByRole("img", { name: /Filing window opens/i })
     ).not.toBeInTheDocument();
   });
 

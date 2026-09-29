@@ -9,6 +9,7 @@
  */
 
 import type { Id } from "../_generated/dataModel";
+import { DEADLINE_LABELS, type DeadlineType } from "./perm/deadlines/types";
 
 // ============================================================================
 // TYPES
@@ -131,27 +132,11 @@ export function getDeadlineUrgency(
 }
 
 /**
- * Format deadline type for human-readable display.
+ * Format deadline type for human-readable display (a central type key).
  */
 export function formatDeadlineType(deadlineType: string): string {
-  const typeMap: Record<string, string> = {
-    pwd_expiration: "PWD Expiration",
-    "PWD Expiration": "PWD Expiration",
-    filing_window_opens: "Filing Window",
-    filing_window_closes: "Filing Window Closes",
-    "Filing Window Closes": "Filing Window Closes",
-    i140_filing_deadline: "I-140 Filing Deadline",
-    rfi_due: "RFI Response Due",
-    "RFI Response Due": "RFI Response Due",
-    rfe_due: "RFE Response Due",
-    "RFE Response Due": "RFE Response Due",
-    recruitment_window_closes: "Recruitment Window Closes",
-    job_order_start_deadline: "Job Order Start",
-    notice_of_filing_start_deadline: "Notice of Filing",
-    first_sunday_ad_deadline: "First Sunday Ad",
-    second_sunday_ad_deadline: "Second Sunday Ad",
-  };
-  return typeMap[deadlineType] ?? deadlineType;
+  // The central labels, so a digest row reads exactly like the dashboard.
+  return DEADLINE_LABELS[deadlineType as DeadlineType] ?? deadlineType;
 }
 
 /**
@@ -161,27 +146,29 @@ export function formatCaseStatusChange(
   caseStatus: string,
   progressStatus?: string
 ): string {
+  // The real status keys (convex/lib/perm/statusTypes.ts) and the words the
+  // app's badges use. The old map keyed "eta_9089" and six progress states
+  // that do not exist, so a digest printed "eta9089" and never the progress.
   const statusDisplay: Record<string, string> = {
-    pwd: "PWD Stage",
-    recruitment: "Recruitment Stage",
-    eta_9089: "ETA 9089 Stage",
-    i140: "I-140 Stage",
-    complete: "Complete",
+    pwd: "PWD stage",
+    recruitment: "Recruitment stage",
+    eta9089: "ETA 9089 stage",
+    i140: "I-140 stage",
     closed: "Closed",
   };
 
   const progressDisplay: Record<string, string> = {
-    not_started: "Not Started",
-    in_progress: "In Progress",
-    complete: "Complete",
-    on_hold: "On Hold",
-    blocked: "Blocked",
-    needs_review: "Needs Review",
+    working: "Working on it",
+    waiting_intake: "Waiting for intake",
+    filed: "Filed",
+    approved: "Approved",
+    under_review: "Under review",
+    rfi_rfe: "RFI/RFE",
   };
 
   const statusText = statusDisplay[caseStatus] ?? caseStatus;
   if (progressStatus && progressDisplay[progressStatus]) {
-    return `${statusText} - ${progressDisplay[progressStatus]}`;
+    return `${statusText}: ${progressDisplay[progressStatus]}`;
   }
   return statusText;
 }

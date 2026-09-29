@@ -7,7 +7,7 @@ import { BulletinWeekly } from "../BulletinWeekly";
 import { CaseAlertConfirm } from "../CaseAlertConfirm";
 import { CaseStatusChanged } from "../CaseStatusChanged";
 import { DailyUpdate } from "../DailyUpdate";
-import { DeadlineReminder } from "../DeadlineReminder";
+import { DeadlineDigest } from "../DeadlineDigest";
 import { EmployerAlertConfirm } from "../EmployerAlertConfirm";
 import { EmployerMoved } from "../EmployerMoved";
 import { QueueReached } from "../QueueReached";
@@ -161,13 +161,11 @@ describe("every email has a way out", () => {
 
   it("account mail links to Settings, never to the token page", async () => {
     const reminder = await render(
-      DeadlineReminder({
-        employerName: "Acme Corp",
-        beneficiaryName: "A. Person",
-        deadlineType: "PWD Expiration",
-        deadlineDate: "January 15, 2027",
-        daysUntil: 7,
-        caseUrl: "https://permtracker.app/cases/123",
+      DeadlineDigest({
+        userName: "A. Person",
+        items: [
+          { caseId: "c1" as never, employerName: "Acme Corp", beneficiaryIdentifier: "A. Person", deadlineType: "PWD expiration", deadlineDate: "2027-01-15", daysUntil: 7, urgency: "urgent" },
+        ],
       }),
     );
     expect(reminder).toContain("https://permtracker.app/settings");

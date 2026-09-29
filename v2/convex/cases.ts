@@ -1189,7 +1189,7 @@ export const update = mutation({
             userId: oldDoc!.userId,
             caseId: args.id,
             type: "status_change",
-            title: "Case Progress Updated",
+            title: "Case progress updated",
             message: `Case for ${caseLabel} progress changed from ${oldDoc!.progressStatus} to ${actualNewProgressStatus}.`,
             priority: "low",
           });

@@ -482,7 +482,6 @@ export function SignupPageClient() {
             label="Password"
             component="password"
             autoComplete="new-password"
-            placeholder="••••••••"
             value={password}
             onChange={(v) => {
               setPassword(v);
@@ -504,10 +503,9 @@ export function SignupPageClient() {
 
           <AuthField
             id="confirmPassword"
-            label="Confirm Password"
+            label="Confirm password"
             component="password"
             autoComplete="new-password"
-            placeholder="••••••••"
             value={confirmPassword}
             onChange={setConfirmPassword}
             onBlur={() => handleBlur("confirm")}

@@ -92,7 +92,7 @@ export function WeeklyDigest({
             <tr>
               <td className="em-stat-cell" style={styles.statCell}>
                 <Text className="em-stat-number" style={styles.statNumber}>{stats.totalActiveCases}</Text>
-                <Text className="em-text-secondary" style={styles.statLabel}>Active Cases</Text>
+                <Text className="em-text-secondary" style={styles.statLabel}>Active cases</Text>
               </td>
               <td className="em-stat-cell" style={getStatCellStyle(stats.overdueCount > 0 ? "#991B1B" : undefined)}>
                 <Text className="em-stat-number" style={styles.statNumber}>{stats.overdueCount}</Text>
@@ -100,7 +100,7 @@ export function WeeklyDigest({
               </td>
               <td className="em-stat-cell" style={getStatCellStyle(stats.urgentCount > 0 ? "#DC2626" : undefined)}>
                 <Text className="em-stat-number" style={styles.statNumber}>{stats.urgentCount}</Text>
-                <Text className="em-text-secondary" style={styles.statLabel}>This Week</Text>
+                <Text className="em-text-secondary" style={styles.statLabel}>This week</Text>
               </td>
               <td className="em-stat-cell" style={styles.statCell}>
                 <Text className="em-stat-number" style={styles.statNumber}>{stats.unreadNotificationCount}</Text>
@@ -115,7 +115,7 @@ export function WeeklyDigest({
       {isEmpty && (
         <Section className="em-alert-green" style={styles.emptyState}>
           <Text style={styles.emptyIcon}>&#127881;</Text>
-          <Text className="em-alert-green-title" style={styles.emptyTitle}>All Clear!</Text>
+          <Text className="em-alert-green-title" style={styles.emptyTitle}>All clear</Text>
           <Text className="em-alert-green-text" style={styles.emptyMessage}>{emptyMessage}</Text>
           <Section style={styles.ctaSection}>
             <Link href={`${baseUrl}/cases`} className="em-cta-button" style={styles.ctaButton}>
@@ -184,7 +184,7 @@ export function WeeklyDigest({
         <>
           <Hr className="em-divider" style={styles.divider} />
           <Section style={styles.activitySection}>
-            <Text className="em-text" style={styles.activityHeader}>Recent Activity</Text>
+            <Text className="em-text" style={styles.activityHeader}>Recent activity</Text>
             {recentCaseUpdates.slice(0, 5).map((update) => (
               <ActivityRow
                 key={`activity-${update.caseId}-${update.updatedAt}`}

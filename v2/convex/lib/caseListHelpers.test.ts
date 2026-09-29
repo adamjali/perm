@@ -218,26 +218,20 @@ describe("calculateNextDeadline", () => {
     };
 
     it("returns filing_window_opens when that is the most urgent deadline", () => {
-      // Per PERM rules: Window opens 30 days after last recruitment ends
-      // Here sundayAdSecondDate (2024-12-08) is the last since isProfessionalOccupation is false
-      // Window opens: 2024-12-08 + 30 = 2025-01-07 (overdue from TODAY = 2025-01-15)
+      // Window opens 30 days after the last recruitment step ends. The second
+      // Sunday ad (2024-12-22) is last, so it opens 2025-01-21: 6 days from TODAY.
       const caseData = createMockCase({
         ...completedRecruitmentBase,
-        sundayAdFirstDate: "2024-12-01",
-        sundayAdSecondDate: "2024-12-08",
-        additionalRecruitmentEndDate: "2024-12-15", // Ignored since not professional
+        sundayAdFirstDate: "2024-12-15",
+        sundayAdSecondDate: "2024-12-22",
+        additionalRecruitmentEndDate: "2024-12-30", // Ignored since not professional
         eta9089FilingDate: undefined,
       });
 
       const result = calculateNextDeadline(caseData, TODAY);
 
-      // Most urgent is filing_window_opens (overdue), not recruitment_window
-      expect(result).toEqual({
-        type: "filing_window_opens",
-        date: "2025-01-07",
-        daysUntil: -8,
-        urgency: "overdue",
-      });
+      expect(result).toMatchObject({ type: "filing_window_opens", date: "2025-01-21", daysUntil: 6 });
+      expect(result?.urgency).not.toBe("overdue");
     });
 
     it("returns recruitment_window when filing window already open", () => {
@@ -254,10 +248,12 @@ describe("calculateNextDeadline", () => {
 
       const result = calculateNextDeadline(caseData, TODAY);
 
-      // Filing window opens: 2024-10-08 + 30 = 2024-11-07 (in the past, -69 days)
-      // Most urgent is filing_window_opens (overdue)
-      expect(result?.type).toBe("filing_window_opens");
-      expect(result?.urgency).toBe("overdue");
+      // The window OPENED 2024-11-07. That is not a deadline anyone can miss
+      // (perm_flow.md: it "only goes away when filed or passes"). It used to
+      // show here as "overdue", and on the case card as days late. The next
+      // deadline is the window CLOSING: first step 2024-09-01 + 180 = 2025-02-28.
+      expect(result).toMatchObject({ type: "recruitment_window", date: "2025-02-28", daysUntil: 44 });
+      expect(result?.urgency).not.toBe("overdue");
     });
 
     it("returns null when ETA already filed", () => {
@@ -289,17 +285,20 @@ describe("calculateNextDeadline", () => {
     };
 
     it("returns filing_window_opens over recruitment_window when both exist and opens is more urgent", () => {
+      // Opens 2025-01-21 (6 days), closes 2025-04-30 (105 days): opening first.
       const caseData = createMockCase({
-        ...completedRecruitmentEarly,
-        sundayAdFirstDate: "2024-10-01",
-        sundayAdSecondDate: "2024-10-08",
+        jobOrderStartDate: "2024-11-01",
+        jobOrderEndDate: "2024-12-01",
+        noticeOfFilingStartDate: "2024-11-01",
+        noticeOfFilingEndDate: "2024-11-15",
+        sundayAdFirstDate: "2024-12-15",
+        sundayAdSecondDate: "2024-12-22",
         eta9089FilingDate: undefined,
       });
 
       const result = calculateNextDeadline(caseData, TODAY);
 
-      expect(result?.type).toBe("filing_window_opens");
-      expect(result?.urgency).toBe("overdue");
+      expect(result).toMatchObject({ type: "filing_window_opens", daysUntil: 6 });
     });
 
     it("returns recruitment_window when it is the most urgent remaining deadline", () => {
@@ -315,9 +314,10 @@ describe("calculateNextDeadline", () => {
 
       const result = calculateNextDeadline(caseData, TODAY);
 
-      // filing_window_opens is in the past (overdue), so most urgent is filing_window_opens
-      expect(result?.type).toBe("filing_window_opens");
-      expect(result?.daysUntil).toBeLessThan(0);
+      // The window opened long ago (not a deadline) and CLOSED 2024-12-28
+      // (2024-07-01 + 180) with the ETA 9089 unfiled: that is a real miss.
+      expect(result).toMatchObject({ type: "recruitment_window", date: "2024-12-28", daysUntil: -18 });
+      expect(result?.urgency).toBe("overdue");
     });
 
     it("prioritizes RFI due over filing window when RFI is more urgent", () => {
@@ -338,9 +338,9 @@ describe("calculateNextDeadline", () => {
 
       const result = calculateNextDeadline(caseData, TODAY);
 
-      // Overdue filing_window_opens beats near-future RFI
-      expect(result?.type).toBe("filing_window_opens");
-      expect(result?.urgency).toBe("overdue");
+      // The RFI response is due in 3 days; the window opened months ago and
+      // only its closing (2025-02-28) remains. The RFI is most urgent.
+      expect(result).toMatchObject({ type: "rfi_due", date: "2025-01-18", daysUntil: 3 });
     });
 
     it("prioritizes overdue RFI over future filing window", () => {

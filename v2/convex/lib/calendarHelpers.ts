@@ -154,17 +154,17 @@ export function formatEventDescription(input: CalendarEventInput): string {
   lines.push(`Beneficiary: ${input.beneficiaryIdentifier}`);
 
   if (input.caseNumber) {
-    lines.push(`Case Number: ${input.caseNumber}`);
+    lines.push(`Case number: ${input.caseNumber}`);
   }
 
   if (input.internalCaseNumber) {
-    lines.push(`Internal Reference: ${input.internalCaseNumber}`);
+    lines.push(`Internal reference: ${input.internalCaseNumber}`);
   }
 
   // For RFI/RFE, include entry ID for reference
   if (input.entryId && (input.eventType === "rfi_due" || input.eventType === "rfe_due")) {
     const typeLabel = input.eventType === "rfi_due" ? "RFI" : "RFE";
-    lines.push(`${typeLabel} Entry ID: ${input.entryId}`);
+    lines.push(`${typeLabel} entry ID: ${input.entryId}`);
   }
 
   // Footer
@@ -250,9 +250,8 @@ export function isRfiRfeEventType(eventType: CalendarEventType): boolean {
 export const ALL_CALENDAR_EVENT_TYPES: CalendarEventType[] = [
   "pwd_expiration",
   "eta9089_filing",
-  "eta9089_expiration",
   "filing_window_opens",
-  "recruitment_expires",
+  "filing_window_closes",
   "recruitment_window_closes",
   "job_order_start_deadline",
   "notice_of_filing_start_deadline",

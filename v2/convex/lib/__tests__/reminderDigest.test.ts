@@ -27,18 +27,18 @@ function makeReminder(over: Partial<DigestReminderInput> = {}): DigestReminderIn
 describe("reminderToDigestItem", () => {
   it("formats the raw deadline type for display", () => {
     expect(reminderToDigestItem(makeReminder({ deadlineType: "pwd_expiration" })).deadlineType).toBe(
-      "PWD Expiration"
+      "PWD expiration"
     );
     expect(reminderToDigestItem(makeReminder({ deadlineType: "rfi_due" })).deadlineType).toBe(
-      "RFI Response Due"
+      "RFI response due"
     );
     // Recruitment types the cron emits must be formatted, not shown raw.
     expect(
       reminderToDigestItem(makeReminder({ deadlineType: "recruitment_window_closes" })).deadlineType
-    ).toBe("Recruitment Window Closes");
+    ).toBe("Recruitment window closes");
     expect(
       reminderToDigestItem(makeReminder({ deadlineType: "first_sunday_ad_deadline" })).deadlineType
-    ).toBe("First Sunday Ad");
+    ).toBe("First Sunday ad by");
   });
 
   it("derives urgency from daysUntil", () => {

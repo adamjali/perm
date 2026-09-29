@@ -3,7 +3,7 @@
  * All PERM Tracker email templates.
  *
  * Templates:
- * - DeadlineReminder: Sent when deadlines are approaching
+ * - DeadlineDigest: the daily email of deadlines reaching a reminder point
  * - StatusChange: Sent when case status changes
  * - RfiAlert: Sent for RFI (Request for Information) events
  * - RfeAlert: Sent for RFE (Request for Evidence) events
@@ -15,8 +15,8 @@
  */
 
 // Email templates
-export { DeadlineReminder } from "./DeadlineReminder";
-export type { DeadlineReminderProps } from "./DeadlineReminder";
+export { DeadlineDigest } from "./DeadlineDigest";
+export type { DeadlineDigestProps } from "./DeadlineDigest";
 
 export { StatusChange } from "./StatusChange";
 export type { StatusChangeProps } from "./StatusChange";

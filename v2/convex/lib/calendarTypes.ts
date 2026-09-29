@@ -11,6 +11,7 @@
  */
 
 import type { Id } from "../_generated/dataModel";
+import type { CaseDataForDeadlines } from "./perm/deadlines/types";
 
 // ============================================================================
 // CALENDAR EVENT TYPE
@@ -25,9 +26,8 @@ import type { Id } from "../_generated/dataModel";
 export type CalendarEventType =
   | "pwd_expiration"
   | "eta9089_filing"
-  | "eta9089_expiration"
   | "filing_window_opens"
-  | "recruitment_expires"
+  | "filing_window_closes"
   | "recruitment_window_closes"
   | "job_order_start_deadline"
   | "notice_of_filing_start_deadline"
@@ -41,19 +41,18 @@ export type CalendarEventType =
  * Human-readable labels for each calendar event type.
  */
 export const CALENDAR_EVENT_LABELS: Record<CalendarEventType, string> = {
-  pwd_expiration: "PWD Expiration",
-  eta9089_filing: "ETA 9089 Filing",
-  eta9089_expiration: "ETA 9089 Expiration",
-  filing_window_opens: "Ready to File",
-  recruitment_expires: "Recruitment Expires",
-  recruitment_window_closes: "Recruitment Window Closes",
-  job_order_start_deadline: "Start Job Order By",
-  notice_of_filing_start_deadline: "Start Notice of Filing By",
-  first_sunday_ad_deadline: "First Sunday Ad By",
-  second_sunday_ad_deadline: "Second Sunday Ad By",
-  i140_deadline: "I-140 Deadline",
-  rfi_due: "RFI Response Due",
-  rfe_due: "RFE Response Due",
+  pwd_expiration: "PWD expires",
+  eta9089_filing: "ETA 9089 filing date",
+  filing_window_opens: "ETA 9089 filing window opens",
+  filing_window_closes: "ETA 9089 filing window closes",
+  recruitment_window_closes: "Recruitment window closes",
+  job_order_start_deadline: "Start job order by",
+  notice_of_filing_start_deadline: "Start notice of filing by",
+  first_sunday_ad_deadline: "First Sunday ad by",
+  second_sunday_ad_deadline: "Second Sunday ad by",
+  i140_deadline: "I-140 filing deadline",
+  rfi_due: "RFI response due",
+  rfe_due: "RFE response due",
 };
 
 // ============================================================================
@@ -75,18 +74,14 @@ export type CalendarSyncPreference =
 /**
  * Maps calendar event types to their corresponding user preference fields.
  *
- * Some preferences control multiple event types:
- * - calendarSyncEta9089: eta9089_filing, eta9089_expiration
- *
  * @example
  * const pref = EVENT_TYPE_TO_PREF["pwd_expiration"]; // "calendarSyncPwd"
  */
 export const EVENT_TYPE_TO_PREF: Record<CalendarEventType, CalendarSyncPreference> = {
   pwd_expiration: "calendarSyncPwd",
   eta9089_filing: "calendarSyncEta9089",
-  eta9089_expiration: "calendarSyncEta9089",
   filing_window_opens: "calendarSyncFilingWindow",
-  recruitment_expires: "calendarSyncRecruitment",
+  filing_window_closes: "calendarSyncFilingWindow",
   recruitment_window_closes: "calendarSyncRecruitment",
   job_order_start_deadline: "calendarSyncRecruitment",
   notice_of_filing_start_deadline: "calendarSyncRecruitment",
@@ -96,6 +91,64 @@ export const EVENT_TYPE_TO_PREF: Record<CalendarEventType, CalendarSyncPreferenc
   rfi_due: "calendarSyncRfi",
   rfe_due: "calendarSyncRfe",
 };
+
+/**
+ * Where each event type's Google event id is kept on the case
+ * (`calendarEventIds.<slot>`). One slot per type: two types sharing a slot is
+ * how an event gets orphaned, its id overwritten and never deleted.
+ */
+export const EVENT_TYPE_TO_SLOT: Record<CalendarEventType, CalendarEventSlot> = {
+  pwd_expiration: "pwd_expiration",
+  eta9089_filing: "eta9089_filing",
+  filing_window_opens: "eta9089_filing_window",
+  filing_window_closes: "filing_window_closes",
+  recruitment_window_closes: "recruitment_window_closes",
+  job_order_start_deadline: "job_order_start_deadline",
+  notice_of_filing_start_deadline: "notice_of_filing_start_deadline",
+  first_sunday_ad_deadline: "first_sunday_ad_deadline",
+  second_sunday_ad_deadline: "second_sunday_ad_deadline",
+  i140_deadline: "i140_filing_deadline",
+  rfi_due: "rfi_due",
+  rfe_due: "rfe_due",
+};
+
+/**
+ * Slots no event type writes any more, kept so ids already stored in them are
+ * still deleted: `eta9089_expiration` (an ETA 9089 expiry event on the same
+ * day as the I-140 deadline) and `recruitment_end` (the recruitment window,
+ * now in `recruitment_window_closes`), both retired Sep 28 2026.
+ */
+export const RETIRED_SLOTS: Partial<Record<CalendarSyncPreference, CalendarEventSlot[]>> = {
+  calendarSyncEta9089: ["eta9089_expiration"],
+  calendarSyncRecruitment: ["recruitment_end"],
+};
+
+/** Every slot on `calendarEventIds`, current and retired. */
+export const CALENDAR_EVENT_SLOTS = [
+  "pwd_expiration",
+  "eta9089_filing",
+  "eta9089_filing_window",
+  "filing_window_closes",
+  "eta9089_expiration",
+  "i140_filing_deadline",
+  "rfi_due",
+  "rfe_due",
+  "recruitment_end",
+  "recruitment_window_closes",
+  "job_order_start_deadline",
+  "notice_of_filing_start_deadline",
+  "first_sunday_ad_deadline",
+  "second_sunday_ad_deadline",
+] as const;
+export type CalendarEventSlot = (typeof CALENDAR_EVENT_SLOTS)[number];
+
+/** The slots a preference's events live in, so turning it off deletes all of them. */
+export function slotsForPreference(pref: CalendarSyncPreference): CalendarEventSlot[] {
+  const current = (Object.keys(EVENT_TYPE_TO_PREF) as CalendarEventType[])
+    .filter((type) => EVENT_TYPE_TO_PREF[type] === pref)
+    .map((type) => EVENT_TYPE_TO_SLOT[type]);
+  return [...new Set([...current, ...(RETIRED_SLOTS[pref] ?? [])])];
+}
 
 // ============================================================================
 // CALENDAR EVENT INPUT/OUTPUT TYPES
@@ -214,14 +267,20 @@ export interface CaseDataForCalendar {
 
   // Filing window dates (stored derived fields)
   filingWindowOpens?: string;
+  filingWindowCloses?: string;
   recruitmentWindowCloses?: string;
 
-  // Recruitment dates (for per-step deadline computation)
+  // Recruitment dates (the central deadline rules read all of them)
   sundayAdFirstDate?: string;
   sundayAdSecondDate?: string;
   jobOrderStartDate?: string;
+  jobOrderEndDate?: string;
   noticeOfFilingStartDate?: string;
   noticeOfFilingEndDate?: string;
+  additionalRecruitmentStartDate?: string;
+  additionalRecruitmentEndDate?: string;
+  isProfessionalOccupation?: boolean;
+  additionalRecruitmentMethods?: CaseDataForDeadlines["additionalRecruitmentMethods"];
 
   // I-140 dates
   i140FilingDate?: string;

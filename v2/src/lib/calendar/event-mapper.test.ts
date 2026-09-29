@@ -82,15 +82,19 @@ describe("caseToCalendarEvents", () => {
       });
 
       const events = caseToCalendarEvents(caseData);
+      const pwd = events.find((e) => e.deadlineType === "pwdExpires")!;
 
-      expect(events).toHaveLength(1);
-      expect(events[0].title).toBe("PWD expires: Acme Corp");
-      expect(events[0].start.toISOString().split("T")[0]).toBe("2024-07-15");
-      expect(events[0].end.toISOString().split("T")[0]).toBe("2024-07-15");
-      expect(events[0].allDay).toBe(true);
-      expect(events[0].caseId).toBe("test-case-id");
-      expect(events[0].deadlineType).toBe("pwdExpires");
-      expect(events[0].stage).toBe("pwd");
+      expect(pwd.title).toBe("PWD expires: Acme Corp");
+      expect(pwd.start.toISOString().split("T")[0]).toBe("2024-07-15");
+      expect(pwd.end.toISOString().split("T")[0]).toBe("2024-07-15");
+      expect(pwd.allDay).toBe(true);
+      expect(pwd.caseId).toBe("test-case-id");
+      expect(pwd.stage).toBe("pwd");
+      // The central rules derive the recruitment "start by" dates from the PWD
+      // alone, as the dashboard shows them; the calendar now shows the same.
+      expect(events.map((e) => e.deadlineType)).toEqual(
+        expect.arrayContaining(["jobOrderStartDeadline", "noticeOfFilingStartDeadline", "firstSundayAdDeadline", "secondSundayAdDeadline"]),
+      );
     });
 
     it("creates event for PWD filing date", () => {
@@ -129,21 +133,22 @@ describe("caseToCalendarEvents", () => {
 
       const events = caseToCalendarEvents(caseData);
 
-      // Should have 12 events for all standard milestones
-      expect(events.length).toBe(12);
+      // Ten dates that happened. The PWD expiration (the ETA 9089 is filed) and
+      // the I-140 deadline (the I-140 is filed) no longer apply, so they are not
+      // on the calendar: they used to sit there turning red as "overdue".
+      expect(events.length).toBe(10);
 
-      // Verify all milestone types are present
       const types = events.map((e) => e.deadlineType);
+      expect(types).not.toContain("pwdExpires");
+      expect(types).not.toContain("eta9089Expires");
       expect(types).toContain("pwdFiled");
       expect(types).toContain("pwdDetermined");
-      expect(types).toContain("pwdExpires");
       expect(types).toContain("sundayAdFirst");
       expect(types).toContain("sundayAdSecond");
       expect(types).toContain("jobOrderStart");
       expect(types).toContain("jobOrderEnd");
       expect(types).toContain("eta9089Filed");
       expect(types).toContain("eta9089Certified");
-      expect(types).toContain("eta9089Expires");
       expect(types).toContain("i140Filed");
       expect(types).toContain("i140Approved");
     });
@@ -197,7 +202,7 @@ describe("caseToCalendarEvents", () => {
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].urgency).toBe("overdue");
+      expect(events.find((e) => e.deadlineType === "pwdExpires")?.urgency).toBe("overdue");
     });
 
     it("marks events as 'urgent' for dates within 7 days", () => {
@@ -207,7 +212,7 @@ describe("caseToCalendarEvents", () => {
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].urgency).toBe("urgent");
+      expect(events.find((e) => e.deadlineType === "pwdExpires")?.urgency).toBe("urgent");
     });
 
     it("marks events as 'soon' for dates 8-30 days away", () => {
@@ -217,7 +222,7 @@ describe("caseToCalendarEvents", () => {
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].urgency).toBe("soon");
+      expect(events.find((e) => e.deadlineType === "pwdExpires")?.urgency).toBe("soon");
     });
 
     it("marks events as 'normal' for dates 31+ days away", () => {
@@ -227,7 +232,7 @@ describe("caseToCalendarEvents", () => {
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].urgency).toBe("normal");
+      expect(events.find((e) => e.deadlineType === "pwdExpires")?.urgency).toBe("normal");
     });
 
     it("marks a recorded date that has passed as 'done', never 'overdue'", () => {
@@ -256,12 +261,12 @@ describe("caseToCalendarEvents", () => {
       // Filing Deadline = 180 days after first recruitment step
       const caseData = createTestCase({
         caseStatus: "eta9089",
-        sundayAdFirstDate: "2024-03-03",
-        sundayAdSecondDate: "2024-03-10",
-        jobOrderStartDate: "2024-03-01",
-        jobOrderEndDate: "2024-04-09",
-        noticeOfFilingStartDate: "2024-03-01",
-        noticeOfFilingEndDate: "2024-03-15",
+        sundayAdFirstDate: "2024-05-05",
+        sundayAdSecondDate: "2024-05-12",
+        jobOrderStartDate: "2024-05-01",
+        jobOrderEndDate: "2024-06-10",
+        noticeOfFilingStartDate: "2024-05-01",
+        noticeOfFilingEndDate: "2024-05-15",
         // No eta9089FilingDate - so filing window should be calculated
       });
 
@@ -281,13 +286,32 @@ describe("caseToCalendarEvents", () => {
       expect(openEvent).toBeDefined();
       expect(closeEvent).toBeDefined();
 
-      // Ready to file = jobOrderEnd (2024-04-09) + 30 days = 2024-05-09
-      expect(openEvent!.start.toISOString().split("T")[0]).toBe("2024-05-09");
+      // Ready to file = jobOrderEnd (2024-06-10) + 30 days = 2024-07-10
+      expect(openEvent!.start.toISOString().split("T")[0]).toBe("2024-07-10");
       expect(openEvent!.title).toContain("ETA window opens");
 
-      // Filing deadline = first recruitment (2024-03-01) + 180 days = 2024-08-28
-      expect(closeEvent!.start.toISOString().split("T")[0]).toBe("2024-08-28");
+      // Filing deadline = first recruitment (2024-05-01) + 180 days = 2024-10-28
+      expect(closeEvent!.start.toISOString().split("T")[0]).toBe("2024-10-28");
       expect(closeEvent!.title).toContain("ETA window closes");
+    });
+
+    it("drops the opening once the window has opened: it is open, not overdue", () => {
+      // perm_flow.md: "ready to file ... only goes away when filed or passes".
+      // Opened 2024-05-09; today is 2024-06-15.
+      const caseData = createTestCase({
+        caseStatus: "eta9089",
+        sundayAdFirstDate: "2024-03-03",
+        sundayAdSecondDate: "2024-03-10",
+        jobOrderStartDate: "2024-03-01",
+        jobOrderEndDate: "2024-04-09",
+        noticeOfFilingStartDate: "2024-03-01",
+        noticeOfFilingEndDate: "2024-03-15",
+      });
+
+      const windowEvents = caseToCalendarEvents(caseData).filter((e) => e.isFilingWindow);
+
+      expect(windowEvents.map((e) => e.deadlineType)).toEqual(["filingWindowCloses"]);
+      expect(windowEvents[0].urgency).not.toBe("overdue");
     });
 
     it("does not create filing window events when ETA already filed", () => {
@@ -567,12 +591,12 @@ describe("caseToCalendarEvents", () => {
         employerName: "Tech Startup LLC",
         positionTitle: "Backend Engineer",
         caseStatus: "eta9089",
-        sundayAdFirstDate: "2024-03-03",
-        sundayAdSecondDate: "2024-03-10",
-        jobOrderStartDate: "2024-03-01",
-        jobOrderEndDate: "2024-04-09",
-        noticeOfFilingStartDate: "2024-03-01",
-        noticeOfFilingEndDate: "2024-03-15",
+        sundayAdFirstDate: "2024-05-05",
+        sundayAdSecondDate: "2024-05-12",
+        jobOrderStartDate: "2024-05-01",
+        jobOrderEndDate: "2024-06-10",
+        noticeOfFilingStartDate: "2024-05-01",
+        noticeOfFilingEndDate: "2024-05-15",
         // No eta9089FilingDate - triggers filing window calculation
       });
 
@@ -597,8 +621,10 @@ describe("caseToCalendarEvents", () => {
       });
 
       const events = caseToCalendarEvents(caseData);
+      const pwdEvents = events.filter((e) => e.deadlineType === "pwdFiled" || e.deadlineType === "pwdExpires");
 
-      events.forEach((e) => {
+      expect(pwdEvents).toHaveLength(2);
+      pwdEvents.forEach((e) => {
         expect(e.stage).toBe("pwd");
       });
     });

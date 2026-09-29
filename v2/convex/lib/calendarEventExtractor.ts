@@ -11,9 +11,11 @@
  */
 
 import { isFutureDate } from "./calendarHelpers";
-import { calculateI140FilingDeadline } from "./perm/calculators/i140";
-import { calculateRecruitmentDeadlines } from "./perm/calculators/recruitment";
-import { getFirstRecruitmentDate } from "./perm/dates";
+import { buildDeadlineInput } from "./perm/deadlines/buildDeadlineInput";
+import { extractActiveDeadlines } from "./perm/deadlines/extractActiveDeadlines";
+import { getActiveRfeEntry, getActiveRfiEntry } from "./perm/deadlines/isDeadlineActive";
+import type { DeadlineType } from "./perm/deadlines/types";
+import type { CaseStatus, ProgressStatus } from "./perm/statusTypes";
 import {
   EVENT_TYPE_TO_PREF,
 } from "./calendarTypes";
@@ -22,9 +24,22 @@ import type {
   CalendarEventInput,
   CaseDataForCalendar,
   UserCalendarPreferences,
-  CalendarRfiEntry,
-  CalendarRfeEntry,
 } from "./calendarTypes";
+
+/** The calendar event each central deadline becomes. */
+const CENTRAL_TO_EVENT: Record<DeadlineType, CalendarEventType> = {
+  pwd_expiration: "pwd_expiration",
+  filing_window_opens: "filing_window_opens",
+  filing_window_closes: "filing_window_closes",
+  recruitment_window_closes: "recruitment_window_closes",
+  job_order_start_deadline: "job_order_start_deadline",
+  notice_of_filing_start_deadline: "notice_of_filing_start_deadline",
+  first_sunday_ad_deadline: "first_sunday_ad_deadline",
+  second_sunday_ad_deadline: "second_sunday_ad_deadline",
+  i140_filing_deadline: "i140_deadline",
+  rfi_due: "rfi_due",
+  rfe_due: "rfe_due",
+};
 
 /**
  * Result of event extraction with additional metadata
@@ -36,8 +51,6 @@ export interface ExtractionResult {
   skippedByPreference: CalendarEventType[];
   /** Event types that were skipped due to past dates */
   skippedPastDates: CalendarEventType[];
-  /** Event types that were skipped due to missing data */
-  skippedMissingData: CalendarEventType[];
 }
 
 /**
@@ -55,20 +68,6 @@ function isEventTypeEnabled(
   // Check specific event type preference
   const prefKey = EVENT_TYPE_TO_PREF[eventType];
   return preferences[prefKey] === true;
-}
-
-/**
- * Check if an RFI entry is unresolved (no response submitted)
- */
-function isRfiUnresolved(entry: CalendarRfiEntry): boolean {
-  return !entry.responseSubmittedDate;
-}
-
-/**
- * Check if an RFE entry is unresolved (no response submitted)
- */
-function isRfeUnresolved(entry: CalendarRfeEntry): boolean {
-  return !entry.responseSubmittedDate;
 }
 
 /**
@@ -95,13 +94,12 @@ function createEventInput(
 /**
  * Extract all calendar events from case data based on user preferences
  *
- * This function:
- * 1. Checks if the case has calendar sync enabled
- * 2. Iterates through all possible event types
- * 3. Filters by user preferences
- * 4. Filters out past dates (only future dates are synced)
- * 5. For I-140, calculates the deadline if not already stored
- * 6. For RFI/RFE, only includes unresolved entries
+ * The deadlines come from the central rules (extractActiveDeadlines), the
+ * same list the dashboard, case cards, in-app calendar and reminder emails
+ * use, so a deadline the case no longer has (a PWD expiry after the ETA 9089
+ * is filed, an answered RFI) never reaches the user's calendar. Past dates
+ * are skipped. The one date that is not a deadline is the ETA 9089 filing
+ * date when it is still ahead (a planned filing).
  *
  * @param caseData - Case data to extract events from
  * @param preferences - User's calendar sync preferences
@@ -120,7 +118,6 @@ export function extractCalendarEvents(
   const events: CalendarEventInput[] = [];
   const skippedByPreference: CalendarEventType[] = [];
   const skippedPastDates: CalendarEventType[] = [];
-  const skippedMissingData: CalendarEventType[] = [];
 
   // Check case-level sync toggle
   if (!caseData.calendarSyncEnabled) {
@@ -129,7 +126,6 @@ export function extractCalendarEvents(
       events: [],
       skippedByPreference: Object.keys(EVENT_TYPE_TO_PREF) as CalendarEventType[],
       skippedPastDates: [],
-      skippedMissingData: [],
     };
   }
 
@@ -139,7 +135,6 @@ export function extractCalendarEvents(
       events: [],
       skippedByPreference: [],
       skippedPastDates: [],
-      skippedMissingData: Object.keys(EVENT_TYPE_TO_PREF) as CalendarEventType[],
     };
   }
 
@@ -155,11 +150,7 @@ export function extractCalendarEvents(
       return;
     }
 
-    // Check if date exists
-    if (!date) {
-      skippedMissingData.push(eventType);
-      return;
-    }
+    if (!date) return;
 
     // Check if date is in the future
     if (!isFutureDate(date, todayISO)) {
@@ -171,81 +162,32 @@ export function extractCalendarEvents(
     events.push(createEventInput(caseData, eventType, date, entryId));
   };
 
-  // PWD Expiration
-  tryAddEvent("pwd_expiration", caseData.pwdExpirationDate);
-
-  // ETA 9089 Filing (filing date is when they plan to file, if set)
-  // Note: This is the actual filing date, not the window
+  // A planned ETA 9089 filing date, while it is still ahead and uncertified.
   if (caseData.eta9089FilingDate && !caseData.eta9089CertificationDate) {
-    // Only show filing date if not yet certified
     tryAddEvent("eta9089_filing", caseData.eta9089FilingDate);
   }
 
-  // ETA 9089 Expiration
-  tryAddEvent("eta9089_expiration", caseData.eta9089ExpirationDate);
-
-  // Filing Window Opens (when 30-day waiting period ends)
-  tryAddEvent("filing_window_opens", caseData.filingWindowOpens);
-
-  // Recruitment Window Closes (overall 180-day window)
-  tryAddEvent("recruitment_expires", caseData.recruitmentWindowCloses);
-
-  // Per-step recruitment deadlines (computed from first recruitment + PWD)
-  const firstRecruitDate = getFirstRecruitmentDate({
-    sundayAdFirstDate: caseData.sundayAdFirstDate,
-    jobOrderStartDate: caseData.jobOrderStartDate,
-    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate,
+  // Every deadline the central rules say the case still has. createdAt is not
+  // part of the calendar's copy of an RFI/RFE and the rules never read it.
+  const input = buildDeadlineInput({
+    ...caseData,
+    caseStatus: caseData.caseStatus as CaseStatus,
+    progressStatus: caseData.progressStatus as ProgressStatus,
+    rfiEntries: caseData.rfiEntries?.map((e) => ({ ...e, createdAt: 0 })),
+    rfeEntries: caseData.rfeEntries?.map((e) => ({ ...e, createdAt: 0 })),
   });
-  if (firstRecruitDate && caseData.pwdExpirationDate) {
-    try {
-      const deadlines = calculateRecruitmentDeadlines(firstRecruitDate, caseData.pwdExpirationDate);
-      if (!caseData.jobOrderStartDate) {
-        tryAddEvent("job_order_start_deadline", deadlines.job_order_start_deadline);
-      }
-      if (!caseData.noticeOfFilingStartDate) {
-        tryAddEvent("notice_of_filing_start_deadline", deadlines.notice_of_filing_start_deadline);
-      }
-      if (!caseData.sundayAdFirstDate) {
-        tryAddEvent("first_sunday_ad_deadline", deadlines.first_sunday_ad_deadline);
-      }
-      if (!caseData.sundayAdSecondDate) {
-        tryAddEvent("second_sunday_ad_deadline", deadlines.second_sunday_ad_deadline);
-      }
-    } catch (error) {
-      console.error("[calendarEventExtractor] Failed to compute per-step recruitment deadlines:", error instanceof Error ? error.message : String(error));
-    }
-  }
-
-  // I-140 Filing Deadline
-  // Calculate if ETA 9089 is certified but I-140 not yet filed
-  if (caseData.eta9089CertificationDate && !caseData.i140FilingDate) {
-    const i140Deadline = calculateI140FilingDeadline(caseData.eta9089CertificationDate);
-    tryAddEvent("i140_deadline", i140Deadline);
-  }
-
-  // RFI Due Dates - only for unresolved entries
-  if (caseData.rfiEntries) {
-    for (const entry of caseData.rfiEntries) {
-      if (isRfiUnresolved(entry)) {
-        tryAddEvent("rfi_due", entry.responseDueDate, entry.id);
-      }
-    }
-  }
-
-  // RFE Due Dates - only for unresolved entries
-  if (caseData.rfeEntries) {
-    for (const entry of caseData.rfeEntries) {
-      if (isRfeUnresolved(entry)) {
-        tryAddEvent("rfe_due", entry.responseDueDate, entry.id);
-      }
-    }
+  for (const d of extractActiveDeadlines(input, todayISO)) {
+    const entryId =
+      d.type === "rfi_due" ? getActiveRfiEntry(input.rfiEntries ?? [])?.id
+      : d.type === "rfe_due" ? getActiveRfeEntry(input.rfeEntries ?? [])?.id
+      : undefined;
+    tryAddEvent(CENTRAL_TO_EVENT[d.type], d.date, entryId);
   }
 
   return {
     events,
     skippedByPreference,
     skippedPastDates,
-    skippedMissingData,
   };
 }
 

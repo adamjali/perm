@@ -13,22 +13,8 @@ import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { buildDefaultProfile } from "./lib/userDefaults";
+import { slotsForPreference, type CalendarSyncPreference } from "./lib/calendarTypes";
 
-/**
- * Maps calendar sync preference names to the schema field names for calendarEventIds.
- *
- * When a preference is toggled OFF, we need to delete the corresponding calendar events.
- * This maps the preference field name to the schema fields that store event IDs.
- */
-const PREF_TO_SCHEMA_FIELDS: Record<string, string[]> = {
-  calendarSyncPwd: ["pwd_expiration"],
-  calendarSyncEta9089: ["eta9089_filing_window", "eta9089_expiration"],
-  calendarSyncI140: ["i140_filing_deadline"],
-  calendarSyncRfe: ["rfe_due"],
-  calendarSyncRfi: ["rfi_due"],
-  calendarSyncRecruitment: ["recruitment_end"],
-  calendarSyncFilingWindow: ["eta9089_filing_window"],
-};
 
 /**
  * RFI/RFE entry type for calendar data
@@ -410,7 +396,7 @@ export const updateCalendarSyncPreference = mutation({
 
     // If toggled OFF, schedule deletion of calendar events for this type
     if (newValue === false) {
-      const schemaFields = PREF_TO_SCHEMA_FIELDS[preferenceName];
+      const schemaFields = slotsForPreference(preferenceName as CalendarSyncPreference);
       if (schemaFields && schemaFields.length > 0) {
         // Schedule the bulk delete action to run immediately
         await ctx.scheduler.runAfter(

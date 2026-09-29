@@ -100,7 +100,7 @@ describe("extractDeadlines", () => {
       const pwdDeadline = deadlines.find((d) => d.type === "pwd_expiration");
       expect(pwdDeadline).toBeDefined();
       expect(pwdDeadline?.date).toBe(caseData.pwdExpirationDate);
-      expect(pwdDeadline?.label).toContain("PWD Expiration");
+      expect(pwdDeadline?.label).toContain("PWD expiration");
     });
 
     it("includes PWD expiration if in recruitment stage", () => {
@@ -138,7 +138,7 @@ describe("extractDeadlines", () => {
       // Array structure: get responseDueDate from first active entry
       const activeRfi = caseData.rfiEntries.find((e) => e.receivedDate && !e.responseSubmittedDate);
       expect(rfiDeadline?.date).toBe(activeRfi?.responseDueDate);
-      expect(rfiDeadline?.label).toContain("RFI Response Due");
+      expect(rfiDeadline?.label).toContain("RFI response due");
     });
 
     it("excludes RFI if received but already submitted", () => {
@@ -175,7 +175,7 @@ describe("extractDeadlines", () => {
       // Array structure: get responseDueDate from first active entry
       const activeRfe = caseData.rfeEntries.find((e) => e.receivedDate && !e.responseSubmittedDate);
       expect(rfeDeadline?.date).toBe(activeRfe?.responseDueDate);
-      expect(rfeDeadline?.label).toContain("RFE Response Due");
+      expect(rfeDeadline?.label).toContain("RFE response due");
     });
 
     it("excludes RFE if received but already submitted", () => {
@@ -210,7 +210,7 @@ describe("extractDeadlines", () => {
       const i140Deadline = deadlines.find((d) => d.type === "i140_filing_deadline");
       expect(i140Deadline).toBeDefined();
       expect(i140Deadline?.date).toBe(caseData.eta9089ExpirationDate);
-      expect(i140Deadline?.label).toContain("I-140 Filing Deadline");
+      expect(i140Deadline?.label).toContain("I-140 filing deadline");
     });
 
     it("excludes I-140 filing deadline if I-140 already filed", () => {
@@ -239,7 +239,7 @@ describe("extractDeadlines", () => {
       };
       const deadlines = extractDeadlines(caseData, todayISO);
 
-      expect(deadlines[0].daysUntil).toBe(10);
+      expect(deadlines.find((d) => d.type === "pwd_expiration")!.daysUntil).toBe(10);
     });
 
     it("calculates negative daysUntil for past dates", () => {
@@ -250,7 +250,7 @@ describe("extractDeadlines", () => {
       };
       const deadlines = extractDeadlines(caseData, todayISO);
 
-      expect(deadlines[0].daysUntil).toBe(-5);
+      expect(deadlines.find((d) => d.type === "pwd_expiration")!.daysUntil).toBe(-5);
     });
 
     it("calculates 0 daysUntil for today", () => {
@@ -260,7 +260,7 @@ describe("extractDeadlines", () => {
       };
       const deadlines = extractDeadlines(caseData, todayISO);
 
-      expect(deadlines[0].daysUntil).toBe(0);
+      expect(deadlines.find((d) => d.type === "pwd_expiration")!.daysUntil).toBe(0);
     });
   });
 
@@ -307,7 +307,7 @@ describe("groupDeadlinesByUrgency", () => {
       {
         caseId: "1" as Id<"cases">,
         type: "pwd_expiration" as const,
-        label: "PWD Expiration",
+        label: "PWD expiration",
         date: daysFromNow(-5),
         daysUntil: -5,
         beneficiaryName: "Test 1",

@@ -62,7 +62,7 @@ import { LOCALES } from "@/lib/i18n/locales";
  *
  * There used to be a second "compact" bar documented as the authenticated
  * footer. Neither call site ever asked for it, so the signed-in app got the
- * public footer, Sign In and Sign Up Free included, offered to people who
+ * public footer, Sign in and Sign up free included, offered to people who
  * were already signed in. `audience` is what fixes that; the compact branch
  * is gone rather than left as an unreachable second layout.
  */

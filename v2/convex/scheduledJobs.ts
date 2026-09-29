@@ -36,13 +36,7 @@ import {
   type DeadlineNotificationType,
   type UserNotificationPrefs,
 } from "./lib/notificationHelpers";
-import {
-  shouldRemindForDeadline,
-  getActiveRfiEntry,
-  getActiveRfeEntry,
-  extractActiveDeadlines,
-  type CaseDataForDeadlines,
-} from "./lib/perm/deadlines";
+import { extractReminderDeadlines } from "./lib/perm/deadlines";
 import {
   getTodayForDeadline,
   DEFAULT_USER_TIMEZONE,
@@ -236,83 +230,10 @@ export const getCasesNeedingReminders = internalQuery({
         }
       };
 
-      // Convert case to CaseDataForDeadlines for supersession checks
-      const caseDataForDeadlines: CaseDataForDeadlines = {
-        _id: caseDoc._id,
-        caseStatus: caseDoc.caseStatus,
-        deletedAt: caseDoc.deletedAt,
-        pwdExpirationDate: caseDoc.pwdExpirationDate,
-        eta9089FilingDate: caseDoc.eta9089FilingDate,
-        eta9089CertificationDate: caseDoc.eta9089CertificationDate,
-        eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
-        i140FilingDate: caseDoc.i140FilingDate,
-        filingWindowOpens: caseDoc.filingWindowOpens,
-        filingWindowCloses: caseDoc.filingWindowCloses,
-        recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
-        sundayAdFirstDate: caseDoc.sundayAdFirstDate,
-        sundayAdSecondDate: caseDoc.sundayAdSecondDate,
-        jobOrderStartDate: caseDoc.jobOrderStartDate,
-        noticeOfFilingStartDate: caseDoc.noticeOfFilingStartDate,
-        rfiEntries: caseDoc.rfiEntries,
-        rfeEntries: caseDoc.rfeEntries,
-      };
-
-      // Check PWD expiration (superseded when ETA 9089 filed)
-      if (shouldRemindForDeadline("pwd_expiration", caseDataForDeadlines)) {
-        checkDeadline(caseDoc.pwdExpirationDate, "pwd_expiration", "pwd_expiration");
-      }
-
-      // Check filing window closes (superseded when ETA 9089 filed)
-      if (shouldRemindForDeadline("filing_window_closes", caseDataForDeadlines)) {
-        checkDeadline(caseDoc.filingWindowCloses, "filing_window_closes", "filing_window_closes");
-      }
-
-      // Check I-140 filing deadline (superseded when I-140 filed)
-      // Uses eta9089ExpirationDate as the deadline (180 days from certification)
-      if (shouldRemindForDeadline("i140_filing_deadline", caseDataForDeadlines)) {
-        checkDeadline(caseDoc.eta9089ExpirationDate, "i140_filing_deadline", "i140_filing_deadline");
-      }
-
-      // Check RFI due dates (superseded when response submitted)
-      if (shouldRemindForDeadline("rfi_due", caseDataForDeadlines)) {
-        const activeRfi = getActiveRfiEntry(caseDoc.rfiEntries ?? []);
-        if (activeRfi?.responseDueDate) {
-          checkDeadline(activeRfi.responseDueDate, "rfi_due", "rfi_due");
-        }
-      }
-
-      // Check RFE due dates (superseded when response submitted)
-      if (shouldRemindForDeadline("rfe_due", caseDataForDeadlines)) {
-        const activeRfe = getActiveRfeEntry(caseDoc.rfeEntries ?? []);
-        if (activeRfe?.responseDueDate) {
-          checkDeadline(activeRfe.responseDueDate, "rfe_due", "rfe_due");
-        }
-      }
-
-      // Check recruitment window closes (superseded when ETA 9089 filed)
-      if (shouldRemindForDeadline("recruitment_window_closes", caseDataForDeadlines)) {
-        checkDeadline(caseDoc.recruitmentWindowCloses, "recruitment_window_closes", "recruitment_window_closes");
-      }
-
-      // Per-step recruitment deadlines (computed from central system)
-      // Extract once, then check each per-step type
-      const perStepTypes = [
-        "job_order_start_deadline",
-        "notice_of_filing_start_deadline",
-        "first_sunday_ad_deadline",
-        "second_sunday_ad_deadline",
-      ] as const;
-      const needsPerStep = perStepTypes.some((t) => shouldRemindForDeadline(t, caseDataForDeadlines));
-      if (needsPerStep) {
-        const extracted = extractActiveDeadlines(caseDataForDeadlines);
-        for (const pType of perStepTypes) {
-          if (shouldRemindForDeadline(pType, caseDataForDeadlines)) {
-            const match = extracted.find((d) => d.type === pType);
-            if (match) {
-              checkDeadline(match.date, pType, pType);
-            }
-          }
-        }
+      // What to remind about comes from the central deadline rules: the same
+      // list the dashboard, case cards and calendar show.
+      for (const d of extractReminderDeadlines(caseDoc, userTz)) {
+        checkDeadline(d.date, d.type, d.type);
       }
     }
 
@@ -607,72 +528,9 @@ export const getDeadlinesForDigest = internalQuery({
         }
       };
 
-      // Build case data for centralized supersession checks
-      const caseDataForDeadlines: CaseDataForDeadlines = {
-        _id: caseDoc._id,
-        caseStatus: caseDoc.caseStatus,
-        deletedAt: caseDoc.deletedAt,
-        pwdExpirationDate: caseDoc.pwdExpirationDate,
-        eta9089FilingDate: caseDoc.eta9089FilingDate,
-        eta9089CertificationDate: caseDoc.eta9089CertificationDate,
-        eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
-        i140FilingDate: caseDoc.i140FilingDate,
-        filingWindowOpens: caseDoc.filingWindowOpens,
-        filingWindowCloses: caseDoc.filingWindowCloses,
-        recruitmentWindowCloses: caseDoc.recruitmentWindowCloses,
-        sundayAdFirstDate: caseDoc.sundayAdFirstDate,
-        sundayAdSecondDate: caseDoc.sundayAdSecondDate,
-        jobOrderStartDate: caseDoc.jobOrderStartDate,
-        noticeOfFilingStartDate: caseDoc.noticeOfFilingStartDate,
-        rfiEntries: caseDoc.rfiEntries,
-        rfeEntries: caseDoc.rfeEntries,
-      };
-
-      if (shouldRemindForDeadline("pwd_expiration", caseDataForDeadlines)) {
-        addDeadline(caseDoc.pwdExpirationDate, "PWD Expiration", "pwd_expiration");
-      }
-
-      if (shouldRemindForDeadline("filing_window_closes", caseDataForDeadlines)) {
-        addDeadline(caseDoc.filingWindowCloses, "Filing Window Closes", "filing_window_closes");
-      }
-
-      if (shouldRemindForDeadline("i140_filing_deadline", caseDataForDeadlines)) {
-        addDeadline(caseDoc.eta9089ExpirationDate, "I-140 Filing Deadline", "i140_filing_deadline");
-      }
-
-      if (shouldRemindForDeadline("rfi_due", caseDataForDeadlines)) {
-        const activeRfi = getActiveRfiEntry(caseDoc.rfiEntries ?? []);
-        if (activeRfi?.responseDueDate) {
-          addDeadline(activeRfi.responseDueDate, "RFI Response Due", "rfi_due");
-        }
-      }
-
-      if (shouldRemindForDeadline("rfe_due", caseDataForDeadlines)) {
-        const activeRfe = getActiveRfeEntry(caseDoc.rfeEntries ?? []);
-        if (activeRfe?.responseDueDate) {
-          addDeadline(activeRfe.responseDueDate, "RFE Response Due", "rfe_due");
-        }
-      }
-
-      // Per-step recruitment deadlines for digest
-      if (shouldRemindForDeadline("recruitment_window_closes", caseDataForDeadlines)) {
-        addDeadline(caseDoc.recruitmentWindowCloses, "Recruitment Window Closes", "recruitment_window_closes");
-      }
-      const digestPerStepTypes = [
-        "job_order_start_deadline",
-        "notice_of_filing_start_deadline",
-        "first_sunday_ad_deadline",
-        "second_sunday_ad_deadline",
-      ] as const;
-      const digestNeedsPerStep = digestPerStepTypes.some((t) => shouldRemindForDeadline(t, caseDataForDeadlines));
-      if (digestNeedsPerStep) {
-        const extracted = extractActiveDeadlines(caseDataForDeadlines);
-        for (const pType of digestPerStepTypes) {
-          const match = extracted.find((d) => d.type === pType);
-          if (match) {
-            addDeadline(match.date, match.label, pType);
-          }
-        }
+      // The central deadline rules, as in the reminders above.
+      for (const d of extractReminderDeadlines(caseDoc, userTz)) {
+        addDeadline(d.date, d.type, d.type);
       }
     }
 

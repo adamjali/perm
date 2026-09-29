@@ -314,15 +314,35 @@ describe("calculateNextDeadline", () => {
     expect(result!.label).toContain("RFI");
   });
 
-  it("filters out past deadlines (negative daysUntil)", () => {
-    // Set time far enough that PWD is already expired
+  it("shows a missed deadline as late instead of hiding it", () => {
+    // The PWD expired with the ETA 9089 never filed: a real miss. The box used
+    // to drop every past date, which hid exactly this.
     vi.setSystemTime(new Date("2026-06-01T00:00:00Z"));
     const result = calculateNextDeadline({
       ...baseCaseData,
       caseStatus: "recruitment",
-      pwdExpirationDate: "2025-01-01", // Already expired
+      pwdExpirationDate: "2025-01-01",
     });
-    // PWD expiration is in the past — should be filtered out
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result!.daysUntil).toBeLessThan(0);
+  });
+
+  it("does not report a filing window that has already opened", () => {
+    // Recruitment done in March 2024, window opened May 9; today is June 15.
+    vi.setSystemTime(new Date("2024-06-15T12:00:00Z"));
+    const result = calculateNextDeadline({
+      ...baseCaseData,
+      caseStatus: "eta9089",
+      sundayAdFirstDate: "2024-03-03",
+      sundayAdSecondDate: "2024-03-10",
+      jobOrderStartDate: "2024-03-01",
+      jobOrderEndDate: "2024-04-09",
+      noticeOfFilingStartDate: "2024-03-01",
+      noticeOfFilingEndDate: "2024-03-15",
+    });
+    // The next deadline is the window CLOSING, never "window opens: 37 days late".
+    expect(result).not.toBeNull();
+    expect(result!.daysUntil).toBeGreaterThanOrEqual(0);
+    expect(result!.label.toLowerCase()).toContain("closes");
   });
 });

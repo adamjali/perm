@@ -45,19 +45,19 @@ export function AutoClosure({
   caseUrl,
   caseNumber,
 }: AutoClosureProps) {
-  const previewText = `Case Automatically Closed: ${beneficiaryName} at ${companyName}`;
+  const previewText = `Case closed automatically: ${beneficiaryName} at ${companyName}`;
 
   return (
     <EmailLayout previewText={previewText}>
       <EmailHeader
-        title="Case Automatically Closed"
+        title="Case closed automatically"
         subtitle={caseNumber ? `Case #${caseNumber}` : undefined}
         urgency="urgent"
         icon="🚨"
       />
 
       <Section style={detailsSectionStyle}>
-        <Text className="em-text-secondary" style={labelStyle}>Foreign Worker</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Foreign worker</Text>
         <Text className="em-text" style={valueStyle}>{beneficiaryName}</Text>
 
         <Text className="em-text-secondary" style={labelStyle}>Company</Text>
@@ -66,7 +66,7 @@ export function AutoClosure({
 
       {/* Closure reason box */}
       <Section className="em-closure-box" style={styles.closureBox}>
-        <Text className="em-closure-title" style={styles.closureTitle}>Closure Reason</Text>
+        <Text className="em-closure-title" style={styles.closureTitle}>Closure reason</Text>
         <Text className="em-closure-type" style={styles.closureType}>{violationType}</Text>
         <Text className="em-closure-reason" style={styles.closureReason}>{reason}</Text>
       </Section>
@@ -84,7 +84,7 @@ export function AutoClosure({
       </Section>
 
       <Section style={ctaSectionStyle}>
-        <EmailButton href={caseUrl}>View Case Details</EmailButton>
+        <EmailButton href={caseUrl}>View case</EmailButton>
       </Section>
     </EmailLayout>
   );
@@ -144,7 +144,7 @@ const styles = {
 AutoClosure.PreviewProps = {
   beneficiaryName: "A. Rivera",
   companyName: "Globex Corporation",
-  violationType: "PWD Expiration Missed",
+  violationType: "PWD expiration missed",
   reason: "The prevailing wage determination expired before the ETA-9089 was filed, so the case can no longer move forward on this PWD.",
   closedAt: "June 27, 2026",
   caseUrl: "https://permtracker.app/cases/abc123",

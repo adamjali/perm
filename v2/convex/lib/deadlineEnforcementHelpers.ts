@@ -610,20 +610,20 @@ export function generateClosureMessage(
 export function generateClosureTitle(violation: DeadlineViolation): string {
   switch (violation.type) {
     case "pwd_expired":
-      return "PWD Expired - Case Closed";
+      return "PWD expired: case closed";
     case "recruitment_window_missed":
       return violation.canRestart
-        ? "Recruitment Window Missed - Action Required"
-        : "Recruitment Window Missed - Case Closed";
+        ? "Recruitment window missed: action needed"
+        : "Recruitment window missed: case closed";
     case "filing_window_missed":
       return violation.canRestart
-        ? "Filing Window Missed - Action Required"
-        : "Filing Window Missed - Case Closed";
+        ? "Filing window missed: action needed"
+        : "Filing window missed: case closed";
     case "eta9089_expired":
       return violation.canRestart
-        ? "ETA 9089 Expired - Action Required"
-        : "ETA 9089 Expired - Case Closed";
+        ? "ETA 9089 expired: action needed"
+        : "ETA 9089 expired: case closed";
     default:
-      return "Deadline Missed";
+      return "Deadline missed";
   }
 }

@@ -233,6 +233,7 @@ import type {
   CalendarEventType,
   CalendarEventInput,
 } from "./lib/calendarTypes";
+import { CALENDAR_EVENT_SLOTS, EVENT_TYPE_TO_SLOT } from "./lib/calendarTypes";
 
 /** Google Calendar API base URL */
 const GOOGLE_CALENDAR_API_BASE = "https://www.googleapis.com/calendar/v3";
@@ -575,27 +576,6 @@ import { extractCalendarEvents } from "./lib/calendarEventExtractor";
 // BULK SYNC ACTION
 // ============================================================================
 
-/**
- * Map CalendarEventType to schema field names
- *
- * The schema uses slightly different field names than CalendarEventType.
- * This maps the event type to the schema field.
- */
-const EVENT_TYPE_TO_SCHEMA_FIELD: Record<CalendarEventType, string> = {
-  pwd_expiration: "pwd_expiration",
-  eta9089_filing: "eta9089_filing_window", // Reuses filing window field
-  eta9089_expiration: "eta9089_expiration",
-  filing_window_opens: "eta9089_filing_window",
-  recruitment_expires: "recruitment_end",
-  recruitment_window_closes: "recruitment_window_closes",
-  job_order_start_deadline: "job_order_start_deadline",
-  notice_of_filing_start_deadline: "notice_of_filing_start_deadline",
-  first_sunday_ad_deadline: "first_sunday_ad_deadline",
-  second_sunday_ad_deadline: "second_sunday_ad_deadline",
-  i140_deadline: "i140_filing_deadline",
-  rfi_due: "rfi_due",
-  rfe_due: "rfe_due",
-};
 
 /**
  * Sync result for a single case
@@ -786,20 +766,7 @@ export const bulkDeleteEventsByType = internalAction({
           internal.googleCalendarSync.updateCaseCalendarEventIds,
           {
             caseId: caseDoc._id,
-            calendarEventIds: {
-              pwd_expiration: updatedEventIds.pwd_expiration,
-              eta9089_filing_window: updatedEventIds.eta9089_filing_window,
-              eta9089_expiration: updatedEventIds.eta9089_expiration,
-              i140_filing_deadline: updatedEventIds.i140_filing_deadline,
-              rfi_due: updatedEventIds.rfi_due,
-              rfe_due: updatedEventIds.rfe_due,
-              recruitment_end: updatedEventIds.recruitment_end,
-              recruitment_window_closes: updatedEventIds.recruitment_window_closes,
-              job_order_start_deadline: updatedEventIds.job_order_start_deadline,
-              notice_of_filing_start_deadline: updatedEventIds.notice_of_filing_start_deadline,
-              first_sunday_ad_deadline: updatedEventIds.first_sunday_ad_deadline,
-              second_sunday_ad_deadline: updatedEventIds.second_sunday_ad_deadline,
-            },
+            calendarEventIds: Object.fromEntries(CALENDAR_EVENT_SLOTS.map((slot) => [slot, updatedEventIds[slot]])),
           }
         );
 
@@ -940,7 +907,7 @@ export const syncCaseCalendarEvents = internalAction({
 
         if (createResult.success && createResult.eventId) {
           // Map event type to schema field
-          const schemaField = EVENT_TYPE_TO_SCHEMA_FIELD[event.eventType];
+          const schemaField = EVENT_TYPE_TO_SLOT[event.eventType];
           newEventIds[schemaField] = createResult.eventId;
           eventsCreated++;
         }
@@ -951,20 +918,7 @@ export const syncCaseCalendarEvents = internalAction({
         internal.googleCalendarSync.updateCaseCalendarEventIds,
         {
           caseId,
-          calendarEventIds: {
-            pwd_expiration: newEventIds["pwd_expiration"],
-            eta9089_filing_window: newEventIds["eta9089_filing_window"],
-            eta9089_expiration: newEventIds["eta9089_expiration"],
-            i140_filing_deadline: newEventIds["i140_filing_deadline"],
-            rfi_due: newEventIds["rfi_due"],
-            rfe_due: newEventIds["rfe_due"],
-            recruitment_end: newEventIds["recruitment_end"],
-            recruitment_window_closes: newEventIds["recruitment_window_closes"],
-            job_order_start_deadline: newEventIds["job_order_start_deadline"],
-            notice_of_filing_start_deadline: newEventIds["notice_of_filing_start_deadline"],
-            first_sunday_ad_deadline: newEventIds["first_sunday_ad_deadline"],
-            second_sunday_ad_deadline: newEventIds["second_sunday_ad_deadline"],
-          },
+          calendarEventIds: Object.fromEntries(CALENDAR_EVENT_SLOTS.map((slot) => [slot, newEventIds[slot]])),
         }
       );
 

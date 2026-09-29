@@ -111,7 +111,7 @@ export function extractMilestones(caseData: CaseWithDates): Milestone[] {
     if (readyToFileDate) {
       milestones.push({
         field: "readyToFile",
-        label: "Ready to File",
+        label: "Filing window opens",
         date: readyToFileDate,
         stage: "eta9089",
         color: STAGE_COLORS.eta9089,

@@ -17,6 +17,7 @@ import {
   type DeadlineViolation,
 } from "./deadlineEnforcementHelpers";
 import { DEFAULT_NOTIFICATION_PREFS } from "./userDefaults";
+import { DEADLINE_LABELS } from "./perm/deadlines/types";
 
 // ============================================================================
 // TYPES
@@ -124,22 +125,6 @@ export type NotificationIcon =
 // ============================================================================
 
 /**
- * Format days until deadline as human-readable text.
- */
-function formatDaysUntil(days: number): string {
-  if (days < 0) {
-    const overdueDays = Math.abs(days);
-    return overdueDays === 1 ? "1 day overdue" : `${overdueDays} days overdue`;
-  }
-  if (days === 0) return "Today";
-  if (days === 1) return "Tomorrow";
-  if (days <= 7) return `in ${days} days`;
-  if (days <= 14) return `in ${Math.ceil(days / 7)} weeks`;
-  if (days <= 30) return `in ${days} days`;
-  return `in ${Math.ceil(days / 30)} months`;
-}
-
-/**
  * Format a case status for display in notifications.
  *
  * @param status - Case status string (pwd, recruitment, etc.)
@@ -203,7 +188,7 @@ export function buildUserNotificationPrefs(
  *   deadlineType: "pwd_expiration",
  *   daysUntilDeadline: 7
  * });
- * // "PWD Expiration in 7 days"
+ * // "PWD expires in 7 days"
  */
 export function generateNotificationTitle(
   type: NotificationType,
@@ -211,72 +196,38 @@ export function generateNotificationTitle(
 ): string {
   switch (type) {
     case "deadline_reminder": {
-      const deadlineLabel = context.deadlineType
-        ? formatDeadlineType(context.deadlineType)
-        : "Deadline";
-
-      if (context.daysUntilDeadline !== undefined) {
-        // Handle labels that already end with "Due" (e.g., "RFI Response Due")
-        const labelEndsDue = deadlineLabel.endsWith("Due");
-
-        if (context.daysUntilDeadline < 0) {
-          return `${deadlineLabel} Overdue`;
-        }
-        if (context.daysUntilDeadline === 0) {
-          return labelEndsDue
-            ? `${deadlineLabel} Today`
-            : `${deadlineLabel} Due Today`;
-        }
-        if (context.daysUntilDeadline === 1) {
-          return `${deadlineLabel} Tomorrow`;
-        }
-        return `${deadlineLabel} in ${context.daysUntilDeadline} days`;
+      if (context.daysUntilDeadline === undefined) {
+        return context.deadlineType ? `${formatDeadlineType(context.deadlineType)} reminder` : "Deadline reminder";
       }
-      return `${deadlineLabel} Reminder`;
+      return deadlineTitle(context.deadlineType, context.daysUntilDeadline);
     }
 
     case "status_change": {
       const statusLabel = context.newStatus
         ? formatCaseStatus(context.newStatus)
-        : "Updated";
-      return `Case Status Updated to ${statusLabel}`;
+        : "a new status";
+      return `Case moved to ${statusLabel}`;
     }
 
-    case "rfi_alert": {
-      if (context.daysUntilDeadline !== undefined) {
-        if (context.daysUntilDeadline < 0) {
-          return "RFI Response Overdue";
-        }
-        if (context.daysUntilDeadline <= 7) {
-          return `RFI Response Due ${formatDaysUntil(context.daysUntilDeadline)}`;
-        }
-        return `RFI Response Due in ${context.daysUntilDeadline} days`;
-      }
-      return "RFI Response Due Soon";
-    }
+    case "rfi_alert":
+      return context.daysUntilDeadline === undefined
+        ? "RFI response due soon"
+        : deadlineTitle("rfi_due", context.daysUntilDeadline);
 
-    case "rfe_alert": {
-      if (context.daysUntilDeadline !== undefined) {
-        if (context.daysUntilDeadline < 0) {
-          return "RFE Response Overdue";
-        }
-        if (context.daysUntilDeadline <= 7) {
-          return `RFE Response Due ${formatDaysUntil(context.daysUntilDeadline)}`;
-        }
-        return `RFE Response Due in ${context.daysUntilDeadline} days`;
-      }
-      return "RFE Response Due Soon";
-    }
+    case "rfe_alert":
+      return context.daysUntilDeadline === undefined
+        ? "RFE response due soon"
+        : deadlineTitle("rfe_due", context.daysUntilDeadline);
 
     case "auto_closure": {
       if (context.violation) {
         return generateClosureTitle(context.violation);
       }
-      return "Case Automatically Closed";
+      return "Case closed automatically";
     }
 
     case "system":
-      return "System Notification";
+      return "System notification";
 
     default:
       return "Notification";
@@ -323,26 +274,21 @@ export function generateNotificationMessage(
 
   switch (type) {
     case "deadline_reminder": {
-      const deadlineLabel = context.deadlineType
-        ? formatDeadlineType(context.deadlineType)
-        : "The deadline";
+      const phrase = context.deadlineType ? DEADLINE_PHRASES[context.deadlineType] : undefined;
+      const noun = phrase?.noun ?? "The deadline";
+      const verb = VERBS[phrase?.verb ?? "due"];
+      const days = context.daysUntilDeadline;
 
-      if (context.daysUntilDeadline !== undefined && context.daysUntilDeadline < 0) {
-        const daysOverdue = Math.abs(context.daysUntilDeadline);
-        return `${deadlineLabel} for ${caseLabel} is ${daysOverdue} day${daysOverdue > 1 ? "s" : ""} overdue. Immediate action required.`;
+      if (days !== undefined && days < 0) {
+        const n = Math.abs(days);
+        return `${noun} for ${caseLabel} ${verb.past} ${n} day${n === 1 ? "" : "s"} ago. Review the case now.`;
       }
-
       if (formattedDate) {
-        if (context.daysUntilDeadline === 0) {
-          return `${deadlineLabel} for ${caseLabel} is due today (${formattedDate}). Take action immediately.`;
-        }
-        if (context.daysUntilDeadline === 1) {
-          return `${deadlineLabel} for ${caseLabel} is due tomorrow (${formattedDate}). Take action soon.`;
-        }
-        return `${deadlineLabel} for ${caseLabel} is due on ${formattedDate}. Plan accordingly.`;
+        if (days === 0) return `${noun} for ${caseLabel} ${verb.now} today (${formattedDate}).`;
+        if (days === 1) return `${noun} for ${caseLabel} ${verb.now} tomorrow (${formattedDate}).`;
+        return `${noun} for ${caseLabel} ${verb.now} on ${formattedDate}.`;
       }
-
-      return `${deadlineLabel} for ${caseLabel} is approaching. Review the case for details.`;
+      return `${noun} for ${caseLabel} is coming up. Review the case for details.`;
     }
 
     case "status_change": {
@@ -493,46 +439,72 @@ export function getNotificationIcon(type: NotificationType): NotificationIcon {
 }
 
 /**
- * Format a deadline type as a human-readable string.
- *
- * @param deadlineType - Deadline type from schema
- * @returns Human-readable deadline name
+ * How each deadline reads in a sentence: what it is, and what happens on its
+ * date. Titles and messages are built from this one table, so an email, a
+ * push and the notification list word a deadline the same way, in sentence
+ * case.
+ */
+const DEADLINE_PHRASES: Record<DeadlineNotificationType, { noun: string; verb: keyof typeof VERBS }> = {
+  pwd_expiration: { noun: "PWD", verb: "expires" },
+  eta9089_expiration: { noun: "ETA 9089 certification", verb: "expires" },
+  filing_window_opens: { noun: "ETA 9089 filing window", verb: "opens" },
+  filing_window_closes: { noun: "ETA 9089 filing window", verb: "closes" },
+  recruitment_window: { noun: "Recruitment window", verb: "closes" },
+  recruitment_window_closes: { noun: "Recruitment window", verb: "closes" },
+  i140_filing_deadline: { noun: "I-140 filing", verb: "due" },
+  job_order_start_deadline: { noun: "Job order start", verb: "due" },
+  notice_of_filing_start_deadline: { noun: "Notice of filing start", verb: "due" },
+  first_sunday_ad_deadline: { noun: "First Sunday ad", verb: "due" },
+  second_sunday_ad_deadline: { noun: "Second Sunday ad", verb: "due" },
+  rfi_due: { noun: "RFI response", verb: "due" },
+  rfe_due: { noun: "RFE response", verb: "due" },
+};
+
+/** Each verb in a title ("due", "expires"), a sentence ("is due") and the past. */
+const VERBS = {
+  due: { title: "due", now: "is due", past: "was due", missed: "overdue" },
+  expires: { title: "expires", now: "expires", past: "expired", missed: "expired" },
+  opens: { title: "opens", now: "opens", past: "opened", missed: "is open" },
+  closes: { title: "closes", now: "closes", past: "closed", missed: "closed" },
+} as const;
+
+/**
+ * A deadline's notification title: "PWD expires in 7 days", "RFI response
+ * due tomorrow", "ETA 9089 filing window closed".
+ */
+export function deadlineTitle(
+  deadlineType: DeadlineNotificationType | undefined,
+  daysUntil: number
+): string {
+  const phrase = deadlineType ? DEADLINE_PHRASES[deadlineType] : undefined;
+  const noun = phrase?.noun ?? "Deadline";
+  const verb = VERBS[phrase?.verb ?? "due"];
+  if (daysUntil < 0) return `${noun} ${verb.missed}`;
+  if (daysUntil === 0) return `${noun} ${verb.title} today`;
+  if (daysUntil === 1) return `${noun} ${verb.title} tomorrow`;
+  return `${noun} ${verb.title} in ${daysUntil} days`;
+}
+
+/**
+ * A deadline type's name in sentence case, for lists and email rows.
  *
  * @example
- * formatDeadlineType("pwd_expiration"); // "PWD Expiration"
- * formatDeadlineType("eta9089_expiration"); // "ETA 9089 Expiration"
+ * formatDeadlineType("pwd_expiration"); // "PWD expiration"
+ * formatDeadlineType("rfi_due"); // "RFI response due"
  */
 export function formatDeadlineType(
   deadlineType: DeadlineNotificationType
 ): string {
   switch (deadlineType) {
     case "pwd_expiration":
-      return "PWD Expiration";
-    case "rfi_due":
-      return "RFI Response Due";
-    case "rfe_due":
-      return "RFE Response Due";
-    case "filing_window_opens":
-      return "Filing Window Opens";
-    case "filing_window_closes":
-      return "Filing Window Closes";
+      return "PWD expiration";
+    case "eta9089_expiration":
+      return "ETA 9089 expiration";
     case "recruitment_window":
     case "recruitment_window_closes":
-      return "Recruitment Window Closes";
-    case "eta9089_expiration":
-      return "ETA 9089 Expiration";
-    case "i140_filing_deadline":
-      return "I-140 Filing Deadline";
-    case "job_order_start_deadline":
-      return "Start Job Order By";
-    case "notice_of_filing_start_deadline":
-      return "Start Notice of Filing By";
-    case "first_sunday_ad_deadline":
-      return "First Sunday Ad By";
-    case "second_sunday_ad_deadline":
-      return "Second Sunday Ad By";
+      return "Recruitment window closes";
     default:
-      return deadlineType;
+      return DEADLINE_LABELS[deadlineType] ?? deadlineType;
   }
 }
 

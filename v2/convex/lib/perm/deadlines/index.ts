@@ -46,9 +46,12 @@ export {
   extractActiveDeadlines,
   getActiveDeadlineTypes,
   shouldRemindForDeadline,
+  extractReminderDeadlines,
   daysBetween,
   getTodayISO,
 } from "./extractActiveDeadlines";
+
+export { buildDeadlineInput, type LooseDeadlineCaseData } from "./buildDeadlineInput";
 
 // ============================================================================
 // TIMEZONE RULES

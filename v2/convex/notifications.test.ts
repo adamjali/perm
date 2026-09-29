@@ -735,7 +735,7 @@ describe("Notifications", () => {
           deadlineType: "pwd_expiration",
           daysUntilDeadline: 7,
         });
-        expect(title).toBe("PWD Expiration in 7 days");
+        expect(title).toBe("PWD expires in 7 days");
       });
 
       it("generates title for deadline_reminder overdue", () => {
@@ -743,7 +743,7 @@ describe("Notifications", () => {
           deadlineType: "pwd_expiration",
           daysUntilDeadline: -3,
         });
-        expect(title).toBe("PWD Expiration Overdue");
+        expect(title).toBe("PWD expired");
       });
 
       it("generates title for deadline_reminder due today", () => {
@@ -751,7 +751,7 @@ describe("Notifications", () => {
           deadlineType: "rfi_due",
           daysUntilDeadline: 0,
         });
-        expect(title).toBe("RFI Response Due Today");
+        expect(title).toBe("RFI response due today");
       });
 
       it("generates title for deadline_reminder due tomorrow", () => {
@@ -759,35 +759,44 @@ describe("Notifications", () => {
           deadlineType: "i140_filing_deadline",
           daysUntilDeadline: 1,
         });
-        expect(title).toBe("I-140 Filing Deadline Tomorrow");
+        expect(title).toBe("I-140 filing due tomorrow");
+      });
+
+      it("words each deadline as a sentence", () => {
+        const title = (deadlineType: Parameters<typeof generateNotificationTitle>[1]["deadlineType"], daysUntilDeadline: number) =>
+          generateNotificationTitle("deadline_reminder", { deadlineType, daysUntilDeadline });
+        expect(title("first_sunday_ad_deadline", 1)).toBe("First Sunday ad due tomorrow");
+        expect(title("filing_window_closes", 0)).toBe("ETA 9089 filing window closes today");
+        expect(title("filing_window_closes", -2)).toBe("ETA 9089 filing window closed");
+        expect(title("job_order_start_deadline", 14)).toBe("Job order start due in 14 days");
       });
 
       it("generates title for status_change", () => {
         const title = generateNotificationTitle("status_change", {
           newStatus: "recruitment",
         });
-        expect(title).toBe("Case Status Updated to Recruitment");
+        expect(title).toBe("Case moved to Recruitment");
       });
 
       it("generates title for rfi_alert", () => {
         const title = generateNotificationTitle("rfi_alert", {
           daysUntilDeadline: 5,
         });
-        expect(title).toBe("RFI Response Due in 5 days");
+        expect(title).toBe("RFI response due in 5 days");
       });
 
       it("generates title for rfi_alert overdue", () => {
         const title = generateNotificationTitle("rfi_alert", {
           daysUntilDeadline: -2,
         });
-        expect(title).toBe("RFI Response Overdue");
+        expect(title).toBe("RFI response overdue");
       });
 
       it("generates title for rfe_alert", () => {
         const title = generateNotificationTitle("rfe_alert", {
           daysUntilDeadline: 10,
         });
-        expect(title).toBe("RFE Response Due in 10 days");
+        expect(title).toBe("RFE response due in 10 days");
       });
 
       it("generates title for auto_closure with violation", () => {
@@ -799,12 +808,12 @@ describe("Notifications", () => {
             canRestart: false,
           },
         });
-        expect(title).toBe("PWD Expired - Case Closed");
+        expect(title).toBe("PWD expired: case closed");
       });
 
       it("generates title for system notification", () => {
         const title = generateNotificationTitle("system", {});
-        expect(title).toBe("System Notification");
+        expect(title).toBe("System notification");
       });
     });
 
@@ -835,8 +844,7 @@ describe("Notifications", () => {
           daysUntilDeadline: -5,
           caseLabel: "Test Case",
         });
-        expect(message).toContain("5 days overdue");
-        expect(message).toContain("Immediate action required");
+        expect(message).toBe("RFI response for Test Case was due 5 days ago. Review the case now.");
       });
     });
 
@@ -960,35 +968,35 @@ describe("Notifications", () => {
 
     describe("formatDeadlineType", () => {
       it("formats pwd_expiration", () => {
-        expect(formatDeadlineType("pwd_expiration")).toBe("PWD Expiration");
+        expect(formatDeadlineType("pwd_expiration")).toBe("PWD expiration");
       });
 
       it("formats rfi_due", () => {
-        expect(formatDeadlineType("rfi_due")).toBe("RFI Response Due");
+        expect(formatDeadlineType("rfi_due")).toBe("RFI response due");
       });
 
       it("formats rfe_due", () => {
-        expect(formatDeadlineType("rfe_due")).toBe("RFE Response Due");
+        expect(formatDeadlineType("rfe_due")).toBe("RFE response due");
       });
 
       it("formats filing_window_opens", () => {
-        expect(formatDeadlineType("filing_window_opens")).toBe("Filing Window Opens");
+        expect(formatDeadlineType("filing_window_opens")).toBe("ETA 9089 filing window opens");
       });
 
       it("formats filing_window_closes", () => {
-        expect(formatDeadlineType("filing_window_closes")).toBe("Filing Window Closes");
+        expect(formatDeadlineType("filing_window_closes")).toBe("ETA 9089 filing window closes");
       });
 
       it("formats recruitment_window", () => {
-        expect(formatDeadlineType("recruitment_window")).toBe("Recruitment Window Closes");
+        expect(formatDeadlineType("recruitment_window")).toBe("Recruitment window closes");
       });
 
       it("formats eta9089_expiration", () => {
-        expect(formatDeadlineType("eta9089_expiration")).toBe("ETA 9089 Expiration");
+        expect(formatDeadlineType("eta9089_expiration")).toBe("ETA 9089 expiration");
       });
 
       it("formats i140_filing_deadline", () => {
-        expect(formatDeadlineType("i140_filing_deadline")).toBe("I-140 Filing Deadline");
+        expect(formatDeadlineType("i140_filing_deadline")).toBe("I-140 filing deadline");
       });
     });
 

@@ -6,7 +6,7 @@
  * and display appropriate content based on props.
  *
  * Templates tested:
- * - DeadlineReminder: Deadline approaching notifications
+ * - DeadlineDigest: the daily deadline email (in the shared checks below)
  * - StatusChange: Case status change notifications
  * - RfiAlert: Request for Information alerts
  * - RfeAlert: Request for Evidence alerts
@@ -16,7 +16,8 @@
 
 import { describe, it, expect } from "vitest";
 import { render } from "@react-email/render";
-import { DeadlineReminder } from "../DeadlineReminder";
+import { DeadlineDigest } from "../DeadlineDigest";
+import type { DeadlineDigestItem } from "../../../convex/lib/reminderDigest";
 import { StatusChange } from "../StatusChange";
 import { RfiAlert } from "../RfiAlert";
 import { RfeAlert } from "../RfeAlert";
@@ -26,181 +27,17 @@ import { AutoClosure } from "../AutoClosure";
 // DEADLINE REMINDER TESTS
 // ============================================================================
 
-describe("DeadlineReminder", () => {
-  const baseProps = {
-    employerName: "Acme Corp",
-    beneficiaryName: "John Doe",
-    deadlineType: "PWD Expiration",
-    deadlineDate: "January 15, 2025",
-    daysUntil: 7,
-    caseUrl: "https://app.com/cases/123",
+/** The live deadline email with one row, for the checks every template shares. */
+function oneDeadline(employerName: string, daysUntil: number) {
+  const urgency: DeadlineDigestItem["urgency"] =
+    daysUntil < 0 ? "overdue" : daysUntil <= 7 ? "urgent" : daysUntil <= 14 ? "upcoming" : "later";
+  return {
+    userName: "Test",
+    items: [
+      { caseId: "c1" as never, employerName, beneficiaryIdentifier: "John Doe", deadlineType: "PWD expiration", deadlineDate: "2026-01-15", daysUntil, urgency },
+    ],
   };
-
-  describe("Basic Rendering", () => {
-    it("renders without errors", async () => {
-      const html = await render(DeadlineReminder(baseProps));
-      expect(html).toBeDefined();
-      expect(typeof html).toBe("string");
-      expect(html.length).toBeGreaterThan(0);
-    });
-
-    it("contains employer name", async () => {
-      const html = await render(DeadlineReminder(baseProps));
-      expect(html).toContain("Acme Corp");
-    });
-
-    it("contains beneficiary name", async () => {
-      const html = await render(DeadlineReminder(baseProps));
-      expect(html).toContain("John Doe");
-    });
-
-    it("contains deadline type", async () => {
-      const html = await render(DeadlineReminder(baseProps));
-      expect(html).toContain("PWD Expiration");
-    });
-
-    it("contains deadline date", async () => {
-      const html = await render(DeadlineReminder(baseProps));
-      expect(html).toContain("January 15, 2025");
-    });
-
-    it("contains case URL in View Case button", async () => {
-      const html = await render(DeadlineReminder(baseProps));
-      expect(html).toContain("https://app.com/cases/123");
-    });
-
-    it("contains settings link in footer", async () => {
-      const html = await render(DeadlineReminder(baseProps));
-      expect(html).toContain("https://permtracker.app/settings");
-      expect(html).toContain("Manage notification settings");
-    });
-  });
-
-  describe("Urgency Levels", () => {
-    it("shows OVERDUE for negative days", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: -3,
-        })
-      );
-      expect(html).toContain("OVERDUE");
-      expect(html).toContain("3 days overdue");
-    });
-
-    it("shows singular 'day' for 1 day overdue", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: -1,
-        })
-      );
-      expect(html).toContain("1 day overdue");
-    });
-
-    it("shows 'Due today' for 0 days", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: 0,
-        })
-      );
-      expect(html.toLowerCase()).toContain("due today");
-    });
-
-    it("shows 'Tomorrow' for 1 day remaining", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: 1,
-        })
-      );
-      expect(html).toContain("Tomorrow");
-      expect(html).toContain("Due tomorrow");
-    });
-
-    it("shows urgent styling for 1-7 days", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: 5,
-        })
-      );
-      expect(html).toContain("5 days - Urgent");
-      expect(html).toContain("5 days remaining");
-    });
-
-    it("shows high priority styling for 8-14 days", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: 10,
-        })
-      );
-      expect(html).toContain("10 days - High Priority");
-      expect(html).toContain("10 days remaining");
-    });
-
-    it("shows normal styling for 15+ days", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: 30,
-        })
-      );
-      expect(html).toContain("30 days");
-      expect(html).toContain("30 days remaining");
-    });
-  });
-
-  describe("Preview Text", () => {
-    it("generates correct preview text for overdue", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: -1,
-        })
-      );
-      expect(html).toContain("OVERDUE: PWD Expiration for Acme Corp");
-    });
-
-    it("generates correct preview text for urgent", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: 5,
-        })
-      );
-      expect(html).toContain("Urgent: PWD Expiration in 5 days");
-    });
-
-    it("generates correct preview text for normal", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          daysUntil: 20,
-        })
-      );
-      expect(html).toContain("Reminder: PWD Expiration in 20 days");
-    });
-  });
-
-  describe("Custom Settings URL", () => {
-    it("uses custom settings URL when provided", async () => {
-      const html = await render(
-        DeadlineReminder({
-          ...baseProps,
-          settingsUrl: "https://custom.com/settings",
-        })
-      );
-      expect(html).toContain("https://custom.com/settings");
-    });
-  });
-});
-
-// ============================================================================
-// STATUS CHANGE TESTS
-// ============================================================================
+}
 
 describe("StatusChange", () => {
   const baseProps = {
@@ -248,7 +85,7 @@ describe("StatusChange", () => {
     it("contains View Case button with case URL", async () => {
       const html = await render(StatusChange(baseProps));
       expect(html).toContain("https://app.com/cases/123");
-      expect(html).toContain("View Case Details");
+      expect(html).toContain("View case");
     });
 
     it("contains settings link in footer", async () => {
@@ -258,19 +95,19 @@ describe("StatusChange", () => {
   });
 
   describe("Change Type Handling", () => {
-    it("shows 'Case Stage Updated' for stage change", async () => {
+    it("shows 'Case stage updated' for stage change", async () => {
       const html = await render(StatusChange(baseProps));
-      expect(html).toContain("Case Stage Updated");
+      expect(html).toContain("Case stage updated");
     });
 
-    it("shows 'Case Progress Updated' for progress change", async () => {
+    it("shows 'Case progress updated' for progress change", async () => {
       const html = await render(
         StatusChange({
           ...baseProps,
           changeType: "progress",
         })
       );
-      expect(html).toContain("Case Progress Updated");
+      expect(html).toContain("Case progress updated");
     });
   });
 
@@ -351,19 +188,19 @@ describe("RfiAlert", () => {
   });
 
   describe("Alert Type Handling", () => {
-    it("shows 'New RFI Received' for new alert type", async () => {
+    it("shows 'New RFI received' for new alert type", async () => {
       const html = await render(RfiAlert(baseProps));
-      expect(html).toContain("New RFI Received");
+      expect(html).toContain("New RFI received");
     });
 
-    it("shows 'RFI Response Due Soon' for reminder alert type", async () => {
+    it("shows 'RFI response due soon' for reminder alert type", async () => {
       const html = await render(
         RfiAlert({
           ...baseProps,
           alertType: "reminder",
         })
       );
-      expect(html).toContain("RFI Response Due Soon");
+      expect(html).toContain("RFI response due soon");
     });
 
     it("shows 30-day response info box for new RFI", async () => {
@@ -388,14 +225,14 @@ describe("RfiAlert", () => {
       expect(html).toContain("1 day remaining");
     });
 
-    it("shows 'DUE TODAY' for 0 days", async () => {
+    it("shows 'Due today' for 0 days", async () => {
       const html = await render(
         RfiAlert({
           ...baseProps,
           daysRemaining: 0,
         })
       );
-      expect(html).toContain("DUE TODAY");
+      expect(html).toContain("Due today");
     });
 
     it("shows overdue message for negative days", async () => {
@@ -405,7 +242,7 @@ describe("RfiAlert", () => {
           daysRemaining: -5,
         })
       );
-      expect(html).toContain("5 days OVERDUE");
+      expect(html).toContain("5 days overdue");
     });
 
     it("shows singular 'day' for 1 day overdue", async () => {
@@ -415,7 +252,7 @@ describe("RfiAlert", () => {
           daysRemaining: -1,
         })
       );
-      expect(html).toContain("1 day OVERDUE");
+      expect(html).toContain("1 day overdue");
     });
   });
 
@@ -484,19 +321,19 @@ describe("RfeAlert", () => {
   });
 
   describe("Alert Type Handling", () => {
-    it("shows 'New RFE Received' for new alert type", async () => {
+    it("shows 'New RFE received' for new alert type", async () => {
       const html = await render(RfeAlert(baseProps));
-      expect(html).toContain("New RFE Received");
+      expect(html).toContain("New RFE received");
     });
 
-    it("shows 'RFE Response Due Soon' for reminder alert type", async () => {
+    it("shows 'RFE response due soon' for reminder alert type", async () => {
       const html = await render(
         RfeAlert({
           ...baseProps,
           alertType: "reminder",
         })
       );
-      expect(html).toContain("RFE Response Due Soon");
+      expect(html).toContain("RFE response due soon");
     });
 
     it("shows USCIS info box for new RFE", async () => {
@@ -532,14 +369,14 @@ describe("RfeAlert", () => {
       expect(html).toContain("60 days remaining");
     });
 
-    it("shows 'DUE TODAY' for 0 days", async () => {
+    it("shows 'Due today' for 0 days", async () => {
       const html = await render(
         RfeAlert({
           ...baseProps,
           daysRemaining: 0,
         })
       );
-      expect(html).toContain("DUE TODAY");
+      expect(html).toContain("Due today");
     });
 
     it("shows overdue message for negative days", async () => {
@@ -549,7 +386,7 @@ describe("RfeAlert", () => {
           daysRemaining: -10,
         })
       );
-      expect(html).toContain("10 days OVERDUE");
+      expect(html).toContain("10 days overdue");
     });
   });
 
@@ -582,7 +419,7 @@ describe("AutoClosure", () => {
   const baseProps = {
     beneficiaryName: "John Doe",
     companyName: "Acme Corp",
-    violationType: "PWD Expiration",
+    violationType: "PWD expiration",
     reason:
       "The Prevailing Wage Determination expired before ETA 9089 filing.",
     closedAt: "December 31, 2024 at 10:30 AM",
@@ -596,9 +433,9 @@ describe("AutoClosure", () => {
       expect(typeof html).toBe("string");
     });
 
-    it("contains 'Case Automatically Closed' title", async () => {
+    it("contains 'Case closed automatically' title", async () => {
       const html = await render(AutoClosure(baseProps));
-      expect(html).toContain("Case Automatically Closed");
+      expect(html).toContain("Case closed automatically");
     });
 
     it("contains beneficiary name", async () => {
@@ -613,7 +450,7 @@ describe("AutoClosure", () => {
 
     it("contains violation type", async () => {
       const html = await render(AutoClosure(baseProps));
-      expect(html).toContain("PWD Expiration");
+      expect(html).toContain("PWD expiration");
     });
 
     it("contains closure reason", async () => {
@@ -631,7 +468,7 @@ describe("AutoClosure", () => {
     it("contains View Case button with case URL", async () => {
       const html = await render(AutoClosure(baseProps));
       expect(html).toContain("https://app.com/cases/123");
-      expect(html).toContain("View Case Details");
+      expect(html).toContain("View case");
     });
 
     it("contains settings link in footer", async () => {
@@ -673,7 +510,7 @@ describe("AutoClosure", () => {
     it("generates correct preview text", async () => {
       const html = await render(AutoClosure(baseProps));
       expect(html).toContain(
-        "Case Automatically Closed: John Doe at Acme Corp"
+        "Case closed automatically: John Doe at Acme Corp"
       );
     });
   });
@@ -686,14 +523,7 @@ describe("AutoClosure", () => {
 describe("Email Templates - Common Features", () => {
   it("all templates include PERM Tracker branding", async () => {
     const deadlineHtml = await render(
-      DeadlineReminder({
-        employerName: "Test",
-        beneficiaryName: "Test",
-        deadlineType: "Test",
-        deadlineDate: "Test",
-        daysUntil: 7,
-        caseUrl: "https://test.com",
-      })
+      DeadlineDigest(oneDeadline("Test", 7))
     );
     const statusHtml = await render(
       StatusChange({
@@ -749,14 +579,7 @@ describe("Email Templates - Common Features", () => {
 
   it("all templates include Open PERM Tracker link", async () => {
     const deadlineHtml = await render(
-      DeadlineReminder({
-        employerName: "Test",
-        beneficiaryName: "Test",
-        deadlineType: "Test",
-        deadlineDate: "Test",
-        daysUntil: 7,
-        caseUrl: "https://test.com",
-      })
+      DeadlineDigest(oneDeadline("Test", 7))
     );
     const statusHtml = await render(
       StatusChange({
@@ -814,14 +637,7 @@ describe("Email Templates - Common Features", () => {
     const year = new Date().getFullYear();
 
     const deadlineHtml = await render(
-      DeadlineReminder({
-        employerName: "Test",
-        beneficiaryName: "Test",
-        deadlineType: "Test",
-        deadlineDate: "Test",
-        daysUntil: 7,
-        caseUrl: "https://test.com",
-      })
+      DeadlineDigest(oneDeadline("Test", 7))
     );
 
     // Note: The year may be rendered with HTML comments around it
@@ -840,14 +656,7 @@ describe("Email Templates - Edge Cases", () => {
   describe("Special Characters Handling", () => {
     it("handles special characters in employer name", async () => {
       const html = await render(
-        DeadlineReminder({
-          employerName: "O'Brien & Associates, LLC",
-          beneficiaryName: "John Doe",
-          deadlineType: "PWD Expiration",
-          deadlineDate: "January 15, 2025",
-          daysUntil: 7,
-          caseUrl: "https://app.com/cases/123",
-        })
+        DeadlineDigest(oneDeadline("O'Brien & Associates, LLC", 7))
       );
       expect(html).toBeDefined();
       // The name should be properly encoded in HTML
@@ -858,14 +667,7 @@ describe("Email Templates - Edge Cases", () => {
     it("handles very long names", async () => {
       const longName = "A".repeat(100);
       const html = await render(
-        DeadlineReminder({
-          employerName: longName,
-          beneficiaryName: "John Doe",
-          deadlineType: "PWD Expiration",
-          deadlineDate: "January 15, 2025",
-          daysUntil: 7,
-          caseUrl: "https://app.com/cases/123",
-        })
+        DeadlineDigest(oneDeadline(longName, 7))
       );
       expect(html).toBeDefined();
       expect(html).toContain(longName);
@@ -875,28 +677,14 @@ describe("Email Templates - Edge Cases", () => {
   describe("Extreme Values", () => {
     it("handles large positive days until", async () => {
       const html = await render(
-        DeadlineReminder({
-          employerName: "Acme Corp",
-          beneficiaryName: "John Doe",
-          deadlineType: "PWD Expiration",
-          deadlineDate: "January 15, 2026",
-          daysUntil: 365,
-          caseUrl: "https://app.com/cases/123",
-        })
+        DeadlineDigest(oneDeadline("Acme Corp", 365))
       );
-      expect(html).toContain("365 days");
+      expect(html).toContain("in 365 days");
     });
 
     it("handles large negative days (very overdue)", async () => {
       const html = await render(
-        DeadlineReminder({
-          employerName: "Acme Corp",
-          beneficiaryName: "John Doe",
-          deadlineType: "PWD Expiration",
-          deadlineDate: "January 15, 2023",
-          daysUntil: -365,
-          caseUrl: "https://app.com/cases/123",
-        })
+        DeadlineDigest(oneDeadline("Acme Corp", -365))
       );
       expect(html).toContain("365 days overdue");
     });

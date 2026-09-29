@@ -15,6 +15,7 @@ import type {
   ExtractedDeadline,
 } from "./types";
 import { ALL_DEADLINE_TYPES, DEADLINE_LABELS } from "./types";
+import { buildDeadlineInput, type LooseDeadlineCaseData } from "./buildDeadlineInput";
 import {
   isDeadlineActive,
   getActiveRfiEntry,
@@ -84,6 +85,10 @@ export function extractActiveDeadlines(
 
   for (const { type, date } of fieldDeadlines) {
     const deadline = extractSingleDeadline(type, date, caseData, resolveToday(type));
+    // The window OPENING is a moment, not a due date: once it has passed it is
+    // simply open (perm_flow.md: "ready to file ... only goes away when filed
+    // or passes"). Kept, it read as an overdue deadline on every surface.
+    if (deadline && type === "filing_window_opens" && deadline.daysUntil < 0) continue;
     if (deadline) deadlines.push(deadline);
   }
 
@@ -224,6 +229,21 @@ export function getActiveDeadlineTypes(
   caseData: CaseDataForDeadlines
 ): DeadlineType[] {
   return ALL_DEADLINE_TYPES.filter((type) => isDeadlineActive(type, caseData).isActive);
+}
+
+/**
+ * The deadlines a reminder or digest may name: the central list, without the
+ * filing window's opening (a date to act from, not one a user can miss).
+ * Both email paths read this, so an email never lists a deadline the
+ * dashboard and calendar do not, or misses one they show.
+ */
+export function extractReminderDeadlines(
+  caseData: LooseDeadlineCaseData,
+  userTimezone: string = DEFAULT_USER_TIMEZONE
+): ExtractedDeadline[] {
+  return extractActiveDeadlines(buildDeadlineInput(caseData), undefined, userTimezone).filter(
+    (d) => d.type !== "filing_window_opens"
+  );
 }
 
 /**

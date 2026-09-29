@@ -203,8 +203,8 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
       { href: "/email-preferences", label: "Email preferences" },
     ],
     publicOnly: [
-      { href: "/signup", label: "Sign Up Free" },
-      { href: "/login", label: "Sign In" },
+      { href: "/signup", label: "Sign up free" },
+      { href: "/login", label: "Sign in" },
     ],
   },
   {

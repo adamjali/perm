@@ -183,9 +183,13 @@ describe("Scheduled Jobs", () => {
         pwdExpirationDate: daysFromNow(45),
       });
 
-      const reminders = await authT.run(async (ctx) => {
+      const all = await authT.run(async (ctx) => {
         return await ctx.runQuery(internal.scheduledJobs.getCasesNeedingReminders, {});
       });
+      // With recruitment not started, the central rules also give each case its
+      // per-step recruitment deadlines (worked back from the PWD expiry), as the
+      // dashboard shows. This test is about the PWD intervals.
+      const reminders = all.filter((r: { deadlineType: string }) => r.deadlineType === "pwd_expiration");
 
       // Should find 3 cases (1, 7, 30 days) but not the 45-day case
       expect(reminders.length).toBe(3);
@@ -1149,7 +1153,7 @@ describe("Scheduled Jobs", () => {
 
   // ============================================================================
   // ============================================================================
-  // getDeadlinesForDigest TESTS (supersession via shouldRemindForDeadline)
+  // getDeadlinesForDigest TESTS (supersession via extractReminderDeadlines)
   // ============================================================================
 
   describe("getDeadlinesForDigest", () => {
@@ -1168,7 +1172,7 @@ describe("Scheduled Jobs", () => {
       });
 
       expect(deadlines.length).toBeGreaterThanOrEqual(1);
-      const pwdDeadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "PWD Expiration");
+      const pwdDeadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "pwd_expiration");
       expect(pwdDeadline).toBeDefined();
       expect(pwdDeadline!.employerName).toBe("Active PWD Co");
     });
@@ -1192,7 +1196,7 @@ describe("Scheduled Jobs", () => {
         return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
       });
 
-      const pwdDeadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "PWD Expiration");
+      const pwdDeadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "pwd_expiration");
       expect(pwdDeadline).toBeUndefined();
     });
 
@@ -1210,7 +1214,7 @@ describe("Scheduled Jobs", () => {
         return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
       });
 
-      const i140Deadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "I-140 Filing Deadline");
+      const i140Deadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "i140_filing_deadline");
       expect(i140Deadline).toBeUndefined();
     });
 
@@ -1237,7 +1241,7 @@ describe("Scheduled Jobs", () => {
         return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
       });
 
-      const i140Deadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "I-140 Filing Deadline");
+      const i140Deadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "i140_filing_deadline");
       expect(i140Deadline).toBeUndefined();
     });
 
@@ -1263,7 +1267,7 @@ describe("Scheduled Jobs", () => {
         return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
       });
 
-      const i140Deadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "I-140 Filing Deadline");
+      const i140Deadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "i140_filing_deadline");
       expect(i140Deadline).toBeDefined();
       expect(i140Deadline!.employerName).toBe("I140 Active Co");
     });
@@ -1291,7 +1295,7 @@ describe("Scheduled Jobs", () => {
         return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
       });
 
-      const rfiDeadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "RFI Response Due");
+      const rfiDeadline = deadlines.find((d: { deadlineType: string }) => d.deadlineType === "rfi_due");
       expect(rfiDeadline).toBeUndefined();
     });
 
@@ -1355,9 +1359,12 @@ describe("Scheduled Jobs", () => {
         return await ctx.runQuery(internal.scheduledJobs.getDeadlinesForDigest, { userId });
       });
 
-      expect(deadlines.length).toBe(2);
-      expect(deadlines[0].employerName).toBe("Sooner Co");
-      expect(deadlines[1].employerName).toBe("Later Co");
+      const pwd = deadlines.filter((d: { deadlineType: string }) => d.deadlineType === "pwd_expiration");
+      expect(pwd.length).toBe(2);
+      expect(pwd[0].employerName).toBe("Sooner Co");
+      expect(pwd[1].employerName).toBe("Later Co");
+      const dates = deadlines.map((d: { deadlineDate: string }) => d.deadlineDate);
+      expect(dates).toEqual([...dates].sort());
     });
   });
 

@@ -510,12 +510,19 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   const handleToggleCalendarSync = async () => {
     if (isTogglingCalendarSync) return;
 
+    // Sync is on but Google isn't connected: the fix is in Settings, which is
+    // what the button says it does in this state.
+    if (caseData.calendarSyncEnabled && !isGoogleConnected) {
+      router.push("/settings?tab=calendar-sync");
+      return;
+    }
+
     // Check if Google Calendar is connected before enabling sync
     if (!caseData.calendarSyncEnabled && !isGoogleConnected) {
       toast.error("Connect Google Calendar first", {
         description: "Go to Settings to connect your Google Calendar account.",
         action: {
-          label: "Go to Settings",
+          label: "Go to settings",
           onClick: () => router.push("/settings?tab=calendar-sync"),
         },
       });
@@ -679,12 +686,14 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
 
               <Button
                 variant="outline"
-                size="icon"
+                size={caseData.calendarSyncEnabled && !isGoogleConnected ? "default" : "icon"}
                 onClick={handleToggleCalendarSync}
                 disabled={isTogglingCalendarSync}
                 className={cn(
                   "shrink-0 border-2 transition-all cursor-pointer",
-                  "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
+                  caseData.calendarSyncEnabled && !isGoogleConnected
+                    ? "h-[38px] min-h-[38px] min-w-[38px] gap-1.5 px-2.5 text-sm font-bold text-foreground"
+                    : "min-h-[38px] min-w-[38px] h-[38px] w-[38px]",
                   caseData.calendarSyncEnabled && isGoogleConnected
                     ? "border-data-good hover: active: dark:active:bg-data-good"
                     : caseData.calendarSyncEnabled && !isGoogleConnected
@@ -695,18 +704,27 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   caseData.calendarSyncEnabled && isGoogleConnected
                     ? "Calendar sync enabled"
                     : caseData.calendarSyncEnabled && !isGoogleConnected
-                      ? "Calendar not connected - click to go to settings"
+                      ? "Calendar not connected: open settings to connect it"
                       : "Calendar sync disabled"
                 }
-                aria-label={caseData.calendarSyncEnabled ? "Disable calendar sync" : "Enable calendar sync"}
-                aria-pressed={caseData.calendarSyncEnabled}
+                aria-label={
+                  caseData.calendarSyncEnabled && !isGoogleConnected
+                    ? "Calendar not connected: open settings"
+                    : caseData.calendarSyncEnabled
+                      ? "Disable calendar sync"
+                      : "Enable calendar sync"
+                }
+                aria-pressed={caseData.calendarSyncEnabled && isGoogleConnected ? true : caseData.calendarSyncEnabled ? undefined : false}
               >
                 {isTogglingCalendarSync ? (
                   <CircleNotchIcon className="h-5 w-5 animate-spin text-primary" />
                 ) : caseData.calendarSyncEnabled && isGoogleConnected ? (
                   <CalendarCheckIcon className="h-5 w-5 text-primary" />
                 ) : caseData.calendarSyncEnabled && !isGoogleConnected ? (
-                  <AlertTriangle className="h-5 w-5 text-data-warn-ink" />
+                  <>
+                    <AlertTriangle className="h-5 w-5 text-data-warn-ink" aria-hidden="true" />
+                    <span className="hidden sm:inline">Calendar not connected</span>
+                  </>
                 ) : (
                   <CalendarXIcon className="h-5 w-5 text-data-bad-ink" />
                 )}

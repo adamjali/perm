@@ -54,8 +54,8 @@ export function RfiAlert({
   const urgency = isOverdue ? "overdue" : isUrgent ? "urgent" : "high";
 
   const title =
-    alertType === "new" ? "New RFI Received" : "RFI Response Due Soon";
-  const previewText = `${title} - ${daysRemaining > 0 ? `${daysRemaining} days remaining` : "OVERDUE"} - ${beneficiaryName}`;
+    alertType === "new" ? "New RFI received" : "RFI response due soon";
+  const previewText = `${title} - ${daysRemaining > 0 ? `${daysRemaining} days remaining` : "overdue"} - ${beneficiaryName}`;
 
   return (
     <EmailLayout previewText={previewText}>
@@ -76,7 +76,7 @@ export function RfiAlert({
       )}
 
       <Section style={styles.details}>
-        <Text className="em-text-secondary" style={labelStyle}>Foreign Worker</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Foreign worker</Text>
         <Text className="em-text" style={valueStyle}>{beneficiaryName}</Text>
 
         <Text className="em-text-secondary" style={labelStyle}>Company</Text>
@@ -85,15 +85,15 @@ export function RfiAlert({
         <Text className="em-text-secondary" style={labelStyle}>RFI Received</Text>
         <Text className="em-text" style={valueStyle}>{receivedDate}</Text>
 
-        <Text className="em-text-secondary" style={labelStyle}>Response Due</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Response due</Text>
         <Text className="em-text" style={valueHighlightStyle}>{dueDate}</Text>
 
         <Text className={isOverdue ? "em-days-overdue" : "em-days-warning"} style={isOverdue ? styles.overdue : styles.daysRemaining}>
           {daysRemaining > 0
             ? `${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} remaining`
             : daysRemaining === 0
-              ? "DUE TODAY - Immediate action required"
-              : `${Math.abs(daysRemaining)} day${Math.abs(daysRemaining) !== 1 ? "s" : ""} OVERDUE`}
+              ? "Due today"
+              : `${Math.abs(daysRemaining)} day${Math.abs(daysRemaining) !== 1 ? "s" : ""} overdue`}
         </Text>
       </Section>
 

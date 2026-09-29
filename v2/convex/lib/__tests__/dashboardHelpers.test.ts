@@ -61,7 +61,7 @@ describe("createDeadlineItem", () => {
       beneficiaryName: "Smith J.",
       positionTitle: "Software Engineer",
       type: "pwd_expiration",
-      label: "PWD Expiration",
+      label: "PWD expiration",
       dueDate: "2025-01-20",
       daysUntil: 5, // Should be thisWeek
       caseStatus: "pwd",

@@ -15,11 +15,9 @@ import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
-import {
-  formatDeadline,
-  formatCaseStatus,
-  getStageColorVar,
-} from "./case-card.utils";
+import { CaseStageBadge } from "@/components/status/case-stage-badge";
+import { STAGE_VISUALS } from "@/components/status/stage-visuals";
+import { deadlineCountdown, formatDeadlineDate } from "./case-card.utils";
 import { getUrgencyFromDeadlineExtended } from "@/lib/status/urgency";
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
 
@@ -57,7 +55,7 @@ export const CaseListRow = memo(function CaseListRow({
   const { isNavigating, navigateTo } = useNavigationLoading();
   const [isHovered, setIsHovered] = useState(false);
 
-  const stageColor = getStageColorVar(caseStatus);
+  const stageFill = STAGE_VISUALS[caseStatus]?.fill ?? "bg-muted";
 
   const handleRowClick = useCallback(
     (e: React.MouseEvent) => {
@@ -95,8 +93,12 @@ export const CaseListRow = memo(function CaseListRow({
     [_id, navigateTo, selectionMode, onSelect]
   );
 
-  // Deadline urgency styling — uses canonical thresholds from @/lib/status/urgency
-  const deadlineUrgency = nextDeadline ? getUrgencyFromDeadlineExtended(nextDeadline) : null;
+  // Deadline urgency: canonical thresholds from @/lib/status/urgency.
+  const deadlineUrgency = nextDeadline && caseStatus !== "closed" ? getUrgencyFromDeadlineExtended(nextDeadline) : null;
+  const countdown = nextDeadline && caseStatus !== "closed" ? deadlineCountdown(nextDeadline) : null;
+  const deadlineDate = nextDeadline ? formatDeadlineDate(nextDeadline) : "";
+  const late = deadlineUrgency === "overdue";
+  const soon = deadlineUrgency === "urgent" || deadlineUrgency === "soon";
 
   return (
     <motion.div
@@ -141,66 +143,55 @@ export const CaseListRow = memo(function CaseListRow({
         />
       )}
 
-      {/* Stage indicator dot */}
-      <div
-        className="shrink-0 w-2 h-2 rounded-full"
-        style={{ backgroundColor: stageColor }}
-        aria-hidden="true"
-      />
+      {/* Stage swatch: the folder tab's colour, square like everything else */}
+      <div className={cn("size-3 shrink-0 border-2 border-border", stageFill)} aria-hidden="true" />
 
       {/* Main content */}
       <div className="flex-1 min-w-0 flex items-center gap-4">
-        {/* Employer & Position */}
+        {/* Employer & Position (and, on phones, what is due next) */}
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm truncate flex items-center gap-1.5" title={employerName}>
-            {employerName}
+          <div className="font-heading font-bold text-base truncate flex items-center gap-2" title={employerName}>
+            <span className="truncate">{employerName}</span>{" "}
             {isSample && (
-              <span className="inline-flex items-center px-1.5 py-px text-sm font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
-                SAMPLE
+              <span className="shrink-0 inline-flex items-center px-1.5 py-px text-sm font-semibold border-2 border-dashed border-muted-foreground/50 text-muted-foreground">
+                Sample
               </span>
             )}
-          </div>
+          </div>{" "}
           <div className="text-sm text-muted-foreground truncate" title={positionTitle}>
             {positionTitle}
           </div>
+          {countdown && nextDeadlineLabel && (
+            <div className="md:hidden mt-1 text-sm font-semibold truncate">
+              <span className={cn("tabular-nums", late ? "text-destructive-text" : soon ? "text-data-warn-ink" : "")}>
+                {countdown.value} {countdown.unit}
+              </span>{" "}
+              <span className="text-muted-foreground font-normal">· {nextDeadlineLabel}</span>
+            </div>
+          )}
         </div>
 
         {/* Stage badge */}
         <div className="shrink-0 hidden sm:block">
-          <span
-            className={cn(
-              "inline-flex items-center px-2 py-0.5 text-sm font-medium",
-              "border-2 border-border"
-            )}
-            style={{
-              backgroundColor: stageColor,
-              color: caseStatus === "closed" ? "var(--foreground)" : "white",
-            }}
-          >
-            {formatCaseStatus(caseStatus)}
-          </span>
+          <CaseStageBadge stage={caseStatus} bordered />
         </div>
 
-        {/* Deadline */}
-        {nextDeadline && (
-          <div className="shrink-0 hidden md:block">
-            <span
+        {/* Next deadline: the number of days leads, then what is due and when */}
+        {countdown && (
+          <div className="shrink-0 hidden md:flex w-64 items-stretch border-2 border-border bg-card" title={nextDeadlineLabel}>
+            <div
               className={cn(
-                "inline-flex items-center px-2 py-0.5 text-sm",
-                "border border-border",
-                deadlineUrgency === "overdue" &&
- "bg-data-bad/10 text-foreground border-data-bad",
-                deadlineUrgency === "urgent" &&
- "bg-data-warn/8 text-foreground border-data-warn",
-                deadlineUrgency === "soon" &&
- "bg-data-warn/8 text-foreground border-data-warn",
-                deadlineUrgency === "normal" && "bg-muted text-muted-foreground",
-                !deadlineUrgency && "bg-muted text-muted-foreground"
+                "flex w-16 shrink-0 flex-col items-center justify-center border-r-2 border-border px-1",
+                late ? "bg-data-bad text-black" : soon ? "bg-data-warn text-black" : "bg-foreground text-background",
               )}
-              title={nextDeadlineLabel}
             >
-              {formatDeadline(nextDeadline)}
-            </span>
+              <span className="font-heading text-lg font-black leading-none tabular-nums">{countdown.value}</span>{" "}
+              <span className="text-sm font-bold leading-tight">{countdown.unit}</span>
+            </div>{" "}
+            <div className="flex min-w-0 flex-col justify-center px-2.5 py-1">
+              <span className="truncate text-sm font-semibold">{nextDeadlineLabel}</span>{" "}
+              <span className="font-mono text-sm text-muted-foreground">{deadlineDate}</span>
+            </div>
           </div>
         )}
 

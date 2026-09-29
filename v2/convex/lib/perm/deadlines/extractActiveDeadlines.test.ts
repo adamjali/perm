@@ -69,7 +69,7 @@ describe("extractActiveDeadlines", () => {
       expect(result.length).toBeGreaterThanOrEqual(1);
       expect(result).toContainEqual(expect.objectContaining({
         type: "pwd_expiration",
-        label: "PWD Expiration",
+        label: "PWD expiration",
         date: "2025-06-30",
       }));
     });
@@ -130,6 +130,33 @@ describe("extractActiveDeadlines", () => {
 
       expect(result.find((d) => d.type === "filing_window_opens")).toBeUndefined();
       expect(result.find((d) => d.type === "filing_window_closes")).toBeUndefined();
+    });
+
+    it("drops the window OPENING once it has passed: open, not overdue", () => {
+      // perm_flow.md: the ready-to-file date "only goes away when filed or passes".
+      const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
+        filingWindowOpens: "2024-10-01", // before TODAY
+        filingWindowCloses: "2025-06-15",
+      };
+
+      const result = extractActiveDeadlines(caseData, TODAY);
+
+      expect(result.find((d) => d.type === "filing_window_opens")).toBeUndefined();
+      expect(result.find((d) => d.type === "filing_window_closes")).toBeDefined();
+    });
+
+    it("keeps the window CLOSING after it passes: that one is a real miss", () => {
+      const caseData: CaseDataForDeadlines = {
+        ...completedRecruitment,
+        filingWindowOpens: "2024-10-01",
+        filingWindowCloses: "2024-11-01", // before TODAY, ETA 9089 not filed
+      };
+
+      const closes = extractActiveDeadlines(caseData, TODAY).find((d) => d.type === "filing_window_closes");
+
+      expect(closes).toBeDefined();
+      expect(closes!.daysUntil).toBeLessThan(0);
     });
 
     it("does not extract filing window when ETA 9089 filed", () => {
@@ -558,7 +585,7 @@ describe("per-step recruitment deadlines", () => {
       const result = extractActiveDeadlines(baseCase, TODAY);
       const deadline = result.find((d) => d.type === "job_order_start_deadline");
       expect(deadline).toBeDefined();
-      expect(deadline?.label).toBe("Start Job Order By");
+      expect(deadline?.label).toBe("Start job order by");
     });
 
     it("does not extract job_order_start_deadline when step completed", () => {
@@ -574,7 +601,7 @@ describe("per-step recruitment deadlines", () => {
       const result = extractActiveDeadlines(baseCase, TODAY);
       const deadline = result.find((d) => d.type === "notice_of_filing_start_deadline");
       expect(deadline).toBeDefined();
-      expect(deadline?.label).toBe("Start Notice of Filing By");
+      expect(deadline?.label).toBe("Start notice of filing by");
     });
 
     it("does not extract notice_of_filing_start_deadline when step completed", () => {

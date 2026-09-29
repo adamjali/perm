@@ -724,7 +724,7 @@ describe("generateClosureTitle", () => {
       canRestart: false,
     };
 
-    expect(generateClosureTitle(violation)).toBe("PWD Expired - Case Closed");
+    expect(generateClosureTitle(violation)).toBe("PWD expired: case closed");
   });
 
   it("generates title for recruitment window with restart", () => {
@@ -735,7 +735,7 @@ describe("generateClosureTitle", () => {
       canRestart: true,
     };
 
-    expect(generateClosureTitle(violation)).toBe("Recruitment Window Missed - Action Required");
+    expect(generateClosureTitle(violation)).toBe("Recruitment window missed: action needed");
   });
 
   it("generates title for recruitment window without restart", () => {
@@ -746,7 +746,7 @@ describe("generateClosureTitle", () => {
       canRestart: false,
     };
 
-    expect(generateClosureTitle(violation)).toBe("Recruitment Window Missed - Case Closed");
+    expect(generateClosureTitle(violation)).toBe("Recruitment window missed: case closed");
   });
 
   it("generates title for filing window with restart", () => {
@@ -757,7 +757,7 @@ describe("generateClosureTitle", () => {
       canRestart: true,
     };
 
-    expect(generateClosureTitle(violation)).toBe("Filing Window Missed - Action Required");
+    expect(generateClosureTitle(violation)).toBe("Filing window missed: action needed");
   });
 
   it("generates title for ETA 9089 expired with restart", () => {
@@ -768,7 +768,7 @@ describe("generateClosureTitle", () => {
       canRestart: true,
     };
 
-    expect(generateClosureTitle(violation)).toBe("ETA 9089 Expired - Action Required");
+    expect(generateClosureTitle(violation)).toBe("ETA 9089 expired: action needed");
   });
 });
 

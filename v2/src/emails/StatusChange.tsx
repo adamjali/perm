@@ -50,7 +50,7 @@ export function StatusChange({
 }: StatusChangeProps) {
   const previewText = `Case status changed: ${previousStatus} → ${newStatus} - ${beneficiaryName}`;
   const title =
-    changeType === "stage" ? "Case Stage Updated" : "Case Progress Updated";
+    changeType === "stage" ? "Case stage updated" : "Case progress updated";
 
   return (
     <EmailLayout previewText={previewText}>
@@ -62,7 +62,7 @@ export function StatusChange({
       />
 
       <Section style={detailsSectionStyle}>
-        <Text className="em-text-secondary" style={labelStyle}>Foreign Worker</Text>
+        <Text className="em-text-secondary" style={labelStyle}>Foreign worker</Text>
         <Text className="em-text" style={valueStyle}>{beneficiaryName}</Text>
 
         <Text className="em-text-secondary" style={labelStyle}>Company</Text>
@@ -95,7 +95,7 @@ export function StatusChange({
       </Section>
 
       <Section style={ctaSectionStyle}>
-        <EmailButton href={caseUrl}>View Case Details</EmailButton>
+        <EmailButton href={caseUrl}>View case</EmailButton>
       </Section>
     </EmailLayout>
   );

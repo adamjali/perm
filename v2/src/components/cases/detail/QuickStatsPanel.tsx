@@ -2,8 +2,9 @@
 
 import { TrendUpIcon as TrendingUp } from "@phosphor-icons/react";
 import { parseISO, differenceInDays } from "date-fns";
+import { buildDeadlineInput, isDeadlineActive, type LooseDeadlineCaseData } from "@/lib/perm";
 import { extractMilestones } from "@/lib/timeline/milestones";
-import { calculateNextDeadline } from "./next-up-section.utils";
+import { countDueDeadlines } from "./next-up-section.utils";
 import type { CaseDetailData } from "./case-detail-types";
 
 interface QuickStatsPanelProps {
@@ -26,11 +27,16 @@ function CountUpStat({ target, color, label, sub }: { target: number; color?: st
 export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
   const now = new Date();
 
-  // PWD Expiry Days — use parseISO to avoid timezone shift
-  let pwdExpiryDays = 0;
-  if (caseData.pwdExpirationDate) {
-    pwdExpiryDays = Math.max(0, differenceInDays(parseISO(caseData.pwdExpirationDate), now));
-  }
+  // The PWD's expiry counts only while the central rules say it still matters
+  // (until the ETA 9089 is filed). After that, the clock that matters is how
+  // long the filing has been with DOL.
+  const pwdMatters = isDeadlineActive("pwd_expiration", buildDeadlineInput(caseData as LooseDeadlineCaseData)).isActive;
+  const pwdExpiryDays = caseData.pwdExpirationDate
+    ? Math.max(0, differenceInDays(parseISO(caseData.pwdExpirationDate), now))
+    : 0;
+  const etaFiledDays = caseData.eta9089FilingDate
+    ? Math.max(0, differenceInDays(now, parseISO(caseData.eta9089FilingDate)))
+    : null;
 
   // Time in process, counted from the PWD filing (the start of the PERM path),
   // or from when the case was added here while no PWD date is recorded.
@@ -44,10 +50,9 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
     (m) => m.date && m.date <= todayStr && !m.isCalculated
   ).length;
 
-  // Next deadline — use canonical extractActiveDeadlines (same as NextUp section)
-  const nextDeadline = calculateNextDeadline(caseData);
-  const nextDeadlineDays = nextDeadline ? Math.max(0, nextDeadline.daysUntil) : 0;
-  const nextDeadlineLabel = nextDeadline ? nextDeadline.label : "no deadline";
+  // Deadlines due within 30 days, from the same central list as the next-up box
+  // above (which already shows the single nearest one).
+  const { due, late } = countDueDeadlines(caseData);
 
   return (
     <div className="detail-card">
@@ -58,14 +63,23 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
         </span>
       </div>
       <div className="stats-grid">
-        <CountUpStat target={pwdExpiryDays} color="var(--stage-pwd-ink)" label="PWD expires" sub="days left" />
+        {!pwdMatters && etaFiledDays !== null ? (
+          <CountUpStat target={etaFiledDays} color="var(--stage-eta9089-ink)" label="ETA 9089 filed" sub="days with DOL" />
+        ) : (
+          <CountUpStat
+            target={pwdExpiryDays}
+            color={caseData.pwdExpirationDate && pwdExpiryDays <= 30 ? "var(--data-warn-ink)" : "var(--stage-pwd-ink)"}
+            label="PWD expires"
+            sub={caseData.pwdExpirationDate ? "days left" : "no date yet"}
+          />
+        )}
         <CountUpStat target={daysInProcess} label="In process" sub={caseData.pwdFilingDate ? "days since PWD filed" : "days since added"} />
         <CountUpStat target={completedMilestones} color="var(--primary-text)" label="Milestones" sub={`of ${allMilestones.length} done`} />
         <CountUpStat
-          target={nextDeadlineDays}
-          color={nextDeadline && nextDeadlineDays <= 30 ? "var(--data-warn-ink)" : undefined}
-          label="Next deadline"
-          sub={nextDeadlineLabel}
+          target={due}
+          color={late > 0 ? "var(--destructive-text)" : due > 0 ? "var(--data-warn-ink)" : undefined}
+          label="Due in 30 days"
+          sub={late > 0 ? `${late} already late` : due === 1 ? "deadline" : "deadlines"}
         />
       </div>
     </div>

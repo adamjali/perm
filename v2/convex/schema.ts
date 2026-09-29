@@ -490,6 +490,8 @@ export default defineSchema({
       v.object({
         pwd_expiration: v.optional(v.string()),
         eta9089_filing_window: v.optional(v.string()),
+        eta9089_filing: v.optional(v.string()),
+        filing_window_closes: v.optional(v.string()),
         eta9089_expiration: v.optional(v.string()),
         i140_filing_deadline: v.optional(v.string()),
         rfi_due: v.optional(v.string()),

@@ -79,9 +79,11 @@ describe("extractCalendarEvents", () => {
 
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
-      expect(result.events).toHaveLength(1);
-      expect(result.events[0]!.eventType).toBe("pwd_expiration");
-      expect(result.events[0]!.date).toBe(futureDate(60));
+      // Recruitment has not started, so the central rules also give the
+      // per-step start-by dates, worked back from the PWD expiry.
+      const pwd = result.events.filter((e) => e.eventType === "pwd_expiration");
+      expect(pwd).toHaveLength(1);
+      expect(pwd[0]!.date).toBe(futureDate(60));
     });
 
     it("skips past PWD dates", () => {
@@ -105,7 +107,7 @@ describe("extractCalendarEvents", () => {
 
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
-      expect(result.events).toHaveLength(0);
+      expect(result.events.find((e) => e.eventType === "pwd_expiration")).toBeUndefined();
       expect(result.skippedByPreference).toContain("pwd_expiration");
     });
 
@@ -118,7 +120,18 @@ describe("extractCalendarEvents", () => {
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
       expect(result.events).toHaveLength(0);
-      expect(result.skippedMissingData).toContain("pwd_expiration");
+    });
+
+    it("drops the PWD expiry once the ETA 9089 is filed (the central rule)", () => {
+      const caseData = createBaseCase({
+        caseStatus: "eta9089",
+        pwdExpirationDate: futureDate(60),
+        eta9089FilingDate: pastDate(5),
+      });
+
+      const result = extractCalendarEvents(caseData, createAllPreferencesEnabled(), TODAY_ISO);
+
+      expect(result.events.map((e) => e.eventType)).not.toContain("pwd_expiration");
     });
   });
 
@@ -147,75 +160,97 @@ describe("extractCalendarEvents", () => {
       expect(result.events.find((e) => e.eventType === "eta9089_filing")).toBeUndefined();
     });
 
-    it("extracts ETA 9089 expiration date", () => {
+    it("puts one event on the certification's expiry: the I-140 deadline", () => {
+      // The certification expiring IS the I-140 deadline; syncing both put
+      // two events on the same day.
       const caseData = createBaseCase({
-        eta9089ExpirationDate: futureDate(90),
+        caseStatus: "i140",
+        eta9089CertificationDate: pastDate(10),
+        eta9089ExpirationDate: futureDate(170),
       });
-      const prefs = createAllPreferencesEnabled();
 
-      const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
+      const result = extractCalendarEvents(caseData, createAllPreferencesEnabled(), TODAY_ISO);
 
-      const event = result.events.find((e) => e.eventType === "eta9089_expiration");
-      expect(event).toBeDefined();
-      expect(event!.date).toBe(futureDate(90));
+      expect(result.events.map((e) => [e.eventType, e.date])).toEqual([["i140_deadline", futureDate(170)]]);
     });
 
     it("skips ETA 9089 when preference disabled", () => {
       const caseData = createBaseCase({
-        eta9089ExpirationDate: futureDate(90),
+        eta9089FilingDate: futureDate(30),
       });
       const prefs = createAllPreferencesEnabled();
       prefs.calendarSyncEta9089 = false;
 
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
-      expect(result.events.find((e) => e.eventType === "eta9089_expiration")).toBeUndefined();
+      expect(result.events.find((e) => e.eventType === "eta9089_filing")).toBeUndefined();
     });
   });
 
   describe("Filing Window Events", () => {
-    it("extracts filing window opens date", () => {
+    it("extracts the filing window's opening and closing", () => {
       const caseData = createBaseCase({
-        filingWindowOpens: futureDate(45),
+        pwdExpirationDate: "2025-06-30",
+        // Recruitment finished Dec 31: the window opens Jan 30 and closes May 30.
+        sundayAdFirstDate: "2024-12-01",
+        sundayAdSecondDate: "2024-12-08",
+        jobOrderStartDate: "2024-12-01",
+        jobOrderEndDate: "2024-12-31",
+        noticeOfFilingStartDate: "2024-12-01",
+        noticeOfFilingEndDate: "2024-12-15",
       });
       const prefs = createAllPreferencesEnabled();
 
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
-      const event = result.events.find((e) => e.eventType === "filing_window_opens");
-      expect(event).toBeDefined();
-      expect(event!.date).toBe(futureDate(45));
+      const byType = new Map(result.events.map((e) => [e.eventType, e.date]));
+      expect(byType.get("filing_window_opens")).toBe("2025-01-30");
+      expect(byType.get("filing_window_closes")).toBe("2025-05-30");
+      // Recruitment is complete, so its own deadlines are gone.
+      expect(byType.has("recruitment_window_closes")).toBe(false);
     });
 
     it("skips filing window when preference disabled", () => {
       const caseData = createBaseCase({
-        filingWindowOpens: futureDate(45),
+        pwdExpirationDate: "2025-06-30",
+        // Recruitment finished Dec 31: the window opens Jan 30 and closes May 30.
+        sundayAdFirstDate: "2024-12-01",
+        sundayAdSecondDate: "2024-12-08",
+        jobOrderStartDate: "2024-12-01",
+        jobOrderEndDate: "2024-12-31",
+        noticeOfFilingStartDate: "2024-12-01",
+        noticeOfFilingEndDate: "2024-12-15",
       });
       const prefs = createAllPreferencesEnabled();
       prefs.calendarSyncFilingWindow = false;
 
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
-      expect(result.skippedByPreference).toContain("filing_window_opens");
+      expect(result.skippedByPreference).toEqual(expect.arrayContaining(["filing_window_opens", "filing_window_closes"]));
+      expect(result.events.map((e) => e.eventType)).not.toContain("filing_window_closes");
     });
   });
 
   describe("Recruitment Events", () => {
-    it("extracts recruitment window closes date", () => {
+    it("extracts recruitment window closes date while recruitment is under way", () => {
       const caseData = createBaseCase({
+        pwdExpirationDate: "2025-06-30",
+        sundayAdFirstDate: "2025-01-05",
         recruitmentWindowCloses: futureDate(120),
       });
       const prefs = createAllPreferencesEnabled();
 
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
-      const event = result.events.find((e) => e.eventType === "recruitment_expires");
+      const event = result.events.find((e) => e.eventType === "recruitment_window_closes");
       expect(event).toBeDefined();
       expect(event!.date).toBe(futureDate(120));
     });
 
     it("skips recruitment when preference disabled", () => {
       const caseData = createBaseCase({
+        pwdExpirationDate: "2025-06-30",
+        sundayAdFirstDate: "2025-01-05",
         recruitmentWindowCloses: futureDate(120),
       });
       const prefs = createAllPreferencesEnabled();
@@ -223,15 +258,16 @@ describe("extractCalendarEvents", () => {
 
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
-      expect(result.skippedByPreference).toContain("recruitment_expires");
+      expect(result.skippedByPreference).toContain("recruitment_window_closes");
+      expect(result.events.map((e) => e.eventType)).toEqual(["pwd_expiration"]);
     });
   });
 
   describe("I-140 Deadline Events", () => {
-    it("calculates I-140 deadline from certification date", () => {
-      const certDate = pastDate(10); // Certified 10 days ago
+    it("uses the certification's stored expiry as the I-140 deadline", () => {
       const caseData = createBaseCase({
-        eta9089CertificationDate: certDate,
+        eta9089CertificationDate: pastDate(10),
+        eta9089ExpirationDate: futureDate(170),
         i140FilingDate: undefined, // Not yet filed
       });
       const prefs = createAllPreferencesEnabled();
@@ -239,9 +275,7 @@ describe("extractCalendarEvents", () => {
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
       const event = result.events.find((e) => e.eventType === "i140_deadline");
-      expect(event).toBeDefined();
-      // I-140 deadline is 180 days from certification
-      // certDate is 10 days ago, so deadline is 170 days from today
+      expect(event?.date).toBe(futureDate(170));
     });
 
     it("skips I-140 when already filed", () => {
@@ -271,7 +305,7 @@ describe("extractCalendarEvents", () => {
     it("skips I-140 when preference disabled", () => {
       const caseData = createBaseCase({
         eta9089CertificationDate: pastDate(10),
-        i140FilingDate: undefined,
+        eta9089ExpirationDate: futureDate(170),
       });
       const prefs = createAllPreferencesEnabled();
       prefs.calendarSyncI140 = false;
@@ -279,6 +313,7 @@ describe("extractCalendarEvents", () => {
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
       expect(result.skippedByPreference).toContain("i140_deadline");
+      expect(result.events).toHaveLength(0);
     });
   });
 
@@ -320,7 +355,10 @@ describe("extractCalendarEvents", () => {
       expect(result.events.find((e) => e.eventType === "rfi_due")).toBeUndefined();
     });
 
-    it("extracts multiple unresolved RFI entries", () => {
+    it("syncs only the active RFI when several are open", () => {
+      // One RFI at a time (perm_flow.md). Each case keeps one rfi_due event id,
+      // so a second event would overwrite the first's id and orphan it in the
+      // user's calendar.
       const rfiEntries: CalendarRfiEntry[] = [
         {
           id: "rfi-1",
@@ -343,7 +381,7 @@ describe("extractCalendarEvents", () => {
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
       const rfiEvents = result.events.filter((e) => e.eventType === "rfi_due");
-      expect(rfiEvents).toHaveLength(2);
+      expect(rfiEvents.map((e) => [e.entryId, e.date])).toEqual([["rfi-1", futureDate(10)]]);
     });
 
     it("skips RFI when preference disabled", () => {
@@ -423,49 +461,26 @@ describe("extractCalendarEvents", () => {
   });
 
   describe("All Event Types Extraction", () => {
-    it("extracts all 8 event types when data is available", () => {
+    it("syncs every deadline a certified case with an open RFI and RFE has", () => {
       const caseData = createBaseCase({
+        caseStatus: "i140",
         pwdExpirationDate: futureDate(180),
-        eta9089FilingDate: futureDate(60),
-        eta9089ExpirationDate: futureDate(200),
-        filingWindowOpens: futureDate(45),
-        recruitmentWindowCloses: futureDate(120),
-        eta9089CertificationDate: pastDate(10), // Triggers I-140 calculation
-        i140FilingDate: undefined,
+        eta9089FilingDate: pastDate(200),
+        eta9089CertificationDate: pastDate(10),
+        eta9089ExpirationDate: futureDate(170),
         rfiEntries: [
-          {
-            id: "rfi-1",
-            receivedDate: pastDate(5),
-            responseDueDate: futureDate(25),
-            responseSubmittedDate: undefined,
-          },
+          { id: "rfi-1", receivedDate: pastDate(5), responseDueDate: futureDate(25), responseSubmittedDate: undefined },
         ],
         rfeEntries: [
-          {
-            id: "rfe-1",
-            receivedDate: pastDate(3),
-            responseDueDate: futureDate(27),
-            responseSubmittedDate: undefined,
-          },
+          { id: "rfe-1", receivedDate: pastDate(3), responseDueDate: futureDate(27), responseSubmittedDate: undefined },
         ],
       });
-      const prefs = createAllPreferencesEnabled();
 
-      const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
+      const result = extractCalendarEvents(caseData, createAllPreferencesEnabled(), TODAY_ISO);
 
-      // Should have: pwd_expiration, eta9089_expiration, filing_window_opens,
-      // recruitment_expires, i140_deadline, rfi_due, rfe_due
-      // Note: eta9089_filing is skipped because we have certification date
-      expect(result.events.length).toBeGreaterThanOrEqual(7);
-
-      const eventTypes = result.events.map((e) => e.eventType);
-      expect(eventTypes).toContain("pwd_expiration");
-      expect(eventTypes).toContain("eta9089_expiration");
-      expect(eventTypes).toContain("filing_window_opens");
-      expect(eventTypes).toContain("recruitment_expires");
-      expect(eventTypes).toContain("i140_deadline");
-      expect(eventTypes).toContain("rfi_due");
-      expect(eventTypes).toContain("rfe_due");
+      // The PWD and every recruitment date ended when the ETA 9089 was filed;
+      // what is left is the I-140 deadline and the two responses.
+      expect(result.events.map((e) => e.eventType).sort()).toEqual(["i140_deadline", "rfe_due", "rfi_due"]);
     });
   });
 
@@ -512,7 +527,6 @@ describe("extractCalendarEvents", () => {
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
       expect(result.events).toHaveLength(0);
-      expect(result.skippedMissingData.length).toBeGreaterThan(0);
     });
 
     it("skips deleted cases", () => {
@@ -549,7 +563,7 @@ describe("extractCalendarEvents", () => {
         beneficiaryIdentifier: "Jane D.",
         caseNumber: "A-123-456",
         internalCaseNumber: "INT-001",
-        pwdExpirationDate: futureDate(60),
+        eta9089FilingDate: futureDate(20),
       });
       const prefs = createAllPreferencesEnabled();
 
@@ -599,7 +613,7 @@ describe("extractCalendarEvents", () => {
 
     it("uses current date when todayISO not provided", () => {
       const caseData = createBaseCase({
-        pwdExpirationDate: "2099-12-31", // Far future
+        eta9089FilingDate: "2099-12-31", // Far future
       });
       const prefs = createAllPreferencesEnabled();
 
@@ -610,7 +624,7 @@ describe("extractCalendarEvents", () => {
 
     it("includes today in future dates", () => {
       const caseData = createBaseCase({
-        pwdExpirationDate: TODAY_ISO, // Today
+        eta9089FilingDate: TODAY_ISO, // Today
       });
       const prefs = createAllPreferencesEnabled();
 
@@ -630,21 +644,15 @@ describe("extractCalendarEvents", () => {
 
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
-      expect(result).toHaveProperty("events");
-      expect(result).toHaveProperty("skippedByPreference");
-      expect(result).toHaveProperty("skippedPastDates");
-      expect(result).toHaveProperty("skippedMissingData");
       expect(Array.isArray(result.events)).toBe(true);
       expect(Array.isArray(result.skippedByPreference)).toBe(true);
       expect(Array.isArray(result.skippedPastDates)).toBe(true);
-      expect(Array.isArray(result.skippedMissingData)).toBe(true);
     });
 
     it("categorizes skipped events correctly", () => {
       const caseData = createBaseCase({
         pwdExpirationDate: pastDate(10), // Past - skipped
-        eta9089ExpirationDate: undefined, // Missing - skipped
-        filingWindowOpens: futureDate(45), // Will be extracted
+        sundayAdFirstDate: pastDate(40), // Recruitment under way
       });
       const prefs = createAllPreferencesEnabled();
       prefs.calendarSyncRecruitment = false; // Disabled - skipped
@@ -652,8 +660,7 @@ describe("extractCalendarEvents", () => {
       const result = extractCalendarEvents(caseData, prefs, TODAY_ISO);
 
       expect(result.skippedPastDates).toContain("pwd_expiration");
-      expect(result.skippedMissingData).toContain("eta9089_expiration");
-      expect(result.skippedByPreference).toContain("recruitment_expires");
+      expect(result.skippedByPreference).toContain("recruitment_window_closes");
     });
   });
 });

@@ -93,7 +93,7 @@ describe("extractMilestones", () => {
       const readyToFile = milestones.find((m) => m.field === "readyToFile");
       expect(readyToFile).toBeDefined();
       expect(readyToFile?.isCalculated).toBe(true);
-      expect(readyToFile?.label).toBe("Ready to File");
+      expect(readyToFile?.label).toBe("Filing window opens");
 
       // 30 days after job order end (2024-03-31)
       const expectedDate = formatDate(addDays(toDate("2024-03-31"), 30));

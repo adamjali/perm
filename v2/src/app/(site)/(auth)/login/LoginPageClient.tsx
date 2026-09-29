@@ -410,7 +410,6 @@ export function LoginPageClient() {
               id="password"
               name="password"
               autoComplete="current-password"
-              placeholder="••••••••"
               required
               disabled={isLoading}
               value={password}

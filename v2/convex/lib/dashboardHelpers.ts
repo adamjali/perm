@@ -18,22 +18,10 @@ import type {
   DeadlineItem,
 } from "./dashboardTypes";
 import {
-  calculateRecruitmentEndDate as calcRecruitmentEndDate,
-  calculateRecruitmentStartDate as calcRecruitmentStartDate,
-  calculateFilingWindowOpens as calcFilingWindowOpens,
-  calculateFilingWindowCloses as calcFilingWindowCloses,
-} from "./derivedCalculations";
-import {
-  isDeadlineActive,
-  getActiveRfiEntry,
-  getActiveRfeEntry,
+  buildDeadlineInput,
   extractActiveDeadlines as centralExtractActiveDeadlines,
   type CaseDataForDeadlines as PermCaseDataForDeadlines,
 } from "./perm/deadlines";
-import { daysBetween } from "./dateValidation";
-import { loggers } from "./logging";
-
-const log = loggers.dashboard;
 
 // ============================================================================
 // URGENCY CALCULATION
@@ -192,210 +180,21 @@ export function extractDeadlines(
   caseData: CaseDataForDeadlines,
   todayISO: string
 ): ExtractedDeadline[] {
-  // Convert to perm module type for supersession checks
-  const permCaseData = toPermCaseData(caseData);
-
-  // Skip closed cases (using centralized check)
-  if (caseData.caseStatus === "closed") {
-    return [];
-  }
-
-  // Skip deleted cases (using centralized check)
-  if (caseData.deletedAt !== undefined) {
-    return [];
-  }
-
-  const deadlines: ExtractedDeadline[] = [];
-
-  // PWD expiration deadline (using centralized supersession check)
-  const pwdStatus = isDeadlineActive("pwd_expiration", permCaseData);
-  if (pwdStatus.isActive && caseData.pwdExpirationDate) {
-    try {
-      const daysUntil = daysBetween(todayISO, caseData.pwdExpirationDate);
-
-      deadlines.push({
-        type: "pwd_expiration",
-        label: "PWD Expiration",
-        date: caseData.pwdExpirationDate,
-        daysUntil,
-      });
-    } catch (error) {
-      log.error('Failed to extract PWD expiration deadline', {
-        resourceId: caseData._id,
-        pwdExpirationDate: caseData.pwdExpirationDate,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  // RFI due deadline (using centralized active entry finder)
-  const activeRfi = getActiveRfiEntry(caseData.rfiEntries ?? []);
-  if (activeRfi?.responseDueDate) {
-    try {
-      const daysUntil = daysBetween(todayISO, activeRfi.responseDueDate);
-
-      deadlines.push({
-        type: "rfi_due",
-        label: "RFI Response Due",
-        date: activeRfi.responseDueDate,
-        daysUntil,
-      });
-    } catch (error) {
-      log.error('Failed to extract RFI deadline', {
-        resourceId: caseData._id,
-        responseDueDate: activeRfi.responseDueDate,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  // RFE due deadline (using centralized active entry finder)
-  const activeRfe = getActiveRfeEntry(caseData.rfeEntries ?? []);
-  if (activeRfe?.responseDueDate) {
-    try {
-      const daysUntil = daysBetween(todayISO, activeRfe.responseDueDate);
-
-      deadlines.push({
-        type: "rfe_due",
-        label: "RFE Response Due",
-        date: activeRfe.responseDueDate,
-        daysUntil,
-      });
-    } catch (error) {
-      log.error('Failed to extract RFE deadline', {
-        resourceId: caseData._id,
-        responseDueDate: activeRfe.responseDueDate,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  // I-140 filing deadline (using centralized supersession check)
-  const i140Status = isDeadlineActive("i140_filing_deadline", permCaseData);
-  if (i140Status.isActive && caseData.eta9089ExpirationDate) {
-    try {
-      const daysUntil = daysBetween(todayISO, caseData.eta9089ExpirationDate);
-
-      deadlines.push({
-        type: "i140_filing_deadline",
-        label: "I-140 Filing Deadline",
-        date: caseData.eta9089ExpirationDate,
-        daysUntil,
-      });
-    } catch (error) {
-      log.error('Failed to extract I-140 deadline', {
-        resourceId: caseData._id,
-        eta9089ExpirationDate: caseData.eta9089ExpirationDate,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-  }
-
-  // Filing window deadlines (using centralized supersession check)
-  const filingWindowStatus = isDeadlineActive("filing_window_opens", permCaseData);
-  if (filingWindowStatus.isActive) {
-    // Filing window opens (30 days after last recruitment ends)
-    // Prefer stored value if available, otherwise calculate
-    let windowOpensISO: string | null = null;
-
-    if (caseData.filingWindowOpens) {
-      // Use stored derived value
-      windowOpensISO = caseData.filingWindowOpens;
-    } else {
-      // Fall back to calculation using derivedCalculations.ts (for backwards compatibility)
-      const recruitmentEndDate = calcRecruitmentEndDate({
-        sundayAdSecondDate: caseData.sundayAdSecondDate ?? null,
-        jobOrderEndDate: caseData.jobOrderEndDate ?? null,
-        noticeOfFilingEndDate: caseData.noticeOfFilingEndDate ?? null,
-        additionalRecruitmentEndDate: caseData.additionalRecruitmentEndDate ?? null,
-        additionalRecruitmentMethods: caseData.additionalRecruitmentMethods,
-        isProfessionalOccupation: caseData.isProfessionalOccupation ?? false,
-      });
-      windowOpensISO = calcFilingWindowOpens(recruitmentEndDate);
-    }
-
-    if (windowOpensISO) {
-      try {
-        const daysUntilOpen = daysBetween(todayISO, windowOpensISO);
-        deadlines.push({
-          type: "filing_window_opens",
-          label: "ETA 9089 Filing Window Opens",
-          date: windowOpensISO,
-          daysUntil: daysUntilOpen,
-        });
-      } catch (error) {
-        log.error('Failed to extract filing window opens', {
-          resourceId: caseData._id,
-          windowOpensISO,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    }
-
-    // ETA 9089 Filing window closes: MIN(180 days after FIRST recruitment, PWD expiration)
-    // Per perm_flow.md: "pwded trumps" the 180-day window
-    // Prefer stored value if available, otherwise calculate
-    let windowCloseISO: string | null = null;
-
-    if (caseData.filingWindowCloses) {
-      // Use stored derived value
-      windowCloseISO = caseData.filingWindowCloses;
-    } else {
-      // Fall back to calculation using derivedCalculations.ts (for backwards compatibility)
-      const recruitmentStartDate = calcRecruitmentStartDate({
-        sundayAdFirstDate: caseData.sundayAdFirstDate ?? null,
-        jobOrderStartDate: caseData.jobOrderStartDate ?? null,
-        noticeOfFilingStartDate: caseData.noticeOfFilingStartDate ?? null,
-      });
-      windowCloseISO = calcFilingWindowCloses(
-        recruitmentStartDate,
-        caseData.pwdExpirationDate ?? null
-      );
-    }
-
-    if (windowCloseISO) {
-      try {
-        const daysUntilClose = daysBetween(todayISO, windowCloseISO);
-        deadlines.push({
-          type: "recruitment_window",
-          label: "ETA 9089 Filing Window Closes",
-          date: windowCloseISO,
-          daysUntil: daysUntilClose,
-        });
-      } catch (error) {
-        log.error('Failed to extract filing window closes', {
-          resourceId: caseData._id,
-          windowCloseISO,
-          error: error instanceof Error ? error.message : String(error),
-        });
-      }
-    }
-  }
-
-  // Recruitment window closes + per-step recruitment deadlines
-  // Use central extractActiveDeadlines for these to avoid duplication
-  const permData = toPermCaseData(caseData);
-  const centralDeadlines = centralExtractActiveDeadlines(permData, todayISO);
-  const perStepTypes: ReadonlySet<string> = new Set([
-    "recruitment_window_closes",
-    "job_order_start_deadline",
-    "notice_of_filing_start_deadline",
-    "first_sunday_ad_deadline",
-    "second_sunday_ad_deadline",
-  ]);
-
-  for (const d of centralDeadlines) {
-    if (perStepTypes.has(d.type)) {
-      deadlines.push({
-        type: d.type as DeadlineType,
-        label: d.label,
-        date: d.date,
-        daysUntil: d.daysUntil,
-      });
-    }
-  }
-
-  return deadlines;
+  // The central rules decide every deadline: which still apply, their dates
+  // and their day counts. This used to rebuild half the list by hand, and the
+  // hand-built half kept "filing window opens" after the window had opened, so
+  // the dashboard's Overdue column listed it on every such case.
+  // buildDeadlineInput derives the filing and recruitment windows from the raw
+  // dates, falling back to the stored ones only when they cannot be derived.
+  const deadlines = centralExtractActiveDeadlines(buildDeadlineInput(toPermCaseData(caseData)), todayISO);
+  return deadlines.map((d) => ({
+    // The dashboard's older name for the filing window closing; the
+    // notification and enforcement tables still read it.
+    type: (d.type === "filing_window_closes" ? "recruitment_window" : d.type) as DeadlineType,
+    label: d.label,
+    date: d.date,
+    daysUntil: d.daysUntil,
+  }));
 }
 
 // NOTE: calculateRecruitmentEndDate has been removed from this file.

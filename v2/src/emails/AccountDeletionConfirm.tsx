@@ -25,7 +25,7 @@ export interface AccountDeletionConfirmProps {
   cancelUrl: string;
   /** URL to contact support */
   supportUrl?: string;
-  /** If true, renders "Account Deleted" variant (no cancel CTA, immediate messaging) */
+  /** If true, renders "Account deleted" variant (no cancel CTA, immediate messaging) */
   immediate?: boolean;
 }
 
@@ -49,13 +49,13 @@ export function AccountDeletionConfirm({
       {/* Warning Banner */}
       <Section className="em-banner" style={immediate ? styles.bannerImmediate : styles.banner}>
         <Text className="em-text-white" style={styles.bannerText}>
-          {immediate ? "Account Deleted" : "Account Deletion Scheduled"}
+          {immediate ? "Account deleted" : "Account deletion scheduled"}
         </Text>
       </Section>
 
       {/* Main Header */}
       <EmailHeader
-        title={immediate ? "Account Deleted" : "Account Deletion Request"}
+        title={immediate ? "Account deleted" : "Account deletion request"}
         subtitle={
           immediate
             ? "Your account has been permanently deleted"

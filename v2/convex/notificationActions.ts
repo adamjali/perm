@@ -154,16 +154,19 @@ function generateAlertSubject(
   alertType: "new" | "reminder",
   urgentThreshold: number = 7
 ): string {
-  if (daysRemaining <= 0) {
-    return `OVERDUE: ${type} Response for ${beneficiaryName}`;
+  if (daysRemaining < 0) {
+    return `${type} response overdue for ${beneficiaryName}`;
+  }
+  if (daysRemaining === 0) {
+    return `${type} response due today for ${beneficiaryName}`;
   }
   if (daysRemaining <= urgentThreshold) {
-    return `Urgent: ${type} Response Due in ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} - ${beneficiaryName}`;
+    return `Urgent: ${type} response due in ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} for ${beneficiaryName}`;
   }
   if (alertType === "new") {
-    return `New ${type} Received - ${beneficiaryName}`;
+    return `New ${type} received for ${beneficiaryName}`;
   }
-  return `${type} Response Due in ${daysRemaining} days - ${beneficiaryName}`;
+  return `${type} response due in ${daysRemaining} days for ${beneficiaryName}`;
 }
 
 // ============================================================================
@@ -212,8 +215,8 @@ export const sendStatusChangeEmail = internalAction({
       })
     );
 
-    const changeLabel = args.changeType === "stage" ? "Stage" : "Progress";
-    const subject = `Case ${changeLabel} Updated: ${args.previousStatus} to ${args.newStatus} - ${args.beneficiaryName}`;
+    const changeLabel = args.changeType === "stage" ? "stage" : "progress";
+    const subject = `${args.beneficiaryName}: ${changeLabel} changed from ${args.previousStatus} to ${args.newStatus}`;
 
     await sendNotificationEmail(ctx, {
       to: args.to,
@@ -358,7 +361,7 @@ export const sendAutoClosureEmail = internalAction({
       })
     );
 
-    const subject = `CASE CLOSED: ${args.beneficiaryName} at ${args.companyName} - ${args.violationType}`;
+    const subject = `Case closed: ${args.beneficiaryName} at ${args.companyName} (${args.violationType})`;
 
     await sendNotificationEmail(ctx, {
       to: args.to,
@@ -418,8 +421,8 @@ export const sendAccountDeletionEmail = internalAction({
     );
 
     const subject = isImmediate
-      ? "Account Deleted - PERM Tracker"
-      : "Account Deletion Scheduled - PERM Tracker";
+      ? "Your PERM Tracker account was deleted"
+      : "Your PERM Tracker account is scheduled for deletion";
 
     const resend = getResend();
     const { error } = await sendEmailWithRetry(resend, {
@@ -545,13 +548,13 @@ export const sendWeeklyDigestEmail = internalAction({
     const { stats, isEmpty } = digestContent;
     let subject: string;
     if (isEmpty) {
-      subject = "Your Weekly PERM Summary - All Clear!";
+      subject = "Your weekly PERM summary: all clear";
     } else if (stats.overdueCount > 0) {
-      subject = `Weekly PERM Summary: ${stats.overdueCount} Overdue, ${stats.urgentCount} This Week`;
+      subject = `Weekly PERM summary: ${stats.overdueCount} overdue, ${stats.urgentCount} due this week`;
     } else if (stats.urgentCount > 0) {
-      subject = `Weekly PERM Summary: ${stats.urgentCount} Deadline${stats.urgentCount !== 1 ? "s" : ""} This Week`;
+      subject = `Weekly PERM summary: ${stats.urgentCount} deadline${stats.urgentCount !== 1 ? "s" : ""} this week`;
     } else {
-      subject = "Your Weekly PERM Summary";
+      subject = "Your weekly PERM summary";
     }
 
     const resend = getResend();

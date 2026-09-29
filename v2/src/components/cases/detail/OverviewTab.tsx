@@ -284,8 +284,12 @@ export function OverviewTab({
                     : "var(--primary-text)";
                   return (
                     <div className="next-up-stat">
-                      <div className="big" style={{ color: urgencyColor }}>{nextDeadline.daysUntil}</div>
-                      <div className="label">{nextDeadline.label}</div>
+                      <div className="big" style={{ color: urgencyColor }}>{Math.abs(nextDeadline.daysUntil)}</div>
+                      <div className="label">
+                        {nextDeadline.daysUntil < 0
+                          ? `${Math.abs(nextDeadline.daysUntil) === 1 ? "day" : "days"} late: ${nextDeadline.label}`
+                          : nextDeadline.label}
+                      </div>
                       <div className="date">{fmtISODate(nextDeadline.date)}</div>
                     </div>
                   );

@@ -11,10 +11,9 @@ import type { CaseStatus, ProgressStatus } from "@/lib/perm";
 import {
   isProfessionalRecruitmentComplete,
   calculateFilingWindowFromCase,
-  calculateRecruitmentWindowCloses,
-  getFirstRecruitmentDate,
   extractActiveDeadlines,
-  type CaseDataForDeadlines,
+  buildDeadlineInput,
+  type LooseDeadlineCaseData,
 } from "@/lib/perm";
 import { getUrgencyLevelExtended, type UrgencyLevelExtended } from "@/lib/status";
 import type { AdditionalRecruitmentMethod } from "@/lib/shared/types";
@@ -438,55 +437,26 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
  * Delegates to the central extractActiveDeadlines system which handles
  * all supersession logic, per-step recruitment deadlines, and filing window gating.
  */
-export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null {
-  // Pre-compute derived fields that extractActiveDeadlines expects as stored values
-  const firstRecruit = getFirstRecruitmentDate({
-    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
-    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
-    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
-  });
-
-  const recruitWindow = firstRecruit
-    ? calculateRecruitmentWindowCloses(firstRecruit, caseData.pwdExpirationDate || undefined)
-    : undefined;
-
-  const filingWindow = calculateFilingWindowFromCase(buildFilingWindowInput(caseData));
-
-  // Build CaseDataForDeadlines with pre-computed derived fields
-  const centralData: CaseDataForDeadlines = {
-    caseStatus: caseData.caseStatus,
-    progressStatus: caseData.progressStatus,
-    pwdExpirationDate: caseData.pwdExpirationDate || undefined,
-    eta9089FilingDate: caseData.eta9089FilingDate || undefined,
-    eta9089CertificationDate: caseData.eta9089CertificationDate || undefined,
-    eta9089ExpirationDate: caseData.eta9089ExpirationDate || undefined,
-    i140FilingDate: caseData.i140FilingDate || undefined,
-    sundayAdFirstDate: caseData.sundayAdFirstDate || undefined,
-    sundayAdSecondDate: caseData.sundayAdSecondDate || undefined,
-    jobOrderStartDate: caseData.jobOrderStartDate || undefined,
-    jobOrderEndDate: caseData.jobOrderEndDate || undefined,
-    noticeOfFilingStartDate: caseData.noticeOfFilingStartDate || undefined,
-    noticeOfFilingEndDate: caseData.noticeOfFilingEndDate || undefined,
-    isProfessionalOccupation: caseData.isProfessionalOccupation || undefined,
-    additionalRecruitmentMethods: caseData.additionalRecruitmentMethods || undefined,
-    // NextUpCaseData entries have optional id/createdAt; extractActiveDeadlines
-    // only reads id for optional entryId output, so this narrowing is safe.
-    rfiEntries: (caseData.rfiEntries || undefined) as CaseDataForDeadlines["rfiEntries"],
-    rfeEntries: (caseData.rfeEntries || undefined) as CaseDataForDeadlines["rfeEntries"],
-    // Derived fields (extractActiveDeadlines reads these directly)
-    filingWindowOpens: filingWindow ? filingWindow.opens : undefined,
-    filingWindowCloses: filingWindow ? filingWindow.closes : undefined,
-    recruitmentWindowCloses: recruitWindow ? recruitWindow.closes : undefined,
+/**
+ * How many deadlines the central rules count as due within `days`, and how
+ * many of those are already late. Same list as the next-up box, so the two
+ * can never disagree about what is due.
+ */
+export function countDueDeadlines(caseData: NextUpCaseData, days = 30): { due: number; late: number } {
+  const deadlines = extractActiveDeadlines(buildDeadlineInput(caseData as LooseDeadlineCaseData));
+  return {
+    due: deadlines.filter((d) => d.daysUntil <= days).length,
+    late: deadlines.filter((d) => d.daysUntil < 0).length,
   };
+}
 
-  // Central system handles all supersession, per-step deadlines, and sorting
-  const deadlines = extractActiveDeadlines(centralData);
-  // Filter to future/current deadlines only — past deadlines (negative daysUntil)
-  // are not "next up" (e.g. filing_window_opens after the window already opened)
-  const upcoming = deadlines.filter(d => d.daysUntil >= 0);
-  if (upcoming.length === 0) return null;
-
-  const first = upcoming[0];
+export function calculateNextDeadline(caseData: NextUpCaseData): Deadline | null {
+  // The central rules decide what is still a deadline. A negative daysUntil is
+  // a real miss (an RFI response, a PWD expiring unfiled) and leads the list:
+  // the central list already drops the one date that passes harmlessly, the
+  // filing window OPENING.
+  const deadlines = extractActiveDeadlines(buildDeadlineInput(caseData as LooseDeadlineCaseData));
+  const first = deadlines[0];
   if (!first) return null;
 
   return {

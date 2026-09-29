@@ -240,12 +240,12 @@ DeadlineDigest.PreviewProps = {
   baseUrl: "https://permtracker.app",
   settingsUrl: "https://permtracker.app/settings",
   items: [
-    { caseId: "c1" as never, employerName: "Globex Corporation", beneficiaryIdentifier: "A. Rivera", deadlineType: "PWD Expiration", deadlineDate: "2026-06-27", daysUntil: -2, urgency: "overdue" },
-    { caseId: "c2" as never, employerName: "Acme Inc", beneficiaryIdentifier: "B. Chen", deadlineType: "PWD Expiration", deadlineDate: "2026-06-30", daysUntil: 1, urgency: "urgent" },
-    { caseId: "c3" as never, employerName: "Initech", beneficiaryIdentifier: "C. Okafor", deadlineType: "Filing Window Closes", deadlineDate: "2026-07-02", daysUntil: 3, urgency: "urgent" },
-    { caseId: "c4" as never, employerName: "Umbrella LLC", beneficiaryIdentifier: "D. Santos", deadlineType: "RFI Response Due", deadlineDate: "2026-07-06", daysUntil: 7, urgency: "urgent" },
-    { caseId: "c5" as never, employerName: "Stark Industries", beneficiaryIdentifier: "E. Müller", deadlineType: "I-140 Filing Deadline", deadlineDate: "2026-07-13", daysUntil: 14, urgency: "upcoming" },
-    { caseId: "c6" as never, employerName: "Wayne Enterprises", beneficiaryIdentifier: "F. Adeyemi", deadlineType: "Recruitment Window Closes", deadlineDate: "2026-07-29", daysUntil: 30, urgency: "later" },
+    { caseId: "c1" as never, employerName: "Globex Corporation", beneficiaryIdentifier: "A. Rivera", deadlineType: "PWD expiration", deadlineDate: "2026-06-27", daysUntil: -2, urgency: "overdue" },
+    { caseId: "c2" as never, employerName: "Acme Inc", beneficiaryIdentifier: "B. Chen", deadlineType: "PWD expiration", deadlineDate: "2026-06-30", daysUntil: 1, urgency: "urgent" },
+    { caseId: "c3" as never, employerName: "Initech", beneficiaryIdentifier: "C. Okafor", deadlineType: "ETA 9089 filing window closes", deadlineDate: "2026-07-02", daysUntil: 3, urgency: "urgent" },
+    { caseId: "c4" as never, employerName: "Umbrella LLC", beneficiaryIdentifier: "D. Santos", deadlineType: "RFI response due", deadlineDate: "2026-07-06", daysUntil: 7, urgency: "urgent" },
+    { caseId: "c5" as never, employerName: "Stark Industries", beneficiaryIdentifier: "E. Müller", deadlineType: "I-140 filing deadline", deadlineDate: "2026-07-13", daysUntil: 14, urgency: "upcoming" },
+    { caseId: "c6" as never, employerName: "Wayne Enterprises", beneficiaryIdentifier: "F. Adeyemi", deadlineType: "Recruitment window closes", deadlineDate: "2026-07-29", daysUntil: 30, urgency: "later" },
   ],
 } satisfies DeadlineDigestProps;
 

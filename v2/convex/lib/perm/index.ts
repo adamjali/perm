@@ -311,8 +311,12 @@ export {
   extractActiveDeadlines,
   getActiveDeadlineTypes,
   shouldRemindForDeadline,
+  extractReminderDeadlines,
   daysBetween,
   getTodayISO,
+  // One input builder for every surface
+  buildDeadlineInput,
+  type LooseDeadlineCaseData,
   // Timezone rules
   getTimezoneDisplayLabel,
 } from './deadlines';

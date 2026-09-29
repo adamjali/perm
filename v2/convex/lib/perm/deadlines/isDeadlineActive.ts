@@ -180,7 +180,8 @@ function checkRecruitmentWindowActive(
  * Active when:
  * - ETA 9089 not yet filed
  * - The step has NOT been completed (no date set for the corresponding field)
- * - First recruitment has started (needed to calculate the deadline)
+ * The date itself needs a first recruitment date or a PWD expiration
+ * (extractPerStepDeadlines works it back from either).
  */
 function checkPerStepActive(
   caseData: CaseDataForDeadlines,
