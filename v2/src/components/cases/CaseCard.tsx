@@ -21,11 +21,11 @@
  * - Hover: lift + shadow-hard-lg + expand content
  */
 
-import { memo, useMemo } from "react";
+import { memo, useMemo, useState } from "react";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useQuery } from "convex/react";
 import { toast } from "@/lib/toast";
-import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, CircleNotchIcon, DotsThreeIcon, EyeIcon, TrashIcon as Trash2 } from "@phosphor-icons/react/ssr";
+import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, CaretDownIcon, CircleNotchIcon, DotsThreeIcon, EyeIcon, TrashIcon as Trash2 } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import { getUrgencyFromDeadline } from "@/lib/status";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,7 @@ import {
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { api } from "../../../convex/_generated/api";
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
-import { formatDeadlineDate, deadlineCountdown, formatClosureReasonLabel, formatCompactDate } from "./case-card.utils";
+import { formatDeadlineDate, deadlineCountdown, formatClosureReasonLabel, formatCompactDate, countShownDates } from "./case-card.utils";
 import { useCardUI } from "./useCardUI";
 import { useCardMutations } from "./useCardMutations";
 import {
@@ -161,6 +161,16 @@ export const CaseCard = memo(function CaseCard({
   const countdown = useMemo(() => (nextDeadline ? deadlineCountdown(nextDeadline) : null), [nextDeadline]);
   const deadlineDate = useMemo(() => (nextDeadline ? formatDeadlineDate(nextDeadline) : ""), [nextDeadline]);
   const shouldExpand = ui.isHovered || isPinned;
+
+  // Phones have no hover, so the dates used to sit open on every card and the
+  // list became one long scroll. There a card starts short and a row opens it;
+  // a pinned card opens by itself, as on desktop.
+  const [datesOpen, setDatesOpen] = useState(false);
+  const openOnPhone = datesOpen || !!isPinned;
+  const dateCount = countShownDates(dates);
+  const hasDetails = !isClosed && (dateCount > 0 || !!notes);
+  const detailsWhat = dateCount > 0 ? (notes ? "dates and notes" : "dates") : "notes";
+  const detailsId = `case-details-${_id}`;
 
   return (
     <div
@@ -288,7 +298,39 @@ export const CaseCard = memo(function CaseCard({
           />
         </div>
 
-        <ExpandedContent shouldExpand={shouldExpand} isClosed={isClosed} dates={dates} notes={notes} />
+        {hasDetails && (
+          <button
+            type="button"
+            className={cn(
+              "md:hidden relative z-10 -mx-6 flex min-h-11 w-[calc(100%+3rem)] items-center justify-between gap-2",
+              "border-t border-dashed border-black/30 px-6 text-sm font-bold text-black",
+              "active:bg-black/5 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-black",
+            )}
+            aria-expanded={openOnPhone}
+            aria-controls={detailsId}
+            onClick={(e) => {
+              e.stopPropagation();
+              setDatesOpen((open) => !open);
+            }}
+          >
+            <span>
+              {openOnPhone ? `Hide ${detailsWhat}` : dateCount > 0 ? `Show dates (${dateCount})${notes ? " and notes" : ""}` : "Show notes"}
+            </span>
+            <CaretDownIcon
+              className={cn("size-4 transition-transform duration-150 motion-reduce:transition-none", openOnPhone && "rotate-180")}
+              aria-hidden="true"
+            />
+          </button>
+        )}
+
+        <ExpandedContent
+          id={detailsId}
+          shouldExpand={shouldExpand}
+          openOnPhone={openOnPhone}
+          isClosed={isClosed}
+          dates={dates}
+          notes={notes}
+        />
 
         {/* Action Buttons Row */}
         <div

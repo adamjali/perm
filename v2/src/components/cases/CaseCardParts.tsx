@@ -7,7 +7,7 @@ import { BookmarkIcon, CalendarCheckIcon, CalendarSlashIcon, CircleNotchIcon, Pu
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { STAGE_VISUALS } from "@/components/status/stage-visuals";
-import { formatCompactDate, getStageColorVar } from "./case-card.utils";
+import { countShownDates, formatCompactDate, getStageColorVar } from "./case-card.utils";
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
 import type { CaseStatus } from "@/lib/perm";
 
@@ -258,33 +258,42 @@ function DateSection({ title, dates }: DateSectionProps) {
 // ============================================================================
 
 interface ExpandedContentProps {
+  id?: string;
   shouldExpand: boolean;
+  /** Phones: opened by the card's "Show dates" row or by pinning. */
+  openOnPhone?: boolean;
   isClosed: boolean;
   dates: CaseCardData["dates"];
   notes: string | undefined;
 }
 
 export function ExpandedContent({
+  id,
   shouldExpand,
+  openOnPhone = false,
   isClosed,
   dates,
   notes,
 }: ExpandedContentProps) {
-  // Mobile-first: always expanded on mobile (no hover), collapsible on desktop
+  // Desktop opens on hover or pin; phones on the card's "Show dates" row.
   const isExpanded = shouldExpand && !isClosed;
   // Nothing recorded yet: no band at all, rather than an empty strip.
-  if (!notes && !Object.values(dates).some(Boolean)) return null;
+  if (!notes && countShownDates(dates) === 0) return null;
 
   return (
     <div
+      id={id}
       data-testid="expanded-content"
       className={cn(
-        "overflow-hidden relative z-10 -mx-6 px-6 transition-all duration-150 ease-out",
-        // Mobile: always show expanded content (no hover on touch devices)
-        // Desktop (md+): respect hover/pin state
+        "overflow-hidden relative z-10 -mx-6 px-6 transition-all duration-150 ease-out motion-reduce:transition-none",
+        // Phones: open only when the card's row (or a pin) opens it.
+        // Desktop (md+): respect hover/pin state.
         isClosed
           ? "max-h-0 opacity-0 mt-0 pt-0 pb-0"
-          : "max-h-[500px] opacity-100 mt-3 pt-3 pb-6 md:max-h-0 md:opacity-0 md:mt-0 md:pt-0 md:pb-0",
+          : cn(
+              openOnPhone ? "max-h-[500px] opacity-100 mt-0 pt-3 pb-6" : "max-h-0 opacity-0 mt-0 pt-0 pb-0",
+              "md:max-h-0 md:opacity-0 md:mt-0 md:pt-0 md:pb-0",
+            ),
         // Desktop expanded state override
         isExpanded && "md:max-h-[500px] md:opacity-100 md:mt-3 md:pt-3 md:pb-6"
       )}
@@ -292,7 +301,7 @@ export function ExpandedContent({
         backgroundColor: !isClosed ? "rgba(255,255,255,0.6)" : "transparent",
       }}
     >
-      <div className="mb-3 border-t border-dashed border-black/30" />
+      <div className="mb-3 hidden border-t border-dashed border-black/30 md:block" />
       <div className="space-y-2 text-sm text-black">
         <DateSection
           title="PWD"

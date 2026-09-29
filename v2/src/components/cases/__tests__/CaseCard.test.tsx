@@ -5,8 +5,11 @@ import { renderWithProviders } from "../../../../test-utils/render-utils";
 import { CaseCard } from "../CaseCard";
 import type { CaseCardData } from "../../../../../convex/lib/caseListTypes";
 
+// One spy for every mutation, so a test can prove none ran.
+const mutationSpy = vi.hoisted(() => vi.fn());
+
 vi.mock("convex/react", () => ({
-  useMutation: () => vi.fn(),
+  useMutation: () => mutationSpy,
   useQuery: () => ({ googleCalendarConnected: true }),
 }));
 
@@ -166,5 +169,52 @@ describe("CaseCard - Selection Mode", () => {
     );
     await user.click(screen.getByRole("checkbox"));
     expect(onSelect).toHaveBeenCalledWith("test-789");
+  });
+});
+
+// Phones have no hover, so a card starts short and one row opens its dates.
+// The row is md:hidden; happy-dom applies no media queries, so these assert
+// the row's state and wiring, not whether it shows at a given width.
+describe("CaseCard - Phone dates row", () => {
+  const withDates = { created: 1, updated: 2, pwdFiled: "2025-01-10", pwdExpires: "2025-06-30" } as CaseCardData["dates"];
+
+  it("counts only the dates the card lists, and opens and closes", async () => {
+    const { user } = renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: withDates })} />);
+    const row = screen.getByRole("button", { name: "Show dates (2)" });
+    expect(row).toHaveAttribute("aria-expanded", "false");
+    expect(row).toHaveAttribute("aria-controls", "case-details-test-case-id");
+    expect(document.getElementById("case-details-test-case-id")).toBeInTheDocument();
+
+    await user.click(row);
+    expect(screen.getByRole("button", { name: "Hide dates" })).toHaveAttribute("aria-expanded", "true");
+    await user.click(screen.getByRole("button", { name: "Hide dates" }));
+    expect(screen.getByRole("button", { name: "Show dates (2)" })).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("does not pin the card when the row is tapped", async () => {
+    const { user } = renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: withDates })} />);
+    mutationSpy.mockClear();
+    await user.click(screen.getByRole("button", { name: "Show dates (2)" }));
+    // A tap that bubbled up to the card would run its pin mutation.
+    expect(mutationSpy).not.toHaveBeenCalled();
+    // Control: a tap on the card itself does run it.
+    await user.click(screen.getByText("Acme Corp"));
+    expect(mutationSpy).toHaveBeenCalled();
+  });
+
+  it("starts open on a pinned card", () => {
+    renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: withDates, isPinned: true })} />);
+    expect(screen.getByRole("button", { name: "Hide dates" })).toHaveAttribute("aria-expanded", "true");
+  });
+
+  it("names notes when the case has them", () => {
+    renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: withDates, notes: "Waiting on the employer" })} />);
+    expect(screen.getByRole("button", { name: "Show dates (2) and notes" })).toBeInTheDocument();
+  });
+
+  it("shows no row and no band when nothing is recorded", () => {
+    renderWithProviders(<CaseCard case={createMockCaseCardData({ dates: { created: 1, updated: 2 } as CaseCardData["dates"] })} />);
+    expect(screen.queryByRole("button", { name: /show dates|show notes/i })).not.toBeInTheDocument();
+    expect(screen.queryByTestId("expanded-content")).not.toBeInTheDocument();
   });
 });

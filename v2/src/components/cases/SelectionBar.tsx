@@ -27,6 +27,7 @@
 
 import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, CalendarIcon, CalendarSlashIcon, DownloadIcon, FileJsIcon, TrashIcon as Trash2, XIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
+import { usePublishBottomBar } from "@/hooks/usePublishBottomBar";
 
 // ============================================================================
 // TYPES
@@ -73,6 +74,9 @@ export function SelectionBar({
   onBulkCalendarSync,
   isCalendarConnected = false,
 }: SelectionBarProps) {
+  // The chat bubble sits above this bar while it shows.
+  const barRef = usePublishBottomBar<HTMLDivElement>(selectedCount > 0);
+
   // Don’t render if no cases are selected
   if (selectedCount === 0) {
     return null;
@@ -80,6 +84,7 @@ export function SelectionBar({
 
   return (
     <div
+      ref={barRef}
       data-testid="selection-bar"
       className="fixed bottom-0 left-0 right-0 z-[60] border-t-2 border-black dark:border-white bg-background shadow-hard-lg"
     >

@@ -208,7 +208,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 28 2026".
 - **A morning report is emailed daily** (health, runs, site, bills, traffic, errors) and a routine reviews it.
 - **The entity load swaps tables in one transaction**, so no page reads a half-built table.
 
-## Sep 29 2026, in six lines
+## Sep 29 2026, in eight lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
 
@@ -221,3 +221,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
   systemd timers are the clock, and a test holds them to `jobs.ts`.
 - **Nightly backups go to Cloudflare R2** (15-day expiry, 7-day lock) and a monthly restore test
   loads the copy; the morning report judges both.
+- **The ETA 9089 expiration is certification + 179** (the date DOL prints), filled in on create,
+  update and import; saved +180 dates were moved once.
+- **The cases page has one Import / export menu**, phone cards open their dates on a tap, and the
+  chat bubble sits in the corner above any bottom bar.

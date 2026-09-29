@@ -86,7 +86,10 @@ export function ChatWidget({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0 }}
             transition={springConfig}
-            className="fixed bottom-20 right-4 z-[60]"
+            // Anchored to the corner, lifted over a bottom bar when one shows
+            // (--bottom-bar-h, published by usePublishBottomBar). z-40 keeps
+            // dialogs, menus and the phone nav (z-50) drawn over it.
+            className="fixed right-4 bottom-[calc(var(--bottom-bar-h,0px)+1rem)] z-40 transition-[bottom] duration-150 motion-reduce:transition-none md:right-6 md:bottom-[calc(var(--bottom-bar-h,0px)+1.5rem)]"
             data-tour="chat-bubble"
           >
             <Button

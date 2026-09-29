@@ -3579,8 +3579,9 @@ House layers, and nothing may hardcode a competing value:
 | layer | who |
 |---|---|
 | `z-[100]` | the Cmd+K search palette |
-| `z-[60]` | bottom-fixed chrome: ScrollToTop, SelectionBar, ChatWidget, ReadingProgress, and the mobile data drawer |
-| `z-50` | `AuthHeader` and its dropdowns |
+| `z-[60]` | bottom-fixed chrome: ScrollToTop, SelectionBar, the open chat panel, ReadingProgress, and the mobile data drawer |
+| `z-50` | `AuthHeader` and its dropdowns, dialogs, the phone menu |
+| `z-40` | the chat bubble (since Sep 29 2026: dialogs and menus draw over it) |
 | `z-10` | `Footer` |
 
 `scroll-to-top-stacking.test.tsx` and `footer-stacking.test.ts` pin the
@@ -6707,7 +6708,8 @@ orphaned and never deleted. Now:
 
 **Known gap, left alone on purpose:** the I-140 deadline needs a stored `eta9089ExpirationDate`.
 The form's cascade fills it from the certification date; an import may not. Filling it inside the
-rules would change what auto-close acts on, so it waits for its own decision.
+rules would change what auto-close acts on, so it waits for its own decision. **Closed the same
+day on the owner's call; see "The ETA 9089 expiration is certification + 179" below.**
 
 **Words.** Notification titles and messages come from one phrase table (`DEADLINE_PHRASES` in
 `convex/lib/notificationHelpers.ts`): "PWD expires in 7 days", "First Sunday ad due tomorrow",
@@ -6735,3 +6737,42 @@ rclone 1.60 re-reads an upload by version id, which R2 answers 501, so uploads u
 The key in `/etc/permtracker/r2.env` is an account-wide admin key by the owner's choice; a bucket-
 scoped Object Read & Write key is the better swap, same file format. The morning report's Turso
 bill section is retired.
+
+### The ETA 9089 expiration is certification + 179, and every certified case has one
+
+**+179, not +180, is the owner's call (Sep 29 2026).** 20 CFR 656.30(b)(1) says the I-140 must be
+filed "within 180 calendar days of the date the Department of Labor granted the certification";
+DOL counts the grant day as day 1, so the "valid through" date it prints is certification + 179.
+Users had been typing +179 while the app filled +180, a day after DOL's date. This rests on the
+users' own entries, not on a DOL document stating the arithmetic. One constant carries it,
+`ETA9089_EXPIRATION_DAYS = 179` in `convex/lib/perm/constants.ts` (`I140_FILING_DAYS` is an
+alias), and auto-close's old `ETA9089_VALIDITY_DAYS = 180` copy and the date picker's literal 180
+now point at it. Public copy that says "within 180 days" states the regulation and stays.
+
+- **Every certified case carries an expiration.** `resolveEta9089ExpirationDate` fills a missing
+  one on create, update and import (`convex/cases.ts`); a date the user entered is kept.
+- **V-I140-02** allows filing on or before the stored expiration, or the computed one when none
+  is stored.
+- **The import preview says so** (`filledExpirations` from `parseCaseImportFile`): which cases got
+  a date, and a red box when an open case with no I-140 already has a past date, because deadline
+  enforcement would close it.
+- **Saved +180 dates moved once** by `migrations:moveEta9089ExpirationTo179` (exact +180 only,
+  `updatedAt` untouched, Google Calendar resync scheduled for live cases; dry-run first).
+
+### The cases page: one Import / export menu, short cards on phones, a lower chat bubble
+
+- **Import / export** replaces the Import button: import JSON, or export the cases the list shows
+  (every page of the filtered set, via `listFilteredIds` then `listByIds`) as CSV or JSON. Select
+  mode keeps its own export of the selected cases.
+- **Phone cards start short**: the next deadline shows, and a 44px row opens the dates and notes
+  (`md:hidden`; desktop keeps hover and pin). A pinned card starts open. The row's count comes
+  from `countShownDates`, which skips `created` and `updated`: counting them put "Show dates (2)"
+  on empty cases, and the "nothing recorded, no band" guard in `ExpandedContent` never fired.
+- **The chat bubble sits in the corner** (16px on phones, 24px from `md`) and rises over a bottom
+  bar. Its fixed `bottom-20` put it 80px up on every page, and on the case form it still sat on
+  the 92px save bar's Save button. Bars publish their height as `--bottom-bar-h` through
+  `usePublishBottomBar` (the case form's save bar and the select-mode bar; the tallest wins, and it
+  clears when the last unmounts). The bubble dropped from `z-[60]` to `z-40`, because it was drawn
+  over open dialogs' backdrops.
+- **The automation tab hid a transition again**: the bubble read 90px after the select bar left,
+  until a screenshot forced a paint; then 16px. Measure a transitioned value after a paint.

@@ -85,6 +85,7 @@ import { getAllDateConstraints } from "@/lib/forms/date-constraints";
 import { initializeFormData, mapFieldToInputName } from "./case-form.helpers";
 import { JobDescriptionField } from "@/components/job-description";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
+import { usePublishBottomBar } from "@/hooks/usePublishBottomBar";
 import { cn } from "@/lib/utils";
 import { handleOperationError } from "@/lib/errors";
 import { FormHelpPanel } from "./FormHelpPopover";
@@ -774,8 +775,10 @@ function SettingsToggle({ id, label, description, checked, onChange }: { id: str
 }
 
 function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCancelNavigating, onCancel, onDeleteClick }: { mode: "add" | "edit"; caseId?: Id<"cases">; isDirty: boolean; isSubmitting: boolean; isDeleting: boolean; isCancelNavigating: boolean; onCancel: () => void; onDeleteClick: () => void }) {
+  // The chat bubble sits above this bar, clear of the save button.
+  const barRef = usePublishBottomBar<HTMLDivElement>();
   return (
-    <div className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-border rounded-t-lg p-4 z-10 animate-slide-up shadow-hard-sm sm:shadow-hard" style={{ animationDelay: "350ms" }}>
+    <div ref={barRef} className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-border rounded-t-lg p-4 z-10 animate-slide-up shadow-hard-sm sm:shadow-hard" style={{ animationDelay: "350ms" }}>
       {/* Mobile: stacked layout, Desktop: horizontal */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4 max-w-5xl mx-auto">
         <div className="flex items-center gap-3 md:gap-4 order-2 md:order-1">

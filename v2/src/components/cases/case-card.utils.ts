@@ -96,6 +96,15 @@ export function formatCompactDate(dateStr: string): string {
 }
 
 /**
+ * How many case dates the card lists. `dates` also carries `created` and
+ * `updated`, which the card never shows, so counting every value would put
+ * "Show dates (2)" on a case with nothing recorded.
+ */
+export function countShownDates(dates: object): number {
+  return Object.entries(dates).filter(([key, value]) => key !== "created" && key !== "updated" && Boolean(value)).length;
+}
+
+/**
  * Get stage color bar CSS variable.
  */
 export function getStageColorVar(stage: CaseStatus): string {

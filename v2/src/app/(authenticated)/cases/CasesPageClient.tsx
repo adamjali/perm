@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useConvex } from "convex/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState, useEffect, useTransition } from "react";
-import { CheckSquareIcon, PlusIcon, UploadIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
+import { ArrowsDownUpIcon, BracketsCurlyIcon, CaretDownIcon, CheckSquareIcon, FileCsvIcon, PlusIcon, UploadSimpleIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
 import {
   DndContext,
   DragOverlay,
@@ -30,6 +30,14 @@ import { handleOperationError } from "@/lib/errors";
 import { api } from "../../../../convex/_generated/api";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -574,65 +582,64 @@ export function CasesPageClient() {
     setSelectedCaseIds(new Set());
   }, []);
 
-  const handleExportCSV = useCallback(async () => {
-    if (selectedCaseIds.size === 0) {
-      toast.error("No cases selected for export");
+  // One export path for the menu and the selection bar: fetch the full cases,
+  // write the file, say how many went out.
+  const exportCases = useCallback(async (
+    ids: import("../../../../convex/_generated/dataModel").Id<"cases">[],
+    format: "csv" | "json",
+  ) => {
+    if (ids.length === 0) {
+      toast.error("No cases to export");
       return;
     }
-
+    const label = format === "csv" ? "CSV" : "JSON";
     setExportLoading(true);
     try {
-      // Fetch full case data for selected IDs
-      const ids = Array.from(selectedCaseIds) as import("../../../../convex/_generated/dataModel").Id<"cases">[];
       const fullCases = await convex.query(api.cases.listByIds, { ids });
-
       if (fullCases.length === 0) {
-        toast.error("Failed to load case data for export");
+        toast.error("Couldn’t load the cases to export");
         return;
       }
-
-      exportFullCasesCSV(fullCases as FullCaseData[]);
-      analytics.capture("cases_exported", { format: "csv", count: fullCases.length });
-      toast.success(`Exported ${fullCases.length} cases as CSV`);
+      if (format === "csv") exportFullCasesCSV(fullCases as FullCaseData[]);
+      else exportFullCasesJSON(fullCases as FullCaseData[]);
+      analytics.capture("cases_exported", { format, count: fullCases.length });
+      toast.success(`Exported ${fullCases.length} case${fullCases.length === 1 ? "" : "s"} as ${label}`);
     } catch (error) {
-      console.error("Failed to export CSV:", error);
+      console.error(`Failed to export ${label}:`, error);
       captureError(error);
-      const message = error instanceof Error ? error.message : "Failed to export CSV";
-      toast.error(message);
+      toast.error(error instanceof Error ? error.message : `Couldn’t export ${label}`);
     } finally {
       setExportLoading(false);
     }
-  }, [selectedCaseIds, convex]);
+  }, [convex]);
 
-  const handleExportJSON = useCallback(async () => {
-    if (selectedCaseIds.size === 0) {
-      toast.error("No cases selected for export");
-      return;
-    }
+  const handleExportCSV = useCallback(
+    () => exportCases(Array.from(selectedCaseIds) as import("../../../../convex/_generated/dataModel").Id<"cases">[], "csv"),
+    [exportCases, selectedCaseIds],
+  );
+  const handleExportJSON = useCallback(
+    () => exportCases(Array.from(selectedCaseIds) as import("../../../../convex/_generated/dataModel").Id<"cases">[], "json"),
+    [exportCases, selectedCaseIds],
+  );
 
-    setExportLoading(true);
+  // The Import / export menu exports what the list shows: every case matching
+  // the current filters and search, not just this page.
+  const handleExportShown = useCallback(async (format: "csv" | "json") => {
     try {
-      // Fetch full case data for selected IDs
-      const ids = Array.from(selectedCaseIds) as import("../../../../convex/_generated/dataModel").Id<"cases">[];
-      const fullCases = await convex.query(api.cases.listByIds, { ids });
-
-      if (fullCases.length === 0) {
-        toast.error("Failed to load case data for export");
-        return;
-      }
-
-      exportFullCasesJSON(fullCases as FullCaseData[]);
-      analytics.capture("cases_exported", { format: "json", count: fullCases.length });
-      toast.success(`Exported ${fullCases.length} cases as JSON`);
+      const ids = await convex.query(api.cases.listFilteredIds, {
+        status: filters.status,
+        progressStatus: filters.progressStatus,
+        searchQuery: filters.searchQuery,
+        favoritesOnly: filters.favoritesOnly,
+        duplicatesOnly: filters.duplicatesOnly,
+        activeOnly: filters.activeOnly,
+      });
+      await exportCases(ids, format);
     } catch (error) {
-      console.error("Failed to export JSON:", error);
       captureError(error);
-      const message = error instanceof Error ? error.message : "Failed to export JSON";
-      toast.error(message);
-    } finally {
-      setExportLoading(false);
+      toast.error("Couldn’t gather the cases to export");
     }
-  }, [selectedCaseIds, convex]);
+  }, [convex, filters, exportCases]);
 
   const handleBulkDelete = useCallback(() => {
     setConfirmDialog({
@@ -1025,15 +1032,43 @@ export function CasesPageClient() {
             <CheckSquareIcon className="size-5 mr-2" />
             {selectionMode ? "Exit selection" : "Select cases"}
           </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => setImportModalOpen(true)}
-            aria-label="Import cases from JSON"
-          >
-            <UploadIcon className="size-5 mr-2" />
-            Import
-          </Button>
+          <DropdownMenu modal={false}>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="lg" loading={exportLoading} loadingText="Exporting...">
+                <ArrowsDownUpIcon className="size-5 mr-2" aria-hidden="true" />
+                Import / export
+                <CaretDownIcon className="size-4 ml-1.5" aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-72">
+              <DropdownMenuItem onSelect={() => setImportModalOpen(true)} className="min-h-11 gap-2">
+                <UploadSimpleIcon className="size-4" aria-hidden="true" />
+                Import cases (JSON)
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-sm font-normal text-muted-foreground">
+                {totalCount === 0
+                  ? "No cases shown to export"
+                  : `Export the ${totalCount} case${totalCount === 1 ? "" : "s"} shown`}
+              </DropdownMenuLabel>
+              <DropdownMenuItem
+                disabled={totalCount === 0}
+                onSelect={() => void handleExportShown("csv")}
+                className="min-h-11 gap-2"
+              >
+                <FileCsvIcon className="size-4" aria-hidden="true" />
+                As a spreadsheet (CSV)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={totalCount === 0}
+                onSelect={() => void handleExportShown("json")}
+                className="min-h-11 gap-2"
+              >
+                <BracketsCurlyIcon className="size-4" aria-hidden="true" />
+                As a backup file (JSON)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
             size="lg"
             className="order-first col-span-2 md:order-none md:col-span-1"
