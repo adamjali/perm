@@ -91,6 +91,13 @@ describe('Input Schemas', () => {
       expect(result.success).toBe(true);
     });
 
+    it('accepts deadlineWithinDays 0 (due today)', () => {
+      // The model asks for 0 when a user says "due today"; rejecting it
+      // failed the whole chat turn (Sentry JAVASCRIPT-NEXTJS-4M, Sep 28 2026).
+      const result = schema.safeParse({ fields: ['employerName', 'deadlines'], deadlineWithinDays: 0 });
+      expect(result.success).toBe(true);
+    });
+
     it('rejects negative deadlineWithinDays', () => {
       const result = schema.safeParse({ deadlineWithinDays: -5 });
       expect(result.success).toBe(false);

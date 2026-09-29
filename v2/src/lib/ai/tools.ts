@@ -191,10 +191,10 @@ export const QueryCasesInputSchema = z.object({
   deadlineWithinDays: z
     .number()
     .int()
-    .positive()
+    .min(0)
     .optional()
     .describe(
-      'Filter for cases with any deadline within N days from today. E.g., 7 for deadlines this week, 30 for next month'
+      'Filter for cases with any deadline within N days from today. 0 for due today, 7 for this week, 30 for next month'
     ),
 
   searchText: z

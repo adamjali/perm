@@ -28,6 +28,10 @@ export function SentryClientInit() {
   useEffect(() => {
     if (sentryInitialized) return;
     sentryInitialized = true;
+    // Only the live site reports. A dev server or a local production build
+    // (audits) runs on another host, and every error there used to arrive as
+    // a new issue and an email.
+    if (window.location.hostname !== "permtracker.app") return;
 
     const init = async () => {
       const Sentry = await import("@sentry/nextjs");

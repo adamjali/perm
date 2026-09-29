@@ -13,7 +13,7 @@ import { query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getCurrentUserIdOrNull } from "./lib/auth";
-import { extractActiveDeadlines } from "./lib/perm/deadlines";
+import { buildDeadlineInput, extractActiveDeadlines, type LooseDeadlineCaseData } from "./lib/perm/deadlines";
 
 /**
  * Type for case document from database
@@ -31,7 +31,7 @@ type CaseDoc = Doc<"cases">;
  * @returns True if any active deadline is past due (daysUntil < 0)
  */
 function hasOverdueDeadline(caseData: CaseDoc, todayISO: string): boolean {
-  const deadlines = extractActiveDeadlines(caseData, todayISO);
+  const deadlines = extractActiveDeadlines(buildDeadlineInput(caseData as LooseDeadlineCaseData), todayISO);
   return deadlines.some((d) => d.daysUntil < 0);
 }
 
@@ -51,7 +51,7 @@ function hasDeadlineWithinDays(
   days: number,
   todayISO: string
 ): boolean {
-  const deadlines = extractActiveDeadlines(caseData, todayISO);
+  const deadlines = extractActiveDeadlines(buildDeadlineInput(caseData as LooseDeadlineCaseData), todayISO);
   return deadlines.some((d) => d.daysUntil >= 0 && d.daysUntil <= days);
 }
 
@@ -286,7 +286,7 @@ export const queryCases = query({
     }
 
     // Apply deadlineWithinDays filter
-    if (args.deadlineWithinDays !== undefined && args.deadlineWithinDays > 0) {
+    if (args.deadlineWithinDays !== undefined && args.deadlineWithinDays >= 0) {
       filteredCases = filteredCases.filter((c) =>
         hasDeadlineWithinDays(c, args.deadlineWithinDays!, todayISO)
       );

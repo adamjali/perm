@@ -12,9 +12,13 @@ import * as Sentry from "@sentry/nextjs";
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
 
-  // Environment and release tracking
-  // SENTRY_ENVIRONMENT lets the self-hosted staging server label its own errors.
-  environment: process.env.SENTRY_ENVIRONMENT || process.env.NODE_ENV,
+  // Only the live server reports: it is the one place SENTRY_ENVIRONMENT is
+  // set (production.env on the Oracle server). A dev server, or a local
+  // production build run for audits, sends nothing, so a half-saved file on a
+  // laptop never becomes a new issue and an email (Sep 29 2026: every new
+  // issue in two days came from development or the old staging server).
+  enabled: Boolean(process.env.SENTRY_ENVIRONMENT),
+  environment: process.env.SENTRY_ENVIRONMENT,
   release: process.env.VERCEL_GIT_COMMIT_SHA,
 
   // Structured logging
@@ -33,16 +37,6 @@ Sentry.init({
     "NEXT_REDIRECT",
   ],
 
-  // Don't send events in development unless explicitly enabled
-  beforeSend(event) {
-    if (
-      process.env.NODE_ENV === "development" &&
-      !process.env.SENTRY_DEBUG
-    ) {
-      return null;
-    }
-    return event;
-  },
 
   integrations: [
     // Forward console.warn and console.error to Sentry Logs
