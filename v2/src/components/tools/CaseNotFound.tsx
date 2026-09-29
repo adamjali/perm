@@ -53,6 +53,14 @@ export interface CaseNotFoundProps {
   publishedFront: string | null;
   publishedAsOf: string | null;
   mirrorSize: number | null;
+  /**
+   * Why DOL's live check could not settle it (caseLookup's `dolMiss`). Only
+   * "none", or no value, may read as "no record": "unavailable" means DOL did
+   * not answer in time and "not-asked" that it was not asked, and saying "no
+   * record" for those told people DOL had no such case when it had only been
+   * slow (fixed Sep 29 2026).
+   */
+  dolMiss?: "none" | "unavailable" | "not-asked" | null;
 }
 
 export function CaseNotFound({
@@ -65,17 +73,49 @@ export function CaseNotFound({
   publishedFront,
   publishedAsOf,
   mirrorSize,
+  dolMiss = null,
 }: CaseNotFoundProps) {
+  const checked = mirrorSize ? `Checked ${int(mirrorSize)} per-case statuses and DOL's FY2024 to FY2026 decided files` : null;
+  if (dolMiss === "unavailable" || dolMiss === "not-asked") {
+    const retry = `/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
+    return (
+      <div>
+        <InsightLede
+          verdict={dolMiss === "unavailable" ? "DOL didn't answer" : "Not checked with DOL"}
+          direction="flat"
+          source={
+            checked
+              ? `${checked}; ${dolMiss === "unavailable" ? "DOL's live check did not answer within 8 seconds" : "the live check with DOL was not made"}`
+              : undefined
+          }
+        >
+          We hold no record for{" "}
+          <b className="font-mono text-primary-on-ink">{caseNumber}</b> yet,{" "}
+          {dolMiss === "unavailable"
+            ? "and DOL's own system didn't answer when we asked just now, so we can't say whether DOL has it. That's usually brief."
+            : "and we couldn't ask DOL just now, because the site's daily limit for live checks is used up."}{" "}
+          <a href={retry} className="underline underline-offset-4 decoration-2">
+            Try again
+          </a>{" "}
+          or use{" "}
+          <a
+            href={DOL_CASE_STATUS_URL}
+            rel="noopener noreferrer"
+            className="underline underline-offset-4 decoration-2"
+          >
+            DOL&apos;s own case-status search
+          </a>
+          .
+        </InsightLede>
+      </div>
+    );
+  }
   return (
     <div>
       <InsightLede
         verdict="Not in our records"
         direction="flat"
-        source={
-          mirrorSize
-            ? `Checked ${int(mirrorSize)} per-case statuses and DOL's FY2024 to FY2026 decided files, then asked DOL directly`
-            : undefined
-        }
+        source={checked ? `${checked}, then asked DOL directly` : undefined}
       >
         We hold no record for{" "}
         <b className="font-mono text-primary-on-ink">{caseNumber}</b>. That is

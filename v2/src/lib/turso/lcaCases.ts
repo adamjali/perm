@@ -35,6 +35,7 @@ export const lca = makeFlagProgram({
 export const normaliseLcaCaseNumber = lca.normalise;
 export const isLcaCaseNumber = lca.isNumber;
 export const lookupLcaCase = lca.lookup;
+export const lookupLcaCaseOutcome = lca.lookupOutcome;
 export const searchLcaCases = lca.search;
 export const listLcaCases = lca.list;
 export const getLcaSummary = lca.getSummary;

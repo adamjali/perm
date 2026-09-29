@@ -2,7 +2,7 @@ import "server-only";
 
 import { EMBED_ALL_DAILY_LIVE, EMBED_SITE_DAILY_LIVE } from "@/lib/embeds";
 import { lookupCase, normaliseLookupCaseNumber } from "./caseLookup";
-import { discoverCase, fetchDolCase, underDailyBudget } from "./caseDiscovery";
+import { askDol, discoverCaseOutcome, underDailyBudget } from "./caseDiscovery";
 import { exec, one } from "./client";
 import type { FlagProgram } from "./flagCases";
 import { lca } from "./lcaCases";
@@ -52,6 +52,11 @@ export interface EmbedCaseAnswer {
   checkedAt: string | null;
   /** This site's (or every site's) live checks for today were used up. */
   capped: boolean;
+  /**
+   * DOL was asked and did not answer in time (or errored), so the answer is
+   * our stored record, or nothing. Said on the embed, never shown as "no record".
+   */
+  dolUnavailable?: boolean;
 }
 
 const FLAG: Record<"pwd" | "lca", FlagProgram> = { pwd, lca };
@@ -175,10 +180,10 @@ export async function lookupForEmbed(
     console.error("[embedLookup] stored read failed:", e);
     return null;
   });
-  const fromStored = (capped: boolean): EmbedCaseAnswer =>
+  const fromStored = (capped: boolean, dolUnavailable = false): EmbedCaseAnswer =>
     stored
-      ? { ...base, found: true, ...stored, source: "stored", capped }
-      : { ...base, found: false, status: null, filingDate: null, decisionDate: null, employerName: null, jobTitle: null, source: null, checkedAt: null, capped };
+      ? { ...base, found: true, ...stored, source: "stored", capped, dolUnavailable }
+      : { ...base, found: false, status: null, filingDate: null, decisionDate: null, employerName: null, jobTitle: null, source: null, checkedAt: null, capped, dolUnavailable };
 
   const charge = await chargeEmbedLive(site, now);
   if (charge !== "ok") return fromStored(charge === "capped");
@@ -188,8 +193,9 @@ export async function lookupForEmbed(
     // and write nothing (see the header).
     const prefix = program === "perm" ? undefined : FLAG[program].config.budgetPrefix;
     const allowed = await underDailyBudget(now, prefix).catch(() => false);
-    const rec = allowed ? await fetchDolCase(caseNumber, f) : null;
-    if (!rec) return fromStored(false);
+    const answer = allowed ? await askDol(caseNumber, f) : null;
+    if (!answer || answer.kind !== "found") return fromStored(false, answer?.kind === "unavailable");
+    const rec = answer.rec;
     return {
       ...base,
       found: true,
@@ -206,11 +212,16 @@ export async function lookupForEmbed(
 
   // A case we don't hold: the ordinary discovery path, which charges the
   // site-wide budget, asks DOL, and records a hit.
-  const found =
+  const outcome =
     program === "perm"
-      ? await discoverCase(caseNumber, f, now).catch(() => null)
-      : await FLAG[program].discover(caseNumber, f, now).catch(() => null);
-  if (!found) return fromStored(false);
+      ? await discoverCaseOutcome(caseNumber, f, now)
+          .then((o) => ({ found: o.found, miss: o.miss }))
+          .catch(() => ({ found: null, miss: "unavailable" as const }))
+      : await FLAG[program].discoverOutcome(caseNumber, f, now)
+          .then((o) => ({ found: o.row, miss: o.miss }))
+          .catch(() => ({ found: null, miss: "unavailable" as const }));
+  const found = outcome.found;
+  if (!found) return fromStored(false, outcome.miss === "unavailable");
   return {
     ...base,
     found: true,

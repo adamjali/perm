@@ -62,6 +62,7 @@ export const pwd = makeFlagProgram({
 export const normalisePwdCaseNumber = pwd.normalise;
 export const isPwdCaseNumber = pwd.isNumber;
 export const lookupPwdCase = pwd.lookup;
+export const lookupPwdCaseOutcome = pwd.lookupOutcome;
 export const discoverPwdCase = pwd.discover;
 export const searchPwdCases = pwd.search;
 export const listPwdCases = pwd.list;

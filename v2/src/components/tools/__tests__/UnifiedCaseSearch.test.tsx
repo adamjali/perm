@@ -185,3 +185,23 @@ describe("the reason a control is off", () => {
     expect(document.getElementById(id!)?.textContent).toMatch(/law firm/);
   });
 });
+
+describe("a long answer is shown a page at a time, and says so", () => {
+  it("draws 100 rows, counts the rest, and shows more on request", () => {
+    const many = Array.from({ length: 230 }, (_, i) => row(`G-100-24001-${String(100000 + i).padStart(6, "0")}`));
+    usePublicQuery.mockImplementation((url: string) =>
+      url === "skip" ? { data: undefined, failed: false } : { data: answer({ rows: many, counts: { perm: 230, pwd: 0, lca: 0 } }), failed: false },
+    );
+    renderIt();
+    fireEvent.change(screen.getByLabelText("Employer or case number"), { target: { value: "acme" } });
+    fireEvent.click(screen.getByRole("button", { name: "Search" }));
+    const bodyRows = () => document.querySelectorAll("tbody tr").length;
+    expect(bodyRows()).toBe(100);
+    expect(screen.getByText(/Showing 100 of 230\. The CSV download carries all/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show 100 more" }));
+    expect(bodyRows()).toBe(200);
+    fireEvent.click(screen.getByRole("button", { name: "Show 30 more" }));
+    expect(bodyRows()).toBe(230);
+    expect(screen.queryByRole("button", { name: /^Show \d+ more$/ })).toBeNull();
+  });
+});

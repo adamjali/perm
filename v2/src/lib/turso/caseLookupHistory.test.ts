@@ -18,7 +18,13 @@ vi.mock("./client", () => ({
 }));
 
 const discoverCase = vi.fn();
-vi.mock("./caseDiscovery", () => ({ discoverCase: (...a: unknown[]) => discoverCase(...a) }));
+vi.mock("./caseDiscovery", () => ({
+  discoverCase: (...a: unknown[]) => discoverCase(...a),
+  discoverCaseOutcome: async (...a: unknown[]) => {
+    const found = await discoverCase(...a);
+    return { found, miss: found ? null : "none" };
+  },
+}));
 vi.mock("./sweepCoverage", () => ({ getSweepCoverage: async () => null, laterDate: (a: string | null) => a }));
 vi.mock("./liveCensus", () => ({
   getLiveCensus: async () => null,

@@ -142,6 +142,13 @@ const CHIP =
 const fmt = (n: number) => n.toLocaleString("en-US");
 
 /**
+ * Rows drawn at once. An answer holds up to 1,000 (UNIFIED_MAX); drawing them
+ * all makes a phone's table heavy, so the page shows 100 and says how many
+ * more there are, and the CSV always carries the whole answer.
+ */
+const PAGE_ROWS = 100;
+
+/**
  * The sortable columns. `descFirst` on the date, money and duration columns:
  * those are read newest-first and highest-first, and defaulting them to
  * ascending makes the first click on each feel like a bug.
@@ -471,6 +478,13 @@ export function UnifiedCaseSearch({
       stage === "all" ? data.rows : data.rows.filter((r) => (stage === "decided" ? r.isFinal : !r.isFinal));
     return sortRows(staged, COLUMNS, sort);
   }, [data, stage, sort]);
+
+  // How many of `shown` are drawn. Keyed on the question (the query, the
+  // stage chip and the sort), not on the answer object, so a refetch of the
+  // same answer keeps the reader's place and a new question starts at one page.
+  const pageKey = `${url}|${stage}|${JSON.stringify(sort)}`;
+  const [expanded, setExpanded] = useState<{ key: string; n: number } | null>(null);
+  const visible = Math.min(expanded && expanded.key === pageKey ? expanded.n : PAGE_ROWS, shown.length);
 
   const toggleProgram = (p: Program) => {
     setPrograms((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]));
@@ -1398,7 +1412,7 @@ export function UnifiedCaseSearch({
                 leading={["Case"]}
               />
               <tbody translate="no" className="bg-card">
-                {shown.map((r) => (
+                {shown.slice(0, visible).map((r) => (
                   <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                       {/* PendingLink: /perm-case-status is dynamic and can
@@ -1492,6 +1506,21 @@ export function UnifiedCaseSearch({
               </tbody>
             </table>
           </div>{" "}
+          {shown.length > visible ? (
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <p className="text-sm text-foreground/70">
+                Showing {fmt(visible)} of {fmt(shown.length)}. The CSV download carries all{" "}
+                {fmt(data.rows.length)}.
+              </p>{" "}
+              <button
+                type="button"
+                className={CHIP + "bg-card"}
+                onClick={() => setExpanded({ key: pageKey, n: visible + PAGE_ROWS })}
+              >
+                Show {fmt(Math.min(PAGE_ROWS, shown.length - visible))} more
+              </button>
+            </div>
+          ) : null}{" "}
 
           {/* THE FOOTNOTE THE ASTERISK POINTS AT, rendered only when a row in
               this answer actually carries one. A `title` is invisible to a

@@ -139,12 +139,18 @@ export interface UnifiedSearchArgs {
   order?: SearchOrder;
 }
 
-export const UNIFIED_MAX = 300;
+/**
+ * Rows in one answer. 1,000 since Sep 29 2026 (was 300, set when Turso billed
+ * every row read; the site's own database reads thousands in milliseconds).
+ * The page shows them 100 at a time and the CSV carries all of them.
+ */
+export const UNIFIED_MAX = 1000;
 /** One-source searches (a stage) fill the whole answer, bounded by UNIFIED_MAX. */
 function stageLimit(limit: number | undefined): number {
   return Math.min(Math.max(1, Math.floor(limit ?? UNIFIED_MAX)), UNIFIED_MAX);
 }
-export const PER_SOURCE = 100;
+/** Rows each program's live and published halves may contribute (100 until Sep 29 2026). */
+export const PER_SOURCE = 500;
 
 /**
  * Which source a set of filters can no longer be asked of.

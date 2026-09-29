@@ -84,13 +84,20 @@ export interface DolCaseRecord {
 }
 
 /**
- * One case number against DOL's batch endpoint. Null on any failure - the
- * caller renders its ordinary miss state, never an error.
+ * What happened when DOL was asked about one number.
+ *
+ * "none" is DOL's own answer: it holds no exact match. "unavailable" is DOL
+ * not answering in time, or answering with an error. Until Sep 29 2026 both
+ * came back as null and the page said "no record" for both, which told a
+ * reader DOL had no such case when DOL had simply been slow.
  */
-export async function fetchDolCase(
-  caseNumber: string,
-  f: typeof fetch = fetch,
-): Promise<DolCaseRecord | null> {
+export type DolAnswer =
+  | { kind: "found"; rec: DolCaseRecord }
+  | { kind: "none" }
+  | { kind: "unavailable" };
+
+/** One case number against DOL's batch endpoint, saying which of the three happened. */
+export async function askDol(caseNumber: string, f: typeof fetch = fetch): Promise<DolAnswer> {
   try {
     const res = await f(ENDPOINT, {
       method: "POST",
@@ -100,7 +107,7 @@ export async function fetchDolCase(
       // and a slow answer read as "no record", which is worse than a wait.
       signal: AbortSignal.timeout(8000),
     });
-    if (!res.ok) return null;
+    if (!res.ok) return { kind: "unavailable" };
     const body = (await res.json()) as {
       value?: {
         caseNumber?: string;
@@ -117,18 +124,30 @@ export async function fetchDolCase(
     const hit = body.value?.find(
       (v) => v.caseNumber?.toUpperCase() === caseNumber.toUpperCase(),
     );
-    if (!hit?.caseStatus) return null;
+    if (!hit?.caseStatus) return { kind: "none" };
     return {
-      caseNumber,
-      caseStatus: hit.caseStatus,
-      employerName: hit.employerName ?? null,
-      jobTitle: hit.jobTitle ?? null,
-      submittedDate: hit.submittedDate ?? null,
-      visaType: hit.visaType ?? null,
+      kind: "found",
+      rec: {
+        caseNumber,
+        caseStatus: hit.caseStatus,
+        employerName: hit.employerName ?? null,
+        jobTitle: hit.jobTitle ?? null,
+        submittedDate: hit.submittedDate ?? null,
+        visaType: hit.visaType ?? null,
+      },
     };
   } catch {
-    return null;
+    return { kind: "unavailable" };
   }
+}
+
+/** The record, or null for either kind of miss (callers that need to tell them apart use askDol). */
+export async function fetchDolCase(
+  caseNumber: string,
+  f: typeof fetch = fetch,
+): Promise<DolCaseRecord | null> {
+  const answer = await askDol(caseNumber, f);
+  return answer.kind === "found" ? answer.rec : null;
 }
 
 /**
@@ -183,11 +202,33 @@ export function logBudgetRefusal(tag: string, caseNumber: string, now: Date): vo
   console.error(`[${tag}] daily budget refused (first refusal today; further ones this day are not logged)`, caseNumber);
 }
 
+/**
+ * Why a discovery came back empty. "none": DOL answered and holds no such
+ * number. "unavailable": DOL did not answer in time or errored, so nothing is
+ * known. "not-asked": DOL was not asked (not a PERM number, or the daily
+ * budget refused or could not be counted). Only "none" may read as "no record".
+ */
+export type DiscoveryMiss = "none" | "unavailable" | "not-asked";
+
+export interface DiscoveryOutcome {
+  found: DiscoveredCase | null;
+  miss: DiscoveryMiss | null;
+}
+
 export async function discoverCase(
   caseNumber: string,
   f: typeof fetch = fetch,
   now: Date = new Date(),
 ): Promise<DiscoveredCase | null> {
+  return (await discoverCaseOutcome(caseNumber, f, now)).found;
+}
+
+export async function discoverCaseOutcome(
+  caseNumber: string,
+  f: typeof fetch = fetch,
+  now: Date = new Date(),
+): Promise<DiscoveryOutcome> {
+  const miss = (why: DiscoveryMiss): DiscoveryOutcome => ({ found: null, miss: why });
   // ONLY PERM NUMBERS MAY BE RECORDED HERE. DOL's endpoint also answers for
   // prevailing wage requests (P-), H-1B LCAs (I-) and the rest of FLAG, all
   // with the same field names, and the shape check upstream accepts any
@@ -198,7 +239,7 @@ export async function discoverCase(
   // path in pwdCases.ts.
   if (!PERM_PREFIX_RE.test(caseNumber)) {
     console.error("[caseDiscovery] refused non-PERM prefix", caseNumber);
-    return null;
+    return miss("not-asked");
   }
   // The page wraps its lookup in .catch(() => null), so a throw from here
   // renders as an ordinary "no record" - a silent failure indistinguishable
@@ -208,18 +249,23 @@ export async function discoverCase(
   try {
     if (!(await underDailyBudget(now))) {
       logBudgetRefusal("caseDiscovery", caseNumber, now);
-      return null;
+      return miss("not-asked");
     }
   } catch (e) {
     console.error("[caseDiscovery] budget write failed:", e);
-    return null;
+    return miss("not-asked");
   }
 
-  const rec = await fetchDolCase(caseNumber, f);
-  if (!rec) {
-    console.error("[caseDiscovery] DOL returned no exact match", caseNumber);
-    return null;
+  const answer = await askDol(caseNumber, f);
+  if (answer.kind === "unavailable") {
+    console.error("[caseDiscovery] DOL did not answer in time or errored", caseNumber);
+    return miss("unavailable");
   }
+  if (answer.kind === "none") {
+    console.error("[caseDiscovery] DOL returned no exact match", caseNumber);
+    return miss("none");
+  }
+  const rec = answer.rec;
 
   const isFinal = FINAL_STATUSES.has(rec.caseStatus.trim().toUpperCase());
   // The number's own YYDDD segment, exact for 94.6% of the corpus and equal
@@ -282,11 +328,14 @@ export async function discoverCase(
   }
 
   return {
-    status: rec.caseStatus,
-    isFinal,
-    filingDate,
-    employerName: rec.employerName,
-    jobTitle: rec.jobTitle,
-    lastCheckedAt,
+    miss: null,
+    found: {
+      status: rec.caseStatus,
+      isFinal,
+      filingDate,
+      employerName: rec.employerName,
+      jobTitle: rec.jobTitle,
+      lastCheckedAt,
+    },
   };
 }

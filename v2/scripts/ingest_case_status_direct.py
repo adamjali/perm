@@ -79,6 +79,7 @@ from lib_turso import (  # noqa: E402
     Turso, last_complete_sweep, record_run, record_sweep, run_independently,
     stamp_freshness,
 )
+from lib_housekeeping import prune as prune_old_rows  # noqa: E402
 from lib_flag_serials import (  # noqa: E402
     ALL_FLAG_PREFIXES, CASE_RE, PERM_OFFICE_PREFIXES, case_number, code_of,
     day_code, day_codes_between, decode_filing_date, fmt_serial, newer,
@@ -1840,7 +1841,8 @@ def sweep_is_complete(limit, offset, truncated: bool, failed_batches: int) -> bo
 
 
 def tail_steps(db, *, discover: bool, cap: int = DISCOVERY_REQUEST_CAP,
-               deadline: float | None = None) -> list[tuple[str, object]]:
+               deadline: float | None = None,
+               housekeeping: bool = False) -> list[tuple[str, object]]:
     """The precomputed docs written after a sweep, as INDEPENDENT steps.
 
     ORDER IS LOAD-BEARING and `run_independently` preserves it: discovery
@@ -1877,6 +1879,14 @@ def tail_steps(db, *, discover: bool, cap: int = DISCOVERY_REQUEST_CAP,
         # failure here leaves yesterday's series live rather than a half one.
         ("observed_decisions", lambda: write_observed_decisions(db)),
     ]
+    if housekeeping:
+        # Once a night (the full pass), after every reader above has run:
+        # retention for the tables nothing reads past a known horizon
+        # (lib_housekeeping.py says which, and why each horizon is safe).
+        steps.append(("housekeeping", lambda: log(
+            "housekeeping: deleted " + ", ".join(
+                f"{k} {v:,}" for k, v in prune_old_rows(
+                    db, datetime.datetime.now(datetime.timezone.utc).date()).items()))))
     return steps
 
 
@@ -2128,7 +2138,8 @@ def main() -> int:
         mode = "full" if args.full else "pending"
         walk = bool(args.full or args.pending)
         steps = tail_steps(db, discover=walk, cap=args.discover_cap,
-                           deadline=t0 + DISCOVERY_BUDGET_MIN[mode] * 60)
+                           deadline=t0 + DISCOVERY_BUDGET_MIN[mode] * 60,
+                           housekeeping=bool(args.full))
         failed = run_independently(steps)
 
         # RECORDED AFTER THE TAIL, NOT BEFORE IT. This call used to sit above

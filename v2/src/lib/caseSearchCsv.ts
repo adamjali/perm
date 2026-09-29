@@ -4,7 +4,7 @@ import type { UnifiedCase } from "@/lib/turso/unifiedSearch";
  * The case search's answer as CSV, one row per case, every column named.
  *
  * THE SAME ROWS AS THE PAGE, not more. The search returns at most
- * `UNIFIED_MAX` cases (300), each source capped at `PER_SOURCE`, and the CSV is
+ * `UNIFIED_MAX` cases (1,000), each source capped at `PER_SOURCE`, and the CSV is
  * that answer: a download cannot be a way to read the corpus in bulk that the
  * page itself refuses (see the Terms' bulk-extraction clause).
  *

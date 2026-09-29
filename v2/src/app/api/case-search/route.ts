@@ -60,8 +60,8 @@ import { casesToCsv } from "@/lib/caseSearchCsv";
  * ## `format=csv` is the same answer, not a bigger one
  *
  * The download runs through every guard above and the same `unifiedSearch`
- * call, so it holds at most `UNIFIED_MAX` rows (300, well under the 1,000-row
- * ceiling a download is held to) and costs what the JSON answer costs. A refusal is still a JSON
+ * call, so it holds at most `UNIFIED_MAX` rows (1,000, the ceiling a download
+ * is held to) and costs what the JSON answer costs. A refusal is still a JSON
  * 400: a CSV of an error would open in a spreadsheet as one odd cell.
  */
 

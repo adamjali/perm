@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { lookupLcaCase, lookupLcaDisclosed, type LcaDisclosedRow, type LcaRow } from "@/lib/turso/lcaCasesTypes";
+import { DolUnanswered } from "@/components/tools/DolUnanswered";
+import { lookupLcaCaseOutcome, lookupLcaDisclosed, type LcaDisclosedRow, type LcaRow } from "@/lib/turso/lcaCasesTypes";
 import { formatWage } from "@/lib/wageFormat";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 
@@ -82,8 +83,9 @@ function Disclosed({ d }: { d: LcaDisclosedRow }) {
 }
 
 export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
-  const [row, disclosed] = await Promise.all([
-    lookupLcaCase(caseNumber).catch(() => null),
+  const [{ row, dolMiss }, disclosed] = await Promise.all([
+    // A failure to read our own table is also "could not settle it", never "no record".
+    lookupLcaCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "unavailable" as const })),
     lookupLcaDisclosed(caseNumber).catch(() => null),
   ]);
 
@@ -129,6 +131,10 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
     );
   }
 
+  if (!row && (dolMiss === "unavailable" || dolMiss === "not-asked")) {
+    return <DolUnanswered caseNumber={caseNumber} label="Labor condition application" miss={dolMiss} />;
+  }
+
   if (!row) {
     return (
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
@@ -137,8 +143,8 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
         </p>{" "}
         <h2 className="mt-2 font-heading text-2xl font-black">No record under {caseNumber}</h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-          DOL&apos;s case system returned nothing for this number, or didn&apos;t
-          answer in time. Check it on{" "}
+          DOL&apos;s case system answered and holds nothing under this number.
+          Check it on{" "}
           <a
             href="https://flag.dol.gov/case-status-search"
             className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"

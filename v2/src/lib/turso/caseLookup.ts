@@ -2,7 +2,7 @@ import "server-only";
 
 import { slugify } from "@/lib/entitySlug";
 import { one } from "./client";
-import { discoverCase } from "./caseDiscovery";
+import { discoverCaseOutcome, type DiscoveryMiss } from "./caseDiscovery";
 import { getSweepCoverage, laterDate } from "./sweepCoverage";
 import {
   aheadPendingFrom,
@@ -77,6 +77,13 @@ export interface CaseLookupResult {
     /** Cases now in this status, across every month. */
     nowInStatus: number;
   } | null;
+  /**
+   * Set only when nothing was found: why DOL could not settle it. "none" means
+   * DOL answered and holds no such number; "unavailable" means DOL did not
+   * answer in time, and "not-asked" that it was not asked, so the page must
+   * not say "no record" for those two.
+   */
+  dolMiss?: DiscoveryMiss | null;
 }
 
 /** `G-100-24158-078964` and friends, normalised for a primary-key lookup. */
@@ -171,11 +178,13 @@ export async function lookupCase(
     // DOL's own endpoint, records a hit so the daily sweep owns it from
     // tomorrow, and degrades to null on a genuine miss, a timeout, or an
     // exhausted global budget - in which case the old answer stands.
-    const found = opts.discover === false ? null : await discoverCase(caseNumber);
+    const outcome =
+      opts.discover === false ? { found: null, miss: "not-asked" as const } : await discoverCaseOutcome(caseNumber);
+    const found = outcome.found;
     if (!found) {
       return {
         caseNumber, live: null, decided: null, cohort: null,
-        employer: null, statusOutlook: null,
+        employer: null, statusOutlook: null, dolMiss: outcome.miss,
       };
     }
     live = {

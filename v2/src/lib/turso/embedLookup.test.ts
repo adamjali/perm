@@ -37,6 +37,16 @@ vi.mock("./caseDiscovery", async (orig) => ({
   ...(await orig<typeof import("./caseDiscovery")>()),
   discoverCase: (...a: unknown[]) => discoverCase(...a),
   fetchDolCase: (...a: unknown[]) => fetchDolCase(...a),
+  // The lookups now ask for the three-way answer; these keep the two stubs
+  // above as the single source, so a stubbed null is DOL answering "none".
+  askDol: async (...a: unknown[]) => {
+    const rec = await fetchDolCase(...a);
+    return rec === "unavailable" ? { kind: "unavailable" } : rec ? { kind: "found", rec } : { kind: "none" };
+  },
+  discoverCaseOutcome: async (...a: unknown[]) => {
+    const found = await discoverCase(...a);
+    return found === "unavailable" ? { found: null, miss: "unavailable" } : { found, miss: found ? null : "none" };
+  },
   underDailyBudget: (...a: unknown[]) => underDailyBudget(...a),
 }));
 
@@ -145,6 +155,19 @@ describe("lookupForEmbed", () => {
   it("falls back to the stored record when DOL does not answer", async () => {
     const a = await lookupForEmbed(CN, "example.com", NOW);
     expect(a).toMatchObject({ source: "stored", capped: false, checkedAt: "2026-09-26T08:30:00Z" });
+  });
+
+  it("says DOL didn't answer, and shows the stored record, when DOL times out on a stored case", async () => {
+    fetchDolCase.mockResolvedValue("unavailable");
+    const a = await lookupForEmbed(CN, "example.com", NOW);
+    expect(a).toMatchObject({ found: true, source: "stored", dolUnavailable: true });
+  });
+
+  it("never reads a DOL timeout on an unknown number as \"not found\"", async () => {
+    lookupCase.mockResolvedValue(MISS);
+    discoverCase.mockResolvedValue("unavailable");
+    const a = await lookupForEmbed(CN, "example.com", NOW);
+    expect(a).toMatchObject({ found: false, dolUnavailable: true, capped: false });
   });
 
   it("sends a case we do not hold through the ordinary discovery path", async () => {

@@ -176,6 +176,8 @@ jobs:
           # writes that make a second writer beside a sweep harmless (run on a
           # real in-memory SQLite, including the sweep-got-there-first case).
           python3 scripts/test_watched_cases.py
+          # The nightly prune: which tables stop growing, and at what horizon.
+          python3 scripts/test_housekeeping.py
 
       # The nightly diff on perm_live_recent (~137k rows). A diff that never
       # matches is not slow, it is absent - and it logs "ok" while rewriting

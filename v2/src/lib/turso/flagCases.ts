@@ -4,7 +4,7 @@ import { exec, one, rows } from "./client";
 import { slugify } from "@/lib/entitySlug";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
 import { LIVE_SEARCH_MAX, narrowingClauses } from "./cases";
-import { fetchDolCase, logBudgetRefusal, underDailyBudget } from "./caseDiscovery";
+import { askDol, logBudgetRefusal, underDailyBudget, type DiscoveryMiss } from "./caseDiscovery";
 import { laterDate } from "./sweepCoverage";
 
 /**
@@ -318,7 +318,17 @@ export interface FlagProgram {
   isNumber: (input: string) => boolean;
   /** `discover: false` returns the stored live row or null, never asking DOL. */
   lookup: (input: string, opts?: { discover?: boolean }) => Promise<FlagCaseRow | null>;
+  /** As `lookup`, and when there is no row, why DOL could not settle it. */
+  lookupOutcome: (
+    input: string,
+    opts?: { discover?: boolean },
+  ) => Promise<{ row: FlagCaseRow | null; dolMiss: DiscoveryMiss | null }>;
   discover: (caseNumber: string, f?: typeof fetch, now?: Date) => Promise<FlagCaseRow | null>;
+  discoverOutcome: (
+    caseNumber: string,
+    f?: typeof fetch,
+    now?: Date,
+  ) => Promise<{ row: FlagCaseRow | null; miss: DiscoveryMiss | null }>;
   search: (args: SearchFlagArgs) => Promise<FlagCaseRow[]>;
   list: (args: ListFlagArgs) => Promise<FlagListPage>;
   getSummary: () => Promise<FlagSummary | null>;
@@ -344,27 +354,37 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     return { cond: null, param: null };
   };
 
-  const discover = async (
+  /**
+   * The row, or why there is none: "none" when DOL answered without it,
+   * "unavailable" when DOL did not answer in time, "not-asked" when the daily
+   * budget refused. Only "none" may read as "no record" (Sep 29 2026).
+   */
+  const discoverOutcome = async (
     caseNumber: string,
     f: typeof fetch = fetch,
     now: Date = new Date(),
-  ): Promise<FlagCaseRow | null> => {
+  ): Promise<{ row: FlagCaseRow | null; miss: DiscoveryMiss | null }> => {
     // Every failure below is caught and NAMED in the logs; the page renders
     // an ordinary miss, never an error, and never a silent one.
     try {
       if (!(await underDailyBudget(now, config.budgetPrefix))) {
         logBudgetRefusal(`${config.key}Discovery`, caseNumber, now);
-        return null;
+        return { row: null, miss: "not-asked" };
       }
     } catch (e) {
       console.error(`[${config.key}Discovery] budget write failed:`, e);
-      return null;
+      return { row: null, miss: "not-asked" };
     }
-    const rec = await fetchDolCase(caseNumber, f);
-    if (!rec) {
+    const answer = await askDol(caseNumber, f);
+    if (answer.kind === "unavailable") {
+      console.error(`[${config.key}Discovery] DOL did not answer in time or errored`, caseNumber);
+      return { row: null, miss: "unavailable" };
+    }
+    if (answer.kind === "none") {
       console.error(`[${config.key}Discovery] DOL returned no exact match`, caseNumber);
-      return null;
+      return { row: null, miss: "none" };
     }
+    const rec = answer.rec;
     const status = rec.caseStatus.trim();
     const isFinal = config.finalStatuses.has(status.toUpperCase());
     const filingDate =
@@ -399,23 +419,32 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
       console.error(`[${config.key}Discovery] record failed:`, e);
     }
     return {
-      caseNumber,
-      filingDate,
-      status,
-      isFinal,
-      employerName: name,
-      employerSlug: slug,
-      jobTitle: rec.jobTitle,
-      visaType: rec.visaType,
-      submittedDate: rec.submittedDate,
-      firstSeenAt: nowIso,
-      lastCheckedAt: nowIso,
+      miss: null,
+      row: {
+        caseNumber,
+        filingDate,
+        status,
+        isFinal,
+        employerName: name,
+        employerSlug: slug,
+        jobTitle: rec.jobTitle,
+        visaType: rec.visaType,
+        submittedDate: rec.submittedDate,
+        firstSeenAt: nowIso,
+        lastCheckedAt: nowIso,
+      },
     };
   };
+  const discover = async (caseNumber: string, f: typeof fetch = fetch, now: Date = new Date()): Promise<FlagCaseRow | null> =>
+    (await discoverOutcome(caseNumber, f, now)).row;
 
-  const lookup = async (input: string, opts: { discover?: boolean } = {}): Promise<FlagCaseRow | null> => {
+  /** The row, and when there is none, why DOL could not settle it (see discoverOutcome). */
+  const lookupOutcome = async (
+    input: string,
+    opts: { discover?: boolean } = {},
+  ): Promise<{ row: FlagCaseRow | null; dolMiss: DiscoveryMiss | null }> => {
     const cn = normalise(input);
-    if (!cn) return null;
+    if (!cn) return { row: null, dolMiss: null };
     const r = await one<FlagDbRow>(`SELECT ${FLAG_COLS} FROM ${table} WHERE case_number = ?`, [cn]);
     if (r) {
       const row = toFlagRow(r);
@@ -430,15 +459,18 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
           row.lastCheckedAt = laterDate(row.lastCheckedAt, new Date(summary.computedAt).toISOString());
         }
       }
-      return row;
+      return { row, dolMiss: null };
     }
     // A case the quarterly file already holds is decided; the page renders
     // the file's record. Asking DOL live for it spent a budget unit and a
     // request on an answer we had, on every lookup of every decided case.
-    if (opts.discover === false) return null;
-    if (await lookupDisclosed(cn)) return null;
-    return discover(cn);
+    if (opts.discover === false) return { row: null, dolMiss: "not-asked" };
+    if (await lookupDisclosed(cn)) return { row: null, dolMiss: null };
+    const found = await discoverOutcome(cn);
+    return { row: found.row, dolMiss: found.miss };
   };
+  const lookup = async (input: string, opts: { discover?: boolean } = {}): Promise<FlagCaseRow | null> =>
+    (await lookupOutcome(input, opts)).row;
 
   const search = async (args: SearchFlagArgs): Promise<FlagCaseRow[]> => {
     const range = slugRange(args.text);
@@ -569,7 +601,9 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     normalise,
     isNumber: (input) => normalise(input) !== null,
     lookup,
+    lookupOutcome,
     discover,
+    discoverOutcome,
     search,
     list,
     getSummary,

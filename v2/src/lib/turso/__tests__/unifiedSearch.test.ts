@@ -24,7 +24,7 @@ vi.mock("../caseSearchReads", () => ({
   readFlagEmployerStage,
 }));
 
-const { compareBy, dedupeToOnePerCase, permOnlyFilters, skippedSources, unifiedSearch } = await import(
+const { compareBy, dedupeToOnePerCase, permOnlyFilters, skippedSources, unifiedSearch, PER_SOURCE, UNIFIED_MAX } = await import(
   "../unifiedSearch"
 );
 type UnifiedCase = Parameters<typeof dedupeToOnePerCase>[0][number];
@@ -385,7 +385,7 @@ describe("unifiedSearch", () => {
   it("reports `capped` when a source returned a full page", async () => {
     readFlagLive.mockResolvedValue(
       slice(
-        Array.from({ length: 100 }, (_, i) => flagLive(`I-200-26232-${String(i).padStart(6, "0")}`)),
+        Array.from({ length: PER_SOURCE }, (_, i) => flagLive(`I-200-26232-${String(i).padStart(6, "0")}`)),
       ),
     );
     const { capped } = await unifiedSearch({ lead: employerLead });
@@ -467,7 +467,7 @@ describe("a review stage in the search", () => {
   it("as a lead reads the live stage only: no published half, no other program, whatever the chips say", async () => {
     const stageLead: Lead = { kind: "stage", value: "APPLICATION ON HOLD", program: "perm" };
     const result = await unifiedSearch({ lead: stageLead, programs: ["perm", "pwd", "lca"] });
-    expect(readPermStage).toHaveBeenCalledWith("APPLICATION ON HOLD", {}, 300);
+    expect(readPermStage).toHaveBeenCalledWith("APPLICATION ON HOLD", {}, UNIFIED_MAX);
     expect(readPermPublished).not.toHaveBeenCalled();
     expect(readPermLive).not.toHaveBeenCalled();
     expect(readFlagLive).not.toHaveBeenCalled();
@@ -478,7 +478,7 @@ describe("a review stage in the search", () => {
   it("narrowing an employer to a stage reads the employer's stage rows and skips the published half", async () => {
     const rfi = { status: "RFI ISSUED", program: "perm" as const };
     await unifiedSearch({ lead: employerLead, narrow: { stage: rfi, title: "engineer" } });
-    expect(readPermEmployerStage).toHaveBeenCalledWith("acme", "RFI ISSUED", { stage: rfi, title: "engineer" }, 300);
+    expect(readPermEmployerStage).toHaveBeenCalledWith("acme", "RFI ISSUED", { stage: rfi, title: "engineer" }, UNIFIED_MAX);
     expect(readPermLive).not.toHaveBeenCalled();
     expect(readPermPublished).not.toHaveBeenCalled();
     expect(skippedSources({ stage: rfi }, employerLead).published).toBe(true);
@@ -493,12 +493,12 @@ describe("a review stage in the search", () => {
   it("a wage-request stage reads the wage-request live table and nothing of PERM or LCA", async () => {
     const pwdLead: Lead = { kind: "stage", value: "RFI ISSUED", program: "pwd" };
     await unifiedSearch({ lead: pwdLead });
-    expect(readFlagStage).toHaveBeenCalledWith("pwd", "RFI ISSUED", {}, 300);
+    expect(readFlagStage).toHaveBeenCalledWith("pwd", "RFI ISSUED", {}, UNIFIED_MAX);
     expect(readPermStage).not.toHaveBeenCalled();
     expect(readFlagStage).not.toHaveBeenCalledWith("lca", expect.anything(), expect.anything(), expect.anything());
     expect(readFlagPublished).not.toHaveBeenCalled();
     await unifiedSearch({ lead: employerLead, narrow: { stage: { status: "IN PROCESS", program: "lca" } } });
-    expect(readFlagEmployerStage).toHaveBeenCalledWith("lca", "acme", "IN PROCESS", expect.anything(), 300);
+    expect(readFlagEmployerStage).toHaveBeenCalledWith("lca", "acme", "IN PROCESS", expect.anything(), UNIFIED_MAX);
     expect(readPermEmployerStage).not.toHaveBeenCalled();
   });
 });
@@ -568,7 +568,7 @@ describe("the order of the merged answer", () => {
     expect(small.order).toBe("wage-desc");
     expect(small.orderScope).toBe("complete");
     readPermPublished.mockResolvedValue(
-      slice(Array.from({ length: 100 }, (_, i) => permPub(`G-${i}`))),
+      slice(Array.from({ length: PER_SOURCE }, (_, i) => permPub(`G-${i}`))),
     );
     const capped = await unifiedSearch({ lead: stateLead, order: "wage-desc" });
     expect(capped.orderScope).toBe("fetched");

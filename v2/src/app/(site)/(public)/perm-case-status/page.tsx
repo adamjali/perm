@@ -426,6 +426,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
         publishedFront={publishedFront}
         publishedAsOf={publishedAsOf}
         mirrorSize={mirrorSize || null}
+        dolMiss={result?.dolMiss ?? null}
       />
     );
   }

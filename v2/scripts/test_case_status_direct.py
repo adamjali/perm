@@ -299,6 +299,9 @@ def main() -> int:
           names[:2] == ["discovery", "live_census"], str(names[:2]))
     check("a run that is not a real pass does not walk",
           "discovery" not in [n for n, _ in csd.tail_steps(WalkDB(), discover=False)])
+    check("the nightly prune runs last, and only when asked (the full pass)",
+          [n for n, _ in csd.tail_steps(WalkDB(), discover=False, housekeeping=True)][-1] == "housekeeping"
+          and "housekeeping" not in [n for n, _ in csd.tail_steps(WalkDB(), discover=False)])
     seen: dict = {}
     real_dar = csd.discover_and_record
     csd.discover_and_record = lambda _db, **kw: seen.update(kw) or {}

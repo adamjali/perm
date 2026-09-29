@@ -2,8 +2,9 @@ import Link from "next/link";
 import { estimatePwdQueue } from "@/lib/perm";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { getPwdEstimatorData } from "@/lib/turso/estimate";
+import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import {
-  lookupPwdCase,
+  lookupPwdCaseOutcome,
   lookupPwdDetermination,
   type PwdCaseRow,
   type PwdDisclosedRow,
@@ -137,8 +138,9 @@ function Determination({ d }: { d: PwdDisclosedRow }) {
 }
 
 export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
-  const [row, disclosed, est] = await Promise.all([
-    lookupPwdCase(caseNumber).catch(() => null),
+  const [{ row, dolMiss }, disclosed, est] = await Promise.all([
+    // A failure to read our own table is also "could not settle it", never "no record".
+    lookupPwdCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "unavailable" as const })),
     lookupPwdDetermination(caseNumber).catch(() => null),
     getPwdEstimatorData().catch(() => null),
   ]);
@@ -187,6 +189,10 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
     );
   }
 
+  if (!row && (dolMiss === "unavailable" || dolMiss === "not-asked")) {
+    return <DolUnanswered caseNumber={caseNumber} label="Prevailing wage request" miss={dolMiss} />;
+  }
+
   if (!row) {
     return (
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
@@ -197,8 +203,8 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
           No record under {caseNumber}
         </h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-          DOL&apos;s case system returned nothing for this number, or didn&apos;t
-          answer in time. It may be a typo, a filing from the last day, or a
+          DOL&apos;s case system answered and holds nothing under this number.
+          It may be a typo, a filing from the last day, or a
           number from before DOL&apos;s current system. Check it on{" "}
           <a
             href="https://flag.dol.gov/case-status-search"

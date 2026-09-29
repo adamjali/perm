@@ -44,9 +44,9 @@ function sourceLine(a: EmbedCaseAnswer): string {
   if (a.source === "dol-now") return "Read from DOL just now.";
   const when = day(a.checkedAt);
   const record = when ? `PERM Tracker's record, last checked with DOL ${when}` : "DOL's published disclosure file";
-  return a.capped
-    ? `Live checks from this site are used up for today, so this is ${record}.`
-    : `From ${record}.`;
+  if (a.capped) return `Live checks from this site are used up for today, so this is ${record}.`;
+  if (a.dolUnavailable) return `DOL didn't answer just now, so this is ${record}.`;
+  return `From ${record}.`;
 }
 
 function Row({ term, value, noTranslate }: { term: string; value: string | null; noTranslate?: boolean }) {
@@ -77,7 +77,9 @@ function Answer({ typed, answer }: { typed: string; answer: EmbedCaseAnswer | nu
         <p>
           {answer.capped
             ? "PERM Tracker holds no record of this number, and live checks with DOL from this site are used up for today."
-            : "Neither DOL nor PERM Tracker returned a record for this number. Check it and try again."}
+            : answer.dolUnavailable
+              ? "PERM Tracker holds no record of this number yet, and DOL didn't answer when we asked just now, so we can't say whether it exists. That's usually brief: try again in a moment."
+              : "Neither DOL nor PERM Tracker returned a record for this number. Check it and try again."}
         </p>{" "}
         <p className="mt-2">
           <a href={full} className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">

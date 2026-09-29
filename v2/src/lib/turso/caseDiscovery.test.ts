@@ -33,7 +33,9 @@ vi.mock("./client", () => ({
 import {
   DAILY_DISCOVERY_CAP,
   FINAL_STATUSES,
+  askDol,
   discoverCase,
+  discoverCaseOutcome,
   fetchDolCase,
 } from "./caseDiscovery";
 
@@ -90,6 +92,28 @@ describe("fetchDolCase", () => {
   it("returns null on a network failure rather than throwing into the page", async () => {
     const f = vi.fn().mockRejectedValue(new Error("ETIMEDOUT"));
     expect(await fetchDolCase("G-100-26125-868956", f as never)).toBeNull();
+  });
+});
+
+describe("askDol tells a DOL answer from a DOL failure", () => {
+  // Until Sep 29 2026 both were null and the page said "no record" for a
+  // timeout, telling a reader DOL had no such case when it had been slow.
+  it("found, none and unavailable are three different answers", async () => {
+    const f = vi.fn().mockImplementation(() => ok(DOL_HIT));
+    expect((await askDol("G-100-26125-868956", f as never)).kind).toBe("found");
+    expect((await askDol("G-100-26125-999999", f as never)).kind).toBe("none");
+    const down = vi.fn().mockRejectedValue(new Error("TimeoutError"));
+    expect((await askDol("G-100-26125-868956", down as never)).kind).toBe("unavailable");
+    const refused = vi.fn().mockResolvedValue({ ok: false, status: 503, json: async () => ({}) });
+    expect((await askDol("G-100-26125-868956", refused as never)).kind).toBe("unavailable");
+  });
+
+  it("a discovery that DOL did not answer says so, and is not a miss", async () => {
+    const down = vi.fn().mockRejectedValue(new Error("TimeoutError"));
+    const outcome = await discoverCaseOutcome("G-100-26125-868956", down as never);
+    expect(outcome.found).toBeNull();
+    expect(["unavailable", "not-asked"]).toContain(outcome.miss);
+    expect(outcome.miss).not.toBe("none");
   });
 });
 

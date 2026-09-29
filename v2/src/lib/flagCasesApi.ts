@@ -28,14 +28,20 @@ export function makeFlagCasesHandler(program: FlagProgram) {
     if (action === "lookup") {
       const raw = p.get("caseNumber") ?? "";
       if (!raw || raw.length > 32) return bad("caseNumber missing or too long");
-      const [row, disclosed] = await Promise.all([program.lookup(raw), program.lookupDisclosed(raw)]);
+      const [{ row, dolMiss }, disclosed] = await Promise.all([program.lookupOutcome(raw), program.lookupDisclosed(raw)]);
+      // A miss DOL could not settle ("unavailable": it did not answer in time)
+      // is said, and never cached: a ten-minute edge copy of one slow answer
+      // would tell everyone "no record" for ten minutes.
+      const unsettled = !row && !disclosed && (dolMiss === "unavailable" || dolMiss === "not-asked");
       return NextResponse.json(
-        { case: row, disclosed },
+        { case: row, disclosed, dolMiss: row || disclosed ? null : dolMiss },
         {
           headers: {
-            "Cache-Control": row?.isFinal
-              ? "public, s-maxage=86400, stale-while-revalidate=86400"
-              : "public, s-maxage=600, stale-while-revalidate=3600",
+            "Cache-Control": unsettled
+              ? "no-store"
+              : row?.isFinal
+                ? "public, s-maxage=86400, stale-while-revalidate=86400"
+                : "public, s-maxage=600, stale-while-revalidate=3600",
           },
         },
       );
