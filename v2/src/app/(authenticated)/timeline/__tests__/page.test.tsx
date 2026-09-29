@@ -465,11 +465,13 @@ describe("TimelinePage - Layout", () => {
     expect(scrollArea).toBeInTheDocument();
   });
 
-  it("has minimum height for timeline grid", () => {
+  // A small floor for the empty state; the grid otherwise sizes to its rows
+  // (a fixed 400px left a screen of blank space under one case, Sep 28 2026).
+  it("has a small minimum height and otherwise sizes to its rows", () => {
     const { container } = renderWithProviders(<TimelinePage />);
 
-    const gridArea = container.querySelector(".min-h-\\[400px\\]");
-    expect(gridArea).toBeInTheDocument();
+    expect(container.querySelector(".min-h-\\[160px\\]")).toBeInTheDocument();
+    expect(container.querySelector(".min-h-\\[400px\\]")).toBeNull();
   });
 });
 
