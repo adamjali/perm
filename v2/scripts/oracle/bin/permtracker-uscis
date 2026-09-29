@@ -8,15 +8,32 @@ git -C "$R" fetch -q origin main && git -C "$R" reset -q --hard origin/main
 set -a; . /srv/permtracker/app/env/uscis.env; set +a
 cd "$V2"
 fail(){ python3 scripts/record_ingest_failure.py --script "$1" --note "oracle timer ($job): $2" || echo "could not record the failure row"; }
+# A clean run writes its own ok row: the failure recorder refuses "ok" on
+# purpose, and the I-140 script records nothing when it succeeds, so without
+# this one failed run kept the health check red for its whole window.
+ok(){ python3 -c 'import sys; sys.path.insert(0, "scripts"); from lib_turso import Turso, record_run; record_run(Turso(), sys.argv[1], status="ok", note=sys.argv[2])' "$1" "oracle timer ($job): $2" || echo "could not record the ok row"; }
+CONVEX_URL="${CONVEX_URL:-https://giant-dragon-464.convex.cloud}"
 rc=0
 case "$job" in
   i485) python3 scripts/ingest_i485_inventory.py || { rc=1; fail ingest_i485_inventory.py "ingest exited non-zero"; } ;;
   i140)
     t=$(mktemp -d)
     if python3 scripts/ingest_uscis_i140.py --out "$t/uscis-payload.json" && [ -s "$t/uscis-payload.json" ]; then
-      if [ -n "${CONVEX_DEPLOY_KEY:-}" ]; then
-        npx --yes convex run uscisI140:storeStats "$(cat "$t/uscis-payload.json")" --prod || { rc=1; fail ingest_uscis_i140.py "payload fetched but convex storeStats failed"; }
-      else rc=1; fail ingest_uscis_i140.py "payload fetched but CONVEX_DEPLOY_KEY is not set on the server"; fi
+      file=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("sourceFile", ""))' "$t/uscis-payload.json")
+      # Convex's public read names the file it holds. The same file again needs
+      # no key and changes nothing; this server has no deploy key (Sep 29 2026),
+      # so it can only store when a quarter is new AND GitHub was refused.
+      held=$(curl -fsS -m 30 -X POST "$CONVEX_URL/api/query" -H "Content-Type: application/json" \
+        -d '{"path":"uscisI140:getLatest","args":{},"format":"json"}' \
+        | python3 -c 'import json, sys; print((json.load(sys.stdin).get("value") or {}).get("sourceFile", ""))' 2>/dev/null)
+      if [ -n "$file" ] && [ "$file" = "$held" ]; then
+        echo "Convex already holds $file; nothing to store"
+        ok ingest_uscis_i140.py "Convex already held $file"
+      elif [ -n "${CONVEX_DEPLOY_KEY:-}" ]; then
+        if npx --yes convex run uscisI140:storeStats "$(cat "$t/uscis-payload.json")" --prod; then
+          ok ingest_uscis_i140.py "stored $file"
+        else rc=1; fail ingest_uscis_i140.py "fetched $file but convex storeStats failed"; fi
+      else rc=1; fail ingest_uscis_i140.py "fetched $file, Convex holds ${held:-nothing}, and CONVEX_DEPLOY_KEY is not set on the server"; fi
     else rc=1; fail ingest_uscis_i140.py "fetch or reduce failed"; fi
     rm -rf "$t"
     python3 scripts/ingest_i140_trends.py || { rc=1; fail ingest_i140_trends.py "ingest exited non-zero"; } ;;

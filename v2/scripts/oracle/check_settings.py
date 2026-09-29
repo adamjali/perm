@@ -128,3 +128,51 @@ c2, _ = curl("-X", "POST", "-H", "x-revalidate-secret: wrong", "-H", "Host: perm
 show("REVALIDATE_SECRET", "right secret revalidates, wrong one refused", c == "200" and c2 in ("401", "403"), f"right={c} wrong={c2}")
 show("SENTRY_CHECK_SECRET", "set", bool(ENV["SENTRY_CHECK_SECRET"]))
 show("TURNSTILE_SECRET_KEY", "present but unused by the site (Convex holds the one used)", True)
+c, _ = curl("-X", "POST", "-H", "x-revalidate-secret: " + ENV["REVALIDATE_SECRET"], "-H", "Host: permtracker.app", base + "/api/revalidate-bulletin")
+c2, _ = curl("-X", "POST", "-H", "x-revalidate-secret: wrong", "-H", "Host: permtracker.app", base + "/api/revalidate-bulletin")
+show("REVALIDATE_SECRET (bulletin)", "right secret revalidates, wrong one refused", c == "200" and c2 in ("401", "403"), f"right={c} wrong={c2}")
+
+
+# Part 3: the database takes every job's biggest read, with room to grow.
+#
+# Sep 29 2026: sqld's default 10 MB reply cap killed the first full case-status
+# sweep after the move off Turso, and four more jobs would have followed
+# (measured below). Nothing in parts 1 and 2 sends a realistic query, so this
+# part sends each job's real largest one and fails any reply over half the cap.
+# The SQL is copied from the named script; keep them in step when a read changes.
+def cap_bytes(flag, default):
+    args = subprocess.run(["ps", "-o", "args=", "-C", "sqld"], capture_output=True, text=True).stdout
+    m = re.search(flag + r"\s+(\d+)\s*([KMG]B)", args)
+    if not m:
+        return default
+    return int(m.group(1)) * {"KB": 1 << 10, "MB": 1 << 20, "GB": 1 << 30}[m.group(2)]
+
+
+CAP = cap_bytes("--max-response-size", 10 << 20)
+DB_URL = ENV["TURSO_DATABASE_URL"].replace("libsql://", "https://").rstrip("/") + "/v2/pipeline"
+BIG_READS = {
+    "case-status full sweep": "SELECT case_number, current_status, employer_name, job_title FROM perm_case_status ORDER BY case_number LIMIT 1000000000 OFFSET 0",
+    "case-status pending sweep": "SELECT case_number, current_status, employer_name, job_title FROM perm_case_status WHERE is_final=0 OR is_final='0' ORDER BY case_number LIMIT 1000000000 OFFSET 0",
+    "weekly estimate backtest": "SELECT case_number, filing_date, current_status, is_final FROM perm_case_status WHERE filing_date >= '2015-01-01' AND filing_date < '2099-01-01'",
+    "nightly live-cases rebuild": "SELECT case_number, filing_date, status, is_final, employer_name, employer_slug, job_title, decided_seen FROM perm_live_recent",
+    "quarterly entity rebuild": "SELECT kind, name, slug, merge_key, code FROM perm_entities",
+    "weekly PWD re-check": "SELECT case_number, current_status, employer_name, job_title FROM pwd_case_status WHERE filing_date >= date('now', '-180 days') ORDER BY filing_date, case_number LIMIT 1000000000",
+    "weekly LCA re-check": "SELECT case_number, current_status, employer_name, job_title FROM lca_case_status WHERE filing_date >= date('now', '-90 days') ORDER BY filing_date, case_number LIMIT 1000000000",
+}
+for name, sql in BIG_READS.items():
+    r = subprocess.run(["curl", "-s", "-m", "120", "-o", "/tmp/bigread.json", "-w", "%{http_code}", "-X", "POST",
+                        *bearer("TURSO_AUTH_TOKEN"), "-H", "Content-Type: application/json", DB_URL,
+                        "-d", json.dumps({"requests": [{"type": "execute", "stmt": {"sql": sql}}, {"type": "close"}]})],
+                       capture_output=True, text=True)
+    size = len(open("/tmp/bigread.json", "rb").read())
+    ok = r.stdout == "200" and b'"type":"ok"' in open("/tmp/bigread.json", "rb").read(4096).replace(b" ", b"")
+    show(name, f"reply {size / 1048576:.1f} MB of a {CAP / 1048576:.0f} MB cap", ok and size <= CAP / 2,
+         "" if ok else r.stdout)
+subprocess.run(["rm", "-f", "/tmp/bigread.json"])
+
+# One value is capped too (5,000,000 bytes, measured Sep 29 2026: "string or blob
+# too big"). The precomputed documents are single values; fail at a fifth of it.
+c, t = curl("-X", "POST", *bearer("TURSO_AUTH_TOKEN"), "-H", "Content-Type: application/json", DB_URL,
+            "-d", json.dumps({"requests": [{"type": "execute", "stmt": {"sql": "SELECT max(length(json)) FROM perm_docs"}}, {"type": "close"}]}))
+biggest = int(json.loads(t)["results"][0]["response"]["result"]["rows"][0][0]["value"]) if c == "200" else -1
+show("largest stored document", f"{biggest:,} bytes of a 5,000,000-byte value limit", 0 <= biggest <= 1_000_000, c)
