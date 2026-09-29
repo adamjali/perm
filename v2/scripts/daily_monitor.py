@@ -412,6 +412,19 @@ R2_WARN_GB, R2_FAIL_GB = 8.0, 9.5
 RESTORE_WARN_D = 40  # the restore test runs monthly; a missed month shows in about ten days
 MUST_RUN = ["permtracker-db", "nginx", "cloudflared"]
 DB_DIR_RATIO = 3.0
+# The page-cache cap (permtracker-prune) runs every 30 minutes; two hours
+# without a run means it stopped, and the disk fills at crawl speed without it.
+PAGE_CACHE_STALE_MIN = 120
+# Memory the machine can still hand out. Under 1 GB, the next big render or a
+# job's burst reaches swap or the out-of-memory killer.
+MEM_AVAILABLE_WARN_MB = 1024
+SWAP_WARN_MB = 1024
+
+
+def repo_timers() -> list[str]:
+    """The timer units the repo installs on the server (scripts/oracle/systemd)."""
+    d = pathlib.Path(__file__).resolve().parent / "oracle" / "systemd"
+    return sorted(p.name for p in d.glob("*.timer"))
 
 
 def server_verdict(doc: dict | None, now_ms: int) -> dict:
@@ -494,6 +507,22 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
             warns.append(f"last restore test {rest_d:.0f} days ago")
         lines.append(f"Restore test: {rest.get('tables')} tables, {rest.get('rows', 0):,} rows, {et_time(rest['at'])}")
 
+    # The two sealed copies (Sep 29 2026): the server's secrets and config, and
+    # the Convex export. Absent from a doc written before they existed means
+    # "not set up", which is itself worth a warning, never a pass.
+    for key, what in (("serverOk", "sealed server copy (secrets and config)"),
+                      ("convexOk", "sealed Convex copy (accounts and cases)")):
+        at = (b.get(key) or {}).get("at")
+        if not at:
+            warns.append(f"no {what} on record")
+            continue
+        h = (now_ms / 1000 - dt.datetime.fromisoformat(at.replace("Z", "+00:00")).timestamp()) / 3600
+        if h > BACKUP_FAIL_H:
+            fails.append(f"{what} {h:.0f} h old")
+        elif h > BACKUP_WARN_H:
+            warns.append(f"{what} {h:.0f} h old")
+        lines.append(f"{what[0].upper() + what[1:]}: {et_time(at)}")
+
     n = doc.get("now") or {}
     # The database folder holds the data file plus the engine's own log and
     # snapshots; the engine is meant to merge those, and this is the check that
@@ -501,6 +530,30 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
     if n.get("dbDataBytes") and (n.get("dbBytes") or 0) > DB_DIR_RATIO * n["dbDataBytes"]:
         warns.append(f"database folder is {n['dbBytes'] / n['dbDataBytes']:.1f}x its data file: "
                      "the engine's log or snapshots are not being trimmed")
+    # Every timer the repo defines must be enabled on the server: the backups,
+    # the page-cache cap and the cron clock are all timers, and a disabled one
+    # just stops, with nothing else to say so.
+    missing_timers = sorted(set(repo_timers()) - set(doc.get("timers") or repo_timers()))
+    if missing_timers:
+        fails.append("timers not enabled on the server: " + ", ".join(missing_timers))
+    pc = doc.get("pageCache")
+    if not pc:
+        warns.append("the page-cache cap has no result on record (permtracker-prune)")
+    else:
+        try:
+            pc_min = (now_ms / 1000 - dt.datetime.fromisoformat(pc["at"].replace("Z", "+00:00")).timestamp()) / 60
+        except (KeyError, ValueError):
+            pc_min = None
+        if pc_min is None or pc_min > PAGE_CACHE_STALE_MIN:
+            warns.append("the page-cache cap has not run for over 2 hours (permtracker-prune)")
+        if pc.get("tight"):
+            fails.append("free disk fell below 20 GB: the page-cache cap is on its tight budgets")
+    avail = n.get("memAvailableMb")
+    if avail is not None and avail < MEM_AVAILABLE_WARN_MB:
+        warns.append(f"only {avail:,} MB of memory available")
+    swap = n.get("swapUsedMb")
+    if swap is not None and swap > SWAP_WARN_MB:
+        warns.append(f"{swap:,} MB of swap in use")
     disk = n.get("diskPct")
     if disk is not None and disk > 90:
         fails.append(f"disk {disk:.0f}% full")

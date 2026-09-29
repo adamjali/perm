@@ -130,6 +130,17 @@ def main():
     except (OSError, ValueError):
         pass
 
+    # The two sealed copies added Sep 29 2026: the server's secrets and config
+    # (bin/permtracker-backup-server) and the Convex export (the convex-backup
+    # workflow, stored by the deploy script's convex-backup action).
+    sealed = {}
+    for key, fname in (("serverOk", "SERVER_OK"), ("convexOk", "CONVEX_OK")):
+        try:
+            at, size, name = (APP / "backups" / fname).read_text().split()
+            sealed[key] = {"at": at, "bytes": int(size), "file": name}
+        except (OSError, ValueError):
+            sealed[key] = None
+
     slot = (APP / "app" / "active").read_text().strip() if (APP / "app" / "active").exists() else None
     release = None
     if slot and (APP / "app" / "slots" / slot).is_symlink():
@@ -151,6 +162,23 @@ def main():
     except OSError:
         pass
 
+    # The page-cache cap (bin/permtracker-prune, every 30 minutes): when it last
+    # ran, what the live and standby copies hold, and whether free disk had
+    # fallen below its floor. Missing or stale here means the cap stopped.
+    page_cache = None
+    try:
+        pr = json.loads((HERE / "prune.json").read_text())
+        by_role = {r["role"]: r for r in pr.get("releases", [])}
+        page_cache = {
+            "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(pr["at"])),
+            "liveGB": (by_role.get("live") or {}).get("gb"),
+            "standbyGB": (by_role.get("standby") or {}).get("gb"),
+            "freedGB": round(sum(r.get("freedGB", 0) for r in pr.get("releases", [])), 2),
+            "tight": bool(pr.get("tight")),
+        }
+    except (OSError, ValueError, KeyError):
+        pass
+
     week = [s for s in samples if s.get("cpu") is not None]
     doc = {
         "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
@@ -161,6 +189,8 @@ def main():
             "dbBytes": db_bytes,
             "dbDataBytes": data_bytes,
             "lockedMb": m.get("Mlocked", 0) // 1024,
+            "swapUsedMb": (m.get("SwapTotal", 0) - m.get("SwapFree", 0)) // 1024,
+            "memAvailableMb": m.get("MemAvailable", 0) // 1024,
             "uptimeH": round(float(open("/proc/uptime").read().split()[0]) / 3600, 1),
         },
         "idle": {
@@ -171,13 +201,16 @@ def main():
             "memMin": min(s["mem"] for s in samples),
             "netP95": p95([s["net"] for s in week if s.get("net") is not None]),
         },
-        "backup": {"lastOk": last_ok, "count": len(backups), "offsiteOk": offsite_ok, "restoreOk": restore_ok},
+        "backup": {"lastOk": last_ok, "count": len(backups), "offsiteOk": offsite_ok, "restoreOk": restore_ok,
+                   **sealed},
         "services": {u: active(u) for u in SERVICES},
         "failedUnits": [ln.split()[0] for ln in failed if ln.strip()],
         "repairs24h": repairs[-5:],
         "repairCount24h": len(repairs),
         "timersEnabled": len(re.findall(r"permtracker[^\s]*\.timer", timers)),
+        "timers": sorted(set(re.findall(r"permtracker[^\s]*\.timer", timers))),
         "slot": {"active": slot, "release": release},
+        "pageCache": page_cache,
     }
 
     token = (APP / "secrets" / "db_rw.jwt").read_text().strip()

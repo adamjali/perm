@@ -2,6 +2,8 @@
 Description=PERM Tracker server health, written into its database
 After=permtracker-db.service
 [Service]
+# A hung run stops here instead of holding its slot forever (a few seconds).
+TimeoutStartSec=5min
 Type=oneshot
 User=permtracker
 Nice=10

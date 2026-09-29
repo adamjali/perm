@@ -1,6 +1,8 @@
 [Unit]
 Description=PERM Tracker cron job %i
 [Service]
+# A hung run stops here instead of holding its slot forever (a dispatch is one request; the scorecard a few minutes).
+TimeoutStartSec=15min
 Type=oneshot
 User=permtracker
 ExecStart=/usr/local/bin/permtracker-cron %i

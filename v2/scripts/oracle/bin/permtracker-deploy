@@ -4,6 +4,9 @@
 #                         idle copy, health-check it, then switch traffic
 #   rollback              switch traffic back to the other copy
 #   status                print which copy serves and what each runs
+#   convex-backup <stamp> store a SEALED Convex export read on stdin (the
+#                         nightly workflow encrypts it on GitHub with the
+#                         backup key's public half), then copy it to R2
 set -euo pipefail
 A=/srv/permtracker/app
 cmd="${1:-status}"; set -- $cmd
@@ -15,6 +18,9 @@ log(){ echo "[deploy $(date -u +%H:%M:%S)] $*"; logger -t permtracker-deploy "$*
 
 switch_to(){ # $1 slot
   echo "server 127.0.0.1:$(port_of "$1");" > /etc/nginx/permtracker-active-upstream.conf
+  # $A/live points at the serving release: nginx serves its public/ images
+  # straight from disk. Renamed into place, so it is never missing mid-switch.
+  ln -sfn "$(readlink -f "$A/slots/$1")" "$A/live.next" && mv -T "$A/live.next" "$A/live"
   nginx -t -q && systemctl reload nginx
   echo "$1" > $A/active
   log "traffic now on $1 ($(readlink $A/slots/$1 | xargs basename))"
@@ -60,5 +66,23 @@ case "$action" in
     ls -1t "$A/releases" | tail -n +6 | while read r; do echo "$keep" | grep -qx "$r" || rm -rf "$A/releases/$r"; done
     find "$A/shared/_next/static" -type f -mtime +21 -delete 2>/dev/null || true
     log "deployed $rel" ;;
+  convex-backup)
+    # Only ciphertext is accepted: a CMS file (DER, first byte 0x30) under
+    # 2 GB. The plaintext never touches this machine or R2.
+    [[ "$rel" =~ ^[0-9]{8}-[0-9]{4}$ ]] || { log "bad backup stamp"; exit 2; }
+    B=/srv/permtracker/backups; f="$B/convex-$rel.zip.cms"
+    head -c 2147483648 > "$f.part"
+    [ "$(stat -c %s "$f.part")" -gt 1000 ] && [ "$(od -An -tx1 -N1 "$f.part" | tr -d ' ')" = "30" ] \
+      || { log "convex backup: not a sealed file"; rm -f "$f.part"; exit 3; }
+    mv "$f.part" "$f"; chown permtracker:permtracker "$f"; chmod 600 "$f"
+    ls -1t "$B"/convex-*.zip.cms | tail -n +8 | xargs -r rm -f
+    # shellcheck disable=SC1091
+    . /usr/local/lib/permtracker/r2-env
+    name=$(basename "$f"); size=$(stat -c %s "$f")
+    rclone copyto "$f" "r2:permtracker-backups/convex/$name" --s3-no-head --retries 3 --low-level-retries 10 -q
+    remote=$(rclone lsjson "r2:permtracker-backups/convex/$name" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r[0]["Size"] if r else -1)')
+    [ "$remote" = "$size" ] || { log "convex backup: uploaded size $remote does not match $size"; exit 4; }
+    printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$size" "$name" > "$B/CONVEX_OK"; chown permtracker:permtracker "$B/CONVEX_OK"
+    log "convex backup $name ($size bytes, sealed) stored and in R2" ;;
   *) log "unknown action"; exit 2 ;;
 esac

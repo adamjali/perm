@@ -1,0 +1,7 @@
+[Unit]
+Description=Nightly sealed server copy, 3:35 AM Eastern (after the database backup)
+[Timer]
+OnCalendar=*-*-* 03:35:00 America/New_York
+Persistent=true
+[Install]
+WantedBy=timers.target

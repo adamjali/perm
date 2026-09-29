@@ -1,0 +1,74 @@
+name: Convex backup (sealed, to R2)
+
+# The site's own data (accounts, attorneys' cases, alert subscriptions, the
+# outbox) lives in Convex, and until Sep 29 2026 there was no copy of it
+# anywhere else: Convex keeps backups only on its Pro plan, for 7 days, inside
+# Convex. This takes a full export every night, SEALS it here on the runner
+# with the public half of the backup key (CMS, AES-256-GCM), deletes the
+# plaintext, and hands only the sealed file to the server, which keeps 7 and
+# copies it to R2 (15 days, deletion-locked for 7). The private half that opens
+# it is never on GitHub, the server or R2.
+#
+# THIS REPOSITORY IS PUBLIC, SO ITS LOGS ARE: the steps print sizes and a
+# table count, never a row. No artifact is uploaded.
+#
+# Dispatched nightly by the server's clock (permtracker-cron@dispatch-convex-
+# backup, jobs.ts). Restore: open it with the private key, then
+#   openssl cms -decrypt -binary -inform DER -in convex-....zip.cms \
+#     -inkey backup-key.pem -out convex.zip
+#   npx convex import --prod --replace convex.zip     (read the prompt first)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: convex-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: 24.x
+
+      - name: Export and seal
+        working-directory: v2
+        env:
+          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
+        run: |
+          test -n "$CONVEX_DEPLOY_KEY" || { echo "::error::CONVEX_DEPLOY_KEY is not set"; exit 1; }
+          v=$(node -p "require('./package.json').dependencies.convex.replace(/^[^0-9]*/, '')")
+          z="$RUNNER_TEMP/convex.zip"
+          npx --yes "convex@$v" export --prod --include-file-storage --path "$z"
+          # A usable export: a valid zip holding the two tables the product is.
+          unzip -tq "$z"
+          for t in users cases; do
+            unzip -l "$z" | grep -q " $t/documents.jsonl$" || { echo "::error::export has no $t table"; exit 1; }
+          done
+          echo "export: $(du -h "$z" | cut -f1), $(unzip -l "$z" | grep -c '/documents.jsonl$') tables"
+          openssl cms -encrypt -binary -aes-256-gcm -outform DER -in "$z" -out "$z.cms" scripts/oracle/conf/backup-recipient.pem
+          rm -f "$z"
+          echo "sealed: $(du -h "$z.cms" | cut -f1)"
+
+      - name: Hand the sealed file to the server
+        env:
+          ORACLE_DEPLOY_KEY: ${{ secrets.ORACLE_DEPLOY_KEY }}
+          ORACLE_KNOWN_HOSTS: ${{ secrets.ORACLE_KNOWN_HOSTS }}
+          ORACLE_HOST: ${{ secrets.ORACLE_HOST }}
+        run: |
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$ORACLE_DEPLOY_KEY" > ~/.ssh/deploy && chmod 600 ~/.ssh/deploy
+          printf '%s\n' "$ORACLE_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy -o BatchMode=yes -o ServerAliveInterval=20 \
+            "deploy@$ORACLE_HOST" "convex-backup $(date -u +%Y%m%d-%H%M)" < "$RUNNER_TEMP/convex.zip.cms"
+
+      - name: Remove key and file
+        if: always()
+        run: rm -f ~/.ssh/deploy "$RUNNER_TEMP/convex.zip" "$RUNNER_TEMP/convex.zip.cms"

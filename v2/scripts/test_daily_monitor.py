@@ -101,10 +101,12 @@ def main() -> int:
              "idle": {"hours": 168, "cpuP95": 6.0, "memP95": 36.0, "memMin": 33.0},
              "backup": {"lastOk": {"at": "2026-09-28T07:16:00Z"}, "count": 7,
                         "offsiteOk": {"at": "2026-09-28T07:18:00Z"},
+                        "serverOk": {"at": "2026-09-28T07:35:00Z"}, "convexOk": {"at": "2026-09-28T07:52:00Z"},
                         "restoreOk": {"at": "2026-09-02T09:40:00Z", "tables": 44, "rows": 6_509_035}},
              "services": {u: "active" for u in ["permtracker-db", "permtracker-dbcache", "permtracker-web@blue",
                                                 "permtracker-web@green", "nginx", "cloudflared"]},
-             "failedUnits": [], "slot": {"active": "blue", "release": "abc-1"}}
+             "failedUnits": [], "slot": {"active": "blue", "release": "abc-1"},
+             "pageCache": {"at": "2026-09-28T11:05:00Z", "liveGB": 3.2, "standbyGB": 4.0, "tight": False}}
         for k, v in over.items():
             d[k] = {**d[k], **v} if isinstance(d.get(k), dict) and isinstance(v, dict) else v
         return d
@@ -159,6 +161,27 @@ def main() -> int:
           "a database folder at 2.1x its data file is normal (one snapshot)")
     check(v(doc(now={"dbBytes": 11_000_000_000, "dbDataBytes": 3_300_000_000}), now_ms)["status"] == "warn",
           "past 3x its data file, the folder is growing and warns")
+    check(v(doc(backup={"convexOk": None}), now_ms)["status"] == "warn", "no sealed Convex copy on record warns")
+    check(v(doc(backup={"serverOk": {"at": "2026-09-26T03:00:00Z"}}), now_ms)["status"] == "fail",
+          "a sealed server copy 56 h old fails")
+    check(v(doc(backup={"convexOk": {"at": "2026-09-27T03:00:00Z"}}), now_ms)["status"] == "warn",
+          "a sealed Convex copy 32 h old warns")
+    check(any("Convex copy" in ln for ln in v(doc(), now_ms)["lines"]), "the report names the Convex copy")
+    all_timers = dm.repo_timers()
+    check(len(all_timers) >= 20 and "permtracker-prune.timer" in all_timers, "the repo's timers are found")
+    check(v(doc(timers=all_timers), now_ms)["status"] == "ok", "every repo timer enabled reads ok")
+    gone = v(doc(timers=[t for t in all_timers if t != "permtracker-backup-server.timer"]), now_ms)
+    check(gone["status"] == "fail" and any("permtracker-backup-server.timer" in f for f in gone.get("fails", gone["lines"])),
+          "a repo timer missing on the server fails and is named")
+    check(v(doc(pageCache=None), now_ms)["status"] == "warn", "no page-cache result on record warns")
+    check(v(doc(pageCache={"at": "2026-09-28T08:05:00Z"}), now_ms)["status"] == "warn",
+          "a page-cache cap silent for 3.4 h warns")
+    check(v(doc(pageCache={"tight": True}), now_ms)["status"] == "fail",
+          "free disk below the cap's floor fails")
+    check(v(doc(now={"memAvailableMb": 700}), now_ms)["status"] == "warn", "under 1 GB of memory available warns")
+    check(v(doc(now={"swapUsedMb": 1800}), now_ms)["status"] == "warn", "1.8 GB of swap in use warns")
+    check(v(doc(now={"memAvailableMb": 5300, "swapUsedMb": 20}), now_ms)["status"] == "ok",
+          "a roomy machine reads ok")
 
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0

@@ -1,5 +1,7 @@
 [Unit]
 Description=PERM Tracker watchdog: restart whatever stopped answering
 [Service]
+# A hung run stops here instead of holding its slot forever (every check has its own timeout; it runs every 2 minutes).
+TimeoutStartSec=3min
 Type=oneshot
 ExecStart=/usr/local/sbin/permtracker-watchdog

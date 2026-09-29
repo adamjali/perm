@@ -3,6 +3,8 @@ Description=PERM Tracker monthly restore test of the off-site backup
 After=network-online.target
 Wants=network-online.target
 [Service]
+# A hung run stops here instead of holding its slot forever (about 3 minutes).
+TimeoutStartSec=2h
 Type=oneshot
 User=permtracker
 Nice=19

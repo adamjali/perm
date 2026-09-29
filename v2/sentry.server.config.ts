@@ -9,6 +9,12 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+import { createSentryBudget } from "./src/lib/sentryBudget";
+
+// A per-process ceiling on what reaches Sentry in an hour (src/lib/sentryBudget.ts):
+// far above a normal day, so a storm cannot spend the monthly allowance.
+const budget = createSentryBudget();
+
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
 
@@ -37,6 +43,9 @@ Sentry.init({
     "NEXT_REDIRECT",
   ],
 
+
+  beforeSend: (event) => budget.error(event),
+  beforeSendLog: (log) => budget.log(log),
 
   integrations: [
     // Forward console.warn and console.error to Sentry Logs

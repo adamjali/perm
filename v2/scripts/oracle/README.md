@@ -33,6 +33,9 @@ GitHub Actions ─(ssh, deploy key)─▶ permtracker-deploy       (new releases
 | health | `permtracker-health.timer` | every 10 minutes: memory, CPU, disk, backup age, service states and the live copy into `perm_docs['server_health']`, with 7 days of samples in `/srv/permtracker/health/` for Oracle's idle rule. The morning report's "server" section judges it |
 | watchdog | `permtracker-watchdog.timer` | every 2 minutes; restarts a piece that runs but stops answering (see below) |
 | backups | `permtracker-backup.timer` | 3:15 AM Eastern: full SQL dump, zstd, checked to end in COMMIT, newest 7 kept, `backups/LAST_OK` |
+| sealed server copy | `permtracker-backup-server.timer` | 3:35 AM Eastern, as root: the env files, secrets, the database signing key, tunnel token, R2 key, nginx, SSH, fail2ban and the installed scripts and units, sealed with the backup key's public half (CMS, AES-256-GCM) and copied to R2 `server/`; refuses to write a copy missing any of them; `backups/SERVER_OK` |
+| sealed Convex copy | `convex-backup.yml`, dispatched by `permtracker-cron@dispatch-convex-backup` (3:50 AM Eastern) | GitHub exports Convex (accounts, cases, subscriptions), seals it on the runner and hands only the sealed file to `permtracker-deploy convex-backup`, which keeps 7 and copies it to R2 `convex/`; `backups/CONVEX_OK` |
+| page-cache cap | `permtracker-prune.timer` | every 30 minutes (:05, :35): pages Next rendered after a deploy are removed least recently used first above 20 GB for the live copy, 4 GB for the standby and 0 for older releases (8 / 0 / 0 below 20 GB free); a removed page is simply rendered again; `health/prune.json` |
 
 ## What repairs itself, and what cannot grow
 
@@ -43,6 +46,9 @@ GitHub Actions ─(ssh, deploy key)─▶ permtracker-deploy       (new releases
 | the machine reboots | every unit is enabled and comes back (measured: 30 s) | Sep 28 |
 | security fixes | unattended-upgrades (Ubuntu security, plus `pkg.cloudflare.com` and `deb.nodesource.com`, see `conf/`); needrestart restarts whatever still runs old code; a reboot at 06:30 UTC only when an update requires one | dry run lists all origins |
 | the disk | journald capped at 1 GB and 30 days; nginx logs rotate daily, 14 kept; releases 5 kept, build files 21 days; backups 7 kept; health samples and repairs 7 days; Oracle disk backups 3 days (`permtracker-daily-keep3`, 06:00 UTC, inside the free 5) | |
+| the page cache | `permtracker-prune` keeps each release's rendered pages inside its budget (measured Sep 29 2026: the live release held 13 GB after 7 hours; a full crawl would reach about 69 GB per release) | Sep 29: 12 GB freed on its first run |
+| memory and CPU | drop-ins in `systemd/dropins/resources-*.conf`: the database is last in line for the out-of-memory killer (-900) and first for CPU and disk; each web copy is squeezed past 3 GB and restarted past 3.5 GB; the RAM lock is the first thing killed if memory runs out (killing it frees 3.2 GB at once); every job yields CPU and disk and stops at 4 GB; every job has a time limit | Sep 29 |
+| traffic | nginx: 300 page requests a minute per visitor; verified crawlers 60 a minute each and 120 all together (429 with Retry-After); at most 64 requests inside the app at once (503 with Retry-After); public images and build files served from disk, outside every limit | Sep 29: crawler bursts had turned 1,742 employer pages into 500s |
 | the database folder | the engine keeps its own log and snapshots next to the data; `server_health` records both sizes and the morning report warns past 3x the data file | 1.97x on Sep 28 (one snapshot from the import) |
 
 Everything above is reported: the morning email's "server" section reads `perm_docs['server_health']`,
@@ -71,6 +77,7 @@ journalctl -u permtracker-web@blue -f            # a copy's log
 | `CRON_SECRET`, `REVALIDATE_SECRET` | `/srv/permtracker/secrets/` (new values; GitHub's `REVALIDATE_SECRET` is updated on switch day) |
 | `GITHUB_DISPATCH_TOKEN` | `/srv/permtracker/secrets/github_dispatch_token` |
 | deploy key, host, known hosts, read-only DB token for builds | GitHub secrets `ORACLE_*` |
+| backup key, PRIVATE half (opens the sealed server and Convex copies) | only the owner's Mac, `~/.config/permtracker-backup/backup-key.pem` (600), plus the owner's own safe copy; never on this server, GitHub or R2. The public half is `conf/backup-recipient.pem` here and `/etc/permtracker/backup-recipient.pem` |
 
 ## Restore a backup
 
@@ -79,6 +86,24 @@ zstd -dc /srv/permtracker/backups/db-<stamp>.sql.zst | sqlite3 /tmp/restore.db
 # stop permtracker-db, put restore.db at data.sqld/dbs/default/data
 # (remove wallog, to_compact, data-wal, data-shm), start permtracker-db
 ```
+
+The sealed copies open only with the backup key's private half (on the owner's
+Mac). Fetch one from R2 (`server/` or `convex/`, 15 days kept) or from
+`/srv/permtracker/backups/`, then:
+
+```bash
+K=~/.config/permtracker-backup/backup-key.pem
+# the server: secrets and config, as a tar of absolute paths
+openssl cms -decrypt -binary -inform DER -in server-<stamp>.tar.zst.cms -inkey $K | zstd -dc | tar -tvf -
+# Convex: the export zip, then import it (read the prompt; --replace overwrites)
+openssl cms -decrypt -binary -inform DER -in convex-<stamp>.zip.cms -inkey $K -out convex.zip
+npx convex import --prod --replace convex.zip
+```
+
+Layers, newest first: Oracle's own disk backups (3 days, whole machine), the
+nightly database dump (7 here, 15 days in R2), the sealed server and Convex
+copies (7 here, 15 days in R2), and the weekly public dump of the tables DOL
+cannot give back (GitHub artifact, 90 days, `backup-observations.yml`).
 
 ## Switch day (only on the owner's go)
 

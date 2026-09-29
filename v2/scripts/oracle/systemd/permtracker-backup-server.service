@@ -1,0 +1,9 @@
+[Unit]
+Description=PERM Tracker nightly sealed copy of the server's secrets and config (R2)
+After=network-online.target
+[Service]
+Type=oneshot
+# A hung run stops here instead of holding its slot forever (about 5 seconds).
+TimeoutStartSec=30min
+Nice=10
+ExecStart=/usr/local/bin/permtracker-backup-server

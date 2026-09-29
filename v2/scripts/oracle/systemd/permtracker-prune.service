@@ -1,0 +1,11 @@
+[Unit]
+Description=PERM Tracker page-cache cap: keep rendered pages inside a disk budget
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/permtracker-prune
+Nice=19
+IOSchedulingClass=idle
+CPUWeight=10
+IOWeight=10
+MemoryMax=512M
+TimeoutStartSec=20min

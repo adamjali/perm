@@ -34,6 +34,9 @@ public/sw.js.map
 # misc
 .DS_Store
 *.pem
+# The one exception: the backup key's PUBLIC certificate, which the Convex
+# backup workflow seals with. It holds no private key (checked before adding).
+!scripts/oracle/conf/backup-recipient.pem
 *.bak
 
 # debug

@@ -49,24 +49,24 @@ const withSerwist = withSerwistInit({
   // "fixed" twice without the manifest changing by a single byte.
   //
   // globPublicPatterns is the glob that produces those entries in the first
-  // place, so it is the one place the decision can be made. Note the `glob`
-  // package IGNORES `!`-negation inside a pattern array (verified: identical
-  // 54-file result with and without it) — exclusion has to be expressed with
-  // extglob, hence the `!(...)` forms below.
-  globPublicPatterns: [
-    // Root-level files (icons, verification, small svgs) except the OG source
-    // image, which the route reads off disk ON THE SERVER to compose the social
-    // card. No browser has any reason to request it.
-    "!(og-image-base).*",
-    // Every image directory except screenshots: 6.03 MB of product captures and
-    // screencasts, wanted only on the pages that display them. Video is served
-    // with HTTP Range requests so a player fetches just the part it is showing;
-    // precaching forces the whole file down before anyone presses play.
-    "images/!(screenshots)/**",
-    "images/*.@(png|jpg|jpeg|webp)",
-    "lottie/**",
-    ".well-known/**",
-  ],
+  // place, so it is the one place the decision can be made for public/ files.
+  // (The `glob` package ignores `!`-negation inside a pattern array, which is
+  // why this list names what it keeps rather than what it drops.)
+  //
+  // PRECACHE ONLY WHAT THE PUSH HANDLER SHOWS (Sep 29 2026). The patterns that
+  // stood here had grown to 186 public files, 18.5 MB (12.7 MB of guide
+  // screenshots alone), plus all 340 build chunks, downloaded by every
+  // visitor's browser the moment the worker installed. None of it bought
+  // anything offline: documents are NetworkOnly in sw.ts, so no page opens
+  // without the network whatever is precached. The worker's real jobs are push
+  // notifications and caching the images a visitor actually views (sw.ts
+  // runtimeCaching), and neither needs a precache beyond the two icons a
+  // notification displays.
+  globPublicPatterns: ["icon-192.png", "badge-72.png"],
+  // Every build file (_next/static) out of the precache: `exclude` is the
+  // webpack InjectManifest filter, and a condition returning true drops the
+  // asset (@serwist/webpack-plugin filterAssets).
+  exclude: [() => true],
 });
 
 /**

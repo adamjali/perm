@@ -208,7 +208,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 28 2026".
 - **A morning report is emailed daily** (health, runs, site, bills, traffic, errors) and a routine reviews it.
 - **The entity load swaps tables in one transaction**, so no page reads a half-built table.
 
-## Sep 29 2026, in ten lines
+## Sep 29 2026, in fourteen lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
 
@@ -228,3 +228,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
 - **The database allows 256 MB replies**: sqld's 10 MB default killed the first full sweep after the
   move (its read is about 85 MB). Run each nightly job once by hand after moving the database.
 - **A new visa bulletin refreshes its pages the day it's stored** (`/api/revalidate-bulletin`).
+- **Every resource has a ceiling** ("Sep 29 2026: every resource has a ceiling" in v2/CLAUDE.md): crawlers
+  60 pages a minute each and 120 together, 64 requests in the app at once, a page-cache cap, memory and
+  CPU priorities with the database protected, time limits on every job, a Sentry budget.
+- **nginx serves images and build files from disk**: it had been refused the folder (57,604 errors a
+  day), and images counted against visitors' page limits. The service worker precaches two icons, not 18.5 MB.
+- **Convex and the server's secrets are backed up nightly, sealed**, to R2; only the owner's Mac holds
+  the key that opens them (`~/.config/permtracker-backup/`). Keep a second copy of that key.
+- **The server is the only scheduled USCIS runner** (GitHub was refused six times of six), and the I-140
+  quarter lives in `perm_docs['uscis_i140']`.

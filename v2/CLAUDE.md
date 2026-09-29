@@ -6811,3 +6811,76 @@ are never created. One account's Google access had already been withdrawn (`inva
 the sync marked it disconnected and its 7 old events stay on that calendar: nothing can delete
 them without access. The disconnect notifies nobody; it records an error, which reaches the
 admin email and Sentry.
+
+## Sep 29 2026: every resource has a ceiling, every copy has a second
+
+A post-switch audit, asked for as "make sure nothing can explode, use up a limit or take the server
+down". Everything below was measured on the server first. The runbook with every unit is
+[`scripts/oracle/README.md`](scripts/oracle/README.md).
+
+**Crawlers took the site down three times in one night, and they were exempt from every limit.**
+nginx waved Cloudflare-verified crawlers past all rate limits, right on Vercel (it scaled out per
+request) and wrong on one 2-CPU server: YandexBot (12:43 AM EDT) and PerplexityBot (7:19 AM) asked
+for up to 280 employer pages a minute, each page runs about 15 reads over one employer's filings,
+the reads queued past the 20-second deadline, and 1,742 employer pages answered 500 (Sentry
+JAVASCRIPT-NEXTJS-4T). At 4:56 AM the live copy stopped answering for six minutes until the watchdog
+restarted it. Now each crawler gets 60 pages a minute keyed on its name, all of them 120 together
+(429 with Retry-After), and at most 64 requests are inside the app at once (503 with Retry-After).
+Oracle's own page says the Always Free A1 limit is 2 OCPU / 12 GB, so this server is already at it;
+capacity cannot be bought for free, only protected.
+
+**The page cache had no ceiling.** Next writes every page it renders into its release
+(.html/.meta/.rsc/.segments per page); the live release held 13 GB after seven hours, and a full
+crawl of 106,000 URLs would put about 69 GB in each of two releases on a 145 GB disk.
+`permtracker-prune` (every 30 minutes) removes pages written after the deploy, least recently used
+first, above 20 GB live / 4 GB standby / 0 for old releases. A removed page is a clean cache miss:
+Next's file-system-cache.js returns null from its catch and renders again. 12 GB freed on its first
+run.
+
+**nginx could not read the files it claimed to serve.** `/srv/permtracker` is 750, so every request
+for `/_next/static` hit "Permission denied" (57,604 in a day) and fell through to Next, which holds
+only its own release's chunks: 309 build files answered 404 to visitors mid-session across a deploy.
+The three parent folders now let others pass through (no listing) and `shared/` is world-readable;
+env files (640, group-only) and secrets (600) stay closed, checked as www-data.
+
+**Images and public files went through Next and through each visitor's page limit**: 2,384 image
+requests from ordinary browsers got 429 in one day, because the service worker fetched them in a
+burst. nginx serves the public folders from `$A/live/public` (a link the deploy script switches with
+traffic), a day at Cloudflare's edge. And **the service worker precached 18.5 MB of images and 340
+build chunks on every visitor's connection** for no offline benefit (documents are NetworkOnly); it
+now precaches the two notification icons only (`service-worker-precache.test.ts`).
+
+**Processes have priorities and ceilings** (`scripts/oracle/systemd/dropins/resources-*.conf`): the
+database is last for the out-of-memory killer and first for CPU and disk; each web copy restarts
+past 3.5 GB; the RAM lock (3.2 GB locked) is killed first, which frees memory at once; jobs yield
+and stop at 4 GB; every job has a time limit. OOMScoreAdjust applies at process start, so it was
+also written into `/proc/<pid>/oom_score_adj` of the running processes: nothing restarted.
+
+**Backups: what could not be rebuilt had no second copy.** Convex keeps backups only on Pro, for 7
+days, inside Convex; the server's secrets existed only on the server. Both now go to R2 nightly,
+SEALED with the public half of a backup key (CMS, AES-256-GCM); the private half is only on the
+owner's Mac (`~/.config/permtracker-backup/`). The Convex export is sealed ON the GitHub runner,
+which already held the Convex key, and handed to the server through the deploy key's existing
+forced command (`permtracker-deploy convex-backup`, which accepts only a CMS file), so no new secret
+was created or moved anywhere. The sealed server copy runs as root and refuses to write if any
+listed path is missing: a copy that silently skipped the root-only files would look complete. The
+first version DID miss the database signing key (`/root/permtracker-jwt`), found by reading the
+runbook's secrets table against the list.
+
+**Sentry has a per-process budget** (`src/lib/sentryBudget.ts`): 5 copies of one error and 60
+errors an hour, 500 log lines an hour. Normal days send about 10 errors and under 1,000 log lines;
+Sep 29 sent 2,008 and 21,311, enough storms of which would spend the plan and hide the next real
+error. The next event after a hold carries `budget.held_before`.
+
+**Also fixed on the way:** www.uscis.gov refused GitHub's runners on every attempt (six of six)
+and each refusal wrote a failure row newer than the server's success, so the USCIS workflows are
+manual now and the server is the scheduled runner; the I-140 quarter is stored in
+`perm_docs['uscis_i140']`, which the two tool pages read first, because only GitHub held the Convex
+key the old path needed. Dependabot moves the CodeQL actions as one group. The corpus load's "kept"
+count for occupations used the wrong key (it read 0 kept over 1,410 unchanged slugs).
+
+**Instruments that misled during this audit, for next time:** `ps %CPU` is a lifetime average, not
+current load; an nginx config test in the same second as `systemctl reload` is answered by the old
+workers; a probe copy of a test that reads files by relative path crashes silently in a scratch
+directory (run mutations in place, with a saved copy); `sed` treats `[` in a pattern as a bracket
+expression, so a probe mutation containing `payload["x"]` never applied and the probe "passed".

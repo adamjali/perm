@@ -2,6 +2,8 @@
 Description=PERM Tracker nightly database backup
 After=permtracker-db.service
 [Service]
+# A hung run stops here instead of holding its slot forever (a dump takes about 2 minutes).
+TimeoutStartSec=2h
 Type=oneshot
 User=permtracker
 Nice=10

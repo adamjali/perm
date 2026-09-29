@@ -82,6 +82,11 @@ export const CRON_JOBS: Record<string, CronJob> = {
     schedule: "30 11 * * *",
     description: "the morning operator report: health, bills, runs, traffic, emailed to the admin",
   },
+  "convex-backup": {
+    workflow: "convex-backup.yml",
+    schedule: "50 7 * * *",
+    description: "a full Convex export, sealed on the runner and copied to R2 by the server, nightly",
+  },
 };
 
 export const CRON_PATH_PREFIX = "/api/cron/dispatch/";

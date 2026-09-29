@@ -1,0 +1,153 @@
+#!/usr/bin/env python3
+"""Keep the website's page cache inside a disk budget. Runs every 30 minutes.
+
+WHY. Next stores every page it renders after a deploy inside that release's
+.next/server/app (an .html, .meta and .rsc file and a .segments folder per
+page), and nothing ever removes them. With 106,000 URLs at 400 to 650 KB each,
+one release can reach about 69 GB once crawlers have walked the site, and two
+releases that size fill the 145 GB disk, which stops the database with it.
+Measured Sep 29 2026: the release that served for 7 hours held 13 GB.
+
+WHAT IT REMOVES. Only pages written AFTER the release was unpacked (the build's
+own files are never touched), least recently used first (the later of the
+.html file's read and write times; the disk records reads at least daily).
+A removed page is not lost: Next finds no file, treats it as not cached and
+renders it again on the next visit (file-system-cache.js returns null from its
+catch). The .html goes first, so a reader in between sees a miss, not half a
+page.
+
+BUDGETS, per release:
+  live copy       20 GB of rendered pages
+  standby copy     4 GB (it serves only after a rollback)
+  older releases   0    (kept for their build; they serve nothing)
+Below 20 GB of free disk the live budget drops to 8 GB and the standby's to 0.
+
+Writes /srv/permtracker/health/prune.json, which the health job reports.
+`--dry-run` prints what it would remove and changes nothing.
+"""
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import sys
+import time
+
+APP = "/srv/permtracker/app"
+HEALTH = "/srv/permtracker/health/prune.json"
+GB = 1024 ** 3
+BUDGET = {"live": 20 * GB, "standby": 4 * GB, "old": 0}
+TIGHT = {"live": 8 * GB, "standby": 0, "old": 0}
+FREE_FLOOR = 20 * GB
+# A page group: the .meta file names it; these are its other pieces.
+PIECES = (".html", ".rsc", ".body", ".meta")
+# Pages rendered within two minutes of the unpack (the deploy's own health
+# check) count as the build's: never removed.
+MARGIN_S = 120
+
+
+def read(path: str) -> str:
+    try:
+        with open(path) as fh:
+            return fh.read().strip()
+    except OSError:
+        return ""
+
+
+def groups(release: str):
+    """Yield (last_used, size, stem) for every page written after the deploy."""
+    root = os.path.join(release, ".next", "server", "app")
+    try:
+        deployed = os.stat(os.path.join(release, "server.js")).st_ctime + MARGIN_S
+    except OSError:
+        return
+    for d, _dirs, files in os.walk(root):
+        for f in files:
+            if not f.endswith(".meta"):
+                continue
+            stem = os.path.join(d, f[: -len(".meta")])
+            try:
+                meta = os.stat(stem + ".meta")
+            except OSError:
+                continue
+            if meta.st_ctime <= deployed:
+                continue            # the build's own page: never removed
+            size, used = 0, meta.st_mtime
+            for ext in PIECES:
+                try:
+                    st = os.stat(stem + ext)
+                except OSError:
+                    continue
+                size += st.st_size
+                if ext in (".html", ".body"):
+                    used = max(used, st.st_atime, st.st_mtime)
+            seg = stem + ".segments"
+            if os.path.isdir(seg):
+                for sd, _sdirs, sfiles in os.walk(seg):
+                    for sf in sfiles:
+                        try:
+                            size += os.stat(os.path.join(sd, sf)).st_size
+                        except OSError:
+                            pass
+            yield used, size, stem
+
+
+DRY_RUN = "--dry-run" in sys.argv
+
+
+def remove(stem: str) -> None:
+    if DRY_RUN:
+        return
+    for ext in (".html", ".body", ".rsc", ".meta"):     # the page first
+        try:
+            os.remove(stem + ext)
+        except OSError:
+            pass
+    shutil.rmtree(stem + ".segments", ignore_errors=True)
+
+
+def main() -> int:
+    live = read(os.path.join(APP, "active"))
+    slots = {s: os.path.realpath(os.path.join(APP, "slots", s)) for s in ("blue", "green")
+             if os.path.exists(os.path.join(APP, "slots", s))}
+    free = shutil.disk_usage("/").free
+    budgets = TIGHT if free < FREE_FLOOR else BUDGET
+    report = {"at": int(time.time()), "freeGB": round(free / GB, 1),
+              "tight": budgets is TIGHT, "releases": []}
+    releases_dir = os.path.join(APP, "releases")
+    for name in sorted(os.listdir(releases_dir)):
+        rel = os.path.realpath(os.path.join(releases_dir, name))
+        role = ("live" if slots.get(live) == rel else
+                "standby" if rel in slots.values() else "old")
+        pages = sorted(groups(rel))                     # least recently used first
+        total = sum(size for _u, size, _s in pages)
+        removed = freed = 0
+        for _used, size, stem in pages:
+            if total - freed <= budgets[role]:
+                break
+            remove(stem)
+            removed += 1
+            freed += size
+        report["releases"].append({
+            "release": name, "role": role, "pages": len(pages) - removed,
+            "gb": round((total - freed) / GB, 2), "removed": removed,
+            "freedGB": round(freed / GB, 2), "budgetGB": round(budgets[role] / GB, 1)})
+        print(f"{name} {role}: {len(pages) - removed} pages, {(total - freed) / GB:.2f} GB"
+              f" (removed {removed}, freed {freed / GB:.2f} GB, budget {budgets[role] / GB:.0f} GB)")
+    report["freeGBAfter"] = round(shutil.disk_usage("/").free / GB, 1)
+    if DRY_RUN:
+        print("dry run: nothing removed, nothing recorded")
+        return 0
+    os.makedirs(os.path.dirname(HEALTH), exist_ok=True)
+    tmp = HEALTH + ".tmp"
+    with open(tmp, "w") as fh:
+        json.dump(report, fh)
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, HEALTH)
+    print(f"disk free {report['freeGB']} GB -> {report['freeGBAfter']} GB"
+          + (" (below the floor: tight budgets)" if report["tight"] else ""))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

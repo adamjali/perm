@@ -1,0 +1,44 @@
+#!/bin/bash
+# Nightly sealed copy of the server itself: secrets and config. Runs as root,
+# because the tunnel token, the deploy key's restriction and SSH settings are
+# root-only, and a copy that silently skipped them would look complete.
+#
+# Everything a rebuild of this machine needs that lives nowhere else: the app's
+# env files (every API key), the database tokens, public key and signing key
+# (/root/permtracker-jwt), the tunnel
+# token, the R2 key, nginx's config, audit key and upstream, the deploy key's
+# restriction, SSH and fail2ban settings, and the installed scripts and units
+# (also in the repo; kept so the copy matches what actually ran).
+#
+# Sealed with the PUBLIC half of the backup key (CMS, AES-256-GCM, recipient
+# /etc/permtracker/backup-recipient.pem). Only the private half opens it, and
+# that half is never on this machine or in R2. Open one with:
+#   openssl cms -decrypt -binary -inform DER -in server-...tar.zst.cms \
+#     -inkey backup-key.pem | tar --zstd -tvf -
+# Added Sep 29 2026. Newest 7 kept here; R2 keeps 15 days, locked for 7.
+set -euo pipefail
+B=/srv/permtracker/backups; R=/etc/permtracker/backup-recipient.pem
+REQUIRED=(/srv/permtracker/app/env /srv/permtracker/secrets /srv/permtracker/db-auth /root/permtracker-jwt
+  /etc/permtracker /etc/cloudflared /etc/nginx/conf.d /etc/nginx/permtracker-audit-key.conf
+  /etc/nginx/permtracker-active-upstream.conf /home/deploy/.ssh/authorized_keys
+  /etc/ssh/sshd_config.d /etc/fail2ban/jail.d /usr/local/bin /usr/local/sbin
+  /usr/local/lib/permtracker /etc/systemd/system)
+[ -r "$R" ] || { echo "no recipient key at $R; nothing sealed"; exit 1; }
+for p in "${REQUIRED[@]}"; do [ -e "$p" ] || { echo "missing $p; refusing to write a copy without it"; exit 1; }; done
+s="$B/server-$(date -u +%Y%m%d-%H%M).tar.zst.cms"
+# No --ignore-failed-read: root reads all of it, and an unreadable file must fail the run.
+tar --zstd -cf - "${REQUIRED[@]}" 2>/tmp/backup-server.tar.err \
+  | openssl cms -encrypt -binary -aes-256-gcm -outform DER -out "$s.part" "$R"
+grep -v "Removing leading" /tmp/backup-server.tar.err || true; rm -f /tmp/backup-server.tar.err
+[ "$(od -An -tx1 -N1 "$s.part" | tr -d ' ')" = "30" ] || { echo "sealing produced no CMS file"; rm -f "$s.part"; exit 1; }
+mv "$s.part" "$s"; chown permtracker:permtracker "$s"; chmod 600 "$s"
+ls -1t "$B"/server-*.tar.zst.cms | tail -n +8 | xargs -r rm -f
+[ -r /etc/permtracker/r2.env ] || { echo "sealed $s; no R2 key, so not uploaded"; exit 1; }
+# shellcheck disable=SC1091
+. /usr/local/lib/permtracker/r2-env
+name=$(basename "$s"); size=$(stat -c %s "$s")
+rclone copyto "$s" "r2:permtracker-backups/server/$name" --s3-no-head --retries 3 --low-level-retries 10 -q
+remote=$(rclone lsjson "r2:permtracker-backups/server/$name" | python3 -c 'import json,sys; r=json.load(sys.stdin); print(r[0]["Size"] if r else -1)')
+[ "$remote" = "$size" ] || { echo "uploaded size $remote does not match $size"; exit 1; }
+printf '%s %s %s\n' "$(date -u +%FT%TZ)" "$size" "$name" > "$B/SERVER_OK"; chown permtracker:permtracker "$B/SERVER_OK"
+echo "server copy ok: $name ($size bytes, sealed) in R2"
