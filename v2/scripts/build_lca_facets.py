@@ -139,13 +139,18 @@ def build_default_view(db: Turso, min_cases: int) -> dict:
     # `FROM o` over an EMPTY population returns ZERO rows, not a row of nulls,
     # so an empty or missing table would be an IndexError here rather than a
     # readable refusal. The caller's guard below only sees what this returns.
+    #
+    # LIMIT 1, BECAUSE `FROM o` IS ONE ROW PER CERTIFIED LCA. Every row carries
+    # the same scalar answers, so without the limit this sent ~2.2 million copies
+    # of one row and the caller kept the first. Turso sent them all; the Oracle
+    # database's reply cap refused it (RESPONSE_TOO_LARGE, Sep 29 2026).
     st_rows = _rows(db, f"""
         WITH f AS (SELECT ({ANNUAL_WAGE_SQL}) AS wage FROM lca_cases WHERE {DEFAULT_WHERE}),
              c AS (SELECT COUNT(*) AS n FROM f),
              o AS (SELECT wage, ROW_NUMBER() OVER (ORDER BY wage) AS rn FROM f)
         SELECT (SELECT n FROM c) AS n, (SELECT AVG(wage) FROM f) AS avg,
                {percentile_select()}
-          FROM o
+          FROM o LIMIT 1
     """, [])
     if not st_rows:
         raise SystemExit(

@@ -176,6 +176,42 @@ for fn_name, py_fn in (("percentileExpr", blf.percentile_select),
     check(f"{fn_name} port equals the TypeScript's own output", got == expected,
           "" if got == expected else f"\n      py: {got[:110]}\n      ts: {expected[:110]}")
 
+# 4b. THE DEFAULT VIEW'S QUERIES RETURN WHAT THE CALLER KEEPS, NOT A ROW PER
+#     CASE. The stats query ended `FROM o` with no aggregate, so it sent one
+#     identical row for every certified LCA (~2.2M) and the caller kept the
+#     first; Turso sent them all, the Oracle database's reply cap refused it on
+#     Sep 29 2026. Run the real function on a real SQLite and count the rows.
+import sqlite3  # noqa: E402
+
+
+class SqliteDb:
+    def __init__(self):
+        self.conn = sqlite3.connect(":memory:")
+        self.rows_per_query: list[int] = []
+
+    def execute(self, sql, args):
+        cur = self.conn.execute(sql, args or [])
+        rows = cur.fetchall()
+        self.rows_per_query.append(len(rows))
+
+        def cell(v):
+            if v is None:
+                return {"type": "null"}
+            return {"type": "float" if isinstance(v, float) else "integer" if isinstance(v, int) else "text",
+                    "value": v if not isinstance(v, int) else str(v)}
+        return {"response": {"result": {"rows": [[cell(v) for v in r] for r in rows]}}}
+
+
+sdb = SqliteDb()
+sdb.conn.execute("CREATE TABLE lca_cases (wage REAL, wage_unit TEXT, case_status TEXT, worksite_state TEXT)")
+sdb.conn.executemany("INSERT INTO lca_cases VALUES (?, 'YEAR', 'CERTIFIED', ?)",
+                     [(60_000 + 1_000 * i, "CA" if i % 2 else "TX") for i in range(60)])
+view = blf.build_default_view(sdb, 5)
+check("the stats query returns one row, not one per case",
+      sdb.rows_per_query[0] == 1, f"returned {sdb.rows_per_query[0]} rows for 60 cases")
+check("control: the stats still describe all 60 cases", view["stats"]["n"] == 60, str(view["stats"]["n"]))
+check("the per-state query returns one row per state", len(view["byState"]) == 2, str(len(view["byState"])))
+
 # 5. The floor is read from the TypeScript, never restated.
 check("MIN_FOR_MEDIAN read from wageStats.ts", blf.min_for_median() == 30,
       f"got {blf.min_for_median()}")
