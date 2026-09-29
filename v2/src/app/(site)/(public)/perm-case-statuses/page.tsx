@@ -208,6 +208,9 @@ export default async function PermCaseStatusesPage() {
           Counts are cases in that status across every filing month
           {permAsOf ? `, as DOL showed them on ${formatAsOf(permAsOf)}` : ""}. A count says how common
           the state is and nothing about how long any one case stays in it.
+          {census
+            ? ""
+            : " The counts are missing today: the daily census they come from couldn't be read or is more than eight days old."}
         </p>
         {groups.map((g) => (
           <div key={g.kind} className="mt-8">
@@ -258,7 +261,9 @@ export default async function PermCaseStatusesPage() {
         <h2 className="font-heading text-2xl font-black">Prevailing wage requests (ETA-9141)</h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
           The wage request comes before the PERM and has its own review chain under 20 CFR 656.41.
-          {pwd?.asOf ? ` Counts are from DOL's live index as of ${formatAsOf(pwd.asOf)}.` : ""}
+          {pwd?.asOf
+            ? ` Counts are from DOL's live index as of ${formatAsOf(pwd.asOf)}.`
+            : " The counts are missing today: their summary couldn't be read."}
         </p>{" "}
         <div className="mt-4 grid gap-px border-2 border-border bg-border">
           {PWD_STATUSES.map((e) => (
@@ -271,7 +276,9 @@ export default async function PermCaseStatusesPage() {
         <h2 className="font-heading text-2xl font-black">H-1B labor condition applications (ETA-9035)</h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
           An LCA is certified or returned within seven working days, so the live index holds almost nothing pending.
-          {lca?.asOf ? ` Counts are from DOL's live index as of ${formatAsOf(lca.asOf)}.` : ""}
+          {lca?.asOf
+            ? ` Counts are from DOL's live index as of ${formatAsOf(lca.asOf)}.`
+            : " The counts are missing today: their summary couldn't be read."}
         </p>{" "}
         <div className="mt-4 grid gap-px border-2 border-border bg-border">
           {LCA_STATUSES.map((e) => (

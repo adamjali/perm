@@ -134,7 +134,10 @@ export interface Facts {
   subs: Array<{ kind: string; live: number; confirmed24h: number; left24h: number }>;
   errors: { count: number; top: [string, number][] };
   outbox: { sent24h: number; failed24h: number; queued: number; oldestQueuedAt: number | null };
-  refusals: Array<{ day: string; pool: string; count: number }>;
+  /** `count`: got no email at all. `queued`: a full pool held them for the queue. */
+  refusals: Array<{ day: string; pool: string; count: number; queued?: number }>;
+  /** Confirmations waiting in convex/confirmationQueue.ts (absent in older callers). */
+  confirmationQueue?: { waiting: number; oldestQueuedAt: number | null };
 }
 
 export interface ResendDay {
@@ -181,8 +184,19 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
     emailStatus.push("warn");
   }
   for (const r of f.refusals) {
-    emailLines.push(`Budget ${r.pool} refused ${r.count} on ${r.day}`);
-    emailStatus.push("warn");
+    if (r.count > 0) {
+      emailLines.push(`Budget ${r.pool} turned away ${r.count} on ${r.day} (they got no email)`);
+      emailStatus.push("warn");
+    }
+    if (r.queued) {
+      emailLines.push(`Budget ${r.pool} was full on ${r.day}; ${r.queued} waited in the queue and went out as room freed`);
+    }
+  }
+  const cq = f.confirmationQueue;
+  if (cq && cq.waiting > 0) {
+    const stale = cq.oldestQueuedAt !== null && now - cq.oldestQueuedAt > DAY_MS / 2;
+    emailLines.push(`${cq.waiting} confirmation${cq.waiting === 1 ? "" : "s"} waiting in the queue${stale ? ", the oldest for over 12 hours" : ""}`);
+    if (stale) emailStatus.push("warn");
   }
   const email: ReportSection = {
     key: "email",

@@ -5,6 +5,7 @@ import { BellIcon, CheckCircleIcon } from "@phosphor-icons/react";
 
 import { cn } from "@/lib/utils";
 import { programNoun, type FlagProgram } from "@/lib/flagCaseNumber";
+import { isQueued } from "@/lib/alertReply";
 
 /**
  * Subscribe to status changes on ONE case.
@@ -56,7 +57,7 @@ function subscribeEndpoint(): string | null {
 type State =
   | { kind: "idle" }
   | { kind: "sending" }
-  | { kind: "done"; message: string }
+  | { kind: "done"; message: string; queued: boolean }
   | { kind: "refused"; message: string };
 
 export function CaseAlertForm({
@@ -104,7 +105,7 @@ export function CaseAlertForm({
       const message =
         body?.message ??
         "That did not go through. Try again in a moment, or check the case on DOL's own status page.";
-      setState({ kind: res.ok ? "done" : "refused", message });
+      setState(res.ok ? { kind: "done", message, queued: isQueued(body) } : { kind: "refused", message });
     } catch {
       setState({
         kind: "refused",
@@ -130,7 +131,9 @@ export function CaseAlertForm({
           />{" "}
           <span>
             <b className="font-bold text-foreground">{state.message}</b>{" "}
-            Check your inbox to confirm. Nothing is sent until you do.
+            {state.queued
+              ? "Confirm it when it arrives. Nothing is sent until you do."
+              : "Nothing is sent until you confirm."}
           </span>
         </p>
       </div>

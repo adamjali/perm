@@ -39,6 +39,7 @@ import { createCacheStats } from '@/lib/ai/cache';
 import { captureError } from '@/lib/sentry';
 import { getPostHogClient } from '@/lib/posthog-server';
 import { chatDebug, createTools, truncateForLog } from './create-tools';
+import { CHAT_MAX_OUTPUT_TOKENS, CHAT_MAX_STEPS, chatIpLimitBody, cutShortFrom } from '@/lib/ai/limits';
 
 // Allow up to 60 seconds for streaming responses (extra time for fallbacks + tool calls)
 export const maxDuration = 60;
@@ -90,12 +91,16 @@ export async function POST(req: Request) {
       });
       if (!ipCheck.allowed) {
         chatDebug(`[Chat API] [${sessionId}] IP rate limit hit`);
-        return new Response(
-          JSON.stringify({
-            error: ipCheck.message || "Too many requests. Please slow down.",
-          }),
-          { status: 429, headers: { "Content-Type": "application/json" } }
+        // Say which limit and how long, in nginx's JSON shape, so the panel
+        // shows the wait instead of "the AI services didn't respond".
+        const body = chatIpLimitBody(
+          ipCheck.retryAfterMs ?? 0,
+          (ipCheck.message ?? '').includes('blocked'),
         );
+        return new Response(JSON.stringify(body), {
+          status: 429,
+          headers: { "Content-Type": "application/json", "Retry-After": String(body.retryAfter) },
+        });
       }
     } catch (ipError) {
       // Fail open on rate-limit service error — better availability than
@@ -293,8 +298,11 @@ export async function POST(req: Request) {
         instructions: systemPrompt,
         messages: convertedMessages,
         tools,
-        stopWhen: stepCountIs(10),
-        maxOutputTokens: 4000,
+        // Both caps are said out loud when they end a reply: the finish
+        // reason rides the message metadata below, and the panel shows why
+        // the reply stopped with a Continue button (src/lib/ai/limits.ts).
+        stopWhen: stepCountIs(CHAT_MAX_STEPS),
+        maxOutputTokens: CHAT_MAX_OUTPUT_TOKENS,
         maxRetries: 0, // Disable per-model retries; FallbackModel handles model-to-model fallback
         onError({ error }) {
           // AI SDK v6: errors during streaming become part of the stream
@@ -363,7 +371,16 @@ export async function POST(req: Request) {
           writer.merge(result.toUIMessageStream({
             // When the reply began, so the client can timestamp it from its
             // first word instead of waiting for the saved copy.
-            messageMetadata: ({ part }) => (part.type === 'start' ? { createdAt: Date.now() } : undefined),
+            messageMetadata: ({ part }) => {
+              if (part.type === 'start') return { createdAt: Date.now() };
+              // Why the reply ended, when a cap ended it: the output cap
+              // ("length") or the step cap (the last step still wanted a tool).
+              if (part.type === 'finish') {
+                const cutShort = cutShortFrom(part.finishReason);
+                return cutShort ? { cutShort } : undefined;
+              }
+              return undefined;
+            },
             // AI SDK v6: the string returned here is emitted as a structured
             // ERROR PART on the stream (not assistant text), so the client can
             // render it as an error banner. The client MUST NOT persist a turn

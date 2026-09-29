@@ -121,6 +121,12 @@ export interface CaseListPagination {
   readonly totalPages: number;
   /** Total non-deleted cases for the user, ignoring all filters. Used to distinguish "new user" from "filters hide everything". */
   readonly totalUnfilteredCount: number;
+  /**
+   * True when the account holds more cases than one read returns
+   * (USER_CASES_MAX in convex/lib/userCases.ts): the list then covers the
+   * newest ones, and the page says so.
+   */
+  readonly truncated: boolean;
   /** @internal Brand to prevent direct construction */
   readonly [CaseListPaginationBrand]: true;
 }
@@ -133,6 +139,7 @@ export function createCaseListPagination(params: {
   pageSize: number;
   totalCount: number;
   totalUnfilteredCount?: number;
+  truncated?: boolean;
 }): CaseListPagination {
   const totalPages = params.totalCount === 0 ? 0 : Math.ceil(params.totalCount / params.pageSize);
 
@@ -142,6 +149,7 @@ export function createCaseListPagination(params: {
     totalCount: params.totalCount,
     totalPages,
     totalUnfilteredCount: params.totalUnfilteredCount ?? params.totalCount,
+    truncated: params.truncated ?? false,
   } as CaseListPagination;
 }
 

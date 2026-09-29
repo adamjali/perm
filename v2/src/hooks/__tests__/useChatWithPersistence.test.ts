@@ -287,7 +287,7 @@ describe('useChatWithPersistence', () => {
   });
 
   describe('one list, stable ids (2026-09-28: no vanish, no duplicate)', () => {
-    type SdkMsg = { id: string; role: 'user' | 'assistant'; parts: Array<{ type: string; text?: string }> };
+    type SdkMsg = { id: string; role: 'user' | 'assistant'; parts: Array<{ type: string; text?: string }>; metadata?: unknown };
     const conv = 'conv-live' as never;
     let sdk: { messages: SdkMsg[]; status: string };
     let persisted: Array<{ _id: string; role: string; content: string; createdAt: number }>;
@@ -422,6 +422,43 @@ describe('useChatWithPersistence', () => {
       sdk.status = 'ready';
       rerender();
       expect(result.current.messages.at(-1)).toMatchObject({ id: 'a1', content: 'Half an ans', wasStopped: true });
+    });
+
+    it('carries why a reply was cut short, and Continue sends "Continue" without touching the draft', async () => {
+      const { result, rerender } = await setup();
+      act(() => result.current.setInput('list everything'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      sdk.messages = [
+        { id: 'u1', role: 'user', parts: text('list everything') },
+        { id: 'a1', role: 'assistant', parts: text('Here are the first'), metadata: { createdAt: 5, cutShort: 'length' } },
+      ];
+      sdk.status = 'ready';
+      rerender();
+      expect(result.current.messages.at(-1)).toMatchObject({ id: 'a1', cutShort: 'length' });
+
+      act(() => result.current.setInput('half-typed note'));
+      await act(async () => {
+        await result.current.continueReply();
+      });
+      expect(sendMessage).toHaveBeenCalledTimes(2);
+      expect(sendMessage.mock.calls[1]![0]).toMatchObject({ text: 'Continue' });
+      expect(result.current.input).toBe('half-typed note');
+    });
+
+    it('an ordinary reply carries no cut-short reason', async () => {
+      const { result, rerender } = await setup();
+      act(() => result.current.setInput('hi'));
+      await act(async () => {
+        await result.current.handleSend();
+      });
+      sdk.messages = [
+        { id: 'u1', role: 'user', parts: text('hi') },
+        { id: 'a1', role: 'assistant', parts: text('Hello.'), metadata: { createdAt: 5 } },
+      ];
+      rerender();
+      expect(result.current.messages.at(-1)?.cutShort).toBeUndefined();
     });
   });
 

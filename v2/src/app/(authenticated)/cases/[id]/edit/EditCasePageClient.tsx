@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
 import type { SectionName } from "@/hooks/useSectionState";
 import { prepareUpdatePayload } from "@/lib/forms/prepareUpdatePayload";
-import { ConvexError } from "convex/values";
+import { caseWriteErrorMessage } from "@/lib/caseWriteErrors";
 
 // ============================================================================
 // COMPONENTS
@@ -276,12 +276,7 @@ export function EditCasePageClient() {
       } catch (error) {
         console.error("Failed to update case:", error);
         captureError(error);
-        let errorMsg = "Failed to update case. Please try again.";
-        if (error instanceof ConvexError) {
-          const data = error.data;
-          errorMsg = typeof data === "string" ? data : errorMsg;
-        }
-        toast.error(errorMsg);
+        toast.error(caseWriteErrorMessage(error, "Failed to update case. Please try again."));
       } finally {
         setIsUpdating(false);
       }

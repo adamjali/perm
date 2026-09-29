@@ -14,6 +14,7 @@ import type { DateConstraint } from "@/lib/forms/date-constraints";
 import { isRecruitmentComplete } from "@/lib/forms/date-constraints";
 import { getFirstRecruitmentDate, getLastRecruitmentDate, calculateFilingWindow } from "@/lib/perm";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
+import { CharLimit } from "@/components/ui/char-limit";
 
 // ============================================================================
 // TYPES
@@ -352,16 +353,17 @@ export function ETA9089Section(props: ETA9089SectionProps) {
             hint="DOL case number (optional)"
             className="md:col-span-2"
           >
-            <Input
-              id="eta9089CaseNumber"
-              name="eta9089CaseNumber"
-              type="text"
-              value={values.eta9089CaseNumber || ""}
-              onChange={handleInputChange}
-              aria-invalid={!!errors?.eta9089CaseNumber}
-              placeholder="e.g., A-12345-67890"
-              maxLength={50}
-            />
+            <CharLimit max={50}>
+              <Input
+                id="eta9089CaseNumber"
+                name="eta9089CaseNumber"
+                type="text"
+                value={values.eta9089CaseNumber || ""}
+                onChange={handleInputChange}
+                aria-invalid={!!errors?.eta9089CaseNumber}
+                placeholder="e.g., A-12345-67890"
+              />
+            </CharLimit>
           </FormField>
         </div>
 

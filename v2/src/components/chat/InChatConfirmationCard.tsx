@@ -239,7 +239,9 @@ export function InChatConfirmationCard({
         {argEntries.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5 bg-muted/50 border-2 border-border">
             {argEntries.map(([key, value]) => (
-              <span key={key} className="font-mono text-sm">
+              // An ID or URL has no spaces to wrap at: let it break anywhere
+              // rather than run under the card's overflow-hidden edge.
+              <span key={key} className="font-mono text-sm min-w-0 [overflow-wrap:anywhere]">
                 <span className="text-muted-foreground">{key}:</span>{' '}
                 <span className="text-foreground">{formatArgValue(value)}</span>
               </span>
@@ -253,7 +255,7 @@ export function InChatConfirmationCard({
         )}
 
         {/* Description */}
-        <p className="text-sm text-foreground leading-relaxed">
+        <p className="text-sm text-foreground leading-relaxed [overflow-wrap:anywhere]">
           &ldquo;{description}&rdquo;
         </p>
 
@@ -264,7 +266,7 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="text-sm text-destructive bg-destructive/10 border-2 border-destructive px-3 py-2"
+              className="text-sm text-destructive bg-destructive/10 border-2 border-destructive px-3 py-2 [overflow-wrap:anywhere]"
             >
               {error}
             </motion.div>

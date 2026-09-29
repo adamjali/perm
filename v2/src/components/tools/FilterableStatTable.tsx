@@ -3,6 +3,9 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
 
+import { RequestFailed } from "@/components/tools/RequestFailed";
+import { failureFromError, type FetchFailure } from "@/lib/fetchFailure";
+
 /**
  * The searchable, filterable, paged table every entity index stands on.
  *
@@ -58,6 +61,10 @@ export interface CsvSpec<T> {
 export interface RemoteSearchResult<T> {
   rows: T[];
   extra?: ReactNode;
+  /** The server stopped at its cap and more rows match than `rows` holds. */
+  more?: boolean;
+  /** Set when the search did not come back; the table shows why, never "nothing matches". */
+  failure?: FetchFailure;
 }
 
 export interface FilterableStatTableProps<T> {
@@ -93,6 +100,12 @@ export interface FilterableStatTableProps<T> {
    * leaving LORENZ BUS SERVICE INC and its 174 live cases unreachable by name.
    */
   searchRemote?: (text: string, localHasRows: boolean) => Promise<RemoteSearchResult<T>>;
+  /**
+   * Start with the search box filled from `?q=` in the address. Read on the
+   * client after mount, so the page itself stays static; it is what lets the
+   * search palette link to "every employer matching this" instead of five.
+   */
+  queryFromUrl?: boolean;
 }
 
 /** `0` means every row on one page: the "show all" a reader asks for when a cohort is a few thousand rows. */
@@ -125,7 +138,9 @@ function compare(
 function toCsv<T>(spec: CsvSpec<T>, rows: T[]): string {
   const cell = (v: string | number | null): string => {
     if (v === null) return "";
-    const s = String(v);
+    // A text cell starting with = + - or @ is a formula to a spreadsheet;
+    // the leading apostrophe makes it plain text (numbers are left alone).
+    const s = typeof v === "string" && /^[=+\-@\t\r]/.test(v) ? `'${v}` : String(v);
     return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const lines = [spec.header.map(cell).join(",")];
@@ -147,8 +162,14 @@ export function FilterableStatTable<T>({
   csv,
   pageSize: initialPageSize = 50,
   searchRemote,
+  queryFromUrl = false,
 }: FilterableStatTableProps<T>) {
   const [query, setQuery] = useState("");
+  useEffect(() => {
+    if (!queryFromUrl) return;
+    const fromUrl = new URLSearchParams(window.location.search).get("q");
+    if (fromUrl) setQuery(fromUrl.slice(0, 120));
+  }, [queryFromUrl]);
   const [sortKey, setSortKey] = useState(initialSort);
   const [sortDesc, setSortDesc] = useState(true);
   const [page, setPage] = useState(0);
@@ -211,6 +232,7 @@ export function FilterableStatTable<T>({
   // prefix range runs on the wider one.
   const [remote, setRemote] = useState<RemoteSearchResult<T> | null>(null);
   const [remoteBusy, setRemoteBusy] = useState(false);
+  const [remoteAttempt, setRemoteAttempt] = useState(0);
   const remoteSeq = useRef(0);
   const q = query.trim();
   const wantRemote = searchRemote !== undefined && q.length >= 2;
@@ -229,15 +251,18 @@ export function FilterableStatTable<T>({
         .then((r) => {
           if (remoteSeq.current === id) setRemote(r);
         })
-        .catch(() => {
-          if (remoteSeq.current === id) setRemote({ rows: [] });
+        .catch((error: unknown) => {
+          // A failed search is NOT an empty one. This used to set
+          // `{ rows: [] }`, and the table then said "Nothing matches that" for
+          // a name the server was never able to check (Sep 29 2026 audit).
+          if (remoteSeq.current === id) setRemote({ rows: [], failure: failureFromError(error) });
         })
         .finally(() => {
           if (remoteSeq.current === id) setRemoteBusy(false);
         });
     }, 250);
     return () => clearTimeout(t);
-  }, [wantRemote, q, localHasRows, searchRemote]);
+  }, [wantRemote, q, localHasRows, searchRemote, remoteAttempt]);
 
   const remoteRows = remote?.rows ?? null;
   // Remote ROWS only stand in when the local list came up empty. When the
@@ -248,6 +273,7 @@ export function FilterableStatTable<T>({
   // The extra block is NOT gated on the table being empty: it is the half
   // that has to survive the table having answered.
   const remoteExtra = remote?.extra ?? null;
+  const remoteFailure = remote?.failure ?? null;
 
   const effectiveSize = pageSize === 0 ? Math.max(1, shown.length) : pageSize;
   const pageCount = Math.max(1, Math.ceil(shown.length / effectiveSize));
@@ -383,14 +409,22 @@ export function FilterableStatTable<T>({
                 {corpusSize.toLocaleString("en-US")} {noun}. Search or sort to
                 read all of them.
               </>
+            ) : usingRemote && remote?.more ? (
+              <>
+                Showing the first{" "}
+                <strong className="font-bold">
+                  {remoteRows.length.toLocaleString("en-US")}
+                </strong>{" "}
+                {noun} whose name matches, busiest first. More match than one
+                answer carries, so type more of the name to narrow it.
+              </>
             ) : usingRemote ? (
               <>
                 Found{" "}
                 <strong className="font-bold">
                   {remoteRows.length.toLocaleString("en-US")}
                 </strong>{" "}
-                {noun} by name, searched across all of them. Ones with fewer
-                than three filings have no page of their own.
+                {noun} by name, searched across all of them.
               </>
             ) : filtersOn ? (
               <>
@@ -511,7 +545,9 @@ export function FilterableStatTable<T>({
                 <td colSpan={columns.length} className="px-3 py-8 text-center text-foreground/60">
                   {remoteBusy
                     ? `Searching all ${noun}\u2026`
-                    : remoteExtra
+                    : remoteFailure
+                      ? `The search across all ${noun} didn\u2019t come back, so this can only show rows already on the page.`
+                      : remoteExtra
                       ? // "Nothing matches that" would be false with results
                         // sitting directly underneath. This table holds the
                         // PUBLISHED corpus; the block below holds the rest.
@@ -563,6 +599,14 @@ export function FilterableStatTable<T>({
           purpose - everything the table promises is a published statistic -
           and placed BELOW its pager, which belongs to the table and not to
           this block. */}
+      {remoteFailure && q.length >= 2 ? (
+        <RequestFailed
+          what={`The search across all ${noun}`}
+          failure={remoteFailure}
+          onRetry={() => setRemoteAttempt((n) => n + 1)}
+          className="mt-4 border-2 border-border bg-tint-primary p-4"
+        />
+      ) : null}
       {remoteExtra}
     </div>
   );

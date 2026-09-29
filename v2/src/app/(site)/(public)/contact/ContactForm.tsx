@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PaperPlaneTiltIcon as Send } from "@phosphor-icons/react";
+import { CharLimit } from "@/components/ui/char-limit";
 
 /**
  * The contact form. Posts to the Convex HTTP route, which owns the shape
@@ -78,44 +79,47 @@ export function ContactForm() {
           <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
             Name
           </span>{" "}
-          <input
-            type="text"
-            name="name"
-            placeholder="Jordan Rivera"
-            required
-            maxLength={120}
-            autoComplete="name"
-            className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
-          />
+          <CharLimit max={120}>
+            <input
+              type="text"
+              name="name"
+              placeholder="Jordan Rivera"
+              required
+              autoComplete="name"
+              className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
+            />
+          </CharLimit>
         </label>
         <label className="block">
           <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
             Email
           </span>{" "}
-          <input
-            type="email"
-            name="email"
-            placeholder="you@example.com"
-            required
-            maxLength={254}
-            autoComplete="email"
-            className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
-          />
+          <CharLimit max={254}>
+            <input
+              type="email"
+              name="email"
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+              className="mt-1.5 min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
+            />
+          </CharLimit>
         </label>
       </div>
       <label className="mt-4 block">
         <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
           Message
         </span>{" "}
-        <textarea
-          name="message"
-          placeholder="What you are trying to do, and what happened instead. A case number helps if it is about one."
-          required
-          minLength={10}
-          maxLength={4000}
-          rows={6}
-          className="mt-1.5 w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
-        />
+        <CharLimit max={4000}>
+          <textarea
+            name="message"
+            placeholder="What you are trying to do, and what happened instead. A case number helps if it is about one."
+            required
+            minLength={10}
+            rows={6}
+            className="mt-1.5 w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base outline-none transition-shadow focus:ring-2 focus:ring-primary"
+          />
+        </CharLimit>
       </label>
       {/* Honeypot: visually gone, still in the form data. */}
       <div aria-hidden="true" className="absolute left-[-9999px] top-auto h-px w-px overflow-hidden">

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { PlusIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import type { SubEntry } from "@/lib/shared/types";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
+import { CharLimit } from "@/components/ui/char-limit";
 
 interface SubEntriesManagerProps {
   entries: SubEntry[];
@@ -87,13 +88,14 @@ export function SubEntriesManager({
               name={`sub-entry-desc-${index}`}
               hint="e.g., station name, time slot"
             >
-              <Input
-                id={`sub-entry-desc-${index}`}
-                value={entry.description || ''}
-                onChange={(e) => updateEntry(index, 'description', e.target.value)}
-                placeholder="e.g., WABC morning show"
-                maxLength={500}
-              />
+              <CharLimit max={500}>
+                <Input
+                  id={`sub-entry-desc-${index}`}
+                  value={entry.description || ''}
+                  onChange={(e) => updateEntry(index, 'description', e.target.value)}
+                  placeholder="e.g., WABC morning show"
+                />
+              </CharLimit>
             </FormField>
           </div>
           {entries.length > 1 && (
@@ -123,6 +125,11 @@ export function SubEntriesManager({
           <PlusIcon className="h-4 w-4 mr-2" />
           Add entry
         </Button>
+      )}
+      {entries.length >= maxEntries && (
+        <p className="text-sm text-muted-foreground" role="status">
+          {maxEntries} entries is the most one method holds. Remove one to add another.
+        </p>
       )}
     </div>
   );

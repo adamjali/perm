@@ -84,6 +84,13 @@ export interface CaseLookupResult {
    * not say "no record" for those two.
    */
   dolMiss?: DiscoveryMiss | null;
+  /**
+   * The daily census that places a case in its month couldn't be read or is
+   * over eight days old, so `cohort` and `statusOutlook` are empty for that
+   * reason, not because the month holds nothing. The page says so instead of
+   * dropping those sections silently (Sep 29 2026 audit).
+   */
+  censusMissing?: boolean;
 }
 
 /** `G-100-24158-078964` and friends, normalised for a primary-key lookup. */
@@ -292,6 +299,7 @@ export async function lookupCase(
 
   return {
     caseNumber,
+    censusMissing: census === null,
     live: live
       ? {
           status: String(live.current_status),

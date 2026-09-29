@@ -86,7 +86,8 @@ export default async function GreenCardTimelinesPage() {
             </h2>{" "}
             <p className="mt-2 max-w-2xl text-base text-foreground/70">
               The bar is the middle half of the reports and the dark tick is the median. Every timeline counts here,
-              shared on the board or not.
+              shared on the board or not
+              {board.scanCapped ? `, up to the newest ${board.scanCap.toLocaleString("en-US")}` : ""}.
             </p>
             <div className="mt-5">
               <StageMedians metrics={board.metrics} />
@@ -100,8 +101,11 @@ export default async function GreenCardTimelinesPage() {
             {board.open ? (
               <>
                 <p className="mt-2 max-w-2xl text-base text-foreground/70">
-                  One row per shared timeline, newest first. Each mark sits at the day it happened, counted from the
-                  PERM filing. No case number or employer is shown.
+                  {board.shared > board.rows.length
+                    ? `The newest ${board.rows.length.toLocaleString("en-US")} of ${board.shared.toLocaleString("en-US")} shared timelines, one row each. `
+                    : "One row per shared timeline, newest first. "}
+                  Each mark sits at the day it happened, counted from the PERM filing. No case number or employer is
+                  shown.
                 </p>
                 <div className="mt-4">
                   <BoardKey />

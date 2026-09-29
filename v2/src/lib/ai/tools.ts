@@ -14,6 +14,14 @@
 import { tool } from 'ai';
 import { z } from 'zod';
 import { CASE_STATUSES, PROGRESS_STATUSES } from '../../../convex/lib/perm/statusTypes';
+import { INPUT_LIMITS } from '../../../convex/lib/validation';
+
+/**
+ * The server's own job-description limit (cases and templates both). The chat
+ * schemas said 10,000 until Sep 29 2026, so a longer paste failed here with a
+ * message only the model saw.
+ */
+const JOB_DESCRIPTION_MAX = INPUT_LIMITS.LONG;
 
 // =============================================================================
 // Output Schemas (for type safety in API route)
@@ -1060,7 +1068,7 @@ export const UpdateCaseInputSchema = z.object({
   // ==========================================================================
   // JOB DESCRIPTION
   // ==========================================================================
-  jobDescription: z.string().max(10000).optional().describe('Update job description text (max 10,000 characters)'),
+  jobDescription: z.string().max(JOB_DESCRIPTION_MAX).optional().describe('Update job description text (max 50,000 characters)'),
   jobDescriptionPositionTitle: z.string().optional().describe('Update job description position title'),
 
   // ==========================================================================
@@ -1922,8 +1930,8 @@ export const CreateJobDescriptionTemplateInputSchema = z.object({
   description: z
     .string()
     .min(1)
-    .max(10000)
-    .describe('Job description text (max 10,000 characters)'),
+    .max(JOB_DESCRIPTION_MAX)
+    .describe('Job description text (max 50,000 characters)'),
 });
 
 export type CreateJobDescriptionTemplateInput = z.infer<typeof CreateJobDescriptionTemplateInputSchema>;
@@ -1941,9 +1949,9 @@ export const UpdateJobDescriptionTemplateInputSchema = z.object({
   description: z
     .string()
     .min(1)
-    .max(10000)
+    .max(JOB_DESCRIPTION_MAX)
     .optional()
-    .describe('New job description text'),
+    .describe('New job description text (max 50,000 characters)'),
 });
 
 export type UpdateJobDescriptionTemplateInput = z.infer<typeof UpdateJobDescriptionTemplateInputSchema>;
@@ -2017,7 +2025,7 @@ export const createJobDescriptionTemplateTool = tool({
 
 ## PARAMETERS:
 - name (required): Template name - usually the position title (e.g., "Software Engineer", "Data Analyst")
-- description (required): The job description text (max 10,000 characters)
+- description (required): The job description text (max 50,000 characters)
 
 ## BEHAVIOR:
 - Creates a new template with the given name and description
@@ -2033,7 +2041,7 @@ export const createJobDescriptionTemplateTool = tool({
 ## NOTES:
 - Always confirm the name and description with the user before creating
 - Template names should be descriptive (usually position titles)
-- Max 10,000 characters for description`,
+- Max 50,000 characters for description`,
 
   inputSchema: CreateJobDescriptionTemplateInputSchema,
 });

@@ -85,7 +85,7 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
         </p>
       ) : null}{" "}
       <p id={noteId} className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        One email a day at most, whatever you follow. You confirm by email first, and one click stops it. We send one confirmation every 10 minutes per address.
+        One email a day at most, whatever you follow. You confirm by email first, and one click stops it. One address can follow 100 employers, and we send one confirmation every 10 minutes per address.
       </p>
     </form>
   );

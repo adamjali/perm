@@ -39,6 +39,7 @@ import { prepareUpdatePayload } from "@/lib/forms/prepareUpdatePayload";
 import { ConvexError } from "convex/values";
 import { analytics } from "@/lib/analytics";
 import { captureError, trackValidationError } from "@/lib/sentry";
+import { caseWriteErrorMessage } from "@/lib/caseWriteErrors";
 
 export interface UseFormSubmissionProps {
   mode: "add" | "edit";
@@ -236,7 +237,9 @@ export function useFormSubmission({
             toast.error("Session expired. Please sign in again.");
             onAuthError?.();
           } else {
-            toast.error("Failed to save case. Please try again.");
+            // The write limit and any stated refusal say what happened; only
+            // an unexplained failure gets the generic line.
+            toast.error(caseWriteErrorMessage(error, "Failed to save case. Please try again."));
           }
         }
       } finally {

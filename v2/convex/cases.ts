@@ -7,6 +7,7 @@ import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib
 import { rateLimiter } from "./rateLimitConfig";
 import { logCreate, logUpdate, logDelete } from "./lib/audit";
 import { validateInputLengths, INPUT_LIMITS } from "./lib/validation";
+import { readUserCases, USER_CASES_MAX } from "./lib/userCases";
 import { encryptToken, decryptToken, isEncryptedToken } from "./lib/crypto";
 import {
   createCaseListPagination,
@@ -157,14 +158,8 @@ export const list = query({
       return [];
     }
 
-    // Query cases for user using the by_user_id index with reasonable limit
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
-
-    // Filter out deleted cases
-    let filteredCases = cases.filter((c) => c.deletedAt === undefined);
+    // Live cases, newest first (convex/lib/userCases.ts)
+    let filteredCases = (await readUserCases(ctx, userId)).cases;
 
     // Apply status filter if provided
     if (args.status !== undefined) {
@@ -2775,9 +2770,9 @@ export const importCases = mutation({
  * Returns paginated case card data with metadata
  * Gracefully handles unauthenticated state by returning empty results
  *
- * NOTE: This query loads cases then applies client-side pagination.
- * For users with very large case counts (1000+), consider implementing
- * cursor-based pagination with indexed deadline fields.
+ * It reads the account's live cases (newest first, up to USER_CASES_MAX)
+ * and then filters, sorts and pages them in memory; `pagination.truncated`
+ * says when the account holds more than one read returns.
  */
 export const listFiltered = query({
   args: {
@@ -2822,14 +2817,10 @@ export const listFiltered = query({
       };
     }
 
-    // 2. Query cases with ownership filter and reasonable limit
-    const allCases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
-
-    // 3. Filter out soft-deleted cases
-    let filteredCases = allCases.filter((c) => c.deletedAt === undefined);
+    // 2-3. Live cases, newest first; `truncated` says when the account holds
+    // more than one read returns (convex/lib/userCases.ts)
+    const read = await readUserCases(ctx, userId);
+    let filteredCases = read.cases;
     const totalUnfilteredCount = filteredCases.length;
 
     // 4. Apply status filter
@@ -2899,8 +2890,25 @@ export const listFiltered = query({
         pageSize,
         totalCount,
         totalUnfilteredCount,
+        truncated: read.truncated,
       }),
     };
+  },
+});
+
+/**
+ * Whether the account holds more live cases than one read returns
+ * (USER_CASES_MAX). The case list, dashboard, calendar and timeline show a
+ * notice when it does (src/components/cases/CaseCapNotice.tsx), so no page
+ * leaves cases out without saying so.
+ */
+export const readCoverage = query({
+  args: {},
+  handler: async (ctx): Promise<{ truncated: boolean; max: number }> => {
+    const userId = await getCurrentUserIdOrNull(ctx);
+    if (userId === null) return { truncated: false, max: USER_CASES_MAX };
+    const { truncated } = await readUserCases(ctx, userId);
+    return { truncated, max: USER_CASES_MAX };
   },
 });
 
@@ -2933,14 +2941,8 @@ export const listFilteredIds = query({
       return [];
     }
 
-    // 2. Query cases with ownership filter
-    const allCases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
-
-    // 3. Filter out soft-deleted cases
-    let filteredCases = allCases.filter((c) => c.deletedAt === undefined);
+    // 2-3. Live cases, newest first (convex/lib/userCases.ts)
+    let filteredCases = (await readUserCases(ctx, userId)).cases;
 
     // 4. Apply status filter
     if (args.status !== undefined) {
@@ -3125,15 +3127,9 @@ export const listForSync = internalQuery({
     userId: v.id("users"),
   },
   handler: async (ctx, args) => {
-    // Query all cases for this user
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
-      .take(1000);
-
-    // Filter out deleted cases and return minimal fields
+    // Live cases, newest first (convex/lib/userCases.ts)
+    const { cases } = await readUserCases(ctx, args.userId);
     return cases
-      .filter((c) => c.deletedAt === undefined)
       .map((c) => ({
         _id: c._id,
         employerName: c.employerName,
@@ -3157,15 +3153,10 @@ export const getSyncEligibleCaseCount = query({
       return 0;
     }
 
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
+    const { cases } = await readUserCases(ctx, userId);
 
-    // Count non-deleted cases with sync enabled (not explicitly false)
-    return cases.filter(
-      (c) => c.deletedAt === undefined && c.calendarSyncEnabled !== false
-    ).length;
+    // Count live cases with sync enabled (not explicitly false)
+    return cases.filter((c) => c.calendarSyncEnabled !== false).length;
   },
 });
 
@@ -3183,12 +3174,9 @@ export const getCasesWithEventsCount = query({
       return { caseCount: 0, estimatedEventCount: 0 };
     }
 
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
+    const { cases } = await readUserCases(ctx, userId);
 
-    // Count non-deleted cases with calendar events
+    // Count live cases with calendar events
     let caseCount = 0;
     let estimatedEventCount = 0;
 

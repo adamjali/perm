@@ -154,6 +154,7 @@ export const createAssistantMessage = mutation({
         processingTimeMs: v.optional(v.number()),
         model: v.optional(v.string()),
         tokenCount: v.optional(v.number()),
+        cutShort: v.optional(v.union(v.literal("length"), v.literal("steps"))),
       })
     ),
   },

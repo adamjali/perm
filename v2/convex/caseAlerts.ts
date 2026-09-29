@@ -125,6 +125,12 @@
  *
  * Following an employer (convex/employerAlerts.ts, Sep 26 2026) claimed no
  * line either: its confirmations share the 15 and its alerts share the 18.
+ * A full CONFIRMATION pool no longer turns people away (Sep 29 2026): the
+ * request waits in convex/confirmationQueue.ts and goes out while Resend's
+ * own count for the UTC day is under 80, so these confirmation lines are
+ * the fast path, not the ceiling. Seventeen people were refused on Sep 28
+ * and 29 while the account had sent 57 of its 100.
+ *
  * Every limit above lives once in convex/lib/alertBudgets.ts, which the
  * senders enforce and the admin panel reports, and a test holds that table
  * to this one. Every ALERT (not confirmation) now leaves through
@@ -201,6 +207,8 @@ import {
   CASE_CONFIRMATION_KEY,
   noteRefusal,
 } from "./lib/alertBudgets";
+import { connectionThrottleReply } from "./lib/throttleReply";
+import { queueConfirmation, replayArgs } from "./confirmationQueue";
 
 const log = createLogger("CaseAlerts");
 
@@ -258,9 +266,6 @@ export const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
  */
 export const MAX_CASES_PER_ADDRESS = 100;
 
-/** Shown when either limit trips. Says nothing about the address. */
-const THROTTLED_REPLY =
-  "We can't send confirmation emails right now. Please try again in a little while.";
 
 /**
  * One reply for every outcome on an existing address.
@@ -397,6 +402,13 @@ export const subscribe = internalMutation({
     newsletter: v.optional(v.boolean()),
     /** Caller IP from the HTTP layer, or "unknown" when none is resolvable. */
     ip: v.optional(v.string()),
+    /**
+     * Set only by the confirmation queue's drain (convex/confirmationQueue.ts)
+     * when it replays a request a full pool held back: the per-IP limit was
+     * passed on the first call and the drain measured the account's room, so
+     * both are skipped. Every per-address check still runs.
+     */
+    fromQueue: v.optional(v.boolean()),
   },
   returns: v.object({
     ok: v.boolean(),
@@ -404,6 +416,8 @@ export const subscribe = internalMutation({
     /** True only when a rate limit refused it, so the HTTP layer can answer
      *  429 for throttling and 400 for a malformed field. */
     throttled: v.optional(v.boolean()),
+    /** True when a full pool queued it (convex/confirmationQueue.ts). */
+    queued: v.optional(v.boolean()),
   }),
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
@@ -431,7 +445,7 @@ export const subscribe = internalMutation({
     // unresolvable caller together, which would let one script lock out all of
     // them at once.
     const ip = args.ip?.trim();
-    if (ip && ip !== "unknown") {
+    if (ip && ip !== "unknown" && !args.fromQueue) {
       const perIp = await checkAndRecordRateLimit(
         ctx,
         ip,
@@ -439,7 +453,7 @@ export const subscribe = internalMutation({
         SUBSCRIBE_IP_LIMIT,
       );
       if (!perIp.allowed) {
-        return { ok: false, message: THROTTLED_REPLY, throttled: true };
+        return { ok: false, message: connectionThrottleReply(perIp.resetInMs), throttled: true };
       }
     }
 
@@ -495,18 +509,26 @@ export const subscribe = internalMutation({
     // old comment here was protecting: both of those return earlier and send
     // nothing, so neither consumes the budget. A mutation is one transaction,
     // so a later throw rolls the recorded attempt back with everything else.
-    const budget = await checkAndRecordRateLimit(
-      ctx,
-      "all",
-      CASE_CONFIRMATION_KEY,
-      CONFIRMATION_GLOBAL_BUDGET,
-    );
-    if (!budget.allowed) {
-      await noteRefusal(ctx, "caseConfirm");
-      log.error("confirmation budget exhausted; refusing to send", {
-        limit: CONFIRMATION_GLOBAL_BUDGET.limit,
-      });
-      return { ok: false, message: THROTTLED_REPLY, throttled: true };
+    //
+    // A full pool QUEUES the request since Sep 29 2026 (convex/confirmationQueue.ts):
+    // still before the write, so the queued request leaves no row and no stamp.
+    if (!args.fromQueue) {
+      const budget = await checkAndRecordRateLimit(
+        ctx,
+        "all",
+        CASE_CONFIRMATION_KEY,
+        CONFIRMATION_GLOBAL_BUDGET,
+      );
+      if (!budget.allowed) {
+        log.warn("confirmation pool full; queueing", { limit: CONFIRMATION_GLOBAL_BUDGET.limit });
+        return queueConfirmation(ctx, {
+          kind: "case",
+          pool: "caseConfirm",
+          email,
+          args: replayArgs(args),
+          resetInMs: budget.resetInMs,
+        });
+      }
     }
 
     if (existing) {

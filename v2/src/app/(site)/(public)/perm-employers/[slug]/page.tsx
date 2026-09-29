@@ -111,6 +111,9 @@ import {
 // write, and 21k pages x weekly expiry was most of the 200k. The stats
 // here move quarterly; the live band on a tail page moving a few weeks
 // late is invisible; the top-100 pages rebuild with every deploy anyway.
+/** Newest live filings shown on the page; the case search holds the rest. */
+const RECENT_LIVE_SHOWN = 8;
+
 export const revalidate = 2592000;
 
 const KIND = "employer" as const;
@@ -394,6 +397,7 @@ export default async function EmployerPage({
             moves={liveStages ? employerMoves(liveStages).filter((m) => m.slug === slug) : []}
             logFrom={liveStages?.logFrom ?? null}
             asOf={liveStages?.asOf ?? null}
+            docMissing={!liveStages}
           />
         }
         wait={
@@ -440,7 +444,8 @@ export default async function EmployerPage({
       // the gap Adam hit: a case he KNEW existed was invisible on its own
       // sponsor's page until DOL's quarterly publication. Indexed point
       // read over the small remainder table; degrades to an absent band.
-      recentLiveByEmployer(canonicalSlug, 8).catch(() => []),
+      // One over what the box shows, so it can say more exist and link them.
+      recentLiveByEmployer(canonicalSlug, RECENT_LIVE_SHOWN + 1).catch(() => []),
       // The steps BEFORE the PERM: the wage requests and H-1B LCAs this
       // employer has filed. Two halves each: the live table from DOL's daily
       // check (status, pending included) and DOL's quarterly file (decided,
@@ -669,6 +674,7 @@ export default async function EmployerPage({
         moves={stagesDoc ? employerMoves(stagesDoc).filter((m) => m.slug === canonicalSlug) : []}
         logFrom={stagesDoc?.logFrom ?? null}
         asOf={stagesDoc?.asOf ?? null}
+        docMissing={!stagesDoc}
       />
 
       {/* The newest individual filings, live from DOL - visible here months
@@ -687,7 +693,7 @@ export default async function EmployerPage({
           <ul className="mt-4 divide-y divide-border/60">
             {/* Keyed Fragment + space: mapped siblings glue their text for
                 every extractor. Third instance of this class tonight. */}
-            {recentLive.map((c) => (
+            {recentLive.slice(0, RECENT_LIVE_SHOWN).map((c) => (
               <Fragment key={c.caseNumber}>{" "}
               <li
                 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-2 text-base"
@@ -708,7 +714,19 @@ export default async function EmployerPage({
               </li>
               </Fragment>
             ))}
-          </ul>
+          </ul>{" "}
+          <p className="mt-3 text-sm">
+            {recentLive.length > RECENT_LIVE_SHOWN
+              ? `The ${RECENT_LIVE_SHOWN} newest. `
+              : ""}
+            <Link
+              href={`/case-search?q=${encodeURIComponent(row.name)}`}
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              Every filing by this employer
+            </Link>{" "}
+            is in the case search, live and published together.
+          </p>
         </section>
       ) : null}
 

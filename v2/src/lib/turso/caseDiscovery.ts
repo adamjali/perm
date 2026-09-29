@@ -202,13 +202,9 @@ export function logBudgetRefusal(tag: string, caseNumber: string, now: Date): vo
   console.error(`[${tag}] daily budget refused (first refusal today; further ones this day are not logged)`, caseNumber);
 }
 
-/**
- * Why a discovery came back empty. "none": DOL answered and holds no such
- * number. "unavailable": DOL did not answer in time or errored, so nothing is
- * known. "not-asked": DOL was not asked (not a PERM number, or the daily
- * budget refused or could not be counted). Only "none" may read as "no record".
- */
-export type DiscoveryMiss = "none" | "unavailable" | "not-asked";
+/** Why a discovery came back empty: see src/lib/dolMiss.ts. */
+export type { DiscoveryMiss } from "@/lib/dolMiss";
+import type { DiscoveryMiss } from "@/lib/dolMiss";
 
 export interface DiscoveryOutcome {
   found: DiscoveredCase | null;
@@ -249,7 +245,7 @@ export async function discoverCaseOutcome(
   try {
     if (!(await underDailyBudget(now))) {
       logBudgetRefusal("caseDiscovery", caseNumber, now);
-      return miss("not-asked");
+      return miss("budget");
     }
   } catch (e) {
     console.error("[caseDiscovery] budget write failed:", e);

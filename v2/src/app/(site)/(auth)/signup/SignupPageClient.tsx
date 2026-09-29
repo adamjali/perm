@@ -41,6 +41,8 @@ import {
   captureTurnstileServiceError,
   authBreadcrumb,
 } from "@/lib/auth/auth-telemetry";
+import { charLimitMessage } from "@/components/ui/char-limit";
+import { authRateLimitText } from "@/lib/auth/rateLimitText";
 
 type SignupStep = "credentials" | "verification";
 
@@ -280,7 +282,7 @@ export function SignupPageClient() {
         return;
       }
       if (isRateLimitError(message)) {
-        toast.error("Too many attempts. Please wait a moment and try again.");
+        toast.error(authRateLimitText(message));
         return;
       }
       if (isNetworkError(message)) {
@@ -330,7 +332,7 @@ export function SignupPageClient() {
         // "Server Error" in production, so a wrong or stale code lands here.
         toast.error("That code didn’t work. Check it, or go back and resubmit for a new one.");
       } else if (isRateLimitError(message)) {
-        toast.error("Too many attempts. Please wait a moment and try again.");
+        toast.error(authRateLimitText(message));
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {
@@ -472,7 +474,13 @@ export function SignupPageClient() {
             onBlur={() => handleBlur("name")}
             state={nameValidation.state}
             error={fieldMessage(nameValidation)}
-            helperText="Letters, numbers, and punctuation only. No web links or emojis."
+            helperText={[
+              "Letters, numbers, and punctuation only. No web links or emojis.",
+              // The field stops at 80: say so as it nears it, not after.
+              charLimitMessage(name.length, 80, false),
+            ]
+              .filter(Boolean)
+              .join(" ")}
             disabled={isLoading}
             maxLength={80}
           />

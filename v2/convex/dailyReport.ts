@@ -81,6 +81,8 @@ export const facts = internalQuery({
     const outbox = await ctx.db.query("alertOutbox").order("desc").take(2000);
     const queued = outbox.filter((r) => r.status === "queued");
 
+    const confirmationWaiting = await ctx.db.query("confirmationQueue").withIndex("by_queuedAt").take(200);
+
     const today = etDay(now);
     const yesterday = etDay(now - DAY_MS);
     const refusals = (await ctx.db.query("budgetRefusals").order("desc").take(200)).filter(
@@ -102,7 +104,11 @@ export const facts = internalQuery({
         queued: queued.length,
         oldestQueuedAt: queued.length ? Math.min(...queued.map((r) => r._creationTime)) : null,
       },
-      refusals: refusals.map((r) => ({ day: r.day, pool: r.pool, count: r.count })),
+      refusals: refusals.map((r) => ({ day: r.day, pool: r.pool, count: r.count, queued: r.queued ?? 0 })),
+      confirmationQueue: {
+        waiting: confirmationWaiting.length,
+        oldestQueuedAt: confirmationWaiting[0]?.queuedAt ?? null,
+      },
     };
   },
 });
@@ -112,8 +118,12 @@ export const facts = internalQuery({
  * On failure, the reason as a short phrase for the report line.
  */
 async function resendDay(now: number): Promise<ResendDay | string> {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) return "RESEND_API_KEY is not set";
+  // The deployment sends with AUTH_RESEND_KEY and never had a RESEND_API_KEY,
+  // so the report said "not set" every morning (Sep 29 2026). Use the sending
+  // key when no separate reading key exists; a send-only key answers 401 and
+  // the line below says so instead.
+  const key = process.env.RESEND_API_KEY || process.env.AUTH_RESEND_KEY;
+  if (!key) return "no Resend key is set (RESEND_API_KEY or AUTH_RESEND_KEY)";
   const since = now - DAY_MS;
   const out: ResendDay = { sent: 0, bounced: 0, complained: 0 };
   let after: string | null = null;

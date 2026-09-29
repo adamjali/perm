@@ -426,7 +426,8 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
         publishedFront={publishedFront}
         publishedAsOf={publishedAsOf}
         mirrorSize={mirrorSize || null}
-        dolMiss={result?.dolMiss ?? null}
+        // A lookup that threw is "our records couldn't be read", never "not found".
+        dolMiss={result ? (result.dolMiss ?? null) : "records"}
       />
     );
   }

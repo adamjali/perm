@@ -438,7 +438,9 @@ export async function searchByName(
   if (text.length > 120) return [];
   const needle = text.trim();
   if (needle.length < 2) return [];
-  const take = Math.min(Math.max(1, Math.floor(limit)), 200);
+  // 501: the name-search route asks for one over what it shows, so it can
+  // say "more match" instead of implying it found everything.
+  const take = Math.min(Math.max(1, Math.floor(limit)), 501);
 
   // `%` and `_` are LIKE wildcards, so a visitor typing one would otherwise
   // widen their own search silently. Escaped, with the escape character

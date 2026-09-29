@@ -25,6 +25,7 @@ import {
   type FlagFilters,
 } from "@/lib/flagFilter";
 import { nextSort, sortRows, type SortColumn, type SortState } from "@/lib/tableSort";
+import { RequestFailed } from "@/components/tools/RequestFailed";
 
 /**
  * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
@@ -420,7 +421,7 @@ export function FlagCaseBrowser({
     p.set("s", String(query.n));
     return `${program.api}?${p.toString()}`;
   }, [query, program.api]);
-  const { data: search, failed: searchFailed } = usePublicQuery<{ cases: FlagCaseRow[]; disclosed?: FlagDisclosedRow[] }>(searchUrl);
+  const { data: search, failed: searchFailed, failure: searchFailure, retry: retrySearch } = usePublicQuery<{ cases: FlagCaseRow[]; disclosed?: FlagDisclosedRow[] }>(searchUrl);
   const searching = query.employer.length >= 2;
   const halves = useMemo(
     () => (search ? mergeHalves(search.cases, search.disclosed ?? []) : null),
@@ -474,7 +475,7 @@ export function FlagCaseBrowser({
     if (cursor) p.set("cursor", cursor);
     return `${program.api}?${p.toString()}`;
   }, [kind, month, order, cursors, withheld, program.api]);
-  const { data: page, failed: listFailed } = usePublicQuery<FlagListPage>(listUrl);
+  const { data: page, failed: listFailed, failure: listFailure, retry: retryList } = usePublicQuery<FlagListPage>(listUrl);
 
   return (
     <div className="space-y-10">
@@ -567,7 +568,7 @@ export function FlagCaseBrowser({
           </p>
         ) : null}
         {searching && searchFailed ? (
-          <p className="mt-4 text-base text-foreground/80">The search didn&apos;t load. Try again in a moment.</p>
+          <RequestFailed what="The search" failure={searchFailure} onRetry={retrySearch} className="mt-4 border-2 border-border bg-tint-primary p-4" />
         ) : null}
         {searching && search && found === 0 ? (
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
@@ -703,7 +704,9 @@ export function FlagCaseBrowser({
             </select>
           </label>
         </div>{" "}
-        {listFailed ? <p className="mt-4 text-base text-foreground/80">The list didn&apos;t load.</p> : null}
+        {listFailed ? (
+          <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 border-2 border-border bg-tint-primary p-4" />
+        ) : null}
         {!withheld && !listFailed && page === undefined ? (
           <p className="mt-4 text-base text-foreground/70">Loading…</p>
         ) : null}

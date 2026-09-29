@@ -109,11 +109,20 @@ describe("askDol tells a DOL answer from a DOL failure", () => {
   });
 
   it("a discovery that DOL did not answer says so, and is not a miss", async () => {
+    oneMock.mockResolvedValue({ n: 3 }); // budget well under cap, so DOL IS asked
     const down = vi.fn().mockRejectedValue(new Error("TimeoutError"));
     const outcome = await discoverCaseOutcome("G-100-26125-868956", down as never);
     expect(outcome.found).toBeNull();
-    expect(["unavailable", "not-asked"]).toContain(outcome.miss);
-    expect(outcome.miss).not.toBe("none");
+    expect(outcome.miss).toBe("unavailable");
+  });
+
+  it("a spent daily allowance is 'budget', and a counter that failed is 'not-asked'", async () => {
+    const f = vi.fn();
+    oneMock.mockResolvedValue({ n: Number.MAX_SAFE_INTEGER });
+    expect((await discoverCaseOutcome("G-100-26125-868956", f as never)).miss).toBe("budget");
+    oneMock.mockRejectedValue(new Error("db down"));
+    expect((await discoverCaseOutcome("G-100-26125-868956", f as never)).miss).toBe("not-asked");
+    expect(f).not.toHaveBeenCalled();
   });
 });
 

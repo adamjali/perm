@@ -30,6 +30,8 @@ const log = createLogger("AlertOutbox");
 const ADDRESSES_PER_RUN = 40;
 /** Items one bundle carries; anything past this goes out tomorrow. */
 const ITEMS_PER_BUNDLE = 12;
+/** Said in a bundle that stopped at ITEMS_PER_BUNDLE with more waiting. */
+export const MORE_TOMORROW = `More updates are waiting than one email carries (${ITEMS_PER_BUNDLE}). They come in tomorrow's email.`;
 /** Failed sends before an item is given up and recorded as an error. */
 const MAX_ATTEMPTS = 6;
 /** Sent, dropped and failed rows are kept this long for the admin panel. */
@@ -216,22 +218,28 @@ const itemValidator = v.object({
   createdAt: v.number(),
 });
 
-/** What waits for one address, or nothing if it was already mailed today. */
+/**
+ * What waits for one address, or nothing if it was already mailed today.
+ * `more` says items beyond this bundle are waiting, so the email can say
+ * they come tomorrow instead of implying it carried everything (Sep 29 2026).
+ */
 export const waitingFor = internalQuery({
   args: { email: v.string(), day: v.string() },
-  returns: v.array(itemValidator),
+  returns: v.object({ items: v.array(itemValidator), more: v.boolean() }),
   handler: async (ctx, args) => {
     const recipient = await ctx.db
       .query("alertRecipients")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .unique();
-    if (recipient?.lastSentDay === args.day) return [];
+    if (recipient?.lastSentDay === args.day) return { items: [], more: false };
     const rows = await ctx.db
       .query("alertOutbox")
       .withIndex("by_email_status", (q) => q.eq("email", args.email).eq("status", "queued"))
-      .take(ITEMS_PER_BUNDLE);
-    return rows
+      .take(ITEMS_PER_BUNDLE + 1);
+    const more = rows.length > ITEMS_PER_BUNDLE;
+    const items = rows
       .sort((a, b) => a.createdAt - b.createdAt)
+      .slice(0, ITEMS_PER_BUNDLE)
       .map((r) => ({
         _id: r._id,
         kind: r.kind,
@@ -242,6 +250,7 @@ export const waitingFor = internalQuery({
         summary: r.summary,
         createdAt: r.createdAt,
       }));
+    return { items, more };
   },
 });
 
@@ -307,11 +316,12 @@ export function bundleSubject(items: { summary: { title: string; line: string } 
 }
 
 /** The plain-text bundle. It must say everything the HTML does. */
-export function bundleText(items: Waiting[], prefsUrl: string, stopUrl: string): string {
+export function bundleText(items: Waiting[], prefsUrl: string, stopUrl: string, more = false): string {
   return [
     `${items.length} things you follow moved since we last wrote.`,
     "",
     ...items.flatMap((i) => [`${i.summary.title}`, `  ${i.summary.line}`, `  ${i.summary.url}`, ""]),
+    ...(more ? [MORE_TOMORROW, ""] : []),
     "Each figure is DOL's or the State Department's own published record. None of it is a prediction of your case.",
     "",
     `Everything this address follows, and turning any of it off: ${prefsUrl}`,
@@ -356,7 +366,8 @@ export const sendBundles = internalAction({
     let held = 0;
 
     for (const email of addresses.slice(0, ADDRESSES_PER_RUN)) {
-      const items = (await ctx.runQuery(internal.alertOutbox.waitingFor, { email, day })) as Waiting[];
+      const waiting = await ctx.runQuery(internal.alertOutbox.waitingFor, { email, day });
+      const items = waiting.items as Waiting[];
       if (items.length === 0) {
         held += 1; // already mailed today; tomorrow's first run takes it
         continue;
@@ -378,13 +389,14 @@ export const sendBundles = internalAction({
           stopUrl = oneClickUnsubscribeUrl(token, "alerts");
           const prefsUrl = await prefsLink(email, unsubscribeSecret());
           subject = bundleSubject(items);
-          text = bundleText(items, prefsUrl, stopUrl);
+          text = bundleText(items, prefsUrl, stopUrl, waiting.more);
           html = await renderOrUndefined(ctx, async () => {
             const { DailyUpdate } = await import("../src/emails/DailyUpdate");
             return DailyUpdate({
               items: items.map((i) => ({ ...i.summary, kind: i.kind })),
               prefsUrl,
               stopUrl,
+              moreWaiting: waiting.more,
             });
           });
         }

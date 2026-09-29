@@ -36,6 +36,9 @@ export const MAX_DOCUMENT_SIZE_BYTES = 20 * 1024 * 1024;
 /** Maximum number of documents per case. */
 export const MAX_DOCUMENTS_PER_CASE = 50;
 
+/** What the upload refusal says, on the server and before an upload starts. */
+export const DOCUMENT_CAP_MESSAGE = `${MAX_DOCUMENTS_PER_CASE} documents is the most a case can hold. Delete one to add another.`;
+
 /** Maximum display name length for document filenames. */
 export const MAX_DOCUMENT_NAME_LENGTH = 255;
 

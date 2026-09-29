@@ -90,43 +90,40 @@ async function enrichNotificationWithCase<T extends Doc<"notifications">>(
 }
 
 /**
- * Encode cursor for pagination (compound format: timestamp|_id).
- * Ensures unique cursors even when notifications have identical timestamps.
+ * A page cursor is the `_creationTime` of the last notification a page LOOKED
+ * AT (not the last one it returned), so a filtered tab resumes exactly where
+ * its scan stopped. Every index ends in `_creationTime`, so the next page is a
+ * range read, never a re-read of everything newer.
+ *
+ * A client may still hold the older `<createdAt>|<id>` form for a moment across
+ * a deploy; that reads as "older than createdAt", which at worst repeats a row
+ * the list already de-duplicates by id.
  */
-function encodeCursor(createdAt: number, id: string): string {
-  return `${createdAt}|${id}`;
+function encodeCursor(creationTime: number): string {
+  return `c:${creationTime}`;
+}
+
+function decodeCursor(cursor: string | undefined): number | null {
+  if (!cursor) return null;
+  const raw = cursor.startsWith("c:") ? cursor.slice(2) : cursor.split("|")[0];
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
 }
 
 /**
- * Decode cursor from pagination string.
- * Returns null if cursor is invalid.
+ * How many notifications one page may look through to fill itself. A filtered
+ * tab (one type, say) can sit behind thousands of newer rows of other types;
+ * past this the page returns what it found with `hasMore` and a cursor, and the
+ * next page carries on from there. A notification is well under 1 KB, so this
+ * stays far inside Convex's 32,000-document and 16 MiB read limits.
  */
-function decodeCursor(cursor: string): { time: number; id: string | null } | null {
-  const [timeStr, cursorId] = cursor.split("|");
-  const cursorTime = parseInt(timeStr!, 10);
-  if (isNaN(cursorTime)) return null;
-  return { time: cursorTime, id: cursorId ?? null };
-}
+export const NOTIFICATION_PAGE_SCAN_MAX = 4_000;
 
 /**
- * Filter notifications that come before the cursor (for descending pagination).
+ * The most notifications the stats query counts. Past it the result says so
+ * (`capped`) instead of stopping at a round number without a word.
  */
-function filterByCursor<T extends { createdAt: number; _id: string }>(
-  items: T[],
-  cursor: string | undefined
-): T[] {
-  if (!cursor) return items;
-
-  const decoded = decodeCursor(cursor);
-  if (!decoded) return items;
-
-  if (decoded.id) {
-    return items.filter(
-      (n) => n.createdAt < decoded.time || (n.createdAt === decoded.time && n._id < decoded.id!)
-    );
-  }
-  return items.filter((n) => n.createdAt < decoded.time);
-}
+export const NOTIFICATION_STATS_MAX = 20_000;
 
 /**
  * Get count of unread notifications for the current user.
@@ -224,62 +221,52 @@ export const getNotifications = query({
       };
     }
 
-    // Start building query
-    let notificationsQuery;
+    const pageSize = Math.max(1, Math.min(Math.floor(limit), 100));
+    const after = decodeCursor(cursor);
+    const typeSet =
+      filters?.type !== undefined && filters.type.length > 0 ? new Set(filters.type) : null;
 
-    // Use specific index based on filters for efficiency
-    if (filters?.isRead !== undefined) {
-      // Use by_user_and_unread index when filtering by read status
-      notificationsQuery = ctx.db
-        .query("notifications")
-        .withIndex("by_user_and_unread", (q) =>
-          q.eq("userId", userId).eq("isRead", filters.isRead!)
-        );
-    } else if (filters?.caseId !== undefined) {
-      // Use by_case_id index when filtering by case
-      notificationsQuery = ctx.db
-        .query("notifications")
-        .withIndex("by_case_id", (q) => q.eq("caseId", filters.caseId!));
-    } else {
-      // Default: use by_user_id index
-      notificationsQuery = ctx.db
-        .query("notifications")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId));
+    // Every read is scoped to this user by the index itself; the case and type
+    // filters are checked row by row below, so a filtered tab keeps reading
+    // older rows until it has a full page or reaches the scan budget.
+    const isRead = filters?.isRead;
+    const rows =
+      isRead !== undefined
+        ? ctx.db
+            .query("notifications")
+            .withIndex("by_user_and_unread", (q) =>
+              after === null
+                ? q.eq("userId", userId).eq("isRead", isRead)
+                : q.eq("userId", userId).eq("isRead", isRead).lt("_creationTime", after)
+            )
+        : ctx.db
+            .query("notifications")
+            .withIndex("by_user_id", (q) =>
+              after === null
+                ? q.eq("userId", userId)
+                : q.eq("userId", userId).lt("_creationTime", after)
+            );
+
+    const page: Doc<"notifications">[] = [];
+    let scanned = 0;
+    let lastSeen: number | null = null;
+    let hasMore = false;
+    for await (const n of rows.order("desc")) {
+      if (page.length === pageSize || scanned === NOTIFICATION_PAGE_SCAN_MAX) {
+        hasMore = true;
+        break;
+      }
+      scanned++;
+      lastSeen = n._creationTime;
+      if (filters?.caseId !== undefined && n.caseId !== filters.caseId) continue;
+      if (typeSet !== null && !typeSet.has(n.type)) continue;
+      page.push(n);
     }
 
-    // Fetch notifications with limit + 1 to detect if there are more
-    const fetchLimit = limit + 1;
-    let notifications = await notificationsQuery.order("desc").take(fetchLimit);
+    const nextCursor = hasMore && lastSeen !== null ? encodeCursor(lastSeen) : null;
 
-    // Apply additional filters that couldn't be done via index
-    // Filter by case ownership if using by_case_id index (security check)
-    if (filters?.caseId !== undefined) {
-      notifications = notifications.filter((n) => n.userId === userId);
-    }
-
-    // Filter by type if specified
-    if (filters?.type !== undefined && filters.type.length > 0) {
-      const typeSet = new Set(filters.type);
-      notifications = notifications.filter((n) => typeSet.has(n.type));
-    }
-
-    // Handle cursor-based pagination
-    notifications = filterByCursor(notifications, cursor);
-
-    // Check if there are more results
-    const hasMore = notifications.length > limit;
-    const paginatedNotifications = notifications.slice(0, limit);
-
-    // Get the next cursor
-    const lastNotification = paginatedNotifications[paginatedNotifications.length - 1];
-    const nextCursor =
-      hasMore && lastNotification
-        ? encodeCursor(lastNotification.createdAt, lastNotification._id)
-        : null;
-
-    // Enrich with case info
     const enrichedNotifications = await Promise.all(
-      paginatedNotifications.map((n) => enrichNotificationWithCase(ctx, n))
+      page.map((n) => enrichNotificationWithCase(ctx, n))
     );
 
     return { notifications: enrichedNotifications, nextCursor, hasMore };
@@ -335,6 +322,7 @@ export const getNotificationStats = query({
     total: number;
     unread: number;
     byType: Record<string, number>;
+    capped: boolean;
   }> => {
     const userId = await getCurrentUserIdOrNull(ctx);
 
@@ -344,30 +332,30 @@ export const getNotificationStats = query({
         total: 0,
         unread: 0,
         byType: {},
+        capped: false,
       };
     }
 
-    // Fetch all notifications for user (limited)
-    const notifications = await ctx.db
+    // Count every notification up to NOTIFICATION_STATS_MAX, newest first,
+    // and say when the count stopped there.
+    let total = 0;
+    let unread = 0;
+    let capped = false;
+    const byType: Record<string, number> = {};
+    for await (const n of ctx.db
       .query("notifications")
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
-
-    // Calculate stats
-    const total = notifications.length;
-    const unread = notifications.filter((n) => !n.isRead).length;
-
-    // Group by type
-    const byType: Record<string, number> = {};
-    for (const notification of notifications) {
-      byType[notification.type] = (byType[notification.type] ?? 0) + 1;
+      .order("desc")) {
+      if (total === NOTIFICATION_STATS_MAX) {
+        capped = true;
+        break;
+      }
+      total++;
+      if (!n.isRead) unread++;
+      byType[n.type] = (byType[n.type] ?? 0) + 1;
     }
 
-    return {
-      total,
-      unread,
-      byType,
-    };
+    return { total, unread, byType, capped };
   },
 });
 

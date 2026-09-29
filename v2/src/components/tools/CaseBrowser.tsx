@@ -17,6 +17,7 @@ import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 // the response shape is a JSON boundary, so a field renamed on the server
 // would otherwise fail at runtime instead of at compile time.
 import type { CasePage } from "@/lib/turso/cases";
+import { RequestFailed } from "@/components/tools/RequestFailed";
 
 /** One shared empty result, so an empty page or search does not mint a new array identity per render. */
 const EMPTY_ROWS: CaseRow[] = [];
@@ -326,9 +327,9 @@ export function CaseBrowser({
     return `/api/perm-cases?${p.toString()}`;
   }, [filter, order, pageSize, cursors, pageIndex, awaitingValue, listSubmit]);
 
-  const { data: page, failed: pageFailed } = usePublicQuery<CasePage>(listUrl);
+  const { data: page, failed: pageFailed, failure: pageFailure } = usePublicQuery<CasePage>(listUrl);
 
-  const { data: lookupData, failed: caseFailed } = usePublicQuery<{
+  const { data: lookupData, failed: caseFailed, failure: caseFailure } = usePublicQuery<{
     disclosed: CaseRow | null;
     live: LiveHit | null;
   }>(
@@ -340,7 +341,7 @@ export function CaseBrowser({
   const caseLookupPending = caseQuery !== "" && lookupData === undefined && !caseFailed;
   const liveHit = lookupData?.live ?? null;
 
-  const { data: searchData, failed: nameFailed } = usePublicQuery<{
+  const { data: searchData, failed: nameFailed, failure: nameFailure } = usePublicQuery<{
     cases: CaseRow[];
     live: LiveHit[];
   }>(
@@ -507,19 +508,12 @@ export function CaseBrowser({
           </button>
         </form>
         {caseFailed ? (
-          <div className="mt-4">
-            <p className="text-base text-foreground/70">
-              The case table couldn’t be reached just now. That’s a fault at our
-              end.
-            </p>{" "}
-            <button
-              type="button"
-              className={`${BUTTON} mt-3`}
-              onClick={() => setCaseSubmit((s) => s + 1)}
-            >
-              Try again
-            </button>
-          </div>
+          <RequestFailed
+            what="The lookup"
+            failure={caseFailure}
+            onRetry={() => setCaseSubmit((s) => s + 1)}
+            className="mt-4 border-2 border-border bg-tint-primary p-4"
+          />
         ) : null}
         {caseQuery !== "" && lookupData && !caseHit && liveHit ? (
           /* Not published yet, but DOL's live system knows it - the case the
@@ -954,23 +948,17 @@ export function CaseBrowser({
         ) : null}
 
         {(searching ? nameFailed : pageFailed) ? (
-          <div className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm">
-            <p className="text-base text-foreground/70">
-              The case table couldn’t be reached just now. Nothing is missing
-              from the record; this is a fault at our end.
-            </p>{" "}
-            <button
-              type="button"
-              className={`${BUTTON} mt-3`}
-              onClick={() =>
-                searching
-                  ? setNameSubmit((s) => s + 1)
-                  : setListSubmit((s) => s + 1)
-              }
-            >
-              Try again
-            </button>
-          </div>
+          <RequestFailed
+            what={searching ? "The search" : "The case table"}
+            failure={searching ? nameFailure : pageFailure}
+            onRetry={() =>
+              searching
+                ? setNameSubmit((s) => s + 1)
+                : setListSubmit((s) => s + 1)
+            }
+            after="Nothing is missing from the record."
+            className="mt-6 border-2 border-border bg-card p-6 shadow-hard-sm"
+          />
         ) : null}
 
         {shown.length === 0 &&

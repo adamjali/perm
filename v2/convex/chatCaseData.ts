@@ -13,6 +13,7 @@ import { query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Doc } from "./_generated/dataModel";
 import { getCurrentUserIdOrNull } from "./lib/auth";
+import { readUserCases } from "./lib/userCases";
 import { buildDeadlineInput, extractActiveDeadlines, type LooseDeadlineCaseData } from "./lib/perm/deadlines";
 
 /**
@@ -228,17 +229,17 @@ export const queryCases = query({
       return { cases: [], count: 0 };
     }
 
-    // Query all cases for user using index
-    const allCases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
+    // Live cases, newest first (convex/lib/userCases.ts). `accountTruncated`
+    // goes out with the answer so the assistant can say its answer covers the
+    // newest cases only.
+    const read = await readUserCases(ctx, userId);
+    const accountTruncated = read.truncated;
 
     // Get today's date for deadline comparisons
     const todayISO = new Date().toISOString().split("T")[0] as string;
 
-    // Filter out deleted cases and apply filters
-    let filteredCases = allCases.filter((c) => c.deletedAt === undefined);
+    // Apply filters
+    let filteredCases = read.cases;
 
     // Apply caseStatus filter
     if (args.caseStatus !== undefined) {
@@ -316,7 +317,7 @@ export const queryCases = query({
 
     // Return count only if requested
     if (args.countOnly) {
-      return { count: filteredCases.length };
+      return { count: filteredCases.length, accountTruncated };
     }
 
     // Handle idsOnly mode for bulk operations (minimal data, NO limit)
@@ -333,6 +334,7 @@ export const queryCases = query({
         totalCount: filteredCases.length,
         returnedCount: minimalCases.length,
         cases: minimalCases,
+        accountTruncated,
       };
     }
 
@@ -375,6 +377,7 @@ export const queryCases = query({
     return {
       cases: projectedCases,
       count: filteredCases.length,
+      accountTruncated,
     };
   },
 });
@@ -480,14 +483,9 @@ export const getCaseSummary = query({
       };
     }
 
-    // Query all cases for user
-    const allCases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
-
-    // Filter out deleted cases
-    const activeCases = allCases.filter((c) => c.deletedAt === undefined);
+    // Live cases, newest first (convex/lib/userCases.ts)
+    const read = await readUserCases(ctx, userId);
+    const activeCases = read.cases;
 
     // Get today's date
     const todayISO = new Date().toISOString().split("T")[0] as string;
@@ -549,6 +547,7 @@ export const getCaseSummary = query({
       upcomingDeadlineCount,
       activeRfiCount,
       activeRfeCount,
+      accountTruncated: read.truncated,
     };
   },
 });

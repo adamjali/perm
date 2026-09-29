@@ -14,6 +14,7 @@ import { calculatePWDExpiration } from "@/lib/perm";
 import { formatWage } from "@/lib/wageFormat";
 import { QueueAlertForm } from "@/app/(site)/(public)/perm-processing-times/QueueAlertForm";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
+import { isLookupGap } from "@/lib/dolMiss";
 
 /**
  * A prevailing wage request (ETA-9141) by number: DOL's own status for it,
@@ -140,7 +141,7 @@ function Determination({ d }: { d: PwdDisclosedRow }) {
 export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
   const [{ row, dolMiss }, disclosed, est] = await Promise.all([
     // A failure to read our own table is also "could not settle it", never "no record".
-    lookupPwdCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "unavailable" as const })),
+    lookupPwdCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "records" as const })),
     lookupPwdDetermination(caseNumber).catch(() => null),
     getPwdEstimatorData().catch(() => null),
   ]);
@@ -189,7 +190,7 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
     );
   }
 
-  if (!row && (dolMiss === "unavailable" || dolMiss === "not-asked")) {
+  if (!row && isLookupGap(dolMiss)) {
     return <DolUnanswered caseNumber={caseNumber} label="Prevailing wage request" miss={dolMiss} />;
   }
 

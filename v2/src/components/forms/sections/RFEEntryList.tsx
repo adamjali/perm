@@ -10,6 +10,9 @@ import { useRfeFieldArray } from "@/components/forms/CaseFormContext";
 import type { CaseFormData, RFEEntry as RFEEntryType } from "@/lib/forms/case-form-schema";
 import type { ISODateString } from "@/lib/perm";
 
+/** The most RFE entries one case holds; the add button says so when it stops. */
+const RFE_ENTRIES_MAX = 50;
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -164,13 +167,13 @@ export function RFEEntryList({
   return (
     <div className="space-y-4">
       {/* Add Button */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={handleAdd}
-          disabled={hasActiveEntry || entries.length >= 50}
+          disabled={hasActiveEntry || entries.length >= RFE_ENTRIES_MAX}
           className="gap-1.5"
         >
           <PlusIcon className="h-4 w-4" />
@@ -182,6 +185,12 @@ export function RFEEntryList({
             <AlertCircle className="h-4 w-4" />
             <span>Submit or remove existing RFE first</span>
           </div>
+        )}
+
+        {!hasActiveEntry && entries.length >= RFE_ENTRIES_MAX && (
+          <p className="text-sm font-semibold text-foreground" role="status">
+            {RFE_ENTRIES_MAX} RFEs is the most a case can hold. Remove one to add another.
+          </p>
         )}
       </div>
 

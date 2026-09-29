@@ -47,6 +47,8 @@ interface EntityHit {
   href: string;
   total: number;
   kindLabel: string;
+  /** "See every match" row: the kind's index page, filtered by the query. */
+  more?: boolean;
 }
 
 /** Static destinations, built once from the same constants the navs use. */
@@ -157,10 +159,13 @@ function looksLikeMonth(q: string): string | null {
 }
 
 const ENTITY_KINDS = [
-  { kind: "employer", base: "/perm-employers", label: "Employer" },
-  { kind: "attorney", base: "/perm-attorneys", label: "Law firm" },
-  { kind: "occupation", base: "/perm-wages", label: "Occupation" },
+  { kind: "employer", base: "/perm-employers", label: "Employer", plural: "employers" },
+  { kind: "attorney", base: "/perm-attorneys", label: "Law firm", plural: "law firms" },
+  { kind: "occupation", base: "/perm-wages", label: "Occupation", plural: "occupations" },
 ] as const;
+
+/** Rows per kind in the palette. The route says whether more match. */
+const PALETTE_PER_KIND = 5;
 
 export function SearchPalette({
   open,
@@ -254,22 +259,40 @@ export function SearchPalette({
     setSearchingEntities(true);
     const t = setTimeout(async () => {
       const results = await Promise.all(
-        ENTITY_KINDS.map(async ({ kind, base, label }) => {
+        ENTITY_KINDS.map(async ({ kind, base, label, plural }) => {
           try {
+            const needle = q.slice(0, 120);
             const res = await fetch(
-              `/api/perm-entities/${kind}?q=${encodeURIComponent(q.slice(0, 120))}`,
+              `/api/perm-entities/${kind}?q=${encodeURIComponent(needle)}&limit=${PALETTE_PER_KIND}`,
             );
             if (!res.ok) return { rows: [] as EntityHit[], failed: true };
             const payload = (await res.json()) as EntityPayload;
-            return {
-              rows: payload.rows.slice(0, 5).map((r) => ({
-                name: String(r[1]),
-                href: `${base}/${String(r[0])}`,
-                total: Number(r[3]) || 0,
+            const rows: EntityHit[] = payload.rows.slice(0, PALETTE_PER_KIND).map((r) => ({
+              name: String(r[1]),
+              href: `${base}/${String(r[0])}`,
+              total: Number(r[3]) || 0,
+              kindLabel: label,
+            }));
+            // Employers DOL hasn't published yet (23% of the employers held).
+            // They were in the answer and the palette dropped them.
+            for (const h of (payload.live ?? []).slice(0, 3)) {
+              rows.push({
+                name: h.name,
+                href: `/perm-employers/${h.slug}`,
+                total: h.cases,
+                kindLabel: "Employer, not published yet",
+              });
+            }
+            if (payload.more || payload.liveMore) {
+              rows.push({
+                name: `Every ${plural.replace(/s$/, "")} matching \u201c${needle}\u201d`,
+                href: `${base}?q=${encodeURIComponent(needle)}`,
+                total: 0,
                 kindLabel: label,
-              })),
-              failed: false,
-            };
+                more: true,
+              });
+            }
+            return { rows, failed: false };
           } catch {
             return { rows: [] as EntityHit[], failed: true };
           }
@@ -493,7 +516,9 @@ export function SearchPalette({
                 >
                   <span className="min-w-0 truncate font-semibold">{h.name}</span>{" "}
                   <span className="shrink-0 font-mono text-xs text-muted-foreground data-[selected=true]:text-primary-foreground/80">
-                    {h.kindLabel} · {h.total.toLocaleString("en-US")} cases
+                    {h.more
+                      ? "More than fit here"
+                      : `${h.kindLabel} · ${h.total.toLocaleString("en-US")} ${h.total === 1 ? "case" : "cases"}`}
                   </span>
                 </Command.Item>
               ))}

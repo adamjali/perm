@@ -9,20 +9,20 @@ import { type ActionMode } from './ActionModeToggle';
 import { springConfig } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import type { ToolConfirmationState } from '@/lib/ai/tool-confirmation-types';
+import type { DisplayMessage } from '@/hooks/useChatWithPersistence';
 
 interface ChatWidgetProps {
-  messages?: Array<{
-    id: string;
-    role: 'user' | 'assistant';
-    content: string;
-    timestamp?: number;
-  }>;
+  messages?: DisplayMessage[];
   input?: string;
   onInputChange?: (value: string) => void;
   onSend?: () => void;
   onStop?: () => void;
   /** Try the failed turn again */
   onRetry?: () => void;
+  /** Pick up a reply a cap cut short */
+  onContinue?: () => void;
+  /** The failed turn's error (its own text is shown) */
+  error?: Error | null;
   status?: 'ready' | 'submitted' | 'streaming' | 'error';
   streamingContent?: string;
   onOpenHistory?: () => void;
@@ -55,6 +55,8 @@ export function ChatWidget({
   onSend = () => {},
   onStop,
   onRetry,
+  onContinue,
+  error,
   status = 'ready',
   streamingContent,
   onOpenHistory,
@@ -120,6 +122,8 @@ export function ChatWidget({
             onSend={onSend}
             onStop={onStop}
             onRetry={onRetry}
+            onContinue={onContinue}
+            error={error}
             onClose={() => setIsOpen(false)}
             status={status}
             streamingContent={streamingContent}

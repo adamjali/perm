@@ -16,8 +16,9 @@ import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 import { etDay } from "../lib/alertDelivery";
-import { bundleSubject } from "../alertOutbox";
+import { bundleSubject, MORE_TOMORROW } from "../alertOutbox";
 import { employerSubject, unheard } from "../employerAlerts";
+import { QUEUED_REPLY } from "../confirmationQueue";
 
 const SECRET = "test-unsubscribe-secret";
 const originalFetch = global.fetch;
@@ -202,26 +203,35 @@ describe("consent", () => {
     expect(row?.unsubscribedAt).toBeDefined();
   });
 
-  it("draws confirmations from the case confirmations' budget, so the Resend arithmetic is unchanged", async () => {
-    const t = createTestContext();
-    stub({});
-    let refused = 0;
-    for (let i = 0; i < 20; i++) {
-      const r = await t.mutation(internal.employerAlerts.subscribe, {
-        email: `p${i}@example.com`,
-        slug: "adobe-inc",
-        employerName: "Adobe Inc.",
-      });
-      if (r.throttled) refused += 1;
+  it("draws confirmations from the case confirmations' budget, and queues what it can't send", async () => {
+    // Fake timers: the queued requests schedule a drain, which must not run
+    // in the background and land its sends in the next test's fetch stub.
+    vi.useFakeTimers();
+    try {
+      const t = createTestContext();
+      stub({});
+      let waiting = 0;
+      for (let i = 0; i < 20; i++) {
+        const r = await t.mutation(internal.employerAlerts.subscribe, {
+          email: `p${i}@example.com`,
+          slug: "adobe-inc",
+          employerName: "Adobe Inc.",
+        });
+        if (r.message === QUEUED_REPLY) waiting += 1;
+      }
+      expect(waiting).toBe(5);
+      const charges = await t.run(async (ctx) =>
+        (await ctx.db.query("rateLimits").collect()).filter((r) => r.action === "case_subscribe_global").length,
+      );
+      expect(charges).toBe(15);
+      // The five are queued, not turned away (convex/confirmationQueue.ts).
+      const noted = await t.run(async (ctx) => ctx.db.query("budgetRefusals").take(10));
+      expect(noted.map((r) => [r.pool, r.count, r.queued])).toEqual([["caseConfirm", 0, 5]]);
+      const q = await t.run(async (ctx) => ctx.db.query("confirmationQueue").take(10));
+      expect(q.map((r) => r.kind)).toEqual(["employer", "employer", "employer", "employer", "employer"]);
+    } finally {
+      vi.useRealTimers();
     }
-    expect(refused).toBe(5);
-    const charges = await t.run(async (ctx) =>
-      (await ctx.db.query("rateLimits").collect()).filter((r) => r.action === "case_subscribe_global").length,
-    );
-    expect(charges).toBe(15);
-    // The five turned away are counted, for the admin panel's upgrade signal.
-    const noted = await t.run(async (ctx) => ctx.db.query("budgetRefusals").take(10));
-    expect(noted.map((r) => [r.pool, r.count])).toEqual([["caseConfirm", 5]]);
   });
 });
 
@@ -397,6 +407,33 @@ describe("one email a day, whatever the address follows", () => {
     const rows = await t.run(async (ctx) => ctx.db.query("alertOutbox").collect());
     expect(rows.map((r) => r.status)).toEqual(["failed", "failed"]);
     expect(rows[0]!.attempts).toBe(6);
+  });
+
+  it("says more are waiting when a bundle stops at its cap, and keeps them for tomorrow", async () => {
+    const t = createTestContext();
+    const { sends } = stub({});
+    await t.run(async (ctx) => {
+      for (let i = 0; i < 13; i++) {
+        await ctx.db.insert("alertOutbox", {
+          email: "m@example.com",
+          kind: "case",
+          ref: `case:${i}`,
+          status: "queued",
+          subject: "s",
+          text: "t",
+          listUnsubscribe: "https://permtracker.app/x",
+          summary: { title: `Case ${i}`, line: "L", url: "https://permtracker.app" },
+          createdAt: Date.now() + i,
+          attempts: 0,
+        });
+      }
+    });
+    const b = await t.action(internal.alertOutbox.sendBundles, {});
+    expect(b).toMatchObject({ emails: 1, items: 12 });
+    expect(String(sends[0]!.text)).toContain(MORE_TOMORROW);
+    expect(String(sends[0]!.html)).toContain("They come in");
+    const rows = await t.run(async (ctx) => ctx.db.query("alertOutbox").collect());
+    expect(rows.filter((r) => r.status === "queued")).toHaveLength(1);
   });
 });
 

@@ -35,6 +35,7 @@ import {
   captureTurnstileServiceError,
   authBreadcrumb,
 } from "@/lib/auth/auth-telemetry";
+import { authRateLimitText } from "@/lib/auth/rateLimitText";
 
 type LoginStep = "login" | "verification";
 
@@ -214,7 +215,7 @@ export function LoginPageClient() {
       if (isRateLimitError(message)) {
         trackLoginFailed("rate_limited");
         trackAbuseEvent("rate_limit_429", { surface: "login", source: "signIn" });
-        toast.error("Too many attempts. Please wait a moment and try again.");
+        toast.error(authRateLimitText(message));
       } else if (isNetworkError(message)) {
         trackLoginFailed("network");
         toast.error("Network error. Please check your connection and try again.");
@@ -262,7 +263,7 @@ export function LoginPageClient() {
         // "Server Error" in production, so a wrong or stale code lands here.
         toast.error("That code didn’t work. Check it, or go back and sign in again for a new one.");
       } else if (isRateLimitError(message)) {
-        toast.error("Too many attempts. Please wait a moment and try again.");
+        toast.error(authRateLimitText(message));
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {

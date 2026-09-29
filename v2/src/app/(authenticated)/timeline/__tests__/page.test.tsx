@@ -41,6 +41,10 @@ vi.mock("convex/react", () => ({
   useMutation: vi.fn(),
 }));
 
+// The account-size notice runs its own query; this file's mock answers queries
+// by call order, so the notice is stubbed here and tested in its own file.
+vi.mock("@/components/cases/CaseCapNotice", () => ({ CaseCapNotice: () => null }));
+
 import { useQuery, useMutation } from "convex/react";
 
 // Default mock mutation function

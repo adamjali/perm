@@ -14,6 +14,7 @@ import AddCaseButton from "@/components/dashboard/AddCaseButton";
 import AutoClosureAlertBanner from "@/components/dashboard/AutoClosureAlertBanner";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { QueuePulseWidget } from "@/components/dashboard/QueuePulseWidget";
+import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 
 export function DashboardPageClient() {
   const router = useRouter();
@@ -107,6 +108,8 @@ export function DashboardPageClient() {
           <AddCaseButton />
         </div>
       </div>
+
+      <CaseCapNotice />
 
       {/* Auto-closure Alert Banner - Shows when cases have been auto-closed */}
       <AutoClosureAlertBanner />

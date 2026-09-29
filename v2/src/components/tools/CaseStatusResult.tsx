@@ -346,6 +346,15 @@ export function CaseStatusResult({
         <CohortQueues counts={cohortStatuses} month={cohort.month} />
       ) : null}
 
+      {!isFinal && result.censusMissing ? (
+        <p role="status" className="mt-10 max-w-2xl border-2 border-border bg-tint-primary p-4 text-base leading-relaxed">
+          <span className="font-bold">Some sections are missing today.</span> The daily count of every
+          pending case, which places this one in its filing month and against its neighbours,
+          couldn&apos;t be read or is more than eight days old. The status above is current; the
+          rest comes back when the count is rewritten, usually the next morning.
+        </p>
+      ) : null}
+
       {/* Pending only, for the same reason the queue split is. On a decided
           case this rendered three rows of "0 of 15,330 still open (100%
           decided)", and the cohort context that IS useful for one is the

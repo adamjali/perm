@@ -33,8 +33,10 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 const SHOWN = 10;
+/** Rows adminSignals reads per list (`take(500)`), newest first. */
+const SUB_READ_CAP = 500;
 
-function SubList({ title, rows, open }: { title: string; rows: Sub[]; open: boolean }) {
+function SubList({ title, rows, open, capped }: { title: string; rows: Sub[]; open: boolean; capped: boolean }) {
   const [all, setAll] = useState(false);
   const confirmed = rows.filter((r) => r.status === "confirmed").length;
   const shown = all ? rows : rows.slice(0, SHOWN);
@@ -42,7 +44,9 @@ function SubList({ title, rows, open }: { title: string; rows: Sub[]; open: bool
     <details open={open} className="border-2 border-border bg-card">
       <summary className="flex min-h-[48px] cursor-pointer flex-wrap items-center gap-x-3 px-4 py-2">
         <span className="font-bold">{title}</span>{" "}
-        <span className="text-sm tabular-nums text-muted-foreground">{`${confirmed} confirmed of ${rows.length}`}</span>
+        <span className="text-sm tabular-nums text-muted-foreground">
+          {`${confirmed} confirmed of ${rows.length}${capped ? `, from the newest ${SUB_READ_CAP} only` : ""}`}
+        </span>
       </summary>
       {rows.length === 0 ? (
         <p className="border-t-2 border-border px-4 py-3 text-sm text-muted-foreground">None match.</p>
@@ -50,8 +54,8 @@ function SubList({ title, rows, open }: { title: string; rows: Sub[]; open: bool
         <ul className="divide-y divide-border border-t-2 border-border">
           {shown.map((r, i) => (
             <li key={`${r.email}-${r.subject}-${i}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2 text-sm">
-              <span className="font-medium">{r.email}</span>{" "}
-              <span className="text-muted-foreground">{r.subject}</span>{" "}
+              <span className="min-w-0 font-medium [overflow-wrap:anywhere]">{r.email}</span>{" "}
+              <span className="min-w-0 text-muted-foreground [overflow-wrap:anywhere]">{r.subject}</span>{" "}
               <span className={`px-1.5 py-0.5 text-sm font-bold ${STATUS_CLASS[r.status] ?? ""}`}>{r.status}</span>{" "}
               <span className="ml-auto text-sm tabular-nums text-muted-foreground">
                 {when(r.createdAt)}
@@ -82,11 +86,11 @@ export function SubscriptionsPanel({ signals }: { signals: Signals }) {
       needle ? rows.filter((r) => r.email.toLowerCase().includes(needle) || r.subject.toLowerCase().includes(needle)) : rows;
     const s = signals.subscriptions;
     return [
-      { title: "Case status alerts", rows: f(s.caseAlerts) },
-      { title: "Employer follows", rows: f(s.employerAlerts) },
-      { title: "Queue month alerts", rows: f(s.queueAlerts) },
-      { title: "Visa bulletin alerts", rows: f(s.bulletinAlerts) },
-      { title: "Product news", rows: f(s.news) },
+      { title: "Case status alerts", rows: f(s.caseAlerts), capped: s.caseAlerts.length >= SUB_READ_CAP },
+      { title: "Employer follows", rows: f(s.employerAlerts), capped: s.employerAlerts.length >= SUB_READ_CAP },
+      { title: "Queue month alerts", rows: f(s.queueAlerts), capped: s.queueAlerts.length >= SUB_READ_CAP },
+      { title: "Visa bulletin alerts", rows: f(s.bulletinAlerts), capped: s.bulletinAlerts.length >= SUB_READ_CAP },
+      { title: "Product news", rows: f(s.news), capped: s.news.length >= SUB_READ_CAP },
     ];
   }, [q, signals]);
   return (
@@ -106,7 +110,7 @@ export function SubscriptionsPanel({ signals }: { signals: Signals }) {
         </label>
       </div>
       {lists.map((l) => (
-        <SubList key={l.title} title={l.title} rows={l.rows} open={q.trim().length > 0 && l.rows.length > 0} />
+        <SubList key={l.title} title={l.title} rows={l.rows} capped={l.capped} open={q.trim().length > 0 && l.rows.length > 0} />
       ))}
     </section>
   );
@@ -128,7 +132,7 @@ export function ActivityPanel({ signals }: { signals: Signals }) {
           <ul className="mt-1 divide-y divide-border">
             {recentUsers.map((u) => (
               <li key={`${u.email}-${u.createdAt}`} className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
-                <span className="font-medium">{u.email}</span>{" "}
+                <span className="min-w-0 font-medium [overflow-wrap:anywhere]">{u.email}</span>{" "}
                 <span className="text-sm tabular-nums text-muted-foreground">{when(u.createdAt)}</span>
               </li>
             ))}
@@ -142,8 +146,8 @@ export function ActivityPanel({ signals }: { signals: Signals }) {
             <ul className="mt-1 divide-y divide-border">
               {recentCases.map((c, i) => (
                 <li key={`${c.email}-${i}`} className="flex flex-wrap items-baseline gap-x-3 py-1.5 text-sm">
-                  <span className="font-medium">{c.email}</span>{" "}
-                  <span className="text-muted-foreground">{c.employerName}</span>{" "}
+                  <span className="min-w-0 font-medium [overflow-wrap:anywhere]">{c.email}</span>{" "}
+                  <span className="min-w-0 text-muted-foreground [overflow-wrap:anywhere]">{c.employerName}</span>{" "}
                   {c.caseNumber ? <span className="font-mono text-sm text-muted-foreground">{c.caseNumber}</span> : null}{" "}
                   <span className="ml-auto text-sm tabular-nums text-muted-foreground">{when(c.createdAt)}</span>
                 </li>

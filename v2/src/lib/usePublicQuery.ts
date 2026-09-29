@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { failureFromError, failureFromResponse, FetchFailureError, type FetchFailure } from "@/lib/fetchFailure";
 
 /**
  * `useQuery` for a public page, over a JSON route.
@@ -30,6 +32,12 @@ import { useEffect, useRef, useState } from "react";
  * `AbortSignal.timeout` fires a `TimeoutError` (distinct from the `AbortError`
  * a supersede/unmount raises), so the deadline can set `failed` without the
  * supersede path ever reading as a failure.
+ *
+ * AND THE REASON (Sep 29 2026). `failed` alone let every caller print one
+ * generic line, "reloading usually clears it", including for the front door's
+ * own 429 - where a reload is one more request against the same limit.
+ * `failure` carries the server's own sentence and the wait, and `retry` asks
+ * again without a reload.
  */
 
 /** Deadline for one request. Hot-path Turso reads are &lt;550ms; live case
@@ -42,17 +50,26 @@ export interface PublicQueryResult<T> {
   data: T | undefined;
   /** True when the most recent request for this url did not return data. */
   failed: boolean;
+  /** Why it failed, as a sentence to show. Null unless `failed`. */
+  failure: FetchFailure | null;
+  /** Ask again for the same url. */
+  retry: () => void;
 }
+
+type State<T> = Pick<PublicQueryResult<T>, "data" | "failed" | "failure">;
 
 export function usePublicQuery<T>(
   url: string | "skip",
   options?: { timeoutMs?: number },
 ): PublicQueryResult<T> {
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-  const [state, setState] = useState<PublicQueryResult<T>>({
+  const [state, setState] = useState<State<T>>({
     data: undefined,
     failed: false,
+    failure: null,
   });
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt((n) => n + 1), []);
   // A monotonic id rather than a cleanup flag: with several requests in
   // flight, only the LATEST may write. A per-effect boolean lets an earlier
   // slow response win whenever it lands after a later fast one.
@@ -60,7 +77,7 @@ export function usePublicQuery<T>(
 
   useEffect(() => {
     if (url === "skip") {
-      setState({ data: undefined, failed: false });
+      setState({ data: undefined, failed: false, failure: null });
       return;
     }
     const id = ++latest.current;
@@ -73,14 +90,14 @@ export function usePublicQuery<T>(
       controller.signal,
       AbortSignal.timeout(timeoutMs),
     ]);
-    setState({ data: undefined, failed: false });
+    setState({ data: undefined, failed: false, failure: null });
     fetch(url, { signal })
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      .then(async (r) => {
+        if (!r.ok) throw new FetchFailureError(await failureFromResponse(r));
         return r.json() as Promise<T>;
       })
       .then((data) => {
-        if (latest.current === id) setState({ data, failed: false });
+        if (latest.current === id) setState({ data, failed: false, failure: null });
       })
       .catch((error: unknown) => {
         // A supersede/unmount abort is not a failure: reporting it would flash
@@ -88,10 +105,12 @@ export function usePublicQuery<T>(
         // request never came back. Everything else (HTTP status, JSON, network)
         // is a failure too.
         if (error instanceof DOMException && error.name === "AbortError") return;
-        if (latest.current === id) setState({ data: undefined, failed: true });
+        if (latest.current === id) {
+          setState({ data: undefined, failed: true, failure: failureFromError(error, timeoutMs) });
+        }
       });
     return () => controller.abort();
-  }, [url, timeoutMs]);
+  }, [url, timeoutMs, attempt]);
 
-  return state;
+  return { ...state, retry };
 }

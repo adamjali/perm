@@ -18,6 +18,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
@@ -28,6 +29,12 @@ import { springConfig } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { useAuthContext } from '@/lib/contexts/AuthContext';
+
+/**
+ * Conversations shown per page. The list grows with every conversation the
+ * person starts, so it shows a page at a time with the total and what is left.
+ */
+const HISTORY_PAGE = 30;
 
 interface ChatHistoryProps {
   isOpen: boolean;
@@ -51,6 +58,7 @@ export function ChatHistory({
     api.conversations.list,
     isSigningOut ? 'skip' : {}
   );
+  const [shown, setShown] = useState(HISTORY_PAGE);
   const deleteConversation = useMutation(api.conversations.deleteConversation);
   const deleteAllConversations = useMutation(api.conversations.deleteAll);
 
@@ -95,7 +103,14 @@ export function ChatHistory({
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b-2 border-border">
-              <h2 className="font-heading font-semibold">Chat history</h2>
+              <div className="min-w-0">
+                <h2 className="font-heading font-semibold">Chat history</h2>{" "}
+                {conversations && conversations.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    {conversations.length.toLocaleString('en-US')} conversation{conversations.length === 1 ? '' : 's'}
+                  </p>
+                )}
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
@@ -128,7 +143,7 @@ export function ChatHistory({
                   <p className="text-sm">No conversations yet</p>
                 </div>
               ) : (
-                conversations.map((conv) => (
+                conversations.slice(0, shown).map((conv) => (
                   <div
                     key={conv._id}
                     className={cn(
@@ -153,18 +168,20 @@ export function ChatHistory({
                     </div>
 
                     {/* Delete Action */}
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {/* Hover on a desk; always shown on a touch screen, and on
+                        keyboard focus, so it never needs a mouse. */}
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100 transition-opacity">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive-text"
+                        className="h-11 w-11 md:h-7 md:w-7 text-destructive hover:text-destructive-text"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (confirm('Delete this conversation permanently?')) {
                             deleteConversation({ id: conv._id });
                           }
                         }}
-                        aria-label="Delete conversation"
+                        aria-label={`Delete conversation ${conv.title}`}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
                       </Button>
@@ -172,6 +189,20 @@ export function ChatHistory({
                   </div>
                 ))
               )}
+              {conversations && conversations.length > shown && (() => {
+                const left = conversations.length - shown;
+                const next = Math.min(HISTORY_PAGE, left);
+                return (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full h-11 md:h-9 shadow-hard-sm"
+                    onClick={() => setShown((n) => n + HISTORY_PAGE)}
+                  >
+                    {next === left ? `Show ${next} more` : `Show ${next} more (${left} left)`}
+                  </Button>
+                );
+              })()}
             </div>
 
             {/* Delete All Footer */}

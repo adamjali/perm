@@ -140,8 +140,14 @@ export const list = query({
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .collect();
 
-    // Sort by updatedAt descending (most recent first)
-    return conversations.sort((a, b) => b.updatedAt - a.updatedAt);
+    // Sort by updatedAt descending (most recent first). Each conversation's
+    // summary (up to ~1,000 tokens, written by compaction) stays out: the
+    // history panel shows the title and the time, and this list grows with
+    // every conversation the person starts. The chat reads the summary through
+    // conversationSummary.getContextMessages.
+    return conversations
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .map(({ summary: _summary, ...rest }) => rest);
   },
 });
 

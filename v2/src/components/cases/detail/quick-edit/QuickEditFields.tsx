@@ -34,6 +34,7 @@ import {
   isWaitingAction,
   isComplexAction,
 } from "./action-config";
+import { caseWriteErrorMessage } from "@/lib/caseWriteErrors";
 
 // ============================================================================
 // TYPES
@@ -392,12 +393,13 @@ export function QuickEditFields({
         onComplete?.();
       }, 500);
     } catch (error) {
+      const message = caseWriteErrorMessage(error, "Save failed. Try again.");
       handleOperationError(error, {
-        userMessage: "Save failed",
+        userMessage: message,
         context: { operation: "quickEditSave" },
       });
       setSubmitStatus("error");
-      setSubmitError(error instanceof Error ? error.message : "Save failed");
+      setSubmitError(message);
     }
   }, [config, formData, canSubmit, updateCase, caseId, onComplete, suggestedCaseStatus, suggestedProgressStatus, validateDateValue, originalFormData]);
 

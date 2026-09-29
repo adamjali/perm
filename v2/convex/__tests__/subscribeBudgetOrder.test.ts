@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
+import { QUEUED_REPLY } from "../confirmationQueue";
 
 /**
  * A refused confirmation must leave NO ROW and NO COOLDOWN STAMP behind.
@@ -20,6 +21,11 @@ import { internal } from "../_generated/api";
  * These assert the ordering by its effect rather than by reading the source:
  * exhaust the budget, then confirm the next caller left no trace. Probed by
  * reverting the reorder in each module - every "leaves no row" case goes red.
+ *
+ * Since Sep 29 2026 a full pool QUEUES the request instead of refusing it
+ * (convex/confirmationQueue.ts, pinned in confirmationQueue.test.ts). The
+ * rule here is unchanged: the held-back request writes no alert row and no
+ * stamp, so a retry gets the same honest reply instead of being swallowed.
  */
 
 /**
@@ -31,17 +37,17 @@ import { internal } from "../_generated/api";
  */
 const FILL_CAP = 40;
 
-async function exhaust(call: (i: number) => Promise<{ ok: boolean }>) {
+async function exhaust(call: (i: number) => Promise<{ ok: boolean; message: string }>) {
   for (let i = 0; i < FILL_CAP; i++) {
     const r = await call(i);
-    if (!r.ok) return i + 1;
+    if (r.message === QUEUED_REPLY) return i + 1;
   }
   // Never silently proceed on an unexhausted budget: that would make every
   // assertion below vacuous and the test would read as a pass.
   throw new Error(`budget not exhausted after ${FILL_CAP} calls`);
 }
 
-describe("subscribe: a budget refusal writes nothing", () => {
+describe("subscribe: a request a full pool holds back writes nothing", () => {
   it("caseAlerts leaves no row for the refused address", async () => {
     const t = createTestContext();
 
@@ -58,8 +64,7 @@ describe("subscribe: a budget refusal writes nothing", () => {
       email: "refused@example.com",
       caseNumber: "G-100-25324-425560",
     });
-    expect(refused.ok).toBe(false);
-    expect(refused.throttled).toBe(true);
+    expect(refused).toEqual({ ok: true, message: QUEUED_REPLY, queued: true });
 
     const rows = await t.run(async (ctx) =>
       ctx.db
@@ -86,14 +91,13 @@ describe("subscribe: a budget refusal writes nothing", () => {
     });
 
     // Same address again, immediately. With a stamp left behind this returns
-    // ok:true (the neutral "check your inbox" reply) and sends nothing, which
-    // is the lie. Without one it is refused honestly for the same real reason.
+    // the neutral "check your inbox" reply and sends nothing, which is the
+    // lie. Without one it gets the same queued reply for the same real reason.
     const retry = await t.mutation(internal.caseAlerts.subscribe, {
       email: "refused@example.com",
       caseNumber: "G-100-25324-425560",
     });
-    expect(retry.ok).toBe(false);
-    expect(retry.throttled).toBe(true);
+    expect(retry).toEqual({ ok: true, message: QUEUED_REPLY, queued: true });
   });
 
   it("queueAlerts leaves no row for the refused address", async () => {
@@ -109,7 +113,7 @@ describe("subscribe: a budget refusal writes nothing", () => {
       email: "refused@example.com",
       filingMonth: "2026-01",
     });
-    expect(refused.ok).toBe(false);
+    expect(refused.message).toBe(QUEUED_REPLY);
 
     const rows = await t.run(async (ctx) =>
       ctx.db
@@ -135,7 +139,7 @@ describe("subscribe: a budget refusal writes nothing", () => {
       category: "EB2",
       country: "india",
     });
-    expect(refused.ok).toBe(false);
+    expect(refused.message).toBe(QUEUED_REPLY);
 
     const rows = await t.run(async (ctx) =>
       ctx.db

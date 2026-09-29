@@ -28,17 +28,27 @@ function fmt(n: number): string {
 export function LiveOnlyEmployerResults({
   hits,
   query,
+  more = false,
 }: {
   hits: LiveEmployerHit[];
   query: string;
+  /** The server stopped at its cap and more sponsors match. */
+  more?: boolean;
 }) {
   if (hits.length === 0) return null;
   return (
     <section className="mt-6 border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
       <h3 className="font-heading text-lg font-black sm:text-xl">
+        {more ? "The first " : ""}
         {fmt(hits.length)} more {hits.length === 1 ? "sponsor" : "sponsors"},
         not in a published DOL file yet
       </h3>{" "}
+      {more ? (
+        <p className="mt-2 max-w-3xl text-base font-bold leading-relaxed">
+          More sponsors match than one answer carries, busiest first. Type more
+          of the name to narrow it.
+        </p>
+      ) : null}
       <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
         These match &ldquo;{query}&rdquo; in our live record of individual
         cases. DOL publishes its disclosure files quarterly and only after a

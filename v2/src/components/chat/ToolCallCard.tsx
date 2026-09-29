@@ -146,7 +146,9 @@ export function ToolCallCard({
         {argSummary.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {argSummary.map(({ key, value }) => (
-              <span key={key} className="font-mono text-sm">
+              // An ID or URL has no spaces to wrap at: let it break anywhere
+              // rather than run under the card's overflow-hidden edge.
+              <span key={key} className="font-mono text-sm min-w-0 [overflow-wrap:anywhere]">
                 <span className="text-muted-foreground">{key}:</span>{' '}
                 <span className="text-foreground">{value}</span>
               </span>

@@ -31,6 +31,8 @@ import { handleOperationError } from "@/lib/errors";
 import { buildEditUrl, buildEditSectionUrl } from "@/lib/cases/editDeepLinks";
 import type { CaseDetailData } from "./case-detail-types";
 import { itemVariants, tabContainerVariants, fmtISODate, fmtCurrency } from "./case-detail-utils";
+import { CharLimit } from "@/components/ui/char-limit";
+import { JOB_DESCRIPTION_MAX_LENGTH } from "@/components/job-description/shared";
 
 export interface JobDescEditProps {
   templates: JobDescriptionTemplate[];
@@ -463,15 +465,16 @@ export function OverviewTab({
                       >
                         Position title
                       </label>
-                      <input
-                        id="jd-edit-title"
-                        type="text"
-                        value={editPositionTitle}
-                        onChange={(e) => setEditPositionTitle(e.target.value)}
-                        placeholder="e.g., Software Engineer"
-                        maxLength={200}
-                        className="w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
-                      />
+                      <CharLimit max={200}>
+                        <input
+                          id="jd-edit-title"
+                          type="text"
+                          value={editPositionTitle}
+                          onChange={(e) => setEditPositionTitle(e.target.value)}
+                          placeholder="e.g., Software Engineer"
+                          className="w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-sm font-mono focus:outline-none focus:border-primary"
+                        />
+                      </CharLimit>
                     </div>
 
                     {/* Description */}
@@ -482,18 +485,16 @@ export function OverviewTab({
                       >
                         Description
                       </label>
-                      <textarea
-                        id="jd-edit-desc"
-                        value={editDescription}
-                        onChange={(e) => setEditDescription(e.target.value)}
-                        placeholder="Enter job requirements..."
-                        rows={8}
-                        maxLength={10000}
-                        className="w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
-                      />
-                      <div className="text-right font-mono text-sm text-muted-foreground mt-1">
-                        {editDescription.length.toLocaleString()} chars
-                      </div>
+                      <CharLimit max={JOB_DESCRIPTION_MAX_LENGTH}>
+                        <textarea
+                          id="jd-edit-desc"
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          placeholder="Enter job requirements..."
+                          rows={8}
+                          className="w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-sm resize-y focus:outline-none focus:border-primary"
+                        />
+                      </CharLimit>
                     </div>
 
                     {/* Action buttons */}

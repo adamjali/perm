@@ -13,6 +13,7 @@ import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { readUserCases } from "./lib/userCases";
 
 /**
  * Timeline time range type
@@ -153,13 +154,10 @@ export const addCaseToTimeline = mutation({
 
     if (currentSelection === undefined) {
       // null/undefined means "all cases" - we need to get all active cases and add this one
-      const allCases = await ctx.db
-        .query("cases")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId))
-        .take(1000);
+      const { cases: allCases } = await readUserCases(ctx, userId);
 
       const activeCaseIds = allCases
-        .filter((c) => c.deletedAt === undefined && c.caseStatus !== "closed")
+        .filter((c) => c.caseStatus !== "closed")
         .map((c) => c._id);
 
       // Add the new case if not already included
@@ -204,15 +202,11 @@ export const removeCaseFromTimeline = mutation({
     if (!existingPreferences) {
       // No preferences - nothing to remove from
       // Create preferences with all active cases except this one
-      const allCases = await ctx.db
-        .query("cases")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId))
-        .take(1000);
+      const { cases: allCases } = await readUserCases(ctx, userId);
 
       const activeCaseIds = allCases
         .filter(
           (c) =>
-            c.deletedAt === undefined &&
             c.caseStatus !== "closed" &&
             c._id !== args.caseId
         )
@@ -232,15 +226,11 @@ export const removeCaseFromTimeline = mutation({
 
     if (currentSelection === undefined) {
       // null/undefined means "all cases" - get all active cases except this one
-      const allCases = await ctx.db
-        .query("cases")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId))
-        .take(1000);
+      const { cases: allCases } = await readUserCases(ctx, userId);
 
       currentSelection = allCases
         .filter(
           (c) =>
-            c.deletedAt === undefined &&
             c.caseStatus !== "closed" &&
             c._id !== args.caseId
         )
@@ -331,16 +321,11 @@ export const getCasesForTimeline = query({
       .withIndex("by_user_id", (q) => q.eq("userId", userId))
       .first();
 
-    // Fetch non-deleted cases for user with reasonable limit
-    const allCases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
+    // Live cases, newest first (convex/lib/userCases.ts)
+    const { cases: allCases } = await readUserCases(ctx, userId);
 
-    // Filter out deleted cases and cases hidden from timeline
-    let filteredCases = allCases.filter((c) =>
-      c.deletedAt === undefined && c.showOnTimeline !== false
-    );
+    // Leave out cases hidden from the timeline
+    let filteredCases = allCases.filter((c) => c.showOnTimeline !== false);
 
     // Apply selection filter
     const selectedCaseIds = preferences?.selectedCaseIds;

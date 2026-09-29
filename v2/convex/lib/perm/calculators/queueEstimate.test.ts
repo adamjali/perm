@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { measurePace } from './decisionPace';
-import {
+import { PACE_ABSENT,
   estimateQueueDecision,
   measureFrontierAdvance,
   measureFrontierAdvanceRange,
@@ -723,6 +723,16 @@ describe('estimateQueueDecision: decision pace', () => {
     const r = paceAsk({ sweepAgeDays: 9 });
     expect(r.models.some((m) => m.id === 'decision-pace')).toBe(false);
     expect(r.models[0]?.id).toBe('queue-advance');
+  });
+
+  it('says WHY it is missing, so a fallback never answers silently', () => {
+    const why = (r: ReturnType<typeof paceAsk>) => r.caveats.find((c) => c.startsWith(PACE_ABSENT)) ?? '';
+    expect(why(paceAsk())).toBe('');
+    expect(why(paceAsk({ casesAhead: null }))).toMatch(/count of cases ahead/);
+    expect(why(paceAsk({ decisionPace: null }))).toMatch(/decision rate/);
+    expect(why(paceAsk({ sweepAgeDays: 9 }))).toMatch(/9 days ago/);
+    // A surface that never feeds this model gets no such line.
+    expect(why(paceAsk({ casesAhead: undefined, decisionPace: undefined }))).toBe('');
   });
 
   it('carries a band, and the band brackets the date', () => {

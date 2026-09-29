@@ -453,6 +453,42 @@ describe('FallbackModel', () => {
     warnSpy.mockRestore();
     errorSpy.mockRestore();
   });
+
+  it("lowers the output cap only for a model that declares a smaller one", async () => {
+    // The route asks for 8,000 output tokens (CHAT_MAX_OUTPUT_TOKENS). Groq's
+    // free tier counts the requested maximum against its tokens-a-minute
+    // budget, so it keeps a lower cap; the other models get the full request.
+    const { FallbackModel } = await import('../providers');
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const capped = {
+      specificationVersion: 'v4' as const, provider: 'test', modelId: 'capped', supportedUrls: {},
+      doGenerate: vi.fn(), doStream: vi.fn().mockRejectedValue(new Error('rate limit')),
+    };
+    const open = {
+      specificationVersion: 'v4' as const, provider: 'test', modelId: 'open', supportedUrls: {},
+      doGenerate: vi.fn(), doStream: vi.fn().mockResolvedValue({ stream: 'ok' }),
+    };
+    const fallback = new FallbackModel([
+      { model: capped, name: 'Capped', maxOutputTokens: 4000 },
+      { model: open, name: 'Open' },
+    ]);
+    const options = { prompt: [], maxOutputTokens: 8000 } as any;
+    await fallback.doStream(options);
+
+    expect(capped.doStream.mock.calls[0][0].maxOutputTokens).toBe(4000);
+    // The uncapped model sees the caller's own options object.
+    expect(open.doStream.mock.calls[0][0]).toBe(options);
+    // And the caller's object was not changed.
+    expect(options.maxOutputTokens).toBe(8000);
+  });
+
+  it('keeps Groq at its lower output cap in the real chain', async () => {
+    const { MODEL_OUTPUT_CAPS } = await import('../providers');
+    expect(MODEL_OUTPUT_CAPS['Llama 3.3 70B (Groq)']).toBe(4000);
+  });
 });
 
 describe('System Prompt', () => {

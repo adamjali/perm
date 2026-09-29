@@ -111,7 +111,26 @@ export default async function EmployersUnderReviewPage() {
     : [];
   const byReview = doc ? rankByReview(doc.employers, 10) : [];
   const byShare = doc ? rankByShare(doc.employers, 10) : [];
-  const moves = doc ? doc.holdMoves.slice(0, MOVES_SHOWN) : [];
+  const allMoves = doc ? doc.holdMoves : [];
+  const moves = allMoves.slice(0, MOVES_SHOWN);
+  const earlier = allMoves.slice(MOVES_SHOWN);
+  const moveItem = (m: (typeof allMoves)[number]) => (
+    <Fragment key={`${m.date}-${m.slug ?? m.name}-${m.dir}-${m.to}`}>{" "}
+    <li className="grid grid-cols-1 gap-y-1 py-3 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-baseline sm:gap-x-4">
+      <span className="font-mono text-sm font-semibold">{longDate(m.date)}</span>{" "}
+      <span className="text-base [overflow-wrap:anywhere]">
+        {m.slug ? (
+          <Link href={`/perm-employers/${m.slug}`} className={`font-bold ${LINK}`}>
+            {m.name}
+          </Link>
+        ) : (
+          <span className="font-bold">{m.name}</span>
+        )}
+        {`: ${holdSentence(m)}`}
+      </span>
+    </li>
+    </Fragment>
+  );
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
@@ -202,25 +221,21 @@ export default async function EmployersUnderReviewPage() {
               {moves.length === 0 ? (
                 <p className="mt-4 text-base text-foreground/80">None since {longDate(doc.logFrom)}.</p>
               ) : (
-                <ol className="mt-4 divide-y-2 divide-border border-y-2 border-border">
-                  {moves.map((m) => (
-                    <Fragment key={`${m.date}-${m.slug ?? m.name}-${m.dir}-${m.to}`}>{" "}
-                    <li className="grid grid-cols-1 gap-y-1 py-3 sm:grid-cols-[11rem_minmax(0,1fr)] sm:items-baseline sm:gap-x-4">
-                      <span className="font-mono text-sm font-semibold">{longDate(m.date)}</span>{" "}
-                      <span className="text-base">
-                        {m.slug ? (
-                          <Link href={`/perm-employers/${m.slug}`} className={`font-bold ${LINK}`}>
-                            {m.name}
-                          </Link>
-                        ) : (
-                          <span className="font-bold">{m.name}</span>
-                        )}
-                        {`: ${holdSentence(m)}`}
-                      </span>
-                    </li>
-                    </Fragment>
-                  ))}
-                </ol>
+                <>
+                  <ol className="mt-4 divide-y-2 divide-border border-y-2 border-border">
+                    {moves.map(moveItem)}
+                  </ol>{" "}
+                  {earlier.length > 0 ? (
+                    <details className="mt-3">
+                      <summary className="min-h-11 cursor-pointer py-2 text-base font-bold underline decoration-primary decoration-2 underline-offset-2">
+                        {`The ${MOVES_SHOWN} newest of ${allMoves.length.toLocaleString("en-US")}. Show the other ${earlier.length.toLocaleString("en-US")}`}
+                      </summary>
+                      <ol className="mt-2 divide-y-2 divide-border border-y-2 border-border">
+                        {earlier.map(moveItem)}
+                      </ol>
+                    </details>
+                  ) : null}
+                </>
               )}
             </section>
           ) : null}{" "}

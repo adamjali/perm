@@ -148,7 +148,7 @@ export default function AdminDashboardClient() {
             content: (
               <div className="space-y-8">
                 <AdminStatsGrid data={dashboardData} />
-                {delivery ? <BudgetPools pools={delivery.pools} /> : <Skeleton className="h-64" />}
+                {delivery ? <BudgetPools pools={delivery.pools} queue={delivery.confirmationQueue} /> : <Skeleton className="h-64" />}
                 {signals ? <ActivityPanel signals={signals} /> : <Skeleton className="h-48" />}
               </div>
             ),

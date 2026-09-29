@@ -711,6 +711,9 @@ export default defineSchema({
         model: v.optional(v.string()),
         // Token usage
         tokenCount: v.optional(v.number()),
+        // Why a reply stopped early, so a saved reply still says so
+        // (the output cap, or the tool-step cap). Sep 29 2026.
+        cutShort: v.optional(v.union(v.literal("length"), v.literal("steps"))),
       })
     ),
     createdAt: v.number(),
@@ -2210,8 +2213,39 @@ export default defineSchema({
     day: v.string(),
     /** A key of BUDGETS in convex/lib/alertBudgets.ts. */
     pool: v.string(),
+    /** People who got no email at all (turned away). */
     count: v.number(),
+    /** Requests a full pool queued instead (convex/confirmationQueue.ts). */
+    queued: v.optional(v.number()),
   }).index("by_day_pool", ["day", "pool"]),
+
+  /**
+   * Confirmation requests a full pool could not send at once (Sep 29 2026).
+   * One row per (kind, address): a newer request replaces the waiting one,
+   * because each module's per-address cooldown would absorb a second
+   * confirmation minutes after the first anyway. `payload` is the subscribe
+   * call's own arguments as JSON, without the caller's IP; the drain replays
+   * it through the same mutation. Rows are deleted when sent, and after
+   * three days unsent (counted as turned away).
+   */
+  confirmationQueue: defineTable({
+    kind: v.union(
+      v.literal("case"),
+      v.literal("employer"),
+      v.literal("queue"),
+      v.literal("bulletin"),
+      v.literal("prefs"),
+    ),
+    pool: v.string(),
+    email: v.string(),
+    payload: v.string(),
+    queuedAt: v.number(),
+    /** Set while a drain is sending it; a lease older than 10 minutes is free again. */
+    claimedAt: v.optional(v.number()),
+    attempts: v.optional(v.number()),
+  })
+    .index("by_queuedAt", ["queuedAt"])
+    .index("by_kind_email", ["kind", "email"]),
 
   /** The last Eastern day each address was sent an alert email. One row per address. */
   alertRecipients: defineTable({

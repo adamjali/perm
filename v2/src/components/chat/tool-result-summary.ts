@@ -42,8 +42,19 @@ export function summarizeToolResult(tool: string, result?: string): string {
       return 'Awaiting confirmation...';
     }
 
+    // A limit says which limit, for any tool (src/lib/ai/limits.ts marks
+    // these results with a `reason`). Saying why beats keeping it short:
+    // "No results found" over a spent quota was the silent case.
+    if (parsed && typeof parsed.error === 'string' && ['quota', 'failed', 'rate_limited'].includes(parsed.reason)) {
+      return parsed.reason === 'quota' && parsed.resetsAtLocal
+        ? `${parsed.error} Back at ${parsed.resetsAtLocal}.`
+        : parsed.error;
+    }
+
     switch (tool) {
       case 'queryCases': {
+        // A list that stopped at its cap says so ("Showing 100 of 340").
+        if (typeof parsed.note === 'string') return parsed.note;
         const count = parsed.count ?? parsed.cases?.length ?? 0;
         return `${count} case${count !== 1 ? 's' : ''} found`;
       }

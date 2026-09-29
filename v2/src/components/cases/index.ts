@@ -13,3 +13,4 @@ export { ViewToggle } from "./ViewToggle";
 export type { ViewMode } from "./ViewToggle";
 export { CaseListView } from "./CaseListView";
 export { CaseListRow } from "./CaseListRow";
+export { CaseCapNotice } from "./CaseCapNotice";

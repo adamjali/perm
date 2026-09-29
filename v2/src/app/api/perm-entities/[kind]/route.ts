@@ -21,6 +21,17 @@ import { isEntityKind, packRow, type EntityPayload } from "@/lib/entityPayload";
 // the disclosure files behind it are quarterly.
 export const revalidate = 86400;
 
+/**
+ * How many name matches one answer carries: published rows, and live-only
+ * employers. Each is asked for ONE over, so the answer can say "more match,
+ * type more of the name" instead of implying it holds everything. They were
+ * 100 and 25 with no such flag until Sep 29 2026, and the table said "searched
+ * across all of them" over a capped list. Rows are ~80 bytes packed, so 200
+ * is ~16 KB.
+ */
+const NAME_MATCHES_SHOWN = 200;
+const LIVE_MATCHES_SHOWN = 50;
+
 export async function GET(
   _request: Request,
   context: { params: Promise<{ kind: string }> },
@@ -71,16 +82,24 @@ export async function GET(
     // the live half on every settled query and pairs it with the expensive
     // half only when it needs it.
     const liveOnly = url.searchParams.get("scope") === "live";
+    // ?limit= lets a small caller (the search palette shows five) ask for
+    // less and still learn whether more match. Never above the caps.
+    const asked = Math.floor(Number(url.searchParams.get("limit")));
+    const nameCap = asked > 0 ? Math.min(asked, NAME_MATCHES_SHOWN) : NAME_MATCHES_SHOWN;
+    const liveCap = asked > 0 ? Math.min(asked, LIVE_MATCHES_SHOWN) : LIVE_MATCHES_SHOWN;
     const [found, live] = await Promise.all([
-      liveOnly ? Promise.resolve([]) : searchByName(kind, needle, 100),
-      kind === "employer" ? searchLiveOnlyEmployers(needle, 25) : Promise.resolve([]),
+      liveOnly ? Promise.resolve([]) : searchByName(kind, needle, nameCap + 1),
+      kind === "employer" ? searchLiveOnlyEmployers(needle, liveCap + 1) : Promise.resolve([]),
     ]);
+    const shown = found.slice(0, nameCap);
     const payload: EntityPayload = {
       kind,
-      count: found.length,
+      count: shown.length,
       computedAt: null,
-      rows: found.map(packRow),
-      live,
+      rows: shown.map(packRow),
+      live: live.slice(0, liveCap),
+      more: found.length > nameCap,
+      liveMore: live.length > liveCap,
     };
     return NextResponse.json(payload, {
       headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400" },

@@ -209,7 +209,8 @@ export async function searchLiveOnlyEmployers(
   if (text.length > 120) return [];
   const range = slugPrefixRange(slugify(text.trim()));
   if (!range) return [];
-  const take = Math.min(Math.max(1, Math.floor(limit)), 50);
+  // 101: the route asks for one over what it shows, to know whether more match.
+  const take = Math.min(Math.max(1, Math.floor(limit)), 101);
 
   const found = await rows<{
     slug: string;

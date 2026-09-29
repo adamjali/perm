@@ -10,6 +10,9 @@ import { useRfiFieldArray } from "@/components/forms/CaseFormContext";
 import type { CaseFormData, RFIEntry as RFIEntryType } from "@/lib/forms/case-form-schema";
 import type { ISODateString } from "@/lib/perm";
 
+/** The most RFI entries one case holds; the add button says so when it stops. */
+const RFI_ENTRIES_MAX = 50;
+
 // ============================================================================
 // TYPES
 // ============================================================================
@@ -160,13 +163,13 @@ export function RFIEntryList({
   return (
     <div className="space-y-4">
       {/* Add Button */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <Button
           type="button"
           variant="outline"
           size="sm"
           onClick={handleAdd}
-          disabled={hasActiveEntry || entries.length >= 50}
+          disabled={hasActiveEntry || entries.length >= RFI_ENTRIES_MAX}
           className="gap-1.5"
         >
           <PlusIcon className="h-4 w-4" />
@@ -178,6 +181,12 @@ export function RFIEntryList({
             <AlertCircle className="h-4 w-4" />
             <span>Submit or remove existing RFI first</span>
           </div>
+        )}
+
+        {!hasActiveEntry && entries.length >= RFI_ENTRIES_MAX && (
+          <p className="text-sm font-semibold text-foreground" role="status">
+            {RFI_ENTRIES_MAX} RFIs is the most a case can hold. Remove one to add another.
+          </p>
         )}
       </div>
 

@@ -31,6 +31,8 @@ export interface DailyUpdateProps {
   prefsUrl: string;
   /** One click turns every alert kind off. Pairs with List-Unsubscribe. */
   stopUrl: string;
+  /** More items wait than one email carries; they come tomorrow. */
+  moreWaiting?: boolean;
 }
 
 const KIND_LABEL: Record<DailyUpdateItem["kind"], string> = {
@@ -40,7 +42,7 @@ const KIND_LABEL: Record<DailyUpdateItem["kind"], string> = {
   employer: "Employer you follow",
 };
 
-export function DailyUpdate({ items, prefsUrl, stopUrl }: DailyUpdateProps) {
+export function DailyUpdate({ items, prefsUrl, stopUrl, moreWaiting = false }: DailyUpdateProps) {
   const n = items.length;
   return (
     <EmailLayout
@@ -92,6 +94,13 @@ export function DailyUpdate({ items, prefsUrl, stopUrl }: DailyUpdateProps) {
           </Section>
         );
       })}
+
+      {moreWaiting ? (
+        <Text className="em-text-body" style={styles.line}>
+          More updates are waiting than one email carries. They come in
+          tomorrow&rsquo;s email.
+        </Text>
+      ) : null}
 
       <Text className="em-text-secondary" style={styles.note}>
         Every figure here is the Department of Labor&rsquo;s or the State

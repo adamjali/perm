@@ -389,4 +389,38 @@ crons.cron(
   {}
 );
 
+// ============================================================================
+// OPERATIONAL LOG RETENTION
+// ============================================================================
+
+/**
+ * Daily: error, email-event and API-usage rows past their horizon
+ * (convex/retention.ts says which and why). 3:20 AM UTC, beside the
+ * conversation cleanup and clear of the hourly jobs.
+ */
+crons.daily(
+  "operational-log-retention",
+  { hourUTC: 3, minuteUTC: 20 },
+  internal.retention.pruneOperationalLogs,
+  {},
+);
+
+// ============================================================================
+// CONFIRMATION QUEUE
+// ============================================================================
+
+/**
+ * Every 15 minutes: send confirmations a full pool queued, while Resend's own
+ * count for the UTC day leaves room (convex/confirmationQueue.ts). A request
+ * is drained the moment it's queued too; this tick is for the ones that
+ * waited on the day's room, which comes back at midnight UTC. An empty queue
+ * costs one read and no call to Resend.
+ */
+crons.interval(
+  "confirmation-queue-drain",
+  { minutes: 15 },
+  internal.confirmationQueue.drain,
+  {},
+);
+
 export default crons;

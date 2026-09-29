@@ -18,7 +18,7 @@ name: Daily monitor
 # morning email is itself the alarm, and the review routine says so.
 #
 # Optional secrets, each switching on one section (the report says "off" until
-# it is set): VERCEL_TOKEN, POSTHOG_PERSONAL_API_KEY,
+# it is set): POSTHOG_PERSONAL_API_KEY,
 # SENTRY_AUTH_TOKEN.
 
 on:
@@ -48,7 +48,6 @@ jobs:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           GITHUB_TOKEN: ${{ github.token }}
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           POSTHOG_PERSONAL_API_KEY: ${{ secrets.POSTHOG_PERSONAL_API_KEY }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         run: python3 scripts/daily_monitor.py --out "${RUNNER_TEMP}/report.json"

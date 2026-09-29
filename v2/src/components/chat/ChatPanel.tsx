@@ -2,7 +2,7 @@
 
 import { Fragment, useRef, useEffect, useLayoutEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
-import { ArrowDownIcon, ChatTextIcon, ClockCounterClockwiseIcon as History, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
+import { ArrowDownIcon, ChatTextIcon, ClockCounterClockwiseIcon as History, InfoIcon, WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
 import { Button } from '@/components/ui/button';
 import { ChatMessage } from './ChatMessage';
 import { ChatInput } from './ChatInput';
@@ -14,6 +14,7 @@ import { springConfig } from '@/lib/animations';
 import { cn } from '@/lib/utils';
 import type { ToolConfirmationState } from '@/lib/ai/tool-confirmation-types';
 import type { DisplayMessage } from '@/hooks/useChatWithPersistence';
+import { chatErrorText, cutShortNotice } from '@/lib/ai/limits';
 
 /**
  * Props for the ChatPanel component
@@ -31,6 +32,13 @@ interface ChatPanelProps {
   onStop?: () => void;
   /** Try the failed turn again */
   onRetry?: () => void;
+  /** Pick up a reply a cap cut short (sends "Continue") */
+  onContinue?: () => void;
+  /**
+   * The failed turn's error. The server's own refusal text (a per-address
+   * limit with its wait, a busy site) is shown instead of the generic line.
+   */
+  error?: Error | null;
   /** Callback when user closes the chat panel */
   onClose: () => void;
   /** Current chat status */
@@ -67,6 +75,12 @@ interface ChatPanelProps {
 
 /** Within this many px of the end counts as "at the bottom". */
 const AT_BOTTOM_PX = 8;
+
+/**
+ * Messages drawn at once. A conversation grows with every turn, so the panel
+ * shows the latest page and a button, with the count, for the earlier ones.
+ */
+const MESSAGE_PAGE = 60;
 
 /**
  * Follow the conversation's end while the reader is there, and let go the
@@ -170,6 +184,8 @@ export function ChatPanel({
   onSend,
   onStop,
   onRetry,
+  onContinue,
+  error,
   onClose,
   status,
   onOpenHistory,
@@ -213,6 +229,12 @@ export function ChatPanel({
   }, [actionMode]);
 
   const isProcessing = status === 'submitted' || status === 'streaming';
+  const errorText = chatErrorText(error ?? undefined);
+
+  // The latest page of messages; earlier ones on request.
+  const [pageSize, setPageSize] = useState(MESSAGE_PAGE);
+  const firstShown = Math.max(0, messages.length - pageSize);
+  const shownMessages = firstShown > 0 ? messages.slice(firstShown) : messages;
   // Waiting for the first word: the reply has not produced a message yet.
   const showTyping = status === 'submitted' || (status === 'streaming' && lastMessage?.role !== 'assistant');
 
@@ -311,7 +333,25 @@ export function ChatPanel({
             </div>
           ) : (
             <div className="space-y-4" aria-live="polite" aria-busy={isProcessing}>
-              {messages.map((message, index) => {
+              {firstShown > 0 && (
+                <div className="flex justify-center">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setPageSize((n) => n + MESSAGE_PAGE)}
+                    className="h-11 md:h-9 shadow-hard-sm"
+                  >
+                    {firstShown > MESSAGE_PAGE
+                      ? `Show ${MESSAGE_PAGE} earlier messages (${firstShown} left)`
+                      : `Show ${firstShown} earlier ${firstShown === 1 ? 'message' : 'messages'}`}
+                  </Button>
+                </div>
+              )}
+              {shownMessages.map((message, pageIndex) => {
+                // Position in the whole conversation (the divider's count and
+                // "is this the latest turn" both need it).
+                const index = firstShown + pageIndex;
                 // Compaction seam: the divider sits between the archived prefix
                 // (< messageCountAtSummary) and the verbatim tail.
                 const showDividerBefore =
@@ -347,6 +387,27 @@ export function ChatPanel({
                         onApproveConfirmation={onApproveConfirmation}
                         onDenyConfirmation={onDenyConfirmation}
                       />
+                      {/* A cap ended this reply: say which, and offer to go on
+                          while it is still the latest turn. */}
+                      {message.cutShort && !message.isStreaming && (
+                        <div className="mt-2 flex items-start gap-2 border-2 border-border bg-muted p-2.5 text-sm">
+                          <InfoIcon className="h-4 w-4 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                          <div className="min-w-0 flex-1">
+                            <p>{cutShortNotice(message.cutShort)}</p>{" "}
+                            {onContinue && index === messages.length - 1 && status === 'ready' && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={onContinue}
+                                className="mt-2 h-11 md:h-9 shadow-hard-sm"
+                              >
+                                Continue
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </motion.div>
                   </Fragment>
                 );
@@ -370,10 +431,10 @@ export function ChatPanel({
                     <AlertTriangle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-destructive">
-                        The assistant couldn’t answer that
+                        {errorText.title}
                       </p>{" "}
-                      <p className="text-sm text-destructive mt-1">
-                        The AI services didn’t respond. Your message is saved; try again in a moment.
+                      <p className="text-sm text-destructive mt-1 break-words">
+                        {errorText.detail}
                       </p>
                       {onRetry && (
                         <Button

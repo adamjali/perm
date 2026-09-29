@@ -134,6 +134,9 @@ export interface QueueEstimateInput {
 // OUTPUT TYPES
 // ============================================================================
 
+/** Lead-in for a caveat saying why the decision-pace model isn't the one answering. */
+export const PACE_ABSENT = 'The cases-ahead model, which usually leads, isn\'t used here:';
+
 export type EstimateModelId = 'decision-pace' | 'dol-average' | 'queue-advance'
   | 'cohort-percentile' | 'cohort-shape';
 
@@ -487,7 +490,26 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
         latestDate: toISO(paced.late),
         source: 'Our own count of DOL\'s live queue, and the decision rate we have observed over the last 28 days',
       });
+    } else if (
+      paced.kind === 'refused' &&
+      (paced.reason === 'stale-data' || paced.reason === 'pace-unmeasurable') &&
+      paced.detail
+    ) {
+      // SAY WHY THE LEAD MODEL IS MISSING. It dropped out silently and a
+      // fallback answered in its place, so a reader saw a different model's
+      // date with no reason (Sep 29 2026 audit).
+      caveats.push(`${PACE_ABSENT} ${paced.detail}`);
     }
+  } else if (
+    monthsBehind !== null &&
+    monthsBehind >= 0 &&
+    // Only for callers that feed this model: undefined means the surface
+    // never uses it, null means it tried and the input was missing.
+    (input.casesAhead !== undefined || input.decisionPace !== undefined)
+  ) {
+    caveats.push(
+      `${PACE_ABSENT} ${typeof input.casesAhead !== 'number' ? "the count of cases ahead of this one couldn't be made from today's data." : "DOL's measured decision rate couldn't be read today."}`,
+    );
   }
 
   // --- Model B: queue advance -- THE LEAD MODEL --------------------------

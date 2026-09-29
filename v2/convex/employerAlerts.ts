@@ -80,6 +80,8 @@ import {
   type EmployerMove,
   type EmployerStagesDoc,
 } from "../src/lib/employerStages";
+import { connectionThrottleReply } from "./lib/throttleReply";
+import { queueConfirmation, replayArgs } from "./confirmationQueue";
 
 const log = createLogger("EmployerAlerts");
 
@@ -102,8 +104,6 @@ const APPEAL_STATUSES = ["RECONSIDERATION APPEALS", "BALCA APPEALS", "REQUEST FO
 
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/;
 
-const THROTTLED_REPLY =
-  "We can't send confirmation emails right now. Please try again in a little while.";
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
 
 function isPlausibleEmail(email: string): boolean {
@@ -168,11 +168,20 @@ export const subscribe = internalMutation({
     news: v.optional(v.boolean()),
     newsletter: v.optional(v.boolean()),
     ip: v.optional(v.string()),
+    /**
+     * Set only by the confirmation queue's drain (convex/confirmationQueue.ts)
+     * when it replays a request a full pool held back: the per-IP limit was
+     * passed on the first call and the drain measured the account's room, so
+     * both are skipped. Every per-address check still runs.
+     */
+    fromQueue: v.optional(v.boolean()),
   },
   returns: v.object({
     ok: v.boolean(),
     message: v.string(),
     throttled: v.optional(v.boolean()),
+    /** True when a full pool queued it (convex/confirmationQueue.ts). */
+    queued: v.optional(v.boolean()),
   }),
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
@@ -184,9 +193,9 @@ export const subscribe = internalMutation({
     }
 
     const ip = args.ip?.trim();
-    if (ip && ip !== "unknown") {
+    if (ip && ip !== "unknown" && !args.fromQueue) {
       const perIp = await checkAndRecordRateLimit(ctx, ip, "employer_subscribe_ip", SUBSCRIBE_IP_LIMIT);
-      if (!perIp.allowed) return { ok: false, message: THROTTLED_REPLY, throttled: true };
+      if (!perIp.allowed) return { ok: false, message: connectionThrottleReply(perIp.resetInMs), throttled: true };
     }
 
     const existing = await ctx.db
@@ -206,13 +215,21 @@ export const subscribe = internalMutation({
       return { ok: true, message: NEUTRAL_REPLY };
     }
 
-    // Charged BEFORE the write, so a refusal leaves no stamp for a retry to
-    // trip over (the Sep 4 2026 lesson in convex/caseAlerts.ts).
-    const budget = await checkAndRecordRateLimit(ctx, "all", CASE_CONFIRMATION_KEY, CASE_CONFIRMATION_BUDGET);
-    if (!budget.allowed) {
-      await noteRefusal(ctx, "caseConfirm");
-      log.error("confirmation budget exhausted; refusing to send", { limit: CASE_CONFIRMATION_BUDGET.limit });
-      return { ok: false, message: THROTTLED_REPLY, throttled: true };
+    // Charged BEFORE the write, so a full pool leaves no stamp for a retry to
+    // trip over (the Sep 4 2026 lesson in convex/caseAlerts.ts). A full pool
+    // queues the request (convex/confirmationQueue.ts).
+    if (!args.fromQueue) {
+      const budget = await checkAndRecordRateLimit(ctx, "all", CASE_CONFIRMATION_KEY, CASE_CONFIRMATION_BUDGET);
+      if (!budget.allowed) {
+        log.warn("confirmation pool full; queueing", { limit: CASE_CONFIRMATION_BUDGET.limit });
+        return queueConfirmation(ctx, {
+          kind: "employer",
+          pool: "caseConfirm",
+          email,
+          args: replayArgs(args),
+          resetInMs: budget.resetInMs,
+        });
+      }
     }
 
     if (existing) {

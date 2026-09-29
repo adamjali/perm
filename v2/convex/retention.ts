@@ -1,0 +1,55 @@
+/**
+ * Retention for the backend's operational logs.
+ *
+ * Three tables had no cleanup at all (measured Sep 29 2026, all still small:
+ * systemErrors 102 rows, marketingEvents 84, apiUsage 5). They're records of
+ * what the machinery did, not anyone's data, and none is read past a few
+ * weeks: the admin panel shows recent errors, the morning report reads one
+ * day of usage. So each keeps a margin well past its readers and the rest goes,
+ * in batches so a backlog can never make one run too big.
+ *
+ * Not here, on purpose: `auditLogs` (kept indefinitely by the retention
+ * policy, docs/compliance/DATA_RETENTION.md, and removed with an account),
+ * people's own content (cases, notes, messages sent to us), and the tables
+ * that already have their own cleanup (notifications, conversations, rate
+ * limits, the alert outbox, daily reports, budget refusals).
+ */
+import { v } from "convex/values";
+
+import { internal } from "./_generated/api";
+import { internalMutation } from "./_generated/server";
+
+const DAY_MS = 86_400_000;
+
+/** Days each table keeps. Read by the tests and the retention doc. */
+export const RETENTION_DAYS = {
+  systemErrors: 180,
+  marketingEvents: 365,
+  apiUsage: 90,
+} as const;
+
+/** Rows one run deletes per table; a longer backlog reschedules itself. */
+const BATCH = 500;
+
+export const pruneOperationalLogs = internalMutation({
+  args: { now: v.optional(v.number()) },
+  returns: v.object({ systemErrors: v.number(), marketingEvents: v.number(), apiUsage: v.number() }),
+  handler: async (ctx, args) => {
+    const now = args.now ?? Date.now();
+    const out = { systemErrors: 0, marketingEvents: 0, apiUsage: 0 };
+    let more = false;
+    for (const table of Object.keys(RETENTION_DAYS) as (keyof typeof RETENTION_DAYS)[]) {
+      const cutoff = now - RETENTION_DAYS[table] * DAY_MS;
+      const old = await ctx.db
+        .query(table)
+        .withIndex("by_creation_time", (q) => q.lt("_creationTime", cutoff))
+        .take(BATCH + 1);
+      for (const row of old.slice(0, BATCH)) await ctx.db.delete(row._id);
+      out[table] = Math.min(old.length, BATCH);
+      if (old.length > BATCH) more = true;
+    }
+    // Guarded on progress, so an empty table can never spin a timer.
+    if (more) await ctx.scheduler.runAfter(0, internal.retention.pruneOperationalLogs, { now });
+    return out;
+  },
+});

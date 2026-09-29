@@ -14,6 +14,7 @@ import { getRfiRfeUrgency, type UrgencyLevelWithCompletion } from "@/lib/status/
 import { calculateRFIDueDate } from "@/lib/perm";
 import type { ISODateString } from "@/lib/perm";
 import type { CaseFormData, RFIEntry as RFIEntryType } from "@/lib/forms/case-form-schema";
+import { CharLimit } from "@/components/ui/char-limit";
 
 // ============================================================================
 // TYPES
@@ -285,15 +286,16 @@ function RFIEntryComponent({
       <div className="space-y-4">
         {/* Optional Text Fields */}
         <FormField label="Title" name={fieldId("title")} hint="Brief description of RFI (optional)">
-          <Input
-            id={fieldId("title")}
-            name={fieldId("title")}
-            type="text"
-            value={title || ""}
-            onChange={handleInputChange("title")}
-            placeholder="e.g., Clarification on job duties"
-            maxLength={200}
-          />
+          <CharLimit max={200}>
+            <Input
+              id={fieldId("title")}
+              name={fieldId("title")}
+              type="text"
+              value={title || ""}
+              onChange={handleInputChange("title")}
+              placeholder="e.g., Clarification on job duties"
+            />
+          </CharLimit>
         </FormField>
 
         <FormField
@@ -301,15 +303,16 @@ function RFIEntryComponent({
           name={fieldId("description")}
           hint="What DOL is requesting (optional)"
         >
-          <Textarea
-            id={fieldId("description")}
-            name={fieldId("description")}
-            value={description || ""}
-            onChange={handleInputChange("description")}
-            placeholder="Describe the information requested..."
-            rows={2}
-            maxLength={2000}
-          />
+          <CharLimit max={2000}>
+            <Textarea
+              id={fieldId("description")}
+              name={fieldId("description")}
+              value={description || ""}
+              onChange={handleInputChange("description")}
+              placeholder="Describe the information requested..."
+              rows={2}
+            />
+          </CharLimit>
         </FormField>
 
         {/* Date Fields Grid */}
@@ -371,15 +374,16 @@ function RFIEntryComponent({
 
         {/* Notes */}
         <FormField label="Notes" name={fieldId("notes")} hint="Additional notes (optional)">
-          <Textarea
-            id={fieldId("notes")}
-            name={fieldId("notes")}
-            value={notes || ""}
-            onChange={handleInputChange("notes")}
-            placeholder="Add any relevant notes..."
-            rows={2}
-            maxLength={2000}
-          />
+          <CharLimit max={2000}>
+            <Textarea
+              id={fieldId("notes")}
+              name={fieldId("notes")}
+              value={notes || ""}
+              onChange={handleInputChange("notes")}
+              placeholder="Add any relevant notes..."
+              rows={2}
+            />
+          </CharLimit>
         </FormField>
       </div>
     </div>

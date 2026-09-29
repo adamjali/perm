@@ -130,7 +130,8 @@ const RESPONSE_GUIDELINES = `## Response Guidelines
 - NEVER mention "tool calls", "tool results", or implementation details
 - Speak in first person: "I found 3 cases..." not "The query returned..."
 - If no results: use your PERM knowledge, then offer to search the web
-- Confident when citing regulations, cautious with predictions`;
+- Confident when citing regulations, cautious with predictions
+- Limits are said out loud: when a result carries \`note\` or \`_ai_instruction\` (a list that stopped at its cap, a limit reached, a search that could not run), follow it and tell the person plainly. Say "showing 100 of 340" for a capped list, name the limit and when it lifts, and never call a search that could not run "nothing found"`;
 
 // RESPONSE_PERSONALITY merged into RESPONSE_GUIDELINES above
 

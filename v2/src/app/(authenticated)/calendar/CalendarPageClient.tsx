@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { CalendarView, type CaseDataMap, CalendarFilters } from "@/components/calendar";
 import type { CaseForSelection } from "@/components/timeline";
 import { PageHeading } from "../components/PageHeading";
+import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 
 // Import V1-style calendar CSS (Tippy.js theme, event styling)
 import "@/app/calendar-v1.css";
@@ -334,6 +335,8 @@ export function CalendarPageClient() {
       initial="hidden"
       animate="visible"
     >
+      <CaseCapNotice className="mb-4" />
+
       {/* Google Calendar Connection Banner - shown when not connected */}
       {!isGoogleConnected && (
         <div

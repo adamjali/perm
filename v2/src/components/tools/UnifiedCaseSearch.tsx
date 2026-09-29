@@ -38,6 +38,7 @@ import {
 // runtime import of a "server-only" module.
 import type { Program, UnifiedCase } from "@/lib/turso/unifiedSearch";
 import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/turso/caseSearchReads";
+import { RequestFailed } from "@/components/tools/RequestFailed";
 
 /**
  * Every DOL filing this site holds, in one search, with every filter the
@@ -467,7 +468,7 @@ export function UnifiedCaseSearch({
     return `/api/case-search?${submitted}&s=${query.n}`;
   }, [submitted, query.n]);
 
-  const { data, failed } = usePublicQuery<SearchResponse>(url);
+  const { data, failed, failure, retry } = usePublicQuery<SearchResponse>(url);
 
   const searching = submitted !== null;
   const pending = searching && data === undefined && !failed;
@@ -1207,9 +1208,7 @@ export function UnifiedCaseSearch({
       ) : null}
 
       {searching && failed ? (
-        <p className="border-2 border-border bg-tint-primary p-4 text-base">
-          The search didn&apos;t load. Reloading usually clears it.
-        </p>
+        <RequestFailed what="The search" failure={failure} onRetry={retry} />
       ) : null}
 
       {data?.needsLead ? (

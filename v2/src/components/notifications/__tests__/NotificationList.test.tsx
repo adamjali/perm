@@ -139,6 +139,16 @@ describe("NotificationList - Empty States", () => {
   });
 });
 
+describe("NotificationList - an empty page with more to check", () => {
+  it("never says 'none' while older notifications remain unchecked", () => {
+    (useQuery as Mock).mockReturnValue({ notifications: [], hasMore: true, nextCursor: "c:1" });
+    renderWithProviders(<NotificationList activeTab="deadlines" />);
+    expect(screen.queryByText(/no deadline notifications/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/older ones haven.t been checked yet/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /look further back/i })).toBeInTheDocument();
+  });
+});
+
 describe("NotificationList - Pagination", () => {
   it("shows Load More when hasMore is true, hides when false", () => {
     (useQuery as Mock).mockReturnValue({ notifications: [createMockNotification()], hasMore: true, nextCursor: "123" });

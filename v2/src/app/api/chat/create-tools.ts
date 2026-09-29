@@ -81,6 +81,7 @@ import {
 import type { ActionMode } from '@/lib/ai/tool-permissions';
 import { executeWithCache, createCacheStats, type CacheableToolName } from '@/lib/ai/cache';
 import { captureError } from '@/lib/sentry';
+import { annotateCaseQuery, rateLimitedToolResult, webSearchUnavailableResult } from '@/lib/ai/limits';
 import {
   buildConfirmationResponse,
   buildToolError,
@@ -326,7 +327,9 @@ export function createTools(
 
           const duration = Date.now() - startTime;
           chatDebug(`[Chat API] queryCases result (${duration}ms):`, truncateForLog(result));
-          return result;
+          // A list that stopped at its cap says so ("showing 100 of 340").
+          // Applied after the cache, so a cached result carries it too.
+          return annotateCaseQuery(result);
         } catch (error) {
           console.error(`[Chat API] queryCases executeWithCache error:`, error);
           captureError(error);
@@ -356,6 +359,11 @@ export function createTools(
               const result = await fetchAction(api.knowledge.searchKnowledge, params, { token });
               return sanitizeBigInts(result);
             } catch (error) {
+              // The per-user search limit (knowledgeSearch in rateLimitConfig)
+              // is a wait, not a bad question: say so, with the wait. It used
+              // to come back as "try rephrasing your question".
+              const limited = rateLimitedToolResult(error, 'knowledge-base searches');
+              if (limited) return limited;
               console.error(`[Chat API] searchKnowledge error:`, {
                 error,
                 errorMessage: error instanceof Error ? error.message : String(error),
@@ -364,8 +372,8 @@ export function createTools(
               });
               captureError(error);
               return {
-                error: 'Failed to search knowledge base',
-                suggestion: 'Please try rephrasing your question about PERM regulations.',
+                error: "The knowledge base didn't answer just now.",
+                suggestion: "Tell the person the knowledge base didn't answer just now, and answer from what you know, saying so.",
                 errorType: error instanceof Error ? error.constructor.name : 'UnknownError',
               };
             }
@@ -400,6 +408,12 @@ export function createTools(
             try {
               cacheStats?.recordMiss();
               const result = await fetchAction(api.webSearch.searchWeb, params, { token });
+              // No provider answered: a spent daily quota or a failure. Say
+              // which (and when the quota comes back) instead of handing the
+              // model an empty list it reads as "the web has nothing". The
+              // result carries an `error` key, so the cache never keeps it.
+              const unavailable = webSearchUnavailableResult(result, new Date());
+              if (unavailable) return unavailable;
               return sanitizeBigInts(result);
             } catch (error) {
               console.error(`[Chat API] searchWeb error:`, {

@@ -16,6 +16,7 @@ import { v } from "convex/values";
 import { query } from "./_generated/server";
 import { requireAdmin } from "./lib/admin";
 import { BUDGETS, type BudgetName } from "./lib/alertBudgets";
+import { QUEUE_MAX } from "./confirmationQueue";
 import { etDay } from "./lib/alertDelivery";
 
 const DAY_MS = 86_400_000;
@@ -32,9 +33,13 @@ export const getDelivery = query({
         limit: v.number(),
         usedLast24h: v.number(),
         refusedLast7d: v.number(),
+        /** Requests the full pool queued instead of refusing (sent as room freed). */
+        queuedLast7d: v.number(),
       }),
     ),
-    refusalDays: v.array(v.object({ day: v.string(), pool: v.string(), count: v.number() })),
+    refusalDays: v.array(v.object({ day: v.string(), pool: v.string(), count: v.number(), queued: v.number() })),
+    /** Confirmations waiting in convex/confirmationQueue.ts right now. */
+    confirmationQueue: v.object({ waiting: v.number(), oldestQueuedAt: v.union(v.number(), v.null()) }),
     outbox: v.object({
       queued: v.number(),
       oldestQueuedAt: v.union(v.number(), v.null()),
@@ -62,11 +67,15 @@ export const getDelivery = query({
         lastError: v.union(v.string(), v.null()),
       }),
     ),
+    /** Every outbox row in the last 7 days; `recent` carries the newest 30. */
+    recentTotal: v.optional(v.number()),
     follows: v.object({
       confirmed: v.number(),
       pending: v.number(),
       unsubscribed: v.number(),
       top: v.array(v.object({ slug: v.string(), name: v.string(), followers: v.number() })),
+      /** Employers with at least one confirmed follower; `top` carries ten. */
+      employers: v.optional(v.number()),
     }),
   }),
   handler: async (ctx) => {
@@ -79,7 +88,11 @@ export const getDelivery = query({
       .withIndex("by_day_pool", (q) => q.gte("day", d7day))
       .take(200);
     const refusedBy = new Map<string, number>();
-    for (const r of refusalRows) refusedBy.set(r.pool, (refusedBy.get(r.pool) ?? 0) + r.count);
+    const queuedBy = new Map<string, number>();
+    for (const r of refusalRows) {
+      refusedBy.set(r.pool, (refusedBy.get(r.pool) ?? 0) + r.count);
+      queuedBy.set(r.pool, (queuedBy.get(r.pool) ?? 0) + (r.queued ?? 0));
+    }
 
     const pools = [];
     for (const [name, b] of Object.entries(BUDGETS) as [BudgetName, (typeof BUDGETS)[BudgetName]][]) {
@@ -87,8 +100,20 @@ export const getDelivery = query({
         .query("rateLimits")
         .withIndex("by_key_and_timestamp", (q) => q.eq("key", `${b.key}:all`).gte("timestamp", now - DAY_MS))
         .take(b.limit + 50);
-      pools.push({ name, label: b.label, limit: b.limit, usedLast24h: used.length, refusedLast7d: refusedBy.get(name) ?? 0 });
+      pools.push({
+        name,
+        label: b.label,
+        limit: b.limit,
+        usedLast24h: used.length,
+        refusedLast7d: refusedBy.get(name) ?? 0,
+        queuedLast7d: queuedBy.get(name) ?? 0,
+      });
     }
+
+    const confirmationWaiting = await ctx.db
+      .query("confirmationQueue")
+      .withIndex("by_queuedAt")
+      .take(QUEUE_MAX);
 
     const queuedRows = await ctx.db
       .query("alertOutbox")
@@ -138,7 +163,11 @@ export const getDelivery = query({
 
     return {
       pools,
-      refusalDays: refusalRows.map((r) => ({ day: r.day, pool: r.pool, count: r.count })),
+      refusalDays: refusalRows.map((r) => ({ day: r.day, pool: r.pool, count: r.count, queued: r.queued ?? 0 })),
+      confirmationQueue: {
+        waiting: confirmationWaiting.length,
+        oldestQueuedAt: confirmationWaiting[0]?.queuedAt ?? null,
+      },
       outbox: {
         queued: queuedRows.length,
         oldestQueuedAt: queuedRows[0]?.createdAt ?? null,
@@ -164,7 +193,9 @@ export const getDelivery = query({
         direct: r.direct === true,
         lastError: r.lastError ?? null,
       })),
+      recentTotal: week.length,
       follows: {
+        employers: counts.size,
         confirmed,
         pending,
         unsubscribed,

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { usePWDSection } from "@/components/forms/useCaseFormSection";
 import type { DateConstraint } from "@/lib/forms/date-constraints";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
+import { CharLimit } from "@/components/ui/char-limit";
 
 // ============================================================================
 // TYPES
@@ -256,16 +257,17 @@ export function PWDSection(props: PWDSectionProps) {
           error={errors?.pwdCaseNumber}
           hint="DOL case number (optional)"
         >
-          <Input
-            id="pwdCaseNumber"
-            name="pwdCaseNumber"
-            type="text"
-            value={values.pwdCaseNumber || ''}
-            onChange={handleInputChange}
-            aria-invalid={!!errors?.pwdCaseNumber}
-            placeholder="e.g., PWD-2024-001"
-            maxLength={50}
-          />
+          <CharLimit max={50}>
+            <Input
+              id="pwdCaseNumber"
+              name="pwdCaseNumber"
+              type="text"
+              value={values.pwdCaseNumber || ''}
+              onChange={handleInputChange}
+              aria-invalid={!!errors?.pwdCaseNumber}
+              placeholder="e.g., PWD-2024-001"
+            />
+          </CharLimit>
         </FormField>
 
         {/* Wage Amount */}

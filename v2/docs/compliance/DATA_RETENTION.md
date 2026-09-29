@@ -12,7 +12,10 @@
 | Read notifications | **90 days** | Hourly cron (:30) | Unread notifications preserved regardless of age |
 | Rate limit records | **24 hours** | Hourly cron (:15) | Processed in batches of 100 |
 | Audit logs | **Indefinite** | N/A | Required for compliance, never auto-deleted |
-| System error logs | Indefinite | Convex DB | Tracked in `systemErrors` table |
+| System error logs | **180 days** | Daily cron (3:20 AM UTC) | `systemErrors`; `convex/retention.ts` (since Sep 29 2026) |
+| Email events (Resend webhook) | **365 days** | Daily cron (3:20 AM UTC) | `marketingEvents` |
+| AI provider usage counters | **90 days** | Daily cron (3:20 AM UTC) | `apiUsage` |
+| Queued confirmation requests | **3 days** at most | Deleted when sent; the 15-minute drain drops any older than 3 days | `confirmationQueue`: the address and the form's own fields, never the IP (since Sep 29 2026) |
 
 ## Automated Cleanup Jobs
 
@@ -26,6 +29,8 @@ All cleanup runs via `convex/crons.ts`:
 | `account-deletion-cleanup` | Hourly :45 | `processExpiredDeletions` |
 | `rate-limit-cleanup` | Hourly :15 | `cleanupRateLimits` |
 | `conversation-ttl-cleanup` | Daily 3:00 AM UTC | `cleanupExpiredConversations` |
+| `confirmation-queue-drain` | Every 15 minutes | `confirmationQueue.drain` (sends, and drops requests past 3 days) |
+| `operational-log-retention` | Daily 3:20 AM UTC | `retention.pruneOperationalLogs` |
 
 ## Account Deletion
 

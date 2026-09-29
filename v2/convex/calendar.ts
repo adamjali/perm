@@ -12,6 +12,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { readUserCases } from "./lib/userCases";
 import { buildDefaultProfile } from "./lib/userDefaults";
 import { slotsForPreference, type CalendarSyncPreference } from "./lib/calendarTypes";
 
@@ -95,14 +96,8 @@ export const getCalendarEvents = query({
       return [];
     }
 
-    // Query cases for user with reasonable limit
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .take(1000);
-
-    // Filter out deleted cases
-    let filteredCases = cases.filter((c) => c.deletedAt === undefined);
+    // Live cases, newest first (convex/lib/userCases.ts)
+    let filteredCases = (await readUserCases(ctx, userId)).cases;
 
     // Filter out completed cases (I-140 + approved) unless showCompleted is true
     if (args.showCompleted !== true) {

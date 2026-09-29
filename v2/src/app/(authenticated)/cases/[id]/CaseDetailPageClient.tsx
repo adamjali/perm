@@ -45,7 +45,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { handleOperationError } from "@/lib/errors";
 import { validateDocumentFile } from "@/lib/documents/validation";
-import type { DocumentCategory } from "@/lib/documents";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { useDerivedDates } from "@/hooks/useDerivedDates";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
@@ -54,6 +53,13 @@ import { isRecruitmentComplete } from "@/lib/perm";
 import { useJobDescriptionTemplates } from "@/hooks/useJobDescriptionTemplates";
 import type { CaseDetailData } from "@/components/cases/detail/case-detail-types";
 import { itemVariants, STAGE_ACCENT_COLORS } from "@/components/cases/detail/case-detail-utils";
+import { caseWriteErrorMessage } from "@/lib/caseWriteErrors";
+import {
+  MAX_DOCUMENTS_PER_CASE,
+  MAX_DOCUMENT_NAME_LENGTH,
+  DOCUMENT_CAP_MESSAGE,
+  type DocumentCategory,
+} from "@/lib/documents";
 
 // ============================================================================
 // ANIMATION VARIANTS
@@ -372,6 +378,11 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
       toast.error(validation.error);
       return;
     }
+    // The server refuses the 51st document; say so before uploading anything.
+    if ((caseData.documents?.length ?? 0) >= MAX_DOCUMENTS_PER_CASE) {
+      toast.error(DOCUMENT_CAP_MESSAGE);
+      return;
+    }
 
     try {
       // 1. Get upload URL (server validates too)
@@ -407,13 +418,18 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         category,
       });
 
-      toast.success("Document uploaded");
+      // The server keeps the first 255 characters of a name; say so when it did.
+      toast.success(
+        file.name.length > MAX_DOCUMENT_NAME_LENGTH
+          ? `Document uploaded. Its name was shortened to ${MAX_DOCUMENT_NAME_LENGTH} characters, the most a document name holds.`
+          : "Document uploaded"
+      );
     } catch (error) {
       handleOperationError(error, {
-        userMessage: "Failed to upload document. Please try again.",
+        userMessage: caseWriteErrorMessage(error, "Failed to upload document. Please try again."),
       });
     }
-  }, [generateUploadUrlMutation, saveDocumentMutation, caseId]);
+  }, [generateUploadUrlMutation, saveDocumentMutation, caseId, caseData.documents?.length]);
 
   const handleDeleteDocument = useCallback(async (documentId: string) => {
     try {
@@ -636,7 +652,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           <div className="flex items-center justify-between gap-3 sm:gap-4">
             <div className="min-w-0 flex-1 overflow-hidden">
               <div className="flex items-center gap-2">
-                <h1 className="font-heading text-2xl sm:text-2xl font-bold leading-[1.15] truncate tracking-tight" title={caseData.employerName}>
+                <h1 className="min-w-0 font-heading text-2xl sm:text-2xl font-bold leading-[1.15] tracking-tight [overflow-wrap:anywhere]">
                   {caseData.employerName}
                 </h1>
                 {isSample && (
@@ -645,7 +661,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   </span>
                 )}
               </div>
-              <p className="font-heading text-sm text-muted-foreground font-medium mt-0.5" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={`${caseData.positionTitle}${caseData.beneficiaryIdentifier ? `, ${caseData.beneficiaryIdentifier}` : ""}`}>
+              <p className="font-heading text-sm text-muted-foreground font-medium mt-0.5 [overflow-wrap:anywhere]">
                 {caseData.positionTitle}
                 {caseData.beneficiaryIdentifier && (
                   <span className="font-mono text-sm opacity-60">, {caseData.beneficiaryIdentifier}</span>

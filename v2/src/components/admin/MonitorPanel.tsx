@@ -83,7 +83,7 @@ export function MonitorPanel() {
             {s.lines.length > 0 ? (
               <ul className="mt-3 space-y-1 border-l-2 border-border pl-3 font-mono text-sm">
                 {s.lines.map((l, i) => (
-                  <li key={i}>{l} </li>
+                  <li key={i} className="[overflow-wrap:anywhere]">{l} </li>
                 ))}
               </ul>
             ) : null}

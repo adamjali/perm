@@ -222,39 +222,8 @@ def health_section() -> dict:
 # removed with the account.
 
 
-# ── Vercel ────────────────────────────────────────────────────────────────
-
-
-def vercel_section() -> dict:
-    tok = os.environ.get("VERCEL_TOKEN")
-    if not tok:
-        return section("vercel", "Vercel (hosting bill)", "off",
-                       "set the VERCEL_TOKEN secret to read usage")
-    p = subprocess.run(["npx", "--yes", "vercel@latest", "usage", "--breakdown", "daily", "--json",
-                        "--token", tok, "--scope", os.environ.get("VERCEL_SCOPE", "adamjalis-projects")],
-                       capture_output=True, text=True, timeout=240)
-    d = json.loads(p.stdout)
-    daily = d["breakdown"]["data"]
-    # The newest bucket is today, still filling; judge the last whole day.
-    full = daily[:-1] if len(daily) > 1 else daily
-    last = full[-1]
-    prior = [x["totals"].get("cost", 0) for x in full[-8:-1]]
-    cost = last["totals"].get("cost", 0)
-    credit = d.get("creditBalance") or {}
-    total = d["totals"]["cost"]
-    top = sorted(last["services"], key=lambda s: -s.get("cost", 0))[:3]
-    parts = ", ".join("%s $%.2f" % (x["name"], x["cost"]) for x in top)
-    lines = [
-        f"{last['periodKey']}: ${cost:.2f} ({parts})",
-        f"This cycle: ${total:.2f} against ${credit.get('allocated', 0):.0f} of credit",
-    ]
-    status = "warn" if total > credit.get("allocated", 20) else "ok"
-    note = spike_note(cost, prior, "dollars")
-    if note:
-        lines.append("Unusual: " + note)
-        status = "warn"
-    return section("vercel", "Vercel (hosting bill)", status,
-                   f"${cost:.2f} yesterday, ${total:.2f} this cycle", lines)
+# The site left Vercel on Sep 28 2026 and its plan was stopped; the Vercel
+# bill section went with it (Sep 29 2026), the same way Turso's did.
 
 
 # ── the site itself ───────────────────────────────────────────────────────
@@ -603,7 +572,6 @@ def build(now: dt.datetime) -> dict:
         guarded("github", "GitHub Actions (24 h)", github_section, since),
         guarded("site", "The site", site_section),
         guarded("data", "The data", data_section, now_ms),
-        guarded("vercel", "Vercel (hosting bill)", vercel_section),
         guarded("traffic", "Traffic", traffic_section),
         guarded("sentry", "Errors (Sentry)", sentry_section),
         guarded("server", "The server (Oracle)", server_section, now_ms),

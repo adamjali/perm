@@ -11,6 +11,7 @@
  */
 
 import * as React from "react";
+import { isQueued, replyHeading } from "@/lib/alertReply";
 
 function requestEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -24,6 +25,7 @@ export function PrefsRequestForm() {
     "idle",
   );
   const [message, setMessage] = React.useState("");
+  const [queued, setQueued] = React.useState(false);
 
   const endpoint = requestEndpoint();
   if (!endpoint) return null;
@@ -40,6 +42,7 @@ export function PrefsRequestForm() {
       });
       const body = (await res.json()) as { ok?: boolean; message?: string };
       setMessage(String(body.message ?? "Something went wrong. Try again."));
+      setQueued(isQueued(body));
       setState(res.ok ? "done" : "error");
     } catch {
       setMessage("Couldn't reach the server. Try again in a moment.");
@@ -50,7 +53,7 @@ export function PrefsRequestForm() {
   if (state === "done") {
     return (
       <div className="border-3 border-border bg-card p-5 shadow-hard">
-        <p className="font-heading text-lg font-black">Check your inbox</p>{" "}
+        <p className="font-heading text-lg font-black">{replyHeading(queued)}</p>{" "}
         <p className="mt-2 text-base leading-relaxed text-foreground/70">
           {message}
         </p>

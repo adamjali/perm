@@ -9,6 +9,7 @@ import {
   MAX_DOCUMENT_SIZE_BYTES,
   MAX_DOCUMENTS_PER_CASE,
   MAX_DOCUMENT_NAME_LENGTH,
+  DOCUMENT_CAP_MESSAGE,
 } from "./lib/documents";
 
 /**
@@ -44,14 +45,14 @@ export const generateUploadUrl = mutation({
 
     // Validate size
     if (args.fileSize > MAX_DOCUMENT_SIZE_BYTES) {
-      throw new ConvexError("File exceeds 20 MB limit");
+      throw new ConvexError("That file is over 20 MB, the most one document holds.");
     }
 
     // Check document count
     const existingDocs = caseDoc.documents || [];
     if (existingDocs.length >= MAX_DOCUMENTS_PER_CASE) {
       throw new ConvexError(
-        `Maximum ${MAX_DOCUMENTS_PER_CASE} documents per case`
+        DOCUMENT_CAP_MESSAGE
       );
     }
 
@@ -100,7 +101,7 @@ export const saveDocument = mutation({
 
     // Re-validate size
     if (args.fileSize > MAX_DOCUMENT_SIZE_BYTES) {
-      throw new ConvexError("File exceeds 20 MB limit");
+      throw new ConvexError("That file is over 20 MB, the most one document holds.");
     }
 
     const url = await ctx.storage.getUrl(
@@ -112,7 +113,7 @@ export const saveDocument = mutation({
 
     const existing = caseDoc.documents || [];
     if (existing.length >= MAX_DOCUMENTS_PER_CASE) {
-      throw new ConvexError(`Maximum ${MAX_DOCUMENTS_PER_CASE} documents per case`);
+      throw new ConvexError(DOCUMENT_CAP_MESSAGE);
     }
 
     const docEntry = {

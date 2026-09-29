@@ -7,6 +7,7 @@ import { exec, one } from "./client";
 import type { FlagProgram } from "./flagCases";
 import { lca } from "./lcaCases";
 import { pwd } from "./pwdCases";
+import { isUnsettledMiss } from "@/lib/dolMiss";
 
 /**
  * The lookup behind `/embed/case-status`: ask DOL live, under a cap, and fall
@@ -221,7 +222,7 @@ export async function lookupForEmbed(
           .then((o) => ({ found: o.row, miss: o.miss }))
           .catch(() => ({ found: null, miss: "unavailable" as const }));
   const found = outcome.found;
-  if (!found) return fromStored(false, outcome.miss === "unavailable");
+  if (!found) return fromStored(false, isUnsettledMiss(outcome.miss));
   return {
     ...base,
     found: true,

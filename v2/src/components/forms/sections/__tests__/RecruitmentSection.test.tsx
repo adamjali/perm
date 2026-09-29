@@ -312,7 +312,7 @@ describe('RecruitmentSection', () => {
       );
 
       // Add method
-      await user.click(screen.getByText('Add Method (1/3)'));
+      await user.click(screen.getByText('Add method (1 of 3)'));
       expect(onChange).toHaveBeenCalledWith('additionalRecruitmentMethods', [
         { method: 'job_fair', date: '2024-03-15', description: '' },
         { method: '', date: '', description: '' },

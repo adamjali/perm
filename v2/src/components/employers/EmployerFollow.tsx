@@ -25,6 +25,16 @@ function markerClass(m: EmployerMove): string {
   return "bg-background";
 }
 
+function MoveItem({ m }: { m: EmployerMove }) {
+  return (
+    <li className="relative grid grid-cols-1 gap-y-0.5 py-2 pl-6 sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:gap-x-4">
+      <span aria-hidden="true" className={`absolute -left-[9px] top-3.5 h-4 w-4 border-2 border-border ${markerClass(m)}`} />{" "}
+      <span className="text-sm font-semibold tabular-nums text-foreground/70">{longDate(m.date).replace(/, \d{4}$/, "")}</span>{" "}
+      <span className="text-base font-bold [overflow-wrap:anywhere]">{m.sentence}</span>
+    </li>
+  );
+}
+
 export function EmployerFollow({
   slug,
   name,
@@ -32,6 +42,7 @@ export function EmployerFollow({
   moves,
   logFrom,
   asOf,
+  docMissing = false,
 }: {
   slug: string;
   name: string;
@@ -41,6 +52,13 @@ export function EmployerFollow({
   moves: EmployerMove[];
   logFrom: string | null;
   asOf: string | null;
+  /**
+   * The employer census couldn't be read, or is more than eight days old.
+   * Then neither the bar nor the rail can be drawn, and the panel says so:
+   * "Nothing employer-wide" over a stale document was a false statement
+   * (Sep 29 2026 audit).
+   */
+  docMissing?: boolean;
 }) {
   const parts = row ? ribbonParts(row) : null;
   const legend = parts ? ribbonLegend(parts) : [];
@@ -71,11 +89,26 @@ export function EmployerFollow({
             ))}
           </ul>
         </div>
-      ) : null}{" "}
+      ) : docMissing ? (
+        <p className="mt-6 text-base text-foreground/80">
+          Today&apos;s picture of its pending cases isn&apos;t available: the site&apos;s
+          employer census couldn&apos;t be read or is more than eight days old. It&apos;s
+          rewritten every night, so this usually clears by the next day.
+        </p>
+      ) : (
+        <p className="mt-6 text-base text-foreground/80">
+          {`Fewer than five of its PERM cases are pending${asOf ? ` as of ${longDate(asOf)}` : ""}, and the census that draws this bar starts at five.`}
+        </p>
+      )}{" "}
 
       <div className="mt-7">
         <p className="text-base font-bold">What DOL has done to its cases as a group</p>{" "}
-        {shown.length === 0 ? (
+        {docMissing ? (
+          <p className="mt-2 text-base text-foreground/80">
+            The record of group moves couldn&apos;t be read just now, so this can&apos;t say
+            whether DOL has moved its cases as a group. Following still works.
+          </p>
+        ) : shown.length === 0 ? (
           <p className="mt-2 text-base text-foreground/80">
             {logFrom ? `Nothing employer-wide since this site's record began on ${longDate(logFrom)}.` : "Nothing employer-wide in this site's record."}
           </p>
@@ -83,17 +116,24 @@ export function EmployerFollow({
           <ol className="mt-3 border-l-2 border-border">
             {shown.map((m) => (
               <Fragment key={m.key}>
-                <li className="relative grid grid-cols-1 gap-y-0.5 py-2 pl-6 sm:grid-cols-[6.5rem_minmax(0,1fr)] sm:gap-x-4">
-                  <span aria-hidden="true" className={`absolute -left-[9px] top-3.5 h-4 w-4 border-2 border-border ${markerClass(m)}`} />{" "}
-                  <span className="text-sm font-semibold tabular-nums text-foreground/70">{longDate(m.date).replace(/, \d{4}$/, "")}</span>{" "}
-                  <span className="text-base font-bold">{m.sentence}</span>
-                </li>{" "}
+                <MoveItem m={m} />{" "}
               </Fragment>
             ))}
           </ol>
         )}{" "}
-        {moves.length > RAIL_SHOWN ? (
-          <p className="mt-2 text-sm text-foreground/70">{`${int(moves.length - RAIL_SHOWN)} earlier in the record.`}</p>
+        {!docMissing && moves.length > RAIL_SHOWN ? (
+          <details className="mt-2">
+            <summary className="min-h-11 cursor-pointer py-2 text-sm font-bold underline decoration-primary decoration-2 underline-offset-2">
+              {`Show the ${int(moves.length - RAIL_SHOWN)} earlier ${moves.length - RAIL_SHOWN === 1 ? "move" : "moves"}`}
+            </summary>
+            <ol className="mt-1 border-l-2 border-border">
+              {moves.slice(RAIL_SHOWN).map((m) => (
+                <Fragment key={m.key}>
+                  <MoveItem m={m} />{" "}
+                </Fragment>
+              ))}
+            </ol>
+          </details>
         ) : null}
       </div>{" "}
 

@@ -171,8 +171,11 @@ describe("the search returns live-only employers as their own shape", () => {
     const route = source("app/api/perm-entities/[kind]/route.ts");
     expect(route).toContain("searchLiveOnlyEmployers");
     // Control, then the assertion: `rows` is mapped through packRow and
-    // `live` is not, so the two lists cannot be confused downstream.
-    expect(route).toContain("rows: found.map(packRow)");
+    // `live` is not, so the two lists cannot be confused downstream. Since
+    // Sep 29 2026 the published list is capped first (`shown`, with `more`
+    // saying so), so the packed name is the capped one.
+    expect(route).toMatch(/rows: shown\.map\(packRow\)/);
+    expect(route).toContain("const shown = found.slice(0, nameCap)");
     expect(route).not.toContain("live.map(packRow)");
   });
 

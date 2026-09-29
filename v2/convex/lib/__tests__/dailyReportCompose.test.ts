@@ -80,7 +80,26 @@ describe("the Convex sections", () => {
     );
     expect(email!.status).toBe("warn");
     expect(email!.lines.join("\n")).toMatch(/85 of the 100/);
-    expect(email!.lines.join("\n")).toMatch(/caseAlert refused 3/);
+    expect(email!.lines.join("\n")).toMatch(/caseAlert turned away 3/);
+  });
+
+  it("reports a queued day as information, and a queue left waiting half a day as a warning", () => {
+    const [, calm] = convexSections(
+      facts({ refusals: [{ day: "2026-09-28", pool: "caseConfirm", count: 0, queued: 15 }] }),
+      { sent: 57, bounced: 0, complained: 0 },
+      NOW,
+    );
+    expect(calm!.status).toBe("ok");
+    expect(calm!.lines.join("\n")).toMatch(/caseConfirm was full on 2026-09-28; 15 waited in the queue/);
+    expect(calm!.lines.join("\n")).not.toMatch(/turned away/);
+
+    const [, stale] = convexSections(
+      facts({ confirmationQueue: { waiting: 4, oldestQueuedAt: NOW - 13 * 60 * 60 * 1000 } }),
+      { sent: 57, bounced: 0, complained: 0 },
+      NOW,
+    );
+    expect(stale!.status).toBe("warn");
+    expect(stale!.lines.join("\n")).toMatch(/4 confirmations waiting in the queue, the oldest for over 12 hours/);
   });
 
   it("says when Resend could not be read instead of reporting zero sends, and why", () => {

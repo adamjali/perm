@@ -190,6 +190,27 @@ interface ModelConfig {
   name: string;
   /** Max estimated input tokens. Skip this model if input exceeds this. */
   maxInputTokens?: number;
+  /** Lower the requested output cap to this for this model only. */
+  maxOutputTokens?: number;
+}
+
+/**
+ * The route asks for CHAT_MAX_OUTPUT_TOKENS (8,000, src/lib/ai/limits.ts).
+ * Groq keeps the old 4,000: its free tier counts the requested maximum against
+ * a 12,000 tokens-a-minute budget shared with the input, so 8,000 would leave
+ * room for only about 4,000 tokens of conversation.
+ */
+export const MODEL_OUTPUT_CAPS: Record<string, number> = {
+  'Llama 3.3 70B (Groq)': 4000,
+};
+
+/** The call options for one model, with its own output cap applied. */
+function optionsFor(config: ModelConfig, options: LanguageModelV4CallOptions): LanguageModelV4CallOptions {
+  const cap = config.maxOutputTokens;
+  if (cap === undefined || options.maxOutputTokens === undefined || options.maxOutputTokens <= cap) {
+    return options;
+  }
+  return { ...options, maxOutputTokens: cap };
 }
 
 /**
@@ -216,7 +237,12 @@ const MODEL_CONFIGS: ModelConfig[] = [
   { model: google('gemini-2.0-flash'), name: 'Gemini 2.0 Flash' },
 
   // Tier 2: High-quota mid-size fallbacks
-  { model: groq('llama-3.3-70b-versatile'), name: 'Llama 3.3 70B (Groq)', maxInputTokens: 10000 },
+  {
+    model: groq('llama-3.3-70b-versatile'),
+    name: 'Llama 3.3 70B (Groq)',
+    maxInputTokens: 10000,
+    maxOutputTokens: MODEL_OUTPUT_CAPS['Llama 3.3 70B (Groq)'],
+  },
   { model: wrapMistralModel(mistral('mistral-small-latest')), name: 'Mistral Small' },
 
   // Tier 3: Free large-context emergency
@@ -300,11 +326,11 @@ export class FallbackModel implements LanguageModelV4 {
 
   private async tryModels<T>(
     mode: 'generate' | 'stream',
-    invoke: (model: LanguageModelV4) => PromiseLike<T>,
-    options?: LanguageModelV4CallOptions,
+    invoke: (model: LanguageModelV4, options: LanguageModelV4CallOptions) => PromiseLike<T>,
+    options: LanguageModelV4CallOptions,
   ): Promise<T> {
     const errors: Array<{ name: string; error: string }> = [];
-    const estimatedTokens = options ? estimateInputTokens(options) : undefined;
+    const estimatedTokens = estimateInputTokens(options);
 
     for (let i = 0; i < this.configs.length; i++) {
       const config = this.configs[i]!;
@@ -324,7 +350,7 @@ export class FallbackModel implements LanguageModelV4 {
       try {
         console.log(`[Fallback] Trying ${config.name} (${i + 1}/${this.configs.length}) for ${mode}...`);
         addBreadcrumb({ category: 'ai.fallback', message: `Trying ${config.name} for ${mode}`, data: { modelIndex: i, totalModels: this.configs.length } });
-        const result = await invoke(config.model);
+        const result = await invoke(config.model, optionsFor(config, options));
         const successMsg = mode === 'stream'
           ? `${config.name} stream started successfully`
           : `${config.name} succeeded (${mode})`;
@@ -354,11 +380,11 @@ export class FallbackModel implements LanguageModelV4 {
   }
 
   async doGenerate(options: LanguageModelV4CallOptions): Promise<LanguageModelV4GenerateResult> {
-    return this.tryModels('generate', (model) => model.doGenerate(options), options);
+    return this.tryModels('generate', (model, opts) => model.doGenerate(opts), options);
   }
 
   async doStream(options: LanguageModelV4CallOptions): Promise<LanguageModelV4StreamResult> {
-    return this.tryModels('stream', (model) => model.doStream(options), options);
+    return this.tryModels('stream', (model, opts) => model.doStream(opts), options);
   }
 }
 

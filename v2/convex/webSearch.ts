@@ -45,6 +45,13 @@ interface SearchResponse {
   source: "tavily" | "brave" | "none";
   results: SearchResult[];
   answer: string | null;
+  /**
+   * Why no provider answered, set only when `source` is "none": "quota" when
+   * every provider was at its daily limit, "error" when one was tried and
+   * failed. Without it an empty list reads as "the web has nothing on this"
+   * (the silent case the Sep 29 2026 audit found).
+   */
+  unavailable?: "quota" | "error";
 }
 
 /**
@@ -192,7 +199,7 @@ async function braveSearch(query: string): Promise<SearchResponse> {
  * This action checks rate limits and falls back between providers:
  * 1. Check Tavily quota -> use if available
  * 2. Check Brave quota -> use if Tavily unavailable/failed
- * 3. Return empty results if all providers exhausted
+ * 3. Return empty results, with the reason in `unavailable`, if none answered
  *
  * Usage from client:
  * ```typescript
@@ -212,6 +219,9 @@ export const searchWeb = action({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) throw new Error("Not authenticated");
 
+    // Did any provider get asked and fail? Decides "error" over "quota" below.
+    let attemptFailed = false;
+
     // Check Tavily quota first
     const tavilyUsage = await ctx.runQuery(internal.apiUsage.getUsageInternal, {
       provider: "tavily",
@@ -226,6 +236,7 @@ export const searchWeb = action({
         return result;
       } catch (e) {
         console.error("Tavily search failed:", e);
+        attemptFailed = true;
         await recordError(ctx, "action", "webSearch.searchWeb.tavily", e);
         // Fall through to Brave
       }
@@ -245,6 +256,7 @@ export const searchWeb = action({
         return result;
       } catch (e) {
         console.error("Brave search failed:", e);
+        attemptFailed = true;
         await recordError(ctx, "action", "webSearch.searchWeb.brave", e);
         // Fall through to graceful degradation
       }
@@ -258,6 +270,7 @@ export const searchWeb = action({
       source: "none",
       results: [],
       answer: null,
+      unavailable: attemptFailed ? "error" : "quota",
     };
   },
 });

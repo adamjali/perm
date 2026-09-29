@@ -73,7 +73,7 @@ import {
 } from "./lib/unsubscribeToken";
 import { recordError } from "./lib/errorRecording";
 import { dropQueued } from "./lib/alertOutboxStore";
-import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
+import { BUDGETS, windowFor } from "./lib/alertBudgets";
 
 /**
  * Render the React template, or fall back to text only.
@@ -100,6 +100,8 @@ async function renderOrTextOnly(
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
+import { connectionThrottleReply } from "./lib/throttleReply";
+import { queueConfirmation, replayArgs } from "./confirmationQueue";
 
 const log = createLogger("EmailPrefs");
 
@@ -115,7 +117,6 @@ const PREFS_COOLDOWN_MS = 10 * 60 * 1000;
 
 const NEUTRAL_REPLY =
   "If we send anything to that address, a preferences link is on its way.";
-const THROTTLED_REPLY = "Too many requests. Try again in a little while.";
 
 function isPlausibleEmail(email: string): boolean {
   return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
@@ -215,11 +216,23 @@ export const confirmNewsletterForEmail = internalMutation({
  * "does this address subscribe to anything here".
  */
 export const requestLink = internalMutation({
-  args: { email: v.string(), ip: v.optional(v.string()) },
+  args: {
+    email: v.string(),
+    ip: v.optional(v.string()),
+    /**
+     * Set only by the confirmation queue's drain (convex/confirmationQueue.ts)
+     * when it replays a request a full pool held back: the per-IP limit was
+     * passed on the first call and the drain measured the account's room, so
+     * both are skipped. Every per-address check still runs.
+     */
+    fromQueue: v.optional(v.boolean()),
+  },
   returns: v.object({
     ok: v.boolean(),
     message: v.string(),
     throttled: v.optional(v.boolean()),
+    /** True when a full pool queued it (convex/confirmationQueue.ts). */
+    queued: v.optional(v.boolean()),
   }),
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
@@ -228,33 +241,44 @@ export const requestLink = internalMutation({
     }
 
     const ip = args.ip?.trim();
-    if (ip && ip !== "unknown") {
+    if (ip && ip !== "unknown" && !args.fromQueue) {
       const perIp = await checkAndRecordRateLimit(ctx, ip, "prefs_link_ip", PREFS_IP_LIMIT);
       if (!perIp.allowed) {
-        return { ok: false, message: THROTTLED_REPLY, throttled: true };
+        return { ok: false, message: connectionThrottleReply(perIp.resetInMs), throttled: true };
       }
     }
 
     // Per-address cooldown, tracked on the rateLimits table keyed by the
-    // address (no subscriber row is guaranteed to exist to stamp).
-    const cooldown = await checkAndRecordRateLimit(ctx, email, "prefs_link_addr", {
-      limit: 1,
-      windowMs: PREFS_COOLDOWN_MS,
-    });
-    if (!cooldown.allowed) {
-      return { ok: true, message: NEUTRAL_REPLY };
-    }
+    // address (no subscriber row is guaranteed to exist to stamp). A replay
+    // from the queue skips it: this same request recorded it when it was
+    // queued, so the check would swallow the very email being released.
+    if (!args.fromQueue) {
+      const cooldown = await checkAndRecordRateLimit(ctx, email, "prefs_link_addr", {
+        limit: 1,
+        windowMs: PREFS_COOLDOWN_MS,
+      });
+      if (!cooldown.allowed) {
+        return { ok: true, message: NEUTRAL_REPLY };
+      }
 
-    const budget = await checkAndRecordRateLimit(
-      ctx,
-      "all",
-      BUDGETS.prefsLink.key,
-      PREFS_LINK_GLOBAL_BUDGET,
-    );
-    if (!budget.allowed) {
-      await noteRefusal(ctx, "prefsLink");
-      log.error("prefs link budget exhausted; refusing to send");
-      return { ok: false, message: THROTTLED_REPLY, throttled: true };
+      // A full pool queues the request (convex/confirmationQueue.ts).
+      const budget = await checkAndRecordRateLimit(
+        ctx,
+        "all",
+        BUDGETS.prefsLink.key,
+        PREFS_LINK_GLOBAL_BUDGET,
+      );
+      if (!budget.allowed) {
+        log.warn("prefs link pool full; queueing");
+        return queueConfirmation(ctx, {
+          kind: "prefs",
+          pool: "prefsLink",
+          email,
+          args: replayArgs(args),
+          resetInMs: budget.resetInMs,
+          what: "preference links",
+        });
+      }
     }
 
     await ctx.scheduler.runAfter(0, internal.emailPrefs.sendLink, { email });

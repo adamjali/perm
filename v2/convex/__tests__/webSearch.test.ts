@@ -122,6 +122,7 @@ describe("webSearch", () => {
 
       // Verify answer
       expect(result.answer).toBe("This is a generated answer from Tavily.");
+      expect(result.unavailable).toBeUndefined();
     });
 
     it("returns correct structure from Brave (fallback provider)", async () => {
@@ -178,6 +179,8 @@ describe("webSearch", () => {
       expect(result.source).toBe("none");
       expect(result.results).toEqual([]);
       expect(result.answer).toBeNull();
+      // A spent quota must say so: an empty list alone reads as "no results".
+      expect(result.unavailable).toBe("quota");
 
       // Fetch should not have been called
       expect(mockFetch).not.toHaveBeenCalled();
@@ -257,6 +260,7 @@ describe("webSearch", () => {
 
       expect(result.source).toBe("none");
       expect(result.results).toEqual([]);
+      expect(result.unavailable).toBe("quota");
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
@@ -350,6 +354,8 @@ describe("webSearch", () => {
       // Should return empty
       expect(result.source).toBe("none");
       expect(result.results).toEqual([]);
+      // Marked as a failure, not a spent quota.
+      expect(result.unavailable).toBe("error");
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
@@ -386,6 +392,8 @@ describe("webSearch", () => {
       // Should return empty since Brave is also at limit
       expect(result.source).toBe("none");
       expect(result.results).toEqual([]);
+      // A provider was tried and failed: that is a failure, not a spent quota.
+      expect(result.unavailable).toBe("error");
       // Only one call (Tavily), Brave wasn't even attempted
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });

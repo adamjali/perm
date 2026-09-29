@@ -13,6 +13,7 @@ import type { Wall } from "@/lib/casePosition";
 import type { ParsedCaseNumber } from "@/lib/permCaseNumber";
 import { CASE_NUMBER_ACCURACY } from "@/lib/permCaseNumber";
 import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
+import { isLookupGap, unsettledClause, unsettledVerdict, type DiscoveryMiss } from "@/lib/dolMiss";
 
 /**
  * A case number we hold no record for. A real state, not an error.
@@ -60,7 +61,7 @@ export interface CaseNotFoundProps {
    * record" for those told people DOL had no such case when it had only been
    * slow (fixed Sep 29 2026).
    */
-  dolMiss?: "none" | "unavailable" | "not-asked" | null;
+  dolMiss?: DiscoveryMiss | "records" | null;
 }
 
 export function CaseNotFound({
@@ -76,24 +77,24 @@ export function CaseNotFound({
   dolMiss = null,
 }: CaseNotFoundProps) {
   const checked = mirrorSize ? `Checked ${int(mirrorSize)} per-case statuses and DOL's FY2024 to FY2026 decided files` : null;
-  if (dolMiss === "unavailable" || dolMiss === "not-asked") {
+  if (isLookupGap(dolMiss)) {
     const retry = `/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
     return (
       <div>
         <InsightLede
-          verdict={dolMiss === "unavailable" ? "DOL didn't answer" : "Not checked with DOL"}
+          verdict={unsettledVerdict(dolMiss)}
           direction="flat"
           source={
             checked
+              && dolMiss !== "records"
               ? `${checked}; ${dolMiss === "unavailable" ? "DOL's live check did not answer within 8 seconds" : "the live check with DOL was not made"}`
               : undefined
           }
         >
-          We hold no record for{" "}
-          <b className="font-mono text-primary-on-ink">{caseNumber}</b> yet,{" "}
-          {dolMiss === "unavailable"
-            ? "and DOL's own system didn't answer when we asked just now, so we can't say whether DOL has it. That's usually brief."
-            : "and we couldn't ask DOL just now, because the site's daily limit for live checks is used up."}{" "}
+          {dolMiss === "records" ? "We couldn't check" : "We hold no record for"}{" "}
+          <b className="font-mono text-primary-on-ink">{caseNumber}</b>
+          {dolMiss === "records" ? " just now: " : " yet, "}
+          {unsettledClause(dolMiss)}{" "}
           <a href={retry} className="underline underline-offset-4 decoration-2">
             Try again
           </a>{" "}

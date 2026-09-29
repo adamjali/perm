@@ -14,6 +14,7 @@ import { TimelineControls } from "@/components/timeline/TimelineControls";
 import { TimelineLegend } from "@/components/timeline/TimelineLegend";
 import { CaseSelectionModal, type CaseForSelection } from "@/components/timeline/CaseSelectionModal";
 import { PageHeading } from "../components/PageHeading";
+import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 
 export function TimelinePageClient() {
   const router = useRouter();
@@ -269,6 +270,7 @@ export function TimelinePageClient() {
 
   return (
     <div className="flex flex-col h-full">
+      <CaseCapNotice className="mb-4" />
       {/* Header with controls - TimelineControls handles responsive layout */}
       <div className="mb-4 sm:mb-6">
         <TimelineControls

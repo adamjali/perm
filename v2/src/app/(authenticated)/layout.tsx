@@ -97,7 +97,9 @@ export default function AuthenticatedLayout({
         {/* Main content - grows to fill space */}
         <main
           id="main-content"
-          className="relative mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-8"
+          // break-words: a long unbroken name, URL or note wraps inside its box
+          // instead of pushing past it (silent-limit audit, Sep 29 2026).
+          className="relative mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-8 break-words"
           tabIndex={-1}
         >
           <PageTransition>{children}</PageTransition>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { FlagProgram, SearchFlagArgs } from "@/lib/turso/flagCases";
 import { FLAG_DEFAULT_ITEMS, isFlagKind } from "@/lib/turso/flagCases";
 import { MAX_TITLE_FILTER, SEARCH_MONTH_RE } from "@/lib/turso/cases";
+import { isUnsettledMiss } from "@/lib/dolMiss";
 
 /**
  * The GET handler for a FLAG program's cases (`/api/pwd-cases`,
@@ -32,7 +33,7 @@ export function makeFlagCasesHandler(program: FlagProgram) {
       // A miss DOL could not settle ("unavailable": it did not answer in time)
       // is said, and never cached: a ten-minute edge copy of one slow answer
       // would tell everyone "no record" for ten minutes.
-      const unsettled = !row && !disclosed && (dolMiss === "unavailable" || dolMiss === "not-asked");
+      const unsettled = !row && !disclosed && isUnsettledMiss(dolMiss);
       return NextResponse.json(
         { case: row, disclosed, dolMiss: row || disclosed ? null : dolMiss },
         {

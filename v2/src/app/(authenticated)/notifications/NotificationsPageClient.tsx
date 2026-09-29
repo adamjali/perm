@@ -57,6 +57,13 @@ export function NotificationsPageClient() {
         className="mb-6"
       />
 
+      {stats?.capped && (
+        <p className="-mt-3 mb-6 text-sm text-muted-foreground">
+          These counts cover your newest {stats.total.toLocaleString()} notifications. The list
+          below still reaches every one.
+        </p>
+      )}
+
       {/* Notification List */}
       <NotificationList activeTab={activeTab} />
     </div>

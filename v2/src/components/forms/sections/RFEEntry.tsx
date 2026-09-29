@@ -12,6 +12,7 @@ import { CheckCircleIcon as CheckCircle2, XIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { getRfiRfeUrgency, type UrgencyLevelWithCompletion } from "@/lib/status/urgency";
 import type { CaseFormData, RFEEntry as RFEEntryType } from "@/lib/forms/case-form-schema";
+import { CharLimit } from "@/components/ui/char-limit";
 
 // ============================================================================
 // TYPES
@@ -278,15 +279,16 @@ function RFEEntryComponent({
       <div className="space-y-4">
         {/* Optional Text Fields */}
         <FormField label="Title" name={fieldId("title")} hint="Brief description of RFE (optional)">
-          <Input
-            id={fieldId("title")}
-            name={fieldId("title")}
-            type="text"
-            value={title || ""}
-            onChange={handleInputChange("title")}
-            placeholder="e.g., Additional evidence of ability to pay"
-            maxLength={200}
-          />
+          <CharLimit max={200}>
+            <Input
+              id={fieldId("title")}
+              name={fieldId("title")}
+              type="text"
+              value={title || ""}
+              onChange={handleInputChange("title")}
+              placeholder="e.g., Additional evidence of ability to pay"
+            />
+          </CharLimit>
         </FormField>
 
         <FormField
@@ -294,15 +296,16 @@ function RFEEntryComponent({
           name={fieldId("description")}
           hint="What USCIS is requesting (optional)"
         >
-          <Textarea
-            id={fieldId("description")}
-            name={fieldId("description")}
-            value={description || ""}
-            onChange={handleInputChange("description")}
-            placeholder="Describe the evidence requested..."
-            rows={2}
-            maxLength={2000}
-          />
+          <CharLimit max={2000}>
+            <Textarea
+              id={fieldId("description")}
+              name={fieldId("description")}
+              value={description || ""}
+              onChange={handleInputChange("description")}
+              placeholder="Describe the evidence requested..."
+              rows={2}
+            />
+          </CharLimit>
         </FormField>
 
         {/* Date Fields Grid */}
@@ -363,15 +366,16 @@ function RFEEntryComponent({
 
         {/* Notes */}
         <FormField label="Notes" name={fieldId("notes")} hint="Additional notes (optional)">
-          <Textarea
-            id={fieldId("notes")}
-            name={fieldId("notes")}
-            value={notes || ""}
-            onChange={handleInputChange("notes")}
-            placeholder="Add any relevant notes..."
-            rows={2}
-            maxLength={2000}
-          />
+          <CharLimit max={2000}>
+            <Textarea
+              id={fieldId("notes")}
+              name={fieldId("notes")}
+              value={notes || ""}
+              onChange={handleInputChange("notes")}
+              placeholder="Add any relevant notes..."
+              rows={2}
+            />
+          </CharLimit>
         </FormField>
       </div>
     </div>

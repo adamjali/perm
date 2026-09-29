@@ -12,6 +12,7 @@ import {
   type ActionMode,
   type PermissionLevel,
 } from './tool-permissions';
+import { rateLimitedToolResult } from './limits';
 
 /** AI instruction shown with every confirmation card */
 export const CONFIRMATION_AI_INSTRUCTION =
@@ -58,9 +59,13 @@ export function buildDisabledResponse(error: string, feature?: string) {
 }
 
 /**
- * Build an error response from a caught exception.
+ * Build an error response from a caught exception. A per-user rate limit
+ * (convex/rateLimitConfig.ts) says what was limited and when to try again;
+ * until Sep 29 2026 it reached the person as the raw error JSON.
  */
 export function buildToolError(toolName: string, error: unknown) {
+  const limited = rateLimitedToolResult(error);
+  if (limited) return limited;
   console.error(`[Chat API] ${toolName} error:`, error);
   return {
     error: `Failed to ${toolName.replace(/([A-Z])/g, ' $1').toLowerCase().trim()}`,

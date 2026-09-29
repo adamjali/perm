@@ -25,6 +25,7 @@ import { SubEntriesManager } from "./SubEntriesManager";
 import { getMethodDateConstraints } from "@/lib/forms/date-constraints";
 import type { SubEntry } from "@/lib/shared/types";
 import { parseISO, addDays, differenceInDays, format } from "date-fns";
+import { CharLimit } from "@/components/ui/char-limit";
 
 // ============================================================================
 // HELPERS - Quick Select for Second Sunday Ad
@@ -463,16 +464,17 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
               error={errors?.sundayAdNewspaper}
               hint="Publication name (optional)"
             >
-              <Input
-                id="sundayAdNewspaper"
-                name="sundayAdNewspaper"
-                type="text"
-                value={values.sundayAdNewspaper || ''}
-                onChange={handleInputChange}
-                aria-invalid={!!errors?.sundayAdNewspaper}
-                placeholder="e.g., New York Times"
-                maxLength={200}
-              />
+              <CharLimit max={200}>
+                <Input
+                  id="sundayAdNewspaper"
+                  name="sundayAdNewspaper"
+                  type="text"
+                  value={values.sundayAdNewspaper || ''}
+                  onChange={handleInputChange}
+                  aria-invalid={!!errors?.sundayAdNewspaper}
+                  placeholder="e.g., New York Times"
+                />
+              </CharLimit>
             </FormField>
           </div>
         </div>
@@ -795,13 +797,14 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   name={`method-desc-${index}`}
                                   hint="Optional details"
                                 >
-                                  <Input
-                                    id={`method-desc-${index}`}
-                                    value={method.description || ''}
-                                    onChange={(e) => updateMethod(index, 'description', e.target.value)}
-                                    placeholder="e.g., posting details"
-                                    maxLength={1000}
-                                  />
+                                  <CharLimit max={1000}>
+                                    <Input
+                                      id={`method-desc-${index}`}
+                                      value={method.description || ''}
+                                      onChange={(e) => updateMethod(index, 'description', e.target.value)}
+                                      placeholder="e.g., posting details"
+                                    />
+                                  </CharLimit>
                                 </FormField>
                               </div>
                             );
@@ -825,13 +828,14 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   name={`method-desc-${index}`}
                                   hint="Optional overall description (e.g., targeted metro area)"
                                 >
-                                  <Input
-                                    id={`method-desc-${index}`}
-                                    value={method.description || ''}
-                                    onChange={(e) => updateMethod(index, 'description', e.target.value)}
-                                    placeholder="e.g., Metro NYC area"
-                                    maxLength={1000}
-                                  />
+                                  <CharLimit max={1000}>
+                                    <Input
+                                      id={`method-desc-${index}`}
+                                      value={method.description || ''}
+                                      onChange={(e) => updateMethod(index, 'description', e.target.value)}
+                                      placeholder="e.g., Metro NYC area"
+                                    />
+                                  </CharLimit>
                                 </FormField>
                               </div>
                             );
@@ -862,13 +866,14 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                 name={`method-desc-${index}`}
                                 hint="Optional details"
                               >
-                                <Input
-                                  id={`method-desc-${index}`}
-                                  value={method.description || ''}
-                                  onChange={(e) => updateMethod(index, 'description', e.target.value)}
-                                  placeholder="e.g., publication name"
-                                  maxLength={1000}
-                                />
+                                <CharLimit max={1000}>
+                                  <Input
+                                    id={`method-desc-${index}`}
+                                    value={method.description || ''}
+                                    onChange={(e) => updateMethod(index, 'description', e.target.value)}
+                                    placeholder="e.g., publication name"
+                                  />
+                                </CharLimit>
                               </FormField>
                             </div>
                           );
@@ -886,8 +891,14 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                         className="w-full"
                       >
                         <PlusIcon className="h-4 w-4 mr-2" />
-                        Add Method ({methods.length}/3)
+                        Add method ({methods.length} of 3)
                       </Button>
+                    )}
+                    {methods.length >= 3 && (
+                      <p className="text-sm text-muted-foreground" role="status">
+                        The rule asks for three additional methods (20 CFR § 656.17(e)), so the
+                        form holds three. To use a different one, change or remove one above.
+                      </p>
                     )}
                   </div>
 

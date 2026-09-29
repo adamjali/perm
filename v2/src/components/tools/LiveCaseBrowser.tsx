@@ -11,6 +11,7 @@ import { formatMonth } from "@/lib/dolFormat";
 // Type-only: `@/lib/turso/liveCases` imports `server-only`, and a value import
 // here would be a build error. A type import compiles to nothing.
 import type { LiveKind, LiveListPage, LiveRemainderSummary, LiveSort } from "@/lib/turso/liveCases";
+import { RequestFailed } from "@/components/tools/RequestFailed";
 
 /**
  * The live half of the case corpus, browsable.
@@ -243,10 +244,13 @@ export function LiveCaseBrowser({
 
 
         {failed ? (
-          <p className="mt-5 text-base text-foreground/80">
-            The live list didn&apos;t load. The case search above still answers by
-            number or employer.
-          </p>
+          <RequestFailed
+            what="The live list"
+            failure={fetched.failure}
+            onRetry={fetched.retry}
+            after="The case search above still answers by number or employer."
+            className="mt-5 border-2 border-border bg-tint-primary p-4"
+          />
         ) : null}
 
         {!withheld && !failed ? (

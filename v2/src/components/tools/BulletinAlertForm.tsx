@@ -11,6 +11,7 @@
  */
 
 import { useId, useState } from "react";
+import { isQueued, replyHeading } from "@/lib/alertReply";
 
 function subscribeEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -48,6 +49,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
   const [newsletter, setNewsletter] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [queued, setQueued] = useState(false);
 
   const endpoint = subscribeEndpoint();
   if (!endpoint) return null;
@@ -75,6 +77,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
       setMessage(
         String(body?.message ?? "Something went wrong. Try again in a moment."),
       );
+      setQueued(isQueued(body));
       setStatus(res.ok ? "done" : "error");
     } catch {
       setMessage("Couldn't reach the server. Try again in a moment.");
@@ -89,7 +92,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
         role="status"
         aria-live="polite"
       >
-        <p className="font-heading text-xl font-black">Check your inbox</p>{" "}
+        <p className="font-heading text-xl font-black">{replyHeading(queued)}</p>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
           {message} Once confirmed, you&apos;ll hear from us when a new
           bulletin moves your cutoff, and not otherwise.

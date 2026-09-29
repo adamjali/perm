@@ -9,6 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useBasicInfoSection } from "@/components/forms/useCaseFormSection";
+import { CharLimit } from "@/components/ui/char-limit";
+import { INPUT_LIMITS } from "../../../../convex/lib/validation";
 
 // ============================================================================
 // TYPES
@@ -181,16 +183,17 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             error={errors?.employerName}
             className="md:col-span-2"
           >
-            <Input
-              id="employerName"
-              name="employerName"
-              type="text"
-              value={values.employerName}
-              onChange={handleInputChange}
-              aria-invalid={!!errors?.employerName}
-              placeholder="Enter employer's full legal name"
-              maxLength={200}
-            />
+            <CharLimit max={INPUT_LIMITS.SHORT}>
+              <Input
+                id="employerName"
+                name="employerName"
+                type="text"
+                value={values.employerName}
+                onChange={handleInputChange}
+                aria-invalid={!!errors?.employerName}
+                placeholder="Enter employer's full legal name"
+              />
+            </CharLimit>
           </FormField>
 
           {/* Foreign Worker ID | DOL case number (side by side) */}
@@ -199,16 +202,17 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             name="beneficiaryIdentifier"
             error={errors?.beneficiaryIdentifier}
           >
-            <Input
-              id="beneficiaryIdentifier"
-              name="beneficiaryIdentifier"
-              type="text"
-              value={values.beneficiaryIdentifier}
-              onChange={handleInputChange}
-              aria-invalid={!!errors?.beneficiaryIdentifier}
-              placeholder="Initials or unique ID (optional)"
-              maxLength={200}
-            />
+            <CharLimit max={INPUT_LIMITS.SHORT}>
+              <Input
+                id="beneficiaryIdentifier"
+                name="beneficiaryIdentifier"
+                type="text"
+                value={values.beneficiaryIdentifier}
+                onChange={handleInputChange}
+                aria-invalid={!!errors?.beneficiaryIdentifier}
+                placeholder="Initials or unique ID (optional)"
+              />
+            </CharLimit>
           </FormField>
 
           {/*
@@ -223,16 +227,17 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             hint="From DOL, on the ETA 9089 or PWD confirmation"
             error={errors?.caseNumber}
           >
-            <Input
-              id="caseNumber"
-              name="caseNumber"
-              type="text"
-              value={values.caseNumber || ''}
-              onChange={handleInputChange}
-              aria-invalid={!!errors?.caseNumber}
-              placeholder="G-100-24339-516453"
-              maxLength={50}
-            />
+            <CharLimit max={50}>
+              <Input
+                id="caseNumber"
+                name="caseNumber"
+                type="text"
+                value={values.caseNumber || ''}
+                onChange={handleInputChange}
+                aria-invalid={!!errors?.caseNumber}
+                placeholder="G-100-24339-516453"
+              />
+            </CharLimit>
           </FormField>
 
           <FormField
@@ -241,16 +246,17 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             hint="Your own matter or file number"
             error={errors?.internalCaseNumber}
           >
-            <Input
-              id="internalCaseNumber"
-              name="internalCaseNumber"
-              type="text"
-              value={values.internalCaseNumber || ''}
-              onChange={handleInputChange}
-              aria-invalid={!!errors?.internalCaseNumber}
-              placeholder="Optional"
-              maxLength={50}
-            />
+            <CharLimit max={50}>
+              <Input
+                id="internalCaseNumber"
+                name="internalCaseNumber"
+                type="text"
+                value={values.internalCaseNumber || ''}
+                onChange={handleInputChange}
+                aria-invalid={!!errors?.internalCaseNumber}
+                placeholder="Optional"
+              />
+            </CharLimit>
           </FormField>
 
           {/* Position Title (Full Width) */}
@@ -261,16 +267,17 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             error={errors?.positionTitle}
             className="md:col-span-2"
           >
-            <Input
-              id="positionTitle"
-              name="positionTitle"
-              type="text"
-              value={values.positionTitle}
-              onChange={handleInputChange}
-              aria-invalid={!!errors?.positionTitle}
-              placeholder="Enter job position title"
-              maxLength={200}
-            />
+            <CharLimit max={INPUT_LIMITS.SHORT}>
+              <Input
+                id="positionTitle"
+                name="positionTitle"
+                type="text"
+                value={values.positionTitle}
+                onChange={handleInputChange}
+                aria-invalid={!!errors?.positionTitle}
+                placeholder="Enter job position title"
+              />
+            </CharLimit>
           </FormField>
         </div>
 

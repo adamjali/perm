@@ -4,6 +4,7 @@ import {
   createAuthenticatedContext,
   setupSchedulerTests,
 } from "../../test-utils/convex";
+import { internal } from "../_generated/api";
 
 // ADMIN_EMAIL is read from process.env at module load time.
 // Set it before importing admin.ts so requireAdmin() passes in tests.
@@ -103,5 +104,35 @@ describe("systemErrors", () => {
         expect(errors).toHaveLength(10);
       });
     });
+  });
+});
+
+describe("systemErrors.record admin email", () => {
+  setupSchedulerTests();
+
+  async function scheduledEmails(t: ReturnType<typeof createTestContext>) {
+    return t.run(async (ctx) => {
+      const jobs = await ctx.db.system.query("_scheduled_functions").collect();
+      return jobs.filter((j) => j.name.includes("sendAdminNotificationEmail"));
+    });
+  }
+
+  it("emails the admin by default", async () => {
+    const t = createTestContext();
+    await t.mutation(internal.systemErrors.record, { source: "cron", operation: "x.y", message: "boom" });
+    expect(await scheduledEmails(t)).toHaveLength(1);
+  });
+
+  it("records but does not email when ADMIN_ERROR_EMAILS is off (a non-live deployment)", async () => {
+    process.env.ADMIN_ERROR_EMAILS = "off";
+    try {
+      const t = createTestContext();
+      await t.mutation(internal.systemErrors.record, { source: "cron", operation: "x.y", message: "boom" });
+      expect(await scheduledEmails(t)).toHaveLength(0);
+      const rows = await t.run((ctx) => ctx.db.query("systemErrors").collect());
+      expect(rows).toHaveLength(1);
+    } finally {
+      delete process.env.ADMIN_ERROR_EMAILS;
+    }
   });
 });

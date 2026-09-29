@@ -2115,8 +2115,9 @@ Two invariants: the count comes from `getReviewStages()` on both the hub and
 the leaf (two totals for one cohort on two linked pages would discredit both),
 and the employer slug is **JOINED from `perm_live_recent`, never slugified from
 the name** - a derived slug 404s on exactly the employers DOL spells several
-ways. `/perm-employers?q=` is an API route, not a page param: linking to it
-returns 200 and silently drops the query.
+ways. Since Sep 29 2026 the three entity indexes read `?q=` on the client
+(`queryFromUrl` on FilterableStatTable) and open with the search filled, so
+`/perm-employers?q=acme` works as a link; the page itself stays static.
 
 ## Vercel binds env at DEPLOY time, so a new secret needs a rebuild (2026-08-30)
 
@@ -6923,3 +6924,63 @@ Found on the way, and fixed: nginx keeps its OLD rules when it refuses a reload 
 `/api` refusals were nginx's stock HTML; a site-wide sign-in-code refusal told people codes had gone "to this
 address"; the prune script was installed where its timer did not run it. `scripts/oracle/test_nginx_conf.py` (CI)
 holds the front door's rules, with five probes that must fail.
+
+## Sep 29 2026 (evening): no limit is silent, nothing grows forever
+
+Adam: *"make sure for this and things like it no silent always says why and shows"*, then overflow,
+paging and "nothing can grow forever" across the public site, the app, admin, backend and server.
+An audit found 33 silent limits; each now names itself, gives the wait, or pages.
+
+- **Why a lookup has no answer is a type, not a guess** (`src/lib/dolMiss.ts`): `none` (DOL
+  answered, no record), `unavailable` (DOL didn't answer in 8 s), `budget` (the day's live
+  checks are used up; resets at midnight UTC, said in Eastern time), `not-asked` (the counter
+  failed), and `records` (our own tables couldn't be read). Only `none` may read as "no record";
+  the PERM, wage-request and LCA pages, the JSON API and the embed all read the same helpers.
+- **A failed public request shows the server's own reason and a Try again button**
+  (`src/lib/fetchFailure.ts`, `RequestFailed`): `usePublicQuery` returns `failure` and `retry`,
+  and nginx's 429/503 JSON sentence reaches the page instead of "reloading usually clears it".
+- **Capped lists ask for one over and say "the first N"**: the employer name search (200 +
+  50 live-only), the palette (5 per kind, live-only employers and a see-all row to
+  `/perm-employers?q=`), the case search (1,000, shown 100 at a time), the employer page's
+  newest filings, the under-review moves, the timelines board (newest 5,000 scanned), the daily
+  alert bundle (12, "more tomorrow"), the digest's "+N more" (counted before the cut).
+- **Stale precomputed docs say so**: the case page, the status dictionary and the follow panel
+  name the missing census instead of dropping sections or claiming "nothing happened".
+- **The estimate says why its lead model is missing** (`PACE_ABSENT` caveat in queueEstimate.ts).
+- **Signed-in app**: notifications page through `_creationTime`; every case read goes through
+  `convex/lib/userCases.ts` (newest first, up to 5,000, `truncated` flag, `CaseCapNotice`);
+  capped inputs use `src/components/ui/char-limit.tsx`; rate limits give the wait.
+- **Chat**: cut-short replies say why (saved in message metadata) with Continue; a spent
+  web-search quota is not "nothing found"; 8,000 output tokens (Groq keeps 4,000).
+- **Retention**: `scripts/lib_housekeeping.py` on the nightly full sweep (serial misses 180 days,
+  per-day counters 90, run logs 400); `convex/retention.ts` daily (errors 180, email events 365,
+  API usage 90). Audit logs stay indefinite by policy. sqld's snapshots are bounded by its own
+  merge rule (2x the database or 32 files).
+- **The development deployment runs every cron**, still pointed at Turso, and emailed the owner
+  three "[System Error]" alerts on Sep 29. `ADMIN_ERROR_EMAILS=off` (set on dev only) mutes them,
+  and every admin error email now names its deployment.
+- **The morning report** reads Resend's log with the sending key and no longer has a Vercel section.
+
+### A full confirmation pool queues; it no longer turns people away
+
+Adam: *"for the ones refused are they queued for next days? if not fix... so this doesn't happen
+again"*. They weren't: 17 people asked for case alerts on Sep 28 and 29 after the day's 15
+confirmations were spent, were told to try later, and nothing was kept, so nobody can say who.
+Measured the same day from Resend's own list, the account sent 57 on Sep 28 (UTC), its busiest
+day of the billing cycle, and never came near 100. The pool was full; the account was not.
+
+- **`convex/confirmationQueue.ts`**: a full pool (case and employer, queue, bulletin, preference
+  links) queues the request, one row per (kind, address), without the IP, and answers
+  `queued: true` with fixed words; the forms head it "Your email is in a short queue", never
+  "Check your inbox". A drain runs at once and every 15 minutes, counts what Resend sent since
+  midnight UTC from Resend's own list (its free-plan day is a UTC calendar day; sent AND received
+  mail count), and replays requests through the same subscribe mutation (`fromQueue`) while that
+  count stays under 80, keeping 20 for sign-in codes. The replay skips only the per-IP limit and
+  the pool; every per-address check still runs.
+- **Bounds**: 100 rows in all (past that, the old refusal, counted), three days per row, five
+  failed replays. `budgetRefusals.count` is now only people who got no email; `queued` counts
+  the rest. The first queued request and the first turn-away of each Eastern day email the admin.
+- **Resend's quota headers** (`x-resend-daily-quota`) come back on sends only, not on reads, so
+  the drain counts the list instead. The SDK (6.26) does return response headers.
+- **The prefs link stamps its per-address cooldown before the pool check**, so its replay skips
+  that cooldown too, or the queue would swallow the very email it releases.

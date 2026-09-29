@@ -222,6 +222,24 @@ describe("conversations", () => {
       expect(user1Conversations.length).toBe(2);
     });
 
+    it("sends the history list only what it shows, never each conversation's summary", async () => {
+      const t = createTestContext();
+      const asUser = await createAuthenticatedContext(t, "Test User");
+      const id = await asUser.mutation(api.conversations.create, { title: "Long one" });
+      // A compacted conversation carries its summary (up to ~1,000 tokens);
+      // the history panel shows only the title and the time.
+      await t.run(async (ctx) => {
+        await ctx.db.patch(id, {
+          summary: { content: "x".repeat(4000), tokenCount: 1000, messageCountAtSummary: 12, lastSummarizedAt: 1 },
+        } as never);
+      });
+
+      const [row] = await asUser.query(api.conversations.list, {});
+      expect(row).toMatchObject({ _id: id, title: "Long one" });
+      expect(typeof row!.updatedAt).toBe("number");
+      expect(row).not.toHaveProperty("summary");
+    });
+
     it("returns empty array for user with no conversations", async () => {
       const t = createTestContext();
       const asUser = await createAuthenticatedContext(t, "New User");

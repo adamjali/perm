@@ -28,6 +28,12 @@ import { extractUserIdFromAction } from "./lib/auth";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 
+/** Google's answer when the person withdrew access or the grant expired: expected, not a fault. */
+export function isRevokedGrant(error: unknown): boolean {
+  const m = error instanceof Error ? error.message : String(error ?? "");
+  return /invalid_grant|Google Calendar has been disconnected/i.test(m);
+}
+
 const log = loggers.calendar;
 
 /**
@@ -124,9 +130,15 @@ export const refreshAccessToken = internalAction({
       log.error('Token refresh failed', {
         error: error instanceof Error ? error.message : 'Unknown error',
       });
-      await recordError(ctx, "action", "googleCalendarActions.refreshAccessToken.tokenRefresh", error, {
-        userId: args.userId,
-      });
+      // A person withdrawing the site's Google access (or Google expiring an
+      // unused grant) answers `invalid_grant`. That's their choice, not a
+      // fault: disconnect quietly. Sep 29 2026 it emailed the admin and raised
+      // two Sentry issues during a routine resync.
+      if (!isRevokedGrant(error)) {
+        await recordError(ctx, "action", "googleCalendarActions.refreshAccessToken.tokenRefresh", error, {
+          userId: args.userId,
+        });
+      }
 
       // Clear tokens to auto-disconnect
       await ctx.runMutation(internal.googleAuth.clearGoogleTokensInternal, {
@@ -495,10 +507,12 @@ export const deleteCalendarEvent = internalAction({
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown error";
       log.error('Failed to delete event', { eventId, error: message });
-      await recordError(ctx, "action", "googleCalendarActions.deleteCalendarEvent.delete", error, {
-        userId,
-        resourceId: eventId,
-      });
+      if (!isRevokedGrant(error)) {
+        await recordError(ctx, "action", "googleCalendarActions.deleteCalendarEvent.delete", error, {
+          userId,
+          resourceId: eventId,
+        });
+      }
       return {
         success: false,
         error: message,

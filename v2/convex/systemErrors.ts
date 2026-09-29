@@ -46,10 +46,17 @@ export const record = internalMutation({
       )
       .take(6);
 
-    if (recentErrors.length <= 5) {
+    // ADMIN_ERROR_EMAILS=off silences the email on a deployment that is not
+    // the live one. Sep 29 2026: the DEVELOPMENT deployment runs the same
+    // crons, still pointed at the retired Turso database, and mailed the
+    // owner three "[System Error]" alerts in a morning that looked exactly
+    // like the live site failing. The row is still recorded either way, and
+    // every email now names the deployment it came from.
+    const deployment = (process.env.CONVEX_CLOUD_URL ?? "").replace(/^https?:\/\//, "").replace(/\.convex\.cloud.*$/, "");
+    if (recentErrors.length <= 5 && process.env.ADMIN_ERROR_EMAILS !== "off") {
       await ctx.scheduler.runAfter(0, internal.notificationActions.sendAdminNotificationEmail, {
         subject: `[System Error] ${args.operation}`,
-        body: `Source: ${args.source}\nOperation: ${args.operation}\n\n${args.message}${args.resourceId ? `\n\nResource: ${args.resourceId}` : ""}`,
+        body: `Source: ${args.source}\nOperation: ${args.operation}${deployment ? `\nDeployment: ${deployment}` : ""}\n\n${args.message}${args.resourceId ? `\n\nResource: ${args.resourceId}` : ""}`,
       });
     }
 

@@ -38,6 +38,7 @@ import {
   captureTurnstileServiceError,
   authBreadcrumb,
 } from "@/lib/auth/auth-telemetry";
+import { authRateLimitText } from "@/lib/auth/rateLimitText";
 
 type ResetStep = "email" | "reset";
 
@@ -175,7 +176,7 @@ export function ResetPasswordPageClient() {
         toast.error(blockedResponseMessage(message));
       } else if (isRateLimitError(message)) {
         captureError(error, { operation: "resetPasswordRequest" });
-        toast.error("Too many attempts. Please wait a moment and try again.");
+        toast.error(authRateLimitText(message));
       } else if (isNetworkError(message)) {
         captureError(error, { operation: "resetPasswordRequest" });
         toast.error("Network error. Please check your connection and try again.");
@@ -232,7 +233,7 @@ export function ResetPasswordPageClient() {
         // Convex masks "Could not verify code" as a bare "Server Error".
         toast.error("That reset code didn’t work. Check it, or request a new one.");
       } else if (isRateLimitError(message)) {
-        toast.error("Too many attempts. Please wait a moment and try again.");
+        toast.error(authRateLimitText(message));
       } else if (isNetworkError(message)) {
         toast.error("Network error. Please check your connection and try again.");
       } else {

@@ -208,7 +208,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 28 2026".
 - **A morning report is emailed daily** (health, runs, site, bills, traffic, errors) and a routine reviews it.
 - **The entity load swaps tables in one transaction**, so no page reads a half-built table.
 
-## Sep 29 2026, in seventeen lines
+## Sep 29 2026, in twenty-two lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
 
@@ -243,3 +243,9 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
 - **nginx keeps its old rules when it refuses a reload, and systemctl says success**; the deploy counts a reload only
   when new workers appear. Rename a rate-limit zone rather than change its key.
 - **The idle sign-out is 30 minutes** (OWASP ASVS 4.0.3 requirement 3.3.2, Level 2), and the compliance docs say so.
+- **No limit is silent** (evening, detail in v2/CLAUDE.md): a lookup DOL couldn't settle, a capped list, a stale
+  doc and a rate limit each say what happened and when to try again.
+- **Nothing grows forever**: a nightly prune on the sweep and a daily Convex retention job; audit logs are kept on purpose.
+- **The dev deployment's crons were the Sep 29 "[System Error]" emails** (still on Turso); `ADMIN_ERROR_EMAILS=off` there.
+- **A full confirmation pool queues instead of refusing**: sent while Resend's own count for the UTC day is under 80
+  (`convex/confirmationQueue.ts`); 17 were refused on Sep 28 and 29 while the account had sent 57 of 100.

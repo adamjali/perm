@@ -18,6 +18,7 @@ import type { DateConstraint } from "@/lib/forms/date-constraints";
 import type { ValidationState } from "@/hooks/useDateFieldValidation";
 import type { I140Category } from "@/lib/processing-times/i140ProcessingTimes";
 import { CheckCircleIcon as CheckCircle2, InfoIcon } from "@phosphor-icons/react";
+import { CharLimit } from "@/components/ui/char-limit";
 
 // ============================================================================
 // TYPES
@@ -314,16 +315,17 @@ export function I140Section(props: I140SectionProps) {
             error={errors?.i140ReceiptNumber}
             hint="USCIS receipt number (optional)"
           >
-            <Input
-              id="i140ReceiptNumber"
-              name="i140ReceiptNumber"
-              type="text"
-              value={values.i140ReceiptNumber || ""}
-              onChange={handleInputChange}
-              aria-invalid={!!errors?.i140ReceiptNumber}
-              placeholder="e.g., WAC2412345678"
-              maxLength={50}
-            />
+            <CharLimit max={50}>
+              <Input
+                id="i140ReceiptNumber"
+                name="i140ReceiptNumber"
+                type="text"
+                value={values.i140ReceiptNumber || ""}
+                onChange={handleInputChange}
+                aria-invalid={!!errors?.i140ReceiptNumber}
+                placeholder="e.g., WAC2412345678"
+              />
+            </CharLimit>
           </FormField>
 
           {/* Category */}

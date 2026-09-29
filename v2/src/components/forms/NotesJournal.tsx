@@ -22,6 +22,11 @@ import {
   NOTE_CATEGORY_LABELS,
   generateNoteId,
 } from "@/lib/forms/case-form-schema";
+import { CharLimit } from "@/components/ui/char-limit";
+import { NOTES_PER_CASE_MAX, notesLimitMessage } from "./notesLimit";
+
+/** How many notes the journal lists before a show-more. */
+const NOTES_SHOWN_STEP = 20;
 
 // ============================================================================
 // TYPES
@@ -248,6 +253,12 @@ export function NotesJournal({
     return result;
   }, [notes, filterBy, sortBy]);
 
+  // A case can hold 200 notes; the list shows NOTES_SHOWN_STEP at a time and
+  // says how many there are. A new filter or sort starts again from the top.
+  const listKey = `${filterBy}|${sortBy}`;
+  const [shown, setShown] = useState<{ key: string; n: number }>({ key: listKey, n: NOTES_SHOWN_STEP });
+  const shownCount = Math.min(shown.key === listKey ? shown.n : NOTES_SHOWN_STEP, processedNotes.length);
+
   // Count high priority, pending, and done for badges
   const counts = useMemo(() => {
     const activeNotes = notes.filter((n) => n.status !== "deleted");
@@ -265,7 +276,7 @@ export function NotesJournal({
    */
   const handleAddNote = useCallback(() => {
     const content = newNoteContent.trim();
-    if (!content || notes.length >= 200) return;
+    if (!content || notes.length >= NOTES_PER_CASE_MAX) return;
 
     const newNote: NoteEntry = {
       id: generateNoteId(),
@@ -387,21 +398,22 @@ export function NotesJournal({
       {/* ========== ADD NEW NOTE INPUT ========== */}
       <div className="space-y-3">
         <div className="relative">
-          <Textarea
-            ref={textareaRef}
-            value={newNoteContent}
-            onChange={(e) => {
-              setNewNoteContent(e.target.value);
-              if (e.target.value && !showNewNoteOptions) {
-                setShowNewNoteOptions(true);
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={`Add a note... (${shortcutKey}+Enter to save)`}
-            rows={3}
-            maxLength={5000}
-            className="border-2 border-border shadow-hard-sm"
-          />
+          <CharLimit max={5000}>
+            <Textarea
+              ref={textareaRef}
+              value={newNoteContent}
+              onChange={(e) => {
+                setNewNoteContent(e.target.value);
+                if (e.target.value && !showNewNoteOptions) {
+                  setShowNewNoteOptions(true);
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder={`Add a note... (${shortcutKey}+Enter to save)`}
+              rows={3}
+              className="border-2 border-border shadow-hard-sm"
+            />
+          </CharLimit>
         </div>
 
         {/* Add Note button - visible with text */}
@@ -411,7 +423,7 @@ export function NotesJournal({
             variant="default"
             size="sm"
             onClick={handleAddNote}
-            disabled={!newNoteContent.trim() || notes.length >= 200}
+            disabled={!newNoteContent.trim() || notes.length >= NOTES_PER_CASE_MAX}
             className="gap-1.5"
           >
             <PlusIcon className="h-4 w-4" />
@@ -421,6 +433,11 @@ export function NotesJournal({
             {shortcutKey}+Enter
           </span>
         </div>
+        {notesLimitMessage(notes.length) && (
+          <p className="text-sm font-semibold text-foreground" role="status">
+            {notesLimitMessage(notes.length)}
+          </p>
+        )}
 
         {/* New note options (priority, category) */}
         <AnimatePresence>
@@ -544,7 +561,7 @@ export function NotesJournal({
       {processedNotes.length > 0 && (
         <div className="space-y-3">
           <AnimatePresence>
-            {processedNotes.map((note) => {
+            {processedNotes.slice(0, shownCount).map((note) => {
               const timestamp = formatTimestamp(note.createdAt);
               const priorityConfig = PRIORITY_CONFIG[note.priority || "medium"];
               const categoryConfig = CATEGORY_CONFIG[note.category || "other"];
@@ -611,15 +628,16 @@ export function NotesJournal({
                       {/* Note content — click to edit */}
                       {isEditing ? (
                         <div className="space-y-2">
-                          <Textarea
-                            ref={editTextareaRef}
-                            value={editingContent}
-                            onChange={(e) => setEditingContent(e.target.value)}
-                            onKeyDown={handleEditKeyDown}
-                            maxLength={5000}
-                            rows={4}
-                            className="text-sm border-2 border-primary/50"
-                          />
+                          <CharLimit max={5000}>
+                            <Textarea
+                              ref={editTextareaRef}
+                              value={editingContent}
+                              onChange={(e) => setEditingContent(e.target.value)}
+                              onKeyDown={handleEditKeyDown}
+                              rows={4}
+                              className="text-sm border-2 border-primary/50"
+                            />
+                          </CharLimit>
                           <div className="flex items-center gap-2">
                             <Button
                               type="button"
@@ -685,6 +703,21 @@ export function NotesJournal({
               );
             })}
           </AnimatePresence>
+          {processedNotes.length > shownCount && (
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm text-muted-foreground">
+                Showing {shownCount} of {processedNotes.length} notes.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setShown({ key: listKey, n: shownCount + NOTES_SHOWN_STEP })}
+              >
+                Show {Math.min(NOTES_SHOWN_STEP, processedNotes.length - shownCount)} more
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

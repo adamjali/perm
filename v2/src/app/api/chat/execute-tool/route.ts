@@ -13,6 +13,7 @@ import { NextResponse } from 'next/server';
 import { captureError } from '@/lib/sentry';
 import { isAuthenticatedNextjs, convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server';
 import { fetchMutation, fetchQuery } from 'convex/nextjs';
+import { rateLimitedToolResult } from '@/lib/ai/limits';
 import { api } from '@/../convex/_generated/api';
 import type { Id } from '@/../convex/_generated/dataModel';
 
@@ -523,6 +524,17 @@ export async function POST(request: Request) {
       duration,
     });
   } catch (error) {
+    // A per-user rate limit (caseUpdate, caseCreate...) is a wait, not a
+    // failure: the confirmation card shows this sentence as it is ("Too many
+    // case changes in the last minute. Try again in 12 seconds."). It used to
+    // show the raw error JSON, and each one was reported to Sentry.
+    const limited = rateLimitedToolResult(error);
+    if (limited) {
+      return NextResponse.json(limited, {
+        status: 429,
+        headers: { 'Retry-After': String(limited.retryAfterSeconds) },
+      });
+    }
     console.error('[Execute Tool] Error:', error);
     captureError(error);
 

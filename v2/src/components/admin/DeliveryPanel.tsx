@@ -37,8 +37,9 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 /** Every pool as a row: label, a usage bar against the ceiling, the numbers. */
-export function BudgetPools({ pools }: { pools: Delivery["pools"] }) {
+export function BudgetPools({ pools, queue }: { pools: Delivery["pools"]; queue?: Delivery["confirmationQueue"] }) {
   const refused = pools.reduce((a, p) => a + p.refusedLast7d, 0);
+  const waited = pools.reduce((a, p) => a + p.queuedLast7d, 0);
   return (
     <section aria-labelledby="pools-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
       <h2 id="pools-h" className="font-heading text-xl font-black">
@@ -49,8 +50,18 @@ export function BudgetPools({ pools }: { pools: Delivery["pools"] }) {
           {`${int(refused)} ${refused === 1 ? "person was" : "people were"} turned away by a full budget in the last 7 days. Resend Pro ($20 a month, 50,000 emails, no daily cap) would have sent every one.`}
         </p>
       ) : (
-        <p className="mt-2 text-sm text-muted-foreground">No one has been turned away in the last 7 days. The free plan is holding.</p>
-      )}
+        <p className="mt-2 text-sm text-muted-foreground">No one has been turned away in the last 7 days.</p>
+      )}{" "}
+      {waited > 0 ? (
+        <p className="mt-2 text-sm font-bold">
+          {`${int(waited)} confirmation${waited === 1 ? "" : "s"} waited in the queue this week because a pool was full. The queue sends them as soon as Resend's count for the day leaves room.`}
+        </p>
+      ) : null}{" "}
+      {queue && queue.waiting > 0 ? (
+        <p className="mt-2 border-2 border-border bg-background px-4 py-3 text-sm font-bold">
+          {`${int(queue.waiting)} waiting now${queue.oldestQueuedAt ? `, the oldest since ${new Date(queue.oldestQueuedAt).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} Eastern` : ""}.`}
+        </p>
+      ) : null}
       <ul className="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
         {pools.map((p) => {
           const share = Math.min(1, p.usedLast24h / p.limit);
@@ -69,6 +80,9 @@ export function BudgetPools({ pools }: { pools: Delivery["pools"] }) {
               </div>{" "}
               {p.refusedLast7d > 0 ? (
                 <p className="mt-1 text-sm font-bold text-destructive">{`${int(p.refusedLast7d)} turned away this week`}</p>
+              ) : null}{" "}
+              {p.queuedLast7d > 0 ? (
+                <p className="mt-1 text-sm">{`${int(p.queuedLast7d)} queued this week`}</p>
               ) : null}
             </li>
           );
@@ -130,6 +144,12 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
             listed here.
           </p>
         ) : (
+          <>
+          {(data.recentTotal ?? 0) > data.recent.length ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              {`The newest ${int(data.recent.length)} of ${int(data.recentTotal ?? 0)} in the last 7 days.`}
+            </p>
+          ) : null}
           <div className="mt-3 overflow-x-auto border-2 border-border">
             <table className="w-full min-w-[720px] text-left text-sm">
               <thead className="bg-muted">
@@ -144,7 +164,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
                 {data.recent.map((r, i) => (
                   <tr key={`${r.email}-${r.createdAt}-${i}`} className="border-t-2 border-border align-top">
                     <td className="whitespace-nowrap px-3 py-2 tabular-nums">{`${when(r.sentAt ?? r.createdAt)} `}</td>
-                    <td className="px-3 py-2">{`${r.email} `}</td>
+                    <td className="px-3 py-2 [overflow-wrap:anywhere]">{`${r.email} `}</td>
                     <td className="px-3 py-2">
                       <span className="font-bold">{`${KIND_LABEL[r.kind]}: ${r.title}`}</span>{" "}
                       <span className="block text-muted-foreground">{`${r.line} `}</span>
@@ -161,6 +181,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </section>{" "}
 
@@ -173,11 +194,16 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           <Figure value={int(data.follows.pending)} label="not confirmed" />
           <Figure value={int(data.follows.unsubscribed)} label="stopped" />
         </div>{" "}
+        {(data.follows.employers ?? 0) > data.follows.top.length ? (
+          <p className="mt-3 text-sm text-muted-foreground">
+            {`The ${int(data.follows.top.length)} most-followed of ${int(data.follows.employers ?? 0)} employers.`}
+          </p>
+        ) : null}{" "}
         {data.follows.top.length > 0 ? (
           <ol className="mt-4 divide-y-2 divide-border border-y-2 border-border">
             {data.follows.top.map((f) => (
               <li key={f.slug} className="flex items-baseline justify-between gap-3 py-2 text-sm">
-                <Link href={`/perm-employers/${f.slug}`} className="font-bold underline decoration-primary-text decoration-2 underline-offset-2">
+                <Link href={`/perm-employers/${f.slug}`} className="min-w-0 font-bold underline decoration-primary-text decoration-2 underline-offset-2 [overflow-wrap:anywhere]">
                   {f.name}
                 </Link>{" "}
                 <span className="tabular-nums">{`${int(f.followers)} following`}</span>

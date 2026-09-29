@@ -356,8 +356,8 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
 
   /**
    * The row, or why there is none: "none" when DOL answered without it,
-   * "unavailable" when DOL did not answer in time, "not-asked" when the daily
-   * budget refused. Only "none" may read as "no record" (Sep 29 2026).
+   * "unavailable" when DOL did not answer in time, "budget" when the daily
+   * allowance refused, "not-asked" when the counter itself failed. Only "none" may read as "no record" (Sep 29 2026).
    */
   const discoverOutcome = async (
     caseNumber: string,
@@ -369,7 +369,7 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     try {
       if (!(await underDailyBudget(now, config.budgetPrefix))) {
         logBudgetRefusal(`${config.key}Discovery`, caseNumber, now);
-        return { row: null, miss: "not-asked" };
+        return { row: null, miss: "budget" };
       }
     } catch (e) {
       console.error(`[${config.key}Discovery] budget write failed:`, e);

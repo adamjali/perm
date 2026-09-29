@@ -10,10 +10,12 @@
  * case confirmations' pool and its alerts from the case alerts' pool.
  *
  * A REFUSAL IS THE UPGRADE SIGNAL. The free Resend plan caps the account at
- * 100 a day, and a pool at its ceiling turns real people away with "try again
- * later". `noteRefusal` counts those per pool per Eastern day, so the admin
- * panel can say "this pool refused 7 people this week" instead of leaving it
- * to a log line nobody reads.
+ * 100 a day. A full CONFIRMATION pool queues the request since Sep 29 2026
+ * (convex/confirmationQueue.ts, sent while Resend's own count leaves room);
+ * `noteQueued` counts those and `noteRefusal` counts the people who got no
+ * email at all, per pool per Eastern day, so the admin panel can say "this
+ * pool queued 15 and turned away 0 this week". The first of each emails the
+ * admin that day.
  */
 import type { MutationCtx } from "../_generated/server";
 import { etDay } from "./alertDelivery";
@@ -62,14 +64,38 @@ export const CASE_CONFIRMATION_BUDGET = windowFor("caseConfirm");
 export const CASE_ALERT_KEY = BUDGETS.caseAlert.key;
 export const CASE_ALERT_BUDGET = windowFor("caseAlert");
 
-/** Count `n` refusals against a pool for today (Eastern). Never throws. */
-export async function noteRefusal(ctx: MutationCtx, name: BudgetName, n = 1): Promise<void> {
-  if (n <= 0) return;
+/**
+ * Count `n` refusals against a pool for today (Eastern): people who got no
+ * email at all. Since Sep 29 2026 a full confirmation pool QUEUES the request
+ * (convex/confirmationQueue.ts), so for confirmations this counts only what
+ * the queue could not hold, or held past its limit. Alert pools still refuse.
+ * Returns true when this is the first refusal of the day for the pool.
+ */
+export async function noteRefusal(ctx: MutationCtx, name: BudgetName, n = 1): Promise<boolean> {
+  return bump(ctx, name, "count", n);
+}
+
+/**
+ * Count `n` requests a full pool put in the queue today (Eastern). They are
+ * not refusals: they go out as soon as the account has room. Returns true
+ * when this is the first queued request of the day for the pool.
+ */
+export async function noteQueued(ctx: MutationCtx, name: BudgetName, n = 1): Promise<boolean> {
+  return bump(ctx, name, "queued", n);
+}
+
+async function bump(ctx: MutationCtx, name: BudgetName, field: "count" | "queued", n: number): Promise<boolean> {
+  if (n <= 0) return false;
   const day = etDay(Date.now());
   const row = await ctx.db
     .query("budgetRefusals")
     .withIndex("by_day_pool", (q) => q.eq("day", day).eq("pool", name))
     .unique();
-  if (row) await ctx.db.patch(row._id, { count: row.count + n });
-  else await ctx.db.insert("budgetRefusals", { day, pool: name, count: n });
+  if (!row) {
+    await ctx.db.insert("budgetRefusals", { day, pool: name, count: field === "count" ? n : 0, ...(field === "queued" ? { queued: n } : {}) });
+    return true;
+  }
+  const before = field === "count" ? row.count : (row.queued ?? 0);
+  await ctx.db.patch(row._id, field === "count" ? { count: row.count + n } : { queued: before + n });
+  return before === 0;
 }

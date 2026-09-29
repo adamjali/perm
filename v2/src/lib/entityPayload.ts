@@ -97,6 +97,13 @@ export interface EntityPayload {
    * other two kinds there is genuinely nothing to search.
    */
   live?: LiveEmployerHit[];
+  /**
+   * A name search stopped at its cap and more published rows match. Without
+   * it a capped answer read as "searched across all of them" (Sep 29 2026).
+   */
+  more?: boolean;
+  /** The same, for `live`. */
+  liveMore?: boolean;
 }
 
 export function packRow(r: EntityRow): PackedRow {

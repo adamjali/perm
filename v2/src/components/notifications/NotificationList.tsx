@@ -484,9 +484,31 @@ export default function NotificationList({
     return <NotificationListSkeleton />;
   }
 
-  // Empty state
-  if (allNotifications.length === 0 && result?.notifications.length === 0) {
+  // Empty state: only when the server has nothing further to look through.
+  // A filtered tab can come back with an empty page while older rows remain
+  // unchecked, and "no deadline notifications" would then be false.
+  if (allNotifications.length === 0 && result?.notifications.length === 0 && !result.hasMore) {
     return <EmptyState activeTab={activeTab} />;
+  }
+
+  if (allNotifications.length === 0 && result?.hasMore) {
+    return (
+      <div className={cn("flex flex-col items-center gap-4 py-12 text-center", className)}>
+        <p className="max-w-sm text-sm text-muted-foreground">
+          None of your newest notifications match this tab. Older ones haven&apos;t been checked yet.
+        </p>
+        <Button variant="outline" size="lg" onClick={handleLoadMore} disabled={isLoadingMore}>
+          {isLoadingMore ? (
+            <>
+              <CircleNotchIcon className="size-4 mr-2 animate-spin" />
+              Looking...
+            </>
+          ) : (
+            "Look further back"
+          )}
+        </Button>
+      </div>
+    );
   }
 
   // Group notifications by date
@@ -532,7 +554,7 @@ export default function NotificationList({
                 Loading...
               </>
             ) : (
-              "Load More"
+              "Load more"
             )}
           </Button>
         </div>

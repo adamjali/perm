@@ -5,6 +5,7 @@ import {
   type EntityRow,
   type LiveEmployerHit,
 } from "./entityPayload";
+import { failureFromResponse, FetchFailureError } from "@/lib/fetchFailure";
 
 /**
  * Fetch every row of one entity kind from the cached route handler.
@@ -30,6 +31,10 @@ export interface EntitySearchResult {
    * Always empty for law firms and occupations.
    */
   live: LiveEmployerHit[];
+  /** More published rows match than `rows` carries. */
+  more: boolean;
+  /** More live-only employers match than `live` carries. */
+  liveMore: boolean;
 }
 
 /**
@@ -60,15 +65,17 @@ export async function searchEntities(
   } = {},
 ): Promise<EntitySearchResult> {
   const q = text.trim();
-  if (q.length < 2) return { rows: [], live: [] };
+  if (q.length < 2) return { rows: [], live: [], more: false, liveMore: false };
   const scope = opts.onlyLive ? "&scope=live" : "";
   const res = await fetch(
     `/api/perm-entities/${kind}?q=${encodeURIComponent(q.slice(0, 120))}${scope}`,
   );
-  if (!res.ok) throw new Error(`perm-entities search ${kind}: HTTP ${res.status}`);
+  if (!res.ok) throw new FetchFailureError(await failureFromResponse(res));
   const payload = (await res.json()) as EntityPayload;
   return {
     rows: Array.isArray(payload.rows) ? payload.rows.map(unpackRow) : [],
     live: Array.isArray(payload.live) ? payload.live : [],
+    more: payload.more === true,
+    liveMore: payload.liveMore === true,
   };
 }

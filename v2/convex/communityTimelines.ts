@@ -119,7 +119,7 @@ export const save = internalMutation({
         .withIndex("by_case_ip", (q) => q.eq("caseNumber", caseNumber).eq("ipHash", a.ipHash))
         .take(PER_CASE_PER_IP);
       if (mine.length >= PER_CASE_PER_IP) {
-        return { ok: false, throttled: true, message: "This case already has several timelines from this connection." };
+        return { ok: false, throttled: true, message: `This case already has ${PER_CASE_PER_IP} timelines from this connection, which is the most one connection can add for a case.` };
       }
     }
 
@@ -298,6 +298,9 @@ export const board = query({
   returns: v.object({
     total: v.number(),
     shared: v.number(),
+    /** The scan stopped at SCAN_CAP: figures cover the newest SCAN_CAP timelines only. */
+    scanCapped: v.boolean(),
+    scanCap: v.number(),
     opensAt: v.number(),
     open: v.boolean(),
     metrics: v.array(metricV),
@@ -310,7 +313,12 @@ export const board = query({
     rows: v.array(boardRowV),
   }),
   handler: async (ctx) => {
-    const all = (await ctx.db.query("communityTimelines").take(SCAN_CAP)).filter((r) => r.hiddenAt === undefined);
+    // NEWEST first. `take` in creation order kept the OLDEST 5,000, so once
+    // the table passed that every new timeline would have vanished from the
+    // counts and the board (Sep 29 2026 audit). Past the cap the page says the
+    // figures cover the newest SCAN_CAP.
+    const scanned = await ctx.db.query("communityTimelines").order("desc").take(SCAN_CAP);
+    const all = scanned.filter((r) => r.hiddenAt === undefined);
     const records = all.map(asRecord);
     const shared = all.filter((r) => r.public);
     const open = shared.length >= BOARD_OPENS_AT;
@@ -323,6 +331,8 @@ export const board = query({
     return {
       total: all.length,
       shared: shared.length,
+      scanCapped: scanned.length >= SCAN_CAP,
+      scanCap: SCAN_CAP,
       opensAt: BOARD_OPENS_AT,
       open,
       metrics: computeMetrics(records),

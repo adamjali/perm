@@ -37,6 +37,7 @@ import { api } from '../../convex/_generated/api';
 import type { Id } from '../../convex/_generated/dataModel';
 import { useAuthContext } from '@/lib/contexts/AuthContext';
 import { type PageContext, serializePageContext } from '@/lib/ai/page-context';
+import type { CutShort } from '@/lib/ai/limits';
 
 interface UseChatWithPersistenceOptions {
   conversationId?: Id<'conversations'>;
@@ -68,6 +69,12 @@ export type DisplayMessage = {
   isLive?: boolean;
   /** The reply was cut short with the stop button. */
   wasStopped?: boolean;
+  /**
+   * A cap ended the reply (the route's finish metadata): "length" for the
+   * output cap, "steps" for the tool-step cap. Live replies only: the saved
+   * copy's metadata has no field for it.
+   */
+  cutShort?: CutShort;
   toolCalls?: ToolCallDisplay[];
 };
 
@@ -212,12 +219,15 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
         executedAt: tc.status !== 'pending' ? Date.now() : undefined,
       }));
 
+      const cutShort = (message.metadata as { cutShort?: CutShort } | undefined)?.cutShort;
       await createAssistantMessage({
         conversationId: currentConversationId,
         content: textOf(message),
         toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
         metadata: {
           processingTimeMs: Date.now() - (streamStartTime.current ?? Date.now()),
+          // Saved with the reply, so reopening the chat still says it was cut short.
+          ...(cutShort ? { cutShort } : {}),
         },
       });
     },
@@ -321,6 +331,10 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
         content: m.content,
         timestamp: m.createdAt,
         isLive: false,
+        cutShort:
+          m.role === 'assistant'
+            ? (m.metadata as { cutShort?: CutShort } | undefined)?.cutShort
+            : undefined,
         toolCalls: m.toolCalls as ToolCallDisplay[] | undefined,
       });
     }
@@ -336,15 +350,17 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
       // An assistant turn with nothing to show yet is covered by the typing
       // indicator; an empty bubble would flash in and out.
       if (m.role === 'assistant' && !content && toolCalls.length === 0 && !isStreaming) continue;
+      const metadata = m.metadata as { createdAt?: number; cutShort?: CutShort } | undefined;
       messages.push({
         id: m.id,
         role: m.role,
         content,
         // Stamped when sent (user, below) or when the reply began (the route).
-        timestamp: (m.metadata as { createdAt?: number } | undefined)?.createdAt,
+        timestamp: metadata?.createdAt,
         isStreaming,
         isLive: true,
         wasStopped: stoppedIds.has(m.id),
+        cutShort: m.role === 'assistant' ? metadata?.cutShort : undefined,
         toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
       });
     }
@@ -391,8 +407,9 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     );
   }, [history, persistedMessages]);
 
-  const handleSend = useCallback(async () => {
-    const messageContent = input.trim();
+  /** Send one user message; `fromInput` clears the composer as it goes. */
+  const sendUserText = useCallback(async (text: string, fromInput: boolean) => {
+    const messageContent = text.trim();
     // One turn at a time: a second send mid-stream interleaves two replies.
     if (!messageContent || isBusy) return;
 
@@ -403,7 +420,7 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
         content: messageContent,
         timestamp: Date.now(),
       });
-      setInput('');
+      if (fromInput) setInput('');
     });
 
     ensureHistory();
@@ -426,7 +443,16 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     }).catch((err: unknown) => {
       console.error('[Chat] Failed to persist user message:', err);
     });
-  }, [input, isBusy, ensureHistory, conversationId, startNewConversation, sendMessage, requestBody, createUserMessage]);
+  }, [isBusy, ensureHistory, conversationId, startNewConversation, sendMessage, requestBody, createUserMessage]);
+
+  const handleSend = useCallback(() => sendUserText(input, true), [sendUserText, input]);
+
+  /**
+   * Pick up a reply a cap cut short. Sent as a visible "Continue" from the
+   * person, so the model sees the request and the conversation reads plainly;
+   * whatever is half-typed in the composer stays there.
+   */
+  const continueReply = useCallback(() => sendUserText('Continue', false), [sendUserText]);
 
   /**
    * An internal message for the model (the orchestrator's continuation after a
@@ -478,6 +504,7 @@ export function useChatWithPersistence(options: UseChatWithPersistenceOptions = 
     selectConversation,
     stop: handleStop,
     retry,
+    continueReply,
 
     // For tool orchestration - continuation messages
     sendContinuation,

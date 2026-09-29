@@ -56,6 +56,7 @@ export function WeeklyDigest({
     isEmpty,
     emptyMessage,
   } = digestContent;
+  const updateTotal = Math.max(digestContent.recentCaseUpdateTotal ?? 0, recentCaseUpdates.length);
 
   // Format week dates for display
   const formatWeekDate = (dateStr: string) => {
@@ -192,9 +193,13 @@ export function WeeklyDigest({
                 baseUrl={baseUrl}
               />
             ))}
-            {recentCaseUpdates.length > 5 && (
+            {updateTotal > 5 && (
               <Text className="em-text-muted" style={styles.moreActivity}>
-                +{recentCaseUpdates.length - 5} more updates
+                {`${updateTotal - 5} more ${updateTotal - 5 === 1 ? "update" : "updates"} this week, all in `}
+                <Link href={`${baseUrl}/cases`} className="em-link">
+                  your case list
+                </Link>
+                .
               </Text>
             )}
           </Section>
@@ -552,7 +557,7 @@ const styles = {
   },
   moreActivity: {
     color: "#71717a",
-    fontSize: "13px",
+    fontSize: "14px",
     fontStyle: "italic" as const,
     margin: "12px 0 0 0",
   },

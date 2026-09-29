@@ -52,6 +52,8 @@ import { recordError } from "./lib/errorRecording";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { stageNewsFor, stageNewsletterFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
+import { connectionThrottleReply } from "./lib/throttleReply";
+import { queueConfirmation, replayArgs } from "./confirmationQueue";
 
 const log = createLogger("BulletinAlerts");
 
@@ -78,7 +80,6 @@ const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 const RESUME_DELAY_MS = 5 * 60 * 1000;
 
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
-const THROTTLED_REPLY = "Too many requests. Try again in a little while.";
 
 function isPlausibleEmail(email: string): boolean {
   return email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
@@ -126,11 +127,20 @@ export const subscribe = internalMutation({
     /** The weekly bulletin digest, staged the same way as news. */
     newsletter: v.optional(v.boolean()),
     ip: v.optional(v.string()),
+    /**
+     * Set only by the confirmation queue's drain (convex/confirmationQueue.ts)
+     * when it replays a request a full pool held back: the per-IP limit was
+     * passed on the first call and the drain measured the account's room, so
+     * both are skipped. Every per-address check still runs.
+     */
+    fromQueue: v.optional(v.boolean()),
   },
   returns: v.object({
     ok: v.boolean(),
     message: v.string(),
     throttled: v.optional(v.boolean()),
+    /** True when a full pool queued it (convex/confirmationQueue.ts). */
+    queued: v.optional(v.boolean()),
   }),
   handler: async (ctx, args) => {
     const email = args.email.trim().toLowerCase();
@@ -139,7 +149,7 @@ export const subscribe = internalMutation({
     }
 
     const ip = args.ip?.trim();
-    if (ip && ip !== "unknown") {
+    if (ip && ip !== "unknown" && !args.fromQueue) {
       const perIp = await checkAndRecordRateLimit(
         ctx,
         ip,
@@ -147,7 +157,7 @@ export const subscribe = internalMutation({
         SUBSCRIBE_IP_LIMIT,
       );
       if (!perIp.allowed) {
-        return { ok: false, message: THROTTLED_REPLY, throttled: true };
+        return { ok: false, message: connectionThrottleReply(perIp.resetInMs), throttled: true };
       }
     }
 
@@ -177,16 +187,24 @@ export const subscribe = internalMutation({
 
     // Charged after the cooldown, which returns above and sends nothing, and
     // BEFORE the write, so a refusal here leaves no row and no stamp behind.
-    const budget = await checkAndRecordRateLimit(
-      ctx,
-      "all",
-      BUDGETS.bulletinConfirm.key,
-      CONFIRMATION_GLOBAL_BUDGET,
-    );
-    if (!budget.allowed) {
-      await noteRefusal(ctx, "bulletinConfirm");
-      log.error("bulletin confirmation budget exhausted; refusing to send");
-      return { ok: false, message: THROTTLED_REPLY, throttled: true };
+    // A full pool queues the request (convex/confirmationQueue.ts).
+    if (!args.fromQueue) {
+      const budget = await checkAndRecordRateLimit(
+        ctx,
+        "all",
+        BUDGETS.bulletinConfirm.key,
+        CONFIRMATION_GLOBAL_BUDGET,
+      );
+      if (!budget.allowed) {
+        log.warn("bulletin confirmation pool full; queueing");
+        return queueConfirmation(ctx, {
+          kind: "bulletin",
+          pool: "bulletinConfirm",
+          email,
+          args: replayArgs(args),
+          resetInMs: budget.resetInMs,
+        });
+      }
     }
 
     if (existing) {

@@ -97,14 +97,15 @@ export function EntityExplorer({
   const searchRemote = useCallback(
     async (text: string, localHasRows: boolean) => {
       if (localHasRows && kind !== "employer") return { rows: [] };
-      const { rows: found, live } = await searchEntities(kind, text, {
+      const { rows: found, live, more, liveMore } = await searchEntities(kind, text, {
         onlyLive: localHasRows,
       });
       return {
         rows: found,
+        more,
         extra:
           live.length > 0 ? (
-            <LiveOnlyEmployerResults hits={live} query={text} />
+            <LiveOnlyEmployerResults hits={live} query={text} more={liveMore} />
           ) : undefined,
       };
     },
@@ -125,6 +126,7 @@ export function EntityExplorer({
       totalCount={total}
       loadAll={loadAll}
       searchRemote={searchRemote}
+      queryFromUrl
     />
   );
 }

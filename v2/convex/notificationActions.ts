@@ -500,6 +500,7 @@ const digestContentValidator = v.object({
   next7DaysDeadlines: v.array(digestDeadlineValidator),
   next14DaysDeadlines: v.array(digestDeadlineValidator),
   recentCaseUpdates: v.array(digestCaseUpdateValidator),
+  recentCaseUpdateTotal: v.optional(v.number()),
   isEmpty: v.boolean(),
   emptyMessage: v.string(),
 });

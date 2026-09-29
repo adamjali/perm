@@ -21,6 +21,8 @@ interface NotesTabProps {
 const ITEMS_PER_PAGE = 10;
 
 import { itemVariants, tabContainerVariants, fmtTimestamp } from "./case-detail-utils";
+import { CharLimit, CharLimitNote, useCharLimit } from "@/components/ui/char-limit";
+import { NOTES_PER_CASE_MAX, notesLimitMessage } from "@/components/forms/notesLimit";
 
 const PRIORITY_LABELS: Record<NotePriority, string> = {
   high: "High",
@@ -65,6 +67,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
 
   // New note input state
   const [newContent, setNewContent] = useState("");
+  const newNoteLimit = useCharLimit(5000, newContent);
   const [newPriority, setNewPriority] = useState<NotePriority>("medium");
   const [newCategory, setNewCategory] = useState<NoteCategory>("other");
   const [newDueDate, setNewDueDate] = useState("");
@@ -185,7 +188,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
   const handleAddNote = useCallback(async () => {
     if (!onUpdateNotes) return;
     const content = newContent.trim();
-    if (!content || notes.length >= 200) return;
+    if (!content || notes.length >= NOTES_PER_CASE_MAX) return;
 
     const newNote: NoteEntry = {
       id: generateNoteId(),
@@ -365,28 +368,29 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   {/* Body */}
                   {isEditing ? (
                     <div style={{ marginBottom: 12 }}>
-                      <textarea
-                        ref={editTextareaRef}
-                        value={editingContent}
-                        onChange={(e) => setEditingContent(e.target.value)}
-                        onKeyDown={(e) => {
-                          if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); saveEdit(); }
-                          if (e.key === "Escape") { e.preventDefault(); cancelEdit(); }
-                        }}
-                        maxLength={5000}
-                        rows={6}
-                        style={{
-                          width: "100%",
-                          fontSize: "0.95rem",
-                          lineHeight: 1.7,
-                          padding: "8px 12px",
-                          border: "3px solid var(--primary)",
-                          background: "var(--background)",
-                          color: "var(--foreground)",
-                          resize: "vertical",
-                          fontFamily: "inherit",
-                        }}
-                      />
+                      <CharLimit max={5000}>
+                        <textarea
+                          ref={editTextareaRef}
+                          value={editingContent}
+                          onChange={(e) => setEditingContent(e.target.value)}
+                          onKeyDown={(e) => {
+                            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); saveEdit(); }
+                            if (e.key === "Escape") { e.preventDefault(); cancelEdit(); }
+                          }}
+                          rows={6}
+                          style={{
+                            width: "100%",
+                            fontSize: "0.95rem",
+                            lineHeight: 1.7,
+                            padding: "8px 12px",
+                            border: "3px solid var(--primary)",
+                            background: "var(--background)",
+                            color: "var(--foreground)",
+                            resize: "vertical",
+                            fontFamily: "inherit",
+                          }}
+                        />
+                      </CharLimit>
                       <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
                         <button
                           className="icon-btn"
@@ -462,6 +466,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
               <div className="note-input-combo">
                 <textarea
                   ref={newTextareaRef}
+                  {...newNoteLimit.fieldProps}
                   className="note-input"
                   placeholder={`Add a case note... (${shortcutKey}+Enter)`}
                   value={newContent}
@@ -470,7 +475,6 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                     if (e.target.value && !showOptions) setShowOptions(true);
                   }}
                   onKeyDown={handleNewNoteKeyDown}
-                  maxLength={5000}
                   rows={2}
                   style={{
                     resize: "none",
@@ -481,12 +485,25 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                 />
                 <button
                   className="note-send-btn"
-                  disabled={!newContent.trim() || notes.length >= 200}
+                  disabled={!newContent.trim() || notes.length >= NOTES_PER_CASE_MAX}
                   onClick={handleAddNote}
                   aria-label="Add note"
                 >
                   <Send className="h-4 w-4" />
                 </button>
+              </div>
+              <div className={newNoteLimit.message || notesLimitMessage(notes.length) ? "px-5 pb-3" : undefined}>
+                <CharLimitNote
+                  id={newNoteLimit.id}
+                  message={newNoteLimit.message}
+                  full={newNoteLimit.full}
+                  className="mt-0"
+                />
+                {notesLimitMessage(notes.length) && (
+                  <p className="text-sm font-semibold text-foreground" role="status">
+                    {notesLimitMessage(notes.length)}
+                  </p>
+                )}
               </div>
 
               {/* Priority, Category, Due Date selectors */}
@@ -592,11 +609,6 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                     )}
                   </div>
 
-                  {notes.length >= 190 && (
-                    <span style={{ fontFamily: "var(--font-mono)", fontSize: "0.55rem", color: "var(--muted-foreground)" }}>
-                      {200 - notes.length} notes remaining
-                    </span>
-                  )}
                 </div>
               )}
             </div>

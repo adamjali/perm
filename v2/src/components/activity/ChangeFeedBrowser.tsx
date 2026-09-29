@@ -16,6 +16,7 @@ import { coverageFor, daysInRange, type CoverageWindows } from "@/lib/dateCovera
 // runtime import of a "server-only" module.
 import type { ChangeCalendar, ChangeDayFeed } from "@/lib/turso/changes";
 import type { DecidedFeed } from "@/lib/turso/decidedDays";
+import { RequestFailed } from "@/components/tools/RequestFailed";
 
 /**
  * Everything DOL moved on a day, searchable, filterable and sortable.
@@ -193,7 +194,7 @@ export function ChangeFeedBrowser({
   const decidedQuery = decidedWindow
     ? `/api/decided-cases?from=${decidedWindow.from}&to=${decidedWindow.to}&limit=1000`
     : "skip";
-  const { data: decidedData, failed: decidedFailed } = usePublicQuery<{
+  const { data: decidedData, failed: decidedFailed, failure: decidedFailure, retry: retryDecided } = usePublicQuery<{
     feed: DecidedFeed | null;
   }>(decidedQuery);
   // Only paint a response that answers the range currently on screen: a slow
@@ -206,7 +207,7 @@ export function ChangeFeedBrowser({
       ? decidedData.feed
       : null;
 
-  const { data, failed } = usePublicQuery<{ day: ChangeDayFeed | null }>(
+  const { data, failed, failure, retry } = usePublicQuery<{ day: ChangeDayFeed | null }>(
     hasObserved && span === 1
       ? `/api/case-changes?date=${date}&limit=5000`
       : "skip",
@@ -736,10 +737,12 @@ export function ChangeFeedBrowser({
               )}
             </>
           ) : decidedFailed ? (
-            <p className="mt-4 border-2 border-border bg-tint-primary p-4 text-base">
-              Those decisions could not be loaded just now. Reloading usually
-              clears it.
-            </p>
+            <RequestFailed
+              what="Those decisions"
+              failure={decidedFailure}
+              onRetry={retryDecided}
+              className="mt-4 border-2 border-border bg-tint-primary p-4"
+            />
           ) : (
             <p className="mt-4 text-base text-foreground/80" role="status">
               Loading decisions for these dates…
@@ -793,9 +796,15 @@ export function ChangeFeedBrowser({
                 Showing the first {fmt(feed.changes.length)} of{" "}
                 {fmt(feed.total)} changes observed on {longDate(feed.date)}.
                 Search, filters and sorting read the whole day, so they switch on
-                once the rest of it has loaded
-                {failed ? ", and that request did not arrive. Reloading usually clears it" : ""}
-                .
+                once the rest of it has loaded.
+                {failed ? (
+                  <>
+                    {" "}That request didn&apos;t come back. {failure?.message}{" "}
+                    <button type="button" onClick={retry} className="font-bold underline decoration-primary decoration-2 underline-offset-2">
+                      Try again
+                    </button>
+                  </>
+                ) : null}
               </>
             ) : (
               <>
@@ -884,10 +893,13 @@ export function ChangeFeedBrowser({
           ) : null}
         </div>
       ) : failed ? (
-        <p className="mt-6 border-2 border-border bg-tint-primary p-4 text-base">
-          That day could not be loaded just now. The other days still work, and
-          reloading usually clears it.
-        </p>
+        <RequestFailed
+          what="That day"
+          failure={failure}
+          onRetry={retry}
+          after="The other days still work."
+          className="mt-6 border-2 border-border bg-tint-primary p-4"
+        />
       ) : (
         <p className="mt-6 text-base text-foreground/80" role="status">
           Loading that day&apos;s changes…

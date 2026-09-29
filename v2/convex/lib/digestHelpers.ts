@@ -63,6 +63,12 @@ export interface DigestContent {
   next7DaysDeadlines: DigestDeadline[];
   next14DaysDeadlines: DigestDeadline[]; // Days 8-14
   recentCaseUpdates: DigestCaseUpdate[];
+  /**
+   * Every update this week, before the list above was cut to 10. The email
+   * counted "+N more" from the CUT list, so 30 updates read as "+5 more"
+   * (Sep 29 2026 audit). Optional: digests built before it render as before.
+   */
+  recentCaseUpdateTotal?: number;
   isEmpty: boolean;
   emptyMessage: string;
 }
@@ -326,6 +332,7 @@ export function buildDigestContent(params: {
     next7DaysDeadlines: next7Days,
     next14DaysDeadlines: next14Days,
     recentCaseUpdates: caseUpdates.slice(0, 10), // Limit to 10 most recent
+    recentCaseUpdateTotal: caseUpdates.length,
     isEmpty,
     emptyMessage,
   };

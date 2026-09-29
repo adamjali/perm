@@ -20,6 +20,7 @@ import { BellIcon, CheckCircleIcon as CheckCircle2 } from "@phosphor-icons/react
 import { MONTH_NAMES } from "@/lib/dolFormat";
 import { Button, Input, Label } from "@/components/ui";
 import { cn } from "@/lib/utils";
+import { isQueued, replyHeading } from "@/lib/alertReply";
 
 /**
  * Convex HTTP actions are served from the `.convex.site` twin of the
@@ -126,6 +127,7 @@ export function QueueAlertForm({
   const [selectedQueue, setSelectedQueue] = useState(queue);
   const [status, setStatus] = useState<"idle" | "sending" | "done" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [queued, setQueued] = useState(false);
 
   const options = filingMonthOptions(newestMonth, frontierMonth);
 
@@ -152,7 +154,8 @@ export function QueueAlertForm({
           news: news || undefined,
         }),
       });
-      const result = (await response.json()) as { ok: boolean; message: string };
+      const result = (await response.json()) as { ok: boolean; message: string; queued?: boolean };
+      setQueued(isQueued(result));
       setStatus(result.ok ? "done" : "error");
       setMessage(result.message);
     } catch {
@@ -171,7 +174,7 @@ export function QueueAlertForm({
         <div className="flex items-start gap-3">
           <CheckCircle2 className="mt-0.5 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
           <div>
-            <p className="font-heading text-lg font-black">Check your inbox</p>{" "}
+            <p className="font-heading text-lg font-black">{replyHeading(queued)}</p>{" "}
             <p className="mt-1 text-sm leading-relaxed text-foreground/70">{message}</p>
           </div>
         </div>
@@ -292,10 +295,11 @@ export function QueueAlertForm({
         {status === "sending" ? "Sending" : "Email me when it happens"}
       </Button>{" "}
 
-      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-        You confirm by email first, and one click opts out. We send one
-        confirmation every 10 minutes per address - if nothing lands, wait that
-        long before trying again.
+      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+        You confirm by email first, and one click opts out. One address watches
+        one filing month per queue, so confirming a new month replaces the one
+        you had. We send one confirmation every 10 minutes per address; if
+        nothing lands, wait that long before trying again.
       </p>
     </form>
   );

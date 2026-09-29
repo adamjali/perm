@@ -11,6 +11,7 @@
 import { query } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUserIdOrNull } from "./lib/auth";
+import { readUserCases } from "./lib/userCases";
 import {
   extractDeadlines,
   groupDeadlinesByUrgency,
@@ -55,11 +56,7 @@ export const getDeadlines = query({
 
     // Fetch non-deleted cases for user with reasonable limit
     // Most users have <100 cases, limit prevents unbounded growth
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
-      .take(1000);
+    const { cases } = await readUserCases(ctx, userId);
 
     // Filter out closed cases
     const activeCases = cases.filter((c) => c.caseStatus !== "closed");
@@ -138,11 +135,7 @@ export const getSummary = query({
     }
 
     // Fetch non-deleted cases for user with reasonable limit
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
-      .take(1000);
+    const { cases } = await readUserCases(ctx, userId);
 
     // SINGLE-PASS AGGREGATION: Count all breakdowns in one loop
     // This replaces 20+ sequential filter() calls with O(n) complexity
@@ -382,11 +375,7 @@ export const getUpcomingDeadlines = query({
     const daysAhead = Math.max(1, Math.min(args.days ?? 30, 365));
 
     // Fetch non-deleted cases for user with reasonable limit
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
-      .take(1000);
+    const { cases } = await readUserCases(ctx, userId);
 
     // Filter out closed cases
     const activeCases = cases.filter((c) => c.caseStatus !== "closed");

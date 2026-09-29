@@ -13,6 +13,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import { SUBSCRIBE_IP_LIMIT } from "../queueAlerts";
+import { QUEUED_REPLY } from "../confirmationQueue";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 
 const SECRET = "test-unsubscribe-secret";
@@ -225,6 +226,10 @@ describe("abuse limits", () => {
   });
 
   it("caps confirmations globally, which is the limit an attacker cannot rotate around", async () => {
+    // Past the pool, requests wait in the bounded queue (convex/confirmationQueue.ts),
+    // which sends against Resend's own daily count. Fake timers keep its drain
+    // from running here and leaking sends into a later test.
+    vi.useFakeTimers();
     const t = createTestContext();
     stubResend(200);
 
@@ -241,13 +246,14 @@ describe("abuse limits", () => {
       );
     }
 
-    const allowed = results.filter((r) => r.ok).length;
+    const allowed = results.filter((r) => r.ok && r.message !== QUEUED_REPLY).length;
     // 18/day since the 2026-08-28 rebalance: the bulletin alerts and the
     // preference-center links joined the shared Resend pool, and the full
     // arithmetic (totalling 70/day worst case, 30 reserved for auth mail)
     // lives in convex/caseAlerts.ts. This pin moves ONLY when that table does.
     expect(allowed).toBe(18);
-    expect(results[results.length - 1]!.ok).toBe(false);
+    expect(results[results.length - 1]).toEqual({ ok: true, message: QUEUED_REPLY, queued: true });
+    vi.useRealTimers();
   });
 
   it("does not charge the global budget for a request the cooldown absorbed", async () => {

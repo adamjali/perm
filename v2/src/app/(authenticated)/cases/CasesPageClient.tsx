@@ -56,6 +56,7 @@ import { SelectionBar } from "@/components/cases/SelectionBar";
 import { ImportModal } from "@/components/cases/ImportModal";
 import { ViewToggle, type ViewMode } from "@/components/cases/ViewToggle";
 import { CaseListView } from "@/components/cases/CaseListView";
+import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { CasesLoadingSkeleton, NewUserEmptyState, NoResultsEmptyState } from "./components";
 import { sortCases } from "../../../../convex/lib/caseListHelpers";
@@ -1081,6 +1082,8 @@ export function CasesPageClient() {
           </Button>
         </div>
       </div>
+
+      <CaseCapNotice truncated={caseListData.pagination.truncated} />
 
       {/* Filter Bar */}
       <CaseFilterBar

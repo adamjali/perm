@@ -262,6 +262,110 @@ describe("Notifications", () => {
       });
     });
 
+    describe("getNotifications walks every page (silent-limit audit #1)", () => {
+      const base = (userId: Id<"users">, i: number, type: "deadline_reminder" | "rfi_alert" | "status_change", isRead = false) => ({
+        userId,
+        type,
+        title: `N ${i}`,
+        message: "Message",
+        priority: "normal" as const,
+        isRead,
+        emailSent: false,
+        createdAt: 1_790_000_000_000 + i * 1000,
+        updatedAt: 1_790_000_000_000 + i * 1000,
+      });
+
+      it("pages through all 25 with no repeats and no gaps", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "Pager");
+        await user.run(async (ctx) => {
+          for (let i = 0; i < 25; i++) await ctx.db.insert("notifications", base(userId, i, "deadline_reminder"));
+        });
+        const seen: string[] = [];
+        let cursor: string | undefined;
+        for (let page = 0; page < 5; page++) {
+          const r = await user.query(api.notifications.getNotifications, { limit: 10, cursor });
+          seen.push(...r.notifications.map((n) => n.title));
+          if (!r.hasMore) break;
+          cursor = r.nextCursor ?? undefined;
+        }
+        expect(seen).toHaveLength(25);
+        expect(new Set(seen).size).toBe(25);
+        expect(seen[0]).toBe("N 24");
+        expect(seen[24]).toBe("N 0");
+      });
+
+      it("a filtered tab finds an old match behind many newer rows", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "Filter");
+        await user.run(async (ctx) => {
+          await ctx.db.insert("notifications", base(userId, 0, "rfi_alert"));
+          for (let i = 1; i <= 60; i++) await ctx.db.insert("notifications", base(userId, i, "deadline_reminder"));
+        });
+        const r = await user.query(api.notifications.getNotifications, {
+          limit: 20,
+          filters: { type: ["rfi_alert"] },
+        });
+        expect(r.notifications.map((n) => n.title)).toEqual(["N 0"]);
+        expect(r.hasMore).toBe(false);
+      });
+
+      it("the read filter pages too", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "Reads");
+        await user.run(async (ctx) => {
+          for (let i = 0; i < 30; i++) await ctx.db.insert("notifications", base(userId, i, "status_change", i % 2 === 0));
+        });
+        const first = await user.query(api.notifications.getNotifications, { limit: 10, filters: { isRead: true } });
+        expect(first.notifications).toHaveLength(10);
+        expect(first.hasMore).toBe(true);
+        const second = await user.query(api.notifications.getNotifications, {
+          limit: 10,
+          filters: { isRead: true },
+          cursor: first.nextCursor ?? undefined,
+        });
+        expect(second.notifications).toHaveLength(5);
+        expect(second.hasMore).toBe(false);
+        const titles = [...first.notifications, ...second.notifications].map((n) => n.title);
+        expect(new Set(titles).size).toBe(15);
+      });
+
+      it("never shows another user's notifications through the case filter", async () => {
+        const t = createTestContext();
+        const { ctx: a, userId: aId } = await createAuthenticatedContext(t, "A");
+        const { ctx: b, userId: bId } = await createAuthenticatedContext(t, "B");
+        const caseId = await a.run(async (ctx) => {
+          await ctx.db.insert("notifications", base(bId, 1, "status_change"));
+          return null;
+        });
+        void caseId;
+        const r = await a.query(api.notifications.getNotifications, { limit: 10 });
+        expect(r.notifications).toHaveLength(0);
+        const rb = await b.query(api.notifications.getNotifications, { limit: 10 });
+        expect(rb.notifications).toHaveLength(1);
+        void aId;
+      });
+    });
+
+    describe("getNotificationStats counts past 1,000 (silent-limit audit #3)", () => {
+      it("counts 1,050 notifications, not 1,000", async () => {
+        const t = createTestContext();
+        const { ctx: user, userId } = await createAuthenticatedContext(t, "Many");
+        await user.run(async (ctx) => {
+          for (let i = 0; i < 1050; i++) {
+            await ctx.db.insert("notifications", {
+              userId, type: "deadline_reminder", title: "t", message: "m", priority: "normal",
+              isRead: i < 50, emailSent: false, createdAt: i, updatedAt: i,
+            });
+          }
+        });
+        const stats = await user.query(api.notifications.getNotificationStats, {});
+        expect(stats.total).toBe(1050);
+        expect(stats.unread).toBe(1000);
+        expect(stats.capped).toBe(false);
+      }, 120_000);
+    });
+
     describe("getNotificationsByCase", () => {
       it("returns only case notifications", async () => {
         const t = createTestContext();

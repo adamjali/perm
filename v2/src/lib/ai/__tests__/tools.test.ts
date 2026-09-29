@@ -923,3 +923,24 @@ describe('Schema Edge Cases', () => {
     });
   });
 });
+
+describe('Job description length in chat', () => {
+  // The server takes 50,000 characters (INPUT_LIMITS.LONG, cases and
+  // templates both). The chat schemas stopped at 10,000 until Sep 29 2026, so
+  // a long description pasted into the chat failed schema validation with a
+  // message only the model saw.
+  it('accepts the server limit in all three chat schemas and refuses one past it', async () => {
+    const { UpdateCaseInputSchema, CreateJobDescriptionTemplateInputSchema, UpdateJobDescriptionTemplateInputSchema } =
+      await import('../tools');
+    const { INPUT_LIMITS } = await import('../../../../convex/lib/validation');
+    const atLimit = 'x'.repeat(INPUT_LIMITS.LONG);
+    const over = 'x'.repeat(INPUT_LIMITS.LONG + 1);
+
+    expect(UpdateCaseInputSchema.safeParse({ caseId: 'abc', jobDescription: atLimit }).success).toBe(true);
+    expect(UpdateCaseInputSchema.safeParse({ caseId: 'abc', jobDescription: over }).success).toBe(false);
+    expect(CreateJobDescriptionTemplateInputSchema.safeParse({ name: 'Dev', description: atLimit }).success).toBe(true);
+    expect(CreateJobDescriptionTemplateInputSchema.safeParse({ name: 'Dev', description: over }).success).toBe(false);
+    expect(UpdateJobDescriptionTemplateInputSchema.safeParse({ templateId: 't', description: atLimit }).success).toBe(true);
+    expect(UpdateJobDescriptionTemplateInputSchema.safeParse({ templateId: 't', description: over }).success).toBe(false);
+  });
+});

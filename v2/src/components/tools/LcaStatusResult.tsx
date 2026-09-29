@@ -3,6 +3,7 @@ import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import { lookupLcaCaseOutcome, lookupLcaDisclosed, type LcaDisclosedRow, type LcaRow } from "@/lib/turso/lcaCasesTypes";
 import { formatWage } from "@/lib/wageFormat";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
+import { isLookupGap } from "@/lib/dolMiss";
 
 /**
  * A labor condition application (ETA-9035) by number: DOL's own status,
@@ -85,7 +86,7 @@ function Disclosed({ d }: { d: LcaDisclosedRow }) {
 export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
   const [{ row, dolMiss }, disclosed] = await Promise.all([
     // A failure to read our own table is also "could not settle it", never "no record".
-    lookupLcaCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "unavailable" as const })),
+    lookupLcaCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "records" as const })),
     lookupLcaDisclosed(caseNumber).catch(() => null),
   ]);
 
@@ -131,7 +132,7 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
     );
   }
 
-  if (!row && (dolMiss === "unavailable" || dolMiss === "not-asked")) {
+  if (!row && isLookupGap(dolMiss)) {
     return <DolUnanswered caseNumber={caseNumber} label="Labor condition application" miss={dolMiss} />;
   }
 
