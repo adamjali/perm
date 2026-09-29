@@ -33,7 +33,11 @@ import { getUserSuspension, setSuspension } from "./lib/suspension";
 
 const FAIL_WINDOW_MS = 30 * 60 * 1000;   // 30-minute rolling window
 const FAIL_THRESHOLD = 10;                // failures in window before auto-suspend
-const AUTO_SUSPEND_DURATION_MS = 24 * 60 * 60 * 1000; // 24h auto-suspension
+// 1h since Sep 29 2026 (was 24h): the trigger is refused attempts against an
+// EMAIL, which a stranger who knows the address can cause, so the suspension
+// is also a lever against the account's owner. An hour stops a flood without
+// locking the owner out for a day.
+const AUTO_SUSPEND_DURATION_MS = 60 * 60 * 1000;
 
 /**
  * Record an auth failure (by email) and evaluate whether to auto-suspend.
@@ -79,7 +83,7 @@ export const recordAuthFailure = internalMutation({
     // when a source floods auth endpoints — their presence indicates automated/
     // distributed abuse rather than a cheap single-email lockout attempt. Without
     // this, an attacker who knows a victim's email could deliberately fail logins
-    // to hard-lock the account for 24h.
+    // to hard-lock the account (for an hour since Sep 29 2026; 24h before).
     const recentIpStrikes = await ctx.db
       .query("rateLimits")
       .withIndex("by_timestamp", (q) => q.gte("timestamp", windowStart))
@@ -121,7 +125,7 @@ export const recordAuthFailure = internalMutation({
           `Auto-suspension triggered by abuse detection.\n\n` +
           `Email: ${normalizedEmail}\n` +
           `Failures in last 30 min: ${recent.length}\n\n` +
-          `Auto-lifts in 24h. Manual override at /admin/security.`,
+          `Auto-lifts in 1 hour. Manual override at /admin/security.`,
       },
     );
 

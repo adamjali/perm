@@ -26,6 +26,7 @@ import {
 import { ConvexError } from "convex/values";
 import { TemplateSelector } from "./TemplateSelector";
 import { toast } from "@/lib/toast";
+import { JOB_DESCRIPTION_MAX_LENGTH } from "./shared";
 
 /** Extract error message from ConvexError or plain Error */
 function getErrorMessage(error: unknown): string {
@@ -89,7 +90,8 @@ export interface JobDescriptionFieldProps {
 // CONSTANTS
 // ============================================================================
 
-const DEFAULT_MAX_LENGTH = 10000;
+// The server's limit, kept once in ./shared (both copies said 10,000 until Sep 29 2026).
+const DEFAULT_MAX_LENGTH = JOB_DESCRIPTION_MAX_LENGTH;
 
 // ============================================================================
 // COMPONENT

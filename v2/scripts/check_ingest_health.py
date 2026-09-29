@@ -155,6 +155,22 @@ def check_runs(db) -> int:
             by = ", ".join(k.split()[1] for k, _ in later)
             newest[key] = ("ok", f"legacy failure superseded by a clean {by} run", finished)
 
+    # AND THE MIRROR CASE: A MODE-KEYED FAILURE, A BARE-KEYED SUCCESS. The
+    # case-status sweep recorded its own clean runs under the bare filename,
+    # naming the mode only in the note ("full: 426,112 cases"), while its
+    # failure hook wrote "ingest_case_status_direct.py --full". So on Sep 29
+    # 2026 the 4:10 AM sweep's failure stayed BROKEN after the re-run worked.
+    # The sweep now records its mode in the key; until those rows age out, a
+    # clean bare-keyed run whose note begins with the same mode clears it.
+    for key in list(newest):
+        status, note, finished = newest[key]
+        if " " not in key or status not in BROKEN_STATUSES:
+            continue
+        base, mode = key.split(" ", 1)
+        bare = newest.get(base)
+        if bare and bare[0] == "ok" and bare[2] > finished and bare[1].startswith(mode.lstrip("-") + ":"):
+            newest[key] = ("ok", f"failure superseded by a clean {mode} run (recorded bare)", finished)
+
     print(f"\ningests with a run in {RUN_FAILURE_WINDOW_DAYS}d: {len(newest)} "
           f"({len(rows)} runs)")
     bad = []

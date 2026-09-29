@@ -12,6 +12,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
+import { SUBSCRIBE_IP_LIMIT } from "../queueAlerts";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 
 const SECRET = "test-unsubscribe-secret";
@@ -181,24 +182,27 @@ describe("subscribe input validation", () => {
 // ---------------------------------------------------------------------------
 
 describe("abuse limits", () => {
-  it("stops one IP after five attempts even with fresh addresses each time", async () => {
+  it("stops one IP after its hourly attempts, whatever the address", async () => {
     const t = createTestContext();
     stubResend(200);
 
+    // One address asking again and again: the first sends, the rest are
+    // absorbed by its cooldown (no mail spent), and every one counts against
+    // the IP. At 30 an hour (Sep 29 2026) the IP limit sits above the 18
+    // confirmations the site may send in a day, so fresh addresses meet that
+    // budget first; this is what stops one caller hammering one address.
     const results = [];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < SUBSCRIBE_IP_LIMIT.limit + 3; i++) {
       results.push(
         await t.mutation(internal.queueAlerts.subscribe, {
-          email: `person${i}@example.com`,
+          email: "person@example.com",
           filingMonth: "2025-09",
           ip: "203.0.113.9",
         }),
       );
     }
-
-    // The per-address cooldown cannot catch this: every address is new.
-    expect(results.slice(0, 5).every((r) => r.ok)).toBe(true);
-    expect(results.slice(5).every((r) => !r.ok)).toBe(true);
+    expect(results.slice(0, SUBSCRIBE_IP_LIMIT.limit).every((r) => r.ok)).toBe(true);
+    expect(results.slice(SUBSCRIBE_IP_LIMIT.limit).every((r) => !r.ok)).toBe(true);
   });
 
   it("keeps separate IPs independent", async () => {

@@ -5,7 +5,8 @@
  * - Single `abuseBlocklist` table, keyed by normalized IP.
  * - `isIpBlocked()` returns { blocked, expiresAt, reason } for middleware.
  * - `recordStrike()` runs every time `checkIpRateLimit` REJECTS. After
- *   N strikes in a short window, the IP is auto-blocked for 24h.
+ *   N strikes in a short window, the IP is auto-blocked for an hour (24h
+ *   until Sep 29 2026).
  * - Admin mutations let you manually block, unblock, extend, or list entries.
  * - The `cleanupExpiredBlocks` cron scrubs stale rows so the table stays bounded.
  */
@@ -24,7 +25,10 @@ import { requireAdmin } from "./lib/admin";
 
 const AUTO_BLOCK_STRIKES = 3;              // # rate-limit rejections within window
 const AUTO_BLOCK_WINDOW_MS = 15 * 60_000;  // 15-minute rolling window for strikes
-const AUTO_BLOCK_DURATION_MS = 24 * 60 * 60_000; // 24h auto-ban
+// 1h since Sep 29 2026 (was 24h): an address is often shared (an office, a
+// campus, a mobile carrier), and a day-long block fell on everyone behind it.
+// Three strikes in 15 minutes still blocks a flood at once, and again after.
+const AUTO_BLOCK_DURATION_MS = 60 * 60_000;
 
 /**
  * Shared result shape for the block-mutating operations (recordStrike,

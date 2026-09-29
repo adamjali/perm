@@ -17,6 +17,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
+import { MAX_CASES_PER_ADDRESS, SUBSCRIBE_IP_LIMIT } from "../caseAlerts";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 
 const SECRET = "test-unsubscribe-secret";
@@ -402,23 +403,28 @@ describe("subscribe input validation", () => {
 // ---------------------------------------------------------------------------
 
 describe("abuse limits", () => {
-  it("stops one IP after five attempts even with a fresh address each time", async () => {
+  it("stops one IP after its hourly attempts, whatever the address", async () => {
     const t = createTestContext();
     stubMirrorAndResend({ cases: {} });
 
+    // One address, a different case each time: the first sends, the rest are
+    // absorbed by the address's cooldown (no mail spent), and every one of
+    // them still counts against the IP. Since Sep 29 2026 the IP allows 30 an
+    // hour, which is above the 15 confirmations the whole site may send in a
+    // day, so fresh addresses meet the global budget first; the IP limit is
+    // what stops one caller hammering a single address.
     const results = [];
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < SUBSCRIBE_IP_LIMIT.limit + 3; i++) {
       results.push(
         await t.mutation(internal.caseAlerts.subscribe, {
-          email: `person${i}@example.com`,
-          caseNumber: CASE,
+          email: "person@example.com",
+          caseNumber: `G-100-25324-4${String(i).padStart(5, "0")}`,
           ip: "203.0.113.9",
         }),
       );
     }
-    // The per-address cooldown cannot catch this: every address is new.
-    expect(results.slice(0, 5).every((r) => r.ok)).toBe(true);
-    expect(results.slice(5).every((r) => !r.ok)).toBe(true);
+    expect(results.slice(0, SUBSCRIBE_IP_LIMIT.limit).every((r) => r.ok)).toBe(true);
+    expect(results.slice(SUBSCRIBE_IP_LIMIT.limit).every((r) => !r.ok && r.throttled)).toBe(true);
   });
 
   it("caps confirmations globally when BOTH the address and the IP rotate", async () => {
@@ -463,10 +469,10 @@ describe("abuse limits", () => {
     const t = createTestContext();
     stubMirrorAndResend({ cases: {} });
     await t.run(async (ctx) => {
-      for (let i = 0; i < 25; i++) {
+      for (let i = 0; i < MAX_CASES_PER_ADDRESS; i++) {
         await ctx.db.insert("caseStatusAlerts", {
           email: "hoarder@example.com",
-          caseNumber: `P-100-26125-8689${String(i).padStart(2, "0")}`,
+          caseNumber: `P-100-26125-868${String(i).padStart(3, "0")}`,
           createdAt: Date.now(),
           confirmedAt: Date.now(),
         });
@@ -484,7 +490,7 @@ describe("abuse limits", () => {
     expect(res.message).toBe("Check your inbox to confirm.");
 
     const rows = await t.run(async (ctx) => ctx.db.query("caseStatusAlerts").collect());
-    expect(rows).toHaveLength(25);
+    expect(rows).toHaveLength(MAX_CASES_PER_ADDRESS);
   });
 });
 

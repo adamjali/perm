@@ -57,7 +57,7 @@ describe("recordStrike — strike accumulation + auto-block", () => {
     expect(blocks).toHaveLength(0);
   });
 
-  it("auto-blocks on the 3rd strike with a 24h window", async () => {
+  it("auto-blocks on the 3rd strike with a 1h window", async () => {
     const t = createTestContext();
 
     await t.mutation(internal.abuseBlocklist.recordStrike, { ip: IP, reason: "x" });
@@ -77,8 +77,8 @@ describe("recordStrike — strike accumulation + auto-block", () => {
     expect(blocks[0]!.manualOverride).toBe(false);
     // 24h window
     const remaining = blocks[0]!.expiresAt - Date.now();
-    expect(remaining).toBeGreaterThan(23 * 60 * 60 * 1000);
-    expect(remaining).toBeLessThanOrEqual(24 * 60 * 60 * 1000);
+    expect(remaining).toBeGreaterThan(59 * 60 * 1000);
+    expect(remaining).toBeLessThanOrEqual(60 * 60 * 1000);
   });
 
   it("uses the first hop of an XFF chain as the keyed IP", async () => {

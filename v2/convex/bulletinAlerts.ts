@@ -74,7 +74,7 @@ const ALERT_BATCH_LIMIT = 12;
 const ALERT_GLOBAL_BUDGET = windowFor("bulletinAlert");
 const CONFIRMATION_GLOBAL_BUDGET = windowFor("bulletinConfirm");
 const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
-const SUBSCRIBE_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
+const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 const RESUME_DELAY_MS = 5 * 60 * 1000;
 
 const NEUTRAL_REPLY = "Check your inbox to confirm.";

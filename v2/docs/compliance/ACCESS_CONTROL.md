@@ -93,6 +93,6 @@ Internal functions are never exposed to the client API. They are called via `int
 ## Session Management
 
 - Sessions managed by Convex Auth (HttpOnly session cookies)
-- 15-minute inactivity timeout with 2-minute warning
+- 30-minute inactivity timeout with 2-minute warning (OWASP ASVS 4.0.3 requirement 3.3.2, Level 2; 15 minutes until Sep 29 2026)
 - Multi-tab sync prevents orphaned sessions
 - Sign-out invalidates session server-side

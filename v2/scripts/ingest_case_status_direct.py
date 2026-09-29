@@ -2143,7 +2143,12 @@ def main() -> int:
         if failed:
             note += (f"; {len(failed)}/{len(steps)} tail steps failed: "
                      + ", ".join(k for k, _ in failed))
-        record_run(db, "ingest_case_status_direct.py", status=status,
+        # Keyed with its mode, the shape the workflow's failure hook writes
+        # ("ingest_case_status_direct.py --full"). Until Sep 29 2026 this row
+        # carried the bare filename, so a failed full sweep and the clean run
+        # that followed it had different keys, and the failure stayed BROKEN in
+        # the health check after the re-run had worked.
+        record_run(db, f"ingest_case_status_direct.py --{mode}", status=status,
                    rows_written=written["u"], note=note, started_at=started)
 
         if failed:

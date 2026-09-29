@@ -156,6 +156,12 @@ export function resetTokenCache(): void {
  * until sixty seconds before it expires. `f` is injectable so tests never
  * touch the network.
  */
+/**
+ * Every call to USCIS gives up after this long. Until Sep 29 2026 there was no
+ * limit at all, so a hung call held the reader until nginx's own timeout.
+ */
+export const USCIS_TIMEOUT_MS = 10_000;
+
 async function accessToken(env: UscisEnv, now: Date, f: typeof fetch): Promise<string> {
   if (cached && cached.env === env && cached.expiresAt > now.getTime()) return cached.token;
   const body = new URLSearchParams({
@@ -167,6 +173,7 @@ async function accessToken(env: UscisEnv, now: Date, f: typeof fetch): Promise<s
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
     body,
+    signal: AbortSignal.timeout(USCIS_TIMEOUT_MS),
   });
   if (!res.ok) throw new UscisAuthError(res.status);
   const json = (await res.json()) as { access_token?: string; expires_in?: number | string };
@@ -304,14 +311,17 @@ export async function fetchCaseStatus(receipt: string, deps: ClientDeps = {}): P
   let token: string;
   try {
     token = await accessToken(env, now, f);
-  } catch {
-    return { kind: "unauthorized" };
+  } catch (e) {
+    // Only a refusal from USCIS is "unauthorized"; a timeout or a dropped
+    // connection while fetching the token is USCIS being unavailable.
+    return e instanceof UscisAuthError ? { kind: "unauthorized" } : { kind: "unavailable", httpStatus: null };
   }
 
   let res: Response;
   try {
     res = await f(`${ENVS[env].caseStatusBase}/${encodeURIComponent(receipt)}`, {
       headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+      signal: AbortSignal.timeout(USCIS_TIMEOUT_MS),
     });
   } catch {
     return { kind: "unavailable", httpStatus: null };
@@ -352,13 +362,16 @@ export async function fetchProcessingTimesRaw(
   let token: string;
   try {
     token = await accessToken(env, now, f);
-  } catch {
-    return { kind: "unauthorized" };
+  } catch (e) {
+    // Only a refusal from USCIS is "unauthorized"; a timeout or a dropped
+    // connection while fetching the token is USCIS being unavailable.
+    return e instanceof UscisAuthError ? { kind: "unauthorized" } : { kind: "unavailable", httpStatus: null };
   }
   let res: Response;
   try {
     res = await f(`${ENVS[env].processingTimesBase}${path}`, {
       headers: { authorization: `Bearer ${token}`, accept: "application/json" },
+      signal: AbortSignal.timeout(USCIS_TIMEOUT_MS),
     });
   } catch {
     return { kind: "unavailable", httpStatus: null };

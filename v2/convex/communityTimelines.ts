@@ -30,10 +30,13 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
  * board except a date or a choice from a fixed list.
  */
 
-/** Six saves an hour from one address, edits included. */
-const PER_IP = { limit: 6, windowMs: 60 * 60 * 1000 };
-/** Three hundred new timelines a day across everyone: the cap on the table's growth. */
-const GLOBAL_BUDGET = { limit: 300, windowMs: 24 * 60 * 60 * 1000 };
+/** Twenty saves an hour from one address, edits included (6 until Sep 29 2026). */
+export const PER_IP = { limit: 20, windowMs: 60 * 60 * 1000 };
+/**
+ * A thousand new timelines a day across everyone: the cap on the table's
+ * growth (300 until Sep 29 2026), kept well inside the board's SCAN_CAP.
+ */
+export const GLOBAL_BUDGET = { limit: 1000, windowMs: 24 * 60 * 60 * 1000 };
 /** At most three timelines on one case from one address (a household, not a flood). */
 const PER_CASE_PER_IP = 3;
 /** The board's scan bound. A table past this has outgrown a single read. */

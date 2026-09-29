@@ -46,13 +46,22 @@ GitHub Actions ─(ssh, deploy key)─▶ permtracker-deploy       (new releases
 | the machine reboots | every unit is enabled and comes back (measured: 30 s) | Sep 28 |
 | security fixes | unattended-upgrades (Ubuntu security, plus `pkg.cloudflare.com` and `deb.nodesource.com`, see `conf/`); needrestart restarts whatever still runs old code; a reboot at 06:30 UTC only when an update requires one | dry run lists all origins |
 | the disk | journald capped at 1 GB and 30 days; nginx logs rotate daily, 14 kept; releases 5 kept, build files 21 days; backups 7 kept; health samples and repairs 7 days; Oracle disk backups 3 days (`permtracker-daily-keep3`, 06:00 UTC, inside the free 5) | |
-| the page cache | `permtracker-prune` keeps each release's rendered pages inside its budget (measured Sep 29 2026: the live release held 13 GB after 7 hours; a full crawl would reach about 69 GB per release) | Sep 29: 12 GB freed on its first run |
+| the page cache | `permtracker-prune` keeps each release's rendered pages inside its budget (live 60 GB, standby 6 GB since Sep 29 2026; 8 and 0 below 20 GB free) (measured Sep 29 2026: the live release held 13 GB after 7 hours; a full crawl would reach about 69 GB per release) | Sep 29: 12 GB freed on its first run |
 | memory and CPU | drop-ins in `systemd/dropins/resources-*.conf`: the database is last in line for the out-of-memory killer (-900) and first for CPU and disk; each web copy is squeezed past 3 GB and restarted past 3.5 GB; the RAM lock is the first thing killed if memory runs out (killing it frees 3.2 GB at once); every job yields CPU and disk and stops at 4 GB; every job has a time limit | Sep 29 |
-| traffic | nginx: 300 page requests a minute per visitor; verified crawlers 60 a minute each and 120 all together (429 with Retry-After); at most 64 requests inside the app at once (503 with Retry-After); public images and build files served from disk, outside every limit | Sep 29: crawler bursts had turned 1,742 employer pages into 500s |
+| traffic | nginx (`nginx/permtracker.conf`, checked by `test_nginx_conf.py` in CI): per address 600 pages a minute, 1,200 background pre-loads, 120 case lookups (pre-loads never count: a pre-load answers the loading shell and never asks DOL), 240 API calls; a person over a rate is SLOWED first (two-stage `delay=`) and only far past it gets a page that reloads itself (429, Retry-After 30; JSON under `/api`). In flight at once: 64 for the app, 32 per address, 6 for search engines, 4 for other crawlers (503, Retry-After 15). Crawlers: Google and Bing 180 a minute per family, outside the shared pool; others 90 each and 180 together. Cloudflare in front: a flood backstop of 500 requests per 10 s per address, security level low, a passed challenge lasts a week. Public images and build files are served from disk, outside every limit | Sep 29: 40 simultaneous pre-loads from one address all answered where 30 had been refused; 12 real case loads in a row all answered |
 | the database folder | the engine keeps its own log and snapshots next to the data; `server_health` records both sizes and the morning report warns past 3x the data file | 1.97x on Sep 28 (one snapshot from the import) |
 
 Everything above is reported: the morning email's "server" section reads `perm_docs['server_health']`,
 including any repair in the last 24 hours.
+
+## Reloading nginx: a refused reload looks like success
+
+nginx keeps its OLD rules when it refuses a reload, and `systemctl reload nginx` still exits 0; `nginx -t` cannot
+catch the commonest cause, a rate-limit zone whose key changed (`limit_req "x" uses the "$a" key while previously
+it used the "$b" key` in `/var/log/nginx/error.log`). Measured Sep 29 2026. Rename the zone instead, and count a
+reload only when new worker processes appear: `permtracker-deploy` does exactly that before it records a traffic
+switch (`reload_nginx`). Install scripts at the path their unit names (`grep ExecStart`): a prune script copied
+to `/usr/local/sbin` while the timer ran `/usr/local/bin` would have kept the old budget.
 
 ## Deploy, roll back, see the state
 

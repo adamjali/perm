@@ -35,11 +35,13 @@ export const SIGNUP_BURST_PER_HOUR = 20;
 
 export const rateLimiter = new RateLimiter(components.rateLimiter, {
   // Writes on core case data (mutations)
-  caseCreate: { kind: "token bucket", rate: 60, period: MINUTE, capacity: 10 },
-  caseUpdate: { kind: "token bucket", rate: 60, period: MINUTE, capacity: 10 },
+  // Capacity 30 (was 10, Sep 29 2026): an import or one chat turn can write
+  // many cases at once.
+  caseCreate: { kind: "token bucket", rate: 60, period: MINUTE, capacity: 30 },
+  caseUpdate: { kind: "token bucket", rate: 60, period: MINUTE, capacity: 30 },
 
   // Chat/conversation creation (mutations)
-  conversationCreate: { kind: "token bucket", rate: 20, period: MINUTE, capacity: 5 },
+  conversationCreate: { kind: "token bucket", rate: 20, period: MINUTE, capacity: 10 },
 
   // Notifications bulk operations (mutations)
   notificationsMarkAllRead: { kind: "token bucket", rate: 20, period: MINUTE, capacity: 5 },

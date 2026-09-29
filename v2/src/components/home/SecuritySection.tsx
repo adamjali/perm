@@ -4,7 +4,7 @@
  * SecuritySection Component
  *
  * Neobrutalist table showing honest security posture.
- * AES-256-GCM, Convex SOC 2, 15-min timeout, row-level isolation, full export.
+ * AES-256-GCM, Convex SOC 2, 30-min timeout, row-level isolation, full export.
  *
  */
 
@@ -27,7 +27,7 @@ const securityRows: SecurityRow[] = [
   },
   {
     label: "Session security",
-    detail: "15-minute inactivity timeout with auto sign-out",
+    detail: "30-minute inactivity timeout with auto sign-out",
   },
   {
     label: "Row-level isolation",

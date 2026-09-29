@@ -34,10 +34,10 @@ export const MILESTONE_LABEL: Record<MilestoneKind, string> = {
 const PERM_CASE = /^(G-\d{3}-\d{5}-\d{6}|A-\d{5}-\d{5})$/;
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
-/** Six reports an hour from one address. */
-const PER_IP = { limit: 6, windowMs: 60 * 60 * 1000 };
-/** Three hundred reports a day across everyone: the cap on the table's growth. */
-const GLOBAL_BUDGET = { limit: 300, windowMs: 24 * 60 * 60 * 1000 };
+/** Twenty reports an hour from one address (6 until Sep 29 2026). */
+export const PER_IP = { limit: 20, windowMs: 60 * 60 * 1000 };
+/** A thousand reports a day across everyone: the cap on the table's growth (300 until Sep 29 2026). */
+export const GLOBAL_BUDGET = { limit: 1000, windowMs: 24 * 60 * 60 * 1000 };
 
 const reportResult = v.object({
   ok: v.boolean(),

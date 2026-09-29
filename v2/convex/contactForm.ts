@@ -19,7 +19,7 @@ import { recordError } from "./lib/errorRecording";
  */
 
 const GLOBAL_PER_DAY = 25;
-const PER_IP_PER_HOUR = 3;
+const PER_IP_PER_HOUR = 10;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const HOUR_MS = 60 * 60 * 1000;
 

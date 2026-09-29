@@ -105,11 +105,11 @@ export const HOME_FAQS: HomeFaqItem[] = [
   {
     question: "Is my client data secure?",
     answer:
-      "Yes. Case data is encrypted at rest with AES-256-GCM, sessions expire after 15 minutes of inactivity, and access is isolated per account: no other firm can see your cases. Privacy Mode hides sensitive fields during screen sharing. The public data pages carry no client data at all, only DOL's published records.",
+      "Yes. Case data is encrypted at rest with AES-256-GCM, sessions expire after 30 minutes of inactivity, and access is isolated per account: no other firm can see your cases. Privacy Mode hides sensitive fields during screen sharing. The public data pages carry no client data at all, only DOL's published records.",
     rich: (
       <>
         Yes. Case data is encrypted at rest with AES-256-GCM, sessions expire
-        after 15 minutes of inactivity, and access is isolated per account: no
+        after 30 minutes of inactivity, and access is isolated per account: no
         other firm can see your cases. Privacy Mode hides sensitive fields during
         screen sharing. The public data pages carry no client data at all, only
         DOL&apos;s published records.{" "}

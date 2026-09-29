@@ -110,7 +110,7 @@ const log = createLogger("EmailPrefs");
  * is enumerated there and the total leaves 25/day for auth mail.
  */
 const PREFS_LINK_GLOBAL_BUDGET = windowFor("prefsLink");
-const PREFS_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
+const PREFS_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 const PREFS_COOLDOWN_MS = 10 * 60 * 1000;
 
 const NEUTRAL_REPLY =

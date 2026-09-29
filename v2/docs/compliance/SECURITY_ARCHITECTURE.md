@@ -7,14 +7,14 @@
 - **Convex Auth** with email/password and Google OAuth
 - Passwords hashed by auth provider (never stored in plaintext)
 - Session tokens managed by Convex Auth (HttpOnly cookies)
-- 15-minute inactivity timeout with 2-minute warning (OWASP-aligned)
+- 30-minute inactivity timeout with 2-minute warning (OWASP ASVS 4.0.3 requirement 3.3.2, Level 2: "12 hours or 30 minutes of inactivity"; 15 minutes until Sep 29 2026)
 - Multi-tab sync via BroadcastChannel + localStorage
 
 ### MFA Status
 
 MFA is not currently implemented. Compensating controls:
-- Inactivity timeout (15 min)
-- Rate limiting on auth endpoints (10 login attempts / 15 min)
+- Inactivity timeout (30 min)
+- Rate limiting on auth endpoints (20 login attempts / 15 min)
 - Login tracking with `recordMyLogin` mutation (client-side, covers all auth flows)
 - Session invalidation on sign-out
 - Google OAuth provides its own MFA options
@@ -62,8 +62,8 @@ Three layers:
 
 Abuse escalation:
 
-- **IP blocklist** (`convex/abuseBlocklist.ts`): 3 rate-limit strikes in 15 min → 24h block, enforced pre-route in middleware at zero Convex cost.
-- **Account auto-suspension** (`convex/abuseDetection.ts`): 10 per-email auth failures in 30 min → `userProfiles.suspendedAt` set for 24h, admin emailed, friendly "account locked" toast shown on next login attempt.
+- **IP blocklist** (`convex/abuseBlocklist.ts`): 3 rate-limit strikes in 15 min → 1h block (24h until Sep 29 2026: an address is often shared), enforced pre-route in middleware at zero Convex cost.
+- **Account auto-suspension** (`convex/abuseDetection.ts`): 10 per-email auth failures in 30 min, corroborated by a recent per-IP strike → `userProfiles.suspendedAt` set for 1h (24h until Sep 29 2026: a stranger who knows the address can trigger it, so a day-long lock punished the owner), admin emailed, friendly "account locked" toast shown on next login attempt.
 - **Admin overrides** (`/admin/security`): manual suspend/unsuspend/block/unblock.
 
 Cleanup: hourly cron removes expired rateLimits + abuseBlocklist records.
@@ -81,7 +81,7 @@ Applied to all routes via `next.config.ts`:
 ## Session Management
 
 - Sessions managed by Convex Auth
-- Inactivity timeout: 15 minutes (configurable)
+- Inactivity timeout: 30 minutes (configurable)
 - Warning modal at 13 minutes (2 minutes before timeout)
 - Sign-out is best-effort with 8-second timeout — always redirects to `/login`
 - Multi-tab synchronization prevents one tab from staying active after another times out

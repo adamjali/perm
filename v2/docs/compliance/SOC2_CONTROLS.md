@@ -9,7 +9,7 @@
 | CC6.1 | Logical access controls | `getCurrentUserId()` in every function, row-level `by_user_id` indexes |
 | CC6.1 | Admin access restriction | `requireAdmin()` guard, email-based admin check |
 | CC6.2 | Authentication mechanisms | Convex Auth (password + Google OAuth), rate-limited auth endpoints |
-| CC6.3 | Session management | 15-min inactivity timeout, multi-tab sync, session invalidation on sign-out |
+| CC6.3 | Session management | 30-min inactivity timeout (OWASP ASVS 4.0.3 3.3.2, Level 2), multi-tab sync, session invalidation on sign-out |
 | CC6.6 | Encryption in transit | TLS/HTTPS everywhere, HSTS header with preload |
 | CC6.7 | Encryption at rest | AES-256 (Convex platform), AES-256-GCM (FEIN, OAuth tokens) |
 | CC6.8 | Input validation | `validateStringLength` / `validateInputLengths` on all mutations |

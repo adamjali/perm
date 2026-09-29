@@ -245,7 +245,8 @@ describe("the change detector", () => {
 
   it("stays silent on a move older than the freshness window or before the follow began", async () => {
     const t = createTestContext();
-    const { sends } = stub({ holdMoves: [hold(6), hold(2, "maplebear-inc", 14)] });
+    // 9 days: past the 7-day window (3 days until Sep 29 2026).
+    const { sends } = stub({ holdMoves: [hold(9), hold(2, "maplebear-inc", 14)] });
     await follow(t, "d@example.com");
     await follow(t, "e@example.com", "maplebear-inc", { followingFrom: isoMinus(0) });
     const r = await t.action(internal.employerAlerts.sweep, {});

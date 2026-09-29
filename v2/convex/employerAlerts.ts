@@ -84,16 +84,20 @@ import {
 const log = createLogger("EmployerAlerts");
 
 /** Follows one address may hold. A product limit and a read bound. */
-export const MAX_EMPLOYERS_PER_ADDRESS = 25;
+export const MAX_EMPLOYERS_PER_ADDRESS = 100;
 const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
-const SUBSCRIBE_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
+const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 /** Rows one sweep reads, and alerts one sweep may build. */
 const CHECK_BATCH_LIMIT = 300;
 const ALERT_BATCH_LIMIT = 18;
-/** A move older than this many days is history, not news, and is never sent. */
-const FRESH_DAYS = 3;
+/**
+ * A move older than this many days is history, not news, and is never sent.
+ * 7 since Sep 29 2026 (was 3): the alert pool is shared, so a busy stretch
+ * could hold a move past three days and drop it for good.
+ */
+const FRESH_DAYS = 7;
 /** Keys remembered per follow; the doc holds at most 120 days of moves. */
-const TOLD_CAP = 80;
+const TOLD_CAP = 200;
 const APPEAL_STATUSES = ["RECONSIDERATION APPEALS", "BALCA APPEALS", "REQUEST FOR REVIEW"];
 
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,119}$/;

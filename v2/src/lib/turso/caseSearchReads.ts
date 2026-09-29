@@ -253,11 +253,13 @@ function commonNarrowing(
  * How many of an employer's newest filings one program's read will look at
  * when a filter has to be applied row by row.
  *
- * MEASURED. Reading a table row on this database costs about 1.5 ms on
- * `perm_cases` and about 6.8 ms on the colder `lca_cases`, so the cap is what
- * bounds a search rather than the row cap on the answer.
+ * MEASURED. On Turso a table row cost about 1.5 ms on `perm_cases` and about
+ * 6.8 ms on the colder `lca_cases`, which is why this was 400. On the site's
+ * own database (Sep 29 2026) the newest 2,000 filings of one of the largest
+ * sponsors read in 8 ms (PERM) and 37 ms (LCA), so the window is 5,000: nearly
+ * every employer's whole history, and a search stays well under a second.
  */
-export const SLICE_CAP = 400;
+export const SLICE_CAP = 5000;
 
 export interface SliceResult<T> {
   rows: T[];

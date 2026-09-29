@@ -123,14 +123,15 @@ export function embedSiteFor(referer: string | null | undefined, carried: string
  * Live DOL asks one embedding site may trigger per UTC day. Past it, an
  * embedded lookup still answers, from the stored record only. This site's own
  * pages are not counted here; the global daily discovery budget still binds
- * every lookup, embedded or not.
+ * every lookup, embedded or not. 500 since Sep 29 2026 (was 50).
  */
-export const EMBED_SITE_DAILY_LIVE = 50;
+export const EMBED_SITE_DAILY_LIVE = 500;
 
 /**
  * Live DOL asks every embedding site together may trigger per UTC day. The
  * site key comes from the request, so a caller can mint new ones; this cap on
  * the shared resource is the one that cannot be rotated around, and it keeps
- * embeds to 5% of the site-wide discovery budget.
+ * embeds to a fifth of the site-wide discovery budget (100,000 a day). 20,000
+ * since Sep 29 2026 (was 5,000).
  */
-export const EMBED_ALL_DAILY_LIVE = 5_000;
+export const EMBED_ALL_DAILY_LIVE = 20_000;

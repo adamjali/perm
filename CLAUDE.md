@@ -208,7 +208,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 28 2026".
 - **A morning report is emailed daily** (health, runs, site, bills, traffic, errors) and a routine reviews it.
 - **The entity load swaps tables in one transaction**, so no page reads a half-built table.
 
-## Sep 29 2026, in fourteen lines
+## Sep 29 2026, in seventeen lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
 
@@ -237,3 +237,9 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
   the key that opens them (`~/.config/permtracker-backup/`). Keep a second copy of that key.
 - **The server is the only scheduled USCIS runner** (GitHub was refused six times of six), and the I-140
   quarter lives in `perm_docs['uscis_i140']`.
+- **Every limit was set from a measurement, on the lax side** ("Sep 29 2026 (afternoon)" in v2/CLAUDE.md): background
+  pre-loads never count as case lookups, people are slowed before refused, search looks at 5,000 filings, and
+  Google and Bing sit outside the shared crawler pool.
+- **nginx keeps its old rules when it refuses a reload, and systemctl says success**; the deploy counts a reload only
+  when new workers appear. Rename a rate-limit zone rather than change its key.
+- **The idle sign-out is 30 minutes** (OWASP ASVS 4.0.3 requirement 3.3.2, Level 2), and the compliance docs say so.

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
+import { CASES_PER_BROWSER, GLOBAL_BUDGET } from "../casePushAlerts";
 import { parseSubscription } from "../casePushAlerts";
 
 /**
@@ -46,9 +47,9 @@ describe("casePushAlerts.subscribe", () => {
     expect(limits).toHaveLength(0);
   });
 
-  it("lets one browser watch ten cases and not an eleventh", async () => {
+  it("lets one browser watch its allowance of cases and not one more", async () => {
     const t = createTestContext();
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < CASES_PER_BROWSER; i++) {
       const r = await t.mutation(internal.casePushAlerts.subscribe, {
         caseNumber: `G-100-25324-4${String(i).padStart(5, "0")}`,
         subscription: sub(1),
@@ -57,9 +58,9 @@ describe("casePushAlerts.subscribe", () => {
       });
       expect(r.ok, `case ${i}`).toBe(true);
     }
-    const eleventh = await t.mutation(internal.casePushAlerts.subscribe, { caseNumber: CASE, subscription: sub(1), endpointHash: hash("e1"), ipHash: hash("ip-x") });
-    expect(eleventh.ok).toBe(false);
-    expect(eleventh.message).toMatch(/10 cases/);
+    const oneMore = await t.mutation(internal.casePushAlerts.subscribe, { caseNumber: CASE, subscription: sub(1), endpointHash: hash("e1"), ipHash: hash("ip-x") });
+    expect(oneMore.ok).toBe(false);
+    expect(oneMore.message).toMatch(new RegExp(`${CASES_PER_BROWSER} cases`));
   });
 
   it("stop closes every row for the browser, and a later subscribe reopens with a fresh baseline", async () => {
@@ -78,7 +79,7 @@ describe("casePushAlerts.subscribe", () => {
 
   it("refuses everyone once the daily budget is spent, with nothing written past it", async () => {
     const t = createTestContext();
-    const CAP = 220;
+    const CAP = GLOBAL_BUDGET.limit + 20;
     let refusedAt = -1;
     for (let i = 0; i < CAP; i++) {
       const r = await t.mutation(internal.casePushAlerts.subscribe, {
@@ -94,7 +95,7 @@ describe("casePushAlerts.subscribe", () => {
       }
     }
     if (refusedAt < 0) throw new Error(`budget not exhausted after ${CAP} subscriptions`);
-    expect(refusedAt).toBe(200);
-    expect(await t.query(internal.casePushAlerts.activeRows, {})).toHaveLength(200);
-  });
+    expect(refusedAt).toBe(GLOBAL_BUDGET.limit);
+    expect(await t.query(internal.casePushAlerts.activeRows, {})).toHaveLength(GLOBAL_BUDGET.limit);
+  }, 180_000);
 });

@@ -136,8 +136,9 @@
  * NEWSLETTER_DAILY_CAP (default 30) sends a day, charged through the same
  * global rate-limit table under "newsletter_send", and it is OFF until
  * NEWSLETTER_ENABLED=1 is set in the deployment. With it on, the worst day is
- * 18 + 10 + 18 + 6 + 12 + 6 + 30 = 100, exactly the Resend cap: flipping it on
- * means moving Resend off the free tier first, or lowering the cap.
+ * 18 + 15 + 18 + 6 + 12 + 6 + 30 = 105, five over the Resend cap (this line
+ * read 10 for case confirmations and summed to 100 until Sep 29 2026): with
+ * the digest on, the worst day needs Resend off the free tier, or a lower cap.
  *
  * @module convex/caseAlerts
  */
@@ -236,8 +237,12 @@ const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
  */
 const ALERT_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 
-/** Per-caller ceiling on subscribe attempts. */
-const SUBSCRIBE_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
+/**
+ * Per-caller ceiling on subscribe attempts. 30 an hour since Sep 29 2026 (was
+ * 5): an office or a family behind one address following several cases met
+ * it first. The global confirmation budget below is what bounds the mail.
+ */
+export const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 
 /**
  * How many cases one address may watch.
@@ -246,11 +251,12 @@ const SUBSCRIBE_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
  * generous. Both the cooldown check in `subscribe` and `forEmail` read every
  * row for an address through `by_email`; without a ceiling those are unbounded
  * `.collect()`s that one attacker can grow without limit by subscribing a
- * single address to arbitrarily many case numbers. Twenty-five is far more than
- * a person waiting on their own case and their spouse's, and an attorney
- * tracking a book of cases belongs in the app, which has auth in front of it.
+ * single address to arbitrarily many case numbers. A hundred (25 until Sep 29
+ * 2026) is far more than a household, still a small read, and an attorney
+ * tracking a whole book of cases belongs in the app, which has auth in front
+ * of it.
  */
-const MAX_CASES_PER_ADDRESS = 25;
+export const MAX_CASES_PER_ADDRESS = 100;
 
 /** Shown when either limit trips. Says nothing about the address. */
 const THROTTLED_REPLY =

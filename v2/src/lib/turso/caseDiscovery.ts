@@ -96,7 +96,9 @@ export async function fetchDolCase(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify([caseNumber]),
-      signal: AbortSignal.timeout(3500),
+      // 8 s since Sep 29 2026 (was 3.5 s): DOL usually answers in about 0.3 s,
+      // and a slow answer read as "no record", which is worse than a wait.
+      signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return null;
     const body = (await res.json()) as {

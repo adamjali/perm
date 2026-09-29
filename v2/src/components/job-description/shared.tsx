@@ -12,8 +12,12 @@ import { toast } from "@/lib/toast";
 // CONSTANTS
 // ============================================================================
 
-/** Maximum character length for job descriptions */
-export const JOB_DESCRIPTION_MAX_LENGTH = 10000;
+/**
+ * Maximum character length for job descriptions: the server's own limit
+ * (INPUT_LIMITS.LONG in convex/lib/validation.ts, cases and templates both).
+ * The box stopped at 10,000 until Sep 29 2026 while the server took 50,000.
+ */
+export const JOB_DESCRIPTION_MAX_LENGTH = 50000;
 
 /** Minimum height for touch-friendly interactive elements */
 export const TOUCH_MIN_HEIGHT = "min-h-[44px]";

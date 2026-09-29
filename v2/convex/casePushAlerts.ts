@@ -22,9 +22,11 @@ import { normaliseFlagCaseNumber } from "../src/lib/flagCaseNumber";
  * browser watches at most ten cases; GET is never a mutation.
  */
 
-const PER_IP = { limit: 5, windowMs: 60 * 60 * 1000 };
-const GLOBAL_BUDGET = { limit: 200, windowMs: 24 * 60 * 60 * 1000 };
-const CASES_PER_BROWSER = 10;
+// Raised Sep 29 2026 (were 5 an hour, 200 a day, 10 cases): browser push costs
+// nothing to send, so these only bound the table and a flood.
+const PER_IP = { limit: 20, windowMs: 60 * 60 * 1000 };
+export const GLOBAL_BUDGET = { limit: 1000, windowMs: 24 * 60 * 60 * 1000 };
+export const CASES_PER_BROWSER = 25;
 /** Rows the sweep reads per run; more than this is a scale the sweep should be re-designed for, not a loop. */
 const SWEEP_READ = 2000;
 const CLOSE_AFTER_FAILURES = 5;

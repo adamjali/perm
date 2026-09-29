@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createTestContext } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
+import { GLOBAL_BUDGET, PER_IP } from "../communityTimelines";
 
 /**
  * Community timelines: the save path's refusals and limits, that a person can
@@ -132,7 +133,7 @@ describe("communityTimelines.save", () => {
   it("the per-address hourly limit refuses", async () => {
     const t = createTestContext();
     let refused = false;
-    for (let i = 0; i < 20 && !refused; i++) {
+    for (let i = 0; i < PER_IP.limit + 5 && !refused; i++) {
       // Distinct cases so the per-case cap never fires first.
       const c = `G-100-25324-${String(425560 + i).padStart(6, "0")}`;
       const r = await t.mutation(internal.communityTimelines.save, save({}, { caseNumber: c }));
@@ -141,20 +142,20 @@ describe("communityTimelines.save", () => {
         refused = true;
       }
     }
-    if (!refused) throw new Error("20 saves from one address were never refused");
+    if (!refused) throw new Error(`${PER_IP.limit + 5} saves from one address were never refused`);
   });
 
   it("the global daily budget refuses new timelines across rotating addresses", async () => {
     const t = createTestContext();
     let refused = false;
-    for (let i = 0; i < 320 && !refused; i++) {
+    for (let i = 0; i < GLOBAL_BUDGET.limit + 20 && !refused; i++) {
       const ip = i.toString(16).padStart(64, "0");
       const c = `G-100-25324-${String(100000 + i).padStart(6, "0")}`;
       const r = await t.mutation(internal.communityTimelines.save, save({}, { caseNumber: c, ip }));
       if (!r.ok) refused = true;
     }
-    if (!refused) throw new Error("320 new timelines were never refused");
-  });
+    if (!refused) throw new Error(`${GLOBAL_BUDGET.limit + 20} new timelines were never refused`);
+  }, 180_000);
 });
 
 describe("communityTimelines.remove", () => {

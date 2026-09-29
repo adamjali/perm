@@ -24,10 +24,16 @@ import { useState, useEffect, useCallback, useRef } from "react";
 // ============================================================================
 
 const TIMEOUT_CONFIG = {
-  /** Total inactivity timeout: 15 minutes (user is logged out after this) */
-  INACTIVITY_TIMEOUT: 15 * 60 * 1000,
-  /** Warning appears at 13 minutes (leaving 2 minutes for user response) */
-  WARNING_TIME: 13 * 60 * 1000,
+  /**
+   * Total inactivity timeout: 30 minutes (user is logged out after this).
+   * OWASP ASVS 4.0.3 requirement 3.3.2, Level 2 ("12 hours or 30 minutes of
+   * inactivity"): the standard level for apps holding sensitive data. It was
+   * 15 minutes until Sep 29 2026, which is Level 3's figure, and Level 3 also
+   * requires two-factor sign-in, which this app does not have.
+   */
+  INACTIVITY_TIMEOUT: 30 * 60 * 1000,
+  /** Warning appears at 28 minutes (leaving 2 minutes for user response) */
+  WARNING_TIME: 28 * 60 * 1000,
   /** Activity debounce: 1 second */
   ACTIVITY_DEBOUNCE: 1000,
   /** Countdown update interval: 1 second */

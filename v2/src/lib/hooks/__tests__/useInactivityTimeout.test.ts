@@ -71,9 +71,9 @@ describe("useInactivityTimeout", () => {
         useInactivityTimeout({ onTimeout, onWarning, enabled: false })
       );
 
-      // Advance to warning time (13 minutes)
+      // Advance to warning time (28 minutes)
       act(() => {
-        vi.advanceTimersByTime(13 * 60 * 1000);
+        vi.advanceTimersByTime(28 * 60 * 1000);
       });
 
       expect(onWarning).not.toHaveBeenCalled();
@@ -85,7 +85,7 @@ describe("useInactivityTimeout", () => {
   // --------------------------------------------------------------------------
 
   describe("Warning callback", () => {
-    it("calls onWarning after 13 minutes of inactivity", () => {
+    it("calls onWarning after 28 minutes of inactivity", () => {
       const onTimeout = vi.fn();
       const onWarning = vi.fn();
 
@@ -93,13 +93,13 @@ describe("useInactivityTimeout", () => {
         useInactivityTimeout({ onTimeout, onWarning })
       );
 
-      // Advance to just before warning (12:59)
+      // Advance to just before warning (27:59)
       act(() => {
-        vi.advanceTimersByTime(12 * 60 * 1000 + 59 * 1000);
+        vi.advanceTimersByTime(27 * 60 * 1000 + 59 * 1000);
       });
       expect(onWarning).not.toHaveBeenCalled();
 
-      // Advance to warning time (13:00)
+      // Advance to warning time (28:00)
       act(() => {
         vi.advanceTimersByTime(1000);
       });
@@ -113,7 +113,7 @@ describe("useInactivityTimeout", () => {
       );
 
       act(() => {
-        vi.advanceTimersByTime(13 * 60 * 1000);
+        vi.advanceTimersByTime(28 * 60 * 1000);
       });
 
       expect(result.current.isWarningVisible).toBe(true);
@@ -125,18 +125,18 @@ describe("useInactivityTimeout", () => {
   // --------------------------------------------------------------------------
 
   describe("Timeout callback", () => {
-    it("calls onTimeout after 15 minutes of inactivity", () => {
+    it("calls onTimeout after 30 minutes of inactivity", () => {
       const onTimeout = vi.fn();
 
       renderHook(() => useInactivityTimeout({ onTimeout }));
 
-      // Advance to just before timeout (14:59)
+      // Advance to just before timeout (29:59)
       act(() => {
-        vi.advanceTimersByTime(14 * 60 * 1000 + 59 * 1000);
+        vi.advanceTimersByTime(29 * 60 * 1000 + 59 * 1000);
       });
       expect(onTimeout).not.toHaveBeenCalled();
 
-      // Advance to timeout (15:00)
+      // Advance to timeout (30:00)
       act(() => {
         vi.advanceTimersByTime(1000);
       });
@@ -150,7 +150,7 @@ describe("useInactivityTimeout", () => {
       );
 
       act(() => {
-        vi.advanceTimersByTime(15 * 60 * 1000);
+        vi.advanceTimersByTime(30 * 60 * 1000);
       });
 
       expect(result.current.isWarningVisible).toBe(false);
@@ -170,7 +170,7 @@ describe("useInactivityTimeout", () => {
 
       // Trigger warning
       act(() => {
-        vi.advanceTimersByTime(13 * 60 * 1000);
+        vi.advanceTimersByTime(28 * 60 * 1000);
       });
       expect(result.current.isWarningVisible).toBe(true);
 
@@ -190,7 +190,7 @@ describe("useInactivityTimeout", () => {
 
       // Trigger warning and let countdown run
       act(() => {
-        vi.advanceTimersByTime(13 * 60 * 1000 + 30 * 1000);
+        vi.advanceTimersByTime(28 * 60 * 1000 + 30 * 1000);
       });
       expect(result.current.remainingSeconds).toBeLessThan(120);
 
@@ -210,7 +210,7 @@ describe("useInactivityTimeout", () => {
 
       // Advance to warning + 1 minute
       act(() => {
-        vi.advanceTimersByTime(14 * 60 * 1000);
+        vi.advanceTimersByTime(29 * 60 * 1000);
       });
 
       // Extend session
@@ -240,9 +240,9 @@ describe("useInactivityTimeout", () => {
         useInactivityTimeout({ onTimeout, onWarning })
       );
 
-      // Advance 12 minutes
+      // Advance 27 minutes
       act(() => {
-        vi.advanceTimersByTime(12 * 60 * 1000);
+        vi.advanceTimersByTime(27 * 60 * 1000);
       });
       expect(onWarning).not.toHaveBeenCalled();
 
@@ -251,15 +251,15 @@ describe("useInactivityTimeout", () => {
         result.current.resetTimeout();
       });
 
-      // Advance 12 more minutes from reset point
+      // Advance 27 more minutes from reset point
       act(() => {
-        vi.advanceTimersByTime(12 * 60 * 1000);
+        vi.advanceTimersByTime(27 * 60 * 1000);
       });
 
-      // Warning should not have fired yet (only 12 min from last activity)
+      // Warning should not have fired yet (only 27 min from last activity)
       expect(onWarning).not.toHaveBeenCalled();
 
-      // Advance 1 more minute to hit 13 min from reset
+      // Advance 1 more minute to hit 28 min from reset
       act(() => {
         vi.advanceTimersByTime(1 * 60 * 1000);
       });
@@ -282,7 +282,7 @@ describe("useInactivityTimeout", () => {
 
       // Trigger warning
       act(() => {
-        vi.advanceTimersByTime(13 * 60 * 1000);
+        vi.advanceTimersByTime(28 * 60 * 1000);
       });
       expect(result.current.isWarningVisible).toBe(true);
 
@@ -303,7 +303,7 @@ describe("useInactivityTimeout", () => {
 
       // Trigger warning
       act(() => {
-        vi.advanceTimersByTime(13 * 60 * 1000);
+        vi.advanceTimersByTime(28 * 60 * 1000);
       });
       expect(result.current.isWarningVisible).toBe(true);
 
@@ -332,7 +332,7 @@ describe("useInactivityTimeout", () => {
 
       // Advance past timeout time
       act(() => {
-        vi.advanceTimersByTime(20 * 60 * 1000);
+        vi.advanceTimersByTime(35 * 60 * 1000);
       });
 
       // onTimeout should not be called after unmount

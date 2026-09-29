@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
+import { GLOBAL_BUDGET, PER_IP } from "../caseMilestones";
 
 /**
  * The milestone report endpoint: what it refuses, what it dedupes, and that
@@ -58,9 +59,9 @@ describe("caseMilestones.report", () => {
     expect(limits).toHaveLength(0);
   });
 
-  it("throttles one address after six reports in an hour", async () => {
+  it("throttles one address after its hourly reports", async () => {
     const t = createTestContext();
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < PER_IP.limit; i++) {
       const r = await t.mutation(internal.caseMilestones.report, {
         caseNumber: `G-100-25324-4${String(i).padStart(5, "0")}`,
         kind: "i485-filed",
@@ -69,14 +70,14 @@ describe("caseMilestones.report", () => {
       });
       expect(r.ok, `report ${i}`).toBe(true);
     }
-    const seventh = await t.mutation(internal.caseMilestones.report, { caseNumber: CASE, kind: "i485-filed", eventDate: "2026-06-01", ipHash: HASH_A });
-    expect(seventh.ok).toBe(false);
-    expect(seventh.throttled).toBe(true);
+    const next = await t.mutation(internal.caseMilestones.report, { caseNumber: CASE, kind: "i485-filed", eventDate: "2026-06-01", ipHash: HASH_A });
+    expect(next.ok).toBe(false);
+    expect(next.throttled).toBe(true);
   });
 
   it("refuses everyone once the daily budget is spent, and nothing is written past it", async () => {
     const t = createTestContext();
-    const CAP = 320;
+    const CAP = GLOBAL_BUDGET.limit + 20;
     let refusedAt = -1;
     for (let i = 0; i < CAP; i++) {
       const r = await t.mutation(internal.caseMilestones.report, {
@@ -92,8 +93,8 @@ describe("caseMilestones.report", () => {
       }
     }
     if (refusedAt < 0) throw new Error(`budget not exhausted after ${CAP} reports`);
-    expect(refusedAt).toBe(300);
-    const rows = await t.run(async (ctx) => ctx.db.query("caseMilestones").take(1000));
-    expect(rows).toHaveLength(300);
-  });
+    expect(refusedAt).toBe(GLOBAL_BUDGET.limit);
+    const rows = await t.run(async (ctx) => ctx.db.query("caseMilestones").take(GLOBAL_BUDGET.limit + 50));
+    expect(rows).toHaveLength(GLOBAL_BUDGET.limit);
+  }, 180_000);
 });

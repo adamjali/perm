@@ -61,11 +61,11 @@ const providers = [
 ] as const;
 
 /** Fresh stub ctx per call so scheduler.runAfter call counts are isolated. */
-function makeCtx(allowed = true) {
+function makeCtx(verdict: "ok" | "address" | "site" = "ok") {
   return {
     scheduler: { runAfter: vi.fn(async () => null) },
     // The sending limit (convex/authMail.ts), charged through the action ctx.
-    runMutation: vi.fn(async () => allowed),
+    runMutation: vi.fn(async () => verdict),
   } as never;
 }
 
@@ -171,10 +171,15 @@ describe("Resend email providers — send-failure handling (C3)", () => {
       const { provider } = await loadProvider(key);
       const { AUTH_MAIL_REFUSED } = await import("../lib/authMailGate");
       await expect(
-        sendWithCtx(provider, { identifier: "user@example.com", token: "ABCDEF123456" }, makeCtx(false)),
+        sendWithCtx(provider, { identifier: "user@example.com", token: "ABCDEF123456" }, makeCtx("address")),
       ).rejects.toThrow(AUTH_MAIL_REFUSED);
       expect(sendMock).not.toHaveBeenCalled();
       expect(AUTH_MAIL_REFUSED).toMatch(/too many/i);
+      const { AUTH_MAIL_SITE_BUSY } = await import("../lib/authMailGate");
+      await expect(
+        sendWithCtx(provider, { identifier: "user@example.com", token: "ABCDEF123456" }, makeCtx("site")),
+      ).rejects.toThrow(AUTH_MAIL_SITE_BUSY);
+      expect(sendMock).not.toHaveBeenCalled();
     });
 
     it("refuses rather than sends when there is no ctx to charge through", async () => {

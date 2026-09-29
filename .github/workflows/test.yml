@@ -98,6 +98,9 @@ jobs:
       - name: Social post composer tests
         run: python3 scripts/test_social_post.py
 
+      - name: Server front door (nginx limits) checks
+        run: python3 scripts/oracle/test_nginx_conf.py
+
       - name: WARN parser tests
         run: |
           python3 -m pip install --quiet openpyxl

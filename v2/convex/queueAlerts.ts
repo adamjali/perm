@@ -121,7 +121,7 @@ const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
  * which IS spoofable — see the note on the global budget below for why that is
  * survivable rather than fatal.
  */
-const SUBSCRIBE_IP_LIMIT = { limit: 5, windowMs: 60 * 60 * 1000 };
+export const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 
 /**
  * Global ceiling on confirmation emails, across every caller.

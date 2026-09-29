@@ -6884,3 +6884,42 @@ current load; an nginx config test in the same second as `systemctl reload` is a
 workers; a probe copy of a test that reads files by relative path crashes silently in a scratch
 directory (run mutations in place, with a saved copy); `sed` treats `[` in a pattern as a bracket
 expression, so a probe mutation containing `payload["x"]` never applied and the probe "passed".
+
+## Sep 29 2026 (afternoon): every limit set from a measurement, and on the lax side
+
+The owner's call: "lax broad limits everywhere; performance, experience and SEO first; highest reasonable". Every
+limit in the stack was inventoried (about 130: app, Convex, email, auth, AI chat, embeds, jobs, nginx, Cloudflare)
+and each was either raised, kept with a reason, or found to be an outside cap. What the numbers rest on:
+
+- **A background pre-load is cheap, and a real click is not.** Next marks it `next-router-prefetch: 1`; on the live
+  app a pre-load of a case page answered in 0.18 s with the loading shell and the DOL live-lookup counter did not move,
+  while the click took 0.81 s and did. Counting pre-loads against the lookup limit had refused 24 of them in an hour.
+  nginx now gives pre-loads their own allowance and never counts them as lookups. Next itself runs at most 4
+  pre-loads at once per browser (12 for a hovered link, `segment-cache/scheduler.js`).
+- **A cached page answers in about 10 ms and a cold one takes 0.1 to 2.6 s** (about one a second is all this server
+  builds). So speed is protected by in-flight caps, which adapt to cost, and the per-minute rates sit where no person
+  meets them. People are SLOWED before they are refused (nginx two-stage `delay=`; waiting requests do not count
+  toward in-flight caps, tested); a refusal is a page that reloads itself, JSON under `/api`.
+- **The local database reads 2,000 filings in 8 to 37 ms**, where Turso took 1.5 to 6.8 ms a row, so the case
+  search's per-program window went from 400 to 5,000 (`SLICE_CAP`). The on-page answer stays 300 rows.
+- **The DOL live-lookup budget was already 100,000 a day** (used: single digits); its timeout went 3.5 s to 8 s.
+
+Changed: nginx per-address rates and caps, crawler allowances (Google and Bing outside the shared pool), the prune
+budgets (60 GB live, 6 GB standby), Cloudflare's flood backstop (500 per 10 s), security level (low) and challenge
+lifetime (a week); subscribe attempts per address 5 to 30 an hour, cases per address and employers followed 25 to
+100, employer-move freshness 3 to 7 days, community timelines and milestones 6 to 20 an hour and 300 to 1,000 a day,
+browser push 5 to 20 an hour, 200 to 1,000 a day and 10 to 25 cases, contact form 3 to 10 an hour, embeds 50 to 500
+per site and 5,000 to 20,000 in all, case-write bursts 10 to 30, the idle sign-out 15 to 30 minutes (OWASP ASVS 4.0.3
+requirement 3.3.2, Level 2; Level 3's 15 minutes also requires two-factor sign-in, which the app does not have), the
+address block and the account suspension 24 hours to 1 hour (a stranger can trigger the suspension), USCIS calls
+gained a 10 s limit and 60 a minute per address, the job-description box matches the server's 50,000.
+
+Kept, with the reason: every email pool (Resend's free plan caps the account at 100 a day and the pools already fill
+it; the worst day with the digest on is 105, the ledger in `convex/caseAlerts.ts` now says so), sign-in attempt
+limits, the free AI and web-search quotas, USCIS's own quota, the Sentry budget.
+
+Found on the way, and fixed: nginx keeps its OLD rules when it refuses a reload while `systemctl reload` exits 0
+(`permtracker-deploy` now counts a reload only when new workers appear); crawler limits applied to ordinary pages only;
+`/api` refusals were nginx's stock HTML; a site-wide sign-in-code refusal told people codes had gone "to this
+address"; the prune script was installed where its timer did not run it. `scripts/oracle/test_nginx_conf.py` (CI)
+holds the front door's rules, with five probes that must fail.

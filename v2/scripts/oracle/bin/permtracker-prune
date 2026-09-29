@@ -17,10 +17,15 @@ catch). The .html goes first, so a reader in between sees a miss, not half a
 page.
 
 BUDGETS, per release:
-  live copy       20 GB of rendered pages
-  standby copy     4 GB (it serves only after a rollback)
+  live copy       60 GB of rendered pages
+  standby copy     6 GB (it serves only after a rollback)
   older releases   0    (kept for their build; they serve nothing)
 Below 20 GB of free disk the live budget drops to 8 GB and the standby's to 0.
+The live budget was 20 GB until Sep 29 2026 and was raised on the owner's
+"highest reasonable" call: a cached page answers in about 10 ms and an evicted
+one takes 0.1 to 2.6 s to build again, so every GB kept is speed. The disk held
+24 GB of everything else that day (database 6.8, releases 8.6, backups 0.5), so
+both budgets full still leaves over 60 GB free for the database to grow.
 
 Writes /srv/permtracker/health/prune.json, which the health job reports.
 `--dry-run` prints what it would remove and changes nothing.
@@ -36,7 +41,7 @@ import time
 APP = "/srv/permtracker/app"
 HEALTH = "/srv/permtracker/health/prune.json"
 GB = 1024 ** 3
-BUDGET = {"live": 20 * GB, "standby": 4 * GB, "old": 0}
+BUDGET = {"live": 60 * GB, "standby": 6 * GB, "old": 0}
 TIGHT = {"live": 8 * GB, "standby": 0, "old": 0}
 FREE_FLOOR = 20 * GB
 # A page group: the .meta file names it; these are its other pieces.

@@ -115,7 +115,7 @@ describe('JobDescriptionField', () => {
       );
 
       // Should show character count
-      expect(screen.getByText('11/10,000')).toBeInTheDocument();
+      expect(screen.getByText('11/50,000')).toBeInTheDocument();
     });
 
     it('shows character count in header when has content', () => {
@@ -127,7 +127,7 @@ describe('JobDescriptionField', () => {
       );
 
       // Even when collapsed, should show count if there's content
-      expect(screen.getByText('11/10,000')).toBeInTheDocument();
+      expect(screen.getByText('11/50,000')).toBeInTheDocument();
     });
 
     it('shows over-limit warning when description exceeds maxLength', () => {

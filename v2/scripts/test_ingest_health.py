@@ -166,6 +166,22 @@ def main() -> int:
     check("a clean run passes",
           run([("ingest_case_status_direct.py", "ok", "full: 414,357 cases",
                 int(NOW - 2 * H))]) == 0)
+    # Sep 29 2026: the failure hook wrote "--full", the sweep's own clean
+    # re-run wrote the bare filename with "full:" in its note, and the failure
+    # stayed BROKEN. A bare clean run of the SAME mode clears it; a different
+    # mode does not; and the sweep now records its mode in the key.
+    check("a mode-keyed failure is cleared by a later bare clean run of that mode",
+          run([("ingest_case_status_direct.py", "ok", "full: 426,112 cases", int(NOW - 3 * H)),
+               ("ingest_case_status_direct.py --full", "failed", "x", int(NOW - 8 * H))]) == 0)
+    check("...but not by a clean run of another mode",
+          run([("ingest_case_status_direct.py", "ok", "pending: 425,877 cases", int(NOW - 3 * H)),
+               ("ingest_case_status_direct.py --full", "failed", "x", int(NOW - 8 * H))]) == 1)
+    check("...nor by one that ran before the failure",
+          run([("ingest_case_status_direct.py --full", "failed", "x", int(NOW - 3 * H)),
+               ("ingest_case_status_direct.py", "ok", "full: 426,112 cases", int(NOW - 8 * H))]) == 1)
+    sweep_src = (pathlib.Path(__file__).resolve().parent / "ingest_case_status_direct.py").read_text()
+    check("the sweep records its mode in the run key",
+          'record_run(db, f"ingest_case_status_direct.py --{mode}"' in sweep_src)
 
     # --- a cancellation is NOT a break --------------------------------------
     # Both workflows set cancel-in-progress: false, so nothing supersedes a

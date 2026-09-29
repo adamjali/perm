@@ -14,9 +14,10 @@ import type { UscisLookupResult } from "@/lib/turso/uscisCaseStatus";
  *   2. shape (400, with the same sentence the form shows);
  *   3. is USCIS access configured at all (503, "pending"), so nothing below
  *      runs on a deployment without keys;
- *   4. per-IP limit, in memory (429). This is the cost-raiser only: the WAF's
- *      rule 3 (60/min per IP on /api/*) is the real per-IP layer, and neither
- *      stops a proxy pool;
+ *   4. per-IP limit, in memory (429). This is the cost-raiser only: nginx's
+ *      /api/ limit (240 a minute per address, slowed before refused,
+ *      scripts/oracle/nginx/permtracker.conf) is the real per-IP layer, and
+ *      neither stops a proxy pool;
  *   5. the lookup, whose client charges the GLOBAL daily budget before any
  *      call. That budget is the guarantee.
  *
@@ -30,7 +31,8 @@ import type { UscisLookupResult } from "@/lib/turso/uscisCaseStatus";
  */
 
 export const MAX_INPUT_LENGTH = 20;
-export const PER_IP_PER_MINUTE = 20;
+/** 60 a minute since Sep 29 2026 (was 20); the global daily budget below is the guarantee. */
+export const PER_IP_PER_MINUTE = 60;
 
 export interface HandlerDeps {
   lookup: (receipt: string, now: Date) => Promise<UscisLookupResult>;

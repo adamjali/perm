@@ -15,15 +15,22 @@ import { internal } from "../_generated/api";
 export const AUTH_MAIL_REFUSED =
   "Too many codes have been sent to this address recently. Please wait an hour and try again.";
 
+/** The site-wide daily pool, not this address. Also reads as "too many". */
+export const AUTH_MAIL_SITE_BUSY =
+  "Too many codes have gone out from the site today, so this one can't be sent right now. Please try again in a few hours.";
+
 export type ChargeCtx = {
-  runMutation?: (ref: typeof internal.authMail.charge, args: { email: string }) => Promise<boolean>;
+  runMutation?: (
+    ref: typeof internal.authMail.charge,
+    args: { email: string },
+  ) => Promise<"ok" | "address" | "site">;
 };
 
 export async function chargeAuthMail(ctx: ChargeCtx | undefined, email: string): Promise<void> {
   if (typeof ctx?.runMutation !== "function") {
     throw new ConvexError("We couldn't send your code right now. Please try again in a moment.");
   }
-  if (!(await ctx.runMutation(internal.authMail.charge, { email }))) {
-    throw new ConvexError(AUTH_MAIL_REFUSED);
-  }
+  const verdict = await ctx.runMutation(internal.authMail.charge, { email });
+  if (verdict === "ok") return;
+  throw new ConvexError(verdict === "site" ? AUTH_MAIL_SITE_BUSY : AUTH_MAIL_REFUSED);
 }

@@ -11,6 +11,10 @@
  * site-wide pool is counted for the admin panel (noteRefusal); a per-address
  * refusal is one person asking too often, not a sign the pool is too small.
  *
+ * The answer names which limit refused ("address" or "site"), so the form can
+ * say the true thing: until Sep 29 2026 a site-wide refusal told the person
+ * codes had been sent "to this address", which was false.
+ *
  * @module convex/authMail
  */
 import { v } from "convex/values";
@@ -26,18 +30,18 @@ import { checkRateLimit, recordRateLimitAttempt } from "./lib/rateLimit";
 
 export const charge = internalMutation({
   args: { email: v.string() },
-  returns: v.boolean(),
+  returns: v.union(v.literal("ok"), v.literal("address"), v.literal("site")),
   handler: async (ctx, { email }) => {
     const address = email.trim().toLowerCase();
     const mine = await checkRateLimit(ctx, address, AUTH_MAIL_ADDRESS_KEY, AUTH_MAIL_PER_ADDRESS);
-    if (!mine.allowed) return false;
+    if (!mine.allowed) return "address" as const;
     const all = await checkRateLimit(ctx, "all", BUDGETS.authMail.key, windowFor("authMail"));
     if (!all.allowed) {
       await noteRefusal(ctx, "authMail");
-      return false;
+      return "site" as const;
     }
     await recordRateLimitAttempt(ctx, address, AUTH_MAIL_ADDRESS_KEY);
     await recordRateLimitAttempt(ctx, "all", BUDGETS.authMail.key);
-    return true;
+    return "ok" as const;
   },
 });

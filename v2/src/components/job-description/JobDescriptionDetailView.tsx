@@ -19,6 +19,7 @@ import { TemplateSelector } from "./TemplateSelector";
 import { TemplateManagementModal } from "./TemplateManagementModal";
 import { TemplateUpdateConfirmDialog } from "./TemplateUpdateConfirmDialog";
 import type { JobDescriptionTemplate } from "./JobDescriptionField";
+import { JOB_DESCRIPTION_MAX_LENGTH } from "./shared";
 
 // ============================================================================
 // TYPES
@@ -28,7 +29,8 @@ import type { JobDescriptionTemplate } from "./JobDescriptionField";
 // CONSTANTS
 // ============================================================================
 
-const DEFAULT_MAX_LENGTH = 10000;
+// The server's limit, kept once in ./shared (both copies said 10,000 until Sep 29 2026).
+const DEFAULT_MAX_LENGTH = JOB_DESCRIPTION_MAX_LENGTH;
 
 export interface JobDescriptionDetailViewProps {
   /** Position title for the job description */

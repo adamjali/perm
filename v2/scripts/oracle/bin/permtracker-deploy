@@ -16,12 +16,31 @@ other_of(){ [ "$1" = blue ] && echo green || echo blue; }
 active=$(cat $A/active)
 log(){ echo "[deploy $(date -u +%H:%M:%S)] $*"; logger -t permtracker-deploy "$*"; }
 
+reload_nginx(){
+  # A reload nginx REFUSES keeps the old rules running while `systemctl reload`
+  # still exits 0: measured Sep 29 2026, when a rate-limit zone's key changed
+  # ("limit_req ... uses the ... key while previously it used ..." in
+  # error.log) and `nginx -t` had passed. So a reload counts only when new
+  # worker processes appear.
+  local before; before=$(pgrep -d, -f "nginx: worker process" || true)
+  nginx -t -q
+  systemctl reload nginx
+  for _ in $(seq 1 40); do
+    for p in $(pgrep -f "nginx: worker process"); do
+      case ",$before," in *",$p,"*) ;; *) return 0 ;; esac
+    done
+    sleep 0.25
+  done
+  log "nginx REFUSED the reload (grep emerg /var/log/nginx/error.log); its old rules are still running"
+  return 1
+}
 switch_to(){ # $1 slot
   echo "server 127.0.0.1:$(port_of "$1");" > /etc/nginx/permtracker-active-upstream.conf
   # $A/live points at the serving release: nginx serves its public/ images
   # straight from disk. Renamed into place, so it is never missing mid-switch.
   ln -sfn "$(readlink -f "$A/slots/$1")" "$A/live.next" && mv -T "$A/live.next" "$A/live"
-  nginx -t -q && systemctl reload nginx
+  # Traffic is recorded as moved only once nginx has taken the new upstream.
+  reload_nginx
   echo "$1" > $A/active
   log "traffic now on $1 ($(readlink $A/slots/$1 | xargs basename))"
 }

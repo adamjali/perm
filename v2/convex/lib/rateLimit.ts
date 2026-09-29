@@ -4,10 +4,8 @@
  * Provides sliding window rate limiting for sensitive operations.
  * Uses Convex internal tables to track request counts.
  *
- * Common limits:
- * - OTP verification: 5 attempts per 15 minutes
- * - Password reset: 3 requests per hour
- * - Login attempts: 10 per 15 minutes
+ * The limits themselves are RATE_LIMITS below; this header used to repeat
+ * older values (5, 3 and 10) and drifted, so it no longer restates them.
  */
 
 import { MutationCtx, QueryCtx } from "../_generated/server";
