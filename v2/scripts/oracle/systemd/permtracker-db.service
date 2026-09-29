@@ -6,7 +6,12 @@ Wants=network-online.target
 [Service]
 User=permtracker
 Group=permtracker
-ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db/data.sqld --http-listen-addr 127.0.0.1:8080 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome
+# Reply caps. sqld's defaults (10 MB a reply) refused the daily full case-status
+# sweep, which reads every case in one query (426,112 rows, about 85 MB as
+# Hrana JSON): "Response is too large" at 4:10 AM Sep 29 2026, the first full
+# sweep after the move off Turso, which had served it. The total covers replies
+# in flight at once.
+ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db/data.sqld --http-listen-addr 127.0.0.1:8080 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome --max-response-size 256MB --max-total-response-size 1GB
 Restart=always
 RestartSec=2
 LimitNOFILE=65536

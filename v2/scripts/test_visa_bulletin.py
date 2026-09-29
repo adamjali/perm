@@ -17,6 +17,7 @@ not depend on page chrome.
 from __future__ import annotations
 
 import importlib.util
+import os
 import pathlib
 import sys
 import tempfile
@@ -308,7 +309,12 @@ def main() -> int:
             return idx if url == vb.DIRECT_INDEX else page   # the July 2026 fixture
 
         vb.fetch = fake_fetch
+        gh_out = tempfile.NamedTemporaryFile("w+", delete=False, suffix=".out")
+        gh_out.close()
+        os.environ["GITHUB_OUTPUT"] = gh_out.name
         vb.ingest_direct(2)
+        check("a run that stores nothing does not ask the workflow to expire the pages",
+              "bulletin_changed" not in open(gh_out.name).read())
         pages = [u for u in asked if u != vb.DIRECT_INDEX]
         check("a month already held from a primary source is not fetched again",
               not any("july-2026" in u for u in pages), str(pages))
@@ -332,12 +338,15 @@ def main() -> int:
         vb.ingest_direct(2)
         check("control: a month not held is stored, labelled as State's own host",
               any("INSERT OR REPLACE INTO visa_bulletins" in q for q in fresh.sql))
+        check("a run that stores a month tells the workflow, so the bulletin pages are expired",
+              "bulletin_changed=true" in open(gh_out.name).read())
 
         vb.fetch = refused
         check("a refused index warns and exits 0 (the freshness budget is the alarm)",
               vb.ingest_direct(2) == 0)
     finally:
         vb.Turso, vb.fetch, vb.time.sleep = saved
+        os.environ.pop("GITHUB_OUTPUT", None)
 
     print(f"\n  {len(failures)} failure(s)")
     return 1 if failures else 0

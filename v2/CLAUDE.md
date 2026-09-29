@@ -6776,3 +6776,38 @@ now point at it. Public copy that says "within 180 days" states the regulation a
   over open dialogs' backdrops.
 - **The automation tab hid a transition again**: the bubble read 90px after the select bar left,
   until a screenshot forced a paint; then 16px. Measure a transitioned value after a paint.
+
+### The self-hosted database caps a reply, and the full sweep's read is 85 MB
+
+**The first full case-status sweep after the move off Turso died at 4:10 AM Sep 29** on
+`Response is too large` (`RESPONSE_TOO_LARGE`). It reads every case in one query: 426,112
+rows, about 34 MB of text and roughly 85 MB as Hrana JSON, against sqld's default 10 MB
+reply cap; the pending sweep's 93,230 rows (about 18 MB) is over it too. Turso had served
+both. `permtracker-db.service` now starts sqld with `--max-response-size 256MB
+--max-total-response-size 1GB` (installed and restarted 9:03 AM EDT; the site answered
+throughout), and the day's sweep was re-dispatched. **After any move of the database, run
+each nightly job once by hand before trusting the timers**: the health check caught this,
+but only after a lost night.
+
+### A bulletin landing now refreshes its pages the same day
+
+The bulletin pages sit on a one-day window and the read runs at 3 AM, so the October 2026
+bulletin (on State's host by about 8 AM EDT Sep 29) would have shown September until the next
+morning, the day the bulletin-alert emails link to it. `ingest_visa_bulletin.py --direct`
+writes `bulletin_changed=true` to `$GITHUB_OUTPUT` when it stores a month, and
+`processing-times-ingest.yml` then POSTs `/api/revalidate-bulletin`: every page that reads the
+bulletin (`BULLETIN_PAGES`), plus all month and category-line pages by pattern. **A pattern is
+the page's FILE path, route groups included**: Next tags a page `/(site)/(public)/visa-bulletin/
+[month]/page`, and `revalidatePath("/visa-bulletin/[month]", "page")` matches nothing, silently.
+The test checks each pattern against a real `page.tsx` and re-derives the reader list from the
+app tree. October 2026 was checked cell by cell against State's PDF: both employment charts match.
+
+### The one-time Google Calendar resync (Sep 29, 8:26 AM EDT)
+
+`googleCalendarActions:syncCaseCalendarEvents` for the 33 cases holding events (3 accounts):
+49 deleted, 2 created, 0 failed. The old rules had kept a PWD expiry after the ETA 9089 was
+filed and a separate certification-expiry event; the current ones keep neither, and past dates
+are never created. One account's Google access had already been withdrawn (`invalid_grant`), so
+the sync marked it disconnected and its 7 old events stay on that calendar: nothing can delete
+them without access. The disconnect notifies nobody; it records an error, which reaches the
+admin email and Sentry.

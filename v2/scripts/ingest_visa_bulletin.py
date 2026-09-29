@@ -554,6 +554,20 @@ def stamp_bulletin_freshness(db: Turso, source: str) -> None:
     log(f"visa_bulletins now holds {n} months")
 
 
+def note_stored() -> None:
+    """Tell the workflow a bulletin was written, so it expires the bulletin pages.
+
+    The pages sit on a one-day window, and the bulletin is read at 3 AM, so the
+    day a new month lands its pages would otherwise show the old month until the
+    next morning, the day most people check it. The workflow's next step reads
+    `bulletin_changed` and POSTs /api/revalidate-bulletin.
+    """
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out:
+        with open(out, "a", encoding="utf-8") as f:
+            f.write("bulletin_changed=true\n")
+
+
 def direct_months(index_html: str) -> list[tuple[str, str]]:
     """[(YYYY-MM, absolute url)] for every bulletin the index links, newest first."""
     out: dict[str, str] = {}
@@ -616,6 +630,7 @@ def ingest_direct(limit: int, dry_run: bool = False) -> int:
         time.sleep(1)
     if stored:
         stamp_bulletin_freshness(db, DIRECT_SOURCE)
+        note_stored()
     return 0
 
 

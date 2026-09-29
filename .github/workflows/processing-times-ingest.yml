@@ -161,6 +161,7 @@ jobs:
       # lands. A refusal warns and exits 0: the visa-bulletin freshness budget
       # is the alarm, and --from-file with a browser-saved page is the fallback.
       - name: Visa bulletin (direct)
+        id: bulletin
         if: always()
         working-directory: v2
         env:
@@ -169,6 +170,21 @@ jobs:
         run: |
           python3 scripts/ingest_visa_bulletin.py --direct \
             || python3 scripts/record_ingest_failure.py --script ingest_visa_bulletin.py --note "visa bulletin direct read failed"
+
+      # The bulletin pages sit on a one-day window and this runs at 3 AM, so a
+      # bulletin published during the day kept showing the old month until the
+      # next morning. The script reports bulletin_changed when it stored one.
+      - name: Expire the bulletin pages
+        if: always() && steps.bulletin.outputs.bulletin_changed == 'true'
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET not set; skipping"; exit 0
+          fi
+          curl -fsS -X POST https://permtracker.app/api/revalidate-bulletin \
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" \
+            || echo "revalidation call failed"
 
       # The yearly spillover figures (annual limits, Table V) from the same State
       # host. Three small page reads a day; a PDF only in the week a new fiscal

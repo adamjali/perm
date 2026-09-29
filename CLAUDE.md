@@ -208,7 +208,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 28 2026".
 - **A morning report is emailed daily** (health, runs, site, bills, traffic, errors) and a routine reviews it.
 - **The entity load swaps tables in one transaction**, so no page reads a half-built table.
 
-## Sep 29 2026, in eight lines
+## Sep 29 2026, in ten lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
 
@@ -225,3 +225,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
   update and import; saved +180 dates were moved once.
 - **The cases page has one Import / export menu**, phone cards open their dates on a tap, and the
   chat bubble sits in the corner above any bottom bar.
+- **The database allows 256 MB replies**: sqld's 10 MB default killed the first full sweep after the
+  move (its read is about 85 MB). Run each nightly job once by hand after moving the database.
+- **A new visa bulletin refreshes its pages the day it's stored** (`/api/revalidate-bulletin`).
