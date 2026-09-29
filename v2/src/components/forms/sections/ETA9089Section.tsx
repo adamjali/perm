@@ -146,7 +146,7 @@ function buildFilingWindowData(
  * and expandable RFI (Request for Information) subsection.
  *
  * Features:
- * - Auto-calculated expiration date (certification + 180 days)
+ * - Auto-calculated expiration date (certification + 179 days, the date DOL prints)
  * - Filing window indicator with color-coded status (not-open, open, closing-soon, closed)
  * - Window countdown when closing soon (< 14 days)
  * - "Auto" badge on auto-calculated fields
@@ -157,7 +157,7 @@ function buildFilingWindowData(
  * - RFI entry list with array support and one-active-at-a-time rule
  *
  * Auto-calculation rules (from perm_flow.md):
- * - Expiration = certification + 180 days
+ * - Expiration = certification + 179 days (the date DOL prints)
  * - RFI due date = received + 30 days (strict, not editable)
  *
  * Filing window rules (from perm_flow.md):
@@ -331,7 +331,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
             name="eta9089ExpirationDate"
             error={errors?.eta9089ExpirationDate}
             autoCalculated={isExpirationAutoCalculated}
-            hint="Auto-calculated: certification + 180 days"
+            hint="Auto-calculated: certification + 179 days, the date DOL prints. Change it if yours differs."
           >
             <DateInput
               id="eta9089ExpirationDate"

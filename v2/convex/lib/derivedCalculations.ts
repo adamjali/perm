@@ -35,6 +35,7 @@ import {
   getMinDate,
 } from './dateValidation';
 import { getLastRecruitmentDate } from './perm/dates/filingWindow';
+import { calculateI140FilingDeadline } from './perm/calculators/i140';
 
 // Re-export for backwards compatibility
 export {
@@ -308,4 +309,22 @@ export function calculateDerivedDates(
     filingWindowCloses,
     recruitmentWindowCloses,
   };
+}
+
+/**
+ * The ETA 9089 expiration date to store: the one entered (what DOL printed),
+ * or, when a case is certified without one, certification + 179 days (the
+ * central rule). A certified case must never lack it: the dashboard, cards,
+ * calendar, reminders and auto-close all read this field, and before this an
+ * import without it left every screen silent while auto-close computed its own.
+ */
+export function resolveEta9089ExpirationDate(
+  certificationDate: string | null | undefined,
+  expirationDate: string | null | undefined
+): string | undefined {
+  if (expirationDate) return expirationDate;
+  if (certificationDate && isValidISODate(certificationDate)) {
+    return calculateI140FilingDeadline(certificationDate);
+  }
+  return undefined;
 }

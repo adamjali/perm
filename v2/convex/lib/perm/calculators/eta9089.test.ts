@@ -72,39 +72,39 @@ describe('calculateETA9089Window', () => {
 });
 
 describe('calculateETA9089Expiration', () => {
-  it('should calculate expiration as certification + 180 days', () => {
+  it('should calculate expiration as certification + 179 days (the date DOL prints)', () => {
     const certificationDate = new Date('2024-03-15');
     const result = calculateETA9089Expiration(certificationDate);
 
-    expect(result).toEqual(new Date('2024-09-11')); // +180 days
+    expect(result).toEqual(new Date('2024-09-10')); // +179 days
   });
 
   it('should handle certification at year boundary', () => {
     const certificationDate = new Date('2024-12-01');
     const result = calculateETA9089Expiration(certificationDate);
 
-    expect(result).toEqual(new Date('2025-05-30')); // +180 days
+    expect(result).toEqual(new Date('2025-05-29')); // +179 days
   });
 
   it('should handle leap year dates', () => {
     const certificationDate = new Date('2024-02-29');
     const result = calculateETA9089Expiration(certificationDate);
 
-    expect(result).toEqual(new Date('2024-08-27')); // +180 days
+    expect(result).toEqual(new Date('2024-08-26')); // +179 days
   });
 
   it('should handle Jan 1 certification', () => {
     const certificationDate = new Date('2024-01-01');
     const result = calculateETA9089Expiration(certificationDate);
 
-    expect(result).toEqual(new Date('2024-06-29')); // +180 days
+    expect(result).toEqual(new Date('2024-06-28')); // +179 days
   });
 
   it('should handle Dec 31 certification', () => {
     const certificationDate = new Date('2024-12-31');
     const result = calculateETA9089Expiration(certificationDate);
 
-    expect(result).toEqual(new Date('2025-06-29')); // +180 days
+    expect(result).toEqual(new Date('2025-06-28')); // +179 days
   });
 });
 
@@ -184,7 +184,7 @@ describe('Integration: Full ETA 9089 workflow', () => {
     const certificationDate = new Date('2024-05-15');
     const i140Deadline = calculateETA9089Expiration(certificationDate);
 
-    expect(i140Deadline).toEqual(new Date('2024-11-11')); // +180 days
+    expect(i140Deadline).toEqual(new Date('2024-11-10')); // +179 days
   });
 
   it('should handle case where job order ends after second Sunday ad', () => {

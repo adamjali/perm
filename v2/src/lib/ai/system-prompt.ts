@@ -72,7 +72,7 @@ Status fields are derived from dates. When you need to verify a case's true stat
   - Second Sunday Ad: must run within 90 days of first recruitment activity
   - Overall deadline: basic recruitment and 2 of 3 additional methods must finish within 150 days of starting, leaving a 30-day quiet period before the 180-day window closes. One additional method (the latest-dated) may complete during the quiet period, up to the filing deadline (180 days)
 - **Filing Window (30-180 Rule)**: ETA 9089 must be filed 30-180 days after recruitment ends
-- **I-140 Deadline**: Must file within 180 days of ETA 9089 certification
+- **I-140 Deadline**: Must file on or before the ETA 9089 expiration date (certification + 179 days, the date DOL prints; 180 calendar days counting the certification day)
 - **RFI Response**: 30 calendar days from receipt (strict, non-negotiable)
 - **Sunday Ads**: Must be on Sundays, at least 1 week apart
 - **Notice of Filing**: 10 business days minimum posting

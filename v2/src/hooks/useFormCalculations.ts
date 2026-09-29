@@ -117,7 +117,7 @@ function calculateDependentValue(
       return calculateJobOrderEnd(formData.jobOrderStartDate);
     }
 
-    // ETA 9089 expiration calculation (+180 days from certification)
+    // ETA 9089 expiration: certification + 179 days, the date DOL prints
     if (sourceField === "eta9089CertificationDate" && dependentField === "eta9089ExpirationDate") {
       if (!formData.eta9089CertificationDate) {
         return undefined;

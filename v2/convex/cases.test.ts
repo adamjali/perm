@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions, resetRateLimit } from "../test-utils/convex";
-import { api } from "./_generated/api";
+import { api, internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
 describe("Cases Security", () => {
@@ -1601,5 +1601,132 @@ describe("auto-closure cleanup when a case leaves closed", () => {
       return notifs.filter((n) => n.type === "auto_closure");
     });
     expect(autoClosure.every((n) => n.isRead)).toBe(true);
+  });
+});
+
+describe("A certified case always carries its ETA 9089 expiration", () => {
+  // Every deadline surface and auto-close read eta9089ExpirationDate. A case
+  // saved or imported with a certification date and no expiration used to
+  // leave the screens silent while auto-close computed its own date.
+  setupSchedulerTests();
+
+  const stored = (t: ReturnType<typeof createTestContext>, id: Id<"cases">) =>
+    t.run(async (ctx) => (await ctx.db.get(id))?.eta9089ExpirationDate);
+
+  it("create fills it as certification + 179 days, and keeps an entered date", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    const filled = await user.mutation(api.cases.create, {
+      employerName: "Acme Corp",
+      beneficiaryIdentifier: "A. B.",
+      positionTitle: "Engineer",
+      eta9089FilingDate: "2026-01-10",
+      eta9089CertificationDate: "2026-03-01",
+    });
+    expect(await stored(t, filled)).toBe("2026-08-27");
+
+    const typed = await user.mutation(api.cases.create, {
+      employerName: "Beta Corp",
+      beneficiaryIdentifier: "C. D.",
+      positionTitle: "Engineer",
+      eta9089FilingDate: "2026-01-10",
+      eta9089CertificationDate: "2026-03-01",
+      eta9089ExpirationDate: "2026-08-28",
+    });
+    expect(await stored(t, typed)).toBe("2026-08-28");
+    await finishScheduledFunctions(t);
+  });
+
+  it("update fills it when a certification arrives without one, and again if it is cleared", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    const id = await user.mutation(api.cases.create, {
+      employerName: "Acme Corp",
+      beneficiaryIdentifier: "A. B.",
+      positionTitle: "Engineer",
+      eta9089FilingDate: "2026-01-10",
+    });
+    expect(await stored(t, id) ?? undefined).toBeUndefined(); // no certification, no expiration
+
+    await user.mutation(api.cases.update, { id, eta9089CertificationDate: "2026-03-01" });
+    expect(await stored(t, id)).toBe("2026-08-27");
+
+    await user.mutation(api.cases.update, { id, eta9089ExpirationDate: null });
+    expect(await stored(t, id)).toBe("2026-08-27");
+    await finishScheduledFunctions(t);
+  });
+
+  it("import fills it", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    await user.mutation(api.cases.importCases, {
+      cases: [
+        {
+          employerName: "Imported Co",
+          beneficiaryIdentifier: "E. F.",
+          positionTitle: "Engineer",
+          eta9089FilingDate: "2026-01-10",
+          eta9089CertificationDate: "2026-03-01",
+        },
+      ],
+    });
+    const exp = await t.run(async (ctx) => {
+      const row = (await ctx.db.query("cases").collect()).find((c) => c.employerName === "Imported Co");
+      return row?.eta9089ExpirationDate;
+    });
+    expect(exp).toBe("2026-08-27");
+    await finishScheduledFunctions(t);
+  });
+});
+
+describe("Moving saved ETA 9089 expirations from +180 to +179", () => {
+  setupSchedulerTests();
+
+  const certified = async (user: Awaited<ReturnType<typeof createAuthenticatedContext>>, name: string) =>
+    user.mutation(api.cases.create, {
+      employerName: name,
+      beneficiaryIdentifier: "A. B.",
+      positionTitle: "Engineer",
+      eta9089FilingDate: "2026-01-10",
+      eta9089CertificationDate: "2026-03-01",
+    });
+
+  it("moves only an exact +180, keeps the user's own date, leaves updatedAt, and runs once", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    const old = await certified(user, "Old Rule Co");
+    const own = await certified(user, "Own Date Co");
+    const fresh = await certified(user, "New Rule Co");
+    const gone = await certified(user, "Deleted Co");
+    await finishScheduledFunctions(t);
+    await t.run(async (ctx) => {
+      await ctx.db.patch(old, { eta9089ExpirationDate: "2026-08-28", updatedAt: 1000 });
+      await ctx.db.patch(own, { eta9089ExpirationDate: "2026-09-15" });
+      await ctx.db.patch(gone, { eta9089ExpirationDate: "2026-08-28", deletedAt: 2000 });
+    });
+
+    const dry = await t.mutation(internal.migrations.moveEta9089ExpirationTo179, { dryRun: true });
+    expect(dry).toMatchObject({ dryRun: true, certified: 4, alreadyNew: 1, other: 1, moved: 2 });
+    expect(await t.run(async (ctx) => (await ctx.db.get(old))?.eta9089ExpirationDate)).toBe("2026-08-28");
+
+    const run = await t.mutation(internal.migrations.moveEta9089ExpirationTo179, {});
+    expect(run.moved).toBe(2);
+    expect(run.cases.find((c) => c.caseId === gone)).toMatchObject({ deleted: true, passedNow: false });
+    await finishScheduledFunctions(t);
+
+    const after = await t.run(async (ctx) => ({
+      old: await ctx.db.get(old),
+      own: await ctx.db.get(own),
+      fresh: await ctx.db.get(fresh),
+      gone: await ctx.db.get(gone),
+    }));
+    expect(after.old?.eta9089ExpirationDate).toBe("2026-08-27");
+    expect(after.old?.updatedAt).toBe(1000);
+    expect(after.own?.eta9089ExpirationDate).toBe("2026-09-15");
+    expect(after.fresh?.eta9089ExpirationDate).toBe("2026-08-27");
+    expect(after.gone?.eta9089ExpirationDate).toBe("2026-08-27");
+
+    const again = await t.mutation(internal.migrations.moveEta9089ExpirationTo179, {});
+    expect(again).toMatchObject({ moved: 0, alreadyNew: 3, other: 1 });
   });
 });

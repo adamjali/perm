@@ -20,7 +20,7 @@ const meta = {
 ETA 9089 form section with filing window indicator.
 
 **Features:**
-- Auto-calculated expiration date (certification + 180 days)
+- Auto-calculated expiration date (certification + 179 days)
 - Filing window indicator with color-coded status
 - Window countdown when closing soon
 - Validation errors and warnings display
@@ -137,7 +137,7 @@ export const WithCertification: Story = {
       eta9089FilingDate: toISODate(addDays(new Date(), -120)),
       eta9089AuditDate: toISODate(addDays(new Date(), -90)),
       eta9089CertificationDate: toISODate(addDays(new Date(), -60)),
-      eta9089ExpirationDate: toISODate(addDays(new Date(), 120)), // Cert + 180 days
+      eta9089ExpirationDate: toISODate(addDays(new Date(), 119)), // Cert + 179 days
       eta9089CaseNumber: 'A-12345-67890',
     },
     autoCalculatedFields: new Set(['eta9089ExpirationDate']),

@@ -170,7 +170,7 @@ const DEADLINE_TYPES = [
   {
     id: "calendarSyncI140",
     label: "I-140 deadlines",
-    description: "I-140 filing deadlines (180 days from certification)",
+    description: "I-140 filing deadlines (the ETA 9089 expiration date)",
   },
   {
     id: "calendarSyncRfe",

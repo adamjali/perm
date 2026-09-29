@@ -103,7 +103,7 @@ function buildI140FilingWindowData(
 
   // I-140 window opens immediately at certification
   const opensDate = new Date(eta9089CertificationDate + "T00:00:00");
-  // Window closes at ETA 9089 expiration (cert + 180 days)
+  // Window closes at ETA 9089 expiration (cert + 179 days, the date DOL prints)
   const closesDate = new Date(eta9089ExpirationDate + "T00:00:00");
 
   const daysUntilOpen = differenceInDays(opensDate, today);
@@ -146,12 +146,12 @@ function buildI140FilingWindowData(
  * - Expandable RFE subsection with Motion animations
  *
  * Filing deadline rules (from perm_flow.md):
- * - Must file within 180 days of ETA 9089 certification
- * - Deadline = ETA 9089 expiration date (cert + 180 days)
+ * - Must file on or before the ETA 9089 expiration date
+ * - Deadline = ETA 9089 expiration date (cert + 179 days, the date DOL prints)
  *
  * Validation rules (from perm_flow.md):
  * - Filing date must be after ETA 9089 certification
- * - Filing date must be before ETA 9089 expiration (180 days)
+ * - Filing date must be on or before the ETA 9089 expiration date
  * - Approval date must be after filing date
  * - Denial date must be after filing date
  * - Only one of approval/denial can be set
@@ -269,7 +269,7 @@ export function I140Section(props: I140SectionProps) {
             label="Filing date"
             name="i140FilingDate"
             error={errors?.i140FilingDate}
-            hint={filingHint || "Date I-140 was filed (within 180 days of ETA 9089 cert)"}
+            hint={filingHint || "Date I-140 was filed (on or before the ETA 9089 expiration)"}
             validationState={validationStates?.i140FilingDate}
           >
             <DateInput

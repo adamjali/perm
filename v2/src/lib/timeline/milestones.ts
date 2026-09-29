@@ -232,7 +232,7 @@ export function extractRangeBars(caseData: CaseWithDates): RangeBar[] {
     }
   }
 
-  // ETA 9089 Certification Validity (certification → expiration, 180 days to file I-140)
+  // ETA 9089 Certification Validity (certification → expiration: the I-140 is due by then)
   if (caseData.eta9089CertificationDate && caseData.eta9089ExpirationDate) {
     rangeBars.push({
       field: "eta9089Validity",

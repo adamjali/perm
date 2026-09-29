@@ -235,9 +235,9 @@ describe('useFormCalculations', () => {
   // ============================================================================
 
   describe('ETA 9089 Expiration Calculation', () => {
-    it('calculates ETA 9089 expiration (+180 days from certification)', () => {
+    it('calculates ETA 9089 expiration (+179 days from certification, the date DOL prints)', () => {
       const formData = createFormData({
-        eta9089CertificationDate: '2024-03-15', // + 180 days = Sep 11
+        eta9089CertificationDate: '2024-03-15', // + 179 days = Sep 10
       });
 
       const { result } = renderHook(() =>
@@ -250,7 +250,7 @@ describe('useFormCalculations', () => {
 
       expect(setFormData).toHaveBeenCalledWith(
         expect.objectContaining({
-          eta9089ExpirationDate: '2024-09-11',
+          eta9089ExpirationDate: '2024-09-10',
         })
       );
     });

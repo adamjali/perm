@@ -1737,12 +1737,12 @@ Track: Enter ETA 9089 filing date
 If RFI: Add RFI entry with received date, due date auto-calculates
 Respond: Enter RFI submitted date when response filed
 Complete: Enter certification date when approved
-Auto: System calculates ETA 9089 expiration (cert + 180 days)
+Auto: System calculates ETA 9089 expiration (cert + 179 days, the date DOL prints)
 
 Stage 4: I-140 Petition
 
 Start: Immediately after ETA 9089 certification
-Deadline: Must file before ETA 9089 expires (180 days from certification)
+Deadline: Must file on or before the ETA 9089 expiration date (cert + 179 days)
 Track: Enter I-140 filing date
 If RFE: Add RFE entry with received date and due date
 Respond: Enter RFE submitted date when response filed

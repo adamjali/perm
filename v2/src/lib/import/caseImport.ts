@@ -17,6 +17,7 @@
  */
 
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import { calculateI140FilingDeadline } from "@/lib/perm";
 import { captureError } from "@/lib/sentry";
 
 // ============================================================================
@@ -63,6 +64,21 @@ export interface ImportResult {
   isLegacyFormat: boolean;
   /** Count of cases that need beneficiary identifier to be filled in */
   casesNeedingBeneficiary: number;
+  /**
+   * Certified cases that arrived without an ETA 9089 expiration date and got
+   * one filled in (certification + 179 days), the same rule the server
+   * applies on save. The import screen lists them before anything is saved.
+   */
+  filledExpirations: FilledExpiration[];
+}
+
+export interface FilledExpiration {
+  row: number;
+  employerName?: string;
+  certificationDate: string;
+  expirationDate: string;
+  /** The filled date has passed, no I-140 is recorded and the case is open: auto-close may act on it. */
+  alreadyPassed: boolean;
 }
 
 // ============================================================================
@@ -602,6 +618,7 @@ export async function parseCaseImportFile(file: File): Promise<ImportResult> {
     detectedFormat: "unknown",
     isLegacyFormat: false,
     casesNeedingBeneficiary: 0,
+    filledExpirations: [],
   };
 
   try {
@@ -664,6 +681,8 @@ export async function parseCaseImportFile(file: File): Promise<ImportResult> {
       if (errors.length > 0) {
         result.errors.push(...errors);
       } else {
+        const filled = fillMissingExpiration(normalized as unknown as Record<string, unknown>, index);
+        if (filled) result.filledExpirations.push(filled);
         result.valid.push(normalized);
         if (needsBeneficiary) {
           result.casesNeedingBeneficiary++;
@@ -683,6 +702,27 @@ export async function parseCaseImportFile(file: File): Promise<ImportResult> {
   }
 
   return result;
+}
+
+/**
+ * Give a certified case without an expiration date the one the server would
+ * store (certification + 179 days, the date DOL prints), and report it.
+ */
+function fillMissingExpiration(c: Record<string, unknown>, row: number): FilledExpiration | null {
+  // The normalized case carries the case document's field names.
+  const cert = c.eta9089CertificationDate;
+  if (typeof cert !== "string" || !cert || c.eta9089ExpirationDate) return null;
+  const expirationDate = calculateI140FilingDeadline(cert);
+  c.eta9089ExpirationDate = expirationDate;
+  const now = new Date();
+  const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  return {
+    row,
+    employerName: typeof c.employerName === "string" ? c.employerName : undefined,
+    certificationDate: cert,
+    expirationDate,
+    alreadyPassed: expirationDate < todayLocal && !c.i140FilingDate && c.caseStatus !== "closed",
+  };
 }
 
 // ============================================================================

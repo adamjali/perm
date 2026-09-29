@@ -220,7 +220,7 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
         label: "Expiration date",
         type: "date",
         autoCalculated: true,
-        placeholder: "Auto-calculated (+180 days)",
+        placeholder: "Auto-calculated (+179 days)",
       },
     ],
   },

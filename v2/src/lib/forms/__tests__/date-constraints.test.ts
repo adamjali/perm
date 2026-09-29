@@ -413,15 +413,16 @@ describe("getI140DateConstraints", () => {
     expect(constraints.i140FilingDate.min).toBe(expectedMin);
   });
 
-  it("filing must be within 180 days of certification", () => {
+  it("filing is capped at the ETA 9089 expiration, certification + 179 days", () => {
     const certDate = "2024-06-01";
     const constraints = getI140DateConstraints({
       eta9089CertificationDate: certDate,
     });
 
-    // Max should be 180 days after cert (or today if in the future)
-    const expected180Days = formatDate(addDays(new Date(certDate + "T00:00:00"), 180));
-    expect(constraints.i140FilingDate.hint).toContain("180 days of certification");
+    // The last day is 179 days after certification (the date DOL prints),
+    // and a past date is not capped by today.
+    expect(constraints.i140FilingDate.max).toBe("2024-11-27");
+    expect(constraints.i140FilingDate.hint).toContain("on or before Nov 27, 2024 (the ETA 9089 expiration)");
   });
 
   it("receipt date must be after filing date (strictly, not same day)", () => {

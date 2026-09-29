@@ -56,13 +56,15 @@ export function calculateETA9089Window(
 /**
  * Calculate the I-140 filing deadline (ETA 9089 expiration).
  *
- * Rule: Must file I-140 within 180 days of ETA 9089 certification
+ * Rule: the certification's last valid day, certification + 179 days (the
+ * date DOL prints; see ETA9089_EXPIRATION_DAYS). The I-140 must be filed on
+ * or before it.
  *
  * @param certificationDate - The ETA 9089 certification date
  * @returns I-140 filing deadline
  *
  * @example
- * calculateETA9089Expiration(new Date('2024-03-15')) // 2024-09-11
+ * calculateETA9089Expiration(new Date('2024-03-15')) // 2024-09-10
  */
 export function calculateETA9089Expiration(certificationDate: Date): Date {
   return addDaysUTC(certificationDate, ETA9089_EXPIRATION_DAYS);

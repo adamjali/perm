@@ -222,7 +222,7 @@ describe('applyCascade', () => {
       });
 
       expect(result.eta9089_certification_date).toBe('2024-03-15');
-      expect(result.eta9089_expiration_date).toBe('2024-09-11'); // +180 days
+      expect(result.eta9089_expiration_date).toBe('2024-09-10'); // +179 days, the date DOL prints
     });
 
     it('should recalculate expiration when certification changes', () => {
@@ -237,7 +237,7 @@ describe('applyCascade', () => {
       });
 
       expect(result.eta9089_certification_date).toBe('2024-04-01');
-      expect(result.eta9089_expiration_date).toBe('2024-09-28'); // New +180 days
+      expect(result.eta9089_expiration_date).toBe('2024-09-27'); // New +179 days
     });
 
     it('should clear expiration when certification is cleared', () => {
@@ -424,7 +424,7 @@ describe('applyCascadeMultiple', () => {
     expect(result.pwd_determination_date).toBe('2024-05-15');
     expect(result.pwd_expiration_date).toBe('2024-08-13');
     expect(result.eta9089_certification_date).toBe('2024-08-01');
-    expect(result.eta9089_expiration_date).toBe('2025-01-28');
+    expect(result.eta9089_expiration_date).toBe('2025-01-27');
     expect(result.rfi_received_date).toBe('2024-09-15');
     expect(result.rfi_due_date).toBe('2024-10-15');
     expect(result.notice_of_filing_start_date).toBe('2024-01-15');

@@ -67,16 +67,20 @@ export const NOTICE_MIN_BUSINESS_DAYS = 10;
 // ============================================================================
 
 /**
- * Days after ETA 9089 certification within which I-140 must be filed.
- * Per USCIS regulations.
+ * The ETA 9089 certification's last valid day, in days after the
+ * certification date: 179, the "valid through" date DOL prints. 20 CFR
+ * 656.30(b)(1) gives "180 calendar days of the date the Department of Labor
+ * granted the certification", and DOL counts the certification day as day 1.
+ * The I-140 must be filed on or before this date.
+ *
+ * Owner's call, Sep 29 2026: users copying the date off their certifications
+ * had entered cert +179 while the app computed +180, a day AFTER DOL's date,
+ * the dangerous direction. The earlier date is the safe one.
  */
-export const I140_FILING_DAYS = 180;
+export const ETA9089_EXPIRATION_DAYS = 179;
 
-/**
- * ETA 9089 expiration period (same as I-140 filing deadline).
- * Certification is valid for 180 days.
- */
-export const ETA9089_EXPIRATION_DAYS = 180;
+/** The same rule from the I-140 side: file within this many days of certification. */
+export const I140_FILING_DAYS = ETA9089_EXPIRATION_DAYS;
 
 // ============================================================================
 // RFI/RFE CONSTANTS

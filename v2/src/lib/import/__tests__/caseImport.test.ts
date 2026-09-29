@@ -1202,4 +1202,42 @@ describe("parseCaseImportFile", () => {
       });
     });
   });
+
+  // ============================================================================
+  // ETA 9089 EXPIRATION FILL-IN
+  // ============================================================================
+  describe("certified cases without an ETA 9089 expiration", () => {
+    const fileOf = (cases: unknown[]) =>
+      new File([JSON.stringify({ version: "v2", cases })], "cases.json", { type: "application/json" });
+    const base = { beneficiaryIdentifier: "A. B.", caseStatus: "i140", progressStatus: "working" };
+
+    it("fills certification + 179 days and lists each case, flagging only open ones already past with no I-140", async () => {
+      const result = await parseCaseImportFile(
+        fileOf([
+          { ...base, employerName: "Past Co", eta9089CertificationDate: "2024-01-10" },
+          { ...base, employerName: "Filed Co", eta9089CertificationDate: "2024-01-10", i140FilingDate: "2024-03-01" },
+          { ...base, employerName: "Closed Co", caseStatus: "closed", eta9089CertificationDate: "2024-01-10" },
+          { ...base, employerName: "Future Co", eta9089CertificationDate: "2099-01-10" },
+          { ...base, employerName: "Typed Co", eta9089CertificationDate: "2024-01-10", eta9089ExpirationDate: "2024-07-08" },
+        ]),
+      );
+
+      const byName = new Map(result.filledExpirations.map((f) => [f.employerName, f]));
+      expect([...byName.keys()].sort()).toEqual(["Closed Co", "Filed Co", "Future Co", "Past Co"]);
+      expect(byName.get("Past Co")).toMatchObject({ expirationDate: "2024-07-07", alreadyPassed: true });
+      expect(byName.get("Filed Co")?.alreadyPassed).toBe(false);
+      expect(byName.get("Closed Co")?.alreadyPassed).toBe(false);
+      expect(byName.get("Future Co")).toMatchObject({ expirationDate: "2099-07-08", alreadyPassed: false });
+
+      // The filled date is on the case that will be saved; a typed one is kept.
+      const saved = result.valid as unknown as Array<{ employerName: string; eta9089ExpirationDate?: string }>;
+      expect(saved.find((c) => c.employerName === "Past Co")?.eta9089ExpirationDate).toBe("2024-07-07");
+      expect(saved.find((c) => c.employerName === "Typed Co")?.eta9089ExpirationDate).toBe("2024-07-08");
+    });
+
+    it("reports nothing when no case needs it", async () => {
+      const result = await parseCaseImportFile(fileOf([{ ...base, employerName: "Plain Co" }]));
+      expect(result.filledExpirations).toEqual([]);
+    });
+  });
 });

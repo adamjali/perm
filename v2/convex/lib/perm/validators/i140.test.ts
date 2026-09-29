@@ -66,11 +66,11 @@ describe('validateI140', () => {
     });
   });
 
-  describe('V-I140-02: I-140 filing must be within 180 days of ETA 9089 certification', () => {
-    it('should pass when I-140 filing is exactly 180 days after certification', () => {
+  describe('V-I140-02: I-140 filing must be on or before the ETA 9089 expiration date', () => {
+    it('passes on the computed last day, certification + 179 days', () => {
       const result = validateI140({
         eta9089_certification_date: '2026-11-15',
-        i140_filing_date: '2027-05-14', // 180 days later
+        i140_filing_date: '2027-05-13', // 179 days later, the date DOL prints
         i140_approval_date: null,
       });
 
@@ -78,7 +78,45 @@ describe('validateI140', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should pass when I-140 filing is less than 180 days after certification', () => {
+    it('fails the day after the computed last day (the old +180 day)', () => {
+      const result = validateI140({
+        eta9089_certification_date: '2026-11-15',
+        i140_filing_date: '2027-05-14', // 180 days later
+        i140_approval_date: null,
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0]).toMatchObject({
+        ruleId: 'V-I140-02',
+        severity: 'error',
+        field: 'i140_filing_date',
+      });
+      expect(result.errors[0].message).toContain('on or before the ETA 9089 expiration date (2027-05-13)');
+      expect(result.errors[0].message).toContain('2027-05-14');
+    });
+
+    it('follows the expiration date on the case when there is one', () => {
+      // A certification printed with a later date: the printed date governs.
+      const onTime = validateI140({
+        eta9089_certification_date: '2026-11-15',
+        eta9089_expiration_date: '2027-05-14',
+        i140_filing_date: '2027-05-14',
+        i140_approval_date: null,
+      });
+      expect(onTime.valid).toBe(true);
+
+      const late = validateI140({
+        eta9089_certification_date: '2026-11-15',
+        eta9089_expiration_date: '2027-05-14',
+        i140_filing_date: '2027-05-15',
+        i140_approval_date: null,
+      });
+      expect(late.valid).toBe(false);
+      expect(late.errors[0].message).toContain('(2027-05-14)');
+    });
+
+    it('should pass when I-140 filing is well inside the window', () => {
       const result = validateI140({
         eta9089_certification_date: '2026-11-15',
         i140_filing_date: '2026-12-15', // 30 days later
@@ -100,24 +138,6 @@ describe('validateI140', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should fail when I-140 filing is more than 180 days after certification', () => {
-      const result = validateI140({
-        eta9089_certification_date: '2026-11-15',
-        i140_filing_date: '2027-05-20', // 186 days later
-        i140_approval_date: null,
-      });
-
-      expect(result.valid).toBe(false);
-      expect(result.errors).toHaveLength(1);
-      expect(result.errors[0]).toMatchObject({
-        ruleId: 'V-I140-02',
-        severity: 'error',
-        field: 'i140_filing_date',
-      });
-      expect(result.errors[0].message).toContain('within 180 days');
-      expect(result.errors[0].message).toContain('186 days');
-    });
-
     it('should fail when I-140 filing is significantly late', () => {
       const result = validateI140({
         eta9089_certification_date: '2026-11-15',
@@ -128,7 +148,7 @@ describe('validateI140', () => {
       expect(result.valid).toBe(false);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].ruleId).toBe('V-I140-02');
-      expect(result.errors[0].message).toContain('381 days');
+      expect(result.errors[0].message).toContain('2027-12-01');
     });
 
     it('should skip validation when ETA 9089 certification date is null', () => {

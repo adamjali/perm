@@ -230,13 +230,13 @@ ETA 9089 Certification Process:
 - Filing date recorded when application is submitted
 - Status changes from "Filed" to "Approved" upon certification
 - Certification date triggers I-140 filing window
-- ETA 9089 expiration is auto-calculated as certification date + 180 days
+- ETA 9089 expiration is auto-calculated as certification date + 179 days (the date DOL prints; 180 calendar days counting the certification day)
 
 I-140 Filing Window:
 - Opens: Immediately upon ETA 9089 certification
-- Closes: 180 days after ETA 9089 certification date
+- Closes: on the ETA 9089 expiration date (certification + 179 days)
 - I-140 filing date must be after certification date
-- I-140 filing date must be before expiration (cert + 180 days)
+- I-140 filing date must be on or before the expiration date (cert + 179 days)
 
 I-140 Approval:
 - I-140 approval date must be after filing date
@@ -246,7 +246,7 @@ I-140 Approval:
 Date Validation Chain:
 1. ETA 9089 certification date must be after filing date
 2. I-140 filing date must be after certification date
-3. I-140 filing date must be before ETA 9089 expiration (cert + 180 days)
+3. I-140 filing date must be on or before the ETA 9089 expiration date (cert + 179 days)
 4. I-140 approval date must be after I-140 filing date
 
 Case Status: I-140 status spans from ETA 9089 certification to expiration. Color: Green.`,
@@ -477,7 +477,7 @@ Scenario 2: Missed and PWD expiring soon (less than 60 days remaining)
 - Must start new PWD application
 
 Scenario 3: ETA 9089 filed but certification takes too long
-- If ETA 9089 expiration passes (180 days from certification)
+- If ETA 9089 expiration passes (certification + 179 days)
 - Must refile ETA 9089 if still within recruitment window and PWD valid
 - If recruitment window passed or PWD expired, case closes
 
@@ -516,7 +516,7 @@ Recruitment Stage Validation:
 ETA 9089 Stage Validation:
 10. Filing date: Must be 30+ days after last recruitment, before 180-day deadline and PWD expiration
 11. Certification date: Must be after filing date
-12. Expiration: Auto-calculated as certification + 180 days
+12. Expiration: Auto-calculated as certification + 179 days (the date DOL prints)
 
 I-140 Stage Validation:
 13. Filing date: Must be after ETA 9089 certification, before ETA 9089 expiration

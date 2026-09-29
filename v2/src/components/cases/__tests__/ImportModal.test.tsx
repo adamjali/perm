@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ImportModal } from "../ImportModal";
 
@@ -96,6 +96,34 @@ describe("ImportModal", () => {
       await waitFor(() => {
         expect(screen.getByText(/Need.*Foreign Worker Info/i)).toBeInTheDocument();
       });
+    });
+  });
+
+  describe("filled-in ETA 9089 expirations", () => {
+    it("names each case that gets a date, and warns when one has already passed", async () => {
+      const user = userEvent.setup();
+      render(<ImportModal open={true} onOpenChange={mockOnOpenChange} onImport={mockOnImport} />);
+
+      const file = new File(
+        [
+          JSON.stringify([
+            { employerName: "Past Co", beneficiaryIdentifier: "A. B.", eta9089CertificationDate: "2024-01-10" },
+            { employerName: "Future Co", beneficiaryIdentifier: "C. D.", eta9089CertificationDate: "2099-01-10" },
+          ]),
+        ],
+        "cases.json",
+        { type: "application/json" },
+      );
+      await user.upload(screen.getByLabelText(/select file/i), file);
+
+      await waitFor(() => {
+        expect(screen.getByText(/ETA 9089 expiration filled in for 2 cases/i)).toBeInTheDocument();
+      });
+      const notice = within(screen.getByTestId("filled-expirations"));
+      expect(notice.getByText("Past Co")).toBeInTheDocument();
+      expect(notice.getByText(/expires Jul 7, 2024/)).toBeInTheDocument();
+      expect(notice.getAllByText("already passed")).toHaveLength(1);
+      expect(notice.getByRole("alert")).toHaveTextContent(/One of these dates has already passed/);
     });
   });
 

@@ -28,6 +28,7 @@ import {
   NOTICE_MIN_BUSINESS_DAYS,
   JOB_ORDER_MIN_DAYS,
   subtractBusinessDays,
+  calculateI140FilingDeadline,
 } from "../perm";
 
 // Re-export for consumers that import from here
@@ -605,9 +606,9 @@ function buildFilingWindowHint(
 
 /** Build certification hint */
 function buildCertificationHint(auditDate: string | undefined, filingDate: string | undefined): string {
-  if (auditDate) return `Must be after audit (${formatDateForDisplay(auditDate)}). Triggers auto-calculation of expiration (+180 days).`;
+  if (auditDate) return `Must be after audit (${formatDateForDisplay(auditDate)}). Triggers auto-calculation of expiration (+179 days, the date DOL prints).`;
   if (filingDate) return `Must be after filing (${formatDateForDisplay(filingDate)}). Triggers auto-calculation of expiration.`;
-  return "Enter filing date first. Triggers auto-calculation of expiration (+180 days).";
+  return "Enter filing date first. Triggers auto-calculation of expiration (+179 days, the date DOL prints).";
 }
 
 /**
@@ -623,15 +624,17 @@ export function getRFIMinReceivedDate(values: Partial<CaseFormData>): string | u
  * Calculate date constraints for I-140 Section fields
  *
  * Per perm_flow.md:
- * - Filing must be after ETA 9089 certification, within 180 days
+ * - Filing must be after ETA 9089 certification, on or before its expiration
+ *   (certification + 179 days, the date DOL prints)
  * - Receipt, approval, and denial dates cannot be in the future
  */
 export function getI140DateConstraints(values: Partial<CaseFormData>) {
   const todayStr = today();
   const { eta9089CertificationDate: certDate, eta9089ExpirationDate: expDate, i140FilingDate, i140ReceiptDate } = values;
 
-  // Filing deadline: 180 days from certification or ETA expiration (whichever earlier)
-  const filingDeadline = certDate ? addDaysToDateStr(certDate, 180) : undefined;
+  // Filing deadline: the certification's last valid day (the central rule) or
+  // the expiration date on the case, whichever is earlier.
+  const filingDeadline = certDate ? calculateI140FilingDeadline(certDate) : undefined;
   const { max: filingMax } = getEarlierDate(filingDeadline, expDate);
   const effectiveFilingMax = capToToday(filingMax, todayStr);
 
@@ -643,7 +646,7 @@ export function getI140DateConstraints(values: Partial<CaseFormData>) {
       min: certDate ? addDaysToDateStr(certDate, 1) : undefined,
       max: effectiveFilingMax,
       hint: certDate && filingMax
-        ? `Must be after ${formatDateForDisplay(certDate)}, within 180 days of certification`
+        ? `Must be after ${formatDateForDisplay(certDate)}, on or before ${formatDateForDisplay(filingMax)} (the ETA 9089 expiration)`
         : "Enter ETA 9089 certification date first. Filing must be after certification.",
     },
     i140ReceiptDate: {

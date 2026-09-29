@@ -48,6 +48,7 @@ export function validateCase(caseData: ValidationCaseData): ValidationResult {
     }),
     validateI140({
       eta9089_certification_date: caseData.eta9089_certification_date,
+      eta9089_expiration_date: caseData.eta9089_expiration_date,
       i140_filing_date: caseData.i140_filing_date,
       i140_approval_date: caseData.i140_approval_date,
     }),

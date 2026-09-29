@@ -126,7 +126,7 @@ export function FormHelpPanel() {
             <FieldList items={[
               { field: "Filing date", desc: "When the ETA 9089 was filed with DOL" },
               { field: "Case number", desc: "The DOL case number (e.g., A-12345-67890)" },
-              { field: "Certification date", desc: "When DOL certified the application. Triggers auto-calculated expiration (180 days) and unlocks I-140." },
+              { field: "Certification date", desc: "When DOL certified the application. Fills in the expiration (certification + 179 days, the date DOL prints) and unlocks I-140." },
               { field: "Audit", desc: "If DOL audits the case, enter the audit received and submitted dates" },
             ]} />
             <h5 className="font-bold text-sm uppercase tracking-wider mt-3 mb-1">RFI (Request for Information)</h5>{" "}
@@ -139,7 +139,7 @@ export function FormHelpPanel() {
           <section>
             <SectionHeading>4. I-140 (Immigrant Petition)</SectionHeading>
             <p className="text-muted-foreground mb-2">
-              The immigrant petition filed with USCIS. Must be filed within 180 days of ETA 9089 certification.
+              The immigrant petition filed with USCIS. Must be filed on or before the ETA 9089 expiration date (certification + 179 days, the date DOL prints).
             </p>
             <FieldList items={[
               { field: "Filing date", desc: "When the I-140 was filed with USCIS" },
@@ -173,7 +173,7 @@ export function FormHelpPanel() {
               <li><strong className="text-foreground">PWD expiration</strong>: Determination date + 1 year</li>{" "}
               <li><strong className="text-foreground">Job order end</strong>: Start date + 30 calendar days</li>{" "}
               <li><strong className="text-foreground">NOF end</strong>: Start date + 10 business days (skips weekends & federal holidays)</li>{" "}
-              <li><strong className="text-foreground">ETA 9089 expiration</strong>: Certification date + 180 days</li>{" "}
+              <li><strong className="text-foreground">ETA 9089 expiration</strong>: Certification date + 179 days (the date DOL prints)</li>{" "}
               <li><strong className="text-foreground">RFI due date</strong>: Received date + 30 days (strict)</li>
             </ul>
             <Example>Auto-calculated fields update instantly. You can manually override them if the auto value isn&rsquo;t right for your case.</Example>

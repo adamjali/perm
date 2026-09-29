@@ -1531,7 +1531,7 @@ Use status: "deleted" for soft delete (preserves history).
 
 These fields trigger automatic calculations:
 - pwdDeterminationDate → pwdExpirationDate (per 20 CFR 656.40)
-- eta9089CertificationDate → eta9089ExpirationDate (+180 days)
+- eta9089CertificationDate → eta9089ExpirationDate (+179 days, the date DOL prints)
 - jobOrderStartDate → jobOrderEndDate (extends to +30 days)
 - noticeOfFilingStartDate → noticeOfFilingEndDate (extends to +10 business days)
 - RFI receivedDate → responseDueDate (+30 days strict)

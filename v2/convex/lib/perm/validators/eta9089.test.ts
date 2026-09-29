@@ -360,7 +360,7 @@ describe('validateETA9089', () => {
         eta9089_filing_date: '2026-08-15',
         pwd_expiration_date: '2027-06-30',
         eta9089_certification_date: '2026-11-15',
-        eta9089_expiration_date: '2027-05-14', // 180 days after 2026-11-15
+        eta9089_expiration_date: '2027-05-13', // 179 days after 2026-11-15, the date DOL prints
       });
 
       expect(result.valid).toBe(true);
@@ -375,7 +375,7 @@ describe('validateETA9089', () => {
         eta9089_filing_date: '2026-08-15',
         pwd_expiration_date: '2027-06-30',
         eta9089_certification_date: '2026-11-15',
-        eta9089_expiration_date: '2027-06-01', // Wrong date (should be 2027-05-14)
+        eta9089_expiration_date: '2027-06-01', // Wrong date (should be 2027-05-13)
       });
 
       expect(result.valid).toBe(true); // Warnings don't affect validity
@@ -386,7 +386,7 @@ describe('validateETA9089', () => {
         severity: 'warning',
         field: 'eta9089_expiration_date',
       });
-      expect(result.warnings[0].message).toContain('2027-05-14');
+      expect(result.warnings[0].message).toContain('2027-05-13');
       expect(result.warnings[0].message).toContain('2027-06-01');
     });
 

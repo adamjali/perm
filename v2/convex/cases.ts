@@ -15,7 +15,7 @@ import {
   isSortOrder,
 } from "./lib/caseListTypes";
 import { filterBySearch, projectCaseForCard, sortCases, determineReopenStatus } from "./lib/caseListHelpers";
-import { calculateDerivedDates } from "./lib/derivedCalculations";
+import { calculateDerivedDates, resolveEta9089ExpirationDate } from "./lib/derivedCalculations";
 import { validateCase, mapToValidatorFormat, calculateAutoStatus } from "./lib/perm";
 import { shouldSendEmail, formatCaseStatus, buildUserNotificationPrefs } from "./lib/notificationHelpers";
 import { scheduleCalendarSync, scheduleCalendarSyncBulk } from "./lib/calendarSyncHelpers";
@@ -478,8 +478,14 @@ export const create = mutation({
     });
 
     // Validate case data before inserting
+    // A certified case always carries its expiration (see the helper).
+    const eta9089ExpirationDate = resolveEta9089ExpirationDate(
+      args.eta9089CertificationDate,
+      args.eta9089ExpirationDate
+    );
     const validationInput = mapToValidatorFormat({
       ...args,
+      eta9089ExpirationDate,
       recruitmentStartDate: derivedDates.recruitmentStartDate,
       recruitmentEndDate: derivedDates.recruitmentEndDate,
     });
@@ -576,7 +582,7 @@ export const create = mutation({
       eta9089FilingDate: args.eta9089FilingDate,
       eta9089AuditDate: args.eta9089AuditDate,
       eta9089CertificationDate: args.eta9089CertificationDate,
-      eta9089ExpirationDate: args.eta9089ExpirationDate,
+      eta9089ExpirationDate,
       eta9089CaseNumber: args.eta9089CaseNumber,
       // RFI/RFE entries arrays (default to empty)
       rfiEntries: args.rfiEntries ?? [],
@@ -1012,7 +1018,10 @@ export const update = mutation({
       // ETA 9089 dates
       eta9089FilingDate: resolve(args.eta9089FilingDate, caseDoc!.eta9089FilingDate),
       eta9089CertificationDate: resolve(args.eta9089CertificationDate, caseDoc!.eta9089CertificationDate),
-      eta9089ExpirationDate: resolve(args.eta9089ExpirationDate, caseDoc!.eta9089ExpirationDate),
+      eta9089ExpirationDate: resolveEta9089ExpirationDate(
+        resolve(args.eta9089CertificationDate, caseDoc!.eta9089CertificationDate),
+        resolve(args.eta9089ExpirationDate, caseDoc!.eta9089ExpirationDate)
+      ),
       // I-140 dates
       i140FilingDate: resolve(args.i140FilingDate, caseDoc!.i140FilingDate),
       i140ApprovalDate: resolve(args.i140ApprovalDate, caseDoc!.i140ApprovalDate),
@@ -1084,6 +1093,8 @@ export const update = mutation({
       ...updates,
       ...statusUpdates,
       ...(leavingClosed ? { closureReason: undefined, closedAt: undefined } : {}),
+      // A certified case always carries its expiration (see the helper).
+      eta9089ExpirationDate: fullCaseData.eta9089ExpirationDate,
       // Always recalculate derived dates on update
       recruitmentStartDate: derivedDates.recruitmentStartDate ?? undefined,
       recruitmentEndDate: derivedDates.recruitmentEndDate ?? undefined,
@@ -2717,7 +2728,10 @@ export const importCases = mutation({
         recruitmentWindowCloses: derivedDates.recruitmentWindowCloses ?? undefined,
         eta9089FilingDate: caseData.eta9089FilingDate,
         eta9089CertificationDate: caseData.eta9089CertificationDate,
-        eta9089ExpirationDate: caseData.eta9089ExpirationDate,
+        eta9089ExpirationDate: resolveEta9089ExpirationDate(
+          caseData.eta9089CertificationDate,
+          caseData.eta9089ExpirationDate
+        ),
         eta9089CaseNumber: caseData.eta9089CaseNumber,
         i140FilingDate: caseData.i140FilingDate,
         i140ReceiptDate: caseData.i140ReceiptDate,

@@ -1,7 +1,7 @@
-import { parseISO, isAfter, differenceInDays, isValid } from 'date-fns';
+import { parseISO, isAfter, isValid } from 'date-fns';
 import type { ValidationResult, ValidationIssue } from '../types';
 import { createValidationResult } from '../types';
-import { I140_FILING_DAYS } from '../constants';
+import { calculateI140FilingDeadline } from '../calculators/i140';
 import { error } from '../utils/validation';
 
 /**
@@ -9,6 +9,8 @@ import { error } from '../utils/validation';
  */
 export interface I140ValidationInput {
   eta9089_certification_date: string | null;
+  /** The certification's printed last day; certification + 179 days when absent. */
+  eta9089_expiration_date?: string | null;
   i140_filing_date: string | null;
   i140_approval_date: string | null;
 }
@@ -18,13 +20,13 @@ export interface I140ValidationInput {
  *
  * Rules:
  * - V-I140-01: Filing must be after ETA 9089 certification
- * - V-I140-02: Filing must be within 180 days of certification
+ * - V-I140-02: Filing must be on or before the ETA 9089 expiration date
  * - V-I140-03: Approval must be after filing
  */
 export function validateI140(input: I140ValidationInput): ValidationResult {
   const errors: ValidationIssue[] = [];
   const warnings: ValidationIssue[] = [];
-  const { eta9089_certification_date, i140_filing_date, i140_approval_date } = input;
+  const { eta9089_certification_date, eta9089_expiration_date, i140_filing_date, i140_approval_date } = input;
 
   // V-I140-01: Filing after certification
   if (eta9089_certification_date && i140_filing_date) {
@@ -49,18 +51,23 @@ export function validateI140(input: I140ValidationInput): ValidationResult {
     }
   }
 
-  // V-I140-02: Filing within 180 days
+  // V-I140-02: Filing on or before the certification's last valid day: the
+  // expiration date on the case (what DOL printed) or, without one, the
+  // computed date. A day count here once disagreed with the stored date.
   if (eta9089_certification_date && i140_filing_date) {
     const certification = parseISO(eta9089_certification_date);
     const filing = parseISO(i140_filing_date);
 
     if (isValid(certification) && isValid(filing)) {
-      const days = differenceInDays(filing, certification);
-      if (days > I140_FILING_DAYS) {
+      const lastDay =
+        eta9089_expiration_date && isValid(parseISO(eta9089_expiration_date))
+          ? eta9089_expiration_date
+          : calculateI140FilingDeadline(eta9089_certification_date);
+      if (i140_filing_date > lastDay) {
         errors.push(error(
           'V-I140-02',
           'i140_filing_date',
-          `I-140 must be filed within ${I140_FILING_DAYS} days of ETA 9089 certification. Current: ${days} days after certification`
+          `I-140 must be filed on or before the ETA 9089 expiration date (${lastDay}). Filed: ${i140_filing_date}`
         ));
       }
     }

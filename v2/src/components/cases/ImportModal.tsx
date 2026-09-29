@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { parseCaseImportFile, type ImportResult as ParseResult, BENEFICIARY_PLACEHOLDER } from "@/lib/import";
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
 import { cn } from "@/lib/utils";
+import { formatDeadlineDate } from "@/components/cases/case-card.utils";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { toast } from "@/lib/toast";
@@ -534,8 +535,8 @@ export function ImportModal({
                       <UserX className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-data-warn-ink">
-                          {parseResult.casesNeedingBeneficiary} Case
-                          {parseResult.casesNeedingBeneficiary !== 1 ? "s" : ""} Need Foreign Worker Info
+                          {parseResult.casesNeedingBeneficiary} case
+                          {parseResult.casesNeedingBeneficiary !== 1 ? "s need" : " needs"} foreign worker info
                         </p>{" "}
                         <p className="text-sm text-data-warn-ink mt-1">
                           These cases were imported from a legacy format without foreign worker IDs. They
@@ -548,6 +549,50 @@ export function ImportModal({
                       </div>
                     </div>
                   )}
+
+                  {/* ETA 9089 expirations filled in: named before anything is saved */}
+                  {parseResult.filledExpirations.length > 0 && (() => {
+                    const filled = parseResult.filledExpirations;
+                    const passed = filled.filter((f) => f.alreadyPassed);
+                    return (
+                      <div className="border-2 border-data-warn bg-data-warn/8 p-4 space-y-3" data-testid="filled-expirations">
+                        <div className="flex items-start gap-3">
+                          <InfoIcon className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" aria-hidden="true" />
+                          <div>
+                            <p className="font-medium text-data-warn-ink">
+                              ETA 9089 expiration filled in for {filled.length} case{filled.length !== 1 ? "s" : ""}
+                            </p>{" "}
+                            <p className="text-sm text-data-warn-ink mt-1">
+                              {filled.length !== 1 ? "These have" : "This has"} a certification date but no expiration date. Each gets the
+                              certification date plus 179 days, the date DOL prints. Change any of them after import if the certification
+                              shows a different date.
+                            </p>
+                          </div>
+                        </div>
+                        <ul className="space-y-1 text-sm text-foreground pl-8">
+                          {filled.slice(0, 8).map((f) => (
+                            <li key={f.row} className="flex flex-wrap gap-x-2">
+                              <span className="font-medium">{f.employerName || `Row ${f.row + 1}`}</span>{" "}
+                              <span className="text-muted-foreground">expires {formatDeadlineDate(f.expirationDate)}</span>
+                              {f.alreadyPassed && <span className="font-bold text-destructive-text">already passed</span>}
+                            </li>
+                          ))}
+                          {filled.length > 8 && <li className="text-muted-foreground">and {filled.length - 8} more</li>}
+                        </ul>
+                        {passed.length > 0 && (
+                          <div className="flex items-start gap-3 border-2 border-destructive bg-destructive/8 p-3" role="alert">
+                            <AlertTriangle className="h-5 w-5 text-destructive-text flex-shrink-0 mt-0.5" aria-hidden="true" />
+                            <p className="text-sm text-destructive-text">
+                              {passed.length === 1 ? "One of these dates has" : `${passed.length} of these dates have`} already passed
+                              with no I-140 filing recorded. If deadline enforcement is on in Settings,{" "}
+                              {passed.length === 1 ? "that case" : "those cases"} will be closed automatically. Add the I-140 filing date
+                              first if one was filed.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Conversion Warnings (Status mappings, etc.) */}
                   {parseResult.warnings.length > 0 && (
@@ -571,7 +616,7 @@ export function ImportModal({
                         <div className="flex items-center gap-2">
                           <InfoIcon className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm font-medium">
-                            {parseResult.warnings.length} Conversion Note
+                            {parseResult.warnings.length} conversion note
                             {parseResult.warnings.length !== 1 ? "s" : ""}
                           </span>
                         </div>

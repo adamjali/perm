@@ -1,6 +1,11 @@
 import { internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { recordError } from "./lib/errorRecording";
+import { addDays, format, parseISO } from "date-fns";
+import { calculateI140FilingDeadline } from "./lib/perm";
+import { DEFAULT_USER_TIMEZONE, getTodayForDeadline } from "./lib/perm/deadlines/timezones";
+import { isValidISODate } from "./lib/dateValidation";
+import { scheduleCalendarSync } from "./lib/calendarSyncHelpers";
 
 /**
  * One-time backfill: normalize pre-existing mixed-case emails to lowercase.
@@ -196,5 +201,94 @@ export const normalizeMixedCaseEmails = internalMutation({
       changes,
       skipped,
     };
+  },
+});
+
+/**
+ * One-time move of saved ETA 9089 expiration dates from certification + 180
+ * days to + 179, the date DOL prints (owner's call, Sep 29 2026). The app
+ * filled in +180 until then, so a saved +180 is the old rule, not a date the
+ * user read off a certification.
+ *
+ * - Only a date exactly certification + 180 moves; anything else is the
+ *   user's own and stays. Re-running is a no-op.
+ * - `updatedAt` is left alone: the rule changed, the user did not edit the
+ *   case, and a bumped stamp would read as activity in the weekly summary.
+ * - A live case with calendar sync on gets a resync, so its I-140 event moves
+ *   with the date. `cases.update` does that for an edit; a patch here does not.
+ * - `passedNow` flags an open case with no I-140 whose new date is already
+ *   past: deadline enforcement would close it a day sooner than before.
+ *
+ * Dry run:  npx convex run migrations:moveEta9089ExpirationTo179 '{"dryRun":true}' --prod
+ * Run:      npx convex run migrations:moveEta9089ExpirationTo179 '{}' --prod
+ */
+export const moveEta9089ExpirationTo179 = internalMutation({
+  args: { dryRun: v.optional(v.boolean()) },
+  handler: async (ctx, args) => {
+    const dryRun = args.dryRun ?? false;
+    const today = getTodayForDeadline("i140_filing_deadline", DEFAULT_USER_TIMEZONE);
+    const moved: Array<{
+      caseId: string;
+      caseStatus: string;
+      deleted: boolean;
+      hasI140: boolean;
+      from: string;
+      to: string;
+      passedNow: boolean;
+      calendar: string;
+    }> = [];
+    let scanned = 0;
+    let certified = 0;
+    let alreadyNew = 0;
+    let other = 0;
+
+    for await (const c of ctx.db.query("cases")) {
+      scanned++;
+      const cert = c.eta9089CertificationDate;
+      if (!cert || !isValidISODate(cert)) continue;
+      certified++;
+      const newDate = calculateI140FilingDeadline(cert);
+      const oldDate = format(addDays(parseISO(cert), 180), "yyyy-MM-dd");
+      if (c.eta9089ExpirationDate === newDate) {
+        alreadyNew++;
+        continue;
+      }
+      if (c.eta9089ExpirationDate !== oldDate) {
+        other++;
+        continue;
+      }
+
+      const deleted = c.deletedAt !== undefined;
+      let calendar = "not scheduled: deleted or sync off for this case";
+      if (!dryRun) await ctx.db.patch(c._id, { eta9089ExpirationDate: newDate });
+      if (!deleted && c.calendarSyncEnabled !== false) {
+        if (dryRun) {
+          calendar = "would schedule if the user has sync on";
+        } else {
+          try {
+            const r = await scheduleCalendarSync(ctx, c.userId, c._id);
+            calendar = r.scheduled ? "scheduled" : `not scheduled: ${r.reason ?? "unknown"}`;
+          } catch (e) {
+            calendar = "schedule failed";
+            await recordError(ctx, "mutation", "migrations.moveEta9089ExpirationTo179.calendar", e, {
+              userId: c.userId,
+              resourceId: c._id.toString(),
+            });
+          }
+        }
+      }
+      moved.push({
+        caseId: c._id,
+        caseStatus: c.caseStatus,
+        deleted,
+        hasI140: !!c.i140FilingDate,
+        from: oldDate,
+        to: newDate,
+        passedNow: newDate < today && !c.i140FilingDate && c.caseStatus !== "closed" && !deleted,
+        calendar,
+      });
+    }
+
+    return { dryRun, today, scanned, certified, alreadyNew, other, moved: moved.length, cases: moved };
   },
 });

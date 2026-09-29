@@ -156,7 +156,7 @@ Design:
 	⁃	I love th show more
 	⁃	add recruitment
 	⁃	started (date of start, earliest recruitment step)
-	⁃	expires (180 days after that)
+	⁃	expires 179 days after that: the date DOL prints (180 calendar days counting the certification day). Owner's call, Sep 29 2026.
 	⁃	add for eta 9089 filing window opens
 	⁃	first one on the list, and is calculated by 30 days after recruitment
 	3.	Calendar

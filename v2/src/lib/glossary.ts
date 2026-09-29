@@ -95,7 +95,7 @@ export const GLOSSARY: GlossaryTerm[] = [
     term: "Certified",
     slug: "certified",
     definition:
-      "DOL granted the labor certification. It is not a green card and not a petition: it is the document the employer files with the I-140, and it expires 180 days after the grant if no I-140 is filed with it.",
+      "DOL granted the labor certification. It is not a green card and not a petition: it is the document the employer files with the I-140, and it expires if no I-140 is filed with it within 180 calendar days of the grant.",
     cite: CFR656("656.30"),
     see: [{ label: "Every status, explained", href: "/perm-case-statuses#certified" }],
   },
