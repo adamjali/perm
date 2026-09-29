@@ -1,7 +1,7 @@
 [Unit]
 Description=Schedule for permtracker-uscis@quarterly
 [Timer]
-OnCalendar=*-*-17 10:50:00 America/New_York
+OnCalendar=*-*-15..17 10:50:00 America/New_York
 Persistent=true
 Unit=permtracker-uscis@quarterly.service
 [Install]

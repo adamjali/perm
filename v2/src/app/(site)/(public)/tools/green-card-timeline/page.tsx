@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
-import { queryStatic } from "@/lib/convexStatic";
-
-import { api } from "../../../../../../convex/_generated/api";
+import { getI140Snapshot } from "@/lib/turso/uscisI140";
 import { buildGreenCardTimeline } from "@/lib/perm";
 import {
   getI140ProcessingTime,
@@ -85,7 +83,7 @@ function monthsFromDays(days: number | null): number | null {
 export default async function GreenCardTimelinePage() {
   const [permData, uscisData, bulletins, i140Median] = await Promise.all([
     getEstimatorData(),
-    queryStatic(api.uscisI140.getLatest, {}, revalidate).catch(() => null),
+    getI140Snapshot(revalidate),
     getVisaBulletinSeries(),
     // USCIS's quarterly median over every I-140 decided, shown beside the
     // per-subtype 80% figures so the two measurements sit together, labelled.

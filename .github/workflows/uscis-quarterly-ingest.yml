@@ -11,10 +11,10 @@ name: USCIS quarterly data
 # MONTHLY POLL, QUARTERLY DATA. USCIS posts a quarter roughly 80 to 90 days
 # after it ends, on no fixed day, so the job reads the listing on the 15th
 # and 16th of every month and loads only files it has not recorded by name.
-# A month with nothing new costs one listing request. Two days rather than
-# one because www.uscis.gov 403s GitHub's datacenter runners on some days and
-# not others; the server's timer (permtracker-uscis@quarterly, Sep 28 2026,
-# before that a launchd agent on the Mac) tries on the 17th as the backstop.
+# A month with nothing new costs one listing request. The server's timer
+# (permtracker-uscis@quarterly, the 15th to the 17th) is the scheduled runner:
+# www.uscis.gov refuses GitHub's runners and answers the server, so this
+# workflow is a manual fallback only (see the note under `on:`).
 #
 # EVERY LISTED QUARTER IS LOADED. USCIS carries the recent four quarters and
 # no archive, so a quarter missed on every attempt is gone; taking every
@@ -24,8 +24,9 @@ name: USCIS quarterly data
 #   cd v2 && python3 scripts/ingest_uscis_quarterly.py
 
 on:
-  schedule:
-    - cron: "0 8 15,16 * *"   # 4:00 AM ET (EDT) on the 15th and 16th
+  # NO SCHEDULE since Sep 29 2026: a refused GitHub run writes a failure row
+  # newer than the server's success and turns the health check red for data
+  # already stored. Same reason as the I-485 workflow.
   workflow_dispatch:
     inputs:
       force:

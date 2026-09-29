@@ -162,6 +162,9 @@ jobs:
           python3 scripts/test_wage_views.py
           python3 scripts/test_daily_monitor.py
           python3 scripts/test_uscis_quarterly.py
+          # The I-140 quarter's database copy, which the two tool pages read
+          # first since Sep 29 2026: the same gates Convex's storeStats keeps.
+          python3 scripts/test_uscis_i140.py
           # The standing estimator backtest: what "pending on the day" means
           # (6,500 expired certifications counted as pending on its first
           # run), and both counting rules scored on one set of cases.

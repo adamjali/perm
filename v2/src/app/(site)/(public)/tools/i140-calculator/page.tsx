@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
-import { queryStatic } from "@/lib/convexStatic";
-
-import { api } from "../../../../../../convex/_generated/api";
+import { getI140Snapshot } from "@/lib/turso/uscisI140";
 import { I140QueueEstimator } from "@/components/tools/I140QueueEstimator";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
@@ -67,7 +65,7 @@ const FAQS = [
 
 export default async function I140CalculatorPage() {
   const [data, i140Median] = await Promise.all([
-    queryStatic(api.uscisI140.getLatest, {}, revalidate).catch(() => null),
+    getI140Snapshot(revalidate),
     // The quarterly median over every I-140 decided, from USCIS's all-forms
     // workbook: the third official figure, beside the published range and
     // the pending count, each measuring something different.

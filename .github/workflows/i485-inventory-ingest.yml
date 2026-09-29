@@ -24,15 +24,13 @@ name: USCIS I-485 inventory
 #   cd v2 && python3 scripts/ingest_i485_inventory.py
 
 on:
-  schedule:
-    # The 6th through the 10th, daily: www.uscis.gov 403s GitHub's datacenter
-    # runners on some days and not others (Sep 6 2026: four 403s from the
-    # runner, 200 from a home connection with identical headers). Five tries
-    # cost nothing when the first succeeds - the script is idempotent per
-    # as_of - and turn a 403 month into a late month rather than a lost one.
-    # If all five fail, run it from any residential machine:
-    #   cd v2 && python3 scripts/ingest_i485_inventory.py
-    - cron: "0 8 6-10 * *"
+  # NO SCHEDULE since Sep 29 2026. www.uscis.gov refused GitHub's runners on
+  # every attempt this workflow ever made (the 6th to the 10th of September,
+  # and a dispatch on Sep 29: six of six), and each refusal wrote a failure
+  # row NEWER than the server's success, so the health check read red on the
+  # mornings after the data was already stored. The server's timer
+  # (permtracker-uscis@i485, the 6th to the 10th at 10:30 AM ET) reaches USCIS
+  # and is now the only scheduled runner; this stays as a manual fallback.
   workflow_dispatch:
 
 permissions:

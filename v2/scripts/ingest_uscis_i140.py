@@ -20,7 +20,16 @@ bad trade, and one ingest pattern is easier to keep working than two.
 
 Usage:
     python3 scripts/ingest_uscis_i140.py --out /tmp/uscis.json
-    npx convex run uscisI140:storeStats "$(cat /tmp/uscis.json)" --prod
+    npx convex run uscisI140:storeStats "$(cat /tmp/uscis.json)" --prod   # optional
+
+THE PAGES READ THE DATABASE COPY FIRST (Sep 29 2026). Every run that parses
+a complete quarter writes it to `perm_docs['uscis_i140']`, which
+/tools/i140-calculator and /tools/green-card-timeline read, with the Convex
+table only as the fallback for a database that has never held one. Until
+then a new quarter reached the pages only through `storeStats`, which needs a
+Convex deploy key: GitHub holds one and www.uscis.gov refuses GitHub's runners
+(four 403s on Sep 29), while the server reaches USCIS and holds no key, so a
+new quarter would have been fetched and then had nowhere to go.
 """
 from __future__ import annotations
 
@@ -147,6 +156,36 @@ def parse(path: str) -> tuple[str, list[dict]]:
     return f"FY{fiscal_year} Q{latest_quarter}", subtypes
 
 
+DOC_KEY = "uscis_i140"
+
+
+def store_doc(db, payload: dict, now_ms: int) -> str:
+    """Write the quarter to `perm_docs['uscis_i140']`; returns what happened.
+
+    Same two gates as Convex's `storeStats`: a payload with no subtypes or no
+    pending petitions never replaces a good one, and identical content keeps
+    its first write time, so a monthly re-read does not make an old quarter
+    look freshly fetched.
+    """
+    subtypes = payload.get("subtypes") or []
+    if not subtypes or sum(int(s.get("pending") or 0) for s in subtypes) <= 0:
+        return "refused: no subtypes or no pending petitions"
+    db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
+        key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""", [])
+    rows = db.execute("SELECT json FROM perm_docs WHERE key = ?", [DOC_KEY])["response"]["result"]["rows"]
+    if rows:
+        try:
+            held = json.loads(rows[0][0]["value"])
+        except (KeyError, TypeError, ValueError):
+            held = {}
+        if held.get("contentHash") == payload["contentHash"]:
+            return "unchanged"
+    doc = {k: payload[k] for k in ("sourceFile", "asOfQuarter", "subtypes", "contentHash")}
+    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
+               [DOC_KEY, json.dumps(doc, separators=(",", ":")), now_ms])
+    return "stored"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--out", required=True, help="Write the aggregate payload here")
@@ -193,8 +232,7 @@ def main() -> int:
     log(f"wrote {args.out} ({os.path.getsize(args.out) / 1024:.1f} KB)")
 
     # Stamp a freshness row so `check_ingest_health.py` can see this ingest
-    # stop. It is NOT rendered on any page - the public provenance lines are
-    # Turso-backed and this payload goes to Convex - but a row the monitor can
+    # stop. It is NOT rendered on any page, but a row the monitor can
     # read is what turns a silent death into a red scheduled run, and this
     # step runs under `continue-on-error: true`.
     #
@@ -214,6 +252,10 @@ def main() -> int:
     # "2026Q2" because that is the shape check_ingest_health.py parses.
     quarter_key = str(payload.get("asOfQuarter", "")).replace("FY", "").replace(" ", "")
     db = Turso()
+    result = store_doc(db, payload, int(time.time() * 1000))
+    log(f"perm_docs[{DOC_KEY}]  {result}")
+    if result.startswith("refused"):
+        raise SystemExit(f"FATAL: {result}. Refusing to report success.")
     db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
         dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
         source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
