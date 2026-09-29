@@ -56,7 +56,7 @@ describe("DeleteNowDialog", () => {
     it("renders dialog title and warning when open", () => {
       renderWithProviders(<DeleteNowDialog {...defaultProps} />);
 
-      expect(screen.getByText("Delete Account Now")).toBeInTheDocument();
+      expect(screen.getByText("Delete account now")).toBeInTheDocument();
       expect(
         screen.getByText(/permanently delete your account and all data RIGHT NOW/)
       ).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe("DeleteNowDialog", () => {
         <DeleteNowDialog open={false} onOpenChange={vi.fn()} />
       );
 
-      expect(screen.queryByText("Delete Account Now")).not.toBeInTheDocument();
+      expect(screen.queryByText("Delete account now")).not.toBeInTheDocument();
     });
 
     it("shows checkbox acknowledgment", () => {
@@ -106,7 +106,7 @@ describe("DeleteNowDialog", () => {
 
       const deleteButton = screen
         .getAllByRole("button")
-        .find((btn) => btn.textContent?.includes("Delete Now"));
+        .find((btn) => btn.textContent?.includes("Delete now"));
       expect(deleteButton).toBeDisabled();
     });
 
@@ -119,7 +119,7 @@ describe("DeleteNowDialog", () => {
 
       const deleteButton = screen
         .getAllByRole("button")
-        .find((btn) => btn.textContent?.includes("Delete Now"));
+        .find((btn) => btn.textContent?.includes("Delete now"));
       expect(deleteButton).toBeDisabled();
     });
 
@@ -132,7 +132,7 @@ describe("DeleteNowDialog", () => {
 
       const deleteButton = screen
         .getAllByRole("button")
-        .find((btn) => btn.textContent?.includes("Delete Now"));
+        .find((btn) => btn.textContent?.includes("Delete now"));
       expect(deleteButton).toBeDisabled();
     });
 
@@ -149,7 +149,7 @@ describe("DeleteNowDialog", () => {
       await waitFor(() => {
         const deleteButton = screen
           .getAllByRole("button")
-          .find((btn) => btn.textContent?.includes("Delete Now"));
+          .find((btn) => btn.textContent?.includes("Delete now"));
         expect(deleteButton).not.toBeDisabled();
       });
     });
@@ -199,13 +199,13 @@ describe("DeleteNowDialog", () => {
       await waitFor(() => {
         const deleteButton = screen
           .getAllByRole("button")
-          .find((btn) => btn.textContent?.includes("Delete Now"));
+          .find((btn) => btn.textContent?.includes("Delete now"));
         expect(deleteButton).not.toBeDisabled();
       });
 
       const deleteButton = screen
         .getAllByRole("button")
-        .find((btn) => btn.textContent?.includes("Delete Now"));
+        .find((btn) => btn.textContent?.includes("Delete now"));
       await user.click(deleteButton!);
 
       await waitFor(() => {
@@ -227,13 +227,13 @@ describe("DeleteNowDialog", () => {
       await waitFor(() => {
         const deleteButton = screen
           .getAllByRole("button")
-          .find((btn) => btn.textContent?.includes("Delete Now"));
+          .find((btn) => btn.textContent?.includes("Delete now"));
         expect(deleteButton).not.toBeDisabled();
       });
 
       const deleteButton = screen
         .getAllByRole("button")
-        .find((btn) => btn.textContent?.includes("Delete Now"));
+        .find((btn) => btn.textContent?.includes("Delete now"));
       await user.click(deleteButton!);
 
       await waitFor(() => {

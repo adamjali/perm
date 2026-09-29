@@ -237,7 +237,7 @@ export function TimelinePageClient() {
         <div className="flex flex-col items-center justify-center py-16 px-4 border-2 border-dashed border-border rounded-lg bg-muted/20">
           <div className="text-center max-w-md">
             <h2 className="font-heading text-xl font-semibold mb-2">
-              No Cases to Display
+              No cases to display
             </h2>{" "}
             <p className="text-muted-foreground mb-4">
               Add cases to see them visualized on the timeline. Each case will
@@ -247,7 +247,7 @@ export function TimelinePageClient() {
               onClick={() => router.push("/cases/new")}
               className="inline-flex min-h-[44px] items-center justify-center border-2 border-border bg-primary px-6 py-3 font-heading font-bold text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
             >
-              Add Your First Case
+              Add your first case
             </button>
           </div>
         </div>
@@ -292,7 +292,7 @@ export function TimelinePageClient() {
               data-testid="back-to-all-cases"
             >
               <ArrowLeftIcon className="size-4 mr-2" />
-              Back to All Cases
+              Back to all cases
             </Button>
           )}
           <p className="text-muted-foreground text-sm">

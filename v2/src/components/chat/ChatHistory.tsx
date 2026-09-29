@@ -95,7 +95,7 @@ export function ChatHistory({
           >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b-2 border-border">
-              <h2 className="font-heading font-semibold">Chat History</h2>
+              <h2 className="font-heading font-semibold">Chat history</h2>
               <Button
                 variant="ghost"
                 size="icon"
@@ -116,7 +116,7 @@ export function ChatHistory({
                 className="w-full shadow-hard-sm"
               >
                 <PlusIcon className="h-4 w-4 mr-2" />
-                New Conversation
+                New conversation
               </Button>
             </div>
 
@@ -147,7 +147,7 @@ export function ChatHistory({
                       <p className="font-medium text-sm truncate" title={conv.title}>
                         {conv.title}
                       </p>{" "}
-                      <p className="text-xs text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-1">
                         {formatDistanceToNow(conv.updatedAt, { addSuffix: true })}
                       </p>
                     </div>
@@ -183,7 +183,7 @@ export function ChatHistory({
                   onClick={handleDeleteAll}
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Delete All Conversations
+                  Delete all conversations
                 </Button>
               </div>
             )}

@@ -245,7 +245,7 @@ export default function QuietHoursSection({
       <div className="flex items-center gap-2 mb-2">
         <MoonIcon className="w-5 h-5 text-foreground" />
         <h3 className="font-heading font-bold text-lg text-foreground">
-          Quiet Hours
+          Quiet hours
         </h3>
       </div>
       <p className="text-sm text-muted-foreground mb-6">
@@ -261,9 +261,9 @@ export default function QuietHoursSection({
               className="text-sm font-medium flex items-center gap-2"
             >
               <MoonIcon className="w-4 h-4 text-primary" />
-              Enable Quiet Hours
+              Enable quiet hours
             </Label>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Suppress notifications during the specified time range
             </p>
           </div>
@@ -294,7 +294,7 @@ export default function QuietHoursSection({
                     className="text-sm font-medium flex items-center gap-2"
                   >
                     <ClockIcon className="w-4 h-4" />
-                    Start Time
+                    Start time
                   </Label>
                   <div className="relative">
                     <Input
@@ -304,7 +304,7 @@ export default function QuietHoursSection({
                       onChange={(e) => setQuietHoursStart(e.target.value)}
                       className="w-full"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
                       {formatTime12h(quietHoursStart)}
                     </span>
                   </div>
@@ -317,7 +317,7 @@ export default function QuietHoursSection({
                     className="text-sm font-medium flex items-center gap-2"
                   >
                     <ClockIcon className="w-4 h-4" />
-                    End Time
+                    End time
                   </Label>
                   <div className="relative">
                     <Input
@@ -327,7 +327,7 @@ export default function QuietHoursSection({
                       onChange={(e) => setQuietHoursEnd(e.target.value)}
                       className="w-full"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
                       {formatTime12h(quietHoursEnd)}
                     </span>
                   </div>
@@ -343,10 +343,10 @@ export default function QuietHoursSection({
                 {onNavigateToProfile && (
                   <button
                     type="button"
-                    className="text-data-info-ink hover:underline text-xs font-medium ml-auto"
+                    className="text-data-info-ink hover:underline text-sm font-medium ml-auto"
                     onClick={onNavigateToProfile}
                   >
-                    Change in Profile
+                    Change in profile
                   </button>
                 )}
               </div>
@@ -432,7 +432,7 @@ export default function QuietHoursSection({
               loadingText="Saving..."
             >
               <CheckIcon className="w-4 h-4" />
-              Save Changes
+              Save changes
             </Button>
           </motion.div>
         )}

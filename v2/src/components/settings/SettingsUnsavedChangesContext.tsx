@@ -200,7 +200,7 @@ export function SettingsUnsavedChangesProvider({
         open={shouldShowDialog}
         onStay={cancelNavigation}
         onLeave={confirmNavigation}
-        title="Unsaved Settings"
+        title="Unsaved settings"
         description="You have unsaved changes in your settings. Are you sure you want to leave? Your changes will be lost."
         stayText="Stay"
         leaveText="Leave Without Saving"

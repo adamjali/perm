@@ -34,14 +34,14 @@ function RecentActivityLoadingSkeleton(): ReactNode {
   return (
     <section
       className={cn(WIDGET_CONTAINER_CLASSES, "p-5")}
-      aria-label="Recent Activity"
+      aria-label="Recent activity"
       aria-busy={true}
     >
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <History className="w-7 h-7 text-foreground" aria-hidden="true" />
           <h2 className="text-2xl font-heading font-bold text-foreground">
-            Recent Activity
+            Recent activity
           </h2>
         </div>
       </div>
@@ -83,11 +83,11 @@ export default function RecentActivityWidget(): ReactNode {
     <section
       data-tour="recent-activity"
       className={WIDGET_CONTAINER_CLASSES}
-      aria-label="Recent Activity"
+      aria-label="Recent activity"
     >
       <WidgetHeader
         icon={History}
-        title="Recent Activity"
+        title="Recent activity"
         action={
           !isEmpty && (
             <WidgetHeaderAction

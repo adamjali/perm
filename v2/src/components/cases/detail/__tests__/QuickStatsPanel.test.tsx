@@ -28,9 +28,11 @@ describe("QuickStatsPanel", () => {
     const { container } = renderWithProviders(<QuickStatsPanel caseData={caseData} />);
 
     const values = [...container.querySelectorAll(".stat-val")].map((el) => Number(el.textContent));
-    // PWD expiry (199 or 200 depending on the hour) and case age (40).
+    // PWD expiry (199 or 200 depending on the hour) and days since the PWD
+    // was filed (120), not days since the case was added here (40).
     expect(values[0]).toBeGreaterThanOrEqual(199);
-    expect(values[1]).toBe(40);
-    expect(screen.getByText("PWD Expiry")).toBeInTheDocument();
+    expect(values[1]).toBe(120);
+    expect(screen.getByText("PWD expires")).toBeInTheDocument();
+    expect(screen.getByText("days since PWD filed")).toBeInTheDocument();
   });
 });

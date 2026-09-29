@@ -139,7 +139,7 @@ export function ChatMessage({
           {(timestamp || wasStopped) && (
             <div
               className={cn(
-                'mt-2 flex items-center gap-2 font-mono text-xs opacity-70',
+                'mt-2 flex items-center gap-2 font-mono text-sm opacity-70',
                 isUser ? 'justify-end' : 'justify-start'
               )}
             >

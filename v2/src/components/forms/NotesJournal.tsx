@@ -415,9 +415,9 @@ export function NotesJournal({
             className="gap-1.5"
           >
             <PlusIcon className="h-4 w-4" />
-            Add Note
+            Add note
           </Button>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {shortcutKey}+Enter
           </span>
         </div>
@@ -437,7 +437,7 @@ export function NotesJournal({
                 <select
                   value={newNotePriority}
                   onChange={(e) => setNewNotePriority(e.target.value as NotePriority)}
-                  className="h-7 rounded border-2 border-border bg-background px-2 text-xs font-medium"
+                  className="h-7 rounded border-2 border-border bg-background px-2 text-sm font-medium"
                 >
                   {NOTE_PRIORITIES.map((p) => (
                     <option key={p} value={p}>
@@ -453,7 +453,7 @@ export function NotesJournal({
                 <select
                   value={newNoteCategory}
                   onChange={(e) => setNewNoteCategory(e.target.value as NoteCategory)}
-                  className="h-7 rounded border-2 border-border bg-background px-2 text-xs font-medium"
+                  className="h-7 rounded border-2 border-border bg-background px-2 text-sm font-medium"
                 >
                   {NOTE_CATEGORIES.map((c) => (
                     <option key={c} value={c}>
@@ -476,7 +476,7 @@ export function NotesJournal({
               type="button"
               onClick={() => setFilterBy("all")}
               className={cn(
-                "px-2 py-1 rounded text-xs font-medium transition-colors border-2",
+                "px-2 py-1 rounded text-sm font-medium transition-colors border-2",
                 filterBy === "all"
                   ? "bg-foreground text-background border-foreground"
                   : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
@@ -489,7 +489,7 @@ export function NotesJournal({
                 type="button"
                 onClick={() => setFilterBy("highPriority")}
                 className={cn(
-                  "px-2 py-1 rounded text-xs font-medium transition-colors border-2",
+                  "px-2 py-1 rounded text-sm font-medium transition-colors border-2",
                   filterBy === "highPriority"
                     ? "bg-data-warn text-black border-data-warn"
                     : "bg-data-warn/15 text-data-warn-ink border-data-warn hover:border-data-warn"
@@ -502,7 +502,7 @@ export function NotesJournal({
               type="button"
               onClick={() => setFilterBy("pending")}
               className={cn(
-                "px-2 py-1 rounded text-xs font-medium transition-colors border-2",
+                "px-2 py-1 rounded text-sm font-medium transition-colors border-2",
                 filterBy === "pending"
                   ? "bg-data-info text-white border-data-info"
                   : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
@@ -514,7 +514,7 @@ export function NotesJournal({
               type="button"
               onClick={() => setFilterBy("done")}
               className={cn(
-                "px-2 py-1 rounded text-xs font-medium transition-colors border-2",
+                "px-2 py-1 rounded text-sm font-medium transition-colors border-2",
                 filterBy === "done"
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-muted-foreground border-border hover:border-muted-foreground"
@@ -530,7 +530,7 @@ export function NotesJournal({
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="h-7 rounded border-2 border-border bg-background px-2 text-xs font-medium"
+              className="h-7 rounded border-2 border-border bg-background px-2 text-sm font-medium"
             >
               <option value="newest">Newest first</option>
               <option value="oldest">Oldest first</option>
@@ -587,7 +587,7 @@ export function NotesJournal({
                         {/* Priority badge */}
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide",
+                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-sm font-bold uppercase tracking-wide",
                             priorityConfig.bgColor,
                             priorityConfig.color
                           )}
@@ -599,7 +599,7 @@ export function NotesJournal({
                         {/* Category badge */}
                         <span
                           className={cn(
-                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium",
+                            "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-sm font-medium",
                             categoryConfig.bgColor,
                             categoryConfig.color
                           )}
@@ -627,7 +627,7 @@ export function NotesJournal({
                               size="sm"
                               onClick={handleSaveEdit}
                               disabled={!editingContent.trim()}
-                              className="h-7 text-xs"
+                              className="h-7 text-sm"
                             >
                               Save
                             </Button>
@@ -636,11 +636,11 @@ export function NotesJournal({
                               variant="ghost"
                               size="sm"
                               onClick={handleCancelEdit}
-                              className="h-7 text-xs"
+                              className="h-7 text-sm"
                             >
                               Cancel
                             </Button>
-                            <span className="text-xs text-muted-foreground">
+                            <span className="text-sm text-muted-foreground">
                               {shortcutKey}+Enter to save · Esc to cancel
                             </span>
                           </div>
@@ -661,9 +661,9 @@ export function NotesJournal({
                       )}
 
                       {/* Timestamp row */}
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span title={timestamp.full}>{timestamp.full}</span>{" "}
-                        <span className="px-1.5 py-0.5 rounded bg-muted text-xs font-medium">
+                        <span className="px-1.5 py-0.5 rounded bg-muted text-sm font-medium">
                           {timestamp.relative}
                         </span>
                       </div>

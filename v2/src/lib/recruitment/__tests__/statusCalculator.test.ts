@@ -68,7 +68,7 @@ describe("calculateRecruitmentStatus", () => {
       const result = calculateRecruitmentStatus(data);
 
       expect(result.status).toBe("incomplete");
-      expect(result.message).toContain("Notice of Filing");
+      expect(result.message).toContain("Notice of filing");
       expect(result.mandatorySteps.noticeOfFiling.complete).toBe(false);
       expect(result.mandatorySteps.allComplete).toBe(false);
     });
@@ -89,7 +89,7 @@ describe("calculateRecruitmentStatus", () => {
       const result = calculateRecruitmentStatus(data);
 
       expect(result.status).toBe("incomplete");
-      expect(result.message).toContain("Notice of Filing");
+      expect(result.message).toContain("Notice of filing");
       expect(result.mandatorySteps.noticeOfFiling.complete).toBe(false);
     });
 
@@ -108,7 +108,7 @@ describe("calculateRecruitmentStatus", () => {
       const result = calculateRecruitmentStatus(data);
 
       expect(result.status).toBe("incomplete");
-      expect(result.message).toContain("Job Order");
+      expect(result.message).toContain("Job order");
       expect(result.mandatorySteps.jobOrder.complete).toBe(false);
     });
 
@@ -128,7 +128,7 @@ describe("calculateRecruitmentStatus", () => {
       const result = calculateRecruitmentStatus(data);
 
       expect(result.status).toBe("incomplete");
-      expect(result.message).toContain("First Sunday Ad");
+      expect(result.message).toContain("First Sunday ad");
       expect(result.mandatorySteps.sundayAdFirst.complete).toBe(false);
     });
 
@@ -148,7 +148,7 @@ describe("calculateRecruitmentStatus", () => {
       const result = calculateRecruitmentStatus(data);
 
       expect(result.status).toBe("incomplete");
-      expect(result.message).toContain("Second Sunday Ad");
+      expect(result.message).toContain("Second Sunday ad");
       expect(result.mandatorySteps.sundayAdSecond.complete).toBe(false);
     });
 
@@ -163,10 +163,10 @@ describe("calculateRecruitmentStatus", () => {
       const result = calculateRecruitmentStatus(data);
 
       expect(result.status).toBe("incomplete");
-      expect(result.message).toContain("Notice of Filing");
-      expect(result.message).toContain("Job Order");
-      expect(result.message).toContain("First Sunday Ad");
-      expect(result.message).toContain("Second Sunday Ad");
+      expect(result.message).toContain("Notice of filing");
+      expect(result.message).toContain("Job order");
+      expect(result.message).toContain("First Sunday ad");
+      expect(result.message).toContain("Second Sunday ad");
       expect(result.mandatorySteps.allComplete).toBe(false);
     });
   });

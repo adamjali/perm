@@ -66,7 +66,7 @@ export function AdminTabs({ tabs }: { tabs: AdminTab[] }) {
             >
               {t.label}
               {t.badge ? (
-                <span className={`px-1.5 text-xs tabular-nums ${selected ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
+                <span className={`px-1.5 text-sm tabular-nums ${selected ? "bg-primary text-primary-foreground" : "bg-muted text-foreground"}`}>
                   {t.badge}
                 </span>
               ) : null}

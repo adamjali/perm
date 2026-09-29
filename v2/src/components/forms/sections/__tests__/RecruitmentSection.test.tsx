@@ -40,21 +40,21 @@ describe('RecruitmentSection', () => {
 
       // Section headers
       expect(screen.getByText('Recruitment')).toBeInTheDocument();
-      expect(screen.getByText('Sunday Newspaper Ads')).toBeInTheDocument();
-      expect(screen.getByText('Job Order')).toBeInTheDocument();
-      expect(screen.getByText('Notice of Filing')).toBeInTheDocument();
-      expect(screen.getByText('Recruitment Results')).toBeInTheDocument();
+      expect(screen.getByText('Sunday newspaper ads')).toBeInTheDocument();
+      expect(screen.getByText('Job order')).toBeInTheDocument();
+      expect(screen.getByText('Notice of filing')).toBeInTheDocument();
+      expect(screen.getByText('Recruitment results')).toBeInTheDocument();
 
       // Field labels
-      expect(screen.getByText('First Sunday Ad')).toBeInTheDocument();
-      expect(screen.getByText('Second Sunday Ad')).toBeInTheDocument();
+      expect(screen.getByText('First Sunday ad')).toBeInTheDocument();
+      expect(screen.getByText('Second Sunday ad')).toBeInTheDocument();
       expect(screen.getByText('Newspaper')).toBeInTheDocument();
-      expect(screen.getByText('Job Order Start')).toBeInTheDocument();
-      expect(screen.getByText('Job Order End')).toBeInTheDocument();
+      expect(screen.getByText('Job order start')).toBeInTheDocument();
+      expect(screen.getByText('Job order end')).toBeInTheDocument();
       expect(screen.getByText('State')).toBeInTheDocument();
-      expect(screen.getByText('Notice Start')).toBeInTheDocument();
-      expect(screen.getByText('Notice End')).toBeInTheDocument();
-      expect(screen.getByText('Applicant Count')).toBeInTheDocument();
+      expect(screen.getByText('Notice start')).toBeInTheDocument();
+      expect(screen.getByText('Notice end')).toBeInTheDocument();
+      expect(screen.getByText('Applicant count')).toBeInTheDocument();
 
       // Verify grid layout exists
       expect(container.querySelector('[class*="grid"]')).toBeInTheDocument();
@@ -225,7 +225,7 @@ describe('RecruitmentSection', () => {
     });
   });
 
-  describe('Professional Occupation', () => {
+  describe('Professional occupation', () => {
     const professionalValues = {
       ...mockValues,
       isProfessionalOccupation: true,
@@ -241,7 +241,7 @@ describe('RecruitmentSection', () => {
         <RecruitmentSection values={professionalValues} onChange={mockOnChange} />
       );
 
-      expect(screen.getByText('Additional Recruitment Methods')).toBeInTheDocument();
+      expect(screen.getByText('Additional recruitment methods')).toBeInTheDocument();
       expect(screen.getByText('Method 1')).toBeInTheDocument();
       expect(screen.getByText('Method 2')).toBeInTheDocument();
       expect(screen.getByText('Method 3')).toBeInTheDocument();
@@ -255,7 +255,7 @@ describe('RecruitmentSection', () => {
         />
       );
 
-      expect(screen.queryByText('Additional Recruitment Methods')).not.toBeInTheDocument();
+      expect(screen.queryByText('Additional recruitment methods')).not.toBeInTheDocument();
     });
 
     it('shows warning when less than 3 methods selected', () => {

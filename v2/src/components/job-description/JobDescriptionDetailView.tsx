@@ -300,12 +300,12 @@ export function JobDescriptionDetailView({
         <div className="flex items-center gap-2 sm:gap-3">
           <FileTextIcon className="h-5 w-5 text-muted-foreground shrink-0" />
           <h3 className="font-heading font-semibold text-base sm:text-lg">
-            Job Description
+            Job description
           </h3>
         </div>
         <div className="flex items-center gap-2">
           {hasContent && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {characterCount.toLocaleString()} chars
             </span>
           )}
@@ -367,13 +367,13 @@ export function JobDescriptionDetailView({
                     {loadedTemplate && (
                       <span
                         className={cn(
-                          "text-xs px-2 py-0.5 rounded-full border",
+                          "text-sm px-2 py-0.5 rounded-full border",
                           isModifiedFromTemplate
                             ? "bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-400"
                             : "bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
                         )}
                       >
-                        {isModifiedFromTemplate ? "Modified" : "From Template"}
+                        {isModifiedFromTemplate ? "Modified" : "From template"}
                       </span>
                     )}
 
@@ -404,7 +404,7 @@ export function JobDescriptionDetailView({
 
                   {/* Position title input */}
                   <div className="space-y-2">
-                    <Label htmlFor="edit-position-title">Position Title</Label>
+                    <Label htmlFor="edit-position-title">Position title</Label>
                     <Input
                       id="edit-position-title"
                       value={editPositionTitle}
@@ -430,12 +430,12 @@ export function JobDescriptionDetailView({
                     />
                     <div className="flex items-center justify-between">
                       {isOverLimit && (
-                        <p className="text-xs text-destructive">
+                        <p className="text-sm text-destructive">
                           Exceeds {maxLength.toLocaleString()} character limit
                         </p>
                       )}
                       <p className={cn(
-                        "text-xs text-muted-foreground ml-auto",
+                        "text-sm text-muted-foreground ml-auto",
                         isOverLimit && "text-destructive"
                       )}>
                         {editCharacterCount.toLocaleString()}/{maxLength.toLocaleString()}
@@ -471,12 +471,12 @@ export function JobDescriptionDetailView({
                           {isExistingTemplateName ? (
                             <>
                               <Save className="h-5 w-5 sm:h-4 sm:w-4" />
-                              <span className="text-sm">{isSavingTemplate ? "Updating..." : "Update Template"}</span>
+                              <span className="text-sm">{isSavingTemplate ? "Updating..." : "Update template"}</span>
                             </>
                           ) : (
                             <>
                               <SparkleIcon className="h-5 w-5 sm:h-4 sm:w-4" />
-                              <span className="text-sm">{isSavingTemplate ? "Saving..." : "Save Template"}</span>
+                              <span className="text-sm">{isSavingTemplate ? "Saving..." : "Save template"}</span>
                             </>
                           )}
                         </Button>
@@ -486,7 +486,7 @@ export function JobDescriptionDetailView({
                       {editPositionTitle.trim() && (
                         <span
                           className={cn(
-                            "text-xs px-2 py-1 rounded border hidden xs:inline-block",
+                            "text-sm px-2 py-1 rounded border hidden xs:inline-block",
                             isExistingTemplateName
                               ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
                               : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400"
@@ -528,7 +528,7 @@ export function JobDescriptionDetailView({
                   {positionTitle && (
                     <div className="space-y-1">
                       <dt className="text-sm font-medium text-muted-foreground">
-                        Position Title
+                        Position title
                       </dt>{" "}
                       <dd className="text-sm">{positionTitle}</dd>
                     </div>
@@ -553,7 +553,7 @@ export function JobDescriptionDetailView({
                                   e.stopPropagation();
                                   setManagementOpen(true);
                                 }}
-                                className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
+                                className="h-9 sm:h-8 gap-1.5 text-sm min-w-[44px] px-2 sm:px-3"
                               >
                                 <SlidersIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                 <span>Templates</span>
@@ -574,7 +574,7 @@ export function JobDescriptionDetailView({
                                     e.stopPropagation();
                                     handleStartEdit();
                                   }}
-                                  className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
+                                  className="h-9 sm:h-8 gap-1.5 text-sm min-w-[44px] px-2 sm:px-3"
                                 >
                                   <PencilIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                   <span>Edit</span>
@@ -596,7 +596,7 @@ export function JobDescriptionDetailView({
                                     e.stopPropagation();
                                     handleCopy();
                                   }}
-                                  className="h-9 sm:h-8 gap-1.5 text-xs min-w-[44px] px-2 sm:px-3"
+                                  className="h-9 sm:h-8 gap-1.5 text-sm min-w-[44px] px-2 sm:px-3"
                                 >
                                   {isCopied ? (
                                     <CheckIcon className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-green-600" />
@@ -623,7 +623,7 @@ export function JobDescriptionDetailView({
                                     handleClear();
                                   }}
                                   disabled={isClearing}
-                                  className="h-9 sm:h-8 gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 min-w-[44px] px-2 sm:px-3"
+                                  className="h-9 sm:h-8 gap-1.5 text-sm text-destructive hover:text-destructive hover:bg-destructive/10 min-w-[44px] px-2 sm:px-3"
                                 >
                                   <Trash2 className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
                                   <span>{isClearing ? "Clearing..." : "Clear"}</span>

@@ -115,7 +115,7 @@ function TooltipPortal({ children, targetRef, visible }: TooltipPortalProps) {
         <motion.div
           className={cn(
             "fixed z-[9999] -translate-x-1/2 -translate-y-full",
-            "px-2 py-1.5 bg-foreground text-background text-xs font-medium",
+            "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
             "whitespace-nowrap shadow-hard-sm",
             "pointer-events-none",
             "border-2 border-foreground"

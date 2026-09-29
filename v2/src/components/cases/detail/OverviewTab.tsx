@@ -221,14 +221,15 @@ export function OverviewTab({
         const nextDeadline = calculateNextDeadline(caseData);
         if (!nextAction) return null;
         const canExpand = isEditableAction(nextAction.action);
+        const needsCaution = nextAction.urgency === "urgent" || nextAction.urgency === "overdue";
         const navigateUrl = isComplexAction(nextAction.action)
           ? buildEditSectionUrl(caseId, "recruitment")
           : null;
         return (
           <motion.div variants={itemVariants}>
             <div className="next-up-caution">
-              {/* Caution tape — top */}
-              <div className="hazard-strip-yellow" aria-hidden="true" />
+              {/* Caution tape only when the step is pressing; a wait is not a hazard. */}
+              {needsCaution && <div className="hazard-strip-yellow" aria-hidden="true" />}
 
               <div className="next-up">
                 {(() => {
@@ -239,7 +240,7 @@ export function OverviewTab({
                         <FileTextIcon className="h-5 w-5" />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div className="next-up-label">Next Up</div>
+                        <div className="next-up-label">Next up</div>
                         <h3>{nextAction.action}</h3>{" "}
                         <p>{nextAction.description}</p>
                       </div>
@@ -278,9 +279,9 @@ export function OverviewTab({
                 })()}
                 {nextDeadline && (() => {
                   const urgencyColor =
-                    nextDeadline.daysUntil <= 14 ? "var(--destructive)"
-                    : nextDeadline.daysUntil <= 30 ? "var(--stage-eta9089)"
-                    : "var(--primary)";
+                    nextDeadline.daysUntil <= 14 ? "var(--destructive-text)"
+                    : nextDeadline.daysUntil <= 30 ? "var(--data-warn-ink)"
+                    : "var(--primary-text)";
                   return (
                     <div className="next-up-stat">
                       <div className="big" style={{ color: urgencyColor }}>{nextDeadline.daysUntil}</div>
@@ -315,7 +316,7 @@ export function OverviewTab({
               </AnimatePresence>
 
               {/* Caution tape — bottom */}
-              <div className="hazard-strip-yellow" aria-hidden="true" />
+              {needsCaution && <div className="hazard-strip-yellow" aria-hidden="true" />}
             </div>
           </motion.div>
         );
@@ -342,7 +343,7 @@ export function OverviewTab({
                   <div className="detail-card-head ch-pwd">
                     <span className="flex items-center gap-1.5">
                       <FlagIcon className="h-3.5 w-3.5" />
-                      Prevailing Wage
+                      Prevailing wage
                     </span>
                     {caseData.pwdDeterminationDate && (
                       <span className="head-badge">Complete</span>
@@ -368,13 +369,13 @@ export function OverviewTab({
                       </div>
                     </div>
                     <div className="field-cell">
-                      <div className="fc-label">Wage Level</div>
+                      <div className="fc-label">Wage level</div>
                       <div className={`fc-val ${!caseData.pwdWageLevel ? "dim" : ""}`}>
                         {caseData.pwdWageLevel || "-"}
                       </div>
                     </div>
                     <div className="field-cell">
-                      <div className="fc-label">PWD Amount</div>
+                      <div className="fc-label">PWD amount</div>
                       <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
                         {caseData.pwdWageAmount !== undefined
                           ? `${fmtCurrency(caseData.pwdWageAmount)} / yr`
@@ -385,7 +386,7 @@ export function OverviewTab({
                       <div className="fc-label">Expires</div>
                       <div className={`fc-val mono ${!caseData.pwdExpirationDate ? "dim" : ""}`}>
                         {caseData.pwdExpirationDate ? (
-                          <span style={{ color: "var(--stage-eta9089)" }}>
+                          <span style={{ color: "var(--data-warn-ink)" }}>
                             {fmtISODate(caseData.pwdExpirationDate)}
                           </span>
                         ) : "-"}
@@ -410,7 +411,7 @@ export function OverviewTab({
                 <div className="detail-card-head ch-yellow">
                   <span className="flex items-center gap-1.5">
                     <BriefcaseIcon className="h-3.5 w-3.5" />
-                    Job Description
+                    Job description
                   </span>
                   <div className="flex items-center gap-1">
                     {(caseData.jobDescription || isEditingJobDesc) && (
@@ -456,7 +457,7 @@ export function OverviewTab({
                         htmlFor="jd-edit-title"
                         className="block font-mono text-sm uppercase tracking-wider text-muted-foreground mb-1"
                       >
-                        Position Title
+                        Position title
                       </label>
                       <input
                         id="jd-edit-title"
@@ -525,7 +526,7 @@ export function OverviewTab({
                           )}
                           {isSavingTemplate
                             ? (isExistingTemplateName ? "Updating..." : "Saving...")
-                            : (isExistingTemplateName ? "Update Template" : "Save Template")}
+                            : (isExistingTemplateName ? "Update template" : "Save template")}
                         </button>
                       </div>
                       <div className="flex items-center gap-2">
@@ -564,13 +565,13 @@ export function OverviewTab({
                         </div>
                       </div>
                       <div className="field-cell">
-                        <div className="fc-label">SOC Code</div>
+                        <div className="fc-label">SOC code</div>
                         <div className={`fc-val mono ${!caseData.socCode ? "dim" : ""}`}>
                           {caseData.socCode || "-"}
                         </div>
                       </div>
                       <div className="field-cell">
-                        <div className="fc-label">Wage Offered</div>
+                        <div className="fc-label">Wage offered</div>
                         <div className={`fc-val ${caseData.pwdWageAmount === undefined ? "dim" : ""}`}>
                           {caseData.pwdWageAmount !== undefined
                             ? `${fmtCurrency(caseData.pwdWageAmount)} / yr`
@@ -642,7 +643,7 @@ export function OverviewTab({
         <div className="gantt-wrap">
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, padding: "12px 16px", borderBottom: "3px solid var(--border)", background: "var(--muted)" }}>
             <span className="flex items-center gap-1.5" style={{ fontFamily: "var(--font-mono)", fontSize: "0.72rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em" }}>
-              Case Timeline
+              Case timeline
             </span>
             <Button
               variant="outline"
@@ -687,7 +688,7 @@ export function OverviewTab({
               Cancel
             </Button>
             <Button onClick={handleConfirmTemplateUpdate} disabled={isSavingTemplate}>
-              {isSavingTemplate ? "Updating..." : "Update Template"}
+              {isSavingTemplate ? "Updating..." : "Update template"}
             </Button>
           </DialogFooter>
         </DialogContent>

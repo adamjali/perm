@@ -23,7 +23,7 @@ describe("SummaryTilesGrid", () => {
 
     // Four path blocks and the outcome tiles below them.
     expect(container.querySelectorAll(".h-36, .h-28").length).toBeGreaterThanOrEqual(6);
-    expect(screen.queryByText("Case Summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("Case summary")).not.toBeInTheDocument();
   });
 
   describe("with data", () => {
@@ -34,7 +34,7 @@ describe("SummaryTilesGrid", () => {
     it("renders heading and all 6 status tiles with correct data", () => {
       renderWithProviders(<SummaryTilesGrid />);
 
-      expect(screen.getByText("Case Summary")).toBeInTheDocument();
+      expect(screen.getByText("Case summary")).toBeInTheDocument();
 
       // All status labels present
       for (const label of ["PWD", "Recruitment", "ETA 9089", "I-140", "Complete", "Closed"]) {

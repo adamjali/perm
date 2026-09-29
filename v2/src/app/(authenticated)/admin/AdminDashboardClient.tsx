@@ -101,7 +101,7 @@ export default function AdminDashboardClient() {
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-destructive">
               <AlertCircle className="size-6" />
-              Access Denied
+              Access denied
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -124,7 +124,7 @@ export default function AdminDashboardClient() {
           </div>
           <div>
             <h1 className="font-heading text-3xl font-bold uppercase tracking-wide">
-              Admin Dashboard
+              Admin dashboard
             </h1>{" "}
             <p className="text-muted-foreground">
               Users, alerts and email, and the weekly digest
@@ -136,7 +136,7 @@ export default function AdminDashboardClient() {
           className="mono flex items-center gap-2 border-2 border-foreground bg-background px-4 py-2 text-sm font-bold uppercase tracking-widest shadow-hard-sm transition-all hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
         >
           <ShieldIcon className="h-4 w-4" aria-hidden />
-          Security Ops
+          Security ops
         </Link>
       </div>
 

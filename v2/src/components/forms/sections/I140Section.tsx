@@ -244,13 +244,13 @@ export function I140Section(props: I140SectionProps) {
   const isApproved = !!values.i140ApprovalDate;
 
   return (
-    <FormSection title="I-140 Immigrant Petition" defaultOpen>
+    <FormSection title="I-140 immigrant petition" defaultOpen>
       <div className="space-y-4">
         {/* ========== COMPLETION BADGE ========== */}
         {isApproved && (
           <div className="flex items-center gap-2 rounded-lg border-2 border-primary bg-primary/10 p-3 text-primary">
             <CheckCircle2 className="h-5 w-5" />
-            <span className="font-heading font-semibold">Complete - I-140 Approved!</span>
+            <span className="font-heading font-semibold">Complete: I-140 approved</span>
           </div>
         )}
 
@@ -258,7 +258,7 @@ export function I140Section(props: I140SectionProps) {
         {!values.i140FilingDate && (
           <FilingWindowIndicator
             window={windowData}
-            label="I-140 Filing Window"
+            label="I-140 filing window"
           />
         )}
 
@@ -266,7 +266,7 @@ export function I140Section(props: I140SectionProps) {
         <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
           {/* Filing Date */}
           <FormField
-            label="Filing Date"
+            label="Filing date"
             name="i140FilingDate"
             error={errors?.i140FilingDate}
             hint={filingHint || "Date I-140 was filed (within 180 days of ETA 9089 cert)"}
@@ -287,7 +287,7 @@ export function I140Section(props: I140SectionProps) {
 
           {/* Receipt Date */}
           <FormField
-            label="Receipt Date"
+            label="Receipt date"
             name="i140ReceiptDate"
             error={errors?.i140ReceiptDate}
             hint={receiptIsDisabled ? receiptDisabled.reason : (receiptHint || "Date USCIS receipt notice was received (optional)")}
@@ -309,7 +309,7 @@ export function I140Section(props: I140SectionProps) {
 
           {/* Receipt Number */}
           <FormField
-            label="Receipt Number"
+            label="Receipt number"
             name="i140ReceiptNumber"
             error={errors?.i140ReceiptNumber}
             hint="USCIS receipt number (optional)"
@@ -358,7 +358,7 @@ export function I140Section(props: I140SectionProps) {
 
           {/* Approval Date */}
           <FormField
-            label="Approval Date"
+            label="Approval date"
             name="i140ApprovalDate"
             error={errors?.i140ApprovalDate}
             hint={approvalIsDisabled ? approvalDisabled.reason : (approvalHint || "Date I-140 was approved (triggers completion status)")}
@@ -380,7 +380,7 @@ export function I140Section(props: I140SectionProps) {
 
           {/* Denial Date */}
           <FormField
-            label="Denial Date"
+            label="Denial date"
             name="i140DenialDate"
             error={errors?.i140DenialDate}
             hint={denialIsDisabled ? denialDisabled.reason : (denialHint || "Date I-140 was denied (optional)")}
@@ -402,7 +402,7 @@ export function I140Section(props: I140SectionProps) {
 
           {/* Service Center */}
           <FormField
-            label="Service Center"
+            label="Service center"
             name="i140ServiceCenter"
             error={errors?.i140ServiceCenter}
             hint="USCIS service center handling the case (optional)"
@@ -449,7 +449,7 @@ export function I140Section(props: I140SectionProps) {
                   htmlFor="i140PremiumProcessing"
                   className="font-semibold cursor-pointer flex items-center gap-2"
                 >
-                  Premium Processing
+                  Premium processing
                   <InfoIcon className="h-4 w-4 text-muted-foreground" />
                 </Label>
                 <p className="text-sm text-muted-foreground">

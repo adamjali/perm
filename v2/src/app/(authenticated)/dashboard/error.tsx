@@ -9,5 +9,5 @@ export default function DashboardError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <RouteError error={error} reset={reset} title="Dashboard Error" />;
+  return <RouteError error={error} reset={reset} title="Dashboard error" />;
 }

@@ -9,5 +9,5 @@ export default function TimelineError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <RouteError error={error} reset={reset} title="Timeline Error" />;
+  return <RouteError error={error} reset={reset} title="Timeline error" />;
 }

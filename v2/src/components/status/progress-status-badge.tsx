@@ -10,7 +10,7 @@ const progressConfig: Record<ProgressStatus, { className: string; label: string 
   },
   waiting_intake: {
     className: "bg-muted text-foreground border-border",
-    label: "Waiting for Intake",
+    label: "Waiting for intake",
   },
   filed: {
     className: "bg-stage-pwd text-white border-border",
@@ -22,7 +22,7 @@ const progressConfig: Record<ProgressStatus, { className: string; label: string 
   },
   under_review: {
     className: "bg-stage-eta9089 text-black border-border",
-    label: "Under Review",
+    label: "Under review",
   },
   rfi_rfe: {
     className: "bg-urgency-urgent text-white border-border",
@@ -33,14 +33,30 @@ const progressConfig: Record<ProgressStatus, { className: string; label: string 
 interface ProgressStatusBadgeProps {
   status: ProgressStatus
   className?: string
+  /**
+   * "paper" for the manila case card, which stays light in both themes: the
+   * neutral states take white paper and black ink instead of theme tokens.
+   */
+  surface?: "theme" | "paper"
 }
 
-export function ProgressStatusBadge({ status, className }: ProgressStatusBadgeProps) {
+// Neutral states on the always-light folder; the coloured states keep their fill.
+const paperOverride: Partial<Record<ProgressStatus, string>> = {
+  working: "bg-white/80 text-black",
+  waiting_intake: "bg-black/10 text-black",
+}
+
+export function ProgressStatusBadge({ status, className, surface = "theme" }: ProgressStatusBadgeProps) {
   const config = progressConfig[status]
   return (
     <Badge
       variant="outline"
-      className={cn("text-xs", config.className, className)}
+      className={cn(
+        "text-sm",
+        config.className,
+        surface === "paper" && ["border-black", paperOverride[status]],
+        className,
+      )}
       data-progress={status}
     >
       {config.label}

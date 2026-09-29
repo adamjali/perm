@@ -187,7 +187,7 @@ export default async function SignupPage() {
           }}
         />
         <div className="w-full max-w-lg lg:sticky lg:top-24">
-          <p className="font-mono text-xs font-bold uppercase tracking-[0.12em] opacity-60">
+          <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] opacity-75">
             What you&rsquo;re waiting on
             {snapshot?.permAsOf
               ? ` · DOL as of ${formatAsOf(snapshot.permAsOf)}`
@@ -197,7 +197,7 @@ export default async function SignupPage() {
             <dl className="mt-6 space-y-5">
               {figures.map((f) => (
                 <div key={f.label}>
-                  <dt className="font-mono text-xs font-bold uppercase tracking-wider opacity-60">
+                  <dt className="font-mono text-sm font-bold uppercase tracking-wider opacity-75">
                     {f.label}
                   </dt>{" "}
                   <dd className="mt-1 font-heading text-4xl font-black leading-none">

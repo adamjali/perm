@@ -111,7 +111,7 @@ function ToggleRow({
           {label}
         </Label>
         <p
-          className={`text-xs text-muted-foreground ${disabled ? "opacity-50" : ""}`}
+          className={`text-sm text-muted-foreground ${disabled ? "opacity-50" : ""}`}
         >
           {description}
         </p>
@@ -137,7 +137,7 @@ interface ConnectionStatusBadgeProps {
 function ConnectionStatusBadge({ connected }: ConnectionStatusBadgeProps) {
   if (connected) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary border-2 border-primary">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-primary/10 text-primary border-2 border-primary">
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
         Connected
       </span>
@@ -145,9 +145,9 @@ function ConnectionStatusBadge({ connected }: ConnectionStatusBadgeProps) {
   }
 
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-2 border-border">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border-2 border-border">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
-      Not Connected
+      Not connected
     </span>
   );
 }
@@ -159,37 +159,37 @@ function ConnectionStatusBadge({ connected }: ConnectionStatusBadgeProps) {
 const DEADLINE_TYPES = [
   {
     id: "calendarSyncPwd",
-    label: "PWD Deadlines",
+    label: "PWD deadlines",
     description: "PWD filing and expiration dates",
   },
   {
     id: "calendarSyncEta9089",
-    label: "ETA 9089 Filing Window",
+    label: "ETA 9089 filing window",
     description: "ETA 9089 filing window and certification dates",
   },
   {
     id: "calendarSyncI140",
-    label: "I-140 Deadlines",
+    label: "I-140 deadlines",
     description: "I-140 filing deadlines (180 days from certification)",
   },
   {
     id: "calendarSyncRfe",
-    label: "RFE Due Dates",
+    label: "RFE due dates",
     description: "Request for Evidence response deadlines",
   },
   {
     id: "calendarSyncRfi",
-    label: "RFI Due Dates",
+    label: "RFI due dates",
     description: "Request for Information response deadlines",
   },
   {
     id: "calendarSyncRecruitment",
-    label: "Recruitment Deadlines",
+    label: "Recruitment deadlines",
     description: "Job order, Sunday ads, and recruitment end dates",
   },
   {
     id: "calendarSyncFilingWindow",
-    label: "Filing Window",
+    label: "Filing window",
     description: "30-180 day filing window open/close dates",
   },
 ] as const;
@@ -527,7 +527,7 @@ export default function CalendarSyncSection({
           <div className="flex items-center gap-2">
             <CalendarIcon className="w-5 h-5 text-foreground" />
             <h3 className="font-heading font-bold text-lg text-foreground">
-              Google Calendar Sync
+              Google Calendar sync
             </h3>
           </div>
           <ConnectionStatusBadge connected={isConnected} />
@@ -561,7 +561,7 @@ export default function CalendarSyncSection({
               <p className="text-sm font-medium text-foreground">
                 Google Calendar
               </p>{" "}
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {isConnected
                   ? connectedEmail || "Your calendar is connected and ready to sync"
                   : "Connect your Google Calendar to enable syncing"}
@@ -607,7 +607,7 @@ export default function CalendarSyncSection({
               ) : (
                 <>
                   <CheckIcon className="w-4 h-4 mr-2" />
-                  Connect Calendar
+                  Connect calendar
                 </>
               )}
             </Button>
@@ -623,9 +623,9 @@ export default function CalendarSyncSection({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Sync All Cases
+                  Sync all cases
                 </p>{" "}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {isSyncingAll
                     ? `Syncing ${syncEligibleCount} case${syncEligibleCount !== 1 ? "s" : ""} to calendar...`
                     : syncProgress
@@ -651,7 +651,7 @@ export default function CalendarSyncSection({
                 ) : (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Sync All
+                    Sync all
                   </>
                 )}
               </Button>
@@ -704,7 +704,7 @@ export default function CalendarSyncSection({
                           />
                         </div>
                         {/* Progress text */}
-                        <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center justify-between text-sm">
                           <span className="text-foreground font-medium">
                             {estimatedCasesProcessed} of {syncEligibleCount} cases
                           </span>{" "}
@@ -731,9 +731,9 @@ export default function CalendarSyncSection({
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-foreground">
-                  Clear All Calendar Events
+                  Clear all calendar events
                 </p>{" "}
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {isClearingEvents
                     ? `Removing ${casesWithEvents.estimatedEventCount} event${casesWithEvents.estimatedEventCount !== 1 ? "s" : ""} from ${casesWithEvents.caseCount} case${casesWithEvents.caseCount !== 1 ? "s" : ""}...`
                     : clearProgress
@@ -759,7 +759,7 @@ export default function CalendarSyncSection({
                 ) : (
                   <>
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Clear All
+                    Clear all
                   </>
                 )}
               </Button>
@@ -814,7 +814,7 @@ export default function CalendarSyncSection({
                           />
                         </div>
                         {/* Progress text */}
-                        <div className="flex items-center justify-between text-xs">
+                        <div className="flex items-center justify-between text-sm">
                           <span className="text-foreground font-medium">
                             {totalEvents > 0
                               ? `~${estimatedEventsProcessed} of ${totalEvents} events from ${totalCases} case${totalCases !== 1 ? "s" : ""}`
@@ -839,7 +839,7 @@ export default function CalendarSyncSection({
           {/* Master Toggle */}
           <ToggleRow
             id="calendar-sync-enabled"
-            label="Calendar Sync"
+            label="Calendar sync"
             description="Enable syncing deadlines to Google Calendar"
             checked={masterEnabled}
             onCheckedChange={handleMasterToggle}
@@ -884,7 +884,7 @@ export default function CalendarSyncSection({
           {/* Deadline Type Toggles - 2 column grid */}
           <div className="pt-4 border-t border-border">
             <p className="text-sm font-medium text-foreground mb-4">
-              Deadline Types to Sync
+              Deadline types to sync
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {DEADLINE_TYPES.map((type) => (
@@ -900,7 +900,7 @@ export default function CalendarSyncSection({
                       >
                         {type.label}
                       </Label>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-sm text-muted-foreground">
                         {type.description}
                       </p>
                     </div>

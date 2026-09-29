@@ -137,7 +137,7 @@ function CalendarEmptyState() {
             <CalendarIcon className="size-12 text-muted-foreground" />
           </div>
           <h2 className="font-heading text-xl font-semibold mb-2">
-            No Deadlines to Display
+            No deadlines to display
           </h2>{" "}
           <p className="text-muted-foreground mb-6">
             Add cases with milestone dates to see them on the calendar. Each
@@ -148,7 +148,7 @@ function CalendarEmptyState() {
             className="bg-primary text-primary-foreground font-semibold border-2 border-border shadow-hard hover:shadow-hard-lg transition-all"
           >
             <PlusIcon className="size-4 mr-2" />
-            Add Your First Case
+            Add your first case
           </Button>
         </div>
       </div>
@@ -309,7 +309,7 @@ export function CalendarPageClient() {
               <CalendarIcon className="size-12 text-muted-foreground" />
             </div>
             <h2 className="font-heading text-xl font-semibold mb-2">
-              No Deadlines Visible
+              No deadlines visible
             </h2>{" "}
             <p className="text-muted-foreground">
               Your cases exist but don&apos;t have milestone dates set, or all

@@ -1014,19 +1014,20 @@ export function CasesPageClient() {
           </div>
           <ViewToggle view={viewMode} onChange={handleViewModeChange} />
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Phone: the primary action first and full width, the two tools under it. */}
+        <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0 md:flex md:flex-wrap md:items-center">
           <Button
             variant={selectionMode ? "default" : "outline"}
-            size="default"
+            size="lg"
             onClick={handleToggleSelectionMode}
             aria-label={selectionMode ? "Exit selection mode" : "Enter selection mode"}
           >
             <CheckSquareIcon className="size-5 mr-2" />
-            {selectionMode ? "Exit Selection" : "Select Cases"}
+            {selectionMode ? "Exit selection" : "Select cases"}
           </Button>
           <Button
             variant="outline"
-            size="default"
+            size="lg"
             onClick={() => setImportModalOpen(true)}
             aria-label="Import cases from JSON"
           >
@@ -1035,12 +1036,13 @@ export function CasesPageClient() {
           </Button>
           <Button
             size="lg"
+            className="order-first col-span-2 md:order-none md:col-span-1"
             onClick={handleAddCase}
             loading={isAddingCase}
             loadingText="Adding..."
           >
             <PlusIcon className="size-5 mr-2" />
-            Add Case
+            Add case
           </Button>
         </div>
       </div>
@@ -1224,7 +1226,7 @@ export function CasesPageClient() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className={`size-5 ${singleCaseConfirm.type === "delete" ? "text-destructive" : "text-primary"}`} />
-              {singleCaseConfirm.type === "delete" ? "Delete Case" : "Archive Case"}
+              {singleCaseConfirm.type === "delete" ? "Delete case" : "Archive case"}
             </DialogTitle>
             <DialogDescription>
               {singleCaseConfirm.type === "delete" ? (

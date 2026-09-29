@@ -81,7 +81,7 @@ describe("NotificationList - Rendering", () => {
     (useQuery as Mock).mockReturnValue({ notifications: [], hasMore: false, nextCursor: null });
     renderWithProviders(<NotificationList activeTab="all" />);
     expect(screen.getByText("No notifications")).toBeInTheDocument();
-    expect(screen.getByText(/all caught up/i)).toBeInTheDocument();
+    expect(screen.getByText(/deadline reminders and case updates appear here/i)).toBeInTheDocument();
   });
 
   it("renders notification title, message, and case info", () => {
@@ -107,8 +107,8 @@ describe("NotificationList - Date Grouping", () => {
     renderWithProviders(<NotificationList activeTab="all" />);
     await waitFor(() => expect(screen.getByText("Today")).toBeInTheDocument());
     expect(screen.getByText("Yesterday")).toBeInTheDocument();
-    expect(screen.getByText("This Week")).toBeInTheDocument();
-    expect(screen.getByText("This Month")).toBeInTheDocument();
+    expect(screen.getByText("This week")).toBeInTheDocument();
+    expect(screen.getByText("This month")).toBeInTheDocument();
     expect(screen.getByText("Older")).toBeInTheDocument();
   });
 
@@ -120,14 +120,14 @@ describe("NotificationList - Date Grouping", () => {
     renderWithProviders(<NotificationList activeTab="all" />);
     await waitFor(() => expect(screen.getByText("Today")).toBeInTheDocument());
     expect(screen.queryByText("Yesterday")).not.toBeInTheDocument();
-    expect(screen.queryByText("This Week")).not.toBeInTheDocument();
+    expect(screen.queryByText("This week")).not.toBeInTheDocument();
   });
 });
 
 describe("NotificationList - Empty States", () => {
   it.each([
-    ["all", /^no notifications$/i, /all caught up/i],
-    ["unread", /no unread notifications/i, /read all your notifications/i],
+    ["all", /^no notifications$/i, /deadline reminders and case updates appear here/i],
+    ["unread", /no unread notifications/i, /read every notification/i],
     ["deadlines", /no deadline notifications/i, /no deadline reminders/i],
     ["status", /no status updates/i, /no case status changes/i],
     ["rfe_rfi", /no rfe\/rfi alerts/i, /no rfe or rfi alerts/i],

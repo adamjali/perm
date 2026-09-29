@@ -140,9 +140,9 @@ export default function AutoClosureAlertBanner() {
               variant="ghost"
               size="sm"
               onClick={handleDismissAll}
-              className="text-data-warn-ink hover:text-data-warn-ink text-xs"
+              className="text-data-warn-ink hover:text-data-warn-ink text-sm"
             >
-              Dismiss All
+              Dismiss all
             </Button>
           )}
 
@@ -181,10 +181,10 @@ export default function AutoClosureAlertBanner() {
                 </span>
               </div>
               <div className="flex items-center gap-2 mt-1 text-sm text-data-warn-ink">
-                <span className="inline-flex items-center px-2 py-0.5 bg-data-warn/15 text-data-warn-ink text-xs font-medium rounded-sm">
+                <span className="inline-flex items-center px-2 py-0.5 bg-data-warn/15 text-data-warn-ink text-sm font-medium rounded-sm">
                   {formatClosureReason(alert.closureReason)}
                 </span>{" "}
-                <span className="text-xs text-data-warn-ink">
+                <span className="text-sm text-data-warn-ink">
                   {formatTimeAgo(alert.createdAt)}
                 </span>
               </div>

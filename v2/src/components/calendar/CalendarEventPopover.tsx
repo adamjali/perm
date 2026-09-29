@@ -87,8 +87,9 @@ const contentItemVariants = {
 const URGENCY_LABELS: Record<Urgency, string> = {
   overdue: "Overdue",
   urgent: "Urgent",
-  soon: "Coming Soon",
-  normal: "On Track",
+  soon: "Coming soon",
+  normal: "On track",
+  done: "Done",
 };
 
 // ============================================================================
@@ -345,8 +346,8 @@ export function CalendarEventPopover({
                 className="flex items-center gap-2 p-2 bg-muted border-2 border-border"
               >
                 <EyeIcon className="size-4 text-primary" aria-hidden="true" />
-                <span className="text-xs font-medium text-foreground">
-                  Filing Window Deadline
+                <span className="text-sm font-medium text-foreground">
+                  Filing window deadline
                 </span>
               </motion.div>
             )}
@@ -374,7 +375,7 @@ export function CalendarEventPopover({
             className="bg-primary hover:bg-primary/90"
           >
             <ArrowSquareOutIcon className="size-4" aria-hidden="true" />
-            <span>View Case</span>
+            <span>View case</span>
           </Button>
         </DialogFooter>
       </DialogContent>

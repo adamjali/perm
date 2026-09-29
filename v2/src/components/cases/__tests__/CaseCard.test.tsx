@@ -49,18 +49,18 @@ describe("CaseCard - Rendering", () => {
 
 describe("CaseCard - Badges", () => {
   it.each([
-    ["PRO", { isProfessionalOccupation: true }],
-    ["RFI", { hasActiveRfi: true }],
-    ["RFE", { hasActiveRfe: true }],
+    ["Professional", { isProfessionalOccupation: true }],
+    ["RFI open", { hasActiveRfi: true }],
+    ["RFE open", { hasActiveRfe: true }],
   ] as const)("shows %s badge when applicable", (badge, overrides) => {
     renderWithProviders(<CaseCard case={createMockCaseCardData(overrides)} />);
     expect(screen.getByText(badge)).toBeInTheDocument();
   });
 
   it.each([
-    ["PRO", { isProfessionalOccupation: false }],
-    ["RFI", { hasActiveRfi: false }],
-    ["RFE", { hasActiveRfe: false }],
+    ["Professional", { isProfessionalOccupation: false }],
+    ["RFI open", { hasActiveRfi: false }],
+    ["RFE open", { hasActiveRfe: false }],
   ] as const)("hides %s badge when not applicable", (badge, overrides) => {
     renderWithProviders(<CaseCard case={createMockCaseCardData(overrides)} />);
     expect(screen.queryByText(badge)).not.toBeInTheDocument();
@@ -68,8 +68,8 @@ describe("CaseCard - Badges", () => {
 
   it("shows both RFI and RFE badges when both active", () => {
     renderWithProviders(<CaseCard case={createMockCaseCardData({ hasActiveRfi: true, hasActiveRfe: true })} />);
-    expect(screen.getByText("RFI")).toBeInTheDocument();
-    expect(screen.getByText("RFE")).toBeInTheDocument();
+    expect(screen.getByText("RFI open")).toBeInTheDocument();
+    expect(screen.getByText("RFE open")).toBeInTheDocument();
   });
 });
 
@@ -105,13 +105,16 @@ describe("CaseCard - Next Deadline", () => {
     expect(screen.getByText(new RegExp(expected))).toBeInTheDocument();
   });
 
-  it("shows urgency indicators based on days remaining", () => {
+  // The card leads with the countdown: the number of days, then its unit.
+  it("leads with the days remaining, in the urgency colour", () => {
     const urgentDate = new Date();
     urgentDate.setDate(urgentDate.getDate() + 5);
-    renderWithProviders(
-      <CaseCard case={createMockCaseCardData({ nextDeadline: urgentDate.toISOString().split("T")[0] })} />
-    );
-    expect(screen.getByText(/\d+ days\)/i)).toBeInTheDocument();
+    const iso = `${urgentDate.getFullYear()}-${String(urgentDate.getMonth() + 1).padStart(2, "0")}-${String(urgentDate.getDate()).padStart(2, "0")}`;
+    renderWithProviders(<CaseCard case={createMockCaseCardData({ nextDeadline: iso })} />);
+    const count = screen.getByText("5");
+    expect(count).toBeInTheDocument();
+    expect(screen.getByText("days")).toBeInTheDocument();
+    expect(count.parentElement).toHaveClass("bg-data-bad");
   });
 
   it("handles missing deadline gracefully", () => {

@@ -74,7 +74,7 @@ export function CaseSelectionItem({
           {caseData.employerName}
         </p>{" "}
         <p
-          className="text-xs text-muted-foreground truncate"
+          className="text-sm text-muted-foreground truncate"
           title={caseData.positionTitle}
         >
           {caseData.positionTitle}

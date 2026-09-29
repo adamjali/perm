@@ -62,7 +62,7 @@ export default function AddCaseButton() {
         <PlusIcon className="size-5" />
       )}
       <span>
-        {isNavigating ? "Loading..." : "Add New Case"}
+        {isNavigating ? "Loading..." : "Add new case"}
       </span>
     </button>
   );

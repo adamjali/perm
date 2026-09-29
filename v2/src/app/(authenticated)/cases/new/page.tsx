@@ -19,7 +19,7 @@ import type { Metadata } from "next";
 import { AddCasePageClient } from "./AddCasePageClient";
 
 export const metadata: Metadata = {
-  title: "New Case",
+  title: "New case",
   robots: { index: false, follow: false },
 };
 

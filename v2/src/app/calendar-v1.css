@@ -8,7 +8,8 @@
    ============================================================================ */
 
 .calendar-event {
-  font-size: 0.75rem;
+  /* The 14px label floor holds here too; the full name is in the hover summary. */
+  font-size: 0.875rem;
   padding: 0.25rem 0.5rem;
   margin: 0; /* No margin - spacing via row-segment padding */
   border: 2px solid black;

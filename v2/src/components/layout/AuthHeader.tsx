@@ -297,7 +297,7 @@ export default function AuthHeader({
                 spinnerClassName="text-white"
                 spinnerSize={14}
               >
-                Sign In
+                Sign in
               </NavLink>
             )}{" "}
 
@@ -308,7 +308,7 @@ export default function AuthHeader({
                 spinnerClassName="text-black"
                 spinnerSize={14}
               >
-                Sign Up
+                Sign up
               </NavLink>
             )}{" "}
 
@@ -394,7 +394,7 @@ export default function AuthHeader({
                   spinnerSize={14}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Sign In
+                  Sign in
                 </NavLink>
               )}{" "}
               {showSignUp && (
@@ -405,7 +405,7 @@ export default function AuthHeader({
                   spinnerSize={14}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  Sign Up
+                  Sign up
                 </NavLink>
               )}
             </div>

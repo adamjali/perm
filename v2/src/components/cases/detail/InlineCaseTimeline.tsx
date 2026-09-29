@@ -565,7 +565,7 @@ export function InlineCaseTimeline({
         {/* Range bar legend item */}
         <div className="flex items-center gap-1.5">
           <div className="w-6 h-2.5 rounded-sm bg-muted-foreground/20 border-2 border-muted-foreground/40" />
-          <span className="text-sm text-muted-foreground font-medium">Date Range</span>
+          <span className="text-sm text-muted-foreground font-medium">Date range</span>
         </div>
         {/* Calculated legend item */}
         <div className="flex items-center gap-1.5">

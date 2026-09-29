@@ -122,9 +122,9 @@ export default function BulkActions({ className }: BulkActionsProps) {
          
         >
           <CheckCheck className="size-4 mr-2" />
-          Mark All Read
+          Mark all read
           {unreadCount > 0 && (
-            <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">
+            <span className="ml-2 text-sm bg-muted px-1.5 py-0.5 rounded">
               {unreadCount}
             </span>
           )}
@@ -141,9 +141,9 @@ export default function BulkActions({ className }: BulkActionsProps) {
           className="text-destructive hover:text-destructive-text hover:bg-destructive/10"
         >
           <Trash2 className="size-4 mr-2" />
-          Delete Read
+          Delete read
           {readCount > 0 && (
-            <span className="ml-2 text-xs bg-muted px-1.5 py-0.5 rounded">
+            <span className="ml-2 text-sm bg-muted px-1.5 py-0.5 rounded">
               {readCount}
             </span>
           )}
@@ -156,7 +156,7 @@ export default function BulkActions({ className }: BulkActionsProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="size-5 text-destructive" />
-              Delete Read Notifications
+              Delete read notifications
             </DialogTitle>
             <DialogDescription>
               Are you sure you want to delete all {readCount} read notification

@@ -63,10 +63,10 @@ describe('JobDescriptionField', () => {
       render(<JobDescriptionField {...defaultProps} />);
 
       // Header should be visible
-      expect(screen.getByText('Job Description')).toBeInTheDocument();
+      expect(screen.getByText('Job description')).toBeInTheDocument();
 
       // Content should be hidden (textarea not visible)
-      expect(screen.queryByLabelText('Job Description')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Job description')).not.toBeInTheDocument();
     });
 
     it('expands when header is clicked', async () => {
@@ -77,7 +77,7 @@ describe('JobDescriptionField', () => {
 
       // Content should now be visible
       await waitFor(() => {
-        expect(screen.getByLabelText('Job Description')).toBeInTheDocument();
+        expect(screen.getByLabelText('Job description')).toBeInTheDocument();
       });
     });
 
@@ -85,14 +85,14 @@ describe('JobDescriptionField', () => {
       render(<JobDescriptionField {...defaultProps} defaultExpanded />);
 
       // Verify expanded
-      expect(screen.getByLabelText('Job Description')).toBeInTheDocument();
+      expect(screen.getByLabelText('Job description')).toBeInTheDocument();
 
       // Click header to collapse
       fireEvent.click(screen.getByRole('button', { expanded: true }));
 
       // Wait for collapse animation
       await waitFor(() => {
-        expect(screen.queryByLabelText('Job Description')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Job description')).not.toBeInTheDocument();
       });
     });
 
@@ -100,7 +100,7 @@ describe('JobDescriptionField', () => {
       render(<JobDescriptionField {...defaultProps} defaultExpanded />);
 
       // Content should be visible
-      expect(screen.getByLabelText('Job Description')).toBeInTheDocument();
+      expect(screen.getByLabelText('Job description')).toBeInTheDocument();
     });
   });
 
@@ -193,7 +193,7 @@ describe('JobDescriptionField', () => {
   });
 
   describe('save button dynamic label', () => {
-    it('shows "Save Template" for new template names', () => {
+    it('shows "Save template" for new template names', () => {
       render(
         <JobDescriptionField
           {...defaultProps}
@@ -204,11 +204,11 @@ describe('JobDescriptionField', () => {
         />
       );
 
-      // Should show "Save Template" for new names
-      expect(screen.getByText('Save Template')).toBeInTheDocument();
+      // Should show "Save template" for new names
+      expect(screen.getByText('Save template')).toBeInTheDocument();
     });
 
-    it('shows "Update Template" when position title matches existing template', () => {
+    it('shows "Update template" when position title matches existing template', () => {
       const existingTemplate = createMockTemplate({ name: 'Software Engineer' });
       render(
         <JobDescriptionField
@@ -220,11 +220,11 @@ describe('JobDescriptionField', () => {
         />
       );
 
-      // Should show "Update Template" for existing names
-      expect(screen.getByText('Update Template')).toBeInTheDocument();
+      // Should show "Update template" for existing names
+      expect(screen.getByText('Update template')).toBeInTheDocument();
     });
 
-    it('shows "Update Template" for case-insensitive match', () => {
+    it('shows "Update template" for case-insensitive match', () => {
       const existingTemplate = createMockTemplate({ name: 'Software Engineer' });
       render(
         <JobDescriptionField
@@ -236,8 +236,8 @@ describe('JobDescriptionField', () => {
         />
       );
 
-      // Should still show "Update Template"
-      expect(screen.getByText('Update Template')).toBeInTheDocument();
+      // Should still show "Update template"
+      expect(screen.getByText('Update template')).toBeInTheDocument();
     });
 
     it('disables save button when position title is empty', () => {
@@ -318,7 +318,7 @@ describe('JobDescriptionField', () => {
   });
 
   describe('loaded template indicator', () => {
-    it('shows "From Template" badge when template is loaded and not modified', () => {
+    it('shows "From template" badge when template is loaded and not modified', () => {
       const template = createMockTemplate({ name: 'Test Template' });
       render(
         <JobDescriptionField
@@ -330,8 +330,8 @@ describe('JobDescriptionField', () => {
         />
       );
 
-      // Should show "From Template" in header
-      expect(screen.getByText('From Template')).toBeInTheDocument();
+      // Should show "From template" in header
+      expect(screen.getByText('From template')).toBeInTheDocument();
     });
 
     it('shows "Modified" badge when loaded template content is changed', () => {
@@ -496,7 +496,7 @@ describe('JobDescriptionField', () => {
       expect(positionInput).toBeDisabled();
 
       // Description textarea should be disabled
-      const descriptionTextarea = screen.getByLabelText('Job Description');
+      const descriptionTextarea = screen.getByLabelText('Job description');
       expect(descriptionTextarea).toBeDisabled();
 
       // Buttons should be disabled
@@ -511,7 +511,7 @@ describe('JobDescriptionField', () => {
       render(
         <JobDescriptionField
           {...defaultProps}
-          positionTitle="New Template Name"
+          positionTitle="New template name"
           description="Template description"
           onSaveAsNewTemplate={onSaveAsNewTemplate}
           templates={[]}
@@ -522,7 +522,7 @@ describe('JobDescriptionField', () => {
       const saveButton = screen.getByRole('button', { name: /save template/i });
       await userEvent.click(saveButton);
 
-      expect(onSaveAsNewTemplate).toHaveBeenCalledWith('New Template Name', 'Template description');
+      expect(onSaveAsNewTemplate).toHaveBeenCalledWith('New template name', 'Template description');
     });
 
     it('calls onUpdateTemplate directly when name matches existing template', async () => {

@@ -110,7 +110,7 @@ export default function TimeoutWarningModal({
             id="timeout-title"
             className="font-heading text-xl font-bold tracking-tight text-foreground text-center"
           >
-            Session Timeout Warning
+            Session timeout warning
           </h2>
         </div>
 
@@ -152,19 +152,19 @@ export default function TimeoutWarningModal({
             onClick={onLogout}
           >
             <SignOutIcon className="size-4" />
-            Log Out Now
+            Log out now
           </Button>
           <Button
             className="flex-1"
             onClick={onExtend}
             autoFocus
           >
-            Stay Logged In
+            Stay logged in
           </Button>
         </div>
 
         {/* Keyboard hint */}
-        <p className="mt-4 text-center text-xs text-muted-foreground">
+        <p className="mt-4 text-center text-sm text-muted-foreground">
           Press <kbd className="mono border-2 border-border bg-muted px-1.5 py-0.5">Esc</kbd> to stay logged in
         </p>
       </div>

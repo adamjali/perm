@@ -225,7 +225,7 @@ export function InChatConfirmationCard({
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Duration badge */}
             {duration !== undefined && status === 'done' && (
-              <span className="font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 border-2 border-border">
+              <span className="font-mono text-sm text-muted-foreground bg-muted px-1.5 py-0.5 border-2 border-border">
                 {duration}ms
               </span>
             )}
@@ -239,13 +239,13 @@ export function InChatConfirmationCard({
         {argEntries.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 py-1.5 bg-muted/50 border-2 border-border">
             {argEntries.map(([key, value]) => (
-              <span key={key} className="font-mono text-xs">
+              <span key={key} className="font-mono text-sm">
                 <span className="text-muted-foreground">{key}:</span>{' '}
                 <span className="text-foreground">{formatArgValue(value)}</span>
               </span>
             ))}
             {Object.keys(args).length > 4 && (
-              <span className="font-mono text-xs text-muted-foreground">
+              <span className="font-mono text-sm text-muted-foreground">
                 +{Object.keys(args).length - 4} more
               </span>
             )}
@@ -278,7 +278,7 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-xs text-muted-foreground italic"
+              className="text-sm text-muted-foreground italic"
             >
               Executing action...
             </motion.div>
@@ -288,7 +288,7 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-xs text-primary font-medium"
+              className="text-sm text-primary font-medium"
             >
               Action approved
             </motion.div>
@@ -298,7 +298,7 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-xs text-muted-foreground"
+              className="text-sm text-muted-foreground"
             >
               Action denied by user
             </motion.div>
@@ -308,7 +308,7 @@ export function InChatConfirmationCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="text-xs text-primary font-medium"
+              className="text-sm text-primary font-medium"
             >
               Action completed successfully
             </motion.div>

@@ -201,7 +201,7 @@ describe("TimeoutWarningModal", () => {
       expect(modal).toHaveAttribute("aria-labelledby", "timeout-title");
 
       // Verify the title exists with correct id
-      const title = screen.getByText("Session Timeout Warning");
+      const title = screen.getByText("Session timeout warning");
       expect(title).toHaveAttribute("id", "timeout-title");
     });
 
@@ -230,7 +230,7 @@ describe("TimeoutWarningModal", () => {
     it("shows session timeout warning title", () => {
       renderWithProviders(<TimeoutWarningModal {...defaultProps} />);
 
-      expect(screen.getByText("Session Timeout Warning")).toBeInTheDocument();
+      expect(screen.getByText("Session timeout warning")).toBeInTheDocument();
     });
 
     it("shows inactivity message", () => {

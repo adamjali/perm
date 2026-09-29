@@ -127,10 +127,10 @@ function getDateGroup(timestamp: number): string {
     return "Yesterday";
   }
   if (diffDays < 7) {
-    return "This Week";
+    return "This week";
   }
   if (diffDays < 30) {
-    return "This Month";
+    return "This month";
   }
   return "Older";
 }
@@ -140,7 +140,7 @@ function groupNotificationsByDate(
   notifications: Notification[]
 ): Map<string, Notification[]> {
   const groups = new Map<string, Notification[]>();
-  const groupOrder = ["Today", "Yesterday", "This Week", "This Month", "Older"];
+  const groupOrder = ["Today", "Yesterday", "This week", "This month", "Older"];
 
   // Initialize groups in order
   for (const group of groupOrder) {
@@ -249,7 +249,7 @@ function NotificationListItem({
           >
             {notification.title}
           </p>{" "}
-          <span className="text-xs text-muted-foreground font-mono whitespace-nowrap shrink-0">
+          <span className="text-sm text-muted-foreground font-mono whitespace-nowrap shrink-0">
             {safeFormatDistanceToNow(notification.createdAt)}
           </span>
         </div>
@@ -259,7 +259,7 @@ function NotificationListItem({
         </p>
 
         {notification.caseInfo?.employerName && (
-          <p className="text-xs text-muted-foreground truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
+          <p className="text-sm text-muted-foreground truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
             {notification.caseInfo.employerName}
             {(notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier) &&
               ` - ${notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier}`}
@@ -343,11 +343,11 @@ function EmptyState({ activeTab }: { activeTab: NotificationTabType }) {
   const messages: Record<NotificationTabType, { title: string; description: string }> = {
     all: {
       title: "No notifications",
-      description: "You’re all caught up! No notifications to display.",
+      description: "Deadline reminders and case updates appear here.",
     },
     unread: {
       title: "No unread notifications",
-      description: "You’ve read all your notifications. Great job staying on top of things!",
+      description: "You’ve read every notification.",
     },
     deadlines: {
       title: "No deadline notifications",

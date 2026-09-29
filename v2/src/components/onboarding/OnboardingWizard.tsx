@@ -75,7 +75,7 @@ export function OnboardingWizard() {
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
       >
-        <DialogTitle className="sr-only">Onboarding Setup</DialogTitle>
+        <DialogTitle className="sr-only">Onboarding setup</DialogTitle>
         <DialogDescription className="sr-only">Setup wizard for new users</DialogDescription>
 
         {/* Skip button — shown on all steps except completion */}
@@ -97,7 +97,7 @@ export function OnboardingWizard() {
             aria-label="Skip setup and explore with sample data"
           >
             {isSkipping ? (
-              <span className="text-xs">Setting up...</span>
+              <span className="text-sm">Setting up...</span>
             ) : (
               <>
                 <span className="hidden sm:inline">Skip</span>

@@ -45,12 +45,12 @@ describe('PWDSection', () => {
       );
 
       // Check for field labels
-      expect(screen.getByText('Filing Date')).toBeInTheDocument();
-      expect(screen.getByText('Determination Date')).toBeInTheDocument();
-      expect(screen.getByText('Expiration Date')).toBeInTheDocument();
-      expect(screen.getByText('PWD Case Number')).toBeInTheDocument();
-      expect(screen.getByText('Wage Amount')).toBeInTheDocument();
-      expect(screen.getByText('Wage Level')).toBeInTheDocument();
+      expect(screen.getByText('Filing date')).toBeInTheDocument();
+      expect(screen.getByText('Determination date')).toBeInTheDocument();
+      expect(screen.getByText('Expiration date')).toBeInTheDocument();
+      expect(screen.getByText('PWD case number')).toBeInTheDocument();
+      expect(screen.getByText('Wage amount')).toBeInTheDocument();
+      expect(screen.getByText('Wage level')).toBeInTheDocument();
     });
 
     it('renders filing date as date input', () => {

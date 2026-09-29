@@ -91,9 +91,9 @@ const CASE_STATUS_OPTIONS = [
 
 const PROGRESS_STATUS_OPTIONS = [
   { value: "working", label: "Working" },
-  { value: "waiting_intake", label: "Waiting Intake" },
+  { value: "waiting_intake", label: "Waiting for intake" },
   { value: "filed", label: "Filed" },
-  { value: "under_review", label: "Under Review" },
+  { value: "under_review", label: "Under review" },
   { value: "approved", label: "Approved" },
 ];
 
@@ -437,10 +437,10 @@ export function ImportModal({
         <DialogHeader>
           <DialogTitle>
             {showSuccessStep
-              ? "Import Complete"
+              ? "Import complete"
               : showDuplicateStep
-                ? "Resolve Duplicates"
-                : "Import Cases"}
+                ? "Resolve duplicates"
+                : "Import cases"}
           </DialogTitle>
           <DialogDescription>
             {showSuccessStep
@@ -518,7 +518,7 @@ export function ImportModal({
                       <InfoIcon className="h-5 w-5 text-data-warn-ink flex-shrink-0 mt-0.5" />
                       <div>
                         <p className="font-medium text-data-warn-ink">
-                          Legacy Format Detected
+                          Legacy format detected
                         </p>{" "}
                         <p className="text-sm text-data-warn-ink mt-1">
                           This file appears to be from an older version. Field names will be
@@ -692,7 +692,7 @@ export function ImportModal({
                         <thead className="sticky top-0 z-10">
                           <tr className="border-b-2 border-border bg-muted">
                             <th className="px-3 py-3 text-left text-sm font-semibold w-[25%]">Employer</th>
-                            <th className="px-3 py-3 text-left text-sm font-semibold w-[25%]">Foreign Worker</th>
+                            <th className="px-3 py-3 text-left text-sm font-semibold w-[25%]">Foreign worker</th>
                             <th className="px-3 py-3 text-left text-sm font-semibold w-[35%]">Status</th>
                             <th className="px-3 py-3 text-left text-sm font-semibold w-[15%]">Date</th>
                           </tr>
@@ -827,7 +827,7 @@ export function ImportModal({
                         <h4 className="font-semibold text-sm">
                           Editing Row {editingIndex + 1}:{" "}
                           <span className="font-normal text-muted-foreground">
-                            {editingCase.employerName || "Untitled Case"}
+                            {editingCase.employerName || "Untitled case"}
                           </span>
                         </h4>
                         <Button
@@ -845,7 +845,7 @@ export function ImportModal({
                         {/* Employer Name */}
                         <div className="space-y-2">
                           <Label htmlFor="edit-employer" className="text-sm font-medium">
-                            Employer Name
+                            Employer name
                           </Label>
                           <Input
                             id="edit-employer"
@@ -859,7 +859,7 @@ export function ImportModal({
                         {/* Foreign Worker ID */}
                         <div className="space-y-2">
                           <Label htmlFor="edit-beneficiary" className="text-sm font-medium">
-                            Foreign Worker ID
+                            Foreign worker ID
                           </Label>
                           <Input
                             id="edit-beneficiary"
@@ -877,7 +877,7 @@ export function ImportModal({
                         {/* Case Status */}
                         <div className="space-y-2">
                           <Label htmlFor="edit-case-status" className="text-sm font-medium">
-                            Case Status
+                            Case status
                           </Label>
                           <select
                             id="edit-case-status"
@@ -904,7 +904,7 @@ export function ImportModal({
                         {/* Progress Status */}
                         <div className="space-y-2">
                           <Label htmlFor="edit-progress-status" className="text-sm font-medium">
-                            Progress Status
+                            Progress status
                           </Label>
                           <select
                             id="edit-progress-status"
@@ -942,7 +942,7 @@ export function ImportModal({
                           ) : (
                             <>
                               <CheckIcon className="h-4 w-4 mr-2" />
-                              Save Changes
+                              Save changes
                             </>
                           )}
                         </Button>
@@ -956,7 +956,7 @@ export function ImportModal({
                       <div className="flex items-start gap-3">
                         <AlertCircle className="h-5 w-5 text-data-bad-ink flex-shrink-0 mt-0.5" />
                         <div className="flex-1">
-                          <p className="font-medium text-data-bad-ink mb-2">Validation Errors</p>
+                          <p className="font-medium text-data-bad-ink mb-2">Validation errors</p>
                           <ul className="space-y-1 text-sm text-data-bad-ink">
                             {parseResult.errors.slice(0, 5).map((error, index) => (
                               <li key={index}>
@@ -1003,7 +1003,7 @@ export function ImportModal({
                   onClick={() => handleApplyToAll("skip")}
                   className="hover:bg-muted transition-colors duration-150"
                 >
-                  Skip All
+                  Skip all
                 </Button>
                 <Button
                   variant="outline"
@@ -1011,7 +1011,7 @@ export function ImportModal({
                   onClick={() => handleApplyToAll("replace")}
                   className="hover:bg-destructive/10 hover:text-destructive-text hover:border-destructive transition-colors duration-150"
                 >
-                  Replace All
+                  Replace all
                 </Button>
               </div>
 
@@ -1021,7 +1021,7 @@ export function ImportModal({
                   <thead>
                     <tr className="border-b-2 border-border bg-muted">
                       <th className="px-3 py-3 text-left text-sm font-semibold w-[30%]">Employer</th>
-                      <th className="px-3 py-3 text-left text-sm font-semibold w-[30%]">Foreign Worker</th>
+                      <th className="px-3 py-3 text-left text-sm font-semibold w-[30%]">Foreign worker</th>
                       <th className="px-3 py-3 text-left text-sm font-semibold w-[40%]">Action</th>
                     </tr>
                   </thead>
@@ -1105,7 +1105,7 @@ export function ImportModal({
                 <CheckIcon className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-primary">
-                    Import Successful
+                    Import successful
                   </p>{" "}
                   <p className="text-sm text-primary mt-1">
                     {importSummary.importedCount > 0 && (
@@ -1189,7 +1189,7 @@ export function ImportModal({
                 Back
               </Button>
               <Button onClick={handleFinalImport} loading={isImporting} loadingText="Importing...">
-                Confirm Import
+                Confirm import
               </Button>
             </>
           ) : (

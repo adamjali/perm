@@ -118,7 +118,7 @@ export function CollapsibleSection({
           {/* Status info — amber warning for waiting period, subtle for enabled sections */}
           {statusInfo && (
             <span className={cn(
-              "text-xs font-medium px-2 py-1 rounded hidden sm:inline",
+              "text-sm font-medium px-2 py-1 rounded hidden sm:inline",
               !isEnabled
                 ? "bg-data-warn/15 text-data-warn-ink border-2 border-data-warn"
                 : "text-muted-foreground bg-muted"
@@ -132,7 +132,7 @@ export function CollapsibleSection({
             <div className="flex items-center gap-1.5 text-primary">
               <CheckCircle2 className="h-4 w-4" />
               {!isOpen && summary && (
-                <span className="text-xs text-muted-foreground max-w-[300px] truncate hidden sm:inline">
+                <span className="text-sm text-muted-foreground max-w-[300px] truncate hidden sm:inline">
                   {summary}
                 </span>
               )}

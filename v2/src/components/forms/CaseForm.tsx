@@ -754,7 +754,7 @@ function WarningSummary({ warnings, warningCount }: { warnings: Record<string, s
 function SettingsToggles({ formData, onChange }: { formData: CaseFormData; onChange: (field: string, value: boolean) => void }) {
   return (
     <div className="pt-4 border-t-2 border-border space-y-4">
-      <SettingsToggle id="calendarSync" label="Calendar Sync" description="Sync deadlines to your Google Calendar" checked={formData.calendarSyncEnabled} onChange={(checked) => onChange("calendarSyncEnabled", checked)} />
+      <SettingsToggle id="calendarSync" label="Calendar sync" description="Sync deadlines to your Google Calendar" checked={formData.calendarSyncEnabled} onChange={(checked) => onChange("calendarSyncEnabled", checked)} />
       <SettingsToggle id="favorite" label="Favorite" description="Mark as favorite for quick access" checked={formData.isFavorite} onChange={(checked) => onChange("isFavorite", checked)} />
       <SettingsToggle id="showOnTimeline" label="Show on Timeline" description="Display this case on the timeline view" checked={formData.showOnTimeline} onChange={(checked) => onChange("showOnTimeline", checked)} />
     </div>
@@ -792,7 +792,7 @@ function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCance
         </div>
         <div className="flex items-center gap-3 md:gap-4 order-1 md:order-2">
           <Button type="button" variant="outline" size="lg" onClick={onCancel} disabled={isSubmitting || isDeleting || isCancelNavigating} loading={isCancelNavigating} loadingText="Cancelling..." className="flex-1 md:flex-none">Cancel</Button>
-          <Button type="submit" size="lg" loading={isSubmitting} loadingText="Saving..." disabled={isSubmitting || isDeleting || isCancelNavigating} className="flex-1 md:flex-none">Save Case</Button>
+          <Button type="submit" size="lg" loading={isSubmitting} loadingText="Saving..." disabled={isSubmitting || isDeleting || isCancelNavigating} className="flex-1 md:flex-none">Save case</Button>
         </div>
       </div>
     </div>
@@ -804,12 +804,12 @@ function DeleteDialog({ open, isDeleting, caseName, onCancel, onConfirm }: { ope
     <Dialog open={open} onOpenChange={(o) => !o && onCancel()}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Case</DialogTitle>
+          <DialogTitle>Delete case</DialogTitle>
           <DialogDescription>Are you sure you want to delete &quot;{caseName}&quot;? This action can’t be undone.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
           <Button variant="outline" onClick={onCancel} disabled={isDeleting}>Cancel</Button>
-          <Button variant="destructive" onClick={onConfirm} disabled={isDeleting}>{isDeleting ? "Deleting..." : "Delete Case"}</Button>
+          <Button variant="destructive" onClick={onConfirm} disabled={isDeleting}>{isDeleting ? "Deleting..." : "Delete case"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

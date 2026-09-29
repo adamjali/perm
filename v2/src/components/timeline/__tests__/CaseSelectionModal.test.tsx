@@ -88,7 +88,7 @@ describe("CaseSelectionModal - Render", () => {
 
     expect(screen.getByTestId("case-selection-modal")).toBeInTheDocument();
     expect(
-      screen.getByText("Select Cases")
+      screen.getByText("Select cases")
     ).toBeInTheDocument();
   });
 

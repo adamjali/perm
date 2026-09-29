@@ -57,7 +57,7 @@ describe("AddCasePage", () => {
   it("renders the page with correct title", () => {
     render(<AddCasePage />);
 
-    expect(screen.getByRole("heading", { name: "Add New Case" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Add new case" })).toBeInTheDocument();
   });
 
   it("renders breadcrumb navigation", () => {

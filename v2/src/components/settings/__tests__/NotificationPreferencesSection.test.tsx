@@ -147,7 +147,7 @@ describe("NotificationPreferencesSection", () => {
       );
 
       // Header is in h3, toggle label also contains the text - use getAllByText
-      const elements = screen.getAllByText("Email Notifications");
+      const elements = screen.getAllByText("Email notifications");
       expect(elements.length).toBeGreaterThanOrEqual(1);
       // The first one should be the h3 header
       expect(elements[0].tagName).toBe("H3");
@@ -159,7 +159,7 @@ describe("NotificationPreferencesSection", () => {
       );
 
       // Header is in h3, toggle label also contains the text - use getAllByText
-      const elements = screen.getAllByText("Push Notifications");
+      const elements = screen.getAllByText("Push notifications");
       expect(elements.length).toBeGreaterThanOrEqual(1);
       // The first one should be the h3 header
       expect(elements[0].tagName).toBe("H3");
@@ -170,7 +170,7 @@ describe("NotificationPreferencesSection", () => {
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
       );
 
-      expect(screen.getByText("Reminder Settings")).toBeInTheDocument();
+      expect(screen.getByText("Reminder settings")).toBeInTheDocument();
     });
 
     it("renders section descriptions", () => {
@@ -222,7 +222,7 @@ describe("NotificationPreferencesSection", () => {
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
       );
 
-      expect(screen.getByText("Deadline Reminders")).toBeInTheDocument();
+      expect(screen.getByText("Deadline reminders")).toBeInTheDocument();
       // The switch is in a separate div from the label button, so find by id
       const toggle = document.getElementById("email-deadline-reminders");
       expect(toggle).toBeInTheDocument();
@@ -234,7 +234,7 @@ describe("NotificationPreferencesSection", () => {
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
       );
 
-      expect(screen.getByText("Status Updates")).toBeInTheDocument();
+      expect(screen.getByText("Status updates")).toBeInTheDocument();
     });
 
     it("renders RFI/RFE response toggles when deadline reminders expanded", async () => {
@@ -244,14 +244,14 @@ describe("NotificationPreferencesSection", () => {
       );
 
       // RFI/RFE toggles are inside a collapsible section that starts collapsed
-      // First, expand the "Deadline Reminders" section by clicking on it
+      // First, expand the "Deadline reminders" section by clicking on it
       const deadlineRemindersButton = screen.getByRole("button", { name: /deadline reminders/i });
       await user.click(deadlineRemindersButton);
 
       // Now the RFI/RFE toggles should be visible
       await waitFor(() => {
-        expect(screen.getByText("RFI Response")).toBeInTheDocument();
-        expect(screen.getByText("RFE Response")).toBeInTheDocument();
+        expect(screen.getByText("RFI response")).toBeInTheDocument();
+        expect(screen.getByText("RFE response")).toBeInTheDocument();
       });
     });
 
@@ -322,17 +322,17 @@ describe("NotificationPreferencesSection", () => {
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
       );
 
-      const expandButton = screen.getByText("Deadline Reminders").closest("button");
+      const expandButton = screen.getByText("Deadline reminders").closest("button");
       expect(expandButton).toBeInTheDocument();
       await user.click(expandButton!);
 
       await waitFor(() => {
-        expect(screen.getByText("PWD Expiration")).toBeInTheDocument();
+        expect(screen.getByText("PWD expiration")).toBeInTheDocument();
         expect(screen.getByText("Recruitment")).toBeInTheDocument();
         expect(screen.getByText("ETA 9089")).toBeInTheDocument();
         expect(screen.getByText("I-140")).toBeInTheDocument();
-        expect(screen.getByText("RFI Response")).toBeInTheDocument();
-        expect(screen.getByText("RFE Response")).toBeInTheDocument();
+        expect(screen.getByText("RFI response")).toBeInTheDocument();
+        expect(screen.getByText("RFE response")).toBeInTheDocument();
       });
     });
 
@@ -342,18 +342,18 @@ describe("NotificationPreferencesSection", () => {
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
       );
 
-      const expandButton = screen.getByText("Deadline Reminders").closest("button");
+      const expandButton = screen.getByText("Deadline reminders").closest("button");
 
       // Expand
       await user.click(expandButton!);
       await waitFor(() => {
-        expect(screen.getByText("PWD Expiration")).toBeInTheDocument();
+        expect(screen.getByText("PWD expiration")).toBeInTheDocument();
       });
 
       // Collapse
       await user.click(expandButton!);
       await waitFor(() => {
-        expect(screen.queryByText("PWD Expiration")).not.toBeInTheDocument();
+        expect(screen.queryByText("PWD expiration")).not.toBeInTheDocument();
       });
     });
   });
@@ -418,7 +418,7 @@ describe("NotificationPreferencesSection", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Not Supported")).toBeInTheDocument();
+        expect(screen.getByText("Not supported")).toBeInTheDocument();
       });
     });
 
@@ -523,7 +523,7 @@ describe("NotificationPreferencesSection", () => {
   // REMINDER SETTINGS
   // ============================================================================
 
-  describe("Reminder Settings", () => {
+  describe("Reminder settings", () => {
     it("renders reminder days checkboxes", () => {
       renderWithProviders(
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
@@ -604,7 +604,7 @@ describe("NotificationPreferencesSection", () => {
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
       );
 
-      // There are 2 "Send Test" buttons - one for email, one for push
+      // There are 2 "Send test" buttons - one for email, one for push
       const testButtons = screen.getAllByRole("button", { name: /send test/i });
       expect(testButtons.length).toBe(2);
       expect(testButtons[0]).toBeInTheDocument();
@@ -616,7 +616,7 @@ describe("NotificationPreferencesSection", () => {
       );
 
       const buttons = screen.getAllByRole("button", { name: /send test/i });
-      // First "Send Test" button is for email
+      // First "Send test" button is for email
       expect(buttons[0]).toBeDisabled();
     });
 
@@ -644,7 +644,7 @@ describe("NotificationPreferencesSection", () => {
       await user.click(testButton);
 
       await waitFor(() => {
-        expect(mockToastSuccess).toHaveBeenCalledWith("Test email sent! Check your inbox.");
+        expect(mockToastSuccess).toHaveBeenCalledWith("Test email sent. Check your inbox.");
       });
     });
 
@@ -687,7 +687,7 @@ describe("NotificationPreferencesSection", () => {
 
       await waitFor(() => {
         const buttons = screen.getAllByRole("button", { name: /send test/i });
-        // Second "Send Test" button is for push
+        // Second "Send test" button is for push
         expect(buttons[1]).toBeDisabled();
       });
     });
@@ -759,7 +759,7 @@ describe("NotificationPreferencesSection", () => {
       await user.click(testButton);
 
       await waitFor(() => {
-        expect(mockToastSuccess).toHaveBeenCalledWith("Test push notification sent!");
+        expect(mockToastSuccess).toHaveBeenCalledWith("Test push notification sent");
       });
     });
   });

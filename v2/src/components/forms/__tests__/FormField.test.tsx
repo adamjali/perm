@@ -17,17 +17,17 @@ describe('FormField', () => {
   describe('Basic Rendering', () => {
     it('renders label text', () => {
       renderWithProviders(
-        <FormField label="Employer Name" name="employerName">
+        <FormField label="Employer name" name="employerName">
           <input type="text" />
         </FormField>
       );
 
-      expect(screen.getByText('Employer Name')).toBeInTheDocument();
+      expect(screen.getByText('Employer name')).toBeInTheDocument();
     });
 
     it('renders children (input element)', () => {
       renderWithProviders(
-        <FormField label="Employer Name" name="employerName">
+        <FormField label="Employer name" name="employerName">
           <input type="text" data-testid="input" />
         </FormField>
       );
@@ -38,7 +38,7 @@ describe('FormField', () => {
     it('renders hint text when provided', () => {
       renderWithProviders(
         <FormField
-          label="PWD Filing Date"
+          label="PWD filing date"
           name="pwdFilingDate"
           hint="Date when PWD application was submitted"
         >
@@ -51,7 +51,7 @@ describe('FormField', () => {
 
     it('does not render hint when not provided', () => {
       const { container } = renderWithProviders(
-        <FormField label="Employer Name" name="employerName">
+        <FormField label="Employer name" name="employerName">
           <input type="text" />
         </FormField>
       );
@@ -67,7 +67,7 @@ describe('FormField', () => {
   describe('Required Field Indicator', () => {
     it('shows red asterisk when required', () => {
       renderWithProviders(
-        <FormField label="Employer Name" name="employerName" required>
+        <FormField label="Employer name" name="employerName" required>
           <input type="text" />
         </FormField>
       );
@@ -87,7 +87,7 @@ describe('FormField', () => {
 
     it('asterisk has red color styling', () => {
       const { container } = renderWithProviders(
-        <FormField label="Employer Name" name="employerName" required>
+        <FormField label="Employer name" name="employerName" required>
           <input type="text" />
         </FormField>
       );
@@ -105,7 +105,7 @@ describe('FormField', () => {
     it('renders error message when error prop provided', () => {
       renderWithProviders(
         <FormField
-          label="Employer Name"
+          label="Employer name"
           name="employerName"
           error="Employer name is required"
         >
@@ -119,7 +119,7 @@ describe('FormField', () => {
     it('error message has destructive color styling', () => {
       const { container } = renderWithProviders(
         <FormField
-          label="Employer Name"
+          label="Employer name"
           name="employerName"
           error="Employer name is required"
         >
@@ -136,7 +136,7 @@ describe('FormField', () => {
     it('has shake animation class when error is present', () => {
       const { container } = renderWithProviders(
         <FormField
-          label="Employer Name"
+          label="Employer name"
           name="employerName"
           error="Employer name is required"
         >
@@ -152,7 +152,7 @@ describe('FormField', () => {
 
     it('does not show error when no error prop', () => {
       renderWithProviders(
-        <FormField label="Employer Name" name="employerName">
+        <FormField label="Employer name" name="employerName">
           <input type="text" />
         </FormField>
       );
@@ -192,18 +192,18 @@ describe('FormField', () => {
   describe('Label-Input Association', () => {
     it('associates label with input via name', () => {
       renderWithProviders(
-        <FormField label="Employer Name" name="employerName">
+        <FormField label="Employer name" name="employerName">
           <input type="text" id="employerName" />
         </FormField>
       );
 
-      const label = screen.getByText('Employer Name');
+      const label = screen.getByText('Employer name');
       expect(label.closest('label')).toHaveAttribute('for', 'employerName');
     });
 
     it('has data-slot="label" on label element', () => {
       const { container } = renderWithProviders(
-        <FormField label="Employer Name" name="employerName">
+        <FormField label="Employer name" name="employerName">
           <input type="text" />
         </FormField>
       );
@@ -220,7 +220,7 @@ describe('FormField', () => {
     it('has proper spacing between elements', () => {
       const { container } = renderWithProviders(
         <FormField
-          label="Employer Name"
+          label="Employer name"
           name="employerName"
           hint="Enter the employer's full legal name"
         >
@@ -237,7 +237,7 @@ describe('FormField', () => {
     it('accepts custom className', () => {
       const { container } = renderWithProviders(
         <FormField
-          label="Employer Name"
+          label="Employer name"
           name="employerName"
           className="custom-class"
         >

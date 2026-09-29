@@ -255,14 +255,14 @@ export function ETA9089Section(props: ETA9089SectionProps) {
         {/* ========== FILING WINDOW INDICATOR ========== */}
         <FilingWindowIndicator
           window={windowData}
-          label="ETA 9089 Filing Window"
+          label="ETA 9089 filing window"
         />
 
         {/* ========== FORM FIELDS GRID ========== */}
         <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
           {/* Filing Date */}
           <FormField
-            label="Filing Date"
+            label="Filing date"
             name="eta9089FilingDate"
             error={errors?.eta9089FilingDate}
             hint={filingHint || "Date ETA 9089 was filed (30-180 days after recruitment)"}
@@ -305,7 +305,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
 
           {/* Certification Date */}
           <FormField
-            label="Certification Date"
+            label="Certification date"
             name="eta9089CertificationDate"
             error={errors?.eta9089CertificationDate}
             hint={certIsDisabled ? certificationDisabled.reason : (certHint || "Date ETA 9089 was certified by DOL")}
@@ -327,7 +327,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
 
           {/* Expiration Date (Auto-calculated, disabled) */}
           <FormField
-            label="Expiration Date"
+            label="Expiration date"
             name="eta9089ExpirationDate"
             error={errors?.eta9089ExpirationDate}
             autoCalculated={isExpirationAutoCalculated}
@@ -346,7 +346,7 @@ export function ETA9089Section(props: ETA9089SectionProps) {
 
           {/* Case Number (Full Width) */}
           <FormField
-            label="ETA 9089 Case Number"
+            label="ETA 9089 case number"
             name="eta9089CaseNumber"
             error={errors?.eta9089CaseNumber}
             hint="DOL case number (optional)"

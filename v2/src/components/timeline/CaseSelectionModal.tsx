@@ -202,7 +202,7 @@ export function CaseSelectionModal({
         {/* Header */}
         <DialogHeader>
           <DialogTitle>
-            {title ?? "Select Cases"}
+            {title ?? "Select cases"}
           </DialogTitle>
           <DialogDescription>
             {description ?? "Choose which cases to display."}
@@ -251,7 +251,7 @@ export function CaseSelectionModal({
             onClick={handleSelectAll}
             data-testid="select-all-btn"
           >
-            Select All
+            Select all
           </Button>
           <Button
             variant="outline"
@@ -259,7 +259,7 @@ export function CaseSelectionModal({
             onClick={handleDeselectAll}
             data-testid="deselect-all-btn"
           >
-            Deselect All
+            Deselect all
           </Button>
           <Button
             variant="outline"
@@ -267,7 +267,7 @@ export function CaseSelectionModal({
             onClick={handleActiveOnly}
             data-testid="active-only-btn"
           >
-            Active Only
+            Active only
           </Button>
           <span className="ml-auto text-sm text-muted-foreground">
             Showing {filteredCases.length} of {allCases.length} cases
@@ -315,7 +315,7 @@ export function CaseSelectionModal({
             Cancel
           </Button>
           <Button onClick={handleSave} data-testid="save-selection-btn">
-            Save Changes
+            Save changes
           </Button>
         </DialogFooter>
       </DialogContent>

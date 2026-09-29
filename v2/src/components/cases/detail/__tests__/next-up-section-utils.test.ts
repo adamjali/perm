@@ -90,14 +90,14 @@ describe("calculateNextAction", () => {
     expect(result!.action).toBe("Wait for PWD");
   });
 
-  it("returns 'Start Recruitment' when PWD determined", () => {
+  it("returns 'Start recruitment' when PWD determined", () => {
     const result = calculateNextAction({
       ...baseCaseData,
       caseStatus: "pwd",
       pwdFilingDate: "2025-01-01",
       pwdDeterminationDate: "2025-05-01",
     });
-    expect(result!.action).toBe("Start Recruitment");
+    expect(result!.action).toBe("Start recruitment");
   });
 
   it("prioritizes active RFI over stage actions", () => {
@@ -148,20 +148,20 @@ describe("calculateNextAction", () => {
         },
       ],
     });
-    expect(result!.action).toBe("Wait for Certification");
+    expect(result!.action).toBe("Wait for certification");
   });
 
   // Recruitment stage
-  it("returns 'Start Recruitment' when PWD done but no recruitment dates", () => {
+  it("returns 'Start recruitment' when PWD done but no recruitment dates", () => {
     const result = calculateNextAction({
       ...baseCaseData,
       ...pwdDone,
       caseStatus: "recruitment",
     });
-    expect(result!.action).toBe("Start Recruitment");
+    expect(result!.action).toBe("Start recruitment");
   });
 
-  it("returns 'Post Job Order' when other recruitment exists but no job order", () => {
+  it("returns 'Post job order' when other recruitment exists but no job order", () => {
     const result = calculateNextAction({
       ...baseCaseData,
       ...pwdDone,
@@ -169,10 +169,10 @@ describe("calculateNextAction", () => {
       noticeOfFilingStartDate: "2025-02-20",
       noticeOfFilingEndDate: "2025-03-06",
     });
-    expect(result!.action).toBe("Post Job Order");
+    expect(result!.action).toBe("Post job order");
   });
 
-  it("returns 'Post Notice of Filing' after job order", () => {
+  it("returns 'Post notice of filing' after job order", () => {
     const result = calculateNextAction({
       ...baseCaseData,
       ...pwdDone,
@@ -180,7 +180,7 @@ describe("calculateNextAction", () => {
       jobOrderStartDate: "2025-02-15",
       jobOrderEndDate: "2025-03-17",
     });
-    expect(result!.action).toBe("Post Notice of Filing");
+    expect(result!.action).toBe("Post notice of filing");
   });
 
   // ETA 9089 stage
@@ -205,7 +205,7 @@ describe("calculateNextAction", () => {
     expect(result!.action).toBe("File I-140");
   });
 
-  it("returns 'Case Complete' when I-140 approved", () => {
+  it("returns 'Case complete' when I-140 approved", () => {
     const result = calculateNextAction({
       ...baseCaseData,
       ...recruitmentDone,
@@ -215,10 +215,10 @@ describe("calculateNextAction", () => {
       i140FilingDate: "2025-05-15",
       i140ApprovalDate: "2025-05-30",
     });
-    expect(result!.action).toBe("Case Complete");
+    expect(result!.action).toBe("Case complete");
   });
 
-  it("returns 'Wait for I-140 Decision' when filed but no decision", () => {
+  it("returns 'Wait for I-140 decision' when filed but no decision", () => {
     const result = calculateNextAction({
       ...baseCaseData,
       ...recruitmentDone,
@@ -227,7 +227,7 @@ describe("calculateNextAction", () => {
       eta9089CertificationDate: "2025-05-01",
       i140FilingDate: "2025-05-15",
     });
-    expect(result!.action).toBe("Wait for I-140 Decision");
+    expect(result!.action).toBe("Wait for I-140 decision");
   });
 
   it("returns null for I-140 denied (case falls through to null)", () => {
@@ -244,7 +244,7 @@ describe("calculateNextAction", () => {
   });
 
   // Recruitment sub-stages
-  it("returns 'Place Sunday Ads' after notice of filing", () => {
+  it("returns 'Place Sunday ads' after notice of filing", () => {
     const result = calculateNextAction({
       ...baseCaseData,
       ...pwdDone,
@@ -254,10 +254,10 @@ describe("calculateNextAction", () => {
       noticeOfFilingStartDate: "2025-02-20",
       noticeOfFilingEndDate: "2025-03-06",
     });
-    expect(result!.action).toBe("Place Sunday Ads");
+    expect(result!.action).toBe("Place Sunday ads");
   });
 
-  it("returns 'Complete Additional Recruitment' for professional occupations", () => {
+  it("returns 'Complete additional recruitment' for professional occupations", () => {
     const result = calculateNextAction({
       ...baseCaseData,
       ...recruitmentDone,
@@ -265,7 +265,7 @@ describe("calculateNextAction", () => {
       isProfessionalOccupation: true,
       additionalRecruitmentMethods: [],
     });
-    expect(result!.action).toBe("Complete Additional Recruitment");
+    expect(result!.action).toBe("Complete additional recruitment");
   });
 });
 

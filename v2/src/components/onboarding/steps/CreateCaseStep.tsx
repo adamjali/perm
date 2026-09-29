@@ -83,7 +83,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
         {/* Employer Name */}
         <div className="space-y-1.5">
           <Label htmlFor="onb-employer" className="font-heading font-semibold text-sm">
-            Employer Name <span className="text-destructive">*</span>
+            Employer name <span className="text-destructive">*</span>
           </Label>
           <Input
             id="onb-employer"
@@ -96,14 +96,14 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
             aria-invalid={!!errors.employerName}
           />
           {errors.employerName && (
-            <p className="text-xs text-destructive">{errors.employerName}</p>
+            <p className="text-sm text-destructive">{errors.employerName}</p>
           )}
         </div>
 
         {/* Position Title */}
         <div className="space-y-1.5">
           <Label htmlFor="onb-position" className="font-heading font-semibold text-sm">
-            Position Title <span className="text-destructive">*</span>
+            Position title <span className="text-destructive">*</span>
           </Label>
           <Input
             id="onb-position"
@@ -116,7 +116,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
             aria-invalid={!!errors.positionTitle}
           />
           {errors.positionTitle && (
-            <p className="text-xs text-destructive">{errors.positionTitle}</p>
+            <p className="text-sm text-destructive">{errors.positionTitle}</p>
           )}
         </div>
 
@@ -132,7 +132,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
             onChange={(e) => setBeneficiaryIdentifier(e.target.value)}
             placeholder="e.g. initials or internal ID"
           />
-          <p className="text-xs text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             A privacy-safe label to identify the beneficiary
           </p>
         </div>
@@ -140,7 +140,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
         {/* Stage Selector */}
         <div className="space-y-1.5">
           <Label className="font-heading font-semibold text-sm">
-            Current PERM Stage
+            Current PERM stage
           </Label>
           <div className="flex flex-wrap gap-2">
             {PERM_STAGES.map((stage) => (
@@ -177,7 +177,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
         size="lg"
         className="w-full max-w-sm"
       >
-        Create Case
+        Create case
       </Button>
     </div>
   );

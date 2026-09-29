@@ -149,7 +149,7 @@ export function FormField({
         {/* Auto-calculated badge */}
         {autoCalculated && (
           <span
-            className="rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary"
+            className="rounded bg-primary/10 px-1.5 py-0.5 text-sm font-medium text-primary"
             aria-label="Auto-calculated value"
           >
             Auto

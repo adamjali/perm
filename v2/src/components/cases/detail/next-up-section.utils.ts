@@ -70,11 +70,11 @@ export interface NextUpCaseData {
 
 /** All known action names returned by calculateNextAction. */
 export type NextActionName =
-  | "File PWD" | "Wait for PWD" | "Start Recruitment"
-  | "Post Job Order" | "Post Notice of Filing" | "Place Sunday Ads"
-  | "Complete Additional Recruitment" | "Wait for Filing Window" | "File ETA 9089"
-  | "Wait for Certification" | "File I-140" | "Wait for I-140 Decision"
-  | "Case Complete" | "Respond to RFI" | "Respond to RFE";
+  | "File PWD" | "Wait for PWD" | "Start recruitment"
+  | "Post job order" | "Post notice of filing" | "Place Sunday ads"
+  | "Complete additional recruitment" | "Wait for filing window" | "File ETA 9089"
+  | "Wait for certification" | "File I-140" | "Wait for I-140 decision"
+  | "Case complete" | "Respond to RFI" | "Respond to RFE";
 
 export interface NextAction {
   action: NextActionName;
@@ -312,10 +312,10 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
   const hasSundayAds = caseData.sundayAdFirstDate && caseData.sundayAdSecondDate;
   const hasAnyRecruitment = caseData.jobOrderStartDate || caseData.sundayAdFirstDate || caseData.noticeOfFilingStartDate;
 
-  // "Start Recruitment" only if NO recruitment has begun at all
+  // "Start recruitment" only if NO recruitment has begun at all
   if (!hasAnyRecruitment) {
     return {
-      action: "Start Recruitment",
+      action: "Start recruitment",
       description: "Begin recruitment activities for labor certification",
       icon: createElement(BriefcaseIcon, { className: "h-5 w-5" }),
       urgency: "normal",
@@ -324,7 +324,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
 
   if (!hasJobOrder) {
     return {
-      action: "Post Job Order",
+      action: "Post job order",
       description: "Submit job posting to State Workforce Agency (30+ days)",
       icon: createElement(BriefcaseIcon, { className: "h-5 w-5" }),
       urgency: "normal",
@@ -333,7 +333,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
 
   if (!hasNoticeOfFiling) {
     return {
-      action: "Post Notice of Filing",
+      action: "Post notice of filing",
       description: "Post internal notice for 10 consecutive business days",
       icon: createElement(FileTextIcon, { className: "h-5 w-5" }),
       urgency: "normal",
@@ -342,7 +342,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
 
   if (!hasSundayAds) {
     return {
-      action: "Place Sunday Ads",
+      action: "Place Sunday ads",
       description: "Publish two newspaper ads on consecutive Sundays",
       icon: createElement(FileTextIcon, { className: "h-5 w-5" }),
       urgency: "normal",
@@ -360,7 +360,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     if (!professionalComplete) {
       const completedCount = methods.filter((m) => m.method && m.date).length;
       return {
-        action: "Complete Additional Recruitment",
+        action: "Complete additional recruitment",
         description: `${completedCount}/3 professional recruitment methods completed`,
         icon: createElement(GraduationCapIcon, { className: "h-5 w-5" }),
         urgency: "normal",
@@ -374,7 +374,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
     const daysUntilOpens = calculateDaysUntil(filingWindow.opens);
     if (daysUntilOpens > 0) {
       return {
-        action: "Wait for Filing Window",
+        action: "Wait for filing window",
         description: `ETA 9089 filing window opens in ${daysUntilOpens} days`,
         icon: createElement(ClockIcon, { className: "h-5 w-5" }),
         urgency: "normal",
@@ -393,7 +393,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
   }
   if (!caseData.eta9089CertificationDate) {
     return {
-      action: "Wait for Certification",
+      action: "Wait for certification",
       description: "Awaiting DOL certification decision",
       icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
       urgency: "normal",
@@ -414,7 +414,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
   }
   if (!caseData.i140ApprovalDate && !caseData.i140DenialDate) {
     return {
-      action: "Wait for I-140 Decision",
+      action: "Wait for I-140 decision",
       description: "Awaiting USCIS adjudication",
       icon: createElement(HourglassIcon, { className: "h-5 w-5" }),
       urgency: "normal",
@@ -422,7 +422,7 @@ export function calculateNextAction(caseData: NextUpCaseData): NextAction | null
   }
   if (caseData.i140ApprovalDate) {
     return {
-      action: "Case Complete",
+      action: "Case complete",
       description: "I-140 approved. PERM process complete.",
       icon: createElement(CheckCircle2, { className: "h-5 w-5" }),
       urgency: "normal",

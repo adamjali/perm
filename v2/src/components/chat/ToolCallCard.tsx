@@ -123,7 +123,7 @@ export function ToolCallCard({
             </div>
 
             {/* Tool Name */}
-            <span className="font-mono text-xs font-medium truncate">
+            <span className="font-mono text-sm font-medium truncate">
               {displayName}
             </span>
           </div>
@@ -132,7 +132,7 @@ export function ToolCallCard({
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* Duration badge */}
             {duration && status === 'success' && (
-              <span className="font-mono text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm">
+              <span className="font-mono text-sm text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm">
                 {duration}
               </span>
             )}
@@ -146,7 +146,7 @@ export function ToolCallCard({
         {argSummary.length > 0 && (
           <div className="flex flex-wrap gap-x-3 gap-y-1">
             {argSummary.map(({ key, value }) => (
-              <span key={key} className="font-mono text-xs">
+              <span key={key} className="font-mono text-sm">
                 <span className="text-muted-foreground">{key}:</span>{' '}
                 <span className="text-foreground">{value}</span>
               </span>
@@ -161,7 +161,7 @@ export function ToolCallCard({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className={cn(
-                "text-xs italic",
+                "text-sm italic",
                 isAwaitingConfirmation
                   ? "text-data-warn-ink"
                   : "text-muted-foreground"
@@ -176,7 +176,7 @@ export function ToolCallCard({
               initial={{ opacity: 0, x: -4 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, ...springConfig }}
-              className="text-xs font-medium text-primary"
+              className="text-sm font-medium text-primary"
             >
               {resultSummary}
             </motion.span>
@@ -187,7 +187,7 @@ export function ToolCallCard({
               initial={{ opacity: 0, x: -4 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, ...springConfig }}
-              className="text-xs font-medium text-destructive"
+              className="text-sm font-medium text-destructive"
             >
               {result ? summarizeToolResult(tool, result) || 'Error occurred' : 'Error occurred'}
             </motion.span>
@@ -198,7 +198,7 @@ export function ToolCallCard({
               initial={{ opacity: 0, x: -4 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.1, ...springConfig }}
-              className="text-xs text-muted-foreground"
+              className="text-sm text-muted-foreground"
             >
               Action denied by user
             </motion.span>

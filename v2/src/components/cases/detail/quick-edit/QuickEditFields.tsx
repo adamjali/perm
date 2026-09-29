@@ -510,7 +510,7 @@ export function QuickEditFields({
         ) : submitStatus === "saved" ? (
           <>
             <CheckIcon className="h-4 w-4" />
-            <span>Saved!</span>
+            <span>Saved</span>
           </>
         ) : (
           <span>Save & Complete</span>

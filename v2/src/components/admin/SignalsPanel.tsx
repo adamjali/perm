@@ -52,8 +52,8 @@ function SubList({ title, rows, open }: { title: string; rows: Sub[]; open: bool
             <li key={`${r.email}-${r.subject}-${i}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 px-4 py-2 text-sm">
               <span className="font-medium">{r.email}</span>{" "}
               <span className="text-muted-foreground">{r.subject}</span>{" "}
-              <span className={`px-1.5 py-0.5 text-xs font-bold ${STATUS_CLASS[r.status] ?? ""}`}>{r.status}</span>{" "}
-              <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+              <span className={`px-1.5 py-0.5 text-sm font-bold ${STATUS_CLASS[r.status] ?? ""}`}>{r.status}</span>{" "}
+              <span className="ml-auto text-sm tabular-nums text-muted-foreground">
                 {when(r.createdAt)}
                 {r.lastNotifiedAt ? `, alerted ${when(r.lastNotifiedAt)}` : ""}
               </span>
@@ -129,7 +129,7 @@ export function ActivityPanel({ signals }: { signals: Signals }) {
             {recentUsers.map((u) => (
               <li key={`${u.email}-${u.createdAt}`} className="flex items-baseline justify-between gap-3 py-1.5 text-sm">
                 <span className="font-medium">{u.email}</span>{" "}
-                <span className="text-xs tabular-nums text-muted-foreground">{when(u.createdAt)}</span>
+                <span className="text-sm tabular-nums text-muted-foreground">{when(u.createdAt)}</span>
               </li>
             ))}
           </ul>
@@ -144,8 +144,8 @@ export function ActivityPanel({ signals }: { signals: Signals }) {
                 <li key={`${c.email}-${i}`} className="flex flex-wrap items-baseline gap-x-3 py-1.5 text-sm">
                   <span className="font-medium">{c.email}</span>{" "}
                   <span className="text-muted-foreground">{c.employerName}</span>{" "}
-                  {c.caseNumber ? <span className="font-mono text-xs text-muted-foreground">{c.caseNumber}</span> : null}{" "}
-                  <span className="ml-auto text-xs tabular-nums text-muted-foreground">{when(c.createdAt)}</span>
+                  {c.caseNumber ? <span className="font-mono text-sm text-muted-foreground">{c.caseNumber}</span> : null}{" "}
+                  <span className="ml-auto text-sm tabular-nums text-muted-foreground">{when(c.createdAt)}</span>
                 </li>
               ))}
             </ul>
@@ -177,11 +177,11 @@ export function DigestPanel({ signals }: { signals: Signals }) {
         <details className="mt-3 border-2 border-border bg-background">
           <summary className="min-h-[44px] cursor-pointer px-3 py-2 text-sm">
             <span className="font-bold">{newsletter.latest.subject}</span>{" "}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-sm text-muted-foreground">
               {`${newsletter.latest.status}${newsletter.latest.sentCount > 0 ? `, ${newsletter.latest.sentCount} sent` : ""}, built ${when(newsletter.latest.builtAt)}`}
             </span>
           </summary>{" "}
-          <pre className="max-h-96 overflow-auto whitespace-pre-wrap border-t-2 border-border p-3 font-mono text-xs leading-relaxed">
+          <pre className="max-h-96 overflow-auto whitespace-pre-wrap border-t-2 border-border p-3 font-mono text-sm leading-relaxed">
             {newsletter.latest.text}
           </pre>
         </details>

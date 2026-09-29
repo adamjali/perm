@@ -188,7 +188,7 @@ export function PWDSection(props: PWDSectionProps) {
 
         {/* Filing Date */}
         <FormField
-          label="Filing Date"
+          label="Filing date"
           name="pwdFilingDate"
           error={errors?.pwdFilingDate}
           hint={filingHint || "Date PWD application was filed"}
@@ -208,7 +208,7 @@ export function PWDSection(props: PWDSectionProps) {
 
         {/* Determination Date */}
         <FormField
-          label="Determination Date"
+          label="Determination date"
           name="pwdDeterminationDate"
           error={errors?.pwdDeterminationDate}
           hint={detIsDisabled ? determinationDisabled.reason : (determinationHint || "Determination date triggers expiration calculation")}
@@ -230,7 +230,7 @@ export function PWDSection(props: PWDSectionProps) {
 
         {/* Expiration Date (Auto-calculated, disabled) */}
         <FormField
-          label="Expiration Date"
+          label="Expiration date"
           name="pwdExpirationDate"
           error={errors?.pwdExpirationDate}
           autoCalculated={isExpirationAutoCalculated}
@@ -251,7 +251,7 @@ export function PWDSection(props: PWDSectionProps) {
 
         {/* PWD Case Number */}
         <FormField
-          label="PWD Case Number"
+          label="PWD case number"
           name="pwdCaseNumber"
           error={errors?.pwdCaseNumber}
           hint="DOL case number (optional)"
@@ -270,7 +270,7 @@ export function PWDSection(props: PWDSectionProps) {
 
         {/* Wage Amount */}
         <FormField
-          label="Wage Amount"
+          label="Wage amount"
           name="pwdWageAmount"
           error={errors?.pwdWageAmount}
           hint="Annual wage in USD (optional)"
@@ -299,7 +299,7 @@ export function PWDSection(props: PWDSectionProps) {
 
         {/* Wage Level */}
         <FormField
-          label="Wage Level"
+          label="Wage level"
           name="pwdWageLevel"
           error={errors?.pwdWageLevel}
           hint="DOL wage level (optional)"

@@ -41,7 +41,7 @@ import {
   CaseSelectionModal,
   type CaseForSelection,
 } from "@/components/timeline";
-import { TimelineLegend } from "@/components/timeline";
+import { TimelineLegendCompact } from "@/components/timeline";
 import { cn } from "@/lib/utils";
 import type { DeadlineType } from "@/lib/calendar/types";
 
@@ -130,57 +130,57 @@ const DEADLINE_TYPE_GROUPS: {
     stage: "PWD",
     color: "#0066FF",
     types: [
-      { value: "pwdFiled", label: "PWD Filed" },
-      { value: "pwdDetermined", label: "PWD Determined" },
-      { value: "pwdExpires", label: "PWD Expiration" },
+      { value: "pwdFiled", label: "PWD filed" },
+      { value: "pwdDetermined", label: "PWD determined" },
+      { value: "pwdExpires", label: "PWD expiration" },
     ],
   },
   {
     stage: "Recruitment",
     color: "#9333ea",
     types: [
-      { value: "jobOrderStart", label: "Job Order Start" },
-      { value: "jobOrderEnd", label: "Job Order End" },
+      { value: "jobOrderStart", label: "Job order start" },
+      { value: "jobOrderEnd", label: "Job order end" },
       { value: "sundayAdFirst", label: "1st Sunday Ad" },
       { value: "sundayAdSecond", label: "2nd Sunday Ad" },
-      { value: "noticeOfFilingStart", label: "Notice Posted" },
-      { value: "noticeOfFilingEnd", label: "Notice End" },
+      { value: "noticeOfFilingStart", label: "Notice posted" },
+      { value: "noticeOfFilingEnd", label: "Notice end" },
     ],
   },
   {
     stage: "Professional",
     color: "#9333ea", // Same purple as Recruitment (part of recruitment phase)
     types: [
-      { value: "additionalRecruitmentStart", label: "Addl Recruitment Start" },
-      { value: "additionalRecruitmentEnd", label: "Addl Recruitment End" },
-      { value: "additionalMethod", label: "Addl Methods" },
+      { value: "additionalRecruitmentStart", label: "Addl recruitment start" },
+      { value: "additionalRecruitmentEnd", label: "Addl recruitment end" },
+      { value: "additionalMethod", label: "Addl methods" },
     ],
   },
   {
     stage: "ETA 9089",
     color: "#D97706",
     types: [
-      { value: "eta9089Filed", label: "ETA Filed" },
-      { value: "eta9089Certified", label: "ETA Certified" },
-      { value: "eta9089Expires", label: "ETA Expiration" },
-      { value: "filingWindowOpens", label: "Filing Window Opens" },
-      { value: "filingWindowCloses", label: "Filing Window Closes" },
+      { value: "eta9089Filed", label: "ETA filed" },
+      { value: "eta9089Certified", label: "ETA certified" },
+      { value: "eta9089Expires", label: "ETA expiration" },
+      { value: "filingWindowOpens", label: "Filing window opens" },
+      { value: "filingWindowCloses", label: "Filing window closes" },
     ],
   },
   {
     stage: "I-140",
     color: "#059669",
     types: [
-      { value: "i140Filed", label: "I-140 Filed" },
-      { value: "i140Approved", label: "I-140 Approved" },
+      { value: "i140Filed", label: "I-140 filed" },
+      { value: "i140Approved", label: "I-140 approved" },
     ],
   },
   {
     stage: "RFI/RFE",
     color: "#DC2626",
     types: [
-      { value: "rfiDue", label: "RFI Due Dates" },
-      { value: "rfeDue", label: "RFE Due Dates" },
+      { value: "rfiDue", label: "RFI due dates" },
+      { value: "rfeDue", label: "RFE due dates" },
     ],
   },
 ];
@@ -322,7 +322,7 @@ export function CalendarFilters({
             <span>Cases</span>{" "}
             <span
               className={cn(
-                "ml-1 px-2 py-0.5 text-xs font-bold border-2 border-border",
+                "ml-1 px-2 py-0.5 text-sm font-bold border-2 border-border",
                 selectedCaseIds.size === allCases.length
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted text-muted-foreground"
@@ -341,7 +341,7 @@ export function CalendarFilters({
             data-testid="toggle-filters-btn"
           >
             <Filter className="size-4" />
-            <span className="hidden sm:inline">Deadline Filters</span>
+            <span className="hidden sm:inline">Deadline filters</span>
             {isFiltersExpanded ? (
               <CaretUpIcon className="size-4" />
             ) : (
@@ -365,7 +365,7 @@ export function CalendarFilters({
             htmlFor="show-completed"
             className="text-sm cursor-pointer whitespace-nowrap"
           >
-            Show Completed (I-140 Approved)
+            Show completed (I-140 approved)
           </Label>
         </div>
 
@@ -384,9 +384,12 @@ export function CalendarFilters({
             htmlFor="show-closed"
             className="text-sm cursor-pointer whitespace-nowrap"
           >
-            Show Closed/Archived
+            Show closed or archived
           </Label>
         </div>
+
+        {/* What the colours mean, in the same bar instead of a box of its own */}
+        <TimelineLegendCompact className="sm:ml-auto" />
       </div>
 
       {/* Expandable Deadline Type Filters with animation */}
@@ -453,7 +456,7 @@ export function CalendarFilters({
                           />
                           <Label
                             htmlFor={`filter-${type.value}`}
-                            className="text-xs cursor-pointer font-normal"
+                            className="text-sm cursor-pointer font-normal"
                           >
                             {type.label}
                           </Label>
@@ -467,9 +470,6 @@ export function CalendarFilters({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Stage Colors Legend */}
-      <TimelineLegend sticky={false} className="border-2 border-border shadow-hard" />
 
       {/* Case Selection Modal */}
       <CaseSelectionModal

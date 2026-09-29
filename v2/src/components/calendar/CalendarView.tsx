@@ -38,10 +38,12 @@ import type { CalendarEvent } from "@/lib/calendar/types";
 import type { CaseStatus } from "@/lib/perm";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { CalendarToolbar } from "./CalendarToolbar";
+import { CalendarListToggleContext } from "./calendar-view-context";
 import { CalendarEvent as CalendarEventComponent } from "./CalendarEvent";
 import { CalendarEventPopover } from "./CalendarEventPopover";
 import { CalendarMobileList } from "./CalendarMobileList";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { GridNineIcon, ListIcon } from "@phosphor-icons/react/ssr";
 
 // ============================================================================
@@ -215,9 +217,11 @@ export function CalendarView({
   const useResponsiveLayout = effectiveViewMode === null;
 
   return (
+    <CalendarListToggleContext.Provider value={handleViewModeToggle}>
     <div className="w-full calendar-container">
-      {/* View Mode Toggle Button - Always visible */}
-      <div className="flex justify-end mb-4">
+      {/* View mode toggle. On desktop the calendar's toolbar carries "List"
+          itself, so this row only shows on phones and in list view. */}
+      <div className={cn("flex justify-end mb-4", userViewMode !== "list" && "md:hidden")}>
         <motion.div
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
@@ -235,13 +239,13 @@ export function CalendarView({
             {userViewMode === "list" ? (
               <>
                 <GridNineIcon className="size-4" />
-                <span className="hidden sm:inline">Calendar View</span>{" "}
+                <span className="hidden sm:inline">Calendar view</span>{" "}
                 <span className="sm:hidden">Calendar</span>
               </>
             ) : (
               <>
                 <ListIcon className="size-4" />
-                <span className="hidden sm:inline">List View</span>{" "}
+                <span className="hidden sm:inline">List view</span>{" "}
                 <span className="sm:hidden">List</span>
               </>
             )}
@@ -756,6 +760,7 @@ export function CalendarView({
         }
       `}</style>
     </div>
+    </CalendarListToggleContext.Provider>
   );
 }
 

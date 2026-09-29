@@ -71,7 +71,7 @@ export function UserDeleteConfirmModal({ user, onClose }: UserDeleteConfirmModal
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="size-5" />
-            Delete User
+            Delete user
           </DialogTitle>
           <DialogDescription>
             This action can’t be undone. All user data will be permanently deleted.

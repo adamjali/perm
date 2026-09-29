@@ -9,5 +9,5 @@ export default function CalendarError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <RouteError error={error} reset={reset} title="Calendar Error" />;
+  return <RouteError error={error} reset={reset} title="Calendar error" />;
 }

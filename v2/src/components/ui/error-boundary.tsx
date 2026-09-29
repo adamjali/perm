@@ -72,7 +72,7 @@ export class ErrorBoundary extends Component<Props, State> {
             )}
           </p>
           <Button onClick={this.handleReset} variant="outline" size="sm">
-            Try Again
+            Try again
           </Button>
         </div>
       );
@@ -107,7 +107,7 @@ export function DashboardErrorFallback({
       </p>
       {onRetry && (
         <Button onClick={onRetry} variant="outline" size="sm">
-          Try Again
+          Try again
         </Button>
       )}
     </div>

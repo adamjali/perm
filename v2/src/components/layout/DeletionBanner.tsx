@@ -79,7 +79,7 @@ export default function DeletionBanner() {
       <div className="mx-auto max-w-7xl flex items-center justify-between gap-3 sm:gap-4">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <AlertTriangle className="w-5 h-5 text-data-warn-ink flex-shrink-0" />
-          <p className="text-xs sm:text-sm text-data-warn-ink min-w-0">
+          <p className="text-sm text-data-warn-ink min-w-0">
             <span className="hidden sm:inline">
               Your account is scheduled for deletion on{" "}
               <strong>{deletionDate}</strong>.{" "}
@@ -91,7 +91,7 @@ export default function DeletionBanner() {
               href="/settings"
               className="underline font-medium hover:text-data-warn-ink whitespace-nowrap"
             >
-              Go to Settings
+              Go to settings
             </Link>{" "}
             <span className="hidden sm:inline">to cancel or delete now.</span>
           </p>

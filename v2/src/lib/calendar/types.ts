@@ -26,8 +26,10 @@ export type { RfiEntry, RfeEntry, AdditionalRecruitmentMethod } from "../shared/
  * - urgent: 0-7 days (needs immediate attention)
  * - soon: 8-30 days (coming up)
  * - normal: 31+ days (no immediate concern)
+ * - done: a recorded date that has passed (a Sunday ad that ran, a filed
+ *   form). It is a fact, not a missed deadline, so it never reads as overdue.
  */
-export type Urgency = "overdue" | "urgent" | "soon" | "normal";
+export type Urgency = "overdue" | "urgent" | "soon" | "normal" | "done";
 
 /**
  * Urgency threshold constants (in days).
@@ -47,6 +49,7 @@ export const URGENCY_COLORS: Record<Urgency, string> = {
   urgent: "#DC2626", // Red-600
   soon: "#EA580C", // Orange-600
   normal: "#059669", // Emerald-600
+  done: "#6B7280", // Gray-500
 } as const;
 
 // ============================================================================
@@ -132,33 +135,56 @@ export const FIELD_TO_DEADLINE_TYPE = {
  * Labels for calendar event titles.
  */
 export const DEADLINE_TYPE_LABELS: Record<DeadlineType, string> = {
-  pwdFiled: "PWD Filed",
-  pwdDetermined: "PWD Determined",
-  pwdExpires: "PWD Exp",
-  sundayAdFirst: "1st Sunday Ad",
-  sundayAdSecond: "2nd Sunday Ad",
-  jobOrderStart: "Job Order Start",
-  jobOrderEnd: "Job Order End",
-  noticeOfFilingStart: "Notice Posted",
-  noticeOfFilingEnd: "Notice End",
-  additionalRecruitmentStart: "Addl Recruitment Start",
-  additionalRecruitmentEnd: "Addl Recruitment End",
-  additionalMethod: "Addl Method",
-  eta9089Filed: "ETA Filed",
-  eta9089Certified: "ETA Certified",
-  eta9089Expires: "ETA Expires",
-  i140Filed: "I-140 Filed",
-  i140Approved: "I-140 Approved",
-  filingWindowOpens: "ETA Window Opens",
-  filingWindowCloses: "ETA Window Closes",
-  recruitmentWindowCloses: "Recruitment Closes",
-  jobOrderStartDeadline: "Job Order Due",
-  noticeOfFilingStartDeadline: "Notice Due",
-  firstSundayAdDeadline: "1st Ad Due",
-  secondSundayAdDeadline: "2nd Ad Due",
-  rfiDue: "RFI Due",
-  rfeDue: "RFE Due",
+  pwdFiled: "PWD filed",
+  pwdDetermined: "PWD determined",
+  pwdExpires: "PWD expires",
+  sundayAdFirst: "1st Sunday ad",
+  sundayAdSecond: "2nd Sunday ad",
+  jobOrderStart: "Job order start",
+  jobOrderEnd: "Job order end",
+  noticeOfFilingStart: "Notice posted",
+  noticeOfFilingEnd: "Notice end",
+  additionalRecruitmentStart: "Addl recruitment start",
+  additionalRecruitmentEnd: "Addl recruitment end",
+  additionalMethod: "Addl method",
+  eta9089Filed: "ETA filed",
+  eta9089Certified: "ETA certified",
+  eta9089Expires: "ETA expires",
+  i140Filed: "I-140 filed",
+  i140Approved: "I-140 approved",
+  filingWindowOpens: "ETA window opens",
+  filingWindowCloses: "ETA window closes",
+  recruitmentWindowCloses: "Recruitment closes",
+  jobOrderStartDeadline: "Job order due",
+  noticeOfFilingStartDeadline: "Notice due",
+  firstSundayAdDeadline: "1st ad due",
+  secondSundayAdDeadline: "2nd ad due",
+  rfiDue: "RFI due",
+  rfeDue: "RFE due",
 } as const;
+
+/**
+ * Dates the user recorded because they happened (a form filed, an ad run, a
+ * notice posted). Expirations, windows and "due" dates are deadlines and are
+ * not in this set.
+ */
+export const RECORDED_EVENT_TYPES: ReadonlySet<DeadlineType> = new Set<DeadlineType>([
+  "pwdFiled",
+  "pwdDetermined",
+  "sundayAdFirst",
+  "sundayAdSecond",
+  "jobOrderStart",
+  "jobOrderEnd",
+  "noticeOfFilingStart",
+  "noticeOfFilingEnd",
+  "additionalRecruitmentStart",
+  "additionalRecruitmentEnd",
+  "additionalMethod",
+  "eta9089Filed",
+  "eta9089Certified",
+  "i140Filed",
+  "i140Approved",
+]);
 
 // ============================================================================
 // Urgency Calculation
@@ -289,7 +315,10 @@ export interface CalendarEventInput {
  * // event.urgency === "soon" (automatically calculated)
  */
 export function createCalendarEvent(input: CalendarEventInput): CalendarEvent {
-  const urgency = calculateUrgency(input.daysUntil);
+  const urgency: Urgency =
+    RECORDED_EVENT_TYPES.has(input.deadlineType) && input.daysUntil < 0
+      ? "done"
+      : calculateUrgency(input.daysUntil);
   return {
     ...input,
     urgency,

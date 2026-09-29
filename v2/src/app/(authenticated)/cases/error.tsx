@@ -9,5 +9,5 @@ export default function CasesError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <RouteError error={error} reset={reset} title="Cases Error" />;
+  return <RouteError error={error} reset={reset} title="Cases error" />;
 }

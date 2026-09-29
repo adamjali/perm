@@ -37,9 +37,9 @@ interface SettingsLayoutProps {
 const NAV_ITEMS: NavItem[] = [
   { id: "profile", label: "Profile", icon: UserIcon },
   { id: "notifications", label: "Notifications", icon: BellIcon },
-  { id: "quiet-hours", label: "Quiet Hours", icon: MoonIcon },
-  { id: "calendar-sync", label: "Calendar Sync", icon: CalendarIcon },
-  { id: "auto-close", label: "Auto-Close", icon: ShieldIcon },
+  { id: "quiet-hours", label: "Quiet hours", icon: MoonIcon },
+  { id: "calendar-sync", label: "Calendar sync", icon: CalendarIcon },
+  { id: "auto-close", label: "Auto-close", icon: ShieldIcon },
   { id: "support", label: "Support", icon: HelpCircle },
 ];
 

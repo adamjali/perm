@@ -39,6 +39,27 @@ function parseLocalDate(dateStr: string): Date {
   return new Date(`${dateStr}T12:00:00`);
 }
 
+/** The deadline's date alone, e.g. "Oct 22, 2026". */
+export function formatDeadlineDate(deadline: string): string {
+  return parseLocalDate(deadline).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+/**
+ * The countdown the card leads with: a number and its unit, e.g. 24 / "days",
+ * 0 / "today", 3 / "days late". The number is the visual; the unit says what
+ * it counts.
+ */
+export function deadlineCountdown(deadline: string): { value: number; unit: string } {
+  const days = getDaysUntilDeadline(deadline);
+  if (days < 0) return { value: Math.abs(days), unit: Math.abs(days) === 1 ? "day late" : "days late" };
+  if (days === 0) return { value: 0, unit: "today" };
+  return { value: days, unit: days === 1 ? "day" : "days" };
+}
+
 /**
  * Format deadline for display.
  * ALWAYS shows the actual date, plus relative time for context.

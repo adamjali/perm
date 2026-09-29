@@ -40,7 +40,7 @@ describe("extractMilestones", () => {
       const pwdFiled = milestones.find((m) => m.field === "pwdFilingDate");
       expect(pwdFiled).toMatchObject({
         field: "pwdFilingDate",
-        label: "PWD Filed",
+        label: "PWD filed",
         date: "2024-01-15",
         stage: "pwd",
         isCalculated: false,
@@ -115,7 +115,7 @@ describe("extractMilestones", () => {
       const recruitmentExpires = milestones.find((m) => m.field === "recruitmentExpires");
       expect(recruitmentExpires).toBeDefined();
       expect(recruitmentExpires?.isCalculated).toBe(true);
-      expect(recruitmentExpires?.label).toBe("Filing Deadline"); // Renamed from "Recruitment Expires"
+      expect(recruitmentExpires?.label).toBe("Filing deadline"); // Renamed from "Recruitment Expires"
 
       // 180 days from first sunday ad (2024-03-03)
       const expectedDate = formatDate(addDays(toDate("2024-03-03"), 180));
@@ -244,7 +244,7 @@ describe("extractRangeBars", () => {
     expect(rangeBars).toHaveLength(1);
     expect(rangeBars[0]).toMatchObject({
       field: "jobOrder",
-      label: "Job Order",
+      label: "Job order",
       startDate: "2024-03-01",
       endDate: "2024-03-31",
       stage: "recruitment",

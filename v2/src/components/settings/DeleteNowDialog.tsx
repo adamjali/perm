@@ -83,7 +83,7 @@ export default function DeleteNowDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
             <Zap className="w-5 h-5" />
-            Delete Account Now
+            Delete account now
           </DialogTitle>
           <DialogDescription asChild>
             <div className="text-muted-foreground text-sm space-y-3 pt-2">
@@ -164,7 +164,7 @@ export default function DeleteNowDialog({
             loadingText="Deleting..."
           >
             <Zap className="w-4 h-4 mr-2" />
-            Delete Now
+            Delete now
           </Button>
         </DialogFooter>
       </DialogContent>

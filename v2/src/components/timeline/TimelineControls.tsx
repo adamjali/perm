@@ -98,7 +98,7 @@ export function TimelineControls({
               data-testid="zoom-slider"
             />
             <MagnifyingGlassPlusIcon className="size-4 text-muted-foreground" />
-            <span className="text-xs font-medium text-muted-foreground min-w-[3ch] text-right">
+            <span className="text-sm font-medium text-muted-foreground min-w-[3ch] text-right">
               {zoomLevel}%
             </span>
           </div>
@@ -154,11 +154,11 @@ export function TimelineControls({
         >
           <div className="flex items-center">
             <Filter className="size-4 mr-2" />
-            <span className="hidden sm:inline">Select Cases</span>{" "}
+            <span className="hidden sm:inline">Select cases</span>{" "}
             <span className="sm:hidden">Cases</span>
           </div>
           <span
-            className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground border-2 border-border text-xs font-bold min-w-[1.5rem] text-center"
+            className="ml-2 px-2 py-0.5 bg-primary text-primary-foreground border-2 border-border text-sm font-bold min-w-[1.5rem] text-center"
             data-testid="case-count-badge"
           >
             {badgeText}

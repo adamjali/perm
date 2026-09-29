@@ -98,7 +98,7 @@ export function RoleStep({ onNext }: RoleStepProps) {
               </div>
               <div className="min-w-0">
                 <p className="font-heading font-semibold text-sm">{role}</p>{" "}
-                <p className="text-xs text-muted-foreground">{description}</p>
+                <p className="text-sm text-muted-foreground">{description}</p>
               </div>
             </button>
           );

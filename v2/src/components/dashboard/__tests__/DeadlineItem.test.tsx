@@ -8,6 +8,7 @@ import {
   createThisWeekDeadline,
 } from "../../../../test-utils/deadline-fixtures";
 import DeadlineItem from "../DeadlineItem";
+import { formatDeadlineDate } from "@/components/cases/case-card.utils";
 
 describe("DeadlineItem", () => {
   const defaultDeadline = createMockDeadlineItem();
@@ -19,7 +20,8 @@ describe("DeadlineItem", () => {
     expect(screen.getByText(defaultDeadline.employerName)).toBeInTheDocument();
     expect(screen.getByText(defaultDeadline.label)).toBeInTheDocument();
     expect(screen.getByText(`${defaultDeadline.daysUntil}d`)).toBeInTheDocument();
-    expect(screen.getByText(defaultDeadline.dueDate)).toBeInTheDocument();
+    // The date reads the way it does everywhere else in the app, not as ISO.
+    expect(screen.getByText(formatDeadlineDate(defaultDeadline.dueDate))).toBeInTheDocument();
     expect(screen.getByRole("link")).toHaveAttribute("href", `/cases/${defaultDeadline.caseId}`);
   });
 

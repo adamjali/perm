@@ -720,7 +720,7 @@ export function DocumentsTab({
                         }}
                         onClick={() => setFullscreenId(selectedDoc.id)}
                       >
-                        <ArrowsOutIcon className="h-3.5 w-3.5" /> Full Screen
+                        <ArrowsOutIcon className="h-3.5 w-3.5" /> Full screen
                       </button>
                     )}
                     <a
@@ -797,7 +797,7 @@ export function DocumentsTab({
                 marginBottom: 8,
               }}
             >
-              Delete Document
+              Delete document
             </div>
             <div
               style={{

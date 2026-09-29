@@ -39,7 +39,7 @@ export function I140Tab({ caseData }: I140TabProps) {
       {ws && (
         <WindowCard
           ws={ws}
-          title="I-140 Filing Window"
+          title="I-140 filing window"
           stageColor="var(--stage-i140)"
           startDate={caseData.eta9089CertificationDate}
           endDate={caseData.eta9089ExpirationDate}
@@ -53,13 +53,13 @@ export function I140Tab({ caseData }: I140TabProps) {
             <div className="detail-card-head ch-i140">
               <span className="flex items-center gap-1.5">
                 <ShieldIcon className="h-3.5 w-3.5" />
-                I-140 Petition
+                I-140 petition
               </span>{" "}
               <span className="head-badge">{statusLabel}</span>
             </div>
 
             {/* Filing Details */}
-            <div className="detail-subhead">Filing Details</div>
+            <div className="detail-subhead">Filing details</div>
             <div className="field-grid" style={{ padding: 0, borderTop: "2px solid var(--manila-dark)" }}>
               <div className="field-cell">
                 <div className="fc-label">Category</div>
@@ -68,11 +68,11 @@ export function I140Tab({ caseData }: I140TabProps) {
                 </div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Filing Date</div>
+                <div className="fc-label">Filing date</div>
                 <div className={`fc-val mono ${!isFiled ? "dim" : ""}`}>{fmtISODate(caseData.i140FilingDate)}</div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Premium Processing</div>
+                <div className="fc-label">Premium processing</div>
                 <div className={`fc-val ${!caseData.i140PremiumProcessing ? "dim" : ""}`}>
                   {caseData.i140PremiumProcessing ? "Yes" : "No"}
                 </div>
@@ -83,17 +83,17 @@ export function I140Tab({ caseData }: I140TabProps) {
             <div className="detail-subhead" style={{ borderTop: "3px solid var(--border)" }}>Receipt &amp; Processing</div>
             <div className="field-grid" style={{ padding: 0, borderTop: "2px solid var(--manila-dark)" }}>
               <div className="field-cell">
-                <div className="fc-label">Receipt Date</div>
+                <div className="fc-label">Receipt date</div>
                 <div className={`fc-val mono ${!caseData.i140ReceiptDate ? "dim" : ""}`}>{fmtISODate(caseData.i140ReceiptDate)}</div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Receipt Number</div>
+                <div className="fc-label">Receipt number</div>
                 <div className={`fc-val fc-val-text mono ${!caseData.i140ReceiptNumber ? "dim" : ""}`} title={caseData.i140ReceiptNumber || undefined}>
                   {caseData.i140ReceiptNumber || "-"}
                 </div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Service Center</div>
+                <div className="fc-label">Service center</div>
                 <div className={`fc-val fc-val-text mono ${!caseData.i140ServiceCenter ? "dim" : ""}`} title={caseData.i140ServiceCenter || undefined}>
                   {caseData.i140ServiceCenter || "-"}
                 </div>
@@ -104,11 +104,11 @@ export function I140Tab({ caseData }: I140TabProps) {
             <div className="detail-subhead" style={{ borderTop: "3px solid var(--border)" }}>Outcome</div>
             <div className="field-grid" style={{ padding: 0, borderTop: "2px solid var(--manila-dark)" }}>
               <div className="field-cell">
-                <div className="fc-label">Approval Date</div>
+                <div className="fc-label">Approval date</div>
                 <div className={`fc-val mono ${!isApproved ? "dim" : ""}`}>{fmtISODate(caseData.i140ApprovalDate)}</div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Denial Date</div>
+                <div className="fc-label">Denial date</div>
                 <div className={`fc-val mono ${!isDenied ? "dim" : ""}`}>{fmtISODate(caseData.i140DenialDate)}</div>
               </div>
               <div className="field-cell">
@@ -133,7 +133,7 @@ export function I140Tab({ caseData }: I140TabProps) {
             {/* Status Summary */}
             {!isApproved && !isDenied && (
               <div className="detail-status-bar">
-                <ClockIcon className="h-4 w-4 shrink-0" style={{ color: "var(--stage-i140)" }} />
+                <ClockIcon className="h-4 w-4 shrink-0" style={{ color: "var(--stage-i140-ink)" }} />
                 <span>
                   {isFiled
                     ? "I-140 filed. Awaiting USCIS decision."

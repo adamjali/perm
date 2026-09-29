@@ -3,9 +3,10 @@
  * Extracted presentational components used by CaseCard.
  */
 
-import { BookmarkIcon, CalendarIcon, CircleNotchIcon, PushPinIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
+import { BookmarkIcon, CalendarCheckIcon, CalendarSlashIcon, CircleNotchIcon, PushPinIcon } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import { formatCompactDate, getStageColorVar } from "./case-card.utils";
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
 import type { CaseStatus } from "@/lib/perm";
@@ -24,10 +25,8 @@ export function FolderTab({ caseStatus, isClosed }: FolderTabProps) {
   return (
     <div
       className={cn(
-        "absolute -top-5 left-6 w-32 h-6 flex items-center justify-center z-10 border border-b-0",
-        isClosed
-          ? "border-black/40"
-          : "border-black dark:border-white"
+        "absolute -top-5 left-6 w-32 h-6 flex items-center justify-center z-10 border-2 border-b-0",
+        isClosed ? "border-black/40" : "border-foreground"
       )}
       style={{
         backgroundColor: isClosed ? "var(--stage-closed)" : getStageColorVar(caseStatus),
@@ -37,7 +36,8 @@ export function FolderTab({ caseStatus, isClosed }: FolderTabProps) {
       <span
         className={cn(
           "font-mono text-sm font-bold uppercase tracking-wider",
-          isClosed ? "text-black/60" : "text-white"
+          // Ink measured against each stage fill (black on the amber and teal).
+          isClosed ? "text-black/60" : STAGE_VISUALS[caseStatus]?.onFill ?? "text-white"
         )}
       >
         {label}
@@ -68,13 +68,12 @@ export function FavoriteBookmark({
       aria-pressed={isFavorite}
       disabled={isToggling}
       className={cn(
-        "absolute -top-6 right-6 z-0 flex items-center justify-center cursor-pointer",
-        "w-10 h-12 border border-b-0 transition-all duration-150",
-        "hover:-translate-y-2 hover:scale-105 active:scale-95 active:-translate-y-1",
-        "disabled:opacity-70 disabled:cursor-wait",
-        isFavorite
-          ? "border-data-warn bg-data-warn/8 -translate-y-2"
-          : "border-black/40 bg-black/10 hover:bg-black/20 translate-y-0"
+        "absolute -top-6 right-6 z-0 flex items-start justify-center pt-0.5 cursor-pointer",
+        // A second folder tab: manila with an ink frame, amber once starred.
+        "w-10 h-12 border-2 border-b-0 border-black transition-all duration-150",
+        "hover:-translate-y-2 active:-translate-y-1",
+        "disabled:cursor-wait",
+        isFavorite ? "bg-data-warn -translate-y-2" : "bg-manila-dark translate-y-0"
       )}
       style={{
         clipPath: "polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)",
@@ -82,14 +81,9 @@ export function FavoriteBookmark({
       onClick={onToggle}
     >
       {isToggling ? (
-        <CircleNotchIcon className="w-4 h-4 mt-0.5 animate-spin text-data-warn-ink" />
+        <CircleNotchIcon className="size-5 animate-spin text-black" />
       ) : (
-        <BookmarkIcon
-          className={cn(
-            "w-4 h-4 mt-0.5",
- isFavorite ? "text-data-warn-ink fill-data-warn" : "text-black/60"
-          )}
-        />
+        <BookmarkIcon className="size-5 text-black" weight={isFavorite ? "fill" : "bold"} />
       )}
     </button>
   );
@@ -154,51 +148,37 @@ export function CaseBadges({
   hasActiveRfe,
   isSample,
 }: CaseBadgesProps) {
+  // Plain words, same chip shape as the progress status beside them. An open
+  // RFI or RFE leads because it carries a response deadline.
+  const chip = "text-sm border-2 border-black text-black";
   return (
-    <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-      {isSample && (
-        <Badge
-          variant="outline"
-          className="text-sm px-2 py-0.5 border-2 border-dashed border-muted-foreground/50 bg-muted text-muted-foreground font-bold tracking-wider"
-          title="Sample case. Delete anytime"
-        >
-          SAMPLE
-        </Badge>
-      )}
-      {duplicateOf && (
-        <Badge
-          variant="outline"
- className="text-sm px-2 py-0.5 font-bold border-2 border-black bg-data-warn text-black"
-          title="This case was marked as a duplicate of another case"
-        >
-          DUP
-        </Badge>
-      )}
-      {isProfessionalOccupation && (
-        <Badge
-          variant="outline"
-          className="text-sm px-2 py-0.5 font-bold border-2 border-black bg-black/10 text-black"
-        >
-          PRO
-        </Badge>
-      )}
+    <>
       {hasActiveRfi && (
-        <Badge
-          variant="outline"
-          className="text-sm px-2 py-0.5 font-bold border-2 border-black bg-urgency-urgent text-white"
-        >
-          RFI
+        <Badge variant="outline" className={cn(chip, "bg-urgency-urgent text-white")} title="A request for information is open">
+          RFI open
         </Badge>
       )}
       {hasActiveRfe && (
-        <Badge
-          variant="outline"
-          className="text-sm px-2 py-0.5 font-bold border-2 border-black bg-urgency-urgent text-white"
-        >
-          RFE
+        <Badge variant="outline" className={cn(chip, "bg-urgency-urgent text-white")} title="A request for evidence is open">
+          RFE open
         </Badge>
       )}
-    </div>
+      {duplicateOf && (
+        <Badge variant="outline" className={cn(chip, "bg-data-warn")} title="Marked as a duplicate of another case">
+          Duplicate
+        </Badge>
+      )}
+      {isProfessionalOccupation && (
+        <Badge variant="outline" className={cn(chip, "bg-white/70")} title="Professional occupation: the extra recruitment steps apply">
+          Professional
+        </Badge>
+      )}
+      {isSample && (
+        <Badge variant="outline" className={cn(chip, "border-dashed border-black/50 bg-transparent text-black/70 shadow-none")} title="Sample case. Delete it anytime">
+          Sample
+        </Badge>
+      )}
+    </>
   );
 }
 
@@ -216,29 +196,20 @@ export function CalendarSyncIndicator({
   isGoogleConnected,
 }: CalendarSyncIndicatorProps) {
   if (!enabled) return null;
+  // Account-level state, so it stays quiet on every card: one icon, the words
+  // in its label and tooltip. It used to print "NOT CONNECTED" in amber caps
+  // on every case.
+  const label = isGoogleConnected ? "Syncing to Google Calendar" : "Calendar not connected";
   return (
-    <div
-      aria-label={isGoogleConnected ? "Syncing to Google Calendar" : "Calendar not connected"}
-      className="group/calendar relative flex items-center gap-1 cursor-default"
-    >
+    <div aria-label={label} title={isGoogleConnected ? "Synced to Google Calendar" : "Not synced: connect Google Calendar in Settings"} className="flex shrink-0 items-center gap-1 text-black/70">
       {isGoogleConnected ? (
         <>
-          <CalendarIcon className="w-4 h-4 text-black" />
-          <span className="font-mono text-sm font-bold uppercase tracking-wider text-black">
-            Synced
-          </span>
+          <CalendarCheckIcon className="size-5" weight="bold" aria-hidden="true" />
+          <span className="text-sm font-bold text-black">Synced</span>
         </>
       ) : (
-        <>
-          <AlertTriangle className="w-4 h-4 text-data-warn-ink" />
-          <span className="font-mono text-sm font-bold uppercase tracking-wider text-data-warn-ink">
-            Not connected
-          </span>
-        </>
+        <CalendarSlashIcon className="size-5" aria-hidden="true" />
       )}
-      <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 text-sm font-mono font-bold bg-black text-white whitespace-nowrap opacity-0 group-hover/calendar:opacity-100 transition-opacity pointer-events-none">
-        {isGoogleConnected ? "Google Calendar" : "Connect in Settings"}
-      </span>
     </div>
   );
 }
@@ -301,6 +272,8 @@ export function ExpandedContent({
 }: ExpandedContentProps) {
   // Mobile-first: always expanded on mobile (no hover), collapsible on desktop
   const isExpanded = shouldExpand && !isClosed;
+  // Nothing recorded yet: no band at all, rather than an empty strip.
+  if (!notes && !Object.values(dates).some(Boolean)) return null;
 
   return (
     <div
@@ -339,7 +312,7 @@ export function ExpandedContent({
         <DateSection
           title="ETA 9089"
           dates={[
-            { label: "Window Opens", value: dates.etaWindowOpens },
+            { label: "Window opens", value: dates.etaWindowOpens },
             { label: "Filed", value: dates.etaFiled },
             { label: "Certified", value: dates.etaCertified },
             { label: "Expires", value: dates.etaExpires },

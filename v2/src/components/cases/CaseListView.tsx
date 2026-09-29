@@ -144,10 +144,10 @@ function groupByDeadline(cases: CaseCardData[]): CaseGroup[] {
   const groupOrder: Array<{ key: DeadlineGroupKey; label: string }> = [
     { key: "overdue", label: "Overdue" },
     { key: "today", label: "Today" },
-    { key: "this_week", label: "This Week" },
-    { key: "this_month", label: "This Month" },
+    { key: "this_week", label: "This week" },
+    { key: "this_month", label: "This month" },
     { key: "later", label: "Later" },
-    { key: "no_deadline", label: "No Deadline" },
+    { key: "no_deadline", label: "No deadline" },
   ];
 
   return groupOrder

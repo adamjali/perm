@@ -125,7 +125,7 @@ export function extractMilestones(caseData: CaseWithDates): Milestone[] {
     if (recruitmentExpiresDate) {
       milestones.push({
         field: "recruitmentExpires",
-        label: "Filing Deadline",
+        label: "Filing deadline",
         date: recruitmentExpiresDate,
         stage: "eta9089",
         color: STAGE_COLORS.eta9089,
@@ -181,7 +181,7 @@ export function extractRangeBars(caseData: CaseWithDates): RangeBar[] {
   if (caseData.pwdDeterminationDate && caseData.pwdExpirationDate) {
     rangeBars.push({
       field: "pwdValidity",
-      label: "PWD Valid",
+      label: "PWD valid",
       startDate: caseData.pwdDeterminationDate,
       endDate: caseData.pwdExpirationDate,
       stage: "pwd",
@@ -193,7 +193,7 @@ export function extractRangeBars(caseData: CaseWithDates): RangeBar[] {
   if (caseData.jobOrderStartDate && caseData.jobOrderEndDate) {
     rangeBars.push({
       field: "jobOrder",
-      label: "Job Order",
+      label: "Job order",
       startDate: caseData.jobOrderStartDate,
       endDate: caseData.jobOrderEndDate,
       stage: "recruitment",
@@ -205,7 +205,7 @@ export function extractRangeBars(caseData: CaseWithDates): RangeBar[] {
   if (caseData.noticeOfFilingStartDate && caseData.noticeOfFilingEndDate) {
     rangeBars.push({
       field: "noticeOfFiling",
-      label: "NOF Posted",
+      label: "NOF posted",
       startDate: caseData.noticeOfFilingStartDate,
       endDate: caseData.noticeOfFilingEndDate,
       stage: "recruitment",
@@ -222,7 +222,7 @@ export function extractRangeBars(caseData: CaseWithDates): RangeBar[] {
     if (readyDate && expiresDate) {
       rangeBars.push({
         field: "filingWindow",
-        label: "Filing Window",
+        label: "Filing window",
         startDate: readyDate,
         endDate: expiresDate,
         stage: "eta9089",
@@ -236,7 +236,7 @@ export function extractRangeBars(caseData: CaseWithDates): RangeBar[] {
   if (caseData.eta9089CertificationDate && caseData.eta9089ExpirationDate) {
     rangeBars.push({
       field: "eta9089Validity",
-      label: "Cert Valid",
+      label: "Cert valid",
       startDate: caseData.eta9089CertificationDate,
       endDate: caseData.eta9089ExpirationDate,
       stage: "eta9089",

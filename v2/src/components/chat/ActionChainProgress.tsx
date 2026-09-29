@@ -173,7 +173,7 @@ function StepCard({
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-border">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-mono text-muted-foreground">
+          <span className="text-sm font-mono text-muted-foreground">
             {index + 1}
           </span>
           <Icon className="h-4 w-4" />
@@ -181,7 +181,7 @@ function StepCard({
         </div>
         <div className="flex items-center gap-2">
           {step.duration && (
-            <span className="text-xs text-muted-foreground font-mono">
+            <span className="text-sm text-muted-foreground font-mono">
               {step.duration}ms
             </span>
           )}
@@ -286,10 +286,10 @@ export function ActionChainProgress({
           </span>
           <div className="flex gap-2">
             <Button size="sm" variant="default" onClick={onApproveAll}>
-              Approve All
+              Approve all
             </Button>
             <Button size="sm" variant="outline" onClick={onDenyAll}>
-              Deny All
+              Deny all
             </Button>
           </div>
         </motion.div>
@@ -299,7 +299,7 @@ export function ActionChainProgress({
       {showCollapse && (
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground mb-2"
+          className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-2"
         >
           {isCollapsed ? (
             <>

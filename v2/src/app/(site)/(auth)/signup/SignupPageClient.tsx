@@ -386,7 +386,7 @@ export function SignupPageClient() {
             <input type="hidden" name="flow" value="email-verification" />
 
             <div className="space-y-2">
-              <Label htmlFor="code" className="text-xs uppercase mono font-bold tracking-widest">
+              <Label htmlFor="code" className="text-sm uppercase mono font-bold tracking-widest">
                 Verification Code
               </Label>
               <Input
@@ -562,7 +562,7 @@ export function SignupPageClient() {
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t-2 border-border" />
           </div>
-          <div className="relative flex justify-center text-xs">
+          <div className="relative flex justify-center text-sm">
             <span className="bg-card px-3 mono uppercase tracking-widest font-bold">
               Or continue with
             </span>

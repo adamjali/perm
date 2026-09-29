@@ -83,7 +83,7 @@ function AutoCloseSection() {
     <div className="space-y-6">
       <div>
         <h2 className="font-heading text-xl font-bold mb-2">
-          Deadline Enforcement
+          Deadline enforcement
         </h2>{" "}
         <p className="text-muted-foreground text-sm">
           Configure automatic case closure based on expired deadlines.

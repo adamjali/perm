@@ -30,7 +30,7 @@ export function NewUserEmptyState({ onAddCase, isAddingCase }: NewUserEmptyState
           loadingText="Adding..."
         >
           <PlusIcon className="size-4 mr-2" />
-          Add Case
+          Add case
         </Button>
       </div>
 
@@ -81,7 +81,7 @@ export function NoResultsEmptyState({
           loadingText="Adding..."
         >
           <PlusIcon className="size-4 mr-2" />
-          Add Case
+          Add case
         </Button>
       </div>
 

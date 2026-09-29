@@ -166,7 +166,7 @@ function NotFoundState() {
           href="/cases"
           className="inline-flex min-h-[44px] items-center justify-center border-2 border-border bg-primary px-6 py-3 font-semibold text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
         >
-          Back to Cases
+          Back to cases
         </Link>
       </div>
     </div>
@@ -449,7 +449,7 @@ export function EditCasePageClient() {
       <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Duplicate Case Detected</DialogTitle>
+            <DialogTitle>Duplicate case detected</DialogTitle>
             <DialogDescription>
               Changing the employer/beneficiary would make this case a duplicate of an existing case.
             </DialogDescription>
@@ -491,7 +491,7 @@ export function EditCasePageClient() {
               loadingText="Updating..."
               disabled={isUpdating}
             >
-              Update Anyway
+              Update anyway
             </Button>
           </DialogFooter>
         </DialogContent>

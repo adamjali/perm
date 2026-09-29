@@ -95,7 +95,7 @@ export function RouteError({
       details={isDev && error.digest ? `Digest: ${error.digest}` : undefined}
       actions={[
         {
-          label: "Try Again",
+          label: "Try again",
           icon: RefreshCcw,
           onClick: reset,
         },

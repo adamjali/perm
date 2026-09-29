@@ -46,13 +46,13 @@ export function SubEntriesManager({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-medium text-muted-foreground">
+        <span className="text-sm font-medium text-muted-foreground">
           {methodLabel} Entries ({entries.length})
         </span>
       </div>
 
       {dateConstraint?.hint && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-sm text-muted-foreground">
           {dateConstraint.hint}
         </p>
       )}
@@ -121,7 +121,7 @@ export function SubEntriesManager({
           className="w-full"
         >
           <PlusIcon className="h-4 w-4 mr-2" />
-          Add Entry
+          Add entry
         </Button>
       )}
     </div>

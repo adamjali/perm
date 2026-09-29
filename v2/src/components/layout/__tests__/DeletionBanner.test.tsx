@@ -100,7 +100,7 @@ describe("DeletionBanner", () => {
       mockUseQuery.mockReturnValue(scheduledProfile);
       renderWithProviders(<DeletionBanner />);
 
-      const link = screen.getByRole("link", { name: /Go to Settings/i });
+      const link = screen.getByRole("link", { name: /Go to settings/i });
       expect(link).toHaveAttribute("href", "/settings");
     });
 

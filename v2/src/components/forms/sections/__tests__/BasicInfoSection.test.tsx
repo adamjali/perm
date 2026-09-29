@@ -20,19 +20,19 @@ const mockOnChange = vi.fn();
 describe('BasicInfoSection', () => {
   it('renders section title and all fields', () => {
     renderWithProviders(<BasicInfoSection values={mockValues} onChange={mockOnChange} />);
-    expect(screen.getByText('Basic Information')).toBeInTheDocument();
-    for (const label of ['Employer Name', 'Foreign Worker ID', 'Position Title', 'DOL case number', 'Internal reference', 'Case Status', 'Progress Status']) {
+    expect(screen.getByText('Basic information')).toBeInTheDocument();
+    for (const label of ['Employer name', 'Foreign worker ID', 'Position title', 'DOL case number', 'Internal reference', 'Case status', 'Progress status']) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
   });
 
   describe('required field indicators', () => {
     it.each([
-      ['Employer Name', true],
-      ['Position Title', true],
-      ['Case Status', true],
-      ['Progress Status', true],
-      ['Foreign Worker ID', false],
+      ['Employer name', true],
+      ['Position title', true],
+      ['Case status', true],
+      ['Progress status', true],
+      ['Foreign worker ID', false],
       ['DOL case number', false],
       ['Internal reference', false],
     ])('%s required=%s', (label, isRequired) => {
@@ -106,10 +106,10 @@ describe('BasicInfoSection', () => {
 
     it.each([
       ['working', 'Working'],
-      ['waiting_intake', 'Waiting for Intake'],
+      ['waiting_intake', 'Waiting for intake'],
       ['filed', 'Filed'],
       ['approved', 'Approved'],
-      ['under_review', 'Under Review'],
+      ['under_review', 'Under review'],
       ['rfi_rfe', 'RFI/RFE'],
     ])('includes %s option with label %s', (value, label) => {
       const { container } = renderWithProviders(<BasicInfoSection values={mockValues} onChange={mockOnChange} />);
@@ -158,7 +158,7 @@ describe('BasicInfoSection', () => {
 
   /**
    * The DOL number and the attorney's own reference are two different things
-   * and this section used to offer one field for both: labelled "Case Number",
+   * and this section used to offer one field for both: labelled "Case number",
    * asking for an "Internal reference". `internalCaseNumber` was in the zod
    * schema, the CSV export, the importer and the AI tools with no input in the
    * form at all, so whatever was typed here went to the DOL field.

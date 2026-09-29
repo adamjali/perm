@@ -11,7 +11,7 @@ export type { TimelineCaseData, TimelineRfiRfeEntry } from "./TimelineGrid";
 export { TimelineHeader } from "./TimelineHeader";
 export { TimelineRow } from "./TimelineRow";
 export { TimelineControls } from "./TimelineControls";
-export { TimelineLegend } from "./TimelineLegend";
+export { TimelineLegend, TimelineLegendCompact } from "./TimelineLegend";
 export { TimelineMilestoneMarker } from "./TimelineMilestoneMarker";
 export type { TimelineMilestoneMarkerProps } from "./TimelineMilestoneMarker";
 export { TimelineRangeBar } from "./TimelineRangeBar";

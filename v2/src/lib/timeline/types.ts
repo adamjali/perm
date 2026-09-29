@@ -114,40 +114,40 @@ export interface MilestoneConfig {
  */
 export const MILESTONE_CONFIG: readonly MilestoneConfig[] = [
   // PWD phase
-  { field: "pwdFilingDate", label: "PWD Filed", stage: "pwd" },
-  { field: "pwdDeterminationDate", label: "PWD Determined", stage: "pwd" },
-  { field: "pwdExpirationDate", label: "PWD Expires", stage: "pwd" },
+  { field: "pwdFilingDate", label: "PWD filed", stage: "pwd" },
+  { field: "pwdDeterminationDate", label: "PWD determined", stage: "pwd" },
+  { field: "pwdExpirationDate", label: "PWD expires", stage: "pwd" },
 
   // Recruitment phase
   { field: "sundayAdFirstDate", label: "1st Sunday Ad", stage: "recruitment" },
   { field: "sundayAdSecondDate", label: "2nd Sunday Ad", stage: "recruitment" },
-  { field: "jobOrderStartDate", label: "Job Order Start", stage: "recruitment" },
-  { field: "jobOrderEndDate", label: "Job Order End", stage: "recruitment" },
-  { field: "noticeOfFilingStartDate", label: "Notice Posted", stage: "recruitment" },
-  { field: "noticeOfFilingEndDate", label: "Notice End", stage: "recruitment" },
+  { field: "jobOrderStartDate", label: "Job order start", stage: "recruitment" },
+  { field: "jobOrderEndDate", label: "Job order end", stage: "recruitment" },
+  { field: "noticeOfFilingStartDate", label: "Notice posted", stage: "recruitment" },
+  { field: "noticeOfFilingEndDate", label: "Notice end", stage: "recruitment" },
   // Professional occupation additional recruitment (only shown if isProfessionalOccupation)
-  { field: "additionalRecruitmentStartDate", label: "Additional Recruitment Start", stage: "recruitment" },
-  { field: "additionalRecruitmentEndDate", label: "Additional Recruitment End", stage: "recruitment" },
+  { field: "additionalRecruitmentStartDate", label: "Additional recruitment start", stage: "recruitment" },
+  { field: "additionalRecruitmentEndDate", label: "Additional recruitment end", stage: "recruitment" },
 
   // ETA 9089 phase
-  { field: "eta9089FilingDate", label: "ETA 9089 Filed", stage: "eta9089" },
-  { field: "eta9089AuditDate", label: "Audit Selected", stage: "eta9089" },
+  { field: "eta9089FilingDate", label: "ETA 9089 filed", stage: "eta9089" },
+  { field: "eta9089AuditDate", label: "Audit selected", stage: "eta9089" },
   {
     field: "eta9089CertificationDate",
-    label: "ETA 9089 Certified",
+    label: "ETA 9089 certified",
     stage: "eta9089",
   },
   {
     field: "eta9089ExpirationDate",
-    label: "ETA 9089 Expires",
+    label: "ETA 9089 expires",
     stage: "eta9089",
   },
 
   // I-140 phase
-  { field: "i140FilingDate", label: "I-140 Filed", stage: "i140" },
-  { field: "i140ReceiptDate", label: "I-140 Receipt", stage: "i140" },
-  { field: "i140ApprovalDate", label: "I-140 Approved", stage: "i140" },
-  { field: "i140DenialDate", label: "I-140 Denied", stage: "i140" },
+  { field: "i140FilingDate", label: "I-140 filed", stage: "i140" },
+  { field: "i140ReceiptDate", label: "I-140 receipt", stage: "i140" },
+  { field: "i140ApprovalDate", label: "I-140 approved", stage: "i140" },
+  { field: "i140DenialDate", label: "I-140 denied", stage: "i140" },
 ] as const;
 
 // ============================================================================

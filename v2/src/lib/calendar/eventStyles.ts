@@ -18,7 +18,7 @@ export const eventStyleBase = {
   border: "2px solid #1a1a1a",
   fontFamily: '"Space Grotesk", sans-serif',
   fontWeight: 600,
-  fontSize: "0.7rem",
+  fontSize: "0.875rem",
   padding: "1px 2px",
   boxShadow: "var(--shadow-hard-sm)",
 };

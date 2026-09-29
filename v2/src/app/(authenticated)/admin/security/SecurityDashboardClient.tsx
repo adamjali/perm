@@ -33,7 +33,7 @@ type TabId = "events" | "blocked" | "flagged" | "settings";
 const TABS: Array<{ id: TabId; label: string; icon: typeof Activity }> = [
   { id: "events", label: "Events", icon: Activity },
   { id: "blocked", label: "Blocked IPs", icon: Ban },
-  { id: "flagged", label: "Flagged Users", icon: UserX },
+  { id: "flagged", label: "Flagged users", icon: UserX },
   { id: "settings", label: "Settings", icon: SettingsIcon },
 ];
 
@@ -78,7 +78,7 @@ export default function SecurityDashboardClient() {
         <ShieldIcon className="h-8 w-8 text-primary" aria-hidden />
         <div>
           <h1 className="font-heading text-3xl font-black uppercase tracking-tight">
-            Security Ops
+            Security ops
           </h1>{" "}
           <p className="mono text-sm uppercase tracking-widest text-muted-foreground">
             Abuse monitoring · blocklist · flagged users
@@ -156,7 +156,7 @@ function SummaryCards({ summary }: { summary?: SummaryShape }) {
     { label: "Blocked IPs", value: summary?.activeBlockedIps, accent: "destructive" as const, icon: Ban },
     { label: "Rate-limit Strikes 24h", value: summary?.strikeHitsLast24h, accent: "amber" as const, icon: AlertTriangle },
     { label: "System Errors 24h", value: summary?.systemErrorsLast24h, accent: "amber" as const, icon: AlertTriangle },
-    { label: "Flagged Users", value: summary?.flaggedUsers, accent: "destructive" as const, icon: UserX },
+    { label: "Flagged users", value: summary?.flaggedUsers, accent: "destructive" as const, icon: UserX },
   ];
   return (
     <div className="grid [&>*]:min-w-0 grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
@@ -222,7 +222,7 @@ function EventsTab() {
     <Card className="border-2 shadow-hard">
       <CardHeader className="border-b-2 border-border">
         <CardTitle className="mono text-sm uppercase tracking-widest">
-          Recent Events
+          Recent events
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -326,7 +326,7 @@ function BlockedIpsTab() {
       <Card className="border-2 shadow-hard">
         <CardHeader className="border-b-2 border-border">
           <CardTitle className="mono text-sm uppercase tracking-widest">
-            Manual Block
+            Manual block
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 p-4">
@@ -480,7 +480,7 @@ function FlaggedUsersTab() {
           <thead className="mono border-b-2 border-border bg-muted/40 text-sm uppercase tracking-widest">
             <tr>
               <th className="px-3 py-2 text-left">Email</th>
-              <th className="px-3 py-2 text-left">Suspended At</th>
+              <th className="px-3 py-2 text-left">Suspended at</th>
               <th className="px-3 py-2 text-left">Until</th>
               <th className="px-3 py-2 text-left">Reason</th>
               <th className="px-3 py-2 text-right">Action</th>

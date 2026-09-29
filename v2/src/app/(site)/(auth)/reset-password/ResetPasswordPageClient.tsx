@@ -262,7 +262,7 @@ export function ResetPasswordPageClient() {
 
           <form onSubmit={handleResetSubmit} className="space-y-5" noValidate>
             <div className="space-y-2">
-              <Label htmlFor="code" className="text-xs uppercase mono font-bold tracking-widest">
+              <Label htmlFor="code" className="text-sm uppercase mono font-bold tracking-widest">
                 Reset Code
               </Label>
               <Input

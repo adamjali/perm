@@ -113,7 +113,7 @@ describe('EditCasePage', () => {
       expect(
         screen.getByText("The case you're looking for doesn't exist or you don't have access.")
       ).toBeInTheDocument();
-      expect(screen.getByText('Back to Cases')).toBeInTheDocument();
+      expect(screen.getByText('Back to cases')).toBeInTheDocument();
       expect(screen.queryByTestId('case-form')).not.toBeInTheDocument();
     });
 
@@ -122,7 +122,7 @@ describe('EditCasePage', () => {
 
       render(<EditCasePage />);
 
-      const backLink = screen.getByText('Back to Cases').closest('a');
+      const backLink = screen.getByText('Back to cases').closest('a');
       expect(backLink).toHaveAttribute('href', '/cases');
     });
   });

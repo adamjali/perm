@@ -331,19 +331,19 @@ export function JobDescriptionField({
           <FileTextIcon className="h-5 w-5 text-muted-foreground shrink-0" />
           <div className="flex items-center gap-2">
             <span className="font-heading font-semibold text-base sm:text-lg">
-              Job Description
+              Job description
             </span>
             {/* Template indicator badge */}
             {loadedTemplate && (
               <span
                 className={cn(
-                  "text-xs px-2 py-0.5 rounded-full border",
+                  "text-sm px-2 py-0.5 rounded-full border",
                   isModified
                     ? "bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-400"
                     : "bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
                 )}
               >
-                {isModified ? "Modified" : "From Template"}
+                {isModified ? "Modified" : "From template"}
               </span>
             )}
           </div>
@@ -354,7 +354,7 @@ export function JobDescriptionField({
           {(isExpanded || hasContent) && (
             <span
               className={cn(
-                "text-xs text-muted-foreground",
+                "text-sm text-muted-foreground",
                 isOverLimit && "text-destructive font-medium"
               )}
             >
@@ -444,7 +444,7 @@ export function JobDescriptionField({
               {/* Position title input */}
               <div className="space-y-2">
                 <Label htmlFor="job-desc-position" className="text-sm font-medium">
-                  Position Title for Job Description
+                  Position title for job description
                 </Label>
                 <div className="relative">
                   <Input
@@ -479,7 +479,7 @@ export function JobDescriptionField({
                     </TooltipProvider>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-sm text-muted-foreground">
                   {isTrackingInherited
                     ? "Auto-syncing from Position Title above. Edit to set a custom title."
                     : "Custom title. Click the reset icon to re-sync with Position Title."}
@@ -489,7 +489,7 @@ export function JobDescriptionField({
               {/* Description textarea - fewer rows on mobile for better UX */}
               <div className="space-y-2">
                 <Label htmlFor="job-description" className="text-sm font-medium">
-                  Job Description
+                  Job description
                 </Label>
                 <Textarea
                   id="job-description"
@@ -505,7 +505,7 @@ export function JobDescriptionField({
                   style={{ minHeight: "min(120px, 30vh)" }} // Dynamic min height for mobile
                 />
                 {isOverLimit && (
-                  <p className="text-xs text-destructive">
+                  <p className="text-sm text-destructive">
                     Description exceeds maximum length of {maxLength.toLocaleString()} characters
                   </p>
                 )}
@@ -538,12 +538,12 @@ export function JobDescriptionField({
                     {isExistingTemplateName ? (
                       <>
                         <Save className="h-5 w-5 sm:h-4 sm:w-4" />
-                        <span className="text-sm">{isSaving ? "Updating..." : "Update Template"}</span>
+                        <span className="text-sm">{isSaving ? "Updating..." : "Update template"}</span>
                       </>
                     ) : (
                       <>
                         <SparkleIcon className="h-5 w-5 sm:h-4 sm:w-4" />
-                        <span className="text-sm">{isSaving ? "Saving..." : "Save Template"}</span>
+                        <span className="text-sm">{isSaving ? "Saving..." : "Save template"}</span>
                       </>
                     )}
                   </Button>
@@ -553,7 +553,7 @@ export function JobDescriptionField({
                 {positionTitle.trim() && (
                   <span
                     className={cn(
-                      "text-xs px-2 py-1 rounded border hidden xs:inline-block",
+                      "text-sm px-2 py-1 rounded border hidden xs:inline-block",
                       isExistingTemplateName
                         ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
                         : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400"
@@ -563,7 +563,7 @@ export function JobDescriptionField({
                   </span>
                 )}
 
-                <span className="text-xs text-muted-foreground ml-auto hidden sm:inline">
+                <span className="text-sm text-muted-foreground ml-auto hidden sm:inline">
                   Changes auto-save to case
                 </span>
               </div>
@@ -586,7 +586,7 @@ export function JobDescriptionField({
               Cancel
             </Button>
             <Button onClick={handleConfirmPendingUpdate} disabled={isSaving}>
-              {isSaving ? "Updating..." : "Update Template"}
+              {isSaving ? "Updating..." : "Update template"}
             </Button>
           </DialogFooter>
         </DialogContent>

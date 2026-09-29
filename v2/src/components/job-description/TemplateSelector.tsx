@@ -124,7 +124,7 @@ export function TemplateSelector({
                 <div className="flex flex-col items-center gap-2 py-4">
                   <FileTextIcon className="h-8 w-8 text-muted-foreground" />
                   <p className="text-sm text-muted-foreground">No templates found</p>{" "}
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Create one by filling in the description below
                   </p>
                 </div>
@@ -149,7 +149,7 @@ export function TemplateSelector({
                         />
                         <span className="truncate text-sm">{template.name}</span>
                       </div>
-                      <span className="text-xs text-muted-foreground shrink-0">
+                      <span className="text-sm text-muted-foreground shrink-0">
                         {template.usageCount > 0 && `Used ${template.usageCount}×`}
                       </span>
                     </CommandItem>

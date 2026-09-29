@@ -109,18 +109,18 @@ export function SelectionBar({
               variant="outline"
               size="sm"
               onClick={onSelectAll}
-              aria-label="Select All"
+              aria-label="Select all"
               disabled={selectedCount === totalCount}
             >
-              Select All
+              Select all
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={onDeselectAll}
-              aria-label="Deselect All"
+              aria-label="Deselect all"
             >
-              Deselect All
+              Deselect all
             </Button>
           </div>
 
@@ -230,20 +230,20 @@ export function SelectionBar({
               variant="outline"
               size="sm"
               onClick={onSelectAll}
-              aria-label="Select All"
+              aria-label="Select all"
               disabled={selectedCount === totalCount}
               className="flex-1"
             >
-              Select All
+              Select all
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={onDeselectAll}
-              aria-label="Deselect All"
+              aria-label="Deselect all"
               className="flex-1"
             >
-              Deselect All
+              Deselect all
             </Button>
           </div>
 

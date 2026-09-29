@@ -68,13 +68,13 @@ export function BudgetPools({ pools }: { pools: Delivery["pools"] }) {
                 <div className={`h-full ${full ? "bg-destructive" : "bg-foreground"}`} style={{ width: `${share * 100}%` }} />
               </div>{" "}
               {p.refusedLast7d > 0 ? (
-                <p className="mt-1 text-xs font-bold text-destructive">{`${int(p.refusedLast7d)} turned away this week`}</p>
+                <p className="mt-1 text-sm font-bold text-destructive">{`${int(p.refusedLast7d)} turned away this week`}</p>
               ) : null}
             </li>
           );
         })}
       </ul>
-      <p className="mt-4 text-xs text-muted-foreground">
+      <p className="mt-4 text-sm text-muted-foreground">
         Rolling 24 hours, counted from the same limits the senders enforce. Resend&apos;s free plan allows 100 a day across all of these plus sign-in mail.
       </p>
     </section>
@@ -85,7 +85,7 @@ function Figure({ value, label, tone }: { value: string; label: string; tone?: "
   return (
     <div className={`border-2 border-border p-3 ${tone === "warn" ? "bg-data-warn-ink text-background" : "bg-background"}`}>
       <p className="font-heading text-2xl font-black tabular-nums">{value}</p>{" "}
-      <p className={`text-xs font-semibold ${tone === "warn" ? "" : "text-muted-foreground"}`}>{label}</p>
+      <p className={`text-sm font-semibold ${tone === "warn" ? "" : "text-muted-foreground"}`}>{label}</p>
     </div>
   );
 }
@@ -148,11 +148,11 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
                     <td className="px-3 py-2">
                       <span className="font-bold">{`${KIND_LABEL[r.kind]}: ${r.title}`}</span>{" "}
                       <span className="block text-muted-foreground">{`${r.line} `}</span>
-                      {r.lastError ? <span className="block text-xs text-destructive">{`${r.lastError} `}</span> : null}
+                      {r.lastError ? <span className="block text-sm text-destructive">{`${r.lastError} `}</span> : null}
                     </td>
                     <td className="whitespace-nowrap px-3 py-2">
-                      <span className={`px-1.5 py-0.5 text-xs font-bold ${STATUS_CLASS[r.status] ?? ""}`}>{r.status}</span>{" "}
-                      <span className="text-xs text-muted-foreground">
+                      <span className={`px-1.5 py-0.5 text-sm font-bold ${STATUS_CLASS[r.status] ?? ""}`}>{r.status}</span>{" "}
+                      <span className="text-sm text-muted-foreground">
                         {r.direct ? "straight out" : r.bundleSize && r.bundleSize > 1 ? `in a bundle of ${r.bundleSize}` : ""}
                       </span>
                     </td>

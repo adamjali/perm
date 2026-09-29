@@ -92,7 +92,7 @@ describe("QuietHoursSection", () => {
         <QuietHoursSection profile={defaultProfile} />
       );
 
-      expect(screen.getByText("Quiet Hours")).toBeInTheDocument();
+      expect(screen.getByText("Quiet hours")).toBeInTheDocument();
     });
 
     it("renders section description", () => {
@@ -108,7 +108,7 @@ describe("QuietHoursSection", () => {
         <QuietHoursSection profile={defaultProfile} />
       );
 
-      expect(screen.getByText("Enable Quiet Hours")).toBeInTheDocument();
+      expect(screen.getByText("Enable quiet hours")).toBeInTheDocument();
       const toggle = screen.getByRole("switch");
       expect(toggle).toBeInTheDocument();
     });
@@ -142,8 +142,8 @@ describe("QuietHoursSection", () => {
         <QuietHoursSection profile={defaultProfile} />
       );
 
-      expect(screen.queryByLabelText("Start Time")).not.toBeInTheDocument();
-      expect(screen.queryByLabelText("End Time")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Start time")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("End time")).not.toBeInTheDocument();
     });
 
     it("shows time pickers when quiet hours enabled", async () => {
@@ -152,8 +152,8 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Start Time")).toBeInTheDocument();
-        expect(screen.getByText("End Time")).toBeInTheDocument();
+        expect(screen.getByText("Start time")).toBeInTheDocument();
+        expect(screen.getByText("End time")).toBeInTheDocument();
       });
     });
 
@@ -226,8 +226,8 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        const startInput = screen.getByLabelText("Start Time");
-        const endInput = screen.getByLabelText("End Time");
+        const startInput = screen.getByLabelText("Start time");
+        const endInput = screen.getByLabelText("End time");
         expect(startInput).toBeInTheDocument();
         expect(endInput).toBeInTheDocument();
       });
@@ -239,8 +239,8 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        const startInput = screen.getByLabelText("Start Time") as HTMLInputElement;
-        const endInput = screen.getByLabelText("End Time") as HTMLInputElement;
+        const startInput = screen.getByLabelText("Start time") as HTMLInputElement;
+        const endInput = screen.getByLabelText("End time") as HTMLInputElement;
         expect(startInput.value).toBe("22:00");
         expect(endInput.value).toBe("08:00");
       });
@@ -292,7 +292,7 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("Change in Profile")).toBeInTheDocument();
+        expect(screen.getByText("Change in profile")).toBeInTheDocument();
       });
     });
 
@@ -306,11 +306,11 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        const link = screen.getByText("Change in Profile");
+        const link = screen.getByText("Change in profile");
         expect(link).toBeInTheDocument();
       });
 
-      await user.click(screen.getByText("Change in Profile"));
+      await user.click(screen.getByText("Change in profile"));
 
       expect(mockOnNavigateToProfile).toHaveBeenCalled();
     });
@@ -321,7 +321,7 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        expect(screen.queryByText("Change in Profile")).not.toBeInTheDocument();
+        expect(screen.queryByText("Change in profile")).not.toBeInTheDocument();
       });
     });
   });
@@ -370,7 +370,7 @@ describe("QuietHoursSection", () => {
         <QuietHoursSection profile={enabledProfile} />
       );
 
-      expect(screen.queryByRole("button", { name: /Save Changes/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Save changes/i })).not.toBeInTheDocument();
     });
 
     it("shows save button when time is changed", async () => {
@@ -380,17 +380,17 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        const startInput = screen.getByLabelText("Start Time");
+        const startInput = screen.getByLabelText("Start time");
         expect(startInput).toBeInTheDocument();
       });
 
       // Change the time
-      const startInput = screen.getByLabelText("Start Time");
+      const startInput = screen.getByLabelText("Start time");
       await user.clear(startInput);
       await user.type(startInput, "21:00");
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: /Save Changes/i })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Save changes/i })).toBeInTheDocument();
       });
     });
 
@@ -401,12 +401,12 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        const startInput = screen.getByLabelText("Start Time");
+        const startInput = screen.getByLabelText("Start time");
         expect(startInput).toBeInTheDocument();
       });
 
       // Change the time
-      const startInput = screen.getByLabelText("Start Time");
+      const startInput = screen.getByLabelText("Start time");
       await user.clear(startInput);
       await user.type(startInput, "21:00");
 
@@ -422,21 +422,21 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        const startInput = screen.getByLabelText("Start Time");
+        const startInput = screen.getByLabelText("Start time");
         expect(startInput).toBeInTheDocument();
       });
 
       // Change the time
-      const startInput = screen.getByLabelText("Start Time");
+      const startInput = screen.getByLabelText("Start time");
       await user.clear(startInput);
       await user.type(startInput, "21:00");
 
       await waitFor(() => {
-        const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+        const saveButton = screen.getByRole("button", { name: /Save changes/i });
         expect(saveButton).toBeInTheDocument();
       });
 
-      await user.click(screen.getByRole("button", { name: /Save Changes/i }));
+      await user.click(screen.getByRole("button", { name: /Save changes/i }));
 
       await waitFor(() => {
         expect(mockUpdateProfile).toHaveBeenCalled();
@@ -464,8 +464,8 @@ describe("QuietHoursSection", () => {
       );
 
       await waitFor(() => {
-        const startInput = screen.getByLabelText("Start Time");
-        const endInput = screen.getByLabelText("End Time");
+        const startInput = screen.getByLabelText("Start time");
+        const endInput = screen.getByLabelText("End time");
         expect(startInput).toHaveAttribute("id", "quiet-hours-start");
         expect(endInput).toHaveAttribute("id", "quiet-hours-end");
       });

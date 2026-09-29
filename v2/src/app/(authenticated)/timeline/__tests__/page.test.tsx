@@ -8,7 +8,7 @@
  * 2. Renders empty state when no cases
  * 3. Renders timeline with cases
  * 4. Time range dropdown changes view
- * 5. "Select Cases" button opens modal (placeholder)
+ * 5. "Select cases" button opens modal (placeholder)
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -191,7 +191,7 @@ describe("TimelinePage - Empty State", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows 'Add Your First Case' button in empty state", () => {
+  it("shows 'Add your first case' button in empty state", () => {
     renderWithProviders(<TimelinePage />);
 
     expect(
@@ -199,7 +199,7 @@ describe("TimelinePage - Empty State", () => {
     ).toBeInTheDocument();
   });
 
-  it("navigates to /cases/new when 'Add Your First Case' is clicked", async () => {
+  it("navigates to /cases/new when 'Add your first case' is clicked", async () => {
     const { user } = renderWithProviders(<TimelinePage />);
 
     const addButton = screen.getByRole("button", {

@@ -71,14 +71,14 @@ export interface ActionConfig {
 const JOB_ORDER_FIELDS: QuickEditFieldConfig[] = [
   {
     name: "jobOrderStartDate",
-    label: "Job Order Start",
+    label: "Job order start",
     type: "date",
     triggersCalculation: true,
     placeholder: "Select start date",
   },
   {
     name: "jobOrderEndDate",
-    label: "Job Order End",
+    label: "Job order end",
     type: "date",
     autoCalculated: true,
     placeholder: "Auto-calculated (30 calendar days)",
@@ -96,7 +96,7 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     fields: [
       {
         name: "pwdFilingDate",
-        label: "PWD Filing Date",
+        label: "PWD filing date",
         type: "date",
         placeholder: "Select date filed",
       },
@@ -108,14 +108,14 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     fields: [
       {
         name: "pwdDeterminationDate",
-        label: "Determination Date",
+        label: "Determination date",
         type: "date",
         triggersCalculation: true,
         placeholder: "Enter when received",
       },
       {
         name: "pwdExpirationDate",
-        label: "Expiration Date",
+        label: "Expiration date",
         type: "date",
         autoCalculated: true,
         placeholder: "Auto-calculated",
@@ -139,14 +139,14 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     fields: [
       {
         name: "noticeOfFilingStartDate",
-        label: "Notice Start",
+        label: "Notice start",
         type: "date",
         triggersCalculation: true,
         placeholder: "Select start date",
       },
       {
         name: "noticeOfFilingEndDate",
-        label: "Notice End",
+        label: "Notice end",
         type: "date",
         autoCalculated: true,
         placeholder: "Auto-calculated (+10 business days)",
@@ -159,14 +159,14 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     fields: [
       {
         name: "sundayAdFirstDate",
-        label: "First Sunday Ad",
+        label: "First Sunday ad",
         type: "date",
         sundayOnly: true,
         placeholder: "Select first Sunday",
       },
       {
         name: "sundayAdSecondDate",
-        label: "Second Sunday Ad",
+        label: "Second Sunday ad",
         type: "date",
         sundayOnly: true,
         placeholder: "Select second Sunday",
@@ -198,7 +198,7 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     fields: [
       {
         name: "eta9089FilingDate",
-        label: "ETA 9089 Filing Date",
+        label: "ETA 9089 filing date",
         type: "date",
         placeholder: "Select filing date",
       },
@@ -210,14 +210,14 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     fields: [
       {
         name: "eta9089CertificationDate",
-        label: "Certification Date",
+        label: "Certification date",
         type: "date",
         triggersCalculation: true,
         placeholder: "Enter when certified",
       },
       {
         name: "eta9089ExpirationDate",
-        label: "Expiration Date",
+        label: "Expiration date",
         type: "date",
         autoCalculated: true,
         placeholder: "Auto-calculated (+180 days)",
@@ -231,7 +231,7 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     fields: [
       {
         name: "i140FilingDate",
-        label: "I-140 Filing Date",
+        label: "I-140 filing date",
         type: "date",
         placeholder: "Select filing date",
       },
@@ -243,7 +243,7 @@ export const ACTION_CONFIG: Record<string, ActionConfig> = {
     fields: [
       {
         name: "i140ApprovalDate",
-        label: "Approval Date",
+        label: "Approval date",
         type: "date",
         placeholder: "Enter when approved",
       },

@@ -96,7 +96,7 @@ function getStatusConfig(status: WindowStatus) {
   switch (status) {
     case "recruitment_incomplete":
       return {
-        label: "Recruitment Incomplete",
+        label: "Recruitment incomplete",
         bgColor: "bg-muted",
         textColor: "text-muted-foreground",
         borderColor: "border-border",
@@ -105,7 +105,7 @@ function getStatusConfig(status: WindowStatus) {
       };
     case "not_open":
       return {
-        label: "Not Yet Open",
+        label: "Not yet open",
         bgColor: "bg-muted",
         textColor: "text-muted-foreground",
         borderColor: "border-border",
@@ -123,7 +123,7 @@ function getStatusConfig(status: WindowStatus) {
       };
     case "closing_soon":
       return {
-        label: "Closing Soon",
+        label: "Closing soon",
         bgColor: "bg-data-warn/15",
         textColor: "text-data-warn-ink",
         borderColor: "border-data-warn",
@@ -266,7 +266,7 @@ export function FilingWindowIndicator({
         </div>
         <span
           className={cn(
-            "px-2 py-1 rounded-md text-xs font-bold uppercase tracking-wide",
+            "px-2 py-1 rounded-md text-sm font-bold uppercase tracking-wide",
             config.bgColor,
             config.textColor,
             "border",
@@ -288,7 +288,7 @@ export function FilingWindowIndicator({
               transition={{ duration: 0.5, ease: "easeOut" }}
             />
           </div>
-          <div className="flex justify-between mt-1 text-xs text-muted-foreground">
+          <div className="flex justify-between mt-1 text-sm text-muted-foreground">
             <span>{progress}% elapsed</span>{" "}
             <span>{100 - progress}% remaining</span>
           </div>
@@ -298,7 +298,7 @@ export function FilingWindowIndicator({
       {/* Window dates */}
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-muted-foreground text-xs uppercase tracking-wide">
+          <span className="text-muted-foreground text-sm uppercase tracking-wide">
             Opens
           </span>{" "}
           <p className="font-medium">
@@ -306,7 +306,7 @@ export function FilingWindowIndicator({
           </p>
         </div>
         <div>
-          <span className="text-muted-foreground text-xs uppercase tracking-wide">
+          <span className="text-muted-foreground text-sm uppercase tracking-wide">
             Closes
           </span>{" "}
           <p className="font-medium">
@@ -355,7 +355,7 @@ export function FilingWindowIndicator({
       {window.isPwdLimited && (
         <div className="mt-3 flex items-start gap-2 rounded-md bg-data-warn/15 p-2 border-2 border-data-warn">
           <AlertTriangle className="h-4 w-4 text-data-warn-ink shrink-0 mt-0.5" />
-          <p className="text-xs text-data-warn-ink">
+          <p className="text-sm text-data-warn-ink">
             <strong>Note:</strong> This window closes early due to PWD expiration date.
             The standard 180-day rule is limited by your PWD validity.
           </p>

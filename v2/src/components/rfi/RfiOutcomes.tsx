@@ -132,7 +132,7 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
               </span>{" "}
               <span className="text-sm">{s.label}</span>{" "}
               <span
-                className="ml-auto font-mono text-xs tabular-nums"
+                className="ml-auto font-mono text-sm tabular-nums"
                 style={{ color: s.ink }}
               >
                 {share(s.n).toFixed(1)}%

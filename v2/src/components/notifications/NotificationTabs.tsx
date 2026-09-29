@@ -87,7 +87,7 @@ export default function NotificationTabs({
                 className={cn(
                   "flex items-center justify-center",
                   "min-w-[20px] h-5 px-1.5",
-                  "text-xs font-bold rounded-full",
+                  "text-sm font-bold rounded-full",
                   isActive
                     ? "bg-background text-foreground"
                     : "bg-muted text-muted-foreground"

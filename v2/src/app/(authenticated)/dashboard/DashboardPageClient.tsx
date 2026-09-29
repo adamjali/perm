@@ -127,10 +127,6 @@ export function DashboardPageClient() {
         <RecentActivityWidget />
       </div>
 
-      {/* Add Case Button - Full width call to action */}
-      <div data-tour="add-case-button" className="flex justify-center">
-        <AddCaseButton />
-      </div>
 
     </div>
   );

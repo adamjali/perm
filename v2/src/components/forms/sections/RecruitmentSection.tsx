@@ -367,12 +367,12 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
         {/* ========== SUNDAY NEWSPAPER ADS ========== */}
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-3">
-            Sunday Newspaper Ads
+            Sunday newspaper ads
           </h4>
           <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-3">
             {/* First Sunday Ad */}
             <FormField
-              label="First Sunday Ad"
+              label="First Sunday ad"
               name="sundayAdFirstDate"
               error={errors?.sundayAdFirstDate}
               hint={sundayFirstHint || "Must be a Sunday"}
@@ -395,7 +395,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
             {/* Second Sunday Ad */}
             <div className="space-y-2">
               <FormField
-                label="Second Sunday Ad"
+                label="Second Sunday ad"
                 name="sundayAdSecondDate"
                 error={errors?.sundayAdSecondDate}
                 hint={secondSundayHint}
@@ -419,7 +419,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
               {/* Quick Select Buttons - only show when first Sunday is valid */}
               {firstSundayIsValid && !sundaySecondDisabled?.disabled && (
                 <div className="flex flex-wrap items-center gap-2 animate-fade-in">
-                  <span className="text-xs font-medium text-muted-foreground">Quick select:</span>
+                  <span className="text-sm font-medium text-muted-foreground">Quick select:</span>
                   <div className="flex flex-wrap gap-1.5">
                     <Button
                       type="button"
@@ -427,7 +427,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                       size="xs"
                       onClick={() => handleQuickSelectSunday(7)}
                       aria-label="Set second Sunday ad to 7 days after first ad"
-                      className="text-xs"
+                      className="text-sm"
                     >
                       +7 days
                     </Button>
@@ -437,7 +437,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                       size="xs"
                       onClick={() => handleQuickSelectSunday(14)}
                       aria-label="Set second Sunday ad to 14 days after first ad"
-                      className="text-xs"
+                      className="text-sm"
                     >
                       +14 days
                     </Button>
@@ -447,7 +447,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                       size="xs"
                       onClick={() => handleQuickSelectSunday(21)}
                       aria-label="Set second Sunday ad to 21 days after first ad"
-                      className="text-xs"
+                      className="text-sm"
                     >
                       +21 days
                     </Button>
@@ -480,12 +480,12 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
         {/* ========== JOB ORDER ========== */}
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-3">
-            Job Order
+            Job order
           </h4>
           <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-3">
             {/* Job Order Start Date */}
             <FormField
-              label="Job Order Start"
+              label="Job order start"
               name="jobOrderStartDate"
               error={errors?.jobOrderStartDate}
               hint={jobOrderStartHint || "Start date of job order posting"}
@@ -506,7 +506,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
 
             {/* Job Order End Date (Auto-suggested +30 days) */}
             <FormField
-              label="Job Order End"
+              label="Job order end"
               name="jobOrderEndDate"
               error={errors?.jobOrderEndDate}
               autoCalculated={isJobOrderEndAutoCalculated}
@@ -550,12 +550,12 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
         {/* ========== NOTICE OF FILING ========== */}
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-3">
-            Notice of Filing
+            Notice of filing
           </h4>
           <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
             {/* Notice of Filing Start Date */}
             <FormField
-              label="Notice Start"
+              label="Notice start"
               name="noticeOfFilingStartDate"
               error={errors?.noticeOfFilingStartDate}
               hint={noticeStartHint || "Notice of filing start date"}
@@ -576,7 +576,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
 
             {/* Notice of Filing End Date (Auto-calculated +10 business days, disabled) */}
             <FormField
-              label="Notice End"
+              label="Notice end"
               name="noticeOfFilingEndDate"
               error={errors?.noticeOfFilingEndDate}
               autoCalculated={isNoticeEndAutoCalculated}
@@ -598,12 +598,12 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
         {/* ========== RECRUITMENT RESULTS ========== */}
         <div>
           <h4 className="text-sm font-semibold text-muted-foreground mb-3">
-            Recruitment Results
+            Recruitment results
           </h4>
           <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-1">
             {/* Applicant Count */}
             <FormField
-              label="Applicant Count"
+              label="Applicant count"
               name="recruitmentApplicantsCount"
               error={errors?.recruitmentApplicantsCount}
               hint="Number of applicants (default 0)"
@@ -637,7 +637,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                 htmlFor="isProfessionalOccupation"
                 className="font-semibold cursor-pointer"
               >
-                Professional Occupation
+                Professional occupation
               </Label>
             </div>
           </div>
@@ -663,7 +663,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                       <p className="font-semibold">
                         {filledMethodsCount}/3 required methods selected
                       </p>{" "}
-                      <p className="text-xs mt-1">
+                      <p className="text-sm mt-1">
                         Professional occupations require 3 additional recruitment methods per 20 CFR § 656.17(e)
                       </p>
                     </div>
@@ -672,7 +672,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                   {/* Additional Recruitment Methods */}
                   <div className="space-y-3">
                     <h5 className="text-sm font-medium text-muted-foreground">
-                      Additional Recruitment Methods
+                      Additional recruitment methods
                     </h5>
 
                     {methods.map((method, index) => (
@@ -681,7 +681,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                         className="grid [&>*]:min-w-0 grid-cols-1 gap-3 p-3 rounded-lg border-2 border-border bg-muted/20"
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                          <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                             Method {index + 1}
                           </span>
                           {methods.length > 1 && (
@@ -757,7 +757,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                             return (
                               <div className="grid [&>*]:min-w-0 grid-cols-1 gap-3 md:grid-cols-3">
                                 <FormField
-                                  label="Start Date"
+                                  label="Start date"
                                   name={`method-start-${index}`}
                                   required={hasMethod}
                                   error={errors?.[`additionalRecruitmentMethods.${index}.startDate`]}
@@ -774,7 +774,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   />
                                 </FormField>
                                 <FormField
-                                  label="End Date"
+                                  label="End date"
                                   name={`method-end-${index}`}
                                   error={errors?.[`additionalRecruitmentMethods.${index}.endDate`]}
                                   hint={endDateHint}
@@ -821,7 +821,7 @@ export function RecruitmentSection(props: RecruitmentSectionProps) {
                                   methodIndex={index}
                                 />
                                 <FormField
-                                  label="Overall Description"
+                                  label="Overall description"
                                   name={`method-desc-${index}`}
                                   hint="Optional overall description (e.g., targeted metro area)"
                                 >

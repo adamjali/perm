@@ -30,10 +30,10 @@ const STATUS_HEX_COLORS = {
 
 // Stage badge labels (from design4 Stage Progression section)
 const STAGE_BADGE_LABELS = {
-  pwd: "PWD Phase",
+  pwd: "PWD phase",
   recruitment: "Recruitment",
   eta9089: "ETA 9089",
-  i140: "I-140 Phase",
+  i140: "I-140 phase",
   complete: "Complete",
   closed: "Closed",
   duplicates: "Duplicates",
@@ -69,7 +69,7 @@ function CornerDecoration({
     // Full-width bar at top with stage label
     return (
       <div
-        className="absolute top-0 left-0 right-0 px-2 py-1 text-xs font-extrabold uppercase text-white text-center"
+        className="absolute top-0 left-0 right-0 px-2 py-1 text-sm font-extrabold uppercase text-white text-center"
         style={{ backgroundColor: color }}
         aria-hidden="true"
       >
@@ -82,7 +82,7 @@ function CornerDecoration({
     // Design4 stage-tag style: small badge with hard shadow, positioned top-right
     return (
       <div
-        className="absolute top-2 right-2 px-2 py-0.5 text-xs font-extrabold uppercase text-white border-2 border-black"
+        className="absolute top-2 right-2 px-2 py-0.5 text-sm font-extrabold uppercase text-white border-2 border-black"
         style={{
           backgroundColor: color,
           boxShadow: "var(--shadow-hard-sm)",
@@ -167,7 +167,7 @@ export default function SummaryTile({
 
           {/* Subtext - theme-aware */}
           {subtext && (
-            <div className="text-xs sm:text-sm text-muted-foreground leading-tight">{subtext}</div>
+            <div className="text-sm text-muted-foreground leading-tight">{subtext}</div>
           )}
         </div>
       </NavigableCard>

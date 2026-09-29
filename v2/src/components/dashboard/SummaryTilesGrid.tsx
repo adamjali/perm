@@ -59,7 +59,7 @@ function SummaryTilesGridContent() {
     <div data-tour="summary-tiles">
       {/* Section header with total badge */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="font-heading text-2xl font-bold">Case Summary</h2>
+        <h2 className="font-heading text-2xl font-bold">Case summary</h2>
 
         {/* Clickable total badge - neobrutalist style */}
         <NavigableCard
@@ -71,7 +71,7 @@ function SummaryTilesGridContent() {
         >
           <div className="flex items-center gap-2">
             <span className="mono text-2xl font-bold">{total}</span>{" "}
-            <span className="text-xs font-semibold uppercase tracking-wide opacity-90">
+            <span className="text-sm font-semibold uppercase tracking-wide opacity-90">
               Total
             </span>
           </div>

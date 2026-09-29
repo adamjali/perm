@@ -84,7 +84,7 @@ describe("caseToCalendarEvents", () => {
       const events = caseToCalendarEvents(caseData);
 
       expect(events).toHaveLength(1);
-      expect(events[0].title).toBe("PWD Exp: Acme Corp");
+      expect(events[0].title).toBe("PWD expires: Acme Corp");
       expect(events[0].start.toISOString().split("T")[0]).toBe("2024-07-15");
       expect(events[0].end.toISOString().split("T")[0]).toBe("2024-07-15");
       expect(events[0].allDay).toBe(true);
@@ -101,7 +101,7 @@ describe("caseToCalendarEvents", () => {
       const events = caseToCalendarEvents(caseData);
 
       expect(events).toHaveLength(1);
-      expect(events[0].title).toBe("PWD Filed: Acme Corp");
+      expect(events[0].title).toBe("PWD filed: Acme Corp");
       expect(events[0].start.toISOString().split("T")[0]).toBe("2024-06-01");
       expect(events[0].end.toISOString().split("T")[0]).toBe("2024-06-01");
       expect(events[0].allDay).toBe(true);
@@ -229,6 +229,24 @@ describe("caseToCalendarEvents", () => {
 
       expect(events[0].urgency).toBe("normal");
     });
+
+    it("marks a recorded date that has passed as 'done', never 'overdue'", () => {
+      // A Sunday ad that ran two weeks ago is a fact, not a missed deadline.
+      const caseData = createTestCase({ sundayAdFirstDate: "2024-06-02" });
+
+      const ad = caseToCalendarEvents(caseData).find((e) => e.deadlineType === "sundayAdFirst");
+
+      expect(ad?.urgency).toBe("done");
+    });
+
+    it("still marks a missed expiration 'overdue' next to a done record", () => {
+      const caseData = createTestCase({ sundayAdFirstDate: "2024-06-02", pwdExpirationDate: "2024-06-01" });
+
+      const events = caseToCalendarEvents(caseData);
+
+      expect(events.find((e) => e.deadlineType === "pwdExpires")?.urgency).toBe("overdue");
+      expect(events.find((e) => e.deadlineType === "sundayAdFirst")?.urgency).toBe("done");
+    });
   });
 
   describe("filing window events", () => {
@@ -265,11 +283,11 @@ describe("caseToCalendarEvents", () => {
 
       // Ready to file = jobOrderEnd (2024-04-09) + 30 days = 2024-05-09
       expect(openEvent!.start.toISOString().split("T")[0]).toBe("2024-05-09");
-      expect(openEvent!.title).toContain("ETA Window Opens");
+      expect(openEvent!.title).toContain("ETA window opens");
 
       // Filing deadline = first recruitment (2024-03-01) + 180 days = 2024-08-28
       expect(closeEvent!.start.toISOString().split("T")[0]).toBe("2024-08-28");
-      expect(closeEvent!.title).toContain("ETA Window Closes");
+      expect(closeEvent!.title).toContain("ETA window closes");
     });
 
     it("does not create filing window events when ETA already filed", () => {
@@ -310,7 +328,7 @@ describe("caseToCalendarEvents", () => {
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].title).toBe("PWD Filed: Acme Corp");
+      expect(events[0].title).toBe("PWD filed: Acme Corp");
     });
 
     it("trims whitespace from employer name", () => {
@@ -321,7 +339,7 @@ describe("caseToCalendarEvents", () => {
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].title).toBe("PWD Filed: Acme Corp");
+      expect(events[0].title).toBe("PWD filed: Acme Corp");
     });
 
     it("handles empty employer name", () => {
@@ -332,7 +350,7 @@ describe("caseToCalendarEvents", () => {
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].title).toBe("PWD Filed");
+      expect(events[0].title).toBe("PWD filed");
     });
 
     it("handles undefined employer name", () => {
@@ -343,7 +361,7 @@ describe("caseToCalendarEvents", () => {
 
       const events = caseToCalendarEvents(caseData);
 
-      expect(events[0].title).toBe("PWD Filed");
+      expect(events[0].title).toBe("PWD filed");
     });
   });
 

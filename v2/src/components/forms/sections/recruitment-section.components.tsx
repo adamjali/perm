@@ -150,27 +150,27 @@ export function RecruitmentDeadlineIndicator({
       <div className="flex items-center gap-2">
         <Icon className={cn("h-5 w-5", config.textColor)} />
         <span className={cn("font-semibold text-sm", config.textColor)}>
-          Recruitment Deadline
+          Recruitment deadline
         </span>
       </div>
 
       <div className="grid grid-cols-2 gap-4 text-sm">
         <div>
-          <span className="text-muted-foreground text-xs uppercase tracking-wide">
-            Must Complete By
+          <span className="text-muted-foreground text-sm uppercase tracking-wide">
+            Must complete by
           </span>{" "}
           <p className="font-medium">
             {format(recruitmentDeadline, "MMM d, yyyy")}
           </p>{" "}
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-sm text-muted-foreground mt-0.5">
             {limitingFactor === '150-day'
               ? '(150 days from first recruitment)'
               : '(30 days before PWD expires)'}
           </p>
         </div>
         <div>
-          <span className="text-muted-foreground text-xs uppercase tracking-wide">
-            PWD Expires
+          <span className="text-muted-foreground text-sm uppercase tracking-wide">
+            PWD expires
           </span>{" "}
           <p className="font-medium">
             {format(parseISO(pwdExpirationDate), "MMM d, yyyy")}
@@ -195,7 +195,7 @@ export function RecruitmentDeadlineIndicator({
         </div>
       )}
 
-      <p className="text-xs text-muted-foreground pt-1">
+      <p className="text-sm text-muted-foreground pt-1">
         {limitingFactor === '150-day'
           ? `Recruitment must be complete within 150 days of the first recruitment step${firstDate ? ` (${format(parseISO(firstDate), "MMM d, yyyy")})` : ""}, leaving a 30-day quiet period (180 days total).${isProfessionalOccupation ? " One additional recruitment method for professional positions may be completed during the 30-day quiet period." : ""}`
           : firstDate

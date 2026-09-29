@@ -63,10 +63,10 @@ export default function RecentActivityCard({ activity }: RecentActivityCardProps
 
       {/* Right: Badge + timestamp */}
       <div className="flex items-center gap-3 shrink-0">
-        <CaseStageBadge stage={activity.caseStatus} bordered className="text-xs" />
+        <CaseStageBadge stage={activity.caseStatus} bordered className="text-sm" />
         <time
           dateTime={new Date(activity.timestamp).toISOString()}
-          className="text-xs text-muted-foreground whitespace-nowrap"
+          className="text-sm text-muted-foreground whitespace-nowrap"
           data-testid="activity-timestamp"
         >
           {relativeTime}

@@ -239,13 +239,13 @@ export function TemplateManagementModal({
                 className="w-fit -ml-2 mb-2 gap-1.5 min-h-[44px]"
               >
                 <CaretLeftIcon className="h-4 w-4" />
-                Back to Templates
+                Back to templates
               </Button>
             )}
             <DialogTitle>
               {isMobile && mobileView === "detail" && selectedTemplate
                 ? selectedTemplate.name
-                : "Manage Job Description Templates"}
+                : "Manage job description templates"}
             </DialogTitle>
             {(!isMobile || mobileView === "list") && (
               <DialogDescription>
@@ -304,10 +304,10 @@ export function TemplateManagementModal({
                           <span className="font-medium truncate flex-1 min-w-0">{template.name}</span>
                           <CaretRightIcon className="h-5 w-5 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                           {template.description}
                         </p>{" "}
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-sm text-muted-foreground mt-1">
                           Used {template.usageCount}× • Updated {formatTemplateDate(template.updatedAt)}
                         </p>
                       </button>
@@ -510,7 +510,7 @@ export function TemplateManagementModal({
                       ) : (
                         <div className="space-y-4">
                           {/* Metadata row - compact */}
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground border-b border-border pb-3">
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground border-b border-border pb-3">
                             <span>Created {formatTemplateDate(selectedTemplate.createdAt)}</span>{" "}
                             <span>Updated {formatTemplateDate(selectedTemplate.updatedAt)}</span>{" "}
                             <span>Used {selectedTemplate.usageCount} times</span>{" "}
@@ -537,7 +537,7 @@ export function TemplateManagementModal({
                       <div className="p-3 sm:p-4 border-t border-border">
                         <Button onClick={handleUseTemplate} className="w-full gap-2 min-h-[48px]">
                           <FileTextIcon className="h-5 w-5 sm:h-4 sm:w-4" />
-                          Use This Template
+                          Use this template
                         </Button>
                       </div>
                     )}
@@ -590,7 +590,7 @@ export function TemplateManagementModal({
               disabled={isProcessing}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isProcessing ? "Deleting..." : "Delete Permanently"}
+              {isProcessing ? "Deleting..." : "Delete permanently"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

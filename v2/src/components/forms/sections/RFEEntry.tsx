@@ -308,7 +308,7 @@ function RFEEntryComponent({
         {/* Date Fields Grid */}
         <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-3">
           <FormField
-            label="Received Date"
+            label="Received date"
             name={fieldId("receivedDate")}
             error={fieldErrors?.receivedDate}
             hint={receivedHint}
@@ -326,7 +326,7 @@ function RFEEntryComponent({
           </FormField>
 
           <FormField
-            label="Response Due"
+            label="Response due"
             name={fieldId("responseDueDate")}
             error={fieldErrors?.responseDueDate}
             hint="Typically 30-90 days (standard 87) - check RFE notice for exact deadline"
@@ -342,7 +342,7 @@ function RFEEntryComponent({
           </FormField>
 
           <FormField
-            label="Response Submitted"
+            label="Response submitted"
             name={fieldId("responseSubmittedDate")}
             error={fieldErrors?.responseSubmittedDate}
             warning={fieldWarnings?.responseSubmittedDate}

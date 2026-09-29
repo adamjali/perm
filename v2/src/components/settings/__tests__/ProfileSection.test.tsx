@@ -101,7 +101,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      expect(screen.getByText("Profile Information")).toBeInTheDocument();
+      expect(screen.getByText("Profile information")).toBeInTheDocument();
     });
 
     it("renders Full Name field with label", () => {
@@ -109,7 +109,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      expect(screen.getByText("Full Name")).toBeInTheDocument();
+      expect(screen.getByText("Full name")).toBeInTheDocument();
       expect(screen.getByPlaceholderText("Enter your full name")).toBeInTheDocument();
     });
 
@@ -136,7 +136,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      expect(screen.getByRole("button", { name: /Save Changes/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Save changes/i })).toBeInTheDocument();
     });
   });
 
@@ -296,7 +296,7 @@ describe("ProfileSection", () => {
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
       );
 
-      const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+      const saveButton = screen.getByRole("button", { name: /Save changes/i });
       expect(saveButton).toBeDisabled();
     });
 
@@ -326,7 +326,7 @@ describe("ProfileSection", () => {
       await user.type(nameInput, "New Name");
 
       await waitFor(() => {
-        const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+        const saveButton = screen.getByRole("button", { name: /Save changes/i });
         expect(saveButton).not.toBeDisabled();
       });
     });
@@ -361,7 +361,7 @@ describe("ProfileSection", () => {
       await user.clear(nameInput);
       await user.type(nameInput, "New Name");
 
-      const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+      const saveButton = screen.getByRole("button", { name: /Save changes/i });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -378,7 +378,7 @@ describe("ProfileSection", () => {
       const timezoneSelect = screen.getByRole("combobox");
       await user.selectOptions(timezoneSelect, "America/Chicago");
 
-      const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+      const saveButton = screen.getByRole("button", { name: /Save changes/i });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -399,7 +399,7 @@ describe("ProfileSection", () => {
       const timezoneSelect = screen.getByRole("combobox");
       await user.selectOptions(timezoneSelect, "America/Chicago");
 
-      const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+      const saveButton = screen.getByRole("button", { name: /Save changes/i });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -420,7 +420,7 @@ describe("ProfileSection", () => {
       await user.clear(nameInput);
       await user.type(nameInput, "New Name");
 
-      const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+      const saveButton = screen.getByRole("button", { name: /Save changes/i });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -428,7 +428,7 @@ describe("ProfileSection", () => {
       });
     });
 
-    it("shows Saved! message after successful save", async () => {
+    it("shows Saved message after successful save", async () => {
       const user = userEvent.setup();
       renderWithProviders(
         <ProfileSection profile={defaultProfile} userEmail={defaultEmail} />
@@ -438,11 +438,11 @@ describe("ProfileSection", () => {
       await user.clear(nameInput);
       await user.type(nameInput, "New Name");
 
-      const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+      const saveButton = screen.getByRole("button", { name: /Save changes/i });
       await user.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByText("Saved!")).toBeInTheDocument();
+        expect(screen.getByText("Saved")).toBeInTheDocument();
       });
     });
   });
@@ -463,7 +463,7 @@ describe("ProfileSection", () => {
       await user.clear(nameInput);
       await user.type(nameInput, "New Name");
 
-      const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+      const saveButton = screen.getByRole("button", { name: /Save changes/i });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -482,7 +482,7 @@ describe("ProfileSection", () => {
       await user.clear(nameInput);
       await user.type(nameInput, "New Name");
 
-      const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+      const saveButton = screen.getByRole("button", { name: /Save changes/i });
       await user.click(saveButton);
 
       await waitFor(() => {
@@ -648,7 +648,7 @@ describe("ProfileSection", () => {
       );
 
       // Simulate making no changes but trying to save
-      const saveButton = screen.getByRole("button", { name: /Save Changes/i });
+      const saveButton = screen.getByRole("button", { name: /Save changes/i });
       expect(saveButton).toBeDisabled();
 
       // Even if we force a click (which shouldn't happen with disabled button)

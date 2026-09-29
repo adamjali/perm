@@ -32,12 +32,12 @@ const MIN_URGENT_DAYS = 1;
 const MAX_URGENT_DAYS = 30;
 
 const DEADLINE_TYPES = [
-  { key: "emailDeadlineReminderPwd", label: "PWD Expiration", description: "Prevailing wage determination deadlines", icon: FileTextIcon },
+  { key: "emailDeadlineReminderPwd", label: "PWD expiration", description: "Prevailing wage determination deadlines", icon: FileTextIcon },
   { key: "emailDeadlineReminderRecruitment", label: "Recruitment", description: "Job posting and recruitment deadlines", icon: BriefcaseIcon },
   { key: "emailDeadlineReminderEta9089", label: "ETA 9089", description: "Labor certification filing deadlines", icon: CalendarIcon },
   { key: "emailDeadlineReminderI140", label: "I-140", description: "Immigration petition filing deadlines", icon: FileCheck },
-  { key: "emailDeadlineReminderRfi", label: "RFI Response", description: "Request for information due dates", icon: HelpCircle },
-  { key: "emailDeadlineReminderRfe", label: "RFE Response", description: "Request for evidence due dates", icon: AlertCircle },
+  { key: "emailDeadlineReminderRfi", label: "RFI response", description: "Request for information due dates", icon: HelpCircle },
+  { key: "emailDeadlineReminderRfe", label: "RFE response", description: "Request for evidence due dates", icon: AlertCircle },
 ] as const;
 
 type DeadlineTypeKey = typeof DEADLINE_TYPES[number]["key"];
@@ -91,7 +91,7 @@ function ToggleRow({
           {icon}
           {label}
         </Label>
-        <p className={`text-xs text-muted-foreground ${disabled ? "opacity-50" : ""}`}>
+        <p className={`text-sm text-muted-foreground ${disabled ? "opacity-50" : ""}`}>
           {description}
         </p>
       </div>
@@ -138,7 +138,7 @@ interface TestButtonProps {
   sentLabel?: string;
 }
 
-function TestButton({ onClick, disabled, loading, justSent, label, sentLabel = "Sent!" }: TestButtonProps): React.ReactElement {
+function TestButton({ onClick, disabled, loading, justSent, label, sentLabel = "Sent" }: TestButtonProps): React.ReactElement {
   return (
     <Button variant="outline" size="sm" onClick={onClick} disabled={disabled} loading={loading} loadingText="Sending...">
       <AnimatePresence mode="wait">
@@ -192,21 +192,21 @@ interface PushStatusBadgeProps {
 
 function PushStatusBadge({ status, enabled }: PushStatusBadgeProps): React.ReactElement {
   if (!status?.supported) {
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-2 border-border">Not Supported</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border-2 border-border">Not supported</span>;
   }
   if (status.permission === "denied") {
-    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-destructive/10 text-destructive border-2 border-destructive">Blocked</span>;
+    return <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-destructive/10 text-destructive border-2 border-destructive">Blocked</span>;
   }
   if (enabled && status.subscribed) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-primary/10 text-primary border-2 border-primary">
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-primary/10 text-primary border-2 border-primary">
         <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
         Enabled
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground border-2 border-border">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 text-sm font-medium bg-muted text-muted-foreground border-2 border-border">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-muted-foreground" />
       Disabled
     </span>
@@ -397,7 +397,7 @@ export default function NotificationPreferencesSection({
     setIsSendingTestEmail(true);
     try {
       await sendTestEmail({ email: userEmail });
-      toast.success("Test email sent! Check your inbox.");
+      toast.success("Test email sent. Check your inbox.");
       setJustSentTestEmail(true);
       setTimeout(() => setJustSentTestEmail(false), 2000);
     } catch (error) {
@@ -414,7 +414,7 @@ export default function NotificationPreferencesSection({
     setIsSendingTestPush(true);
     try {
       await sendTestPush();
-      toast.success("Test push notification sent!");
+      toast.success("Test push notification sent");
       setJustSentTestPush(true);
       setTimeout(() => setJustSentTestPush(false), 2000);
     } catch (error) {
@@ -490,11 +490,11 @@ export default function NotificationPreferencesSection({
   return (
     <div className="space-y-6">
       {/* Email Notifications Section */}
-      <SectionCard icon={Mail} title="Email Notifications" description="Control which email notifications you receive">
+      <SectionCard icon={Mail} title="Email notifications" description="Control which email notifications you receive">
         <div className="space-y-5">
           <ToggleRow
             id="email-notifications-enabled"
-            label="Email Notifications"
+            label="Email notifications"
             description="Receive notifications via email"
             checked={emailEnabled}
             onCheckedChange={handleMasterToggle}
@@ -519,9 +519,9 @@ export default function NotificationPreferencesSection({
                   <div className="space-y-0.5 flex-1">
                     <span className={`text-sm font-medium flex items-center gap-2 ${!emailEnabled ? "opacity-50" : ""}`}>
                       <BellRingingIcon className="w-4 h-4" />
-                      Deadline Reminders
+                      Deadline reminders
                     </span>{" "}
-                    <p className={`text-xs text-muted-foreground ${!emailEnabled ? "opacity-50" : ""}`}>
+                    <p className={`text-sm text-muted-foreground ${!emailEnabled ? "opacity-50" : ""}`}>
                       Get notified about upcoming deadlines
                     </p>
                   </div>
@@ -545,7 +545,7 @@ export default function NotificationPreferencesSection({
                     transition={{ duration: 0.2 }}
                   >
                     <div className="mt-4 ml-6 pl-4 border-l-2 border-border/50 space-y-3 pb-1">
-                      <p className="text-xs text-muted-foreground mb-2">
+                      <p className="text-sm text-muted-foreground mb-2">
                         Choose which deadline types to receive reminders for:
                       </p>
                       {DEADLINE_TYPES.map((type) => {
@@ -559,7 +559,7 @@ export default function NotificationPreferencesSection({
                                 <Icon className="w-3.5 h-3.5 text-muted-foreground" />
                                 {type.label}
                               </Label>
-                              <p className={`text-xs text-muted-foreground ${isDisabled ? "opacity-50" : ""}`}>
+                              <p className={`text-sm text-muted-foreground ${isDisabled ? "opacity-50" : ""}`}>
                                 {type.description}
                               </p>
                             </div>
@@ -580,7 +580,7 @@ export default function NotificationPreferencesSection({
 
             <ToggleRow
               id="email-status-updates"
-              label="Status Updates"
+              label="Status updates"
               description="Get notified when case statuses change"
               checked={statusUpdates}
               onCheckedChange={(value) => handleToggle("emailStatusUpdates", value, setStatusUpdates)}
@@ -590,7 +590,7 @@ export default function NotificationPreferencesSection({
 
             <ToggleRow
               id="email-weekly-digest"
-              label="Weekly Digest"
+              label="Weekly digest"
               description="Receive a summary email every Monday morning"
               checked={weeklyDigest}
               onCheckedChange={handleWeeklyDigestToggle}
@@ -609,14 +609,14 @@ export default function NotificationPreferencesSection({
                 <MegaphoneIcon className="w-4 h-4 text-primary" />
                 Product Updates &amp; Announcements
               </Label>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 Occasional emails about new features and improvements
               </p>
             </div>
             {marketingLoading ? (
               <CircleNotchIcon className="w-4 h-4 animate-spin text-muted-foreground" />
             ) : marketingSubscribed === null ? (
-              <span className="text-xs text-muted-foreground">Not available</span>
+              <span className="text-sm text-muted-foreground">Not available</span>
             ) : (
               <Switch
                 id="marketing-updates"
@@ -630,15 +630,15 @@ export default function NotificationPreferencesSection({
         <div className="mt-6 pt-6 border-t border-border">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-sm font-medium text-foreground">Test Email</p>{" "}
-              <p className="text-xs text-muted-foreground">Send a test email to {userEmail}</p>
+              <p className="text-sm font-medium text-foreground">Test email</p>{" "}
+              <p className="text-sm text-muted-foreground">Send a test email to {userEmail}</p>
             </div>
             <TestButton
               onClick={handleSendTestEmail}
               disabled={isSendingTestEmail || !emailEnabled}
               loading={isSendingTestEmail}
               justSent={justSentTestEmail}
-              label="Send Test"
+              label="Send test"
             />
           </div>
         </div>
@@ -647,7 +647,7 @@ export default function NotificationPreferencesSection({
       {/* Push Notifications Section */}
       <SectionCard
         icon={Smartphone}
-        title="Push Notifications"
+        title="Push notifications"
         description="Receive notifications directly in your browser"
         headerRight={<PushStatusBadge status={pushStatus} enabled={pushEnabled} />}
       >
@@ -656,9 +656,9 @@ export default function NotificationPreferencesSection({
             <div className="space-y-0.5 flex-1">
               <Label htmlFor="push-notifications-enabled" className={`text-sm font-medium flex items-center gap-2 ${!pushStatus?.supported || isUpdatingPush ? "opacity-50" : ""}`}>
                 <BellIcon className="w-4 h-4 text-primary" />
-                Push Notifications
+                Push notifications
               </Label>
-              <p className={`text-xs text-muted-foreground ${!pushStatus?.supported || isUpdatingPush ? "opacity-50" : ""}`}>
+              <p className={`text-sm text-muted-foreground ${!pushStatus?.supported || isUpdatingPush ? "opacity-50" : ""}`}>
                 {!pushStatus?.supported
                   ? "Push notifications aren’t supported in this browser"
                   : "Receive instant notifications in your browser"}
@@ -684,26 +684,26 @@ export default function NotificationPreferencesSection({
         <div className="mt-6 pt-6 border-t border-border">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <p className="text-sm font-medium text-foreground">Test Push Notification</p>{" "}
-              <p className="text-xs text-muted-foreground">Send a test notification to this browser</p>
+              <p className="text-sm font-medium text-foreground">Test push notification</p>{" "}
+              <p className="text-sm text-muted-foreground">Send a test notification to this browser</p>
             </div>
             <TestButton
               onClick={handleSendTestPush}
               disabled={isSendingTestPush || !pushEnabled || !pushStatus?.subscribed}
               loading={isSendingTestPush}
               justSent={justSentTestPush}
-              label="Send Test"
+              label="Send test"
             />
           </div>
         </div>
       </SectionCard>
 
       {/* Reminder Settings Section */}
-      <SectionCard icon={ClockIcon} title="Reminder Settings" description="Configure when you receive deadline reminders">
+      <SectionCard icon={ClockIcon} title="Reminder settings" description="Configure when you receive deadline reminders">
         <div className="space-y-4">
           <div>
             <Label className="text-sm font-medium text-foreground">Remind me before deadlines</Label>
-            <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+            <p className="text-sm text-muted-foreground mt-0.5 mb-3">
               Select which days before a deadline you want to receive reminders
             </p>
             <div className="flex flex-wrap gap-4">
@@ -723,7 +723,7 @@ export default function NotificationPreferencesSection({
             <Label htmlFor="urgent-deadline-days" className="text-sm font-medium text-foreground">
               Urgent deadline threshold
             </Label>
-            <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+            <p className="text-sm text-muted-foreground mt-0.5 mb-3">
               Mark deadlines as urgent when within this many days
             </p>
             <div className="flex items-center gap-2">
@@ -759,7 +759,7 @@ export default function NotificationPreferencesSection({
               </Button>
               <span className="text-sm text-muted-foreground">days</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
+            <p className="text-sm text-muted-foreground mt-2 flex items-center gap-1">
               <AlertTriangle className="w-3 h-3" />
               Urgent deadlines bypass quiet hours
             </p>

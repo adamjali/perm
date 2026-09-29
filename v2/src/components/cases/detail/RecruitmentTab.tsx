@@ -166,7 +166,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
       {ws && (
         <WindowCard
           ws={ws}
-          title="Recruitment Window"
+          title="Recruitment window"
           stageColor="var(--stage-recruitment)"
           startDate={windowStart}
           endDate={windowEnd}
@@ -237,7 +237,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="detail-card-head ch-rec">
                 <span className="flex items-center gap-1.5">
                   <NewspaperIcon className="h-3.5 w-3.5" />
-                  Sunday Ads
+                  Sunday ads
                 </span>
                 {hasSundayAds && caseData.sundayAdSecondDate && (
                   <span className="head-badge">
@@ -285,7 +285,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="detail-card-head ch-rec">
                 <span className="flex items-center gap-1.5">
                   <FileTextIcon className="h-3.5 w-3.5" />
-                  Notice of Filing
+                  Notice of filing
                 </span>
                 {hasNOF && caseData.noticeOfFilingEndDate && (
                   <span className="head-badge">
@@ -319,7 +319,7 @@ export function RecruitmentTab({ caseData }: RecruitmentTabProps) {
               <div className="detail-card-head ch-rec">
                 <span className="flex items-center gap-1.5">
                   <UsersIcon className="h-3.5 w-3.5" />
-                  Additional Methods
+                  Additional methods
                 </span>{" "}
                 <span className="head-badge">{methods.length} / {caseData.isProfessionalOccupation ? Math.max(3, methods.length) : methods.length}</span>
               </div>

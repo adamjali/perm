@@ -39,7 +39,7 @@ describe("RecentActivityWidget", () => {
       mockUseQuery.mockReturnValue(activityScenarios.typical);
       const { container } = renderWithProviders(<RecentActivityWidget />);
 
-      expect(screen.getByText("Recent Activity")).toBeInTheDocument();
+      expect(screen.getByText("Recent activity")).toBeInTheDocument();
       expect(container.querySelectorAll('[data-testid="activity-card"]').length).toBeGreaterThan(0);
       expect(screen.getByRole("button", { name: /view all/i })).toBeInTheDocument();
     });

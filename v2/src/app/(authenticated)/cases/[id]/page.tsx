@@ -3,7 +3,7 @@ import { CaseDetailPageClient } from "./CaseDetailPageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Case Details",
+    title: "Case details",
     robots: { index: false, follow: false },
   };
 }

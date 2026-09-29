@@ -162,14 +162,14 @@ export function TemplateStatusBadge({
   return (
     <span
       className={cn(
-        "text-xs px-2 py-0.5 rounded-full border",
+        "text-sm px-2 py-0.5 rounded-full border",
         isModified
           ? "bg-amber-50 border-amber-300 text-amber-700 dark:bg-amber-900/20 dark:border-amber-700 dark:text-amber-400"
           : "bg-blue-50 border-blue-300 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400",
         className
       )}
     >
-      {isModified ? "Modified" : "From Template"}
+      {isModified ? "Modified" : "From template"}
     </span>
   );
 }
@@ -192,7 +192,7 @@ export function TemplateTypeBadge({
   return (
     <span
       className={cn(
-        "text-xs px-2 py-1 rounded border",
+        "text-sm px-2 py-1 rounded border",
         isExisting
           ? "bg-blue-50 border-blue-200 text-blue-700 dark:bg-blue-900/20 dark:border-blue-700 dark:text-blue-400"
           : "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-700 dark:text-emerald-400",

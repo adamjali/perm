@@ -10,12 +10,13 @@
 
 "use client";
 
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useContext, useMemo, useEffect, useRef } from "react";
 import type { ToolbarProps, View } from "react-big-calendar";
 import { Navigate } from "react-big-calendar";
-import { CaretDownIcon, CaretLeftIcon, CaretRightIcon, CaretUpIcon } from "@phosphor-icons/react/ssr";
+import { CaretDownIcon, CaretLeftIcon, CaretRightIcon, CaretUpIcon, ListIcon } from "@phosphor-icons/react/ssr";
 
 import type { CalendarEvent } from "@/lib/calendar/types";
+import { CalendarListToggleContext } from "./calendar-view-context";
 
 // ============================================================================
 // Constants
@@ -26,7 +27,7 @@ const VIEW_LABELS: Record<View, string> = {
   week: "Week",
   day: "Day",
   agenda: "Agenda",
-  work_week: "Work Week",
+  work_week: "Work week",
 };
 
 const MONTHS = [
@@ -40,6 +41,7 @@ const MONTHS = [
 // ============================================================================
 
 export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
+  const toggleList = useContext(CalendarListToggleContext);
   const { label, onNavigate, onView, view, views, date } = props;
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -264,6 +266,17 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
               {VIEW_LABELS[v]}
             </button>
           ))}
+          {toggleList && (
+            <button
+              type="button"
+              onClick={toggleList}
+              className="flex items-center gap-1.5 border-l-2 border-border bg-card px-4 py-3 text-sm font-semibold text-foreground transition-colors hover:bg-muted"
+              aria-label="Switch to list view"
+            >
+              <ListIcon className="size-4" aria-hidden="true" />
+              List
+            </button>
+          )}
         </div>
       </div>
     </div>

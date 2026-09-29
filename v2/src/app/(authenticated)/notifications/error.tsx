@@ -9,5 +9,5 @@ export default function NotificationsError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <RouteError error={error} reset={reset} title="Notifications Error" />;
+  return <RouteError error={error} reset={reset} title="Notifications error" />;
 }

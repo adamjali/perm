@@ -241,10 +241,10 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             </div>
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
-                Contact Support
+                Contact support
                 <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
-              <span className="text-xs text-muted-foreground">{SUPPORT_EMAIL}</span>
+              <span className="text-sm text-muted-foreground">{SUPPORT_EMAIL}</span>
             </div>
           </a>{" "}
 
@@ -260,10 +260,10 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             </div>
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
-                Report a Bug
+                Report a bug
                 <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
-              <span className="text-xs text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 By email
               </span>
             </div>
@@ -281,10 +281,10 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             </div>
             <div className="text-center">
               <span className="font-heading font-bold text-sm block flex items-center justify-center gap-1">
-                Request Feature
+                Request feature
                 <ArrowSquareOutIcon className="h-3 w-3 text-muted-foreground" />
               </span>{" "}
-              <span className="text-xs text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 By email
               </span>
             </div>
@@ -313,9 +313,9 @@ export default function SupportSection({ profile }: SupportSectionProps) {
             </div>
             <div className="text-center">
               <span className="font-heading font-bold text-sm block">
-                {isRestarting ? "Starting..." : "Replay Tour"}
+                {isRestarting ? "Starting..." : "Replay tour"}
               </span>{" "}
-              <span className="text-xs text-muted-foreground">
+              <span className="text-sm text-muted-foreground">
                 Product walkthrough
               </span>
             </div>
@@ -331,7 +331,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         <div className="flex items-center gap-2 mb-2">
           <DownloadIcon className="w-5 h-5 text-foreground" />
           <h3 className="font-heading font-bold text-lg text-foreground">
-            Your Data
+            Your data
           </h3>
         </div>
         <p className="text-sm text-muted-foreground mb-4">
@@ -359,7 +359,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
         <div className="flex items-center gap-2 mb-2">
           <Trash2 className="w-5 h-5 text-destructive" />
           <h3 className="font-heading font-bold text-lg text-destructive">
-            Delete Account
+            Delete account
           </h3>
         </div>
         <p className="text-sm text-muted-foreground mb-6">
@@ -381,8 +381,8 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               <div className="flex items-center gap-2">
                 <AlertTriangle className="w-5 h-5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium">Deletion Scheduled</p>{" "}
-                  <p className="text-xs">
+                  <p className="text-sm font-medium">Deletion scheduled</p>{" "}
+                  <p className="text-sm">
                     Your account will be permanently deleted on {deletionDate}
                   </p>
                 </div>
@@ -393,7 +393,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                   size="sm"
                   onClick={handleCancelDeletion}
                 >
-                  Cancel Deletion
+                  Cancel deletion
                 </Button>
                 <Button
                   variant="destructive"
@@ -401,7 +401,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
                   onClick={() => setDeleteNowOpen(true)}
                 >
                   <Zap className="w-3 h-3 mr-1" />
-                  Delete Now
+                  Delete now
                 </Button>
               </div>
             </motion.div>
@@ -415,7 +415,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           disabled={isDeletionScheduled}
         >
           <Trash2 className="w-4 h-4 mr-2" />
-          {isDeletionScheduled ? "Deletion Pending" : "Delete Account"}
+          {isDeletionScheduled ? "Deletion pending" : "Delete account"}
         </Button>
       </div>
 
@@ -423,9 +423,9 @@ export default function SupportSection({ profile }: SupportSectionProps) {
       <div className="bg-muted/30 border-2 border-border p-4">
         <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
           <InfoIcon className="h-4 w-4" />
-          <span className="font-mono text-xs">PERM Tracker v{appVersion}</span>{" "}
+          <span className="font-mono text-sm">PERM Tracker v{appVersion}</span>{" "}
           <span className="text-muted-foreground">|</span>{" "}
-          <span className="text-xs">&copy; {currentYear} PERM Tracker</span>
+          <span className="text-sm">&copy; {currentYear} PERM Tracker</span>
         </div>
       </div>
 
@@ -435,7 +435,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="w-5 h-5" />
-              Delete Your Account
+              Delete your account
             </DialogTitle>
             <DialogDescription asChild>
               <div className="text-muted-foreground text-sm space-y-3 pt-2">
@@ -496,7 +496,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
               loadingText="Deleting..."
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              Delete Account
+              Delete account
             </Button>
           </DialogFooter>
         </DialogContent>

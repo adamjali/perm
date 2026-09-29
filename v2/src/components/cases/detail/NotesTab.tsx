@@ -230,7 +230,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
           <div className="detail-card-head ch-yellow" style={{ gap: 8 }}>
             <span className="flex items-center gap-1.5">
               <ChatCircleIcon className="h-3.5 w-3.5" />
-              Case Notes
+              Case notes
             </span>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <select
@@ -350,9 +350,9 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                     {selectedNote.category && <CategoryBadge category={selectedNote.category} />}
                     <span>
                       {selectedNote.status === "done" ? (
-                        <span style={{ color: "var(--primary)", fontWeight: 700 }}>Complete</span>
+                        <span style={{ color: "var(--primary-text)", fontWeight: 700 }}>Complete</span>
                       ) : (
-                        <span style={{ color: "var(--stage-eta9089)", fontWeight: 700 }}>Pending</span>
+                        <span style={{ color: "var(--data-warn-ink)", fontWeight: 700 }}>Pending</span>
                       )}
                     </span>
                   </div>
@@ -418,7 +418,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                   {/* Due date box */}
                   {selectedNote.dueDate && (
                     <div style={{ marginTop: 16, padding: "12px 16px", border: "3px solid var(--border)", background: "var(--muted)" }}>
-                      <span className="preview-date" style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", textTransform: "uppercase" }}>Due Date</span>
+                      <span className="preview-date" style={{ fontFamily: "var(--font-mono)", fontSize: "0.62rem", textTransform: "uppercase" }}>Due date</span>
                       <div style={{ fontWeight: 700, marginTop: 4 }}>{selectedNote.dueDate}</div>
                     </div>
                   )}
@@ -432,7 +432,7 @@ export function NotesTab({ notes, onUpdateNotes }: NotesTabProps) {
                       onClick={() => toggleDone(selectedNote.id)}
                     >
                       <CheckCircleIcon className="h-3.5 w-3.5" />
-                      {selectedNote.status === "done" ? "Mark Pending" : "Mark Done"}
+                      {selectedNote.status === "done" ? "Mark pending" : "Mark done"}
                     </button>
                     <button
                       className="icon-btn"

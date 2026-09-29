@@ -81,7 +81,7 @@ export function TimelineHeader({ months, today }: TimelineHeaderProps) {
             </span>{" "}
             {/* Show year on January or first month of range */}
             {(isJanuary || index === 0) && (
-              <span className="text-xs text-muted-foreground leading-none">
+              <span className="text-sm text-muted-foreground leading-none">
                 {/* Short year on mobile, full on sm+ */}
                 <span className="hidden sm:inline">{yearLabel}</span>{" "}
                 <span className="sm:hidden">{yearLabelShort}</span>

@@ -98,10 +98,10 @@ const CASE_STATUS_OPTIONS = [
  */
 const PROGRESS_STATUS_OPTIONS = [
   { value: 'working', label: 'Working' },
-  { value: 'waiting_intake', label: 'Waiting for Intake' },
+  { value: 'waiting_intake', label: 'Waiting for intake' },
   { value: 'filed', label: 'Filed' },
   { value: 'approved', label: 'Approved' },
-  { value: 'under_review', label: 'Under Review' },
+  { value: 'under_review', label: 'Under review' },
   { value: 'rfi_rfe', label: 'RFI/RFE' },
 ];
 
@@ -169,13 +169,13 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
   const statusColor = statusOption ? statusOption.color : '#6B7280';
 
   return (
-    <FormSection title="Basic Information" defaultOpen>
+    <FormSection title="Basic information" defaultOpen>
       <div className="space-y-4">
         {/* ========== PRIMARY FIELDS ========== */}
         <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
           {/* Employer Name (Full Width) */}
           <FormField
-            label="Employer Name"
+            label="Employer name"
             name="employerName"
             required
             error={errors?.employerName}
@@ -195,7 +195,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
 
           {/* Foreign Worker ID | DOL case number (side by side) */}
           <FormField
-            label="Foreign Worker ID"
+            label="Foreign worker ID"
             name="beneficiaryIdentifier"
             error={errors?.beneficiaryIdentifier}
           >
@@ -255,7 +255,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
 
           {/* Position Title (Full Width) */}
           <FormField
-            label="Position Title"
+            label="Position title"
             name="positionTitle"
             required
             error={errors?.positionTitle}
@@ -281,7 +281,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-foreground">Status</span>
               {isAutoStatusEnabled && (
-                <span className="text-xs text-primary bg-primary/10 px-2 py-0.5 border-2 border-primary">
+                <span className="text-sm text-primary bg-primary/10 px-2 py-0.5 border-2 border-primary">
                   Auto-updating
                 </span>
               )}
@@ -309,7 +309,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
           <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-2">
             {/* Case Status */}
             <FormField
-              label="Case Status"
+              label="Case status"
               name="caseStatus"
               required
               error={errors?.caseStatus}
@@ -349,7 +349,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
 
             {/* Progress Status */}
             <FormField
-              label="Progress Status"
+              label="Progress status"
               name="progressStatus"
               required
               error={errors?.progressStatus}
@@ -381,7 +381,7 @@ export function BasicInfoSection(props: BasicInfoSectionProps) {
 
           {/* Helper text */}
           {isAutoStatusEnabled && (
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 text-sm text-muted-foreground">
               Status automatically updates based on form data. Toggle off to set manually.
             </p>
           )}

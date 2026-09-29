@@ -7,6 +7,7 @@ import { motion } from "motion/react";
 import { api } from "@/../convex/_generated/api";
 import type { Id } from "@/../convex/_generated/dataModel";
 import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, ArrowLeftIcon, BookmarkIcon, CalendarCheckIcon, CalendarXIcon, CheckIcon, CircleNotchIcon, DotsThreeVerticalIcon, PencilIcon, TrashIcon as Trash2, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -201,14 +202,14 @@ function NotFoundState() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
       <div className="text-center space-y-2">
-        <h2 className="font-heading text-2xl font-bold">Case Not Found</h2>{" "}
+        <h2 className="font-heading text-2xl font-bold">Case not found</h2>{" "}
         <p className="text-muted-foreground">
           The case you&apos;re looking for doesn&apos;t exist or has been deleted.
         </p>
       </div>
       <Button onClick={() => router.push("/cases")} className="gap-2">
         <ArrowLeftIcon className="h-4 w-4" />
-        Back to Cases
+        Back to cases
       </Button>
     </div>
   );
@@ -237,7 +238,7 @@ function DeleteConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete Case</DialogTitle>
+          <DialogTitle>Delete case</DialogTitle>
           <DialogDescription>
             Are you sure you want to delete &quot;{caseName}&quot;? This action can’t be
             undone.
@@ -256,7 +257,7 @@ function DeleteConfirmDialog({
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "Deleting..." : "Delete Case"}
+            {isLoading ? "Deleting..." : "Delete case"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -632,8 +633,8 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   {caseData.employerName}
                 </h1>
                 {isSample && (
-                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-sm font-bold tracking-wider uppercase border-2 border-dashed border-muted-foreground/40 text-muted-foreground bg-muted">
-                    SAMPLE
+                  <span className="shrink-0 inline-flex items-center px-2 py-0.5 text-sm font-semibold border-2 border-dashed border-muted-foreground/50 text-muted-foreground" title="Sample case. Delete it anytime">
+                    Sample
                   </span>
                 )}
               </div>
@@ -726,7 +727,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                 ) : (
                   <PencilIcon className="h-4 w-4" />
                 )}
-                <span className="hidden sm:inline">Edit Case</span>
+                <span className="hidden sm:inline">Edit case</span>
               </Button>
 
               <DropdownMenu modal={false}>
@@ -749,12 +750,12 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                   {isClosed ? (
                     <DropdownMenuItem onClick={handleReopen} disabled={isUpdating} className="min-h-[44px] font-heading font-bold text-sm rounded-none">
                       <RotateCcw className="h-4 w-4" />
-                      Reopen Case
+                      Reopen case
                     </DropdownMenuItem>
                   ) : (
                     <DropdownMenuItem onClick={handleArchive} disabled={isUpdating} className="min-h-[44px] font-heading font-bold text-sm rounded-none">
                       <ArchiveIcon className="h-4 w-4" />
-                      Archive Case
+                      Archive case
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator className="bg-border h-[2px]" />
@@ -764,7 +765,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
                     className="min-h-[44px] font-heading font-bold text-sm rounded-none"
                   >
                     <Trash2 className="h-4 w-4" />
-                    Delete Case
+                    Delete case
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -803,9 +804,9 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
             <CaseStageBadge stage={caseData.caseStatus} bordered />
             <ProgressStatusBadge status={caseData.progressStatus} />
             {isProfessionalOccupation && (
-              <span className="inline-flex items-center border-2 border-border px-2 py-0.5 text-sm font-mono font-bold uppercase tracking-wide gap-1">
+              <Badge variant="outline" className="text-sm" title="Professional occupation: the extra recruitment steps apply">
                 Professional
-              </span>
+              </Badge>
             )}
           </div>
         </div>
@@ -930,7 +931,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
           ) : (
             <Trash2 className="h-3.5 w-3.5" />
           )}
-          Delete Case
+          Delete case
         </Button>
       </motion.div>
 

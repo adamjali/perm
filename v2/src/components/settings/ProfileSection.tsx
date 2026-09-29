@@ -193,7 +193,7 @@ export default function ProfileSection({
       <div className="flex items-center gap-2 mb-6">
         <UserIcon className="w-5 h-5 text-foreground" />
         <h3 className="font-heading font-bold text-lg text-foreground">
-          Profile Information
+          Profile information
         </h3>
       </div>
 
@@ -234,7 +234,7 @@ export default function ProfileSection({
       {/* Form Fields */}
       <div className="space-y-6">
         {/* Full Name */}
-        <FormField label="Full Name" name="fullName">
+        <FormField label="Full name" name="fullName">
           <Input
             id="fullName"
             type="text"
@@ -255,7 +255,7 @@ export default function ProfileSection({
               className="sm:pr-44"
             />
             {isGoogleSignIn && (
-              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-xs font-medium border-2 border-primary/20 sm:absolute sm:right-2 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2">
+              <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-1 bg-primary/10 text-primary text-sm font-medium border-2 border-primary/20 sm:absolute sm:right-2 sm:top-1/2 sm:mt-0 sm:-translate-y-1/2">
                 <Mail className="w-3 h-3" />
                 <span>Signed in with Google</span>
               </div>
@@ -302,7 +302,7 @@ export default function ProfileSection({
                 >
                   <CheckIcon className="w-4 h-4" />
                 </motion.span>
-                Saved!
+                Saved
               </motion.span>
             ) : isDirty ? (
               <motion.span
@@ -335,7 +335,7 @@ export default function ProfileSection({
           loadingText="Saving..."
         >
           <CheckIcon className="w-4 h-4" />
-          Save Changes
+          Save changes
         </Button>
       </div>
     </div>

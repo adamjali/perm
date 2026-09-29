@@ -197,13 +197,13 @@ function NotificationItem({
         </p>{" "}
 
         {/* Message - 2 line truncate */}
-        <p className="text-xs text-muted-foreground line-clamp-2" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notification.message}>
+        <p className="text-sm text-muted-foreground line-clamp-2" style={{ overflowWrap: "break-word", wordBreak: "break-word" }} title={notification.message}>
           {notification.message}
         </p>
 
         {/* Case info if available */}
         {notification.caseInfo?.employerName && (
-          <p className="text-xs text-muted-foreground truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
+          <p className="text-sm text-muted-foreground truncate" title={`${notification.caseInfo.employerName}${notification.caseInfo.positionTitle ? ` - ${notification.caseInfo.positionTitle}` : notification.caseInfo.beneficiaryIdentifier ? ` - ${notification.caseInfo.beneficiaryIdentifier}` : ""}`}>
             {notification.caseInfo.employerName}
             {(notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier) &&
               ` - ${notification.caseInfo.positionTitle || notification.caseInfo.beneficiaryIdentifier}`}
@@ -213,7 +213,7 @@ function NotificationItem({
 
       {/* Time and Delete button container */}
       <div className="shrink-0 flex flex-col items-end gap-1">
-        <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
+        <span className="text-sm text-muted-foreground font-mono whitespace-nowrap">
           {safeFormatDistanceToNow(notification.createdAt)}
         </span>
 
@@ -275,7 +275,7 @@ function EmptyState() {
       <p className="text-sm font-heading font-bold text-foreground">
         No notifications
       </p>{" "}
-      <p className="text-xs text-muted-foreground mt-1">
+      <p className="text-sm text-muted-foreground mt-1">
         You&apos;re all caught up!
       </p>
     </div>
@@ -385,9 +385,9 @@ export default function NotificationDropdown() {
             variant="ghost"
             size="xs"
             onClick={handleMarkAllAsRead}
-            className="text-xs text-primary hover:text-primary-text hover:bg-primary/10"
+            className="text-sm text-primary hover:text-primary-text hover:bg-primary/10"
           >
-            Mark All Read
+            Mark all read
           </Button>
         )}
       </header>

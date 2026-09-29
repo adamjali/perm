@@ -73,7 +73,7 @@ describe("SupportSection", () => {
    */
   it("labels the data export as a plain download", () => {
     renderWithProviders(<SupportSection profile={defaultProfile} />);
-    expect(screen.getByRole("heading", { name: "Your Data" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Your data" })).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /download everything \(\.json\)/i }),
     ).toBeInTheDocument();
@@ -119,38 +119,38 @@ describe("SupportSection", () => {
   describe("delete account", () => {
     it("renders delete account section with button when not scheduled", () => {
       renderWithProviders(<SupportSection profile={defaultProfile} />);
-      expect(screen.getByRole("heading", { name: /Delete Account/i })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: /Delete account/i })).toBeInTheDocument();
       expect(screen.getByText(/Permanently delete your account/)).toBeInTheDocument();
-      const deleteButton = screen.getByRole("button", { name: /Delete Account/i });
+      const deleteButton = screen.getByRole("button", { name: /Delete account/i });
       expect(deleteButton).not.toBeDisabled();
     });
 
     it("shows scheduled deletion state with cancel and delete now buttons", () => {
       renderWithProviders(<SupportSection profile={scheduledDeletionProfile} />);
-      expect(screen.getByText("Deletion Scheduled")).toBeInTheDocument();
-      expect(screen.getByText("Deletion Pending")).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /Cancel Deletion/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /Deletion Pending/i })).toBeDisabled();
-      expect(screen.getByRole("button", { name: /Delete Now/i })).toBeInTheDocument();
+      expect(screen.getByText("Deletion scheduled")).toBeInTheDocument();
+      expect(screen.getByText("Deletion pending")).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Cancel deletion/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Deletion pending/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /Delete now/i })).toBeInTheDocument();
     });
 
     it("does not show Delete Now when no deletion scheduled", () => {
       renderWithProviders(<SupportSection profile={defaultProfile} />);
-      expect(screen.queryByRole("button", { name: /Delete Now/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Delete now/i })).not.toBeInTheDocument();
     });
 
     it("opens confirmation dialog requiring DELETE text", async () => {
       const user = userEvent.setup();
       renderWithProviders(<SupportSection profile={defaultProfile} />);
 
-      const triggerBtn = screen.getByRole("button", { name: /Delete Account/i });
+      const triggerBtn = screen.getByRole("button", { name: /Delete account/i });
       await user.click(triggerBtn);
-      expect(screen.getByText("Delete Your Account")).toBeInTheDocument();
+      expect(screen.getByText("Delete your account")).toBeInTheDocument();
       expect(screen.getByPlaceholderText(/Type DELETE to confirm/i)).toBeInTheDocument();
 
       // Confirm button starts disabled
       const allButtons = screen.getAllByRole("button");
-      const confirmBtn = allButtons.find((btn) => btn.textContent?.includes("Delete Account") && btn !== triggerBtn);
+      const confirmBtn = allButtons.find((btn) => btn.textContent?.includes("Delete account") && btn !== triggerBtn);
       expect(confirmBtn).toBeDisabled();
 
       // Type confirmation enables it
@@ -161,16 +161,16 @@ describe("SupportSection", () => {
     it("closes dialog on Cancel", async () => {
       const user = userEvent.setup();
       renderWithProviders(<SupportSection profile={defaultProfile} />);
-      await user.click(screen.getByRole("button", { name: /Delete Account/i }));
-      expect(screen.getByText("Delete Your Account")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: /Delete account/i }));
+      expect(screen.getByText("Delete your account")).toBeInTheDocument();
       await user.click(screen.getByRole("button", { name: /^Cancel$/i }));
-      await waitFor(() => expect(screen.queryByText("Delete Your Account")).not.toBeInTheDocument());
+      await waitFor(() => expect(screen.queryByText("Delete your account")).not.toBeInTheDocument());
     });
 
     it("shows deletion warning items in dialog", async () => {
       const user = userEvent.setup();
       renderWithProviders(<SupportSection profile={defaultProfile} />);
-      await user.click(screen.getByRole("button", { name: /Delete Account/i }));
+      await user.click(screen.getByRole("button", { name: /Delete account/i }));
       expect(screen.getByText(/All your PERM cases and related data/)).toBeInTheDocument();
       expect(screen.getByText(/Notification preferences and history/)).toBeInTheDocument();
       expect(screen.getByText(/Calendar sync settings/)).toBeInTheDocument();
@@ -180,8 +180,8 @@ describe("SupportSection", () => {
     it("opens DeleteNowDialog when Delete Now clicked", async () => {
       const user = userEvent.setup();
       renderWithProviders(<SupportSection profile={scheduledDeletionProfile} />);
-      await user.click(screen.getByRole("button", { name: /Delete Now/i }));
-      expect(screen.getByText("Delete Account Now")).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: /Delete now/i }));
+      expect(screen.getByText("Delete account now")).toBeInTheDocument();
     });
   });
 
@@ -190,6 +190,6 @@ describe("SupportSection", () => {
     for (const name of [/contact support/i, /report a bug/i, /request feature/i]) {
       expect(screen.getByRole("link", { name })).toHaveAccessibleName();
     }
-    expect(screen.getByRole("button", { name: /Delete Account/i })).toHaveAccessibleName();
+    expect(screen.getByRole("button", { name: /Delete account/i })).toHaveAccessibleName();
   });
 });

@@ -112,7 +112,7 @@ export function TimelineRangeBar({
       <div
         className={cn(
           "absolute bottom-full left-1/2 -translate-x-1/2 mb-3",
-          "px-2.5 py-1.5 bg-foreground text-background text-xs font-medium",
+          "px-2.5 py-1.5 bg-foreground text-background text-sm font-medium",
           "whitespace-nowrap shadow-xl",
           "opacity-0 group-hover:opacity-100",
           "transition-opacity duration-150",
@@ -123,7 +123,7 @@ export function TimelineRangeBar({
         {/* Label on first line */}
         <div className="font-semibold">{rangeBar.label}</div>
         {/* Date range on second line */}
-        <div className="text-xs opacity-80">
+        <div className="text-sm opacity-80">
           {formatISODate(rangeBar.startDate)} - {formatISODate(rangeBar.endDate)}
         </div>
 

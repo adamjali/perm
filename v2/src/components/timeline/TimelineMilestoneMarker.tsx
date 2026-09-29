@@ -153,7 +153,7 @@ export function TimelineMilestoneMarker({
           <motion.div
             className={cn(
               "absolute bottom-full left-1/2 mb-3",
-              "px-2 py-1.5 bg-foreground text-background text-xs font-medium",
+              "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
               "whitespace-nowrap shadow-hard-sm",
               "pointer-events-none z-50",
               "border-2 border-foreground"
@@ -166,7 +166,7 @@ export function TimelineMilestoneMarker({
             {/* Label on first line */}
             <div className="font-semibold">{milestone.label}</div>
             {/* Formatted date on second line */}
-            <div className="text-xs opacity-80">{formatISODate(milestone.date)}</div>
+            <div className="text-sm opacity-80">{formatISODate(milestone.date)}</div>
 
             {/* Arrow pointer */}
             <div

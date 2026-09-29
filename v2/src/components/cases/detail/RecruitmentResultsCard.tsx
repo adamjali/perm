@@ -216,7 +216,7 @@ export function RecruitmentResultsCard({
         <div className="detail-card-head ch-rec">
           <span className="flex items-center gap-1.5">
             <ClipboardTextIcon className="h-3.5 w-3.5" />
-            Recruitment Results
+            Recruitment results
             {isCustom && !isEditing && (
               <span className="ml-1 inline-flex items-center border-2 border-border bg-muted px-1.5 py-0.5 text-sm font-medium text-muted-foreground">
                 Custom
@@ -262,7 +262,7 @@ export function RecruitmentResultsCard({
                   type="button"
                   onClick={handleCopy}
                   className="icon-btn"
-                  title={isCopied ? "Copied!" : "Copy to clipboard"}
+                  title={isCopied ? "Copied" : "Copy to clipboard"}
                 >
                   <AnimatePresence mode="wait">
                     {isCopied ? (
@@ -381,7 +381,7 @@ export function RecruitmentResultsCard({
         {/* ── Compact Summary ── */}
         <div className="field-grid" style={{ padding: 0 }}>
           <div className="field-cell">
-            <div className="fc-label">Mandatory Steps</div>
+            <div className="fc-label">Mandatory steps</div>
             <div className="fc-val flex items-center gap-1.5">
               {mandatoryDone === 4 ? (
                 <CheckIcon className="h-3.5 w-3.5 text-primary" />
@@ -393,7 +393,7 @@ export function RecruitmentResultsCard({
           </div>
           {status.professionalMethods.required && (
             <div className="field-cell">
-              <div className="fc-label">Professional Methods</div>
+              <div className="fc-label">Professional methods</div>
               <div className="fc-val flex items-center gap-1.5">
                 {status.professionalMethods.allComplete ? (
                   <CheckIcon className="h-3.5 w-3.5 text-primary" />
@@ -411,7 +411,7 @@ export function RecruitmentResultsCard({
             </div>
           </div>
           <div className="field-cell">
-            <div className="fc-label">Recruitment Period</div>
+            <div className="fc-label">Recruitment period</div>
             <div className="fc-val mono">
               {status.recruitmentEndDate
                 ? `${fmtISOShort(caseData.recruitmentStartDate)} to ${fmtISOShort(status.recruitmentEndDate)}`

@@ -114,7 +114,7 @@ export function TemplateUpdateConfirmDialog({
               <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
             </div>
             <AlertDialogTitle>
-              Template Already Exists
+              Template already exists
             </AlertDialogTitle>
           </div>
           <AlertDialogDescription className="pt-2">
@@ -136,7 +136,7 @@ export function TemplateUpdateConfirmDialog({
               )}
             >
               <Save className="h-4 w-4" />
-              {isProcessing ? "Updating..." : "Update Existing Template"}
+              {isProcessing ? "Updating..." : "Update existing template"}
             </Button>
 
             {/* Save as New Option */}
@@ -166,7 +166,7 @@ export function TemplateUpdateConfirmDialog({
         ) : (
           <div className="space-y-4 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="new-template-name">New Template Name</Label>
+              <Label htmlFor="new-template-name">New template name</Label>
               <Input
                 id="new-template-name"
                 value={newName}

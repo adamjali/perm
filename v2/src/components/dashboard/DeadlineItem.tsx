@@ -22,6 +22,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { CircleNotchIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { formatDeadlineDate } from "@/components/cases/case-card.utils";
 import { Z_INDEX } from "@/lib/constants/zIndex";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
@@ -188,7 +189,7 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
         }}
       >
         <div>
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Case #
           </div>
           <div className="mono text-sm font-medium text-foreground truncate" title={deadline.caseNumber || "N/A"}>
@@ -196,7 +197,7 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
           </div>
         </div>
         <div>
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Position
           </div>
           <div className="text-sm font-medium text-foreground truncate" title={deadline.positionTitle || deadline.beneficiaryName || "N/A"}>
@@ -204,11 +205,11 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
           </div>
         </div>
         <div>
-          <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+          <div className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
             Due
           </div>
           <div className="text-sm font-medium text-foreground">
-            {deadline.dueDate}
+            {formatDeadlineDate(deadline.dueDate)}
           </div>
         </div>
       </div>,
@@ -266,7 +267,7 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
             <div className="font-bold text-base truncate text-foreground" title={deadline.employerName}>
               {deadline.employerName}
             </div>
-            <div className="text-xs text-muted-foreground uppercase tracking-wide truncate" title={deadline.label}>
+            <div className="line-clamp-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide" title={deadline.label}>
               {deadline.label}
             </div>
           </div>
@@ -281,8 +282,8 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
             >
               {countdownText}
             </div>
-            <div className="text-xs text-muted-foreground">
-              {deadline.dueDate}
+            <div className="whitespace-nowrap font-mono text-sm text-muted-foreground">
+              {formatDeadlineDate(deadline.dueDate)}
             </div>
           </div>
         </a>

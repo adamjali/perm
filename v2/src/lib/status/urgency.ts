@@ -141,7 +141,7 @@ export const URGENCY_CONFIG: Record<UrgencyLevelFull, UrgencyConfig> = {
     cssVar: "var(--urgency-normal)",
     hexColor: "#2563EB", // Blue-600
     hexBgColor: "#EFF6FF", // Blue-50
-    label: "On Track",
+    label: "On track",
   },
 };
 

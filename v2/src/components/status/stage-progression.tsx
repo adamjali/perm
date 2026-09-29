@@ -11,10 +11,10 @@ const stageColors: Record<CaseStatus, string> = {
 }
 
 const stageLabels: Record<CaseStatus, { label: string; number: string }> = {
-  pwd: { label: "PWD Phase", number: "01" },
+  pwd: { label: "PWD phase", number: "01" },
   recruitment: { label: "Recruitment", number: "02" },
   eta9089: { label: "ETA 9089", number: "03" },
-  i140: { label: "I-140 Phase", number: "04" },
+  i140: { label: "I-140 phase", number: "04" },
   closed: { label: "Closed", number: "05" },
 }
 

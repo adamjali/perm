@@ -247,10 +247,10 @@ export function calculateRecruitmentStatus(
   if (!isComplete) {
     const missingSteps: string[] = [];
     const stepChecks = [
-      { condition: !mandatorySteps.noticeOfFiling.complete, label: "Notice of Filing" },
-      { condition: !mandatorySteps.jobOrder.complete, label: "Job Order" },
-      { condition: !mandatorySteps.sundayAdFirst.complete, label: "First Sunday Ad" },
-      { condition: !mandatorySteps.sundayAdSecond.complete, label: "Second Sunday Ad" },
+      { condition: !mandatorySteps.noticeOfFiling.complete, label: "Notice of filing" },
+      { condition: !mandatorySteps.jobOrder.complete, label: "Job order" },
+      { condition: !mandatorySteps.sundayAdFirst.complete, label: "First Sunday ad" },
+      { condition: !mandatorySteps.sundayAdSecond.complete, label: "Second Sunday ad" },
     ];
 
     stepChecks.forEach(({ condition, label }) => {

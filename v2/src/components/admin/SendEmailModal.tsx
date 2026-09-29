@@ -76,7 +76,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Mail className="size-5" />
-            Send Email
+            Send email
           </DialogTitle>
           <DialogDescription>
             Send an email to {user.name} ({user.email})
@@ -124,7 +124,7 @@ export function SendEmailModal({ user, onClose }: SendEmailModalProps) {
               rows={8}
               className="font-mono text-sm"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               This will be sent as a branded HTML email from notifications@permtracker.app
             </p>
           </div>

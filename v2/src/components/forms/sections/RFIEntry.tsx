@@ -315,7 +315,7 @@ function RFIEntryComponent({
         {/* Date Fields Grid */}
         <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 md:grid-cols-3">
           <FormField
-            label="Received Date"
+            label="Received date"
             name={fieldId("receivedDate")}
             error={fieldErrors?.receivedDate}
             hint={receivedHint}
@@ -333,7 +333,7 @@ function RFIEntryComponent({
           </FormField>
 
           <FormField
-            label="Response Due"
+            label="Response due"
             name={fieldId("responseDueDate")}
             error={fieldErrors?.responseDueDate}
             hint="Strict 30 days from received (auto-calculated, not editable)"
@@ -351,7 +351,7 @@ function RFIEntryComponent({
           </FormField>
 
           <FormField
-            label="Response Submitted"
+            label="Response submitted"
             name={fieldId("responseSubmittedDate")}
             error={fieldErrors?.responseSubmittedDate}
             hint={submittedHint}

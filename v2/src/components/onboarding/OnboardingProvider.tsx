@@ -200,7 +200,7 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
         console.error("Failed to complete tour:", error);
         captureError(error, { operation: "completeTour" });
       });
-      toast.success("Tour complete! You can replay it anytime from Settings \u2192 Support.");
+      toast.success("Tour complete. You can replay it anytime from Settings \u2192 Support.");
     } else {
       setTourPhase(TOUR_PHASE_ORDER[nextIndex] ?? null);
     }

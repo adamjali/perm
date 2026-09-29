@@ -308,7 +308,7 @@ describe("CaseDetailPage - Not Found State", () => {
 
     await renderPageAndWait("nonexistent-id");
 
-    expect(screen.getByText("Case Not Found")).toBeInTheDocument();
+    expect(screen.getByText("Case not found")).toBeInTheDocument();
   });
 
   it("shows descriptive message in not found state", async () => {

@@ -48,7 +48,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
         return (
           <code
             className={cn(
-              'block font-mono text-xs',
+              'block font-mono text-sm',
               className
             )}
             {...props}
@@ -62,7 +62,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
       return (
         <code
           className={cn(
-            'font-mono text-xs px-1.5 py-0.5',
+            'font-mono text-sm px-1.5 py-0.5',
             'border border-current/30',
             isUser
               ? 'bg-black/10'
@@ -81,7 +81,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
         className={cn(
           'my-2 p-3 overflow-x-auto overscroll-x-none',
           'border-2 border-current/20',
-          'font-mono text-xs leading-relaxed',
+          'font-mono text-sm leading-relaxed',
           isUser
             ? 'bg-black/10'
             : 'bg-muted'
@@ -149,7 +149,7 @@ export function ChatMarkdown({ content, isUser = false }: ChatMarkdownProps) {
       <div className="my-2 overflow-x-auto overscroll-x-none">
         <table
           className={cn(
-            'w-full text-xs',
+            'w-full text-sm',
             'border-2 border-collapse',
             isUser ? 'border-current/30' : 'border-border'
           )}

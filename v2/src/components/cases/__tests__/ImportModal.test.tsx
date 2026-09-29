@@ -17,7 +17,7 @@ describe("ImportModal", () => {
         <ImportModal open={true} onOpenChange={mockOnOpenChange} onImport={mockOnImport} />
       );
 
-      expect(screen.getByText("Import Cases")).toBeInTheDocument();
+      expect(screen.getByText("Import cases")).toBeInTheDocument();
     });
 
     it("does not render when open is false", () => {
@@ -128,7 +128,7 @@ describe("ImportModal", () => {
       await waitFor(() => {
         // Check table headers
         expect(screen.getByText("Employer")).toBeInTheDocument();
-        expect(screen.getByText("Foreign Worker")).toBeInTheDocument();
+        expect(screen.getByText("Foreign worker")).toBeInTheDocument();
 
         // Check data rows
         expect(screen.getByText("Tech Corp")).toBeInTheDocument();

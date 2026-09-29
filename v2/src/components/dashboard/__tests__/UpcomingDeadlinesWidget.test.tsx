@@ -34,7 +34,7 @@ describe("UpcomingDeadlinesWidget", () => {
       expect(screen.getByRole("heading", { name: /next 30 days/i })).toBeInTheDocument();
       expect(screen.getByText("5")).toBeInTheDocument();
       expect(screen.getAllByText(/Deadline Co/i).length).toBeGreaterThan(0);
-      expect(screen.getByText(/PWD Expires/i)).toBeInTheDocument();
+      expect(screen.getByText(/PWD expires/i)).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /calendar/i })).toBeInTheDocument();
     });
 
@@ -51,7 +51,7 @@ describe("UpcomingDeadlinesWidget", () => {
       renderWithProviders(<UpcomingDeadlinesWidget />);
 
       expect(screen.getByText(/no deadlines in next 30 days/i)).toBeInTheDocument();
-      expect(screen.getByText(/you[’']re all caught up!/i)).toBeInTheDocument();
+      expect(screen.getByText(/nothing due in the next 30 days/i)).toBeInTheDocument();
       expect(screen.getByRole("heading", { name: /next 30 days/i })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /calendar/i })).toBeInTheDocument();
     });

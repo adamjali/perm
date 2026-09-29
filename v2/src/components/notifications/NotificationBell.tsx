@@ -97,7 +97,7 @@ export default function NotificationBell({ className, children }: NotificationBe
                 // Colors: red badge with white text
                 "bg-urgency-urgent text-white",
                 // Typography
-                "text-xs font-bold font-heading leading-none",
+                "text-sm font-bold font-heading leading-none",
                 // Border carves the badge off the icon. The header bar is
                 // bg-black in both themes, so this ring does not follow --border.
                 "border-2 border-black",

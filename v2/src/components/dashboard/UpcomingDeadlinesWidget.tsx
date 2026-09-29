@@ -79,7 +79,7 @@ export default function UpcomingDeadlinesWidget(): ReactNode {
     <div data-tour="upcoming-deadlines" className={WIDGET_CONTAINER_CLASSES}>
       <WidgetHeader
         icon={CalendarIcon}
-        title="Next 30 Days"
+        title="Next 30 days"
         count={hasDeadlines ? count : undefined}
         badgeVariant="default"
         action={
@@ -106,7 +106,7 @@ export default function UpcomingDeadlinesWidget(): ReactNode {
         <WidgetEmptyState
           icon={CalendarIcon}
           message="No deadlines in next 30 days"
-          description="You’re all caught up!"
+          description="Nothing due in the next 30 days"
         />
       )}
     </div>

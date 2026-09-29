@@ -80,7 +80,7 @@ export default function DeadlineEnforcementToggle() {
       <div className="flex items-center gap-2 mb-4">
         <ShieldIcon className="w-5 h-5 text-foreground" />
         <h3 className="font-heading font-bold text-lg text-foreground">
-          Deadline Enforcement
+          Deadline enforcement
         </h3>
       </div>
 

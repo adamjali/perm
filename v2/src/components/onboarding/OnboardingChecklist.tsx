@@ -44,9 +44,9 @@ export function OnboardingChecklist() {
           <SparkleIcon className="w-5 h-5 text-primary" />
           <div>
             <h3 className="font-heading font-bold text-2xl">
-              Getting Started
+              Getting started
             </h3>{" "}
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Complete these steps to get the most out of PERM Tracker
             </p>
           </div>
@@ -73,10 +73,10 @@ export function OnboardingChecklist() {
       {/* Progress bar */}
       <div className="mx-4 mb-3">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-xs font-heading font-semibold">
+          <span className="text-sm font-heading font-semibold">
             {completedCount}/{totalCount} complete
           </span>{" "}
-          <span className="text-xs text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             {progressPercent}%
           </span>
         </div>
@@ -135,7 +135,7 @@ export function OnboardingChecklist() {
                   {item.label}
                 </p>
                 {!isComplete && (
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-sm text-muted-foreground truncate">
                     {item.description}
                   </p>
                 )}

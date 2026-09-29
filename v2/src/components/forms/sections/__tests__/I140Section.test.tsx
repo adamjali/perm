@@ -105,7 +105,7 @@ describe("I140Section - Filing Deadline", () => {
     expect(openBadges.length).toBeGreaterThan(0);
   });
 
-  it("should show 'Closing Soon' status when <=14 days remaining", () => {
+  it("should show 'Closing soon' status when <=14 days remaining", () => {
     // System time frozen to 2024-06-15
     // Exp date: 2024-06-25 (10 days remaining triggers closing_soon)
     // Cert date: 2023-12-28 (+180 days = exp date)
@@ -116,11 +116,11 @@ describe("I140Section - Filing Deadline", () => {
 
     renderI140Section(values);
 
-    // Updated in Phase 5: FilingWindowIndicator uses "Closing Soon" for <= 14 days
-    expect(screen.getByText(/Closing Soon/i)).toBeInTheDocument();
+    // Updated in Phase 5: FilingWindowIndicator uses "Closing soon" for <= 14 days
+    expect(screen.getByText(/Closing soon/i)).toBeInTheDocument();
   });
 
-  it("should show 'Closing Soon' status when <7 days remaining", () => {
+  it("should show 'Closing soon' status when <7 days remaining", () => {
     // System time frozen to 2024-06-15
     // Exp date: 2024-06-20 (5 days remaining)
     // Cert date: 2023-12-23 (+180 days = exp date)
@@ -131,8 +131,8 @@ describe("I140Section - Filing Deadline", () => {
 
     renderI140Section(values);
 
-    // Updated in Phase 5: FilingWindowIndicator uses "Closing Soon" for <= 14 days (including < 7)
-    expect(screen.getByText(/Closing Soon/i)).toBeInTheDocument();
+    // Updated in Phase 5: FilingWindowIndicator uses "Closing soon" for <= 14 days (including < 7)
+    expect(screen.getByText(/Closing soon/i)).toBeInTheDocument();
   });
 
   it("should show 'CLOSED' status when >180 days past certification", () => {
@@ -302,7 +302,7 @@ describe("I140Section - Premium Processing", () => {
 
     renderI140Section(values);
 
-    expect(screen.getByLabelText(/Premium Processing/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Premium processing/i)).toBeInTheDocument();
   });
 
   it("should call onChange when premium processing is toggled", () => {
@@ -310,7 +310,7 @@ describe("I140Section - Premium Processing", () => {
 
     renderI140Section(values);
 
-    const checkbox = screen.getByLabelText(/Premium Processing/i);
+    const checkbox = screen.getByLabelText(/Premium processing/i);
     fireEvent.click(checkbox);
 
     expect(mockOnChange).toHaveBeenCalledWith("i140PremiumProcessing", true);
@@ -370,14 +370,14 @@ describe("I140Section - Form Fields", () => {
 
     renderI140Section(values);
 
-    expect(screen.getByLabelText(/Filing Date/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Receipt Date/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Receipt Number/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Approval Date/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Denial Date/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Filing date/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Receipt date/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Receipt number/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Approval date/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Denial date/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Category/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Service Center/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Premium Processing/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Service center/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Premium processing/i)).toBeInTheDocument();
   });
 
   it("should call onDateChange when filing date changes", () => {
@@ -385,7 +385,7 @@ describe("I140Section - Form Fields", () => {
 
     renderI140Section(values);
 
-    const filingDateInput = screen.getByLabelText(/Filing Date/i);
+    const filingDateInput = screen.getByLabelText(/Filing date/i);
     fireEvent.change(filingDateInput, { target: { value: "2024-12-01" } });
 
     expect(mockOnDateChange).toHaveBeenCalledWith("i140FilingDate", "2024-12-01");
@@ -406,12 +406,12 @@ describe("I140Section - Form Fields", () => {
 
     renderI140Section(values);
 
-    expect(screen.getByLabelText(/Filing Date/i)).toHaveValue("2024-12-01");
-    expect(screen.getByLabelText(/Receipt Date/i)).toHaveValue("2024-12-05");
-    expect(screen.getByLabelText(/Receipt Number/i)).toHaveValue("WAC2412345678");
-    expect(screen.getByLabelText(/Approval Date/i)).toHaveValue("2025-01-15");
+    expect(screen.getByLabelText(/Filing date/i)).toHaveValue("2024-12-01");
+    expect(screen.getByLabelText(/Receipt date/i)).toHaveValue("2024-12-05");
+    expect(screen.getByLabelText(/Receipt number/i)).toHaveValue("WAC2412345678");
+    expect(screen.getByLabelText(/Approval date/i)).toHaveValue("2025-01-15");
     expect(screen.getByLabelText(/Category/i)).toHaveValue("EB-2");
-    expect(screen.getByLabelText(/Service Center/i)).toHaveValue("Texas");
-    expect(screen.getByLabelText(/Premium Processing/i)).toBeChecked();
+    expect(screen.getByLabelText(/Service center/i)).toHaveValue("Texas");
+    expect(screen.getByLabelText(/Premium processing/i)).toBeChecked();
   });
 });

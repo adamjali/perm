@@ -152,7 +152,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={defaultProfile} />
       );
 
-      expect(screen.getByText("Google Calendar Sync")).toBeInTheDocument();
+      expect(screen.getByText("Google Calendar sync")).toBeInTheDocument();
       expect(screen.getByText(/Automatically sync case deadlines to your Google Calendar/)).toBeInTheDocument();
     });
   });
@@ -163,7 +163,7 @@ describe("CalendarSyncSection", () => {
 
   describe("Connection Status", () => {
     it.each([
-      { profile: defaultProfile, expectedText: /Not Connected/i, description: "not connected" },
+      { profile: defaultProfile, expectedText: /Not connected/i, description: "not connected" },
       { profile: connectedProfile, expectedText: "Connected", description: "connected" },
     ])("shows correct status when $description", ({ profile, expectedText }) => {
       renderWithProviders(<CalendarSyncSection profile={profile} />);
@@ -185,7 +185,7 @@ describe("CalendarSyncSection", () => {
 
   describe("Connect/Disconnect Buttons", () => {
     it.each([
-      { profile: defaultProfile, buttonName: /Connect Calendar/i, description: "not connected" },
+      { profile: defaultProfile, buttonName: /Connect calendar/i, description: "not connected" },
       { profile: connectedProfile, buttonName: /Disconnect/i, description: "connected" },
     ])("shows correct button when $description", ({ profile, buttonName }) => {
       renderWithProviders(<CalendarSyncSection profile={profile} />);
@@ -206,7 +206,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={defaultProfile} />
       );
 
-      const connectButton = screen.getByRole("button", { name: /Connect Calendar/i });
+      const connectButton = screen.getByRole("button", { name: /Connect calendar/i });
       await user.click(connectButton);
 
       expect(window.location.href).toBe("/api/google/connect");
@@ -279,8 +279,8 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={defaultProfile} />
       );
 
-      // Master toggle label is "Calendar Sync"
-      expect(screen.getByText("Calendar Sync")).toBeInTheDocument();
+      // Master toggle label is "Calendar sync"
+      expect(screen.getByText("Calendar sync")).toBeInTheDocument();
     });
 
     it.each([
@@ -354,13 +354,13 @@ describe("CalendarSyncSection", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("PWD Deadlines")).toBeInTheDocument();
-        expect(screen.getByText("ETA 9089 Filing Window")).toBeInTheDocument();
-        expect(screen.getByText("I-140 Deadlines")).toBeInTheDocument();
-        expect(screen.getByText("RFE Due Dates")).toBeInTheDocument();
-        expect(screen.getByText("RFI Due Dates")).toBeInTheDocument();
-        expect(screen.getByText("Recruitment Deadlines")).toBeInTheDocument();
-        expect(screen.getByText("Filing Window")).toBeInTheDocument();
+        expect(screen.getByText("PWD deadlines")).toBeInTheDocument();
+        expect(screen.getByText("ETA 9089 filing window")).toBeInTheDocument();
+        expect(screen.getByText("I-140 deadlines")).toBeInTheDocument();
+        expect(screen.getByText("RFE due dates")).toBeInTheDocument();
+        expect(screen.getByText("RFI due dates")).toBeInTheDocument();
+        expect(screen.getByText("Recruitment deadlines")).toBeInTheDocument();
+        expect(screen.getByText("Filing window")).toBeInTheDocument();
       });
     });
 
@@ -399,7 +399,7 @@ describe("CalendarSyncSection", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText("PWD Deadlines")).toBeInTheDocument();
+        expect(screen.getByText("PWD deadlines")).toBeInTheDocument();
       });
 
       // Find and click the PWD toggle
@@ -533,7 +533,7 @@ describe("CalendarSyncSection", () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByRole("button", { name: /Sync All/i })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /Sync all/i })).toBeInTheDocument();
       });
     });
 
@@ -542,7 +542,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledNotConnectedProfile} />
       );
 
-      expect(screen.queryByRole("button", { name: /Sync All/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Sync all/i })).not.toBeInTheDocument();
     });
 
     it("hides Sync All button when master toggle is off", () => {
@@ -550,7 +550,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={connectedProfile} />
       );
 
-      expect(screen.queryByRole("button", { name: /Sync All/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Sync all/i })).not.toBeInTheDocument();
     });
 
     it("calls syncAllCases when Sync All button clicked", async () => {
@@ -559,7 +559,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -573,7 +573,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -593,7 +593,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -613,7 +613,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -634,7 +634,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -648,7 +648,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -669,7 +669,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -690,7 +690,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -705,7 +705,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -731,7 +731,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -751,7 +751,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={enabledProfile} />
       );
 
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       await waitFor(() => {
@@ -826,31 +826,31 @@ describe("CalendarSyncSection", () => {
   // CLEAR ALL CALENDAR EVENTS
   // ============================================================================
 
-  describe("Clear All Calendar Events", () => {
-    it("shows 'Clear All' button when connected", async () => {
+  describe("Clear all calendar events", () => {
+    it("shows 'Clear all' button when connected", async () => {
       renderWithProviders(
         <CalendarSyncSection profile={connectedProfile} />
       );
 
-      const clearButton = await screen.findByRole("button", { name: /Clear All/i });
+      const clearButton = await screen.findByRole("button", { name: /Clear all/i });
       expect(clearButton).toBeInTheDocument();
     });
 
-    it("hides 'Clear All' button when not connected", () => {
+    it("hides 'Clear all' button when not connected", () => {
       renderWithProviders(
         <CalendarSyncSection profile={defaultProfile} />
       );
 
-      expect(screen.queryByRole("button", { name: /Clear All/i })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /Clear all/i })).not.toBeInTheDocument();
     });
 
-    it("calls clearAllEvents action when 'Clear All' button clicked", async () => {
+    it("calls clearAllEvents action when 'Clear all' button clicked", async () => {
       const user = userEvent.setup();
       renderWithProviders(
         <CalendarSyncSection profile={connectedProfile} />
       );
 
-      const clearButton = await screen.findByRole("button", { name: /Clear All/i });
+      const clearButton = await screen.findByRole("button", { name: /Clear all/i });
       await user.click(clearButton);
 
       await waitFor(() => {
@@ -870,7 +870,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={connectedProfile} />
       );
 
-      const clearButton = await screen.findByRole("button", { name: /Clear All/i });
+      const clearButton = await screen.findByRole("button", { name: /Clear all/i });
       await user.click(clearButton);
 
       await waitFor(() => {
@@ -890,7 +890,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={connectedProfile} />
       );
 
-      const clearButton = await screen.findByRole("button", { name: /Clear All/i });
+      const clearButton = await screen.findByRole("button", { name: /Clear all/i });
       await user.click(clearButton);
 
       await waitFor(() => {
@@ -911,7 +911,7 @@ describe("CalendarSyncSection", () => {
         <CalendarSyncSection profile={connectedProfile} />
       );
 
-      const clearButton = await screen.findByRole("button", { name: /Clear All/i });
+      const clearButton = await screen.findByRole("button", { name: /Clear all/i });
       await user.click(clearButton);
 
       await waitFor(() => {
@@ -919,7 +919,7 @@ describe("CalendarSyncSection", () => {
       });
     });
 
-    it("disables 'Clear All' button while sync is in progress", async () => {
+    it("disables 'Clear all' button while sync is in progress", async () => {
       // Make sync take a long time
       mockSyncAllCases.mockImplementation(() => new Promise(() => {})); // Never resolves
       const user = userEvent.setup();
@@ -928,7 +928,7 @@ describe("CalendarSyncSection", () => {
       );
 
       // Click sync button first
-      const syncButton = await screen.findByRole("button", { name: /Sync All/i });
+      const syncButton = await screen.findByRole("button", { name: /Sync all/i });
       await user.click(syncButton);
 
       // Clear button should be disabled while syncing

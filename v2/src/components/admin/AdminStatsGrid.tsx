@@ -17,14 +17,14 @@ interface AdminStatsGridProps {
 export function AdminStatsGrid({ data }: AdminStatsGridProps) {
   const stats = [
     {
-      label: "Total Users",
+      label: "Total users",
       value: data.totalUsers,
       icon: UsersIcon,
       color: "text-data-info-ink",
       bgColor: "bg-data-info/10",
     },
     {
-      label: "Active Users",
+      label: "Active users",
       value: data.activeUsers,
       icon: UserCheckIcon,
       color: "text-primary",
@@ -38,21 +38,21 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
       bgColor: "bg-stage-recruitment/10",
     },
     {
-      label: "Total Cases",
+      label: "Total cases",
       value: data.totalCasesInSystem,
       icon: TrendingUp,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
     {
-      label: "Pending Deletion",
+      label: "Pending deletion",
       value: data.pendingDeletion,
       icon: ClockIcon,
       color: "text-data-warn-ink",
       bgColor: "bg-data-warn/15",
     },
     {
-      label: "Deleted Users",
+      label: "Deleted users",
       value: data.deletedUsers,
       icon: UserX,
       color: "text-destructive",

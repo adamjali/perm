@@ -11,16 +11,16 @@ import type { CaseDetailData } from "./case-detail-types";
 
 // All key PERM stages to always show
 const ALL_STAGES: { field: string; label: string }[] = [
-  { field: "pwdFilingDate", label: "PWD Filed" },
-  { field: "pwdDeterminationDate", label: "PWD Determined" },
-  { field: "jobOrderStartDate", label: "Job Order Started" },
-  { field: "sundayAds", label: "Sunday Ads" },
-  { field: "noticeOfFilingStartDate", label: "NOF Posted" },
-  { field: "recruitmentEndDate", label: "Recruitment Completed" },
-  { field: "eta9089FilingDate", label: "ETA 9089 Filed" },
-  { field: "eta9089CertificationDate", label: "ETA 9089 Certified" },
-  { field: "i140FilingDate", label: "I-140 Filed" },
-  { field: "i140ApprovalDate", label: "I-140 Approved" },
+  { field: "pwdFilingDate", label: "PWD filed" },
+  { field: "pwdDeterminationDate", label: "PWD determined" },
+  { field: "jobOrderStartDate", label: "Job order started" },
+  { field: "sundayAds", label: "Sunday ads" },
+  { field: "noticeOfFilingStartDate", label: "NOF posted" },
+  { field: "recruitmentEndDate", label: "Recruitment completed" },
+  { field: "eta9089FilingDate", label: "ETA 9089 filed" },
+  { field: "eta9089CertificationDate", label: "ETA 9089 certified" },
+  { field: "i140FilingDate", label: "I-140 filed" },
+  { field: "i140ApprovalDate", label: "I-140 approved" },
 ];
 
 interface VerticalTimelineProps {
@@ -69,7 +69,7 @@ export function VerticalTimeline({ caseData }: VerticalTimelineProps) {
       const date = ad2 || ad1 || "";
       milestoneByField.set("sundayAds", {
         field: "sundayAds",
-        label: "Sunday Ads",
+        label: "Sunday ads",
         date,
         stage: "recruitment" as const,
         color: "var(--stage-recruitment)",

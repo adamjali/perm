@@ -116,7 +116,7 @@ function UserMenu({ userName }: UserMenuProps) {
           ) : (
             <SignOutIcon className="size-4" />
           )}
-          {isSigningOut ? "Signing out..." : "Sign Out"}
+          {isSigningOut ? "Signing out..." : "Sign out"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -134,7 +134,8 @@ export default function Header(): React.ReactElement {
   const { isSigningOut, beginSignOut, cancelSignOut } = useAuthContext();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   // Extracted to local variable (React Compiler disabled; kept for SWC safety)
-  const displayName = user?.name ?? "User";
+  // No name on file: the part of the address before the @, never a generic "User".
+  const displayName = user?.name || user?.email?.split("@")[0] || "Account";
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -305,7 +306,7 @@ export default function Header(): React.ReactElement {
                   ) : (
                     <SignOutIcon className="size-4" />
                   )}
-                  {isSigningOut ? "Signing out..." : "Sign Out"}
+                  {isSigningOut ? "Signing out..." : "Sign out"}
                 </button>
               </div>
             )}

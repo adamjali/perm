@@ -62,7 +62,7 @@ export function StageCensus({
               <span className="ml-auto font-mono text-sm font-bold tabular-nums">
                 {n.toLocaleString()}
               </span>{" "}
-              <span className="font-mono text-xs tabular-nums text-muted-foreground">
+              <span className="font-mono text-sm tabular-nums text-muted-foreground">
                 {pct(n, total)} of pending
               </span>
             </header>
@@ -129,7 +129,7 @@ function StageRow({
         <span className="ml-auto font-mono text-lg font-bold tabular-nums">
           {stage.cases.toLocaleString()}
         </span>{" "}
-        <span className="w-14 text-right font-mono text-xs tabular-nums text-muted-foreground">
+        <span className="w-14 text-right font-mono text-sm tabular-nums text-muted-foreground">
           {pct(stage.cases, total)}
         </span>
       </div>{" "}

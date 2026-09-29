@@ -94,7 +94,7 @@ export function TimelineLegendCompact({ className = "" }: { className?: string }
             style={{ backgroundColor: stage.primary }}
             aria-hidden="true"
           />
-          <span className="text-sm font-medium text-muted-foreground">
+          <span className="text-sm font-semibold text-foreground">
             {stage.name}
           </span>
         </div>

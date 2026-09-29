@@ -51,15 +51,15 @@ export default function UpcomingDeadlineItem({ deadline }: UpcomingDeadlineItemP
         <p className="font-heading font-bold text-base text-foreground truncate group-hover:text-primary-text transition-colors" title={employerName}>
           {employerName}
         </p>{" "}
-        <p className="text-xs text-muted-foreground uppercase tracking-wide truncate" title={label}>
+        <p className="text-sm text-muted-foreground uppercase tracking-wide truncate" title={label}>
           {label}
         </p>
       </div>
 
       {/* Right: Badge + date + countdown */}
       <div className="flex items-center gap-3 shrink-0">
-        <CaseStageBadge stage={caseStatus} bordered className="text-xs px-2 py-0.5" />
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
+        <CaseStageBadge stage={caseStatus} bordered className="text-sm px-2 py-0.5" />
+        <span className="text-sm text-muted-foreground whitespace-nowrap">
           {safeFormatShortDate(dueDate)}
         </span>{" "}
         <span

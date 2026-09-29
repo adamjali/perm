@@ -129,7 +129,7 @@ const COLUMNS: {
   },
   {
     key: "verificationMethod",
-    label: "Auth Method",
+    label: "Auth method",
     render: (u) => <TruncatedCell maxWidth={120}>{u.verificationMethod.replace(/_/g, " ")}</TruncatedCell>,
     className: "min-w-[110px] max-w-[140px]",
   },
@@ -141,7 +141,7 @@ const COLUMNS: {
   },
   {
     key: "totalCases",
-    label: "Total Cases",
+    label: "Total cases",
     render: (u) => u.totalCases,
     className: "min-w-[90px] text-center",
   },
@@ -165,13 +165,13 @@ const COLUMNS: {
   },
   {
     key: "termsVersion" as SortField,
-    label: "Terms Ver",
+    label: "Terms ver",
     render: (u) => u.termsVersion || "-",
     className: "min-w-[80px]",
   },
   {
     key: "termsAccepted" as SortField,
-    label: "Terms Accepted",
+    label: "Terms accepted",
     render: (u) => formatDate(u.termsAccepted),
     className: "min-w-[120px]",
   },
@@ -183,25 +183,25 @@ const COLUMNS: {
   },
   {
     key: "lastLoginTime" as SortField,
-    label: "Last Login",
+    label: "Last login",
     render: (u) => formatTimestamp(u.lastLoginTime),
     className: "min-w-[150px]",
   },
   {
     key: "lastActivity",
-    label: "Last Activity",
+    label: "Last activity",
     render: (u) => formatTimestamp(u.lastActivity),
     className: "min-w-[150px]",
   },
   {
     key: "lastCaseUpdate" as SortField,
-    label: "Last Case Update",
+    label: "Last case update",
     render: (u) => formatTimestamp(u.lastCaseUpdate),
     className: "min-w-[150px]",
   },
   {
     key: "deletedAt" as SortField,
-    label: "Deleted At",
+    label: "Deleted at",
     render: (u) => formatTimestamp(u.deletedAt),
     className: "min-w-[150px]",
   },
@@ -213,7 +213,7 @@ const COLUMNS: {
         {u.userId}
       </TruncatedCell>
     ),
-    className: "min-w-[140px] max-w-[200px] font-mono text-xs text-muted-foreground",
+    className: "min-w-[140px] max-w-[200px] font-mono text-sm text-muted-foreground",
   },
 ];
 
@@ -231,7 +231,7 @@ function StatusBadge({ status }: { status: string }) {
   };
 
   return (
-    <span className={`border-2 text-xs font-bold px-2 py-0.5 uppercase tracking-wide whitespace-nowrap ${styles[status] || "bg-muted text-foreground border-border"}`}>
+    <span className={`border-2 text-sm font-bold px-2 py-0.5 uppercase tracking-wide whitespace-nowrap ${styles[status] || "bg-muted text-foreground border-border"}`}>
       {labels[status] || status}
     </span>
   );
@@ -319,7 +319,7 @@ export function UsersTable({
                   {COLUMNS.map((col) => (
                     <th
                       key={col.key}
-                      className={`p-3 text-left text-xs whitespace-nowrap ${col.className || ""}`}
+                      className={`p-3 text-left text-sm whitespace-nowrap ${col.className || ""}`}
                     >
                       <button
                         onClick={() => handleSort(col.key)}
@@ -332,7 +332,7 @@ export function UsersTable({
                       </button>
                     </th>
                   ))}
-                  <th className="p-3 text-right text-xs font-bold uppercase tracking-wide sticky right-0 z-20 bg-muted min-w-[90px] border-l-2 border-border">
+                  <th className="p-3 text-right text-sm font-bold uppercase tracking-wide sticky right-0 z-20 bg-muted min-w-[90px] border-l-2 border-border">
                     Actions
                   </th>
                 </tr>

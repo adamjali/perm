@@ -96,13 +96,13 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
     steps: [
       {
         element: "[data-tour='deadline-hero']",
-        title: "Deadline Command Center",
+        title: "Deadline command center",
         description:
           "Your most critical view, every deadline grouped by urgency. Overdue items surface first so nothing slips through the cracks.",
       },
       {
         element: "[data-tour='summary-tiles']",
-        title: "Case Pipeline",
+        title: "Case pipeline",
         description:
           "Instant snapshot of all cases by PERM stage. Click any tile to jump straight to those cases.",
       },
@@ -114,7 +114,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
       },
       {
         element: "[data-tour='recent-activity']",
-        title: "Activity Feed",
+        title: "Activity feed",
         description:
           "Every change across all your cases, status updates, date edits, new notes, in real time.",
       },
@@ -126,7 +126,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
     steps: [
       {
         element: "[data-tour='cases-list']",
-        title: "Your Case List",
+        title: "Your case list",
         description:
           "Every PERM case in one place. Sort by deadline, filter by stage, search by name, and click any case to see full details and edit dates.",
       },
@@ -138,7 +138,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
     steps: [
       {
         element: "[data-tour='calendar-view']",
-        title: "Deadline Calendar",
+        title: "Deadline calendar",
         description:
           "All your deadlines on a monthly calendar. Connect Google Calendar in Settings to sync everything automatically.",
       },
@@ -162,13 +162,13 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
     steps: [
       {
         element: "[data-tour='nav-cases']",
-        title: "Quick Navigation",
+        title: "Quick navigation",
         description:
           "Jump between Cases, Calendar, and Timeline from any page. All your tools are one click away.",
       },
       {
         element: "[data-tour='chat-bubble']",
-        title: "Your AI Assistant",
+        title: "Your AI assistant",
         description:
           "Click this bubble to open the AI assistant. Ask about PERM deadlines, get case status summaries, or learn about the immigration process. Try saying \"What are my upcoming deadlines?\" to get started!",
       },

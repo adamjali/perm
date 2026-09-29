@@ -13,7 +13,6 @@
  *
  * Design:
  * - Manila folder tab with stage color extends ABOVE the card
- * - Left color bar (6px) indicates stage
  * - Paper texture overlay (subtle)
  * - Always visible: employer, position, badges, deadline with label, progress status
  * - Hover expansion: detailed dates, notes preview
@@ -28,7 +27,7 @@ import { useQuery } from "convex/react";
 import { toast } from "@/lib/toast";
 import { ArchiveIcon, ArrowCounterClockwiseIcon as RotateCcw, CircleNotchIcon, DotsThreeIcon, EyeIcon, TrashIcon as Trash2 } from "@phosphor-icons/react/ssr";
 import { cn } from "@/lib/utils";
-import { getUrgencyFromDeadline, getUrgencyDotClass } from "@/lib/status";
+import { getUrgencyFromDeadline } from "@/lib/status";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -40,7 +39,7 @@ import {
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
 import { api } from "../../../convex/_generated/api";
 import type { CaseCardData } from "../../../convex/lib/caseListTypes";
-import { formatDeadline, formatClosureReasonLabel, getStageColorVar, formatCompactDate } from "./case-card.utils";
+import { formatDeadlineDate, deadlineCountdown, formatClosureReasonLabel, formatCompactDate } from "./case-card.utils";
 import { useCardUI } from "./useCardUI";
 import { useCardMutations } from "./useCardMutations";
 import {
@@ -159,11 +158,8 @@ export const CaseCard = memo(function CaseCard({
     () => (!isClosed && nextDeadline ? getUrgencyFromDeadline(nextDeadline) : null),
     [isClosed, nextDeadline]
   );
-  const urgencyDotColor = useMemo(() => (urgency ? getUrgencyDotClass(urgency) : ""), [urgency]);
-  const formattedDeadline = useMemo(
-    () => (nextDeadline ? formatDeadline(nextDeadline) : ""),
-    [nextDeadline]
-  );
+  const countdown = useMemo(() => (nextDeadline ? deadlineCountdown(nextDeadline) : null), [nextDeadline]);
+  const deadlineDate = useMemo(() => (nextDeadline ? formatDeadlineDate(nextDeadline) : ""), [nextDeadline]);
   const shouldExpand = ui.isHovered || isPinned;
 
   return (
@@ -229,11 +225,7 @@ export const CaseCard = memo(function CaseCard({
           }}
         />
 
-        {/* Left color bar */}
-        <div
-          className="absolute left-0 top-0 bottom-0 w-1.5 z-20"
-          style={{ backgroundColor: getStageColorVar(caseStatus) }}
-        />
+        {/* The stage lives on the folder tab above; no side stripe repeating it. */}
 
         {/* Header */}
         <div className="flex items-start justify-between gap-2 mb-3 relative z-10">
@@ -243,30 +235,28 @@ export const CaseCard = memo(function CaseCard({
             </h3>{" "}
             <p className="text-sm text-black/70 truncate" title={positionTitle || beneficiaryIdentifier}>{positionTitle || beneficiaryIdentifier}</p>
           </div>
-          <CaseBadges
-            duplicateOf={duplicateOf}
-            isProfessionalOccupation={isProfessionalOccupation}
-            hasActiveRfi={hasActiveRfi}
-            hasActiveRfe={hasActiveRfe}
-            isSample={isSample}
-          />
         </div>
 
         {/* Meta Row: Deadline + Calendar */}
         <div className="flex items-center justify-between gap-2 mb-3 relative z-10">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            {!isClosed && nextDeadline && nextDeadlineLabel ? (
-              <div
-                className={cn(
-                  "flex items-center gap-2 px-2 py-1",
- urgency === "urgent" && "bg-data-bad/10 border-2 border-data-bad",
- urgency === "soon" && "bg-data-warn/8"
-                )}
-              >
-                <div className={cn("w-2.5 h-2.5 shrink-0", urgencyDotColor)} />
-                <span className={cn("text-sm font-mono text-black", urgency === "urgent" && "font-bold")}>
-                  {nextDeadlineLabel} {formattedDeadline}
-                </span>
+            {!isClosed && nextDeadline && nextDeadlineLabel && countdown ? (
+              // The countdown leads: the number of days in the urgency colour,
+              // the deadline and its date beside it.
+              <div className="flex min-h-[3.5rem] min-w-0 items-stretch border-2 border-black bg-white/60">
+                <div
+                  className={cn(
+                    "flex min-w-[3.75rem] shrink-0 flex-col items-center justify-center border-r-2 border-black px-2 py-1",
+                    urgency === "urgent" ? "bg-data-bad text-black" : urgency === "soon" ? "bg-data-warn text-black" : "bg-black text-white"
+                  )}
+                >
+                  <span className="font-heading text-2xl font-black leading-none tabular-nums">{countdown.value}</span>{" "}
+                  <span className="text-sm font-bold">{countdown.unit}</span>
+                </div>{" "}
+                <div className="flex min-w-0 flex-col justify-center px-2.5 py-1">
+                  <span className="truncate font-heading text-sm font-bold" title={nextDeadlineLabel}>{nextDeadlineLabel}</span>{" "}
+                  <span className="font-mono text-sm text-black/75">{deadlineDate}</span>
+                </div>
               </div>
             ) : isClosed ? (
               <span className="truncate text-sm italic text-black/70" title={`Closed ${caseData.closedAt ? formatCompactDate(caseData.closedAt) : ""}${formatClosureReasonLabel(caseData.closedReason) ? ` - ${formatClosureReasonLabel(caseData.closedReason)}` : ""}`}>
@@ -277,18 +267,26 @@ export const CaseCard = memo(function CaseCard({
                 )}
               </span>
             ) : (
-              <span className="text-sm text-black/70">No upcoming deadlines</span>
+              // Same footprint as the countdown, so cards in a row line up.
+              <span className="flex min-h-[3.5rem] items-center border-2 border-dashed border-black/40 px-3 text-sm font-semibold text-black/70">
+                No upcoming deadlines
+              </span>
             )}
           </div>
           <CalendarSyncIndicator enabled={calendarSyncEnabled ?? false} isGoogleConnected={isGoogleConnected} />
         </div>
 
-        {/* Progress Status */}
-        {!isClosed && (
-          <div className="mb-3 relative z-10">
-            <ProgressStatusBadge status={progressStatus} />
-          </div>
-        )}
+        {/* Tags: where the case stands, then anything that needs a note */}
+        <div className="mb-3 relative z-10 flex flex-wrap items-center gap-1.5">
+          {!isClosed && <ProgressStatusBadge status={progressStatus} surface="paper" />}
+          <CaseBadges
+            duplicateOf={duplicateOf}
+            isProfessionalOccupation={isProfessionalOccupation}
+            hasActiveRfi={hasActiveRfi}
+            hasActiveRfe={hasActiveRfe}
+            isSample={isSample}
+          />
+        </div>
 
         <ExpandedContent shouldExpand={shouldExpand} isClosed={isClosed} dates={dates} notes={notes} />
 

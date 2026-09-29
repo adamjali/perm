@@ -10,7 +10,7 @@ function createMockDeadline(overrides: Partial<DeadlineItem> = {}): DeadlineItem
     employerName: "Test Company",
     beneficiaryName: "John Doe",
     type: "pwd_expiration",
-    label: "PWD Expiration",
+    label: "PWD expiration",
     dueDate: "2024-12-28",
     daysUntil: 5,
     urgency: "thisWeek",
@@ -54,14 +54,14 @@ describe("UpcomingDeadlineItem", () => {
   it("displays employer name, label, stage badge, and links to case", () => {
     const deadline = createMockDeadline({
       employerName: "Acme Corp",
-      label: "PWD Expiration",
+      label: "PWD expiration",
       caseStatus: "pwd",
       caseId: "case-123" as unknown as DeadlineItem["caseId"],
     });
     render(<UpcomingDeadlineItem deadline={deadline} />);
 
     expect(screen.getByText("Acme Corp")).toBeInTheDocument();
-    expect(screen.getByText("PWD Expiration")).toBeInTheDocument();
+    expect(screen.getByText("PWD expiration")).toBeInTheDocument();
     expect(document.querySelector('[data-status="pwd"]')).toBeInTheDocument();
     expect(screen.getByTestId("deadline-item")).toHaveAttribute("href", "/cases/case-123");
   });

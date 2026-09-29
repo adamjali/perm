@@ -14,7 +14,7 @@
  */
 
 import { useState, useEffect, useRef } from "react";
-import { ArrowDownIcon, ArrowUpIcon, CopyIcon, MagnifyingGlassIcon as Search } from "@phosphor-icons/react";
+import { ArrowDownIcon, ArrowUpIcon, CaretDownIcon, CopyIcon, MagnifyingGlassIcon as Search } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -287,8 +287,8 @@ export function CaseFilterBar({
       data-testid="case-filter-bar"
       className="space-y-5 border-2 border-border bg-background p-5 shadow-hard"
     >
-      {/* Show By Tabs */}
-      <div className="flex flex-wrap gap-3">
+      {/* Show By Tabs: a 2x2 block on phones, one row from sm up */}
+      <div className="grid grid-cols-2 gap-3 [&>*]:min-w-0 sm:flex sm:flex-wrap">
         <Button
           variant={activeTab === "active" ? "default" : "outline"}
           size="default"
@@ -320,15 +320,16 @@ export function CaseFilterBar({
       </div>
 
       {/* Filter Row */}
-      <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center">
+      {/* Phones: two columns, packed densely so no cell is left empty */}
+      <div className="grid grid-flow-row-dense grid-cols-2 gap-3 [&>*]:min-w-0 md:flex md:flex-row md:flex-wrap md:items-center">
         {/* Search Input */}
-        <div data-testid="search-input-container" className="relative flex-1 group">
+        <div data-testid="search-input-container" className="relative col-span-2 flex-1 group">
           <Input
             type="text"
             placeholder="Search cases..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="pl-11 h-11 text-base"
+            className="pl-11 h-11 md:h-9 text-base"
           />
           <Search className="absolute left-3 top-1/2 size-5 -translate-y-1/2 text-foreground/60 dark:text-muted-foreground pointer-events-none transition-transform duration-150 group-hover:-translate-y-[calc(50%+1px)] active:translate-y-0 active:shadow-hard-sm" />
         </div>
@@ -339,10 +340,11 @@ export function CaseFilterBar({
             <Button
               variant="outline"
               size="default"
-              className="w-full md:w-44 justify-between cursor-pointer"
-              aria-label={`Case Status: ${getCurrentCaseStatusLabel()}`}
+              className="w-full md:w-36 justify-between cursor-pointer"
+              aria-label={`Stage: ${getCurrentCaseStatusLabel()}`}
             >
-              <span className="truncate">Case Status: {getCurrentCaseStatusLabel()}</span>
+              <span className="truncate">Stage: {getCurrentCaseStatusLabel()}</span>{" "}
+              <CaretDownIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-44">
@@ -373,7 +375,8 @@ export function CaseFilterBar({
               className="w-full md:w-52 justify-between cursor-pointer"
               aria-label={`Progress Status: ${getCurrentProgressStatusLabel()}`}
             >
-              <span className="truncate">Progress: {getCurrentProgressStatusLabel()}</span>
+              <span className="truncate">Progress: {getCurrentProgressStatusLabel()}</span>{" "}
+              <CaretDownIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-48">
@@ -415,16 +418,17 @@ export function CaseFilterBar({
         </Button>
 
         {/* Sort Dropdown + Order Toggle */}
-        <div className="flex w-full md:w-auto items-center gap-1">
+        <div className="col-span-2 flex w-full md:w-auto items-center gap-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
                 size="default"
-                className="flex-1 md:w-44 justify-between cursor-pointer"
+                className="flex-1 md:w-52 justify-between cursor-pointer"
                 aria-label={`Sort by: ${getCurrentSortLabel()}`}
               >
-                <span className="truncate">Sort: {getCurrentSortLabel()}</span>
+                <span className="truncate">Sort: {getCurrentSortLabel()}</span>{" "}
+                <CaretDownIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-44">
@@ -480,10 +484,11 @@ export function CaseFilterBar({
             <Button
               variant="outline"
               size="default"
-              className="w-full md:w-36 justify-between cursor-pointer font-mono"
+              className="w-full md:w-36 justify-between cursor-pointer"
               aria-label={`Per Page: ${pageSize}`}
             >
-              <span className="truncate">Per Page: {pageSize}</span>
+              <span className="truncate">{pageSize} per page</span>{" "}
+              <CaretDownIcon className="size-4 shrink-0" weight="bold" aria-hidden="true" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[calc(100vw-2.5rem)] md:w-36">
@@ -491,7 +496,7 @@ export function CaseFilterBar({
               <DropdownMenuItem
                 key={size}
                 onClick={() => onPageSizeChange(size)}
-                className="font-mono cursor-pointer"
+                className="cursor-pointer tabular-nums"
                 aria-label={`${size} per page`}
               >
                 {size}

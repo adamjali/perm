@@ -87,7 +87,7 @@ function DeadlineHeroHeader({
         <AlertTriangle
           className={`size-6 ${hasOverdue ? "text-destructive" : "text-muted-foreground"}`}
         />
-        <h2 className="text-2xl font-bold font-heading">Deadline Hub</h2>
+        <h2 className="text-2xl font-bold font-heading">Deadline hub</h2>
         <Badge variant={hasOverdue ? "destructive" : "secondary"}>
           {totalCount}
         </Badge>
@@ -129,7 +129,7 @@ function DeadlineHeroEmptyState({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <AlertTriangle className="size-7 text-muted-foreground" />
-            <h2 className="text-2xl font-bold font-heading">Deadline Hub</h2>
+            <h2 className="text-2xl font-bold font-heading">Deadline hub</h2>
             <Badge variant="secondary" className="text-sm px-3 py-1">
               0
             </Badge>
@@ -227,8 +227,8 @@ export default function DeadlineHeroWidget(): ReactNode {
         />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           <UrgencyGroup title="Overdue" urgency="overdue" items={data.overdue} />
-          <UrgencyGroup title="This Week" urgency="thisWeek" items={data.thisWeek} />
-          <UrgencyGroup title="This Month" urgency="thisMonth" items={data.thisMonth} />
+          <UrgencyGroup title="This week" urgency="thisWeek" items={data.thisWeek} />
+          <UrgencyGroup title="This month" urgency="thisMonth" items={data.thisMonth} />
           <UrgencyGroup title="Later" urgency="later" items={data.later} isLast />
         </div>
       </div>

@@ -32,8 +32,10 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
     pwdExpiryDays = Math.max(0, differenceInDays(parseISO(caseData.pwdExpirationDate), now));
   }
 
-  // Case Age
-  const caseAge = Math.max(0, differenceInDays(now, new Date(caseData.createdAt)));
+  // Time in process, counted from the PWD filing (the start of the PERM path),
+  // or from when the case was added here while no PWD date is recorded.
+  const processStart = caseData.pwdFilingDate ? parseISO(caseData.pwdFilingDate) : new Date(caseData.createdAt);
+  const daysInProcess = Math.max(0, differenceInDays(now, processStart));
 
   // Milestones completed vs total
   const allMilestones = extractMilestones(caseData);
@@ -52,14 +54,19 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
       <div className="detail-card-head ch-muted">
         <span className="flex items-center gap-1.5">
           <TrendingUp className="h-3.5 w-3.5" />
-          Quick Stats
+          Quick stats
         </span>
       </div>
       <div className="stats-grid">
-        <CountUpStat target={pwdExpiryDays} color="var(--stage-eta9089)" label="PWD Expiry" sub="days left" />
-        <CountUpStat target={caseAge} label="Case Age" sub="days" />
-        <CountUpStat target={completedMilestones} color="var(--stage-recruitment)" label="Milestones" sub={`of ${allMilestones.length} done`} />
-        <CountUpStat target={nextDeadlineDays} color="var(--stage-pwd)" label="Next Deadline" sub={nextDeadlineLabel} />
+        <CountUpStat target={pwdExpiryDays} color="var(--stage-pwd-ink)" label="PWD expires" sub="days left" />
+        <CountUpStat target={daysInProcess} label="In process" sub={caseData.pwdFilingDate ? "days since PWD filed" : "days since added"} />
+        <CountUpStat target={completedMilestones} color="var(--primary-text)" label="Milestones" sub={`of ${allMilestones.length} done`} />
+        <CountUpStat
+          target={nextDeadlineDays}
+          color={nextDeadline && nextDeadlineDays <= 30 ? "var(--data-warn-ink)" : undefined}
+          label="Next deadline"
+          sub={nextDeadlineLabel}
+        />
       </div>
     </div>
   );

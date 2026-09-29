@@ -36,8 +36,8 @@ describe("DeadlineHeroWidget", () => {
       expect(screen.getByRole("heading", { name: /deadline hub/i })).toBeInTheDocument();
       expect(screen.getByText("8")).toBeInTheDocument();
       expect(screen.getByText("Overdue")).toBeInTheDocument();
-      expect(screen.getByText("This Week")).toBeInTheDocument();
-      expect(screen.getByText("This Month")).toBeInTheDocument();
+      expect(screen.getByText("This week")).toBeInTheDocument();
+      expect(screen.getByText("This month")).toBeInTheDocument();
       expect(screen.getByText("Later")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: /refresh/i })).toBeInTheDocument();
     });

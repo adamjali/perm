@@ -46,7 +46,7 @@ export function ETA9089Tab({
       {ws && (
         <WindowCard
           ws={ws}
-          title="ETA 9089 Filing Window"
+          title="ETA 9089 filing window"
           stageColor="var(--stage-eta9089)"
           startDate={filingWindowOpens}
           endDate={filingWindowCloses}
@@ -68,31 +68,31 @@ export function ETA9089Tab({
             </div>
             <div className="field-grid" style={{ padding: 0 }}>
               <div className="field-cell">
-                <div className="fc-label">Filing Date</div>
+                <div className="fc-label">Filing date</div>
                 <div className={`fc-val mono ${!isFiled ? "dim" : ""}`}>{fmtISODate(caseData.eta9089FilingDate)}</div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Case Number</div>
+                <div className="fc-label">Case number</div>
                 <div className={`fc-val fc-val-text mono ${!caseData.eta9089CaseNumber ? "dim" : ""}`} title={caseData.eta9089CaseNumber || undefined}>{caseData.eta9089CaseNumber || "-"}</div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Audit Date</div>
+                <div className="fc-label">Audit date</div>
                 <div className={`fc-val mono ${!caseData.eta9089AuditDate ? "dim" : ""}`}>{fmtISODate(caseData.eta9089AuditDate)}</div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Certification Date</div>
+                <div className="fc-label">Certification date</div>
                 <div className={`fc-val mono ${!isCertified ? "dim" : ""}`}>{fmtISODate(caseData.eta9089CertificationDate)}</div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Expiration Date</div>
+                <div className="fc-label">Expiration date</div>
                 <div className={`fc-val mono ${!caseData.eta9089ExpirationDate ? "dim" : ""}`}>
                   {caseData.eta9089ExpirationDate ? (
-                    <span style={{ color: "var(--stage-eta9089)" }}>{fmtISODate(caseData.eta9089ExpirationDate)}</span>
+                    <span style={{ color: "var(--data-warn-ink)" }}>{fmtISODate(caseData.eta9089ExpirationDate)}</span>
                   ) : "-"}
                 </div>
               </div>
               <div className="field-cell">
-                <div className="fc-label">Filing Window</div>
+                <div className="fc-label">Filing window</div>
                 <div className="fc-val mono" style={{ fontSize: "0.8rem" }}>
                   {filingWindowOpens && filingWindowCloses
                     ? `${fmtISOShort(filingWindowOpens)} to ${fmtISOShort(filingWindowCloses)}`
@@ -102,7 +102,7 @@ export function ETA9089Tab({
             </div>
             {!isCertified && (
               <div className="detail-status-bar">
-                <ClockIcon className="h-4 w-4 shrink-0" style={{ color: "var(--stage-eta9089)" }} />
+                <ClockIcon className="h-4 w-4 shrink-0" style={{ color: "var(--stage-eta9089-ink)" }} />
                 <span>
                   {isFiled
                     ? "ETA 9089 filed. Awaiting DOL decision."

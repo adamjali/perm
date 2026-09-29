@@ -80,7 +80,7 @@ describe('CaseForm', () => {
       const h3Elements = container.querySelectorAll('h3');
       const headingTexts = Array.from(h3Elements).map(el => el.textContent);
 
-      expect(headingTexts).toContain('Basic Information');
+      expect(headingTexts).toContain('Basic information');
       expect(headingTexts).toContain('PWD (Prevailing Wage Determination)');
       expect(headingTexts).toContain('Recruitment');
       expect(headingTexts).toContain('ETA 9089 (PERM Application)');

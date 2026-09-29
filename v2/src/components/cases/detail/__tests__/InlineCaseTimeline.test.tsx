@@ -127,9 +127,9 @@ describe("InlineCaseTimeline - Milestone Rendering", () => {
     renderWithProviders(<InlineCaseTimeline caseData={mockCase} />);
 
     // Check that milestones are rendered (via aria-label)
-    expect(screen.getByRole("img", { name: /PWD Filed/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /PWD filed/i })).toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: /PWD Determined/i })
+      screen.getByRole("img", { name: /PWD determined/i })
     ).toBeInTheDocument();
   });
 
@@ -144,7 +144,7 @@ describe("InlineCaseTimeline - Milestone Rendering", () => {
 
     // Find milestone dot
     const milestoneDot = container.querySelector(
-      '[role="img"][aria-label*="PWD Filed"]'
+      '[role="img"][aria-label*="PWD filed"]'
     );
     expect(milestoneDot).toBeInTheDocument();
     // Should have rounded-full class
@@ -162,15 +162,15 @@ describe("InlineCaseTimeline - Milestone Rendering", () => {
     renderWithProviders(<InlineCaseTimeline caseData={mockCase} />);
 
     // Check all milestones are rendered
-    expect(screen.getByRole("img", { name: /PWD Filed/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /PWD filed/i })).toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: /PWD Determined/i })
+      screen.getByRole("img", { name: /PWD determined/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: /1st Sunday Ad/i })
+      screen.getByRole("img", { name: /1st Sunday ad/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("img", { name: /2nd Sunday Ad/i })
+      screen.getByRole("img", { name: /2nd Sunday ad/i })
     ).toBeInTheDocument();
   });
 });
@@ -230,12 +230,12 @@ describe("InlineCaseTimeline - Range Bars", () => {
 
     const { container } = renderWithProviders(<InlineCaseTimeline caseData={mockCase} />);
 
-    // Range bar should render with "Job Order: ... to ..." aria-label
+    // Range bar should render with "Job order: ... to ..." aria-label
     const labelElements = container.querySelectorAll('[aria-label]');
     const jobOrderElement = Array.from(labelElements).find(
       el => {
         const label = el.getAttribute('aria-label') || '';
-        return label.startsWith('Job Order:') && label.includes(' to ');
+        return label.startsWith('Job order:') && label.includes(' to ');
       }
     );
     expect(jobOrderElement).toBeTruthy();
@@ -256,7 +256,7 @@ describe("InlineCaseTimeline - Range Bars", () => {
     const rangeBar = Array.from(labels).find(
       el => {
         const label = el.getAttribute('aria-label') || '';
-        return label.startsWith('Job Order:') && label.includes(' to ');
+        return label.startsWith('Job order:') && label.includes(' to ');
       }
     );
     expect(rangeBar).toBeFalsy();
@@ -276,7 +276,7 @@ describe("InlineCaseTimeline - Range Bars", () => {
     const rangeBar = Array.from(labels).find(
       el => {
         const label = el.getAttribute('aria-label') || '';
-        return label.startsWith('Job Order:') && label.includes(' to ');
+        return label.startsWith('Job order:') && label.includes(' to ');
       }
     );
     expect(rangeBar).toBeFalsy();
@@ -305,7 +305,7 @@ describe("InlineCaseTimeline - Tooltips", () => {
     expect(tooltip).toBeInTheDocument();
 
     // Tooltip should contain the label
-    expect(tooltip?.textContent).toContain("PWD Filed");
+    expect(tooltip?.textContent).toContain("PWD filed");
   });
 
   it("tooltip appears above milestone (bottom-full class)", () => {
@@ -336,7 +336,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     );
 
     const milestone = container.querySelector(
-      '[role="img"][aria-label*="PWD Filed"]'
+      '[role="img"][aria-label*="PWD filed"]'
     );
     expect(milestone).toHaveStyle({ backgroundColor: "#0066FF" });
   });
@@ -351,7 +351,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     );
 
     const milestone = container.querySelector(
-      '[role="img"][aria-label*="1st Sunday Ad"]'
+      '[role="img"][aria-label*="1st Sunday ad"]'
     );
     expect(milestone).toHaveStyle({ backgroundColor: "#9333ea" });
   });
@@ -366,7 +366,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     );
 
     const milestone = container.querySelector(
-      '[role="img"][aria-label*="ETA 9089 Filed"]'
+      '[role="img"][aria-label*="ETA 9089 filed"]'
     );
     expect(milestone).toHaveStyle({ backgroundColor: "#D97706" });
   });
@@ -381,7 +381,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     );
 
     const milestone = container.querySelector(
-      '[role="img"][aria-label*="I-140 Filed"]'
+      '[role="img"][aria-label*="I-140 filed"]'
     );
     expect(milestone).toHaveStyle({ backgroundColor: "#059669" });
   });
@@ -599,7 +599,7 @@ describe("InlineCaseTimeline - RFI/RFE Deadlines", () => {
 
     renderWithProviders(<InlineCaseTimeline caseData={mockCase} />);
 
-    expect(screen.getByRole("img", { name: /RFI Due/i })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: /RFI due/i })).toBeInTheDocument();
   });
 
   it("hides resolved RFI deadline", () => {
@@ -622,7 +622,7 @@ describe("InlineCaseTimeline - RFI/RFE Deadlines", () => {
 
     // Should not show RFI deadline since it's resolved
     expect(
-      screen.queryByRole("img", { name: /RFI Due/i })
+      screen.queryByRole("img", { name: /RFI due/i })
     ).not.toBeInTheDocument();
   });
 
@@ -644,7 +644,7 @@ describe("InlineCaseTimeline - RFI/RFE Deadlines", () => {
     );
 
     const rfeMilestone = container.querySelector(
-      '[role="img"][aria-label*="RFE Due"]'
+      '[role="img"][aria-label*="RFE due"]'
     );
     expect(rfeMilestone).toBeInTheDocument();
     expect(rfeMilestone).toHaveStyle({ backgroundColor: "#dc2626" });
@@ -681,7 +681,7 @@ describe("InlineCaseTimeline - Accessibility", () => {
     const rangeBar = Array.from(labels).find(
       el => {
         const label = el.getAttribute('aria-label') || '';
-        return label.startsWith('Job Order:') && label.includes(' to ');
+        return label.startsWith('Job order:') && label.includes(' to ');
       }
     );
     expect(rangeBar).toBeTruthy();

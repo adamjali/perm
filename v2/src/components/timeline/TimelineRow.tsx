@@ -232,7 +232,7 @@ export function TimelineRow({
         >
           {caseData.employerName}
         </button>
-        <div className="truncate text-xs text-muted-foreground leading-tight" title={caseData.positionTitle}>
+        <div className="truncate text-sm text-muted-foreground leading-tight" title={caseData.positionTitle}>
           {caseData.positionTitle}
         </div>
       </div>
@@ -261,6 +261,15 @@ export function TimelineRow({
             endPosition={item.endPosition}
           />
         ))}
+
+        {/* A case with nothing in this range says so, instead of a blank row */}
+        {visibleMilestones.length === 0 && visibleRangeBars.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="border-2 border-dashed border-muted-foreground/50 bg-card px-3 py-1 text-sm text-muted-foreground">
+              No dates in this range yet
+            </span>
+          </div>
+        )}
 
         {/* Milestone Markers Layer */}
         {visibleMilestones.map((item) => (

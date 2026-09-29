@@ -32,8 +32,8 @@ describe("SelectionBar", () => {
   });
 
   it.each([
-    ["Select All", "onSelectAll"],
-    ["Deselect All", "onDeselectAll"],
+    ["Select all", "onSelectAll"],
+    ["Deselect all", "onDeselectAll"],
     ["Export CSV", "onExportCSV"],
     ["Export JSON", "onExportJSON"],
     ["Delete", "onBulkDelete"],

@@ -10,7 +10,7 @@ import type { Milestone } from "@/lib/timeline/types";
 function createMockMilestone(overrides?: Partial<Milestone>): Milestone {
   return {
     field: "pwdFilingDate",
-    label: "PWD Filed",
+    label: "PWD filed",
     date: "2024-06-15",
     stage: "pwd",
     color: "#0066FF",
@@ -92,12 +92,12 @@ describe("TimelineMilestoneMarker - Tooltip", () => {
     renderWithProviders(
       <TimelineMilestoneMarker
         {...getDefaultProps()}
-        milestone={createMockMilestone({ label: "ETA 9089 Certified" })}
+        milestone={createMockMilestone({ label: "ETA 9089 certified" })}
       />
     );
     fireEvent.mouseEnter(screen.getByRole("img"));
     await waitFor(() => {
-      expect(screen.getByText("ETA 9089 Certified")).toBeInTheDocument();
+      expect(screen.getByText("ETA 9089 certified")).toBeInTheDocument();
     });
   });
 
@@ -120,12 +120,12 @@ describe("TimelineMilestoneMarker - Tooltip", () => {
 
     fireEvent.mouseEnter(marker);
     await waitFor(() => {
-      expect(screen.getByText("PWD Filed")).toBeInTheDocument();
+      expect(screen.getByText("PWD filed")).toBeInTheDocument();
     });
 
     fireEvent.mouseLeave(marker);
     await waitFor(() => {
-      expect(screen.queryByText("PWD Filed")).not.toBeInTheDocument();
+      expect(screen.queryByText("PWD filed")).not.toBeInTheDocument();
     });
   });
 
@@ -237,23 +237,23 @@ describe("TimelineMilestoneMarker - Accessibility", () => {
     renderWithProviders(
       <TimelineMilestoneMarker
         {...getDefaultProps()}
-        milestone={createMockMilestone({ label: "I-140 Approved", date: "2024-03-20" })}
+        milestone={createMockMilestone({ label: "I-140 approved", date: "2024-03-20" })}
       />
     );
-    expect(screen.getByRole("img")).toHaveAttribute("aria-label", "I-140 Approved: Mar 20, 2024");
+    expect(screen.getByRole("img")).toHaveAttribute("aria-label", "I-140 approved: Mar 20, 2024");
   });
 
   it("includes navigation hint in aria-label when interactive", () => {
     renderWithProviders(
       <TimelineMilestoneMarker
         {...getDefaultProps()}
-        milestone={createMockMilestone({ label: "PWD Determined", date: "2024-02-10" })}
+        milestone={createMockMilestone({ label: "PWD determined", date: "2024-02-10" })}
         onNavigate={vi.fn()}
       />
     );
     expect(screen.getByRole("button")).toHaveAttribute(
       "aria-label",
-      "PWD Determined: Feb 10, 2024 - Click to view case"
+      "PWD determined: Feb 10, 2024 - Click to view case"
     );
   });
 });

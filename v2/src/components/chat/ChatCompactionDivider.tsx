@@ -106,7 +106,7 @@ export function ChatCompactionDivider({
           aria-hidden
         />
         <span
-          className="shrink-0 whitespace-nowrap text-xs uppercase"
+          className="shrink-0 whitespace-nowrap text-sm uppercase"
           style={{
             fontFamily: 'var(--font-heading)',
             letterSpacing: '0.12em',
@@ -174,7 +174,7 @@ export function ChatCompactionDivider({
                 {hasAnyFacts(facts) && (
                   <div
                     className={cn(
-                      'grid gap-x-4 gap-y-1.5 text-xs',
+                      'grid gap-x-4 gap-y-1.5 text-sm',
                       'grid-cols-[auto_1fr]',
                       summary.trim().length > 0 && 'mt-4 pt-4',
                     )}
@@ -186,7 +186,7 @@ export function ChatCompactionDivider({
                     }}
                   >
                     <div
-                      className="col-span-2 text-xs uppercase"
+                      className="col-span-2 text-sm uppercase"
                       style={{
                         fontFamily: 'var(--font-heading)',
                         letterSpacing: '0.12em',

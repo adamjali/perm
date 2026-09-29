@@ -22,7 +22,7 @@ import { EditCasePageClient } from "./EditCasePageClient";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
-    title: "Edit Case",
+    title: "Edit case",
     robots: { index: false, follow: false },
   };
 }

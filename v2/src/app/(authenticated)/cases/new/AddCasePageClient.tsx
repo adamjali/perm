@@ -208,7 +208,7 @@ export function AddCasePageClient() {
           Cases
         </button>
         <CaretRightIcon className="size-4" />
-        <span className="text-foreground font-medium">Add New Case</span>
+        <span className="text-foreground font-medium">Add new case</span>
       </nav>
 
       {/* Page Title with neobrutalist accent */}
@@ -217,7 +217,7 @@ export function AddCasePageClient() {
         <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border-2 border-foreground shadow-hard-sm" />
         <div className="pl-6">
           <PageHeading
-            title="Add New Case"
+            title="Add new case"
             lede="Enter case details below. All fields are optional except employer, beneficiary, and position."
           />
         </div>
@@ -234,7 +234,7 @@ export function AddCasePageClient() {
       <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>Duplicate Case Detected</DialogTitle>
+            <DialogTitle>Duplicate case detected</DialogTitle>
             <DialogDescription>
               A case already exists for{" "}
               <strong>{pendingFormData?.employerName}</strong> /{" "}
@@ -273,7 +273,7 @@ export function AddCasePageClient() {
               loadingText="Creating..."
               disabled={isCreating}
             >
-              Create Anyway
+              Create anyway
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -310,7 +310,7 @@ export function AddCasePageClient() {
               loadingText="Creating..."
               disabled={isCreating}
             >
-              Create Anyway
+              Create anyway
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -168,6 +168,7 @@ function UrgencyIcon({ urgency }: { urgency: CalendarEvent["urgency"] }) {
     case "soon":
       return <ClockIcon className="size-4" />;
     case "normal":
+    case "done":
       return <CheckCircle2 className="size-4" />;
   }
 }
@@ -202,7 +203,7 @@ export function CalendarMobileList({
           <CalendarIcon className="size-10 text-muted-foreground" />
         </div>
         <h3 className="font-heading text-lg font-semibold mb-2">
-          No Upcoming Deadlines
+          No upcoming deadlines
         </h3>{" "}
         <p className="text-sm text-muted-foreground max-w-[280px]">
           No deadlines in the next {daysToShow} days. Check back later or view
@@ -273,8 +274,8 @@ export function CalendarMobileList({
                     </div>
 
                     {/* Case name */}
-                    <p className="text-sm text-muted-foreground truncate" title={`${employerName ?? "Unknown Case"}${caseData?.positionTitle ? ` - ${caseData.positionTitle}` : ""}`}>
-                      {employerName ?? "Unknown Case"}
+                    <p className="text-sm text-muted-foreground truncate" title={`${employerName ?? "Unknown case"}${caseData?.positionTitle ? ` - ${caseData.positionTitle}` : ""}`}>
+                      {employerName ?? "Unknown case"}
                       {caseData?.positionTitle && (
                         <span className="hidden sm:inline">
                           {" "}
@@ -295,7 +296,7 @@ export function CalendarMobileList({
                       {formatEventDate(event.start)}
                     </span>
                     <div
-                      className="flex items-center gap-1 text-xs"
+                      className="flex items-center gap-1 text-sm"
                       style={{ color: urgencyColor }}
                     >
                       <UrgencyIcon urgency={event.urgency} />

@@ -9,5 +9,5 @@ export default function SettingsError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <RouteError error={error} reset={reset} title="Settings Error" />;
+  return <RouteError error={error} reset={reset} title="Settings error" />;
 }
