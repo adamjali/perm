@@ -10,7 +10,7 @@ import { ArrowSquareOutIcon, CalendarIcon as CalendarIcon, InfoIcon, PlusIcon } 
 
 import { api } from "../../../../convex/_generated/api";
 import { caseToCalendarEvents } from "@/lib/calendar/event-mapper";
-import type { CalendarCaseData, DeadlineType } from "@/lib/calendar/types";
+import { RECORDED_EVENT_TYPES, type CalendarCaseData, type DeadlineType } from "@/lib/calendar/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { CalendarView, type CaseDataMap, CalendarFilters } from "@/components/calendar";
@@ -267,6 +267,10 @@ export function CalendarPageClient() {
     return { events: filteredEvents, caseDataMap: dataMap };
   }, [calendarCases, preferences]);
 
+  // The header counts deadlines only; recorded dates (a filed PWD, a placed
+  // ad) sit on the calendar too but are not something still to meet.
+  const openDeadlines = events.filter((e) => !RECORDED_EVENT_TYPES.has(e.deadlineType)).length;
+
   // Redirect to login if not authenticated (in useEffect to avoid setState during render)
   // useQuery returns null when auth fails, undefined while loading
   useEffect(() => {
@@ -363,7 +367,7 @@ export function CalendarPageClient() {
       {/* Header */}
       <div className="mb-4">
         <PageHeading
-          eyebrow={`${events.length} deadline${events.length !== 1 ? "s" : ""} across ${calendarCases.length} case${calendarCases.length !== 1 ? "s" : ""}`}
+          eyebrow={`${openDeadlines} deadline${openDeadlines !== 1 ? "s" : ""} across ${calendarCases.length} case${calendarCases.length !== 1 ? "s" : ""}`}
           title="Calendar"
         />
       </div>

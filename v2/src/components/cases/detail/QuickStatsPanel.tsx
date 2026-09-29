@@ -2,7 +2,7 @@
 
 import { TrendUpIcon as TrendingUp } from "@phosphor-icons/react";
 import { parseISO, differenceInDays } from "date-fns";
-import { buildDeadlineInput, isDeadlineActive, type LooseDeadlineCaseData } from "@/lib/perm";
+import { buildDeadlineInput, extractActiveDeadlines, isDeadlineActive, type LooseDeadlineCaseData } from "@/lib/perm";
 import { extractMilestones } from "@/lib/timeline/milestones";
 import { countDueDeadlines } from "./next-up-section.utils";
 import type { CaseDetailData } from "./case-detail-types";
@@ -30,10 +30,12 @@ export function QuickStatsPanel({ caseData }: QuickStatsPanelProps) {
   // The PWD's expiry counts only while the central rules say it still matters
   // (until the ETA 9089 is filed). After that, the clock that matters is how
   // long the filing has been with DOL.
-  const pwdMatters = isDeadlineActive("pwd_expiration", buildDeadlineInput(caseData as LooseDeadlineCaseData)).isActive;
-  const pwdExpiryDays = caseData.pwdExpirationDate
-    ? Math.max(0, differenceInDays(parseISO(caseData.pwdExpirationDate), now))
-    : 0;
+  const input = buildDeadlineInput(caseData as LooseDeadlineCaseData);
+  const pwdMatters = isDeadlineActive("pwd_expiration", input).isActive;
+  // The central list's own count, so this matches the dashboard to the day.
+  // (Subtracting now from a midnight date dropped a day after midnight.)
+  const pwdDeadline = extractActiveDeadlines(input).find((d) => d.type === "pwd_expiration");
+  const pwdExpiryDays = Math.max(0, pwdDeadline?.daysUntil ?? 0);
   const etaFiledDays = caseData.eta9089FilingDate
     ? Math.max(0, differenceInDays(now, parseISO(caseData.eta9089FilingDate)))
     : null;
