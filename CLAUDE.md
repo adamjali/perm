@@ -1,10 +1,10 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-26
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-30
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **391 files / 7,034 tests across 4 vitest
-> projects** (2026-09-16), not the 151 files / 3 projects TESTING.md records. Treat those
+> have drifted: the suite is now **509 files / 8,144 tests across 5 vitest
+> projects** (2026-09-30), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
 ## Production URLs
@@ -274,3 +274,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026 (morning)".
 - **The morning report ranks only still-failing workflows**; one that failed and passed again is history.
 - **Every loading.tsx is rendered the way Next's build renders it**, in a test, so a URL read outside
   Suspense fails locally instead of failing the deploy.
+
+## Sep 30 2026 (midday), in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026 (midday)".
+
+- **motion 13 and svix 2 are in**; svix is bundled into Convex, so its bump needed a Convex deploy.
+- **`pnpm audit` found five advisories Dependabot hadn't**; the override floors are capped at their majors.
+- **Timeline dates too close to tell apart share one numbered square**, kept inside the grid's edges,
+  with the colour key above the grid.
+- **IndexNow retries a server error, and the SSR audit judges inline styles only.**

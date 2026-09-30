@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-09-26
+> **Status:** Production | **Last Updated:** 2026-09-30
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -28,8 +28,8 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:app` | `tsgo --noEmit` (app tsconfig) |
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
-| `pnpm test:fast` | ~1300 tests, **2 of 4 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 4 projects. Baseline 391 files / 7,034 tests (~12.5 min, 2026-09-16). Run this before every push.** |
+| `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
+| `pnpm test:run` | **All 5 projects. Baseline 509 files / 8,144 tests (2026-09-30; ~20 min at a load average near 45, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -181,9 +181,9 @@ SWC minifier bug details: [CONCERNS.md TD-01](../.planning/codebase/CONCERNS.md)
 
 ## Before pushing: `pnpm test:run`, not `pnpm test:fast`
 
-`test:fast` runs **2 of the 4** vitest projects (`unit`, `unit-isolated`). It
+`test:fast` runs **2 of the 5** vitest projects (`unit`, `unit-isolated`). It
 does NOT run `components` — which owns `src/app/**/*.test.{ts,tsx}`,
-`src/components/**`, `src/emails/**` — or `convex`.
+`src/components/**`, `src/emails/**` — or `convex`, or `ssr`.
 
 | project | covers |
 |---|---|
@@ -191,6 +191,7 @@ does NOT run `components` — which owns `src/app/**/*.test.{ts,tsx}`,
 | `unit-isolated` | mock-heavy files needing `isolate: true` |
 | `components` | **`src/app/**`**, `src/components/**`, `src/emails/**`, `test-utils/**` |
 | `convex` | `convex/*.test.ts`, `convex/__tests__/**`, `convex/lib/__tests__/**` |
+| `ssr` | `src/**/*.ssr.test.{ts,tsx}`: node environment, no setup file, real motion (server renders, loading.tsx prerenders) |
 
 Making `sitemap()` async broke `src/app/__tests__/sitemap.test.ts`
 (`sitemap().map` on a Promise). `test:fast` + `--project convex` were both green
@@ -7133,3 +7134,45 @@ a workflow whose newest completed run failed (`recovered()`); the others read "f
 renders each one with no URL and `useSearchParams` throwing Next's bailout (layout auth and Convex
 stood in), so a loading state that reads the query string outside a Suspense boundary fails in
 seconds instead of failing the deploy, as the 6:54 AM EDT deploy did. Probed with that exact mistake.
+
+## Sep 30 2026 (midday): Audit 11, and dates that share a square
+
+Audit 11 (`../.planning/github-audit-history.md`) and the second timeline pass, both deployed the
+same day (`10dc8232`, `59863b95`, `8435aca3`).
+
+- **motion 13.4.1 and svix 2.5.0**, Dependabot PRs #33 and #35 closed as superseded with a reason
+  each. motion 13's one break drops the optional `@emotion/is-prop-valid` detection, never installed
+  here; the `ssr` vitest project (real motion) and the live SSR-visibility audit (475 of 475 pages)
+  show nothing above the fold ships hidden. svix 2 stops parsing JSON inside `Webhook.verify`;
+  `convex/http.ts` ignores its return and parses the body itself, and live `/resend-inbound` still
+  answers 401 to a forged signature. **svix is bundled into Convex, so a bump that touches no file
+  under `convex/` still needs `npx convex deploy -y`.**
+- **`pnpm audit` sees what Dependabot doesn't**: 0 open Dependabot alerts beside 2 high and 3
+  moderate advisories. Override floors `brace-expansion >=5.0.12 <6`, `moment >=2.31.0 <3`,
+  `fast-uri >=3.1.8 <4`, each capped at its major so a floor can't pull in the next one.
+- **The 7-day `minimumReleaseAge` chooses the version**: `pnpm add motion@^13 svix@^2` installed
+  13.4.1 and 2.5.0 while 13.4.6 and 2.6.0 were a day old. Read changelogs up to what installed.
+- **`audit_ssr_visibility.py` judges inline `style` attributes only** (`hidden_styles`, with
+  `test_ssr_visibility.py` in CI): the home curtain's `opacity:0` rule in `<head>` made 80 of 80
+  pages "fail" once it shipped.
+- **IndexNow retries a server error**: one Cloudflare 520 on `live-employer-3.xml`, while the
+  server warmed a fresh deploy, failed the run. Sitemap fetches retry 5xx, 429 and network errors
+  after 5, 15 and 30 s and fail after four tries; a 404 fails at once.
+- **Dates too close to tell apart share one numbered square**, replacing the morning's lanes and
+  "+N" (Adam, from his phone: *"what’s going on with the + and the multiple dots and same color?
+  and left side edge? etc?"*). `groupMarkers` in `src/lib/timeline/positioning.ts` joins dates
+  less than a 22px square apart at `MIN_MONTH_PX`, so a group never splits on a wider screen;
+  `groupPosition` puts the square at the group's middle. Same stage: the stage colour with
+  `STAGE_ON_FILL` text; mixed: plain. Every square's left is `clamp(12px, var(--x), calc(100% -
+  12px))`, set as a Tailwind class with `--x` inline, because happy-dom drops an inline `clamp()`
+  and the tests read `--x`. The colour key (`TimelineLegendCompact`, with a "Dates close together"
+  swatch) sits above the grid in the page and in its skeleton. Measured in Storybook at 320, 390
+  and 1440: 15 squares, 0 overlaps; in dark, the counts read 4.83:1 on PWD blue, 5.38:1 on
+  recruitment purple and 18.97:1 on the plain squares.
+- **Storybook's dark theme is a class.** `withThemeByClassName` puts `dark` on `<html>`; neither
+  devtools' `colorScheme` emulation nor a `globals=theme:dark` iframe URL changed it. Add the class
+  by script and read a computed background before believing a dark check.
+- **Wait on a commit's runs by `headSha`**: `gh run list --commit <sha>` returned nothing here;
+  `gh run list --json headSha,name,status,conclusion` filtered on the SHA works.
+- **A screenshot shows where the reader scrolled.** I called scroll-to-today broken from Adam's
+  screenshot; he had scrolled past it. Nothing changed there.

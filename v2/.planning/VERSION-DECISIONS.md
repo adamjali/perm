@@ -134,3 +134,26 @@ every workflow to v7), #26, #27 (grouped, superseded by the caret bulk update â€
 note #27 also wanted the Sentry bump that was deliberately reverted), #28, #29,
 #30 (the `@ai-sdk` provider majors, superseded by going further to the full v7
 upgrade).
+
+## September 30 2026 audit (Audit 11): motion 13, svix 2, three floors
+
+| Package | From | To | What the major changed, and how it was checked |
+|---------|------|----|-----------------------------------------------|
+| `motion` | 12.43.0 | **13.4.1** | Drops the optional `@emotion/is-prop-valid` auto-detection, which this repo never installed. The `ssr` vitest project runs real motion with no mock and passed; the live SSR-visibility audit read 475 of 475 pages clean. Motion's `initial` is an SSR inline style here, so this is the check that matters. |
+| `svix` | 1.99.1 | **2.5.0** | `Webhook.verify` no longer parses the JSON body. `convex/http.ts` ignores its return value and parses the body itself; `marketingEmail.test` signs and verifies real webhooks with v2, and live `/resend-inbound` answers 401 to a forged signature. **svix is bundled into Convex: the bump needed `npx convex deploy -y` though no file under `convex/` changed.** |
+
+**Why these versions and not the newest:** `pnpm-workspace.yaml` sets `minimumReleaseAge: 10080`
+(7 days), so `pnpm add motion@^13 svix@^2` installed 13.4.1 and 2.5.0 while 13.4.6 and 2.6.0
+were a day old. The changelogs were read up to the installed versions, not the PR's.
+
+**Override floors raised for advisories Dependabot never flagged** (`pnpm audit` found them; 0
+open Dependabot alerts at the time), each capped at its major so a floor can't pull in the next
+one: `brace-expansion >=5.0.12 <6` (GHSA-6j4f-fj2g-mc7p and GHSA-qhr7-859c-m2p7, high;
+GHSA-q2hr-2g5m-vwhr), `moment >=2.31.0 <3` (GHSA-4p3w-j4w9-5jqw; it ships, via
+react-big-calendar), `fast-uri >=3.1.8 <4` (GHSA-hrr3-gc8f-f4qj). All three patches were 15 days
+old, so the release-age floor allowed them. `pnpm audit` clean afterwards.
+
+**Superseded Dependabot PRs:** #33 (motion 13) and #35 (svix 2), each closed with its own
+reason. Audit 10 had left both open because motion's SSR inline style and svix's signature check
+are the two places a silent regression costs most; both were tested directly this time.
+
