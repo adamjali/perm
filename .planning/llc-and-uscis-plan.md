@@ -13,7 +13,7 @@ it); ship the bulletin month strip; the manager consented to being named.
 
 | thing | state |
 |---|---|
-| Florida LLC, PERM Tracker LLC, manager-managed | filed through Northwest Registered Agent, Sep 22 ~7:35 PM EDT; to the state by Sep 25; Northwest estimates Oct 14 |
+| Florida LLC, PERM Tracker LLC, manager-managed | **FILED AND ACTIVE: Sunbiz document L26000495521, date filed 09/23/2026** (read on Sunbiz Sep 30 2026, ~3:05 PM EDT; three weeks ahead of Northwest's Oct 14 estimate). Principal, mailing and agent address Northwest's; manager listed, no members; FEI/EIN "NONE" until the EIN exists. FinCEN: US companies are exempt from BOI reporting (fincen.gov/boi, read Sep 30 2026) |
 | operating agreement | DRAFT written (single member, manager without ownership, Chapter 605). Lives OUTSIDE this public repo, in the owner's Documents folder, because it names the owner |
 | Terms, About, Organization schema | say "PERM Tracker LLC, a Florida limited liability company" from this deploy; the entity is a few days from existing, which is the same interval the Terms already carried |
 | USCIS Torch client, receipt parser, `/uscis-case-status` page | built (Track B); reads `USCIS_CLIENT_ID`, `USCIS_CLIENT_SECRET`, `USCIS_ENV` (Vercel only; nothing under `convex/` touches USCIS) and renders its waiting state until they exist. Registration notes: `.planning/uscis-api/registration.md`, `support-email.md`, `affidavit-and-demo.md`, `section-508.md` |
@@ -62,8 +62,14 @@ developersupport@uscis.dhs.gov, a demo, production keys.
    mailbox. SHOW THE FILLED FORM TO THE OWNER BEFORE SUBMITTING (identity rule).
 3. **Create the Developer App** for "Case Status API - Sandbox". Two credentials appear:
    client ID and client secret.
-4. **Move the secret without reading it.** In the automation tab, select the secret and
-   send a `cmd+c` key event; then, in this shell:
+4. **Move the secret without reading it.** **Since Sep 28 2026 the site runs on the Oracle
+   server, not Vercel**: server-only settings live in `/srv/permtracker/app/env/production.env`
+   (root:permtracker 640, see `v2/scripts/oracle/README.md`). In the automation tab, select the
+   secret and send a `cmd+c` key event; then pipe it straight in without printing it:
+   `pbpaste | tr -d '\n' | ssh permtracker 'v=$(cat); printf "USCIS_CLIENT_SECRET=%s\n" "$v" | sudo tee -a /srv/permtracker/app/env/production.env >/dev/null'`,
+   add `USCIS_CLIENT_ID` and `USCIS_ENV=sandbox` the same way, clear the clipboard
+   (`printf '' | pbcopy`), and restart the web copies per the server README so they read the
+   file. The Vercel commands below are the pre-move route, kept for the record only:
    ```
    pbpaste | tr -d '\n' | npx vercel env add USCIS_CLIENT_SECRET production --sensitive
    printf '' | pbcopy

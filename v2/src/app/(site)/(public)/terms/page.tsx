@@ -9,6 +9,7 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
+import { LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
@@ -62,7 +63,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: September 28, 2026
+          Effective Date: February 17, 2026 | Last Updated: September 30, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -795,7 +796,10 @@ export default function TermsPage() {
                 <strong>Application:</strong> PERM Tracker
               </li>{" "}
               <li>
-                <strong>Operator:</strong> PERM Tracker, Washington, DC 20001
+                <strong>Operator:</strong> {`${LEGAL_NAME}, ${LEGAL_FORM}`}
+              </li>{" "}
+              <li>
+                <strong>Mailing address:</strong> {POSTAL_ADDRESS}
               </li>
             </ul>
           </section>

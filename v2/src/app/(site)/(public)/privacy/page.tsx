@@ -9,6 +9,7 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
+import { LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 
@@ -64,7 +65,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: September 28, 2026
+          Effective Date: February 17, 2026 | Last Updated: September 30, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -76,8 +77,9 @@ export default function PrivacyPage() {
               1. Introduction
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              Welcome to PERM Tracker. PERM Tracker (&quot;we,&quot; &quot;our,&quot; or
-              &quot;us&quot;) operates permtracker.app. This Privacy Policy explains
+              Welcome to PERM Tracker. PERM Tracker is operated by {LEGAL_NAME},{" "}
+              {LEGAL_FORM} (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), which
+              runs permtracker.app. This Privacy Policy explains
               how we collect, use,
               disclose, and safeguard your information when you use our web
               application for tracking Permanent Labor Certification (PERM)
@@ -1175,7 +1177,10 @@ export default function PrivacyPage() {
                 <strong>Application:</strong> PERM Tracker
               </li>{" "}
               <li>
-                <strong>Operator:</strong> PERM Tracker, Washington, DC 20001
+                <strong>Operator:</strong> {`${LEGAL_NAME}, ${LEGAL_FORM}`}
+              </li>{" "}
+              <li>
+                <strong>Mailing address:</strong> {POSTAL_ADDRESS}
               </li>
             </ul>
           </section>

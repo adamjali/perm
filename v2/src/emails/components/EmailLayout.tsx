@@ -305,7 +305,7 @@ export function EmailLayout({
               {`${LEGAL_NAME}, ${POSTAL_ADDRESS}`}
             </Text>
             <Text className="em-footer-muted" style={styles.copyright}>
-              &copy; {new Date().getFullYear()} PERM Tracker. All rights
+              &copy; {`${new Date().getFullYear()} ${LEGAL_NAME}`}. All rights
               reserved.
             </Text>
           </Section>

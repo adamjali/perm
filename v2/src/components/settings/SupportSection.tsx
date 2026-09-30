@@ -49,6 +49,7 @@ import { ArrowSquareOutIcon, BugIcon, DownloadIcon, EnvelopeIcon as Mail, InfoIc
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
+import { LEGAL_NAME } from "@/lib/constants/about";
 import { useOnboarding } from "@/components/onboarding/OnboardingProvider";
 import DeleteNowDialog from "./DeleteNowDialog";
 import {
@@ -425,7 +426,7 @@ export default function SupportSection({ profile }: SupportSectionProps) {
           <InfoIcon className="h-4 w-4" />
           <span className="font-mono text-sm">PERM Tracker v{appVersion}</span>{" "}
           <span className="text-muted-foreground">|</span>{" "}
-          <span className="text-sm">&copy; {currentYear} PERM Tracker</span>
+          <span className="text-sm">&copy; {`${currentYear} ${LEGAL_NAME}`}</span>
         </div>
       </div>
 
