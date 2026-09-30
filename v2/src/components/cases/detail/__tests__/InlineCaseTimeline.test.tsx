@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../../test-utils/render-utils";
 import { InlineCaseTimeline } from "../InlineCaseTimeline";
 import type { CaseWithDates } from "@/lib/timeline";
@@ -147,8 +147,10 @@ describe("InlineCaseTimeline - Milestone Rendering", () => {
       '[role="img"][aria-label*="PWD filed"]'
     );
     expect(milestoneDot).toBeInTheDocument();
-    // Should have rounded-full class
-    expect(milestoneDot).toHaveClass("rounded-full");
+    // A square, like the timeline page's markers (Sep 30 2026: the two match)
+    const square = milestoneDot?.firstElementChild;
+    expect(square).toHaveClass("size-4");
+    expect(square).not.toHaveClass("rounded-full");
   });
 
   it("renders multiple milestones from different stages", () => {
@@ -197,13 +199,10 @@ describe("InlineCaseTimeline - Milestone Positioning", () => {
     // Component may filter milestones based on visibility and stage grouping
     expect(milestones.length).toBeGreaterThanOrEqual(1);
 
-    // Each milestone should have a left position style
+    // Each marker and band carries its own left position
     milestones.forEach((milestone) => {
-      const parent = milestone.parentElement;
-      if (parent) {
-        // eslint-disable-next-line security/detect-unsafe-regex -- safe-regex flags this heuristically, but the pattern is linear (no nested/overlapping quantifiers) and runs on a short style string in a test
-        expect(parent.style.left).toMatch(/\d+(\.\d+)?%/);
-      }
+      // eslint-disable-next-line security/detect-unsafe-regex -- safe-regex flags this heuristically, but the pattern is linear (no nested/overlapping quantifiers) and runs on a short style string in a test
+      expect((milestone as HTMLElement).style.left).toMatch(/\d+(\.\d+)?%/);
     });
   });
 
@@ -296,16 +295,12 @@ describe("InlineCaseTimeline - Tooltips", () => {
       <InlineCaseTimeline caseData={mockCase} />
     );
 
-    // Find the milestone wrapper (has group class for hover)
-    const milestoneWrapper = container.querySelector(".group");
-    expect(milestoneWrapper).toBeInTheDocument();
-
-    // Tooltip should exist but be hidden initially
-    const tooltip = container.querySelector(".group-hover\\:opacity-100");
+    // Hovering the marker opens its tooltip (the timeline page's marker)
+    const marker = container.querySelector('[role="img"][aria-label*="PWD filed"]');
+    expect(marker).toBeInTheDocument();
+    fireEvent.mouseEnter(marker!);
+    const tooltip = await screen.findByText("PWD filed");
     expect(tooltip).toBeInTheDocument();
-
-    // Tooltip should contain the label
-    expect(tooltip?.textContent).toContain("PWD filed");
   });
 
   it("tooltip appears above milestone (bottom-full class)", () => {
@@ -317,6 +312,8 @@ describe("InlineCaseTimeline - Tooltips", () => {
       <InlineCaseTimeline caseData={mockCase} />
     );
 
+    const marker = container.querySelector('[role="img"][aria-label*="PWD filed"]');
+    fireEvent.mouseEnter(marker!);
     // Tooltip should have bottom-full for positioning above
     const tooltip = container.querySelector(".bottom-full");
     expect(tooltip).toBeInTheDocument();
@@ -338,7 +335,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     const milestone = container.querySelector(
       '[role="img"][aria-label*="PWD filed"]'
     );
-    expect(milestone).toHaveStyle({ backgroundColor: "#0066FF" });
+    expect(milestone?.firstElementChild).toHaveStyle({ backgroundColor: "#0066FF" });
   });
 
   it("displays Recruitment milestones in purple (#9333ea)", () => {
@@ -353,7 +350,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     const milestone = container.querySelector(
       '[role="img"][aria-label*="1st Sunday ad"]'
     );
-    expect(milestone).toHaveStyle({ backgroundColor: "#9333ea" });
+    expect(milestone?.firstElementChild).toHaveStyle({ backgroundColor: "#9333ea" });
   });
 
   it("displays ETA 9089 milestones in the stage amber (#D97706)", () => {
@@ -368,7 +365,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     const milestone = container.querySelector(
       '[role="img"][aria-label*="ETA 9089 filed"]'
     );
-    expect(milestone).toHaveStyle({ backgroundColor: "#D97706" });
+    expect(milestone?.firstElementChild).toHaveStyle({ backgroundColor: "#D97706" });
   });
 
   it("displays I-140 milestones in the stage teal (#059669)", () => {
@@ -383,7 +380,7 @@ describe("InlineCaseTimeline - Stage Colors", () => {
     const milestone = container.querySelector(
       '[role="img"][aria-label*="I-140 filed"]'
     );
-    expect(milestone).toHaveStyle({ backgroundColor: "#059669" });
+    expect(milestone?.firstElementChild).toHaveStyle({ backgroundColor: "#059669" });
   });
 });
 
@@ -425,8 +422,8 @@ describe("InlineCaseTimeline - Legend", () => {
       <InlineCaseTimeline caseData={mockCase} />
     );
 
-    // Find legend color dots (w-3 h-3 rounded-full in the legend section)
-    const legendDots = container.querySelectorAll(".w-3.h-3.rounded-full");
+    // The shared legend's stage swatches
+    const legendDots = container.querySelectorAll("[data-legend-swatch]");
     expect(legendDots.length).toBeGreaterThanOrEqual(4);
   });
 });
@@ -647,7 +644,7 @@ describe("InlineCaseTimeline - RFI/RFE Deadlines", () => {
       '[role="img"][aria-label*="RFE due"]'
     );
     expect(rfeMilestone).toBeInTheDocument();
-    expect(rfeMilestone).toHaveStyle({ backgroundColor: "#dc2626" });
+    expect(rfeMilestone?.firstElementChild).toHaveStyle({ backgroundColor: "#dc2626" });
   });
 });
 
@@ -740,9 +737,8 @@ describe("InlineCaseTimeline - Styling", () => {
       <InlineCaseTimeline caseData={mockCase} />
     );
 
-    // 4-tier Gantt layout: each row has border-b border-border and alternating bg
-    const ganttRows = container.querySelectorAll(".border-b.border-border");
-    // Should have at least 4 rows (PWD, Recruitment, ETA 9089, I-140)
-    expect(ganttRows.length).toBeGreaterThanOrEqual(4);
+    // One lane per stage: PWD, Recruitment, ETA 9089, I-140
+    const ganttRows = container.querySelectorAll("[data-stage-lane]");
+    expect(ganttRows.length).toBe(4);
   });
 });

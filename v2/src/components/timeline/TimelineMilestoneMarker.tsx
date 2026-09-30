@@ -42,12 +42,24 @@ export interface TimelineMilestoneMarkerProps {
   /**
    * Case ID for navigation
    */
-  caseId: string;
+  caseId?: string;
 
   /**
    * Callback when milestone is clicked for navigation
    */
   onNavigate?: (caseId: string) => void;
+
+  /**
+   * Vertical offset in px from the row's middle, for markers moved into a
+   * lane so they do not cover a neighbour (see assignMarkerLanes).
+   */
+  offsetY?: number;
+
+  /**
+   * Nearby milestones with no lane of their own (see foldedMarkers). This
+   * marker shows their count as "+N" and lists them in its tooltip.
+   */
+  folded?: Milestone[];
 
   /**
    * Additional CSS classes
@@ -87,6 +99,8 @@ export function TimelineMilestoneMarker({
   position,
   caseId,
   onNavigate,
+  offsetY = 0,
+  folded = [],
   className,
 }: TimelineMilestoneMarkerProps) {
   const clampedPosition = clampPosition(position);
@@ -95,7 +109,7 @@ export function TimelineMilestoneMarker({
   // Handle click navigation
   const handleClick = React.useCallback(() => {
     if (onNavigate) {
-      onNavigate(caseId);
+      if (caseId) onNavigate(caseId);
     }
   }, [onNavigate, caseId]);
 
@@ -104,7 +118,7 @@ export function TimelineMilestoneMarker({
     (event: React.KeyboardEvent) => {
       if ((event.key === "Enter" || event.key === " ") && onNavigate) {
         event.preventDefault();
-        onNavigate(caseId);
+        if (caseId) onNavigate(caseId);
       }
     },
     [onNavigate, caseId]
@@ -118,6 +132,7 @@ export function TimelineMilestoneMarker({
       )}
       style={{
         left: `${clampedPosition}%`,
+        top: offsetY ? `calc(50% + ${offsetY}px)` : undefined,
         transform: "translate(-50%, -50%)",
         zIndex: isHovered ? Z_INDEX.milestoneHovered : Z_INDEX.milestone,
       }}
@@ -129,7 +144,7 @@ export function TimelineMilestoneMarker({
       onBlur={() => setIsHovered(false)}
       tabIndex={onNavigate ? 0 : undefined}
       role={onNavigate ? "button" : "img"}
-      aria-label={`${milestone.label}: ${formatISODate(milestone.date)}${onNavigate ? " - Click to view case" : ""}`}
+      aria-label={`${[milestone, ...folded].map((m) => `${m.label}: ${formatISODate(m.date)}`).join("; ")}${onNavigate ? " - Click to view case" : ""}`}
     >
       {/* Milestone marker: a square, like every other mark in the app */}
       <motion.div
@@ -147,6 +162,16 @@ export function TimelineMilestoneMarker({
         transition={springConfig}
       />
 
+      {folded.length > 0 && (
+        <span
+          aria-hidden="true"
+          data-folded-count
+          className="absolute left-full top-1/2 ml-1 flex h-5 min-w-5 -translate-y-1/2 items-center justify-center border-2 border-foreground bg-background px-0.5 text-xs font-bold leading-none text-foreground"
+        >
+          +{folded.length}
+        </span>
+      )}
+
       {/* Tooltip - animated fade-in with spring */}
       <AnimatePresence>
         {isHovered && (
@@ -163,10 +188,14 @@ export function TimelineMilestoneMarker({
             exit={{ opacity: 0, y: 4, x: "-50%" }}
             transition={{ duration: 0.15 }}
           >
-            {/* Label on first line */}
-            <div className="font-semibold">{milestone.label}</div>
-            {/* Formatted date on second line */}
-            <div className="text-sm opacity-80">{formatISODate(milestone.date)}</div>
+            <div className="space-y-1">
+              {[milestone, ...folded].map((m) => (
+                <div key={`${m.field}-${m.date}`}>
+                  <div className="font-semibold">{m.label}</div>
+                  <div className="text-sm opacity-80">{formatISODate(m.date)}</div>
+                </div>
+              ))}
+            </div>
 
             {/* Arrow pointer */}
             <div

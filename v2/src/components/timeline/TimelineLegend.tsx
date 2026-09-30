@@ -66,6 +66,7 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
               style={{ backgroundColor: stage.primary }}
               role="presentation"
               aria-hidden="true"
+              data-legend-swatch
             />
             {/* Stage label */}
             <span className="text-sm font-semibold text-foreground whitespace-nowrap">
@@ -73,6 +74,19 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
             </span>
           </div>
         ))}
+        {/* What the two other shapes mean: a band is a date range, a dashed
+            marker a date computed from the others (not entered). */}
+        <div className="flex items-center gap-2 min-h-[36px]">
+          <div
+            className="h-3 w-6 shrink-0 border-2 border-muted-foreground bg-muted-foreground/25"
+            aria-hidden="true"
+          />
+          <span className="text-sm font-semibold text-foreground whitespace-nowrap">Date range</span>
+        </div>
+        <div className="flex items-center gap-2 min-h-[36px]">
+          <div className="size-4 shrink-0 border-2 border-dashed border-foreground" aria-hidden="true" />
+          <span className="text-sm font-semibold text-foreground whitespace-nowrap">Calculated</span>
+        </div>
       </div>
     </div>
   );

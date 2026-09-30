@@ -3,11 +3,8 @@
  * Renders a semi-transparent date range bar on the timeline grid.
  *
  * Features:
- * - Semi-transparent bar (opacity 0.3)
- * - Height: 8px, vertically centered
- * - Color from rangeBar.color
- * - Rounded ends (2px border-radius)
- * - CSS-based tooltip with date range
+ * - Outlined band in the stage colour over a 30% fill, 12px tall
+ * - Tooltip with the date range, mounted only while hovered
  *
  * Phase: 24 (Timeline Visualization)
  * Created: 2025-12-26
@@ -43,6 +40,13 @@ export interface TimelineRangeBarProps {
   endPosition: number;
 
   /**
+   * The band's vertical centre in px from the top of its container. Omitted,
+   * it sits at the middle of the row (the timeline page, one band per row);
+   * the case page stacks several bands per stage lane in slots.
+   */
+  centerY?: number;
+
+  /**
    * Additional CSS classes
    */
   className?: string;
@@ -71,6 +75,7 @@ export function TimelineRangeBar({
   rangeBar,
   startPosition,
   endPosition,
+  centerY,
   className,
 }: TimelineRangeBarProps) {
   const [isHovered, setIsHovered] = React.useState(false);
@@ -89,6 +94,7 @@ export function TimelineRangeBar({
       style={{
         left: `${clampedStart}%`,
         width: `${width}%`,
+        ...(centerY !== undefined ? { top: `${centerY}px` } : {}),
         zIndex: isHovered ? Z_INDEX.rangeBarHovered : Z_INDEX.rangeBar,
       }}
       onMouseEnter={() => setIsHovered(true)}
@@ -107,32 +113,25 @@ export function TimelineRangeBar({
         }}
       />
 
-      {/* Hover tooltip - NOT affected by bar opacity */}
-      {/* z-[45] ensures tooltip appears above milestone dots (z-40) but below milestone tooltips (z-50) */}
-      <div
-        className={cn(
-          "absolute bottom-full left-1/2 -translate-x-1/2 mb-3",
-          "px-2.5 py-1.5 bg-foreground text-background text-sm font-medium",
-          "whitespace-nowrap shadow-xl",
-          "opacity-0 group-hover:opacity-100",
-          "transition-opacity duration-150",
-          "pointer-events-none z-[45]",
-          "border-2 border-foreground rounded-lg"
-        )}
-      >
-        {/* Label on first line */}
-        <div className="font-semibold">{rangeBar.label}</div>
-        {/* Date range on second line */}
-        <div className="text-sm opacity-80">
-          {formatISODate(rangeBar.startDate)} - {formatISODate(rangeBar.endDate)}
-        </div>
-
-        {/* Arrow pointer */}
+      {/* Hover tooltip, mounted only while hovered: an invisible one still
+          widens the scroll area, and on a phone the case timeline scrolled
+          33px past its last month because of it (Sep 30 2026) */}
+      {isHovered && (
         <div
-          className="absolute top-full left-1/2 -translate-x-1/2
-          border-2 border-transparent border-t-foreground"
-        />
-      </div>
+          className={cn(
+            "absolute bottom-full left-1/2 -translate-x-1/2 mb-3",
+            "px-2 py-1.5 bg-foreground text-background text-sm font-medium",
+            "whitespace-nowrap shadow-hard-sm",
+            "pointer-events-none z-[45]",
+            "border-2 border-foreground"
+          )}
+        >
+          <div className="font-semibold">{rangeBar.label}</div>
+          <div className="text-sm opacity-80">
+            {formatISODate(rangeBar.startDate)} - {formatISODate(rangeBar.endDate)}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

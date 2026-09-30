@@ -25,23 +25,22 @@ export function TimelineSkeleton() {
   return (
     <div className="flex flex-col h-full" aria-busy={true}>
       <div className="mb-4 sm:mb-6">
-        {/* TimelineControls' own row: the real title, then its three
-            44px controls (stacked full width on phones). */}
-        <div className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-3">
-          <h1 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
-            Timeline
-          </h1>
-          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
-            <Skeleton variant="block" className="h-11 sm:w-40" />
+        {/* TimelineControls' own layout: the page heading (only the count
+            waits), then zoom across the top and range and cases side by side
+            on a phone, one row from sm. */}
+        <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-3">
+          <PageHeading
+            eyebrow={<Skeleton variant="line" className="inline-block h-4 w-36 align-middle" />}
+            title="Timeline"
+          />
+          <div className="grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
+            <Skeleton variant="block" className="h-11 min-[360px]:col-span-2 sm:w-56" />
             <Skeleton variant="block" className="h-11 sm:w-36" />
             <Skeleton variant="block" className="h-11 sm:w-40" />
           </div>
         </div>
-        <div className="mt-2 flex h-5 items-center">
-          <Skeleton variant="line" className="h-4 w-32" />
-        </div>
       </div>
-      <div className="min-h-[160px] border-2 border-border bg-card shadow-hard">
+      <div className="min-h-[160px] border-2 border-foreground bg-card shadow-hard">
         <Skeleton variant="block" className="h-[320px] border-0" />
       </div>
       <div className="mt-6">
@@ -303,10 +302,15 @@ export function TimelinePageClient() {
           hasActiveSelection={hasActiveSelection}
           zoomLevel={zoomLevel}
           onZoomChange={handleZoomChange}
+          eyebrow={
+            filteredCaseId
+              ? `Viewing 1 of ${cases.length} cases`
+              : `${cases.length} ${cases.length === 1 ? "case" : "cases"} displayed`
+          }
         />
-        <div className="flex items-center gap-3 mt-2">
-          {/* Back to All Cases button (shown when filtered to single case) */}
-          {filteredCaseId && (
+        {/* Back to All Cases button (shown when filtered to single case) */}
+        {filteredCaseId && (
+          <div className="mt-3">
             <Button
               variant="outline"
               size="sm"
@@ -317,17 +321,14 @@ export function TimelinePageClient() {
               <ArrowLeftIcon className="size-4 mr-2" />
               Back to all cases
             </Button>
-          )}
-          <p className="text-muted-foreground text-sm">
-            {filteredCaseId
-              ? `Viewing 1 of ${cases.length} cases`
-              : `${cases.length} ${cases.length === 1 ? "case" : "cases"} displayed`}
-          </p>
-        </div>
+          </div>
+        )}
       </div>
 
-      {/* Main timeline grid - overflow-x-auto for horizontal scroll, overflow-y-visible for tooltips to escape */}
-      <div className="flex-1 overflow-x-auto overscroll-x-none overflow-y-visible min-h-[160px] border-2 border-border bg-card shadow-hard">
+      {/* The grid carries its own frame and its own sideways scroll. This used
+          to add a second border, shadow and scroller around it: a doubled
+          frame, and two scroll containers competing for one swipe. */}
+      <div className="flex-1 min-h-[160px]">
         <TimelineGrid
           cases={displayedCases}
           timeRange={effectiveTimeRange}

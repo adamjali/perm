@@ -9,8 +9,6 @@
 export { InlineCaseTimeline } from "./InlineCaseTimeline";
 export type { InlineCaseTimelineProps } from "./InlineCaseTimeline";
 
-export { TimelineMilestone } from "./TimelineMilestone";
-export type { TimelineMilestoneProps } from "./TimelineMilestone";
 
 export { TimelineRangeBar } from "./TimelineRangeBar";
 export type { TimelineRangeBarProps } from "./TimelineRangeBar";

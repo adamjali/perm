@@ -20,7 +20,7 @@
 
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { motion } from "motion/react";
 import {
   startOfMonth,
@@ -31,6 +31,8 @@ import {
 } from "date-fns";
 import { cn } from "@/lib/utils";
 import { SIDEBAR_WIDTH_CLASSES, SIDEBAR_WIDTHS, TIMELINE_ANIMATION } from "@/lib/timeline/constants";
+import { MIN_MONTH_PX } from "@/lib/timeline/positioning";
+import { useScrollToToday } from "@/lib/timeline/useScrollToToday";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineRow } from "./TimelineRow";
 import type { Id } from "../../../convex/_generated/dataModel";
@@ -134,6 +136,11 @@ export function TimelineGrid({
   }, [timeRange]);
 
   // Empty state
+  // The grid opens scrolled so today is in view on a narrow screen; before, a
+  // phone opened on the oldest months with today off to the right.
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useScrollToToday(scrollRef, startDate, endDate, today);
+
   if (cases.length === 0) {
     return (
       <div
@@ -159,16 +166,21 @@ export function TimelineGrid({
     <div
       className={cn(
         "border-2 border-foreground",
-        "bg-card shadow-hard"
+        "bg-card shadow-hard",
+        // The label column's width, for anything that must sit beside it
+        // (the sticky "no dates" note, the scroll-to-today offset).
+        "[--tl-label:120px] sm:[--tl-label:180px] md:[--tl-label:250px]"
         // Note: No overflow-hidden here - allows tooltips to escape vertically
       )}
       role="grid"
       aria-label={`Timeline showing ${cases.length} cases over ${timeRange} months`}
     >
       {/* Scrollable container - overflow-x-auto handles horizontal scroll */}
-      <div className="overflow-x-auto overscroll-x-none overflow-y-visible">
-        {/* Minimum width to prevent squishing on small screens */}
-        <div className="min-w-[600px]">
+      <div ref={scrollRef} className="overflow-x-auto overscroll-x-none overflow-y-visible">
+        {/* Every month at least MIN_MONTH_PX wide, so a label and a marker fit.
+            A flat 600px minimum gave 24 months 19px each on a phone: one-letter
+            labels and markers covering each other. Wider screens still fill. */}
+        <div style={{ minWidth: `calc(var(--tl-label) + ${months.length * MIN_MONTH_PX}px)` }}>
           {/* Header Row */}
           <div className="flex sticky top-0 z-30 bg-card">
             {/* Sidebar Header - minimum 44px height for touch targets */}
@@ -235,9 +247,15 @@ interface TodayIndicatorProps {
   startDate: Date;
   endDate: Date;
   today: Date;
+  /**
+   * The label column's width when it is the same at every breakpoint (the case
+   * page's stage lanes). Omitted, the timeline's responsive widths are used.
+   */
+  labelWidth?: number;
 }
 
-function TodayIndicator({ startDate, endDate, today }: TodayIndicatorProps) {
+/** The red Today line and its label, shared by the timeline and the case page. */
+export function TodayIndicator({ startDate, endDate, today, labelWidth }: TodayIndicatorProps) {
   // Calculate position as percentage within the timeline area
   if (today < startDate || today > endDate) {
     return null;
@@ -256,11 +274,14 @@ function TodayIndicator({ startDate, endDate, today }: TodayIndicatorProps) {
   return (
     <>
       {/* Responsive indicators for each breakpoint */}
-      {[
-        { width: SIDEBAR_WIDTHS.mobile, className: "sm:hidden" },
-        { width: SIDEBAR_WIDTHS.tablet, className: "hidden sm:block md:hidden" },
-        { width: SIDEBAR_WIDTHS.desktop, className: "hidden md:block" },
-      ].map(({ width, className }, i) => (
+      {(labelWidth !== undefined
+        ? [{ width: labelWidth, className: "" }]
+        : [
+            { width: SIDEBAR_WIDTHS.mobile, className: "sm:hidden" },
+            { width: SIDEBAR_WIDTHS.tablet, className: "hidden sm:block md:hidden" },
+            { width: SIDEBAR_WIDTHS.desktop, className: "hidden md:block" },
+          ]
+      ).map(({ width, className }, i) => (
         <div key={i}>
           <div
             className={`absolute top-0 bottom-0 w-0.5 bg-destructive pointer-events-none z-20 ${className}`}

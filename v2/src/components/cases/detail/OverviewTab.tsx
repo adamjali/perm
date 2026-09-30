@@ -678,12 +678,8 @@ export function OverviewTab({
               )}
             </Button>
           </div>
-          <div style={{ overflowX: "auto", padding: "0" }}>
-            <InlineCaseTimeline
-              caseData={caseData}
-              className="min-w-[600px] sm:min-w-0"
-            />
-          </div>
+          {/* The timeline scrolls its own months under a sticky stage column. */}
+          <InlineCaseTimeline caseData={caseData} />
         </div>
       </motion.div>
 

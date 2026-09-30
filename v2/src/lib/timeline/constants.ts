@@ -10,8 +10,10 @@
  * Sidebar width classes for responsive design.
  * Matches TimelineGrid and TimelineRow sidebar widths.
  */
+// 120px on phones (was 140): at 320px wide, 140 left three months of dates
+// and clipped the "no dates" note. Keep TimelineGrid's --tl-label in step.
 export const SIDEBAR_WIDTH_CLASSES =
-  "w-[140px] min-w-[140px] max-w-[140px] " +
+  "w-[120px] min-w-[120px] max-w-[120px] " +
   "sm:w-[180px] sm:min-w-[180px] sm:max-w-[180px] " +
   "md:w-[250px] md:min-w-[250px] md:max-w-[250px]";
 
@@ -19,7 +21,7 @@ export const SIDEBAR_WIDTH_CLASSES =
  * Sidebar width values in pixels for calculations.
  */
 export const SIDEBAR_WIDTHS = {
-  mobile: 140,
+  mobile: 120,
   tablet: 180,
   desktop: 250,
 } as const;
@@ -37,6 +39,15 @@ export const Z_INDEX = {
   milestone: 20,
   /** Milestone when hovered (above everything) */
   milestoneHovered: 40,
+  /**
+   * The sticky case / stage label column. Above every bar, marker, the "no dates"
+   * note and the Today line (20 and 30), so dates scrolled sideways pass UNDER
+   * the names; below a hovered marker (40), so its tooltip can still show over
+   * them. The date area must not open its own stacking context, or its whole
+   * layer is compared with this one as a unit: that is how every marker once
+   * painted over the names on a phone (Sep 30 2026).
+   */
+  stickyLabel: 35,
 } as const;
 
 /**

@@ -23,17 +23,6 @@ interface TimelineHeaderProps {
   today: Date;
 }
 
-/**
- * Get single-letter month abbreviation for condensed display
- * Uses first letter for most months, with special handling for June/July (Jn/Jl)
- */
-function getCondensedMonthLabel(month: Date): string {
-  const monthIndex = month.getMonth();
-  // Special handling for June (5) and July (6) to differentiate
-  if (monthIndex === 5) return "Jn"; // June
-  if (monthIndex === 6) return "Jl"; // July
-  return format(month, "MMM").charAt(0); // First letter for others
-}
 
 export function TimelineHeader({ months, today }: TimelineHeaderProps) {
   return (
@@ -49,9 +38,7 @@ export function TimelineHeader({ months, today }: TimelineHeaderProps) {
       {months.map((month, index) => {
         const isCurrentMonth = isSameMonth(month, today);
         const monthLabelFull = format(month, "MMM");
-        const monthLabelCondensed = getCondensedMonthLabel(month);
         const yearLabel = format(month, "yyyy");
-        const yearLabelShort = format(month, "yy");
         const isJanuary = month.getMonth() === 0;
 
         return (
@@ -75,16 +62,15 @@ export function TimelineHeader({ months, today }: TimelineHeaderProps) {
                 isCurrentMonth ? "text-primary" : "text-foreground"
               )}
             >
-              {/* Condensed format on small screens, full on sm+ */}
-              <span className="hidden sm:inline">{monthLabelFull}</span>{" "}
-              <span className="sm:hidden">{monthLabelCondensed}</span>
+              {/* Three letters at every size: a month is never narrower than
+                  MIN_MONTH_PX now, and one letter ("J", "J", "J") could not
+                  say which month it was. */}
+              {monthLabelFull}
             </span>{" "}
             {/* Show year on January or first month of range */}
             {(isJanuary || index === 0) && (
               <span className="text-sm text-muted-foreground leading-none">
-                {/* Short year on mobile, full on sm+ */}
-                <span className="hidden sm:inline">{yearLabel}</span>{" "}
-                <span className="sm:hidden">{yearLabelShort}</span>
+                {yearLabel}
               </span>
             )}
           </div>

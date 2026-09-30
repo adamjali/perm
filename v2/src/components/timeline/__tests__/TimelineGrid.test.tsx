@@ -361,14 +361,18 @@ describe("TimelineGrid - Neobrutalist Styling", () => {
     expect(scrollContainer).toBeInTheDocument();
   });
 
-  it("has minimum width to prevent squishing", () => {
+  it("gives every month a minimum width so labels and markers fit", () => {
     const cases = createMockCases(1);
     const { container } = renderWithProviders(
       <TimelineGrid cases={cases} timeRange={6} />
     );
 
-    const minWidthContainer = container.querySelector(".min-w-\\[600px\\]");
-    expect(minWidthContainer).toBeInTheDocument();
+    // The label column plus 44px a month (MIN_MONTH_PX), not a flat 600px:
+    // 24 months at 600px gave each month 19px on a phone.
+    const sized = Array.from(container.querySelectorAll<HTMLElement>("div")).find((el) =>
+      el.style.minWidth.includes("var(--tl-label)")
+    );
+    expect(sized?.style.minWidth).toContain(`${6 * 44}px`);
   });
 });
 
@@ -383,7 +387,7 @@ describe("TimelineGrid - Responsive Layout", () => {
 
     // Check for responsive width classes on sidebar header
     const sidebarHeader = container.querySelector(
-      ".w-\\[140px\\].sm\\:w-\\[180px\\].md\\:w-\\[250px\\]"
+      ".w-\\[120px\\].sm\\:w-\\[180px\\].md\\:w-\\[250px\\]"
     );
     expect(sidebarHeader).toBeInTheDocument();
   });

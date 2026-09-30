@@ -22,8 +22,15 @@
 import { parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { extractMilestones, extractRangeBars } from "@/lib/timeline/milestones";
-import { calculatePosition, calculateRangePosition } from "@/lib/timeline/positioning";
-import { SIDEBAR_WIDTH_CLASSES } from "@/lib/timeline/constants";
+import {
+  assignMarkerLanes,
+  FOLDED_LANE,
+  foldedMarkers,
+  calculatePosition,
+  calculateRangePosition,
+  MARKER_LANE_OFFSETS,
+} from "@/lib/timeline/positioning";
+import { SIDEBAR_WIDTH_CLASSES, Z_INDEX } from "@/lib/timeline/constants";
 import type { Milestone, RangeBar, CaseWithDates } from "@/lib/timeline/types";
 import type { Id } from "../../../convex/_generated/dataModel";
 import { TimelineMilestoneMarker } from "./TimelineMilestoneMarker";
@@ -164,6 +171,10 @@ export function TimelineRow({
         item.position !== null
     );
 
+  const markerPositions = visibleMilestones.map((item) => item.position);
+  const markerLanes = assignMarkerLanes(markerPositions, months.length);
+  const markerFolds = foldedMarkers(markerPositions, markerLanes);
+
   // Calculate visible range bars with positions
   const visibleRangeBars = rangeBars
     .map((rangeBar) => {
@@ -209,13 +220,14 @@ export function TimelineRow({
       {/* Sticky Sidebar - Case Label */}
       <div
         className={cn(
-          "sticky left-0 z-20",
+          "sticky left-0",
           "flex flex-col justify-center px-3",
           "bg-card border-r-[3px] border-foreground",
           SIDEBAR_WIDTH_CLASSES,
           // Match row hover (theme-aware)
           "group-hover:bg-primary/5"
         )}
+        style={{ zIndex: Z_INDEX.stickyLabel }}
         role="rowheader"
       >
         {/* Case name - clickable to navigate */}
@@ -237,8 +249,10 @@ export function TimelineRow({
         </div>
       </div>
 
-      {/* Timeline Content Area - z-30 ensures tooltips appear above sticky sidebar (z-20) */}
-      <div className="flex-1 relative z-30">
+      {/* Timeline content. No z-index of its own, on purpose: its bars and
+          markers then stack against the sticky label column one by one
+          (Z_INDEX.stickyLabel), and pass under it when the grid scrolls. */}
+      <div className="flex-1 relative">
         {/* Month grid lines */}
         <div className="absolute inset-0 flex">
           {months.map((month) => (
@@ -262,25 +276,40 @@ export function TimelineRow({
           />
         ))}
 
-        {/* A case with nothing in this range says so, instead of a blank row */}
+        {/* A case with nothing in this range says so, instead of a blank row.
+            Sticky just right of the label column, so it stays in view however
+            far the grid is scrolled (centred in a scrolled grid it sat under
+            the names or off screen). */}
         {visibleMilestones.length === 0 && visibleRangeBars.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="border-2 border-dashed border-muted-foreground/50 bg-card px-3 py-1 text-sm text-muted-foreground">
-              No dates in this range yet
+          // z-[25]: over the Today line (20), under its label (30) and the
+          // sticky names (35). Short enough for the ~180px of months a phone
+          // shows beside the names; "No dates in this range yet" ran off the
+          // edge there.
+          <div className="absolute inset-0 z-[25] flex items-center">
+            <span className="sticky left-[calc(var(--tl-label,120px)+12px)] ml-3 whitespace-nowrap border-2 border-dashed border-muted-foreground/50 bg-card px-2 py-0.5 text-sm text-muted-foreground">
+              {/* Below 360px wide the months beside the names are ~134px. */}
+              <span className="min-[360px]:hidden">No dates</span>
+              <span className="hidden min-[360px]:inline">No dates in range</span>
             </span>
           </div>
         )}
 
-        {/* Milestone Markers Layer */}
-        {visibleMilestones.map((item) => (
-          <TimelineMilestoneMarker
-            key={`${item.milestone.field}-${item.milestone.date}`}
-            milestone={item.milestone}
-            position={item.position}
-            caseId={caseData.id}
-            onNavigate={onNavigate}
-          />
-        ))}
+        {/* Milestone Markers Layer: markers that would cover a neighbour move
+            into a lane above or below the band; past three lanes they fold
+            into the nearest marker's "+N". */}
+        {visibleMilestones.map((item, i) =>
+          markerLanes[i] === FOLDED_LANE ? null : (
+            <TimelineMilestoneMarker
+              key={`${item.milestone.field}-${item.milestone.date}`}
+              milestone={item.milestone}
+              position={item.position}
+              caseId={caseData.id}
+              onNavigate={onNavigate}
+              offsetY={MARKER_LANE_OFFSETS[markerLanes[i] ?? 0]}
+              folded={(markerFolds.get(i) ?? []).map((j) => visibleMilestones[j]!.milestone)}
+            />
+          )
+        )}
       </div>
     </div>
   );

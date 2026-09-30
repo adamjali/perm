@@ -17,7 +17,9 @@
 "use client";
 
 import { CalendarIcon, CaretDownIcon, FunnelIcon as Filter, MagnifyingGlassMinusIcon, MagnifyingGlassPlusIcon } from "@phosphor-icons/react/ssr";
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
+import { PageHeading } from "@/app/(authenticated)/components/PageHeading";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,6 +41,8 @@ interface TimelineControlsProps {
   zoomLevel?: number;
   /** Callback when zoom level changes */
   onZoomChange?: (zoom: number) => void;
+  /** The line above the title (how many cases are shown), as on every app page. */
+  eyebrow?: ReactNode;
 }
 
 const TIME_RANGE_OPTIONS: { value: 3 | 6 | 12 | 24; label: string }[] = [
@@ -57,6 +61,7 @@ export function TimelineControls({
   hasActiveSelection = false,
   zoomLevel = 100,
   onZoomChange,
+  eyebrow,
 }: TimelineControlsProps) {
   const currentRangeLabel =
     TIME_RANGE_OPTIONS.find((opt) => opt.value === timeRange)?.label ??
@@ -71,18 +76,17 @@ export function TimelineControls({
         : "0";
 
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between w-full gap-4 sm:gap-3">
-      {/* Title on left */}
-      <h1 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-        Timeline
-      </h1>
+    <div className="flex w-full flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-3">
+      {/* The same heading every app page opens with: count, then the title. */}
+      <PageHeading eyebrow={eyebrow} title="Timeline" />
 
-      {/* Controls - stack vertically on mobile, row on sm+ */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
+      {/* Controls: on a phone, zoom across the top and the range and cases side
+          by side under it (two rows, not three full-width stacked boxes). */}
+      <div className="grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
         {/* Zoom Control */}
         {onZoomChange && (
           <div
-            className="flex items-center gap-2 px-3 py-2 border-2 border-border bg-background shadow-hard min-h-[44px]"
+            className="flex items-center justify-between gap-2 min-[360px]:col-span-2 px-3 py-2 border-2 border-border bg-background shadow-hard min-h-[44px] sm:justify-start"
             data-testid="zoom-control"
           >
             <MagnifyingGlassMinusIcon className="size-4 text-muted-foreground" />
@@ -93,7 +97,7 @@ export function TimelineControls({
               step={10}
               value={zoomLevel}
               onChange={(e) => onZoomChange(Number(e.target.value))}
-              className="w-20 sm:w-24 accent-primary cursor-pointer"
+              className="min-w-0 flex-1 accent-primary cursor-pointer sm:w-24 sm:flex-none"
               aria-label="Zoom level"
               data-testid="zoom-slider"
             />
