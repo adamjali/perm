@@ -82,7 +82,7 @@ export function TimelineControls({
 
       {/* Controls: on a phone, zoom across the top and the range and cases side
           by side under it (two rows, not three full-width stacked boxes). */}
-      <div className="grid w-full grid-cols-1 gap-2 min-[360px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
+      <div className="grid w-full grid-cols-1 gap-2 [&>*]:min-w-0 min-[360px]:grid-cols-2 sm:flex sm:w-auto sm:items-center sm:gap-3">
         {/* Zoom Control */}
         {onZoomChange && (
           <div
