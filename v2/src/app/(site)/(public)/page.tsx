@@ -149,10 +149,8 @@ export default async function HomePage() {
 
   return (
     <>
-      {/* The curtain panel is built by PRELOADER_BOOT in <head> - the
-          server-rendered copy was removed because on a data-driven page
-          its markup arrived after the cover, leaving a blank white cover
-          with nothing on it. One owner now. */}
+      {/* The curtain panel is rendered by the root layout as the first
+          child of <body>, so it paints before this page's header. */}
       {/* FAQPage + homepage aggregateRating partial. Server-built schemas only. */}
       <JsonLdScript schema={faqSchema} />
       {ratingPartial ? <JsonLdScript schema={ratingPartial} /> : null}

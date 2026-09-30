@@ -54,8 +54,14 @@ export default function ContentCard({
       <NavLink href={href} className="group block" showLoading={false}>
         <div className="relative border-2 border-border bg-card shadow-hard transition-shadow duration-150 group-hover:shadow-hard-lg">
           {/* Loading overlay */}
+          {/* Held back 150ms (fill-mode-both keeps it invisible through the
+              delay), so a prefetched article that opens in a frame never
+              flashes it; only a slow one shows it. */}
           {isNavigating && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/50">
+            <div
+              className="absolute inset-0 z-10 flex items-center justify-center bg-background/50 animate-in fade-in fill-mode-both duration-150 motion-reduce:animate-none"
+              style={{ animationDelay: "150ms" }}
+            >
               <CircleNotchIcon className="h-6 w-6 animate-spin text-primary" />
             </div>
           )}

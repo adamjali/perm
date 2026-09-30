@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
 import Link from "next/link";
 
 import { I485QueuePosition } from "@/components/tools/I485QueuePosition";
@@ -31,6 +30,7 @@ import {
 } from "@/lib/turso/publicData";
 import type { I485CellTable } from "@/lib/i485/position";
 import { withSocialCard } from "@/lib/socialCard";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 
 /**
  * Queue position inside USCIS's employment-based I-485 pending inventory.
@@ -178,19 +178,14 @@ export default async function I485QueuePositionPage() {
         </p>{" "}
       </header>
 
-      <section className="mt-10">
+      <section data-embed="i485-position" className="mt-10">
         {/* useSearchParams needs a boundary, same as the salary explorer and
-            the case browser. The shared (public)/loading.tsx used to satisfy
+            the case browser, and its fallback is the tool with no parameters
+            (see SearchParamsBoundary). The shared (public)/loading.tsx used to satisfy
             it for the whole group; when that file was removed (it was masking
             real 404 statuses on the entity routes), this page was the one
             mount without its own wrap and the build failed on it. */}
-        <Suspense
-          fallback={
-            <div data-embed="i485-position" className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-              <p className="text-base text-foreground/70">Loading queue figures…</p>
-            </div>
-          }
-        >
+        <SearchParamsBoundary>
           <I485QueuePosition
             cells={cells}
             options={options}
@@ -200,7 +195,7 @@ export default async function I485QueuePositionPage() {
             filingChartMonth={newestBulletin?.bulletinMonth ?? null}
             pace={pace}
           />
-        </Suspense>
+        </SearchParamsBoundary>
       </section>{" "}
 
       <section className="mt-12">

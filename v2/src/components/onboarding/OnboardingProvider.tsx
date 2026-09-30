@@ -116,9 +116,15 @@ export function OnboardingProvider({ children }: { children: React.ReactNode }) 
     () => onboardingState?.onboardingChecklist ?? [],
     [onboardingState?.onboardingChecklist]
   );
+  // Hidden while the state is unknown or unavailable. It used to count as
+  // "not dismissed" while loading, so the checklist flashed on the dashboard
+  // for people who had dismissed it, then vanished; and for a null state
+  // (account deletion scheduled) it showed for good.
   const isChecklistDismissed =
-    (shouldSkipOnboarding && onboardingState?.onboardingCompletedAt === null) ||
-    (onboardingState?.onboardingChecklistDismissed ?? false);
+    isLoading ||
+    onboardingState === null ||
+    (shouldSkipOnboarding && onboardingState.onboardingCompletedAt === null) ||
+    onboardingState.onboardingChecklistDismissed;
 
   // --- Actions ---
 

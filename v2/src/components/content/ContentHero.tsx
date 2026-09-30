@@ -5,7 +5,7 @@
  *
  * Hero banner for content section landing pages.
  * Neobrutalist: bold type, hard edges, decorative accents.
- * Motion staggered entrance + GSAP parallax grid.
+ * GSAP parallax grid; the text renders at rest, with no entrance animation.
  */
 
 import * as React from "react";
@@ -15,7 +15,6 @@ import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { stagger, fadeUp } from "@/lib/content/animations";
 import { useParallax } from "@/lib/hooks/useGSAP";
-import { useHasHydratedOnce } from "@/hooks/useHasHydratedOnce";
 
 /** Hero background images per content type */
 const HERO_IMAGES: Partial<Record<ContentType, string>> = {
@@ -39,11 +38,12 @@ export default function ContentHero({
   description,
   postCount,
 }: ContentHeroProps) {
-  // Entrance animations are skipped on the FIRST paint of the session, so the
-  // server's markup is visible with no JavaScript and does not gate LCP. The
-  // whileInView reveals in this directory are deliberately NOT guarded: hiding
-  // below-the-fold content until it is scrolled to is what those are for.
-  const hydrated = useHasHydratedOnce();
+  // No entrance animation, on any load (initial={false}). This sits above the
+  // fold: on a hard load a fade hid server markup until hydration, and after
+  // a client navigation it replayed over a page that had just replaced its
+  // skeleton, so readers saw skeleton, blank, then a fade. The whileInView
+  // reveals in this directory stay: hiding below-the-fold content until it
+  // is scrolled to is what those are for.
   const config = CONTENT_TYPE_CONFIG[type];
   const gridRef = React.useRef<HTMLDivElement>(null);
   const heroImage = HERO_IMAGES[type];
@@ -82,13 +82,13 @@ export default function ContentHero({
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
         <motion.div
           className="absolute -right-16 -top-16 h-64 w-64 border-4 border-primary/10"
-          initial={hydrated ? { opacity: 0, rotate: 0 } : false}
+          initial={false}
           animate={{ opacity: 1, rotate: 12 }}
           transition={{ duration: 1.2, ease: "easeOut", delay: 0.5 }}
         />
         <motion.div
           className="absolute -bottom-8 -left-8 h-32 w-32 bg-primary/5"
-          initial={hydrated ? { opacity: 0, scale: 0.8 } : false}
+          initial={false}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.7 }}
         />
@@ -97,7 +97,7 @@ export default function ContentHero({
       <div className="relative mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
         <motion.div
           variants={stagger}
-          initial={hydrated ? "hidden" : false}
+          initial={false}
           animate="show"
         >
           {/* Type badge */}

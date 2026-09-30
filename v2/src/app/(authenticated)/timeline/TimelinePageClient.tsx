@@ -16,6 +16,41 @@ import { CaseSelectionModal, type CaseForSelection } from "@/components/timeline
 import { PageHeading } from "../components/PageHeading";
 import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 
+/**
+ * The timeline while it loads, in the page's own frame: the controls row and
+ * its count line, the grid (its real border and card), and the legend.
+ * Shared with timeline/loading.tsx, which used to draw a different one.
+ */
+export function TimelineSkeleton() {
+  return (
+    <div className="flex flex-col h-full" aria-busy={true}>
+      <div className="mb-4 sm:mb-6">
+        {/* TimelineControls' own row: the real title, then its three
+            44px controls (stacked full width on phones). */}
+        <div className="flex w-full flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-3">
+          <h1 className="font-heading text-2xl font-bold text-foreground sm:text-3xl">
+            Timeline
+          </h1>
+          <div className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:gap-3">
+            <Skeleton variant="block" className="h-11 sm:w-40" />
+            <Skeleton variant="block" className="h-11 sm:w-36" />
+            <Skeleton variant="block" className="h-11 sm:w-40" />
+          </div>
+        </div>
+        <div className="mt-2 flex h-5 items-center">
+          <Skeleton variant="line" className="h-4 w-32" />
+        </div>
+      </div>
+      <div className="min-h-[160px] border-2 border-border bg-card shadow-hard">
+        <Skeleton variant="block" className="h-[320px] border-0" />
+      </div>
+      <div className="mt-6">
+        <Skeleton variant="block" className="h-16" />
+      </div>
+    </div>
+  );
+}
+
 export function TimelinePageClient() {
   const router = useRouter();
 
@@ -31,7 +66,13 @@ export function TimelinePageClient() {
   // Query preferences and cases
   const preferences = useQuery(api.timeline.getPreferences);
   const timeRange = preferences?.timeRange ?? 6;
-  const cases = useQuery(api.timeline.getCasesForTimeline, { timeRange });
+  // Waits for the saved range: asking with the default 6 first meant anyone
+  // who had saved a different range loaded the timeline twice, the first
+  // answer thrown away.
+  const cases = useQuery(
+    api.timeline.getCasesForTimeline,
+    preferences === undefined ? "skip" : { timeRange },
+  );
 
   // Query ALL cases for the selection modal (unfiltered)
   const allCasesRaw = useQuery(api.cases.list, {});
@@ -189,27 +230,7 @@ export function TimelinePageClient() {
 
   // Loading state
   if (preferences === undefined || cases === undefined) {
-    return (
-      <div className="space-y-6">
-        {/* Header Skeleton */}
-        <div className="flex items-center justify-between">
-          <div>
-            <Skeleton variant="line" className="w-32 h-10 mb-2" />
-            <Skeleton variant="line" className="w-48 h-6" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Skeleton variant="block" className="w-32 h-10" />
-            <Skeleton variant="block" className="w-32 h-10" />
-          </div>
-        </div>
-
-        {/* Grid Skeleton */}
-        <Skeleton variant="block" className="h-[400px]" />
-
-        {/* Legend Skeleton */}
-        <Skeleton variant="block" className="h-16" />
-      </div>
-    );
+    return <TimelineSkeleton />;
   }
 
   // Empty state

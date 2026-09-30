@@ -4,13 +4,12 @@
  * ArticleBody
  *
  * Client component wrapping article content area + sidebar.
- * Handles FM fade-in for content and share buttons.
+ * The share row reveals on scroll; the article itself renders at rest.
  */
 
 import { motion } from "motion/react";
 import TableOfContents from "./TableOfContents";
 import ShareButtons from "./ShareButtons";
-import { useHasHydratedOnce } from "@/hooks/useHasHydratedOnce";
 
 interface ArticleBodyProps {
   title: string;
@@ -19,11 +18,12 @@ interface ArticleBodyProps {
 }
 
 export default function ArticleBody({ title, url, children }: ArticleBodyProps) {
-  // Entrance animations are skipped on the FIRST paint of the session, so the
-  // server's markup is visible with no JavaScript and does not gate LCP. The
-  // whileInView reveals in this directory are deliberately NOT guarded: hiding
-  // below-the-fold content until it is scrolled to is what those are for.
-  const hydrated = useHasHydratedOnce();
+  // No entrance animation, on any load (initial={false}). This sits above the
+  // fold: on a hard load a fade hid server markup until hydration, and after
+  // a client navigation it replayed over a page that had just replaced its
+  // skeleton, so readers saw skeleton, blank, then a fade. The whileInView
+  // reveals in this directory stay: hiding below-the-fold content until it
+  // is scrolled to is what those are for.
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
       <div className="flex gap-10">
@@ -31,7 +31,7 @@ export default function ArticleBody({ title, url, children }: ArticleBodyProps) 
         <div className="min-w-0 flex-1">
           <motion.div
             className="article-content prose-neobrutalist max-w-none"
-            initial={hydrated ? { opacity: 0 } : false}
+            initial={false}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.4, delay: 0.2 }}
           >

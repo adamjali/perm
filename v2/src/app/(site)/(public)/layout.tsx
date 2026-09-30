@@ -7,12 +7,16 @@
  * spans this group and `(auth)`. See that file for why. What is left here is
  * the chrome that genuinely belongs to the public pages and would be wrong on
  * a sign-in form: the ambient canvas, the scroll progress bar, hash-anchor
- * handling, the back-to-top button, the on-device diagnostic, and the page
- * transition.
+ * handling, the back-to-top button and the on-device diagnostic.
+ *
+ * No page transition, deliberately (removed Sep 30 2026). A fade keyed on the
+ * pathname remounted the whole tree, data rail included, on every click. The
+ * pathname commits WITH the loading state, so the fade played on the skeleton
+ * and the real page then swapped in unanimated. Under reduced motion the
+ * wrapper changed type after hydration and remounted the page a second time.
  */
 
 import { ScrollProgress } from "@/components/home";
-import { PageTransition } from "@/components/ui/page-transition";
 import { ScrollToTop } from "@/components/ui/scroll-to-top";
 import { HashScrollHandler } from "@/components/ui/hash-scroll-handler";
 import { ViewportDiag } from "@/components/diag/ViewportDiag";
@@ -41,16 +45,14 @@ export default function PublicLayout({
       <main
         id="main-content"
         style={{ paddingTop: "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))" }}
-        className="relative flex-1 transition-[padding] duration-200"
+        className="relative flex-1"
         tabIndex={-1}
       >
         {/* The data rail lives here rather than on each of the 28 data
             pages: a sidebar has to sit BESIDE the content, so something has
             to own both. On every other public page DataShell renders its
             children untouched. */}
-        <PageTransition>
-          <DataShell>{children}</DataShell>
-        </PageTransition>
+        <DataShell>{children}</DataShell>
       </main>
 
       {/* Back-to-top button */}

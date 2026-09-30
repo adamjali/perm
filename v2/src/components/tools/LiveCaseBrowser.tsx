@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 
 import { usePublicQuery } from "@/lib/usePublicQuery";
 import { Pager } from "@/components/ui/pager";
@@ -12,6 +12,7 @@ import { formatMonth } from "@/lib/dolFormat";
 // here would be a build error. A type import compiles to nothing.
 import type { LiveKind, LiveListPage, LiveRemainderSummary, LiveSort } from "@/lib/turso/liveCases";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { cn } from "@/lib/utils";
 
 /**
  * The live half of the case corpus, browsable.
@@ -82,7 +83,7 @@ export function LiveCaseBrowser({
   /** The first page, server-rendered, so the rows read before hydration and the first fetch is skipped. */
   seed?: LiveListPage | null;
 }) {
-  const params = useSearchParams();
+  const params = useUrlSearchParams();
   // `?filed=YYYY-MM` is how the month pages hand a cohort to this list.
   const filedParam = params.get("filed");
   const initialMonth =
@@ -135,6 +136,11 @@ export function LiveCaseBrowser({
 
   const fetched = usePublicQuery<LiveListPage>(url);
   const page = pristine ? seed ?? undefined : fetched.data;
+  // What the table draws: the current page, or while the next one is on its
+  // way, the last one that arrived (or the server's first page). Dropping to a
+  // one-line "Loading" row on every filter or page change collapsed the table
+  // and grew it back a moment later.
+  const shownPage = page ?? fetched.previous ?? seed ?? undefined;
   const failed = pristine ? false : fetched.failed;
 
   const reset = useCallback(() => setCursors([]), []);
@@ -149,6 +155,7 @@ export function LiveCaseBrowser({
 
   const pageIndex = cursors.length;
   const loading = url !== "skip" && page === undefined && !failed;
+  const busy = loading && shownPage !== undefined;
 
   return (
     <section id="live" className="scroll-mt-24">
@@ -254,7 +261,10 @@ export function LiveCaseBrowser({
         ) : null}
 
         {!withheld && !failed ? (
-          <div className="mt-5 overflow-x-auto">
+          <div
+            className={cn("mt-5 overflow-x-auto transition-opacity", busy && "opacity-60")}
+            aria-busy={loading}
+          >
             <table className="w-full min-w-[820px] border-collapse text-left text-base">
               <caption className="sr-only">
                 Live cases from DOL&apos;s daily check, newest filing first
@@ -274,7 +284,7 @@ export function LiveCaseBrowser({
                 </tr>
               </thead>
               <tbody translate="no" className="bg-card">
-                {loading ? (
+                {loading && !shownPage ? (
                   <tr>
                     <td colSpan={6} className="px-3 py-6 text-foreground/70">
                       Loading the live list…
@@ -288,7 +298,7 @@ export function LiveCaseBrowser({
                     {" "}</td>
                   </tr>
                 ) : null}
-                {page?.rows.map((r) => (
+                {shownPage?.rows.map((r) => (
                   <tr key={r.caseNumber} className="border-t-2 border-border/30 align-top">
                     <td className="whitespace-nowrap px-3 py-3 font-mono text-base">
                       {/* PendingLink: /perm-case-status is dynamic and can

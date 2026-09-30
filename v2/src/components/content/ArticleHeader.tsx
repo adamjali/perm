@@ -5,7 +5,7 @@ import { Fragment } from "react";
  * ArticleHeader
  *
  * Animated article header with breadcrumb, metadata, tags, and featured image.
- * Motion staggered entrance animation.
+ * Renders at rest: no entrance animation (see the note in the body).
  */
 
 import Image from "next/image";
@@ -15,7 +15,6 @@ import { NavLink } from "@/components/ui/nav-link";
 import type { PostMeta, ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { stagger, fadeUp } from "@/lib/content/animations";
-import { useHasHydratedOnce } from "@/hooks/useHasHydratedOnce";
 
 interface ArticleHeaderProps {
   meta: PostMeta;
@@ -23,11 +22,12 @@ interface ArticleHeaderProps {
 }
 
 export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
-  // Entrance animations are skipped on the FIRST paint of the session, so the
-  // server's markup is visible with no JavaScript and does not gate LCP. The
-  // whileInView reveals in this directory are deliberately NOT guarded: hiding
-  // below-the-fold content until it is scrolled to is what those are for.
-  const hydrated = useHasHydratedOnce();
+  // No entrance animation, on any load (initial={false}). This sits above the
+  // fold: on a hard load a fade hid server markup until hydration, and after
+  // a client navigation it replayed over a page that had just replaced its
+  // skeleton, so readers saw skeleton, blank, then a fade. The whileInView
+  // reveals in this directory stay: hiding below-the-fold content until it
+  // is scrolled to is what those are for.
   const config = CONTENT_TYPE_CONFIG[type];
 
   return (
@@ -35,7 +35,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
       <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-8 sm:py-10">
         <motion.div
           variants={stagger}
-          initial={hydrated ? "hidden" : false}
+          initial={false}
           animate="show"
         >
           {/* Breadcrumb */}
@@ -149,7 +149,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
           <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
             <motion.div
               className="relative -mt-2 aspect-[21/9] overflow-hidden border-2 border-border shadow-hard-lg"
-              initial={hydrated ? { opacity: 0, y: 20 } : false}
+              initial={false}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3, ease: [0.4, 0, 0.2, 1] as const }}
             >

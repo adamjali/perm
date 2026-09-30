@@ -29,8 +29,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 // Viewport configuration for proper mobile scaling
-import { PRELOADER_BOOT, PRELOADER_CSS } from "@/components/home/Preloader";
-import { HomeCurtainNav } from "@/components/home/HomeCurtainNav";
+import { Preloader, PRELOADER_BOOT, PRELOADER_CSS } from "@/components/home/Preloader";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -171,22 +170,11 @@ export default async function RootLayout({
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
         <head>
           {/*
-            The home curtain's boot script, FIRST in <head>.
-            It has to be here rather than beside the curtain markup: that
-            markup is rendered by the home page, below this layout's header,
-            so on the deployed document the header was at byte 8,339 and the
-            curtain at 64,073. Any connection slow enough to paint
-            incrementally showed the header and then had the curtain slam
-            over it. The script gates on location.pathname so the other
-            routes are untouched.
-          */}
-          {/*
-            ABOVE the script, and inline, on purpose. The cover rule and the
-            background colour it paints with both used to live in globals.css
-            — an external stylesheet. WebKit paints before a pending
-            stylesheet, so the script set the attribute, the browser painted
-            the header, and the cover only arrived with the CSS. The
-            attribute was working; there was no rule yet to act on it.
+            The home curtain: its CSS and boot script FIRST in <head>, inline,
+            so the rules exist before anything paints (WebKit paints before a
+            pending external stylesheet). The script gates on
+            location.pathname, so other routes are untouched. The panel itself
+            is the first child of <body> below. See Preloader.tsx.
           */}
           <style dangerouslySetInnerHTML={{ __html: PRELOADER_CSS }} />
           {/*
@@ -216,13 +204,13 @@ export default async function RootLayout({
         <body
           className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable} font-body antialiased`}
         >
-          <div className="grain-overlay" aria-hidden="true" />
           {/*
-            Mounted at the ROOT, not in the public layout, because a link
-            home exists in the authenticated chrome and the auth pages too.
-            Renders null; it only listens.
+            The home curtain's panel, FIRST in <body> on every route so it
+            paints in the same frame as the header it covers. Hidden unless
+            the boot script arms it (hard loads of "/" only).
           */}
-          <HomeCurtainNav />
+          <Preloader />
+          <div className="grain-overlay" aria-hidden="true" />
           <SharedProviders>{children}</SharedProviders>
           {/* Vercel Analytics + Speed Insights removed 2026-08-29: both are
               fully redundant with PostHog (autocapture pageviews + $web_vitals),

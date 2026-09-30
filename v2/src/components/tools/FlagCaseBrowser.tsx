@@ -2,7 +2,7 @@
 
 import { Fragment, useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 
 import { usePublicQuery } from "@/lib/usePublicQuery";
 import { Pager } from "@/components/ui/pager";
@@ -388,7 +388,7 @@ export function FlagCaseBrowser({
     pending: program.pendingLabel,
     decided: program.decidedLabel,
   };
-  const params = useSearchParams();
+  const params = useUrlSearchParams();
   const initial = params.get("q") ?? "";
   const uid = useId();
 
@@ -475,7 +475,11 @@ export function FlagCaseBrowser({
     if (cursor) p.set("cursor", cursor);
     return `${program.api}?${p.toString()}`;
   }, [kind, month, order, cursors, withheld, program.api]);
-  const { data: page, failed: listFailed, failure: listFailure, retry: retryList } = usePublicQuery<FlagListPage>(listUrl);
+  const { data: page, previous: previousPage, failed: listFailed, failure: listFailure, retry: retryList } = usePublicQuery<FlagListPage>(listUrl);
+  // The rows on screen: this page, or the last one while the next loads, so a
+  // filter or page change dims the table instead of collapsing it to a line.
+  const shownPage = page ?? previousPage;
+  const listBusy = page === undefined && !listFailed && shownPage !== undefined;
 
   return (
     <div className="space-y-10">
@@ -707,14 +711,16 @@ export function FlagCaseBrowser({
         {listFailed ? (
           <RequestFailed what="The list" failure={listFailure} onRetry={retryList} className="mt-4 border-2 border-border bg-tint-primary p-4" />
         ) : null}
-        {!withheld && !listFailed && page === undefined ? (
+        {!withheld && !listFailed && shownPage === undefined ? (
           <p className="mt-4 text-base text-foreground/70">Loading…</p>
         ) : null}
         {!withheld && page && page.rows.length === 0 ? (
           <p className="mt-4 text-base text-foreground/70">Nothing matches that filter.</p>
         ) : null}
-        {!withheld && page && page.rows.length > 0 ? (
-          <Rows rows={page.rows} caption={`${program.nouns} from DOL's daily check`} />
+        {!withheld && !listFailed && shownPage && shownPage.rows.length > 0 && (page === undefined || page.rows.length > 0) ? (
+          <div className={listBusy ? "opacity-60 transition-opacity" : "transition-opacity"} aria-busy={listBusy}>
+            <Rows rows={shownPage.rows} caption={`${program.nouns} from DOL's daily check`} />
+          </div>
         ) : null}
         {!withheld && !listFailed ? (
           <Pager

@@ -258,7 +258,9 @@ export default function SettingsLayout({
         id={`settings-panel-${activeSection}`}
         aria-labelledby={`settings-tab-${activeSection}`}
       >
-        <AnimatePresence mode="wait">
+        {/* initial={false}: the first section is at rest when settings opens;
+            switching sections still cross-fades. */}
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={activeSection}
             initial={{ opacity: 0, y: 8 }}

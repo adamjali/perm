@@ -13,7 +13,6 @@ import {
 } from "@/components/home";
 import { SectionDivider } from "@/components/home/SectionDivider";
 import { FloatingShapes } from "@/components/home/DecorativeElements";
-import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -61,28 +60,30 @@ export default function ForAttorneysPage() {
         <FloatingShapes className="absolute inset-0" />
         <div className="relative z-10 mx-auto flex max-w-[1400px] items-center px-4 py-12 sm:px-8 sm:py-16 lg:py-20">
           <div className="grid w-full items-center gap-12 [&>*]:min-w-0 lg:grid-cols-2 lg:gap-20">
+            {/* No scroll reveal in the hero: it is what the visitor is already
+                looking at, so a reveal only hid it until the observer fired. */}
             <div className="flex flex-col gap-6">
-              <ScrollReveal direction="up">
+              <div>
                 <div className="inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
                   <span className="h-2 w-2 bg-primary" aria-hidden="true" />
                   Case Management Reimagined
                 </div>
-              </ScrollReveal>
-              <ScrollReveal direction="up" delay={0.05}>
+              </div>
+              <div>
                 <h1 className="font-heading text-4xl font-black leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:text-6xl xl:text-7xl">
                   Track Your PERM Cases{" "}
                   <span className="inline-block bg-primary px-[0.3em] py-[0.1em] text-black shadow-hard transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-translate-x-1 hover:-translate-y-1 hover:shadow-hard-lg">
                     Effortlessly
                   </span>
                 </h1>
-              </ScrollReveal>
-              <ScrollReveal direction="up" delay={0.1}>
+              </div>
+              <div>
                 <p className="max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
                   Free case management for immigration attorneys. Enter the case
                   dates once, get every PERM deadline.
                 </p>
-              </ScrollReveal>
-              <ScrollReveal direction="up" delay={0.15}>
+              </div>
+              <div>
                 <div className="flex flex-wrap gap-4 pt-4">
                   <Link
                     href="/signup"
@@ -99,9 +100,9 @@ export default function ForAttorneysPage() {
                     Check a Case First
                   </Link>
                 </div>
-              </ScrollReveal>
+              </div>
             </div>
-            <ScrollReveal direction="right" delay={0.15} className="relative lg:order-last">
+            <div className="relative lg:order-last">
               <div
                 className="absolute -right-10 -top-10 h-28 w-28 rotate-45 bg-primary opacity-10"
                 aria-hidden="true"
@@ -121,7 +122,7 @@ export default function ForAttorneysPage() {
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                 />
               </div>
-            </ScrollReveal>
+            </div>
           </div>
         </div>
       </section>

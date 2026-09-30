@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { PageBasics } from "@/components/data/PageBasics";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -15,6 +14,7 @@ import { getCaseFieldOptions, getPermHistoryYears } from "@/lib/turso/caseSearch
 import { getLiveRemainderSummary } from "@/lib/turso/liveCases";
 import { getPwdSummary, getPwdDisclosureSummary } from "@/lib/turso/pwdCases";
 import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 
 /**
  * One search over every DOL filing this site holds.
@@ -173,7 +173,7 @@ export default async function CaseSearchPage() {
       </dl>
 
       <div className="mt-10">
-        <Suspense fallback={<p className="text-base text-foreground/60">Loading the search…</p>}>
+        <SearchParamsBoundary>
           {/* The state and fiscal-year lists come from the same `perm_docs`
               row the header counts do, so the options and the totals beside
               them cannot disagree, and neither costs a query of its own. */}
@@ -184,7 +184,7 @@ export default async function CaseSearchPage() {
             fieldOptions={fieldOptions}
             publishedFrom={firstYear}
           />
-        </Suspense>
+        </SearchParamsBoundary>
       </div>
 
       <section className="mt-12 max-w-3xl">

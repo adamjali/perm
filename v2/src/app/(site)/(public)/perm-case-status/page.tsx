@@ -9,7 +9,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
+import { CASE_STATUS_FRAME, CaseStatusHead, LookupSkeleton } from "./CaseStatusShell";
 import { CaseNotFound, CaseStatusEmpty } from "@/components/tools/CaseNotFound";
 import { CaseStatusResult } from "@/components/tools/CaseStatusResult";
 import { PwdLookup } from "@/components/tools/PwdStatusResult";
@@ -196,33 +196,12 @@ export default async function PermCaseStatusPage({
   ]);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
+    <div className={CASE_STATUS_FRAME}>
+      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
       <JsonLdScript schema={breadcrumbSchema} />
 
-      <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link
-            href="/tools"
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            Data
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Check a PERM case
-        </h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
-          A case number gets you the status in plain English, what the queue in
-          front of it looks like, and the employer&apos;s own record. It will
-          not get you a decision date, and the page says why. Prevailing wage
-          (P-100-...) and LCA (I-200-...) numbers work here too, and any of the three can email you when DOL&apos;s status changes.
-        </p>
-      </header>
-
-      <div className="mt-8 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <CaseLookupForm defaultValue={typed} />
-      </div>
+      <CaseStatusHead typed={typed} />
 
       {/* The warning sits ABOVE anything it qualifies and nothing is computed
           from bad input. A figure the reader has already absorbed cannot be
@@ -493,21 +472,3 @@ async function Empty() {
   );
 }
 
-/**
- * A reservation the size of the answer, not a spinner.
- *
- * The block it stands in for is tall, so a short placeholder would let the
- * FAQ jump up into view and back down again a second later.
- */
-function LookupSkeleton() {
-  return (
-    <div aria-hidden="true" className="animate-pulse motion-reduce:animate-none">
-      <div className="h-40 border-2 border-border bg-muted" />
-      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 [&>*]:min-w-0">
-        <div className="h-48 border-2 border-border bg-muted" />
-        <div className="h-48 border-2 border-border bg-muted" />
-      </div>
-      <div className="mt-8 h-64 border-2 border-border bg-muted" />
-    </div>
-  );
-}

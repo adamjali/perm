@@ -187,8 +187,12 @@ export default function AuthHeader({
           </span>
         </NavLink>{" "}
 
-        {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-4 lg:flex">
+        {/* Desktop Navigation, from xl (1280px). It needs 1,137px on one line
+            (measured Sep 30 2026), so from 1024 to 1199 every label, the logo
+            and both buttons wrapped to two lines and the bar grew from 71px
+            to 99px after the page had painted. The menu button covers 1024
+            to 1279 instead. */}
+        <nav className="hidden items-center gap-4 xl:flex">
           {/* Nav Links */}
           <div className="flex items-center gap-1">
             {PUBLIC_NAV_LINKS.map((link) => {
@@ -317,7 +321,7 @@ export default function AuthHeader({
         </nav>{" "}
 
         {/* Mobile Menu Button */}
-        <div className="flex items-center gap-3 lg:hidden">
+        <div className="flex items-center gap-3 xl:hidden">
           <SiteSearch articles={articles} />{" "}
           <ThemeToggle />
           <button
@@ -340,7 +344,7 @@ export default function AuthHeader({
           so the SEO sitelinks contract is satisfied at the page level. Mobile
           is purely a viewport-specific UX surface. */}
       {isMobileMenuOpen && (
-        <div className="absolute left-0 right-0 top-full border-b-3 border-white/20 bg-black px-4 py-4 lg:hidden">
+        <div className="absolute left-0 right-0 top-full border-b-3 border-white/20 bg-black px-4 py-4 xl:hidden">
           <nav className="flex flex-col gap-3">
             {PUBLIC_NAV_LINKS.map((link) => (
               <React.Fragment key={link.href}>

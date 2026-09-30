@@ -46,7 +46,7 @@ export default function AuthLayout({
       <main
         id="main-content"
         style={{ paddingTop: "calc(var(--site-header-max-h, 4.5rem) + var(--security-banner-h, 0px))" }}
-        className="relative z-10 flex flex-1 justify-center px-4 pb-8 transition-[padding] duration-200 sm:px-8 sm:pb-12"
+        className="relative z-10 flex flex-1 justify-center px-4 pb-8 sm:px-8 sm:pb-12"
         tabIndex={-1}
       >
         {/* WIDTH BELONGS TO THE PAGE, not to the layout. A fixed max-w-md

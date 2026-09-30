@@ -254,7 +254,9 @@ export function CalendarView({
       </div>
 
       {/* Mobile List View - Shown on mobile by default, or when user explicitly selects list */}
-      <AnimatePresence mode="wait">
+      {/* initial={false}: the view is at rest when the page mounts; only a
+          switch between list and calendar animates. */}
+      <AnimatePresence mode="wait" initial={false}>
         {useResponsiveLayout ? (
           // CSS-based responsive: show list on mobile (<768px), calendar on desktop
           <motion.div

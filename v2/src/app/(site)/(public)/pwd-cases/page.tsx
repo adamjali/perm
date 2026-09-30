@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { PageBasics } from "@/components/data/PageBasics";
@@ -10,6 +9,7 @@ import { FlagCaseBrowser, PWD_PROGRAM } from "@/components/tools/FlagCaseBrowser
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getPwdSummary, getPwdDisclosureSummary } from "@/lib/turso/pwdCases";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 
 /**
  * Prevailing wage requests, findable by employer before the PERM exists.
@@ -125,9 +125,9 @@ export default async function PwdCasesPage() {
       </section>
 
       <div className="mt-10">
-        <Suspense fallback={<p className="text-base text-foreground/60">Loading the search…</p>}>
+        <SearchParamsBoundary>
           <FlagCaseBrowser summary={summary} disclosure={disclosure} program={PWD_PROGRAM} />
-        </Suspense>
+        </SearchParamsBoundary>
       </div>
 
       <section className="mt-12 max-w-3xl">

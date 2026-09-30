@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -20,6 +19,7 @@ import { LadderCombViews } from "@/components/wages/LadderViews";
 import { SplitLadderNote } from "@/components/wages/SplitLadderNote";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
 import { withSocialCard } from "@/lib/socialCard";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 
 /**
  * PERM salary explorer.
@@ -132,16 +132,12 @@ export default async function SalaryExplorerPage() {
         </p>
       </header>
 
-      <section className="mt-10">
-        {/* useSearchParams needs a boundary, and the fallback is the same
-            frame the explorer renders so the page does not jump. */}
-        <Suspense
-          fallback={
-            <div data-embed="salary-explorer" className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-              <p className="text-base text-foreground/70">Loading wage figures…</p>
-            </div>
-          }
-        >
+      <section data-embed="salary-explorer" className="mt-10">
+        {/* useSearchParams needs a boundary. Its fallback is the explorer
+            itself with no filters, so the prerendered page holds the whole
+            tool and nothing jumps at hydration (it used to be a one-line card
+            the explorer then replaced). */}
+        <SearchParamsBoundary>
           <SalaryExplorer
             occupations={options.occupations}
             states={options.states}
@@ -149,7 +145,7 @@ export default async function SalaryExplorerPage() {
             initial={{ stats, bins, binWidth: width, below, above, byState }}
             placeFilters
           />
-        </Suspense>
+        </SearchParamsBoundary>
       </section>
 
       {stateLadders.length > 0 ? (

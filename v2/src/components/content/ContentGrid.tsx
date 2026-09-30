@@ -5,13 +5,12 @@
  *
  * Responsive grid layout for ContentCard items.
  * 1-col mobile, 2-col tablet, 3-col desktop.
- * GSAP ScrollTrigger stagger animation on scroll.
+ * Cards present at mount render at rest; filtered-in cards animate.
  */
 
 import { AnimatePresence, motion } from "motion/react";
 import type { PostSummary } from "@/lib/content/types";
 import ContentCard from "./ContentCard";
-import { useHasHydratedOnce } from "@/hooks/useHasHydratedOnce";
 
 interface ContentGridProps {
   posts: PostSummary[];
@@ -19,42 +18,39 @@ interface ContentGridProps {
 }
 
 export default function ContentGrid({ posts, showType }: ContentGridProps) {
-  // Entrance animations are skipped on the FIRST paint of the session, so the
-  // server's markup is visible with no JavaScript and does not gate LCP. The
-  // whileInView reveals in this directory are deliberately NOT guarded: hiding
-  // below-the-fold content until it is scrolled to is what those are for.
-  const hydrated = useHasHydratedOnce();
   if (posts.length === 0) {
     return (
-      <motion.div
-        className="flex flex-col items-center justify-center py-20 text-center"
-        initial={hydrated ? { opacity: 0, scale: 0.95 } : false}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
-      >
+      <div className="flex flex-col items-center justify-center py-20 text-center">
         <p className="font-heading text-lg font-bold text-muted-foreground">
           No content yet
         </p>{" "}
         <p className="mt-1 text-sm text-muted-foreground">
           Check back soon for new articles.
         </p>
-      </motion.div>
+      </div>
     );
   }
 
+  // `initial={false}` on AnimatePresence: the cards on screen when the grid
+  // MOUNTS render at rest, on a hard load and after a client navigation
+  // alike. Only cards a tag filter or search brings in animate. They used to
+  // cascade in on every visit, 0.06 s apart, so the 53 guides took over three
+  // seconds to appear and the ones below the fold sat blank meanwhile.
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="popLayout" initial={false}>
         {posts.map((post, i) => (
           <motion.div
             key={`${post.type}-${post.slug}`}
             layout
-            initial={hydrated ? { opacity: 0, y: 20 } : false}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{
-              duration: 0.35,
-              delay: i * 0.06,
+              duration: 0.25,
+              // Capped, so a filter that brings in 40 cards finishes in
+              // a quarter second rather than walking down the list.
+              delay: Math.min(i, 6) * 0.03,
               ease: [0.4, 0, 0.2, 1],
             }}
           >

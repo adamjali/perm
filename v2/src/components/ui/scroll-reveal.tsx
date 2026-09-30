@@ -254,8 +254,9 @@ export function ScrollReveal({
    * On the first page of a session everything renders visible and no reveal
    * runs. Every client-side navigation after that animates normally, which
    * is where the effect is actually perceptible. There is no flash: the hook
-   * does not trigger a re-render, so nothing transitions from visible to
-   * hidden mid-view.
+   * captures its value once per mount, so a later re-render (useIsMobile
+   * settling, say) cannot flip a visible reveal to hidden mid-view. Content
+   * at the top of a page should not be wrapped in one at all.
    */
   const hydrated = useHasHydratedOnce();
 

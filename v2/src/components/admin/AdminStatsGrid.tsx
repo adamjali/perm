@@ -62,12 +62,10 @@ export function AdminStatsGrid({ data }: AdminStatsGridProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {stats.map((stat, index) => (
-        <Card
-          key={stat.label}
-          className="animate-in fade-in slide-in-from-bottom-4 duration-300"
-          style={{ animationDelay: `${index * 50}ms` }}
-        >
+      {stats.map((stat) => (
+        // No staggered entrance: the delays let each card show, vanish and
+        // fade back in (tw-animate's fill mode does not hold the first frame).
+        <Card key={stat.label}>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
               {stat.label}

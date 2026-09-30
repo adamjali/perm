@@ -60,7 +60,15 @@ export function AuthTurnstile({
 
   // Track theme from the document.documentElement class (matches how the app
   // toggles dark mode via existing CSS vars).
-  const [theme, setTheme] = useState<"light" | "dark">("light");
+  // Read the real theme at first render (the widget's options are not in the
+  // server markup, so this cannot mismatch hydration). Starting at "light" and
+  // correcting in the effect rebuilt a dark-mode widget a second time.
+  const [theme, setTheme] = useState<"light" | "dark">(() =>
+    typeof document !== "undefined" &&
+    document.documentElement.classList.contains("dark")
+      ? "dark"
+      : "light",
+  );
   useEffect(() => {
     const root = document.documentElement;
     const update = () =>
@@ -80,7 +88,14 @@ export function AuthTurnstile({
 
   return (
     <div
-      className="flex justify-center"
+      // A visible widget is 65px tall (Cloudflare's "flexible" size). Reserve
+      // it, or the form grows by that much when Cloudflare's script lands and
+      // the submit button jumps down under the reader's pointer.
+      className={
+        appearance === "always"
+          ? "flex min-h-[65px] justify-center"
+          : "flex justify-center"
+      }
       data-testid="turnstile-widget"
       aria-label="Anti-spam verification"
     >

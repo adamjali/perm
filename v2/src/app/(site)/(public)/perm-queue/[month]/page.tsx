@@ -21,6 +21,7 @@ import {
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { getLiveRemainderSummary, listLiveCases } from "@/lib/turso/liveCases";
 import { LiveCaseBrowser } from "@/components/tools/LiveCaseBrowser";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { openGraphBase } from "@/lib/openGraphBase";
 
 /**
@@ -296,12 +297,16 @@ export default async function CohortPage({
         )}
         {liveMonth && liveMonth.total > 0 ? (
           <div className="mt-5">
-            <LiveCaseBrowser
-              summary={remainder}
-              publishedThrough={remainder?.publishedThrough ?? null}
-              fixedMonth={month}
-              seed={seedPage}
-            />
+            {/* The browser reads the URL, so it needs a boundary whose
+                fallback is the browser itself (see SearchParamsBoundary). */}
+            <SearchParamsBoundary>
+              <LiveCaseBrowser
+                summary={remainder}
+                publishedThrough={remainder?.publishedThrough ?? null}
+                fixedMonth={month}
+                seed={seedPage}
+              />
+            </SearchParamsBoundary>
           </div>
         ) : null}
         {liveMonth && liveRows.length > 0 ? (

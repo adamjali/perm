@@ -24,10 +24,10 @@ import InactivityTimeoutProvider from "@/components/layout/InactivityTimeoutProv
 import { ChatWidgetConnected } from "@/components/chat/ChatWidgetConnected";
 import { PendingTermsHandler } from "@/components/auth/PendingTermsHandler";
 import { LoginTracker } from "@/components/auth/LoginTracker";
+import { WarmAppQueries } from "@/components/app/WarmAppQueries";
 import { OnboardingProvider } from "@/components/onboarding/OnboardingProvider";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import { OnboardingTourWrapper } from "@/components/onboarding/OnboardingTourWrapper";
-import { PageTransition } from "@/components/ui/page-transition";
 import { SentryUserContext } from "@/components/layout/SentryUserContext";
 import { SentryClientInit } from "@/components/layout/SentryClientInit";
 import { AppSessionReplay } from "@/components/layout/AppSessionReplay";
@@ -64,6 +64,9 @@ export default function AuthenticatedLayout({
 
       {/* Record login once per browser session (covers all auth flows) */}
       <LoginTracker />
+
+      {/* The main pages' data, kept subscribed so moving between them is instant. */}
+      <WarmAppQueries />
 
       {/* Onboarding: wizard + tour + checklist state management */}
       <OnboardingProvider>
@@ -102,7 +105,9 @@ export default function AuthenticatedLayout({
           className="relative mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-8 break-words"
           tabIndex={-1}
         >
-          <PageTransition>{children}</PageTransition>
+          {/* No keyed page transition: it faded the loading skeleton, not the
+              page, and remounted everything on each click. */}
+          {children}
         </main>
 
         {/* Footer */}

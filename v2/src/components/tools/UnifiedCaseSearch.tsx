@@ -2,7 +2,7 @@
 
 import { Fragment, useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 
 import { STAGE_PROGRAM_LABEL, searchStages } from "@/lib/searchStages";
 import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
@@ -372,7 +372,7 @@ export function UnifiedCaseSearch({
   /** The first fiscal year of published PERM cases the search reaches, once the history is loaded. */
   publishedFrom?: string | null;
 }) {
-  const params = useSearchParams();
+  const params = useUrlSearchParams();
   const initial = params.get("q") ?? "";
   // `?stage=<slug>` is how the stage pages hand a cohort to this search.
   const stageOptions = useMemo(() => searchStages(), []);

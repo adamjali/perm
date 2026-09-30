@@ -80,8 +80,11 @@ export function ChatWidget({
 
   return (
     <>
-      {/* Floating Bubble */}
-      <AnimatePresence>
+      {/* Floating Bubble. initial={false}: the bubble present at page load
+          renders in place. Its scale(0) start shipped in the server HTML, so
+          the bubble was invisible until the scripts ran and then popped in;
+          it still scales in and out when the chat panel closes and opens. */}
+      <AnimatePresence initial={false}>
         {!isOpen && (
           <motion.div
             initial={{ opacity: 0, scale: 0 }}

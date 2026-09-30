@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { ResetPasswordPageClient } from "./ResetPasswordPageClient";
 
+// Static, like /login and /signup. The layout's auth provider reads cookies,
+// so without this the page rendered per request: every click on "Forgot
+// password?" waited on the server behind a skeleton, then swapped it out.
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Reset Password",
   description: "Reset your PERM Tracker account password.",

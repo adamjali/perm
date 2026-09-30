@@ -11,7 +11,6 @@
 import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
 import { CalendarIcon, TagIcon } from "@phosphor-icons/react";
 import type { PostSummary } from "@/lib/content/types";
 import { useScrollStagger } from "@/lib/hooks/useGSAP";
@@ -77,12 +76,11 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
   return (
     <div ref={timelineRef} className="relative space-y-6">
       {/* Vertical line */}
-      <motion.div
-        className="absolute left-4 top-0 bottom-0 w-[2px] origin-top bg-border sm:left-8"
+      {/* Drawn, not animated: an unguarded scaleY(0) shipped the line hidden
+          in the server HTML and drew it in after hydration on every load. */}
+      <div
+        className="absolute left-4 top-0 bottom-0 w-[2px] bg-border sm:left-8"
         aria-hidden="true"
-        initial={{ scaleY: 0 }}
-        animate={{ scaleY: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
       />
 
       {entries.map((entry) => {

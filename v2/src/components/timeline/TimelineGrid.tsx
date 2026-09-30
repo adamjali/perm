@@ -192,12 +192,13 @@ export function TimelineGrid({
             </div>
           </div>
 
-          {/* Case Rows - with staggered entrance animation */}
+          {/* Case rows, at rest when they mount: a staggered slide-in played
+              right after the loading skeleton, a second arrival of the list. */}
           <div role="rowgroup" className="relative">
             {cases.map((caseData, index) => (
               <motion.div
                 key={caseData.id}
-                initial={{ opacity: 0, x: -20 }}
+                initial={false}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{
                   ...TIMELINE_ANIMATION.spring,

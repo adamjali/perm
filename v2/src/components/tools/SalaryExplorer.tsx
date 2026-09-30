@@ -2,7 +2,8 @@
 
 import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { Label } from "@/components/ui";
@@ -146,7 +147,7 @@ export function SalaryExplorer({
 }: SalaryExplorerProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const params = useSearchParams();
+  const params = useUrlSearchParams();
   const ids = { soc: useId(), state: useId(), fy: useId(), status: useId(), city: useId(), sector: useId() };
 
   const soc = params.get("soc") ?? "";

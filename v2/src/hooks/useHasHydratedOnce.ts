@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 /**
  * Has this app hydrated at least once in this browser session?
@@ -50,9 +50,13 @@ import { useEffect } from "react";
 let hydratedOnce = false;
 
 export function useHasHydratedOnce(): boolean {
-  // Captured at render time. False on the server and on the first client
-  // render of the session; true for every mount after that.
-  const value = hydratedOnce;
+  // Captured ONCE PER MOUNT: false on the server and for everything mounted
+  // by the session's first render, true for every mount after that. It used
+  // to be read on every render, so any re-render after the first effect ran
+  // (useIsMobile settling on a phone, for one) flipped a first-paint
+  // ScrollReveal to "hidden" before its observer fired: the /for-attorneys
+  // hero and the /faq header dipped out and back in on every phone load.
+  const [value] = useState(() => hydratedOnce);
 
   useEffect(() => {
     hydratedOnce = true;

@@ -12,7 +12,6 @@
  * common outcome into bad news about someone's petition.
  */
 
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getDatasetSchema } from "@/lib/structuredData";
@@ -30,6 +29,7 @@ import { listByKind } from "@/lib/turso/entities";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
 import { withSocialCard } from "@/lib/socialCard";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 const TITLE = "PERM Case Search";
 const DESCRIPTION =
   "Search every PERM case in DOL's published disclosure window by case number, employer, law firm, state or occupation, with the wage and the days it took.";
@@ -212,9 +212,7 @@ export default async function PermCasesPage() {
           // and paints before the JS lands.
           <>
             <DailyDecisionsChart points={daily} className="mb-10" />
-            <Suspense
-              fallback={<p className="text-base text-foreground/60">Loading the case browser…</p>}
-            >
+            <SearchParamsBoundary>
             <CaseBrowser meta={meta} occupations={occupations} />
 
             <div className="mt-12">
@@ -223,7 +221,7 @@ export default async function PermCasesPage() {
                 publishedThrough={meta.lastDecisionDate}
               />
             </div>
-            </Suspense>
+            </SearchParamsBoundary>
           </>
         ) : (
           <section className="border-2 border-border bg-card p-8 text-center shadow-hard">

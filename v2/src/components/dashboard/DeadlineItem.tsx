@@ -64,7 +64,7 @@ interface HoverCardPosition {
   placement: "right" | "left";
 }
 
-export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
+export default function DeadlineItem({ deadline }: DeadlineItemProps) {
   const { isNavigating: isLoading, navigateTo } = useNavigationLoading();
   const hasHover = useHasHover();
   const [showHoverCard, setShowHoverCard] = useState(false);
@@ -81,8 +81,6 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
     navigateTo(`/cases/${deadline.caseId}`);
   }, [isLoading, navigateTo, deadline.caseId]);
 
-  // Calculate animation delay (staggered 50ms per index for smoother cascade)
-  const animationDelay = `${index * 50}ms`;
 
   // Format countdown display
   const countdownText = isOverdue
@@ -219,10 +217,10 @@ export default function DeadlineItem({ deadline, index }: DeadlineItemProps) {
 
   return (
     <>
+      {/* No staggered slide-in: the items arrive with their widget, and the
+          per-item delay made each one show, vanish, then slide back. */}
       <div
         ref={containerRef}
-        className="animate-in slide-in-from-left-4 fill-mode-forwards ease-out"
-        style={{ animationDelay, animationDuration: "0.3s" }}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >

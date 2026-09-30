@@ -38,6 +38,12 @@ import { failureFromError, failureFromResponse, FetchFailureError, type FetchFai
  * own 429 - where a reload is one more request against the same limit.
  * `failure` carries the server's own sentence and the wait, and `retry` asks
  * again without a reload.
+ *
+ * AND `previous` (Sep 30 2026): the last answer that came back, for any url.
+ * `data` still goes undefined the moment the url changes, so a table built on
+ * it collapsed to a one-line "Loading…" on every filter or page change and
+ * grew back when the answer landed. A caller that renders `data ?? previous`
+ * keeps the old rows on screen (dimmed, marked busy) until the new ones land.
  */
 
 /** Deadline for one request. Hot-path Turso reads are &lt;550ms; live case
@@ -54,9 +60,11 @@ export interface PublicQueryResult<T> {
   failure: FetchFailure | null;
   /** Ask again for the same url. */
   retry: () => void;
+  /** The most recent successful answer, for this url or an earlier one. */
+  previous: T | undefined;
 }
 
-type State<T> = Pick<PublicQueryResult<T>, "data" | "failed" | "failure">;
+type State<T> = Pick<PublicQueryResult<T>, "data" | "failed" | "failure" | "previous">;
 
 export function usePublicQuery<T>(
   url: string | "skip",
@@ -67,6 +75,7 @@ export function usePublicQuery<T>(
     data: undefined,
     failed: false,
     failure: null,
+    previous: undefined,
   });
   const [attempt, setAttempt] = useState(0);
   const retry = useCallback(() => setAttempt((n) => n + 1), []);
@@ -77,7 +86,7 @@ export function usePublicQuery<T>(
 
   useEffect(() => {
     if (url === "skip") {
-      setState({ data: undefined, failed: false, failure: null });
+      setState((s) => ({ data: undefined, failed: false, failure: null, previous: s.previous }));
       return;
     }
     const id = ++latest.current;
@@ -90,14 +99,14 @@ export function usePublicQuery<T>(
       controller.signal,
       AbortSignal.timeout(timeoutMs),
     ]);
-    setState({ data: undefined, failed: false, failure: null });
+    setState((s) => ({ data: undefined, failed: false, failure: null, previous: s.previous }));
     fetch(url, { signal })
       .then(async (r) => {
         if (!r.ok) throw new FetchFailureError(await failureFromResponse(r));
         return r.json() as Promise<T>;
       })
       .then((data) => {
-        if (latest.current === id) setState({ data, failed: false, failure: null });
+        if (latest.current === id) setState({ data, failed: false, failure: null, previous: data });
       })
       .catch((error: unknown) => {
         // A supersede/unmount abort is not a failure: reporting it would flash
@@ -106,7 +115,12 @@ export function usePublicQuery<T>(
         // is a failure too.
         if (error instanceof DOMException && error.name === "AbortError") return;
         if (latest.current === id) {
-          setState({ data: undefined, failed: true, failure: failureFromError(error, timeoutMs) });
+          setState((s) => ({
+            data: undefined,
+            failed: true,
+            failure: failureFromError(error, timeoutMs),
+            previous: s.previous,
+          }));
         }
       });
     return () => controller.abort();

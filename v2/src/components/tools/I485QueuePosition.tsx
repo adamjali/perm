@@ -30,7 +30,8 @@
  */
 
 import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { UsersIcon, InfoIcon } from "@phosphor-icons/react";
 
 import { pairKey,
@@ -167,7 +168,7 @@ export function I485QueuePosition({
   const yearId = useId();
   const monthId = useId();
   const router = useRouter();
-  const params = useSearchParams();
+  const params = useUrlSearchParams();
 
   // A priority date cannot be later than the release that is answering about
   // it, so the last offerable month is the release's own. Without this the

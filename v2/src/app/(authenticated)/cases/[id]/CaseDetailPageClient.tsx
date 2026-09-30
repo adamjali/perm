@@ -108,7 +108,7 @@ interface CaseDetailPageProps {
 // LOADING SKELETON
 // ============================================================================
 
-function CaseDetailSkeleton() {
+export function CaseDetailSkeleton() {
   return (
     <div className="space-y-6">
       {/* Hero Header Skeleton */}
@@ -590,7 +590,14 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
   };
 
   // Active tab state for manila folder tabs
-  const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [activeTab, setActiveTabState] = useState<TabId>("overview");
+  // Whether the reader has switched tabs yet: the Overview tab animates in
+  // only after that, never when it mounts with the page.
+  const [tabSwitched, setTabSwitched] = useState(false);
+  const setActiveTab = useCallback((tab: TabId) => {
+    setTabSwitched(true);
+    setActiveTabState(tab);
+  }, []);
 
   const isClosed = caseData.caseStatus === "closed";
   const caseName = `${caseData.employerName} - ${caseData.positionTitle}`;
@@ -902,6 +909,7 @@ function CaseDetail({ caseId, caseData }: CaseDetailProps) {
         <CaseDetailTabs activeTab={activeTab} onTabChange={setActiveTab}>
           <TabPanel id="overview" activeTab={activeTab}>
             <OverviewTab
+              animateIn={tabSwitched}
               caseData={caseData}
               caseId={caseId}
               isMobile={isMobile}

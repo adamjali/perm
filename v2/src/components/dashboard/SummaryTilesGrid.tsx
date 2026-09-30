@@ -10,6 +10,33 @@ import { PermPath, StatBlock } from "@/components/visuals/PermPath";
 import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import { CheckCircleIcon, CopyIcon } from "@phosphor-icons/react";
 
+/**
+ * Loading: the real heading (it never changes) and the stat blocks in the
+ * real grid. The second row used to be `md:grid-cols-3 gap-4` against the
+ * real `sm:grid-cols-4 sm:gap-6`, so its blocks changed width on arrival.
+ * The dashboard's loading.tsx renders this same component.
+ */
+export function SummaryTilesSkeleton() {
+  return (
+    <div aria-busy={true}>
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="font-heading text-2xl font-bold">Case summary</h2>
+        <Skeleton variant="block" className="h-12 w-28" />
+      </div>
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} variant="block" className="h-36" />
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
+        {Array.from({ length: 2 }).map((_, i) => (
+          <Skeleton key={i} variant="block" className="h-28" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function SummaryTilesGridContent() {
   // Get signing out state to skip queries during sign out
   const { isSigningOut } = useAuthContext();
@@ -23,29 +50,7 @@ function SummaryTilesGridContent() {
   // Loading state (undefined means still loading)
   // Note: Convex queries return undefined while loading, then the actual data.
   // Query errors are thrown and caught by the ErrorBoundary wrapper.
-  if (data === undefined) {
-    return (
-      <div>
-        {/* Header skeleton */}
-        <div className="flex items-center justify-between mb-6">
-          <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-12 w-28" />
-        </div>
-
-        {/* Grid skeleton */}
-        <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-36" />
-          ))}
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <Skeleton key={i} className="h-28" />
-          ))}
-        </div>
-      </div>
-    );
-  }
+  if (data === undefined) return <SummaryTilesSkeleton />;
 
   const total =
     data.pwd.count +

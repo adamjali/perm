@@ -59,10 +59,10 @@ export interface CaseFormSkeletonProps {
  */
 export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
   return (
-    <div className="space-y-8 pb-24 animate-fade-in">
+    <div className="space-y-8 pb-24">
       {/* ========== BASIC INFO SECTION ========== */}
       {/* Not in a CollapsibleSection - always visible */}
-      <div className="animate-slide-up" style={{ animationDelay: "50ms" }}>
+      <div>
         <div className="rounded-lg border-2 border-border bg-card p-6 shadow-hard-sm">
           {/* Section header */}
           <div className="flex items-center gap-3 mb-6">
@@ -89,7 +89,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
       </div>
 
       {/* ========== PWD SECTION ========== */}
-      <div className="animate-slide-up" style={{ animationDelay: "100ms" }}>
+      <div>
         <FormSectionSkeleton
           titleWidth="w-64"
           inputCount={6}
@@ -98,7 +98,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
       </div>
 
       {/* ========== RECRUITMENT SECTION ========== */}
-      <div className="animate-slide-up" style={{ animationDelay: "150ms" }}>
+      <div>
         <FormSectionSkeleton titleWidth="w-28" columns={2}>
           {/* Custom content for complex recruitment section */}
           <div className="space-y-6">
@@ -139,7 +139,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
       </div>
 
       {/* ========== ETA 9089 SECTION ========== */}
-      <div className="animate-slide-up" style={{ animationDelay: "200ms" }}>
+      <div>
         <FormSectionSkeleton titleWidth="w-48" columns={2}>
           <div className="space-y-6">
             {/* Filing window indicator placeholder */}
@@ -176,7 +176,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
       </div>
 
       {/* ========== I-140 SECTION ========== */}
-      <div className="animate-slide-up" style={{ animationDelay: "250ms" }}>
+      <div>
         <FormSectionSkeleton titleWidth="w-44" columns={2}>
           <div className="space-y-6">
             {/* Filing window indicator placeholder */}
@@ -225,7 +225,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
       </div>
 
       {/* ========== NOTES SECTION ========== */}
-      <div className="animate-slide-up" style={{ animationDelay: "300ms" }}>
+      <div>
         <FormSectionSkeleton titleWidth="w-36">
           <div className="space-y-6">
             {/* Notes journal placeholder */}
@@ -245,7 +245,7 @@ export function CaseFormSkeleton({ showFooter = true }: CaseFormSkeletonProps) {
 
       {/* ========== STICKY FOOTER ========== */}
       {showFooter && (
-        <div className="animate-slide-up" style={{ animationDelay: "350ms" }}>
+        <div>
           <StickyFooterSkeleton />
         </div>
       )}

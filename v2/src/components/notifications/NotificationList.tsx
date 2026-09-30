@@ -480,18 +480,26 @@ export default function NotificationList({
   };
 
   // Loading state (only for initial load)
-  if (result === undefined && allNotifications.length === 0) {
+  // On the first page, render the query's answer directly. The accumulating
+  // copy is set in an effect AFTER the answer arrives, so reading only it left
+  // one frame with the answer in hand and an empty list on screen.
+  const shown =
+    cursor === undefined && result?.notifications
+      ? (result.notifications as Notification[])
+      : allNotifications;
+
+  if (result === undefined && shown.length === 0) {
     return <NotificationListSkeleton />;
   }
 
   // Empty state: only when the server has nothing further to look through.
   // A filtered tab can come back with an empty page while older rows remain
   // unchecked, and "no deadline notifications" would then be false.
-  if (allNotifications.length === 0 && result?.notifications.length === 0 && !result.hasMore) {
+  if (shown.length === 0 && result?.notifications.length === 0 && !result.hasMore) {
     return <EmptyState activeTab={activeTab} />;
   }
 
-  if (allNotifications.length === 0 && result?.hasMore) {
+  if (shown.length === 0 && result?.hasMore) {
     return (
       <div className={cn("flex flex-col items-center gap-4 py-12 text-center", className)}>
         <p className="max-w-sm text-sm text-muted-foreground">
@@ -512,7 +520,7 @@ export default function NotificationList({
   }
 
   // Group notifications by date
-  const groupedNotifications = groupNotificationsByDate(allNotifications);
+  const groupedNotifications = groupNotificationsByDate(shown);
 
   return (
     <div className={cn("space-y-6", className)}>

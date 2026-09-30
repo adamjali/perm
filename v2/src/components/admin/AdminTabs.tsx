@@ -7,7 +7,7 @@
  * the WAI-ARIA tabs pattern.
  */
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
 export interface AdminTab {
   id: string;
@@ -18,15 +18,16 @@ export interface AdminTab {
 }
 
 export function AdminTabs({ tabs }: { tabs: AdminTab[] }) {
-  const [active, setActive] = useState(tabs[0]?.id ?? "");
+  // The hash is the starting tab, read in the initializer: reading it in an
+  // effect painted Overview first and then jumped. Safe for hydration because
+  // these tabs only ever mount in the browser, after the admin data loads
+  // (the server renders the page's skeleton). The hash is a starting point,
+  // not a live binding.
+  const [active, setActive] = useState(() => {
+    const fromHash = typeof window === "undefined" ? "" : window.location.hash.slice(1);
+    return tabs.some((t) => t.id === fromHash) ? fromHash : (tabs[0]?.id ?? "");
+  });
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
-
-  useEffect(() => {
-    const fromHash = window.location.hash.slice(1);
-    if (tabs.some((t) => t.id === fromHash)) setActive(fromHash);
-    // Only on first mount: the hash is a starting point, not a live binding.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   function choose(id: string, focus = false) {
     setActive(id);

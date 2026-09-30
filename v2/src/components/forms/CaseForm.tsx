@@ -590,7 +590,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
         suggestedCaseStatus={suggestedCaseStatus}
         suggestedProgressStatus={suggestedProgressStatus}
       >
-      <form onSubmit={handleSubmit} className="space-y-8 pb-24 animate-fade-in">
+      <form onSubmit={handleSubmit} className="space-y-8 pb-24">
         {/* Error Summary */}
         {showErrorSummary && mergedErrorCount > 0 && (
           <ErrorSummary errors={mergedErrors} errorCount={mergedErrorCount} onDismiss={() => setShowErrorSummary(false)} onFieldClick={scrollToField} />
@@ -602,7 +602,7 @@ export function CaseForm({ mode, caseId, initialData, onSuccess, onCancel, initi
         )}
 
         {/* Progress + Instruction */}
-        <div className="space-y-2 animate-fade-in">
+        <div className="space-y-2">
           <div className="flex items-center gap-3 font-mono">
             <span className="text-base font-bold text-foreground">
               {(['pwd', 'recruitment', 'eta9089', 'i140'] as const).filter((s) => sectionStates[s].isComplete).length} of 4 sections complete
@@ -778,7 +778,9 @@ function StickyFooter({ mode, caseId, isDirty, isSubmitting, isDeleting, isCance
   // The chat bubble sits above this bar, clear of the save button.
   const barRef = usePublishBottomBar<HTMLDivElement>();
   return (
-    <div ref={barRef} className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-border rounded-t-lg p-4 z-10 animate-slide-up shadow-hard-sm sm:shadow-hard" style={{ animationDelay: "350ms" }}>
+    // No entrance animation: it slid in 350ms after the form had appeared, a
+    // late second arrival of the page's main controls.
+    <div ref={barRef} className="sticky bottom-0 left-0 right-0 bg-background/95 backdrop-blur-sm border-2 border-border rounded-t-lg p-4 z-10 shadow-hard-sm sm:shadow-hard">
       {/* Mobile: stacked layout, Desktop: horizontal */}
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4 max-w-5xl mx-auto">
         <div className="flex items-center gap-3 md:gap-4 order-2 md:order-1">

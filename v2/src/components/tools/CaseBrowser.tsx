@@ -2,7 +2,8 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 // A public page has no ConvexProvider above it by design, and the Turso
 // client is server-only, so the reads go through /api/perm-cases. See
 // src/lib/usePublicQuery.ts.
@@ -175,7 +176,7 @@ export function CaseBrowser({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const params = useSearchParams();
+  const params = useUrlSearchParams();
 
   // --- filter state, seeded from the URL so a filtered view is linkable ----
   const [dimension, setDimension] = useState<Dimension>(() => {

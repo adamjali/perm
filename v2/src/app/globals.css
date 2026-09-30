@@ -136,6 +136,24 @@
   --data-good-ink: #1D8229;
 }
 
+/* The fixed site header's height BEFORE AuthHeader measures it. It is 71px at
+   every width from 400px up and 99px below, where the logo wraps to two lines
+   (measured on four pages at 27 widths, Sep 30 2026). The layouts pad <main>
+   by --site-header-max-h, and a default that was wrong on phones (72px for a
+   99px bar) slid every page down 27px once the script published the real
+   figure. Pixels, not rem: DataRail parseFloat()s this value. Kept out of the
+   main :root block above so the tokens there stay one uninterrupted list. */
+:root {
+  --site-header-h: 71px;
+  --site-header-max-h: 71px;
+}
+@media (max-width: 399.98px) {
+  :root {
+    --site-header-h: 99px;
+    --site-header-max-h: 99px;
+  }
+}
+
 .dark {
   --primary-on-ink: #1D8229;
   --data-bad-on-ink: #B3271A;
@@ -2449,127 +2467,6 @@ input[type="week"] {
   background: var(--foreground);
 }
 
-/* ------------------------------------------------------------------ *
- * The home load curtain.
- *
- * Every rule lives HERE, in the stylesheet the document loads in <head>.
- * The markup is NOT the first child of <body> - it is rendered by the
- * home page, below the layout's header - which is why the cover above
- * is keyed off the attribute the <head> script sets rather than off the
- * element. The
- * previous version styled itself from a <style> inside a client component
- * and gated on React state, so it could not paint before hydration and the
- * page flashed through it. A curtain that arrives after the content is not
- * a curtain.
- *
- * The inline script in the markup flips data-pre on <html> before first
- * paint, so a repeat visit in the same session never sees a flash of
- * curtain either. Both directions matter.
- * ------------------------------------------------------------------ */
-html[data-pre="on"] { overflow: hidden; }
-/* An ABSENT attribute must hide the curtain too. `[data-pre="off"]`
-   matches only when the attribute is literally "off", and the boot
-   script returns early on every route except "/", so on /blog the
-   attribute is never set at all. A soft navigation to / then rendered
-   .pre with nothing in the document able to dismiss it: the reported
-   "loads forever, have to refresh". :not([data-pre="on"]) is also
-   higher specificity than the bare .pre rule below, so it wins
-   regardless of stylesheet order. */
-html:not([data-pre="on"]) .pre { display: none; }
-
-/*
- * The cover, drawn from the ATTRIBUTE rather than from the .pre element.
- *
- * `.pre` is real markup and it sits 56 KB into the document, after the
- * header, because it is rendered by the page and the header belongs to the
- * layout above it. Measured on the deployed page: <header> at byte 8,339,
- * the curtain at 64,073. So on any connection slow enough to paint
- * incrementally the browser shows the header and THEN slams the curtain
- * over it, which is worse than having no curtain.
- *
- * The boot script sets this attribute from <head>, before a single byte of
- * body has painted, so this pseudo-element is the thing that actually
- * closes the flash. The branded `.pre` panel layers on top at z-index 200
- * when it parses.
- */
-html[data-pre="on"] body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 199;
-  background: var(--background);
-}
-
-.pre {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 18px;
-  background: var(--background);
-  transition: transform 0.55s cubic-bezier(0.65, 0, 0.35, 1);
-}
-.pre-leave { transform: translateY(-101%); }
-
-.pre-mark { color: var(--primary); animation: pre-in 0.45s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
-.pre-name {
-  font-family: var(--font-heading), system-ui, sans-serif;
-  font-weight: 900;
-  font-size: clamp(1.6rem, 4vw, 2.1rem);
-  letter-spacing: -0.02em;
-  line-height: 1;
-  color: var(--foreground);
-  animation: pre-in 0.45s 0.06s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-.pre-name b { color: var(--primary); font-weight: 900; }
-.pre-sub {
-  font-family: var(--font-mono), monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--foreground) 55%, transparent);
-  animation: pre-in 0.45s 0.12s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-.pre-track {
-  width: min(260px, 60vw);
-  height: 6px;
-  border: 2px solid var(--border);
-  background: var(--card);
-  overflow: hidden;
-  animation: pre-in 0.45s 0.16s cubic-bezier(0.2, 0.8, 0.2, 1) both;
-}
-.pre-bar {
-  display: block;
-  height: 100%;
-  background: var(--primary);
-  transform-origin: left;
-  animation: pre-fill 1.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.pre-spin {
-  width: 18px;
-  height: 18px;
-  border: 2.5px solid color-mix(in srgb, var(--foreground) 22%, transparent);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: pre-spin 0.68s linear infinite;
-}
-
-@keyframes pre-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-@keyframes pre-fill { from { transform: scaleX(0); } to { transform: scaleX(0.92); } }
-@keyframes pre-spin { to { transform: rotate(360deg); } }
-
-@media (prefers-reduced-motion: reduce) {
-  .pre { transition: opacity 0.25s ease; }
-  .pre-leave { transform: none; opacity: 0; }
-  .pre-mark, .pre-name, .pre-sub, .pre-track { animation: none; }
-  .pre-bar { animation: none; transform: scaleX(0.92); }
-  .pre-spin { animation: none; }
-}
-
 /* ---------------------------------------------------------------------------
    Wait-ledger draw-in
    ---------------------------------------------------------------------------
@@ -2579,14 +2476,16 @@ html[data-pre="on"] body::before {
    the stagger walks the eye down to the shortest and most recent row.
 
    ADDITIVE, NEVER LOAD-BEARING. The default state is a fully drawn segment.
-   The rule only applies under `html[data-pre="off"]`, which the preloader's
-   boot script sets; with JavaScript off that attribute is never written, the
-   rule never matches, and the figure renders complete. A reveal animation
-   must not be the only thing that makes content visible.
+   The rule only applies once the curtain starts lifting (`leaving`, then
+   `off`, both written by the preloader's boot script); with JavaScript off,
+   or on any visit the curtain skips, the attribute never takes those values
+   and the figure renders complete. A reveal animation must not be the only
+   thing that makes content visible.
 
    Not an `infinite` animation, and there is no pulse: it runs once and stops.
    --------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: no-preference) {
+  html[data-pre="leaving"] .wl-seg,
   html[data-pre="off"] .wl-seg {
     transform-origin: left center;
     animation: wl-draw 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;

@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -16,6 +15,7 @@ import {
   getLcaWageStats,
 } from "@/lib/turso/lcaWages";
 import { binWidth, clampBins, MIN_FOR_MEDIAN } from "@/lib/wageStats";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 
 /**
  * H-1B salary explorer.
@@ -118,13 +118,7 @@ export default async function LcaWagesPage() {
       </header>
 
       <section className="mt-10">
-        <Suspense
-          fallback={
-            <div className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-              <p className="text-base text-foreground/70">Loading wage figures…</p>
-            </div>
-          }
-        >
+        <SearchParamsBoundary>
           <SalaryExplorer
             occupations={options.occupations}
             states={options.states}
@@ -135,7 +129,7 @@ export default async function LcaWagesPage() {
             noun="LCA"
             nounPlural="LCAs"
           />
-        </Suspense>
+        </SearchParamsBoundary>
       </section>
 
       <section className="mt-12">

@@ -33,8 +33,8 @@ import {
  * `<button onClick>` rather than links: not crawlable, no middle-click, no
  * open-in-new-tab. They are `<Link>`s now, there is no client JavaScript in
  * the hero at all, and the entry motion is CSS keyed off the preloader's own
- * `html[data-pre="off"]` so it plays when the curtain lifts instead of behind
- * it.
+ * `html[data-pre="leaving"]`/`"off"`, so it plays as the curtain lifts
+ * instead of behind it.
  *
  * ------------------------------------------------------------------------
  * THE 2026-08-30 REBUILD: FIT, AND A VISUAL LAYER ON THE DOORS

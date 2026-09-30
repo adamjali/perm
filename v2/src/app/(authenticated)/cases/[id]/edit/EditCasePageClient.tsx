@@ -10,6 +10,8 @@ import Link from "next/link";
 import { api } from "../../../../../../convex/_generated/api";
 import type { Id, Doc } from "../../../../../../convex/_generated/dataModel";
 import { CaseForm, type CaseFormInitialData } from "@/components/forms/CaseForm";
+import { CaseFormSkeleton } from "@/components/forms/CaseFormSkeleton";
+import { BreadcrumbSkeleton } from "@/components/skeletons";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
@@ -32,119 +34,35 @@ import { caseWriteErrorMessage } from "@/lib/caseWriteErrors";
 /**
  * Loading skeleton matching form layout
  */
-function EditPageSkeleton() {
+/**
+ * The edit page while the case loads, in the page's own frame. Shared with
+ * edit/loading.tsx. It used to carry px-4 py-8 the page does not have (a 32px
+ * jump up and 16px sideways on arrival), its own form shapes, and a FIXED
+ * footer that vanished before the real sticky one slid in.
+ */
+export function EditPageSkeleton() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 space-y-6" data-testid="edit-page-skeleton">
-      {/* Breadcrumb skeleton */}
-      <div className="flex items-center gap-2">
-        <Skeleton variant="line" className="h-4 w-16" />
-        <Skeleton variant="circle" className="h-4 w-4" />
-        <Skeleton variant="line" className="h-4 w-32" />
-      </div>
+    <div className="mx-auto w-full max-w-4xl space-y-6" data-testid="edit-page-skeleton">
+      <BreadcrumbSkeleton items={3} />
 
-      {/* Title skeleton with spinning accent */}
+      {/* The title block: employer (h1 line), position (mono line), and the
+          lede, which never changes. */}
       <div className="relative">
         <div className="absolute -top-2 -left-2 h-6 w-6 border-2 border-foreground bg-primary shadow-hard-sm" />
-        <div className="pl-6 space-y-2">
-          <Skeleton variant="line" className="h-8 w-3/4" />
-          <Skeleton variant="line" className="h-4 w-1/2" />
+        <div className="min-w-0 pl-6">
+          <div className="flex h-[2.025rem] items-center sm:h-[2.43rem]">
+            <Skeleton variant="line" className="h-7 w-2/3 sm:h-8" />
+          </div>
+          <div className="mt-2 flex h-5 items-center">
+            <Skeleton variant="line" className="h-4 w-1/3" />
+          </div>
+          <p className="mt-3 max-w-[60ch] text-base leading-relaxed text-foreground/70">
+            Update case details below. All changes will be saved to your account.
+          </p>
         </div>
       </div>
 
-      {/* Form sections skeleton */}
-      <div className="space-y-6">
-        {/* Basic Info Section */}
-        <div className="rounded-lg border-2 border-border bg-card p-6 shadow-hard-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <Skeleton variant="circle" className="h-5 w-5" />
-            <Skeleton variant="line" className="h-6 w-32" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Skeleton variant="line" className="h-4 w-24" />
-              <Skeleton variant="block" className="h-11" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton variant="line" className="h-4 w-28" />
-              <Skeleton variant="block" className="h-11" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton variant="line" className="h-4 w-20" />
-              <Skeleton variant="block" className="h-11" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton variant="line" className="h-4 w-24" />
-              <Skeleton variant="block" className="h-11" />
-            </div>
-          </div>
-        </div>
-
-        {/* PWD Section */}
-        <div className="rounded-lg border-2 border-border bg-card p-6 shadow-hard-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <Skeleton variant="circle" className="h-5 w-5" />
-            <Skeleton variant="line" className="h-6 w-48" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Skeleton variant="line" className="h-4 w-20" />
-              <Skeleton variant="block" className="h-11" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton variant="line" className="h-4 w-28" />
-              <Skeleton variant="block" className="h-11" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton variant="line" className="h-4 w-24" />
-              <Skeleton variant="block" className="h-11" />
-            </div>
-            <div className="space-y-2">
-              <Skeleton variant="line" className="h-4 w-20" />
-              <Skeleton variant="block" className="h-11" />
-            </div>
-          </div>
-        </div>
-
-        {/* Recruitment Section */}
-        <div className="rounded-lg border-2 border-border bg-card p-6 shadow-hard-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <Skeleton variant="circle" className="h-5 w-5" />
-            <Skeleton variant="line" className="h-6 w-28" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Skeleton variant="block" className="h-11" />
-            <Skeleton variant="block" className="h-11" />
-            <Skeleton variant="block" className="h-11" />
-            <Skeleton variant="block" className="h-11" />
-          </div>
-        </div>
-
-        {/* ETA 9089 Section */}
-        <div className="rounded-lg border-2 border-border bg-card p-6 shadow-hard-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <Skeleton variant="circle" className="h-5 w-5" />
-            <Skeleton variant="line" className="h-6 w-36" />
-          </div>
-          <Skeleton variant="block" className="h-32" />
-        </div>
-
-        {/* I-140 Section */}
-        <div className="rounded-lg border-2 border-border bg-card p-6 shadow-hard-sm">
-          <div className="flex items-center gap-3 mb-4">
-            <Skeleton variant="circle" className="h-5 w-5" />
-            <Skeleton variant="line" className="h-6 w-32" />
-          </div>
-          <Skeleton variant="block" className="h-32" />
-        </div>
-      </div>
-
-      {/* Sticky footer skeleton */}
-      <div className="fixed bottom-0 left-0 right-0 bg-background/95 border-t-2 border-border p-4">
-        <div className="flex justify-end gap-4 max-w-4xl mx-auto">
-          <Skeleton variant="block" className="h-11 w-24" />
-          <Skeleton variant="block" className="h-11 w-28" />
-        </div>
-      </div>
+      <CaseFormSkeleton />
     </div>
   );
 }
@@ -412,7 +330,7 @@ export function EditCasePageClient() {
       <Breadcrumb caseData={caseData} />
 
       {/* Page Title with neobrutalist accent */}
-      <div className="relative animate-fade-in">
+      <div className="relative">
         {/* Corner accent decoration */}
         <div className="absolute -top-2 -left-2 w-6 h-6 bg-primary border-2 border-foreground shadow-hard-sm" />
         <div className="pl-6 min-w-0">

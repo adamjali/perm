@@ -23,7 +23,10 @@ describe("SummaryTilesGrid", () => {
 
     // Four path blocks and the outcome tiles below them.
     expect(container.querySelectorAll(".h-36, .h-28").length).toBeGreaterThanOrEqual(6);
-    expect(screen.queryByText("Case summary")).not.toBeInTheDocument();
+    // The heading never changes, so it renders while the counts load: the
+    // skeleton used to draw a bar in its place and swap it for the text.
+    expect(screen.getByText("Case summary")).toBeInTheDocument();
+    expect(container.querySelector('[aria-busy="true"]')).toBeInTheDocument();
   });
 
   describe("with data", () => {

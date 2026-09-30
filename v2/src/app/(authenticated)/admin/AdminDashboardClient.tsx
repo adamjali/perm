@@ -52,6 +52,16 @@ export default function AdminDashboardClient() {
     setHasAppliedServerSort(true);
   }
 
+  // The last answer, kept while the next one loads. A sort, page or search
+  // change is a new query whose answer starts undefined, and the page used to
+  // drop back to its full-page skeleton for each one, unmounting the search
+  // box mid-word. (Setting state during render, guarded, is React's own
+  // pattern for deriving from a changing value.)
+  const [kept, setKept] = useState(dashboardData);
+  if (dashboardData !== undefined && dashboardData !== kept) setKept(dashboardData);
+  const data = dashboardData ?? kept;
+  const refreshing = dashboardData === undefined && kept !== undefined;
+
   const handlePageChange = useCallback((newPage: number) => {
     setPage(newPage);
   }, []);
@@ -67,8 +77,12 @@ export default function AdminDashboardClient() {
     setPage(0);
   }, []);
 
+  // Not an admin: the query is skipped, so waiting for its data (as this did)
+  // showed a skeleton forever instead of the refusal below.
+  const denied = !authLoading && !isAdmin;
+
   // Loading state
-  if (authLoading || dashboardData === undefined) {
+  if (!denied && (authLoading || data === undefined)) {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
         {/* Header skeleton */}
@@ -94,7 +108,7 @@ export default function AdminDashboardClient() {
   }
 
   // Not admin
-  if (!isAdmin) {
+  if (denied || !data) {
     return (
       <div className="container mx-auto max-w-7xl px-4 py-8">
         <Card className="border-destructive">
@@ -115,7 +129,7 @@ export default function AdminDashboardClient() {
   }
 
   return (
-    <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8 animate-in fade-in duration-300">
+    <div className="container mx-auto max-w-7xl px-4 py-8 space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between gap-4 border-b-2 border-border pb-6">
         <div className="flex items-center gap-4">
@@ -147,7 +161,7 @@ export default function AdminDashboardClient() {
             label: "Overview",
             content: (
               <div className="space-y-8">
-                <AdminStatsGrid data={dashboardData} />
+                <AdminStatsGrid data={data} />
                 {delivery ? <BudgetPools pools={delivery.pools} queue={delivery.confirmationQueue} day={delivery.emailDay} /> : <Skeleton className="h-64" />}
                 {signals ? <ActivityPanel signals={signals} /> : <Skeleton className="h-48" />}
               </div>
@@ -167,20 +181,25 @@ export default function AdminDashboardClient() {
           {
             id: "users",
             label: "Users",
-            badge: String(dashboardData.totalCount),
+            badge: String(data.totalCount),
             content: (
-              <UsersTable
-                users={dashboardData.users}
-                totalCount={dashboardData.totalCount}
-                totalPages={dashboardData.totalPages}
-                page={dashboardData.page}
-                onPageChange={handlePageChange}
-                sortField={sortField}
-                sortOrder={sortOrder}
-                onSortChange={handleSortChange}
-                search={search}
-                onSearchChange={handleSearchChange}
-              />
+              <div
+                className={refreshing ? "opacity-60 transition-opacity" : "transition-opacity"}
+                aria-busy={refreshing}
+              >
+                <UsersTable
+                  users={data.users}
+                  totalCount={data.totalCount}
+                  totalPages={data.totalPages}
+                  page={data.page}
+                  onPageChange={handlePageChange}
+                  sortField={sortField}
+                  sortOrder={sortOrder}
+                  onSortChange={handleSortChange}
+                  search={search}
+                  onSearchChange={handleSearchChange}
+                />
+              </div>
             ),
           },
           {

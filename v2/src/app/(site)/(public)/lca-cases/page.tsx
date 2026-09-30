@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { PageBasics } from "@/components/data/PageBasics";
@@ -10,6 +9,7 @@ import { FlagCaseBrowser, LCA_PROGRAM } from "@/components/tools/FlagCaseBrowser
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
+import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 
 /**
  * Labor condition applications, findable by employer as DOL confirms them.
@@ -111,9 +111,9 @@ export default async function LcaCasesPage() {
       </section>
 
       <div className="mt-10">
-        <Suspense fallback={<p className="text-base text-foreground/60">Loading the search…</p>}>
+        <SearchParamsBoundary>
           <FlagCaseBrowser summary={summary} disclosure={disclosure} program={LCA_PROGRAM} />
-        </Suspense>
+        </SearchParamsBoundary>
       </div>
 
       <section className="mt-12 max-w-3xl">

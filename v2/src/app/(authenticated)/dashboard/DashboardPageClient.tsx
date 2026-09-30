@@ -5,12 +5,11 @@ import { captureError } from "@/lib/sentry";
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { api } from "../../../../convex/_generated/api";
-import { Skeleton } from "@/components/ui/skeleton";
 import SummaryTilesGrid from "@/components/dashboard/SummaryTilesGrid";
 import DeadlineHeroWidget from "@/components/dashboard/DeadlineHeroWidget";
 import RecentActivityWidget from "@/components/dashboard/RecentActivityWidget";
 import UpcomingDeadlinesWidget from "@/components/dashboard/UpcomingDeadlinesWidget";
-import AddCaseButton from "@/components/dashboard/AddCaseButton";
+import { DashboardHeading } from "@/components/dashboard/DashboardShell";
 import AutoClosureAlertBanner from "@/components/dashboard/AutoClosureAlertBanner";
 import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist";
 import { QueuePulseWidget } from "@/components/dashboard/QueuePulseWidget";
@@ -54,60 +53,17 @@ export function DashboardPageClient() {
     return null;
   }
 
-  // Loading state
-  if (currentUser === undefined) {
-    return (
-      <div className="space-y-6">
-        <div
-          className="animate-in fade-in fill-mode-forwards"
-          style={{ animationDuration: "0.2s" }}
-        >
-          <Skeleton variant="line" className="mb-3 h-4 w-32" />
-          <Skeleton variant="line" className="mb-3 h-10 w-64" />
-          <Skeleton variant="line" className="h-6 w-full max-w-[52ch]" />
-        </div>
-        <div
-          className="animate-in fade-in slide-in-from-bottom-2 fill-mode-forwards"
-          style={{ animationDelay: "50ms", animationDuration: "0.3s" }}
-        >
-          <Skeleton variant="block" className="h-48" />
-        </div>
-        <div
-          className="animate-in fade-in slide-in-from-bottom-4 fill-mode-forwards"
-          style={{ animationDelay: "100ms", animationDuration: "0.3s" }}
-        >
-          <Skeleton variant="block" className="h-64" />
-        </div>
-      </div>
-    );
-  }
-
-  // Extract first name from full name
-  // Extracted to local variable (React Compiler disabled; kept for SWC safety)
-  const rawName = currentUser.name;
+  // Nothing waits on the user record except the greeting: every widget starts
+  // its own query now, in parallel, instead of mounting only after this one
+  // resolved. (It is usually already cached: the header subscribes to it.)
+  const rawName = currentUser?.name;
   // No name on file greets plainly: "Welcome back, there" read as a typo.
-  const firstName = rawName ? rawName.split(" ")[0] : null;
+  const firstName =
+    currentUser === undefined ? undefined : rawName ? rawName.split(" ")[0] : null;
 
   return (
     <div className="space-y-6">
-      {/* Welcome Header + Primary CTA */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0">
-          <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-            Dashboard
-          </p>{" "}
-          <h1 className="mt-2 font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">
-            {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
-          </h1>{" "}
-          <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-foreground/70">
-            Every filing window, wage expiration and audit deadline in your
-            cases, computed from the dates you have entered.
-          </p>
-        </div>
-        <div className="shrink-0">
-          <AddCaseButton />
-        </div>
-      </div>
+      <DashboardHeading firstName={firstName} />
 
       <CaseCapNotice />
 

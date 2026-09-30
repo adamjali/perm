@@ -33,14 +33,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import UrgencyGroup from "./UrgencyGroup";
 
 // Container styles shared across all states
+// border-2, the real widget's border. The skeleton drew 3px, so the widget
+// shifted by a pixel on every side when its data arrived.
 const CONTAINER_CLASSES =
-  "overflow-hidden rounded-none border-[3px] border-border shadow-hard";
+  "overflow-hidden rounded-none border-2 border-border shadow-hard";
 
 // ============================================================================
 // Sub-components
 // ============================================================================
 
-function DeadlineHeroLoadingSkeleton(): ReactNode {
+export function DeadlineHeroLoadingSkeleton(): ReactNode {
   return (
     <div className={CONTAINER_CLASSES}>
       <div className="hazard-strip-red" aria-hidden="true" />

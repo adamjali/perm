@@ -19,6 +19,20 @@ interface FAQPageClientProps {
   faqData: FAQSection[];
 }
 
+/**
+ * A scroll reveal on every category but the first, which is on screen at
+ * load: revealing it only hid it until the observer fired, so it dipped out
+ * and back in after every navigation to this page.
+ */
+function Reveal({
+  on,
+  children,
+  ...rest
+}: { on: boolean } & React.ComponentProps<typeof ScrollReveal>) {
+  if (on) return <ScrollReveal {...rest}>{children}</ScrollReveal>;
+  return <div className={rest.className}>{children}</div>;
+}
+
 export function FAQPageClient({ faqData }: FAQPageClientProps) {
   const [openIndex, setOpenIndex] = React.useState<string | null>(null);
 
@@ -28,15 +42,15 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
 
   return (
     <div className="space-y-10">
-      {faqData.map((section) => (
+      {faqData.map((section, sectionIndex) => (
         <div key={section.category}>
-          <ScrollReveal direction="up">
+          <Reveal on={sectionIndex > 0} direction="up">
             <h2 className="mb-4 font-heading text-lg font-bold tracking-tight sm:text-xl">
               {section.category}
             </h2>
-          </ScrollReveal>{" "}
+          </Reveal>{" "}
 
-          <ScrollReveal direction="up" stagger className="flex flex-col gap-3">
+          <Reveal on={sectionIndex > 0} direction="up" stagger className="flex flex-col gap-3">
             {section.items.map((item, idx) => {
               const key = `${section.category}-${idx}`;
               const isOpen = openIndex === key;
@@ -97,7 +111,7 @@ export function FAQPageClient({ faqData }: FAQPageClientProps) {
                 </div>
               );
             })}
-          </ScrollReveal>
+          </Reveal>
         </div>
       ))}
     </div>

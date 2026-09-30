@@ -8,6 +8,7 @@ import { api } from "../../../convex/_generated/api";
 import { analystReviewQueue } from "../../../convex/lib/dolProcessingTimes";
 import { QueueTape } from "@/components/tools/QueueTape";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * The first thing a signed-in user sees: where DOL's queue stands today.
@@ -17,11 +18,13 @@ import { formatAsOf, formatMonth } from "@/lib/dolFormat";
  * brings people back — has DOL advanced — from the same snapshot the public
  * data pages read, so the app and the site can never disagree.
  *
- * Renders nothing while the snapshot loads or if the query fails; the
- * dashboard's own content never waits on it.
+ * While the snapshot loads it holds its own frame (QueuePulseSkeleton): it
+ * used to render nothing and then arrive about 200px tall, pushing the whole
+ * dashboard below it down. It still renders nothing if there is no frontier.
  */
 export function QueuePulseWidget() {
   const snapshot = useQuery(api.dolProcessingTimes.getLatest);
+  if (snapshot === undefined) return <QueuePulseSkeleton />;
   const analyst = snapshot ? analystReviewQueue(snapshot.permQueues) : undefined;
   const frontier = analyst?.priorityDate;
   if (!frontier) return null;
@@ -50,6 +53,30 @@ export function QueuePulseWidget() {
         </Link>
       </div>
       <QueueTape frontierMonth={frontier} monthsBehind={5} monthsAhead={7} className="mt-4" />
+    </section>
+  );
+}
+
+/** The strip's frame while the snapshot loads: two text lines, the button and
+ *  the tape (its 28px label row plus the 12-month grid and its legend). */
+export function QueuePulseSkeleton() {
+  return (
+    <section
+      aria-label="Live DOL queue position"
+      aria-busy={true}
+      className="border-2 border-border bg-card p-4 shadow-hard sm:p-5"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+        <div>
+          <Skeleton variant="line" className="h-5 w-40" />
+          <Skeleton variant="line" className="mt-1 h-7 w-64" />
+        </div>
+        <Skeleton variant="block" className="h-11 w-48" />
+      </div>
+      <div className="mt-4 pt-7">
+        <Skeleton variant="block" className="h-[68px]" />
+        <Skeleton variant="line" className="mt-3 h-5 w-72" />
+      </div>
     </section>
   );
 }

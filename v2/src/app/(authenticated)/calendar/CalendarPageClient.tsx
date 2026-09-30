@@ -46,16 +46,34 @@ const pageVariants = {
 // Loading Skeleton
 // ============================================================================
 
-function CalendarSkeleton() {
+/**
+ * The calendar while its events load, in the page's own order: heading, the
+ * filter row, then the calendar (a grid from md, the list below it, as the
+ * real view switches). Shared with calendar/loading.tsx, which used to draw
+ * its own version, so a click showed two skeletons before the page.
+ */
+export function CalendarSkeleton() {
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <Skeleton variant="line" className="w-32 h-10 mb-2" />
-          <Skeleton variant="line" className="w-56 h-5" />
-        </div>
+    <div className="flex flex-col h-full" aria-busy={true}>
+      {/* Header: the real title; only the count in the eyebrow waits. */}
+      <div className="mb-4">
+        <PageHeading
+          eyebrow={<Skeleton variant="line" className="inline-block h-4 w-56 align-middle" />}
+          title="Calendar"
+        />
       </div>
+
+      {/* Filter row */}
+      <Skeleton variant="block" className="mb-4 h-11" />
+
+      {/* Phones get the list view, as the real calendar does. */}
+      <div className="space-y-3 md:hidden">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} variant="block" className="h-16" />
+        ))}
+      </div>
+
+      <div className="hidden md:block">
 
       {/* Toolbar skeleton */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-4">
@@ -72,8 +90,8 @@ function CalendarSkeleton() {
         </div>
       </div>
 
-      {/* Calendar grid skeleton */}
-      <div className="flex-1 border-2 border-border bg-card shadow-hard">
+      {/* Calendar grid skeleton, the real calendar's 700px minimum */}
+      <div className="min-h-[700px] flex-1 border-2 border-border bg-card shadow-hard">
         {/* Month header row */}
         <div className="grid grid-cols-7 border-b-2 border-border bg-muted">
           {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
@@ -109,6 +127,7 @@ function CalendarSkeleton() {
             ))}
           </div>
         ))}
+      </div>
       </div>
     </div>
   );
@@ -332,7 +351,9 @@ export function CalendarPageClient() {
       data-tour="calendar-view"
       className="flex flex-col h-full"
       variants={pageVariants}
-      initial="hidden"
+      // At rest on mount: the page used to go blank after its skeleton and
+      // fade in over 0.3s, a second arrival.
+      initial={false}
       animate="visible"
     >
       <CaseCapNotice className="mb-4" />

@@ -96,31 +96,25 @@ export function CasesPageClient() {
   // URL STATE
   // ============================================================================
 
-  // Parse URL state (always the initial source of truth)
+  // URL params win; with none, the saved filters and sort are the starting
+  // state. Read in the initializers, not in an effect after mount: the effect
+  // version sent the default query first, threw its answer away and asked
+  // again, so the list loaded twice. Safe for hydration because the first
+  // render, on the server and in the browser alike, is the loading skeleton,
+  // which does not depend on either value (page size and view already work
+  // this way).
+  const hasURLParams = searchParams.toString().length > 0;
   const [filters, setFilters] = useState<CaseListFilters>(() =>
-    parseURLFilters(searchParams)
+    hasURLParams ? parseURLFilters(searchParams) : getStoredFilters() ?? parseURLFilters(searchParams)
   );
   const [sort, setSort] = useState<CaseListSort>(() =>
-    parseURLSort(searchParams)
+    hasURLParams ? parseURLSort(searchParams) : getStoredSort() ?? parseURLSort(searchParams)
   );
   const [currentPage, setCurrentPage] = useState(() =>
     parseURLPage(searchParams)
   );
   const [pageSize, setPageSize] = useState(() => getStoredPageSize());
   const [viewMode, setViewMode] = useState<ViewMode>(() => getStoredViewMode());
-
-  // Restore sort/filters from localStorage on mount when URL has no params.
-  // useState initializers can’t reliably access localStorage during SSR/hydration,
-  // so we restore in useEffect (client-only, runs once after mount).
-  const hasURLParams = searchParams.toString().length > 0;
-  useEffect(() => {
-    if (hasURLParams) return;
-    const storedFilters = getStoredFilters();
-    if (storedFilters) setFilters(storedFilters);
-    const storedSort = getStoredSort();
-    if (storedSort) setSort(storedSort);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // ============================================================================
   // VIEW MODE HANDLER
@@ -1100,7 +1094,10 @@ export function CasesPageClient() {
         className="transition-opacity duration-150"
         style={{ opacity: isRefetching || isPending ? 0.6 : 1 }}
       >
-        <AnimatePresence mode="wait">
+        {/* initial={false}: the grid is at rest when the page mounts. It faded
+            in after the loading skeleton, a second reveal of the same list.
+            Switching between card and list view still animates. */}
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={viewMode}
             initial={{ opacity: 0, y: 8 }}

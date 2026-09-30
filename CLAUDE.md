@@ -250,3 +250,15 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
 - **No email is refused and lost**: Resend's 100 a day is guarded once by the real count (list mail stops at 85,
   codes keep 15), every send goes through `sendOrQueue` and a fixable failure waits in `emailRetries`; the pools
   were raised (case confirmations 15 to 60, sign-in codes 40 to 80). The Sep 28 hit was real demand, not abuse.
+
+## Sep 30 2026, in four lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026: one picture per load".
+
+- **A loading.tsx renders the page's own loading component**; prerendered pages have none, and nothing
+  above the fold animates in on mount (the keyed page transition is gone).
+- **Public data tools render whole on the server** (`SearchParamsBoundary`); tables keep their rows while
+  the next page loads (`usePublicQuery().previous`).
+- **Signed-in pages stay warm**: `WarmAppQueries` in the app layout, and 30-second reuse of visited pages.
+- **The home curtain** is server markup first in `<body>`, lifts at DOMContentLoaded over the page; the
+  header is one line from 400px up (desktop nav from 1280px).

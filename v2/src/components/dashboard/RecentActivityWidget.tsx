@@ -12,7 +12,6 @@ import { type ReactNode } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { ClockCounterClockwiseIcon as History } from "@phosphor-icons/react";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "../../../convex/_generated/api";
 import RecentActivityCard from "./RecentActivityCard";
@@ -30,22 +29,25 @@ const MAX_DISPLAY_ITEMS = 4;
 // Sub-components
 // ============================================================================
 
-function RecentActivityLoadingSkeleton(): ReactNode {
+/**
+ * Loading: the real header (fixed title and icon) over the real body padding.
+ * It used to draw its own, differently sized header, so the whole widget
+ * re-laid itself out when the data arrived. The dashboard's loading.tsx
+ * renders this same component.
+ */
+export function RecentActivityLoadingSkeleton(): ReactNode {
   return (
     <section
-      className={cn(WIDGET_CONTAINER_CLASSES, "p-5")}
+      className={WIDGET_CONTAINER_CLASSES}
       aria-label="Recent activity"
       aria-busy={true}
     >
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <History className="w-7 h-7 text-foreground" aria-hidden="true" />
-          <h2 className="text-2xl font-heading font-bold text-foreground">
-            Recent activity
-          </h2>
-        </div>
-      </div>
-      <div className="space-y-4" role="status" aria-label="Loading recent activity">
+      <WidgetHeader
+        icon={History}
+        title="Recent activity"
+        action={<Skeleton variant="line" className="h-6 w-20" />}
+      />
+      <div className="space-y-4 p-5" role="status" aria-label="Loading recent activity">
         {Array.from({ length: MAX_DISPLAY_ITEMS }, (_, i) => (
           <div key={i} className="space-y-2">
             <Skeleton variant="line" className="w-3/4" />

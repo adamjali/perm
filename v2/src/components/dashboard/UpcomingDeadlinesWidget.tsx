@@ -23,7 +23,6 @@ import { CalendarIcon } from "@phosphor-icons/react/ssr";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
 import { api } from "../../../convex/_generated/api";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import UpcomingDeadlineItem from "./UpcomingDeadlineItem";
 import {
@@ -37,20 +36,28 @@ import {
 // Sub-components
 // ============================================================================
 
-function UpcomingDeadlinesLoadingSkeleton(): ReactNode {
+/**
+ * The widget as it looks loading: its real header (the title and icon never
+ * change) over the real body padding, so only the rows change when the data
+ * lands. The dashboard's loading.tsx renders this same component.
+ */
+export function UpcomingDeadlinesLoadingSkeleton(): ReactNode {
   return (
-    <div className={cn(WIDGET_CONTAINER_CLASSES, "p-6")}>
-      <div className="flex items-center justify-between mb-4">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-6 w-20" />
-      </div>
-      <div className="space-y-2">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <div key={i} className="p-3 border-2 border-border">
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-3 w-3/4" />
-          </div>
-        ))}
+    <div className={WIDGET_CONTAINER_CLASSES} aria-busy={true}>
+      <WidgetHeader
+        icon={CalendarIcon}
+        title="Next 30 days"
+        action={<Skeleton variant="line" className="h-6 w-24" />}
+      />
+      <div className="p-5">
+        <ul className="space-y-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <li key={i} className="border-2 border-border p-3">
+              <Skeleton variant="line" className="mb-2 h-5 w-2/3" />
+              <Skeleton variant="line" className="h-4 w-1/2" />
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

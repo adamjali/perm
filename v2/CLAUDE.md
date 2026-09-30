@@ -7002,3 +7002,59 @@ kept, so who they were can't be recovered.
 - The admin page's Alerts and email tab shows today's count against 100, the retries waiting and
   anything given up; the morning report says the same for the UTC day that just ended. `emailDays`
   is kept 400 days (`convex/retention.ts`).
+
+## Sep 30 2026: one picture per load
+
+Adam: *"no multiple loads, or flashes and then load again"*. Two audits and a frame-by-frame
+recorder (`node_modules/.cache/qa/film.mjs`, CDP screencast plus a DOM probe; `sheet.py` makes the
+contact sheet) found pages arriving as two or three different pictures in a row. The rules:
+
+- **A loading.tsx renders the page's OWN loading component, never a skeleton of its own.**
+  Dashboard: `DashboardSkeleton` (each widget's exported skeleton, in the page's layout). Cases,
+  case detail, edit, calendar, timeline: the skeleton the page renders while its query loads.
+  Notifications and case status: the page itself / its shared shell. Two drawings of one page
+  drift, and a click showed both. `loading-transitions.test.ts` fails on `<Skeleton` in any
+  loading.tsx.
+- **No loading.tsx on prerendered pages.** Static routes prefetch whole; their skeletons only
+  showed on an unprefetched click and matched nothing (an article opened from outside its
+  section got the LIST skeleton, because a section's loading.tsx wraps its `[slug]` too). No
+  group-level loading.tsx either: `(authenticated)/loading.tsx` showed a generic skeleton
+  before each page's own. /reset-password is force-static like /login and /signup.
+- **No keyed page transition.** `PageTransition` faded on pathname, and the pathname commits
+  WITH the loading state, so it faded the skeleton and swapped the page in unanimated; it also
+  remounted the data rail on every click, and under reduced motion changed element type after
+  hydration and remounted the whole page. Deleted.
+- **Nothing above the fold animates in on mount.** Article header/body, content hero,
+  ContentGrid (`AnimatePresence initial={false}`: filtered-in cards still animate), changelog
+  line, the cases grid, calendar, timeline rows, the Overview tab (animates only after a tab
+  switch), settings, the chat bubble. `useHasHydratedOnce` captures once per MOUNT: read per
+  render, a phone's `useIsMobile` settle flipped first-paint ScrollReveals to hidden.
+- **Never `animate-in` with an `animationDelay` on a loading state.** tw-animate's fill mode does
+  not hold the first frame, so each block showed, vanished, then faded back. Gated.
+- **Public data tools render in full on the server.** `SearchParamsBoundary`
+  (`src/hooks/useUrlSearchParams.ts`) makes a tool's Suspense fallback the tool itself under
+  `WithoutSearchParams`, where `useUrlSearchParams` returns empty params and never calls
+  `useSearchParams` (which bails the boundary out of the prerender). Seven pages shipped a
+  one-line "Loading…" and grew hundreds of pixels at hydration. Any new tool that reads the URL
+  uses `useUrlSearchParams` and sits in a `SearchParamsBoundary`.
+- **Tables keep their rows while the next page loads.** `usePublicQuery` returns `previous`
+  (the last answer for any url); LiveCaseBrowser, FlagCaseBrowser and the admin users table dim
+  the old rows instead of collapsing to one line.
+- **Signed-in navigation is warm.** `WarmAppQueries` in the app layout subscribes to the
+  dashboard, calendar and timeline queries with the widgets' EXACT arguments (a different arg,
+  "skip" included, is a second subscription), and `experimental.staleTimes.dynamic = 30` reuses a
+  visited page's payload for 30 seconds. Saved case filters and the timeline's saved range are
+  read before the first query, not after it (each loaded its list twice).
+- **The home curtain** is server markup first in `<body>` (root layout, every route, hidden
+  unless `html[data-pre]`), lifts at DOMContentLoaded (not window.load) with the 600ms floor and
+  1200ms cap, and slides away over the page (`data-pre="leaving"`); no scroll lock, no DOM
+  injection, no client-navigation curtain (`HomeCurtainNav` deleted).
+- **The header is one line at every width from 400px.** Desktop nav starts at `xl` (it needs
+  1,137px); below 400px the logo wraps and `globals.css` defaults `--site-header-max-h` to 99px
+  there (71px elsewhere), so `<main>` reserves the right space before any script runs.
+- **Turnstile reserves its 65px** when visible, and reads the theme at first render.
+
+Not done, measured: the header link spinner still widens the label on a SLOW navigation
+(rare now that pages prefetch); the article table of contents appears after hydration (it sits
+in a fixed-width sidebar, so nothing moves); the signed-in widget skeletons are sized from code,
+not from a render (no signed-in session on this machine) and want a check in a real browser.

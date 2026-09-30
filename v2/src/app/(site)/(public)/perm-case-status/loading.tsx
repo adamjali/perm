@@ -1,40 +1,27 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import { CASE_STATUS_FRAME, LookupSkeleton } from "./CaseStatusShell";
+import { LoadingHead } from "./LoadingHead";
 
 /**
  * The one public segment that keeps a loading boundary, and the boundary is
- * segment-local ON PURPOSE.
+ * segment-local ON PURPOSE. A group-level one made Next stream a 200 before
+ * notFound() could run (soft 404s on junk entity slugs), and it was a home
+ * skeleton on every data page. This page renders per request (a live lookup),
+ * so a visitor deserves feedback, and an unknown case renders its own
+ * explanation at 200.
  *
- * The (public) route group used to carry a shared loading.tsx, and that had
- * two costs. It was a HOME-page skeleton, so every data page flashed a
- * mismatched layout while loading. Worse, a loading boundary makes Next
- * stream a 200 before the page has decided anything, so notFound() on the
- * entity and queue-month routes could swap the UI but never the status -
- * measured live as junk slugs answering HTTP 200 (soft 404s). Removing the
- * group-level file is what lets those routes answer a real 404.
- *
- * This page is different: it renders per request (the case lookup is live
- * DOL-mirror work, ~0.7s), so a visitor deserves feedback - and a lookup
- * page has no miss state that needs a status code (an unknown case renders
- * its own explanation at 200).
+ * It renders exactly what the page renders while the answer streams: the same
+ * frame, heading and form (filled with the number being looked up) and the
+ * same reservation. So the loading state and the page's first paint are one
+ * picture, and the only change a reader sees is the answer arriving.
  */
 export default function CaseStatusLoading() {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-8 sm:py-16">
-      <Skeleton className="h-5 w-40" />
-      <Skeleton className="mt-4 h-10 w-full max-w-xl" />
-      <Skeleton className="mt-3 h-5 w-full max-w-md" />
-      {/* The record card. */}
-      <div className="mt-8 border-2 border-border p-6">
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="mt-4 h-8 w-64" />
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-          <Skeleton className="h-16" />
-        </div>
+    <div className={CASE_STATUS_FRAME}>
+      <div className="pt-10 sm:pt-12" />
+      <LoadingHead />
+      <div className="mt-8">
+        <LookupSkeleton />
       </div>
-      <Skeleton className="mt-8 h-40 w-full" />
     </div>
   );
 }
