@@ -55,7 +55,6 @@ import {
 import {
   comparables,
   fieldDistribution,
-  getBySlug,
   listByKind,
   PRERENDERED_ENTITY_HEAD,
 } from "@/lib/turso/entities";

@@ -13,7 +13,6 @@ import { describe, expect, it } from "vitest";
 
 import { ABOUT_ONE_LINER, PEOPLE } from "@/lib/constants/about";
 import { LEARN_NAV_LINKS } from "@/lib/constants/navigation";
-import { HOME_FAQS } from "@/components/home/faqData";
 import { getOrganizationSchema } from "@/lib/structuredData";
 
 const ROOT = path.resolve(__dirname, "../../../../../..");

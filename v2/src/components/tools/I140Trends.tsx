@@ -11,7 +11,6 @@ import {
   totalsFor,
   type TrendRow,
 } from "@/lib/i140Trends";
-import { cn } from "@/lib/utils";
 
 /**
  * USCIS's quarterly I-140 counts, by category.

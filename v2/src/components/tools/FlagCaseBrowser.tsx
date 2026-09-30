@@ -462,7 +462,6 @@ export function FlagCaseBrowser({
     () => (summary ? [...summary.byMonth].sort((a, b) => (a.month < b.month ? 1 : -1)) : []),
     [summary],
   );
-  const cohort = month ? months.find((m) => m.month === month) ?? null : null;
   // Every month lists, however small (owner's call, Sep 8 2026). `withheld`
   // survives as a constant so the render branches below need no rewrite.
   const withheld = false as boolean;

@@ -78,7 +78,6 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import {
   comparables,
   fieldDistribution,
-  getBySlug,
   listByKind,
   PRERENDERED_ENTITY_HEAD,
 } from "@/lib/turso/entities";
