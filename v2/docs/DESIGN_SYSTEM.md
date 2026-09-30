@@ -222,7 +222,9 @@ Located in `v2/src/components/dashboard/`:
 2. **SummaryTilesGrid** - Grid container for summary tiles
    - Responsive grid: 2 columns mobile, 3 columns tablet+
    - Fetches data from Convex `dashboard.getSummary`
-   - Loading state with skeleton placeholders
+   - Loading state: `SummaryTilesSkeleton`, the real heading over blocks sized to
+     the real tiles (155px, measured on production), also used by
+     `DashboardSkeleton` in dashboard/loading.tsx
    - Supports `cornerVariant` prop to apply decoration to all tiles
 
 ### Content Hub Components
@@ -451,6 +453,7 @@ focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring
 
 ### Phase 25 - Settings & Motion Library (2025-12-31)
 - **Motion library integration:** Added `motion/react` for snappy page transitions
+  (the route-change fade was removed Sep 30 2026; see ANIMATION_STORYBOARD "Loading states")
 - **Tab switch animation:** Settings layout content fades + slides (150ms, ease-out) on section change
 - **Success feedback:** Animated checkmark with spring physics after successful save
 - **Status text transitions:** AnimatePresence for clean state changes (dirty/saved/clean)

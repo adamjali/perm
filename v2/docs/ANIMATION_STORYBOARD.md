@@ -25,9 +25,13 @@ Unified timing tokens ensure animations feel cohesive throughout the application
 
 ### Scroll Reveals
 
+**Nothing that is on screen when a page loads animates in** (Sep 30 2026, see
+"Loading states" below). Scroll reveals are for content BELOW the fold; a hero,
+a page heading or the first FAQ category renders at rest.
+
 | Section | Trigger | Animation | Duration | Stagger |
 |---------|---------|-----------|----------|---------|
-| Hero | Immediate | fadeInUp | 0.4s spring | - |
+| Hero | none: renders at rest | - | - | - |
 | Features | 10% viewport | fadeInUp | spring(500,30) | 0.1s |
 | How It Works | 10% viewport | fadeInUp | spring(500,30) | 0.1s |
 | Showcase | 10% viewport | fadeInUp | spring(500,30) | 0.08s |
@@ -129,11 +133,37 @@ const fadeUp = {
 
 ---
 
+### Loading states (Sep 30 2026: one picture per load)
+
+A page must arrive as ONE picture: its own skeleton, then its content. Every rule
+here was a defect measured frame by frame on production first (two to four
+different pictures per load).
+
+| Rule | Why |
+|------|-----|
+| A route's `loading.tsx` renders the page's OWN loading component | two drawings of one page drift; a click showed both in a row |
+| No `loading.tsx` on prerendered pages or above the signed-in group | static pages prefetch whole; a skeleton only showed on an unprefetched click and matched nothing |
+| No keyed page transition on route change | it faded the skeleton, not the page (the pathname commits with the loading state), remounted the data rail, and remounted the page under reduced motion |
+| Nothing above the fold animates in on mount (`initial={false}`, `AnimatePresence initial={false}`) | after a skeleton, a fade is a second arrival of the same content |
+| Never `animate-in` with an `animationDelay` on a loading state | tw-animate's fill mode does not hold the first frame: the block shows, vanishes, fades back |
+| Tables keep their rows, dimmed, while the next page loads | collapsing to one "Loading…" line and growing back is two loads |
+| `useHasHydratedOnce` is captured once per mount | read per render, a phone's `useIsMobile` settle flipped a visible reveal to hidden |
+
+Animations that answer an action stay: switching tabs, card or list view,
+filtering cards in, opening a modal, the chat panel.
+
+The home curtain is the one orchestrated load moment: server markup first in
+`<body>`, lifted at DOMContentLoaded, sliding away over the page
+(`html[data-pre]` on / leaving / off, `src/components/home/Preloader.tsx`).
+
+Gates: `src/app/__tests__/loading-transitions.test.ts`,
+`src/hooks/__tests__/useUrlSearchParams.ssr.test.tsx`.
+
 ### Page Transitions
 
 | Transition | Animation | Duration |
 |------------|-----------|----------|
-| Route change | fadeIn | 0.2s |
+| Route change | none: the new page (or its own skeleton) replaces the old | - |
 | Modal open | fadeIn + scale(0.95 → 1) | 0.2s |
 | Modal close | fadeOut + scale(1 → 0.95) | 0.15s |
 

@@ -7006,8 +7006,8 @@ kept, so who they were can't be recovered.
 ## Sep 30 2026: one picture per load
 
 Adam: *"no multiple loads, or flashes and then load again"*. Two audits and a frame-by-frame
-recorder (`node_modules/.cache/qa/film.mjs`, CDP screencast plus a DOM probe; `sheet.py` makes the
-contact sheet) found pages arriving as two or three different pictures in a row. The rules:
+recorder (`~/.claude/skills/site-forge/scripts/film-load.mjs`, CDP screencast plus a DOM probe;
+`film-sheet.py` makes the contact sheet; run from `v2/` so `@playwright/test` resolves) found pages arriving as two or three different pictures in a row. The rules:
 
 - **A loading.tsx renders the page's OWN loading component, never a skeleton of its own.**
   Dashboard: `DashboardSkeleton` (each widget's exported skeleton, in the page's layout). Cases,
@@ -7062,3 +7062,29 @@ after that, clicking dashboard, cases, calendar and timeline showed ONE state ea
 once the first case-list visit of the session had loaded its code
 (deadline hub, case summary, calendar filters and grid, case filter bar and cards); the timeline
 grid's height follows the number of cases, so its skeleton cannot know it.
+
+### Shipping it (Sep 30 2026, 6:55 to 7:48 AM EDT): what the deploys taught
+
+- **The first build failed and only a build could have caught it.** Next prerenders a route's
+  `loading.tsx` at build time; `/perm-case-status`'s loading header read `?case=` with no Suspense
+  boundary and the build stopped ("useSearchParams() should be wrapped in a suspense boundary").
+  Its fallback is now the same header with an empty box. There is no local build here (it would
+  read the retired Turso database, billed per row, or need a read-only sqld token minted as root),
+  so a change to anything Next prerenders gets its deploy's Build step watched before it is called
+  shipped.
+- **Measured on production after deploy** (recorder, 12 public loads and clicks): no skeleton
+  cycles; layout shift 0 on nine, under 0.06 on the rest (the header gaining Sign in on
+  /reset-password, the heading font swapping in, the attorney page's decorative shapes). Header
+  71px at every width from 400, 99px below, equal to the CSS default. Signed-in, in Adam's Chrome:
+  four skeletons were resized from measurement (deadline hub was 28px tall, case summary 59px
+  short, calendar filters 36px short, case filter bar 60px short); with the case list and timeline
+  warm too, dashboard, cases, calendar and timeline each open in ONE state after the first case
+  list visit of a session.
+- **`staleTimes.dynamic` is 300**, not 30: each signed-in click still showed 0.5 to 1.3s of
+  skeleton while the server re-sent a client shell.
+- **A truncated `.next/dev/types/routes.d.ts` refused a push**: a running `pnpm dev` (not ours)
+  wrote a shorter file over a longer one and the old tail stayed. Read the file's END; delete
+  `.next/dev/types` (generated) and push again; leave the other session's dev server running.
+- **`scripts/film-load.mjs` lives in the site-forge skill now**; the copies under
+  `node_modules/.cache/qa/` are scratch and a reinstall wipes them.
+

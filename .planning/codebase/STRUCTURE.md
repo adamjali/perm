@@ -446,7 +446,7 @@ perm-tracker/                      # Repository root
 | `skeletons/` | Loading states | Skeleton components for each page |
 | `status/` | Status badges | PERM status/progress badge components |
 | `timeline/` | Timeline view | Timeline visualization components |
-| `ui/` | Core UI primitives | shadcn/ui + custom: `Button`, `Card`, `Dialog`, `Input`, `Badge`, `Tooltip`, `Popover`, `Command`, `ScrollArea`, `DropdownMenu`, `AlertDialog`, `Switch`, `Checkbox`, `Label`, `Skeleton`, `Spinner`, `MagneticButton`, `PageTransition`, `LottieAnimation`, `Lightbox`, `NavLink`, `ErrorBoundary` |
+| `ui/` | Core UI primitives | shadcn/ui + custom: `Button`, `Card`, `Dialog`, `Input`, `Badge`, `Tooltip`, `Popover`, `Command`, `ScrollArea`, `DropdownMenu`, `AlertDialog`, `Switch`, `Checkbox`, `Label`, `Skeleton`, `Spinner`, `MagneticButton`, `LottieAnimation`, `Lightbox`, `NavLink`, `ErrorBoundary` (`PageTransition` deleted Sep 30 2026) |
 
 ### `v2/src/hooks/` -- Custom Hooks
 

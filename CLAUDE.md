@@ -251,7 +251,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 29 2026".
   codes keep 15), every send goes through `sendOrQueue` and a fixable failure waits in `emailRetries`; the pools
   were raised (case confirmations 15 to 60, sign-in codes 40 to 80). The Sep 28 hit was real demand, not abuse.
 
-## Sep 30 2026, in four lines
+## Sep 30 2026, in five lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026: one picture per load".
 
@@ -262,3 +262,5 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026: one picture per l
 - **Signed-in pages stay warm**: `WarmAppQueries` in the app layout, and 5-minute reuse of visited pages.
 - **The home curtain** is server markup first in `<body>`, lifts at DOMContentLoaded over the page; the
   header is one line from 400px up (desktop nav from 1280px).
+- **Measured on production after deploy**, and the first build failed on a `loading.tsx` URL read: Next
+  prerenders loading files, and only a build catches it; there is no local build, so watch the deploy's Build step.

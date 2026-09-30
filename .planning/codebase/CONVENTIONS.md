@@ -546,6 +546,23 @@ import { toast } from "sonner";
 import { toast } from "@/lib/toast";
 ```
 
+## Loading States (Sep 30 2026)
+
+- A route's `loading.tsx` renders the page's own loading component, never a skeleton of its
+  own (`DashboardSkeleton`, `CasesLoadingSkeleton`, `CaseDetailSkeleton`, `EditPageSkeleton`,
+  `CalendarSkeleton`, `TimelineSkeleton`; notifications renders the page itself). A widget
+  exports its loading component so the route skeleton can be built from it.
+- No `loading.tsx` on prerendered pages; none above `(authenticated)`.
+- A client component that reads the URL on a public page uses `useUrlSearchParams` and sits in a
+  `SearchParamsBoundary` (`src/hooks/useUrlSearchParams.ts`), whose fallback is the component
+  itself with no parameters, so the prerender holds the whole tool.
+- Next prerenders a route's `loading.tsx` at BUILD time: anything in it that reads the URL needs
+  its own Suspense boundary, and only `next build` catches the omission.
+- Nothing above the fold animates in on mount; keep what the previous rows showed while the next
+  page loads (`usePublicQuery().previous`).
+- New signed-in page with its own queries: add them to `WarmAppQueries` with the page's EXACT
+  arguments (share the builder, as `caseListQueryArgs` does).
+
 ## Component Hierarchy
 
 ```mermaid
@@ -555,14 +572,12 @@ graph TD
     ConvexProvider["ConvexClientProvider"]
     AuthProvider["AuthProvider"]
     ThemeProvider["ThemeProvider"]
-    PageTransition["PageTransition"]
 
     RootLayout --> SharedProviders
     SharedProviders --> ConvexProvider
     ConvexProvider --> AuthProvider
     AuthProvider --> ThemeProvider
-    ThemeProvider --> PageTransition
-    PageTransition --> Pages
+    ThemeProvider --> Pages
 
     Pages --> PublicPages["(public) Home, Blog, Guides"]
     Pages --> AuthPages["(auth) Login, Signup"]
