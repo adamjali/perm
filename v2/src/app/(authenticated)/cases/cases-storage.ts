@@ -165,3 +165,49 @@ export function parseURLPage(searchParams: URLSearchParams): number {
   const page = searchParams.get("page");
   return page ? Math.max(1, parseInt(page, 10)) : 1;
 }
+
+// ============================================================================
+// THE LIST QUERY'S ARGUMENTS
+// ============================================================================
+
+/**
+ * The arguments for `api.cases.listFiltered`. One builder for the case list
+ * and for WarmAppQueries, which keeps the same query subscribed on every
+ * signed-in page: Convex shares a subscription only when the arguments are
+ * identical, so two hand-written copies would drift into two queries and the
+ * warm one would warm nothing.
+ */
+export function caseListQueryArgs(
+  filters: CaseListFilters,
+  sort: CaseListSort,
+  page: number,
+  pageSize: number,
+) {
+  return {
+    status: filters.status,
+    progressStatus: filters.progressStatus,
+    searchQuery: filters.searchQuery,
+    favoritesOnly: filters.favoritesOnly,
+    duplicatesOnly: filters.duplicatesOnly,
+    activeOnly: filters.activeOnly,
+    sortBy: sort.sortBy,
+    sortOrder: sort.sortOrder,
+    page,
+    pageSize,
+  };
+}
+
+/**
+ * What the case list asks for when it opens with no parameters in the URL:
+ * the saved filters and sort (or the defaults), page 1, the saved page size.
+ * The case list's own starting state is built from the same pieces.
+ */
+export function defaultCaseListQueryArgs() {
+  const none = new URLSearchParams();
+  return caseListQueryArgs(
+    getStoredFilters() ?? parseURLFilters(none),
+    getStoredSort() ?? parseURLSort(none),
+    1,
+    getStoredPageSize(),
+  );
+}

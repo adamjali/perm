@@ -1,13 +1,19 @@
 "use client";
 
+import { useMemo } from "react";
+import { usePathname } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
+import { defaultCaseListQueryArgs } from "@/app/(authenticated)/cases/cases-storage";
 
 /**
  * Keeps the main pages' queries subscribed on every signed-in page, so moving
- * between the dashboard, the calendar and the timeline renders each one
- * filled in, not as skeletons that resolve one by one.
+ * between the dashboard, the case list, the calendar and the timeline renders
+ * each one filled in, not as skeletons that resolve one by one. (Measured on
+ * production Sep 30 2026: with the dashboard and calendar warm, those two
+ * opened with no skeleton at all; the case list and timeline, not yet warm,
+ * showed one for 0.7 to 1.2 seconds on every visit.)
  *
  * Convex shares one subscription per (query, arguments) pair across the whole
  * client, so these cost nothing extra while the dashboard is open, and on any
@@ -28,9 +34,24 @@ export function WarmAppQueries() {
   useQuery(api.dashboard.getRecentActivity);
   useQuery(api.dolProcessingTimes.getLatest);
   useQuery(api.deadlineEnforcement.isEnforcementEnabled);
-  // Calendar (its default filters) and the timeline's saved range.
+  // Calendar (its default filters).
   useQuery(api.calendar.getCalendarEvents, { showCompleted: false, showClosed: false });
   useQuery(api.calendar.getCalendarPreferences);
-  useQuery(api.timeline.getPreferences);
+  // The timeline at its saved range, asked exactly as the page asks.
+  const timelinePrefs = useQuery(api.timeline.getPreferences);
+  useQuery(
+    api.timeline.getCasesForTimeline,
+    timelinePrefs === undefined ? "skip" : { timeRange: timelinePrefs?.timeRange ?? 6 },
+  );
+  // The case list as it opens with no URL parameters: saved filters, sort and
+  // page size. Re-read on every navigation, because leaving the list is when
+  // a changed filter has just been saved.
+  const pathname = usePathname();
+  const caseListArgs = useMemo(
+    () => defaultCaseListQueryArgs(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- storage is re-read per navigation
+    [pathname],
+  );
+  useQuery(api.cases.listFiltered, isSigningOut ? "skip" : caseListArgs);
   return null;
 }

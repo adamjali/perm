@@ -82,6 +82,7 @@ import {
   parseURLFilters,
   parseURLSort,
   parseURLPage,
+  caseListQueryArgs,
 } from "./cases-storage";
 
 // ============================================================================
@@ -336,18 +337,12 @@ export function CasesPageClient() {
   // ============================================================================
 
   // Send all parameters to server - server handles everything
-  const caseListDataRaw = useQuery(api.cases.listFiltered, {
-    status: filters.status,
-    progressStatus: filters.progressStatus,
-    searchQuery: filters.searchQuery,
-    favoritesOnly: filters.favoritesOnly,
-    duplicatesOnly: filters.duplicatesOnly,
-    activeOnly: filters.activeOnly,
-    sortBy: sort.sortBy,
-    sortOrder: sort.sortOrder,
-    page: currentPage,
-    pageSize: pageSize,
-  });
+  // Built by the same function WarmAppQueries uses, so returning to this page
+  // with the saved filters finds the query already subscribed and answered.
+  const caseListDataRaw = useQuery(
+    api.cases.listFiltered,
+    caseListQueryArgs(filters, sort, currentPage, pageSize),
+  );
 
   // Cache the last successful result to prevent skeleton flash during re-fetches
   const [cachedCaseListData, setCachedCaseListData] = useState(caseListDataRaw);
