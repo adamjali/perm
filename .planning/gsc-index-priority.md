@@ -1,6 +1,33 @@
 # GSC indexing priority list
 
-**Run of 2026-09-27, 9:27 to 9:43 PM EDT: 11 accepted, the 12th refused.**
+**Run of 2026-09-30, 2:33 to 2:49 PM EDT: 11 accepted, the 12th refused.** Automatic daily
+rounds resumed the same afternoon (session timer, 3:07, 5:07 and 7:07 PM; see the Sep 30 queue
+at the end of this file for what remains).
+
+The cap was 11 for the tenth run running. The sitemap index was resubmitted first (about 2:31 PM,
+"Sitemap submitted successfully"), because Google had last read it Sep 23 and never seen
+`groups.xml` (4,156 pages). Every never-crawled page answered either "Discovered" or "unknown to
+Google" (`/perm-industries` and all three group pages: no referring sitemap, which is the gap
+the resubmission closes).
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/visa-bulletin/2026-10` | Discovered, never crawled | 2:33 PM |
+| 2 | `/nvc-waiting-list` | Discovered, never crawled | 2:35 PM |
+| 3 | `/perm-cities` | Discovered, never crawled | 2:36 PM |
+| 4 | `/perm-industries` | unknown to Google | 2:38 PM |
+| 5 | `/perm-countries` | Discovered, never crawled | 2:39 PM |
+| 6 | `/perm-cities/new-york-ny` | unknown to Google | 2:40 PM |
+| 7 | `/perm-industries/541511` | unknown to Google | 2:42 PM |
+| 8 | `/perm-countries/india` | unknown to Google | 2:43 PM |
+| 9 | `/tools/salary-explorer` | indexed (HTML changed Sep 30) | 2:45 PM |
+| 10 | `/case-search` | indexed (HTML changed Sep 30) | 2:46 PM |
+| 11 | `/lca-wages` | indexed (HTML changed Sep 30) | 2:48 PM |
+| 12 | `/tools/i485-queue-position` | indexed; **refused, Quota Exceeded** | 2:49 PM |
+
+---
+
+**Previous run:** 2026-09-27, 9:27 to 9:43 PM EDT: 11 accepted, the 12th refused.
 
 The cap was 11 for the ninth run running. It ran after both of the evening's deploys (8:14 and
 9:24 PM), so every page Google fetches now carries the history search, the breakdown pages'
@@ -647,4 +674,15 @@ Then request, in order (inspected Sep 30 where marked):
 
 Dropped: the translations. `/zh` is indexed on its own (inspected); inspect `/es`, `/pt-br`, `/ko`
 and `/vi` before spending a slot on any of them.
+
+**Remaining after the Sep 30 run (the automatic round works this list, top first):**
+
+1. `/tools/i485-queue-position` (refused Sep 30 on quota; indexed, HTML changed Sep 30)
+2. `/perm-cases`, `/pwd-cases`, `/lca-cases` (indexed; HTML changed Sep 30)
+3. `/guides/perm-application-on-hold-meaning`
+4. The Sep 25 queue from its item 1 (inspect first; much of it may already be indexed)
+5. `/es`, `/pt-br`, `/ko`, `/vi`: inspect only; request any that are not indexed
+
+When every item above is either indexed or requested, the queue is EMPTY: say so here in one
+line ("Queue empty as of <date>"), and the automatic round deletes its own timer.
 
