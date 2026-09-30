@@ -288,8 +288,7 @@ export function TimelineRow({
           <div className="absolute inset-0 z-[25] flex items-center">
             <span className="sticky left-[calc(var(--tl-label,120px)+12px)] ml-3 whitespace-nowrap border-2 border-dashed border-muted-foreground/50 bg-card px-2 py-0.5 text-sm text-muted-foreground">
               {/* Below 360px wide the months beside the names are ~134px. */}
-              <span className="min-[360px]:hidden">No dates</span>
-              <span className="hidden min-[360px]:inline">No dates in range</span>
+              No dates<span className="hidden min-[360px]:inline"> in range</span>
             </span>
           </div>
         )}
