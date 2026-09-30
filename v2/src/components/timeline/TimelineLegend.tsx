@@ -87,8 +87,24 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
           <div className="size-4 shrink-0 border-2 border-dashed border-foreground" aria-hidden="true" />
           <span className="text-sm font-semibold text-foreground whitespace-nowrap">Calculated</span>
         </div>
+        <div className="flex items-center gap-2 min-h-[36px]">
+          <GroupSwatch />
+          <span className="text-sm font-semibold text-foreground whitespace-nowrap">Dates close together</span>
+        </div>
       </div>
     </div>
+  );
+}
+
+/** A square holding several dates, as the timelines draw one (see groupMarkers). */
+function GroupSwatch() {
+  return (
+    <span
+      className="flex size-[22px] shrink-0 items-center justify-center border-2 border-foreground bg-background text-sm font-bold leading-none text-foreground"
+      aria-hidden="true"
+    >
+      3
+    </span>
   );
 }
 
@@ -97,7 +113,7 @@ export function TimelineLegend({ className = "", sticky = false }: TimelineLegen
  */
 export function TimelineLegendCompact({ className = "" }: { className?: string }) {
   return (
-    <div className={`flex flex-wrap gap-4 ${className}`}>
+    <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 ${className}`}>
       {STAGE_COLORS.map((stage) => (
         <div
           key={stage.name}
@@ -113,6 +129,10 @@ export function TimelineLegendCompact({ className = "" }: { className?: string }
           </span>
         </div>
       ))}
+      <div className="flex items-center gap-1.5">
+        <GroupSwatch />
+        <span className="text-sm font-semibold text-foreground">Dates close together</span>
+      </div>
     </div>
   );
 }

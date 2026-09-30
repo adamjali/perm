@@ -58,7 +58,17 @@ describe("TimelineMilestoneMarker - Position", () => {
     const { container } = renderWithProviders(
       <TimelineMilestoneMarker {...getDefaultProps()} position={input} />
     );
-    expect(container.querySelector(".absolute")).toHaveStyle({ left: expected });
+    const el = container.querySelector(".absolute") as HTMLElement;
+    expect(el.style.getPropertyValue("--x")).toBe(expected);
+  });
+
+  it("keeps the square inside the grid's edges (the clamp is in its class)", () => {
+    const { container } = renderWithProviders(
+      <TimelineMilestoneMarker {...getDefaultProps()} position={0} />
+    );
+    expect(container.querySelector(".absolute")!.className).toContain(
+      "left-[clamp(12px,var(--x),calc(100%_-_12px))]"
+    );
   });
 
   it("applies transform translate for centering", () => {
@@ -297,5 +307,43 @@ describe("TimelineMilestoneMarker - Edge Cases", () => {
       <TimelineMilestoneMarker {...getDefaultProps()} className="custom-test-class" />
     );
     expect(container.querySelector(".custom-test-class")).toBeInTheDocument();
+  });
+});
+
+describe("TimelineMilestoneMarker - several dates in one square", () => {
+  const job = createMockMilestone({ field: "jobOrderStartDate", label: "Job order starts", stage: "recruitment", color: "#9333EA", date: "2026-08-01" });
+  const ad1 = createMockMilestone({ field: "sundayAdFirstDate", label: "First Sunday ad", stage: "recruitment", color: "#9333EA", date: "2026-08-02" });
+  const pwd = createMockMilestone({ field: "pwdExpirationDate", label: "PWD expires", stage: "pwd", color: "#0066FF", date: "2026-08-03" });
+
+  it("shows how many dates it holds, and no count for one", () => {
+    const { container, rerender } = renderWithProviders(
+      <TimelineMilestoneMarker {...getDefaultProps()} milestone={job} grouped={[ad1, pwd]} />
+    );
+    expect(container.querySelector("[data-group-count]")?.textContent).toBe("3");
+    rerender(<TimelineMilestoneMarker {...getDefaultProps()} milestone={job} />);
+    expect(container.querySelector("[data-group-count]")).toBeNull();
+  });
+
+  it("takes the stage colour when every date shares it, and is plain when they don't", () => {
+    const same = renderWithProviders(
+      <TimelineMilestoneMarker {...getDefaultProps()} milestone={job} grouped={[ad1]} />
+    );
+    const sameSquare = same.container.querySelector("[data-group-count]")!.parentElement as HTMLElement;
+    expect(sameSquare.style.backgroundColor).not.toBe("");
+    same.unmount();
+    const mixed = renderWithProviders(
+      <TimelineMilestoneMarker {...getDefaultProps()} milestone={job} grouped={[pwd]} />
+    );
+    const mixedSquare = mixed.container.querySelector("[data-group-count]")!.parentElement as HTMLElement;
+    expect(mixedSquare.style.backgroundColor).toBe("");
+    expect(mixedSquare.className).toContain("bg-background");
+  });
+
+  it("names every date it holds for screen readers", () => {
+    renderWithProviders(
+      <TimelineMilestoneMarker {...getDefaultProps()} milestone={job} grouped={[ad1, pwd]} />
+    );
+    const label = screen.getByRole("img").getAttribute("aria-label") ?? "";
+    for (const text of ["Job order starts", "First Sunday ad", "PWD expires"]) expect(label).toContain(text);
   });
 });

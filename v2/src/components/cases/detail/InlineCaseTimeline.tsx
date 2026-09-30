@@ -13,7 +13,7 @@ import {
   type RangeBar,
 } from "@/lib/timeline";
 import { Z_INDEX } from "@/lib/timeline/constants";
-import { assignMarkerLanes, FOLDED_LANE, foldedMarkers, MARKER_LANE_OFFSETS, MIN_MONTH_PX } from "@/lib/timeline/positioning";
+import { groupMarkers, groupPosition, MIN_MONTH_PX } from "@/lib/timeline/positioning";
 import { useScrollToToday } from "@/lib/timeline/useScrollToToday";
 import { TimelineHeader } from "@/components/timeline/TimelineHeader";
 import { TimelineMilestoneMarker } from "@/components/timeline/TimelineMilestoneMarker";
@@ -44,8 +44,8 @@ export interface InlineCaseTimelineProps {
 /** The stage column's width (w-28: "Recruitment" fits whole), which the
  *  Today line is offset by and --tl-label repeats. */
 const LABEL_WIDTH = 112;
-/** The marker track at the top of each lane (room for the lanes above and
- *  below the middle, see MARKER_LANE_OFFSETS), and one band's slot below it. */
+/** The marker track at the top of each lane (a grouped marker is 22px, with
+ *  room for its hover growth), and one band's slot below it. */
 const TRACK = 44;
 const SLOT = 20;
 
@@ -301,8 +301,7 @@ export function InlineCaseTimeline({
                 const markerPositions = row.milestones.map((m) =>
                   calculatePosition(m.date, windowStartMs, windowDurationMs)
                 );
-                const markerLanes = assignMarkerLanes(markerPositions, months.length);
-                const markerFolds = foldedMarkers(markerPositions, markerLanes);
+                const markerGroups = groupMarkers(markerPositions, months.length);
                 return (
                   <div
                     key={row.stage}
@@ -350,17 +349,17 @@ export function InlineCaseTimeline({
                       ))}
 
                       <div className="absolute inset-x-0 top-0" style={{ height: `${TRACK}px` }}>
-                        {row.milestones.map((milestone, i) =>
-                          markerLanes[i] === FOLDED_LANE ? null : (
+                        {markerGroups.map((group) => {
+                          const [first, ...rest] = group.map((j) => row.milestones[j]!);
+                          return (
                             <TimelineMilestoneMarker
-                              key={`${milestone.field}-${milestone.date}`}
-                              milestone={milestone}
-                              position={markerPositions[i] ?? 0}
-                              offsetY={MARKER_LANE_OFFSETS[markerLanes[i] ?? 0]}
-                              folded={(markerFolds.get(i) ?? []).map((j) => row.milestones[j]!)}
+                              key={`${first!.field}-${first!.date}`}
+                              milestone={first!}
+                              position={groupPosition(markerPositions, group)}
+                              grouped={rest}
                             />
-                          )
-                        )}
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

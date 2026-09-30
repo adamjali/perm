@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { TimelineGrid } from "@/components/timeline/TimelineGrid";
 import { TimelineControls } from "@/components/timeline/TimelineControls";
-import { TimelineLegend } from "@/components/timeline/TimelineLegend";
+import { TimelineLegend, TimelineLegendCompact } from "@/components/timeline/TimelineLegend";
 import { CaseSelectionModal, type CaseForSelection } from "@/components/timeline/CaseSelectionModal";
 import { PageHeading } from "../components/PageHeading";
 import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
@@ -40,11 +40,10 @@ export function TimelineSkeleton() {
           </div>
         </div>
       </div>
+      {/* The key is static, so the skeleton draws the real one where the page does. */}
+      <TimelineLegendCompact className="mb-3" />
       <div className="min-h-[160px] border-2 border-foreground bg-card shadow-hard">
         <Skeleton variant="block" className="h-[320px] border-0" />
-      </div>
-      <div className="mt-6">
-        <Skeleton variant="block" className="h-16" />
       </div>
     </div>
   );
@@ -328,6 +327,9 @@ export function TimelinePageClient() {
       {/* The grid carries its own frame and its own sideways scroll. This used
           to add a second border, shadow and scroller around it: a doubled
           frame, and two scroll containers competing for one swipe. */}
+      {/* The key sits above the grid: below it, a phone reached it only after
+          scrolling past every case. */}
+      <TimelineLegendCompact className="mb-3" />
       <div className="flex-1 min-h-[160px]">
         <TimelineGrid
           cases={displayedCases}
@@ -338,10 +340,6 @@ export function TimelinePageClient() {
         />
       </div>
 
-      {/* Legend */}
-      <div className="mt-6">
-        <TimelineLegend />
-      </div>
 
       {/* Case Selection Modal */}
       <CaseSelectionModal

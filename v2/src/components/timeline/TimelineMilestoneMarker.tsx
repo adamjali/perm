@@ -2,13 +2,12 @@
  * TimelineMilestoneMarker Component
  * Renders a milestone marker on the timeline grid with tooltip and navigation.
  *
- * Features:
- * - 12px circle with 3px black border
- * - Background color from milestone.color
- * - Absolute positioned at percentage
- * - Hover: scale animation with spring physics (1 -> 1.3)
- * - Click: navigate to case detail page
- * - Animated tooltip fade-in
+ * - A 16px square in the stage's colour, or a 22px square with a count when
+ *   several dates sit too close to tell apart (see groupMarkers): coloured
+ *   when they share a stage, plain when they don't.
+ * - Placed at a percentage, clamped 12px inside each edge so a square is
+ *   never half hidden.
+ * - Hover or tap lists every date it holds; click opens the case.
  *
  * Phase: 24 (Timeline Visualization)
  * Created: 2025-12-26
@@ -22,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { formatISODate } from "@/lib/utils/date";
 import { clampPosition } from "@/lib/timeline/positioning";
 import { Z_INDEX } from "@/lib/timeline/constants";
-import type { Milestone } from "@/lib/timeline/types";
+import { STAGE_ON_FILL, type Milestone } from "@/lib/timeline/types";
 
 // ============================================================================
 // Types
@@ -50,16 +49,11 @@ export interface TimelineMilestoneMarkerProps {
   onNavigate?: (caseId: string) => void;
 
   /**
-   * Vertical offset in px from the row's middle, for markers moved into a
-   * lane so they do not cover a neighbour (see assignMarkerLanes).
+   * The other dates drawn in this same square because they sit too close to
+   * tell apart (see groupMarkers). The square then shows how many dates it
+   * holds, and its tooltip lists every one.
    */
-  offsetY?: number;
-
-  /**
-   * Nearby milestones with no lane of their own (see foldedMarkers). This
-   * marker shows their count as "+N" and lists them in its tooltip.
-   */
-  folded?: Milestone[];
+  grouped?: Milestone[];
 
   /**
    * Additional CSS classes
@@ -99,11 +93,12 @@ export function TimelineMilestoneMarker({
   position,
   caseId,
   onNavigate,
-  offsetY = 0,
-  folded = [],
+  grouped = [],
   className,
 }: TimelineMilestoneMarkerProps) {
   const clampedPosition = clampPosition(position);
+  const all = [milestone, ...grouped];
+  const oneStage = all.every((m) => m.stage === milestone.stage);
   const [isHovered, setIsHovered] = React.useState(false);
 
   // Handle click navigation
@@ -127,12 +122,16 @@ export function TimelineMilestoneMarker({
   return (
     <div
       className={cn(
-        "absolute top-1/2 cursor-pointer",
+        // Kept a square's half-width inside each edge, or a date at the start
+        // of the range is half hidden under the sticky names (Sep 30 2026).
+        // Shifts a mark by at most a few px there; the tooltip gives the date.
+        // The clamp lives in the class and the position in --x, because an
+        // inline clamp() is dropped by some renderers (happy-dom among them).
+        "absolute top-1/2 cursor-pointer left-[clamp(12px,var(--x),calc(100%_-_12px))]",
         className
       )}
       style={{
-        left: `${clampedPosition}%`,
-        top: offsetY ? `calc(50% + ${offsetY}px)` : undefined,
+        ["--x" as string]: `${clampedPosition}%`,
         transform: "translate(-50%, -50%)",
         zIndex: isHovered ? Z_INDEX.milestoneHovered : Z_INDEX.milestone,
       }}
@@ -144,33 +143,37 @@ export function TimelineMilestoneMarker({
       onBlur={() => setIsHovered(false)}
       tabIndex={onNavigate ? 0 : undefined}
       role={onNavigate ? "button" : "img"}
-      aria-label={`${[milestone, ...folded].map((m) => `${m.label}: ${formatISODate(m.date)}`).join("; ")}${onNavigate ? " - Click to view case" : ""}`}
+      aria-label={`${all.map((m) => `${m.label}: ${formatISODate(m.date)}`).join("; ")}${onNavigate ? " - Click to view case" : ""}`}
     >
       {/* Milestone marker: a square, like every other mark in the app */}
+      {/* Milestone marker: a square, like every other mark in the app. A
+          square holding several dates is larger and says how many; it takes
+          the stage colour when they share one, and is plain when they don't. */}
       <motion.div
         className={cn(
-          "size-4",
+          all.length > 1 ? "flex size-[22px] items-center justify-center" : "size-4",
           "border-2 border-foreground",
           "shadow-hard-sm",
           // Dashed border for calculated milestones
-          milestone.isCalculated && "border-dashed"
+          all.length === 1 && milestone.isCalculated && "border-dashed",
+          all.length > 1 && !oneStage && "bg-background text-foreground"
         )}
-        style={{ backgroundColor: milestone.color }}
+        style={
+          all.length === 1 || oneStage
+            ? { backgroundColor: milestone.color, color: STAGE_ON_FILL[milestone.stage] }
+            : undefined
+        }
         initial={{ scale: 1 }}
         animate={{ scale: isHovered ? 1.3 : 1 }}
         whileTap={{ scale: 1.1 }}
         transition={springConfig}
-      />
-
-      {folded.length > 0 && (
-        <span
-          aria-hidden="true"
-          data-folded-count
-          className="absolute left-full top-1/2 ml-1 flex h-5 min-w-5 -translate-y-1/2 items-center justify-center border-2 border-foreground bg-background px-0.5 text-xs font-bold leading-none text-foreground"
-        >
-          +{folded.length}
-        </span>
-      )}
+      >
+        {all.length > 1 && (
+          <span aria-hidden="true" data-group-count className="text-sm font-bold leading-none">
+            {all.length}
+          </span>
+        )}
+      </motion.div>
 
       {/* Tooltip - animated fade-in with spring */}
       <AnimatePresence>
@@ -189,7 +192,7 @@ export function TimelineMilestoneMarker({
             transition={{ duration: 0.15 }}
           >
             <div className="space-y-1">
-              {[milestone, ...folded].map((m) => (
+              {all.map((m) => (
                 <div key={`${m.field}-${m.date}`}>
                   <div className="font-semibold">{m.label}</div>
                   <div className="text-sm opacity-80">{formatISODate(m.date)}</div>

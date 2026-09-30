@@ -270,7 +270,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026: one picture per l
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026 (morning)".
 
 - **Both timelines share one set of parts**: a sticky name column above everything that scrolls, 44px
-  months on a phone, close dates on three lanes and then a "+N".
+  months on a phone, dates too close to tell apart in one square with a count, the key above the grid.
 - **The morning report ranks only still-failing workflows**; one that failed and passed again is history.
 - **Every loading.tsx is rendered the way Next's build renders it**, in a test, so a URL read outside
   Suspense fails locally instead of failing the deploy.

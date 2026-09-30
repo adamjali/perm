@@ -23,12 +23,10 @@ import { parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
 import { extractMilestones, extractRangeBars } from "@/lib/timeline/milestones";
 import {
-  assignMarkerLanes,
-  FOLDED_LANE,
-  foldedMarkers,
   calculatePosition,
   calculateRangePosition,
-  MARKER_LANE_OFFSETS,
+  groupMarkers,
+  groupPosition,
 } from "@/lib/timeline/positioning";
 import { SIDEBAR_WIDTH_CLASSES, Z_INDEX } from "@/lib/timeline/constants";
 import type { Milestone, RangeBar, CaseWithDates } from "@/lib/timeline/types";
@@ -172,8 +170,7 @@ export function TimelineRow({
     );
 
   const markerPositions = visibleMilestones.map((item) => item.position);
-  const markerLanes = assignMarkerLanes(markerPositions, months.length);
-  const markerFolds = foldedMarkers(markerPositions, markerLanes);
+  const markerGroups = groupMarkers(markerPositions, months.length);
 
   // Calculate visible range bars with positions
   const visibleRangeBars = rangeBars
@@ -293,22 +290,21 @@ export function TimelineRow({
           </div>
         )}
 
-        {/* Milestone Markers Layer: markers that would cover a neighbour move
-            into a lane above or below the band; past three lanes they fold
-            into the nearest marker's "+N". */}
-        {visibleMilestones.map((item, i) =>
-          markerLanes[i] === FOLDED_LANE ? null : (
+        {/* Milestone Markers Layer: dates too close to tell apart share one
+            square that says how many it holds (see groupMarkers). */}
+        {markerGroups.map((group) => {
+          const [first, ...rest] = group.map((j) => visibleMilestones[j]!.milestone);
+          return (
             <TimelineMilestoneMarker
-              key={`${item.milestone.field}-${item.milestone.date}`}
-              milestone={item.milestone}
-              position={item.position}
+              key={`${first!.field}-${first!.date}`}
+              milestone={first!}
+              position={groupPosition(markerPositions, group)}
               caseId={caseData.id}
               onNavigate={onNavigate}
-              offsetY={MARKER_LANE_OFFSETS[markerLanes[i] ?? 0]}
-              folded={(markerFolds.get(i) ?? []).map((j) => visibleMilestones[j]!.milestone)}
+              grouped={rest}
             />
-          )
-        )}
+          );
+        })}
       </div>
     </div>
   );

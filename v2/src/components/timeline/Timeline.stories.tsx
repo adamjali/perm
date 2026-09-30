@@ -3,6 +3,7 @@ import { useState } from "react";
 import { addDays, format } from "date-fns";
 import { TimelineGrid, type TimelineCaseData } from "./TimelineGrid";
 import { TimelineControls } from "./TimelineControls";
+import { TimelineLegendCompact } from "./TimelineLegend";
 import { InlineCaseTimeline } from "@/components/cases/detail/InlineCaseTimeline";
 import type { Id } from "../../../convex/_generated/dataModel";
 
@@ -108,6 +109,7 @@ function TimelinePage({ cases }: { cases: TimelineCaseData[] }) {
           eyebrow={`${cases.length} cases displayed`}
         />
       </div>
+      <TimelineLegendCompact className="mb-3" />
       <TimelineGrid cases={cases} timeRange={months} rowHeight={cases.length > 10 ? 48 : 56} />
     </div>
   );

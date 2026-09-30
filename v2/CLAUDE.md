@@ -7104,11 +7104,18 @@ now (`src/components/timeline/`), and the rules that made them fit:
 - **A month is at least 44px** (`MIN_MONTH_PX`): the grid's min width is `var(--tl-label) + months x
   44px`, so a phone scrolls sideways instead of squeezing months to one letter, and
   `useScrollToToday` opens with today a third of the way in. Month labels are always three letters.
-- **Dates close together take lanes, then fold.** `assignMarkerLanes` puts a marker that would
-  overlap its neighbour on one of three lanes (on the band, 14px above, 14px below); past three it
-  returns `FOLDED_LANE`, and `foldedMarkers` gives it to the nearest drawn marker, which shows "+N"
-  beside itself and lists every date in its tooltip. A fourth lane doesn't fit a 56px row, and
-  doubling up (the first version) hid squares again: five dates in six days at 24 months.
+- **Dates too close to tell apart share ONE square that says how many it holds** (replaced lanes
+  the same afternoon). `groupMarkers` joins dates less than a 22px square apart at the narrowest
+  month width (`MIN_MONTH_PX`), so a group never splits when the screen widens; the square sits at
+  the group's middle, in the stage's colour when every date shares a stage and plain when they
+  don't, and its tooltip and label list every date. The lanes version put up to three same-coloured
+  squares in a tower with a "+N" chip beside them, and Adam's phone read it as *"the + and the
+  multiple dots and same color"*: a stack of look-alike squares is noise, a count is a fact.
+- **A square never sits half under an edge.** Its left is `clamp(12px, var(--x), calc(100% -
+  12px))`, set as a Tailwind class with `--x` inline (happy-dom drops an inline `clamp()`, so the
+  tests read `--x`). A date on the first or last day of the range sat half behind the name column.
+- **The colour key sits above the grid**, in the page and its loading skeleton alike; below it, a
+  phone met it only after scrolling past every case.
 - **A tooltip mounts only while hovered.** The range bar's invisible tooltip still counted toward
   the scroll width, and the case timeline scrolled 33px past its last month on a phone.
 - **The "no dates" note is sticky** beside the label column, and reads "No dates" under 360px.
