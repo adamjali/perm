@@ -611,3 +611,40 @@ crawled before tonight's deploy.
 4. `/zh`, `/es`, `/pt-br`, `/ko`, `/vi`
 5. `/guides/perm-application-on-hold-meaning`, then the Sep 25 queue from its item 1
 
+## Queue after the Sep 30 check (supersedes the Sep 27 queue; no round ran Sep 28 to 30)
+
+Checked 2:10 to 2:25 PM EDT Sep 30. The session timers had expired (7 days); nothing was
+requested Sep 28, 29 or 30, so the next round has a full day's quota.
+
+**The move to the Oracle server did not hurt crawling.** Search Console's own reports can't show it
+yet (Pages last updated 9/20, crawl stats 9/28, performance 13.5 hours behind and ending before the
+5:53 PM Sep 28 switch), so the server's nginx logs are the record: Googlebot (66.249.*) made 4,065
+requests from the switch to 2:08 PM Sep 30; 3,888 got 200/304, 153 got 404 (almost all old
+`/_next/static` build files, expected after a rebuild), 23 got 5xx (all on Sep 29, the crawler-flood
+day, none since), and none got 429 or 503. The weekend dip on the performance chart (Sep 26 to 27)
+matches the Sep 19 to 20 weekend.
+
+**Resubmit the sitemap index first (it costs no request slot).** Search Console last read it Sep 23
+and counts 102,019 discovered pages; the live children hold 106,175. The difference, 4,156, is
+exactly `groups.xml` (every `/perm-cities/`, `/perm-industries/` and `/perm-countries/` page), a
+child added Sep 26 that Google has never seen. Same trap as Sep 21: a NEW child is found only when
+the index is re-read.
+
+Then request, in order (inspected Sep 30 where marked):
+
+1. `/visa-bulletin/2026-10`: Discovered, never crawled (inspected). The October bulletin is what
+   people are searching for this week. (`/visa-bulletin` itself is indexed.)
+2. `/nvc-waiting-list`: Discovered, never crawled (inspected; third queue running).
+3. `/perm-cities` (Discovered, no referring page seen, inspected), `/perm-industries`,
+   `/perm-countries`
+4. `/perm-cities/new-york-ny`, `/perm-industries/541511`, `/perm-countries/india`
+5. `/tools/salary-explorer`, `/case-search`, `/lca-wages`, `/tools/i485-queue-position`: indexed,
+   but since the Sep 30 loading pass their server HTML carries the whole tool (salary explorer
+   6,204 words) where it carried a one-line "Loading…". Checked live: no page-level "Loading…".
+6. Next day: `/perm-cases`, `/pwd-cases`, `/lca-cases` (same fix; each still loads its case table's
+   rows in the browser, 1,100+ words around it are in the HTML), then
+   `/guides/perm-application-on-hold-meaning`, then the Sep 25 queue from its item 1.
+
+Dropped: the translations. `/zh` is indexed on its own (inspected); inspect `/es`, `/pt-br`, `/ko`
+and `/vi` before spending a slot on any of them.
+
