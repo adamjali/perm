@@ -46,8 +46,11 @@ export function DeadlineHeroLoadingSkeleton(): ReactNode {
   return (
     <div className={CONTAINER_CLASSES}>
       <div className="hazard-strip-red" aria-hidden="true" />
-      <div className="space-y-4 bg-card p-4">
-        <div className="flex items-center justify-between">
+      {/* Sized to the real widget (measured on production, Sep 30 2026): a
+          66px header over four 194px columns. The first version was 28px
+          taller, so everything below it moved up when the deadlines landed. */}
+      <div className="bg-card">
+        <div className="flex h-[66px] items-center justify-between px-4">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-9 w-24" />
         </div>
@@ -55,10 +58,9 @@ export function DeadlineHeroLoadingSkeleton(): ReactNode {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className={`p-4 min-h-[120px] ${i < 3 ? "md:border-r-2 border-border" : ""}`}
+              className={`p-4 min-h-[194px] ${i < 3 ? "md:border-r-2 border-border" : ""}`}
             >
               <Skeleton className="h-6 w-24 mb-3" />
-              <Skeleton className="h-16 mb-2" />
               <Skeleton className="h-16" />
             </div>
           ))}

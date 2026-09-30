@@ -63,8 +63,11 @@ export function CalendarSkeleton() {
         />
       </div>
 
-      {/* Filter row */}
-      <Skeleton variant="block" className="mb-4 h-11" />
+      {/* Filter row: the real one is a bordered box around a row of 44px
+          controls, 80px in all (measured on production, Sep 30 2026). */}
+      <div className="mb-4 border-2 border-border p-4">
+        <Skeleton variant="block" className="h-11" />
+      </div>
 
       {/* Phones get the list view, as the real calendar does. */}
       <div className="space-y-3 md:hidden">
@@ -73,7 +76,7 @@ export function CalendarSkeleton() {
         ))}
       </div>
 
-      <div className="hidden md:block">
+      <div className="hidden min-h-[870px] flex-col md:flex">
 
       {/* Toolbar skeleton */}
       <div className="flex items-center justify-between mb-4 flex-wrap gap-4">

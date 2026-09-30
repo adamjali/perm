@@ -22,7 +22,7 @@ describe("SummaryTilesGrid", () => {
     const { container } = renderWithProviders(<SummaryTilesGrid />);
 
     // Four path blocks and the outcome tiles below them.
-    expect(container.querySelectorAll(".h-36, .h-28").length).toBeGreaterThanOrEqual(6);
+    expect(container.querySelectorAll('[data-slot="skeleton"]').length).toBeGreaterThanOrEqual(6);
     // The heading never changes, so it renders while the counts load: the
     // skeleton used to draw a bar in its place and swap it for the text.
     expect(screen.getByText("Case summary")).toBeInTheDocument();

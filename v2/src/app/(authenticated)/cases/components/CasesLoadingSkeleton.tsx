@@ -18,8 +18,9 @@ function CaseCardSkeleton() {
         <Skeleton variant="block" className="w-full h-full" />
       </div>
 
-      {/* Folder Body */}
-      <div className="border-2 border-border bg-manila shadow-hard p-6 pt-10 min-h-[180px]">
+      {/* Folder Body: 288px plus the 32px tab offset is the real card's
+          height in a row of ordinary cases (measured Sep 30 2026). */}
+      <div className="border-2 border-border bg-manila shadow-hard p-6 pt-10 min-h-[288px]">
         {/* Left color bar skeleton */}
         <div className="absolute left-0 top-0 bottom-0 w-1.5">
           <Skeleton variant="block" className="w-full h-full" />
@@ -74,22 +75,24 @@ export function CasesLoadingSkeleton() {
         </div>
       </div>
 
-      {/* Filter Bar Skeleton - More detailed */}
-      <div className="border-2 border-border bg-card p-4 shadow-hard-sm">
-        <div className="flex flex-wrap items-center gap-4">
-          {/* Search input */}
-          <div className="flex-1 min-w-[200px]">
-            <Skeleton variant="block" className="h-10" />
-          </div>
-          {/* Filter dropdowns */}
-          <Skeleton variant="block" className="w-32 h-10" />
-          <Skeleton variant="block" className="w-32 h-10" />
-          <Skeleton variant="block" className="w-28 h-10" />
-          {/* Sort controls */}
-          <div className="flex items-center gap-2">
-            <Skeleton variant="block" className="w-36 h-10" />
-            <Skeleton variant="block" className="w-10 h-10" />
-          </div>
+      {/* The filter bar as it really is (measured on production, Sep 30
+          2026): a bordered p-5 box with two rows of 36px controls, the
+          status tabs over the search and its menus, 136px in all. The first
+          version was one 76px row, so the cards jumped 60px on arrival. */}
+      <div className="space-y-5 border-2 border-border bg-background p-5 shadow-hard">
+        <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-wrap">
+          <Skeleton variant="block" className="h-9 sm:w-20" />
+          <Skeleton variant="block" className="h-9 sm:w-28" />
+          <Skeleton variant="block" className="h-9 sm:w-36" />
+          <Skeleton variant="block" className="h-9 sm:w-14" />
+        </div>
+        <div className="grid grid-cols-2 gap-3 md:flex md:flex-row md:flex-wrap md:items-center">
+          <Skeleton variant="block" className="col-span-2 h-9 md:w-[364px]" />
+          <Skeleton variant="block" className="h-9 md:w-36" />
+          <Skeleton variant="block" className="h-9 md:w-52" />
+          <Skeleton variant="block" className="h-9 md:w-32" />
+          <Skeleton variant="block" className="col-span-2 h-9 md:w-60" />
+          <Skeleton variant="block" className="h-9 md:w-36" />
         </div>
       </div>
 

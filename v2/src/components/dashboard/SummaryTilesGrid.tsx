@@ -21,16 +21,18 @@ export function SummaryTilesSkeleton() {
     <div aria-busy={true}>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="font-heading text-2xl font-bold">Case summary</h2>
-        <Skeleton variant="block" className="h-12 w-28" />
+        <Skeleton variant="block" className="h-[52px] w-28" />
       </div>
+      {/* 155px: the path's and the outcome blocks' real height at desktop
+          (measured on production, Sep 30 2026). */}
       <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
         {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} variant="block" className="h-36" />
+          <Skeleton key={i} variant="block" className="h-[155px]" />
         ))}
       </div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-6">
         {Array.from({ length: 2 }).map((_, i) => (
-          <Skeleton key={i} variant="block" className="h-28" />
+          <Skeleton key={i} variant="block" className="h-[155px]" />
         ))}
       </div>
     </div>

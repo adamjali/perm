@@ -149,13 +149,15 @@ const nextConfig: NextConfig = {
     // motion/react removed — its dep motion-dom has ESM export bugs with Webpack
     // zod removed — optimizePackageImports breaks ZodNumber.int() (ReferenceError: int is not defined)
     optimizePackageImports: ["date-fns"],
-    // Reuse a visited dynamic page's server payload for 30 seconds on a
-    // client navigation (the default is 0, so every click back to the
-    // dashboard or the case list re-rendered it on the server behind its
-    // loading skeleton). The signed-in pages are client shells whose data
-    // comes live from Convex, so a reused shell is never stale; the one
-    // public dynamic page is a case lookup, where 30 seconds is nothing.
-    staleTimes: { dynamic: 30 },
+    // Reuse a visited dynamic page's server payload for 5 minutes on a
+    // client navigation. The default is 0, so every click back to the
+    // dashboard, cases or calendar re-rendered it on the server behind its
+    // loading skeleton: measured on production Sep 30 2026, 0.5 to 1.3
+    // seconds of skeleton per click, with the data already warm. The
+    // signed-in pages are client shells whose data comes live from Convex,
+    // so a reused shell is never stale; the one public dynamic page is a
+    // case lookup, whose answer is dated on the page.
+    staleTimes: { dynamic: 300 },
   },
 
   // Disable Webpack ModuleConcatenationPlugin on client bundles

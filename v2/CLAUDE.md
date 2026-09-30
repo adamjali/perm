@@ -7043,7 +7043,7 @@ contact sheet) found pages arriving as two or three different pictures in a row.
 - **Signed-in navigation is warm.** `WarmAppQueries` in the app layout subscribes to the
   dashboard, calendar and timeline queries with the widgets' EXACT arguments (a different arg,
   "skip" included, is a second subscription), and `experimental.staleTimes.dynamic = 30` reuses a
-  visited page's payload for 30 seconds. Saved case filters and the timeline's saved range are
+  visited page's payload for 5 minutes (it was 30 seconds; each signed-in click still showed 0.5 to 1.3 seconds of skeleton while the server re-sent a shell). Saved case filters and the timeline's saved range are
   read before the first query, not after it (each loaded its list twice).
 - **The home curtain** is server markup first in `<body>` (root layout, every route, hidden
   unless `html[data-pre]`), lifts at DOMContentLoaded (not window.load) with the 600ms floor and
@@ -7056,5 +7056,6 @@ contact sheet) found pages arriving as two or three different pictures in a row.
 
 Not done, measured: the header link spinner still widens the label on a SLOW navigation
 (rare now that pages prefetch); the article table of contents appears after hydration (it sits
-in a fixed-width sidebar, so nothing moves); the signed-in widget skeletons are sized from code,
-not from a render (no signed-in session on this machine) and want a check in a real browser.
+in a fixed-width sidebar, so nothing moves); the signed-in skeletons were then measured on production in Adam's browser and resized
+(deadline hub, case summary, calendar filters and grid, case filter bar and cards); the timeline
+grid's height follows the number of cases, so its skeleton cannot know it.

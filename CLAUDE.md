@@ -259,6 +259,6 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026: one picture per l
   above the fold animates in on mount (the keyed page transition is gone).
 - **Public data tools render whole on the server** (`SearchParamsBoundary`); tables keep their rows while
   the next page loads (`usePublicQuery().previous`).
-- **Signed-in pages stay warm**: `WarmAppQueries` in the app layout, and 30-second reuse of visited pages.
+- **Signed-in pages stay warm**: `WarmAppQueries` in the app layout, and 5-minute reuse of visited pages.
 - **The home curtain** is server markup first in `<body>`, lifts at DOMContentLoaded over the page; the
   header is one line from 400px up (desktop nav from 1280px).
