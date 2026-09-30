@@ -7088,3 +7088,41 @@ grid's height follows the number of cases, so its skeleton cannot know it.
 - **`scripts/film-load.mjs` lives in the site-forge skill now**; the copies under
   `node_modules/.cache/qa/` are scratch and a reinstall wipes them.
 
+
+## Sep 30 2026 (morning): the two timelines, and a report that counted fixed failures
+
+Adam's phone screenshot of /timeline: markers on top of case names, "no dates" boxes over names,
+one-letter months, squares covering squares. Then *"not only the layering but clashing, overflow,
+fit, and the titles/header"*. Both timelines (the page and the case page's) share one set of parts
+now (`src/components/timeline/`), and the rules that made them fit:
+
+- **A sticky column must sit ABOVE what scrolls under it, and nothing between may make a stacking
+  context.** The label column carries `Z_INDEX.stickyLabel` (35: above bars 10, markers 20, today
+  line 20 and its label 30, below a hovered marker 40); the row's content area has no z-index, so its
+  children compete with the column one by one. A z-indexed row made the whole row one layer and the
+  markers slid over the names.
+- **A month is at least 44px** (`MIN_MONTH_PX`): the grid's min width is `var(--tl-label) + months x
+  44px`, so a phone scrolls sideways instead of squeezing months to one letter, and
+  `useScrollToToday` opens with today a third of the way in. Month labels are always three letters.
+- **Dates close together take lanes, then fold.** `assignMarkerLanes` puts a marker that would
+  overlap its neighbour on one of three lanes (on the band, 14px above, 14px below); past three it
+  returns `FOLDED_LANE`, and `foldedMarkers` gives it to the nearest drawn marker, which shows "+N"
+  beside itself and lists every date in its tooltip. A fourth lane doesn't fit a 56px row, and
+  doubling up (the first version) hid squares again: five dates in six days at 24 months.
+- **A tooltip mounts only while hovered.** The range bar's invisible tooltip still counted toward
+  the scroll width, and the case timeline scrolled 33px past its last month on a phone.
+- **The "no dates" note is sticky** beside the label column, and reads "No dates" under 360px.
+
+QA ran in Storybook (`Timeline.stories.tsx`: cases built to break it) through the devtools browser
+at 320, 390, 768 and 1440, light and dark, measuring overlaps, clipping and page overflow; the
+signed-in pages need a sign-in the automation browser doesn't have.
+
+**The morning report ranked fixed failures as FAILING.** Sep 30's email said "GitHub Actions is
+FAILING: 7 failed" when all seven workflows had passed again since. `daily_monitor.py` now ranks only
+a workflow whose newest completed run failed (`recovered()`); the others read "failed, then passed at
+<time>". Every item on that report was a Sep 29 leftover of the server move, already fixed.
+
+**Next prerenders every loading.tsx, and a test now does the same.** `loading-prerender.ssr.test.tsx`
+renders each one with no URL and `useSearchParams` throwing Next's bailout (layout auth and Convex
+stood in), so a loading state that reads the query string outside a Suspense boundary fails in
+seconds instead of failing the deploy, as the 6:54 AM EDT deploy did. Probed with that exact mistake.

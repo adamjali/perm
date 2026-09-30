@@ -264,3 +264,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026: one picture per l
   header is one line from 400px up (desktop nav from 1280px).
 - **Measured on production after deploy**, and the first build failed on a `loading.tsx` URL read: Next
   prerenders loading files, and only a build catches it; there is no local build, so watch the deploy's Build step.
+
+## Sep 30 2026 (morning), in three lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026 (morning)".
+
+- **Both timelines share one set of parts**: a sticky name column above everything that scrolls, 44px
+  months on a phone, close dates on three lanes and then a "+N".
+- **The morning report ranks only still-failing workflows**; one that failed and passed again is history.
+- **Every loading.tsx is rendered the way Next's build renders it**, in a test, so a URL read outside
+  Suspense fails locally instead of failing the deploy.
