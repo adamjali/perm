@@ -1,4 +1,5 @@
-import { CASE_STATUS_FRAME, LookupSkeleton } from "./CaseStatusShell";
+import { Suspense } from "react";
+import { CASE_STATUS_FRAME, CaseStatusHead, LookupSkeleton } from "./CaseStatusShell";
 import { LoadingHead } from "./LoadingHead";
 
 /**
@@ -13,12 +14,19 @@ import { LoadingHead } from "./LoadingHead";
  * frame, heading and form (filled with the number being looked up) and the
  * same reservation. So the loading state and the page's first paint are one
  * picture, and the only change a reader sees is the answer arriving.
+ *
+ * Next PRERENDERS this loading state at build time, where there is no URL, so
+ * the head that reads the number sits in its own boundary whose fallback is
+ * the same head with an empty box. Without it the build fails ("useSearchParams
+ * should be wrapped in a suspense boundary"), as the first deploy did.
  */
 export default function CaseStatusLoading() {
   return (
     <div className={CASE_STATUS_FRAME}>
       <div className="pt-10 sm:pt-12" />
-      <LoadingHead />
+      <Suspense fallback={<CaseStatusHead typed="" />}>
+        <LoadingHead />
+      </Suspense>
       <div className="mt-8">
         <LookupSkeleton />
       </div>
