@@ -127,7 +127,9 @@ def fmt(n: float) -> str:
 
 
 def summarize_runs(runs: list[dict]) -> dict:
-    """Per workflow: runs, failures, cancellations, re-runs. Pure, for the test."""
+    """Per workflow: runs, failures, cancellations, re-runs, and when it last
+    failed and last passed (ISO times, which sort as text). Pure, for the test.
+    """
     by: dict[str, dict] = {}
     for r in runs:
         # Dependabot's version-update runs ("npm_and_yarn in /v2 for x - Update
@@ -135,18 +137,28 @@ def summarize_runs(runs: list[dict]) -> dict:
         if " in /" in (r.get("name") or "") and " - Update #" in (r.get("name") or ""):
             continue
         w = by.setdefault(r.get("name") or "?", {"runs": 0, "failed": 0, "cancelled": 0,
-                                                 "reruns": 0, "running": 0})
+                                                 "reruns": 0, "running": 0,
+                                                 "last_fail": "", "last_ok": ""})
         w["runs"] += 1
         c = r.get("conclusion")
+        at = str(r.get("updated_at") or r.get("created_at") or "")
         if r.get("status") != "completed":
             w["running"] += 1
         elif c in ("failure", "timed_out", "startup_failure"):
             w["failed"] += 1
+            w["last_fail"] = max(w["last_fail"], at)
         elif c == "cancelled":
             w["cancelled"] += 1
+        elif c == "success":
+            w["last_ok"] = max(w["last_ok"], at)
         if (r.get("run_attempt") or 1) > 1:
             w["reruns"] += 1
     return by
+
+
+def recovered(w: dict) -> bool:
+    """A workflow that failed and has passed since."""
+    return bool(w["failed"]) and w["last_ok"] > w["last_fail"]
 
 
 def github_section(since: dt.datetime) -> dict:
@@ -165,23 +177,35 @@ def github_section(since: dt.datetime) -> dict:
         page += 1
     by = summarize_runs(runs)
     lines, statuses = [], []
+    still = 0
     for name in sorted(by):
         w = by[name]
         bits = [f"{w['runs']} run{'s' if w['runs'] != 1 else ''}"]
         if w["failed"]:
-            bits.append(f"{w['failed']} failed")
-            statuses.append("fail" if name in DATA_WORKFLOWS else "warn")
+            # A failure the workflow has since passed is history, not a task:
+            # Sep 30's report called seven fixed failures FAILING (Adam: "i just
+            # want it one day to be all good"). Only the still-failing ones rank.
+            if recovered(w):
+                bits.append(f"{w['failed']} failed, then passed at {et_time(w['last_ok']) or w['last_ok']}")
+            else:
+                still += 1
+                bits.append(f"{w['failed']} failed, still failing")
+                statuses.append("fail" if name in DATA_WORKFLOWS else "warn")
         if w["reruns"]:
             bits.append(f"{w['reruns']} re-run")
-            statuses.append("warn")
         if w["cancelled"]:
             bits.append(f"{w['cancelled']} cancelled")
         if w["running"]:
             bits.append(f"{w['running']} still running")
         lines.append(f"{name}: {', '.join(bits)}")
     failed = sum(w["failed"] for w in by.values())
-    summary = (f"{len(runs)} runs across {len(by)} workflows, "
-               + (f"{failed} failed" if failed else "none failed"))
+    if not failed:
+        tail = "none failed"
+    elif not still:
+        tail = f"{failed} failed and every one has since passed"
+    else:
+        tail = f"{still} workflow{'s' if still != 1 else ''} still failing"
+    summary = f"{len(runs)} runs across {len(by)} workflows, {tail}"
     return section("github", "GitHub Actions (24 h)", worst(statuses), summary, lines)
 
 

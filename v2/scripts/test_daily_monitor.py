@@ -37,14 +37,25 @@ def main() -> int:
           "worst() picks the worst status")
 
     runs = [
-        {"name": "Case status (direct from DOL)", "status": "completed", "conclusion": "failure", "run_attempt": 1},
-        {"name": "Case status (direct from DOL)", "status": "completed", "conclusion": "success", "run_attempt": 2},
+        {"name": "Case status (direct from DOL)", "status": "completed", "conclusion": "failure", "run_attempt": 1,
+         "updated_at": "2026-09-29T08:30:00Z"},
+        {"name": "Case status (direct from DOL)", "status": "completed", "conclusion": "success", "run_attempt": 2,
+         "updated_at": "2026-09-29T13:30:00Z"},
         {"name": "Tests", "status": "completed", "conclusion": "cancelled", "run_attempt": 1},
         {"name": "Tests", "status": "in_progress", "conclusion": None, "run_attempt": 1},
+        {"name": "Oracle build and deploy", "status": "completed", "conclusion": "success", "run_attempt": 1,
+         "updated_at": "2026-09-30T09:00:00Z"},
+        {"name": "Oracle build and deploy", "status": "completed", "conclusion": "failure", "run_attempt": 1,
+         "updated_at": "2026-09-30T11:00:00Z"},
     ]
     by = dm.summarize_runs(runs)
-    check(by["Case status (direct from DOL)"] == {"runs": 2, "failed": 1, "cancelled": 0, "reruns": 1, "running": 0},
+    case = by["Case status (direct from DOL)"]
+    check({k: case[k] for k in ("runs", "failed", "cancelled", "reruns", "running")}
+          == {"runs": 2, "failed": 1, "cancelled": 0, "reruns": 1, "running": 0},
           "a failure and a re-run are both counted")
+    check(dm.recovered(case), "a failure followed by a pass is recovered, so it does not rank as FAILING")
+    check(not dm.recovered(by["Oracle build and deploy"]), "a pass followed by a failure is still failing")
+    check(not dm.recovered(by["Tests"]), "a workflow that never failed is not 'recovered'")
     check(by["Tests"]["cancelled"] == 1 and by["Tests"]["running"] == 1, "cancelled and still-running are told apart")
     check(dm.summarize_runs([{"name": "npm_and_yarn in /v2 for next - Update #1", "status": "completed"}]) == {},
           "Dependabot version-update runs are left out")
