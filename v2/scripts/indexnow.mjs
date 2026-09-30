@@ -21,13 +21,35 @@ const SITEMAP_URL = `https://${HOST}/sitemap.xml`;
 const locs = (xml) =>
   [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1].trim()).filter(Boolean);
 
+// Waits before each retry of a sitemap the server could not answer. On Sep 30
+// 2026 one of 24 children came back as Cloudflare's 520 while the server
+// warmed a fresh deploy, and the whole run failed; the same file answered 200
+// in 1.5 s moments later. A server error is retried; one that persists across
+// all four attempts still fails the run, so a real outage stays loud.
+const RETRY_WAITS_MS = (process.env.INDEXNOW_RETRY_WAITS_MS || "5000,15000,30000")
+  .split(",")
+  .map(Number);
+
 const get = async (url) => {
   // Only sitemaps are fetched here, and Firewall rule 8 lets any client read
   // them, so this runs on CI with no audit key (rule 5 wants its exact value
   // since Sep 25 2026, and that value never leaves the owner's machine).
-  const r = await fetch(url, { headers: { "User-Agent": "permtracker-indexnow/1.0" } });
-  if (!r.ok) throw new Error(`fetch failed: HTTP ${r.status} for ${url}`);
-  return r.text();
+  for (let attempt = 0; ; attempt++) {
+    let why;
+    try {
+      const r = await fetch(url, { headers: { "User-Agent": "permtracker-indexnow/1.0" } });
+      if (r.ok) return r.text();
+      why = `HTTP ${r.status}`;
+      // A 4xx other than 429 is our mistake or a missing file: retrying cannot help.
+      if (r.status < 500 && r.status !== 429) throw new Error(`fetch failed: ${why} for ${url}`);
+    } catch (e) {
+      if (String(e.message).startsWith("fetch failed:")) throw e;
+      why = e.message; // network error: worth another try
+    }
+    if (attempt >= RETRY_WAITS_MS.length) throw new Error(`fetch failed: ${why} for ${url} (after ${attempt + 1} attempts)`);
+    console.log(`  ${url}: ${why}, retrying in ${RETRY_WAITS_MS[attempt] / 1000}s`);
+    await new Promise((res) => setTimeout(res, RETRY_WAITS_MS[attempt]));
+  }
 };
 
 /**

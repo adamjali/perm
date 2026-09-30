@@ -52,6 +52,16 @@ HIDDEN_RE = re.compile(r"opacity:\s*0(?![.\d])")
 # The specific shape the PageTransition regression produced, reported separately
 # because it names its own cause.
 TRANSFORM_RE = re.compile(r"translateY\(8px\)")
+# Only an element's own inline style can hide it at first paint. The regex used
+# to run over the whole document, so from Sep 30 2026 every page "failed" on the
+# home curtain's stylesheet rule `html[data-pre="leaving"] .pre{...opacity:0}`
+# in <head>: CSS text that hides nothing on the page (80 of 80 findings, all it).
+STYLE_ATTR_RE = re.compile(r'\sstyle="([^"]*)"')
+
+
+def hidden_styles(body: str, pattern: re.Pattern = HIDDEN_RE) -> list[int]:
+    """Positions of elements whose inline style attribute matches `pattern`."""
+    return [m.start() for m in STYLE_ATTR_RE.finditer(body) if pattern.search(m.group(1))]
 
 # A string every page on this site serves. If it is absent the fetch did not
 # reach a real page (a Vercel bot challenge, a 404 body, an error shell), and
@@ -152,10 +162,10 @@ def main() -> int:
             # hidden before the page's headline is on the critical render path
             # and is gating LCP on hydration.
             h1 = body.find("<h1")
-            hidden_before_h1 = [m.start() for m in HIDDEN_RE.finditer(body)
-                                if h1 > -1 and m.start() < h1]
-            tf = len(TRANSFORM_RE.findall(body))
-            below = len(HIDDEN_RE.findall(body)) - len(hidden_before_h1)
+            hidden = hidden_styles(body)
+            hidden_before_h1 = [p for p in hidden if h1 > -1 and p < h1]
+            tf = len(hidden_styles(body, TRANSFORM_RE))
+            below = len(hidden) - len(hidden_before_h1)
 
             if tf:
                 findings.append(

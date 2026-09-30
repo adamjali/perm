@@ -48,6 +48,34 @@
 - **USCIS's data page lists ten items by default** (Audit 10, 2026-09-09). `ingest_i485_inventory.py` fetched the bare page, and once the FY2026 Q3 quarterly files were published every monthly `eb_inventory` file fell to page 2, so discovery raised "no eb_inventory link" from GitHub and from the Mac alike for four days. The page's own `?items_per_page=100` fixes it. The file also has two name shapes, `eb_inventory_july_2026_v1.0.xlsx` and `eb_inventory_march_2026.xlsx`; the version suffix is optional.
 - **A JSON-LD `<script>` body escapes `<` as `<`** (Audit 10, 2026-09-09). `JSON.stringify(schema)` alone lets any string field that ever contains `</script>` (a DOL employer name, an article title) close the element early. Both `JsonLdScript.tsx` and `StructuredData.tsx` do it now.
 
+- **The site deploys from the Oracle server since Sep 28 2026, not Vercel** (Audit 11). Phase 4's "verify Vercel" step is now: watch the `Oracle build and deploy` run for the pushed commit (a failed build ships nothing and the old release keeps serving), then check the live site. `.planning/**`, `**/*.md`, `docs/**` and `v2/scripts/**` pushes skip the deploy (`paths-ignore`). Convex still deploys by hand, and any dependency the backend bundles (svix) needs it too.
+- **`pnpm audit` sees advisories Dependabot has not raised** (Audit 11): 0 open Dependabot alerts while `pnpm audit` listed 2 high and 3 moderate (brace-expansion, moment, fast-uri). Run `pnpm audit` on every audit; do not score from the Dependabot count alone.
+- **The 7-day `minimumReleaseAge` picks the newest mature version by itself** (Audit 11): `pnpm add motion@^13 svix@^2` resolved 13.4.1 and 2.5.0 while 13.4.6 and 2.6.0 were a day old. Read the changelog up to the version actually installed, not the one the Dependabot PR named.
+- **console.error with a template-literal first argument trips `unsafe-formatstring`** (Audit 11). When every interpolated value is a constant (a config key, a menu label), dismiss as a false positive with that reason; nothing untrusted reaches the format string.
+- **Traffic "clones" counts CI checkouts**: ~4,700 clones in 14 days (435 unique) against 37 page views is every workflow's `actions/checkout`, not people. Not an anomaly.
+
+## Audit 11 — 2026-09-30
+- **health_before:** 100/100 by rubric (0 Dependabot, 0 secret-scanning, CI green, protection intact, 2 Dependabot PRs 23 days old). Not scored: **7 open code-scanning alerts** (Semgrep, all false positives) and **5 `pnpm audit` advisories** (2 high, 3 moderate) Dependabot had not raised.
+- **health_after:** 100/100; **0 open code-scanning alerts, `pnpm audit` clean, 0 open PRs**, remote branches down to main.
+- **items_fixed:** 13 · **items_discussed:** 1 (the two major PRs, taken on Adam's instruction) · **prs:** 0 merged, 2 closed as superseded with reasons · **quality_issues_fixed:** 6 unused declarations + 2 gate failures in my own timeline work
+- **deployed:** yes. 967b19eb (timelines) and 10dc8232 (this audit) pushed; Oracle build and deploy green on both, CI Tests green on both; Convex deployed 9:50 AM and 10:41 AM EDT (svix is bundled there); live /resend-inbound rejects a forged signature with 401. A follow-up push carries the two tooling fixes below (no site change).
+- **duration:** ~1h 10m (9:56 to ~11:05 AM EDT)
+
+### Changes Made
+- **motion 12.43.0 -> 13.4.1** (PR #33, superseded). v13's one break drops the optional `@emotion/is-prop-valid` auto-detection, never installed here. Verified by the `ssr` vitest project (real motion) and the live SSR-visibility audit.
+- **svix 1.99.1 -> 2.5.0** (PR #35, superseded). v2 stops parsing JSON in `Webhook.verify`; `convex/http.ts` ignores the return value and parses the body itself. `marketingEmail.test` signs and verifies with v2; live `/resend-inbound` answers 401 to a forged signature.
+- **Override floors**: `brace-expansion >=5.0.12 <6`, `moment >=2.31.0 <3` (new; it ships, via react-big-calendar), `fast-uri >=3.1.8 <4`. Lockfile moved 3 packages.
+- **7 code-scanning alerts dismissed individually** (5 console.error prefixes that are constants, 2 in a test's own mutation probe).
+- **6 unused declarations removed**, each checked by counting its uses in its file first.
+- **`oracle-migration` branch deleted** (fully contained in main; tip `dd97df13`). **Orphaned `warn-probe.yml` workflow disabled** (no branch carries it).
+- **`audit_ssr_visibility.py` matched stylesheet text**: after the morning's curtain CSS, every page "failed" (80 of 80) on `html[data-pre="leaving"] .pre{...opacity:0}` in <head>. It now judges inline `style` attributes only (`hidden_styles`), with `test_ssr_visibility.py` in CI (probe: whole-document matching turns 2 checks red). Corrected run on production after motion 13: 475 of 475 pages clean, plus 45 of 45 sampled entity pages; glued text 0 across 105 pages.
+- **IndexNow retries a server error**: the post-deploy run for 10dc8232 failed on one Cloudflare 520 for `live-employer-3.xml` (the same file answered 200 in 1.5 s moments later). Sitemap fetches now retry 5xx/429/network errors after 5, 15 and 30 s and still fail after four attempts; a 404 fails at once. Probed with fake responses.
+- Stale mail and notifications cleared the same morning (267 GitHub notifications read; 7 stale PERM system emails archived).
+
+### Decisions
+- **Took both majors now** on Adam's "make sure [the two PRs are] fully addressed". Audit 10 had left them open because motion's `initial` is an SSR inline style here and svix verifies webhooks; both risks were tested directly rather than waited out.
+- **15 lint warnings left as they are, classified**: 3 `detect-unsafe-regex` on anchored fixed-width date patterns (linear, one carries a comment saying so), 2 `detect-non-literal-regexp` built from the constant `MONTH_NAMES`, 7 unsafe-regex and 2 timing-attack warnings in tests. No inline suppression.
+- **The two USCIS workflows' red "last run"** (Sep 29, uscis.gov refusing GitHub) stays: they are manual fallbacks now; the server runs the fetches.
 
 ## Audit 10 — 2026-09-09
 - **health_before:** 84/100 by rubric (2 HIGH Dependabot alerts on browserslist, -16). 0 secret-scanning. **147 open code-scanning alerts** (1 CodeQL error `js/stored-xss`, 2 Semgrep `run-shell-injection`, 14 `sqlalchemy-execute-raw-query`), 5 open Dependabot PRs, CI green on the last push, branch protection intact.
@@ -107,29 +135,8 @@
 - I trusted `gh pr close --comment`'s exit code; **all 8 comments silently never posted**.
 - The Phosphor codemod's one gap (`vi.mock` factory keys) was caught by the suite, not by typecheck. Two build runs were killed under memory pressure before I applied Audit 6's own foreground-build note.
 
-## Audit 8 — 2026-08-22
-- **health_before:** 100/100 by rubric, but 4 open HIGH CodeQL alerts the rubric does not score
-- **health_after:** 100/100 and 0 open alerts at every severity (dependabot, secret-scanning, CodeQL high)
-- **items_fixed:** 4 (all CodeQL HIGH) + 1 lint warning
-- **items_discussed:** 2 (CodeQL handling; enforce_admins/required-reviews, both declined)
-- **prs_merged:** 0 (0 open PRs at audit time)
-- **quality_issues_fixed:** 1 (security/detect-non-literal-regexp introduced by the fix itself)
-- **deployed:** yes (Convex required, convex/ touched)
-- **duration:** ~35 min
-
-### Changes Made
-- **js/double-escaping** (`dolProcessingTimes.ts`): entity decoding was a chain of `.replace` calls with `&amp;` decoded BEFORE `&lt;`, so the literal text `&amp;lt;` became `<`, a value DOL never published. Now one pass over a single alternation with a lookup map, which cannot double-unescape.
-- **js/bad-tag-filter + js/incomplete-multi-character-sanitization** (x3): script/style stripping used `<\/script>`, which does not match `</script >` (HTML allows whitespace before the bracket), and had no `\b` so `<scripting>` matched as `<script>`. Now literal whitespace-tolerant patterns applied until the output stops changing, since one lazy pass leaves the outer closer of a nested block behind.
-- Lint: the first fix built a RegExp from a tag-name variable and tripped `security/detect-non-literal-regexp`. Replaced with two literal patterns rather than suppressed.
-- 5 regression tests added, one per CodeQL finding plus malformed-markup behaviour. Parser suite 38 -> 43.
-
-### Decisions
-- **Fix the parser rather than dismiss**: React escapes the parser's output so the XSS framing overstated it, but the double-unescape was a real correctness bug on its own merits. User chose fix.
-- **enforce_admins stays false**: direct pushes to main are the deploy path (carried from Audit 6). Declined again.
-- **Required reviews stay off**: sole maintainer. Declined.
-- **Parity verified live, not just by tests**: after the fix, `dolProcessingTimes:refresh` against live DOL returned "unchanged since last publication", meaning the content hash was byte-identical to what the original parser stored. The hardening altered zero parsed values.
-
 ## Archived Summaries
+- **Audit 8 — 2026-08-22**: health 100 by rubric with 4 HIGH CodeQL alerts it does not score; fixed a real double-unescape in the DOL parser and whitespace-tolerant tag stripping (5 regression tests); enforce_admins and required reviews declined again. Deployed with Convex.
 - **Audit 7 — 2026-08-22 (Search Console driven)**: health n/a. 21 pages listed "not indexed", only 2 real defects; `/register` was a live 404 (308 to `/signup`), robots.txt Disallow lines carried trailing slashes, one guide genuinely un-indexed. 2 Dependabot alerts (nanoid HIGH, dompurify MODERATE) fixed by override floors, which is where the "cap the major" policy came from. 3 commits, 2 Vercel deploys, no Convex.
 - **Audit 6 — 2026-08-03**: health 0→100. 20 Dependabot alerts (2 critical, 11 high) cleared: next 16.2.12, @auth/core 0.41.3, sharp 0.35.3, @vitest/browser 4.1.10, plus override floors (postcss, brace-expansion, dompurify, fast-uri, sharp, undici). Method: caret `pnpm update` then overrides then a full `pnpm install` to re-resolve, because `pnpm update` alone does not re-apply overrides to locked entries. Added `Typecheck + Vitest` to required checks; `enforce_admins` left false so direct pushes to main (the deploy path) keep working. Machine note now promoted to a Saved Policy: backgrounded builds get killed, foreground ones complete.
 - 2026-06-29: health 94->97, fixed dompurify CVE + caret bulk update, closed 4 PRs
