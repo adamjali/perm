@@ -21,7 +21,7 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
-
+import { firstThatFits } from "@/lib/describe";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBaseNoImage } from "@/lib/openGraphBase";
 import { FieldPosition } from "@/components/tools/FieldPosition";
@@ -333,9 +333,25 @@ export async function generateMetadata({
   // one name (Verizon's 68-character legal entity) pushed the description to
   // 159 and got cut mid-sentence in the SERP. Dropping the clause when the
   // head runs long caps it at 126. Same trick the occupation page uses.
-  const head = `${row.name}: ${fmt(row.total)} PERM filings${ratePart}, ranked ${fmt(row.rank)} by volume`;
-  const description =
-    head.length <= 120 ? `${head}, from DOL's own disclosure files.` : `${head}.`;
+  //
+  // A PRIORITY LIST, like the live-only branch: the longest that fits 155
+  // wins. The old two-way choice left a small employer at about 90
+  // characters ("Name: 3 PERM filings, ranked 40,123 by volume, from DOL's
+  // own disclosure files."), and 71% of a sampled 160 employer pages sat
+  // under 110 (Oct 1 2026), a snippet with room for the page's own wage and
+  // what the page holds. Only facts the page itself prints go in.
+  const filings = `${fmt(row.total)} PERM filing${row.total === 1 ? "" : "s"}`;
+  const head = `${row.name}: ${filings}${ratePart}, ranked ${fmt(row.rank)} by volume`;
+  const wage =
+    row.medianAnnualWage != null && row.medianAnnualWage > 0
+      ? `, median offered wage $${fmt(Math.round(row.medianAnnualWage))}`
+      : "";
+  const description = firstThatFits([
+    `${head}${wage}. Jobs, wages and case status, from DOL's own records.`,
+    `${head}${wage}, from DOL's own disclosure files.`,
+    `${head}, from DOL's own disclosure files.`,
+    `${head}.`,
+  ]);
   return {
     // Thin-page defense: a sub-floor entity page exists for people but is
     // not offered to the index. The sitemap already omits it.

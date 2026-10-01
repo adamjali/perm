@@ -10,5 +10,5 @@ import { CaseStatusHead } from "./CaseStatusShell";
  */
 export function LoadingHead() {
   const typed = useSearchParams().get("case") ?? "";
-  return <CaseStatusHead typed={typed} />;
+  return <CaseStatusHead typed={typed} loading />;
 }

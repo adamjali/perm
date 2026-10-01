@@ -101,6 +101,19 @@ describe("filters", () => {
     expect(pwd).toMatch(/attorney_slug = \?/);
   });
 
+  it("links only the employers and law firms that have a page (Oct 1 2026: 132 404s)", async () => {
+    DATA.pwd_cases = [
+      row("P-1", "2025-03-01", { employer_slug: "adobe-inc", attorney_slug: "fragomen" }),
+      row("P-2", "2025-03-01", { employer_slug: "steamboat-ski-resort-corporation", attorney_slug: "goldstein-law-group" }),
+    ];
+    // The fake returns every row of a table, so these are the slugs with pages.
+    DATA.perm_entities = [{ slug: "adobe-inc" }, { slug: "fragomen" }];
+    const f = await getDecidedFeed({ range: { from: "2025-03-01", to: "2025-03-01" }, programs: ["pwd"] });
+    const by = Object.fromEntries(f.cases.map((c) => [c.caseNumber, [c.employerSlug, c.attorneySlug]]));
+    expect(by["P-1"]).toEqual(["adobe-inc", "fragomen"]);
+    expect(by["P-2"]).toEqual([null, null]);
+  });
+
   it("answers nothing for a program that can't carry a filter, rather than ignoring it", async () => {
     DATA.pwd_cases = [row("P-1", "2025-03-01")];
     DATA.perm_cases = [row("G-1", "2025-03-01", { citizenship: "INDIA" })];

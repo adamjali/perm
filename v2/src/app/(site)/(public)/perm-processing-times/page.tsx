@@ -482,7 +482,7 @@ export default async function PermProcessingTimesPage() {
               </div>
 
               <div className="mt-6">
-                <QueueHistoryChart points={reconstructedPoints} />
+                <QueueHistoryChart points={reconstructedPoints} kind="reconstructed" />
               </div>
               <FinePrint summary="Which files, and how solid each point is" className="mt-3">
                 <p>

@@ -148,6 +148,54 @@ describe("QueueHistoryChart", () => {
   });
 });
 
+/**
+ * The page draws a second series with the same component: the queue position
+ * rebuilt from DOL's determination dates, one point per month of decisions.
+ * Until Oct 1 2026 it printed "DOL published" over those rows and "Each step
+ * is a published DOL reading" under the chart, so months DOL never published
+ * read as DOL's own readings.
+ */
+describe("QueueHistoryChart, reconstructed series", () => {
+  const REBUILT = [
+    { asOf: "2025-10-01", frontierMonth: "2024-09" },
+    { asOf: "2025-11-01", frontierMonth: "2024-10" },
+    { asOf: "2025-12-01", frontierMonth: "2024-12" },
+    { asOf: "2026-01-01", frontierMonth: "2025-01" },
+    { asOf: "2026-02-01", frontierMonth: "2025-03" },
+    { asOf: "2026-03-01", frontierMonth: "2025-04" },
+    { asOf: "2026-04-01", frontierMonth: "2025-05" },
+  ];
+
+  it("never calls a rebuilt month a published DOL reading", () => {
+    const { container } = render(<QueueHistoryChart points={REBUILT} kind="reconstructed" />);
+    expect(container.textContent).not.toMatch(/published DOL reading|DOL published/);
+    expect(screen.getByText(/DOL never published these as readings/)).toBeInTheDocument();
+    openTable();
+    expect(table().getByText("Decided in")).toBeInTheDocument();
+    expect(table().getByText("Median filing month")).toBeInTheDocument();
+    expect(table().queryByText(/Days since last/)).not.toBeInTheDocument();
+  });
+
+  it("dates each row by its month, never by a first-of-month day", () => {
+    render(<QueueHistoryChart points={REBUILT} kind="reconstructed" />);
+    expect(screen.getByText(/October 2025 to April 2026/)).toBeInTheDocument();
+    openTable();
+    expect(table().getByText("April 2026")).toBeInTheDocument();
+    expect(table().queryByText("2026-04-01")).not.toBeInTheDocument();
+  });
+
+  it("offers windows in months", () => {
+    render(<QueueHistoryChart points={REBUILT} kind="reconstructed" />);
+    const select = screen.getByRole("combobox", { name: /Months/ });
+    expect(within(select).getByRole("option", { name: "Last 6 months" })).toBeInTheDocument();
+  });
+
+  it("still labels the published series as DOL's readings", () => {
+    render(<QueueHistoryChart points={READINGS} />);
+    expect(screen.getByText("Each step is a published DOL reading.")).toBeInTheDocument();
+  });
+});
+
 const DECISIONS = [
   { month: "2025-06", decisions: 15255 },
   { month: "2025-07", decisions: 14998 },

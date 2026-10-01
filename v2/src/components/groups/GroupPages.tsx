@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { generateBreadcrumbSchema } from "@/lib/content/seo";
+import { firstThatFits } from "@/lib/describe";
 import { naicsSectorTitle } from "@/lib/naicsSectors";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { countryYears, getGroup, GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
@@ -152,7 +153,15 @@ export async function groupDetailMetadata(kind: GroupKind, slug: string): Promis
   const c = COPY[kind];
   const path = `${GROUP_PATH[kind]}/${slug}`;
   const title = c.detailTitle(g.label);
-  const description = `${fmt(g.total)} PERM decisions${g.fyFrom && g.fyTo ? `, FY${g.fyFrom} to FY${g.fyTo}` : ""}: approval rate, wages, sponsors and jobs, from DOL's own files.`;
+  // The page's own name leads: without it, two places with the same count
+  // shared one description word for word (our audit, Oct 1 2026).
+  const fy = g.fyFrom && g.fyTo ? `, FY${g.fyFrom} to FY${g.fyTo}` : "";
+  const decisions = `${fmt(g.total)} PERM decision${g.total === 1 ? "" : "s"}${fy}`;
+  const description = firstThatFits([
+    `${title}: ${decisions}, with the approval rate, wages, top sponsors and jobs, from DOL's own files.`,
+    `${title}: ${decisions}: approval rate, wages, sponsors and jobs.`,
+    `${title}: ${decisions}.`,
+  ]);
   return {
     title: { absolute: title.length > 44 ? title : `${title} | PERM Tracker` },
     description,

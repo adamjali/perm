@@ -267,15 +267,20 @@ export function SearchPalette({
             );
             if (!res.ok) return { rows: [] as EntityHit[], failed: true };
             const payload = (await res.json()) as EntityPayload;
-            const rows: EntityHit[] = payload.rows.slice(0, PALETTE_PER_KIND).map((r) => ({
-              name: String(r[1]),
-              href: `${base}/${String(r[0])}`,
-              total: Number(r[3]) || 0,
-              kindLabel: label,
-            }));
+            // A row without a slug has no page: String(null) would link "/null".
+            const rows: EntityHit[] = payload.rows
+              .slice(0, PALETTE_PER_KIND)
+              .filter((r) => typeof r[0] === "string" && r[0] !== "")
+              .map((r) => ({
+                name: String(r[1]),
+                href: `${base}/${String(r[0])}`,
+                total: Number(r[3]) || 0,
+                kindLabel: label,
+              }));
             // Employers DOL hasn't published yet (23% of the employers held).
             // They were in the answer and the palette dropped them.
             for (const h of (payload.live ?? []).slice(0, 3)) {
+              if (!h.slug) continue;
               rows.push({
                 name: h.name,
                 href: `/perm-employers/${h.slug}`,

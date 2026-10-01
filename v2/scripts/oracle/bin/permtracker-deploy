@@ -44,6 +44,25 @@ switch_to(){ # $1 slot
   echo "$1" > $A/active
   log "traffic now on $1 ($(readlink $A/slots/$1 | xargs basename))"
 }
+warm(){ # $1 port
+  # Render the core pages on the NEW copy before it takes traffic. Each release
+  # starts with an empty page cache, so without this the first visitor to every
+  # page after a deploy waited for a cold render: 1 to 4.5 s, 152 of 855 pages
+  # over a second in our Oct 1 2026 audit. The pages come from the sitemap the
+  # copy itself serves, two at a time, for at most 4 minutes; nothing here can
+  # fail or block a deploy (the old copy keeps serving until the switch).
+  # Core pages first (475, about 47 s measured), then the 300 busiest
+  # employers (employer-1.xml lists them by volume).
+  local port=$1 paths
+  paths=$( { curl -fsS --max-time 20 -H "Host: permtracker.app" "http://127.0.0.1:$port/sitemaps/pages.xml"
+             curl -fsS --max-time 20 -H "Host: permtracker.app" "http://127.0.0.1:$port/sitemaps/employer-1.xml" \
+               | grep -o '<loc>[^<]*</loc>' | head -300; } \
+    | grep -o '<loc>[^<]*</loc>' | sed -e 's#<loc>https://permtracker.app##' -e 's#</loc>##') || return 0
+  [ -n "$paths" ] || return 0
+  printf '%s\n' "$paths" | timeout 240 xargs -P 2 -I{} \
+    curl -s -o /dev/null --max-time 30 -H "Host: permtracker.app" "http://127.0.0.1:$port{}" || true
+  log "warmed up to $(printf '%s\n' "$paths" | wc -l) pages on the new copy (4-minute budget)"
+}
 healthy(){ # $1 port
   for i in $(seq 1 90); do
     if curl -fsS -o /dev/null --max-time 5 "http://127.0.0.1:$1/api/health" \
@@ -79,6 +98,7 @@ case "$action" in
       journalctl -u "permtracker-web@$idle" -n 30 --no-pager | tail -30
       exit 4
     fi
+    warm "$(port_of "$idle")" || true
     switch_to "$idle"
     # keep the previous copy running: rollback is instant.
     keep=$(for s in blue green; do readlink "$A/slots/$s" 2>/dev/null | xargs -r basename; done)

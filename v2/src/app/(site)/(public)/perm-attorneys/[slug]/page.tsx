@@ -19,7 +19,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
-
+import { firstThatFits } from "@/lib/describe";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBaseNoImage } from "@/lib/openGraphBase";
 import { FieldPosition } from "@/components/tools/FieldPosition";
@@ -212,9 +212,15 @@ export async function generateMetadata({
     reliability.ratePct != null ? `, ${reliability.ratePct.toFixed(1)}% approved` : "";
   // The source clause is dropped when the name has already used the space, so
   // a long firm name cannot push the description past what the SERP shows.
-  const head = `${row.name}: ${fmt(row.total)} PERM cases${ratePart}, ranked ${fmt(row.rank)} by volume`;
-  const description =
-    head.length <= 120 ? `${head}, from DOL's own disclosure files.` : `${head}.`;
+  //
+  // The richest that fits 155 (lib/describe). No wage: the page itself says a
+  // firm's median offered wage measures its clients' job mix, not the firm.
+  const head = `${row.name}: ${fmt(row.total)} PERM case${row.total === 1 ? "" : "s"}${ratePart}, ranked ${fmt(row.rank)} by volume`;
+  const description = firstThatFits([
+    `${head}. The jobs it files for, outcomes and how it ranks, from DOL's own records.`,
+    `${head}, from DOL's own disclosure files.`,
+    `${head}.`,
+  ]);
   return {
     // Thin-page defense: a sub-floor entity page exists for people but is
     // not offered to the index. The sitemap already omits it.

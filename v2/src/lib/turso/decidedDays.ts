@@ -1,6 +1,7 @@
 import "server-only";
 
 import { rows } from "./client";
+import { keepLinkableSlugs } from "./entityLinks";
 // ONE slug-range implementation, shared with the case search. A prefix
 // computed differently in two readers is an employer whose cases answer
 // differently depending on which page asked.
@@ -565,9 +566,17 @@ export async function getDecidedFeed(args: {
       : b.decidedOn.localeCompare(a.decidedOn),
   );
 
+  // A wage request or LCA employer that never filed a PERM, and a law firm
+  // from an older file, has no page: print those names as text, not 404 links.
+  const linked = await keepLinkableSlugs(
+    cases,
+    (c) => c.attorneySlug,
+    (c) => ({ ...c, attorneySlug: null }),
+  );
+
   return {
     range,
-    cases,
+    cases: linked,
     totals: span === 1 ? await countDay(range.from, programs, narrow) : null,
     capped,
     refused: null,

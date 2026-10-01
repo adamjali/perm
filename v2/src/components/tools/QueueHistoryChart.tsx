@@ -36,6 +36,63 @@ export interface QueueSnapshotPoint {
 export interface QueueHistoryChartProps {
   points: readonly QueueSnapshotPoint[];
   className?: string;
+  /**
+   * What the points ARE. "readings" (the default): DOL's own published
+   * queue month, dated by the day DOL published it. "reconstructed": one
+   * point per month of determinations in DOL's disclosure files, at the
+   * filing month of their median, `asOf` being that month's first day.
+   *
+   * The same drawing serves both, and until Oct 1 2026 it also labelled both
+   * the same way: the reconstructed series printed "DOL published" over its
+   * table, "Each step is a published DOL reading" under its chart and a
+   * first-of-month date per row, so 33 months nobody at DOL ever published
+   * read as DOL's own readings.
+   */
+  kind?: QueueSeriesKind;
+}
+
+export type QueueSeriesKind = "readings" | "reconstructed";
+
+/** Every word that changes with the series' kind, in one place. */
+const KIND_COPY = {
+  readings: {
+    view: "DOL queue readings",
+    select: "Readings",
+    hint: "Narrows the chart and the table to the most recent readings.",
+    unit: "",
+    windows: [6, 12, 26],
+    svg: "DOL's analyst review queue month at each published snapshot",
+    hover: "Queue month at each reading. Use the arrow keys to step through the readings.",
+    caption:
+      "Every DOL analyst-review queue reading on record, with the date DOL published it and how far the queue moved since the previous reading",
+    dateHead: "DOL published",
+    monthHead: "Working filings from",
+    figcaption: "Each step is a published DOL reading.",
+  },
+  reconstructed: {
+    view: "Queue position rebuilt from DOL's decisions",
+    select: "Months",
+    hint: "Narrows the chart and the table to the most recent months of decisions.",
+    unit: " months",
+    windows: [6, 12, 24],
+    svg: "Filing month at the median of each month's PERM determinations, rebuilt from DOL's disclosure files",
+    hover: "Median filing month for each month of decisions. Use the arrow keys to step through the months.",
+    caption:
+      "For each month of PERM determinations in DOL's disclosure files, the filing month at their median, and how far it moved from the month before",
+    dateHead: "Decided in",
+    monthHead: "Median filing month",
+    figcaption:
+      "Each step is one month of DOL determinations, at the filing month of their median. Rebuilt from DOL's files: DOL never published these as readings.",
+  },
+} as const;
+
+/** The date a point is plotted at, as a reader should see it. */
+function pointLabel(kind: QueueSeriesKind, asOf: string, short: boolean): string {
+  if (kind === "reconstructed") {
+    const month = asOf.slice(0, 7);
+    return (short ? formatMonthShort(month) : formatMonth(month)) ?? month;
+  }
+  return short ? formatAsOfShort(asOf) : (formatAsOf(asOf) ?? asOf);
 }
 
 const W = 720;
@@ -89,8 +146,7 @@ export const PAD = { top: 18, right: 16, bottom: 40, left: 76 };
 export const Y_LABEL_FONT_PX = 12;
 export const MONO_ADVANCE_EM = 0.6;
 
-/** Windows offered, in readings. Only those the record can actually fill. */
-const WINDOWS = [6, 12, 26] as const;
+/** Windows offered are per kind (KIND_COPY); only those the record can fill. */
 
 function monthIndex(month: string): number {
   return Number(month.slice(0, 4)) * 12 + Number(month.slice(5, 7)) - 1;
@@ -110,10 +166,12 @@ function QueueHistorySvg({
   sorted,
   moved,
   gapDays,
+  kind,
 }: {
   sorted: QueueSnapshotPoint[];
   moved: Map<string, number | null>;
   gapDays: Map<string, number | null>;
+  kind: QueueSeriesKind;
 }) {
   if (sorted.length < 2) return null;
 
@@ -188,9 +246,10 @@ function QueueHistorySvg({
   const last = sorted[sorted.length - 1]!;
   const mid = sorted[Math.floor(sorted.length / 2)]!;
 
-  const leftEdge = PAD.left + first.asOf.length * CHAR_W;
-  const rightEdge = W - PAD.right - last.asOf.length * CHAR_W;
-  const midHalf = (mid.asOf.length * CHAR_W) / 2;
+  const tick = (p: QueueSnapshotPoint) => pointLabel(kind, p.asOf, true);
+  const leftEdge = PAD.left + tick(first).length * CHAR_W;
+  const rightEdge = W - PAD.right - tick(last).length * CHAR_W;
+  const midHalf = (tick(mid).length * CHAR_W) / 2;
   const midX = px(mid.asOf);
   const midFits =
     midX - midHalf >= leftEdge + GAP && midX + midHalf <= rightEdge - GAP;
@@ -228,12 +287,15 @@ function QueueHistorySvg({
   const hover: HoverPoint[] = sorted.map((p) => {
     const m = moved.get(p.asOf) ?? null;
     const g = gapDays.get(p.asOf) ?? null;
-    const span = g !== null && g > 0 ? ` over ${g} day${g === 1 ? "" : "s"}` : "";
+    // A month-by-month series is a month apart by construction; "over 31
+    // days" would only restate the axis.
+    const span =
+      kind === "readings" && g !== null && g > 0 ? ` over ${g} day${g === 1 ? "" : "s"}` : "";
     return {
       x: px(p.asOf),
       y: py(p.frontierMonth),
-      label: p.asOf,
-      value: `Working filings from ${formatMonthShort(p.frontierMonth) ?? p.frontierMonth}`,
+      label: kind === "readings" ? p.asOf : `Decided in ${tick(p)}`,
+      value: `${kind === "readings" ? "Working filings from" : "Median filing month"} ${formatMonthShort(p.frontierMonth) ?? p.frontierMonth}`,
       detail:
         m === null
           ? undefined
@@ -249,7 +311,7 @@ function QueueHistorySvg({
         viewBox={`0 0 ${W} ${H}`}
         className="block h-auto w-full min-w-[560px] border-2 border-border bg-card shadow-hard-sm"
         role="img"
-        aria-label="DOL's analyst review queue month at each published snapshot"
+        aria-label={KIND_COPY[kind].svg}
       >
         {/* Grid + y labels */}
         {levels.map((m) => (
@@ -305,7 +367,7 @@ function QueueHistorySvg({
                 ISO dates anywhere on the site, against `formatAsOf` used
                 everywhere else. Short form, because three of these sit under
                 a 720-unit axis and the full "August 20, 2026" collides. */}
-            {formatAsOfShort(p.asOf)}
+            {tick(p)}
           </text>
         ))}
 
@@ -340,7 +402,7 @@ function QueueHistorySvg({
             height: H - PAD.top - PAD.bottom,
           }}
           viewBox={{ width: W, height: H }}
-          label="Queue month at each reading. Use the arrow keys to step through the readings."
+          label={KIND_COPY[kind].hover}
         />
       </svg>
     </div>
@@ -356,32 +418,37 @@ function QueueHistoryTable({
   shown,
   moved,
   gapDays,
+  kind,
 }: {
   shown: QueueSnapshotPoint[];
   moved: Map<string, number | null>;
   gapDays: Map<string, number | null>;
+  kind: QueueSeriesKind;
 }) {
+  const copy = KIND_COPY[kind];
+  // Days between readings is a fact about DOL's publishing; between calendar
+  // months it is always 28 to 31 and says nothing.
+  const showGap = kind === "readings";
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] border-2 border-border text-left text-sm shadow-hard-sm">
-        <caption className="sr-only">
-          Every DOL analyst-review queue reading on record, with the date DOL
-          published it and how far the queue moved since the previous reading
-        </caption>
+        <caption className="sr-only">{copy.caption}</caption>
         <thead className="bg-foreground text-background">
           <tr>
             <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
-              DOL published
+              {copy.dateHead}
             {" "}</th>
             <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
-              Working filings from
+              {copy.monthHead}
             {" "}</th>
             <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
               Moved
             {" "}</th>
-            <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
-              Days since last{" "}
-            </th>
+            {showGap ? (
+              <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
+                Days since last{" "}
+              </th>
+            ) : null}
           </tr>
         </thead>
         <tbody className="bg-card">
@@ -390,7 +457,9 @@ function QueueHistoryTable({
             const g = gapDays.get(p.asOf) ?? null;
             return (
               <tr key={p.asOf} className="border-t border-border/40">
-                <td className="px-3 py-2.5 tabular-nums">{p.asOf}{" "}</td>
+                <td className="px-3 py-2.5 tabular-nums">
+                  {kind === "readings" ? p.asOf : pointLabel(kind, p.asOf, false)}
+                {" "}</td>
                 <td className="px-3 py-2.5 font-bold">
                   {formatMonth(p.frontierMonth) ?? p.frontierMonth}
                 {" "}</td>
@@ -403,9 +472,11 @@ function QueueHistoryTable({
                     `${m > 0 ? "+" : ""}${m} month${Math.abs(m) === 1 ? "" : "s"}`
                   )}
                 {" "}</td>
-                <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
-                  {g === null ? "—" : g}
-                {" "}</td>
+                {showGap ? (
+                  <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
+                    {g === null ? "—" : g}
+                  {" "}</td>
+                ) : null}
               </tr>
             );
           })}
@@ -415,7 +486,8 @@ function QueueHistoryTable({
   );
 }
 
-export function QueueHistoryChart({ points, className }: QueueHistoryChartProps) {
+export function QueueHistoryChart({ points, className, kind = "readings" }: QueueHistoryChartProps) {
+  const copy = KIND_COPY[kind];
   // Oldest first. The chart de-duplicates visually by drawing steps; the table
   // keeps every reading, because "DOL published the same month again" is
   // itself a fact about the queue.
@@ -448,9 +520,9 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
   // option over 9 readings is a control that does nothing, which is worse
   // than no control.
   const options = [
-    ...WINDOWS.filter((w) => w < n).map((w) => ({
+    ...copy.windows.filter((w) => w < n).map((w) => ({
       value: String(w),
-      label: `Last ${w}`,
+      label: `Last ${w}${copy.unit}`,
     })),
     { value: "all", label: `All ${n}` },
   ];
@@ -464,15 +536,15 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
     options.length > 1 ? (
       <Fragment>
         <ScopeSelect
-          label="Readings"
+          label={copy.select}
           value={window}
           onChange={setWindow}
-          hint="Narrows the chart and the table to the most recent readings."
+          hint={copy.hint}
           options={options}
         />{" "}
         <p className="text-sm text-foreground/70">
-          {formatAsOf(first.asOf) ?? first.asOf} to{" "}
-          {formatAsOf(last.asOf) ?? last.asOf}
+          {pointLabel(kind, first.asOf, false)} to{" "}
+          {pointLabel(kind, last.asOf, false)}
           {spanMonths > 0 ? (
             <>
               {" "}
@@ -486,12 +558,12 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
       </Fragment>
     ) : undefined;
 
-  const chart = <QueueHistorySvg sorted={shown} moved={moved} gapDays={gapDays} />;
+  const chart = <QueueHistorySvg sorted={shown} moved={moved} gapDays={gapDays} kind={kind} />;
 
   return (
     <figure className={cn("m-0", className)}>
       <DataView
-        label="DOL queue readings"
+        label={copy.view}
         controls={rangeControl}
         chart={
           chart ?? (
@@ -501,12 +573,12 @@ export function QueueHistoryChart({ points, className }: QueueHistoryChartProps)
             </p>
           )
         }
-        table={<QueueHistoryTable shown={shown} moved={moved} gapDays={gapDays} />}
+        table={<QueueHistoryTable shown={shown} moved={moved} gapDays={gapDays} kind={kind} />}
       />
       {/* Provenance only. The second sentence used to describe the flat
           stretches; the readout now names each one, with its length in days. */}
       <figcaption className="mt-3 text-sm text-foreground/70">
-        Each step is a published DOL reading.
+        {copy.figcaption}
       </figcaption>
     </figure>
   );

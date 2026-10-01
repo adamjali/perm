@@ -63,10 +63,21 @@ export function embedBySlug(slug: string): EmbedDef | null {
   return EMBEDS.find((e) => e.slug === slug) ?? null;
 }
 
-/** The iframe a site pastes. Lazy, borderless, titled, and sized to start. */
+/**
+ * What a site pastes: the iframe (lazy, borderless, titled, sized to start)
+ * and one source line under it.
+ *
+ * The source line is the only part that links from the embedding site's own
+ * page. The frame's footer links to the full tool too, but that link lives on
+ * our domain inside the frame, so until Oct 1 2026 every site that used an
+ * embed credited nothing where search engines read it. A site can delete the
+ * line; it is offered, not enforced.
+ */
 export function embedSnippet(def: EmbedDef, origin = "https://permtracker.app"): string {
   const title = def.title.replace(/"/g, "&quot;");
-  return `<iframe src="${origin}/embed/${def.slug}" title="${title}" width="100%" height="${def.height}" style="border:0;max-width:100%" loading="lazy"></iframe>`;
+  const frame = `<iframe src="${origin}/embed/${def.slug}" title="${title}" width="100%" height="${def.height}" style="border:0;max-width:100%" loading="lazy"></iframe>`;
+  const source = `<p style="margin:4px 0 0;font-size:13px">Source: <a href="${origin}${def.href}">PERM Tracker</a></p>`;
+  return `${frame}\n${source}`;
 }
 
 /**

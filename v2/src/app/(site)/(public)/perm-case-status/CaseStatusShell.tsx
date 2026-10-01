@@ -14,7 +14,16 @@ import { CaseLookupForm } from "@/components/tools/CaseLookupForm";
  */
 export const CASE_STATUS_FRAME = "mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16";
 
-export function CaseStatusHead({ typed }: { typed: string }) {
+/**
+ * `loading` renders the title as a heading-role paragraph instead of an
+ * `<h1>`. The loading state and its fallback stay in the streamed HTML, so
+ * with three real `<h1>` tags a crawler reading the raw document saw the
+ * page's heading three times (measured Oct 1 2026). It looks identical and
+ * screen readers still announce a level-1 heading; only the page's own copy
+ * is the `<h1>`.
+ */
+export function CaseStatusHead({ typed, loading = false }: { typed: string; loading?: boolean }) {
+  const titleClass = "mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl";
   return (
     <>
       <header>
@@ -26,9 +35,13 @@ export function CaseStatusHead({ typed }: { typed: string }) {
             Data
           </Link>
         </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Check a PERM case
-        </h1>{" "}
+        {loading ? (
+          <p role="heading" aria-level={1} className={titleClass}>
+            Check a PERM case
+          </p>
+        ) : (
+          <h1 className={titleClass}>Check a PERM case</h1>
+        )}{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
           A case number gets you the status in plain English, what the queue in
           front of it looks like, and the employer&apos;s own record. It will

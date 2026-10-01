@@ -80,6 +80,18 @@ export async function generateMetadata({
 export const revalidate = 21600;
 
 /**
+ * No month is built ahead; each is built on its first request and cached for
+ * the window above. Without this export the route rendered fresh on EVERY
+ * request despite `revalidate`: Next treats a dynamic segment with no
+ * generateStaticParams as dynamic, and production served these pages
+ * `private, no-store`, 1 to 1.5 s each (measured Oct 1 2026, the only public
+ * [param] route missing it). `dynamic-routes-cache.test.ts` holds every route.
+ */
+export async function generateStaticParams(): Promise<{ month: string }[]> {
+  return [];
+}
+
+/**
  * How many of the month's live rows the page lists before pointing at the
  * full list on /perm-cases. A busy month holds ~14,500 filings; the whole set
  * belongs in the paginated browser, not in a prerendered page whose size is

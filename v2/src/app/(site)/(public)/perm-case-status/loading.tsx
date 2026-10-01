@@ -24,7 +24,7 @@ export default function CaseStatusLoading() {
   return (
     <div className={CASE_STATUS_FRAME}>
       <div className="pt-10 sm:pt-12" />
-      <Suspense fallback={<CaseStatusHead typed="" />}>
+      <Suspense fallback={<CaseStatusHead typed="" loading />}>
         <LoadingHead />
       </Suspense>
       <div className="mt-8">

@@ -16,7 +16,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
-
+import { firstThatFits } from "@/lib/describe";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBaseNoImage } from "@/lib/openGraphBase";
 import { FieldPosition } from "@/components/tools/FieldPosition";
@@ -207,8 +207,14 @@ export async function generateMetadata({
   ]);
   const wagePart =
     row.medianAnnualWage != null ? `: ${money(row.medianAnnualWage)} median offered` : "";
-  const head = `${name} PERM wages${wagePart} across ${fmt(row.total)} filings`;
-  const description = head.length <= 120 ? `${head}, from DOL's own files.` : `${head}.`;
+  const head = `${name} PERM wages${wagePart} across ${fmt(row.total)} filing${row.total === 1 ? "" : "s"}`;
+  // The richest that fits 155 (lib/describe). No approval rate: this page
+  // publishes a wage and no rate.
+  const description = firstThatFits([
+    `${head}. Who files this job, what it pays and where, from DOL's own files.`,
+    `${head}, from DOL's own files.`,
+    `${head}.`,
+  ]);
   return {
     // Thin-page defense: a sub-floor entity page exists for people but is
     // not offered to the index. The sitemap already omits it.

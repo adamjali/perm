@@ -56,11 +56,20 @@ describe("the embed registry", () => {
     }
   });
 
-  it("builds a lazy, titled, borderless iframe snippet", () => {
+  it("builds a lazy, titled, borderless iframe snippet with a source link under it", () => {
     const s = embedSnippet(EMBEDS[0]!);
     expect(s).toBe(
-      `<iframe src="https://permtracker.app/embed/case-status" title="Check a DOL case" width="100%" height="560" style="border:0;max-width:100%" loading="lazy"></iframe>`,
+      `<iframe src="https://permtracker.app/embed/case-status" title="Check a DOL case" width="100%" height="560" style="border:0;max-width:100%" loading="lazy"></iframe>\n` +
+        `<p style="margin:4px 0 0;font-size:13px">Source: <a href="https://permtracker.app/perm-case-status">PERM Tracker</a></p>`,
     );
+  });
+
+  it("links every snippet's source line to its own full tool, outside the frame", () => {
+    for (const e of EMBEDS) {
+      const s = embedSnippet(e);
+      const after = s.slice(s.indexOf("</iframe>"));
+      expect(after, e.slug).toContain(`<a href="https://permtracker.app${e.href}">`);
+    }
   });
 });
 

@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { LiveCaseRow } from "./cases";
+import { keepLinkableSlugs } from "./entityLinks";
 import type { FlagCaseRow, FlagDisclosedRow } from "./flagCases";
 import {
   SLICE_CAP,
@@ -530,7 +531,13 @@ async function finish(
   const order = args.order ?? "filed-desc";
   all.sort(compareBy(order));
   const take = Math.min(Math.max(1, Math.floor(args.limit ?? UNIFIED_MAX)), UNIFIED_MAX);
-  const rows = all.slice(0, take);
+  // Older filings carry employer and law-firm slugs no page answers (a FY2016
+  // firm, a wage request's employer): keep only the ones that link somewhere.
+  const rows = await keepLinkableSlugs(
+    all.slice(0, take),
+    (r) => r.firmSlug,
+    (r) => ({ ...r, firmSlug: null }),
+  );
   await addSeenDecided(rows);
   const counts: Record<Program, number> = { perm: 0, pwd: 0, lca: 0 };
   for (const r of rows) counts[r.program] += 1;
