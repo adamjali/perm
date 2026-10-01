@@ -80,10 +80,12 @@ def main() -> int:
     real_http = dm.http_json
     try:
         __import__("os").environ["POSTHOG_PERSONAL_API_KEY"] = "test"
-        dm.http_json = lambda *a, **k: {"results": [['["Minified React error #185"]', 3, 3, "/perm-wages"],
-                                                    ['["Rejected"]', 1, 1, "/login"]]}
+        many = [['["Minified React error #185"]', 3, 3, 0, "/perm-wages"],
+                ['["Brand new thing"]', 1, 1, 1, "/tools"]]
+        many += [[f'["one-off {i}"]', 1, 1, 0, "/x"] for i in range(20)]
+        dm.http_json = lambda *a, **k: {"results": many}
         b = dm.browser_errors_section()
-        dm.http_json = lambda *a, **k: {"results": [['["Rejected"]', 1, 1, "/login"]]}
+        dm.http_json = lambda *a, **k: {"results": [['["Rejected"]', 1, 1, 0, "/login"]]}
         quiet = dm.browser_errors_section()
     finally:
         dm.http_json = real_http
@@ -91,8 +93,11 @@ def main() -> int:
             __import__("os").environ.pop("POSTHOG_PERSONAL_API_KEY", None)
         else:
             __import__("os").environ["POSTHOG_PERSONAL_API_KEY"] = real_key
-    check(b["status"] == "warn" and "4 error events" in json.dumps(b) and "Minified React error #185" in json.dumps(b),
-          "a browser error seen in 2+ sessions warns, with the message")
+    check(b["status"] == "warn" and "24 error events in 24 h, 22 kinds" in b["summary"]
+          and "Minified React error #185" in json.dumps(b), "a browser error seen in 2+ sessions warns, with the message")
+    check(any(l.startswith("NEW Brand new thing") for l in b["lines"]), "an error kind never seen before is marked NEW")
+    check(b["lines"][-1] == "and 20 more kinds, each seen in one session",
+          "kinds not listed are counted, never silently dropped")
     check(quiet["status"] == "ok", "a one-off browser error stays ok")
     check("browser_errors_section" in inspect.getsource(dm.build), "the report includes the browser-errors section")
     check("toDateTime('2026-10-01 02:42:00')" in inspect.getsource(dm.browser_errors_section),

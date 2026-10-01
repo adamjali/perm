@@ -408,35 +408,51 @@ def browser_errors_section() -> dict:
     """Errors in visitors' browsers. They go to PostHog, not Sentry (the
     Sentry client runs only on the sign-in pages and in the app), so before
     Oct 1 2026 this report never saw them: a header loop that crashed public
-    pages ("Maximum update depth exceeded") sat there unread for a day. Known
-    noise from in-app browsers and extensions is dropped in before_send, so
-    what arrives here is worth a look; one seen in 2+ sessions is a warning."""
+    pages ("Maximum update depth exceeded") sat there unread for a day.
+
+    Every kind of error in the last 24 hours is counted, none dropped: the
+    lines list the ones seen in 2+ sessions and the ones never seen in the 14
+    days before (NEW) first, then say how many more there were. Known noise
+    from in-app browsers and extensions is dropped at the source (before_send),
+    so what arrives is worth a look; a kind seen in 2+ sessions warns. If
+    PostHog can't be read the section says "unknown", never "ok"."""
     key = os.environ.get("POSTHOG_PERSONAL_API_KEY")
     if not key:
         return section("browser", "Errors in visitors' browsers", "off",
                        "set the POSTHOG_PERSONAL_API_KEY secret to read browser errors")
-    q = ("SELECT substring(toString(properties.$exception_values), 1, 140) AS msg, count() AS n, "
-         "uniq(properties.$session_id) AS sessions, any(properties.$pathname) AS path FROM events "
-         "WHERE event = '$exception' AND timestamp > now() - INTERVAL 24 HOUR "
-         # Errors before the fix deploy (Sep 30 2026, 10:42 PM EDT) are fixed or now
-         # filtered at the source; without this floor the first report would page for
-         # them. It stops mattering 24 hours later.
-         "AND timestamp > toDateTime('2026-10-01 02:42:00') "
-         "GROUP BY msg ORDER BY n DESC LIMIT 8")
+    # Errors before the fix deploy (Sep 30 2026, 10:42 PM EDT) are fixed or now
+    # filtered at the source; without this floor the first report would page for
+    # them. It stops mattering 24 hours later.
+    recent = ("timestamp > now() - INTERVAL 24 HOUR "
+              "AND timestamp > toDateTime('2026-10-01 02:42:00')")
+    q = ("SELECT substring(toString(properties.$exception_values), 1, 140) AS msg, "
+         f"countIf({recent}) AS n, uniqIf(properties.$session_id, {recent}) AS sessions, "
+         "min(timestamp) > now() - INTERVAL 24 HOUR AS is_new, "
+         f"anyIf(properties.$pathname, {recent}) AS path FROM events "
+         "WHERE event = '$exception' AND timestamp > now() - INTERVAL 14 DAY "
+         "GROUP BY msg HAVING n > 0 ORDER BY sessions DESC, n DESC LIMIT 500")
     d = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",
                   {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                   json.dumps({"query": {"kind": "HogQLQuery", "query": q}}).encode())
-    rows = d.get("results", [])
-    total = sum(int(r[1]) for r in rows)
-    repeated = [r for r in rows if int(r[2]) >= 2]
+    rows = [(str(r[0]), int(r[1]), int(r[2]), bool(r[3]), r[4]) for r in d.get("results", [])]
+    total = sum(r[1] for r in rows)
+    repeated = [r for r in rows if r[2] >= 2]
+    new = [r for r in rows if r[3]]
+    shown = [r for r in rows if r[2] >= 2 or r[3]][:12]
     lines = []
-    for msg, n, sessions, path in rows:
-        text = str(msg).strip("[]").strip('"')[:110] or "(no message)"
-        lines.append(f"{text}: {n} event{'s' if n != 1 else ''}, {sessions} session{'s' if sessions != 1 else ''}, "
-                     f"e.g. {path}")
-    return section("browser", "Errors in visitors' browsers", "warn" if repeated else "ok",
-                   f"{total} error event{'s' if total != 1 else ''} in 24 h"
-                   + (f", {len(repeated)} seen in 2+ sessions" if repeated else ""), lines)
+    for msg, n, sessions, is_new, path in shown:
+        text = msg.strip("[]").strip('"')[:110] or "(no message)"
+        lines.append(f"{'NEW ' if is_new else ''}{text}: {n} event{'s' if n != 1 else ''}, "
+                     f"{sessions} session{'s' if sessions != 1 else ''}, e.g. {path}")
+    rest = len(rows) - len(shown)
+    if rest:
+        lines.append(f"and {rest} more kind{'s' if rest != 1 else ''}, each seen in one session")
+    summary = f"{total} error event{'s' if total != 1 else ''} in 24 h, {len(rows)} kind{'s' if len(rows) != 1 else ''}"
+    if repeated:
+        summary += f", {len(repeated)} seen in 2+ sessions"
+    if new:
+        summary += f", {len(new)} new"
+    return section("browser", "Errors in visitors' browsers", "warn" if repeated else "ok", summary, lines)
 
 
 # ── the Oracle server ─────────────────────────────────────────────────────
