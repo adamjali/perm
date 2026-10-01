@@ -418,6 +418,10 @@ def browser_errors_section() -> dict:
     q = ("SELECT substring(toString(properties.$exception_values), 1, 140) AS msg, count() AS n, "
          "uniq(properties.$session_id) AS sessions, any(properties.$pathname) AS path FROM events "
          "WHERE event = '$exception' AND timestamp > now() - INTERVAL 24 HOUR "
+         # Errors before the fix deploy (Sep 30 2026, 10:42 PM EDT) are fixed or now
+         # filtered at the source; without this floor the first report would page for
+         # them. It stops mattering 24 hours later.
+         "AND timestamp > toDateTime('2026-10-01 02:42:00') "
          "GROUP BY msg ORDER BY n DESC LIMIT 8")
     d = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",
                   {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},

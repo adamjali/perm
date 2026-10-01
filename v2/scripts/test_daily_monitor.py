@@ -95,6 +95,8 @@ def main() -> int:
           "a browser error seen in 2+ sessions warns, with the message")
     check(quiet["status"] == "ok", "a one-off browser error stays ok")
     check("browser_errors_section" in inspect.getsource(dm.build), "the report includes the browser-errors section")
+    check("toDateTime('2026-10-01 02:42:00')" in inspect.getsource(dm.browser_errors_section),
+          "browser errors from before the fix deploy are not reported as new")
     check("toDate(toTimeZone(" in inspect.getsource(dm.traffic_section),
           "the traffic query shifts the zone before toDate (HogQL's toDate takes one argument)")
     check(dm.et_time("2026-09-27T19:54:52+00:00") == "Sep 27, 3:54 PM EDT"
