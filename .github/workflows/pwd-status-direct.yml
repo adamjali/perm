@@ -122,6 +122,21 @@ jobs:
               timeout 170m python3 scripts/ingest_pwd_status_direct.py --"$MODE" ;;
           esac
 
+      # The wage-request and LCA summaries this run just wrote are printed by
+      # daily-window pages (/pwd-cases, /lca-cases, /case-search). Expire them
+      # with the PERM sweep's fixed list (src/app/api/revalidate-sweep/paths.ts).
+      - name: Expire the pages that print the sweep's figures
+        if: success()
+        working-directory: v2
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET not set; skipping"; exit 0
+          fi
+          curl -fsS -X POST https://permtracker.app/api/revalidate-sweep \
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" || echo "revalidation call failed"
+
       # A backfill leg that stopped at its cap dispatches the next one. Guards:
       # only when it moved the frontier (a leg that made no progress would loop
       # forever), and only while the frontier is short of --to. GITHUB_TOKEN

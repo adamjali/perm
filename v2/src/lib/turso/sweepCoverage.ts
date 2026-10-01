@@ -22,6 +22,8 @@ export interface SweepCoverage {
   mode: string;
   asked: number;
   answered: number;
+  /** When the sweep wrote this record, epoch ms: the time a page can print as "checked". */
+  checkedAt: number;
 }
 
 const MAX_AGE_MS = 8 * 86_400_000;
@@ -43,6 +45,7 @@ export const getSweepCoverage = cache(async (): Promise<SweepCoverage | null> =>
       mode: typeof d.mode === "string" ? d.mode : "",
       asked: Number(d.asked) || 0,
       answered: Number(d.answered) || 0,
+      checkedAt: computedAt,
     };
   } catch {
     return null;

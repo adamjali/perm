@@ -28,6 +28,8 @@ import { getDatasetSchema } from "@/lib/structuredData";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DecisionPaceChart } from "@/components/activity/DecisionPaceChart";
+import { PermPulse } from "@/components/pulse/PermPulse";
+import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { OutcomeMix } from "@/components/activity/OutcomeMix";
 import { WeekdayShape } from "@/components/activity/WeekdayShape";
 import { ChangeFeedBrowser } from "@/components/activity/ChangeFeedBrowser";
@@ -91,7 +93,7 @@ function monthYear(iso: string | undefined): string | null {
 }
 
 export default async function DecisionActivityPage() {
-  const [series, mirrorSize, activity, windows] = await Promise.all([
+  const [series, mirrorSize, activity, windows, coverage] = await Promise.all([
     getActivitySeries(),
     getLiveMirrorSize(),
     // The event record is days old, so a failure here must not take the whole
@@ -109,14 +111,22 @@ export default async function DecisionActivityPage() {
     // lands or the sweep runs, so a hardcoded pair of dates would silently
     // under-report coverage for months.
     getCoverageWindows().catch((): CoverageWindows => ({ decided: null, observed: null })),
+    getSweepCoverage().catch(() => null),
   ]);
 
   const disclosure = series.find((s) => s.source === "dol-disclosure");
-  const live = series.find((s) => s.source === "flag-live");
+  const live = series.find((s) => s.source === "sweep-observed");
   // The live scan is the current instrument, so it sets the headline pace. The
   // disclosure series is the fallback, never a splice of the two: the 43 days
   // between them hold no measurement at all.
   const current = live?.days.length ? live : disclosure;
+  // Days with no record between the two series, read off the series.
+  const lastDisclosed = disclosure?.days.at(-1)?.date;
+  const firstObserved = live?.days[0]?.date;
+  const gapDays =
+    lastDisclosed && firstObserved
+      ? Math.round((Date.parse(`${firstObserved}T00:00:00Z`) - Date.parse(`${lastDisclosed}T00:00:00Z`)) / 86_400_000) - 1
+      : null;
   const currentPace = current ? pace(current.days, 28) : null;
   // ZERO-FILLED, and that is the difference between showing October 2025 and
   // hiding it. The disclosure series is GROUP BY decision_date over the case
@@ -152,6 +162,17 @@ export default async function DecisionActivityPage() {
           day, that is the pace of the queue.
         </p>
       </header>
+
+      {live?.days.length ? (
+        <div className="mt-8">
+          <PermPulse
+            days={live.days.slice(-56)}
+            checkedAt={coverage?.checkedAt ?? null}
+            showLink={false}
+            variant="block"
+          />
+        </div>
+      ) : null}
 
       {currentPace ? (
         <section className="mt-8 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
@@ -352,7 +373,7 @@ export default async function DecisionActivityPage() {
               ...(live
                 ? [
                     {
-                      label: "Live case scan",
+                      label: "Our daily check of DOL",
                       color: "var(--stage-pwd-ink)",
                       days: live.days,
                     },
@@ -366,8 +387,11 @@ export default async function DecisionActivityPage() {
       {series.length > 0 ? (
         <FinePrint summary="The break, and October 2025" className="mt-4">
           <p>
-            The quarterly disclosure file ends 2026-06-30 and the per-case scan
-            of flag.dol.gov begins 2026-08-13. Drawing those 44 days as zero
+            The quarterly disclosure file ends{" "}
+            {disclosure?.days.at(-1)?.date ?? "with its last quarter"} and our
+            daily check of DOL&apos;s case status begins{" "}
+            {live?.days[0]?.date ?? "later"}
+            {gapDays !== null ? `. Drawing those ${gapDays} days as zero` : ". Drawing that gap as zero"}{" "}
             would invent a second national stoppage that never happened.
           </p>{" "}
           <p>

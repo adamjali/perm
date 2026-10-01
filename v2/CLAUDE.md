@@ -7217,7 +7217,85 @@ before and after Sep 27, reading every browser exception since, and walking the 
   emailed links, one-click unsubscribe, badges and social cards answer; build files of every recent
   release stay served; CAA lists Cloudflare's certificate authorities and the certificate runs to
   Dec 27; the browser-UA clients the rate limits refused were scrapers (600 requests in 2 minutes);
-  Convex shows only retried sign-in conflicts. Left alone: about 0.09% of `/ingest` posts get a 502
-  when the app restarts (a direct nginx proxy to PostHog would have to pass the client IP exactly,
-  or cookie-free counting collapses to one visitor), and rare webpack "reading 'call'" errors right
-  after a deploy.
+  Convex shows only retried sign-in conflicts. **Corrected Oct 1 2026:** about 0.09% of `/ingest`
+  posts get a first-try 502, and NOTHING is lost. posthog-js retries a status-0 or 5xx post with
+  backoff (its resends carry `retry_count=` in the URL), and nginx shows those resends answered 200,
+  80 of 80; the 502s don't line up with restarts either. This note first said events were dropped
+  "whenever the app restarts", which was wrong on both counts. Also left alone: rare webpack
+  "reading 'call'" errors right after a deploy.
+
+## Oct 1 2026: our own audit, H-2A and H-2B on the counter, and the daily pulse
+
+- **An Ahrefs crawl was refused** (the free plan's 5,000 crawl credits a month were spent; they reset
+  Oct 19 at 00:00 UTC, and the scheduled Site Audit runs on the 20th at 8 PM ET at 30 URLs a minute).
+  Our own audit of 855 sampled pages stood in for it; every page answered 200.
+- **Entity links go only to pages that exist.** The decision feed and the case search linked
+  employers and law firms with no page (132 404s in three days). `keepLinkableSlugs` in
+  `src/lib/turso/entityLinks.ts` checks each slug against `perm_entities`, `perm_entity_alias` and,
+  for employers, `perm_live_recent`, in batches of 300, and returns the rows untouched if the
+  check itself fails.
+- **A public `[param]` route needs `generateStaticParams` for its `revalidate` to apply.** Without
+  one, `/perm-queue/<month>` rendered dynamic (`private, no-store`, 1 to 1.5 s); returning `[]`
+  turns on-demand ISR on. `dynamic-routes-cache.test.ts` holds every public `[param]` route to it.
+- **A streamed loading fallback adds a heading to the raw HTML.** The case page's fallbacks put two
+  more `<h1>`s in the document; they're `role="heading" aria-level={1}` now.
+- **Descriptions take the richest form that fits 155 characters** (`firstThatFits` in
+  `src/lib/describe.ts`): 285 of 855 pages had been under 110.
+- **The deploy renders pages on the new copy before it takes traffic**: `warm()` in
+  `scripts/oracle/bin/permtracker-deploy` fetches the 475 core pages and the first 300 entries of
+  `employer-1.xml` (busiest first) two at a time, for at most 4 minutes. It can't fail a deploy.
+  Installed on the server by hand; that path is `v2/scripts/**`, which the deploy workflow ignores.
+  **Its first version warmed nothing, silently, on two deploys.** The script runs `set -euo pipefail`,
+  and `head -300` closing the pipe killed `curl` with SIGPIPE (141), so the path list "failed" and
+  `warm` returned before its log line. Each sitemap is now fetched whole and cut with `sed -n`, and an
+  empty list logs "warm-up skipped". Test a deploy-script function under the script's own shell
+  options, and read the deploy's journal (`journalctl -t permtracker-deploy`) for the line it should
+  write: a step that can't fail a deploy also can't tell you it did nothing.
+- **The rebuilt frontier on `/perm-processing-times` said it was DOL's readings** ("DOL published",
+  "Each step is a published DOL reading"). `QueueHistoryChart` takes `kind="reconstructed"` now.
+- **Embed snippets carry a source line** linking the full tool outside the frame; the frame's own
+  footer link lives on our domain and credited nothing.
+- **FLAG serves H-2A (`H-300-`), H-2B (`H-400-`) and H-2B prevailing wage (`P-400-`) cases from the
+  same serial counter, and nothing asked for them.** On Sep 29, 383 of 2,912 serials were held
+  under no prefix; 7 of 10 sampled were these. Worse than a gap: 50 unclaimed serials in a row read
+  to the walk as DOL's edge, so a season's H-2A job orders filed back to back would have stopped it
+  at the same serial every night (proved in `test_case_status_direct.py` against the old list).
+  `ALL_FLAG_PREFIXES` has twelve entries (4 serials a request), and a `seasonal` program in
+  `ingest_pwd_status_direct.py` stores them in `seasonal_case_status`. **P-400 stays out of the PWD
+  program**: the PWD pages describe the ETA-9141 queue PERM and H-1B wait in. The gap sweep reads its
+  tables from `PROGRAMS` now (the typed list had been the drift), and `--recheck-prefixes` re-asks
+  serials retired under the old prefix set, asks only the new prefixes and writes no misses. FY2026
+  was backfilled from the server with it (`systemd-run`, paced 0.5 s).
+  **Statuses seen:** FULL CERTIFICATION (and - EXPIRED), PARTIAL CERTIFICATION, ACCEPTED - PENDING
+  RECRUITMENT, NOD ISSUED, IN PROCESS, DETERMINATION ISSUED, WITHDRAWN. An unknown one is logged and
+  treated as pending. **CW-1 answered to no prefix tried.**
+  **The read side, same night:** the PWD rule took any `P-###-`, so an H-2B wage number looked up
+  live would have been recorded in `pwd_case_status`, and an H-2A number got "no record". The PWD
+  rule is `P-100-` only (both copies: `pwdCases.ts` and `flagCaseNumber.ts`, held together by its
+  test), `seasonalCases.ts` is a fourth `makeFlagProgram`, and `programOf` returns `seasonal` for
+  `H-300`/`H-400`/`P-400`. The case page and the embed lookup route those numbers to
+  `SeasonalLookup`, and case alerts work for them through Convex's table-driven sweep (which needs
+  `npx convex deploy` to pick up the new map).
+- **`daily_decisions` holds two sources: `dol-disclosure` and `sweep-observed`.** `flag-live` and
+  `rival-b` were deleted Sep 18, but `activity.ts` still asked for `flag-live`, so
+  `/perm-decision-activity`'s "last 28 days" was June's. It reads `sweep-observed`, and the break's
+  start date and length come from the series.
+- **The daily pulse** (`PermPulse`, the homepage under the DOL band and the top of
+  `/perm-decision-activity`): the newest day's decisions against the same weekday over the four
+  weeks before (never the day before: a Monday against a Sunday reads as thousands of percent), its
+  split, the last 30 days as stacked bars, a typical week, and when the sweep last checked DOL. Bars
+  are HTML, not SVG text, with a screen-reader table. `case-status-direct.yml` and
+  `pwd-status-direct.yml` POST `/api/revalidate-sweep` after each pass, so the ten pages printing a
+  sweep's figures (the pulse, the census and review stages, under-review employers, the wage-request
+  and LCA summaries) move when the record does. `paths.ts` is held to the app tree by its test, which
+  lists the readers only a sweep writes; a POST from the runners reaching the Oracle site was
+  confirmed off the employer step's own log (`{"revalidated":503}`, Sep 30).
+- **DOL refused the nightly gap sweep again** (HTTP 403 after 499 requests, Sep 30). It recorded
+  `ok` and resumes, as designed; two refusals in a month.
+- **A local dev server against production data**: an SSH tunnel to the server's sqld
+  (`ssh -L 18080:127.0.0.1:8080 permtracker`) and `TURSO_DATABASE_URL=http://127.0.0.1:18080` with
+  the server's read-only token in the environment (never printed). `.env.local` still points at
+  the retired Turso database, which bills per row read. Next refuses a second dev server in the same
+  folder, and Turbopack refuses a `node_modules` symlinked from outside the project root, so a
+  second copy runs from a git worktree with its own `pnpm install --offline`.
+

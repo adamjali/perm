@@ -225,6 +225,23 @@ jobs:
             -H "content-type: application/json" \
             --data @changed-employer-slugs.json || echo "revalidation call failed"
 
+      # The pages that print the sweep's own figures (the daily decisions, the
+      # census, the review stages, "checked against DOL at ...") sit on daily or
+      # six-hourly windows. Expired here, they move when the record moves
+      # instead of up to a window later (Oct 1 2026). Fixed list, no input:
+      # src/app/api/revalidate-sweep/paths.ts.
+      - name: Expire the pages that print the sweep's figures
+        if: success()
+        working-directory: v2
+        env:
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+        run: |
+          if [ -z "$REVALIDATE_SECRET" ]; then
+            echo "REVALIDATE_SECRET not set; skipping"; exit 0
+          fi
+          curl -fsS -X POST https://permtracker.app/api/revalidate-sweep \
+            -H "x-revalidate-secret: $REVALIDATE_SECRET" || echo "revalidation call failed"
+
       # THE ONLY THING THAT WILL SAY THIS RUN FAILED, TOMORROW.
       #
       # There is no alerting on these workflows. A red scheduled run does email

@@ -51,6 +51,9 @@ import { deriveFigures } from "@/components/home/dataPageFigures";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { getRecordCounts } from "@/lib/turso/recordCounts";
+import { getObservedDays } from "@/lib/turso/pulse";
+import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
+import { PermPulse } from "@/components/pulse/PermPulse";
 
 // One live DOL figure on the page: hourly ISR, same as the data pages.
 // The disclosure files are quarterly, so an hourly window bought
@@ -115,10 +118,15 @@ export default async function HomePage() {
   // must not be conflated: the processing-times snapshot is DOL's weekly queue
   // page, the disclosure stats are its quarterly determination files. Fetched
   // in parallel, server-side, once per revalidate window.
-  const [snapshot, disclosure, record] = await Promise.all([
+  // The pulse reads our own sweep's record, a third clock: it moves when the
+  // sweep finishes, and /api/revalidate-sweep expires this page then. Either
+  // read failing drops the band, never the page.
+  const [snapshot, disclosure, record, observed, coverage] = await Promise.all([
     getProcessingTimes(),
     getDisclosureStats(),
     getRecordCounts(),
+    getObservedDays().catch(() => []),
+    getSweepCoverage().catch(() => null),
   ]);
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)
@@ -160,6 +168,7 @@ export default async function HomePage() {
         asOf={snapshot?.permAsOf ?? null}
         figures={deriveFigures(disclosure)}
       />
+      <PermPulse days={observed} checkedAt={coverage?.checkedAt ?? null} />
       <StageStrip />
       <SectionDivider kind="comb" />
       <ToolsSection

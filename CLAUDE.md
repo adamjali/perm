@@ -294,3 +294,17 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026 (night)".
 - **The morning report reads browser errors and likely people**, not only Sentry and raw visitors.
 - **Turnstile's automatic refresh is no longer counted as a failed check.**
 - **The Security and Privacy pages and the compliance docs name Oracle and Cloudflare**, not Vercel.
+
+## Oct 1 2026, in six lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 1 2026".
+
+- **FLAG also serves H-2A, H-2B and H-2B wage cases from the same counter.** The walk and the gap sweep
+  ask all twelve prefixes, they're stored in `seasonal_case_status`, and a run of them can no longer
+  read as DOL's edge and stall the walk. Case lookups, embeds and alerts answer them too.
+- **Entity links go only to pages that exist**; 132 404s in three days came from the decision feed.
+- **A public `[param]` route needs `generateStaticParams`** or its `revalidate` is ignored.
+- **The deploy renders the core pages and 300 busiest employers before it switches.**
+- **`/perm-decision-activity` read a deleted source** and showed June as "the last 28 days".
+- **The daily pulse** leads the homepage's data and the activity page; each sweep expires those pages.
+
