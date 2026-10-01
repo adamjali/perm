@@ -7,6 +7,7 @@ import { exec, one } from "./client";
 import type { FlagProgram } from "./flagCases";
 import { lca } from "./lcaCases";
 import { pwd } from "./pwdCases";
+import { seasonal } from "./seasonalCases";
 import { isUnsettledMiss } from "@/lib/dolMiss";
 
 /**
@@ -35,7 +36,7 @@ import { isUnsettledMiss } from "@/lib/dolMiss";
  * of the counters falls back to the stored record: no counter, no live ask.
  */
 
-export type EmbedProgram = "perm" | "pwd" | "lca";
+export type EmbedProgram = "perm" | "pwd" | "lca" | "seasonal";
 
 export interface EmbedCaseAnswer {
   caseNumber: string;
@@ -60,7 +61,7 @@ export interface EmbedCaseAnswer {
   dolUnavailable?: boolean;
 }
 
-const FLAG: Record<"pwd" | "lca", FlagProgram> = { pwd, lca };
+const FLAG: Record<"pwd" | "lca" | "seasonal", FlagProgram> = { pwd, lca, seasonal };
 
 /** Which program a typed number belongs to. P- and I- first: the PERM shape accepts any letter. */
 export function embedProgramOf(input: string): { program: EmbedProgram; caseNumber: string } | null {
@@ -68,6 +69,9 @@ export function embedProgramOf(input: string): { program: EmbedProgram; caseNumb
   if (p) return { program: "pwd", caseNumber: p };
   const l = lca.normalise(input);
   if (l) return { program: "lca", caseNumber: l };
+  // H-2A, H-2B and H-2B wage numbers, before the PERM shape claims them.
+  const s = seasonal.normalise(input);
+  if (s) return { program: "seasonal", caseNumber: s };
   const g = normaliseLookupCaseNumber(input);
   return g ? { program: "perm", caseNumber: g } : null;
 }

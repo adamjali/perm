@@ -47,7 +47,8 @@ export const PWD_DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, via
 export const pwd = makeFlagProgram({
   key: "pwd",
   table: "pwd_case_status",
-  numberRe: /^P-\d{3}-\d{5}-\d+$/,
+  // P-100 only: P-400 is an H-2B wage request, read by seasonalCases.ts.
+  numberRe: /^P-100-\d{5}-\d+$/,
   finalStatuses: PWD_FINAL_STATUSES,
   docKey: "pwd_live_summary",
   discoverySource: PWD_DISCOVERY_SOURCE,

@@ -138,16 +138,22 @@ PROGRAMS: dict[str, dict] = {
         # PWD pages describe the ETA-9141 queue that PERM and H-1B wait in,
         # and H-2B requests run through a different one.
         "prefixes": ["H-300-", "H-400-", "P-400-"],
-        # Statuses read off DOL's own answers on Oct 1 2026. One not in
-        # either set is logged and treated as pending, which costs a daily
-        # re-check and never a wrong "decided".
+        # Statuses read off DOL's own answers on Oct 1 2026, over the FY2026
+        # backfill's first 27,000 cases. One not in either set is logged and
+        # treated as pending, which costs a daily re-check and never a wrong
+        # "decided". Mirror seasonalCases.ts, pinned by its test.
         "final": {"FULL CERTIFICATION", "FULL CERTIFICATION - EXPIRED",
+                  "FULL CERTIFICATION - WITHDRAWN",
                   "PARTIAL CERTIFICATION", "PARTIAL CERTIFICATION - EXPIRED",
+                  "PARTIAL CERTIFICATION - WITHDRAWN",
                   "DENIED", "WITHDRAWN", "DETERMINATION ISSUED",
                   "REDETERMINATION AFFIRMED", "REDETERMINATION MODIFIED",
                   "RETURNED UNPROCESSED",
-                  "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION"},
-        "pending": {"IN PROCESS", "ACCEPTED - PENDING RECRUITMENT"},
+                  "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
+                  "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION"},
+        "pending": {"IN PROCESS", "ACCEPTED - PENDING RECRUITMENT", "NOD ISSUED",
+                    "NOR ISSUED", "NRM ISSUED", "RFI ISSUED", "PENDING APPEAL",
+                    "PENDING CENTER DIRECTOR REVIEW", "POST-CERT REQUEST PENDING"},
         "doc": "seasonal_live_summary",
         "freshness": "seasonal-status",
         # An H-2A or H-2B season is decided within months of filing.

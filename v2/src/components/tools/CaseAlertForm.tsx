@@ -41,6 +41,7 @@ const SOURCE: Record<FlagProgram, string> = {
   perm: "perm-case-status",
   pwd: "pwd-status",
   lca: "lca-status",
+  seasonal: "seasonal-status",
 };
 
 /**

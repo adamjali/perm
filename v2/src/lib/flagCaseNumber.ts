@@ -34,11 +34,15 @@ import {
   normaliseCaseNumber,
 } from "./caseStatusVocabulary";
 
-/** The three FLAG programs this product tracks per case. */
-export type FlagProgram = "perm" | "pwd" | "lca";
+/**
+ * The FLAG programs this product tracks per case. `seasonal` is H-2A
+ * (`H-300-`), H-2B (`H-400-`) and the H-2B prevailing wage request
+ * (`P-400-`), on the same counter and found there on Oct 1 2026.
+ */
+export type FlagProgram = "perm" | "pwd" | "lca" | "seasonal";
 
 /** Every program, in a stable order, for exhaustive iteration in tests. */
-export const FLAG_PROGRAMS: readonly FlagProgram[] = ["perm", "pwd", "lca"];
+export const FLAG_PROGRAMS: readonly FlagProgram[] = ["perm", "pwd", "lca", "seasonal"];
 
 /**
  * The prefix rules, byte-identical to the Turso read layer's own.
@@ -47,7 +51,10 @@ export const FLAG_PROGRAMS: readonly FlagProgram[] = ["perm", "pwd", "lca"];
  * fallback rather than a pattern. See `programOf`.
  */
 const PROGRAM_PATTERNS: readonly { program: FlagProgram; re: RegExp }[] = [
-  { program: "pwd", re: /^P-\d{3}-\d{5}-\d+$/ },
+  // P-100 only. Until Oct 1 2026 this was any P-###, which filed an H-2B
+  // wage request (P-400) under the PWD program and its ETA-9141 queue.
+  { program: "pwd", re: /^P-100-\d{5}-\d+$/ },
+  { program: "seasonal", re: /^(?:H-300|H-400|P-400)-\d{5}-\d+$/ },
   { program: "lca", re: /^I-\d{3}-\d{5}-\d+$/ },
 ];
 
@@ -68,7 +75,7 @@ function tidy(input: string): string {
  * dispatches a lookup.
  *
  * Total by design: anything unrecognised comes back `perm`. Callers shape-gate
- * first with `normaliseFlagCaseNumber`; this answers "which of the three",
+ * first with `normaliseFlagCaseNumber`; this answers "which program",
  * never "is this a case number".
  */
 export function programOf(caseNumber: string): FlagProgram {
@@ -102,6 +109,7 @@ const STATUS_TABLE: Record<FlagProgram, string> = {
   perm: "perm_case_status",
   pwd: "pwd_case_status",
   lca: "lca_case_status",
+  seasonal: "seasonal_case_status",
 };
 
 /**
@@ -130,6 +138,7 @@ const FRESHNESS_DATASET: Record<FlagProgram, string> = {
   perm: "perm-case-status",
   pwd: "pwd-status",
   lca: "lca-status",
+  seasonal: "seasonal-status",
 };
 
 export function freshnessDatasetFor(program: FlagProgram): string {
@@ -151,6 +160,7 @@ const NOUNS: Record<FlagProgram, { noun: string; withArticle: string }> = {
     withArticle: "a prevailing wage request",
   },
   lca: { noun: "LCA", withArticle: "an LCA" },
+  seasonal: { noun: "H-2A or H-2B filing", withArticle: "an H-2A or H-2B filing" },
 };
 
 export function programNoun(program: FlagProgram): string {
@@ -186,6 +196,17 @@ const LANDED_WELL: Record<Exclude<FlagProgram, "perm">, ReadonlySet<string>> = {
     "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
   ]),
   lca: new Set(["CERTIFIED"]),
+  // A full or partial certification (fewer workers than asked, still
+  // certified), or an issued wage for an H-2B wage request.
+  seasonal: new Set([
+    "FULL CERTIFICATION",
+    "PARTIAL CERTIFICATION",
+    "DETERMINATION ISSUED",
+    "REDETERMINATION AFFIRMED",
+    "REDETERMINATION MODIFIED",
+    "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
+    "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
+  ]),
 };
 
 /**

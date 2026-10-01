@@ -299,7 +299,7 @@ function count(n: number): string {
  * Every read in this file goes through here rather than naming a table, so
  * there is one decision rather than eight, and a program added later cannot
  * be half-wired. The value is interpolated into SQL and is safe to be: it is
- * one of three literals from a closed map, never anything a caller typed.
+ * one of four literals from a closed map, never anything a caller typed.
  * See `src/lib/flagCaseNumber.ts`.
  */
 function tableForCase(caseNumber: string): string {

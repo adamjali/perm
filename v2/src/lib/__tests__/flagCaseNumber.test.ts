@@ -44,6 +44,10 @@ describe("programOf", () => {
       // through to PERM.
       ["I-201-26125-868956", "lca"],
       ["I-202-26125-868956", "lca"],
+      // H-2A, H-2B and the H-2B wage request, on the same counter (Oct 1 2026).
+      ["H-300-26272-266803", "seasonal"],
+      ["H-400-26050-650195", "seasonal"],
+      ["P-400-26272-268643", "seasonal"],
     ];
     for (const [caseNumber, program] of cases) {
       expect(programOf(caseNumber), caseNumber).toBe(program);
@@ -60,7 +64,7 @@ describe("programOf", () => {
    */
   it("does not let the PERM shape rule claim a P- or I- number", () => {
     const permShape = /^[A-Z]-\d{3}-\d{5}-\d+$/;
-    for (const caseNumber of ["P-100-26125-868956", "I-200-26125-868956"]) {
+    for (const caseNumber of ["P-100-26125-868956", "I-200-26125-868956", "H-300-26272-266803", "P-400-26272-268643"]) {
       expect(
         permShape.test(caseNumber),
         `${caseNumber} really does satisfy the PERM shape rule, which is why order matters`,
@@ -111,6 +115,7 @@ describe("statusTableFor", () => {
     expect(statusTableFor("perm")).toBe("perm_case_status");
     expect(statusTableFor("pwd")).toBe("pwd_case_status");
     expect(statusTableFor("lca")).toBe("lca_case_status");
+    expect(statusTableFor("seasonal")).toBe("seasonal_case_status");
   });
 
   /**
@@ -123,7 +128,7 @@ describe("statusTableFor", () => {
   it("returns a real table name for every program, never undefined", () => {
     for (const program of FLAG_PROGRAMS) {
       const table = statusTableFor(program);
-      expect(table, program).toMatch(/^(perm|pwd|lca)_case_status$/);
+      expect(table, program).toMatch(/^(perm|pwd|lca|seasonal)_case_status$/);
     }
     expect(new Set(FLAG_PROGRAMS.map(statusTableFor)).size).toBe(
       FLAG_PROGRAMS.length,
@@ -136,6 +141,7 @@ describe("freshnessDatasetFor", () => {
     expect(freshnessDatasetFor("perm")).toBe("perm-case-status");
     expect(freshnessDatasetFor("pwd")).toBe("pwd-status");
     expect(freshnessDatasetFor("lca")).toBe("lca-status");
+    expect(freshnessDatasetFor("seasonal")).toBe("seasonal-status");
   });
 
   /**
@@ -158,6 +164,9 @@ describe("freshnessDatasetFor", () => {
     expect(pwd, "the LCA ingest no longer stamps 'lca-status'").toContain(
       '"freshness": "lca-status"',
     );
+    expect(pwd, "the H-2A/H-2B ingest no longer stamps 'seasonal-status'").toContain(
+      '"freshness": "seasonal-status"',
+    );
 
     const perm = await source("../../../scripts/ingest_case_status_direct.py");
     if (perm === null) return;
@@ -177,12 +186,17 @@ describe("the prefix rules", () => {
   it("match the Turso read layer's own copies", async () => {
     const pwd = await source("../turso/pwdCases.ts");
     const lca = await source("../turso/lcaCases.ts");
-    if (pwd === null || lca === null) {
+    const seasonal = await source("../turso/seasonalCases.ts");
+    if (pwd === null || lca === null || seasonal === null) {
       expect(true).toBe(true);
       return;
     }
     expect(
-      pwd.includes("/^P-\\d{3}-\\d{5}-\\d+$/"),
+      seasonal.includes("/^(?:H-300|H-400|P-400)-\\d{5}-\\d+$/"),
+      "seasonalCases.ts no longer uses the same prefix pattern as flagCaseNumber.ts",
+    ).toBe(true);
+    expect(
+      pwd.includes("/^P-100-\\d{5}-\\d+$/"),
       "pwdCases.ts no longer uses the same prefix pattern as flagCaseNumber.ts",
     ).toBe(true);
     expect(
@@ -197,6 +211,7 @@ describe("the nouns", () => {
     expect(programNoun("perm")).toBe("PERM case");
     expect(programNoun("pwd")).toBe("prevailing wage request");
     expect(programNoun("lca")).toBe("LCA");
+    expect(programNoun("seasonal")).toBe("H-2A or H-2B filing");
   });
 
   it("gets the article right, including the one that is not 'a'", () => {
@@ -236,6 +251,15 @@ describe("isProgramApproval", () => {
     expect(isProgramApproval("lca", "CERTIFIED")).toBe(true);
     expect(isProgramApproval("lca", "CERTIFIED - WITHDRAWN")).toBe(false);
     expect(isProgramApproval("lca", "DENIED")).toBe(false);
+  });
+
+  it("treats a full or partial certification as the good outcome for H-2A and H-2B", () => {
+    expect(isProgramApproval("seasonal", "FULL CERTIFICATION")).toBe(true);
+    expect(isProgramApproval("seasonal", "PARTIAL CERTIFICATION")).toBe(true);
+    expect(isProgramApproval("seasonal", "DETERMINATION ISSUED")).toBe(true);
+    expect(isProgramApproval("seasonal", "FULL CERTIFICATION - EXPIRED")).toBe(false);
+    expect(isProgramApproval("seasonal", "FULL CERTIFICATION - WITHDRAWN")).toBe(false);
+    expect(isProgramApproval("seasonal", "DENIED")).toBe(false);
   });
 
   it("canonicalises casing the way the ingest does", () => {

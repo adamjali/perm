@@ -401,8 +401,12 @@ def main() -> int:
     core.log(f"  probed {r['probed']:,} holes in {r['requests']:,} requests")
     core.log(f"  DOL confirmed {r['found']:,} of them as real cases")
     core.log(f"  inserted {r['inserted_perm']:,} PERM, {r['inserted_other']:,} PWD/LCA")
-    core.log(f"  {r['missed']:,} serials came back empty and had their miss count bumped "
-             f"(retired at {MISS_LIMIT})")
+    if recheck:
+        core.log(f"  {r['missed']:,} serials came back empty under {', '.join(recheck)}; "
+                 "no misses recorded (a recheck never retires a serial)")
+    else:
+        core.log(f"  {r['missed']:,} serials came back empty and had their miss count bumped "
+                 f"(retired at {MISS_LIMIT})")
     for code, gaps, found in r["days_with_finds"][:12]:
         core.log(f"    {code}: {found} of {gaps} holes were real")
     if r["skipped"]:

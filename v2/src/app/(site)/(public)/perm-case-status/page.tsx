@@ -14,6 +14,7 @@ import { CaseNotFound, CaseStatusEmpty } from "@/components/tools/CaseNotFound";
 import { CaseStatusResult } from "@/components/tools/CaseStatusResult";
 import { PwdLookup } from "@/components/tools/PwdStatusResult";
 import { LcaLookup } from "@/components/tools/LcaStatusResult";
+import { SeasonalLookup } from "@/components/tools/SeasonalStatusResult";
 import { buildWall, neighbourMonths } from "@/lib/casePosition";
 import { isLegacyCaseNumber, normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { looksLikeReceipt, normaliseReceipt } from "@/lib/uscis/receipt";
@@ -26,6 +27,7 @@ import { getCaseWageContext, getCohortDuration } from "@/lib/turso/caseContext";
 import { lookupCase } from "@/lib/turso/caseLookup";
 import { normalisePwdCaseNumber } from "@/lib/turso/pwdCases";
 import { normaliseLcaCaseNumber } from "@/lib/turso/lcaCases";
+import { normaliseSeasonalCaseNumber } from "@/lib/turso/seasonalCases";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
 import { getDecisionPace } from "@/lib/turso/decisionPace";
@@ -176,10 +178,20 @@ export default async function PermCaseStatusPage({
   // PERM lookup, which refuses to record it and reports "not found".
   const pwdNumber = typed.trim().length > 0 ? normalisePwdCaseNumber(typed) : null;
   const lcaNumber = !pwdNumber && typed.trim().length > 0 ? normaliseLcaCaseNumber(typed) : null;
+  // H-2A (H-300), H-2B (H-400) and H-2B wage (P-400) numbers, before the
+  // PERM shape rule claims them (Oct 1 2026).
+  const seasonalNumber =
+    !pwdNumber && !lcaNumber && typed.trim().length > 0 ? normaliseSeasonalCaseNumber(typed) : null;
   const caseNumber =
-    !pwdNumber && !lcaNumber && typed.trim().length > 0 ? normaliseCaseNumber(typed) : null;
+    !pwdNumber && !lcaNumber && !seasonalNumber && typed.trim().length > 0
+      ? normaliseCaseNumber(typed)
+      : null;
   const malformed =
-    typed.trim().length > 0 && caseNumber === null && pwdNumber === null && lcaNumber === null;
+    typed.trim().length > 0 &&
+    caseNumber === null &&
+    pwdNumber === null &&
+    lcaNumber === null &&
+    seasonalNumber === null;
 
   const faqSchema = {
     "@context": "https://schema.org",
@@ -271,6 +283,10 @@ export default async function PermCaseStatusPage({
         {pwdNumber ? (
           <Suspense key={pwdNumber} fallback={<LookupSkeleton />}>
             <PwdLookup caseNumber={pwdNumber} />
+          </Suspense>
+        ) : seasonalNumber ? (
+          <Suspense key={seasonalNumber} fallback={<LookupSkeleton />}>
+            <SeasonalLookup caseNumber={seasonalNumber} />
           </Suspense>
         ) : lcaNumber ? (
           <Suspense key={lcaNumber} fallback={<LookupSkeleton />}>
