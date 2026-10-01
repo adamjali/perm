@@ -30,7 +30,7 @@ MFA is not currently implemented. Compensating controls:
 ## Encryption
 
 ### In Transit
-- All traffic over TLS/HTTPS (enforced by Vercel + Convex)
+- All traffic over TLS/HTTPS (enforced by Cloudflare in front of the Oracle server, and by Convex)
 - HSTS header: `max-age=63072000; includeSubDomains; preload`
 
 ### At Rest
@@ -43,7 +43,7 @@ MFA is not currently implemented. Compensating controls:
 ### Key Rotation
 
 To rotate `OAUTH_ENCRYPTION_KEY`:
-1. Set new key in env vars (Convex + Vercel)
+1. Set new key in env vars (Convex + the server's `production.env`)
 2. Run migration to re-encrypt existing tokens and FEINs with new key
 3. Old key needed temporarily for decryption during migration
 4. Verify all records re-encrypted via dashboard spot check
@@ -95,7 +95,7 @@ Applied to all routes via `next.config.ts`:
 ## Bot Protection
 
 - **Cloudflare Turnstile** (interaction-only widget) on `/signup`, `/login`, `/reset-password` — invisible to low-risk users, challenges appear only when Cloudflare's ML flags the attempt. Token verified server-side via `turnstile.verifyTurnstileToken`.
-- **Vercel BotID Basic** (Kasada ML) on `/api/chat` — invisible bot detection baked into the platform.
+- **Cloudflare** in front of every request (bot scoring, flood backstop) and **nginx** rate limits per address and per crawler. BotID was removed with the move off Vercel (Sep 29 2026); `/api/chat` is guarded by sign-in, its per-IP and per-user limits and the AI quotas.
 - Name validation server-side for sign-up (`convex/lib/nameValidation.ts`) to filter obvious spam.
 
 ## Attack Surface Map
@@ -107,8 +107,8 @@ Applied to all routes via `next.config.ts`:
 | 3 | Google OAuth | `/api/auth/callback/google` | No | per-IP | Google |
 | 4 | Password reset | `/api/auth` (flow=reset) | No | per-IP + per-email | Turnstile |
 | 5 | OTP verify | `/api/auth` (flow=email-verification) | No | per-IP + per-email | Turnstile |
-| 6 | AI chat | `/api/chat` POST | **Yes** | per-IP (120/min) + per-user | BotID |
-| 7 | Tool execution | `/api/chat/execute-tool` | **Yes** | per-user on target mutation | BotID |
+| 6 | AI chat | `/api/chat` POST | **Yes** | per-IP (120/min) + per-user | Sign-in + nginx |
+| 7 | Tool execution | `/api/chat/execute-tool` | **Yes** | per-user on target mutation | Sign-in |
 | 8 | Convex functions | WebSocket `*.convex.cloud` | Most **yes** | per-user | N/A |
 | 9 | Image upload | `convex/documents.ts:generateUploadUrl` | **Yes** | per-user | N/A |
 | 10 | Public content (`/`, `/blog`, `/guides`, `/tutorials`, `/changelog`, `/resources`) | SSG | No | None | None |
@@ -120,20 +120,20 @@ Applied to all routes via `next.config.ts`:
 ### Defense-in-depth layering (request flow)
 
 ```
-Vercel edge → Next middleware (IP rate + blocklist) → Form pre-flight (email rate + suspension + Turnstile) → Convex Auth → Function (auth gate + per-user rate) → business logic
+Cloudflare edge → nginx (per-IP and crawler limits) → Next proxy (IP rate + blocklist) → Form pre-flight (email rate + suspension + Turnstile) → Convex Auth → Function (auth gate + per-user rate) → business logic
 ```
 
 ## Response Playbook
 
 - **Credential stuffing flood**: `/admin/security` Events tab → confirm auto-suspensions working; add offending IPs to blocklist if narrow; escalate if botnet.
-- **Sign-up spam**: verify BotID healthy, Turnstile loading; `adminSuspendUser` on offenders; `npx convex run marketingEmail:syncContacts '{}' --prod` to clean contacts.
+- **Sign-up spam**: verify Turnstile loading and the nginx limits answering; `adminSuspendUser` on offenders; `npx convex run marketingEmail:syncContacts '{}' --prod` to clean contacts.
 - **Compromised account**: `adminSuspendUser` + force sign-out + send reset email + review `auditLogs`.
 - **False-positive lockout**: `/admin/security` → Flagged Users → unsuspend; optionally unblock IP.
 
 ## Known gaps (Phase 2+)
 
 - No MFA (planned with Clerk migration)
-- No dedicated WAF (Vercel Hobby — rely on edge + middleware + per-layer limits)
+- Cloudflare Free plan: no custom WAF rules beyond its managed protection (rely on edge + nginx + middleware + per-layer limits)
 - Appeal flow is email-based (self-service signed-token `/appeal/[token]` planned)
 - No password-history enforcement (Clerk will provide)
-- No device fingerprinting beyond Turnstile + BotID
+- No device fingerprinting beyond Turnstile

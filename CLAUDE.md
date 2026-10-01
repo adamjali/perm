@@ -3,7 +3,7 @@
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-30
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **509 files / 8,144 tests across 5 vitest
+> have drifted: the suite is now **510 files / 8,165 tests across 5 vitest
 > projects** (2026-09-30), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
@@ -284,3 +284,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026 (midday)".
 - **Timeline dates too close to tell apart share one numbered square**, kept inside the grid's edges,
   with the colour key above the grid.
 - **IndexNow retries a server error, and the SSR audit judges inline styles only.**
+
+## Sep 30 2026 (night), in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Sep 30 2026 (night)".
+
+- **Anonymous visitors have a country again**, read from Cloudflare's edge; cookie-free mode had dropped it since Sep 28.
+- **The header no longer loops on phones**: its height reservation resets on width changes only, with a 20 px scroll band.
+- **The morning report reads browser errors and likely people**, not only Sentry and raw visitors.
+- **Turnstile's automatic refresh is no longer counted as a failed check.**
+- **The Security and Privacy pages and the compliance docs name Oracle and Cloudflare**, not Vercel.

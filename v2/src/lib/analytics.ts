@@ -61,17 +61,59 @@ export function isGpcEnabled(): boolean {
 }
 
 /**
+ * Calls made while PostHog is still starting are HELD and replayed in order.
+ *
+ * It starts a beat late on purpose (Oct 1 2026): instrumentation-client.ts
+ * first asks Cloudflare's edge for the visitor's country, because cookie-free
+ * mode drops the IP address before PostHog can look one up. posthog-js drops
+ * any call made before init, so without this an early sign-in's consent or an
+ * early click would be lost. Nothing is held unless that startup actually
+ * began, so a page without PostHog (no key, tests) runs every call at once.
+ */
+let starting = false;
+const held: Array<() => void> = [];
+const HELD_MAX = 100;
+
+/** Start holding calls; instrumentation-client calls this before its country lookup. */
+export function holdUntilStarted(): void {
+  starting = true;
+}
+
+/** PostHog is up (or gave up): run everything held, in order. */
+export function releaseHeld(): void {
+  starting = false;
+  for (const fn of held.splice(0)) {
+    try {
+      fn();
+    } catch {
+      // each call guards itself; one failure must not drop the rest
+    }
+  }
+}
+
+/** Run now, or after PostHog has started when it is still starting. */
+export function whenAnalyticsReady(fn: () => void): void {
+  if (!starting) {
+    fn();
+    return;
+  }
+  if (held.length < HELD_MAX) held.push(fn);
+}
+
+/**
  * Safely capture a PostHog event. Never throws.
  */
 function capture(
   event: string,
   properties?: Record<string, unknown>
 ): void {
-  try {
-    posthog.capture(event, properties);
-  } catch (error) {
-    console.warn(`[Analytics] Failed to capture "${event}":`, error);
-  }
+  whenAnalyticsReady(() => {
+    try {
+      posthog.capture(event, properties);
+    } catch (error) {
+      console.warn(`[Analytics] Failed to capture "${event}":`, error);
+    }
+  });
 }
 
 /**
@@ -82,11 +124,13 @@ function identify(
   distinctId: string,
   properties?: Record<string, unknown>
 ): void {
-  try {
-    posthog.identify(distinctId, properties);
-  } catch (error) {
-    console.warn("[Analytics] Failed to identify user:", error);
-  }
+  whenAnalyticsReady(() => {
+    try {
+      posthog.identify(distinctId, properties);
+    } catch (error) {
+      console.warn("[Analytics] Failed to identify user:", error);
+    }
+  });
 }
 
 /**
@@ -96,11 +140,13 @@ function identify(
  * counting until someone signs in again.
  */
 function reset(): void {
-  try {
-    posthog.reset();
-  } catch (error) {
-    console.warn("[Analytics] Failed to reset:", error);
-  }
+  whenAnalyticsReady(() => {
+    try {
+      posthog.reset();
+    } catch (error) {
+      console.warn("[Analytics] Failed to reset:", error);
+    }
+  });
 }
 
 /**
@@ -111,13 +157,15 @@ function reset(): void {
  * per browser, not on every render.
  */
 function consentForAccount(): void {
-  try {
-    if (isGpcEnabled() || isAnalyticsOff()) return;
-    if (!posthog.has_opted_in_capturing()) posthog.opt_in_capturing();
-    window.dispatchEvent(new Event(ANALYTICS_CONSENT_EVENT));
-  } catch {
-    // PostHog not initialized — safe to ignore
-  }
+  whenAnalyticsReady(() => {
+    try {
+      if (isGpcEnabled() || isAnalyticsOff()) return;
+      if (!posthog.has_opted_in_capturing()) posthog.opt_in_capturing();
+      window.dispatchEvent(new Event(ANALYTICS_CONSENT_EVENT));
+    } catch {
+      // PostHog not initialized — safe to ignore
+    }
+  });
 }
 
 /**
@@ -131,11 +179,13 @@ function optOut(): void {
   } catch {
     // Storage blocked — before_send can't see the flag, nothing else to do
   }
-  try {
-    posthog.opt_out_capturing();
-  } catch {
-    // PostHog not initialized — safe to ignore
-  }
+  whenAnalyticsReady(() => {
+    try {
+      posthog.opt_out_capturing();
+    } catch {
+      // PostHog not initialized — safe to ignore
+    }
+  });
 }
 
 /**

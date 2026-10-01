@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 
+import { getClientIp } from "@/lib/net/getClientIp";
+
 import { RECEIPT_SHAPE_MESSAGE, normaliseReceipt } from "./receipt";
 import type { UscisLookupResult } from "@/lib/turso/uscisCaseStatus";
 
@@ -53,13 +55,9 @@ export function resetIpBuckets(): void {
   buckets.clear();
 }
 
+/** The shared trusted-IP read, so every limiter keys on the same address. */
 function clientIp(req: Request): string {
-  const xff = req.headers.get("x-forwarded-for");
-  if (xff) {
-    const first = xff.split(",")[0]?.trim();
-    if (first) return first;
-  }
-  return req.headers.get("x-real-ip")?.trim() || "unknown";
+  return getClientIp(req) || "unknown";
 }
 
 /** True when this address may proceed. Charged before the lookup. */

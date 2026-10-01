@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import posthog from "posthog-js";
 
-import { ANALYTICS_CONSENT_EVENT } from "@/lib/analytics";
+import { ANALYTICS_CONSENT_EVENT, whenAnalyticsReady } from "@/lib/analytics";
 
 /**
  * Turns PostHog session replay ON, masked, for the authenticated app only.
@@ -31,16 +31,27 @@ import { ANALYTICS_CONSENT_EVENT } from "@/lib/analytics";
  */
 export function AppSessionReplay(): null {
   useEffect(() => {
-    // No-op if PostHog never initialised (missing key, privacy-mode throw).
-    if (!posthog.__loaded) return;
-    const start = () => {
-      if (posthog.has_opted_in_capturing()) posthog.startSessionRecording();
-    };
-    start();
-    window.addEventListener(ANALYTICS_CONSENT_EVENT, start);
+    let mounted = true;
+    let stop = () => {};
+    // PostHog may still be starting (it waits briefly for the country), so
+    // this runs once it is up.
+    whenAnalyticsReady(() => {
+      // No-op if PostHog never initialised (missing key, privacy-mode throw),
+      // or if the page left before it started.
+      if (!mounted || !posthog.__loaded) return;
+      const start = () => {
+        if (posthog.has_opted_in_capturing()) posthog.startSessionRecording();
+      };
+      start();
+      window.addEventListener(ANALYTICS_CONSENT_EVENT, start);
+      stop = () => {
+        window.removeEventListener(ANALYTICS_CONSENT_EVENT, start);
+        posthog.stopSessionRecording();
+      };
+    });
     return () => {
-      window.removeEventListener(ANALYTICS_CONSENT_EVENT, start);
-      posthog.stopSessionRecording();
+      mounted = false;
+      stop();
     };
   }, []);
 

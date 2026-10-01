@@ -92,3 +92,33 @@ describe("analytics consent", () => {
     expect(window.localStorage.length).toBe(0);
   });
 });
+
+describe("calls made while PostHog is starting", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    window.localStorage.clear();
+    setGpc(false);
+  });
+
+  it("are held, then replayed in order once it starts", async () => {
+    const { holdUntilStarted, releaseHeld } = await import("../analytics");
+    holdUntilStarted();
+    analytics.capture("first");
+    analytics.identify("user-1");
+    analytics.capture("second");
+    expect(ph.capture).not.toHaveBeenCalled();
+    expect(ph.identify).not.toHaveBeenCalled();
+
+    releaseHeld();
+    expect(ph.capture.mock.calls.map((c) => c[0])).toEqual(["first", "second"]);
+    expect(ph.identify).toHaveBeenCalledWith("user-1", undefined);
+    expect(ph.capture.mock.invocationCallOrder[0]).toBeLessThan(
+      ph.identify.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("run at once when nothing is starting (no key, tests)", () => {
+    analytics.capture("now");
+    expect(ph.capture).toHaveBeenCalledWith("now", undefined);
+  });
+});

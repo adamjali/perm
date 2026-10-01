@@ -2537,9 +2537,9 @@ Custom drag-drop case ordering with filter snapshot persistence.
 
 > The jobs below are Convex crons (deadline reminders, cleanup, the weekly
 > digest). The federal-data ingests are NOT Convex crons: they are GitHub
-> Actions workflows dispatched by Vercel cron through
-> `/api/cron/dispatch/<job>` since 2026-09-07, plus two launchd agents on
-> Adam's Mac for the USCIS fetches. See `v2/CLAUDE.md`.
+> Actions workflows dispatched through `/api/cron/dispatch/<job>` by the
+> server's systemd timers (since the move off Vercel, Sep 28 2026), and the
+> USCIS fetches run on the server itself. See `v2/CLAUDE.md`.
 
 Automated background tasks running on Convex cron scheduler.
 

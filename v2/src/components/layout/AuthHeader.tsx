@@ -27,6 +27,11 @@ import * as React from "react";
 // SecurityIncidentBanner already uses.
 const useIsoLayoutEffect =
   typeof window !== "undefined" ? React.useLayoutEffect : React.useEffect;
+
+/** The bar compacts past this scroll depth (px)... */
+export const SCROLL_COMPACT_ABOVE = 24;
+/** ...and grows back only near the top. The band must exceed the bar's 12px change. */
+export const SCROLL_EXPAND_BELOW = 4;
 import { usePathname } from "next/navigation";
 import {
   LEARN_NAV_LINKS,
@@ -89,9 +94,18 @@ export default function AuthHeader({
   // already correct. `motionArmed` then flips in a passive effect (which runs
   // AFTER that paint) so the corrected value never animates into place on
   // arrival, while ordinary scrolling still transitions.
+  //
+  // TWO THRESHOLDS, NOT ONE (Oct 1 2026). Compacting the bar moves it 12px,
+  // and anything that shifts the page by that much (the browser's scroll
+  // anchoring, a phone toolbar) can carry scrollY back across a single
+  // threshold, flip the bar, shift the page again, and flip it back. That
+  // ping-pong threw React's "Maximum update depth exceeded" (#185) from this
+  // handler on three live pages. The bar compacts past 24px and only grows
+  // again under 4px, a 20px band no 12px shift can cross.
   useIsoLayoutEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
+      const y = window.scrollY;
+      setIsScrolled((was) => (was ? y > SCROLL_EXPAND_BELOW : y > SCROLL_COMPACT_ABOVE));
     };
     handleScroll();
     window.addEventListener("scroll", handleScroll, { passive: true });
@@ -143,10 +157,15 @@ export default function AuthHeader({
     const ro = new ResizeObserver(publish);
     ro.observe(el, { box: "border-box" });
     // A width change can shrink the bar back (the logo lockup wraps below
-    // ~414px and again at exactly 1024px, where the desktop nav appears), and
-    // ResizeObserver alone cannot lower a high-water mark. Reset it on resize
-    // and let the next observation set the new one.
+    // ~400px), and ResizeObserver alone cannot lower a high-water mark. Reset
+    // it on a WIDTH change only. A phone fires `resize` whenever its toolbar
+    // shows or hides, which changes only the height; resetting then took the
+    // reservation down to the compact bar's height while scrolled, and every
+    // page jumped 12px mid-scroll (measured at 393px, Oct 1 2026: 71px to 59px).
+    let width = window.innerWidth;
     const onResize = () => {
+      if (window.innerWidth === width) return;
+      width = window.innerWidth;
       max = 0;
       publish();
     };

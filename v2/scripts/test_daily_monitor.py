@@ -60,6 +60,41 @@ def main() -> int:
     check(dm.summarize_runs([{"name": "npm_and_yarn in /v2 for next - Update #1", "status": "completed"}]) == {},
           "Dependabot version-update runs are left out")
     import inspect
+    # Traffic separates likely people from single-page crawler visits.
+    yday = (dt.datetime.now(dm.ET).date() - dt.timedelta(days=1)).isoformat()
+    real_http, real_key = dm.http_json, __import__("os").environ.get("POSTHOG_PERSONAL_API_KEY")
+    try:
+        __import__("os").environ["POSTHOG_PERSONAL_API_KEY"] = "test"
+        dm.http_json = lambda *a, **k: {"results": [[yday, 4000, 1000, 700]]}
+        t = dm.traffic_section()
+    finally:
+        dm.http_json = real_http
+        if real_key is None:
+            __import__("os").environ.pop("POSTHOG_PERSONAL_API_KEY", None)
+        else:
+            __import__("os").environ["POSTHOG_PERSONAL_API_KEY"] = real_key
+    blob = json.dumps(t)
+    check("about 700 people" in blob and "1,000 visitors" in blob,
+          "traffic reports likely people beside raw visitors")
+    # Browser errors live in PostHog; one seen in 2+ sessions warns.
+    real_http = dm.http_json
+    try:
+        __import__("os").environ["POSTHOG_PERSONAL_API_KEY"] = "test"
+        dm.http_json = lambda *a, **k: {"results": [['["Minified React error #185"]', 3, 3, "/perm-wages"],
+                                                    ['["Rejected"]', 1, 1, "/login"]]}
+        b = dm.browser_errors_section()
+        dm.http_json = lambda *a, **k: {"results": [['["Rejected"]', 1, 1, "/login"]]}
+        quiet = dm.browser_errors_section()
+    finally:
+        dm.http_json = real_http
+        if real_key is None:
+            __import__("os").environ.pop("POSTHOG_PERSONAL_API_KEY", None)
+        else:
+            __import__("os").environ["POSTHOG_PERSONAL_API_KEY"] = real_key
+    check(b["status"] == "warn" and "4 error events" in json.dumps(b) and "Minified React error #185" in json.dumps(b),
+          "a browser error seen in 2+ sessions warns, with the message")
+    check(quiet["status"] == "ok", "a one-off browser error stays ok")
+    check("browser_errors_section" in inspect.getsource(dm.build), "the report includes the browser-errors section")
     check("toDate(toTimeZone(" in inspect.getsource(dm.traffic_section),
           "the traffic query shifts the zone before toDate (HogQL's toDate takes one argument)")
     check(dm.et_time("2026-09-27T19:54:52+00:00") == "Sep 27, 3:54 PM EDT"

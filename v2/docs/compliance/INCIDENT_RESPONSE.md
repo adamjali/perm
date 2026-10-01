@@ -56,7 +56,7 @@ This schedules:
 1. **Automated Detection**: Sentry alerts, health check failures, system error emails
 2. **Admin Review**: Check admin dashboard (`/admin`) for error patterns
 3. **Investigation**: Review Sentry breadcrumbs, session replays, audit logs
-4. **Mitigation**: Deploy fix or rollback via Vercel (instant) + Convex (`npx convex deploy -y`)
+4. **Mitigation**: Deploy fix or roll back on the Oracle server (`permtracker-deploy`, which switches between the live and standby releases) + Convex (`npx convex deploy -y`)
 5. **Post-Incident**: Document in changelog, update monitoring if gaps found
 
 ## Data Breach Response
@@ -72,8 +72,9 @@ This schedules:
 
 ### Service Outage
 - Convex: Check [status.convex.dev](https://status.convex.dev)
-- Vercel: Check [vercel.com/status](https://vercel.com/status)
-- Redeploy if needed: `npx convex deploy -y` (backend), `vercel --prod` (frontend)
+- Cloudflare: Check [cloudflarestatus.com](https://www.cloudflarestatus.com)
+- Oracle Cloud: Check [ocistatus.oraclecloud.com](https://ocistatus.oraclecloud.com)
+- Redeploy if needed: `npx convex deploy -y` (backend), a push to `main` (the Oracle deploy workflow builds and switches the release)
 
 ### Data Recovery
 - Convex provides automatic backups

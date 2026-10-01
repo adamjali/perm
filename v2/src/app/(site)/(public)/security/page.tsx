@@ -60,8 +60,10 @@ export default function SecurityPage() {
               Overview
             </h2>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              Infrastructure is operated on SOC&nbsp;2-compliant providers
-              (Convex, Vercel). User data is encrypted at
+              Infrastructure runs on providers that hold SOC&nbsp;2 Type&nbsp;II
+              reports: Convex (accounts and case data), Oracle Cloud
+              Infrastructure (the website&apos;s server) and Cloudflare (the
+              network in front of it). User data is encrypted at
               rest and in transit. Authentication uses email-verified one-time codes
               or Google OAuth; all passwords are salted and hashed using industry-standard
               algorithms. Outbound transactional mail is DKIM-, SPF-, and DMARC-authenticated.

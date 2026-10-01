@@ -14,7 +14,13 @@
 import posthog from "posthog-js";
 import { config as zodConfig } from "zod/v4/core";
 
-import { isAnalyticsOff, isGpcEnabled } from "@/lib/analytics";
+import {
+  holdUntilStarted,
+  isAnalyticsOff,
+  isGpcEnabled,
+  releaseHeld,
+} from "@/lib/analytics";
+import { edgeCountry } from "@/lib/edgeCountry";
 
 // The live site's security policy has no 'unsafe-eval', so zod must not
 // compile parsers with new Function: its probe would be refused and log a
@@ -41,6 +47,18 @@ function redactCaseParam(props: Record<string, unknown> | undefined): void {
   }
 }
 
+/** True when an exception came from the browser's own service-worker registration. */
+function fromServiceWorkerRegister(props: Record<string, unknown> | undefined): boolean {
+  const list = props?.$exception_list as
+    | Array<{ stacktrace?: { frames?: Array<{ function?: string }> } }>
+    | undefined;
+  return (list || []).some((e) =>
+    (e.stacktrace?.frames || []).some((f) =>
+      /ServiceWorkerContainer\.register|_registerScript/.test(f.function || ""),
+    ),
+  );
+}
+
 // ---------------------------------------------------------------------------
 // PostHog — product analytics + client exception capture.
 // Events are sent via the /ingest reverse proxy (next.config.ts rewrites) to
@@ -48,7 +66,7 @@ function redactCaseParam(props: Record<string, unknown> | undefined): void {
 // ---------------------------------------------------------------------------
 const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
-if (posthogKey) {
+function startPostHog(key: string, country: string | null): void {
   try {
     // Honor Global Privacy Control (GPC). When the browser advertises a GPC
     // signal, nothing is sent to PostHog at all: analytics, exceptions and
@@ -57,7 +75,7 @@ if (posthogKey) {
     // Privacy Policy (§7, §15).
     const gpcEnabled = isGpcEnabled();
 
-    posthog.init(posthogKey, {
+    posthog.init(key, {
       api_host: "/ingest",
       ui_host: "https://us.posthog.com",
       // Pin PostHog SDK defaults to this date to prevent behavior changes from SDK updates
@@ -123,6 +141,12 @@ if (posthogKey) {
         // event still carries the path, so the page is still measurable.
         redactCaseParam(event.properties);
         redactCaseParam(event.$set);
+
+        // The country Cloudflare reported (see edgeCountry). Signed-in events
+        // also get PostHog's own lookup, which agrees with it.
+        if (country && event.properties && !event.properties.$geoip_country_code) {
+          event.properties.$geoip_country_code = country;
+        }
 
         if (event.event === "$exception") {
           // Build a single string from all exception message sources for filtering.
@@ -190,6 +214,16 @@ if (posthogKey) {
           if (msg.includes("UnrecognizedActionError")) return null;
           // React reconciler errors from extensions mutating the DOM.
           if (/Minified React error #(418|423|425)\b/.test(msg)) return null;
+          // Measured Sep 27 to Oct 1 2026, none of it ours: Zalo's in-app
+          // browser calling its own bridge (192 events), Android WebView
+          // bridges, Safari failing to fetch sw.js, opaque cross-origin
+          // "Script error.", and a browser refusing service-worker
+          // registration ("Rejected", thrown inside register()).
+          if (/zaloJSV2/.test(msg)) return null;
+          if (/Java exception was raised during method invocation/.test(msg)) return null;
+          if (/Script \S*sw\.js load failed/.test(msg)) return null;
+          if (/^\s*Script error\.?\s*$/.test(msg)) return null;
+          if (fromServiceWorkerRegister(event.properties)) return null;
         }
         return event;
       },
@@ -202,6 +236,14 @@ if (posthogKey) {
       error instanceof Error ? error.message : String(error),
     );
   }
+}
+
+if (posthogKey) {
+  // Calls the app makes before PostHog is up are held, then replayed.
+  holdUntilStarted();
+  void edgeCountry()
+    .then((country) => startPostHog(posthogKey, country))
+    .finally(releaseHeld);
 } else if (process.env.NODE_ENV === "development") {
   console.warn(
     "[PostHog] NEXT_PUBLIC_POSTHOG_KEY is not set. Analytics disabled."

@@ -540,7 +540,9 @@ export function SignupPageClient() {
               }}
               onExpire={() => {
                 setTurnstileToken(null);
-                trackTurnstileFail("signup", "expired");
+                // Not a failure: the widget refreshes an idle token on its own
+                // (refreshExpired: "auto"), and counting each refresh as one read
+                // as 250 failed checks a day from three open tabs (Sep 29 2026).
               }}
             />
             {turnstileError && (

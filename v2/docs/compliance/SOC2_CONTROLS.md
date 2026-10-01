@@ -24,7 +24,7 @@
 | A1.1 | Health monitoring | `GET /api/health` endpoint for uptime monitoring |
 | A1.1 | Error monitoring | Sentry (client+server), systemErrors table, admin email alerts |
 | A1.2 | Incident response | Documented in `INCIDENT_RESPONSE.md` |
-| A1.2 | Automated recovery | Convex auto-scaling, Vercel edge deployment, scheduled job retries |
+| A1.2 | Automated recovery | Convex auto-scaling, a standby release on the Oracle server, systemd restarts and watchdog, scheduled job retries |
 
 ## Processing Integrity (PI1)
 

@@ -59,7 +59,7 @@ Look for the SPF record — it should end with `-all` (not `~all`).
 
 ## 3. CAA Record (Certificate Authority Authorization)
 
-Restricts which certificate authorities can issue SSL certificates for this domain. Only Let's Encrypt (used by Vercel) should be authorized.
+Restricts which certificate authorities can issue SSL certificates for this domain. Since the move to Cloudflare (Sep 28 2026), Cloudflare publishes CAA records for the authorities its edge certificates come from (Let's Encrypt, Google Trust Services, SSL.com, Sectigo, DigiCert); keep those, or certificate renewal fails.
 
 **Record:**
 - **Type:** CAA

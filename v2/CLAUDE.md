@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 509 files / 8,144 tests (2026-09-30; ~20 min at a load average near 45, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 510 files / 8,165 tests (2026-09-30, night; ~20 min at a load average near 45, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -7176,3 +7176,48 @@ same day (`10dc8232`, `59863b95`, `8435aca3`).
   `gh run list --json headSha,name,status,conclusion` filtered on the SHA works.
 - **A screenshot shows where the reader scrolled.** I called scroll-to-today broken from Adam's
   screenshot; he had scrolled past it. Nothing changed there.
+
+## Sep 30 2026 (night): what silently broke after the privacy change and the move
+
+Adam asked to find every silent breakage before fixing any. Found by comparing each event's volume
+before and after Sep 27, reading every browser exception since, and walking the server's logs.
+
+- **Cookie-free analytics lost every anonymous visitor's country.** `cookieless_mode: "on_reject"`
+  (Sep 27) has PostHog drop the IP BEFORE its GeoIP step, so from Sep 28 12:00 UTC 4,443 of 4,529
+  pageviews a day had no `$geoip_country_code`; signed-in events kept theirs. It was the privacy
+  change, not the server move (the nulls start ten hours before the switch). The country now comes
+  from Cloudflare: `src/lib/edgeCountry.ts` reads `loc=` from same-origin `/cdn-cgi/trace`
+  (no cookie, nothing stored, two letters only, XX and T1 dropped, 800 ms cap), PostHog starts
+  after it, and before_send adds the code to every event. **posthog-js drops any call made before
+  init**, so `analytics.ts` holds calls while it starts (`holdUntilStarted` / `releaseHeld`,
+  `whenAnalyticsReady`) and replays them in order; with no startup in progress (no key, tests)
+  calls run at once. The privacy page says country only, never city or IP, for signed-out visits.
+- **The header looped ("Maximum update depth exceeded", React #185) on three live pages.** A phone
+  fires `resize` when its toolbar moves; the header reset its height reservation on every resize,
+  so while scrolled `--site-header-max-h` dropped 71 to 59 px, the page jumped 12 px, and scrollY
+  crossed the single 10 px threshold back and forth. Reproduced at 393 px on production. Now the
+  reservation resets on a WIDTH change only, and the bar compacts past 24 px and grows back under
+  4 px (`SCROLL_COMPACT_ABOVE` / `SCROLL_EXPAND_BELOW`): a band no 12 px shift can cross.
+- **Browser errors reach PostHog, not Sentry, and the morning report read only Sentry**, so the loop
+  sat unread. `daily_monitor.py` has a browser-errors section (warns on a message seen in 2+
+  sessions), and before_send drops measured noise that isn't ours: Zalo's in-app `zaloJSV2` (192
+  events in 3 days), Android WebView bridges, Safari's `sw.js load failed`, opaque `Script error.`
+  and a browser refusing service-worker registration ("Rejected" inside `register()`).
+- **The report's "visitors" counted crawlers**: it now gives likely people beside it (on a phone, or
+  more than one page; about 776 of 1,077 on Sep 30). An estimate, labelled as one.
+- **Turnstile's automatic token refresh was counted as a failed check** (255 "failures" from three
+  idle login tabs on Sep 29). The widget's onExpire no longer reports; a real failure still does.
+- **The Security page still said the site runs on Vercel**, the privacy list omitted Cloudflare
+  (every request passes through it) and still listed PostHog session replay (off since Sep 6), and
+  the compliance docs described Vercel, BotID and a Mac's launchd jobs. All say Oracle and
+  Cloudflare now; `analytics-cookieless.test.ts` fails on "Vercel" in the legal and security pages.
+  Oracle (OCI) and Cloudflare both publish SOC 2 Type II reports, checked on their own sites.
+- **Checked and fine:** Sentry is connected and tags the deployed release (a test event through
+  `/api/sentry-check`, resolved after); every env var the app reads is on the server or derived;
+  emailed links, one-click unsubscribe, badges and social cards answer; build files of every recent
+  release stay served; CAA lists Cloudflare's certificate authorities and the certificate runs to
+  Dec 27; the browser-UA clients the rate limits refused were scrapers (600 requests in 2 minutes);
+  Convex shows only retried sign-in conflicts. Left alone: about 0.09% of `/ingest` posts get a 502
+  when the app restarts (a direct nginx proxy to PostHog would have to pass the client IP exactly,
+  or cookie-free counting collapses to one visitor), and rare webpack "reading 'call'" errors right
+  after a deploy.

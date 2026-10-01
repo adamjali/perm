@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { screen, fireEvent } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
-import AuthHeader from "../AuthHeader";
+import AuthHeader, { SCROLL_COMPACT_ABOVE, SCROLL_EXPAND_BELOW } from "../AuthHeader";
 import { CONTENT_NAV_LINKS } from "@/lib/constants/navigation";
 
 const mockPush = vi.fn();
@@ -231,5 +231,74 @@ describe("AuthHeader: the unified public nav", () => {
     expect(
       screen.getAllByRole("button", { name: /search the site/i }).length,
     ).toBeGreaterThan(0);
+  });
+});
+
+describe("AuthHeader: scroll compaction cannot ping-pong (React #185, Oct 1 2026)", () => {
+  const header = () => document.querySelector("header") as HTMLElement;
+  const scrollTo = (y: number) => {
+    Object.defineProperty(window, "scrollY", { value: y, configurable: true });
+    fireEvent.scroll(window);
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(usePathname).mockReturnValue("/perm-wages");
+    scrollTo(0);
+  });
+
+  it("compacts past the upper threshold and grows back only near the top", () => {
+    renderWithProviders(<AuthHeader />);
+    expect(header().className).toContain("py-3");
+
+    scrollTo(SCROLL_COMPACT_ABOVE + 1);
+    expect(header().className).toContain("py-1.5");
+
+    // A 12px shift (the bar's own change, or scroll anchoring) inside the
+    // band must not flip it back. With one threshold at 10 it did.
+    scrollTo(SCROLL_COMPACT_ABOVE + 1 - 12);
+    expect(header().className).toContain("py-1.5");
+
+    scrollTo(SCROLL_EXPAND_BELOW);
+    expect(header().className).toContain("py-3");
+
+    // And on the way down, a page shifted 12px from the top stays tall.
+    scrollTo(SCROLL_EXPAND_BELOW + 12);
+    expect(header().className).toContain("py-3");
+  });
+
+  it("keeps a band wider than the 12px the bar changes by", () => {
+    expect(SCROLL_COMPACT_ABOVE - SCROLL_EXPAND_BELOW).toBeGreaterThan(12);
+  });
+
+  it("keeps the height reservation through a height-only resize (a phone toolbar)", () => {
+    const root = document.documentElement;
+    const spy = vi
+      .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+      .mockImplementation(function (this: HTMLElement) {
+        return this.tagName === "HEADER" ? (this.className.includes("py-1.5") ? 59 : 71) : 0;
+      });
+    try {
+      renderWithProviders(<AuthHeader />);
+      expect(root.style.getPropertyValue("--site-header-max-h")).toBe("71px");
+
+      scrollTo(SCROLL_COMPACT_ABOVE + 10);
+      expect(header().className).toContain("py-1.5");
+
+      // The toolbar hides: height changes, width does not.
+      fireEvent(window, new Event("resize"));
+      expect(root.style.getPropertyValue("--site-header-max-h")).toBe("71px");
+
+      // A real width change still re-measures.
+      const w = window.innerWidth;
+      Object.defineProperty(window, "innerWidth", { value: w + 100, configurable: true });
+      fireEvent(window, new Event("resize"));
+      expect(root.style.getPropertyValue("--site-header-max-h")).toBe("59px");
+      Object.defineProperty(window, "innerWidth", { value: w, configurable: true });
+    } finally {
+      spy.mockRestore();
+      root.style.removeProperty("--site-header-max-h");
+      root.style.removeProperty("--site-header-h");
+    }
   });
 });

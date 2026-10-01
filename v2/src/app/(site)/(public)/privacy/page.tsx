@@ -402,7 +402,13 @@ export default function PrivacyPage() {
               <li>Page views and navigation patterns</li>{" "}
               <li>Feature usage events (e.g., creating a case, using AI chat)</li>{" "}
               <li>Browser exceptions and JavaScript errors</li>{" "}
-              <li>Browser type, device information, and screen resolution</li>
+              <li>Browser type, device information, and screen resolution</li>{" "}
+              <li>
+                The country you’re visiting from, as our network provider
+                (Cloudflare) reports it: the country only, never your city or
+                your IP address. When you’re signed in, PostHog may also
+                estimate your city from your IP address.
+              </li>
             </ul>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
@@ -819,6 +825,13 @@ export default function PrivacyPage() {
                 its public-data database, on servers in the United States
               </li>{" "}
               <li>
+                <strong>Cloudflare:</strong> The network in front of the
+                website. Every request passes through it, so it receives your
+                browser&apos;s standard request data (IP address, user agent)
+                to deliver the page and screen out abusive traffic. It also
+                runs Turnstile (Section 9)
+              </li>{" "}
+              <li>
                 <strong>Resend:</strong> Transactional email delivery
                 (notifications, OTP verification, password resets) and, if you
                 opt in, marketing and product-update emails (we sync your email
@@ -829,8 +842,8 @@ export default function PrivacyPage() {
                 integration
               </li>{" "}
               <li>
-                <strong>PostHog:</strong> Product analytics, event tracking, and
-                session replay (see Section 7)
+                <strong>PostHog:</strong> Product analytics and event tracking
+                (see Section 7)
               </li>{" "}
               <li>
                 <strong>Sentry:</strong> Error tracking and performance

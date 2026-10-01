@@ -355,26 +355,35 @@ def traffic_section() -> dict:
     if not key:
         return section("traffic", "Traffic", "off", "set the POSTHOG_PERSONAL_API_KEY secret to read visits")
     # HogQL's toDate takes one argument: shift the zone first (Sep 28, a 400 on the first run).
-    q = ("SELECT toDate(toTimeZone(timestamp, 'America/New_York')) AS d, count() AS views, "
-         "count(DISTINCT person_id) AS visitors FROM events WHERE event = '$pageview' "
-         "AND timestamp > now() - INTERVAL 9 DAY GROUP BY d ORDER BY d")
+    # "Likely people" are visitors who were on a phone or read more than one
+    # page. About half of all visitors are single-page desktop visits from
+    # crawlers wearing browser user agents (measured Sep 30 2026), so the raw
+    # visitor count overstates the audience by about 2x. An estimate, and
+    # labelled as one in the report.
+    q = ("SELECT d, sum(v) AS views, count() AS visitors, countIf(v > 1 OR m > 0) AS people FROM ("
+         "SELECT toDate(toTimeZone(timestamp, 'America/New_York')) AS d, person_id, count() AS v, "
+         "countIf(properties.$device_type = 'Mobile') AS m FROM events WHERE event = '$pageview' "
+         "AND timestamp > now() - INTERVAL 9 DAY GROUP BY d, person_id) GROUP BY d ORDER BY d")
     d = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",
                   {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
                   json.dumps({"query": {"kind": "HogQLQuery", "query": q}}).encode())
     rows = d.get("results", [])
     yday = (dt.datetime.now(ET).date() - dt.timedelta(days=1)).isoformat()
-    by = {str(r[0])[:10]: (r[1], r[2]) for r in rows}
+    by = {str(r[0])[:10]: (r[1], r[2], r[3]) for r in rows}
     if yday not in by:
         return section("traffic", "Traffic", "unknown", "no pageviews recorded for yesterday")
-    views, people = by[yday]
+    views, visitors, people = by[yday]
     prior = [by[k][0] for k in sorted(by) if k < yday][-7:]
-    lines = [f"Yesterday: {views:,} pageviews by {people:,} visitors"]
+    lines = [f"Yesterday: {views:,} pageviews by {visitors:,} visitors",
+             f"About {people:,} of them likely people (on a phone, or read more than one page); "
+             "most of the rest are single-page crawler visits"]
     status = "ok"
     note = spike_note(views, prior, "pageviews", drop=True)
     if note:
         lines.append("Unusual: " + note)
         status = "warn"
-    return section("traffic", "Traffic", status, f"{views:,} pageviews, {people:,} visitors yesterday", lines)
+    return section("traffic", "Traffic", status,
+                   f"{views:,} pageviews, about {people:,} people ({visitors:,} visitors) yesterday", lines)
 
 
 # ── Sentry ────────────────────────────────────────────────────────────────
@@ -390,6 +399,40 @@ def sentry_section() -> dict:
     lines = [f"{i.get('shortId')}: {str(i.get('title'))[:90]} ({i.get('count')} events)" for i in issues[:8]]
     return section("sentry", "Errors (Sentry)", "warn" if issues else "ok",
                    f"{len(issues)} new issue{'s' if len(issues) != 1 else ''} in 24 h", lines)
+
+
+# ── browser errors (PostHog) ──────────────────────────────────────────────
+
+
+def browser_errors_section() -> dict:
+    """Errors in visitors' browsers. They go to PostHog, not Sentry (the
+    Sentry client runs only on the sign-in pages and in the app), so before
+    Oct 1 2026 this report never saw them: a header loop that crashed public
+    pages ("Maximum update depth exceeded") sat there unread for a day. Known
+    noise from in-app browsers and extensions is dropped in before_send, so
+    what arrives here is worth a look; one seen in 2+ sessions is a warning."""
+    key = os.environ.get("POSTHOG_PERSONAL_API_KEY")
+    if not key:
+        return section("browser", "Errors in visitors' browsers", "off",
+                       "set the POSTHOG_PERSONAL_API_KEY secret to read browser errors")
+    q = ("SELECT substring(toString(properties.$exception_values), 1, 140) AS msg, count() AS n, "
+         "uniq(properties.$session_id) AS sessions, any(properties.$pathname) AS path FROM events "
+         "WHERE event = '$exception' AND timestamp > now() - INTERVAL 24 HOUR "
+         "GROUP BY msg ORDER BY n DESC LIMIT 8")
+    d = http_json(f"https://us.posthog.com/api/projects/{POSTHOG_PROJECT}/query/",
+                  {"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+                  json.dumps({"query": {"kind": "HogQLQuery", "query": q}}).encode())
+    rows = d.get("results", [])
+    total = sum(int(r[1]) for r in rows)
+    repeated = [r for r in rows if int(r[2]) >= 2]
+    lines = []
+    for msg, n, sessions, path in rows:
+        text = str(msg).strip("[]").strip('"')[:110] or "(no message)"
+        lines.append(f"{text}: {n} event{'s' if n != 1 else ''}, {sessions} session{'s' if sessions != 1 else ''}, "
+                     f"e.g. {path}")
+    return section("browser", "Errors in visitors' browsers", "warn" if repeated else "ok",
+                   f"{total} error event{'s' if total != 1 else ''} in 24 h"
+                   + (f", {len(repeated)} seen in 2+ sessions" if repeated else ""), lines)
 
 
 # ── the Oracle server ─────────────────────────────────────────────────────
@@ -598,6 +641,7 @@ def build(now: dt.datetime) -> dict:
         guarded("data", "The data", data_section, now_ms),
         guarded("traffic", "Traffic", traffic_section),
         guarded("sentry", "Errors (Sentry)", sentry_section),
+        guarded("browser", "Errors in visitors' browsers", browser_errors_section),
         guarded("server", "The server (Oracle)", server_section, now_ms),
     ]
     return {"day": now.astimezone(ET).date().isoformat(), "generatedAt": now_ms, "sections": sections}
