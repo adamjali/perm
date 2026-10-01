@@ -265,6 +265,40 @@ try:
         check(False, "a non-HTTP exception must propagate")
     except KeyError:
         check(True, "a non-HTTP exception propagates")
+
+    # ---- the re-ask for prefixes added later (Oct 1 2026) -----------------
+    # Serials the ledger retired were retired under the OLD prefix set, so
+    # the one-off backfill re-asks them, asks only the new prefixes, and
+    # writes no misses (three empty prefixes say nothing about the others).
+    seen: list[list[str]] = []
+    def h2a_lookup(nums):
+        seen.append(nums)
+        return [{"caseNumber": n, "caseStatus": "FULL CERTIFICATION", "visaType": "H-2A",
+                 "employerName": "Farm Co", "jobTitle": "Farmworker"}
+                for n in nums if n == "H-300-26240-000103"]
+    db_r = FakeDB([100, 105], misses=[101, 102, 103, 104])
+    rr = sweep(db_r, ["26240"], cap=99, lookup=h2a_lookup, dry=True,
+               prefixes=("H-300-", "H-400-", "P-400-"), recheck=True)
+    check(rr["probed"] == 4, f"a recheck re-asks retired serials (got {rr['probed']})")
+    check(rr["found"] == 1, f"and finds the case the old prefixes could not (got {rr['found']})")
+    check(all(n[:6] in ("H-300-", "H-400-", "P-400-") for b in seen for n in b),
+          "a recheck asks only the prefixes it was given")
+    # This fake models neither DDL nor pipelines; the walk's test owns the
+    # schema step, so it is marked done here and the insert is counted.
+    core._OTHER_SCHEMA_READY = True
+    db_w = FakeDB([100, 105], misses=[101, 102, 103, 104])
+    db_w.pipeline = lambda reqs, **k: {"results": [
+        {"response": {"result": {"affected_row_count": 1}}}
+        for r in reqs if r.get("type") == "execute"]}
+    rw = sweep(db_w, ["26240"], cap=99, lookup=h2a_lookup, dry=False,
+               prefixes=("H-300-", "H-400-", "P-400-"), recheck=True)
+    check(rw["inserted_other"] == 1, f"the H-2A case is inserted (got {rw['inserted_other']})")
+    check(not any("perm_serial_misses" in w for w in db_w.writes),
+          f"a recheck leaves the miss ledger alone ({sum('perm_serial_misses' in w for w in db_w.writes)} writes)")
+    # The nightly sweep, by contrast, still skips what the ledger retired.
+    rn2 = sweep(FakeDB([100, 105], misses=[101, 102, 103, 104]), ["26240"], cap=99,
+                lookup=h2a_lookup, dry=True)
+    check(rn2["probed"] == 0, f"the nightly sweep still skips retired serials (got {rn2['probed']})")
 finally:
     core._rows = _real_rows
 

@@ -287,7 +287,7 @@ def check_frontier(db) -> int:
     stalled = age > FRONTIER_MAX_DAYS
     print(f"frontier          : {code}:{serial:06d} = {d.isoformat()}  "
           f"{age:>3}d  budget {FRONTIER_MAX_DAYS}d  {'STALLED' if stalled else 'ok'}")
-    for table in ("pwd_case_status", "lca_case_status"):
+    for table in ("pwd_case_status", "lca_case_status", "seasonal_case_status"):
         try:
             r = db.execute(f"SELECT MAX(filing_date) FROM {table}")["response"]["result"]["rows"]
             print(f"  {table:18s} newest filing {r[0][0].get('value') if r else None}  (context only)")

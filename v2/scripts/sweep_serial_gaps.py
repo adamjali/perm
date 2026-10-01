@@ -35,6 +35,7 @@ from lib_flag_serials import (  # noqa: E402
     ALL_FLAG_PREFIXES, case_number, day_code, prefix_of,
 )
 import ingest_case_status_direct as core  # noqa: E402
+import ingest_pwd_status_direct as programs  # noqa: E402
 
 # Every prefix we have ever seen on this counter, in measured hit-rate order.
 # A serial belongs to exactly one of them; the walk drops it the moment one
@@ -72,25 +73,27 @@ MISS_DDL = """
     PRIMARY KEY (day_code, serial)
   )
 """
-SERIALS_PER_REQUEST = core.BATCH // len(PREFIXES)   # 8 prefixes -> 6 serials
+SERIALS_PER_REQUEST = core.BATCH // len(PREFIXES)   # 12 prefixes -> 4 serials
+
+# Every table that holds a FLAG case, read from the program list rather than
+# typed out. Typed out, the list missed H-2A and H-2B for as long as nobody
+# remembered it existed (Oct 1 2026): a held case its query cannot see is a
+# hole, re-asked every night.
+CASE_TABLES = ("perm_case_status", *(cfg["table"] for cfg in programs.PROGRAMS.values()))
 
 
 def held_serials(db, code: str) -> list[int]:
     """Every serial we hold for one day code, across all three programs."""
-    sql = """
-      SELECT CAST(substr(case_number, 13) AS INT) s FROM perm_case_status
-       WHERE CAST(substr(case_number, 7, 5) AS INT) = ?
-      UNION SELECT CAST(substr(case_number, 13) AS INT) FROM pwd_case_status
-       WHERE CAST(substr(case_number, 7, 5) AS INT) = ?
-      UNION SELECT CAST(substr(case_number, 13) AS INT) FROM lca_case_status
-       WHERE CAST(substr(case_number, 7, 5) AS INT) = ?
-    """
+    sql = "\n      UNION ".join(
+        f"SELECT CAST(substr(case_number, 13) AS INT) s FROM {t} "
+        f"WHERE CAST(substr(case_number, 7, 5) AS INT) = ?" for t in CASE_TABLES)
     n = int(code)
     # libSQL hands integers back as STRINGS, CAST(... AS INT) included. Sorting
     # or ranging over those silently compares lexically - "9" > "10" - so the
     # coercion is load-bearing, not tidiness. This repo has been bitten by the
     # same thing twice before (live_recent's diff, the WARN change check).
-    return sorted(int(r[0]) for r in core._rows(db, sql, [n, n, n]) if r[0] is not None)
+    return sorted(int(r[0]) for r in core._rows(db, sql, [n] * len(CASE_TABLES))
+                  if r[0] is not None)
 
 
 def settled_misses(db, code: str) -> set[int]:
@@ -115,14 +118,12 @@ def day_bounds(db) -> dict[int, tuple[int, int, int]]:
     every day, not just the ones being swept, because a day's true span is
     defined by its NEIGHBOURS.
     """
-    sql = """
+    union = "\n        UNION ".join(
+        f"SELECT CAST(substr(case_number,7,5) AS INT) d, "
+        f"CAST(substr(case_number,13) AS INT) n FROM {t}" for t in CASE_TABLES)
+    sql = f"""
       WITH s AS (
-        SELECT CAST(substr(case_number,7,5) AS INT) d,
-               CAST(substr(case_number,13) AS INT) n FROM perm_case_status
-        UNION SELECT CAST(substr(case_number,7,5) AS INT),
-               CAST(substr(case_number,13) AS INT) FROM pwd_case_status
-        UNION SELECT CAST(substr(case_number,7,5) AS INT),
-               CAST(substr(case_number,13) AS INT) FROM lca_case_status)
+        {union})
       SELECT d, MIN(n), MAX(n), COUNT(*) FROM s GROUP BY d ORDER BY d
     """
     out: dict[int, tuple[int, int, int]] = {}
@@ -254,8 +255,19 @@ def run_record(r: dict, cap: int) -> tuple[str, str]:
 
 
 def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
-          bounds: dict[int, tuple[int, int, int]] | None = None) -> dict:
+          bounds: dict[int, tuple[int, int, int]] | None = None,
+          prefixes: tuple[str, ...] = PREFIXES, recheck: bool = False) -> dict:
+    """Probe each day's holes under `prefixes`.
+
+    `recheck` is the one-off mode for a prefix added after the fact: it asks
+    only the new prefixes, re-asks serials the miss ledger already retired
+    (they were retired under the OLD prefix set, so "never issued" was a
+    claim about the prefixes asked, not about DOL), and writes no misses,
+    because an empty answer under three prefixes says nothing about the
+    other nine.
+    """
     lookup = lookup or core.lookup_with_retry
+    per_request = core.BATCH // len(prefixes)
     # Built once for the whole run. Without it each day is probed only between
     # its own known serials and the inter-day regions are never asked about.
     if bounds is None:
@@ -264,7 +276,7 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
     stamp = int(core.time.time() * 1000)
     requests = probed = found = ins_perm = ins_other = retired = 0
     skipped: list[str] = []
-    if not dry:
+    if not dry and not recheck:
         db.execute(MISS_DDL, [])
     per_day: list[tuple[str, int, int]] = []
     refused: str | None = None
@@ -279,16 +291,17 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
             if int(code) in bounds:
                 skipped.append(code)
             continue
-        gaps = holes(held_serials(db, code), settled_misses(db, code), span)
+        skip = set() if recheck else settled_misses(db, code)
+        gaps = holes(held_serials(db, code), skip, span)
         if not gaps:
             continue
         day_found = 0
         day_missed: list[int] = []
-        for i in range(0, len(gaps), SERIALS_PER_REQUEST):
+        for i in range(0, len(gaps), per_request):
             if requests >= cap:
                 break
-            chunk = gaps[i:i + SERIALS_PER_REQUEST]
-            nums = [case_number(p, code, s) for s in chunk for p in PREFIXES]
+            chunk = gaps[i:i + per_request]
+            nums = [case_number(p, code, s) for s in chunk for p in prefixes]
             requests += 1
             try:
                 hits = lookup(nums)
@@ -328,7 +341,7 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
             other = [h for h in hits if h not in perm]
             ins_perm += core._insert_perm_hits(db, perm, now_iso, stamp)
             ins_other += core._insert_other_hits(db, other)
-        if not dry:
+        if not dry and not recheck:
             record_misses(db, code, day_missed, stamp)
         retired += len(day_missed)
         if day_found:
@@ -348,9 +361,21 @@ def main() -> int:
     ap.add_argument("--to", dest="to", help="last day code")
     ap.add_argument("--cap", type=int, default=DEFAULT_CAP)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--recheck-prefixes", metavar="P,P",
+                    help="one-off: ask ONLY these prefixes (e.g. H-300-,H-400-,P-400-), "
+                         "including serials the miss ledger retired; writes no misses")
+    ap.add_argument("--pace", type=float, default=0.0,
+                    help="seconds between requests (a long one-off run should be polite)")
     a = ap.parse_args()
 
     db = Turso()
+    # The program tables must exist before held_serials can read them, and a
+    # program added later has none until something creates it.
+    programs.ensure_schema(db)
+    recheck = tuple(p.strip() for p in (a.recheck_prefixes or "").split(",") if p.strip())
+    unknown = [p for p in recheck if p not in PREFIXES]
+    if unknown:
+        raise SystemExit(f"--recheck-prefixes: not a known prefix: {', '.join(unknown)}")
     today = datetime.date.today()
     if a.frm and a.to:
         # NEWEST FIRST here too, matching the default path below. An explicit
@@ -367,7 +392,12 @@ def main() -> int:
     core.log(f"gap sweep over {len(codes)} day code(s), cap {a.cap} requests"
              + (" (dry run)" if a.dry_run else ""))
 
-    r = sweep(db, codes, cap=a.cap, dry=a.dry_run)
+    def paced(nums):
+        core.time.sleep(a.pace)
+        return core.lookup_with_retry(nums)
+    lookup = paced if a.pace > 0 else None
+    r = sweep(db, codes, cap=a.cap, dry=a.dry_run, lookup=lookup,
+              **({"prefixes": recheck, "recheck": True} if recheck else {}))
     core.log(f"  probed {r['probed']:,} holes in {r['requests']:,} requests")
     core.log(f"  DOL confirmed {r['found']:,} of them as real cases")
     core.log(f"  inserted {r['inserted_perm']:,} PERM, {r['inserted_other']:,} PWD/LCA")
@@ -393,8 +423,11 @@ def main() -> int:
         # make a healthy sweep look dead. Probes only reach zero when the walk
         # left no holes at all, or when `held_serials` broke - and the second
         # is the defect this number exists to expose.
-        record_run(db, "sweep_serial_gaps.py", status=status,
-                   rows_written=r["probed"], note=note)
+        # A recheck run is a one-off backfill and keeps its own key, so the
+        # nightly sweep's health line (keyed on the bare name) is not moved
+        # by it in either direction.
+        record_run(db, "sweep_serial_gaps.py" + (" --recheck-prefixes" if recheck else ""),
+                   status=status, rows_written=r["probed"], note=note)
     return 0
 
 

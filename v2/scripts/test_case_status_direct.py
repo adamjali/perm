@@ -137,6 +137,7 @@ def main() -> int:
     class WalkDB:
         def __init__(self, rows_by_prefix=None):
             self.docs, self.perm, self.other, self.rows_by_prefix = {}, {}, [], rows_by_prefix or {}
+            self.ddl = []
         @staticmethod
         def _res(rows=(), affected=0):
             return {"response": {"result": {"rows": list(rows), "affected_row_count": affected}}}
@@ -154,6 +155,12 @@ def main() -> int:
             if "INSERT OR IGNORE INTO perm_case_status" in sql:
                 new = args[0] not in self.perm; self.perm[args[0]] = args
                 return self._res(affected=1 if new else 0)
+            # The other programs' schema, created before the walk's first
+            # non-PERM insert (a program added later has no table until then).
+            if sql.startswith(("CREATE TABLE IF NOT EXISTS", "CREATE INDEX IF NOT EXISTS")):
+                self.ddl.append(sql); return self._res()
+            if sql.startswith("PRAGMA table_info"):
+                return self._res([[{"type": "integer", "value": "0"}, {"type": "text", "value": "visa_type"}]])
             raise AssertionError("unexpected sql: " + sql[:70])
         def pipeline(self, reqs, **kw):
             stmts = [r for r in reqs if r.get("type") == "execute"]
@@ -191,6 +198,26 @@ def main() -> int:
     check("walk reaches the edge and reports ok", r["status"] == "ok", r["status"])
     check("every asked serial is six digits wide",
           all(len(n.rsplit("-", 1)[1]) == 6 for batch in look.asked for n in batch), look.asked[0][:3])
+
+    # 1b. H-2A and H-2B share the counter (Oct 1 2026). A season's worth of
+    # H-2A job orders filed back to back, 60 serials with no PERM, PWD or LCA
+    # among them, must read as cases, not as the edge of DOL's issuance.
+    csd._OTHER_SCHEMA_READY = False
+    u = dict([(f"H-300-26240-{s:06d}", {"caseStatus": "ACCEPTED - PENDING RECRUITMENT",
+               "employerName": "Farm Co", "jobTitle": "Farmworker", "visaType": "H-2A"})
+              for s in range(101, 161)] + [perm("G-100-26240-000161")])
+    db = WalkDB(); look = fake_dol(u)
+    r = csd.run_discovery(db, lookup=look, today=T, frontier_override=("26240", 100))
+    check("a run of 60 H-2A serials does not stop the walk",
+          "G-100-26240-000161" in db.perm and r["frontier_after"][1] == 161, str(r["frontier_after"]))
+    check("H-2A hits go to the other programs' inserter",
+          r["inserted_other"] == 60 and len(db.other) == 60, f"{r['inserted_other']} {len(db.other)}")
+    check("the other programs' tables are created first, once",
+          sum(d.startswith("CREATE TABLE IF NOT EXISTS seasonal_case_status ") for d in db.ddl) == 1,
+          f"{len(db.ddl)} DDL statements")
+    check("every request asks the H-2A, H-2B and H-2B wage prefixes",
+          all(any(n.startswith(p) for n in batch) for batch in look.asked
+              for p in ("H-300-", "H-400-", "P-400-")), look.asked[0][:12])
 
     # 2. A 200-serial stretch that is all LCA/PWD (an overnight lull) does NOT stop it.
     u = dict([lca(f"I-200-26240-{s:06d}") for s in range(101, 301)] + [perm("G-100-26240-000301")])
@@ -281,7 +308,10 @@ def main() -> int:
     check("the budget stop names the budget, not the request cap",
           csd.BUDGET_NOTE in r["note"] and csd.CAP_NOTE not in r["note"], r["note"])
     check("a budget stop leaves the frontier on the last confirmed hit",
-          r["frontier_after"] == ("26240", 120) and _json.loads(db.docs[csd.FRONTIER_DOC])["serial"] == 120,
+          # Four requests of DISCOVERY_STEP serials each (5 with nine prefixes,
+          # 4 with twelve), so the step is read, not typed.
+          r["frontier_after"] == ("26240", 100 + 4 * csd.DISCOVERY_STEP)
+          and _json.loads(db.docs[csd.FRONTIER_DOC])["serial"] == 100 + 4 * csd.DISCOVERY_STEP,
           str(r["frontier_after"]))
     ticks = iter(range(10_000))
     db = WalkDB(); look = fake_dol(dict([perm("G-100-26240-000101")]))

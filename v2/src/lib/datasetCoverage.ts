@@ -49,6 +49,8 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Live status of prevailing wage requests, pending included. The wage itself is not here; it arrives with the quarterly file.",
   "lca-status":
     "Live status of H-1B labor condition applications, pending included.",
+  "seasonal-status":
+    "Live status of H-2A and H-2B applications and H-2B prevailing wage requests filed since October 2025, pending included. No wage or worksite.",
   "live-recent":
     "The cases our sweep knows that DOL has not published yet, so they can be found by employer before any file lists them.",
   "decisions-observed":

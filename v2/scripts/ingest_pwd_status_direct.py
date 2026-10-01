@@ -127,11 +127,38 @@ PROGRAMS: dict[str, dict] = {
         # would read as stale six days a week for a table that is fine.
         "freshness_max_age": 8,
     },
+    "seasonal": {
+        "label": "H-2A and H-2B",
+        "table": "seasonal_case_status",
+        "events": "seasonal_case_events",
+        # The temporary-labor programs, from the same counter and the same
+        # endpoint (Oct 1 2026): H-300 is an H-2A application (ETA-9142A),
+        # H-400 an H-2B application (ETA-9142B), P-400 an H-2B prevailing
+        # wage request. P-400 is kept OUT of the PWD program on purpose: the
+        # PWD pages describe the ETA-9141 queue that PERM and H-1B wait in,
+        # and H-2B requests run through a different one.
+        "prefixes": ["H-300-", "H-400-", "P-400-"],
+        # Statuses read off DOL's own answers on Oct 1 2026. One not in
+        # either set is logged and treated as pending, which costs a daily
+        # re-check and never a wrong "decided".
+        "final": {"FULL CERTIFICATION", "FULL CERTIFICATION - EXPIRED",
+                  "PARTIAL CERTIFICATION", "PARTIAL CERTIFICATION - EXPIRED",
+                  "DENIED", "WITHDRAWN", "DETERMINATION ISSUED",
+                  "REDETERMINATION AFFIRMED", "REDETERMINATION MODIFIED",
+                  "RETURNED UNPROCESSED",
+                  "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION"},
+        "pending": {"IN PROCESS", "ACCEPTED - PENDING RECRUITMENT"},
+        "doc": "seasonal_live_summary",
+        "freshness": "seasonal-status",
+        # An H-2A or H-2B season is decided within months of filing.
+        "full_window_days": 120,
+        "freshness_max_age": 3,
+    },
 }
 PREFIX_TO_PROGRAM = {p: name for name, cfg in PROGRAMS.items() for p in cfg["prefixes"]}
 # Probe order across programs, by measured hit rate: the more a prefix
 # claims early, the fewer serials the rarer prefixes are asked about.
-DISCOVERY_ORDER = ["I-200-", "P-100-", "I-203-", "I-201-", "I-202-"]
+DISCOVERY_ORDER = ["I-200-", "P-100-", "H-300-", "P-400-", "H-400-", "I-203-", "I-201-", "I-202-"]
 
 # Kept under their original names: scripts/test_pwd_status.py imports them.
 PREFIX = "P-100-"

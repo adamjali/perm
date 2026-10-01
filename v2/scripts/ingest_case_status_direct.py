@@ -375,13 +375,23 @@ def _insert_perm_hits(db, hits: list[dict], now_iso: str, stamp: int) -> int:
     return inserted
 
 
+_OTHER_SCHEMA_READY = False
+
+
 def _insert_other_hits(db, hits: list[dict]) -> int:
     """PWD and LCA hits go to their own tables through the PWD prober's
     inserter (program routing, slugs, status vocabularies live there).
     Imported lazily: that module imports THIS one at its top."""
     if not hits:
         return 0
-    from ingest_pwd_status_direct import insert_hits  # noqa: PLC0415
+    from ingest_pwd_status_direct import ensure_schema, insert_hits  # noqa: PLC0415
+    # A program added later (H-2A and H-2B, Oct 1 2026) has no table until
+    # something creates it, and the walk can meet its first case before any
+    # job that would. Once per process.
+    global _OTHER_SCHEMA_READY
+    if not _OTHER_SCHEMA_READY:
+        ensure_schema(db)
+        _OTHER_SCHEMA_READY = True
     return insert_hits(db, hits, DISCOVERY_SOURCE)
 
 
