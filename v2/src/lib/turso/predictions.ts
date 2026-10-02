@@ -1,7 +1,5 @@
 import "server-only";
 
-import { buildCaseEstimate } from "@/lib/caseEstimate";
-import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
 import { estimatePwdQueue } from "@/lib/perm";
 import {
   isGradedOutcome,
@@ -11,16 +9,8 @@ import {
   type Summary,
 } from "@/lib/scorecard/score";
 import { exec, one, rows } from "@/lib/turso/client";
-import { getDecisionPace } from "@/lib/turso/decisionPace";
-import { getEstimatorData, getPwdEstimatorData } from "@/lib/turso/estimate";
-import { getLiveBacklog } from "@/lib/turso/publicData";
-import {
-  ageByStatusFrom,
-  exitMixFor,
-  getStageStats,
-  stageDurationFor,
-} from "@/lib/turso/stageStats";
-import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
+import { getPwdEstimatorData } from "@/lib/turso/estimate";
+import { loadPermEstimateContext, estimatePermCase } from "@/lib/turso/permEstimate";
 import { easternDay } from "@/lib/time";
 
 /**
@@ -191,14 +181,11 @@ export async function predictOurs(today: string): Promise<{
   /** Pending cases filed before a month, from the same census, for rival C's method. */
   pendingBefore: (month: string) => number;
 }> {
-  const [backlog, estimator, decisionPace, sweep, stageStats, pwdEst] = await Promise.all([
-    getLiveBacklog(),
-    getEstimatorData().catch(() => null),
-    getDecisionPace().catch(() => null),
-    getSweepCoverage().catch(() => null),
-    getStageStats().catch(() => null),
+  const [ctx, pwdEst] = await Promise.all([
+    loadPermEstimateContext(),
     getPwdEstimatorData().catch(() => null),
   ]);
+  const { backlog } = ctx;
 
   const permMonths = backlog
     .filter((m) => (m.analystReview ?? 0) > 0)
@@ -209,25 +196,7 @@ export async function predictOurs(today: string): Promise<{
 
   const perm: NewPrediction[] = [];
   for (const c of sample) {
-    const { casesAhead, sweepAgeDays } = caseEstimateInputs({
-      backlog,
-      filingDate: c.filingDate,
-      sweepFinishedOn: sweep?.finishedOn ?? null,
-      today,
-    });
-    const est = buildCaseEstimate({
-      filingDate: c.filingDate,
-      status: c.status,
-      isFinal: false,
-      estimator,
-      casesAhead,
-      decisionPace: decisionPace?.pace ?? null,
-      sweepAgeDays,
-      measuredStageAges: ageByStatusFrom(stageStats),
-      stageExit: exitMixFor(stageStats, c.status),
-      stageDuration: stageDurationFor(stageStats, c.status),
-      today,
-    });
+    const { estimate: est, casesAhead } = estimatePermCase(ctx, c, today);
     if (!est || est.kind !== "date") continue;
     perm.push({
       source: "ours",

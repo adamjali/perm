@@ -16,6 +16,10 @@ export default function robots(): MetadataRoute.Robots {
   // Check this list before adding a public route that starts with one of them.
   const authDisallow = [
     '/api',           // API routes - internal only
+    // The public API and the MCP server answer programs, not readers; /developers
+    // documents them and is the page to index.
+    '/v1',
+    '/mcp',
     '/dashboard',     // Authenticated dashboard
     '/admin',         // Authenticated admin dashboard
     '/cases',         // Authenticated case management (all /cases/* routes)

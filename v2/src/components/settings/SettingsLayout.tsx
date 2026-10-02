@@ -3,7 +3,7 @@
 import { useCallback, useRef, KeyboardEvent } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
-import { BellIcon, CalendarIcon, MoonIcon, QuestionIcon as HelpCircle, ShieldIcon, UserIcon, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { BellIcon, CalendarIcon, KeyIcon, MoonIcon, QuestionIcon as HelpCircle, ShieldIcon, UserIcon, type Icon as PhosphorIcon } from "@phosphor-icons/react";
 import { useSettingsUnsavedChanges } from "./SettingsUnsavedChangesContext";
 
 // ============================================================================
@@ -16,6 +16,7 @@ export type SettingsSectionType =
   | "quiet-hours"
   | "calendar-sync"
   | "auto-close"
+  | "api-keys"
   | "support";
 
 interface NavItem {
@@ -40,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
   { id: "quiet-hours", label: "Quiet hours", icon: MoonIcon },
   { id: "calendar-sync", label: "Calendar sync", icon: CalendarIcon },
   { id: "auto-close", label: "Auto-close", icon: ShieldIcon },
+  { id: "api-keys", label: "API keys", icon: KeyIcon },
   { id: "support", label: "Support", icon: HelpCircle },
 ];
 

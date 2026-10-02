@@ -138,6 +138,13 @@ function staticIndex(): { label: string; href: string; group: string; keywords: 
     keywords: "i-140 i-485 timeline community reports rfe premium ead advance parole",
   });
   out.push({ label: "Embed a tool", href: "/badges#embeds", group: "Go to", keywords: "embed iframe widget calculator website" });
+  out.push({
+    label: "API and AI assistants",
+    href: "/developers",
+    group: "Go to",
+    keywords: "api developer developers key json mcp claude cursor chatgpt assistant connector openapi integration",
+  });
+  out.push({ label: "API Terms", href: "/api-terms", group: "Go to", keywords: "api terms license licence rules" });
   for (const [label, href, keywords] of [
     ["中文指南 (Chinese)", "/zh", "chinese 中文 绿卡 排期 劳工证"],
     ["Guía en español (Spanish)", "/es", "spanish español green card"],

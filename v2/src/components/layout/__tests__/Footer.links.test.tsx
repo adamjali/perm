@@ -18,7 +18,8 @@ describe("Footer", () => {
       renderWithProviders(<Footer variant="extended" audience={audience} />);
 
       expect(screen.getByRole("link", { name: /privacy/i })).toHaveAttribute("href", "/privacy");
-      expect(screen.getByRole("link", { name: /terms/i })).toHaveAttribute("href", "/terms");
+      expect(screen.getByRole("link", { name: /^terms of service$/i })).toHaveAttribute("href", "/terms");
+      expect(screen.getByRole("link", { name: /^api terms$/i })).toHaveAttribute("href", "/api-terms");
       expect(screen.getByRole("link", { name: /contact/i })).toHaveAttribute("href", "/contact");
 
       const currentYear = new Date().getFullYear();

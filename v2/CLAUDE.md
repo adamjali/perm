@@ -7529,3 +7529,55 @@ upstream down after 3 failures in 5 s; the edge serves a stale page for up to a 
 (`stale-if-error`); a passed challenge lasts 30 minutes. Onboarding: a brand-new account is welcomed, not welcomed
 back; the illustration's dates come from the sample case's real window (`convex/lib/sampleCase.ts`, shared with the
 case the tour creates); the tour's last part is "Getting around"; labels in sentence case.
+
+## Oct 2 2026 (afternoon): the free API and the MCP server
+
+Phase 1 and 2 of the developer platform plan (Claude Doc "PERM Tracker Developer Platform Plan"), with the owner's
+Oct 2 call: one paid plan first (Plus, about $5 a month or $50 a year), charged once Stripe exists. Everything here
+is free today.
+
+**Where things live.**
+
+| piece | file |
+|---|---|
+| key format (`pt_live_` + 32 + a 6-character CRC32 checksum; the first 8 random characters are the public id) | `convex/lib/apiKeyFormat.ts` |
+| plans and their limits | `convex/lib/apiPlans.ts` |
+| keys and accounts (`apiKeys`, `apiAccounts`); make, list, revoke, verify, `setPlan` by hand | `convex/apiKeys.ts` |
+| who's calling (Bearer or X-API-Key; checksum first, then Convex by hash, cached 60 s) | `src/lib/api/auth.ts` |
+| counting and limits (minute in memory; day and month in `api_usage`, written every 5 s) | `src/lib/api/usage.ts` |
+| the reads both doors answer with | `src/lib/api/reads.ts` |
+| the /v1 wrapper (order: key shape, key, minute, allowance, read, count) | `src/lib/api/route.ts` |
+| the spec, the docs' endpoint and tool lists | `src/lib/api/openapi.ts` |
+| the MCP tools | `src/lib/api/mcp.ts`, served by `src/app/mcp/route.ts` |
+| Settings > API keys, and its usage route | `src/components/settings/ApiKeysSection.tsx`, `src/app/api/developer/usage/route.ts` |
+
+**A key is made in a Convex action**, because queries and mutations can't use cryptographic randomness. Only the
+SHA-256 is stored; the key is shown once. `verify` is a public query by hash: only a key's holder can compute the
+hash, and the answer carries no user id. A revoked key keeps its row so a call can be told "revoked"; a key whose
+account is being deleted stops at once (verify checks `deletedAt`), and `purgeAllUserData` removes keys and the
+API account.
+
+**Counting never blocks an answer.** A failed write keeps the counts and retries; a failed read counts as zero.
+The site runs as two copies, so between re-reads (30 s) an account can go a few calls past its allowance, never
+far. A call is counted when it did its work (an answer or a 404); a 400, a refusal and a 500 are not. `api_usage`
+holds the account's random id and the key's public id only, and the nightly prune drops rows after 400 days.
+
+**The MCP server needs no key**: Claude's custom connectors can't send a header. Calls without one share a pool of
+300 a minute per copy (and nginx hashes `/mcp` to one copy, so that's the site's). A key gets its plan's limits.
+`createMcpHandler` (`@modelcontextprotocol/server` 2.1) serves 2025-era clients statelessly over SSE and 2026-07-28
+clients as JSON. nginx gives `/mcp` its own in-flight cap (48) instead of the app's 64, unbuffered, because a
+notification stream can stay open for hours and must not hold a render slot; the app allows 8 such streams a copy.
+`/v1` calls together hold at most 24 of the app's 64 slots. Cloudflare's custom rule 2 (trusted traffic skips its
+checks) also covers `/v1` and `/mcp` since Oct 2 2026: a browser check or Under Attack Mode would refuse every
+program calling them, and the app already limits them.
+
+**Nothing in the API asks DOL live.** A case we don't hold answers 404 with a link to the case page, which can.
+Plus is meant to add live lookups (plan phase 5).
+
+**Instruments.** `scripts/oracle/test_nginx_conf.py` holds the two locations (three new probes). The spec test
+holds every path in `ENDPOINTS` to a route file under `src/app/v1` and every tool in `MCP_TOOLS` to a
+`registerTool` call. Smoke-tested locally against production data through the tunnel (`ssh -L 18080:...`, the
+read-only token): all six tools answered, including a PERM and a wage-request case filed that day.
+
+**Not built yet** (plan phases 3 and on): OAuth sign-in for assistants, billing, webhooks, exports, live lookups,
+an admin Developers tab and morning-report lines for API use, the CLI and SDKs, directory listings.

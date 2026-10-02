@@ -97,6 +97,15 @@ def run() -> None:
 
     out2 = hk.prune(db, TODAY)
     check("a second run deletes nothing", sum(out2.values()) == 0, str(out2))
+    check("a database with no API calls yet prunes without error", out["api_usage"] == 0, str(out))
+
+    db.execute("CREATE TABLE api_usage (account TEXT, key_id TEXT, day TEXT, calls INTEGER, PRIMARY KEY (account, key_id, day))")
+    for d in (TODAY - datetime.timedelta(days=hk.API_USAGE_KEEP_DAYS + 1), TODAY - datetime.timedelta(days=hk.API_USAGE_KEEP_DAYS - 1)):
+        db.execute("INSERT INTO api_usage VALUES ('acct', 'KEY', ?, 5)", [d.isoformat()])
+    out3 = hk.prune(db, TODAY)
+    days = [r[0] for r in db.conn.execute("SELECT day FROM api_usage")]
+    check("API call counts past the horizon go, recent ones stay",
+          out3["api_usage"] == 1 and days == [(TODAY - datetime.timedelta(days=hk.API_USAGE_KEEP_DAYS - 1)).isoformat()], str(days))
 
 
 def probe() -> None:

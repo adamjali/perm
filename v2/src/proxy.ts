@@ -160,6 +160,8 @@ export const config = {
     "/api/auth/:path*",
     "/api/chat/:path*",
     "/api/google/:path*",
+    // Settings > API keys reads its usage here with the signed-in session.
+    "/api/developer/:path*",
     { source: "/:path*", has: [{ type: "query", key: "code" }] },
   ],
 };

@@ -223,6 +223,7 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
       { href: "/estimate-scorecard", label: "Estimate scorecard" },
       { href: "/badges", label: "Badges" },
       { href: "/open-data", label: "Open data" },
+      { href: "/developers", label: "API and AI assistants" },
     ],
   },
   {
@@ -237,6 +238,7 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
     links: [
       { href: "/privacy", label: "Privacy Policy" },
       { href: "/terms", label: "Terms of Service" },
+      { href: "/api-terms", label: "API Terms" },
       { href: "/security", label: "Security" },
       { href: "/accessibility", label: "Accessibility" },
       { href: "/contact", label: "Contact" },

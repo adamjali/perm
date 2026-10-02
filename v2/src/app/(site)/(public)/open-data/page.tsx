@@ -155,6 +155,7 @@ export default async function OpenDataPage() {
       <div className="mt-10 grid grid-cols-1 gap-8 [&>*]:min-w-0 lg:grid-cols-2">
         <DatasetPanel
           title="Visa bulletin cutoffs"
+          caption="The newest bulletin's first EB-2 and EB-3 rows, as they appear in the file"
           summary={`Every cell of every bulletin we hold: employment and family, final action and dates for filing.${
             missingBulletins > 0
               ? ` ${missingBulletins} months in that span are missing, where State's older pages don't parse or its index doesn't link them.`
@@ -173,6 +174,7 @@ export default async function OpenDataPage() {
         />{" "}
         <DatasetPanel
           title="DOL processing times"
+          caption="The newest DOL reading's first rows, as they appear in the file"
           summary="Every reading of DOL's processing-times page we've saved. DOL overwrites the page, so earlier readings exist only where someone kept them."
           stats={[
             ["Covers", firstReading && lastReading ? `${dayLabel(firstReading)} to ${dayLabel(lastReading)}` : "Unavailable"],
@@ -225,6 +227,7 @@ export default async function OpenDataPage() {
 
 function DatasetPanel<T extends object>({
   title,
+  caption,
   summary,
   stats,
   source,
@@ -234,6 +237,7 @@ function DatasetPanel<T extends object>({
   fields,
 }: {
   title: string;
+  caption: string;
   summary: string;
   stats: Array<[string, string]>;
   source: { label: string; href: string };
@@ -260,7 +264,7 @@ function DatasetPanel<T extends object>({
       {preview.length > 0 && (
         <div className="overflow-x-auto border-b-3 border-border bg-muted/60">
           <table className="w-full min-w-[26rem] border-collapse font-mono text-sm">
-            <caption className="sr-only">The first rows of the newest {title.toLowerCase()} in the file</caption>
+            <caption className="sr-only">{caption}</caption>
             <thead>
               <tr className="border-b-2 border-border">
                 {columns.map((c) => (

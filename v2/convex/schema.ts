@@ -2309,4 +2309,37 @@ export default defineSchema({
   })
     .index("by_hash", ["hash"])
     .index("by_expires", ["expiresAt"]),
+
+  /**
+   * One row per account that has made an API key: its plan, and `account`, a
+   * random id that is the only thing the public-data database's usage
+   * counters carry (never a user id or an email). See convex/apiKeys.ts.
+   */
+  apiAccounts: defineTable({
+    userId: v.id("users"),
+    account: v.string(),
+    plan: v.union(v.literal("free"), v.literal("plus")),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_account", ["account"]),
+
+  /**
+   * API keys. Only the SHA-256 of a key is stored; the key itself is shown
+   * once, when it is made. `keyId` is the key's first 8 random characters,
+   * its public id. A revoked key keeps its row so a call with it can be told
+   * "revoked" rather than "unknown".
+   */
+  apiKeys: defineTable({
+    userId: v.id("users"),
+    account: v.string(),
+    keyHash: v.string(),
+    keyId: v.string(),
+    name: v.string(),
+    createdAt: v.number(),
+    revokedAt: v.optional(v.number()),
+  })
+    .index("by_hash", ["keyHash"])
+    .index("by_key_id", ["keyId"])
+    .index("by_user", ["userId"]),
 });

@@ -184,7 +184,17 @@ export default function TermsPage() {
               <li>Use the Service for any illegal purpose or in violation of any laws</li>{" "}
               <li>Upload false, misleading, or inaccurate information</li>{" "}
               <li>Attempt to gain unauthorized access to the Service or other accounts</li>{" "}
-              <li>Use automated scripts, bots, or scrapers to access the Service</li>{" "}
+              <li>
+                Use automated scripts, bots, or scrapers to access the Service,
+                except through the{" "}
+                <Link href="/developers" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  API
+                </Link>{" "}
+                within its limits and under the{" "}
+                <Link href="/api-terms" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  API Terms
+                </Link>
+              </li>{" "}
               <li>
                 Extract the compiled dataset in bulk, or redistribute it as a
                 dataset, whether by automated means or otherwise (see{" "}

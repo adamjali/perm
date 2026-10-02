@@ -62,7 +62,7 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: October 1, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 2, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -160,6 +160,22 @@ export default function PrivacyPage() {
               <li>Usage patterns and interaction data</li>{" "}
               <li>Performance metrics (page load times, Core Web Vitals)</li>{" "}
               <li>Error logs and stack traces (for debugging)</li>
+            </ul>{" "}
+
+            <h3 className="font-heading text-lg font-bold mt-6 mb-3">
+              API Keys
+            </h3>{" "}
+            <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
+              <li>
+                If you make an API key, we keep its name, a one-way hash of it
+                (never the key itself) and the date you made it, until you
+                revoke it or delete your account
+              </li>{" "}
+              <li>
+                How many calls each key made per day, under a random account
+                number that names nobody, kept to enforce your plan&rsquo;s
+                limits and to show your usage in Settings
+              </li>
             </ul>
           </details>{" "}
 

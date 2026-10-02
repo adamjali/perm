@@ -242,6 +242,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "Two datasets as CSV and JSON under CC BY 4.0: every visa bulletin cutoff (employment and family, final action and dates for filing, by category and country) back to June 2005, every one since October 2014, and every reading of DOL's PERM and prevailing wage processing-times page we've kept.",
   },
   {
+    path: "/developers",
+    label: "API and MCP server",
+    blurb: "A free JSON API (permtracker.app/v1, keys from Settings) and an MCP server (permtracker.app/mcp, no key needed) with six read-only tools: look up a PERM, prevailing wage, H-1B LCA or H-2A/H-2B case by number, estimate a PERM decision date, DOL's queues, the visa bulletin, and employer, law firm and occupation records.",
+  },
+  {
     path: "/badges",
     label: "Badges",
     blurb: "Embeddable SVG badges of DOL's own published figures, and every calculator, estimate and chart plus the case lookup as an iframe for other sites, with the HTML to copy.",

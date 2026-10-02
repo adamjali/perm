@@ -68,6 +68,10 @@ def run(conf_text: str) -> None:
     mail = locs.get(mail_sel, "")
     proxied = {sel: b for sel, b in locs.items() if "proxy_pass" in b and not sel.startswith("@")
                and sel not in ("^~ /ingest/", mail_sel) and "internal;" not in b}
+    # /mcp is checked on its own below: it keeps its own in-flight cap and no
+    # crawler pools (an assistant's notification stream must not hold a render
+    # slot for hours, and tool calls are not crawling).
+    mcp = proxied.pop("= /mcp", "")
     public = {sel: b for sel, b in proxied.items() if sel not in ("/_next/",)}
 
     # The relay: PostHog's host, looked up at request time, the visitor's own
@@ -149,6 +153,21 @@ def run(conf_text: str) -> None:
         req = zones_in(locs.get(sel, ""), "limit_req")
         check(f"{sel}: page and pre-load limits", {"pt_page", "pt_prefetch"} <= set(req))
     check("/api/: its own limit", "pt_api" in zones_in(locs.get("/api/", ""), "limit_req"))
+
+    # The public API: the app's cap, its own share of it, JSON refusals.
+    v1 = locs.get("~ ^/v1(/|$)", "")
+    check("/v1: exists", bool(v1))
+    m = re.search(r"limit_conn\s+pt_apiall\s+(\d+);", v1)
+    check("/v1: API calls together hold a share of the app's slots", m is not None and int(m.group(1)) < 64)
+    check("/v1: refusals answer JSON", "error_page 429 @pt_slow_down_api;" in v1 and "error_page 503 @pt_busy_api;" in v1)
+    # The MCP server: its own cap, never the app's, a per-person rate, streams
+    # passed through unbuffered.
+    check("/mcp: exists", bool(mcp))
+    check("/mcp: its own in-flight cap, not the app's",
+          "pt_mcpall" in zones_in(mcp, "limit_conn") and "pt_app" not in zones_in(mcp, "limit_conn"))
+    check("/mcp: per-address cap and rate", "pt_perip" in zones_in(mcp, "limit_conn") and "pt_api" in zones_in(mcp, "limit_req"))
+    check("/mcp: refusals answer JSON", "error_page 429 @pt_slow_down_api;" in mcp and "error_page 503 @pt_busy_api;" in mcp)
+    check("/mcp: streams unbuffered", "proxy_buffering off;" in mcp)
 
     # People are SLOWED before they are refused; crawlers are refused at once.
     for zone in ("pt_page", "pt_lookup", "pt_api"):
@@ -247,6 +266,9 @@ def probe() -> None:
             "proxy_set_header X-Forwarded-For $remote_addr;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie",
             "proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-Host $host;\n        proxy_set_header Cookie", 1),
         "lookups-together cap removed": good.replace("        limit_conn pt_lookup_conn 24;\n", "", 1),
+        "API share of the app's slots removed": good.replace("        limit_conn pt_apiall 24;\n", "", 1),
+        "MCP streams hold app slots": good.replace("        limit_conn pt_mcpall 48;\n", "        limit_conn pt_mcpall 48;\n        limit_conn pt_app 64;\n", 1),
+        "MCP streams buffered": good.replace("        proxy_buffering off;\n        proxy_read_timeout 3600s;\n", "        proxy_read_timeout 3600s;\n", 1),
         "refresh no longer mirrored": good.replace("        mirror /__pt_revalidate_w2;\n", "", 1),
         "email links forward Cloudflare's headers": good.replace("        proxy_pass_request_headers off;\n", "", 1),
         "email-link pages stored again": good.replace('        add_header Cache-Control "private, no-store" always;\n', "", 1),

@@ -17,6 +17,8 @@ export const PAGE_CARD_ALT = {
   "perm-countries": "PERM by country of citizenship. Each country's PERM decisions by year from FY2008, with sponsors, jobs and education, from DOL's old-form files.",
   "badges": "PERM queue badges. Three embeddable SVG badges, regenerated daily from DOL's own figures: the queue month, the decision days and the wage-request month.",
   "open-data": "Open data. The visa bulletin archive and DOL's processing-times readings as CSV and JSON files, free to reuse under CC BY 4.0.",
+  developers: "The PERM Tracker API and MCP server: federal PERM, prevailing wage, H-1B and visa bulletin records as JSON and as tools for AI assistants.",
+  "api-terms": "API Terms: keys, limits, attribution and what you may build with the PERM Tracker API.",
   "debarments": "Debarred from PERM, H-1B, H-2A and H-2B. Every employer and agent DOL has barred from the programs, from DOL's own lists.",
   "email-preferences": "Email preferences. Turn any PERM Tracker alert off from one page, no account needed.",
   "estimate-scorecard": "PERM estimate scorecard. Every decision-date estimate this site made for a real case, recorded before the outcome and scored against DOL's decision.",

@@ -18,6 +18,8 @@ readers use and the rest goes:
     run logs        every scheduled job runs at least yearly (the visa limits
                     sheet is the slowest), and the health check reads each
                     job's newest row, so 400 days always keeps one per job.
+    API call counts the API reads this month's and today's (src/lib/api/
+                    usage.ts); 400 days keeps a year for the admin's view.
 
 What is NOT pruned, on purpose: `perm_case_events` and `estimate_predictions`
 ARE the record (the status history and the scorecard); `pwd_`/`lca_case_events`
@@ -40,6 +42,7 @@ DAILY_COUNTER_PREFIXES = (
 COUNTER_KEEP_DAYS = 90
 SERIAL_MISS_KEEP_DAYS = 180
 RUN_LOG_KEEP_DAYS = 400
+API_USAGE_KEEP_DAYS = 400
 
 _DATE_GLOB = "[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]"
 
@@ -78,4 +81,13 @@ def prune(db, today: datetime.date) -> dict[str, int]:
     for table in ("ingest_runs", "sweep_runs"):
         out[table] = _affected(db.execute(
             f"DELETE FROM {table} WHERE started_at < ?", [run_cut]))
+    usage_cut = (today - datetime.timedelta(days=API_USAGE_KEEP_DAYS)).isoformat()
+    try:
+        out["api_usage"] = _affected(db.execute("DELETE FROM api_usage WHERE day < ?", [usage_cut]))
+    except Exception as err:  # noqa: BLE001
+        # The site makes the table on its first API call; until then there is
+        # nothing to prune.
+        if "no such table" not in str(err).lower():
+            raise
+        out["api_usage"] = 0
     return out

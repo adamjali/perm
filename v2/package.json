@@ -53,6 +53,7 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@libsql/client": "^0.17.4",
     "@marsidev/react-turnstile": "^1.6.1",
+    "@modelcontextprotocol/server": "^2.1.0",
     "@openrouter/ai-sdk-provider": "^3.0.0",
     "@oslojs/crypto": "^1.0.1",
     "@phosphor-icons/react": "^2.1.10",

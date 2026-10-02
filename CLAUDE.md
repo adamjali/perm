@@ -354,3 +354,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 2 2026 (morning)".
 - **DOL's decisions per day reach October 2015**, from both case tables (`build_daily_decisions.py`).
 - **An automatic defense** challenges whoever is turning people away, then Under Attack Mode, then stands down.
 - **Onboarding's dates match the sample case**, and a new account is welcomed, not welcomed back.
+
+## Oct 2 2026 (afternoon), in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 2 2026 (afternoon)".
+
+- **A free JSON API at `/v1`** (keys from Settings > API keys) and **an MCP server at `/mcp`** (no key needed), both on `src/lib/api/`.
+- **One shared read per answer**: an endpoint and its assistant tool call the same function; the scorecard and the API share `permEstimate.ts`.
+- **Keys are hashed in Convex; calls are counted in the public-data database** under a random account id, never a user id.
+- **Free plan: 10 calls a minute, 300 a day, 3,000 a month** (`convex/lib/apiPlans.ts`); Plus exists for comped accounts until billing.
+- **`/developers` and `/api-terms`** document it; the Terms carve API use out of the no-scripts rule.

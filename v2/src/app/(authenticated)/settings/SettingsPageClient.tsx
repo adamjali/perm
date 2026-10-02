@@ -16,6 +16,7 @@ import NotificationPreferencesSection from "@/components/settings/NotificationPr
 import QuietHoursSection from "@/components/settings/QuietHoursSection";
 import CalendarSyncSection from "@/components/settings/CalendarSyncSection";
 import SupportSection from "@/components/settings/SupportSection";
+import ApiKeysSection from "@/components/settings/ApiKeysSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeading } from "../components/PageHeading";
 
@@ -30,6 +31,7 @@ const VALID_TABS: SettingsSectionType[] = [
   "quiet-hours",
   "calendar-sync",
   "auto-close",
+  "api-keys",
   "support",
 ];
 
@@ -214,6 +216,8 @@ export function SettingsPageClient() {
         );
       case "auto-close":
         return <AutoCloseSection />;
+      case "api-keys":
+        return <ApiKeysSection />;
       case "support":
         return (
           <SupportSection

@@ -22,6 +22,7 @@ interface PurgeResult {
   caseOrders: number;
   timelinePrefs: number;
   templates: number;
+  apiKeys: number;
   authAccounts: number;
   authSessions: number;
   authRefreshTokens: number;
@@ -153,6 +154,24 @@ export async function purgeAllUserData(
     await ctx.db.delete(template._id);
   }
 
+  // API keys and the API account. The calls those keys made are counted in
+  // the public-data database under the account's random id only, which
+  // names nobody once these rows are gone.
+  const apiKeys = await ctx.db
+    .query("apiKeys")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+  for (const key of apiKeys) {
+    await ctx.db.delete(key._id);
+  }
+  const apiAccounts = await ctx.db
+    .query("apiAccounts")
+    .withIndex("by_user", (q) => q.eq("userId", userId))
+    .collect();
+  for (const acct of apiAccounts) {
+    await ctx.db.delete(acct._id);
+  }
+
   // Delete user profile (use collect to handle any duplicates)
   const profiles = await ctx.db
     .query("userProfiles")
@@ -211,6 +230,7 @@ export async function purgeAllUserData(
     caseOrders: caseOrders.length,
     timelinePrefs: timelinePrefs.length,
     templates: templates.length,
+    apiKeys: apiKeys.length,
     authAccounts: authAccounts.length,
     authSessions: authSessions.length,
     authRefreshTokens: authRefreshTokensCount,

@@ -46,6 +46,11 @@ const sharedConfig = {
 // module registry (the cause of historical CI-only flakiness under shuffle).
 // They run in the "unit-isolated" project; the "unit" project excludes them.
 const ISOLATED_UNIT_FILES = [
+  // Added 2026-10-02. The API layer's tests mock the database client, the
+  // key check and the reads; isolated so no neighbour inherits those mocks.
+  "src/lib/api/__tests__/usage.test.ts",
+  "src/lib/api/__tests__/route.test.ts",
+  "src/lib/api/__tests__/mcp.test.ts",
   "src/lib/ai/__tests__/page-context.test.tsx",
   "src/lib/__tests__/toast.test.ts",
   // Mocks posthog-js; in the shared pool the mock would leak into every
