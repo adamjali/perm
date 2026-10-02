@@ -1,5 +1,7 @@
 import { assignBarLanes, assignLanes, STRIP_PAD, STRIP_W, type Strip } from "@/lib/policyFeed";
 
+import { ChartTips } from "@/components/data/ChartTips";
+
 import { dayLabel } from "./format";
 
 /**
@@ -12,7 +14,8 @@ import { dayLabel } from "./format";
  * lower rail. Marks that share a day stack. The marks are not links: at a
  * phone's width a mark is an 11px square, far under the 44px a tap target
  * needs, and a hit area big enough would overlap its neighbours; the list
- * below is the navigation, and each mark names its document on hover.
+ * below is the navigation, and each mark names its document on hover, tap
+ * or arrow key (`ChartTips`).
  *
  * Plain SVG in a server component: no client bundle, and it paints with the
  * HTML. The drawing keeps a minimum width so its labels never scale below
@@ -28,6 +31,13 @@ const RAIL_OFLC = 140;
 const AXIS = 170;
 const MARK = 13;
 const LANE = 17;
+
+/** The legend's word for a document type. */
+function typeWord(type: string): string {
+  if (type === "Rule") return "Final rule";
+  if (type === "Proposed Rule") return "Proposed rule";
+  return "Notice";
+}
 
 function markClass(type: string): string {
   if (type === "Rule") return "fill-primary stroke-foreground";
@@ -52,7 +62,9 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
   const monthW = inner / Math.max(1, strip.months.length);
 
   return (
-    <div className="mt-6 overflow-x-auto border-2 border-border bg-card shadow-hard">
+    // The tooltip sits outside the scrolling strip, which would clip it.
+    <ChartTips label="Twelve months of policy documents" className="mt-6">
+    <div className="overflow-x-auto border-2 border-border bg-card shadow-hard">
       <svg
         viewBox={`0 0 ${STRIP_W} ${H}`}
         className="block h-auto min-w-[880px] w-full"
@@ -92,9 +104,8 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
               // Not `fill-border`: the border token is ink in light mode, so a
               // closed window drew as black as a proposed rule's mark.
               className={m.bar.open ? "fill-primary" : "fill-foreground/35"}
-            >
-              <title>{`Comments ${m.bar.open ? "open" : "closed"}: ${m.title} `}</title>
-            </rect>
+              data-tip={`Comment window ${m.bar.open ? "open" : "closed"}\n${m.title}\nProposed ${dayLabel(m.publicationDate)}`}
+            />
           ) : null,
         )}
 
@@ -108,9 +119,8 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
             height={MARK}
             strokeWidth={2}
             className={markClass(m.type)}
-          >
-            <title>{`${m.type}, ${dayLabel(m.publicationDate)}: ${m.title} `}</title>
-          </rect>
+            data-tip={`${dayLabel(m.publicationDate)}\n${typeWord(m.type)}\n${m.title}`}
+          />
         ))}
 
         {/* OFLC announcements */}
@@ -122,9 +132,8 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
             width={3}
             height={14}
             className="fill-foreground"
-          >
-            <title>{`OFLC, ${dayLabel(m.publicationDate)}: ${m.title} `}</title>
-          </rect>
+            data-tip={`${dayLabel(m.publicationDate)}\nOFLC announcement\n${m.title}`}
+          />
         ))}
 
         {/* today */}
@@ -142,6 +151,7 @@ export function PolicyStrip({ strip }: { strip: Strip }) {
         </text>
       </svg>
     </div>
+    </ChartTips>
   );
 }
 

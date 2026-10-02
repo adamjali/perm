@@ -18,9 +18,9 @@
 
 import { generateText, Output } from "ai";
 import { fetchMutation, fetchQuery } from "convex/nextjs";
-import { api } from "@/../convex/_generated/api";
-import type { Id } from "@/../convex/_generated/dataModel";
-import { RECENT_MESSAGES_TO_KEEP } from "@/../convex/conversationSummary";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
+import { RECENT_MESSAGES_TO_KEEP } from "@convex/conversationSummary";
 import { captureError } from "@/lib/sentry";
 import {
   CompactionFactsSchema,

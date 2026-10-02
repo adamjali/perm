@@ -1,11 +1,11 @@
 "use client";
 
 // `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here (2026-09-01) rather
+// which exists only in React's client build. Declared here rather
 // than inherited from whichever importer happened to cross a boundary first.
 // Without it this module works until the chunk graph shifts, then fails with
 // `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx for the incident.
+// and no source file. See components/layout/Footer.tsx.
 
 /**
  * DeadlineHeroWidget Component
@@ -24,7 +24,9 @@ import { useQuery } from "convex/react";
 import { useState, useEffect } from "react";
 import { ArrowsClockwiseIcon as RefreshCw, WarningIcon as AlertTriangle } from "@phosphor-icons/react/ssr";
 
-import { api } from "../../../convex/_generated/api";
+import { MS_PER_MINUTE } from "@/lib/time";
+
+import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { formatRelativeTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -46,9 +48,9 @@ export function DeadlineHeroLoadingSkeleton(): ReactNode {
   return (
     <div className={CONTAINER_CLASSES}>
       <div className="hazard-strip-red" aria-hidden="true" />
-      {/* Sized to the real widget (measured on production, Sep 30 2026): a
-          66px header over four 194px columns. The first version was 28px
-          taller, so everything below it moved up when the deadlines landed. */}
+      {/* Sized to the real widget (measured on production): a 66px header
+          over four 194px columns, so nothing below it moves when the
+          deadlines land. */}
       <div className="bg-card">
         <div className="flex h-[66px] items-center justify-between px-4">
           <Skeleton className="h-8 w-48" />
@@ -186,7 +188,7 @@ export default function DeadlineHeroWidget(): ReactNode {
   useEffect(() => {
     const interval = setInterval(() => {
       setLastRefresh(Date.now());
-    }, 5 * 60 * 1000);
+    }, 5 * MS_PER_MINUTE);
     return () => clearInterval(interval);
   }, []);
 

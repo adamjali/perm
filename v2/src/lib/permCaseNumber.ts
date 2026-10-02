@@ -20,6 +20,8 @@
  * disclosure record when it is there.
  */
 
+import { MS_PER_DAY } from "@/lib/time";
+
 export interface ParsedCaseNumber {
   caseNumber: string;
   prefix: string;
@@ -57,7 +59,7 @@ export function parseCaseNumber(input: string): ParsedCaseNumber | null {
 
   // A case number from the future is a typo, not a filing.
   const today = new Date();
-  if (date.getTime() > today.getTime() + 86_400_000) return null;
+  if (date.getTime() > today.getTime() + MS_PER_DAY) return null;
   // PERM's electronic case numbers do not predate the program's modern era;
   // a two-digit year of 99 would otherwise decode to 2099 above and 1999
   // never appears in this format.

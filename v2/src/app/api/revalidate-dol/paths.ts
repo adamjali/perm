@@ -41,9 +41,8 @@ export const DOL_PAGES = [
   "/tools/pwd-calculator",
   "/tools/green-card-timeline",
   "/tools/perm-timeline-calculator",
-  // The catalogue page reads the snapshot ITSELF now (2026-09-09). It used to
-  // render `<img src="/badge/x.svg">` and hold no figure of its own, so it was
-  // correctly absent; it now prints federal figures inline from one read.
+  // The catalogue page reads the snapshot ITSELF: it prints federal figures
+  // inline from one read, so it is on this list.
   "/badges",
   // Every badge's canonical path, DERIVED rather than hand-listed. A hand list
   // fell behind the registry the same day six kinds were added, and the file

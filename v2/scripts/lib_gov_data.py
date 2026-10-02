@@ -1,19 +1,16 @@
 """Shared helpers for pulling published data off federal agency sites.
 
-Two ingests use these (DOL's PERM disclosure files and USCIS's I-140 counts) and
-both hit the same two problems: the agencies front their static files with a CDN
-that refuses an incomplete client, and XLSX omits empty cells in a way that
-silently shifts columns.
+The DOL and USCIS ingests all hit the same two problems: the agencies front
+their static files with a CDN that refuses an incomplete client, and XLSX omits
+empty cells in a way that silently shifts columns.
 
-Measured while building these, and the reason each helper exists:
-
-* `flag.dol.gov` serves scripts fine. `www.dol.gov` returns 403 "Access Denied"
-  to a bare User-Agent and 200 to a full browser header set. `www.uscis.gov`
-  behaves like the former; `egov.uscis.gov` and `travel.state.gov` refuse
-  automated clients outright and are not fetched by anything here.
-* Sustained traffic from one address gets 403 even WITH the full header set: a
-  request that returned 200 came back 403 twenty minutes and 240 MB later.
-  Hence the backoff.
+* `flag.dol.gov` serves scripts as they are. `www.dol.gov` and `www.uscis.gov`
+  answer a bare User-Agent with 403 and a full browser header set with 200;
+  `egov.uscis.gov` and `travel.state.gov` refuse automated clients outright
+  and nothing here fetches them.
+* Sustained traffic from one address draws a 403 even with the full header
+  set, which is address reputation rather than the client, so `fetch` backs
+  off rather than retrying at once.
 """
 from __future__ import annotations
 
@@ -46,11 +43,24 @@ BROWSER_HEADERS = {
 }
 
 
+# A large disclosure workbook can take minutes to arrive.
+FETCH_TIMEOUT_S = 300
+FETCH_ATTEMPTS = 4
+# Backoff starts here and triples: 20 s, 60 s, 180 s.
+BACKOFF_FIRST_S = 20
+BACKOFF_FACTOR = 3
+# Throttle answers worth waiting out. Anything else (a 404 above all) raises
+# at once, because retrying only delays the real error.
+RETRYABLE_STATUS = (403, 429, 503)
+# Between consecutive files from the same agency in one run.
+POLITE_PAUSE_S = 1.5
+
+
 def log(message: str) -> None:
     print(message, flush=True)
 
 
-def fetch(url: str, referer: str | None = None, attempts: int = 4) -> bytes:
+def fetch(url: str, referer: str | None = None, attempts: int = FETCH_ATTEMPTS) -> bytes:
     """GET with the browser header set, backing off on a throttle.
 
     Raises after the final attempt rather than returning empty. A run that could
@@ -61,18 +71,18 @@ def fetch(url: str, referer: str | None = None, attempts: int = 4) -> bytes:
     if referer:
         headers["Referer"] = referer
 
-    delay = 20
+    delay = BACKOFF_FIRST_S
     for attempt in range(1, attempts + 1):
         try:
             request = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(request, timeout=300) as response:
+            with urllib.request.urlopen(request, timeout=FETCH_TIMEOUT_S) as response:
                 return response.read()
         except urllib.error.HTTPError as exc:
-            if exc.code not in (403, 429, 503) or attempt == attempts:
+            if exc.code not in RETRYABLE_STATUS or attempt == attempts:
                 raise
             log(f"  HTTP {exc.code} (attempt {attempt}/{attempts}); waiting {delay}s")
             time.sleep(delay)
-            delay *= 3
+            delay *= BACKOFF_FACTOR
     raise SystemExit("unreachable")
 
 
@@ -92,6 +102,11 @@ def discover_links(html: str, pattern: str, host: str) -> dict[str, str]:
             continue
         found[name] = href if href.startswith("http") else f"{host}{href}"
     return found
+
+
+def quarter_end(fy: int, quarter: int) -> str:
+    """The last day of a federal fiscal quarter: FY2026 Q1 ends 2025-12-31."""
+    return {1: f"{fy - 1}-12-31", 2: f"{fy}-03-31", 3: f"{fy}-06-30", 4: f"{fy}-09-30"}[quarter]
 
 
 def column_index(ref: str) -> int:

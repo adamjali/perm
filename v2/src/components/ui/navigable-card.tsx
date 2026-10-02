@@ -121,5 +121,3 @@ export function NavigableCard({
     </a>
   );
 }
-
-export default NavigableCard;

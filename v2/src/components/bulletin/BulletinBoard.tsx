@@ -19,6 +19,7 @@
 
 import { Fragment, useMemo, useState } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { ViewToggle } from "@/components/tools/ViewToggle";
 import { formatMonth, formatAsOf } from "@/lib/dolFormat";
 // TYPE-ONLY. `@/lib/turso/bulletin` carries `import "server-only"`, and a
@@ -28,6 +29,7 @@ import { formatMonth, formatAsOf } from "@/lib/dolFormat";
 import type { BulletinBoard as Board, BoardCell } from "@/lib/turso/bulletin";
 import type { ChartKind, CountryKey } from "@/lib/perm";
 import { cn } from "@/lib/utils";
+import { DAYS_PER_MONTH } from "@/lib/time";
 
 export interface BulletinBoardProps {
   board: Board;
@@ -71,7 +73,7 @@ function categoryLabel(code: string): string {
 
 /** "610 days" as "1 year 8 months", which is how a wait is actually thought about. */
 function asYearsMonths(days: number): string {
-  const months = Math.round(days / 30.4375);
+  const months = Math.round(days / DAYS_PER_MONTH);
   const y = Math.floor(months / 12);
   const m = months % 12;
   if (y === 0) return m === 1 ? "1 month" : `${m} months`;
@@ -160,7 +162,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
               <tr>
                 <th
                   scope="col"
-                  className="px-3 py-2.5 font-mono text-xs font-bold uppercase tracking-wider"
+                  className="px-3 py-2.5 font-mono text-sm font-bold uppercase tracking-wider"
                 >
                   Category{" "}
                 </th>
@@ -172,7 +174,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                   <Fragment key={c}>
                     <th
                       scope="col"
-                      className="px-3 py-2.5 text-right font-mono text-xs font-bold uppercase tracking-wider"
+                      className="px-3 py-2.5 text-right font-mono text-sm font-bold uppercase tracking-wider"
                     >
                       {COUNTRY_SHORT[c]}{" "}
                     </th>
@@ -208,7 +210,7 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                                 {stateText(cell)}
                               </span>{" "}
                               {cell.pace !== null ? (
-                                <span className="block text-xs text-foreground/60">
+                                <span className="block text-sm text-foreground/60">
                                   {cell.pace.toFixed(2)}x pace
                                 </span>
                               ) : null}
@@ -228,10 +230,9 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
         <p className="mt-3 text-sm leading-relaxed text-foreground/60">
           Cutoffs as published in the {formatMonth(board.lastMonth)} bulletin.{" "}
           <strong className="font-bold text-primary-text">Current</strong> means
-          the category was open to every priority date that month.{" "}
-          <strong className="font-bold text-data-bad-ink">Closed</strong> means
-          no visa numbers were being issued at all, so no priority date
-          qualified however early it was.
+          every priority date qualified that month.{" "}
+          <strong className="font-bold text-data-bad-ink">Closed</strong> means none did: no visa numbers
+          were being issued.
         </p>
       </div>
 
@@ -241,14 +242,12 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
             Cutoff days gained per calendar month
           </h3>{" "}
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70">
-            Measured between the first and last bulletin here that published a
-            real cutoff date for each queue. At 1.00 the cutoff advances one
-            month per month and the wait ahead of a fixed priority date is
-            unchanged. Below it, the wait got longer while the number on the
-            page went up.
+            Between the first and last bulletin with a real cutoff for each line. At 1.00 the cutoff keeps
+            pace with the calendar; below it, the wait got longer even as the date moved forward.
           </p>{" "}
 
-          <ul className="mt-6 space-y-3">
+          <ChartTips label="Cutoff days gained per calendar month, by queue" className="mt-6">
+          <ul className="space-y-3">
             {paced.map((c) => {
               const gaining = c.pace >= 1;
               const pct = (c.pace / domainMax) * 100;
@@ -257,7 +256,21 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
               return (
                 <Fragment key={`${c.category}|${c.country}`}>
                   {" "}
-                  <li className="grid grid-cols-1 gap-1 sm:grid-cols-[13rem_1fr_5rem] sm:items-center sm:gap-3 [&>*]:min-w-0">
+                  <li
+                    data-tip={[
+                      `${categoryLabel(c.category)} ${COUNTRY_LABELS[c.country]}`,
+                      `${c.pace.toFixed(2)}x: ${gaining ? "the queue shortened" : "the queue lengthened"}`,
+                      c.movedDays !== null && c.spanMonths !== null
+                        ? `${c.movedDays.toLocaleString("en-US")} cutoff days gained over ${c.spanMonths} ${c.spanMonths === 1 ? "month" : "months"}`
+                        : null,
+                      c.retrogressions.length > 0
+                        ? `Went back or shut ${c.retrogressions.length} ${c.retrogressions.length === 1 ? "time" : "times"}`
+                        : null,
+                    ]
+                      .filter(Boolean)
+                      .join("\n")}
+                    className="grid grid-cols-1 gap-1 sm:grid-cols-[13rem_1fr_5rem] sm:items-center sm:gap-3 [&>*]:min-w-0"
+                  >
                   <span className="text-sm font-bold">
                     {categoryLabel(c.category)} {COUNTRY_LABELS[c.country]}
                   </span>{" "}
@@ -287,7 +300,8 @@ export function BulletinBoard({ board, className }: BulletinBoardProps) {
                 </Fragment>
               );
             })}
-          </ul>{" "}
+          </ul>
+          </ChartTips>{" "}
 
           <p className="mt-4 text-sm leading-relaxed text-foreground/60">
             The upright rule is 1.00, holding station. Bars reaching{" "}

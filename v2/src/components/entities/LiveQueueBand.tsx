@@ -1,10 +1,13 @@
 import { Fragment } from "react";
 import Link from "next/link";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { statusMeaning } from "@/lib/caseStatusVocabulary";
 import type { EntityPending } from "@/lib/turso/entityDetail";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
+import { DAYS_PER_MONTH, MS_PER_DAY } from "@/lib/time";
 
 /**
  * Where one sponsor's cases are standing in the queue TODAY.
@@ -35,10 +38,6 @@ import { cn } from "@/lib/utils";
  * and is the only figure `pending` may be read against.
  */
 
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 /** Whole months between an ISO date and today, or null if unparseable. */
 function monthsSince(iso: string): number | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
@@ -46,7 +45,7 @@ function monthsSince(iso: string): number | null {
   const then = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   const now = Date.now();
   if (then > now) return null;
-  return Math.floor((now - then) / (1000 * 60 * 60 * 24 * 30.4375));
+  return Math.floor((now - then) / (MS_PER_DAY * DAYS_PER_MONTH));
 }
 
 function longDate(iso: string): string {
@@ -85,23 +84,18 @@ export function LiveQueueBand({
     <FigurePlate
       n={n}
       title="In the queue right now"
-      subject={`${fmt(tracked)} cases in the live tracker`}
+      subject={`${formatInt(tracked)} cases in the live tracker`}
       caption={
         waiting > 0 ? (
           <>
-            Every case in DOL&apos;s disclosure files has already been decided,
-            so none of the filing counts on this page can see a case that is
-            still waiting. This is the other source: a per-case tracker that
-            carries a current status. It counts {fmt(tracked)} cases for this{" "}
-            {subject} and {fmt(waiting)} of them have no decision yet. Read the
-            share against that {fmt(tracked)}, never against the lifetime
-            filings above.
+            From DOL&apos;s live status of {formatInt(tracked)} of this {subject}&apos;s
+            cases: read this share against {formatInt(tracked)}, never against the
+            lifetime filings above.
           </>
         ) : (
           <>
-            The live tracker holds {fmt(tracked)} cases for this {subject} and
-            every one of them has a decision. That is a real answer rather than
-            a gap: nothing of theirs is sitting in the queue.
+            All {formatInt(tracked)} of this {subject}&apos;s cases in DOL&apos;s live
+            status are decided: nothing of theirs is in the queue.
           </>
         )
       }
@@ -112,14 +106,14 @@ export function LiveQueueBand({
         <>
           <div className="grid grid-cols-1 gap-6 [&>*]:min-w-0 sm:grid-cols-[minmax(0,15rem)_1fr] sm:gap-8">
             <div>
-              <p className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-muted-foreground">
+              <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
                 Waiting on a decision
               </p>{" "}
               <p className="mt-1 font-heading text-5xl font-black leading-none tabular-nums">
-                {fmt(waiting)}
+                {formatInt(waiting)}
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
-                of {fmt(tracked)} tracked cases. The other {fmt(decided)} have
+                of {formatInt(tracked)} tracked cases. The other {formatInt(decided)} have
                 been decided.
               </p>
               {oldest ? (
@@ -128,7 +122,7 @@ export function LiveQueueBand({
                   <span className="font-bold">{longDate(oldest)}</span>
                   {months != null && months >= 1 ? (
                     <>
-                      , {fmt(months)} month{months === 1 ? "" : "s"} ago
+                      , {formatInt(months)} month{months === 1 ? "" : "s"} ago
                     </>
                   ) : null}
                   .
@@ -138,8 +132,9 @@ export function LiveQueueBand({
 
             <div>
               <p className="mb-3 border-b border-border/40 pb-1.5 font-mono text-sm font-bold uppercase tracking-[0.1em] text-muted-foreground">
-                Where those {fmt(waiting)} are standing
+                Where those {formatInt(waiting)} are standing
               </p>
+              <ChartTips label={`Where those ${formatInt(waiting)} cases are standing`}>
               <dl className="space-y-4">
                 {stages.map((s) => {
                   const meaning = statusMeaning(s.status);
@@ -151,13 +146,15 @@ export function LiveQueueBand({
                     // the DOM. A whitespace-only node is not laid out as a grid
                     // or flex item, so it costs nothing visually.
                     <Fragment key={s.status}>{" "}
-                    <div>
+                    <div
+                      data-tip={`${s.status}\n${formatInt(s.n)} waiting\n${share >= 0.5 ? `${share.toFixed(0)}%` : "Under 1%"} of the ${formatInt(waiting)} waiting`}
+                    >
                       <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                        <dt className="font-mono text-xs font-bold uppercase tracking-[0.1em]">
+                        <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em]">
                           {s.status}
                         </dt>{" "}
                         <dd className="font-mono text-sm font-bold tabular-nums">
-                          {fmt(s.n)}
+                          {formatInt(s.n)}
                           <span className="ml-2 font-normal text-muted-foreground">
                             {share >= 0.5 ? `${share.toFixed(0)}%` : "<1%"}
                           </span>
@@ -190,12 +187,13 @@ export function LiveQueueBand({
                   );
                 })}
               </dl>
+              </ChartTips>
             </div>
           </div>
 
           <p className="mt-6 border-t-2 border-border pt-4 text-sm leading-relaxed text-foreground/70">
-            A queue position is national and first in, first out, so none of
-            this changes what any one case waits.{" "}
+            None of this changes one case&apos;s wait: DOL works one national
+            line.{" "}
             <Link
               href="/perm-processing-times"
               className={cn(
@@ -211,7 +209,7 @@ export function LiveQueueBand({
       ) : (
         <p className="max-w-2xl text-base leading-relaxed text-foreground/80">
           Nothing for this {subject} is waiting on a decision. All{" "}
-          {fmt(tracked)} of their cases in the live tracker are closed.
+          {formatInt(tracked)} of their cases in the live tracker are closed.
         </p>
       )}
     </FigurePlate>

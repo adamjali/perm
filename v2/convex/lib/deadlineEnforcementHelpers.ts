@@ -19,8 +19,8 @@ import {
   isValidISODate,
   parseISOToUTCSafe,
   getTodayISO,
-  MS_PER_DAY,
 } from "./dateValidation";
+import { MS_PER_DAY } from "./time";
 import {
   ENFORCEMENT_TIMEZONE_RULES,
   getTodayInTimezone,
@@ -31,7 +31,7 @@ import {
 // Re-export for backwards compatibility
 export { getTodayISO };
 
-import { ETA9089_EXPIRATION_DAYS } from "./perm/constants";
+import { resolveEta9089ExpirationDate } from "./derivedCalculations";
 // Re-export type for shared mapping
 import type { DeadlineNotificationType } from "./notificationHelpers";
 import {
@@ -45,12 +45,6 @@ import {
 
 /** Days before PWD expiration when restart is no longer viable */
 export const MIN_DAYS_FOR_RESTART = 60;
-
-/**
- * Days from certification to the ETA 9089's last valid day. The central rule,
- * not a copy: this file kept its own 180 while the screens used another.
- */
-export const ETA9089_VALIDITY_DAYS = ETA9089_EXPIRATION_DAYS;
 
 /** Map ViolationType to DeadlineNotificationType for email formatting. Single source of truth. */
 export const VIOLATION_TO_DEADLINE_TYPE: Record<ViolationType, DeadlineNotificationType> = {
@@ -435,17 +429,13 @@ function checkEta9089Expiration(
   if (!caseData.eta9089CertificationDate) return null;
   if (caseData.i140FilingDate) return null;
 
-  // Use stored expiration or calculate from certification date
-  let expirationDate = caseData.eta9089ExpirationDate;
-
-  if (!isValidISODate(expirationDate)) {
-    // Calculate expiration: certification + ETA9089_VALIDITY_DAYS (the central rule)
-    const certUTC = parseISOToUTCSafe(caseData.eta9089CertificationDate);
-    if (certUTC === null) return null;
-
-    const expDate = new Date(certUTC + ETA9089_VALIDITY_DAYS * 24 * 60 * 60 * 1000);
-    expirationDate = expDate.toISOString().split("T")[0]!;
-  }
+  // The stored expiration when it is a valid date, otherwise the central rule
+  // (certification + 179 days, the date DOL prints).
+  const expirationDate = resolveEta9089ExpirationDate(
+    caseData.eta9089CertificationDate,
+    isValidISODate(caseData.eta9089ExpirationDate) ? caseData.eta9089ExpirationDate : undefined,
+  );
+  if (!expirationDate) return null;
 
   const daysUntil = daysBetween(todayISO, expirationDate);
 

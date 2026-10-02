@@ -3,10 +3,9 @@
  *
  * Callers pass candidates richest first; the first one at or under the cap
  * wins. Google cuts a snippet near 155 characters, so a longer one ends
- * mid-sentence, while a short one leaves the space unused: an Ahrefs crawl and
- * our own audit (Oct 1 2026) found 285 of 855 sampled pages under 110
- * characters, nearly every employer, law firm, occupation and place page,
- * because each template offered only a short form and a shorter one.
+ * mid-sentence, while a short one leaves the space unused, which is what a
+ * template offering only a short form and a shorter one produces on nearly
+ * every employer, law firm, occupation and place page.
  *
  * If nothing fits (a very long legal name), the last candidate is cut at a
  * word boundary rather than mid-word.

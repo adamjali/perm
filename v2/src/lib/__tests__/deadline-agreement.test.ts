@@ -27,9 +27,9 @@ import { caseToCalendarEvents } from "@/lib/calendar/event-mapper";
 import { RECORDED_EVENT_TYPES } from "@/lib/calendar/types";
 import type { CalendarCaseData, DeadlineType as CalendarType } from "@/lib/calendar/types";
 import { calculateNextDeadline, type NextUpCaseData } from "@/components/cases/detail/next-up-section.utils";
-import { extractDeadlines } from "../../../convex/lib/dashboardHelpers";
-import { calculateDerivedDates } from "../../../convex/lib/derivedCalculations";
-import { checkDeadlineViolations, mapCaseToEnforcementData } from "../../../convex/lib/deadlineEnforcementHelpers";
+import { extractDeadlines } from "@convex/lib/dashboardHelpers";
+import { calculateDerivedDates } from "@convex/lib/derivedCalculations";
+import { checkDeadlineViolations, mapCaseToEnforcementData } from "@convex/lib/deadlineEnforcementHelpers";
 
 const TODAY = "2025-01-15";
 

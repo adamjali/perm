@@ -4,7 +4,7 @@ import { useAuthActions } from "@convex-dev/auth/react";
 import { useAction, useMutation, useConvex } from "convex/react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
@@ -447,8 +447,9 @@ export function LoginPageClient() {
             onExpire={() => {
               setTurnstileToken(null);
               // Not a failure: the widget refreshes an idle token on its own
-              // (refreshExpired: "auto"), and counting each refresh as one read
-              // as 250 failed checks a day from three open tabs (Sep 29 2026).
+              // (refreshExpired: "auto"), and counting each refresh as one
+              // would read as hundreds of failed checks a day from a few open
+              // tabs.
             }}
           />
 

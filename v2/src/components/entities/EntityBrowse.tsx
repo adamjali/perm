@@ -9,6 +9,7 @@ import {
 } from "@/lib/entityBrowse";
 import type { BrowseEntry } from "@/lib/turso/entityBrowse";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 /**
  * The A-Z index modules, shared by all three entity kinds.
@@ -33,10 +34,6 @@ import { cn } from "@/lib/utils";
  * here" is exactly the thin-page pattern the rest of this codebase spends so
  * much effort avoiding.
  */
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 /**
  * Every bucket, as links, with the current one marked.
@@ -147,7 +144,7 @@ export function BrowseIndexGrid({
                   <span className="font-heading text-2xl font-black uppercase text-muted-foreground">
                     {bucketLabel(b)}
                   </span>{" "}
-                  <span className="mt-1 font-mono text-xs font-bold text-foreground/60">
+                  <span className="mt-1 font-mono text-sm font-bold text-foreground/60">
                     none
                   </span>
                 </div>
@@ -162,8 +159,8 @@ export function BrowseIndexGrid({
                   <span className="font-heading text-2xl font-black uppercase">
                     {bucketLabel(b)}
                   </span>{" "}
-                  <span className="mt-1 font-mono text-xs font-bold tabular-nums text-foreground/70">
-                    {fmt(n)} {plural}
+                  <span className="mt-1 font-mono text-sm font-bold tabular-nums text-foreground/70">
+                    {formatInt(n)} {plural}
                   </span>
                 </Link>
               )}
@@ -212,7 +209,7 @@ export function BrowseList({
         <Fragment key={e.slug}>{" "}
           <li>
             <Link translate="no" href={`${base}/${e.slug}`}>{e.name}</Link>{" "}
-            <span title={`${fmt(e.total)} ${unit}`}>{fmt(e.total)}</span>
+            <span title={`${formatInt(e.total)} ${unit}`}>{formatInt(e.total)}</span>
           </li>
         </Fragment>
       ))}

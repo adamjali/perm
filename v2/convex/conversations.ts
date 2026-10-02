@@ -152,49 +152,6 @@ export const list = query({
 });
 
 /**
- * Update conversation title
- *
- * @param id - The conversation ID to update
- * @param title - The new title
- * @throws Error if user doesn't own the conversation
- *
- * @example
- * ```typescript
- * await ctx.runMutation(api.conversations.updateTitle, {
- *   id: conversationId,
- *   title: 'PWD Deadline Question'
- * });
- * ```
- */
-export const updateTitle = mutation({
-  args: {
-    id: v.id("conversations"),
-    title: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
-
-    // Input validation
-    validateStringLength(args.title, "Conversation title", INPUT_LIMITS.SHORT);
-
-    const conversation = await ctx.db.get(args.id);
-
-    if (!conversation) {
-      throw new Error("Conversation not found");
-    }
-
-    if (conversation.userId !== userId) {
-      throw new Error("Access denied: you do not own this conversation");
-    }
-
-    await ctx.db.patch(args.id, {
-      title: args.title,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-/**
  * Permanently delete a conversation and all its messages
  *
  * This is a destructive operation that cannot be undone.

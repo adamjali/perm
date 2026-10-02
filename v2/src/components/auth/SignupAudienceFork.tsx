@@ -9,19 +9,17 @@ import { analytics } from "@/lib/analytics";
  * Caution tape across the sign-up form: who the account is for, and where
  * everyone else should go.
  *
- * ADAM, ON WHY IT EXISTS: "i know beneficiaries find themselves there". They
- * do, and the site sends them. The public IA is beneficiary-first (track my
+ * WHY IT EXISTS: beneficiaries find themselves on this form, and the site
+ * sends them. The public IA is beneficiary-first (track my
  * case, then alerts, then data, then the app), the footer says "Free for
  * applicants and attorneys", and every page carries a lime Sign Up button
  * naming no audience. The account behind it is a caseload manager.
  *
  * ## Why tape, and why this small
  *
- * A first pass was a two-lane card with a header band: it read correctly and
- * took 380px above a form, which is a lot of room to spend telling most
- * readers they are in the right place. Adam: "make it as concise as possible
- * and not take up too much room", and "needs to have some sort of warning sign
- * symbol caution tape etc".
+ * A two-lane card with a header band reads correctly but takes 380px above a
+ * form, which is a lot of room to spend telling most readers they are in the
+ * right place, so it is one compact caution bar.
  *
  * Hazard stripes are the right device precisely because they are not
  * decoration: diagonal tape is the one graphic everybody already reads as

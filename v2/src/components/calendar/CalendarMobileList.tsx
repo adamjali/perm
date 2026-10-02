@@ -11,9 +11,6 @@
  * - Tap to navigate to case detail
  * - Touch-friendly 44px minimum touch targets
  * - Neobrutalist styling
- *
- * Phase: 23.1 (Calendar UI)
- * Created: 2025-12-28
  */
 
 "use client";
@@ -324,5 +321,3 @@ export function CalendarMobileList({
     </div>
   );
 }
-
-export default CalendarMobileList;

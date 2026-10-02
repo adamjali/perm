@@ -12,7 +12,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
-import { SUBSCRIBE_IP_LIMIT } from "../queueAlerts";
+import { SUBSCRIBE_IP_LIMIT } from "../lib/alertBudgets";
 import { QUEUED_REPLY } from "../confirmationQueue";
 import { BUDGETS } from "../lib/alertBudgets";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";

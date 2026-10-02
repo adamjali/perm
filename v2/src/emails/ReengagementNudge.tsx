@@ -12,6 +12,7 @@
 
 import { Text, Section, Link } from "@react-email/components";
 import { EmailLayout } from "./components";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface ReengagementNudgeProps {
   /** First name (or display name) of the recipient. */
@@ -27,8 +28,8 @@ export interface ReengagementNudgeProps {
 export function ReengagementNudge({
   userName,
   activeCaseCount,
-  baseUrl = "https://permtracker.app",
-  settingsUrl = "https://permtracker.app/settings",
+  baseUrl = SITE_URL,
+  settingsUrl = `${SITE_URL}/settings`,
   unsubscribeUrl,
 }: ReengagementNudgeProps) {
   const previewText = "Your PERM cases are still tracked, here’s a quick way back in.";
@@ -51,7 +52,7 @@ export function ReengagementNudge({
           Pick up right where you left off.
         </Text>
         <Text className="em-text-muted" style={styles.note}>
-          If we don&#39;t hear from you, we&#39;ll pause your weekly summary to keep your inbox clear. Your deadline reminders keep coming, and you can turn the summary back on anytime in settings.
+          If we don&#39;t hear from you, we&#39;ll pause your weekly case summary to keep your inbox clear. Your deadline reminders keep coming, and you can turn the summary back on anytime in settings.
         </Text>
       </Section>
 
@@ -120,9 +121,8 @@ const styles = {
 ReengagementNudge.PreviewProps = {
   userName: "Jake",
   activeCaseCount: 3,
-  baseUrl: "https://permtracker.app",
-  settingsUrl: "https://permtracker.app/settings",
-  unsubscribeUrl: "https://permtracker.app/unsubscribe?token=SAMPLE",
+  baseUrl: SITE_URL,
+  settingsUrl: `${SITE_URL}/settings`,
+  unsubscribeUrl: `${SITE_URL}/unsubscribe?token=SAMPLE`,
 } satisfies ReengagementNudgeProps;
 
-export default ReengagementNudge;

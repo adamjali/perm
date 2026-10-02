@@ -30,14 +30,15 @@ import { internalMutation, query } from "./_generated/server";
 import { internal } from "./_generated/api";
 import { getUserByEmail } from "./lib/auth";
 import { getUserSuspension, setSuspension } from "./lib/suspension";
+import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 
-const FAIL_WINDOW_MS = 30 * 60 * 1000;   // 30-minute rolling window
+const FAIL_WINDOW_MS = 30 * MS_PER_MINUTE;   // 30-minute rolling window
 const FAIL_THRESHOLD = 10;                // failures in window before auto-suspend
-// 1h since Sep 29 2026 (was 24h): the trigger is refused attempts against an
-// EMAIL, which a stranger who knows the address can cause, so the suspension
-// is also a lever against the account's owner. An hour stops a flood without
-// locking the owner out for a day.
-const AUTO_SUSPEND_DURATION_MS = 60 * 60 * 1000;
+// One hour: the trigger is refused attempts against an EMAIL, which a
+// stranger who knows the address can cause, so the suspension is also a lever
+// against the account's owner. An hour stops a flood without locking the
+// owner out for a day.
+const AUTO_SUSPEND_DURATION_MS = MS_PER_HOUR;
 
 /**
  * Record an auth failure (by email) and evaluate whether to auto-suspend.
@@ -83,7 +84,7 @@ export const recordAuthFailure = internalMutation({
     // when a source floods auth endpoints — their presence indicates automated/
     // distributed abuse rather than a cheap single-email lockout attempt. Without
     // this, an attacker who knows a victim's email could deliberately fail logins
-    // to hard-lock the account (for an hour since Sep 29 2026; 24h before).
+    // to hard-lock the account for an hour.
     const recentIpStrikes = await ctx.db
       .query("rateLimits")
       .withIndex("by_timestamp", (q) => q.gte("timestamp", windowStart))

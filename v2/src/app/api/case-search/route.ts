@@ -29,7 +29,7 @@ import {
 import { casesToCsv } from "@/lib/caseSearchCsv";
 
 /**
- * One search across PERM, prevailing wage requests and H-1B LCAs.
+ * One search across PERM, prevailing wage requests, H-1B LCAs and H-2A and H-2B.
  *
  * A ROUTE, NOT A PAGE PARAM. Reading `searchParams` in the page would make it
  * dynamic, and every visit would then be a server render against Turso. That
@@ -235,7 +235,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       // can lead with. The page renders this as guidance, not as an error.
       return NextResponse.json({
         rows: [],
-        counts: { perm: 0, pwd: 0, lca: 0 },
+        counts: { perm: 0, pwd: 0, lca: 0, seasonal: 0 },
         truncated: false,
         capped: false,
         skipped: { live: false, published: false, because: [] },

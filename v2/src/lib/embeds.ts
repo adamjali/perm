@@ -15,6 +15,8 @@
  * it came from.
  */
 
+import { SITE_URL } from "@/lib/constants/site";
+
 export type EmbedGroup = "lookup" | "estimate" | "calculator" | "chart";
 
 export interface EmbedDef {
@@ -42,6 +44,7 @@ export const EMBEDS: readonly EmbedDef[] = [
   { slug: "rfi-deadline", title: "RFI response deadline", blurb: "The date a PERM RFI response is due.", href: "/tools/rfi-deadline", height: 560, group: "calculator" },
   { slug: "pwd-validity", title: "When a prevailing wage expires", blurb: "The validity window of a determination, by the OEWS wage-year rule.", href: "/tools/pwd-validity", height: 600, group: "calculator" },
   { slug: "pd-retention", title: "Keeping a priority date", blurb: "Whether an earlier priority date carries over to a new I-140.", href: "/tools/priority-date-retention", height: 640, group: "calculator" },
+  { slug: "h1b-lottery", title: "H-1B lottery odds for a job", blurb: "The OEWS level an offer meets, from DOL, and DHS's estimated chance at that level in the weighted draw.", href: "/tools/h1b-lottery-odds-calculator", height: 900, group: "calculator" },
   { slug: "h1b-six-year", title: "H-1B six-year limit", blurb: "When the six years run out, and the extensions a pending green card can earn.", href: "/tools/h1b-six-year-limit", height: 700, group: "calculator" },
   { slug: "green-card-fees", title: "Green card fees", blurb: "Every government filing fee from PERM to the green card, by who pays.", href: "/tools/green-card-fees", height: 820, group: "calculator" },
   { slug: "wage-levels", title: "Prevailing wage levels", blurb: "The four OEWS wage levels for an occupation and an area, live from DOL.", href: "/tools/wage-levels", height: 760, group: "calculator" },
@@ -69,11 +72,11 @@ export function embedBySlug(slug: string): EmbedDef | null {
  *
  * The source line is the only part that links from the embedding site's own
  * page. The frame's footer links to the full tool too, but that link lives on
- * our domain inside the frame, so until Oct 1 2026 every site that used an
- * embed credited nothing where search engines read it. A site can delete the
- * line; it is offered, not enforced.
+ * our domain inside the frame, so without the line an embedding site credits
+ * nothing where search engines read it. A site can delete the line; it is
+ * offered, not enforced.
  */
-export function embedSnippet(def: EmbedDef, origin = "https://permtracker.app"): string {
+export function embedSnippet(def: EmbedDef, origin = SITE_URL): string {
   const title = def.title.replace(/"/g, "&quot;");
   const frame = `<iframe src="${origin}/embed/${def.slug}" title="${title}" width="100%" height="${def.height}" style="border:0;max-width:100%" loading="lazy"></iframe>`;
   const source = `<p style="margin:4px 0 0;font-size:13px">Source: <a href="${origin}${def.href}">PERM Tracker</a></p>`;
@@ -134,7 +137,7 @@ export function embedSiteFor(referer: string | null | undefined, carried: string
  * Live DOL asks one embedding site may trigger per UTC day. Past it, an
  * embedded lookup still answers, from the stored record only. This site's own
  * pages are not counted here; the global daily discovery budget still binds
- * every lookup, embedded or not. 500 since Sep 29 2026 (was 50).
+ * every lookup, embedded or not.
  */
 export const EMBED_SITE_DAILY_LIVE = 500;
 
@@ -142,7 +145,6 @@ export const EMBED_SITE_DAILY_LIVE = 500;
  * Live DOL asks every embedding site together may trigger per UTC day. The
  * site key comes from the request, so a caller can mint new ones; this cap on
  * the shared resource is the one that cannot be rotated around, and it keeps
- * embeds to a fifth of the site-wide discovery budget (100,000 a day). 20,000
- * since Sep 29 2026 (was 5,000).
+ * embeds to a fifth of the site-wide discovery budget (100,000 a day).
  */
 export const EMBED_ALL_DAILY_LIVE = 20_000;

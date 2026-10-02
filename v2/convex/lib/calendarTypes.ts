@@ -59,17 +59,17 @@ export const CALENDAR_EVENT_LABELS: Record<CalendarEventType, string> = {
 // USER PREFERENCE MAPPING
 // ============================================================================
 
-/**
- * Calendar sync preference fields from userProfiles schema.
- */
-export type CalendarSyncPreference =
-  | "calendarSyncPwd"
-  | "calendarSyncEta9089"
-  | "calendarSyncFilingWindow"
-  | "calendarSyncRecruitment"
-  | "calendarSyncI140"
-  | "calendarSyncRfi"
-  | "calendarSyncRfe";
+/** The per-type calendar sync switches on userProfiles. */
+export const CALENDAR_SYNC_PREFERENCES = [
+  "calendarSyncPwd",
+  "calendarSyncEta9089",
+  "calendarSyncFilingWindow",
+  "calendarSyncRecruitment",
+  "calendarSyncI140",
+  "calendarSyncRfi",
+  "calendarSyncRfe",
+] as const;
+export type CalendarSyncPreference = (typeof CALENDAR_SYNC_PREFERENCES)[number];
 
 /**
  * Maps calendar event types to their corresponding user preference fields.
@@ -116,7 +116,7 @@ export const EVENT_TYPE_TO_SLOT: Record<CalendarEventType, CalendarEventSlot> = 
  * Slots no event type writes any more, kept so ids already stored in them are
  * still deleted: `eta9089_expiration` (an ETA 9089 expiry event on the same
  * day as the I-140 deadline) and `recruitment_end` (the recruitment window,
- * now in `recruitment_window_closes`), both retired Sep 28 2026.
+ * now in `recruitment_window_closes`), both retired.
  */
 export const RETIRED_SLOTS: Partial<Record<CalendarSyncPreference, CalendarEventSlot[]>> = {
   calendarSyncEta9089: ["eta9089_expiration"],

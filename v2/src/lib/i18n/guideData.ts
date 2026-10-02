@@ -2,7 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 
-import { analystReviewAverage, analystReviewQueue } from "../../../convex/lib/dolProcessingTimes";
+import { analystReviewAverage, analystReviewQueue } from "@convex/lib/dolProcessingTimes";
 import type { BulletinMonth, CountryKey } from "@/lib/perm";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { getVisaBulletins } from "@/lib/turso/publicData";

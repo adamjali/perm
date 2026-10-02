@@ -2,25 +2,18 @@ import "server-only";
 
 import { cache } from "react";
 
+import { MS_PER_DAY } from "@/lib/time";
+
 import { one } from "./client";
 
 /**
  * What each review stage looks like right now, measured rather than typed.
  *
- * `queueForecast.ts` carries a per-stage table, and its `observedAgeDays`
- * values were hardcoded once and never revisited. Checked against the live
- * table on 2026-09-10 they had drifted, one of them by nearly three months:
- *
- *     ANALYST REVIEW            170 -> 162
- *     APPLICATION ON HOLD       223 -> 229
- *     RFI ISSUED                375 -> 362
- *     NORD ISSUED               697 -> 684
- *     BALCA APPEALS             714 -> 716
- *     RECONSIDERATION APPEALS   624 -> 539
- *     REQUEST FOR REVIEW          - -> 506   (absent from the table entirely)
- *
- * A figure that only changes when somebody edits it is not a measurement, and
- * "self-updating" was the explicit ask.
+ * `queueForecast.ts` carries a per-stage table whose `observedAgeDays` are
+ * typed by hand, and a hand-typed age drifts: checked against the live table,
+ * one had moved by nearly three months and one stage was missing entirely. A
+ * figure that only changes when somebody edits it is not a measurement, so
+ * these are read from the data and stay current on their own.
  *
  * WHAT DOES NOT MOVE: the percentile each stage maps to. That says what a
  * stage MEANS - an RFI sits in the slow tail of its filing month, an appeal is
@@ -81,7 +74,7 @@ export const getStageStats = cache(async (): Promise<StageStats | null> => {
     "SELECT json, computed_at FROM perm_docs WHERE key = 'stage_stats'",
   ).catch(() => null);
   if (!row?.json) return null;
-  const ageDays = (Date.now() - Number(row.computed_at ?? 0)) / 86_400_000;
+  const ageDays = (Date.now() - Number(row.computed_at ?? 0)) / MS_PER_DAY;
   if (!Number.isFinite(ageDays) || ageDays > MAX_AGE_DAYS) return null;
   try {
     const doc = JSON.parse(row.json) as StageStats;
@@ -114,10 +107,10 @@ export function ageByStatusFrom(stats: StageStats | null): Map<string, number> {
  * at an RFI with no date attached, that is the most useful true thing
  * available.
  *
- * DESTINATIONS ONLY, NEVER DURATION. The event log opens 2026-08-26 and cannot
- * see an entry before it, so the exits we watch are biased toward stages that
- * were already running - fine for "where does it go", useless for "how long
- * does it take". Measured 2026-09-10: 422 RFI entries watched, 3 exits seen.
+ * DESTINATIONS ONLY, NEVER DURATION. The event log cannot see an entry from
+ * before it opened, so the exits we watch are biased toward stages that were
+ * already running - fine for "where does it go", useless for "how long does
+ * it take".
  */
 export function exitMixFor(
   stats: StageStats | null,
@@ -159,8 +152,8 @@ const MIN_ENTRANTS = 60;
  * review entries we can see are RE-entries, mostly cases coming back from an
  * RFI and being decided soon after.
  *
- * On 2026-09-10 the curve made ANALYST REVIEW reportable at a median of 4 days
- * while the mean age of a pending analyst-review case was 162 days. Both
+ * Measured: the curve makes ANALYST REVIEW reportable at a median of 4 days
+ * while the mean age of a pending analyst-review case is 162 days. Both
  * numbers are correct and the sentence built from the first one would not be:
  * a reader sees "about 4 days" against their own months of waiting and either
  * disbelieves the site or, worse, believes it.
@@ -176,7 +169,7 @@ const NOT_A_DIVERSION = new Set(["ANALYST REVIEW", "IN PROCESS"]);
  * Below the line the stage reports nothing and the page keeps its current
  * behaviour; above it the stage turns itself on. Nobody has to notice.
  *
- * Measured 2026-09-10, entered / exited:
+ * For example, from the first weeks of the event log (entered / exited):
  *
  *     ANALYST REVIEW           345 / 236  (68%)  -> median reportable now
  *     REQUEST FOR REVIEW        25 /  20  (80%)  -> too few entrants
@@ -184,10 +177,10 @@ const NOT_A_DIVERSION = new Set(["ANALYST REVIEW", "IN PROCESS"]);
  *     RFI ISSUED               422 /   3  (0.7%) -> not yet
  *     APPLICATION ON HOLD      218 /   0  (0%)   -> not yet
  *
- * The RFI line is the one worth reading twice. 327 RFI exits have been
- * observed, and they say nothing about duration: those cases were already at
- * an RFI when the log opened on 2026-08-26, so their start is unknown. Only
- * the 3 we watched both enter and leave can be timed.
+ * The RFI line is the one worth reading twice. Most RFI exits observed say
+ * nothing about duration: those cases were already at an RFI when the event
+ * log opened, so their start is unknown. Only the ones we watched both enter
+ * and leave can be timed.
  */
 export function stageDurationFor(
   stats: StageStats | null,

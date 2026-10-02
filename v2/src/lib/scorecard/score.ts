@@ -17,6 +17,8 @@
  * Plain module, pure functions, so the unit project tests every rule.
  */
 
+import { daysBetween } from "@/lib/time";
+
 export type Source = "ours" | "rival-a" | "rival-b" | "rival-c";
 
 export interface PredictionRow {
@@ -35,10 +37,6 @@ export interface PredictionRow {
 
 /** Days after a predicted date before an undecided case counts as a miss. */
 export const SETTLE_DAYS = 30;
-
-const DAY = 86_400_000;
-export const daysBetween = (from: string, to: string): number =>
-  Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / DAY);
 
 export type Horizon = "0-30" | "31-90" | "91-180" | "181+";
 export const HORIZONS: readonly Horizon[] = ["0-30", "31-90", "91-180", "181+"];

@@ -1,5 +1,6 @@
 import { calculatePWDExpiration } from "@/lib/perm";
 import { formatAsOf } from "@/lib/dolFormat";
+import { daysBetween } from "@/lib/time";
 
 /**
  * How long a determination lasts, and the cliff in the middle of the rule.
@@ -33,14 +34,6 @@ interface Regime {
   rule: string;
 }
 
-/** Days between two ISO dates, inclusive of neither endpoint's time of day. */
-function daysBetweenIso(from: string, to: string): number {
-  const MS = 24 * 60 * 60 * 1000;
-  return Math.round(
-    (Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / MS,
-  );
-}
-
 function regimes(year: number): Regime[] {
   return [
     {
@@ -64,14 +57,14 @@ function regimes(year: number): Regime[] {
 function Row({ regime }: { regime: Regime }) {
   const fromExpiry = calculatePWDExpiration(regime.from);
   const toExpiry = calculatePWDExpiration(regime.to);
-  const longest = daysBetweenIso(regime.from, fromExpiry);
-  const shortest = daysBetweenIso(regime.to, toExpiry);
+  const longest = daysBetween(regime.from, fromExpiry);
+  const shortest = daysBetween(regime.to, toExpiry);
   const flat = longest === shortest;
 
   return (
     <div className="p-6 sm:p-8">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Issued {formatAsOf(regime.from)} to {formatAsOf(regime.to)}
         </p>{" "}
         <p className="font-heading text-2xl font-black tabular-nums">
@@ -94,14 +87,14 @@ export function PwdValidityWindow({ className }: { className?: string }) {
   // against the first day of the long one.
   const cliffBefore = `${year}-06-30`;
   const cliffAfter = `${year}-07-01`;
-  const shortDays = daysBetweenIso(cliffBefore, calculatePWDExpiration(cliffBefore));
-  const longDays = daysBetweenIso(cliffAfter, calculatePWDExpiration(cliffAfter));
+  const shortDays = daysBetween(cliffBefore, calculatePWDExpiration(cliffBefore));
+  const longDays = daysBetween(cliffAfter, calculatePWDExpiration(cliffAfter));
   const multiple = (longDays / shortDays).toFixed(1);
 
   return (
     <div className={className}>
       <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
           One day, {multiple} times the runway
         </p>{" "}
         <p className="mt-3 font-heading text-2xl font-black leading-tight sm:text-3xl">
@@ -109,10 +102,8 @@ export function PwdValidityWindow({ className }: { className?: string }) {
           days. One issued {formatAsOf(cliffAfter)} is valid {longDays}.
         </p>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
-          The validity period is anchored to the wage year, not counted from
-          your determination date. Recruitment, the 30-day job order and the
-          30-day quiet period all have to finish inside it, so which side of 30
-          June yours lands on decides whether that is comfortable or tight.
+          Validity follows the wage year, not your determination date, and recruitment and the 30-day quiet
+          period must fit inside it. Which side of 30 June yours lands on decides how tight that is.
         </p>
       </div>
 
@@ -123,10 +114,8 @@ export function PwdValidityWindow({ className }: { className?: string }) {
       </div>
 
       <p className="mt-3 text-sm leading-relaxed text-foreground/60">
-        20 CFR 656.40(c), computed for {year} by the same function that runs on
-        a tracked case. You can&apos;t choose your determination date, but the
-        queue position above says roughly when yours is coming, and that&apos;s
-        enough to know which of these you are planning inside.
+        20 CFR 656.40(c), computed for {year} by the same rule a tracked case uses. The queue position above
+        says roughly when your determination is coming.
       </p>
     </div>
   );

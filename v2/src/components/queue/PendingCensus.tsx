@@ -1,5 +1,7 @@
 import { Fragment } from "react";
 
+import { formatInt } from "@/lib/format";
+
 import { STAGE_META, prettyStatus, type StageGroup } from "./stages";
 
 /**
@@ -27,8 +29,6 @@ import { STAGE_META, prettyStatus, type StageGroup } from "./stages";
  * `no-whitespace-in-table-rows.test.ts` exists. The separator belongs before
  * the closing tag, where it is legal and an extractor still reads a boundary.
  */
-
-const int = (n: number) => n.toLocaleString("en-US");
 
 export function PendingCensus({
   stages,
@@ -79,7 +79,7 @@ export function PendingCensus({
                       {meta.label}
                     </span>{" "}
                     <span className="font-mono text-sm tabular-nums text-foreground/70">
-                      {int(group.count)}
+                      {formatInt(group.count)}
                     </span>
                   </span>{" "}
                 </th>
@@ -90,7 +90,7 @@ export function PendingCensus({
                     {prettyStatus(s.status)}{" "}
                   </td>
                   <td className="py-2 text-right text-base font-bold tabular-nums">
-                    {int(s.count)}{" "}
+                    {formatInt(s.count)}{" "}
                   </td>
                 </tr>
               ))}
@@ -122,7 +122,7 @@ export function DecidedList({
           {" "}
           <li className="flex items-baseline justify-between gap-4 border-b-2 border-border pb-2 text-base">
             <span className="text-foreground/80">{prettyStatus(s.status)}</span>{" "}
-            <span className="font-bold tabular-nums">{int(s.count)}</span>
+            <span className="font-bold tabular-nums">{formatInt(s.count)}</span>
           </li>
         </Fragment>
       ))}

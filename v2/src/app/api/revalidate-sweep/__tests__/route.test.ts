@@ -60,6 +60,7 @@ describe("the list covers every cached page that reads a sweep-written figure", 
     "getQueueAhead",
     "getPwdSummary",
     "getLcaSummary",
+    "getSeasonalSummary",
   ];
   const EXCLUDED: Record<string, string> = {
     "/perm-queue/[month]":

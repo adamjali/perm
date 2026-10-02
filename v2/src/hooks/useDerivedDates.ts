@@ -152,5 +152,3 @@ export function useDerivedDates(caseData: DerivedDatesInput | null | undefined):
     };
   }, [caseData]);
 }
-
-export default useDerivedDates;

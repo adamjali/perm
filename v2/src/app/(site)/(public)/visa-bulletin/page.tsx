@@ -20,13 +20,13 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
+import { CaretDownIcon } from "@phosphor-icons/react/ssr";
 
 import { BulletinMonthStrip } from "@/components/data/BulletinMonthStrip";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { getFAQPageSchema } from "@/lib/structuredData";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
@@ -34,7 +34,8 @@ import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { getVisaBulletinSeries, getI485Cells } from "@/lib/turso/publicData";
 import { getVisaAnnualLimits } from "@/lib/turso/visaLimits";
-import { fmtNumber, latestLimits, latestUsage } from "@/lib/visaLimits";
+import { latestLimits, latestUsage } from "@/lib/visaLimits";
+import { formatInt } from "@/lib/format";
 import { getBulletinBoard, BOARD_COUNTRIES, type BoardCell } from "@/lib/turso/bulletin";
 import { computeI485Position } from "@/lib/i485/position";
 import { BulletinRelease } from "@/components/bulletin/BulletinRelease";
@@ -48,6 +49,7 @@ import {
   type SameMonthMove,
 } from "@/lib/bulletinNext";
 import type { CountryKey, Cutoff } from "@/lib/perm";
+import { MoreText } from "@/components/data/MoreText";
 
 const TITLE = "The Next Visa Bulletin, From Every Past One";
 const DESCRIPTION =
@@ -168,16 +170,11 @@ export default async function VisaBulletinPage() {
   ]);
   const spill = latestLimits(limitsDoc);
   const usage = latestUsage(limitsDoc);
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: "Visa bulletin", href: "/visa-bulletin" },
-  ]);
   const faqSchema = getFAQPageSchema(FAQS.map((f) => ({ question: f.q, answer: f.a })));
 
   if (series.length === 0 || !board) {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-12 sm:px-6">
-        <JsonLdScript schema={breadcrumb} />
         <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl">The next visa bulletin</h1>{" "}
         <p className="mt-4 text-base text-foreground/80">
           The bulletin archive is not available right now. The State Department publishes the current bulletin at{" "}
@@ -224,25 +221,24 @@ export default async function VisaBulletinPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-8 sm:px-6 sm:pb-24">
-      <JsonLdScript schema={breadcrumb} />
       <JsonLdScript schema={faqSchema} />
 
-      <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-        Visa bulletin · {series.length} months held, {monthLabel(series[0]!.bulletinMonth)} to {monthLabel(last.bulletinMonth)}
-      </p>{" "}
-      <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
         The {monthLabel(next)} visa bulletin, from the last {series.length}
       </h1>{" "}
       <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/85">
-        The newest bulletin we hold is {monthLabel(last.bulletinMonth)}. For every employment category and country, this page shows what each earlier{" "}
-        {monthName(targetMonth)} bulletin did, measured against the month before it, beside USCIS&apos;s count of applications ahead of the current cutoff. It is measured, not predicted, and it rolls forward by itself when the next bulletin lands.
+        What every earlier {monthName(targetMonth)} bulletin did for each employment category and country, from{" "}
+        {series.length} bulletins ({monthLabel(series[0]!.bulletinMonth)} to {monthLabel(last.bulletinMonth)}), beside
+        USCIS&apos;s count of applications ahead of each cutoff. Measured, not predicted.
       </p>
 
       {isFiscalStart ? (
         <div className="mt-8 border-2 border-border bg-primary/10 p-5 shadow-hard">
           <p className="font-heading text-base font-bold">October is the fiscal-year start</p>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/85">
-            A fresh annual allocation of employment-based numbers opens on October 1, plus whatever family-sponsored numbers went unused in the year just ended. That is why October bulletins reopen categories that were shut in August and September. How many unused numbers there are is not published on the day, so any figure you read for it before then is a guess, this page included; it prints none.
+            October 1 opens a new year of employment numbers, plus family numbers unused last year, so October
+            often reopens categories shut in August and September. The carry-over isn&apos;t published on the day,
+            so this page prints no figure for it.
           </p>
         </div>
       ) : null}
@@ -267,10 +263,10 @@ export default async function VisaBulletinPage() {
           <h2 className="mt-12 font-heading text-2xl font-black tracking-tight">The spillover, as the Department set it</h2>{" "}
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
             For fiscal year {spill.fiscalYear}, the State Department set the employment-based limit at{" "}
-            {fmtNumber(spill.employmentTotal)} worldwide: the statutory {fmtNumber(spill.employmentBase)} plus{" "}
-            {fmtNumber(spill.spillover)} family-sponsored numbers that went unused in fiscal year {spill.fiscalYear - 1}.
+            {formatInt(spill.employmentTotal)} worldwide: the statutory {formatInt(spill.employmentBase)} plus{" "}
+            {formatInt(spill.spillover)} family-sponsored numbers that went unused in fiscal year {spill.fiscalYear - 1}.
             {spill.estimated ? " The Department marks that sheet estimated, pending its official determination." : ""}
-            {spill.perCountry !== null ? ` No single country can take more than ${fmtNumber(spill.perCountry)} of the employment total.` : ""}
+            {spill.perCountry !== null ? ` No single country can take more than ${formatInt(spill.perCountry)} of the employment total.` : ""}
           </p>{" "}
           <div className="mt-4 max-w-3xl overflow-x-auto">
             <table className="w-full min-w-[28rem] border-collapse text-left text-sm">
@@ -285,29 +281,33 @@ export default async function VisaBulletinPage() {
                 {spill.rows.map((r) => (
                   <tr key={r.label} className={r.label.startsWith("All") ? "border-t-2 border-border font-bold" : "border-b border-border/40"}>
                     <td className="py-2 pr-3">{r.label}{" "}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums">{fmtNumber(r.worldwide)}{" "}</td>
-                    <td className="py-2 text-right tabular-nums">{r.foreignState === null ? "" : fmtNumber(r.foreignState)}{" "}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{formatInt(r.worldwide)}{" "}</td>
+                    <td className="py-2 text-right tabular-nums">{r.foreignState === null ? "" : formatInt(r.foreignState)}{" "}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>{" "}
           {usage ? (
-            <p className="mt-4 max-w-3xl text-base leading-relaxed text-foreground/85">
-              The year before is counted, not estimated. In fiscal year {usage.fiscalYear}, {fmtNumber(usage.familyUsed)} family-sponsored
-              and {fmtNumber(usage.employmentUsed)} employment-based numbers were used, by Table V of the Department&apos;s Report of the
-              Visa Office {usage.fiscalYear}; the {fmtNumber(usage.familyUnused)} family numbers left unused against the{" "}
-              {fmtNumber(usage.familyBase)} floor are what fell to the employment side for fiscal year {usage.fiscalYear + 1}.
-            </p>
+            <MoreText gist={"Last year's use, counted from Table V of the Visa Office report."} className="mt-4">
+              <p className="max-w-3xl text-base leading-relaxed text-foreground/85">
+                The year before is counted, not estimated. In fiscal year {usage.fiscalYear}, {formatInt(usage.familyUsed)} family-sponsored
+                and {formatInt(usage.employmentUsed)} employment-based numbers were used, by Table V of the Department&apos;s Report of the
+                Visa Office {usage.fiscalYear}; the {formatInt(usage.familyUnused)} family numbers left unused against the{" "}
+                {formatInt(usage.familyBase)} floor are what fell to the employment side for fiscal year {usage.fiscalYear + 1}.
+              </p>
+            </MoreText>
           ) : null}{" "}
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            Both figures are read from the Department&apos;s own PDFs, the{" "}
-            <a href={spill.source} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">
-              annual numerical limits
-            </a>{" "}
-            and the annual report, and nothing here is a forecast. The spillover for the fiscal year about to open is not published on
-            bulletin day; this page prints it when the Department posts its sheet, usually in the first weeks of the fiscal year.
-          </p>
+          <MoreText gist={"Both from the State Department's own PDFs; no forecast."} className="mt-3">
+            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              Both figures are read from the Department&apos;s own PDFs, the{" "}
+              <a href={spill.source} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">
+                annual numerical limits
+              </a>{" "}
+              and the annual report, and nothing here is a forecast. The spillover for the fiscal year about to open is not published on
+              bulletin day; this page prints it when the Department posts its sheet, usually in the first weeks of the fiscal year.
+            </p>
+          </MoreText>
         </>
       ) : null}
 
@@ -350,14 +350,25 @@ export default async function VisaBulletinPage() {
       <h2 className="mt-12 font-heading text-2xl font-black tracking-tight">
         What earlier {monthName(targetMonth)} bulletins did, by category
       </h2>{" "}
-      <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/85">
-        Each row is one country. The cutoff is the newest final action date we hold. The moves are every {monthName(targetMonth)} bulletin in the archive, measured against its own September; a median is printed only when there were date-to-date moves to take it over. &ldquo;Ahead of the cutoff&rdquo; is {inventoryAsOf ?? "USCIS's inventory"}: pending adjustment applications with an earlier priority date than the cutoff, a floor because USCIS withholds small cells.
-      </p>
+      <MoreText gist={"One row per country: the newest cutoff, what this month did in past years, and the line ahead of it."} className="mt-3">
+        <p className="max-w-3xl text-base leading-relaxed text-foreground/85">
+          Each row is one country. The cutoff is the newest final action date we hold. The moves are every {monthName(targetMonth)} bulletin in the archive, measured against its own September; a median is printed only when there were date-to-date moves to take it over. &ldquo;Ahead of the cutoff&rdquo; is {inventoryAsOf ?? "USCIS's inventory"}: pending adjustment applications with an earlier priority date than the cutoff, a floor because USCIS withholds small cells.
+        </p>
+      </MoreText>
 
+      {/* One fold per category: ten tables open ran the page past 10,000px,
+          and a reader comes for one category. The rows stay in the HTML. */}
+      <div className="mt-6 border-2 border-border bg-card shadow-hard">
       {sections.map((s) => (
-        <section key={s.key} className="mt-8">
-          <h3 className="font-heading text-xl font-bold tracking-tight">{s.label}</h3>{" "}
-          <div className="mt-3 overflow-x-auto overscroll-x-none">
+        <details key={s.key} className="group border-b-2 border-border last:border-b-0">
+          <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
+            <h3 className="font-heading text-lg font-bold tracking-tight">{s.label}</h3>{" "}
+            <span className="flex items-center gap-3">
+              <span className="font-mono text-sm text-muted-foreground">{s.rows.length} {s.rows.length === 1 ? "country" : "countries"}</span>{" "}
+              <CaretDownIcon className="h-5 w-5 shrink-0 text-primary transition-transform duration-200 group-open:rotate-180 motion-reduce:transition-none" aria-hidden="true" />
+            </span>
+          </summary>{" "}
+          <div className="overflow-x-auto overscroll-x-none border-t-2 border-border/40 p-3 sm:p-4">
             <table className="w-full min-w-[720px] border-2 border-border text-sm">
               <thead className="bg-foreground text-background">
                 <tr>
@@ -414,14 +425,17 @@ export default async function VisaBulletinPage() {
               </tbody>
             </table>
           </div>
-        </section>
+        </details>
       ))}
+      </div>
 
-      <p className="mt-6 text-sm text-muted-foreground">
-        Bulletin figures are the State Department&apos;s, one row per published bulletin since {monthLabel(series[0]!.bulletinMonth)}. Inventory figures are USCIS&apos;s monthly pending I-485 counts. Every month-by-month cutoff, both charts, is on the{" "}
-        <Link href="/tools/priority-date-calculator" className="font-semibold underline underline-offset-2">priority date page</Link>, and the queue ahead of your own date on the{" "}
-        <Link href="/tools/i485-queue-position" className="font-semibold underline underline-offset-2">I-485 queue position tool</Link>.
-      </p>
+      <MoreText gist={"Bulletins are the State Department's; the line ahead is USCIS's monthly inventory."} className="mt-6">
+        <p className="text-sm text-muted-foreground">
+          Bulletin figures are the State Department&apos;s, one row per published bulletin since {monthLabel(series[0]!.bulletinMonth)}. Inventory figures are USCIS&apos;s monthly pending I-485 counts. Every month-by-month cutoff, both charts, is on the{" "}
+          <Link href="/tools/priority-date-calculator" className="font-semibold underline underline-offset-2">priority date page</Link>, and the queue ahead of your own date on the{" "}
+          <Link href="/tools/i485-queue-position" className="font-semibold underline underline-offset-2">I-485 queue position tool</Link>.
+        </p>
+      </MoreText>
 
       <BulletinMonthStrip months={series.map((b) => b.bulletinMonth)} newest={last.bulletinMonth} />
 

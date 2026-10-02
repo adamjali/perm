@@ -17,6 +17,7 @@ import {
 } from "@/lib/perm";
 import { getUrgencyLevelExtended, type UrgencyLevelExtended } from "@/lib/status";
 import type { AdditionalRecruitmentMethod } from "@/lib/shared/types";
+import { MS_PER_DAY } from "@/lib/time";
 
 // ============================================================================
 // TYPES
@@ -91,19 +92,9 @@ export interface Deadline {
 // Note: UrgencyLevel is re-exported from @/lib/status as UrgencyLevelExtended
 export type UrgencyLevel = UrgencyLevelExtended;
 
-export interface UrgencyColors {
-  bg: string;
-  text: string;
-  border: string;
-  ring: string;
-}
-
 // ============================================================================
 // CONSTANTS
 // ============================================================================
-
-/** Milliseconds per day for date calculations */
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 /** Build the 9-field input for calculateFilingWindowFromCase from NextUpCaseData. */
 function buildFilingWindowInput(caseData: NextUpCaseData) {
@@ -211,42 +202,6 @@ export function getStageIndex(status: CaseStatus): number {
  */
 export function getUrgencyLevel(daysUntil: number): UrgencyLevel {
   return getUrgencyLevelExtended(daysUntil);
-}
-
-/**
- * Get urgency color classes
- */
-export function getUrgencyColors(urgency: UrgencyLevel): UrgencyColors {
-  switch (urgency) {
-    case "overdue":
-      return {
-        bg: "bg-red-100 dark:bg-red-950",
-        text: "text-red-700 dark:text-red-400",
-        border: "border-red-500",
-        ring: "ring-red-500/50",
-      };
-    case "urgent":
-      return {
-        bg: "bg-red-50 dark:bg-red-950",
-        text: "text-red-600 dark:text-red-400",
-        border: "border-red-400",
-        ring: "ring-red-400/50",
-      };
-    case "soon":
-      return {
-        bg: "bg-orange-50 dark:bg-orange-950",
-        text: "text-orange-600 dark:text-orange-400",
-        border: "border-orange-400",
-        ring: "ring-orange-400/50",
-      };
-    default:
-      return {
-        bg: "bg-green-50 dark:bg-green-950",
-        text: "text-green-600 dark:text-green-400",
-        border: "border-green-500",
-        ring: "ring-green-500/50",
-      };
-  }
 }
 
 /**

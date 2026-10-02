@@ -62,6 +62,11 @@ const mockGetPushSubscriptionStatus = vi.fn(() => Promise.resolve({
 const mockSubscribeToPush = vi.fn(() => Promise.resolve("mock-subscription-json"));
 const mockUnsubscribeFromPush = vi.fn(() => Promise.resolve());
 
+// The subscriber-mail card reads its own query; it has its own test.
+vi.mock("../MailSubscriptionsCard", () => ({
+  MailSubscriptionsCard: () => <div data-testid="mail-subscriptions" />,
+}));
+
 vi.mock("@/lib/pushSubscription", () => ({
   isPushSupported: () => mockIsPushSupported(),
   getPushSubscriptionStatus: () => mockGetPushSubscriptionStatus(),
@@ -234,7 +239,7 @@ describe("NotificationPreferencesSection", () => {
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
       );
 
-      expect(screen.getByText("Status updates")).toBeInTheDocument();
+      expect(screen.getByText("Case updates")).toBeInTheDocument();
     });
 
     it("renders RFI/RFE response toggles when deadline reminders expanded", async () => {
@@ -815,12 +820,12 @@ describe("NotificationPreferencesSection", () => {
       expect(cards.length).toBeGreaterThanOrEqual(3); // 3 sections
     });
 
-    it("applies box shadow styling via inline style", () => {
+    it("draws each section as a card with the hard shadow", () => {
       const { container } = renderWithProviders(
         <NotificationPreferencesSection profile={defaultProfile} userEmail={TEST_EMAIL} />
       );
 
-      const cardsWithShadow = container.querySelectorAll('[style*="box-shadow"]');
+      const cardsWithShadow = container.querySelectorAll(".shadow-hard");
       expect(cardsWithShadow.length).toBeGreaterThanOrEqual(3);
     });
   });

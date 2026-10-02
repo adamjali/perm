@@ -3,17 +3,17 @@
  *
  * ## Why these are on permtracker.app and not on the Convex domain
  *
- * They used to be built on `CONVEX_SITE_URL`, so a subscriber asking to change
- * their email preferences received a plain-text message whose only link was
- * `https://giant-dragon-464.convex.site/prefs?token=<long opaque string>`.
+ * Built on `CONVEX_SITE_URL`, the link a subscriber gets for changing their
+ * email preferences would read
+ * `https://<deployment>.convex.site/prefs?token=<long opaque string>`.
  *
  * That is not a leak - a deployment name is an endpoint, not a credential -
  * and the route genuinely lives there. It is a TRUST problem, and a bad one.
  * Line the pieces up as a recipient sees them: unstyled text, an unfamiliar
  * domain with a random-looking name, a long opaque token, and an instruction
  * to click in order to change your email settings. That is the anatomy of a
- * phishing email, and it was the shape of the one message whose entire job is
- * to be trusted enough to click. A reader who refused was behaving correctly.
+ * phishing email, on the one message whose entire job is to be trusted
+ * enough to click. A reader who refused it would be behaving correctly.
  *
  * So emailed links are built on the public site, and `next.config.ts` rewrites
  * those paths to the Convex HTTP routes that still serve them.
@@ -28,9 +28,8 @@
  *
  * ## Why one module
  *
- * `SITE_URL` was hardcoded in four modules and `actionUrl` was copy-pasted
- * into three, which is how five sending paths end up disagreeing about their
- * own domain one edit at a time.
+ * A site URL copied into each sender is how sending paths end up disagreeing
+ * about their own domain one edit at a time.
  *
  * @module convex/lib/links
  */

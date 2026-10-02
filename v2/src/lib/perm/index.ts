@@ -8,4 +8,4 @@
  * @module
  */
 
-export * from '../../../convex/lib/perm';
+export * from '@convex/lib/perm';

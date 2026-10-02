@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import type { WeekdayProfile } from "@/lib/activityStats";
 import { cn } from "@/lib/utils";
 
@@ -38,12 +39,14 @@ export function WeekdayShape({
 
   return (
     <div className={className}>
+      <ChartTips label="Average decisions by day of the week">
       <ol className="m-0 list-none p-0">
         {profile.map((p) => (
           // Keyed Fragment with a trailing space: array items render with
           // NOTHING between them, so each row's figures glue to the next.
           <Fragment key={p.weekday}>
           <li
+            data-tip={`${p.label}\nAbout ${p.mean.toLocaleString("en-US")} decided a day\nMost in one day: ${p.max.toLocaleString("en-US")}\n${p.days.toLocaleString("en-US")} days on record\n${p.zeroDays === 0 ? "Never zero" : `${p.zeroDays.toLocaleString("en-US")} at zero`}`}
             className={cn(
               "py-2",
               // The rule sits between Friday and Saturday and says what it
@@ -55,7 +58,7 @@ export function WeekdayShape({
               <span className="font-mono text-sm font-bold uppercase tracking-wider">
                 {p.label}
               </span>{" "}
-              <span className="font-mono text-xs font-bold tabular-nums text-foreground/70">
+              <span className="font-mono text-sm font-bold tabular-nums text-foreground/70">
                 {p.mean.toLocaleString("en-US")} a day · {p.days} days ·{" "}
                 {p.zeroDays === 0 ? "never zero" : `${p.zeroDays} at zero`}
               </span>
@@ -73,6 +76,7 @@ export function WeekdayShape({
           </Fragment>
         ))}
       </ol>
+      </ChartTips>
       <p className="mt-4 text-sm leading-relaxed text-foreground/70">
         A weekday clears about {meanOf(weekdays).toLocaleString("en-US")}{" "}
         decisions and a weekend day about{" "}

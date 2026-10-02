@@ -99,20 +99,14 @@ export default async function LcaWagesPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/perm-wages" className="underline underline-offset-2 hover:text-primary">
-            Wages
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           H-1B salary explorer
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          The wage every employer attested on a certified H-1B LCA, as DOL
-          published it. Filter to an occupation, a worksite state or a year,
-          and the figures describe those filings and no others.{" "}
+          The wages employers attested on certified H-1B LCAs, as DOL published them. Filter by occupation,
+          state or year.{" "}
           <Link href="/tools/compare-my-offer" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
-            Have an offer? Place it in the distribution.
+            Have an offer? See where it falls.
           </Link>
         </p>
       </header>

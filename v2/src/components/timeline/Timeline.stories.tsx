@@ -5,7 +5,7 @@ import { TimelineGrid, type TimelineCaseData } from "./TimelineGrid";
 import { TimelineControls } from "./TimelineControls";
 import { TimelineLegendCompact } from "./TimelineLegend";
 import { InlineCaseTimeline } from "@/components/cases/detail/InlineCaseTimeline";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 
 /**
  * The timeline page and the case page's timeline with cases shaped like real

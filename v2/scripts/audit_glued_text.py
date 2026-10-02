@@ -12,11 +12,11 @@ WHY THIS IS NOT A SOURCE-LEVEL CHECK. `no-glued-jsx-text.test.ts` scans source
 for `</tag>` then a newline then `<tag>`, and that pattern is blind to four
 shapes this project actually uses:
 
-  1. `{items.map(...)}` — the glue is between ARRAY ELEMENTS. There is no
+  1. `{items.map(...)}`: the glue is between ARRAY ELEMENTS. There is no
      newline between two tags in the source at all.
   2. `<NavLink>` and other custom components, which are not in any HTML tag list.
-  3. `<motion.h1>` — renders an <h1>, but the tag name is dotted and lowercase.
-  4. `</p>{cond ? (...) : null}<p>` — the next token is `{`, not `<`, and the
+  3. `<motion.h1>` renders an <h1>, but the tag name is dotted and lowercase.
+  4. `</p>{cond ? (...) : null}<p>`: the next token is `{`, not `<`, and the
      glue only appears in the branch where the conditional renders nothing.
 
 Measured on this repo: the source gate reported clean while 153 real pairs were
@@ -93,11 +93,8 @@ CONTROL = "PERM"
 
 
 def _fetch(url: str) -> str:
-    # `x-permtracker-audit` is what Firewall rule 5 bypasses. Without it this
-    # audit is CHALLENGED by our own WAF when pointed at production: every
-    # fetch answers 429 and the run reports "0 glued pairs" over nothing at
-    # all. The scanned-count control is what caught that; the header is what
-    # fixes it. The other three audits already send it.
+    # The audit key exempts this from the per-address limits (lib_audit.py);
+    # without it a walk of production can be answered 429 page after page.
     req = urllib.request.Request(
         url,
         headers={
@@ -200,10 +197,7 @@ def main() -> int:
     for path in pages:
         url = f"{args.base}{path}"
         try:
-            # THROUGH `_fetch`, not a bare urlopen. There were two fetch paths
-            # here and only the sitemap one carried the firewall bypass header,
-            # so against production every page answered 429 and the run
-            # reported "0 glued pairs" having scanned nothing.
+            # Through `_fetch`, so every page carries the audit header.
             body = _fetch(url)
         except Exception as exc:  # noqa: BLE001 - one bad page must not hide the rest
             print(f"  {path}: FETCH FAILED {exc}")
@@ -223,7 +217,7 @@ def main() -> int:
     print(f"\npages scanned   : {scanned}/{len(pages)}")
     # Do not claim the sweep is healthy when it fetched nothing: that line
     # printed "the sweep is not blind" over a run that scanned 0 of 21 pages.
-    verdict = "n/a — nothing was scanned" if scanned == 0 else (blind or "none — the sweep is not blind")
+    verdict = "n/a, nothing was scanned" if scanned == 0 else (blind or "none, the sweep is not blind")
     print(f"control missing : {verdict}")
     print(f"glued pairs     : {total}")
     if scanned == 0 or blind:

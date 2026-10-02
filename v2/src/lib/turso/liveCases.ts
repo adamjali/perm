@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { MS_PER_DAY } from "@/lib/time";
 import { one, rows } from "./client";
 
 /**
@@ -9,11 +10,10 @@ import { one, rows } from "./client";
  * the published half (DOL's quarterly files, decided cases only, through the
  * last quarter) and the live half (DOL's daily check, everything the files do
  * not hold yet) are stored apart, and every page that lists cases is meant to
- * answer from both, labelled. Lookup and search did. The `/perm-cases` browse
- * table and the `/perm-queue/[month]` pages did not: they read the published
- * half only, so a visitor scrolling the table saw June 30 as the newest
- * decision while the corpus held 40,935 newer decisions and 96,157 pending
- * cases (measured 2026-09-02). This module is the read side of closing that.
+ * answer from both, labelled. A browse table or month page that read the
+ * published half alone would show the last published quarter's end as the
+ * newest decision while the corpus holds tens of thousands of newer decisions
+ * and pending cases. This module is the read side of listing both.
  *
  * WHAT A LIVE ROW CAN AND CANNOT SAY. DOL's per-case lookup returns status,
  * employer, job title and filing date. It never returns a decision date, a
@@ -27,8 +27,8 @@ import { one, rows } from "./client";
  * here is served by one of two indexes, `(is_final, filing_date, case_number)`
  * or `(filing_date, case_number)`, so a page is `take + 1` row reads however
  * deep the offset. The counts come from `perm_docs['live_remainder']`, written
- * by the same nightly build, because a `count(*)` over 137k rows per request
- * is the class of read that got Turso blocked in August.
+ * by the same nightly build, because a `count(*)` over the whole table per
+ * request is a read no page render should make.
  */
 
 export type LiveKind = "pending" | "decided" | "all";
@@ -247,7 +247,7 @@ export interface LiveRemainderSummary {
  * or the build has been failing for a week, and a count that says "as of
  * last week" under a heading that says "live" is the misleading case.
  */
-const MAX_AGE_MS = 8 * 24 * 60 * 60 * 1000;
+const MAX_AGE_MS = 8 * MS_PER_DAY;
 
 const isInt = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v) && v >= 0;
 

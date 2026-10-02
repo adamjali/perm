@@ -66,7 +66,7 @@ export default function ContentListing({
 
       {/* Result count */}
       {(search || activeTag) && (
-        <p className="text-center font-mono text-xs text-muted-foreground">
+        <p className="text-center font-mono text-sm text-muted-foreground">
           Showing {filtered.length} of {posts.length} articles
           {activeTag && ` tagged "${activeTag}"`}
           {search && ` matching "${search}"`}

@@ -4,13 +4,11 @@ import * as React from "react";
 /**
  * Every bulletin the archive holds, one link each, grouped by year.
  *
- * WHY THIS EXISTS (2026-09-22). The hub linked exactly ONE month page, the
- * newest, and each month page linked only its neighbours, so the other 96
- * month pages hung off an eighteen-hop chain from a single link. Search
- * Console read the current month itself as "Discovered, never crawled".
- * Same defect as the `/perm-queue/<month>` family in September, one layer up:
- * those were in no sitemap, these were in the sitemap but link-deep. A hub
- * strip is the fix the queue page already uses.
+ * WHY THIS EXISTS. If the hub links only the newest month and each month page
+ * only its neighbours, the rest hang off a long chain of hops from a single
+ * link, and Search Console leaves them "Discovered, never crawled". A sitemap
+ * entry is not a link; a hub strip, as on the queue page, puts every month
+ * one hop from the hub.
  *
  * Plain links, no client JS, so every one is in the HTML a crawler reads.
  * Years descend (the reader wants the recent ones), months ascend inside a

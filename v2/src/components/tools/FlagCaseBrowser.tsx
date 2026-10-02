@@ -4,7 +4,7 @@ import { Fragment, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 
-import { usePublicQuery } from "@/lib/usePublicQuery";
+import { usePublicQuery } from "@/hooks/usePublicQuery";
 import { Pager } from "@/components/ui/pager";
 import { PendingLink } from "@/components/ui/pending-link";
 import { formatMonth } from "@/lib/dolFormat";
@@ -26,6 +26,8 @@ import {
 } from "@/lib/flagFilter";
 import { nextSort, sortRows, type SortColumn, type SortState } from "@/lib/tableSort";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { seasonalForm } from "@/lib/seasonalForms";
+import { formatInt } from "@/lib/format";
 
 /**
  * Find a FLAG case (prevailing wage request, or LCA) by employer, and browse
@@ -57,6 +59,14 @@ export interface FlagBrowserProgram {
    * them on `visa=all`.
    */
   allVisasLabel?: string;
+  /** "a" or "an" before the singular noun; "a" when absent. */
+  article?: "a" | "an";
+  /**
+   * Add a Form column read off the case number's prefix. The H-2A and H-2B
+   * program holds three forms under one table, and a row that doesn't say
+   * which leaves the reader to decode H-300 from H-400 themselves.
+   */
+  showForm?: boolean;
 }
 
 export const PWD_PROGRAM: FlagBrowserProgram = {
@@ -76,6 +86,19 @@ export const LCA_PROGRAM: FlagBrowserProgram = {
   pendingLabel: "In process",
   decidedLabel: "Decided",
   wageLabel: "Wage offered",
+  article: "an",
+};
+
+export const SEASONAL_PROGRAM: FlagBrowserProgram = {
+  api: "/api/seasonal-cases",
+  noun: "H-2A or H-2B filing",
+  nouns: "H-2A and H-2B filings",
+  pendingLabel: "In process",
+  decidedLabel: "Decided",
+  // No quarterly file is loaded for these yet, so no wage column ever shows.
+  wageLabel: "Wage",
+  article: "an",
+  showForm: true,
 };
 
 
@@ -85,12 +108,10 @@ const PAGE_SIZE = 50;
 const CONTROL =
   "w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
-  "min-h-[44px] border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
 const CHIP =
-  "min-h-[44px] border-2 border-border px-4 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary ";
+  "min-h-[44px] border-2 border-border px-4 font-mono text-sm font-bold uppercase tracking-wider transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary ";
 
-
-const fmt = (n: number) => n.toLocaleString("en-US");
 
 function chip(status: string, isFinal: boolean): string {
   const u = status.toUpperCase();
@@ -104,17 +125,20 @@ function Rows({
   caption,
   wages,
   wageLabel,
+  showForm,
 }: {
   rows: FlagCaseRow[];
   caption: string;
   /** The file's record for rows it also holds; adds a wage column when non-empty. */
   wages?: Map<string, FlagDisclosedRow>;
   wageLabel?: string;
+  showForm?: boolean;
 }) {
   const withWage = !!wages && wages.size > 0;
   const [sort, setSort] = useState<SortState>({ key: "filed", dir: -1 });
   const columns: SortColumn<FlagCaseRow>[] = useMemo(() => {
     const cols: SortColumn<FlagCaseRow>[] = [
+      ...(showForm ? [{ key: "form", label: "Form", get: (r: FlagCaseRow) => seasonalForm(r.caseNumber)?.label ?? null }] : []),
       { key: "status", label: "Status", get: (r) => r.status },
       { key: "employer", label: "Employer", get: (r) => r.employerName },
       { key: "title", label: "Job title", get: (r) => r.jobTitle },
@@ -136,7 +160,7 @@ function Rows({
       { key: "checked", label: "Checked", descFirst: true, get: (r) => r.lastCheckedAt ?? null },
     );
     return cols;
-  }, [withWage, wageLabel, wages]);
+  }, [withWage, wageLabel, wages, showForm]);
   const ordered = useMemo(() => sortRows(rows, columns, sort), [rows, columns, sort]);
   return (
     <div className="mt-4 overflow-x-auto">
@@ -163,8 +187,13 @@ function Rows({
                   {r.caseNumber}
                 </PendingLink>
               {" "}</td>
+              {showForm ? (
+                <td className="whitespace-nowrap px-3 py-3 text-sm font-bold">
+                  {seasonalForm(r.caseNumber)?.label ?? ""}
+                {" "}</td>
+              ) : null}
               <td className="whitespace-nowrap px-3 py-3">
-                <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chip(r.status, r.isFinal)}>
+                <span className={"border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " + chip(r.status, r.isFinal)}>
                   {r.status}
                 </span>
               {" "}</td>
@@ -249,7 +278,7 @@ function DisclosedRows({
                 </PendingLink>
               {" "}</td>
               <td className="whitespace-nowrap px-3 py-3">
-                <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chip(r.status, true)}>
+                <span className={"border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " + chip(r.status, true)}>
                   {r.status}
                 </span>
               {" "}</td>
@@ -315,10 +344,10 @@ function FlagSearchFilters({
                 onChange={(e) => onChange({ ...value, [f.key]: e.target.value || undefined })}
                 className={CONTROL}
               >
-                <option value="">Any ({fmt(opts.length)})</option>
+                <option value="">Any ({formatInt(opts.length)})</option>
                 {opts.slice(0, MAX_OPTIONS).map((o) => (
                   <option key={o.value} value={o.value}>
-                    {`${o.value} (${fmt(o.n)})`}
+                    {`${o.value} (${formatInt(o.n)})`}
                   </option>
                 ))}
               </select>
@@ -358,10 +387,9 @@ function FlagSearchFilters({
       </div>{" "}
       <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-2xl text-sm leading-relaxed text-foreground/80">
-          These narrow the rows already loaded. The state, occupation, law firm,
-          visa class and wage come from DOL&apos;s quarterly file, so a filing
-          still in process drops under them until DOL publishes it. Wages are as
-          filed, so an hourly and a yearly figure compare as numbers.
+          These narrow the rows already loaded. State, occupation, firm, visa class and wage come from
+          DOL&apos;s quarterly file, so a case still in process drops out under them. Wages are as filed:
+          hourly and yearly figures compare as plain numbers.
         </p>{" "}
         {anyFlagFilter(value) ? (
           <button type="button" onClick={() => onChange({})} className={CHIP + "bg-card"}>
@@ -462,7 +490,7 @@ export function FlagCaseBrowser({
     () => (summary ? [...summary.byMonth].sort((a, b) => (a.month < b.month ? 1 : -1)) : []),
     [summary],
   );
-  // Every month lists, however small (owner's call, Sep 8 2026). `withheld`
+  // Every month lists its cases, however few. `withheld`
   // survives as a constant so the render branches below need no rewrite.
   const withheld = false as boolean;
   const listUrl = useMemo(() => {
@@ -483,7 +511,7 @@ export function FlagCaseBrowser({
   return (
     <div className="space-y-10">
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <h2 className="font-heading text-xl font-black">Find {program.noun === "LCA" ? "an" : "a"} {program.noun} by employer</h2>{" "}
+        <h2 className="font-heading text-xl font-black">Find {program.article ?? "a"} {program.noun} by employer</h2>{" "}
         <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/80">
           The start of the employer&apos;s name is enough. Add a word from the job
           title or a filing month if the employer files a lot.
@@ -591,7 +619,7 @@ export function FlagCaseBrowser({
         ) : null}
         {searching && search && filtering && shownLive.length + shownFile.length === 0 && found > 0 ? (
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
-            None of the {fmt(found)} loaded {found === 1 ? program.noun : program.nouns} match those filters.
+            None of the {formatInt(found)} loaded {found === 1 ? program.noun : program.nouns} match those filters.
             A filing still in process has no state, occupation, firm, visa class or wage until DOL&apos;s
             quarterly file publishes it.
           </p>
@@ -599,12 +627,12 @@ export function FlagCaseBrowser({
         {searching && search && shownLive.length > 0 ? (
           <>
             <p className="mt-4 text-sm text-foreground/70">
-              {filtering ? `${fmt(shownLive.length)} of ` : ""}
-              {fmt(search.cases.length)} {search.cases.length === 1 ? program.noun : program.nouns} from DOL&apos;s
+              {filtering ? `${formatInt(shownLive.length)} of ` : ""}
+              {formatInt(search.cases.length)} {search.cases.length === 1 ? program.noun : program.nouns} from DOL&apos;s
               daily check, newest filing first
               {search.cases.length >= 200 ? " (the first 200; narrow by title or month for the rest)" : ""}.
               {halves && halves.wages.size > 0
-                ? ` ${fmt(halves.wages.size)} of them ${halves.wages.size === 1 ? "has" : "have"} the wage from DOL's quarterly file.`
+                ? ` ${formatInt(halves.wages.size)} of them ${halves.wages.size === 1 ? "has" : "have"} the wage from DOL's quarterly file.`
                 : ""}
             </p>{" "}
             <Rows
@@ -612,6 +640,7 @@ export function FlagCaseBrowser({
               caption={`${program.nouns} matching the search`}
               wages={halves?.wages}
               wageLabel={program.wageLabel}
+              showForm={program.showForm}
             />
           </>
         ) : null}
@@ -621,8 +650,8 @@ export function FlagCaseBrowser({
               {shownLive.length > 0 ? "Earlier, from DOL\u2019s quarterly file" : "From DOL\u2019s quarterly file"}
             </h3>{" "}
             <p className="mt-1 text-sm text-foreground/70">
-              {filtering ? `${fmt(shownFile.length)} of ` : ""}
-              {fmt(halves.fileOnly.length)} decided {halves.fileOnly.length === 1 ? program.noun : program.nouns} with the{" "}
+              {filtering ? `${formatInt(shownFile.length)} of ` : ""}
+              {formatInt(halves.fileOnly.length)} decided {halves.fileOnly.length === 1 ? program.noun : program.nouns} with the{" "}
               {program.wageLabel.toLowerCase()}
               {disclosure?.latestDecision ? `, decisions through ${disclosure.latestDecision}` : ""}
               {halves.fileOnly.length >= 200 ? " (the first 200; narrow by title or month for the rest)" : ""}.
@@ -642,17 +671,17 @@ export function FlagCaseBrowser({
           href={`/case-search${query.employer ? `?q=${encodeURIComponent(query.employer)}` : ""}`}
           className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
         >
-          Search all three DOL programs at once
+          Search every DOL program at once
         </Link>{" "}
-        for the PERM, the wage request and the LCA side by side.
+        for the PERM, the wage request, the LCA and any H-2A or H-2B filing side by side.
       </p>
 
       <section id="browse" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <h2 className="font-heading text-xl font-black">Browse every {program.noun} DOL has confirmed</h2>{" "}
         {summary ? (
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-            {fmt(summary.total)} {program.nouns} so far: {fmt(summary.pending)} still in process,{" "}
-            {fmt(summary.decided)} {program.decidedLabel.toLowerCase()}.
+            {formatInt(summary.total)} {program.nouns} so far: {formatInt(summary.pending)} still in process,{" "}
+            {formatInt(summary.decided)} {program.decidedLabel.toLowerCase()}.
           </p>
         ) : null}{" "}
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -669,7 +698,7 @@ export function FlagCaseBrowser({
                 className={CHIP + (kind === k ? "bg-foreground text-background hover:bg-foreground" : "bg-card")}
               >
                 {KIND_LABEL[k]}
-                {summary && k !== "all" ? ` · ${fmt(summary[k])}` : ""}
+                {summary && k !== "all" ? ` · ${formatInt(summary[k])}` : ""}
               </button>
               </Fragment>
             ))}
@@ -701,7 +730,7 @@ export function FlagCaseBrowser({
               <option value="">Any month</option>
               {months.map((m) => (
                 <option key={m.month} value={m.month}>
-                  {formatMonth(m.month) ?? m.month} ({fmt(m.total)})
+                  {formatMonth(m.month) ?? m.month} ({formatInt(m.total)})
                 </option>
               ))}
             </select>
@@ -718,7 +747,7 @@ export function FlagCaseBrowser({
         ) : null}
         {!withheld && !listFailed && shownPage && shownPage.rows.length > 0 && (page === undefined || page.rows.length > 0) ? (
           <div className={listBusy ? "opacity-60 transition-opacity" : "transition-opacity"} aria-busy={listBusy}>
-            <Rows rows={shownPage.rows} caption={`${program.nouns} from DOL's daily check`} />
+            <Rows rows={shownPage.rows} caption={`${program.nouns} from DOL's daily check`} showForm={program.showForm} />
           </div>
         ) : null}
         {!withheld && !listFailed ? (

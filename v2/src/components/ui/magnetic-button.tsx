@@ -136,5 +136,3 @@ export function MagneticButton({
     </div>
   );
 }
-
-export default MagneticButton;

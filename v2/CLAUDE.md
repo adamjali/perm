@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-09-30
+> **Status:** Production | **Last Updated:** 2026-10-01
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 510 files / 8,165 tests (2026-09-30, night; ~20 min at a load average near 45, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 544 files / 8,237 tests (2026-10-01, night; ~20 min at a load average near 45, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -889,7 +889,7 @@ second first:
   viewport with the true source marked `ROOT>`, and the date field's ancestor
   chain. This is what actually settled the bug: one screenshot from the phone
   named the input itself, at 412px inside a 356px parent, `minw=107px`.
-- `scripts/diag_proxy.py` does the same via a LAN proxy of the local build —
+- `scripts/diag_proxy.py` (deleted Oct 1 2026) did the same via a LAN proxy of the local build —
   but this machine's firewall blocks inbound connections, which is exactly how
   the LAN route failed. Prefer the deployed `?diag=1`.
 
@@ -1247,7 +1247,7 @@ with the first chunk clearing the kind. Detail pages resolve the subject via
 prerenders only the first 100 and the rest arrive through ISR, because
 prerendering 12,000 pages costs hours for pages almost nobody opens.
 
-**The slug rules are duplicated in `scripts/store_entities.py` and
+**The slug rules are duplicated in `scripts/lib_slugs.py` (was `store_entities.py`) and
 `src/lib/entitySlug.ts` deliberately** — a slug computed differently in the
 writer than in the reader is a detail page that 404s from its own index — and
 the Python copy is asserted against the same fixtures as the TypeScript one.
@@ -2908,7 +2908,7 @@ skips every rule after it, managed ones included**, so order is the design:
 | 9 | Bypass `/api/revalidate-*` when `x-revalidate-secret` exists | the nightly POSTs from GitHub Actions |
 | 10 | Bypass `/api/cron/*` when the user agent contains `vercel-cron` | Vercel's own cron invocations of the dispatcher. **A condition on the `authorization` header never matched** (measured 9:08 AM Sep 7: the secret-bearing request was still challenged), while the same request with Vercel's documented `vercel-cron/1.0` user agent passed. Spoofable, and harmless: the route itself demands `CRON_SECRET` |
 
-AI Bots stays on **Log**. `scripts/probe_firewall.sh` proves all of it from
+AI Bots stays on **Log**. `scripts/probe_firewall.sh` (deleted Oct 1 2026 with the Vercel firewall) proved all of it from
 the laptop in one run and is the thing to re-run after any change.
 
 **What Challenge mode deliberately costs:** a script calling `/api/*` without
@@ -3324,7 +3324,7 @@ column, not a band of cards.
 
 ## The full build of Sep 8 2026: what landed, and the five things it taught (2026-09-09)
 
-Ledger: `.planning/full-build-2026-09-09.md`, every item ticked or marked left
+Ledger: `.planning/full-build-2026-09-09.md` (deleted Oct 1 2026; in git history), every item ticked or marked left
 off. Shipped in twelve commits after the parity build: five statutory
 calculators, the status dictionary, six situation guides, the glossary, the
 corrections log, the estimate scorecard, comparisons and a document checklist,
@@ -3562,7 +3562,7 @@ pages and both PDFs across in one session without a tool result carrying them.
 two new HTTP route families, a cron); set `NEWSLETTER_ENABLED=1` and
 `NEWSLETTER_DAILY_CAP=15` on prod Convex; add a Firewall bypass for `/badge/*`
 so GitHub's camo proxy is not challenged; then push and the GSC queue in
-`.planning/gsc-reindex-queue-2026-09-08.md` plus the new pages.
+`.planning/gsc-reindex-queue-2026-09-08.md` (deleted Oct 1 2026; in git history) plus the new pages.
 
 ## Equal z-index is not a tie: the later element in DOM order wins (2026-09-09)
 
@@ -5189,7 +5189,7 @@ config version 13 -> 16.
 restricted set; a script claiming any listed assistant passes the live lookup
 (rule 4's 20/min per IP still binds); a browser-looking script on `/api` is
 still challenged; a real Claude fetch read `/perm-queue` and a live case page
-where it got 429 before. `scripts/probe_firewall.sh` carries five new lines.
+where it got 429 before. `scripts/probe_firewall.sh` (since deleted) carried five new lines.
 What this costs: unverified scrapers read cached pages, bounded by 300/min per
 IP; the lookup budget and the API stay behind the challenge for anyone not on
 the list. Vercel's `Claude-User` verification did not cover the addresses a
@@ -5499,7 +5499,7 @@ surfaces, it does not hide the activity from them.
 `.github/workflows/case-status-mirror.yml`. The competitive teardowns moved out
 of the repo to `~/.claude/explanations/20260918_competitive_docs/` - genericising
 a teardown makes it worthless, so it leaves rather than gets rewritten. Prediction
-ledger labels are `rival-a` / `rival-b`; `capture_rival_predictions.mjs` takes
+ledger labels are `rival-a` / `rival-b`; `capture_rival_predictions.mjs` (deleted Oct 1 2026; the scorecard cron replaced it) took
 `RIVAL_A_API` / `RIVAL_B_API` from the environment. **Git history is deliberately
 untouched** (22 commits still contain the names).
 
@@ -5761,7 +5761,7 @@ the script:
 
 1. One guide's `seoTitle` was **byte-identical to a blog post's display H1**,
    so the replace rewrote the blog's visible heading and left the guide
-   unfixed. Same family as `permtrack` corrupting `permtracker.app`, and as
+   unfixed. Same family as a rival's name corrupting `permtracker.app` in a blanket scrub, and as
    `have` contracting where it is not an auxiliary.
 2. Five changelog posts define no `seoTitle`, so the script changed their
    editorial `title` - the headline shown on the timeline. The right fix was
@@ -7299,3 +7299,99 @@ before and after Sep 27, reading every browser exception since, and walking the 
   folder, and Turbopack refuses a `node_modules` symlinked from outside the project root, so a
   second copy runs from a git worktree with its own `pnpm install --offline`.
 
+
+## Oct 1 2026: the visual pass, one email list, breadcrumbs, and a cleanup
+
+- **One list of every email** (`convex/lib/mailKinds.ts`, re-exported at `src/lib/mailKinds.ts`): name,
+  one-line description, cadence and where to start each kind. The emailed preferences page renders from a
+  shared HTML shell (`convex/lib/mailPages.ts`) and the same rows as Settings > Notifications
+  (`MailSubscriptionsCard`, through `emailPrefs.mine` and `turnOffMine`). The address always comes from the
+  token or the signed-in account, never from a row id, and both routes only turn mail off. Kind ids that
+  appear in emailed links are never renamed.
+- **One breadcrumb bar on every public page** but home (`components/layout/SiteBreadcrumbs.tsx`), its trail
+  named from the menus by `lib/breadcrumbs.ts`. The bar emits the BreadcrumbList when the trail ends at the
+  page; a detail page the menus can't name calls `breadcrumbSchema(path, name)`. Never two lists on a page;
+  a test reads the page files and fails on a top-level page the menus don't name. The small all-caps
+  labels above H1s that repeated the section are gone; where one carried a date, the date moved into the intro.
+- **Every chart explains itself on hover or tap** through `components/data/ChartTips.tsx` (marks carry
+  `data-tip`, lines split on `\n`; arrows, Home, End and Escape work too).
+- **Less visible text**: dataset coverage folds under the source lines (`DataProvenance`); visible
+  paragraphs of 40+ words went from 106 to 59 across the public pages (the rest are legal pages, rare
+  error states and sentences built from live figures); 12px text became 14px on public pages by an AST
+  codemod that skips SVG. The signed-in app still has 12px in places, to be checked in a browser.
+- **The attorney hero is an example docket** (`components/home/DeadlineDocket.tsx`), computed at build by
+  the central deadline rules, replacing an AI illustration that carried a generator's watermark.
+- **Switching a calendar type off now removes its events from Google Calendar.** The settings page calls
+  `users.updateUserProfile`, which saved the switch and nothing else; the function that scheduled
+  `googleCalendarActions.bulkDeleteEventsByType` had never been called. The update now schedules it for
+  each type that goes from on to off (`convex/users.test.ts`, probed).
+- **Cleanup**: about 90 dead source files, 18 public Convex functions with no caller, the retired Convex
+  mirror modules (their tables stay in the schema), completed migrations (checked in production first),
+  12 unused packages, the UI barrel, and in `scripts/` the shared database helpers moved into
+  `lib_turso.py` and `lib_slugs.py`, with 15 scripts and the two USCIS workflows deleted.
+- **Convex queries and mutations deny cryptographic randomness**, so `crypto.randomUUID()` there fails in
+  production while edge-runtime tests pass. Entry ids come from `convex/lib/ids.ts` `newEntryId(prefix)`.
+- **No comment names the owner or quotes chat.** A comment states the rule. Comment-only rewrites were proved
+  by printing each file's AST without comments before and after and comparing.
+- **Deleting a route leaves stale generated types** (`.next/types`, `.next/dev/types/validator.ts`) that fail
+  `typecheck:app` with "Cannot find module". They're generated: delete them.
+
+## Oct 1 2026 (evening): the app's real pages as pictures, and what drawing them found
+
+**The attorney page shows the signed-in app's real pages, drawn from a recorded sample firm.**
+`convex/__tests__/tourFixtures.test.ts` builds a firm of eight sample cases through the real
+mutations (`cases.create` with the form's cascade, `cases.update`, the conversation mutations),
+replays the reminder job for 35 days so the inbox has a history, and records every query the
+pages make into `src/components/tour/tour-fixtures.json` (clock pinned to 2026-10-01). A fake
+`ConvexReactClient` (`src/components/tour/fakeConvex.tsx`) answers the app's pages from that file
+in Storybook ("Tour/App pages"), so the real components render with no sign-in.
+`scripts/tour_shots.py` crops and encodes the captures (light, dark, phone) into
+`public/images/for-attorneys/` and writes `src/components/marketing/tourShots.ts` with each file's
+real size; `tourShots.test.ts` holds the sizes to the files.
+- Re-record: `UPDATE_TOUR_FIXTURES=1 pnpm exec vitest run tourFixtures --project convex -u`
+  (`node:fs` is blocked in `convex/`, so the file is written by `toMatchFileSnapshot`).
+- Capture the stories at scale 2 with the clock fixed and reduced motion, one browser, then run
+  the script on the folder. Storybook themes by a class on `<html>` its decorator rewrites, so a
+  dark capture has to hold the class with a MutationObserver.
+- The guides' and the sign-up page's app pictures come from the same captures now; the Feb 2026
+  screenshots they used showed a filing window's opening as overdue, a defect fixed Sep 29.
+
+**Building the sample firm found four real defects, each fixed:**
+- **`cases.create` dropped the job description.** The form sent it and the insert never wrote it
+  (since before the move to derived validators). `convex/cases.test.ts` "Nothing a case is given
+  is dropped" holds create and import to it.
+- **An export read back through Import lost nine fields**: the wage amount and level (the screen
+  never sent them), the audit date, the I-140 category, premium processing and service center,
+  the recruitment notes, tags and the status override; the job description was never exported.
+  `src/lib/import/importArgs.ts` is now the one place an imported case becomes the mutation's
+  arguments, and `importArgs.test.ts` exports a fully filled case, imports it and fails on any
+  field that doesn't survive (probed by removing two). Import also caps text lengths like create.
+- **The recruitment card read "EXPIRED" on a filed case**: `determineStatus` now answers `filed`
+  first when the ETA 9089 is in (inside or outside the window, said plainly).
+- **Notification titles in title case** ("Job Description Updated") and the FAQ's claim of CSV
+  import (import is JSON only) were corrected.
+- **"Select all" and "export what's shown" searched differently from the list**: substring over a
+  different field set, so a typo the list's fuzzy search forgave selected nothing. `listFilteredIds`
+  now runs the list's own `filterBySearch`; a test compares the two queries over three searches.
+- **The chat confirmation card's endless shimmer sweep** is gone (the no-pulse rule); its status
+  label already says it's waiting.
+
+**Bulletin release day: "at least 0 ... may well be up" was live.** `BulletinRelease` now gives
+three answers: none out this early (probably not out yet), under half (may be up, most came
+later), half or more (may well be up).
+
+**Social cards hold no live figure.** The home card had frozen "13 months" from the old homepage;
+it shows the case lookup now. The attorney card shows the deadline hub, the contact card no longer
+offers the GitHub templates removed Sep 7, and the bulletin card lost its stale "last 84". Cards
+are re-rendered with `scripts/make-page-cards.mjs`, whose `crop` is `[x, y, width, height]` in
+capture pixels, not corners.
+
+**Emails' footer links carry no separators**: each link is a padded inline block that never
+breaks inside, so a phone wraps between links at a 44px pitch with nothing dangling.
+
+**Server loads, Oct 1 (run before the deploy, from a copy of the scripts, as the app user):**
+ICE's SEVP top-employer lists (1,604 rows), the H-1B lottery FOIA release FY2021 to FY2024
+(171,588 employer-year rows) and USCIS's H-1B Employer Data Hub FY2009 to FY2026 (1,067,558 rows).
+From FY2022 the FOIA file says `ELIGIBLE` where FY2021 said `CREATED` (registered, not selected);
+FY2024's selected count is 9 under USCIS's table (188,391 against 188,400) while every other total
+matches exactly, so that one gap is allowed by name (`KNOWN_SELECTED_GAP`) and recorded in the doc.

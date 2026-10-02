@@ -1,8 +1,8 @@
 /**
  * One law firm's PERM record.
  *
- * The same treatment as the employer pages, for the half of the audience the
- * rival product does not serve. An attorney gets a public benchmark of their
+ * The same treatment as the employer pages, for the practitioners in the
+ * audience. An attorney gets a public benchmark of their
  * own practice against the field; a beneficiary gets to see whether the firm
  * on their case has done this before.
  *
@@ -20,15 +20,12 @@ import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
 import { firstThatFits } from "@/lib/describe";
+import { formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { openGraphBaseNoImage } from "@/lib/openGraphBase";
-import { FieldPosition } from "@/components/tools/FieldPosition";
-import { FigurePlate } from "@/components/tools/FigurePlate";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import {
   DisclosureNote,
   LimitsPanel,
-  MIN_DECIDED_FOR_MEDIAN,
   MIN_DECIDED_FOR_RATE,
   PeerList,
   RankLadder,
@@ -36,8 +33,25 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
-import { getDatasetSchema } from "@/lib/structuredData";
+import {
+  DecisionEstimatorCard,
+  EntityStatCards,
+  FieldPositionPlate,
+  UnpublishedFilingsNote,
+  approvalCard,
+  certifiedCard,
+  entityStanding,
+  medianDaysCard,
+  medianWageCard,
+  volumeCard,
+  wageIsTheJobLimit,
+} from "@/components/entities/EntityPageParts";
+import {
+  FALLBACK_BASELINE_DENIAL_PCT,
+  entityJsonLd,
+  entityMetadata,
+  entityStaticParams,
+} from "@/lib/entityPage";
 import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { DebarmentNotice } from "@/components/entities/DebarmentNotice";
@@ -52,49 +66,24 @@ import {
   resolveEntity,
   sizeBand,
 } from "@/lib/turso/entityDetail";
-import {
-  comparables,
-  fieldDistribution,
-  listByKind,
-  PRERENDERED_ENTITY_HEAD,
-} from "@/lib/turso/entities";
+import { comparables, fieldDistribution } from "@/lib/turso/entities";
 
-// The disclosure files are quarterly, so an hourly window bought
-// nothing and cost a regeneration per page per hour across 21,178
-// entity pages. A day bounds staleness far below the data's own
-// cadence. The ingest should also revalidate on demand.
 /**
- * SEVEN DAYS, NOT ONE, AND THE REASON IS THE SOURCE'S CADENCE.
+ * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
  *
- * These pages render the QUARTERLY disclosure corpus. There are ~20,700 of
- * them and only the top 100 of each kind are prerendered, so every other one
- * regenerates on first request after its window expires. At revalidate=86400
- * that is up to 21,000 cold server renders A DAY - each a React SSR pass plus
- * Turso round trips - to reflect data that changes FOUR TIMES A YEAR.
- *
- * Vercel's free Fluid tier is 4 CPU-hours. 21,000 daily renders at even a
- * couple of hundred milliseconds of CPU each consumes it, and the account hit
- * 100% on 2026-08-27 with every public page still serving `x-vercel-cache:
- * HIT` - so it was never the pages people actually visit, it was the
- * regeneration of pages almost nobody opens.
- *
- * Seven days is still 13x more often than the underlying data moves. If a
- * quarter lands and these need to reflect it sooner, the ingest should call
- * on-demand revalidation rather than every page re-rendering on a timer.
+ * These pages render the QUARTERLY disclosure corpus, and only the busiest
+ * are prerendered, so every other one regenerates on its first request after
+ * its window expires. A short window means tens of thousands of cold server
+ * renders a day, each a React SSR pass plus database reads, almost all of
+ * them pages nobody opens and every one triggered by a crawler, to reflect
+ * data that changes FOUR TIMES A YEAR. The live band on a tail page moving a
+ * few weeks late is invisible, and a quarter that must show sooner belongs to
+ * on-demand revalidation, not to a timer.
  */
-// 30 days, up from 7 (2026-08-29, the night ISR writes hit 100% of the
-// Hobby cap). Every crawler hit on an expired tail page is a paid cache
-// write, and 21k pages x weekly expiry was most of the 200k. The stats
-// here move quarterly; the live band on a tail page moving a few weeks
-// late is invisible; the top-100 pages rebuild with every deploy anyway.
 export const revalidate = 2592000;
 
 const KIND = "attorney" as const;
 const BASE = "/perm-attorneys";
-/** Same literal this file already used for the canonical Dataset url. */
-const ORIGIN = "https://permtracker.app";
-/** DOL's own denial rate, used when the aggregate document cannot be read. */
-const FALLBACK_BASELINE_DENIAL_PCT = 2.57;
 
 interface Subject {
   slug: string;
@@ -137,28 +126,13 @@ async function loadSubject(
   } };
 }
 
-function median(xs: number[]): number | null {
-  if (xs.length === 0) return null;
-  const s = [...xs].sort((a, b) => a - b);
-  return s[Math.floor(s.length / 2)] ?? null;
-}
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 function stateName(code: string | null): string | null {
   if (!code) return null;
   return US_STATE_NAMES[code] ?? code;
 }
 
 export async function generateStaticParams() {
-  // Only the head is prerendered; the rest generate on first request and cache
-  // for an hour. Read from the entity TABLE, so a prerendered slug is one
-  // `getBySlug` can find - the aggregate document slugs its own copy of the
-  // top 250 separately and the two are not guaranteed to agree.
-  const rows = await listByKind(KIND, PRERENDERED_ENTITY_HEAD);
-  return rows.map((r) => ({ slug: r.slug }));
+  return entityStaticParams(KIND);
 }
 
 export async function generateMetadata({
@@ -187,8 +161,8 @@ export async function generateMetadata({
   );
   // THE COUNT, NOT THE RATE. A specific number in the title is the difference
   // between a generic label and a result someone recognises as the page they
-  // wanted, and it is the one thing the leading competitor does better in the
-  // SERP. But only the count is safe to put here: these pages WITHHOLD the
+  // wanted in the SERP. But only the count is safe to put here: these pages
+  // WITHHOLD the
   // approval rate whenever the sample is too small to support one, and a title
   // has nowhere to carry that caveat - a snippet claiming a perfect rate over
   // three cases is exactly the claim the whole ReliabilityBand exists to
@@ -202,7 +176,7 @@ export async function generateMetadata({
   // entityTitle takes the first qualifier that fits under the 62-char limit and
   // falls back through the rest, so a long name simply keeps the short form.
   const { title, absolute } = entityTitle(row.name, [
-    `PERM Cases: ${fmt(row.total)} Filed`,
+    `PERM Cases: ${formatInt(row.total)} Filed`,
     "PERM Cases",
   ]);
   // The rate is left out whenever the page itself is withholding it. A snippet
@@ -215,33 +189,22 @@ export async function generateMetadata({
   //
   // The richest that fits 155 (lib/describe). No wage: the page itself says a
   // firm's median offered wage measures its clients' job mix, not the firm.
-  const head = `${row.name}: ${fmt(row.total)} PERM case${row.total === 1 ? "" : "s"}${ratePart}, ranked ${fmt(row.rank)} by volume`;
+  const head = `${row.name}: ${formatInt(row.total)} PERM case${row.total === 1 ? "" : "s"}${ratePart}, ranked ${formatInt(row.rank)} by volume`;
   const description = firstThatFits([
     `${head}. The jobs it files for, outcomes and how it ranks, from DOL's own records.`,
     `${head}, from DOL's own disclosure files.`,
     `${head}.`,
   ]);
-  return {
-    // Thin-page defense: a sub-floor entity page exists for people but is
-    // not offered to the index. The sitemap already omits it.
-    ...(row && !hasOwnPage(row) ? { robots: { index: false, follow: true } } : {}),
-    // A firm's filed name can run past what Google shows on its own, so
-    // `entityTitle` drops the brand suffix, then the qualifier, rather than
-    // crowding out the name. It measures the RENDERED length.
-    title: absolute ? { absolute: title } : title,
+  // A firm's filed name can run past what Google shows on its own, so
+  // `entityTitle` drops the brand suffix, then the qualifier, rather than
+  // crowding out the name. It measures the RENDERED length.
+  return entityMetadata({
+    title,
+    absolute,
     description,
-    alternates: { canonical: `${BASE}/${found.canonicalSlug}` },
-    openGraph: {
-      ...openGraphBaseNoImage,
-      title: `${title} | PERM Tracker`,
-      description,
-      url: `${BASE}/${found.canonicalSlug}`,
-    },
-    // A segment-level `twitter` so the root layout's twitter.images does not
-    // win: the file-convention card beside this page then fills twitter:image
-    // as well as og:image. Title and description resolve from the page's own.
-    twitter: { card: "summary_large_image" },
-  };
+    path: `${BASE}/${found.canonicalSlug}`,
+    noindex: !hasOwnPage(row),
+  });
 }
 
 export default async function AttorneyPage({
@@ -289,43 +252,24 @@ export default async function AttorneyPage({
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
   const kindTotal = dist.kindTotal;
 
-  const dataset = getDatasetSchema(ORIGIN, {
-    name: `${row.name} PERM labor certification cases`,
-    description: `PERM case record for ${row.name} from DOL disclosure data.`,
-    url: `${ORIGIN}${BASE}/${slug}`,
-    dateModified: freshness["perm-cases"]?.asOf ?? undefined,
-    variableMeasured: ["cases", "certified", "denied", "median days to decision"],
+  const schema = entityJsonLd({
+    path: `${BASE}/${slug}`,
+    name: row.name,
+    dataset: {
+      name: `${row.name} PERM labor certification cases`,
+      description: `PERM case record for ${row.name} from DOL disclosure data.`,
+      variableMeasured: ["cases", "certified", "denied", "median days to decision"],
+    },
+    freshness,
   });
 
-  // Home > Law firms > this page. Breadcrumbs tell Google the shape of the site,
-  // which is what it reads to decide a result deserves a hierarchy rather than
-  // a bare link. The blog carried these; the ~20,960 pages that ARE the product
-  // did not.
-  const schema = {
-    "@context": "https://schema.org",
-    "@graph": [
-      dataset,
-      generateBreadcrumbSchema([
-        { name: "Home", href: "/" },
-        { name: "Law firms", href: BASE },
-        { name: row.name, href: `${BASE}/${slug}` },
-      ]),
-    ],
-  };
-
-  const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
-  const inCohort = reliability.tier !== "withheld";
-  // The card and the drawing read one number: the median of the comparable
-  // cohort's own medians, which is the distribution the figure plots.
-  const fieldDays = median(dist.medianDays);
-  const daysDelta =
-    row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null;
-  const thinMedian = reliability.decided < MIN_DECIDED_FOR_MEDIAN;
+  const standing = entityStanding(row, dist, baselineDenialPct);
+  const { reliability, thinMedian } = standing;
   // THE LIMITS PANEL CARRIES THIS FIRM'S OWN FIGURES, NOT A TEMPLATE.
-  // Measured 2026-09-04: 721 words of every attorney page were byte-identical
-  // to every other one, and GSC holds 19,931 entity URLs at "Discovered -
-  // currently not indexed" with last-crawled N/A. Google's crawl-budget
-  // guidance names duplicate content as the lever. Each caveat below now leads
+  // A template caveat makes hundreds of words of every attorney page
+  // byte-identical to every other one, and Google's crawl-budget guidance
+  // names duplicate content as the lever for entity URLs left at "Discovered
+  // - currently not indexed". Each caveat below leads
   // with the subject's own number, which removes no disclosure and makes the
   // caveat more useful: "their rate is 99.2%, and the median is above 99" tells
   // a reader something the generic sentence never did.
@@ -342,22 +286,12 @@ export default async function AttorneyPage({
       <JsonLdScript schema={schema} />
 
       <header className="max-w-3xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
-          <Link
-            href={BASE}
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            All firms
-          </Link>{" "}
-          · #{fmt(row.rank)}
-          {kindTotal > 0 ? ` of ${fmt(kindTotal)}` : ""} by volume
-        </p>{" "}
-        <h1 translate="no" className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 translate="no" className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           {row.name}
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          {fmt(row.total)} PERM cases in DOL&apos;s current disclosure window,{" "}
-          {fmt(row.certified)} certified and {fmt(row.denied)} denied.
+          {formatInt(row.total)} PERM cases in DOL&apos;s current disclosure window,{" "}
+          {formatInt(row.certified)} certified and {formatInt(row.denied)} denied.
           {where ? ` Filed from ${where}.` : ""} Firm name as filed.
         </p>
       </header>
@@ -374,121 +308,35 @@ export default async function AttorneyPage({
       />
 
       <section className="pop mt-8">
-        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border sm:grid-cols-5">
-          {[
-            {
-              k: "Cases",
-              wide: false,
-              v: fmt(row.total),
-              sub: kindTotal > 0 ? `#${fmt(row.rank)} of ${fmt(kindTotal)}` : "",
-            },
-            {
-              k: "Certified",
-              wide: false,
-              v: fmt(row.certified),
-              sub: `${fmt(row.denied)} denied`,
-            },
-            {
-              k: "Approval",
-              wide: false,
-              v: reliability.ratePct == null ? "—" : `${reliability.ratePct.toFixed(1)}%`,
-              sub:
-                reliability.ratePct == null
-                  ? `withheld: ${fmt(reliability.decided)} decided`
-                  : `field ${(100 - baselineDenialPct).toFixed(1)}%`,
-            },
-            {
-              k: "Median wage",
-              v:
-                row.medianAnnualWage == null
-                  ? "—"
-                  : `$${Math.round(row.medianAnnualWage).toLocaleString("en-US")}`,
-              sub: row.medianAnnualWage == null ? "not on file" : "offered, per year",
-              // Five cards in a two-column grid leave the fifth alone, and an
-              // empty cell in this `gap-px bg-border` grid paints as a slab of
-              // border colour. Spanning both keeps the mobile grid whole.
-              wide: true,
-            },
-            {
-              k: "Median days",
-              wide: false,
-              v: row.medianDays == null ? "—" : fmt(Math.round(row.medianDays)),
-              sub: thinMedian
-                ? `middle of ${fmt(reliability.decided)} decided`
-                : daysDelta == null
-                  ? ""
-                  : Math.round(daysDelta) === 0
-                    ? "at the field median"
-                    : `${fmt(Math.abs(Math.round(daysDelta)))} ${daysDelta > 0 ? "slower" : "faster"} than the field`,
-            },
-          ].map((d) => (
-            <div
-              key={d.k}
-              className={
-                d.wide ? "bg-card p-5 col-span-2 sm:col-span-1" : "bg-card p-5"
-              }
-            >
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
-                {d.k}
-              </p>{" "}
-              <p className="mt-1.5 font-heading text-2xl font-black tabular-nums">{d.v}</p>{" "}
-              {d.sub ? <p className="mt-1 text-xs text-foreground/70">{d.sub}</p> : null}
-            </div>
-          ))}
-        </div>
+        <EntityStatCards
+          cards={[
+            volumeCard("Cases", row, kindTotal),
+            certifiedCard(row),
+            approvalCard(reliability, baselineDenialPct),
+            medianWageCard(row.medianAnnualWage),
+            medianDaysCard(row.medianDays, standing),
+          ]}
+        />
       </section>
 
-      {dist.cohort >= 8 ? (
-        <FigurePlate
-          n="01"
-          title="Position in the field"
-          subject={`${fmt(dist.cohort)} firms with ${dist.minDecided}+ decided`}
-          caption={
-            <>
-              Each bar counts firms at that value. Firms with fewer than{" "}
-              {dist.minDecided} decided cases are left out of the population
-              rather than plotted, because a rate over a handful of cases lands
-              wherever the handful landed.{" "}
-              {inCohort
-                ? "The line marks this one. Approval rates pile up against 100%, so read the ties in the label rather than the position of the line."
-                : `This firm has ${fmt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}{" "}
-              {dist.complete
-                ? ""
-                : "The scan behind this cohort didn’t reach past the last qualifying firm, so read it as the busiest part of the field rather than all of it. "}
-            </>
-          }
-          source="DOL PERM disclosure files"
-          className="mt-10"
-        >
-          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-8 md:grid-cols-2">
-            <FieldPosition
-              population={dist.approval}
-              value={inCohort ? reliability.ratePct : null}
-              valueLabel={
-                reliability.ratePct == null ? "not shown" : `${reliability.ratePct.toFixed(1)}%`
-              }
-              measure="Approval rate"
-              betterWhen="higher"
-              format={(n) => `${n.toFixed(0)}%`}
-              note={`under ${dist.minDecided} decided`}
-            />
-            {/* The days figure is real whatever the case count is, so the
-                marker is drawn even for a subject outside the population. What
-                is withheld is the PERCENTILE, because a percentile is a claim
-                about membership and this subject is not a member. */}
-            <FieldPosition
-              population={dist.medianDays}
-              value={row.medianDays}
-              subjectInPopulation={inCohort}
-              valueLabel={row.medianDays == null ? "—" : `${Math.round(row.medianDays)} days`}
-              measure="Median days to decision"
-              betterWhen="lower"
-              format={(n) => `${Math.round(n)}d`}
-              note={`middle of ${fmt(reliability.decided)} decided, too few to rank`}
-            />
-          </div>
-        </FigurePlate>
-      ) : null}
+      <FieldPositionPlate
+        n="01"
+        singular="firm"
+        plural="firms"
+        dist={dist}
+        standing={standing}
+        medianDays={row.medianDays}
+        lead={
+          <>
+            Each bar counts firms at that value. Firms with fewer than{" "}
+            {dist.minDecided} decided cases are left out of the population
+            rather than plotted, because a rate over a handful of cases lands
+            wherever the handful landed.
+          </>
+        }
+        inCohortNote="The line marks this one. Approval rates pile up against 100%, so read the ties in the label rather than the position of the line."
+        outOfCohortNote={`This firm has ${formatInt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}
+      />
 
       {/* The client list is the module a firm page has and an employer page
           does not. "Who do they file for" is the question an attorney
@@ -583,38 +431,12 @@ export default async function AttorneyPage({
       <LimitsPanel
         className="mt-12"
         items={[
-          {
-            head: "The wage is the job, not the payer",
-            body: (
-              <>
-                {topOcc ? (
-                  <>
-                    Their filings are led by {topOcc.label}, {fmt(topOcc.n)} of{" "}
-                    {fmt(row.total)}.{" "}
-                  </>
-                ) : null}
-                The median offered wage moves almost entirely with what roles their clients
-                {" "}
-                file. A software developer and a poultry cutter are different
-                numbers wherever they are filed, so this figure is not plotted
-                against the field and no percentile is given for it: that
-                comparison would rank occupation mix and call it pay. Wages by
-                occupation are on the{" "}
-                <Link
-                  href="/perm-wages"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  wages page
-                </Link>
-                .
-              </>
-            ),
-          },
+          wageIsTheJobLimit({ topOccupation: topOcc, total: row.total, filers: "their clients" }),
           {
             head: "Nothing here is waiting",
             body: (
               <>
-                All {fmt(row.total)} of the cases on this page carry a
+                All {formatInt(row.total)} of the cases on this page carry a
                 decision date, because every row in DOL&apos;s disclosure files
                 does, so a case still in the queue is in none of these counts.
                 The live tracker that does see pending cases records the
@@ -656,7 +478,7 @@ export default async function AttorneyPage({
             ),
           },
           {
-            head: `A median over ${fmt(reliability.decided)} decided cases`,
+            head: `A median over ${formatInt(reliability.decided)} decided cases`,
             body: (
               <>
                 {thinMedian
@@ -683,19 +505,7 @@ export default async function AttorneyPage({
       />
 
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">They&apos;re handling your case?</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            The{" "}
-            <Link
-              href="/tools/perm-timeline-calculator"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              decision estimator
-            </Link>{" "}
-            reads your filing month against where DOL is now.
-          </p>
-        </div>
+        <DecisionEstimatorCard heading="They're handling your case?" />
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Running the practice?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
@@ -717,9 +527,7 @@ export default async function AttorneyPage({
           </p>
         </div>
       </section>
-      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
-        Filings newer than DOL&apos;s last published file can&apos;t be attributed to this firm until DOL publishes them. The <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link> on the case search page carries them by employer.
-      </p>{" "}
+      <UnpublishedFilingsNote subject="firm" />{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>
   );

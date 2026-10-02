@@ -21,9 +21,8 @@ import { useEffect, useState } from "react";
  *   soft nav    the reader was just looking at a different page, so the
  *               entrance is doing real work.
  *
- * Measured on this site 2026-08-31: `<h1>`, the article description, the
- * breadcrumb and the entire `article-content` div shipped with
- * `style="opacity:0"` on every blog, guide and changelog page.
+ * Without it, an article page's `<h1>`, description, breadcrumb and whole
+ * `article-content` div ship with `style="opacity:0"`.
  *
  * HOW TO USE IT
  * -------------

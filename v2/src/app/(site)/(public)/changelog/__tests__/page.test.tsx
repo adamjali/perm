@@ -52,14 +52,15 @@ function parseLdJsonFromPage(): Record<string, unknown> {
 }
 
 describe("ChangelogPage structured data", () => {
-  it("emits a @graph containing both BreadcrumbList and ItemList", () => {
+  it("emits a @graph with the ItemList (the shared breadcrumb bar carries the BreadcrumbList)", () => {
     const ld = parseLdJsonFromPage();
     expect(ld["@context"]).toBe("https://schema.org");
     const graph = ld["@graph"] as Array<{ "@type": string }>;
     expect(graph).toBeInstanceOf(Array);
     const types = graph.map((n) => n["@type"]);
-    expect(types).toContain("BreadcrumbList");
     expect(types).toContain("ItemList");
+    // One BreadcrumbList per page, from SiteBreadcrumbs; a second here would conflict.
+    expect(types).not.toContain("BreadcrumbList");
   });
 
   it("ItemList items point at anchor URLs (/changelog#<slug>), not 404-bound detail URLs", () => {

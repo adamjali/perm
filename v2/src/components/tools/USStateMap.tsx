@@ -4,6 +4,7 @@ import { Fragment, useMemo, useState } from "react";
 
 import { US_MAP_VIEWBOX, US_STATES } from "@/lib/usStatesGeometry";
 import { stateName } from "@/lib/usStateNames";
+import { formatDollars, formatInt } from "@/lib/format";
 import { ScopeSelect } from "./DataView";
 import { FilterableStatTable, type CsvSpec, type StatColumn } from "./FilterableStatTable";
 
@@ -67,12 +68,8 @@ export const CENSUS_REGION: Record<string, string> = {
   AS: "Territories",
 };
 
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 function fmtWage(n: number | null): string {
-  return n == null ? "—" : `$${Math.round(n).toLocaleString("en-US")}`;
+  return n == null ? "—" : formatDollars(n);
 }
 
 function decidedOf(s: StateStat): number {
@@ -103,7 +100,7 @@ export const STATE_METRICS: Record<StateMetric, MetricSpec> = {
   total: {
     label: "Filings",
     value: (s) => s.total,
-    format: (v) => fmtInt(v),
+    format: (v) => formatInt(v),
     population: (s) => s.total,
     floored: false,
     populationNoun: "filings",
@@ -127,7 +124,7 @@ export const STATE_METRICS: Record<StateMetric, MetricSpec> = {
   days: {
     label: "Median days",
     value: (s) => s.medianDays,
-    format: (v) => fmtInt(Math.round(v)),
+    format: (v) => formatInt(Math.round(v)),
     population: (s) => s.total,
     floored: true,
     populationNoun: "filings",
@@ -269,7 +266,7 @@ export function USStateMap({
           hint="States with fewer cases than this are left uncoloured on rates and medians, because a rate over a handful of cases is noise. Counts are never withheld, and the table below always shows every state."
           options={STATE_FLOORS.map((n) => ({
             value: String(n),
-            label: n === 0 ? "No floor" : `${fmtInt(n)}+`,
+            label: n === 0 ? "No floor" : `${formatInt(n)}+`,
           }))}
         />{" "}
         <ScopeSelect
@@ -298,10 +295,10 @@ export function USStateMap({
             const label = !stat
               ? `${shape.name}: no data`
               : metric === "total"
-                ? `${shape.name}: ${fmtInt(stat.total)} PERM cases were filed`
+                ? `${shape.name}: ${formatInt(stat.total)} PERM cases were filed`
                 : v === undefined
-                  ? `${shape.name}: ${spec.label.toLowerCase()} withheld, fewer than ${fmtInt(floor)} ${spec.populationNoun}. ${fmtInt(stat.total)} cases were filed`
-                  : `${shape.name}: ${spec.label.toLowerCase()} ${spec.format(v)}, from ${fmtInt(spec.population(stat))} ${spec.populationNoun}. ${fmtInt(stat.total)} cases were filed`;
+                  ? `${shape.name}: ${spec.label.toLowerCase()} withheld, fewer than ${formatInt(floor)} ${spec.populationNoun}. ${formatInt(stat.total)} cases were filed`
+                  : `${shape.name}: ${spec.label.toLowerCase()} ${spec.format(v)}, from ${formatInt(spec.population(stat))} ${spec.populationNoun}. ${formatInt(stat.total)} cases were filed`;
             return (
               <path
                 key={shape.abbr}
@@ -409,10 +406,10 @@ export function USStateMap({
       {/* Legend: five buckets, and the range they actually span. A scale with
           no numbers on it is a decoration. */}
       <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+        <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
           {spec.label}
         </span>{" "}
-        <span className="text-xs text-foreground/60">
+        <span className="text-sm text-foreground/60">
           {range ? spec.format(range.lo) : "—"}
         </span>{" "}
         {BUCKET_MIX.map((mix) => (
@@ -423,7 +420,7 @@ export function USStateMap({
             style={{ background: `color-mix(in srgb, var(--primary) ${mix}%, var(--card))` }}
           />
         ))}{" "}
-        <span className="text-xs text-foreground/60">
+        <span className="text-sm text-foreground/60">
           {range ? spec.format(range.hi) : "—"}
         </span>{" "}
         {spec.floored && floor > 0 ? (
@@ -433,12 +430,12 @@ export function USStateMap({
               className="inline-block h-3.5 w-6 border border-border"
               style={{ background: "color-mix(in srgb, var(--data-none) 22%, var(--card))" }}
             />
-            <span className="text-xs text-foreground/60">
-              Fewer than {fmtInt(floor)} {spec.populationNoun}, not shaded
+            <span className="text-sm text-foreground/60">
+              Fewer than {formatInt(floor)} {spec.populationNoun}, not shaded
             </span>
           </span>
         ) : null}{" "}
-        <span className="text-xs text-muted-foreground">
+        <span className="text-sm text-muted-foreground">
           {range
             ? `${range.n} of ${states.length} shaded`
             : "Nothing clears the floor at this setting"}
@@ -454,7 +451,7 @@ export function USStateMap({
           <div>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h2 className="font-heading text-xl font-black">{activeName}</h2>{" "}
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
                 {pinned === activeAbbr
                   ? "Pinned. Another state replaces it"
                   : "Tapping pins it"}
@@ -462,18 +459,18 @@ export function USStateMap({
             </div>
             <dl className="mt-4 grid [&>*]:min-w-0 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
               {[
-                { k: "Filings", v: fmtInt(active.total) },
-                { k: "Certified", v: fmtInt(active.certified) },
-                { k: "Denied", v: fmtInt(active.denied) },
+                { k: "Filings", v: formatInt(active.total) },
+                { k: "Certified", v: formatInt(active.certified) },
+                { k: "Denied", v: formatInt(active.denied) },
                 { k: "Approval rate", v: certRate(active) },
                 {
                   k: "Median days",
-                  v: active.medianDays == null ? "—" : fmtInt(Math.round(active.medianDays)),
+                  v: active.medianDays == null ? "—" : formatInt(Math.round(active.medianDays)),
                 },
                 { k: "Median wage", v: fmtWage(active.medianAnnualWage) },
               ].map((d) => (
                 <div key={d.k}>
-                  <dt className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <dt className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
                     {d.k}
                   </dt>{" "}
                   <dd className="mt-1 font-heading text-lg font-black tabular-nums">{d.v}</dd>
@@ -490,12 +487,12 @@ export function USStateMap({
                   , {rankOf.get(active.state)}
                   {ordinalSuffix(rankOf.get(active.state) ?? 0)} of the{" "}
                   {range?.n ?? 0} states with that figure, from{" "}
-                  {fmtInt(spec.population(active))} {spec.populationNoun}.
+                  {formatInt(spec.population(active))} {spec.populationNoun}.
                 </>
               ) : (
                 <>
-                  {spec.label} is withheld here: {fmtInt(spec.population(active))}{" "}
-                  {spec.populationNoun} is under the floor of {fmtInt(floor)}, and a rate
+                  {spec.label} is withheld here: {formatInt(spec.population(active))}{" "}
+                  {spec.populationNoun} is under the floor of {formatInt(floor)}, and a rate
                   over a population that small says more about the sample than the state.
                   Counts carry no floor, so those are shown for every state.
                 </>
@@ -506,8 +503,8 @@ export function USStateMap({
           <div>
             <h2 className="font-heading text-xl font-black">The whole country</h2>{" "}
             <p className="mt-2 text-base leading-relaxed text-foreground/70">
-              {fmtInt(national.total)} PERM filings across {states.length} states and
-              territories in the current disclosure window, {fmtInt(national.certified)}{" "}
+              {formatInt(national.total)} PERM filings across {states.length} states and
+              territories in the current disclosure window, {formatInt(national.certified)}{" "}
               certified. Hovering or tapping a state shows its own numbers.
             </p>
           </div>
@@ -568,7 +565,7 @@ export function StateStatTable({ states }: { states: StateStat[] }) {
       sortValue: (s) => s.name,
       render: (s) => (
         <span className="font-bold">
-          {s.name} <span className="font-mono text-xs text-muted-foreground">{s.state}</span>
+          {s.name} <span className="font-mono text-sm text-muted-foreground">{s.state}</span>
         </span>
       ),
     },
@@ -577,7 +574,7 @@ export function StateStatTable({ states }: { states: StateStat[] }) {
       label: "Filings",
       numeric: true,
       sortValue: (s) => s.total,
-      render: (s) => fmtInt(s.total),
+      render: (s) => formatInt(s.total),
     },
     {
       key: "certified",
@@ -585,7 +582,7 @@ export function StateStatTable({ states }: { states: StateStat[] }) {
       numeric: true,
       secondary: true,
       sortValue: (s) => s.certified,
-      render: (s) => fmtInt(s.certified),
+      render: (s) => formatInt(s.certified),
     },
     {
       key: "denied",
@@ -593,7 +590,7 @@ export function StateStatTable({ states }: { states: StateStat[] }) {
       numeric: true,
       secondary: true,
       sortValue: (s) => s.denied,
-      render: (s) => fmtInt(s.denied),
+      render: (s) => formatInt(s.denied),
     },
     {
       key: "withdrawn",
@@ -601,14 +598,14 @@ export function StateStatTable({ states }: { states: StateStat[] }) {
       numeric: true,
       secondary: true,
       sortValue: (s) => s.withdrawn,
-      render: (s) => fmtInt(s.withdrawn),
+      render: (s) => formatInt(s.withdrawn),
     },
     {
       key: "decided",
       label: "Decided",
       numeric: true,
       sortValue: (s) => s.decided,
-      render: (s) => fmtInt(s.decided),
+      render: (s) => formatInt(s.decided),
     },
     {
       key: "approval",
@@ -626,7 +623,7 @@ export function StateStatTable({ states }: { states: StateStat[] }) {
       numeric: true,
       secondary: true,
       sortValue: (s) => s.medianDays,
-      render: (s) => (s.medianDays == null ? "—" : fmtInt(Math.round(s.medianDays))),
+      render: (s) => (s.medianDays == null ? "—" : formatInt(Math.round(s.medianDays))),
     },
     {
       key: "wage",

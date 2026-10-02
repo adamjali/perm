@@ -1,20 +1,17 @@
 name: PW and LCA disclosure ingest
 
 # Loads DOL's quarterly prevailing-wage (Form ETA-9141) and LCA (Form
-# ETA-9035) disclosure files into Turso, one row per case, into `pwd_cases`
-# and `lca_cases`. The same discipline as perm-disclosure-ingest.yml: the file
-# URL is discovered from DOL's performance page, never constructed; the
-# workbook is streamed, never loaded whole (an LCA file is several hundred MB
-# compressed and multiple GB of XML); and the run reports success only after
-# `COUNT(*)` for the file equals the number of unique cases it read.
+# ETA-9035) disclosure files into `pwd_cases` and `lca_cases`, one row per
+# case. As in perm-disclosure-ingest.yml, the file URL is discovered from DOL's
+# performance page, never constructed; the workbook is streamed (an LCA file
+# is multiple GB of XML); and the run reports success only after `COUNT(*)` for
+# the file equals the unique cases it read.
 #
-# MONTHLY, not quarterly, on purpose. DOL republishes each quarter a week or
-# two after it ends, under a NEW filename, and the freshness row allows 120
-# days. A monthly check picks the new quarter up within a few weeks of it
-# appearing. It does not cost a rewrite on the other months: the script keeps
-# the loaded file's SHA-256 and row count in `perm_docs`, and a run that sees
-# the same hash with the rows still present skips the write and re-stamps
-# freshness. Dispatch with `force` to override that.
+# Monthly, not quarterly: DOL republishes each quarter a week or two after it
+# ends, under a new filename, so a monthly check picks it up within weeks. The
+# other months cost no rewrite: the script keeps the loaded file's SHA-256 and
+# row count, and a run that sees the same hash with the rows present skips the
+# write and re-stamps freshness. Dispatch with `force` to override that.
 #
 # Manual run, from a home connection (www.dol.gov 403s some addresses):
 #   python3 v2/scripts/ingest_flag_disclosure.py --program pw
@@ -61,6 +58,11 @@ on:
         required: false
         type: boolean
         default: false
+      backfill_lca_detail:
+        description: "LCA only: write ONLY the worker counts, wage level and the two employer flags onto existing rows (one quarter per run; pair with name)."
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -72,12 +74,9 @@ concurrency:
 jobs:
   ingest:
     runs-on: ubuntu-24.04
-    # Generous because the LCA file is large: the download is minutes, the
-    # streaming parse of a few GB of XML is tens of minutes, and the chunked
-    # write of several hundred thousand rows is minutes more. The `timeout`
-    # inside the step is what actually bounds a hang, and it is set BELOW
-    # this so a stuck run FAILS and notifies rather than being cancelled
-    # silently at the job cap.
+    # Generous because the LCA file is large. The `timeout` inside the step is
+    # what bounds a hang, set below this so a stuck run fails and notifies
+    # rather than being cancelled silently at the job cap.
     timeout-minutes: 240
 
     strategy:
@@ -89,8 +88,8 @@ jobs:
         # the `(cond && a) || b` form because Actions has no ternary.
         program: ${{ fromJSON((github.event_name == 'workflow_dispatch' && inputs.program != 'all' && format('["{0}"]', inputs.program)) || '["pw","lca"]') }}
 
-    # JOB-LEVEL, as in perm-disclosure-ingest.yml: lib_turso.env() reads the
-    # real environment first, so no credentials file is materialised on disk.
+    # lib_turso.env() reads the environment first, so no credentials file is
+    # written to the runner's disk.
     env:
       TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
       TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
@@ -112,6 +111,7 @@ jobs:
           FY: ${{ inputs.fy }}
           BACKFILL_ATTORNEY: ${{ inputs.backfill_attorney }}
           BACKFILL_PLACE: ${{ inputs.backfill_place }}
+          BACKFILL_LCA_DETAIL: ${{ inputs.backfill_lca_detail }}
           NAME: ${{ inputs.name }}
           LIST_ONLY: ${{ inputs.list_only }}
         run: |
@@ -120,16 +120,16 @@ jobs:
             *) echo "::error::program must be pw or lca, got '$PROGRAM'"; exit 1 ;;
           esac
           if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
-            echo "::error::TURSO secrets absent; nothing to load into."
+            echo "::error::database secrets absent; nothing to load into."
             exit 1
           fi
           EXTRA=""
           if [ "$FORCE" = "true" ]; then
             EXTRA="--force"
           fi
-          # MUTUALLY EXCLUSIVE. A backfill writes only the two firm columns and
-          # returns before the ordinary load runs, so pairing it with --force
-          # would silently ignore the force and look like a no-op reload.
+          # One mode per run. A backfill writes only its columns and returns
+          # before the ordinary load, so pairing it with --force would quietly
+          # ignore the force.
           if [ "$BACKFILL_ATTORNEY" = "true" ]; then
             if [ "$FORCE" = "true" ]; then
               echo "::error::pick one of force or backfill_attorney, not both"
@@ -144,6 +144,13 @@ jobs:
             fi
             EXTRA="--backfill-place"
           fi
+          if [ "$BACKFILL_LCA_DETAIL" = "true" ]; then
+            if [ "$PROGRAM" != "lca" ] || [ "$FORCE" = "true" ] || [ "$BACKFILL_ATTORNEY" = "true" ] || [ "$BACKFILL_PLACE" = "true" ]; then
+              echo "::error::backfill_lca_detail runs alone, on program lca"
+              exit 1
+            fi
+            EXTRA="--backfill-lca-detail"
+          fi
           if [ -n "$FY" ]; then
             case "$FY" in
               20[0-9][0-9]) EXTRA="$EXTRA --fy $FY" ;;
@@ -156,10 +163,9 @@ jobs:
             python3 scripts/ingest_flag_disclosure.py --program "$PROGRAM" ${FY:+--fy "$FY"} --list
             exit 0
           fi
-          # A SPECIFIC quarter. Checked against DOL's own naming before it can
-          # reach a command, like every other input here - the script then
-          # refuses any name its discovery did not return, so a typo cannot
-          # become a constructed URL.
+          # A specific quarter, checked against DOL's naming before it reaches a
+          # command; the script then refuses any name its discovery didn't
+          # return, so a typo can't become a constructed URL.
           if [ -n "$NAME" ]; then
             case "$NAME" in
               *_Disclosure_Data_FY[0-9][0-9][0-9][0-9]*.xlsx) EXTRA="$EXTRA --name $NAME" ;;
@@ -167,40 +173,26 @@ jobs:
             esac
           fi
           echo "program: $PROGRAM ${EXTRA:+($EXTRA)}"
-          # `timeout` rather than the job cap, so a hang FAILS and notifies
-          # instead of being cancelled silently (see pwd-status-direct.yml).
+          # `timeout` rather than the job cap, so a hang fails and notifies.
           timeout 230m python3 scripts/ingest_flag_disclosure.py --program "$PROGRAM" $EXTRA
 
-      # THE LCA SALARY EXPLORER CANNOT BE COMPUTED AT BUILD TIME ANY MORE, so
-      # the doc it reads has to be rebuilt HERE, after the load and BEFORE the
-      # expiry below - expiring first would regenerate those pages against the
-      # previous quarter's figures.
-      #
-      # Measured against production at 1.96M rows on 2026-09-13, after the
-      # FY2021-FY2025 backfill: the by-state window function takes 33.6 s
-      # against the read layer's 20 s deadline, and the three build-time
-      # queries together ~44 s of a 90 s prerender budget. The deploy of
-      # ded503e5 died on exactly that. The reader keeps the live query as its
-      # doc-missing fallback, so a skipped build here is a slow page, never an
-      # empty one.
-      - name: Rebuild the LCA salary explorer's precomputed doc
-        if: success() && matrix.program == 'lca'
+      # At this table's size the LCA salary explorer's queries outrun the read
+      # layer's deadline, so it reads precomputed docs, rebuilt here after the
+      # load and before the expiry below (expiring first would regenerate the
+      # pages against the previous quarter). The reader keeps the live query as
+      # a fallback, so a skipped rebuild is a slow page, never an empty one.
+      - name: Rebuild the LCA salary explorer's precomputed docs
+        # A detail backfill writes no wage, so these docs cannot change.
+        if: success() && matrix.program == 'lca' && inputs.backfill_lca_detail != true
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           timeout 30m python3 scripts/build_lca_facets.py
-          # Every LCA selection of 5,000+ filings, precomputed (wageViews.ts).
-          # /api/lca-wages passed its 20 s deadline 839 times computing these
-          # live (Sentry JAVASCRIPT-NEXTJS-3K). About 5 minutes, 2.4M rows read.
+          # Every LCA selection of 5,000+ filings (src/lib/turso/wageViews.ts).
           timeout 30m python3 scripts/build_wage_views.py --program lca
 
-      # THE PAGES BUILT FROM THIS FILE SIT ON A WEEK-LONG WINDOW, because the
-      # data behind them changes four times a year and a daily window meant
-      # ~364 expiries to express four real changes. That is only correct if a
-      # load expires them, which is this step. `if: success()` so a failed or
-      # refused load never claims fresh pages.
+      # The pages built from these files sit on a week-long window, which is
+      # only right if a load expires them. `success()` so a failed or refused
+      # load never claims fresh pages.
       - name: Expire the pages built from the disclosure files
         if: success()
         env:
@@ -209,8 +201,6 @@ jobs:
           if [ -z "$REVALIDATE_SECRET" ]; then
             echo "REVALIDATE_SECRET not set; skipping"; exit 0
           fi
-          # -f so a 4xx/5xx is visible in the log rather than a silent 403 body
-          # scrolling past as if it were a success.
           curl -fsS -X POST https://permtracker.app/api/revalidate-disclosure \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
             || echo "revalidation call failed"

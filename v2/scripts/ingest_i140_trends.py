@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
-"""USCIS I-140 quarterly volumes and outcomes -> Turso. First-party.
-
-The competitor ships an I-140 Trends page sourced from "USCIS Dataset A".
-This reads the same USCIS release directly, so the figures owe nothing to a
-mirror and cannot go stale behind someone else's ingest.
+"""USCIS I-140 quarterly volumes and outcomes, read from USCIS's own release.
 
 WHAT THE WORKBOOK ACTUALLY LOOKS LIKE, read rather than assumed:
-- One file per fiscal year, holding all four quarters of it. Two files cover
-  the eight quarters the rival displays: fy2025_q4 (all of FY2025) and
-  fy2026_q2 (FY2026 so far).
+- One file per fiscal year, holding all four quarters of it, so two files
+  cover eight quarters: fy2025_q4 (all of FY2025) and fy2026_q2 (FY2026 so
+  far).
 - Sheet 1 "RADP Summary" is a matrix, not a table. Row 3 puts a quarter label
   at columns 1/5/9/13 and "Fiscal Year Total" at 17; row 4 repeats
   Received/Approved/Denied/Pending under each. So a quarter's four metrics
@@ -31,8 +27,8 @@ import time
 import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_gov_data import fetch, log, read_shared_strings, iter_rows  # noqa: E402
-from lib_turso import Turso  # noqa: E402
+from lib_gov_data import POLITE_PAUSE_S, fetch, iter_rows, log, read_shared_strings  # noqa: E402
+from lib_turso import Turso, query_rows, stamp_freshness  # noqa: E402
 
 DATA_PAGE = ("https://www.uscis.gov/tools/reports-and-studies/"
              "immigration-and-citizenship-data")
@@ -145,23 +141,21 @@ def main() -> int:
         qs = sorted({r["q"] for r in recs})
         log(f"    FY{fy}: {len(recs):,} rows across quarters {qs}")
         total += len(recs)
-        time.sleep(1.5)
+        time.sleep(POLITE_PAUSE_S)
 
     if total == 0:
         raise SystemExit("stored nothing - refusing to report success")
 
     held = int(db.scalar("SELECT count(*) FROM i140_trends") or 0)
     cats = int(db.scalar("SELECT count(DISTINCT category) FROM i140_trends") or 0)
-    span = db.execute("SELECT min(fiscal_year), max(fiscal_year), count(DISTINCT fiscal_year || '-' || quarter) FROM i140_trends")["response"]["result"]["rows"][0]
-    log(f"  VERIFY {held:,} rows | {cats} categories | FY{span[0]['value']}-FY{span[1]['value']}, {span[2]['value']} quarters")
+    lo, hi, quarters = query_rows(
+        db, "SELECT min(fiscal_year), max(fiscal_year), count(DISTINCT fiscal_year || '-' || quarter) FROM i140_trends")[0]
+    log(f"  VERIFY {held:,} rows | {cats} categories | FY{lo}-FY{hi}, {quarters} quarters")
 
-    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
     newest = db.scalar("SELECT max(fiscal_year || 'Q' || quarter) FROM i140_trends")
-    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-               ["i140-trends", str(newest), stamp, SOURCE, "Quarterly",
-                f"{held:,} rows across {cats} preference categories and subcategories", 135])
+    stamp_freshness(db, "i140-trends", as_of=str(newest), source=SOURCE, cadence="Quarterly",
+                    note=f"{held:,} rows across {cats} preference categories and subcategories",
+                    max_age_days=135)
     return 0
 
 

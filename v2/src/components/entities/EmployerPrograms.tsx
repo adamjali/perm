@@ -1,7 +1,9 @@
 import Link from "next/link";
 
 import { breakdownParts, holdSincePhrase, type EmployerStageRow } from "@/lib/employerStages";
+import { FinePrint } from "@/components/data/FinePrint";
 import { PROGRAM_LABEL, WAGE_FLOOR, wageGap, wageGapSentence, type ProgramLine } from "@/lib/employerPrograms";
+import { formatDollars, formatInt, formatShare } from "@/lib/format";
 
 /**
  * One employer across DOL's three programs, as a ledger.
@@ -15,13 +17,10 @@ import { PROGRAM_LABEL, WAGE_FLOOR, wageGap, wageGapSentence, type ProgramLine }
  * Plain server markup; every figure carries the count it rests on.
  */
 
-const int = (n: number) => n.toLocaleString("en-US");
-const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
-const pct = (x: number) => `${(x * 100).toFixed(x >= 0.1 ? 0 : 1)}%`;
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export function EmployerPrograms({
-  name,
+  name: _name,
   perm,
   pwd,
   lca,
@@ -48,12 +47,9 @@ export function EmployerPrograms({
   return (
     <section className="mt-10">
       <h2 className="font-heading text-xl font-black sm:text-2xl">Across DOL&apos;s three programs</h2>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-        The PERM is the green-card step. The prevailing wage request comes
-        months before it, and an H-1B labor condition application is the
-        separate form the same employer files to sponsor or extend an H-1B.
-        DOL publishes each in its own file, and its live record shows what is
-        still open. All three for {name}, on one line each.
+      <p className="mt-2 max-w-3xl text-base text-foreground/75">
+        The wage request, the PERM and the H-1B labor condition application,
+        one line each.
       </p>{" "}
       <dl className="mt-4 max-w-3xl border-t-2 border-border">
         {lines.map((l) => (
@@ -63,28 +59,28 @@ export function EmployerPrograms({
           >
             <dt className="text-base font-bold">{PROGRAM_LABEL[l.program]}</dt>{" "}
             <dd className="tabular-nums sm:text-right">
-              <span className="font-heading text-lg font-black">{int(l.published)}</span>{" "}
-              <span className="text-xs text-muted-foreground">published</span>
+              <span className="font-heading text-lg font-black">{formatInt(l.published)}</span>{" "}
+              <span className="text-sm text-muted-foreground">published</span>
             </dd>{" "}
             <dd className="tabular-nums sm:text-right">
               {l.pending === null ? (
-                <span className="text-xs text-muted-foreground">no live read</span>
+                <span className="text-sm text-muted-foreground">no live read</span>
               ) : (
                 <>
-                  <span className="font-heading text-lg font-black">{int(l.pending)}</span>{" "}
-                  <span className="text-xs text-muted-foreground">pending</span>
+                  <span className="font-heading text-lg font-black">{formatInt(l.pending)}</span>{" "}
+                  <span className="text-sm text-muted-foreground">pending</span>
                 </>
               )}
             </dd>{" "}
             <dd className="tabular-nums sm:text-right">
               {l.medianAnnualWage !== null && l.wageN >= WAGE_FLOOR ? (
                 <>
-                  <span className="font-heading text-lg font-black">{usd(l.medianAnnualWage)}</span>{" "}
-                  <span className="text-xs text-muted-foreground">median, n={int(l.wageN)}</span>
+                  <span className="font-heading text-lg font-black">{formatDollars(l.medianAnnualWage)}</span>{" "}
+                  <span className="text-sm text-muted-foreground">median, n={formatInt(l.wageN)}</span>
                 </>
               ) : (
-                <span className="text-xs text-muted-foreground">
-                  {l.wageN > 0 ? `${int(l.wageN)} wage${l.wageN === 1 ? "" : "s"}, under the floor` : "no wage published"}
+                <span className="text-sm text-muted-foreground">
+                  {l.wageN > 0 ? `${formatInt(l.wageN)} wage${l.wageN === 1 ? "" : "s"}, under the floor` : "no wage published"}
                 </span>
               )}
             </dd>
@@ -97,7 +93,7 @@ export function EmployerPrograms({
           {(() => {
             const parts = breakdownParts(stages);
             const since = holdSincePhrase(stages, logFrom);
-            return `Of its ${int(stages.pending)} pending PERM cases, ${int(stages.review)} (${pct(stages.share)}) sit outside DOL's normal queue${
+            return `Of its ${formatInt(stages.pending)} pending PERM cases, ${formatInt(stages.review)} (${formatShare(stages.share)}) sit outside DOL's normal queue${
               parts.length ? `: ${parts.join(", ")}` : ""
             }.${since ? ` The hold, from this site's daily record: ${since}.` : ""}`;
           })()}{" "}
@@ -107,14 +103,22 @@ export function EmployerPrograms({
           .
         </p>
       ) : null}{" "}
-      <p className="mt-3 max-w-3xl text-sm text-foreground/70">
-        Medians are of the published rows with a usable wage, annualised from whatever unit the filing quoted, and withheld under {WAGE_FLOOR} wages.
-        {matchedPrefix ? ` The three files spell an employer differently, so they are joined on the name prefix "${matchedPrefix}".` : ""}{" "}
+      <p className="mt-3 max-w-3xl text-sm text-foreground/75">
         <Link href={searchHref} className={LINK}>
           Every case across the three programs
         </Link>{" "}
         is in the search.
-      </p>
+      </p>{" "}
+      <FinePrint summary="How these are counted" className="mt-1">
+        <p>
+          Medians are of the published rows with a usable wage, annualised from
+          whatever unit the filing quoted, and withheld under {WAGE_FLOOR} wages.
+          {matchedPrefix ? ` The three files spell an employer differently, so they are joined on the name prefix "${matchedPrefix}".` : ""}{" "}
+          The PERM is the green-card step; the wage request comes months before
+          it, and the LCA is the separate form for an H-1B. DOL publishes each
+          in its own file, and its live record shows what is still open.
+        </p>
+      </FinePrint>
     </section>
   );
 }

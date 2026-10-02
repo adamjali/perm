@@ -18,8 +18,8 @@ import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import type { FunctionReturnType } from "convex/server";
 import { ArrowLeftIcon, CheckIcon, CircleNotchIcon, GearIcon as SettingsIcon, ProhibitIcon as Ban, PulseIcon as Activity, ShieldIcon, UserMinusIcon as UserX, WarningIcon as AlertTriangle } from "@phosphor-icons/react";
-import { api } from "../../../../../convex/_generated/api";
-import type { Id } from "../../../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -154,8 +154,8 @@ function cardAccentClass(accent: CardAccent, value: number | undefined): string 
 function SummaryCards({ summary }: { summary?: SummaryShape }) {
   const cards = [
     { label: "Blocked IPs", value: summary?.activeBlockedIps, accent: "destructive" as const, icon: Ban },
-    { label: "Rate-limit Strikes 24h", value: summary?.strikeHitsLast24h, accent: "amber" as const, icon: AlertTriangle },
-    { label: "System Errors 24h", value: summary?.systemErrorsLast24h, accent: "amber" as const, icon: AlertTriangle },
+    { label: "Rate-limit strikes, 24h", value: summary?.strikeHitsLast24h, accent: "amber" as const, icon: AlertTriangle },
+    { label: "System errors, 24h", value: summary?.systemErrorsLast24h, accent: "amber" as const, icon: AlertTriangle },
     { label: "Flagged users", value: summary?.flaggedUsers, accent: "destructive" as const, icon: UserX },
   ];
   return (

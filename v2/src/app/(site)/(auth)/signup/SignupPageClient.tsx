@@ -12,7 +12,7 @@ import { NavLink } from "@/components/ui/nav-link";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleStaleDeployment } from "@/components/error/auth-error";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { AuthField } from "@/components/auth/AuthField";
 import { AuthTurnstile } from "@/components/auth/AuthTurnstile";
 import {
@@ -541,8 +541,9 @@ export function SignupPageClient() {
               onExpire={() => {
                 setTurnstileToken(null);
                 // Not a failure: the widget refreshes an idle token on its own
-                // (refreshExpired: "auto"), and counting each refresh as one read
-                // as 250 failed checks a day from three open tabs (Sep 29 2026).
+                // (refreshExpired: "auto"), and counting each refresh as one
+                // would read as hundreds of failed checks a day from a few
+                // open tabs.
               }}
             />
             {turnstileError && (

@@ -10,6 +10,7 @@ import { approvalRate } from "@/lib/entityPayload";
 import { wilsonInterval } from "@/lib/wageLadder";
 import { stateName } from "@/lib/usStateNames";
 import { entityFacets, entityPending, resolveEntity, type EntityFacets, type EntityPending, type ResolvedEntity } from "@/lib/turso/entityDetail";
+import { formatDollars, formatInt, formatPercent } from "@/lib/format";
 
 /**
  * Two employers side by side.
@@ -57,17 +58,26 @@ async function loadSide(slug: string): Promise<Side | null> {
   return { entity, pending, facets };
 }
 
-const int = (n: number | null | undefined) => (n === null || n === undefined ? "n/a" : n.toLocaleString("en-US"));
-const usd = (n: number | null | undefined) => (n === null || n === undefined ? "n/a" : `$${Math.round(n).toLocaleString("en-US")}`);
-const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
+const int = (n: number | null | undefined) => (n === null || n === undefined ? "n/a" : formatInt(n));
+const usd = (n: number | null | undefined) => (n === null || n === undefined ? "n/a" : formatDollars(n));
 
 function rateCell(certified: number, denied: number): string {
   const decided = certified + denied;
   const r = approvalRate({ certified, denied });
   if (r === null || decided < MIN_FOR_RATE) return decided === 0 ? "no decisions" : `withheld under ${MIN_FOR_RATE} decisions`;
   const band = wilsonInterval(denied, decided);
-  return band ? `${pct(r)} (denial ${pct(band.lo)} to ${pct(band.hi)})` : pct(r);
+  return band ? `${formatPercent(r, 1)} (denial ${formatPercent(band.lo, 1)} to ${formatPercent(band.hi, 1)})` : formatPercent(r, 1);
 }
+
+/**
+ * Pairs to start from when nothing is picked yet: three of the busiest sponsors
+ * in DOL's files. Their slugs are kept across rebuilds, so the links stay good.
+ */
+const EXAMPLES = [
+  { label: "Microsoft and Apple", a: "microsoft-corporation", b: "apple-inc" },
+  { label: "Intel and Microsoft", a: "intel-corporation", b: "microsoft-corporation" },
+  { label: "FPL Food and JCG Foods of Georgia", a: "fpl-food-llc", b: "jcg-foods-of-georgia-llc" },
+] as const;
 
 export default async function CompareEmployersPage({
   searchParams,
@@ -101,10 +111,7 @@ export default async function CompareEmployersPage({
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-sm">
-        <Link href="/perm-employers" className="underline underline-offset-2 hover:text-primary">Employers</Link>
-      </p>{" "}
-      <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
         Compare two employers
       </h1>{" "}
       <p className="mt-4 max-w-3xl text-lg leading-relaxed text-foreground/70">
@@ -120,6 +127,25 @@ export default async function CompareEmployersPage({
         />
       </div>{" "}
 
+      {!slugA && !slugB ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Or start from a pair:{" "}
+          {EXAMPLES.map((e, i) => (
+            <Fragment key={e.label}>
+              {i > 0 ? ", " : ""}
+              <Link
+                href={`/perm-employers/compare?a=${e.a}&b=${e.b}`}
+                rel="nofollow"
+                className="font-semibold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary-text"
+              >
+                {e.label}
+              </Link>
+            </Fragment>
+          ))}
+          .
+        </p>
+      ) : null}{" "}
+
       {(slugA && !left) || (slugB && !right) ? (
         <p role="alert" className="mt-6 border-2 border-border bg-card p-4 text-sm font-bold">
           One of those employers is not in the index. Pick it again from the search.
@@ -131,7 +157,7 @@ export default async function CompareEmployersPage({
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead className="bg-foreground text-background">
               <tr>
-                <th scope="col" className="px-4 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">Measure{" "} </th>
+                <th scope="col" className="px-4 py-3 text-left font-mono text-sm font-bold uppercase tracking-[0.1em]">Measure{" "} </th>
                 {[left, right].map((s) => (
                   <Fragment key={s.entity.canonicalSlug}>
                     <th scope="col" className="px-4 py-3 text-left">
@@ -149,7 +175,7 @@ export default async function CompareEmployersPage({
                   <tr className="border-t-2 border-border align-top">
                     <th scope="row" className="px-4 py-3 text-left font-semibold">
                       {r.label}{" "}
-                      {r.note ? <span className="block text-xs font-normal text-muted-foreground">{r.note}</span> : null}{" "}
+                      {r.note ? <span className="block text-sm font-normal text-muted-foreground">{r.note}</span> : null}{" "}
                     </th>
                     <td className="px-4 py-3 font-heading font-bold">{r.value(left)}{" "} </td>
                     <td className="px-4 py-3 font-heading font-bold">{r.value(right)}{" "} </td>
@@ -173,10 +199,8 @@ export default async function CompareEmployersPage({
 
       {both ? (
         <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/75">
-          Moving employers before an I-140 is approved usually means a new
-          PERM; after 180 days of an approved I-140 the priority date is
-          portable under AC21. Which of those applies to you decides more than
-          any figure above.{" "}
+          Moving employers before an I-140 is approved usually means a new PERM; 180 days after approval,
+          the priority date moves with you (AC21). That matters more than any figure above.{" "}
           <Link href="/guides/three-180-day-clocks" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
             The three 180-day clocks
           </Link>{" "}

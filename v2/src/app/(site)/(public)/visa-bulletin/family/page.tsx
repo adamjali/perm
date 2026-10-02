@@ -8,6 +8,7 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { BOARD_COUNTRIES, summariseBulletins, type BoardCell } from "@/lib/turso/bulletin";
 import { getFamilyBulletinSeries } from "@/lib/turso/publicData";
 import { withSocialCard } from "@/lib/socialCard";
+import { SITE_URL } from "@/lib/constants/site";
 
 /**
  * Family-sponsored cutoff history from the bulletin archive.
@@ -51,9 +52,9 @@ function Movement({ cell }: { cell: BoardCell | null }) {
   return (
     <>
       <span className="font-mono">{cutoffLabel(cell.latest)}</span>
-      {moved ? <span className="block text-xs text-muted-foreground">{moved}</span> : null}
+      {moved ? <span className="block text-sm text-muted-foreground">{moved}</span> : null}
       {cell.retrogressions.length > 0 ? (
-        <span className="block text-xs text-muted-foreground">
+        <span className="block text-sm text-muted-foreground">
           {cell.retrogressions.length} {cell.retrogressions.length === 1 ? "retrogression" : "retrogressions"}
         </span>
       ) : null}
@@ -70,9 +71,9 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
         <table className="w-full min-w-[720px] border-2 border-border text-sm">
           <thead className="bg-foreground text-background">
             <tr>
-              <th className="p-3 text-left font-mono text-xs uppercase tracking-wider">Category{" "}</th>
+              <th className="p-3 text-left font-mono text-sm uppercase tracking-wider">Category{" "}</th>
               {BOARD_COUNTRIES.map((c) => (
-                <th key={c} className="p-3 text-left font-mono text-xs uppercase tracking-wider">
+                <th key={c} className="p-3 text-left font-mono text-sm uppercase tracking-wider">
                   {COUNTRY_LABEL[c]}{" "}
                 </th>
               ))}
@@ -83,7 +84,7 @@ function Board({ cells, title, note }: { cells: BoardCell[]; title: string; note
               <tr key={cat} className="border-t-2 border-border align-top">
                 <td className="p-3">
                   <span className="font-semibold">{CATEGORY[cat]?.label ?? cat}</span>{" "}
-                  <span className="block text-xs text-muted-foreground">{CATEGORY[cat]?.who ?? ""}</span>{" "}
+                  <span className="block text-sm text-muted-foreground">{CATEGORY[cat]?.who ?? ""}</span>{" "}
                 </td>
                 {BOARD_COUNTRIES.map((country) => (
                   <td key={country} className="p-3">
@@ -107,20 +108,19 @@ export default async function FamilyBulletinPage() {
     "@type": "Dataset" as const,
     name: "Family-sponsored visa bulletin cutoff history",
     description: DESCRIPTION,
-    url: `https://permtracker.app${PATH}`,
+    url: `${SITE_URL}${PATH}`,
     // "Organization", NOT "GovernmentOrganization". Search Console rejected the
     // subtype on /perm-processing-times as "Invalid object type for field
     // creator": Google's Dataset parser matches the type literally and does
     // not walk the schema.org hierarchy, so the more precise answer is the
     // rejected one. The name still says which agency.
     creator: { "@type": "Organization" as const, name: "U.S. Department of State, Bureau of Consular Affairs" },
-    // `license` is a recommended Dataset property and Search Console emailed
-    // about it on 2026-09-10, naming this page: it is the only Dataset on the
-    // site without one. Every other page builds its schema through
-    // `getDatasetSchema`, which has always emitted this; this page hand-rolls
-    // its own and inherited none of the shared defaults. The same shape of
-    // omission is why the `creator` note above exists.
-    license: "https://permtracker.app/terms#intellectual-property",
+    // `license` is a recommended Dataset property, and Search Console reports
+    // any Dataset without one. Every other page builds its schema through
+    // `getDatasetSchema`, which emits it; this page hand-rolls its own and
+    // inherits none of the shared defaults, so it states it here. The same
+    // shape of omission is why the `creator` note above exists.
+    license: `${SITE_URL}/terms#intellectual-property`,
     isBasedOn: "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
     spatialCoverage: { "@type": "Place" as const, name: "United States" },
     temporalCoverage: board ? `${board.firstMonth}/${board.lastMonth}` : undefined,
@@ -131,12 +131,7 @@ export default async function FamilyBulletinPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={dataset} />
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/visa-bulletin" className="underline underline-offset-2 hover:text-primary">
-            Visa bulletin
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">Family-sponsored cutoffs, month by month</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Family-sponsored cutoffs, month by month</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           {board
             ? `Every family cutoff State printed in ${board.bulletinCount} bulletins from ${formatMonth(board.firstMonth)} to ${formatMonth(board.lastMonth)}, by category and country, with how far each moved and every month it went backwards.`
@@ -162,15 +157,13 @@ export default async function FamilyBulletinPage() {
       <section className="mt-10 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">What this page does not do</h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          It prints no queue position and no forecast. The employment-based tools can count the applicants ahead of a
-          date because USCIS publishes its I-485 inventory by priority date and country for those categories; it
-          publishes no such inventory for family categories, so a family &ldquo;queue position&rdquo; from any source is
-          a guess dressed as a count. The history above is what can be measured: where the line stood every month, and
-          how it moved.
+          No queue position and no forecast. USCIS publishes its I-485 inventory by priority date only for
+          employment categories, so a family &ldquo;queue position&rdquo; from any source is a guess. The history
+          above is what can be measured.
         </p>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          Each bulletin is read from the State Department&apos;s own pages the day it appears, both charts, family and
-          employment. The employment-based history is on{" "}
+          Each bulletin is read from the State Department&apos;s pages the day it appears. Employment history is
+          on{" "}
           <Link href="/tools/priority-date-calculator" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
             the priority date calculator
           </Link>{" "}

@@ -8,12 +8,10 @@ import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
 
-import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { bulletinMonthLabel, cutoffLabel } from "@/lib/bulletinNext";
 import { LINE_CATEGORY_SHORT, LINE_COUNTRY_SHORT, LINE_PAGE_COUNTRIES, lineSlug } from "@/lib/bulletinLines";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import type { BulletinMonth } from "@/lib/perm";
@@ -47,23 +45,13 @@ export default async function BulletinCategoriesPage() {
   const cell = (list: NonNullable<typeof board>["finalAction"], category: string, country: string) =>
     list.find((c) => c.category === category && c.country === country) ?? null;
 
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Visa bulletin", href: "/visa-bulletin" },
-    { name: "Categories", href: PATH },
-  ]);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
-      <JsonLdScript schema={breadcrumb} />
 
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link href="/visa-bulletin" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Visa bulletin
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">Every line in the bulletin</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Every line in the bulletin</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           {board
             ? `The ${bulletinMonthLabel(board.lastMonth)} bulletin's cutoffs for every employment-based category and country. Pick a line for its history back to ${bulletinMonthLabel(board.firstMonth)}.`

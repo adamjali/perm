@@ -30,6 +30,9 @@
     "paths": {
       "@/*": [
         "./src/*"
+      ],
+      "@convex/*": [
+        "./convex/*"
       ]
     }
   },
@@ -39,13 +42,7 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts",
-    ".next-rfi/types/**/*.ts",
-    ".next-rfi/dev/types/**/*.ts",
-    ".next-queue-dev/types/**/*.ts",
-    ".next-queue-dev/dev/types/**/*.ts",
-    ".next-dev-hero/types/**/*.ts",
-    ".next-dev-hero/dev/types/**/*.ts"
+    "**/*.mts"
   ],
   "exclude": [
     "node_modules",

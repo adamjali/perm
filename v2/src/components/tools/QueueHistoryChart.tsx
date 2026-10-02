@@ -1,11 +1,13 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import { ChartTips } from "@/components/data/ChartTips";
 import { evenTickIndices } from "@/components/tools/chartTicks";
 import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverLayer";
 
 import { formatAsOf, formatMonthShort, formatMonth } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
+import { MS_PER_DAY } from "@/lib/time";
 import { DataView, ScopeSelect } from "./DataView";
 
 /**
@@ -42,11 +44,10 @@ export interface QueueHistoryChartProps {
    * point per month of determinations in DOL's disclosure files, at the
    * filing month of their median, `asOf` being that month's first day.
    *
-   * The same drawing serves both, and until Oct 1 2026 it also labelled both
-   * the same way: the reconstructed series printed "DOL published" over its
-   * table, "Each step is a published DOL reading" under its chart and a
-   * first-of-month date per row, so 33 months nobody at DOL ever published
-   * read as DOL's own readings.
+   * The same drawing serves both, and its words must follow the kind: "DOL
+   * published" or "Each step is a published DOL reading" over a
+   * reconstructed series would present months nobody at DOL ever published as
+   * DOL's own readings.
    */
   kind?: QueueSeriesKind;
 }
@@ -153,7 +154,7 @@ function monthIndex(month: string): number {
 }
 
 function dayIndex(iso: string): number {
-  return Date.parse(`${iso}T00:00:00Z`) / 86_400_000;
+  return Date.parse(`${iso}T00:00:00Z`) / MS_PER_DAY;
 }
 
 /**
@@ -198,10 +199,9 @@ function QueueHistorySvg({
   /*
    * GRIDLINES at every observed level, LABELS on a subset.
    *
-   * This used to label every distinct frontier month on the reasoning that
-   * "they are few". They are few at two snapshots and thirty at thirty: the
-   * chart shipped with "Dec 2024" sitting on top of "Nov 2024" and five
-   * consecutive months overprinted into a smear. The lines still mark every
+   * Labelling every distinct frontier month fails as the series grows: few at
+   * two snapshots, thirty at thirty, and consecutive months overprint into a
+   * smear. The lines still mark every
    * level the queue actually sat at, because that is information; only the
    * labels are thinned, using the same helper every other chart on the site
    * uses rather than a fourth private copy of the arithmetic.
@@ -214,22 +214,20 @@ function QueueHistorySvg({
   /*
    * X ticks: first, middle, last - DE-DUPLICATED.
    *
-   * With two snapshots `Math.floor(2 / 2)` is 1, so "middle" WAS the last
-   * point, and the same date rendered twice at the right-hand edge: once
-   * centred on its own x, once anchored to the frame. On the live page that
-   * read as "2026-0202708". Two readings is the normal state of a series DOL
-   * has only just started publishing, so the thin case is the common one.
+   * With two snapshots `Math.floor(2 / 2)` is 1, so "middle" IS the last
+   * point, and without de-duplication the same date renders twice at the
+   * right-hand edge: once centred on its own x, once anchored to the frame. A
+   * thin series is a common state, not an edge case.
    */
   /*
    * DE-DUPLICATING WAS NOT ENOUGH: two DIFFERENT dates can still collide.
    *
-   * The fix above stopped the same date printing twice. It did not stop the
+   * De-duplication stops the same date printing twice. It does not stop the
    * middle tick landing on top of an edge one, because the ticks are chosen by
    * INDEX and drawn by DATE, and those only agree when the readings are evenly
-   * spaced in time. DOL's are not. With readings on 2026-08-20, 08-27 and
-   * 08-28, the middle tick sits at 87.5% of the span - 40 units from a
-   * right-hand label anchored to the frame - and the page rendered
-   * "2026-08-2023-08-28".
+   * spaced in time. DOL's are not: readings a week apart and then a day apart
+   * put the middle tick at 87.5% of the span, 40 units from a right-hand label
+   * anchored to the frame.
    *
    * So the middle tick has to EARN its place: it is kept only when its box
    * clears both edge labels, and dropped when it cannot. A solver that places
@@ -435,17 +433,17 @@ function QueueHistoryTable({
         <caption className="sr-only">{copy.caption}</caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
               {copy.dateHead}
             {" "}</th>
-            <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
               {copy.monthHead}
             {" "}</th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Moved
             {" "}</th>
             {showGap ? (
-              <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
+              <th scope="col" className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell">
                 Days since last{" "}
               </th>
             ) : null}
@@ -687,11 +685,24 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
           ) : undefined
         }
         chart={
+          <ChartTips label="PERM decisions per month">
           <ol className="space-y-2">
-            {shown.map((p) => (
+            {shown.map((p) => {
+              const c = changes.get(p.month) ?? null;
+              return (
               <Fragment key={p.month}>
                 {" "}
-                <li className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[9rem_1fr_5.5rem]">
+                <li
+                  data-tip={[
+                    formatMonth(p.month) ?? p.month,
+                    `${p.decisions.toLocaleString("en-US")} decisions`,
+                    c === null ? null : `${c > 0 ? "+" : ""}${c.toLocaleString("en-US")} on the month before`,
+                    windowTotal > 0 ? `${((p.decisions / windowTotal) * 100).toFixed(1)}% of the window` : null,
+                  ]
+                    .filter(Boolean)
+                    .join("\n")}
+                  className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[9rem_1fr_5.5rem]"
+                >
                   <span className="text-sm text-foreground/70">
                     {formatMonth(p.month)}
                   </span>{" "}
@@ -708,8 +719,10 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
                   </span>
                 </li>
               </Fragment>
-            ))}
+              );
+            })}
           </ol>
+          </ChartTips>
         }
         table={
           <div className="overflow-x-auto">
@@ -720,16 +733,16 @@ export function DecisionsByMonth({ points, className }: DecisionsByMonthProps) {
               </caption>
               <thead className="bg-foreground text-background">
                 <tr>
-                  <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
+                  <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
                     Month
                   {" "}</th>
-                  <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
+                  <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
                     Decisions
                   {" "}</th>
-                  <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
+                  <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
                     Change
                   {" "}</th>
-                  <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
+                  <th scope="col" className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell">
                     Share of window{" "}
                   </th>
                 </tr>

@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import { countShownDates, formatCompactDate, getStageColorVar } from "./case-card.utils";
-import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
 import type { CaseStatus } from "@/lib/perm";
 
 // ============================================================================

@@ -27,8 +27,8 @@ import type {
   CaseListFilters,
   CaseListSort,
   CaseListSortField,
-} from "../../../convex/lib/caseListTypes";
-import type { CaseStatus, ProgressStatus } from "../../../convex/lib/dashboardTypes";
+} from "@convex/lib/caseListTypes";
+import type { CaseStatus, ProgressStatus } from "@convex/lib/dashboardTypes";
 
 // ============================================================================
 // TYPES

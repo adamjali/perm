@@ -1,13 +1,12 @@
 /**
  * Why a public request failed, in words a reader can act on.
  *
- * Every public search and list used to turn a failed request into one line -
- * "The search didn't load. Reloading usually clears it." - whatever the
- * cause. For the commonest cause under load that advice is wrong: the front
- * door answers 429 with its own JSON ("Too many requests from this address.
- * Try again in a few seconds.") and a Retry-After, and a reload is one more
- * request against the same limit. Sep 29 2026, from the silent-limit audit:
- * the reason existed on the wire and no page ever showed it.
+ * One line for every failure ("The search didn't load. Reloading usually
+ * clears it.") is wrong for the commonest cause under load: the front door
+ * answers 429 with its own JSON ("Too many requests from this address. Try
+ * again in a few seconds.") and a Retry-After, and a reload is one more
+ * request against the same limit. The reason is on the wire; the page should
+ * show it.
  *
  * So the reason is read here, once, for every caller: the server's own
  * message when it sent one, the wait from Retry-After, and a plain sentence

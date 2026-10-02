@@ -46,6 +46,9 @@ import {
   zeroWeekdays,
   type ActivityDay,
 } from "@/lib/activityStats";
+import { formatInt } from "@/lib/format";
+import { MS_PER_DAY } from "@/lib/time";
+import { SITE_URL } from "@/lib/constants/site";
 
 const TITLE = "PERM Decision Activity";
 const DESCRIPTION =
@@ -63,16 +66,11 @@ export const metadata: Metadata = withSocialCard({
   },
 }, "perm-decision-activity");
 
-// SIX HOURS, NOT ONE (changed 2026-09-01 on cost evidence). The old comment
-// said it plainly and then picked the wrong number: "the live scan moves daily
-// and the disclosure series quarterly". An hour therefore bought nothing, it
-// just regenerated a ~290 KB page 24 times to express one change. Six hours is
-// still four times faster than the faster of the two inputs.
+// SIX HOURS: the live scan moves with each sweep and the disclosure series
+// quarterly, so an hourly window would regenerate a ~290 KB page 24 times a
+// day to express a change or two. Each sweep expires the page anyway
+// (/api/revalidate-sweep), so the window is only the backstop.
 export const revalidate = 21600;
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 function longDate(iso: string): string {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-US", {
@@ -103,8 +101,7 @@ export default async function DecisionActivityPage() {
     // prerendered HTML, so it is sized for the page rather than for the
     // instrument: the browser below fetches the rest on its own, once, through
     // a cached route. Putting 1,090 rows here would add ~267 KB to every
-    // regeneration of a page that revalidates six-hourly, and an ISR write unit
-    // is 8 KB.
+    // regeneration of a page that revalidates six-hourly.
     getChangeActivity(null, 60).catch(() => null),
     // WHAT EACH RECORD CAN ANSWER, read once per regeneration rather than
     // per visitor. Six index seeks. It moves only when a quarterly file
@@ -125,7 +122,7 @@ export default async function DecisionActivityPage() {
   const firstObserved = live?.days[0]?.date;
   const gapDays =
     lastDisclosed && firstObserved
-      ? Math.round((Date.parse(`${firstObserved}T00:00:00Z`) - Date.parse(`${lastDisclosed}T00:00:00Z`)) / 86_400_000) - 1
+      ? Math.round((Date.parse(`${firstObserved}T00:00:00Z`) - Date.parse(`${lastDisclosed}T00:00:00Z`)) / MS_PER_DAY) - 1
       : null;
   const currentPace = current ? pace(current.days, 28) : null;
   // ZERO-FILLED, and that is the difference between showing October 2025 and
@@ -139,10 +136,10 @@ export default async function DecisionActivityPage() {
   const idleWeekdays = zeroWeekdays(record);
   const recordTotal = record.reduce((a, b) => a + b.total, 0);
 
-  const schema = getDatasetSchema("https://permtracker.app", {
+  const schema = getDatasetSchema(SITE_URL, {
     name: "PERM decisions per day",
     description: DESCRIPTION,
-    url: "https://permtracker.app/perm-decision-activity",
+    url: `${SITE_URL}/perm-decision-activity`,
     isBasedOn: "https://flag.dol.gov/processingtimes",
   });
 
@@ -151,15 +148,11 @@ export default async function DecisionActivityPage() {
       <JsonLdScript schema={schema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Decisions, as DOL issued them
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           How fast the queue is moving
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          Every PERM determination carries the date it was issued. Counted by
-          day, that is the pace of the queue.
+          Every PERM decision DOL makes, counted by day.
         </p>
       </header>
 
@@ -175,15 +168,15 @@ export default async function DecisionActivityPage() {
       ) : null}
 
       {currentPace ? (
-        <section className="mt-8 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-          <h2 className="font-heading text-2xl font-black">
-            The last {currentPace.weekdays + currentPace.weekendDays} days
-          </h2>{" "}
-          <dl className="mt-6 grid [&>*]:min-w-0 grid-cols-2 gap-6 sm:grid-cols-4">
+        // ONE BAND, NOT TWO: a ledger row under the day-by-day charts, the
+        // same four figures with no second heading, never a second slab
+        // restating their pace.
+        <section className="mt-6" aria-label={`The last ${currentPace.weekdays + currentPace.weekendDays} days`}>
+          <dl className="grid [&>*]:min-w-0 grid-cols-2 gap-x-6 gap-y-4 border-y-2 border-border py-4 sm:grid-cols-4">
             {[
               {
                 k: "Per weekday",
-                v: fmt(currentPace.perWeekday),
+                v: formatInt(currentPace.perWeekday),
                 sub: `${currentPace.weekdays} weekdays counted`,
               },
               {
@@ -191,7 +184,7 @@ export default async function DecisionActivityPage() {
                 v:
                   currentPace.perWeekendDay === null
                     ? "none"
-                    : fmt(currentPace.perWeekendDay),
+                    : formatInt(currentPace.perWeekendDay),
                 sub:
                   currentPace.perWeekendDay === null
                     ? "no weekend in the window"
@@ -199,38 +192,37 @@ export default async function DecisionActivityPage() {
               },
               {
                 k: "Cases in the scan",
-                v: fmt(mirrorSize),
-                // A row count, not a status claim. Four fifths of the pending
-                // rows carry a check older than 2026-08-01, so "tracked live"
-                // would be false about the statuses even though the total is
-                // exact.
+                v: formatInt(mirrorSize),
+                // A row count, not a status claim: a pending row carries the
+                // status of its last check, so "tracked live" would claim more
+                // about the statuses than the exact total can.
                 sub: "per-case scan of flag.dol.gov",
               },
               {
                 k: "Decisions on record",
-                v: fmt(recordTotal),
-                sub: `over ${fmt(record.length)} days`,
+                v: formatInt(recordTotal),
+                sub: `over ${formatInt(record.length)} days`,
               },
             ].map((d) => (
               // Keyed Fragment with a trailing space: array items render with
               // NOTHING between them, so "852" glues to "10 weekdays counted".
               <Fragment key={d.k}>
               <div>
-                <dt className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+                <dt className="text-sm font-bold text-foreground/70">
                   {d.k}
                 </dt>{" "}
                 <dd className="mt-1 font-heading text-3xl font-black tabular-nums">
                   {d.v}
                 </dd>{" "}
-                <dd className="mt-1 text-xs text-background/70">{d.sub}</dd>
+                <dd className="mt-1 text-sm text-foreground/70">{d.sub}</dd>
               </div>{" "}
               </Fragment>
             ))}
           </dl>
-          <p className="mt-6 max-w-3xl text-sm leading-relaxed text-background/70">
-            Weekday and weekend counted apart: one rate over both understates
-            the weekday pace by about a fifth, and DOL does decide at
-            weekends. {longDate(currentPace.from)} to {longDate(currentPace.to)}.
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/70">
+            {longDate(currentPace.from)} to {longDate(currentPace.to)}. Weekdays
+            and weekends counted apart: one rate over both understates the
+            weekday pace by about a fifth.
           </p>
         </section>
       ) : null}
@@ -240,7 +232,14 @@ export default async function DecisionActivityPage() {
           <h2 className="font-heading text-2xl font-black">
             The cases DOL moved, day by day
           </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
+          <p className="mt-2 max-w-3xl text-base text-foreground/75">
+            Pick a day, or a range, and filter every case DOL moved.
+          </p>{" "}
+          <details className="mt-2 max-w-3xl">
+            <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-bold underline decoration-2 underline-offset-4">
+              What each date gives you
+            </summary>{" "}
+            <p className="mt-1 text-base leading-relaxed text-foreground/75">
             Pick any date back to{" "}
             {monthYear(windows.decidedByProgram?.perm?.from ?? windows.decided?.from) ?? "October 2023"}{" "}
             for PERM
@@ -258,17 +257,18 @@ export default async function DecisionActivityPage() {
             with what each case changed from and to. Search, filter and sort
             either one, and pick a range to cross both.
           </p>{" "}
+            <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+              A change row is dated when our scan <b>saw</b> it, not when DOL
+              made it: a Friday determination read on Monday is a Monday row. A
+              decided row carries DOL&apos;s own determination date.
+            </p>
+          </details>{" "}
           <ChangeFeedBrowser
             calendar={activity.calendar}
             initialDay={activity.day}
             windows={windows}
           />{" "}
-          <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/70">
-            A change row is dated when our scan <b>saw</b> it, not when DOL made
-            it: a Friday determination read on Monday is a Monday row. A decided
-            row carries DOL&apos;s own determination date, so it needs no such
-            caveat.
-          </p>{" "}
+
           {/* WHERE THE SAME CASES LIVE, said plainly. A reader who has just
               found a case here has an obvious next question, and every one of
               these answers it from the same corpus. */}
@@ -276,7 +276,7 @@ export default async function DecisionActivityPage() {
             aria-label="Related records"
             className="mt-6 max-w-3xl border-2 border-border bg-card p-4"
           >
-            <p className="font-mono text-xs font-bold uppercase tracking-wider">
+            <p className="font-mono text-sm font-bold uppercase tracking-wider">
               The same cases, other ways in
             </p>{" "}
             <ul className="mt-2 grid grid-cols-1 gap-2 text-base sm:grid-cols-2">
@@ -411,7 +411,7 @@ export default async function DecisionActivityPage() {
         <FigurePlate
           n="02"
           title="The working week"
-          subject={`Mean decisions by day of week, ${fmt(record.length)} days`}
+          subject={`Mean decisions by day of week, ${formatInt(record.length)} days`}
           caption="Counting a Saturday as a working day drags a per-working-day rate down without saying so."
           source="DOL PERM disclosure files"
           className="mt-10"
@@ -450,7 +450,7 @@ export default async function DecisionActivityPage() {
             ).map((col) => (
               <Fragment key={col.title}>
               <div className="border-2 border-border bg-card p-5 shadow-hard-sm">
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+                <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
                   {col.title}
                 </h3>{" "}
                 <ol className="mt-3 m-0 list-none p-0">
@@ -459,7 +459,7 @@ export default async function DecisionActivityPage() {
                     <li className="flex items-baseline justify-between gap-3 border-t-2 border-border py-2 first:border-t-0 first:pt-0">
                       <span className="text-sm font-bold">{longDate(d.date)}</span>{" "}
                       <span className="font-mono text-sm font-bold tabular-nums">
-                        {fmt(d.total)}
+                        {formatInt(d.total)}
                       </span>
                     </li>{" "}
                     </Fragment>
@@ -472,7 +472,7 @@ export default async function DecisionActivityPage() {
           {idleWeekdays.length > 0 ? (
             <>
               <p className="mt-4 max-w-3xl text-sm leading-relaxed text-foreground/60">
-                {fmt(idleWeekdays.length)} weekdays carry no determination at
+                {formatInt(idleWeekdays.length)} weekdays carry no determination at
                 all, so the quietest list is a list of ties: federal holidays
                 and the October 2025 stoppage.
               </p>{" "}

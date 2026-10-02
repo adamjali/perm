@@ -10,8 +10,7 @@
  * are named, never turned into a number.
  */
 import { parseCutoff, type BulletinMonth, type ChartKind, type CountryKey, type Cutoff } from "@/lib/perm";
-
-const DAY_MS = 86_400_000;
+import { MS_PER_DAY } from "@/lib/time";
 
 export function nextBulletinMonth(lastMonth: string): string {
   const [y, m] = lastMonth.split("-").map(Number) as [number, number];
@@ -115,7 +114,7 @@ export function classifyMove(from: Cutoff | null, to: Cutoff | null): { kind: Mo
 function classify(from: Cutoff | null, to: Cutoff | null): { kind: MoveKind; movedDays: number | null } {
   if (!from || !to) return { kind: "unknown", movedDays: null };
   if (from.kind === "date" && to.kind === "date") {
-    const days = Math.round((Date.parse(to.iso) - Date.parse(from.iso)) / DAY_MS);
+    const days = Math.round((Date.parse(to.iso) - Date.parse(from.iso)) / MS_PER_DAY);
     return { kind: days > 0 ? "advanced" : days < 0 ? "retrogressed" : "held", movedDays: days };
   }
   if (from.kind === "current" && to.kind === "current") return { kind: "current", movedDays: null };
@@ -195,7 +194,7 @@ export function monthsToReach(
 ): { months: number; gapDays: number; basis: { movedDays: number; spanMonths: number; retrogressions: number } } | null {
   if (cell.latest.kind !== "date") return null;
   if (cell.movedDays === null || cell.spanMonths === null || cell.movedDays <= 0 || cell.spanMonths <= 0) return null;
-  const gapDays = Math.round((Date.parse(priorityDate) - Date.parse(cell.latest.iso)) / DAY_MS);
+  const gapDays = Math.round((Date.parse(priorityDate) - Date.parse(cell.latest.iso)) / MS_PER_DAY);
   const perMonth = cell.movedDays / cell.spanMonths;
   const months = gapDays <= 0 ? 0 : Math.round((gapDays / perMonth) * 10) / 10;
   return { months, gapDays: Math.max(gapDays, 0), basis: { movedDays: cell.movedDays, spanMonths: cell.spanMonths, retrogressions: cell.retrogressions.length } };

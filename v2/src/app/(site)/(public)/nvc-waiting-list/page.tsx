@@ -9,10 +9,10 @@ import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
 
+import { ChartHit } from "@/components/data/ChartHit";
+import { ChartTips } from "@/components/data/ChartTips";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import {
   EMPLOYMENT_ROWS,
   FAMILY_ROWS,
@@ -58,9 +58,9 @@ function Spark({ row, max }: { row: CategorySeries; max: number }) {
         const h = max > 0 ? (H * p.n) / max : 0;
         const last = i === row.points.length - 1;
         return (
-          <rect key={p.asOf} x={i * bw + 1} y={H - h} width={Math.max(bw - 2, 1)} height={h} className={last ? "fill-foreground" : "fill-foreground/35"}>
-            <title>{`November ${yearOf(p.asOf)}: ${p.n.toLocaleString("en-US")} `}</title>
-          </rect>
+          <ChartHit key={p.asOf} tip={`${row.label}\n${p.n.toLocaleString("en-US")} waiting\nAs of ${dateLabel(p.asOf)}`} x={i * bw} width={bw} y={0} height={H}>
+            <rect x={i * bw + 1} y={H - h} width={Math.max(bw - 2, 1)} height={h} className={last ? "fill-foreground" : "fill-foreground/35"} />
+          </ChartHit>
         );
       })}
     </svg>
@@ -70,7 +70,9 @@ function Spark({ row, max }: { row: CategorySeries; max: number }) {
 function CategoryTable({ rows, caption }: { rows: CategorySeries[]; caption: string }) {
   const max = Math.max(...rows.flatMap((r) => r.points.map((p) => p.n)), 1);
   return (
-    <div className="mt-4 overflow-x-auto border-2 border-border bg-card shadow-hard">
+    // The tooltip sits outside the scrolling table, which would clip it.
+    <ChartTips label={caption} className="mt-4">
+    <div className="overflow-x-auto border-2 border-border bg-card shadow-hard">
       <table className="w-full min-w-[640px] text-left text-base">
         <caption className="sr-only">{caption}</caption>
         <thead className="border-b-2 border-border bg-muted/40">
@@ -95,15 +97,12 @@ function CategoryTable({ rows, caption }: { rows: CategorySeries[]; caption: str
         </tbody>
       </table>
     </div>
+    </ChartTips>
   );
 }
 
 export default async function NvcWaitingListPage() {
   const wl = await getNvcWaitingList().catch(() => null);
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Visa bulletin", href: "/visa-bulletin" },
-    { name: "NVC waiting list", href: PATH },
-  ]);
 
   const series = wl ? [...wl.series].sort((a, z) => a.asOf.localeCompare(z.asOf)) : [];
   const newest = series[series.length - 1];
@@ -114,15 +113,9 @@ export default async function NvcWaitingListPage() {
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
-      <JsonLdScript schema={breadcrumb} />
 
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link href="/visa-bulletin" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Visa bulletin
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">The immigrant visa waiting list</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">The immigrant visa waiting list</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           The State Department&apos;s yearly count of people with approved petitions waiting for an immigrant visa at the
           National Visa Center, by category.
@@ -131,11 +124,10 @@ export default async function NvcWaitingListPage() {
 
       <div className="mt-8 border-l-4 border-primary bg-card p-5 shadow-hard">
         <p className="text-base leading-relaxed">
-          <b className="font-bold">Consular cases only, families included.</b> It counts people whose visas will be
-          processed at an embassy or consulate, with their spouses and children. Everyone adjusting status inside the US
-          is left out, so for employment categories it understates demand, in State&apos;s own words
-          &ldquo;significantly&rdquo;. Consulates also remove cases unlikely to move, so the list shrinks for reasons
-          other than visas issued.
+          <b className="font-bold">Consular cases only, families included.</b> Everyone adjusting status inside the US
+          is left out, so for employment categories it understates demand (&ldquo;significantly&rdquo;, in
+          State&apos;s words). Consulates also remove cases unlikely to move, so the list shrinks for reasons other
+          than visas issued.
         </p>
       </div>
 

@@ -9,13 +9,11 @@ deliberate rather than convenient - the defect these tests guard is inside a
 CTE with three window functions, and a canned fixture would pass with the
 query deleted.
 
-WHAT THIS FILE IS ABOUT. `perm_case_status.last_checked_at` is the rival tracker's
-column, inherited from the mirror seed, and the PERM sweep has never written
-it. `write_review_stages` used to take MIN/MAX of it and publish that as
-`seenFrom`/`seenTo`, which `/perm-rfi-audit` renders as a sentence about when
-the stages were read. Measured on production 2026-09-03: 66,771 pending cases
-carried a 2026-07 date and 12,187 carried none, on a morning when the sweep had
-asked DOL about every one of them.
+What this guards: the review-stage doc's `seenFrom`/`seenTo`, which
+`/perm-rfi-audit` renders as when the stages were read, come from the sweep's
+own run record. `perm_case_status.last_checked_at` is an inherited column the
+PERM sweep never writes, so a MIN/MAX of it described someone else's
+timestamp, not this sweep's.
 """
 from __future__ import annotations
 
@@ -290,8 +288,7 @@ def main() -> int:
     body = src[src.index("def main()"):]
     # The anchor is the sweep path's own assignment, `steps = tail_steps(`: the
     # --discover path calls tail_steps inside run_independently(...) earlier in
-    # main, and the argument list changed on 2026-09-24 when both passes began
-    # to walk, which is what broke the previous literal anchor.
+    # main, and an anchor on the argument list breaks whenever it changes.
     m = after(body, "record_sweep(", "steps = tail_steps(")
     check("main() records the sweep before it runs the doc writers",
           0 <= m["record_sweep("] < m["steps = tail_steps("],

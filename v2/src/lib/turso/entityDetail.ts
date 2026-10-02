@@ -342,9 +342,9 @@ export async function nameVariants(
   // A HALF-OPEN RANGE ON THE INDEX, NOT LIKE. `merge_key = root OR merge_key
   // LIKE 'root %'` cannot use idx_pe_merge (an OR, and a LIKE on a BINARY
   // column), so EXPLAIN showed it walking every row of the kind: 71,512
-  // employer rows per employer page render. Turso meters rows READ, and
-  // that one query, multiplied by the regenerations a cold ISR cache causes,
-  // was most of a 7.75-billion-row invoice (2026-09-02). Every key that is
+  // employer rows per employer page render. That one query, multiplied by the
+  // regenerations a cold page cache causes, was most of the database's read
+  // load. Every key that is
   // exactly `root` or starts with `root ` sorts in [root, root + "!"), because
   // the space (0x20) is the last character below "!" (0x21); nothing else
   // lands there. Measured plan: SEARCH perm_entities USING INDEX idx_pe_merge.
@@ -403,9 +403,9 @@ export interface SizeBand {
  * is asked for.
  */
 /**
- * Cached in Vercel's Data Cache, which SURVIVES A DEPLOYMENT while the ISR
- * route cache does not. Every entity page calls this, so after a deploy the
- * pages still regenerate but they no longer each re-run the query.
+ * Cached in Next's data cache, shared by every render in a release, so the
+ * entity pages that regenerate after a deploy run this query once per window
+ * between them rather than once each.
  *
  * Keyed on kind and rank because the band is a window around the rank, so
  * neighbours legitimately share an answer. Small result: five numbers.

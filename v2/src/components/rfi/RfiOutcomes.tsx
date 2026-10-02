@@ -1,6 +1,8 @@
 import { Fragment } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import type { BlendedRfiFunnel, RfiFunnel } from "@/lib/turso/rfi";
+import { MoreText } from "@/components/data/MoreText";
 
 /**
  * What happened to the cases that already went through an RFI.
@@ -69,15 +71,16 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
   return (
     <div>
       <div className="border-2 border-border bg-card p-4 sm:p-6">
+        <ChartTips label="What became of every RFI DOL issued">
         <Row label={`${everIssued.toLocaleString()} RFIs issued`}>
           <div
             className="h-full border-r-2 border-border bg-foreground/85"
             style={{ width: `${share(resolved)}%` }}
-            title={`Reached a decision: ${resolved.toLocaleString()} of ${everIssued.toLocaleString()}`}
+            data-tip={`Reached a decision\n${resolved.toLocaleString()} of ${everIssued.toLocaleString()} RFIs issued\n${share(resolved).toFixed(1)}%`}
           />
           <div
             className="h-full flex-1 bg-foreground/25"
-            title={`No decision yet: ${stillOpen.toLocaleString()} of ${everIssued.toLocaleString()}`}
+            data-tip={`No decision yet\n${stillOpen.toLocaleString()} of ${everIssued.toLocaleString()} RFIs issued\n${share(stillOpen).toFixed(1)}%`}
           />
         </Row>
 
@@ -107,16 +110,17 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
               across a luminance ramp without one of them landing on the page
               colour. So the bar carries proportion, the legend below carries
               the name, the count and the share for every segment, and each
-              segment carries its own title.
+              segment carries its own hover detail.
             */}
             <div
               className="h-full border-r-2 border-border last:border-r-0"
               style={{ width: `${share(s.n)}%`, backgroundColor: s.fill }}
-              title={`${s.label}: ${s.n.toLocaleString()} of ${everIssued.toLocaleString()} (${share(s.n).toFixed(1)}%)`}
+              data-tip={`${s.label}\n${s.n.toLocaleString()} of ${everIssued.toLocaleString()} RFIs issued\n${share(s.n).toFixed(1)}%${s.key === "certified" && certifiedOfResolved !== null ? `\n${certifiedOfResolved.toFixed(0)}% of those that reached a decision` : ""}`}
             />
             </Fragment>
           ))}
         </Row>
+        </ChartTips>
 
         <ul className="mt-4 grid gap-x-6 gap-y-2 sm:grid-cols-2">
           {outcomes.map((s) => (
@@ -158,11 +162,8 @@ export function RfiOutcomes({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }
             {certifiedOfResolved.toFixed(0)}% of the RFIs that reached a
             decision were certified
           </b>{" "}
-          ({certified.toLocaleString()} of {resolved.toLocaleString()}). Against
-          every RFI ever issued the figure is {share(certified).toFixed(0)}%,
-          because {stillOpen.toLocaleString()} of them have no decision yet.
-          Which number you want depends on whether you are asking how these
-          usually end or how many have ended.
+          ({certified.toLocaleString()} of {resolved.toLocaleString()}). Counting every RFI ever issued
+          it&apos;s {share(certified).toFixed(0)}%, since {stillOpen.toLocaleString()} haven&apos;t been decided.
         </p>
       ) : null}
     </div>
@@ -208,22 +209,24 @@ function Provenance({ funnel }: { funnel: RfiFunnel | BlendedRfiFunnel }) {
   if (observed.newIssued <= 0 && observed.resolved <= 0) return null;
   const since = observed.from ? ` since ${observed.from}` : "";
   return (
-    <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-muted-foreground">
-      <b className="font-bold text-foreground">Two windows, pooled.</b>{" "}
-      {base.everIssued.toLocaleString()} RFIs, {base.resolved.toLocaleString()}{" "}
-      of them resolved, come from a third-party aggregate frozen at{" "}
-      {fmtDay(base.observedAt)}. On top of that we have watched{" "}
-      {observed.newIssued.toLocaleString()} more be issued and{" "}
-      {observed.resolved.toLocaleString()} resolve ourselves{since}.{" "}
-      {observed.resolved > 0
-        // NOT "grows every day": measured 2026-09-18, ours was 4 resolutions
-        // against a frozen 2,151 in the 23 days since we started watching.
-        // An RFI takes months to resolve, so this share moves slowly.
-        ? `Our own observations are ${observedShare.toFixed(1)}% of the resolved total. An RFI takes months to resolve, so that share moves slowly.`
-        : "None of ours have resolved yet, so the percentage above is still entirely theirs."}{" "}
-      The two windows do not overlap: the frozen half is never re-read, so no
-      case is counted twice.
-    </p>
+    <MoreText gist={"Two sources pooled: a frozen third-party tally, plus RFIs we watched ourselves."} className="mt-4">
+      <p className="border-t-2 border-border pt-3 text-sm leading-relaxed text-muted-foreground">
+        <b className="font-bold text-foreground">Two windows, pooled.</b>{" "}
+        {base.everIssued.toLocaleString()} RFIs, {base.resolved.toLocaleString()}{" "}
+        of them resolved, come from a third-party aggregate frozen at{" "}
+        {fmtDay(base.observedAt)}. On top of that we have watched{" "}
+        {observed.newIssued.toLocaleString()} more be issued and{" "}
+        {observed.resolved.toLocaleString()} resolve ourselves{since}.{" "}
+        {observed.resolved > 0
+          // NOT "grows every day": our own resolutions are a tiny share
+          // against the frozen base, and an RFI takes months to resolve, so
+          // this share moves slowly.
+          ? `Our own observations are ${observedShare.toFixed(1)}% of the resolved total. An RFI takes months to resolve, so that share moves slowly.`
+          : "None of ours have resolved yet, so the percentage above is still entirely theirs."}{" "}
+        The two windows do not overlap: the frozen half is never re-read, so no
+        case is counted twice.
+      </p>
+    </MoreText>
   );
 }
 

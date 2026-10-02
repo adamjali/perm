@@ -6,7 +6,7 @@ import { FormField } from "@/components/forms/FormField";
 import { DateInput } from "@/components/forms/DateInput";
 import { FilingWindowIndicator, type FilingWindowData } from "@/components/forms/FilingWindowIndicator";
 import { Input } from "@/components/ui/input";
-import { RFIEntryList } from "@/components/forms/sections/RFIEntryList";
+import { RequestEntryList } from "@/components/forms/sections/RequestEntryList";
 import { differenceInDays, format, addDays } from "date-fns";
 import { useETA9089Section } from "@/components/forms/useCaseFormSection";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
@@ -381,7 +381,8 @@ export function ETA9089Section(props: ETA9089SectionProps) {
             Request for Information (RFI)
           </h4>
 
-          <RFIEntryList
+          <RequestEntryList
+            kind="rfi"
             minReceivedDate={values.eta9089FilingDate ? format(addDays(new Date(values.eta9089FilingDate + "T00:00:00"), 1), "yyyy-MM-dd") : undefined}
             receivedDisabled={
               !values.eta9089FilingDate

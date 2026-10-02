@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """The morning report: is everything healthy, and did anything cost more than it should.
 
-Adam, 2026-09-27: a daily check of health, price, every GitHub Action, the
-ingests, failures, retries, the stats and traffic, what was expected and what
-was not, run in the cloud and emailed every morning.
+A daily check of health, cost, every GitHub Action, the ingests, failures,
+retries, the stats and traffic, and what was and wasn't expected, emailed every
+morning.
 
 This script gathers the parts that live OUTSIDE Convex and writes one JSON
 report. `convex/dailyReport.ts` then adds what only Convex can see (users,
@@ -58,12 +58,10 @@ DATA_WORKFLOWS = {
     "Case status (direct from DOL)", "PWD case status (direct from DOL)",
     "DOL processing times", "Federal data ingest", "Ingest health",
     "PW and LCA disclosure ingest", "PERM history ingest (FY2008 to FY2023)",
-    "USCIS I-485 inventory", "USCIS quarterly data", "Watched cases (hourly)",
-    "Backup observations",
+    "Watched cases (hourly)", "Backup observations",
 }
 
-# Pages a visitor reads every day. Each must answer 200 to a plain request
-# (firewall rule 12 lets every cheap path through).
+# Pages a visitor reads every day. Each must answer 200 to a plain request.
 PROBES = ["/", "/perm-queue", "/perm-processing-times", "/visa-bulletin",
           "/perm-employers", "/tools", "/sitemap.xml", "/llms.txt"]
 
@@ -107,7 +105,7 @@ def spike_note(today: float, prior: list[float], unit: str, *, drop: bool = Fals
 
 
 def et_time(iso) -> str | None:
-    """'2026-09-27T19:54:52+00:00' -> 'Sep 27, 3:54 PM EDT' (Adam's clock)."""
+    """'2026-09-27T19:54:52+00:00' -> 'Sep 27, 3:54 PM EDT' (the owner's clock)."""
     try:
         t = dt.datetime.fromisoformat(str(iso).replace("Z", "+00:00")).astimezone(ET)
     except ValueError:
@@ -182,9 +180,8 @@ def github_section(since: dt.datetime) -> dict:
         w = by[name]
         bits = [f"{w['runs']} run{'s' if w['runs'] != 1 else ''}"]
         if w["failed"]:
-            # A failure the workflow has since passed is history, not a task:
-            # Sep 30's report called seven fixed failures FAILING (Adam: "i just
-            # want it one day to be all good"). Only the still-failing ones rank.
+            # A failure the workflow has since passed is history, not a task,
+            # so only the still-failing ones rank.
             if recovered(w):
                 bits.append(f"{w['failed']} failed, then passed at {et_time(w['last_ok']) or w['last_ok']}")
             else:
@@ -238,16 +235,6 @@ def health_section() -> dict:
                        lines)
     return section("health", "Ingests and data freshness", "fail",
                    "the health check failed", lines or ["(no verdict line: read the Ingest health run)"])
-
-
-# ── Turso: retired Sep 29 2026 ──────────────────────────────────────────
-# The database moved to the site's own server on Sep 28 2026 (the "server"
-# section judges it, and the R2 lines its backups). Turso's bill section was
-# removed with the account.
-
-
-# The site left Vercel on Sep 28 2026 and its plan was stopped; the Vercel
-# bill section went with it (Sep 29 2026), the same way Turso's did.
 
 
 # ── the site itself ───────────────────────────────────────────────────────
@@ -317,19 +304,30 @@ def site_section() -> dict:
 
 
 def data_section(now_ms: int) -> dict:
-    from lib_turso import Turso  # noqa: PLC0415 - only needed here
+    from lib_turso import Turso, query_rows  # noqa: PLC0415 - only needed here
 
     db = Turso(os.environ["TURSO_DATABASE_URL"], os.environ["TURSO_AUTH_TOKEN"])
 
     def one(sql, args=()):
-        rows = db.execute(sql, list(args))["response"]["result"]["rows"]
-        return [None if c["type"] == "null" else c["value"] for c in rows[0]] if rows else None
+        rows = query_rows(db, sql, list(args))
+        return rows[0] if rows else None
 
     day_ago = now_ms - 86_400_000
     moved = one("SELECT COUNT(*) FROM perm_case_events WHERE changed_at >= ?", [day_ago])
     frontier = one("SELECT json FROM perm_docs WHERE key = 'discovery_frontier'")
     score = one("SELECT json FROM perm_docs WHERE key = 'scorecard_summary'")
     lines = [f"PERM status changes recorded in 24 h: {int(moved[0]) if moved else 0:,}"]
+    # The other programs on the same counter, one line: a program whose sweep
+    # stopped writing shows here as a zero beside the others.
+    others = []
+    for label, table in (("wage requests", "pwd_case_events"), ("LCAs", "lca_case_events"),
+                         ("H-2A and H-2B", "seasonal_case_events")):
+        try:
+            got = one(f"SELECT COUNT(*) FROM {table} WHERE changed_at >= ?", [day_ago])
+            others.append(f"{label} {int(got[0]) if got else 0:,}")
+        except Exception:  # noqa: BLE001 - a missing table is a line, not a crash
+            others.append(f"{label} unreadable")
+    lines.append("Other programs, status changes in 24 h: " + ", ".join(others))
     status = "ok"
     if frontier and frontier[0]:
         f = json.loads(frontier[0])
@@ -354,12 +352,11 @@ def traffic_section() -> dict:
     key = os.environ.get("POSTHOG_PERSONAL_API_KEY")
     if not key:
         return section("traffic", "Traffic", "off", "set the POSTHOG_PERSONAL_API_KEY secret to read visits")
-    # HogQL's toDate takes one argument: shift the zone first (Sep 28, a 400 on the first run).
+    # HogQL's toDate takes one argument, so the zone is shifted first.
     # "Likely people" are visitors who were on a phone or read more than one
-    # page. About half of all visitors are single-page desktop visits from
-    # crawlers wearing browser user agents (measured Sep 30 2026), so the raw
-    # visitor count overstates the audience by about 2x. An estimate, and
-    # labelled as one in the report.
+    # page: about half of all visitors are single-page desktop visits from
+    # crawlers wearing browser user agents, so the raw count overstates the
+    # audience. An estimate, and labelled as one in the report.
     q = ("SELECT d, sum(v) AS views, count() AS visitors, countIf(v > 1 OR m > 0) AS people FROM ("
          "SELECT toDate(toTimeZone(timestamp, 'America/New_York')) AS d, person_id, count() AS v, "
          "countIf(properties.$device_type = 'Mobile') AS m FROM events WHERE event = '$pageview' "
@@ -406,9 +403,8 @@ def sentry_section() -> dict:
 
 def browser_errors_section() -> dict:
     """Errors in visitors' browsers. They go to PostHog, not Sentry (the
-    Sentry client runs only on the sign-in pages and in the app), so before
-    Oct 1 2026 this report never saw them: a header loop that crashed public
-    pages ("Maximum update depth exceeded") sat there unread for a day.
+    Sentry client runs only on the sign-in pages and in the app), so this is
+    the only place the report sees them.
 
     Every kind of error in the last 24 hours is counted, none dropped: the
     lines list the ones seen in 2+ sessions and the ones never seen in the 14
@@ -420,9 +416,9 @@ def browser_errors_section() -> dict:
     if not key:
         return section("browser", "Errors in visitors' browsers", "off",
                        "set the POSTHOG_PERSONAL_API_KEY secret to read browser errors")
-    # Errors before the fix deploy (Sep 30 2026, 10:42 PM EDT) are fixed or now
-    # filtered at the source; without this floor the first report would page for
-    # them. It stops mattering 24 hours later.
+    # Errors from before the Sep 30 2026 fix deploy (10:42 PM EDT) are fixed or
+    # filtered at the source. This floor stops mattering once the 24-hour window
+    # passes it, and can then be deleted with its test.
     recent = ("timestamp > now() - INTERVAL 24 HOUR "
               "AND timestamp > toDateTime('2026-10-01 02:42:00')")
     q = ("SELECT substring(toString(properties.$exception_values), 1, 140) AS msg, "
@@ -563,7 +559,7 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
             warns.append(f"last restore test {rest_d:.0f} days ago")
         lines.append(f"Restore test: {rest.get('tables')} tables, {rest.get('rows', 0):,} rows, {et_time(rest['at'])}")
 
-    # The two sealed copies (Sep 29 2026): the server's secrets and config, and
+    # The two sealed copies: the server's secrets and config, and
     # the Convex export. Absent from a doc written before they existed means
     # "not set up", which is itself worth a warning, never a pass.
     for key, what in (("serverOk", "sealed server copy (secrets and config)"),
@@ -632,12 +628,10 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
 
 
 def server_section(now_ms: int) -> dict:
-    from lib_turso import Turso  # noqa: PLC0415 - only needed here
+    from lib_turso import Turso, read_doc  # noqa: PLC0415 - only needed here
 
     db = Turso(os.environ["TURSO_DATABASE_URL"], os.environ["TURSO_AUTH_TOKEN"])
-    rows = db.execute("SELECT json FROM perm_docs WHERE key = 'server_health'")["response"]["result"]["rows"]
-    doc = json.loads(rows[0][0]["value"]) if rows else None
-    return server_verdict(doc, now_ms)
+    return server_verdict(read_doc(db, "server_health"), now_ms)
 
 
 # ── assembly ──────────────────────────────────────────────────────────────

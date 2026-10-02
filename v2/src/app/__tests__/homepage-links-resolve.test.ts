@@ -26,7 +26,6 @@ import { describe, expect, it } from "vitest";
 
 const APP = join(process.cwd(), "src/app");
 const COMPONENTS = [
-  "src/components/home/StageStrip.tsx",
   "src/components/home/LiveDataBand.tsx",
   // Added 2026-08-30. The hero is the homepage's most-clicked link surface and
   // it was not covered, because it writes its destinations as JSX attributes
@@ -34,6 +33,10 @@ const COMPONENTS = [
   // `{ href: "..." }` config objects the original pattern was written for. A
   // gate that cannot see its subject reads exactly like a pass.
   "src/components/home/HeroSection.tsx",
+  // Added 2026-10-01 with the homepage rework: the road replaced the stage
+  // strip and the tools section on the page, and the two halves gained links.
+  "src/components/home/RoadSection.tsx",
+  "src/components/home/AudienceBlocks.tsx",
 ];
 
 /** Route segments Next treats as grouping only, so they vanish from the URL. */
@@ -66,7 +69,7 @@ describe("homepage internal links", () => {
 
   it.each(COMPONENTS)("%s links only to routes that exist", (rel) => {
     const src = readFileSync(join(process.cwd(), rel), "utf8");
-    // Both shapes: the `{ href: "/x" }` config objects StageStrip builds its
+    // Both shapes: the `{ href: "/x" }` config objects a section builds its
     // cards from, and the plain JSX attributes the hero writes. `action` is in
     // here too - a form posting at a route that does not exist is a dead link
     // that also loses what the visitor typed. Leading `/` keeps external URLs

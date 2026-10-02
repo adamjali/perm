@@ -1,14 +1,11 @@
 /**
  * The About page.
  *
- * WHY THIS PAGE EXISTS (measured 2026-09-07). For the query "perm tracker",
- * Search Console showed the homepage at 410 to 849 impressions a day through
- * Aug 26 and under 30 a day from Aug 27, after a rewrite removed the product's
- * self-description; Google moved the query to /faq and /terms, the two pages
- * that still said the name most often. Google's site-names doc lists an About
- * page's contents (a named publisher, a founding date, "web references to the
- * site") among what it corroborates a name against, and this site had no such
- * page: /about answered 404 while every named competitor had one.
+ * WHY THIS PAGE EXISTS. Google's site-names doc lists an About page's
+ * contents (a named publisher, a founding date, "web references to the
+ * site") among what it corroborates a site's name against, and a brand query
+ * goes to whichever page says the name most plainly; without one it drifts
+ * to pages like /faq and /terms.
  *
  * Every fact here is read from `src/lib/constants/about.ts`, the same module
  * the homepage block and the Organization schema read, so the three surfaces
@@ -21,9 +18,10 @@ import { withSocialCard } from "@/lib/socialCard";
 import Image from "next/image";
 import Link from "next/link";
 
+import { ArrowRightIcon, BriefcaseIcon, HourglassIcon } from "@phosphor-icons/react/ssr";
+
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { SCHEMA_IDS } from "@/lib/structuredData";
 import {
   ABOUT_ONE_LINER,
@@ -40,6 +38,7 @@ import {
   PRODUCT_HUNT_URL,
   X_PROFILE_URL,
 } from "@/lib/constants/externalLinks";
+import { SITE_URL } from "@/lib/constants/site";
 
 const TITLE = "About PERM Tracker";
 const DESCRIPTION =
@@ -77,11 +76,7 @@ const h2 = "mt-12 font-heading text-xl font-bold tracking-tight sm:text-2xl";
 const p = "mt-4 text-base leading-relaxed text-foreground/90";
 
 export default function AboutPage() {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: "About", href: "/about" },
-  ]);
+  const baseUrl = SITE_URL;
   // AboutPage whose subject is the Organization node every page already
   // carries, by @id, so Google attaches these facts to the same entity rather
   // than to a second, inline copy of it.
@@ -96,39 +91,35 @@ export default function AboutPage() {
   };
 
   return (
-    // FULL WIDTH, NOT FULL-WIDTH PROSE. Adam: "about and contact should take
-    // full width". A 768px column in a 1400px frame was the narrow thing; a
-    // 1400px line of prose would be the unreadable thing (a 200-character
-    // measure). So the frame is the site's, and inside it the reading column
-    // keeps a book measure while an aside carries the person, the dates and
-    // the contact links beside it. Below `lg` the aside follows the prose.
+    // The site's full-width frame, with a reading column at a book measure
+    // and an aside beside it for the person, dates and contact links. Below
+    // `lg` the aside follows the prose.
     <div className="mx-auto w-full max-w-[1400px] px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <JsonLdScript schema={breadcrumb} />
       <JsonLdScript schema={aboutSchema} />
 
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-sm">
-        About
-      </p>{" "}
-      <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
         About PERM Tracker
       </h1>{" "}
-      <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90 sm:text-xl">
+      <div className="mt-6 grid gap-12 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16">
+      <div className="min-w-0 max-w-[52rem]">
+      <p className="max-w-3xl text-lg leading-relaxed text-foreground/90 sm:text-xl">
         {ABOUT_ONE_LINER} It&apos;s not a law firm, it isn&apos;t affiliated with
         the Department of Labor, and nothing on it is legal advice.
       </p>{" "}
-      <p className="mt-4 max-w-3xl text-base leading-relaxed text-foreground/80 sm:text-lg">
-        {/* Both halves, stated in full, and the brand name linking home: the
-            homepage is the page that should own the name (2026-09-15). */}
-        <Link href="/" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 transition-colors hover:decoration-primary">
-          PERM Tracker
-        </Link>{" "}
-        has two halves, both free. {ABOUT_TWO_HALVES.waiting}{" "}
-        {ABOUT_TWO_HALVES.practice}
-      </p>{" "}
+      {/* Both halves, side by side and equal. */}
+      <h2 className="mt-10 font-heading text-xl font-black">Two halves, both free</h2>{" "}
+      <ul className="mt-4 grid grid-cols-1 gap-5 md:grid-cols-2 [&>*]:min-w-0">
+        <li className="border-2 border-border bg-card p-5 shadow-hard-sm">
+          <HourglassIcon aria-hidden="true" className="size-8 text-primary" weight="bold" />{" "}
+          <p className="mt-3 text-base leading-relaxed text-foreground/85">{ABOUT_TWO_HALVES.waiting}</p>
+        </li>{" "}
+        <li className="border-2 border-border bg-foreground p-5 text-background shadow-hard-sm">
+          <BriefcaseIcon aria-hidden="true" className="size-8 text-primary-on-ink" weight="bold" />{" "}
+          <p className="mt-3 text-base leading-relaxed text-background/85">{ABOUT_TWO_HALVES.practice}</p>
+        </li>
+      </ul>{" "}
 
-      <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-16">
-      <div className="min-w-0 max-w-[52rem]">
-      <figure className="overflow-x-auto overscroll-x-none border-2 border-border bg-card p-4 shadow-hard sm:p-6">
+      <figure className="mt-10 overflow-x-auto overscroll-x-none border-2 border-border bg-card p-4 shadow-hard sm:p-6">
         <svg viewBox="0 0 760 300" className="w-full min-w-[640px] text-foreground" role="img" aria-labelledby="data-flow-title">
           <title id="data-flow-title">How the site works: DOL&apos;s case index is asked every night and on every lookup, DOL&apos;s disclosure files are read each quarter, USCIS and the State Department each month; all of it lands in the pages: case status, processing times, wages and deadlines.</title>
           <text x="20" y="28" fontSize="13" fontWeight="700" fill="currentColor" fontFamily="ui-monospace, SFMono-Regular, Menlo, monospace">FEDERAL SOURCES</text>
@@ -166,37 +157,38 @@ export default function AboutPage() {
       </figure>
 
       <h2 className={h2}>What it does</h2>{" "}
-      <p className={p}>
-        <Link href="/perm-case-status" className={link}>Look up a case number</Link>{" "}
-        and see its federal record and how far DOL&apos;s queue has reached.{" "}
-        <Link href="/case-search" className={link}>Search an employer, law firm, state or occupation</Link>{" "}
-        across PERM, prevailing wage and H-1B filings. Read the{" "}
-        <Link href="/perm-processing-times" className={link}>processing-time</Link>,{" "}
-        <Link href="/perm-wages" className={link}>wage</Link> and{" "}
-        <Link href="/perm-decision-activity" className={link}>decision</Link> data DOL
-        publishes, each figure with the window it was measured over. If you file
-        cases,{" "}
-        <Link href="/for-attorneys" className={link}>track every deadline across a caseload</Link>{" "}
-        with reminders.
-      </p>{" "}
+      <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {[
+          { href: "/perm-case-status", label: "Look up a case number" },
+          { href: "/case-search", label: "Search every filing by employer or firm" },
+          { href: "/perm-processing-times", label: "DOL's processing times" },
+          { href: "/perm-wages", label: "Wages by occupation" },
+          { href: "/perm-decision-activity", label: "Decisions, day by day" },
+          { href: "/for-attorneys", label: "Track a caseload's deadlines" },
+        ].map((l) => (
+          <li key={l.href}>
+            <Link href={l.href} className={`${link} inline-flex min-h-[44px] items-center gap-2`}>
+              <ArrowRightIcon aria-hidden="true" className="size-4 shrink-0" weight="bold" />
+              {l.label}
+            </Link>{" "}
+          </li>
+        ))}
+      </ul>{" "}
 
       <h2 className={h2}>Who&apos;s behind it</h2>{" "}
       <p className={p}>
-        <strong className="font-semibold">{SABRINA.name}</strong> runs PERM Tracker.
+        {/* The brand name links home: the homepage is the page that should own the name. */}
+        <strong className="font-semibold">{SABRINA.name}</strong> runs{" "}
+        <Link href="/" className={link}>PERM Tracker</Link>.
         She&apos;s an immigration attorney who files these cases, and she started
         it because the people she files for had no way to see where a case stood
         between the filing and the decision. She still files them, and her
         clients&apos; questions shape what the site answers first.
       </p>{" "}
       <p className={p}>
-        She brings both sides of a filing to the site: the attorney&apos;s, which
-        deadlines matter and what an audit actually asks for, and her
-        clients&apos;, what it&apos;s like to wait on a case with nothing to check.
-        She&apos;s also the voice of the product&apos;s email.
-      </p>{" "}
-      <p className={p}>
-        Both sides of a filing have a say in what the site does: the people
-        waiting on a case and the attorneys who file for them.
+        She brings both sides of a filing to the site: the attorney&apos;s
+        deadlines and audits, and her clients&apos; wait with nothing to check.
+        She&apos;s also the voice of the site&apos;s email.
       </p>{" "}
 
       <h2 className={h2}>Where the data comes from</h2>{" "}

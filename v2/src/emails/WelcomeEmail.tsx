@@ -16,6 +16,8 @@
 import { Text, Section, Link, Hr } from "@react-email/components";
 import { EmailLayout } from "./components";
 import { ctaSectionStyle } from "./components/emailStyles";
+import { REVIEW_URL } from "../lib/constants/externalLinks";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface WelcomeEmailProps {
   /** User's display name */
@@ -29,7 +31,7 @@ export interface WelcomeEmailProps {
  */
 export function WelcomeEmail({
   userName,
-  baseUrl = "https://permtracker.app",
+  baseUrl = SITE_URL,
 }: WelcomeEmailProps) {
   return (
     <EmailLayout previewText="PERM Tracker helps you manage and monitor your cases in one place.">
@@ -165,7 +167,7 @@ export function WelcomeEmail({
           actually need. What features are working well? What would you like to
           see next?{" "}
           <Link
-            href="https://senja.io/p/perm-tracker/r/FXAjpr"
+            href={REVIEW_URL}
             className="em-link-blue"
             style={styles.inlineLink}
           >
@@ -307,7 +309,6 @@ const styles = {
 /** Preview props for React Email dev server. */
 WelcomeEmail.PreviewProps = {
   userName: "Jordan",
-  baseUrl: "https://permtracker.app",
+  baseUrl: SITE_URL,
 } satisfies WelcomeEmailProps;
 
-export default WelcomeEmail;

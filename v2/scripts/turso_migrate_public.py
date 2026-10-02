@@ -1,22 +1,11 @@
 #!/usr/bin/env python3
-"""Load the rest of the PUBLIC data surface into Turso.
+"""Load the rest of the public data surface into the database.
 
-Companion to turso_migrate.py, which loads the 373,939 case rows. This one
-loads everything else the public pages read: entities, wage cells, the
-aggregate documents, and the visa bulletin history.
-
-The point is not only cost. With the case table gone from Convex the site
-would still have been dark, because /perm-employers, /perm-wages and the
-state pages read permEntities and permDisclosureStats, which were disabled
-along with everything else. Moving the whole public surface means a
-data-volume problem can never take the public site down again. Convex keeps
-what it should: accounts, user-tracked cases, chat, audit logs.
-
-ONE CONSTRAINT DISAPPEARS HERE. Convex caps a document at 1 MB, which is why
-perm-aggregate.json carries only the top 250 employers when the real list is
-16,305 - the cap was an architectural limit wearing an editorial disguise.
-SQLite has no such cap, so entities live in a real table, every one of them,
-and the aggregate document keeps only the genuinely document-shaped series.
+The companion to turso_migrate.py, which loads the case rows. This loads
+everything else the public pages read from the quarterly payload: entities,
+wage cells, the aggregate documents, and the visa bulletin history. Every
+entity lives in a real table, all of them; the aggregate document keeps only
+the genuinely document-shaped series.
 """
 from __future__ import annotations
 
@@ -27,32 +16,20 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from ingest_perm_disclosure import entity_key  # noqa: E402
-from lib_turso import Turso, lit  # noqa: E402
-from store_entities import plan_aliases, plan_sticky_slugs  # noqa: E402
+from entity_identity import entity_key  # noqa: E402
+from lib_turso import Turso, insert_rows, query_rows  # noqa: E402
+from lib_slugs import plan_aliases, plan_sticky_slugs  # noqa: E402
 
 SCHEMA = [
-    # ONLY these two are ours to rebuild wholesale: every row in them is
-    # derived from the payload this run just parsed, so a drop is correct.
+    # Only these two are rebuilt wholesale: every row in them is derived from the
+    # payload this run parsed. They are built alongside as *_next tables and
+    # swapped in one transaction (swap()) only when VERIFY passes, so pages never
+    # read a missing or half-filled table and a failed load leaves the old data.
     #
-    # `perm_docs` and `visa_bulletins` are NOT, and dropping them was a live
-    # data-loss bug (found 2026-08-29, before it ever ran). We own three of
-    # perm_docs' ten keys; the other seven belong to other writers, and two of
-    # them - `live_census` and `decided_month_percentiles` - are written only
-    # by the nightly case-status sweep. Dropping the table meant the public
-    # case lookup fell back to its pre-census SQL (~1.8M row reads per lookup,
-    # the path that got Turso reads BLOCKED in August) until the next 04:10 ET
-    # sweep. And `visa_bulletins` is an ACCUMULATOR: it held 84 months
-    # (2019-10..2026-09) built up over time and upgraded by source rank, while
-    # this run's artifact carries only `--months 18` - so a drop-and-reload
-    # destroyed 66 months of history and every primary-source upgrade in them.
-    # BUILT ALONGSIDE, SWAPPED IN ONE TRANSACTION (Sep 28 2026). These two
-    # used to be dropped here and refilled over several minutes, so every
-    # entity page rendered in that window read no table or half of one:
-    # 497 "no such column" and "no such table: perm_entities" errors on Sep 26
-    # (Sentry JAVASCRIPT-NEXTJS-4E/4F). The *_next tables are filled and
-    # counted while the live ones keep serving; swap() replaces them only
-    # when VERIFY passes, so a failed load leaves the site on the old data.
+    # `perm_docs` and `visa_bulletins` are never dropped. Other writers own most of
+    # perm_docs' keys (the nightly sweep's census among them), and visa_bulletins is
+    # an accumulator built up over time and upgraded by source rank, while this
+    # run's artifact carries only the recent months.
     "DROP TABLE IF EXISTS perm_entities_next",
     "DROP TABLE IF EXISTS perm_wage_stats_next",
     """CREATE TABLE perm_entities_next (
@@ -120,8 +97,8 @@ SCHEMA = [
 INDEXES = [
     "CREATE INDEX idx_pe_kind_rank ON perm_entities(kind, rank)",
     # Expression index for fieldDistribution's cohort filter. The SQL text in
-    # src/lib/turso/entities.ts must match this expression exactly or SQLite
-    # walks the whole kind (71k rows per entity page render, 2026-09-02).
+    # src/lib/turso/entities.ts must match this expression exactly, or SQLite
+    # walks the whole kind on every entity page render.
     "CREATE INDEX idx_pe_kind_decided ON perm_entities(kind, (IFNULL(certified, 0) + IFNULL(denied, 0)))",
     "CREATE INDEX idx_pe_kind_total ON perm_entities(kind, total DESC)",
     "CREATE INDEX idx_pe_kind_name ON perm_entities(kind, name)",
@@ -132,16 +109,6 @@ INDEXES = [
 
 
 def log(m): print(m, flush=True)
-
-
-def chunked(rows, n):
-    buf = []
-    for r in rows:
-        buf.append(r)
-        if len(buf) >= n:
-            yield buf; buf = []
-    if buf:
-        yield buf
 
 
 def identity_key(kind: str, name: str, code) -> str:
@@ -156,22 +123,6 @@ def count_kept(kind: str, assigned, name_of, prior: dict[str, str]) -> int:
                if prior.get(identity_key(kind, name_of(item), item.get("code"))) == slug)
 
 
-def insert_many(db, table, columns, rows, per_stmt=400, per_req=4):
-    ph = "(" + ",".join("?" * len(columns)) + ")"
-    head = f"INSERT OR REPLACE INTO {table} ({','.join(columns)}) VALUES "
-    pending, n = [], 0
-    for batch in chunked(rows, per_stmt):
-        pending.append({"type": "execute", "stmt": {
-            "sql": head + ",".join([ph] * len(batch)),
-            "args": [lit(v) for row in batch for v in row]}})
-        n += len(batch)
-        if len(pending) >= per_req:
-            db.pipeline(pending + [{"type": "close"}]); pending = []
-    if pending:
-        db.pipeline(pending + [{"type": "close"}])
-    return n
-
-
 def main() -> int:
     positional = [a for a in sys.argv[1:] if not a.startswith("--")]
     art = pathlib.Path(positional[0] if positional else "/tmp/ingest-artifact/federal-payloads")
@@ -183,20 +134,9 @@ def main() -> int:
     wages = json.load(open(art / "perm-wages.json"))
     meta = json.load(open(art / "perm-cases.ndjson.gz.meta.json"))
 
-    # The visa bulletin is OPTIONAL, and it is the only one of the four that
-    # is. Its own workflow step is `continue-on-error` because it reads the
-    # Internet Archive, a free public service that has slow days - and on
-    # 2026-08-29 the Archive refused every connection, so the script correctly
-    # declined to write a short series and produced no file at all. That took
-    # the entire corpus load down with it: 21,748 freshly-diffed case rows
-    # loaded, and then a hard FileNotFoundError on a file whose own step is
-    # allowed to fail.
-    #
-    # Missing is now simply "add no months", which is SAFE ONLY BECAUSE this
-    # script no longer drops the table. When it dropped and reloaded, the file
-    # was structurally mandatory: no payload meant no bulletins at all. As an
-    # accumulator, absent input leaves all 84 stored months exactly where they
-    # are, and the next run with a working Archive adds whatever is new.
+    # The visa bulletin is the one optional input: its workflow step reads the
+    # Internet Archive, which has slow days, and may produce no file. Missing
+    # simply adds no months, which is safe because the table is an accumulator.
     bulletin_path = art / "visa-bulletin.json"
     if bulletin_path.exists():
         bulletins = json.load(open(bulletin_path))
@@ -209,10 +149,9 @@ def main() -> int:
     db = Turso()
     log(f"  target: {db.url}")
 
-    # Baseline the two ACCUMULATOR tables BEFORE the schema runs. Reading them
-    # afterwards would make the check self-fulfilling: if a DROP for either one
-    # were ever re-added to SCHEMA, "held before" would read 0 and VERIFY would
-    # sail straight over the loss. Taken here, a drop shows up as a mismatch.
+    # Baseline the two accumulator tables before the schema runs: read afterwards,
+    # a DROP re-added to SCHEMA would make "held before" 0 and VERIFY would pass
+    # over the loss.
     def count_or_zero(table: str) -> int:
         try:
             return int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
@@ -221,18 +160,16 @@ def main() -> int:
 
     bulletins_before = count_or_zero("visa_bulletins")
 
-    # STICKY SLUGS: read what every entity is called NOW, before the schema
-    # drops the table. A rebuild used to assign `-2`/`-3` in volume order,
-    # and volume order changes every quarter, so two spellings of one firm
-    # swapped URLs and every inbound link swapped with them. An entity keeps
-    # the slug it holds; only newcomers are assigned; every slug that no
-    # entity kept gets an alias row, or the run refuses.
+    # Sticky slugs: read what every entity is called now, before the rebuild. An
+    # entity keeps the slug it holds (volume order changes every quarter, and
+    # reassigning `-2`/`-3` would swap URLs between firms); only newcomers are
+    # assigned, and every slug no entity kept gets an alias row, or the run
+    # refuses.
     prior_slug: dict[str, dict[str, str]] = {}     # kind -> name -> slug
     prior_key: dict[str, dict[str, str]] = {}      # kind -> slug -> merge key
     try:
-        res = db.execute("SELECT kind, name, slug, merge_key, code FROM perm_entities")
-        for r in res["response"]["result"]["rows"]:
-            kind, name, slug, key, code = (None if c["type"] == "null" else c["value"] for c in r)
+        for kind, name, slug, key, code in query_rows(
+                db, "SELECT kind, name, slug, merge_key, code FROM perm_entities"):
             prior_slug.setdefault(kind, {})[identity_key(kind, name, code)] = slug
             prior_key.setdefault(kind, {})[slug] = key or ""
     except Exception:  # noqa: BLE001 - first run: no table yet
@@ -261,9 +198,8 @@ def main() -> int:
         alias_rows.extend((kind, old, target) for old, target in aliases)
         unresolved_all.extend((kind, old) for old in unresolved)
         planned[kind] = [(slug, name_of(item), item) for slug, item in assigned]
-        # Counted by the SAME key the planner used: by the bare name an
-        # occupation never matched (its key carries the SOC code), so the
-        # log read "0 kept, 1,410 new" over 1,410 unchanged slugs (Sep 29).
+        # Counted by the same key the planner used (an occupation's key carries
+        # its SOC code), so the log's kept and new counts are true.
         kept = count_kept(kind, assigned, name_of, prior_slug.get(kind, {}))
         log(f"    {kind:11s} {len(assigned):>6,} slugs: {kept:,} kept, "
             f"{len(assigned) - kept:,} new, {len(aliases):,} aliased, {len(unresolved):,} unresolved")
@@ -292,7 +228,7 @@ def main() -> int:
                 item.get("medianDays"), item.get("medianAnnualWage"),
                 item.get("state"), item.get("code"),
             ))
-        n = insert_many(db, "perm_entities_next",
+        n = insert_rows(db, "perm_entities_next",
                         ["kind", "slug", "name", "merge_key", "rank", "total",
                          "certified", "denied", "median_days",
                          "median_annual_wage", "state", "code"], out)
@@ -308,7 +244,7 @@ def main() -> int:
         kind TEXT NOT NULL, slug TEXT NOT NULL, target_slug TEXT NOT NULL,
         PRIMARY KEY (kind, slug))""")
     if alias_rows:
-        insert_many(db, "perm_entity_alias", ["kind", "slug", "target_slug"], alias_rows)
+        insert_rows(db, "perm_entity_alias", ["kind", "slug", "target_slug"], alias_rows)
         for kind, old, target in alias_rows:
             db.execute("UPDATE perm_entity_alias SET target_slug = ? "
                        "WHERE kind = ? AND target_slug = ? AND slug <> ?",
@@ -322,16 +258,16 @@ def main() -> int:
         r.get("p25"), r.get("p50"), r.get("p75"), r.get("p90"), r.get("p95"),
         r.get("mean"), json.dumps(r.get("histogram")),
     ) for r in wages.get("rows", [])]
-    nw = insert_many(db, "perm_wage_stats_next",
+    nw = insert_rows(db, "perm_wage_stats_next",
                      ["kind", "key", "soc_code", "soc_title", "state",
                       "fiscal_year", "count", "p5", "p10", "p25", "p50", "p75",
                       "p90", "p95", "mean", "histogram"], wrows)
     log(f"    wage cells  {nw:>6,}")
 
     # ---- documents -----------------------------------------------------
-    # The entity arrays are deliberately dropped from the stats document:
-    # they now live in perm_entities in full, and keeping a truncated copy
-    # here is how the top-250 version silently became the source of truth.
+    # The entity arrays are dropped from the stats document: they live in
+    # perm_entities in full, and a truncated copy here would become a second,
+    # wrong source of truth.
     stats = {k: v for k, v in payload.items()
              if k not in ("topEmployers", "topAttorneys", "topOccupations")}
     docs = [
@@ -339,40 +275,31 @@ def main() -> int:
         ("cases_meta", json.dumps(meta), stamp),
         ("wage_meta", json.dumps({k: v for k, v in wages.items() if k != "rows"}), stamp),
     ]
-    nd = insert_many(db, "perm_docs", ["key", "json", "computed_at"], docs, per_stmt=1)
+    nd = insert_rows(db, "perm_docs", ["key", "json", "computed_at"], docs, per_stmt=1)
     log(f"    documents   {nd:>6,}")
 
     # ---- visa bulletins ------------------------------------------------
-    # ADD ONLY WHAT IS MISSING. This table is an accumulator: it holds every
-    # month back to 2019-10, and ingest_visa_bulletin.py decides by SOURCE_RANK
-    # when a month may be replaced (a saved primary-source page outranks an
-    # archive capture, which outranks the mirror). This run's artifact is a
-    # plain `--months 18` archive pull, so an unconditional INSERT OR REPLACE
-    # would silently DOWNGRADE any month already upgraded to a better source.
-    # Skipping months we already hold leaves that decision where it belongs,
-    # and a fresh database still gets the full artifact.
-    have_months = set()
-    res = db.execute("SELECT bulletin_month FROM visa_bulletins")
-    for r in res["response"]["result"]["rows"]:
-        have_months.add(r[0]["value"])
+    # Add only what is missing. ingest_visa_bulletin.py decides by SOURCE_RANK
+    # when a month may be replaced, and this artifact is a plain archive pull, so
+    # replacing a held month could downgrade it. A fresh database still gets the
+    # full artifact.
+    have_months = {r[0] for r in query_rows(db, "SELECT bulletin_month FROM visa_bulletins")}
 
     brows = [(
         b["bulletinMonth"], b.get("sourceUrl"), b.get("archivedAt"),
         json.dumps(b.get("finalAction")), json.dumps(b.get("datesForFiling")), stamp,
     ) for b in bulletins.get("bulletins", [])
         if b["bulletinMonth"] not in have_months]
-    nb = insert_many(db, "visa_bulletins",
+    nb = insert_rows(db, "visa_bulletins",
                      ["bulletin_month", "source_url", "archived_at",
                       "final_action", "dates_for_filing", "computed_at"], brows)
     log(f"    bulletins   {nb:>6,} new"
         f"  ({len(have_months):,} already held, left untouched)")
 
-    # Verify from the TABLES, never from the counters that wrote them.
-    #
-    # Two different invariants, because two of these tables are rebuilt and two
-    # are added to. Asserting "count(*) == rows I wrote" on a table we only
-    # append to would be wrong in the dangerous direction: it passes only when
-    # every pre-existing row is gone.
+    # Verify from the tables, never from the counters that wrote them, with one
+    # invariant for the rebuilt tables and another for the accumulators: on a
+    # table we only add to, "count(*) == rows written" would pass only when every
+    # earlier row was gone.
     log("  VERIFY")
     ok = True
 
@@ -385,11 +312,9 @@ def main() -> int:
             ok = False
         log(f"    {flag} {table:16s} {got:>6,} (expected {expect:,})")
 
-    # Preserved + added to: every row we held before must STILL be there, plus
-    # whatever we just added. This is the check that would have caught the
-    # drop-and-reload bug, so it is written to fail if history goes missing.
-    # bulletins_before is read BEFORE the schema statements, so a re-added DROP
-    # shows up here as a mismatch instead of silently redefining the baseline.
+    # Preserved and added to: every row held before must still be there, plus
+    # whatever was just added. bulletins_before was read before the schema
+    # statements, so a re-added DROP shows up here as a mismatch.
     vb_expect = bulletins_before + nb
     vb_got = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
     if vb_got != vb_expect:

@@ -39,7 +39,7 @@ import json
 import sys
 import time
 
-from lib_turso import Turso, lit
+from lib_turso import Turso, lit, query_dicts, write_doc
 
 DOC_KEY = "state_profiles"
 
@@ -56,23 +56,6 @@ RATE_FLOOR = 100
 
 def log(msg: str) -> None:
     print(msg, flush=True)
-
-
-def cell(c):
-    if c["type"] == "null":
-        return None
-    v = c["value"]
-    if c["type"] == "integer":
-        return int(v)
-    if c["type"] == "float":
-        return float(v)
-    return v
-
-
-def rows(db: Turso, sql: str, args: list | None = None) -> list[dict]:
-    res = db.execute(sql, args or [])["response"]["result"]
-    cols = [c["name"] for c in res["cols"]]
-    return [dict(zip(cols, [cell(c) for c in r])) for r in res["rows"]]
 
 
 def median(values: list[float]) -> float | None:
@@ -113,31 +96,33 @@ def top_by_count(counts: dict[str, int], labels: dict[str, str], n: int) -> list
 def build(db: Turso) -> dict:
     log("  reading state x employer")
     t = time.time()
-    emp = rows(
+    emp = query_dicts(
         db,
         """SELECT state, employer_slug AS slug, employer_name AS name, COUNT(*) AS n
              FROM perm_cases
             WHERE state IS NOT NULL AND state <> ''
               AND employer_slug IS NOT NULL AND employer_slug <> ''
             GROUP BY state, employer_slug, employer_name""",
+        typed=True,
     )
     log(f"    {len(emp):,} rows in {time.time() - t:.0f}s")
 
     log("  reading state x occupation")
     t = time.time()
-    occ = rows(
+    occ = query_dicts(
         db,
         """SELECT state, soc_code AS code, soc_title AS title, COUNT(*) AS n
              FROM perm_cases
             WHERE state IS NOT NULL AND state <> ''
               AND soc_code IS NOT NULL AND soc_code <> ''
             GROUP BY state, soc_code, soc_title""",
+        typed=True,
     )
     log(f"    {len(occ):,} rows in {time.time() - t:.0f}s")
 
     log("  reading state outcomes and wages")
     t = time.time()
-    outcome = rows(
+    outcome = query_dicts(
         db,
         """SELECT state,
                   SUM(status IN ('certified','denied'))            AS decided,
@@ -147,6 +132,7 @@ def build(db: Turso) -> dict:
              FROM perm_cases
             WHERE state IS NOT NULL AND state <> ''
             GROUP BY state""",
+        typed=True,
     )
     log(f"    {len(outcome):,} rows in {time.time() - t:.0f}s")
 
@@ -240,7 +226,7 @@ def main() -> int:
     # the site reads. Stamped in so a page can compare the two and say nothing
     # rather than presenting leaders from one ingest beside figures from
     # another.
-    base = rows(db, "SELECT json FROM perm_docs WHERE key = 'disclosure_stats'")
+    base = query_dicts(db, "SELECT json FROM perm_docs WHERE key = 'disclosure_stats'", typed=True)
     if not base:
         log("  FAIL: disclosure_stats is missing. Run the disclosure ingest first.")
         return 1
@@ -305,14 +291,11 @@ def main() -> int:
 
     payload = json.dumps(doc, separators=(",", ":"))
     log(f"  writing perm_docs['{DOC_KEY}'] ({len(payload):,} bytes)")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-        [DOC_KEY, payload, int(time.time() * 1000)],
-    )
+    write_doc(db, DOC_KEY, payload)
 
     # Read it back. An INSERT that a pipeline reported as fine is not evidence
     # the row is there in the shape the reader expects.
-    check = rows(db, "SELECT length(json) AS n FROM perm_docs WHERE key = ?", [DOC_KEY])
+    check = query_dicts(db, "SELECT length(json) AS n FROM perm_docs WHERE key = ?", [DOC_KEY], typed=True)
     if not check or check[0]["n"] != len(payload):
         log("  FAIL: read-back does not match what was written.")
         return 1

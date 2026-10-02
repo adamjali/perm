@@ -5,10 +5,10 @@ import { internalQuery } from "./_generated/server";
 /**
  * Every case number someone is waiting to hear about, for the hourly check.
  *
- * WHY THIS EXISTS (2026-09-26). The full sweep asks DOL about every case twice
- * a day, so a watched case could change status and the subscriber hear about
- * it up to twelve hours later. Two rivals now sell "hourly checks" as a paid
- * plan. `watched-cases.yml` runs every hour, reads this list, asks DOL about
+ * WHY THIS EXISTS. The full sweep asks DOL about every case twice a day, so
+ * without this a watched case could change status and the subscriber not hear
+ * about it for up to twelve hours. `watched-cases.yml` runs every hour, reads
+ * this list, asks DOL about
  * only these numbers (a few hundred at most, 50 per request), writes any
  * change through the same Python writer the daily sweeps use, and then runs
  * the existing alert sweeps. Nothing about who is watching leaves Convex: the

@@ -11,6 +11,8 @@ import { getEstimatorBacktest, getScorecardSummary } from "@/lib/turso/predictio
 import { getScorecard } from "@/lib/turso/scorecard";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { withSocialCard } from "@/lib/socialCard";
+import { formatInt } from "@/lib/format";
+import { MS_PER_DAY } from "@/lib/time";
 
 /**
  * The estimate scorecard, in three layers, strongest evidence first.
@@ -18,7 +20,7 @@ import { withSocialCard } from "@/lib/socialCard";
  * 1. The standing backtest (weekly, `scripts/backtest_queue.py`): the queue
  *    rebuilt as it stood on a past day and every in-line case near the front
  *    dated the way the site dates it, graded against thousands of real DOL
- *    decisions. It is what moved the estimator on 2026-09-26.
+ *    decisions. It is the evidence the estimator's method rests on.
  * 2. The daily sample (`/api/cron/scorecard`): a few random pending cases
  *    from every filing month, recorded each morning BEFORE the outcome and
  *    graded when DOL decides. Forward, uncherry-pickable, and slow to fill.
@@ -48,7 +50,6 @@ const long = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("e
 const signed = (n: number) => (n > 0 ? `+${n}` : `${n}`);
 const pct = (x: number | null) => (x === null ? "none yet" : `${Math.round(x * 100)}%`);
 const days = (x: number | null) => (x === null ? "none yet" : `${Math.round(x)} ${Math.round(x) === 1 ? "day" : "days"}`);
-const int = (n: number) => n.toLocaleString("en-US");
 const HORIZON_LABEL: Record<(typeof HORIZONS)[number], string> = {
   "0-30": "Dated within a month",
   "31-90": "One to three months out",
@@ -69,8 +70,8 @@ function Figure({ label, value, note }: { label: string; value: string; note: st
 function SampleCells({ cell, since }: { cell: Cell; since: string | null }) {
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
-      <Figure label="Recorded" value={int(cell.recorded)} note={since ? `predictions since ${long(since)}` : "predictions"} />
-      <Figure label="Graded" value={int(cell.graded)} note="DOL has decided these (withdrawals left out)" />
+      <Figure label="Recorded" value={formatInt(cell.recorded)} note={since ? `predictions since ${long(since)}` : "predictions"} />
+      <Figure label="Graded" value={formatInt(cell.graded)} note="DOL has decided these (withdrawals left out)" />
       <Figure label="Typical miss" value={days(cell.typicalMissDays)} note="median distance, decided cases" />
       <Figure label="Inside the range" value={pct(cell.inBandShare)} note="decided between the range's two ends" />
     </div>
@@ -95,12 +96,7 @@ export default async function EstimateScorecardPage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header>
-        <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/methodology" className="underline underline-offset-2 hover:text-primary">
-            Reference
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">Estimate scorecard</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Estimate scorecard</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           How close our PERM decision dates land, graded against what DOL actually did.
         </p>
@@ -115,11 +111,12 @@ export default async function EstimateScorecardPage() {
             {days(cur.typicalMissDays)}
           </p>{" "}
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-            Across {int(cur.decided)} cases DOL decided between {longNoYear(backtest.t0)} and {long(backtest.end)},
+            Across {formatInt(cur.decided)} cases DOL decided between {longNoYear(backtest.t0)} and {long(backtest.end)},
             each dated the way the site dates it, from the queue as it stood on the first of those days.
           </p>{" "}
           {old && old.typicalMissDays !== null ? (
             <BarRows
+              label="Typical miss in days, by how the queue is counted"
               className="mt-6 max-w-3xl"
               max={Math.max(cur.typicalMissDays, old.typicalMissDays)}
               rows={[
@@ -147,7 +144,7 @@ export default async function EstimateScorecardPage() {
               <Figure
                 label="Inside the printed range"
                 value={pct(backtest.rangeCoverage.insideShare)}
-                note={`of ${int(backtest.rangeCoverage.judged)} cases dated a week or more before the end; a case still waiting counts as a miss`}
+                note={`of ${formatInt(backtest.rangeCoverage.judged)} cases dated a week or more before the end; a case still waiting counts as a miss`}
               />
             ) : null}
             <Figure
@@ -155,7 +152,7 @@ export default async function EstimateScorecardPage() {
               value={pct(cur.decidedByEndRight)}
               note={`said "decided by ${long(backtest.end)}" or "not yet", and was right`}
             />
-            <Figure label={"DOL\u2019s pace used"} value={`${int(Math.round(backtest.pace))} a day`} note="the measured average before the first day" />
+            <Figure label={"DOL\u2019s pace used"} value={`${formatInt(Math.round(backtest.pace))} a day`} note="the measured average before the first day" />
           </div>
           <p className="mt-4 text-sm text-muted-foreground">
             Recomputed every Monday. This run: {formatAsOf(new Date(backtest.computedAt).toISOString().slice(0, 10))}.
@@ -176,11 +173,12 @@ export default async function EstimateScorecardPage() {
             </div>{" "}
             {perm.all.graded > 0 ? (
               <BarRows
+                label="Typical miss in days, by how far ahead the estimate was"
                 className="mt-6 max-w-3xl"
                 rows={HORIZONS.filter((h) => perm.byHorizon[h].graded > 0).map((h) => ({
                   key: h,
                   label: HORIZON_LABEL[h],
-                  sub: `${int(perm.byHorizon[h].graded)} graded of ${int(perm.byHorizon[h].recorded)} recorded`,
+                  sub: `${formatInt(perm.byHorizon[h].graded)} graded of ${formatInt(perm.byHorizon[h].recorded)} recorded`,
                   value: perm.byHorizon[h].typicalMissDays,
                   text: days(perm.byHorizon[h].typicalMissDays),
                 }))}
@@ -207,7 +205,7 @@ export default async function EstimateScorecardPage() {
                         <td className="py-2 pr-3 tabular-nums">{`${r.predicted} `}</td>
                         <td className="py-2 pr-3 tabular-nums">{`${r.decidedOn} `}</td>
                         <td className="py-2 text-right tabular-nums">
-                          {`${signed(Math.round((Date.parse(r.decidedOn) - Date.parse(r.predicted)) / 86_400_000))} days `}
+                          {`${signed(Math.round((Date.parse(r.decidedOn) - Date.parse(r.predicted)) / MS_PER_DAY))} days `}
                         </td>
                       </tr>
                     ))}
@@ -229,8 +227,8 @@ export default async function EstimateScorecardPage() {
         )}
         {pwd && pwd.all.recorded > 0 ? (
           <p className="mt-6 border-t-2 border-border pt-4 text-base text-foreground/80">
-            <b className="font-bold text-foreground">Prevailing wage requests:</b> {int(pwd.all.recorded)} recorded,{" "}
-            {int(pwd.all.graded)} graded
+            <b className="font-bold text-foreground">Prevailing wage requests:</b> {formatInt(pwd.all.recorded)} recorded,{" "}
+            {formatInt(pwd.all.graded)} graded
             {pwd.all.graded > 0 ? <>, typical miss {days(pwd.all.typicalMissDays)}</> : null}. That estimate names a
             month, so it is graded against the middle of the month.
           </p>
@@ -290,14 +288,15 @@ export default async function EstimateScorecardPage() {
       {rows.some((r) => r.prediction.note) ? (
         <section className="mt-8 max-w-3xl">
           <h2 className="font-heading text-xl font-black">Notes on the record</h2>{" "}
+          {/* One note per distinct text, with every case it covers: several
+              predictions recorded together share one explanation. */}
           <ul className="mt-3 space-y-3 text-sm leading-relaxed text-foreground/80">
-            {rows
-              .filter((r) => r.prediction.note)
-              .map((r) => (
-                <li key={r.prediction.caseNumber}>
-                  <span className="font-mono text-xs font-bold">{r.prediction.caseNumber}</span>: {r.prediction.note}
-                </li>
-              ))}
+            {[...Map.groupBy(rows.filter((r) => r.prediction.note), (r) => r.prediction.note!)].map(([note, group]) => (
+              <li key={note}>
+                <span className="font-mono text-sm font-bold">{group.map((r) => r.prediction.caseNumber).join(", ")}</span>
+                : {note}
+              </li>
+            ))}
           </ul>
         </section>
       ) : null}

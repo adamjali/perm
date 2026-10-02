@@ -7,23 +7,10 @@
  * move something into its own module: the rail, the tests and the layout all
  * need the map, and none of them should have to import a component to get it.
  *
- * WHY THE GROUPING CHANGED. Adam, on the old bar: "theres like two headers...
- * double header is awk, esp how were doing it ppl click the top ones and are
- * confused why they didnt go anywhere." Two fixes, and only one of them is
- * about the control:
- *
- *   - The group headers were never links, and nothing said so. That is a
- *     documented usability failure, not a preference - a reader cannot tell a
- *     parent is inert until they click it. They are disclosures now, with a
- *     caret and no link styling.
- *   - Two groups were wrong about their own contents. "Start" held Overview,
- *     Case status and Calculators, which is a hub plus two tools; Overview is
- *     the section's home and is now a standalone entry above the groups.
- *     "Who files" held Case search, which is a case tool and has moved to sit
- *     beside Case status.
- *
- * The labels say what is inside rather than characterising it: "Employers and
- * wages", not "Who files"; "Denials and audits", not "Risk".
+ * The group headers are disclosures (a caret, no link styling), because a
+ * parent that looks like a link and goes nowhere is a known usability failure.
+ * Overview is the section's home, a standalone entry above the groups. Labels
+ * say what's inside ("Employers and wages", "Denials and audits").
  */
 
 export type DataSection =
@@ -43,6 +30,8 @@ export type DataSection =
   | "awaiting-visa"
   | "timelines"
   | "h1b-lottery"
+  | "h1b-lottery-calc"
+  | "opt-employers"
   | "nvc-waiting-list"
   | "by-city"
   | "by-industry"
@@ -64,6 +53,7 @@ export type DataSection =
   | "all-cases"
   | "pwd-cases"
   | "lca-cases"
+  | "seasonal-cases"
   | "risk"
   | "rfi-audit"
   | "employers-under-review"
@@ -105,9 +95,8 @@ export const OVERVIEW = {
  * checks passes on the day they diverge, which is the day it was needed.
  */
 export const SECTIONS: DataNavSection[] = [
-  { key: "all-cases", group: "Case tools", label: "Search all programs", href: "/case-search" },
   { key: "case-status", group: "Case tools", label: "Case status", href: "/perm-case-status" },
-  { key: "uscis-case-status", group: "Case tools", label: "USCIS receipt", href: "/uscis-case-status" },
+  { key: "all-cases", group: "Case tools", label: "Search all programs", href: "/case-search" },
   // Moved out of "Who files". It searches the case corpus, and somebody
   // holding a case number is the highest-intent reader on this surface; the
   // two lookups belong together.
@@ -115,12 +104,12 @@ export const SECTIONS: DataNavSection[] = [
   // The step before the PERM, findable the same way: employer, title, month.
   { key: "pwd-cases", group: "Case tools", label: "Wage requests", href: "/pwd-cases" },
   { key: "lca-cases", group: "Case tools", label: "H-1B LCAs", href: "/lca-cases" },
+  { key: "seasonal-cases", group: "Case tools", label: "H-2A and H-2B", href: "/seasonal-cases" },
   { key: "calculators", group: "Case tools", label: "Calculators", href: "/calculators" },
 
-  // "Queue backlog", not "Live queue". 79.8% of pending cases were last
-  // re-verified before 2026-08-01, so these counts are a rolling snapshot
-  // rather than a live reading, and a nav label is the last place that
-  // distinction should be quietly dropped.
+  // "Queue backlog", not "Live queue": these counts are the last sweep's
+  // snapshot rather than a live reading, and a nav label is the last place
+  // that distinction should be quietly dropped.
   { key: "queue", group: "Queue", label: "Queue backlog", href: "/perm-queue" },
   { key: "processing-times", group: "Queue", label: "Processing times", href: "/perm-processing-times" },
   { key: "activity", group: "Queue", label: "Daily activity", href: "/perm-decision-activity" },
@@ -138,6 +127,10 @@ export const SECTIONS: DataNavSection[] = [
   { key: "by-city", group: "Breakdowns", label: "By city", href: "/perm-cities" },
   { key: "by-industry", group: "Breakdowns", label: "By industry", href: "/perm-industries" },
   { key: "by-country", group: "Breakdowns", label: "By citizenship", href: "/perm-countries" },
+  // ICE's top-200 OPT and CPT employer lists: employers broken down by the
+  // students they hire on practical training (Employers and wages is at the
+  // rail's seven-row limit).
+  { key: "opt-employers", group: "Breakdowns", label: "OPT and CPT employers", href: "/opt-employers" },
 
   { key: "risk", group: "Denials and audits", label: "Denial rates", href: "/perm-denial-risk" },
   // Its own key rather than borrowing "risk". Measured before adding: this
@@ -162,6 +155,9 @@ export const SECTIONS: DataNavSection[] = [
   // USCIS's quarterly workbooks: a different agency from everything above,
   // and the stage AFTER the labor certification. Its own group for the same
   // reason the visa bulletin has one.
+  // The receipt lookup sits with the rest of USCIS: Case tools is at the
+  // rail's seven-row limit.
+  { key: "uscis-case-status", group: "USCIS", label: "USCIS receipt", href: "/uscis-case-status" },
   { key: "uscis-times", group: "USCIS", label: "Processing times", href: "/uscis-processing-times" },
   { key: "i485-offices", group: "USCIS", label: "I-485 by office", href: "/i485-by-field-office" },
   { key: "awaiting-visa", group: "USCIS", label: "Awaiting a visa", href: "/i140-awaiting-visa" },
@@ -169,6 +165,7 @@ export const SECTIONS: DataNavSection[] = [
   { key: "timelines", group: "USCIS", label: "Green card timelines", href: "/green-card-timelines" },
   // USCIS runs the H-1B cap registration, so its odds sit with USCIS's data.
   { key: "h1b-lottery", group: "USCIS", label: "H-1B lottery odds", href: "/h1b-lottery-odds" },
+  { key: "h1b-lottery-calc", group: "USCIS", label: "Lottery odds for a job", href: "/tools/h1b-lottery-odds-calculator" },
   { key: "case-statuses", group: "Reference", label: "Status meanings", href: "/perm-case-statuses" },
   { key: "methodology", group: "Reference", label: "Methodology", href: "/methodology" },
   { key: "policy-changes", group: "Reference", label: "Policy changes", href: "/policy-changes" },

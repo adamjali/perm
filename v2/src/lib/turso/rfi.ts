@@ -24,6 +24,8 @@
  */
 import "server-only";
 
+import { MS_PER_DAY } from "@/lib/time";
+
 import { one, rows } from "./client";
 
 // ---------------------------------------------------------------------------
@@ -209,7 +211,7 @@ async function getReviewStagesLive(): Promise<ReviewStage[]> {
  * which is worse than falling back to a live (slow) query or an empty state.
  * Same budget and same reasoning as the live census.
  */
-const REVIEW_STAGES_MAX_AGE_MS = 8 * 24 * 60 * 60 * 1000;
+const REVIEW_STAGES_MAX_AGE_MS = 8 * MS_PER_DAY;
 
 /** One stage exactly as the ingest serialises it: RAW numbers, no guards. */
 interface ReviewStageDocRow {
@@ -308,16 +310,14 @@ export function parseReviewStagesDoc(
  *
  * The live query is a CTE over ~98,000 pending rows with three window
  * functions, a COUNT(DISTINCT employer_name) and three joins. Measured
- * against production 2026-08-31: **19.56s cold, 2.49s warm**, against this
- * layer's 20s deadline. It blew the deadline, retried, blew it again and
- * threw - so all ten stage pages returned 500 on a cold render. Google's
- * Inspection Tool hit exactly that and REFUSED to index two of them with
- * "Page cannot be indexed: Server error (5xx)"; Sentry caught the cause
- * verbatim as `turso query deadline (20000ms, attempt 2): WITH pend AS (`.
+ * against production: **19.56s cold, 2.49s warm**, against this layer's 20s
+ * deadline, so a cold render blows the deadline, retries, blows it again and
+ * throws, and every stage page returns 500 (which Google's Inspection Tool
+ * reports as "Page cannot be indexed: Server error (5xx)").
  *
  * The fallback is kept rather than deleted because a missing doc must
- * degrade to a slow page, never a blank one - and it is what runs the first
- * time this ships, before the next sweep writes the doc.
+ * degrade to a slow page, never a blank one - and it is what runs on a fresh
+ * database, before the next sweep writes the doc.
  */
 export async function getReviewStages(): Promise<ReviewStage[]> {
   const doc = await one<{ json: string; computed_at: number }>(
@@ -404,7 +404,7 @@ export interface StageRecord {
 /**
  * The largest cohort a stage page will list case by case.
  *
- * Measured 2026-08-30, pending, DOL's fixture excluded: ANALYST REVIEW holds
+ * Measured on the pending cases, DOL's fixture excluded: ANALYST REVIEW holds
  * 93,219 and every other stage put together holds 5,648. That is not a long
  * tail, it is one stage and then everything else, so a single "list this
  * stage" rule cannot be right for both. Listing 93,219 rows a hundred at a
@@ -432,8 +432,7 @@ export type StageListing = "list" | "too-small" | "too-large";
 
 export function stageListing(cases: number): StageListing {
   if (cases > LISTABLE_STAGE_MAX) return "too-large";
-  // The floor that withheld cohorts under SMALL_STAGE_MAX was removed on
-  // Sep 8 2026 at the owner's call: DOL publishes every one of these rows
+  // Small stages list their cases too: DOL publishes every one of these rows
   // through its own lookup, so the list adds reach, not exposure. An empty
   // stage still gets its own sentence rather than an empty table.
   if (cases === 0) return "too-small";
@@ -456,12 +455,11 @@ export interface StageCase {
    * name-derived slug where none does, and stores the answer. Joining to it
    * on the case number is exact.
    *
-   * TWO TABLES, BECAUSE AN APPEAL IS A DECIDED CASE (corrected Sep 25 2026).
-   * This comment used to say a pending case cannot be in `perm_cases`. An
-   * appeal can: DOL denied it, the quarterly file published the denial, and
+   * TWO TABLES, BECAUSE AN APPEAL IS A DECIDED CASE. A pending case can be in
+   * `perm_cases`: DOL denied it, the quarterly file published the denial, and
    * the employer's reconsideration request put it back to pending. Such a
    * case is in `perm_cases` and not in the remainder, so a join to the
-   * remainder alone left every appeal stage's employers unlinked. Both
+   * remainder alone would leave every appeal stage's employers unlinked. Both
    * tables carry the canonical slug; the remainder wins when both have it.
    * LEFT JOINs anyway - a case discovered since last night's rebuild has no
    * row yet, and the honest render for that is an unlinked name rather than
@@ -590,7 +588,7 @@ export interface StageCohortCell {
  * writer's freshness row fires at three, so an alert lands well before the
  * reader gives up and puts eleven pages back on the full scan.
  */
-const STAGE_COHORTS_MAX_AGE_MS = 8 * 24 * 60 * 60 * 1000;
+const STAGE_COHORTS_MAX_AGE_MS = 8 * MS_PER_DAY;
 
 /**
  * Fold the matrix into one row per filing month.
@@ -704,12 +702,10 @@ async function getStageCohortsLive(statuses: string[]): Promise<StageCohort[]> {
  * READS A PRECOMPUTED DOC, and falls back to computing it live.
  *
  * The live query groups on `substr(filing_date, 1, 7)`, an expression no index
- * can serve, so it is a full scan of perm_case_status: measured 2026-09-03 at
- * **414,357 rows on every cold render**, across the eleven pages that call it.
- * It blew this layer's 20s deadline and returned 500; production survived only
- * on the ISR cache, which is the same shape as the getReviewStages incident -
- * fine until the first cold render after a deploy, then 5xx at Google. It is a
- * bill as well as an outage: Turso charges rows read.
+ * can serve, so it is a full scan of perm_case_status: **over 400,000 rows on
+ * every cold render**, across every page that calls it. That blows this
+ * layer's 20s deadline and returns 500, which the page cache hides until the
+ * first cold render after a deploy, when a crawler gets the error.
  *
  * The fallback is kept rather than deleted because a missing doc must degrade
  * to a slow page, never a blank one, and it is what runs the first time this
@@ -819,9 +815,8 @@ export interface RfiObserved {
 /**
  * A funnel built from both halves, with both halves still visible.
  *
- * ADAM ASKED FOR ONE BLENDED NUMBER AND THIS IS IT. I argued against it and
- * was overruled, which is his call; what the code owes him in return is a
- * blend that can always be taken apart again. So the components are returned
+ * ONE BLENDED NUMBER, BY THE SITE OWNER'S CALL, AND A BLEND THAT CAN ALWAYS
+ * BE TAKEN APART AGAIN. So the components are returned
  * beside the total rather than folded into it, and nothing here computes a
  * rate that the page cannot decompose into "theirs" and "ours".
  *
@@ -833,10 +828,10 @@ export interface RfiObserved {
  * number would absorb the same resolutions ours had already added, and the
  * blended denominator would drift upward with no error anywhere.
  *
- * The first direct sweep would have broken it too, which is why it ran with
- * `--reconcile`: 1,328 status differences that were corrections of a stale
- * mirror, not transitions, and writing them as events would have poured a
- * fabricated day of history straight into this denominator.
+ * A reconciliation would break it too, which is why `--reconcile` writes no
+ * events: status differences that correct a stale copy are not transitions,
+ * and writing them as events would pour a fabricated day of history straight
+ * into this denominator.
  */
 export interface BlendedRfiFunnel extends RfiFunnel {
   // Extends RfiFunnel rather than redeclaring its fields, so anything that
@@ -859,16 +854,16 @@ export interface BlendedRfiFunnel extends RfiFunnel {
 /**
  * Only events WE observed at DOL count toward our half.
  *
- * `perm_case_events` also holds rows written by the old rival mirror,
- * which recorded a "transition" whenever THEIR copy differed from OUR copy.
+ * `perm_case_events` also holds rows written by a retired third-party
+ * mirror, which recorded a "transition" whenever ITS copy differed from OURS.
  * A difference like that is not necessarily something that moved after the
  * freeze - if our stored copy was staler than the snapshot their frozen
  * aggregate was built from, the same RFI is already inside `ever_rfi` and
  * adding it again double-counts it.
  *
- * A timestamp cannot tell those apart: the mirror wrote its rows at 19:16 on
- * the freeze date, comfortably "after" a 03:25 freeze, while describing
- * changes of unknown age. The source can. So our half is defined as what the
+ * A timestamp cannot tell those apart: the mirror's rows are stamped hours
+ * after the freeze while describing changes of unknown age. The source can.
+ * So our half is defined as what the
  * direct DOL sweep saw, and the mirror's rows are excluded by construction.
  *
  * MUST MATCH `SOURCE` in `scripts/ingest_case_status_direct.py`. A drift here
@@ -906,14 +901,12 @@ export async function getBlendedRfiFunnel(): Promise<BlendedRfiFunnel | null> {
   // half - ever had an RFI, now has a final decision - and it does not depend
   // on catching one particular transition.
   //
-  // ONE PASS, DRIVEN FROM THE SMALL SIDE (Sep 28 2026). The first version
-  // counted over a joined CTE four times, and with no statistics (Turso
-  // forbids ANALYZE) SQLite drove each count from perm_case_status's
-  // status indexes (up to ~300k rows) and probed the ~1,000 RFI cases,
-  // which read 1.3M rows per call (Turso Top Queries, Sep 27). A LEFT JOIN
-  // must walk its left side, so the RFI cases drive and each is one
-  // primary-key probe. Same counts: a case with no status row adds to
-  // new_issued and to nothing else, as before.
+  // ONE PASS, DRIVEN FROM THE SMALL SIDE. Counting over a joined CTE four
+  // times lets SQLite, with no planner statistics, drive each count from
+  // perm_case_status's status indexes (up to ~300k rows) and probe the
+  // ~1,000 RFI cases: 1.3M rows read per call. A LEFT JOIN must walk its
+  // left side, so the RFI cases drive and each is one primary-key probe. A
+  // case with no status row adds to new_issued and to nothing else.
   const x = await one<Record<string, unknown>>(
     `WITH ours AS (
        SELECT DISTINCT case_number FROM perm_case_events

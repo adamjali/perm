@@ -1,8 +1,10 @@
 import { Fragment } from "react";
 import Link from "next/link";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import type { PendingLeader } from "@/lib/turso/entityDetail";
+import { formatInt } from "@/lib/format";
 
 /**
  * Who has the most cases waiting on DOL right now.
@@ -25,10 +27,6 @@ import type { PendingLeader } from "@/lib/turso/entityDetail";
  * been filing steadily for years. The count alone cannot tell those apart, so
  * the denominator is never dropped.
  */
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 function longDate(iso: string | null): string | null {
   if (!iso) return null;
@@ -59,7 +57,7 @@ export function PendingLeaderboard({
     <FigurePlate
       n={n}
       title="Most cases waiting right now"
-      subject={`${fmt(leaders.length)} sponsors, live tracker`}
+      subject={`${formatInt(leaders.length)} sponsors, live tracker`}
       caption={
         <>
           A different list from the one above, and deliberately so. Volume
@@ -74,10 +72,12 @@ export function PendingLeaderboard({
       source={when ? `Live case tracker, as of ${when}` : "Live case tracker"}
       className={className}
     >
+      <ChartTips label="Sponsors with the most cases waiting">
       <ol className="space-y-3">
         {leaders.map((l, i) => (
           <Fragment key={l.slug}>{" "}
             <li
+              data-tip={`${l.name}\n${formatInt(l.pending)} waiting\n${formatInt(l.tracked)} tracked in all${l.topStage ? `\n${formatInt(l.topStageN)} in ${l.topStage.toLowerCase()}` : ""}`}
               className={i > 0 ? "border-t border-border/40 pt-3" : undefined}
             >
               <div className="grid grid-cols-1 gap-x-4 gap-y-1 [&>*]:min-w-0 sm:grid-cols-[minmax(0,1fr)_minmax(0,14rem)] sm:items-baseline">
@@ -89,9 +89,9 @@ export function PendingLeaderboard({
                     {l.name}
                   </Link>
                 </p>{" "}
-                <p className="font-mono text-xs tabular-nums text-foreground/70">
-                  <span className="font-bold text-foreground">{fmt(l.pending)}</span> of{" "}
-                  {fmt(l.tracked)} tracked
+                <p className="font-mono text-sm tabular-nums text-foreground/70">
+                  <span className="font-bold text-foreground">{formatInt(l.pending)}</span> of{" "}
+                  {formatInt(l.tracked)} tracked
                 </p>
               </div>
               {/* Trackless. The lime fill measures 1.38:1 against a
@@ -105,13 +105,14 @@ export function PendingLeaderboard({
               />
               {l.topStage ? (
                 <p className="mt-1 font-mono text-sm uppercase tracking-[0.1em] text-muted-foreground">
-                  {fmt(l.topStageN)} in {l.topStage.toLowerCase()}
+                  {formatInt(l.topStageN)} in {l.topStage.toLowerCase()}
                 </p>
               ) : null}
             </li>
           </Fragment>
         ))}
       </ol>
+      </ChartTips>
     </FigurePlate>
   );
 }

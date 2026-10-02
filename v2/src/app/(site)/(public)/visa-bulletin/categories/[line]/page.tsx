@@ -32,13 +32,14 @@ import {
   lineSlugs,
   parseLineSlug,
 } from "@/lib/bulletinLines";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
+import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import type { BulletinMonth, CountryKey } from "@/lib/perm";
 import { getLineCounts } from "@/lib/turso/bulletinLine";
 import { categoriesIn, summariseBulletins, type BoardCell } from "@/lib/turso/bulletin";
 import { getVisaBulletins } from "@/lib/turso/publicData";
+import { DAYS_PER_MONTH, easternDay } from "@/lib/time";
 
 // A bulletin changes once a month and USCIS's counts monthly or quarterly.
 export const revalidate = 86400;
@@ -99,10 +100,6 @@ export async function generateMetadata({ params }: { params: Promise<{ line: str
   );
 }
 
-function todayEastern(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
-}
-
 function movedLabel(days: number | null): string {
   if (days === null) return "not dated";
   if (days === 0) return "no change";
@@ -116,7 +113,7 @@ function paceSentence(cell: BoardCell): string {
       ? "Current in the newest bulletin; there's no dated run to measure."
       : "Too few dated bulletins to measure a pace.";
   }
-  const months = Math.round(cell.movedDays / 30.4375);
+  const months = Math.round(cell.movedDays / DAYS_PER_MONTH);
   return `It moved ${months} month${months === 1 ? "" : "s"} of priority dates across ${cell.spanMonths} months of bulletins.`;
 }
 
@@ -130,11 +127,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
   const years = fiscalYearMoves(fa.states);
   const path = `/visa-bulletin/categories/${slug}`;
 
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Visa bulletin", href: "/visa-bulletin" },
-    { name: "Categories", href: "/visa-bulletin/categories" },
-    { name: `${cat} ${where}`, href: path },
-  ]);
+  const breadcrumb = breadcrumbSchema(path, `${cat} ${where}`);
 
   const sameCategory = LINE_PAGE_COUNTRIES.filter((c) => c !== country);
   const sameCountry = board.categories.filter((c) => c !== category && LINE_CATEGORY_SHORT[c]);
@@ -145,16 +138,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
       <JsonLdScript schema={breadcrumb} />
 
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link href="/visa-bulletin" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Visa bulletin
-          </Link>{" "}
-          <span aria-hidden="true">/</span>{" "}
-          <Link href="/visa-bulletin/categories" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Every line
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           <span translate="no">{cat}</span>, {where}
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
@@ -204,7 +188,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
         <PriorityDateEstimator
           bulletins={bulletins}
           categoryCodes={board.categories}
-          today={todayEastern()}
+          today={easternDay()}
           initialCategory={category}
           initialCountry={country}
           className="mt-4"
@@ -284,9 +268,8 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             ) : null}
           </dl>{" "}
           <p className="mt-4 max-w-3xl text-base text-foreground/70">
-            The approved count is USCIS&apos;s quarterly file and counts petitions, not people: no family members, and one
-            person can hold more than one. The I-485 counts are USCIS&apos;s monthly inventory, where cells of 1 to 10 are
-            withheld, so they&apos;re ranges. People getting their visa abroad aren&apos;t in the I-485 counts at all.
+            Approved counts are petitions, not people. I-485 counts are ranges (USCIS withholds cells of 1 to 10)
+            and leave out people getting their visa abroad.
           </p>{" "}
           {GREEN_CARD_LINE.has(category) ? (
             <Link

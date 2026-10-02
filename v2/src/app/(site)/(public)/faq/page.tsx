@@ -9,14 +9,13 @@ import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 import { getFAQPageSchema } from "@/lib/structuredData";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { FAQPageClient } from "./FAQPageClient";
 
 export const dynamic = "force-static";
 
 export const metadata: Metadata = withSocialCard({
-  title: "Frequently Asked Questions",
+  title: "Frequently asked questions",
   description:
     "Answers to common questions about PERM labor certification, deadlines, recruitment, and case management with PERM Tracker.",
   alternates: { canonical: "/faq" },
@@ -33,7 +32,7 @@ export const metadata: Metadata = withSocialCard({
 const faqData = [
   {
     // The four brand-defining questions (what it does, is it free, client
-    // data, import) live on the HOMEPAGE since 2026-09-15; see
+    // data, import) live on the HOMEPAGE; see
     // components/home/faqData.tsx. This page keeps the process questions.
     category: "Using PERM Tracker",
     items: [
@@ -50,7 +49,7 @@ const faqData = [
     ],
   },
   {
-    category: "PERM Process",
+    category: "The PERM process",
     items: [
       {
         question: "What’s PERM labor certification?",
@@ -95,7 +94,7 @@ const faqData = [
     ],
   },
   {
-    category: "The Live Data",
+    category: "The live data",
     items: [
       {
         question: "Is there any way to check my PERM status myself?",
@@ -141,8 +140,7 @@ const allFAQs = faqData.flatMap((section) => section.items);
 
 export default function FAQPage() {
   const { '@context': _1, ...faqSchema } = getFAQPageSchema(allFAQs);
-  const { '@context': _2, ...breadcrumb } = generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "FAQ", href: "/faq" }]);
-  const schemas = { '@context': 'https://schema.org', '@graph': [faqSchema, breadcrumb] };
+  const schemas = { '@context': 'https://schema.org', '@graph': [faqSchema] };
 
   return (
     <>
@@ -151,7 +149,7 @@ export default function FAQPage() {
       <section className="border-b-2 border-border bg-card">
         <div className="mx-auto max-w-[800px] px-4 py-10 sm:px-8 sm:py-14">
           <h1 className="mb-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-            Frequently Asked Questions
+            Frequently asked questions
           </h1>{" "}
           <p className="max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
             What applicants and attorneys ask about PERM Tracker and
@@ -164,35 +162,35 @@ export default function FAQPage() {
         <FAQPageClient faqData={faqData} />
 
         <div className="mt-12 border-t-2 border-border pt-8">
-          <h2 className="mb-4 font-heading text-xl font-bold">Learn More</h2>{" "}
+          <h2 className="mb-4 font-heading text-xl font-bold">Learn more</h2>{" "}
           <div className="grid gap-3 sm:grid-cols-2">
             <Link
               href="/blog/what-is-perm-labor-certification"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
               <span className="font-heading text-sm font-bold">What’s PERM?</span>{" "}
-              <p className="mt-1 text-xs text-muted-foreground">Complete overview of the PERM process</p>
+              <p className="mt-1 text-sm text-muted-foreground">Complete overview of the PERM process</p>
             </Link>{" "}
             <Link
               href="/guides/ultimate-perm-guide-2026"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
-              <span className="font-heading text-sm font-bold">Ultimate PERM Guide 2026</span>{" "}
-              <p className="mt-1 text-xs text-muted-foreground">Comprehensive filing reference</p>
+              <span className="font-heading text-sm font-bold">The ultimate PERM guide, 2026</span>{" "}
+              <p className="mt-1 text-sm text-muted-foreground">Comprehensive filing reference</p>
             </Link>{" "}
             <Link
               href="/blog/perm-processing-times-2026"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
-              <span className="font-heading text-sm font-bold">Processing Times 2026</span>{" "}
-              <p className="mt-1 text-xs text-muted-foreground">Current DOL timelines</p>
+              <span className="font-heading text-sm font-bold">Processing times in 2026</span>{" "}
+              <p className="mt-1 text-sm text-muted-foreground">Current DOL timelines</p>
             </Link>{" "}
             <Link
               href="/guides/getting-started"
               className="border-2 border-border bg-card p-4 transition-shadow hover:shadow-hard"
             >
-              <span className="font-heading text-sm font-bold">Getting Started</span>{" "}
-              <p className="mt-1 text-xs text-muted-foreground">Set up your first case in minutes</p>
+              <span className="font-heading text-sm font-bold">Getting started</span>{" "}
+              <p className="mt-1 text-sm text-muted-foreground">Set up your first case in minutes</p>
             </Link>
           </div>
         </div>

@@ -36,7 +36,7 @@ def main() -> int:
     check(tv["employment"]["total"] == 167_394 and tv["grand_total"] == 383_353, "employment total and grand total as printed", f)
     check(tv["family"]["total"] + tv["employment"]["total"] == tv["grand_total"], "the parts add up to the grand total", f)
     # Per-country rows of Part 2 for the four chargeabilities the bulletin names,
-    # and the rest of the world as the grand total less those four (2026-09-26).
+    # and the rest of the world as the grand total less those four.
     by = tv["employment_by_chargeability"]
     check(by["india"]["2nd"] == 3_916 and by["india"]["3rd"] == 3_643 and by["india"]["3rd_other_workers"] == 12, "India EB-2 3,916, EB-3 3,643, other workers 12, as printed", f)
     check(by["china"]["2nd"] == 6_556 and by["china"]["3rd_other_workers"] == 177, "China (mainland born) EB-2 6,556, other workers 177", f)

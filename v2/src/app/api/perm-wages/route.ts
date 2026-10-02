@@ -29,8 +29,8 @@ export const revalidate = 0;
 
 // The files behind these figures change four times a year, so a response is
 // cached at the edge for a day and served stale for a week while it refreshes.
-// Turso bills rows read: the software-developer group alone is ~120,000 rows
-// per uncached call, and a reader dragging a filter fires several.
+// Every uncached call reads rows: the software-developer group alone is
+// ~120,000, and a reader dragging a filter fires several calls.
 const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" };
 
 // Nothing DOL prints is anywhere near these. They exist so a caller cannot

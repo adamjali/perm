@@ -10,9 +10,6 @@
  * - Auto-Close: Deadline enforcement settings
  * - Account: Account management
  * - Support: Help and support
- *
- * Phase: 25 (Settings & Preferences)
- * Updated: 2025-12-31
  */
 
 import type { Metadata } from "next";

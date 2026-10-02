@@ -9,6 +9,7 @@
  */
 
 import type { CountryKey, Cutoff } from "@/lib/perm";
+import { MS_PER_DAY } from "@/lib/time";
 
 /** Bulletin category code -> slug. A code with no entry gets no page. */
 const CATEGORY_SLUG: Record<string, string> = {
@@ -133,7 +134,7 @@ export function fiscalYearMoves(states: ReadonlyArray<{ month: string; cutoff: C
     }
     const movedDays =
       start.cutoff.kind === "date" && end.cutoff.kind === "date"
-        ? Math.round((Date.parse(end.cutoff.iso) - Date.parse(start.cutoff.iso)) / 86_400_000)
+        ? Math.round((Date.parse(end.cutoff.iso) - Date.parse(start.cutoff.iso)) / MS_PER_DAY)
         : null;
     out.push({
       fy,

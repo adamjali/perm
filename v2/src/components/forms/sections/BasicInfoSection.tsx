@@ -8,16 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import type { CaseStatus, ProgressStatus } from "@/lib/perm";
 import { useBasicInfoSection } from "@/components/forms/useCaseFormSection";
 import { CharLimit } from "@/components/ui/char-limit";
-import { INPUT_LIMITS } from "../../../../convex/lib/validation";
+import { INPUT_LIMITS } from "@convex/lib/validation";
 
 // ============================================================================
 // TYPES
 // ============================================================================
-
-export type CaseStatus = 'pwd' | 'recruitment' | 'eta9089' | 'i140' | 'closed';
-export type ProgressStatus = 'working' | 'waiting_intake' | 'filed' | 'approved' | 'under_review' | 'rfi_rfe';
 
 export interface BasicInfoSectionProps {
   /**

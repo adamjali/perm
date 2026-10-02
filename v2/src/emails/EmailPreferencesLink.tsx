@@ -1,12 +1,8 @@
 /**
  * The magic link to the email preference centre.
  *
- * THIS EMAIL WAS PLAIN TEXT UNTIL 2026-09-09, and it was the only one in the
- * codebase that was: twenty templates exist and every other sending path
- * renders one. Nothing in `emailPrefs.ts` explained the exception, which is
- * how it reads as an oversight rather than a decision.
- *
- * It matters more here than on any other message. Every piece of this email
+ * A real template, like every other email this codebase sends, and it matters
+ * more here than on any other message. Every piece of this email
  * is a phishing signal when it arrives unstyled: an unfamiliar sender shape,
  * a long opaque token, and an instruction to click a link in order to change
  * your email settings. This is the one email whose entire job is to be

@@ -13,11 +13,10 @@ import Link from "next/link";
 import { DisclosureList } from "@/components/tools/FaqList";
 import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 
-import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import { MoreText } from "@/components/data/MoreText";
 
 const TITLE = "How These Numbers Are Computed";
 const DESCRIPTION =
@@ -58,7 +57,7 @@ export const revalidate = 604800;
  * Readings of the same headline number across the public tools, taken on one
  * day (2026-08-24). Kept as a dated record on purpose: the spread is the
  * point, and a live comparison would put us in the business of monitoring
- * competitors rather than DOL.
+ * other sites rather than DOL.
  */
 const SPREAD = [
   { source: "DOL's own published average", value: "372 days" },
@@ -236,18 +235,11 @@ export default async function MethodologyPage() {
         .join(" + ")
     : null;
 
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: "Methodology", href: "/methodology" },
-  ]);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
-      <JsonLdScript schema={breadcrumb} />      <header className="pt-10 sm:pt-12">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Methodology
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+      <header className="pt-10 sm:pt-12">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           How these numbers are computed
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
@@ -269,10 +261,10 @@ export default async function MethodologyPage() {
           <table className="w-full border-2 border-border text-left text-sm shadow-hard-sm">
             <thead className="bg-foreground text-background">
               <tr>
-                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">
+                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
                   Source
                 {" "}</th>
-                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">
+                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
                   Reported{" "}
                 </th>
               </tr>
@@ -287,15 +279,17 @@ export default async function MethodologyPage() {
             </tbody>
           </table>
         </div>
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/70">
-          Four causes account for nearly all of it. A tool can measure cases
-          <em> decided</em> recently or cases <em>filed</em> in a month, and
-          those are different populations. It can include audited cases or set
-          them aside. It can run on this quarter&apos;s data or on a file from
-          March. And a tool built on crowd reports measures its own users
-          rather than the queue. None of these choices is wrong on its own. What
-          matters is saying which one produced the number.
-        </p>
+        <MoreText gist={"Four choices explain nearly every difference between tools' numbers."} className="mt-4">
+          <p className="max-w-2xl text-base leading-relaxed text-foreground/70">
+            Four causes account for nearly all of it. A tool can measure cases
+            <em> decided</em> recently or cases <em>filed</em> in a month, and
+            those are different populations. It can include audited cases or set
+            them aside. It can run on this quarter&apos;s data or on a file from
+            March. And a tool built on crowd reports measures its own users
+            rather than the queue. None of these choices is wrong on its own. What
+            matters is saying which one produced the number.
+          </p>
+        </MoreText>
       </section>
 
       <section className="mt-12">
@@ -335,7 +329,7 @@ export default async function MethodologyPage() {
                 </a>
               </div>
               <p className="mt-2 text-base leading-relaxed text-foreground/70">{s.what}</p>{" "}
-              <p className="mt-2 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="mt-2 font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
                 {s.cadence}
               </p>
             </div>
@@ -371,7 +365,7 @@ export default async function MethodologyPage() {
               <>
                 <p className="text-base leading-relaxed text-foreground/70">{t.how}</p>{" "}
                 <p className="mt-2 text-base leading-relaxed">
-                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
                     Counted over
                   </span>{" "}
                   <span className="text-foreground/70">{t.population}</span>
@@ -379,7 +373,7 @@ export default async function MethodologyPage() {
                 <p className="mt-2">
                   <Link
                     href={t.where.href}
-                    className="font-mono text-xs font-bold uppercase tracking-wider underline underline-offset-2 hover:text-primary"
+                    className="font-mono text-sm font-bold uppercase tracking-wider underline underline-offset-2 hover:text-primary"
                   >
                     Open {t.where.label}
                   </Link>
@@ -438,6 +432,7 @@ export default async function MethodologyPage() {
           // written to tell them.
           "pwd-status",
           "lca-status",
+          "seasonal-status",
           "pw-disclosure",
           "visa-bulletin",
           "i485-inventory",

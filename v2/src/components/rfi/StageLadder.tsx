@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import type { ReviewStage } from "@/lib/turso/rfi";
 import { GROUP_STYLE, stageMeta } from "./stageMeta";
 
@@ -56,6 +57,7 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
         analyst-review and hold bands on top of each other, which is the one
         comparison the chart exists to make.
       */}
+      <ChartTips label="How old the cases at each review stage are, in days past filing">
       <div className="overflow-x-auto">
         <div className="min-w-[34rem]">
           {ordered.map((s) => {
@@ -77,7 +79,10 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
                     {s.cases.toLocaleString()} cases
                   </div>
                 </div>{" "}
-                <div className="relative h-8">
+                <div
+                  className="relative h-8"
+                  data-tip={`${meta.label}\n${s.cases.toLocaleString()} cases\nMedian ${band.median.toLocaleString()} days past filing\nMiddle 80%: ${band.p10.toLocaleString()} to ${band.p90.toLocaleString()} days\n${s.employerNames.toLocaleString()} employer names`}
+                >
                   <Rails ticks={ticks} pct={pct} />
                   {/*
                     The band is the 10th to 90th percentile and the notch is
@@ -143,6 +148,7 @@ export function StageLadder({ stages, marker = null }: StageLadderProps) {
           </div>
         </div>
       </div>
+      </ChartTips>
       <figcaption className="mt-3 text-sm text-muted-foreground">
         Days between filing and the day we observed the case at that stage. The
         bar covers the middle 80% of cases, the notch is the median.

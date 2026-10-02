@@ -15,6 +15,7 @@ import { formatWage } from "@/lib/wageFormat";
 import { QueueAlertForm } from "@/app/(site)/(public)/perm-processing-times/QueueAlertForm";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { isLookupGap } from "@/lib/dolMiss";
+import { formatInt } from "@/lib/format";
 
 /**
  * A prevailing wage request (ETA-9141) by number: DOL's own status for it,
@@ -57,8 +58,6 @@ function day(iso: string | null): string | null {
     : null;
 }
 
-const fmt = (n: number) => n.toLocaleString("en-US");
-
 const ISSUED = /^(DETERMINATION ISSUED|REDETERMINATION|CENTER DIRECTOR REVIEW)/;
 
 /**
@@ -84,7 +83,7 @@ function Determination({ d }: { d: PwdDisclosedRow }) {
   const until = issued ? validUntil(d.decisionDate) : null;
   return (
     <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-      <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
         DOL&apos;s determination · from the quarterly disclosure file
       </p>{" "}
       {issued && wage ? (
@@ -152,12 +151,12 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
     return (
       <div className="space-y-6">
         <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
             Prevailing wage request · ETA-9141
           </p>{" "}
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <h2 className="font-heading text-2xl font-black sm:text-3xl" translate="no">{disclosed.caseNumber}</h2>{" "}
-            <span className="border-2 border-border bg-primary px-2 py-0.5 font-mono text-xs font-bold uppercase text-primary-foreground">
+            <span className="border-2 border-border bg-primary px-2 py-0.5 font-mono text-sm font-bold uppercase text-primary-foreground">
               {prettyStatus(disclosed.status)}
             </span>
           </div>{" "}
@@ -197,14 +196,14 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
   if (!row) {
     return (
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Prevailing wage request
         </p>{" "}
         <h2 className="mt-2 font-heading text-2xl font-black">
           No record under {caseNumber}
         </h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-          DOL&apos;s case system answered and holds nothing under this number.
+          DOL&apos;s case system holds nothing under this number.
           It may be a typo, a filing from the last day, or a
           number from before DOL&apos;s current system. Check it on{" "}
           <a
@@ -243,14 +242,14 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
   return (
     <div className="space-y-6">
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Prevailing wage request · ETA-9141
         </p>{" "}
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h2 className="font-heading text-2xl font-black sm:text-3xl" translate="no">{row.caseNumber}</h2>{" "}
           <span
             className={
-              "border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chipClass(row)
+              "border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " + chipClass(row)
             }
           >
             {prettyStatus(row.status)}
@@ -321,11 +320,11 @@ export async function PwdLookup({ caseNumber }: { caseNumber: string }) {
             <dl className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
               <div className="border-2 border-border bg-tint-primary p-4">
                 <dt className="text-sm font-bold text-foreground/70">Requests ahead of {formatMonth(month)}</dt>{" "}
-                <dd className="mt-1 font-heading text-2xl font-black">{fmt(estimate.requestsAhead)}</dd>
+                <dd className="mt-1 font-heading text-2xl font-black">{formatInt(estimate.requestsAhead)}</dd>
               </div>{" "}
               <div className="border-2 border-border bg-card p-4">
                 <dt className="text-sm font-bold text-foreground/70">Received the same month</dt>{" "}
-                <dd className="mt-1 font-heading text-2xl font-black">{fmt(estimate.requestsSameMonth)}</dd>
+                <dd className="mt-1 font-heading text-2xl font-black">{formatInt(estimate.requestsSameMonth)}</dd>
               </div>{" "}
               <div className="border-2 border-border bg-card p-4">
                 <dt className="text-sm font-bold text-foreground/70">Estimated determination</dt>{" "}

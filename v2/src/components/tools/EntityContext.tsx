@@ -2,6 +2,8 @@ import { Fragment, type ReactNode } from "react";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { MoreText, firstSentence, plainText, wordCount } from "@/components/data/MoreText";
+import { formatInt } from "@/lib/format";
 
 /**
  * The context modules the 16,210 entity detail pages are built out of.
@@ -135,10 +137,6 @@ export function rateReliability(
   };
 }
 
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 /** What Google shows before it truncates, in characters. */
 export const TITLE_LIMIT = 60;
 /** `title.template` in `src/app/layout.tsx`. Changing that must change this. */
@@ -227,33 +225,40 @@ export function ReliabilityBand({
     >
       <p
         className={cn(
-          "font-mono text-xs font-bold uppercase tracking-[0.1em]",
+          "font-mono text-sm font-bold uppercase tracking-[0.1em]",
           withheld ? "text-data-warn-ink" : "text-foreground/60",
         )}
       >
         {withheld ? "Too few cases for a rate" : "This rate is level with the field"}
       </p>{" "}
       <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-        {withheld ? (
-          <>
-            {fmt(decided)} decided {decided === 1 ? unit.replace(/s$/, "") : unit}, so
-            there&apos;s no approval rate here. Across every PERM case DOL decided
-            in this window, {baselineDenialPct.toFixed(2)}% were denied. At that
-            rate a file this size comes back clean most of the time whatever the{" "}
-            {subject} did, so a percentage would be a fact about how few cases
-            there are. Telling a clean record apart from the field takes about{" "}
-            {fmt(needed)} decided cases.
-          </>
-        ) : (
-          <>
-            Computed over {fmt(decided)} decided {unit}. The 95% interval runs up
-            to a {upperDenialPct.toFixed(1)}% denial rate, which still covers
-            the {baselineDenialPct.toFixed(2)}% the field as a whole records, so
-            this record can&apos;t be told apart from the field in either
-            direction.
-          </>
-        )}
-      </p>
+        {withheld
+          ? `${formatInt(decided)} decided ${decided === 1 ? unit.replace(/s$/, "") : unit}: too few for an approval rate.`
+          : `Over ${formatInt(decided)} decided ${unit}, this rate can't be told apart from the field in either direction.`}
+      </p>{" "}
+      <details className="mt-1 max-w-3xl">
+        <summary className="inline-flex min-h-[44px] cursor-pointer items-center text-sm font-bold underline decoration-2 underline-offset-4">
+          Why
+        </summary>{" "}
+        <p className="mt-1 text-base leading-relaxed text-foreground/80">
+          {withheld ? (
+            <>
+              Across every PERM case DOL decided in this window,{" "}
+              {baselineDenialPct.toFixed(2)}% were denied. At that rate a file
+              this size comes back clean most of the time whatever the {subject}{" "}
+              did, so a percentage would be a fact about how few cases there are.
+              Telling a clean record apart from the field takes about{" "}
+              {formatInt(needed)} decided cases.
+            </>
+          ) : (
+            <>
+              The 95% interval runs up to a {upperDenialPct.toFixed(1)}% denial
+              rate, which still covers the {baselineDenialPct.toFixed(2)}% the
+              field as a whole records.
+            </>
+          )}
+        </p>
+      </details>
     </section>
   );
 }
@@ -298,7 +303,13 @@ export function PeerList({
   return (
     <section className={cn("", className)}>
       <h2 className="font-heading text-2xl font-black">{heading}</h2>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">{note}</p>{" "}
+      {wordCount(note) > 28 ? (
+        <MoreText gist={firstSentence(plainText(note))} className="mt-2">
+          <p className="text-base leading-relaxed text-foreground/70">{note}</p>
+        </MoreText>
+      ) : (
+        <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">{note}</p>
+      )}{" "}
       <ul className="mt-5 grid list-none grid-cols-1 gap-4 p-0 [&>*]:min-w-0 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((p) => (
           // React renders array items with nothing between them, so the
@@ -312,13 +323,13 @@ export function PeerList({
                 className="flex h-full min-h-[44px] flex-col border-2 border-border bg-card p-4 no-underline shadow-hard-sm transition-colors hover:border-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
               >
                 <span className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/60">
-                  #{fmt(p.rank)}
+                  #{formatInt(p.rank)}
                   {p.state ? ` · ${p.state}` : ""}
                 </span>{" "}
                 <span className="mt-1 text-base font-bold leading-snug">{p.name}</span>{" "}
-                <span className="mt-2 font-mono text-xs tabular-nums text-foreground/70">
-                  {fmt(p.total)} {unit}
-                  {p.denied > 0 ? ` · ${fmt(p.denied)} denied` : " · none denied"}
+                <span className="mt-2 font-mono text-sm tabular-nums text-foreground/70">
+                  {formatInt(p.total)} {unit}
+                  {p.denied > 0 ? ` · ${formatInt(p.denied)} denied` : " · none denied"}
                 </span>
               </Link>
             </li>
@@ -371,8 +382,8 @@ export function RankLadder({
     <section className={cn("border-2 border-border bg-card p-6 shadow-hard-sm", className)}>
       <h2 className="font-heading text-lg font-black">Where this sits in the ranking</h2>{" "}
       <p className="mt-2 text-base leading-relaxed text-foreground/70">
-        Ranked {fmt(rank)} of {fmt(kindTotal)} by volume: {fmt(above_)} filed at
-        least as many {unit}, and {fmt(below_)} filed no more.
+        Ranked {formatInt(rank)} of {formatInt(kindTotal)} by volume: {formatInt(above_)} filed at
+        least as many {unit}, and {formatInt(below_)} filed no more.
       </p>{" "}
       <dl className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-2">
         {rows.map((r) => (
@@ -389,8 +400,8 @@ export function RankLadder({
                 >
                   {r.item.name}
                 </Link>{" "}
-                <span className="block font-mono text-xs tabular-nums text-foreground/70">
-                  {fmt(r.item.total)} {unit}
+                <span className="block font-mono text-sm tabular-nums text-foreground/70">
+                  {formatInt(r.item.total)} {unit}
                 </span>
               </dd>
             </div>
@@ -418,16 +429,24 @@ export function LimitsPanel({
   className?: string;
 }) {
   return (
-    <section
-      className={cn("border-2 border-border bg-tint-primary p-6 shadow-hard-sm sm:p-8", className)}
+    // FOLDED. The limits stay on every page, in the DOM and one
+    // click away, with the heading still in the outline; a reader meets the
+    // heading and the count, not five paragraphs.
+    <details
+      className={cn("group border-2 border-border bg-tint-primary shadow-hard-sm", className)}
     >
-      <h2 className="font-heading text-xl font-black">What these numbers don&apos;t say</h2>{" "}
-      <dl className="mt-4 grid grid-cols-1 gap-5 [&>*]:min-w-0 md:grid-cols-2">
+      <summary className="flex min-h-[44px] cursor-pointer items-center justify-between gap-4 px-6 py-4">
+        <h2 className="font-heading text-xl font-black">What these numbers don&apos;t say</h2>{" "}
+        <span className="shrink-0 text-sm font-bold text-foreground/70">
+          {items.length} notes
+        </span>
+      </summary>{" "}
+      <dl className="grid grid-cols-1 gap-5 border-t-2 border-border px-6 py-5 [&>*]:min-w-0 md:grid-cols-2">
         {items.map((i) => (
           <Fragment key={i.head}>
             {" "}
             <div className="min-w-0">
-              <dt className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-foreground/70">
+              <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/70">
                 {i.head}
               </dt>{" "}
               <dd className="mt-1.5 text-base leading-relaxed text-foreground/80">{i.body}</dd>
@@ -435,7 +454,7 @@ export function LimitsPanel({
           </Fragment>
         ))}
       </dl>
-    </section>
+    </details>
   );
 }
 
@@ -459,30 +478,19 @@ export function DisclosureNote({
     .map((f) => f.replace(/^PERM_Disclosure_Data_/, "").replace(/\.xlsx$/, "").replace(/_/g, " "))
     .join(" and ");
   return (
-    <section
-      className={cn("border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6", className)}
-    >
-      <p className="font-mono text-xs font-bold uppercase tracking-[0.1em] text-foreground/60">
-        The window these figures cover
-      </p>{" "}
-      <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-        {files
-          ? `DOL's ${files} PERM disclosure files`
-          : "DOL's PERM disclosure files"}
-        , unioned and de-duplicated by case number
-        {uniqueCases ? `: ${fmt(uniqueCases)} cases` : ""}. Every case in them
-        carries a decision, so nothing here counts what’s still pending. How
-        each figure is built, and what it can and can&apos;t answer, is set out in
-        the{" "}
-        <Link
-          href="/methodology"
-          className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-        >
-          methodology
-        </Link>
-        .
-      </p>
-    </section>
+    // ONE LINE: the window and the method link, no panel.
+    <p className={cn("max-w-3xl text-sm leading-relaxed text-foreground/75", className)}>
+      <span className="font-bold text-foreground">The window these figures cover: </span>
+      {files ? `DOL's ${files} PERM disclosure files` : "DOL's PERM disclosure files"}
+      {uniqueCases ? `, ${formatInt(uniqueCases)} decided cases` : ""}. Nothing pending
+      is counted here.{" "}
+      <Link
+        href="/methodology"
+        className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+      >
+        How each figure is built
+      </Link>
+    </p>
   );
 }
 

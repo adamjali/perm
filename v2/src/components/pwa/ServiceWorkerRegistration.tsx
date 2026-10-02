@@ -1,11 +1,11 @@
 "use client";
 
 // `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here (2026-09-01) rather
+// which exists only in React's client build. Declared here rather
 // than inherited from whichever importer happened to cross a boundary first.
 // Without it this module works until the chunk graph shifts, then fails with
 // `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx for the incident.
+// and no source file. See components/layout/Footer.tsx.
 
 /**
  * Service Worker Lifecycle Component
@@ -16,16 +16,13 @@
  * This component handles:
  * - One-time migration from legacy sw-push.js
  * - Push subscription repair if browser subscription is missing but user has push enabled
- *
- * Phase: 31 (PWA)
- * Created: 2025-01-11
  */
 
 "use client";
 
 import { useEffect, useRef } from "react";
 import { useMutation, useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { urlBase64ToUint8Array } from "@/lib/pushSubscription";
 
 export function ServiceWorkerRegistration(): null {
@@ -134,5 +131,3 @@ async function repairPushSubscription(
     console.warn("[SW] Failed to repair push subscription:", err);
   }
 }
-
-export default ServiceWorkerRegistration;

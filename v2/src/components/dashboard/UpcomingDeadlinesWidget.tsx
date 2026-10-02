@@ -1,11 +1,11 @@
 "use client";
 
 // `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here (2026-09-01) rather
+// which exists only in React's client build. Declared here rather
 // than inherited from whichever importer happened to cross a boundary first.
 // Without it this module works until the chunk graph shifts, then fails with
 // `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx for the incident.
+// and no source file. See components/layout/Footer.tsx.
 
 /**
  * UpcomingDeadlinesWidget Component
@@ -22,7 +22,7 @@ import { useQuery } from "convex/react";
 import { CalendarIcon } from "@phosphor-icons/react/ssr";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import UpcomingDeadlineItem from "./UpcomingDeadlineItem";
 import {

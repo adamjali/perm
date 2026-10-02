@@ -1,6 +1,7 @@
 import "server-only";
 
 import { exec, one } from "@/lib/turso/client";
+import { easternDay } from "@/lib/time";
 
 /**
  * The USCIS Torch API client: OAuth client-credentials, one endpoint that is
@@ -10,9 +11,9 @@ import { exec, one } from "@/lib/turso/client";
  * ## Sources, so nobody has to trust this file
  *
  * Everything documented here is from the Case Status API's OpenAPI spec on
- * developer.uscis.gov (`/api/case-status`, spec version 1.0.1, captured from
- * the portal on 2026-09-21; the portal is JavaScript-rendered and refuses
- * scripted fetches, so the capture in the session transcript is the copy):
+ * developer.uscis.gov (`/api/case-status`, spec version 1.0.1; the portal is
+ * JavaScript-rendered and refuses scripted fetches, so read it in a
+ * browser):
  *
  * - Sandbox base `https://api-int.uscis.gov/case-status`, token URL
  *   `https://api-int.uscis.gov/oauth/accesstoken`, grant type client
@@ -20,8 +21,8 @@ import { exec, one } from "@/lib/turso/client";
  *   receipt numbers only, open weekdays 7 AM to 8 PM ET (503 outside).
  * - Production: 10 TPS, 400,000 a day, "resets everyday at -04:00 UTC
  *   (Midnight EST)". The production host is `api.uscis.gov`; the same paths
- *   under it answer 401 to an unauthenticated probe (live-verified
- *   2026-09-21), which is how we know they exist.
+ *   under it answer 401 to an unauthenticated probe (verified live), which
+ *   is how we know they exist.
  * - `GET /{receiptNumber}` answers 200 with `case_status` (below), 401 bad or
  *   expired token, 404 unknown receipt OR a receipt protected under
  *   8 U.S.C. 1367 (USCIS returns the same 404 for both on purpose), 422 wrong
@@ -35,7 +36,7 @@ import { exec, one } from "@/lib/turso/client";
  *   completed_text_es }`.
  *
  * `/processing-times/` is NOT in the portal's catalogue. It is live (the same
- * 401 probe), and the session that found it recorded it as undocumented. It
+ * 401 probe) and undocumented. It
  * is exposed here as an untyped read so the day the keys arrive it can be
  * asked what it returns; nothing on the site consumes it until that shape is
  * known.
@@ -50,8 +51,8 @@ import { exec, one } from "@/lib/turso/client";
  * caseDiscovery.ts: the counter protects USCIS, not itself. The day boundary
  * is USCIS's, midnight Eastern, so our counter and their quota reset together.
  *
- * TPS is enforced in-process with a small token bucket. Several serverless
- * instances can each hold a bucket and together exceed 10 a second; that is
+ * TPS is enforced in-process with a small token bucket. Several server
+ * processes can each hold a bucket and together exceed 10 a second; that is
  * accepted, because USCIS answers 429 and this client turns that into a
  * refusal rather than a retry storm.
  */
@@ -103,13 +104,7 @@ export function uscisEnabled(): boolean {
 
 /** The day, in USCIS's own zone, that a call is charged to. */
 export function uscisBudgetDay(now: Date): string {
-  // en-CA formats as YYYY-MM-DD; the zone is the whole point.
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
+  return easternDay(now);
 }
 
 /**
@@ -157,8 +152,8 @@ export function resetTokenCache(): void {
  * touch the network.
  */
 /**
- * Every call to USCIS gives up after this long. Until Sep 29 2026 there was no
- * limit at all, so a hung call held the reader until nginx's own timeout.
+ * Every call to USCIS gives up after this long. Without it a hung call holds
+ * the reader until nginx's own timeout.
  */
 export const USCIS_TIMEOUT_MS = 10_000;
 

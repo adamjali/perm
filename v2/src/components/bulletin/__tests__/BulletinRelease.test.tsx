@@ -37,16 +37,37 @@ describe("BulletinRelease", () => {
     expect(document.body.textContent).toMatch(/Today is September 14\. In at least 8 of the 12 months with evidence/);
   });
 
+  it("says the bulletin probably isn't out yet when none was this early", () => {
+    render(<BulletinRelease rows={rows} summary={summary} next="2026-10" measured="2026-09-26" today="2026-09-01" />);
+    const text = document.body.textContent ?? "";
+    expect(text).toMatch(/Today is September 1\. None of the 12 bulletins with evidence was out this early/);
+    expect(text).toMatch(/October 2026 bulletin probably isn.t out yet/);
+    expect(text).not.toMatch(/may well be up/);
+  });
+
+  it("says most came later when fewer than half were out by today", () => {
+    // 2 of 12 by the 8th.
+    render(<BulletinRelease rows={rows} summary={summary} next="2026-10" measured="2026-09-26" today="2026-09-08" />);
+    const text = document.body.textContent ?? "";
+    expect(text).toMatch(/In at least 2 of the 12 months with evidence/);
+    expect(text).toMatch(/may be up already, though most came later/);
+    expect(text).not.toMatch(/may well be up/);
+  });
+
   it("says nothing about today once the reader is past the month before", () => {
     render(<BulletinRelease rows={rows} summary={summary} next="2026-10" measured="2026-09-26" today="2026-10-02" />);
     expect(document.body.textContent).not.toContain("Today is");
   });
 
-  it("draws one bar per day, each with a single-string title", () => {
+  it("draws one bar per day, each with its own hover detail", () => {
     const { container } = render(
       <BulletinRelease rows={rows} summary={summary} next="2026-10" measured="2026-09-26" today="2026-08-01" />,
     );
-    expect(container.querySelectorAll("svg rect")).toHaveLength(31);
-    expect(container.querySelector("svg rect title")!.childNodes).toHaveLength(1);
+    const days = container.querySelectorAll("svg g[data-tip]");
+    expect(days).toHaveLength(31);
+    // 6 of the 12 were out by the 12th (the half day the summary states).
+    expect(days[11]!.getAttribute("data-tip")).toBe("By the 12th of the month before\n6 of 12 bulletins out");
+    // The detail lives in ChartTips, so no rect carries an SVG <title> as well.
+    expect(container.querySelector("svg rect title")).toBeNull();
   });
 });

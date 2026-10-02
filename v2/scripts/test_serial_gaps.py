@@ -3,8 +3,9 @@
 from __future__ import annotations
 import pathlib, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from sweep_serial_gaps import (holes, sweep, record_misses, true_span, PREFIXES,
+from sweep_serial_gaps import (holes, sweep, record_misses, true_span,
                                SERIALS_PER_REQUEST, MISS_LIMIT, MAX_PLAUSIBLE_SPAN)
+from lib_flag_serials import ALL_FLAG_PREFIXES as PREFIXES, PERM_OFFICE_PREFIXES
 import ingest_case_status_direct as core
 
 fails: list[str] = []
@@ -28,28 +29,21 @@ check(holes([1, 6], set()) == [2, 3, 4, 5], "an empty skip set changes nothing")
 
 
 # ---- EVERY PREFIX THE SWEEP ASKS FOR MUST HAVE SOMEWHERE TO GO -----------
-# A prefix that is asked but routed nowhere produces a case that is confirmed
-# by DOL, counted as found, stored in no table, and not recorded as a miss
-# either - so it is re-found and re-dropped every single night. That is what
-# G-300 did until 2026-09-13, and it was invisible in the log: "confirmed 1,
-# inserted 0" reads like an already-known case.
+# A prefix that is asked but routed nowhere produces a case that DOL confirms
+# and no table stores, and that isn't recorded as a miss either, so it is
+# re-found and re-dropped every night while the log reads "confirmed 1,
+# inserted 0" like an already-known case.
 from ingest_pwd_status_direct import PREFIX_TO_PROGRAM  # noqa: E402
 _homeless = [p for p in PREFIXES
-             if p not in core.PERM_PREFIXES and p not in PREFIX_TO_PROGRAM]
+             if p not in PERM_OFFICE_PREFIXES and p not in PREFIX_TO_PROGRAM]
 check(not _homeless,
       f"every asked prefix routes to a table (homeless: {_homeless})")
-check(set(PREFIXES) == set(core.DISCOVERY_PREFIXES),
-      "the sweep and the nightly walk ask for the SAME prefixes - a prefix only "
-      "one of them knows is a case only one of them can ever find")
 check(SERIALS_PER_REQUEST * len(PREFIXES) <= core.BATCH,
       "widening the prefix set kept the request under DOL's 50-number ceiling")
-check("G-300-" in core.PERM_PREFIXES,
+check("G-300-" in PERM_OFFICE_PREFIXES,
       "G-300 is a PERM office code and is stored as one")
-check("G-400-" in core.PERM_PREFIXES,
+check("G-400-" in PERM_OFFICE_PREFIXES,
       "G-400 is a PERM office code and is stored as one")
-check(set(core.PERM_PREFIXES) == set(core.FRONTIER_PREFIXES),
-      "the prefixes that move the frontier are exactly the ones we can store; "
-      "counting a case toward the frontier and then dropping it is the bug")
 
 
 # ---- true_span(): neighbours bound a day EXACTLY ------------------------
@@ -136,8 +130,10 @@ def fake_rows(db, sql, args=None):
         return [[str(d), str(lo), str(hi), str(n)] for d, lo, hi, n in db.bounds]
     return [[str(s)] for s in db.serials]
 
-_real_rows = core._rows
-core._rows = fake_rows
+# The sweep and the walk's insert path each read through their own import.
+import sweep_serial_gaps as _sweep_mod  # noqa: E402
+_real_rows = (_sweep_mod.query_rows, core.query_rows)
+_sweep_mod.query_rows = core.query_rows = fake_rows
 try:
     asked: list[list[str]] = []
     def fake_lookup(nums):
@@ -164,7 +160,7 @@ try:
     check(rw["inserted_perm"] + rw["inserted_other"] >= 1,
           f"a confirmed hit is actually inserted (got {rw['inserted_perm']}+{rw['inserted_other']})")
 
-    # ---- near matches are not finds (2026-09-24) -------------------------
+    # ---- near matches are not finds -------------------------
     # DOL's endpoint is a search: for numbers that do not exist it returns
     # scored neighbours. A catch-up over 17,545 empty holes reported 497
     # "real" because those were counted and stored. Exact matches only.
@@ -227,7 +223,7 @@ try:
     rz = sweep(FakeDB([1, 2, 3, 4]), ["26240"], cap=99, lookup=fake_lookup, dry=True)
     check(rz["requests"] == 0, "a contiguous day costs zero requests")
 
-    # ---- a DOL refusal is a STOP, not a crash (2026-09-22) ----------------
+    # ---- a DOL refusal is a STOP, not a crash ----------------
     # flag.dol.gov answered HTTP 403 on the tail of a 10,000-request morning,
     # the sweep crashed, the hook recorded `failed`, the health check went red.
     calls = {"n": 0}
@@ -266,7 +262,7 @@ try:
     except KeyError:
         check(True, "a non-HTTP exception propagates")
 
-    # ---- the re-ask for prefixes added later (Oct 1 2026) -----------------
+    # ---- the re-ask for prefixes added later -----------------
     # Serials the ledger retired were retired under the OLD prefix set, so
     # the one-off backfill re-asks them, asks only the new prefixes, and
     # writes no misses (three empty prefixes say nothing about the others).
@@ -300,9 +296,9 @@ try:
                 lookup=h2a_lookup, dry=True)
     check(rn2["probed"] == 0, f"the nightly sweep still skips retired serials (got {rn2['probed']})")
 finally:
-    core._rows = _real_rows
+    _sweep_mod.query_rows, core.query_rows = _real_rows
 
-# --- A stop on the cap records `ok` and names the cap (2026-09-15)
+# --- A stop on the cap records `ok` and names the cap
 import sweep_serial_gaps as sg  # noqa: E402
 _base = {"probed": 2998, "found": 2113, "inserted_perm": 400, "inserted_other": 1713, "missed": 885}
 _st, _note = sg.run_record({**_base, "capped": True}, 600)

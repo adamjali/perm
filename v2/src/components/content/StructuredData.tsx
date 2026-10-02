@@ -5,14 +5,13 @@
  * Rendered inline as a script tag for immediate crawler availability.
  */
 
+import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import type { PostMeta, ContentType } from "@/lib/content/types";
 import {
   generateArticleSchema,
-  generateBreadcrumbSchema,
   generateHowToSchema,
   generateVideoObjectSchema,
 } from "@/lib/content/seo";
-import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 
 interface StructuredDataProps {
   type: ContentType;
@@ -23,16 +22,8 @@ interface StructuredDataProps {
 }
 
 export default function StructuredData({ type, slug, meta, steps, videos }: StructuredDataProps) {
-  const config = CONTENT_TYPE_CONFIG[type];
-
   const articleSchema = generateArticleSchema(meta, slug, type);
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: config.plural, href: `/${type}` },
-    { name: meta.title, href: `/${type}/${slug}` },
-  ]);
-
-  const schemas: object[] = [articleSchema, breadcrumbSchema];
+  const schemas: object[] = [articleSchema, breadcrumbSchema(`/${type}/${slug}`, meta.title)];
 
   if (type === "guides" && steps && steps.length > 0) {
     schemas.push(generateHowToSchema(meta, slug, steps));

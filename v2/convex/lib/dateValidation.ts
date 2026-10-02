@@ -11,6 +11,7 @@
  */
 
 import { isValidISODate as isStrictISODate } from "./dateTypes";
+import { MS_PER_DAY } from "./time";
 
 // ============================================================================
 // CONSTANTS
@@ -18,9 +19,6 @@ import { isValidISODate as isStrictISODate } from "./dateTypes";
 
 /** ISO date format regex: YYYY-MM-DD */
 export const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-
-/** Milliseconds in one day */
-export const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 // ============================================================================
 // VALIDATION
@@ -42,7 +40,7 @@ export function isValidISODate(
 ): dateStr is string {
   // The strict check (real calendar day, not just YYYY-MM-DD shape) lives in
   // dateTypes; this wrapper only adds the null/undefined handling this call
-  // site needs. It used to be a bare regex and so accepted "2024-02-31".
+  // site needs. A bare shape regex would accept "2024-02-31".
   return dateStr != null && isStrictISODate(dateStr);
 }
 

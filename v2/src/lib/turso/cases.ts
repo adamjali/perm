@@ -1,8 +1,7 @@
 /**
  * The case-level browser's read path, backed by Turso.
  *
- * Replaces `convex/permCases.ts`'s four public queries. Nothing here can
- * identify a person: DOL's disclosure files carry attorney and
+ * Nothing here can identify a person: DOL's disclosure files carry attorney and
  * point-of-contact emails, phones and street addresses, and the ingest reads
  * none of those columns, so every field below is an organisation, a date, a
  * job, or a wage.
@@ -16,10 +15,8 @@
  * combinations a real index serves, because an unindexed predicate over
  * 373,939 rows is still a full scan someone unauthenticated can ask for.
  *
- * `planCaseSql` below is the same decision `planCaseQuery` made in
- * `convex/permCases.ts`, translated from a Convex index name to a WHERE
- * clause plus the SQLite index expected to serve it. The mapping is
- * one-for-one:
+ * `planCaseSql` below turns each slice into a WHERE clause plus the SQLite
+ * index expected to serve it:
  *
  * | slice      | no status              | with a status                  | SQLite index          |
  * |------------|------------------------|--------------------------------|-----------------------|
@@ -44,18 +41,18 @@ import { slugify } from "@/lib/entitySlug";
 import { getCasesMeta } from "./publicData";
 import { one, rows } from "./client";
 
-export type CaseStatus = "certified" | "denied" | "withdrawn";
+export type DisclosureOutcome = "certified" | "denied" | "withdrawn";
 
-const STATUSES: readonly CaseStatus[] = ["certified", "denied", "withdrawn"];
+const STATUSES: readonly DisclosureOutcome[] = ["certified", "denied", "withdrawn"];
 
-export function isCaseStatus(v: string): v is CaseStatus {
+export function isDisclosureOutcome(v: string): v is DisclosureOutcome {
   return (STATUSES as readonly string[]).includes(v);
 }
 
 /** The row as the site reads it. Mirrors Convex's `caseRowValidator` exactly. */
 export interface PermCaseRow {
   caseNumber: string;
-  status: CaseStatus;
+  status: DisclosureOutcome;
   receivedDate: string;
   decisionDate: string;
   days: number;
@@ -105,7 +102,7 @@ export function toCaseRow(r: CaseDbRow): PermCaseRow {
   // A status outside the three is corrupt data, not a rendering problem. The
   // Convex validator would have refused the row at read time; throwing keeps
   // that guarantee rather than quietly widening the union at the call site.
-  if (!isCaseStatus(r.status)) {
+  if (!isDisclosureOutcome(r.status)) {
     throw new Error(`perm_cases.${r.case_number} has status "${r.status}"`);
   }
   return {
@@ -131,7 +128,7 @@ export function toCaseRow(r: CaseDbRow): PermCaseRow {
 // ---------------------------------------------------------------------------
 
 export interface StatusFacet {
-  status: CaseStatus;
+  status: DisclosureOutcome;
   count: number;
 }
 export interface FiscalYearFacet {
@@ -193,7 +190,7 @@ export type CaseSlice =
 
 export interface CaseFilter {
   slice: CaseSlice;
-  status?: CaseStatus;
+  status?: DisclosureOutcome;
   /** Inclusive lower bound on `decision_date`, `YYYY-MM-DD`. */
   from?: string;
   /** Inclusive upper bound on `decision_date`, `YYYY-MM-DD`. */
@@ -425,7 +422,7 @@ export const MAX_SEARCH_RESULTS = 100;
 export interface SearchCasesArgs {
   field: "employer" | "attorney";
   text: string;
-  status?: CaseStatus;
+  status?: DisclosureOutcome;
   state?: string;
   limit?: number;
   /** Case-insensitive "contains" on the job title. `%` and `_` are literal. */
@@ -581,7 +578,7 @@ export async function searchLiveCases(
   // INDEXED BY: a `from`/`to` month narrowing otherwise moved the plan onto
   // `perm_live_recent_filed (filing_date>? AND filing_date<?)`, which reads
   // every filing in that window across every employer in the country and
-  // then discards all but one company's. Measured 2026-09-03.
+  // then discards all but one company's. Measured.
   const found = await rows<LiveDbRow>(
     `SELECT case_number, filing_date, status, is_final, employer_name, employer_slug, job_title
        FROM perm_live_recent INDEXED BY perm_live_recent_emp
@@ -670,14 +667,14 @@ export async function searchCases(args: SearchCasesArgs): Promise<PermCaseRow[]>
   conds.push(...narrow.conds);
   sqlArgs.push(...narrow.params);
 
-  // INDEXED BY, AND IT IS LOAD-BEARING. Measured against production
-  // 2026-09-03: with the status filter present and no hint, SQLite chose
+  // INDEXED BY, AND IT IS LOAD-BEARING. Measured against production: with
+  // the status filter present and no hint, SQLite chose
   // `SEARCH perm_cases USING INDEX idx_pc_status_dec (status=?)` - it read
   // every certified case in the corpus and threw away the ones belonging to
   // other employers. `state = ?` stole it the same way (`idx_pc_state_dec`),
-  // and so did `fiscal_year` (`idx_pc_fy_wage`). Turso forbids ANALYZE, so
-  // there are no statistics to tell the planner that one employer is a few
-  // thousand rows and one status is a quarter of a million; it prefers an
+  // and so did `fiscal_year` (`idx_pc_fy_wage`). This database carries no
+  // planner statistics to say that one employer is a few thousand rows and
+  // one status is a quarter of a million, so SQLite prefers an
   // equality over a range and is wrong here every time. Naming the index
   // pins the read to this employer, and it fails loudly if the index is ever
   // dropped rather than silently degrading to a scan.

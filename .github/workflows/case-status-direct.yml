@@ -1,42 +1,24 @@
 name: Case status (direct from DOL)
 
-# Per-case PERM status, straight from flag.dol.gov instead of the rival tracker's
-# mirror of it. See scripts/ingest_case_status_direct.py for the measurement
-# that established the endpoint is open (the path is NAMED recaptcha and
-# nothing in the flow is a captcha) and that nothing is lost by switching.
+# Per-case PERM status, straight from flag.dol.gov's open batch endpoint
+# (scripts/ingest_case_status_direct.py has the details).
 #
-# TWO PASSES, TWO CHECKPOINTS, for the same reason the mirror had two:
-#   full     daily 04:10 ET  - all ~414k cases, 8,281 requests, ~69 min
-#   pending  daily 15:40 ET  - the ~97k undecided, 1,948 requests, ~16 min
+#   full      daily 04:10 ET  every case, plus the discovery walk and the gap sweep
+#   pending   daily 15:40 ET  the undecided cases, plus the discovery walk
+#   discover  dispatch only   the serial walk on its own, to recover a gap
 #
-# The full pass is DAILY rather than weekly because "final" is not final: a
-# CERTIFIED case silently becomes CERTIFIED - EXPIRED when the 180-day I-140
-# window lapses, and nothing announces it. The first smoke test found 171 of
-# those in 200 rows. Weekly meant a case could read as certified for six days
-# after it had lapsed.
+# The full pass is daily because "final" is not final: a CERTIFIED case
+# becomes CERTIFIED - EXPIRED when its 180-day I-140 window lapses, and nothing
+# announces it. The pending pass halves the worst-case staleness on the cases
+# people have alerts on. Both run in DOL's quiet hours, around its published
+# evening maintenance windows, and the script backs off and stops cleanly when
+# the far end keeps failing.
 #
-# Measured before choosing daily: 10,229 requests/day over ~85 minutes is
-# 2.0 requests/second. Turso writes stay ~1,300/day because only CHANGED rows
-# are written, against a 10M/month plan, and Actions minutes are free on a
-# public repo. The binding cost is politeness to a government host, and 2/s
-# for under an hour and a half is modest for a public search endpoint that
-# answers the same query for real users all day.
-#
-# The pending pass survives because it is cheap and it halves the worst-case
-# staleness on the cases people actually have alerts on.
-#
-# Scheduled AROUND DOL's habits, not through them. FLAG publishes evening
-# maintenance windows (observed 19:00-21:00 ET), so both passes run in the
-# early hours ET. The script also retries each batch with backoff and stops
-# cleanly after three consecutive failures rather than hammering a host that
-# is down - and it flushes as it goes, so a shutdown mid-run keeps the work.
+# The server's timers dispatch both passes through /api/cron/dispatch
+# (v2/src/app/api/cron/dispatch/jobs.ts), because GitHub's own `schedule` ran
+# hours late on this repo.
 
 on:
-  # No `schedule:` any more. GitHub fired these crons 2 to 7.5 hours late on
-  # every one of nine measured days (Sep 7 2026), so the server's timers drive
-  # them through /api/cron/dispatch: case-status-full at 08:10 UTC,
-  # case-status-pending at 19:40 UTC (v2/src/app/api/cron/dispatch/jobs.ts).
-  # Both arrive here as workflow_dispatch.
   workflow_dispatch:
     inputs:
       mode:
@@ -64,11 +46,12 @@ concurrency:
 jobs:
   sweep:
     runs-on: ubuntu-24.04
-    # 150, not 120 (2026-09-24): the 4:10 AM walk now spends the slack inside
-    # the main step (up to 90 minutes after the script started), and the gap
-    # sweep follows it, so 120 left too little margin. The step-level
-    # `timeout` commands below are still what catch a genuine hang.
+    # Above the main step's `timeout 105m` plus the gap sweep's 25m. The
+    # step-level `timeout` commands are what catch a hang (see below).
     timeout-minutes: 150
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -78,102 +61,52 @@ jobs:
       - name: Sweep
         working-directory: v2
         env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          CAP_IN: ${{ github.event.inputs.discover_cap }}
-          FRONTIER_IN: ${{ github.event.inputs.frontier }}
+          MODE_IN: ${{ inputs.mode }}
+          CAP_IN: ${{ inputs.discover_cap }}
+          FRONTIER_IN: ${{ inputs.frontier }}
         run: |
-          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
-            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
-          # 08:10 UTC (04:10 ET) is the DAILY full pass; the other cron is
-          # the pending pass. workflow_dispatch overrides both.
-          # Keep this string in step with the cron above: if they drift, the
-          # full pass silently becomes a second pending pass and the
-          # expiration sweep stops happening with nothing erroring.
-          MODE="${{ github.event.inputs.mode }}"
-          if [ -z "$MODE" ]; then
-            if [ "${{ github.event.schedule }}" = "10 8 * * *" ]; then
-              MODE=full
-            else
-              MODE=pending
-            fi
-          fi
+          MODE="${MODE_IN:-pending}"
+          case "$MODE" in
+            pending|full|discover) ;;
+            *) echo "::error::unknown mode '$MODE'"; exit 1 ;;
+          esac
           echo "mode: $MODE"
           echo "MODE=$MODE" >> "$GITHUB_ENV"
+          # `timeout` rather than the job's timeout-minutes, so a hang exits 124
+          # and fails visibly: GitHub sends nothing for a cancelled job.
           if [ "$MODE" = "discover" ]; then
-            # The serial walk on its own: recovers a gap, or re-runs the
-            # night's discovery. It records its own ingest_runs row and
-            # refreshes the census when it inserted anything.
-            # Measured Sep 7 2026: ~1.4 s per request (0.35 s pace + DOL's
-            # latency), so 60m held ~2,400 requests and a 2,500 cap was killed
-            # 124 with its cursor safe. 100m under the 150m job cap, and the
-            # script stops itself at 95 (DISCOVERY_BUDGET_MIN["discover"]).
+            # ~1.4 s a request; the script stops itself on its 95-minute budget
+            # (DISCOVERY_BUDGET_MIN["discover"]), inside this 100.
             timeout 100m python3 scripts/ingest_case_status_direct.py --discover \
               --discover-cap "${CAP_IN:-2000}" ${FRONTIER_IN:+--frontier "$FRONTIER_IN"}
-            python3 scripts/build_entity_detail.py --live-recent-only || true
-            exit 0
+          else
+            timeout 105m python3 scripts/ingest_case_status_direct.py --"$MODE"
           fi
-          # `timeout`, not the job's timeout-minutes, is what makes a hung sweep
-          # NOTIFY. A job that hits timeout-minutes is CANCELLED, and GitHub
-          # sends nothing for a cancellation - which is how the 2026-08-28 full
-          # sweep died two-thirds through with no alert. `timeout 105m` exits
-          # 124 (a real failure, red, notified) below the 150m job cap, which
-          # is a genuine hang: the full pass is ~85 min and the script already
-          # stops itself cleanly after three consecutive far-end failures.
-          timeout 105m python3 scripts/ingest_case_status_direct.py --"$MODE"
-          # The searchable remainder (cases newer than the last disclosure
-          # file) rebuilds right after the sweep, so the case search and the
-          # employer pages see today's discoveries with canonical slugs.
-          # Cheap (one quarter of filings at most); failure here must not
-          # mark the sweep failed - the band just stays a day staler.
+          # The searchable live remainder rebuilds right after, so the case
+          # search and the employer pages see today's discoveries. A failure
+          # here leaves the band a day staler; it must not fail the sweep.
           python3 scripts/build_entity_detail.py --live-recent-only || true
 
-      # SECOND LOOK AT THE SERIAL SPACE.
-      #
-      # `run_discovery` advances a cursor and never goes back, so anything it
-      # missed on the night is missed permanently, as is anything DOL files
-      # into a range the walk has already passed. Measured 12 Sep 2026 we held
-      # 88-92% of each day's serial span, and probing the holes by hand found
-      # real PERM cases in them. An independent check against the rival tracker's
-      # published July figure put us 1.2% short.
-      #
-      # This re-asks DOL about the holes in the trailing 90 day codes. It never
-      # probes outside the span we already hold, so it cannot burn budget on
-      # serials DOL never issued, and it only writes what DOL confirms.
-      #
-      # Runs on the FULL pass only (once a day). ~1.4 s per request, so a 600
-      # cap is ~14 minutes; `timeout 25m` makes a hang exit 124 and go red
-      # rather than hanging the job to a silent cancellation.
-      #
-      # `|| record_ingest_failure` rather than `|| true`: unlike the entity
-      # rebuild, a gap sweep that stops running is a slow corpus leak with no
-      # other symptom, so it must reach the health check.
+      # The walk only moves forward, so this is its second look: it re-asks DOL
+      # about the holes in the trailing 90 day codes and writes only what DOL
+      # confirms. A gap sweep that stops running is a slow corpus leak with no
+      # other symptom, so its failure is recorded for the health check.
       - name: Sweep the serial gaps
         if: env.MODE == 'full'
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           timeout 25m python3 scripts/sweep_serial_gaps.py --window 90 --cap 600 \
             || python3 scripts/record_ingest_failure.py \
                  --script "sweep_serial_gaps.py" \
                  --note "gap sweep: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
-      # THE STANDING BACKTEST, weekly (Mondays, on the full pass).
-      #
-      # Rebuilds the queue as it stood 21 days ago, dates every in-line case
-      # near the front the way the site does, and scores the dates against
-      # what DOL actually decided since. /estimate-scorecard prints the result
-      # (perm_docs['estimator_backtest']). Read-only apart from that one doc,
-      # ~500k row reads a week. A failure is a warning, not a red sweep: the
-      # page keeps last week's figure and says when it was computed.
+      # The standing estimator backtest, Mondays on the full pass. It scores
+      # the site's dates against what DOL decided since and writes the one doc
+      # /estimate-scorecard prints. A failure only warns: the page keeps last
+      # week's figure and says when it was computed.
       - name: Estimator backtest (weekly)
         if: env.MODE == 'full'
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           if [ "$(date -u +%u)" = "1" ]; then
             timeout 20m python3 scripts/backtest_queue.py --write \
@@ -182,18 +115,10 @@ jobs:
             echo "not Monday; the backtest runs weekly"
           fi
 
-      # Expire the employer pages whose live rows just moved.
-      #
-      # /perm-employers/[slug] caches for 30 days, which is right for the
-      # quarterly figures on it and a month too long for the live band. A
-      # route segment gets one window, so the pages that changed are expired
-      # by PATH instead. The rebuild above writes the slug list, busiest
-      # first, capped to match the endpoint's own limit.
-      #
-      # `|| true` for the same reason as the rebuild: a page staying a day
-      # staler is not a reason to mark a 85-minute federal data sweep failed.
-      # The step is skipped rather than failing when the file is absent, which
-      # is what a rebuild that itself failed leaves behind.
+      # Employer pages cache for 30 days, right for their quarterly figures and
+      # too long for the live band, so the pages whose live rows moved are
+      # expired by path. The rebuild above writes the list, busiest first. A
+      # page staying a day staler is not a reason to fail the sweep.
       - name: Expire changed employer pages
         if: always()
         working-directory: v2
@@ -203,13 +128,8 @@ jobs:
           if [ ! -s changed-employer-slugs.json ]; then
             echo "no slug list written; nothing to expire"; exit 0
           fi
-          # An EMPTY list is the normal quiet night, not a failure. The file
-          # still exists and is 13 bytes of '{"slugs": []}', so `-s` passes
-          # it straight through to a POST the endpoint correctly rejects with
-          # 400 "No usable slugs" - which `curl -f` then reports as
-          # "revalidation call failed". Measured by running the rebuild on a
-          # night with nothing to write. A healthy no-op that logs an error
-          # trains everyone to ignore the log, which is worse than no log.
+          # An empty list is a quiet night, and the endpoint rejects it with a
+          # 400, so it is skipped here rather than logged as a failed call.
           N=$(python3 -c "import json;print(len(json.load(open('changed-employer-slugs.json'))['slugs']))" 2>/dev/null || echo 0)
           if [ "$N" -eq 0 ]; then
             echo "no employer pages changed; nothing to expire"; exit 0
@@ -218,21 +138,16 @@ jobs:
             echo "REVALIDATE_SECRET not set; skipping"; exit 0
           fi
           echo "expiring $N employer pages"
-          # -f so a 4xx/5xx is visible in the log rather than a silent 403
-          # body scrolling past as if it were a success.
           curl -fsS -X POST https://permtracker.app/api/revalidate-live-employers \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
             -H "content-type: application/json" \
             --data @changed-employer-slugs.json || echo "revalidation call failed"
 
       # The pages that print the sweep's own figures (the daily decisions, the
-      # census, the review stages, "checked against DOL at ...") sit on daily or
-      # six-hourly windows. Expired here, they move when the record moves
-      # instead of up to a window later (Oct 1 2026). Fixed list, no input:
-      # src/app/api/revalidate-sweep/paths.ts.
+      # census, the review stages) move when the record does. Fixed list, no
+      # input: src/app/api/revalidate-sweep/paths.ts.
       - name: Expire the pages that print the sweep's figures
         if: success()
-        working-directory: v2
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |
@@ -242,39 +157,13 @@ jobs:
           curl -fsS -X POST https://permtracker.app/api/revalidate-sweep \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" || echo "revalidation call failed"
 
-      # THE ONLY THING THAT WILL SAY THIS RUN FAILED, TOMORROW.
-      #
-      # There is no alerting on these workflows. A red scheduled run does email
-      # the repo owner, but three of the four ways this job can die send
-      # nothing at all: a CANCELLED job (the job-level timeout-minutes cap),
-      # a runner reclaimed mid-sweep, and any failure whose only record is an
-      # Actions log that ages out. And the script's own `record_run` cannot
-      # help there, because in those cases no Python is left running.
-      #
-      # So write the failure where machinery that already exists will find it.
-      # `check_ingest_health.py` reads `ingest_runs` at 10:00 UTC daily and
-      # exits non-zero when an ingest's most recent run did not finish clean,
-      # which turns THAT run red and fires GitHub's own notification. No new
-      # service, no new secret - it rides the Turso token this job already has.
-      #
-      # `cancelled()` as well as `failure()`: a cancellation is the case with
-      # NO other signal whatsoever, so it is the one most worth recording. It
-      # is best-effort inside the runner's cancellation grace window.
+      # A cancelled or killed run leaves no other record; this one is what the
+      # daily health check reads (see scripts/record_ingest_failure.py).
       - name: Record the failure where the health check will see it
         if: failure() || cancelled()
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
-          # Env vars, not .env.local: a job that died before the sweep step
-          # ever wrote that file still has to be able to report itself.
           python3 scripts/record_ingest_failure.py \
             --script "ingest_case_status_direct.py --${MODE:-unknown}" \
             --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
             --note "case-status-direct: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-
-      - name: Remove credentials
-        if: always()
-        working-directory: v2
-        run: rm -f .env.local

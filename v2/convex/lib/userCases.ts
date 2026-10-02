@@ -3,15 +3,14 @@
  * (the case list, select-all, the dashboard, the calendar, the timeline,
  * calendar sync and the chat's case data).
  *
- * It replaced `.withIndex("by_user_id").take(1000)` in about a dozen places,
- * which had three faults, all silent (silent-limit audit, Sep 29 2026):
- *   - it read OLDEST first, so the newest cases were the ones that fell off;
- *   - soft-deleted cases counted toward the 1,000, so an account that had
- *     deleted cases lost live ones sooner;
- *   - nothing on any page said a case had been left out.
+ * A plain `.withIndex("by_user_id").take(1000)` has three faults, all silent:
+ *   - it reads OLDEST first, so the newest cases are the ones that fall off;
+ *   - soft-deleted cases count toward the limit, so an account that has
+ *     deleted cases loses live ones sooner;
+ *   - nothing on any page says a case was left out.
  *
- * Now the index leaves deleted cases out, the read goes newest first (so a
- * ceiling drops the oldest), the result keeps the old oldest-first order, and
+ * Here the index leaves deleted cases out, the read goes newest first (so a
+ * ceiling drops the oldest), the result is returned oldest first, and
  * `truncated` says when more cases exist than were read, so each page can say
  * so. The ceiling is set by Convex's own read limits (32,000 documents and
  * 16 MiB a transaction): a case document is usually a few KB, and the loop

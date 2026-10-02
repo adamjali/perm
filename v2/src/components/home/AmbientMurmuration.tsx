@@ -173,6 +173,8 @@ interface Boid {
   r: number;
   lime: boolean;
   f: number;
+  /** A pointed dart instead of a dot, aimed along its own flight. */
+  tri: boolean;
 }
 
 export function AmbientMurmuration() {
@@ -233,6 +235,10 @@ export function AmbientMurmuration() {
             sizeScale,
           lime: i % flock.limeEvery === 0,
           f: fi,
+          // About one bird in six is a dart, a triangle pointing along its
+          // heading, for variety in the flock. Same flock, same paint
+          // bucket, same size budget, so the field reads as one murmuration.
+          tri: (k * 5) % 6 === 0,
         });
       }
     });
@@ -316,6 +322,26 @@ export function AmbientMurmuration() {
         for (const b of group) {
           const cx = b.x * w;
           const cy = b.y * h;
+          if (b.tri) {
+            // A dart aimed along the bird's own velocity, in pixels (x and y
+            // are normalised to the canvas, so the heading needs w and h).
+            // Long and narrow so it reads as pointing: 3.4r nose to tail,
+            // 1.4r across the tail, area about three quarters of the dot's.
+            const dx = b.vx * w;
+            const dy = b.vy * h;
+            const len = Math.hypot(dx, dy) || 1;
+            const ux = dx / len;
+            const uy = dy / len;
+            const L = b.r * 3.4;
+            const half = b.r * 0.7;
+            const bx = cx - ux * L * 0.4;
+            const by = cy - uy * L * 0.4;
+            ctx.moveTo(cx + ux * L * 0.6, cy + uy * L * 0.6);
+            ctx.lineTo(bx - uy * half, by + ux * half);
+            ctx.lineTo(bx + uy * half, by - ux * half);
+            ctx.closePath();
+            continue;
+          }
           // moveTo before each arc, or the arcs are joined by a line.
           ctx.moveTo(cx + b.r, cy);
           ctx.arc(cx, cy, b.r, 0, Math.PI * 2);

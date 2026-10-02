@@ -1,6 +1,6 @@
 name: Backup observations
 
-# Weekly dump of the Turso tables that cannot be rebuilt from DOL's files:
+# Weekly dump of the database tables that cannot be rebuilt from DOL's files:
 # per-case status rows, the event log, precomputed docs, the audit trail and
 # the small federal series whose sources keep no archive. See
 # scripts/dump_observations.py for the reasoning and the table list.
@@ -29,6 +29,9 @@ jobs:
   dump:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -37,15 +40,9 @@ jobs:
 
       - name: Dump
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-        run: |
-          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
-            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
-          # Exits non-zero on a short table, so an empty dump cannot upload
-          # as if it were a backup.
-          python3 scripts/dump_observations.py --out "${RUNNER_TEMP}/observations"
+        # Exits non-zero on a short table, so an empty dump cannot upload as
+        # if it were a backup.
+        run: python3 scripts/dump_observations.py --out "${RUNNER_TEMP}/observations"
 
       - name: Upload
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
@@ -58,16 +55,8 @@ jobs:
       - name: Record the failure where the health check will see it
         if: failure() || cancelled()
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           python3 scripts/record_ingest_failure.py \
             --script dump_observations.py \
             --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
             --note "backup-observations: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-
-      - name: Remove credentials
-        if: always()
-        working-directory: v2
-        run: rm -f .env.local

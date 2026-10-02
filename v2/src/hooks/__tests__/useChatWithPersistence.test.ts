@@ -70,7 +70,7 @@ vi.mock('@/lib/contexts/AuthContext', () => ({
 }));
 
 // Mock the API import
-vi.mock('../../../convex/_generated/api', () => ({
+vi.mock('@convex/_generated/api', () => ({
   api: {
     conversations: {
       create: 'create',

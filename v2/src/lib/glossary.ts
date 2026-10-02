@@ -203,11 +203,20 @@ export const GLOSSARY: GlossaryTerm[] = [
     see: [{ label: "Wage request search", href: "/pwd-cases" }],
   },
   {
+    term: "ETA-9142A and ETA-9142B",
+    slug: "eta-9142",
+    aka: ["H-2A application form", "H-2B application form", "Application for Temporary Employment Certification"],
+    definition:
+      "The applications for temporary labor certification: 9142A for H-2A farm work, 9142B for H-2B non-farm work. FLAG numbers them H-300- and H-400-. The employer files them against a date of need: at least 45 days ahead for H-2A, 75 to 90 days ahead for H-2B.",
+    cite: CFR655("655.15"),
+    see: [{ label: "H-2A and H-2B case search", href: "/seasonal-cases" }],
+  },
+  {
     term: "FLAG",
     slug: "flag",
     aka: ["Foreign Labor Application Gateway"],
     definition:
-      "DOL's filing system for PERM, prevailing wage and LCA cases, and the source of the status words on this site. Its case-status search answers by case number; it publishes no definitions of the words it returns.",
+      "DOL's filing system for PERM, prevailing wage, LCA, H-2A and H-2B cases, and the source of the status words on this site. Its case-status search answers by case number; it publishes no definitions of the words it returns.",
     see: [{ label: "Every status, explained", href: "/perm-case-statuses" }],
   },
   {
@@ -216,6 +225,24 @@ export const GLOSSARY: GlossaryTerm[] = [
     definition:
       "Days spent outside the United States during H-1B status do not count toward the six-year limit and can be added back with proof of travel. The calculator takes the total as an input because only the passport holds it.",
     see: [{ label: "H-1B six-year limit calculator", href: "/tools/h1b-six-year-limit" }],
+  },
+  {
+    term: "H-2A",
+    slug: "h-2a",
+    aka: ["H2A", "temporary agricultural worker"],
+    definition:
+      "The visa for temporary or seasonal farm work. DOL must first certify that no qualified U.S. workers are available and that hiring won't depress local wages; the application is decided no later than 30 days before the first date of need when it is complete.",
+    cite: CFR655("655.160"),
+    see: [{ label: "H-2A and H-2B case search", href: "/seasonal-cases" }],
+  },
+  {
+    term: "H-2B",
+    slug: "h-2b",
+    aka: ["H2B", "temporary non-agricultural worker"],
+    definition:
+      "The visa for temporary non-farm work: a one-time, seasonal, peakload or intermittent need, denied past nine months unless it is a one-time occurrence. The employer needs a prevailing wage determination (a P-400- number) before filing the 9142B.",
+    cite: CFR655("655.6"),
+    see: [{ label: "H-2A and H-2B case search", href: "/seasonal-cases" }],
   },
   {
     term: "I-140",

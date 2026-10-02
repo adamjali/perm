@@ -17,10 +17,6 @@
  * - beginSignOut(): idle → signingOut
  * - completeSignOut(): signingOut → idle (success, component unmounts)
  * - cancelSignOut(): signingOut → idle (error recovery)
- *
- * Phase: 20 (Dashboard + UI Polish)
- * Created: 2025-12-24
- * Updated: 2025-12-24 - Refactored to action-based interface
  */
 
 import { createContext, useContext, useState, useCallback, useEffect, ReactNode } from "react";

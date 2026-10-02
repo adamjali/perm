@@ -117,7 +117,7 @@ export default defineSchema({
     emailDeadlineReminderRfe: v.optional(v.boolean()),
     emailStatusUpdates: v.boolean(),
     emailRfeAlerts: v.boolean(),
-    emailWeeklyDigest: v.optional(v.boolean()), // Weekly summary email (Mondays 9 AM EST) - defaults to false
+    emailWeeklyDigest: v.optional(v.boolean()), // Weekly case summary email (Mondays 9 AM EST) - defaults to false
     // DEPRECATED: No longer used — emails always go to signup email.
     // Kept as optional for backwards compat with existing documents.
     preferredNotificationEmail: v.optional(v.union(
@@ -1625,7 +1625,7 @@ export default defineSchema({
   }).index("by_email", ["email"]),
 
   /**
-   * The weekly bulletin digest list. Same shape and the same double opt-in
+   * The weekly digest list. Same shape and the same double opt-in
    * as `newsSubscribers` (staged by a checkbox, confirmed by the alert's own
    * confirm click, which names it). Built out on 2026-09-08 and switched OFF
    * by the NEWSLETTER_ENABLED environment variable: issues are composed every

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { ArrowRight } from "./icons";
 
 import { QueueTape } from "@/components/tools/QueueTape";
-import { formatAsOf, formatMonth } from "@/lib/dolFormat";
+import { formatAsOf } from "@/lib/dolFormat";
 
 /**
  * The homepage's evidence band.
@@ -43,24 +43,20 @@ export interface DataPageFigures {
 export interface LiveDataBandProps {
   frontierMonth: string | null;
   asOf: string | null;
-  figures?: DataPageFigures;
+  /** The day-by-day charts, drawn under the tape (the homepage passes PermPulse). */
+  children?: React.ReactNode;
 }
 
 /**
  * A figure for every card, and a DIFFERENT SHAPE for each.
  *
- * Adam, 2026-08-30: "the 5 boxes/links are boring low effort lazy ai slop and
- * flat and nothing and superficial not deep, no visuals? no unique structure
- * or layout or skeleton?" He was right, and the reason is documented two
- * comments below: three of the five carried a numeric figure that was deleted
- * for being meaningless, and nothing replaced it. Deleting them was correct.
- * Leaving the slot empty was not.
+ * Each card carries its own visual, never a figure for the sake of having
+ * one (see below).
  *
  * THE CONSTRAINT THAT SHAPES ALL OF THIS: employers and law firms have no
  * honest number to print. DOL spells one practice six ways, so any count or
- * ranking off these files overstates until entity identity is normalised, and
- * the deleted "top 250 sponsors" share was the residue of a 1 MB document
- * limit rather than a cohort anyone chose. So those two cards get a DIAGRAM of
+ * ranking off these files overstates until entity identity is normalised. So
+ * those two cards get a DIAGRAM of
  * the shape of their data, which is true and needs no disputed figure, while
  * wages and denial keep the real numbers they already had.
  *
@@ -153,44 +149,31 @@ function FirmsFigure() {
 export function LiveDataBand({
   frontierMonth,
   asOf,
-  figures,
+  children,
 }: LiveDataBandProps) {
   if (!frontierMonth) return null;
 
   return (
     <section
-      aria-label="Live DOL queue position"
+      aria-label="DOL's queue and its pace"
       className="border-y-2 border-border bg-card"
     >
       <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div>
-            <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-foreground/55">
-              Live from the Department of Labor
-              {asOf ? ` · ${formatAsOf(asOf)}` : null}
-            </p>{" "}
-            <h2 className="mt-2 font-heading text-3xl font-black leading-tight sm:text-4xl">
-              DOL is deciding cases filed{" "}
-              <span className="whitespace-nowrap bg-primary px-2 text-black">
-                {formatMonth(frontierMonth)}
-              </span>
-            </h2>
-            {/* The "N days on average to a determination. The tracker turns
-                dates like these into your case's own deadlines." line was cut
-                on 2026-08-30: the headline above already states DOL's position
-                as a fact, and a second sentence restating it as an average and
-                then explaining the product was the band's own too-many-words
-                problem. The live average still has a home on
-                /perm-processing-times, which the tape below links. */}
-          </div>
+            <h2 className="font-heading text-3xl font-black leading-tight sm:text-4xl">
+              How fast DOL works through the line
+            </h2>{" "}
+            {asOf ? (
+              <p className="mt-2 text-sm text-foreground/70">
+                From DOL&apos;s own processing times, as of {formatAsOf(asOf)}
+              </p>
+            ) : null}
+          </div>{" "}
           <Link
             href="/tools"
             className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-background px-5 py-2.5 font-bold shadow-hard-sm transition-all duration-150 hover:-translate-y-[1px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
           >
-            {/* "Open the data" says nothing about what opens. The hero's
-                card was renamed off this phrasing; this button points at the
-                same place and kept it, which is the drift a reader has to
-                translate. */}
             Browse every dataset
             <ArrowRight />
           </Link>
@@ -201,8 +184,52 @@ export function LiveDataBand({
           className="mt-8"
           monthsBehind={6}
           monthsAhead={8}
-        />
+        />{" "}
+        {children ? <div className="mt-8">{children}</div> : null}
 
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Search every filing: the dataset doors, kept out of the queue band so each
+ * band does one job. A plain GET form into
+ * `/case-search?q=` leads it, so the most common next step (an employer's
+ * name) is one field away; the five doors below keep their figures.
+ */
+export function DataShelf({ figures }: { figures?: DataPageFigures }) {
+  return (
+    <section aria-labelledby="data-shelf-heading" className="border-b-3 border-border bg-card">
+      <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
+        <div className="grid grid-cols-1 items-end gap-6 [&>*]:min-w-0 lg:grid-cols-12">
+          <h2
+            id="data-shelf-heading"
+            className="font-heading text-3xl font-black leading-tight sm:text-4xl lg:col-span-5"
+          >
+            Search every filing
+          </h2>{" "}
+          <form action="/case-search" method="get" role="search" className="flex flex-col gap-3 sm:flex-row lg:col-span-7">
+            <label htmlFor="shelf-q" className="sr-only">
+              Employer, law firm or job title
+            </label>
+            <input
+              id="shelf-q"
+              name="q"
+              type="search"
+              autoComplete="off"
+              placeholder="An employer's name"
+              className="min-h-[48px] w-full min-w-0 flex-1 border-3 border-border bg-background px-4 text-base placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />{" "}
+            <button
+              type="submit"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 border-3 border-border bg-foreground px-6 font-heading font-black text-background shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"
+            >
+              Search{" "}
+              <ArrowRight className="shrink-0" />
+            </button>
+          </form>
+        </div>{" "}
         {/* A CARD CARRIES A FIGURE ONLY IF THE FIGURE ANSWERS SOMETHING.
             An earlier version gave all five one, on the reasoning that a card
             without a number was "a menu pretending to be a page". That pushed
@@ -222,7 +249,7 @@ export function LiveDataBand({
             wrong until entity identity is normalised. */}
         <nav
           aria-label="Data pages"
-          className="mt-10 grid grid-cols-2 gap-3 [&>*]:min-w-0 sm:grid-cols-3 lg:grid-cols-5"
+          className="mt-8 grid grid-cols-2 gap-3 [&>*]:min-w-0 sm:grid-cols-3 lg:grid-cols-5"
         >
           {[
             {
@@ -339,21 +366,19 @@ export function LiveDataBand({
               href={d.href}
               className="group flex flex-col border-2 border-border bg-background p-4 shadow-hard-sm transition-all duration-150 hover:-translate-y-[2px] hover:shadow-hard active:translate-y-0 active:shadow-hard-sm"
             >
-              <span className="font-heading text-base font-black">
-                {d.label}
+              {/* THE PICTURE AND THE NAME: no "View ..." line or OPEN row
+                  restating the label; the whole card is the link, and `what`
+                  names it for screen readers. */}
+              <span className="flex items-center justify-between gap-2 font-heading text-lg font-black">
+                {d.label}{" "}
+                <ArrowRight className="shrink-0 transition-transform duration-150 group-hover:translate-x-0.5" />
               </span>{" "}
               {d.figure ? (
                 <span className="mt-3 block border-t-2 border-border/30 pt-3">
                   {d.figure}
                 </span>
               ) : null}{" "}
-              <span className="mt-3 block text-sm leading-snug text-foreground/60">
-                {d.what}
-              </span>{" "}
-              <span className="mt-auto inline-flex items-center gap-1.5 pt-3 font-mono text-sm font-semibold uppercase tracking-[0.1em] text-foreground/55 group-hover:text-foreground">
-                Open{" "}
-                <ArrowRight className="transition-transform duration-150 group-hover:translate-x-0.5" />
-              </span>
+              <span className="sr-only">{d.what}</span>
             </Link>
           ))}
         </nav>

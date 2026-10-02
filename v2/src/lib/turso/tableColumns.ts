@@ -1,5 +1,7 @@
 import "server-only";
 
+import { MS_PER_MINUTE } from "@/lib/time";
+
 import { rows } from "./client";
 
 /**
@@ -24,7 +26,7 @@ import { rows } from "./client";
  * next ten minutes.
  */
 
-const TTL_MS = 10 * 60_000;
+const TTL_MS = 10 * MS_PER_MINUTE;
 const cache = new Map<string, { at: number; cols: Promise<Set<string>> }>();
 
 export function tableColumns(table: string): Promise<Set<string>> {

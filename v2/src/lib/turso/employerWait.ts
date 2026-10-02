@@ -10,6 +10,7 @@ import { getDecisionPace } from "@/lib/turso/decisionPace";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { getLiveBacklog } from "@/lib/turso/publicData";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
+import { MS_PER_DAY } from "@/lib/time";
 
 /**
  * How long one employer's PERM cases are taking, against every employer's,
@@ -55,7 +56,7 @@ export const getFieldWait = cache(async (): Promise<FieldWait | null> => {
 });
 
 export const getEmployerWait = cache(async (slug: string): Promise<WaitSummary> => {
-  const since = Date.now() - RECENT_WAIT_DAYS * 86_400_000;
+  const since = Date.now() - RECENT_WAIT_DAYS * MS_PER_DAY;
   const got = await rows<{ f: string; t: number | string }>(
     `SELECT r.filing_date AS f, MIN(e.changed_at) AS t
        FROM perm_live_recent r

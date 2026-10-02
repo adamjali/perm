@@ -2,7 +2,7 @@
  * Shared admin types used across admin UI components and utilities.
  */
 
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 
 /**
  * Per-user summary returned by the admin dashboard query.

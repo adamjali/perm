@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
 import { LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS } from "@/lib/constants/about";
@@ -65,17 +66,18 @@ export default function PrivacyPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Privacy Policy</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: September 30, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 1, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
 
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
-          <section>
-            <h2 id="introduction" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              1. Introduction
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="introduction" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">1. Introduction</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               Welcome to PERM Tracker. PERM Tracker is operated by {LEGAL_NAME},{" "}
               {LEGAL_FORM} (&quot;we,&quot; &quot;our,&quot; or &quot;us&quot;), which
@@ -90,12 +92,13 @@ export default function PrivacyPage() {
               information in accordance with this policy. If you don’t agree with
               this policy, please don’t use our service.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="information-we-collect" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              2. Information We Collect
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="information-we-collect" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">2. Information We Collect</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Account Information
@@ -162,12 +165,13 @@ export default function PrivacyPage() {
               <li>Performance metrics (page load times, Core Web Vitals)</li>{" "}
               <li>Error logs and stack traces (for debugging)</li>
             </ul>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="how-we-use-your-information" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              3. How We Use Your Information
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="how-we-use-your-information" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">3. How We Use Your Information</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We use the information we collect to:
             </p>{" "}
@@ -182,12 +186,13 @@ export default function PrivacyPage() {
               <li>Respond to customer support requests</li>{" "}
               <li>Comply with legal obligations</li>
             </ul>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="google-oauth-disclosure" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              4. Google OAuth Disclosure
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="google-oauth-disclosure" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">4. Google OAuth Disclosure</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker uses Google OAuth as one of our authentication methods.
               When you sign in with Google:
@@ -227,12 +232,13 @@ export default function PrivacyPage() {
               </a>
               , including the Limited Use requirements.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="data-storage-security" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              5. Data Storage &amp; Security
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="data-storage-security" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">5. Data Storage &amp; Security</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               Your data is stored securely using industry-standard practices:
             </p>{" "}
@@ -281,12 +287,13 @@ export default function PrivacyPage() {
               transmission over the Internet is 100% secure. We can’t guarantee
               absolute security of your data.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="ai-chat-assistant" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              6. AI Chat Assistant
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="ai-chat-assistant" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">6. AI Chat Assistant</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker includes an AI-powered chat assistant to help you
               understand your cases, deadlines, and PERM processes. When you use
@@ -384,12 +391,13 @@ export default function PrivacyPage() {
                 identity documents.
               </p>
             </div>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="product-analytics" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              7. Product Analytics
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="product-analytics" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">7. Product Analytics</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We use PostHog (PostHog, Inc.) for product analytics to understand
               how the application is used and to improve features.
@@ -503,12 +511,13 @@ export default function PrivacyPage() {
               PostHog as our data processor, and taking part is always
               optional.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="error-monitoring-session-replay" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              8. Error Monitoring &amp; Session Replay
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="error-monitoring-session-replay" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">8. Error Monitoring &amp; Session Replay</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We use Sentry (Functional Software, Inc.) to monitor application
               errors and improve reliability.
@@ -562,12 +571,13 @@ export default function PrivacyPage() {
               </a>
               .
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="bot-fraud-prevention" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              9. Bot &amp; Fraud Prevention
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="bot-fraud-prevention" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">9. Bot &amp; Fraud Prevention</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               To protect our sign-up, sign-in, and password-reset forms from
               automated abuse, we use Cloudflare Turnstile, operated by
@@ -681,12 +691,13 @@ export default function PrivacyPage() {
               Owners of accounts placed in this state can contact support
               to appeal and have the lock lifted earlier.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="push-notifications" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              10. Push Notifications
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="push-notifications" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">10. Push Notifications</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               When you enable push notifications, your browser generates a unique
               subscription including an endpoint URL and encryption keys. We store
@@ -731,12 +742,13 @@ export default function PrivacyPage() {
               <li>Configure quiet hours and notification types in Settings</li>{" "}
               <li>Subscription data is deleted when you revoke permissions or delete your account</li>
             </ul>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="google-calendar-integration" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              11. Google Calendar Integration
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="google-calendar-integration" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">11. Google Calendar Integration</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You may optionally connect your Google Calendar to sync PERM
               deadlines as calendar events.
@@ -767,12 +779,13 @@ export default function PrivacyPage() {
               We don’t access your existing calendar events, contacts, or other
               Google services through this integration.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="cookies-local-storage" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              12. Cookies &amp; Local Storage
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="cookies-local-storage" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">12. Cookies &amp; Local Storage</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We use the following storage technologies:
             </p>{" "}
@@ -806,12 +819,13 @@ export default function PrivacyPage() {
               and service improvement. They don’t track you across other
               websites.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="thirdparty-services" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              13. Third-Party Services
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="thirdparty-services" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">13. Third-Party Services</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We use the following third-party services to operate PERM Tracker:
             </p>{" "}
@@ -854,12 +868,6 @@ export default function PrivacyPage() {
                 page-view analytics loaded on every page. It sets no cookies,
                 stores no identifiers on your device and collects no personal
                 data; we see page counts and referrers, not people.
-              </li>{" "}
-              <li>
-                <strong>Senja:</strong> The reviews widget on the homepage is
-                served from Senja&apos;s servers, which receive your browser&apos;s
-                standard request data (IP address, user agent) when it loads.
-                No account data is sent to Senja.
               </li>{" "}
               <li>
                 <strong>AI Providers:</strong> Google Gemini, OpenRouter, Mistral
@@ -915,12 +923,13 @@ export default function PrivacyPage() {
                 third-party advertising trackers.
               </p>
             </div>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="data-retention-deletion" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              14. Data Retention &amp; Deletion
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="data-retention-deletion" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">14. Data Retention &amp; Deletion</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4">
               <li>Your data is retained for as long as your account is active</li>{" "}
               <li>
@@ -972,12 +981,13 @@ export default function PrivacyPage() {
               </a>
               .
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="your-rights" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              15. Your Rights
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="your-rights" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">15. Your Rights</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               Depending on your location, you may have the following rights
               regarding your personal data:
@@ -1090,12 +1100,13 @@ export default function PrivacyPage() {
               16). We don’t engage in solely-automated decision-making that
               produces legal or similarly significant effects.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="international-data-transfers" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              16. International Data Transfers
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="international-data-transfers" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">16. International Data Transfers</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               Your data is primarily stored and processed in the United States.
               If you’re located in the European Economic Area (EEA), United
@@ -1108,24 +1119,26 @@ export default function PrivacyPage() {
               approved by the European Commission, as well as Data Processing
               Agreements with our service providers.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="childrens-privacy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              17. Children&apos;s Privacy
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="childrens-privacy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">17. Children&apos;s Privacy</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               PERM Tracker isn’t intended for use by individuals under the age of
               13. We don’t knowingly collect personal information from children
               under 13. If you become aware that a child has provided us with
               personal information, please contact us immediately.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="uscis-case-status" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              18. USCIS Case Status Lookups
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="uscis-case-status" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">18. USCIS Case Status Lookups</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               The USCIS case status lookup lets you enter a receipt number and see what
               USCIS says about that case. It runs on USCIS&apos;s Case Status API under
@@ -1147,12 +1160,13 @@ export default function PrivacyPage() {
               <li>Stored lookups are deleted twelve months after the last lookup of that receipt, or sooner if you ask at <a href="mailto:support@permtracker.app?subject=USCIS%20lookup%20deletion" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">support@permtracker.app</a> with the receipt number.</li>{" "}
               <li>No email or notification is sent from a lookup. If alerts on USCIS receipts are ever offered they will be a separate, opt-in subscription described here first.</li>
             </ul>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="changes-to-this-policy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              19. Changes to This Policy
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="changes-to-this-policy" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">19. Changes to This Policy</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We may update this Privacy Policy from time to time. We’ll notify
               you of any changes by:
@@ -1166,12 +1180,13 @@ export default function PrivacyPage() {
               Your continued use of the service after changes constitutes
               acceptance of the updated policy.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              20. Contact Us
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">20. Contact Us</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               If you have any questions about this Privacy Policy or our data
               practices, please contact us:
@@ -1196,7 +1211,7 @@ export default function PrivacyPage() {
                 <strong>Mailing address:</strong> {POSTAL_ADDRESS}
               </li>
             </ul>
-          </section>
+          </details>
         </div>
 
         {/* Back link */}

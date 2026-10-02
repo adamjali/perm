@@ -15,15 +15,15 @@ import {
   type DebarmentProgram,
 } from "@/lib/turso/debarments";
 import { withSocialCard } from "@/lib/socialCard";
+import { formatInt } from "@/lib/format";
 
 /**
  * DOL's debarment lists, as published.
  *
  * Four programs, two sources: OFLC's program-debarments PDF (PERM, H-2A,
  * H-2B) and the Wage and Hour Division's H-1B page. A debarment is the
- * formal, dated answer to "who may not file", and until Sep 2026 it was not
- * on this site; the week DOL's Inspector General announced one employer's
- * PERM suspension, it was the question everyone asked next. The rows are
+ * formal, dated answer to "who may not file", the question readers ask
+ * whenever an employer's filings are in the news. The rows are
  * DOL's words and dates; the page adds only whether the period contains
  * today. Expired rows stay, marked, because a list that forgets is not a
  * record.
@@ -47,7 +47,6 @@ export const revalidate = 21600;
 const ORDER: DebarmentProgram[] = ["perm", "h1b", "h2a", "h2b"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
 const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
-const int = (n: number) => n.toLocaleString("en-US");
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export default async function DebarmentsPage() {
@@ -57,23 +56,17 @@ export default async function DebarmentsPage() {
   for (const d of all) byProgram.set(d.program, [...(byProgram.get(d.program) ?? []), d]);
   const active = all.filter((d) => isActive(d, today)).length;
   // Counted, not assumed: a debarment whose start date has not arrived is
-  // neither in force nor ended, and it used to be described as ended.
+  // neither in force nor ended, and must never be described as ended.
   const upcoming = all.filter((d) => phase(d, today) === "upcoming").length;
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-sm">
-        Reference
-      </p>{" "}
-      <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
         Who DOL will not accept a filing from
       </h1>{" "}
       <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90">
-        A debarment bars an employer, attorney or agent from a program for a
-        stated period. DOL publishes the PERM, H-2A and H-2B lists in one
-        document and the H-1B list on a Wage and Hour Division page. Both are
-        here as published, with the violation in DOL&apos;s words and whether
-        the period contains today.
+        Employers, attorneys and agents DOL has barred from a program for a set period, as DOL publishes
+        them: the violation in DOL&apos;s words, and whether the bar is in force today.
       </p>{" "}
 
       {all.length === 0 ? (
@@ -93,9 +86,9 @@ export default async function DebarmentsPage() {
       ) : (
         <>
           <p className="mt-6 max-w-3xl text-base leading-relaxed text-foreground/80">
-            {int(active)} debarments in force today of {int(all.length)} on the lists
+            {formatInt(active)} debarments in force today of {formatInt(all.length)} on the lists
             {upcoming > 0
-              ? `, and ${int(upcoming)} ${upcoming === 1 ? "that has" : "that have"} been ordered but ${upcoming === 1 ? "has" : "have"} not begun`
+              ? `, and ${formatInt(upcoming)} ${upcoming === 1 ? "that has" : "that have"} been ordered but ${upcoming === 1 ? "has" : "have"} not begun`
               : ""}
             .
             {summary?.pdfDate ? ` OFLC's document was last modified ${day(summary.pdfDate)}.` : ""}

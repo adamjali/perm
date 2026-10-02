@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { CheckIcon, XIcon } from "@phosphor-icons/react";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 
 export type EditableField = "name" | "userType";
 

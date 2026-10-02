@@ -21,7 +21,7 @@ import {
   isAuthenticatedNextjs,
 } from "@convex-dev/auth/nextjs/server";
 import { fetchAction } from "convex/nextjs";
-import { api } from "@/../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 
 export async function POST(request: NextRequest) {
   try {

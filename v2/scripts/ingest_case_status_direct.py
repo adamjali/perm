@@ -1,64 +1,29 @@
 #!/usr/bin/env python3
-"""Per-case PERM status, straight from DOL instead of a competitor's mirror.
-
-WHAT THIS REPLACES. `mirror_case_status.py` reads the rival tracker's watchlist
-API - their copy of data they scanned out of flag.dol.gov. It works, and it
-made us dependent on a competitor continuing to serve us, at whatever
-freshness they choose.
-
-DOL serves the same lookup directly:
+"""Per-case PERM status, straight from DOL's own case-status lookup.
 
     POST https://flag.dol.gov/recaptcha/caseStatus
-    ["G-100-24339-516453", ...]        <- a JSON array; it BATCHES
+    ["G-100-24339-516453", ...]        <- a JSON array; it batches
 
     {"value":[{"caseNumber":"...","caseStatus":"CERTIFIED","visaType":"PERM",
                "employerName":"...","jobTitle":"...","submittedDate":"..."}]}
 
-THE PATH IS NAMED `recaptcha` AND NOTHING IN THE FLOW IS A CAPTCHA. Measured
-2026-08-27 in a real browser: `grecaptcha` undefined, no captcha scripts, no
-[data-sitekey], no challenge iframes, no hidden token. A bare curl with no
-cookie and no session gets a 200 in 0.29 s. An earlier note in this project
-concluded the opposite FROM THE PATH NAME ALONE, which is not evidence.
-`robots.txt` does not disallow it (stock Drupal; blocks /core/, /profiles/,
-/README.txt only).
+The path is named `recaptcha`, but nothing in the flow is a CAPTCHA: no
+challenge script, no site key, no token, and a bare request with no cookie is
+answered. `robots.txt` doesn't disallow it.
 
-WHAT WE LOSE, AND WHY IT IS NOTHING. The rival tracker returns four fields DOL does
-not, and three of them are derived rather than sourced:
-  filing_date     - decodes from the case number's YYDDD segment (94.6% exact,
-                    the rest off by one day) and equals submitted_date for
-                    409,127 of 414,050 rows.
-  is_final        - a function of the status string. We already own that logic.
-  is_disclosed    - whether the case appears in the disclosure files, which we
-                    hold ourselves in `perm_cases`. We can compute it better.
-  last_checked_at - THEIR bookkeeping about when THEY looked. Meaningless once
-    /verified       we do the looking.
-And DOL returns `visaType`, which the rival tracker does not.
+THE BATCH CEILING IS 50, AND IT FAILS QUIETLY. Asking for 100 or 200 returns
+200 OK with exactly 50 records and no warning (only 400 is rejected), so the
+batch size is asserted against the request rather than trusted.
 
-AND THE SITE WAS QUOTING `last_checked_at` BACK AS IF IT WERE OURS. This
-script has never written that column, so it still holds the mirror seed:
-measured 2026-09-03, 66,771 pending cases carried a 2026-07 date and 12,187
-carried none, while the sweep had asked DOL about every one of them that
-morning. `/perm-rfi-audit` turned MIN/MAX of it into a sentence about when
-the review stages "were read". A sweep asks about a POPULATION, so the honest
-record is one row per RUN, not a stamp on 414,358 rows (which would be ~12.4M
-writes/month against a 10M plan to say something worse). That record is
-`sweep_runs`, written at the end of main() by `record_sweep`, read back by
-`write_review_stages` and projected into perm_docs['sweep_coverage'].
+Coverage is recorded per run, not per case: a sweep asks about a population,
+so `record_sweep` writes one `sweep_runs` row at the end of main(), and the
+review-stage doc and perm_docs['sweep_coverage'] read it back. The inherited
+`perm_case_status.last_checked_at` column is never written here and must not
+be quoted as the date a case was checked.
 
-STILL OPEN, in src/ and therefore not fixed here: `/perm-case-status` prints
-"checked N days ago" per case from the same column (src/lib/casePosition.ts,
-`statusCheckAge`). For a PENDING case the truthful answer is the sweep's
-finish date, which perm_docs['sweep_coverage'] now supplies.
-
-BATCH CEILING IS 50, MEASURED, AND IT FAILS QUIETLY. Asking for 100 or 200
-returns 200 OK with exactly 50 records - no error, no warning. Only 400 is
-rejected outright (HTTP 400). A loop that asked for 200 would silently drop
-three quarters of every batch and report success, so the batch size is
-asserted against the request, not trusted.
-
-Politeness: this is a government system with published maintenance windows.
-It is paced, it checkpoints, and it stops rather than hammering when the
-far end starts failing.
+This is a government system with published maintenance windows, so the sweep
+is paced, checkpoints as it goes, and stops rather than hammering a far end
+that keeps failing.
 
     python3 scripts/ingest_case_status_direct.py --limit 500     # a taste
     python3 scripts/ingest_case_status_direct.py --pending       # the sweep
@@ -72,12 +37,11 @@ import pathlib
 import subprocess
 import sys
 import time
-import zoneinfo
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_turso import (  # noqa: E402
-    Turso, last_complete_sweep, record_run, record_sweep, run_independently,
-    stamp_freshness,
+    ET, Turso, et_date, last_complete_sweep, query_rows, read_doc, record_run, record_sweep,
+    run_independently, run_stmts, stamp_freshness, stmt, write_doc,
 )
 from lib_housekeeping import prune as prune_old_rows  # noqa: E402
 from lib_flag_serials import (  # noqa: E402
@@ -107,35 +71,20 @@ FINAL_STATUSES = {
 # ---------------------------------------------------------------------------
 # The observed-decision series: our own half of `daily_decisions`
 #
-# WHAT IT IS, AND WHAT IT IS NOT. `daily_decisions` already holds
-# `dol-disclosure`, derived from `perm_cases` by DOL's OWN decision date - the
-# date printed in the quarterly file. It is authoritative and it stops dead at
-# the last published quarter (2026-06-30), because that is where DOL's dating
-# ends. DOL publishes no decision timestamp on the live endpoint, so
-# `perm_case_status` has no decision_date column and no amount of sweeping
-# will produce one.
+# `daily_decisions` holds two sources that answer different questions:
 #
-# What a sweep CAN say is when it SAW a case move, and `perm_case_events`
-# records exactly that. So this series is dated by OBSERVATION, and it is
-# stored under a source name that says so rather than one that could be read
-# as DOL's dating:
+#   dol-disclosure   DOL decided it on this date          (quarterly files)
+#   sweep-observed   our sweep first saw it on this date  (daily)
 #
-#   dol-disclosure   DOL decided it on this date        (quarterly, to 06-30)
-#   sweep-observed   our sweep first saw it on this date (daily, from 08-30)
+# DOL's live endpoint publishes no decision date, so the most a sweep can say
+# is when it SAW a case move, and the source name says exactly that. The two
+# must never be unioned: a `sum(total) GROUP BY date` across both adds them.
+# Every reader is pinned to one source, and test_observed_decisions.py scans
+# for a query that forgets.
 #
-# THE TWO MUST NEVER BE UNIONED. They answer different questions and a
-# `sum(total) GROUP BY date` across the table silently adds them. Measured
-# before this change, that union was already wrong for another reason: the
-# retired `rival-b` series overlapped `dol-disclosure` on 88 dates and
-# injected 42,056 phantom decisions into every unfiltered read. Those rows are
-# gone and every reader is pinned to a source; `test_observed_decisions.py`
-# scans for a query that forgets.
-#
-# WHY THE FILTERS ARE COPIED FROM `src/lib/turso/changes.ts`. That module
-# renders the same events as a per-case feed. If the chart and the feed
-# disagreed about which rows count, a reader could click a day on one and find
-# a different day on the other. The constants below are asserted equal to that
-# file's, so a change on either side fails CI instead of drifting.
+# The filters below are copied from src/lib/turso/changes.ts, which renders the
+# same events as a per-case feed, and asserted equal to it, so the chart and
+# the feed always count the same rows.
 # ---------------------------------------------------------------------------
 
 OBSERVED_SOURCE = "sweep-observed"
@@ -148,25 +97,17 @@ BULK_WRITE_ROWS = 5000
 
 # WHICH FINAL STATUS LANDS IN WHICH COLUMN.
 #
-# `daily_decisions` carries total/certified/denied/withdrawn, and both existing
-# sources satisfy total == certified + denied + withdrawn exactly (373,939 and
-# 9,457, checked). Keeping that invariant is what makes the two series
-# comparable at all, so `total` here is the sum of the three buckets and not a
-# count of anything else.
+# `total` is the sum of the three buckets and nothing else, so both sources
+# keep total == certified + denied + withdrawn and stay comparable.
 #
-# An expired certification is filed as CERTIFIED, which is also what the rival tracker
-# did with their `certified_expired`. The ORDINARY expiry - a case moving
-# CERTIFIED -> CERTIFIED - EXPIRED - never reaches this map, because the pair
-# filter drops it as a clock running out rather than a decision. What does
-# reach it is an arrival at an expired-certification status from anything
-# else, i.e. a certification we saw late because the sweep missed the window
-# in between. Measured 2026-09-03: 0 such rows in 147,328 events, so this is a
-# rule for a case that has not happened yet rather than a live reclassification.
+# An expired certification counts as certified. The ordinary expiry (CERTIFIED
+# -> CERTIFIED - EXPIRED) never reaches this map, because the pair filter drops
+# it as a clock running out; what can reach it is a certification the sweep saw
+# only after it had already expired.
 #
-# The membership assertion is the point of writing it out. FINAL_STATUSES is
-# the canonical set and this map must cover it exactly; adding a status there
-# without deciding where it belongs here raises rather than silently dropping
-# the decisions into no column at all.
+# FINAL_STATUSES must be covered exactly: adding a status there without
+# deciding its bucket here raises, rather than dropping its decisions into no
+# column at all.
 DECISION_BUCKETS = {
     "CERTIFIED": "certified",
     "CERTIFIED - EXPIRED": "certified",
@@ -178,116 +119,60 @@ DECISION_BUCKETS = {
 
 
 # ---------------------------------------------------------------------------
-# Discovery: walk the shared serial counter forward from the last confirmed
-# filing, carrying the day code. The corpus was a closed set; this is the
-# systematic half of opening it (the demand half is the web lookup's
-# discoverCase).
+# Discovery: walk DOL's shared serial counter forward from the last confirmed
+# filing, carrying the day code. (The other way new cases arrive is a visitor's
+# lookup of a number we don't hold, in the web app.)
 #
-# WHY A SERIAL-MAJOR WALK THAT CARRIES ITS DAY CODE. The first version
-# anchored day codes to TODAY and serials to the last known max, and gave up
-# on a day code after two empty 50-number batches. On Sun Aug 30 2026 it
-# walked into the Aug 28 overnight lull (serials 200,247-200,394 are all LCA
-# and PWD), met two empties, abandoned the rest of that business day, and
-# because the frontier only ever moved on a hit it asked the same 100 serials
-# every night after. On Sep 2 the 5-day window dropped the frontier's own day
-# code and every number asked from then on was a (day code, serial) pair that
-# cannot exist. Seven runs printed "10 requests, 0 new cases recorded" and
-# recorded themselves as ok. ~2,500 PERM filings went unrecorded before a
-# human noticed, because nothing measured whether the frontier MOVED.
+#   - The cursor is a (day_code, serial) pair kept in perm_docs and moved only
+#     by a confirmed hit, never by the calendar.
+#   - Each span is asked under the cursor's day code and then each later code
+#     up to today, so a day boundary is crossed by a hit, not guessed.
+#   - Each span is asked under every prefix at once: a serial belongs to
+#     exactly one program, and DOL returns nothing for it under any other
+#     prefix, so "issued elsewhere" and "not issued yet" stay different answers.
+#   - PWD, LCA and seasonal hits go to the PWD prober's inserter, so those
+#     tables move with this walk.
+#   - Serials are six digits and wrap at 1,000,000 (lib_flag_serials).
+#   - A run that stops on its own cap or budget records "ok" and names the stop
+#     in its note, and a run that finds nothing still records itself, so the
+#     health check can see a frontier that stops moving.
 #
-# This walk cannot fail that way:
-#   - the cursor is a (day_code, serial) pair persisted in perm_docs and
-#     advanced only by evidence, never by the calendar;
-#   - every span of serials is asked under the cursor's day code and then
-#     under each later code up to today, so a day boundary is crossed by a
-#     hit, not guessed;
-#   - every span is asked for ALL FIVE busy prefixes at once (PERM's G-100 and
-#     G-200, LCA's I-200 and I-203, PWD's P-100: about 70% of the counter), so
-#     "issued to another program" and "not yet issued" are different answers.
-#     Measured 2026-09-06: DOL returns NOTHING for a G-100 number whose serial
-#     belongs to an I-200, so existence is never implied, only asked;
-#   - PWD and LCA hits are handed to the PWD prober's inserter, so those
-#     tables' frontiers move with this one instead of being seeded from it;
-#   - serials are six digits wide and wrap at 1,000,000 (lib_flag_serials);
-#   - a run that stops on its own request cap records "ok" and NAMES the cap
-#     in its note (see CAP_NOTE), because an expected stop is not a failure;
-#     and a run that finds nothing still records itself, so the health check
-#     can see a frontier that has stopped moving.
-#
-# Cost, measured 2026-09-24: nine prefixes at the 50-number ceiling is 5
-# serials a request, and a weekday issues 3,000 to 5,300 serials, so keeping
-# pace takes 600 to 1,100 requests a day at ~1.4 s each (PACE_S plus DOL's
-# latency). See DISCOVERY_REQUEST_CAP for why one 400-request walk a night
-# could not do that.
+# A weekday issues 3,000 to 5,300 serials; with every prefix asked, a request
+# covers DISCOVERY_STEP of them at ~1.4 s (PACE_S plus DOL's latency), so
+# keeping pace takes several hundred to about a thousand requests a day.
 # ---------------------------------------------------------------------------
 
 DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, discovered)"
 
-# A STOP ON THE WALK'S OWN REQUEST CAP IS NOT A FAILURE, AND MUST NOT BE
-# RECORDED AS ONE (2026-09-20). It used to write `partial`, which
-# check_ingest_health.py counts as BROKEN, so the nights when the walk is
-# catching up - exactly the nights it is doing the most useful work - painted
-# the whole health check red. Same fix, and the same wording, as
-# sweep_serial_gaps.CAP_NOTE on 2026-09-15: record `ok` and name the stop.
-# `check_ingest_health.SWEEP_CAP_NOTE` is this same string, so a `partial` row
-# written before this change is tolerated too rather than misread.
+# A stop on the walk's own request cap is not a failure: the run records "ok"
+# and names the stop in its note. The health check reads this exact string
+# (check_ingest_health.SWEEP_CAP_NOTE, shared with sweep_serial_gaps.CAP_NOTE).
 CAP_NOTE = "stopped on the request cap"
-# EVERY PERM OFFICE CODE BELONGS HERE, because this tuple decides where a
-# confirmed hit is STORED, not which numbers get asked for. It held G-100 and
-# G-200 only, so a G-300 hit fell through to the PWD/LCA inserter, whose
-# PREFIX_TO_PROGRAM does not know the prefix and silently `continue`s past it.
-# The case was then found again the next night, dropped again, and never
-# recorded as a miss either - because it was CLAIMED, just not stored.
-#
-# Measured 2026-09-13, which is how it surfaced: the gap sweep reported
-# "confirmed 1, inserted 0" on two consecutive runs over the same day code.
-# The case was G-300-26254-230507, College of William and Mary, in ANALYST
-# REVIEW. G-300 is 6,854 live rows and is still being filed (105 in August
-# 2026, 102 of them pending), and our newest G-300 filing was 2026-08-26
-# against 2026-09-12 for G-100/G-200 - a 17-day hole in 1.9% of PERM.
-PERM_PREFIXES = PERM_OFFICE_PREFIXES
-FRONTIER_PREFIXES = PERM_OFFICE_PREFIXES
-# EVERY PREFIX, not the five busiest. This asked G-100/G-200/I-200/P-100/I-203
-# only - about 70% of the counter - so a span whose serials all belonged to
-# G-300, I-201 or I-202 answered empty under all five and counted toward the
-# "unissued" streak that ends a day. A sparse office code was therefore not
-# just undiscovered, it could end the walk early and hide the serials behind
-# it. Measured 2026-09-13: G-300 alone is 6,854 live rows, still being filed,
-# and our newest was 17 days behind G-100's.
-#
-# The cost is real and bounded: eight prefixes at DOL's 50-number ceiling is 6
-# serials a request instead of 10, so a steady night goes from ~215 requests
-# to ~360. Against the ~10,000 the daily sweep already makes, that is noise.
-DISCOVERY_PREFIXES = ALL_FLAG_PREFIXES
-DISCOVERY_STEP = BATCH // len(DISCOVERY_PREFIXES)   # serials per request, at the 50 ceiling
-# THE WALK HAS TO OUT-RUN THE COUNTER, AND AT 400 A NIGHT IT COULD NOT
-# (2026-09-24). 400 requests reach at most 2,000 serials, and the day spans we
-# hold measure 2,963 (Sep 18), 2,968 (Sep 21), 3,595 (Sep 22) and 5,253
-# (Sep 23). The walk stopped on its cap every night for at least a week and
-# held a 2 to 4 day lag, which the frontier check (5-day budget) read as ok.
-# It now runs on BOTH passes, 4:10 AM and 3:40 PM, and the TIME BUDGET is
-# what bounds it, so a slow DOL can never push the step into the workflow's
-# `timeout 105m`; the request cap is only a sanity bound. At ~1.4 s a
-# request, 2,000 is ~47 minutes and ~10,000 serials: a backlog of days
-# clears in one run and a normal run stops at the edge well short of it.
+# Every span is asked under every prefix (ALL_FLAG_PREFIXES): a sparse office
+# code asked under none would answer empty, count toward the "unissued" streak
+# that ends a day, and hide the serials behind it. A confirmed hit is stored as
+# PERM when its prefix is a PERM office code (PERM_OFFICE_PREFIXES) and handed
+# to the PWD prober otherwise; a prefix asked but stored nowhere would be found
+# and dropped every night.
+DISCOVERY_STEP = BATCH // len(ALL_FLAG_PREFIXES)   # serials per request, at the 50 ceiling
+# The walk has to out-run the counter, so it runs on both daily passes and is
+# bounded by a time budget; this cap is only a sanity bound. At ~1.4 s a
+# request, 2,000 is ~47 minutes and ~10,000 serials: a backlog of days clears in
+# one run, and a normal run reaches the edge long before it.
 DISCOVERY_REQUEST_CAP = 2000
 # Minutes after the PROCESS started (not after the walk did), so the walk
-# spends only what the pass has left. The full sweep takes 60 to 72 minutes,
-# so the 4:10 AM walk gets ~20 to 30; the pending sweep takes ~17, so the
-# 3:40 PM walk gets the cap. Both leave room under `timeout 105m` for the
-# census docs and the live-table rebuild that follow. A dispatched
-# `--discover` run stops at 95, inside that step's `timeout 100m`, so a big
-# catch-up ends by its own clock and records itself instead of being killed.
+# spends only what the pass has left, and every budget leaves room under its
+# workflow step's `timeout` (105m for the passes, 100m for a dispatched
+# --discover) for the work that follows. A run that stops on its own clock
+# records itself; one killed by `timeout` leaves only a red run.
+# test_case_status_direct.py reads the step timeouts out of the workflow.
 DISCOVERY_BUDGET_MIN = {"full": 90, "pending": 75, "discover": 95}
 # The note a walk writes when the budget, not the cap, stopped it. Pinned
 # byte-identical by test_ingest_health.py, whose streak check reads it.
 BUDGET_NOTE = "stopped on its time budget"
-# HOW FAR A GAP THE WALK WILL STEP OVER, IN SERIALS, NOT IN SPANS. It was two
-# SPANS, and that silently halved on 2026-09-13 when DISCOVERY_PREFIXES went
-# from five prefixes to nine: the span is BATCH // len(prefixes), so it went
-# 10 serials -> 5 and the tolerance went 20 -> 10. The frontier stopped moving
-# that same morning and stayed stuck for six days. Expressed in serials it
-# cannot drift with the prefix count again.
+# How far a gap of unissued serials the walk steps over before calling it the
+# edge. Counted in serials, not spans: a span's width depends on the prefix
+# count, so a limit in spans would shrink every time a prefix was added.
 DISCOVERY_UNISSUED_SERIALS = 50
 DISCOVERY_UNISSUED_STREAK = max(2, -(-DISCOVERY_UNISSUED_SERIALS // DISCOVERY_STEP))
 DISCOVERY_MAX_DAYS_AHEAD = 21    # later day codes a span is re-asked under
@@ -295,12 +180,9 @@ FRONTIER_DOC = "discovery_frontier"
 
 
 def _frontier_doc(db) -> tuple[str, int] | None:
-    rows = _rows(db, "SELECT json FROM perm_docs WHERE key = ?", [FRONTIER_DOC])
-    if not rows or not rows[0][0]:
-        return None
+    d = read_doc(db, FRONTIER_DOC)
     try:
-        d = json.loads(rows[0][0])
-        return str(d["day_code"]), int(d["serial"])
+        return (str(d["day_code"]), int(d["serial"])) if d else None
     except (ValueError, KeyError, TypeError):
         return None
 
@@ -312,9 +194,9 @@ def _frontier_from_rows(db, today: datetime.date) -> tuple[str, int] | None:
     case a week ahead of the walk must not make the walk skip the week."""
     best = None
     years = sorted({f"{today.year % 100:02d}", f"{(today.year - 1) % 100:02d}"})
-    for prefix in FRONTIER_PREFIXES:
+    for prefix in PERM_OFFICE_PREFIXES:
         for yy in years:
-            for (cn,) in _rows(
+            for (cn,) in query_rows(
                     db,
                     "SELECT case_number FROM perm_case_status "
                     "WHERE case_number >= ? AND case_number < ? AND source IN (?, ?) "
@@ -332,8 +214,7 @@ def _write_frontier(db, code: str, serial: int, note: str) -> None:
            "shape": case_number("G-100-", code, serial),
            "updated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
            "note": note}
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-               [FRONTIER_DOC, json.dumps(doc), int(time.time() * 1000)])
+    write_doc(db, FRONTIER_DOC, json.dumps(doc))
 
 
 def parse_frontier(text: str) -> tuple[str, int]:
@@ -385,7 +266,7 @@ def _insert_other_hits(db, hits: list[dict]) -> int:
     if not hits:
         return 0
     from ingest_pwd_status_direct import ensure_schema, insert_hits  # noqa: PLC0415
-    # A program added later (H-2A and H-2B, Oct 1 2026) has no table until
+    # A program added later (H-2A and H-2B, say) has no table until
     # something creates it, and the walk can meet its first case before any
     # job that would. Once per process.
     global _OTHER_SCHEMA_READY
@@ -430,14 +311,13 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
                 "status": "failed", "note": "frontier in the future"}
 
     code, serial = start
-    # TWO CURSORS, DELIBERATELY. `code`/`serial` is the CONFIRMED frontier and
-    # moves only on a hit; `probe_code`/`probe_serial` is where the walk is
-    # looking and steps over gaps. Sharing one variable made the returned
-    # frontier report wherever probing happened to stop, which is not a place
-    # DOL confirmed anything.
+    # Two cursors: `code`/`serial` is the confirmed frontier and moves only on a
+    # hit; `probe_code`/`probe_serial` is where the walk is looking and steps
+    # over gaps. One shared variable would report wherever probing stopped as
+    # the frontier, which is not a place DOL confirmed anything.
     probe_code, probe_serial = start
     log(f"discovery: frontier {code}:{fmt_serial(serial)}, walking toward {today_code} "
-        f"({DISCOVERY_STEP} serials x {len(DISCOVERY_PREFIXES)} prefixes per request, cap {cap})")
+        f"({DISCOVERY_STEP} serials x {len(ALL_FLAG_PREFIXES)} prefixes per request, cap {cap})")
     requests = inserted = inserted_other = 0
     unissued = 0
     stopped: str | None = None
@@ -456,7 +336,7 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
             if deadline is not None and clock() >= deadline:
                 timed_out = True
                 break
-            asked = [case_number(pfx, c, s) for s in span for pfx in DISCOVERY_PREFIXES]
+            asked = [case_number(pfx, c, s) for s in span for pfx in ALL_FLAG_PREFIXES]
             try:
                 got = lookup(asked)
             except Exception as exc:  # noqa: BLE001
@@ -474,20 +354,15 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
         if not claimed:
             if requests >= cap:
                 break
-            # STEP OVER THE GAP. This used to `continue` WITHOUT touching
-            # `serial`, so the next iteration rebuilt the identical span and
-            # asked DOL the same five numbers a second time - two "spans", one
-            # range, and then the edge. The walk could not cross a gap of even
-            # one unissued serial. Measured 2026-09-19: the frontier sat at
-            # 26255:231396 for six days while G-100-26255-231407 waited two
-            # spans ahead. `serial` is the probe cursor only; the frontier doc
-            # is still written solely on a confirmed hit, below.
+            # Step over the gap, or the next iteration would ask the same span
+            # again. `serial` is the probe cursor only; the frontier doc is
+            # written solely on a confirmed hit, below.
             probe_serial = serial_add(probe_serial, DISCOVERY_STEP)
             unissued += 1
             continue
         unissued = 0
-        perm = [v for v in claimed if v["caseNumber"][:6] in PERM_PREFIXES]
-        other = [v for v in claimed if v["caseNumber"][:6] not in PERM_PREFIXES]
+        perm = [v for v in claimed if v["caseNumber"][:6] in PERM_OFFICE_PREFIXES]
+        other = [v for v in claimed if v["caseNumber"][:6] not in PERM_OFFICE_PREFIXES]
         inserted += _insert_perm_hits(db, perm, now_iso, stamp)
         inserted_other += _insert_other_hits(db, other)
         top = _furthest(span[0], [serial_of(v["caseNumber"]) for v in claimed])
@@ -518,10 +393,9 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
 
 
 def discover_and_record(db, **kw) -> dict:
-    """run_discovery, plus its own ingest_runs row. The full sweep runs
-    discovery as one tail step and used to discard the result, so seven
-    nights of "0 new cases" left no row anywhere a check could read. Every
-    walk now records requests, insertions and the frontier it moved to."""
+    """run_discovery, plus its own ingest_runs row (requests, insertions and
+    the frontier it moved to), so the health check can see a walk that finds
+    nothing."""
     res = run_discovery(db, **kw)
     fb, fa = res["frontier_before"], res["frontier_after"]
     record_run(db, "ingest_case_status_direct.py --discover", status=res["status"],
@@ -541,14 +415,10 @@ def log(m: str) -> None:
 def lookup_with_retry(nums: list[str], attempts: int = 4) -> list[dict]:
     """One batch, with backoff.
 
-    A single transient failure silently skips FIFTY cases, and the caller only
-    counts consecutive failures, so one blip in the middle of a sweep would
-    leave a 50-case hole that nothing reports. Retry the batch before giving
-    up on it.
-
-    The backoff is generous on purpose: the failure this most often sees is
-    DOL's published maintenance window, and hammering through one is both
-    rude and useless.
+    A batch that fails is fifty cases skipped, and the caller only counts
+    consecutive failures, so one blip mid-sweep would leave a hole nothing
+    reports. The backoff is generous because the usual failure is DOL's
+    published maintenance window, which hammering cannot get through.
     """
     delay = 4
     for attempt in range(1, attempts + 1):
@@ -586,51 +456,28 @@ written = {"u": 0, "e": 0}
 def flush(db, updates: list, events: list) -> None:
     """Write what we have, then clear it.
 
-    CALLED MID-RUN, NOT ONLY AT THE END. The sweep is ~2,000 requests over a
-    quarter of an hour, and DOL publishes maintenance windows it goes down
-    for. Holding every result until the last batch means a shutdown at minute
-    fourteen throws away fourteen minutes of work, leaves the table exactly as
-    it was, and costs the far end 1,900 requests for nothing.
+    Called mid-run, not only at the end, so a sweep that stops partway (DOL
+    has published maintenance windows) keeps the work it already did.
     """
-    for i in range(0, len(updates), 200):
-        db.pipeline([{"type": "execute", "stmt": {
-            "sql": "UPDATE perm_case_status SET current_status=?, is_final=?, "
-                   "employer_name=?, job_title=?, source=?, fetched_at=? "
-                   "WHERE case_number=?",
-            "args": [{"type": "integer", "value": str(a)} if isinstance(a, int)
-                     else {"type": "text", "value": str(a)} for a in u]}}
-            for u in updates[i:i + 200]] + [{"type": "close"}])
-    for i in range(0, len(events), 200):
-        db.pipeline([{"type": "execute", "stmt": {
-            "sql": "INSERT OR IGNORE INTO perm_case_events (case_number, changed_at, "
-                   "from_status, to_status, to_final, source) VALUES (?,?,?,?,?,?)",
-            "args": [{"type": "integer", "value": str(a)} if isinstance(a, int)
-                     else {"type": "text", "value": str(a)} for a in e]}}
-            for e in events[i:i + 200]] + [{"type": "close"}])
+    run_stmts(db, [stmt(
+        "UPDATE perm_case_status SET current_status=?, is_final=?, employer_name=?, "
+        "job_title=?, source=?, fetched_at=? WHERE case_number=?", u) for u in updates])
+    run_stmts(db, [stmt(
+        "INSERT OR IGNORE INTO perm_case_events (case_number, changed_at, from_status, "
+        "to_status, to_final, source) VALUES (?,?,?,?,?,?)", e) for e in events])
     written["u"] += len(updates)
     written["e"] += len(events)
     updates.clear()
     events.clear()
 
 
-def _rows(db, sql: str, args: list | None = None) -> list[list]:
-    """Rows as plain Python values (Hrana cells decoded)."""
-    res = db.execute(sql, args or [])["response"]["result"]
-    return [[None if c["type"] == "null" else c["value"] for c in row]
-            for row in res["rows"]]
-
-
-# The fixture row DOL leaves in its own data. Must stay byte-identical to
-# TEST_FIXTURE_EMPLOYER in src/lib/turso/rfi.ts, which is asserted by
-# review-stages-doc.test.ts - a drift here would silently change what the
-# published doc counts while the fallback query kept counting the old way.
+# The fixture row DOL leaves in its own data. Byte-identical to
+# TEST_FIXTURE_EMPLOYER in src/lib/turso/rfi.ts (review-stages-doc.test.ts
+# asserts it), so the doc and the page's fallback query count the same rows.
 TEST_FIXTURE_EMPLOYER = "bah-test-company-name"
 
-# Same expression as AGE_DAYS in src/lib/turso/rfi.ts.
-# Age NOW, from the filing date. It used to be filing_date to last_checked_at,
-# a column this sweep never writes: the mirror's July stamp for 66,771 rows and
-# NULL for 12,187, so every stage median was short by the stamp's age and the
-# NULL rows were dropped. Must stay byte-identical to AGE_DAYS in rfi.ts.
+# Age today, from the filing date. Byte-identical to AGE_DAYS in
+# src/lib/turso/rfi.ts.
 _AGE_DAYS = """CASE
   WHEN filing_date IS NOT NULL AND filing_date <> ''
   THEN CAST(julianday('now') - julianday(filing_date) AS INTEGER)
@@ -640,59 +487,25 @@ END"""
 def write_review_stages(db) -> None:
     """Precompute the pending review-stage census into perm_docs['review_stages'].
 
-    WHY. `/perm-rfi-audit` and its nine stage pages called getReviewStages()
-    on every cold render, and that query is a CTE over ~98,000 pending rows
-    with three window functions, a COUNT(DISTINCT employer_name) and three
-    joins. Measured against production 2026-08-31: **19.56s cold, 2.49s
-    warm**, against the read layer's 20s deadline. It blew the deadline,
-    retried, blew it again and threw - so the page returned 500.
+    The live query behind /perm-rfi-audit and its stage pages (a CTE over the
+    whole pending population with three window functions) is far too slow to
+    run on a page render, so it runs once per sweep and the pages read the doc.
 
-    That was not theoretical. Google's Inspection Tool hit it three times and
-    REFUSED to index two stage URLs ("Page cannot be indexed: Server error
-    (5xx)"), and Sentry caught the cause verbatim:
-    `turso query deadline (20000ms, attempt 2): WITH pend AS (`.
+    Raw numbers only. The editorial guards that decide whether an age band is
+    honest enough to draw (MIN_BAND_N, n >= cases/2) stay in TypeScript beside
+    their tests, so one rule doesn't live in two languages.
 
-    Computing it once per sweep instead of once per cold render replaces all
-    of it with a single doc read.
+    The doc must reconcile or it isn't written: sum(stage.cases) must equal the
+    pending total counted separately, because a partial census looks like a
+    plausible smaller one.
 
-    RAW NUMBERS ONLY. The editorial guards that decide whether an age band is
-    honest enough to draw - MIN_BAND_N, and n >= cases/2 - stay in TypeScript
-    where they are already probed by tests. Reimplementing them here would
-    put the same rule in two languages with no way to notice them diverging.
-
-    THE DOC MUST RECONCILE OR IT MUST NOT BE WRITTEN, the same rule
-    write_live_census follows: sum(stage.cases) must equal the pending total
-    counted separately. A partial census folds into smaller plausible
-    numbers and nothing downstream can tell.
-
-    `seenFrom`/`seenTo` ARE OUR SWEEP'S DATES, NOT `last_checked_at`.
-
-    They used to be MIN/MAX of `substr(last_checked_at, 1, 10)`, and this
-    script has never written that column - it is the rival tracker's field, inherited
-    from the mirror seed, and the header of this file says as much. Measured
-    2026-09-03: 66,771 pending cases carried a 2026-07 timestamp and 12,187
-    carried none, so the doc published `seenTo` 2026-08-31 for the largest
-    stage on a morning when the sweep had asked DOL about every case in it.
-    The page turns that into a sentence about when the stages "were read",
-    which made a freshness claim out of a retired competitor's bookkeeping.
-
-    A sweep asks about a POPULATION, and the review stages are a subset of
-    the pending population that both the full and pending passes cover
-    entirely. So there is nothing per-stage to recover: every stage was
-    checked in the same run, on the same date, and a per-stage range would be
-    that one date repeated. Sweep-wide is the accurate answer here, not a
-    compromise. The range only opens when a run crosses midnight.
-
-    NONE IS A REAL ANSWER. Before the first complete sweep is recorded there
-    is no date we can prove, and both fields go null - which the reader
-    already accepts (`string | null`) and which renders as no "checked"
-    clause at all. An absent claim beats an unprovable one.
-
-    THE DOC'S SHAPE DOES NOT MOVE. `parseReviewStagesDoc` in
-    src/lib/turso/rfi.ts still sees `seenFrom`/`seenTo` as string-or-null on
-    every stage row; only where the values come from has changed.
+    `seenFrom`/`seenTo` are the newest complete sweep's dates. Every pass
+    covers the whole pending population, so each stage was checked in the
+    same run and a per-stage range would repeat one date. Before the first
+    complete sweep is recorded they are null, and the page states no
+    "checked" date at all rather than one it can't prove.
     """
-    stage_rows = _rows(db, f"""
+    stage_rows = query_rows(db, f"""
         WITH pend AS (
           SELECT current_status AS status, employer_name,
                  {_AGE_DAYS} AS days
@@ -772,24 +585,15 @@ def write_review_stages(db) -> None:
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
-        "VALUES (?, ?, ?)",
-        ["review_stages", payload, int(time.time() * 1000)])
+    write_doc(db, "review_stages", payload)
     got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?",
                     ["review_stages"])
     if int(got or 0) != len(payload):
         raise SystemExit("FATAL: review_stages read-back does not match write")
-    # ITS OWN FRESHNESS ROW, deliberately separate from the sweep's.
-    #
-    # The reconciliation guard above can SKIP the write while the sweep
-    # itself succeeds and stamps `perm-case-status-full` green. Without a row
-    # of its own, a doc that quietly stopped being written would age past the
-    # reader's 8-day cutoff, every stage page would fall back to the 19.5s
-    # query, and they would start 500ing again with nothing alerting.
-    #
-    # 3 days, not 8: check_ingest_health.py must fire well before the reader
-    # gives up on the doc, not at the same moment.
+    # Its own freshness row, separate from the sweep's: the reconciliation
+    # guard can skip this write while the sweep itself succeeds, and a doc that
+    # quietly stopped being written must alarm before the reader's 8-day
+    # cutoff sends the stage pages back to the slow query. Hence 3 days.
     stamp_freshness(db, "review-stages", source=SOURCE, cadence="Daily",
                     note=f"{len(stages)} stages, {pending_total:,} pending",
                     max_age_days=3)
@@ -803,34 +607,22 @@ HOLD_STATUS = "APPLICATION ON HOLD"
 EMPLOYER_STAGES_MIN_PENDING = 5
 EMPLOYER_STAGES_CAP = 1000
 # Five or more of one employer's cases moved on one day is an action on the
-# employer. DOL's case-level holds arrive one or two at a time (the 23 cases
-# outside Cognizant's batch on Sep 8 sat across six filers and a year of
-# filing dates), so five separates the two with room on both sides.
+# employer. DOL's case-level holds arrive one or two at a time, spread across
+# filers and filing dates, so five separates the two with room on both sides.
 EMPLOYER_MOVE_MIN = 5
 EMPLOYER_MOVES_DAYS = 120
 # A day of decisions is an employer-wide event when it is big in absolute
 # terms AND against the employer's own queue. Ten is under what one analyst
-# decides in a day, so a busy filer's ordinary flow (Amazon decides dozens a
-# day out of thousands pending) never reaches 5% of its queue; a batch does.
+# decides in a day, so a busy filer's ordinary flow (dozens a day out of
+# thousands pending) never reaches 5% of its queue; a batch does.
 DECISION_STATUSES = ("CERTIFIED", "DENIED", "WITHDRAWN")
 DECISION_MOVE_MIN = 10
 DECISION_MOVE_SHARE = 0.05
 DECISION_MOVES_DAYS = 60
-# ...and it must stand out against the employer's OWN pace: measured Sep 26
-# 2026, the two rules above passed Amazon Dev Center on 42 and 44
-# certifications on consecutive days, its ordinary flow. Three times its
-# average day over the window (zero days included) keeps the batches.
+# ...and it must stand out against the employer's own pace: a large filer's
+# ordinary flow can pass both rules above every day. Three times its average
+# day over the window (zero days included) keeps only the batches.
 DECISION_MOVE_PACE = 3.0
-ET = zoneinfo.ZoneInfo("America/New_York")
-
-
-def et_date(ms) -> str:
-    """The Eastern calendar date of a millisecond epoch.
-
-    A fixed -4 hours is wrong for half the year, and a UTC date is tomorrow
-    on Adam's clock for four hours every evening, so both are ruled out.
-    """
-    return datetime.datetime.fromtimestamp(int(ms) / 1000, tz=ET).date().isoformat()
 
 
 def _norm_name(name) -> str:
@@ -849,15 +641,11 @@ def employer_stage_rows(rows, floor: int = EMPLOYER_STAGES_MIN_PENDING,
     than the ordinary queue. `share` is review / pending, and the page only
     ranks by share above a floor, because 2 of 2 is not a signal.
 
-    A NAME-KEYED ROW FOLDS INTO THE SLUG ROW THAT CARRIES THE SAME SPELLING.
-    An appeal is a case DOL already decided, so it sits in `perm_cases` and
-    not in `perm_live_recent`. Until Sep 25 2026 the slug came from the
-    remainder alone: 175 pending cases (146 of them appeals) rendered as
-    unlinked names, and seven employers sat on two rows each (Juniper's 26
-    appeals on one, the rest of its cases on another), so each row's count and
-    share was only part of the truth. The query now takes the slug from either
-    table; this fold catches what is left, a case discovered since the nightly
-    rebuild. Each row keeps its spellings in `_names` for `annotate_holds`;
+    A name-keyed row folds into the slug row that carries the same spelling.
+    The query takes the slug from either case table (an appeal is a decided
+    case, so it lives in `perm_cases`); this fold catches what is left, a case
+    discovered since the nightly rebuild, so one employer never splits across
+    two rows. Each row keeps its spellings in `_names` for `annotate_holds`;
     `strip_private` removes them before the doc is written.
     """
     by_key: dict[str, dict] = {}
@@ -924,14 +712,12 @@ def annotate_holds(employers: list[dict], held, log_from: str | None = None) -> 
     this site first recorded the case (`fetched_at`, which moves only when the
     status does, so for an undated hold it IS the first record).
 
-    AN UNDATED HOLD IS TWO DIFFERENT FACTS. Cognizant's 1,831 were held when
-    the log began, so "since before Aug 27" is true of them. Adobe's one
-    undated case was filed Sep 23 and first recorded already held; "since
-    before Aug 27" would be false of it. `holdBeforeLog` counts only the cases
-    first recorded on or before `log_from`; the rest of `holdUndated` were
-    already held when first recorded. A case held, released
-    and held again (Adobe: Sep 10, Sep 11, Sep 24) is dated by its latest
-    entry, because that is the hold it is in.
+    An undated hold is two different facts. A case held when the log began is
+    held "since before the record began"; a case first recorded already held,
+    after the log began, is not. `holdBeforeLog` counts only the cases first
+    recorded on or before `log_from`; the rest of `holdUndated` were already
+    held when first recorded. A case held, released and held again is dated by
+    its latest entry, because that is the hold it is in.
 
     An employer's hold is dated by the entry day most of its held cases share
     (ties go to the later day), with the count on that day beside it, and the
@@ -1070,14 +856,14 @@ def hold_history(db, employers: list[dict], today: datetime.date) -> dict:
     with a pending case, so a name resolves to its slug and a batch is judged
     against the employer's real queue; annotating those rows in place also
     annotates the floored census, which holds the same dicts.
-    Only DOL-direct events count; the retired mirror's rows describe changes
-    of unknown date.
+    Only DOL-direct events count; the older rows from another source describe
+    changes of unknown date.
     """
-    ins = _rows(db, "SELECT case_number, changed_at FROM perm_case_events "
+    ins = query_rows(db, "SELECT case_number, changed_at FROM perm_case_events "
                     "WHERE to_status = ? AND source = ?", [HOLD_STATUS, SOURCE])
-    outs = _rows(db, "SELECT case_number, changed_at, to_status FROM perm_case_events "
+    outs = query_rows(db, "SELECT case_number, changed_at, to_status FROM perm_case_events "
                      "WHERE from_status = ? AND source = ?", [HOLD_STATUS, SOURCE])
-    held = _rows(db, f"""
+    held = query_rows(db, f"""
         SELECT c.case_number, c.employer_name, COALESCE(l.employer_slug, p.employer_slug),
                c.fetched_at
           FROM perm_case_status c {_slug_join()}
@@ -1087,14 +873,14 @@ def hold_history(db, employers: list[dict], today: datetime.date) -> dict:
     need = sorted(({r[0] for r in ins} | {r[0] for r in outs}) - set(meta))
     for i in range(0, len(need), 400):
         chunk = need[i:i + 400]
-        for cn, name, slug in _rows(db, f"""
+        for cn, name, slug in query_rows(db, f"""
                 SELECT c.case_number, c.employer_name,
                        COALESCE(l.employer_slug, p.employer_slug)
                   FROM perm_case_status c {_slug_join()}
                  WHERE c.case_number IN ({",".join("?" * len(chunk))})""", chunk):
             meta[cn] = (name, slug)
 
-    first = _rows(db, "SELECT changed_at FROM perm_case_events WHERE source = ? "
+    first = query_rows(db, "SELECT changed_at FROM perm_case_events WHERE source = ? "
                       "ORDER BY changed_at LIMIT 1", [SOURCE])
     log_from = et_date(first[0][0]) if first else None
     last_in: dict[str, int] = {}
@@ -1110,7 +896,7 @@ def hold_history(db, employers: list[dict], today: datetime.date) -> dict:
     events += [(*meta.get(cn, (None, None)), et_date(at), "off", to)
                for cn, at, to in outs]
     since_ms = int((time.time() - (DECISION_MOVES_DAYS + 1) * 86400) * 1000)
-    decided = _rows(db, f"""
+    decided = query_rows(db, f"""
         SELECT c.employer_name, COALESCE(l.employer_slug, p.employer_slug),
                e.changed_at, e.to_status
           FROM perm_case_events e
@@ -1130,15 +916,12 @@ def hold_history(db, employers: list[dict], today: datetime.date) -> dict:
 def write_employer_stages(db) -> None:
     """Precompute per-employer pending counts by status into perm_docs['employer_stages'].
 
-    WHY. On Sep 5 2026 a reader found by hand, from this site's employer and
-    stage pages, that 1,831 of the 1,855 PERM cases on hold nationwide belonged
-    to one employer; the Inspector General confirmed the suspension three days
-    later. The question every follow-up asked was "who's next", and answering
-    it from the live table on a page render is a 97,000-row group-by. Once a
-    sweep, it is one doc read. Raw counts only; the floor and the ranking
-    rules live in TypeScript beside their tests.
+    Answers "which employers have cases pulled aside" without a page render
+    grouping the whole pending table: once a sweep, it is one doc read. Raw
+    counts only; the floor and the ranking rules live in TypeScript beside
+    their tests.
     """
-    rows = _rows(db, f"""
+    rows = query_rows(db, f"""
         SELECT c.employer_name, COALESCE(l.employer_slug, p.employer_slug) AS slug,
                c.current_status, COUNT(*) AS n
           FROM perm_case_status c {_slug_join()}
@@ -1174,10 +957,7 @@ def write_employer_stages(db) -> None:
            "minPending": EMPLOYER_STAGES_MIN_PENDING,
            "employers": strip_private(employers), **history}
     payload = json.dumps(doc, separators=(",", ":"))
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
-        "VALUES (?, ?, ?)",
-        ["employer_stages", payload, int(time.time() * 1000)])
+    write_doc(db, "employer_stages", payload)
     got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?",
                     ["employer_stages"])
     if int(got or 0) != len(payload):
@@ -1190,28 +970,13 @@ def write_employer_stages(db) -> None:
 
 
 def write_sweep_coverage(db) -> None:
-    """Project the newest COMPLETE sweep into perm_docs['sweep_coverage'].
+    """Project the newest complete sweep into perm_docs['sweep_coverage'].
 
-    THE TABLE IS THE RECORD; THIS IS THE CURRENT VALUE. `sweep_runs` is
-    append-only and answers the historical question ("has it run every day,
-    and did it finish"). The website needs only the latest answer, and it
-    already reads `perm_docs` with a React-cached point read - so projecting
-    it here costs one small write per sweep and saves the read layer from
-    querying a table it otherwise never touches, on a database billed by rows
-    read.
-
-    Derived FROM `last_complete_sweep`, never from the run's own variables, so
-    the doc cannot claim coverage the table does not record. A partial run
-    leaves the previous complete run's dates standing, which is exactly right:
-    the last date on which we can PROVE we saw every pending case.
-
-    NOTHING READS THIS YET. It is written so the remaining half of the same
-    defect can be fixed without adding a query shape: `/perm-case-status`
-    prints "checked N days ago" for a pending case from
-    `perm_case_status.last_checked_at` - the rival tracker's field again - and for a
-    pending PERM case the honest answer is this doc's `finishedOn`, because
-    the sweep asks DOL about every pending case every day. See
-    src/lib/casePosition.ts `statusCheckAge` and src/lib/turso/caseLookup.ts.
+    `sweep_runs` is the append-only record; this is its current value, which
+    the case page reads (src/lib/turso/sweepCoverage.ts) to say when a pending
+    case was last checked against DOL. Derived from `last_complete_sweep`, never
+    from this run's own variables, so a partial run leaves the previous
+    complete run's dates standing: the last date every pending case was seen.
     """
     sweep = last_complete_sweep(db, "perm", modes=("full", "pending"))
     if not sweep:
@@ -1231,10 +996,7 @@ def write_sweep_coverage(db) -> None:
         "durationS": max(0, (sweep["finished_at"] - sweep["started_at"]) // 1000),
     }
     payload = json.dumps(doc, separators=(",", ":"))
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
-        "VALUES (?, ?, ?)",
-        ["sweep_coverage", payload, int(time.time() * 1000)])
+    write_doc(db, "sweep_coverage", payload)
     log(f"wrote     sweep_coverage ({doc['mode']} sweep of "
         f"{doc['asked']:,} cases, finished {doc['finishedOn']})")
 
@@ -1242,36 +1004,20 @@ def write_sweep_coverage(db) -> None:
 def write_stage_cohorts(db) -> None:
     """Precompute the filing-month x status matrix into perm_docs['stage_cohorts'].
 
-    WHY. `getStageCohorts` ran a GROUP BY over EVERY row of perm_case_status
-    on each cold render of /perm-rfi-audit and its ten stage pages. Measured
-    2026-09-03: 414,357 rows, and the group key is substr(filing_date, 1, 7),
-    an expression no index can serve, so it is a full scan every time. It blew
-    the read layer's 20s deadline locally and returned 500; production only
-    survived on the ISR cache, which is exactly the shape of the getReviewStages
-    incident above - a page that is fine until the first cold render after a
-    deploy, and then 5xxs at Google.
+    Grouping every case by filing month is a full scan (no index serves the
+    month expression), far too slow for a page render, so it runs here once a
+    sweep.
 
-    It is also a bill. Turso charges rows READ, and this one query read 414,357
-    of them per render on eleven pages.
+    Not folded from live_census: that counts every row, while every reader in
+    rfi.ts excludes DOL's own test-fixture employer, and two surfaces must not
+    disagree about one cohort. The whole matrix is stored, decided cases
+    included, because `filed` is its own denominator and each stage page
+    filters to the statuses it wants.
 
-    WHY NOT FOLD live_census, WHICH ALREADY HOLDS THIS MATRIX. Because it does
-    not hold the same one: live_census counts every row, and every reader in
-    rfi.ts excludes DOL's own test-fixture employer. That is 10 rows in 414,357,
-    small enough to look right and wrong enough to make two surfaces disagree
-    about one cohort, which is the defect this codebase keeps writing rules
-    about. A doc of its own costs a few hundred bytes and cannot drift.
-
-    THE WHOLE MATRIX, NOT THE WANTED STATUSES. `filed` has to count the whole
-    month including decided cases, so it is its own denominator; the reader
-    filters to the statuses it wants. Storing a filtered matrix would make the
-    doc unusable for the stage pages, which each ask for a different one.
-
-    THE DOC MUST RECONCILE OR IT MUST NOT BE WRITTEN, the same rule the two
-    writers above follow: sum(n) must equal a separately counted total over the
-    same predicate. A partial matrix folds into smaller plausible numbers and
-    nothing downstream can tell.
+    The doc must reconcile or it isn't written: sum(n) must equal a separately
+    counted total over the same predicate.
     """
-    rows = _rows(db, """
+    rows = query_rows(db, """
         SELECT substr(filing_date, 1, 7) AS month,
                current_status            AS status,
                COUNT(*)                  AS n
@@ -1301,18 +1047,12 @@ def write_stage_cohorts(db) -> None:
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
-        "VALUES (?, ?, ?)",
-        ["stage_cohorts", payload, int(time.time() * 1000)])
+    write_doc(db, "stage_cohorts", payload)
     got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?",
                     ["stage_cohorts"])
     if int(got or 0) != len(payload):
         raise SystemExit("FATAL: stage_cohorts read-back does not match write")
-    # Its own freshness row, for the same reason review_stages has one: the
-    # guard above can skip the write while the sweep stamps itself green, and
-    # without this a doc that quietly stopped being written would age past the
-    # reader's cutoff and put all eleven pages back on the full scan.
+    # Its own freshness row, for the same reason review_stages has one.
     stamp_freshness(db, "stage-cohorts", source=SOURCE, cadence="Daily",
                     note=f"{len(matrix)} month/status pairs, {total:,} cases",
                     max_age_days=3)
@@ -1323,37 +1063,21 @@ def write_stage_cohorts(db) -> None:
 def write_stage_stats(db) -> None:
     """Precompute what each review stage looks like right now.
 
-    WHY THIS IS DATA AND NOT A TABLE IN THE CODE. `queueForecast.ts` carried a
-    hardcoded `observedAgeDays` per stage - 170, 223, 375, 697, 624, 714 - typed
-    once and never revisited. Measured against the live table on 2026-09-10 it
-    had drifted, and one of them badly:
+    Measured from the live table every sweep, rather than typed into the code,
+    so the ages can't drift. What stays in code is the percentile each stage
+    maps to (an RFI sits in the slow tail of its month; an appeal is a separate
+    proceeding with no percentile at all): that is a judgement about what a
+    stage means, not a measurement.
 
-        ANALYST REVIEW            170 -> 162   (-8)
-        APPLICATION ON HOLD       223 -> 229   (+6)
-        RFI ISSUED                375 -> 362   (-13)
-        NORD ISSUED               697 -> 684   (-13)
-        BALCA APPEALS             714 -> 716   (+2)
-        RECONSIDERATION APPEALS   624 -> 539   (-85)
-        REQUEST FOR REVIEW          - -> 506   (absent from the table entirely)
+    The exit mix is here too: most RFI exits return to analyst review rather
+    than to a decision, so an RFI is a detour back into the ordinary queue, not
+    an endpoint.
 
-    A number that only moves when somebody edits it is not a measurement.
-
-    WHAT STAYS IN CODE: the percentile each stage maps to (an RFI sits in the
-    slow tail of its month, an appeal is a different proceeding with no
-    percentile at all). That is editorial judgement about what a stage MEANS,
-    and it does not belong in a nightly aggregate. Only the measurement moves.
-
-    The exit mix is here too, and it is the useful thing nobody is told: of the
-    RFI exits we have watched, about nine in ten return to ANALYST REVIEW
-    rather than to a decision. An RFI is not an endpoint, it is a detour back
-    into the ordinary queue.
-
-    Ages are pending-only and measured from the filing date, so this says how
-    long cases at a stage have ALREADY waited - never how much longer they
-    have, which needs exit timing the event log is still too young to supply
-    (422 RFI entries watched, 3 exits seen).
+    Ages are pending-only and measured from the filing date, so they say how
+    long cases at a stage have already waited, never how much longer they
+    have: that needs exit timing the event log is still too young to supply.
     """
-    ages = _rows(db, """
+    ages = query_rows(db, """
         SELECT current_status AS s, COUNT(*) AS n,
                CAST(AVG(julianday('now') - julianday(filing_date)) AS INT) AS mean_age
           FROM perm_case_status
@@ -1363,36 +1087,24 @@ def write_stage_stats(db) -> None:
     # Where a stage's cases go when they leave it. Left-truncated - the event
     # log opens 2026-08-26 and cannot see an entry before that - so this is
     # honest about DESTINATIONS and says nothing about how long the stage runs.
-    exits = _rows(db, """
+    exits = query_rows(db, """
         SELECT from_status AS f, to_status AS t, COUNT(*) AS n
           FROM perm_case_events
          WHERE from_status IS NOT NULL AND to_status IS NOT NULL
            AND from_status <> to_status
          GROUP BY f, t HAVING n >= 3""")
 
-    # HOW LONG A STAGE LASTS, as a SURVIVAL CURVE rather than an average.
+    # How long a stage lasts, as a survival curve rather than an average.
     #
-    # Only cases we watched ENTER can be timed: the event log opens 2026-08-26,
-    # and pairing an exit we watched with an entry we did not would time a
-    # fragment and call it the whole.
-    #
-    # THE FIRST VERSION OF THIS WAS WRONG AND ITS ANSWER LOOKED FINE. It took
-    # the observed exits and reported their median once "enough" had exited.
-    # On 2026-09-10 that made ANALYST REVIEW reportable at 345 entered, 236
-    # exited, median 3 days - and 3 days is not how long a case sits in
-    # analyst review. Every entrant we can see entered within the last 15 days,
-    # so a long stay CANNOT have been observed yet: the exits are the fast ones
-    # by construction and the completion share measures the age of the window,
-    # not the stage.
-    #
-    # The fix is to condition on time. For each candidate duration d, count
-    # only entrants old enough to have reached d, and ask how many of THOSE had
-    # left by then. That is a survival curve, it handles the censoring
-    # correctly, and it cannot report a median longer than the window because
-    # no entrant is old enough to support one. The reader picks the median off
-    # the curve, so a stage turns itself on the day its own data crosses the
-    # line, with no flag and no edit.
-    pairs = _rows(db, """
+    # Only cases watched ENTERING a stage can be timed: pairing an exit we saw
+    # with an entry we didn't would time a fragment. And a median of the exits
+    # seen so far is wrong while the log is young, because only short stays can
+    # have finished yet. So for each candidate duration d, only entrants old
+    # enough to have reached d are counted, and the question is how many of
+    # those had left by then. That handles the censoring and can never report a
+    # median longer than the window; the reader picks the median off the curve,
+    # so a stage starts reporting the day its own data crosses the line.
+    pairs = query_rows(db, """
         WITH ins AS (
             SELECT case_number, to_status AS stage, MIN(changed_at) AS t0
               FROM perm_case_events
@@ -1448,10 +1160,7 @@ def write_stage_stats(db) -> None:
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
-        "VALUES (?, ?, ?)",
-        ["stage_stats", payload, int(time.time() * 1000)])
+    write_doc(db, "stage_stats", payload)
     def _median(d):
         for pt in d["curve"]:
             if pt["left"] / pt["eligible"] >= 0.5:
@@ -1463,21 +1172,17 @@ def write_stage_stats(db) -> None:
 
 
 def write_live_census(db) -> None:
-    """Precompute the mirror census into perm_docs['live_census'].
+    """Precompute the live census into perm_docs['live_census'].
 
-    WHY. `/perm-case-status?case=` renders dynamically, and its read layer
-    used to aggregate the 414k-row mirror on every request: a full status
-    count, an unbounded ahead-of-month range, a whole-table month group-by
-    and a bare COUNT(*) - measured at ~1.8M row reads per lookup, which is
-    how a month of crawler traffic burned a 500M row-read budget. Two
-    group-bys here, twice a day, replace all of it with one doc read.
+    The case-status page renders on request, and aggregating every case for
+    each lookup is far too many rows read per visit; two group-bys here, twice
+    a day, become one doc read.
 
-    THE DOC MUST RECONCILE OR IT MUST NOT BE WRITTEN. sum(matrix) +
-    noFilingDate == totalCases is asserted before the write; the reader
-    re-checks it and treats a mismatch as no census at all. Half a census
-    folds into small plausible numbers, and nothing downstream can tell.
+    The doc must reconcile or it isn't written: sum(matrix) + noFilingDate ==
+    totalCases is asserted before the write, and the reader re-checks it and
+    treats a mismatch as no census at all.
     """
-    matrix_rows = _rows(db, """
+    matrix_rows = query_rows(db, """
         SELECT substr(filing_date, 1, 7) AS month,
                current_status            AS status,
                is_final                  AS is_final,
@@ -1507,10 +1212,7 @@ def write_live_census(db) -> None:
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
-        "VALUES (?, ?, ?)",
-        ["live_census", payload, int(time.time() * 1000)])
+    write_doc(db, "live_census", payload)
     got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?",
                     ["live_census"])
     if int(got or 0) != len(payload):
@@ -1522,12 +1224,11 @@ def write_live_census(db) -> None:
 def write_decided_percentiles(db) -> None:
     """Per received-month decision-day percentiles from the decided corpus.
 
-    Replaces caseContext's per-request window-function pass over perm_cases
-    (259k rows, no received_date index - a full scan per lookup). The corpus
-    only changes at disclosure ingests, but recomputing here twice a day
-    costs two bounded scans and guarantees the doc can never lag a re-ingest.
+    Replaces a per-lookup window-function scan of perm_cases. The corpus only
+    changes at disclosure loads, but recomputing it with each sweep is cheap
+    and means the doc can never lag a load.
     """
-    raw = _rows(db, """
+    raw = query_rows(db, """
         WITH f AS (SELECT substr(received_date, 1, 7) AS m, days
                      FROM perm_cases
                     WHERE days IS NOT NULL AND received_date IS NOT NULL
@@ -1549,23 +1250,16 @@ def write_decided_percentiles(db) -> None:
         return
     doc = {"asOf": time.strftime("%Y-%m-%d"), "months": months}
     payload = json.dumps(doc, separators=(",", ":"))
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
-        "VALUES (?, ?, ?)",
-        ["decided_month_percentiles", payload, int(time.time() * 1000)])
+    write_doc(db, "decided_month_percentiles", payload)
     log(f"wrote     decided_month_percentiles ({len(months)} months)")
 
 
 def observed_day(changed_at: int) -> str:
     """The UTC calendar day a `perm_case_events.changed_at` falls in.
 
-    MUST AGREE WITH THE READER, which is the only reason this is a named
-    function. `src/lib/turso/changes.ts` buckets the same rows by UTC midnight
-    (its `dayBounds` parses `${date}T00:00:00Z`), and the SQL form it replaced,
-    `DATE(changed_at / 1000, 'unixepoch')`, is UTC too. A local-time fold here
-    would move rows written between 19:00 and 24:00 ET onto the previous day
-    and the two surfaces would disagree about which day a decision landed on.
-
+    UTC because the reader buckets the same rows by UTC midnight
+    (src/lib/turso/changes.ts `dayBounds`); a local-time fold here would move
+    evening rows onto the previous day and the two surfaces would disagree.
     Integer division matches SQLite's `changed_at / 1000` on an INTEGER column.
     """
     return datetime.datetime.fromtimestamp(
@@ -1583,33 +1277,22 @@ def fold_observed_decisions(
     Returns `(days, withheld)` - the days that may be published, and the days
     deliberately not published with the reason for each.
 
-    FOUR RULES, AND TWO OF THEM ARE ABOUT WITHHOLDING RATHER THAN FILTERING.
+    Four rules, two of them about withholding rather than filtering:
 
-    1. EXPIRY IS NOT A DECISION. `CERTIFIED -> CERTIFIED - EXPIRED` is a
-       180-day I-140 window lapsing, not DOL adjudicating. Excluded upstream by
-       the SQL, as a status PAIR, exactly as changes.ts does it.
-    2. A BULK WRITE IS NOT A DAY'S WORK. Any timestamp carrying more than
-       `BULK_WRITE_ROWS` rows is a sweep catching up on months of history.
-       Dropped whole.
-    3. A DAY CONTAMINATED BY RULE 2 IS WITHHELD ENTIRELY, not published with
-       what survives. This is where a count parts company with a feed. On
-       2026-08-28 two timestamps exist: one of 58 rows and one of 94,523. Drop
-       the second and 57 decisions remain - a plausible number, and a lie,
-       because the dropped stamp certainly carried that day's real
-       adjudications mixed in with two years of backfilled expiries and
-       nothing can separate them. Plotting 57 beside 1,000 the following week
-       draws a collapse in DOL output that did not happen. A hole in the chart
-       is visible; a wrong point is not.
-    4. THE CURRENT DAY IS WITHHELD. The sweep runs inside it, so its own day is
-       complete only by accident. Publishing it makes every rebuild show
-       "today" collapsing, which is the same lie as rule 3 arriving on a timer.
+    1. Expiry is not a decision. `CERTIFIED -> CERTIFIED - EXPIRED` is an I-140
+       window lapsing; the SQL excludes it as a status pair, as changes.ts does.
+    2. A bulk write is not a day's work. A timestamp carrying more than
+       `BULK_WRITE_ROWS` rows is a sweep catching up on history; it is dropped.
+    3. A day touched by rule 2 is withheld entirely, not published with what
+       survives: the dropped stamp may have carried that day's real decisions
+       too, and a plausible small number would draw a collapse in DOL's output
+       that never happened. A hole is visible; a wrong point is not.
+    4. The current day is withheld, because the sweep runs inside it and its
+       count is incomplete.
 
-    AND A DAY WITH NO OBSERVATION IS ABSENT, NOT ZERO. Only days carrying a
-    surviving timestamp are eligible, so a day the sweep did not run has no
-    row. A day it DID run and saw nothing decided is a real zero and is
-    published as one. `ingest_rfi_funnel.py` already had to learn this
-    distinction: storing "we did not look" as 0 draws a trough that is
-    indistinguishable from a holiday.
+    A day with no observation is absent, not zero. Only days carrying a
+    surviving timestamp are eligible; a day the sweep ran and saw nothing
+    decided is a real zero and is published as one.
     """
     # The bulk rule counts a timestamp ACROSS sources, exactly as the feed's
     # roll-up does (`GROUP BY changed_at`, no source term). Splitting it per
@@ -1627,20 +1310,10 @@ def fold_observed_decisions(
 
     days: dict[str, dict[str, int]] = {}
     for ts, src, _n in stamp_totals:
-        # ELIGIBILITY IS OUR SWEEP HAVING RUN, NOT MERELY A ROW EXISTING.
-        # 2026-08-27 carries exactly one timestamp: 48 rows written by the
-        # retired rival mirror, comparing their copy against ours. Our own
-        # DOL sweep did not write an event until 2026-08-27T21:16Z, the next
-        # day in UTC. Treating that stamp as an observation published
-        # `2026-08-27 = 0`, a zero-decision day at the head of the series and
-        # a false trough - the exact failure `ingest_rfi_funnel.py` guarded
-        # against with the rival tracker's own `has_data` flag, arriving by a
-        # different door.
-        #
-        # This decides which days are MEASURABLE, not which rows COUNT: a
-        # mirror row on a day our sweep also ran is still counted, so the
-        # chart and the feed cannot disagree about a day both publish. There
-        # are zero such rows (measured 2026-09-03).
+        # A day is measurable when our own sweep ran on it, not merely when some
+        # row exists: rows from another source on a day the sweep didn't run
+        # would publish a false zero. Rows on a day the sweep did run still
+        # count, so the chart and the feed agree about every day both publish.
         if ts not in bulk and src == sweep_source:
             days.setdefault(observed_day(ts),
                             {"certified": 0, "denied": 0, "withdrawn": 0})
@@ -1651,23 +1324,18 @@ def fold_observed_decisions(
         key = status.upper()
         if key not in DECISION_BUCKETS:
             # A final status nobody decided where to file. Raising is right:
-            # run_independently prints it as a ::error:: annotation and the
-            # other doc writers still run, whereas silently dropping it would
-            # under-count the series forever with nothing to see.
-            #
-            # RuntimeError AND NOT SystemExit, deliberately. `run_independently`
-            # catches `Exception`, and SystemExit inherits from BaseException,
-            # so it would sail past the handler and kill the process BEFORE
-            # `record_run` writes the audit row - leaving check_ingest_health.py
-            # with nothing to turn red at 10:00 the next morning. That is the
-            # exact shape of the 2026-09-03 outage this file already documents.
+            # run_independently prints it as a ::error:: annotation and the other
+            # doc writers still run, where dropping it would under-count forever.
+            # RuntimeError, not SystemExit: run_independently catches Exception,
+            # and a SystemExit would kill the process before `record_run`
+            # writes the row the health check reads.
             raise RuntimeError(
                 f"{status!r} is final but has no column in DECISION_BUCKETS; "
                 f"add it rather than losing its decisions")
         day = observed_day(ts)
         if day not in days:
-            # A decision on a day our sweep never ran - only reachable for the
-            # mirror's own rows. Counting it would publish a day nobody swept.
+            # A decision on a day our sweep never ran (only rows from another
+            # source can land there). Counting it would publish a day nobody swept.
             continue
         days[day][DECISION_BUCKETS[key]] += int(n)
 
@@ -1697,37 +1365,26 @@ def fold_observed_decisions(
 def write_observed_decisions(db) -> None:
     """Rebuild `daily_decisions` under `sweep-observed` from perm_case_events.
 
-    WHY IT EXISTS. `dol-disclosure` is dated by DOL's own decision date and
-    stops at the last published quarter, so the chart on `/perm-cases` ends
-    two months behind. DOL publishes no decision timestamp on the live
-    endpoint - `perm_case_status` has no decision_date column and cannot be
-    made to have one - but the sweep records every transition it sees, and
-    when we SAW a case decided is a real, publishable measurement as long as
-    it is labelled as that and not as DOL's dating. Hence a separate source
-    name; see the block comment beside `OBSERVED_SOURCE`.
+    `dol-disclosure` stops at the last published quarter, and DOL's live
+    endpoint publishes no decision date, but the sweep records every
+    transition it sees, and when we SAW a case decided is a real measurement as
+    long as it is labelled as one (see the comment beside `OBSERVED_SOURCE`).
 
-    A DECISION IS A TRANSITION INTO `FINAL_STATUSES`, which is reused from the
-    same constant the sweep classifies `is_final` with, so the chart and the
-    per-case pages cannot disagree about what "decided" means. Movements
-    between review stages (`ANALYST REVIEW -> RFI ISSUED`, an appeal opening)
-    are adjudication EVENTS and appear in the feed on `/perm-decision-activity`,
-    but they are not decisions and they do not belong in a table whose other
-    source counts certifications, denials and withdrawals.
+    A decision is a transition into `FINAL_STATUSES`, the same constant the
+    sweep classifies `is_final` with. Moves between review stages are events in
+    the activity feed, not decisions, and don't belong beside a source that
+    counts certifications, denials and withdrawals.
 
-    THE COST. Two grouped scans of `perm_case_events` per run, twice a day.
-    Measured 2026-09-03: 147,328 rows, so ~589k rows read a day against a
-    2.5B-per-cycle allowance, and the second query is served by
-    `case_events_status_time (to_status, changed_at)`. Growth is ~1,500
-    events/day. The site never reads this table row by row; this is the ingest
-    paying once so every page reads a handful of rows.
+    Two grouped scans of `perm_case_events` per run, the second served by
+    `case_events_status_time (to_status, changed_at)`.
     """
     stamp_totals = [
-        (int(ts), str(src), int(n)) for ts, src, n in _rows(
+        (int(ts), str(src), int(n)) for ts, src, n in query_rows(
             db, "SELECT changed_at, source, COUNT(*) FROM perm_case_events "
                 "GROUP BY changed_at, source")]
     finals = sorted(FINAL_STATUSES)
     decisions = [
-        (int(ts), str(s), int(n)) for ts, s, n in _rows(
+        (int(ts), str(s), int(n)) for ts, s, n in query_rows(
             db,
             "SELECT changed_at, to_status, COUNT(*) FROM perm_case_events "
             f"WHERE to_status IN ({','.join('?' * len(finals))}) "
@@ -1739,11 +1396,9 @@ def write_observed_decisions(db) -> None:
     days, withheld = fold_observed_decisions(stamp_totals, decisions, today)
 
     if not days:
-        # AN EMPTY COMPUTATION MUST NEVER WIPE A GOOD SERIES. Every path below
-        # deletes what it did not just write, so a run that legitimately found
-        # nothing - or a `perm_case_events` that failed to read - would empty
-        # the table and log success. Same guard shape as live_census's
-        # reconciliation: refuse the write, keep the previous good data.
+        # An empty computation must never wipe a good series: every path below
+        # deletes what it did not just write, so a run that found nothing (or
+        # failed to read the events) would empty the table and log success.
         log(f"NOT writing {OBSERVED_SOURCE}: no publishable day "
             f"({len(withheld)} withheld, {len(stamp_totals)} sweep timestamps)")
         return
@@ -1754,29 +1409,15 @@ def write_observed_decisions(db) -> None:
         fetched_at INTEGER NOT NULL, PRIMARY KEY (date, source))""")
     stamp = int(time.time() * 1000)
     dates = sorted(days)
-    # UPSERT FIRST, DELETE SECOND, so the series is never briefly empty for a
-    # reader mid-run. `INSERT OR REPLACE` is keyed on (date, source), so the
-    # write is idempotent and a re-sent pipeline is a no-op.
-    #
-    # NOT DIFFED, unlike `perm_live_recent`, and the difference is two orders
-    # of magnitude: this series is one row per day since 2026-08-30, so it is
-    # ~4 rows today, ~370 in a year and ~1,800 in five - against 137,000 there.
-    # At two sweeps a day that is 3,600 writes a day at the five-year mark,
-    # roughly 1% of a 10M/month plan, to keep the writer a dozen lines shorter
-    # and unconditionally self-healing. Revisit if this ever holds more than a
-    # few thousand rows.
-    db.pipeline([{"type": "execute", "stmt": {
-        "sql": "INSERT OR REPLACE INTO daily_decisions "
-               "(date, source, total, certified, denied, withdrawn, fetched_at) "
-               "VALUES (?,?,?,?,?,?,?)",
-        "args": [{"type": "text", "value": d},
-                 {"type": "text", "value": OBSERVED_SOURCE},
-                 {"type": "integer", "value": str(days[d]["total"])},
-                 {"type": "integer", "value": str(days[d]["certified"])},
-                 {"type": "integer", "value": str(days[d]["denied"])},
-                 {"type": "integer", "value": str(days[d]["withdrawn"])},
-                 {"type": "integer", "value": str(stamp)}]}}
-        for d in dates] + [{"type": "close"}])
+    # Upsert first, delete second, so a reader never sees the series briefly
+    # empty. `INSERT OR REPLACE` is keyed on (date, source), so a re-sent
+    # pipeline is a no-op. Not diffed like `perm_live_recent`: this is one row
+    # per day, so rewriting it whole stays cheap and is always self-healing.
+    db.pipeline([stmt(
+        "INSERT OR REPLACE INTO daily_decisions "
+        "(date, source, total, certified, denied, withdrawn, fetched_at) VALUES (?,?,?,?,?,?,?)",
+        [d, OBSERVED_SOURCE, days[d]["total"], days[d]["certified"], days[d]["denied"],
+         days[d]["withdrawn"], stamp]) for d in dates] + [{"type": "close"}])
     # A day that becomes unpublishable (a later backfill lands on it) has to
     # LOSE its row, or the series keeps a number this run has just decided it
     # cannot stand behind.
@@ -1803,14 +1444,9 @@ def write_observed_decisions(db) -> None:
     }
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) "
-        "VALUES (?, ?, ?)",
-        ["observed_decisions", json.dumps(doc, separators=(",", ":")), stamp])
-    # WHY THE HOLES ARE RECORDED. A missing day in a chart is indistinguishable
-    # from a day with no data, and rule 3 above deliberately makes holes. The
-    # doc is what lets the page say WHY 28 and 29 August are absent instead of
-    # leaving a reader to assume DOL stopped working.
+    write_doc(db, "observed_decisions", doc, stamp)
+    # The withheld days are recorded so the page can say why a day is missing,
+    # rather than leave a reader to assume DOL stopped working.
 
     stamp_freshness(
         db, "decisions-observed", as_of=dates[-1],
@@ -1830,22 +1466,16 @@ def _int_or_none(v) -> int | None:
 
 
 def sweep_is_complete(limit, offset, truncated: bool, failed_batches: int) -> bool:
-    """Did this run cover its whole population? A named function so it can be
-    tested, because it is the claim `write_review_stages` dates a published
-    census on.
+    """Did this run cover its whole population? `write_review_stages` dates a
+    published census on this claim, so it is a named, tested function.
 
-    Every term is a coverage failure that produces a PLAUSIBLE partial result
+    Every term is a coverage failure that yields a plausible partial result
     rather than an error:
 
       limit / offset   the todo list was a slice by construction
       truncated        three consecutive far-end failures stopped the loop
-      failed_batches   a batch exhausted its retries and was skipped with
-                       `continue` - a hole of up to 50 cases the run never
-                       saw, with no exception and no missing output
-
-    The last one is the reason this is not just `not truncated`: a sweep can
-    finish its loop, report a healthy total, and still have missed 50 cases in
-    the middle.
+      failed_batches   a batch exhausted its retries and was skipped: a hole of
+                       up to 50 cases, with no exception and no missing output
     """
     return not limit and not offset and not truncated and failed_batches == 0
 
@@ -1853,21 +1483,13 @@ def sweep_is_complete(limit, offset, truncated: bool, failed_batches: int) -> bo
 def tail_steps(db, *, discover: bool, cap: int = DISCOVERY_REQUEST_CAP,
                deadline: float | None = None,
                housekeeping: bool = False) -> list[tuple[str, object]]:
-    """The precomputed docs written after a sweep, as INDEPENDENT steps.
+    """The precomputed docs written after a sweep, as independent steps.
 
-    ORDER IS LOAD-BEARING and `run_independently` preserves it: discovery
-    before the census, or the census is written without the day's new filings;
-    `write_sweep_coverage` before `write_review_stages`, which reads that row
-    back to date the published stage census.
-
-    These were bare calls in a row, and on 2026-09-03 the last of them raised
-    SQLITE_NOMEM on a single-row INSERT (Actions run 33757242079). The
-    70-minute sweep had already written its 566 status changes and stamped
-    itself fresh; the run still went red, and had the failure landed on the
-    FIRST doc instead of the last, all four after it would have been skipped
-    for a reason that had nothing to do with them. Each doc is independently
-    useful and each has its own reader fallback, so one failing is a reason to
-    log loudly, not a reason to abandon the rest.
+    Each doc is useful on its own and each has a reader fallback, so one
+    failing is logged loudly and the rest still run. Order matters and
+    `run_independently` keeps it: discovery before the census, or the census
+    misses the day's new filings; `write_sweep_coverage` before
+    `write_review_stages`, which reads that row back.
     """
     steps: list[tuple[str, object]] = []
     if discover:
@@ -1883,10 +1505,9 @@ def tail_steps(db, *, discover: bool, cap: int = DISCOVERY_REQUEST_CAP,
         ("employer_stages", lambda: write_employer_stages(db)),
         ("stage_cohorts", lambda: write_stage_cohorts(db)),
         ("decided_month_percentiles", lambda: write_decided_percentiles(db)),
-        # LAST, because it reads `perm_case_events`, which `flush()` has
-        # already written by the time any of these run. It is also the only
-        # step whose output is a public SERIES rather than a snapshot, so a
-        # failure here leaves yesterday's series live rather than a half one.
+        # Last: it reads the `perm_case_events` that `flush()` wrote, and as the
+        # only public series here, a failure leaves yesterday's series live
+        # rather than half of one.
         ("observed_decisions", lambda: write_observed_decisions(db)),
     ]
     if housekeeping:
@@ -1927,8 +1548,7 @@ def main() -> int:
              "--pending sweep also walk on their own, under a time budget.")
     ap.add_argument(
         "--reconcile", action="store_true",
-        help="Correct statuses but write NO events. Use this for the first "
-             "pass against a stale mirror.",
+        help="Correct statuses but write NO events, for a pass against stale data.",
     )
     args = ap.parse_args()
 
@@ -1956,30 +1576,20 @@ def main() -> int:
                         + (f"; failed: {', '.join(k for k, _ in failed)}" if failed else ""))
         return 0 if status != "failed" else 1
 
-    # The RFI blend reads "cases that ENTERED an RFI since <a fixed date>".
-    # `changed_at > <freeze>` matches more of the table every day, so with only
-    # a changed_at index that CTE degrades into a growing scan. Leading on
-    # to_status keeps it bounded to the RFI rows, which are a small slice.
+    # Reads of "cases that entered a status since a date" lead on to_status, so
+    # they stay bounded to that status's rows instead of a growing time scan.
     db.execute("""CREATE INDEX IF NOT EXISTS case_events_status_time
         ON perm_case_events (to_status, changed_at)""")
-    # The mirror of the one above, for moves OUT of a status. The employer
-    # census dates releases from hold with it, and a release of cases that were
-    # already held when the log began has no entry event to find them by, so
-    # without it that read is a scan of the whole table twice a day.
+    # The same, for moves OUT of a status: the employer census dates releases
+    # from hold with it, including cases held before the log began, which have
+    # no entry event to find them by.
     db.execute("""CREATE INDEX IF NOT EXISTS case_events_from_time
         ON perm_case_events (from_status, changed_at)""")
 
-    # The stage pages list the cases sitting at one FLAG status, oldest filing
-    # first. The two indexes this table already had both lead somewhere else -
-    # case_status_month on the filing month, case_status_final on is_final - so
-    # SQLite served that query from case_status_final and read every one of the
-    # ~98,000 pending rows to return the 974 at RFI ISSUED. Measured with
-    # EXPLAIN QUERY PLAN before this existed:
-    #
-    #   SEARCH perm_case_status USING INDEX case_status_final (is_final=?)
-    #
-    # Leading on current_status bounds the read to the stage; filing_date last
-    # makes the ordering free rather than a sort over the partition.
+    # The stage pages list the cases at one status, oldest filing first.
+    # Leading on current_status bounds the read to that stage (the other
+    # indexes would read every pending row), and filing_date last makes the
+    # ordering free.
     db.execute("""CREATE INDEX IF NOT EXISTS case_status_stage
         ON perm_case_status (current_status, is_final, filing_date)""")
 
@@ -1992,20 +1602,17 @@ def main() -> int:
     sql = (f"SELECT case_number, current_status, employer_name, job_title "
            f"FROM perm_case_status {where} ORDER BY case_number "
            f"LIMIT {args.limit or 10**9} OFFSET {args.offset}")
-    res = db.execute(sql)["response"]["result"]
-    rows = {x[0]["value"]: [None if c["type"] == "null" else c["value"] for c in x[1:]]
-            for x in res["rows"]}
+    rows = {r[0]: r[1:] for r in query_rows(db, sql)}
     todo = sorted(rows)
     log(f"{len(todo):,} cases to check, {BATCH} per request "
         f"= {(len(todo)+BATCH-1)//BATCH:,} requests\n")
 
     checked = moved = missing = 0
-    # COVERAGE BOOKKEEPING, for the sweep record written at the end.
+    # Coverage bookkeeping, for the sweep record written at the end.
     #   asked          case numbers actually put to DOL (failed batches never got there)
     #   requests       HTTP batches attempted
-    #   failed_batches batches that exhausted their retries - each one is a
-    #                  hole of up to 50 cases, and a run with a hole in it has
-    #                  NOT covered its population
+    #   failed_batches batches that exhausted their retries: each is a hole of
+    #                  up to 50 cases, so the run hasn't covered its population
     #   truncated      the loop stopped early (three consecutive far-end failures)
     asked = requests = failed_batches = 0
     truncated = False
@@ -2051,10 +1658,9 @@ def main() -> int:
             checked += 1
             new_status = (v.get("caseStatus") or "").strip()
             old_status = (old[0] or "").strip()
-            # The breakdown DOL ANSWERED WITH, over every case we asked about -
-            # not only the ones that moved. A record of coverage that only
-            # counted changes could not tell an all-quiet sweep from one that
-            # never ran.
+            # The breakdown DOL answered with, over every case asked about, not
+            # only the ones that moved, so an all-quiet sweep and one that never
+            # ran look different.
             status_counts[new_status or "(blank)"] = (
                 status_counts.get(new_status or "(blank)", 0) + 1)
             if new_status and new_status != old_status:
@@ -2062,16 +1668,11 @@ def main() -> int:
                 is_final = 1 if new_status.upper() in FINAL_STATUSES else 0
                 updates.append([new_status, is_final, v.get("employerName") or old[1],
                                 v.get("jobTitle") or old[2], SOURCE, stamp, cn])
-                # A RECONCILIATION IS NOT A TRANSITION, AND STAMPING IT AS ONE
-                # INVENTS HISTORY. The first direct pass compares DOL against a
-                # mirror that was last scanned months ago, so most differences
-                # are corrections of stale data, not things that moved today.
-                # Writing 98,586 of those into perm_case_events with today's
-                # timestamp would fabricate a one-day surge - and that table
-                # feeds both the alert sweep and the RFI funnel history.
-                #
-                # Once our own data IS current, a difference really does mean
-                # the case moved since we last looked, and the events are real.
+                # A reconciliation is not a transition: correcting stale rows
+                # against DOL must not write events stamped today, or the alert
+                # sweep and the activity history would see a one-day surge that
+                # never happened. Once the data is current, a difference does
+                # mean the case moved, and the events are real.
                 if not args.reconcile:
                     events.append([cn, stamp, old_status, new_status, is_final, SOURCE])
         missing += len(chunk) - len(seen)
@@ -2092,37 +1693,22 @@ def main() -> int:
 
     log(f"wrote     {written['u']:,} status changes, {written['e']:,} events")
 
-    # Stamp freshness so `check_ingest_health.py` can see this ingest stop.
-    # An ingest that fails silently is worse than one that fails loudly, and
-    # this one runs unattended against a host with maintenance windows.
-    #
-    # Only stamp on a run that actually got somewhere: a run that died on its
-    # first batch must NOT refresh the clock, or a permanently broken ingest
-    # keeps reporting itself healthy forever.
+    # Stamp freshness so check_ingest_health.py can see this ingest stop, but
+    # only on a run that got somewhere: a run that died on its first batch must
+    # not refresh the clock, or a broken ingest would report itself healthy.
     if checked:
         n = int(db.scalar("SELECT count(*) FROM perm_case_status") or 0)
-        # PER-PASS freshness. Both passes used to stamp one `perm-case-status`
-        # row, so the full pass - the only one that catches expirations, runs
-        # discovery and rebuilds the live remainder - could fail every night
-        # and the pending pass would keep the clock green. The full pass now
-        # owns its own dataset key, which check_ingest_health.py picks up for
-        # free because it reads every row in data_freshness.
+        # Freshness per pass, so the pending pass can never keep the clock
+        # green over a full pass (the only one that catches expirations) that
+        # fails every night. The health check reads every data_freshness row,
+        # so the full pass's own key is monitored automatically.
         dataset = "perm-case-status-full" if args.full else "perm-case-status"
         stamp_freshness(db, dataset, source=SOURCE, cadence="Daily",
                         note=f"{n:,} cases", max_age_days=3)
         log(f"stamped   {dataset}")
-        # WHAT THIS RUN ACTUALLY LOOKED AT, and whether it got all the way
-        # round. `complete` is what write_review_stages reads back to date the
-        # published stage census, so every term below is a coverage claim:
-        #
-        #   --limit / --offset  the todo list was a slice, not the population
-        #   truncated           three consecutive far-end failures stopped it
-        #   failed_batches      a batch exhausted its retries; each one is a
-        #                       hole of up to 50 cases the run never saw
-        #
-        # A run failing any of these still gets a row - the audit trail wants
-        # partial runs most of all - it just cannot be used to date a census.
-        # The predicate itself is `sweep_is_complete`, above, where it is tested.
+        # What this run looked at, and whether it got all the way round
+        # (`sweep_is_complete`). A partial run still gets a row, since the audit
+        # trail wants partial runs most of all; it just can't date a census.
         complete = sweep_is_complete(args.limit, args.offset,
                                      truncated, failed_batches)
         record_sweep(
@@ -2135,16 +1721,10 @@ def main() -> int:
         log(f"recorded  sweep: asked {asked:,}, answered {checked:,}, "
             f"changed {moved:,}, {requests:,} requests, "
             f"{'COMPLETE' if complete else 'PARTIAL'}")
-        # Discovery rides BOTH passes so the census below already carries the
-        # day's new filings. It used to ride the full pass only, on the
-        # reasoning that twice-daily probing "buys little and doubles the
-        # polite load"; measured 2026-09-24, one 400-request walk a night
-        # covered at most 2,000 serials against 3,000 to 5,300 issued each
-        # weekday, so the corpus ran 2 to 4 days behind DOL. The time budget
-        # (DISCOVERY_BUDGET_MIN) is what keeps either pass under its step
-        # timeout. A `--limit` test run does not walk. write_sweep_coverage
-        # runs before write_review_stages, which reads that row back, so the
-        # doc's dates are this run's rather than yesterday's.
+        # Discovery rides both passes, so the census below carries the day's
+        # new filings and the walk keeps pace with the counter; its time budget
+        # (DISCOVERY_BUDGET_MIN) keeps either pass under its step timeout. A
+        # `--limit` test run does not walk.
         mode = "full" if args.full else "pending"
         walk = bool(args.full or args.pending)
         steps = tail_steps(db, discover=walk, cap=args.discover_cap,
@@ -2152,37 +1732,26 @@ def main() -> int:
                            housekeeping=bool(args.full))
         failed = run_independently(steps)
 
-        # RECORDED AFTER THE TAIL, NOT BEFORE IT. This call used to sit above
-        # the doc writes and always said "ok", so the run that died on
-        # 2026-09-03 wrote itself an `ok` audit row and a fresh
-        # `perm-case-status-full` stamp 80 seconds before it crashed. Every
-        # row in ingest_runs said `ok` (36 of 36, measured) while two sweeps
-        # had failed that morning, so both monitors reported green over a red
-        # run. A status column with one value in it is not a status column.
+        # Recorded after the tail, not before it, so a run that dies in its doc
+        # writes can't have already written itself an `ok` row.
         status = "ok" if not failed else "partial"
         note = f"{'full' if args.full else 'pending'}: {n:,} cases"
         if failed:
             note += (f"; {len(failed)}/{len(steps)} tail steps failed: "
                      + ", ".join(k for k, _ in failed))
         # Keyed with its mode, the shape the workflow's failure hook writes
-        # ("ingest_case_status_direct.py --full"). Until Sep 29 2026 this row
-        # carried the bare filename, so a failed full sweep and the clean run
-        # that followed it had different keys, and the failure stayed BROKEN in
-        # the health check after the re-run had worked.
+        # ("ingest_case_status_direct.py --full"), so a clean re-run clears a
+        # failed run of the same pass.
         record_run(db, f"ingest_case_status_direct.py --{mode}", status=status,
                    rows_written=written["u"], note=note, started_at=started)
 
         if failed:
             log(f"TAIL: {len(failed)} of {len(steps)} doc writes failed: "
                 + ", ".join(k for k, _ in failed))
-            # EVERY tail step failing is not "a doc write failed", it is the
-            # database being gone - at which point the sweep's own writes are
-            # suspect too and the run should be red. One or two failing is a
-            # blip: the previous docs are still live and correct, every reader
-            # has its own fallback, and re-running a 70-minute federal scrape
-            # to rewrite one small JSON blob is not a trade worth making. It
-            # surfaces instead through the `partial` row above, which
-            # check_ingest_health.py turns red at 10:00 UTC the same morning.
+            # Every tail step failing means the database is gone, so the sweep's
+            # own writes are suspect and the run goes red. One or two failing is
+            # a blip: the previous docs stay live, every reader has a fallback,
+            # and the `partial` row above turns the health check red that morning.
             if len(failed) == len(steps):
                 log("every tail step failed; failing the run")
                 return 1

@@ -1,11 +1,11 @@
 "use client";
 
 // `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here (2026-09-01) rather
+// which exists only in React's client build. Declared here rather
 // than inherited from whichever importer happened to cross a boundary first.
 // Without it this module works until the chunk graph shifts, then fails with
 // `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx for the incident.
+// and no source file. See components/layout/Footer.tsx.
 
 /**
  * ProfileSection Component
@@ -21,10 +21,6 @@
  * - Dirty state tracking for save button
  * - Toast notifications for success/error
  * - Animated success feedback (checkmark pulse)
- *
- * Phase: 25 (Settings & Preferences)
- * Created: 2025-12-31
- * Updated: 2025-12-31 - Added Motion library animations
  */
 
 "use client";
@@ -34,7 +30,8 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "motion/react";
 import { analytics } from "@/lib/analytics";
 import { useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { EASTERN_TIMEZONE } from "@/lib/time";
+import { api } from "@convex/_generated/api";
 import { FormField } from "@/components/forms/FormField";
 import { Input } from "@/components/ui/input";
 import { SelectInput, type SelectOption } from "@/components/forms/SelectInput";
@@ -100,9 +97,9 @@ function getBrowserTimezone(): string {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
     // Check if it’s a US timezone we support
     const isSupported = US_TIMEZONES.some((opt) => opt.value === tz);
-    return isSupported ? tz : "America/New_York"; // Default to Eastern if unsupported
+    return isSupported ? tz : EASTERN_TIMEZONE; // Default to Eastern if unsupported
   } catch {
-    return "America/New_York";
+    return EASTERN_TIMEZONE;
   }
 }
 

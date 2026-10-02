@@ -61,7 +61,7 @@ export function ViewToggle<T extends string>({
             aria-pressed={active}
             onClick={() => onChange(o.value)}
             className={cn(
-              "min-h-[44px] px-4 font-mono text-xs font-bold uppercase tracking-wider transition-colors focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-primary",
+              "min-h-[44px] px-4 font-mono text-sm font-bold uppercase tracking-wider transition-colors focus-visible:relative focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-primary",
               i > 0 && "border-l-2 border-border",
               active
                 ? "bg-primary text-primary-foreground"

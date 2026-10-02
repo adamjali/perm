@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { NavigableCard } from "@/components/ui/navigable-card";
 import { safeFormatDistanceToNow } from "@/lib/utils/date";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";
-import type { RecentActivityItem } from "../../../convex/lib/dashboardTypes";
+import type { RecentActivityItem } from "@convex/lib/dashboardTypes";
 
 interface RecentActivityCardProps {
   activity: RecentActivityItem;

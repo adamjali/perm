@@ -2,10 +2,12 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import type { VolumeAnomaly } from "@/lib/queueAhead";
 import { cn } from "@/lib/utils";
 import type { BacklogMonth } from "@/lib/turso/backlog";
+import { formatInt } from "@/lib/format";
 
 import { StageBar } from "./StageBar";
 import { groupByStage } from "./stages";
@@ -13,13 +15,12 @@ import { groupByStage } from "./stages";
 /**
  * The wall: every filing month still carrying undecided cases.
  *
- * WHAT THE BAR MEASURES CHANGED, AND THAT IS THE POINT. This list used to
- * draw the share of a month DOL had decided, which put October 2025 (1,261
- * cases, 78% pending) visually ahead of February 2026 (5,219 cases, 3%
- * decided). The bars are now drawn against one shared maximum, so length is
- * case count and the eye reads the backlog's real shape: a thin tail, then
- * the cliff at November 2025. The percentage is still on the row, demoted
- * from the picture to a figure, because it answers a second question.
+ * THE BAR IS CASE COUNT, NOT SHARE DECIDED. A share would draw a small month
+ * that is mostly pending visually ahead of a large month that has barely
+ * started. The bars are drawn against one shared maximum, so length is case
+ * count and the eye reads the backlog's real shape: a thin tail, then the
+ * cliff at the work front. The percentage is still on the row, as a figure
+ * rather than the picture, because it answers a second question.
  *
  * DOL'S OWN POSITION IS DRAWN ON THE SAME LIST. A rule sits at the filing
  * month DOL publishes as its analyst-review priority date, carrying DOL's
@@ -40,8 +41,6 @@ import { groupByStage } from "./stages";
  * summary states the month count and the case count as two separate figures
  * so it never implies every month in there is carrying something.
  */
-
-const int = (n: number) => n.toLocaleString("en-US");
 
 export interface BacklogWallProps {
   /** Oldest first. */
@@ -101,10 +100,11 @@ export function BacklogWall({
         <details className="mt-4 border-2 border-border bg-background">
           <summary className="cursor-pointer px-4 py-3 text-base font-bold marker:text-primary hover:text-primary">
             {passed.length} earlier {passed.length === 1 ? "month" : "months"} DOL
-            has worked past. {int(passedPending)}{" "}
+            has worked past. {formatInt(passedPending)}{" "}
             {passedPending === 1 ? "case" : "cases"} across them{" "}
             {passedPending === 1 ? "is" : "are"} still open
           </summary>
+          <ChartTips label="Earlier filing months, cases still pending by stage">
           <ol className="space-y-1 border-t-2 border-border px-4 py-3">
             {passed.map((m) => (
               <Fragment key={m.month}>
@@ -119,10 +119,12 @@ export function BacklogWall({
               </Fragment>
             ))}
           </ol>
+          </ChartTips>
         </details>
       ) : null}
 
-      <ol className="mt-4 space-y-1">
+      <ChartTips label="Pending cases by filing month and stage" className="mt-4">
+      <ol className="space-y-1">
         {wall.map((m, i) => {
           const previous = i > 0 ? wall[i - 1] : undefined;
           const crossesFrontier =
@@ -154,6 +156,7 @@ export function BacklogWall({
           <FrontierRule month={frontierMonth} asOf={frontierAsOf} />
         ) : null}
       </ol>
+      </ChartTips>
     </div>
   );
 }
@@ -214,7 +217,7 @@ function MonthRow({
       // put 39 targets on a 24px pitch, which is the floor of WCAG 2.5.8 and
       // well under this project's own. The bar stays 20px; the ROW grew.
       className="grid min-h-11 grid-cols-[5rem_1fr_3.5rem_3rem] items-center gap-2 [&>*]:min-w-0 sm:grid-cols-[7rem_1fr_5rem_4rem] sm:gap-3"
-      aria-label={`${label}: ${int(month.pending)} of ${int(month.total)} still waiting, ${pct.toFixed(0)} percent decided`}
+      aria-label={`${label}: ${formatInt(month.pending)} of ${formatInt(month.total)} still waiting, ${pct.toFixed(0)} percent decided`}
     >
       <span className="flex min-h-11 items-center gap-1 truncate">
         {anomaly ? (
@@ -230,14 +233,14 @@ function MonthRow({
           {short}
         </Link>
       </span>{" "}
-      <StageBar stages={stages} scale={scale} />{" "}
+      <StageBar stages={stages} scale={scale} tipHeading={`${label}, ${pct.toFixed(0)}% decided`} />{" "}
       <span
         className={cn(
           "text-right text-sm tabular-nums",
           isFront ? "font-black" : "text-foreground/80",
         )}
       >
-        {int(month.pending)}
+        {formatInt(month.pending)}
       </span>{" "}
       <span className="text-right text-sm tabular-nums text-foreground/70">
         {pct.toFixed(0)}%
@@ -253,12 +256,11 @@ function MonthRow({
  * vertical coordinate by construction rather than by two numbers that have to
  * be kept in step.
  *
- * IT WRAPS. The row used to be three `shrink-0` pieces on one unbreakable
- * line, and at 390px the badge plus "as of September 22" came to 462px: the
- * whole page scrolled sideways (a 493px document on a phone, reported from
- * a screenshot on 2026-09-26). Now the date drops under the rule on a narrow
- * screen, the badge may wrap its own words, and the rule keeps a 2rem floor
- * so it never collapses to nothing.
+ * IT WRAPS. As three `shrink-0` pieces on one unbreakable line, the badge
+ * plus "as of September 22" is wider than a 390px phone and the whole page
+ * scrolls sideways. So the date drops under the rule on a narrow screen, the
+ * badge may wrap its own words, and the rule keeps a 2rem floor so it never
+ * collapses to nothing.
  */
 function FrontierRule({ month, asOf }: { month: string; asOf: string | null }) {
   const label = formatMonth(month) ?? month;
@@ -295,7 +297,7 @@ function AnomalyMark({
   anomaly: VolumeAnomaly;
   noteId?: string;
 }) {
-  const measured = `${label} holds ${int(anomaly.total)} filings against a neighbouring average of ${int(Math.round(anomaly.neighbourMean))}`;
+  const measured = `${label} holds ${formatInt(anomaly.total)} filings against a neighbouring average of ${formatInt(Math.round(anomaly.neighbourMean))}`;
   const icon = <WarningIcon className="h-4 w-4" weight="fill" aria-hidden="true" />;
   if (noteId) {
     return (

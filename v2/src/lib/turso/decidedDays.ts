@@ -33,8 +33,7 @@ export * from "@/lib/dateCoverage";
  * But the published files carry an indexed `decision_date` on every decided
  * case, going back to 2023-10-01. So "what did DOL do on 12 March 2025" IS
  * answerable, in full detail, with the wage and the worksite and the
- * occupation attached. The day picker simply never looked there, which is why
- * it appeared capped at a week.
+ * occupation attached.
  *
  * THE TWO DIMENSIONS ARE NEVER SILENTLY MERGED. "Decided on this day" and
  * "changed status on this day" are different questions with different
@@ -43,10 +42,10 @@ export * from "@/lib/dateCoverage";
  * Blending them into one undated feed would misstate both. Each is labelled,
  * and `coverageFor` says which one a given date can answer.
  *
- * ## Cost, because Turso bills rows READ
+ * ## Cost
  *
- * An August incident read 11.6 billion rows in two days and got reads blocked.
- * Two rules keep this module bounded:
+ * Every row read costs the database time, and a range over the corpus can
+ * read millions. Two rules keep this module bounded:
  *
  * **No `COUNT(*)` over a range.** Counting a year of decisions walks every
  * index entry in it, which is millions of rows for one headline number. An
@@ -88,7 +87,7 @@ export interface DecidedCase {
    * "per year".
    */
   wageUnit: string | null;
-  /** The law firm on the filing (all three programs since the Sep 4 backfill). */
+  /** The law firm on the filing (all three programs). */
   attorneyName: string | null;
   attorneySlug: string | null;
   /** Worksite city. PERM only. */
@@ -201,7 +200,7 @@ export const PERM_HISTORY_LAST = "2023-09-30";
 
 /**
  * A table's columns, from its schema. `PRAGMA table_info` reads the schema,
- * not the rows, so it costs nothing that Turso bills; memoised per process for
+ * not the rows, so it costs no row reads; memoised per process for
  * ten minutes so a busy page asks once.
  *
  * WHY PROBE AT ALL. The optional columns arrive with loads that run on their

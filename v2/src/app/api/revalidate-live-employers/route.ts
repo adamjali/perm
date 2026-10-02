@@ -3,13 +3,12 @@
  *
  * THE PROBLEM THIS SOLVES. `/perm-employers/[slug]` carries `revalidate =
  * 2592000`. Thirty days is correct for its main branch, which renders the
- * QUARTERLY disclosure corpus, and it is not negotiable downward: there are
- * ~21,495 live-only employer pages, every expiry a crawler walks into is a
- * paid ISR write, and a weekly window on that tail is most of what took the
- * Vercel cache-write meter to 100% on 2026-08-29. But the same route file has
- * a second branch for employers that exist ONLY in `perm_live_recent`, and
- * that data is rebuilt nightly. Those pages were serving statuses up to a
- * month stale while telling the reader they lag "by days".
+ * QUARTERLY disclosure corpus, and a shorter one would re-render tens of
+ * thousands of employer pages every time a crawler walks into an expired one.
+ * But the same route file has a second branch for employers that exist ONLY
+ * in `perm_live_recent`, and that data is rebuilt nightly; on the thirty-day
+ * window alone those pages would serve statuses up to a month stale while
+ * telling the reader they lag "by days".
  *
  * `export const revalidate` is route-segment config: one statically analysable
  * value per segment. It cannot be conditional, so the two branches cannot have
@@ -20,15 +19,12 @@
  * WHY NOT A TAG. `revalidateTag` would be a SILENT NO-OP here. Tags attach to
  * data through exactly three mechanisms - `fetch` with `next.tags`,
  * `unstable_cache`, or `cacheTag` inside a `"use cache"` scope - and this app
- * uses none of them: Turso is read through a raw libSQL client. A tag call
- * would return 200, log nothing, and leave every prerender in place. That is
- * the "wired is not proven" failure this codebase keeps meeting, and it would
- * have read as working for months.
+ * uses none of them: the database is read through a raw libSQL client. A tag
+ * call would return 200, log nothing, and leave every prerender in place.
  *
- * A tag would also be the wrong SHAPE even if it worked. One tag over all
- * 21,495 pages expires all of them at once, and each becomes a paid write on
- * first visit - reproducing the exact cost failure the thirty-day window was
- * set to fix.
+ * A tag would also be the wrong SHAPE even if it worked. One tag over all of
+ * those pages expires every one at once, and each becomes a render on its
+ * first visit - the exact cost the thirty-day window exists to avoid.
  *
  * WHAT THIS DOES NOT DO. `revalidatePath` from a route handler MARKS a path
  * stale; it does not regenerate it. The next visitor pays for the render and

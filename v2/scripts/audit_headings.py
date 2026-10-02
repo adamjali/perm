@@ -1,12 +1,8 @@
 #!/usr/bin/env python3
 """Heading structure across every public page, read from the SITEMAP.
 
-WHY THE SITEMAP AND NOT A LIST. A hand-kept list of pages saw 21 of 298 URLs
-the last time one was written here, and the first run of THIS script - against
-a list I typed from memory - reported `/compare-employers` and `/i140-trends`
-as 404s. Both were my guesses; the real routes are `/perm-employers/compare`
-and `/tools/i140-trends`, and both answer 200. A page nobody remembered is
-exactly the page that breaks.
+Read from the sitemap rather than a hand-kept list, because a page nobody
+remembered is exactly the page that breaks.
 
 WHAT IT CHECKS, and why each one is worth a finding:
 
@@ -35,15 +31,13 @@ from lib_audit import audit_headers  # noqa: E402
 
 HEADERS = {
     "User-Agent": "permtracker-audit/1.0",
-    # Firewall rule 5 - without it a bare script is answered 429.
+    # Exempts the audit from the per-address limits (lib_audit.py).
     **audit_headers(),
 }
 
 # One page is enough to judge a template, and these are the templated families.
-# A family missing here is WALKED, every page of it, and on a fresh deploy each
-# of those is a cold ISR render Vercel bills. The three breakdown families
-# (4,156 pages) were missing on Sep 27 2026 and the audit was stopped a few
-# hundred pages in. Add a new [slug] family the day it ships.
+# A family missing here is walked, every page of it, and on a fresh deploy each
+# of those is a cold render; add a new [slug] family the day it ships.
 TEMPLATED = ("/perm-employers/", "/perm-attorneys/", "/perm-wages/",
              "/perm-queue/", "/perm-rfi-audit/", "/blog/", "/guides/",
              "/changelog/", "/perm-cities/", "/perm-industries/", "/perm-countries/",
@@ -59,11 +53,10 @@ ALLOW_DUPLICATES = {
     # A policy feed legitimately lists the same Federal Register notice title
     # more than once, because DOL published it more than once.
     "/policy-changes",
-    # A legal policy repeats "What We Collect" / "Your Controls" / "Session
-    # Replay" under each numbered vendor section, and the numbered <h2> above
-    # each one disambiguates it for a reader. Checked entry by entry on
-    # 2026-09-13: six duplicates, six different parent sections, all correct.
-    # Qualifying them ("What We Collect (PostHog)") would be noise, not a fix.
+    # A legal policy repeats "What We Collect" / "Your Controls" under each
+    # numbered vendor section, and the numbered <h2> above each disambiguates
+    # it for a reader. Qualifying them ("What We Collect (PostHog)") would be
+    # noise, not a fix.
     "/privacy",
 }
 
@@ -87,13 +80,9 @@ def detext(html: str) -> str:
 
 def page_paths(base: str) -> list[str]:
     """Every static page, plus a sample of each templated family."""
-    # RE-BASE EVERY URL, INCLUDING THE CHILD SITEMAPS.
-    #
-    # `.env.local` sets NEXT_PUBLIC_APP_URL=http://localhost:3000, so a local
-    # server emits `http://localhost:3000/...` in every <loc> whatever port it
-    # is actually listening on. Fetching the children by their absolute URL
-    # therefore hit a dead port and the walk returned nothing - which the
-    # minimum-pages guard caught, correctly, instead of reporting a clean site.
+    # Re-base every URL, the child sitemaps included: `.env.local` sets
+    # NEXT_PUBLIC_APP_URL=http://localhost:3000, so a local server emits that
+    # host in every <loc> whatever port it is actually listening on.
     def rebase(u: str) -> str:
         return base + (re.sub(r"^https?://[^/]+", "", u) or "/")
 
@@ -139,11 +128,9 @@ def main() -> int:
     base = args.base.rstrip("/")
 
     paths = args.pages or page_paths(base)
-    # THE FLOOR GUARDS THE SITEMAP WALK, NOT AN EXPLICIT LIST. A walk that
-    # returns three pages means the walk broke, and a near-empty scan reporting
-    # "0 findings" is the exact shape of a gate that has gone blind. Checking
-    # one page by name on purpose is not that, and the first version refused to
-    # do it.
+    # The floor guards the sitemap walk, not an explicit list: a walk that
+    # returns three pages means the walk broke, while checking one page by
+    # name on purpose is fine.
     if args.pages is None and len(paths) < 20:
         print(f"FAIL: the sitemap walk found only {len(paths)} pages. That is "
               "a defect in this script or in the sitemap, not a clean site.")

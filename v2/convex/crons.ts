@@ -20,7 +20,7 @@
  * - Daily visa-bulletin alert sweep (17:30 UTC)
  * - Alert bundles: one email per address per day (11:30, 18:00, 23:30 UTC)
  * - Alert outbox pruning (04:40 UTC)
- * - Weekly bulletin digest build (Tuesdays 13:00 UTC; sends only when enabled)
+ * - Weekly digest build (Tuesdays 13:00 UTC; sends only when enabled)
  *
  * IMPORTANT: All cron handlers use `internal` functions for security.
  * Never expose scheduled job handlers to the public API.
@@ -235,28 +235,23 @@ crons.daily(
 // ============================================================================
 
 /**
- * Weekly capture of https://flag.dol.gov/processingtimes.
+ * Daily capture of https://flag.dol.gov/processingtimes, at 15:00 UTC.
  *
  * DOL overwrites this page rather than archiving it, so anything we miss is
- * gone. Weekly rather than monthly on purpose: the PERM and prevailing-wage
- * sections update on different cadences, DOL occasionally corrects a figure
- * out of band, and "first work week" is not a fixed date. The run is one
- * ~160 KB GET, and `store` inserts only when the content hash changes, so
- * extra runs cost almost nothing and cannot pollute the series.
+ * gone. The PERM and prevailing-wage sections update on different cadences,
+ * DOL occasionally corrects a figure out of band, and "first work week" is
+ * not a fixed date. The run is one ~160 KB GET, and `store` inserts only when
+ * the content hash changes, so extra runs cost almost nothing and cannot
+ * pollute the series.
  *
- * Wednesday 15:00 UTC (11:00 ET) sits after DOL's first-work-week refresh has
- * reliably landed in any given month.
+ * Daily, not weekly, because this Convex snapshot is what the QUEUE-MONTH
+ * ALERTS read, while the public site reads the DOL frontier from the database
+ * that processing-times-ingest.yml refreshes daily. Polled weekly, the two
+ * drift apart: the site shows a month as reached while the alerts still judge
+ * a subscriber in that month not-yet-reached, and the email never fires.
+ * Daily keeps the alert source within a day of the site, matching the
+ * case-status alert SLA.
  */
-// DAILY, not weekly (changed 2026-08-29). The public site reads the DOL
-// frontier from Turso, refreshed daily by processing-times-ingest.yml; this
-// Convex snapshot is what the QUEUE-MONTH ALERTS read. Weekly, the two
-// diverged: on 2026-08-29 Turso had advanced to analyst-review month 2025-11
-// while this table was still on 2025-09, so a real subscriber whose filing
-// month was 2025-11 was overdue an email that never fired — the alert system
-// judged them not-yet-reached off stale data. Daily keeps the alert source
-// within a day of the site, matching the case-status alert SLA. store is
-// insert-only-on-content-hash-change, so the extra runs cost a ~160KB GET and
-// nothing else on the ~29 days DOL does not move.
 crons.daily(
   "dol-processing-times-refresh",
   { hourUTC: 15, minuteUTC: 0 },
@@ -270,8 +265,8 @@ crons.daily(
 /**
  * Look at every live case subscription and mail the ones whose case has moved.
  *
- * These two ticks follow the twice-daily sweeps. Since 2026-09-26 the watched
- * cases are ALSO checked hourly (`.github/workflows/watched-cases.yml`), and
+ * These two ticks follow the twice-daily sweeps. The watched cases are ALSO
+ * checked hourly (`.github/workflows/watched-cases.yml`), and
  * that workflow runs this sweep itself when a watched case moved, so a
  * subscriber hears within the hour; these ticks remain the floor. DOL
  * publishes no timestamp for a status change, so an hour is the resolution.
@@ -374,7 +369,7 @@ crons.daily(
 );
 
 /**
- * The weekly bulletin digest. Composes Tuesday's issue from what the ingests
+ * The weekly digest. Composes Tuesday's issue from what the ingests
  * already hold (DOL's queue, the newest bulletin's moves, the week's Federal
  * Register documents) and stores it as a preview. Sending is gated on the
  * NEWSLETTER_ENABLED deployment variable: with it unset the cron costs one

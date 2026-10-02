@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { FinePrint } from "@/components/data/FinePrint";
 import { buildCaseEstimate, type CaseEstimateInput } from "@/lib/caseEstimate";
 import { formatAsOf } from "@/lib/dolFormat";
 
@@ -28,7 +29,7 @@ export function CaseEstimate(props: CaseEstimateInput) {
   if (est.kind === "no-date") {
     return (
       <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Estimate
         </p>{" "}
         <h2 className="mt-1 font-heading text-2xl font-black">
@@ -80,12 +81,10 @@ export function CaseEstimate(props: CaseEstimateInput) {
             <b className="font-bold text-foreground">
               about {est.stageDuration.p50.toLocaleString("en-US")} days
             </b>
-            , at the halfway mark.{" "}
+            {" "}(the median).{" "}
             <span className="text-muted-foreground">
-              Measured over {est.stageDuration.eligible.toLocaleString("en-US")}{" "}
-              cases we watched arrive here and followed long enough to say. It
-              is the time spent AT this stage, not the time left until a
-              decision.
+              Measured over {est.stageDuration.eligible.toLocaleString("en-US")} cases followed from arrival: time
+              at this stage, not time to a decision.
             </span>
           </p>
         ) : null}{" "}
@@ -112,89 +111,47 @@ export function CaseEstimate(props: CaseEstimateInput) {
     );
   }
 
+  // The date first, its window under it at a size that can't be missed, and
+  // everything about how it's worked out folded below. The window isn't a
+  // confidence interval, so each model words it for what it is.
   return (
     <section className="mt-8 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-      <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-        Estimate · not a promise
-      </p>{" "}
-      <h2 className="mt-1 font-heading text-2xl font-black">
-        When this case could be decided
-      </h2>{" "}
-      {/* ANCHOR FIRST, WINDOW UNDER IT. This block used to lead with the
-          range at display size and demote the central read to muted 14px,
-          which answers a question nobody asks: a person checking one case
-          wants a date, and a five-month span offered as THE answer reads as
-          an evasion. Leading with the anchor is not a claim of precision -
-          the window is still directly beneath it, at a size that cannot be
-          missed, and both come from the same model. The rival's failure is
-          the opposite one: a single bold date with the spread deleted. */}
+      <h2 className="font-heading text-2xl font-black">When this case could be decided</h2>{" "}
       <p className="mt-4 font-heading text-3xl font-black sm:text-4xl">
         Around {fmtDate(est.estimatedDate)}
-      </p>
-      {est.earliestDate && est.latestDate ? (
-        <p className="mt-1 text-base text-foreground/80">
-          {/* THE BAND IS NOT A CONFIDENCE INTERVAL AND MUST NOT READ AS ONE.
-              This said "Most likely between", which is a probability claim,
-              over a band whose measured coverage is 57-58% overall and 41%
-              at the near horizon - under half, so "most likely" was false
-              for the very cases most people look up. Each model's band means
-              something different, so each gets its own words: decision-pace
-              is a scenario on DOL's recent rate, queue-advance is the spread
-              of DOL's own observed frontier movement. */}
-          {est.modelId === "decision-pace"
-            ? "If DOL holds its recent pace: "
-            : est.modelId === "queue-advance"
-              ? "At the fastest and slowest the queue has moved: "
-              : "Between "}
-          <b>{fmtDate(est.earliestDate)}</b> and{" "}
-          <b>{fmtDate(est.latestDate)}</b> ·{" "}
-          {est.totalDays.toLocaleString("en-US")} days from filing
-        </p>
-      ) : (
-        <p className="mt-1 text-base text-foreground/80">
-          {est.totalDays.toLocaleString("en-US")} days from filing
-        </p>
-      )}
-
+      </p>{" "}
+      <p className="mt-1 text-base text-foreground/80">
+        {est.earliestDate && est.latestDate ? (
+          <>
+            {est.modelId === "decision-pace"
+              ? "If DOL keeps its recent pace, between "
+              : est.modelId === "queue-advance"
+                ? "At the fastest and slowest the queue has moved, between "
+                : "Between "}
+            <b>{fmtDate(est.earliestDate)}</b> and <b>{fmtDate(est.latestDate)}</b>.{" "}
+          </>
+        ) : null}
+        {est.totalDays.toLocaleString("en-US")} days from filing. An estimate, not a promise.
+      </p>{" "}
       {est.stage ? (
-        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">
-          <b className="font-bold">
-            Adjusted for this case&apos;s stage (p{est.stage.percentile} of its
-            filing month).
-          </b>{" "}
-          {est.stage.note}
+        <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/80">{est.stage.note}</p>
+      ) : null}{" "}
+      <FinePrint summary="How this is worked out" className="mt-4">
+        <p>
+          {est.modelLabel}: {est.basis} Source: {est.source}
         </p>
-      ) : null}
-
-
-      <p className="mt-4 text-sm text-muted-foreground">
-        {est.modelLabel}: {est.basis} Source: {est.source}
-      </p>
-
-      {est.caveats.length > 0 ? (
-        <ul className="mt-3 max-w-2xl space-y-1 text-sm text-muted-foreground">
-          {est.caveats.map((c) => (
-            <li key={c}>{c}</li>
-          ))}
-        </ul>
-      ) : null}
-
-      <p className="mt-4 text-sm text-muted-foreground">
-        Every model and its spread, side by side:{" "}
-        <Link
-          href="/tools/perm-timeline-calculator"
-          className="font-bold underline underline-offset-2 hover:text-primary"
-        >
-          the timeline calculator
-        </Link>{" "}
-        ·{" "}
-        <Link
-          href="/methodology"
-          className="font-bold underline underline-offset-2 hover:text-primary"
-        >
-          how these numbers are computed
-        </Link>
-      </p>
+        {est.stage ? (
+          <p>Adjusted for the case&apos;s stage: the {est.stage.percentile}th percentile of its filing month.</p>
+        ) : null}
+        {est.caveats.map((c) => (
+          <p key={c}>{c}</p>
+        ))}
+        <p>
+          Every model and its spread, side by side, is on{" "}
+          <Link href="/tools/perm-timeline-calculator">the processing time calculator</Link>, and how each
+          is computed on <Link href="/methodology">the methodology page</Link>.
+        </p>
+      </FinePrint>
     </section>
   );
 }

@@ -31,7 +31,7 @@ export default function CategoryFilter({
         type="button"
         onClick={() => onTagChange(null)}
         className={cn(
-          "relative border-2 border-border px-3 py-1 font-heading text-xs font-bold uppercase tracking-wide transition-colors duration-150",
+          "relative border-2 border-border px-3 py-1 font-heading text-sm font-bold uppercase tracking-wide transition-colors duration-150",
           activeTag === null
             ? "bg-primary text-black"
             : "bg-card text-muted-foreground hover:bg-muted"
@@ -61,7 +61,7 @@ export default function CategoryFilter({
             type="button"
             onClick={() => onTagChange(activeTag === tag ? null : tag)}
             className={cn(
-              "relative border-2 border-border px-3 py-1 font-mono text-xs uppercase tracking-wide transition-colors duration-150",
+              "relative border-2 border-border px-3 py-1 font-mono text-sm uppercase tracking-wide transition-colors duration-150",
               activeTag === tag
                 ? "bg-primary font-bold text-black"
                 : "bg-card text-muted-foreground hover:bg-muted"

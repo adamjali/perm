@@ -1,20 +1,15 @@
 /**
  * Reads for the decision-activity surface, over `daily_decisions`.
  *
- * TWO SOURCES, BOTH OURS (measured Oct 1 2026):
+ * TWO SOURCES, BOTH OURS:
  *
- *   dol-disclosure  947 days, 2023-10-01 to 2026-06-30, 373,939 decisions.
+ *   dol-disclosure  from 2023-10-01 through the last published quarter.
  *                   Derived from our own case corpus by decision date.
- *   sweep-observed  2026-08-30 onward, daily. Our own sweep's record of
- *                   when each case's status changed (perm_case_events).
+ *   sweep-observed  daily. Our own sweep's record of when each case's
+ *                   status changed (perm_case_events).
  *
- * Two others were deleted on 2026-09-18 because neither was ours: `rival-b`
- * (a rival's series, backfilled once) and `flag-live` (labelled as our scan,
- * in fact mirrored from a rival). This reader kept asking for `flag-live`
- * until Oct 1 2026, so the page's "last 28 days" quietly fell back to the
- * disclosure series, which ends in June. Reading by source by name is what
- * keeps a deleted or foreign source out; `getDailyDecisions` in publicData.ts
- * defends the same boundary.
+ * Each is read by source NAME, which keeps any other source out of the page;
+ * `getDailyDecisions` in publicData.ts defends the same boundary.
  *
  * THE TWO SERIES ARE NOT SPLICED. Between the end of the quarterly file and
  * the first sweep-observed day there is no record at all. Joining them into

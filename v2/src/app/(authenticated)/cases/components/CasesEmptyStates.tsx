@@ -8,7 +8,7 @@ import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { Button } from "@/components/ui/button";
 import { CaseListEmptyState } from "@/components/cases/CaseListEmptyState";
 import { CaseFilterBar } from "@/components/cases/CaseFilterBar";
-import type { CaseListFilters, CaseListSort } from "../../../../../convex/lib/caseListTypes";
+import type { CaseListFilters, CaseListSort } from "@convex/lib/caseListTypes";
 
 interface NewUserEmptyStateProps {
   onAddCase: () => void;

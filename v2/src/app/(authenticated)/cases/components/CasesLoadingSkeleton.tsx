@@ -1,8 +1,7 @@
 /**
  * The case list while its first page loads. ONE component, rendered by both
- * cases/loading.tsx and the page itself: they used to be two different
- * skeletons (a 72px filter bar then a 160px one, 180px cards then 256px), so
- * a click showed one layout, swapped to another, then the real page. No
+ * cases/loading.tsx and the page itself, because two different skeletons
+ * would show one layout on a click, swap to another, then the real page. No
  * entrance animations: staggered delays made each block appear, vanish and
  * fade back in (tw-animate's fill mode does not hold the first frame).
  */
@@ -75,8 +74,8 @@ export function CasesLoadingSkeleton() {
         </div>
       </div>
 
-      {/* The filter bar as it really is (measured on production, Sep 30
-          2026): a bordered p-5 box with two rows of 36px controls, the
+      {/* The filter bar as it really is (measured on production): a
+          bordered p-5 box with two rows of 36px controls, the
           status tabs over the search and its menus, 136px in all. The first
           version was one 76px row, so the cards jumped 60px on arrival. */}
       <div className="space-y-5 border-2 border-border bg-background p-5 shadow-hard">

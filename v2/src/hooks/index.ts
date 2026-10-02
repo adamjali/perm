@@ -11,7 +11,7 @@
 export {
   useDebounce,
   useDebouncedCallback,
-} from "./use-debounce";
+} from "./useDebounce";
 
 // Form calculation hooks
 export { useFormCalculations } from "./useFormCalculations";

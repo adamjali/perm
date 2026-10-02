@@ -16,6 +16,7 @@
 
 import type { ReactNode } from "react";
 import { LockIcon, TimerIcon, WarningCircleIcon as CircleAlert } from "@phosphor-icons/react";
+import { ChartTips } from "@/components/data/ChartTips";
 import type { GreenCardTimeline, TimelineStage } from "@/lib/perm";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +72,7 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
       {/* Proportional band. The unknown stage is deliberately outside it: it has
           no width because it has no number, and giving it one would invent the
           figure the whole page says cannot be known. */}
+      <ChartTips label="Each stage of the green card, to scale">
       <div className="flex h-12 w-full overflow-hidden border-2 border-border">
         {measured.map((stage, i) => (
           <div
@@ -80,10 +82,11 @@ export function GreenCardTimelineView({ timeline, slots, className }: GreenCardT
               i > 0 && "border-l-2 border-border",
             )}
             style={{ width: `${(stage.months / total) * 100}%` }}
-            title={`${stage.label}: ${months(stage.months)}`}
+            data-tip={`${stage.label}\n${months(stage.months)} of ${total}\n${CERTAINTY[stage.certainty].label}`}
           />
         ))}
       </div>
+      </ChartTips>
 
       <ol className="mt-6 space-y-4">
         {timeline.stages.map((stage) => {

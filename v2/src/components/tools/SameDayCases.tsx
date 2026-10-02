@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import type { DayGroup, SameDay } from "@/lib/sameDay";
 import { prettyStatus } from "@/components/queue/stages";
 import { cn } from "@/lib/utils";
@@ -44,15 +45,18 @@ export function SameDayCases({ data, className }: { data: SameDay; className?: s
         {longDay(data.day)}.{" "}
         <b className="font-bold text-foreground">{decided.toLocaleString("en-US")}</b> have been decided.
       </p>{" "}
-      <div className="mt-4 flex h-5 w-full overflow-hidden border-2 border-border" aria-hidden="true">
+      <ChartTips label={`Cases filed on ${longDay(data.day)}, by what has happened to them`} className="mt-4">
+      <div className="flex h-5 w-full overflow-hidden border-2 border-border" aria-hidden="true">
         {shown.map((g) => (
           <div
             key={g.key}
+            data-tip={`${g.label}\n${data.counts[g.key].toLocaleString("en-US")} of the ${data.total.toLocaleString("en-US")} filed ${longDay(data.day)}`}
             className={cn("h-full", g.tone, g.key === "inLine" && "bg-[repeating-linear-gradient(45deg,transparent,transparent_4px,var(--border)_4px,var(--border)_5px)]")}
             style={{ width: `${(data.counts[g.key] / data.total) * 100}%` }}
           />
         ))}
-      </div>{" "}
+      </div>
+      </ChartTips>{" "}
       <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
         {shown.map((g) => (
           <Fragment key={g.key}>{" "}

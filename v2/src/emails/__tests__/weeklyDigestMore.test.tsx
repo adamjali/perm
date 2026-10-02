@@ -2,8 +2,8 @@ import { render } from "@react-email/render";
 import { describe, expect, it } from "vitest";
 
 import { WeeklyDigest } from "../WeeklyDigest";
-import type { DigestContent, DigestCaseUpdate } from "../../../convex/lib/digestHelpers";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { DigestContent, DigestCaseUpdate } from "@convex/lib/digestHelpers";
+import type { Id } from "@convex/_generated/dataModel";
 
 /**
  * The "+N more" line counts every update this week, not the list the server

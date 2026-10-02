@@ -8,9 +8,6 @@
  * - Placed at a percentage, clamped 12px inside each edge so a square is
  *   never half hidden.
  * - Hover or tap lists every date it holds; click opens the case.
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2025-12-26
  */
 
 "use client";
@@ -123,7 +120,7 @@ export function TimelineMilestoneMarker({
     <div
       className={cn(
         // Kept a square's half-width inside each edge, or a date at the start
-        // of the range is half hidden under the sticky names (Sep 30 2026).
+        // of the range is half hidden under the sticky names.
         // Shifts a mark by at most a few px there; the tooltip gives the date.
         // The clamp lives in the class and the position in --x, because an
         // inline clamp() is dropped by some renderers (happy-dom among them).

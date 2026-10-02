@@ -3,7 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { useParams, useRouter } from 'next/navigation';
 import { useQuery } from 'convex/react';
 import EditCasePage from '../page';
-import type { Doc } from '../../../../../../../convex/_generated/dataModel';
+import type { Doc } from '@convex/_generated/dataModel';
 
 // MOCKS
 

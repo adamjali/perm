@@ -8,7 +8,7 @@ import {
   createEmptyActivityList,
   activityScenarios,
 } from "../../../../test-utils/activity-fixtures";
-import type { RecentActivityItem } from "../../../../convex/lib/dashboardTypes";
+import type { RecentActivityItem } from "@convex/lib/dashboardTypes";
 
 const mockUseQuery = vi.fn();
 vi.mock("convex/react", () => ({

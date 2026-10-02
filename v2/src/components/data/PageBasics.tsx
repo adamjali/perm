@@ -287,6 +287,64 @@ export const BASICS: Record<string, BasicsEntry[]> = {
       ),
     },
   ],
+  "seasonal-cases": [
+    {
+      q: "What are H-2A and H-2B?",
+      a: (
+        <>
+          Temporary work visas. H-2A covers seasonal or temporary farm work;
+          H-2B covers non-farm work with a one-time, seasonal, peakload or
+          intermittent need, usually up to nine months (20 CFR 655.6). Before
+          USCIS can approve either petition, the Department of Labor must
+          certify that no qualified U.S. workers are available and that hiring
+          won&apos;t lower local wages (20 CFR 655.100). Numbers start with{" "}
+          <b className="font-bold">H-300</b> (H-2A, form ETA-9142A),{" "}
+          <b className="font-bold">H-400</b> (H-2B, ETA-9142B) or{" "}
+          <b className="font-bold">P-400</b> (the wage request for an H-2B job).
+        </>
+      ),
+    },
+    {
+      q: "How long does DOL take on an H-2A or H-2B application?",
+      a: (
+        <>
+          The rules set the clock around the employer&apos;s date of need. An
+          H-2A application is filed at least 45 days before it (20 CFR
+          655.130), DOL accepts it or sends a notice of deficiency within 7
+          calendar days, and a complete application is decided no later than 30
+          days before the date of need (655.141, 655.143, 655.160). An H-2B
+          application is filed 75 to 90 days before the date of need, and DOL
+          answers within 7 business days (655.15, 655.31, 655.33).
+        </>
+      ),
+    },
+    {
+      q: "What does a status like NOD issued or accepted, pending recruitment mean?",
+      a: (
+        <>
+          A notice of deficiency (NOD) means DOL found something to fix; the
+          employer has 5 business days (H-2A) or 10 (H-2B) to send a corrected
+          application. Accepted, pending recruitment means DOL accepted it and
+          the employer is now recruiting U.S. workers before the decision. The{" "}
+          <Link href="/perm-case-statuses" className={link}>
+            status dictionary
+          </Link>{" "}
+          lists every one, with the rule behind it.
+        </>
+      ),
+    },
+    {
+      q: "Why doesn't this show the wage or the number of workers?",
+      a: (
+        <>
+          DOL&apos;s case lookup never returns them. They&apos;re in its
+          quarterly H-2A and H-2B disclosure files, which PERM Tracker doesn&apos;t
+          load yet, so every row here is the status, employer, job title and
+          filing date DOL&apos;s own system reports.
+        </>
+      ),
+    },
+  ],
   "case-search": [
     {
       q: "Can I search PERM, wage requests and LCAs at once?",
@@ -482,19 +540,8 @@ export const BASICS: Record<string, BasicsEntry[]> = {
       ),
     },
   ],
+  // The page's own questions cover what the status means and the I-485 difference.
   "i140-awaiting-visa": [
-    {
-      q: "What does 'awaiting visa availability' mean on an approved I-140?",
-      a: (
-        <>
-          The petition is approved but the visa bulletin&apos;s final action date
-          for the category and country has not reached the priority date, so
-          the beneficiary cannot yet be approved for a green card. USCIS counts
-          these petitions every quarter by preference and country of birth,
-          primary beneficiaries only, and this page prints that count.
-        </>
-      ),
-    },
     {
       q: "How many people are waiting for an EB-2 India green card?",
       a: (
@@ -516,20 +563,6 @@ export const BASICS: Record<string, BasicsEntry[]> = {
       ),
     },
     {
-      q: "Is this the same as the I-485 backlog?",
-      a: (
-        <>
-          No. This count is approved petitions whose beneficiary has not been
-          able to file or be approved for adjustment; the{" "}
-          <Link href="/tools/i485-queue-position" className={link}>
-            I-485 inventory
-          </Link>{" "}
-          is applications already filed and pending. They sit on either side of
-          the visa bulletin line.
-        </>
-      ),
-    },
-    {
       q: "Why are dependents not counted?",
       a: (
         <>
@@ -542,23 +575,9 @@ export const BASICS: Record<string, BasicsEntry[]> = {
       ),
     },
   ],
+  // The page's own questions already explain the receipt number and why no
+  // status shows yet; this block adds only what they don't.
   "uscis-case-status": [
-    {
-      q: "What is a USCIS receipt number?",
-      a: (
-        <>
-          The 13-character identifier USCIS assigns to a filing, three letters
-          and ten digits, printed at the top of every I-797 notice. USCIS&apos;s
-          glossary names the letters as the office that took the case (EAC,
-          WAC, LIN, SRC, NBC, MSC or IOE). It is USCIS&apos;s key to the
-          petition, the way a G-100 number is DOL&apos;s key to the{" "}
-          <Link href="/perm-case-status" className={link}>
-            PERM case
-          </Link>{" "}
-          that came before it.
-        </>
-      ),
-    },
     {
       q: "Which USCIS forms follow a PERM?",
       a: (
@@ -578,19 +597,6 @@ export const BASICS: Record<string, BasicsEntry[]> = {
         </>
       ),
     },
-    {
-      q: "Why does this page not show a status yet?",
-      a: (
-        <>
-          Because PERM Tracker&apos;s USCIS API access is pending, and a
-          status this site did not get from USCIS is not one it will show. The
-          page decodes the receipt and links to USCIS&apos;s own status page,
-          which answers any receipt today. When USCIS issues keys, the same
-          page reads its Case Status API and prints USCIS&apos;s own words with
-          the time they were read.
-        </>
-      ),
-    },
   ],
 };
 
@@ -599,7 +605,7 @@ export function PageBasics({ page }: { page: keyof typeof BASICS | string }) {
   if (!entries || entries.length === 0) return null;
   return (
     <section className="mt-14 border-t-3 border-border pt-8">
-      <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
         The basics
       </p>{" "}
       {/* QUESTIONS VISIBLE, ANSWERS ON DEMAND. This is the answer-engine

@@ -10,14 +10,12 @@
  * - Broadcasts through NavLinkProvider so other components can see a navigation
  * - Scrolls to top after NavLink-initiated navigation completes (via NavLinkProvider)
  *
- * THE SPINNER USED TO BE DRIVEN BY THE SHARED CONTEXT AND THAT WAS THE BUG.
+ * THE SPINNER IS DRIVEN BY `useLinkStatus`, NEVER BY THE SHARED CONTEXT.
  * `activeNavigation` is set on click and cleared on a pathname CHANGE, so a
- * click that never arrived somewhere left this link spinning, at `opacity-70`,
- * with `pointer-events-none` and `aria-disabled` on it - permanently dead, and
- * dead in exactly the way the reader was complaining about. `useLinkStatus`
- * resolves on commit, failure and supersede alike, so it cannot strand
- * anything, and nothing is disabled any more: a second click on a slow link is
- * harmless, a link you cannot click is not.
+ * click that never arrives somewhere would leave the link spinning, and
+ * disabled, for good. `useLinkStatus` resolves on commit, failure and
+ * supersede alike, so it cannot strand anything, and nothing is disabled: a
+ * second click on a slow link is harmless, a link you cannot click is not.
  */
 
 import Link, { useLinkStatus } from "next/link";
@@ -243,5 +241,3 @@ export function NavLink({
     </Link>
   );
 }
-
-export default NavLink;

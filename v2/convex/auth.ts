@@ -168,8 +168,8 @@ export const { auth, signIn, signOut, store, isAuthenticated } = convexAuth({
         const validatedName = validateUserName(params.name as string | undefined);
         // Normalize email at the source: the Password provider uses the returned
         // email as the account id, and createOrUpdateUser links accounts by an
-        // exact email-index match. Without normalization, "Adam@X.com" (password)
-        // and "adam@x.com" (Google) become two accounts, and mixed-case emails
+        // exact email-index match. Without normalization, "Name@X.com" (password)
+        // and "name@x.com" (Google) become two accounts, and mixed-case emails
         // dodge the suspension lookup (which lowercases). Lowercase + trim here
         // and in createOrUpdateUser so stored value, account id, and lookup agree.
         return {

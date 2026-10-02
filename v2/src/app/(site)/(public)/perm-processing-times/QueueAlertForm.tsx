@@ -18,9 +18,12 @@ import { useId, useState } from "react";
 import { BellIcon, CheckCircleIcon as CheckCircle2 } from "@phosphor-icons/react";
 
 import { MONTH_NAMES } from "@/lib/dolFormat";
-import { Button, Input, Label } from "@/components/ui";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { isQueued, replyHeading } from "@/lib/alertReply";
+import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
 
 /**
  * Convex HTTP actions are served from the `.convex.site` twin of the
@@ -271,19 +274,7 @@ export function QueueAlertForm({
         </select>
       </div>{" "}
 
-      <div className="mt-4 flex items-start gap-2.5">
-        <input
-          id={newsId}
-          type="checkbox"
-          checked={news}
-          onChange={(e) => setNews(e.target.checked)}
-          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none border-2 border-border bg-background checked:bg-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />{" "}
-        <label htmlFor={newsId} className="cursor-pointer text-sm leading-relaxed text-muted-foreground">
-          Also send occasional product news: new data, new tools. The same
-          confirmation email covers it, and it&apos;s off by default.
-        </label>
-      </div>
+      <OptInBox id={newsId} kind="news" checked={news} onChange={setNews} className="mt-4" />
 
       {status === "error" && message ? (
         <p className="mt-4 text-sm font-bold text-destructive" role="alert">
@@ -295,12 +286,7 @@ export function QueueAlertForm({
         {status === "sending" ? "Sending" : "Email me when it happens"}
       </Button>{" "}
 
-      <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-        You confirm by email first, and one click opts out. One address watches
-        one filing month per queue, so confirming a new month replaces the one
-        you had. We send one confirmation every 10 minutes per address; if
-        nothing lands, wait that long before trying again.
-      </p>
+      <AlertNote limit="One address watches one filing month per queue; a new month replaces the old one." className="mt-4" />
     </form>
   );
 }

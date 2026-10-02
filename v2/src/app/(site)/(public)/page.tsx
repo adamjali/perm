@@ -4,35 +4,34 @@
  * Public landing page for PERM Tracker.
  * Complete landing page matching mockup-home-v2.html design.
  *
- * Sections (in order):
- * 1. HeroSection - the measured wait, the case-lookup form, then the doors
- * 2. LiveDataBand - DOL's live queue position + the tape
- * 3. StageStrip - PWD / PERM / I-140 / I-485, each with its timeline + data
- * 4. ToolsSection - the four calculators, laid out as the process (#tools)
- * 5. AudienceBlocks - both audiences, equal H2s, full capability lists (2026-09-15)
- * 6. TestimonialsSection - Value props + trust badges
+ * Sections, in order:
+ * 1. HeroSection - the measured wait, the case lookup, the doors, and the
+ *    departures board (now deciding, decided, waiting, wage requests)
+ * 2. LiveDataBand - the queue tape and the day-by-day charts (PermPulse)
+ * 3. RoadSection - six stops to a green card, each with its real paperwork
+ *    and its calculator
+ * 4. DataShelf - an employer search and the five dataset doors
+ * 5. AudienceBlocks - both audiences, equal headings, each with its film
+ * 6. AboutSection - the portrait, the record ledger, the reviews
  * 7. FAQSection - Common questions (#faq)
  * 8. CTASection - two doors: check a case, start tracking cases
  * (Footer is rendered by PublicLayout)
  *
- * The practitioner lower half (Stakes, HowItWorks, FeaturesGrid, Security)
- * moved WHOLE to /for-attorneys: every H2 below the fold used to address a
- * caseload, which is exactly what answer engines aggregated into "what this
- * product is". Nothing was deleted in the move.
+ * The practitioner sections (the product tour, Stakes, Security) live
+ * WHOLE on /for-attorneys: on the homepage, H2s addressed to a caseload are
+ * exactly what answer engines aggregate into "what this product is".
  */
 
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import {
   HeroSection,
-  StageStrip,
   AudienceBlocks,
-  ToolsSection,
-  TestimonialsSection,
   AboutSection,
   FAQSection,
   CTASection,
 } from "@/components/home";
+import { RoadSection } from "@/components/home/RoadSection";
 import {
   getFAQPageSchema,
   getHomepageRatingPartialSchema,
@@ -41,12 +40,10 @@ import {
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { HOME_FAQS } from "@/components/home/faqData";
-import {
-  analystReviewQueue,
-  analystReviewAverage,
-} from "../../../../convex/lib/dolProcessingTimes";
-import { LiveDataBand } from "@/components/home/LiveDataBand";
+import { analystReviewQueue } from "@convex/lib/dolProcessingTimes";
+import { DataShelf, LiveDataBand } from "@/components/home/LiveDataBand";
 import { SectionDivider } from "@/components/home/SectionDivider";
+import { pulseHeadline } from "@/lib/pulseStats";
 import { deriveFigures } from "@/components/home/dataPageFigures";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
@@ -54,6 +51,7 @@ import { getRecordCounts } from "@/lib/turso/recordCounts";
 import { getObservedDays } from "@/lib/turso/pulse";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { PermPulse } from "@/components/pulse/PermPulse";
+import { SITE_URL } from "@/lib/constants/site";
 
 // One live DOL figure on the page: hourly ISR, same as the data pages.
 // The disclosure files are quarterly, so an hourly window bought
@@ -67,30 +65,24 @@ export const metadata: Metadata = withSocialCard({
   // (Next.js docs § Template). Without this, Next.js appends " | PERM Tracker"
   // to a literal that already starts with the brand → "...| PERM Tracker | PERM
   // Tracker" doubled. Using `absolute` is the documented escape hatch.
-  // LEADS WITH THE NAME, THEN THE THREE PHRASES PEOPLE SEARCH. Search Console
-  // (28 days to 2026-09-05): "perm tracker" 15.6K impressions, and the
-  // homepage lost that query on Aug 27 after two title rewrites in three days.
-  // "Deadlines", the previous title's last word, is not a searched phrase;
-  // "processing times" and "case status" are the two largest non-brand
-  // clusters. 59 characters. FROZEN UNTIL 2026-11-07: every rewrite resets
-  // Google's read of the page, and the last three cost the brand query.
+  // LEADS WITH THE NAME, THEN THE PHRASES PEOPLE SEARCH: "perm tracker" is
+  // the largest query in Search Console, and "processing times" and "case
+  // status" are the two largest non-brand clusters. 59 characters. FROZEN
+  // UNTIL 2026-11-07: every rewrite resets Google's read of the page, and
+  // rewrites in quick succession cost the brand query.
   title: { absolute: "PERM Tracker: PERM Processing Times, Case Status and Alerts" },
-  // LEADS WITH THE PHRASE THIS PAGE ACTUALLY RANKS FOR, and that is the whole
-  // edit. Measured in GSC 2026-08-30: "perm tracker" brought 1,088 of the
-  // site's 2,300 clicks in the last three months, and the previous
-  // description - accurate, 138 characters, well within every limit - did not
-  // contain the phrase anywhere. Google was not using it. The live SERP
-  // snippet was assembled from the page instead: one sentence out of the
-  // reviews section plus four trust-badge labels welded together with full
-  // stops ("Encrypted Data. DOL Compliant. Applicants and Attorneys. 5 PERM
-  // Stages."), which reads like ad copy.
+  // LEADS WITH THE PHRASE THIS PAGE ACTUALLY RANKS FOR: "perm tracker" brings
+  // close to half the site's clicks in Search Console. A description that
+  // never contains the query is one Google ignores, assembling a snippet
+  // from the page instead (trust-badge labels welded together with full
+  // stops read like ad copy).
   //
   // Google rewrites descriptions when it judges page text a better answer, and
   // the text it chose opened with the query, bolded. This cannot be forced -
   // no description is guaranteed to be used - but one that answers the query
   // it is competing for has a far better chance than one that never says it.
   //
-  // 138 characters, the same as what it replaces, so nothing is truncated.
+  // 138 characters, so nothing is truncated.
   description:
     "PERM Tracker shows where DOL's queue stands today and computes every deadline on your case. Look up a case number free, no account needed.",
   alternates: {
@@ -131,20 +123,17 @@ export default async function HomePage() {
   const analyst = snapshot
     ? analystReviewQueue(snapshot.permQueues)
     : undefined;
-  const analystAvg = snapshot
-    ? analystReviewAverage(snapshot.permAverageDays)
-    : undefined;
+  const lastDay = pulseHeadline(observed);
   const pwdPending = snapshot?.pwdPermBacklog?.length
     ? snapshot.pwdPermBacklog.reduce((sum, r) => sum + r.remainingRequests, 0)
     : null;
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+  const baseUrl = SITE_URL;
   const faqSchema = getFAQPageSchema(
     HOME_FAQS.map(({ question, answer }) => ({ question, answer })),
   );
-  // The aggregateRating ships ONLY here (homepage) — the Senja widget that
-  // renders the visible review UI is mounted in TestimonialsSection on this
-  // page. The partial below shares the root SoftwareApplication's @id so
+  // The aggregateRating ships ONLY here (homepage), where ReviewsLine shows
+  // the same rating. The partial below shares the root SoftwareApplication's @id so
   // Google's @id-graph merge attaches the rating to that entity on this
   // page only (not on /blog, /privacy, etc.).
   // Gated on the review count: below the advertising floor the schema is
@@ -162,25 +151,32 @@ export default async function HomePage() {
       {/* FAQPage + homepage aggregateRating partial. Server-built schemas only. */}
       <JsonLdScript schema={faqSchema} />
       {ratingPartial ? <JsonLdScript schema={ratingPartial} /> : null}
-      <HeroSection waitRows={disclosure?.frontierHistory ?? []} />
+      {/* In reading order: the board (where DOL is, what it decided, what
+          is still waiting), the line and its pace, the road with each
+          stage's real paperwork, the search shelf, then the two halves with
+          their films. */}
+      <HeroSection
+        waitRows={disclosure?.frontierHistory ?? []}
+        board={{
+          frontierMonth: analyst?.priorityDate ?? null,
+          lastDay: lastDay ? { date: lastDay.day.date, total: lastDay.day.total } : null,
+          pending: record.find((f) => f.href === "/perm-case-status")?.value ?? null,
+          checkedAt: coverage?.checkedAt ?? null,
+          pwdPending,
+        }}
+      />
       <LiveDataBand
         frontierMonth={analyst?.priorityDate ?? null}
         asOf={snapshot?.permAsOf ?? null}
-        figures={deriveFigures(disclosure)}
-      />
-      <PermPulse days={observed} checkedAt={coverage?.checkedAt ?? null} />
-      <StageStrip />
-      <SectionDivider kind="comb" />
-      <ToolsSection
-        pwdPending={pwdPending}
-        frontierMonth={analyst?.priorityDate ?? null}
-        averageDays={analystAvg?.calendarDays ?? null}
-      />
+      >
+        <PermPulse variant="charts" days={observed} checkedAt={coverage?.checkedAt ?? null} />
+      </LiveDataBand>
+      <RoadSection pwdPending={pwdPending} frontierMonth={analyst?.priorityDate ?? null} />
+      <DataShelf figures={deriveFigures(disclosure)} />
       <AudienceBlocks />
-      <TestimonialsSection />
       <AboutSection record={record} />
       <FAQSection />
-      <SectionDivider kind="step" fill="var(--primary)" />
+      <SectionDivider kind="step" above="var(--card)" fill="var(--primary)" />
       <CTASection />
     </>
   );

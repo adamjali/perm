@@ -2,7 +2,7 @@
  * Shared email configuration and helpers.
  *
  * Centralizes Resend client creation, email constants, and retry logic. Every
- * sender goes through `sendOrQueue` (Sep 29 2026): it checks the day's count
+ * sender goes through `sendOrQueue`: it checks the day's count
  * against Resend's quota, sends, records the count, and keeps a send that
  * failed for a fixable reason in the retry queue (convex/emailLedger.ts), so
  * no email is refused and dropped. ResendOTP and ResendPasswordReset send

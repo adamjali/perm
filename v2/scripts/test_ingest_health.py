@@ -166,10 +166,9 @@ def main() -> int:
     check("a clean run passes",
           run([("ingest_case_status_direct.py", "ok", "full: 414,357 cases",
                 int(NOW - 2 * H))]) == 0)
-    # Sep 29 2026: the failure hook wrote "--full", the sweep's own clean
-    # re-run wrote the bare filename with "full:" in its note, and the failure
-    # stayed BROKEN. A bare clean run of the SAME mode clears it; a different
-    # mode does not; and the sweep now records its mode in the key.
+    # The failure hook writes the mode in the key ("--full"), the sweep's own
+    # clean run the bare filename with "full:" in its note. A bare clean run of
+    # the same mode clears the failure; a different mode doesn't.
     check("a mode-keyed failure is cleared by a later bare clean run of that mode",
           run([("ingest_case_status_direct.py", "ok", "full: 426,112 cases", int(NOW - 3 * H)),
                ("ingest_case_status_direct.py --full", "failed", "x", int(NOW - 8 * H))]) == 0)
@@ -202,7 +201,7 @@ def main() -> int:
     # key is the filename plus its first mode flag: a later clean run of the
     # SAME mode clears a failure, a clean run of a DIFFERENT mode does not.
     # Filename-only keying let Monday's daily pass erase Sunday's weekly
-    # failure before the health cron looked (Sep 6 2026); the workflow hooks
+    # failure before the health cron looked; the workflow hooks
     # now record the mode too, so a killed run and its recovery share a key.
     check("run_key keeps the filename and the first mode flag",
           health.run_key("ingest_pwd_status_direct.py --full --program all")
@@ -410,7 +409,7 @@ def main() -> int:
     check("gap sweep: a capped `partial` run still counts as having run",
           health.check_gap_sweep(GapDB([("partial", 1200, 0.4)] + fresh[1:])) == 0)
 
-    # --- the cap streak (2026-09-24) ---------------------------------------
+    # --- the cap streak ---------------------------------------
     # A capped run is a job doing its work; three in a row is a job that is
     # not keeping up. The walk was capped every night for a week while the
     # frontier check read "ok". Warning only, so it must never return 1.
@@ -455,7 +454,7 @@ def main() -> int:
     return 1 if failures else 0
 
 
-# --- The stale split: warn on a late source, fail on a dead ingest (2026-09-15)
+# --- The stale split: warn on a late source, fail on a dead ingest
 def check_freshness_verdict() -> None:
     g = health.SOURCE_PAUSED_GRACE
     late = ("processing-times", 14, 10, "flag.dol.gov")            # DOL late: watch
@@ -472,7 +471,7 @@ def check_freshness_verdict() -> None:
     check("grace is measured, not zero", g >= 2)
 
 
-# --- Figures read by hand from USCIS's challenged page (2026-09-26) ------
+# --- Figures read by hand from USCIS's challenged page ------
 def check_hand_read_figures() -> None:
     d = datetime.date
     check("fresh hand-read figures are fine", health.hand_read_verdict(d(2026, 9, 26), d(2026, 12, 1)) == "ok")
@@ -485,11 +484,10 @@ def check_hand_read_figures() -> None:
     check("warn comes before fail", health.HAND_READ_WARN_DAYS < health.HAND_READ_FAIL_DAYS)
 
 
-# --- A `partial` that names the sweep's cap is a designed stop (2026-09-15)
+# --- A `partial` that names the sweep's cap is a designed stop
 def check_capped_partial_is_not_broken() -> None:
-    # BOTH producers of the phrase are pinned. The walk gained its own
-    # CAP_NOTE on 2026-09-20 and a third spelling would silently un-tolerate
-    # whichever row it wrote.
+    # Both producers of the phrase are pinned: a third spelling would silently
+    # un-tolerate whichever row it wrote.
     here = pathlib.Path(__file__).resolve().parent
     for producer in ("sweep_serial_gaps.py", "ingest_case_status_direct.py"):
         m = re.search(r'^CAP_NOTE = "([^"]+)"', (here / producer).read_text(), re.M)

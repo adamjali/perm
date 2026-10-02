@@ -118,9 +118,9 @@ export const MIN_DAYS_FOR_WEEK = 7;
  * because a gap in a series is never a point to interpolate through. After
  * `fillZeros` a null means one of exactly two things and neither is "DOL
  * stopped": a partial week at an end of this series, or a stretch belonging to
- * a DIFFERENT series (the 44 days between the disclosure corpus ending on
- * 2026-06-30 and the live scan beginning on 2026-08-13). A period when DOL
- * really did stop is zeros, and zeros are drawn.
+ * a DIFFERENT series (the gap between the end of the disclosure corpus and the
+ * start of the live record). A period when DOL really did stop is zeros, and
+ * zeros are drawn.
  */
 export function toWeeks(days: readonly ActivityDay[]): (ActivityWeek | null)[] {
   if (days.length === 0) return [];

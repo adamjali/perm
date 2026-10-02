@@ -40,7 +40,7 @@ function createFormValues(overrides?: Partial<CaseFormData>): Partial<CaseFormDa
 
 /**
  * Wrapper component that provides CaseFormContext for ETA9089Section tests.
- * RFIEntryList (within ETA9089Section) now uses useFieldArray which requires the context.
+ * RequestEntryList (within ETA9089Section) uses useFieldArray, which requires the context.
  */
 const TestWrapper = ({
   values,

@@ -26,10 +26,10 @@ RULES. The row is the record: nothing is inferred, and the violation text
 is DOL's. A row keeps its identity by (program, entity, start date), so a
 list that drops an entry after its end date leaves our row in place with
 its end date, which is the honest history. The run writes nothing when a
-source could not be read (a 403 from this network is DOL policy, not our
-bug) and stamps freshness only when both sources answered. `www.dol.gov`
-answers GitHub's runners with a full browser header set and refuses this
-laptop; the parser is tested on fixtures, not on the live fetch.
+source could not be read and stamps freshness only when both sources
+answered. `www.dol.gov` answers GitHub's runners with a full browser header
+set and refuses many residential addresses, so the parser is tested on
+fixtures rather than on the live fetch.
 """
 from __future__ import annotations
 
@@ -43,8 +43,8 @@ import time
 import urllib.request
 
 sys.path.insert(0, str(__import__("pathlib").Path(__file__).resolve().parent))
-from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
-from store_entities import slugify  # noqa: E402
+from lib_turso import Turso, record_run, stamp_freshness, write_doc  # noqa: E402
+from lib_slugs import slugify  # noqa: E402
 
 OFLC_URL = "https://www.dol.gov/agencies/eta/foreign-labor/program-debarments"
 WHD_URL = "https://www.dol.gov/agencies/whd/immigration/h1b/debarment"
@@ -328,9 +328,7 @@ def main() -> int:
     doc = {"asOf": as_of, "pdfDate": pdf_date, "h1bEffective": effective,
            "counts": {p: sum(1 for r in rows if r["program"] == p) for p in ("perm", "h1b", "h2a", "h2b")},
            "sources": {"oflc": OFLC_URL, "whd": WHD_URL}}
-    import json
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-               ["debarments_summary", json.dumps(doc, separators=(",", ":")), int(time.time() * 1000)])
+    write_doc(db, "debarments_summary", doc)
     # `as_of` is the day this run confirmed the lists, not the PDF's own
     # date: OFLC's document can legitimately go months without a change, and
     # a budget on ITS date would trip on a healthy ingest. The document's date

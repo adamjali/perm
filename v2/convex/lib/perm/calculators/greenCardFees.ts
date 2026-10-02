@@ -8,7 +8,7 @@
  * and medical exams vary by case and are named on the page as not included.
  *
  * Source: USCIS Form G-1055, Fee Schedule, edition 05/29/26, read from the
- * PDF at https://www.uscis.gov/g-1055 on Sep 8 2026. Relevant rows:
+ * PDF at https://www.uscis.gov/g-1055. Relevant rows:
  *   I-140 paper $715 (online $665); Asylum Program Fee with the I-140:
  *   regular petitioner $600, small employer (25 or fewer full-time
  *   employees) or self-petitioner $300, nonprofit $0.

@@ -4,7 +4,7 @@
  * 5-model free fallback chain with automatic failover. Tries each in order;
  * if one fails (503, rate limit, quota, auth, 404, any error), moves to the next.
  *
- * Chain (April 2026):
+ * Chain:
  *
  *   Tier 1, Google Gemini (primary, 1M context):
  *     1. Gemini 2.5 Flash (20 RPD free tier per model)
@@ -27,7 +27,7 @@
  * tool call parsing. Using createOpenAI() as a generic wrapper causes
  * "Expected 'function' type." errors on streaming tool calls (vercel/ai#5350).
  *
- * WHY THE MISTRAL ID SANITIZER IS NEEDED (re-added April 2026):
+ * WHY THE MISTRAL ID SANITIZER IS NEEDED:
  *   Mistral's API requires tool_call_id values to be exactly 9 alphanumeric
  *   chars; anything else returns HTTP 400 ("Tool call id was X but must be
  *   a-z, A-Z, 0-9, length 9"). The native @ai-sdk/mistral only sanitizes IDs
@@ -35,7 +35,7 @@
  *   and we fall to Mistral, those historical IDs are passed through unchanged
  *   and rejected. The `wrapMistralModel` middleware rewrites incoming IDs on
  *   both assistant tool-call parts AND tool-result parts before the request
- *   goes out. Production evidence: Sentry issue 7411490896 (release 49ece79).
+ *   goes out.
  */
 
 import { google } from '@ai-sdk/google';

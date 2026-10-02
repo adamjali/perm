@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
+import { EASTERN_TIMEZONE } from "@/lib/time";
 
 /**
  * The live half of `/uscis-case-status`: asks our own route for the receipt
@@ -48,7 +49,7 @@ type State =
   | { kind: "network" };
 
 const ET = new Intl.DateTimeFormat("en-US", {
-  timeZone: "America/New_York",
+  timeZone: EASTERN_TIMEZONE,
   month: "short",
   day: "numeric",
   year: "numeric",

@@ -48,7 +48,7 @@ export function DashboardHeading({ firstName }: { firstName: string | null | und
  * loading component in the page's own layout. dashboard/loading.tsx renders
  * this, and the page renders the same widgets, which show the same skeletons
  * until their data lands. So the route's loading state and the page's first
- * paint are one picture; there used to be three different ones in a row.
+ * paint are one picture.
  */
 export function DashboardSkeleton() {
   return (

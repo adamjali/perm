@@ -15,8 +15,8 @@
 export {
   checkUserName,
   MAX_NAME_LENGTH,
-} from "../../convex/lib/nameValidation";
+} from "@convex/lib/nameValidation";
 export type {
   NameValidationFailure,
   NameCheckResult,
-} from "../../convex/lib/nameValidation";
+} from "@convex/lib/nameValidation";

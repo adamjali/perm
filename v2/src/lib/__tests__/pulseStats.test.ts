@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ActivityDay } from "../activityStats";
-import { certifiedShare, lastDays, pulseHeadline, recentWeekdays } from "../pulseStats";
+import { certifiedShare, lastDays, pulseHeadline, pulseSummary, recentWeekdays } from "../pulseStats";
 
 const d = (date: string, total: number, certified = total): ActivityDay => ({
   date,
@@ -80,5 +80,31 @@ describe("certifiedShare", () => {
   it("is a whole percent, and null on an empty day", () => {
     expect(certifiedShare(d("2026-09-29", 989, 906))).toBe(92);
     expect(certifiedShare(d("2026-09-27", 0))).toBeNull();
+  });
+});
+
+describe("pulseSummary", () => {
+  it("totals calendar windows ending on the newest day, not the last n rows", () => {
+    const s = pulseSummary(SERIES)!;
+    // Sep 23 to 29: Sun 8 + Mon 712 + Tue 989. The 22nd is eight days back.
+    expect(s.last7).toBe(1709);
+    // Aug 31 to Sep 29 holds every row.
+    expect(s.last30).toBe(700 + 800 + 2 + 600 + 900 + 8 + 712 + 989);
+  });
+
+  it("averages weekdays only, so a weekend never drags the typical day down", () => {
+    const s = pulseSummary(SERIES)!;
+    // Mon to Fri rows in the window: 700, 800, 600, 900, 712, 989.
+    expect(s.weekdayAvg).toBe(Math.round((700 + 800 + 600 + 900 + 712 + 989) / 6));
+  });
+
+  it("gives the certified share of the whole window", () => {
+    const s = pulseSummary(SERIES)!;
+    const total = 700 + 800 + 2 + 600 + 900 + 8 + 712 + 989;
+    expect(s.certifiedPct).toBe(Math.round(((total - 83) / total) * 100));
+  });
+
+  it("returns null with nothing on record", () => {
+    expect(pulseSummary([])).toBeNull();
   });
 });

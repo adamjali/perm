@@ -8,18 +8,20 @@
  *   budget       the site's daily allowance of live checks is used up
  *   not-asked    the check couldn't be made (the counter itself failed)
  *
- * "budget" and "not-asked" were one value until Sep 29 2026, so a counter
- * failure told the reader the daily limit was used up when it wasn't.
+ * "budget" and "not-asked" are kept apart so a counter failure never tells
+ * the reader the daily limit is used up when it isn't.
  * A plain module (no server-only import) so the result panels can use it.
  */
+
+import { EASTERN_TIMEZONE } from "@/lib/time";
 
 export type DiscoveryMiss = "none" | "unavailable" | "budget" | "not-asked";
 export type UnsettledMiss = Exclude<DiscoveryMiss, "none">;
 
 /**
  * Everything a result panel may have to explain: the DOL misses above, plus
- * "records", when this site's own case records couldn't be read at all. That
- * used to render as "Not in our records" on the PERM page (Sep 29 2026 audit).
+ * "records", when this site's own case records couldn't be read at all, which
+ * must never render as "Not in our records".
  */
 export type LookupGap = UnsettledMiss | "records";
 
@@ -36,7 +38,7 @@ export function isUnsettledMiss(m: DiscoveryMiss | null | undefined): m is Unset
 export function budgetResetEastern(now: Date = new Date()): string {
   const next = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
+    timeZone: EASTERN_TIMEZONE,
     hour: "numeric",
     minute: "2-digit",
   }).format(next).replace(":00", "");

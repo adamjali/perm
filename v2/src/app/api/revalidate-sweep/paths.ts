@@ -8,8 +8,8 @@
  * WHY THE SWEEP EXPIRES THEM. These pages sit on daily or six-hourly windows,
  * and the sweep finishes twice a day. Without this a page can print the
  * previous day's decisions, or "checked against DOL" a day late, for up to a
- * full window after the record moved: the owner's "updated, correct, synced"
- * (Oct 1 2026). Literal paths only, and the generated tails are left to their
+ * full window after the record moved. Literal paths only, and the generated
+ * tails are left to their
  * own windows (see the test's EXCLUDED list for each reason).
  *
  * `__tests__/route.test.ts` re-derives this list from the app tree.
@@ -22,9 +22,10 @@ export const SWEEP_PAGES = [
   "/perm-employers/under-review",
   "/tools/perm-timeline-calculator",
   "/estimate-scorecard",
-  // The wage-request and LCA summaries, written by pwd-status-direct.yml,
-  // which calls this endpoint too.
+  // The wage-request, LCA and H-2A/H-2B summaries, written by
+  // pwd-status-direct.yml, which calls this endpoint too.
   "/pwd-cases",
   "/lca-cases",
+  "/seasonal-cases",
   "/case-search",
 ] as const;

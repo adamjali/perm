@@ -10,7 +10,6 @@ import {
   isComplete,
   isMonotonicFalling,
   ladderExtent,
-  money,
   moneyShort,
   overlaps,
   toBands,
@@ -18,6 +17,7 @@ import {
   worstBand,
   type Ladder,
 } from "@/lib/wageLadder";
+import { formatDollars } from "@/lib/format";
 
 /**
  * Fixtures are the REAL measured cells, not invented numbers.
@@ -183,7 +183,7 @@ describe("widestStep", () => {
 
 describe("money formatting", () => {
   it("rounds to whole dollars", () => {
-    expect(money(139_026.51)).toBe("$139,027");
+    expect(formatDollars(139_026.51)).toBe("$139,027");
   });
 
   it("abbreviates for an axis", () => {

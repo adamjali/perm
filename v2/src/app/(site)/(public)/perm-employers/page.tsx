@@ -12,6 +12,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
 import { getDatasetSchema } from "@/lib/structuredData";
+import { ChartTips } from "@/components/data/ChartTips";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
@@ -26,6 +27,8 @@ import { getFreshness } from "@/lib/turso/publicData";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
+import { formatInt } from "@/lib/format";
+import { SITE_URL } from "@/lib/constants/site";
 const TITLE = "Every PERM Employer, Ranked";
 const DESCRIPTION =
   "Every company that filed a PERM case: volume, approval rate and median days per sponsor, searchable and sortable, from DOL's own disclosure files.";
@@ -55,10 +58,6 @@ export const metadata: Metadata = withSocialCard({
 // trigger that never fires bounds the staleness instead of stranding the page.
 export const revalidate = 604800;
 
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 export default async function PermEmployersPage() {
   // Seeded from the entity TABLE, not the aggregate document. The aggregate
   // is capped at 250 rows per kind to fit Convex's 1 MB document limit, so
@@ -75,10 +74,10 @@ export default async function PermEmployersPage() {
   const topTen = employers.slice(0, 10);
   const maxTotal = Math.max(1, ...topTen.map((e) => e.total));
 
-  const datasetSchema = getDatasetSchema("https://permtracker.app", {
+  const datasetSchema = getDatasetSchema(SITE_URL, {
     name: "PERM labor certification filings by employer",
     description: DESCRIPTION,
-    url: "https://permtracker.app/perm-employers",
+    url: `${SITE_URL}/perm-employers`,
   });
 
   return (
@@ -86,10 +85,7 @@ export default async function PermEmployersPage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          As printed in DOL&apos;s files
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Who sponsors the most
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
@@ -106,10 +102,23 @@ export default async function PermEmployersPage() {
           <section className="pop mt-10">
             <div className="border-2 border-border bg-card p-6 sm:p-8">
               <h2 className="font-heading text-xl font-black">The top ten, by filings</h2>
-              <div className="mt-6 space-y-3">
+              <ChartTips label="The top ten sponsors, by filings" className="mt-6">
+              <div className="space-y-3">
                 {topTen.map((e) => (
-                  <div key={e.name} className="grid grid-cols-[minmax(0,220px)_1fr] items-center gap-3">
-                    <p className="truncate text-sm font-bold" title={e.name}>
+                  <div
+                    key={e.name}
+                    data-tip={[
+                      e.name,
+                      `#${e.rank} by filings`,
+                      `${formatInt(e.total)} filings`,
+                      `${formatInt(e.certified)} certified, ${formatInt(e.denied)} denied`,
+                      e.medianDays !== null ? `Median ${formatInt(e.medianDays)} days to a decision` : null,
+                      e.recent12m !== null ? `${formatInt(e.recent12m)} filed in the last 12 months` : null,
+                    ]
+                      .filter(Boolean)
+                      .join("\n")}
+                    className="grid grid-cols-[minmax(0,220px)_1fr] items-center gap-3">
+                    <p className="truncate text-sm font-bold">
                       {e.name}
                     </p>
                     <div className="flex min-w-0 items-center gap-2">
@@ -121,13 +130,14 @@ export default async function PermEmployersPage() {
                           maxWidth: "calc(100% - 64px)",
                         }}
                       />
-                      <span className="whitespace-nowrap font-mono text-xs font-bold tabular-nums">
-                        {fmtInt(e.total)}
+                      <span className="whitespace-nowrap font-mono text-sm font-bold tabular-nums">
+                        {formatInt(e.total)}
                       </span>
                     </div>
                   </div>
                 ))}
               </div>
+              </ChartTips>
               <p className="mt-5 text-sm text-foreground/60">
                 DOL works one national queue, oldest first, whoever filed the
                 case.

@@ -1,15 +1,14 @@
 name: Convex backup (sealed, to R2)
 
 # The site's own data (accounts, attorneys' cases, alert subscriptions, the
-# outbox) lives in Convex, and until Sep 29 2026 there was no copy of it
-# anywhere else: Convex keeps backups only on its Pro plan, for 7 days, inside
-# Convex. This takes a full export every night, SEALS it here on the runner
-# with the public half of the backup key (CMS, AES-256-GCM), deletes the
-# plaintext, and hands only the sealed file to the server, which keeps 7 and
-# copies it to R2 (15 days, deletion-locked for 7). The private half that opens
-# it is never on GitHub, the server or R2.
+# outbox) lives in Convex, which keeps backups only on its Pro plan, for 7
+# days, inside Convex. This takes a full export every night, seals it here on
+# the runner with the public half of the backup key (CMS, AES-256-GCM), deletes
+# the plaintext, and hands only the sealed file to the server, which keeps 7
+# and copies it to R2 (15 days, deletion-locked for 7). The private half that
+# opens it is never on GitHub, the server or R2.
 #
-# THIS REPOSITORY IS PUBLIC, SO ITS LOGS ARE: the steps print sizes and a
+# This repository is public, so its logs are too: the steps print sizes and a
 # table count, never a row. No artifact is uploaded.
 #
 # Dispatched nightly by the server's clock (permtracker-cron@dispatch-convex-

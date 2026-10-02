@@ -76,19 +76,14 @@ def decode_filing_date(case_number: str) -> str | None:
     return d.isoformat() if d else None
 
 
-# EVERY PREFIX FLAG IS KNOWN TO ISSUE ON THIS COUNTER, in one place so the
-# nightly walk and the gap sweep cannot drift apart. They did: the walk asked
-# five and the sweep eight, so a case the sweep could find was one the walk
-# would never look for, and a prefix added to one was silently absent from the
-# other. PERM's office codes are G-100/G-200/G-300/G-400; H-1B LCAs are I-200
+# Every prefix FLAG is known to issue on this counter, in one place so the
+# nightly walk and the gap sweep can't drift apart (a case one could find would
+# be one the other never looked for). PERM's office codes are G-100/G-200/G-300/G-400; H-1B LCAs are I-200
 # and I-203 (I-201/I-202 are rare but real); prevailing wage is P-100.
-# H-300 (H-2A), H-400 (H-2B) and P-400 (an H-2B prevailing wage request) were
-# added Oct 1 2026. FLAG's case status answers them from the SAME counter, and
-# unasked they were invisible twice over: no H-2A or H-2B case was ever found,
-# and 50 of them in a row (an agent filing a season's job orders at once)
-# would read to the walk as the edge of DOL's issuance and stop it there every
-# night. On Sep 29, 383 of 2,912 serials were held under no prefix; 7 of 10
-# sampled were these three.
+# H-300 (H-2A), H-400 (H-2B) and P-400 (an H-2B prevailing wage request) come
+# from the same counter. Unasked, they're invisible twice over: no such case is
+# found, and 50 of them in a row (an agent filing a season's job orders at
+# once) read to the walk as the edge of DOL's issuance and stop it there.
 ALL_FLAG_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-",
                      "I-200-", "I-203-", "I-201-", "I-202-", "P-100-",
                      "H-300-", "H-400-", "P-400-")

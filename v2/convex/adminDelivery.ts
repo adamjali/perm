@@ -3,8 +3,8 @@
  * spent, who each one turned away this week, what is waiting in the outbox
  * and what went out, and which employers people follow.
  *
- * Every figure answers a question Adam asked on Sep 25 2026: are the alerts
- * working, and is it time to move off Resend's free plan. A pool that refused
+ * Every figure answers one of two questions: are the alerts working, and is
+ * it time to move off Resend's free plan. A pool that refused
  * anyone is the second answer.
  *
  * SECURITY: requireAdmin(); the rows carry subscriber addresses.
@@ -18,9 +18,16 @@ import { requireAdmin } from "./lib/admin";
 import { BUDGETS, type BudgetName } from "./lib/alertBudgets";
 import { QUEUE_MAX } from "./confirmationQueue";
 import { LIST_CEILING, RESEND_DAILY_CAP, RETRY_MAX_ROWS, utcDay } from "./lib/emailLimits";
-import { etDay } from "./lib/alertDelivery";
+import { easternDay, MS_PER_DAY } from "./lib/time";
 
-const DAY_MS = 86_400_000;
+/** Budget refusal rows read: one per pool per day, so a week of pools fits many times over. */
+const REFUSALS_READ = 200;
+/** Alerts waiting in the outbox read for the count and the oldest wait. */
+const OUTBOX_QUEUED_READ = 1000;
+/** A week of outbox rows read for the sent, failed and dropped counts. */
+const OUTBOX_WEEK_READ = 3000;
+/** Employer follows read for the follower list. */
+const FOLLOWS_READ = 2000;
 
 const kindValidator = v.union(v.literal("case"), v.literal("queue"), v.literal("bulletin"), v.literal("employer"));
 
@@ -93,11 +100,11 @@ export const getDelivery = query({
     await requireAdmin(ctx);
     const now = Date.now();
 
-    const d7day = etDay(now - 6 * DAY_MS);
+    const d7day = easternDay(now - 6 * MS_PER_DAY);
     const refusalRows = await ctx.db
       .query("budgetRefusals")
       .withIndex("by_day_pool", (q) => q.gte("day", d7day))
-      .take(200);
+      .take(REFUSALS_READ);
     const refusedBy = new Map<string, number>();
     const queuedBy = new Map<string, number>();
     for (const r of refusalRows) {
@@ -109,7 +116,7 @@ export const getDelivery = query({
     for (const [name, b] of Object.entries(BUDGETS) as [BudgetName, (typeof BUDGETS)[BudgetName]][]) {
       const used = await ctx.db
         .query("rateLimits")
-        .withIndex("by_key_and_timestamp", (q) => q.eq("key", `${b.key}:all`).gte("timestamp", now - DAY_MS))
+        .withIndex("by_key_and_timestamp", (q) => q.eq("key", `${b.key}:all`).gte("timestamp", now - MS_PER_DAY))
         .take(b.limit + 50);
       pools.push({
         name,
@@ -134,13 +141,13 @@ export const getDelivery = query({
     const queuedRows = await ctx.db
       .query("alertOutbox")
       .withIndex("by_status_created", (q) => q.eq("status", "queued"))
-      .take(1000);
+      .take(OUTBOX_QUEUED_READ);
 
     const week = await ctx.db
       .query("alertOutbox")
-      .withIndex("by_created", (q) => q.gte("createdAt", now - 7 * DAY_MS))
+      .withIndex("by_created", (q) => q.gte("createdAt", now - 7 * MS_PER_DAY))
       .order("desc")
-      .take(3000);
+      .take(OUTBOX_WEEK_READ);
     const byKind = { case: 0, queue: 0, bulletin: 0, employer: 0 };
     let items = 0;
     let direct = 0;
@@ -162,7 +169,7 @@ export const getDelivery = query({
       else if (r.status === "dropped") dropped += 1;
     }
 
-    const followRows = await ctx.db.query("employerAlerts").order("desc").take(2000);
+    const followRows = await ctx.db.query("employerAlerts").order("desc").take(FOLLOWS_READ);
     const counts = new Map<string, { name: string; followers: number }>();
     let confirmed = 0;
     let pending = 0;

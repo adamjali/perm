@@ -3,14 +3,15 @@
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useCallback, useEffect } from "react";
 import { useMutation } from "convex/react";
-import { api } from "@/../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { captureError } from "@/lib/sentry";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
-import { useInactivityTimeout } from "@/lib/hooks/useInactivityTimeout";
+import { useInactivityTimeout } from "@/hooks/useInactivityTimeout";
+import { MS_PER_MINUTE } from "@/lib/time";
 import TimeoutWarningModal from "./TimeoutWarningModal";
 
 /** Heartbeat interval: 5 minutes */
-const HEARTBEAT_INTERVAL_MS = 5 * 60 * 1000;
+const HEARTBEAT_INTERVAL_MS = 5 * MS_PER_MINUTE;
 
 interface InactivityTimeoutProviderProps {
   children: React.ReactNode;

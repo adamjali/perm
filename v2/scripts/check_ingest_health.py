@@ -1,36 +1,22 @@
 #!/usr/bin/env python3
 """Fail loudly when a dataset stops refreshing.
 
-WHY THIS EXISTS. Every ingest already records an `as_of` and a `max_age_days`
-in `data_freshness`, and `DataProvenance` renders a warning when a dataset is
-overdue. But that warning appears on a PAGE, and nobody watches pages. The
-other channel is GitHub emailing on a red scheduled run - and FOUR of the six
-ingests mark their step `continue-on-error: true`, so a failed ingest exits
-green and sends nothing.
+The staleness warning a data page renders is something nobody watches, and a
+failed ingest step is often allowed to exit green, so without this the site
+would keep serving its last good numbers under their own as-of date and nothing
+would say so.
 
-Net effect before this script: if the rival tracker changed shape, or DOL moved a file,
-or a token expired, the site would keep serving the last good numbers under
-their own as-of date and NOTHING would tell us. That is worse than an outage,
-because an outage is visible.
+Run daily in CI, it exits non-zero when our ingest has stopped fetching, or a
+source has been silent past SOURCE_PAUSED_GRACE times its budget; a source that
+is merely late is a printed `::warning::`. A red run is what triggers GitHub's
+notification, so no other alerting is needed.
 
-This runs in CI on a schedule and EXITS NON-ZERO when OUR ingest has stopped
-fetching, or when a source has been silent past SOURCE_PAUSED_GRACE times its
-budget; a source that is merely late is a printed `::warning::`, not a red
-run (2026-09-15, below). Red turns on GitHub's own notification. No new
-alerting infrastructure, no extra credential.
+Freshness alone misses a run that failed after stamping itself fresh, so this
+also reads the `ingest_runs` audit trail and fails when an ingest's most recent
+run did not finish clean.
 
-TWO CHECKS, BECAUSE FRESHNESS ALONE MISSES A RUN THAT FAILED LATE. A sweep
-stamps `data_freshness` when its own work is done and then writes several
-precomputed docs; on 2026-09-03 the case-status sweep stamped itself fresh at
-13:58:50 and died at 14:00:11, and every one of the 36 rows in `ingest_runs`
-said `ok` while two ingests had failed that morning. So this also reads the
-audit trail and fails when an ingest's MOST RECENT run did not finish clean.
-
-THE BUDGET COMES FROM THE DATA, NOT FROM HERE. Each row carries the
-`max_age_days` its own ingest set, because only that ingest knows whether it is
-daily, quarterly or event-driven. A threshold hardcoded in the checker would
-drift from the thing it checks - the same defect class as a gate holding its
-own copy of the list it is checking.
+The budget comes from the data: each `data_freshness` row carries the
+`max_age_days` its own ingest set, because only that ingest knows its cadence.
 """
 from __future__ import annotations
 
@@ -44,7 +30,7 @@ import pathlib
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 from lib_flag_serials import code_to_date  # noqa: E402
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, query_rows, rows_of  # noqa: E402
 
 
 def parse_as_of(raw: str) -> datetime.date | None:
@@ -81,43 +67,31 @@ NOW_MS = time.time() * 1000
 # STOPPED ingest, and `data_freshness` is the check that says so.
 RUN_FAILURE_WINDOW_DAYS = 3
 
-# WHICH OUTCOMES ARE A BREAK, and which are merely worth recording.
-#
-# `cancelled` is deliberately NOT here. Both DOL workflows set
-# `cancel-in-progress: false`, so a newer run never cancels an older one and a
-# cancellation is almost always a person pressing stop. Turning that red would
-# train the reader to skim past the alert inside a week, which costs more than
-# the cancellation it reported. The row is still written and still printed
-# below - a cancellation mid-sweep IS worth seeing in the history - it just
-# does not fail the check.
-#
-# A genuine HANG is not a cancellation here either: both workflows wrap the
-# sweep in `timeout` set below the job cap precisely so a hang exits 124 and
-# lands as `failed`.
+# Which outcomes are a break. `cancelled` is deliberately not: the DOL
+# workflows never cancel an older run, so a cancellation is almost always a
+# person pressing stop, and alarming on it would teach the reader to skim past
+# the alert. It is still recorded and printed. A genuine hang is not a
+# cancellation either: the workflows wrap each sweep in a `timeout` below the
+# job cap, so a hang exits 124 and lands as `failed`.
 BROKEN_STATUSES = frozenset({"failed", "partial"})
-# The gap sweep used to record `partial` when it stopped on its own request
-# cap, and this check painted that BROKEN (2026-09-15). The sweep records `ok`
-# now and names the cap in its note; this phrase must stay byte-identical to
-# `CAP_NOTE` in sweep_serial_gaps.py (test_ingest_health pins it), so that a
-# row written by the older code is read for what it was: a designed stop.
+# A run that stops on its own request cap records `ok` and names the cap in its
+# note. Byte-identical to CAP_NOTE in sweep_serial_gaps.py and
+# ingest_case_status_direct.py (test_ingest_health pins it), so a `partial` row
+# carrying it reads as the designed stop it was.
 SWEEP_CAP_NOTE = "stopped on the request cap"
-# The walk's other designed stop (2026-09-24): its time budget. Byte-identical
-# to ingest_case_status_direct.BUDGET_NOTE; test_ingest_health.py pins it.
+# The walk's other designed stop, its time budget. Byte-identical to
+# ingest_case_status_direct.BUDGET_NOTE; test_ingest_health.py pins it.
 BUDGET_NOTE = "stopped on its time budget"
 
 
 def check_runs(db) -> int:
     """Fail when an ingest's most recent run did not finish clean.
 
-    KEYED ON THE SCRIPT FILENAME PLUS ITS MODE FLAG (see run_key). It used
-    to key on the filename alone, so that any later clean run of the script
-    cleared the flag. That answered "has this script recovered?" for a
-    script with one job and was wrong for one with two: on Sun Sep 6 2026
-    the weekly PWD/LCA full sweep died on its timeout at 12:38 PM, Monday's
-    daily pending pass ran clean at 5:40 AM, this check ran at 6:00 AM and
-    saw only the pass. The weekly job could fail every week and never be
-    reported. The workflow failure hooks now pass the mode too, so a killed
-    run and its later clean run share a key.
+    Keyed on the script filename plus its mode flag (see run_key), so the
+    daily and the weekly pass of one script are separate questions: a clean
+    daily pass must never clear a failed weekly one. The workflow failure
+    hooks pass the mode too, so a killed run and its later clean run share a
+    key.
     """
     cutoff = int(NOW_MS - RUN_FAILURE_WINDOW_DAYS * 86_400_000)
     try:
@@ -130,8 +104,7 @@ def check_runs(db) -> int:
         # because "no rows" and "no table" look identical from a pass.
         print(f"ingest_runs      : unreadable ({str(exc)[:120]})")
         return 0
-    rows = [[None if c["type"] == "null" else c["value"] for c in r]
-            for r in res["response"]["result"]["rows"]]
+    rows = rows_of(res)
 
     newest: dict[str, tuple[str, str, int]] = {}
     for script, status, note, finished in rows:
@@ -139,12 +112,9 @@ def check_runs(db) -> int:
         if key not in newest:                       # rows arrive newest first
             newest[key] = (str(status), str(note or ""), int(finished))
 
-    # A LEGACY ROW HAS NO MODE, SO NO LATER RUN CAN SHARE ITS KEY. The failure
-    # hooks recorded the bare filename until Sep 6 2026; a failure written in
-    # that shape would stay BROKEN for the whole window even after the script
-    # ran clean in every mode, because nothing keys on the bare name any more.
-    # Any later clean run of the same FILENAME supersedes it. Mode-keyed rows
-    # keep their exact-key rule: that is the whole point of keying by mode.
+    # A row with no mode can share no later run's key, so any later clean run
+    # of the same filename supersedes it. Mode-keyed rows keep the exact-key
+    # rule.
     for key in list(newest):
         status, note, finished = newest[key]
         if " " in key or status not in BROKEN_STATUSES:
@@ -155,13 +125,9 @@ def check_runs(db) -> int:
             by = ", ".join(k.split()[1] for k, _ in later)
             newest[key] = ("ok", f"legacy failure superseded by a clean {by} run", finished)
 
-    # AND THE MIRROR CASE: A MODE-KEYED FAILURE, A BARE-KEYED SUCCESS. The
-    # case-status sweep recorded its own clean runs under the bare filename,
-    # naming the mode only in the note ("full: 426,112 cases"), while its
-    # failure hook wrote "ingest_case_status_direct.py --full". So on Sep 29
-    # 2026 the 4:10 AM sweep's failure stayed BROKEN after the re-run worked.
-    # The sweep now records its mode in the key; until those rows age out, a
-    # clean bare-keyed run whose note begins with the same mode clears it.
+    # The reverse: a mode-keyed failure and a clean run recorded under the bare
+    # filename with the mode only in its note ("full: 426,112 cases"). A clean
+    # bare-keyed run whose note begins with the same mode clears it.
     for key in list(newest):
         status, note, finished = newest[key]
         if " " not in key or status not in BROKEN_STATUSES:
@@ -213,16 +179,12 @@ def run_key(script) -> str:
 # smallest budget that never fires on a calendar.
 FRONTIER_MAX_DAYS = 5
 
-# A DATASET IS STALE FOR TWO OPPOSITE REASONS AND THEY NEED TWO EXIT CODES.
-# Measured 2026-09-15: this check sat red for four days and paged the owner
-# because DOL had not republished its processing-times figure for 14 days
-# against a 10-day budget. Our ingest ran every day and logged "DOL as-of
-# unchanged"; the text below even said so, and the run still exited 1. A red
-# light everyone learns to ignore is how the September I-485 outage went
-# unread for four days. So: our-ingest-stopped fails at once; the-source-is-
-# late is a `::warning::` until it has been silent for SOURCE_PAUSED_GRACE
-# times its budget, when the page may have moved or the parser may be reading
-# a stale element, and a human should look.
+# A dataset is stale for two opposite reasons, and they get two exit codes. Our
+# ingest having stopped fails at once. A source that hasn't republished while
+# our ingest keeps reading it is something nobody can act on, so it is a
+# `::warning::` until it has been silent for SOURCE_PAUSED_GRACE times its
+# budget, when the page may have moved or the parser may be reading a stale
+# element, and a human should look.
 SOURCE_PAUSED_GRACE = 3
 
 
@@ -250,18 +212,14 @@ DISCOVERY_DRY_RUNS = 4
 def check_frontier(db) -> int:
     """Fail when the discovery walk's cursor has not moved in FRONTIER_MAX_DAYS.
 
-    WHY THIS IS ITS OWN CHECK. Every other line in this report measures that
-    a JOB RAN: `data_freshness` is stamped by the sweep, `ingest_runs` says
-    it exited clean. From Aug 31 to Sep 6 2026 the PERM prober ran every
-    night, exited 0, stamped itself fresh, and recorded nothing, because it
-    was asking DOL for case numbers that could not exist. Seven days, all
-    green. The walk's cursor is the one number that only moves when a
-    filing is actually recorded, so it is the one to judge.
+    Every other check measures that a job ran. A walk can run, exit 0 and
+    stamp itself fresh while recording nothing; its cursor is the one number
+    that moves only when a filing is actually recorded, so it is the one to
+    judge.
 
-    MAX(filing_date) on the PWD/LCA tables is printed for context and NOT
-    judged: a visitor looking up a fresh case inserts a row with a fresh
-    filing date, so that number stays green with the prober dead (the two
-    G-200-26246 rows found on Sep 6 were exactly that).
+    MAX(filing_date) on the PWD/LCA tables is printed for context and not
+    judged: a visitor looking up a fresh case inserts a fresh row, so that
+    number can stay current with the walk dead.
     """
     today = datetime.date.today()
     try:
@@ -289,8 +247,8 @@ def check_frontier(db) -> int:
           f"{age:>3}d  budget {FRONTIER_MAX_DAYS}d  {'STALLED' if stalled else 'ok'}")
     for table in ("pwd_case_status", "lca_case_status", "seasonal_case_status"):
         try:
-            r = db.execute(f"SELECT MAX(filing_date) FROM {table}")["response"]["result"]["rows"]
-            print(f"  {table:18s} newest filing {r[0][0].get('value') if r else None}  (context only)")
+            r = query_rows(db, f"SELECT MAX(filing_date) FROM {table}")
+            print(f"  {table:18s} newest filing {r[0][0] if r else None}  (context only)")
         except RuntimeError:
             pass
     if stalled:
@@ -314,8 +272,7 @@ def check_discovery_yield(db) -> int:
             "SELECT status, rows_written, finished_at FROM ingest_runs WHERE script = ? "
             "ORDER BY finished_at DESC LIMIT ?",
             ["ingest_case_status_direct.py --discover", DISCOVERY_DRY_RUNS])
-        rows = [[None if c["type"] == "null" else c["value"] for c in r]
-                for r in res["response"]["result"]["rows"]]
+        rows = rows_of(res)
     except RuntimeError as exc:
         print(f"discovery yield   : unreadable ({str(exc)[:120]})")
         return 0
@@ -379,14 +336,11 @@ def check_backfill(db) -> int:
     return 0
 
 
-# Lookup demand: the count of live DOL lookups the case page made, per UTC
-# day, in perm_docs['discovery_budget_<date>']. It is the number a crawler on
-# `/perm-case-status?case=` moves - Meta's spent 2,000 a day before 5 AM in
-# September 2026 - and the one thing on this site that alerts on nothing
-# else. (Vercel's only firewall alert fired at 100,000 requests per 10
-# minutes, ten times that crawler's rate; the site has sat behind Cloudflare
-# since Sep 28 2026.) Judged against the site's own
-# recent median with a floor, because the organic rate is single digits.
+# Lookup demand: the live DOL lookups the case page made, per UTC day, in
+# perm_docs['discovery_budget_<date>']. It is the number a crawler on
+# `/perm-case-status?case=` moves first, and nothing else alerts on it. Judged
+# against the site's own recent median with a floor, because the organic rate
+# is single digits.
 LOOKUP_DEMAND_FLOOR = 500
 LOOKUP_DEMAND_MULTIPLE = 5
 LOOKUP_DEMAND_HISTORY = 30
@@ -397,28 +351,21 @@ LOOKUP_DEMAND_HISTORY = 30
 GAP_SWEEP_MAX_AGE_DAYS = 3
 
 
-# The docs the site reads INSTEAD of a query it can no longer afford. Each is
-# the only thing standing between a page and a query that blows the read
-# deadline, and each degrades silently: the reader falls back to the slow live
-# query, so the page still renders and nobody notices until a build times out.
-# That is exactly how the deploy of ded503e5 failed.
+# The docs the site reads instead of a query too slow for a page. Each degrades
+# silently: the reader falls back to the slow live query, so the page still
+# renders and nobody notices until a build times out. The budget is "rebuilt
+# since the data under it last moved", generous where that data is quarterly.
 #
-# `max_age_days` is generous where the underlying data moves quarterly, and the
-# floor is "has this been rebuilt since the data under it last moved", not a
-# cadence.
-#
-# SCOPE, DELIBERATELY: docs whose absence is SILENT, meaning the reader falls
-# back to an expensive query and the page stays correct. Docs whose absence
-# shows an empty state are already visible to a reader and to `audit_all_pages`
-# - `lca_live_summary` and `flag_disclosure_summary_lca` are that kind and are
-# not listed here. Adding them would trade a real alarm for a noisier one.
+# Only docs whose absence is silent belong here. A doc whose absence shows an
+# empty state is already visible to readers and to audit_all_pages
+# (`lca_live_summary`, `flag_disclosure_summary_lca`).
 PRECOMPUTED_DOCS = {
     "lca_filter_options": (100, "the H-1B salary explorer's facets and default view"),
     "live_census": (8, "the case lookup's queue position"),
     "review_stages": (5, "the review-stage cohort pages"),
     "wage_filter_options": (100, "the PERM salary explorer's facets"),
     "alphabet": (100, "the employer-initial chart on /perm-queue (no longer in any estimate)"),
-    # Added 2026-09-26. Rebuilt after every sweep, daily and weekly respectively.
+    # Rebuilt after every sweep, daily and weekly respectively.
     "recent_decision_wait": (3, "the employer pages' wait section and the fastest/slowest view"),
     "scorecard_summary": (3, "the estimate scorecard's daily sample"),
     "estimator_backtest": (9, "the estimate scorecard's headline backtest"),
@@ -428,25 +375,19 @@ PRECOMPUTED_DOCS = {
 def check_precomputed_docs(db) -> int:
     """Fail when a doc the read layer depends on has gone missing or stale.
 
-    A MISSING DOC IS NOT AN OUTAGE, WHICH IS THE PROBLEM. Every reader here
-    falls back to the live query it was written to replace, so the page is
-    correct and slow, and the only symptom is a prerender that takes 44 s
-    instead of 0.2 s - invisible until a build dies under contention.
+    A missing doc is not an outage, which is the problem: every reader falls
+    back to the live query it replaced, so the page is correct and slow, and
+    the only symptom is a slow prerender, invisible until a build dies.
     """
     print("precomputed docs")
     bad = 0
     try:
-        res = db.execute(
-            "SELECT key, computed_at, length(json) AS bytes FROM perm_docs "
-            "WHERE key IN (" + ",".join("?" * len(PRECOMPUTED_DOCS)) + ")",
-            list(PRECOMPUTED_DOCS),
-        )
         rows = {
-            str(r[0]["value"]): (
-                int(r[1]["value"]) if r[1]["type"] != "null" else None,
-                int(r[2]["value"]) if r[2]["type"] != "null" else 0,
-            )
-            for r in res["response"]["result"]["rows"]
+            str(key): (int(at) if at is not None else None, int(size or 0))
+            for key, at, size in query_rows(
+                db, "SELECT key, computed_at, length(json) AS bytes FROM perm_docs "
+                    "WHERE key IN (" + ",".join("?" * len(PRECOMPUTED_DOCS)) + ")",
+                list(PRECOMPUTED_DOCS))
         }
     except Exception as e:  # noqa: BLE001 - a probe failing is itself a finding
         print(f"  FAIL: could not read perm_docs: {e}")
@@ -486,15 +427,12 @@ def check_wage_views(db) -> int:
     """Fail when a program's precomputed wage selections are missing or stale.
 
     Same failure shape as a missing doc: every reader falls back to its live
-    query, so the explorer still answers, slowly, and /api/lca-wages goes back
-    to passing its 20 s deadline (Sentry JAVASCRIPT-NEXTJS-3K, 839 times).
+    query, so the explorer still answers, slowly enough to pass its deadline.
     """
     print("wage views")
     try:
-        res = db.execute(
-            "SELECT program, COUNT(*), MAX(built_at) FROM wage_views GROUP BY program", [])
-        got = {str(r[0]["value"]): (int(r[1]["value"]), int(r[2]["value"]))
-               for r in res["response"]["result"]["rows"]}
+        got = {str(prog): (int(n), int(built)) for prog, n, built in query_rows(
+            db, "SELECT program, COUNT(*), MAX(built_at) FROM wage_views GROUP BY program")}
     except Exception as e:  # noqa: BLE001 - a missing table is itself the finding
         print(f"  FAIL: could not read wage_views: {e}")
         return 1
@@ -516,26 +454,19 @@ def check_wage_views(db) -> int:
 def check_gap_sweep(db) -> int:
     """Fail when the serial gap sweep has stopped running.
 
-    THE NUMBER HERE IS HOLES PROBED, NOT CASES FOUND, and the distinction is
-    the whole design. The walk is forward-only, so anything it skips is lost
-    permanently unless something re-asks; the sweep is that something. But a
-    sweep that recovers nothing is the goal state, not a failure - as the
-    corpus closes, the holes it probes turn out to be serials DOL never
-    issued. Alerting on finds would therefore go red precisely when the
-    system started working.
-
-    Probes DO go to zero for a bad reason: `held_serials` returning nothing
-    (a renamed column, a changed type) makes every day look contiguous and
-    the sweep exits clean having asked DOL nothing. That is invisible in the
-    log, which is why it is checked here.
+    The number judged is holes probed, not cases found: a sweep that recovers
+    nothing is the goal state, since as the corpus closes the holes it probes
+    are serials DOL never issued. Probes go to zero only for a bad reason:
+    `held_serials` returning nothing (a renamed column, a changed type) makes
+    every day look contiguous, and the sweep exits clean having asked DOL
+    nothing.
     """
     try:
         res = db.execute(
             "SELECT status, rows_written, finished_at, note FROM ingest_runs "
             "WHERE script = ? ORDER BY finished_at DESC LIMIT 5",
             ["sweep_serial_gaps.py"])
-        rows = [[None if c["type"] == "null" else c["value"] for c in r]
-                for r in res["response"]["result"]["rows"]]
+        rows = rows_of(res)
     except RuntimeError as exc:
         print(f"gap sweep         : unreadable ({str(exc)[:120]})")
         return 0
@@ -562,15 +493,10 @@ def check_gap_sweep(db) -> int:
     return 0
 
 
-# A JOB THAT STOPS ON ITS OWN BUDGET EVERY RUN IS NOT KEEPING UP (2026-09-24).
-# Both jobs below record a budget stop as `ok`, correctly: one capped run is a
-# job doing its work. But the walk stopped on its 400-request cap every night
-# for at least a week, holding the corpus 2 to 4 days behind DOL, and nothing
-# here said so: the frontier check's 5-day budget read "ok" throughout, and
-# the gap sweep was capped every night over a backlog of 29,297 holes. The
-# streak is the leading signal both lag checks miss. A WARNING, not a
-# failure: a streak is capacity running short, not data going wrong, and the
-# frontier check still fails if the lag itself gets long.
+# A job that stops on its own budget every run is not keeping up. One capped
+# run is a job doing its work and records `ok`; a streak of them is capacity
+# running short, the leading signal a generous lag budget misses. A warning,
+# not a failure: the frontier check still fails if the lag itself gets long.
 CAP_STREAK_RUNS = 3
 CAP_STREAK_JOBS = (("walk", "ingest_case_status_direct.py --discover"),
                    ("gap sweep", "sweep_serial_gaps.py"))
@@ -581,11 +507,9 @@ def check_cap_streak(db) -> int:
     its last CAP_STREAK_RUNS runs. Never fails the check; see above."""
     for label, script in CAP_STREAK_JOBS:
         try:
-            res = db.execute(
-                "SELECT note FROM ingest_runs WHERE script = ? "
-                "ORDER BY finished_at DESC LIMIT ?", [script, CAP_STREAK_RUNS])
-            notes = [(r[0].get("value") or "") if r[0]["type"] != "null" else ""
-                     for r in res["response"]["result"]["rows"]]
+            notes = [r[0] or "" for r in query_rows(
+                db, "SELECT note FROM ingest_runs WHERE script = ? ORDER BY finished_at DESC LIMIT ?",
+                [script, CAP_STREAK_RUNS])]
         except RuntimeError as exc:
             print(f"cap streak        : {label} unreadable ({str(exc)[:100]})")
             continue
@@ -608,10 +532,8 @@ def check_cap_streak(db) -> int:
 
 def check_lookup_demand(db) -> int:
     try:
-        res = db.execute(
-            "SELECT key, json FROM perm_docs WHERE key LIKE 'discovery_budget_%' "
-            "ORDER BY key DESC LIMIT ?", [LOOKUP_DEMAND_HISTORY + 1])
-        rows = [[c["value"] for c in r] for r in res["response"]["result"]["rows"]]
+        rows = query_rows(db, "SELECT key, json FROM perm_docs WHERE key LIKE 'discovery_budget_%' "
+                              "ORDER BY key DESC LIMIT ?", [LOOKUP_DEMAND_HISTORY + 1])
     except RuntimeError as exc:
         print(f"lookup demand     : unreadable ({str(exc)[:120]})")
         return 0
@@ -642,17 +564,11 @@ def check_lookup_demand(db) -> int:
 def check_coverage_stated(db) -> int:
     """Every registered dataset says what it CONTAINS, not just how often it arrives.
 
-    The provenance line under every data page has always carried a source, an
-    as-of date and a cadence. Cadence is not coverage, and the gap between them
-    is where this project's two recurring errors live: "quarterly" does not say
-    DOL's files hold only DECIDED cases, and "daily" does not say our sweep
-    includes pending but carries no wage.
-
-    The sentences live in `src/lib/datasetCoverage.ts`. A vitest gate holds
-    their shape, but it cannot see the full registry - most ingests write
-    `data_freshness` with a plain SQL tuple rather than a helper, so scraping
-    finds only a subset. This check has the live registry, so it is the one
-    that can say a NEW dataset shipped without a sentence.
+    Cadence is not coverage: "quarterly" doesn't say DOL's files hold only
+    decided cases, and "daily" doesn't say the sweep includes pending cases but
+    no wage. The sentences live in `src/lib/datasetCoverage.ts`; a vitest gate
+    holds their shape, but only this check sees the live registry, so it is the
+    one that can say a new dataset shipped without a sentence.
     """
     src = (pathlib.Path(__file__).resolve().parent.parent
            / "src" / "lib" / "datasetCoverage.ts")
@@ -663,8 +579,7 @@ def check_coverage_stated(db) -> int:
     stated = set(re.findall(r'^\s*"?([a-z0-9-]+)"?:\s*$|^\s*"?([a-z0-9-]+)"?:\s*"',
                             text, re.M))
     have = {a or b for a, b in stated if (a or b)}
-    res = db.execute("SELECT dataset FROM data_freshness")
-    registered = {str(r[0].get("value")) for r in res["response"]["result"]["rows"]}
+    registered = {str(r[0]) for r in query_rows(db, "SELECT dataset FROM data_freshness")}
     missing = sorted(registered - have)
     if missing:
         print(f"COVERAGE: {len(missing)} dataset(s) registered with no coverage "
@@ -676,15 +591,12 @@ def check_coverage_stated(db) -> int:
     return 0
 
 
-# FIGURES READ BY HAND FROM A PAGE NO SCRIPT CAN REACH (2026-09-26).
-# USCIS's processing-times page (egov.uscis.gov) answers every script with a
-# Cloudflare challenge, from any address, so its "80% within N months" figures
-# for each I-140 class are read in a browser and typed into
-# src/lib/processing-times/i140ProcessingTimes.ts with the date read. Their age
-# used to be a unit test that failed after eight months, which would have
-# blocked every deploy on the day it tripped. It lives here instead: a warning
-# once the figures are older than USCIS's own six-month window, a failure only
-# when they've gone unrefreshed for most of a year.
+# Figures read by hand from a page no script can reach: USCIS's processing-times
+# page answers every script with a Cloudflare challenge, so its I-140 figures
+# are read in a browser and typed into
+# src/lib/processing-times/i140ProcessingTimes.ts with the date read. A warning
+# once they are older than USCIS's own six-month window; a failure only when
+# they've gone unrefreshed for most of a year.
 HAND_READ_WARN_DAYS = 120
 HAND_READ_FAIL_DAYS = 270
 
@@ -734,10 +646,7 @@ def main() -> int:
         "FROM data_freshness "
         "ORDER BY dataset"
     )
-    rows = [
-        [None if c["type"] == "null" else c["value"] for c in r]
-        for r in res["response"]["result"]["rows"]
-    ]
+    rows = rows_of(res)
 
     # A checker that cannot see its subject reads exactly like a pass. This has
     # bitten this project twice today alone.
@@ -760,40 +669,29 @@ def main() -> int:
         data_stale = age > budget
         bad = data_stale
 
-        # AN `as_of` IN THE FUTURE MAKES THE BUDGET UNTRIPPABLE. The visa
-        # bulletin is dated by the month it COVERS, and that month is always
-        # ahead of the day it is published: the September bulletin exists in
-        # August, so its age reads -34 days and no budget can ever be
-        # exceeded. That row was printing `ok` for a reason that had nothing
-        # to do with the ingest still running.
-        #
-        # `as_of` answers "is the SOURCE still publishing". `fetched_at`
-        # answers "is OUR INGEST still running", and only the second one is
-        # monotonic. Check both, and let either trip.
+        # `as_of` answers "is the source still publishing" and can be in the
+        # future (the visa bulletin is dated by the month it covers, published
+        # the month before), so it alone could never trip. `fetched_at` answers
+        # "is our ingest still running". Check both, and let either trip.
         run_age = None
         if fetched_at is not None:
             run_age = (NOW_MS - int(fetched_at)) / 86_400_000
-            # A run budget of twice the data budget, floored at a week: an
-            # ingest is allowed to be idle between publications, but not
-            # forever. This is what would have caught a dead ingest behind a
-            # future-dated row.
+            # A run budget of twice the data budget, floored at a week: an ingest
+            # may be idle between publications, but not forever.
             run_budget = max(7, budget * 2)
             if run_age > run_budget:
                 bad = True
                 stale.append((dataset + " (has not RUN)", int(run_age),
                               run_budget, source))
-        # Report the as_of line ONLY when the as_of is genuinely over budget.
-        # Keying it off `bad` printed "visa-bulletin: -34 days old" in an
-        # alert - a false statement, and the fastest way to teach someone to
-        # skim past the true line sitting next to it.
+        # Report the as_of line only when the as_of itself is over budget, so a
+        # future-dated row never prints a false "-34 days old".
         if data_stale:
             stale.append((dataset, age, budget, source))
         print(f"{dataset:22s} {str(as_of):12s} {age:>5}d {budget:>6}d  "
               f"{'STALE' if bad else 'ok'}")
 
-    # RUN BEFORE THE EARLY RETURNS BELOW. A stale dataset and a failed run
-    # are independent defects and the report must show both, or fixing the
-    # loud one hides the quiet one until tomorrow.
+    # Before the early returns below: a stale dataset and a failed run are
+    # independent defects, and the report shows both.
     runs_bad = check_runs(db)
     print()
     frontier_bad = check_frontier(db)
@@ -815,16 +713,9 @@ def main() -> int:
         print(f"STALE: {len(stale)} dataset(s) past their own budget")
         for dataset, age, budget, source in stale:
             print(f"  {dataset}: {age} days old, budget {budget} - source: {source}")
-        # NAME WHICH HALF BROKE. A row is stale for two opposite reasons and
-        # they need opposite responses: our ingest stopped running (fix us),
-        # or the SOURCE stopped publishing while our ingest keeps fetching
-        # cleanly (fix nothing, watch it). Measured 2026-09-13: DOL had not
-        # republished its processing times since 2026-08-31, the workflow was
-        # green that morning and had read DOL's own unchanged as-of stamp an
-        # hour earlier - and this message still said "an ingest has stopped",
-        # which is a 20-minute detour through Actions logs to learn nothing.
-        # `(has not RUN)` is appended above only for the fetched_at case, so
-        # the two are already distinguishable here.
+        # Name which half broke: our ingest stopped running (fix us), or the
+        # source stopped publishing while our ingest keeps reading it (watch
+        # it). `(has not RUN)` is appended above only for the first.
         failing, watching = freshness_verdict(stale)
         not_run = [d for d, *_ in failing if d.endswith("(has not RUN)")]
         silent = [d for d, *_ in failing if not d.endswith("(has not RUN)")]

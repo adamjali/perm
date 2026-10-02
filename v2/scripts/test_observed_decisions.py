@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The observed-decision series, and the three ways it could publish a lie.
+"""The observed-decision series, and three ways it could publish a wrong number.
 
     python3 scripts/test_observed_decisions.py
 
@@ -9,25 +9,19 @@ live inside the statements: a `NOT IN` over a grouped subquery, a `GROUP BY`
 on a timestamp, and a `DELETE ... NOT IN` that empties a table if the set it
 was given is empty.
 
-WHAT THIS FILE IS ABOUT. `daily_decisions` held three sources and read one.
-`dol-disclosure` is DOL's own dating and stops at the last published quarter;
-`rival-b` was the rival's series, backfilled once, overlapping ours on 88
-dates; `flag-live` was labelled as our own per-case scan and was in fact
-mirrored from the rival tracker's `daily-summary` endpoint on 2026-08-27T03:25Z, two
-days before our first sweep ever ran. Both are deleted. `sweep-observed`
-replaces them with our own observations out of `perm_case_events`.
+What this guards: `sweep-observed` in `daily_decisions` is this project's own
+series of decisions, folded out of `perm_case_events`, beside `dol-disclosure`
+(DOL's own dating, which stops at the last published quarter). Three things
+have to hold:
 
-Three things have to hold and each was measured, not assumed:
-
-  1. THE FILTERS MATCH THE FEED. `src/lib/turso/changes.ts` renders the same
-     rows per case. If it and the chart disagreed about which rows count, a
+  1. The filters match the feed. `src/lib/turso/changes.ts` renders the same
+     rows per case; if it and the chart disagreed about which rows count, a
      reader could click a day on one and find a different day on the other.
-  2. A CONTAMINATED DAY IS WITHHELD, NOT TRIMMED. 2026-08-28 carries two
-     timestamps, 58 rows and 94,523. Dropping the second leaves 57 decisions,
-     which is a plausible number and a lie.
-  3. NOTHING UNIONS THE SOURCES. `sum(total) GROUP BY date` across this table
-     was already wrong before today: the rival tracker overlapped `dol-disclosure` on
-     88 dates and injected 42,056 phantom decisions into it.
+  2. A contaminated day is withheld, not trimmed. A day carrying a backfill
+     timestamp beside the day's real rows can't be trimmed to the real ones:
+     the remainder is a plausible number and a wrong one.
+  3. Nothing unions the sources. A sum by date across sources double-counts
+     every date they share.
 """
 from __future__ import annotations
 
@@ -217,10 +211,9 @@ def main() -> int:
                                  "withdrawn": 3, "total": 256},
           str(days["2026-08-30"]))
 
-    # A day the sweep ran and saw nothing decided is a REAL zero. A day it did
-    # not run at all is absent. Storing the second as zero draws a trough that
-    # is indistinguishable from a holiday - the lesson ingest_rfi_funnel.py
-    # already had to learn from the rival tracker's `has_data` flag.
+    # A day the sweep ran and saw nothing decided is a real zero. A day it didn't
+    # run at all is absent: stored as zero, it would draw a trough that looks
+    # exactly like a holiday.
     quiet, _ = csd.fold_observed_decisions(
         [(ts("2026-08-30"), csd.SOURCE, 4), (ts("2026-08-31"), csd.SOURCE, 7)],
         [(ts("2026-08-31"), "CERTIFIED", 2)], "2026-09-01")
@@ -229,13 +222,10 @@ def main() -> int:
     check("a day the sweep never ran on has no row at all",
           "2026-08-29" not in quiet, str(sorted(quiet)))
 
-    # A DAY ONLY THE RETIRED MIRROR WROTE IS NOT A DAY WE OBSERVED. This is
-    # production's 2026-08-27 exactly: one 48-row timestamp from
-    # the rival tracker's watchlist diff, and no DOL sweep of our own until the
-    # next UTC day. Publishing it put a 0 at the head of the series.
-    # Byte-identical to the value stored in `perm_case_events.source` for the
-    # 48 rows the retired mirror wrote. Migrated 2026-09-18; if this string
-    # and the column ever disagree the filter silently matches nothing.
+    # A day only the retired mirror wrote isn't a day we observed: published,
+    # it put a 0 at the head of the series. This string is byte-identical to
+    # `perm_case_events.source` on the rows the mirror wrote; if the two ever
+    # disagree, the filter silently matches nothing.
     MIRROR = "retired mirror (third party; underlying: flag.dol.gov case status)"
     mixed, _ = csd.fold_observed_decisions(
         [(ts("2026-08-27", 3), MIRROR, 48), (ts("2026-08-28", 3), csd.SOURCE, 6)],

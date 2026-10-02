@@ -4,9 +4,7 @@ import Link from "next/link";
 
 import { PageBasics } from "@/components/data/PageBasics";
 import { FinePrint } from "@/components/data/FinePrint";
-import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { UnifiedCaseSearch } from "@/components/tools/UnifiedCaseSearch";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { naicsSectors } from "@/lib/naicsTitles";
 import { getMeta } from "@/lib/turso/cases";
@@ -14,7 +12,10 @@ import { getCaseFieldOptions, getPermHistoryYears } from "@/lib/turso/caseSearch
 import { getLiveRemainderSummary } from "@/lib/turso/liveCases";
 import { getPwdSummary, getPwdDisclosureSummary } from "@/lib/turso/pwdCases";
 import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
+import { getSeasonalSummary } from "@/lib/turso/seasonalCases";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
+import { MoreText } from "@/components/data/MoreText";
+import { formatInt } from "@/lib/format";
 
 /**
  * One search over every DOL filing this site holds.
@@ -34,7 +35,7 @@ import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 
 const TITLE = "Search Every DOL Case";
 const DESCRIPTION =
-  "One search across PERM applications, prevailing wage requests and H-1B LCAs: find every filing an employer has made, with status, dates and wage, sortable.";
+  "One search across PERM, prevailing wage requests, H-1B LCAs and H-2A and H-2B: every filing an employer has made, with status, dates and wage.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -52,16 +53,15 @@ export const metadata: Metadata = withSocialCard({
 // through the route.
 export const revalidate = 86400;
 
-const fmt = (n: number) => n.toLocaleString("en-US");
-
 export default async function CaseSearchPage() {
-  const [permMeta, permLive, pwd, pwdFile, lca, lcaFile, historyYears, fieldOptions] = await Promise.all([
+  const [permMeta, permLive, pwd, pwdFile, lca, lcaFile, seasonal, historyYears, fieldOptions] = await Promise.all([
     getMeta().catch(() => null),
     getLiveRemainderSummary().catch(() => null),
     getPwdSummary().catch(() => null),
     getPwdDisclosureSummary().catch(() => null),
     getLcaSummary().catch(() => null),
     getLcaDisclosureSummary().catch(() => null),
+    getSeasonalSummary().catch(() => null),
     getPermHistoryYears(),
     getCaseFieldOptions(),
   ]);
@@ -102,6 +102,12 @@ export default async function CaseSearchPage() {
       href: "/lca-cases",
       note: "The ETA-9035 an employer files to sponsor or extend an H-1B.",
     },
+    {
+      label: "H-2A and H-2B",
+      n: seasonal?.total ?? null,
+      href: "/seasonal-cases",
+      note: "Seasonal farm and non-farm filings and their wage requests, from DOL's daily check.",
+    },
   ];
 
   // Sorted the way a reader scans them: the states by volume, because the
@@ -121,30 +127,22 @@ export default async function CaseSearchPage() {
     ...historyYears.filter((h) => !currentYears.some((c) => c.fiscalYear === h.fiscalYear)),
   ].sort((a, b) => (a.fiscalYear < b.fiscalYear ? 1 : -1));
 
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: "Data", href: "/tools" },
-    { name: "Search every case", href: "/case-search" },
-  ]);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
-      <JsonLdScript schema={breadcrumbSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          All three programs, one box
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Search every case an employer has filed
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          Three DOL programs, three case numbers, one employer name: every
-          filing, open and decided.
+          Four DOL programs, four kinds of case number, one employer name:
+          every filing, open and decided.
         </p>
       </header>
 
-      <dl className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
+      <dl className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
         {bands.map((b, i) => (
           <div
             key={b.label}
@@ -154,7 +152,7 @@ export default async function CaseSearchPage() {
           >
             <dt className="text-sm font-bold text-foreground/70">{b.label}</dt>{" "}
             <dd className="mt-1 font-heading text-3xl font-black tabular-nums">
-              {b.n === null ? "—" : fmt(b.n)}
+              {b.n === null ? "—" : formatInt(b.n)}
             </dd>{" "}
             {/* More <dd>s, not <p>s: a <div> inside a <dl> may hold only dt and dd
                 elements, and the two <p>s here failed axe's definition-list rule
@@ -190,23 +188,25 @@ export default async function CaseSearchPage() {
       <section className="mt-12 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">How this search works</h2>{" "}
         <div className="mt-4 space-y-4 text-base leading-relaxed text-foreground/80">
-          <p>
-            <b className="font-bold">One field has to lead.</b> An employer name
-            reaches all three programs and both halves of each. A law firm, a
-            worksite state or an occupation reads DOL&apos;s published files,
-            because that is the only place those columns exist with an index on
-            them{firstYear ? `, and for PERM they reach back to FY${firstYear}` : ""}.
-            Everything else narrows whichever of those you gave.
-            With a case number,{" "}
-            <Link
-              href="/perm-case-status"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              the status lookup
-            </Link>{" "}
-            takes all three prefixes and asks DOL live. Paste one into the box
-            above and it hands you straight there.
-          </p>{" "}
+          <MoreText gist={"Start with an employer, a law firm, a state or a job; everything else narrows it."}>
+            <p>
+              <b className="font-bold">One field has to lead.</b> An employer name
+              reaches every program, live and published. A law firm, a
+              worksite state or an occupation reads DOL&apos;s published files,
+              because that is the only place those columns exist with an index on
+              them{firstYear ? `, and for PERM they reach back to FY${firstYear}` : ""}.
+              Everything else narrows whichever of those you gave.
+              With a case number,{" "}
+              <Link
+                href="/perm-case-status"
+                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              >
+                the status lookup
+              </Link>{" "}
+              takes every prefix and asks DOL live. Paste one into the box
+              above and it hands you straight there.
+            </p>
+          </MoreText>{" "}
           <FinePrint summary="Live versus published, merged records, and why a filing might be missing">
           <p>
             <b className="font-bold">A number is live, a name is not.</b> A case

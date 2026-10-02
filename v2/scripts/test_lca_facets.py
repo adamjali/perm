@@ -177,10 +177,9 @@ for fn_name, py_fn in (("percentileExpr", blf.percentile_select),
           "" if got == expected else f"\n      py: {got[:110]}\n      ts: {expected[:110]}")
 
 # 4b. THE DEFAULT VIEW'S QUERIES RETURN WHAT THE CALLER KEEPS, NOT A ROW PER
-#     CASE. The stats query ended `FROM o` with no aggregate, so it sent one
-#     identical row for every certified LCA (~2.2M) and the caller kept the
-#     first; Turso sent them all, the Oracle database's reply cap refused it on
-#     Sep 29 2026. Run the real function on a real SQLite and count the rows.
+#     CASE. Without a LIMIT the stats query sends one identical row per
+#     certified LCA, past the database's reply cap. Run the real function on a
+#     real SQLite and count the rows.
 import sqlite3  # noqa: E402
 
 

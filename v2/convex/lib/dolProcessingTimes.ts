@@ -224,12 +224,12 @@ export function parseUsDate(input: string): string | null {
  * "September 2025" to "2025-09". Returns null for anything that is not a
  * month-year.
  *
- * ANCHORED, and that is the point. The previous pattern had no `^`/`$`, so it
- * matched the first month-year anywhere in the cell: a cell reading
- * "As of May 2025 the queue is at September 2025" returned 2025-05. A wrong
- * month is worse than a missing one, because null is at least visible
- * downstream while a plausible wrong date is not. Every sibling regex in
- * src/lib/dolFormat.ts was already anchored; this one was the outlier.
+ * ANCHORED, and that is the point. Without `^`/`$` it would match the first
+ * month-year anywhere in the cell: a cell reading "As of May 2025 the queue
+ * is at September 2025" would return 2025-05. A wrong month is worse than a
+ * missing one, because null is at least visible downstream while a plausible
+ * wrong date is not. Every sibling regex in src/lib/dolFormat.ts is anchored
+ * the same way.
  *
  * Accepts "September 2025", "Sept. 2025", "September, 2025" and "09/2025".
  */
@@ -527,10 +527,6 @@ export async function hashSnapshot(snapshot: DolProcessingTimesSnapshot): Promis
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 }
-
-// `monthsBetween` used to live here. Deleted: it had zero callers anywhere,
-// including its own test file, and computed exactly what `monthsMoved` in
-// src/lib/dolFormat.ts already computes for the one place that needs it.
 
 /** The DOL row whose priority date answers "has the queue reached me yet". */
 const ANALYST_REVIEW = /analyst review/i;

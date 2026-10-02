@@ -5,16 +5,13 @@ import { describe, expect, it } from "vitest";
  * A placeholder longer than its input is clipped, and nobody sees it clipped
  * on the machine they wrote it on.
  *
- * Measured on the live page at four phone widths: the hero input has 212px of
- * usable space at 320px, 267 at 375, 282 at 390 and 322 at 430. At the 16px
- * mono face this input uses, a 38-character placeholder measured 365px, so it
- * was clipped on EVERY phone. `G-100-24339-516453` is 18 characters and 173px.
- *
- * 22 characters is roughly 210px in that face, which is the 320px budget. The
- * cap is on characters rather than pixels because a static test cannot measure
- * a font; it is deliberately a little tight so the real check never has to run.
+ * The hero input has 212px of usable space at 320px, the narrowest phone.
+ * It's set in the body face (Inter, 16px): "Case number or employer", 23
+ * characters, measures 196px there (Oct 1 2026). The cap is on characters
+ * because a static test can't measure a font; 24 keeps the longest allowed
+ * placeholder inside 212px at Inter's widths.
  */
-const MAX_CHARS = 22;
+const MAX_CHARS = 24;
 
 describe("the hero case input's placeholder fits a phone", () => {
   const source = readFileSync("src/components/home/HeroSection.tsx", "utf8");

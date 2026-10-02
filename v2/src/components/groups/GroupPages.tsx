@@ -4,11 +4,12 @@ import { notFound } from "next/navigation";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
+import { breadcrumbSchema } from "@/lib/breadcrumbs";
 import { firstThatFits } from "@/lib/describe";
 import { naicsSectorTitle } from "@/lib/naicsSectors";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { countryYears, getGroup, GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
+import { formatInt } from "@/lib/format";
 
 import { GroupIndexTable, type GroupIndexRow } from "./GroupIndexTable";
 import { GroupView } from "./GroupView";
@@ -76,10 +77,6 @@ const COPY: Record<GroupKind, KindCopy> = {
   },
 };
 
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 export function groupIndexMetadata(kind: GroupKind): Metadata {
   const c = COPY[kind];
   const path = GROUP_PATH[kind];
@@ -108,14 +105,9 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
     fyTo: g.fyTo,
     facet: kind === "city" ? g.key.split("|")[1] ?? null : kind === "industry" ? naicsSectorTitle(g.key) : null,
   }));
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Data", href: "/perm-employers" },
-    { name: c.indexH1, href: path },
-  ]);
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
-      <JsonLdScript schema={breadcrumb} />
       <header>
         <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">{c.indexH1}</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">{c.indexLede}</p>
@@ -135,7 +127,7 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
             basePath={path}
             noun={c.noun}
             facetLabel={c.facetLabel}
-            caption={`${fmt(rows.length)} ${c.noun}, busiest first`}
+            caption={`${formatInt(rows.length)} ${c.noun}, busiest first`}
           />
         </div>
       )}
@@ -154,9 +146,9 @@ export async function groupDetailMetadata(kind: GroupKind, slug: string): Promis
   const path = `${GROUP_PATH[kind]}/${slug}`;
   const title = c.detailTitle(g.label);
   // The page's own name leads: without it, two places with the same count
-  // shared one description word for word (our audit, Oct 1 2026).
+  // would share one description word for word.
   const fy = g.fyFrom && g.fyTo ? `, FY${g.fyFrom} to FY${g.fyTo}` : "";
-  const decisions = `${fmt(g.total)} PERM decision${g.total === 1 ? "" : "s"}${fy}`;
+  const decisions = `${formatInt(g.total)} PERM decision${g.total === 1 ? "" : "s"}${fy}`;
   const description = firstThatFits([
     `${title}: ${decisions}, with the approval rate, wages, top sponsors and jobs, from DOL's own files.`,
     `${title}: ${decisions}: approval rate, wages, sponsors and jobs.`,
@@ -175,21 +167,13 @@ export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: s
   if (!g) notFound();
   const c = COPY[kind];
   const years = kind === "country" ? await countryYears(g.key) : undefined;
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: c.indexH1, href: GROUP_PATH[kind] },
-    { name: g.label, href: `${GROUP_PATH[kind]}/${slug}` },
-  ]);
+  const breadcrumb = breadcrumbSchema(`${GROUP_PATH[kind]}/${slug}`, g.label);
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={breadcrumb} />
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link href={GROUP_PATH[kind]} className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            {c.indexH1}
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">{c.detailH1(g.label)}</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">{c.detailH1(g.label)}</h1>{" "}
         {kind === "industry" ? (
           <p className="mt-3 font-mono text-sm tabular-nums text-foreground/70">NAICS {g.key}</p>
         ) : null}

@@ -9,7 +9,7 @@ import { ProcessingTimeEstimate } from "@/components/forms/ProcessingTimeEstimat
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { RFEEntryList } from "@/components/forms/sections/RFEEntryList";
+import { RequestEntryList } from "@/components/forms/sections/RequestEntryList";
 import { differenceInDays, addDays, format as formatDate } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useI140Section } from "@/components/forms/useCaseFormSection";
@@ -487,7 +487,8 @@ export function I140Section(props: I140SectionProps) {
             Request for Evidence (RFE)
           </h4>
 
-          <RFEEntryList
+          <RequestEntryList
+            kind="rfe"
             minReceivedDate={values.i140FilingDate ? formatDate(addDays(new Date(values.i140FilingDate + "T00:00:00"), 1), "yyyy-MM-dd") : undefined}
             receivedDisabled={
               !values.i140FilingDate

@@ -107,7 +107,7 @@ export function getOrganizationSchema(baseUrl: string) {
       contactType: 'customer support',
     },
     // Every brand-owned surface that names the brand (Medium, Product Hunt),
-    // each verified live on 2026-09-07. Brand-owned URLs only on the
+    // each verified live. Brand-owned URLs only on the
     // Organization; the person is her own node below, with her own profile,
     // so a personal profile is never asserted as the brand's.
     sameAs: [...ORGANIZATION_SAME_AS],
@@ -135,25 +135,21 @@ export function getWebSiteSchema(baseUrl: string) {
     '@context': 'https://schema.org',
     '@type': 'WebSite' as const,
     name: 'PERM Tracker',
-    // The lowercase domain is here DELIBERATELY, reversing an earlier decision
-    // in this file that excluded it.
-    //
-    // That decision read the causation backwards: it assumed listing the URL
-    // form was what made Google print the URL. Google's site-names doc says the
+    // The lowercase domain is here DELIBERATELY. Listing the URL form is not
+    // what makes Google print the URL; Google's site-names doc says the
     // opposite, verbatim - "Provide your domain or subdomain name as a backup
     // option. To provide your domain or subdomain as a backup option, add your
     // domain or subdomain name as your alternative name" - and "Your domain or
     // subdomain needs to be in all lowercase ... for our system to detect this
     // as a site name preference." It is a documented fallback, not a cause.
     //
-    // And the feared harm is already the status quo: Google prints
-    // "permtracker.app" in the SERP today, with this list at ['PERMTracker'].
-    // So the only thing this changes is WHY the domain shows - a detected
-    // preference rather than a fallthrough - and it gives the system a legal
-    // second choice for when it declines the primary name.
+    // When Google declines the primary name it prints the domain anyway, so
+    // listing "permtracker.app" beside "PERMTracker" only changes WHY the
+    // domain shows - a detected preference rather than a fallthrough - and
+    // gives the system a legal second choice.
     //
     // It declines it for two documented reasons, neither fixable by markup:
-    // "PERM Tracker" is generic (it IS the search query), and the rival tracker
+    // "PERM Tracker" is generic (it IS the search query), and another site
     // declares the byte-identical string, while Google "generally won't use the
     // same site name for two different sites."
     alternateName: ['PERMTracker', 'permtracker.app'],
@@ -205,22 +201,11 @@ export const APP_RATING = {
  * no aggregateRating in the JSON-LD. The testimonials themselves and the
  * review CTA stay; it is the scorekeeping that goes quiet.
  *
- * SET TO 2 ON ADAM'S CALL, 2026-08-28. It was 10, and the reason it was 10 is
- * worth keeping on the record rather than deleting: a practicing attorney
- * read the site as "trying too hard", and specifically that a centered
- * social-proof band declaring 5.0 over "from 2 attorney reviews" performs
- * beyond its evidence - a practitioner reads the 2 before the stars. That is
- * real user feedback from the audience this product sells to, and it argues
- * against the current value.
- *
- * Adam's decision is that the reviews are genuine and displayed, so they
- * should count. That is his to make, and it is defensible on the terms that
- * actually bind: Google prohibits self-serving review markup for
- * `LocalBusiness` and `Organization` types, ours is `SoftwareApplication`
- * which is on the eligible list, and the requirement that DOES apply - that
- * the marked-up rating be readily visible on the page - is satisfied, because
- * TestimonialsSection renders it from this same constant. The markup and the
- * visible text cannot disagree.
+ * Set to 2. The reviews are genuine and displayed. Google's ban on
+ * self-serving review markup binds `LocalBusiness` and `Organization` types;
+ * ours is `SoftwareApplication`, which is eligible, and the rating is visible
+ * on the page (ReviewsLine renders it from this same constant), so the markup
+ * and the visible text can't disagree.
  *
  * Google may still decline a rich result off two reviews, which costs
  * nothing. Raising APP_RATING.count as reviews arrive needs no other change.

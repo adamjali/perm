@@ -19,9 +19,6 @@
  * 3. On query update, diff current vs. seen IDs
  * 4. For each new unread ID, show toast and add to seen set
  * 5. Prune seen set to only keep current notification IDs
- *
- * Phase: 25.2 (Toast Notifications)
- * Created: 2026-01-03
  */
 
 import { useEffect, useRef, useCallback } from "react";
@@ -29,9 +26,9 @@ import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
-import { api } from "../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
-import type { Id } from "../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 
 // Map notification priority to Sonner toast type
 type ToastVariant = "info" | "warning" | "error" | "success";

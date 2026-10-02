@@ -1,136 +1,180 @@
 import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
+import {
+  ArrowRightIcon,
+  ArrowsClockwiseIcon,
+  BellRingingIcon,
+  BuildingsIcon,
+  CalendarCheckIcon,
+  EnvelopeSimpleIcon,
+  FileMagnifyingGlassIcon,
+  HourglassIcon,
+  ListChecksIcon,
+  MegaphoneIcon,
+  NewspaperIcon,
+  PowerIcon,
+  SealCheckIcon,
+} from "@phosphor-icons/react/ssr";
+import type { Icon } from "@phosphor-icons/react";
 
 import { PrefsRequestForm } from "@/components/prefs/PrefsRequestForm";
 import { AlertLanesFigure } from "@/components/marketing/PageFigures";
+import {
+  ACCOUNT_KINDS,
+  MAIL_KINDS,
+  MAIL_RULES,
+  NOTIFICATION_SETTINGS_PATH,
+  SUBSCRIBER_KINDS,
+  type MailKindId,
+} from "@/lib/mailKinds";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
 /**
- * The one page about everything we email.
+ * Everything PERM Tracker emails, and the one link that turns it off.
  *
- * The alert systems each carry their own unsubscribe links, but nothing let
- * a person SEE what an address is signed up for across all of them. This
- * page requests the magic link (served by the Convex HTTP router at /prefs)
- * and explains the model: prove the inbox, see everything, turn anything
- * off. Turning things ON always happens from the pages that own them.
+ * The alerts each carry their own unsubscribe link, and nothing else let a
+ * person see what an address gets across all of them. This page requests the
+ * preferences link (served by Convex at /prefs) and lists every kind of email
+ * from the shared list in convex/lib/mailKinds.ts, the same names the emailed
+ * page and Settings use. Turning something on always happens on the page that
+ * owns it, never from a link.
  */
 
 export const metadata: Metadata = withSocialCard({
   title: "Email Preferences",
   description:
-    "See everything PERM Tracker sends to your address - case status alerts, queue milestones, visa bulletin movements - and turn any of it off with one link.",
+    "See everything PERM Tracker emails you, from case and queue alerts to the weekly digest, and turn any of it off with one link.",
   alternates: {
     canonical: "/email-preferences",
   },
   openGraph: {
     ...openGraphBase,
     title: "Email Preferences",
-    description:
-      "One link to see and stop everything PERM Tracker emails you.",
+    description: "One link to see and stop everything PERM Tracker emails you.",
     url: "/email-preferences",
   },
 }, "email-preferences");
 
-const KINDS = [
-  {
-    name: "Case status alerts",
-    what: "An email when DOL's status for a case you watch changes. Stops on its own once the case is decided.",
-    from: { label: "Check a case", href: "/perm-case-status" },
-  },
-  {
-    name: "Queue milestone alerts",
-    what: "One email on the day DOL's queue reaches your filing month - the PERM analyst queue, or either prevailing-wage queue.",
-    from: { label: "Processing times", href: "/perm-processing-times" },
-  },
-  {
-    name: "Visa bulletin alerts",
-    what: "An email when the final-action cutoff you watch moves in a new bulletin.",
-    from: { label: "Priority dates", href: "/tools/priority-date-calculator" },
-  },
-  {
-    name: "Product news",
-    what: "Occasional notes about new data and tools. Only if you ticked the box on an alert form.",
-    from: null,
-  },
-  {
-    name: "Weekly bulletin digest",
-    what: "Once it launches: the visa bulletin cutoffs, DOL's queue and any new rule, every Tuesday. Only if you ticked the box on an alert form.",
-    from: null,
-  },
-] as const;
+const KIND_ICONS: Record<MailKindId, Icon> = {
+  case: FileMagnifyingGlassIcon,
+  queue: HourglassIcon,
+  bulletin: CalendarCheckIcon,
+  employer: BuildingsIcon,
+  newsletter: NewspaperIcon,
+  news: MegaphoneIcon,
+  reminders: BellRingingIcon,
+  updates: ArrowsClockwiseIcon,
+  digest: ListChecksIcon,
+};
 
-export default function EmailPreferencesPage() {
+const RULE_ICONS: readonly Icon[] = [SealCheckIcon, EnvelopeSimpleIcon, PowerIcon];
+
+function KindTile({ id }: { id: MailKindId }) {
+  const kind = MAIL_KINDS[id];
+  const Glyph = KIND_ICONS[id];
   return (
-    <div className="mx-auto max-w-3xl px-4 py-12 sm:px-8 sm:py-16">
-      <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-        Email
-      </p>{" "}
-      <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl">
-        Everything we send, in one place
-      </h1>{" "}
-      <p className="mt-4 max-w-2xl text-base leading-relaxed text-foreground/70 sm:text-lg">
-        Every alert here is double opt-in: nothing is ever sent to an address
-        that hasn&apos;t confirmed it. This page emails you a link that shows
-        everything your address is signed up for, and lets you turn any of it
-        off. Turning something on always happens from the page that owns it,
-        never from a link.
-      </p>
-      {/* The figure, before the form. The page asks for an email address, and
-          a reader deciding whether to give one wants to know what arrives -
-          three triggers, one message each, and nothing while nothing moves.
-          The dashed run is that silence drawn. */}
-      <figure className="mt-8 border-2 border-border bg-card p-6 shadow-hard-sm">
-        <AlertLanesFigure className="h-auto w-full text-foreground" />{" "}
-        <figcaption className="mt-4 border-t-2 border-border pt-3 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          One email per change. Nothing while nothing changes.
-        </figcaption>
-      </figure>
-
-      <div className="mt-8">
-        <PrefsRequestForm />
+    <li className="flex flex-col border-2 border-border bg-card p-5 shadow-hard-sm">
+      <div className="flex items-start justify-between gap-3">
+        <span
+          aria-hidden="true"
+          className="grid size-11 shrink-0 place-items-center border-2 border-border bg-primary text-black"
+        >
+          <Glyph className="size-6" weight="bold" />
+        </span>{" "}
+        <span className="border-2 border-border px-2 py-0.5 text-sm font-semibold">{kind.when}</span>
       </div>{" "}
-      <h2 className="mt-12 font-heading text-2xl font-black">What exists</h2>{" "}
-      <ul className="mt-5 space-y-4">
-        {KINDS.map((k) => (
-          /* Keyed Fragment with a real space: mapped siblings render with
-             zero characters between them, and every extractor reads the
-             cards as one glued run. Caught by the rendered audit. */
-          <Fragment key={k.name}>
+      <h4 className="mt-4 font-heading text-lg font-black">{kind.name}</h4>{" "}
+      <p className="mt-1 flex-1 text-base leading-relaxed text-foreground/75">{kind.what}</p>{" "}
+      <Link
+        href={kind.start.href}
+        className="group mt-4 inline-flex min-h-[44px] items-center gap-2 self-start text-sm font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
+      >
+        {kind.start.label}{" "}
+        <ArrowRightIcon aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-0.5" />
+      </Link>
+    </li>
+  );
+}
+
+function KindGroup({ title, ids }: { title: string; ids: readonly MailKindId[] }) {
+  return (
+    <>
+      <h3 className="mt-10 font-heading text-xl font-black">{title}</h3>{" "}
+      <ul className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
+        {ids.map((id) => (
+          /* Keyed Fragment with a real space: mapped siblings otherwise read
+             as one glued run to anything that extracts the text. */
+          <Fragment key={id}>
             {" "}
-            <li className="border-2 border-border bg-card p-4 shadow-hard-sm">
-              <p className="font-heading text-lg font-black">{k.name}</p>{" "}
-              <p className="mt-1 text-base leading-relaxed text-foreground/70">
-                {k.what}
-              </p>{" "}
-              {k.from ? (
-                <p className="mt-2 text-sm">
-                  Set up from{" "}
-                  <Link
-                    href={k.from.href}
-                    className="font-bold underline underline-offset-2 hover:text-primary"
-                  >
-                    {k.from.label}
-                  </Link>
-                </p>
-              ) : null}
-            </li>
+            <KindTile id={id} />
           </Fragment>
         ))}
       </ul>
-      <p className="mt-8 text-sm leading-relaxed text-muted-foreground">
-        Signed in? Your account&apos;s deadline reminders and weekly digest live
-        in{" "}
-        <Link
-          href="/settings?tab=notifications"
-          className="font-bold underline underline-offset-2 hover:text-primary"
-        >
-          notification settings
-        </Link>
-        . The preferences link can turn the weekly digest off too; turning it
-        back on happens there.
+    </>
+  );
+}
+
+export default function EmailPreferencesPage() {
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-12 sm:px-8 sm:py-16">
+      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-5xl">
+        Your email, in one place
+      </h1>{" "}
+      <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/75">
+        See everything PERM Tracker sends you, and turn any of it off.
       </p>
+
+      <div className="mt-10 grid grid-cols-1 items-start gap-8 lg:grid-cols-12 [&>*]:min-w-0">
+        <div className="lg:col-span-7">
+          <PrefsRequestForm />
+        </div>{" "}
+        {/* Beside the form: a reader deciding whether to give an address
+            wants to see what arrives. */}
+        <figure className="m-0 border-2 border-border bg-card p-5 shadow-hard-sm lg:col-span-5">
+          <AlertLanesFigure className="text-foreground" />{" "}
+          <figcaption className="mt-3 border-t-2 border-border pt-3 text-sm font-semibold text-muted-foreground">
+            One email per change. Nothing while nothing changes.
+          </figcaption>
+        </figure>
+      </div>
+
+      <ul className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-3 [&>*]:min-w-0">
+        {MAIL_RULES.map((rule, i) => {
+          const Glyph = RULE_ICONS[i] ?? SealCheckIcon;
+          return (
+            <Fragment key={rule.title}>
+              {" "}
+              <li className="flex gap-3 border-t-3 border-border pt-4">
+                <Glyph aria-hidden="true" className="size-7 shrink-0 text-primary" weight="bold" />{" "}
+                <div>
+                  <p className="font-heading font-black">{rule.title}</p>{" "}
+                  <p className="mt-1 text-base text-foreground/75">{rule.body}</p>
+                </div>
+              </li>
+            </Fragment>
+          );
+        })}
+      </ul>
+
+      <section aria-labelledby="kinds-heading" className="mt-16">
+        <h2 id="kinds-heading" className="font-heading text-2xl font-black sm:text-3xl">
+          What you can get
+        </h2>{" "}
+        <KindGroup title="No account needed" ids={SUBSCRIBER_KINDS} />{" "}
+        <KindGroup title="With an account" ids={ACCOUNT_KINDS} />
+        <p className="mt-6 text-base text-foreground/75">
+          Signed in? Everything sent to your address, alerts included, is in{" "}
+          <Link
+            href={NOTIFICATION_SETTINGS_PATH}
+            className="font-bold underline decoration-primary decoration-2 underline-offset-4 hover:text-primary"
+          >
+            notification settings
+          </Link>
+          .
+        </p>
+      </section>
     </div>
   );
 }

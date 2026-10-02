@@ -10,9 +10,6 @@
  * - RFE/RFI: rfe_alert and rfi_alert types
  *
  * Each tab shows a count badge for the number of notifications in that category.
- *
- * Phase: 24 (Notifications)
- * Created: 2025-12-31
  */
 
 "use client";

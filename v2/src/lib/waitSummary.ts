@@ -3,6 +3,9 @@
  * test it; `src/lib/turso/employerWait.ts` feeds it rows.
  */
 
+import { MS_PER_DAY } from "@/lib/time";
+import { easternDay } from "./time";
+
 export interface WaitSummary {
   n: number;
   p25: number | null;
@@ -13,14 +16,12 @@ export interface WaitSummary {
 /** Under this many decisions an employer gets no median, only the count. */
 export const EMPLOYER_MIN_DECISIONS = 5;
 
-const ET = new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York", year: "numeric", month: "2-digit", day: "2-digit" });
-
 /** Pure: filing dates and final-event stamps to a summary. Exported for the test. */
 export function summariseWaits(pairs: readonly { filed: string; stamp: number }[]): WaitSummary {
   const days = pairs
     .map((p) => {
-      const decided = ET.format(new Date(p.stamp));
-      return Math.round((Date.parse(`${decided}T00:00:00Z`) - Date.parse(`${p.filed.slice(0, 10)}T00:00:00Z`)) / 86_400_000);
+      const decided = easternDay(p.stamp);
+      return Math.round((Date.parse(`${decided}T00:00:00Z`) - Date.parse(`${p.filed.slice(0, 10)}T00:00:00Z`)) / MS_PER_DAY);
     })
     .filter((d) => Number.isFinite(d) && d >= 0)
     .sort((a, b) => a - b);

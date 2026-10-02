@@ -4,11 +4,10 @@
  * card. Cached for the page's own window.
  *
  * It resolves in the SAME order the page does: the published record first,
- * then the live-only record. It used to stop at the first, and because a
- * file-based image is attached to every page in the segment, all ~22,600
- * live-only employer pages advertised an og:image that answered 404 to every
- * link-preview agent (measured 2026-09-23). A slug in neither has no page
- * either, so it stays a 404 here.
+ * then the live-only record. A file-based image is attached to every page in
+ * the segment, so stopping at the first would make every live-only employer
+ * page advertise an og:image that answers 404 to every link-preview agent. A
+ * slug in neither has no page either, so it stays a 404 here.
  */
 import { ENTITY_OG_SIZE, generateEntityOG, generateLiveEmployerOG } from "@/lib/entityOg";
 import { resolveEntity } from "@/lib/turso/entityDetail";

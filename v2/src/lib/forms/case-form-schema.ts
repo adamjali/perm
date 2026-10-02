@@ -5,7 +5,7 @@
  * Integrates with lib/perm validators for PERM-specific rules.
  */
 import { z } from 'zod';
-import type { Id } from '@/../convex/_generated/dataModel';
+import type { Id } from '@convex/_generated/dataModel';
 import {
   validateCase,
   validateProfessionalMethods,
@@ -20,7 +20,8 @@ import {
   CASE_STATUSES,
   PROGRESS_STATUSES,
 } from '../perm';
-import { getMethodCategory } from '@/../convex/lib/perm/recruitment/methodCategories';
+import { getMethodCategory } from '@convex/lib/perm/recruitment/methodCategories';
+import { newEntryId } from '@convex/lib/ids';
 import { captureError } from '@/lib/sentry';
 
 // Re-export isISODateString for backward compatibility
@@ -156,7 +157,7 @@ export type NoteEntry = z.infer<typeof noteSchema>;
  * Generate a unique ID for a new note
  */
 export function generateNoteId(): string {
-  return `note-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return newEntryId('note');
 }
 export type RFIEntry = z.infer<typeof rfiEntrySchema>;
 export type RFEEntry = z.infer<typeof rfeEntrySchema>;

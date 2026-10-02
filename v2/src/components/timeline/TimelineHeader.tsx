@@ -6,9 +6,6 @@
  * - Month labels (Jan, Feb, etc.)
  * - Current month highlighted with subtle background
  * - Responsive sizing
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2025-12-26
  */
 
 "use client";

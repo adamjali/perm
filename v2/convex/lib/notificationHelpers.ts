@@ -19,6 +19,9 @@ import {
 import { DEFAULT_NOTIFICATION_PREFS } from "./userDefaults";
 import { DEADLINE_LABELS } from "./perm/deadlines/types";
 
+/** The most unread notifications counted for one user; a badge past it shows the cap. */
+export const UNREAD_COUNT_CAP = 1000;
+
 // ============================================================================
 // TYPES
 // ============================================================================

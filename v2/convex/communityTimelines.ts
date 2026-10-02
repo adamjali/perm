@@ -15,6 +15,7 @@ import {
 } from "./lib/communityTimeline";
 import { query as mirrorQuery } from "./lib/publicMirror";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
+import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
 
 /**
  * Community timelines: a person's dates after PERM, with DOL's own PERM dates
@@ -30,19 +31,21 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
  * board except a date or a choice from a fixed list.
  */
 
-/** Twenty saves an hour from one address, edits included (6 until Sep 29 2026). */
-export const PER_IP = { limit: 20, windowMs: 60 * 60 * 1000 };
+/** Twenty saves an hour from one address, edits included. */
+export const PER_IP = { limit: 20, windowMs: MS_PER_HOUR };
 /**
  * A thousand new timelines a day across everyone: the cap on the table's
- * growth (300 until Sep 29 2026), kept well inside the board's SCAN_CAP.
+ * growth, kept well inside the board's SCAN_CAP.
  */
-export const GLOBAL_BUDGET = { limit: 1000, windowMs: 24 * 60 * 60 * 1000 };
+export const GLOBAL_BUDGET = { limit: 1000, windowMs: MS_PER_DAY };
 /** At most three timelines on one case from one address (a household, not a flood). */
 const PER_CASE_PER_IP = 3;
 /** The board's scan bound. A table past this has outgrown a single read. */
 const SCAN_CAP = 5_000;
 /** Rows the public board lists, newest first. */
 const BOARD_ROWS = 200;
+/** Rows read for one case: its timelines, or its legacy milestone reports. */
+const PER_CASE_READ = 500;
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
@@ -236,13 +239,13 @@ export const caseSummary = internalQuery({
       ? (await ctx.db
           .query("communityTimelines")
           .withIndex("by_case", (q) => q.eq("caseNumber", caseNumber))
-          .take(500)).filter((r) => r.hiddenAt === undefined)
+          .take(PER_CASE_READ)).filter((r) => r.hiddenAt === undefined)
       : [];
     const legacy = valid
       ? await ctx.db
           .query("caseMilestones")
           .withIndex("by_case", (q) => q.eq("caseNumber", caseNumber))
-          .take(500)
+          .take(PER_CASE_READ)
       : [];
     const stops = CASE_STOPS.filter((s) => !s.verified).map((s) => ({
       id: s.id as string,
@@ -313,9 +316,9 @@ export const board = query({
     rows: v.array(boardRowV),
   }),
   handler: async (ctx) => {
-    // NEWEST first. `take` in creation order kept the OLDEST 5,000, so once
-    // the table passed that every new timeline would have vanished from the
-    // counts and the board (Sep 29 2026 audit). Past the cap the page says the
+    // NEWEST first. `take` in creation order keeps the OLDEST 5,000, so past
+    // that every new timeline would vanish from the counts and the board.
+    // Past the cap the page says the
     // figures cover the newest SCAN_CAP.
     const scanned = await ctx.db.query("communityTimelines").order("desc").take(SCAN_CAP);
     const all = scanned.filter((r) => r.hiddenAt === undefined);
@@ -355,7 +358,7 @@ export const setPermHalf = internalMutation({
     const rows = await ctx.db
       .query("communityTimelines")
       .withIndex("by_case", (q) => q.eq("caseNumber", a.caseNumber))
-      .take(500);
+      .take(PER_CASE_READ);
     const now = Date.now();
     for (const r of rows) {
       await ctx.db.patch(r._id, {
@@ -439,7 +442,7 @@ export const casesToVerify = internalQuery({
   args: { limit: v.number() },
   returns: v.array(v.string()),
   handler: async (ctx, a) => {
-    const dayAgo = Date.now() - 20 * 60 * 60 * 1000;
+    const dayAgo = Date.now() - 20 * MS_PER_HOUR;
     const out = new Set<string>();
     let seen = 0;
     for await (const r of ctx.db.query("communityTimelines").withIndex("by_perm_checked")) {

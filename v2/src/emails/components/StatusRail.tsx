@@ -212,5 +212,3 @@ const styles = {
     lineHeight: "1px",
   },
 } as const;
-
-export default StatusRail;

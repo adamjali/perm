@@ -17,12 +17,9 @@ import {
  * wage carries a unit (403,531 yearly, 32,839 hourly, then monthly, weekly
  * and bi-weekly rows in the FY2026 files), so every figure here is
  * annualised in SQL first: 2,080 hours, 12 months, 52 weeks, 26 fortnights.
- * A real row on the first test day was 9.75 HOURLY, which printed beside
- * six-figure salaries as "$10" until the unit was carried. And the window is
- * the FY2026 disclosure files, decisions from Oct 1 2025, because that is
- * what is loaded; earlier fiscal years are a one-year-at-a-time load
- * (`ingest_flag_disclosure.py --program lca --fy 2025`) that costs about a
- * million writes each, so they are a budget decision, not a code change.
+ * A real row of 9.75 HOURLY would print beside six-figure salaries as "$10"
+ * without its unit. And the window is whatever the disclosure files loaded
+ * into `lca_cases` cover.
  *
  * Every filter is an equality on an indexed column (`lca_cases_soc_st_dec`,
  * `lca_cases_state_st_dec`), and a selection under thirty rows publishes no
@@ -104,10 +101,10 @@ function where(f: LcaWageFilters): { sql: string; args: (string | number)[] } {
  * time, and it is the only selection that walks every row of `lca_cases`. Every
  * other selection is narrowed by an indexed equality and is served live.
  *
- * Measured against production at 1.96M rows, 2026-09-13: the by-state window
- * function takes **33.6 s**, past the read layer's own 20 s deadline, and the
- * stats and histogram about 5 s each. Serially that is ~44 s of a build's 90 s
- * prerender budget for one page, which is what failed the deploy of ded503e5.
+ * Measured against production at 1.96M rows: the by-state window function
+ * takes **33.6 s**, past the read layer's own 20 s deadline, and the stats and
+ * histogram about 5 s each. Serially that is ~44 s of a build's 90 s
+ * prerender budget for one page.
  */
 export function isDefaultLcaFilter(f: LcaWageFilters): boolean {
   return f.status === "certified" && !f.socCode && !f.state && !f.fiscalYear;
@@ -240,14 +237,12 @@ export async function getLcaWageFilterOptions(minCases: number): Promise<{
    * `getWageFilterOptions` has carried for PERM since the salary explorer
    * started blowing its deadline.
    *
-   * WHY IT BECAME NECESSARY. The live version is a triple-nested GROUP BY
-   * over every row of `lca_cases`, plus a sibling aggregate on worksite
-   * state. That was affordable at 437,000 rows. Loading the LCA disclosure
-   * history took the table to 1.96M on 2026-09-13, and the very next
-   * production build died: "/lca-wages took more than 180 seconds", with
-   * `turso query deadline (90000ms, attempt 2)` on this exact statement. A
-   * bare COUNT over the table measures 16.8s now with nothing else running,
-   * so this is the table's size, not contention.
+   * WHY IT IS NECESSARY. The live version is a triple-nested GROUP BY over
+   * every row of `lca_cases`, plus a sibling aggregate on worksite state. At
+   * the table's full history, about two million rows, it outruns a build's
+   * prerender deadline on its own: a bare COUNT over the table takes about
+   * 17 s with nothing else running, so this is the table's size, not
+   * contention.
    *
    * The doc's own `minCases` is checked against the caller's for the same
    * reason as PERM's: a doc built under a different floor offers a state the

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { useId, useState } from "react";
 
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import {
   CASE_NUMBER_ACCURACY,
   parseCaseNumber,

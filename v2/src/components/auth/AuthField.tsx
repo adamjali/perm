@@ -132,7 +132,7 @@ export function AuthField({
         <p
           id={`${id}-error`}
           role="alert"
-          className="text-sm mono font-semibold text-destructive flex items-start gap-1.5"
+          className="text-sm font-semibold text-destructive flex items-start gap-1.5"
         >
           <AlertCircle className="h-3 w-3 shrink-0 mt-[1px]" aria-hidden="true" />
           <span>{error}</span>
@@ -141,7 +141,7 @@ export function AuthField({
         <p
           id={`${id}-help`}
           className={cn(
-            "text-sm mono transition-colors duration-150 flex items-start gap-1.5",
+            "text-sm transition-colors duration-150 flex items-start gap-1.5",
             helperMet
               ? "text-primary font-semibold"
               : "text-muted-foreground",

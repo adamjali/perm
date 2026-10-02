@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { PriorityDateEstimator } from "@/components/tools/PriorityDateEstimator";
 import { BulletinBoard } from "@/components/bulletin/BulletinBoard";
@@ -16,19 +15,16 @@ import { withSocialCard } from "@/lib/socialCard";
 /**
  * Priority dates against the visa bulletin.
  *
- * The one page here built on an archive rather than a live feed, because
- * travel.state.gov refuses automated clients. It is framed as a history for
- * that reason: the movement is both the honest thing to show and the useful
- * one, since this month's number is on the State Department's own page and
- * the direction is not.
+ * The one page here built on the bulletin archive rather than a live DOL
+ * feed. It is framed as a history: the movement is both the honest thing to
+ * show and the useful one, since this month's number is on the State
+ * Department's own page and the direction is not.
  *
- * travel.state.gov began serving 403 to the Internet Archive's crawler in
- * mid-July 2026 (last good capture 2026-07-14, first refusal 2026-07-17), so
- * the archive alone stops at July 2026. The bulletins after it reach this
- * table through a second mirror, which is why the freshness row names both
- * sources. Whatever the newest month turns out to be, the page reads it from
- * the data and states how far behind the live bulletin that leaves it, rather
- * than carrying a month in prose that the ingest can outrun.
+ * The archive is filled from the State Department's own pages, with the
+ * Internet Archive behind it for older months. Whatever the newest month
+ * turns out to be, the page reads it from the data and states how far behind
+ * the live bulletin that leaves it, rather than carrying a month in prose
+ * that the ingest can outrun.
  */
 
 const TITLE = "Visa Bulletin Priority Date Calculator";
@@ -54,18 +50,16 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 86400;
 
 /**
- * The newest bulletin the State Department has actually published, from USCIS.
+ * The newest bulletin the State Department has actually published, as USCIS
+ * names it. USCIS is a separate primary federal source that serves scripts,
+ * and while it publishes no cutoff dates of its own, it does name the
+ * bulletin months it is operating against. That is exactly what the
+ * staleness message needs, and it is sourced rather than guessed.
  *
- * travel.state.gov refuses automated clients and, since mid-July 2026, refuses
- * the Internet Archive's crawler too, so the archived series stops at July
- * 2026 and cannot advance. USCIS is a separate primary federal source that
- * does serve scripts, and while it publishes no cutoff dates of its own, it
- * does name the bulletin months it is operating against. That is exactly what
- * the staleness message needs, and it is sourced rather than guessed.
- *
- * It matters because the bulletin is FORWARD-DATED: on 2026-08-25 the bulletin
- * in force is August and September is already out. Counting from the calendar
- * alone would say "one month behind" when the honest answer is two bulletins.
+ * It matters because the bulletin is FORWARD-DATED: late in a month, the
+ * bulletin in force is that month's and the next one is already out.
+ * Counting from the calendar alone would say "one month behind" when the
+ * honest answer is two bulletins.
  *
  * Never fatal. A failed read leaves the prop null and the component falls back
  * to the calendar comparison, which is weaker but still true.
@@ -130,8 +124,8 @@ async function fetchUscisGuidance(): Promise<UscisGuidance | null> {
     //
     // The "employment-based" half of the sentence is load-bearing, not
     // decoration. The page carries the same sentence for FAMILY-SPONSORED
-    // filings and the two disagree: measured 2026-08-25, employment-based is
-    // "Final Action Dates" while family-sponsored is "Dates for Filing". A
+    // filings and the two can disagree: in a given month employment-based can
+    // be "Final Action Dates" while family-sponsored is "Dates for Filing". A
     // pattern matching a bare "must use the X chart" has five hits on this
     // page and would report the wrong chart about half the time.
     const chartRe = new RegExp(
@@ -238,15 +232,7 @@ export default async function PriorityDateCalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link
-            href="/tools"
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            Tools
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Priority date calculator
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">

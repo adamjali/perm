@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 import { screen, waitFor } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import NotificationList from "../NotificationList";
-import type { Id } from "../../../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 
 vi.mock("convex/react", () => ({
   useQuery: vi.fn(),

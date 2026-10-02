@@ -14,27 +14,39 @@
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { FinePrint } from "@/components/data/FinePrint";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
 import { firstThatFits } from "@/lib/describe";
+import { formatDollars, formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { openGraphBaseNoImage } from "@/lib/openGraphBase";
 import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { socGroup } from "@/lib/socGroups";
 import {
   DisclosureNote,
   LimitsPanel,
-  MIN_DECIDED_FOR_MEDIAN,
   MIN_DECIDED_FOR_RATE,
   PeerList,
   RankLadder,
   ReliabilityBand,
   entityTitle,
-  rateReliability,
 } from "@/components/tools/EntityContext";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
-import { getDatasetSchema } from "@/lib/structuredData";
+import {
+  EntityStatCards,
+  FieldPositionPlate,
+  UnpublishedFilingsNote,
+  approvalCard,
+  entityStanding,
+  medianDaysCard,
+  volumeCard,
+} from "@/components/entities/EntityPageParts";
+import {
+  FALLBACK_BASELINE_DENIAL_PCT,
+  entityJsonLd,
+  entityMetadata,
+  entityStaticParams,
+} from "@/lib/entityPage";
 import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { getLadderByYear, getOccupationStateLadders } from "@/lib/turso/wages";
 import { LadderCombViews, LadderYearViews } from "@/components/wages/LadderViews";
@@ -43,50 +55,24 @@ import { CityMix, PartyMix, StateMix } from "@/components/entities/FilingMakeup"
 import { WorkerMix } from "@/components/entities/WorkerMix";
 import { workerFacets } from "@/lib/turso/employerHistory";
 import { aliasTarget, entityFacets } from "@/lib/turso/entityDetail";
-import {
-  comparables,
-  fieldDistribution,
-  getBySlug,
-  listByKind,
-  PRERENDERED_ENTITY_HEAD,
-} from "@/lib/turso/entities";
+import { comparables, fieldDistribution, getBySlug } from "@/lib/turso/entities";
 
-// The disclosure files are quarterly, so an hourly window bought
-// nothing and cost a regeneration per page per hour across 21,178
-// entity pages. A day bounds staleness far below the data's own
-// cadence. The ingest should also revalidate on demand.
 /**
- * SEVEN DAYS, NOT ONE, AND THE REASON IS THE SOURCE'S CADENCE.
+ * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
  *
- * These pages render the QUARTERLY disclosure corpus. There are ~20,700 of
- * them and only the top 100 of each kind are prerendered, so every other one
- * regenerates on first request after its window expires. At revalidate=86400
- * that is up to 21,000 cold server renders A DAY - each a React SSR pass plus
- * Turso round trips - to reflect data that changes FOUR TIMES A YEAR.
- *
- * Vercel's free Fluid tier is 4 CPU-hours. 21,000 daily renders at even a
- * couple of hundred milliseconds of CPU each consumes it, and the account hit
- * 100% on 2026-08-27 with every public page still serving `x-vercel-cache:
- * HIT` - so it was never the pages people actually visit, it was the
- * regeneration of pages almost nobody opens.
- *
- * Seven days is still 13x more often than the underlying data moves. If a
- * quarter lands and these need to reflect it sooner, the ingest should call
- * on-demand revalidation rather than every page re-rendering on a timer.
+ * These pages render the QUARTERLY disclosure corpus, and only the busiest
+ * are prerendered, so every other one regenerates on its first request after
+ * its window expires. A short window means tens of thousands of cold server
+ * renders a day, each a React SSR pass plus database reads, almost all of
+ * them pages nobody opens and every one triggered by a crawler, to reflect
+ * data that changes FOUR TIMES A YEAR. The live band on a tail page moving a
+ * few weeks late is invisible, and a quarter that must show sooner belongs to
+ * on-demand revalidation, not to a timer.
  */
-// 30 days, up from 7 (2026-08-29, the night ISR writes hit 100% of the
-// Hobby cap). Every crawler hit on an expired tail page is a paid cache
-// write, and 21k pages x weekly expiry was most of the 200k. The stats
-// here move quarterly; the live band on a tail page moving a few weeks
-// late is invisible; the top-100 pages rebuild with every deploy anyway.
 export const revalidate = 2592000;
 
 const KIND = "occupation" as const;
 const BASE = "/perm-wages";
-/** Same literal this file already used for the canonical Dataset url. */
-const ORIGIN = "https://permtracker.app";
-/** DOL's own denial rate, used when the aggregate document cannot be read. */
-const FALLBACK_BASELINE_DENIAL_PCT = 2.57;
 /**
  * DOL leaves the job-title cell unusable on 15 of the 762 occupation rows and
  * prints "N/A". Those rows are real filings with real SOC codes, so the pages
@@ -134,20 +120,6 @@ async function loadSubject(slug: string): Promise<Subject | null> {
   };
 }
 
-function median(xs: number[]): number | null {
-  if (xs.length === 0) return null;
-  const s = [...xs].sort((a, b) => a - b);
-  return s[Math.floor(s.length / 2)] ?? null;
-}
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
-function money(n: number): string {
-  return `$${Math.round(n).toLocaleString("en-US")}`;
-}
-
 /** What to call this occupation when DOL's own title cell is unusable. */
 function displayTitle(row: { title: string; code: string | null }): string {
   if (row.title !== UNUSABLE_TITLE) return row.title;
@@ -155,11 +127,7 @@ function displayTitle(row: { title: string; code: string | null }): string {
 }
 
 export async function generateStaticParams() {
-  // Only the head is prerendered; the rest generate on first request and cache
-  // for an hour. Read from the entity TABLE, so a prerendered slug is one
-  // `getBySlug` can find.
-  const rows = await listByKind(KIND, PRERENDERED_ENTITY_HEAD);
-  return rows.map((r) => ({ slug: r.slug }));
+  return entityStaticParams(KIND);
 }
 
 export async function generateMetadata({
@@ -186,8 +154,8 @@ export async function generateMetadata({
   // before it drops anything a searcher typed.
   // THE COUNT, NOT THE RATE. A specific number in the title is the difference
   // between a generic label and a result someone recognises as the page they
-  // wanted, and it is the one thing the leading competitor does better in the
-  // SERP. But only the count is safe to put here: these pages WITHHOLD the
+  // wanted in the SERP. But only the count is safe to put here: these pages
+  // WITHHOLD the
   // approval rate whenever the sample is too small to support one, and a title
   // has nowhere to carry that caveat - a snippet claiming a perfect rate over
   // three cases is exactly the claim the whole ReliabilityBand exists to
@@ -201,13 +169,13 @@ export async function generateMetadata({
   // entityTitle takes the first qualifier that fits under the 62-char limit and
   // falls back through the rest, so a long name simply keeps the short form.
   const { title, absolute } = entityTitle(name, [
-    `PERM Salary: ${fmt(row.total)} Filings`,
+    `PERM Salary: ${formatInt(row.total)} Filings`,
     "PERM Salary and Filings",
     "PERM Salary",
   ]);
   const wagePart =
-    row.medianAnnualWage != null ? `: ${money(row.medianAnnualWage)} median offered` : "";
-  const head = `${name} PERM wages${wagePart} across ${fmt(row.total)} filing${row.total === 1 ? "" : "s"}`;
+    row.medianAnnualWage != null ? `: ${formatDollars(row.medianAnnualWage)} median offered` : "";
+  const head = `${name} PERM wages${wagePart} across ${formatInt(row.total)} filing${row.total === 1 ? "" : "s"}`;
   // The richest that fits 155 (lib/describe). No approval rate: this page
   // publishes a wage and no rate.
   const description = firstThatFits([
@@ -215,27 +183,16 @@ export async function generateMetadata({
     `${head}, from DOL's own files.`,
     `${head}.`,
   ]);
-  return {
-    // Thin-page defense: a sub-floor entity page exists for people but is
-    // not offered to the index. The sitemap already omits it.
-    ...(row && !hasOwnPage(row) ? { robots: { index: false, follow: true } } : {}),
-    // When the SOC title alone already fills the space Google shows, the
-    // brand suffix is the least valuable thing in it - `absolute` drops the
-    // "| PERM Tracker" template rather than crowding out the searched phrase.
-    title: absolute ? { absolute: title } : title,
+  // When the SOC title alone already fills the space Google shows, the
+  // brand suffix is the least valuable thing in it - `absolute` drops the
+  // "| PERM Tracker" template rather than crowding out the searched phrase.
+  return entityMetadata({
+    title,
+    absolute,
     description,
-    alternates: { canonical: `${BASE}/${slug}` },
-    openGraph: {
-      ...openGraphBaseNoImage,
-      title: `${title} | PERM Tracker`,
-      description,
-      url: `${BASE}/${slug}`,
-    },
-    // A segment-level `twitter` so the root layout's twitter.images does not
-    // win: the file-convention card beside this page then fills twitter:image
-    // as well as og:image. Title and description resolve from the page's own.
-    twitter: { card: "summary_large_image" },
-  };
+    path: `${BASE}/${slug}`,
+    noindex: !hasOwnPage(row),
+  });
 }
 
 export default async function OccupationPage({
@@ -287,36 +244,19 @@ export default async function OccupationPage({
   const ladder = stats?.wageLadder ?? null;
   const name = displayTitle(row);
 
-  const dataset = getDatasetSchema(ORIGIN, {
-    name: `${name} PERM offered wages and filings`,
-    description: `PERM wage and filing record for ${name} from DOL disclosure data.`,
-    url: `${ORIGIN}${BASE}/${slug}`,
-    dateModified: freshness["perm-cases"]?.asOf ?? undefined,
-    variableMeasured: ["filings", "certified", "denied", "median offered wage"],
+  const schema = entityJsonLd({
+    path: `${BASE}/${slug}`,
+    name,
+    dataset: {
+      name: `${name} PERM offered wages and filings`,
+      description: `PERM wage and filing record for ${name} from DOL disclosure data.`,
+      variableMeasured: ["filings", "certified", "denied", "median offered wage"],
+    },
+    freshness,
   });
 
-  // Home > Occupations > this page. Breadcrumbs tell Google the shape of the site,
-  // which is what it reads to decide a result deserves a hierarchy rather than
-  // a bare link. The blog carried these; the ~20,960 pages that ARE the product
-  // did not.
-  const schema = {
-    "@context": "https://schema.org",
-    "@graph": [
-      dataset,
-      generateBreadcrumbSchema([
-        { name: "Home", href: "/" },
-        { name: "Occupations", href: BASE },
-        { name: name, href: `${BASE}/${slug}` },
-      ]),
-    ],
-  };
-
-  const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
-  const inCohort = reliability.tier !== "withheld";
-  const fieldDays = median(dist.medianDays);
-  const daysDelta =
-    row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null;
-  const thinMedian = reliability.decided < MIN_DECIDED_FOR_MEDIAN;
+  const standing = entityStanding(row, dist, baselineDenialPct);
+  const { reliability, inCohort } = standing;
   // Each caveat leads with THIS occupation's own figure. See the note on the
   // attorney page: the entity long tail is what GSC has discovered and never
   // crawled, and 721 words of every entity page were byte-identical.
@@ -333,24 +273,14 @@ export default async function OccupationPage({
       <JsonLdScript schema={schema} />
 
       <header className="max-w-3xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
-          <Link
-            href={BASE}
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            All occupations
-          </Link>{" "}
-          · #{fmt(row.rank)}
-          {kindTotal > 0 ? ` of ${fmt(kindTotal)}` : ""} by volume
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           {name}
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           {row.code ? `SOC ${row.code}` : "No SOC code on file"}
           {group ? `, in the ${group.toLowerCase()} major group` : ""}.{" "}
-          {fmt(row.total)} PERM filings in DOL&apos;s current disclosure window,{" "}
-          {fmt(row.certified)} certified and {fmt(row.denied)} denied.
+          {formatInt(row.total)} PERM filings in DOL&apos;s current disclosure window,{" "}
+          {formatInt(row.certified)} certified and {formatInt(row.denied)} denied.
           {row.title === UNUSABLE_TITLE
             ? " DOL's job-title cell is unusable on these rows, so the code is the only name they have."
             : ""}
@@ -367,112 +297,45 @@ export default async function OccupationPage({
       />
 
       <section className="pop mt-8">
-        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border sm:grid-cols-4">
-          {[
+        <EntityStatCards
+          cards={[
             {
               k: "Median wage",
-              v: row.medianAnnualWage == null ? "—" : money(row.medianAnnualWage),
-              sub: ladder?.p50 != null ? `all PERM ${money(ladder.p50)}` : "",
+              v: row.medianAnnualWage == null ? "—" : formatDollars(row.medianAnnualWage),
+              sub: ladder?.p50 != null ? `all PERM ${formatDollars(ladder.p50)}` : "",
             },
-            {
-              k: "Filings",
-              v: fmt(row.total),
-              sub: kindTotal > 0 ? `#${fmt(row.rank)} of ${fmt(kindTotal)}` : "",
-            },
-            {
-              k: "Approval",
-              v: reliability.ratePct == null ? "—" : `${reliability.ratePct.toFixed(1)}%`,
-              sub:
-                reliability.ratePct == null
-                  ? `withheld: ${fmt(reliability.decided)} decided`
-                  : `field ${(100 - baselineDenialPct).toFixed(1)}%`,
-            },
-            {
-              k: "Median days",
-              v: row.medianDays == null ? "—" : fmt(Math.round(row.medianDays)),
-              sub: thinMedian
-                ? `middle of ${fmt(reliability.decided)} decided`
-                : daysDelta == null
-                  ? ""
-                  : Math.round(daysDelta) === 0
-                    ? "at the field median"
-                    : `${fmt(Math.abs(Math.round(daysDelta)))} ${daysDelta > 0 ? "slower" : "faster"} than the field`,
-            },
-          ].map((d) => (
-            <div key={d.k} className="bg-card p-5">
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
-                {d.k}
-              </p>{" "}
-              <p className="mt-1.5 font-heading text-2xl font-black tabular-nums">{d.v}</p>{" "}
-              {d.sub ? <p className="mt-1 text-xs text-foreground/70">{d.sub}</p> : null}
-            </div>
-          ))}
-        </div>
+            volumeCard("Filings", row, kindTotal),
+            approvalCard(reliability, baselineDenialPct),
+            medianDaysCard(row.medianDays, standing),
+          ]}
+        />
       </section>
 
-      {dist.cohort >= 8 ? (
-        <FigurePlate
-          n="01"
-          title="Position in the field"
-          subject={`${fmt(dist.cohort)} occupations with ${dist.minDecided}+ decided`}
-          caption={
-            <>
-              Each bar counts occupations at that value. PERM runs two labour
-              markets through one process, which is why the wage axis is two
-              humps rather than a bell.{" "}
-              {inCohort
-                ? "The line marks this one."
-                : `This occupation has ${fmt(reliability.decided)} decided cases, so its wage and its median days are marked but left unranked, and no approval rate is drawn at all.`}{" "}
-              {dist.complete
-                ? ""
-                : "The scan behind this cohort didn’t reach past the last qualifying occupation, so read it as the busiest part of the field rather than all of it. "}
-            </>
-          }
-          source="DOL PERM disclosure files"
-          className="mt-10"
-        >
-          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-8 md:grid-cols-3">
-            <FieldPosition
-              population={dist.wages}
-              value={row.medianAnnualWage}
-              subjectInPopulation={wageInCohort}
-              valueLabel={
-                row.medianAnnualWage == null ? "—" : money(row.medianAnnualWage)
-              }
-              measure="Median offered wage"
-              betterWhen="higher"
-              aheadVerb="above"
-              format={(n) => `$${Math.round(n / 1000)}k`}
-              note={`median of ${fmt(row.total)} filings, too few decided to rank`}
-            />
-            <FieldPosition
-              population={dist.approval}
-              value={inCohort ? reliability.ratePct : null}
-              valueLabel={
-                reliability.ratePct == null ? "not shown" : `${reliability.ratePct.toFixed(1)}%`
-              }
-              measure="Approval rate"
-              betterWhen="higher"
-              format={(n) => `${n.toFixed(0)}%`}
-              note={`under ${dist.minDecided} decided`}
-            />
-            {/* The days figure is real whatever the case count is, so the
-                marker is drawn even for a subject outside the population. What
-                is withheld is the PERCENTILE, because a percentile is a claim
-                about membership and this subject is not a member. */}
-            <FieldPosition
-              population={dist.medianDays}
-              value={row.medianDays}
-              subjectInPopulation={inCohort}
-              valueLabel={row.medianDays == null ? "—" : `${Math.round(row.medianDays)} days`}
-              measure="Median days to decision"
-              betterWhen="lower"
-              format={(n) => `${Math.round(n)}d`}
-              note={`middle of ${fmt(reliability.decided)} decided, too few to rank`}
-            />
-          </div>
-        </FigurePlate>
-      ) : null}
+      <FieldPositionPlate
+        n="01"
+        singular="occupation"
+        plural="occupations"
+        dist={dist}
+        standing={standing}
+        medianDays={row.medianDays}
+        lead="Each bar counts occupations at that value. PERM runs two labour markets through one process, which is why the wage axis is two humps rather than a bell."
+        outOfCohortNote={`This occupation has ${formatInt(reliability.decided)} decided cases, so its wage and its median days are marked but left unranked, and no approval rate is drawn at all.`}
+        first={
+          <FieldPosition
+            population={dist.wages}
+            value={row.medianAnnualWage}
+            subjectInPopulation={wageInCohort}
+            valueLabel={
+              row.medianAnnualWage == null ? "—" : formatDollars(row.medianAnnualWage)
+            }
+            measure="Median offered wage"
+            betterWhen="higher"
+            aheadVerb="above"
+            format={(n) => `$${Math.round(n / 1000)}k`}
+            note={`median of ${formatInt(row.total)} filings, too few decided to rank`}
+          />
+        }
+      />
 
       {/* The wage percentiles. A single median is the figure that brings
           people to this page and it is also the one that misleads them: it
@@ -589,35 +452,36 @@ export default async function OccupationPage({
         className="mt-12"
       />
 
+      {/* ONE LINE AND A LINK, THE READING FOLDED. */}
       <section className="mt-12 border-2 border-border bg-tint-primary p-6 shadow-hard-sm sm:p-8">
         <h2 className="font-heading text-xl font-black">Reading the wage</h2>{" "}
-        <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/70">
-          This is the median wage employers committed to in federal filings for
-          this occupation. It mixes every experience level and every metro, and
-          it&apos;s a floor: the employer must offer at least the prevailing wage
-          DOL determines for the occupation, level and county.
-          {ladder?.p25 != null && ladder.p75 != null ? (
+        <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
+          A floor, not a salary survey: every level and metro mixed.
+          {row.code ? (
             <>
               {" "}
-              Across all PERM filings the middle half of offered wages runs{" "}
-              {money(ladder.p25)} to {money(ladder.p75)}, so a figure inside
-              that band is unremarkable whichever occupation it belongs to.
+              <Link
+                href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
+                className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+              >
+                DOL&apos;s four wage levels for this job
+              </Link>
+              , by area.
             </>
           ) : null}
         </p>{" "}
-        {row.code ? (
-          <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/70">
-            The floor itself, DOL&apos;s four prevailing wage levels for SOC {row.code.trim().slice(0, 7)} in any
-            metro or non-metro area, is one lookup away:{" "}
-            <Link
-              href={`/tools/wage-levels?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              prevailing wage levels
-            </Link>
-            , read live from the OFLC wage search.
+        <FinePrint summary="What the median is" className="mt-2">
+          <p>
+            The median wage employers committed to in federal filings for this
+            occupation. It mixes every experience level and every metro, and
+            it&apos;s a floor: the employer must offer at least the prevailing
+            wage DOL determines for the occupation, level and county.
+            {ladder?.p25 != null && ladder.p75 != null
+              ? ` Across all PERM filings the middle half of offered wages runs ${formatDollars(ladder.p25)} to ${formatDollars(ladder.p75)}, so a figure inside that band is unremarkable whichever occupation it belongs to.`
+              : ""}{" "}
+            The levels page reads DOL&apos;s OFLC wage search live.
           </p>
-        ) : null}
+        </FinePrint>
       </section>
 
       <LimitsPanel
@@ -638,7 +502,7 @@ export default async function OccupationPage({
             head: "A median isn’t an offer",
             body: (
               <>
-                It&apos;s the middle of all {fmt(row.total)} wages committed to
+                It&apos;s the middle of all {formatInt(row.total)} wages committed to
                 for this occupation across the country, entry level and
                 principal alike. The same
                 role&apos;s medians swing hard by worksite, which the{" "}
@@ -673,7 +537,7 @@ export default async function OccupationPage({
             head: "Nothing here is pending",
             body: (
               <>
-                All {fmt(row.total)} counted here carry a decision date, because
+                All {formatInt(row.total)} counted here carry a decision date, because
                 every case in DOL&apos;s disclosure files does, so a case still
                 waiting is in none of them.{topEmp ? ` The largest filer of this
                 occupation is ${topEmp.label}.` : ""}
@@ -715,7 +579,7 @@ export default async function OccupationPage({
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Setting one?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            All {kindTotal > 0 ? fmt(kindTotal) : ""} occupations sort together
+            All {kindTotal > 0 ? formatInt(kindTotal) : ""} occupations sort together
             on the{" "}
             <Link
               href={BASE}
@@ -734,9 +598,7 @@ export default async function OccupationPage({
           </p>
         </div>
       </section>
-      <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">
-        Filings newer than DOL&apos;s last published file can&apos;t be attributed to this occupation until DOL publishes them. The <Link href="/perm-cases#live" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">live list</Link> on the case search page carries them by employer.
-      </p>{" "}
+      <UnpublishedFilingsNote subject="occupation" />{" "}
       <DataProvenance datasets={["perm-cases", "entities"]} />
     </div>
   );

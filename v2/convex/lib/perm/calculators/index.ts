@@ -52,11 +52,9 @@ export {
   type EstimateModel,
   type EstimateModelId,
 } from './queueEstimate';
-// Decision-pace estimation: cases-ahead divided by DOL's measured daily rate,
-// the shape both rivals use. Exported and tested but NOT yet feeding any
-// rendered number - the substitution it would need in production (our
-// observation dates for DOL's decision dates) has zero days of overlap to be
-// validated against until FY2026 Q4 publishes. See the module header.
+// Decision-pace estimation: cases ahead divided by DOL's measured daily rate.
+// It leads the PERM estimate; the module header says where its rate comes
+// from and how that is checked.
 export {
   measurePace,
   estimateByPace,

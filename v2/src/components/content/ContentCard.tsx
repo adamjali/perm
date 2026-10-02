@@ -77,7 +77,7 @@ export default function ContentCard({
               />
               {/* Type badge overlay */}
               {showType && (
-                <span className="absolute left-3 top-3 border-2 border-black bg-primary px-2 py-0.5 font-heading text-xs font-bold uppercase tracking-wide text-black">
+                <span className="absolute left-3 top-3 border-2 border-black bg-primary px-2 py-0.5 font-heading text-sm font-bold uppercase tracking-wide text-black">
                   {config.label}
                 </span>
               )}
@@ -115,7 +115,7 @@ export default function ContentCard({
             </p>
 
             {/* Meta row */}
-            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <CalendarIcon className="h-3 w-3" />
                 {new Date(meta.date).toLocaleDateString("en-US", {

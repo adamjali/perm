@@ -13,6 +13,8 @@
  * address.
  */
 
+import { MS_PER_DAY } from "@/lib/time";
+
 /**
  * What a rival published for the SAME case on the same day.
  *
@@ -56,6 +58,10 @@ export interface Prediction {
   rivals?: RivalPrediction[];
 }
 
+/** Shared by the four entries recorded the day the decision-pace model took the lead. */
+const FIRST_DECISION_PACE_NOTE =
+  "The decision-pace model's first predictions, from the day it became the lead model (13 September 2026): cases ahead from the live census divided by DOL's measured 625 decisions a day, with the range from that rate's own spread. Recorded across four filing months, so the model is also tested far from the front of the queue, and copied from the live page as a reader saw it.";
+
 export const PREDICTIONS: Prediction[] = [
   {
     recorded: "2026-08-28",
@@ -78,8 +84,7 @@ export const PREDICTIONS: Prediction[] = [
     anchorIso: "2026-10-02",
     windowFrom: "2026-09-30",
     windowTo: "2026-10-08",
-    note:
-      "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. Recorded from the LIVE PAGE, not from a harness: an earlier draft of these entries came from calling the calculator directly and was 3 to 5 days out, because the page also applies the measured stage adjustment and the employer-initial shift. This interface says the anchor is the one the page printed, so it has to be.",
+    note: FIRST_DECISION_PACE_NOTE,
     rivals: [
       {
         site: "rival-a",
@@ -106,8 +111,7 @@ export const PREDICTIONS: Prediction[] = [
     anchorIso: "2026-11-10",
     windowFrom: "2026-10-31",
     windowTo: "2026-11-28",
-    note:
-      "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. Recorded from the LIVE PAGE, not from a harness: an earlier draft of these entries came from calling the calculator directly and was 3 to 5 days out, because the page also applies the measured stage adjustment and the employer-initial shift. This interface says the anchor is the one the page printed, so it has to be.",
+    note: FIRST_DECISION_PACE_NOTE,
     rivals: [
       {
         site: "rival-a",
@@ -134,8 +138,7 @@ export const PREDICTIONS: Prediction[] = [
     anchorIso: "2026-11-15",
     windowFrom: "2026-11-02",
     windowTo: "2026-12-12",
-    note:
-      "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. Recorded from the LIVE PAGE, not from a harness: an earlier draft of these entries came from calling the calculator directly and was 3 to 5 days out, because the page also applies the measured stage adjustment and the employer-initial shift. This interface says the anchor is the one the page printed, so it has to be.",
+    note: FIRST_DECISION_PACE_NOTE,
     rivals: [
       {
         site: "rival-a",
@@ -162,8 +165,7 @@ export const PREDICTIONS: Prediction[] = [
     anchorIso: "2026-12-21",
     windowFrom: "2026-11-30",
     windowTo: "2027-01-30",
-    note:
-      "The first predictions from the decision-pace model, which became the lead model on 13 September 2026: cases ahead from the live census divided by DOL's measured 625 decisions a calendar day, band from that rate's own p10/p90. Recorded across four filing months on purpose - a model that is only ever scored near the frontier is never tested at the horizon where it can be most wrong. Recorded from the LIVE PAGE, not from a harness: an earlier draft of these entries came from calling the calculator directly and was 3 to 5 days out, because the page also applies the measured stage adjustment and the employer-initial shift. This interface says the anchor is the one the page printed, so it has to be.",
+    note: FIRST_DECISION_PACE_NOTE,
     rivals: [
       {
         site: "rival-a",
@@ -190,8 +192,7 @@ export interface Score {
   inWindow: boolean;
 }
 
-const dayMs = 86_400_000;
-const days = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / dayMs);
+const days = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / MS_PER_DAY);
 
 /** Score one prediction against the day DOL decided. */
 export function scorePrediction(p: Prediction, decidedOn: string): Score {

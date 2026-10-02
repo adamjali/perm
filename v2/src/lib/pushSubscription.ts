@@ -22,9 +22,6 @@
  *   }
  * }
  * ```
- *
- * Phase: 24 (Notifications)
- * Created: 2025-12-31
  */
 
 import { captureError } from "@/lib/sentry";

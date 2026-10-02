@@ -8,23 +8,28 @@
 import { v } from "convex/values";
 import { query, mutation } from "./_generated/server";
 import { requireAdmin } from "./lib/admin";
-import { normalizeIp } from "./abuseBlocklist";
 import { getUserSuspension, setSuspension, clearSuspension } from "./lib/suspension";
+import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
 
 /**
  * Aggregate summary numbers for the dashboard's top-of-page KPI cards.
  * Single round-trip — computed in one query to avoid multiple waterfalls.
  */
+/** Rows each security panel read takes; the panel is admin-only, so it reads then filters. */
+const SECURITY_READ = 500;
+/** Rate-limit rows read for the last day's strike count. */
+const STRIKES_READ = 4000;
+
 export const getSecuritySummary = query({
   args: {},
   handler: async (ctx) => {
     await requireAdmin(ctx);
     const now = Date.now();
-    const dayAgo = now - 24 * 60 * 60 * 1000;
+    const dayAgo = now - MS_PER_DAY;
 
     // Active blocklist entries (expiresAt > now). Read up to 500 then filter
     // — this dashboard is admin-only so consistency over throughput.
-    const allBlocks = await ctx.db.query("abuseBlocklist").take(500);
+    const allBlocks = await ctx.db.query("abuseBlocklist").take(SECURITY_READ);
     const activeBlocks = allBlocks.filter((b) => b.expiresAt > now);
 
     // Rate-limit rejections in last 24h — we keyed strikes under
@@ -32,17 +37,17 @@ export const getSecuritySummary = query({
     const recentStrikes = await ctx.db
       .query("rateLimits")
       .withIndex("by_timestamp", (q) => q.gte("timestamp", dayAgo))
-      .take(4000);
+      .take(STRIKES_READ);
     const strikeHits = recentStrikes.filter((r) => r.action === "ip_strike").length;
 
     // System errors that might indicate abuse cascade
     const recentErrors = await ctx.db
       .query("systemErrors")
       .withIndex("by_created_at", (q) => q.gte("createdAt", dayAgo))
-      .take(500);
+      .take(SECURITY_READ);
 
     // Flagged users (currently-active suspension)
-    const allProfiles = await ctx.db.query("userProfiles").take(500);
+    const allProfiles = await ctx.db.query("userProfiles").take(SECURITY_READ);
     const flaggedCount = allProfiles.filter((p) => getUserSuspension(p)).length;
 
     return {
@@ -64,7 +69,7 @@ export const listRecentEvents = query({
     limit: v.optional(v.number()),
     sinceMs: v.optional(v.number()), // e.g., 24 * 60 * 60 * 1000 = last 24h
   },
-  handler: async (ctx, { limit = 200, sinceMs = 72 * 60 * 60 * 1000 }) => {
+  handler: async (ctx, { limit = 200, sinceMs = 72 * MS_PER_HOUR }) => {
     await requireAdmin(ctx);
     const cap = Math.min(Math.max(limit, 1), 500);
     const cutoff = Date.now() - sinceMs;
@@ -163,7 +168,7 @@ export const listFlaggedUsers = query({
   args: {},
   handler: async (ctx) => {
     await requireAdmin(ctx);
-    const profiles = await ctx.db.query("userProfiles").take(500);
+    const profiles = await ctx.db.query("userProfiles").take(SECURITY_READ);
     const flagged = profiles
       .map((p) => ({ profile: p, suspension: getUserSuspension(p) }))
       .filter((x): x is { profile: typeof x.profile; suspension: NonNullable<typeof x.suspension> } => x.suspension !== null);
@@ -228,11 +233,3 @@ export const adminSuspendUser = mutation({
   },
 });
 
-/** Echo: normalize helper for admin UIs that want to preview an IP lookup. */
-export const previewIpNormalization = query({
-  args: { ip: v.string() },
-  handler: async (ctx, { ip }) => {
-    await requireAdmin(ctx);
-    return { normalized: normalizeIp(ip) };
-  },
-});

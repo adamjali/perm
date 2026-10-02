@@ -6,19 +6,18 @@
  * signups and in-app cases, and the weekly digest. Data from
  * `adminSignals.getSignals`, read once by the dashboard and handed down.
  *
- * Exists because the first genuine alert subscriber appeared (2026-08-28)
- * and finding out took a database query. What "searched" data is NOT here
- * is deliberate: public lookups redact case numbers from analytics, so
- * there is no per-visitor search log to display - see adminSignals.ts.
+ * Growth signal belongs on the admin page, not in a database query. What
+ * "searched" data is NOT here is deliberate: public lookups redact case
+ * numbers from analytics, so there is no per-visitor search log to display -
+ * see adminSignals.ts.
  *
- * Reworked Sep 26 2026: it was one long card that grew with every
- * subscriber. The lists now collapse, show ten rows until asked for more,
- * and one search box filters all of them.
+ * The lists collapse, show ten rows until asked for more, and one search box
+ * filters all of them, so the panel does not grow with every subscriber.
  */
 
 import { useMemo, useState } from "react";
 import type { FunctionReturnType } from "convex/server";
-import type { api } from "../../../convex/_generated/api";
+import type { api } from "@convex/_generated/api";
 
 export type Signals = FunctionReturnType<typeof api.adminSignals.getSignals>;
 type Sub = Signals["subscriptions"]["caseAlerts"][number];
@@ -165,7 +164,7 @@ export function DigestPanel({ signals }: { signals: Signals }) {
   return (
     <section aria-labelledby="digest-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
       <h2 id="digest-h" className="font-heading text-xl font-black">
-        Weekly bulletin digest
+        Weekly digest
       </h2>{" "}
       <p className="mt-2 text-base">
         Sending is{" "}

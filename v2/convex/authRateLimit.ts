@@ -20,6 +20,7 @@ import { getCurrentUserIdOrNull } from "./lib/auth";
 import { internal } from "./_generated/api";
 import { normalizeIp, findActiveBlock } from "./abuseBlocklist";
 import { recordError } from "./lib/errorRecording";
+import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 
 const ACTION_CONFIG: Record<string, RateLimitConfig> = {
   login: RATE_LIMITS.LOGIN,
@@ -39,8 +40,8 @@ const ACTION_CONFIG: Record<string, RateLimitConfig> = {
 //              caps automated bots at 12k/day sustained
 //   ip_chat  = 120 req / rolling 60 sec / IP = 2 msg/sec, already hyperactive
 const IP_ACTION_CONFIG: Record<string, RateLimitConfig> = {
-  ip_auth: { limit: 500, windowMs: 60 * 60 * 1000 }, // all /api/auth POSTs (signup/login/reset/otp)
-  ip_chat: { limit: 120, windowMs: 60 * 1000 },       // /api/chat POSTs
+  ip_auth: { limit: 500, windowMs: MS_PER_HOUR }, // all /api/auth POSTs (signup/login/reset/otp)
+  ip_chat: { limit: 120, windowMs: MS_PER_MINUTE },       // /api/chat POSTs
 };
 
 /**

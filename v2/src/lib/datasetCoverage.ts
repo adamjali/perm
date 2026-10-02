@@ -1,29 +1,20 @@
 /**
  * What each dataset CONTAINS, as distinct from how often it arrives.
  *
- * The provenance line under every data page already states a source, an as-of
- * date and a cadence. Cadence is not coverage, and the gap between them is the
- * single most confusing thing about this site's numbers:
+ * A source line states a cadence, and cadence is not coverage:
  *
- *   - "Quarterly" does not tell a reader that DOL's disclosure files hold
- *     ONLY DECIDED cases, so nothing computed from them can describe a case
- *     still waiting, and a completion fraction taken from them alone is
- *     always exactly 1.0.
- *   - "Daily" does not tell a reader that our own sweep INCLUDES PENDING
- *     cases but carries no wage, no law firm and no worksite, because DOL
- *     only reveals those at publication.
+ *   - "Quarterly" doesn't say that DOL's disclosure files hold ONLY DECIDED
+ *     cases, so nothing computed from them describes a case still waiting.
+ *   - "Daily" doesn't say that the live sweep INCLUDES PENDING cases but
+ *     carries no wage, law firm or worksite, which DOL reveals only when it
+ *     publishes a case.
  *
- * Read one for the other and you get the two errors this project keeps
- * meeting: a duration averaged over the fastest 2% of a recent month, or a
- * "nothing found" for a case that is simply not decided yet.
+ * Reading one for the other gives a duration averaged over the fastest few
+ * percent of a recent month, or "nothing found" for a case that simply isn't
+ * decided yet. DataProvenance shows these sentences under every data page.
  *
- * Adam, 2026-09-10: "there's also confusion everywhere about the DOL quarterly
- * vs live pending from our scraping, and it should be clarified everywhere
- * what is which."
- *
- * One sentence per dataset, in the reader's terms, never the schema's. A
- * dataset with no entry is a dataset whose coverage nobody has stated, which
- * is why `dataset-coverage.test.ts` fails on one.
+ * One sentence per dataset, in the reader's terms. `dataset-coverage.test.ts`
+ * fails on a dataset without one.
  */
 export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   // --- DOL quarterly disclosure files: decided only -----------------------
@@ -107,6 +98,12 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Approved I-140, I-360 and I-526 petitions whose beneficiary is still waiting for a visa number, by preference and country of birth, as of the month USCIS states. Primary beneficiaries only, dependents excluded.",
   "uscis-i140-class-country":
     "I-140 petitions by the fiscal year USCIS received them and their current status, all countries and the top five, with approvals by class. Counted by filing year, so a recent year is mostly still pending.",
+  // --- ICE SEVIS by the Numbers -------------------------------------------------
+  "sevp-top-employers":
+    "The 200 employers with the most F-1 students on OPT or STEM OPT, and on CPT, for each year ICE published a list, under ICE's own employer names. Top 200 only; a student in two programs at one employer is counted in each.",
+  // --- USCIS H-1B Employer Data Hub -------------------------------------------
+  "uscis-h1b-hub":
+    "H-1B workers USCIS approved and denied per petitioner, by the fiscal year of its FIRST decision, from FY2009. Appeals, revocations and pending petitions are excluded, and the address is the petitioner's mailing address, not where the work is.",
 };
 
 /** The coverage sentence for a dataset, or null when nobody has written one. */

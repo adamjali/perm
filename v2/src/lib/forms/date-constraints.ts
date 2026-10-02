@@ -15,6 +15,7 @@
  */
 
 import { addDays, subDays, format, parseISO } from "date-fns";
+import { MS_PER_DAY } from "@/lib/time";
 import type { CaseFormData } from "./case-form-schema";
 import {
   getFirstRecruitmentDate,
@@ -750,6 +751,6 @@ export function getDaysUntilEta9089Window(values: Partial<CaseFormData>): number
   const windowOpenDate = addDays(parsed, FILING_WINDOW_WAIT_DAYS);
   const today = new Date();
   const diffTime = windowOpenDate.getTime() - today.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffDays = Math.ceil(diffTime / MS_PER_DAY);
   return diffDays;
 }

@@ -2,11 +2,9 @@ import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
-import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { PageBasics } from "@/components/data/PageBasics";
 import { FinePrint } from "@/components/data/FinePrint";
 import { FlagCaseBrowser, LCA_PROGRAM } from "@/components/tools/FlagCaseBrowser";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
@@ -51,20 +49,12 @@ export default async function LcaCasesPage() {
   const earliest = summary?.byMonth.length
     ? [...summary.byMonth].map((m) => m.month).sort()[0] ?? null
     : null;
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: "Data", href: "/tools" },
-    { name: "LCAs", href: "/lca-cases" },
-  ]);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
-      <JsonLdScript schema={breadcrumbSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Live from DOL&apos;s daily check
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Find an H-1B LCA
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">

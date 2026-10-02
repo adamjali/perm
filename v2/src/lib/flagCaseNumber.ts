@@ -37,7 +37,7 @@ import {
 /**
  * The FLAG programs this product tracks per case. `seasonal` is H-2A
  * (`H-300-`), H-2B (`H-400-`) and the H-2B prevailing wage request
- * (`P-400-`), on the same counter and found there on Oct 1 2026.
+ * (`P-400-`), all on the same counter.
  */
 export type FlagProgram = "perm" | "pwd" | "lca" | "seasonal";
 
@@ -51,8 +51,8 @@ export const FLAG_PROGRAMS: readonly FlagProgram[] = ["perm", "pwd", "lca", "sea
  * fallback rather than a pattern. See `programOf`.
  */
 const PROGRAM_PATTERNS: readonly { program: FlagProgram; re: RegExp }[] = [
-  // P-100 only. Until Oct 1 2026 this was any P-###, which filed an H-2B
-  // wage request (P-400) under the PWD program and its ETA-9141 queue.
+  // P-100 only. Any P-### would file an H-2B wage request (P-400) under the
+  // PWD program and its ETA-9141 queue.
   { program: "pwd", re: /^P-100-\d{5}-\d+$/ },
   { program: "seasonal", re: /^(?:H-300|H-400|P-400)-\d{5}-\d+$/ },
   { program: "lca", re: /^I-\d{3}-\d{5}-\d+$/ },

@@ -3,10 +3,13 @@
  * a verdict. Pure, so the email, the admin page and the tests read one answer.
  *
  * `scripts/daily_monitor.py` builds the sections that live outside Convex
- * (ingest health, GitHub Actions, the site, Turso and Vercel bills, traffic,
- * Sentry); `convex/dailyReport.ts` adds the ones only Convex can see. Both
+ * (ingest health, GitHub Actions, the site, the data, traffic, Sentry,
+ * browser errors and the server); `convex/dailyReport.ts` adds the ones only
+ * Convex can see. Both
  * speak this shape, and STATUS_RANK must match RANK in the Python script.
  */
+
+import { MS_PER_DAY } from "./time";
 
 export type SectionStatus = "fail" | "warn" | "unknown" | "off" | "ok";
 
@@ -120,7 +123,6 @@ export function reportText(report: DailyReport): string {
   return out.join("\n");
 }
 
-const DAY_MS = 86_400_000;
 /** Resend's account cap, shared with every other sending path. */
 export const RESEND_DAILY_CAP = 100;
 /** Resend answers 401 or 403 to a send-only key asking for its log. */
@@ -181,7 +183,7 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
   }
   emailLines.push(`Alert outbox: ${f.outbox.sent24h} sent, ${f.outbox.failed24h} failed, ${f.outbox.queued} waiting`);
   if (f.outbox.failed24h) emailStatus.push("warn");
-  if (f.outbox.oldestQueuedAt && now - f.outbox.oldestQueuedAt > DAY_MS) {
+  if (f.outbox.oldestQueuedAt && now - f.outbox.oldestQueuedAt > MS_PER_DAY) {
     emailLines.push("Something has waited in the outbox for over a day");
     emailStatus.push("warn");
   }
@@ -204,14 +206,14 @@ export function convexSections(f: Facts, resend: ResendDay | string, now: number
       emailStatus.push("warn");
     }
     if (rq.waiting > 0) {
-      const stale = rq.oldestQueuedAt !== null && now - rq.oldestQueuedAt > DAY_MS;
+      const stale = rq.oldestQueuedAt !== null && now - rq.oldestQueuedAt > MS_PER_DAY;
       emailLines.push(`${rq.waiting} failed email${rq.waiting === 1 ? "" : "s"} waiting to retry${stale ? ", the oldest for over a day" : ""}`);
       if (stale) emailStatus.push("warn");
     }
   }
   const cq = f.confirmationQueue;
   if (cq && cq.waiting > 0) {
-    const stale = cq.oldestQueuedAt !== null && now - cq.oldestQueuedAt > DAY_MS / 2;
+    const stale = cq.oldestQueuedAt !== null && now - cq.oldestQueuedAt > MS_PER_DAY / 2;
     emailLines.push(`${cq.waiting} confirmation${cq.waiting === 1 ? "" : "s"} waiting in the queue${stale ? ", the oldest for over 12 hours" : ""}`);
     if (stale) emailStatus.push("warn");
   }

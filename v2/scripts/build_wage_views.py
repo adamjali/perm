@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 """Precompute every wage selection big enough to be slow, for both explorers.
 
-WHY THIS EXISTS. The PERM salary explorer and the H-1B (LCA) wage explorer
-compute five percentiles, a histogram and a per-state table over whatever the
-reader filtered to, live, with window functions. On a big selection that is
-slow and it is billed per row:
-
-- Turso's Top Queries, Sep 27 2026 (the four hours after the entity-count
-  fix): the PERM percentiles read 25.9M rows in 5 runs, the PERM per-state
-  table 13.3M, the histogram 3.4M. About 8.5M rows per rebuild of one page.
-- Sentry JAVASCRIPT-NEXTJS-3K: `/api/lca-wages` passed the read layer's 20 s
-  deadline 839 times between Aug 31 and Sep 27. `lca_cases` holds 2.38M rows,
-  and a big occupation (15-1252) alone is most of them.
+Why: the PERM salary explorer and the H-1B (LCA) wage explorer compute five
+percentiles, a histogram and a per-state table over whatever the reader
+filtered to, live, with window functions. On a big selection that reads
+millions of rows (about 8.5M for one PERM page) and can outrun the read
+layer's 20 s deadline (`lca_cases` holds 2.38M rows, and one big occupation is
+most of them).
 
 `build_lca_facets.py` already precomputed ONE selection (the LCA default
 view). This does all of them that matter: every combination of status x
@@ -50,7 +45,7 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_lca_facets import ANNUAL_WAGE_SQL, bin_width, min_for_median  # noqa: E402
-from lib_turso import Turso, record_run  # noqa: E402
+from lib_turso import Turso, cell, query_rows, record_run  # noqa: E402
 
 # A selection at or above this many filings is precomputed. Below it the live
 # query touches at most an index slice and returns in well under a second.
@@ -131,12 +126,10 @@ def read_rows(db: Turso, program: str) -> list[tuple]:
     out: list[tuple] = []
     last = 0
     while True:
-        res = db.execute(sql, [last, PAGE])
-        rows = res["response"]["result"]["rows"]
+        rows = query_rows(db, sql, [last, PAGE])
         if not rows:
             break
-        for r in rows:
-            v = [None if c["type"] == "null" else c["value"] for c in r]
+        for v in rows:
             last = int(v[0])
             wage = None if v[1] is None else float(v[1])
             if wage is None or wage <= 0:
@@ -287,7 +280,7 @@ def verify(db: Turso, program: str, views: dict[str, dict]) -> None:
            "o AS (SELECT wage, ROW_NUMBER() OVER (ORDER BY wage) AS rn FROM f) "
            f"SELECT (SELECT n FROM c) AS n, {percentile_select()}")
     res = db.execute(sql, args)["response"]["result"]
-    row = [None if c["type"] == "null" else c["value"] for c in res["rows"][0]]
+    row = [cell(c) for c in res["rows"][0]]
     live = dict(zip([c["name"] for c in res["cols"]], row))
     mine = views[k]["stats"]
     if int(live["n"]) != mine["n"]:

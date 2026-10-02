@@ -1,9 +1,9 @@
 /**
  * The visitor's country, from Cloudflare's edge.
  *
- * Cookie-free mode (Sep 27 2026) has PostHog drop the IP address BEFORE its
- * GeoIP step, so from Sep 28 every anonymous event arrived with no country
- * (measured: 4,443 of 4,529 pageviews on Sep 30; signed-in events kept theirs).
+ * Cookie-free mode has PostHog drop the IP address BEFORE its GeoIP step, so
+ * without this every anonymous event arrives with no country (signed-in events
+ * keep theirs).
  * Cloudflare already knows the country of every request and prints it at
  * /cdn-cgi/trace as `loc=XX`. Same origin, no cookie, nothing stored, and only
  * the two-letter code is kept: never a city, never the IP.

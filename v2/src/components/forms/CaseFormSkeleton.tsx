@@ -17,9 +17,6 @@
  * - Neobrutalist aesthetic (hard shadows, 2px borders)
  * - Staggered animations (50ms increments)
  * - Dark mode support via CSS variables
- *
- * Phase: 22 (Case Forms)
- * Created: 2025-12-27
  */
 
 import {

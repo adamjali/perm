@@ -24,10 +24,8 @@ export const revalidate = 86400;
 /**
  * How many name matches one answer carries: published rows, and live-only
  * employers. Each is asked for ONE over, so the answer can say "more match,
- * type more of the name" instead of implying it holds everything. They were
- * 100 and 25 with no such flag until Sep 29 2026, and the table said "searched
- * across all of them" over a capped list. Rows are ~80 bytes packed, so 200
- * is ~16 KB.
+ * type more of the name" instead of implying it holds everything. Rows are
+ * ~80 bytes packed, so 200 is ~16 KB.
  */
 const NAME_MATCHES_SHOWN = 200;
 const LIVE_MATCHES_SHOWN = 50;
@@ -55,10 +53,9 @@ export async function GET(
     // TWO CORPORA, ONE QUESTION. `perm_entities` is built from DOL's
     // published quarterly files, so it only holds employers with a decided
     // case in a published quarter. `perm_live_recent` is everything the
-    // published files do not hold, and on 2026-08-30 it named 37,813
-    // employers, 21,495 of them with NO entity row at all - 23% of the
-    // 93,007 employers we hold, unreachable from the one box a person
-    // types a name into.
+    // published files do not hold, and it names tens of thousands of
+    // employers with NO entity row at all, which would otherwise be
+    // unreachable from the one box a person types a name into.
     // They come back in their own field, never merged into `rows`: they have
     // no rank, no rate and no median, and a packed row of zeros would render
     // as a real record of a company that certified nothing.
@@ -71,16 +68,15 @@ export async function GET(
     //
     // The two halves cost wildly different amounts and are wanted at
     // different times. `searchByName` is a LIKE, which SQLite serves by
-    // walking all 71,512 employer rows in rank order, so it only runs when
-    // the client's downloaded slice could not answer - its original trigger.
-    // The live half is an indexed prefix range whose worst measured 2-char
-    // prefix touches 5,365 rows, 13x cheaper, and it answers a question the
-    // client cannot answer locally AT ALL: a search for "lorenz" matches 5
-    // published employers, so the table fills, the remote call would never
-    // fire under the old trigger, and LORENZ BUS SERVICE INC - 174 live
-    // cases, no published record - stays invisible. So the client asks for
-    // the live half on every settled query and pairs it with the expensive
-    // half only when it needs it.
+    // walking every employer row in rank order, so it only runs when the
+    // client's downloaded slice could not answer. The live half is an
+    // indexed prefix range whose worst measured 2-char prefix touches 5,365
+    // rows, 13x cheaper, and it answers a question the client cannot answer
+    // locally AT ALL: a name that matches a few published employers fills
+    // the table, so the expensive call would never fire, while a live-only
+    // employer of that name, with no published record, stays invisible. So
+    // the client asks for the live half on every settled query and pairs it
+    // with the expensive half only when it needs it.
     const liveOnly = url.searchParams.get("scope") === "live";
     // ?limit= lets a small caller (the search palette shows five) ask for
     // less and still learn whether more match. Never above the caps.

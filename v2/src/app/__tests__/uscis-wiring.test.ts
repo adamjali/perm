@@ -110,7 +110,7 @@ describe("the USCIS page and the privacy policy agree", () => {
 
   it("retention in code is the twelve months the policy states", () => {
     const storage = read(STORAGE);
-    expect(storage).toMatch(/RETENTION_MS = 365 \* 24 \* 60 \* 60 \* 1000/);
+    expect(storage).toMatch(/RETENTION_MS = 365 \* MS_PER_DAY\b/);
     const privacy = read(PRIVACY);
     const section = privacy.slice(privacy.indexOf('id="uscis-case-status"'));
     expect(section).toMatch(/twelve months after the last lookup/);

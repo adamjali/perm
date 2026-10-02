@@ -1,29 +1,25 @@
 #!/usr/bin/env python3
 """How much a case's employer initial is actually worth, measured.
 
-WHY THIS FIGURE EXISTS AT ALL. DOL works each filing month in order and, within
-a month, alphabetically by employer name. That is a real ordering rule, it is
-stated in DOL's own material, and every public PERM estimator uses it. What none
-of them publishes is its SIZE, and the size is the whole question: an ordering
-term worth two weeks is a footnote, and one worth five months is the dominant
-factor. A rival prints `employer_letter_impact` from -80 to +80 days - a 160-day
-spread - and markets the initial as roughly 80% of the outcome.
+Why: DOL works each filing month in order and, within a month, alphabetically
+by employer name. That ordering rule is real and stated in DOL's own material,
+but its size is the whole question: an ordering term worth two weeks is a
+footnote, and one worth five months is the dominant factor.
 
-WHAT THE CORPUS SAYS. Pooled over ~340k decided cases, A averages about 11 days
-under the mean and Z about 16 over it: the entire alphabet is worth roughly 27
-days end to end, not 160. Per filing month the first third of the alphabet beats
+What the corpus says: pooled over ~340k decided cases, A averages about 11
+days under the mean and Z about 16 over it, so the entire alphabet is worth
+roughly 27 days end to end. Per filing month the first third of the alphabet beats
 the last third by a median of ~8 days, and in about a sixth of months the
 ordering REVERSES and the back half is faster.
 
-SO BOTH HALVES SHIP, AND THAT IS THE DESIGN. A pooled per-letter mean is the
-shape, and it is the flattering half: it looks like a clean gradient. The
-per-month gap series is the honest half, because a quantity that changes sign in
-a sixth of its observations is not well described by its average, and a reader
-deciding how much weight to give their own initial needs to know it sometimes
-runs the other way. Publishing only the pooled figure would reproduce the
-rival's error at a smaller magnitude.
+So both halves ship. A pooled per-letter mean is the shape, and it's the
+flattering half: it looks like a clean gradient. The per-month gap series is
+the honest half, because a quantity that changes sign in a sixth of its
+observations isn't well described by its average, and a reader deciding how
+much weight to give their own initial needs to know it sometimes runs the
+other way.
 
-WHY A PRECOMPUTE. It is a GROUP BY over every decided row on an expression
+Why a precompute: it's a GROUP BY over every decided row on an expression
 (`UPPER(SUBSTR(employer_name, 1, 1))`) with no covering index, twice - once
 pooled, once per filing month. That is not a request-path query, and
 `disclosure_stats` and `state_profiles` already establish the pattern of a
@@ -43,9 +39,8 @@ import argparse
 import datetime
 import json
 import sys
-import time
 
-from lib_turso import Turso, lit
+from lib_turso import Turso, lit, query_dicts, write_doc
 
 DOC_KEY = "alphabet"
 
@@ -67,8 +62,8 @@ SINCE_MONTH = "2023-01"
 # ...and it STOPS this far back from today, which is the guard that was missing.
 #
 # `perm_cases` holds DECIDED cases only, so a recent filing month contains just
-# the ones already finished - the fast ones. Measured 2026-09-10, the letter
-# span computed over rolling windows:
+# the ones already finished, the fast ones. The letter span over rolling
+# windows, measured:
 #
 #     whole corpus (227,348 cases)   21.0 days
 #     FY2025        (75,631)         22.3 days
@@ -92,20 +87,6 @@ def log(msg: str) -> None:
     print(msg, flush=True)
 
 
-def rows(db: Turso, sql: str, args: list | None = None) -> list[dict]:
-    res = db.execute(sql, args or [])["response"]["result"]
-    cols = [c["name"] for c in res["cols"]]
-    out = []
-    for row in res["rows"]:
-        out.append(
-            {
-                c: (None if cell["type"] == "null" else cell["value"])
-                for c, cell in zip(cols, row)
-            }
-        )
-    return out
-
-
 def maturity_cutoff() -> str:
     """The newest filing month mature enough to measure, as `YYYY-MM-01`."""
     today = datetime.date.today()
@@ -115,7 +96,7 @@ def maturity_cutoff() -> str:
 
 def build(db: Turso) -> dict:
     log("  reading pooled per-letter means...")
-    pooled = rows(
+    pooled = query_dicts(
         db,
         """SELECT UPPER(SUBSTR(TRIM(employer_name), 1, 1)) AS letter,
                   COUNT(*) AS n, AVG(CAST(days AS REAL)) AS mean_days
@@ -145,7 +126,7 @@ def build(db: Turso) -> dict:
     ]
 
     log("  reading the per-month gap between the ends of the alphabet...")
-    per_month = rows(
+    per_month = query_dicts(
         db,
         """SELECT SUBSTR(received_date, 1, 7) AS month,
                   SUM(CASE WHEN UPPER(SUBSTR(TRIM(employer_name),1,1)) BETWEEN 'A' AND 'I'
@@ -215,14 +196,11 @@ def main() -> int:
 
     payload = json.dumps(doc, separators=(",", ":"))
     log(f"  writing perm_docs['{DOC_KEY}'] ({len(payload):,} bytes)")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-        [DOC_KEY, payload, int(time.time() * 1000)],
-    )
+    write_doc(db, DOC_KEY, payload)
 
     # Read it back. An INSERT a pipeline reported as fine is not evidence the
     # row is there in the shape the reader expects.
-    check = rows(db, "SELECT length(json) AS n FROM perm_docs WHERE key = ?", [DOC_KEY])
+    check = query_dicts(db, "SELECT length(json) AS n FROM perm_docs WHERE key = ?", [DOC_KEY])
     if not check or int(check[0]["n"]) != len(payload):
         log("  FAIL: read-back does not match what was written.")
         return 1

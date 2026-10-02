@@ -1,12 +1,12 @@
 /**
  * Accessibility statement.
  *
- * WHY THIS EXISTS (2026-09-22). USCIS grants API access only to organizations
- * that "offer Section 508 compliant" applications, and it reads the policies
- * before it grants anything. The site already builds to the craft floor this
- * page describes (16px body text, 4.5:1 contrast, 44px targets, keyboard paths,
- * reduced motion honoured); what it lacked was a page saying so and a place to
- * report a barrier. This is a statement of the standard and the process, not a
+ * WHY THIS EXISTS. USCIS grants API access only to organizations that "offer
+ * Section 508 compliant" applications, and it reads the policies before it
+ * grants anything. The site builds to the craft floor this page describes
+ * (16px body text, 4.5:1 contrast, 44px targets, keyboard paths, reduced
+ * motion honoured); this page says so and gives a place to report a barrier.
+ * This is a statement of the standard and the process, not a
  * claim of a completed audit, and it says which is which.
  */
 
@@ -16,6 +16,7 @@ import Link from "next/link";
 import { LEGAL_NAME } from "@/lib/constants/about";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { MoreText } from "@/components/data/MoreText";
 
 export const dynamic = "force-static";
 
@@ -52,14 +53,16 @@ export default function AccessibilityPage() {
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
           <section>
             <h2 className="font-heading text-2xl font-bold mt-2 mb-4">The standard</h2>{" "}
-            <p className="text-foreground/80 leading-relaxed">
-              PERM Tracker builds to the Web Content Accessibility Guidelines (WCAG) 2.2
-              at level AA. Section 508 of the Rehabilitation Act incorporates WCAG 2.0 AA
-              for web content, and 2.2 AA includes every one of those success criteria,
-              so meeting the newer standard meets the older one. This page states the
-              standard and how the site is built against it. It doesn&apos;t claim a
-              completed third-party audit, because none has been commissioned.
-            </p>
+            <MoreText gist={"Built to WCAG 2.2 AA, which covers Section 508; no third-party audit yet."}>
+              <p className="text-foreground/80 leading-relaxed">
+                PERM Tracker builds to the Web Content Accessibility Guidelines (WCAG) 2.2
+                at level AA. Section 508 of the Rehabilitation Act incorporates WCAG 2.0 AA
+                for web content, and 2.2 AA includes every one of those success criteria,
+                so meeting the newer standard meets the older one. This page states the
+                standard and how the site is built against it. It doesn&apos;t claim a
+                completed third-party audit, because none has been commissioned.
+              </p>
+            </MoreText>
           </section>{" "}
 
           <section>

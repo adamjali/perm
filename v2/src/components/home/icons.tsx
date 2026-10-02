@@ -1,20 +1,19 @@
 /**
  * Phosphor icons, inlined.
  *
- * `@phosphor-icons/react` is NOT a dependency of this project and package.json
- * is owned by other work in flight, so the sanctioned alternative is used:
- * the real path data, copied verbatim from Phosphor's own source files.
+ * The real path data, copied verbatim from Phosphor's own source files, so
+ * these glyphs need no icon package on the pages that use them.
  *
- * PROVENANCE. Every path below was fetched from the upstream repository on
- * 2026-08-25 and pasted unaltered:
+ * PROVENANCE. Every path below was fetched from the upstream repository and
+ * pasted unaltered:
  *
  *   https://raw.githubusercontent.com/phosphor-icons/core/main/assets/regular/arrow-right.svg
  *   https://raw.githubusercontent.com/phosphor-icons/core/main/assets/regular/arrow-up-right.svg
  *
  * Nothing here is drawn, traced, approximated or transformed. If a glyph is
  * needed that is not in this file, fetch it from that same directory rather
- * than reaching for a shape that looks close enough: a hand-drawn phone
- * handset once shipped in this fleet under a docstring promising Phosphor.
+ * than reaching for a shape that looks close enough: a hand-drawn shape under
+ * a docstring promising Phosphor is exactly the failure to avoid.
  *
  * Phosphor "regular" is a 16-unit stroke already converted to outlines on a
  * 256 viewBox, so these render with `fill="currentColor"` and NO stroke. That

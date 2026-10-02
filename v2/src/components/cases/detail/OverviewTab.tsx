@@ -6,7 +6,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowRightIcon, BriefcaseIcon, CalendarMinusIcon, CalendarPlusIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, CopyIcon, FilePlusIcon, FileTextIcon, FlagIcon, FloppyDiskIcon as Save, PencilIcon, TrashIcon as Trash2 } from "@phosphor-icons/react";
 import { ConvexError } from "convex/values";
-import type { Id } from "@/../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 import { calculateNextAction, calculateNextDeadline } from "./next-up-section.utils";
 import { QuickEditFields, isEditableAction, isComplexAction } from "./quick-edit";
 import { InlineCaseTimeline } from "./InlineCaseTimeline";

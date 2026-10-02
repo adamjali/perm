@@ -1,16 +1,18 @@
+import Link from "next/link";
 import { DolUnanswered } from "@/components/tools/DolUnanswered";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { lookupSeasonalCaseOutcome, type SeasonalRow } from "@/lib/turso/seasonalCasesTypes";
 import { isLookupGap } from "@/lib/dolMiss";
+import { SEASONAL_STATUSES, statusAnchor } from "@/lib/statusDictionary";
 
 /**
  * An H-2A application (`H-300-`), an H-2B application (`H-400-`) or an H-2B
  * prevailing wage request (`P-400-`) by number: DOL's own status, the
  * employer and title it names, and what the status means.
  *
- * Found on FLAG's counter on Oct 1 2026. Before that, these numbers reached
- * the PERM or PWD lookup and came back "no record", or worse, an H-2B wage
- * request was filed under the ETA-9141 queue PERM waits in.
+ * Routed here by prefix, so these numbers never reach the PERM or PWD lookup,
+ * where they would come back "no record" or, worse, an H-2B wage request
+ * would be filed under the ETA-9141 queue PERM waits in.
  */
 
 const FORM: Record<string, string> = {
@@ -48,27 +50,13 @@ function day(iso: string | null): string | null {
 }
 
 /**
- * What a status means, in one sentence. Only statuses whose meaning is in
- * DOL's own rules get one (a Notice of Deficiency is 20 CFR 655.141 for H-2A
- * and 655.31 for H-2B); NRM and NOR fall to the neutral line until read
- * from DOL's own text.
+ * What a status means: the status dictionary's own entry, so the lookup and
+ * /perm-case-statuses cannot say two things about one word. Each entry there
+ * carries a 20 CFR 655 cite or says DOL publishes no definition.
  */
-function meaning(status: string): string {
+function entryFor(status: string) {
   const u = status.trim().toUpperCase();
-  if (u === "IN PROCESS") return "DOL is reviewing it.";
-  if (u === "ACCEPTED - PENDING RECRUITMENT")
-    return "DOL accepted the application for processing; the employer is recruiting U.S. workers before a decision.";
-  if (u === "NOD ISSUED") return "DOL sent a Notice of Deficiency: the employer has to correct the application before it can go on.";
-  if (u === "RFI ISSUED") return "DOL asked the employer for more information.";
-  if (u.startsWith("PENDING")) return "The case is under review at a later stage, an appeal or a Center Director review.";
-  if (u === "FULL CERTIFICATION") return "DOL certified every position the employer asked for. The employer can now petition USCIS.";
-  if (u === "PARTIAL CERTIFICATION") return "DOL certified some of the positions asked for, not all.";
-  if (u.endsWith("- EXPIRED")) return "The certification was granted and its validity has since run out.";
-  if (u.endsWith("- WITHDRAWN") || u === "WITHDRAWN") return "The employer withdrew it. A withdrawal isn't a denial.";
-  if (u === "DETERMINATION ISSUED") return "DOL issued the prevailing wage the employer must offer.";
-  if (u === "DENIED") return "DOL denied it. Ask the employer or its attorney what happens next.";
-  if (u === "RETURNED UNPROCESSED") return "DOL returned it without a decision, usually for a missing piece.";
-  return "DOL's status for this case, as shown on its own case status page.";
+  return SEASONAL_STATUSES.find((e) => e.status.toUpperCase() === u) ?? null;
 }
 
 export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
@@ -85,7 +73,7 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
   if (!row) {
     return (
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">{form}</p>{" "}
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">{form}</p>{" "}
         <h2 className="mt-2 font-heading text-2xl font-black">No record under {caseNumber}</h2>{" "}
         <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
           DOL&apos;s case system answered and holds nothing under this number. Check it on{" "}
@@ -102,13 +90,14 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
     );
   }
 
+  const entry = entryFor(row.status);
   return (
     <div className="space-y-6">
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">{form}</p>{" "}
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">{form}</p>{" "}
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h2 className="font-heading text-2xl font-black sm:text-3xl" translate="no">{row.caseNumber}</h2>{" "}
-          <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chipClass(row)}>
+          <span className={"border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " + chipClass(row)}>
             {prettyStatus(row.status)}
           </span>
         </div>{" "}
@@ -136,7 +125,19 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
 
       <section className="border-2 border-border bg-tint-primary p-5 sm:p-6">
         <h3 className="font-heading text-xl font-black">What this status means</h3>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">{meaning(row.status)}</p>
+        <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
+          {entry?.summary ?? "DOL's status for this case, as shown on its own case status page."}
+        </p>{" "}
+        {entry ? (
+          <p className="mt-2 text-sm text-foreground/70">
+            <Link
+              href={`/perm-case-statuses#h2-${statusAnchor(entry.status)}`}
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              The rule behind it, and how many cases carry it
+            </Link>
+          </p>
+        ) : null}
       </section>
     </div>
   );

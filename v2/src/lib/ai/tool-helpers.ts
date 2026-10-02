@@ -4,7 +4,7 @@
  */
 
 import { fetchQuery } from 'convex/nextjs';
-import { api } from '@/../convex/_generated/api';
+import { api } from '@convex/_generated/api';
 import {
   requiresConfirmation,
   getToolPermission,
@@ -60,8 +60,8 @@ export function buildDisabledResponse(error: string, feature?: string) {
 
 /**
  * Build an error response from a caught exception. A per-user rate limit
- * (convex/rateLimitConfig.ts) says what was limited and when to try again;
- * until Sep 29 2026 it reached the person as the raw error JSON.
+ * (convex/rateLimitConfig.ts) says what was limited and when to try again,
+ * never the raw error JSON.
  */
 export function buildToolError(toolName: string, error: unknown) {
   const limited = rateLimitedToolResult(error);

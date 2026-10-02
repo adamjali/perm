@@ -6,6 +6,8 @@
  * - Stale deployment: reload to pick up new Server Action hashes
  */
 
+import { MS_PER_MINUTE } from "@/lib/time";
+
 /** Errors that indicate session expiry, not real crashes */
 export const AUTH_ERROR_PATTERN = /not authenticated|User profile not found|Unauthenticated|could not verify identity/i;
 
@@ -29,7 +31,7 @@ export function isLikelySessionTimeout(): boolean {
     if (!stored) return false;
     const elapsed = Date.now() - parseInt(stored, 10);
     // 15 minutes = inactivity timeout
-    return elapsed >= 15 * 60 * 1000;
+    return elapsed >= 15 * MS_PER_MINUTE;
   } catch {
     return false;
   }

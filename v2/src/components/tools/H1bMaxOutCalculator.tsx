@@ -4,8 +4,9 @@ import { useId, useMemo, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { calculateH1bMaxOut, PERM_ADVANCE_DAYS, type H1bMaxOutResult } from "@/lib/perm";
+import { formatInt } from "@/lib/format";
 
 type Outcome = { kind: "error"; error: string } | { kind: "ok"; r: H1bMaxOutResult; warnings: string[] };
 
@@ -27,7 +28,6 @@ const localToday = () => {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 };
-const int = (n: number) => n.toLocaleString("en-US");
 const long = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
@@ -66,7 +66,7 @@ export function H1bMaxOutCalculator() {
         <div>
           <Label htmlFor={startId}>First day of H-1B status</Label>{" "}
           <DateInput id={startId} value={start} onChange={(e) => setStart(e.target.value)} className="mt-1.5" />{" "}
-          <p className="mt-1 text-xs text-muted-foreground">Or the earliest H-1B or L-1 start if the six years combine.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Or the earliest H-1B or L-1 start if the six years combine.</p>
         </div>{" "}
         <div>
           <Label htmlFor={outsideId}>Days outside the U.S. (optional)</Label>{" "}
@@ -81,12 +81,12 @@ export function H1bMaxOutCalculator() {
             placeholder="0"
             className="mt-1.5 min-h-11 w-full min-w-0 border-2 border-border bg-background px-3 text-base focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           />{" "}
-          <p className="mt-1 text-xs text-muted-foreground">Time abroad during H-1B status can be recaptured.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Time abroad during H-1B status can be recaptured.</p>
         </div>{" "}
         <div>
           <Label htmlFor={permId}>PERM filing date (optional)</Label>{" "}
           <DateInput id={permId} value={perm} onChange={(e) => setPerm(e.target.value)} className="mt-1.5" />{" "}
-          <p className="mt-1 text-xs text-muted-foreground">Filed, or the date it is planned for.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Filed, or the date it is planned for.</p>
         </div>
       </div>{" "}
 
@@ -109,14 +109,14 @@ export function H1bMaxOutCalculator() {
           ) : null}{" "}
           <dl className="border-t-2 border-border">
             <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
-              <dt className="text-base">Last day in H-1B status (six-year limit{Number(outside) > 0 ? `, plus ${int(Math.floor(Number(outside)))} recaptured days` : ""})</dt>{" "}
+              <dt className="text-base">Last day in H-1B status (six-year limit{Number(outside) > 0 ? `, plus ${formatInt(Math.floor(Number(outside)))} recaptured days` : ""})</dt>{" "}
               <dd className="font-heading text-xl font-black tabular-nums">{long(result.r.maxOutDate)}</dd>
             </div>{" "}
             <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
               <dt className="text-base">
                 Last day to file the PERM for the 365-day rule
                 {result.r.daysOfMargin !== null && result.r.daysOfMargin >= 0 ? (
-                  <span className="text-foreground/70"> · {int(result.r.daysOfMargin)} days from today</span>
+                  <span className="text-foreground/70"> · {formatInt(result.r.daysOfMargin)} days from today</span>
                 ) : null}
               </dt>{" "}
               <dd className="font-heading text-xl font-black tabular-nums">{long(result.r.permFileBy)}</dd>
@@ -124,15 +124,15 @@ export function H1bMaxOutCalculator() {
             {result.r.perm ? (
               <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">
-                  A PERM filed {long(result.r.perm.filed)} is {int(result.r.perm.daysBeforeMaxOut)} days before the limit
+                  A PERM filed {long(result.r.perm.filed)} is {formatInt(result.r.perm.daysBeforeMaxOut)} days before the limit
                 </dt>{" "}
                 <dd className={`font-heading text-xl font-black ${result.r.perm.qualifies ? "" : "text-foreground/70"}`}>
-                  {result.r.perm.qualifies ? "Meets the 365-day rule" : `Short by ${int(PERM_ADVANCE_DAYS - result.r.perm.daysBeforeMaxOut)} days`}
+                  {result.r.perm.qualifies ? "Meets the 365-day rule" : `Short by ${formatInt(PERM_ADVANCE_DAYS - result.r.perm.daysBeforeMaxOut)} days`}
                 </dd>
               </div>
             ) : null}
           </dl>{" "}
-          <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
+          <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
             {result.r.citations.map((c) => (
               <li key={c}>{c}</li>
             ))}

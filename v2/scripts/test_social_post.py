@@ -75,10 +75,8 @@ def main() -> int:
     sig = oauth1_signature("POST", "http://example.com/request", RFC_PAIRS, "j49sk3j29djd", "dh893hdasih9")
     check(len(sig) == 28 and sig.endswith("="), "HMAC-SHA1 signature is 20 bytes, base64", f)
 
-    # The two HTTP tests below were written pytest-style and defined AFTER the
-    # __main__ guard, so `python3 scripts/test_social_post.py` (how CI runs
-    # this file) never reached them: until 2026-09-23 the posting requests
-    # were proven only by hand. main() runs them now.
+    # The two HTTP tests below are written pytest-style; main() runs them,
+    # because CI runs this file as a script.
     for test in (test_post_to_x_sends_a_signed_json_request,
                  test_post_to_linkedin_sends_the_versioned_bearer_request):
         try:

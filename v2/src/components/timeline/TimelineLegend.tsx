@@ -13,9 +13,6 @@
  * - Flat stage swatches, framed like the timeline markers
  * - Fixed/sticky footer positioning
  * - Neobrutalist styling
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2025-12-26
  */
 
 "use client";

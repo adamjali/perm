@@ -36,34 +36,18 @@ from __future__ import annotations
 
 import json
 import sys
-import time
 
-from lib_turso import Turso
+from build_lca_facets import min_for_median
+from lib_turso import Turso, query_dicts, write_doc
 
 DOC_KEY = "wage_denial_bands"
 FACET_KEY = "wage_filter_options"
 
-# MUST EQUAL MIN_FOR_MEDIAN IN src/lib/wageStats.ts. The facets are the filter
-# lists the page offers, so a Python copy that drifts from the TypeScript floor
-# would offer the reader a state the page then refuses to show a median for.
-# Read out of the TS file at build time rather than restated, so it cannot rot.
-MIN_FOR_MEDIAN = 30
-
-# The salary explorer's filter dropdowns. These were computed live on every
-# render, and one of them - the per-state count - is a GROUP BY over the whole
-# of perm_cases that no index can serve past the first predicate.
-#
-# Idle it runs in about 1.5s. Under a concurrent disclosure load it does not:
-# this repo already measured an ordinary GROUP BY state going from ~0.3s to a
-# worst of 59.2s while a 147k-row file was being written. Sentry's week to
-# 2026-09-12 carried 11 occurrences of
-#   "turso query deadline (20000ms, attempt 2): SELECT state, CO..."
-# plus 4 SQLITE_NOMEM, all on this page.
-#
-# The facets change only when perm_cases is reloaded, which is quarterly. There
-# was never a reason to recompute them per request. Same treatment as
-# live_census and review_stages: precompute here, read one doc, keep the live
-# query as the doc-missing fallback.
+# The salary explorer's filter dropdowns. One of them, the per-state count, is a
+# GROUP BY over the whole of perm_cases that no index can serve past the first
+# predicate: about 1.5 s idle, and past the read layer's 20 s deadline under a
+# concurrent load. The facets change only when perm_cases is reloaded, so they
+# are precomputed here, read as one doc, with the live query as the fallback.
 
 # Lower bound, upper bound (exclusive), label. `None` is open-ended.
 FINE_BANDS = [
@@ -97,23 +81,6 @@ def log(msg: str) -> None:
     print(msg, flush=True)
 
 
-def cell(c):
-    if c["type"] == "null":
-        return None
-    v = c["value"]
-    if c["type"] == "integer":
-        return int(v)
-    if c["type"] == "float":
-        return float(v)
-    return v
-
-
-def rows(db: Turso, sql: str, args: list | None = None) -> list[dict]:
-    res = db.execute(sql, args or [])["response"]["result"]
-    cols = [c["name"] for c in res["cols"]]
-    return [dict(zip(cols, [cell(c) for c in r])) for r in res["rows"]]
-
-
 def case_sql(bands) -> str:
     """A CASE expression labelling each row with its band, ordered by edge.
 
@@ -132,7 +99,7 @@ def case_sql(bands) -> str:
 
 def measure(db: Turso, bands) -> list[dict]:
     expr = case_sql(bands)
-    r = rows(
+    r = query_dicts(
         db,
         f"""SELECT {expr} AS band,
                    SUM(status IN ('certified','denied')) AS decided,
@@ -141,6 +108,7 @@ def measure(db: Turso, bands) -> list[dict]:
               FROM perm_cases
              WHERE wage IS NOT NULL AND wage > 0
              GROUP BY band ORDER BY band""",
+        typed=True,
     )
     out = []
     for x in r:
@@ -158,29 +126,19 @@ def measure(db: Turso, bands) -> list[dict]:
     return out
 
 
-def ts_min_for_median() -> int:
-    """Read the floor out of the TypeScript rather than trusting the copy above."""
-    import pathlib, re as _re
-    src = pathlib.Path(__file__).resolve().parent.parent / "src" / "lib" / "wageStats.ts"
-    m = _re.search(r"export const MIN_FOR_MEDIAN\s*=\s*(\d+)", src.read_text())
-    if not m:
-        raise RuntimeError(f"MIN_FOR_MEDIAN not found in {src}")
-    return int(m.group(1))
-
-
 def build_facets(db: Turso, min_cases: int) -> dict:
     """The three filter lists, computed once instead of per render."""
-    occ = rows(db,
+    occ = query_dicts(db,
         "SELECT code AS soc_code, name AS soc_title, total AS n FROM perm_entities "
         "WHERE kind = 'occupation' AND code IS NOT NULL AND code <> '' AND total >= ? "
-        "ORDER BY total DESC", [min_cases])
-    st = rows(db,
+        "ORDER BY total DESC", [min_cases], typed=True)
+    st = query_dicts(db,
         "SELECT state, COUNT(*) AS n FROM perm_cases "
         "WHERE wage IS NOT NULL AND wage > 0 AND state IS NOT NULL AND state <> '' "
-        "GROUP BY state HAVING COUNT(*) >= ? ORDER BY state", [min_cases])
-    fy = rows(db,
+        "GROUP BY state HAVING COUNT(*) >= ? ORDER BY state", [min_cases], typed=True)
+    fy = query_dicts(db,
         "SELECT DISTINCT fiscal_year FROM perm_cases "
-        "WHERE fiscal_year IS NOT NULL AND fiscal_year <> '' ORDER BY fiscal_year DESC")
+        "WHERE fiscal_year IS NOT NULL AND fiscal_year <> '' ORDER BY fiscal_year DESC", typed=True)
     # REFUSE TO WRITE AN EMPTY FACET SET. A dropdown that silently loses every
     # option looks like "no data for your filter" on the page, which is
     # indistinguishable from a real empty result. Same rule the census write
@@ -205,7 +163,7 @@ def main() -> int:
     db = Turso()
     log(f"  target: {db.url}")
 
-    base = rows(db, "SELECT json FROM perm_docs WHERE key = 'disclosure_stats'")
+    base = query_dicts(db, "SELECT json FROM perm_docs WHERE key = 'disclosure_stats'", typed=True)
     if not base:
         log("  FAIL: disclosure_stats is missing. Run the disclosure ingest first.")
         return 1
@@ -259,10 +217,11 @@ def main() -> int:
             return 1
     log(f"  agrees with the published risk.byWage on all {len(published)} bands")
 
-    no_wage = rows(
+    no_wage = query_dicts(
         db,
         """SELECT SUM(status IN ('certified','denied')) AS decided
              FROM perm_cases WHERE wage IS NULL OR wage <= 0""",
+        typed=True,
     )
     unbanded = (no_wage[0]["decided"] if no_wage else 0) or 0
 
@@ -283,28 +242,19 @@ def main() -> int:
 
     payload = json.dumps(doc, separators=(",", ":"))
     log(f"  writing perm_docs['{DOC_KEY}'] ({len(payload):,} bytes)")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-        [DOC_KEY, payload, int(time.time() * 1000)],
-    )
-    check = rows(db, "SELECT length(json) AS n FROM perm_docs WHERE key = ?", [DOC_KEY])
+    write_doc(db, DOC_KEY, payload)
+    check = query_dicts(db, "SELECT length(json) AS n FROM perm_docs WHERE key = ?", [DOC_KEY], typed=True)
     if not check or check[0]["n"] != len(payload):
         log("  FAIL: read-back does not match what was written.")
         return 1
-    # The salary explorer's facets, same cadence, same table.
-    floor = ts_min_for_median()
-    if floor != MIN_FOR_MEDIAN:
-        log(f"  FAIL: MIN_FOR_MEDIAN is {MIN_FOR_MEDIAN} here and {floor} in wageStats.ts")
-        return 1
-    facets = build_facets(db, floor)
+    # The salary explorer's facets, same cadence, same table. The floor is the
+    # page's own, so the lists never offer a selection it won't show a median for.
+    facets = build_facets(db, min_for_median())
     fpayload = json.dumps(facets, separators=(",", ":"))
     log(f"  writing perm_docs['{FACET_KEY}'] ({len(fpayload):,} bytes): "
         f"{len(facets['occupations'])} occupations, {len(facets['states'])} states, "
         f"{len(facets['fiscalYears'])} fiscal years")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-        [FACET_KEY, fpayload, int(time.time() * 1000)],
-    )
+    write_doc(db, FACET_KEY, fpayload)
     log("  ok")
     return 0
 

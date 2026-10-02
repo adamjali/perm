@@ -241,15 +241,12 @@ export function ScrollReveal({
    *
    * `initial="hidden"` is serialized by Motion as an inline style during
    * server rendering, and `animate` resolves to "hidden" too because
-   * `isInView` is false on the server. So a ScrollReveal shipped its
-   * children invisible until React hydrated - which is correct for content
-   * below the fold and actively wrong for anything above it.
-   *
-   * Found by the SSR-visibility gate on 2026-08-31: `/for-attorneys` wrapped
-   * its own `<h1>` in one, so the page's largest element waited on the whole
-   * JS bundle, and with JS off the hero never appeared at all. A "scroll
-   * reveal" on content the visitor is already looking at was never doing
-   * anything except delaying it.
+   * `isInView` is false on the server. So a ScrollReveal would ship its
+   * children invisible until React hydrated - correct for content below the
+   * fold and actively wrong for anything above it: a wrapped `<h1>` waits on
+   * the whole JS bundle, and with JS off never appears at all. A "scroll
+   * reveal" on content the visitor is already looking at does nothing except
+   * delay it.
    *
    * On the first page of a session everything renders visible and no reveal
    * runs. Every client-side navigation after that animates normally, which
@@ -350,5 +347,3 @@ export function ScrollRevealItem({
 // ============================================================================
 // EXPORTS
 // ============================================================================
-
-export default ScrollReveal;

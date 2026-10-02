@@ -18,7 +18,6 @@ import { SeasonalLookup } from "@/components/tools/SeasonalStatusResult";
 import { buildWall, neighbourMonths } from "@/lib/casePosition";
 import { isLegacyCaseNumber, normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { looksLikeReceipt, normaliseReceipt } from "@/lib/uscis/receipt";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { findFront, type CohortMonth } from "@/lib/liveQueue";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
@@ -40,6 +39,7 @@ import {
   stageDurationFor,
 } from "@/lib/turso/stageStats";
 import { getLiveBacklog, getLiveMirrorSize } from "@/lib/turso/publicData";
+import { MoreText } from "@/components/data/MoreText";
 
 /**
  * One PERM case number in, everything we can honestly say about it out.
@@ -179,7 +179,7 @@ export default async function PermCaseStatusPage({
   const pwdNumber = typed.trim().length > 0 ? normalisePwdCaseNumber(typed) : null;
   const lcaNumber = !pwdNumber && typed.trim().length > 0 ? normaliseLcaCaseNumber(typed) : null;
   // H-2A (H-300), H-2B (H-400) and H-2B wage (P-400) numbers, before the
-  // PERM shape rule claims them (Oct 1 2026).
+  // PERM shape rule claims them.
   const seasonalNumber =
     !pwdNumber && !lcaNumber && typed.trim().length > 0 ? normaliseSeasonalCaseNumber(typed) : null;
   const caseNumber =
@@ -202,16 +202,11 @@ export default async function PermCaseStatusPage({
       acceptedAnswer: { "@type": "Answer" as const, text: f.a },
     })),
   };
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: "Data", href: "/tools" },
-    { name: "Case status", href: "/perm-case-status" },
-  ]);
 
   return (
     <div className={CASE_STATUS_FRAME}>
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumbSchema} />
 
       <CaseStatusHead typed={typed} />
 
@@ -227,13 +222,11 @@ export default async function PermCaseStatusPage({
           />{" "}
           <span>
             <b className="font-bold text-data-warn-ink">
-              That is not the shape of a PERM case number,
+              That isn&apos;t the shape of a case number,
             </b>{" "}
-            so nothing was looked up. Current ones run letter, three digits,
-            five digits, then a serial, like G-100-26125-868956. Cases from
-            2022 and 2023 use a shorter form, like A-23043-00641. Either is on
-            the ETA-9089 receipt. A prevailing wage request starts with P
-            (P-100-26240-200135) and an H-1B LCA with I (I-200-26239-199948).
+            so nothing was looked up. PERM numbers look like G-100-26125-868956 (A-23043-00641 for 2022 and
+            2023) and are on the ETA-9089 receipt. Wage requests start with P, H-1B LCAs with I, H-2A and H-2B
+            cases with H.
           </span>
         </p>
       ) : null}
@@ -253,7 +246,7 @@ export default async function PermCaseStatusPage({
           <p className="mt-3">
             <Link
               href="/uscis-case-status"
-              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
+              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
             >
               Check a USCIS receipt instead
             </Link>
@@ -271,7 +264,7 @@ export default async function PermCaseStatusPage({
           <p className="mt-3">
             <Link
               href={`/case-search?q=${encodeURIComponent(typed.trim().slice(0, 120))}`}
-              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
+              className="inline-flex min-h-[44px] items-center border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
             >
               Search DOL for &ldquo;{typed.trim().slice(0, 60)}&rdquo;
             </Link>
@@ -311,20 +304,27 @@ export default async function PermCaseStatusPage({
       <DataProvenance
         datasets={["perm-case-status", "perm-cases", "processing-times"]}
       />
-      <p className="mt-2 text-sm text-muted-foreground">
-        These statuses are read from DOL directly. The FLAG case-status search answers a batch lookup, and we run it against every undecided case every 12 hours and against all of them weekly. DOL publishes no documented API for this, so it is the same endpoint their own search page uses rather than a supported one. The date shown on each case is
-        when the tracker saw it, not when we did, and it is a snapshot rather
-        than a live feed. DOL is the authority for any case and this page is
-        never a substitute for the determination letter.{" "}
-        <a
-          href="https://flag.dol.gov"
-          rel="noopener noreferrer"
-          className="font-bold underline underline-offset-2 hover:text-primary"
-        >
-          Check it yourself at flag.dol.gov
-        </a>
-        .
-      </p>
+      <MoreText gist={"Read from DOL's own case-status search, every case daily. DOL is the authority."} className="mt-2">
+        <p className="text-sm text-muted-foreground">
+          These statuses are read from DOL directly. The FLAG case-status
+          search answers a batch lookup, and we run it against every case once a
+          day, against every undecided case twice a day, and against cases with
+          an alert on them every hour. DOL publishes no documented API for this,
+          so it is the same endpoint their own search page uses rather than a
+          supported one. The date shown on each case is when our check saw it,
+          and it is a snapshot rather than a live feed. DOL is the authority for
+          any case and this page is never a substitute for the determination
+          letter.{" "}
+          <a
+            href="https://flag.dol.gov"
+            rel="noopener noreferrer"
+            className="font-bold underline underline-offset-2 hover:text-primary"
+          >
+            Check it yourself at flag.dol.gov
+          </a>
+          .
+        </p>
+      </MoreText>
 
       <ToolPageFooter
         currentHref="/perm-case-status"

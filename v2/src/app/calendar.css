@@ -1,37 +1,47 @@
 /**
- * Calendar theming for react-big-calendar.
- *
- * Dark-mode event shadows, keyboard focus rings, high-contrast support and the
- * reduced-motion overrides for the .rbc-* classes the library emits. Imported
+ * Calendar styles: the event pill CalendarEvent.tsx renders, and the theming
+ * for the .rbc-* classes react-big-calendar emits (dark-mode event shadows,
+ * keyboard focus rings, high-contrast support and reduced motion). Imported
  * once, by (authenticated)/calendar/CalendarPageClient.tsx.
- *
- * It used to be titled "animations and micro-interactions" and carried five
- * animation classes; see the note below for why none of them survive.
- *
- * Phase: 23.1 (Calendar UI)
- * Created: 2025-12-28
  */
 
 /* ============================================================================
-   NOTE ON THE ANIMATIONS THAT USED TO LIVE HERE
-   ============================================================================
-
-   Five animation classes were removed on 2026-08-25 because nothing in src/
-   referenced any of them, and two were banned on their own merits:
-
-     .calendar-skeleton-cell   a SECOND shimmer engine, duplicating the one in
-                               globals.css, running an infinite sweep
-     .calendar-event-urgent    @keyframes event-urgent-pulse animated a
-                               RED-TINTED box-shadow, rgba(220,38,38,...), on
-                               an infinite loop. A coloured shadow is glow and
-                               a perpetual pulse is banned; this was both.
-     .calendar-event-enter
-     .calendar-view-enter-*    entrance animations, unused
-     .calendar-popover-enter
-
-   The reduced-motion block below no longer needs to name them.
+   EVENT PILL
    ============================================================================ */
 
+.calendar-event {
+  /* The 14px label floor holds here too; the full name is in the hover summary. */
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  margin: 0; /* No margin - spacing via row-segment padding */
+  border: 2px solid black;
+  cursor: pointer;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  /* Ink comes from the pill's inline style: white or black by stage, measured
+     against the fill (see STAGE_ON_FILL). No text-shadow. */
+}
+
+.calendar-event:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-hard-sm);
+}
+
+.event-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* ============================================================================
    DARK MODE ADJUSTMENTS

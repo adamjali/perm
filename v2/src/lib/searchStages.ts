@@ -7,7 +7,7 @@
  * drawn by month on /perm-queue) but is a perfectly good search filter with an
  * employer or a filing month beside it. The wage-request and LCA stages are
  * the pending statuses DOL's live record actually carries for those programs
- * (measured Sep 8 2026: wage requests pend at IN PROCESS, RFI ISSUED and
+ * (measured: wage requests pend at IN PROCESS, RFI ISSUED and
  * PENDING REDETERMINATION; LCAs pend only at IN PROCESS). A stage belongs to
  * exactly one program, and the slug says which. Plain module: the form
  * imports it in the browser and the route on the server.

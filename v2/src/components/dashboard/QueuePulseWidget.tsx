@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useQuery } from "convex/react";
 import { ArrowRightIcon } from "@phosphor-icons/react";
 
-import { api } from "../../../convex/_generated/api";
-import { analystReviewQueue } from "../../../convex/lib/dolProcessingTimes";
+import { api } from "@convex/_generated/api";
+import { analystReviewQueue } from "@convex/lib/dolProcessingTimes";
 import { QueueTape } from "@/components/tools/QueueTape";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,9 +18,9 @@ import { Skeleton } from "@/components/ui/skeleton";
  * brings people back — has DOL advanced — from the same snapshot the public
  * data pages read, so the app and the site can never disagree.
  *
- * While the snapshot loads it holds its own frame (QueuePulseSkeleton): it
- * used to render nothing and then arrive about 200px tall, pushing the whole
- * dashboard below it down. It still renders nothing if there is no frontier.
+ * While the snapshot loads it holds its own frame (QueuePulseSkeleton):
+ * rendering nothing first, it would arrive about 200px tall and push the
+ * whole dashboard below it down. It renders nothing if there is no frontier.
  */
 export function QueuePulseWidget() {
   const snapshot = useQuery(api.dolProcessingTimes.getLatest);

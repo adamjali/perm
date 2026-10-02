@@ -26,9 +26,7 @@ import "server-only";
 
 import { getVisaBulletins } from "./publicData";
 import { parseCutoff, type BulletinMonth, type CountryKey, type ChartKind, type Cutoff } from "@/lib/perm";
-
-/** Days in an average month, 365.25/12. The pace ratio is per calendar month. */
-export const DAYS_PER_MONTH = 30.4375;
+import { DAYS_PER_MONTH, MS_PER_DAY } from "@/lib/time";
 
 export const BOARD_COUNTRIES: readonly CountryKey[] = [
   "worldwide",
@@ -141,7 +139,7 @@ function cellFor(
   let spanMonths: number | null = null;
   if (first && last && first !== last) {
     movedDays = Math.round(
-      (Date.parse(last.cutoff.iso) - Date.parse(first.cutoff.iso)) / 86_400_000,
+      (Date.parse(last.cutoff.iso) - Date.parse(first.cutoff.iso)) / MS_PER_DAY,
     );
     spanMonths = monthsBetween(first.month, last.month);
   }

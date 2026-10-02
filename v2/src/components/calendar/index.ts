@@ -1,8 +1,5 @@
 /**
  * Calendar components index
- *
- * Phase: 23.1 (Calendar UI)
- * Created: 2025-12-28
  */
 
 export { CalendarView } from "./CalendarView";

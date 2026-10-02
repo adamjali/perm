@@ -7,13 +7,12 @@
  * - Clear reason for closure
  * - Case details
  * - CTA to view case
- *
- * Phase: 24 (Notifications + Email)
  */
 
 import { Text, Section } from "@react-email/components";
 import { EmailLayout, EmailButton, EmailHeader } from "./components";
 import { labelStyle, valueStyle, detailsSectionStyle, ctaSectionStyle } from "./components/emailStyles";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface AutoClosureProps {
   /** Beneficiary name */
@@ -147,8 +146,6 @@ AutoClosure.PreviewProps = {
   violationType: "PWD expiration missed",
   reason: "The prevailing wage determination expired before the ETA-9089 was filed, so the case can no longer move forward on this PWD.",
   closedAt: "June 27, 2026",
-  caseUrl: "https://permtracker.app/cases/abc123",
+  caseUrl: `${SITE_URL}/cases/abc123`,
   caseNumber: "PT-1042",
 } satisfies AutoClosureProps;
-
-export default AutoClosure;

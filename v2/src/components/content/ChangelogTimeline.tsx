@@ -13,7 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { CalendarIcon, TagIcon } from "@phosphor-icons/react";
 import type { PostSummary } from "@/lib/content/types";
-import { useScrollStagger } from "@/lib/hooks/useGSAP";
+import { useScrollStagger } from "@/hooks/useGSAP";
 
 // Shared formatting for the entry's published/updated <time> elements. Module
 // scope so the Intl.DateTimeFormatOptions object isn’t reallocated each render.
@@ -33,14 +33,10 @@ interface ChangelogTimelineProps {
 /**
  * One timeline row.
  *
- * Corrections used to be a SECOND kind here, interleaved from `lib/corrections.ts`
- * as fourteen special-cased rows with their own dot colour, their own badge and
- * their own three-part prose block. They are one ordinary changelog entry now
- * (`content/changelog/corrections.mdx`, category "Correction") - Adam,
- * 2026-09-10: "all the corrections, they should be under 1 changelog and follow
- * same format as others". The honesty bar did not move; the entry still names
- * the page, quotes what it said, states what was true and says what changed,
- * and `corrections-entry.test.ts` holds it to that.
+ * Every row is an ordinary changelog post, corrections included: they are one
+ * entry (`content/changelog/corrections.mdx`, category "Correction") that
+ * names each page, quotes what it said, states what was true and says what
+ * changed, and `corrections-entry.test.ts` holds it to that.
  */
 type Entry = { date: string; key: string; post: PostSummary };
 
@@ -111,7 +107,7 @@ export default function ChangelogTimeline({ posts }: ChangelogTimelineProps) {
             ) : null}
 
             <div className="p-4 sm:p-5">
-              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                 <span className="flex items-center gap-2">
                   <CalendarIcon className="h-3.5 w-3.5" />
                   <time dateTime={entry.date}>{fmtDate(entry.date)}</time>

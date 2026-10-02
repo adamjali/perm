@@ -28,6 +28,7 @@ import { internal } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { loggers } from "./lib/logging";
+import { MS_PER_DAY } from "./lib/time";
 
 const log = loggers.scheduler;
 
@@ -39,7 +40,6 @@ function getProfileByUserId(ctx: QueryCtx | MutationCtx, userId: Id<"users">) {
     .unique();
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
 /** Days of no activity before the first nudge. */
 const INACTIVE_DAYS = 60;
 /** Days after the nudge, still inactive, before the weekly digest is paused. */
@@ -52,7 +52,7 @@ const SUPPRESS_GRACE_DAYS = 14;
 export const getReengagementCandidates = internalQuery({
   args: {},
   handler: async (ctx) => {
-    const cutoff = Date.now() - INACTIVE_DAYS * DAY_MS;
+    const cutoff = Date.now() - INACTIVE_DAYS * MS_PER_DAY;
     const profiles = await ctx.db.query("userProfiles").collect();
 
     const candidates: Array<{
@@ -151,7 +151,7 @@ export const runReengagementCheck = internalAction({
         nudged++;
         emailIndex++;
       } else if (
-        now - c.reengagementNudgeSentAt > SUPPRESS_GRACE_DAYS * DAY_MS &&
+        now - c.reengagementNudgeSentAt > SUPPRESS_GRACE_DAYS * MS_PER_DAY &&
         c.lastSeen < c.reengagementNudgeSentAt && // no activity since the nudge
         c.weeklyDigestSuppressedAt === undefined
       ) {

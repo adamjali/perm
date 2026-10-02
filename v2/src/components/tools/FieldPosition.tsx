@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
 
 /**
@@ -127,7 +128,7 @@ export function FieldPosition({
         <p className="font-mono text-sm font-bold uppercase tracking-[0.1em] text-foreground/60">
           {measure}
         </p>{" "}
-        <p className="font-mono text-xs font-bold tabular-nums">
+        <p className="font-mono text-sm font-bold tabular-nums">
           {valueLabel}
           <span className="ml-2 font-normal text-foreground/70">
             {ranked ? (
@@ -145,7 +146,8 @@ export function FieldPosition({
       </div>
 
       {/* The field, as its own distribution. */}
-      <div className="relative mt-2 flex h-14 items-end gap-px border-b-2 border-border">
+      <ChartTips label={`${measure}, across the field`} className="mt-2">
+      <div className="relative flex h-14 items-end gap-px border-b-2 border-border">
         {counts.map((c, i) => {
           const binMid = min + ((i + 0.5) / BINS) * (max - min);
           return (
@@ -154,7 +156,7 @@ export function FieldPosition({
               aria-hidden="true"
               className={cn("flex-1", i === subjectBin ? "bg-primary" : "bg-foreground/25")}
               style={{ height: `${Math.max(4, (c / peak) * 100)}%` }}
-              title={format(binMid)}
+              data-tip={`Around ${format(binMid)}\n${c.toLocaleString("en-US")} of ${clean.length.toLocaleString("en-US")} in the field${i === subjectBin ? `\nThis one: ${valueLabel}` : ""}`}
             />
           );
         })}
@@ -167,6 +169,7 @@ export function FieldPosition({
           />
         ) : null}
       </div>
+      </ChartTips>
 
       <div className="mt-1.5 flex justify-between font-mono text-sm text-foreground/60">
         <span>{format(min)}</span>{" "}

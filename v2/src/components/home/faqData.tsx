@@ -3,22 +3,16 @@ import Link from "next/link";
 /**
  * The homepage FAQ, single-sourced: SIX questions, three per audience.
  *
- * This block has moved twice. The homepage carried eight questions, six
- * byte-identical to /faq, and Google picked /faq as the page for "what is PERM
- * Tracker" (the brand query moved there on 2026-08-27). The Sep 7 trim cut it
- * to three site-usage questions and moved every definitional one to /faq alone,
- * after which /faq KEPT the query, because it was now the only page whose first
- * answer defines the product. So on 2026-09-15 the four brand-defining
- * questions came here and left /faq (which keeps its process questions): three
- * for the person waiting, three for the practice, so the page that should own
- * the name answers what the name is for both audiences. One page answers each
- * question; `about-surfaces.test.ts` asserts the split in both directions.
+ * The brand-defining questions live here and not on /faq (which keeps its
+ * process questions): Google gives "what is PERM Tracker" to the page whose
+ * answers define the product, so the page that should own the name has to
+ * answer what the name is, for both audiences: three for the person waiting,
+ * three for the practice. One page answers each question;
+ * `about-surfaces.test.ts` asserts the split in both directions.
  *
- * The questions used to exist twice in another sense too: a plain-text array in page.tsx
- * feeding the FAQPage structured data, and a JSX array in FAQSection feeding
- * the accordion. Google requires the schema text to match the visible text,
- * and two hand-maintained copies drift silently. One list now carries both
- * shapes: `answer` is the canonical plain text (schema), `rich` is the same
+ * One list carries both shapes, because Google requires the FAQPage schema
+ * text to match the visible text and two hand-maintained copies drift
+ * silently: `answer` is the canonical plain text (schema), `rich` is the same
  * answer with inline links for the accordion. Editing a question or answer
  * here updates both consumers.
  */
@@ -88,7 +82,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
   {
     question: "What does the case-management app do for attorneys and HR teams?",
     answer:
-      "Enter a case's dates once and every deadline comes out computed under 20 CFR 656: prevailing wage expiration, recruitment clocks, the 30-180 day ETA 9089 filing window, audit and RFI response dates, and the I-140 filing cutoff. Change one date and the downstream dates recalculate. Email and push reminders run 1 to 30 days out with quiet hours and calendar sync, a Monday digest summarises the caseload, and an AI assistant answers questions over your own cases.",
+      "Enter a case's dates once and every deadline comes out computed under 20 CFR 656: prevailing wage expiration, recruitment clocks, the 30-180 day ETA 9089 filing window, audit and RFI response dates, and the I-140 filing cutoff. Change one date and the downstream dates recalculate. Email and push reminders run 1 to 30 days out with quiet hours and calendar sync, a weekly case summary arrives every Monday, and an AI assistant answers questions over your own cases.",
     rich: (
       <>
         Enter a case&apos;s dates once and every deadline comes out computed
@@ -96,7 +90,7 @@ export const HOME_FAQS: HomeFaqItem[] = [
         30-180 day ETA 9089 filing window, audit and RFI response dates, and the
         I-140 filing cutoff. Change one date and the downstream dates
         recalculate. Email and push reminders run 1 to 30 days out with quiet
-        hours and calendar sync, a Monday digest summarises the caseload, and an
+        hours and calendar sync, a weekly case summary arrives every Monday, and an
         AI assistant answers questions over your own cases.{" "}
         <Link href="/for-attorneys" className={faqLink}>How the software works &rarr;</Link>
       </>
@@ -120,12 +114,12 @@ export const HOME_FAQS: HomeFaqItem[] = [
   {
     question: "Can I import my existing cases?",
     answer:
-      "Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard auto-maps your fields and validates data before import. You can also export your data at any time.",
+      "Yes. Upload a JSON file of cases, such as an export from PERM Tracker. Every case is checked before anything is saved, and duplicates are flagged. You can export to CSV or JSON at any time.",
     rich: (
       <>
-        Yes. PERM Tracker supports CSV import for bulk uploads. The import wizard
-        auto-maps your fields and validates data before import. You can also
-        export your data at any time.
+        Yes. Upload a JSON file of cases, such as an export from PERM Tracker.
+        Every case is checked before anything is saved, and duplicates are
+        flagged. You can export to CSV or JSON at any time.
       </>
     ),
   },

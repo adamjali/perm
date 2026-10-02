@@ -189,5 +189,3 @@ export function TemplateSelector({
     </>
   );
 }
-
-export default TemplateSelector;

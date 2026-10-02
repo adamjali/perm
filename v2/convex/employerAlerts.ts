@@ -1,11 +1,10 @@
 /**
  * Follow an employer: an email when DOL moves its PERM cases as a group.
  *
- * The census page (`/perm-employers/under-review`) was quoted to about 127,000
- * people on X on Sep 25 2026, and the question every reply asked was "tell me
- * when it changes". This answers it for one employer at a time, from the list
- * of employer-wide moves the daily sweep already writes into
- * `perm_docs['employer_stages']`:
+ * The census page (`/perm-employers/under-review`) shows where each
+ * employer's pending cases stand; this tells a follower when that changes,
+ * one employer at a time, from the list of employer-wide moves the daily
+ * sweep already writes into `perm_docs['employer_stages']`:
  *
  * - `holdMoves`: a day five or more of the employer's cases went on hold or
  *   came off it;
@@ -28,8 +27,8 @@
  * this send words of their choosing to someone else's inbox.
  *
  * It claims no new line in the Resend arithmetic (convex/caseAlerts.ts):
- * confirmations share the case confirmations' 15 a day, alerts share the case
- * alerts' 18 (`convex/lib/alertBudgets.ts`), and every alert leaves through
+ * confirmations share the case confirmations' pool, alerts share the case
+ * alerts' pool (`convex/lib/alertBudgets.ts`), and every alert leaves through
  * `deliverAlert`, so a follower gets at most one alert email a day whatever
  * else they follow.
  *
@@ -66,8 +65,11 @@ import {
   CASE_ALERT_BUDGET,
   CASE_ALERT_KEY,
   noteRefusal,
+  CONFIRMATION_COOLDOWN_MS,
+  SUBSCRIBE_IP_LIMIT,
+  SWEEP_RESUME_DELAY_MS,
 } from "./lib/alertBudgets";
-import { deliverAlert, etDay } from "./lib/alertDelivery";
+import { deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
 import {
   HOLD_STATUS,
@@ -80,20 +82,19 @@ import {
 } from "../src/lib/employerStages";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
+import { easternDay } from "./lib/time";
 
 const log = createLogger("EmployerAlerts");
 
 /** Follows one address may hold. A product limit and a read bound. */
 export const MAX_EMPLOYERS_PER_ADDRESS = 100;
-const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
-const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
 /** Rows one sweep reads, and alerts one sweep may build. */
 const CHECK_BATCH_LIMIT = 300;
 const ALERT_BATCH_LIMIT = 18;
 /**
  * A move older than this many days is history, not news, and is never sent.
- * 7 since Sep 29 2026 (was 3): the alert pool is shared, so a busy stretch
- * could hold a move past three days and drop it for good.
+ * Seven days: the alert pool is shared, so a busy stretch can hold a move for
+ * days, and a shorter window would drop it for good.
  */
 const FRESH_DAYS = 7;
 /** Keys remembered per follow; the doc holds at most 120 days of moves. */
@@ -214,7 +215,7 @@ export const subscribe = internalMutation({
     }
 
     // Charged BEFORE the write, so a full pool leaves no stamp for a retry to
-    // trip over (the Sep 4 2026 lesson in convex/caseAlerts.ts). A full pool
+    // trip over (see the note in convex/caseAlerts.ts). A full pool
     // queues the request (convex/confirmationQueue.ts).
     if (!args.fromQueue) {
       const budget = await admitConfirmation(ctx, "caseConfirm");
@@ -333,7 +334,7 @@ export const sendConfirmation = internalAction({
             ? ["You also asked for occasional product news. The same click confirms that.", ""]
             : []),
           ...(args.includesNewsletter
-            ? ["You also asked for the weekly bulletin digest, once it launches. The same click confirms that.", ""]
+            ? ["You also asked for the weekly digest. The same click confirms that.", ""]
             : []),
           "If you didn't ask for this, ignore this message. Nothing further will be sent.",
           "",
@@ -399,7 +400,7 @@ export const confirmByToken = internalMutation({
         pendingSlug: undefined,
         pendingName: undefined,
         unsubscribedAt: undefined,
-        followingFrom: etDay(now),
+        followingFrom: easternDay(now),
         ...(moved || row.unsubscribedAt !== undefined ? { toldMoves: [] } : {}),
       });
       confirmed.push(row.pendingName ?? row.employerName);
@@ -637,7 +638,7 @@ export const sweep = internalAction({
     let remaining = due.length > CHECK_BATCH_LIMIT;
     if (batch.length === 0) return { checked: 0, sent: 0, queued: 0, failed: 0 };
 
-    const today = etDay(Date.now());
+    const today = easternDay(Date.now());
     const moves = freshMoves(doc, today);
     const withNews = batch
       .map((sub) => ({ sub, news: unheard(moves.get(sub.slug), sub.toldMoves, sub.followingFrom) }))
@@ -732,7 +733,7 @@ export const sweep = internalAction({
     }
 
     if (remaining && sent + queued > 0) {
-      await ctx.scheduler.runAfter(5 * 60 * 1000, internal.employerAlerts.sweep, {});
+      await ctx.scheduler.runAfter(SWEEP_RESUME_DELAY_MS, internal.employerAlerts.sweep, {});
     }
     return { checked: batch.length, sent, queued, failed };
   },

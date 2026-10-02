@@ -19,7 +19,7 @@ import { CaseStageBadge } from "@/components/status/case-stage-badge";
 import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import { deadlineCountdown, formatDeadlineDate } from "./case-card.utils";
 import { getUrgencyFromDeadlineExtended } from "@/lib/status/urgency";
-import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
 
 export interface CaseListRowProps {
   /** Case data */

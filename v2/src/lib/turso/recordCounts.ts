@@ -9,9 +9,9 @@ import { one, rows } from "./client";
  * The record this site is built on, read as five point reads.
  *
  * Every count comes from a document an ingest reconciled before writing
- * (`perm_docs`), never from a COUNT over a table: the homepage is an ISR page
- * and Turso bills rows read. The one live query is over `visa_bulletins`,
- * which holds one row per month (84 at the time of writing).
+ * (`perm_docs`), never from a COUNT over a table: the homepage is an ISR page,
+ * and a COUNT walks every row. The one live query is over `visa_bulletins`,
+ * which holds one row per month.
  */
 const KEYS = ["cases_meta", "live_remainder", "sweep_coverage", "flag_disclosure_summary_pw", "flag_disclosure_summary_lca"] as const;
 

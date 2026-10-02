@@ -1,39 +1,32 @@
-"""Minimal Turso/libSQL HTTP client.
+"""Minimal libSQL HTTP client, plus the bookkeeping every ingest shares.
 
-Deliberately NOT a dependency. Turso speaks Hrana-over-HTTP at /v2/pipeline,
-which is a JSON POST, so a client library would buy us nothing and would put
-a third copy of the slug rules in a third language. Keeping the migration in
-Python means it imports `entity_key` and `slugify` from the ingest scripts
-that already own them, and a slug computed differently in the writer than in
-the reader is a detail page that 404s from its own index.
+The database (sqld on the server, Turso before it) speaks Hrana over HTTP at
+/v2/pipeline, which is a JSON POST, so a client library would buy nothing.
+Keeping the writers in Python also lets them import the entity and slug rules
+from the scripts that own them, rather than re-deriving them in a third
+language.
 """
 from __future__ import annotations
 
+import datetime
+import hashlib
 import json
 import os
 import pathlib
 import time
 import urllib.error
 import urllib.request
+from collections.abc import Iterable, Iterator, Sequence
+from itertools import islice
+from zoneinfo import ZoneInfo
 
 
 def env(name: str, path: str = ".env.local") -> str:
     """The real environment first, then `.env.local`.
 
-    This used to read the FILE ONLY, which is the wrong way round for CI: a
-    GitHub step supplies secrets as environment variables, so a script that
-    only reads a file could not see them and died with a bare
-    `FileNotFoundError: '.env.local'` - an error that names a file nobody
-    expected it to want, from a step that had the credentials all along.
-
-    That is not hypothetical. Three steps of the quarterly ingest call
-    `Turso()` at the end of `main()` to stamp their freshness row, and the DOL
-    one crashed exactly there **after** parsing 259,489 cases and writing every
-    payload. The work was done; only the bookkeeping call failed, and it took
-    the whole job red with it.
-
-    Reading os.environ first also means a workflow no longer has to materialise
-    a credentials file on disk just to hand a value to a Python script.
+    A CI step supplies secrets as environment variables and a laptop keeps them
+    in `.env.local`; reading the environment first serves both, with no
+    credentials file written to a runner's disk.
     """
     value = os.environ.get(name)
     if value:
@@ -65,19 +58,204 @@ def lit(v):
     return {"type": "text", "value": str(v)}
 
 
+def stmt(sql: str, args: list | tuple = ()) -> dict:
+    """One Hrana execute request for a pipeline; `args` are plain Python values."""
+    return {"type": "execute", "stmt": {"sql": sql, "args": [lit(a) for a in args]}}
+
+
+def run_stmts(db: "Turso", stmts: Iterable[dict], per_request: int = 200) -> list[int]:
+    """Send `stmts` in closed pipelines of `per_request`, in order.
+
+    Statements are drawn as they're sent, so a generator never sits in memory
+    whole. Returns each statement's affected-row count, aligned with `stmts`
+    (0 when the far end reports none), so a caller can tell which writes applied.
+    """
+    counts: list[int] = []
+    it = iter(stmts)
+    while chunk := list(islice(it, per_request)):
+        res = db.pipeline(chunk + [{"type": "close"}])
+        results = (res.get("results") or []) if isinstance(res, dict) else []
+        for j in range(len(chunk)):
+            r = results[j] if j < len(results) else {}
+            got = ((r.get("response") or {}).get("result") or {}).get("affected_row_count")
+            counts.append(int(got or 0))
+    return counts
+
+
+def insert_stmts(table: str, columns: Sequence[str], rows: Sequence[Sequence],
+                 per_stmt: int = 400) -> Iterator[dict]:
+    """INSERT OR REPLACE statements for `rows`, `per_stmt` rows to a statement.
+
+    Many rows to a statement because the cost is per statement: written one
+    at a time, updates measured 49 rows a second against 1,233 batched.
+    """
+    mark = "(" + ",".join("?" * len(columns)) + ")"
+    head = f"INSERT OR REPLACE INTO {table} ({','.join(columns)}) VALUES "
+    for i in range(0, len(rows), per_stmt):
+        chunk = rows[i:i + per_stmt]
+        yield stmt(head + ",".join([mark] * len(chunk)), [v for row in chunk for v in row])
+
+
+def insert_rows(db: "Turso", table: str, columns: Sequence[str], rows: Sequence[Sequence],
+                per_stmt: int = 400, per_request: int = 4) -> int:
+    """Write `rows` with `insert_stmts`; returns how many rows were sent."""
+    run_stmts(db, insert_stmts(table, columns, rows, per_stmt), per_request)
+    return len(rows)
+
+
+def case_update(table: str, key: str, columns: Sequence[str], rows: Sequence[Sequence]) -> dict:
+    """One UPDATE giving each row its own values; each row is (key, *values),
+    values in `columns` order.
+
+    A CASE arm per row, so a batch costs one statement and each row a
+    primary-key seek. A row not named keeps its values, which the ELSE arm
+    makes explicit.
+    """
+    arms = " ".join("WHEN ? THEN ?" for _ in rows)
+    sets, args = [], []
+    for i, col in enumerate(columns, start=1):
+        sets.append(f"{col} = CASE {key} {arms} ELSE {col} END")
+        args += [v for r in rows for v in (r[0], r[i])]
+    args += [r[0] for r in rows]
+    return stmt(f"UPDATE {table} SET {', '.join(sets)} WHERE {key} IN ({','.join('?' * len(rows))})",
+                args)
+
+
+# ---------------------------------------------------------------------------
+# Reading results
+#
+# Hrana sends every cell as {"type", "value"}, with integers as strings (see
+# `lit`). These decode a result without changing that: callers that want
+# numbers convert, so a diff against stored values stays like for like.
+# ---------------------------------------------------------------------------
+
+def cell(c: dict):
+    """One result cell as its raw value, None for SQL NULL."""
+    return None if c["type"] == "null" else c["value"]
+
+
+def typed_cell(c: dict):
+    """One result cell with integers and floats converted to Python numbers."""
+    v = cell(c)
+    if c["type"] == "integer":
+        return int(v)
+    if c["type"] == "float":
+        return float(v)
+    return v
+
+
+def rows_of(res: dict) -> list[list]:
+    """An `execute()` response's rows, each cell decoded by `cell`."""
+    return [[cell(c) for c in r] for r in res["response"]["result"]["rows"]]
+
+
+def dicts_of(res: dict, *, typed: bool = False) -> list[dict]:
+    """An `execute()` response's rows as {column: value} dicts."""
+    result = res["response"]["result"]
+    decode = typed_cell if typed else cell
+    cols = [c["name"] for c in result["cols"]]
+    return [dict(zip(cols, (decode(c) for c in r))) for r in result["rows"]]
+
+
+def query_rows(db: "Turso", sql: str, args: list | None = None) -> list[list]:
+    """Run one statement and return its rows as plain lists."""
+    return rows_of(db.execute(sql, args or []))
+
+
+def query_dicts(db: "Turso", sql: str, args: list | None = None, *,
+                typed: bool = False) -> list[dict]:
+    """Run one statement and return its rows as {column: value} dicts."""
+    return dicts_of(db.execute(sql, args or []), typed=typed)
+
+
+def add_missing_columns(db: "Turso", table: str, columns: dict[str, str]) -> list[str]:
+    """Add each of `columns` ({name: SQL type}) that the live table lacks.
+
+    `CREATE TABLE IF NOT EXISTS` never adds a column to a table that already
+    exists, so a schema that grows needs this before the first write that
+    names the new column. A table that doesn't exist yet is left alone: its
+    own CREATE carries every column. Returns the names added.
+    """
+    have = {r[1] for r in query_rows(db, f"PRAGMA table_info({table})")}
+    if not have:
+        return []
+    added = [c for c in columns if c not in have]
+    for c in added:
+        db.execute(f"ALTER TABLE {table} ADD COLUMN {c} {columns[c]}")
+    return added
+
+
+def write_doc(db: "Turso", key: str, doc, computed_at: int | None = None) -> str:
+    """Store perm_docs[key]: `doc` as a dict, or JSON text already serialized.
+
+    Returns the stored text, so a caller can read the row back and compare.
+    """
+    text = doc if isinstance(doc, str) else json.dumps(doc, separators=(",", ":"))
+    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
+               [key, text, int(time.time() * 1000) if computed_at is None else computed_at])
+    return text
+
+
+def read_doc(db: "Turso", key: str) -> dict | None:
+    """perm_docs[key] as a dict, or None when it's missing, unreadable or not
+    a JSON object."""
+    rows = query_rows(db, "SELECT json FROM perm_docs WHERE key = ?", [key])
+    try:
+        doc = json.loads(rows[0][0]) if rows and rows[0][0] else None
+    except ValueError:
+        return None
+    return doc if isinstance(doc, dict) else None
+
+
+def canon(v) -> str:
+    """One spelling per value, whether it was built here or read back.
+
+    SQLite stores a REAL column's 93205 as 93205.0, so comparing str() of the
+    two would mark every such row as changed; both sides go through here, so a
+    diff compares values, not storage types. 1.5 stays 1.5.
+    """
+    if v is None or v == "":
+        return ""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return str(v)
+    return str(int(f)) if f == int(f) else repr(f)
+
+
+def canon_hash(values) -> str:
+    """A short hash of `values` through `canon`, for cheap change detection."""
+    return hashlib.blake2b("\x1f".join(canon(v) for v in values).encode(), digest_size=8).hexdigest()
+
+
+# The site's day is Eastern: in UTC, a change after 8 PM ET would be dated
+# tomorrow, and a fixed -4 hours is wrong for half the year.
+ET = ZoneInfo("America/New_York")
+# Stamps are epoch milliseconds; a value below this is read as seconds.
+MS_EPOCH_FLOOR = 10_000_000_000
+
+
+def et_date(stamp) -> str | None:
+    """An epoch stamp (milliseconds, seconds tolerated) as its Eastern date."""
+    if stamp is None or stamp == "":
+        return None
+    n = int(stamp)
+    secs = n / 1000 if n > MS_EPOCH_FLOOR else n
+    return datetime.datetime.fromtimestamp(secs, tz=ET).strftime("%Y-%m-%d")
+
+
 # ---------------------------------------------------------------------------
 # What is worth retrying
 #
-# AN ALLOW-LIST, NOT A DENY-LIST, on purpose. An unknown error code is treated
-# as deterministic and fails immediately, which is the safe direction: a new
-# transient code costs one wasted run and a one-line addition here, whereas a
-# new DETERMINISTIC code caught by a deny-list would be re-sent four times on
-# every statement forever.
+# An allow-list, not a deny-list: an unknown error code is treated as
+# deterministic and fails at once. A new transient code costs one wasted run
+# and a one-line addition here; a deterministic code caught by a deny-list would
+# be re-sent on every statement forever.
 # ---------------------------------------------------------------------------
 
 # Statement failures that mean "the far end could not do this right now".
 TRANSIENT_SQLITE_CODES = frozenset({
-    "SQLITE_NOMEM",      # measured twice on 2026-09-03, two minutes apart
+    "SQLITE_NOMEM",      # the far end briefly out of memory
     "SQLITE_BUSY",       # write contention - a disclosure load starves reads
     "SQLITE_LOCKED",
     "SQLITE_IOERR",
@@ -97,10 +275,8 @@ RETRY_BACKOFF_S = (3, 10, 30)
 def transient_code(err) -> str | None:
     """The error code when a statement failure is worth re-sending, else None.
 
-    A HEALTHY REFUSAL IS NOT A TRANSIENT FAILURE and must never reach here.
-    The reconciliation guards in the ingests (`sum(matrix) != total`, so the
-    census is not written) return early rather than raising, precisely so a
-    deliberate no-op cannot be mistaken for something to retry.
+    A deliberate refusal is not a transient failure and never reaches here: the
+    ingests' reconciliation guards return early rather than raising.
     """
     if not isinstance(err, dict):
         return None
@@ -119,33 +295,19 @@ class Turso:
                  retries: int = 4, retry_transient: bool = True):
         """POST one Hrana pipeline, retrying only the transient failures.
 
-        TWO KINDS OF FAILURE ARRIVE BY TWO DIFFERENT ROUTES and this used to
-        retry only the first. A transport error (connection reset, DNS, a
-        timeout) raises out of `urlopen`. A STATEMENT error comes back inside
-        a **200 OK** body as `{"type": "error"}`, and the old code checked for
-        that only AFTER the retry loop had exited - so the far end could say
-        "out of memory" and the client treated it as a settled, final answer.
-
-        That is not hypothetical. On 2026-09-03 both scheduled DOL sweeps died
-        two minutes apart on `{"message": "SQLite error: out of memory",
-        "code": "SQLITE_NOMEM"}` (Actions runs 33757242079 and 33763357105) -
-        one on a single-row INSERT into perm_docs, one inside a batched write.
-        Re-running the same query by hand afterwards took 22.2s and succeeded.
-        Nothing was wrong with either statement; the primary was under
-        pressure for a moment and the client had no way to wait it out.
-
-        Same shape as the defect already recorded for the TypeScript read
-        layer, whose retry guard excluded the one error it was written for.
+        Two kinds of failure arrive by two routes. A transport error (connection
+        reset, DNS, a timeout) raises out of `urlopen`. A statement error comes back
+        inside a 200 OK body as `{"type": "error"}`; a transient one there (the far
+        end briefly out of memory, say) is retried like a transport error, because
+        the same statement usually succeeds a few seconds later.
         """
         body = json.dumps({"requests": requests}).encode()
         last: BaseException | None = None
         for attempt in range(retries):
             if attempt:
-                # Longer than the old 1.5/3/4.5s. A NOMEM is the far end short
-                # of memory; coming back in a second and a half is likely to
-                # meet the same pressure. 3/10/30 spans 43 seconds, which is
-                # nothing against an 85-minute sweep and long enough for a
-                # pressure window to clear.
+                # A transient error is usually the far end under pressure, which a
+                # retry a second later is likely to meet again; RETRY_BACKOFF_S spans
+                # 43 seconds, nothing against a long sweep.
                 time.sleep(RETRY_BACKOFF_S[min(attempt - 1, len(RETRY_BACKOFF_S) - 1)])
             req = urllib.request.Request(
                 self.url + "/v2/pipeline", data=body,
@@ -168,8 +330,7 @@ class Turso:
             code = transient_code(err) if retry_transient else None
             if code is None:
                 # Deterministic: a constraint violation, a missing table, the
-                # read-only token's BLOCKED. Retrying only delays the real
-                # error by three quarters of a minute.
+                # read-only token's BLOCKED. Retrying only delays the real error.
                 raise RuntimeError(detail)
             last = RuntimeError(detail)
             print(f"  [turso] {code} on attempt {attempt + 1}/{retries}; "
@@ -179,18 +340,13 @@ class Turso:
 
     def execute(self, sql: str, args: list | None = None, *,
                 retry_transient: bool = True):
-        reqs = [{"type": "execute", "stmt": {
-            "sql": sql, "args": [lit(a) for a in (args or [])]}}]
-        return self.pipeline(reqs + [{"type": "close"}],
+        return self.pipeline([stmt(sql, args or []), {"type": "close"}],
                              retry_transient=retry_transient)["results"][0]
 
     def scalar(self, sql: str, args: list | None = None):
         res = self.execute(sql, args or [])
         rows = res["response"]["result"]["rows"]
-        if not rows:
-            return None
-        cell = rows[0][0]
-        return None if cell["type"] == "null" else cell["value"]
+        return cell(rows[0][0]) if rows else None
 
     def script(self, statements: list[str]):
         """Run DDL in order, one pipeline, failing loudly on the first error."""
@@ -245,13 +401,9 @@ def record_run(
 ) -> None:
     """Append one row to the ingest audit trail.
 
-    This is the answer to 'why did this table change at 13:48, and to what?'
-    A last-write freshness stamp is overwritten every run and cannot show a
-    history; this table is append-only. It exists because a scheduled job once
-    ran OLD code and silently rebuilt perm_live_recent from 137k rows down to
-    16k - freshness stayed green because the reverted run still stamped itself
-    fresh, and the only record of the drop was in GitHub Actions logs that age
-    out. rows_written per run makes that drop visible after the fact.
+    A freshness stamp is overwritten every run and can't show a history; this
+    table is append-only, so "why did this table change, and to what?" has an
+    answer after the fact (rows_written makes a sudden drop visible).
 
     Never raises: an audit write that fails must not fail the ingest it audits.
     """
@@ -264,29 +416,15 @@ def record_run(
                 started_at INTEGER, finished_at INTEGER)"""
         )
         now = int(time.time() * 1000)
-        # BOTH COLUMNS ARE MILLISECONDS. `finished_at` always was, but
-        # `started_at` used to be written through untouched - so a caller
-        # reaching for the obvious `time.time()` (SECONDS) put seconds in a
-        # milliseconds column, and the only symptom was a duration off by a
-        # factor of 1000. Nothing raised. Caught by actually calling this once
-        # and reading the row back, which is the only way a unit mismatch in a
-        # loosely-typed column ever shows up.
-        #
-        # Anything below 1e11 has to be seconds: as milliseconds it would be
-        # 1973, and as seconds it is year 5138. So the two are separable with
-        # no ambiguity for any timestamp this will ever see, and a caller may
-        # pass whichever it has.
+        # Both columns are milliseconds. A caller may pass `time.time()` seconds:
+        # anything below 1e11 has to be seconds (as milliseconds it would be 1973),
+        # so the two are separable for any timestamp this will ever see.
         started = float(started_at) if started_at is not None else float(now)
         started_ms = int(started * 1000) if started < 1e11 else int(started)
-        # THE ONLY NON-IDEMPOTENT WRITE IN ANY SCHEDULED INGEST, so it is the
-        # only one that must not be retried. `ingest_runs.id` is AUTOINCREMENT,
-        # so a re-sent pipeline appends a SECOND row describing one run and
-        # quietly corrupts the audit trail this table exists to be. Measured
-        # 2026-09-03: every other INSERT in the scheduled scripts is
-        # `INSERT OR IGNORE` or `INSERT OR REPLACE`, and every UPDATE is keyed
-        # on a primary key, so re-sending them is a no-op:
-        #   grep -rn "INSERT INTO" scripts/*.py | grep -viE "OR IGNORE|OR REPLACE"
-        # returns this line plus three scripts no workflow runs.
+        # Not retried: `ingest_runs.id` is AUTOINCREMENT, so a re-sent pipeline
+        # would append a second row for one run. Every other scheduled write is
+        # INSERT OR IGNORE, INSERT OR REPLACE or a keyed UPDATE, so re-sending
+        # those is a no-op.
         db.execute(
             "INSERT INTO ingest_runs (script, status, rows_written, note, "
             "started_at, finished_at) VALUES (?,?,?,?,?,?)",
@@ -300,38 +438,15 @@ def record_run(
 # ---------------------------------------------------------------------------
 # Sweep coverage: what a run actually looked at
 #
-# `record_run` above answers "did this script run, and how many rows did it
-# write". It cannot answer "which cases did we look at, and when" - and that
-# question is load-bearing, because the review-stage pages print a freshness
-# claim about exactly that.
+# `record_run` answers "did this script run, and how many rows did it write".
+# This answers "which cases did a sweep look at, and when", which is what the
+# review-stage pages print a freshness date from.
 #
-# WHY IT HAD TO EXIST. The only per-case record of "when was this looked at"
-# was `perm_case_status.last_checked_at`, which is PERMTRACK'S field, seeded
-# from their mirror and never written by our own PERM sweep - the ingest's own
-# header says so. Measured 2026-09-03 against production:
-#
-#   66,771 pending cases carried a 2026-07 timestamp
-#   12,187 carried none at all
-#
-# while the sweep had in fact asked DOL about every one of them that morning.
-# The published doc said the largest stage was "checked ... 2026-08-31"; the
-# run that produced the number finished 2026-09-03. So the site was citing a
-# retired competitor's bookkeeping as its own measurement. Probably true,
-# unprovable, and not ours.
-#
-# WHY NOT STAMP EVERY ROW. 414,358 rows x 365 days is ~12.4M writes/month
-# against a 10M plan, to express something ONE ROW PER SWEEP says better. A
-# sweep asks about a POPULATION; coverage is a property of the run, not of
-# each row in it. The sweep deliberately writes only CHANGED rows (~1,300/day)
-# and this keeps it that way: 2 rows/day for PERM, ~3 for the FLAG programs.
-#
-# WHY A TABLE AND NOT A `perm_docs` KEY. `perm_docs` is keyed and written with
-# INSERT OR REPLACE, so it holds one value and destroys the previous one - the
-# same trap already recorded for the DOL as-of stamp. The question this
-# answers is historical ("has the sweep run every day, and did it finish?"),
-# and an append-only table is the only shape that can answer it. It is also
-# free on the read side: the WEBSITE never reads this table, only the ingest
-# does, and only ever one row of it.
+# Coverage is a property of the run, not of each case in it: a sweep asks about
+# a population, so one row per sweep says it, where stamping every case would be
+# hundreds of thousands of writes a day. And it is an append-only table rather
+# than a `perm_docs` key, because the question is historical ("has the sweep run
+# every day, and did it finish?") and a keyed doc keeps only the latest value.
 # ---------------------------------------------------------------------------
 
 _SWEEP_DDL = """CREATE TABLE IF NOT EXISTS sweep_runs (
@@ -354,8 +469,7 @@ _SWEEP_DDL = """CREATE TABLE IF NOT EXISTS sweep_runs (
 )"""
 
 # Leading equalities, ordering column last: the one query this table serves is
-# "newest complete run for a program", which the index then answers without a
-# sort. Same rule the case_status_stage index was built on.
+# "newest complete run for a program", which the index answers without a sort.
 _SWEEP_INDEX = ("CREATE INDEX IF NOT EXISTS sweep_runs_cover "
                 "ON sweep_runs (program, complete, finished_at)")
 
@@ -385,18 +499,13 @@ def record_sweep(
 ) -> dict | None:
     """Append one row describing what this sweep covered. Returns the row.
 
-    `complete` IS A CLAIM ABOUT COVERAGE AND ONLY THE CALLER CAN MAKE IT.
-    Pass 1 only when the run walked its whole population: no `--limit`, no
-    `--offset`, no early stop, and no batch that exhausted its retries. A
-    partial run that claimed completeness would let a freshness date be
-    stamped on stages the run never reached, which is the defect this table
-    exists to end rather than relocate.
+    `complete` is a claim about coverage, and only the caller can make it: pass
+    1 only when the run walked its whole population (no `--limit`, no
+    `--offset`, no early stop, no batch that exhausted its retries).
 
-    NEVER RAISES, for the same reason `record_run` does not: bookkeeping must
-    not fail the ingest it books. The failure mode is benign in the one
-    direction that matters - a missed write means the next reader falls back
-    to the PREVIOUS complete sweep, so the published date is a day old rather
-    than wrong. Understating freshness is the safe side of this trade.
+    Never raises, like `record_run`. A missed write only means the next reader
+    falls back to the previous complete sweep, so the published date is a day
+    old rather than wrong.
     """
     now = int(time.time() * 1000)
     started = float(started_at)
@@ -404,10 +513,8 @@ def record_sweep(
     row = {
         "script": script, "program": program, "mode": mode,
         "started_at": started_ms, "finished_at": now,
-        # THE DATE IS WRITTEN BY THE RUN, NOT DERIVED BY THE READER. Re-deriving
-        # a date from epoch ms puts the reader's timezone in the middle of a
-        # published freshness claim; storing what the run itself called "today"
-        # keeps it in step with the doc's own `asOf`, which uses the same clock.
+        # The date is written by the run, not derived by the reader from epoch
+        # ms, so the reader's timezone never enters a published freshness claim.
         "started_on": time.strftime("%Y-%m-%d", time.localtime(started_ms / 1000)),
         "finished_on": time.strftime("%Y-%m-%d", time.localtime(now / 1000)),
         "asked": int(asked), "answered": int(answered), "missing": int(missing),
@@ -420,22 +527,9 @@ def record_sweep(
     try:
         _ensure_sweep_runs(db)
         cols = list(row)
-        # NOT RETRIED, for the same reason as record_run's INSERT: this is a
-        # bare `INSERT INTO` against an AUTOINCREMENT id, so a re-sent pipeline
-        # appends a SECOND row for one sweep - and a sweep appearing twice
-        # poisons the very coverage claim this table exists to make honest.
-        # `Turso.pipeline` cannot tell whether the far end applied a statement
-        # before it ran out of memory, so retrying a non-idempotent write is
-        # never safe; it is a parameter, not a default, exactly as the
-        # TypeScript read layer's retry is.
-        #
-        # Measured 2026-09-03 - the two non-idempotent writes in this file are
-        # the only ones in any SCHEDULED ingest. Everything else is
-        # `INSERT OR IGNORE`, `INSERT OR REPLACE`, or an UPDATE keyed on a
-        # primary key, so re-sending it is a no-op:
-        #   grep -rn "INSERT INTO" scripts/*.py | grep -viE "OR IGNORE|OR REPLACE"
-        # returns this line, record_run's below, and three scripts that no
-        # workflow runs (rebuild_entities, the one-off backfill, test_turso_load).
+        # Not retried, for the same reason as record_run's INSERT: a re-sent
+        # pipeline would record one sweep twice, and `Turso.pipeline` can't tell
+        # whether the far end applied a statement before it failed.
         db.execute(
             f"INSERT INTO sweep_runs ({', '.join(cols)}) "
             f"VALUES ({', '.join('?' * len(cols))})",
@@ -453,9 +547,8 @@ def last_complete_sweep(
 ) -> dict | None:
     """The newest run that covered `program`'s whole population, or None.
 
-    None is a real and correct answer - before the first complete run there is
-    no honest date to publish, and the caller must render nothing rather than
-    reach for somebody else's timestamp. That is the whole point.
+    None is a real answer: before the first complete run there is no date to
+    publish, and the caller renders nothing rather than borrow another one.
     """
     try:
         _ensure_sweep_runs(db)
@@ -474,8 +567,8 @@ def last_complete_sweep(
     if not rows:
         return None
     out: dict = {}
-    for name, cell in zip(_SWEEP_COLS, rows[0]):
-        v = None if cell["type"] == "null" else cell["value"]
+    for name, c in zip(_SWEEP_COLS, rows[0]):
+        v = cell(c)
         out[name] = v if name in ("mode", "started_on", "finished_on") else (
             None if v is None else int(v))
     return out
@@ -488,22 +581,12 @@ def last_complete_sweep(
 def run_independently(steps: list[tuple[str, object]]) -> list[tuple[str, str]]:
     """Run each step in order; one failing must not cost the ones after it.
 
-    WHY. The last thing both DOL sweeps do is write a handful of precomputed
-    docs, and they were written as four bare statements in a row. On
-    2026-09-03 the fourth raised `SQLITE_NOMEM` and took the whole run red
-    AFTER the 70-minute sweep had already written its 566 status changes and
-    stamped itself fresh - so the expensive work was done, one small doc was
-    18 hours stale, and the run's exit code said the sweep had failed.
-
-    NOT A SWALLOW. Every failure is printed as a GitHub `::error::`
-    annotation, which renders on the run page whatever the job's conclusion,
-    and the caller gets the list back so it can be written to `ingest_runs`
-    where `check_ingest_health.py` will find it. A step that fails silently is
-    worse than one that crashes; the point here is only that it should not
-    take its siblings with it.
-
-    Order is preserved, because it is load-bearing: discovery has to run
-    before the census, or the census is written without the day's new filings.
+    The tail of a sweep is a handful of precomputed docs, each useful on its
+    own, so one failing must not cost the rest (or turn a sweep that did its
+    work red). Not a swallow: every failure is printed as a GitHub `::error::`
+    annotation, and the list is returned so the caller can record it in
+    `ingest_runs`, where check_ingest_health.py finds it. Order is preserved,
+    because callers depend on it.
     """
     failed: list[tuple[str, str]] = []
     for name, fn in steps:

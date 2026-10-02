@@ -50,5 +50,3 @@ export function PageHeading({ eyebrow, title, lede }: PageHeadingProps) {
     </div>
   );
 }
-
-export default PageHeading;

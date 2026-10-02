@@ -1,92 +1,29 @@
 #!/usr/bin/env python3
-"""Ingest the employment-based visa bulletin series from the Wayback Machine.
+"""Ingest the visa bulletin: employment and family charts, every month.
 
-The State Department publishes the bulletin at travel.state.gov, which refuses
-automated clients behind a bot challenge. Seven access routes were tried
-directly and all were refused, and defeating a government site's bot protection
-is not something this project does.
+Three routes, ranked by SOURCE_RANK so a worse source never overwrites a
+better one:
 
-The Internet Archive is a different thing: a public archive of public pages,
-built to be read programmatically. Reading an archived copy is not
-circumventing anything, and it is what this uses.
+--direct      Automatic, daily. The State Department serves its bulletin
+pages from adoption.state.gov to scripts (travel.state.gov
+refuses every automated client). Primary source.
+--from-file   The fallback: a page a person saved from a browser. Same
+parser, same checks, same primary-source rank.
+--out         The back series from the Internet Archive, for months no
+primary route can reach. The archive stopped capturing new
+bulletins in July 2026, when travel.state.gov began refusing
+its crawler too, so this can only fill history.
 
-The trade is FRESHNESS. The archive lags the live site, so this can never claim
-to hold the current month's bulletin. That is why the product built on it is a
-HISTORY: how a cutoff has moved over the months, with every month labelled by
-the bulletin it came from. A movement series is honest about being historical in
-a way that "here is this month's number" would not be, and the movement is the
-part people actually cannot get anywhere else.
-
-THE LAG IS NO LONGER A MONTH OR TWO. Measured 2026-08-25: travel.state.gov began
-serving 403 to the Internet Archive's own crawler in mid-July 2026. The last
-successful capture of any bulletin page is 2026-07-14; the first refused one is
-2026-07-17. Every capture attempt since is the 4.8 KB Cloudflare block page, so
-the August 2026 and September 2026 bulletins have never been archived at all
-(15 and 28 capture attempts respectively, all 403, latest 2026-08-23).
-
-    month       captures   status codes
-    2026-07     16         7x 200, 4x 403, 5x no-status
-    2026-08     15         15x 403
-    2026-09     28         28x 403
-
-So 2026-07 is the newest bulletin obtainable from any route this project is
-willing to use, and it will stay that way until travel.state.gov relaxes. This
-is a CEILING, not a backlog: re-running this script cannot fix it. The product
-says so on the page rather than presenting a stale figure as a current one.
-
-Routes measured the same day, with cloudflare.com/discord.com/flag.dol.gov as
-controls (all reachable, so this is agency policy and not our IP):
-
-    travel.state.gov, bare UA                    403
-    travel.state.gov, full browser header set    403 (identical 5,868-byte body)
-    www.uscis.gov filing-charts page             200, but carries NO cutoffs;
-                                                 it names the current bulletin
-                                                 month and links to DOS
-    federalregister.gov API                      200, publishes rules about the
-                                                 bulletin, never the bulletin
-    archive.today mirror                         429, and a less reputable
-                                                 archive is not worth leaning on
-
-THE BLOCK IS AGENCY POLICY, NOT OUR ADDRESS. Re-measured 2026-08-27 from a
-GitHub Actions runner, an entirely different network, with controls in the
-same run:
-
-    travel.state.gov  bulletin index          403   5,843 b, 0 cutoffs
-    travel.state.gov  September 2026 page     403   5,843 b, 0 cutoffs
-    travel.state.gov  robots.txt              403   4,905 b
-    cloudflare.com                            200   (control)
-    flag.dol.gov                              200   (control)
-    www.dol.gov  full browser header set      200   (403 from this laptop)
-    www.uscis.gov                             403   (200 from this laptop)
-
-A host that refuses robots.txt itself is not rate-limiting us. Two networks,
-every path, same 403. The first run of that probe had a control that ALSO
-failed, which made it worthless - a probe whose control fails is blind, and
-its findings read exactly like real ones.
-
-So there is no automated primary route, and there will not be one until the
-State Department relaxes. What there IS:
-
-    --from-file   A person opens the public page in a normal browser and
-                  saves it; this parses, validates and stores it, with
-                  primary-source provenance. The bulletin is ONE page
-                  published ONCE a month, so the human step is 30 seconds
-                  twelve times a year, and it removes the dependency on
-                  anyone else's mirror entirely.
+Every route goes through one parser that refuses anything that isn't a whole
+bulletin: a challenge page, missing charts, a month it can't read, a column
+in the wrong place.
 
 Usage:
-    # Archive route: the back series, automated, structurally behind.
-    python3 scripts/ingest_visa_bulletin.py --out /tmp/vb.json --months 18
-    # Turso is written by this script directly, on both routes. The JSON is
-    # for turso_migrate_public.py; there is no Convex mirror any more.
-
-    # Primary route: this month, from the source, needing one human minute.
-    #   1. Open the bulletin in a browser.
-    #   2. Save it (Cmd+S, "Page Source" / "HTML only" is enough).
-    #   3. Point this at the file. It refuses a challenge page, a page with
-    #      no charts, a month it cannot read, and a month you assert that
-    #      the page contradicts.
-    python3 scripts/ingest_visa_bulletin.py --from-file ~/Downloads/vb.html
+python3 scripts/ingest_visa_bulletin.py --direct
+python3 scripts/ingest_visa_bulletin.py --from-file ~/Downloads/vb.html
+python3 scripts/ingest_visa_bulletin.py --out /tmp/vb.json --months 18
+# The archive route writes the database directly too; the JSON is
+# turso_migrate_public.py's input.
 
 Tests: python3 scripts/test_visa_bulletin.py
 """
@@ -106,24 +43,15 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, add_missing_columns, query_rows, stamp_freshness  # noqa: E402
 
-# Queried per calendar year. A single wildcard over the whole bulletin path
-# matches thousands of URLs and the row limit truncates before it reaches the
-# recent ones, which silently returned bulletins from 2022 while reporting
-# success.
+# Queried per calendar year: one wildcard over the whole bulletin path hits the
+# row limit and truncates before the recent months, while reporting success.
 #
-# `collapse=urlkey` is deliberately ABSENT, and its absence is load-bearing.
-# CDX collapse keeps the FIRST row of each group, and rows are ordered by
-# urlkey then timestamp, so it hands back the OLDEST capture of every bulletin.
-# That silently defeated the "keep the latest snapshot" rule below: for the
-# July 2026 bulletin it returned the 2026-06-18 capture while a 2026-07-14 one
-# existed. An early capture can predate the page being filled in, which is the
-# exact failure the rule was written to avoid.
-#
-# `filter=statuscode:200` is also load-bearing now that travel.state.gov
-# refuses the archive's crawler: without it every August and September 2026
-# capture would parse as a bulletin-shaped page with no charts on it.
+# `collapse=urlkey` is deliberately absent: it keeps the OLDEST capture of each
+# bulletin, which can predate the page being filled in, and the rule below
+# wants the latest. `filter=statuscode:200` keeps refused captures (a
+# Cloudflare block page) from parsing as a bulletin with no charts.
 CDX_LIMIT = 2000
 CDX_TEMPLATE = (
     "http://web.archive.org/cdx/search/cdx"
@@ -145,41 +73,32 @@ MONTHS = {
 }
 
 # The row labels the bulletin uses, mapped to the categories people say.
-# Several alternates per code, because DOL has renamed rows over the years and
-# a single label silently drops a whole category from the older months.
+# Several alternates per code, because rows have been renamed over the years
+# and a single label silently drops a whole category from the older months.
 #
-# EB5 IS THE ONE THAT MOVED. The EB-5 Reform and Integrity Act (March 2022)
-# replaced the old split - "5th Non-Regional Center (C5 and T5)" and "5th
-# Regional Center (I5 and R5)" - with "5th Unreserved" plus three set-asides.
-# Matching only "5th Unreserved" left EB5 missing from every bulletin before
-# 2022-05: 18 months, silently, with nothing erroring.
-#
-# The two pre-RIA rows carry IDENTICAL cutoffs (checked on April 2021: both
-# 15AUG15 China final-action, both 15DEC15 dates-for-filing), so taking the
-# non-regional row loses nothing. It is not the same legal category as
-# today's Unreserved, which is why the alternates are listed in order and the
-# newest name wins where both appear.
+# EB-5 is the one that moved: the EB-5 Reform and Integrity Act (March 2022)
+# replaced "5th Non-Regional Center (C5 and T5)" and "5th Regional Center (I5
+# and R5)" with "5th Unreserved" plus three set-asides. The two older rows carry
+# identical cutoffs, so taking the non-regional row loses nothing. Alternates
+# are listed in order, so the newest name wins where both appear.
 CATEGORY_ROWS = [
     ("EB1", ["1st"]),
     ("EB2", ["2nd"]),
     ("EB3", ["3rd"]),
     ("EW3", ["Other Workers"]),
     ("EB4", ["4th"]),
-    # "5th Targeted Employment Areas/ Regional Centers and Pilot Programs" is
-    # the single EB-5 row of bulletins before October 2015 (added 2026-09-26),
-    # and October 2015's dates-for-filing chart still used it while its final
-    # action chart had already split. Last, so a month that prints both takes
-    # the newer name. "5th Targeted" matches "5th Targeted EmploymentAreas",
-    # the unspaced form some captures carry.
+    # "5th Targeted Employment Areas/ Regional Centers and Pilot Programs" is the
+    # single EB-5 row of bulletins before October 2015 (October 2015's
+    # dates-for-filing chart still used it after its final-action chart had split).
+    # Last, so a month that prints both takes the newer name. "5th Targeted" also
+    # matches the unspaced "5th Targeted EmploymentAreas" some captures carry.
     ("EB5", ["5th Unreserved", "5th Non-Regional Center", "5th Regional Center", "5th Targeted"]),
-    # THE THREE SET-ASIDES (added 2026-09-07). The bulletin prints the label
-    # in two shapes, one per chart in the same month: the final-action table
-    # says "5th Set Aside: Rural (20%, including NR, RR)" and the
-    # dates-for-filing table "5th Set Aside: (Rural: NR, RR - 20%)". Both
-    # start with the phrase and the name, in that order, so both are listed;
-    # the hyphenated spelling appears in some 2022 months. These codes match
-    # USCIS's inventory workbook (EB5R, EB5HU, EB5I), which is what lets the
-    # I-485 tool pair a set-aside cutoff with its own inventory.
+    # The three set-asides. The bulletin prints the label in a different shape on
+    # each chart ("5th Set Aside: Rural (20%, including NR, RR)" and "5th Set
+    # Aside: (Rural: NR, RR - 20%)"); both start with the phrase and the name, and
+    # some 2022 months hyphenate it. The codes match USCIS's inventory workbook
+    # (EB5R, EB5HU, EB5I), which lets the I-485 tool pair a set-aside cutoff with
+    # its own inventory.
     ("EB5R", ["5th Set Aside: Rural", "5th Set Aside: (Rural", "5th Set-Aside: Rural", "5th Set-Aside: (Rural"]),
     ("EB5HU", ["5th Set Aside: High Unemployment", "5th Set Aside: (High Unemployment",
                "5th Set-Aside: High Unemployment", "5th Set-Aside: (High Unemployment"]),
@@ -195,9 +114,9 @@ CATEGORY_ROWS = [
 # were already complete for their era.
 SET_ASIDES_FROM = "2022-05"
 
-# The family-sponsored chart, read the same way (added 2026-09-08). Same
-# country columns; the row labels are the preference codes themselves. F2A
-# and F2B are distinct rows and must not be prefix-matched to "F2".
+# The family-sponsored chart, read the same way. Same country columns; the row
+# labels are the preference codes themselves. F2A and F2B are distinct rows and
+# must not be prefix-matched to "F2".
 FAMILY_ROWS = [
     ("F1", ["F1"]),
     ("F2A", ["F2A"]),
@@ -211,11 +130,10 @@ def expected_categories(month: str) -> int:
     return 9 if month >= SET_ASIDES_FROM else 6
 
 
-# The Dates for Filing chart began with the October 2015 bulletin. Before it
-# the bulletin printed ONE employment chart (final action) and ONE family chart,
-# so a single chart is a whole bulletin for those months and a truncated
-# capture for every month since. Measured on the archived pages 2026-09-26:
-# January 2015 carries one of each, October 2015 two of each.
+# The Dates for Filing chart began with the October 2015 bulletin. Before it the
+# bulletin printed one employment chart (final action) and one family chart, so
+# a single chart is a whole bulletin for those months and a truncated capture
+# for every month since.
 DATES_FOR_FILING_FROM = "2015-10"
 
 # Column order is fixed across every bulletin, but is asserted rather than
@@ -223,34 +141,23 @@ DATES_FOR_FILING_FROM = "2015-10"
 COUNTRY_COLUMNS = ["worldwide", "china", "india", "mexico", "philippines"]
 COUNTRY_HEADINGS = ["ALL CHARGEABILITY", "CHINA", "INDIA", "MEXICO", "PHILIPPINES"]
 
-# Primary source. Named as what it is - a person opened the page - so a
-# reader can tell it apart from the archived and mirrored rows beside it.
-# A MONTHLY ARTEFACT NEEDS A BUDGET TIGHTER THAN ITS CADENCE, NOT LOOSER.
-#
-# `as_of` here is the month the bulletin COVERS, which is about a month in the
-# future while we are current, so its age sits near -34 and only crosses zero
-# two months after we fall behind. It cannot catch a single missed month.
-#
-# What can is the RUN age, which `check_ingest_health.py` budgets at
-# max(7, max_age_days * 2). At 20 that is 40 days: a bulletin done on time
-# refreshes every ~30, so 40 fires on one missed month with slack and stays
-# quiet when current. Probed: silent at 35 days, fires at 45.
-#
-# It was 75, which meant a missed October would have said nothing until
-# November.
+# The run age is what catches a missed month: `as_of` is the month the bulletin
+# COVERS, about a month in the future while current, so its own age can't. The
+# health check budgets the run age at max(7, max_age_days * 2), and at 20 that
+# is 40 days: quiet while a bulletin lands every ~30, firing on one missed
+# month.
 BULLETIN_MAX_AGE_DAYS = 20
 
+# Named for what it is (a person saved the page), so a reader can tell it apart
+# from the direct and archived rows beside it.
 SAVED_PAGE_SOURCE = (
     "travel.state.gov (page saved from a browser; the site refuses automated clients)"
 )
 
-# THE BULLETIN IS AUTOMATIC AGAIN (2026-09-26). The State Department serves the
-# same bulletin pages from adoption.state.gov, a host of its own that answers a
-# plain request with 200 (index, month pages and PDFs), has no robots.txt rule,
-# and puts no challenge in the way; travel.state.gov answered the same minute's
-# request with 403. Reading a public page that its owner serves to anyone
-# defeats nothing. Same parser, same validation, same primary-source rank as a
-# page saved from a browser, because it is the same document.
+# The State Department serves the same bulletin pages from adoption.state.gov,
+# its own host, which answers a plain request (index, month pages and PDFs)
+# and has no robots.txt rule against it. Same parser, same validation and same
+# primary-source rank as a page saved from a browser: it is the same document.
 DIRECT_ORIGIN = "https://adoption.state.gov"
 DIRECT_INDEX = f"{DIRECT_ORIGIN}/content/travel/en/legal/visa-law0/visa-bulletin.html"
 DIRECT_SOURCE = (
@@ -294,10 +201,8 @@ def discover_snapshots(limit: int, years: list[int]) -> list[tuple[str, str, str
         except Exception as exc:  # noqa: BLE001
             log(f"  {year}: {exc}")
             continue
-        # Truncation is silent and drops whole months. Rows come back ordered
-        # by urlkey, so hitting the limit loses the alphabetically-last
-        # bulletins rather than the oldest ones, which is not a pattern anyone
-        # would spot in the output.
+        # Truncation is silent and drops whole months, and rows come back ordered
+        # by urlkey, so it loses the alphabetically-last bulletins, not the oldest.
         if len(year_rows) >= CDX_LIMIT:
             log(f"  WARNING {year}: hit the {CDX_LIMIT}-row CDX limit; months may be missing")
         rows += year_rows
@@ -345,10 +250,9 @@ def parse_bulletin(page: str, month: str | None = None) -> dict | None:
         if not rows:
             continue
         head = " ".join(rows[0]).upper().replace("- ", "-").replace(" -", "-")
-        # Both charts carry INDIA, so the discriminator is EMPLOYMENT in the
-        # first cell specifically. Matching anywhere in the header let a
-        # family-sponsored chart through, whose third column is El Salvador and
-        # not India.
+        # Both charts carry INDIA, so the discriminator is EMPLOYMENT in the first
+        # cell specifically: matching anywhere in the header would let a family
+        # chart through, whose third column is El Salvador, not India.
         first_cell = rows[0][0].upper().replace("- ", "-").replace(" ", "")
         if first_cell.startswith("EMPLOYMENT") and "INDIA" in head:
             eb.append(rows)
@@ -361,19 +265,11 @@ def parse_bulletin(page: str, month: str | None = None) -> dict | None:
     def chart(rows: list[list[str]], category_rows=CATEGORY_ROWS) -> dict[str, dict[str, str]]:
         """Resolve each country to its OWN column, by header name.
 
-        POSITION IS NOT STABLE ACROSS YEARS. Bulletins before roughly April
-        2023 carry a SIXTH country column on the employment chart - EL
-        SALVADOR / GUATEMALA / HONDURAS, between CHINA and INDIA - which was
-        later dropped. A parser that asserted "column 3 is INDIA" therefore
-        refused 18 real bulletins with
-        `column 3 is ['ELSALVADORGUATEMALAHONDURAS'], expected INDIA`.
-
-        Refusing was the right failure: reading that column as India would
-        have published Central American cutoffs as Indian ones, silently, on
-        a page headed "These are not estimates." But the fix is to stop
-        assuming position at all. Finding each country by its own heading
-        handles both layouts, ignores columns we do not track, and still
-        fails loudly when a country we DO need is absent.
+        Position is not stable across years: bulletins before roughly April 2023
+        carry a sixth country column (EL SALVADOR / GUATEMALA / HONDURAS) between
+        CHINA and INDIA. Finding each country by its own heading handles both
+        layouts, ignores columns we don't track, and still fails loudly when a
+        country we need is absent.
         """
         header = [h.upper().replace("- ", "").replace(" ", "") for h in rows[0]]
         idx: dict[str, int] = {}
@@ -391,13 +287,11 @@ def parse_bulletin(page: str, month: str | None = None) -> dict | None:
             done = False
             for label in labels:          # alternates in preference order
                 for r in rows[1:]:
-                    # Compare on the full label, not a 6-character prefix:
-                    # "5th Unreserved" and "5th Non-Regional" share "5th un"?
-                    # No - but "5th Reg" and "5th Res" would, and a prefix
-                    # short enough to be convenient is short enough to collide.
-                    # A family code is matched whole ("F2A" must not take
-                    # the "F2B" row), which `startswith` on a bare code
-                    # already guarantees: no family label is a prefix of another.
+                    # Compare on the full label, not a short prefix: a prefix short
+                    # enough to be convenient ("5th Reg", "5th Res") is short enough to
+                    # collide. A family code is matched whole ("F2A" must not take the
+                    # "F2B" row), which `startswith` guarantees here because no family
+                    # label is a prefix of another.
                     if r and r[0].strip().lower().startswith(label.lower()):
                         out[code] = {c: (r[i] if i < len(r) else "") for c, i in idx.items()}
                         done = True
@@ -442,13 +336,9 @@ def month_from_page(page: str) -> str | None:
 
 
 def ensure_family_columns(db: Turso) -> None:
-    """The two family columns arrived 2026-09-08; add them to a table that predates them."""
-    for col in ("family_final_action", "family_dates_for_filing"):
-        try:
-            db.execute(f"ALTER TABLE visa_bulletins ADD COLUMN {col} TEXT")
-        except Exception as e:  # noqa: BLE001
-            if "duplicate column" not in str(e).lower():
-                raise
+    """Add the family-chart columns to a table that predates them."""
+    add_missing_columns(db, "visa_bulletins",
+                        {"family_final_action": "TEXT", "family_dates_for_filing": "TEXT"})
 
 
 def family_json(parsed: dict, key: str) -> str | None:
@@ -458,20 +348,10 @@ def family_json(parsed: dict, key: str) -> str | None:
 def ingest_saved_page(path: str, month: str | None) -> int:
     """Store one bulletin from a page saved out of a browser.
 
-    travel.state.gov refuses every automated client, from this machine and
-    from GitHub's runners alike, on every path including robots.txt (measured
-    2026-08-27, with cloudflare.com and flag.dol.gov returning 200 in the same
-    run as controls, so it is agency policy and not our address). Defeating
-    that is not something this project does.
-
-    A person opening a public page in their own browser is not automation, and
-    the bulletin is ONE page published ONCE a month. So the human step is the
-    30 seconds it takes to save the page; everything after it - parsing,
-    validating the column order, storing, stamping - is this function.
-
-    It is deliberately the SAME parser the archive route uses. A second parser
-    for the same document is a second thing to get wrong, and the two would
-    drift on the first bulletin that changed shape.
+    The fallback when the direct route is refused: a person saves the public page
+    in a browser, and everything after that (parsing, validating the column
+    order, storing, stamping) is this function. It shares the direct route's
+    parser, so there is one set of checks for one document.
     """
     page = pathlib.Path(path).read_text(errors="replace")
     log(f"read {path} ({len(page) / 1024:.0f} KB)")
@@ -543,14 +423,10 @@ def write_month(db: Turso, m: str, parsed: dict, source: str) -> None:
 
 def stamp_bulletin_freshness(db: Turso, source: str) -> None:
     n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
-    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
-    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-               ["visa-bulletin",
-                str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10],
-                int(time.time() * 1000), source, "Monthly",
-                f"{n:,} bulletins", BULLETIN_MAX_AGE_DAYS])
+    stamp_freshness(db, "visa-bulletin",
+                    as_of=str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10],
+                    source=source, cadence="Monthly", note=f"{n:,} bulletins",
+                    max_age_days=BULLETIN_MAX_AGE_DAYS)
     log(f"visa_bulletins now holds {n} months")
 
 
@@ -605,11 +481,8 @@ def ingest_direct(limit: int, dry_run: bool = False) -> int:
     log(f"State's index links {len(linked)} bulletins; newest {linked[0][0]}")
 
     db = Turso()
-    res = db.execute("SELECT bulletin_month, source_url FROM visa_bulletins")
-    held = {
-        str(r[0]["value"])[:7]: ("" if r[1]["type"] == "null" else r[1]["value"])
-        for r in res["response"]["result"]["rows"]
-    }
+    held = {str(m)[:7]: src or "" for m, src in query_rows(
+        db, "SELECT bulletin_month, source_url FROM visa_bulletins")}
     todo = [(m, u) for m, u in linked if rank_of(held.get(m, "")) < 3][:limit]
     if not todo:
         log("nothing new: every linked month is already held from a primary source")
@@ -634,18 +507,14 @@ def ingest_direct(limit: int, dry_run: bool = False) -> int:
     return 0
 
 
-# Which source wins when two of them hold the same month. A better source
-# must never be overwritten by a worse one, and "better" here is not a
-# judgement call: the saved page and the archived page are both the State
-# Department's own document, and the mirror is a third party's summary of it
-# that carries HALF THE CATEGORIES (EB1/EB2/EB3 only, no EB4, EB5 or EW3).
-# ORDER IS LOAD-BEARING, and the mirror clause MUST come before the
-# travel.state.gov one. A mirror records itself as
-#   "<third party> (mirror; original: travel.state.gov)"
-# because naming the original is good provenance - and that means a plain
-# substring test for "travel.state.gov" matches the MIRROR too, ranks it as
-# the real page, and makes the backfill skip every month that most needs
-# upgrading while reporting success. Caught by a unit test before it ran.
+# Which source wins when two hold the same month; a better source is never
+# overwritten by a worse one. The saved, direct and archived pages are all the
+# State Department's own document; a mirror is a third party's summary with
+# half the categories.
+#
+# Order matters: the mirror clause must come before the travel.state.gov one,
+# because a mirror records itself as "<third party> (mirror; original:
+# travel.state.gov)", and a plain substring test would rank it as the page.
 SOURCE_RANK = [
     (lambda u: "saved from a browser" in u, 3),   # primary, a person fetched it
     (lambda u: u.startswith("adoption.state.gov"), 3),  # primary, State's own host
@@ -663,51 +532,39 @@ def rank_of(source_url: str) -> int:
 
 
 def backfill_from_archive(years: list[int], limit: int, dry_run: bool = False) -> int:
-    """Re-parse every bulletin the archive can still serve, straight to Turso.
+    """Re-parse every bulletin the archive can still serve, straight to the database.
 
-    WHY THIS EXISTED AS A GAP. `main()` defaults to `[this_year, this_year-1]`,
-    but the folder in the URL is the FISCAL year, so the November 2025 bulletin
-    lives under /2026/ and the whole of calendar 2024 lives under /2024/ and
-    /2025/. Two years of folders is not two years of bulletins, and the months
-    that fell outside them were quietly filled from the mirror instead - at
-    three categories each, for 24 months, with nothing anywhere saying so.
-
-    Nothing was broken and nothing errored. The series just silently carried
-    half the categories for two thirds of its length.
+    The URL folder is the FISCAL year, so the November 2025 bulletin lives under
+    /2026/; this walks every folder rather than assuming two calendar years
+    cover two years of bulletins.
 
     `dry_run` fetches and parses exactly as a real run does and writes
     NOTHING: no row, no freshness stamp, not even the family-column ALTER. It
     reads the held rows so its ADDED/RE-PARSED lines mean what a real run's
-    would. Added 2026-09-26 to prove the FY2015-FY2018 back series before the
-    write.
+    would.
     """
     db = Turso()
     if not dry_run:
         ensure_family_columns(db)
-    res = db.execute("SELECT bulletin_month, source_url, final_action, family_final_action FROM visa_bulletins")
     have = {}
-    for r in res["response"]["result"]["rows"]:
-        src = r[1]["value"] if r[1]["type"] != "null" else ""
+    for month, src, final_action, family in query_rows(
+            db, "SELECT bulletin_month, source_url, final_action, family_final_action "
+                "FROM visa_bulletins"):
         try:
-            cats = len(json.loads(r[2]["value"])) if r[2]["type"] != "null" else 0
+            cats = len(json.loads(final_action)) if final_action is not None else 0
         except Exception:  # noqa: BLE001
             cats = 0
-        has_family = r[3]["type"] != "null"
-        have[r[0]["value"]] = (src, cats, has_family)
+        have[month] = (src or "", cats, family is not None)
     log(f"holding {len(have)} months before this run")
 
     snaps = discover_snapshots(limit, years)
     added = upgraded = skipped = failed = 0
     for month, ts, url in snaps:
         current = have.get(month)
-        # Re-parse a row that is already from a good source but INCOMPLETE.
-        # This is what makes a parser improvement self-healing: when EB5 was
-        # missing from every pre-2022-05 bulletin because DOL had renamed the
-        # row, a rank-only skip meant fixing the parser fixed nothing, and the
-        # 18 short months would have sat there looking fine.
-        # A row without the family charts is incomplete in the same sense
-        # (added 2026-09-08): re-fetching it is how the family history fills
-        # in behind a parser that learned to read them.
+        # Re-parse a row that is from a good source but incomplete (fewer
+        # categories than its era should carry, or no family charts). This is what
+        # makes a parser improvement self-healing: a rank-only skip would leave the
+        # short months looking fine forever.
         if current is not None and rank_of(current[0]) >= 2 and current[1] >= expected_categories(month) and current[2]:
             skipped += 1
             continue
@@ -763,17 +620,7 @@ def backfill_from_archive(years: list[int], limit: int, dry_run: bool = False) -
         log("dry run: nothing written")
         return 1 if failed else 0
 
-    n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
-    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
-    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-               ["visa-bulletin",
-                str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10],
-                int(time.time() * 1000),
-                "State Dept via Internet Archive; current month from a saved page",
-                "Monthly", f"{n:,} bulletins", BULLETIN_MAX_AGE_DAYS])
-    log(f"visa_bulletins now holds {n} months")
+    stamp_bulletin_freshness(db, "State Dept via Internet Archive; current month from a saved page")
     return 0
 
 
@@ -785,7 +632,7 @@ def main() -> int:
     ap.add_argument(
         "--from-file",
         help="A bulletin page saved from a browser. Stores that one month "
-             "straight to Turso as a primary-source row.",
+             "straight to the database as a primary-source row.",
     )
     ap.add_argument("--month", help="YYYY-MM, when the page cannot be read for it")
     ap.add_argument(
@@ -800,7 +647,7 @@ def main() -> int:
     ap.add_argument(
         "--backfill-turso", action="store_true",
         help="Re-parse every bulletin the archive still serves, writing "
-             "straight to Turso and never overwriting a better source.",
+             "straight to the database and never overwriting a better source.",
     )
     args = ap.parse_args()
 
@@ -855,10 +702,9 @@ def main() -> int:
         log(f"newest            {newest}")
         log(f"oldest            {bulletins[-1]['bulletinMonth']}")
 
-        # State the lag rather than leaving it to be noticed. The archive route
-        # has a ceiling it cannot cross on its own (see the module docstring),
-        # so "two months behind" is the expected steady state, not a sign the
-        # run failed.
+        # State the lag rather than leaving it to be noticed: the archive stopped
+        # capturing new bulletins, so a lag here is the expected steady state, not
+        # a failed run.
         today = datetime.date.today()
         ny, nm = (int(x) for x in newest.split("-"))
         behind = (today.year - ny) * 12 + (today.month - nm)
@@ -881,19 +727,9 @@ def main() -> int:
         json.dump(payload, fh, separators=(",", ":"))
     log(f"wrote {args.out} ({os.path.getsize(args.out) / 1024:.1f} KB)")
 
-    # Stamp our own freshness row. This ingest previously wrote data without
-    # recording that it had: the row came from a one-off backfill that is in no
-    # workflow, so `as_of` described that run forever while the data refreshed
-    # on schedule underneath it. A frozen row makes the monitor cry wolf, and a
-    # monitor that cries wolf is one you stop reading.
-    db = Turso()
-    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
-    n = int(db.scalar("SELECT count(*) FROM visa_bulletins") or 0)
-    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-               ["visa-bulletin", str(db.scalar("SELECT max(bulletin_month) FROM visa_bulletins"))[:10], int(time.time() * 1000),
-                "State Dept via Internet Archive", "Monthly", f"{n:,} bulletins", BULLETIN_MAX_AGE_DAYS])
+    # Stamp this ingest's own freshness row, so the health check judges the
+    # data this run actually wrote.
+    stamp_bulletin_freshness(Turso(), "State Dept via Internet Archive")
 
     return 0
 

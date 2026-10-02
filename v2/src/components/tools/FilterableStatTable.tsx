@@ -218,18 +218,18 @@ export function FilterableStatTable<T>({
 
   // Ask the server on every settled query. Debounced, and the newest wins.
   //
-  // THE TRIGGER USED TO BE "only when the local list is empty" AND THAT WAS
-  // TOO NARROW. It is the right rule for fetching more ROWS - the local slice
-  // having answered means there is nothing more to fetch - but the server can
-  // also return things this table's columns cannot describe, and those exist
-  // whether or not the table filled. Measured: "lorenz" matches 5 published
-  // sponsors, so the table answered, the server was never asked, and an
-  // employer with 174 live cases and no published record stayed unreachable.
+  // NOT "only when the local list is empty". That is the right rule for
+  // fetching more ROWS - the local slice having answered means there is
+  // nothing more to fetch - but the server can also return things this
+  // table's columns cannot describe, and those exist whether or not the table
+  // filled. A name that matches a few published sponsors fills the table, and
+  // a live-only employer of that name, with no published record, would stay
+  // unreachable.
   //
   // What stops this being a cost regression is that `localHasRows` goes to
   // the caller, which uses it to skip the expensive half server-side. The
-  // 71,512-row LIKE keeps its original trigger exactly; only the indexed
-  // prefix range runs on the wider one.
+  // whole-table LIKE runs only when the local list is empty; only the indexed
+  // prefix range runs on every settled query.
   const [remote, setRemote] = useState<RemoteSearchResult<T> | null>(null);
   const [remoteBusy, setRemoteBusy] = useState(false);
   const [remoteAttempt, setRemoteAttempt] = useState(0);
@@ -252,9 +252,9 @@ export function FilterableStatTable<T>({
           if (remoteSeq.current === id) setRemote(r);
         })
         .catch((error: unknown) => {
-          // A failed search is NOT an empty one. This used to set
-          // `{ rows: [] }`, and the table then said "Nothing matches that" for
-          // a name the server was never able to check (Sep 29 2026 audit).
+          // A failed search is NOT an empty one: `{ rows: [] }` here would
+          // make the table say "Nothing matches that" for a name the server
+          // was never able to check.
           if (remoteSeq.current === id) setRemote({ rows: [], failure: failureFromError(error) });
         })
         .finally(() => {
@@ -498,7 +498,7 @@ export function FilterableStatTable<T>({
                         type="button"
                         onClick={() => toggleSort(c.key, c.numeric)}
                         className={
-                          "min-h-[44px] w-full px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
+                          "min-h-[44px] w-full px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
                           (c.numeric ? "text-right" : "text-left") +
                           (isSorted ? " text-primary-on-ink" : "")
                         }

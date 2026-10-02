@@ -4,11 +4,10 @@ import Link from "next/link";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { EmployerStagesTable } from "@/components/employers/EmployerStagesTable";
+import { ChartTips } from "@/components/data/ChartTips";
 import { StatusRibbon, ribbonLegend, ribbonParts } from "@/components/employers/StatusRibbon";
 import { stageMeta, stageSlug, isReviewStage } from "@/components/rfi/stageMeta";
-import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import {
   HOLD_STATUS,
   QUEUE_STATUS,
@@ -26,27 +25,25 @@ import { openGraphBase } from "@/lib/openGraphBase";
 import { searchStageSlug } from "@/lib/searchStages";
 import { getEmployerStages } from "@/lib/turso/employerStages";
 import { withSocialCard } from "@/lib/socialCard";
+import { formatInt, formatShare } from "@/lib/format";
 
 /**
  * Employers by their PERM cases outside DOL's normal queue.
  *
- * WHY THIS PAGE EXISTS. On Sep 5 2026 a reader worked out by hand, from this
- * site's employer page and its "application on hold" stage page, that 1,831
- * of the 1,855 PERM cases on hold nationwide belonged to one employer. The
- * Inspector General confirmed the suspension three days later, and every
- * follow-up asked the same next question: who else. This is that question
- * answered from the record, once a sweep, for every employer with pending
- * cases, with the date DOL confirmed the statuses.
+ * WHY THIS PAGE EXISTS. When most of the cases on hold nationwide belong to
+ * one employer, the next question is always "who else". This answers it from
+ * the record, once a sweep, for every employer with pending cases, with the
+ * date DOL confirmed the statuses.
  *
  * WHAT IT DOES NOT SAY. A hold, an RFI or an appeal is DOL's status for a
  * case, and nothing here calls it a finding. The page prints counts, shares
  * and dates; the reader decides what a concentration means.
  *
- * EVERY SENTENCE NAMES WHO ACTED (Sep 25 2026). The first version was headed
- * "Whose PERM cases DOL has pulled aside" over 5,958 cases, 2,848 of them
- * appeals the employers filed themselves. It was quoted to 127,000 people on
- * X the day Adobe's holds landed. A hold, an RFI, a NORD and supervised
- * recruitment are DOL's doing; an appeal is the employer's; the copy says so.
+ * EVERY SENTENCE NAMES WHO ACTED. A heading like "Whose PERM cases DOL has
+ * pulled aside" over a census that is nearly half appeals the employers
+ * filed themselves says DOL did what the employers did. A hold, an RFI, a
+ * NORD and supervised recruitment are DOL's doing; an appeal is the
+ * employer's; the copy says so.
  *
  * NEVER A REASON DOL HASN'T GIVEN, AND NEVER ONE EMPLOYER'S NEXT TO ANOTHER'S.
  * A public explanation of one employer's hold, printed beside a different
@@ -75,8 +72,6 @@ export const metadata: Metadata = withSocialCard({
 // page within a working day of it without a rebuild per visit.
 export const revalidate = 21600;
 
-const int = (n: number) => n.toLocaleString("en-US");
-
 /** The employer with the most cases at one status, or null when nobody has any. */
 function topHolder(rows: readonly EmployerStageRow[], status: string): EmployerStageRow | null {
   let best: EmployerStageRow | null = null;
@@ -86,7 +81,6 @@ function topHolder(rows: readonly EmployerStageRow[], status: string): EmployerS
   }
   return best;
 }
-const pct = (x: number) => `${(x * 100).toFixed(x >= 0.1 ? 0 : 1)}%`;
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 function breakdown(r: EmployerStageRow): string {
@@ -98,11 +92,6 @@ const MOVES_SHOWN = 12;
 
 export default async function EmployersUnderReviewPage() {
   const doc = await getEmployerStages();
-  const breadcrumbs = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: "Employers", href: "/perm-employers" },
-    { name: "Under review", href: "/perm-employers/under-review" },
-  ]);
 
   const stages = doc
     ? Object.entries(doc.nationwide)
@@ -134,20 +123,13 @@ export default async function EmployersUnderReviewPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <JsonLdScript schema={breadcrumbs} />
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-sm">
-        Employers and wages
-      </p>{" "}
-      <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
         Employers with PERM cases on hold, at RFI or under appeal
       </h1>{" "}
       <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90">
-        Most pending PERM cases wait in analyst review, DOL&apos;s normal queue.
-        The rest are somewhere else: DOL has put them on hold, sent a request
-        for information or a notice of deficiency, or placed them in
-        supervised recruitment, or the employer has appealed a denial. This
-        page counts those cases employer by employer from DOL&apos;s live
-        record and dates the holds from this site&apos;s daily record.
+        Most pending PERM cases wait in DOL&apos;s normal queue. This page counts the rest by employer:
+        cases DOL has put on hold, questioned (an RFI or a deficiency notice) or placed in supervised
+        recruitment, and denials the employer has appealed.
       </p>{" "}
       <aside className="mt-6 max-w-3xl border-2 border-border bg-card p-5 shadow-hard">
         <p className="text-base font-bold">Waiting on one of these cases?</p>{" "}
@@ -155,13 +137,11 @@ export default async function EmployersUnderReviewPage() {
           <Link href="/perm-case-status" className={LINK}>
             Look up your case number
           </Link>{" "}
-          to see DOL&apos;s current status and get an email the day it changes,
-          or follow an employer from its page to hear when DOL moves its cases
-          as a group.{" "}
+          for its current status and an email when it changes, or follow an employer from its page.{" "}
           <Link href="/guides/perm-application-on-hold-meaning" className={LINK}>
             What &ldquo;on hold&rdquo; means
-          </Link>{" "}
-          covers what the status does and doesn&apos;t tell you.
+          </Link>
+          .
         </p>
       </aside>{" "}
 
@@ -180,14 +160,14 @@ export default async function EmployersUnderReviewPage() {
           <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
             <h2 className="font-heading text-xl font-black sm:text-2xl">Nationwide, as of {longDate(doc.asOf)}</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-              {int(doc.pendingTotal)} PERM cases are pending. {int(doc.nationwide[QUEUE_STATUS] ?? 0)} of them
+              {formatInt(doc.pendingTotal)} PERM cases are pending. {formatInt(doc.nationwide[QUEUE_STATUS] ?? 0)} of them
               are in analyst review; the rest sit at one of these stages.
             </p>{" "}
             <dl className="mt-5 border-t-2 border-border">
               {stages.map(([status, n]) => (
                 <Fragment key={status}>{" "}
                 <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[7.5rem_minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
-                  <dt className="font-heading text-xl font-black tabular-nums tracking-tight sm:text-2xl">{int(n)}</dt>{" "}
+                  <dt className="font-heading text-xl font-black tabular-nums tracking-tight sm:text-2xl">{formatInt(n)}</dt>{" "}
                   <dd className="text-base leading-snug">
                     {isReviewStage(status) ? (
                       <Link href={`/perm-rfi-audit/${stageSlug(status)}`} className={LINK}>
@@ -197,10 +177,10 @@ export default async function EmployersUnderReviewPage() {
                       stageMeta(status).label
                     )}
                   </dd>{" "}
-                  <dd className="font-mono text-xs text-muted-foreground sm:text-right">
+                  <dd className="font-mono text-sm text-muted-foreground sm:text-right">
                     {(() => {
                       const top = topHolder(doc.employers, status);
-                      return top ? `largest single employer holds ${pct(nationalShare(top, status, doc.nationwide))}` : "";
+                      return top ? `largest single employer holds ${formatShare(nationalShare(top, status, doc.nationwide))}` : "";
                     })()}
                   </dd>
                 </div>
@@ -246,7 +226,8 @@ export default async function EmployersUnderReviewPage() {
               By count. The biggest filers lead this list because they file the
               most; the share list below corrects for size.
             </p>{" "}
-            <ol className="mt-4 divide-y-2 divide-border border-y-2 border-border">
+            <ChartTips label="Pending cases outside the normal queue, by employer" className="mt-4">
+            <ol className="divide-y-2 divide-border border-y-2 border-border">
               {byReview.map((r, i) => (
                 <Fragment key={r.slug ?? r.name}>{" "}
                 <li className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-baseline gap-x-3 py-3">
@@ -260,11 +241,12 @@ export default async function EmployersUnderReviewPage() {
                       <span className="font-bold">{r.name}</span>
                     )}{" "}
                     <span className="text-sm text-foreground/70">
-                      {`${int(r.review)} of ${int(r.pending)} pending${breakdown(r)}`}
+                      {`${formatInt(r.review)} of ${formatInt(r.pending)} pending${breakdown(r)}`}
                     </span>{" "}
                     <span className="mt-2 block max-w-sm">
                       <StatusRibbon
                         size="sm"
+                        name={r.name}
                         parts={ribbonParts(r)}
                         label={ribbonLegend(ribbonParts(r)).map((l) => l.text).join("; ")}
                       />
@@ -275,7 +257,7 @@ export default async function EmployersUnderReviewPage() {
                     })()}
                   </span>{" "}
                   <span className="flex flex-col items-end">
-                    <span className="font-heading text-lg font-black tabular-nums">{pct(r.share)}</span>{" "}
+                    <span className="font-heading text-lg font-black tabular-nums">{formatShare(r.share)}</span>{" "}
                     {r.slug ? (
                       <Link
                         href={`/perm-employers/${r.slug}#follow`}
@@ -290,6 +272,7 @@ export default async function EmployersUnderReviewPage() {
                 </Fragment>
               ))}
             </ol>
+            </ChartTips>
           </section>{" "}
 
           <section className="mt-10">
@@ -299,7 +282,8 @@ export default async function EmployersUnderReviewPage() {
               share outside the normal queue. Below that floor a share is noise:
               two of two is not a pattern.
             </p>{" "}
-            <ol className="mt-4 divide-y-2 divide-border border-y-2 border-border">
+            <ChartTips label="Share of each employer's queue outside the normal queue" className="mt-4">
+            <ol className="divide-y-2 divide-border border-y-2 border-border">
               {byShare.map((r, i) => (
                 <Fragment key={r.slug ?? r.name}>{" "}
                 <li className="grid grid-cols-[2rem_minmax(0,1fr)_auto] items-baseline gap-x-3 py-3">
@@ -313,18 +297,19 @@ export default async function EmployersUnderReviewPage() {
                       <span className="font-bold">{r.name}</span>
                     )}{" "}
                     <span className="text-sm text-foreground/70">
-                      {`${int(r.review)} of ${int(r.pending)} pending${breakdown(r)}`}
+                      {`${formatInt(r.review)} of ${formatInt(r.pending)} pending${breakdown(r)}`}
                     </span>{" "}
                     <span className="mt-2 block max-w-sm">
                       <StatusRibbon
                         size="sm"
+                        name={r.name}
                         parts={ribbonParts(r)}
                         label={ribbonLegend(ribbonParts(r)).map((l) => l.text).join("; ")}
                       />
                     </span>
                   </span>{" "}
                   <span className="flex flex-col items-end">
-                    <span className="font-heading text-lg font-black tabular-nums">{pct(r.share)}</span>{" "}
+                    <span className="font-heading text-lg font-black tabular-nums">{formatShare(r.share)}</span>{" "}
                     {r.slug ? (
                       <Link
                         href={`/perm-employers/${r.slug}#follow`}
@@ -339,12 +324,13 @@ export default async function EmployersUnderReviewPage() {
                 </Fragment>
               ))}
             </ol>
+            </ChartTips>
           </section>{" "}
 
           <section className="mt-10">
             <h2 className="font-heading text-xl font-black sm:text-2xl">Every employer with five or more pending cases</h2>{" "}
             <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-              {int(doc.employers.length)} employers. Search by name, sort any column, or
+              {formatInt(doc.employers.length)} employers. Search by name, sort any column, or
               download the table. Each name opens the employer&apos;s page; to see the
               cases themselves, open the{" "}
               <Link href={`/case-search?stage=${searchStageSlug(HOLD_STATUS) ?? ""}`} className={LINK}>
@@ -360,22 +346,17 @@ export default async function EmployersUnderReviewPage() {
           <section className="mt-10 max-w-3xl">
             <h2 className="font-heading text-xl font-black sm:text-2xl">What a count here does and does not mean</h2>{" "}
             <p className="mt-3 text-base leading-relaxed text-foreground/85">
-              &ldquo;On hold&rdquo;, &ldquo;RFI issued&rdquo; and the appeal stages are DOL&apos;s
-              own status words for a case, read from its case system and
-              confirmed on the date above. They describe where a case is and
-              say nothing about why. A hold can be administrative; an RFI is a
-              routine request; an appeal is the employer&apos;s own filing. This
-              page ranks counts and shares and draws no conclusion from them.
+              These are DOL&apos;s own status words, confirmed on the date above. They say where a case is,
+              never why: a hold can be administrative, an RFI is routine, and an appeal is the
+              employer&apos;s own filing.
             </p>{" "}
             <p className="mt-3 text-base leading-relaxed text-foreground/85">
-              This site&apos;s record of status changes began on{" "}
-              {longDate(doc.logFrom ?? "2026-08-27")}. A hold that was already in
-              place then carries &ldquo;since before&rdquo; that date rather than a
-              guess, and a case first found already on hold says so. The{" "}
+              This site&apos;s record of status changes began on {longDate(doc.logFrom ?? "2026-08-27")}, so a
+              hold already in place then reads &ldquo;since before&rdquo; that date.{" "}
               <Link href="/perm-decision-activity" className={LINK}>
-                decision activity
+                Decision activity
               </Link>{" "}
-              page shows the changes DOL made on each day since.
+              shows each day&apos;s changes since.
             </p>
           </section>
         </>

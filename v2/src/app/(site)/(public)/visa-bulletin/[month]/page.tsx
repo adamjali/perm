@@ -21,7 +21,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon, ArrowRightIcon } from "@phosphor-icons/react/ssr";
 
-import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { BulletinAlertForm } from "@/components/tools/BulletinAlertForm";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
@@ -34,7 +33,6 @@ import {
   moveLabel,
   type MoveKind,
 } from "@/lib/bulletinNext";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { parseCutoff, type BulletinMonth, type ChartKind, type CountryKey } from "@/lib/perm";
 import { withSocialCard } from "@/lib/socialCard";
@@ -108,13 +106,11 @@ export async function generateMetadata({
   if (!loaded) notFound();
   const label = bulletinMonthLabel(month);
   const since = loaded.prevMonth ? ` since ${bulletinMonthLabel(loaded.prevMonth)}` : "";
-  // SHORT ENOUGH TO SURVIVE A SERP (2026-09-21). This read "Visa Bulletin
-  // {label}: Every EB Cutoff and What Moved", which with the brand suffix is
-  // 73-75 characters on all 96 month pages - Google cuts a title around 60,
-  // so the descriptive tail was never shown and the brand was cut off with
-  // it. The searched phrase is "visa bulletin <month> <year>"; that now leads,
-  // a short qualifier follows, and the sentence the tail used to carry is in
-  // the description below, where there is room for it. Same shape as the
+  // SHORT ENOUGH TO SURVIVE A SERP. Google cuts a title around 60
+  // characters, so a longer one loses its descriptive tail and the brand
+  // with it. The searched phrase is "visa bulletin <month> <year>"; it leads,
+  // a short qualifier follows, and the rest is in the description below,
+  // where there is room for it. Same shape as the
   // sibling month family, /perm-queue/[month] ("PERM Cases Filed {label}").
   // Worst case: "September 2026" -> 55 characters including " | PERM Tracker".
   const title = `Visa Bulletin ${label}: EB Cutoffs`;
@@ -212,10 +208,10 @@ function ChartTable({
         <table className="w-full min-w-[760px] border-collapse text-sm">
           <thead className="bg-foreground text-background">
             <tr>
-              <th scope="col" className="px-3 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">Category{" "} </th>
+              <th scope="col" className="px-3 py-3 text-left font-mono text-sm font-bold uppercase tracking-[0.1em]">Category{" "} </th>
               {BOARD_COUNTRIES.map((c) => (
                 <Fragment key={c}>
-                  <th scope="col" className="px-3 py-3 text-left font-mono text-xs font-bold uppercase tracking-[0.1em]">{COUNTRY_LABEL[c]}{" "} </th>
+                  <th scope="col" className="px-3 py-3 text-left font-mono text-sm font-bold uppercase tracking-[0.1em]">{COUNTRY_LABEL[c]}{" "} </th>
                 </Fragment>
               ))}
             </tr>
@@ -235,7 +231,7 @@ function ChartTable({
                         <td className="px-3 py-3">
                           <span className="font-heading font-bold">{cell.label}</span>{" "}
                           {cell.move ? (
-                            <span className={`mt-0.5 block font-mono text-xs font-bold ${moveClass(cell.kind)}`}>{cell.move} </span>
+                            <span className={`mt-0.5 block font-mono text-sm font-bold ${moveClass(cell.kind)}`}>{cell.move} </span>
                           ) : null}{" "}
                         </td>
                       </Fragment>
@@ -277,20 +273,11 @@ export default async function BulletinMonthPage({
   const hasSetAsides = categories.some((c) => c === "EB5R" || c === "EB5HU" || c === "EB5I");
   const isNewest = month === newestMonth;
 
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: "Visa bulletin", href: "/visa-bulletin" },
-    { name: label, href: `/visa-bulletin/${month}` },
-  ]);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <JsonLdScript schema={breadcrumb} />
 
-      <p className="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-sm">
-        Visa bulletin, employment-based charts
-      </p>{" "}
-      <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
         The {label} visa bulletin
       </h1>{" "}
       <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90">
@@ -377,7 +364,7 @@ export default async function BulletinMonthPage({
       </div>{" "}
 
       {sourceUrl ? (
-        <p className="mt-6 text-xs text-muted-foreground">
+        <p className="mt-6 text-sm text-muted-foreground">
           Source: the State Department&apos;s bulletin page{sourceUrl.includes("web.archive.org") ? ", read from the Internet Archive" : ""}.
         </p>
       ) : null}{" "}

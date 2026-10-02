@@ -1,5 +1,5 @@
 /**
- * The weekly bulletin digest, composed from numbers the ingests already
+ * The weekly digest, composed from numbers the ingests already
  * hold. Pure: takes a data object, returns subject and plain text. The HTML
  * is rendered from the same object by `src/emails/BulletinWeekly.tsx`, so the
  * two parts cannot disagree.
@@ -12,6 +12,7 @@
  * which is the whole argument in that module.
  */
 import { SITE_URL } from "./links";
+import { formatInt } from "./format";
 
 export interface DigestNotice {
   title: string;
@@ -115,7 +116,7 @@ export interface DigestData {
    * The week's employer-wide moves from the census (holds first, then
    * decision batches, biggest first, at most EMPLOYER_MOVES_MAX). Each
    * sentence names who acted; none carries a reason. Absent on issues built
-   * before Sep 26 2026.
+   * before the field existed.
    */
   employerMoves?: DigestEmployerMove[];
   /** Absolute URL of the preference center for this address (per recipient). */
@@ -190,8 +191,6 @@ export function dateLabel(iso: string): string {
   return `${(MONTHS[m - 1] ?? "").slice(0, 3)} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
 }
 
-const int = (n: number) => n.toLocaleString("en-US");
-
 /** "2025-11" -> "Nov 2025", for the subject line, where every character is rationed. */
 export function shortMonthLabel(ym: string): string {
   const n = Number(ym.slice(5, 7));
@@ -253,8 +252,8 @@ export function composeText(d: DigestData): string {
   if (d.frontierMonth || d.averageDays !== null || d.pendingCases !== null) {
     lines.push("DOL'S QUEUE");
     if (d.frontierMonth) lines.push(`Analyst review is deciding cases filed in ${monthLabel(d.frontierMonth)}.`);
-    if (d.averageDays !== null) lines.push(`Average to a determination: ${int(d.averageDays)} days.`);
-    if (d.pendingCases !== null) lines.push(`Pending PERM cases in the live record: ${int(d.pendingCases)}.`);
+    if (d.averageDays !== null) lines.push(`Average to a determination: ${formatInt(d.averageDays)} days.`);
+    if (d.pendingCases !== null) lines.push(`Pending PERM cases in the live record: ${formatInt(d.pendingCases)}.`);
     if (d.dolAsOf) lines.push(`DOL's own stamp: ${dateLabel(d.dolAsOf)}.`);
     lines.push(`${SITE_URL}/perm-processing-times`);
     lines.push("");
@@ -295,7 +294,7 @@ export function composeText(d: DigestData): string {
     lines.push(`${SITE_URL}/policy-changes`);
     lines.push("");
   }
-  lines.push(`Check a case, any PERM, wage-request or LCA number, live from DOL: ${CHECK_CASE_URL}`);
+  lines.push(`Check a case, any PERM, wage-request, LCA, H-2A or H-2B number, live from DOL: ${CHECK_CASE_URL}`);
   lines.push(`Start tracking cases, free, for attorneys, paralegals and HR teams: ${SIGNUP_URL}`);
   lines.push("");
   lines.push("Every figure above comes from DOL, USCIS, the State Department or the Federal Register, dated as they published it. Nothing is predicted.");

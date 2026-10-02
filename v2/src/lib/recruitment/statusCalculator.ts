@@ -19,7 +19,8 @@ export type RecruitmentStatusType =
   | "waiting" // Must wait until 30 days passed
   | "ready" // In the 30-180 day filing window
   | "incomplete" // Missing mandatory recruitment steps
-  | "expired"; // Past 180 days - must restart
+  | "expired" // Past 180 days - must restart
+  | "filed"; // The ETA 9089 went in; the window is settled
 
 /**
  * Mandatory recruitment steps status.
@@ -117,6 +118,9 @@ export interface RecruitmentCaseData {
 
   // PWD expiration for window calculation
   pwdExpirationDate?: string;
+
+  // Once the ETA 9089 is filed, the window no longer runs out on the case
+  eta9089FilingDate?: string;
 }
 
 // ============================================================================
@@ -313,6 +317,15 @@ export function calculateRecruitmentStatus(
   // -------------------------------------------------------------------------
 
   const determineStatus = (): { status: RecruitmentStatusType; message: string } => {
+    if (data.eta9089FilingDate) {
+      const filed = data.eta9089FilingDate;
+      const inside = filed >= windowOpensStr && filed <= windowClosesStr;
+      return {
+        status: "filed",
+        message: `ETA 9089 filed ${format(parseISO(filed), "MMM d, yyyy")}, ${inside ? "inside" : "outside"} the filing window`,
+      };
+    }
+
     if (today < windowOpens) {
       return {
         status: "waiting",

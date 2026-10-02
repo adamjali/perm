@@ -19,13 +19,15 @@
 
 import { fetchQuery } from "convex/nextjs";
 
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { getAllPosts } from "@/lib/content";
 import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { getDisclosureStats } from "@/lib/turso/publicData";
+import { SITE_URL } from "@/lib/constants/site";
+import { formatInt } from "@/lib/format";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+const BASE_URL = SITE_URL;
 
 export const revalidate = 86400;
 
@@ -134,10 +136,16 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
       "Find an H-1B labor condition application (ETA-9035) by employer, job title and filing month, with the case number, filing date and DOL's current status. Live from DOL's daily check.",
   },
   {
-    path: "/case-search",
-    label: "Search all three DOL programs at once",
+    path: "/seasonal-cases",
+    label: "H-2A and H-2B case search",
     blurb:
-      "One employer, law firm, worksite state or occupation searched across PERM, prevailing wage requests and H-1B LCAs together. DOL runs the three off one case-number counter but publishes them in three separate files, so an employer's record is normally split across three searches; this returns all three, each result labelled with the program it came from.",
+      "Find an H-2A application (ETA-9142A, H-300- numbers), an H-2B application (ETA-9142B, H-400-) or an H-2B prevailing wage request (P-400-) by employer, job title and filing month, with DOL's current status. Live from DOL's daily check, pending included; no wage or worker count.",
+  },
+  {
+    path: "/case-search",
+    label: "Search every DOL program at once",
+    blurb:
+      "One employer, law firm, worksite state or occupation searched across PERM, prevailing wage requests, H-1B LCAs and H-2A and H-2B filings together. DOL runs them all off one case-number counter but publishes them separately, so an employer's record is normally split across several searches; this returns them together, each result labelled with the program it came from.",
   },
   {
     path: "/calculators",
@@ -264,6 +272,16 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Dates with citations, no prediction.",
   },
   {
+    path: "/opt-employers",
+    label: "Top OPT and CPT employers",
+    blurb: "ICE's own top-200 lists of employers of F-1 students on OPT, STEM OPT and CPT, for every year ICE published one, as ICE printed them.",
+  },
+  {
+    path: "/tools/h1b-lottery-odds-calculator",
+    label: "H-1B lottery odds calculator",
+    blurb: "The OEWS wage level an H-1B offer meets for its occupation and work areas, read live from DOL's wage search, the level 8 CFR 214.2(h)(8)(iii)(A)(4) assigns, and DHS's estimated chance of selection at that level.",
+  },
+  {
     path: "/tools/priority-date-retention",
     label: "Priority date retention and I-485 portability",
     blurb: "From an I-140 approval date: when an employer's withdrawal stops revoking it, when a pending I-485 becomes portable under INA 204(j), and whether the priority date is kept.",
@@ -376,10 +394,6 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   },
 ];
 
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
@@ -452,18 +466,18 @@ export async function GET() {
   if (disclosure) {
     const files = (disclosure.sourceFiles ?? []).join(", ");
     figures.push(
-      `- Decided PERM cases in the current disclosure window: ${fmtInt(disclosure.uniqueCases)}, unioned and de-duplicated by case number from ${files || "DOL's quarterly disclosure files"}.`,
+      `- Decided PERM cases in the current disclosure window: ${formatInt(disclosure.uniqueCases)}, unioned and de-duplicated by case number from ${files || "DOL's quarterly disclosure files"}.`,
     );
     const base = disclosure.risk?.baseline;
     if (base?.denialRate != null) {
       figures.push(
-        `- Overall PERM denial rate across that window: ${base.denialRate}% of ${fmtInt(base.decided)} decided cases. Withdrawals are counted as neither approvals nor denials.`,
+        `- Overall PERM denial rate across that window: ${base.denialRate}% of ${formatInt(base.decided)} decided cases. Withdrawals are counted as neither approvals nor denials.`,
       );
     }
     const p50 = disclosure.wageLadder?.p50;
     if (p50 != null) {
       figures.push(
-        `- Median offered annual wage on certified PERM cases: $${fmtInt(Math.round(p50))}.`,
+        `- Median offered annual wage on certified PERM cases: $${formatInt(Math.round(p50))}.`,
       );
     }
   }
@@ -511,10 +525,9 @@ export async function GET() {
     const config = CONTENT_TYPE_CONFIG[type];
     lines.push(`## ${config.plural}`, "");
     for (const post of posts) {
-      // Every type has per-slug routes. Changelog used to be special-cased to
-      // the index because its detail pages 404'd; they exist now, and pointing
-      // six differently-titled entries at one URL taught readers that five of
-      // them were wrong.
+      // Every type has per-slug routes, changelog included: pointing
+      // differently-titled entries at one URL would tell readers that all but
+      // one of them were wrong.
       lines.push(
         `- [${post.meta.title}](${BASE_URL}/${type}/${post.slug}): ${post.meta.description}`,
       );

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Every internal link, and whether it goes where its own words say.
 
-WHY. Adam clicked something labelled "processing time" on the homepage and
-landed on the timeline CALCULATOR, not the processing-times data page. A 404
-checker would have passed that link: it resolves, it is just not what it says.
+A 404 checker passes a link that resolves to the wrong page: a link labelled
+"processing time" that lands on the timeline calculator rather than the
+processing-times data page resolves fine and is still wrong.
 
 So this checks two different things, and the second is the one that matters:
 

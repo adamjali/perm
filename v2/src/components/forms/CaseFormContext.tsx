@@ -4,7 +4,7 @@
 // export is absent, so a module calling it without a boundary fails with
 // `TypeError: (0 , d.createContext) is not a function` the moment the chunk
 // graph puts it server-side - naming webpack bootstrap and no source file.
-// Declared here (2026-09-01) rather than inherited from whichever importer
+// Declared here rather than inherited from whichever importer
 // happened to cross a boundary first. See components/layout/Footer.tsx.
 
 /**
@@ -17,21 +17,19 @@
  * Architecture:
  * - CaseFormProvider wraps the form and provides RHF context
  * - useCaseFormContext gives child components access to form methods
- * - useRfiFieldArray and useRfeFieldArray manage RFI/RFE entries with automatic error cleanup
+ * - useRequestEntryArray manages RFI/RFE entries with automatic error cleanup
  */
 
 "use client";
 
 import * as React from "react";
-import { createContext, useContext, useCallback, useMemo, useRef, useEffect } from "react";
+import { createContext, useContext, useCallback, useMemo } from "react";
 import {
   useForm,
   useFieldArray,
   FormProvider,
   useFormContext,
   type UseFormReturn,
-  type FieldArrayWithId,
-  type UseFieldArrayReturn,
 } from "react-hook-form";
 import { zod4Resolver } from "@/lib/forms/zod4-resolver";
 import {
@@ -40,6 +38,7 @@ import {
   type RFIEntry,
   type RFEEntry,
 } from "@/lib/forms/case-form-schema";
+import { newEntryId } from "@convex/lib/ids";
 import { DEFAULT_FORM_DATA, initializeFormData } from "./case-form.helpers";
 
 // ============================================================================
@@ -277,53 +276,34 @@ export function useCaseFormMethods(): UseFormReturn<CaseFormData> {
 // FIELD ARRAY HOOKS
 // ============================================================================
 
-/**
- * useRfiFieldArray - Manage RFI entries with automatic error cleanup
- *
- * When an entry is removed via `remove()`, react-hook-form automatically:
- * 1. Updates the array in form state
- * 2. Clears any validation errors for that index
- * 3. Re-indexes remaining entries
- *
- * This solves the root cause of the bug where deleting an RFI with validation
- * errors still blocked the save button.
- */
-export function useRfiFieldArray(): UseFieldArrayReturn<CaseFormData, "rfiEntries"> & {
-  entries: FieldArrayWithId<CaseFormData, "rfiEntries">[];
-  addEntry: (entry: Omit<RFIEntry, "id" | "createdAt">) => void;
-  removeEntry: (index: number) => void;
-  updateEntry: (index: number, data: Partial<RFIEntry>) => void;
-  getActiveEntryIndex: () => number | null;
-} {
-  const { control } = useCaseFormMethods();
+/** The two kinds of agency request a case tracks: DOL's RFIs and USCIS's RFEs. */
+export type RequestKind = "rfi" | "rfe";
 
-  const fieldArray = useFieldArray({
+/**
+ * useRequestEntryArray - Manage a case's RFI or RFE entries
+ *
+ * Removing an entry through useFieldArray also clears that index's validation
+ * errors and re-indexes the rest, so a deleted entry with errors can't keep
+ * blocking the save button.
+ */
+export function useRequestEntryArray(kind: RequestKind) {
+  const { control } = useCaseFormMethods();
+  const { fields, append, remove } = useFieldArray({
     control,
-    name: "rfiEntries",
+    name: `${kind}Entries` as const,
   });
 
-  const { fields, append, remove, update } = fieldArray;
-
-  // Use ref to access current fields without adding to dependencies
-  // This prevents updateEntry from getting a new reference on every keystroke
-  const fieldsRef = useRef(fields);
-  useEffect(() => {
-    fieldsRef.current = fields;
-  }, [fields]);
-
-  // Add a new RFI entry
   const addEntry = useCallback(
-    (entry: Omit<RFIEntry, "id" | "createdAt">) => {
+    (entry: Omit<RFIEntry | RFEEntry, "id" | "createdAt">) => {
       append({
         ...entry,
-        id: `rfi-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: newEntryId(kind),
         createdAt: Date.now(),
       });
     },
-    [append]
+    [append, kind]
   );
 
-  // Remove an RFI entry - errors are automatically cleared by RHF!
   const removeEntry = useCallback(
     (index: number) => {
       remove(index);
@@ -331,106 +311,7 @@ export function useRfiFieldArray(): UseFieldArrayReturn<CaseFormData, "rfiEntrie
     [remove]
   );
 
-  // Update an RFI entry - uses ref to avoid dependency on fields array
-  const updateEntry = useCallback(
-    (index: number, data: Partial<RFIEntry>) => {
-      const current = fieldsRef.current[index];
-      if (current) {
-        update(index, { ...current, ...data });
-      }
-    },
-    [update]
-  );
-
-  // Get the index of the active entry (first without responseSubmittedDate)
-  const getActiveEntryIndex = useCallback((): number | null => {
-    const index = fieldsRef.current.findIndex((entry) => !entry.responseSubmittedDate);
-    return index >= 0 ? index : null;
-  }, []);
-
-  return {
-    ...fieldArray,
-    entries: fields,
-    addEntry,
-    removeEntry,
-    updateEntry,
-    getActiveEntryIndex,
-  };
-}
-
-/**
- * useRfeFieldArray - Manage RFE entries with automatic error cleanup
- *
- * Same benefits as useRfiFieldArray for RFE entries.
- */
-export function useRfeFieldArray(): UseFieldArrayReturn<CaseFormData, "rfeEntries"> & {
-  entries: FieldArrayWithId<CaseFormData, "rfeEntries">[];
-  addEntry: (entry: Omit<RFEEntry, "id" | "createdAt">) => void;
-  removeEntry: (index: number) => void;
-  updateEntry: (index: number, data: Partial<RFEEntry>) => void;
-  getActiveEntryIndex: () => number | null;
-} {
-  const { control } = useCaseFormMethods();
-
-  const fieldArray = useFieldArray({
-    control,
-    name: "rfeEntries",
-  });
-
-  const { fields, append, remove, update } = fieldArray;
-
-  // Use ref to access current fields without adding to dependencies
-  // This prevents updateEntry from getting a new reference on every keystroke
-  const fieldsRef = useRef(fields);
-  useEffect(() => {
-    fieldsRef.current = fields;
-  }, [fields]);
-
-  // Add a new RFE entry
-  const addEntry = useCallback(
-    (entry: Omit<RFEEntry, "id" | "createdAt">) => {
-      append({
-        ...entry,
-        id: `rfe-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        createdAt: Date.now(),
-      });
-    },
-    [append]
-  );
-
-  // Remove an RFE entry - errors are automatically cleared by RHF!
-  const removeEntry = useCallback(
-    (index: number) => {
-      remove(index);
-    },
-    [remove]
-  );
-
-  // Update an RFE entry - uses ref to avoid dependency on fields array
-  const updateEntry = useCallback(
-    (index: number, data: Partial<RFEEntry>) => {
-      const current = fieldsRef.current[index];
-      if (current) {
-        update(index, { ...current, ...data });
-      }
-    },
-    [update]
-  );
-
-  // Get the index of the active entry (first without responseSubmittedDate)
-  const getActiveEntryIndex = useCallback((): number | null => {
-    const index = fieldsRef.current.findIndex((entry) => !entry.responseSubmittedDate);
-    return index >= 0 ? index : null;
-  }, []);
-
-  return {
-    ...fieldArray,
-    entries: fields,
-    addEntry,
-    removeEntry,
-    updateEntry,
-    getActiveEntryIndex,
-  };
+  return { entries: fields, addEntry, removeEntry };
 }
 
 // ============================================================================

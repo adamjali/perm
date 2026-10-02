@@ -2,11 +2,14 @@ import { Fragment } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+import { ChartTips } from "@/components/data/ChartTips";
+import { FinePrint } from "@/components/data/FinePrint";
 import { MIN_DECIDED_FOR_RATE } from "@/components/tools/EntityContext";
 import { PlateLabel } from "@/components/tools/FigurePlate";
 import type { FacetRow } from "@/lib/turso/entityDetail";
 import { stateName } from "@/lib/usStateNames";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 /**
  * What an entity's filings are actually MADE OF.
@@ -40,10 +43,6 @@ import { cn } from "@/lib/utils";
  * so the count is always printed and the rate only sometimes.
  */
 
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 /** The approval rate, or null when the decided count cannot carry one. */
 function ratePct(row: FacetRow): number | null {
   const decided = row.certified + row.denied;
@@ -72,10 +71,13 @@ function Shell({
           while every DOM extractor reads one run. */}
       <PlateLabel>{title}</PlateLabel>{" "}
       {children}{" "}
+      {/* THE NOTE FOLDS. Each panel's note says how its figure
+          is counted; the panel itself carries the reading, so the note waits
+          behind one line instead of standing under every panel. */}
       {note ? (
-        <p className="mt-4 border-t border-border/40 pt-3 text-sm leading-relaxed text-foreground/70">
-          {note}
-        </p>
+        <FinePrint summary="How this is counted" className="mt-3 border-t border-border/40 pt-1">
+          <p>{note}</p>
+        </FinePrint>
       ) : null}
     </section>
   );
@@ -105,7 +107,7 @@ export function OccupationMix({
       note={
         <>
           These are the {rows.length === 1 ? "occupation" : `${rows.length} occupations`} with
-          the most filings, {fmt(shown)} of {fmt(total)} cases between them.
+          the most filings, {formatInt(shown)} of {formatInt(total)} cases between them.
           The occupation on a PERM is the SOC code on the form, which is the
           job as DOL classifies it rather than the job title on the offer. DOL
           still accepts two SOC vintages, so one job can appear twice under
@@ -128,7 +130,7 @@ export function OccupationMix({
       </p>{" "}
       <p className="mt-1.5 font-mono text-sm tabular-nums text-foreground/70">
         {lead.code ? <>SOC {lead.code} &middot; </> : null}
-        {fmt(lead.n)} filings
+        {formatInt(lead.n)} filings
         {leadShare >= 1 ? `, ${leadShare.toFixed(0)}% of everything they file` : null}
         {leadRate != null ? ` · ${leadRate.toFixed(1)}% approved` : null}
       </p>
@@ -156,7 +158,7 @@ export function OccupationMix({
                   {r.code ? (
                     <span className="mr-2 font-normal text-muted-foreground">{r.code}</span>
                   ) : null}
-                  {fmt(r.n)}
+                  {formatInt(r.n)}
                 </span>
               </li>
             </Fragment>
@@ -195,8 +197,8 @@ export function StateMix({
           </Link>
           .{" "}
           {rows.length === 1
-            ? `This state covers ${fmt(shown)} of ${fmt(total)} filings.`
-            : `These ${rows.length} states cover ${fmt(shown)} of ${fmt(total)} filings.`}
+            ? `This state covers ${formatInt(shown)} of ${formatInt(total)} filings.`
+            : `These ${rows.length} states cover ${formatInt(shown)} of ${formatInt(total)} filings.`}
         </>
       }
       className={className}
@@ -210,10 +212,10 @@ export function StateMix({
             <li
               className="border-2 border-border bg-background px-3 py-1.5"
             >
-              <span className="block font-mono text-xs font-bold uppercase tracking-[0.1em]">
+              <span className="block font-mono text-sm font-bold uppercase tracking-[0.1em]">
                 {r.key ? stateName(r.key) : r.label}
               </span>{" "}
-              <span className="block font-mono text-sm font-bold tabular-nums">{fmt(r.n)}</span>
+              <span className="block font-mono text-sm font-bold tabular-nums">{formatInt(r.n)}</span>
             </li>
           </Fragment>
         ))}
@@ -255,7 +257,7 @@ export function PartyMix({
       title={title}
       note={
         <>
-          {note} {fmt(shown)} of {fmt(total)} filings, {share.toFixed(0)}% of the
+          {note} {formatInt(shown)} of {formatInt(total)} filings, {share.toFixed(0)}% of the
           total.
         </>
       }
@@ -281,8 +283,8 @@ export function PartyMix({
                   ) : (
                     <span className="font-bold leading-snug">{r.label}</span>
                   )}{" "}
-                  <span className="mt-0.5 block font-mono text-xs tabular-nums text-foreground/70">
-                    {fmt(r.n)} filings
+                  <span className="mt-0.5 block font-mono text-sm tabular-nums text-foreground/70">
+                    {formatInt(r.n)} filings
                     {rate != null ? ` · ${rate.toFixed(1)}% approved` : null}
                   </span>
                 </span>
@@ -319,19 +321,25 @@ export function CityMix({
         <>
           The worksite city on the application, which is where the job is.{" "}
           {rows.length === 1 ? "This city covers" : `These ${rows.length} cities cover`}{" "}
-          {fmt(shown)} of {fmt(total)} filings.
+          {formatInt(shown)} of {formatInt(total)} filings.
         </>
       }
       className={className}
     >
+      <ChartTips label="Filings by worksite city">
       <ul className="space-y-2.5">
         {rows.map((r) => (
           <Fragment key={r.key ?? r.label}>
             {" "}
-            <li>
+            <li
+              data-tip={(() => {
+                const rate = ratePct(r);
+                return `${r.label}\n${formatInt(r.n)} of ${formatInt(total)} filings${rate != null ? `\n${rate.toFixed(1)}% approved` : ""}`;
+              })()}
+            >
               <span className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
-                <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{fmt(r.n)}</span>
+                <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{formatInt(r.n)}</span>
               </span>{" "}
               <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
                 <span
@@ -343,6 +351,7 @@ export function CityMix({
           </Fragment>
         ))}
       </ul>
+      </ChartTips>
     </Shell>
   );
 }
@@ -377,7 +386,7 @@ export function IndustryMix({
     >
       <p className="font-heading text-xl font-black leading-tight">{lead.label}</p>{" "}
       <p className="mt-1.5 font-mono text-sm tabular-nums text-foreground/70">
-        NAICS {lead.key} &middot; {fmt(lead.n)} filings
+        NAICS {lead.key} &middot; {formatInt(lead.n)} filings
       </p>
       {rest.length > 0 ? (
         <ul className="mt-4 space-y-2 border-t-2 border-border pt-3">
@@ -388,7 +397,7 @@ export function IndustryMix({
                 <span className="min-w-0 flex-1 text-sm font-bold leading-snug">{r.label}</span>{" "}
                 <span className="font-mono text-sm tabular-nums text-foreground/70">
                   <span className="mr-2 font-normal text-muted-foreground">{r.key}</span>
-                  {fmt(r.n)}
+                  {formatInt(r.n)}
                 </span>
               </li>
             </Fragment>

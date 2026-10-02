@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ingest USCIS's quarterly performance data into Turso.
+"""Ingest USCIS's quarterly performance data.
 
 Four spreadsheets USCIS posts each quarter on its immigration-and-citizenship
 data page, plus one static factsheet, none of which the site read before:
@@ -64,7 +64,6 @@ from __future__ import annotations
 
 import argparse
 import io
-import json
 import os
 import pathlib
 import re
@@ -74,8 +73,12 @@ import zipfile
 from dataclasses import dataclass, field
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_gov_data import fetch, iter_rows, log, read_shared_strings  # noqa: E402
-from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
+from lib_gov_data import (  # noqa: E402
+    POLITE_PAUSE_S, fetch, iter_rows, log, quarter_end, read_shared_strings,
+)
+from lib_turso import (  # noqa: E402
+    Turso, insert_rows, query_rows, read_doc, record_run, rows_of, stamp_freshness, write_doc,
+)
 
 # THE FULL LISTING, NOT THE LANDING PAGE. The bare page shows ten items and
 # the quarterly files push each other off it; `items_per_page=100` is the
@@ -253,11 +256,6 @@ def quarter_bounds(text: str) -> tuple[str, str] | None:
 
 def norm(s: object) -> str:
     return re.sub(r"\s+", " ", str(s or "")).strip()
-
-
-def quarter_end(fy: int, quarter: int) -> str:
-    """The last day of a USCIS fiscal quarter: Q1 ends December 31 of the prior calendar year."""
-    return {1: f"{fy - 1}-12-31", 2: f"{fy}-03-31", 3: f"{fy}-06-30", 4: f"{fy}-09-30"}[quarter]
 
 
 # ---------------------------------------------------------------------------
@@ -763,17 +761,6 @@ def ensure_tables(db: Turso) -> None:
         db.execute(ddl)
 
 
-def insert_chunks(db: Turso, table: str, columns: list[str], rows: list[list], size: int = 200) -> None:
-    placeholders = "(" + ",".join("?" * len(columns)) + ")"
-    for i in range(0, len(rows), size):
-        chunk = rows[i:i + size]
-        args: list = []
-        for r in chunk:
-            args += r
-        db.execute(f"INSERT OR REPLACE INTO {table} ({', '.join(columns)}) VALUES "
-                   + ",".join([placeholders] * len(chunk)), args)
-
-
 def count_where(db: Turso, table: str, where: str, args: list) -> int:
     return int(db.scalar(f"SELECT count(*) FROM {table} WHERE {where}", args) or 0)
 
@@ -786,7 +773,7 @@ def store(db: Turso, p: Parsed) -> int:
                 "ytd_received", "ytd_approved", "ytd_denied", "ytd_completed", "ytd_pending",
                 "source_file"]
         db.execute("DELETE FROM uscis_form_quarters WHERE fy = ? AND quarter = ?", [p.fy, p.quarter])
-        insert_chunks(db, "uscis_form_quarters", cols, [
+        insert_rows(db, "uscis_form_quarters", cols, [
             [p.fy, p.quarter, r["form"], r["title"], r["category"], p.quarter_start, p.quarter_end,
              r["received"], r["approved"], r["denied"], r["completed"], r["pending"],
              r["median_months"], r["ytd_received"], r["ytd_approved"], r["ytd_denied"],
@@ -796,20 +783,20 @@ def store(db: Turso, p: Parsed) -> int:
         cols = ["fy", "quarter", "quarter_end", "state", "office", "code", *OFFICE_COLUMNS,
                 "suppressed", "source_file"]
         db.execute("DELETE FROM uscis_i485_offices WHERE fy = ? AND quarter = ?", [p.fy, p.quarter])
-        insert_chunks(db, "uscis_i485_offices", cols, [
+        insert_rows(db, "uscis_i485_offices", cols, [
             [p.fy, p.quarter, p.quarter_end, r["state"], r["office"], r["code"],
              *[r[c] for c in OFFICE_COLUMNS], r["suppressed"], p.name] for r in p.rows])
         n = count_where(db, "uscis_i485_offices", "fy = ? AND quarter = ?", [p.fy, p.quarter])
     elif p.kind == "eb_awaiting":
         cols = ["as_of", "country", "category", "count", "source_file"]
         db.execute("DELETE FROM uscis_eb_awaiting_visa WHERE as_of = ?", [p.as_of])
-        insert_chunks(db, "uscis_eb_awaiting_visa", cols, [
+        insert_rows(db, "uscis_eb_awaiting_visa", cols, [
             [p.as_of, r["country"], r["category"], r["count"], p.name] for r in p.rows])
         n = count_where(db, "uscis_eb_awaiting_visa", "as_of = ?", [p.as_of])
     elif p.kind == "i140_class_country":
         cols = ["as_of", "country", "preference", "measure", "fy", "count", "source_file"]
         db.execute("DELETE FROM uscis_i140_class_country WHERE as_of = ?", [p.as_of])
-        insert_chunks(db, "uscis_i140_class_country", cols, [
+        insert_rows(db, "uscis_i140_class_country", cols, [
             [p.as_of, r["country"], r["preference"], r["measure"], r["fy"], r["count"], p.name]
             for r in p.rows])
         n = count_where(db, "uscis_i140_class_country", "as_of = ?", [p.as_of])
@@ -822,18 +809,7 @@ def store(db: Turso, p: Parsed) -> int:
 
 
 def read_loads(db: Turso) -> dict:
-    raw = db.scalar("SELECT json FROM perm_docs WHERE key = ?", [LOADS_DOC])
-    if not raw:
-        return {}
-    try:
-        return json.loads(str(raw))
-    except ValueError:
-        return {}
-
-
-def write_doc(db: Turso, key: str, doc: dict) -> None:
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?,?,?)",
-               [key, json.dumps(doc, separators=(",", ":")), int(time.time() * 1000)])
+    return read_doc(db, LOADS_DOC) or {}
 
 
 def previous_keys(db: Turso, p: Parsed) -> set[str] | None:
@@ -847,12 +823,12 @@ def previous_keys(db: Turso, p: Parsed) -> set[str] | None:
     prev = db.execute(
         f"SELECT fy, quarter FROM {table} WHERE (fy < ?) OR (fy = ? AND quarter < ?) "
         "ORDER BY fy DESC, quarter DESC LIMIT 1", [p.fy, p.fy, p.quarter])
-    rows = prev["response"]["result"]["rows"]
+    rows = rows_of(prev)
     if not rows:
         return None
-    fy, q = int(rows[0][0]["value"]), int(rows[0][1]["value"])
-    res = db.execute(f"SELECT {expr} FROM {table} WHERE fy = ? AND quarter = ?", [fy, q])
-    return {str(r[0]["value"]) for r in res["response"]["result"]["rows"]}
+    fy, q = int(rows[0][0]), int(rows[0][1])
+    return {str(r[0]) for r in query_rows(
+        db, f"SELECT {expr} FROM {table} WHERE fy = ? AND quarter = ?", [fy, q])}
 
 
 def drift_findings(previous: set[str] | None, p: Parsed) -> list[str]:
@@ -994,7 +970,7 @@ def main(argv: list[str] | None = None) -> int:
             newest_as_of[item.kind] = as_of
         log(f"    stored {n:,} rows")
         if not args.local:
-            time.sleep(1.5)   # polite between federal fetches
+            time.sleep(POLITE_PAUSE_S)
 
     factsheet_note = ""
     if not args.skip_factsheet:

@@ -4,6 +4,10 @@ import { useEffect, useId, useState } from "react";
 
 import { monthBefore } from "@/lib/bulletinNext";
 import { ordinal, type ReleaseSummary } from "@/lib/bulletinRelease";
+import { ChartHit } from "@/components/data/ChartHit";
+import { ChartTips } from "@/components/data/ChartTips";
+import { MoreText } from "@/components/data/MoreText";
+import { easternDay } from "@/lib/time";
 
 const MONTHS = [
   "January", "February", "March", "April", "May", "June",
@@ -12,10 +16,6 @@ const MONTHS = [
 
 function monthName(ym: string): string {
   return `${MONTHS[Number(ym.slice(5, 7)) - 1] ?? ""} ${ym.slice(0, 4)}`;
-}
-
-function todayEastern(): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/New_York" }).format(new Date());
 }
 
 export interface BulletinReleaseProps {
@@ -39,7 +39,7 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
   const titleId = `${useId()}-release`;
   const [today, setToday] = useState<string | null>(todayProp ?? null);
   useEffect(() => {
-    if (!todayProp) setToday(todayEastern());
+    if (!todayProp) setToday(easternDay());
   }, [todayProp]);
 
   const prior = monthBefore(next);
@@ -69,28 +69,48 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
       </p>{" "}
       {byToday ? (
         <p className="mt-3 border-l-4 border-primary pl-3 text-base leading-relaxed">
-          Today is {priorName} {todayDay}. In at least <b className="font-bold tabular-nums">{byToday.captured}</b> of the{" "}
-          {byToday.of} months with evidence, the bulletin was already out by this day of the month before, so the{" "}
-          {monthName(next)} bulletin may well be up on the State Department&apos;s page.
+          Today is {priorName} {todayDay}.{" "}
+          {byToday.captured === 0 ? (
+            <>
+              None of the {byToday.of} bulletins with evidence was out this early in the month before, so the{" "}
+              {monthName(next)} bulletin probably isn&apos;t out yet.
+            </>
+          ) : (
+            <>
+              In at least <b className="font-bold tabular-nums">{byToday.captured}</b> of the {byToday.of} months with
+              evidence, the bulletin was already out by this day of the month before, so the {monthName(next)} bulletin{" "}
+              {byToday.captured * 2 >= byToday.of
+                ? "may well be up on the State Department\u2019s page."
+                : "may be up already, though most came later."}
+            </>
+          )}
         </p>
       ) : null}{" "}
-      <div className="mt-5 overflow-x-auto">
+      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
+      <ChartTips label="Bulletins out by each day of the month before" className="mt-5">
+      <div className="overflow-x-auto">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px] text-foreground" role="img" aria-labelledby={titleId}>
           <title id={titleId}>{`Share of bulletins out by each day of the month before, ${summary.months} bulletins`}</title>
           {rows.map((r, i) => {
             const h = r.of ? (plotH * r.captured) / r.of : 0;
             const isToday = todayDay === r.day;
             return (
-              <rect
+              <ChartHit
                 key={r.day}
-                x={PAD.l + i * bw + 1}
-                y={H - PAD.b - h}
-                width={Math.max(bw - 2, 1)}
-                height={h}
-                className={isToday ? "fill-primary" : "fill-foreground/75"}
+                tip={`By the ${ordinal(r.day)} of the month before\n${r.captured} of ${r.of} bulletins out${isToday ? "\nToday" : ""}`}
+                x={PAD.l + i * bw}
+                width={bw}
+                y={PAD.t}
+                height={plotH}
               >
-                <title>{`By the ${ordinal(r.day)}: ${r.captured} of ${r.of} bulletins out `}</title>
-              </rect>
+                <rect
+                  x={PAD.l + i * bw + 1}
+                  y={H - PAD.b - h}
+                  width={Math.max(bw - 2, 1)}
+                  height={h}
+                  className={isToday ? "fill-primary" : "fill-foreground/75"}
+                />
+              </ChartHit>
             );
           })}
           <line x1={PAD.l} x2={W - PAD.r} y1={H - PAD.b} y2={H - PAD.b} className="stroke-foreground" strokeWidth={2} />
@@ -105,16 +125,19 @@ export function BulletinRelease({ rows, summary, next, measured, today: todayPro
             >{`${ordinal(d)} `}</text>
           ))}
         </svg>
-      </div>{" "}
-      <p className="mt-3 text-base text-foreground/75">
-        Each bar is the share of those {summary.months} bulletins the Internet Archive had captured by that day of the
-        month before. A capture only shows the page was up by then, so the real share is at least this high.
-        {summary.setAside > 0
-          ? ` ${summary.setAside} more ${summary.setAside === 1 ? "was" : "were"} first captured only after their month began, mostly because the archive didn't crawl these pages before December 2017, so they say nothing about the day and aren't counted. A bulletin published in a month's last days could be missed the same way, which makes these days read a little early.`
-          : ""}{" "}
-        Measured {measured}; the archive has captured no bulletin since July 2026, when the State Department began
-        refusing its crawler.
-      </p>
+      </div>
+      </ChartTips>{" "}
+      <MoreText gist={"When past bulletins were first seen online, by day of the month: a floor, from the Internet Archive."} className="mt-3">
+        <p className="text-base text-foreground/75">
+          Each bar is the share of those {summary.months} bulletins the Internet Archive had captured by that day of the
+          month before. A capture only shows the page was up by then, so the real share is at least this high.
+          {summary.setAside > 0
+            ? ` ${summary.setAside} more ${summary.setAside === 1 ? "was" : "were"} first captured only after their month began, mostly because the archive didn't crawl these pages before December 2017, so they say nothing about the day and aren't counted. A bulletin published in a month's last days could be missed the same way, which makes these days read a little early.`
+            : ""}{" "}
+          Measured {measured}; the archive has captured no bulletin since July 2026, when the State Department began
+          refusing its crawler.
+        </p>
+      </MoreText>
     </div>
   );
 }

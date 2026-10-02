@@ -3,8 +3,7 @@
  *
  * The aggregate pages answer "how is the queue doing". This one answers "what
  * happened to cases like mine", which is a different question and the one
- * people actually arrive with. It is also the one feature the rival product
- * had and this one did not, off the identical source file.
+ * people actually arrive with.
  *
  * The coverage statement is not decoration. DOL's disclosure files contain no
  * pending rows at all, so a search that finds nothing is the ordinary result
@@ -30,6 +29,8 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
 import { withSocialCard } from "@/lib/socialCard";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
+import { formatInt } from "@/lib/format";
+import { SITE_URL } from "@/lib/constants/site";
 const TITLE = "PERM Case Search";
 const DESCRIPTION =
   "Search every PERM case in DOL's published disclosure window by case number, employer, law firm, state or occupation, with the wage and the days it took.";
@@ -58,10 +59,6 @@ export const metadata: Metadata = withSocialCard({
 // the long window costs no freshness. It stays a WEEK rather than a month so a
 // trigger that never fires bounds the staleness instead of stranding the page.
 export const revalidate = 604800;
-
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 /** `2026-06-30` to `30 June 2026`, in the reader's language rather than ISO. */
 function longDate(iso: string): string {
@@ -97,10 +94,10 @@ export default async function PermCasesPage() {
     row.code ? [{ code: row.code, name: row.name, total: row.total }] : [],
   );
 
-  const datasetSchema = getDatasetSchema("https://permtracker.app", {
+  const datasetSchema = getDatasetSchema(SITE_URL, {
     name: "PERM labor certification case decisions",
     description: DESCRIPTION,
-    url: "https://permtracker.app/perm-cases",
+    url: `${SITE_URL}/perm-cases`,
     // Measured from the corpus rather than written down, and omitted entirely
     // when the meta read comes back empty. This page had the honest version of
     // temporalCoverage before the builder existed; it keeps it.
@@ -117,16 +114,13 @@ export default async function PermCasesPage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          From DOL&apos;s own disclosure files
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Every decided case
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           {meta ? (
             <>
-              {fmtInt(meta.totalCases)} PERM cases decided between{" "}
+              {formatInt(meta.totalCases)} PERM cases decided between{" "}
               {longDate(meta.firstDecisionDate)} and{" "}
               {longDate(meta.lastDecisionDate)}, filed as far back as{" "}
               {longDate(meta.firstReceivedDate)}. Anything newer than{" "}
@@ -202,10 +196,9 @@ export default async function PermCasesPage() {
           // boundary or the whole route opts out of static rendering. But a
           // boundary emits its FALLBACK into the static shell, so everything
           // inside it is absent from the prerendered HTML and arrives only
-          // after hydration. The chart was inside, so it existed on this page
-          // only in the escaped RSC payload: measured on production 2026-09-03,
-          // /perm-cases served zero <polyline>, zero <polygon> and no chart
-          // aria-label, while the other two chart pages served theirs.
+          // after hydration. Inside it, the chart would exist on this page
+          // only in the escaped RSC payload: no <polyline>, no <polygon> and
+          // no chart aria-label in the served HTML.
           //
           // It has no reason to be in there. It takes server-computed props and
           // reads no search params. Outside, it is in the HTML a crawler gets

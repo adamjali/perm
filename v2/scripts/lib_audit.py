@@ -1,13 +1,11 @@
-"""The value this site's own scripts send to get past its firewall.
+"""The key this site's own audit scripts send to skip the per-address limits.
 
-Vercel Firewall rule 5 bypasses Bot Protection and the per-IP page limit for
-requests carrying `x-permtracker-audit`. Until Sep 25 2026 the rule matched on
-the header merely EXISTING, and this public repository printed the header's
-name in a dozen places, so anyone could send `x-permtracker-audit: 1` and walk
-past the challenge (measured: 429 without it, 200 with any value). The rule now
-matches the header's VALUE, which lives in `.env.local` (mode 600) or the
-environment and never in the repo. Without it the scripts still run, at the
-rate the firewall allows any client.
+The server's front door (scripts/oracle/nginx/permtracker.conf) exempts a
+request whose `x-permtracker-audit` header matches the audit key from the
+per-address rate limits, so an audit that walks hundreds of pages isn't
+answered 429. The key lives in `.env.local` (mode 600) or the environment,
+never in this public repo; a header that merely existed would be a bypass
+for anyone. Without it the scripts still run, at the rate any client gets.
 """
 from __future__ import annotations
 

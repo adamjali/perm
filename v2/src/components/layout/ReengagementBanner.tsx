@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { EnvelopeIcon as Mail } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/lib/toast";
 
 /**
- * Shown on authenticated pages when a user's weekly summary was auto-paused after
+ * Shown on authenticated pages when a user's weekly case summary was auto-paused after
  * a spell of inactivity (set by the reengagement cron). Lets them turn it back on
  * or acknowledge the pause. Both actions clear the server-side paused marker, so
  * the banner disappears on its own, no sessionStorage needed.
@@ -28,7 +28,7 @@ export default function ReengagementBanner() {
     setBusy(true);
     try {
       await reactivate({});
-      toast.success("Weekly summary turned back on");
+      toast.success("Weekly case summary turned back on");
     } catch {
       toast.error("Couldn’t turn it back on. Try again.");
       setBusy(false);
@@ -48,14 +48,14 @@ export default function ReengagementBanner() {
     <div
       className="relative z-10 border-b-2 border-border bg-muted px-4 py-3 sm:px-6"
       role="status"
-      aria-label="Weekly summary paused"
+      aria-label="Weekly case summary paused"
     >
       <div className="mx-auto flex max-w-7xl flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <Mail className="h-5 w-5 flex-shrink-0 text-muted-foreground" />
           <p className="min-w-0 text-sm text-foreground">
             <span className="font-medium text-foreground">
-              Your weekly summary is paused.
+              Your weekly case summary is paused.
             </span>{" "}
             <span className="hidden sm:inline">
               We stopped it while you were away, your deadline reminders kept coming.

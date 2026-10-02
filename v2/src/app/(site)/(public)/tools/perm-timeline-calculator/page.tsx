@@ -5,6 +5,7 @@ import { ArrowRightIcon } from "@phosphor-icons/react/ssr";
 import { PermTimelineEstimator } from "@/components/tools/PermTimelineEstimator";
 import { getDailyDecisions, getQueueAhead } from "@/lib/turso/publicData";
 import { businessDayPace } from "@/lib/dolPace";
+import { MS_PER_DAY } from "@/lib/time";
 import { QueueAlertForm } from "../../perm-processing-times/QueueAlertForm";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
@@ -109,12 +110,7 @@ export default async function PermTimelineCalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/tools" className="underline underline-offset-2 hover:text-primary">
-            Tools
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           PERM processing time calculator
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
@@ -138,7 +134,7 @@ export default async function PermTimelineCalculatorPage() {
               ? Math.floor(
                   (Date.parse(`${today}T00:00:00Z`) -
                     Date.parse(`${sweep.finishedOn}T00:00:00Z`)) /
-                    86_400_000,
+                    MS_PER_DAY,
                 )
               : null
           }

@@ -7,6 +7,7 @@
  */
 
 import type { Metadata } from "next";
+import { PlusIcon } from "@phosphor-icons/react/ssr";
 import { withSocialCard } from "@/lib/socialCard";
 import { SectionIndex } from "@/components/legal/SectionIndex";
 import { LEGAL_FORM, LEGAL_NAME, POSTAL_ADDRESS } from "@/lib/constants/about";
@@ -63,17 +64,18 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: September 30, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 1, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
 
 
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
-          <section>
-            <h2 id="agreement-to-terms" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              1. Agreement to Terms
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="agreement-to-terms" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">1. Agreement to Terms</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               By accessing or using PERM Tracker (&quot;the Service&quot;), operated by
               PERM Tracker LLC (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), you agree to be bound by
@@ -84,34 +86,44 @@ export default function TermsPage() {
               These Terms constitute a legally binding agreement between you and PERM
               Tracker LLC regarding your use of the Service.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="description-of-service" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              2. Description of Service
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="description-of-service" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">2. Description of Service</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
-              PERM Tracker is a web application designed to help immigration
-              attorneys and law firms track Permanent Labor Certification (PERM)
-              cases through the Department of Labor (DOL) and USCIS processes.
-              The Service is currently offered free of charge, though we reserve
-              the right to introduce fees or subscription plans in the future.
-            </p>{" "}
-            <p className="text-foreground/80 leading-relaxed mt-4">
-              The Service includes:
+              PERM Tracker is a website with two parts:
             </p>{" "}
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
-              <li>Case tracking and management features</li>{" "}
-              <li>Calendar and timeline views</li>{" "}
-              <li>Deadline notifications and reminders</li>{" "}
-              <li>Data import/export capabilities</li>
-            </ul>
-          </section>{" "}
+              <li>
+                <strong>Public lookups and data.</strong> Anyone, with or without an
+                account, may look up PERM, prevailing wage, LCA, H-2A and H-2B case
+                numbers; view data published by the Department of Labor (DOL), U.S.
+                Citizenship and Immigration Services (USCIS) and the Department of
+                State, and figures derived from it; read estimates; and subscribe to
+                email alerts.
+              </li>{" "}
+              <li>
+                <strong>Case management.</strong> Account holders, such as
+                immigration attorneys, paralegals and HR teams, may track PERM
+                cases, with deadlines computed from the dates they enter,
+                reminders, calendar and timeline views, calendar sync, data import
+                and export, and an AI assistant.
+              </li>
+            </ul>{" "}
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              The Service is currently offered free of charge, though we reserve
+              the right to introduce fees or subscription plans in the future.
+            </p>
+          </details>{" "}
 
-          <section>
-            <h2 id="user-accounts" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              3. User Accounts
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="user-accounts" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">3. User Accounts</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Registration
@@ -161,12 +173,13 @@ export default function TermsPage() {
               You may delete your account at any time by contacting us. We reserve
               the right to suspend or terminate accounts that violate these Terms.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="acceptable-use" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              4. Acceptable Use
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="acceptable-use" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">4. Acceptable Use</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You agree to use the Service only for lawful purposes and in
               accordance with these Terms. You agree NOT to:
@@ -190,12 +203,13 @@ export default function TermsPage() {
               <li>Use the Service to send spam or unsolicited communications</li>{" "}
               <li>Reverse engineer, decompile, or attempt to extract the source code</li>
             </ul>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="user-content" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              5. User Content
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="user-content" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">5. User Content</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">Ownership</h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -222,12 +236,13 @@ export default function TermsPage() {
               User Content. You represent that you have all necessary rights to
               enter the data you provide.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="intellectual-property" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              6. Intellectual Property
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="intellectual-property" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">6. Intellectual Property</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">Our Rights</h3>{" "}
             <p className="text-foreground/80 leading-relaxed">
@@ -290,12 +305,13 @@ export default function TermsPage() {
               the property of their respective owners and are used for
               identification purposes only.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="disclaimers" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              7. Disclaimers
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="disclaimers" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">7. Disclaimers</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed font-bold">
               THE SERVICE IS PROVIDED &quot;AS IS&quot; AND &quot;AS AVAILABLE&quot; WITHOUT
               WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED.
@@ -332,12 +348,13 @@ export default function TermsPage() {
                 legal requirements.
               </p>
             </div>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="limitation-of-liability" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              8. Limitation of Liability
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="limitation-of-liability" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">8. Limitation of Liability</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed font-bold">
               TO THE MAXIMUM EXTENT PERMITTED BY LAW, PERM TRACKER SHALL NOT BE
               LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR
@@ -356,12 +373,13 @@ export default function TermsPage() {
               use the Service in the twelve (12) months preceding the claim, or
               (b) one hundred dollars ($100).
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="aipowered-features" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              9. AI-Powered Features
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="aipowered-features" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">9. AI-Powered Features</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               AI Chat Assistant Disclosure
@@ -536,12 +554,13 @@ export default function TermsPage() {
               </a>
               .
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="indemnification" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              10. Indemnification
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="indemnification" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">10. Indemnification</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               You agree to indemnify, defend, and hold harmless PERM Tracker and
               its operators from any claims, damages, losses, or expenses
@@ -553,12 +572,13 @@ export default function TermsPage() {
               <li>Your violation of any third-party rights</li>{" "}
               <li>Any content you submit to the Service</li>
             </ul>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="service-modifications-pricing" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              11. Service Modifications & Pricing
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="service-modifications-pricing" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">11. Service Modifications & Pricing</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We reserve the right to:
             </p>{" "}
@@ -574,12 +594,13 @@ export default function TermsPage() {
               of paid features after the effective date constitutes acceptance
               of the applicable fees.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="termination" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              12. Termination
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="termination" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">12. Termination</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We may terminate or suspend your access to the Service immediately,
               without prior notice, for any reason, including:
@@ -594,12 +615,13 @@ export default function TermsPage() {
               Upon termination, your right to use the Service will immediately
               cease. You may request your data before termination.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="governing-law-dispute-resolution" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              13. Governing Law &amp; Dispute Resolution
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="governing-law-dispute-resolution" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">13. Governing Law &amp; Dispute Resolution</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               These Terms shall be governed by and construed in accordance with
               the laws of the{" "}
@@ -632,12 +654,13 @@ export default function TermsPage() {
               waiver, while the jury trial waiver and all other provisions remain
               in full force.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="changes-to-terms" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              14. Changes to Terms
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="changes-to-terms" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">14. Changes to Terms</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               We reserve the right to modify these Terms at any time. If we make
               material changes, we’ll provide notice by:
@@ -651,24 +674,26 @@ export default function TermsPage() {
               Your continued use of the Service after changes constitutes
               acceptance of the new Terms.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="severability" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              15. Severability
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="severability" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">15. Severability</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               If any provision of these Terms is found to be unenforceable or
               invalid, that provision will be limited or eliminated to the minimum
               extent necessary, and the remaining provisions will remain in full
               force and effect.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="entire-agreement-assignment" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              16. Entire Agreement &amp; Assignment
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="entire-agreement-assignment" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">16. Entire Agreement &amp; Assignment</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               These Terms, together with our Privacy Policy, constitute the entire
               agreement between you and PERM Tracker regarding the Service and
@@ -682,12 +707,13 @@ export default function TermsPage() {
               assets. These Terms bind and benefit the parties and their permitted
               successors and assigns.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section id="attorney-privilege">
-            <h2 id="attorneyclient-privilege-data-storage" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              17. Attorney-Client Privilege & Data Storage
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border" id="attorney-privilege">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="attorneyclient-privilege-data-storage" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">17. Attorney-Client Privilege & Data Storage</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
 
             <h3 className="font-heading text-lg font-bold mt-6 mb-3">
               Service Provider Status
@@ -772,12 +798,13 @@ export default function TermsPage() {
               responses to legal process. You should consult with qualified
               counsel regarding any legal process affecting your data.
             </p>
-          </section>{" "}
+          </details>{" "}
 
-          <section>
-            <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold mt-8 mb-4">
-              18. Contact Us
-            </h2>{" "}
+          <details className="legal-section group border-b-2 border-border">
+            <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 py-4 [&::-webkit-details-marker]:hidden">
+              <h2 id="contact-us" className="scroll-mt-[calc(var(--site-header-max-h,4.5rem)+1rem)] font-heading text-2xl font-bold m-0">18. Contact Us</h2>{" "}
+              <PlusIcon aria-hidden="true" weight="bold" className="size-5 shrink-0 transition-transform group-open:rotate-45 motion-reduce:transition-none" />
+            </summary>{" "}
             <p className="text-foreground/80 leading-relaxed">
               If you have any questions about these Terms of Service, please
               contact us:
@@ -802,7 +829,7 @@ export default function TermsPage() {
                 <strong>Mailing address:</strong> {POSTAL_ADDRESS}
               </li>
             </ul>
-          </section>
+          </details>
         </div>
 
         {/* Back link */}

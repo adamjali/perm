@@ -13,6 +13,7 @@
 
 import { Text, Section, Link } from "@react-email/components";
 import { EmailLayout } from "./components";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface PasswordResetCodeProps {
   /** The OTP reset code */
@@ -27,7 +28,7 @@ export interface PasswordResetCodeProps {
  */
 export function PasswordResetCode({
   code,
-  baseUrl = "https://permtracker.app",
+  baseUrl = SITE_URL,
 }: PasswordResetCodeProps) {
   return (
     <EmailLayout
@@ -181,7 +182,5 @@ const styles = {
 /** Preview props for React Email dev server. */
 PasswordResetCode.PreviewProps = {
   code: "729104",
-  baseUrl: "https://permtracker.app",
+  baseUrl: SITE_URL,
 } satisfies PasswordResetCodeProps;
-
-export default PasswordResetCode;

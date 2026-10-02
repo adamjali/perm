@@ -1,9 +1,8 @@
 /**
  * The most notes one case holds, and what the add controls say about it.
  *
- * The add button used to grey out at 200 with no word, and one of the two note
- * views said "N notes remaining" in 9px type only while its options row was
- * open (silent-limit audit, Sep 29 2026). Both note views read this now.
+ * Both note views read this, so the limit is said in words wherever a note
+ * can be added, never left to a silently greyed button.
  */
 
 export const NOTES_PER_CASE_MAX = 200;

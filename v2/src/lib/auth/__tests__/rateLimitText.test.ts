@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { authRateLimitText } from "../rateLimitText";
-import { AUTH_MAIL_REFUSED, AUTH_MAIL_SITE_BUSY } from "../../../../convex/lib/authMailGate";
+import { AUTH_MAIL_REFUSED, AUTH_MAIL_SITE_BUSY } from "@convex/lib/authMailGate";
 
 describe("authRateLimitText (silent-limit audit #63)", () => {
   it("shows the server's own wait for the address limit", () => {

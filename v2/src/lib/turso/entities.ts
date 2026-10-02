@@ -1,11 +1,10 @@
 /**
  * The entity pages' read path, backed by Turso.
  *
- * Replaces `convex/permEntities.ts`'s public queries. `getEntitySeed`,
- * `getAllEntities` and `getEntityBySlug` already live in publicData.ts and
- * are reused here rather than reimplemented, so the column list and the row
- * mapper have one home; the queries below are the ones that need their own
- * projection.
+ * `getEntitySeed`, `getAllEntities` and `getEntityBySlug` already live in
+ * publicData.ts and are reused here rather than reimplemented, so the column
+ * list and the row mapper have one home; the queries below are the ones that
+ * need their own projection.
  *
  * ## Two Convex constraints disappeared, and one of them was load-bearing
  *
@@ -30,6 +29,7 @@ import "server-only";
 import { unstable_cache } from "next/cache";
 
 import type { EntityKind, EntityRow } from "@/lib/entityPayload";
+import { MS_PER_HOUR } from "@/lib/time";
 
 import { getEntityBySlug, getEntitySeed } from "./publicData";
 import { one, rows } from "./client";
@@ -37,9 +37,8 @@ import { one, rows } from "./client";
 /**
  * One entity by slug. `null` means no such page, which callers turn into a 404.
  *
- * Re-exported rather than rewritten: this is `api.permEntities.getBySlug`'s
- * replacement and the implementation already exists one module over. Keeping
- * the name here means a page imports its four entity reads from one place.
+ * Re-exported rather than rewritten: the implementation already exists one
+ * module over, in publicData.ts. Keeping the name here means a page imports its four entity reads from one place.
  */
 export const getBySlug = getEntityBySlug;
 
@@ -55,17 +54,14 @@ export const getBySlug = getEntityBySlug;
  * How many entity detail pages are PRERENDERED at build time. The rest are
  * valid routes that render on first request and cache for 30 days.
  *
- * WHY 25 AND NOT 100. Build CPU is billed by the minute and it is this
- * project's largest Vercel line by far - $13.20 of a $20.05 month, against
- * 12 cents of function invocations. Measured in the build log: 483 static
- * pages took 2.4 minutes of a 6-minute build, and 303 of those pages were
- * these three entity routes at 100 each.
+ * WHY 25 AND NOT 100. Prerendering is build time: at 100 each, these three
+ * entity routes were 303 of 483 static pages and most of the build's static
+ * generation.
  *
  * 25 rather than 10 because these are ordered by filing VOLUME, so the head
  * is also the traffic. Prerendering the top 25 keeps the pages anyone
  * actually opens warm from the first request after a deploy; #26 and beyond
- * pay one cold render each, once per 30 days, at a cost that does not show
- * up on the bill.
+ * pay one cold render each, once per 30 days.
  *
  * The floor on lowering it further is UX, not correctness: `dynamicParams`
  * is true on these routes, so every slug still resolves.
@@ -120,7 +116,7 @@ interface CohortDbRow {
  * An hour is far below the data's own cadence and bounds this to a couple of
  * dozen reads a day per kind per server instance.
  */
-const COHORT_TTL_MS = 60 * 60 * 1000;
+const COHORT_TTL_MS = MS_PER_HOUR;
 
 const cohortCache = new Map<string, { at: number; value: Promise<FieldDistribution> }>();
 
@@ -147,19 +143,17 @@ export function fieldDistribution(
   if (hit && Date.now() - hit.at < COHORT_TTL_MS) return hit.value;
 
   // TWO LAYERS, and they do different jobs. The map above is L1: free,
-  // instant, and per server instance, so it dies with the instance and with
-  // every deployment. `unstable_cache` is L2: Vercel's Data Cache, which its
-  // docs say "persists across deployments unless you explicitly invalidate
-  // it", unlike the ISR route cache which is scoped to one deployment and
-  // always starts empty. So after a deploy the 13,579 entity pages still
-  // regenerate, but they no longer each re-read this cohort from Turso.
+  // instant, and per server process, so it dies with the process and with
+  // every deployment. `unstable_cache` is L2: Next's data cache, kept with
+  // each release, so the entity pages a release renders share one read of
+  // this cohort per window instead of each re-reading it. A deploy starts it
+  // empty, like the page cache.
   //
-  // That is the half of the bill worth attacking: the regeneration itself is
-  // unavoidable, the database read behind it is not. Rows read overran at
-  // 11.58 billion in two days.
+  // That is the half of the cost worth attacking: the regeneration itself is
+  // unavoidable, the database read behind it is not.
   //
-  // Small result, deliberately. Runtime Cache writes bill at the same rate as
-  // ISR writes, so this caches a computed distribution, never rendered markup.
+  // Small result, deliberately: this caches a computed distribution, never
+  // rendered markup.
   const value = unstable_cache(
     () => computeFieldDistribution(kind, bar),
     ["field-distribution", kind, String(bar)],
@@ -196,8 +190,8 @@ async function computeFieldDistribution(
     // = 71,512), so the kind's size is one index read from the top of
     // idx_pe_kind_rank rather than a count that walks every row. The cohort
     // read above is served by idx_pe_kind_decided, an expression index on
-    // (kind, certified + denied) created 2026-09-02; before it, this pair of
-    // reads walked 143k rows on every cold render of every entity page.
+    // (kind, certified + denied); without it this pair of reads walks 143k
+    // rows on every cold render of every entity page.
     one<{ n: number }>(
       "SELECT rank AS n FROM perm_entities WHERE kind = ? ORDER BY rank DESC LIMIT 1",
       [kind],

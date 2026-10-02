@@ -20,9 +20,11 @@ import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL } from "./lib/links";
 import { oneClickUnsubscribeUrl, prefsLink } from "./lib/prefsLink";
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
-import { etDay, oneClickHeaders } from "./lib/alertDelivery";
+import { oneClickHeaders } from "./lib/alertDelivery";
 import { recordError } from "./lib/errorRecording";
 import { createLogger } from "./lib/logging";
+import { easternDay, MS_PER_DAY } from "./lib/time";
+import { SWEEP_RESUME_DELAY_MS } from "./lib/alertBudgets";
 
 const log = createLogger("AlertOutbox");
 
@@ -35,7 +37,7 @@ export const MORE_TOMORROW = `More updates are waiting than one email carries ($
 /** Failed sends before an item is given up and recorded as an error. */
 const MAX_ATTEMPTS = 6;
 /** Sent, dropped and failed rows are kept this long for the admin panel. */
-const KEEP_MS = 30 * 86_400_000;
+const KEEP_MS = 30 * MS_PER_DAY;
 
 const kindValidator = v.union(
   v.literal("case"),
@@ -221,7 +223,7 @@ const itemValidator = v.object({
 /**
  * What waits for one address, or nothing if it was already mailed today.
  * `more` says items beyond this bundle are waiting, so the email can say
- * they come tomorrow instead of implying it carried everything (Sep 29 2026).
+ * they come tomorrow instead of implying it carried everything.
  */
 export const waitingFor = internalQuery({
   args: { email: v.string(), day: v.string() },
@@ -356,7 +358,7 @@ export const sendBundles = internalAction({
   args: {},
   returns: v.object({ emails: v.number(), items: v.number(), failed: v.number(), held: v.number() }),
   handler: async (ctx): Promise<{ emails: number; items: number; failed: number; held: number }> => {
-    const day = etDay(Date.now());
+    const day = easternDay(Date.now());
     const addresses = await ctx.runQuery(internal.alertOutbox.waitingAddresses, {
       limit: ADDRESSES_PER_RUN + 1,
     });
@@ -437,7 +439,7 @@ export const sendBundles = internalAction({
     }
 
     if (addresses.length > ADDRESSES_PER_RUN && emails > 0) {
-      await ctx.scheduler.runAfter(5 * 60 * 1000, internal.alertOutbox.sendBundles, {});
+      await ctx.scheduler.runAfter(SWEEP_RESUME_DELAY_MS, internal.alertOutbox.sendBundles, {});
     }
     return { emails, items: itemsSent, failed, held };
   },
@@ -464,7 +466,7 @@ export const prune = internalMutation({
       await ctx.db.delete(r._id);
       if (++recipients >= 2000) break;
     }
-    const oldDay = etDay(cutoff);
+    const oldDay = easternDay(cutoff);
     for await (const r of ctx.db
       .query("budgetRefusals")
       .withIndex("by_day_pool", (q) => q.lt("day", oldDay))) {

@@ -11,7 +11,6 @@ export const api = {
     create: "cases.create",
     update: "cases.update",
     delete: "cases.delete",
-    hasAnyCases: "cases.hasAnyCases",
   },
   onboarding: {
     getOnboardingState: "onboarding.getOnboardingState",
@@ -19,6 +18,5 @@ export const api = {
     saveOnboardingRole: "onboarding.saveOnboardingRole",
     completeChecklistItem: "onboarding.completeChecklistItem",
     dismissChecklist: "onboarding.dismissChecklist",
-    resetOnboarding: "onboarding.resetOnboarding",
   },
 } as const;

@@ -10,6 +10,7 @@
  */
 
 import type { PolicyNotice } from "@/lib/turso/policyNotices";
+import { MS_PER_DAY } from "@/lib/time";
 
 export const OFLC_TYPE = "OFLC announcement";
 
@@ -79,7 +80,7 @@ export function buildFeed(rows: readonly PolicyNotice[]): PolicyFeed {
 /** Whole days from `from` to `to`, ISO dates, UTC arithmetic so no zone can shift a boundary. */
 export function daysBetween(from: string, to: string): number {
   return Math.round((Date.UTC(+to.slice(0, 4), +to.slice(5, 7) - 1, +to.slice(8, 10)) -
-    Date.UTC(+from.slice(0, 4), +from.slice(5, 7) - 1, +from.slice(8, 10))) / 86_400_000);
+    Date.UTC(+from.slice(0, 4), +from.slice(5, 7) - 1, +from.slice(8, 10))) / MS_PER_DAY);
 }
 
 export interface CommentWindow {
@@ -221,8 +222,8 @@ export function buildStrip(feed: PolicyFeed, today: string, monthsBack = 12): St
 }
 
 /**
- * Marks that share a day would draw on top of each other (two DHS rules on
- * 2026-08-10). Each mark takes the lowest lane no earlier mark within
+ * Marks that share a day would draw on top of each other (two rules published
+ * the same day). Each mark takes the lowest lane no earlier mark within
  * `minGap` units is already on, so a same-day pair stacks and a spread-out
  * series stays flat. Input order is preserved.
  */

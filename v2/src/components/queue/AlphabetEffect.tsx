@@ -6,11 +6,10 @@ import type { Alphabet } from "@/lib/turso/alphabet";
  * What the employer's first letter is actually worth.
  *
  * THE DRAWING'S JOB IS TO MAKE A SMALL EFFECT LOOK SMALL. DOL works a filing
- * month alphabetically, so the ordering is real and every rival estimator uses
- * it; one of them prints a 160-day spread for the term and sells the initial as
+ * month alphabetically, so the ordering is real, and it is easy to oversell as
  * most of the answer. Measured here it is worth about 27 days end to end. A
  * chart that scaled each bar to fit the panel would show a dramatic gradient
- * and quietly agree with the rival, so the axis is anchored at the corpus mean
+ * and quietly oversell it too, so the axis is anchored at the corpus mean
  * and the bars are drawn against a fixed, labelled span - the same discipline
  * as an axis that does not start at zero being a lie.
  *

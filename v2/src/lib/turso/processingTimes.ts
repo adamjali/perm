@@ -2,15 +2,12 @@
  * DOL processing times, read from Turso.
  *
  * Written by scripts/ingest_processing_times.mts, which runs the SAME parser
- * the Convex action used (convex/lib/dolProcessingTimes.ts, unmodified) so
- * the stored shape is identical and nothing had to be re-derived.
+ * the Convex action uses (convex/lib/dolProcessingTimes.ts) so the stored
+ * shape is identical and nothing has to be re-derived.
  *
  * ON THE HISTORY, AND BE HONEST ABOUT IT. The series is keyed by DOL's own
- * as-of date, and this store began on 2026-08-25, so it holds one point until
- * DOL republishes. The older series is still sitting in the disabled Convex
- * deployment; if that is ever re-enabled it can be backfilled here. Until
- * then a "watch the queue move" chart has one point, and a chart that draws a
- * trend through one point would be inventing one.
+ * as-of date, so it gains a point only when DOL republishes, and a chart that
+ * draws a trend through a single point would be inventing one.
  */
 import "server-only";
 
@@ -24,13 +21,13 @@ export type {
   PermDeterminationRow,
   PwdQueueRow,
   PwdBacklogRow,
-} from "../../../convex/lib/dolProcessingTimes";
+} from "@convex/lib/dolProcessingTimes";
 import type {
   PermQueueRow,
   PermDeterminationRow,
   PwdQueueRow,
   PwdBacklogRow,
-} from "../../../convex/lib/dolProcessingTimes";
+} from "@convex/lib/dolProcessingTimes";
 
 export interface ProcessingTimesSnapshot {
   permAsOf: string;

@@ -3,9 +3,9 @@ import type { CountryKey } from "@/lib/perm";
 /**
  * The five languages this site publishes a guide in, beyond English.
  *
- * Chosen by who actually reads the site (PostHog, 30 days to 2026-09-26:
- * Spanish 351 engaged readers, Portuguese 227, Chinese 149 plus readers in
- * China, Korean 87, Vietnamese 70; Arabic 20 and Hindi 1 were skipped).
+ * Chosen by who actually reads the site (PostHog's engaged readers by
+ * language: Spanish, Portuguese and Chinese lead, then Korean and
+ * Vietnamese; Arabic and Hindi readers were too few to serve).
  *
  * ONE PAGE PER LANGUAGE, and it is a guide, not the data pages. The data pages
  * are English on purpose: their values are DOL's and State's own words, and a

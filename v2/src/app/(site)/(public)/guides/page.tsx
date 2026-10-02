@@ -5,7 +5,7 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import { getAllPosts, getAllTags } from "@/lib/content";
-import { generateItemListSchema, generateBreadcrumbSchema } from "@/lib/content/seo";
+import { generateItemListSchema } from "@/lib/content/seo";
 import { ContentHero } from "@/components/content";
 import ContentListing from "@/components/content/ContentListing";
 import { openGraphBase } from "@/lib/openGraphBase";
@@ -33,8 +33,7 @@ export default function GuidesPage() {
   // not a category.
   const tags = getAllTags("guides", 2, 24);
   const { '@context': _1, ...itemList } = generateItemListSchema(posts, "guides");
-  const { '@context': _2, ...breadcrumb } = generateBreadcrumbSchema([{ name: "Home", href: "/" }, { name: "Guides", href: "/guides" }]);
-  const schemas = { '@context': 'https://schema.org', '@graph': [itemList, breadcrumb] };
+  const schemas = { '@context': 'https://schema.org', '@graph': [itemList] };
 
   return (
     <>

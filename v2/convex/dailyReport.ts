@@ -1,6 +1,6 @@
 /**
- * The daily operator report (Adam, 2026-09-27: "a daily check for health,
- * price, any and all github actions, ingests, fails, retries, stats").
+ * The daily operator report: health, costs, every GitHub Actions run, the
+ * ingests, failures, retries and usage.
  *
  * `scripts/daily_monitor.py` runs in GitHub Actions every morning, gathers
  * what lives outside Convex, and calls `send` with its sections. `send` adds
@@ -18,7 +18,6 @@ import { DailyReport as DailyReportEmail } from "../src/emails/DailyReport";
 import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery, query } from "./_generated/server";
 import { getSecurityAlertEmail, requireAdmin } from "./lib/admin";
-import { etDay } from "./lib/alertDelivery";
 import {
   type DailyReport,
   type Facts,
@@ -32,11 +31,24 @@ import {
 } from "./lib/dailyReportCompose";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { loggers } from "./lib/logging";
+import { easternDay, MS_PER_DAY } from "./lib/time";
+import { RETRY_MAX_ROWS } from "./lib/emailLimits";
 
 const log = loggers.email;
-const DAY_MS = 86_400_000;
 /** Reports kept for the admin page. */
 const KEEP_DAYS = 60;
+/** The most rows the report reads from one table; a table past it is undercounted, never an error. */
+const TABLE_READ = 2000;
+/** The day's errors read for the by-operation count. */
+const ERRORS_READ = 500;
+/** Waiting confirmations read for the count and the oldest wait. */
+const CONFIRMATIONS_READ = 200;
+/** Budget refusal rows read: one per pool per day, so two days of pools fit many times over. */
+const REFUSALS_READ = 200;
+/** Expired reports deleted per store. */
+const PRUNE_BATCH = 50;
+/** Verdicts the admin page lists: two weeks. */
+const HISTORY_DAYS = 14;
 
 interface Sub {
   confirmedAt?: number;
@@ -49,17 +61,17 @@ export const facts = internalQuery({
   returns: v.any(),
   handler: async (ctx) => {
     const now = Date.now();
-    const since = now - DAY_MS;
+    const since = now - MS_PER_DAY;
 
-    const users = (await ctx.db.query("users").order("desc").take(2000)).filter((u) => !u.deletedAt);
-    const profiles = await ctx.db.query("userProfiles").take(2000);
+    const users = (await ctx.db.query("users").order("desc").take(TABLE_READ)).filter((u) => !u.deletedAt);
+    const profiles = await ctx.db.query("userProfiles").take(TABLE_READ);
 
     const kinds = [
-      ["case", await ctx.db.query("caseStatusAlerts").take(2000)],
-      ["queue", await ctx.db.query("dolQueueAlerts").take(2000)],
-      ["bulletin", await ctx.db.query("bulletinAlerts").take(2000)],
-      ["employer", await ctx.db.query("employerAlerts").take(2000)],
-      ["news", await ctx.db.query("newsSubscribers").take(2000)],
+      ["case", await ctx.db.query("caseStatusAlerts").take(TABLE_READ)],
+      ["queue", await ctx.db.query("dolQueueAlerts").take(TABLE_READ)],
+      ["bulletin", await ctx.db.query("bulletinAlerts").take(TABLE_READ)],
+      ["employer", await ctx.db.query("employerAlerts").take(TABLE_READ)],
+      ["news", await ctx.db.query("newsSubscribers").take(TABLE_READ)],
     ] as const;
     const subs = kinds.map(([kind, rows]) => {
       const list = rows as Sub[];
@@ -74,23 +86,23 @@ export const facts = internalQuery({
     const errors = await ctx.db
       .query("systemErrors")
       .withIndex("by_created_at", (q) => q.gt("createdAt", since))
-      .take(500);
+      .take(ERRORS_READ);
     const byOp = new Map<string, number>();
     for (const e of errors) byOp.set(e.operation, (byOp.get(e.operation) ?? 0) + 1);
 
-    const outbox = await ctx.db.query("alertOutbox").order("desc").take(2000);
+    const outbox = await ctx.db.query("alertOutbox").order("desc").take(TABLE_READ);
     const queued = outbox.filter((r) => r.status === "queued");
 
-    const confirmationWaiting = await ctx.db.query("confirmationQueue").withIndex("by_queuedAt").take(200);
-    const retryWaiting = await ctx.db.query("emailRetries").withIndex("by_queuedAt").take(1000);
+    const confirmationWaiting = await ctx.db.query("confirmationQueue").withIndex("by_queuedAt").take(CONFIRMATIONS_READ);
+    const retryWaiting = await ctx.db.query("emailRetries").withIndex("by_queuedAt").take(RETRY_MAX_ROWS);
     const yesterdayUtc = await ctx.db
       .query("emailDays")
-      .withIndex("by_day", (q) => q.eq("day", new Date(now - DAY_MS).toISOString().slice(0, 10)))
+      .withIndex("by_day", (q) => q.eq("day", new Date(now - MS_PER_DAY).toISOString().slice(0, 10)))
       .unique();
 
-    const today = etDay(now);
-    const yesterday = etDay(now - DAY_MS);
-    const refusals = (await ctx.db.query("budgetRefusals").order("desc").take(200)).filter(
+    const today = easternDay(now);
+    const yesterday = easternDay(now - MS_PER_DAY);
+    const refusals = (await ctx.db.query("budgetRefusals").order("desc").take(REFUSALS_READ)).filter(
       (r) => r.day === today || r.day === yesterday,
     );
 
@@ -130,13 +142,13 @@ export const facts = internalQuery({
  * On failure, the reason as a short phrase for the report line.
  */
 async function resendDay(now: number): Promise<ResendDay | string> {
-  // The deployment sends with AUTH_RESEND_KEY and never had a RESEND_API_KEY,
-  // so the report said "not set" every morning (Sep 29 2026). Use the sending
-  // key when no separate reading key exists; a send-only key answers 401 and
+  // The deployment sends with AUTH_RESEND_KEY and has no RESEND_API_KEY, so
+  // use the sending key when no separate reading key exists; a send-only key
+  // answers 401 and
   // the line below says so instead.
   const key = process.env.RESEND_API_KEY || process.env.AUTH_RESEND_KEY;
   if (!key) return "no Resend key is set (RESEND_API_KEY or AUTH_RESEND_KEY)";
-  const since = now - DAY_MS;
+  const since = now - MS_PER_DAY;
   const out: ResendDay = { sent: 0, bounced: 0, complained: 0 };
   let after: string | null = null;
   for (let page = 0; page < 3; page++) {
@@ -175,11 +187,11 @@ export const store = internalMutation({
       .unique();
     if (existing) await ctx.db.replace(existing._id, { ...args, createdAt: Date.now() });
     else await ctx.db.insert("dailyReports", { ...args, createdAt: Date.now() });
-    const cutoff = etDay(Date.now() - KEEP_DAYS * DAY_MS);
+    const cutoff = easternDay(Date.now() - KEEP_DAYS * MS_PER_DAY);
     for (const old of await ctx.db
       .query("dailyReports")
       .withIndex("by_day", (q) => q.lt("day", cutoff))
-      .take(50)) {
+      .take(PRUNE_BATCH)) {
       await ctx.db.delete(old._id);
     }
     return null;
@@ -242,7 +254,7 @@ export const latest = query({
   }),
   handler: async (ctx) => {
     await requireAdmin(ctx);
-    const rows = await ctx.db.query("dailyReports").withIndex("by_day").order("desc").take(14);
+    const rows = await ctx.db.query("dailyReports").withIndex("by_day").order("desc").take(HISTORY_DAYS);
     return {
       report: rows[0]?.report ?? null,
       history: rows.map((r) => ({ day: r.day, overall: r.overall })),

@@ -29,12 +29,12 @@ export function SiteSearch({
   // The palette mounts only after the first open and stays mounted after,
   // so reopening is instant.
   const [everOpened, setEverOpened] = React.useState(false);
-  // THE FIRST PRESS DOWNLOADS A CHUNK, AND IT USED TO SAY NOTHING WHILE IT DID.
-  // cmdk plus the whole static index is deliberately kept out of the marketing
-  // bundles, which is right - but it means the first click on this button is a
-  // network fetch, and on a slow connection the button just sat there. "I click
-  // and nothing happens" is the literal description of that. The palette calls
-  // `onReady` on mount, which is the only honest end to the wait.
+  // THE FIRST PRESS DOWNLOADS A CHUNK, AND SAYS SO WHILE IT DOES. cmdk plus
+  // the whole static index is deliberately kept out of the marketing bundles,
+  // which is right - but it means the first click on this button is a network
+  // fetch, and on a slow connection a silent button reads as "I click and
+  // nothing happens". The palette calls `onReady` on mount, which is the only
+  // honest end to the wait.
   const [ready, setReady] = React.useState(false);
   const onReady = React.useCallback(() => setReady(true), []);
   const loadingPalette = everOpened && !ready;
@@ -79,7 +79,7 @@ export function SiteSearch({
         ) : (
           <MagnifyingGlassIcon className="h-4 w-4" aria-hidden="true" />
         )}
-        <span className="hidden font-mono text-xs font-bold text-white/60 xl:inline">
+        <span className="hidden font-mono text-sm font-bold text-white/60 xl:inline">
           ⌘K
         </span>
       </button>

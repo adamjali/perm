@@ -15,7 +15,9 @@
 import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 import { getCurrentUserId } from "./lib/auth";
+import { MS_PER_DAY, MS_PER_MINUTE } from "./lib/time";
 
 // =============================================================================
 // TTL CONSTANTS (in milliseconds)
@@ -25,19 +27,19 @@ import { getCurrentUserId } from "./lib/auth";
  * TTL for query_cases tool (5 minutes)
  * Case data may change frequently, so shorter TTL
  */
-export const QUERY_CASES_TTL = 5 * 60 * 1000;
+export const QUERY_CASES_TTL = 5 * MS_PER_MINUTE;
 
 /**
  * TTL for search_knowledge tool (24 hours)
  * Knowledge base is static, so longer TTL
  */
-export const SEARCH_KNOWLEDGE_TTL = 24 * 60 * 60 * 1000;
+export const SEARCH_KNOWLEDGE_TTL = MS_PER_DAY;
 
 /**
  * TTL for search_web tool (15 minutes)
  * Web search results should be relatively fresh
  */
-export const SEARCH_WEB_TTL = 15 * 60 * 1000;
+export const SEARCH_WEB_TTL = 15 * MS_PER_MINUTE;
 
 /**
  * Tool name to TTL mapping
@@ -51,7 +53,7 @@ export const TOOL_TTLS: Record<string, number> = {
 /**
  * Default TTL if tool name not found (5 minutes)
  */
-export const DEFAULT_TTL = 5 * 60 * 1000;
+export const DEFAULT_TTL = 5 * MS_PER_MINUTE;
 
 // =============================================================================
 // HASH FUNCTION
@@ -219,29 +221,36 @@ export const invalidateCaseCaches = mutation({
 });
 
 /**
- * Clean up expired cache entries
- * Should be called periodically via cron job
+ * Delete expired cache entries.
+ *
+ * Reads never return an expired entry, but nothing else removes one, so the
+ * daily retention run (`retention.pruneOperationalLogs`) starts this. It works
+ * in batches and schedules itself again while it keeps finding a full batch.
  *
  * @param batchSize - Maximum number of entries to delete in one call (default: 100)
- * @returns Number of entries deleted
+ * @returns Number of entries deleted by this call
  */
 export const cleanExpired = internalMutation({
   args: {
     batchSize: v.optional(v.number()),
   },
+  returns: v.number(),
   handler: async (ctx, args): Promise<number> => {
     const now = Date.now();
     const batchSize = args.batchSize ?? 100;
 
-    // Find expired entries
     const expired = await ctx.db
       .query("toolCache")
       .withIndex("by_expires", (q) => q.lt("expiresAt", now))
       .take(batchSize);
 
-    // Delete expired entries
     for (const entry of expired) {
       await ctx.db.delete(entry._id);
+    }
+
+    // A full batch may mean more remain. An empty or partial one ends the run.
+    if (expired.length === batchSize) {
+      await ctx.scheduler.runAfter(0, internal.toolCache.cleanExpired, { batchSize });
     }
 
     return expired.length;

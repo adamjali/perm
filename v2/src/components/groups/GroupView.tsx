@@ -2,9 +2,12 @@ import { Fragment } from "react";
 import type { ReactNode } from "react";
 import Link from "next/link";
 
+import { ChartTips } from "@/components/data/ChartTips";
+import { plainText } from "@/components/data/MoreText";
 import { YearBars, type YearCount } from "@/components/entities/YearBars";
 import { GROUP_PATH, type GroupDetail, type GroupKind, type GroupSummary } from "@/lib/turso/groups";
 import { stateName } from "@/lib/usStateNames";
+import { formatInt } from "@/lib/format";
 
 /**
  * One city's, industry's or country's PERM record: the headline counts, the
@@ -14,10 +17,6 @@ import { stateName } from "@/lib/usStateNames";
  */
 
 const FLOOR = 20;
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 function Box({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -30,19 +29,23 @@ function Box({ title, children }: { title: string; children: ReactNode }) {
 
 function Ranked({
   items,
+  label,
 }: {
   items: { key: string; label: ReactNode; n: number }[];
+  /** What the list ranks, for the keyboard focus announcement. */
+  label: string;
 }) {
   const top = items[0]?.n ?? 0;
   return (
-    <ul className="mt-4 space-y-2.5">
-      {items.map((it) => (
+    <ChartTips label={label} className="mt-4">
+    <ul className="space-y-2.5">
+      {items.map((it, i) => (
         <Fragment key={it.key}>
           {" "}
-          <li>
+          <li data-tip={`${plainText(it.label)}\n${formatInt(it.n)} ${it.n === 1 ? "case" : "cases"}\n#${i + 1} of ${items.length} shown`}>
             <span className="flex items-baseline justify-between gap-3">
               <span className="min-w-0 truncate text-sm font-bold">{it.label}</span>{" "}
-              <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{fmt(it.n)}</span>
+              <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{formatInt(it.n)}</span>
             </span>{" "}
             <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
               <span
@@ -54,6 +57,7 @@ function Ranked({
         </Fragment>
       ))}
     </ul>
+    </ChartTips>
   );
 }
 
@@ -84,7 +88,7 @@ export function GroupView({
   if (d.employers.length > 0) {
     boxes.push(
       <Box key="emp" title="Top sponsors">
-        <Ranked
+        <Ranked label="Top sponsors"
           items={d.employers.map((e) => ({
             key: e.slug ?? `name:${e.name}`,
             n: e.n,
@@ -103,7 +107,7 @@ export function GroupView({
   if (d.occupations.length > 0) {
     boxes.push(
       <Box key="occ" title="Top occupations">
-        <Ranked
+        <Ranked label="Top occupations"
           items={d.occupations.map((o) => ({
             key: o.code,
             n: o.n,
@@ -122,14 +126,14 @@ export function GroupView({
   if (kind !== "city" && d.states.length > 0) {
     boxes.push(
       <Box key="st" title="Worksite states">
-        <Ranked items={d.states.map((s) => ({ key: s.key, n: s.n, label: stateName(s.key) }))} />
+        <Ranked label="Worksite states" items={d.states.map((s) => ({ key: s.key, n: s.n, label: stateName(s.key) }))} />
       </Box>,
     );
   }
   if (d.cities.length > 0) {
     boxes.push(
       <Box key="city" title="Worksite cities">
-        <Ranked
+        <Ranked label="Worksite cities"
           items={d.cities.map((c) => ({
             key: c.key,
             n: c.n,
@@ -149,7 +153,7 @@ export function GroupView({
   if (d.industries.length > 0) {
     boxes.push(
       <Box key="ind" title="Industries">
-        <Ranked
+        <Ranked label="Industries"
           items={d.industries.map((i) => ({
             key: i.code,
             n: i.n,
@@ -169,7 +173,7 @@ export function GroupView({
   if (d.countries.length > 0) {
     boxes.push(
       <Box key="cty" title="Countries of citizenship">
-        <Ranked
+        <Ranked label="Countries of citizenship"
           items={d.countries.map((c) => ({
             key: c.key,
             n: c.n,
@@ -189,14 +193,14 @@ export function GroupView({
   if (d.education.length > 0) {
     boxes.push(
       <Box key="edu" title="Worker's education">
-        <Ranked items={d.education.map((e) => ({ key: e.key, n: e.n, label: e.key }))} />
+        <Ranked label="Worker's education" items={d.education.map((e) => ({ key: e.key, n: e.n, label: e.key }))} />
       </Box>,
     );
   }
   if (d.visa.length > 0) {
     boxes.push(
       <Box key="visa" title="Visa held when filed">
-        <Ranked items={d.visa.map((v) => ({ key: v.key, n: v.n, label: v.key }))} />
+        <Ranked label="Visa held when filed" items={d.visa.map((v) => ({ key: v.key, n: v.n, label: v.key }))} />
       </Box>,
     );
   }
@@ -205,9 +209,9 @@ export function GroupView({
     <>
       <dl className="mt-8 grid grid-cols-2 gap-4 [&>*]:min-w-0 sm:grid-cols-4">
         {[
-          ["Decisions", fmt(group.total)],
+          ["Decisions", formatInt(group.total)],
           ["Approved", rate == null ? "too few" : `${rate.toFixed(1)}%`],
-          ["Median certified wage", group.medianWage == null ? "n/a" : `$${fmt(Math.round(group.medianWage))}`],
+          ["Median certified wage", group.medianWage == null ? "n/a" : `$${formatInt(Math.round(group.medianWage))}`],
           ["Years", group.fyFrom && group.fyTo ? `FY${group.fyFrom} to FY${group.fyTo}` : "n/a"],
         ].map(([k, v]) => (
           <Fragment key={k}>

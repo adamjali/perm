@@ -1,8 +1,8 @@
 /**
  * The heading a subscribe form shows once the server has answered.
  *
- * Since Sep 29 2026 a full confirmation pool queues the request instead of
- * refusing it (convex/confirmationQueue.ts) and says so with `queued: true`.
+ * A full confirmation pool queues the request instead of refusing it
+ * (convex/confirmationQueue.ts) and says so with `queued: true`.
  * A form that always headed its reply "Check your inbox" would tell someone
  * the email was there while it waited. The flag depends on how busy the site
  * is, never on the address, so it reveals nothing about what one holds.

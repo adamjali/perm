@@ -2,6 +2,7 @@ import "server-only";
 
 import { cache } from "react";
 import { measurePace, type DecisionDay, type MeasuredPace } from "@/lib/perm";
+import { MS_PER_DAY } from "@/lib/time";
 import { rows } from "./client";
 
 /**
@@ -9,19 +10,18 @@ import { rows } from "./client";
  *
  * WHERE THE NUMBERS COME FROM. `daily_decisions` carries two sources and only
  * one of them can answer "recently": `dol-disclosure` is dated by DOL's own
- * decision date and stops at the last published quarter (currently
- * 2026-06-30), so "the last 28 days" does not exist in it. `sweep-observed`
+ * decision date and stops at the last published quarter, so "the last 28
+ * days" does not exist in it. `sweep-observed`
  * is written by every sweep from `perm_case_events` and is dated by when our
  * sweep SAW a case become final. That is a different measurement and it is
  * labelled as one everywhere it is published.
  *
  * IT IS VALIDATED AGAINST AN INDEPENDENT SOURCE, which is what makes it
- * usable as a rate rather than merely available. Measured 2026-09-13 over the
- * 16 days our series and the rival dashboard's published `daily-volume` both cover:
- * our mean 574.6/day against their 566.4, a difference of **+1.4%**.
- * Individual days diverge by more, because a day boundary falls in a
- * different place for each of us - but the model divides by a 28-day mean,
- * and the mean is the quantity that agrees.
+ * usable as a rate rather than merely available. Over the 16 days our series
+ * and an independently published daily series both cover, the two means
+ * differ by **+1.4%**. Individual days diverge by more, because a day
+ * boundary falls in a different place for each - but the model divides by a
+ * 28-day mean, and the mean is the quantity that agrees.
  *
  * One consequence worth stating rather than discovering later: our
  * day-boundary noise inflates the weekday spread that the BAND is built from,
@@ -90,7 +90,7 @@ export const getDecisionPace = cache(
     for (const r of got) if (r.date > through) through = r.date;
     if (!through) return null;
     const ageDays = Math.floor(
-      (Date.now() - Date.parse(`${through}T00:00:00Z`)) / 86_400_000,
+      (Date.now() - Date.parse(`${through}T00:00:00Z`)) / MS_PER_DAY,
     );
     if (ageDays > MAX_SERIES_AGE_DAYS) return null;
 

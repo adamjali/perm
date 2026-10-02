@@ -1,9 +1,9 @@
+import { EnvelopeSimpleIcon } from "@phosphor-icons/react/ssr";
+
+import { cn } from "@/lib/utils";
+
 /**
- * Figures for the pages that had none.
- *
- * Adam: "all pages should have some sort of visual (picture or something) like
- * /email-preferences doesnt, its boring lazy low effort, ai slop... unique
- * creative simple on theme, unique structure, layout, skeleton."
+ * Figures for utility pages: a drawing of the thing each page is about.
  *
  * NO STOCK PHOTOGRAPHY HERE, and that is a decision rather than an omission.
  * The house rule ranks real photographs above diagrams, but it is written for
@@ -13,7 +13,7 @@
  * complained about, not the cure for it.
  *
  * So each figure DRAWS THE THING THE PAGE IS ABOUT, and each is a different
- * shape because each page is about something different: three lanes of a
+ * shape because each page is about something different: lanes of a
  * trigger reaching an inbox, a case's dates laid on a track, and three routes
  * converging on one. The alternative - one house chart repeated - is the
  * five-identical-cards defect from the homepage in another place.
@@ -34,68 +34,34 @@
  */
 
 /**
- * What actually reaches an inbox, and what sets it off.
- *
- * Three lanes because there are three alert kinds, and they differ in what
- * triggers them rather than in what they look like: a case changing status, a
- * queue month being reached, a bulletin cutoff moving. The diagram says
- * "something happens on the left, one email arrives on the right", which is
- * the whole contract of the page.
+ * What actually reaches an inbox, and what sets it off: one lane per alert
+ * kind, a change on the federal record at the left, one email at the right,
+ * and a dashed wait between them because nothing is sent while nothing
+ * changes. HTML rather than SVG so the labels keep their size at any width.
  */
+const ALERT_LANES = [
+  "A case's status changes",
+  "DOL's queue reaches your month",
+  "Your bulletin cutoff moves",
+  "DOL moves an employer's cases",
+] as const;
+
 export function AlertLanesFigure({ className }: { className?: string }) {
-  const lanes = [
-    { y: 16, label: "Case status" },
-    { y: 46, label: "Queue month" },
-    { y: 76, label: "Bulletin move" },
-  ];
   return (
-    <svg
-      viewBox="0 0 300 100"
-      className={className}
+    <div
       role="img"
-      aria-label="Three kinds of trigger, each producing one email"
+      aria-label="Four kinds of change on the federal record, each sending one email"
+      className={cn("grid gap-4", className)}
     >
-      {lanes.map((l) => (
-        <g key={l.label}>
-          {/* The trigger: a mark on the federal record. */}
-          <rect
-            x="2"
-            y={l.y - 7}
-            width="14"
-            height="14"
-            fill="var(--data-good-ink)"
-          />
-          {/* The wait. Dashed because nothing is sent while nothing changes,
-              which is the promise the page makes. */}
-          <line
-            x1="22"
-            y1={l.y}
-            x2="236"
-            y2={l.y}
-            stroke="currentColor"
-            strokeOpacity="0.35"
-            strokeWidth="2"
-            strokeDasharray="5 5"
-          />
-          {/* The email. One per trigger, never a digest of guesses. */}
-          <rect
-            x="242"
-            y={l.y - 9}
-            width="26"
-            height="18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <polyline
-            points={`242,${l.y - 9} 255,${l.y + 1} 268,${l.y - 9}`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-        </g>
+      {ALERT_LANES.map((label) => (
+        <div key={label} className="flex items-center gap-3">
+          <span aria-hidden="true" className="size-3.5 shrink-0 bg-data-good-ink" />{" "}
+          <span className="whitespace-nowrap text-sm font-semibold">{label}</span>{" "}
+          <span aria-hidden="true" className="h-0 min-w-6 flex-1 border-t-2 border-dashed border-foreground/35" />{" "}
+          <EnvelopeSimpleIcon aria-hidden="true" className="size-6 shrink-0" weight="bold" />
+        </div>
       ))}
-    </svg>
+    </div>
   );
 }
 

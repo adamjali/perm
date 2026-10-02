@@ -2,6 +2,8 @@ import "server-only";
 
 import { cache } from "react";
 
+import { MS_PER_DAY } from "@/lib/time";
+
 import { one } from "./client";
 import { getWageStats, type WagePercentileRow } from "./publicData";
 
@@ -163,7 +165,7 @@ const getDecidedPercentiles = cache(
       "SELECT json, computed_at FROM perm_docs WHERE key = 'decided_month_percentiles'",
     );
     if (!r) return null;
-    if (Date.now() - Number(r.computed_at) > 8 * 24 * 60 * 60 * 1000) {
+    if (Date.now() - Number(r.computed_at) > 8 * MS_PER_DAY) {
       return null;
     }
     try {

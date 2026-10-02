@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { screen } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import { CaseCard } from "../CaseCard";
-import type { CaseCardData } from "../../../../../convex/lib/caseListTypes";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
 
 // One spy for every mutation, so a test can prove none ran.
 const mutationSpy = vi.hoisted(() => vi.fn());

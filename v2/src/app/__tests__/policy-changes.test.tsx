@@ -13,6 +13,7 @@ vi.mock("@/components/data/DataProvenance", () => ({
 
 import { listPolicyNotices } from "@/lib/turso/policyNotices";
 import { POLICY_SHOTS } from "@/lib/policyShots";
+import { webpSize } from "../../../test-utils/image-size";
 import PolicyChangesPage from "../(site)/(public)/policy-changes/page";
 
 function n(over: Partial<PolicyNotice> & { documentNumber: string; publicationDate: string }): PolicyNotice {
@@ -50,17 +51,6 @@ const FIXTURE: PolicyNotice[] = [
 
 async function render(): Promise<string> {
   return renderToStaticMarkup(await PolicyChangesPage());
-}
-
-/** Pixel size from a WebP's own header (VP8, VP8L or VP8X chunk). */
-function webpSize(buf: Buffer): { w: number; h: number } {
-  const chunk = buf.toString("ascii", 12, 16);
-  if (chunk === "VP8X") return { w: 1 + buf.readUIntLE(24, 3), h: 1 + buf.readUIntLE(27, 3) };
-  if (chunk === "VP8L") {
-    const b = buf.readUInt32LE(21);
-    return { w: 1 + (b & 0x3fff), h: 1 + ((b >> 14) & 0x3fff) };
-  }
-  return { w: buf.readUInt16LE(26) & 0x3fff, h: buf.readUInt16LE(28) & 0x3fff };
 }
 
 describe("/policy-changes", () => {
@@ -119,7 +109,9 @@ describe("/policy-changes", () => {
 
   it("draws the strip with one mark per document in the window and a today line", async () => {
     const html = await render();
-    expect(html).toContain("<title>Proposed Rule, Aug 25, 2026: Document 2026-17324 </title>");
+    // Each mark names its document as hover detail (ChartTips), not as an
+    // SVG <title>, so a mouse never sees two tooltips at once.
+    expect(html).toContain('data-tip="Aug 25, 2026\nProposed rule\nDocument 2026-17324"');
     // Not links: an 11px square on a phone is no tap target, so the marks
     // name their document and the list below is the navigation. Scoped to
     // the strip's own <svg>; the page has other svgs and other links.

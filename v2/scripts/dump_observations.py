@@ -1,7 +1,6 @@
 """Dump the tables that cannot be rebuilt from DOL's files.
 
-WHY. Turso's point-in-time restore is 24 hours on the Free plan and 10 days
-on Developer. Most of this database is rebuildable: perm_cases, pwd_cases and
+Why: most of this database is rebuildable. perm_cases, pwd_cases and
 lca_cases come from DOL's quarterly disclosure files, and every perm_entities*
 table is derived from them. What is NOT rebuildable is what this project
 OBSERVED: the per-case status rows and the event log (DOL serves a case's
@@ -9,11 +8,10 @@ current status and never says when it changed, so the transitions exist
 nowhere else), the precomputed docs, the audit trail, and the small federal
 series whose sources keep no archive (USCIS republishes monthly and drops the
 previous month; travel.state.gov refuses scripts). A bad INSERT OR REPLACE
-older than the restore window would lose all of it.
+that outlived the nightly backups would lose all of it.
 
-WHAT. One gzipped JSONL per table, read in primary-key-ordered pages so no
-single request is large. ~1M rows a week, which Turso meters as reads and
-which is far inside any plan. Rebuildable tables are deliberately absent.
+What: one gzipped JSONL per table, read in primary-key-ordered pages so no
+single request is large. Rebuildable tables are deliberately absent.
 
 The workflow uploads the directory as a GitHub Actions artifact. The rows are
 public DOL data (case numbers, employers, job titles, statuses) plus this
@@ -31,7 +29,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, cell  # noqa: E402
 
 # (table, expected floor) - a table that dumps fewer rows than its floor fails
 # the run: a dump that is silently empty is a backup that does not exist.
@@ -60,7 +58,7 @@ PAGE = 5_000
 def _cells(res) -> tuple[list[str], list[list]]:
     result = res["response"]["result"]
     cols = [c["name"] for c in result["cols"]]
-    rows = [[None if c["type"] == "null" else c["value"] for c in r] for r in result["rows"]]
+    rows = [[cell(c) for c in r] for r in result["rows"]]
     return cols, rows
 
 

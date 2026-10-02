@@ -5,7 +5,7 @@
  * compatible with react-big-calendar.
  */
 
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 import type { Stage } from "../timeline/types";
 import type { RfiEntry, RfeEntry, AdditionalRecruitmentMethod } from "../shared/types";
 

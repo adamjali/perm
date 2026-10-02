@@ -15,6 +15,7 @@ import { buildFeed, buildStrip, commentWindow, feedLedger } from "@/lib/policyFe
 import type { RecordFigure } from "@/lib/recordCounts";
 import { withSocialCard } from "@/lib/socialCard";
 import { listPolicyNotices } from "@/lib/turso/policyNotices";
+import { easternDay } from "@/lib/time";
 
 /**
  * Policy changes, from the record itself.
@@ -47,21 +48,11 @@ export const metadata: Metadata = withSocialCard({
 // "days left" figure honest without regenerating a page nothing moved on.
 export const revalidate = 21600;
 
-/** Today in Washington, not UTC: after 8 PM Eastern a UTC date is tomorrow, and "days left" would be one short. */
-function todayEastern(): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
-
 const LINK =
   "font-semibold underline decoration-primary decoration-2 underline-offset-[3px] transition-colors hover:text-primary";
 
 export default async function PolicyChangesPage() {
-  const today = todayEastern();
+  const today = easternDay();
   const rows = await listPolicyNotices();
   const feed = buildFeed(rows);
   const ledger = feedLedger(feed, today);
@@ -105,10 +96,7 @@ export default async function PolicyChangesPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-16 pt-10 sm:px-6 sm:pb-24 sm:pt-14">
-      <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-        Reference
-      </p>{" "}
-      <h1 className="mt-3 font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+      <h1 className="font-heading text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
         Policy changes, on the record
       </h1>{" "}
       <p className="mt-5 max-w-3xl text-lg leading-relaxed text-foreground/90">

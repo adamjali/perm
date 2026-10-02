@@ -269,8 +269,8 @@ export function InlineCaseTimeline({
   return (
     <div className={cn("w-full", className)}>
       {/* The timeline page's grid, one case at a time: the same frame, month
-          header, square markers, stage bands, Today line and legend (Adam,
-          Sep 30 2026: the two "should match"). The lanes are the case's four
+          header, square markers, stage bands, Today line and legend, so the
+          two match. The lanes are the case's four
           stages, and the stage column sticks while the months scroll under it
           on a phone, exactly as the case column does on the timeline. */}
       <div className="border-2 border-foreground bg-card shadow-hard [--tl-label:112px]">

@@ -2,12 +2,11 @@
  * Lookup-side replenishment: unknown case numbers are asked of DOL live,
  * shown to the visitor, and recorded.
  *
- * WHY THIS EXISTS. The corpus was a closed set: the daily sweep only
- * re-checks case numbers already in `perm_case_status` (verified 2026-08-28:
- * still exactly the 414,050 rows the mirror seed left). Nothing added new
- * filings, so the pending pool could only drain and every month after the
- * freeze would read emptier than it is. This module opens the set from the
- * demand side: a lookup that misses our table queries DOL's own batch
+ * WHY THIS EXISTS. The daily sweep only re-checks case numbers already in
+ * `perm_case_status`, so with nothing adding new filings the pending pool
+ * could only drain and every recent month would read emptier than it is.
+ * This module opens the set from the demand side (the nightly discovery walk
+ * is the other): a lookup that misses our table queries DOL's own batch
  * endpoint (one case, one request), renders the real status instead of
  * "not found", and inserts the row - after which the daily sweep re-checks
  * it forever. Every visitor grows the corpus.
@@ -59,13 +58,11 @@ export const DISCOVERY_SOURCE =
 /**
  * Requests we are willing to send DOL for strangers per rolling UTC day.
  *
- * 100,000, not 2,000, since Sep 6 2026: a per-client limit now lives in
- * front of this page (Vercel Firewall: the Meta crawler that was spending
- * 2,000 by 5 AM every day is denied on this path and rate-limited by TLS
- * fingerprint everywhere else, and /api/* is capped per IP). With the
- * identity-rotation case handled at the edge, this global cap is only the
- * guarantee against a runaway - a bug that loops, or a client the firewall
- * has not seen yet - and a guarantee should be far above any honest day.
+ * 100,000: per-client limits live in front of this page (the front door's
+ * per-address and per-crawler rate limits), so with the identity-rotation
+ * case handled at the edge, this global cap is only the guarantee against a
+ * runaway - a bug that loops, or a client the edge has not seen yet - and a
+ * guarantee should be far above any honest day.
  * Humans do 50 to 200 live lookups a day. Zero was declined on purpose: an
  * unbounded call path to a .gov endpoint the whole product depends on is
  * how the product ends.
@@ -87,9 +84,9 @@ export interface DolCaseRecord {
  * What happened when DOL was asked about one number.
  *
  * "none" is DOL's own answer: it holds no exact match. "unavailable" is DOL
- * not answering in time, or answering with an error. Until Sep 29 2026 both
- * came back as null and the page said "no record" for both, which told a
- * reader DOL had no such case when DOL had simply been slow.
+ * not answering in time, or answering with an error. They are kept apart
+ * because "no record" for both would tell a reader DOL had no such case when
+ * DOL had simply been slow.
  */
 export type DolAnswer =
   | { kind: "found"; rec: DolCaseRecord }
@@ -103,8 +100,8 @@ export async function askDol(caseNumber: string, f: typeof fetch = fetch): Promi
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify([caseNumber]),
-      // 8 s since Sep 29 2026 (was 3.5 s): DOL usually answers in about 0.3 s,
-      // and a slow answer read as "no record", which is worse than a wait.
+      // 8 s: DOL usually answers in about 0.3 s, and treating a slow answer
+      // as "no record" is worse than a wait.
       signal: AbortSignal.timeout(8000),
     });
     if (!res.ok) return { kind: "unavailable" };
@@ -239,9 +236,8 @@ export async function discoverCaseOutcome(
   }
   // The page wraps its lookup in .catch(() => null), so a throw from here
   // renders as an ordinary "no record" - a silent failure indistinguishable
-  // from a genuine miss. First deploy proved it: the budget INSERT failed in
-  // the Vercel runtime and nothing anywhere said so. Every failure below is
-  // caught and NAMED in the function logs instead.
+  // from a genuine miss. Every failure below is caught and NAMED in the
+  // server logs instead.
   try {
     if (!(await underDailyBudget(now))) {
       logBudgetRefusal("caseDiscovery", caseNumber, now);

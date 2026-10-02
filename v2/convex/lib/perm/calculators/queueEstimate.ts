@@ -2,6 +2,7 @@ import { addDays, differenceInCalendarMonths } from 'date-fns';
 import { formatUTC, validateISODate } from '../dates/dateUtils';
 import { monthStart, monthsBetween } from '../dates/monthUtils';
 import { estimateByPace, type MeasuredPace } from './decisionPace';
+import { DAYS_PER_MONTH_2DP, MS_PER_DAY } from "../../time";
 
 /**
  * PERM decision-date estimation.
@@ -118,8 +119,8 @@ export interface QueueEstimateInput {
   casesAhead?: number | null;
   /**
    * DOL's recent decision rate, measured by `measurePace` over the observed
-   * daily series. Never a constant: a rival divides by a hardcoded 650/day,
-   * and the same window measured here gives 625.
+   * daily series. Never a constant: DOL's rate moves, and a hardcoded daily
+   * figure drifts away from it.
    */
   decisionPace?: MeasuredPace | null;
   /**
@@ -347,20 +348,16 @@ export function reportablePercentiles(
   // The last few points before the observation boundary are the noisiest, so
   // the usable ceiling sits below the raw completion fraction.
   //
-  // A MARGIN, NOT A MULTIPLIER. This was `completionFraction * 0.9`, which was
-  // harmless only while the fraction was always exactly 1.0 - DOL's files hold
-  // no pending rows, so the real fraction was never available and the call site
-  // passed 1. The moment the live census supplied a true denominator
-  // (2026-09-10) that form became a cliff: it admits p90 only at a fraction of
-  // EXACTLY 1.0, and real cohorts land at 0.96 to 0.9996. Measured over
-  // production, 13 of the 28 settled cohorts with live coverage would have
-  // silently lost their p90 - at 99.3% decided, where the 90th percentile is
+  // A MARGIN, NOT A MULTIPLIER. `completionFraction * 0.9` admits p90 only at
+  // a fraction of EXACTLY 1.0, and with the live census supplying a true
+  // denominator real cohorts land at 0.96 to 0.9996. Measured over
+  // production, 13 of the 28 settled cohorts with live coverage would
+  // silently lose their p90 - at 99.3% decided, where the 90th percentile is
   // genuinely observed.
   //
   // Subtracting a fixed cushion says the intended thing directly: report a
   // percentile once we have observed past it, less a few points for the noisy
-  // tail. Every previously-asserted behaviour is unchanged - 1.0 still reports
-  // all four, 0.4 still reports p25 alone, 0.1 still reports nothing.
+  // tail. 1.0 reports all four, 0.4 reports p25 alone, 0.1 reports nothing.
   const ceiling = completionFraction - TAIL_MARGIN;
   const out: Array<{ percentile: number; days: number }> = [];
   for (const entry of available) {
@@ -426,19 +423,16 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
   // rate DOL is clearing them, so it lands on a day rather than a month and
   // it moves the moment DOL speeds up or slows down.
   //
-  // It leads because both rivals use this shape and because its two inputs
-  // are measured rather than assumed. The rate in particular: the rival dashboard
-  // divides by a hardcoded 650/day, and the same window measured against our
-  // own observed series gives 625.
+  // It leads because both its inputs are measured rather than assumed, the
+  // rate especially: never a hardcoded daily figure.
   //
   // THE RATE IS VALIDATED AGAINST AN INDEPENDENT SOURCE, which matters
   // because our daily series is dated by when our SWEEP SAW a change, not by
   // DOL's own decision date (DOL publishes no decision timestamp on the live
-  // endpoint). Measured 2026-09-13 over the 16 days both series cover, our
-  // mean is 574.6/day against the rival dashboard's published 566.4 - a difference of
-  // +1.4%. Individual days diverge by more because a day boundary falls in a
-  // different place for each of us; the model divides by a 28-day mean, and
-  // that is the quantity that agrees.
+  // endpoint). Over 16 days both series cover, our mean and an independently
+  // published daily series differ by about 1.4%. Individual days diverge by
+  // more because a day boundary falls in a different place for each; the
+  // model divides by a 28-day mean, and that is the quantity that agrees.
   //
   // One honest consequence: our day-boundary noise inflates the weekday
   // spread the BAND is built from, so the band is somewhat wider than DOL's
@@ -451,7 +445,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
   ) {
     const paced = estimateByPace({
       // Day numbers since the epoch; the calculator works in ISO strings.
-      today: Math.floor(today.getTime() / 86_400_000),
+      today: Math.floor(today.getTime() / MS_PER_DAY),
       casesAhead: input.casesAhead,
       pace: input.decisionPace,
       // The caller has already decided this case is in filing order; the
@@ -465,26 +459,23 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     // against - is a reason NOT to print a date, and the models below are
     // the honest fallback rather than a second opinion to average in.
     if (paced.kind === 'estimate') {
-      // STATE THE COVERAGE WHEREVER THE BAND IS SHOWN. Re-measured on the
-      // analyst-review count (2026-09-26, scripts/backtest_queue.py): 44% of
-      // 2,293 near-front cases landed inside it, and almost every miss was a
-      // case still waiting a week past its date. The old count measured
-      // 57-58% overall and 41% near, over ~88,000 predictions. That is a pace
-      // scenario, not a confidence interval, and the difference is the whole
-      // reason this sentence exists: a rival publishes `confidence_level:
-      // 0.8` as a hardcoded constant against real coverage of 8-15%, which
-      // is the most checkable false claim a queue estimator can make.
+      // STATE THE COVERAGE WHEREVER THE BAND IS SHOWN. Measured on the
+      // analyst-review count (scripts/backtest_queue.py): 44% of 2,293
+      // near-front cases landed inside it, and almost every miss was a case
+      // still waiting a week past its date. That is a pace scenario, not a
+      // confidence interval, and labelling it as one ("80% confident") is the
+      // most checkable false claim a queue estimator can make.
       caveats.push(
         'The range is what happens if DOL keeps to its recent pace, not a confidence interval. Near the front of the queue, tested on September 2026 decisions, it held for about 4 cases in 10: most of the rest were decided within a few days of it, and some waited weeks longer.',
       );
-      const toISO = (d: number) => formatUTC(new Date(d * 86_400_000));
+      const toISO = (d: number) => formatUTC(new Date(d * MS_PER_DAY));
       models.push({
         id: 'decision-pace',
         label: 'Cases ahead of you, at DOL\'s measured pace',
         basis: `${input.casesAhead.toLocaleString()} cases in DOL's normal queue were filed before yours (cases on hold, at an RFI or on appeal are out of line and not counted), and DOL has been deciding about ${Math.round(paced.pace).toLocaleString()} a day including weekends. That is ${paced.rawDays.toLocaleString()} days of work.`,
         estimatedDate: toISO(paced.day),
         totalDays: Math.round(
-          (paced.day * 86_400_000 - filed.getTime()) / 86_400_000,
+          (paced.day * MS_PER_DAY - filed.getTime()) / MS_PER_DAY,
         ),
         earliestDate: toISO(paced.early),
         latestDate: toISO(paced.late),
@@ -495,9 +486,8 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       (paced.reason === 'stale-data' || paced.reason === 'pace-unmeasurable') &&
       paced.detail
     ) {
-      // SAY WHY THE LEAD MODEL IS MISSING. It dropped out silently and a
-      // fallback answered in its place, so a reader saw a different model's
-      // date with no reason (Sep 29 2026 audit).
+      // SAY WHY THE LEAD MODEL IS MISSING, or a fallback answers in its place
+      // and a reader sees a different model's date with no reason.
       caveats.push(`${PACE_ABSENT} ${paced.detail}`);
     }
   } else if (
@@ -528,7 +518,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     monthsBehind > 0
   ) {
     const monthsUntilReached = monthsBehind / rate;
-    const daysUntilReached = Math.round(monthsUntilReached * 30.44);
+    const daysUntilReached = Math.round(monthsUntilReached * DAYS_PER_MONTH_2DP);
     const estimated = addDays(today, daysUntilReached);
 
     // The band comes from how much the rate itself has varied, not from a
@@ -539,8 +529,8 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
     let earliest: string | null = null;
     let latest: string | null = null;
     if (range && range.fastest > 0 && range.slowest > 0) {
-      earliest = formatUTC(addDays(today, Math.round((monthsBehind / range.fastest) * 30.44)));
-      latest = formatUTC(addDays(today, Math.round((monthsBehind / range.slowest) * 30.44)));
+      earliest = formatUTC(addDays(today, Math.round((monthsBehind / range.fastest) * DAYS_PER_MONTH_2DP)));
+      latest = formatUTC(addDays(today, Math.round((monthsBehind / range.slowest) * DAYS_PER_MONTH_2DP)));
     }
 
     models.push({
@@ -549,7 +539,7 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
       basis: `DOL is working ${input.frontier.analystQueueMonth} and your month is ${monthsBehind} month(s) further on. The frontier has been advancing about ${rate.toFixed(2)} month(s) per calendar month.`,
       estimatedDate: formatUTC(estimated),
       totalDays: Math.round(
-        (estimated.getTime() - filed.getTime()) / 86_400_000,
+        (estimated.getTime() - filed.getTime()) / MS_PER_DAY,
       ),
       earliestDate: earliest,
       latestDate: latest,
@@ -560,23 +550,20 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
   // --- Model A: DOL's own published average ------------------------------
   // Backward-looking: the mean over cases DOL actually closed recently, so it
   // is dragged upward by old and audited cases. Authoritative and citable,
-  // which is why it is kept and cited - but it is NO LONGER THE LEAD.
+  // which is why it is kept and cited, but it is NOT THE LEAD.
   //
-  // IT LED UNTIL 2026-09-10 AND IT WAS THE WRONG ANCHOR. For a mid-December
-  // 2025 filing it returned 15 Nov 2026 (filed + 336 days) while the queue
-  // model returned 10 Oct 2026 - DOL was adjudicating November 2025, so that
-  // case was ONE MONTH from being reached. The gap is not noise, it is the
-  // audit and RFI tail: 336 days before August 2026 is roughly September
-  // 2025, yet DOL says it is working November 2025, and those two DOL figures
-  // differ by about two months for exactly that reason. Pricing a clean case
-  // with the tail's average makes every normal case look later than it is.
+  // It is the wrong anchor for a clean case. DOL's average is taken over
+  // decided cases, so it carries the audit and RFI tail: the filing date plus
+  // that average lands about two months after the month DOL says it is
+  // working. Pricing a clean case with the tail's average makes every normal
+  // case look later than it is.
   //
-  // The coverage objection was measured rather than assumed, and it did not
-  // survive: of 95,993 pending cases against the November 2025 frontier,
-  // 86.0% were filed AFTER it (queue advance runs), 9.5% at it, and only
-  // 4.6% before it - and that 4.6% is precisely the audit/RFI/hold
-  // population, which `position === "overdue"` already answers separately
-  // and better. So this model's job is the fallback when no rate has been
+  // The coverage objection was measured: of the pending cases against DOL's
+  // frontier, most were filed AFTER it (queue advance runs), about a tenth
+  // at it, and only about one in twenty before it, and that group is
+  // precisely the audit/RFI/hold population, which `position === "overdue"`
+  // already answers separately and better. So this model's job is the
+  // fallback when no rate has been
   // measured, plus a citable cross-check beside the lead.
   const avgDays = input.frontier ? input.frontier.officialAvgDays : null;
   if (input.frontier && typeof avgDays === 'number' && avgDays > 0) {
@@ -705,20 +692,19 @@ export function estimateQueueDecision(input: QueueEstimateInput): QueueEstimate 
   }
 
   // A forecast whose date has already elapsed is not a forecast. For a month
-  // the frontier has passed, every filing-anchored model lands in the past -
-  // measured live: a Nov 2024 filing rendered "likely decision window
-  // November 2025 to March 2026" in August 2026, a checkably-wrong headline.
-  // The cohort facts survive in `cohort`; `position` ('overdue') tells the
+  // the frontier has passed, every filing-anchored model lands in the past,
+  // and a "likely decision window" that has already closed is a checkably
+  // wrong headline. The cohort facts survive in `cohort`; `position`
+  // ('overdue') tells the
   // caller what to say instead. The rule lives here so every surface that
   // composes these models - the timeline page, the case page - inherits it.
   //
-  // NO EMPLOYER-LETTER SHIFT, deliberately (removed 2026-09-26). It moved
-  // every date by the letter's historical offset (A about -11 days, Z about
-  // +16), measured over decided cases from 2023 on. Scored against 7,112 real
-  // decisions after 2026-09-13 it ADDED error (typical miss 3.9 -> 6.5 days):
-  // at the current frontier DOL decided about 80% of each letter's cases in
-  // the same fortnight, U and Z included. The historical table still shows on
-  // /perm-queue as a measurement; it no longer moves anybody's date.
+  // NO EMPLOYER-LETTER SHIFT, deliberately. Shifting every date by the
+  // letter's historical offset (A about -11 days, Z about +16) ADDS error when
+  // scored against real decisions (typical miss 3.9 -> 6.5 days): near the
+  // frontier DOL decides most of each letter's cases in the same fortnight,
+  // U and Z included. The historical table shows on /perm-queue as a
+  // measurement; it moves nobody's date.
   const liveModels = models.filter((m) => m.estimatedDate >= input.today);
 
   return {

@@ -19,9 +19,8 @@
  * nothing teaches the reader to distrust the site instead of teaching them the
  * data model.
  *
- * **2. Turso bills rows READ.** Every read here rides an index, and which
- * index depends on which field LEADS. Measured against production on
- * 2026-09-03:
+ * **2. Every read rides an index**, and which index depends on which field
+ * LEADS. Measured against production:
  *
  * | lead | shape | slice | one search |
  * |---|---|---|---|
@@ -42,16 +41,14 @@
  * outcome and a decided-date range. Everything else is refused HERE, in words,
  * rather than shipped as a scan.
  *
- * **3. The same rule now holds on all three programs.** A state or occupation
- * lead used to read `perm_cases` alone, and the reason given was that no other
- * table carried an index on those columns. That was true and it was fixable:
- * `pwd_cases` and `lca_cases` both hold `worksite_state` and `soc_code`, so
- * eight indexes (`<table>_state_dec`, `<table>_state_st_dec`,
- * `<table>_soc_dec`, `<table>_soc_st_dec`) were created and the leads now
- * reach every program. Measured against production on 2026-09-03, rows READ
- * for a hundred-row page:
+ * **3. The same rule holds on all three programs.** `pwd_cases` and
+ * `lca_cases` both hold `worksite_state` and `soc_code`, and eight indexes
+ * (`<table>_state_dec`, `<table>_state_st_dec`, `<table>_soc_dec`,
+ * `<table>_soc_st_dec`) let a state or occupation lead reach every program.
+ * Rows READ for a hundred-row page, measured against production without and
+ * with them:
  *
- * | query | before | after |
+ * | query | without | with |
  * |---|---|---|
  * | `pwd_cases` state `WY` | 229,555 | **305** |
  * | `pwd_cases` state `CA` + `DENIED` (no such rows) | 634,638 | **0** |
@@ -59,11 +56,12 @@
  * | `lca_cases` state `CA` + `DENIED` | 78,360 | **100** |
  * | `lca_cases` occupation `49-3051` (no such rows) | 437,496 | **0** |
  *
- * The before column is not hypothetical: every one of those planned as
- * `SCAN <table> USING INDEX <table>_decided`, which walks the whole table in
- * decision order and throws away what does not match. It is cheap when the
- * needle is common and it is the entire table when the needle is rare, which
- * is the shape of cost that arrives as a bill rather than as a bug report.
+ * The without column is not hypothetical: without those indexes every one
+ * plans as `SCAN <table> USING INDEX <table>_decided`, which walks the whole
+ * table in decision order and throws away what does not match. It is cheap
+ * when the needle is common and it is the entire table when the needle is
+ * rare, which is the shape of cost that arrives as a slow site rather than as
+ * a bug report.
  */
 
 /** Which field leads the search. Exactly one, and the index follows from it. */
@@ -304,23 +302,14 @@ export function chooseLead(input: LeadInput): Lead | null {
  * because they read DOL's published files and every row in one of those has a
  * decision on it.
  *
- * THE PROGRAM CHIPS SPLIT THE THREE APART, and the split is about which column
- * DOL publishes rather than about cost:
- *
- * * **state and occupation** now reach all three programs. `pwd_cases` and
- *   `lca_cases` have always held `worksite_state` and `soc_code`; what they
- *   lacked was an index on either, so the search read the PERM file alone and
- *   said nothing about it. Measured 2026-09-03 before the indexes existed: a
- *   state lead on `pwd_cases` planned as `SCAN pwd_cases USING INDEX
- *   pwd_cases_decided` and read **634,638 rows to return none** for a state
- *   and status pair that does not occur. The eight indexes in
- *   `scripts/ingest_flag_disclosure.py` turn every one of those into a seek.
- * * **firm** still reads PERM alone. DOL DOES publish the firm for the other
- *   two programs - `LAWFIRM_NAME_BUSINESS_NAME` is in both the ETA-9035 and
- *   ETA-9141 FY2026 Q3 record layouts - but this site has never ingested that
- *   column, so there is nothing to search. That is a missing ingest, not a
- *   missing index, and the chips say so rather than returning an empty PWD
- *   half that looks like "this firm files no wage requests".
+ * ALL THREE LEADS REACH ALL THREE PROGRAMS. `pwd_cases` and `lca_cases` hold
+ * `worksite_state`, `soc_code` and the law firm (`LAWFIRM_NAME_BUSINESS_NAME`
+ * in the ETA-9035 and ETA-9141 record layouts), and the eight state and
+ * occupation indexes in `scripts/ingest_flag_disclosure.py` make every one of
+ * those leads a seek. Without them a state lead on `pwd_cases` plans as
+ * `SCAN pwd_cases USING INDEX pwd_cases_decided` and reads the whole table
+ * (measured: **634,638 rows to return none** for a state and status pair that
+ * does not occur).
  */
 export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterState> {
   const all = (state: FilterState): Record<FilterKey, FilterState> =>
@@ -331,9 +320,8 @@ export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterS
     // filling one is how a lead comes into existence. Turning them off with
     // everything else was a deadlock: the law-firm box was disabled because
     // there was no lead, and there could be no lead because the box was
-    // disabled. The employer box was the only way in, so "search by law firm
-    // alone" was unreachable even though `chooseLead` has always supported it.
-    // Reported by a reader who tried exactly that.
+    // disabled, and "search by law firm alone" would be unreachable even
+    // though `chooseLead` supports it.
     const out = all({ on: false, why: "no-lead" });
     out.firm = { on: true };
     out.state = { on: true };
@@ -359,34 +347,28 @@ export function filterAvailability(lead: Lead | null): Record<FilterKey, FilterS
     return out;
   }
 
-  // firm | state | occupation: EVERY filter, because the index now carries the
-  // combinations that used to be walks.
+  // firm | state | occupation: EVERY filter, because composite indexes carry
+  // the combinations that would otherwise be walks.
   //
-  // This block used to turn everything off with `walks-the-slice` except the
-  // outcome and a decided-date range, so picking a law firm greyed out
-  // worksite state. The cost argument behind it was real and measured, and it
-  // was about a SELECTIVE second equality: the biggest firm in the corpus plus
-  // `state='WY'` read 48,166 rows in 17.11 s through `idx_pc_att_dec`, walking
-  // the firm's whole slice to return four cases.
+  // The cost that matters is a SELECTIVE second equality. Through
+  // `idx_pc_att_dec` alone, the biggest firm in the corpus plus `state='WY'`
+  // reads 48,166 rows in 17 s, walking the firm's whole slice to return four
+  // cases. Three composite indexes cover exactly those pairs, and the same
+  // query reads 5 rows in 0.55 s; `state='CA'` plus a rare occupation reads 0
+  // rows in 0.43 s where it would read 67,743. The filters that still walk
+  // are the cheap per-row tests - a title LIKE over all of California
+  // measures 0.57 s - and they run against whatever the pair of equalities
+  // left, which is usually a handful of rows.
   //
-  // Three composite indexes now cover exactly those pairs, and the same query
-  // reads 5 rows in 0.55 s. `state='CA'` plus a rare occupation went from
-  // 67,743 rows / 8.82 s to 0 rows / 0.43 s. The filters that still walk are
-  // the cheap per-row tests - a title LIKE over all of California measured
-  // 0.57 s - and they now run against whatever the pair of equalities left,
-  // which is usually a handful of rows.
-  //
-  // So the restriction is gone rather than relaxed. A control is disabled here
-  // only when the data genuinely cannot answer it, which is the next line.
+  // So nothing is restricted for cost. A control is disabled here only when
+  // the data genuinely cannot answer it, which is the next line.
   const out = all({ on: true });
   out.stage = { on: false, why: "lead-published-only" };
-  // ALL THREE LEADS NOW REACH ALL THREE PROGRAMS. The firm used to be the odd
-  // one out: DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` in the ETA-9035 and
-  // ETA-9141 files, and this site had simply never ingested the column, so a
-  // firm lead read the PERM file alone and said "this firm files no wage
-  // requests" by omission. `ingest_flag_disclosure.py --backfill-attorney`
-  // reads it now; measured on the FY2026 wage-request file, DOL fills it on
-  // 91.0% of rows.
+  // ALL THREE LEADS REACH ALL THREE PROGRAMS. DOL publishes
+  // `LAWFIRM_NAME_BUSINESS_NAME` in the ETA-9035 and ETA-9141 files too, and
+  // `ingest_flag_disclosure.py` loads it (DOL fills it on about nine in ten
+  // wage-request rows), so a firm lead never says "this firm files no wage
+  // requests" by omission.
   return out;
 }
 

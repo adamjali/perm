@@ -4,9 +4,7 @@
  * Says so when a text field nears or reaches its character limit.
  *
  * A `maxLength` on its own is silent: typing just stops, and a paste longer
- * than the room left is cut without a word (silent-limit audit, Sep 29 2026:
- * notes, RFE and RFI text, recruitment fields, the job description and the
- * contact form all did this). Wrap the field:
+ * than the room left is cut without a word. Wrap the field:
  *
  *   <CharLimit max={2000}>
  *     <Textarea value={text} onChange={...} />
@@ -24,22 +22,21 @@
  */
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 /** The share of the limit at which the count appears. */
 export const CHAR_LIMIT_SHOW_AT = 0.8;
 
-const fmt = (n: number) => n.toLocaleString("en-US");
-
 /** The line under the field, or null when it has nothing to say yet. */
 export function charLimitMessage(length: number, max: number, pasteCut: boolean): string | null {
   if (pasteCut && length >= max) {
-    return `Your paste was cut at ${fmt(max)} characters, the most this field holds.`;
+    return `Your paste was cut at ${formatInt(max)} characters, the most this field holds.`;
   }
   if (length >= max) {
-    return `${fmt(length)} of ${fmt(max)} characters. That's the most this field holds.`;
+    return `${formatInt(length)} of ${formatInt(max)} characters. That's the most this field holds.`;
   }
   if (length >= Math.ceil(max * CHAR_LIMIT_SHOW_AT)) {
-    return `${fmt(length)} of ${fmt(max)} characters`;
+    return `${formatInt(length)} of ${formatInt(max)} characters`;
   }
   return null;
 }

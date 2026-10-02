@@ -12,12 +12,11 @@ import { PROGRAM_LABEL, isActive, phase, type Debarment } from "@/lib/turso/deba
  * page's. An expired debarment shows as ended rather than vanishing, because
  * the page is a record.
  *
- * THREE STATES, NOT TWO. This component treated anything not in force today as
- * finished, and told the reader in words that the sponsor "was barred from
- * filing in the past; the period has ended". For a debarment that has not
- * STARTED yet - one exists in the data right now, an H-2A employer barred from
- * 2026-11-01 for a year - every clause of that sentence is false, on the page
- * of a sponsor somebody may be about to sign with. See `phase()`.
+ * THREE STATES, NOT TWO. Treating anything not in force today as finished
+ * would tell the reader that the sponsor "was barred from filing in the past;
+ * the period has ended", and for a debarment that has not STARTED yet every
+ * clause of that sentence is false, on the page of a sponsor somebody may be
+ * about to sign with. See `phase()`.
  */
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
@@ -37,7 +36,7 @@ export function DebarmentNotice({ rows, pageName, today }: { rows: Debarment[]; 
         : `A name matching ${pageName} was barred from filing in the past; the period has ended.`;
   return (
     <aside className="mt-8 border-2 border-foreground bg-card p-5 shadow-hard sm:p-6" aria-label="Debarment notice">
-      <p className="font-mono text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
         On DOL&apos;s debarment list
       </p>{" "}
       <p className="mt-2 text-base leading-relaxed">

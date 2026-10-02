@@ -37,7 +37,7 @@ export interface TableVYear {
   /**
    * Part 2's rows for the four chargeabilities the bulletin names, plus the
    * rest of the world as the grand total less those four (ours, labelled).
-   * Absent from documents written before 2026-09-26.
+   * Absent from documents written before the field existed.
    */
   employment_by_chargeability?: Record<"china" | "india" | "mexico" | "philippines" | "row", Record<string, number>>;
   grand_total: number;
@@ -122,5 +122,3 @@ export function latestUsage(doc: VisaAnnualLimitsDoc | null): UsageSummary | nul
     source: y.source,
   };
 }
-
-export const fmtNumber = (n: number): string => n.toLocaleString("en-US");

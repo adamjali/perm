@@ -20,6 +20,8 @@
  * other information.
  */
 
+import { MS_PER_DAY } from "./time";
+
 export const CATEGORIES = [
   { id: "eb2", label: "EB-2" },
   { id: "eb3", label: "EB-3 professional or skilled" },
@@ -247,7 +249,7 @@ export function daysBetween(a?: string | null, b?: string | null): number | null
   if (!a || !b) return null;
   const ms = Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`);
   if (!Number.isFinite(ms)) return null;
-  return Math.round(ms / 86_400_000);
+  return Math.round(ms / MS_PER_DAY);
 }
 
 /** The stored row, as the board sees it: the verified PERM half plus the fields. */

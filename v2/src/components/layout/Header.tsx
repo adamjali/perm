@@ -8,7 +8,7 @@ import { useQuery } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { handleOperationError } from "@/lib/errors";
 import { CaretDownIcon, CircleNotchIcon, FileTextIcon, GearIcon as Settings, ListIcon as Menu, SignOutIcon, XIcon } from "@phosphor-icons/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { cn } from "@/lib/utils";
 import { AUTHENTICATED_NAV_LINKS, ADMIN_NAV_LINK } from "@/lib/constants/navigation";
 import { useAuthContext } from "@/lib/contexts/AuthContext";

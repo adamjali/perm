@@ -14,9 +14,6 @@
  * 2. CaseFilterBar (filters + sort controls)
  * 3. Case cards grid with staggered entrance animation
  * 4. CasePagination controls
- *
- * Phase: 21 (Case List)
- * Created: 2025-12-24
  */
 
 import type { Metadata } from "next";

@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { CircleNotchIcon, WarningIcon as AlertTriangle } from "@phosphor-icons/react";

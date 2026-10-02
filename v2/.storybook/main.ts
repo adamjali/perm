@@ -11,7 +11,6 @@ const config: StorybookConfig = {
   addons: [
     "@storybook/addon-a11y",
     "@storybook/addon-docs",
-    "@storybook/addon-onboarding",
     "@storybook/addon-themes",
   ],
   framework: {
@@ -20,11 +19,12 @@ const config: StorybookConfig = {
   },
   staticDirs: ["../public"],
   viteFinal: async (config) => {
-    // Ensure @ alias is resolved for Vite pre-bundling
+    // Ensure the @ and @convex aliases resolve for Vite pre-bundling
     config.resolve = config.resolve || {};
     config.resolve.alias = {
       ...config.resolve.alias,
       '@': path.resolve(__dirname, '../src'),
+      '@convex': path.resolve(__dirname, '../convex'),
     };
     return config;
   },

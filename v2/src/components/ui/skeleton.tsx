@@ -3,15 +3,10 @@ import { cn } from "@/lib/utils"
 /**
  * Loading placeholder.
  *
- * This is the first thing a visitor sees on all nine authenticated loading
- * routes, and it used to be the least house-styled component in the app: pill
- * and rounded corners on a design system whose radius token is 0px, and a
- * `.skeleton-pulse` class that swept an infinite gradient across two hardcoded
- * greys. Perpetual motion is banned, and the greys were theme-blind.
- *
- * It now draws what it stands in for: a square-cornered box on the muted
- * ground with a real --border edge. Both the ground and the edge come from
- * tokens, so it is correct in dark mode for the first time.
+ * It draws what it stands in for: a square-cornered box (the radius token is
+ * 0px) on the muted ground with a real --border edge. Both come from tokens,
+ * so it is right in dark mode, and nothing moves, because perpetual motion is
+ * banned.
  *
  * The `circle` variant keeps its radius on purpose. It stands in for an
  * avatar, which is genuinely round; squaring it would misdescribe the thing

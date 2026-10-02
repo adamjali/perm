@@ -1,12 +1,9 @@
 /**
  * Screenshots of our own pages, for the articles.
  *
- * ONE browser, ONE page, sequentially. Running headless Chrome in parallel has
- * crashed this machine twice, so the loop is deliberately serial and the
- * browser is closed in a finally block.
- *
- * Uses the installed Google Chrome rather than a downloaded Chromium: this is
- * macOS 12 and Playwright will not install its own browsers here.
+ * One browser, one page, sequentially: parallel headless Chrome is too heavy
+ * for a laptop, so the loop is serial and the browser is closed in a finally
+ * block. Uses the installed Google Chrome rather than a downloaded Chromium.
  *
  * Usage:  node scripts/shoot.mjs shots.json
  * where shots.json is [{ "name": "...", "url": "...", "clip"?: "css selector",
@@ -44,11 +41,8 @@ try {
     const height = s.height ?? 800;
     const page = await browser.newPage({
       viewport: { width, height },
-      // The Firewall's bypass for the site's own tooling: headless Chrome
-      // may not pass Bot Protection's challenge, and a challenge page is
-      // not a screenshot of the product.
-      // The value lives in .env.local (rule 5 matches it exactly since Sep 25
-      // 2026); without it a capture of a public page still passes rule 12.
+      // The audit key (from .env.local) exempts the capture from the
+      // per-address limits; see scripts/lib_audit.py.
       extraHTTPHeaders: AUDIT_KEY ? { "x-permtracker-audit": AUDIT_KEY } : {},
       deviceScaleFactor: 2, // retina, so the figure is not soft on a good screen
       colorScheme: s.dark ? "dark" : "light",

@@ -52,8 +52,8 @@ let mockIsWarningVisible = false;
 let mockOnTimeoutCallback: (() => void) | null = null;
 const mockExtendSession = vi.fn();
 
-vi.mock("@/lib/hooks/useInactivityTimeout", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/hooks/useInactivityTimeout")>();
+vi.mock("@/hooks/useInactivityTimeout", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/hooks/useInactivityTimeout")>();
   return {
     ...actual,
     useInactivityTimeout: ({ onTimeout }: { onTimeout: () => void }) => {

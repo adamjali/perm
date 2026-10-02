@@ -17,8 +17,8 @@
  * letter D. An exact total is therefore not knowable from the release, and
  * `low` and `high` are the arithmetic bounds: every suppressed cell at its
  * floor of 1, and every one at its ceiling of 10. Both are true statements
- * about the published data. Resolving each D to 5 and printing one number,
- * as the rival does, invents a precision the source withheld.
+ * about the published data. Resolving each D to 5 and printing one number
+ * invents a precision the source withheld.
  */
 
 /**

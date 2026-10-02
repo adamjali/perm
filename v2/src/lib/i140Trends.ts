@@ -100,9 +100,9 @@ export interface QuarterPoint {
 /**
  * One category's quarters, oldest first.
  *
- * DROPS UNREPORTED QUARTERS RATHER THAN DRAWING THEM AT ZERO. USCIS has not
- * published FY2026 Q3 or Q4; a rival's chart shows them as bars at zero,
- * which reads as a collapse in filings rather than an absence of data. A
+ * DROPS UNREPORTED QUARTERS RATHER THAN DRAWING THEM AT ZERO. A quarter USCIS
+ * has not published, drawn as a bar at zero, reads as a collapse in filings
+ * rather than an absence of data. A
  * quarter with no receipts, no decisions and nothing pending is not a
  * measurement of zero, it is the absence of a measurement.
  */

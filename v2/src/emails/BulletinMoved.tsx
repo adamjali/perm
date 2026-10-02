@@ -9,6 +9,7 @@
 import { Link, Section, Text } from "@react-email/components";
 import { EmailLayout } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface BulletinMovedProps {
   /** "EB2 India". */
@@ -75,7 +76,7 @@ export function BulletinMoved({
       <Text className="em-text-secondary" style={styles.note}>
         The full board and every bulletin since October 2014:{" "}
         <Link
-          href="https://permtracker.app/tools/priority-date-calculator"
+          href={`${SITE_URL}/tools/priority-date-calculator`}
           className="em-link"
           style={styles.footerLink}
         >

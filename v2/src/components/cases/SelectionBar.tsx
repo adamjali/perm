@@ -17,10 +17,6 @@
  *   - Row 1: Export actions (CSV, JSON)
  *   - Row 2: Case management (Archive, Delete) + Calendar sync (when connected)
  *   - Row 3: Recovery actions (Re-open, when applicable)
- *
- * Phase: 21 (Case List - Selection Mode)
- * Created: 2025-12-25
- * Updated: 2026-01-03 - Reorganized mobile layout for consistency (ISS-027)
  */
 
 "use client";

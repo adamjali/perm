@@ -7,8 +7,8 @@
  * THE ANSWER IS A RANGE AND IT IS PRESENTED AS ONE. USCIS replaces any cell
  * holding 1 to 10 applications with the letter D, so an exact total is not
  * knowable from the release. Two figures of equal weight, a floor and a
- * ceiling, both arithmetically true. Resolving every D to its midpoint, which
- * is what the rival does, invents a precision the source withheld. This is the
+ * ceiling, both arithmetically true. Resolving every D to its midpoint
+ * invents a precision the source withheld. This is the
  * same discipline /perm-denial-risk applies when it refuses to blend its
  * factors into a single score.
  *
@@ -16,8 +16,7 @@
  * USCIS refuses to resolve, scaled to the ceiling with NO empty track behind
  * it, so it cannot read as a progress meter. Its two ticks sit at the two
  * figures' own coordinates, which is the whole reason it is an axis and not a
- * decoration: this repo has already shipped a diagram whose label sat 204
- * units from the date it named.
+ * decoration: a label away from its own coordinate names the wrong figure.
  *
  * WHAT THE COUNT DOES AND DOES NOT INCLUDE. An I-485 can only be filed once
  * the Dates for Filing chart reaches your priority date, so the inventory is
@@ -41,8 +40,10 @@ import { pairKey,
 } from "@/lib/i485/position";
 import { formatAsOf, formatAsOfShort, formatMonth } from "@/lib/dolFormat";
 import { monthsToReach, scenarioMonths, type PaceBasis } from "@/lib/bulletinNext";
-import { Label } from "@/components/ui";
+import { ChartTips } from "@/components/data/ChartTips";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 export interface I485QueuePositionProps {
   cells: I485CellTable;
@@ -501,7 +502,7 @@ export function I485QueuePosition({
                 <SupplyScenario low={position.low} high={position.high} />{" "}
                 {/* The certainty bar, as an axis. Scaled to the ceiling, no
                     empty track, and both ticks at their own coordinates. */}
-                <div className="mt-6">
+                <ChartTips label="Applications ahead, counted and withheld" className="mt-6">
                   <div
                     className="flex h-10 w-full overflow-hidden border-2 border-border"
                     role="img"
@@ -510,9 +511,11 @@ export function I485QueuePosition({
                     <div
                       className="h-full border-r-2 border-border bg-primary"
                       style={{ width: `${split.solid}%` }}
+                      data-tip={`At least ${position.low.toLocaleString("en-US")} ahead\n${position.counted.toLocaleString("en-US")} published individually`}
                     />
                     <div
                       className="h-full bg-muted"
+                      data-tip={`Up to ${position.high.toLocaleString("en-US")} ahead\n${position.suppressedCells.toLocaleString("en-US")} ${position.suppressedCells === 1 ? "cell" : "cells"} withheld by USCIS, 1 to 10 applications each`}
                       style={{
                         width: `${split.hatched}%`,
                         // Texture, not a second colour, so the two segments stay
@@ -534,18 +537,18 @@ export function I485QueuePosition({
                     />
                     {showLowLabel ? (
                       <span
-                        className="absolute top-3 -translate-x-1/2 whitespace-nowrap font-mono text-xs tabular-nums text-foreground/70"
+                        className="absolute top-3 -translate-x-1/2 whitespace-nowrap font-mono text-sm tabular-nums text-foreground/70"
                         style={{ left: `${split.solid}%` }}
                       >
                         {position.low.toLocaleString("en-US")}
                       </span>
                     ) : null}{" "}
                     <span className="absolute right-0 top-0 h-2 w-0.5 bg-border" />
-                    <span className="absolute right-0 top-3 whitespace-nowrap font-mono text-xs tabular-nums text-foreground/70">
+                    <span className="absolute right-0 top-3 whitespace-nowrap font-mono text-sm tabular-nums text-foreground/70">
                       {position.high.toLocaleString("en-US")}
                     </span>{" "}
                   </div>{" "}
-                </div>
+                </ChartTips>
                 <p className="mt-1 text-base leading-relaxed text-foreground/70">
                   <strong>{position.counted.toLocaleString("en-US")}</strong>{" "}
                   {position.counted === 1 ? "application is" : "applications are"}{" "}
@@ -606,13 +609,24 @@ export function I485QueuePosition({
           {(() => {
             const max = Math.max(...trend.map((x) => x.total));
             return (
-              <ol className="mt-6 space-y-2">
+              <ChartTips label="Employment I-485s pending, release by release" className="mt-6">
+              <ol className="space-y-2">
                 {[...trend].reverse().map((t) => (
                   // Mapped siblings arrive with nothing between them, so the
                   // rows read as one glued run to any extractor.
                   <Fragment key={t.asOf}>
                     {" "}
-                    <li className="grid grid-cols-[5.5rem_1fr_5rem] items-center gap-3 [&>*]:min-w-0 sm:grid-cols-[9rem_1fr_6rem]">
+                    <li
+                      data-tip={[
+                        formatAsOf(t.asOf),
+                        `${t.total.toLocaleString("en-US")} pending`,
+                        t.available != null ? `${t.available.toLocaleString("en-US")} with a visa number available` : null,
+                        t.awaiting != null ? `${t.awaiting.toLocaleString("en-US")} awaiting a visa number` : null,
+                      ]
+                        .filter(Boolean)
+                        .join("\n")}
+                      className="grid grid-cols-[5.5rem_1fr_5rem] items-center gap-3 [&>*]:min-w-0 sm:grid-cols-[9rem_1fr_6rem]"
+                    >
                       {/* One string at every width. A responsive pair of spans
                           puts BOTH forms in textContent, so an extractor reads
                           "Aug 5, 2026August 5, 2026", and the long form
@@ -624,12 +638,10 @@ export function I485QueuePosition({
                       <span className="flex h-6 w-full border-2 border-border bg-muted">
                         <span
                           className="block h-full bg-primary"
-                          title="visa number available, not yet adjudicated"
                           style={{ width: `${Math.max(((t.available ?? t.total) / max) * 100, 1)}%` }}
                         />{" "}
                         <span
                           className="block h-full bg-foreground/45"
-                          title="awaiting a visa number"
                           style={{ width: `${Math.max(((t.awaiting ?? 0) / max) * 100, 0)}%` }}
                         />
                       </span>{" "}
@@ -640,14 +652,13 @@ export function I485QueuePosition({
                   </Fragment>
                 ))}
               </ol>
+              </ChartTips>
             );
           })()}{" "}
           <p className="mt-4 text-sm text-foreground/60">
-            Lime is pending with a visa number already available, the part USCIS
-            owns; grey is awaiting a number, the part the bulletin owns. Each release counts what was pending on its own date, so a month
-            moves with both new filings and decisions. USCIS keeps no archive of
-            past releases, so this series can only grow forward from the ones
-            already captured.
+            Lime: pending with a visa number available (USCIS&apos;s part). Grey: waiting for a number (the
+            bulletin&apos;s part). Each release counts what was pending that day, so a month moves with both
+            new filings and decisions. USCIS keeps no archive, so the series grows forward only.
           </p>
         </div>
       ) : null}{" "}
@@ -689,10 +700,10 @@ export function I485QueuePosition({
 
 /**
  * "If the supply were": the reader picks a number of visas a year and the
- * queue ahead is divided by it. It is what a rival prints as low, base and
- * high scenarios with the supply chosen for the reader; here the supply is
- * the reader's own input, the anchors are the statute's figures rather than
- * anyone's expectation, and the result says what it assumes.
+ * queue ahead is divided by it. Rather than low, base and high scenarios with
+ * the supply chosen for the reader, the supply is the reader's own input, the
+ * anchors are the statute's figures rather than anyone's expectation, and
+ * the result says what it assumes.
  */
 const SUPPLY_ANCHORS = [
   { label: "7% of one category", value: 2803, note: "7% of the 40,040 a category gets from the 140,000 floor; the rule of thumb many trackers use as a floor" },
@@ -712,17 +723,14 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
     const r = Math.round(m);
     return `${r} ${r === 1 ? "month" : "months"}`;
   };
-  const int = (n: number) => n.toLocaleString("en-US");
   return (
     <div className="mt-6 border-2 border-border bg-background p-4 sm:p-5">
       <p className="font-mono text-sm font-bold uppercase tracking-[0.12em] text-muted-foreground">
         If the supply were
       </p>{" "}
       <p className="mt-2 text-sm leading-relaxed text-foreground/75">
-        A scenario, not a forecast. You choose how many visa numbers a year
-        reach this category and country, and the queue ahead is divided by it.
-        Nobody publishes that supply in advance; the anchors are the statute&apos;s
-        figures, not anyone&apos;s expectation.
+        A scenario, not a forecast: choose how many visas a year reach this line and the queue ahead is
+        divided by it. Nobody publishes that supply in advance; the presets are the statute&apos;s figures.
       </p>{" "}
       <div className="mt-3 flex flex-wrap items-end gap-3">
         <div className="min-w-0">
@@ -745,14 +753,14 @@ function SupplyScenario({ low, high }: { low: number; high: number }) {
               title={a.note}
               className="min-h-11 border-2 border-border bg-card px-3 text-sm font-semibold transition-colors hover:bg-tint-primary"
             >
-              {a.label}: {int(a.value)}
+              {a.label}: {formatInt(a.value)}
             </button>
           </Fragment>
         ))}
       </div>{" "}
       {lo !== null && hi !== null ? (
         <p className="mt-3 text-base leading-relaxed text-foreground/85" aria-live="polite">
-          At {int(perYear)} a year, the {low === high ? int(low) : `${int(low)} to ${int(high)}`} ahead
+          At {formatInt(perYear)} a year, the {low === high ? formatInt(low) : `${formatInt(low)} to ${formatInt(high)}`} ahead
           would take about{" "}
           <strong className="font-semibold">{fmt(lo) === fmt(hi) ? fmt(lo) : `${fmt(lo)} to ${fmt(hi)}`}</strong>.
           That assumes every number goes to an applicant ahead of you and none to anyone

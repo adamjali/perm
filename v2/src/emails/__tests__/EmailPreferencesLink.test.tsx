@@ -2,7 +2,7 @@ import { render } from "@react-email/render";
 import { describe, expect, it } from "vitest";
 
 import { EmailPreferencesLink } from "../EmailPreferencesLink";
-import { SITE_URL, actionUrl } from "../../../convex/lib/links";
+import { SITE_URL, actionUrl } from "@convex/lib/links";
 
 /**
  * The preferences email shipped as PLAIN TEXT with a link to

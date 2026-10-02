@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
@@ -12,8 +12,8 @@ import { CheckCircleIcon, CopyIcon } from "@phosphor-icons/react";
 
 /**
  * Loading: the real heading (it never changes) and the stat blocks in the
- * real grid. The second row used to be `md:grid-cols-3 gap-4` against the
- * real `sm:grid-cols-4 sm:gap-6`, so its blocks changed width on arrival.
+ * real grid. Its grid classes must match the real ones exactly, or the blocks
+ * change width on arrival.
  * The dashboard's loading.tsx renders this same component.
  */
 export function SummaryTilesSkeleton() {

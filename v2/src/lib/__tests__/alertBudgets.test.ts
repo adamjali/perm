@@ -3,8 +3,8 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import { BUDGETS, LIST_MAIL_POOLS } from "../../../convex/lib/alertBudgets";
-import { LIST_CEILING, RESEND_DAILY_CAP } from "../../../convex/lib/emailLimits";
+import { BUDGETS, LIST_MAIL_POOLS } from "@convex/lib/alertBudgets";
+import { LIST_CEILING, RESEND_DAILY_CAP } from "@convex/lib/emailLimits";
 
 /**
  * The budget table the senders enforce and the admin panel reports is held to

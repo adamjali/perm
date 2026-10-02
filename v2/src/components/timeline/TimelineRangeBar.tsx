@@ -5,9 +5,6 @@
  * Features:
  * - Outlined band in the stage colour over a 30% fill, 12px tall
  * - Tooltip with the date range, mounted only while hovered
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2025-12-26
  */
 
 "use client";

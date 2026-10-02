@@ -23,7 +23,7 @@ import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { CaseChange, ChangeCalendar, ChangeDayFeed } from "@/lib/turso/changes";
 
 const usePublicQuery = vi.fn();
-vi.mock("@/lib/usePublicQuery", () => ({ usePublicQuery }));
+vi.mock("@/hooks/usePublicQuery", () => ({ usePublicQuery }));
 
 const { ChangeFeedBrowser } = await import("../ChangeFeedBrowser");
 
@@ -120,15 +120,16 @@ beforeEach(() => {
 });
 
 describe("filters DOL's data cannot support", () => {
-  it("explains them on a date only the live check covers, and opens itself", () => {
+  it("explains them on a date only the live check covers, one click away", () => {
     // 2026-09-03 is past DOL's last published file, so on THIS date the four
-    // fields genuinely do not exist and the explanation is what the reader
-    // needs. The panel opens itself for exactly this case.
+    // fields genuinely do not exist. The panel used to open itself here; since
+    // 2026-10-01 it stays shut and its summary says why, so the feed is not
+    // pushed down by four boxes. The explanation is still in the page.
     loaded();
     render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
 
-    const panel = document.querySelector("details");
-    expect(panel?.open).toBe(true);
+    const panel = screen.getByText(/why wage, law firm, worksite and occupation are off/i).closest("details");
+    expect(panel?.open).toBe(false);
     for (const why of [/no wage from the live case lookup/i, /attorney or agent only at publication/i,
                        /worksite is on the published record/i, /SOC code is on the published record/i]) {
       expect(screen.getByText(why)).toBeInTheDocument();
@@ -149,9 +150,8 @@ describe("filters DOL's data cannot support", () => {
       />,
     );
 
-    const panel = document.querySelector("details");
-    expect(panel?.open).toBe(false);
-    expect(screen.getByText(/available for these dates/i)).toBeInTheDocument();
+    const summary = screen.getByText(/available for these dates/i);
+    expect(summary.closest("details")?.open).toBe(false);
     expect(screen.queryByText(/no wage from the live case lookup/i)).toBeNull();
   });
 
@@ -296,5 +296,28 @@ describe("what the day itself leaves out", () => {
     loaded({ expiriesExcluded: 0, bulkExcluded: 0 });
     render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
     expect(screen.queryByText(/Left out of that count/)).toBeNull();
+  });
+});
+
+describe("the kinds of change, as chips", () => {
+  const MANY = Array.from({ length: 9 }, (_, i) => ({
+    fromStatus: `FROM ${i}`,
+    toStatus: `TO ${i}`,
+    n: 100 - i,
+  }));
+
+  it("shows the six busiest until asked, then every kind", () => {
+    loaded({ transitions: MANY });
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day({ transitions: MANY })} windows={WINDOWS} />);
+    expect(screen.getAllByRole("button", { pressed: false }).filter((b) => /FROM \d/.test(b.textContent ?? ""))).toHaveLength(6);
+    expect(screen.queryByText("TO 8")).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /show all 9 kinds of change/i }));
+    expect(screen.getByText("TO 8")).toBeInTheDocument();
+  });
+
+  it("offers no toggle when every kind already fits", () => {
+    loaded();
+    render(<ChangeFeedBrowser calendar={CALENDAR} initialDay={day()} windows={WINDOWS} />);
+    expect(screen.queryByRole("button", { name: /show all/i })).toBeNull();
   });
 });

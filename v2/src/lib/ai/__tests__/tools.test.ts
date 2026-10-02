@@ -932,7 +932,7 @@ describe('Job description length in chat', () => {
   it('accepts the server limit in all three chat schemas and refuses one past it', async () => {
     const { UpdateCaseInputSchema, CreateJobDescriptionTemplateInputSchema, UpdateJobDescriptionTemplateInputSchema } =
       await import('../tools');
-    const { INPUT_LIMITS } = await import('../../../../convex/lib/validation');
+    const { INPUT_LIMITS } = await import('@convex/lib/validation');
     const atLimit = 'x'.repeat(INPUT_LIMITS.LONG);
     const over = 'x'.repeat(INPUT_LIMITS.LONG + 1);
 

@@ -43,6 +43,42 @@ describe("User Profile", () => {
       expect(profileId1).toBe(profileId2);
     });
 
+    it("takes a calendar type's events off Google Calendar when it is switched off", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Test User");
+      await authT.mutation(api.users.ensureUserProfile, {});
+      await finishScheduledFunctions(t);
+
+      await authT.mutation(api.users.updateUserProfile, { calendarSyncRecruitment: false });
+
+      const jobs = await t.run(async (ctx) =>
+        (await ctx.db.system.query("_scheduled_functions").collect()).filter((j) =>
+          j.name.includes("bulkDeleteEventsByType"),
+        ),
+      );
+      expect(jobs).toHaveLength(1);
+      const fields = (jobs[0]!.args[0] as { eventSchemaFields: string[] }).eventSchemaFields;
+      // The recruitment preference's current slots and its retired one.
+      expect(fields).toContain("recruitment_window_closes");
+      expect(fields).toContain("recruitment_end");
+      await finishScheduledFunctions(t);
+    });
+
+    it("schedules no calendar cleanup when a type is switched on, or was already off", async () => {
+      const t = createTestContext();
+      const authT = await createAuthenticatedContext(t, "Test User");
+      await authT.mutation(api.users.ensureUserProfile, {});
+      await authT.mutation(api.users.updateUserProfile, { calendarSyncPwd: false });
+      await finishScheduledFunctions(t);
+      const before = await t.run(async (ctx) => (await ctx.db.system.query("_scheduled_functions").collect()).length);
+
+      await authT.mutation(api.users.updateUserProfile, { calendarSyncPwd: false });
+      await authT.mutation(api.users.updateUserProfile, { calendarSyncPwd: true });
+
+      const after = await t.run(async (ctx) => (await ctx.db.system.query("_scheduled_functions").collect()).length);
+      expect(after).toBe(before);
+    });
+
     it("rejects unauthenticated users", async () => {
       const t = createTestContext();
 

@@ -1,6 +1,6 @@
 #!/bin/bash
-# permtracker-cron <job>: calls the site's own cron route, exactly as Vercel's
-# cron did (GET with Authorization: Bearer CRON_SECRET).
+# permtracker-cron <job>: calls the site's own cron route
+# (GET with Authorization: Bearer CRON_SECRET).
 set -euo pipefail
 job="$1"
 case "$job" in

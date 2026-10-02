@@ -7,8 +7,6 @@
  * - Urgency color bars
  * - Icon support (emoji-based for email compatibility)
  * - Dark mode via CSS classes
- *
- * Phase: 24 (Notifications + Email)
  */
 
 import { Section, Text } from "@react-email/components";
@@ -114,5 +112,3 @@ const styles = {
     margin: "0",
   },
 } as const;
-
-export default EmailHeader;

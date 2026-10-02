@@ -8,8 +8,6 @@
  * - Inline styles for email client compatibility
  * - Urgency variants (urgent=red, warning=orange)
  * - Dark mode via CSS class
- *
- * Phase: 24 (Notifications + Email)
  */
 
 import { Button } from "@react-email/components";
@@ -112,5 +110,3 @@ const styles = {
     borderColor: "#000001",
   },
 } as const;
-
-export default EmailButton;

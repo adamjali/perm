@@ -20,6 +20,8 @@
 // TYPES
 // ============================================================================
 
+import { MS_PER_DAY } from "../../time";
+
 export type CountryKey = "worldwide" | "china" | "india" | "mexico" | "philippines";
 
 export type ChartKind = "finalAction" | "datesForFiling";
@@ -119,7 +121,7 @@ export function parseCutoff(cell: string | undefined): Cutoff | null {
 }
 
 function daysBetween(a: string, b: string): number {
-  return Math.round((Date.parse(b) - Date.parse(a)) / 86_400_000);
+  return Math.round((Date.parse(b) - Date.parse(a)) / MS_PER_DAY);
 }
 
 /**

@@ -19,16 +19,13 @@
  * - Max-height: 400px with scroll
  * - 2px black border, 4px 4px shadow
  * - Space Grotesk for headers, Inter for body
- *
- * Phase: 24 (Notifications)
- * Created: 2025-12-30
  */
 
 import { useState, useEffect } from "react";
 import { handleOperationError } from "@/lib/errors";
 import { ArrowsClockwiseIcon as RefreshCw, BellIcon, CalendarIcon, CircleNotchIcon, ClockIcon, InfoIcon, WarningIcon as AlertTriangle, XIcon, type Icon as PhosphorIcon, CheckIcon, ArrowRightIcon } from "@phosphor-icons/react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,7 +33,7 @@ import { cn } from "@/lib/utils";
 import { safeFormatDistanceToNow } from "@/lib/utils/date";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 
 // Type for notification from getRecentNotifications
 type NotificationType =

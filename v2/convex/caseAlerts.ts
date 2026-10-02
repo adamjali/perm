@@ -71,13 +71,12 @@
  * counted over a UTC calendar day) and 3,000 a month. That 100 is SHARED with
  * sign-in and reset codes, which lock a person out when they don't arrive.
  *
- * Since Sep 29 2026 it is guarded ONCE, by what was actually sent: list mail
- * stops at 85 of Resend's 100 (LIST_CEILING in convex/lib/emailLimits.ts), and
- * every send but a sign-in code goes through `sendOrQueue`, which checks that
- * count first and keeps anything it can't send in the retry queue
- * (convex/emailLedger.ts). Before, fixed shares had to add up under 100
- * (75 a day in all), and the case confirmations' 15 turned real people away on
- * Sep 28 while the account had sent 57.
+ * It is guarded ONCE, by what was actually sent: list mail
+ * stops at 85 of Resend's 100 (LIST_CEILING in convex/lib/emailLimits.ts), and every send
+ * but a sign-in code goes through `sendOrQueue`, which checks that count
+ * first and keeps anything it can't send in the retry queue
+ * (convex/emailLedger.ts). Fixed shares that must add up under 100 turn real
+ * people away from a full pool while the account itself has room.
  *
  * The per-kind pools remain, as bounds against abuse of one form:
  *
@@ -104,7 +103,7 @@
  * confirmation) leaves through `deliverAlert` (convex/lib/alertDelivery.ts), so
  * one person gets at most one alert email a day.
  *
- * The weekly bulletin digest (convex/newsletter.ts) has its own cap,
+ * The weekly digest (convex/newsletter.ts) has its own cap,
  * NEWSLETTER_DAILY_CAP (default 30), and goes through `sendOrQueue` like the
  * rest, so on a heavy day the digests past 85 wait for the next UTC day.
  *
@@ -166,9 +165,14 @@ import {
   CASE_ALERT_BUDGET,
   CASE_ALERT_KEY,
   noteRefusal,
+  CONFIRMATION_COOLDOWN_MS,
+  SUBSCRIBE_IP_LIMIT,
+  SWEEP_RESUME_DELAY_MS,
 } from "./lib/alertBudgets";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
+import { formatInt } from "./lib/format";
+import { MS_PER_HOUR } from "./lib/time";
 
 const log = createLogger("CaseAlerts");
 
@@ -191,9 +195,6 @@ const ALERT_BATCH_LIMIT = 18;
  */
 const ALERT_GLOBAL_BUDGET = CASE_ALERT_BUDGET;
 
-/** Minimum gap between confirmation emails to one address. */
-const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
-
 /**
  * Minimum gap between ALERTS to one subscription.
  *
@@ -202,14 +203,7 @@ const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
  * ever flaps a case between two statuses, six hours caps the damage at four
  * emails a day instead of one per sweep.
  */
-const ALERT_COOLDOWN_MS = 6 * 60 * 60 * 1000;
-
-/**
- * Per-caller ceiling on subscribe attempts. 30 an hour since Sep 29 2026 (was
- * 5): an office or a family behind one address following several cases met
- * it first. The global confirmation budget below is what bounds the mail.
- */
-export const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
+const ALERT_COOLDOWN_MS = 6 * MS_PER_HOUR;
 
 /**
  * How many cases one address may watch.
@@ -218,10 +212,9 @@ export const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
  * generous. Both the cooldown check in `subscribe` and `forEmail` read every
  * row for an address through `by_email`; without a ceiling those are unbounded
  * `.collect()`s that one attacker can grow without limit by subscribing a
- * single address to arbitrarily many case numbers. A hundred (25 until Sep 29
- * 2026) is far more than a household, still a small read, and an attorney
- * tracking a whole book of cases belongs in the app, which has auth in front
- * of it.
+ * single address to arbitrarily many case numbers. A hundred is far more than
+ * a household and still a small read; an attorney tracking a whole book of
+ * cases belongs in the app, which has auth in front of it.
  */
 export const MAX_CASES_PER_ADDRESS = 100;
 
@@ -269,11 +262,11 @@ function casePageUrl(caseNumber: string): string {
  * The upstream's per-case check stamp, formatted, or null.
  *
  * `perm_case_status.last_checked_at` is an ISO-8601 STRING like
- * "2026-08-05T22:31:24", written straight from the upstream tracker's own
- * field. Two things follow and both have bitten someone already:
+ * "2026-08-05T22:31:24", written from a retired third-party mirror's own
+ * field. Two things follow:
  *
- * 1. **It is THEIR check time, not ours.** We mirror a tracker that reads DOL.
- *    No email may say "we checked" or "we verified" on the strength of it.
+ * 1. **It is THEIR check time, not ours.** No email may say "we checked" or
+ *    "we verified" on the strength of it.
  * 2. **Never compare it numerically.** SQLite sorts any string above any
  *    number, so `last_checked_at >= 1787000000` is TRUE for every non-null row
  *    and yields a clean-looking result that is entirely artefact. Compare as
@@ -286,11 +279,6 @@ function casePageUrl(caseNumber: string): string {
 function observedLabel(raw: string | number | null | undefined): string | null {
   if (typeof raw !== "string" || raw.length < 10) return null;
   return formatAsOf(raw.slice(0, 10));
-}
-
-/** Thousands separators, so 94435 reads as 94,435 in a mono column. */
-function count(n: number): string {
-  return n.toLocaleString("en-US");
 }
 
 /**
@@ -357,7 +345,7 @@ export const subscribe = internalMutation({
      * confirmation so the email can say so. See convex/emailPrefs.ts.
      */
     news: v.optional(v.boolean()),
-    /** The weekly bulletin digest, staged the same way as news. */
+    /** The weekly digest, staged the same way as news. */
     newsletter: v.optional(v.boolean()),
     /** Caller IP from the HTTP layer, or "unknown" when none is resolvable. */
     ip: v.optional(v.string()),
@@ -395,7 +383,7 @@ export const subscribe = internalMutation({
       return {
         ok: false,
         message:
-          "That does not look like a DOL case number (G-, A-, P- or I-).",
+          "That does not look like a DOL case number (G-, A-, P-, I- or H-).",
       };
     }
     const caseNumber = parsed.caseNumber;
@@ -456,21 +444,21 @@ export const subscribe = internalMutation({
       return { ok: true, message: NEUTRAL_REPLY };
     }
 
-    // BEFORE THE WRITE, AND THAT ORDER IS THE FIX. This used to sit after it,
-    // so an exhausted budget still stamped `lastConfirmationSentAt` on the row
-    // while sending nothing. The compensating `clearConfirmationCooldown` is
-    // only reachable from inside `sendConfirmation`, which this branch returns
-    // before scheduling - so the stamp stood, and the caller's retry a minute
-    // later was swallowed by the ten-minute cooldown and answered "check your
-    // inbox" for an email that was never sent.
+    // BEFORE THE WRITE, and the order matters. Charged after it, an exhausted
+    // budget would still stamp `lastConfirmationSentAt` on the row while
+    // sending nothing. The compensating `clearConfirmationCooldown` is only
+    // reachable from inside `sendConfirmation`, which this branch returns
+    // before scheduling, so the stamp would stand, and the caller's retry a
+    // minute later would be swallowed by the ten-minute cooldown and answered
+    // "check your inbox" for an email never sent.
     //
-    // Still charged BELOW the cooldown and ceiling checks, which is what the
-    // old comment here was protecting: both of those return earlier and send
-    // nothing, so neither consumes the budget. A mutation is one transaction,
-    // so a later throw rolls the recorded attempt back with everything else.
+    // Still charged BELOW the cooldown and ceiling checks: both of those
+    // return earlier and send nothing, so neither consumes the budget. A
+    // mutation is one transaction, so a later throw rolls the recorded attempt
+    // back with everything else.
     //
-    // A full pool QUEUES the request since Sep 29 2026 (convex/confirmationQueue.ts):
-    // still before the write, so the queued request leaves no row and no stamp.
+    // A full pool QUEUES the request (convex/confirmationQueue.ts): still
+    // before the write, so the queued request leaves no row and no stamp.
     if (!args.fromQueue) {
       const budget = await admitConfirmation(ctx, "caseConfirm");
       if (!budget.allowed) {
@@ -721,7 +709,7 @@ export const sendConfirmation = internalAction({
             : []),
           ...(includesNewsletter
             ? [
-                "You also asked for the weekly bulletin digest, once it launches. The same click confirms that.",
+                "You also asked for the weekly digest. The same click confirms that.",
                 "",
               ]
             : []),
@@ -1463,20 +1451,20 @@ export const sweepCaseChanges = internalAction({
           !isFinal || isProgramApproval(program, status) ? "live" : "closed";
 
         const contextRows = [
-          { label: "Cases now at this status", value: count(context.nowInStatus) },
+          { label: "Cases now at this status", value: formatInt(context.nowInStatus) },
           ...(context.cohortTotal > 0
             ? [
                 {
                   label: "Filed the same month as yours",
-                  value: count(context.cohortTotal),
+                  value: formatInt(context.cohortTotal),
                 },
                 {
                   label: "Of those, still pending",
-                  value: count(context.cohortPending),
+                  value: formatInt(context.cohortPending),
                 },
                 {
                   label: "Pending cases filed earlier",
-                  value: count(context.pendingAhead),
+                  value: formatInt(context.pendingAhead),
                 },
               ]
             : []),
@@ -1486,13 +1474,13 @@ export const sweepCaseChanges = internalAction({
           program === "perm" && showsRfiFunnel(status) && funnel !== null;
         const rfiRows = showFunnel
           ? [
-              { label: "Resolved RFIs observed", value: count(funnel.resolved) },
+              { label: "Resolved RFIs observed", value: formatInt(funnel.resolved) },
               {
                 label: "Of those, ended certified",
-                value: count(funnel.certified),
+                value: formatInt(funnel.certified),
               },
-              { label: "Ended denied", value: count(funnel.denied) },
-              { label: "Withdrawn", value: count(funnel.withdrawn) },
+              { label: "Ended denied", value: formatInt(funnel.denied) },
+              { label: "Withdrawn", value: formatInt(funnel.withdrawn) },
             ]
           : null;
 
@@ -1501,18 +1489,18 @@ export const sweepCaseChanges = internalAction({
             ? [
                 {
                   label: "Decisions DOL has published",
-                  value: count(context.employer.total),
+                  value: formatInt(context.employer.total),
                 },
                 {
                   label: "Of those, certified",
-                  value: count(context.employer.certified),
+                  value: formatInt(context.employer.certified),
                 },
-                { label: "Denied", value: count(context.employer.denied) },
+                { label: "Denied", value: formatInt(context.employer.denied) },
                 ...(context.employer.medianDays !== null
                   ? [
                       {
                         label: "Median days to a decision",
-                        value: count(context.employer.medianDays),
+                        value: formatInt(context.employer.medianDays),
                       },
                     ]
                   : []),
@@ -1540,7 +1528,7 @@ export const sweepCaseChanges = internalAction({
               contextProvenance,
               rfiRows,
               rfiProvenance: funnel
-                ? `Observed across ${count(funnel.tracked)} tracked cases. Underlying source: DOL case status on flag.dol.gov.`
+                ? `Observed across ${formatInt(funnel.tracked)} tracked cases. Underlying source: DOL case status on flag.dol.gov.`
                 : null,
               employerRows,
               employerProvenance:
@@ -1655,7 +1643,7 @@ export const sweepCaseChanges = internalAction({
 
     if (remaining && delivered > 0) {
       await ctx.scheduler.runAfter(
-        5 * 60 * 1000,
+        SWEEP_RESUME_DELAY_MS,
         internal.caseAlerts.sweepCaseChanges,
         {},
       );

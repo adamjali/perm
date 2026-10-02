@@ -21,6 +21,7 @@
 import type { DeadlineType } from "./types";
 import type { ViolationType } from "../../deadlineEnforcementHelpers";
 import { loggers } from "../../logging";
+import { EASTERN_TIMEZONE } from "../../time";
 
 // ============================================================================
 // TYPES
@@ -39,10 +40,10 @@ export type TimezoneRule = "local" | "dol";
 // ============================================================================
 
 /** DOL operates on Eastern Time (Washington, DC) */
-export const DOL_TIMEZONE = "America/New_York";
+export const DOL_TIMEZONE = EASTERN_TIMEZONE;
 
 /** Default timezone when user hasn't configured one */
-export const DEFAULT_USER_TIMEZONE = "America/New_York";
+export const DEFAULT_USER_TIMEZONE = EASTERN_TIMEZONE;
 
 /**
  * Timezone rule for each deadline type.

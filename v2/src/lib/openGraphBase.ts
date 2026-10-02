@@ -12,9 +12,9 @@ import { PAGE_CARD_ALT } from "./pageCards";
  * <head> unless re-specified.
  * (https://nextjs.org/docs/app/api-reference/functions/generate-metadata#merging)
  *
- * That's how `og:site_name` went missing from this site's pages and why Google
- * fell back to the URL as the displayed site name. Spread `openGraphBase` into
- * every per-page `openGraph` to keep these signals consistent.
+ * Without it `og:site_name` goes missing from a page and Google falls back to
+ * the URL as the displayed site name. Spread `openGraphBase` into every
+ * per-page `openGraph` to keep these signals consistent.
  *
  * Usage:
  *   openGraph: { ...openGraphBase, title: "...", description: "...", url: "/x" }
@@ -39,8 +39,7 @@ import { PAGE_CARD_ALT } from "./pageCards";
  *
  * `type` must match the `contentType` export of `src/app/opengraph-image.tsx`.
  * It is not cosmetic: it lets a scraper know the format without a HEAD request,
- * and it was absent from every page until 2026-08-01 because this object was the
- * only place it could be added and nothing checked for it.
+ * and this object is the only place it can be added.
  *
  * Exported separately so the Twitter card in `src/app/layout.tsx` can reuse the
  * same descriptor instead of restating the URL and alt text.
@@ -67,10 +66,10 @@ export const openGraphBase = {
 
 /**
  * The base WITHOUT the site-wide image, for a segment that ships its own
- * file-convention image (an `opengraph-image.tsx` beside the page). Measured
- * 2026-09-07: a config `images` in the same segment beats the file, so an
- * entity page that spread `openGraphBase` kept pointing at the root card while
- * its generated card sat unused at `.../opengraph-image-<hash>`.
+ * file-convention image (an `opengraph-image.tsx` beside the page). A config
+ * `images` in the same segment beats the file, so an entity page that spreads
+ * `openGraphBase` keeps pointing at the root card while its generated card
+ * sits unused at `.../opengraph-image-<hash>`.
  */
 export const openGraphBaseNoImage = {
   siteName: openGraphBase.siteName,

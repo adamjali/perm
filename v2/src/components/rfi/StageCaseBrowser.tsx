@@ -5,6 +5,9 @@ import { useCallback, useMemo } from "react";
 
 import { FilterableStatTable, type CsvSpec, type Facet, type StatColumn } from "@/components/tools/FilterableStatTable";
 import type { StageCase } from "@/lib/turso/rfi";
+import { formatInt } from "@/lib/format";
+import { MS_PER_DAY } from "@/lib/time";
+import { SITE_URL } from "@/lib/constants/site";
 
 /**
  * Every case at a review stage, browsable.
@@ -32,16 +35,12 @@ interface StageFeed {
   rows: StageCase[];
 }
 
-const DAY_MS = 86_400_000;
-
 function daysWaiting(filingDate: string | null): number | null {
   if (!filingDate || !/^\d{4}-\d{2}-\d{2}/.test(filingDate)) return null;
   const t = Date.parse(`${filingDate.slice(0, 10)}T00:00:00Z`);
   if (!Number.isFinite(t)) return null;
-  return Math.max(0, Math.floor((Date.now() - t) / DAY_MS));
+  return Math.max(0, Math.floor((Date.now() - t) / MS_PER_DAY));
 }
-
-const int = (n: number) => n.toLocaleString("en-US");
 
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
@@ -89,7 +88,7 @@ const COLUMNS: StatColumn<StageCase>[] = [
     sortValue: (r) => daysWaiting(r.filingDate),
     render: (r) => {
       const d = daysWaiting(r.filingDate);
-      return <span className="tabular-nums">{d === null ? "" : int(d)}</span>;
+      return <span className="tabular-nums">{d === null ? "" : formatInt(d)}</span>;
     },
   },
 ];
@@ -121,7 +120,7 @@ export function StageCaseBrowser({ slug, status, seed, totalCount, asOf }: Stage
         r.jobTitle,
         status,
         daysWaiting(r.filingDate),
-        `https://permtracker.app/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`,
+        `${SITE_URL}/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`,
       ],
     }),
     [slug, status, asOf],

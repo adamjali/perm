@@ -1,8 +1,10 @@
 import { Fragment } from "react";
 
 import { EmployerFollowForm } from "@/components/employers/EmployerFollowForm";
+import { ChartTips } from "@/components/data/ChartTips";
 import { StatusRibbon, ribbonLegend, ribbonParts } from "@/components/employers/StatusRibbon";
 import { longDate, type EmployerMove, type EmployerStageRow } from "@/lib/employerStages";
+import { formatInt } from "@/lib/format";
 
 /**
  * Follow an employer: what its pending cases look like today, what DOL has
@@ -16,7 +18,6 @@ import { longDate, type EmployerMove, type EmployerStageRow } from "@/lib/employ
  */
 
 const RAIL_SHOWN = 6;
-const int = (n: number) => n.toLocaleString("en-US");
 
 function markerClass(m: EmployerMove): string {
   if (m.key.includes("|hold-on|")) return "bg-data-warn-ink";
@@ -55,8 +56,7 @@ export function EmployerFollow({
   /**
    * The employer census couldn't be read, or is more than eight days old.
    * Then neither the bar nor the rail can be drawn, and the panel says so:
-   * "Nothing employer-wide" over a stale document was a false statement
-   * (Sep 29 2026 audit).
+   * "Nothing employer-wide" over a stale document would be a false statement.
    */
   docMissing?: boolean;
 }) {
@@ -73,11 +73,11 @@ export function EmployerFollow({
       {parts && parts.pending > 0 ? (
         <div className="mt-6">
           <p className="text-base font-bold">
-            {`Its ${int(parts.pending)} pending PERM cases${asOf ? `, as of ${longDate(asOf)}` : ""}`}
+            {`Its ${formatInt(parts.pending)} pending PERM cases${asOf ? `, as of ${longDate(asOf)}` : ""}`}
           </p>{" "}
-          <div className="mt-2">
+          <ChartTips label="Where its pending cases sit" className="mt-2">
             <StatusRibbon parts={parts} label={legend.map((l) => l.text).join("; ")} />
-          </div>{" "}
+          </ChartTips>{" "}
           <ul className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {legend.map((l) => (
               <Fragment key={l.key}>
@@ -124,7 +124,7 @@ export function EmployerFollow({
         {!docMissing && moves.length > RAIL_SHOWN ? (
           <details className="mt-2">
             <summary className="min-h-11 cursor-pointer py-2 text-sm font-bold underline decoration-primary decoration-2 underline-offset-2">
-              {`Show the ${int(moves.length - RAIL_SHOWN)} earlier ${moves.length - RAIL_SHOWN === 1 ? "move" : "moves"}`}
+              {`Show the ${formatInt(moves.length - RAIL_SHOWN)} earlier ${moves.length - RAIL_SHOWN === 1 ? "move" : "moves"}`}
             </summary>
             <ol className="mt-1 border-l-2 border-border">
               {moves.slice(RAIL_SHOWN).map((m) => (

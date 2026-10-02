@@ -7,6 +7,7 @@
 
 import type { Id } from "../_generated/dataModel";
 import type { UserNotificationPrefs } from "./notificationHelpers";
+import { DEFAULT_USER_TIMEZONE } from "./perm/deadlines/timezones";
 
 /**
  * Current Terms of Service version — single source of truth.
@@ -26,7 +27,7 @@ export const DEFAULT_NOTIFICATION_PREFS: UserNotificationPrefs = {
   emailRfeAlerts: true,
   pushNotificationsEnabled: false,
   quietHoursEnabled: false,
-  timezone: "America/New_York",
+  timezone: DEFAULT_USER_TIMEZONE,
 };
 
 /**

@@ -23,6 +23,7 @@ import {
   generateNoteId,
 } from "@/lib/forms/case-form-schema";
 import { CharLimit } from "@/components/ui/char-limit";
+import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "@/lib/time";
 import { NOTES_PER_CASE_MAX, notesLimitMessage } from "./notesLimit";
 
 /** How many notes the journal lists before a show-more. */
@@ -135,16 +136,16 @@ function formatTimestamp(timestamp: number): { full: string; relative: string } 
 
   // Relative format
   let relative: string;
-  if (diff < 60000) {
+  if (diff < MS_PER_MINUTE) {
     relative = "Just now";
-  } else if (diff < 3600000) {
-    const mins = Math.floor(diff / 60000);
+  } else if (diff < MS_PER_HOUR) {
+    const mins = Math.floor(diff / MS_PER_MINUTE);
     relative = `${mins}m ago`;
-  } else if (diff < 86400000) {
-    const hours = Math.floor(diff / 3600000);
+  } else if (diff < MS_PER_DAY) {
+    const hours = Math.floor(diff / MS_PER_HOUR);
     relative = `${hours}h ago`;
   } else if (diff < 604800000) {
-    const days = Math.floor(diff / 86400000);
+    const days = Math.floor(diff / MS_PER_DAY);
     relative = `${days}d ago`;
   } else {
     relative = format(date, "MMM d");

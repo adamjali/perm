@@ -1,17 +1,18 @@
 import "server-only";
 
 import { cache } from "react";
+import { MS_PER_DAY } from "@/lib/time";
 import { one } from "./client";
 
 /**
  * When our DOL sweep last finished, and how much of the corpus it answered.
  *
- * WHY THIS EXISTS. The case page used to print `perm_case_status.last_checked_at`
- * as "status seen". The PERM sweep has never written that column: it was the
- * mirror's stamp, frozen in July 2026 for 66,771 pending cases and NULL for
- * 12,187 more. So a beneficiary whose case the sweep had verified that
- * morning read "seen 7 days ago, and it has not been looked at since". The
- * sweep's own record is the honest check date, and it is one point read.
+ * WHY THIS EXISTS. `perm_case_status.last_checked_at` is not a check date:
+ * the PERM sweep never writes that column, which holds a retired mirror's
+ * stale stamps or nothing. Printed as "status seen", it would tell a
+ * beneficiary whose case the sweep verified that morning that it has not
+ * been looked at in weeks. The sweep's own record is the honest check date,
+ * and it is one point read.
  *
  * Eight-day cutoff, like every other precomputed doc: a stale sweep must read
  * as "not checked recently", never as fresh.
@@ -26,7 +27,7 @@ export interface SweepCoverage {
   checkedAt: number;
 }
 
-const MAX_AGE_MS = 8 * 86_400_000;
+const MAX_AGE_MS = 8 * MS_PER_DAY;
 
 export const getSweepCoverage = cache(async (): Promise<SweepCoverage | null> => {
   const r = await one<{ json: string; computed_at: number | string }>(

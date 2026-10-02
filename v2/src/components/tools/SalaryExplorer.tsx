@@ -3,10 +3,11 @@
 import { Fragment, useCallback, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { ChartTips } from "@/components/data/ChartTips";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import {
   MIN_FOR_MEDIAN,
@@ -15,6 +16,7 @@ import {
 } from "@/lib/wageStats";
 import { cn } from "@/lib/utils";
 import { MAX_CITY, WAGE_SECTORS } from "@/lib/wagePlaceFilters";
+import { formatDollars, formatInt } from "@/lib/format";
 
 /**
  * Offered wages in DOL's disclosure files, filtered.
@@ -85,8 +87,7 @@ const STATUSES = [
 ];
 
 const usd = (n: number | null) =>
-  n === null ? "n/a" : `$${Math.round(n).toLocaleString("en-US")}`;
-const int = (n: number) => n.toLocaleString("en-US");
+  n === null ? "n/a" : formatDollars(n);
 
 const FIELD =
   "mt-2 block w-full min-w-0 min-h-[44px] border-2 border-border bg-background px-3 py-2 text-base focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50";
@@ -256,7 +257,7 @@ export function SalaryExplorer({
               <option value="">All occupations</option>
               {occupations.map((o) => (
                 <option key={o.value} value={o.value}>
-                  {o.label} ({int(o.n)})
+                  {o.label} ({formatInt(o.n)})
                 </option>
               ))}
             </select>{" "}
@@ -276,7 +277,7 @@ export function SalaryExplorer({
               <option value="">Every state</option>
               {states.map((s) => (
                 <option key={s.value} value={s.value}>
-                  {s.label} ({int(s.n)})
+                  {s.label} ({formatInt(s.n)})
                 </option>
               ))}
             </select>
@@ -361,9 +362,8 @@ export function SalaryExplorer({
         </div>
         {placeFilters ? (
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-foreground/70">
-            A city narrows a state, and an industry narrows a state or an
-            occupation, so each stays a quick read. City is as DOL prints it.
-            For a city or an industry across the whole country, see the{" "}
+            A city narrows a state, and an industry a state or an occupation. Cities are as DOL prints them.
+            For one across the whole country, see the{" "}
             <Link href="/perm-cities" className="font-bold underline decoration-primary decoration-2 underline-offset-2">
               city
             </Link>{" "}
@@ -414,7 +414,7 @@ export function SalaryExplorer({
 
       <div className={cn("p-6 sm:p-8", loading && "opacity-60")} aria-busy={loading}>
         <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          {int(data.stats.n)} {data.stats.n === 1 ? noun : nounPlural} with a usable wage
+          {formatInt(data.stats.n)} {data.stats.n === 1 ? noun : nounPlural} with a usable wage
         </p>
 
         {report.showMiddle ? (
@@ -456,12 +456,13 @@ export function SalaryExplorer({
                   {data.below > 0 || data.above > 0 ? (
                     <>
                       {" "}
-                      {int(data.below + data.above)} {nounPlural} sit outside this range and are counted
+                      {formatInt(data.below + data.above)} {nounPlural} sit outside this range and are counted
                       but not drawn, so the axis is not stretched by a handful of outliers.
                     </>
                   ) : null}
                 </p>
-                <ol className="mt-4 space-y-1">
+                <ChartTips label={`Where the wages land, ${nounPlural} by wage band`} className="mt-4">
+                <ol className="space-y-1">
                   {data.bins.map((b) => (
                     // Fragment with an explicit space: mapped siblings arrive
                     // with nothing between them and would read as one run.
@@ -469,7 +470,8 @@ export function SalaryExplorer({
                       {" "}
                       <li
                         className="grid grid-cols-[6rem_1fr_4rem] items-center gap-2 [&>*]:min-w-0 sm:grid-cols-[8rem_1fr_5rem] sm:gap-3"
-                        aria-label={`${usd(b.from)} to ${usd(b.from + data.binWidth)}: ${int(b.count)} ${nounPlural}`}
+                        aria-label={`${usd(b.from)} to ${usd(b.from + data.binWidth)}: ${formatInt(b.count)} ${nounPlural}`}
+                        data-tip={`${usd(b.from)} to ${usd(b.from + data.binWidth)}\n${formatInt(b.count)} ${nounPlural}`}
                       >
                         <span className="text-sm tabular-nums text-foreground/70">{usd(b.from)}</span>{" "}
                         <span className="block h-5 w-full border-2 border-border bg-muted">
@@ -479,12 +481,13 @@ export function SalaryExplorer({
                           />
                         </span>{" "}
                         <span className="text-right text-sm tabular-nums text-foreground/70">
-                          {int(b.count)}
+                          {formatInt(b.count)}
                         </span>
                       </li>
                     </Fragment>
                   ))}
                 </ol>
+                </ChartTips>
               </div>
             ) : null}
 
@@ -521,7 +524,7 @@ export function SalaryExplorer({
                           <th scope="row" className="px-3 py-2 font-bold">
                             {r.state}{" "}
                           </th>
-                          <td className="px-3 py-2 text-right tabular-nums">{int(r.n)}{" "}</td>
+                          <td className="px-3 py-2 text-right tabular-nums">{formatInt(r.n)}{" "}</td>
                           <td className="px-3 py-2 text-right tabular-nums">
                             {r.n >= 100 ? usd(r.p5) : "n/a"}
                           {" "}</td>

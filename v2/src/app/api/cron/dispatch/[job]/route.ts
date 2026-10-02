@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { MS_PER_MINUTE } from "@/lib/time";
 import {
   BRANCH,
   CRON_JOBS,
@@ -17,8 +18,7 @@ import {
  *
  * Three refusals and one skip, each with its own status so monitoring can
  * tell them apart: 401 (no secret), 404 (not a job), 500 (the GitHub token
- * is not configured, which is the state between deploying this and Adam
- * creating the token), and 200 with `skipped` when the workflow already has
+ * is not configured), and 200 with `skipped` when the workflow already has
  * a run from the last 20 minutes (a timer catching up after a restart can
  * land on top of a scheduled run).
  * A GitHub refusal is 502 with GitHub's status, never a 200.
@@ -80,7 +80,7 @@ export async function GET(
         (r) => now - Date.parse(r.created_at) < RECENT_RUN_WINDOW_MS,
       );
       if (fresh) {
-        const minutes = Math.round((now - Date.parse(fresh.created_at)) / 60_000);
+        const minutes = Math.round((now - Date.parse(fresh.created_at)) / MS_PER_MINUTE);
         console.log(`${TAG} ${job}: skipped, a run started ${minutes} min ago (${fresh.status})`);
         return NextResponse.json({
           job,

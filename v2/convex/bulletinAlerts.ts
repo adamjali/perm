@@ -38,10 +38,11 @@ import type { ReactElement } from "react";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
-import { BUDGETS, noteRefusal, windowFor } from "./lib/alertBudgets";
+import { BUDGETS, noteRefusal, windowFor, CONFIRMATION_COOLDOWN_MS, SUBSCRIBE_IP_LIMIT, SWEEP_RESUME_DELAY_MS } from "./lib/alertBudgets";
 import { monthLabel } from "./lib/newsletterCompose";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
+import { seriesLabel } from "./lib/mailKinds";
 import { one as mirrorOne } from "./lib/publicMirror";
 import {
   makeUnsubscribeToken,
@@ -74,10 +75,6 @@ const countryValidator = v.union(...COUNTRIES.map((c) => v.literal(c)));
 /** Alerts one sweep may send; the remainder reschedules. Budget arithmetic in caseAlerts.ts. */
 const ALERT_BATCH_LIMIT = 12;
 const ALERT_GLOBAL_BUDGET = windowFor("bulletinAlert");
-const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
-const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
-const RESUME_DELAY_MS = 5 * 60 * 1000;
-
 const NEUTRAL_REPLY = "Check your inbox to confirm.";
 
 function isPlausibleEmail(email: string): boolean {
@@ -89,15 +86,6 @@ function unsubscribeSecret(): string {
   const secret = process.env.UNSUBSCRIBE_SECRET;
   if (!secret) throw new Error("UNSUBSCRIBE_SECRET is not configured");
   return secret;
-}
-
-/** "EB2 India", "EB3 all countries" - one label used by subjects and bodies alike. */
-export function seriesLabel(category: string, country: string): string {
-  const countryLabel =
-    country === "worldwide"
-      ? "all countries"
-      : country.charAt(0).toUpperCase() + country.slice(1);
-  return `${category} ${countryLabel}`;
 }
 
 /** A cutoff cell in plain words. "C" and "U" are opposites, never dates. */
@@ -123,7 +111,7 @@ export const subscribe = internalMutation({
      * confirmation so the email can say so. See convex/emailPrefs.ts.
      */
     news: v.optional(v.boolean()),
-    /** The weekly bulletin digest, staged the same way as news. */
+    /** The weekly digest, staged the same way as news. */
     newsletter: v.optional(v.boolean()),
     ip: v.optional(v.string()),
     /**
@@ -349,7 +337,7 @@ export const sendConfirmation = internalAction({
             : []),
           ...(includesNewsletter
             ? [
-                "You also asked for the weekly bulletin digest, once it launches. The same click confirms that.",
+                "You also asked for the weekly digest. The same click confirms that.",
                 "",
               ]
             : []),
@@ -689,7 +677,7 @@ export const sweep = internalAction({
     // this run made progress (same stall logic as the queue sweep).
     const moved = subs.length - baselined;
     if (sent === ALERT_BATCH_LIMIT && moved > sent && sent > 0) {
-      await ctx.scheduler.runAfter(RESUME_DELAY_MS, internal.bulletinAlerts.sweep, {});
+      await ctx.scheduler.runAfter(SWEEP_RESUME_DELAY_MS, internal.bulletinAlerts.sweep, {});
     }
 
     return { sent, failed, baselined };

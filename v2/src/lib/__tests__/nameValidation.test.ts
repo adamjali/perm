@@ -3,7 +3,7 @@ import { checkUserName, MAX_NAME_LENGTH } from "../nameValidation";
 import {
   checkUserName as checkUserNameServer,
   sanitizeNameForEmail,
-} from "../../../convex/lib/nameValidation";
+} from "@convex/lib/nameValidation";
 
 // ---------------------------------------------------------------------------
 // checkUserName — happy path

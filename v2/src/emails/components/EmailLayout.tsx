@@ -9,8 +9,6 @@
  * - Responsive design
  * - Dark mode support via @media (prefers-color-scheme: dark)
  * - All inline styles (email client compatibility)
- *
- * Phase: 24 (Notifications + Email)
  */
 
 import {
@@ -26,6 +24,7 @@ import {
 import * as React from "react";
 
 import { LEGAL_NAME, POSTAL_ADDRESS } from "../../lib/constants/about";
+import { SITE_URL } from "../../../convex/lib/links";
 
 export interface EmailLayoutProps {
   /** Preview text shown in email clients */
@@ -246,7 +245,7 @@ const RESPONSIVE_STYLES = [
 export function EmailLayout({
   previewText,
   children,
-  settingsUrl = "https://permtracker.app/settings",
+  settingsUrl = `${SITE_URL}/settings`,
   settingsLabel = "Manage notification settings",
   footerText,
   hideSettingsLink = false,
@@ -285,19 +284,19 @@ export function EmailLayout({
                   <Link href={settingsUrl} className="em-link" style={styles.footerLink}>
                     {settingsLabel}
                   </Link>
-                  {" | "}
+                  {" "}
                 </>
               )}
-              <Link href="https://permtracker.app" className="em-link" style={styles.footerLink}>
+              <Link href={SITE_URL} className="em-link" style={styles.footerLink}>
                 Open PERM Tracker
               </Link>
-              {" | "}
-              <Link href="https://permtracker.app/privacy" className="em-link" style={styles.footerLink}>
-                Privacy Policy
+              {" "}
+              <Link href={`${SITE_URL}/privacy`} className="em-link" style={styles.footerLink}>
+                Privacy
               </Link>
-              {" | "}
-              <Link href="https://permtracker.app/terms" className="em-link" style={styles.footerLink}>
-                Terms of Service
+              {" "}
+              <Link href={`${SITE_URL}/terms`} className="em-link" style={styles.footerLink}>
+                Terms
               </Link>
             </Text>
             {footerExtra}
@@ -377,9 +376,9 @@ const styles = {
   footerLinks: {
     color: "#5F5F67",
     fontSize: "12px",
-    // 44px line box, so each link below reaches the tap-target floor without
-    // the row growing taller than the padding it already had.
-    lineHeight: "44px",
+    // Each link's own padded box (18px text + 26px) is the 44px row; a taller
+    // line-height on top of it doubled the gap when the row wrapped on a phone.
+    lineHeight: "18px",
     margin: "0 0 4px 0",
   },
   footerLink: {
@@ -388,7 +387,7 @@ const styles = {
     /*
      * Measured at an 18px box with a 9.8px gap to its neighbour, which misses
      * the 44px house floor AND WCAG 2.5.8's 24px spacing exception on the
-     * horizontal axis. These sit three-to-a-row separated by a pipe, so they
+     * horizontal axis. These sit three or four to a row, so they
      * are a genuine cluster of adjacent targets rather than links inside a
      * sentence.
      *
@@ -400,6 +399,8 @@ const styles = {
      */
     display: "inline-block",
     padding: "13px 10px",
+    // A label breaks between links, never inside one; the padding is the separator.
+    whiteSpace: "nowrap" as const,
   },
   copyright: {
     // Quieter than the links above it (5.76:1) and still over the floor.
@@ -409,5 +410,3 @@ const styles = {
     margin: "0",
   },
 } as const;
-
-export default EmailLayout;

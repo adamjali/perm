@@ -13,13 +13,13 @@
 
 import { tool } from 'ai';
 import { z } from 'zod';
-import { CASE_STATUSES, PROGRESS_STATUSES } from '../../../convex/lib/perm/statusTypes';
-import { INPUT_LIMITS } from '../../../convex/lib/validation';
+import { CASE_STATUSES, PROGRESS_STATUSES } from '@convex/lib/perm/statusTypes';
+import { INPUT_LIMITS } from '@convex/lib/validation';
 
 /**
  * The server's own job-description limit (cases and templates both). The chat
- * schemas said 10,000 until Sep 29 2026, so a longer paste failed here with a
- * message only the model saw.
+ * schemas use the same figure; a lower one would fail a longer paste here
+ * with a message only the model sees.
  */
 const JOB_DESCRIPTION_MAX = INPUT_LIMITS.LONG;
 
@@ -855,10 +855,6 @@ const DocumentSchema = z.object({
 
 // Export schemas for use in chat route
 export { RfiEntrySchema, RfeEntrySchema, NoteSchema, DocumentSchema };
-export type RfiEntry = z.infer<typeof RfiEntrySchema>;
-export type RfeEntry = z.infer<typeof RfeEntrySchema>;
-export type NoteEntry = z.infer<typeof NoteSchema>;
-export type DocumentEntry = z.infer<typeof DocumentSchema>;
 
 /**
  * Schema for createCase tool input

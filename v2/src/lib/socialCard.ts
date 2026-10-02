@@ -8,12 +8,11 @@
  *     scraper what to expect before it fetches anything.
  *
  * When those two disagree the tags lie, and nothing at runtime notices: the
- * image still renders, so it reads as working. That is exactly how og:image:type
- * stayed missing sitewide until 2026-08-01. One export, one truth.
+ * image still renders, so it reads as working. One export, one truth.
  *
  * Changing the format here is a real decision, not a tidy-up. See the comment in
- * opengraph-image.tsx: PNG is what next/og natively emits and it put this card
- * at 762 KB, over WhatsApp's ceiling, which silently killed the preview.
+ * opengraph-image.tsx: PNG is what next/og natively emits and it puts this card
+ * at 762 KB, over WhatsApp's ceiling, which silently kills the preview.
  */
 export const SOCIAL_CARD_SIZE = { width: 1200, height: 630 } as const;
 

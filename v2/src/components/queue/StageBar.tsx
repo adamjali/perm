@@ -1,5 +1,7 @@
 import { Fragment } from "react";
 
+import { formatInt } from "@/lib/format";
+
 import { STAGE_META, STAGE_ORDER, type StageGroup } from "./stages";
 
 /**
@@ -27,7 +29,31 @@ export interface StageBarProps {
   stages: readonly StageGroup[];
   /** A number to divide by, or "composition" to fill the track. */
   scale: number | "composition";
+  /**
+   * The first line of each segment's hover detail (the filing month). The
+   * caller places the `ChartTips` around one bar or a whole board of them.
+   */
+  tipHeading?: string;
   className?: string;
+}
+
+/**
+ * What one segment says on hover: its stage and count, the DOL statuses
+ * folded into it (which the bar can't show), and the bar's whole.
+ */
+export function stageTip(stage: StageGroup, own: number, heading?: string): string {
+  const folded =
+    stage.statuses.length > 1
+      ? stage.statuses.slice(0, 4).map((s) => `${s.status}: ${formatInt(s.count)}`)
+      : [];
+  return [
+    heading,
+    `${STAGE_META[stage.stage].label}: ${formatInt(stage.count)} ${stage.count === 1 ? "case" : "cases"}`,
+    ...folded,
+    `Of ${formatInt(own)} pending`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 /**
@@ -72,7 +98,7 @@ const MIN_SEGMENT_PX = 4;
  */
 const SEGMENT_EDGE = "border-r-2 border-muted";
 
-export function StageBar({ stages, scale, className }: StageBarProps) {
+export function StageBar({ stages, scale, tipHeading, className }: StageBarProps) {
   const own = stages.reduce((n, s) => n + s.count, 0);
   const denominator = scale === "composition" ? own : scale;
   if (denominator <= 0 || own === 0) {
@@ -96,6 +122,7 @@ export function StageBar({ stages, scale, className }: StageBarProps) {
         return (
           <span
             key={stage}
+            data-tip={stageTip(group, own, tipHeading)}
             className={`block h-full ${SEGMENT_EDGE} ${STAGE_META[stage].fill}`}
             style={{ width: `${pct}%`, minWidth: `${MIN_SEGMENT_PX}px` }}
           />
@@ -120,7 +147,6 @@ export function StageLegend({
   stages: readonly StageGroup[];
   className?: string;
 }) {
-  const int = (n: number) => n.toLocaleString("en-US");
   return (
     <ul className={`grid grid-cols-1 gap-3 sm:grid-cols-3 ${className ?? ""}`}>
       {STAGE_ORDER.map((stage) => {
@@ -143,7 +169,7 @@ export function StageLegend({
                 </span>
               </span>{" "}
               <span className="mt-1 block font-heading text-2xl font-black tabular-nums">
-                {int(group?.count ?? 0)}
+                {formatInt(group?.count ?? 0)}
               </span>{" "}
               <span className="mt-1 block text-sm leading-snug text-foreground/70">
                 {meta.gloss}

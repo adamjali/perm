@@ -34,41 +34,14 @@ export function DataShell({ children }: { children: React.ReactNode }) {
   if (!isDataPath(pathname)) return <>{children}</>;
 
   return (
-    // FULL WIDTH, on Adam's note: "feel free to take all the space width wise
-    // left and right we dont need to be contained." The rail takes a fixed
-    // column and the content keeps whatever measure its own page sets, so
-    // prose does not stretch to the monitor just because the frame could.
-    // `lg:flex`, NOT `flex`. The row only exists where the rail does.
-    //
-    // This shipped as an unconditional `flex` and desktop looked perfect,
-    // which is the whole reason both viewports get measured. Below `lg` the
-    // desktop rail is hidden but the MOBILE disclosure is still a flex item,
-    // so it took a column of its own and squeezed the article into what was
-    // left: the h1 broke to one word per line at 390px. Measured, not
-    // guessed - the nav element reported a height of 32,268px, stretched to
-    // match a column of text it should never have been beside.
-    // `max-lg:pt-3` buys the phone's edge handle its own space. The handle is
-    // a 44px tap target - the craft floor, not negotiable - pinned flush under
-    // a 71px header, so it runs to y=116 while the first line of a page used to
-    // start at 112. Adam: "the arrow covers :/". Twelve pixels of top padding
-    // below `lg` is the whole fix, and it is far cheaper than the alternative:
-    // insetting the text column by the handle's 44px width would take a 390px
-    // screen's measure down by a tenth for every reader, scrolled or not.
-    // NO `mx-auto max-w-[1600px]` HERE, and that is the fix rather than an
-    // omission. The rail cancels the shell's own padding with `-ml-4 sm:-ml-6`
-    // so its current tab can run from the screen edge, which is the whole
-    // shape of the design. A fixed negative margin cannot cancel a VARIABLE
-    // auto margin, so as soon as the viewport passed 1600px the centring put
-    // the rail back inside the page: measured at 1920px it sat 155px from the
-    // left edge, and at 2560px it would be ~480px. Adam, on a wider screen:
-    // "the side panel ... wasn't aligned snapped glued touching the left side
-    // there was space".
-    //
-    // Dropping the cap is safe because every one of the 32 data pages already
-    // sets its own measure (max-w-3xl through max-w-7xl), which is what the
-    // note above always said. Below 1600px this changes nothing at all - the
-    // shell was never wide enough to be centred - and above it the rail is
-    // flush and the content lands within ~7px of where it used to.
+    // Full width: the rail takes a fixed column and each page sets its own
+    // measure. `lg:flex`, not `flex`: below `lg` the row doesn't exist, and a
+    // flex row there made the mobile disclosure a column of its own.
+    // `max-lg:pt-3` keeps the phone's 44px edge handle off the first line.
+    // No `mx-auto max-w-*`: the rail cancels the shell's padding with a fixed
+    // negative margin to reach the screen edge, which can't cancel a variable
+    // auto margin, so a centring cap would pull the rail off the edge on wide
+    // screens.
     <div className="w-full px-4 max-lg:pt-3 sm:px-6 lg:flex lg:gap-8">
       {/* `contents` keeps the wrapper out of the flex layout; it exists only so
           the rail can be left off a printed page. */}

@@ -8,10 +8,6 @@
  * - Zoom control slider (50-200%)
  * - Case selector trigger button with count badge
  * - Neobrutalist styling with hard shadows
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2025-12-26
- * Updated: 2025-12-27 - Added zoom control
  */
 
 "use client";

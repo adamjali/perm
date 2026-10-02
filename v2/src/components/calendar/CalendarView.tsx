@@ -14,9 +14,6 @@
  * - Range change callback for future optimization
  * - Responsive: Mobile list view (<768px), full calendar (768px+)
  * - Toggle between list/calendar view on any screen size
- *
- * Phase: 23.1 (Calendar UI)
- * Created: 2025-12-28
  */
 
 "use client";
@@ -36,7 +33,7 @@ import { springTransition, fadeVariants, fadeTransition } from "@/lib/calendar/a
 import { createEventPropGetter } from "@/lib/calendar/eventStyles";
 import type { CalendarEvent } from "@/lib/calendar/types";
 import type { CaseStatus } from "@/lib/perm";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 import { CalendarToolbar } from "./CalendarToolbar";
 import { CalendarListToggleContext } from "./calendar-view-context";
 import { CalendarEvent as CalendarEventComponent } from "./CalendarEvent";
@@ -765,5 +762,3 @@ export function CalendarView({
     </CalendarListToggleContext.Provider>
   );
 }
-
-export default CalendarView;

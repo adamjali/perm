@@ -21,8 +21,8 @@ behind `/api/subscribe/checkout`. Features verbatim: case status checked every h
 9 AM to 6 PM ET Mon to Fri; instant email when DOL updates the case; daily digest with
 queue position and estimated review date; cohort progress and employer approval rate;
 auto-cancels when the case is certified or denied. Their `/pricing` and `/pro` both
-redirect to the homepage. They also run a "Help keep PermTrack free" modal (Telegram
-channel a Telegram channel and a Buy Me a Coffee page). The rival dashboard: no paid tier found.
+redirect to the homepage. They also run a donation modal (a Telegram channel and a Buy
+Me a Coffee page). The rival dashboard: no paid tier found.
 
 **Their $9.99 list is roughly our free product.** Live lookup that asks DOL, free case
 alerts, queue position and estimate on the case page, employer approval rate on the

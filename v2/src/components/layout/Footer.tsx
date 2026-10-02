@@ -3,51 +3,23 @@
 import Link from "next/link";
 import { LOCALES } from "@/lib/i18n/locales";
 
-// KEEP "use client" HERE. Making this a server component was tried on
-// 2026-09-01, got all the way to a green build, was MEASURED, and made every
-// page BIGGER. Do not try it again without reading this.
+// KEEP "use client" HERE. As a server component this footer makes every page
+// BIGGER, measured at about 9.5 KB a page.
 //
-// THE MODEL THAT MOTIVATED IT WAS BACKWARDS, and that is the useful part.
-// The reasoning was: half of a cached page is the RSC flight payload (measured,
-// 163 KB of 330 KB on an entity page), so a component with no interactivity
-// should not be a client component, because then it is "stored twice" - once as
-// HTML, once in the payload. Convert it and the page shrinks.
+// A CLIENT component appears in the RSC payload as a compact client
+// REFERENCE: a module id plus its props. A SERVER component's full rendered
+// element tree is serialized into it. So converting a markup-heavy component
+// from client to server REPLACES a small reference with a large serialized
+// tree, and the page grows. The payload is reduced by rendering less, not by
+// moving boundaries.
 //
-// That is not how the payload works. A CLIENT component appears in it as a
-// compact client REFERENCE: a module id plus its props. A SERVER component's
-// full rendered element tree is serialized into it. So converting a
-// markup-heavy component from client to server REPLACES a small reference with
-// a large serialized tree, and the page grows.
-//
-// Measured, same build, four routes, local vs production:
-//
-//     /tools            181,750 -> 191,266 B   +9,516
-//     /perm-queue       295,935 -> 305,451 B   +9,516
-//     /perm-wages/...   338,201 -> 347,581 B   +9,380
-//     /                 327,680 -> 335,246 B   +7,566
-//
-// The identical +9,516 on two unrelated routes is Footer's constant per-page
-// cost. That is +1 ISR write unit on EVERY page, the opposite of the intent.
-//
-// SO THE PAYLOAD IS NOT REDUCED BY MOVING BOUNDARIES. It is reduced by
-// rendering less, or by rendering it somewhere that is not serialized at all.
-// Anyone optimising ISR write volume here should start from that.
-//
-// TWO THINGS FOUND ALONG THE WAY THAT WERE KEPT, both real:
-//   1. `@phosphor-icons/react`'s MAIN entry calls `createContext` at module
-//      scope for its IconContext, so it needs React's client build. Importing
-//      it from a server component is what produced
-//      `TypeError: (0 , d.createContext) is not a function` - an error naming
-//      webpack bootstrap and no source file, found only by reading the module
-//      ids in the emitted chunk (`.next/server/chunks/*.js`). The `/ssr` entry
-//      exists for this and ~60 files here already use it. Footer is a client
-//      component again so its main-entry import is fine. NOTE: three other
-//      server files were briefly recorded as dormant traps here; that was a
-//      FALSE POSITIVE - their main-entry imports are `import type`, which is
-//      erased at compile. Measured 2026-09-02: zero server-side VALUE imports
-//      of the main entry exist in src/.
-//   2. 25 modules used client-only APIs with no boundary of their own, working
-//      purely by inheriting somebody else's. Those are declared now.
+// Its `@phosphor-icons/react` import is the MAIN entry, which calls
+// `createContext` at module scope for its IconContext and so needs React's
+// client build. A server component must import from `@phosphor-icons/react/ssr`
+// instead, or the build fails with `TypeError: (0 , d.createContext) is not a
+// function`, naming webpack bootstrap rather than any source file (the module
+// ids in `.next/server/chunks/*.js` point at the importer). A type-only import
+// of the main entry is erased at compile and is safe anywhere.
 
 /**
  * Footer Component
@@ -60,11 +32,8 @@ import { LOCALES } from "@/lib/i18n/locales";
  * - Dark mode compatible (black bg works in both modes)
  * - Loading states for internal navigation links
  *
- * There used to be a second "compact" bar documented as the authenticated
- * footer. Neither call site ever asked for it, so the signed-in app got the
- * public footer, Sign in and Sign up free included, offered to people who
- * were already signed in. `audience` is what fixes that; the compact branch
- * is gone rather than left as an unreachable second layout.
+ * `audience` drops Sign in and Sign up for the signed-in app, where they
+ * would be offered to people who are already signed in.
  */
 
 import { CaretDownIcon, HeartIcon } from "@phosphor-icons/react";
@@ -110,8 +79,8 @@ interface FooterProps {
 export default function Footer({ audience = "public" }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
-  // The signed-in app drops Sign Up and Sign In. That is the whole reason
-  // `audience` exists: the app used to be offered both.
+  // The signed-in app drops Sign Up and Sign In; that is the whole reason
+  // `audience` exists.
   const columns = FOOTER_COLUMNS.map((col) => ({
     ...col,
     links: audience === "public" && col.publicOnly ? [...col.links, ...col.publicOnly] : col.links,
@@ -122,19 +91,16 @@ export default function Footer({ audience = "public" }: FooterProps) {
     // (`AmbientMurmuration`, `fixed inset-0 z-0`) and the dot ground; it has
     // no business outranking the header.
     //
-    // At `z-50` it TIED with the header, which is `fixed z-50`, and the
-    // footer is the last child of `(site)/layout.tsx`, so DOM order decided
-    // it and the footer won. Measured on production: with the Learn menu
-    // open over the footer, `elementFromPoint` at a point 40px inside the
-    // overlap returned the footer, not the menu link. The menu was not
-    // clipped - it rendered all six items at full height - it was covered,
-    // and its clicks went to the footer behind it.
+    // At `z-50` it would TIE with the header, which is `fixed z-50`, and the
+    // footer is the last child of `(site)/layout.tsx`, so DOM order decides
+    // it and the footer wins: the Learn menu, open over the footer, is not
+    // clipped but covered, and its clicks go to the footer behind it
+    // (`elementFromPoint` inside the overlap returns the footer).
     //
-    // The same tie beat the back-to-top button (fixed 2026-09-09) and the
-    // mobile data drawer at `z-40`, which an open drawer scrolled to the
-    // bottom of a page could not paint over. Raising each of those past the
-    // footer one at a time treats the symptom; the footer is what is wrong.
-    // Gated by `footer-stacking.test.ts`.
+    // The same tie would beat the back-to-top button and the mobile data
+    // drawer. Raising each of those past the footer one at a time treats the
+    // symptom; the footer is what is wrong. Gated by
+    // `footer-stacking.test.ts`.
     <footer className="relative z-10 border-t-3 border-black bg-black dark:border-white dark:bg-black">
       <div className="mx-auto max-w-[1400px] px-4 py-10 sm:px-8">
         {/* Multi-column grid */}
@@ -186,11 +152,8 @@ export default function Footer({ audience = "public" }: FooterProps) {
           </div>{" "}
 
           {/* Every column is a `<details>`: an accordion on a phone, a plain
-              column at `lg`. Adam: "footer too big, maybe have it have
-              expandable stuff? industry standard best practices?" Measured
-              before this: 760px on desktop (101% of the viewport) and 1,882px
-              at 500px wide, which is 285% of a phone screen and 22% of the
-              whole page.
+              column at `lg`. Before this the footer measured 760px on desktop
+              and 1,882px on a phone.
 
               The links stay in the HTML when a column is shut, because the
               content of a closed `<details>` is parsed and indexed - it is
@@ -268,10 +231,9 @@ export default function Footer({ audience = "public" }: FooterProps) {
               <LawGavelSVG size={28} className="text-white" />
             </div>{" "}
             <div className="mono text-sm text-white/70">
-              {/* The brand name links home from every page: until 2026-09-15
-                  the header logo was the only link to "/" whose text was the
-                  site's name, and Google ties a phrase to a page partly by
-                  what links to it with those words. */}
+              {/* The brand name links home from every page: Google ties a
+                  phrase to a page partly by what links to it with those
+                  words, and the header logo alone is a thin signal. */}
               &copy; {currentYear}{" "}
               <Link href="/" className="underline decoration-white/30 underline-offset-2 transition-colors hover:text-white hover:decoration-white">
                 PERM Tracker

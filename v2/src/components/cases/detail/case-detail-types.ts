@@ -4,7 +4,7 @@
  */
 
 import type { useQuery } from "convex/react";
-import type { api } from "@/../convex/_generated/api";
+import type { api } from "@convex/_generated/api";
 
 /**
  * The full case data object returned by `api.cases.get`, excluding null/undefined loading states.

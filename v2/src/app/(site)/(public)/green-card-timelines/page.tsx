@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { queryStatic } from "@/lib/convexStatic";
 
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { BoardKey, BoardTable, RfeBars, StageMedians } from "@/components/community/TimelineBoard";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
@@ -51,12 +51,7 @@ export default async function GreenCardTimelinesPage() {
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header>
-        <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/perm-case-status" className="underline underline-offset-2 hover:text-primary">
-            Case status
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">Green card timelines</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Green card timelines</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           How long each step after PERM took, from the people who went through it. The PERM dates are checked against
           DOL&apos;s record; the rest is self-reported, because USCIS doesn&apos;t publish it case by case.
@@ -151,10 +146,9 @@ export default async function GreenCardTimelinesPage() {
           Add yours
         </h2>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          Look up your PERM case, then use <b>Add your dates</b> under the record. PERM Tracker reads your PERM filing
-          and certification dates from DOL itself, so you only type what came after. There&apos;s no account: the
-          browser you use keeps a key so you can edit or remove your timeline later, and it shows on the board only if
-          you tick the box.
+          Look up your PERM case and choose <b>Add your dates</b>. DOL supplies the PERM dates; you type the rest.
+          No account: your browser keeps a key so you can edit it later, and it joins the board only if you tick
+          the box.
         </p>{" "}
         <p className="mt-4">
           <Link

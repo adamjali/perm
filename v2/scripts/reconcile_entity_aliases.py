@@ -1,13 +1,9 @@
 """Keep perm_entity_alias consistent with the live perm_entities table.
 
-WHY. Two writers slug entities with two slugifiers. `rebuild_entity_identity.py`
-(manual, never scheduled) wrote `s-s-international-llc` and
-`lg-electronics-usa-inc`; the quarterly loader `turso_migrate_public.py` drops
-and rebuilds perm_entities with `store_entities.with_unique_slugs`, which
-writes `ss-international-llc` and `lg-electronics-u-s-a-inc`. After the loader
-ran, 62 alias rows pointed live pages at slugs that did not exist, and 61 of
-those "aliases" were themselves live entities: a redirect from a real page to
-a 404. Measured Sun Sep 6 2026, 12:55 AM ET.
+The alias table remembers slugs from earlier runs, which may have slugged an
+entity differently from the loader that rebuilt perm_entities this quarter, so
+an alias can end up pointing a live page at a slug that no longer exists, or
+redirecting away from a page that is itself live.
 
 THE RULE. The live table is the truth about which slug a page has today;
 the alias table is the memory of slugs a page USED to have. So:
@@ -35,7 +31,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, lit  # noqa: E402
+from lib_turso import Turso, lit, rows_of  # noqa: E402
 
 
 def classify(db: Turso) -> dict[str, list[tuple[str, str, str]]]:
@@ -50,9 +46,8 @@ def classify(db: Turso) -> dict[str, list[tuple[str, str, str]]]:
         "  LEFT JOIN perm_entities t ON t.kind = a.kind AND t.slug = a.target_slug")
     out: dict[str, list[tuple[str, str, str]]] = {
         "keep": [], "reverse": [], "drop_both_live": [], "drop_both_dead": []}
-    for r in res["response"]["result"]["rows"]:
-        kind, slug, target = (c["value"] for c in r[:3])
-        src_live, tgt_live = int(r[3]["value"] or 0), int(r[4]["value"] or 0)
+    for kind, slug, target, src_live, tgt_live in rows_of(res):
+        src_live, tgt_live = int(src_live or 0), int(tgt_live or 0)
         if src_live and not tgt_live:
             out["reverse"].append((kind, slug, target))
         elif src_live and tgt_live:

@@ -66,17 +66,12 @@ export function ContactForm() {
 
   return (
     <form onSubmit={onSubmit} className="relative border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-      {/* PLACEHOLDERS, NOT FLOATING LABELS. Adam asked for "the fields with
-          the light gray text that disappears when you start typing". The
-          visible <span> label above each field stays: a placeholder that
-          doubles as the label vanishes the moment someone types, so a reader
-          checking their own answer before submitting has nothing left telling
-          them which field it was. The placeholder shows the SHAPE of a good
-          answer instead, which is the job it can do without taking the
-          label's. */}
+      {/* Placeholders show the shape of a good answer; the visible label above
+          each field stays, because a placeholder used as the label vanishes
+          as soon as someone types. */}
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
         <label className="block">
-          <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
             Name
           </span>{" "}
           <CharLimit max={120}>
@@ -91,7 +86,7 @@ export function ContactForm() {
           </CharLimit>
         </label>
         <label className="block">
-          <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
             Email
           </span>{" "}
           <CharLimit max={254}>
@@ -107,7 +102,7 @@ export function ContactForm() {
         </label>
       </div>
       <label className="mt-4 block">
-        <span className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+        <span className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
           Message
         </span>{" "}
         <CharLimit max={4000}>

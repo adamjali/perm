@@ -1,6 +1,8 @@
 import { Fragment } from "react";
 import Link from "next/link";
 
+import { OpenOnHash } from "./OpenOnHash";
+
 /**
  * A jump list for a long legal page.
  *
@@ -37,6 +39,7 @@ export function SectionIndex({
   if (sections.length === 0) return null;
   return (
     <nav aria-label={label} className="mt-8 border-2 border-border bg-card p-5 shadow-hard">
+      <OpenOnHash />
       <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
         {label}
       </p>{" "}
@@ -52,7 +55,7 @@ export function SectionIndex({
             <li>
               <Link
                 href={`#${s.id}`}
-                className="inline-flex min-h-[36px] items-center text-base underline decoration-border decoration-2 underline-offset-2 hover:decoration-primary hover:text-primary"
+                className="inline-flex min-h-[44px] items-center text-base underline decoration-border decoration-2 underline-offset-2 hover:decoration-primary hover:text-primary"
               >
                 {s.title}
               </Link>

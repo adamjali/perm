@@ -5,16 +5,15 @@
  *
  * Every signed-in list of cases (the case list, dashboard, calendar,
  * timeline) reads the newest USER_CASES_MAX live cases (convex/lib/userCases.ts).
- * Before Sep 29 2026 that ceiling was 1,000, oldest first, and no page said a
- * case had been left out. This renders nothing for an account under the
+ * This renders nothing for an account under the
  * ceiling, which is every account today.
  */
 import { useQuery } from "convex/react";
 import { InfoIcon } from "@phosphor-icons/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import { USER_CASES_MAX } from "../../../convex/lib/userCases";
+import { USER_CASES_MAX } from "@convex/lib/userCases";
 
 export function CaseCapNotice({
   className,

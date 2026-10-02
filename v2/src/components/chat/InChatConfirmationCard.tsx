@@ -189,11 +189,6 @@ export function InChatConfirmationCard({
         borderStyles
       )}
     >
-      {/* Shimmer overlay for pending state */}
-      {status === 'pending' && (
-        <div className="absolute inset-0 pointer-events-none animate-shimmer" />
-      )}
-
       <div className="p-4 space-y-3">
         {/* Header: Icon, Name, Status, Duration */}
         <div className="flex items-center justify-between gap-2">

@@ -4,8 +4,9 @@ import { useId, useMemo, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { calculatePriorityDateRetention, RETENTION_DAYS, type RetentionResult } from "@/lib/perm";
+import { formatInt } from "@/lib/format";
 
 type Outcome = { kind: "error"; error: string } | { kind: "ok"; r: RetentionResult; warnings: string[] };
 
@@ -20,7 +21,6 @@ type Outcome = { kind: "error"; error: string } | { kind: "ok"; r: RetentionResu
  */
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const int = (n: number) => n.toLocaleString("en-US");
 const long = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 
@@ -92,7 +92,7 @@ export function PriorityDateRetentionCalculator() {
             {result.r.withdrawal ? (
               <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border [&>*]:min-w-0 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-baseline sm:gap-x-4">
                 <dt className="text-base">
-                  A withdrawal on {long(result.r.withdrawal.on)}, {int(result.r.withdrawal.daysAfterApproval)} days after approval
+                  A withdrawal on {long(result.r.withdrawal.on)}, {formatInt(result.r.withdrawal.daysAfterApproval)} days after approval
                 </dt>{" "}
                 <dd className={`font-heading text-xl font-black ${result.r.withdrawal.autoRevokes ? "text-foreground/70" : ""}`}>
                   {result.r.withdrawal.autoRevokes ? "Revokes the I-140 automatically" : "Does not revoke the I-140"}
@@ -109,7 +109,7 @@ export function PriorityDateRetentionCalculator() {
             labor certification, which the dates cannot tell. Whether a new job is &ldquo;same or similar&rdquo; is USCIS&apos;s
             finding on Supplement J, not arithmetic.
           </p>{" "}
-          <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
+          <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
             {result.r.citations.map((c) => (
               <li key={c}>{c}</li>
             ))}

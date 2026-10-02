@@ -1,8 +1,8 @@
 """Ask DOL, every hour, about only the cases someone is waiting to hear about.
 
-WHY (2026-09-26). The full and pending sweeps ask about every case twice a
-day, so a watched case could change and its subscriber hear up to twelve hours
-later. Two rivals now sell "hourly checks" as a paid plan. `watched-cases.yml`
+The full and pending sweeps ask about every case twice a day, so a watched
+case could change and its subscriber hear up to twelve hours later.
+`watched-cases.yml`
 runs this every hour with the list from Convex (`watchedCases:
 watchedCaseNumbers`: case numbers only, never an address), then runs the
 existing alert sweeps when anything moved.
@@ -36,7 +36,8 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib_turso import Turso, record_run  # noqa: E402
+from lib_flag_serials import PERM_OFFICE_PREFIXES  # noqa: E402
+from lib_turso import Turso, query_rows, record_run, run_stmts, stmt  # noqa: E402
 import ingest_case_status_direct as perm  # noqa: E402
 import ingest_pwd_status_direct as flag  # noqa: E402
 
@@ -51,7 +52,7 @@ def split_programs(numbers: list[str]) -> dict[str, list[str]]:
     out: dict[str, set[str]] = {"perm": set(), "pwd": set(), "lca": set()}
     for raw in numbers:
         cn = (raw or "").strip().upper()
-        if cn.startswith(perm.PERM_PREFIXES):
+        if cn.startswith(PERM_OFFICE_PREFIXES):
             out["perm"].add(cn)
             continue
         prog = next((p for pfx, p in flag.PREFIX_TO_PROGRAM.items() if cn.startswith(pfx)), None)
@@ -112,28 +113,15 @@ def plan_changes(program: str, stored: dict[str, list], answers: list[dict], sta
     return stmts
 
 
-def _arg(a):
-    if a is None:
-        return {"type": "null"}
-    if isinstance(a, int):
-        return {"type": "integer", "value": str(a)}
-    return {"type": "text", "value": str(a)}
+# Even, so an UPDATE and the INSERT that tests its changes() share a request.
+STMTS_PER_REQUEST = 100
 
 
 def apply(db: Turso, stmts: list[dict]) -> int:
-    """Run the planned pairs in order on ONE connection (so `changes()` refers
+    """Run the planned pairs in order on one connection (so `changes()` refers
     to the UPDATE just before each INSERT); returns updates that applied."""
-    applied = 0
-    for i in range(0, len(stmts), 100):
-        chunk = stmts[i:i + 100]
-        out = db.pipeline([{"type": "execute", "stmt": {"sql": s["sql"], "args": [_arg(a) for a in s["args"]]}}
-                           for s in chunk] + [{"type": "close"}])
-        results = out.get("results", []) if isinstance(out, dict) else []
-        for s, r in zip(chunk, results):
-            if s["sql"].startswith("UPDATE"):
-                n = (r.get("response", {}).get("result", {}) or {}).get("affected_row_count", 0)
-                applied += 1 if n else 0
-    return applied
+    counts = run_stmts(db, [stmt(s["sql"], s["args"]) for s in stmts], STMTS_PER_REQUEST)
+    return sum(1 for s, n in zip(stmts, counts) if s["sql"].startswith("UPDATE") and n)
 
 
 def check(db: Turso, program: str, numbers: list[str], dry: bool) -> dict:
@@ -142,7 +130,7 @@ def check(db: Turso, program: str, numbers: list[str], dry: bool) -> dict:
     for i in range(0, len(numbers), 200):
         chunk = numbers[i:i + 200]
         q = ",".join("?" * len(chunk))
-        for r in perm._rows(db, f"SELECT case_number, current_status, employer_name, job_title "
+        for r in query_rows(db, f"SELECT case_number, current_status, employer_name, job_title "
                                 f"FROM {table} WHERE case_number IN ({q})", chunk):
             stored[r[0]] = list(r[1:])
     stamp = int(time.time() * 1000)

@@ -9,8 +9,8 @@
  *
  * The two records are not interchangeable and their windows do not meet:
  *
- *   decided   published files: PERM from FY2016 (the history table, loaded
- *             Sep 26 2026) and the quarterly files to 2026-06-30
+ *   decided   published files: PERM from FY2016 (the history table) and the
+ *             quarterly files to the last published quarter
  *   observed  our own sweep's event log, 2026-08-26 -> today
  *
  * The decided window is the widest program's; `decidedByProgram` carries each
@@ -22,6 +22,8 @@
  * "we hold nothing for that day" instead of rendering an empty table, which a
  * reader correctly reads as "DOL did nothing".
  */
+
+import { MS_PER_DAY } from "@/lib/time";
 
 /** A closed date range, inclusive at both ends. `from === to` is one day. */
 export interface DateRange {
@@ -50,8 +52,6 @@ export interface SelectionCoverage {
   uncoveredDays: number;
   totalDays: number;
 }
-
-const MS_PER_DAY = 86_400_000;
 
 const ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -120,7 +120,7 @@ export interface DecidedNarrow {
   socCode?: string;
   /**
    * The law firm's slug. All three programs carry it: the wage-request and LCA
-   * tables gained `attorney_slug` in the Sep 4 2026 backfill.
+   * tables hold `attorney_slug` too.
    */
   attorney?: string;
   status?: string;

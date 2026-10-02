@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import type { OutcomeQuarter } from "@/lib/activityStats";
 
 /**
@@ -34,7 +35,7 @@ export function OutcomeMix({
   );
   return (
     <div className={className}>
-      <ul className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-foreground/70">
+      <ul className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/70">
         <li className="flex items-center gap-2">
           <span aria-hidden="true" className="h-3 w-8 border-2 border-border bg-data-bad-ink" />{" "}
           <span>Denied</span>
@@ -44,15 +45,19 @@ export function OutcomeMix({
           <span>Withdrawn by the employer</span>
         </li>{" "}
       </ul>{" "}
+      <ChartTips label="Denied and withdrawn shares by quarter">
       <ol className="m-0 list-none p-0">
         {quarters.map((q) => (
           <Fragment key={q.quarter}>
-          <li className="border-t-2 border-border py-2.5 first:border-t-0 first:pt-0">
+          <li
+            data-tip={`${q.quarter}\n${q.deniedPct.toFixed(2)}% denied\n${q.withdrawnPct.toFixed(2)}% withdrawn\n${q.certifiedPct.toFixed(1)}% certified\n${q.total.toLocaleString("en-US")} decided`}
+            className="border-t-2 border-border py-2.5 first:border-t-0 first:pt-0"
+          >
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-mono text-sm font-bold tabular-nums">
                 {q.quarter}
               </span>{" "}
-              <span className="font-mono text-xs font-bold tabular-nums text-foreground/70">
+              <span className="font-mono text-sm font-bold tabular-nums text-foreground/70">
                 {q.certifiedPct.toFixed(1)}% certified ·{" "}
                 {q.total.toLocaleString("en-US")} decided
               </span>
@@ -85,11 +90,10 @@ export function OutcomeMix({
           </Fragment>
         ))}
       </ol>
+      </ChartTips>
       <p className="mt-4 text-sm leading-relaxed text-foreground/60">
-        Both bars share one scale. A quarter is dated by the day the decision
-        landed, not the day the case was filed, so a bar shows what DOL did in
-        those three months, not how a filing cohort fared. Quarters at the ends
-        are partial.
+        Both bars share one scale. Each quarter is when DOL decided, not when the cases were filed, and the
+        quarters at the ends are partial.
       </p>
     </div>
   );

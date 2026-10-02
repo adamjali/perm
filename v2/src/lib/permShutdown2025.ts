@@ -24,9 +24,8 @@
  * would be wrong for the one cohort this covers. So the date stays, and the
  * exception is stated next to it with DOL's own words.
  *
- * It is ten months old at the time of writing and covers a single 33-day
- * window that cannot recur, which is why it earns one band on one tool
- * rather than a place in the model.
+ * It covers a single 33-day window that cannot recur, which is why it earns
+ * one band on one tool rather than a place in the model.
  */
 
 /** First day of the affected window, inclusive. DOL's own boundary. */

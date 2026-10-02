@@ -17,8 +17,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
-import { MAX_CASES_PER_ADDRESS, SUBSCRIBE_IP_LIMIT } from "../caseAlerts";
-import { BUDGETS } from "../lib/alertBudgets";
+import { MAX_CASES_PER_ADDRESS } from "../caseAlerts";
+import { BUDGETS, SUBSCRIBE_IP_LIMIT } from "../lib/alertBudgets";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
 
 const SECRET = "test-unsubscribe-secret";
@@ -1024,7 +1024,7 @@ describe("the three FLAG programs", () => {
       // The refusal names every prefix the endpoint takes. Saying "PERM case
       // number" to someone holding a P- number is a correct-looking rejection
       // of a number that works.
-      expect(res.message).toContain("G-, A-, P- or I-");
+      expect(res.message).toContain("G-, A-, P-, I- or H-");
       expect(res.message).not.toContain("PERM case number");
     }
   });

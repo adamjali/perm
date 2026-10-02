@@ -31,6 +31,11 @@ import type {
   PwdBreakdown,
 } from "./lib/dashboardTypes";
 
+/** Cases the recent-activity list shows. */
+const RECENT_ACTIVITY_SHOWN = 5;
+/** Cases read for it, so deleted ones dropped after the read still leave a full list. */
+const RECENT_ACTIVITY_READ = 20;
+
 /**
  * Get all deadlines grouped by urgency
  * Returns deadlines from active (non-closed, non-deleted) cases
@@ -329,18 +334,18 @@ export const getRecentActivity = query({
       return [];
     }
 
-    // OPTIMIZED: Use index-based ordering and take only what we need
-    // Take more than 5 to account for deleted cases that will be filtered out
+    // Index-ordered, and read past RECENT_ACTIVITY_SHOWN so deleted cases
+    // filtered out below still leave a full list.
     const cases = await ctx.db
       .query("cases")
       .withIndex("by_user_and_updated_at", (q) => q.eq("userId", userId))
       .order("desc")
-      .take(20); // Take extra to account for deletions
+      .take(RECENT_ACTIVITY_READ);
 
-    // Filter out deleted cases and take first 5
+    // Filter out deleted cases and keep the newest few
     const recentCases = cases
       .filter((c) => c.deletedAt === undefined)
-      .slice(0, 5);
+      .slice(0, RECENT_ACTIVITY_SHOWN);
 
     // Build RecentActivityItem array
     return recentCases.map((c) => ({

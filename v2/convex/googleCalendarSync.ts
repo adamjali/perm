@@ -129,7 +129,7 @@ export const getCaseCalendarEventIds = internalQuery({
  * Get all cases for a user that have calendar events stored.
  *
  * Used by bulkDeleteEventsByType to find cases that need event cleanup
- * when a calendar sync preference is toggled OFF.
+ * when a calendar sync preference is switched off.
  *
  * @param userId - The user ID to query cases for
  * @returns Array of cases with their _id and calendarEventIds

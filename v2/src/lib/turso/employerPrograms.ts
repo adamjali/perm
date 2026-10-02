@@ -93,24 +93,30 @@ export interface EmployerPrograms {
 }
 
 /**
- * All three programs for one employer.
+ * The slug range one employer's wage-request and LCA rows are read over.
  *
- * THE THREE FILES SPELL ONE EMPLOYER THREE WAYS. Measured Sep 8 2026: the
- * PERM entity is `cognizant-technology-solutions-us-corporation`, its 5,779
- * LCAs sit under `...-us-corp`, its wage requests under `...-corporation`.
- * The entity's own slug range found the LCAs of nobody. The join key that
+ * THE THREE FILES SPELL ONE EMPLOYER THREE WAYS. Measured: one large
+ * employer's PERM entity, LCAs and wage requests sit under three different
+ * slugs (`...-us-corporation`, `...-us-corp`, `...-corporation`), so the
+ * entity's own slug range finds none of its LCAs. The join key that
  * works is the entity's `merge_key` - the normalised name the PERM entity
  * builder already uses to fold spellings, with the corporate suffix dropped -
  * slugified and used as the prefix. Where an entity has no merge key the
- * slug itself is the prefix, as before.
+ * slug itself is the prefix, as before. Shared with the LCA profile
+ * (`lcaProfile.ts`), so the two read exactly the same rows.
  */
-export const getEmployerPrograms = cache(async (slug: string): Promise<EmployerPrograms | null> => {
+export const employerSlugRange = cache(async (slug: string): Promise<{ lo: string; hi: string } | null> => {
   const entity = await one<{ merge_key: string | null }>(
     "SELECT merge_key FROM perm_entities WHERE kind = 'employer' AND slug = ?",
     [slug],
   ).catch(() => null);
   const prefixSource = entity?.merge_key ? String(entity.merge_key) : slug;
-  const range = slugRange(prefixSource);
+  return slugRange(prefixSource);
+});
+
+/** All three programs for one employer, over that range. */
+export const getEmployerPrograms = cache(async (slug: string): Promise<EmployerPrograms | null> => {
+  const range = await employerSlugRange(slug);
   if (!range) return null;
   const [perm, pwd, lca] = await Promise.all([
     programLine("perm", range),

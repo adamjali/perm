@@ -29,7 +29,7 @@ import { JOB_DESCRIPTION_MAX_LENGTH } from "./shared";
 // CONSTANTS
 // ============================================================================
 
-// The server's limit, kept once in ./shared (both copies said 10,000 until Sep 29 2026).
+// The server's limit, kept once in ./shared.
 const DEFAULT_MAX_LENGTH = JOB_DESCRIPTION_MAX_LENGTH;
 
 export interface JobDescriptionDetailViewProps {
@@ -679,5 +679,3 @@ export function JobDescriptionDetailView({
     </div>
   );
 }
-
-export default JobDescriptionDetailView;

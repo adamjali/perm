@@ -24,9 +24,6 @@
  *   onStay={cancelNavigation}
  *   onLeave={confirmNavigation}
  * />
- *
- * Phase: 21+ (UI/UX Global)
- * Created: 2025-12-27
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";

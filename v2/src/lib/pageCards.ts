@@ -58,9 +58,9 @@ export const PAGE_CARD_ALT = {
   "calculators": "PERM calculators. Seven calculators for your case and two explorers for the field, all free, on data the government publishes.",
   "case-search": "Search every DOL case an employer filed. PERM, prevailing wage and H-1B LCA, open and decided, in one search.",
   "changelog": "What changed. Every release, dated, with the data and features it added.",
-  "contact": "Get in touch. support@permtracker.app, and the GitHub issue templates for bugs and requests.",
+  "contact": "Get in touch. Questions, bugs and ideas land in one inbox: support@permtracker.app or the form on the contact page.",
   "faq": "Frequently asked questions. What applicants and attorneys ask about PERM Tracker and the PERM process.",
-  "for-attorneys": "Track every PERM deadline. Filing windows, wage expirations and audit clocks, computed per case. Free.",
+  "for-attorneys": "Every PERM deadline, worked out. The app's deadline hub for sample cases: an RFI response this week, an I-140 filing and a filing window this month, and more later. Free.",
   "guides": "PERM guides. How-tos, references and checklists for the PERM process and for PERM Tracker itself.",
   "home": "PERM Tracker. Look up a PERM case, see where DOL's queue stands, and track every deadline. Free, from DOL's own data.",
   "lca-cases": "Find an H-1B LCA. The number, title, filing date and status, from DOL's daily check and its files.",
@@ -85,7 +85,7 @@ export const PAGE_CARD_ALT = {
   "accessibility": "The standard the site builds to, WCAG 2.2 AA, what it means on each page, and where to report a barrier.",
   "uscis-case-status": "Check a USCIS case by receipt number. What the letters and digits encode, and USCIS's own status once API access is live.",
   "terms": "Terms of service. The terms for using PERM Tracker, its data and its case management.",
-  "visa-bulletin": "The next visa bulletin, from the last 84. What every earlier bulletin for this month did, per category and country, beside the I-485 inventory ahead of each cutoff.",
+  "visa-bulletin": "The next visa bulletin. When past bulletins first appeared, by day of the month before, and what every earlier bulletin for this month did, since October 2014.",
   "tools": "Live PERM data and free calculators. DOL's own figures, each with its date, and calculators built on them.",
 } as const;
 

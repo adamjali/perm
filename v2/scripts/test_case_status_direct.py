@@ -199,7 +199,7 @@ def main() -> int:
     check("every asked serial is six digits wide",
           all(len(n.rsplit("-", 1)[1]) == 6 for batch in look.asked for n in batch), look.asked[0][:3])
 
-    # 1b. H-2A and H-2B share the counter (Oct 1 2026). A season's worth of
+    # 1b. H-2A and H-2B share the counter. A season's worth of
     # H-2A job orders filed back to back, 60 serials with no PERM, PWD or LCA
     # among them, must read as cases, not as the edge of DOL's issuance.
     csd._OTHER_SCHEMA_READY = False
@@ -270,7 +270,7 @@ def main() -> int:
           r["frontier_before"] == ("26241", 200300), str(r["frontier_before"]))
 
     # 6. The request cap stops the walk with more to do, and says so.
-    #    A stop on our OWN budget is not a failure (2026-09-20): it records
+    #    A stop on our OWN budget is not a failure: it records
     #    `ok` and NAMES the cap, because check_ingest_health.py counts every
     #    `partial` as BROKEN and the catching-up nights are exactly the
     #    productive ones. `capped` is what tells a budget stop from a finish.
@@ -291,7 +291,7 @@ def main() -> int:
           r["status"] == "ok" and r["capped"] is False and r["note"] == "",
           f"{r['status']} capped={r.get('capped')} note={r['note']!r}")
 
-    # 6c. THE TIME BUDGET STOPS THE WALK THE WAY THE CAP DOES (2026-09-24). The
+    # 6c. THE TIME BUDGET STOPS THE WALK THE WAY THE CAP DOES. The
     #     walk rides both passes now, and the budget, not the request cap, is
     #     what keeps a slow DOL from pushing the step into `timeout 105m`. A
     #     fake clock ticks once per read; with the deadline at 4, four

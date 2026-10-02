@@ -100,5 +100,3 @@ const styles = {
     textDecoration: "underline",
   },
 } as const;
-
-export default EmailLinkList;

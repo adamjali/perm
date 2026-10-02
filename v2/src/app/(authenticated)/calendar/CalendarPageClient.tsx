@@ -8,7 +8,7 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { ArrowSquareOutIcon, CalendarIcon as CalendarIcon, InfoIcon, PlusIcon } from "@phosphor-icons/react";
 
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { caseToCalendarEvents } from "@/lib/calendar/event-mapper";
 import { RECORDED_EVENT_TYPES, type CalendarCaseData, type DeadlineType } from "@/lib/calendar/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,9 +18,7 @@ import type { CaseForSelection } from "@/components/timeline";
 import { PageHeading } from "../components/PageHeading";
 import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 
-// Import V1-style calendar CSS (Tippy.js theme, event styling)
-import "@/app/calendar-v1.css";
-// Import calendar animations and accessibility styles
+// The event pill and the react-big-calendar theming
 import "@/app/calendar.css";
 
 // ============================================================================

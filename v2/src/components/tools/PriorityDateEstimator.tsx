@@ -25,6 +25,8 @@ import {
   type CountryKey,
   type ChartKind,
 } from "@/lib/perm";
+import { ChartHit } from "@/components/data/ChartHit";
+import { ChartTips } from "@/components/data/ChartTips";
 import { formatMonth, formatMonthShort, formatAsOf } from "@/lib/dolFormat";
 import {
   dropCollidingTicks,
@@ -32,8 +34,9 @@ import {
   tickAnchor,
 } from "@/components/tools/chartTicks";
 import { DateInput } from "@/components/forms/DateInput";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { MS_PER_DAY } from "@/lib/time";
 
 export interface PriorityDateEstimatorProps {
   bulletins: readonly BulletinMonth[];
@@ -41,12 +44,10 @@ export interface PriorityDateEstimatorProps {
    * The category codes the archive actually publishes, computed on the server
    * from these same bulletins.
    *
-   * It used to be a hardcoded list of six, and the archive holds three. The
-   * failure was silent and total: picking EB-4, EB-5 or EB-3 other workers
-   * left every cell lookup undefined, so the verdict panel, the retrogression
-   * note and the whole chart simply stopped rendering, with the only
-   * explanation four scrolls down under "what this can't tell you". A
-   * selector should not be able to offer a question the data cannot answer.
+   * Never a hardcoded list: a category the archive does not hold leaves every
+   * cell lookup undefined, and the verdict panel, the retrogression note and
+   * the whole chart silently stop rendering. A selector should not be able to
+   * offer a question the data cannot answer.
    */
   categoryCodes: readonly string[];
   /**
@@ -64,8 +65,8 @@ export interface PriorityDateEstimatorProps {
    * `YYYY-MM`, read from USCIS at render time. Null when that read failed.
    *
    * It matters that this is sourced rather than guessed: the bulletin is
-   * forward-dated, so on 2026-08-25 the bulletin in force is August and
-   * September is already out. Deriving "how far behind" from the calendar
+   * forward-dated, so late in a month the bulletin in force is that month's
+   * and the next is already out. Deriving "how far behind" from the calendar
    * alone understates it by one, and inventing the number is exactly the
    * thing this page must not do.
    */
@@ -102,7 +103,6 @@ export interface PriorityDateEstimatorProps {
 }
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-const DAY_MS = 86_400_000;
 const DOS_BULLETIN_URL =
   "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html";
 const USCIS_CHARTS_URL =
@@ -390,7 +390,7 @@ export function PriorityDateEstimator({
   // Positive means the priority date sits BEFORE that cutoff, so it was past it.
   const lastOpenDeltaDays =
     lastOpen && lastOpen.kind === "date" && pdUsable
-      ? Math.round((Date.parse(lastOpen.iso) - Date.parse(priorityDate)) / DAY_MS)
+      ? Math.round((Date.parse(lastOpen.iso) - Date.parse(priorityDate)) / MS_PER_DAY)
       : null;
 
   // The series is drawn whether or not a priority date has been entered: the
@@ -468,8 +468,8 @@ export function PriorityDateEstimator({
     // A single distinct value would collapse the axis and print three
     // identical tick labels. Give it half a year of room either side.
     if (hi === lo) {
-      lo -= 180 * DAY_MS;
-      hi += 180 * DAY_MS;
+      lo -= 180 * MS_PER_DAY;
+      hi += 180 * MS_PER_DAY;
     }
     const pad = (hi - lo) * 0.06;
     lo -= pad;
@@ -493,7 +493,7 @@ export function PriorityDateEstimator({
       ? null
       : Math.round(
           Math.abs(pdTime - (pdPlacement === "above" ? Math.max(...times) : Math.min(...times))) /
-            DAY_MS,
+            MS_PER_DAY,
         );
 
   const px = (i: number) =>
@@ -680,19 +680,13 @@ export function PriorityDateEstimator({
               {monthsBehind > 0 || (bulletinsBehind !== null && bulletinsBehind > 0) ? (
                 <>
                   <p className="mt-2 text-base leading-relaxed text-foreground/70">
-                    That&apos;s the newest bulletin this page can read, and it
-                    won&apos;t catch up on its own. The State Department
-                    publishes the bulletin on a site that refuses automated
-                    requests, and since mid-July 2026 it has refused the
-                    Internet Archive&apos;s crawler too, so the months after{" "}
-                    {formatMonth(newestMonth)} have never been archived
-                    anywhere this page can reach.
+                    That&apos;s the newest bulletin this page holds. New ones are read from the State
+                    Department the day they&apos;re published, so a gap like this usually means a missed read;
+                    State&apos;s own page has the current cutoff.
                   </p>{" "}
                   <p className="mt-2 text-base leading-relaxed text-foreground/70">
-                    For the current cutoff, read it at the source. What the
-                    archive holds and a single bulletin doesn’t is the movement:{" "}
-                    {bulletins.length} bulletins of it, including the months the
-                    cutoff went backwards.
+                    What the archive adds is the movement: {bulletins.length} bulletins of it, including the
+                    months the cutoff went backwards.
                   </p>{" "}
                 </>
               ) : (
@@ -740,7 +734,7 @@ export function PriorityDateEstimator({
                 // host that serves scripts. Dated, sourced, and never used to
                 // infer a cutoff.
                 <div className="mt-4 border-2 border-border bg-card p-4">
-                  <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+                  <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
                     What USCIS is accepting now
                   </p>{" "}
                   <p className="mt-2 text-base leading-relaxed text-foreground/70">
@@ -785,7 +779,7 @@ export function PriorityDateEstimator({
                 : "bg-muted",
           )}
         >
-          <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
             In the {formatMonth(estimate.asOfBulletin)} bulletin
           </p>{" "}
           <p className="mt-2 font-heading text-2xl font-black leading-tight sm:text-3xl">
@@ -819,7 +813,7 @@ export function PriorityDateEstimator({
             // publish a cutoff is where they can still see where they stand,
             // and that gap is the thing worth watching when it reopens.
             <div className="mt-4 border-2 border-border bg-card p-4">
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+              <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
                 Where your date stood before it closed
               </p>{" "}
               <p className="mt-2 text-base leading-relaxed text-foreground/70">
@@ -863,15 +857,13 @@ export function PriorityDateEstimator({
           ) : null}{" "}
           {estimate.latest?.kind === "unavailable" ? (
             <div className="mt-4 border-2 border-border bg-card p-4">
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+              <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
                 Why a category closes
               </p>{" "}
               <p className="mt-2 text-base leading-relaxed text-foreground/70">
-                Each category gets a fixed number of visas per fiscal year. When
-                a category uses its allocation, the State Department marks it
-                &quot;U&quot; for the rest of the year and it reopens in October
-                with the new year&apos;s numbers. It happens every year, most
-                often in the last months of the fiscal year.
+                Each category gets a fixed number of visas a year. Once it&apos;s used up, the State
+                Department marks the category &quot;U&quot; until October, when the new year&apos;s numbers
+                reopen it. It happens every year, most often near the end of the fiscal year.
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
                 The chart still shows where the cutoff stood before it closed.
@@ -918,15 +910,13 @@ export function PriorityDateEstimator({
             </p>
           ) : null}{" "}
           <figure className="m-0">
-            <div
-              className="-mx-1 mt-6 overflow-x-auto px-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-              // The drawing is wider than a phone, so this scrolls. A
-              // scrollable box that cannot be reached or named is unusable by
-              // keyboard and invisible to a screen reader.
-              role="group"
-              aria-label="Cutoff history, scrollable"
-              tabIndex={0}
-            >
+            {/* The drawing is wider than a phone, so it scrolls. ChartTips is
+                the named, focusable region around it (one tab stop, the arrow
+                keys read every bulletin month), and it sits outside the
+                scroller, which would clip the tooltip. A second tab stop on
+                the scroller would also have its arrow keys taken by ChartTips. */}
+            <ChartTips label={`Cutoff history for ${category} ${country}`} className="mt-6">
+            <div className="-mx-1 overflow-x-auto px-1">
               <svg
                 viewBox={`0 0 ${W} ${H}`}
                 className="block h-auto w-full min-w-[44rem]"
@@ -1072,24 +1062,36 @@ export function PriorityDateEstimator({
                   {/* One hover surface per bulletin, over everything, so any
                       month reports its own cutoff rather than only the two
                       states that used to carry a title. */}
-                  {series.map((s, i) => (
-                    <rect
-                      key={`h${s.month}`}
-                      x={px(i) - stepW / 2}
-                      y={PAD_T}
-                      width={stepW}
-                      height={PLOT_BOTTOM - PAD_T}
-                      fill="transparent"
-                    >
-                      <title>
-                        {s.state === "unavailable"
-                          ? `${formatMonth(s.month)}: closed, no visa numbers`
-                          : s.state === "current"
-                            ? `${formatMonth(s.month)}: current, open to every priority date`
-                            : `${formatMonth(s.month)}: cutoff ${formatAsOf(s.iso!)}`}
-                      </title>
-                    </rect>
-                  ))}
+                  {series.map((s, i) => {
+                    const yours =
+                      !pdUsable || s.state === "unavailable"
+                        ? null
+                        : s.state === "current" || priorityDate < s.iso!
+                          ? "Your date was current"
+                          : "Your date was not yet current";
+                    return (
+                      <ChartHit
+                        key={`h${s.month}`}
+                        tip={[
+                          `${formatMonth(s.month)} bulletin`,
+                          s.state === "unavailable"
+                            ? "Closed, no visa numbers"
+                            : s.state === "current"
+                              ? "Current, open to every priority date"
+                              : `Cutoff ${formatAsOf(s.iso!)}`,
+                          yours,
+                        ]
+                          .filter(Boolean)
+                          .join("\n")}
+                        x={px(i) - stepW / 2}
+                        width={stepW}
+                        y={PAD_T}
+                        height={PLOT_BOTTOM - PAD_T}
+                        cx={s.state === "date" && s.iso ? px(i) : undefined}
+                        cy={s.state === "date" && s.iso ? py(Date.parse(s.iso)) : undefined}
+                      />
+                    );
+                  })}
                 </g>
 
                 {pdPlacement === "inside" && pdTime !== null ? (
@@ -1188,6 +1190,7 @@ export function PriorityDateEstimator({
                 </text>
               </svg>
             </div>
+            </ChartTips>
             <figcaption className="mt-5 text-sm leading-relaxed text-foreground/70">
               {/* The legend sits with the marks, drawn in the same fills the
                   marks use. Naming a colour in prose under a chart that

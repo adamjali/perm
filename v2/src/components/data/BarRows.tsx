@@ -1,5 +1,7 @@
 import { Fragment, type ReactNode } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
+import { plainText } from "@/components/data/MoreText";
 import { cn } from "@/lib/utils";
 
 /**
@@ -26,26 +28,42 @@ export interface BarRow {
   /** The figure as printed beside the bar. */
   text: string;
   tone?: "primary" | "ink";
+  /**
+   * The hover detail, lines split by "\n". Defaults to the row's own label,
+   * figure and sub-line, so every page using the rows gets a tooltip.
+   */
+  tip?: string;
+}
+
+/** What a bar row says on hover: its label, its figure, then its sub-line. */
+export function barRowTip(r: BarRow): string {
+  if (r.tip) return r.tip;
+  const sub = plainText(r.sub).trim();
+  return [plainText(r.label).trim(), r.value === null ? "withheld" : r.text, sub].filter(Boolean).join("\n");
 }
 
 export function BarRows({
   rows,
   max,
+  label = "Bar chart",
   className,
 }: {
   rows: readonly BarRow[];
+  /** What the bars show, for the keyboard focus announcement. */
+  label?: string;
   /** The value that fills the bar; defaults to the largest value present. */
   max?: number;
   className?: string;
 }) {
   const top = max ?? Math.max(0, ...rows.map((r) => r.value ?? 0));
   return (
-    <ol className={cn("space-y-3", className)}>
+    <ChartTips label={label} className={className}>
+    <ol className="space-y-3">
       {rows.map((r) => {
         const width = r.value === null || top <= 0 ? 0 : Math.max(1, (r.value / top) * 100);
         return (
           <Fragment key={r.key}>{" "}
-          <li className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4">
+          <li data-tip={barRowTip(r)} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-x-4">
             <div className="min-w-0">
               <p className="text-base font-semibold leading-snug">{r.label}</p>{" "}
               {r.sub ? <p className="text-sm text-muted-foreground">{r.sub}</p> : null}
@@ -66,6 +84,7 @@ export function BarRows({
         );
       })}
     </ol>
+    </ChartTips>
   );
 }
 
@@ -85,9 +104,12 @@ const STACK_TONES = ["bg-primary", "bg-foreground", "bg-foreground/60", "bg-fore
 export function StackedBar({
   segments,
   total,
+  label = "Stacked bar",
   className,
 }: {
   segments: readonly StackSegment[];
+  /** What the bar shows, for the keyboard focus announcement. */
+  label?: string;
   /** The bar's full length; defaults to the sum of the segments. */
   total?: number;
   className?: string;
@@ -95,15 +117,18 @@ export function StackedBar({
   const sum = total ?? segments.reduce((a, s) => a + s.value, 0);
   return (
     <div className={className}>
+      <ChartTips label={label}>
       <div className="flex h-4 w-full overflow-hidden bg-muted" aria-hidden="true">
         {segments.map((s, i) => (
           <div
             key={s.key}
+            data-tip={`${s.label}\n${s.value.toLocaleString("en-US")}${sum > 0 ? `\n${Math.round((s.value / sum) * 100)}% of ${sum.toLocaleString("en-US")} in all` : ""}`}
             className={cn("h-full", STACK_TONES[i % STACK_TONES.length])}
             style={{ width: sum > 0 ? `${(s.value / sum) * 100}%` : "0%" }}
           />
         ))}
       </div>
+      </ChartTips>
       <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
         {segments.map((s, i) => (
           <Fragment key={s.key}>{" "}

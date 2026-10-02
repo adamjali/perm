@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { FilterableStatTable, type Facet, type StatColumn } from "@/components/tools/FilterableStatTable";
+import { formatInt } from "@/lib/format";
 
 /**
  * Every city, industry or country group of one kind, searchable, sortable by
@@ -23,10 +24,6 @@ export interface GroupIndexRow {
   fyTo: number | null;
   /** City: its state code. Industry: its sector title. Country: null. */
   facet: string | null;
-}
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
 }
 
 function rate(r: GroupIndexRow): number | null {
@@ -61,7 +58,7 @@ export function GroupIndexTable({
         </Link>
       ),
     },
-    { key: "total", label: "Decisions", numeric: true, sortValue: (r) => r.total, render: (r) => fmt(r.total) },
+    { key: "total", label: "Decisions", numeric: true, sortValue: (r) => r.total, render: (r) => formatInt(r.total) },
     {
       key: "rate",
       label: "Approved",
@@ -77,7 +74,7 @@ export function GroupIndexTable({
       label: "Median wage",
       numeric: true,
       sortValue: (r) => r.medianWage,
-      render: (r) => (r.medianWage == null ? "n/a" : `$${fmt(Math.round(r.medianWage))}`),
+      render: (r) => (r.medianWage == null ? "n/a" : `$${formatInt(Math.round(r.medianWage))}`),
     },
     {
       key: "denied",
@@ -85,7 +82,7 @@ export function GroupIndexTable({
       numeric: true,
       secondary: true,
       sortValue: (r) => r.denied,
-      render: (r) => fmt(r.denied),
+      render: (r) => formatInt(r.denied),
     },
     {
       key: "years",

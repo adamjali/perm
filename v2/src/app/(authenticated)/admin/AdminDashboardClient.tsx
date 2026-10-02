@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useAdminAuth } from "@/lib/admin/adminAuth";
 import { ShieldIcon, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
 import { AdminStatsGrid } from "@/components/admin/AdminStatsGrid";
@@ -15,7 +15,7 @@ import { ScorecardPanel } from "@/components/admin/ScorecardPanel";
 import { MonitorPanel } from "@/components/admin/MonitorPanel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useDebounce } from "@/hooks/use-debounce";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export default function AdminDashboardClient() {
   const { isAdmin, isLoading: authLoading, isSigningOut } = useAdminAuth();

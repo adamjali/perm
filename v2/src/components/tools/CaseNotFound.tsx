@@ -14,6 +14,7 @@ import type { ParsedCaseNumber } from "@/lib/permCaseNumber";
 import { CASE_NUMBER_ACCURACY } from "@/lib/permCaseNumber";
 import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
 import { isLookupGap, unsettledClause, unsettledVerdict, type DiscoveryMiss } from "@/lib/dolMiss";
+import { formatInt } from "@/lib/format";
 
 /**
  * A case number we hold no record for. A real state, not an error.
@@ -31,8 +32,6 @@ import { isLookupGap, unsettledClause, unsettledVerdict, type DiscoveryMiss } fr
  * FY2024 onward, and a case filed in the last few days may simply not have
  * been picked up yet. None of those are anything wrong with the case.
  */
-
-const int = (n: number) => n.toLocaleString("en-US");
 
 export interface CaseNotFoundProps {
   caseNumber: string;
@@ -58,8 +57,8 @@ export interface CaseNotFoundProps {
    * Why DOL's live check could not settle it (caseLookup's `dolMiss`). Only
    * "none", or no value, may read as "no record": "unavailable" means DOL did
    * not answer in time and "not-asked" that it was not asked, and saying "no
-   * record" for those told people DOL had no such case when it had only been
-   * slow (fixed Sep 29 2026).
+   * record" for those would tell people DOL had no such case when it had only
+   * been slow.
    */
   dolMiss?: DiscoveryMiss | "records" | null;
 }
@@ -76,7 +75,7 @@ export function CaseNotFound({
   mirrorSize,
   dolMiss = null,
 }: CaseNotFoundProps) {
-  const checked = mirrorSize ? `Checked ${int(mirrorSize)} per-case statuses and DOL's FY2024 to FY2026 decided files` : null;
+  const checked = mirrorSize ? `Checked ${formatInt(mirrorSize)} per-case statuses and DOL's FY2024 to FY2026 decided files` : null;
   if (isLookupGap(dolMiss)) {
     const retry = `/perm-case-status?case=${encodeURIComponent(caseNumber)}`;
     return (
@@ -172,20 +171,13 @@ export function CaseNotFound({
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
             Numbers like{" "}
             <b className="font-mono font-bold text-foreground">{caseNumber}</b>{" "}
-            have three parts rather than four, and DOL used them mostly in 2022
-            and 2023. The current format states its own filing date in the
-            middle digits. This one does not: reading its middle block as a
-            date matches DOL&apos;s recorded receipt date{" "}
-            <b className="font-bold text-foreground">13% of the time</b>, against
-            90% for the current format, so whatever those digits are they are
-            not the filing date.
+            are the older three-part format, used mostly in 2022 and 2023. Its middle digits aren&apos;t a
+            filing date: read as one, they match DOL&apos;s receipt date only{" "}
+            <b className="font-bold text-foreground">13% of the time</b>, against 90% for the current format.
           </p>{" "}
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
-            So there is no filing month to read off it and no cohort to show
-            around it. Every case in this format has already been decided, and
-            DOL publishes those in its quarterly files, so a number that is
-            genuinely one of them will be found here. Worth checking the digits
-            against the receipt.
+            Every case in this format is already decided and published, so a real one would be found here.
+            Check the digits against the receipt.
           </p>
         </section>
       ) : null}{" "}
@@ -219,19 +211,19 @@ export function CaseNotFound({
             <b className="font-bold text-foreground">
               None of this was measured on {caseNumber}
             </b>
-            , which we could not find. It describes the {int(cohort.total)}{" "}
+            , which we could not find. It describes the {formatInt(cohort.total)}{" "}
             cases we do hold that were filed alongside it.
           </p>
 
           <div className="mt-6 flex flex-wrap gap-3">
             <Cell
               label="Filed that month"
-              value={int(cohort.total)}
+              value={formatInt(cohort.total)}
               note="cases in the mirror"
             />
             <Cell
               label="Still undecided"
-              value={int(cohort.pending)}
+              value={formatInt(cohort.pending)}
               note={
                 cohort.decidedPct !== null
                   ? `${cohort.decidedPct.toFixed(1)}% of the month is decided`
@@ -241,7 +233,7 @@ export function CaseNotFound({
             {wall && !wall.isPastFront ? (
               <Cell
                 label="Filed before that month"
-                value={int(wall.ahead)}
+                value={formatInt(wall.ahead)}
                 note="undecided, across every earlier month"
               />
             ) : null}
@@ -362,7 +354,7 @@ export function CaseStatusEmpty({
   if (wallTotal !== null) {
     facts.push({
       label: "Undecided cases",
-      value: int(wallTotal),
+      value: formatInt(wallTotal),
       note: "across every filing month, the whole wall",
     });
   }
@@ -417,7 +409,7 @@ export function CaseStatusEmpty({
         </ul>
         {mirrorSize ? (
           <p className="mt-5 border-t-2 border-border pt-4 text-sm text-muted-foreground">
-            Searched against {int(mirrorSize)} per-case statuses, read from DOL&apos;s own case-status search, plus DOL&apos;s published decisions for FY2024 to FY2026.
+            Searched against {formatInt(mirrorSize)} per-case statuses, read from DOL&apos;s own case-status search, plus DOL&apos;s published decisions for FY2024 to FY2026.
             Nothing is stored and nothing is sent anywhere else.
           </p>
         ) : null}

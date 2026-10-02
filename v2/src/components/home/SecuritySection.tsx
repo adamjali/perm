@@ -45,12 +45,8 @@ export function SecuritySection() {
       <div className="mx-auto max-w-[900px] px-4 py-16 sm:px-8 sm:py-20">
         {/* Section header */}
         <ScrollReveal direction="up" className="mb-10 text-center sm:mb-12">
-          <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
-            <ShieldIcon className="h-3.5 w-3.5" />
-            Security
-          </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
-            Your Client Data Is Protected
+            Your client data, protected
           </h2>
         </ScrollReveal>
 
@@ -59,10 +55,10 @@ export function SecuritySection() {
           <div className="border-3 border-border shadow-hard overflow-hidden">
             {/* Table header */}
             <div className="grid grid-cols-[1fr_1.5fr] border-b-3 border-border bg-foreground text-background">
-              <div className="px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider">
-                What Protects You
+              <div className="px-5 py-3 font-heading text-sm font-bold">
+                What protects it
               </div>{" "}
-              <div className="px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider border-l-2 border-background/20">
+              <div className="px-5 py-3 font-heading text-sm font-bold border-l-2 border-background/20">
                 How
               </div>
             </div>
@@ -101,4 +97,3 @@ export function SecuritySection() {
   );
 }
 
-export default SecuritySection;

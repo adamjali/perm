@@ -5,17 +5,10 @@
  */
 
 export { HeroSection } from "./HeroSection";
-export { TrustStrip } from "./TrustStrip";
 export { StakesSection } from "./StakesSection";
-export { FeaturesGrid } from "./FeaturesGrid";
-export { HowItWorks } from "./HowItWorks";
-export { StatsSection } from "./StatsSection";
 export { SecuritySection } from "./SecuritySection";
 export { FAQSection } from "./FAQSection";
 export { AboutSection } from "./AboutSection";
 export { CTASection } from "./CTASection";
-export { TestimonialsSection } from "./TestimonialsSection";
-export { ScrollProgress } from "./DecorativeElements";
-export { ToolsSection } from "./ToolsSection";
-export { StageStrip } from "./StageStrip";
+export { ScrollProgress } from "./ScrollProgress";
 export { AudienceBlocks } from "./AudienceBlocks";

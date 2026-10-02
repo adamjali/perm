@@ -10,6 +10,7 @@
 import { Text, Section, Hr } from "@react-email/components";
 import * as React from "react";
 import { EmailLayout, EmailHeader, EmailButton } from "./components";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface AdminEmailProps {
   /** Recipient's name */
@@ -30,7 +31,7 @@ export function AdminEmail({
   recipientName,
   subject,
   body,
-  appUrl = "https://permtracker.app",
+  appUrl = SITE_URL,
 }: AdminEmailProps) {
   const previewText = `Message from PERM Tracker: ${subject}`;
 
@@ -143,8 +144,8 @@ AdminEmail.PreviewProps = {
   recipientName: "Jordan Lee",
   subject: "A quick update on your account",
   body:
-    "Thanks for being an early PERM Tracker user. We wanted to let you know about a few improvements we shipped this week.\n\nDeadline reminders now arrive as a single daily digest instead of one email per case, and the weekly summary has a cleaner layout.\n\nIf you run into anything or have a feature request, just reply to this email. We read every message.",
-  appUrl: "https://permtracker.app",
+    "Thanks for being an early PERM Tracker user. We wanted to let you know about a few improvements we shipped this week.\n\nDeadline reminders now arrive as a single daily digest instead of one email per case, and the weekly case summary has a cleaner layout.\n\nIf you run into anything or have a feature request, just reply to this email. We read every message.",
+  appUrl: SITE_URL,
 } satisfies AdminEmailProps;
 
 export default AdminEmail;

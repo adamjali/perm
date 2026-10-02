@@ -5,6 +5,7 @@ import { prettyStatus } from "@/components/queue/stages";
 import { embedSiteFor } from "@/lib/embeds";
 import { getStatusMeaning } from "@/lib/permStatus";
 import { lookupForEmbed, type EmbedCaseAnswer } from "@/lib/turso/embedLookup";
+import { EASTERN_TIMEZONE } from "@/lib/time";
 
 /**
  * The embeddable case lookup: one box, one answer card.
@@ -37,7 +38,7 @@ const day = (iso: string | null) => {
     month: "short",
     day: "numeric",
     year: "numeric",
-    timeZone: iso.length === 10 ? "UTC" : "America/New_York",
+    timeZone: iso.length === 10 ? "UTC" : EASTERN_TIMEZONE,
   });
 };
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 
-import { RateBars, type RateRow } from "../RateBars";
+import { RateBars, rateTip, type RateRow } from "../RateBars";
 
 /**
  * The bars carry a claim about denial rates, so the tests are about honesty:
@@ -68,5 +68,25 @@ describe("RateBars", () => {
       />,
     );
     expect(screen.getByText(/Section G, Item 1/)).toBeInTheDocument();
+  });
+});
+
+describe("RateBars tooltips", () => {
+  it("adds what the row does not print: the denied count and the 95% range", () => {
+    expect(rateTip({ label: "Layoff", rate: 0.59, decided: 9519, denied: 56 }, 2.57)).toBe(
+      "Layoff\n0.59% denied\n56 denied of 9,519 decided\n95% range 0.45–0.76%\nField baseline 2.57%",
+    );
+  });
+
+  it("falls back to the decided count when no numerator was given", () => {
+    expect(rateTip(ROWS[0]!, 2.57)).toBe(
+      "Position is not full time\n54.31% denied\n383 decided\nField baseline 2.57%",
+    );
+  });
+
+  it("puts one tip on every row and drops the badge's own title, so a hover never shows two", () => {
+    const { container } = render(<RateBars rows={ROWS} baseline={2.57} />);
+    expect(container.querySelectorAll("[data-tip]")).toHaveLength(3);
+    expect(container.querySelector("[title]")).toBeNull();
   });
 });

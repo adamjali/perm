@@ -1,5 +1,8 @@
+import { ChartHit, hitSpan } from "@/components/data/ChartHit";
+import { ChartTips } from "@/components/data/ChartTips";
 import { evenTickIndices, tickAnchor } from "@/components/tools/chartTicks";
 import { segments, toWeeks, weekStart, type ActivityDay } from "@/lib/activityStats";
+import { formatInt } from "@/lib/format";
 
 /**
  * Decisions per week across the whole record, drawn with its holes intact.
@@ -10,20 +13,20 @@ import { segments, toWeeks, weekStart, type ActivityDay } from "@/lib/activitySt
  * every day in the drawing and leave about 135 points, which is legible.
  *
  * A ZERO AND A BREAK ARE OPPOSITE FACTS AND THIS CHART DRAWS THEM DIFFERENTLY.
- * The first version got it wrong and it mattered. October 2025 has no rows in
+ * October 2025 has no rows in
  * the disclosure series, and that series is `GROUP BY decision_date` over the
  * corpus, so no row means DOL decided NOTHING that day. Drawn as a hole, the
  * largest stoppage in the record was invisible; zero-filled by the caller, it
  * is a line on the floor for three straight weeks, which is what happened.
- * The only true break here is between two DIFFERENT instruments, 2026-06-30 to
- * 2026-08-13, where the quarterly file ends and the live scan has not begun.
+ * The only true break here is between two DIFFERENT instruments, where the
+ * quarterly file ends and the live scan has not begun.
  * Drawing THAT as zero would invent a second national outage that never
  * happened. So: zeros are drawn, instruments are separated, and a period DOL
  * announced it had stopped gets an annotation naming the announcement.
  *
  * WHY TWO COLOURS. The two runs at the right come from different instruments,
- * not different weeks of one instrument: everything up to 2026-06-30 is
- * derived from the quarterly disclosure corpus, and everything after is the
+ * not different weeks of one instrument: everything up to the last published
+ * quarter is derived from the disclosure corpus, and everything after is the
  * per-case scan of flag.dol.gov. Different meaning gets a different colour,
  * never a different opacity, because two shapes that differ only in opacity
  * end up sharing one caption.
@@ -57,6 +60,11 @@ export interface PaceAnnotation {
   date: string;
   /** Short label, drawn at the top of the rule. */
   label: string;
+}
+
+function weekLabel(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  return `Week of ${d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" })}`;
 }
 
 function monthLabel(iso: string): string {
@@ -108,6 +116,7 @@ export function DecisionPaceChart({
       points: run.map(({ week }) => ({
         i: weekIndex.get(week.weekStart) ?? 0,
         total: week.total,
+        week,
       })),
     })),
   );
@@ -121,10 +130,14 @@ export function DecisionPaceChart({
   const y = (v: number) => PAD_T + plotH - (v / max) * plotH;
   const ticks = evenTickIndices(spine.length, 7);
   const yTicks = [0, max / 2, max];
+  // One hover column per plotted week, whichever instrument holds it.
+  const plotted = runs
+    .flatMap((run) => run.points.map((p) => ({ ...p, label: run.label })))
+    .sort((a, b) => a.i - b.i);
 
   return (
     <div className={className}>
-      <ul className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-foreground/70">
+      <ul className="mb-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/70">
         {series.map((s) => (
           <li key={s.label} className="flex items-center gap-2">
             <span
@@ -136,6 +149,8 @@ export function DecisionPaceChart({
           </li>
         ))}
       </ul>
+      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
+      <ChartTips label="Decisions per week">
       <div className="-mx-1 overflow-x-auto px-1">
         <svg
           viewBox={`0 0 ${W} ${H}`}
@@ -230,8 +245,20 @@ export function DecisionPaceChart({
               {monthLabel(weekNames[i] ?? "")}
             </text>
           ))}
+          {plotted.map((p) => (
+            <ChartHit
+              key={`hit-${p.i}-${p.label}`}
+              tip={`${weekLabel(p.week.weekStart)}\n${formatInt(p.week.total)} decided\n${formatInt(p.week.certified)} certified\n${formatInt(p.week.denied)} denied\n${formatInt(p.week.withdrawn)} withdrawn\n${p.label}`}
+              {...hitSpan(p.i, spine.length, x, PAD_L, W - PAD_R)}
+              y={PAD_T}
+              height={plotH}
+              cx={x(p.i)}
+              cy={y(p.total)}
+            />
+          ))}
         </svg>
       </div>
+      </ChartTips>
     </div>
   );
 }

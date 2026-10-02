@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useQuery } from "convex/react";
 import { ClockCounterClockwiseIcon as History } from "@phosphor-icons/react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import RecentActivityCard from "./RecentActivityCard";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import {

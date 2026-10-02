@@ -5,9 +5,10 @@ import {
   RUNG_LABEL,
   isComplete,
   ladderExtent,
-  money,
   type Ladder,
 } from "@/lib/wageLadder";
+import { formatDollars } from "@/lib/format";
+import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
 
 import { WageAxis } from "./WageAxis";
@@ -71,6 +72,7 @@ export function LadderByYear({
   return (
     <div className={className}>
       <WageLadderKey className="mb-6" />{" "}
+      <ChartTips label="Wage percentiles by year">
       <ol className="m-0 list-none p-0">
         {drawable.map((l) => (
           // Keyed Fragment with a trailing space: React puts NOTHING between
@@ -82,8 +84,8 @@ export function LadderByYear({
               <p className="font-mono text-sm font-bold uppercase tracking-wider">
                 {l.label}
               </p>{" "}
-              <p className="font-mono text-xs font-bold tabular-nums text-foreground/60">
-                {money(l.p50 as number)} median ·{" "}
+              <p className="font-mono text-sm font-bold tabular-nums text-foreground/60">
+                {formatDollars(l.p50 as number)} median ·{" "}
                 {l.count.toLocaleString("en-US")} {unit}
               </p>
             </div>
@@ -92,6 +94,7 @@ export function LadderByYear({
           </Fragment>
         ))}
       </ol>
+      </ChartTips>
       <WageAxis domain={domain} className="mt-1" />
 
       {/* Rung by rung, so a reader can see which part of the distribution
@@ -101,16 +104,16 @@ export function LadderByYear({
           const pct = move(r);
           return (
             <div key={r} className="bg-card p-3">
-              <dt className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+              <dt className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
                 {RUNG_LABEL[r]}
               </dt>{" "}
               <dd className="mt-1 font-heading text-lg font-black tabular-nums">
-                {money(last[r] as number)}
+                {formatDollars(last[r] as number)}
               </dd>{" "}
               {/* No second line at all when the change cannot be computed. A
                   placeholder glyph in a numeric column reads as a value. */}
               {pct === null ? null : (
-                <dd className="mt-0.5 font-mono text-xs tabular-nums text-foreground/70">
+                <dd className="mt-0.5 font-mono text-sm tabular-nums text-foreground/70">
                   {`${pct >= 0 ? "+" : ""}${pct.toFixed(1)}% since ${first.label}`}
                 </dd>
               )}

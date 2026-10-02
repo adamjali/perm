@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { FinePrint } from "@/components/data/FinePrint";
 import { Fragment } from "react";
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { InsightLede, Verdict } from "@/components/tools/Insight";
 import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
@@ -38,6 +40,7 @@ import type { CaseWageContext, CohortDuration } from "@/lib/turso/caseContext";
 import type { CohortMonth } from "@/lib/liveQueue";
 import { cn } from "@/lib/utils";
 import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
+import { formatInt } from "@/lib/format";
 
 /**
  * Everything this project can honestly say about one case, arranged.
@@ -57,7 +60,6 @@ import { DOL_CASE_STATUS_URL } from "@/components/queue/SourceNote";
  * observed in the code, since a reader cannot audit what they cannot see.
  */
 
-const int = (n: number) => n.toLocaleString("en-US");
 const money = (n: number) =>
   n.toLocaleString("en-US", {
     style: "currency",
@@ -187,6 +189,7 @@ export function CaseStatusResult({
         check={check}
         publishedFront={publishedFront}
         publishedAsOf={publishedAsOf}
+        casesAhead={casesAhead}
       />
 
       {check?.stale && !isFinal ? (
@@ -200,21 +203,17 @@ export function CaseStatusResult({
             <b className="font-bold text-data-warn-ink">
               DOL showed this status {check.ageDays} days ago
             </b>
-            , on {formatAsOf(check.date)}, and it has not been looked at since.
-            A case can move in that time, so if something has changed recently
-            it will show on DOL&apos;s own status page before it shows here.{" "}
-            {/* The sentence above promises "DOL's own status page", which is
-                the case-status search. It pointed at the processing-times
-                page, which publishes queue averages and cannot show one
-                case. */}
+            , on {formatAsOf(check.date)}, and it hasn&apos;t been checked since. A recent change shows first
+            on{" "}
+            {/* DOL's case-status search, not its processing-times page, which can't show one case. */}
             <a
               href={DOL_CASE_STATUS_URL}
               rel="noopener noreferrer"
               className="font-bold underline underline-offset-2 hover:text-primary"
             >
               flag.dol.gov
-            </a>{" "}
-            is the source, and it is the authority.
+            </a>
+            , DOL&apos;s own status page.
           </span>
         </p>
       ) : null}
@@ -231,12 +230,10 @@ export function CaseStatusResult({
               DOL&apos;s file records a decision on this case, and it is back in
               processing.
             </b>{" "}
-            The quarterly disclosure file shows it {decided.status.toLowerCase()}
+            DOL&apos;s quarterly file shows it {decided.status.toLowerCase()}
             {decided.decisionDate ? <> on {formatAsOf(decided.decisionDate)}</> : null}
-            , and the live status page now shows{" "}
-            {prettyStatus(live.status).toLowerCase()}. That is a normal sequence
-            rather than a contradiction: a denial can be appealed within 30 days
-            under{" "}
+            ; DOL&apos;s live status is now {prettyStatus(live.status).toLowerCase()}, which is current. That&apos;s
+            normal: a denial can be appealed within 30 days under{" "}
             <a
               href="https://www.ecfr.gov/current/title-20/section-656.24"
               rel="noopener noreferrer"
@@ -244,8 +241,7 @@ export function CaseStatusResult({
             >
               20 CFR 656.24(g)
             </a>
-            , which puts the case back in front of the Certifying Officer. The
-            live status is the current one.
+            .
           </span>
         </p>
       ) : null}
@@ -263,10 +259,8 @@ export function CaseStatusResult({
             </b>{" "}
             DOL&apos;s quarterly disclosure file records it as{" "}
             {decided.status.toLowerCase()}; the live status page shows{" "}
-            {prettyStatus(live.status).toLowerCase()}. That happens to about
-            one case in five thousand, usually because the case moved after
-            the disclosure file closed. Both are shown below rather than one
-            being picked.
+            {prettyStatus(live.status).toLowerCase()}. About one case in five thousand does this, usually after
+            moving once the file closed. Both are shown below.
           </span>
         </p>
       ) : null}
@@ -413,6 +407,7 @@ function Answer({
   check,
   publishedFront,
   publishedAsOf,
+  casesAhead,
 }: {
   status: string | null;
   isFinal: boolean;
@@ -420,6 +415,13 @@ function Answer({
   filingDate: string | null;
   elapsed: number | null;
   wall: Wall | null;
+  /**
+   * Cases in the normal queue filed before this one, counted to the DAY (the
+   * estimate's own input). `wall.ahead` counts whole earlier months only, so
+   * it leaves out cases filed earlier in this case's own month; this sentence
+   * and the estimate below must give one number.
+   */
+  casesAhead: number | null;
   decided: CaseLookupResult["decided"];
   check: ReturnType<typeof statusCheckAge>;
   publishedFront: string | null;
@@ -428,14 +430,14 @@ function Answer({
   const verdict = meaning ? KIND_LABEL[meaning.kind] : isFinal ? "Decided" : "Pending";
 
   /*
-   * A DENIAL IS NOT GOOD NEWS, and this used to say it was.
+   * A DENIAL IS NOT GOOD NEWS.
    *
    * All four terminal statuses share `kind: "decided"` - CERTIFIED,
    * CERTIFIED - EXPIRED, DENIED and WITHDRAWN - so the kind alone cannot tell
-   * an approval from a refusal. The old rule was `isFinal ? "good" : "flat"`,
-   * which drew a denied case with a green badge, a ▲ mark and the word
-   * "Denied" set in the brand lime. Someone opening their own case number saw
-   * the success colour on the worst outcome the process has.
+   * an approval from a refusal. A rule like `isFinal ? "good" : "flat"` would
+   * draw a denied case with a green badge, a ▲ mark and the word "Denied" set
+   * in the brand lime: the success colour on the worst outcome the process
+   * has, for someone opening their own case number.
    *
    * `isApproval` is a lookup against a set of exactly one status rather than a
    * substring test, precisely so that CERTIFIED - EXPIRED does not read as an
@@ -484,13 +486,13 @@ function Answer({
       {filingDate ? (
         <>
           It was filed {formatAsOf(filingDate)}
-          {elapsed !== null && !isFinal ? <>, {int(elapsed)} days ago</> : null}.
+          {elapsed !== null && !isFinal ? <>, {formatInt(elapsed)} days ago</> : null}.
         </>
       ) : null}{" "}
       {isFinal && decided?.decisionDate ? (
         <>
           DOL decided it {formatAsOf(decided.decisionDate)}
-          {decided.days !== null ? <>, {int(decided.days)} days after filing</> : null}.
+          {decided.days !== null ? <>, {formatInt(decided.days)} days after filing</> : null}.
         </>
       ) : wall && !wall.isPastFront ? (
         <>
@@ -504,8 +506,8 @@ function Answer({
           ) : (
             <>The oldest month still open is {formatMonth(wall.frontMonth)}</>
           )}
-          , and {int(wall.ahead)} cases in DOL&apos;s normal queue were filed
-          before this one.
+          , and {formatInt(casesAhead ?? wall.ahead)} cases in DOL&apos;s normal queue
+          were filed before this one.
         </>
       ) : wall ? (
         <>
@@ -542,8 +544,7 @@ function TheRecord({
 
   // The status is why the visitor is here; it must not weigh the same as
   // "Job title". It leads the card at display size, toned by its kind, and
-  // the dl below keeps the supporting facts. Adam's read of the flat
-  // five-row version: no hierarchy.
+  // the dl below keeps the supporting facts.
   const kind = status ? getStatusMeaning(status)?.kind ?? null : null;
   const statusTone =
     kind === "decided"
@@ -559,7 +560,7 @@ function TheRecord({
       label: "Filed",
       value: filingDate
         ? `${formatAsOf(filingDate)}${
-            elapsed !== null && !isFinal ? ` (${int(elapsed)} days ago)` : ""
+            elapsed !== null && !isFinal ? ` (${formatInt(elapsed)} days ago)` : ""
           }`
         : "Not recorded",
     },
@@ -654,8 +655,8 @@ function Position({
     <section className="mt-12">
       <h2 className="font-heading text-2xl font-black">Where it sits</h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-        Every figure here is a count over the per-case snapshot. None
-        of them is a date, and none of them is a rate this case will move at.
+        Counts from DOL&apos;s live status of every pending case, by filing
+        month.
       </p>{" "}
 
       {/* The one drawing that carries the whole mental model: DOL's tape of
@@ -673,14 +674,14 @@ function Position({
       <div className="mt-6 flex flex-wrap gap-3">
         <Stat
           emphasis
-          label="Filed before this case"
-          value={int(wall.ahead)}
-          note="undecided cases with an earlier filing month"
+          label="Filed in earlier months"
+          value={formatInt(wall.ahead)}
+          note="still waiting in DOL's normal queue"
         />
         <Stat
           label="Filed the same month"
-          value={int(wall.sameMonth)}
-          note="still open alongside it, not in front of it"
+          value={formatInt(wall.sameMonth)}
+          note="still waiting, this case among them"
         />
         <Stat
           label="Behind the work front"
@@ -726,9 +727,9 @@ function Position({
 
       {cohort ? (
         <p className="mt-5 max-w-3xl text-base leading-relaxed text-foreground/70">
-          {int(cohort.total)} cases were filed in {formatMonth(cohort.month)}.{" "}
+          {formatInt(cohort.total)} cases were filed in {formatMonth(cohort.month)}.{" "}
           <b className="font-bold text-foreground">
-            {int(cohort.decided)} of them have been decided
+            {formatInt(cohort.decided)} of them have been decided
           </b>{" "}
           so far, which is {cohort.decidedPct.toFixed(1)}% of the month.
           {maturity === "untouched" ? (
@@ -785,7 +786,7 @@ function TheDecision({
         {decided.days !== null ? (
           <Stat
             label="Days taken"
-            value={int(decided.days)}
+            value={formatInt(decided.days)}
             note="from receipt to determination"
           />
         ) : null}
@@ -803,18 +804,18 @@ function TheDecision({
 
       {quotable && duration && cohort && decided.days !== null ? (
         <p className="mt-6 max-w-3xl border-2 border-border bg-card p-5 text-base leading-relaxed text-foreground/80 shadow-hard">
-          Across {int(duration.n)} decided cases filed in{" "}
+          Across {formatInt(duration.n)} decided cases filed in{" "}
           {formatMonth(cohort.month)}, the middle one took{" "}
           <b className="font-bold text-foreground">
-            {int(duration.medianDays ?? 0)} days
+            {formatInt(duration.medianDays ?? 0)} days
           </b>
-          , and half of them landed between {int(duration.p25Days ?? 0)} and{" "}
-          {int(duration.p75Days ?? 0)}. This one took {int(decided.days)}
+          , and half of them landed between {formatInt(duration.p25Days ?? 0)} and{" "}
+          {formatInt(duration.p75Days ?? 0)}. This one took {formatInt(decided.days)}
           {duration.medianDays !== null
             ? decided.days > duration.medianDays
-              ? `, which is ${int(decided.days - duration.medianDays)} days longer than the middle of its month.`
+              ? `, which is ${formatInt(decided.days - duration.medianDays)} days longer than the middle of its month.`
               : decided.days < duration.medianDays
-                ? `, which is ${int(duration.medianDays - decided.days)} days quicker than the middle of its month.`
+                ? `, which is ${formatInt(duration.medianDays - decided.days)} days quicker than the middle of its month.`
                 : ", exactly the middle of its month."
             : "."}
         </p>
@@ -878,9 +879,9 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
           the job at a figure no employer had to pay.
         </>
       }
-      source={`DOL quarterly disclosure files · ${int(row.n)} certified cases`}
+      source={`DOL quarterly disclosure files · ${formatInt(row.n)} certified cases`}
     >
-      <div className="relative pb-9 pt-9">
+      <ChartTips label={`Where this wage sits among certified ${scope} wages`} className="pb-9 pt-9">
         {/* The subject rides above the rail so a wage at either end is never
             clipped by it, and it is translated by its own half-width rather
             than nudged, so the point of the marker is the coordinate.
@@ -894,13 +895,27 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
             is delimited by a 2px near-black border, so the fill is not the
             only thing carrying it. */}
         <span
-          className="absolute top-0 -translate-x-1/2 whitespace-nowrap border-2 border-foreground bg-primary px-2 py-0.5 font-mono text-xs font-bold tabular-nums text-primary-foreground"
+          className="absolute top-0 -translate-x-1/2 whitespace-nowrap border-2 border-foreground bg-primary px-2 py-0.5 font-mono text-sm font-bold tabular-nums text-primary-foreground"
           style={{ left: `${subject}%` }}
         >
           {money(wage.wage)}
         </span>
 
-        <div className="relative h-4 border-2 border-border bg-background">
+        <div
+          className="relative h-4 border-2 border-border bg-background"
+          data-tip={[
+            scope,
+            `This case: ${money(wage.wage)}`,
+            `5th percentile: ${money(p5)}`,
+            p25 !== null ? `25th percentile: ${money(p25)}` : null,
+            `Median: ${money(p50)}`,
+            p75 !== null ? `75th percentile: ${money(p75)}` : null,
+            `95th percentile: ${money(p95)}`,
+            `${formatInt(row.n)} certified cases`,
+          ]
+            .filter(Boolean)
+            .join("\n")}
+        >
           {bandFrom !== null && bandTo !== null && bandTo > bandFrom ? (
             <span
               aria-hidden="true"
@@ -943,7 +958,7 @@ function WageLadder({ wage }: { wage: CaseWageContext }) {
         <p className="absolute bottom-0 right-0 font-mono text-sm tabular-nums text-foreground/70">
           {money(p95)}
         </p>
-      </div>
+      </ChartTips>
     </FigurePlate>
   );
 }
@@ -973,12 +988,12 @@ function StatusExplainer({
             <a
               href={meaning.cite.href}
               rel="noopener noreferrer"
-              className="font-mono text-xs font-bold underline underline-offset-2 hover:text-primary"
+              className="font-mono text-sm font-bold underline underline-offset-2 hover:text-primary"
             >
               {meaning.cite.label}
             </a>
           ) : (
-            <span className="font-mono text-xs text-muted-foreground">
+            <span className="font-mono text-sm text-muted-foreground">
               No published definition
             </span>
           )}
@@ -1014,13 +1029,11 @@ function StatusExplainer({
           {nowInStatus !== null ? (
             <p className="mt-4 border-t-2 border-border pt-4 text-base leading-relaxed text-foreground/70">
               <b className="font-bold text-foreground">
-                {int(nowInStatus)} cases
+                {formatInt(nowInStatus)} cases
               </b>{" "}
-              are in this status right now, across every filing month. That is
-              a measure of how common the state is, and nothing more. It is not
-              how likely this case is to leave it or where it goes next: the
-              feed has only been observing status changes since August 2026,
-              and weeks of transitions cannot honestly price the odds of one.
+              are in this status right now, across every filing month: how common it is, not how likely this
+              case is to leave it. Status changes have only been recorded since August 2026, too short a record
+              to price those odds.
             </p>
           ) : null}
         </div>
@@ -1036,10 +1049,8 @@ function UndecodedStatus({ status }: { status: string }) {
         What &ldquo;{prettyStatus(status)}&rdquo; means
       </h2>{" "}
       <p className="mt-4 max-w-3xl border-2 border-border bg-card p-6 text-base leading-relaxed text-foreground/80 shadow-hard">
-        This one has not been written up here yet, and DOL publishes no
-        glossary to copy from, so nothing on this page will guess at it. The
-        determination letter or notice DOL sent the employer says what it
-        means; their attorney has it.
+        Not written up here yet, and DOL publishes no glossary, so this page won&apos;t guess. The notice DOL
+        sent the employer explains it; their attorney has it.
       </p>
     </section>
   );
@@ -1065,27 +1076,28 @@ function CohortQueues({
         Which queue the rest of {formatMonth(month)} is in
       </h2>{" "}
       <p className="mt-2 max-w-2xl text-base leading-relaxed text-foreground/70">
-        Analyst review is the ordinary queue and it moves in filing order.
-        Everything else takes a case out of that order, which is the honest
-        answer to &ldquo;DOL passed my month and I still have nothing&rdquo;.
+        Analyst review moves in filing order. A hold, an RFI, an audit or an
+        appeal takes a case out of that order.
       </p>
 
       <div className="mt-5 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <p className="text-base leading-relaxed text-foreground/80">
-          <b className="font-bold text-foreground">{int(split.ordinary)}</b> of
-          the {int(split.pending)} still open are in analyst review.
+          <b className="font-bold text-foreground">{formatInt(split.ordinary)}</b> of
+          the {formatInt(split.pending)} still open are in analyst review.
         </p>
         {/* The same drawing language the month pages use, on the same data,
             so a reader arriving here from /perm-queue/<month> is not asked to
             learn a second chart of one thing. */}
-        <StageBar stages={split.stages} scale="composition" className="mt-6" />
+        <ChartTips label={`Pending cases filed in ${formatMonth(month) ?? month}, by stage`} className="mt-6">
+          <StageBar stages={split.stages} scale="composition" tipHeading={`Filed in ${formatMonth(month) ?? month}`} />
+        </ChartTips>
         <StageLegend stages={split.stages} className="mt-4" />
-        <div className="mt-8 border-t-2 border-border pt-6">
+        <FinePrint summary="Every DOL status in this month" className="mt-6">
           <PendingCensus
             stages={split.stages}
             caption={`Every DOL status a pending case filed in ${formatMonth(month)} is currently in, grouped by queue`}
           />
-        </div>
+        </FinePrint>
       </div>
     </section>
   );
@@ -1113,15 +1125,15 @@ function EmployerRecord({
 }) {
   const thin = employer.total < MIN_RATE_SAMPLE;
   const figures: { value: string; label: string }[] = [
-    { value: int(employer.total), label: "decided cases" },
-    { value: int(employer.certified), label: "certified" },
+    { value: formatInt(employer.total), label: "decided cases" },
+    { value: formatInt(employer.certified), label: "certified" },
     ...(employer.denied > 0
-      ? [{ value: int(employer.denied), label: "denied" }]
+      ? [{ value: formatInt(employer.denied), label: "denied" }]
       : []),
     ...(employer.medianDays !== null
       ? [
           {
-            value: int(Math.round(employer.medianDays)),
+            value: formatInt(Math.round(employer.medianDays)),
             label: "median days",
           },
         ]
@@ -1165,21 +1177,21 @@ function EmployerRecord({
           {thin ? (
             employer.total === employer.certified ? (
               <>
-                A clean record over {int(employer.total)} cases is worth knowing
+                A clean record over {formatInt(employer.total)} cases is worth knowing
                 and it is not a rate. At this volume one denial would move the
                 figure by tens of percentage points, so the counts are here and
                 the percentage is not.
               </>
             ) : (
               <>
-                At {int(employer.total)} decided cases this is too small a
+                At {formatInt(employer.total)} decided cases this is too small a
                 sample to carry a percentage, so the counts are here and the
                 rate is not.
               </>
             )
           ) : (
             <>
-              {employer.approvalRate.toFixed(1)}% of {int(employer.total)}{" "}
+              {employer.approvalRate.toFixed(1)}% of {formatInt(employer.total)}{" "}
               decided cases were certified. That describes what DOL did with
               this sponsor&apos;s past filings and carries no claim about this
               one.
@@ -1215,34 +1227,29 @@ export function WontSay({ isFinal }: { isFinal: boolean }) {
               <b className="font-bold text-primary-on-ink">
                 A guaranteed decision date.
               </b>{" "}
-              The estimate above is a statistic about this case&apos;s filing
-              month, read at the percentile its stage implies, from a named
-              model with its spread shown. It is checkable and it is not a
-              promise: cases leave the queue out of order through audits and
-              appeals, and DOL publishes no schedule. The{" "}
+              The estimate is a statistic, not a schedule: audits and appeals
+              take cases out of order. Every model side by side is on the{" "}
               <Link
                 href="/tools/perm-timeline-calculator"
                 className="font-bold text-primary-on-ink underline underline-offset-2"
               >
-                timeline calculator
-              </Link>{" "}
-              shows every model side by side, disagreements included.
+                processing time calculator
+              </Link>
+              .
             </li>{" "}
             <li>
               <b className="font-bold text-primary-on-ink">
                 How likely this case is to be certified.
               </b>{" "}
-              A single odds figure would read as precision the data cannot
-              support: the measured factors are not independent, and blending
-              them into one number hides which one is doing the work. The{" "}
+              One odds figure would claim more than the data can support. The
+              measured rates, factor by factor, are on the{" "}
               <Link
                 href="/perm-denial-risk"
                 className="font-bold text-primary-on-ink underline underline-offset-2"
               >
-                denial-rate data
-              </Link>{" "}
-              publishes the measured rates separately and refuses the blend,
-              on purpose.
+                denial-rate page
+              </Link>
+              .
             </li>
           </>
         ) : (
@@ -1250,9 +1257,8 @@ export function WontSay({ isFinal }: { isFinal: boolean }) {
             <b className="font-bold text-primary-on-ink">
               What happens next for this case.
             </b>{" "}
-            PERM is the first stage of three. What follows depends on the
-            I-140, the visa bulletin and a priority date, none of which DOL
-            publishes against a case number. The{" "}
+            PERM is the first of three stages, and DOL publishes nothing about
+            the next two against a case number. The{" "}
             <Link
               href="/tools/green-card-timeline"
               className="font-bold text-primary-on-ink underline underline-offset-2"
@@ -1266,9 +1272,8 @@ export function WontSay({ isFinal }: { isFinal: boolean }) {
           <b className="font-bold text-primary-on-ink">
             Anything about the worker.
           </b>{" "}
-          DOL&apos;s disclosure files carry no beneficiary name, so this
-          project holds employers, job titles and case numbers, and never a
-          person.
+          DOL&apos;s files name employers, job titles and case numbers, never
+          the person, and neither does this site.
         </li>
       </ul>
     </section>

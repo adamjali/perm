@@ -17,6 +17,7 @@
  * queue overview two clicks away.
  */
 
+import { MS_PER_DAY } from "@/lib/time";
 import { findFront, monthsBetween, type CohortMonth } from "./liveQueue";
 import { inLine } from "./queueAhead";
 
@@ -221,7 +222,7 @@ export function daysElapsed(
   const a = Date.parse(`${from}T00:00:00Z`);
   const b = Date.parse(`${to}T00:00:00Z`);
   if (Number.isNaN(a) || Number.isNaN(b)) return null;
-  return Math.round((b - a) / 86_400_000);
+  return Math.round((b - a) / MS_PER_DAY);
 }
 
 export interface StatusCheck {
@@ -235,11 +236,10 @@ export interface StatusCheck {
 /**
  * A case's status is only as current as the last time it was read.
  *
- * MEASURED ON THE MIRROR: every pending case was last read in July or August
- * 2026, or carries no timestamp at all (11,955 of them). So a status here can
- * be weeks behind DOL's own page, and presenting it undated would be the
- * single most misleading thing this page could do: someone whose case was
- * certified last week would read "still in analyst review" and believe it.
+ * A status here can be behind DOL's own page, and presenting it undated
+ * would be the single most misleading thing this page could do: someone
+ * whose case was certified last week would read "still in analyst review"
+ * and believe it.
  *
  * A decided status cannot change, so the age only matters while a case is
  * open; the caller decides whether to act on `stale`.

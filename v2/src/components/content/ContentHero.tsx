@@ -14,7 +14,7 @@ import { motion } from "motion/react";
 import type { ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { stagger, fadeUp } from "@/lib/content/animations";
-import { useParallax } from "@/lib/hooks/useGSAP";
+import { useParallax } from "@/hooks/useGSAP";
 
 /** Hero background images per content type */
 const HERO_IMAGES: Partial<Record<ContentType, string>> = {
@@ -103,7 +103,7 @@ export default function ContentHero({
           {/* Type badge */}
           <motion.span
             variants={fadeUp}
-            className="mb-4 inline-block border-2 border-border bg-primary px-3 py-1 font-heading text-xs font-bold uppercase tracking-wider text-black"
+            className="mb-4 inline-block border-2 border-border bg-primary px-3 py-1 font-heading text-sm font-bold uppercase tracking-wider text-black"
           >
             {config.label}
           </motion.span>{" "}

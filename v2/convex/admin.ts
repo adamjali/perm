@@ -22,7 +22,6 @@ import { createLogger } from "./lib/logging";
 
 const log = createLogger("Admin");
 import { recordError } from "./lib/errorRecording";
-import { purgeAllUserData } from "./lib/deletion";
 import { buildDefaultProfile } from "./lib/userDefaults";
 import { render } from "@react-email/render";
 import { AdminEmail } from "../src/emails/AdminEmail";
@@ -757,29 +756,6 @@ export const cleanupOrphanedProfiles = internalMutation({
     }
 
     return { deleted, totalChecked: profiles.length };
-  },
-});
-
-/**
- * Purge a user by ID from CLI. Calls the centralized purgeAllUserData.
- * Use for cleaning up incomplete signups or manual admin deletion.
- */
-export const purgeUserInternal = internalMutation({
-  args: { userId: v.id("users") },
-  handler: async (ctx, args) => {
-    const user = await ctx.db.get(args.userId);
-    if (!user) {
-      return { error: "User not found" };
-    }
-    const result = await purgeAllUserData(ctx, args.userId);
-    // Best-effort: drop the Resend marketing contact too (CLI cleanup).
-    if (result.email) {
-      await ctx.scheduler.runAfter(0, internal.marketingEmail.removeContactByEmail, {
-        email: result.email,
-      });
-    }
-    console.info(`[admin] Purged user ${args.userId} (${user.email})`, result);
-    return result;
   },
 });
 

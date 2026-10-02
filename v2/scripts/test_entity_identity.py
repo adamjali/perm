@@ -19,7 +19,7 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import entity_key, typo_aliases  # noqa: E402
-from store_entities import slugify  # noqa: E402
+from lib_slugs import slugify  # noqa: E402
 
 FIXTURES = pathlib.Path(__file__).resolve().parents[1] / "src/lib/__fixtures__/entityIdentity.json"
 

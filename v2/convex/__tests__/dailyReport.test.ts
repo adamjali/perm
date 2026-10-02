@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createTestContext } from "../../test-utils/convex";
 import { api, internal } from "../_generated/api";
-import { etDay } from "../lib/alertDelivery";
+import { easternDay } from "../lib/time";
 
 const ADMIN = "admin@report-test.com";
 beforeEach(() => vi.stubEnv("ADMIN_EMAIL", ADMIN));
@@ -40,9 +40,9 @@ describe("dailyReport.store and latest", () => {
   it("keeps one report per day, prunes past 60 days, and shows them only to the admin", async () => {
     const t = createTestContext();
     // Days relative to now: pruning reads the clock, so fixed dates would age out of the test.
-    const today = etDay(Date.now());
-    const yesterday = etDay(Date.now() - 86_400_000);
-    const ancient = etDay(Date.now() - 400 * 86_400_000);
+    const today = easternDay(Date.now());
+    const yesterday = easternDay(Date.now() - 86_400_000);
+    const ancient = easternDay(Date.now() - 400 * 86_400_000);
     const report = (day: string, status: string) => ({ day, generatedAt: 1, sections: [{ key: "a", title: "A", status, summary: "s", lines: [] }] });
     await t.mutation(internal.dailyReport.store, { day: yesterday, overall: "warn", report: report(yesterday, "warn") });
     await t.mutation(internal.dailyReport.store, { day: yesterday, overall: "ok", report: report(yesterday, "ok") });

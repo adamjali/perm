@@ -1,11 +1,11 @@
 "use client";
 
 // `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here (2026-09-01) rather
+// which exists only in React's client build. Declared here rather
 // than inherited from whichever importer happened to cross a boundary first.
 // Without it this module works until the chunk graph shifts, then fails with
 // `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx for the incident.
+// and no source file. See components/layout/Footer.tsx.
 
 /**
  * CaseCard Component
@@ -37,8 +37,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ProgressStatusBadge } from "@/components/status/progress-status-badge";
-import { api } from "../../../convex/_generated/api";
-import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import { api } from "@convex/_generated/api";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
 import { formatDeadlineDate, deadlineCountdown, formatClosureReasonLabel, formatCompactDate, countShownDates } from "./case-card.utils";
 import { useCardUI } from "./useCardUI";
 import { useCardMutations } from "./useCardMutations";
@@ -162,8 +162,8 @@ export const CaseCard = memo(function CaseCard({
   const deadlineDate = useMemo(() => (nextDeadline ? formatDeadlineDate(nextDeadline) : ""), [nextDeadline]);
   const shouldExpand = ui.isHovered || isPinned;
 
-  // Phones have no hover, so the dates used to sit open on every card and the
-  // list became one long scroll. There a card starts short and a row opens it;
+  // Phones have no hover, and dates open on every card would make the list
+  // one long scroll. There a card starts short and a row opens it;
   // a pinned card opens by itself, as on desktop.
   const [datesOpen, setDatesOpen] = useState(false);
   const openOnPhone = datesOpen || !!isPinned;

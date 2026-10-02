@@ -10,6 +10,7 @@ import {
   type MetricResult,
   type RfeSummary,
 } from "@/lib/communityTimeline";
+import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
 
 /**
@@ -40,6 +41,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
   const pct = (d: number) => `${Math.min(100, (d / span) * 100)}%`;
 
   return (
+    <ChartTips label="Days each stage took, the median and the middle half">
     <ul className="grid grid-cols-1 gap-3">
       {metrics.map((m) => (
         <Fragment key={m.id}>
@@ -54,7 +56,11 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
             </div>{" "}
             {m.median !== null && m.p25 !== null && m.p75 !== null ? (
               <>
-                <div className="relative mt-3 h-6 border-2 border-border bg-background" aria-hidden="true">
+                <div
+                  className="relative mt-3 h-6 border-2 border-border bg-background"
+                  aria-hidden="true"
+                  data-tip={`${m.label}\nMedian ${days(m.median)}\nMiddle half ${m.p25.toLocaleString("en-US")} to ${days(m.p75)}\n${m.n.toLocaleString("en-US")} ${m.n === 1 ? "timeline" : "timelines"}, ${m.verified ? "DOL's record" : "self-reported"}`}
+                >
                   <span
                     className={cn("absolute inset-y-0 border-x-2 border-border", m.verified ? "bg-primary/60" : "bg-primary/30")}
                     style={{ left: pct(m.p25), width: `calc(${pct(m.p75)} - ${pct(m.p25)})` }}
@@ -77,6 +83,7 @@ export function StageMedians({ metrics }: { metrics: readonly MetricResult[] }) 
         </Fragment>
       ))}
     </ul>
+    </ChartTips>
   );
 }
 
@@ -126,6 +133,8 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
   const span = Math.ceil(far / 90) * 90;
   const at = (d: number) => `${Math.max(0, Math.min(100, (d / span) * 100))}%`;
   return (
+    // The tooltip sits outside the scrolling table, which would clip it.
+    <ChartTips label="Shared timelines, each step by days from PERM filing">
     <div className="overflow-x-auto border-2 border-border">
       <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
         <thead className="bg-muted">
@@ -163,7 +172,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
                     {shown.map((s) => (
                       <span
                         key={s.id}
-                        title={`${STOPS.find((x) => x.id === s.id)?.short ?? s.id}: day ${s.day}${s.month ? `, ${monthName(s.month)}` : ""}`}
+                        data-tip={`${STOPS.find((x) => x.id === s.id)?.short ?? s.id}\nDay ${(s.day as number).toLocaleString("en-US")} from PERM filing${s.month ? `\n${monthName(s.month)}` : ""}${r.filedMonth ? `\nPERM filed ${monthName(r.filedMonth)}` : ""}`}
                         className={cn(
                           "absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 border-2 border-border",
                           DOT[s.id],
@@ -187,6 +196,7 @@ export function BoardTable({ rows }: { rows: readonly BoardRow[] }) {
         </tbody>
       </table>
     </div>
+    </ChartTips>
   );
 }
 
@@ -197,11 +207,15 @@ export function RfeBars({ rfe }: { rfe: RfeSummary }) {
   const most = Math.max(...rfe.byReason.map((r) => r.count), 1);
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[2fr_1fr] [&>*]:min-w-0">
+      <ChartTips label="RFEs reported, by reason">
       <ul className="grid grid-cols-1 gap-2">
         {rfe.byReason.map((r) => (
           <Fragment key={r.id}>
             {" "}
-            <li className="grid grid-cols-[minmax(0,14rem)_1fr_auto] items-center gap-3 text-sm">
+            <li
+              data-tip={`${r.label}\n${r.count.toLocaleString("en-US")} of ${rfe.total.toLocaleString("en-US")} RFEs reported`}
+              className="grid grid-cols-[minmax(0,14rem)_1fr_auto] items-center gap-3 text-sm"
+            >
               <span className="font-bold">{r.label}</span>{" "}
               <span className="h-4 border-2 border-border bg-background" aria-hidden="true">
                 <span className="block h-full bg-primary/50" style={{ width: `${(r.count / most) * 100}%` }} />
@@ -210,7 +224,8 @@ export function RfeBars({ rfe }: { rfe: RfeSummary }) {
             </li>
           </Fragment>
         ))}
-      </ul>{" "}
+      </ul>
+      </ChartTips>{" "}
       <dl className="grid grid-cols-1 gap-2 self-start border-2 border-border bg-card p-4 text-sm">
         {rfe.byForm.map((f) => (
           <Fragment key={f.id}>

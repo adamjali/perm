@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { WarningIcon as AlertTriangle, XIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

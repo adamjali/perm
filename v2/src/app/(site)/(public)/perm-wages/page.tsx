@@ -38,6 +38,8 @@ import { DenialByWageBand } from "@/components/wages/DenialByWageBand";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { PageBasics } from "@/components/data/PageBasics";
+import { formatDollars } from "@/lib/format";
+import { SITE_URL } from "@/lib/constants/site";
 const TITLE = "PERM Salaries by Occupation";
 const DESCRIPTION =
   "What PERM cases pay: the full wage ladder by occupation, with volume and approval rates, from DOL's own disclosure files.";
@@ -67,10 +69,6 @@ export const metadata: Metadata = withSocialCard({
 // trigger that never fires bounds the staleness instead of stranding the page.
 export const revalidate = 604800;
 
-function fmtWage(n: number): string {
-  return `$${Math.round(n).toLocaleString("en-US")}`;
-}
-
 export default async function PermWagesPage() {
   const [stats, seed, ladders, bandsByYear, bandsPooled] = await Promise.all([
     getDisclosureStats(),
@@ -99,10 +97,10 @@ export default async function PermWagesPage() {
     occupations.filter((o) => o.code).map((o) => [o.code as string, o.slug]),
   );
 
-  const datasetSchema = getDatasetSchema("https://permtracker.app", {
+  const datasetSchema = getDatasetSchema(SITE_URL, {
     name: "PERM offered wages by occupation",
     description: DESCRIPTION,
-    url: "https://permtracker.app/perm-wages",
+    url: `${SITE_URL}/perm-wages`,
   });
 
   return (
@@ -110,10 +108,7 @@ export default async function PermWagesPage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          From DOL&apos;s own disclosure files
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           What PERM cases pay
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
@@ -140,11 +135,11 @@ export default async function PermWagesPage() {
                   // last figure of one rung glued to the next rung's label.
                   <Fragment key={d.k}>
                     <div className={d.k === "Median" ? "border-2 border-primary bg-primary/15 p-3" : "p-3"}>
-                      <dt className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+                      <dt className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
                         {d.k}
                       </dt>{" "}
                       <dd className="mt-1 font-heading text-xl font-black tabular-nums sm:text-2xl">
-                        {d.v == null ? "—" : fmtWage(d.v)}
+                        {d.v == null ? "—" : formatDollars(d.v)}
                       </dd>
                     </div>{" "}
                   </Fragment>
@@ -203,7 +198,7 @@ export default async function PermWagesPage() {
             <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
               <div className="flex flex-wrap items-baseline gap-x-6 gap-y-2">
                 <p className="font-heading text-4xl font-black tabular-nums sm:text-5xl">
-                  {fmtWage(overallMedian)}
+                  {formatDollars(overallMedian)}
                 </p>{" "}
                 <p className="max-w-md text-base leading-relaxed text-foreground/70">
                   Median of the occupation medians, across all{" "}

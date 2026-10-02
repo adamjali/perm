@@ -60,7 +60,7 @@ function DisclosureShell({
             <span className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
               <span>{item.term}</span>{" "}
               {item.hint ? (
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   {item.hint}
                 </span>
               ) : null}

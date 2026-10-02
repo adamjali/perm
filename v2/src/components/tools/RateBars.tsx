@@ -21,6 +21,9 @@
 
 import { useMemo, useState } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
+import { formatInt } from "@/lib/format";
+
 import { BaselineMultiple } from "./Insight";
 import { DataView, ScopeSelect } from "./DataView";
 import { FilterableStatTable, type CsvSpec, type Facet, type StatColumn } from "./FilterableStatTable";
@@ -66,8 +69,23 @@ export function wilsonInterval(
   };
 }
 
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
+/**
+ * What a rate bar says on hover: the figures the row does not print (the
+ * denied count and the same 95% range the table carries) beside the field.
+ */
+export function rateTip(r: RateRow, baseline: number): string {
+  const ci = r.denied === undefined ? null : wilsonInterval(r.denied, r.decided);
+  return [
+    r.label,
+    `${r.rate.toFixed(2)}% denied`,
+    r.denied === undefined
+      ? `${formatInt(r.decided)} decided`
+      : `${formatInt(r.denied)} denied of ${formatInt(r.decided)} decided`,
+    ci ? `95% range ${ci.lo.toFixed(2)}–${ci.hi.toFixed(2)}%` : null,
+    `Field baseline ${baseline.toFixed(2)}%`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number }) {
@@ -76,6 +94,7 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
 
   return (
     <div className="border-2 border-border bg-card p-5 shadow-hard-sm sm:p-6">
+      <ChartTips label="Denial rate by group, against the field baseline">
       <div className="space-y-5">
         {rows.map((r) => {
           const ratio = baseline > 0 ? r.rate / baseline : 1;
@@ -88,15 +107,15 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
                 ? "var(--data-warn)"
                 : "var(--primary)";
           return (
-            <div key={r.label}>
+            <div key={r.label} data-tip={rateTip(r, baseline)}>
               <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                 <p className="text-sm font-bold">{r.label}</p>{" "}
                 <p className="flex items-baseline gap-2 font-mono text-sm font-bold tabular-nums">
-                  <BaselineMultiple rate={r.rate} baseline={baseline} />{" "}
+                  <BaselineMultiple rate={r.rate} baseline={baseline} withTitle={false} />{" "}
                   <span>
                     {r.rate.toFixed(2)}%{" "}
                     <span className="font-normal text-muted-foreground">
-                      of {fmtInt(r.decided)}
+                      of {formatInt(r.decided)}
                     </span>
                   </span>
                 </p>
@@ -118,13 +137,14 @@ export function RateBars({ rows, baseline }: { rows: RateRow[]; baseline: number
                 />
               </div>
               {r.note ? (
-                <p className="mt-1.5 text-xs leading-relaxed text-foreground/60">{r.note}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-foreground/60">{r.note}</p>
               ) : null}
             </div>
           );
         })}
       </div>
-      <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-foreground/60">
+      </ChartTips>
+      <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground/60">
         <span className="inline-flex items-center gap-1.5">
           <span aria-hidden="true" className="inline-block h-3 w-0.5 bg-foreground/40" />
           Field baseline, {baseline.toFixed(2)}%
@@ -193,7 +213,7 @@ export function RateTable({
           }
         }}
         className={
-          "min-h-[44px] w-full px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
+          "min-h-[44px] w-full px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider transition-colors hover:text-primary-on-ink focus-visible:ring-2 focus-visible:ring-primary " +
           (numeric ? "text-right" : "text-left") +
           (sortKey === key ? " text-primary-on-ink" : "")
         }
@@ -217,7 +237,7 @@ export function RateTable({
             {head("rate", "Denial rate")}
             <th
               scope="col"
-              className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell"
+              className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell"
             >
               95% range
             {" "}</th>
@@ -225,7 +245,7 @@ export function RateTable({
             {head("decided", "Decided")}
             <th
               scope="col"
-              className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell"
+              className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell"
             >
               vs field{" "}
             </th>
@@ -239,7 +259,7 @@ export function RateTable({
                 <td className="px-3 py-2.5 font-bold">
                   {r.label}
                   {r.note ? (
-                    <span className="block text-xs font-normal leading-relaxed text-foreground/60">
+                    <span className="block text-sm font-normal leading-relaxed text-foreground/60">
                       {r.note}
                     </span>
                   ) : null}
@@ -249,9 +269,9 @@ export function RateTable({
                   {ci ? `${ci.lo.toFixed(2)}–${ci.hi.toFixed(2)}%` : "—"}
                 {" "}</td>
                 <td className="px-3 py-2.5 text-right tabular-nums">
-                  {r.denied === undefined ? "—" : fmtInt(r.denied)}
+                  {r.denied === undefined ? "—" : formatInt(r.denied)}
                 {" "}</td>
-                <td className="px-3 py-2.5 text-right tabular-nums">{fmtInt(r.decided)}{" "}</td>
+                <td className="px-3 py-2.5 text-right tabular-nums">{formatInt(r.decided)}{" "}</td>
                 <td className="hidden px-3 py-2.5 text-right sm:table-cell">
                   <BaselineMultiple rate={r.rate} baseline={baseline} />
                 {" "}</td>
@@ -393,14 +413,14 @@ export function RankedRateViews({
         label: "Denied",
         numeric: true,
         sortValue: (r) => r.denied,
-        render: (r) => fmtInt(r.denied),
+        render: (r) => formatInt(r.denied),
       },
       {
         key: "decided",
         label: "Decided",
         numeric: true,
         sortValue: (r) => r.decided,
-        render: (r) => fmtInt(r.decided),
+        render: (r) => formatInt(r.decided),
       },
       {
         key: "multiple",

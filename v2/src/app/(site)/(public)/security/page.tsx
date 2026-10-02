@@ -17,6 +17,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import { openGraphBase } from "@/lib/openGraphBase";
 import Link from "next/link";
 import { CheckCircleIcon as CheckCircle2, ShieldIcon } from "@phosphor-icons/react/ssr";
+import { MoreText } from "@/components/data/MoreText";
 
 export const dynamic = "force-static";
 
@@ -59,15 +60,17 @@ export default function SecurityPage() {
             <h2 className="font-heading text-2xl font-bold mt-2 mb-4">
               Overview
             </h2>{" "}
-            <p className="text-foreground/80 leading-relaxed">
-              Infrastructure runs on providers that hold SOC&nbsp;2 Type&nbsp;II
-              reports: Convex (accounts and case data), Oracle Cloud
-              Infrastructure (the website&apos;s server) and Cloudflare (the
-              network in front of it). User data is encrypted at
-              rest and in transit. Authentication uses email-verified one-time codes
-              or Google OAuth; all passwords are salted and hashed using industry-standard
-              algorithms. Outbound transactional mail is DKIM-, SPF-, and DMARC-authenticated.
-            </p>
+            <MoreText gist={"Hosted on SOC 2 Type II providers; data encrypted at rest and in transit."}>
+              <p className="text-foreground/80 leading-relaxed">
+                Infrastructure runs on providers that hold SOC&nbsp;2 Type&nbsp;II
+                reports: Convex (accounts and case data), Oracle Cloud
+                Infrastructure (the website&apos;s server) and Cloudflare (the
+                network in front of it). User data is encrypted at
+                rest and in transit. Authentication uses email-verified one-time codes
+                or Google OAuth; all passwords are salted and hashed using industry-standard
+                algorithms. Outbound transactional mail is DKIM-, SPF-, and DMARC-authenticated.
+              </p>
+            </MoreText>
           </section>
 
           {/* Reporting vulnerabilities */}
@@ -118,7 +121,7 @@ export default function SecurityPage() {
                 </div>{" "}
                 <div className="shrink-0 flex items-center gap-2 rounded-full border-2 border-green-600 bg-green-50 dark:bg-green-950/30 px-3 py-1">
                   <CheckCircle2 className="h-4 w-4 text-green-600" aria-hidden="true" />
-                  <span className="text-xs mono font-bold uppercase tracking-wider text-green-800 dark:text-green-400">
+                  <span className="text-sm mono font-bold uppercase tracking-wider text-green-800 dark:text-green-400">
                     Resolved
                   </span>
                 </div>
@@ -166,19 +169,21 @@ export default function SecurityPage() {
                     signup endpoint with server-side token verification.
                   </li>
                 </ul>{" "}
-                <p>
-                  <strong>If you received an unexpected email.</strong> If you
-                  received a message referencing permtracker.app that you didn’t expect, particularly one containing a link or promotional content in Turkish, <strong>please don’t click any links</strong>{" "}
-                  in that message. The content wasn’t authorized by PERM Tracker,
-                  wasn’t directed to you by us, and doesn’t reflect our product
-                  or services. You may safely delete the email. You won’t
-                  receive further messages from us unless you choose to sign up
-                  for an account directly at{" "}
-                  <Link href="/" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-                    permtracker.app
-                  </Link>
-                  .
-                </p>{" "}
+                <MoreText gist={"Got an unexpected email naming permtracker.app? Don't click its links."}>
+                  <p>
+                    <strong>If you received an unexpected email.</strong> If you
+                    received a message referencing permtracker.app that you didn’t expect, particularly one containing a link or promotional content in Turkish, <strong>please don’t click any links</strong>{" "}
+                    in that message. The content wasn’t authorized by PERM Tracker,
+                    wasn’t directed to you by us, and doesn’t reflect our product
+                    or services. You may safely delete the email. You won’t
+                    receive further messages from us unless you choose to sign up
+                    for an account directly at{" "}
+                    <Link href="/" className="font-bold text-foreground underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                      permtracker.app
+                    </Link>
+                    .
+                  </p>
+                </MoreText>{" "}
                 <p>
                   <strong>Coordinating with downstream providers.</strong> The
                   phishing URL used in the attack has been reported to Google Safe

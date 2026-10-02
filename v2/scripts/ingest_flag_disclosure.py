@@ -1,84 +1,66 @@
 #!/usr/bin/env python3
-"""Ingest DOL's quarterly PW (ETA-9141) and LCA (ETA-9035) disclosure files into Turso.
+"""Ingest DOL's quarterly PW (ETA-9141) and LCA (ETA-9035) disclosure files.
 
 One script, two programs, selected with `--program pw|lca`. Each run discovers
-the NEWEST disclosure file for that program on DOL's performance page, streams
+the newest disclosure file for that program on DOL's performance page, streams
 it, and upserts one row per case into `pwd_cases` or `lca_cases`.
 
     python3 scripts/ingest_flag_disclosure.py --program pw
     python3 scripts/ingest_flag_disclosure.py --program lca
 
-    # Probe the parser against a local or synthetic file, writing nothing.
+    # Probe the parser against a local file, writing nothing.
     python3 scripts/ingest_flag_disclosure.py --program pw --dry-run --file x.xlsx --dump-rows 5
 
     # What column names does this file actually use?
     python3 scripts/ingest_flag_disclosure.py --program lca --dump-header --file x.xlsx
 
-Everything here mirrors `ingest_perm_disclosure.py`, because every rule in
-that file was a defect first:
+The rules it shares with `ingest_perm_disclosure.py`:
 
 * **The download URL is discovered, never constructed.** DOL keeps the
   current-year file under `/media/` and the archive under
-  `/sites/dolgov/files/ETA/oflc/pdfs/`; a hardcoded path returns a styled 404
-  that reads like a dead link. Measured 2026-09-02 on the live page: the LCA
-  link TEXT is misspelled `LCA_Dislclosure_Data_FY2026_Q3.xlsx` while its href
-  is spelled correctly, and that href carries a double slash
-  (`https://www.dol.gov//media/...`). Discovery matches the href's basename
-  and collapses the slashes; the link text is never read.
-* **www.dol.gov refuses a bare User-Agent** (403 "Access Denied" from Akamai)
-  and serves the full browser header set in `lib_gov_data.BROWSER_HEADERS`.
-  Sustained traffic earns a 403 anyway, so the download backs off.
-* **XLSX omits empty cells entirely.** A row's `<c>` children indexed by
-  position shift every column after the first blank one, so a blank job title
-  would put the SOC code in the job-title column and nobody would notice.
-  `lib_gov_data.iter_rows` resolves each cell from its own `r="A1"` reference.
-  `scripts/test_flag_disclosure.py` builds a fixture with a blank cell in the
-  middle of a row and asserts the columns after it land correctly.
-* **A load is guarded BEFORE it writes** (`lib_load_guard.py`). A pre-pass
-  over the workbook records which columns resolved, the blank share per
-  column and the median wage per unit, and compares them with the previous
-  load of the same program (the bare `flag_disclosure_<program>` record).
-  A column DOL renamed used to land as NULL under a green run; now a lost
-  column, a blank share up 25 points, a median wage moved by half, or more
-  than 1% of rows with impossible values refuses the file with nothing
-  written. `--accept-drift` overrides the drift half after a human looked;
-  the impossible-values half has no override.
-* **Columns are resolved by HEADER NAME, per file.** Every name below was read
-  off DOL's own record layouts for FY2026 Q3 (`PW_Record_Layout_FY2026_Q3.pdf`
-  and `LCA_Record_Layout_FY2026_Q3.pdf`, both under `/pdfs/FY26Q3/`), not
-  guessed. A guessed name degrades to an empty column, which reads exactly
-  like DOL not publishing the field. Older-form files (the `_old_form` PW
-  files, FY2020 and earlier) are NOT mapped: run `--dump-header` on one and
-  add the verified names before pointing this at it.
-* **NO CONTACT DATA, EVER.** Both files carry `EMPLOYER_POC_EMAIL`,
-  `AGENT_ATTORNEY_EMAIL_ADDRESS`, direct phones and street addresses. Not one
-  of those columns is in `PROGRAMS[...]["columns"]`, so nothing here can read
-  them and nothing downstream can print them.
+  `/sites/dolgov/files/ETA/oflc/pdfs/`, and a hardcoded path returns a styled
+  404 that reads like a dead link. The LCA link's text is misspelled
+  (`LCA_Dislclosure_Data_...`) while its href is right, and the href carries a
+  double slash, so discovery matches the href's basename, collapses the
+  slashes and never reads the link text.
+* **www.dol.gov refuses a bare User-Agent** and serves the full browser header
+  set in `lib_gov_data.BROWSER_HEADERS`. Sustained traffic earns a 403 anyway,
+  so the download backs off.
+* **XLSX omits empty cells**, so a row's cells indexed by position shift after
+  the first blank one. `lib_gov_data.iter_rows` resolves each cell from its
+  own `r="A1"` reference, and the test fixture has a blank mid-row cell.
+* **A load is guarded before it writes** (`lib_load_guard.py`). A pre-pass
+  records which columns resolved, the blank share per column and the median
+  wage per unit, and compares them with the previous load of the same
+  program. A lost column, a blank share up 25 points, a median wage moved by
+  half, or more than 1% of rows with impossible values refuses the file with
+  nothing written. `--accept-drift` overrides the drift half after a person
+  has looked; the impossible-values half has no override.
+* **Columns are resolved by header name, per file**, from the names on DOL's
+  FY2026 Q3 record layouts. A guessed name degrades to an empty column, which
+  reads exactly like DOL not publishing the field. The older-form PW files
+  (FY2020 and earlier) aren't mapped: run `--dump-header` on one and add the
+  verified names first.
+* **No contact data, ever.** Both files carry contact emails, direct phones
+  and street addresses, and none of those columns is in
+  `PROGRAMS[...]["columns"]`, so nothing here can read them.
 
-The two things this script does that the PERM ingest does not:
+Two things this script does that the PERM ingest doesn't:
 
-1. **It writes rows to Turso itself**, chunked 500 rows per statement, four
-   statements per pipeline request (the `turso_migrate.py` shape). `INSERT OR
-   REPLACE` on `case_number`, so a case re-published in a later file (a PW
-   redetermination decided the next quarter) moves to the new `source_file`.
+1. **It writes rows itself**, `INSERT OR REPLACE` on `case_number`, so a case
+   republished in a later file (a PW redetermination decided the next
+   quarter) moves to the new `source_file`.
 2. **It reconciles before it reports success.** After the write,
-   `COUNT(*) WHERE source_file = <this file>` must equal the number of unique
-   cases read from that file, or the run is recorded as failed and exits 1.
-   A load that wrote half a file and stamped itself fresh is the failure the
-   freshness table exists to catch, so the stamp happens only after the
-   reconcile passes.
+   `COUNT(*) WHERE source_file = <this file>` must equal the unique cases read
+   from that file, or the run is recorded as failed and exits 1. Freshness is
+   stamped only after that passes.
 
-**A monthly schedule on a quarterly file would rewrite every row eleven
-times for nothing.** An LCA file is several hundred thousand rows, and each
-row written costs one table write plus one per index - SEVEN indexes now,
-after the four the unified search's state and occupation leads need, so a
-437k-row LCA reload is ~3.5M writes against a 10M/month plan and the skip
-below is what keeps that quarterly rather than monthly. So the file's SHA-256 is computed while it downloads and kept in
-`perm_docs['flag_disclosure_<program>']` with the row count; a later run that
-sees the same hash and finds the table still holding that count skips the
-write, re-stamps freshness (the data has been re-verified current) and
-records a zero-row run. `--force` bypasses that. DOL republishes each quarter
-under a new filename, so the new quarter is loaded the first month it exists.
+A load rewrites every row and every index entry, so the file's SHA-256 is kept
+in `perm_docs['flag_disclosure_<program>']` with the row count: a later run
+that sees the same hash, with the table still holding that count, skips the
+write, re-stamps freshness and records a zero-row run. `--force` bypasses
+that. DOL republishes each quarter under a new filename, so a new quarter
+loads the first month it exists.
 """
 from __future__ import annotations
 
@@ -97,7 +79,7 @@ import zipfile
 from collections import Counter
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from build_entity_detail import _search_slug  # noqa: E402
+from lib_slugs import slugify  # noqa: E402
 from ingest_perm_disclosure import (  # noqa: E402
     STATE_NAMES,
     US_STATES,
@@ -115,7 +97,10 @@ from lib_gov_data import (  # noqa: E402
     log,
     read_shared_strings,
 )
-from lib_turso import Turso, lit, record_run, stamp_freshness  # noqa: E402
+from lib_turso import (  # noqa: E402
+    Turso, add_missing_columns, case_update, query_rows, read_doc, record_run, stamp_freshness,
+    stmt, write_doc,
+)
 
 PERFORMANCE_PAGE = "https://www.dol.gov/agencies/eta/foreign-labor/performance"
 HOST = "https://www.dol.gov"
@@ -153,8 +138,8 @@ PROGRAMS: dict[str, dict] = {
             "wage_unit": ["PWD_UNIT_OF_PAY"],
             "state": ["PRIMARY_WORKSITE_STATE"],
             "visa": ["VISA_CLASS"],
-            # Read off PW_Record_Layout_FY2026_Q3.pdf (Sep 26 2026): the
-            # employer's NAICS code and the primary worksite's city.
+            # From PW_Record_Layout_FY2026_Q3.pdf: the employer's NAICS code
+            # and the primary worksite's city.
             "city": ["PRIMARY_WORKSITE_CITY"],
             "naics": ["NAICS_CODE"],
             # The REPRESENTING firm, not the employer. Both files carry it
@@ -194,9 +179,9 @@ PROGRAMS: dict[str, dict] = {
             "wage_unit": ["WAGE_UNIT_OF_PAY"],
             "state": ["WORKSITE_STATE"],
             "visa": ["VISA_CLASS"],
-            # Read off LCA_Record_Layout_FY2026_Q3.pdf (Sep 26 2026): NAICS_CODE
-            # is Form ETA-9035 Section C, Item 13; WORKSITE_CITY is the FIRST
-            # worksite location (the Worksites companion file lists the rest).
+            # From LCA_Record_Layout_FY2026_Q3.pdf: NAICS_CODE is Form ETA-9035
+            # Section C, Item 13; WORKSITE_CITY is the first worksite location
+            # (the Worksites companion file lists the rest).
             "city": ["WORKSITE_CITY"],
             "naics": ["NAICS_CODE"],
             # The REPRESENTING firm, not the employer. Both files carry it
@@ -204,10 +189,34 @@ PROGRAMS: dict[str, dict] = {
             # Firm representing the Employer submitting the Labor Condition
             # Application", the ETA-9141 one the same for a wage request.
             "attorney": ["LAWFIRM_NAME_BUSINESS_NAME"],
+            # From LCA_Record_Layout_FY2026_Q3.pdf. The worker counts are Form
+            # ETA-9035 Section B, Items 7 and 7a-7f: how many of the positions
+            # are new employment, continuing, a change of employer (a
+            # transfer) and so on. PW_WAGE_LEVEL is Section F.a, Item 13a,
+            # filled only when the employer determined the wage itself from
+            # OES ("I" to "IV" or "N/A"). The two flags are Section H.a, Items
+            # 1 and 2: the employer's own attestation. Note the hyphen: the
+            # header is `H-1B_DEPENDENT`.
+            "workers": ["TOTAL_WORKER_POSITIONS"],
+            "new_employment": ["NEW_EMPLOYMENT"],
+            "continued_employment": ["CONTINUED_EMPLOYMENT"],
+            "change_previous_employment": ["CHANGE_PREVIOUS_EMPLOYMENT"],
+            "new_concurrent_employment": ["NEW_CONCURRENT_EMPLOYMENT"],
+            "change_employer": ["CHANGE_EMPLOYER"],
+            "amended_petition": ["AMENDED_PETITION"],
+            "wage_level": ["PW_WAGE_LEVEL"],
+            "h1b_dependent": ["H-1B_DEPENDENT", "H_1B_DEPENDENT"],
+            "willful_violator": ["WILLFUL_VIOLATOR"],
         },
         "event_dates": [],
     },
 }
+
+# The LCA worker-count columns, in form order (Section B, Items 7a to 7f).
+LCA_COUNT_COLUMNS = (
+    "new_employment", "continued_employment", "change_previous_employment",
+    "new_concurrent_employment", "change_employer", "amended_petition",
+)
 
 # A file that resolves none of these is unusable; the rest degrade to NULL
 # columns and say so in the log.
@@ -222,17 +231,17 @@ COLUMNS = (
     "attorney_name", "attorney_slug",
     "source_file", "fiscal_year",
     "worksite_city", "naics",
+    # LCA only; NULL on every wage-request row. See PROGRAMS["lca"].
+    "workers", *LCA_COUNT_COLUMNS, "wage_level", "h1b_dependent", "willful_violator",
 )
+INTEGER_COLUMNS = frozenset({"fiscal_year", "workers", *LCA_COUNT_COLUMNS, "h1b_dependent", "willful_violator"})
 
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
-# MEASURED 2026-09-02, and the reason this exists: while a 147k-row load ran,
-# an ordinary GROUP BY on another table went from ~0.3s to a WORST OF 59.2s,
-# sampled every 10 seconds. That starved a production build's prerender (a 90s
-# query deadline, blown twice) and would starve the live site the same way. A
-# load is a background chore; the site is not. Pacing gives the primary room
-# between write requests: 2,000 rows a request at 0.35s idle is ~26 seconds
-# added per 147k rows, against a load that already takes minutes.
+# Idle between write requests. While a large load ran unpaced, an ordinary
+# GROUP BY on another table went from ~0.3 s to as much as 59 s, which starves
+# the live site; a load is a background chore and the site isn't. 2,000 rows a
+# request at 0.35 s idle adds ~26 s per 147k rows.
 WRITE_PAUSE_S = 0.35
 # Names and titles are truncated exactly as the PERM corpus truncates them,
 # so an employer string here matches the one the entity tables were built on.
@@ -270,7 +279,17 @@ def table_ddl(table: str) -> list[str]:
              source_file     TEXT,
              fiscal_year     INTEGER,
              worksite_city   TEXT,
-             naics           TEXT)""",
+             naics           TEXT,
+             workers                    INTEGER,
+             new_employment             INTEGER,
+             continued_employment       INTEGER,
+             change_previous_employment INTEGER,
+             new_concurrent_employment  INTEGER,
+             change_employer            INTEGER,
+             amended_petition           INTEGER,
+             wage_level                 TEXT,
+             h1b_dependent              INTEGER,
+             willful_violator           INTEGER)""",
     ]
 
 
@@ -286,37 +305,23 @@ def index_ddl(table: str) -> list[str]:
         # read never touches rows belonging to anybody else.
         f"CREATE INDEX IF NOT EXISTS {table}_emp ON {table} (employer_slug, received_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_decided ON {table} (decision_date)",
-        # THE FIRM LEAD, added 2026-09-03. DOL publishes the representing law
-        # firm for both of these programs - `LAWFIRM_NAME_BUSINESS_NAME` is in
-        # the ETA-9035 and ETA-9141 record layouts - and this ingest simply
-        # never read the column, so the unified search's firm lead answered
-        # from the PERM file alone and said "this firm files no wage requests"
-        # by omission. Same shape as `idx_pc_att_dec` and `idx_pc_att_st_dec`.
+        # The unified search's law-firm lead, the same shape as perm_cases'
+        # `idx_pc_att_dec` and `idx_pc_att_st_dec`.
         f"CREATE INDEX IF NOT EXISTS {table}_att_dec ON {table} (attorney_slug, decision_date)",
         f"CREATE INDEX IF NOT EXISTS {table}_att_st_dec ON {table} (attorney_slug, case_status, decision_date)",
-        # THE STATE AND OCCUPATION LEADS OF THE UNIFIED CASE SEARCH. Both
-        # columns were here from the first load and neither had an index, so
-        # `src/lib/turso/unifiedSearch.ts` read the PERM file alone for those
-        # two leads and said nothing about the other two programs. Measured
-        # against production on 2026-09-03, rows READ for a hundred-row page:
+        # The unified search's state and occupation leads. Without these a
+        # rare state or occupation scans the whole table through `_decided`
+        # (wage requests in Wyoming read 229,555 rows for a 100-row page; with
+        # them, 305).
         #
-        #     pwd state=WY                229,555 -> 305
-        #     pwd state=CA + DENIED       634,638 -> 0     (no such rows exist)
-        #     lca state=WY                259,885 -> 100
-        #     lca state=CA + DENIED        78,360 -> 100
-        #     lca occupation 49-3051      437,496 -> 0
-        #
-        # Every "before" planned as `SCAN {table} USING INDEX {table}_decided`:
-        # cheap when the needle is common, the whole table when it is rare.
-        #
-        # FOUR RATHER THAN TWO, because a three-column index cannot supply
+        # Four rather than two, because a three-column index cannot supply
         # `ORDER BY decision_date DESC` unless the status is an equality, and a
         # two-column one cannot seek the status. The `_st_` pair is used only
         # when the outcome bucket is a SINGLE status; a multi-status bucket
         # rides the plain index and filters, which measured cheaper (0.57 s for
         # California's three-status withdrawn bucket on `lca_cases`).
         #
-        # THE SOC INDEXES ARE ON AN EXPRESSION because the programs spell the
+        # The SOC indexes are on an expression because the programs spell the
         # occupation differently: `pwd_cases` holds ZERO dotted codes out of
         # 634,638 while `lca_cases` holds 434,314 of them. The 6-digit group is
         # the only key the files share, and SQLite serves a filter on an
@@ -521,6 +526,49 @@ def parse_state(raw: str | None) -> str | None:
     return STATE_NAMES.get(text)
 
 
+def parse_count(raw: str | None) -> int | None:
+    """A worker count: `3` -> 3, `0` -> 0, blank or unreadable -> None.
+
+    `3.0` (a number cell written as a float) reads as 3. A negative or
+    fractional count is not a count and reads as None, never 0.
+    """
+    text = (raw or "").replace(",", "").strip()
+    if not text:
+        return None
+    try:
+        value = float(text)
+    except ValueError:
+        return None
+    if value < 0 or value != int(value):
+        return None
+    return int(value)
+
+
+WAGE_LEVELS = ("I", "II", "III", "IV")
+
+
+def parse_wage_level(raw: str | None) -> str | None:
+    """`I` to `IV` as DOL prints them; `N/A`, blank and anything else -> None.
+
+    Arabic numerals are accepted as the same levels, in case a file writes
+    `1` to `4`; nothing else is guessed.
+    """
+    text = (raw or "").strip().upper().replace("LEVEL", "").strip()
+    if text in WAGE_LEVELS:
+        return text
+    return {"1": "I", "2": "II", "3": "III", "4": "IV"}.get(text)
+
+
+def parse_flag(raw: str | None) -> int | None:
+    """`Y` -> 1, `N` -> 0, anything else (blank, N/A) -> None."""
+    text = (raw or "").strip().upper()
+    if text in ("Y", "YES"):
+        return 1
+    if text in ("N", "NO"):
+        return 0
+    return None
+
+
 def resolve_columns(header_cells: dict[int, str], cfg: dict, filename: str) -> tuple[dict[int, str], dict[int, int]]:
     """Map sheet column index -> field name, and index -> event-date slot.
 
@@ -578,7 +626,7 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
         "received_date": to_iso((rec.get("received") or "").strip()),
         "decision_date": decided,
         "employer_name": employer,
-        "employer_slug": _search_slug(employer) if employer else None,
+        "employer_slug": slugify(employer) if employer else None,
         "job_title": clean_text(rec.get("job_title"), NAME_LEN),
         "soc_code": clean_text(rec.get("soc_code"), SOC_LEN),
         "soc_title": clean_text(rec.get("soc_title"), NAME_LEN),
@@ -590,11 +638,17 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
         # THE SAME SLUG FUNCTION THE PERM INGEST AND THE READ LAYER USE. A firm
         # slugged differently here would be a law firm whose wage requests
         # cannot be found from its own page.
-        "attorney_slug": _search_slug(firm) if firm else None,
+        "attorney_slug": slugify(firm) if firm else None,
         "source_file": source_file,
         "fiscal_year": year,
         "worksite_city": clean_text(rec.get("city"), 60),
         "naics": normalize_naics(rec.get("naics")),
+        # LCA only (the wage-request map names none of these, so they are None).
+        "workers": parse_count(rec.get("workers")),
+        **{c: parse_count(rec.get(c)) for c in LCA_COUNT_COLUMNS},
+        "wage_level": parse_wage_level(rec.get("wage_level")),
+        "h1b_dependent": parse_flag(rec.get("h1b_dependent")),
+        "willful_violator": parse_flag(rec.get("willful_violator")),
     }
 
 
@@ -708,23 +762,14 @@ def load_record_key(program: str, name: str | None = None) -> str:
     return f"flag_disclosure_{program}" + (f":{name}" if name else "")
 
 
-def _read_doc(db: Turso, key: str) -> dict | None:
-    raw = db.scalar("SELECT json FROM perm_docs WHERE key = ?", [key])
-    if not raw:
-        return None
-    try:
-        return json.loads(raw)
-    except (TypeError, ValueError):
-        return None
-
 
 def read_load_record(db: Turso, program: str, name: str) -> dict | None:
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""")
-    rec = _read_doc(db, load_record_key(program, name))
+    rec = read_doc(db, load_record_key(program, name))
     if rec:
         return rec
-    legacy = _read_doc(db, load_record_key(program))
+    legacy = read_doc(db, load_record_key(program))
     return legacy if legacy and legacy.get("file") == name else None
 
 
@@ -733,10 +778,7 @@ def write_load_record(db: Turso, program: str, record: dict, *, latest: bool) ->
     if latest:
         keys.append(load_record_key(program))
     for key in keys:
-        db.execute(
-            "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-            [key, json.dumps(record, separators=(",", ":")), int(time.time() * 1000)],
-        )
+        write_doc(db, key, record)
 
 
 def summary_key(program: str) -> str:
@@ -747,23 +789,17 @@ def write_summary_doc(db: Turso, program: str, table: str) -> dict:
     """What the web reads instead of counting the table on every render:
     rows, the span of dates, and the files behind them. Two scans, once per
     load, against a table nothing else counts."""
-    res = db.execute(
-        f"SELECT count(*), min(received_date), max(decision_date) FROM {table}")
-    row = res["response"]["result"]["rows"][0]
-    cell = lambda c: None if c["type"] == "null" else c["value"]  # noqa: E731
-    per_file = db.execute(
-        f"SELECT source_file, count(*) FROM {table} GROUP BY source_file ORDER BY source_file")
-    files = {r[0]["value"]: int(r[1]["value"]) for r in per_file["response"]["result"]["rows"]}
+    rows, earliest, latest = query_rows(
+        db, f"SELECT count(*), min(received_date), max(decision_date) FROM {table}")[0]
+    files = {f: int(n) for f, n in query_rows(
+        db, f"SELECT source_file, count(*) FROM {table} GROUP BY source_file ORDER BY source_file")}
     doc = {
-        "rows": int(cell(row[0]) or 0),
-        "earliestReceived": cell(row[1]),
-        "latestDecision": cell(row[2]),
+        "rows": int(rows or 0),
+        "earliestReceived": earliest,
+        "latestDecision": latest,
         "files": files,
     }
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-        [summary_key(program), json.dumps(doc, separators=(",", ":")), int(time.time() * 1000)],
-    )
+    write_doc(db, summary_key(program), doc)
     log(f"  summary   {doc['rows']:,} rows, received from {doc['earliestReceived']}, "
         f"decided through {doc['latestDecision']}, {len(files)} file(s)")
     return doc
@@ -772,46 +808,22 @@ def write_summary_doc(db: Turso, program: str, table: str) -> dict:
 def ensure_columns(db: Turso, table: str) -> None:
     """Add any column in `COLUMNS` the live table is missing.
 
-    `CREATE TABLE IF NOT EXISTS` is a no-op on a table that already exists, so
-    it can create a table with new columns but never ADD one. Both of these
-    tables were loaded before the law firm was read, so without this the very
-    next INSERT names a column that is not there and the load dies with a
-    syntax error that reads like a typo.
-
-    THE ALTERNATIVE WAS A FULL RELOAD AND IT IS NOT AFFORDABLE. Measured:
-    pwd_cases is 634,638 rows and lca_cases 437,496, and each row written costs
-    one table write plus one per index - nine of them now - so reloading both
-    to gain two columns is roughly 10.7M writes against a 10M/month plan. An
-    ALTER is metadata only, and the backfill that follows rewrites each row
-    once.
-
-    Idempotent by inspection rather than by catching an error, so a genuine
-    failure is not swallowed as "column already there".
+    A full reload is the other way to gain a column, and it isn't affordable:
+    every row rewritten costs a write per index too. An ALTER is metadata
+    only, and a backfill then writes each row once.
     """
-    res = db.execute(f"SELECT name FROM pragma_table_info('{table}')")
-    have = {
-        str(row[0]["value"])
-        for row in res["response"]["result"]["rows"]
-        if row and row[0].get("type") != "null"
-    }
-    if not have:
-        return  # the table does not exist yet; the DDL above will create it
-    missing = [c for c in COLUMNS if c not in have]
-    for col in missing:
-        kind = "REAL" if col == "wage" else "INTEGER" if col == "fiscal_year" else "TEXT"
-        log(f"  adding missing column {table}.{col} {kind}")
-        db.script([f"ALTER TABLE {table} ADD COLUMN {col} {kind}"])
+    types = {c: "REAL" if c == "wage" else "INTEGER" if c in INTEGER_COLUMNS else "TEXT"
+             for c in COLUMNS}
+    for col in add_missing_columns(db, table, types):
+        log(f"  added missing column {table}.{col} {types[col]}")
 
 
 def count_for_file(db: Turso, table: str, source_file: str) -> int:
     return int(db.scalar(f"SELECT count(*) FROM {table} WHERE source_file = ?", [source_file]) or 0)
 
 
-# One UPDATE carries this many rows. 200 x 3 parameters is 600 per statement,
-# comfortably inside any bind limit, and it is the batching that matters:
-# 500 SEPARATE update statements in one request measured 986 rows per 20
-# seconds against production, which is 3.6 hours for pwd_cases alone and over
-# the workflow's own timeout. The cost was per STATEMENT, not per request.
+# Rows per backfill UPDATE: two parameters per column plus one per row, so
+# the eleven LCA detail columns make 4,600 parameters.
 BACKFILL_ROWS_PER_STMT = 200
 BACKFILL_STMTS_PER_REQUEST = 8
 
@@ -820,6 +832,8 @@ BACKFILL_STMTS_PER_REQUEST = 8
 BACKFILL_GROUPS: dict[str, tuple[str, ...]] = {
     "attorney": ("attorney_name", "attorney_slug"),
     "place": ("worksite_city", "naics"),
+    # LCA only: the worker counts by kind, the wage level and the two flags.
+    "lca-detail": ("workers", *LCA_COUNT_COLUMNS, "wage_level", "h1b_dependent", "willful_violator"),
 }
 
 
@@ -830,27 +844,15 @@ def backfill_attorney(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S)
 
 def backfill_columns(db: Turso, table: str, rows, cols: tuple[str, ...],
                      pause: float = WRITE_PAUSE_S) -> int:
-    """Write ONLY the two attorney columns onto rows that already exist.
+    """Write only `cols` onto rows that already exist.
 
-    WHY NOT JUST RELOAD THE FILE. `INSERT OR REPLACE` deletes and reinserts, so
-    every index on the table is rewritten for every row. These two tables carry
-    1,072,134 rows between them and nine indexes each, which is about 10.7M
-    writes against a 10M/month plan - the whole month's budget to gain two
-    columns. An `UPDATE` of two columns rewrites the table row and only the
-    indexes that contain them, and the two attorney indexes are created AFTER
-    this runs, so the backfill costs one write per row: about 1.07M, ten times
-    cheaper for the same result.
+    An INSERT OR REPLACE deletes and reinserts, rewriting every index for every
+    row; an UPDATE rewrites the row and only the indexes holding these
+    columns, which for a new column is none.
 
-    ONE STATEMENT PER BATCH, NOT ONE PER ROW. A `CASE case_number WHEN ...`
-    updates the whole batch in a single statement whose `WHERE ... IN (...)` is
-    a primary-key seek per row. The first version sent 500 individual UPDATEs
-    per request and managed 986 rows per 20 seconds; the work was in the
-    per-statement overhead, not the network.
-
-    A case in the file that is not in the table is simply not updated. That is
-    correct rather than a gap: this is a backfill of rows the ordinary load
-    already wrote, and a genuinely new case arrives through that load with its
-    firm already on it.
+    A case in the file that isn't in the table is left alone: this fills rows
+    the ordinary load already wrote, and a new case arrives through that load
+    with every column on it.
     """
     pending: list[dict] = []
     batch: list[dict] = []
@@ -861,16 +863,8 @@ def backfill_columns(db: Turso, table: str, rows, cols: tuple[str, ...],
         nonlocal batch
         if not batch:
             return
-        whens = " ".join(["WHEN ? THEN ?"] * len(batch))
-        holes = ",".join(["?"] * len(batch))
-        sets = ", ".join(f"{c} = CASE case_number {whens} END" for c in cols)
-        sql = f"UPDATE {table} SET {sets} WHERE case_number IN ({holes})"
-        args: list = []
-        for c in cols:
-            for r in batch:
-                args += [lit(r["case_number"]), lit(r[c])]
-        args += [lit(r["case_number"]) for r in batch]
-        pending.append({"type": "execute", "stmt": {"sql": sql, "args": args}})
+        pending.append(case_update(table, "case_number", cols,
+                                   [(r["case_number"], *(r[c] for c in cols)) for r in batch]))
         batch = []
 
     def flush_request() -> None:
@@ -899,7 +893,8 @@ def backfill_columns(db: Turso, table: str, rows, cols: tuple[str, ...],
 
 
 def write_cases(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> int:
-    """Chunked INSERT OR REPLACE: 500 rows a statement, 4 statements a request."""
+    """INSERT OR REPLACE, ROWS_PER_STMT rows a statement and STMTS_PER_REQUEST
+    statements a request, idling `pause` seconds between requests."""
     placeholders = "(" + ",".join("?" * len(COLUMNS)) + ")"
     head = f"INSERT OR REPLACE INTO {table} ({','.join(COLUMNS)}) VALUES "
     pending: list[dict] = []
@@ -911,9 +906,8 @@ def write_cases(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> in
         nonlocal batch
         if not batch:
             return
-        sql = head + ",".join([placeholders] * len(batch))
-        args = [lit(row[c]) for row in batch for c in COLUMNS]
-        pending.append({"type": "execute", "stmt": {"sql": sql, "args": args}})
+        pending.append(stmt(head + ",".join([placeholders] * len(batch)),
+                            [row[c] for row in batch for c in COLUMNS]))
         batch = []
 
     def flush_request() -> None:
@@ -968,6 +962,11 @@ def main() -> int:
                     help="Write ONLY the worksite city and NAICS columns onto rows "
                          "that already exist (one write per row). Neither column is "
                          "indexed: both are narrowing filters, not search leads.")
+    ap.add_argument("--backfill-lca-detail", action="store_true",
+                    help="LCA only: write ONLY the worker counts (new, continuing, change "
+                         "of employer and the rest), the wage level and the H-1B-dependent "
+                         "and willful-violator flags onto rows that already exist. One "
+                         "write per row; none of the ten columns is indexed.")
     ap.add_argument("--accept-drift", action="store_true",
                     help="Load despite the fingerprint differing from the previous load "
                          "(a lost column, a blank-share jump, a moved median). For a "
@@ -1045,25 +1044,14 @@ def main() -> int:
             sha, size = download(url, path, referer=PERFORMANCE_PAGE)
             log(f"  {size / 1e6:.1f} MB  sha256 {sha[:16]}")
 
-        # IS THIS THE NEWEST FILE DOL PUBLISHES?
+        # Is this the newest file DOL publishes? Only that file may stamp
+        # freshness or move the "latest quarter" pointer; anything else is
+        # history, however it was chosen (`--fy` or `--name`), and stamping
+        # with an old quarter's dates would report a live source as stopped.
+        # An unknown newest counts as history: declining to stamp keeps the
+        # last good value, while a wrong stamp destroys it.
         #
-        # Everything below that used to ask `args.fy` was asking the wrong
-        # question. `--fy 2024` is history - but so is
-        # `--name LCA_Disclosure_Data_FY2022_Q4.xlsx`, and the `--name` path
-        # sets no `fy` at all. So loading the LCA back catalogue one quarter at
-        # a time stamped `data_freshness` with each old quarter's own last
-        # decision date, and `write_load_record` replaced the "latest quarter"
-        # pointer with it too. Measured 2026-09-13 after the FY2021-FY2025
-        # backfill: `lca-disclosure` read **as_of 2022-09-30, 1,444 days old**,
-        # and the health check reported a source that had stopped publishing.
-        # DOL had published nothing new; we had overwritten our own record of
-        # the newest quarter with the oldest file we happened to load last.
-        #
-        # An unknown `newest_name` counts as HISTORY, never as newest:
-        # declining to stamp leaves the previous good value in place, while
-        # wrongly stamping destroys it - which is the failure being fixed.
-        #
-        # Resolved LAZILY and at most once. The `--file` branch is the only one
+        # Resolved lazily and at most once. The `--file` branch is the only one
         # that would need a network request for the answer, and it is also the
         # dry-run path, where nothing is written and the answer is never used.
         newest_cache: list = []
@@ -1114,8 +1102,8 @@ def main() -> int:
             log("DRY RUN: nothing written")
             return 0
 
-        # Everything below touches Turso. Deliberately after the two probe
-        # modes, so they can run on a laptop with no credentials.
+        # Everything below touches the database: after the two probe modes,
+        # so those run with no credentials.
         db = Turso()
         prior = read_load_record(db, args.program, name)
         # BEFORE THE HASH CHECK, because a backfill is not a load. The file
@@ -1124,6 +1112,28 @@ def main() -> int:
         # after the sha-match branch meant it returned "unchanged; skipping"
         # and never ran. Caught by dispatching it once rather than by reading
         # the flow.
+        if args.backfill_lca_detail:
+            if args.program != "lca" or args.backfill_attorney or args.backfill_place or args.force:
+                raise SystemExit("FATAL: --backfill-lca-detail runs alone, on --program lca")
+            log(f"Backfilling LCA worker counts, wage level and flags onto {table} from {name}")
+            existing = int(db.scalar(f"SELECT count(*) FROM {table}") or 0)
+            if existing == 0:
+                raise SystemExit(
+                    f"FATAL: {table} holds no rows, so there is nothing to "
+                    "backfill onto. Run the ordinary load first.")
+            ensure_columns(db, table)
+            n = backfill_columns(db, table, iter_cases(path, cfg, stats),
+                                 BACKFILL_GROUPS["lca-detail"], pause=args.pause)
+            stats.report()
+            filled = int(db.scalar(
+                f"SELECT count(*) FROM {table} WHERE source_file = ? AND workers IS NOT NULL",
+                [name]) or 0)
+            log(f"  {table}: {filled:,} of {n:,} rows from {name} now carry worker counts")
+            record_run(db, script, status="ok", rows_written=n,
+                       note=f"LCA detail backfill from {name}: {filled:,}/{n:,} with counts",
+                       started_at=started)
+            return 0
+
         if args.backfill_place:
             if args.backfill_attorney or args.force:
                 raise SystemExit("FATAL: --backfill-place runs alone, without --force "
@@ -1220,7 +1230,7 @@ def main() -> int:
             guard.see(row)
         guard.resolved = pre.resolved
         fingerprint = guard.to_doc()
-        baseline = _read_doc(db, load_record_key(args.program)) or {}
+        baseline = read_doc(db, load_record_key(args.program)) or {}
         findings = sanity_findings(fingerprint)
         drift = drift_findings(baseline.get("fingerprint"), fingerprint)
         log(f"  guard: {pre.kept:,} rows, impossible {fingerprint['badShare']:.2%}, "

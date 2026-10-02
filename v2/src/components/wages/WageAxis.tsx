@@ -86,7 +86,7 @@ export function WageAxis({
             />
             <span
               className={cn(
-                "absolute top-3 font-mono text-xs font-bold tabular-nums text-foreground/60",
+                "absolute top-3 font-mono text-sm font-bold tabular-nums text-foreground/60",
                 ANCHOR_CLASS[anchor],
               )}
               style={{ left: `${at(v)}%` }}

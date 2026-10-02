@@ -3,17 +3,20 @@
 /**
  * Offline Fallback Page
  *
- * Shown when the user is offline and tries to access uncached content.
- * Follows the neobrutalist design system:
- * - No rounded corners (--radius: 0px)
- * - Hard shadows (4px 4px)
- * - Lime green accent (#2ECC40)
- * - Bold, direct messaging
+ * Shown when the user is offline and tries to open a page that isn't cached.
  */
 
+import { useEffect } from "react";
 import { ArrowsClockwiseIcon as RefreshCw, WifiSlashIcon } from "@phosphor-icons/react";
 
 export default function OfflinePage() {
+  // The page says it loads on reconnection, so it does.
+  useEffect(() => {
+    const reload = () => window.location.reload();
+    window.addEventListener("online", reload);
+    return () => window.removeEventListener("online", reload);
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
@@ -26,58 +29,21 @@ export default function OfflinePage() {
             </div>
           </div>
 
-          {/* Heading */}
           <h1 className="font-heading text-3xl font-bold text-center text-foreground mb-4">
-            You&apos;re Offline
+            You&apos;re offline
           </h1>{" "}
-
-          {/* Description */}
           <p className="text-center text-muted-foreground font-body mb-8">
-            It looks like you&apos;ve lost your internet connection.
-            Your data will load automatically when you&apos;re back online.
+            This page needs a connection. It loads as soon as you&apos;re back online.
           </p>{" "}
-
-          {/* Status indicator */}
-          <div className="bg-muted border-2 border-border p-4 mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-3 h-3 bg-destructive border border-border" />
-              <span className="text-sm font-body text-foreground">
-                Network status: <span className="font-semibold">Disconnected</span>
-              </span>
-            </div>
-          </div>
-
-          {/* Retry button */}
           <button
             onClick={() => window.location.reload()}
             className="w-full bg-primary text-primary-foreground font-heading font-bold text-lg py-4 px-6 border-2 border-border shadow-hard hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-150"
           >
             <span className="flex items-center justify-center gap-2">
               <RefreshCw className="w-5 h-5" />
-              Try Again
+              Try again
             </span>
           </button>
-
-          {/* Tips section */}
-          <div className="mt-8 pt-6 border-t-2 border-border">
-            <h2 className="font-heading font-bold text-sm text-foreground uppercase tracking-wide mb-4">
-              While you wait
-            </h2>
-            <ul className="space-y-2 text-sm text-muted-foreground font-body">
-              <li className="flex items-start gap-2">
-                <span className="text-primary font-bold mt-0.5">1.</span>
-                Check your WiFi or mobile data connection
-              </li>{" "}
-              <li className="flex items-start gap-2">
-                <span className="text-primary font-bold mt-0.5">2.</span>
-                Try moving to an area with better signal
-              </li>{" "}
-              <li className="flex items-start gap-2">
-                <span className="text-primary font-bold mt-0.5">3.</span>
-                Your unsaved work will sync when reconnected
-              </li>
-            </ul>
-          </div>
         </div>
 
         {/* Bottom branding */}

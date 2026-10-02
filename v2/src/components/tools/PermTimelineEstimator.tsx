@@ -45,7 +45,7 @@ import {
   FrontierProgressChart,
   type FrontierPoint,
 } from "@/components/tools/FrontierProgressChart";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import {
   deriveQueueAhead,
   findVolumeAnomalies,
@@ -56,6 +56,7 @@ import {
 import { CaseNumberField } from "@/components/tools/CaseNumberField";
 import { QueueMonthChart } from "@/components/tools/QueueMonthChart";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 export interface PermTimelineEstimatorProps {
   frontier: DolFrontier | null;
@@ -137,8 +138,8 @@ export interface PermTimelineEstimatorProps {
  *
  * Analyst review is the ordinary queue. RFI and audit are their own, and a
  * case in either is out of filing order entirely, which is the honest answer
- * to "DOL passed my month and I still have nothing". The rival's table stops
- * at a pending count; this split is data we hold and they do not show.
+ * to "DOL passed my month and I still have nothing". A pending count alone
+ * cannot say that; this split can.
  */
 function StagesLine({
   subject,
@@ -157,22 +158,21 @@ function StagesLine({
 
   const accounted = parts.reduce((n, p) => n + p.n, 0);
   const rest = subject.pending - accounted;
-  const fmt = (n: number) => n.toLocaleString("en-US");
 
   return (
     <p className="mt-4 text-base leading-relaxed text-foreground/70">
       <b className="font-bold text-foreground">
-        {fmt(subject.pending)} still undecided in {formatMonth(month)}
+        {formatInt(subject.pending)} still undecided in {formatMonth(month)}
       </b>
       :{" "}
       {parts.map((p, i) => (
         <Fragment key={p.label}>
           {i > 0 ? (i === parts.length - 1 && rest <= 0 ? " and " : ", ") : ""}
-          {fmt(p.n)} {p.label}
+          {formatInt(p.n)} {p.label}
         {" "}
         </Fragment>
       ))}
-      {rest > 0 ? `, and ${fmt(rest)} in none of those three` : ""}. A case in
+      {rest > 0 ? `, and ${formatInt(rest)} in none of those three` : ""}. A case in
       a request for information or an audit is out of filing order, and DOL
       publishes those queues separately.
     </p>
@@ -392,23 +392,18 @@ export function PermTimelineEstimator({
    * The answer as the LEAD model states it, when that model can place a case
    * inside its filing month - and the cross-model envelope otherwise.
    *
-   * WHY THIS EXISTS NOW. The display used to print a month unless the employer
-   * initial was supplied, on the reasoning that "DOL publishes at MONTH
-   * resolution and works alphabetically within it, so the initial is the only
-   * thing that says where in the month a case falls". That was true of every
-   * model anchored to a filing month. It is NOT true of decision-pace, which
-   * counts the undecided cases filed before yours - that number places you
-   * inside the month directly, and it moves with the day you filed.
+   * A model anchored to a filing month can only print a month: DOL publishes
+   * at MONTH resolution. Decision-pace is different: it counts the undecided
+   * cases filed before yours, which places you inside the month directly and
+   * moves with the day you filed.
    *
    * So a day is printed when a day is earned, and the one thing that earns it
-   * is the counting model. (The employer initial used to count too; it was
-   * removed on 2026-09-26 after it scored worse than no shift at all.) Leaving it as it was meant a reader could pick their filing day,
+   * is the counting model; otherwise a reader could pick their filing day,
    * watch the arithmetic change underneath, and still be shown a month.
    *
-   * It also settles a split between this page and the case page, which has
-   * always shown the leading model's own band rather than a span across
-   * models. Two surfaces describing one estimate should not disagree about
-   * what the estimate is.
+   * It also keeps this page in step with the case page, which shows the
+   * leading model's own band rather than a span across models. Two surfaces
+   * describing one estimate should not disagree about what the estimate is.
    */
   const lead = estimate.models[0] ?? null;
   const leadIsCounting = lead?.id === "decision-pace";
@@ -642,12 +637,9 @@ export function PermTimelineEstimator({
                   : ""}
               </p>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
-                Most cases filed this month have been decided. One still
-                pending has usually been taken out of filing order by an
-                audit, a request for information, or a hold, and none of
-                those can be dated from the filing month alone. Your case
-                number can: it carries the live DOL status and a
-                stage-adjusted estimate.
+                Most cases filed this month are decided. One still pending is usually at an audit, an RFI or
+                a hold, which the filing month can&apos;t date. Your case number can: it carries DOL&apos;s live
+                status and an estimate for that stage.
               </p>{" "}
               <p className="mt-4">
                 <Link
@@ -751,7 +743,7 @@ export function PermTimelineEstimator({
           when the overdue hero above has already said exactly this. */}
       {hasDate && frontier && position && !(estimate.position === "overdue" && !envelope) ? (
         <div className={cn("border-b-2 border-border p-6 sm:p-8", position.tone)}>
-          <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
             Queue position
           </p>{" "}
           <p className="mt-2 font-heading text-xl font-black leading-tight sm:text-2xl">
@@ -844,20 +836,17 @@ export function PermTimelineEstimator({
         </div>
       ) : null}
 
-      {/* ONE ANSWER, THEN THE WORKING. These used to render side by side, each
-          date at text-4xl, so the page showed up to four equally loud and
-          different answers and left the reader to pick. The headline above is
-          the answer; this is how it was reached, for anyone who wants it.
-          Adam, 2026-09-10: "everything should be focused on one main answer,
-          and the rest is secondary and you can see it if you'd like but not
-          the main thing". */}
+      {/* ONE ANSWER, THEN THE WORKING. Side by side at equal size, the models
+          would show up to four equally loud and different answers and leave
+          the reader to pick. The headline above is
+          the answer; this is how it was reached, for anyone who wants it. */}
       {hasDate && estimate.models.length > 0 ? (
         <details className="group border-t-2 border-border">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 p-6 sm:p-8">
             <span className="font-heading text-base font-black">
               How this was worked out
             </span>{" "}
-            <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
+            <span className="font-mono text-sm uppercase tracking-wider text-muted-foreground">
               {estimate.models.length}{" "}
               {estimate.models.length === 1 ? "model" : "models"}
               <span className="ml-2 inline-block transition-transform group-open:rotate-90">
@@ -868,7 +857,7 @@ export function PermTimelineEstimator({
           <div className="divide-y-2 divide-border border-t-2 border-border">
           {estimate.models.map((model, i) => (
             <div key={model.id} className="p-6 sm:p-8">
-              <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+              <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
                 {model.label}
                 {i === 0 ? (
                   <span className="ml-2 text-primary">· the one above</span>

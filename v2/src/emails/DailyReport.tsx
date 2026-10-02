@@ -17,6 +17,7 @@ import {
   worstStatus,
 } from "../../convex/lib/dailyReportCompose";
 import { EmailHeader, EmailLayout } from "./components";
+import { SITE_URL } from "../../convex/lib/links";
 
 const STATUS_WORD: Record<ReportSection["status"], string> = {
   fail: "FAILING",
@@ -75,7 +76,7 @@ export function DailyReport({ report }: DailyReportProps) {
   return (
     <EmailLayout
       previewText={headline}
-      settingsUrl="https://permtracker.app/admin#monitor"
+      settingsUrl={`${SITE_URL}/admin#monitor`}
       settingsLabel="Open the admin page"
       footerText="The daily operator report. Sent to the admin address only."
     >
@@ -108,5 +109,3 @@ const styles = {
     fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
   },
 } as const;
-
-export default DailyReport;

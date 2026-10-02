@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import type { NameVariant } from "@/lib/turso/entityDetail";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 /**
  * What the merge caught, and what it deliberately did not.
@@ -32,10 +33,6 @@ import { cn } from "@/lib/utils";
  * address somebody typed into the attorney field. Presenting them as merged
  * would be a claim. Presenting them as candidates is the truth.
  */
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 export function NameSpellings({
   variants,
@@ -69,7 +66,7 @@ export function NameSpellings({
         under several.{" "}
         {absorbed > 0 ? (
           <>
-            {fmt(absorbed)} other spelling{absorbed === 1 ? "" : "s"} of this
+            {formatInt(absorbed)} other spelling{absorbed === 1 ? "" : "s"} of this
             name {absorbed === 1 ? "was" : "were"} folded into this page and{" "}
             {absorbed === 1 ? "its" : "their"} cases are counted here.{" "}
           </>
@@ -80,7 +77,7 @@ export function NameSpellings({
             below start the same way and were <strong>not</strong> merged,
             because the difference between them is more than a mistyped letter.
             Some may be the same {subject}; some are a different one. Rank
-            #{fmt(rank)} counts this page&apos;s cases only.
+            #{formatInt(rank)} counts this page&apos;s cases only.
           </>
         ) : (
           <>Nothing else in the file starts the same way.</>
@@ -103,8 +100,8 @@ export function NameSpellings({
                     <span className="min-w-0 flex-1 text-sm font-bold leading-snug underline decoration-primary/50 decoration-2 underline-offset-2">
                       {v.name}
                     </span>{" "}
-                    <span className="font-mono text-xs tabular-nums text-foreground/70">
-                      {fmt(v.total)} filing{v.total === 1 ? "" : "s"}
+                    <span className="font-mono text-sm tabular-nums text-foreground/70">
+                      {formatInt(v.total)} filing{v.total === 1 ? "" : "s"}
                     </span>
                   </Link>
                 </li>
@@ -112,7 +109,7 @@ export function NameSpellings({
             ))}
           </ul>{" "}
           <p className="mt-4 text-sm leading-relaxed text-foreground/70">
-            {fmt(residue)} filing{residue === 1 ? "" : "s"} sit on those pages
+            {formatInt(residue)} filing{residue === 1 ? "" : "s"} sit on those pages
             rather than this one. The{" "}
             <Link
               href="/methodology"

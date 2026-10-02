@@ -9,12 +9,11 @@
  * - Support link in footer
  *
  * Subject line: "Account Deletion Scheduled - PERM Tracker"
- *
- * Phase: 24 (Notifications + Email) - P1-01 Fix
  */
 
 import { Text, Section, Link } from "@react-email/components";
 import { EmailLayout, EmailButton, EmailHeader } from "./components";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface AccountDeletionConfirmProps {
   /** User's display name or email */
@@ -262,7 +261,7 @@ const styles = {
 AccountDeletionConfirm.PreviewProps = {
   userName: "Jordan Lee",
   deletionDate: "July 29, 2026",
-  cancelUrl: "https://permtracker.app/settings",
+  cancelUrl: `${SITE_URL}/settings`,
   supportUrl: "mailto:support@permtracker.app",
   immediate: false,
 } satisfies AccountDeletionConfirmProps;

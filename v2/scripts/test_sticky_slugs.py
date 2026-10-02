@@ -13,7 +13,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from store_entities import plan_aliases, plan_sticky_slugs, with_unique_slugs  # noqa: E402
+from lib_slugs import plan_aliases, plan_sticky_slugs, with_unique_slugs  # noqa: E402
 
 FAILURES: list[str] = []
 CHECKS = 0

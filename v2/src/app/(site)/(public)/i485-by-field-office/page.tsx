@@ -20,7 +20,6 @@ import Link from "next/link";
 import { withSocialCard } from "@/lib/socialCard";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { FaqList } from "@/components/tools/FaqList";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -39,12 +38,14 @@ import {
   sumMeasure,
   type OfficeRow,
 } from "@/lib/uscisQuarterlyShape";
+import { SITE_URL } from "@/lib/constants/site";
+import { formatInt } from "@/lib/format";
 
 const TITLE = "I-485 Processing by USCIS Field Office";
 const DESCRIPTION =
   "Employment-based I-485s received, approved, denied and pending at every USCIS field office and service center last quarter, from USCIS's own data.";
 const PATH = "/i485-by-field-office";
-const SITE = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+const SITE = SITE_URL;
 const USCIS_DATA_PAGE = "https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data";
 
 export const metadata: Metadata = withSocialCard({
@@ -85,16 +86,12 @@ const FAQS = [
 ];
 
 function fmt(n: number | null): string {
-  return n === null ? "withheld" : n.toLocaleString("en-US");
+  return n === null ? "withheld" : formatInt(n);
 }
 
 export default async function I485ByFieldOfficePage() {
   const data = await getI485Offices();
 
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: TITLE, href: PATH },
-  ]);
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
@@ -184,21 +181,15 @@ export default async function I485ByFieldOfficePage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumb} />
 
       <header>
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          USCIS quarterly data{data ? ` · ${quarterLabel(data.fy, data.quarter)}` : ""}
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           The I-485 by field office
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          What each USCIS office received, approved, denied and still holds,
-          employment-based first, from USCIS&apos;s own quarterly count. The
-          busiest offices, how many quarters of work each has in front of it at
-          last quarter&apos;s pace, and the service centers that decide most cases
-          without an interview.
+          What each USCIS office received, decided and still holds
+          {data ? ` in ${quarterLabel(data.fy, data.quarter)}` : ""}, employment-based first, and how many
+          quarters of work each has at last quarter&apos;s pace.
         </p>
       </header>
 
@@ -230,7 +221,7 @@ export default async function I485ByFieldOfficePage() {
               }
               source={<>USCIS, {data.sourceFile}, employment-based, pending as of {data.quarterEnd}.</>}
             >
-              <BarRows rows={busiestRows} />
+              <BarRows label="Busiest field offices by pending employment I-485s" rows={busiestRows} />
             </FigurePlate>
           </section>
 
@@ -251,7 +242,7 @@ export default async function I485ByFieldOfficePage() {
                 }
                 source={<>Arithmetic on USCIS&apos;s pending, approved and denied columns, {quarterLabel(data.fy, data.quarter)}.</>}
               >
-                <BarRows rows={workRows} />
+                <BarRows label="Quarters of work pending, by field office" rows={workRows} />
               </FigurePlate>
             </section>
           ) : null}
@@ -274,7 +265,7 @@ export default async function I485ByFieldOfficePage() {
               }
               source={<>USCIS, {data.sourceFile}, approved in the quarter.</>}
             >
-              <BarRows rows={centerRows} />
+              <BarRows label="Service center approvals in the quarter" rows={centerRows} />
             </FigurePlate>
           </section>
 

@@ -1,6 +1,6 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly>: the USCIS fetches that ran on the
-# Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp>: the USCIS fetches that ran on the
+# owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
 job="$1"; R=/srv/permtracker/repo; V2=$R/v2
@@ -33,6 +33,11 @@ case "$job" in
     rm -rf "$t"
     python3 scripts/ingest_i140_trends.py || { rc=1; fail ingest_i140_trends.py "ingest exited non-zero"; } ;;
   quarterly) python3 scripts/ingest_uscis_quarterly.py || { rc=1; fail ingest_uscis_quarterly.py "ingest exited non-zero"; } ;;
+  # USCIS's H-1B Employer Data Hub (a Tableau export, 75 to 110 MB a year).
+  # The ingest records its own ok row, or its refusal with the reason; this adds the timer's row on any non-zero exit.
+  h1b-hub) nice -n 10 python3 scripts/ingest_uscis_h1b_hub.py || { rc=1; fail ingest_uscis_h1b_hub.py "ingest exited non-zero"; } ;;
+  # ICE's yearly top-200 OPT and CPT employer lists (a handful of small PDFs).
+  sevp) python3 scripts/ingest_sevp_top_employers.py || { rc=1; fail ingest_sevp_top_employers.py "ingest exited non-zero"; } ;;
   *) echo "unknown job $job"; exit 2 ;;
 esac
 exit $rc

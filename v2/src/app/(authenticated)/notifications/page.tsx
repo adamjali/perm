@@ -13,9 +13,6 @@
  * 1. Page header with bulk actions
  * 2. Notification tabs
  * 3. Notification list with date grouping
- *
- * Phase: 24 (Notifications)
- * Created: 2025-12-31
  */
 
 import type { Metadata } from "next";

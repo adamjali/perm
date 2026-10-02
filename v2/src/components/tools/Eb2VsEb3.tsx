@@ -4,8 +4,9 @@ import { useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowRightIcon, ScalesIcon, WarningIcon } from "@phosphor-icons/react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { DateInput } from "@/components/forms/DateInput";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { rangeText, roundPeople } from "@/components/tools/GreenCardLine";
 import { cutoffLabel } from "@/lib/bulletinNext";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
@@ -235,12 +236,22 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
   return (
     <div className="border-b-2 border-border p-6 sm:p-8">
       <h3 className="font-heading text-lg font-black">People ahead, on one scale</h3>{" "}
-      <div className="mt-4 space-y-4">
+      <ChartTips label="People ahead in EB-2 and EB-3, on one scale" className="mt-4">
+      <div className="space-y-4">
         {rows.map(({ line, r }) => (
           <div key={line} className="grid grid-cols-[3.5rem_1fr] items-center gap-3 [&>*]:min-w-0 sm:grid-cols-[4.5rem_1fr]">
             <span className="font-heading text-lg font-black">{LINE_NAME[line]}</span>{" "}
             {r.kind === "estimate" ? (
-              <div className="relative h-8 border-2 border-border bg-background" role="img" aria-label={`${LINE_NAME[line]}: ${rangeLabel(r)} people ahead`}>
+              <div
+                className="relative h-8 border-2 border-border bg-background"
+                role="img"
+                aria-label={`${LINE_NAME[line]}: ${rangeLabel(r)} people ahead`}
+                data-tip={
+                  r.check?.scaled
+                    ? `${LINE_NAME[line]}\n${rangeLabel(r)} people ahead\nSolid: ${rangeText(r.peopleAhead.low, r.peopleAhead.high)}, the estimate\nScaled to USCIS's own count: ${rangeText(r.check.scaled.low, r.check.scaled.high)}`
+                    : `${LINE_NAME[line]}\n${rangeLabel(r)} people ahead`
+                }
+              >
                 {r.check?.scaled ? (
                   <span
                     className="absolute inset-y-0 border-2 border-dashed border-foreground/60"
@@ -261,7 +272,8 @@ function RangeRows({ cmp }: { cmp: ReturnType<typeof compareLines> }) {
             )}
           </div>
         ))}
-      </div>{" "}
+      </div>
+      </ChartTips>{" "}
       <p className="mt-3 font-mono text-sm text-muted-foreground tabular-nums">0 to {roundPeople(max)} people</p>
     </div>
   );

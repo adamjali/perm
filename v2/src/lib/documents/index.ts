@@ -13,4 +13,4 @@ export {
   DOCUMENT_CATEGORIES,
   DOCUMENT_CATEGORY_LABELS,
   type DocumentCategory,
-} from "../../../convex/lib/documents";
+} from "@convex/lib/documents";

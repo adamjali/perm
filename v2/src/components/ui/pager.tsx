@@ -12,8 +12,7 @@ import { cn } from "@/lib/utils";
  * them were worse than silent: `disabled={!page || page.isDone}` is true while
  * the next page is still LOADING as well as when there isn't one, so a reader
  * who pressed Next on a slow connection got a greyed button that meant "wait"
- * and read as "that's everything". Adam's report was exactly this shape:
- * "no feedback? about like can or cant i just click and nothing happens".
+ * and read as "that's everything".
  *
  * THE REASON IS VISIBLE TEXT, NOT A `title`. A tooltip on a disabled button is
  * invisible to a keyboard and to a phone, and most engines suppress pointer

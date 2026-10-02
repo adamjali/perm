@@ -6,8 +6,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 // A public page has no ConvexProvider above it by design, and the Turso
 // client is server-only, so the reads go through /api/perm-cases. See
-// src/lib/usePublicQuery.ts.
-import { usePublicQuery } from "@/lib/usePublicQuery";
+// src/hooks/usePublicQuery.ts.
+import { usePublicQuery } from "@/hooks/usePublicQuery";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { Pager } from "@/components/ui/pager";
 import { LinkPending, PendingLink } from "@/components/ui/pending-link";
@@ -19,6 +19,7 @@ import { LinkPending, PendingLink } from "@/components/ui/pending-link";
 // would otherwise fail at runtime instead of at compile time.
 import type { CasePage } from "@/lib/turso/cases";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { formatInt } from "@/lib/format";
 
 /** One shared empty result, so an empty page or search does not mint a new array identity per render. */
 const EMPTY_ROWS: CaseRow[] = [];
@@ -132,15 +133,11 @@ const MONTH_INPUT_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 const CONTROL =
   "min-h-[44px] w-full min-w-0 border-2 border-border bg-card px-3 py-2 text-base outline-none shadow-hard-sm focus-visible:ring-2 focus-visible:ring-primary";
 const BUTTON =
-  "min-h-[44px] border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary";
-const LABEL = "font-mono text-xs font-bold uppercase tracking-wider text-foreground/60";
-
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
-}
+  "min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider shadow-hard-sm transition-colors hover:bg-tint-primary disabled:opacity-40 disabled:hover:bg-card focus-visible:ring-2 focus-visible:ring-primary";
+const LABEL = "font-mono text-sm font-bold uppercase tracking-wider text-foreground/60";
 
 function fmtWage(n: number | null): string {
-  return n === null ? "—" : `$${n.toLocaleString("en-US")}`;
+  return n === null ? "—" : `$${formatInt(n)}`;
 }
 
 /**
@@ -625,7 +622,7 @@ export function CaseBrowser({
                 <option value="">Pick a state</option>
                 {(meta?.byState ?? []).map((s) => (
                   <option key={s.state || "none"} value={s.state}>
-                    {s.state === "" ? "Not published" : s.state} ({fmtInt(s.total)})
+                    {s.state === "" ? "Not published" : s.state} ({formatInt(s.total)})
                   </option>
                 ))}
               </select>
@@ -643,7 +640,7 @@ export function CaseBrowser({
                 <option value="">Pick an occupation</option>
                 {occupations.map((o) => (
                   <option key={o.code} value={o.code}>
-                    {o.name} ({fmtInt(o.total)})
+                    {o.name} ({formatInt(o.total)})
                   </option>
                 ))}
               </select>{" "}
@@ -679,7 +676,7 @@ export function CaseBrowser({
               <option value="">Any outcome</option>
               {(meta?.byStatus ?? []).map((s) => (
                 <option key={s.status} value={s.status}>
-                  {STATUS_LABEL[s.status]} ({fmtInt(s.count)})
+                  {STATUS_LABEL[s.status]} ({formatInt(s.count)})
                 </option>
               ))}
             </select>
@@ -695,7 +692,7 @@ export function CaseBrowser({
               <option value="">Every year in the window</option>
               {(meta?.byFiscalYear ?? []).map((y) => (
                 <option key={y.fiscalYear} value={y.fiscalYear}>
-                  FY{y.fiscalYear} ({fmtInt(y.total)})
+                  FY{y.fiscalYear} ({formatInt(y.total)})
                 </option>
               ))}
             </select>
@@ -826,9 +823,8 @@ export function CaseBrowser({
           </div>
         </form>
         {searching && nameField === "employer" && liveHits.length > 0 ? (
-          /* The live strip: the exact case Adam searched for and could not
-             find - filings newer than the last disclosure file, from DOL's
-             live feed, each linking to its own status page. */
+          /* The live strip: filings newer than the last disclosure file, from
+             DOL's live feed, each linking to its own status page. */
           <div className="mt-4 border-2 border-border bg-tint-primary p-4">
             <p className="text-base font-bold">
               {narrow.title || narrow.from || narrow.to
@@ -879,7 +875,7 @@ export function CaseBrowser({
               "Searching the case table…"
             ) : (
               <>
-                Showing {fmtInt(nameHits.length)} decided matches, newest first
+                Showing {formatInt(nameHits.length)} decided matches, newest first
                 and capped. A name search matches from the start of a name, so
                 “fragomen” finds Fragomen, Del Rey, Bernsen &amp; Loewy and “del
                 rey” finds nothing. The filters don’t apply to it.{" "}
@@ -909,14 +905,14 @@ export function CaseBrowser({
               <span>Name matches</span>
             ) : exactTotal !== null ? (
               <span>
-                <strong className="font-bold">{fmtInt(exactTotal)}</strong>{" "}
+                <strong className="font-bold">{formatInt(exactTotal)}</strong>{" "}
                 {exactTotal === 1 ? "case" : "cases"} match. Showing{" "}
-                {fmtInt(firstRow)} to {fmtInt(lastRow)}.
+                {formatInt(firstRow)} to {formatInt(lastRow)}.
               </span>
             ) : (
               <span>
-                Showing {fmtInt(firstRow)} to {fmtInt(lastRow)}
-                {page?.isDone && isFirstPage ? ` of ${fmtInt(rows.length)}` : ""}.
+                Showing {formatInt(firstRow)} to {formatInt(lastRow)}
+                {page?.isDone && isFirstPage ? ` of ${formatInt(rows.length)}` : ""}.
               </span>
             )}
           </p>
@@ -1048,7 +1044,7 @@ function CaseTable({
                 scope="col"
                 aria-sort={active ? (sortAsc ? "ascending" : "descending") : undefined}
                 className={
-                  "whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider " +
+                  "whitespace-nowrap px-3 py-3 font-mono text-sm font-bold uppercase tracking-wider " +
                   (c.numeric ? "text-right " : "") +
                   (c.hideOnPhone ? "hidden sm:table-cell " : "")
                 }
@@ -1077,7 +1073,7 @@ function CaseTable({
             <td className="whitespace-nowrap px-3 py-3">
               <span
                 className={
-                  "border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " +
+                  "border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " +
                   (r.status === "certified"
                     ? "bg-primary text-primary-foreground"
                     : r.status === "denied"
@@ -1138,7 +1134,7 @@ function CaseTable({
               {r.decisionDate}
             {" "}</td>
             <td className="whitespace-nowrap px-3 py-3 text-right tabular-nums">
-              {fmtInt(r.days)}
+              {formatInt(r.days)}
             {" "}</td>
           </tr>
         ))}

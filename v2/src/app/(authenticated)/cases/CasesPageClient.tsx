@@ -27,7 +27,8 @@ import { analytics } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
+import { toImportCaseArgs } from "@/lib/import/importArgs";
 import { usePageContextUpdater } from "@/lib/ai/page-context";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,7 +60,7 @@ import { CaseListView } from "@/components/cases/CaseListView";
 import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
 import { CasesLoadingSkeleton, NewUserEmptyState, NoResultsEmptyState } from "./components";
-import { sortCases } from "../../../../convex/lib/caseListHelpers";
+import { sortCases } from "@convex/lib/caseListHelpers";
 import {
   exportFullCasesJSON,
   exportFullCasesCSV,
@@ -68,7 +69,7 @@ import {
 import type {
   CaseListFilters,
   CaseListSort,
-} from "../../../../convex/lib/caseListTypes";
+} from "@convex/lib/caseListTypes";
 import {
   DEFAULT_SORT,
   getStoredPageSize,
@@ -575,7 +576,7 @@ export function CasesPageClient() {
   // One export path for the menu and the selection bar: fetch the full cases,
   // write the file, say how many went out.
   const exportCases = useCallback(async (
-    ids: import("../../../../convex/_generated/dataModel").Id<"cases">[],
+    ids: import("@convex/_generated/dataModel").Id<"cases">[],
     format: "csv" | "json",
   ) => {
     if (ids.length === 0) {
@@ -604,11 +605,11 @@ export function CasesPageClient() {
   }, [convex]);
 
   const handleExportCSV = useCallback(
-    () => exportCases(Array.from(selectedCaseIds) as import("../../../../convex/_generated/dataModel").Id<"cases">[], "csv"),
+    () => exportCases(Array.from(selectedCaseIds) as import("@convex/_generated/dataModel").Id<"cases">[], "csv"),
     [exportCases, selectedCaseIds],
   );
   const handleExportJSON = useCallback(
-    () => exportCases(Array.from(selectedCaseIds) as import("../../../../convex/_generated/dataModel").Id<"cases">[], "json"),
+    () => exportCases(Array.from(selectedCaseIds) as import("@convex/_generated/dataModel").Id<"cases">[], "json"),
     [exportCases, selectedCaseIds],
   );
 
@@ -660,7 +661,7 @@ export function CasesPageClient() {
       if (selectedCaseIds.size === 0) return;
 
       setBulkOperationLoading(true);
-      const ids = Array.from(selectedCaseIds) as import("../../../../convex/_generated/dataModel").Id<"cases">[];
+      const ids = Array.from(selectedCaseIds) as import("@convex/_generated/dataModel").Id<"cases">[];
 
       try {
         const result = await bulkUpdateCalendarSyncMutation({
@@ -698,7 +699,7 @@ export function CasesPageClient() {
     if (!confirmDialog.type) return;
 
     setBulkOperationLoading(true);
-    const ids = Array.from(selectedCaseIds) as import("../../../../convex/_generated/dataModel").Id<"cases">[];
+    const ids = Array.from(selectedCaseIds) as import("@convex/_generated/dataModel").Id<"cases">[];
 
     try {
       if (confirmDialog.type === "delete") {
@@ -772,7 +773,7 @@ export function CasesPageClient() {
     if (!singleCaseConfirm.type || !singleCaseConfirm.caseId) return;
 
     setSingleCaseLoading(true);
-    const caseId = singleCaseConfirm.caseId as import("../../../../convex/_generated/dataModel").Id<"cases">;
+    const caseId = singleCaseConfirm.caseId as import("@convex/_generated/dataModel").Id<"cases">;
 
     try {
       if (singleCaseConfirm.type === "delete") {
@@ -824,78 +825,7 @@ export function CasesPageClient() {
       resolutions?: Record<string, "skip" | "replace">
     ) => {
       try {
-        // Pass through ALL fields from the parsed import data
-        // The import parser already normalizes field names to camelCase
-        const casesToImport = cases.map((c) => {
-          // Extract required fields
-          const employerName = c.employerName as string;
-          const beneficiaryIdentifier = c.beneficiaryIdentifier as string;
-
-          // Handle dates that may be in a nested 'dates' object OR at top level
-          const dates = c.dates as Record<string, string> | undefined;
-
-          return {
-            // Required fields
-            employerName,
-            beneficiaryIdentifier,
-            // Core fields
-            positionTitle: c.positionTitle as string | undefined,
-            caseStatus: c.caseStatus as "pwd" | "recruitment" | "eta9089" | "i140" | "closed" | undefined,
-            progressStatus: c.progressStatus as "working" | "waiting_intake" | "filed" | "approved" | "under_review" | "rfi_rfe" | undefined,
-            priorityLevel: c.priorityLevel as "low" | "normal" | "high" | "urgent" | undefined,
-            isFavorite: c.isFavorite as boolean | undefined,
-            isPinned: c.isPinned as boolean | undefined,
-            isProfessionalOccupation: c.isProfessionalOccupation as boolean | undefined,
-            calendarSyncEnabled: c.calendarSyncEnabled as boolean | undefined,
-            showOnTimeline: c.showOnTimeline as boolean | undefined,
-            // SWC minifier bug workaround: use || instead of ?? (swc#760)
-            // PWD dates
-            pwdFilingDate: dates?.pwdFiled || c.pwdFilingDate,
-            pwdDeterminationDate: dates?.pwdDetermined || c.pwdDeterminationDate,
-            pwdExpirationDate: dates?.pwdExpires || c.pwdExpirationDate,
-            pwdCaseNumber: c.pwdCaseNumber,
-            // Recruitment - Job Order
-            jobOrderStartDate: dates?.recruitmentStart || c.jobOrderStartDate,
-            jobOrderEndDate: dates?.recruitmentEnd || c.jobOrderEndDate,
-            jobOrderState: c.jobOrderState,
-            // Recruitment - Sunday Ads
-            sundayAdFirstDate: c.sundayAdFirstDate,
-            sundayAdSecondDate: c.sundayAdSecondDate,
-            sundayAdNewspaper: c.sundayAdNewspaper,
-            // Recruitment - Notice of Filing
-            noticeOfFilingStartDate: c.noticeOfFilingStartDate,
-            noticeOfFilingEndDate: c.noticeOfFilingEndDate,
-            // Recruitment - Additional Methods
-            additionalRecruitmentStartDate: c.additionalRecruitmentStartDate,
-            additionalRecruitmentEndDate: c.additionalRecruitmentEndDate,
-            additionalRecruitmentMethods: c.additionalRecruitmentMethods,
-            recruitmentApplicantsCount: c.recruitmentApplicantsCount,
-            recruitmentSummaryCustom: c.recruitmentSummaryCustom,
-            // ETA 9089
-            eta9089FilingDate: dates?.etaFiled || c.eta9089FilingDate,
-            eta9089CertificationDate: dates?.etaCertified || c.eta9089CertificationDate,
-            eta9089ExpirationDate: dates?.etaExpires || c.eta9089ExpirationDate,
-            eta9089CaseNumber: c.eta9089CaseNumber,
-            // I-140
-            i140FilingDate: dates?.i140Filed || c.i140FilingDate,
-            i140ReceiptDate: c.i140ReceiptDate,
-            i140ReceiptNumber: c.i140ReceiptNumber,
-            i140ApprovalDate: dates?.i140Approved || c.i140ApprovalDate,
-            i140DenialDate: c.i140DenialDate,
-            // RFI/RFE arrays
-            rfiEntries: c.rfiEntries,
-            rfeEntries: c.rfeEntries,
-            // Notes
-            notes: c.notes,
-            // Text fields
-            caseNumber: c.caseNumber,
-            internalCaseNumber: c.internalCaseNumber,
-            employerFein: c.employerFein,
-            jobTitle: c.jobTitle,
-            socCode: c.socCode,
-            socTitle: c.socTitle,
-          };
-        });
+        const casesToImport = cases.map(toImportCaseArgs);
 
         const result = await importCasesMutation({ cases: casesToImport, resolutions });
 

@@ -93,14 +93,13 @@ export function CaseLookupForm({ defaultValue = "", className }: CaseLookupFormP
           </span>
         ) : malformed ? (
           <span className="font-bold text-data-bad-ink">
-            That is not the shape of a PERM case number. They look like
+            That isn&apos;t the shape of a case number. They look like
             G-100-26125-868956.
           </span>
         ) : (
           <>
-            It is on your ETA-9089 receipt and on any status email from DOL. The
-            number goes into this page&apos;s address so you can bookmark or
-            share the result; it is not stored and not sent anywhere else.
+            It&apos;s on your ETA-9089 receipt. It isn&apos;t stored; it goes
+            into the page&apos;s address so you can bookmark the result.
           </>
         )}
       </p>

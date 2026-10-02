@@ -1,33 +1,30 @@
 #!/usr/bin/env python3
 """The Department's own spillover numbers: annual limits and Table V.
 
+    python3 scripts/ingest_visa_limits.py --discover
     python3 scripts/ingest_visa_limits.py --limits <Annual Numerical Limits PDF>
     python3 scripts/ingest_visa_limits.py --table-v <Report of the Visa Office, Table V PDF>
     python3 scripts/ingest_visa_limits.py --limits a.pdf --table-v b.pdf --dry-run
 
-WHAT THIS IS. Every October the employment-based categories reopen because
-unused family-sponsored numbers from the year just ended "spill over" to
-employment (INA 201(d)). Every rival site prints a guess for that number on
-bulletin day. The State Department publishes the real one twice, and only
+Every October the employment-based categories reopen because unused
+family-sponsored numbers from the year just ended "spill over" to employment
+(INA 201(d)). The State Department publishes that number twice, and only
 twice: in the Annual Numerical Limits sheet it posts near the start of a
 fiscal year (the employment worldwide total minus the statutory 140,000 IS
 the spillover, marked estimated until the official determination), and in
 Table V of the Report of the Visa Office the following year (numbers used
 per preference, so unused family numbers can be counted directly).
 
-WHY FILES. travel.state.gov refuses every automated client (it 403s its own
-robots.txt), so both PDFs are fetched in a browser and handed to this
-script, the same route the current bulletin takes. Once a year for each.
+`--discover` is the daily route. travel.state.gov refuses scripts, but the
+State Department serves the same pages and PDFs from adoption.state.gov,
+which answers a plain request. It reads the statistics page for the newest
+Annual Numerical Limits link and the reports index for the newest Report of
+the Visa Office, follows that report's own Table V link, and loads only a
+fiscal year the document doesn't hold yet. Links are discovered, never built:
+file names change year to year. `--limits` and `--table-v` take PDFs saved
+from a browser, the fallback when State's pages refuse.
 
-NOW AUTOMATIC (2026-09-26): `--discover`. The State Department serves the
-same statistics pages and PDFs from adoption.state.gov, which answers a plain
-request (travel.state.gov answered the same request 403). `--discover` reads
-the statistics page for the newest Annual Numerical Limits link and the
-reports index for the newest Report of the Visa Office, follows that report's
-own Table V link, and loads only a fiscal year the document doesn't hold yet.
-Links are discovered, never built: file names change year to year.
-
-WHAT IS STORED. One document, perm_docs['visa_annual_limits'], with a
+What is stored: one document, perm_docs['visa_annual_limits'], with a
 `limits` entry per fiscal year and a `table_v` entry per fiscal year, every
 figure as the Department printed it and the arithmetic (spillover, unused)
 done here and labelled as ours. Nothing is forecast.
@@ -44,7 +41,7 @@ import sys
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
+from lib_turso import Turso, read_doc, record_run, stamp_freshness, write_doc  # noqa: E402
 
 DOC_KEY = "visa_annual_limits"
 DATASET = "visa-annual-limits"
@@ -292,9 +289,7 @@ def main() -> int:
     table_v_bytes = open(a.table_v, "rb").read() if a.table_v else None
     if a.discover:
         db0 = Turso()
-        res0 = db0.execute("SELECT json FROM perm_docs WHERE key = ?", [DOC_KEY])
-        rows0 = res0["response"]["result"]["rows"]
-        held = json.loads(rows0[0][0]["value"]) if rows0 else {}
+        held = read_doc(db0, DOC_KEY) or {}
         try:
             limits_bytes, table_v_bytes, note = discover(held)
         except Exception as exc:  # noqa: BLE001
@@ -315,15 +310,13 @@ def main() -> int:
         print(json.dumps({"limits": limits, "table_v": table_v}, indent=1)[:3000])
         return 0
     db = Turso()
-    res = db.execute("SELECT json FROM perm_docs WHERE key = ?", [DOC_KEY])
-    rows = res["response"]["result"]["rows"]
-    doc = json.loads(rows[0][0]["value"]) if rows else {"limits": {}, "table_v": {}}
+    doc = read_doc(db, DOC_KEY) or {"limits": {}, "table_v": {}}
     if limits:
         doc.setdefault("limits", {})[str(limits["fiscal_year"])] = limits
     if table_v:
         doc.setdefault("table_v", {})[str(table_v["fiscal_year"])] = table_v
     doc["updated"] = dt.date.today().isoformat()
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)", [DOC_KEY, json.dumps(doc), int(time.time() * 1000)])
+    write_doc(db, DOC_KEY, json.dumps(doc))
     newest = max(int(k) for k in doc.get("limits", {}))
     stamp_freshness(db, DATASET, as_of=f"{newest - 1}-10-01", source=STATS_PAGE, cadence="Yearly", max_age_days=420, note=f"limits FY{sorted(doc.get('limits', {}))}; Table V FY{sorted(doc.get('table_v', {}))}")
     record_run(db, "ingest_visa_limits.py", status="ok", rows_written=1, note=f"limits {sorted(doc.get('limits', {}))} table_v {sorted(doc.get('table_v', {}))}", started_at=started)

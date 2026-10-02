@@ -19,9 +19,6 @@
  * - In async callbacks (setTimeout, fetch.then, etc.)
  * - In custom hooks
  * - In event handlers
- *
- * Phase: 32-05 (Auth-Aware Toasts)
- * Created: 2026-01-13
  */
 
 import { toast as sonnerToast, type ExternalToast } from "sonner";

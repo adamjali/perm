@@ -30,6 +30,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 // Viewport configuration for proper mobile scaling
 import { Preloader, PRELOADER_BOOT, PRELOADER_CSS } from "@/components/home/Preloader";
+import { SITE_URL } from "@/lib/constants/site";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -39,9 +40,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app"
-  ),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "PERM Tracker - Live PERM Data and Deadline Tracking",
     template: "%s | PERM Tracker",
@@ -76,13 +75,14 @@ export const metadata: Metadata = {
   // Icons. Ordered cheapest-correct first: a browser takes the first type it
   // understands, so the SVG wins everywhere modern and the PNG catches the rest.
   //
-  // Two things were wrong here before 2026-08-01:
-  //  - /icon.png was declared sizes:"32x32" but src/app/icon.png is 192x192, so
-  //    anything asking for a 32px icon downloaded a 192px file to shrink it.
-  //  - /icon-192.png was listed as a <link rel="icon">, duplicating /icon.png
-  //    (identical dimensions) for a size no browser uses for a tab. The 192 and
-  //    512 rasters belong to the PWA and are already declared in manifest.ts,
-  //    which is the only place Android reads them from.
+  // Two rules:
+  //  - a declared size must match the file: src/app/icon.png is 192x192, so
+  //    declaring it 32x32 makes anything asking for a 32px icon download a
+  //    192px file to shrink it.
+  //  - no /icon-192.png <link rel="icon">: it duplicates /icon.png (identical
+  //    dimensions) for a size no browser uses for a tab. The 192 and 512
+  //    rasters belong to the PWA and are declared in manifest.ts, which is
+  //    the only place Android reads them from.
   icons: {
     icon: [
       // DECLARED SIZES, because the file genuinely holds three frames and we
@@ -142,8 +142,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   // Generate structured data for SEO (static data, not user input - safe for JSON-LD)
-  const baseUrl =
-    process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+  const baseUrl = SITE_URL;
   // Strip per-schema @context — the @graph wrapper provides it once
   const { '@context': _1, ...software } = getSoftwareApplicationSchema(baseUrl);
   const { '@context': _2, ...org } = getOrganizationSchema(baseUrl);
@@ -160,13 +159,12 @@ export default async function RootLayout({
   return (
     // NO auth provider here, deliberately. ConvexAuthNextjsServerProvider
     // reads the session cookies, and a cookie read in the ROOT layout makes
-    // EVERY route dynamic: the whole public site was rendering ƒ with
-    // no-store - revalidate ignored, a fresh server render (and its Turso
-    // queries) on every visit, the blank-white first paint the preloader
-    // could never cover, and the Fluid CPU bill. Convex Auth's own docs
-    // scope it: "wrap the parts of your app that interact with Convex
-    // functions" - which is (site)/(auth) and (authenticated), where it
-    // now lives.
+    // EVERY route dynamic: the whole public site renders ƒ with no-store -
+    // revalidate ignored, a fresh server render (and its database queries)
+    // on every visit, and a blank-white first paint the preloader can never
+    // cover. Convex Auth's own docs scope it: "wrap the parts of your app
+    // that interact with Convex functions" - which is (site)/(auth) and
+    // (authenticated), where it lives.
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
         <head>
           {/*
@@ -212,11 +210,6 @@ export default async function RootLayout({
           <Preloader />
           <div className="grain-overlay" aria-hidden="true" />
           <SharedProviders>{children}</SharedProviders>
-          {/* Vercel Analytics + Speed Insights removed 2026-08-29: both are
-              fully redundant with PostHog (autocapture pageviews + $web_vitals),
-              worse on Hobby (50k-event pause, 1-month window, no custom events),
-              and every beacon is an edge request this project is short of. Web
-              vitals now come from PostHog capture_performance.web_vitals. */}
           {/*
             Ahrefs Web Analytics. EXTERNAL-SCRIPT form deliberately - Ahrefs
             also ships an inline injector variant, and this site's CSP is the

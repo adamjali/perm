@@ -2,6 +2,9 @@
 
 import { Fragment, useMemo } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
+import { formatInt } from "@/lib/format";
+
 import { DataView } from "./DataView";
 
 /**
@@ -59,10 +62,6 @@ function pct(n: number): string {
   return n >= 10 ? `${n.toFixed(0)}%` : `${n.toFixed(1)}%`;
 }
 
-function int(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 export function DenialReach({
   rows,
   totalDecided,
@@ -87,6 +86,7 @@ export function DenialReach({
 
   const chart = (
     <div>
+      <ChartTips label={label}>
       <ul className="space-y-5">
         {/* Array items render with nothing between them, so the last line of
             one row reaches an extractor glued to the next row's label. A
@@ -94,11 +94,11 @@ export function DenialReach({
         {computed.map((c) => (
           <Fragment key={c.label}>
             {" "}
-            <li>
+            <li data-tip={`${c.label}\n${formatInt(c.denied)} of ${formatInt(c.decided)} denied\n${pct(c.reach)} of all decided cases\n${pct(c.share)} of all denials`}>
             <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
               <p className="font-bold">{c.label}</p>{" "}
               <p className="font-mono text-sm tabular-nums text-foreground/70">
-                {int(c.denied)} of {int(c.decided)} denied
+                {formatInt(c.denied)} of {formatInt(c.decided)} denied
               </p>
             </div>
             <div className="mt-2 space-y-1.5">
@@ -111,7 +111,7 @@ export function DenialReach({
                     aria-label={`${pct(c.reach)} of all decided cases`}
                   />
                 </div>
-                <p className="w-32 shrink-0 font-mono text-xs tabular-nums text-foreground/70">
+                <p className="w-32 shrink-0 font-mono text-sm tabular-nums text-foreground/70">
                   {pct(c.reach)} of cases
                 </p>
               </div>
@@ -124,7 +124,7 @@ export function DenialReach({
                     aria-label={`${pct(c.share)} of all denials`}
                   />
                 </div>
-                <p className="w-32 shrink-0 font-mono text-xs font-bold tabular-nums">
+                <p className="w-32 shrink-0 font-mono text-sm font-bold tabular-nums">
                   {pct(c.share)} of denials
                 </p>
               </div>
@@ -135,7 +135,8 @@ export function DenialReach({
             </li>
           </Fragment>
         ))}
-      </ul>{" "}
+      </ul>
+      </ChartTips>{" "}
       <p className="mt-6 text-sm leading-relaxed text-foreground/60">
         Outlined is the {unitLabel.toLowerCase()}&apos;s share of decided cases,
         solid its share of denials. Solid longer than outlined means denials
@@ -150,19 +151,19 @@ export function DenialReach({
         <caption className="sr-only">{caption}</caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
               {unitLabel}
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Decided
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Denied
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Share of cases
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Share of denials{" "}
             </th>
           </tr>
@@ -171,8 +172,8 @@ export function DenialReach({
           {computed.map((c) => (
             <tr key={c.label} className="border-t border-border/40">
               <td className="p-3 font-bold">{c.label}{" "}</td>
-              <td className="p-3 text-right tabular-nums">{int(c.decided)}{" "}</td>
-              <td className="p-3 text-right tabular-nums">{int(c.denied)}{" "}</td>
+              <td className="p-3 text-right tabular-nums">{formatInt(c.decided)}{" "}</td>
+              <td className="p-3 text-right tabular-nums">{formatInt(c.denied)}{" "}</td>
               <td className="p-3 text-right tabular-nums">{pct(c.reach)}{" "}</td>
               <td className="p-3 text-right font-bold tabular-nums">{pct(c.share)}{" "}</td>
             </tr>

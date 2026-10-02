@@ -24,8 +24,8 @@ import {
 import { after } from 'next/server';
 import { isAuthenticatedNextjs, convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server';
 import { fetchMutation, fetchQuery } from 'convex/nextjs';
-import { api } from '@/../convex/_generated/api';
-import type { Id } from '@/../convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import {
   summarizeConversation,
   checkNeedsSummarization,

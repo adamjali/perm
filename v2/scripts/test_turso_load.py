@@ -145,7 +145,7 @@ def check_count_kept(failures: list[str]) -> None:
     "0 kept, 1,410 new" over 1,410 unchanged slugs on Sep 29 2026."""
     sys.path.insert(0, str(HERE))
     import turso_migrate_public as tmp_mod
-    from store_entities import plan_sticky_slugs
+    from lib_slugs import plan_sticky_slugs
 
     items = [{"title": "Managers, All Other", "code": "11-9199", "total": 9},
              {"title": "Managers, All Other", "code": "11-9198", "total": 5},
@@ -192,14 +192,14 @@ def main() -> int:
             print(f"  [1] normal load          bulletins={vb} docs={len(keys)} rc={r.returncode}")
             # The entity readers select recent_12m. This load recreates the
             # table, and without the column every entity page failed until
-            # the nightly refresh re-added it (Sep 26 2026).
+            # the nightly refresh re-added it.
             con = sqlite3.connect(DB)
             ecols = {row[1] for row in con.execute("PRAGMA table_info(perm_entities)")}
             con.close()
             if "recent_12m" not in ecols:
                 failures.append(f"1. perm_entities lost recent_12m: {sorted(ecols)}")
             # The rebuild happens in *_next tables and is swapped in with one
-            # transaction (Sep 28 2026): nothing may be left behind, and the
+            # transaction: nothing may be left behind, and the
             # swapped-in table must carry its indexes.
             con = sqlite3.connect(DB)
             names = {r[0] for r in con.execute("SELECT name FROM sqlite_master")}

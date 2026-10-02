@@ -4,27 +4,22 @@ import { getAllEntities, getEntitySeed } from "./turso/publicData";
 /**
  * The server-rendered head of one entity kind, plus how many exist.
  *
- * Backed by Turso since 2026-08-25. The signatures are unchanged on purpose:
- * every entity index page, the detail pages and the sitemap read through
- * here, so moving the backend is one file rather than fifteen.
+ * Backed by the site's SQL database, not Convex. Every entity index page, the
+ * detail pages and the sitemap read through here, so the backend is one file
+ * rather than fifteen.
  *
- * Why it moved: 373,939 case rows plus these 21,178 entities and their
- * indexes exceeded Convex's 0.5 GB free tier and disabled the deployment -
- * reads included - which took every public data page down to nav and footer.
- * The data is public DOL disclosure output, read-mostly and rewritten once a
- * quarter, so it belongs in cheap bulk storage. Accounts and user-tracked
- * cases stay on Convex, behind auth, where they belong.
+ * Why not Convex: the case rows plus these entities and their indexes are
+ * public DOL disclosure output, read-mostly and rewritten once a quarter, and
+ * they outgrow Convex's free tier, where an exceeded limit disables the
+ * deployment, reads included. Accounts and user-tracked cases stay on Convex,
+ * behind auth, where they belong. SQLite also has no 1 MB document limit, so
+ * `perm_entities` holds every entity rather than a truncated head that
+ * describes itself as complete.
  *
- * ONE CAP DISAPPEARED WITH THE MOVE. The old comment here explained that the
- * aggregate document could hold only 250 rows per kind because of Convex's
- * 1 MB document limit. That limit does not exist in SQLite, so `perm_entities`
- * holds all 16,305 employers rather than a truncated head that described
- * itself as complete.
- *
- * ERRORS ARE NOT SWALLOWED ANY MORE. Each fetch used to end in
- * `.catch(() => [])`, which turned the outage above into an HTTP 200 carrying
- * an empty state - a page that looks merely quiet while being entirely
- * broken, and which no status-code check can catch. These throw.
+ * ERRORS ARE NOT SWALLOWED. A `.catch(() => [])` here would turn an outage
+ * into an HTTP 200 carrying an empty state - a page that looks merely quiet
+ * while being entirely broken, and which no status-code check can catch.
+ * These throw.
  */
 
 export interface EntitySeed {
@@ -47,10 +42,10 @@ export async function fetchEntitySeed(
  * lazy-load, and the sitemap.
  */
 /**
- * The BULK dump's rows. Not the sitemap's - that reads its own rank window
- * (`getEntitySlugWindow`) and stopped sharing this function on 2026-09-10,
- * when the page floor dropped to 1 and a shared whole-table fetch became
- * fourteen full reads a day. This keeps the higher `MIN_TOTAL_FOR_BULK`.
+ * The BULK dump's rows. Not the sitemap's: that reads its own rank window
+ * (`getEntitySlugWindow`), because with a page floor of 1 a shared
+ * whole-table fetch would be one full read per sitemap file. This keeps the
+ * higher `MIN_TOTAL_FOR_BULK`.
  */
 export async function fetchAllEntitiesServer(
   kind: EntityKind,

@@ -225,13 +225,15 @@ describe("RfiOutcomes", () => {
     for (const f of fills) expect(f).toContain("-ink");
   });
 
-  it("names every segment in a title, because hue cannot be the only channel", () => {
+  it("names every segment in its hover detail, because hue cannot be the only channel", () => {
     // Certified (#1D8229) against no-decision-yet (#B45309) is 1.02:1 — the
     // two are separable by hue and by nothing else, and four categories cannot
     // be spread across a luminance ramp without one landing on the page.
+    // The names ride ChartTips' data-tip (hover, tap and arrow keys), not a
+    // native title, which a phone never shows.
     const { container } = render(<RfiOutcomes funnel={funnel} />);
-    const titles = [...container.querySelectorAll("[title]")].map((e) =>
-      e.getAttribute("title"),
+    const titles = [...container.querySelectorAll("[data-tip]")].map((e) =>
+      e.getAttribute("data-tip"),
     );
     for (const label of ["Certified", "Denied", "Withdrawn", "No decision yet"]) {
       expect(titles.some((t) => t?.startsWith(label))).toBe(true);

@@ -1,9 +1,6 @@
 /**
  * Timeline Components Index
  * Barrel exports for timeline visualization components.
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2025-12-26
  */
 
 export { TimelineGrid } from "./TimelineGrid";

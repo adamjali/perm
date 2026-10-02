@@ -12,7 +12,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { api } from "../_generated/api";
 import { BUDGETS } from "../lib/alertBudgets";
-import { etDay } from "../lib/alertDelivery";
+import { easternDay } from "../lib/time";
 
 const ADMIN = "admin@delivery-test.com";
 
@@ -50,7 +50,7 @@ describe("adminDelivery.getDelivery", () => {
           timestamp: now - i * 1000,
         });
       }
-      await ctx.db.insert("budgetRefusals", { day: etDay(now), pool: "caseAlert", count: 4 });
+      await ctx.db.insert("budgetRefusals", { day: easternDay(now), pool: "caseAlert", count: 4 });
       await ctx.db.insert("employerAlerts", { email: "e@x.com", slug: "adobe-inc", employerName: "Adobe Inc.", createdAt: now, confirmedAt: now });
       await ctx.db.insert("employerAlerts", { email: "f@x.com", slug: "adobe-inc", employerName: "Adobe Inc.", createdAt: now, confirmedAt: now });
       await ctx.db.insert("employerAlerts", { email: "g@x.com", slug: "maplebear-inc", employerName: "Maplebear Inc.", createdAt: now });

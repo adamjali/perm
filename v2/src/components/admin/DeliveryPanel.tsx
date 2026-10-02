@@ -12,16 +12,17 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { FunctionReturnType } from "convex/server";
-import type { api } from "../../../convex/_generated/api";
+import { formatInt } from "@/lib/format";
+import { EASTERN_TIMEZONE, MS_PER_HOUR } from "@/lib/time";
+import type { api } from "@convex/_generated/api";
 
 export type Delivery = FunctionReturnType<typeof api.adminDelivery.getDelivery>;
 
-const int = (n: number) => n.toLocaleString("en-US");
 const when = (ms: number) =>
   new Date(ms).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 function ago(ms: number): string {
-  const h = Math.floor((Date.now() - ms) / 3_600_000);
+  const h = Math.floor((Date.now() - ms) / MS_PER_HOUR);
   if (h < 1) return "under an hour";
   if (h < 48) return `${h} hour${h === 1 ? "" : "s"}`;
   return `${Math.floor(h / 24)} days`;
@@ -55,29 +56,29 @@ export function BudgetPools({
       </h2>{" "}
       {refused > 0 ? (
         <p className="mt-3 border-2 border-border bg-data-warn-ink px-4 py-3 text-base font-bold text-background">
-          {`${int(refused)} ${refused === 1 ? "person was" : "people were"} turned away in the last 7 days: the queue was full or a request waited more than seven days.`}
+          {`${formatInt(refused)} ${refused === 1 ? "person was" : "people were"} turned away in the last 7 days: the queue was full or a request waited more than seven days.`}
         </p>
       ) : (
         <p className="mt-2 text-sm text-muted-foreground">No one has been turned away in the last 7 days.</p>
       )}{" "}
       {waited > 0 ? (
         <p className="mt-2 text-sm font-bold">
-          {`${int(waited)} confirmation${waited === 1 ? "" : "s"} waited in the queue this week because a pool was full. The queue sends them as soon as Resend's count for the day leaves room.`}
+          {`${formatInt(waited)} confirmation${waited === 1 ? "" : "s"} waited in the queue this week because a pool was full. The queue sends them as soon as Resend's count for the day leaves room.`}
         </p>
       ) : null}{" "}
       {day ? (
         <p className="mt-3 text-sm">
-          <span className="font-bold">{`Today: ${int(day.used)} of ${int(day.cap)} sent.`}</span>{" "}
-          {`List mail stops at ${int(day.listCeiling)}; the rest is kept for sign-in codes. Resend's day resets at 8 PM Eastern in summer.`}
+          <span className="font-bold">{`Today: ${formatInt(day.used)} of ${formatInt(day.cap)} sent.`}</span>{" "}
+          {`List mail stops at ${formatInt(day.listCeiling)}; the rest is kept for sign-in codes. Resend's day resets at 8 PM Eastern in summer.`}
           {day.retrying > 0
-            ? ` ${int(day.retrying)} failed ${day.retrying === 1 ? "email is" : "emails are"} waiting to retry${day.oldestRetryAt ? `, the oldest since ${new Date(day.oldestRetryAt).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} Eastern` : ""}.`
+            ? ` ${formatInt(day.retrying)} failed ${day.retrying === 1 ? "email is" : "emails are"} waiting to retry${day.oldestRetryAt ? `, the oldest since ${new Date(day.oldestRetryAt).toLocaleString("en-US", { timeZone: EASTERN_TIMEZONE, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} Eastern` : ""}.`
             : ""}
-          {day.lostToday > 0 ? ` ${int(day.lostToday)} given up on today.` : ""}
+          {day.lostToday > 0 ? ` ${formatInt(day.lostToday)} given up on today.` : ""}
         </p>
       ) : null}{" "}
       {queue && queue.waiting > 0 ? (
         <p className="mt-2 border-2 border-border bg-background px-4 py-3 text-sm font-bold">
-          {`${int(queue.waiting)} waiting now${queue.oldestQueuedAt ? `, the oldest since ${new Date(queue.oldestQueuedAt).toLocaleString("en-US", { timeZone: "America/New_York", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} Eastern` : ""}.`}
+          {`${formatInt(queue.waiting)} waiting now${queue.oldestQueuedAt ? `, the oldest since ${new Date(queue.oldestQueuedAt).toLocaleString("en-US", { timeZone: EASTERN_TIMEZONE, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} Eastern` : ""}.`}
         </p>
       ) : null}
       <ul className="mt-4 grid grid-cols-1 gap-x-8 gap-y-4 md:grid-cols-2">
@@ -89,18 +90,18 @@ export function BudgetPools({
               <div className="flex items-baseline justify-between gap-3">
                 <span className="text-sm font-bold">{p.label}</span>{" "}
                 <span className="text-sm tabular-nums">
-                  <span className="font-heading text-base font-black">{int(p.usedLast24h)}</span>
-                  {` of ${int(p.limit)}`}
+                  <span className="font-heading text-base font-black">{formatInt(p.usedLast24h)}</span>
+                  {` of ${formatInt(p.limit)}`}
                 </span>
               </div>{" "}
               <div className="mt-1.5 h-3 w-full border-2 border-border bg-background" role="img" aria-label={`${p.usedLast24h} of ${p.limit} used in the last 24 hours`}>
                 <div className={`h-full ${full ? "bg-destructive" : "bg-foreground"}`} style={{ width: `${share * 100}%` }} />
               </div>{" "}
               {p.refusedLast7d > 0 ? (
-                <p className="mt-1 text-sm font-bold text-destructive">{`${int(p.refusedLast7d)} turned away this week`}</p>
+                <p className="mt-1 text-sm font-bold text-destructive">{`${formatInt(p.refusedLast7d)} turned away this week`}</p>
               ) : null}{" "}
               {p.queuedLast7d > 0 ? (
-                <p className="mt-1 text-sm">{`${int(p.queuedLast7d)} queued this week`}</p>
+                <p className="mt-1 text-sm">{`${formatInt(p.queuedLast7d)} queued this week`}</p>
               ) : null}
             </li>
           );
@@ -126,7 +127,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
   const w = data.outbox.last7d;
   // Read the clock once at mount; a render must not call it (react-hooks/purity).
   const [now] = useState(() => Date.now());
-  const stale = data.outbox.oldestQueuedAt !== null && now - data.outbox.oldestQueuedAt > 26 * 3_600_000;
+  const stale = data.outbox.oldestQueuedAt !== null && now - data.outbox.oldestQueuedAt > 26 * MS_PER_HOUR;
   return (
     <div className="space-y-8">
       <section aria-labelledby="outbox-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
@@ -137,16 +138,16 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           One email per person per day at most. Several updates for one person wait in the outbox and go out together.
         </p>{" "}
         <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <Figure value={int(w.emails)} label="emails sent" />
-          <Figure value={int(w.items)} label="alerts inside them" />
-          <Figure value={int(w.bundles)} label="bundled emails" />
-          <Figure value={int(data.outbox.queued)} label={data.outbox.oldestQueuedAt ? `waiting, oldest ${ago(data.outbox.oldestQueuedAt)}` : "waiting"} tone={stale ? "warn" : undefined} />
-          <Figure value={int(w.failed)} label="gave up after 6 tries" tone={w.failed > 0 ? "warn" : undefined} />
-          <Figure value={int(w.dropped)} label="dropped by an opt-out" />
+          <Figure value={formatInt(w.emails)} label="emails sent" />
+          <Figure value={formatInt(w.items)} label="alerts inside them" />
+          <Figure value={formatInt(w.bundles)} label="bundled emails" />
+          <Figure value={formatInt(data.outbox.queued)} label={data.outbox.oldestQueuedAt ? `waiting, oldest ${ago(data.outbox.oldestQueuedAt)}` : "waiting"} tone={stale ? "warn" : undefined} />
+          <Figure value={formatInt(w.failed)} label="gave up after 6 tries" tone={w.failed > 0 ? "warn" : undefined} />
+          <Figure value={formatInt(w.dropped)} label="dropped by an opt-out" />
         </div>{" "}
         <p className="mt-3 text-sm">
           {(Object.keys(KIND_LABEL) as (keyof typeof KIND_LABEL)[])
-            .map((k) => `${KIND_LABEL[k]} ${int(w.byKind[k])}`)
+            .map((k) => `${KIND_LABEL[k]} ${formatInt(w.byKind[k])}`)
             .join(", ")}
         </p>
       </section>{" "}
@@ -165,7 +166,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           <>
           {(data.recentTotal ?? 0) > data.recent.length ? (
             <p className="mt-2 text-sm text-muted-foreground">
-              {`The newest ${int(data.recent.length)} of ${int(data.recentTotal ?? 0)} in the last 7 days.`}
+              {`The newest ${formatInt(data.recent.length)} of ${formatInt(data.recentTotal ?? 0)} in the last 7 days.`}
             </p>
           ) : null}
           <div className="mt-3 overflow-x-auto border-2 border-border">
@@ -208,13 +209,13 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
           Employer follows
         </h2>{" "}
         <div className="mt-3 grid grid-cols-3 gap-3 sm:max-w-md">
-          <Figure value={int(data.follows.confirmed)} label="following" />
-          <Figure value={int(data.follows.pending)} label="not confirmed" />
-          <Figure value={int(data.follows.unsubscribed)} label="stopped" />
+          <Figure value={formatInt(data.follows.confirmed)} label="following" />
+          <Figure value={formatInt(data.follows.pending)} label="not confirmed" />
+          <Figure value={formatInt(data.follows.unsubscribed)} label="stopped" />
         </div>{" "}
         {(data.follows.employers ?? 0) > data.follows.top.length ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            {`The ${int(data.follows.top.length)} most-followed of ${int(data.follows.employers ?? 0)} employers.`}
+            {`The ${formatInt(data.follows.top.length)} most-followed of ${formatInt(data.follows.employers ?? 0)} employers.`}
           </p>
         ) : null}{" "}
         {data.follows.top.length > 0 ? (
@@ -224,7 +225,7 @@ export function DeliveryPanel({ data }: { data: Delivery }) {
                 <Link href={`/perm-employers/${f.slug}`} className="min-w-0 font-bold underline decoration-primary-text decoration-2 underline-offset-2 [overflow-wrap:anywhere]">
                   {f.name}
                 </Link>{" "}
-                <span className="tabular-nums">{`${int(f.followers)} following`}</span>
+                <span className="tabular-nums">{`${formatInt(f.followers)} following`}</span>
               </li>
             ))}
           </ol>

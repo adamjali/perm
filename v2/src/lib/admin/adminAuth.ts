@@ -6,23 +6,19 @@
  * Provides admin authentication helpers for the frontend.
  * Admin check is performed server-side, no secrets exposed to the client.
  *
- * THE DIRECTIVE IS LOAD-BEARING (added 2026-09-01). This module calls
- * `useQuery` from `convex/react` and `useAuthContext`, both of which reach
- * `React.createContext`, so it is a client module in every sense except the
- * annotation. It survived without one only because all three of its importers
- * (AdminDashboardClient, SecurityDashboardClient, Header) are themselves client
- * components, so it was always pulled in through somebody else's boundary.
- *
- * That made it a latent trap rather than a safe omission: the moment an
- * unrelated change reshuffled the module graph - here, making Footer a server
- * component - `/admin/security` failed to collect page data with
+ * THE DIRECTIVE IS LOAD-BEARING. This module calls `useQuery` from
+ * `convex/react` and `useAuthContext`, both of which reach
+ * `React.createContext`, so it is a client module in every sense. Without the
+ * annotation it works only while every importer is itself a client
+ * component, pulling it in through somebody else's boundary; the first
+ * change that reshuffles the module graph then fails the build with
  * `TypeError: (0 , d.createContext) is not a function`, pointing at webpack
- * bootstrap rather than at this file. Declaring the boundary where it actually
- * belongs stops the next reshuffle from doing the same thing.
+ * bootstrap rather than at this file. Declaring the boundary where it
+ * belongs prevents that.
  */
 
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 
 /**

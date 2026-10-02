@@ -1,72 +1,67 @@
 /**
- * Fetch DOL's processing-times page and store it in Turso.
+ * Fetch DOL's processing-times page and store it in the database.
  *
- * This used to run as a Convex cron + action. It moved for the same reason
- * the case corpus did: Convex's free tier was exceeded and the whole
- * deployment was disabled, so the cron stopped and the page went stale with
- * no signal. Turso holds the public data now.
- *
- * IT REUSES THE EXISTING PARSER RATHER THAN PORTING IT. convex/lib/
- * dolProcessingTimes.ts is 561 lines with its own test suite, and it has
- * already had at least one subtle defect fixed in it (an unanchored regex
- * that read "As of May 2025 ... September 2025" as 2025-05 - a plausible
- * WRONG date, which is worse than a null because null is visible downstream).
- * Rewriting it in Python would re-derive those traps from scratch. The module
- * has ZERO imports, so it runs unmodified under Node.
+ * It reuses the app's parser (convex/lib/dolProcessingTimes.ts, with its own
+ * test suite) rather than porting it: that module has no imports, so it runs
+ * unmodified under Node, and a second copy in Python would have to re-learn
+ * every trap the first one already fixed.
  *
  *   node --experimental-strip-types scripts/ingest_processing_times.mts
  */
 import { createClient } from "@libsql/client";
-import { appendFileSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, readFileSync } from "node:fs";
 
 import { parseProcessingTimes } from "../convex/lib/dolProcessingTimes.ts";
 
 const SOURCE = "https://flag.dol.gov/processingtimes";
+const FETCH_ATTEMPTS = 4;
+const RETRY_BASE_MS = 5000;
+// Statuses worth another attempt. A 404 means the page moved, and retrying
+// only delays the real error.
+const RETRYABLE_STATUS = [403, 429, 503];
+// DOL republishes roughly weekly with gaps of up to a week, so ten days is
+// longer than any observed gap and still short enough to catch this job dying.
+const FRESHNESS_MAX_AGE_DAYS = 10;
 
+/** The environment first, then `.env.local`: the same rule as lib_turso.env(). */
 function env(name: string): string {
-  const raw = readFileSync(".env.local", "utf8");
+  const value = process.env[name];
+  if (value) return value;
+  const raw = existsSync(".env.local") ? readFileSync(".env.local", "utf8") : "";
   for (const line of raw.split("\n")) {
     if (line.startsWith(name + "=")) return line.slice(name.length + 1).trim();
   }
-  throw new Error(`${name} missing from .env.local`);
+  throw new Error(`${name} is not set in the environment or .env.local`);
 }
 
 async function main() {
   console.log(`  fetching ${SOURCE}`);
-  // RETRY, BECAUSE THIS RUNS UNATTENDED ONCE A DAY. Before this there was a
-  // single fetch with no retry, and the workflow step is `continue-on-error`,
-  // so one blip against flag.dol.gov lost the whole day AND said nothing.
-  // DOL publishes evening maintenance windows, which is exactly the shape of
-  // failure a short backoff rides out.
+  // Retried with backoff: this runs unattended once a day, and DOL's evening
+  // maintenance windows are exactly the kind of blip a short backoff rides out.
   let res: Response | undefined;
-  for (let attempt = 1; attempt <= 4; attempt++) {
+  for (let attempt = 1; attempt <= FETCH_ATTEMPTS; attempt++) {
     try {
-      // ASSIGN, do not redeclare. A `const res` here shadows the outer one,
-      // leaves it undefined forever, and makes the guard below throw on every
-      // run. TypeScript does not flag it - shadowing is legal - so
-      // `pnpm typecheck` passed cleanly over exactly this bug.
+      // Assign, don't redeclare: a `const res` here would shadow the outer
+      // one, and TypeScript allows the shadow without a warning.
       res = await fetch(SOURCE, {
         headers: {
-          // flag.dol.gov serves scripts without ceremony; www.dol.gov does not.
-          // Verified 2026-08-25 with cloudflare.com/discord.com as controls.
+          // flag.dol.gov serves scripts without a browser header set.
           "User-Agent": "permtracker.app ingest (+https://permtracker.app)",
           Accept: "text/html,application/xhtml+xml",
         },
       });
       if (res.ok) break;
-      // 403/429/503 are worth another go. A 404 means the page moved, and
-      // retrying only delays the real error.
-      if (![403, 429, 503].includes(res.status) || attempt === 4) {
+      if (!RETRYABLE_STATUS.includes(res.status) || attempt === FETCH_ATTEMPTS) {
         throw new Error(`DOL returned ${res.status}`);
       }
-      console.log(`  HTTP ${res.status} (attempt ${attempt}/4)`);
+      console.log(`  HTTP ${res.status} (attempt ${attempt}/${FETCH_ATTEMPTS})`);
     } catch (err) {
-      if (attempt === 4) throw err;
-      console.log(`  ${String(err)} (attempt ${attempt}/4)`);
+      if (attempt === FETCH_ATTEMPTS) throw err;
+      console.log(`  ${String(err)} (attempt ${attempt}/${FETCH_ATTEMPTS})`);
     }
-    await new Promise((r) => setTimeout(r, 5000 * 3 ** (attempt - 1)));
+    await new Promise((r) => setTimeout(r, RETRY_BASE_MS * 3 ** (attempt - 1)));
   }
-  if (!res?.ok) throw new Error("DOL unreachable after 4 attempts");
+  if (!res?.ok) throw new Error(`DOL unreachable after ${FETCH_ATTEMPTS} attempts`);
 
   const html = await res.text();
   console.log(`  ${html.length.toLocaleString()} bytes`);
@@ -90,16 +85,13 @@ async function main() {
       fetched_at INTEGER NOT NULL
     )`);
 
-  // DID DOL ACTUALLY REPUBLISH? Asked BEFORE the write, because the write
-  // itself destroys the answer: the table is keyed by DOL's own as-of, so
-  // INSERT OR REPLACE makes a new publication and a re-read of an unchanged
-  // page look identical afterwards.
+  // Did DOL actually republish? Asked BEFORE the write, because the write
+  // destroys the answer: the table is keyed by DOL's own as-of, so after an
+  // INSERT OR REPLACE a new publication and a re-read look the same.
   //
-  // This gates the on-demand revalidation the workflow does with it. DOL moves
-  // roughly weekly, so firing it on every run would expire the public pages on
-  // the ~29 days a month DOL did NOT move, and every expiry a visitor walks
-  // into is a paid ISR render for a number that did not change. Same cost
-  // shape as the employer-page tail that took the Vercel write meter to 100%.
+  // The workflow expires the public pages only when this is true. DOL moves
+  // roughly weekly, so expiring on every run would re-render those pages on
+  // the days nothing changed.
   const existing = await db.execute({
     sql: "SELECT 1 FROM processing_times WHERE perm_as_of = ? LIMIT 1",
     args: [snap.permAsOf],
@@ -114,26 +106,8 @@ async function main() {
     args: [snap.permAsOf, JSON.stringify(snap), now],
   });
 
-  // Stamp our own freshness row, the same way every Python ingest does.
-  //
-  // THIS INGEST WROTE DATA FOR MONTHS AND NEVER RECORDED THAT IT HAD. The
-  // `processing-times` row in data_freshness was created once by
-  // a one-off backfill script (since removed), a one-off that is in no workflow, so `as_of` stayed
-  // frozen at whatever that run left while this job refreshed the data daily
-  // underneath it. Measured 2026-08-29: the table held DOL's 2026-08-28
-  // snapshot while the freshness row still claimed 2026-08-20, one day short
-  // of its 10-day budget. The monitor was about to report a dataset as stale
-  // that was actually a day old.
-  //
-  // A monitor that cries wolf is one you stop reading, which is worse than no
-  // monitor. The identical defect was fixed in the Python ingests earlier;
-  // this one survived because it is the only ingest written in TypeScript, so
-  // a sweep over scripts/*.py could not see it.
-  //
-  // max_age_days is 10, not 1: DOL republishes when it republishes, and the
-  // gaps in our own history (2026-08-20 -> 08-27 -> 08-28) are DOL's, not
-  // ours. Ten days is comfortably longer than any gap observed and still short
-  // enough to catch this job dying.
+  // Stamp the freshness row the health check reads, as every Python ingest
+  // does, so a dataset this job keeps current never reads as stale.
   await db.execute(`CREATE TABLE IF NOT EXISTS data_freshness (
       dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
       source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)`);
@@ -146,7 +120,7 @@ async function main() {
       "DOL FLAG (flag.dol.gov/processingtimes)",
       "Daily",
       "DOL's own as-of date",
-      10,
+      FRESHNESS_MAX_AGE_DAYS,
     ],
   });
 

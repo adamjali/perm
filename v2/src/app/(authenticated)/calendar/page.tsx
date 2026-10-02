@@ -13,9 +13,6 @@
  * - Case selection modal for visibility control
  * - Loading skeleton while data loads
  * - Empty state when no cases
- *
- * Phase: 23.1 (Calendar UI)
- * Created: 2025-12-28
  */
 
 import type { Metadata } from "next";

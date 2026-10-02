@@ -76,8 +76,8 @@ def main() -> int:
     check("shape carries the citation and pdf", row["citation"] == "91 FR 57516" and row["pdf_url"].endswith("C1-2026-17324.pdf"))
     check("shape without a correction_of gives None", pn.shape({"document_number": "x"})["correction_of"] is None)
 
-    # ensure_columns() adds only what the live table lacks; write() compares
-    # on the new fields too, so a changed effective date is a write.
+    # add_missing_columns() adds only what the live table lacks; write()
+    # compares on the new fields too, so a changed effective date is a write.
     class FakeDb:
         def __init__(self, cols):
             self.cols = list(cols); self.sql = []; self.rows = []
@@ -93,9 +93,9 @@ def main() -> int:
             return {}
     base = ["document_number", "publication_date", "type", "title", "abstract", "html_url", "agencies", "topics", "fetched_at"]
     db = FakeDb(base)
-    added = pn.ensure_columns(db)
-    check("ensure_columns adds every extra column to a nine-column table", added == pn.EXTRA_NAMES)
-    check("ensure_columns adds nothing the second time", pn.ensure_columns(db) == [])
+    added = pn.add_missing_columns(db, "policy_notices", pn.EXTRA_COLUMNS)
+    check("every extra column is added to a nine-column table", added == pn.EXTRA_NAMES)
+    check("nothing is added the second time", pn.add_missing_columns(db, "policy_notices", pn.EXTRA_COLUMNS) == [])
     stored = {"document_number": "2026-16231", "publication_date": "2026-08-10", "type": "Rule", "title": "T",
               "abstract": "A", "html_url": "u", "agencies": [], "topics": ["H-1B"], "effective_on": "2026-09-09",
               "comments_close_on": None, "comment_url": None, "citation": None, "action": None, "dates": None,

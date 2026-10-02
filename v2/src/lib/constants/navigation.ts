@@ -84,6 +84,7 @@ export const TOOL_NAV_LINKS = [
   { href: "/tools/rfi-deadline", label: "RFI deadline" },
   { href: "/tools/pwd-validity", label: "Wage determination validity" },
   { href: "/tools/h1b-six-year-limit", label: "H-1B six-year limit" },
+  { href: "/tools/h1b-lottery-odds-calculator", label: "H-1B lottery odds" },
   { href: "/tools/priority-date-retention", label: "Priority date retention" },
   { href: "/tools/green-card-fees", label: "Green card fees" },
   { href: "/tools/wage-levels", label: "Wage levels" },
@@ -115,10 +116,9 @@ export const HOME_SECTION_LINKS = [
  * The unified public top nav, one list for every public page including the
  * homepage.
  *
- * The homepage used to render section anchors (#how, #features) instead -
- * retired when those sections moved to /for-attorneys, and better retired
- * anyway: a nav that changes shape between pages makes the site feel like
- * two sites. Ordered by visitor priority: the person waiting first.
+ * No homepage-only section anchors: a nav that changes shape between pages
+ * makes the site feel like two sites. Ordered by visitor priority: the
+ * person waiting first.
  */
 export const PUBLIC_NAV_LINKS = [
   { href: "/perm-case-status", label: "Track my case" },
@@ -160,9 +160,8 @@ export const LEARN_NAV_LINKS = [
  *
  * The columns had drifted from the Learn dropdown: FAQ sat under Product,
  * About under Legal, "Processing Times" under Learn, and Methodology appeared
- * in the dropdown and NOWHERE in the footer. Adam: "drop down learn isnt same
- * as footer, ensure footer is correct everywhere adn vice versa". The Learn
- * column is now literally `LEARN_NAV_LINKS`, so the two cannot disagree, and
+ * in the dropdown and nowhere in the footer. The Learn column is now
+ * literally `LEARN_NAV_LINKS`, so the two cannot disagree, and
  * `footer-nav-parity.test.ts` asserts it.
  *
  * And the whole Reference cluster - the glossary, the scorecard, policy
@@ -203,7 +202,7 @@ export const FOOTER_COLUMNS: readonly FooterColumn[] = [
       { href: "/email-preferences", label: "Email preferences" },
     ],
     publicOnly: [
-      { href: "/signup", label: "Sign up free" },
+      { href: "/signup", label: "Sign up" },
       { href: "/login", label: "Sign in" },
     ],
   },

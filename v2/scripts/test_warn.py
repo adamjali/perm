@@ -69,11 +69,10 @@ def main() -> int:
     check(ny[0]["company"] == "420 Park FB LLC" and ny[0]["notice_date"] == "2026-04-06" and ny[0]["effective_date"] == "2026-07-06", "New York first row: company, notice date, start date", f)
     check(ny[0]["kind"] == "Closure, Permanent" and ny[0]["employees"] == 42 and ny[0]["county"] == "New York", "New York first row: kind, count, county", f)
     check(len({r["id"] for r in ny}) == len(ny), "New York ids are unique", f)
-    # THE DASHBOARD'S "Index" COLUMN IS A POSITION, NOT AN ID. The same Amazon
-    # notice was Index 23 on Sep 9 and 25 on Sep 23 because later postings sort
-    # in ahead of it, and with Index in the hash every shift minted a second row:
-    # 258 New York rows held for the 197 New York lists. Renumbering the column
-    # must leave every id where it was.
+    # The dashboard's "Index" column is a position, not an id: later postings
+    # sort in ahead of a notice and renumber it, and with Index in the hash
+    # every shift minted a second row. Renumbering the column must leave every
+    # id where it was.
     raw = open(NY_FIXTURE, "rb").read().decode("utf-8-sig")
     lines = list(csv.reader(io.StringIO(raw)))
     ix = [h.strip().lower() for h in lines[0]].index("index")
@@ -95,7 +94,7 @@ def main() -> int:
 
     # THE ID COMPONENT A PARSER FORGETS TO NAME IS INVISIBLE. assign_ids reads
     # one private key, `_extra`, and pops it. A parser that emits a different
-    # name (parse_california emitted `_address` for one commit on 2026-09-09)
+    # name (as parse_california once emitted `_address`)
     # keeps that key AND silently drops its component from the hash, so every
     # id changes and the next load writes a duplicate of every row: California
     # went to 384 rows for 192 notices. A leftover underscore key is the tell.

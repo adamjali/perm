@@ -5,7 +5,7 @@ import {
   MAX_SEARCH_RESULTS,
   MAX_TITLE_FILTER,
   SEARCH_MONTH_RE,
-  isCaseStatus,
+  isDisclosureOutcome,
   listCases,
   lookupByCaseNumber,
   lookupLiveByCaseNumber,
@@ -145,7 +145,7 @@ export async function GET(request: Request) {
     // Length BEFORE anything else touches it.
     if (text.length < 2 || text.length > MAX_TEXT) return bad("text must be 2..120 chars");
     const status = p.get("status");
-    if (status && !isCaseStatus(status)) return bad("unknown status");
+    if (status && !isDisclosureOutcome(status)) return bad("unknown status");
     const state = p.get("state");
     if (state && state.length > 2) return bad("bad state");
     // The narrowing filters. Length before anything walks the string, and
@@ -174,7 +174,7 @@ export async function GET(request: Request) {
       searchCases({
         field,
         text,
-        ...(status && isCaseStatus(status) ? { status } : {}),
+        ...(status && isDisclosureOutcome(status) ? { status } : {}),
         ...(state ? { state } : {}),
         ...narrow,
         limit,
@@ -226,7 +226,7 @@ export async function GET(request: Request) {
   const slice = readSlice(p);
   if (!slice) return bad("unknown or over-long slice");
   const status = p.get("status");
-  if (status && !isCaseStatus(status)) return bad("unknown status");
+  if (status && !isDisclosureOutcome(status)) return bad("unknown status");
   const from = p.get("from");
   const to = p.get("to");
   // Shape-check the dates rather than handing arbitrary text to the query.
@@ -238,7 +238,7 @@ export async function GET(request: Request) {
 
   const filter: CaseFilter = {
     slice,
-    ...(status && isCaseStatus(status) ? { status } : {}),
+    ...(status && isDisclosureOutcome(status) ? { status } : {}),
     ...(from ? { from } : {}),
     ...(to ? { to } : {}),
   };

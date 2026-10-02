@@ -1,11 +1,11 @@
 "use client";
 
 // `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here (2026-09-01) rather
+// which exists only in React's client build. Declared here rather
 // than inherited from whichever importer happened to cross a boundary first.
 // Without it this module works until the chunk graph shifts, then fails with
 // `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx for the incident.
+// and no source file. See components/layout/Footer.tsx.
 
 /**
  * CalendarFilters Component
@@ -20,9 +20,6 @@
  * - "Case Selection" button with badge showing selection status
  * - Collapsible filter sections on mobile
  * - Neobrutalist styling with stage colors
- *
- * Phase: 23.1 (Calendar UI)
- * Created: 2025-12-28
  */
 
 "use client";
@@ -32,8 +29,8 @@ import { useMutation } from "convex/react";
 import { motion, AnimatePresence } from "motion/react";
 import { CaretDownIcon, CaretUpIcon, FunnelIcon as Filter, FunnelSimpleIcon } from "@phosphor-icons/react/ssr";
 
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -482,5 +479,3 @@ export function CalendarFilters({
     </div>
   );
 }
-
-export default CalendarFilters;

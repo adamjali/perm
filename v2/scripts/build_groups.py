@@ -35,12 +35,16 @@ from collections import Counter, defaultdict
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from build_entity_detail import city_key, city_labels  # noqa: E402
 from lib_naics import naics_title, normalize_naics  # noqa: E402
-from lib_turso import Turso, lit, record_run  # noqa: E402
-from store_entities import slugify  # noqa: E402
+from lib_turso import (  # noqa: E402
+    Turso, insert_stmts, record_run, rows_of, run_stmts, stmt, write_doc,
+)
+from lib_slugs import slugify  # noqa: E402
 
-FLOOR = 20
-TOP = 10
-PAGE = 25000
+FLOOR = 20                # decided cases a group needs for a row (and a page)
+TOP = 10                  # entries in each of a group's top lists
+PAGE = 25000              # case rows read per request
+ROWS_PER_STMT = 200       # perm_groups rows per INSERT
+STMTS_PER_REQUEST = 4
 
 READ_COLS = ["status", "fiscal_year", "employer_slug", "employer_name", "state", "soc_code",
              "soc_title", "wage", "naics", "worksite_city", "citizenship", "education", "visa_class",
@@ -78,12 +82,6 @@ def log(msg: str) -> None:
     print(msg, flush=True)
 
 
-def _rows(res) -> list[list]:
-    return res["response"]["result"]["rows"]
-
-
-def _cell(c):
-    return None if c["type"] == "null" else c["value"]
 
 
 def read_table(db, table: str):
@@ -92,19 +90,18 @@ def read_table(db, table: str):
     A column the table doesn't have yet (perm_cases gains the worker's fields
     at its next load) reads as NULL rather than failing the build.
     """
-    have = {_cell(r[1]) for r in _rows(db.execute(f"PRAGMA table_info({table})"))}
+    have = {r[1] for r in rows_of(db.execute(f"PRAGMA table_info({table})"))}
     select = ",".join(c if c in have else f"NULL AS {c}" for c in READ_COLS)
     after = 0
     while True:
         res = db.execute(f"SELECT rowid, {select} FROM {table} "
                          f"WHERE rowid > ? ORDER BY rowid LIMIT {PAGE}", [after])
-        rs = _rows(res)
+        rs = rows_of(res)
         for r in rs:
-            vals = [_cell(c) for c in r]
-            yield dict(zip(READ_COLS, vals[1:]))
+            yield dict(zip(READ_COLS, r[1:]))
         if len(rs) < PAGE:
             return
-        after = int(_cell(rs[-1][0]))
+        after = int(rs[-1][0])
 
 
 def country_label(key: str) -> str:
@@ -255,14 +252,13 @@ def field_options_doc(fields: dict[str, Counter]) -> dict:
 
 def write_field_options(db, doc: dict) -> None:
     db.execute("CREATE TABLE IF NOT EXISTS perm_docs (key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)")
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-               ["case_field_options", json.dumps(doc, separators=(",", ":")), int(time.time() * 1000)])
+    write_doc(db, "case_field_options", doc)
 
 
 def occupation_slugs(db) -> dict[str, str]:
     out: dict[str, str] = {}
-    for r in _rows(db.execute("SELECT code, slug FROM perm_entities WHERE kind = 'occupation' AND code IS NOT NULL")):
-        code, slug = str(_cell(r[0])), str(_cell(r[1]))
+    for r in rows_of(db.execute("SELECT code, slug FROM perm_entities WHERE kind = 'occupation' AND code IS NOT NULL")):
+        code, slug = str(r[0]), str(r[1])
         out.setdefault(code[:7], slug)
     return out
 
@@ -270,17 +266,10 @@ def occupation_slugs(db) -> dict[str, str]:
 def write_groups(db, rows: list[tuple]) -> None:
     cols = ["kind", "slug", "key", "label", "total", "certified", "denied", "withdrawn",
             "median_wage", "fy_from", "fy_to", "detail"]
-    stmts = [{"type": "execute", "stmt": {"sql": "DELETE FROM perm_groups"}}]
-    for i in range(0, len(rows), 200):
-        chunk = rows[i:i + 200]
-        stmts.append({"type": "execute", "stmt": {
-            "sql": f"INSERT OR REPLACE INTO perm_groups ({','.join(cols)}) VALUES "
-                   + ",".join(["(" + ",".join("?" * len(cols)) + ")"] * len(chunk)),
-            "args": [lit(v) for row in chunk for v in row]}})
-    # One pipeline for the delete and the first inserts, so a reader between
-    # them sees at worst a partial table, never an empty one for long.
-    for i in range(0, len(stmts), 4):
-        db.pipeline(stmts[i:i + 4] + [{"type": "close"}])
+    # The delete rides in the same request as the first inserts, so a reader
+    # between them sees at worst a partial table, never an empty one for long.
+    run_stmts(db, [stmt("DELETE FROM perm_groups"),
+                   *insert_stmts("perm_groups", cols, rows, ROWS_PER_STMT)], STMTS_PER_REQUEST)
 
 
 def main() -> int:

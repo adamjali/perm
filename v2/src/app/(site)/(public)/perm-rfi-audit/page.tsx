@@ -26,6 +26,7 @@
 import type { Metadata } from "next";
 import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
+import { CaretRightIcon } from "@phosphor-icons/react/ssr";
 import { FinePrint } from "@/components/data/FinePrint";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -54,6 +55,8 @@ import {
   getSmallStageRecords,
   getStageCohorts,
 } from "@/lib/turso/rfi";
+import { MoreText } from "@/components/data/MoreText";
+import { SITE_URL } from "@/lib/constants/site";
 
 const TITLE = "PERM RFI, Audits and Appeals";
 // 148 characters unescaped. Measure the UNESCAPED text: house style is
@@ -148,11 +151,11 @@ export default async function PermRfiAuditPage() {
           "@type": "WebPage",
           name: TITLE,
           description: DESCRIPTION,
-          url: "https://permtracker.app/perm-rfi-audit",
+          url: `${SITE_URL}/perm-rfi-audit`,
           isPartOf: {
             "@type": "WebSite",
             name: "PERM Tracker",
-            url: "https://permtracker.app",
+            url: SITE_URL,
           },
         }}
       />
@@ -199,9 +202,14 @@ export default async function PermRfiAuditPage() {
             <>
               {pending.toLocaleString()} PERM cases are waiting on a decision.{" "}
               {reviewCases.toLocaleString()} of them, {share(reviewCases, pending)},
-              are at something other than the ordinary queue. DOL&rsquo;s
-              quarterly disclosure files contain only decided cases, so these
-              counts cannot be built from them at all.
+              are at something other than the ordinary queue.
+            </>
+          }
+          more={
+            <>
+              DOL&rsquo;s quarterly disclosure files contain only decided cases,
+              so these counts cannot be built from them at all: they come from
+              DOL&rsquo;s live status of every pending case.
             </>
           }
         >
@@ -228,9 +236,13 @@ export default async function PermRfiAuditPage() {
           title="When each stage happens"
           lede={
             <>
+              Holds land early, RFIs around a year in, appeals past two years.
+            </>
+          }
+          more={
+            <>
               The stages are ordered by how old the case is, and the order
-              holds every time it is measured. Holds land early, RFIs around a
-              year in, appeals past two years. Nothing here says how long a
+              holds every time it is measured. Nothing here says how long a
               stage lasts. It says where in a case&rsquo;s life you find it.
             </>
           }
@@ -252,12 +264,14 @@ export default async function PermRfiAuditPage() {
             }
             table={<StageLadderTable stages={stages} />}
           />
-          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            The appeal stages sit late for a mechanical reason rather than an
-            interesting one: a case cannot be at BALCA without first being
-            filed, reviewed and denied. Read the ladder as a map of the process,
-            not as a measure of delay at any one stage.
-          </p>
+          <MoreText gist={"Appeals sit late because a case has to be denied first."} className="mt-4">
+            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              The appeal stages sit late for a mechanical reason rather than an
+              interesting one: a case cannot be at BALCA without first being
+              filed, reviewed and denied. Read the ladder as a map of the process,
+              not as a measure of delay at any one stage.
+            </p>
+          </MoreText>
         </Section>
 
         {/* 3. THE FUNNEL -------------------------------------------------- */}
@@ -266,10 +280,14 @@ export default async function PermRfiAuditPage() {
           title="What happens after an RFI"
           lede={
             <>
+              The most reassuring true number on this page.
+            </>
+          }
+          more={
+            <>
               This is the one thing a snapshot of today cannot answer, because
               a case that answered its RFI is no longer showing one. It comes
-              from a separate outcome tally over a different population, and it
-              is the most reassuring true number on this page.
+              from a separate outcome tally over a different population.
             </>
           }
         >
@@ -355,12 +373,18 @@ export default async function PermRfiAuditPage() {
             title="Which jobs are carrying the open RFIs"
             lede={
               <>
-                Not the ones most people expect. Software roles draw an RFI at
-                well under the field rate, and the service occupations that
-                make up a small share of PERM filings carry rates several times
-                it. These are measured rates for named groups with their sizes
-                shown, and a rate for a group you belong to is not a
-                probability for your case.
+                Not the ones most people expect: software roles draw few RFIs,
+                service jobs several times the field rate. A group&rsquo;s rate
+                isn&rsquo;t your case&rsquo;s chance.
+              </>
+            }
+            more={
+              <>
+                Software roles draw an RFI at well under the field rate, and the
+                service occupations that make up a small share of PERM filings
+                carry rates several times it. These are measured rates for named
+                groups with their sizes shown, and a rate for a group you belong
+                to is not a probability for your case.
               </>
             }
           >
@@ -385,12 +409,15 @@ export default async function PermRfiAuditPage() {
               <b className="font-bold text-foreground">
                 DOL publishes no glossary of these statuses.
               </b>{" "}
+              Each entry cites its regulation, or says nothing defines it.
+            </>
+          }
+          more={
+            <>
               Five of the sixteen strings it can show you have no published
               definition anywhere: two independent research passes went looking
-              and neither found one. So each entry below either cites the
-              regulation that governs it, or says plainly that nothing defines
-              it. Nothing here is reconstructed from what an acronym looks like
-              it should mean.
+              and neither found one. Nothing here is reconstructed from what an
+              acronym looks like it should mean.
             </>
           }
         >
@@ -480,11 +507,14 @@ function Section({
   id,
   title,
   lede,
+  more,
   children,
 }: {
   id: string;
   title: string;
   lede?: React.ReactNode;
+  /** The reasoning behind the lede, folded under it. */
+  more?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -496,6 +526,11 @@ function Section({
         <p className="mt-3 max-w-3xl text-base leading-relaxed text-muted-foreground">
           {lede}
         </p>
+      ) : null}{" "}
+      {more ? (
+        <FinePrint summary="Why" className="mt-1">
+          <p>{more}</p>
+        </FinePrint>
       ) : null}
       <div className="mt-6">{children}</div>
     </section>
@@ -533,7 +568,7 @@ function Concentration({
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <div className="border-2 border-border bg-card p-5">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Most concentrated
         </p>{" "}
         <p className="mt-2 font-heading text-xl font-black leading-snug">
@@ -549,7 +584,7 @@ function Concentration({
         </p>
       </div>
       <div className="border-2 border-border bg-card p-5">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Most spread out
         </p>{" "}
         <p className="mt-2 font-heading text-xl font-black leading-snug">
@@ -562,14 +597,16 @@ function Concentration({
           way the other stages are.
         </p>
       </div>
-      <p className="text-sm leading-relaxed text-muted-foreground lg:col-span-2">
-        Both figures count distinct employer NAMES, which overstates how many
-        separate organisations are involved: DOL prints one practice under
-        several spellings, and the BALCA rows carry PricewaterhouseCoopers and
-        PwC entities under eight of them. Merging them properly needs an entity
-        resolver, and a half-built one silently merges two genuinely different
-        companies, so nothing here attempts it.
-      </p>
+      <MoreText gist={"Counted by employer name, so one company under several spellings counts more than once."}>
+        <p className="text-sm leading-relaxed text-muted-foreground lg:col-span-2">
+          Both figures count distinct employer NAMES, which overstates how many
+          separate organisations are involved: DOL prints one practice under
+          several spellings, and the BALCA rows carry PricewaterhouseCoopers and
+          PwC entities under eight of them. Merging them properly needs an entity
+          resolver, and a half-built one silently merges two genuinely different
+          companies, so nothing here attempts it.
+        </p>
+      </MoreText>
     </div>
   );
 }
@@ -625,12 +662,18 @@ function Limits({
 }
 
 function Limit({ head, children }: { head: string; children: React.ReactNode }) {
+  // FOLDED: five headings to scan, each opening its answer.
   return (
     <li className="border-l-4 border-border pl-4">
-      <h3 className="font-heading text-base font-bold">{head}</h3>{" "}
-      <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-        {children}
-      </p>
+      <details className="group">
+        <summary className="flex min-h-[44px] cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
+          <CaretRightIcon aria-hidden="true" weight="bold" className="size-4 shrink-0 transition-transform group-open:rotate-90 motion-reduce:transition-none" />{" "}
+          <h3 className="font-heading text-base font-bold">{head}</h3>
+        </summary>{" "}
+        <p className="mt-1 pl-6 text-sm leading-relaxed text-muted-foreground">
+          {children}
+        </p>
+      </details>
     </li>
   );
 }

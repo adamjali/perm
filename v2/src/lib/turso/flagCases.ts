@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { MS_PER_DAY } from "@/lib/time";
 import { exec, one, rows } from "./client";
 import { slugify } from "@/lib/entitySlug";
 import { parseCaseNumber } from "@/lib/permCaseNumber";
@@ -269,13 +270,17 @@ export interface FlagSummary {
   decided: number;
   byStatus: Record<string, number>;
   byVisaType: Record<string, number>;
+  /** Cases per number prefix (`H-300`, `I-200`); empty on a doc written before the field existed. */
+  byPrefix: Record<string, number>;
+  /** Still-pending cases per number prefix; empty when the doc predates it. */
+  pendingByPrefix: Record<string, number>;
   byMonth: FlagMonth[];
   asOf: string | null;
   computedAt: number;
 }
 
 /** A doc older than eight days is absent: a stale "live" count is the misleading case. */
-const MAX_AGE_MS = 8 * 24 * 60 * 60 * 1000;
+const MAX_AGE_MS = 8 * MS_PER_DAY;
 const isInt = (v: unknown): v is number => typeof v === "number" && Number.isInteger(v) && v >= 0;
 const isCountMap = (v: unknown): v is Record<string, number> =>
   !!v && typeof v === "object" && Object.values(v as object).every(isInt);
@@ -306,6 +311,8 @@ export function parseFlagSummaryDoc(json: string, computedAt: number, now: numbe
     decided: o.decided,
     byStatus: o.byStatus,
     byVisaType: isCountMap(o.byVisaType) ? o.byVisaType : {},
+    byPrefix: isCountMap(o.byPrefix) ? o.byPrefix : {},
+    pendingByPrefix: isCountMap(o.pendingByPrefix) ? o.pendingByPrefix : {},
     byMonth,
     asOf: typeof o.asOf === "string" ? o.asOf : null,
     computedAt,
@@ -357,7 +364,7 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
   /**
    * The row, or why there is none: "none" when DOL answered without it,
    * "unavailable" when DOL did not answer in time, "budget" when the daily
-   * allowance refused, "not-asked" when the counter itself failed. Only "none" may read as "no record" (Sep 29 2026).
+   * allowance refused, "not-asked" when the counter itself failed. Only "none" may read as "no record".
    */
   const discoverOutcome = async (
     caseNumber: string,
@@ -487,7 +494,7 @@ export function makeFlagProgram(config: FlagProgramConfig): FlagProgram {
     // INDEXED BY, for the reason recorded in cases.ts: without it a status
     // or month narrowing moved the plan onto `<table>_stage (current_status=?)`
     // or `<table>_filed (filing_date>?)`, both of which read the whole slice
-    // for every employer in the country. Measured 2026-09-03.
+    // for every employer in the country. Measured.
     const found = await rows<FlagDbRow>(
       `SELECT ${FLAG_COLS} FROM ${table} INDEXED BY ${table}_emp ` +
         `WHERE ${conds.join(" AND ")} ` +

@@ -2,10 +2,7 @@
  * The admin "signals" panel: who signed up, who subscribed to what, who
  * added which case, and whether anyone is actually using the thing.
  *
- * Built the day the first real alert subscriber appeared (2026-08-28: one
- * person confirmed a queue alert, then a case alert on their own case the
- * same night) and Adam had to ask a database to find out. Growth signal
- * belongs on the admin page, not in a REPL.
+ * Growth signal belongs on the admin page, not in a database query.
  *
  * WHAT IS DELIBERATELY NOT HERE: public case SEARCHES. The lookup page
  * redacts case numbers from analytics on purpose (a case number is a
@@ -26,6 +23,16 @@ import { adminSummaryValidator } from "./lib/newsletterValidators";
 
 import { query } from "./_generated/server";
 import { requireAdmin } from "./lib/admin";
+import { MS_PER_DAY } from "./lib/time";
+
+/** Newest rows of each subscription list the panel shows. */
+const SUBSCRIPTIONS_SHOWN = 500;
+/** Newest accounts the panel shows. */
+const USERS_SHOWN = 200;
+/** Profiles read to join onto those accounts. */
+const PROFILES_READ = 1000;
+/** Newest in-app case additions the panel shows. */
+const CASES_SHOWN = 40;
 
 /** One subscription row, shaped for a table the admin can scan. */
 interface SignalSub {
@@ -90,12 +97,12 @@ export const getSignals = query({
     await requireAdmin(ctx);
 
     const now = Date.now();
-    const d7 = now - 7 * 86_400_000;
-    const d14 = now - 14 * 86_400_000;
+    const d7 = now - 7 * MS_PER_DAY;
+    const d14 = now - 14 * MS_PER_DAY;
 
     // Users: newest first. The tables here are small (hundreds of rows);
     // every collect() below is bounded by the size of the product itself.
-    const users = await ctx.db.query("users").order("desc").take(200);
+    const users = await ctx.db.query("users").order("desc").take(USERS_SHOWN);
     const living = users.filter((u) => !u.deletedAt);
     const recentUsers = living.slice(0, 20).map((u) => ({
       email: u.email ?? "(no email)",
@@ -103,12 +110,12 @@ export const getSignals = query({
     }));
 
     // Bounded, not collect(): the panel is a scan surface, not an export.
-    const profiles = await ctx.db.query("userProfiles").take(1000);
+    const profiles = await ctx.db.query("userProfiles").take(PROFILES_READ);
     const activeLast7d = profiles.filter(
       (p) => (p.lastLoginAt ?? 0) > d7,
     ).length;
 
-    const caseAlerts = (await ctx.db.query("caseStatusAlerts").order("desc").take(500)).map(
+    const caseAlerts = (await ctx.db.query("caseStatusAlerts").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
       (r): SignalSub => ({
         email: r.email,
         subject: r.caseNumber,
@@ -117,7 +124,7 @@ export const getSignals = query({
         lastNotifiedAt: r.lastAlertSentAt ?? null,
       }),
     );
-    const queueAlerts = (await ctx.db.query("dolQueueAlerts").order("desc").take(500)).map(
+    const queueAlerts = (await ctx.db.query("dolQueueAlerts").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
       (r): SignalSub => ({
         email: r.email,
         subject: `${r.queue === "pwd-oews" ? "PWD OEWS" : r.queue === "pwd-nonoews" ? "PWD non-OEWS" : "PERM queue"} · ${r.filingMonth}`,
@@ -126,7 +133,7 @@ export const getSignals = query({
         lastNotifiedAt: r.notifiedAt ?? null,
       }),
     );
-    const bulletinAlerts = (await ctx.db.query("bulletinAlerts").order("desc").take(500)).map(
+    const bulletinAlerts = (await ctx.db.query("bulletinAlerts").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
       (r): SignalSub => ({
         email: r.email,
         subject: `Bulletin ${r.category} · ${r.country}`,
@@ -135,7 +142,7 @@ export const getSignals = query({
         lastNotifiedAt: r.lastAlertSentAt ?? null,
       }),
     );
-    const employerAlerts = (await ctx.db.query("employerAlerts").order("desc").take(500)).map(
+    const employerAlerts = (await ctx.db.query("employerAlerts").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
       (r): SignalSub => ({
         email: r.email,
         subject: r.employerName,
@@ -144,7 +151,7 @@ export const getSignals = query({
         lastNotifiedAt: r.lastAlertSentAt ?? null,
       }),
     );
-    const news = (await ctx.db.query("newsSubscribers").order("desc").take(500)).map(
+    const news = (await ctx.db.query("newsSubscribers").order("desc").take(SUBSCRIPTIONS_SHOWN)).map(
       (r): SignalSub => ({
         email: r.email,
         subject: "Product news",
@@ -155,7 +162,7 @@ export const getSignals = query({
     );
 
     // In-app case additions, newest first, with the owner's email joined.
-    const cases = await ctx.db.query("cases").order("desc").take(40);
+    const cases = await ctx.db.query("cases").order("desc").take(CASES_SHOWN);
     const recentCases = [];
     for (const c of cases) {
       if (c.deletedAt) continue;

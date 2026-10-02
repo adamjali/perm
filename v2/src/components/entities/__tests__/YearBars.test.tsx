@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { YearBars } from "../YearBars";
+import { YearBars, yearTip } from "../YearBars";
 
 /**
  * The chart's words must not glue for anything reading the DOM. The rendered
@@ -24,5 +24,19 @@ describe("YearBars text", () => {
     expect(text).not.toMatch(/withdrawnFiscal/);
     expect(text).not.toMatch(/September\.Every/);
     expect(text).toMatch(/FY16 /);
+  });
+});
+
+describe("YearBars tooltips", () => {
+  it("gives each year its total and every outcome", () => {
+    expect(yearTip(YEARS[0]!)).toBe("FY2016\n13 decided\n10 certified\n2 denied\n1 withdrawn");
+  });
+
+  it("puts a tip on every year, a gap year included, and no native title beside it", () => {
+    const { container } = render(<YearBars years={[YEARS[0]!, YEARS[2]!]} />);
+    const tips = [...container.querySelectorAll("[data-tip]")].map((el) => el.getAttribute("data-tip"));
+    expect(tips).toHaveLength(3);
+    expect(tips[1]).toBe("FY2017\n0 decided\n0 certified\n0 denied\n0 withdrawn");
+    expect(container.querySelector("[title]")).toBeNull();
   });
 });

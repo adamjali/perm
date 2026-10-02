@@ -6,6 +6,7 @@ import { BellIcon, CheckCircleIcon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { programNoun, type FlagProgram } from "@/lib/flagCaseNumber";
 import { isQueued } from "@/lib/alertReply";
+import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
 
 /**
  * Subscribe to status changes on ONE case.
@@ -181,50 +182,15 @@ export function CaseAlertForm({
           {state.kind === "sending" ? "Sending" : "Email me changes"}
         </button>
       </div>
-      <div className="mt-3 flex items-start gap-2.5">
-        <input
-          id={newsId}
-          type="checkbox"
-          checked={news}
-          onChange={(e) => setNews(e.target.checked)}
-          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none border-2 border-border bg-background checked:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
-        />{" "}
-        <label
-          htmlFor={newsId}
-          className="cursor-pointer text-sm leading-relaxed text-muted-foreground"
-        >
-          Also send occasional product news. The same confirmation covers it,
-          and it&apos;s off by default.
-        </label>
-      </div>{" "}
-      <div className="mt-3 flex items-start gap-2.5">
-        <input
-          id={`${newsId}-newsletter`}
-          type="checkbox"
-          checked={newsletter}
-          onChange={(e) => setNewsletter(e.target.checked)}
-          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none border-2 border-border bg-background checked:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
-        />{" "}
-        <label
-          htmlFor={`${newsId}-newsletter`}
-          className="cursor-pointer text-sm leading-relaxed text-muted-foreground"
-        >
-          Also send the weekly bulletin digest once it launches: the cutoffs,
-          DOL&apos;s queue and any new rule, every Tuesday. Same confirmation, off
-          by default.
-        </label>
-      </div>{" "}
-      <p id={noteId} className="mt-2 text-sm text-muted-foreground">
-        {state.kind === "refused" ? (
-          <span className="font-bold text-data-warn-ink">{state.message}</span>
-        ) : (
-          <>
-            Double opt-in, so nothing arrives until you confirm. One address can
-            watch 100 cases, and we send one confirmation every 10 minutes - if
-            nothing lands, wait that long before trying again.
-          </>
-        )}
-      </p>
+      <OptInBox id={newsId} kind="news" checked={news} onChange={setNews} className="mt-3" />{" "}
+      <OptInBox id={`${newsId}-newsletter`} kind="newsletter" checked={newsletter} onChange={setNewsletter} className="mt-3" />{" "}
+      {state.kind === "refused" ? (
+        <p id={noteId} className="mt-2 text-sm font-bold text-data-warn-ink">
+          {state.message}
+        </p>
+      ) : (
+        <AlertNote id={noteId} limit="One address can watch 100 cases." className="mt-2" />
+      )}
     </form>
   );
 }

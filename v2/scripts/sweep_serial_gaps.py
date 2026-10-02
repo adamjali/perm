@@ -1,26 +1,19 @@
 #!/usr/bin/env python3
 """Re-ask DOL about the serials the nightly walk skipped.
 
-WHY THIS EXISTS. FLAG issues case numbers from ONE counter shared by every
-program, so for a given filing day the serials we hold should be contiguous.
-They are not: measured 12 Sep 2026 we hold 88-92% of the span, and probing the
-holes by hand found real PERM cases sitting in them - five G-200 cases in
-ANALYST REVIEW on a single day.
+FLAG issues case numbers from one counter shared by every program, so the
+serials held for a filing day should be contiguous. They aren't quite: the
+walk advances a cursor and never goes back, so a case missed on the night (or
+indexed by DOL after the walk passed it) is otherwise missed for good.
 
-The cause is structural rather than a bug. `run_discovery` advances a cursor and
-never goes back, so anything missed on the night is missed permanently, as is
-anything DOL files into a serial range the walk has already passed. There was no
-second look. An independent check against the rival tracker's published July figure put
-us 1.2% short; the serial probe put it at up to 5%.
+This is the second look. It reads the holes out of our own tables, asks DOL
+about each one under every prefix, and inserts what comes back. Nothing here
+guesses: a hole is filled only when DOL answers.
 
-This is the second look. It reads the holes out of our own tables, asks DOL for
-each one under every prefix we know, and inserts what comes back. Nothing here
-guesses: a hole is only filled when DOL answers.
-
-    python3 scripts/sweep_serial_gaps.py                  # trailing 60 day codes
-    python3 scripts/sweep_serial_gaps.py --window 400     # a deeper pass
-    python3 scripts/sweep_serial_gaps.py --from 26100 --to 26200
-    python3 scripts/sweep_serial_gaps.py --cap 200 --dry-run
+python3 scripts/sweep_serial_gaps.py                  # trailing 60 day codes
+python3 scripts/sweep_serial_gaps.py --window 400     # a deeper pass
+python3 scripts/sweep_serial_gaps.py --from 26100 --to 26200
+python3 scripts/sweep_serial_gaps.py --cap 200 --dry-run
 """
 from __future__ import annotations
 
@@ -30,19 +23,12 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, record_run  # noqa: E402
+from lib_turso import Turso, query_rows, record_run  # noqa: E402
 from lib_flag_serials import (  # noqa: E402
-    ALL_FLAG_PREFIXES, case_number, day_code, prefix_of,
+    ALL_FLAG_PREFIXES, PERM_OFFICE_PREFIXES, case_number, day_code, prefix_of,
 )
 import ingest_case_status_direct as core  # noqa: E402
 import ingest_pwd_status_direct as programs  # noqa: E402
-
-# Every prefix we have ever seen on this counter, in measured hit-rate order.
-# A serial belongs to exactly one of them; the walk drops it the moment one
-# claims it, so asking in frequency order keeps the request count down.
-# Shared with the nightly walk so the two cannot drift: a prefix the sweep
-# asks for and the walk does not is a case only one of them can ever find.
-PREFIXES = ALL_FLAG_PREFIXES
 
 # A day's own span only. Holes are read BETWEEN the lowest and highest serial we
 # already hold for that day: outside that range we cannot tell a hole from the
@@ -51,17 +37,11 @@ PREFIXES = ALL_FLAG_PREFIXES
 DEFAULT_WINDOW = 60
 DEFAULT_CAP = 1200              # requests per run; ~7 min at the module's pace
 
-# WITHOUT A MEMORY THIS SWEEP NEVER CONVERGES. The first real run probed 7,129
-# holes to find 251 cases; the other 6,878 are serials DOL never issued, and a
-# sweep with no record re-asks every one of them tomorrow, and the night after,
-# forever. The nightly budget would be spent entirely on re-confirming known
-# absences and would never reach the holes that have not been looked at.
-#
-# A miss is NOT recorded as permanent, though, because misses are not
-# permanent: the 251 found above were cases that EXISTED and had not been
-# indexed when the walk went past. DOL's index lags. So a serial is dropped
-# only after it has come back empty MISS_LIMIT separate times, which gives a
-# late-indexed case several chances and still bounds the work.
+# Without a memory this sweep never converges: most holes are serials DOL never
+# issued, and re-asking every one of them each night would spend the whole
+# budget on known absences. But a miss is not permanent either, since DOL's index
+# lags and a case can appear after the walk went past it. So a serial is retired
+# only after MISS_LIMIT separate empty answers.
 MISS_LIMIT = 3
 
 MISS_DDL = """
@@ -73,12 +53,12 @@ MISS_DDL = """
     PRIMARY KEY (day_code, serial)
   )
 """
-SERIALS_PER_REQUEST = core.BATCH // len(PREFIXES)   # 12 prefixes -> 4 serials
+# Every prefix is asked per serial (lib_flag_serials.ALL_FLAG_PREFIXES, shared
+# with the nightly walk), so a request carries this many serials.
+SERIALS_PER_REQUEST = core.BATCH // len(ALL_FLAG_PREFIXES)
 
 # Every table that holds a FLAG case, read from the program list rather than
-# typed out. Typed out, the list missed H-2A and H-2B for as long as nobody
-# remembered it existed (Oct 1 2026): a held case its query cannot see is a
-# hole, re-asked every night.
+# typed out, so a program added later is never a hole re-asked every night.
 CASE_TABLES = ("perm_case_status", *(cfg["table"] for cfg in programs.PROGRAMS.values()))
 
 
@@ -88,35 +68,32 @@ def held_serials(db, code: str) -> list[int]:
         f"SELECT CAST(substr(case_number, 13) AS INT) s FROM {t} "
         f"WHERE CAST(substr(case_number, 7, 5) AS INT) = ?" for t in CASE_TABLES)
     n = int(code)
-    # libSQL hands integers back as STRINGS, CAST(... AS INT) included. Sorting
-    # or ranging over those silently compares lexically - "9" > "10" - so the
-    # coercion is load-bearing, not tidiness. This repo has been bitten by the
-    # same thing twice before (live_recent's diff, the WARN change check).
-    return sorted(int(r[0]) for r in core._rows(db, sql, [n] * len(CASE_TABLES))
+    # libSQL hands integers back as strings, CAST(... AS INT) included, and
+    # sorting or ranging over strings compares lexically ("9" > "10"), so this
+    # coercion is load-bearing.
+    return sorted(int(r[0]) for r in query_rows(db, sql, [n] * len(CASE_TABLES))
                   if r[0] is not None)
 
 
 def settled_misses(db, code: str) -> set[int]:
     """Serials DOL has denied MISS_LIMIT times. Asking again buys nothing."""
-    rows = core._rows(
+    rows = query_rows(
         db, "SELECT serial FROM perm_serial_misses WHERE day_code = ? AND misses >= ?",
         [int(code), MISS_LIMIT])
     # Integers arrive as strings here too.
     return {int(r[0]) for r in rows if r[0] is not None}
 
 
-# A span this wide is a WRAP, not a day. The counter rolls at 1,000,000, so the
-# day it rolls on reads MIN 1 / MAX 999,997 and its neighbours look absurd too.
-# Three such days exist in our history (24136, 25141, 26161).
+# A span this wide is a wrap, not a day: the counter rolls at 1,000,000, so the
+# day it rolls on reads MIN 1 / MAX 999,997.
 MAX_PLAUSIBLE_SPAN = 200_000
 
 
 def day_bounds(db) -> dict[int, tuple[int, int, int]]:
     """{day_code: (min_serial, max_serial, held_count)} for every day we hold.
 
-    ONE query for the whole history rather than three per day. The caller needs
-    every day, not just the ones being swept, because a day's true span is
-    defined by its NEIGHBOURS.
+    One query for the whole history: the caller needs every day, not just the
+    ones being swept, because a day's true span is defined by its neighbours.
     """
     union = "\n        UNION ".join(
         f"SELECT CAST(substr(case_number,7,5) AS INT) d, "
@@ -127,7 +104,7 @@ def day_bounds(db) -> dict[int, tuple[int, int, int]]:
       SELECT d, MIN(n), MAX(n), COUNT(*) FROM s GROUP BY d ORDER BY d
     """
     out: dict[int, tuple[int, int, int]] = {}
-    for r in core._rows(db, sql, []):
+    for r in query_rows(db, sql, []):
         # libSQL returns integers as STRINGS. Comparing or ranging over those
         # compares lexically ("9" > "10"), so the coercion is load-bearing.
         d, lo, hi, n = (int(x) for x in r[:4])
@@ -138,17 +115,11 @@ def day_bounds(db) -> dict[int, tuple[int, int, int]]:
 def true_span(bounds: dict[int, tuple[int, int, int]], code: str) -> tuple[int, int] | None:
     """The serial range day `code` really owns, bounded by its neighbours.
 
-    FLAG issues case numbers from ONE global sequential counter, so every
-    serial between the previous day's highest and the next day's lowest
-    belongs to this day. That makes the day's true span EXACT rather than
-    guessed - which matters because the earlier version read holes only
-    between a day's own lowest and highest KNOWN serial, and was therefore
-    structurally blind to anything issued before the first case we happen to
-    hold or after the last one. Measured over 2026: 1,102 serials sat in
-    those inter-day regions, invisible by construction.
-
-    Falls back to the day's own span at a wrap boundary, where the counter
-    rolls and MIN/MAX stop meaning anything.
+    FLAG issues case numbers from one global sequential counter, so every serial
+    between the previous day's highest and the next day's lowest belongs to this
+    day. That makes the span exact, including the serials before the first case
+    we happen to hold and after the last, which a day's own MIN/MAX can't see.
+    A wrap day has no usable span and returns None.
     """
     n = int(code)
     if n not in bounds:
@@ -165,16 +136,9 @@ def true_span(bounds: dict[int, tuple[int, int, int]], code: str) -> tuple[int, 
         if 0 < next_lo - hi <= MAX_PLAUSIBLE_SPAN:
             hi = next_lo - 1
     if hi < lo or hi - lo + 1 > MAX_PLAUSIBLE_SPAN:
-        # THE DAY THE COUNTER WRAPS HAS NO USABLE SPAN, and falling back to
-        # its own MIN/MAX does not help: on a wrap day those ARE 0 and
-        # 999,999, so the "fallback" hands back the whole million. Measured
-        # 2026-09-13, after this exact fallback sent a sweep to probe
-        # 1,000,000 serials on day 26161 and it sat there for 44 minutes.
-        #
-        # A wrap day's serials sit in two clusters, one before the roll and
-        # one after, and there is no way to say which unissued numbers between
-        # them belong to this day. Three day codes in the whole history are
-        # like this (24136, 25141, 26161), so they are SKIPPED and named
+        # The day the counter wraps has no usable span: its own MIN/MAX are 0 and
+        # 999,999, and its serials sit in two clusters with no way to say which
+        # unissued numbers between them belong to it. So it is skipped and named
         # rather than guessed at.
         return None
     return lo, hi
@@ -204,9 +168,7 @@ def record_misses(db, code: str, serials: list[int], stamp: int) -> None:
     """Bump the miss counter for every serial DOL just declined to confirm."""
     if not serials:
         return
-    # One statement per batch, never one per serial: the cost here is per
-    # STATEMENT, and 500 single-row writes measured 986 rows in 20 seconds
-    # against 1,233 rows/s batched.
+    # One statement per batch, never one per serial: the cost is per statement.
     for i in range(0, len(serials), 200):
         chunk = serials[i:i + 200]
         values = ", ".join(f"({int(code)}, {s}, 1, {stamp})" for s in chunk)
@@ -217,27 +179,17 @@ def record_misses(db, code: str, serials: list[int], stamp: int) -> None:
             f"misses = misses + 1, last_probed_at = excluded.last_probed_at", [])
 
 
-# A STOP ON THE SWEEP'S OWN CAP IS NOT A FAILURE, AND MUST NOT BE RECORDED AS
-# ONE (2026-09-15). This used to write `partial` when the cap stopped the run,
-# and the health check counts every `partial` as BROKEN, so a night with many
-# holes to probe painted the whole check red and paged the owner for a job
-# that had done exactly what it was built to do. Same shape as the WARN
-# ingest's browser-only refusal: an expected stop records `ok` and NAMES the
-# stop in its note. `CAP_NOTE` is read back by check_ingest_health.py (a test
-# pins the two strings equal), so a row written before this change is not
-# misread either.
+# A stop on the sweep's own cap is not a failure: it records `ok` and names the
+# stop in its note. check_ingest_health.py reads this exact string (a test pins
+# the two equal).
 CAP_NOTE = "stopped on the request cap"
 
-# A REFUSAL FROM DOL IS A STOP TOO (2026-09-22). flag.dol.gov answered HTTP
-# 403 about eighty seconds into the sweep, on the tail of the ~10,000
-# requests the main sweep had just made in the same job, and after the retry
-# helper's own 52 seconds of backoff. The sweep crashed, the failure hook
-# recorded `failed`, and the health check went red for a refusal nobody can
-# act on - the main sweep had succeeded minutes earlier and DOL answered 200
-# again by the afternoon. Same rule as the cap: keep what was found, record
-# only the misses DOL actually answered, name the refusal, resume tomorrow.
-# A refusal that recurs is still caught: the main sweep fails first on a
-# persistent one, and check_gap_sweep fires when three runs probe nothing.
+# A refusal from DOL (an HTTP 403 after the retries) is a stop too, usually on
+# the tail of the main sweep's own requests, and nothing anyone can act on: the
+# sweep keeps what it found, records only the misses DOL actually answered,
+# names the refusal and resumes tomorrow. A refusal that recurs is still caught:
+# the main sweep fails first on a persistent one, and check_gap_sweep fires
+# when three runs probe nothing.
 REFUSAL_NOTE = "stopped on a DOL refusal"
 
 
@@ -256,7 +208,7 @@ def run_record(r: dict, cap: int) -> tuple[str, str]:
 
 def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
           bounds: dict[int, tuple[int, int, int]] | None = None,
-          prefixes: tuple[str, ...] = PREFIXES, recheck: bool = False) -> dict:
+          prefixes: tuple[str, ...] = ALL_FLAG_PREFIXES, recheck: bool = False) -> dict:
     """Probe each day's holes under `prefixes`.
 
     `recheck` is the one-off mode for a prefix added after the fact: it asks
@@ -314,14 +266,10 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
                 # reach the miss ledger below.
                 refused = str(exc)
                 break
-            # ONLY EXACT MATCHES COUNT (2026-09-24). The endpoint is a SEARCH:
-            # asked about numbers that do not exist, it answers with scored
-            # near matches from other serials, days and prefixes. Counted,
-            # those made a catch-up over 17,545 genuinely empty holes report
-            # "DOL confirmed 497 of them as real cases" while every asked
-            # serial came back empty; stored, they raced the walk for serials
-            # it had not reached yet. The walk has always kept exact matches
-            # only, and the sweep now does the same.
+            # Only exact matches count. The endpoint is a search: asked about
+            # numbers that don't exist, it answers with scored near matches from
+            # other serials, days and prefixes, which must be neither counted nor
+            # stored. The walk keeps exact matches only, and so does this.
             wanted = set(nums)
             hits = [h for h in hits if h.get("caseNumber") in wanted]
             probed += len(chunk)
@@ -337,7 +285,7 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
             day_found += len(hits)
             if dry:
                 continue
-            perm = [h for h in hits if prefix_of(h["caseNumber"]) in core.PERM_PREFIXES]
+            perm = [h for h in hits if prefix_of(h["caseNumber"]) in PERM_OFFICE_PREFIXES]
             other = [h for h in hits if h not in perm]
             ins_perm += core._insert_perm_hits(db, perm, now_iso, stamp)
             ins_other += core._insert_other_hits(db, other)
@@ -373,15 +321,13 @@ def main() -> int:
     # program added later has none until something creates it.
     programs.ensure_schema(db)
     recheck = tuple(p.strip() for p in (a.recheck_prefixes or "").split(",") if p.strip())
-    unknown = [p for p in recheck if p not in PREFIXES]
+    unknown = [p for p in recheck if p not in ALL_FLAG_PREFIXES]
     if unknown:
         raise SystemExit(f"--recheck-prefixes: not a known prefix: {', '.join(unknown)}")
     today = datetime.date.today()
     if a.frm and a.to:
-        # NEWEST FIRST here too, matching the default path below. An explicit
-        # range used to run oldest-first, which puts the days that matter most
-        # - the recent ones, where the pending cases are - at the END of a run
-        # that can be interrupted or hit its cap. Same work, better order.
+        # Newest first here too, matching the default path below, so a run
+        # that is interrupted or capped has already covered the recent days.
         codes = [str(c) for c in range(int(a.to), int(a.frm) - 1, -1)]
     else:
         # Newest first: a hole in the last fortnight matters more than one in a
@@ -422,14 +368,11 @@ def main() -> int:
 
     if not a.dry_run:
         status, note = run_record(r, a.cap)
-        # `probed`, NOT `found`. A sweep that finds nothing is the SUCCESS
-        # case once the corpus is contiguous, so recording finds here would
-        # make a healthy sweep look dead. Probes only reach zero when the walk
-        # left no holes at all, or when `held_serials` broke - and the second
-        # is the defect this number exists to expose.
-        # A recheck run is a one-off backfill and keeps its own key, so the
-        # nightly sweep's health line (keyed on the bare name) is not moved
-        # by it in either direction.
+        # `probed`, not `found`: a sweep that finds nothing is the success case
+        # once the corpus is contiguous. Probes reach zero only when there were
+        # no holes, or when `held_serials` broke, which is the defect this number
+        # exists to expose. A recheck run is a one-off backfill and keeps its own
+        # key, so it never moves the nightly sweep's health line.
         record_run(db, "sweep_serial_gaps.py" + (" --recheck-prefixes" if recheck else ""),
                    status=status, rows_written=r["probed"], note=note)
     return 0

@@ -15,7 +15,6 @@ import { toast } from "@/lib/toast";
 /**
  * Maximum character length for job descriptions: the server's own limit
  * (INPUT_LIMITS.LONG in convex/lib/validation.ts, cases and templates both).
- * The box stopped at 10,000 until Sep 29 2026 while the server took 50,000.
  */
 export const JOB_DESCRIPTION_MAX_LENGTH = 50000;
 

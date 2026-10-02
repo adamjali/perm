@@ -13,8 +13,8 @@ import { useMemo } from "react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { CaseListRow } from "./CaseListRow";
-import type { CaseCardData } from "../../../convex/lib/caseListTypes";
-import type { CaseListSortField } from "../../../convex/lib/caseListTypes";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
+import type { CaseListSortField } from "@convex/lib/caseListTypes";
 
 export interface CaseListViewProps {
   /** Cases to display */

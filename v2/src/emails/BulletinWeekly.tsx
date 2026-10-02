@@ -1,5 +1,5 @@
 /**
- * The weekly bulletin digest, HTML part.
+ * The weekly digest, HTML part.
  *
  * Rendered from the same DigestData the plain-text part is composed from
  * (convex/lib/newsletterCompose.ts), section for section, so the two never
@@ -7,7 +7,7 @@
  * out. The footer link is the preference center, purpose-scoped per
  * recipient, which is OFF-only by design.
  *
- * ## Shape (2026-09-16)
+ * ## Shape
  *
  * - **The recipient's case first**, when they watch one. It is the only line
  *   in the email that is theirs, so it goes above everything that is
@@ -27,14 +27,14 @@ import { Link, Section, Text } from "@react-email/components";
 import type { DigestData } from "../../convex/lib/newsletterCompose";
 import { CHECK_CASE_URL, dateLabel, monthLabel, monthsLabel, SIGNUP_URL, uscisIsNews } from "../../convex/lib/newsletterCompose";
 import { EmailButton, EmailLayout, FigureTable, MONO_STACK, QueueStamp, SANS_STACK } from "./components";
-
-const int = (n: number) => n.toLocaleString("en-US");
+import { formatInt } from "../../convex/lib/format";
+import { SITE_URL } from "../../convex/lib/links";
 
 export function BulletinWeekly(d: DigestData) {
-  const site = "https://permtracker.app";
+  const site = SITE_URL;
   const queueRows = [
-    ...(d.averageDays !== null ? [{ label: "Average days to a determination", value: int(d.averageDays) }] : []),
-    ...(d.pendingCases !== null ? [{ label: "Pending PERM cases in the live record", value: int(d.pendingCases) }] : []),
+    ...(d.averageDays !== null ? [{ label: "Average days to a determination", value: formatInt(d.averageDays) }] : []),
+    ...(d.pendingCases !== null ? [{ label: "Pending PERM cases in the live record", value: formatInt(d.pendingCases) }] : []),
   ];
   return (
     <EmailLayout
@@ -234,7 +234,7 @@ export function BulletinWeekly(d: DigestData) {
                   Check a case
                 </EmailButton>
                 <Text className="em-text-secondary" style={styles.doorNote}>
-                  Any PERM, wage-request or LCA number, live from DOL.
+                  Any PERM, wage-request, LCA, H-2A or H-2B number, live from DOL.
                 </Text>
               </td>
               <td style={styles.doorLast}>

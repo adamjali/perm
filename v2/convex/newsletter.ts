@@ -1,5 +1,5 @@
 /**
- * The weekly bulletin digest.
+ * The weekly digest.
  *
  * Built OFF. `buildIssue` runs every Tuesday from the cron table and composes
  * an issue from what the ingests already hold, then stores it as a preview
@@ -53,9 +53,9 @@ import { newsletterDailyCap as dailyCap, newsletterSendingEnabled as sendingEnab
 import { adminSummaryValidator, issueStatusValidator } from "./lib/newsletterValidators";
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
 import { employerMoves, parseEmployerStagesDoc } from "../src/lib/employerStages";
+import { MS_PER_DAY } from "./lib/time";
 
 const log = createLogger("newsletter");
-const DAY_MS = 24 * 60 * 60 * 1000;
 const BATCH = 25;
 
 function unsubscribeSecret(): string {
@@ -404,7 +404,7 @@ export const chargeSend = internalMutation({
   handler: async (ctx) => {
     const r = await checkAndRecordRateLimit(ctx, "all", "newsletter_send", {
       limit: dailyCap(),
-      windowMs: DAY_MS,
+      windowMs: MS_PER_DAY,
     });
     return { allowed: r.allowed, remaining: r.remaining };
   },
@@ -420,7 +420,7 @@ export const buildIssue = internalAction({
   returns: v.object({ weekOf: v.string(), subject: v.string(), scheduledSend: v.boolean() }),
   handler: async (ctx, args) => {
     const weekOf = args.weekOf ?? new Date().toISOString().slice(0, 10);
-    const since = new Date(Date.now() - 7 * DAY_MS).toISOString().slice(0, 10);
+    const since = new Date(Date.now() - 7 * MS_PER_DAY).toISOString().slice(0, 10);
     try {
       const [queue, pending, bulletin, notices, uscis, employerMoves] = await Promise.all([
         readQueue(),
@@ -474,11 +474,10 @@ export const buildIssue = internalAction({
 /**
  * Send up to the daily cap, then reschedule for the rest tomorrow.
  *
- * The loop itself is `lib/newsletterSend.runSendLoop`, which owns the two
- * rules that were wrong here before 2026-09-16: the budget is charged before
- * every attempt, the retry included, and the cursor moves only once an
- * address is actually handled. A single transient `{ error }` used to advance
- * the cursor and drop that subscriber from the issue for good.
+ * The loop itself is `lib/newsletterSend.runSendLoop`, which owns two rules:
+ * the budget is charged before every attempt, the retry included, and the
+ * cursor moves only once an address is actually handled, so a transient
+ * `{ error }` cannot drop a subscriber from the issue for good.
  *
  * Each recipient gets their own render: the preferences link is purpose-
  * scoped to the address, and the opening carries their watched case when
@@ -561,7 +560,7 @@ export const sendBatch = internalAction({
     log.info("batch finished", { weekOf, sent: result.sent, failed: result.failed, done });
     // Progress-guarded: a day that sent nothing does not spin a timer.
     if (!done && result.sent > 0) {
-      await ctx.scheduler.runAfter(DAY_MS, internal.newsletter.sendBatch, { weekOf });
+      await ctx.scheduler.runAfter(MS_PER_DAY, internal.newsletter.sendBatch, { weekOf });
     }
     return { sent: result.sent, failed: result.failed, done };
   },

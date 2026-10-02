@@ -15,7 +15,7 @@ import { useRef, useEffect } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CaseCard } from "./CaseCard";
-import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
 
 interface SortableCaseCardProps {
   case: CaseCardData;

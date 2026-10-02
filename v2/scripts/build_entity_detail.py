@@ -1,43 +1,30 @@
 #!/usr/bin/env python3
 """Everything an entity page needs beyond its own four numbers.
 
-    python3 scripts/build_entity_detail.py --cache /tmp/cases.jsonl
-    python3 scripts/build_entity_detail.py --dry-run
+python3 scripts/build_entity_detail.py --cache /tmp/cases.jsonl
+python3 scripts/build_entity_detail.py --dry-run
+python3 scripts/build_entity_detail.py --live-recent-only   # after each sweep
 
-Two tables, from two different corpora, and the difference between them is
-the point:
+Two tables, from two corpora:
 
-`perm_entity_pending` comes from `perm_case_status`, the LIVE per-case
-mirror. It is the only source in the building that knows a case is still
-waiting - DOL's disclosure files carry a decision date on every row, so a
-pending case appears in none of them. This is what lets a sponsor page say
-"1,768 of their cases are in analyst review right now" instead of only
-reciting history.
-It is refreshed with the live remainder on every sweep (`--live-recent-only`,
-diffed; since 2026-09-26), because the page prints it under the sweep's date.
+`perm_entity_pending` comes from `perm_case_status`, the live per-case table,
+the only source that knows a case is still waiting (DOL's disclosure files carry
+a decision on every row). It lets a sponsor page say how many of its cases are
+in analyst review right now. It is refreshed, diffed, with the live remainder
+after every sweep, because the page prints it under the sweep's date.
 
-`perm_entity_facets` comes from `perm_cases`, the decided corpus, and says
-what an entity's filings are MADE OF: which occupations, which states, which
-firm filed them, and for a firm, which employers it files for. Rolled up at
-build time because the alternative is a GROUP BY over 373,939 rows on every
-one of 21,000 page regenerations.
+`perm_entity_facets` comes from `perm_cases`, the decided corpus, and says what
+an entity's filings are made of: which occupations, which states, which firm
+filed them, and for a firm, which employers it files for. Rolled up here rather
+than grouped on every page render.
 
-## Scope, and why it is not every entity
+Facets are built only for entities with a page (`MIN_TOTAL_FOR_PAGE`): below
+that the facet is the entity, one case in one occupation in one state.
 
-Facets are built only for entities that have a page (`MIN_TOTAL_FOR_PAGE`,
-three filings). Below that the facet IS the entity - one case, one
-occupation, one state - so the row would carry no information and there are
-55,000 of them.
-
-## Two joins that do not line up, and are not made to
-
-The live mirror holds 88,861 distinct employer spellings against the decided
-corpus's 71,512 entities, because the mirror includes cases filed after the
-last disclosure file was cut. An employer that appears only in the mirror has
-no entity row and therefore no page; its pending count is real and is simply
-not reachable from anywhere yet. The unmatched share is REPORTED rather than
-silently dropped - a join whose miss rate nobody prints is a join nobody can
-trust.
+The live table holds employer spellings the decided corpus has no entity for
+(filed after the last disclosure file). Their pending counts are real but have
+no entity page to land on, and the unmatched share is reported rather than
+silently dropped.
 """
 from __future__ import annotations
 
@@ -48,12 +35,15 @@ import json
 import pathlib
 import sys
 from collections import Counter, defaultdict
-from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from entity_identity import entity_key  # noqa: E402
 from lib_naics import naics_title, normalize_naics  # noqa: E402
-from lib_turso import Turso, lit, record_run, stamp_freshness  # noqa: E402
+from lib_slugs import slugify  # noqa: E402
+from lib_turso import (  # noqa: E402
+    ET, Turso, add_missing_columns, cell, et_date, insert_rows, record_run, rows_of,
+    stamp_freshness, write_doc,
+)
 
 PAGE_FLOOR = 3          # mirrors MIN_TOTAL_FOR_PAGE in src/lib/entityPayload.ts
 TOP_N = 6               # facet rows kept per entity per facet
@@ -91,12 +81,10 @@ DDL = [
 ]
 
 
-def rows_of(res) -> list[list]:
+def raw_rows(res) -> list[list]:
+    """An `execute()` response's rows with the Hrana cells undecoded, for the
+    diff normalisers, which accept a stored row and a built one alike."""
     return res["response"]["result"]["rows"]
-
-
-def cell(c):
-    return None if c["type"] == "null" else c["value"]
 
 
 # ---------------------------------------------------------------------------
@@ -113,7 +101,7 @@ def slug_maps(db: Turso):
             res = db.execute(
                 "SELECT merge_key, slug, total, code FROM perm_entities WHERE kind = ? "
                 "ORDER BY rank LIMIT 20000 OFFSET ?", [kind, off])
-            rs = rows_of(res)
+            rs = raw_rows(res)
             for r in rs:
                 key = cell(r[3]) if kind == "occupation" else cell(r[0])
                 if key:
@@ -130,51 +118,23 @@ def slug_maps(db: Turso):
 # Pending, from the live mirror
 # ---------------------------------------------------------------------------
 
-def _search_slug(raw: str) -> str:
-    """Mirrors slugify in store_entities.py / src/lib/entitySlug.ts.
-
-    Used only as the FALLBACK for employers the entity tables have never
-    seen (a company whose first-ever filing is newer than the last
-    disclosure file). Matched employers carry their canonical entity slug
-    instead, which is what both the case search's needle and the employer
-    page's own URL are built from.
-    """
-    import re as _re
-    t = _re.sub(r"[^a-z0-9]+", "-", (raw or "").lower())
-    t = _re.sub(r"-+", "-", t).strip("-")[:60]
-    return t.rstrip("-")
-
-
 def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
     """Every live case the published files do not hold, slugged for search.
 
-    THE GAP THIS FILLS, in Adam's words: "I knew there was a case by an
-    employer but couldn't find it." The disclosure files carry only DECIDED
-    cases and only up to the last published quarter, so anything they miss is
-    invisible to the case search and to its employer's page even though the
-    live corpus holds it.
+    The disclosure files carry only decided cases, and only up to the last
+    published quarter, so without this table everything they miss would be
+    invisible to the case search and to its employer's page.
 
-    THE FIRST VERSION OF THIS TABLE DEFINED THE REMAINDER BY DATE, AND THAT
-    WAS THE WRONG AXIS. It took cases filed after the last disclosure MONTH,
-    which is the right rule for new filings and the wrong one for everything
-    still waiting: a case filed in March 2026 and still pending is not in the
-    disclosure files (undecided) and was not in this table either (not recent
-    enough), so it existed in our corpus and could be found by nobody who did
-    not already know its number. Measured when it was fixed: the table held
-    16,676 rows and the true remainder was 136,886 - **120,210 cases missing,
-    97,875 of them pending**, which is precisely the population most likely to
-    be searching for themselves.
+    The rule is membership, not date: a case belongs here when `perm_cases`
+    does not hold it. A date boundary would drop every case filed before it
+    and still pending, which is exactly who searches for their own case; and
+    membership needs no boundary to drift, and self-corrects when a quarterly
+    file lands and absorbs part of the set.
 
-    The rule is therefore membership, not date: a case belongs here when
-    `perm_cases` does not hold it. That is the honest definition of "the
-    remainder", it needs no boundary to drift, and it self-corrects when a
-    quarterly file lands and absorbs part of the set.
-
-    WRITES ARE DIFFED, NOT WHOLESALE. 137k rows rebuilt nightly is ~4.1M
-    writes a month against a 10M plan, for a set whose membership barely
-    moves. `write_live_recent` writes only rows that changed.
+    Writes are diffed (`write_live_recent`): the set is ~137k rows and its
+    membership barely moves from one night to the next.
     """
-    got = rows_of(db.execute(
+    got = raw_rows(db.execute(
         "SELECT s.case_number, s.filing_date, s.current_status, s.is_final, "
         "s.employer_name, s.job_title, s.fetched_at FROM perm_case_status s "
         "WHERE NOT EXISTS (SELECT 1 FROM perm_cases c "
@@ -197,12 +157,17 @@ def build_live_recent(db: Turso, maps) -> tuple[list[dict], str]:
             "status": cell(r[2]),
             "is_final": fin,
             "employer_name": name,
-            "employer_slug": hit[0] if hit is not None else _search_slug(name),
+            # A matched employer carries its canonical entity slug, the one its
+            # page and the case search are built from; a name the entity
+            # tables have never seen gets its own slug.
+            "employer_slug": hit[0] if hit is not None else slugify(name),
             "job_title": cell(r[5]),
             "decided_seen": seen.get(str(case)) if fin else None,
-            # When this case last changed as the page shows it (see et_date).
-            # Carried for the live-only index; NOT a perm_live_recent column,
-            # so live_norm and the diffed write never see it.
+            # The Eastern day this case last changed as the page shows it:
+            # fetched_at is rewritten only when the status, employer or job
+            # title changes, so an employer's newest one dates its live-only
+            # page. Carried for the live-only index; NOT a perm_live_recent
+            # column, so live_norm and the diffed write never see it.
             "changed_on": et_date(cell(r[6])),
         })
     log(f"  live-recent: {len(out):,} cases absent from the disclosure corpus "
@@ -226,7 +191,7 @@ LIVE_RECENT_DDL = [
     # first, the range/sort column next, the unique tiebreak last, so
     # `WHERE is_final = ? [AND filing_date range] ORDER BY filing_date,
     # case_number` is one reverse index scan of `take + 1` rows at any offset.
-    # Turso forbids ANALYZE, so an index has to win on shape alone.
+    # The planner has no statistics to lean on, so an index has to win on shape.
     "CREATE INDEX IF NOT EXISTS perm_live_recent_final_filed "
     "ON perm_live_recent (is_final, filing_date, case_number)",
     "CREATE INDEX IF NOT EXISTS perm_live_recent_filed "
@@ -239,15 +204,8 @@ LIVE_COLS = ["case_number", "filing_date", "status", "is_final",
 
 
 def ensure_live_recent_columns(db: Turso) -> None:
-    """Add columns the CREATE TABLE above gained after the table existed.
-
-    `CREATE TABLE IF NOT EXISTS` is a no-op on the live database, so a column
-    added to the DDL never reaches production by itself. `decided_seen` was
-    added 2026-09-02; the ALTER runs once and is idempotent afterwards.
-    """
-    have = {cell(r[1]) for r in rows_of(db.execute("PRAGMA table_info(perm_live_recent)"))}
-    if "decided_seen" not in have:
-        db.execute("ALTER TABLE perm_live_recent ADD COLUMN decided_seen TEXT")
+    """Add the columns the CREATE TABLE above gained after the table existed."""
+    if add_missing_columns(db, "perm_live_recent", {"decided_seen": "TEXT"}):
         log("  added column perm_live_recent.decided_seen")
 
 
@@ -255,14 +213,13 @@ def decided_seen_map(db: Turso) -> dict[str, str]:
     """case_number -> the day OUR sweep first recorded a final status.
 
     An observation date, never DOL's decision date: DOL's per-case lookup
-    does not return one. Only cases whose decision the direct sweep actually
-    watched have an entry (3,641 of 40,935 decided live cases on 2026-09-02);
-    the rest were already decided when the corpus was seeded and stay null.
-    `CERTIFIED - EXPIRED` is a clock running out, not a decision, and is not
-    a status here anyway; the three real outcomes are named explicitly.
+    does not return one. Only cases whose decision the sweep actually watched
+    have an entry; the rest were already decided when first recorded and stay
+    null. `CERTIFIED - EXPIRED` is a clock running out, not a decision, so the
+    three real outcomes are named explicitly.
     """
     out: dict[str, str] = {}
-    for r in rows_of(db.execute(
+    for r in raw_rows(db.execute(
             "SELECT case_number, MIN(changed_at) FROM perm_case_events "
             "WHERE to_final = 1 AND to_status IN ('CERTIFIED', 'DENIED', 'WITHDRAWN') "
             "GROUP BY case_number")):
@@ -327,16 +284,15 @@ def write_recent_wait(db: Turso) -> bool:
     the last 90 days took, filing to decision, for employer pages to compare
     one employer against.
 
-    DECISIONS THE SWEEP WATCHED, NOT FIRST SIGHTINGS. `decided_seen` dates a
+    Decisions the sweep watched, not first sightings: `decided_seen` dates a
     case the first time we saw it final, which for a case discovered late is
-    months after DOL decided it (2024 filings found on 2026-09-26 read as
-    decided that day). A final EVENT only exists when the sweep saw the case
-    pending and then decided, so it is dated to within the half day between
-    sweeps. Expirations (CERTIFIED to CERTIFIED - EXPIRED) and withdrawals are
-    left out: neither is DOL deciding a case.
+    months after DOL decided it. A final event exists only when the sweep saw
+    the case pending and then decided, so it is dated to within the half day
+    between sweeps. Expirations and withdrawals are left out: neither is DOL
+    deciding a case.
     """
     since = int((time.time() - RECENT_WAIT_DAYS * 86_400) * 1000)
-    rows = rows_of(db.execute(
+    rows = raw_rows(db.execute(
         "SELECT s.filing_date, MIN(e.changed_at), r.employer_slug, r.employer_name "
         "FROM perm_case_events e "
         "JOIN perm_case_status s ON s.case_number = e.case_number "
@@ -345,7 +301,7 @@ def write_recent_wait(db: Turso) -> bool:
         "AND e.from_status NOT LIKE 'CERTIFIED%' AND e.from_status NOT LIKE 'DENIED%' "
         "AND e.from_status NOT LIKE 'WITHDRAWN%' AND e.to_status NOT LIKE 'WITHDRAWN%' "
         "GROUP BY e.case_number", [since, DIRECT_SOURCE]))
-    val = lambda c: None if c["type"] == "null" else c["value"]  # noqa: E731
+    val = lambda c: cell(c)  # noqa: E731
     pairs = [(val(r[0]), val(r[1])) for r in rows]
     summary = wait_summary(pairs)
     if summary is None:
@@ -360,11 +316,10 @@ def write_recent_wait(db: Turso) -> bool:
             names[slug] = val(r[3]) or slug
     ranked = employer_waits(by_emp, names)
     doc = {**summary, "windowDays": RECENT_WAIT_DAYS,
-           "computedOn": datetime.datetime.now(ZoneInfo("America/New_York")).date().isoformat(),
+           "computedOn": datetime.datetime.now(ET).date().isoformat(),
            "employersRanked": len(ranked), "minDecisions": EMPLOYER_RANK_MIN,
            "fastest": ranked[:10], "slowest": list(reversed(ranked[-10:])) if len(ranked) > 10 else []}
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES ('recent_decision_wait', ?, ?)",
-               [json.dumps(doc), int(time.time() * 1000)])
+    write_doc(db, "recent_decision_wait", json.dumps(doc))
     log(f"  recent_decision_wait: n={summary['n']:,}, median {summary['p50']} days")
     return True
 
@@ -373,10 +328,10 @@ def write_live_remainder_doc(db: Turso, live: list[dict]) -> bool:
     """Precompute the live remainder's counts into perm_docs['live_remainder'].
 
     The /perm-cases page prints "N decided and M pending since DOL's last
-    file" and offers a month picker. A `count(*)` over 137k rows per request
-    is the read pattern that got Turso blocked in August, and the reader
-    already treats a doc older than eight days as absent, so the counts are
-    written here, by the same run that writes the rows they describe.
+    file" and offers a month picker. Counting the whole table per request is
+    too many rows read, so the counts are written here, by the run that writes
+    the rows they describe; the reader treats a doc older than eight days as
+    absent.
     """
     published_through = db.scalar("SELECT MAX(decision_date) FROM perm_cases")
     by_month: dict[str, dict[str, int]] = {}
@@ -403,9 +358,7 @@ def write_live_remainder_doc(db: Turso, live: list[dict]) -> bool:
     payload = json.dumps(doc, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER NOT NULL)""")
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-        [LIVE_REMAINDER_DOC, payload, int(time.time() * 1000)])
+    write_doc(db, LIVE_REMAINDER_DOC, payload)
     # Read it back: an INSERT the pipeline reported as fine is not evidence
     # the row is there in the shape the reader expects.
     got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?", [LIVE_REMAINDER_DOC])
@@ -419,16 +372,11 @@ def write_live_remainder_doc(db: Turso, live: list[dict]) -> bool:
 def live_norm(row) -> tuple:
     """One row of `perm_live_recent` as comparable values, from either side.
 
-    ONE NORMALISER, BOTH SIDES, AND THIS IS NOT A STYLE POINT. libSQL returns
-    every integer as a STRING to protect precision, so a stored `is_final`
-    arrives as '0' while the freshly built row holds int 0. Comparing them raw
-    makes every row look changed - which is not a slow diff, it is NO diff:
-    the first version of this ran and rewrote all 136,886 rows on a night when
-    nothing had changed, reporting "ok" while doing it.
-
-    Accepts a built dict or a libSQL row tuple and returns the same shape for
-    both, because a comparison whose two sides are prepared differently is the
-    defect it is meant to prevent.
+    One normaliser for both sides: libSQL returns every integer as a string, so
+    a stored `is_final` arrives as '0' while a freshly built row holds int 0.
+    Compared raw, every row looks changed and the diff rewrites the whole table
+    while reporting success. Accepts a built dict or a libSQL row tuple and
+    returns the same shape for both.
     """
     is_tuple = not isinstance(row, dict)
     out = []
@@ -442,25 +390,21 @@ def write_live_recent(db: Turso, live: list[dict],
                       extra_changed: dict[str, int] | None = None) -> bool:
     """Write only what changed.
 
-    The set is ~137k rows and its membership barely moves: on an ordinary day
-    a few hundred cases change status and the nightly prober adds a hundred
-    filings. A DELETE-then-reinsert costs 137k writes for that, ~4.1M a month
-    against a 10M plan, which is 40% of the budget to express a few hundred
-    facts. So the desired set is compared against what is stored and only the
-    difference is written.
+    The set is ~137k rows and on an ordinary day only a few hundred change
+    status or arrive, so the desired set is compared against what is stored
+    and only the difference is written, rather than deleting and reinserting
+    every row.
 
-    The comparison is on the WHOLE row, not on `case_number`: a case whose
-    status moved from ANALYST REVIEW to CERTIFIED keeps its number, and a
-    membership-only diff would leave the old status in the search index
-    forever - stale in exactly the way that makes a live table worse than no
-    table.
+    The comparison is on the whole row, not on `case_number`: a case whose
+    status moved keeps its number, and a membership-only diff would leave the
+    old status in the search index forever.
     """
     for ddl in LIVE_RECENT_DDL:
         db.execute(ddl)
     ensure_live_recent_columns(db)
 
     stored: dict[str, tuple] = {}
-    for r in rows_of(db.execute(
+    for r in raw_rows(db.execute(
             "SELECT " + ", ".join(LIVE_COLS) + " FROM perm_live_recent")):
         vals = live_norm(r)
         stored[str(vals[0])] = vals
@@ -505,51 +449,24 @@ LIVE_ONLY_DDL = [
     "CREATE INDEX IF NOT EXISTS perm_live_only_rank ON perm_live_only_index (rank)",
 ]
 
-ET = ZoneInfo("America/New_York")
-
-
-def et_date(stamp) -> str | None:
-    """A perm_case_status.fetched_at stamp as the EASTERN calendar date.
-
-    fetched_at is written when a case is first recorded (the nightly walk, the
-    gap sweep, a visitor's lookup) and rewritten only when its status, employer
-    or job title changes: the sweep writes changed rows and nothing else. So the
-    newest fetched_at among an employer's cases is the day that employer's
-    live-only page last changed. Milliseconds, with seconds tolerated the way
-    decided_seen_map tolerates them. Eastern because the site's day is Eastern:
-    in UTC a change after 8 PM ET would be dated tomorrow.
-    """
-    if stamp is None or stamp == "":
-        return None
-    n = int(stamp)
-    secs = n / 1000 if n > 10_000_000_000 else n
-    return datetime.datetime.fromtimestamp(secs, tz=ET).strftime("%Y-%m-%d")
-
-
 def ensure_live_only_columns(db: Turso) -> None:
-    """`CREATE TABLE IF NOT EXISTS` never adds a column to a live table."""
-    have = {cell(r[1]) for r in rows_of(db.execute("PRAGMA table_info(perm_live_only_index)"))}
-    if "last_changed" not in have:
-        db.execute("ALTER TABLE perm_live_only_index ADD COLUMN last_changed TEXT")
+    """Add the columns the live-only index gained after it existed."""
+    if add_missing_columns(db, "perm_live_only_index", {"last_changed": "TEXT"}):
         log("  added column perm_live_only_index.last_changed")
 
 
 def live_only_rows(live: list[dict], published_slugs: set[str]) -> list[list]:
     """One row per live-only employer, ranked densely for the sitemap windows.
 
-    Live-only means the live feed names the employer and `perm_entities` has
-    no row for its slug, which is exactly the page the sitemap could not list
-    until 2026-09-17 (it was built from perm_entities alone). Ordered by first
-    filing then slug so that a night's new arrivals mostly APPEND and the rank
-    windows the sitemap reads stay stable; ordering by case count would
-    reshuffle every rank whenever any count moved.
+    Live-only means the live feed names the employer and `perm_entities` has no
+    row for its slug. Ordered by first filing then slug, so a night's new
+    arrivals mostly append and the rank windows the sitemap reads stay stable;
+    ordering by case count would reshuffle every rank whenever a count moved.
 
-    `last_changed` is the sitemap's lastmod for the page: the newest day any
-    of the employer's cases changed as the page shows it (its `changed_on`,
-    falling back to its filing date). It used to be the sweep's finish date on
-    all ~22,600 URLs, a date that moved every night whether a page changed or
-    not; Google uses lastmod only when it is "consistently and verifiably
-    accurate", and a nightly all-rows date reads as a timestamp.
+    `last_changed` is the page's sitemap lastmod: the newest day any of the
+    employer's cases changed as the page shows it (its `changed_on`, falling
+    back to its filing date). Google uses lastmod only when it is "consistently
+    and verifiably accurate", so it moves only when the page does.
     """
     by_slug: dict[str, dict] = {}
     for row in live:
@@ -582,7 +499,7 @@ def write_live_only_index(db: Turso, live: list[dict], maps) -> bool:
     published = {v[0] for v in maps["employer"].values()}
     want = live_only_rows(live, published)
     stored: dict[str, tuple] = {}
-    for r in rows_of(db.execute(
+    for r in raw_rows(db.execute(
             "SELECT slug, name, cases, first_filed, rank, last_changed FROM perm_live_only_index")):
         vals = [cell(c) for c in r]
         stored[str(vals[0])] = (str(vals[1]), int(vals[2] or 0), vals[3], int(vals[4] or 0), vals[5])
@@ -718,19 +635,16 @@ def pending_diff(stored: list, built: list[dict]):
 def write_pending(db: Turso, pending: list[dict]) -> tuple[bool, dict[str, int]]:
     """Refresh `perm_entity_pending` every night, writing only what moved.
 
-    WHY THIS RUNS NIGHTLY NOW (2026-09-26). The table used to be rebuilt only
-    by the full rebuild after a disclosure load, while every published
-    employer page printed it in `LiveQueueBand` under the SWEEP's date. So a
-    snapshot weeks old read as today's queue: on Sep 26 Adobe's band said 199
-    waiting, 197 in analyst review, while `perm_case_status` held 218 pending
-    with 216 on hold, and the follow block on the same page said so. Two
-    figures for one queue on one page discredit both.
+    Every published employer page prints this table in `LiveQueueBand` under
+    the sweep's date, so it is refreshed with each sweep; refreshed only with
+    the quarterly load, it would show a weeks-old queue as today's beside the
+    live figures elsewhere on the same page.
 
     Diffed like `perm_live_recent`: about 70,000 rows, of which a night moves
     a few hundred to a few thousand.
     """
     db.script(DDL)
-    stored = rows_of(db.execute(
+    stored = raw_rows(db.execute(
         "SELECT " + ", ".join(PENDING_COLS) + " FROM perm_entity_pending"))
     changed, gone, moved = pending_diff(stored, pending)
     for i in range(0, len(gone), 250):
@@ -750,17 +664,17 @@ def write_pending(db: Turso, pending: list[dict]) -> tuple[bool, dict[str, int]]
 def build_pending(db: Turso, maps) -> list[dict]:
     """Per-employer live queue position, aggregated server-side.
 
-    A GROUP BY over 412,865 rows returns 88,861, which is the difference
-    between a query and a download. Stage counts come back in a second
-    aggregate restricted to `is_final = 0`, so the two never disagree about
-    what "pending" means: the mirror's own flag decides, not a status list
-    kept here that would drift the first time DOL invents a stage.
+    Aggregated in the database, so the read returns one row per employer rather
+    than every case. Stage counts come from a second aggregate restricted to
+    `is_final = 0`, so the two never disagree about what "pending" means: the
+    table's own flag decides, not a status list kept here that would drift the
+    first time DOL adds a stage.
     """
-    totals = rows_of(db.execute(
+    totals = raw_rows(db.execute(
         "SELECT employer_name, count(*), sum(1 - is_final), min(CASE WHEN is_final = 0 "
         "THEN filing_date END) FROM perm_case_status WHERE employer_name IS NOT NULL "
         "AND employer_name <> '' GROUP BY employer_name"))
-    stages = rows_of(db.execute(
+    stages = raw_rows(db.execute(
         "SELECT employer_name, current_status, count(*) FROM perm_case_status "
         "WHERE is_final = 0 AND employer_name IS NOT NULL AND employer_name <> '' "
         "GROUP BY employer_name, current_status"))
@@ -827,7 +741,7 @@ def read_cases(db: Turso, cache: str | None):
     while True:
         res = db.execute(
             f"SELECT {','.join(cols)} FROM perm_cases ORDER BY rowid LIMIT 25000 OFFSET ?", [off])
-        rs = rows_of(res)
+        rs = raw_rows(res)
         for r in rs:
             yield {c: cell(x) for c, x in zip(cols, r)}
         if len(rs) < 25000:
@@ -914,10 +828,9 @@ def build_facets(db: Turso, maps, cache) -> list[list]:
             city_votes[ck][raw_city] += 1
         naics = normalize_naics(r.get("naics"))
 
-        # The occupation facet's key is the occupation's SLUG, not its SOC
+        # The occupation facet's key is the occupation's slug, not its SOC
         # code: it is a link target, and /perm-wages/[slug] is keyed on the
-        # entity slug. Storing the code here produced a facet list whose
-        # every link 404'd while looking perfectly correct in the table.
+        # entity slug.
         if e and e[1] >= PAGE_FLOOR:
             if o:
                 add("employer", e[0], "occupation", o[0], occ_label or code, cert, den)
@@ -968,22 +881,11 @@ def build_facets(db: Turso, maps, cache) -> list[list]:
 # ---------------------------------------------------------------------------
 
 def write_rows(db: Turso, table: str, cols: list[str], rows: list) -> None:
-    """INSERT OR REPLACE - `lib_turso.pipeline` retries, and a retry after a
-    lost response replays a write that already landed."""
-    ph = "(" + ",".join("?" * len(cols)) + ")"
-    head = f"INSERT OR REPLACE INTO {table} ({','.join(cols)}) VALUES "
-    pending = []
-    for i in range(0, len(rows), CHUNK):
-        batch = rows[i:i + CHUNK]
-        args = [lit(r[c] if isinstance(r, dict) else r[j])
-                for r in batch for j, c in enumerate(cols)]
-        pending.append({"type": "execute",
-                        "stmt": {"sql": head + ",".join([ph] * len(batch)), "args": args}})
-        if len(pending) >= 4:
-            db.pipeline(pending + [{"type": "close"}])
-            pending = []
-    if pending:
-        db.pipeline(pending + [{"type": "close"}])
+    """INSERT OR REPLACE, so a retry after a lost response replays a write
+    that already landed without harm. Rows are dicts keyed by column, or
+    sequences in column order."""
+    insert_rows(db, table, cols, [[r[c] for c in cols] if isinstance(r, dict) else r[:len(cols)]
+                                  for r in rows], per_stmt=CHUNK)
 
 
 def main() -> int:
@@ -1033,13 +935,11 @@ def main() -> int:
             write_recent_wait(db)
         except Exception as exc:  # noqa: BLE001 - a comparison must not fail the rebuild
             log(f"  recent_decision_wait refresh FAILED: {exc}")
-        # STAMP FRESHNESS AND AUDIT THE RUN. This table is the only thing that
-        # makes cases newer than the last disclosure file findable, it rebuilds
-        # under `|| true` in the sweep workflow, and it had no monitoring at
-        # all - which is how it sat silently reverted from 137k rows to 16k for
-        # hours. The freshness stamp makes a STALLED rebuild go red in
-        # check_ingest_health after 3 days; the audit row records the row COUNT
-        # per run, which is what makes a sudden drop visible after the fact.
+        # Stamp freshness and audit the run. This table is what makes cases newer
+        # than the last disclosure file findable, and the sweep workflow runs it
+        # under `|| true`, so a stalled rebuild must turn the health check red
+        # (the stamp), and a sudden drop in rows must be visible afterwards (the
+        # audit row's count).
         if ok:
             stamp_freshness(db, "live-recent", source="derived from perm_case_status",
                             cadence="Daily", note=f"{len(live):,} cases", max_age_days=3)
@@ -1111,21 +1011,12 @@ def refresh_recent_12m(db: Turso) -> tuple[int, int]:
     and the live remainder (perm_live_recent.filing_date, indexed). The live
     table carries no attorney, so a firm's count is the published half only,
     which is said on the page. Only rows whose value changed are written, in
-    one UPDATE ... CASE per 200 slugs (the pattern the attorney backfill
-    measured at ~1,200 rows/s against ~50/s for one statement per row), so a
-    quiet night costs a few hundred writes rather than 33,700.
+    one UPDATE ... CASE per 200 slugs, so a quiet night costs a few hundred
+    writes rather than one per employer.
 
     Returns (rows_changed, rows_examined).
     """
-    def rows_of(res):
-        out = []
-        for r in res["response"]["result"]["rows"]:
-            out.append([None if c["type"] == "null" else c["value"] for c in r])
-        return out
-
-    cols = {r[1] for r in rows_of(db.execute("PRAGMA table_info(perm_entities)"))}
-    if "recent_12m" not in cols:
-        db.execute("ALTER TABLE perm_entities ADD COLUMN recent_12m INTEGER")
+    if add_missing_columns(db, "perm_entities", {"recent_12m": "INTEGER"}):
         log("  added perm_entities.recent_12m")
     cutoff = (datetime.date.today() - datetime.timedelta(days=RECENT_WINDOW_DAYS)).isoformat()
     counts: dict[tuple[str, str], int] = defaultdict(int)
@@ -1169,11 +1060,7 @@ def lit_sql(s: str) -> str:
     return "'" + str(s).replace("'", "''") + "'"
 
 
-# LAST, AND IT MUST STAY LAST. Until 2026-09-23 this guard sat above
-# refresh_recent_12m, so running the script exited inside main() before Python
-# ever reached that definition: every nightly call raised NameError, the
-# try/except logged "recent_12m refresh FAILED" and the run still said ok, and
-# the 12-month counts froze at their Sep 7 values. test_main_guard.py holds
-# every script to this shape.
+# Last, and it must stay last: a definition below the guard doesn't exist yet
+# when the guard runs main(). test_main_guard.py holds every script to this.
 if __name__ == "__main__":
     sys.exit(main())

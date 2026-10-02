@@ -61,7 +61,7 @@ export default function TableOfContents() {
 
   return (
     <nav aria-label="Table of contents">
-      <p className="mb-3 font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-3 font-heading text-sm font-bold uppercase tracking-wider text-muted-foreground">
         On this page
       </p>{" "}
       <ul className="space-y-1 border-l-2 border-border">

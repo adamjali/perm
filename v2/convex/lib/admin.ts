@@ -154,6 +154,15 @@ function compareUserField(
   return order === "asc" ? cmp : -cmp;
 }
 
+/** The most rows the admin dashboard loads from each table. */
+const DASHBOARD_READ = {
+  users: 2000,
+  authAccounts: 5000,
+  authSessions: 10000,
+  userProfiles: 2000,
+  cases: 10000,
+} as const;
+
 export async function getAdminDashboardDataHelper(
   ctx: QueryCtx,
   opts: AdminPaginationOpts = {}
@@ -164,13 +173,13 @@ export async function getAdminDashboardDataHelper(
   const sortOrder = opts.sortOrder ?? "desc";
   const search = opts.search?.toLowerCase().trim();
 
-  // Bulk-load all 5 tables (with safety cap)
+  // Bulk-load all 5 tables, each under its read cap
   const [users, authAccounts, authSessions, userProfiles, cases] = await Promise.all([
-    ctx.db.query("users").take(2000),
-    ctx.db.query("authAccounts").take(5000),
-    ctx.db.query("authSessions").take(10000),
-    ctx.db.query("userProfiles").take(2000),
-    ctx.db.query("cases").take(10000),
+    ctx.db.query("users").take(DASHBOARD_READ.users),
+    ctx.db.query("authAccounts").take(DASHBOARD_READ.authAccounts),
+    ctx.db.query("authSessions").take(DASHBOARD_READ.authSessions),
+    ctx.db.query("userProfiles").take(DASHBOARD_READ.userProfiles),
+    ctx.db.query("cases").take(DASHBOARD_READ.cases),
   ]);
 
   // Build lookup maps: userId -> docs[]

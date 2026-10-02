@@ -71,12 +71,10 @@ export interface Entry {
    * ONE LINE, AND REQUIRED, because it is the only definition most readers
    * will see.
    *
-   * The list below used to render every entry fully expanded: ten terms, each
-   * with a definition, a deadline, a what-follows and a sourcing note, stacked
-   * down the page. Measured 2026-09-13, that section was over half of
-   * `/perm-rfi-audit`'s 3,411 rendered words - against 670 for a comparable
-   * gov.uk service page. Someone arriving to find out what "NORD ISSUED" means
-   * had to scroll past nine definitions they did not want.
+   * Fully expanded, ten terms each with a definition, a deadline, a
+   * what-follows and a sourcing note are over half of `/perm-rfi-audit`'s
+   * words, and someone arriving to find out what "NORD ISSUED" means scrolls
+   * past nine definitions they did not want.
    *
    * Collapsed, the same content is a dictionary index. The gloss is what makes
    * that index usable, so it is not optional: an entry added without one does
@@ -98,8 +96,8 @@ export interface Entry {
  * Verified against the section text, not written from memory.
  *
  * Fetched from eCFR's versioner API (title 20, part 656, 2026-08-01 issue) and
- * read paragraph by paragraph. Three things came back different from the draft
- * this replaced, and one of them is the most consequential fact on the page:
+ * read paragraph by paragraph. Three points are easy to get wrong, and one of
+ * them is the most consequential fact on the page:
  *
  *  - Missing the audit deadline does not merely deny the application. Under
  *    656.20(a)(3)(i)-(ii) it "constitutes a refusal to exhaust available
@@ -107,8 +105,8 @@ export interface Entry {
  *    procedure provided in 656.26 is not available", so the right to appeal to
  *    BALCA goes with it.
  *  - BALCA's three outcomes under 656.27(c) are affirm, direct the officer to
- *    grant, or direct a HEARING. The draft said "remand", which is what
- *    everybody assumes and is not what the section says.
+ *    grant, or direct a HEARING. "Remand" is what everybody assumes and is not
+ *    what the section says.
  *  - 656.24(g)(3) bars reconsideration outright where the deficiency came from
  *    "the applicant's disregard of a system prompt or other direct
  *    instruction".
@@ -381,16 +379,14 @@ export function StageGlossary({
       </div>
 
       <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-        An audit has no status string of its own in the case-status feed, which
-        is why it appears here without a live count. DOL does publish an Audit
-        Review queue on its processing-times page
+        An audit has no status of its own in DOL&apos;s case feed, so it has no live count here. DOL&apos;s
+        processing-times page does show an Audit Review queue
         {auditQueue ? (
           <>
-            , currently working filings from {monthName(auditQueue)}
+            , working filings from {monthName(auditQueue)}
           </>
         ) : null}
-        , so audits are plainly still being worked even though nothing in the
-        data behind this page counts them.
+        .
       </p>{" "}
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
         Deadlines run from the date on the letter, not from the day the status

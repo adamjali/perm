@@ -2,11 +2,11 @@
  * The PERM cases filed on the same day as one case, grouped by what has
  * happened to them since.
  *
- * WHY (2026-09-26). A reader waiting on one case asks "are people who filed
+ * WHY. A reader waiting on one case asks "are people who filed
  * when I did hearing back?" Case numbers carry the filing day and a serial
  * from one sequential counter, so the cases filed that day, and the handful
- * with the serials right beside yours, are exactly that cohort. USCIS
- * trackers show neighbouring receipts; no PERM site does. Every number here
+ * with the serials right beside yours, are exactly that cohort, the PERM
+ * equivalent of neighbouring USCIS receipts. Every number here
  * is a public DOL record we already hold.
  *
  * Plain module so the unit project tests the grouping.

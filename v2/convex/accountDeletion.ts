@@ -19,7 +19,7 @@
  * @module
  */
 
-import { internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { internalAction, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { loggers } from "./lib/logging";
@@ -123,40 +123,3 @@ export const processExpiredDeletions = internalAction({
   },
 });
 
-/**
- * One-off remediation: re-point in-flight grace deletions (scheduled BEFORE this
- * wrapper existed) at cleanupAndPurge, so when their grace expires they also
- * clean up Google Calendar + the Resend contact, not just the DB rows + storage.
- *
- * Cancels the old scheduled job and reschedules the wrapper at the same time.
- * Idempotent + safe to re-run; the hourly cron is the backstop if anything here
- * fails. Run once after deploy:
- *   npx convex run accountDeletion:repointInFlightDeletions '{}' --prod
- */
-export const repointInFlightDeletions = internalMutation({
-  args: {},
-  handler: async (ctx): Promise<{ repointed: number }> => {
-    const profiles = await ctx.db.query("userProfiles").collect();
-    let repointed = 0;
-    for (const profile of profiles) {
-      if (profile.deletedAt === undefined || !profile.scheduledDeletionJobId) continue;
-      try {
-        await ctx.scheduler.cancel(profile.scheduledDeletionJobId);
-      } catch {
-        // Old job already ran or was cancelled — fine, the reschedule below
-        // (and the hourly cron) still cover this user.
-      }
-      const newJobId = await ctx.scheduler.runAt(
-        profile.deletedAt,
-        internal.accountDeletion.cleanupAndPurge,
-        { userId: profile.userId }
-      );
-      await ctx.db.patch(profile._id, {
-        scheduledDeletionJobId: newJobId,
-        updatedAt: Date.now(),
-      });
-      repointed++;
-    }
-    return { repointed };
-  },
-});

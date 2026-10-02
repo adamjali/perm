@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { render } from "@react-email/render";
 
 import { BulletinWeekly } from "../BulletinWeekly";
-import type { DigestData } from "../../../convex/lib/newsletterCompose";
+import type { DigestData } from "@convex/lib/newsletterCompose";
 
 const base: DigestData = {
   weekOf: "2026-09-08",

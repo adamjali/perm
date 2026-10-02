@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { DAY_ROW_CAP, getChangeDay } from "@/lib/turso/changes";
+import { MS_PER_DAY } from "@/lib/time";
 
 /**
  * One day of FLAG adjudication events, by date. PERM, prevailing wage and LCA.
@@ -42,7 +43,6 @@ const DEFAULT_ITEMS = 100;
  * describe the data. The page says what the record actually covers.
  */
 const MAX_AGE_DAYS = 400;
-const MS_PER_DAY = 86_400_000;
 
 export async function GET(request: Request): Promise<NextResponse> {
   const p = new URL(request.url).searchParams;

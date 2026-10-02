@@ -11,6 +11,8 @@ import { buildDefaultProfile } from "./lib/userDefaults";
 import { rateLimiter, SIGNUP_BURST_PER_HOUR } from "./rateLimitConfig";
 import { isEmailPostHogExcluded } from "./lib/posthog";
 import { formatDateForNotification } from "./lib/formatDate";
+import { CALENDAR_SYNC_PREFERENCES, slotsForPreference } from "./lib/calendarTypes";
+import { MS_PER_DAY } from "./lib/time";
 
 const log = loggers.auth;
 
@@ -115,7 +117,7 @@ export const ensureUserProfile = mutation({
     // A session outlives its account by a second or two: "Delete now" purges
     // the user while the browser is still signed in, and the client's safety
     // net then asks for a profile. Creating one there left an orphan profile
-    // behind each deletion (three on Sep 28 2026) and opened the onboarding
+    // behind each deletion and opened the onboarding
     // wizard behind the sign-out overlay. No user record, or one scheduled for
     // deletion, gets no new profile.
     if (!user || user.deletedAt !== undefined) {
@@ -436,69 +438,19 @@ export const updateUserProfile = mutation({
       await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
     }
 
-    return profile._id;
-  },
-});
-
-// ============================================================================
-// TERMS ACCEPTANCE MUTATIONS
-// ============================================================================
-
-/**
- * Record user acceptance of Terms of Service and Privacy Policy.
- *
- * Terms are now auto-stamped at profile creation via buildDefaultProfile().
- * This mutation is retained for future re-consent flows (e.g., when terms are updated
- * and existing users need to accept a new version).
- *
- * @param termsVersion - The effective date of the ToS being accepted (e.g., "2026-02-17")
- * @returns Success indicator
- */
-export const acceptTermsOfService = mutation({
-  args: {
-    termsVersion: v.string(), // Effective date of ToS, e.g., "2025-01-03"
-  },
-  handler: async (ctx, { termsVersion }) => {
-    const userId = await getCurrentUserId(ctx);
-
-    // Get or create user profile
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) {
-      // Create profile first if it doesn't exist
-      const user = await ctx.db.get(userId);
-      const defaultProfile = buildDefaultProfile(
+    // A calendar type switched off takes its events off Google Calendar.
+    // Unset counts as on, which is the default.
+    const switchedOff = CALENDAR_SYNC_PREFERENCES.filter(
+      (pref) => args[pref] === false && profile[pref] !== false,
+    );
+    if (switchedOff.length > 0) {
+      await ctx.scheduler.runAfter(0, internal.googleCalendarActions.bulkDeleteEventsByType, {
         userId,
-        { fullName: user?.name, profilePhotoUrl: user?.image, termsAcceptedAt: Date.now(), termsVersion }
-      );
-      const profileId = await ctx.db.insert("userProfiles", defaultProfile);
-
-      // Audit: profile creation with terms acceptance
-      await logCreate(ctx, "userProfiles", profileId, defaultProfile as Record<string, unknown>);
-
-      return { success: true, profileId };
+        eventSchemaFields: [...new Set(switchedOff.flatMap(slotsForPreference))],
+      });
     }
 
-    // Capture old doc for audit
-    const oldDoc = { ...profile } as Record<string, unknown>;
-
-    // Update existing profile with terms acceptance
-    await ctx.db.patch(profile._id, {
-      termsAcceptedAt: Date.now(),
-      termsVersion,
-      updatedAt: Date.now(),
-    });
-
-    // Audit: terms acceptance (legal record — CRITICAL)
-    const updatedProfile = await ctx.db.get(profile._id);
-    if (updatedProfile) {
-      await logUpdate(ctx, "userProfiles", profile._id, oldDoc, updatedProfile as Record<string, unknown>);
-    }
-
-    return { success: true, profileId: profile._id };
+    return profile._id;
   },
 });
 
@@ -723,7 +675,7 @@ export const requestAccountDeletion = mutation({
     const oldDoc = { ...profile } as Record<string, unknown>;
 
     // Calculate grace period (30 days from now)
-    const gracePeriodMs = 30 * 24 * 60 * 60 * 1000;
+    const gracePeriodMs = 30 * MS_PER_DAY;
     const deletionDate = Date.now() + gracePeriodMs;
 
     // Schedule the permanent deletion job to run after the grace period
@@ -944,9 +896,9 @@ export const immediateAccountDeletion = action({
 /**
  * Delete profiles whose user record no longer exists.
  *
- * Until Sep 28 2026 "Delete now" left one behind: the account was purged while
- * the browser was still signed in, and `ensureUserProfile` built a fresh
- * profile for it. That path is closed; this removes what it left. Dry run by
+ * "Delete now" could leave one behind: the account was purged while the
+ * browser was still signed in, and `ensureUserProfile` built a fresh profile
+ * for it. That path is closed; this removes any that remain. Dry run by
  * default: `npx convex run users:purgeOrphanProfiles '{"apply": true}' --prod`.
  */
 export const purgeOrphanProfiles = internalMutation({

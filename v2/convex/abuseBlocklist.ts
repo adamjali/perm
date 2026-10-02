@@ -3,10 +3,10 @@
  * admin) from hitting our public HTTP endpoints.
  *
  * - Single `abuseBlocklist` table, keyed by normalized IP.
- * - `isIpBlocked()` returns { blocked, expiresAt, reason } for middleware.
+ * - `findActiveBlock()` returns the active block for an IP, if any (read by the
+ *   auth rate limiter).
  * - `recordStrike()` runs every time `checkIpRateLimit` REJECTS. After
- *   N strikes in a short window, the IP is auto-blocked for an hour (24h
- *   until Sep 29 2026).
+ *   N strikes in a short window, the IP is auto-blocked for an hour.
  * - Admin mutations let you manually block, unblock, extend, or list entries.
  * - The `cleanupExpiredBlocks` cron scrubs stale rows so the table stays bounded.
  */
@@ -22,13 +22,19 @@ import {
 } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { requireAdmin } from "./lib/admin";
+import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
+
+/** Newest blocklist rows the admin list reads before keeping the active ones. */
+const ADMIN_LIST_READ = 500;
+/** Expired rows deleted per cleanup run. */
+const CLEANUP_BATCH = 500;
 
 const AUTO_BLOCK_STRIKES = 3;              // # rate-limit rejections within window
-const AUTO_BLOCK_WINDOW_MS = 15 * 60_000;  // 15-minute rolling window for strikes
-// 1h since Sep 29 2026 (was 24h): an address is often shared (an office, a
-// campus, a mobile carrier), and a day-long block fell on everyone behind it.
-// Three strikes in 15 minutes still blocks a flood at once, and again after.
-const AUTO_BLOCK_DURATION_MS = 60 * 60_000;
+const AUTO_BLOCK_WINDOW_MS = 15 * MS_PER_MINUTE;  // 15-minute rolling window for strikes
+// One hour: an address is often shared (an office, a campus, a mobile
+// carrier), and a longer block falls on everyone behind it. Three strikes in
+// 15 minutes still blocks a flood at once, and again after.
+const AUTO_BLOCK_DURATION_MS = MS_PER_HOUR;
 
 /**
  * Shared result shape for the block-mutating operations (recordStrike,
@@ -74,24 +80,6 @@ export async function findActiveBlock(
   if (!row || row.expiresAt <= Date.now()) return null;
   return row;
 }
-
-/**
- * Check if an IP is currently blocked. Exposed as a public query so that
- * any path (middleware, admin UI, debugging) can read without mutating state.
- */
-export const isIpBlocked = query({
-  args: { ip: v.string() },
-  handler: async (ctx, { ip }) => {
-    const row = await findActiveBlock(ctx, ip);
-    if (!row) return { blocked: false as const };
-    return {
-      blocked: true as const,
-      expiresAt: row.expiresAt,
-      reason: row.reason,
-      manualOverride: row.manualOverride,
-    };
-  },
-});
 
 /**
  * Internal helper — record a rate-limit strike for this IP, and if we've
@@ -217,7 +205,7 @@ export const listActiveBlocks = query({
   handler: async (ctx) => {
     await requireAdmin(ctx);
     const now = Date.now();
-    const rows = await ctx.db.query("abuseBlocklist").order("desc").take(500);
+    const rows = await ctx.db.query("abuseBlocklist").order("desc").take(ADMIN_LIST_READ);
     return rows.filter((r) => r.expiresAt > now);
   },
 });
@@ -233,7 +221,7 @@ export const cleanupExpiredBlocks = internalMutation({
     const expired = await ctx.db
       .query("abuseBlocklist")
       .withIndex("by_expiresAt", (q) => q.lte("expiresAt", now))
-      .take(500);
+      .take(CLEANUP_BATCH);
     let deleted = 0;
     for (const row of expired) {
       await ctx.db.delete(row._id);

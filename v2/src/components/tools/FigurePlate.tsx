@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { MoreText, firstSentence, plainText, wordCount } from "@/components/data/MoreText";
 
 /**
  * The figure plate: one drawing language for every chart on the site.
@@ -11,8 +12,8 @@ import { cn } from "@/lib/utils";
  * frame with corner ticks, a corner title block reading FIG 04 / DENIAL RATE
  * BY WAGE BAND, tracked mono labels, and a caption that states the source.
  *
- * This exists because the alternative is what the rival ships: default chart
- * library output on white, indistinguishable from every other dashboard. A
+ * This exists because the alternative is default chart library output on
+ * white, indistinguishable from every other dashboard. A
  * plate makes a drawing look authored, and it makes ten different drawings
  * across ten pages read as one system rather than ten widgets.
  *
@@ -85,20 +86,20 @@ export function FigurePlate({
       >
         <span
           className={cn(
-            "font-mono text-xs font-bold uppercase tracking-[0.1em]",
+            "font-mono text-sm font-bold uppercase tracking-[0.1em]",
             ink ? "text-primary-on-ink" : "text-muted-foreground",
           )}
         >
           Fig {n}
         </span>{" "}
-        <span className="font-mono text-xs font-bold uppercase tracking-[0.1em]">
+        <span className="font-mono text-sm font-bold uppercase tracking-[0.1em]">
           {title}
         </span>{" "}
         {subject ? (
           <span
             className={cn(
-              "font-mono text-xs tracking-[0.08em]",
-              ink ? "text-background/55" : "text-muted-foreground",
+              "font-mono text-sm tracking-[0.08em]",
+              ink ? "text-background/70" : "text-muted-foreground",
             )}
           >
             {subject}
@@ -115,13 +116,22 @@ export function FigurePlate({
             ink ? "border-background/25 text-background/70" : "border-border text-foreground/70",
           )}
         >
-          {caption}
+          {/* LONG CAPTIONS FOLD: over 28 words, the first
+              sentence shows and the rest opens on demand, every word still in
+              the HTML. Measured: plate captions ran to 75 words. */}
+          {caption && wordCount(caption) > 28 ? (
+            <MoreText gist={firstSentence(plainText(caption))} size="sm" className="max-w-none">
+              <div>{caption}</div>
+            </MoreText>
+          ) : (
+            caption
+          )}
           {source ? (
             <>
               {caption ? " " : null}
               <span
                 className={cn(
-                  "font-mono text-xs uppercase tracking-wider",
+                  "font-mono text-sm uppercase tracking-wider",
                   ink ? "text-background/50" : "text-muted-foreground",
                 )}
               >

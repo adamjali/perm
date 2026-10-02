@@ -293,6 +293,23 @@ describe("unifiedSearch", () => {
     expect(readFlagLive.mock.calls[0]?.[0]).toBe("pwd");
   });
 
+  it("reads H-2A and H-2B from the live table only, and labels the rows", async () => {
+    // No quarterly H-2A or H-2B file is loaded, so an employer search reads
+    // seasonal_case_status and nothing else, and its rows say which program.
+    readFlagLive.mockImplementation(async (program: string) =>
+      program === "seasonal"
+        ? slice([{ caseNumber: "H-300-26272-266803", filingDate: "2026-09-29", status: "IN PROCESS", isFinal: false,
+            employerName: "MCRP Farms", employerSlug: "mcrp-farms", jobTitle: "Farmworker", visaType: "H-2A",
+            submittedDate: null, firstSeenAt: null, lastCheckedAt: null }])
+        : slice([]),
+    );
+    const { rows, counts } = await unifiedSearch({ lead: employerLead, programs: ["seasonal"] });
+    expect(readFlagLive.mock.calls.map((c) => c[0])).toEqual(["seasonal"]);
+    expect(readPermPublished).not.toHaveBeenCalled();
+    expect(rows.map((r) => [r.caseNumber, r.program, r.half])).toEqual([["H-300-26272-266803", "seasonal", "live"]]);
+    expect(counts.seasonal).toBe(1);
+  });
+
   it.each([
     ["state", stateLead],
     ["occupation", occupationLead],
@@ -357,7 +374,8 @@ describe("unifiedSearch", () => {
     expect(readPermPublished).not.toHaveBeenCalled();
     expect(readFlagPublished).not.toHaveBeenCalled();
     expect(readPermLive).toHaveBeenCalledTimes(1);
-    expect(readFlagLive).toHaveBeenCalledTimes(2);
+    // Wage requests, LCAs, and H-2A and H-2B.
+    expect(readFlagLive).toHaveBeenCalledTimes(3);
   });
 
   it("counts the RETURNED rows, not everything it collected", async () => {
@@ -443,7 +461,7 @@ describe("unifiedSearch with a case number", () => {
       lead: { kind: "case", value: "P-100-26232-000009" },
     });
     expect(rows[0]).toMatchObject({ program: "pwd", half: "live" });
-    expect(counts).toEqual({ perm: 0, pwd: 1, lca: 0 });
+    expect(counts).toEqual({ perm: 0, pwd: 1, lca: 0, seasonal: 0 });
   });
 
   it("returns nothing rather than erroring when we do not hold the case", async () => {

@@ -1,9 +1,6 @@
 /**
  * Constants for timeline components.
  * Responsive sidebar widths and Z-index layers.
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2026-01-09
  */
 
 /**
@@ -44,8 +41,8 @@ export const Z_INDEX = {
    * note and the Today line (20 and 30), so dates scrolled sideways pass UNDER
    * the names; below a hovered marker (40), so its tooltip can still show over
    * them. The date area must not open its own stacking context, or its whole
-   * layer is compared with this one as a unit: that is how every marker once
-   * painted over the names on a phone (Sep 30 2026).
+   * layer is compared with this one as a unit and every marker paints over
+   * the names.
    */
   stickyLabel: 35,
 } as const;

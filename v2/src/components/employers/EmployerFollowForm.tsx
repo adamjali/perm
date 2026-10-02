@@ -10,6 +10,7 @@
  */
 
 import { useId, useState } from "react";
+import { AlertNote } from "@/components/alerts/AlertOptIns";
 
 function subscribeEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -84,9 +85,7 @@ export function EmployerFollowForm({ slug, source }: { slug: string; source: str
           {message}
         </p>
       ) : null}{" "}
-      <p id={noteId} className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        One email a day at most, whatever you follow. You confirm by email first, and one click stops it. One address can follow 100 employers, and we send one confirmation every 10 minutes per address.
-      </p>
+      <AlertNote id={noteId} limit="One address can follow 100 employers." className="mt-3" />
     </form>
   );
 }

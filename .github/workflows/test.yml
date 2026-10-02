@@ -18,7 +18,7 @@ jobs:
   test:
     name: Typecheck + Vitest
     runs-on: ubuntu-24.04
-    # All app code lives in v2/ — run every step from there.
+    # All app code lives in v2/, so every step runs from there.
     defaults:
       run:
         working-directory: v2
@@ -32,9 +32,8 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
         with:
-          # action-setup is a `uses:` step, so the job's working-directory:v2
-          # default does NOT apply — it reads the repo-root package.json by
-          # default. Point it at v2/ where the `packageManager` pin lives.
+          # A `uses:` step ignores the job's working directory and would read
+          # the repo root's package.json; the `packageManager` pin is in v2/.
           package_json_file: v2/package.json
 
       - name: Setup Node
@@ -50,220 +49,39 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      # The ingest scripts have no typechecker, and nothing else in CI ever
-      # imports them: a NameError sits in one until the night it runs. Three
-      # of the eight freshness stamps shipped with an undefined `db` and would
-      # have died on their last line, under `continue-on-error: true`, in
-      # total silence - the monitor built to catch a silent ingest failure was
-      # itself failing silently. F821 is the whole point; the unused-import
-      # codes are pre-existing noise and stay off.
-      - name: Lint ingest scripts for undefined names
-        working-directory: v2
+      # The data scripts have no typechecker and nothing in the app imports
+      # them, so a NameError would otherwise wait for the night a script runs.
+      # Any finding fails: the tree is clean, so a new one is a regression.
+      - name: Lint the data scripts
         run: |
-          pipx run pyflakes scripts/*.py 2>&1 | tee /tmp/pf.txt || true
-          if grep -qE "undefined name|invalid syntax" /tmp/pf.txt; then
-            echo "::error::An ingest script references a name that does not exist."
-            grep -E "undefined name|invalid syntax" /tmp/pf.txt
-            exit 1
-          fi
-          # A linter that found nothing and a linter that never ran look the
-          # same. Prove it parsed the files.
-          n=$(ls scripts/*.py | wc -l)
-          echo "  pyflakes clean across $n scripts"
-          [ "$n" -ge 10 ] || { echo "::error::only $n scripts seen; the glob is wrong"; exit 1; }
+          pipx run pyflakes scripts/*.py scripts/oracle/*.py
+          # A linter that found nothing and one that never ran look the same.
+          n=$(ls scripts/*.py scripts/oracle/*.py | wc -l)
+          echo "pyflakes clean across $n scripts"
+          [ "$n" -ge 50 ] || { echo "::error::only $n scripts seen; the glob is wrong"; exit 1; }
 
-      # The parser between a saved government page and a published cutoff
-      # date. Every guard in it protects against a PLAUSIBLE WRONG ANSWER
-      # rather than an error: a reordered column publishes India's cutoff as
-      # China's, and a misread month files October under September. Neither
-      # looks broken on the page.
-      - name: Visa bulletin parser contract
-        working-directory: v2
-        run: python3 scripts/test_visa_bulletin.py
-      - name: Bulletin capture measurement tests
-        working-directory: v2
-        run: python3 scripts/test_bulletin_captures.py
-      - name: NVC waiting list parser tests
-        working-directory: v2
-        run: python3 scripts/test_nvc_waiting_list.py
-      - name: Entity identity rules
-        working-directory: v2
-        run: python3 scripts/test_entity_identity.py
-      - name: Policy feed selection rules
-        working-directory: v2
-        run: python3 scripts/test_policy_notices.py
-      - name: OFLC announcements parser tests
-        run: python3 scripts/test_oflc_news.py
-
-      - name: Social post composer tests
-        run: python3 scripts/test_social_post.py
-
-      - name: SSR visibility audit judges inline styles only
-        run: python3 scripts/test_ssr_visibility.py
-
-      - name: Server front door (nginx limits) checks
-        run: python3 scripts/oracle/test_nginx_conf.py
-
-      - name: WARN parser tests
-        run: |
-          python3 -m pip install --quiet openpyxl
-          python3 scripts/test_warn.py
-      - name: Visa limits and Table V parser tests
+      # Every script test, found by name, so a new test runs the day it lands,
+      # and all of them run even after one fails. None touches the network: each
+      # substitutes the far end. openpyxl reads the spreadsheets, pdfplumber the
+      # PDFs.
+      - name: Data script tests
+        if: ${{ !cancelled() }}
         run: |
           python3 -m pip install --quiet openpyxl pdfplumber
-          python3 scripts/test_visa_limits.py
-
-      - name: Debarment parser tests
-        working-directory: v2
-        run: python3 scripts/test_debarments.py
-
-      # The ingest that talks to DOL unattended. Every case in here is a
-      # defect that happened or would have shipped silently - the batch
-      # ceiling that truncates without erroring, the retry that stops a
-      # transient blip from dropping 50 cases, and the flush that must clear
-      # what it wrote or the next one re-sends it. No network: lookup is
-      # substituted, so CI never adds load to a government host.
-      - name: Direct case-status ingest contract
-        working-directory: v2
-        run: python3 scripts/test_case_status_direct.py
-
-      # The sweep's own record of what it checked, and the freshness claim it
-      # replaced. `perm_case_status.last_checked_at` is the rival tracker's column,
-      # never written by our PERM sweep, and the review-stage doc used to
-      # publish MIN/MAX of it as "when we read these stages" - 66,771 pending
-      # cases carrying a July date on a morning the sweep had checked every
-      # one. These run the REAL SQL against in-memory SQLite, so a typo in the
-      # CTE fails here rather than in production. No network.
-      - name: Sweep coverage record
-        working-directory: v2
-        run: python3 scripts/test_sweep_runs.py
-
-      # Surviving a transient far-end failure, and saying so when it does not.
-      #
-      # On 2026-09-03 both DOL sweeps died on `SQLITE_NOMEM` two minutes apart
-      # and NOTHING reported it: the case-status run had stamped itself fresh
-      # and written an `ok` audit row 80 seconds before it crashed, and all 36
-      # rows in `ingest_runs` said `ok`. Two halves, tested separately:
-      #
-      #   resilience  the retry only fires for the transient class, and the
-      #               two AUTOINCREMENT writers still land exactly one row
-      #               through an applied-then-failed error
-      #   health      a `failed` or `partial` run turns the daily health run
-      #               red, a `cancelled` one does not, and a later success
-      #               clears the flag
-      #
-      # No network in either. Both were dead code until this step existed - a
-      # control that has never run is not a control.
-      - name: Ingest resilience and failure visibility
-        working-directory: v2
-        run: |
-          python3 scripts/test_ingest_resilience.py
-          python3 scripts/test_ingest_health.py
-          # The forward-only walk's second look, and the doc the LCA salary
-          # explorer reads instead of a query it can no longer afford. Both
-          # were written this week and neither was in a workflow, which is
-          # the "wired is not proven" rule applied to tests themselves.
-          python3 scripts/test_serial_gaps.py
-          python3 scripts/test_lca_facets.py
-          python3 scripts/test_wage_views.py
-          python3 scripts/test_daily_monitor.py
-          python3 scripts/test_uscis_quarterly.py
-          # The I-140 quarter's database copy, which the two tool pages read
-          # first since Sep 29 2026: the same gates Convex's storeStats keeps.
-          python3 scripts/test_uscis_i140.py
-          # The standing estimator backtest: what "pending on the day" means
-          # (6,500 expired certifications counted as pending on its first
-          # run), and both counting rules scored on one set of cases.
-          python3 scripts/test_backtest_queue.py
-          # The hourly watched-case check: prefix routing, and the conditional
-          # writes that make a second writer beside a sweep harmless (run on a
-          # real in-memory SQLite, including the sweep-got-there-first case).
-          python3 scripts/test_watched_cases.py
-          # The nightly prune: which tables stop growing, and at what horizon.
-          python3 scripts/test_housekeeping.py
-
-      # The nightly diff on perm_live_recent (~137k rows). A diff that never
-      # matches is not slow, it is absent - and it logs "ok" while rewriting
-      # every row, which is what shipped for one run when libSQL's
-      # integers-as-strings met a freshly built int. No network.
-      - name: Live-recent diff contract
-        working-directory: v2
-        run: |
-          python3 scripts/test_live_recent.py
-          python3 scripts/test_flag_disclosure.py
-          python3 scripts/test_pwd_status.py
-          python3 scripts/test_load_guard.py
-          python3 scripts/test_sticky_slugs.py
-
-      # Nothing may follow a script's `if __name__ == "__main__":` guard: a
-      # definition below it never runs when the script runs. That froze the
-      # 12-month counts for sixteen days (build_entity_detail.py) and kept
-      # two posting tests out of CI (test_social_post.py). No network.
-      - name: Main guard is last in every script
-        working-directory: v2
-        run: python3 scripts/test_main_guard.py
-
-      # The observed-decision series: our own half of `daily_decisions`.
-      #
-      # `daily_decisions` held three sources and read one. Two are now deleted:
-      # `rival-b` was the rival's series, overlapping ours on 88 dates and
-      # double-counting 42,056 decisions in anything that summed the table, and
-      # `flag-live` was labelled as our own per-case scan while actually being
-      # mirrored from the rival tracker's daily-summary endpoint two days before our
-      # first sweep ever ran. `sweep-observed` replaces them, derived from
-      # `perm_case_events` on every sweep.
-      #
-      # Every guard in here protects against a PLAUSIBLE WRONG NUMBER rather
-      # than an error. Dropping the 94,523-row backfill stamp from 2026-08-28
-      # leaves 57 decisions on that day - a number that looks like a quiet
-      # Friday and is a lie, so the whole day is withheld. The two filters are
-      # asserted byte-identical to src/lib/turso/changes.ts, which renders the
-      # same rows per case. No network.
-      - name: Observed-decision series contract
-        working-directory: v2
-        run: python3 scripts/test_observed_decisions.py
-
-      # The quarterly Turso load, against a local SQLite stub instead of the
-      # real thing. Five bugs in these load steps were each found by
-      # dispatching the full 40-minute ingest and reading its log, one bug per
-      # run, because the only way to reach three minutes of load work was to
-      # re-download 156 MB and re-parse 1.21 GB of XML first. This exercises
-      # the same scripts in about two seconds.
-      #
-      # It asserts what the drop-and-reload bug destroyed: visa_bulletins is an
-      # accumulator (84 stored months must survive an artifact carrying 18),
-      # perm_docs is shared (we own 3 of 10 keys), a missing bulletin artifact
-      # must not sink the corpus load, and a fresh database still builds.
-      - name: Quarterly Turso load contract
-        working-directory: v2
-        run: python3 scripts/test_turso_load.py
-
-      # The industry and worksite-city columns (Sep 26 2026) fill by a narrow
-      # UPDATE, never a whole-row rewrite of 374k rows and their indexes.
-      - name: PERM industry and city columns
-        if: ${{ !cancelled() }}
-        working-directory: v2
-        run: |
-          python3 scripts/test_perm_extras.py
-          python3 scripts/test_perm_history.py
-          python3 scripts/test_groups.py
-
-      - name: Serial arithmetic and data-invariant contracts
-        if: ${{ !cancelled() }}
-        working-directory: v2
-        run: |
-          python3 scripts/test_flag_serials.py
-          python3 scripts/test_check_invariants.py
+          n=0; failed=0
+          for t in scripts/test_*.py scripts/oracle/test_*.py; do
+            n=$((n + 1))
+            echo "::group::$t"
+            python3 "$t" || { echo "::error::$t failed"; failed=$((failed + 1)); }
+            echo "::endgroup::"
+          done
+          echo "$n script tests, $failed failed"
+          [ "$n" -ge 40 ] || { echo "::error::only $n tests found; the glob is wrong"; exit 1; }
+          [ "$failed" -eq 0 ]
 
       - name: Run full test suite
-        # ALWAYS RUNS, even when a Python contract above failed. From Sep 3 to
-        # Sep 6 2026 one stale Python fixture failed first and this step never
-        # executed, so vitest did not run in CI for 25 pushes while the badge
-        # said only "tests failed". A failed step still fails the job; this
-        # only stops one gate from hiding another.
+        # Runs even when a script test failed, so one gate can't hide another;
+        # the failed step still fails the job. --retry=2 re-runs only a test
+        # that fails, a net for rare runner hiccups in a deterministic suite.
         if: ${{ !cancelled() }}
-        # --retry=2 re-runs only individual tests that fail, a safety net against
-        # rare CI-environment hiccups. The suite is deterministic (per-file
-        # isolation for mock-stateful unit + convex tests, scheduler noise
-        # suppressed), so retries should not normally trigger.
         run: pnpm test:run --retry=2

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FaqList } from "@/components/tools/FaqList";
@@ -62,12 +61,7 @@ export default function H1bSixYearLimitPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/tools" className="underline underline-offset-2 hover:text-primary">
-            Tools
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           H-1B six-year limit and the PERM 365-day rule
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">

@@ -7,13 +7,13 @@ import { getAllPosts } from "@/lib/content";
  * The shell shared by every logged-out page: the marketing and data pages in
  * `(public)`, and sign in / sign up / reset in `(auth)`.
  *
- * WHY THIS FILE EXISTS. `AuthHeader` used to be mounted twice, once by each of
- * those group layouts. Route groups are siblings, so crossing between them
- * unmounted one instance and mounted another — and the two are not identical,
- * because `AuthHeader` branches on `usePathname()`: the homepage renders
- * section anchors and both auth buttons, every other page renders Home / Data
- * / Learn and one. So a visitor clicking "Sign Up" watched one header be
- * replaced by a visibly different one. That is the flash that was reported.
+ * WHY THIS FILE EXISTS. Mounted by each group layout, `AuthHeader` would be
+ * two instances. Route groups are siblings, so crossing between them unmounts
+ * one instance and mounts another, and the two are not identical, because
+ * `AuthHeader` branches on `usePathname()`: the homepage renders section
+ * anchors and both auth buttons, every other page renders Home / Data / Learn
+ * and one. So a visitor clicking "Sign Up" would watch one header be replaced
+ * by a visibly different one.
  *
  * Hoisting it here makes it ONE instance for both groups. A layout above the
  * segment that changed is preserved across navigation, so React reconciles
@@ -25,7 +25,7 @@ import { getAllPosts } from "@/lib/content";
  * shared: the flex column, the dotted ground, the skip link, the header, the
  * footer, and the incident banner the header's own `top` already reads. The
  * public group keeps its own ambient canvas, scroll progress, hash handling,
- * back-to-top and page transition; the auth group keeps `ConvexProviders` and
+ * and back-to-top; the auth group keeps `ConvexProviders` and
  * its centred column. Each child still owns its own `<main id="main-content">`,
  * which is what the skip link above targets — only one of them is ever
  * mounted, so there is exactly one `<main>` on any page.

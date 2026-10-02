@@ -1,25 +1,11 @@
 #!/usr/bin/env python3
-"""USCIS employment-based I-485 pending inventory -> Turso.
+"""USCIS's employment-based I-485 pending inventory, the queue position for an
+adjustment-of-status application, read from USCIS's own monthly workbook.
 
-Closes the one substantive gap against the rival tracker: queue position for an
-adjustment-of-status application. Built first-party from USCIS rather than
-from their API, which turned out to matter more than expected.
-
-WHY FIRST-PARTY WINS HERE. Their /api/i485/queue-position answers
-`data_as_of: 2026-05-01`. USCIS publishes this monthly and had
-`eb_inventory_august_2026` on the day this was written - the same underlying
-release, three months fresher, with no dependency on a competitor's uptime.
-Their own response note ("25 suppressed cells (1-10 applicants each)
-estimated at 5") is what identified the source: that suppression rule is
-USCIS's, not theirs.
-
-THE SUPPRESSION IS THE INTERESTING PART. USCIS replaces any cell holding 1-10
-applications with the letter `D`. The rival tracker resolves every `D` to 5 and
-publishes one number with a plus-or-minus note. We keep the `D` count itself
-and report a RANGE - low counts every suppressed cell as 1, high as 10 - so
-the uncertainty is a property of the answer instead of a footnote under it.
-On a page that refuses to blend denial factors into one score, publishing a
-point estimate here would contradict the rest of the site.
+Suppressed cells: USCIS replaces any cell holding 1-10 applications with the
+letter `D`. Rather than resolve each to a guess, the `D` count is kept and the
+answer is a range (low counts every suppressed cell as 1, high as 10), so the
+uncertainty is part of the answer instead of a footnote under it.
 
 SHAPE OF THE WORKBOOK, all of it verified by reading rather than assumed:
 - One sheet per country, plus a separate `India (EB2 EB3)` sheet, because
@@ -45,14 +31,12 @@ import time
 import zipfile
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_gov_data import fetch, log, read_shared_strings, iter_rows  # noqa: E402
-from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
+from lib_gov_data import POLITE_PAUSE_S, fetch, iter_rows, log, read_shared_strings  # noqa: E402
+from lib_turso import Turso, query_rows, record_run, stamp_freshness  # noqa: E402
 
-# THE FULL LISTING, NOT THE LANDING PAGE. The bare data page shows the ten
-# newest items, and on 2026-09-09 the quarterly performance files had pushed
-# every monthly inventory off it, so discovery reported "no eb_inventory link"
-# from GitHub and from the Mac alike while July 2026's file sat on page 2.
-# `items_per_page=100` is the page's own control and lists them all.
+# The full listing, not the landing page: the bare data page shows only the ten
+# newest items, and the quarterly performance files can push every monthly
+# inventory off it. `items_per_page=100` is the page's own control.
 DATA_PAGE = ("https://www.uscis.gov/tools/reports-and-studies/"
              "immigration-and-citizenship-data?items_per_page=100")
 HOST = "https://www.uscis.gov"
@@ -255,16 +239,14 @@ def main() -> int:
         log(f"    as of {as_of}: {n:,} cells, {total:,} applications, "
             f"{sup:,} suppressed")
         newest_as_of, newest_total, newest_sup = as_of, total, sup
-        time.sleep(1.5)   # polite between federal fetches
+        time.sleep(POLITE_PAUSE_S)
 
     if not newest_as_of:
         raise SystemExit("stored nothing - refusing to report success")
 
     log("  HISTORY held:")
-    for r in db.execute(
-        "SELECT as_of, sum(count) FROM i485_inventory GROUP BY as_of "
-        "ORDER BY as_of")["response"]["result"]["rows"]:
-        log(f"    {r[0]['value']}  {int(r[1]['value']):>8,} applications")
+    for as_of, n in query_rows(db, "SELECT as_of, sum(count) FROM i485_inventory GROUP BY as_of ORDER BY as_of"):
+        log(f"    {as_of}  {int(n):>8,} applications")
 
     # Via the shared helper: this script CREATE'd data_freshness with 6 columns
     # and INSERTed 6 VALUES into the live 7-column table (missing max_age_days),

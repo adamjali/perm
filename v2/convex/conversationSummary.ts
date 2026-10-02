@@ -21,6 +21,7 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
+import { MS_PER_MINUTE } from "./lib/time";
 
 // =============================================================================
 // CONSTANTS
@@ -57,7 +58,7 @@ export const RECENT_MESSAGES_TO_KEEP = 10;
  * How long a summarization lock remains honored. After this, a stale lock
  * is ignored (we assume the prior attempt crashed).
  */
-export const SUMMARIZATION_LOCK_TTL_MS = 60_000;
+export const SUMMARIZATION_LOCK_TTL_MS = MS_PER_MINUTE;
 
 // =============================================================================
 // PUBLIC QUERIES (with auth)
@@ -398,42 +399,3 @@ export const finishSummarizing = mutation({
   },
 });
 
-/**
- * Get conversation with summary info
- *
- * Returns the conversation's summary metadata.
- * Verifies the user owns the conversation before returning data.
- */
-export const getConversationSummary = query({
-  args: {
-    conversationId: v.id("conversations"),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getCurrentUserIdOrNull(ctx);
-    if (userId === null) return null;
-
-    const conversation = await ctx.db.get(args.conversationId);
-    if (!conversation) {
-      return null;
-    }
-
-    // Verify ownership
-    if (conversation.userId !== userId) {
-      return null;
-    }
-
-    const messageCount = await ctx.db
-      .query("conversationMessages")
-      .withIndex("by_conversation_id", (q) =>
-        q.eq("conversationId", args.conversationId)
-      )
-      .collect()
-      .then((msgs) => msgs.length);
-
-    return {
-      id: conversation._id,
-      summary: conversation.summary,
-      messageCount,
-    };
-  },
-});

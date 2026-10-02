@@ -147,5 +147,3 @@ export function CalendarEvent({ event }: CalendarEventProps) {
     </TooltipProvider>
   );
 }
-
-export default CalendarEvent;

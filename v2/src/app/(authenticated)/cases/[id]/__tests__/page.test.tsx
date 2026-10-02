@@ -187,13 +187,6 @@ vi.mock("@/components/status/progress-status-badge", () => ({
   ),
 }));
 
-// Mock StageProgressIndicator and getStageIndex
-vi.mock("@/components/cases/detail/next-up-section.components", () => ({
-  StageProgressIndicator: ({ currentStage }: any) => (
-    <div data-testid="stage-progress">Stage {currentStage}</div>
-  ),
-}));
-
 vi.mock("@/components/cases/detail/next-up-section.utils", () => ({
   getStageIndex: (status: string) => {
     const stages: Record<string, number> = { pwd: 0, recruitment: 1, eta9089: 2, i140: 3 };

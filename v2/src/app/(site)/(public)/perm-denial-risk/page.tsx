@@ -1,9 +1,9 @@
 /**
  * PERM denial rates, by the factors DOL's own files record.
  *
- * The rival ships a letter-graded "risk score" from an additive model whose
- * factors it assumes independent, and has it switched off in production. We
- * publish the measured rates themselves and say what they can and cannot
+ * A letter-graded "risk score" from an additive model assumes its factors
+ * are independent, and they are not. We publish the measured rates
+ * themselves and say what they can and cannot
  * support: a rate for a group you belong to is not a probability for your
  * case, and this page says so where the reader is looking.
  *
@@ -36,6 +36,7 @@ import {
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
+import { SITE_URL } from "@/lib/constants/site";
 const TITLE = "PERM Denial Rates";
 // 147 characters. Anything past ~155 is truncated mid-sentence in the SERP,
 // and the entity-escaped source string is six characters per apostrophe, so
@@ -275,11 +276,11 @@ export default async function PermDenialRiskPage() {
   // every page looks finished on its own. It is the AEO lever for a data
   // page: it is what tells an answer engine the numbers have a named federal
   // source, a licence and a coverage window rather than being prose.
-  const datasetSchema = getDatasetSchema("https://permtracker.app", {
+  const datasetSchema = getDatasetSchema(SITE_URL, {
     name: "PERM denial rates by filing attribute",
     description:
       "Measured PERM denial rates by ETA-9089 answer, offered wage band, occupation, state and fiscal year, from DOL disclosure files. Group rates only, with no per-case risk score.",
-    url: "https://permtracker.app/perm-denial-risk",
+    url: `${SITE_URL}/perm-denial-risk`,
   });
 
   return (
@@ -288,10 +289,7 @@ export default async function PermDenialRiskPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Denial rates
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           What gets denied
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">

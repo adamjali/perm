@@ -1,29 +1,25 @@
 #!/usr/bin/env python3
-"""WARN notices, matched to the PERM sponsors in the record. California first.
+"""WARN notices from four states, matched to the PERM sponsors in the record.
 
-    python3 scripts/ingest_warn.py                    # fetch California's report, write
-    python3 scripts/ingest_warn.py --dry-run          # print, write nothing
-    python3 scripts/ingest_warn.py --from-file x.xlsx # parse a saved report
+python3 scripts/ingest_warn.py                                # every state, write
+python3 scripts/ingest_warn.py --dry-run                      # print, write nothing
+python3 scripts/ingest_warn.py --state tx --from-file x.xlsx  # parse a saved file
 
-WHAT THIS IS. The Worker Adjustment and Retraining Notification Act makes an
-employer file 60 days' notice of a mass layoff or closing with the state,
-and some states publish the notices. DOL's PERM files record no layoff, so a
-WARN notice is the only public trace of one, and 20 CFR 656.17(k) makes a
-layoff in the six months before filing something the employer has to
-account for. Each notice becomes one row in `warn_notices`, matched to a
-sponsor when the employer's normalised name (`entity_identity.entity_key`,
-the same rule the entity table is keyed on) equals a PERM employer's
-`merge_key`. An exact key match only: a prefix match would attach a
-foundation's layoff to a company that shares its first word.
+The Worker Adjustment and Retraining Notification Act makes an employer file
+60 days' notice of a mass layoff or closing with the state, and some states
+publish the notices. DOL's PERM files record no layoff, so a WARN notice is the
+only public trace of one, and 20 CFR 656.17(k) makes a layoff in the six months
+before filing something the employer has to account for. Each notice becomes
+one row in `warn_notices`, matched to a sponsor when the employer's normalised
+name (`entity_identity.entity_key`, the rule the entity table is keyed on)
+equals a PERM employer's `merge_key`. Exact matches only: a prefix match would
+attach a foundation's layoff to a company that shares its first word.
 
-PARTIAL BY DESIGN. California publishes a spreadsheet with a stable shape
-(edd.ca.gov, the "Detailed WARN Report" sheet), so it is read. Texas answers
-scripts with a challenge page, Washington keeps a database behind a search
-form, New York publishes an HTML list; none is read yet, and the page that
-shows these notices says so. Adding a state means a parser for its file and
-the same row shape; nothing else changes.
+California, New York, Texas and Washington are read, each by its own parser
+into the same row shape. Each state loads, writes and stamps its own freshness
+on its own, so one state's outage never costs the others.
 
-WHAT IT IS NOT. A layoff count for an employer, or a judgment about one. A
+What it is not: a layoff count for an employer, or a judgment about one. A
 notice is one filing as the state printed it, with the state's own numbers.
 """
 from __future__ import annotations
@@ -42,28 +38,25 @@ import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from entity_identity import entity_key  # noqa: E402
-from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
+from lib_turso import (  # noqa: E402
+    Turso, add_missing_columns, query_rows, record_run, stamp_freshness,
+)
 
 CA_URL = "https://edd.ca.gov/siteassets/files/jobs_and_training/warn/warn_report1.xlsx"
 CA_PAGE = "https://edd.ca.gov/en/jobs_and_training/Layoff_Services_WARN/"
-# Texas: one spreadsheet per calendar year, linked from the WARN page. The
-# site answers scripts with a bot challenge (HTTP 202 and a 2 KB page, measured
-# from a residential address 2026-09-09); a real browser gets the file. The
-# runner tries anyway, and `--state tx --from-file <xlsx>` is the fallback.
-TX_URL = "https://www.twc.texas.gov/sites/default/files/oei/docs/warn-act-listings-{year}-twc.xlsx"
+# Texas posts one spreadsheet per calendar year on its WARN page, behind a bot
+# challenge that only a browser gets past, so `--state tx --from-file <xlsx>`
+# loads one saved by hand.
 TX_PAGE = "https://www.twc.texas.gov/data-reports/warn-notice"
-# Texas publishes the same notices on the state open data portal, which serves
-# scripts freely and reaches back to 2019 (2,368 rows on 2026-09-09) where the
-# yearly spreadsheet holds one calendar year. It is the AUTOMATIC source. It
-# lags the spreadsheet by a couple of months (portal to 2026-06-23, sheet to
-# 2026-09-04), so `--state tx --from-file <xlsx>` remains the optional top-up
-# for the most recent weeks; the two agree on 68 of the 71 notices they share
-# and produce identical ids for them.
+# The same notices on the state's open data portal, which serves scripts and
+# reaches back to 2019: the automatic source. It trails the agency spreadsheet
+# by a couple of months, so a saved spreadsheet is the optional top-up for the
+# newest weeks; the two produce identical ids for the notices they share.
 TX_API = "https://data.texas.gov/resource/8w53-c4f6.json?$limit=50000&$order=notice_date"
 TX_DATA_PAGE = "https://data.texas.gov/d/8w53-c4f6"
-# New York: the current notices live in a Tableau Public dashboard, and Tableau
-# Public serves any view as CSV. 194 rows for 2026 on 2026-09-09; the legacy
-# HTML list holds 2023 to 2025 as one page per notice and is not read.
+# New York's current notices live in a Tableau Public dashboard, which serves
+# any view as CSV. Its legacy HTML list (2023 to 2025, a page per notice) is
+# not read.
 NY_CSV = "https://public.tableau.com/views/WorkerAdjustmentRetrainingNotificationWARN/WARN.csv?:showVizHome=no"
 NY_PAGE = "https://dol.ny.gov/warn-dashboard"
 # Washington: an ASP.NET grid of 15 rows a page, newest received first, paged
@@ -127,12 +120,10 @@ def _site(v) -> str | None:
 
     California and New York join the street to the city with a double space
     ("420 Park Ave S  New York, NY, 10016"); that gap becomes a comma and any
-    other run of whitespace one space. It exists because one company can file
-    several notices on one day for different sites, and without the site they
-    print identically: Morgan Stanley filed seven with New York on 2026-03-05,
-    two of them for one worker each (100 Park Ave and One Penn Plaza), and the
-    page read as a duplicate. The id does NOT use this field; it hashes the raw
-    `_extra`, and changing that would mint a new id for every held notice.
+    other run of whitespace one space. One company can file several notices on
+    one day for different sites, and without the site they print identically.
+    The id does not use this field; it hashes the raw `_extra`, and changing
+    that would mint a new id for every held notice.
     """
     if v is None:
         return None
@@ -145,7 +136,7 @@ def _site(v) -> str | None:
 
 def parse_california(xlsx_bytes: bytes) -> list[dict]:
     """The 'Detailed WARN Report' sheet: one row per notice, columns resolved by header name."""
-    import openpyxl  # the runner installs it; the laptop's miniconda has it
+    import openpyxl  # installed by the workflow step; not in the standard library
 
     wb = openpyxl.load_workbook(io.BytesIO(xlsx_bytes), read_only=True, data_only=True)
     sheet = next((n for n in wb.sheetnames if "detailed" in n.lower() and "warn" in n.lower()), None)
@@ -207,12 +198,11 @@ def assign_ids(rows: list[dict]) -> list[dict]:
     """
     seen: dict[str, int] = {}
     for row in rows:
-        # `employees` is DELIBERATELY NOT in the identity. A state revises a
-        # worker count (Texas carried FreshRealm at 176 on its open-data portal
-        # and 161 on its own spreadsheet, the same notice), and with the count
-        # in the hash the revision became a second row instead of an update.
-        # Exact duplicates are still separated by the sequence number below,
-        # and `write()` compares the count so a revision is picked up.
+        # `employees` is deliberately not in the identity: a state revises a
+        # worker count, and with the count in the hash a revision would become a
+        # second row instead of an update. Exact duplicates are still separated
+        # by the sequence number below, and `write()` compares the count, so a
+        # revision is picked up.
         base = "|".join([row["state"], row["notice_date"], row["company"], row["effective_date"] or "", row["county"] or "", row.pop("_extra", "") or ""])
         n = seen.get(base, 0)
         seen[base] = n + 1
@@ -223,10 +213,10 @@ def assign_ids(rows: list[dict]) -> list[dict]:
 def parse_texas(xlsx_bytes: bytes) -> list[dict]:
     """TWC's yearly listing: one sheet, one header row, columns by name.
 
-    Header as shipped 2026-09-09: NOTICE_DATE, JOB_SITE_NAME, COUNTY_NAME,
-    WDA_NAME, TOTAL_LAYOFF_NUMBER, LayOff_Date, WFDD_RECEIVED_DATE, CITY_NAME.
-    Texas does not say whether a notice is a layoff or a closure, so `kind`
-    is null rather than guessed.
+    Header: NOTICE_DATE, JOB_SITE_NAME, COUNTY_NAME, WDA_NAME,
+    TOTAL_LAYOFF_NUMBER, LayOff_Date, WFDD_RECEIVED_DATE, CITY_NAME. Texas
+    doesn't say whether a notice is a layoff or a closure, so `kind` is null
+    rather than guessed.
     """
     import openpyxl
 
@@ -336,12 +326,9 @@ def parse_new_york(csv_bytes: bytes) -> list[dict]:
             # columns and ignores it.
             "posted_date": _date(r[c_posted]) if c_posted is not None else None,
             "site": _site(r[c_addr]) if c_addr is not None else None,
-            # The ADDRESS separates one company's sites filed the same day. The
-            # dashboard's "Index" column used to be in here too, and it is a
-            # POSITION, not an id: Amazon's Jan 28 notice was Index 23 on Sep 9
-            # and 25 on Sep 23, because notices posted later sort in ahead of it.
-            # Every shift minted a new id for an unchanged notice, and by Sep 23
-            # the table held 258 New York rows for the 197 New York lists.
+            # The address separates one company's sites filed the same day. The
+            # dashboard's "Index" column is a position, not an id (later postings
+            # sort in ahead of a notice), so it must stay out of the identity.
             "_extra": r[c_addr].strip() if c_addr is not None else "",
         })
     return assign_ids(out)
@@ -426,10 +413,10 @@ def match_employers(db: Turso, rows: list[dict]) -> int:
     for i in range(0, len(keys), 100):
         chunk = keys[i : i + 100]
         marks = ",".join("?" * len(chunk))
-        res = db.execute(f"SELECT merge_key, slug, total FROM perm_entities WHERE kind = 'employer' AND merge_key IN ({marks}) ORDER BY total DESC", chunk)
-        for r in res["response"]["result"]["rows"]:
-            vals = [None if c["type"] == "null" else c["value"] for c in r]
-            slug_by_key.setdefault(str(vals[0]), str(vals[1]))  # busiest spelling wins
+        for key, slug, _total in query_rows(
+                db, f"SELECT merge_key, slug, total FROM perm_entities WHERE kind = 'employer' "
+                    f"AND merge_key IN ({marks}) ORDER BY total DESC", chunk):
+            slug_by_key.setdefault(str(key), str(slug))  # busiest spelling wins
     n = 0
     for r in rows:
         slug = slug_by_key.get(entity_key(r["company"]))
@@ -438,13 +425,11 @@ def match_employers(db: Turso, rows: list[dict]) -> int:
     return n
 
 
-# WHICH SOURCE OUTRANKS WHICH, so a fresher record is never overwritten by a
-# staler one. Texas is the only state with two feeds: the agency's own yearly
-# spreadsheet runs to the current week, the open data portal trails it by a
-# month or two, and they disagree on revised worker counts (FreshRealm: 161 on
-# the sheet, 176 on the portal). Without this the weekly portal run reverted
-# the sheet's correction every time, which is the two-writers flip-flop the
-# bulletin ingest already guards against with a rank of its own.
+# Which source outranks which, so a fresher record is never overwritten by a
+# staler one. Texas is the only state with two feeds: the agency spreadsheet
+# runs to the current week, the open data portal trails it, and they can
+# disagree on a revised worker count. Without a rank, every portal run would
+# revert the spreadsheet's correction.
 SOURCE_RANK = {TX_PAGE: 2, TX_DATA_PAGE: 1}
 
 
@@ -455,48 +440,33 @@ def rank_of(source_url: str) -> int:
 def _cmp(employees, slug, site=None) -> tuple:
     """Both sides of the change check, in one shape.
 
-    **libSQL returns integers as STRINGS**, so a stored `employees` of '42'
-    never equals the parsed int 42 and every row reads as changed: measured
-    2026-09-09, an identical re-run rewrote all 566 rows and logged "wrote
-    566" as though it had done useful work. That is not a slow diff, it is NO
-    diff, and it is the same defect `live_norm()` exists for in
-    build_entity_detail.py. Normalise both sides or do not compare at all.
+    libSQL returns integers as strings, so a stored `employees` of '42' never
+    equals the parsed int 42, and without normalising both sides every row would
+    read as changed and be rewritten (the same reason `live_norm()` exists in
+    build_entity_detail.py).
     """
     return (None if employees is None or employees == "" else int(employees), slug or None, site or None)
 
 
 # Columns added after the table first shipped. `CREATE TABLE IF NOT EXISTS`
 # can never add one to a live table, so each is ALTERed in when missing.
-EXTRA_COLUMNS = [("site", "TEXT")]
+EXTRA_COLUMNS = {"site": "TEXT"}
 
 # Named, never positional: a positional INSERT breaks the moment a column is
-# added (the OFLC writer did exactly that to policy_notices on 2026-09-16).
+# added.
 INSERT_COLS = ("id, state, notice_date, effective_date, company, kind, employees, county, "
                "industry, employer_slug, source_url, fetched_at, site")
 
 
-def ensure_columns(db: Turso) -> list[str]:
-    """Add any column the live table lacks. Returns the names added."""
-    res = db.execute("PRAGMA table_info(warn_notices)")
-    have = {(None if r[1]["type"] == "null" else r[1]["value"]) for r in res["response"]["result"]["rows"]}
-    added = []
-    for name, typ in EXTRA_COLUMNS:
-        if name not in have:
-            db.execute(f"ALTER TABLE warn_notices ADD COLUMN {name} {typ}")
-            added.append(name)
-    return added
-
-
 def write(db: Turso, rows: list[dict], state: str) -> int:
     db.script(DDL)
-    ensure_columns(db)
-    res = db.execute("SELECT id, employees, employer_slug, source_url, site FROM warn_notices WHERE state = ?", [state])
+    add_missing_columns(db, "warn_notices", EXTRA_COLUMNS)
     have, held_rank, held_site = {}, {}, {}
-    for r in res["response"]["result"]["rows"]:
-        vals = [None if c["type"] == "null" else c["value"] for c in r]
-        have[vals[0]] = _cmp(vals[1], vals[2], vals[4])
-        held_rank[vals[0]] = rank_of(str(vals[3] or ""))
-        held_site[vals[0]] = vals[4]
+    for nid, employees, slug, source_url, site in query_rows(
+            db, "SELECT id, employees, employer_slug, source_url, site FROM warn_notices WHERE state = ?", [state]):
+        have[nid] = _cmp(employees, slug, site)
+        held_rank[nid] = rank_of(str(source_url or ""))
+        held_site[nid] = site
     now = int(time.time() * 1000)
     differs = [r for r in rows if have.get(r["id"]) != _cmp(r["employees"], r.get("employer_slug"), r.get("site"))]
     changed = [r for r in differs if rank_of(r["source_url"]) >= held_rank.get(r["id"], 0)]
@@ -507,10 +477,8 @@ def write(db: Turso, rows: list[dict], state: str) -> int:
     # get a site from the weekly portal run.
     fills = [r for r in differs if r not in changed and r["id"] in held_site
              and held_site[r["id"]] is None and r.get("site")]
-    # CHUNKED, like ingest_flag_disclosure.write_cases. The cost is per
-    # STATEMENT, so a row at a time is what turned a 2,367-row Texas backfill
-    # into a ten-minute job; 200 rows a statement puts the same work in
-    # seconds and keeps a full reload inside the step's timeout.
+    # Chunked, like ingest_flag_disclosure.write_cases: the cost is per
+    # statement, so 200 rows a statement keeps a full reload to seconds.
     per = 200
     row_sql = "(" + ",".join("?" * 13) + ")"
     for i in range(0, len(changed), per):
@@ -532,8 +500,8 @@ def write(db: Turso, rows: list[dict], state: str) -> int:
 
 # A snapshot load that covers less than this share of the (company, notice
 # date) pairs already held in its date range is treated as a truncated
-# download, and nothing is deleted. Measured on New York 2026-09-23: 162 of the
-# 163 pairs held, the one missing a notice New York withdrew.
+# download, and nothing is deleted. A state withdrawing a notice or two stays
+# well above it.
 PRUNE_MIN_COVERAGE = 0.9
 
 
@@ -562,8 +530,8 @@ def prune_plan(held: list[tuple[str, str, str]], rows: list[dict]) -> tuple[list
 
 
 def prune(db: Turso, rows: list[dict], state: str) -> int:
-    res = db.execute("SELECT id, company, notice_date FROM warn_notices WHERE state = ?", [state])
-    held = [tuple(c["value"] for c in r) for r in res["response"]["result"]["rows"]]
+    held = [tuple(r) for r in query_rows(
+        db, "SELECT id, company, notice_date FROM warn_notices WHERE state = ?", [state])]
     stale, coverage = prune_plan(held, rows)
     if not stale:
         if coverage < PRUNE_MIN_COVERAGE:
@@ -590,27 +558,16 @@ def load_texas(from_file: str | None) -> list[dict]:
     return parse_texas_api(fetch(TX_API))
 
 
-# `browser_only` states refuse automated clients as a matter of policy, so a
-# refusal from a scheduled run is EXPECTED and must not mark the run partial:
-# a job that reports failure every single week teaches everyone to skip its
-# alert, which is exactly how the I-485 outage of Sep 6 to 9 2026 sat unread
-# for four days. Measured 2026-09-09 from GitHub runner 52.155.33.249 and from
-# a residential address alike: Texas answers HTTP 202 with zero bytes for both
-# its WARN page and its spreadsheet. Staleness is still reported, by the state's
-# own freshness row below, which only moves when that state actually writes.
+
 STATES: dict[str, dict] = {
     "ca": {"name": "California", "page": CA_PAGE, "days": 21, "load": lambda f: parse_california(open(f, "rb").read() if f else fetch(CA_URL))},
-    # Texas reads the open data portal automatically. Its budget is long
-    # because the portal itself lags the state's own spreadsheet by a couple of
-    # months; a notice newer than 120 days is the honest floor, and the
-    # spreadsheet top-up brings it current whenever anyone runs it.
+    # Texas's budget is long because its automatic source, the open data
+    # portal, trails the agency's spreadsheet by a couple of months.
     "tx": {"name": "Texas", "page": TX_DATA_PAGE, "days": 120, "load": load_texas},
-    # New York: a snapshot (the file is the whole current-year list, so a row it
-    # no longer carries is pruned), stamped from its own "Date Posted". It posts
-    # a notice a MEDIAN OF 62 DAYS after the notice date (p90 115, measured
-    # 2026-09-23 over 197 notices), so a notice-date stamp could never read
-    # green against a 21-day budget and reported "not republished" the day
-    # after New York posted.
+    # New York: a snapshot (the file is the whole current-year list, so a row
+    # it no longer carries is pruned), with freshness stamped from its own
+    # "Date Posted": it posts notices about two months after their notice
+    # date, so a notice-date stamp would never read fresh.
     "ny": {"name": "New York", "page": NY_PAGE, "days": 21, "snapshot": True, "stamp": "posted_date",
            "load": lambda f: parse_new_york(open(f, "rb").read() if f else fetch(NY_CSV))},
     "wa": {"name": "Washington", "page": WA_PAGE, "days": 21, "load": lambda f: parse_washington_page(open(f, encoding="utf8").read()) if f else fetch_washington()},
@@ -628,19 +585,17 @@ def main() -> int:
     started = time.time()
     wanted = list(STATES) if a.state == "all" else [a.state]
     parsed: dict[str, list[dict]] = {}
-    failed: list[str] = []     # unexpected: these make the run partial
-    refused: list[str] = []    # expected: a browser-only source turning a script away
+    failed: list[str] = []
     for st in wanted:
-        asked_by_hand = a.from_file is not None
         try:
             rows = STATES[st]["load"](a.from_file)
         except Exception as e:  # one state's outage must not cost the others
             log(f"{STATES[st]['name']}: {type(e).__name__}: {str(e)[:200]}")
-            (failed if asked_by_hand or not STATES[st].get("browser_only") else refused).append(st)
+            failed.append(st)
             continue
         if not rows:
             log(f"{STATES[st]['name']}: no rows parsed; refusing to write it")
-            (failed if asked_by_hand or not STATES[st].get("browser_only") else refused).append(st)
+            failed.append(st)
             continue
         parsed[st] = rows
         log(f"{STATES[st]['name']}: {len(rows)} notices, {min(r['notice_date'] for r in rows)} to {max(r['notice_date'] for r in rows)}")
@@ -660,21 +615,12 @@ def main() -> int:
         written += write(db, rows, st.upper())
         if STATES[st].get("snapshot"):
             pruned += prune(db, rows, st.upper())
-        # ONE FRESHNESS ROW PER STATE, stamped only when that state actually
-        # wrote. The health check reads every row in that table dynamically, so
-        # this is what makes a single state going quiet visible without the
-        # whole job crying wolf: Texas needs a browser fetch, and its row ages
-        # out at 45 days if nobody does one.
-        # AS OF WHAT THE TABLE HOLDS, not what this batch parsed. Texas has two
-        # feeds and the portal trails the agency spreadsheet by two months, so
-        # stamping the batch's own newest date let a routine portal run push
-        # the row BACKWARDS from 2026-09-04 to 2026-06-23 while the table still
-        # held every September notice. A freshness row that understates the
-        # data is as useless as one that overstates it.
-        held = db.execute(
-            "SELECT MAX(notice_date), COUNT(*) FROM warn_notices WHERE state = ?", [st.upper()]
-        )["response"]["result"]["rows"][0]
-        newest, count = held[0].get("value"), held[1].get("value")
+        # One freshness row per state, stamped only when that state wrote, so
+        # the health check sees a single state go quiet. Dated by what the table
+        # holds, not by this batch: a portal run (which trails the spreadsheet)
+        # must not move a state's date backwards.
+        newest, count = query_rows(
+            db, "SELECT MAX(notice_date), COUNT(*) FROM warn_notices WHERE state = ?", [st.upper()])[0]
         as_of = newest or max(r["notice_date"] for r in rows)
         note = f"{STATES[st]['name']}: {count} notices held ({len(rows)} in this load)"
         stamp_key = STATES[st].get("stamp")
@@ -690,8 +636,6 @@ def main() -> int:
             max_age_days=STATES[st]["days"],
         )
     note = "; ".join(f"{STATES[st]['name']} {len(rows)}" for st, rows in parsed.items())
-    if refused:
-        note += f"; refused as expected (browser-only): {', '.join(STATES[st]['name'] for st in refused)}"
     if failed:
         note += f"; FAILED: {', '.join(STATES[st]['name'] for st in failed)}"
     # The dataset-wide row speaks for every state, so only an all-states run may

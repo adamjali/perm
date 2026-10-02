@@ -218,6 +218,14 @@ PW_ROWS = [
      "51-4121", "Welders, Cutters, Solderers, and Brazers", "n/a", "Fortnight", "Toronto", "junk"],
 ]
 
+# LCA-only columns: a wage request's row carries every one as None.
+NO_LCA_DETAIL = {
+    "workers": None, "new_employment": None, "continued_employment": None,
+    "change_previous_employment": None, "new_concurrent_employment": None,
+    "change_employer": None, "amended_petition": None,
+    "wage_level": None, "h1b_dependent": None, "willful_violator": None,
+}
+
 PW_EXPECTED = [
     {"case_number": "P-100-25300-123456", "case_status": "DETERMINATION ISSUED",
      "received_date": "2025-10-27", "decision_date": "2026-03-02",
@@ -226,7 +234,7 @@ PW_EXPECTED = [
      "wage": 145600.0, "wage_unit": "YEAR", "worksite_state": "CA", "visa_class": "PERM",
      "attorney_name": None, "attorney_slug": None,
      "source_file": PW_FILE, "fiscal_year": 2026,
-     "worksite_city": "San Jose", "naics": "541511"},
+     "worksite_city": "San Jose", "naics": "541511", **NO_LCA_DETAIL},
     {"case_number": "P-100-25301-000002", "case_status": "DETERMINATION ISSUED",
      "received_date": "2025-11-03", "decision_date": "2026-04-15",
      "employer_name": "Globex Corporation", "employer_slug": "globex-corporation",
@@ -234,7 +242,7 @@ PW_EXPECTED = [
      "wage": 38.5, "wage_unit": "HOUR", "worksite_state": "CA", "visa_class": "H-1B",
      "attorney_name": None, "attorney_slug": None,
      "source_file": PW_FILE, "fiscal_year": 2026,
-     "worksite_city": "Los Angeles", "naics": "541211"},
+     "worksite_city": "Los Angeles", "naics": "541211", **NO_LCA_DETAIL},
     {"case_number": "P-100-25302-000003", "case_status": "WITHDRAWN",
      "received_date": "2025-12-01", "decision_date": "2026-01-20",
      "employer_name": "Initech LLC", "employer_slug": "initech-llc",
@@ -242,7 +250,7 @@ PW_EXPECTED = [
      "wage": None, "wage_unit": None, "worksite_state": "NY", "visa_class": "PERM",
      "attorney_name": None, "attorney_slug": None,
      "source_file": PW_FILE, "fiscal_year": 2026,
-     "worksite_city": None, "naics": None},
+     "worksite_city": None, "naics": None, **NO_LCA_DETAIL},
     {"case_number": "P-100-25303-000006", "case_status": "REDETERMINATION MODIFIED",
      "received_date": "2025-12-15", "decision_date": "2026-05-05",
      "employer_name": "Wayne Enterprises", "employer_slug": "wayne-enterprises",
@@ -251,7 +259,7 @@ PW_EXPECTED = [
      "wage": None, "wage_unit": "FORTNIGHT", "worksite_state": None, "visa_class": "H-2B",
      "attorney_name": None, "attorney_slug": None,
      "source_file": PW_FILE, "fiscal_year": 2026,
-     "worksite_city": "Toronto", "naics": None},
+     "worksite_city": "Toronto", "naics": None, **NO_LCA_DETAIL},
 ]
 
 LCA_FILE = "LCA_Disclosure_Data_FY2026_Q3.xlsx"
@@ -260,6 +268,12 @@ LCA_HEADER = [
     "JOB_TITLE", "SOC_CODE", "SOC_TITLE", "EMPLOYER_NAME", "WORKSITE_STATE",
     "WAGE_RATE_OF_PAY_FROM", "WAGE_RATE_OF_PAY_TO", "WAGE_UNIT_OF_PAY",
     "PREVAILING_WAGE", "PW_UNIT_OF_PAY", "WORKSITE_CITY", "NAICS_CODE",
+    # Section B Items 7 and 7a-7f, Section F.a Item 13a, Section H.a Items 1
+    # and 2, verbatim from LCA_Record_Layout_FY2026_Q3.pdf (note the hyphen
+    # in H-1B_DEPENDENT).
+    "TOTAL_WORKER_POSITIONS", "NEW_EMPLOYMENT", "CONTINUED_EMPLOYMENT",
+    "CHANGE_PREVIOUS_EMPLOYMENT", "NEW_CONCURRENT_EMPLOYMENT", "CHANGE_EMPLOYER",
+    "AMENDED_PETITION", "PW_WAGE_LEVEL", "H-1B_DEPENDENT", "WILLFUL_VIOLATOR",
 ]
 LCA_ROWS = [
     LCA_HEADER,
@@ -267,10 +281,13 @@ LCA_ROWS = [
     # purpose: reading the wrong column must be visible.
     ["I-200-26010-111111", "Certified", D(2026, 1, 10), D(2026, 1, 17), "H-1B",
      "Data Scientist", "15-2051", "Data Scientists", "Hooli, Inc.", "TX",
-     150000, 180000, "Year", 128000, "Year", "Austin", 541511],
+     150000, 180000, "Year", 128000, "Year", "Austin", 541511,
+     2, 1, 0, 0, 0, 1, 0, "II", "N", "N"],
     ["I-203-26011-222222", "Certified - Withdrawn", "2026-01-11", "2026-02-20", "E-3 Australian",
      "Nurse", "29-1141", "Registered Nurses", "Pied Piper LLC", "Washington",
-     "48.00", "", "Hour", "45.10", "Hour", "Seattle", "622110"],
+     "48.00", "", "Hour", "45.10", "Hour", "Seattle", "622110",
+     # Counts as text, a blank count, the N/A level, a Y flag and a blank one.
+     "1", "", "1", "0", "0", "0", "0", "N/A", "Y", ""],
 ]
 LCA_EXPECTED = [
     {"case_number": "I-200-26010-111111", "case_status": "CERTIFIED",
@@ -280,7 +297,11 @@ LCA_EXPECTED = [
      "wage": 150000.0, "wage_unit": "YEAR", "worksite_state": "TX", "visa_class": "H-1B",
      "attorney_name": None, "attorney_slug": None,
      "source_file": LCA_FILE, "fiscal_year": 2026,
-     "worksite_city": "Austin", "naics": "541511"},
+     "worksite_city": "Austin", "naics": "541511",
+     "workers": 2, "new_employment": 1, "continued_employment": 0,
+     "change_previous_employment": 0, "new_concurrent_employment": 0,
+     "change_employer": 1, "amended_petition": 0,
+     "wage_level": "II", "h1b_dependent": 0, "willful_violator": 0},
     {"case_number": "I-203-26011-222222", "case_status": "CERTIFIED - WITHDRAWN",
      "received_date": "2026-01-11", "decision_date": "2026-02-20",
      "employer_name": "Pied Piper LLC", "employer_slug": "pied-piper-llc",
@@ -288,7 +309,11 @@ LCA_EXPECTED = [
      "wage": 48.0, "wage_unit": "HOUR", "worksite_state": "WA", "visa_class": "E-3 Australian",
      "attorney_name": None, "attorney_slug": None,
      "source_file": LCA_FILE, "fiscal_year": 2026,
-     "worksite_city": "Seattle", "naics": "622110"},
+     "worksite_city": "Seattle", "naics": "622110",
+     "workers": 1, "new_employment": None, "continued_employment": 1,
+     "change_previous_employment": 0, "new_concurrent_employment": 0,
+     "change_employer": 0, "amended_petition": 0,
+     "wage_level": None, "h1b_dependent": 1, "willful_violator": None},
 ]
 
 # The performance page as it was on 2026-09-02, hrefs verbatim: the misspelled
@@ -427,10 +452,10 @@ def check_discovery() -> None:
     newest = pick_latest(lca)
     check("LCA: the newest file is FY2026 Q3", newest, "LCA_Disclosure_Data_FY2026_Q3.xlsx")
 
-    # HISTORY NEEDS EVERY QUARTER, NOT THE NEWEST OF EACH YEAR. LCA files are
-    # per-QUARTER - measured 2026-09-13, FY2025_Q4 holds 118,580 rows covering
-    # 2025-07-01 to 2025-09-30 alone - so `--fy` reaches exactly one quarter of
-    # each fiscal year and every earlier one is unreachable without naming it.
+    # History needs every quarter, not the newest of each year. LCA files are
+    # per-quarter (FY2025_Q4 covers 2025-07-01 to 2025-09-30 alone), so `--fy`
+    # reaches exactly one quarter of each fiscal year and every earlier one is
+    # unreachable without naming it.
     # That is why `--name` and `--list` exist.
     many = {
         "LCA_Disclosure_Data_FY2024_Q2.xlsx": "/a",
@@ -580,9 +605,31 @@ def check_backfill_place() -> None:
           fd.BACKFILL_GROUPS["attorney"], ("attorney_name", "attorney_slug"))
 
 
+def check_lca_detail_parsers() -> None:
+    check("count: a number", fd.parse_count("3"), 3)
+    check("count: a float cell", fd.parse_count("2.0"), 2)
+    check("count: zero is zero, not None", fd.parse_count("0"), 0)
+    check("count: blank is None", fd.parse_count(""), None)
+    check("count: a fraction is not a count", fd.parse_count("1.5"), None)
+    check("count: negative is not a count", fd.parse_count("-1"), None)
+    check("level: roman as printed", fd.parse_wage_level(" iii "), "III")
+    check("level: N/A is None", fd.parse_wage_level("N/A"), None)
+    check("level: an arabic 4 is IV", fd.parse_wage_level("4"), "IV")
+    check("level: nothing else is guessed", fd.parse_wage_level("V"), None)
+    check("flag: Y", fd.parse_flag("y"), 1)
+    check("flag: N", fd.parse_flag("N"), 0)
+    check("flag: N/A is None", fd.parse_flag("N/A"), None)
+    check("backfill group lca-detail writes the ten LCA columns only",
+          fd.BACKFILL_GROUPS["lca-detail"],
+          ("workers", "new_employment", "continued_employment", "change_previous_employment",
+           "new_concurrent_employment", "change_employer", "amended_petition",
+           "wage_level", "h1b_dependent", "willful_violator"))
+
+
 def main() -> int:
     print("flag disclosure parser contract")
     check_units()
+    check_lca_detail_parsers()
     check_backfill_place()
     check_discovery()
     check_freshness_is_keyed_on_the_file()

@@ -1,14 +1,11 @@
 /**
  * Hard geometric seam between full-bleed bands.
  *
- * DIVIDER DOCTRINE, and the measurement that changed it. The rule has always
- * been "only on a seam with real contrast, because a shape on a light-to-light
- * join reads as a rendering fault". Measured on 2026-08-25, the home page was
- * failing its own rule in the other direction: `--muted` against
+ * DIVIDER DOCTRINE. A shape on a light-to-light join reads as a rendering
+ * fault, and a fill alone cannot carry a seam here: `--muted` against
  * `--background` is #F5F5F5 on #FAFAFA, a contrast ratio of **1.04:1** in
- * light and 1.14:1 in dark. Two of the three dividers on the page were not
- * subtle, they were invisible, and adding more silhouettes at the same fill
- * would only have added more invisible SVG.
+ * light and 1.14:1 in dark, so a silhouette drawn only by its fill is
+ * invisible.
  *
  * THE FIX IS AN EDGE, NOT A FILL. Every other layer in this system is defined
  * by a hard border rather than by its background, so a divider is too: the
@@ -26,14 +23,18 @@
  * Each silhouette encodes something about the bands it joins. A shape that
  * encodes nothing is decoration and does not belong here.
  *
+ * ONE LINE PER SEAM. The divider IS the edge between two bands, so the band
+ * above must not draw a bottom border of its own: a border three pixels above
+ * a stepped stroke reads as two clashing rules. Pass `above` so the strip over the edge
+ * continues the band above instead of showing the page ground through it.
+ *
  * NO FILL ON A SEAM INTO A TRANSPARENT BAND. `fill` is the colour of the band
  * arriving BELOW the seam, and it exists so the silhouette reads as the top
  * edge of that band. When the arriving section has no background of its own
  * (the dotted page ground shows through it), there is no band to extend, and
  * a fill of `--background` paints an opaque strip over the dot grid: a white
- * bar with a jagged top, which is exactly what it looked like on the homepage
- * and on /for-attorneys under the `comb` seam (reported 2026-09-07). Omit
- * `fill` there and only the stroked edge is drawn.
+ * bar with a jagged top. Omit `fill` there and only the stroked edge is
+ * drawn.
  */
 
 /**
@@ -73,6 +74,7 @@ export function fillPath(edge: string): string {
 export function SectionDivider({
   kind = "step",
   fill,
+  above,
   className,
 }: {
   kind?: SectionDividerKind;
@@ -81,11 +83,18 @@ export function SectionDivider({
    * section below is transparent; the edge is then drawn on its own.
    */
   fill?: string;
+  /**
+   * CSS colour of the OPAQUE band above the seam. The strip above the edge
+   * is otherwise transparent, and the dotted page ground showing through it
+   * reads as a gap between two bands. Leave it out when the section above is
+   * transparent too.
+   */
+  above?: string;
   className?: string;
 }) {
   const edge = EDGES[kind];
   return (
-    <div className={className} aria-hidden="true" style={{ lineHeight: 0 }}>
+    <div className={className} aria-hidden="true" style={{ lineHeight: 0, background: above }}>
       <svg
         viewBox="0 0 1440 64"
         preserveAspectRatio="none"

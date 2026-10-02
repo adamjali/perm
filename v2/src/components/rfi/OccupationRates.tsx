@@ -1,6 +1,8 @@
 import { Fragment } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import type { RfiOccupationCut } from "@/lib/turso/rfi";
+import { FinePrint } from "@/components/data/FinePrint";
 
 /**
  * Open-RFI rate by job title, inside the filing window the RFIs live in.
@@ -53,10 +55,20 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
           are sitting at an RFI today. Every rate below is against that.
         </p>
 
+        <ChartTips label="Share of each occupation's cases at an RFI">
         <ul className="grid gap-2.5">
           {cut.rows.map((r) => (
             <Fragment key={r.title}>{" "}
             <li
+              data-tip={[
+                titleCase(r.title),
+                `${r.rate.toFixed(1)}% at an RFI, ${(r.rate / cut.baseline).toFixed(1)}x the field's ${cut.baseline.toFixed(2)}%`,
+                `${r.rfi.toLocaleString()} of ${r.filed.toLocaleString()} filed`,
+                `${r.rfiEmployers.toLocaleString()} employers`,
+                r.ci ? `95% interval ${r.ci.lo.toFixed(1)} to ${r.ci.hi.toFixed(1)}%` : null,
+              ]
+                .filter(Boolean)
+                .join("\n")}
               className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1 sm:grid-cols-[13rem_minmax(0,1fr)_auto]"
             >
               <span className="truncate font-heading text-sm font-bold sm:order-1">
@@ -97,33 +109,38 @@ export function OccupationRates({ cut }: { cut: RfiOccupationCut }) {
             </Fragment>
           ))}
         </ul>
+        </ChartTips>
       </div>
 
-      <figcaption className="mt-3 space-y-2 text-sm leading-relaxed text-muted-foreground">
-        <p>
-          {cut.withheld > 0 ? (
-            <>
-              <b className="font-bold text-foreground">
-                {cut.withheld} more{" "}
-                {cut.withheld === 1 ? "title is" : "titles are"} left off.
-              </b>{" "}
-              Each had enough RFIs to rank and fewer than five distinct
-              employers using the title, which makes the rate a fact about one
-              filer rather than about the job. Ranked without that floor, the
-              two highest rates in PERM were dishwashers at 100% and facilities
-              mechanics at 90%, and both are a single employer.{" "}
-            </>
-          ) : null}
-          Job titles are free text the employer types, so this groups{" "}
-          <span className="font-mono">COOK</span> with{" "}
-          <span className="font-mono">Cook</span> and leaves{" "}
-          <span className="font-mono">Line Cook</span> separate.
-        </p>{" "}
-        <p>
-          These are RFIs open today. A title whose RFIs get answered and closed
-          quickly shows a lower rate than one whose RFIs sit, and nothing in
-          the data separates those two.
-        </p>
+      <figcaption className="mt-3">
+        {/* The method folds: titles left off, how free-text titles
+            group, and why open RFIs favour slow closers. */}
+        <FinePrint summary="How these rates are counted">
+          <p>
+            {cut.withheld > 0 ? (
+              <>
+                <b className="font-bold text-foreground">
+                  {cut.withheld} more{" "}
+                  {cut.withheld === 1 ? "title is" : "titles are"} left off.
+                </b>{" "}
+                Each had enough RFIs to rank and fewer than five distinct
+                employers using the title, which makes the rate a fact about one
+                filer rather than about the job. Ranked without that floor, the
+                two highest rates in PERM were dishwashers at 100% and facilities
+                mechanics at 90%, and both are a single employer.{" "}
+              </>
+            ) : null}
+            Job titles are free text the employer types, so this groups{" "}
+            <span className="font-mono">COOK</span> with{" "}
+            <span className="font-mono">Cook</span> and leaves{" "}
+            <span className="font-mono">Line Cook</span> separate.
+          </p>{" "}
+          <p>
+            These are RFIs open today. A title whose RFIs get answered and closed
+            quickly shows a lower rate than one whose RFIs sit, and nothing in
+            the data separates those two.
+          </p>
+  </FinePrint>
       </figcaption>
     </figure>
   );

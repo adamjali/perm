@@ -11,6 +11,7 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { CheckIcon, LinkIcon } from "@phosphor-icons/react";
+import { SITE_URL } from "@/lib/constants/site";
 interface ShareButtonsProps {
   title: string;
   url: string;
@@ -24,7 +25,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
   // client another, which React reports as a hydration mismatch it will not
   // patch, so the client's value was silently discarded anyway. A share link
   // should carry the canonical host regardless of where the page was opened.
-  const fullUrl = `https://permtracker.app${url}`;
+  const fullUrl = `${SITE_URL}${url}`;
 
   const handleCopy = async () => {
     try {
@@ -44,7 +45,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <span className="font-heading text-sm font-bold uppercase tracking-wider text-muted-foreground">
         Share
       </span>{" "}
 

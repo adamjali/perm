@@ -6,7 +6,7 @@ import {
   exportFullCasesCSV,
   EXPORT_VERSION,
 } from "../caseExport";
-import type { CaseCardData } from "../../../../convex/lib/caseListTypes";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
 import type { FullCaseData } from "../caseExport";
 
 // ============================================================================

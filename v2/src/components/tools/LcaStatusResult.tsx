@@ -40,7 +40,7 @@ function Disclosed({ d }: { d: LcaDisclosedRow }) {
   const wage = formatWage(d.wage, d.wageUnit);
   return (
     <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-      <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
         DOL&apos;s record · from the quarterly disclosure file
       </p>{" "}
       {wage ? <p className="mt-2 font-heading text-3xl font-black sm:text-4xl">{wage}</p> : null}{" "}
@@ -94,12 +94,12 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
     return (
       <div className="space-y-6">
         <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
             Labor condition application · ETA-9035
           </p>{" "}
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <h2 className="font-heading text-2xl font-black sm:text-3xl" translate="no">{disclosed.caseNumber}</h2>{" "}
-            <span className="border-2 border-border bg-primary px-2 py-0.5 font-mono text-xs font-bold uppercase text-primary-foreground">
+            <span className="border-2 border-border bg-primary px-2 py-0.5 font-mono text-sm font-bold uppercase text-primary-foreground">
               {prettyStatus(disclosed.status)}
             </span>
           </div>{" "}
@@ -139,7 +139,7 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
   if (!row) {
     return (
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Labor condition application
         </p>{" "}
         <h2 className="mt-2 font-heading text-2xl font-black">No record under {caseNumber}</h2>{" "}
@@ -167,12 +167,12 @@ export async function LcaLookup({ caseNumber }: { caseNumber: string }) {
   return (
     <div className="space-y-6">
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Labor condition application · ETA-9035
         </p>{" "}
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h2 className="font-heading text-2xl font-black sm:text-3xl" translate="no">{row.caseNumber}</h2>{" "}
-          <span className={"border-2 border-border px-2 py-0.5 font-mono text-xs font-bold uppercase " + chipClass(row)}>
+          <span className={"border-2 border-border px-2 py-0.5 font-mono text-sm font-bold uppercase " + chipClass(row)}>
             {prettyStatus(row.status)}
           </span>
         </div>{" "}

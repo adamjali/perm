@@ -6,6 +6,8 @@ import { MIN_DECIDED_FOR_RATE } from "@/components/tools/EntityContext";
 import { approvalRate, type EntityRow } from "@/lib/entityPayload";
 import { socGroup } from "@/lib/socGroups";
 import { stateName } from "@/lib/usStateNames";
+import { formatDollars, formatInt } from "@/lib/format";
+import { SITE_URL } from "@/lib/constants/site";
 
 import type { CsvSpec, Facet, StatColumn } from "./FilterableStatTable";
 
@@ -13,13 +15,8 @@ import type { CsvSpec, Facet, StatColumn } from "./FilterableStatTable";
  * Column, facet and CSV definitions for the three entity indexes.
  *
  * They sit together because they are three views of one row shape and the
- * differences between them are small and worth seeing side by side. Each
- * index used to carry its own near-identical copy.
+ * differences between them are small and worth seeing side by side.
  */
-
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 function fmtPct(r: EntityRow): string {
   const a = approvalRate(r);
@@ -27,11 +24,11 @@ function fmtPct(r: EntityRow): string {
 }
 
 function fmtWage(n: number | null): string {
-  return n == null ? "—" : `$${Math.round(n).toLocaleString("en-US")}`;
+  return n == null ? "—" : formatDollars(n);
 }
 
 function fmtDays(n: number | null): string {
-  return n == null ? "—" : fmtInt(Math.round(n));
+  return n == null ? "—" : formatInt(Math.round(n));
 }
 
 const rankCol: StatColumn<EntityRow> = {
@@ -74,7 +71,7 @@ const stateCol: StatColumn<EntityRow> = {
   sortValue: (e) => e.state,
   render: (e) =>
     e.state ? (
-      <span className="font-mono text-xs font-bold">{e.state}</span>
+      <span className="font-mono text-sm font-bold">{e.state}</span>
     ) : (
       <span className="text-muted-foreground">—</span>
     ),
@@ -85,7 +82,7 @@ const totalCol: StatColumn<EntityRow> = {
   label: "Filings",
   numeric: true,
   sortValue: (e) => e.total,
-  render: (e) => fmtInt(e.total),
+  render: (e) => formatInt(e.total),
 };
 
 const certifiedCol: StatColumn<EntityRow> = {
@@ -94,7 +91,7 @@ const certifiedCol: StatColumn<EntityRow> = {
   numeric: true,
   secondary: true,
   sortValue: (e) => e.certified,
-  render: (e) => fmtInt(e.certified),
+  render: (e) => formatInt(e.certified),
 };
 
 const deniedCol: StatColumn<EntityRow> = {
@@ -105,7 +102,7 @@ const deniedCol: StatColumn<EntityRow> = {
   sortValue: (e) => e.denied,
   render: (e) =>
     e.denied > 0 ? (
-      <span className="font-bold text-data-bad-ink">{fmtInt(e.denied)}</span>
+      <span className="font-bold text-data-bad-ink">{formatInt(e.denied)}</span>
     ) : (
       "0"
     ),
@@ -135,7 +132,7 @@ const recentCol: StatColumn<EntityRow> = {
   numeric: true,
   secondary: true,
   sortValue: (e) => e.recent12m,
-  render: (e) => (e.recent12m === null ? "n/a" : fmtInt(e.recent12m)),
+  render: (e) => (e.recent12m === null ? "n/a" : formatInt(e.recent12m)),
 };
 
 const wageCol: StatColumn<EntityRow> = {
@@ -242,7 +239,7 @@ export const OCCUPATION_COLUMNS: StatColumn<EntityRow>[] = [
         >
           {e.name}
         </PendingLink>{" "}
-        <span className="font-mono text-xs font-normal text-muted-foreground">
+        <span className="font-mono text-sm font-normal text-muted-foreground">
           {e.code ?? ""}
         </span>
       </span>
@@ -287,7 +284,7 @@ function csvFor(
         a === null ? null : Number((a * 100).toFixed(2)),
         e.medianDays === null ? null : Math.round(e.medianDays),
         ...(withWage ? [e.medianAnnualWage === null ? null : Math.round(e.medianAnnualWage)] : []),
-        `https://permtracker.app${base}/${e.slug}`,
+        `${SITE_URL}${base}/${e.slug}`,
       ];
     },
   };

@@ -104,12 +104,11 @@ const ingestResult = v.object({
  * the change within a day of it happening rather than on a fixed date DOL does
  * not honour.
  *
- * It was weekly until 2026-08-29, and weekly was too slow for the queue-month
- * alerts that read this table: the Turso copy had advanced to analyst-review
- * month 2025-11 while this one still said 2025-09, so a subscriber whose month
- * HAD been reached was judged not-yet-reached and never mailed. `store` is
- * insert-only on a content-hash change, so the extra runs cost a ~160KB GET
- * and nothing else on the ~29 days DOL does not move.
+ * Weekly would be too slow for the queue-month alerts that read this table:
+ * the site's copy of the frontier can advance while this one lags, and a
+ * subscriber whose month HAS been reached is then judged not-yet-reached and
+ * never mailed. `store` is insert-only on a content-hash change, so the extra
+ * runs cost a ~160KB GET and nothing else on the ~29 days DOL does not move.
  */
 export const refresh = internalAction({
   args: {},

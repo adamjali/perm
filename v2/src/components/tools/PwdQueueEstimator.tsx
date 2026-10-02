@@ -17,7 +17,7 @@ import { ScalesIcon as Scale, WarningIcon } from "@phosphor-icons/react";
 import { estimatePwdQueue, type PwdBacklogMonth } from "@/lib/perm";
 import { formatMonth } from "@/lib/dolFormat";
 import { PwdBacklogChart } from "@/components/tools/PwdBacklogChart";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 export interface PwdQueueEstimatorProps {
@@ -116,7 +116,7 @@ export function PwdQueueEstimator({
       </div>
 
       <div className="border-b-2 border-border bg-tint-primary p-6 sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+        <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
           Requests ahead of yours
         </p>{" "}
         <p className="mt-2 font-heading text-4xl font-black leading-none sm:text-5xl">
@@ -165,7 +165,7 @@ export function PwdQueueEstimator({
 
       {estimate.estimatedMonth ? (
         <div className="border-b-2 border-border p-6 sm:p-8">
-          <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
             Estimated determination
           </p>{" "}
           <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">

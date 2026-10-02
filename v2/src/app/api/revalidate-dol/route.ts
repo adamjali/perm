@@ -19,13 +19,10 @@
  * defend against, and no way to aim this at anything else. A caller either
  * knows the secret and expires these ten paths, or does nothing.
  *
- * IT CLEARS PATHS ONLY, AGAIN (Sep 27 2026). From Sep 1 it also cleared the
- * "data-freshness" tag, because getFreshness sat in `unstable_cache` and a
- * regenerated page would otherwise read the old stamp back. That cache's
- * one-hour window turned out to cap every page reading it (the build printed
- * 1h for pages declaring days), so getFreshness is a per-request read now and
- * the tag has nothing to clear. `revalidate-disclosure` still clears the
- * "entities" tag, which the entity cohort caches carry.
+ * IT CLEARS PATHS ONLY. getFreshness is a per-request read, not an
+ * `unstable_cache` entry (a cached one's window would cap every page reading
+ * it), so there is no "data-freshness" tag to clear. `revalidate-disclosure`
+ * clears the "entities" tag, which the entity cohort caches carry.
  *
  * WHAT THIS DOES NOT DO. `revalidatePath` MARKS a path stale; it does not
  * regenerate it. The next visitor pays for one render and everyone after them
@@ -47,8 +44,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // No tag to clear first: getFreshness is a per-request read since Sep 27
-  // 2026, so a regenerated page reads DOL's new stamp directly.
+  // No tag to clear first: getFreshness is a per-request read, so a
+  // regenerated page reads DOL's new stamp directly.
   for (const path of DOL_PAGES) {
     revalidatePath(path);
   }

@@ -42,12 +42,10 @@ export function ScrollToTop() {
     }
   });
 
-  // ONE progress indicator, drawn ON the border (2026-09-26). The button used
-  // to carry two: a lime fill rising behind the arrow AND a line traced inside
-  // the frame. The line was drawn in a 46-unit box inside the padding of an
-  // `overflow-hidden` button with a 3px border, so it ran just inside the
-  // black frame and was clipped at its corners - on a phone it read as a
-  // second, broken border. Now the SVG covers the border box exactly
+  // ONE progress indicator, drawn ON the border. A line traced inside the
+  // padding of an `overflow-hidden` button with a 3px border runs just inside
+  // the black frame and is clipped at its corners, which on a phone reads as
+  // a second, broken border. So the SVG covers the border box exactly
   // (`-inset-[3px]` from the padding box) and its stroke sits on the centre
   // line of the 3px border, so the frame itself fills with lime as you
   // scroll. Motion's `pathLength` handles the dash arithmetic.

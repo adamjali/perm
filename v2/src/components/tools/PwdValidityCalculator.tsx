@@ -4,8 +4,9 @@ import { useId, useMemo, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { calculatePWDExpiration } from "@/lib/perm";
+import { daysBetween } from "@/lib/time";
 
 /**
  * When a prevailing wage determination expires, from its determination date.
@@ -26,7 +27,6 @@ const localToday = () => {
 };
 const long = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
-const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
 
 function whichRule(determination: string): string {
   const month = Number(determination.slice(5, 7));
@@ -57,7 +57,7 @@ export function PwdValidityCalculator() {
         <div>
           <Label htmlFor={detId}>Determination date</Label>{" "}
           <DateInput id={detId} value={det} onChange={(e) => setDet(e.target.value)} className="mt-1.5" />{" "}
-          <p className="mt-1 text-xs text-muted-foreground">The date on the ETA-9141 determination, not the date it was requested.</p>
+          <p className="mt-1 text-sm text-muted-foreground">The date on the ETA-9141 determination, not the date it was requested.</p>
         </div>
       </div>{" "}
 
@@ -80,7 +80,7 @@ export function PwdValidityCalculator() {
             </div>
           </dl>{" "}
           <p className="mt-3 text-sm leading-relaxed text-foreground/70">{result.rule}</p>{" "}
-          <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
+          <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
             <li>20 CFR 656.40(c): a determination is valid for no less than 90 days and no more than one year, and the employer must file the application or begin recruitment inside that period.</li>
           </ul>
         </div>

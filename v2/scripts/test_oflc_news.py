@@ -5,7 +5,7 @@
 
 Three things it proves: the text fixture yields every announcement with the
 right date and title; the HTML-to-text step produces the same line shape the
-parser keys on (a synthetic page, since www.dol.gov refuses the laptop); and
+parser keys on (a synthetic page, since www.dol.gov refuses many addresses); and
 the tags and document numbers are what the feed expects. A parser change that
 drops announcements fails the count, which is the failure that matters.
 """

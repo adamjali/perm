@@ -2,8 +2,8 @@ import type {
   RecentActivityItem,
   CaseStatus,
   ProgressStatus,
-} from "@/convex/lib/dashboardTypes";
-import type { Id } from "@/convex/_generated/dataModel";
+} from "@convex/lib/dashboardTypes";
+import type { Id } from "@convex/_generated/dataModel";
 
 export function now(): number { return Date.now(); }
 export function minutesAgo(minutes: number): number { return now() - minutes * 60 * 1000; }

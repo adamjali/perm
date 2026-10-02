@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { WageOption } from "@/lib/turso/publicData";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { MIN_FOR_MEDIAN, placeOffer, type OfferPayload as Payload, type PlacedOffer as Placed } from "@/lib/wageStats";
+import { formatDollars } from "@/lib/format";
 
 /**
  * Compare my offer: where a salary sits among what employers actually filed.
@@ -25,7 +26,7 @@ import { MIN_FOR_MEDIAN, placeOffer, type OfferPayload as Payload, type PlacedOf
  */
 
 const usd = (v: number | null) =>
-  v === null ? "n/a" : `$${Math.round(v).toLocaleString("en-US")}`;
+  v === null ? "n/a" : formatDollars(v);
 
 function ordinal(n: number): string {
   const s = ["th", "st", "nd", "rd"] as const;

@@ -11,6 +11,7 @@ import type { Infer } from "convex/values";
 
 import type { QueryCtx } from "../_generated/server";
 import type { adminSummaryValidator } from "./newsletterValidators";
+import { MS_PER_DAY } from "./time";
 
 export type NewsletterAdminSummary = Infer<typeof adminSummaryValidator>;
 export type NewsletterHealth = NewsletterAdminSummary["health"];
@@ -25,10 +26,12 @@ export function newsletterDailyCap(): number {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : 30;
 }
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 /** The Tuesday build is weekly, so an issue older than this means the cron stopped. */
 export const STALE_AFTER_DAYS = 8;
+/** Subscribers counted for the list size. */
+const SUBSCRIBERS_READ = 2000;
+/** Issues counted for the preview total: the digest is weekly, so this is roughly a decade. */
+const ISSUES_READ = 500;
 
 /**
  * One line the admin panel can read at a glance.
@@ -53,8 +56,8 @@ export function newsletterHealth(args: {
   if (args.latestBuiltAt === null) {
     return { level: "warn", message: "flag on and no issue has ever been built" };
   }
-  const ageDays = Math.floor((args.now - args.latestBuiltAt) / DAY_MS);
-  if (args.now - args.latestBuiltAt > STALE_AFTER_DAYS * DAY_MS) {
+  const ageDays = Math.floor((args.now - args.latestBuiltAt) / MS_PER_DAY);
+  if (args.now - args.latestBuiltAt > STALE_AFTER_DAYS * MS_PER_DAY) {
     return { level: "warn", message: `flag on, newest issue built ${ageDays} days ago; the Tuesday build has stopped` };
   }
   return { level: "ok", message: `flag on, newest issue built ${ageDays} ${ageDays === 1 ? "day" : "days"} ago` };
@@ -62,11 +65,10 @@ export function newsletterHealth(args: {
 
 /** List size, the latest issue and the health line, for the admin panel. */
 export async function summarizeNewsletter(ctx: QueryCtx): Promise<NewsletterAdminSummary> {
-  const subs = await ctx.db.query("newsletterSubscribers").take(2000);
+  const subs = await ctx.db.query("newsletterSubscribers").take(SUBSCRIBERS_READ);
   const confirmed = subs.filter((s) => s.confirmedAt !== undefined && s.unsubscribedAt === undefined).length;
   const latest = await ctx.db.query("newsletterIssues").withIndex("by_weekOf").order("desc").first();
-  // Bounded: the digest is weekly, so 500 issues is roughly a decade.
-  const issues = await ctx.db.query("newsletterIssues").take(500);
+  const issues = await ctx.db.query("newsletterIssues").take(ISSUES_READ);
   const previewCount = issues.filter((i) => i.status === "preview").length;
   return {
     enabled: newsletterSendingEnabled(),

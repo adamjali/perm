@@ -5,13 +5,15 @@
  * Used by googleAuth.ts and googleCalendarActions.ts
  */
 
+import { MS_PER_MINUTE } from "./time";
+
 /**
  * Time buffer (in milliseconds) before token expiry to trigger refresh
  * 5 minutes = 300,000 ms
  *
  * This ensures we don't make API calls with a token that's about to expire
  */
-export const TOKEN_EXPIRY_BUFFER_MS = 5 * 60 * 1000;
+export const TOKEN_EXPIRY_BUFFER_MS = 5 * MS_PER_MINUTE;
 
 /**
  * Check if a token is expired or about to expire

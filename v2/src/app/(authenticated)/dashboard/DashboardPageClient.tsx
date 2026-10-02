@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { captureError } from "@/lib/sentry";
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import SummaryTilesGrid from "@/components/dashboard/SummaryTilesGrid";
 import DeadlineHeroWidget from "@/components/dashboard/DeadlineHeroWidget";
 import RecentActivityWidget from "@/components/dashboard/RecentActivityWidget";

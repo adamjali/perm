@@ -15,10 +15,6 @@
  * 1. Header with controls (time range, case selector, zoom)
  * 2. Main timeline grid (scrollable)
  * 3. Legend footer
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2025-12-26
- * Updated: 2025-12-27 - Added click behaviors, zoom, auto-resize
  */
 
 import type { Metadata } from "next";

@@ -81,16 +81,16 @@ function startPostHog(key: string, country: string | null): void {
       // Pin PostHog SDK defaults to this date to prevent behavior changes from SDK updates
       defaults: "2026-01-30",
       capture_exceptions: true,
-      // Field Core Web Vitals (LCP/CLS/FCP/INP) — replaces @vercel/speed-insights,
-      // with years of retention instead of Hobby's 7-day window and no extra script.
+      // Field Core Web Vitals (LCP/CLS/FCP/INP), kept with the rest of the
+      // analytics and loaded with no extra script.
       capture_performance: { web_vitals: true },
-      // COOKIE-FREE UNLESS SIGNED IN (Sep 27 2026). Consent starts pending and
+      // COOKIE-FREE UNLESS SIGNED IN. Consent starts pending and
       // pending counts as a rejection, so everyone is counted with PostHog's
       // daily-salted server hash and nothing is written to the browser. A
       // signed-in account switches to persistence through
       // analytics.consentForAccount() (LoginTracker); sign-out's reset()
-      // clears it again. Requires the project's cookieless_server_hash_mode,
-      // set to 2 (stateful) on Sep 27 2026, or PostHog drops these events.
+      // clears it again. Requires the project's cookieless_server_hash_mode
+      // set to 2 (stateful), or PostHog drops these events.
       cookieless_mode: "on_reject",
       opt_out_capturing_by_default: true,
       // SESSION REPLAY IS OFF BY DEFAULT AND TURNED ON ONLY IN THE AUTHENTICATED
@@ -111,10 +111,10 @@ function startPostHog(key: string, country: string | null): void {
       //      maskAllInputs + maskTextSelector below defend the app recording too.
       disable_session_recording: true,
       session_recording: { maskAllInputs: true, maskTextSelector: "*" },
-      // SURVEYS OFF. The Surveys product is not enabled on this project (the
-      // PostHog project record says so, 2026-09-23), yet posthog-js fetched
-      // /ingest/static/<version>/surveys.js (34 KB, 83% unused) on every page
-      // load. `disable_surveys` is the SDK's own switch for the whole module
+      // SURVEYS OFF. The Surveys product is not enabled on this project, yet
+      // without this posthog-js fetches /ingest/static/<version>/surveys.js
+      // (34 KB, 83% unused) on every page load. `disable_surveys` is the
+      // SDK's own switch for the whole module
       // (@posthog/types: "disable all surveys functionality", default false).
       // Turn it back on here if a survey is ever built.
       disable_surveys: true,
@@ -198,9 +198,8 @@ function startPostHog(key: string, country: string | null): void {
           if (/AbortError.*ServiceWorker|ServiceWorker.*aborted|Operation has been aborted/i.test(msg)) {
             return null;
           }
-          // The noise the Sentry client SDK used to filter, ported here when it
-          // was removed (client error capture consolidated onto PostHog). ONE
-          // filter list now, not two hand-synced copies.
+          // PostHog's exception capture keeps ONE noise filter list, here,
+          // not two hand-synced copies.
           // Layout thrash the browser recovers from on its own.
           if (/ResizeObserver loop/i.test(msg)) return null;
           // Network flake, including iOS auth-token refresh on suspend/resume.
@@ -214,8 +213,8 @@ function startPostHog(key: string, country: string | null): void {
           if (msg.includes("UnrecognizedActionError")) return null;
           // React reconciler errors from extensions mutating the DOM.
           if (/Minified React error #(418|423|425)\b/.test(msg)) return null;
-          // Measured Sep 27 to Oct 1 2026, none of it ours: Zalo's in-app
-          // browser calling its own bridge (192 events), Android WebView
+          // Measured, none of it ours: Zalo's in-app browser calling its own
+          // bridge (the largest share), Android WebView
           // bridges, Safari failing to fetch sw.js, opaque cross-origin
           // "Script error.", and a browser refusing service-worker
           // registration ("Rejected", thrown inside register()).

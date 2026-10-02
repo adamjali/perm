@@ -48,8 +48,7 @@ interface SearchResponse {
   /**
    * Why no provider answered, set only when `source` is "none": "quota" when
    * every provider was at its daily limit, "error" when one was tried and
-   * failed. Without it an empty list reads as "the web has nothing on this"
-   * (the silent case the Sep 29 2026 audit found).
+   * failed. Without it an empty list reads as "the web has nothing on this".
    */
   unavailable?: "quota" | "error";
 }

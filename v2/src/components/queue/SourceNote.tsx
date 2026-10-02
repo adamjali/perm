@@ -1,22 +1,11 @@
 /**
  * Where the pending counts come from, and how fresh they are.
  *
- * THIS COMPONENT USED TO SAY THE OPPOSITE, AND IT WAS TRUE WHEN WRITTEN.
- * Until 2026-08-27 the per-case statuses were mirrored from a third-party
- * tracker, because DOL was believed to gate its own case-status lookup. It
- * does not: the FLAG search posts a JSON array of case numbers to an
- * unauthenticated endpoint and answers with the statuses, fifty at a time.
- * The earlier conclusion came from the endpoint's PATH being named
- * `recaptcha`, which is not evidence of anything.
- *
- * So the counts are FIRST-PARTY now. `scripts/ingest_case_status_direct.py`
- * sweeps every undecided case every 12 hours and all of them weekly, and the
- * mirror is kept only as a dispatchable fallback.
- *
- * The file was renamed from `MirrorNote` deliberately. A component called
- * "Mirror" that describes a direct read is the same class of mistake as
- * trusting a path called "recaptcha": a name is not a fact, and the next
- * person to read it should not have to check.
+ * The counts are FIRST-PARTY. DOL's FLAG search posts a JSON array of case
+ * numbers to an unauthenticated endpoint and answers with the statuses,
+ * fifty at a time; the endpoint's PATH is named `recaptcha`, which is not
+ * evidence of anything. `scripts/ingest_case_status_direct.py` sweeps every
+ * case daily and the undecided ones twice a day.
  *
  * WHAT IS STILL TRUE AND STILL WORTH SAYING: this is a snapshot, not a live
  * reading. Between sweeps a case can be decided and still read as pending

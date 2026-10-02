@@ -11,6 +11,7 @@
  */
 
 import { casesAheadOfDay, type MonthQueue } from "@/lib/queueAhead";
+import { MS_PER_DAY } from "@/lib/time";
 
 export interface BacklogRow {
   month: string;
@@ -35,7 +36,7 @@ export function caseEstimateInputs(input: {
   const sweepAgeDays = sweepFinishedOn
     ? Math.floor(
         (Date.parse(`${today}T00:00:00Z`) - Date.parse(`${sweepFinishedOn}T00:00:00Z`)) /
-          86_400_000,
+          MS_PER_DAY,
       )
     : null;
   // Prorated by the filing day, and counting only the cases in line

@@ -14,13 +14,13 @@
  * A sweep observes a case's status and records the difference against what we
  * last held. When the sweep is new, or when it re-reads a corpus it has never
  * checked, that difference can be months old: the event is dated when we SAW
- * it, not when DOL did it. Measured on 2026-08-28, the first full sweep wrote
- * 92,113 `CERTIFIED -> CERTIFIED - EXPIRED` rows under a single timestamp, and
- * a second on 2026-08-29 wrote 45,107 more. Not one of those expiries happened
- * that day. They are 180-day I-140 windows that lapsed across two years and
- * were all noticed at once.
+ * it, not when DOL did it. The first full sweep wrote 92,113
+ * `CERTIFIED -> CERTIFIED - EXPIRED` rows under a single timestamp, and the
+ * next wrote 45,107 more. Not one of those expiries happened that day: they
+ * are 180-day I-140 windows that lapsed across two years and were all
+ * noticed at once.
  *
- * Rendering that as "94,581 cases changed on 28 August" would be a fabricated
+ * Rendering that as "94,581 cases changed that day" would be a fabricated
  * surge on the busiest-looking day in the record - the same defect the RFI
  * funnel guards against by filtering on source, one class down.
  *
@@ -41,22 +41,15 @@
  * feed that quietly drops rows is indistinguishable from one with no data, and
  * both counts are carried out of here for that purpose.
  *
- * WHERE THE READS GO, AND WHY THE SHAPE CHANGED (2026-09-03)
- * ---------------------------------------------------------
- * Turso bills rows READ, and this module used to be a cost bug. Every query
- * matched the day with `DATE(changed_at / 1000, 'unixepoch') = ?`, which is an
- * expression over the indexed column and therefore unindexable, and every one
- * also carried `changed_at NOT IN (SELECT ... GROUP BY changed_at HAVING
- * COUNT(*) > ?)`, an unbounded second pass. Measured with EXPLAIN QUERY PLAN
- * against production, one feed request ran four statements over a
- * 147,328-row table:
- *
- *     SCAN perm_case_events                    x3   (day list, feed, transitions)
- *     SCAN perm_case_events USING COVERING ... x3   (the NOT IN subquery)
- *     SEARCH ... case_events_status_time            (the expiry count)
- *
- * roughly 977,000 rows read to render at most 1,090. Two changes fix it and
- * neither one changes a published number:
+ * WHERE THE READS GO
+ * ------------------
+ * Every read here rides an index. Matching the day with
+ * `DATE(changed_at / 1000, 'unixepoch') = ?` is an expression over the
+ * indexed column and therefore unindexable, and a `changed_at NOT IN (SELECT
+ * ... GROUP BY changed_at HAVING COUNT(*) > ?)` filter is an unbounded second
+ * pass. Measured with EXPLAIN QUERY PLAN, those two shapes made one feed
+ * request scan the whole event table several times, close to a million rows
+ * read to render about a thousand. So, without changing a published number:
  *
  *   - THE DAY IS A RANGE, NOT AN EXPRESSION. `changed_at >= lo AND < hi` with
  *     the bounds computed in JS from the ISO date. `DATE(x/1000,'unixepoch')`
@@ -68,12 +61,14 @@
  *     it from the prerendered HTML, so the API path never recomputes it.
  *
  * The bulk-write rule is applied in TypeScript, from a per-timestamp roll-up,
- * rather than in SQL in three places. There are 15 distinct timestamps in
- * 147,328 rows (the sweep writes one per run), so the roll-up returns 15 rows
- * and one pass answers "which timestamps are backfills", "how many
- * adjudications per day" and "how many expiries per day" together.
+ * rather than in SQL in three places. The sweep writes one timestamp per run,
+ * so the roll-up returns one row per run and one pass answers "which
+ * timestamps are backfills", "how many adjudications per day" and "how many
+ * expiries per day" together.
  */
 import "server-only";
+
+import { MS_PER_DAY } from "@/lib/time";
 
 import { rows } from "./client";
 // The program list and its labels are a PLAIN module: this one is
@@ -93,7 +88,7 @@ const EXPIRY_TO = "CERTIFIED - EXPIRED";
  * Rows under one timestamp above which the write is a catch-up sweep.
  *
  * DOL's heaviest measured day in the disclosure corpus is under 2,000
- * decisions; the 2026-08-28 backfill wrote 94,523 under one stamp. Anything
+ * decisions; the first full sweep's catch-up wrote 94,523 under one stamp. Anything
  * over this is not a day of work.
  */
 const BULK_WRITE_ROWS = 5000;
@@ -124,8 +119,6 @@ export const DAY_LIST_LIMIT = 60;
  * stated on the page rather than silently applied.
  */
 export const DAY_ROW_CAP = 5000;
-
-const MS_PER_DAY = 86_400_000;
 
 /**
  * Each program keeps its own pair of tables, deliberately.
@@ -262,15 +255,15 @@ async function rollUp(
 /**
  * Apply the two filters to a program's roll-up.
  *
- * IN TYPESCRIPT, NOT IN SQL, AND THAT IS THE POINT. The bulk rule used to live
- * in a `NOT IN` subquery repeated in three statements, which is three places
- * for one editorial judgement to drift and an unbounded extra pass every time
- * it ran. Here it is one comparison against a number a test can read.
+ * IN TYPESCRIPT, NOT IN SQL, AND THAT IS THE POINT. In SQL the bulk rule
+ * would be a `NOT IN` subquery repeated in three statements: three places for
+ * one editorial judgement to drift and an unbounded extra pass every time it
+ * ran. Here it is one comparison against a number a test can read.
  *
  * THE TEST IS ON THE TIMESTAMP'S RAW SIZE, NOT ITS POST-FILTER SIZE. The
- * 2026-08-28 backfill holds 94,523 rows of which 92,113 are expiries, leaving
- * 2,410. Testing the remainder would put that stamp under the threshold and
- * quietly restore 2,410 rows the current page correctly excludes.
+ * first full sweep's stamp holds 94,523 rows of which 92,113 are expiries,
+ * leaving 2,410. Testing the remainder would put that stamp under the
+ * threshold and quietly restore 2,410 rows the page correctly excludes.
  */
 function foldDays(
   program: ChangeProgram,
@@ -429,10 +422,9 @@ export async function getChangeDay(
 
   for (const [program, roll] of rolls) {
     for (const s of roll) {
-      // Every expiry that day is counted, backfill stamps included: the 92,113
-      // the page discloses for 2026-08-28 all sit under a bulk stamp, so
-      // counting them only on surviving stamps would report zero and lose the
-      // whole disclosure.
+      // Every expiry that day is counted, backfill stamps included: a backfill
+      // day's expiries all sit under a bulk stamp, so counting them only on
+      // surviving stamps would report zero and lose the whole disclosure.
       expiriesExcluded += s.expiries;
       if (s.n > BULK_WRITE_ROWS) {
         bulk[program].push(s.ts);

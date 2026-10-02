@@ -88,6 +88,31 @@ describe("DataProvenance", () => {
     expect(screen.getByText(/has not refreshed in a day\./)).toBeInTheDocument();
   });
 
+  it("keeps what a dataset includes in the page, folded under the source lines", async () => {
+    await renderProvenance({
+      "perm-cases": row({ dataset: "perm-cases", cadence: "Quarterly", source: "flag.dol.gov" }),
+    });
+    const fold = screen.getByText("What this data includes").closest("details");
+    expect(fold).not.toBeNull();
+    expect(fold).not.toHaveAttribute("open");
+    // In the DOM while shut, so search engines and screen readers still get it.
+    expect(fold).toHaveTextContent(/Decided PERM cases only/);
+  });
+
+  it("names the fold for several sources when there are several", async () => {
+    await renderProvenance({
+      "perm-cases": row({ dataset: "perm-cases" }),
+      "perm-case-status": row({ dataset: "perm-case-status" }),
+    });
+    expect(screen.getByText("What each source includes")).toBeInTheDocument();
+  });
+
+  it("draws no fold when no dataset has a coverage sentence", async () => {
+    await renderProvenance({ "not-a-dataset": row({ dataset: "not-a-dataset" }) });
+    expect(screen.queryByRole("group")).not.toBeInTheDocument();
+    expect(screen.queryByText(/includes$/)).not.toBeInTheDocument();
+  });
+
   it("warns only about the stale dataset when others are fine", async () => {
     await renderProvenance({
       "perm-month-stats": row({ stale: true, ageDays: 41 }),
@@ -98,6 +123,7 @@ describe("DataProvenance", () => {
       }),
     });
     expect(screen.getAllByText(/has not refreshed/)).toHaveLength(1);
-    expect(screen.getByText("Case data:")).toBeInTheDocument();
+    // Named once in its source line and once in the coverage fold.
+    expect(screen.getAllByText("Case data:")).toHaveLength(2);
   });
 });

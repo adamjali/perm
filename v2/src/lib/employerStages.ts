@@ -4,10 +4,10 @@
  * employer's own filing after a denial). The pure half: parsing the document
  * the sweep writes, the two rankings the page prints, and the dated sentences.
  *
- * WHO ACTED IS PART OF EVERY SENTENCE. Until Sep 25 2026 the page said "DOL
- * has pulled aside" over all of these, and 2,848 of the 5,958 cases were
- * appeals the employers filed themselves. A status is DOL's word for where a
- * case is; the page never adds a reason DOL hasn't given.
+ * WHO ACTED IS PART OF EVERY SENTENCE. "DOL has pulled aside" over all of
+ * these would be false: nearly half are appeals the employers filed
+ * themselves. A status is DOL's word for where a case is; the page never
+ * adds a reason DOL hasn't given.
  *
  * Why two rankings. Counts answer "who has the most cases held", which is
  * dominated by the biggest filers; share answers "whose queue is mostly
@@ -16,11 +16,14 @@
  * The Turso half is `src/lib/turso/employerStages.ts`.
  */
 
+import { formatInt } from "../../convex/lib/format";
+import { MS_PER_DAY } from "../../convex/lib/time";
+
 export const QUEUE_STATUS = "ANALYST REVIEW";
 export const HOLD_STATUS = "APPLICATION ON HOLD";
 /** An employer needs this many pending cases before its share is ranked. */
 export const SHARE_FLOOR = 25;
-export const EMPLOYER_STAGES_MAX_AGE_MS = 8 * 86_400_000;
+export const EMPLOYER_STAGES_MAX_AGE_MS = 8 * MS_PER_DAY;
 
 export interface EmployerStageRow {
   name: string;
@@ -33,7 +36,7 @@ export interface EmployerStageRow {
   /**
    * When the current hold began, read from this site's daily record. Present
    * only on employers with a case on hold, and only in docs written since
-   * Sep 25 2026. `holdSince` is the entry day most held cases share,
+   * the field existed. `holdSince` is the entry day most held cases share,
    * `holdSinceCases` how many share it; `holdUndated` were never seen
    * entering, of which `holdBeforeLog` were already held when the record
    * began (the rest were already held when first recorded).
@@ -77,7 +80,7 @@ export interface EmployerStagesDoc {
   /** First day of this site's record of status changes, or null on an older doc. */
   logFrom: string | null;
   holdMoves: HoldMove[];
-  /** Empty on a doc written before Sep 26 2026. */
+  /** Empty on a doc written before the field existed. */
   decisionMoves: DecisionMove[];
 }
 
@@ -188,8 +191,6 @@ export function longDate(iso: string): string {
   return `${MONTHS[Number(iso.slice(5, 7)) - 1] ?? ""} ${Number(iso.slice(8, 10))}, ${iso.slice(0, 4)}`;
 }
 
-const int = (n: number) => n.toLocaleString("en-US");
-
 /**
  * When an employer's current hold began, as a phrase, or null when it has no
  * case on hold or the doc carries no dates. Every clause is a count the record
@@ -204,17 +205,17 @@ export function holdSincePhrase(row: EmployerStageRow, logFrom: string | null): 
   const otherDays = held - dated - (row.holdUndated ?? 0);
   const parts: string[] = [];
   if (dated > 0 && row.holdSince) {
-    parts.push(dated === held ? `on hold since ${longDate(row.holdSince)}` : `${int(dated)} on hold since ${longDate(row.holdSince)}`);
+    parts.push(dated === held ? `on hold since ${longDate(row.holdSince)}` : `${formatInt(dated)} on hold since ${longDate(row.holdSince)}`);
   }
   if (before > 0 && logFrom) {
     parts.push(
       before === held
         ? `on hold since before ${longDate(logFrom)}, when this site's record begins`
-        : `${int(before)} since before ${longDate(logFrom)}`,
+        : `${formatInt(before)} since before ${longDate(logFrom)}`,
     );
   }
-  if (firstSeen > 0) parts.push(`${int(firstSeen)} already on hold when first recorded`);
-  if (otherDays > 0) parts.push(`${int(otherDays)} put on hold on other days`);
+  if (firstSeen > 0) parts.push(`${formatInt(firstSeen)} already on hold when first recorded`);
+  if (otherDays > 0) parts.push(`${formatInt(otherDays)} put on hold on other days`);
   return parts.length ? parts.join("; ") : null;
 }
 
@@ -229,9 +230,9 @@ export function breakdownParts(row: EmployerStageRow): string[] {
   const at = (s: string) => row.byStatus[s] ?? 0;
   const appeals = APPEAL_STATUSES.reduce((a, s) => a + at(s), 0);
   return [
-    at(HOLD_STATUS) > 0 ? `${int(at(HOLD_STATUS))} on hold` : "",
-    at("RFI ISSUED") > 0 ? `${int(at("RFI ISSUED"))} at RFI` : "",
-    appeals > 0 ? `${int(appeals)} under appeal` : "",
+    at(HOLD_STATUS) > 0 ? `${formatInt(at(HOLD_STATUS))} on hold` : "",
+    at("RFI ISSUED") > 0 ? `${formatInt(at("RFI ISSUED"))} at RFI` : "",
+    appeals > 0 ? `${formatInt(appeals)} under appeal` : "",
   ].filter(Boolean);
 }
 
@@ -245,7 +246,7 @@ const STATUS_WORDS: Record<string, string> = {
 
 /** "215 cases put on hold" / "201 taken off hold, back to analyst review". */
 export function moveSentence(m: HoldMove): string {
-  const cases = `${int(m.n)} case${m.n === 1 ? "" : "s"}`;
+  const cases = `${formatInt(m.n)} case${m.n === 1 ? "" : "s"}`;
   if (m.dir === "on") return `${cases} put on hold`;
   const where = STATUS_WORDS[m.to] ?? m.to.toLowerCase();
   return `${cases} taken off hold, ${where}`;
@@ -256,14 +257,14 @@ export function moveSentence(m: HoldMove): string {
  * employer". Names who acted: DOL decides, the employer withdraws.
  */
 export function decisionSentence(m: DecisionMove): string {
-  const cases = `${int(m.n)} of its cases`;
+  const cases = `${formatInt(m.n)} of its cases`;
   if (m.to === "WITHDRAWN") return `${cases} ${m.n === 1 ? "was" : "were"} withdrawn by the employer`;
   return `DOL ${m.to === "CERTIFIED" ? "certified" : "denied"} ${cases}`;
 }
 
 /** "DOL put 215 of its cases on hold" / "DOL took 201 of its cases off hold, back to analyst review". */
 export function holdSentence(m: HoldMove): string {
-  const cases = `${int(m.n)} of its cases`;
+  const cases = `${formatInt(m.n)} of its cases`;
   if (m.dir === "on") return `DOL put ${cases} on hold`;
   const them = m.n === 1 ? "it" : "them";
   switch (m.to) {

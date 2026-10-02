@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createTestContext, createAuthenticatedContext } from './convex';
-import { api } from '../convex/_generated/api';
-import type { Id } from '../convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 
 // ============================================================================
 // TEST DATA FACTORY
@@ -327,60 +327,6 @@ describe('jobDescriptionTemplates', () => {
       });
 
       expect(results).toEqual([]);
-    });
-  });
-
-  describe('findByExactName', () => {
-    it('returns template with exact name match (case-insensitive)', async () => {
-      const t = createTestContext();
-      const auth = await createAuthenticatedContext(t);
-
-      await auth.run(async (ctx) => {
-        await ctx.db.insert('jobDescriptionTemplates', {
-          userId: auth.userId,
-          name: 'Software Engineer',
-          description: 'Description',
-          usageCount: 0,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
-      });
-
-      // Exact match
-      const result1 = await auth.query(api.jobDescriptionTemplates.findByExactName, {
-        name: 'Software Engineer',
-      });
-      expect(result1).toBeDefined();
-      expect(result1?.name).toBe('Software Engineer');
-
-      // Case-insensitive match
-      const result2 = await auth.query(api.jobDescriptionTemplates.findByExactName, {
-        name: 'software engineer',
-      });
-      expect(result2).toBeDefined();
-      expect(result2?.name).toBe('Software Engineer');
-    });
-
-    it('returns null when no exact match found', async () => {
-      const t = createTestContext();
-      const auth = await createAuthenticatedContext(t);
-
-      await auth.run(async (ctx) => {
-        await ctx.db.insert('jobDescriptionTemplates', {
-          userId: auth.userId,
-          name: 'Software Engineer',
-          description: 'Description',
-          usageCount: 0,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        });
-      });
-
-      const result = await auth.query(api.jobDescriptionTemplates.findByExactName, {
-        name: 'Senior Software Engineer',
-      });
-
-      expect(result).toBeNull();
     });
   });
 

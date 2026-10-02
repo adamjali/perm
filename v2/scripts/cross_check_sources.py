@@ -1,23 +1,11 @@
 #!/usr/bin/env python3
 """Cross-check our figures against a third-party tracker's public API.
 
-Adam asked for a live sync from that tracker and the attorney requested it. What
-measurement found instead is worth stating plainly, because it changes what is
-worth building:
-
-**Their entire live scrape produces `pwd_months: [4, 6]`.** Their
-/api/stats/timeline-data carries a `sources` block with a live flag per
-dataset, and only `pwd` is true - visa_bulletin, i140 and i485 are all
-live:false. The `flag_checked` timestamp that updates every few minutes is
-them polling flag.dol.gov/processingtimes, the same public page we ingest
-first-party, and OUR parse of it is strictly richer: three named PERM queues
-with their frontier months, four PWD programs with OEWS and non-OEWS receipt
-dates, and the backlog - against their two-number summary.
-
-So there is no live data of theirs worth importing. What IS worth having is
-this: a second independent read of the same public sources, so a divergence
-tells us one of us has a parsing bug. That is the honest use of a competitor's
-public API, and it costs them four requests a day.
+Nothing of theirs is imported: their only live data is a summary of the same
+public DOL page this site ingests first-party, which our own parse already
+carries in full. What is worth having is a second, independent read of the same
+public sources, so a divergence says one side has a parsing bug. It costs them
+a few requests a day.
 
 Exit 1 only on a divergence that indicates a real defect (a cutoff we both
 publish for the same month disagreeing). Anything explained by different
@@ -33,7 +21,7 @@ import sys
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, query_rows  # noqa: E402
 
 # The endpoint is configuration, not source: it names a third party, so it
 # lives in the CROSS_CHECK_API Actions secret rather than in a public repo.
@@ -117,11 +105,10 @@ def main() -> int:
     vb = tl.get("visa_bulletin") or {}
     their_month_name = vb.get("month")  # e.g. "September 2026"
     their_cells = vb.get("cutoffs") or {}
-    row = db.execute(
-        "SELECT bulletin_month, final_action FROM visa_bulletins "
-        "ORDER BY bulletin_month DESC LIMIT 1")["response"]["result"]["rows"]
+    row = query_rows(db, "SELECT bulletin_month, final_action FROM visa_bulletins "
+                         "ORDER BY bulletin_month DESC LIMIT 1")
     if row and their_month_name:
-        our_month, our_fa = row[0][0]["value"], json.loads(row[0][1]["value"])
+        our_month, our_fa = row[0][0], json.loads(row[0][1])
         try:
             tm = dt.datetime.strptime(their_month_name, "%B %Y").strftime("%Y-%m")
         except ValueError:

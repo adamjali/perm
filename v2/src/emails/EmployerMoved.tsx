@@ -16,6 +16,7 @@
 import { Link, Section, Text } from "@react-email/components";
 import { EmailLayout } from "./components";
 import { SANS_STACK } from "./components/QueueStamp";
+import { formatInt } from "../../convex/lib/format";
 
 export interface EmployerMovedProps {
   employerName: string;
@@ -46,8 +47,6 @@ export function mixSegments(mix: { pending: number; queue: number; review: numbe
   return widths;
 }
 
-const int = (n: number) => n.toLocaleString("en-US");
-
 export function EmployerMoved({
   employerName,
   employerUrl,
@@ -60,10 +59,10 @@ export function EmployerMoved({
   const segments = mix ? mixSegments(mix) : [];
   const legend = mix
     ? [
-        mix.held > 0 ? `${int(mix.held)} on hold` : "",
-        mix.review - mix.held > 0 ? `${int(mix.review - mix.held)} at RFI or other review` : "",
-        mix.appeal > 0 ? `${int(mix.appeal)} under appeal` : "",
-        mix.queue > 0 ? `${int(mix.queue)} waiting for an analyst` : "",
+        mix.held > 0 ? `${formatInt(mix.held)} on hold` : "",
+        mix.review - mix.held > 0 ? `${formatInt(mix.review - mix.held)} at RFI or other review` : "",
+        mix.appeal > 0 ? `${formatInt(mix.appeal)} under appeal` : "",
+        mix.queue > 0 ? `${formatInt(mix.queue)} waiting for an analyst` : "",
       ].filter(Boolean)
     : [];
   return (
@@ -109,7 +108,7 @@ export function EmployerMoved({
       {mix && segments.length > 0 ? (
         <Section style={styles.mixWrap}>
           <Text className="em-text-secondary" style={styles.eyebrow}>
-            {`Its ${int(mix.pending)} pending cases today`}
+            {`Its ${formatInt(mix.pending)} pending cases today`}
           </Text>
           <table role="presentation" width="100%" cellPadding={0} cellSpacing={0} border={0} style={styles.bar}>
             <tbody>

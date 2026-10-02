@@ -2,6 +2,9 @@ import { Fragment } from "react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
+import { ChartTips } from "@/components/data/ChartTips";
+import { MoreText, firstSentence, plainText, wordCount } from "@/components/data/MoreText";
+import { formatInt } from "@/lib/format";
 
 /**
  * PERM decisions by fiscal year as stacked bars, with a legend, a note and
@@ -26,8 +29,10 @@ const TONE = {
   withdrawn: "bg-data-none",
 } as const;
 
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
+/** What a year's bar says on hover: the year, its total, then each outcome. */
+export function yearTip(y: YearCount): string {
+  const total = y.certified + y.denied + y.withdrawn;
+  return `FY${y.fy}\n${formatInt(total)} decided\n${formatInt(y.certified)} certified\n${formatInt(y.denied)} denied\n${formatInt(y.withdrawn)} withdrawn`;
 }
 
 /** Every year from the first to the last, a missing year as zero. */
@@ -53,11 +58,13 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
   const total = totals.reduce((a, b) => a + b, 0);
   return (
     <div className="border-2 border-border bg-card p-5 sm:p-6">
+      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
+      <ChartTips label="PERM decisions by fiscal year">
       <div className="overflow-x-auto">
         <div
           className="flex h-48 min-w-[640px] items-end gap-1.5 border-b-2 border-border"
           role="img"
-          aria-label={`Decisions by fiscal year, FY${first} to FY${last}, ${fmt(total)} in all. The table below has every figure.`}
+          aria-label={`Decisions by fiscal year, FY${first} to FY${last}, ${formatInt(total)} in all. The table below has every figure.`}
         >
           {series.map((y, i) => {
             const t = totals[i]!;
@@ -65,7 +72,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
               <span
                 key={y.fy}
                 className="flex h-full flex-1 flex-col justify-end"
-                title={`FY${y.fy}: ${fmt(y.certified)} certified, ${fmt(y.denied)} denied, ${fmt(y.withdrawn)} withdrawn`}
+                data-tip={yearTip(y)}
               >
                 <span className="flex w-full flex-col-reverse" style={{ height: `${(t / max) * 100}%` }}>
                   {(["certified", "denied", "withdrawn"] as const).map((k) =>
@@ -91,6 +98,7 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
           ))}
         </div>
       </div>
+      </ChartTips>
 
       <ul className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm">
         {(["certified", "denied", "withdrawn"] as const).map((k) => (
@@ -104,7 +112,13 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
         ))}
       </ul>{" "}
       {note ? (
-        <p className="mt-4 border-t border-border/40 pt-3 text-sm leading-relaxed text-foreground/70">{note}</p>
+        wordCount(note) > 28 ? (
+          <MoreText gist={firstSentence(plainText(note))} size="sm" className="mt-4 border-t border-border/40 pt-2">
+            <p className="text-sm leading-relaxed text-foreground/70">{note}</p>
+          </MoreText>
+        ) : (
+          <p className="mt-4 border-t border-border/40 pt-3 text-sm leading-relaxed text-foreground/70">{note}</p>
+        )
       ) : null}{" "}
       <details className="mt-3 text-sm">
         <summary className="inline-flex min-h-[44px] cursor-pointer items-center font-bold">Every year as a table</summary>
@@ -122,9 +136,9 @@ export function YearBars({ years, note }: { years: YearCount[]; note?: ReactNode
               {series.map((y) => (
                 <tr key={y.fy} className="border-b border-border/30">
                   <td className="py-1 pr-4">FY{y.fy}{" "}</td>
-                  <td className="py-1 pr-4 text-right">{fmt(y.certified)}{" "}</td>
-                  <td className="py-1 pr-4 text-right">{fmt(y.denied)}{" "}</td>
-                  <td className="py-1 text-right">{fmt(y.withdrawn)}{" "}</td>
+                  <td className="py-1 pr-4 text-right">{formatInt(y.certified)}{" "}</td>
+                  <td className="py-1 pr-4 text-right">{formatInt(y.denied)}{" "}</td>
+                  <td className="py-1 text-right">{formatInt(y.withdrawn)}{" "}</td>
                 </tr>
               ))}
             </tbody>

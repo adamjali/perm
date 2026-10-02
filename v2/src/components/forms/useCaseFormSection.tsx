@@ -4,7 +4,7 @@
 // export is absent, so a module calling it without a boundary fails with
 // `TypeError: (0 , d.createContext) is not a function` the moment the chunk
 // graph puts it server-side - naming webpack bootstrap and no source file.
-// Declared here (2026-09-01) rather than inherited from whichever importer
+// Declared here rather than inherited from whichever importer
 // happened to cross a boundary first. See components/layout/Footer.tsx.
 
 /**

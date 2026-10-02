@@ -73,9 +73,9 @@ export const NOTICE_MIN_BUSINESS_DAYS = 10;
  * granted the certification", and DOL counts the certification day as day 1.
  * The I-140 must be filed on or before this date.
  *
- * Owner's call, Sep 29 2026: users copying the date off their certifications
- * had entered cert +179 while the app computed +180, a day AFTER DOL's date,
- * the dangerous direction. The earlier date is the safe one.
+ * The site owner's call: users copy the date off their certifications, and
+ * computing +180 would put the app a day AFTER DOL's date, the dangerous
+ * direction. The earlier date is the safe one.
  */
 export const ETA9089_EXPIRATION_DAYS = 179;
 

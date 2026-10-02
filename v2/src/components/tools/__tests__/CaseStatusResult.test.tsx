@@ -155,6 +155,30 @@ describe("CaseStatusResult, pending case", () => {
     expect(screen.getAllByText(ahead.toLocaleString("en-US")).length).toBeGreaterThan(0);
   });
 
+  it("quotes the same cases-ahead figure the estimate is built on, counted to the day", () => {
+    // The month-level wall leaves out cases filed earlier in the case's own
+    // month; the estimate's input counts them. One page, one number.
+    const result = { ...PENDING };
+    const month = result.cohort?.month ?? "2026-05";
+    const { container } = render(
+      <CaseStatusResult
+        result={result}
+        backlog={BACKLOG}
+        cohortStatuses={COHORT_STATUSES}
+        wall={buildWall(BACKLOG, month)}
+        neighbours={neighbourMonths(BACKLOG, month, 2)}
+        publishedFront="2025-09"
+        publishedAsOf="2026-08-20"
+        wage={null}
+        duration={null}
+        estimator={null}
+        casesAhead={75_048}
+        today={TODAY}
+      />,
+    );
+    expect(container.textContent).toMatch(/75,048 cases in DOL.s normal queue\s+were filed before this one/);
+  });
+
   it("says how far behind DOL's work front the filing month sits", () => {
     renderPending();
     expect(screen.getAllByText(/September 2025/).length).toBeGreaterThan(0);
@@ -187,12 +211,12 @@ describe("CaseStatusResult, pending case", () => {
     const text = container.textContent ?? "";
     // The label IS the contract: an unlabeled date on a page that answers a
     // case number would be read as a promise.
-    expect(text).toMatch(/Estimate · not a promise/i);
+    expect(text).toMatch(/An estimate, not a promise/i);
     expect(text).toMatch(/When this case could be decided/i);
     // ANALYST REVIEW reads the middle of its month, and says so.
     expect(text).toMatch(/ordinary path/i);
-    // The model and its source are on the page, not in a footnote elsewhere.
-    expect(text).toMatch(/timeline calculator/i);
+    // The model and its source are on the page (folded), not on another page.
+    expect(text).toMatch(/processing time calculator/i);
   });
 
   it("refuses a date for an appeal and shows the measured age instead", () => {
@@ -219,9 +243,9 @@ describe("CaseStatusResult, pending case", () => {
     expect(text).not.toMatch(/your (odds|chances)/i);
     // The count is present AND explicitly framed as a scale. The reason
     // updated when the direct DOL feed began observing transitions
-    // (2026-08-27): the honest ground is now sample youth, not blindness.
+    // (2026-08-27): the record is too young to price odds.
     expect(screen.getAllByText(/94,435 cases/).length).toBeGreaterThan(0);
-    expect(text).toMatch(/cannot honestly price the odds/i);
+    expect(text).toMatch(/too short a record to price those odds/i);
   });
 
   it("offers alerts while the case can still change", () => {
@@ -322,7 +346,8 @@ describe("CaseStatusResult, pending case", () => {
       live: { ...PENDING.live!, status: "SOME NEW DOL STATE" },
       statusOutlook: null,
     });
-    expect(container.textContent).toMatch(/has not been written up here yet/);
+    expect(container.textContent).toMatch(/Not written up here yet/);
+    expect(container.textContent).toMatch(/won.t guess/);
   });
 
   it("explains the gap between the wall it draws and the figure it quotes", () => {
@@ -424,7 +449,7 @@ describe("CaseStatusResult, decided case", () => {
 
   it("does not offer a queue position for a case that is already decided", () => {
     const { container } = renderDecided(null);
-    expect(container.textContent).not.toMatch(/Filed before this case/);
+    expect(container.textContent).not.toMatch(/Filed in earlier months/);
   });
 
   it("does not offer alerts on a case that is already decided", () => {
@@ -763,7 +788,7 @@ describe("CaseNotFound", () => {
     expect(text).toMatch(/None of this was measured on G-100-26125-999999/);
     expect(text).toMatch(/in front of that filing month/);
     // And nothing claims the case itself has a position.
-    expect(text).not.toMatch(/Filed before this case/);
+    expect(text).not.toMatch(/Filed in earlier months/);
     expect(text).not.toMatch(/this case is in/i);
   });
 

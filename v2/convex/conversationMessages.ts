@@ -275,56 +275,6 @@ export const list = query({
 });
 
 /**
- * Count messages in a conversation
- *
- * Returns the total number of messages in a conversation.
- * Returns 0 if the conversation doesn't exist or the user doesn't own it.
- *
- * @param conversationId - The conversation to count messages for
- * @returns The number of messages
- *
- * @example
- * ```typescript
- * const messageCount = await ctx.runQuery(api.conversationMessages.count, {
- *   conversationId
- * });
- *
- * console.log(`Conversation has ${messageCount} messages`);
- * ```
- */
-export const count = query({
-  args: {
-    conversationId: v.id("conversations"),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getCurrentUserIdOrNull(ctx);
-    if (userId === null) return 0;
-
-    // Verify conversation ownership
-    const conversation = await ctx.db.get(args.conversationId);
-
-    // Return 0 if not found or not owned (security: don't reveal existence)
-    if (!conversation) {
-      return 0;
-    }
-
-    if (conversation.userId !== userId) {
-      return 0;
-    }
-
-    // Count messages
-    const messages = await ctx.db
-      .query("conversationMessages")
-      .withIndex("by_conversation_id", (q) =>
-        q.eq("conversationId", args.conversationId)
-      )
-      .collect();
-
-    return messages.length;
-  },
-});
-
-/**
  * Get the most recently updated non-archived conversation
  *
  * Used for "resume conversation" UX - allows users to continue

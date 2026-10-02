@@ -7,7 +7,12 @@ import { recordError } from "./lib/errorRecording";
 import { isLiveContactEventType } from "./marketingWebhook";
 import { Webhook } from "svix";
 import { verifyUnsubscribeToken } from "./lib/unsubscribeToken";
+import { badLinkPage, escapeHtml, messagePage, prefsPage, type PrefsState } from "./lib/mailPages";
+import { MAIL_KINDS, PREFS_KINDS, type PrefsKind } from "./lib/mailKinds";
+
+const isPrefsKind = (k: string): k is PrefsKind => (PREFS_KINDS as readonly string[]).includes(k);
 import { SLUG_RE as EMPLOYER_SLUG_RE, employerNameFor } from "./employerAlerts";
+import { SITE_URL } from "./lib/links";
 
 const http = httpRouter();
 auth.addHttpRoutes(http);
@@ -213,32 +218,6 @@ async function resolveUnsubscribeEmail(req: Request): Promise<string | null> {
   return verifyUnsubscribeToken(token, secret);
 }
 
-function unsubscribePage(
-  title: string,
-  body: string,
-  button?: { action: string; label?: string },
-): Response {
-  const buttonHtml = button
-    ? `<form method="POST" action="${button.action}" style="margin:20px 0 0 0;">
-         <button type="submit" style="background:#18181b;color:#fffffe;border:3px solid #000001;box-shadow:4px 4px 0 #22c55e;font-size:14px;font-weight:700;padding:12px 28px;cursor:pointer;">${button.label ?? "Unsubscribe"}</button>
-       </form>`
-    : "";
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>${title}</title></head>
-<body style="margin:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:48px 16px;">
-    <table role="presentation" width="440" cellpadding="0" cellspacing="0" style="max-width:440px;background:#fffffe;border:4px solid #000001;">
-      <tr><td style="background:#000001;padding:18px 24px;"><span style="color:#22c55e;font-weight:700;font-size:18px;">PERM</span><span style="color:#fffffe;font-weight:700;font-size:18px;"> Tracker</span></td></tr>
-      <tr><td style="padding:28px 24px;">
-        <div style="font-size:18px;font-weight:700;color:#18181b;margin:0 0 8px 0;">${title}</div>
-        <div style="font-size:14px;line-height:21px;color:#52525b;">${body}</div>
-        ${buttonHtml}
-      </td></tr>
-    </table>
-  </td></tr></table>
-</body></html>`;
-  return new Response(html, { status: 200, headers: { "Content-Type": "text/html; charset=utf-8" } });
-}
-
 // POST: one-click. Hit by Gmail/Apple's native Unsubscribe button (List-Unsubscribe-Post)
 // and by the confirmation form. Acts immediately.
 http.route({
@@ -246,28 +225,29 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const email = await resolveUnsubscribeEmail(req);
-    if (!email) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    if (!email) return badLinkPage("This link has expired or was changed.");
     await ctx.runMutation(internal.notifications.unsubscribeWeeklyByEmail, { email });
-    return unsubscribePage(
+    return messagePage(
       "You're unsubscribed",
-      "You won't receive the weekly summary anymore. Your deadline reminders are unaffected, and you can turn the weekly summary back on anytime in your account settings."
+      `You won't get the ${MAIL_KINDS.digest.name.toLowerCase()} any more. Deadline reminders keep coming, and you can turn the summary back on in your notification settings.`
     );
   }),
 });
 
-// GET: a human clicked the in-email link. Show a confirmation page with a POST
-// button — prefetch-safe (a bare GET, e.g. Apple Mail Privacy prefetch, never unsubscribes).
+// GET: a person clicked the link in the email. Show a confirmation page with a
+// POST button, so a prefetch (Apple Mail Privacy Protection and friends) never
+// unsubscribes anyone.
 http.route({
   path: "/unsubscribe",
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
     const email = await resolveUnsubscribeEmail(req);
-    if (!email) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    if (!email) return badLinkPage("This link has expired or was changed.");
     const token = new URL(req.url).searchParams.get("token") ?? "";
-    return unsubscribePage(
-      "Unsubscribe from the weekly summary?",
-      "This only stops the weekly PERM summary. Your deadline reminders keep coming, and you can turn the summary back on anytime in settings.",
-      { action: `/unsubscribe?token=${encodeURIComponent(token)}` }
+    return messagePage(
+      `Stop the ${MAIL_KINDS.digest.name.toLowerCase()}?`,
+      `This only stops the ${MAIL_KINDS.digest.name.toLowerCase()}. Deadline reminders keep coming, and you can turn the summary back on in your notification settings.`,
+      { post: `/unsubscribe?token=${encodeURIComponent(token)}` }
     );
   }),
 });
@@ -289,13 +269,13 @@ http.route({
  * and keeps the SEO pages light.
  */
 const ALLOWED_ORIGINS = new Set([
-  "https://permtracker.app",
+  SITE_URL,
   "https://www.permtracker.app",
   "http://localhost:3000",
 ]);
 
 function corsHeaders(origin: string | null): Record<string, string> {
-  const allowed = origin && ALLOWED_ORIGINS.has(origin) ? origin : "https://permtracker.app";
+  const allowed = origin && ALLOWED_ORIGINS.has(origin) ? origin : SITE_URL;
   return {
     "Access-Control-Allow-Origin": allowed,
     "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -390,12 +370,12 @@ http.route({
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
-    return unsubscribePage(
+    if (!token) return badLinkPage();
+    return messagePage(
       "Confirm your queue alert",
       "We'll email you once, on the day the Department of Labor's PERM analyst-review queue reaches your filing month. That's the only message you'll get.",
       {
-        action: `/queue-alert/confirm?token=${encodeURIComponent(token)}`,
+        post: `/queue-alert/confirm?token=${encodeURIComponent(token)}`,
         label: "Confirm",
       },
     );
@@ -407,17 +387,17 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    if (!token) return badLinkPage();
 
     const result = await ctx.runMutation(internal.queueAlerts.confirmByToken, { token });
     if (!result) {
       // Also the answer for a valid token belonging to someone who has since
       // unsubscribed. Deliberately not distinguished: re-subscribing is a
       // fresh signup, not a link click.
-      return new Response("This confirmation link is no longer valid.", { status: 400 });
+      return badLinkPage("This confirmation link is no longer valid.");
     }
 
-    return unsubscribePage(
+    return messagePage(
       "You're on the list",
       result.alreadyReached
         ? `DOL's PERM analyst-review queue has already reached ${result.filingMonth}. Your alert is on its way now, and that's the only message you'll get. Current figures are always on permtracker.app/perm-processing-times.`
@@ -432,10 +412,10 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    if (!token) return badLinkPage();
     const ok = await ctx.runMutation(internal.queueAlerts.unsubscribeByToken, { token });
-    if (!ok) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
-    return unsubscribePage("You're unsubscribed", "You won't receive a queue alert from us.");
+    if (!ok) return badLinkPage("This link has expired or was changed.");
+    return messagePage("You're unsubscribed", "You won't receive a queue alert from us.");
   }),
 });
 
@@ -446,11 +426,11 @@ http.route({
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
-    return unsubscribePage(
+    if (!token) return badLinkPage();
+    return messagePage(
       "Cancel your queue alert?",
       "You'll stop receiving the one-time alert about the PERM queue reaching your filing month.",
-      { action: `/queue-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+      { post: `/queue-alert/unsubscribe?token=${encodeURIComponent(token)}` },
     );
   }),
 });
@@ -533,12 +513,12 @@ http.route({
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
-    return unsubscribePage(
+    if (!token) return badLinkPage();
+    return messagePage(
       "Confirm your case alerts",
       "We'll email you when the Department of Labor's status for your case changes, and stop once it's decided.",
       {
-        action: `/case-alert/confirm?token=${encodeURIComponent(token)}`,
+        post: `/case-alert/confirm?token=${encodeURIComponent(token)}`,
         label: "Confirm",
       },
     );
@@ -550,18 +530,18 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    if (!token) return badLinkPage();
 
     const result = await ctx.runMutation(internal.caseAlerts.confirmByToken, { token });
     if (!result) {
       // Also the answer for a valid token whose owner has since unsubscribed,
       // and for a replayed link with nothing staged behind it. Deliberately not
       // distinguished: re-subscribing is a fresh signup, not a link click.
-      return new Response("This confirmation link is no longer valid.", { status: 400 });
+      return badLinkPage("This confirmation link is no longer valid.");
     }
 
     const list = result.caseNumbers.join(", ");
-    return unsubscribePage(
+    return messagePage(
       "You're on the list",
       `We'll email you when the Department of Labor's status changes for ${list}, and again each time it moves until the case is decided. Current figures are always on permtracker.app/perm-case-status.`,
     );
@@ -574,10 +554,10 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    if (!token) return badLinkPage();
     const ok = await ctx.runMutation(internal.caseAlerts.unsubscribeByToken, { token });
-    if (!ok) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
-    return unsubscribePage(
+    if (!ok) return badLinkPage("This link has expired or was changed.");
+    return messagePage(
       "You're unsubscribed",
       "You won't receive case-status alerts from us. That covers every case this address was watching.",
     );
@@ -591,11 +571,11 @@ http.route({
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
-    return unsubscribePage(
+    if (!token) return badLinkPage();
+    return messagePage(
       "Stop your case alerts?",
       "You'll stop receiving status alerts for every PERM case this address is watching.",
-      { action: `/case-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+      { post: `/case-alert/unsubscribe?token=${encodeURIComponent(token)}` },
     );
   }),
 });
@@ -754,12 +734,12 @@ http.route({
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
-    return unsubscribePage(
+    if (!token) return badLinkPage();
+    return messagePage(
       "Confirm your visa bulletin alert",
       "We'll email you when a new visa bulletin moves the final-action cutoff you're watching. Nothing else will be sent.",
       {
-        action: `/bulletin-alert/confirm?token=${encodeURIComponent(token)}`,
+        post: `/bulletin-alert/confirm?token=${encodeURIComponent(token)}`,
         label: "Confirm",
       },
     );
@@ -771,12 +751,12 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    if (!token) return badLinkPage();
     const result = await ctx.runMutation(internal.bulletinAlerts.confirmByToken, { token });
     if (!result) {
-      return new Response("This confirmation link is no longer valid.", { status: 400 });
+      return badLinkPage("This confirmation link is no longer valid.");
     }
-    return unsubscribePage(
+    return messagePage(
       "You're on the list",
       `We'll email you when the State Department moves the final-action cutoff for ${result.series
         .map(escapeHtml)
@@ -790,10 +770,10 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    if (!token) return badLinkPage();
     const ok = await ctx.runMutation(internal.bulletinAlerts.unsubscribeByToken, { token });
-    if (!ok) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
-    return unsubscribePage(
+    if (!ok) return badLinkPage("This link has expired or was changed.");
+    return messagePage(
       "You're unsubscribed",
       "You won't receive visa bulletin alerts from us.",
     );
@@ -805,11 +785,11 @@ http.route({
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
-    return unsubscribePage(
+    if (!token) return badLinkPage();
+    return messagePage(
       "Stop your visa bulletin alerts?",
       "You'll stop receiving emails when the cutoffs you watch move.",
-      { action: `/bulletin-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+      { post: `/bulletin-alert/unsubscribe?token=${encodeURIComponent(token)}` },
     );
   }),
 });
@@ -889,12 +869,12 @@ http.route({
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
-    return unsubscribePage(
+    if (!token) return badLinkPage();
+    return messagePage(
       "Follow this employer?",
       "We'll email you when DOL moves five or more of its PERM cases on or off hold in a day, or decides a batch of them well above its usual pace. Never more than one email a day.",
       {
-        action: `/employer-alert/confirm?token=${encodeURIComponent(token)}`,
+        post: `/employer-alert/confirm?token=${encodeURIComponent(token)}`,
         label: "Confirm",
       },
     );
@@ -906,10 +886,10 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid confirmation link.", { status: 400 });
+    if (!token) return badLinkPage();
     const result = await ctx.runMutation(internal.employerAlerts.confirmByToken, { token });
-    if (!result) return new Response("This confirmation link is no longer valid.", { status: 400 });
-    return unsubscribePage(
+    if (!result) return badLinkPage("This confirmation link is no longer valid.");
+    return messagePage(
       "You're following",
       `We'll write when DOL moves ${escapeHtml(result.employers.join(", "))}'s PERM cases as a group. Every figure is on permtracker.app/perm-employers/under-review.`,
     );
@@ -921,10 +901,10 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
+    if (!token) return badLinkPage();
     const ok = await ctx.runMutation(internal.employerAlerts.unsubscribeByToken, { token });
-    if (!ok) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
-    return unsubscribePage(
+    if (!ok) return badLinkPage("This link has expired or was changed.");
+    return messagePage(
       "You're unsubscribed",
       "You won't receive employer alerts from us. That covers every employer this address was following.",
     );
@@ -936,11 +916,11 @@ http.route({
   method: "GET",
   handler: httpAction(async (_ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid unsubscribe link.", { status: 400 });
-    return unsubscribePage(
+    if (!token) return badLinkPage();
+    return messagePage(
       "Stop your employer alerts?",
       "You'll stop receiving alerts for every employer this address follows.",
-      { action: `/employer-alert/unsubscribe?token=${encodeURIComponent(token)}` },
+      { post: `/employer-alert/unsubscribe?token=${encodeURIComponent(token)}` },
     );
   }),
 });
@@ -953,148 +933,6 @@ http.route({
 // flow that owns it (double opt-in forms, or the signed-in settings page).
 // See convex/emailPrefs.ts for why that asymmetry is deliberate.
 // ============================================================================
-
-function escapeHtml(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-type PrefsState = {
-  email: string;
-  queueAlerts: {
-    id: string;
-    filingMonth: string;
-    queue: string;
-    active: boolean;
-    notified: boolean;
-  }[];
-  caseAlerts: { id: string; caseNumber: string; active: boolean; closed: boolean }[];
-  bulletinAlerts: { id: string; category: string; country: string; active: boolean }[];
-  employerAlerts: { id: string; slug: string; employerName: string; active: boolean }[];
-  news: boolean;
-  newsletter: boolean;
-  weeklyDigest: boolean | null;
-};
-
-/** `kind` or `kind:id`, the row an email was about. Anything else is ignored. */
-function isFocus(s: string): boolean {
-  const [kind, id, extra] = s.split(":");
-  if (extra !== undefined) return false;
-  if (!["queue", "case", "bulletin", "employer", "news", "newsletter", "digest"].includes(kind ?? "")) return false;
-  return id === undefined || /^[A-Za-z0-9_-]{1,64}$/.test(id);
-}
-
-function prefsPage(state: PrefsState, token: string, focus?: string | null): Response {
-  const esc = escapeHtml;
-  const t = encodeURIComponent(token);
-  const focused = focus && isFocus(focus) ? focus : null;
-  const offButton = (kind: string, id?: string) =>
-    `<form method="POST" action="/prefs/update?token=${t}" style="margin:0;display:inline;">
-       <input type="hidden" name="kind" value="${esc(kind)}"/>
-       ${id ? `<input type="hidden" name="id" value="${esc(id)}"/>` : ""}
-       <button type="submit" style="background:#fffffe;color:#18181b;border:2px solid #000001;font-size:12px;font-weight:700;padding:6px 14px;cursor:pointer;">Turn off</button>
-     </form>`;
-
-  const queueLabelFor = (q: string) =>
-    q === "pwd-oews"
-      ? "PWD queue (OEWS)"
-      : q === "pwd-nonoews"
-        ? "PWD queue (non-OEWS)"
-        : "PERM queue";
-
-  const row = (label: string, detail: string, control: string, key?: string) =>
-    `<tr${key && key === focused ? ' id="focus"' : ""}><td style="padding:10px 0;border-bottom:1px solid #e4e4e7;">
-       <div style="font-size:14px;font-weight:600;color:#18181b;">${label}</div>
-       <div style="font-size:12px;color:#52525b;margin-top:2px;">${detail}</div>
-       ${key && key === focused ? '<div style="display:inline-block;margin-top:6px;background:#22c55e;color:#18181b;border:2px solid #000001;font-size:12px;font-weight:700;padding:2px 8px;">The email you came from was about this one</div>' : ""}
-     </td><td style="padding:10px 0;border-bottom:1px solid #e4e4e7;text-align:right;vertical-align:middle;">${control}</td></tr>`;
-
-
-  const queueRows = state.queueAlerts
-    .filter((a) => a.active)
-    .map((a) =>
-      row(
-        `${queueLabelFor(a.queue)} alert`,
-        `Month ${esc(a.filingMonth)}${a.notified ? " (already sent)" : ""}`,
-        offButton("queue", a.id),
-        `queue:${a.id}`,
-      ),
-    );
-  const caseRows = state.caseAlerts
-    .filter((a) => a.active)
-    .map((a) => row("Case status alert", esc(a.caseNumber), offButton("case", a.id), `case:${a.id}`));
-  const bulletinRows = state.bulletinAlerts
-    .filter((a) => a.active)
-    .map((a) =>
-      row(
-        "Visa bulletin alert",
-        `${esc(a.category)} ${esc(a.country === "worldwide" ? "all countries" : a.country)}`,
-        offButton("bulletin", a.id),
-        `bulletin:${a.id}`,
-      ),
-    );
-  const employerRows = state.employerAlerts
-    .filter((a) => a.active)
-    .map((a) =>
-      row(
-        "Employer you follow",
-        esc(a.employerName),
-        offButton("employer", a.id),
-        `employer:${a.id}`,
-      ),
-    );
-  const newsRow = state.news
-    ? [row("Product news", "Occasional updates about new data and tools", offButton("news"), "news")]
-    : [];
-  const newsletterRow = state.newsletter
-    ? [row("Weekly bulletin digest", "DOL's queue, the bulletin and the Federal Register, every Tuesday", offButton("newsletter"), "newsletter")]
-    : [];
-  const digestRow =
-    state.weeklyDigest === true
-      ? [
-          row(
-            "Weekly digest",
-            "Your account's Monday summary email",
-            offButton("digest"),
-            "digest",
-          ),
-        ]
-      : [];
-
-  const allRows = [...queueRows, ...caseRows, ...bulletinRows, ...employerRows, ...newsRow,
-    ...newsletterRow, ...digestRow];
-  const body =
-    allRows.length > 0
-      ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">${allRows.join("")}</table>
-         <form method="POST" action="/prefs/update?token=${t}" style="margin:24px 0 0 0;">
-           <input type="hidden" name="kind" value="all"/>
-           <button type="submit" style="background:#18181b;color:#fffffe;border:3px solid #000001;box-shadow:4px 4px 0 #ef4444;font-size:13px;font-weight:700;padding:10px 22px;cursor:pointer;">Stop everything</button>
-         </form>
-         <div style="font-size:12px;color:#52525b;margin-top:16px;">Turning something new on happens from the site itself: alerts from their pages, the weekly digest from your account settings.</div>`
-      : `<div style="font-size:14px;color:#52525b;">Nothing is active for this address. Alerts are set up from the site's own pages, and each asks you to confirm by email first.</div>`;
-
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/><title>Email preferences</title><meta name="robots" content="noindex"/></head>
-<body style="margin:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:48px 16px;">
-    <table role="presentation" width="480" cellpadding="0" cellspacing="0" style="max-width:480px;background:#fffffe;border:4px solid #000001;">
-      <tr><td style="background:#000001;padding:18px 24px;"><span style="color:#22c55e;font-weight:700;font-size:18px;">PERM</span><span style="color:#fffffe;font-weight:700;font-size:18px;"> Tracker</span></td></tr>
-      <tr><td style="padding:28px 24px;">
-        <div style="font-size:18px;font-weight:700;color:#18181b;margin:0 0 4px 0;">Email preferences</div>
-        <div style="font-size:13px;color:#52525b;margin:0 0 20px 0;">Everything we send to ${esc(state.email)}</div>
-        ${body}
-      </td></tr>
-    </table>
-  </td></tr></table>
-</body></html>`;
-  return new Response(html, {
-    status: 200,
-    headers: { "Content-Type": "text/html; charset=utf-8" },
-  });
-}
 
 http.route({
   path: "/prefs/request",
@@ -1143,9 +981,9 @@ http.route({
   handler: httpAction(async (ctx, req) => {
     const url = new URL(req.url);
     const token = url.searchParams.get("token");
-    if (!token) return new Response("Invalid preferences link.", { status: 400 });
+    if (!token) return badLinkPage();
     const state = await ctx.runMutation(internal.emailPrefs.stateByToken, { token });
-    if (!state) return new Response("Invalid or expired preferences link.", { status: 400 });
+    if (!state) return badLinkPage("This link has expired or was changed.");
     return prefsPage(state, token, url.searchParams.get("focus"));
   }),
 });
@@ -1163,17 +1001,17 @@ http.route({
 // unsubscribes anyone.
 // ============================================================================
 
-const ONE_CLICK_KINDS = ["queue", "case", "bulletin", "employer", "news", "newsletter", "digest", "alerts"] as const;
+const ONE_CLICK_KINDS = [...PREFS_KINDS, "alerts"] as const;
 type OneClickKind = (typeof ONE_CLICK_KINDS)[number];
 const KIND_WORDS: Record<OneClickKind, string> = {
-  queue: "the queue-month alert",
-  case: "the case status alert",
-  bulletin: "the visa bulletin alert",
-  employer: "the employer alert",
+  case: `this ${MAIL_KINDS.case.one.toLowerCase()}`,
+  queue: `this ${MAIL_KINDS.queue.one.toLowerCase()}`,
+  bulletin: `this ${MAIL_KINDS.bulletin.one.toLowerCase()}`,
+  employer: "alerts for this employer",
   alerts: "every alert this address gets (case, queue, bulletin and employer)",
-  news: "product news",
-  newsletter: "the weekly bulletin digest",
-  digest: "your account's weekly summary",
+  newsletter: `the ${MAIL_KINDS.newsletter.name.toLowerCase()}`,
+  news: MAIL_KINDS.news.name.toLowerCase(),
+  digest: `your ${MAIL_KINDS.digest.name.toLowerCase()}`,
 };
 
 function oneClickParams(req: Request): { token: string; kind: OneClickKind; id?: string } | null {
@@ -1190,14 +1028,14 @@ http.route({
   method: "GET",
   handler: httpAction(async (ctx, req) => {
     const p = oneClickParams(req);
-    if (!p) return new Response("Invalid unsubscribe link.", { status: 400 });
+    if (!p) return badLinkPage();
     const state = await ctx.runMutation(internal.emailPrefs.stateByToken, { token: p.token });
-    if (!state) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
+    if (!state) return badLinkPage("This link has expired or was changed.");
     const action = `/prefs/unsubscribe?token=${encodeURIComponent(p.token)}&kind=${p.kind}${p.id ? `&id=${encodeURIComponent(p.id)}` : ""}`;
-    return unsubscribePage(
+    return messagePage(
       "Stop these emails?",
       `This turns off ${KIND_WORDS[p.kind]} for ${escapeHtml(state.email)}. Everything else you get stays as it is, and all of it is on your <a href="/prefs?token=${encodeURIComponent(p.token)}">email preferences</a> page.`,
-      { action, label: "Turn off" },
+      { post: action, label: "Turn off" },
     );
   }),
 });
@@ -1207,10 +1045,10 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const p = oneClickParams(req);
-    if (!p) return new Response("Invalid unsubscribe link.", { status: 400 });
+    if (!p) return badLinkPage();
     const state = await ctx.runMutation(internal.emailPrefs.disableByToken, { token: p.token, kind: p.kind, id: p.id });
-    if (!state) return new Response("Invalid or expired unsubscribe link.", { status: 400 });
-    return unsubscribePage(
+    if (!state) return badLinkPage("This link has expired or was changed.");
+    return messagePage(
       "Turned off",
       `${KIND_WORDS[p.kind].charAt(0).toUpperCase()}${KIND_WORDS[p.kind].slice(1)} won't be sent to ${escapeHtml(state.email)} any more. Anything else you get is on your <a href="/prefs?token=${encodeURIComponent(p.token)}">email preferences</a> page.`,
     );
@@ -1222,7 +1060,7 @@ http.route({
   method: "POST",
   handler: httpAction(async (ctx, req) => {
     const token = new URL(req.url).searchParams.get("token");
-    if (!token) return new Response("Invalid preferences link.", { status: 400 });
+    if (!token) return badLinkPage();
 
     // The buttons submit as form-encoded, being plain HTML forms on a page
     // served from this same host.
@@ -1234,31 +1072,23 @@ http.route({
       const rawId = form.get("id");
       id = typeof rawId === "string" && rawId.length > 0 ? rawId : undefined;
     } catch {
-      return new Response("Malformed request.", { status: 400 });
+      return badLinkPage("That request was incomplete.");
     }
 
     let state: PrefsState | null = null;
     if (kind === "all") {
       state = await ctx.runMutation(internal.emailPrefs.unsubscribeAllByToken, { token });
-    } else if (
-      kind === "queue" ||
-      kind === "case" ||
-      kind === "bulletin" ||
-      kind === "employer" ||
-      kind === "news" ||
-      kind === "newsletter" ||
-      kind === "digest"
-    ) {
+    } else if (isPrefsKind(kind)) {
       state = await ctx.runMutation(internal.emailPrefs.disableByToken, {
         token,
         kind,
         id: id?.slice(0, 64),
       });
     } else {
-      return new Response("Malformed request.", { status: 400 });
+      return badLinkPage("That request was incomplete.");
     }
 
-    if (!state) return new Response("Invalid or expired preferences link.", { status: 400 });
+    if (!state) return badLinkPage("This link has expired or was changed.");
     return prefsPage(state, token);
   }),
 });

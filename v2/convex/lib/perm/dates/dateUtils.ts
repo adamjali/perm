@@ -15,8 +15,8 @@ import { isValidISODate as isStrictISODate } from '../../dateTypes';
  */
 export function isValidISODate(dateStr: string | null | undefined): dateStr is string {
   // The strict check (a real calendar day, not just YYYY-MM-DD shape) is in
-  // dateTypes; this wrapper adds only the null handling. It used to be a bare
-  // regex and so called "2024-02-31" valid, disagreeing with dateTypes.
+  // dateTypes; this wrapper adds only the null handling. A bare shape regex
+  // would call "2024-02-31" valid and disagree with dateTypes.
   return dateStr != null && isStrictISODate(dateStr);
 }
 

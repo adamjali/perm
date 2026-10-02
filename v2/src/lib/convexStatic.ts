@@ -9,11 +9,9 @@ import type { FunctionArgs, FunctionReference, FunctionReturnType } from "convex
  * WHY NOT `fetchQuery` FROM `convex/nextjs`. It always sets
  * `cache: "no-store"` on its client (convex 1.46, `setupClient`), and one
  * no-store fetch makes the whole route dynamic, whatever `revalidate` the
- * page exports. Measured 2026-09-26: adding one community-timeline read to
- * `/perm-processing-times` turned it from prerendered to rendered on every
- * visit, and `/tools/i140-calculator` and `/tools/green-card-timeline` had
- * been dynamic in production the same way since they first read Convex.
- * This client sends the page's own window instead, so the page stays static
+ * page exports: one Convex read is enough to turn a prerendered page into one
+ * rendered on every visit. This client sends the page's own window instead,
+ * so the page stays static
  * and refreshes on schedule. `public-convex-reads.test.ts` keeps public pages
  * off `convex/nextjs`.
  */

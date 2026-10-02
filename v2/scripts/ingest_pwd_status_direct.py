@@ -1,66 +1,35 @@
 #!/usr/bin/env python3
-"""Per-case status for PREVAILING WAGE (ETA-9141) and LCA (ETA-9035) filings,
-straight from flag.dol.gov: one prober, two tables.
+"""Per-case status for the FLAG programs other than PERM, straight from
+flag.dol.gov: prevailing wage requests (ETA-9141), LCAs (ETA-9035), and the
+H-2A and H-2B seasonal filings.
 
-WHAT THIS IS. Every DOL foreign-labor filing gets a FLAG case number:
-`G-100-` for a PERM, `P-100-` for the prevailing wage request that precedes
-it, `I-200-` (H-1B) and `I-203-` for labor condition applications. The
-applicant usually never sees the P- or I- number, and the question people
-ask is the same one they ask about PERM: find my number from the employer,
-the title and roughly when it was filed, then tell me where it is.
+Every DOL foreign-labor filing gets a FLAG case number: `G-100-` for a PERM,
+`P-100-` for the prevailing wage request before it, `I-200-` and `I-203-` for
+labor condition applications, `H-300-`, `H-400-` and `P-400-` for H-2A, H-2B
+and H-2B prevailing wage. DOL's batch case-status endpoint serves all of them
+with the same fields, and every program draws from one serial counter: a
+serial that answers under one prefix is no case under another. So one prober
+covers them all and drops a serial the moment a prefix claims it.
 
-THREE FACTS, MEASURED 2026-09-02, THAT MAKE THIS ONE SCRIPT:
+Separate tables per program (`pwd_case_status`, `lca_case_status`,
+`seasonal_case_status`), because the PERM tables feed the queue census, the
+review-stage pages, the RFI funnel and the alert sweep, all of which assume a
+PERM status vocabulary. Each program's final-status set is pinned against its
+TypeScript reader by a test.
 
-1. DOL's batch case-status endpoint SERVES ALL OF THEM, with the same fields
-   (status, employer, job title, submitted date, visaType). FLAG's own page
-   lists PERM, prevailing wage and LCA among the programs the search covers.
+New filings are found by the unified serial walk in
+ingest_case_status_direct.py, which hands P-, I- and H- hits to
+`insert_hits` here. This script re-checks what is held:
 
-2. EVERY PROGRAM DRAWS FROM ONE SERIAL COUNTER. On day code 26239
-   (2026-08-27) serials 199900-199949 held PERM cases already in our corpus,
-   14 H-1B LCAs, 2 I-203 LCAs and a run of PWDs. So the serial range the
-   PERM corpus already knows for each filing day IS the range to probe, and
-   a serial that hits under one prefix cannot be a case under another: the
-   prober walks each day's range once, tries prefixes in measured hit-rate
-   order, and drops a serial the moment it is claimed. Roughly a third of
-   the counter is LCAs, a quarter PWDs, a tenth PERMs.
-
-3. The counter advances ~3,000 a day. With claimed serials dropped, a day is
-   ~180 requests across every prefix, the last week ~1,300, and a backfill
-   to January ~45,000: a few CI runs at a polite pace, then ~20 minutes a
-   day.
-
-SEPARATE TABLES PER PROGRAM, ON PURPOSE. The PERM tables feed the queue
-census, the review-stage pages, the RFI funnel and the alert sweep, all of
-which assume a PERM status vocabulary; ten P-/I- rows had already leaked
-into them through the web lookup before this existed. `pwd_case_status` and
-`lca_case_status` mirror the PERM pair, and their final-status sets are
-pinned against the TypeScript readers by tests.
-
-STATUS VOCABULARIES, as observed. PWD: IN PROCESS, DETERMINATION ISSUED,
-REDETERMINATION AFFIRMED / MODIFIED, WITHDRAWN. LCA: IN PROCESS, CERTIFIED,
-WITHDRAWN (DOL's target for an LCA is seven business days, so its pending
-set is small). A status outside a program's known set is treated as pending
-and re-swept, the safe failure, and logged so the set grows from evidence.
-
-    python3 scripts/ingest_pwd_status_direct.py --discover                       # last 7 filing days, both programs
+    python3 scripts/ingest_pwd_status_direct.py --pending [--program pwd|lca|seasonal|all]   # daily
+    python3 scripts/ingest_pwd_status_direct.py --full [--program ...]     # weekly, a rolling window
+    python3 scripts/ingest_pwd_status_direct.py --discover                 # recent days, by day window
     python3 scripts/ingest_pwd_status_direct.py --backfill --from 2026-01-01 --to 2026-08-31
-    python3 scripts/ingest_pwd_status_direct.py --pending [--program pwd|lca|all]   # daily
-    python3 scripts/ingest_pwd_status_direct.py --full [--program ...]              # weekly
 
-COVERAGE IS RECORDED PER RUN (`sweep_runs`, via lib_turso.record_sweep), the
-same as the PERM sweep. The reason the PERM one needed it does NOT apply here
-and that was checked rather than assumed: this script WRITES
-`last_checked_at` itself on every case it looks at - both the changed branch
-and the unchanged one - so `pwd_case_status` / `lca_case_status` already carry
-our own observation date, and `/pwd-cases` and `/lca-cases` print it honestly.
-`perm_case_status.last_checked_at` is the rival tracker's, inherited from the mirror
-seed and never written by the PERM sweep, which is what made the review-stage
-pages cite a retired competitor's timestamp. So this file gets the run record
-(useful: it is the only thing that can say a nightly probe stopped finishing)
-and none of the seenFrom/seenTo rework.
-
-Per-row stamping is affordable here and not there: this sweep re-checks ~1,400
-pending PWD cases and a similar LCA slice, against 414,358 PERM rows.
+A status outside a program's known set is treated as pending and re-swept,
+the safe failure, and logged so the set grows from evidence. Coverage is
+recorded per run in `sweep_runs`, which is what "last checked" on the site
+reads; unchanged rows aren't rewritten.
 """
 from __future__ import annotations
 
@@ -73,13 +42,14 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_turso import (  # noqa: E402
-    Turso, lit, record_run, record_sweep, run_independently, stamp_freshness,
+    Turso, add_missing_columns, query_rows, read_doc, record_run, record_sweep,
+    run_independently, run_stmts, stamp_freshness, stmt, write_doc,
 )
 from ingest_case_status_direct import (  # noqa: E402
-    BATCH, PACE_S, _rows, decode_filing_date, log, lookup_with_retry,
+    BATCH, PACE_S, decode_filing_date, log, lookup_with_retry,
 )
 from lib_flag_serials import SERIAL_MOD, case_number, day_code, serial_of  # noqa: E402
-from build_entity_detail import _search_slug  # noqa: E402
+from lib_slugs import slugify  # noqa: E402
 
 PERM_PREFIX = "G-100-"
 
@@ -132,14 +102,14 @@ PROGRAMS: dict[str, dict] = {
         "table": "seasonal_case_status",
         "events": "seasonal_case_events",
         # The temporary-labor programs, from the same counter and the same
-        # endpoint (Oct 1 2026): H-300 is an H-2A application (ETA-9142A),
+        # endpoint: H-300 is an H-2A application (ETA-9142A),
         # H-400 an H-2B application (ETA-9142B), P-400 an H-2B prevailing
         # wage request. P-400 is kept OUT of the PWD program on purpose: the
         # PWD pages describe the ETA-9141 queue that PERM and H-1B wait in,
         # and H-2B requests run through a different one.
         "prefixes": ["H-300-", "H-400-", "P-400-"],
-        # Statuses read off DOL's own answers on Oct 1 2026, over the FY2026
-        # backfill's first 27,000 cases. One not in either set is logged and
+        # Statuses read off DOL's own answers over the FY2026 backfill's first
+        # 27,000 cases. One not in either set is logged and
         # treated as pending, which costs a daily re-check and never a wrong
         # "decided". Mirror seasonalCases.ts, pinned by its test.
         "final": {"FULL CERTIFICATION", "FULL CERTIFICATION - EXPIRED",
@@ -150,7 +120,10 @@ PROGRAMS: dict[str, dict] = {
                   "REDETERMINATION AFFIRMED", "REDETERMINATION MODIFIED",
                   "RETURNED UNPROCESSED",
                   "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
-                  "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION"},
+                  "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
+                  # The Board's decision on an appealed wage determination is
+                  # the last administrative word (20 CFR 655.13(c)).
+                  "BALCA OVERTURNED"},
         "pending": {"IN PROCESS", "ACCEPTED - PENDING RECRUITMENT", "NOD ISSUED",
                     "NOR ISSUED", "NRM ISSUED", "RFI ISSUED", "PENDING APPEAL",
                     "PENDING CENTER DIRECTOR REVIEW", "POST-CERT REQUEST PENDING"},
@@ -169,7 +142,6 @@ DISCOVERY_ORDER = ["I-200-", "P-100-", "H-300-", "P-400-", "H-400-", "I-203-", "
 # Kept under their original names: scripts/test_pwd_status.py imports them.
 PREFIX = "P-100-"
 PWD_FINAL = PROGRAMS["pwd"]["final"]
-KNOWN_STATUSES = PWD_FINAL | PROGRAMS["pwd"]["pending"]
 
 SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, direct)"
 DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, discovered)"
@@ -178,12 +150,10 @@ DISCOVERY_DAY_WINDOW = 7
 DISCOVERY_REQUEST_CAP = 2000
 BACKFILL_REQUEST_CAP = 9000
 EDGE_PAD = 300
-# THE COUNTER WRAPS. On 2026-06-10 serials ran 998,922 to 999,997 and restarted
-# at 1, so that day's MIN/MAX read as (1, 999,997): a million-serial window.
-# The backfill walked I-200 from serial 1, burned its 4,500-request cap
-# 225,000 serials in, wrote no progress, and sat on day 26161 from Thu Sep 3.
-# A jump this big between two consecutive known serials is the wrap; each
-# side is probed as its own cluster, and no window may exceed MAX_WINDOW.
+# The counter wraps at 1,000,000, so on a wrap day MIN/MAX read as (1, 999,997):
+# a million-serial window that would spend a whole run's cap. A jump this big
+# between two consecutive known serials is the wrap; each side is probed as its
+# own cluster, and no window may exceed MAX_WINDOW.
 CLUSTER_GAP = 50_000
 MAX_WINDOW = 20_000
 _KNOWN_CACHE: dict[str, set[int]] = {}
@@ -227,13 +197,9 @@ def ensure_schema(db: Turso) -> None:
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER NOT NULL)""")
     for cfg in PROGRAMS.values():
-        for stmt in table_ddl(cfg):
-            db.execute(stmt)
-        # A column added after the table existed; CREATE TABLE IF NOT EXISTS
-        # is a no-op on a live database. Idempotent afterwards.
-        have = {r[1] for r in _rows(db, f"PRAGMA table_info({cfg['table']})")}
-        if "visa_type" not in have:
-            db.execute(f"ALTER TABLE {cfg['table']} ADD COLUMN visa_type TEXT")
+        for ddl in table_ddl(cfg):
+            db.execute(ddl)
+        if add_missing_columns(db, cfg["table"], {"visa_type": "TEXT"}):
             log(f"  added column {cfg['table']}.visa_type")
 
 
@@ -247,16 +213,16 @@ def ensure_schema(db: Turso) -> None:
 def _serial_stats(db: Turso, table: str, prefixes: list[str], codes: list[str]):
     """Per day code, min and max serial, read by PRIMARY KEY RANGE.
 
-    Turso meters every row READ, and `LIKE 'G-100-26238-%'` cannot use the
-    primary key index (LIKE is case-insensitive by default while the column
-    collates BINARY), so the first version scanned all 414k PERM rows per
-    call. A half-open range on the same prefix walks only that day's rows.
+    `LIKE 'G-100-26238-%'` can't use the primary key index (LIKE is
+    case-insensitive by default while the column collates BINARY), so it scans
+    the whole table; a half-open range on the same prefix walks only that day's
+    rows.
     """
     out = []
     for prefix in prefixes:
         for code in codes:
             lo, hi = f"{prefix}{code}-", f"{prefix}{code}-~"
-            for _day, mn, mx in _rows(
+            for _day, mn, mx in query_rows(
                     db,
                     f"SELECT ? AS day, "
                     f"       MIN(CAST(substr(case_number, 13) AS INTEGER)), "
@@ -349,7 +315,7 @@ def known_serials(db: Turso, code: str) -> set[int]:
         pairs += [(cfg["table"], pfx) for pfx in cfg["prefixes"]]
     for table, prefix in pairs:
         # Primary-key range, not LIKE: see _serial_stats.
-        for (s,) in _rows(db, f"SELECT CAST(substr(case_number, 13) AS INTEGER) FROM {table} "
+        for (s,) in query_rows(db, f"SELECT CAST(substr(case_number, 13) AS INTEGER) FROM {table} "
                               f"WHERE case_number >= ? AND case_number < ?",
                           [f"{prefix}{code}-", f"{prefix}{code}-~"]):
             known.add(int(s))
@@ -383,6 +349,14 @@ def is_final(status: str, program: str = "pwd") -> int:
     return 1 if status.strip().upper() in PROGRAMS[program]["final"] else 0
 
 
+def _flag(v) -> int:
+    """A stored is_final as an int: libSQL hands integers back as strings."""
+    try:
+        return int(v or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
 unknown_seen: set[tuple[str, str]] = set()
 
 
@@ -401,21 +375,6 @@ def _insert_sql(table: str) -> str:
             " last_checked_at, source, fetched_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
 
 
-def _stmt(sql: str, args: list) -> dict:
-    return {"type": "execute", "stmt": {"sql": sql, "args": [lit(a) for a in args]}}
-
-
-def _run_pipeline(db: Turso, stmts: list[dict]) -> list[int]:
-    """Statements in chunks of 200; returns affected-row counts in order."""
-    out: list[int] = []
-    for i in range(0, len(stmts), 200):
-        chunk = stmts[i:i + 200]
-        res = db.pipeline(chunk + [{"type": "close"}])
-        for r in res.get("results", [])[:len(chunk)]:
-            out.append(int(r.get("response", {}).get("result", {}).get("affected_row_count", 0) or 0))
-    return out
-
-
 def insert_hits(db: Turso, hits: list[dict], source: str) -> int:
     """INSERT OR IGNORE each confirmed case into its program's table, in one
     pipeline. Returns rows actually added."""
@@ -430,12 +389,12 @@ def insert_hits(db: Turso, hits: list[dict], source: str) -> int:
             continue
         note_status(program, status)
         name = (v.get("employerName") or "").strip() or None
-        stmts.append(_stmt(_insert_sql(PROGRAMS[program]["table"]), [
+        stmts.append(stmt(_insert_sql(PROGRAMS[program]["table"]), [
             cn, decode_filing_date(cn), status, is_final(status, program), name,
-            _search_slug(name) if name else None, v.get("jobTitle"),
+            slugify(name) if name else None, v.get("jobTitle"),
             (v.get("visaType") or "").strip() or None, v.get("submittedDate"),
             now_iso, now_iso, source, stamp]))
-    return sum(1 for n in _run_pipeline(db, stmts) if n) if stmts else 0
+    return sum(1 for n in run_stmts(db, stmts) if n) if stmts else 0
 
 
 def probe_days(db: Turso, windows: dict[str, list[tuple[int, int]]], cap: int,
@@ -491,12 +450,10 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
     """Re-ask DOL about a set of cases and record what moved.
 
     pending_only  every non-final row (the daily pass; index case_status_final)
-    window_days   every row FILED within the last N days (the weekly pass;
-                  index <table>_filed). The weekly pass used to walk every
-                  row: 96k PWD + 310k LCA needs ~230 minutes against a 170
-                  minute timeout, so it died at 65% every Sunday and, because
-                  it walked in case-number order, the same newest rows were
-                  the ones never re-checked.
+    window_days   every row filed within the last N days (the weekly pass;
+                  index <table>_filed). Every row would outlast the job's
+                  timeout, and in case-number order the newest rows would be
+                  the ones never reached.
     neither       every row (only --limit sampling uses this now)
     """
     cfg = PROGRAMS[program]
@@ -513,15 +470,15 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
     else:
         where, order = "", "case_number"
     rows = {
-        r[0]: r[1:] for r in _rows(
+        r[0]: r[1:] for r in query_rows(
             db,
-            f"SELECT case_number, current_status, employer_name, job_title "
+            f"SELECT case_number, current_status, employer_name, job_title, is_final "
             f"FROM {table} {where} ORDER BY {order} LIMIT {limit or 10**9}", args)
     }
     todo = sorted(rows)
     log(f"{program}: {len(todo):,} cases to check, {BATCH} per request "
         f"= {(len(todo)+BATCH-1)//BATCH:,} requests")
-    checked = moved = missing = fails = 0
+    checked = moved = missing = fails = healed = 0
     # Coverage bookkeeping for the sweep record. Same meanings as the PERM
     # sweep: `asked` counts numbers that reached DOL, `failed_batches` counts
     # holes of up to 50 cases, and either a hole or an early stop disqualifies
@@ -536,7 +493,7 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
 
     def flush() -> None:
         if pending_writes:
-            _run_pipeline(db, pending_writes)
+            run_stmts(db, pending_writes)
             pending_writes.clear()
 
     for i in range(0, len(todo), BATCH):
@@ -576,16 +533,24 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
             if new_status and new_status != old_status:
                 moved += 1
                 fin = is_final(new_status, program)
-                pending_writes.append(_stmt(
+                pending_writes.append(stmt(
                     f"UPDATE {table} SET current_status=?, is_final=?, employer_name=?, "
                     f"job_title=?, visa_type=COALESCE(?, visa_type), last_checked_at=?, "
                     f"source=?, fetched_at=? WHERE case_number=?",
                     [new_status, fin, v.get("employerName") or old[1],
                      v.get("jobTitle") or old[2], visa, now_iso, SOURCE, stamp, cn]))
-                pending_writes.append(_stmt(
+                pending_writes.append(stmt(
                     f"INSERT OR IGNORE INTO {events} (case_number, changed_at, from_status, "
                     f"to_status, to_final, source) VALUES (?,?,?,?,?,?)",
                     [cn, stamp, old_status, new_status, fin, SOURCE]))
+            elif new_status and _flag(old[3]) != is_final(new_status, program):
+                # Same status, wrong flag: the status set learned a word after
+                # the row was stored. Fix the flag; no event, because nothing
+                # moved.
+                healed += 1
+                pending_writes.append(stmt(
+                    f"UPDATE {table} SET is_final=? WHERE case_number=?",
+                    [is_final(new_status, program), cn]))
             # An unchanged row is not written. This branch used to stamp
             # last_checked_at on every row it looked at: ~300,000 UPDATEs a
             # Sunday to record 54 transitions, each one maintaining every
@@ -599,7 +564,8 @@ def sweep(db: Turso, program: str, pending_only: bool, limit: int | None,
             log(f"  {i:,}/{len(todo):,}  moved={moved:,}  missing={missing:,}")
         time.sleep(PACE_S)
     flush()
-    log(f"{program}: checked {checked:,}  moved {moved:,}  not found {missing:,}")
+    log(f"{program}: checked {checked:,}  moved {moved:,}  not found {missing:,}"
+        + (f"  final flag corrected on {healed:,}" if healed else ""))
     # `complete` is decided here rather than by the caller because only this
     # function knows whether a batch was lost. `limit` is the caller's, and a
     # limited run is a slice of the population by construction.
@@ -627,35 +593,40 @@ def write_summary_doc(db: Turso, program: str = "pwd") -> bool:
     against COUNT(*) before writing; a mismatch leaves the previous doc."""
     cfg = PROGRAMS[program]
     table, key = cfg["table"], cfg["doc"]
-    by_status = {s: int(n) for s, n in _rows(
+    by_status = {s: int(n) for s, n in query_rows(
         db, f"SELECT current_status, COUNT(*) FROM {table} GROUP BY current_status")}
-    by_visa = {(v or "unknown"): int(n) for v, n in _rows(
+    by_visa = {(v or "unknown"): int(n) for v, n in query_rows(
         db, f"SELECT visa_type, COUNT(*) FROM {table} GROUP BY visa_type")}
-    by_month_rows = _rows(
+    by_month_rows = query_rows(
         db,
         f"SELECT substr(filing_date, 1, 7) AS m, COUNT(*), SUM(is_final) "
         f"FROM {table} WHERE filing_date IS NOT NULL GROUP BY m ORDER BY m DESC")
-    total = int(_rows(db, f"SELECT COUNT(*) FROM {table}")[0][0] or 0)
+    # Per form prefix (H-300, H-400, P-400 under one table; I-200 and I-203
+    # under another): the H-2A and H-2B page names the three forms apart.
+    by_prefix_rows = query_rows(
+        db, f"SELECT substr(case_number, 1, 5) AS p, COUNT(*), SUM(is_final) FROM {table} GROUP BY p")
+    total = int(query_rows(db, f"SELECT COUNT(*) FROM {table}")[0][0] or 0)
     if sum(by_status.values()) != total:
         log(f"  MISMATCH {key} {sum(by_status.values()):,} vs count {total:,}; doc not written")
         return False
     final = sum(n for s, n in by_status.items() if (s or "").upper() in cfg["final"])
-    earliest = _rows(db, f"SELECT MIN(first_seen_at) FROM {table}")[0][0]
+    earliest = query_rows(db, f"SELECT MIN(first_seen_at) FROM {table}")[0][0]
     doc = {
         "total": total,
         "pending": total - final,
         "decided": final,
         "byStatus": dict(sorted(by_status.items(), key=lambda kv: -kv[1])),
         "byVisaType": dict(sorted(by_visa.items(), key=lambda kv: -kv[1])),
+        "byPrefix": {pfx: int(n) for pfx, n, _f in sorted(by_prefix_rows, key=lambda r: -int(r[1])) if pfx},
+        "pendingByPrefix": {pfx: int(n) - int(f or 0) for pfx, n, f in by_prefix_rows if pfx},
         "byMonth": [{"month": m, "total": int(n), "decided": int(f or 0),
                      "pending": int(n) - int(f or 0)} for m, n, f in by_month_rows if m],
         "sinceFirstSeen": earliest,
         "asOf": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     payload = json.dumps(doc, separators=(",", ":"))
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-               [key, payload, int(time.time() * 1000)])
-    got = _rows(db, "SELECT length(json) FROM perm_docs WHERE key = ?", [key])
+    write_doc(db, key, payload)
+    got = query_rows(db, "SELECT length(json) FROM perm_docs WHERE key = ?", [key])
     ok = bool(got) and int(got[0][0] or 0) == len(payload)
     log(f"  {'ok ' if ok else 'MISMATCH'} perm_docs[{key}]  {total:,} cases, "
         f"{total - final:,} pending, {len(doc['byMonth'])} months")
@@ -665,14 +636,7 @@ def write_summary_doc(db: Turso, program: str = "pwd") -> bool:
 def read_progress_doc(db: Turso) -> dict:
     """The whole backfill record: lastDayDone, when it last moved, the range
     it was dispatched for, and whether it finished. Empty when none exists."""
-    got = _rows(db, "SELECT json FROM perm_docs WHERE key = ?", [PROGRESS_KEY])
-    if not got:
-        return {}
-    try:
-        doc = json.loads(got[0][0])
-    except (TypeError, ValueError):
-        return {}
-    return doc if isinstance(doc, dict) else {}
+    return read_doc(db, PROGRESS_KEY) or {}
 
 
 def read_progress(db: Turso) -> str | None:
@@ -689,8 +653,7 @@ def write_progress(db: Turso, last_day: str | None = None, **fields) -> None:
         doc["lastDayDone"] = last_day
         doc["lastDayDoneAt"] = now_ms
     doc.update(fields)
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-               [PROGRESS_KEY, json.dumps(doc), now_ms])
+    write_doc(db, PROGRESS_KEY, json.dumps(doc), now_ms)
 
 
 # A leg that ran inside this window means the chain is alive (legs take up
@@ -719,7 +682,7 @@ def resume_decision(doc: dict, last_run_ms: int | None, now_ms: int) -> tuple[st
 
 def last_backfill_run_ms(db: Turso) -> int | None:
     try:
-        got = _rows(db, "SELECT started_at FROM ingest_runs WHERE script = ? "
+        got = query_rows(db, "SELECT started_at FROM ingest_runs WHERE script = ? "
                         "ORDER BY started_at DESC LIMIT 1", [BACKFILL_SCRIPT])
     except Exception:  # noqa: BLE001 - a database with no runs yet
         return None
@@ -765,7 +728,7 @@ def main() -> int:
     ap.add_argument("--to", dest="to", help="YYYY-MM-DD, backfill end (inclusive)")
     ap.add_argument("--cap", type=int, help="Override the run's request cap.")
     ap.add_argument("--pending", action="store_true", help="Re-check every non-final case.")
-    ap.add_argument("--full", action="store_true", help="Re-check every case.")
+    ap.add_argument("--full", action="store_true", help="Re-check every case filed inside its program's window.")
     ap.add_argument("--program", choices=[*PROGRAMS, "all"], default="all")
     ap.add_argument("--limit", type=int)
     # Two read-only probes for the workflow that chains backfill legs: where

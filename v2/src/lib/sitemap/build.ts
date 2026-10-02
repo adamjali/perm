@@ -27,26 +27,25 @@ import { MIRROR_COMPLETE } from "@/lib/liveQueueGate";
 import { lineSlugs } from "@/lib/bulletinLines";
 import { categoriesIn } from "@/lib/turso/bulletin";
 import type { BulletinMonth } from "@/lib/perm";
+import { SITE_URL } from "@/lib/constants/site";
 
 /**
  * The sitemap, split into an index and per-kind children.
  *
- * WHY SPLIT AT 21,224 URLs, WHICH IS ONLY 42% OF GOOGLE'S 50,000 CAP.
+ * WHY SPLIT WELL UNDER GOOGLE'S 50,000-URL CAP.
  * Google publishes two numbers that are in tension and never reconciles them:
  * a sitemap may be 50 MB / 50,000 URLs, but "Googlebot crawls the first 2MB
  * of a supported file type" and that limit "is applied on the uncompressed
  * data". Nothing in Google's docs says whether the 2 MB fetch limit applies
- * to sitemap XML. Our single file was 2.3 MB - right on the line of a rule
- * that may or may not exist.
+ * to sitemap XML, and a single file for this site would be past it - on the
+ * line of a rule that may or may not exist.
  *
  * The risk is asymmetric: splitting costs a refactor, truncation costs
- * thousands of URLs silently, and truncation is exactly the failure mode this
- * codebase has already shipped once. So: split, and stop caring which limit
- * applies.
+ * thousands of URLs silently. So: split, and stop caring which limit applies.
  *
  * The second reason is the better one long-term. Search Console can filter
- * the Page indexing report BY SITEMAP, so per-kind children turn "21,224
- * submitted, N indexed" into three separate coverage numbers. That is the
+ * the Page indexing report BY SITEMAP, so per-kind children turn one
+ * "submitted, N indexed" figure into a coverage number per kind. That is the
  * measurement that would show whether law-firm pages index worse than
  * occupation pages - which matters here, because DOL prints one firm under
  * several spellings and each gets its own leaf page.
@@ -56,7 +55,7 @@ import type { BulletinMonth } from "@/lib/perm";
  *     and <changefreq> values", and Bing said the same in July 2025. We never
  *     emitted them; measured at 115 bytes per URL, which is a bare loc+lastmod.
  *   - no .gz. It buys zero headroom (both limits are measured uncompressed)
- *     and Vercel already serves application/xml compressed.
+ *     and Cloudflare already serves application/xml compressed.
  *   - no generateSitemaps() in a root sitemap.ts. Next issue #77304 (open)
  *     reports that 404s /sitemap.xml, which is the URL submitted in Search
  *     Console. These are hand-rolled Route Handlers instead.
@@ -89,7 +88,7 @@ const KIND_PATH: Record<EntityKind, string> = {
 const MIN_ROWS_PER_KIND = 100;
 
 export function baseUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+  return SITE_URL;
 }
 
 /** DOL's own as-of stamp, or null. Optional: it degrades one date. */
@@ -100,12 +99,11 @@ async function permAsOf(): Promise<string | null> {
 }
 
 /**
- * When the DISCLOSURE CORPUS last changed, for the ~20,960 entity URLs.
+ * When the DISCLOSURE CORPUS last changed, for the entity URLs.
  *
  * Not `permAsOf()`. That returns DOL's PROCESSING-TIMES as-of, which moves
- * daily - so every entity URL restamped every day for data that changes four
- * times a year. Measured 2026-08-29: all 5,000 URLs in employer-1.xml carried
- * 2026-08-28 while the corpus behind them was published through 2026-06-30.
+ * daily - so every entity URL would restamp every day for data that changes
+ * four times a year.
  *
  * A lastmod that behaves like a timestamp rather than a fact is one Google
  * discounts, and discounting it costs recrawl priority on exactly the pages
@@ -157,10 +155,9 @@ export async function pagesEntries(): Promise<Entry[]> {
   // census `/perm-queue` builds its month strip from and the month route
   // peeks before rendering (a month whose total is zero 404s there). Listing
   // them from that read is what keeps this file and the router from
-  // disagreeing. Until 2026-09-16 the sitemap listed `/perm-queue` alone and
-  // the ~40 month pages were never advertised: Search Console had
-  // `/perm-queue/2025-11`, the month DOL was adjudicating, as "URL is unknown
-  // to Google", with no referring sitemap and no referring page. The lastmod
+  // disagreeing. Unlisted, the month pages are never advertised, and Search
+  // Console reports even the month DOL is adjudicating as "URL is unknown to
+  // Google". The lastmod
   // is the sweep's own finish date, because the pending counts on every one
   // of these pages move when the sweep runs and at no other time.
   let queueMonths: string[] = [];
@@ -208,8 +205,8 @@ export async function pagesEntries(): Promise<Entry[]> {
   // robots:{index:false} and advertising them here would contradict that.
   const statics: Entry[] = [
     // `${base}/` with the slash: it is the form Google inspects and the
-    // form the canonical declares; without it the homepage inspection read
-    // "no referring sitemaps" (2026-09-15).
+    // form the canonical declares; without it the homepage inspection reads
+    // "no referring sitemaps".
     { url: `${base}/`, lastModified: latest, images: [`${base}/og/home.jpg`] },
     { url: `${base}/blog`, lastModified: latest, images: [`${base}/og/blog.jpg`] },
     { url: `${base}/guides`, lastModified: latest, images: [`${base}/og/guides.jpg`] },
@@ -292,13 +289,17 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/priority-date-retention`, lastModified: "2026-09-09", images: [`${base}/og/priority-date-retention.jpg`] },
     { url: `${base}/tools/green-card-fees`, lastModified: "2026-09-09", images: [`${base}/og/green-card-fees.jpg`] },
     { url: `${base}/tools/wage-levels`, lastModified: "2026-09-09", images: [`${base}/og/wage-levels.jpg`] },
-    // `/perm-employers/compare` IS DELIBERATELY ABSENT (2026-09-21). The page
-    // sets `robots: { index: false }` - it is a tool that renders whatever two
-    // slugs the query names, so there is nothing stable to index - and it was
-    // listed here anyway, which is a sitemap telling Google to index a page
-    // that tells Google not to. Ahrefs' only ERROR on the whole site. robots.txt
-    // already disallowed `/perm-employers/compare?`; the bare path is what was
-    // advertised. `sitemap-excludes-noindex.test.ts` keeps the class shut.
+    // No card of their own yet, so no image entry.
+    { url: `${base}/tools/h1b-lottery-odds-calculator`, lastModified: "2026-10-01" },
+    { url: `${base}/opt-employers`, lastModified: "2026-10-01" },
+    // `/perm-employers/compare` IS DELIBERATELY ABSENT. The page sets
+    // `robots: { index: false }` - it is a tool that renders whatever two
+    // slugs the query names, so there is nothing stable to index - and
+    // listing it here would be a sitemap telling Google to index a page that
+    // tells Google not to, which SEO audits report as an error. robots.txt
+    // disallows `/perm-employers/compare?`, and the bare path must not be
+    // advertised either. `sitemap-excludes-noindex.test.ts` keeps the class
+    // shut.
     { url: `${base}/policy-changes`, lastModified: dol ?? "2026-09-08", images: [`${base}/og/policy-changes.jpg`] },
     { url: `${base}/debarments`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/debarments.jpg`] },
     { url: `${base}/perm-case-statuses`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/perm-case-statuses.jpg`] },
@@ -320,6 +321,8 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/perm-cases`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-cases.jpg`] },
     { url: `${base}/pwd-cases`, lastModified: "2026-09-02", images: [`${base}/og/pwd-cases.jpg`] },
     { url: `${base}/lca-cases`, lastModified: "2026-09-02", images: [`${base}/og/lca-cases.jpg`] },
+    // No card image yet: the page's own card is made from a capture after it ships.
+    { url: `${base}/seasonal-cases`, lastModified: "2026-10-01" },
     { url: `${base}/case-search`, lastModified: "2026-09-03", images: [`${base}/og/case-search.jpg`] },
     // The bare path only. A `?case=` result sets robots:{index:false} and
     // canonicalises back here, so advertising one would contradict the page's
@@ -380,12 +383,11 @@ async function browseEntries(dol: string | null): Promise<Entry[]> {
   const lastModified = dol ?? "2026-08-24";
   const kinds = Object.values(BROWSE_KINDS);
   // REPORT AND CONTINUE, and this is deliberately the OPPOSITE of what
-  // `entityEntries` does. The asymmetry was questioned on 2026-08-30 and the
-  // measurement defended the original choice, so here is the arithmetic:
+  // `entityEntries` does. The arithmetic:
   //
   // `pagesEntries` builds ONE child, pages.xml, and 69 of its URLs are the
   // site's most important - `/`, `/faq`, every calculator, every article. The
-  // browse letters are 81 more. The 21,000 entity URLs are NOT here; they are
+  // browse letters are 81 more. The entity URLs are NOT here; they are
   // in employer-*.xml and friends, 5,000 apiece, and a browse failure cannot
   // touch them.
   //
@@ -465,18 +467,17 @@ export async function entityEntries(kind: EntityKind, chunk: number): Promise<En
 
 /**
  * One chunk of the live-only employers: pages the live feed names and the
- * published files do not. Indexable since 2026-09-17 by the owner's decision
- * (the page's `generateMetadata` carries the reasoning); listed from
- * `perm_live_only_index`, the nightly table, through a rank window.
+ * published files do not. Indexable (the page's `generateMetadata` carries
+ * the reasoning); listed from `perm_live_only_index`, the nightly table,
+ * through a rank window.
  *
  * LASTMOD IS PER PAGE. Each URL carries the day that employer's page last
  * changed (`last_changed`: the newest perm_case_status.fetched_at among its
- * cases, an Eastern date). It used to be the sweep's finish date on all
- * ~22,600 URLs, which moved every night whether a page changed or not; Google
- * uses lastmod only when it is "consistently and verifiably accurate", and a
- * nightly all-rows date reads as a timestamp (outside audit, 2026-09-23). The
- * sweep date survives only as the fallback for a row the builder has not
- * dated yet.
+ * cases, an Eastern date). Not the sweep's finish date on every URL, which
+ * would move every night whether a page changed or not: Google uses lastmod
+ * only when it is "consistently and verifiably accurate", and a nightly
+ * all-rows date reads as a timestamp. The sweep date is only the fallback
+ * for a row the builder has not dated yet.
  */
 export async function liveEmployerEntries(chunk: number): Promise<Entry[]> {
   const base = baseUrl();

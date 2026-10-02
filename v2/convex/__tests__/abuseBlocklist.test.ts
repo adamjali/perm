@@ -115,56 +115,6 @@ describe("recordStrike — strike accumulation + auto-block", () => {
 });
 
 // ---------------------------------------------------------------------------
-// isIpBlocked — read path used by the middleware
-// ---------------------------------------------------------------------------
-
-describe("isIpBlocked", () => {
-  it("returns blocked=false for an unknown IP", async () => {
-    const t = createTestContext();
-    const r = await t.query(api.abuseBlocklist.isIpBlocked, { ip: IP });
-    expect(r.blocked).toBe(false);
-  });
-
-  it("returns blocked=true for an active row", async () => {
-    const t = createTestContext();
-    // Insert directly — the admin mutation path is exercised separately.
-    await t.run(async (ctx) => {
-      await ctx.db.insert("abuseBlocklist", {
-        ip: normalizeIp(IP),
-        addedAt: Date.now(),
-        expiresAt: Date.now() + 60_000,
-        reason: "manual",
-        strikes: 0,
-        manualOverride: true,
-      });
-    });
-    const r = await t.query(api.abuseBlocklist.isIpBlocked, { ip: IP });
-    expect(r.blocked).toBe(true);
-    if (r.blocked) {
-      expect(r.reason).toBe("manual");
-      expect(r.manualOverride).toBe(true);
-    }
-  });
-
-  it("returns blocked=false for an expired row (live filter)", async () => {
-    const t = createTestContext();
-    // Insert a row that expired 1 ms ago
-    await t.run(async (ctx) => {
-      await ctx.db.insert("abuseBlocklist", {
-        ip: normalizeIp(IP),
-        addedAt: Date.now() - 1000,
-        expiresAt: Date.now() - 1,
-        reason: "stale",
-        strikes: 0,
-        manualOverride: true,
-      });
-    });
-    const r = await t.query(api.abuseBlocklist.isIpBlocked, { ip: IP });
-    expect(r.blocked).toBe(false);
-  });
-});
-
-// ---------------------------------------------------------------------------
 // adminBlockIp / adminUnblockIp — manual override path
 // ---------------------------------------------------------------------------
 

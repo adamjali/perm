@@ -11,6 +11,7 @@ import { placeholders, query, type Statement } from "./lib/publicMirror";
 import { canonicalStatus } from "../src/lib/caseStatusVocabulary";
 import { programOf, statusTableFor, type FlagProgram } from "../src/lib/flagCaseNumber";
 import { v } from "convex/values";
+import { SITE_URL } from "./lib/links";
 
 /**
  * The browser-push sweep. In its own file because `web-push` needs the Node
@@ -82,7 +83,7 @@ export const sweep = internalAction({
         title: `${r.caseNumber} moved`,
         body: `DOL's status changed from ${r.lastSeenStatus} to ${cur.status}. Tap to open the case.`,
         tag: `case-${r.caseNumber}`,
-        url: `https://permtracker.app/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`,
+        url: `${SITE_URL}/perm-case-status?case=${encodeURIComponent(r.caseNumber)}`,
       });
       try {
         await webpush.sendNotification(JSON.parse(r.subscription), payload, { TTL: 24 * 60 * 60 });

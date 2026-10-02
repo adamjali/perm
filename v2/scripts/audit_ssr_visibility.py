@@ -1,26 +1,13 @@
 #!/usr/bin/env python3
 """Assert no page ships its content hidden behind an inline opacity.
 
-WHY THIS EXISTS
----------------
-Motion serializes a component's `initial` prop as an INLINE STYLE during
+Motion serializes a component's `initial` prop as an inline style during
 server rendering, so `<motion.div initial={{ opacity: 0 }}>{children}</...>`
-puts `style="opacity:0"` into the prerendered HTML. On 2026-08-31 the shared
-`PageTransition` wrapper was doing exactly that around `{children}` in the
-public layout, so every one of ~298 URLs served roughly 90% of its bytes
-invisible until React hydrated:
-
-    <main id="main-content" ...>
-      <div style="opacity:0;transform:translateY(8px)">   <- 266KB of 296KB
-
-Three consequences: FCP/LCP gated on the whole JS bundle for a page whose HTML
-arrived at 20ms (PageSpeed mobile read FCP 3.0s, LCP 5.8s, element render
-delay 2,470ms); a permanently blank page with JS disabled or broken; and it is
-invisible on desktop, which scored 96 with the defect fully present.
-
-Source-level review does not catch this - the JSX reads as an ordinary
-animation and the prop is named `initial`, which sounds client-side. The only
-place it is visible is the served bytes, so that is what this checks.
+puts `style="opacity:0"` into the prerendered HTML: the page arrives invisible
+until React hydrates, its paint waits on the whole JS bundle, and it stays
+blank with JS disabled or broken. It is invisible on a fast desktop, and the
+JSX reads as an ordinary animation, so the served bytes are the only place to
+check.
 
 USAGE
     python3 scripts/audit_ssr_visibility.py                       # live site
@@ -52,10 +39,9 @@ HIDDEN_RE = re.compile(r"opacity:\s*0(?![.\d])")
 # The specific shape the PageTransition regression produced, reported separately
 # because it names its own cause.
 TRANSFORM_RE = re.compile(r"translateY\(8px\)")
-# Only an element's own inline style can hide it at first paint. The regex used
-# to run over the whole document, so from Sep 30 2026 every page "failed" on the
-# home curtain's stylesheet rule `html[data-pre="leaving"] .pre{...opacity:0}`
-# in <head>: CSS text that hides nothing on the page (80 of 80 findings, all it).
+# Only an element's own inline style can hide it at first paint, so only inline
+# `style` attributes are judged: a stylesheet rule in <head> can mention
+# `opacity:0` without hiding anything on the page.
 STYLE_ATTR_RE = re.compile(r'\sstyle="([^"]*)"')
 
 
@@ -64,15 +50,13 @@ def hidden_styles(body: str, pattern: re.Pattern = HIDDEN_RE) -> list[int]:
     return [m.start() for m in STYLE_ATTR_RE.finditer(body) if pattern.search(m.group(1))]
 
 # A string every page on this site serves. If it is absent the fetch did not
-# reach a real page (a Vercel bot challenge, a 404 body, an error shell), and
-# every "clean" result in that run is meaningless. A sweep with no control
-# reads exactly like a pass - the failure this repo has hit more than once.
+# reach a real page (a bot challenge, a 404 body, an error shell), and every
+# "clean" result in that run would be meaningless.
 CONTROL = "main-content"
 
 
 def fetch(url: str, timeout: int = 30) -> tuple[int, str]:
-    # x-permtracker-audit: the Firewall's bypass for the site's own audits
-    # (Bot Protection would challenge a script wearing a browser UA).
+    # The audit key exempts this from the per-address limits (lib_audit.py).
     req = urllib.request.Request(url, headers={"User-Agent": UA, **audit_headers()})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
@@ -150,17 +134,11 @@ def main() -> int:
             if CONTROL not in body:
                 blind.append(f"  200 but no control string ({CONTROL!r})  {path}")
                 continue
-            # THE RULE IS POSITIONAL, and that is what makes this gate usable.
-            #
-            # A bare count of `opacity:0` cannot be the failure condition: the
-            # `whileInView` reveals on content pages are SUPPOSED to start
-            # hidden, so counting them would fail every blog and changelog
-            # page forever and the gate would be ignored within a week.
-            #
-            # What is never acceptable is hiding content ABOVE the fold, and
-            # the <h1> is a reliable proxy for that line: anything serialized
-            # hidden before the page's headline is on the critical render path
-            # and is gating LCP on hydration.
+            # The rule is positional. `whileInView` reveals further down a page are
+            # supposed to start hidden, so a bare count of `opacity:0` would fail
+            # every content page forever. What is never acceptable is hiding content
+            # above the fold, and the <h1> is a reliable proxy for that line:
+            # anything hidden before the headline gates LCP on hydration.
             h1 = body.find("<h1")
             hidden = hidden_styles(body)
             hidden_before_h1 = [p for p in hidden if h1 > -1 and p < h1]

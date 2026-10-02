@@ -27,6 +27,40 @@ def check(name: str, got, want) -> None:
         print(f"  FAIL {name}\n         got  {got!r}\n         want {want!r}")
 
 
+def sweep_heals_stale_flags() -> None:
+    """A row stored before its status joined the final set is fixed by the
+    next pass with no event, and a row whose flag already agrees is not
+    written at all."""
+    import ingest_pwd_status_direct as m
+
+    stored = [  # case, status, employer, title, is_final AS libSQL returns it
+        ("P-400-25308-369253", "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION", "A", "t", "0"),
+        ("P-400-25325-428824", "BALCA OVERTURNED", "B", "t", "0"),
+        ("H-300-26246-000001", "IN PROCESS", "C", "t", "0"),
+        ("H-300-26246-000002", "FULL CERTIFICATION", "D", "t", "1"),
+    ]
+    writes: list[dict] = []
+    saved = (m.query_rows, m.lookup_with_retry, m.run_stmts, m.record_sweep, m.time.sleep)
+    try:
+        m.query_rows = lambda db, sql, args=None: stored
+        m.lookup_with_retry = lambda nums: [
+            {"caseNumber": c, "caseStatus": st} for c, st, *_ in stored if c in nums]
+        m.run_stmts = lambda db, stmts, per_request=200: writes.extend(stmts) or [1] * len(stmts)
+        m.record_sweep = lambda *a, **k: None
+        m.time.sleep = lambda s: None
+        m.sweep(None, "seasonal", pending_only=True, limit=None)
+    finally:
+        m.query_rows, m.lookup_with_retry, m.run_stmts, m.record_sweep, m.time.sleep = saved
+    sqls = [w["stmt"]["sql"] for w in writes]
+    fixed = sorted(w["stmt"]["args"][1]["value"] for w in writes
+                   if w["stmt"]["sql"].startswith("UPDATE seasonal_case_status SET is_final"))
+    check("both stale rows get their flag fixed", fixed,
+          ["P-400-25308-369253", "P-400-25325-428824"])
+    check("a heal writes no event (nothing moved)",
+          any("seasonal_case_events" in q for q in sqls), False)
+    check("rows whose flag agrees are not written", len(writes), 2)
+
+
 def main() -> int:
     print("pwd status ingest")
     # The day code is YYDDD from a real date, year boundary included.
@@ -57,6 +91,9 @@ def main() -> int:
     check("the final set names the observed outcomes",
           {"DETERMINATION ISSUED", "REDETERMINATION AFFIRMED", "REDETERMINATION MODIFIED",
            "WITHDRAWN"} <= PWD_FINAL, True)
+
+    print("sweep corrects a stale final flag")
+    sweep_heals_stale_flags()
 
     print("backfill resumer")
     H = 3_600_000

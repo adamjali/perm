@@ -10,8 +10,7 @@ import type { WarnNotice as Notice } from "@/lib/turso/warn";
  *
  * The site sits on a second line where the state gives one. Without it, two
  * notices a company filed the same day for different sites print identically
- * and read as a duplicate: Morgan Stanley's two one-worker New York notices of
- * 2026-03-05 are 100 Park Ave and One Penn Plaza.
+ * and read as a duplicate.
  */
 
 const long = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
@@ -25,8 +24,8 @@ export function WarnNoticeBand({ rows, pageName }: { rows: Notice[]; pageName: s
         Layoff notices filed by {pageName}
       </h2>{" "}
       <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/70">
-        Filed with the state under the WARN Act, which requires 60 days&apos; notice of a mass layoff or closing. As
-        printed by the state; matched to this sponsor by the same name rule that groups DOL&apos;s spellings.{" "}
+        Notices of a mass layoff or closing filed with the state under the WARN Act, as the state printed them,
+        matched to this sponsor by name.{" "}
         <Link href="/guides/employer-layoffs-and-your-perm" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
           What a layoff means for a PERM
         </Link>

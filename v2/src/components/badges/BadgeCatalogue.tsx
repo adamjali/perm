@@ -238,7 +238,7 @@ export function BadgeCatalogue({ rows, origin }: { rows: BadgeRow[]; origin: str
                     </div>
                     <CopyButton text={code} />
                   </div>
-                  <pre className="mt-4 overflow-x-auto border-2 border-border bg-background p-3 font-mono text-xs leading-relaxed">
+                  <pre className="mt-4 overflow-x-auto border-2 border-border bg-background p-3 font-mono text-sm leading-relaxed">
                     <code>{code}</code>
                   </pre>
                 </li>

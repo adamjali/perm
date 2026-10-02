@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { ChartTips } from "@/components/data/ChartTips";
 import type { BulletinMonth, CountryKey } from "@/lib/perm";
 import { formatMonth } from "@/lib/dolFormat";
 import type { I140Subtype } from "@/lib/processing-times/i140ProcessingTimes";
@@ -44,12 +45,16 @@ export function I140SubtypePanel({
       <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
         USCIS published times, 80% within
       </p>{" "}
-      <ul className="mt-3 space-y-2">
+      <ChartTips label="I-140 processing time by subtype, 80% within" className="mt-3">
+      <ul className="space-y-2">
         {subtypes.map((s) => {
           const active = s.code === activeCode;
           return (
             <Fragment key={s.code}>{" "}
-            <li className="grid grid-cols-[1fr_auto] items-center gap-x-3">
+            <li
+              data-tip={`${s.label}\n80% decided within ${s.months80} months${active ? "\nThe subtype the estimate uses" : ""}`}
+              className="grid grid-cols-[1fr_auto] items-center gap-x-3"
+            >
               <div className="min-w-0">
                 <p className={cn("truncate text-sm", active ? "font-bold" : "text-foreground/70")}>
                   {s.label}
@@ -76,7 +81,8 @@ export function I140SubtypePanel({
             </Fragment>
           );
         })}
-      </ul>{" "}
+      </ul>
+      </ChartTips>{" "}
       <p className="mt-3 text-sm text-muted-foreground">
         USCIS, as of {asOf}: the time it took to finish 80% of the petitions it
         decided over the past six months. The bar above uses{" "}

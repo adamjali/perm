@@ -3,8 +3,7 @@
  *
  * Real Census geometry filled from the live DOL disclosure aggregates —
  * filings, approval rate, denial rate, median days and median wage per
- * worksite state. The rival keeps a state map behind its paywall; ours is
- * free, on the open data, with the methodology one tab away.
+ * worksite state. Free, on the open data, with the methodology one tab away.
  *
  * The map and the table share one metric selector and one population floor.
  * A choropleth shaded by a rate over seventeen decided cases is a picture of
@@ -29,6 +28,8 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
 import { stateName } from "@/lib/usStateNames";
+import { formatInt } from "@/lib/format";
+import { SITE_URL } from "@/lib/constants/site";
 const TITLE = "PERM Filings by State";
 const DESCRIPTION =
   "Interactive map of PERM filings by worksite state: volume, approval rate, median days and median wage, from DOL's own disclosure files.";
@@ -57,10 +58,6 @@ export const metadata: Metadata = withSocialCard({
 // the long window costs no freshness. It stays a WEEK rather than a month so a
 // trigger that never fires bounds the staleness instead of stranding the page.
 export const revalidate = 604800;
-
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 export default async function PermByStatePage() {
   const [stats, profiles] = await Promise.all([
@@ -93,10 +90,10 @@ export default async function PermByStatePage() {
     .filter((s) => s.topOccupationShare !== null && s.topOccupations[0])
     .sort((a, b) => (b.topOccupationShare ?? 0) - (a.topOccupationShare ?? 0))[0];
 
-  const datasetSchema = getDatasetSchema("https://permtracker.app", {
+  const datasetSchema = getDatasetSchema(SITE_URL, {
     name: "PERM labor certification filings by state",
     description: DESCRIPTION,
-    url: "https://permtracker.app/perm-by-state",
+    url: `${SITE_URL}/perm-by-state`,
   });
 
   return (
@@ -104,10 +101,7 @@ export default async function PermByStatePage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          From DOL&apos;s own disclosure files
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           PERM filings, state by state
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
@@ -123,18 +117,18 @@ export default async function PermByStatePage() {
           {/* The three facts the map cannot say at a glance. */}
           <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
             <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard-sm">
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+              <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
                 Cases in this window
               </p>{" "}
               <p className="mt-2 font-heading text-3xl font-black tabular-nums">
-                {fmtInt(uniqueCases)}
+                {formatInt(uniqueCases)}
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-background/70">
                 De-duplicated by case number across the quarterly files.
               </p>
             </div>
             <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+              <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
                 Busiest state
               </p>{" "}
               <p className="mt-2 font-heading text-3xl font-black">
@@ -144,12 +138,12 @@ export default async function PermByStatePage() {
                 {!top
                   ? "Awaiting the next quarterly ingest."
                   : topBeatsSmallHalf
-                    ? `${fmtInt(top.total)} filings, more than the ${smallHalf.length} smallest states put together.`
-                    : `${fmtInt(top.total)} filings, ${((top.total / (uniqueCases || 1)) * 100).toFixed(0)}% of the window.`}
+                    ? `${formatInt(top.total)} filings, more than the ${smallHalf.length} smallest states put together.`
+                    : `${formatInt(top.total)} filings, ${((top.total / (uniqueCases || 1)) * 100).toFixed(0)}% of the window.`}
               </p>
             </div>
             <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+              <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
                 Why states differ
               </p>{" "}
               <p className="mt-2 text-sm leading-relaxed text-foreground/70">
@@ -178,7 +172,7 @@ export default async function PermByStatePage() {
                       {stateName(mostConcentrated.state)} is the extreme:{" "}
                       <strong>
                         {mostConcentrated.topOccupationShare}% of its{" "}
-                        {fmtInt(mostConcentrated.total)} filings are{" "}
+                        {formatInt(mostConcentrated.total)} filings are{" "}
                         {mostConcentrated.topOccupations[0].label.toLowerCase()}
                       </strong>
                       .

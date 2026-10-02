@@ -8,15 +8,14 @@
  * route. It is deliberately separate from `permCaseNumber.ts`: a DOL case
  * number (`G-100-26125-868956`) and a USCIS receipt (`EAC2190123456`) are
  * different agencies, different records and different lookups, and one
- * parser that accepts both is how a P-100 row once leaked into the PERM
- * table.
+ * parser that accepts both would let a P-100 row leak into the PERM table.
  *
  * ## What is primary-sourced and what is convention
  *
- * USCIS's own glossary (uscis.gov/tools/glossary, entry "Receipt Number",
- * read 2026-09-22) says, verbatim: "The receipt number consists of 3 letters,
- * such as EAC, WAC, LIN, SRC, NBC, MSC or IOE, with 10 numbers." The Case
- * Status API's OpenAPI spec (developer.uscis.gov, captured 2026-09-21) gives
+ * USCIS's own glossary (uscis.gov/tools/glossary, entry "Receipt Number")
+ * says, verbatim: "The receipt number consists of 3 letters, such as EAC,
+ * WAC, LIN, SRC, NBC, MSC or IOE, with 10 numbers." The Case Status API's
+ * OpenAPI spec (developer.uscis.gov) gives
  * the validation regex as `[a-zA-Z]{3}[0-9]{10}` and, for masked numbers,
  * `[a-zA-Z]{3}\*[0-9]{9}`, and answers 422 to anything else.
  *

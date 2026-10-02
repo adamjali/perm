@@ -6,7 +6,7 @@
  */
 
 import type { MutationCtx } from "./_generated/server";
-import { query, mutation, internalMutation } from "./_generated/server";
+import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { calculatePWDExpiration } from "./lib/perm";
@@ -162,98 +162,6 @@ export const restartTour = mutation({
       onboardingStep: "tour_pending",
       updatedAt: Date.now(),
     });
-  },
-});
-
-/**
- * Reset onboarding state to trigger the wizard again (authenticated).
- */
-export const resetOnboarding = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const profile = await requireProfile(ctx);
-
-    await ctx.db.patch(profile._id, {
-      onboardingStep: "welcome",
-      onboardingCompletedAt: undefined,
-      onboardingChecklist: undefined,
-      onboardingChecklistDismissed: undefined,
-      updatedAt: Date.now(),
-    });
-  },
-});
-
-/**
- * Reset onboarding by email — internal, for CLI testing.
- */
-export const resetOnboardingByEmail = internalMutation({
-  args: { email: v.string() },
-  handler: async (ctx, args) => {
-    // Find user by email in users table
-    const user = await ctx.db
-      .query("users")
-      .withIndex("email", (q) => q.eq("email", args.email))
-      .unique();
-    if (!user) throw new Error(`No user found for ${args.email}`);
-
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", user._id))
-      .unique();
-    if (!profile) throw new Error(`No profile found for user ${user._id}`);
-
-    await ctx.db.patch(profile._id, {
-      onboardingStep: "welcome",
-      onboardingCompletedAt: undefined,
-      onboardingChecklist: undefined,
-      onboardingChecklistDismissed: undefined,
-      updatedAt: Date.now(),
-    });
-    return { success: true, userId: profile.userId };
-  },
-});
-
-/**
- * Backfill migration: set termsAcceptedAt + reset onboarding for ALL users
- * who haven't completed it. Run once via CLI:
- *   npx convex run onboarding:backfillOnboardingForAllUsers '{}' --prod
- */
-export const backfillOnboardingForAllUsers = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const profiles = await ctx.db.query("userProfiles").collect();
-    let termsBackfilled = 0;
-    let onboardingReset = 0;
-
-    for (const profile of profiles) {
-      const updates: Record<string, unknown> = {};
-
-      // Backfill termsAcceptedAt if missing
-      if (!profile.termsAcceptedAt) {
-        updates.termsAcceptedAt = Date.now();
-        updates.termsVersion = "2026-01-03";
-        termsBackfilled++;
-      }
-
-      // Reset onboarding if not completed
-      if (!profile.onboardingCompletedAt) {
-        updates.onboardingStep = "welcome";
-        updates.onboardingChecklist = undefined;
-        updates.onboardingChecklistDismissed = undefined;
-        onboardingReset++;
-      }
-
-      if (Object.keys(updates).length > 0) {
-        updates.updatedAt = Date.now();
-        await ctx.db.patch(profile._id, updates);
-      }
-    }
-
-    return {
-      totalProfiles: profiles.length,
-      termsBackfilled,
-      onboardingReset,
-    };
   },
 });
 
@@ -445,51 +353,3 @@ function buildSampleCaseDates(referenceDate?: Date) {
 // Sample Case Migration
 // ============================================================================
 
-/**
- * One-time migration: fix all existing sample cases to have PERM-compliant dates.
- * Run via: npx convex run onboarding:migrateSampleCases '{}' --prod
- */
-export const migrateSampleCases = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    const sampleCases = await ctx.db
-      .query("cases")
-      .filter((q) => q.eq(q.field("isSample"), true))
-      .collect();
-
-    let updated = 0;
-    let skipped = 0;
-
-    for (const caseDoc of sampleCases) {
-      // Skip deleted cases
-      if (caseDoc.deletedAt !== undefined) {
-        skipped++;
-        continue;
-      }
-
-      const dates = buildSampleCaseDates();
-
-      await ctx.db.patch(caseDoc._id, {
-        pwdFilingDate: dates.pwdFilingDate,
-        pwdDeterminationDate: dates.pwdDeterminationDate,
-        pwdExpirationDate: dates.pwdExpirationDate,
-        jobOrderStartDate: dates.jobOrderStartDate,
-        jobOrderEndDate: dates.jobOrderEndDate,
-        sundayAdFirstDate: dates.sundayAdFirstDate,
-        sundayAdSecondDate: dates.sundayAdSecondDate,
-        noticeOfFilingStartDate: dates.noticeOfFilingStartDate,
-        noticeOfFilingEndDate: dates.noticeOfFilingEndDate,
-        recruitmentStartDate: dates.jobOrderStartDate,
-        additionalRecruitmentMethods: [
-          { method: "Company Website", date: dates.additionalMethod1Date, description: "Posted on careers page" },
-          { method: "Indeed.com", date: dates.additionalMethod2Date, description: "Online job board posting" },
-          { method: "Campus Career Office", date: dates.additionalMethod3Date, description: "University partnership" },
-        ],
-        updatedAt: Date.now(),
-      });
-      updated++;
-    }
-
-    return { updated, skipped, total: sampleCases.length };
-  },
-});

@@ -1,8 +1,7 @@
 /**
  * One way out for every alert email, so a person hears from us at most once a day.
  *
- * Adam, Sep 25 2026: "i feel like we already have too much emails as it is ...
- * just merge everything in somewhere". Each alert kind (case status, queue
+ * Each alert kind (case status, queue
  * month, visa bulletin, employer follow) still decides WHAT to say and builds
  * its own complete email; this decides WHEN it leaves.
  *
@@ -28,6 +27,7 @@
 import { internal } from "../_generated/api";
 import type { ActionCtx } from "../_generated/server";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./email";
+import { easternDay } from "./time";
 
 export type AlertKind = "case" | "queue" | "bulletin" | "employer";
 
@@ -59,16 +59,6 @@ export type DeliveryResult =
   | { status: "queued" }
   | { status: "failed"; error: string };
 
-/** YYYY-MM-DD on Adam's and DOL's clock, never UTC's. */
-export function etDay(ms: number): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/New_York",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(ms));
-}
-
 /** RFC 8058 one-click headers for a single opt-out URL. */
 export function oneClickHeaders(url: string): Record<string, string> {
   return {
@@ -79,7 +69,7 @@ export function oneClickHeaders(url: string): Record<string, string> {
 
 export async function deliverAlert(ctx: ActionCtx, item: AlertItem): Promise<DeliveryResult> {
   const now = Date.now();
-  const day = etDay(now);
+  const day = easternDay(now);
   const state = await ctx.runQuery(internal.alertOutbox.deliveryState, {
     email: item.email,
     day,

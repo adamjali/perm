@@ -8,14 +8,14 @@
 
 import { useQuery } from "convex/react";
 
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import {
   type DailyReport,
   type SectionStatus,
   STATUS_RANK,
   dayLabel,
   readReport,
-} from "../../../convex/lib/dailyReportCompose";
+} from "@convex/lib/dailyReportCompose";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const WORD: Record<SectionStatus, string> = {

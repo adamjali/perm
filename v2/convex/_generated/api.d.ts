@@ -53,7 +53,6 @@ import type * as googleAuth from "../googleAuth.js";
 import type * as googleCalendarActions from "../googleCalendarActions.js";
 import type * as googleCalendarSync from "../googleCalendarSync.js";
 import type * as http from "../http.js";
-import type * as incidentCleanup from "../incidentCleanup.js";
 import type * as jobDescriptionTemplates from "../jobDescriptionTemplates.js";
 import type * as knowledge from "../knowledge.js";
 import type * as lib_admin from "../lib/admin.js";
@@ -67,6 +66,7 @@ import type * as lib_calendarEventExtractor from "../lib/calendarEventExtractor.
 import type * as lib_calendarHelpers from "../lib/calendarHelpers.js";
 import type * as lib_calendarSyncHelpers from "../lib/calendarSyncHelpers.js";
 import type * as lib_calendarTypes from "../lib/calendarTypes.js";
+import type * as lib_caseDates from "../lib/caseDates.js";
 import type * as lib_caseListHelpers from "../lib/caseListHelpers.js";
 import type * as lib_caseListTypes from "../lib/caseListTypes.js";
 import type * as lib_communityTimeline from "../lib/communityTimeline.js";
@@ -87,10 +87,14 @@ import type * as lib_email from "../lib/email.js";
 import type * as lib_emailBlocklist from "../lib/emailBlocklist.js";
 import type * as lib_emailLimits from "../lib/emailLimits.js";
 import type * as lib_errorRecording from "../lib/errorRecording.js";
+import type * as lib_format from "../lib/format.js";
 import type * as lib_formatDate from "../lib/formatDate.js";
 import type * as lib_googleHelpers from "../lib/googleHelpers.js";
+import type * as lib_ids from "../lib/ids.js";
 import type * as lib_links from "../lib/links.js";
 import type * as lib_logging from "../lib/logging.js";
+import type * as lib_mailKinds from "../lib/mailKinds.js";
+import type * as lib_mailPages from "../lib/mailPages.js";
 import type * as lib_nameValidation from "../lib/nameValidation.js";
 import type * as lib_newsConsent from "../lib/newsConsent.js";
 import type * as lib_newsletterCompose from "../lib/newsletterCompose.js";
@@ -156,6 +160,7 @@ import type * as lib_sentry from "../lib/sentry.js";
 import type * as lib_supportEmailForward from "../lib/supportEmailForward.js";
 import type * as lib_suspension from "../lib/suspension.js";
 import type * as lib_throttleReply from "../lib/throttleReply.js";
+import type * as lib_time from "../lib/time.js";
 import type * as lib_turnstilePass from "../lib/turnstilePass.js";
 import type * as lib_unsubscribeToken from "../lib/unsubscribeToken.js";
 import type * as lib_userCases from "../lib/userCases.js";
@@ -165,14 +170,10 @@ import type * as lib_validation from "../lib/validation.js";
 import type * as marketingEmail from "../marketingEmail.js";
 import type * as marketingEmailHelpers from "../marketingEmailHelpers.js";
 import type * as marketingWebhook from "../marketingWebhook.js";
-import type * as migrations from "../migrations.js";
 import type * as newsletter from "../newsletter.js";
 import type * as notificationActions from "../notificationActions.js";
 import type * as notifications from "../notifications.js";
 import type * as onboarding from "../onboarding.js";
-import type * as permCases from "../permCases.js";
-import type * as permEntities from "../permEntities.js";
-import type * as permWageStats from "../permWageStats.js";
 import type * as pushNotifications from "../pushNotifications.js";
 import type * as pushSubscriptions from "../pushSubscriptions.js";
 import type * as queueAlerts from "../queueAlerts.js";
@@ -193,7 +194,6 @@ import type * as users from "../users.js";
 import type * as watchedCases from "../watchedCases.js";
 import type * as webSearch from "../webSearch.js";
 import type * as welcomeEmail from "../welcomeEmail.js";
-import type * as welcomeEmailHelpers from "../welcomeEmailHelpers.js";
 
 import type {
   ApiFromModules,
@@ -247,7 +247,6 @@ declare const fullApi: ApiFromModules<{
   googleCalendarActions: typeof googleCalendarActions;
   googleCalendarSync: typeof googleCalendarSync;
   http: typeof http;
-  incidentCleanup: typeof incidentCleanup;
   jobDescriptionTemplates: typeof jobDescriptionTemplates;
   knowledge: typeof knowledge;
   "lib/admin": typeof lib_admin;
@@ -261,6 +260,7 @@ declare const fullApi: ApiFromModules<{
   "lib/calendarHelpers": typeof lib_calendarHelpers;
   "lib/calendarSyncHelpers": typeof lib_calendarSyncHelpers;
   "lib/calendarTypes": typeof lib_calendarTypes;
+  "lib/caseDates": typeof lib_caseDates;
   "lib/caseListHelpers": typeof lib_caseListHelpers;
   "lib/caseListTypes": typeof lib_caseListTypes;
   "lib/communityTimeline": typeof lib_communityTimeline;
@@ -281,10 +281,14 @@ declare const fullApi: ApiFromModules<{
   "lib/emailBlocklist": typeof lib_emailBlocklist;
   "lib/emailLimits": typeof lib_emailLimits;
   "lib/errorRecording": typeof lib_errorRecording;
+  "lib/format": typeof lib_format;
   "lib/formatDate": typeof lib_formatDate;
   "lib/googleHelpers": typeof lib_googleHelpers;
+  "lib/ids": typeof lib_ids;
   "lib/links": typeof lib_links;
   "lib/logging": typeof lib_logging;
+  "lib/mailKinds": typeof lib_mailKinds;
+  "lib/mailPages": typeof lib_mailPages;
   "lib/nameValidation": typeof lib_nameValidation;
   "lib/newsConsent": typeof lib_newsConsent;
   "lib/newsletterCompose": typeof lib_newsletterCompose;
@@ -350,6 +354,7 @@ declare const fullApi: ApiFromModules<{
   "lib/supportEmailForward": typeof lib_supportEmailForward;
   "lib/suspension": typeof lib_suspension;
   "lib/throttleReply": typeof lib_throttleReply;
+  "lib/time": typeof lib_time;
   "lib/turnstilePass": typeof lib_turnstilePass;
   "lib/unsubscribeToken": typeof lib_unsubscribeToken;
   "lib/userCases": typeof lib_userCases;
@@ -359,14 +364,10 @@ declare const fullApi: ApiFromModules<{
   marketingEmail: typeof marketingEmail;
   marketingEmailHelpers: typeof marketingEmailHelpers;
   marketingWebhook: typeof marketingWebhook;
-  migrations: typeof migrations;
   newsletter: typeof newsletter;
   notificationActions: typeof notificationActions;
   notifications: typeof notifications;
   onboarding: typeof onboarding;
-  permCases: typeof permCases;
-  permEntities: typeof permEntities;
-  permWageStats: typeof permWageStats;
   pushNotifications: typeof pushNotifications;
   pushSubscriptions: typeof pushSubscriptions;
   queueAlerts: typeof queueAlerts;
@@ -387,7 +388,6 @@ declare const fullApi: ApiFromModules<{
   watchedCases: typeof watchedCases;
   webSearch: typeof webSearch;
   welcomeEmail: typeof welcomeEmail;
-  welcomeEmailHelpers: typeof welcomeEmailHelpers;
 }>;
 
 /**

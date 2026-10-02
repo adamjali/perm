@@ -1,11 +1,10 @@
 "use client";
 
-// DECLARED, not inherited (2026-09-01). This module uses useState, so it is a
-// client module in every sense except the annotation. It worked without one
-// only because every path that reached it happened to cross somebody else's
-// `"use client"` boundary first, which made it a latent trap: move a boundary
-// anywhere above it and this lands on the server, where the API does not exist.
-// See lib/ai/page-context.tsx for the failure this actually caused.
+// DECLARED, not inherited. This module uses useState, so it is a client module
+// in every sense. Without the annotation it works only while every path to
+// it crosses somebody else's `"use client"` boundary first: move a boundary
+// anywhere above it and this lands on the server, where the API does not
+// exist. See lib/ai/page-context.tsx for the failure that causes.
 
 /**
  * useChatWithPersistence Hook
@@ -13,15 +12,12 @@
  * AI SDK streaming plus Convex persistence, displayed as ONE list with stable
  * identities.
  *
- * WHERE EACH MESSAGE COMES FROM (rebuilt 2026-09-28). A message sent or
- * received in this session is shown from the AI SDK, from its first streamed
- * word to the end, keyed by the SDK's own id; the saved copy in Convex is never
- * swapped in for it. Everything older comes from Convex. The earlier design
- * showed a streaming message, hid it when the stream ended, re-showed it from
- * an "optimistic" copy once onFinish ran, then swapped in the Convex copy after
- * a typewriter-length timer: the reply vanished for a moment, replayed as one
- * block, jumped again on the swap, and printed twice whenever the saved text
- * differed from the streamed text. Session membership is decided once, when
+ * WHERE EACH MESSAGE COMES FROM. A message sent or received in this session
+ * is shown from the AI SDK, from its first streamed word to the end, keyed by
+ * the SDK's own id; the saved copy in Convex is never swapped in for it,
+ * because a swap makes the reply vanish, replay as one block, jump, and print
+ * twice whenever the saved text differs from the streamed text. Everything
+ * older comes from Convex. Session membership is decided once, when
  * the session's first message is sent: the Convex ids present then are
  * history, everything later is the session's own.
  *
@@ -33,8 +29,8 @@ import { flushSync } from 'react-dom';
 import { useChat as useAIChat } from '@ai-sdk/react';
 import { DefaultChatTransport, type UIMessage } from 'ai';
 import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
-import type { Id } from '../../convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import { useAuthContext } from '@/lib/contexts/AuthContext';
 import { type PageContext, serializePageContext } from '@/lib/ai/page-context';
 import type { CutShort } from '@/lib/ai/limits';

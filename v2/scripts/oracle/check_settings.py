@@ -4,11 +4,10 @@ Run ON the server after ANY settings change (switch day included):
 
     ssh permtracker 'sudo /usr/bin/python3 -' < v2/scripts/oracle/check_settings.py
 
-Why it exists: on Sep 28 2026 nine values copied from Vercel carried a stray
-trailing \\n (the escape `vercel env pull` writes for a value stored with a
-newline). Every AI key was rejected and the staging chatbot failed, while the
-length and presence checks passed. Part 1 finds that class in every env file;
-part 2 asks each service whether it accepts its key. Only names, PASS/FAIL and
+A value copied between systems can carry an invisible artifact (a literal
+trailing \\n, for one) that passes every length and presence check while the
+service rejects the key. Part 1 finds that class in every env file; part 2
+asks each service whether it accepts its key. Only names, PASS/FAIL and
 HTTP codes are printed; no value leaves the server.
 """
 import base64
@@ -135,10 +134,9 @@ show("REVALIDATE_SECRET (bulletin)", "right secret revalidates, wrong one refuse
 
 # Part 3: the database takes every job's biggest read, with room to grow.
 #
-# Sep 29 2026: sqld's default 10 MB reply cap killed the first full case-status
-# sweep after the move off Turso, and four more jobs would have followed
-# (measured below). Nothing in parts 1 and 2 sends a realistic query, so this
-# part sends each job's real largest one and fails any reply over half the cap.
+# sqld's default 10 MB reply cap is smaller than several jobs' largest reads.
+# Nothing in parts 1 and 2 sends a realistic query, so this part sends each
+# job's real largest one and fails any reply over half the cap.
 # The SQL is copied from the named script; keep them in step when a read changes.
 def cap_bytes(flag, default):
     args = subprocess.run(["ps", "-o", "args=", "-C", "sqld"], capture_output=True, text=True).stdout
@@ -170,8 +168,7 @@ for name, sql in BIG_READS.items():
          "" if ok else r.stdout)
 subprocess.run(["rm", "-f", "/tmp/bigread.json"])
 
-# One value is capped too (5,000,000 bytes, measured Sep 29 2026: "string or blob
-# too big"). The precomputed documents are single values; fail at a fifth of it.
+# One value is capped too (5,000,000 bytes: "string or blob too big"). The precomputed documents are single values; fail at a fifth of it.
 c, t = curl("-X", "POST", *bearer("TURSO_AUTH_TOKEN"), "-H", "Content-Type: application/json", DB_URL,
             "-d", json.dumps({"requests": [{"type": "execute", "stmt": {"sql": "SELECT max(length(json)) FROM perm_docs"}}, {"type": "close"}]}))
 biggest = int(json.loads(t)["results"][0]["response"]["result"]["rows"][0][0]["value"]) if c == "200" else -1

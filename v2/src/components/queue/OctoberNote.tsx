@@ -1,6 +1,7 @@
 import { WarningIcon } from "@phosphor-icons/react/ssr";
 
 import { FinePrint } from "@/components/data/FinePrint";
+import { MoreText } from "@/components/data/MoreText";
 
 /**
  * Why one month in the backlog is a twelfth the size of its neighbours.
@@ -106,14 +107,16 @@ export function OctoberNote() {
         .
       </p>{" "}
 
-      <p className="mt-3 text-base leading-relaxed text-foreground/80">
-        October isn&rsquo;t empty because paper kept moving. DOL says employers
-        who couldn&rsquo;t file electronically posted their applications, that
-        OFLC entered those by hand once FLAG was back, and that each one
-        &ldquo;will be considered to have been filed on the date it was
-        postmarked&rdquo;. So a good part of the 1,616 is mail, backdated into
-        a month when the portal was shut.
-      </p>{" "}
+      <MoreText gist={"October holds mailed applications DOL backdated to their postmark."} className="mt-3">
+        <p className="text-base leading-relaxed text-foreground/80">
+          October isn&rsquo;t empty because paper kept moving. DOL says employers
+          who couldn&rsquo;t file electronically posted their applications, that
+          OFLC entered those by hand once FLAG was back, and that each one
+          &ldquo;will be considered to have been filed on the date it was
+          postmarked&rdquo;. So a good part of the 1,616 is mail, backdated into
+          a month when the portal was shut.
+        </p>
+      </MoreText>{" "}
 
       {/* The corroboration, the second corpus and the archive route are how
           the claim was checked rather than what it says, so they collapse.

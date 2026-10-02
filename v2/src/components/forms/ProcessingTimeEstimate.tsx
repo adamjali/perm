@@ -29,10 +29,10 @@ export interface ProcessingTimeEstimateProps {
  *
  * Shows the subtypes rather than one figure, because within a category they
  * diverge enormously: EB-1 runs 15 months for an outstanding professor and
- * 32.5 for extraordinary ability (USCIS's 80% figures, read 2026-09-26). Each
- * subtype carries one number, the time USCIS took to finish 80% of the
- * petitions it decided over six months. An earlier version showed one number per
- * category per service center and was wrong by up to 4x.
+ * 32.5 for extraordinary ability (USCIS's 80% figures). Each subtype carries
+ * one number, the time USCIS took to finish 80% of the petitions it decided
+ * over six months. One number per category per service center would be wrong
+ * by up to 4x.
  *
  * Service center is deliberately not an input. USCIS reports I-140 under a
  * single office, so offering the choice implied a precision the source does
@@ -175,5 +175,3 @@ export function ProcessingTimeEstimate({
     </motion.div>
   );
 }
-
-export default ProcessingTimeEstimate;

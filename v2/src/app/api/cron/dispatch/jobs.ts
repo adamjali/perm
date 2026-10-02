@@ -1,19 +1,19 @@
 /**
  * The scheduled GitHub jobs that the server's clock drives.
  *
- * WHY THIS EXISTS. GitHub's `schedule` trigger ran this repo's crons two to
- * seven and a half hours late on every one of the nine days measured to
- * Sep 7 2026 (the "4:10 AM" sweep landed between 8:00 and 8:50 AM, the
- * health check between 9:15 and 10:30). So each job here has a systemd timer
- * on the server (scripts/oracle/systemd/permtracker-cron@dispatch-<job>.timer)
- * that calls `/api/cron/dispatch/<job>`, and the route fires GitHub's
- * `workflow_dispatch` for it. Vercel's cron did this from Sep 7 2026 until
- * the move to the server on Sep 28 2026.
+ * WHY THIS EXISTS. GitHub's `schedule` trigger runs this repo's crons hours
+ * late (measured: two to seven and a half hours, on every one of nine days).
+ * So each job here has a systemd timer on the server
+ * (scripts/oracle/systemd/permtracker-cron@dispatch-<job>.timer) that calls
+ * `/api/cron/dispatch/<job>`, and the route fires GitHub's
+ * `workflow_dispatch` for it.
  *
  * Kept in a sibling of the route on purpose: a `route.ts` may export only
  * handler names, and the timers have to agree with this table, which the
  * test next door enforces.
  */
+
+import { MS_PER_MINUTE } from "@/lib/time";
 
 export interface CronJob {
   /** The workflow file under .github/workflows. */
@@ -35,7 +35,7 @@ export const BRANCH = "main";
  * is ~10,000 DOL requests for nothing, and the workflow's concurrency group
  * would queue it rather than drop it.
  */
-export const RECENT_RUN_WINDOW_MS = 20 * 60 * 1000;
+export const RECENT_RUN_WINDOW_MS = 20 * MS_PER_MINUTE;
 
 export const CRON_JOBS: Record<string, CronJob> = {
   "processing-times": {

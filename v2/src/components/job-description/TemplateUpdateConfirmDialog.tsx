@@ -216,5 +216,3 @@ export function TemplateUpdateConfirmDialog({
     </AlertDialog>
   );
 }
-
-export default TemplateUpdateConfirmDialog;

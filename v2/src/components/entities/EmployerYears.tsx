@@ -1,5 +1,6 @@
 import type { EmployerYear, HistoryCase } from "@/lib/turso/employerHistory";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 import { YearBars, fillYears } from "./YearBars";
 
@@ -7,10 +8,6 @@ import { YearBars, fillYears } from "./YearBars";
  * An employer's PERM record by fiscal year, FY2008 onward (the shared
  * YearBars chart), and its decided cases from FY2016 to FY2023.
  */
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 export function EmployerYears({
   years,
@@ -48,19 +45,17 @@ export function EmployerYears({
             Year by year since {first}
           </h2>{" "}
           <p className="mt-2 max-w-2xl text-base text-foreground/70">
-            {fmt(total)} PERM decisions from FY{first} to FY{last}, busiest in
+            {formatInt(total)} PERM decisions from FY{first} to FY{last}, busiest in
             FY{peak.fy} with{" "}
-            {fmt(peak.certified + peak.denied + peak.withdrawn)}.
+            {formatInt(peak.certified + peak.denied + peak.withdrawn)}.
           </p>
           <div className="mt-6">
             <YearBars
               years={series}
               note={
                 <>
-                  Fiscal years run October to September. Older years come from
-                  DOL&apos;s closed-year files and attach to this page by name, so a
-                  year the company filed under a name this page doesn&apos;t carry
-                  is missing rather than zero.
+                  Fiscal years, October to September. A year filed under
+                  another name is missing, not zero.
                   {lastYearPartial ? ` FY${last} is partial: ${lastYearPartial}.` : ""}
                 </>
               }
@@ -76,8 +71,8 @@ export function EmployerYears({
           </h3>{" "}
           <p className="mt-1 text-sm text-foreground/70">
             {cases.length < historyTotal
-              ? `The ${fmt(cases.length)} most recent of ${fmt(historyTotal)}.`
-              : `All ${fmt(cases.length)}.`}{" "}
+              ? `The ${formatInt(cases.length)} most recent of ${formatInt(historyTotal)}.`
+              : `All ${formatInt(cases.length)}.`}{" "}
             Case numbers from these years start with A-; look one up for
             DOL&apos;s full record.
           </p>
@@ -114,7 +109,7 @@ export function EmployerYears({
                     </td>
                     <td className="py-1.5 text-right">
                       {c.wage != null
-                        ? `$${fmt(Math.round(c.wage))}`
+                        ? `$${formatInt(Math.round(c.wage))}`
                         : "n/a"}{" "}
                     </td>
                   </tr>

@@ -7,6 +7,7 @@ import { WarnTable } from "@/components/warn/WarnTable";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { MoreText } from "@/components/data/MoreText";
 
 /**
  * WARN layoff notices against the sponsor record. Every row is a filing as
@@ -39,17 +40,14 @@ export default async function LayoffsPage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/perm-employers" className="underline underline-offset-2 hover:text-primary">
-            Employers
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">Layoff notices against sponsors</h1>{" "}
-        <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          The WARN Act makes an employer file 60 days&apos; notice of a mass layoff or closing with the state, and
-          some states publish the filings. DOL&apos;s PERM files record no layoff, so these notices are the only public
-          trace of one. Each row is a filing as the state printed it.
-        </p>
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Layoff notices against sponsors</h1>{" "}
+        <MoreText gist={"Mass layoffs need 60 days' notice, filed with the state."} className="mt-4">
+          <p className=" max-w-2xl text-lg leading-relaxed text-foreground/70">
+            The WARN Act makes an employer file 60 days&apos; notice of a mass layoff or closing with the state, and
+            some states publish the filings. DOL&apos;s PERM files record no layoff, so these notices are the only public
+            trace of one. Each row is a filing as the state printed it.
+          </p>
+        </MoreText>
       </header>
 
       <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3 [&>*]:min-w-0">
@@ -82,20 +80,22 @@ export default async function LayoffsPage() {
 
       <section className="mt-10 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">What is read, and what is not</h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          Four states are read, each from the record it publishes, and all four refresh on their own. California&apos;s
-          Employment Development Department posts its WARN report as a spreadsheet; New York&apos;s current notices sit
-          in a public dashboard that also serves them as a table; Washington keeps a searchable database of every
-          notice received, walked newest first; and Texas publishes its notices on the state open data portal, which
-          reaches back to 2019. Texas is the one with a caveat worth stating: the portal trails the agency&apos;s own
-          yearly spreadsheet by a month or two, and that spreadsheet turns automated requests away, so the most recent
-          Texas weeks arrive only when someone loads the file by hand. Each state&apos;s newest notice is checked
-          against its own budget, so a source going quiet shows up as a stale date rather than shrinking to a silent
-          zero. Every other state, and anything published before the window read here, shows nothing, so a sponsor
-          with layoffs elsewhere is not cleared by this page. A match means the filer&apos;s
-          normalised name equals a PERM employer&apos;s, the same rule that groups DOL&apos;s own spellings of one
-          company; a subsidiary filing under its own name does not match its parent, on purpose.
-        </p>{" "}
+        <MoreText gist={"Four states' WARN records only: a sponsor with layoffs elsewhere isn't cleared here."} className="mt-3">
+          <p className="text-base leading-relaxed text-foreground/80">
+            Four states are read, each from the record it publishes, and all four refresh on their own. California&apos;s
+            Employment Development Department posts its WARN report as a spreadsheet; New York&apos;s current notices sit
+            in a public dashboard that also serves them as a table; Washington keeps a searchable database of every
+            notice received, walked newest first; and Texas publishes its notices on the state open data portal, which
+            reaches back to 2019. Texas is the one with a caveat worth stating: the portal trails the agency&apos;s own
+            yearly spreadsheet by a month or two, and that spreadsheet turns automated requests away, so the most recent
+            Texas weeks arrive only when someone loads the file by hand. Each state&apos;s newest notice is checked
+            against its own budget, so a source going quiet shows up as a stale date rather than shrinking to a silent
+            zero. Every other state, and anything published before the window read here, shows nothing, so a sponsor
+            with layoffs elsewhere is not cleared by this page. A match means the filer&apos;s
+            normalised name equals a PERM employer&apos;s, the same rule that groups DOL&apos;s own spellings of one
+            company; a subsidiary filing under its own name does not match its parent, on purpose.
+          </p>
+        </MoreText>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
           A notice is not a finding about a PERM. What a layoff does to a filing, and to a pending case, is on{" "}
           <Link href="/guides/employer-layoffs-and-your-perm" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">

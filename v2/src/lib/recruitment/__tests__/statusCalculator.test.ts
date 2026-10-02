@@ -440,6 +440,45 @@ describe("calculateRecruitmentStatus", () => {
     });
   });
 
+  describe("filed status - the ETA 9089 went in", () => {
+    // Window from these steps: opens Apr 30, 2024, closes Aug 28, 2024.
+    const steps: RecruitmentCaseData = {
+      noticeOfFilingStartDate: "2024-03-01",
+      noticeOfFilingEndDate: "2024-03-15",
+      jobOrderStartDate: "2024-03-01",
+      jobOrderEndDate: "2024-03-31",
+      sundayAdFirstDate: "2024-03-10",
+      sundayAdSecondDate: "2024-03-17",
+      isProfessionalOccupation: false,
+    };
+
+    it("says filed, not expired, once the window has passed", () => {
+      vi.setSystemTime(new Date("2025-01-01"));
+      const result = calculateRecruitmentStatus({ ...steps, eta9089FilingDate: "2024-05-20" });
+
+      expect(result.status).toBe("filed");
+      expect(result.message).toBe("ETA 9089 filed May 20, 2024, inside the filing window");
+      expect(result.message).not.toContain("restart");
+    });
+
+    it("says filed while the window is still open", () => {
+      vi.setSystemTime(new Date("2024-06-01"));
+      const result = calculateRecruitmentStatus({ ...steps, eta9089FilingDate: "2024-05-20" });
+
+      expect(result.status).toBe("filed");
+      expect(result.filingWindowOpens).toBe("2024-04-30");
+      expect(result.filingWindowCloses).toBe("2024-08-28");
+    });
+
+    it("names a filing date outside the window rather than hiding it", () => {
+      vi.setSystemTime(new Date("2025-01-01"));
+      const result = calculateRecruitmentStatus({ ...steps, eta9089FilingDate: "2024-09-15" });
+
+      expect(result.status).toBe("filed");
+      expect(result.message).toBe("ETA 9089 filed Sep 15, 2024, outside the filing window");
+    });
+  });
+
   describe("PWD expiration truncates filing window", () => {
     it("uses PWD expiration as window close when earlier than 180 days", () => {
       // First recruitment March 1, 2024

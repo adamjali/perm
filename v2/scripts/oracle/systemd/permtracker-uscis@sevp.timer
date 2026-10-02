@@ -1,0 +1,10 @@
+[Unit]
+Description=Schedule for permtracker-uscis@sevp
+[Timer]
+# ICE publishes its SEVIS by the Numbers lists once a year, on no fixed date;
+# a monthly look costs one page and a few small PDFs.
+OnCalendar=*-*-22 11:20:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@sevp.service
+[Install]
+WantedBy=timers.target

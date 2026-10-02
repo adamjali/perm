@@ -1,14 +1,15 @@
 import type { MetadataRoute } from 'next'
+import { SITE_URL } from "@/lib/constants/site";
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://permtracker.app'
+  const baseUrl = SITE_URL
 
   // A robots.txt path is a PREFIX match, so '/admin' covers '/admin', '/admin/'
-  // and '/admin/security' alike. These used to carry trailing slashes, which do
-  // NOT match the bare path: '/admin/' never blocked '/admin'. Googlebot crawled
-  // both '/admin' and '/dashboard' and filed them in Search Console as indexing
-  // errors. Nothing leaked (they 307 to /login, which is noindex), but it spent
-  // crawl budget on routes that can never be served to a crawler.
+  // and '/admin/security' alike. No trailing slashes: '/admin/' does NOT match
+  // the bare path, so it never blocks '/admin', and Googlebot would crawl
+  // '/admin' and '/dashboard' and file them in Search Console as indexing
+  // errors. Nothing would leak (they 307 to /login, which is noindex), but it
+  // spends crawl budget on routes that can never be served to a crawler.
   //
   // The prefix semantics cut both ways: a future public page at '/settings-guide'
   // or '/timeline-explained' would be silently blocked by the entries below.
@@ -25,7 +26,7 @@ export default function robots(): MetadataRoute.Robots {
     // The lookup page is indexable; its query-string variants are not worth a
     // crawl. Every case number on the site links to one, each is a dynamic
     // render that can ask DOL live, and a crawler walking thousands of them is
-    // pure cost (measured 2026-09-02 in Turso rows read and DOL requests).
+    // pure cost, in database reads and DOL requests.
     '/perm-case-status?',
     // The embedded lookup asks DOL live on every query (under a daily cap per
     // embedding site), so its query variants are the same cost, and worse.
@@ -35,19 +36,17 @@ export default function robots(): MetadataRoute.Robots {
     '/perm-employers/compare?',
   ]
 
-  // High-volume crawlers that bring this product NOTHING back. Measured
-  // 2026-08-28: humans generated ~1,400 pageviews in a week while Vercel's
-  // edge served 750K requests in a month - the gap is bots working the
-  // 21k-URL sitemap. Search bots (Google, Bing, DuckDuckGo, Apple) and AI
+  // High-volume crawlers that bring this product NOTHING back. Human
+  // pageviews are a small fraction of all requests; the rest is bots working
+  // the sitemap. Search bots (Google, Bing, DuckDuckGo, Apple) and AI
   // bots (GPTBot, ClaudeBot, Perplexity, CCBot, ...) stay welcome: they are
   // the distribution strategy. Ahrefs stays: it is our own audit tool. The
   // ones below are SEO-index and scraper fleets whose data nobody here
   // consumes - each obeys robots.txt, and each can re-earn access the day
-  // it is useful. Bytespider was on this list for an hour and came off it:
-  // it is ByteDance's AI-training crawler, and the policy above says AI
-  // crawlers are welcome - a block would have contradicted the strategy the
-  // comment states. robots.txt is advisory, so this trims the polite
-  // high-volume tail rather than "securing" anything.
+  // it is useful. Bytespider is not on it: it is ByteDance's AI-training
+  // crawler, and the policy above says AI crawlers are welcome. robots.txt is
+  // advisory, so this trims the polite high-volume tail rather than
+  // "securing" anything.
   const freeloaders = [
     'SemrushBot',
     'MJ12bot',

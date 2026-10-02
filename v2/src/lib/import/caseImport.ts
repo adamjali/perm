@@ -16,7 +16,7 @@
  * - Track cases needing user attention
  */
 
-import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
 import { calculateI140FilingDeadline } from "@/lib/perm";
 import { captureError } from "@/lib/sentry";
 

@@ -13,7 +13,7 @@
  * happen to reduce to the same string. It is no longer doing identity's job.
  *
  * THE RULES ARE MIRRORED IN `scripts/entity_identity.py` AND
- * `scripts/store_entities.py`. A key or a slug computed differently in the
+ * `scripts/lib_slugs.py`. A key or a slug computed differently in the
  * writer than in the reader is a detail page that 404s from its own index,
  * so `src/lib/__tests__/entitySlug.test.ts` and
  * `scripts/test_entity_identity.py` assert both against ONE fixture file:

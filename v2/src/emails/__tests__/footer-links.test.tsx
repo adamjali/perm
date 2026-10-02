@@ -11,9 +11,8 @@ import { DeadlineDigest } from "../DeadlineDigest";
 import { EmployerAlertConfirm } from "../EmployerAlertConfirm";
 import { EmployerMoved } from "../EmployerMoved";
 import { QueueReached } from "../QueueReached";
-import { RfiAlert } from "../RfiAlert";
 import { StatusChange } from "../StatusChange";
-import type { DigestData } from "../../../convex/lib/newsletterCompose";
+import type { DigestData } from "@convex/lib/newsletterCompose";
 
 /**
  * Every email has a way out, and it is the right one for who receives it.
@@ -171,10 +170,6 @@ describe("every email has a way out", () => {
     expect(reminder).toContain("https://permtracker.app/settings");
     expect(reminder).toContain("Manage notification settings");
     expect(reminder).not.toContain("/prefs?token=");
-    const rfi = await render(
-      RfiAlert({ employerName: "Acme Corp", beneficiaryName: "A. Person", caseUrl: "https://permtracker.app/cases/123" } as Parameters<typeof RfiAlert>[0]),
-    );
-    expect(rfi).toContain("https://permtracker.app/settings");
     const status = await render(
       StatusChange({ employerName: "Acme Corp", beneficiaryName: "A. Person", caseUrl: "https://permtracker.app/cases/123", oldStatus: "pwd_pending", newStatus: "pwd_received" } as Parameters<typeof StatusChange>[0]),
     );

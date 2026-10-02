@@ -3,8 +3,8 @@
  * of the odds under the wage-weighted selection that began with FY2027.
  *
  * Typed rather than ingested: six rows a year, published once a year on one
- * page. Transcribed 2026-09-26 from the page as USCIS last revised it on
- * 2026-09-21; `h1bLottery.test.ts` checks every row adds up the way USCIS's
+ * page. Transcribed from the page as USCIS last revised it on 2026-09-21;
+ * `h1bLottery.test.ts` checks every row adds up the way USCIS's
  * own columns do. Add FY2027 when USCIS adds it.
  */
 

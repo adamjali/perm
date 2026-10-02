@@ -3,8 +3,8 @@
  *
  * Resend's free plan allows 100 emails a day, sent and received together,
  * counted over a UTC calendar day that resets at midnight UTC (8 PM Eastern in
- * summer), plus 3,000 a month (resend.com/docs/api-reference/rate-limit, read
- * Sep 29 2026). That 100 is the only limit that can't be raised for free, so it
+ * summer), plus 3,000 a month (resend.com/docs/api-reference/rate-limit).
+ * That 100 is the only limit that can't be raised for free, so it
  * is guarded ONCE, here, by what was actually sent, instead of by fixed shares
  * that each had to stay small enough to add up under it.
  *
@@ -21,6 +21,7 @@
  * tests can all import it.
  */
 import type { QueryCtx } from "../_generated/server";
+import { MS_PER_DAY, MS_PER_MINUTE } from "./time";
 
 /** Resend's free-plan daily limit, sent and received together. */
 export const RESEND_DAILY_CAP = 100;
@@ -32,11 +33,11 @@ export const RECEIVED_MARGIN = 5;
 /** Failed sends the retry queue holds in all. */
 export const RETRY_MAX_ROWS = 1000;
 /** A failed send is retried for two weeks, then counted as lost and the admin told. */
-export const RETRY_EXPIRE_MS = 14 * 24 * 60 * 60 * 1000;
+export const RETRY_EXPIRE_MS = 14 * MS_PER_DAY;
 /** A stored email bigger than this (an inbound message with attachments) can't be kept. */
 export const RETRY_MAX_PAYLOAD = 900_000;
 /** Waits between retries: 5 min, 15 min, 1 h, 3 h, then every 8 h. */
-export const RETRY_BACKOFF_MS = [5, 15, 60, 180, 480].map((m) => m * 60 * 1000);
+export const RETRY_BACKOFF_MS = [5, 15, 60, 180, 480].map((m) => m * MS_PER_MINUTE);
 
 /** The UTC calendar day Resend counts against, as YYYY-MM-DD. */
 export function utcDay(now: number): string {
@@ -78,7 +79,7 @@ export function isQuotaError(error: SendError): boolean {
 
 /** When to try a failed send again. */
 export function nextRetryAt(attempts: number, now: number, quota: boolean): number {
-  if (quota) return now + msToNextUtcDay(now) + 5 * 60 * 1000;
+  if (quota) return now + msToNextUtcDay(now) + 5 * MS_PER_MINUTE;
   const i = Math.min(Math.max(attempts, 0), RETRY_BACKOFF_MS.length - 1);
   return now + (RETRY_BACKOFF_MS[i] ?? 0);
 }

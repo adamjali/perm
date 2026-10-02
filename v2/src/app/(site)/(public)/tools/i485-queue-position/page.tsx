@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { I485QueuePosition } from "@/components/tools/I485QueuePosition";
 import { getBulletinBoard } from "@/lib/turso/bulletin";
@@ -17,7 +16,6 @@ const I485_COUNTRY: Record<CountryKey, string> = {
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import {
@@ -40,9 +38,8 @@ import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
  * exact total is not knowable from the release, and both bounds are published
  * instead of a midpoint dressed up as a measurement.
  *
- * It is also first-party and current. The rival's equivalent endpoint answers
- * `data_as_of: 2026-05-01` against a release USCIS dated 2026-08-05, so this
- * reads three months fresher and depends on nobody.
+ * It is also first-party and current: it reads USCIS's own newest release and
+ * depends on nobody.
  */
 
 const TITLE = "I-485 Queue Position Calculator";
@@ -141,34 +138,13 @@ export default async function I485QueuePositionPage() {
     })),
   };
 
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: "Data", href: "/tools" },
-    { name: "Calculators", href: "/calculators" },
-    { name: "I-485 queue position", href: "/tools/i485-queue-position" },
-  ]);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumbSchema} />
 
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link
-            href="/tools"
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            Data
-          </Link>{" "}
-          <span aria-hidden="true">/</span>{" "}
-          <Link
-            href="/calculators"
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            Calculators
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           I-485 queue position
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">

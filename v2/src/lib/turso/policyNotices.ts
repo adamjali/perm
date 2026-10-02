@@ -64,11 +64,11 @@ function parseList(json: string): string[] {
 /**
  * Newest first, over the indexed date column; `LIMIT`-capped.
  *
- * The default reads the whole table (627 rows on 2026-09-16) because the page
+ * The default reads the whole table (a few hundred rows) because the page
  * partitions it in memory: OFLC announcements on this site's programs are
  * listed and the H-2A/H-2B ones are counted, and a SQL-side split would put
- * the topic vocabulary in two places. ~630 rows six times a day is nothing
- * against a corpus that reads 143k rows per entity page.
+ * the topic vocabulary in two places. A few hundred rows a few times a day
+ * costs nothing.
  */
 export async function listPolicyNotices(limit = 1000): Promise<PolicyNotice[]> {
   const r = await rows<DbRow>(

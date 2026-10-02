@@ -23,7 +23,7 @@ afterEach(() => {
 
 /**
  * Wrapper component that provides CaseFormContext for I140Section tests.
- * RFEEntryList (within I140Section) now uses useFieldArray which requires the context.
+ * RequestEntryList (within I140Section) uses useFieldArray, which requires the context.
  */
 const TestWrapper = ({
   values,

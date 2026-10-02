@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeftIcon, HouseIcon as Home } from "@phosphor-icons/react/ssr";
+import { HouseIcon as Home, MagnifyingGlassIcon } from "@phosphor-icons/react/ssr";
 
 /**
  * A 404 must not be indexable. Without this it inherits the site default and
@@ -36,20 +36,20 @@ export default function NotFound() {
           <div className="relative p-8 sm:p-10">
             {/* Status badge */}
             <div className="inline-block bg-destructive/10 border-2 border-destructive/30 px-3 py-1 mb-6">
-              <span className="mono text-xs font-bold uppercase tracking-widest text-destructive">
-                Page Not Found
+              <span className="mono text-sm font-bold uppercase tracking-widest text-destructive">
+                Page not found
               </span>
             </div>
 
             {/* Heading */}
             <h1 className="font-heading text-3xl sm:text-4xl font-bold text-foreground uppercase tracking-tight mb-3">
-              Dead End
+              Dead end
             </h1>{" "}
 
             {/* Description */}
             <p className="text-muted-foreground mb-8 max-w-sm">
-              The page you&apos;re looking for doesn&apos;t exist or has been
-              moved. Check the URL or head back to familiar ground.
+              This page doesn&apos;t exist or has moved. Check the address, or
+              start again from home.
             </p>{" "}
 
             {/* Action buttons */}
@@ -62,11 +62,11 @@ export default function NotFound() {
                 Home
               </Link>
               <Link
-                href="/dashboard"
+                href="/perm-case-status"
                 className="inline-flex items-center justify-center gap-2 bg-card text-foreground font-heading font-bold text-sm uppercase tracking-wide px-6 py-3 border-2 border-border shadow-hard hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-hard-lg active:translate-x-[2px] active:translate-y-[2px] active:shadow-none transition-all duration-150"
               >
-                <ArrowLeftIcon className="w-4 h-4" />
-                Dashboard
+                <MagnifyingGlassIcon className="w-4 h-4" />
+                Check a case
               </Link>
             </div>
           </div>

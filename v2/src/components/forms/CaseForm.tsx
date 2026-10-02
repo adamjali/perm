@@ -1,11 +1,11 @@
 "use client";
 
 // `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here (2026-09-01) rather
+// which exists only in React's client build. Declared here rather
 // than inherited from whichever importer happened to cross a boundary first.
 // Without it this module works until the chunk graph shifts, then fails with
 // `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx for the incident.
+// and no source file. See components/layout/Footer.tsx.
 
 /**
  * CaseForm Component
@@ -30,8 +30,6 @@
  * - Loading states and error handling
  * - Success/cancel callbacks
  *
- * Phase: 22 (Case Forms)
- * Created: 2025-12-25
  * Refactored: 2026-01 (simplified with custom hooks)
  */
 
@@ -43,10 +41,10 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zod4Resolver } from "@/lib/forms/zod4-resolver";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { BuildingIcon as Building2, ClipboardTextIcon, FileArrowUpIcon as FileCheck, FileTextIcon, NoteIcon as StickyNote, TrashIcon as Trash2, WarningIcon as AlertTriangle, XCircleIcon } from "@phosphor-icons/react/ssr";
 import { toast } from "@/lib/toast";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {

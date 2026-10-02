@@ -14,7 +14,9 @@ import {
   action,
   internalMutation,
   internalQuery,
+  type MutationCtx,
 } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
 import { v } from "convex/values";
 import { getCurrentUserId, getCurrentUserIdOrNull, extractUserIdFromAction } from "./lib/auth";
@@ -25,6 +27,37 @@ import { recordError } from "./lib/errorRecording";
 
 const log = loggers.googleAuth;
 const oauthLog = loggers.googleOAuth;
+
+/**
+ * Store a user's Google tokens, encrypted, and mark the calendar connected.
+ * Throws when the user has no profile.
+ */
+async function storeTokens(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  tokens: { accessToken: string; refreshToken: string; expiryTime: number; email: string; scopes: string[] },
+): Promise<{ success: true }> {
+  const profile = await ctx.db
+    .query("userProfiles")
+    .withIndex("by_user_id", (q) => q.eq("userId", userId))
+    .unique();
+
+  if (!profile) {
+    throw new Error("User profile not found");
+  }
+
+  await ctx.db.patch(profile._id, {
+    googleAccessToken: await encryptToken(tokens.accessToken),
+    googleRefreshToken: await encryptToken(tokens.refreshToken),
+    googleTokenExpiry: tokens.expiryTime,
+    googleEmail: tokens.email,
+    googleScopes: tokens.scopes,
+    googleCalendarConnected: true,
+    updatedAt: Date.now(),
+  });
+
+  return { success: true };
+}
 
 /**
  * Store Google OAuth tokens after successful authorization
@@ -48,140 +81,7 @@ export const storeGoogleTokens = mutation({
   },
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
-
-    // Get the user profile
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) {
-      throw new Error("User profile not found");
-    }
-
-    // Encrypt tokens before storing
-    const encryptedAccessToken = await encryptToken(args.accessToken);
-    const encryptedRefreshToken = await encryptToken(args.refreshToken);
-
-    // Update profile with encrypted tokens and connection status
-    await ctx.db.patch(profile._id, {
-      googleAccessToken: encryptedAccessToken,
-      googleRefreshToken: encryptedRefreshToken,
-      googleTokenExpiry: args.expiryTime,
-      googleEmail: args.email,
-      googleScopes: args.scopes,
-      googleCalendarConnected: true,
-      updatedAt: Date.now(),
-    });
-
-    return { success: true };
-  },
-});
-
-/**
- * Clear Google OAuth tokens (disconnect calendar)
- *
- * Called from /api/google/disconnect.
- * Does NOT delete events from Google Calendar - only disconnects sync.
- */
-export const clearGoogleTokens = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getCurrentUserId(ctx);
-
-    // Get the user profile
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) {
-      throw new Error("User profile not found");
-    }
-
-    // Clear all Google OAuth fields
-    await ctx.db.patch(profile._id, {
-      googleAccessToken: undefined,
-      googleRefreshToken: undefined,
-      googleTokenExpiry: undefined,
-      googleEmail: undefined,
-      googleScopes: undefined,
-      googleCalendarConnected: false,
-      updatedAt: Date.now(),
-    });
-
-    return { success: true };
-  },
-});
-
-/**
- * Get Google connection status for the current user
- *
- * Returns basic connection info (no tokens exposed).
- * Used by settings UI to show connection status.
- */
-export const getGoogleConnectionStatus = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getCurrentUserIdOrNull(ctx);
-    if (userId === null) {
-      return null;
-    }
-
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) {
-      return null;
-    }
-
-    return {
-      connected: profile.googleCalendarConnected,
-      email: profile.googleEmail ?? null,
-      scopes: profile.googleScopes ?? [],
-      // Token expiry for debugging (but not the token itself)
-      tokenExpiresAt: profile.googleTokenExpiry ?? null,
-    };
-  },
-});
-
-/**
- * Update Google access token after refresh
- *
- * Called internally when access token is refreshed.
- * Only updates access token and expiry - refresh token stays the same.
- */
-export const updateGoogleAccessToken = mutation({
-  args: {
-    accessToken: v.string(),
-    expiryTime: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const userId = await getCurrentUserId(ctx);
-
-    // Get the user profile
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .unique();
-
-    if (!profile) {
-      throw new Error("User profile not found");
-    }
-
-    // Encrypt new access token
-    const encryptedAccessToken = await encryptToken(args.accessToken);
-
-    // Update only access token and expiry
-    await ctx.db.patch(profile._id, {
-      googleAccessToken: encryptedAccessToken,
-      googleTokenExpiry: args.expiryTime,
-      updatedAt: Date.now(),
-    });
-
-    return { success: true };
+    return storeTokens(ctx, userId, args);
   },
 });
 
@@ -285,7 +185,7 @@ export const isGoogleCalendarConnected = query({
  * Internal mutation to store updated tokens after refresh
  *
  * Called by googleCalendarActions.refreshAccessToken after getting new tokens.
- * Updates both tokens if a new refresh token was issued, otherwise just access token.
+ * Stores both tokens, encrypted, as `storeGoogleTokens` does.
  */
 export const storeGoogleTokensInternal = internalMutation({
   args: {
@@ -297,32 +197,8 @@ export const storeGoogleTokensInternal = internalMutation({
     scopes: v.array(v.string()),
   },
   handler: async (ctx, args) => {
-    // Get the user profile
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", args.userId))
-      .unique();
-
-    if (!profile) {
-      throw new Error("User profile not found");
-    }
-
-    // Encrypt tokens before storing
-    const encryptedAccessToken = await encryptToken(args.accessToken);
-    const encryptedRefreshToken = await encryptToken(args.refreshToken);
-
-    // Update profile with encrypted tokens and connection status
-    await ctx.db.patch(profile._id, {
-      googleAccessToken: encryptedAccessToken,
-      googleRefreshToken: encryptedRefreshToken,
-      googleTokenExpiry: args.expiryTime,
-      googleEmail: args.email,
-      googleScopes: args.scopes,
-      googleCalendarConnected: true,
-      updatedAt: Date.now(),
-    });
-
-    return { success: true };
+    const { userId, ...tokens } = args;
+    return storeTokens(ctx, userId, tokens);
   },
 });
 

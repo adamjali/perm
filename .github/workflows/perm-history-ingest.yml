@@ -3,8 +3,8 @@ name: PERM history ingest (FY2008 to FY2023)
 # Dispatch only. DOL does not revise closed years, so this runs once and then
 # only to retry a year that failed: every workbook it loads is recorded in
 # perm_docs['perm_history'] and skipped next time unless `force` is set. It
-# runs here because www.dol.gov refuses this project's laptop and serves
-# GitHub's runners.
+# runs here because www.dol.gov serves GitHub's runners and refuses many
+# residential addresses.
 on:
   workflow_dispatch:
     inputs:
@@ -84,8 +84,3 @@ jobs:
               --note "run ${GITHUB_RUN_ID} failed; see the log" || true
             exit 1
           }
-
-      - name: Remove credentials
-        if: ${{ always() }}
-        working-directory: v2
-        run: rm -f .env.local

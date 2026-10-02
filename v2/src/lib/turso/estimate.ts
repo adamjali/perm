@@ -178,9 +178,9 @@ export interface PwdEstimatorData {
    *
    * NULL UNTIL THE HISTORY IS DEEP ENOUGH, and that is the honest answer
    * rather than a gap. The rate is measured BETWEEN two snapshots whose PWD
-   * as-of dates differ by enough to resolve a monthly figure. This store
-   * began on 2026-08-25 with a single snapshot, so there is nothing to
-   * measure across yet; it fills in once DOL republishes. Inventing a rate
+   * as-of dates differ by enough to resolve a monthly figure. Until the store
+   * holds two such snapshots there is nothing to measure across; it fills in
+   * once DOL republishes. Inventing a rate
    * from one observation would be fabricating the one number the estimator
    * exists to supply.
    */

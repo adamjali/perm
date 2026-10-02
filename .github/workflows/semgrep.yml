@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Run Semgrep
         # Two rules are structurally wrong for this repository and are excluded
-        # rather than dismissed one alert at a time (Audit 10, 2026-09-09):
+        # rather than dismissed one alert at a time:
         # sqlalchemy-execute-raw-query fires on every `db.execute(sql)` of the
         # libSQL HTTP helper in scripts/lib_turso.py, and there is no SQLAlchemy
         # here; dynamic-urllib-use-detected fires on every ingest that fetches

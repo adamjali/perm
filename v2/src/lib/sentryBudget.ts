@@ -1,9 +1,9 @@
 /**
  * A ceiling on what one server process sends to Sentry, per hour.
  *
- * Normal days send about 10 errors and under 1,000 log lines in total. On
- * Sep 29 2026 one database stall sent 2,008 copies of the same error and
- * 21,311 log lines, and a storm like that can spend the plan's monthly
+ * Normal days send about 10 errors and under 1,000 log lines in total. One
+ * database stall can send thousands of copies of the same error and tens of
+ * thousands of log lines, and a storm like that can spend the plan's monthly
  * allowance, after which Sentry drops everything, including the next real
  * error. The ceilings sit far above normal, so nothing is lost on an ordinary
  * day; in a storm the first copies of each error still arrive, and the next
@@ -12,7 +12,9 @@
  * Plain functions over an injected clock, so the tests drive time directly.
  */
 
-export const HOUR_MS = 60 * 60 * 1000;
+import { MS_PER_HOUR } from "@/lib/time";
+
+export const HOUR_MS = MS_PER_HOUR;
 /** Copies of one error (same type and message, digits ignored) per hour. */
 export const PER_ERROR_PER_HOUR = 5;
 /** All errors together per hour. */

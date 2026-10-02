@@ -56,7 +56,7 @@ export default function AuthLayout({
             themselves, so nothing about them changes.
 
             `my-auto` INSTEAD OF `items-center` ON THE PARENT, plus real top
-            padding. Adam: "need top paddingspacing". Two separate faults.
+            padding. Two separate fixes.
 
             The padding above reserves the header's height exactly and nothing
             more, so a page began 1px under a fixed bar with no breathing room

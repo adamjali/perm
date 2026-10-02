@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAction } from "convex/react";
 import { useRouter } from "next/navigation";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { Button } from "@/components/ui/button";

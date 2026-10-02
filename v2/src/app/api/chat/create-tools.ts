@@ -13,8 +13,8 @@
 import { z } from 'zod';
 import { type Tool, type ModelMessage } from 'ai';
 import { fetchQuery, fetchAction, fetchMutation } from 'convex/nextjs';
-import { api } from '@/../convex/_generated/api';
-import type { Id } from '@/../convex/_generated/dataModel';
+import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 import {
   QueryCasesInputSchema,
   SearchKnowledgeInputSchema,
@@ -110,8 +110,8 @@ const VERBOSE_LOGGING = process.env.CHAT_LOG_VERBOSE === 'true';
  *
  * These traces carry a signed-in user's own case data — employer, job title,
  * wage, SOC, filing dates — through the tool params and results. Left on by
- * default they land, unredacted, in the Vercel/Convex logs the provider
- * retains. `truncateForLog` caps length, it does not drop fields, so the gate
+ * default they land, unredacted, in the server and Convex logs, which are
+ * retained. `truncateForLog` caps length, it does not drop fields, so the gate
  * is what keeps that data out of prod logs. Verbose stays available for
  * on-demand debugging by flipping one env var.
  */

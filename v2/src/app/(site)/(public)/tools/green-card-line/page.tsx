@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { GreenCardLine } from "@/components/tools/GreenCardLine";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { getBulletinBoard } from "@/lib/turso/bulletin";
@@ -19,10 +17,9 @@ import type { PaceBasis } from "@/lib/bulletinNext";
  * and applications already current and not yet finished. See
  * `src/lib/greenCardLine.ts` for the method and everything it leaves out.
  *
- * Two rival sites sell "people ahead of you" as a paid feature; the one that
- * shows its method places approvals in the year USCIS RECEIVED them, which
- * puts a 2023 priority date a year or more ahead of where it sits. This page
- * moves each approval back by the PERM time DOL's own decisions measure.
+ * Placing approvals in the year USCIS RECEIVED them puts a 2023 priority
+ * date a year or more ahead of where it sits, so this page moves each
+ * approval back by the PERM time DOL's own decisions measure.
  */
 
 const TITLE = "Green Card Line: People Ahead of Your Date";
@@ -101,29 +98,14 @@ export default async function GreenCardLinePage() {
       acceptedAnswer: { "@type": "Answer" as const, text: f.a },
     })),
   };
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: "Data", href: "/tools" },
-    { name: "Calculators", href: "/calculators" },
-    { name: "Green card line", href: PATH },
-  ]);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumbSchema} />
 
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link href="/tools" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Data
-          </Link>{" "}
-          <span aria-hidden="true">/</span>{" "}
-          <Link href="/calculators" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Calculators
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Your place in the green card line
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">

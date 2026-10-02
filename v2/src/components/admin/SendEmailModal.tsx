@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAction } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { CircleNotchIcon, EnvelopeIcon as Mail } from "@phosphor-icons/react";

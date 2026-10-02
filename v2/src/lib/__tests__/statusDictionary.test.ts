@@ -1,7 +1,26 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import { allStatusMeanings } from "../permStatus";
-import { dictionaryAnchors, LCA_STATUSES, permStatusGroups, PWD_STATUSES, statusAnchor } from "../statusDictionary";
+import {
+  dictionaryAnchors,
+  LCA_STATUSES,
+  permStatusGroups,
+  PWD_STATUSES,
+  SEASONAL_STATUSES,
+  statusAnchor,
+} from "../statusDictionary";
+
+/** One status set of a program in the Python ingest's PROGRAMS dict. */
+function pythonSet(program: string, which: "final" | "pending"): Set<string> {
+  const src = readFileSync(join(process.cwd(), "scripts/ingest_pwd_status_direct.py"), "utf8");
+  const start = src.indexOf(`"${program}": {`);
+  expect(start).toBeGreaterThan(-1);
+  const block = new RegExp(`"${which}": \\{([\\s\\S]*?)\\}`).exec(src.slice(start));
+  expect(block).not.toBeNull();
+  return new Set([...block![1]!.matchAll(/"([^"]+)"/g)].map((m) => m[1]!));
+}
 
 describe("statusDictionary", () => {
   it("makes one anchor per status word and keeps them unique across programs", () => {
@@ -20,7 +39,7 @@ describe("statusDictionary", () => {
   });
 
   it("gives every FLAG entry exactly one of a citation or an admission that none exists", () => {
-    for (const e of [...PWD_STATUSES, ...LCA_STATUSES]) {
+    for (const e of [...PWD_STATUSES, ...LCA_STATUSES, ...SEASONAL_STATUSES]) {
       const sourced = e.cite !== undefined;
       const admitted = e.unsourced !== undefined;
       expect(sourced !== admitted, `${e.status}: cite=${sourced} unsourced=${admitted}`).toBe(true);
@@ -44,5 +63,19 @@ describe("statusDictionary", () => {
     ];
     expect(PWD_STATUSES.map((e) => e.status)).toEqual(documented);
     expect(LCA_STATUSES.map((e) => e.status)).toEqual(["IN PROCESS", "CERTIFIED", "CERTIFIED - WITHDRAWN", "WITHDRAWN", "DENIED"]);
+  });
+
+  it("files every H-2A and H-2B entry under the same pending or decided call the ingest makes", () => {
+    const final = pythonSet("seasonal", "final");
+    const pending = pythonSet("seasonal", "pending");
+    expect(final.size).toBeGreaterThan(10);
+    expect(pending.size).toBeGreaterThan(5);
+    for (const e of SEASONAL_STATUSES) {
+      const u = e.status.toUpperCase();
+      // The ingest upper-cases before it looks a status up, and so does this.
+      expect(final.has(u) || pending.has(u), `${e.status} is in neither of the ingest's sets`).toBe(true);
+      expect(e.pending, `${e.status}: dictionary says pending=${e.pending}`).toBe(!final.has(u));
+    }
+    expect(dictionaryAnchors().filter((a) => a.program === "seasonal")).toHaveLength(SEASONAL_STATUSES.length);
   });
 });

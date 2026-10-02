@@ -54,7 +54,6 @@ function formatZodErrors<T extends FieldValues>(zodError: ZodError): FieldErrors
  */
 interface ZodLikeSchema<TOutput> {
   parseAsync(data: unknown): Promise<TOutput>;
-  safeParse(data: unknown): { success: true; data: TOutput } | { success: false; error: ZodError };
 }
 
 /**
@@ -135,52 +134,6 @@ export function zod4Resolver<TFormValues extends FieldValues>(
       // Re-throw unexpected errors
       throw error;
     }
-  };
-
-  return resolver;
-}
-
-/**
- * Synchronous version of the resolver (uses safeParse)
- * Use this when you know the schema doesn't have async refinements
- */
-export function zod4ResolverSync<TFormValues extends FieldValues>(
-  schema: ZodLikeSchema<TFormValues>
-): Resolver<TFormValues> {
-  const resolver: Resolver<TFormValues> = (values, _context, options) => {
-    const result = schema.safeParse(values);
-
-    if (result.success) {
-      // Success: return values with empty errors object
-      return {
-        values: result.data,
-        errors: {} as Record<string, never>,
-      };
-    }
-
-    const formattedErrors = formatZodErrors<TFormValues>(result.error);
-
-    // Filter by field names if specified
-    if (options.names && options.names.length > 0) {
-      const filteredErrors: FieldErrors<TFormValues> = {};
-      for (const name of options.names) {
-        const key = String(name);
-        if (key in formattedErrors) {
-          (filteredErrors as Record<string, unknown>)[key] = (
-            formattedErrors as Record<string, unknown>
-          )[key];
-        }
-      }
-      return {
-        values: {},
-        errors: filteredErrors,
-      };
-    }
-
-    return {
-      values: {},
-      errors: formattedErrors,
-    };
   };
 
   return resolver;

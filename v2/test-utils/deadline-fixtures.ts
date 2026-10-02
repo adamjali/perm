@@ -2,8 +2,8 @@ import type {
   DeadlineItem,
   DeadlineGroups,
   UrgencyGroup,
-} from "../convex/lib/dashboardTypes";
-import type { Id } from "../convex/_generated/dataModel";
+} from "@convex/lib/dashboardTypes";
+import type { Id } from "@convex/_generated/dataModel";
 
 export function createMockDeadlineItem(
   overrides: Partial<DeadlineItem> = {}

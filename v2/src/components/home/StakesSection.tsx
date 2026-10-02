@@ -14,7 +14,6 @@ import { ArrowRightIcon, ShieldIcon, WarningIcon as AlertTriangle } from "@phosp
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 
 interface StakeCard {
-  number: string;
   title: string;
   consequence: string;
   prevention: string;
@@ -23,40 +22,35 @@ interface StakeCard {
 
 const stakes: StakeCard[] = [
   {
-    number: "1",
-    title: "30-Day Audit Response",
+    title: "30-day audit response",
     consequence:
       "Miss DOL's 30-day audit window and the case is abandoned. No extension, no appeal.",
     prevention: "Computed, with alerts 14, 7, 3 and 1 day before",
     severity: "critical",
   },
   {
-    number: "2",
-    title: "PWD Expiration",
+    title: "Wage determination expiry",
     consequence:
       "A prevailing wage determination expires under 20 CFR 656.40. File after that and you start from zero.",
     prevention: "Computed from the determination date under DOL's rules",
     severity: "critical",
   },
   {
-    number: "3",
-    title: "180-Day Filing Window",
+    title: "180-day filing window",
     consequence:
       "The ETA 9089 must be filed 30 to 180 days after recruitment ends, and before the PWD expires. Miss the window and recruitment is redone.",
     prevention: "Open and close dates from your recruitment dates",
     severity: "high",
   },
   {
-    number: "4",
-    title: "I-140 Filing Deadline",
+    title: "I-140 filing deadline",
     consequence:
       "You have 180 days after PERM certification to file the I-140. Miss it and the approved labor certification expires.",
     prevention: "Set from your certification date",
     severity: "high",
   },
   {
-    number: "5",
-    title: "Recruitment Timing",
+    title: "Recruitment timing",
     consequence:
       "Sunday ads, job orders and the notice of filing each have exact timing rules. Gaps trigger DOL audits.",
     prevention: "Every step computed, business days included",
@@ -67,24 +61,6 @@ const stakes: StakeCard[] = [
 const severityColors = {
   critical: "var(--urgency-urgent, #DC2626)",
   high: "var(--urgency-soon, #EA580C)",
-};
-
-/**
- * The ink each severity can actually carry, measured rather than assumed.
- *
- * Both badges hardcoded `color: "#fff"`, and the two backgrounds want opposite
- * inks:
- *
- *   #DC2626 (critical)  white 4.83:1   black 4.35:1
- *   #EA580C (high)      white 3.56:1   black 5.90:1
- *
- * So white was correct on one badge and failed the 4.5 floor on the other, and
- * the two sit side by side in the same row. A single literal cannot serve two
- * grounds; the pairing has to be per colour.
- */
-const severityInk = {
-  critical: "#fff",
-  high: "#000",
 };
 
 export function StakesSection() {
@@ -123,12 +99,8 @@ export function StakesSection() {
       {/* Header */}
       <div className="mx-auto max-w-[1400px] px-4 pb-12 text-center sm:px-8">
         <ScrollReveal direction="up">
-          <div className="mb-4 inline-flex items-center gap-2 font-mono text-sm uppercase tracking-widest text-muted-foreground">
-            <AlertTriangle className="h-3.5 w-3.5" />
-            The Stakes
-          </div>{" "}
           <h2 className="font-heading text-2xl font-black tracking-tight sm:text-3xl lg:text-4xl">
-            What a Missed Deadline Costs
+            What a missed deadline costs
           </h2>{" "}
           <p className="mx-auto mt-3 max-w-xl text-base text-muted-foreground">
             PERM filing windows are measured in days. Miss one and recruitment
@@ -206,18 +178,6 @@ export function StakesSection() {
 
               {/* Content */}
               <div className="relative p-6">
-                {/* Number badge */}
-                <div
-                  className="absolute -top-0 right-5 flex h-10 w-10 items-center justify-center border-3 border-border font-heading text-lg font-bold shadow-hard-sm"
-                  style={{
-                    backgroundColor: severityColors[stake.severity],
-                    color: severityInk[stake.severity],
-                    top: "-1px",
-                  }}
-                >
-                  {stake.number}
-                </div>
-
                 {/* Warning icon */}
                 <div className="mb-4 flex h-[60px] items-center">
                   <div className="transition-transform duration-500 group-hover:scale-110">
@@ -264,7 +224,7 @@ export function StakesSection() {
           `animation: infinite` pulse. The count is read off the array so it
           cannot go stale. */}
       <div className="flex flex-col items-center gap-4 pt-8">
-        <div className="flex items-center gap-2 font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
+        <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
           <span>{stakes.length} ways a case is lost</span>{" "}
           <ArrowRightIcon className="h-4 w-4" />
         </div>{" "}
@@ -276,4 +236,3 @@ export function StakesSection() {
   );
 }
 
-export default StakesSection;

@@ -23,6 +23,9 @@ import { getBacklogCensus } from "@/lib/turso/backlog";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { getAlphabet } from "@/lib/turso/alphabet";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { MoreText } from "@/components/data/MoreText";
+import { formatInt } from "@/lib/format";
+import { SITE_URL } from "@/lib/constants/site";
 
 /**
  * Where DOL's PERM queue stands right now, from a per-case scan.
@@ -48,9 +51,9 @@ import { openGraphBase } from "@/lib/openGraphBase";
  * directive, so the two cannot disagree.
  */
 
-// NOT "PERM Queue, Live". 79.8% of pending cases were last re-verified before
-// 2026-08-01, so these are the statuses a rolling scan last saw rather than a
-// live reading, and the title was the loudest place the page claimed otherwise.
+// NOT "PERM Queue, Live": these are the statuses the last sweep saw rather
+// than a live reading, and the title is the loudest place the page could
+// claim otherwise.
 const TITLE = "PERM Queue Backlog";
 const DESCRIPTION =
   "How many PERM cases are still undecided in every filing month, which DOL queue they sit in, and where DOL says its analyst review has reached.";
@@ -68,20 +71,14 @@ export const metadata: Metadata = withSocialCard({
   },
 }, "perm-queue");
 
-// SIX HOURS, NOT ONE (changed 2026-09-01 on cost evidence). The reasoning for
-// an hour was sound about the reader and wrong about the data: this is a queue
-// position rather than a live ticker, but the underlying census is rebuilt ONCE
-// daily after the full DOL sweep, so twenty-four regenerations a day expressed
-// at most one change. Six still bounds staleness below the data's own cadence
-// and catches both the 04:10 and 15:40 ET sweeps.
-//
-// It is not free to regenerate. Vercel bills ISR writes in 8 KB units and this
-// page is ~289 KB, so every regeneration is ~37 units. Across this route and
-// `[month]` (~39 pages) the hourly window was ~984 regenerations a day, roughly
-// a fifth of all ISR writes on the site, for no freshness anyone could observe.
+// SIX HOURS: this is a queue position rather than a live ticker, and the
+// census behind it is rebuilt by the DOL sweeps, so an hourly window would
+// regenerate the page many times a day to express at most a change or two.
+// Six still bounds staleness below the data's own cadence and catches both
+// the 04:10 and 15:40 ET sweeps. Each regeneration is a ~289 KB render, and
+// across this route and `[month]` an hourly window means close to a thousand
+// renders a day for no freshness anyone could observe.
 export const revalidate = 21600;
-
-const int = (n: number) => n.toLocaleString("en-US");
 
 export default async function PermQueuePage() {
   const [census, estimator, alphabet] = await Promise.all([
@@ -134,11 +131,11 @@ export default async function PermQueuePage() {
   // every page looks finished on its own. It is the AEO lever for a data
   // page: it is what tells an answer engine the numbers have a named federal
   // source, a licence and a coverage window rather than being prose.
-  const datasetSchema = getDatasetSchema("https://permtracker.app", {
+  const datasetSchema = getDatasetSchema(SITE_URL, {
     name: "PERM pending queue census by filing month",
     description:
       "How many PERM cases remain undecided in each filing month, which DOL review queue they sit in, and how far each month has been worked through. Read per case from DOL's own case-status search.",
-    url: "https://permtracker.app/perm-queue",
+    url: `${SITE_URL}/perm-queue`,
     isBasedOn: "https://flag.dol.gov/processingtimes",
   });
 
@@ -147,10 +144,7 @@ export default async function PermQueuePage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header>
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
-          From a per-case scan
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Where the PERM queue stands
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
@@ -179,8 +173,8 @@ export default async function PermQueuePage() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 [&>*]:min-w-0">
           <Figure
             label="Last seen undecided"
-            value={int(census.pending)}
-            note={`cases across ${census.months.length} filing months, out of ${int(census.total)} scanned`}
+            value={formatInt(census.pending)}
+            note={`cases across ${census.months.length} filing months, out of ${formatInt(census.total)} scanned`}
           />
           <Figure
             label="DOL is working"
@@ -208,7 +202,7 @@ export default async function PermQueuePage() {
               The oldest filing month that isn&rsquo;t substantially decided is{" "}
               <b className="font-bold">{formatMonth(front.month)}</b>, which is{" "}
               {front.decidedPct !== null ? `${front.decidedPct.toFixed(0)}% decided ` : ""}
-              and still holds {int(front.pendingHere)} undecided cases.{" "}
+              and still holds {formatInt(front.pendingHere)} undecided cases.{" "}
               {newest ? (
                 <>
                   It sits {front.monthsBack}{" "}
@@ -267,9 +261,9 @@ export default async function PermQueuePage() {
 
           {lastClearance ? (
             <p>
-              DOL issued {int(lastClearance.decisions)} determinations in{" "}
+              DOL issued {formatInt(lastClearance.decisions)} determinations in{" "}
               {formatMonth(lastClearance.decisionMonth)}, the last full month in
-              its disclosure window, against {int(census.pending)} still
+              its disclosure window, against {formatInt(census.pending)} still
               undecided. Those two figures don&rsquo;t get divided into a wait:
               new applications keep arriving and DOL reprioritises. The{" "}
               <Link
@@ -287,7 +281,7 @@ export default async function PermQueuePage() {
 
       <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-2xl font-black sm:text-3xl">
-          What those {int(census.pending)} cases were doing
+          What those {formatInt(census.pending)} cases were doing
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
           Analyst review moves in filing order; the other two queues
@@ -332,17 +326,19 @@ export default async function PermQueuePage() {
           <h2 className="font-heading text-2xl font-black sm:text-3xl">
             Your employer&rsquo;s first letter: small, and not in our estimates
           </h2>{" "}
-          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-            Across decided cases DOL tended to work a filing month roughly
-            alphabetically:{" "}
-            <b>
-              about {Math.round(alphabet.spreadDays)} days from A to Z
-            </b>
-            , and in {alphabet.monthsReversed} of {alphabet.monthsMeasured}{" "}
-            filing months the back half was decided <b>faster</b>. At the front
-            of the queue in September 2026 it didn&rsquo;t show at all, so no
-            estimate here uses it.
-          </p>{" "}
+          <MoreText gist={"DOL works a month roughly A to Z, too loosely for any estimate here to use."} className="mt-2">
+            <p className="max-w-3xl text-base leading-relaxed text-foreground/80">
+              Across decided cases DOL tended to work a filing month roughly
+              alphabetically:{" "}
+              <b>
+                about {Math.round(alphabet.spreadDays)} days from A to Z
+              </b>
+              , and in {alphabet.monthsReversed} of {alphabet.monthsMeasured}{" "}
+              filing months the back half was decided <b>faster</b>. At the front
+              of the queue in September 2026 it didn&rsquo;t show at all, so no
+              estimate here uses it.
+            </p>
+          </MoreText>{" "}
 
           <div className="mt-8 border-t-2 border-border pt-6">
             <AlphabetEffect data={alphabet} />
@@ -375,7 +371,7 @@ function Figure({
 }) {
   return (
     <div>
-      <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
+      <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/80">
         {label}
       </p>{" "}
       <p className="mt-1 font-heading text-4xl font-black leading-none tabular-nums">

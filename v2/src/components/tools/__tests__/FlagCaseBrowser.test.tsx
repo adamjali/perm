@@ -12,7 +12,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { FlagCaseRow, FlagDisclosedRow } from "@/lib/turso/flagCases";
 
 const usePublicQuery = vi.fn();
-vi.mock("@/lib/usePublicQuery", () => ({ usePublicQuery }));
+vi.mock("@/hooks/usePublicQuery", () => ({ usePublicQuery }));
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams("q=acme"),
   useRouter: () => ({ push: vi.fn() }),

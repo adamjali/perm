@@ -12,10 +12,6 @@
  * - Click-to-navigate on case name
  * - Click-to-filter on row
  * - Dynamic row heights
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2025-12-26
- * Updated: 2025-12-27 - Added click handlers and dynamic row heights
  */
 
 "use client";
@@ -35,7 +31,7 @@ import { MIN_MONTH_PX } from "@/lib/timeline/positioning";
 import { useScrollToToday } from "@/lib/timeline/useScrollToToday";
 import { TimelineHeader } from "./TimelineHeader";
 import { TimelineRow } from "./TimelineRow";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 
 // ============================================================================
 // Types

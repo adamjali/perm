@@ -51,7 +51,7 @@ from lib_gov_data import (  # noqa: E402
     log,
     read_shared_strings,
 )
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, read_doc, stamp_freshness, write_doc  # noqa: E402
 
 DATA_PAGE = "https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data"
 HOST = "https://www.uscis.gov"
@@ -172,17 +172,11 @@ def store_doc(db, payload: dict, now_ms: int) -> str:
         return "refused: no subtypes or no pending petitions"
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""", [])
-    rows = db.execute("SELECT json FROM perm_docs WHERE key = ?", [DOC_KEY])["response"]["result"]["rows"]
-    if rows:
-        try:
-            held = json.loads(rows[0][0]["value"])
-        except (KeyError, TypeError, ValueError):
-            held = {}
-        if held.get("contentHash") == payload["contentHash"]:
-            return "unchanged"
+    held = read_doc(db, DOC_KEY) or {}
+    if held.get("contentHash") == payload["contentHash"]:
+        return "unchanged"
     doc = {k: payload[k] for k in ("sourceFile", "asOfQuarter", "subtypes", "contentHash")}
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-               [DOC_KEY, json.dumps(doc, separators=(",", ":")), now_ms])
+    write_doc(db, DOC_KEY, doc, now_ms)
     return "stored"
 
 
@@ -231,38 +225,20 @@ def main() -> int:
         json.dump(payload, fh, separators=(",", ":"))
     log(f"wrote {args.out} ({os.path.getsize(args.out) / 1024:.1f} KB)")
 
-    # Stamp a freshness row so `check_ingest_health.py` can see this ingest
-    # stop. It is NOT rendered on any page, but a row the monitor can
-    # read is what turns a silent death into a red scheduled run, and this
-    # step runs under `continue-on-error: true`.
-    #
-    # THE FIRST VERSION OF THIS STAMP WAS WRONG IN TWO WAYS AT ONCE, and both
-    # were invisible until it actually ran:
-    #
-    #   1. It wrote to `uscis-i140-times`, which is a DIFFERENT dataset: the
-    #      per-subtype processing RANGES that live in a hand-maintained table
-    #      at src/lib/processing-times/i140ProcessingTimes.ts, scraped from
-    #      egov.uscis.gov, which this script explicitly does not touch. It
-    #      would have overwritten that row's as_of with this one's.
-    #   2. It read `SELECT max(as_of) FROM uscis_i140_times`, a table that has
-    #      never existed in Turso. The run died there every time.
-    #
-    # The as_of now comes from the PAYLOAD, which is the only thing here that
-    # knows which quarter was actually parsed. "FY2026 Q2" is normalised to
-    # "2026Q2" because that is the shape check_ingest_health.py parses.
+    # A freshness row so check_ingest_health.py sees this ingest stop. The
+    # dataset is `uscis-i140-counts`, not `uscis-i140-times` (the hand-kept
+    # processing ranges in src/lib/processing-times/), and its as_of is the
+    # quarter this payload parsed, normalised from "FY2026 Q2" to "2026Q2",
+    # the shape the health check reads.
     quarter_key = str(payload.get("asOfQuarter", "")).replace("FY", "").replace(" ", "")
     db = Turso()
     result = store_doc(db, payload, int(time.time() * 1000))
     log(f"perm_docs[{DOC_KEY}]  {result}")
     if result.startswith("refused"):
         raise SystemExit(f"FATAL: {result}. Refusing to report success.")
-    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
-    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-               ["uscis-i140-counts", quarter_key, int(time.time() * 1000),
-                "USCIS quarterly I-140 spreadsheets (www.uscis.gov)", "Quarterly",
-                f"{len(subtypes)} preference subtypes", 135])
+    stamp_freshness(db, "uscis-i140-counts", as_of=quarter_key,
+                    source="USCIS quarterly I-140 spreadsheets (www.uscis.gov)", cadence="Quarterly",
+                    note=f"{len(subtypes)} preference subtypes", max_age_days=135)
 
     return 0
 

@@ -8,7 +8,7 @@
 
 ## Testing
 
-- [ ] Unit tests pass (`pnpm test:fast`)
+- [ ] Tests pass (`pnpm test:run`)
 - [ ] No TypeScript errors (`pnpm typecheck`)
 - [ ] Tested in browser (if UI changes)
 

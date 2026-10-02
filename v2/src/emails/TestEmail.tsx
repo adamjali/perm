@@ -10,6 +10,7 @@
 
 import { Text, Section, Link } from "@react-email/components";
 import { EmailLayout } from "./components";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface TestEmailProps {
   /** URL for notification settings */
@@ -21,7 +22,7 @@ export interface TestEmailProps {
  * Uses the shared EmailLayout for consistent PERM Tracker branding.
  */
 export function TestEmail({
-  settingsUrl = "https://permtracker.app/settings/notifications",
+  settingsUrl = `${SITE_URL}/settings/notifications`,
 }: TestEmailProps) {
   return (
     <EmailLayout
@@ -119,7 +120,7 @@ const styles = {
 
 /** Preview props for React Email dev server. */
 TestEmail.PreviewProps = {
-  settingsUrl: "https://permtracker.app/settings/notifications",
+  settingsUrl: `${SITE_URL}/settings/notifications`,
 } satisfies TestEmailProps;
 
 export default TestEmail;

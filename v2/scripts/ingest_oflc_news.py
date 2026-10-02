@@ -16,9 +16,9 @@ the same vocabulary the Federal Register feed uses.
 
 WHERE IT RUNS. www.dol.gov answers GitHub's runners with a full browser header
 set and refuses residential addresses, so this runs on the runner beside the
-debarment ingest. From a laptop, `--from-file` parses a page saved by a
-browser (HTML or the page's text); the parser accepts either because the
-fixture that proves it was captured as text.
+debarment ingest. Elsewhere, `--from-file` parses a page saved by a browser
+(HTML or the page's text); the parser accepts either because the fixture that
+proves it was captured as text.
 
 WHAT IT IS NOT. A summary or an opinion. The abstract is OFLC's first
 paragraph, verbatim; a row's URL is the announcements page, because OFLC gives
@@ -42,7 +42,7 @@ import time
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
+from lib_turso import Turso, query_rows, record_run, stamp_freshness  # noqa: E402
 
 URL = "https://www.dol.gov/agencies/eta/foreign-labor/news"
 DATASET = "policy-notices-oflc"
@@ -204,11 +204,8 @@ DDL = [
 def write(db: Turso, rows: list[dict]) -> int:
     """Upsert only the rows that are new or changed; the Federal Register feed's rows are untouched."""
     db.script(DDL)
-    res = db.execute("SELECT document_number, title, abstract, topics FROM policy_notices WHERE type = ?", [TYPE])
-    have = {}
-    for r in res["response"]["result"]["rows"]:
-        vals = [None if c["type"] == "null" else c["value"] for c in r]
-        have[vals[0]] = (vals[1], vals[2], vals[3])
+    have = {r[0]: tuple(r[1:]) for r in query_rows(
+        db, "SELECT document_number, title, abstract, topics FROM policy_notices WHERE type = ?", [TYPE])}
     now = int(time.time() * 1000)
     written = 0
     for row in rows:
@@ -216,8 +213,8 @@ def write(db: Turso, rows: list[dict]) -> int:
         if have.get(row["document_number"]) == key:
             continue
         db.execute(
-            # Named columns: the Federal Register feed widened this table on
-            # 2026-09-16 and a positional insert would fail on the count.
+            # Named columns: the Federal Register feed shares this table and
+            # adds columns, and a positional insert would fail on the count.
             "INSERT OR REPLACE INTO policy_notices (document_number, publication_date, type, title, "
             "abstract, html_url, agencies, topics, fetched_at) VALUES (?,?,?,?,?,?,?,?,?)",
             [

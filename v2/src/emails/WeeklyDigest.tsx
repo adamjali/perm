@@ -1,6 +1,6 @@
 /**
  * WeeklyDigest Email Template
- * Weekly summary email sent every Monday morning.
+ * Weekly case summary, sent every Monday morning.
  *
  * Features:
  * - Stats overview (active cases, overdue, urgent)
@@ -14,14 +14,14 @@
  * - urgent (1-7): #DC2626 (red)
  * - upcoming (8-14): #F97316 (orange)
  * - later (15+): #2563EB (blue)
- *
- * Phase: 25.1 (Weekly Digest Email)
  */
 
 import { Text, Section, Link, Hr } from "@react-email/components";
 import * as React from "react";
 import { EmailLayout } from "./components";
 import type { DigestContent, DigestDeadline, DigestCaseUpdate } from "../../convex/lib/digestHelpers";
+import { MS_PER_DAY } from "../../convex/lib/time";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface WeeklyDigestProps {
   /** Complete digest content built by digestHelpers */
@@ -30,7 +30,7 @@ export interface WeeklyDigestProps {
   baseUrl?: string;
   /** URL to manage notification settings */
   settingsUrl?: string;
-  /** One-click unsubscribe URL for the weekly summary (omit to hide the link). */
+  /** One-click unsubscribe URL for the weekly case summary (omit to hide the link). */
   unsubscribeUrl?: string;
 }
 
@@ -40,8 +40,8 @@ export interface WeeklyDigestProps {
  */
 export function WeeklyDigest({
   digestContent,
-  baseUrl = "https://permtracker.app",
-  settingsUrl = "https://permtracker.app/settings",
+  baseUrl = SITE_URL,
+  settingsUrl = `${SITE_URL}/settings`,
   unsubscribeUrl,
 }: WeeklyDigestProps) {
   const {
@@ -71,8 +71,8 @@ export function WeeklyDigest({
   const weekRange = `${formatWeekDate(weekStartDate)} - ${formatWeekDate(weekEndDate)}`;
 
   const previewText = isEmpty
-    ? "Your weekly PERM case summary - All clear this week!"
-    : `Your weekly PERM summary: ${stats.overdueCount} overdue, ${stats.urgentCount} urgent deadlines`;
+    ? "Your weekly case summary: all clear this week"
+    : `Your weekly case summary: ${stats.overdueCount} overdue, ${stats.urgentCount} urgent deadlines`;
 
   return (
     <EmailLayout previewText={previewText} settingsUrl={settingsUrl}>
@@ -218,7 +218,7 @@ export function WeeklyDigest({
       {unsubscribeUrl && (
         <Section style={{ textAlign: "center" as const, marginTop: "12px", paddingTop: "8px" }}>
           <Text className="em-text-muted" style={{ color: "#a1a1aa", fontSize: "12px", lineHeight: "18px", margin: "0" }}>
-            You get this weekly summary because it&#39;s on in your settings.{" "}
+            You get this weekly case summary because it&#39;s on in your settings.{" "}
             <Link href={unsubscribeUrl} className="em-link" style={{ color: "#71717a", textDecoration: "underline" }}>
               Unsubscribe from weekly summaries
             </Link>
@@ -306,7 +306,7 @@ function ActivityRow({
     const date = new Date(timestamp);
     const now = new Date();
     const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const days = Math.floor(diff / MS_PER_DAY);
 
     if (days === 0) return "Today";
     if (days === 1) return "Yesterday";
@@ -578,4 +578,3 @@ const styles = {
   },
 } as const;
 
-export default WeeklyDigest;

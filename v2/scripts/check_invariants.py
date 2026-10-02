@@ -5,11 +5,11 @@ job run, exit clean, and move its frontier". It cannot see data that is
 present and WRONG: two P-100 rows counted as a PERM review stage for four
 days; 284 terminal statuses stored as pending because a vocabulary did not
 know them; 62 alias rows pointing live pages at slugs that never existed;
-four duplicate indexes doubling every write to a table. Each of those was
-found by hand on Sep 6 2026 and each is a query. So they run daily.
+four duplicate indexes doubling every write to a table. Each was found by
+hand once, and each is a query, so they run daily.
 
 Every check is bounded (samples by primary-key range, small tables read in
-full, DISTINCT only on leading index columns) because Turso bills rows read.
+full, DISTINCT only on leading index columns), so the daily run stays cheap.
 Every check prints its finding before its verdict, so a check that could not
 see its subject is distinguishable from one that found nothing.
 
@@ -22,7 +22,7 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, query_rows  # noqa: E402
 from lib_flag_serials import code_to_date, code_of, recent_day_codes  # noqa: E402
 from ingest_case_status_direct import FINAL_STATUSES as PERM_FINAL  # noqa: E402
 from ingest_pwd_status_direct import PROGRAMS  # noqa: E402
@@ -40,11 +40,6 @@ FOREIGN_PREFIXES = ("P-100-", "I-200-", "I-203-", "I-201-", "I-202-")
 SAMPLE_DAYS = 4          # newest rows: an unknown status appears on new rows first
 MAX_DATE_DRIFT_DAYS = 2  # the counter rolls at a moment that is not midnight
 MAX_DRIFT_SHARE = 0.02
-
-
-def _cells(res) -> list[list]:
-    return [[None if c["type"] == "null" else c["value"] for c in r]
-            for r in res["response"]["result"]["rows"]]
 
 
 def check_no_foreign_prefixes(rows) -> tuple[bool, str]:
@@ -141,7 +136,7 @@ def main(today: datetime.date | None = None) -> int:
     today = today or datetime.date.today()
 
     def rows(sql: str, args: list | None = None) -> list[list]:
-        return _cells(db.execute(sql, args or []))
+        return query_rows(db, sql, args)
 
     checks = [
         check_no_foreign_prefixes(rows),

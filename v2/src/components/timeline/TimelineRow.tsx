@@ -11,10 +11,6 @@
  * - Click on case name to navigate to detail page
  * - Click on row to filter to single case
  * - Dynamic row height support
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2025-12-26
- * Updated: 2025-12-27 - Added click handlers and dynamic height
  */
 
 "use client";
@@ -30,7 +26,7 @@ import {
 } from "@/lib/timeline/positioning";
 import { SIDEBAR_WIDTH_CLASSES, Z_INDEX } from "@/lib/timeline/constants";
 import type { Milestone, RangeBar, CaseWithDates } from "@/lib/timeline/types";
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 import { TimelineMilestoneMarker } from "./TimelineMilestoneMarker";
 import { TimelineRangeBar } from "./TimelineRangeBar";
 

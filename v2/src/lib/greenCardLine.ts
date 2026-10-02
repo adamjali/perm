@@ -41,6 +41,7 @@
  */
 
 import type { CountryKey, Cutoff } from "@/lib/perm";
+import { DAYS_PER_MONTH } from "@/lib/time";
 
 // ---------------------------------------------------------------------------
 // Vocabulary
@@ -152,8 +153,8 @@ export const FAMILY_SIZE_SOURCES = [
 
 /**
  * Days from PERM filing to certification, median over certified cases by the
- * fiscal quarter DOL decided them, measured 2026-09-26 from DOL's disclosure
- * files (FY2024 through FY2026 Q3) as loaded in this site's perm_cases table.
+ * fiscal quarter DOL decided them, measured from DOL's disclosure files
+ * (FY2024 through FY2026 Q3) as loaded in this site's perm_cases table.
  */
 export const PERM_DAYS_BY_DECISION_QUARTER: ReadonlyArray<{ fy: number; q: number; days: number }> = [
   { fy: 2024, q: 1, days: 348 },
@@ -182,8 +183,6 @@ export const FILING_DELAY_MONTHS = { low: 0, mid: 1, high: 6 } as const;
  * nine for the chart. The range below carries it.
  */
 export const PERM_MONTHS_BEFORE_MEASURED = { low: 6, mid: 9, high: 12 } as const;
-
-const DAYS_PER_MONTH = 30.4375;
 
 // ---------------------------------------------------------------------------
 // The snapshot the server hands the calculator
@@ -222,7 +221,7 @@ export interface LineSnapshot {
    * Every pending I-485 (both statuses), per line, by priority-date month:
    * `[monthIndex, counted, suppressed]`, month 0 for USCIS's "prior years"
    * column. These are PEOPLE USCIS counted, the one part of the line that
-   * needs no estimate. Absent from snapshots built before 2026-09-26.
+   * needs no estimate. Absent from snapshots built before the field existed.
    */
   i485Filed?: {
     asOf: string;

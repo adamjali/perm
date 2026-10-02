@@ -121,18 +121,15 @@ export type CaseEstimate =
       /**
        * A measured waiting time, and WHOSE it is.
        *
-       * This used to be a bare `observedAgeDays` documented as "mean days
-       * cases at this stage have already been pending", with two producers
-       * that meant different things: the stage branch put the measured
-       * population mean in it (170 to 714 days, from queueForecast), and the
-       * overdue branch put `today - this case's filing date` in it. The panel
-       * rendered one sentence for both - "Cases at this stage have been
-       * pending a measured average of N days" - so for every overdue case it
-       * presented that one case's own wait as a population average.
-       *
-       * It was invisible because both numbers are in the same range and both
-       * look plausible. The discriminator is here so the copy cannot claim
-       * more than the number is.
+       * Two producers mean different things: the stage branch carries the
+       * measured population mean for the stage (170 to 714 days, from
+       * queueForecast), and the overdue branch carries `today - this case's
+       * filing date`. One sentence for both ("Cases at this stage have been
+       * pending a measured average of N days") would present one case's own
+       * wait as a population average, and nobody would notice, because both
+       * numbers are in the same range and both look plausible. The
+       * discriminator is here so the copy cannot claim more than the number
+       * is.
        */
       age:
         | { of: "stage"; days: number }
@@ -144,8 +141,8 @@ export type CaseEstimate =
        * return to ANALYST REVIEW rather than to a decision, so an RFI is a
        * detour back into the ordinary queue and not an endpoint.
        *
-       * Destinations only. The event log opens 2026-08-26 and cannot see an
-       * entry before it, so it can say WHERE a case goes and nothing about how
+       * Destinations only. The event log cannot see an entry from before it
+       * opened, so it can say WHERE a case goes and nothing about how
        * long it takes to get there.
        */
       nextStep?: { to: string; share: number; observed: number } | null;

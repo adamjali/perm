@@ -14,6 +14,7 @@ import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { readUserCases } from "./lib/userCases";
+import { caseDeadlineDates, type CaseDeadlineDates } from "./lib/caseDates";
 
 /**
  * Timeline time range type
@@ -266,35 +267,12 @@ interface TimelineRfiRfeEntry {
 /**
  * Timeline case data type
  */
-interface TimelineCaseData {
+interface TimelineCaseData extends CaseDeadlineDates {
   id: Id<"cases">;
   employerName: string;
   positionTitle: string;
   caseStatus: "pwd" | "recruitment" | "eta9089" | "i140" | "closed";
   progressStatus: "working" | "waiting_intake" | "filed" | "approved" | "under_review" | "rfi_rfe";
-  // PWD dates
-  pwdFilingDate?: string;
-  pwdDeterminationDate?: string;
-  pwdExpirationDate?: string;
-  // Recruitment dates
-  jobOrderStartDate?: string;
-  jobOrderEndDate?: string;
-  sundayAdFirstDate?: string;
-  sundayAdSecondDate?: string;
-  additionalRecruitmentStartDate?: string;
-  additionalRecruitmentEndDate?: string;
-  noticeOfFilingStartDate?: string;
-  noticeOfFilingEndDate?: string;
-  // ETA 9089 dates
-  eta9089FilingDate?: string;
-  eta9089AuditDate?: string;
-  eta9089CertificationDate?: string;
-  eta9089ExpirationDate?: string;
-  // I-140 dates
-  i140FilingDate?: string;
-  i140ReceiptDate?: string;
-  i140ApprovalDate?: string;
-  i140DenialDate?: string;
   // RFI/RFE entries
   rfiEntries: TimelineRfiRfeEntry[];
   rfeEntries: TimelineRfiRfeEntry[];
@@ -346,29 +324,7 @@ export const getCasesForTimeline = query({
       positionTitle: caseDoc.positionTitle,
       caseStatus: caseDoc.caseStatus,
       progressStatus: caseDoc.progressStatus,
-      // PWD dates
-      pwdFilingDate: caseDoc.pwdFilingDate,
-      pwdDeterminationDate: caseDoc.pwdDeterminationDate,
-      pwdExpirationDate: caseDoc.pwdExpirationDate,
-      // Recruitment dates
-      jobOrderStartDate: caseDoc.jobOrderStartDate,
-      jobOrderEndDate: caseDoc.jobOrderEndDate,
-      sundayAdFirstDate: caseDoc.sundayAdFirstDate,
-      sundayAdSecondDate: caseDoc.sundayAdSecondDate,
-      additionalRecruitmentStartDate: caseDoc.additionalRecruitmentStartDate,
-      additionalRecruitmentEndDate: caseDoc.additionalRecruitmentEndDate,
-      noticeOfFilingStartDate: caseDoc.noticeOfFilingStartDate,
-      noticeOfFilingEndDate: caseDoc.noticeOfFilingEndDate,
-      // ETA 9089 dates
-      eta9089FilingDate: caseDoc.eta9089FilingDate,
-      eta9089AuditDate: caseDoc.eta9089AuditDate,
-      eta9089CertificationDate: caseDoc.eta9089CertificationDate,
-      eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
-      // I-140 dates
-      i140FilingDate: caseDoc.i140FilingDate,
-      i140ReceiptDate: caseDoc.i140ReceiptDate,
-      i140ApprovalDate: caseDoc.i140ApprovalDate,
-      i140DenialDate: caseDoc.i140DenialDate,
+      ...caseDeadlineDates(caseDoc),
       // RFI/RFE entries - default to empty arrays
       rfiEntries: (caseDoc.rfiEntries ?? []) as TimelineRfiRfeEntry[],
       rfeEntries: (caseDoc.rfeEntries ?? []) as TimelineRfiRfeEntry[],

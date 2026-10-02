@@ -104,12 +104,12 @@ export function SentryClientInit() {
           }
           return event;
         },
-        // SESSION REPLAY REMOVED 2026-08-29. PostHog records the authenticated
-        // app (masked) via AppSessionReplay; two replay products recording the
-        // same sessions was pure duplication and double the rrweb/replay
-        // main-thread cost. Sentry stays for what it is better at here — the
+        // NO SESSION REPLAY. PostHog records the authenticated app (masked)
+        // via AppSessionReplay; two replay products recording the same
+        // sessions would be pure duplication and double the replay
+        // main-thread cost. Sentry stays for what it is better at here, the
         // explicit captureError() calls throughout the app and its console
-        // integration — while PostHog owns replay and analytics.
+        // integration, while PostHog owns replay and analytics.
         integrations: [
           Sentry.consoleLoggingIntegration({ levels: ["warn", "error"] }),
         ],

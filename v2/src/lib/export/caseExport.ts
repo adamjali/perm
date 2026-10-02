@@ -19,7 +19,7 @@
  * }
  */
 
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 import { captureError } from "@/lib/sentry";
 
 // ============================================================================
@@ -102,6 +102,8 @@ export interface ExportedCase {
   socCode?: string;
   socTitle?: string;
   jobOrderState?: string;
+  jobDescriptionPositionTitle?: string;
+  jobDescription?: string;
 
   // Status
   caseStatus: string;
@@ -221,6 +223,8 @@ export interface FullCaseData {
   socCode?: string;
   socTitle?: string;
   jobOrderState?: string;
+  jobDescriptionPositionTitle?: string;
+  jobDescription?: string;
   caseStatus: string;
   progressStatus: string;
   progressStatusOverride?: boolean;
@@ -343,6 +347,8 @@ function transformFullCaseForExport(caseData: FullCaseData): ExportedCase {
     socCode: caseData.socCode,
     socTitle: caseData.socTitle,
     jobOrderState: caseData.jobOrderState,
+    jobDescriptionPositionTitle: caseData.jobDescriptionPositionTitle,
+    jobDescription: caseData.jobDescription,
 
     // Status
     caseStatus: caseData.caseStatus,
@@ -620,25 +626,24 @@ function downloadBlob(blob: Blob, filename: string): void {
 // FULL CASE EXPORT FUNCTIONS
 // ============================================================================
 
+/** The JSON a full export writes: a versioned wrapper around every case. */
+export function buildFullCasesJSON(cases: readonly FullCaseData[]): string {
+  const exportWrapper: ExportWrapper = {
+    version: EXPORT_VERSION,
+    exportDate: new Date().toISOString(),
+    totalCases: cases.length,
+    cases: cases.map(transformFullCaseForExport),
+  };
+  return JSON.stringify(exportWrapper, null, 2);
+}
+
 /**
  * Export full case data as JSON file.
  * Takes an array of full case data from Convex query.
  * Triggers browser download with filename: perm-cases-YYYY-MM-DD.json
  */
 export function exportFullCasesJSON(cases: readonly FullCaseData[]): void {
-  // Transform cases to export format
-  const exportedCases = cases.map(transformFullCaseForExport);
-
-  // Create versioned wrapper
-  const exportWrapper: ExportWrapper = {
-    version: EXPORT_VERSION,
-    exportDate: new Date().toISOString(),
-    totalCases: cases.length,
-    cases: exportedCases,
-  };
-
-  // Serialize to pretty-printed JSON
-  const jsonContent = JSON.stringify(exportWrapper, null, 2);
+  const jsonContent = buildFullCasesJSON(cases);
 
   // Create Blob
   const blob = new Blob([jsonContent], { type: "application/json;charset=utf-8" });
@@ -682,7 +687,7 @@ export function exportFullCasesCSV(cases: readonly FullCaseData[]): void {
 // LEGACY EXPORTS (for backward compatibility with CaseCardData)
 // ============================================================================
 
-import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
 
 /**
  * Legacy: Transform CaseCardData to exportable format.

@@ -5,7 +5,8 @@ import {
 } from "@convex-dev/auth/nextjs/server";
 import { NextResponse } from "next/server";
 import { fetchMutation } from "convex/nextjs";
-import { api } from "../convex/_generated/api";
+import { MS_PER_MINUTE } from "@/lib/time";
+import { api } from "@convex/_generated/api";
 import { addBreadcrumb } from "@/lib/sentry";
 import { getClientIp } from "@/lib/net/getClientIp";
 
@@ -73,7 +74,7 @@ const handler = convexAuthNextjsMiddleware(
         });
         if (!check.allowed) {
           const retryMs = check.retryAfterMs ?? 0;
-          const retryMin = Math.ceil(retryMs / 60000);
+          const retryMin = Math.ceil(retryMs / MS_PER_MINUTE);
           const retrySec = Math.ceil(retryMs / 1000);
           return NextResponse.json(
             {
@@ -136,11 +137,10 @@ export default handler;
 export const proxy = handler;
 
 export const config = {
-  // ONLY WHERE THIS FILE HAS WORK TO DO. It used to match every non-file
-  // path, so the login check ran on every public page and on every CDN hit
-  // before the ISR cache could answer: 85 to 93 percent of all function
-  // invocations on Sep 6 2026, on pages with no login at all. Public pages
-  // are static or ISR and need nothing from here.
+  // ONLY WHERE THIS FILE HAS WORK TO DO. Matching every non-file path would
+  // run the login check on every public page and every cached hit before the
+  // page cache could answer, which is most requests, on pages with no login
+  // at all. Public pages are static or ISR and need nothing from here.
   //
   // What still must run through it: the authenticated app (redirect to
   // /login), /login and /signup (redirect to /dashboard), the Convex Auth

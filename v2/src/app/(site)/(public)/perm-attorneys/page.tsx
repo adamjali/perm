@@ -12,6 +12,7 @@ import { withSocialCard } from "@/lib/socialCard";
 import Link from "next/link";
 
 import { getDatasetSchema } from "@/lib/structuredData";
+import { ChartTips } from "@/components/data/ChartTips";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { EntityExplorer } from "@/components/tools/EntityExplorer";
@@ -21,6 +22,8 @@ import { fetchEntitySeed } from "@/lib/entitySeed";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { PageBasics } from "@/components/data/PageBasics";
+import { formatInt } from "@/lib/format";
+import { SITE_URL } from "@/lib/constants/site";
 const TITLE = "Every PERM Law Firm, Ranked";
 const DESCRIPTION =
   "Every law firm filing PERM cases: volume, approval rate and median processing days per firm, searchable and sortable, from DOL's own disclosure files.";
@@ -50,20 +53,16 @@ export const metadata: Metadata = withSocialCard({
 // trigger that never fires bounds the staleness instead of stranding the page.
 export const revalidate = 604800;
 
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 export default async function PermAttorneysPage() {
   const { rows: attorneys, total: firmCount } = await fetchEntitySeed("attorney");
 
   const topTen = attorneys.slice(0, 10);
   const maxTotal = Math.max(1, ...topTen.map((a) => a.total));
 
-  const datasetSchema = getDatasetSchema("https://permtracker.app", {
+  const datasetSchema = getDatasetSchema(SITE_URL, {
     name: "PERM labor certification filings by law firm",
     description: DESCRIPTION,
-    url: "https://permtracker.app/perm-attorneys",
+    url: `${SITE_URL}/perm-attorneys`,
   });
 
   return (
@@ -71,10 +70,7 @@ export default async function PermAttorneysPage() {
       <JsonLdScript schema={datasetSchema} />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          As printed in DOL&apos;s files
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Who files the most PERM cases
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
@@ -88,10 +84,23 @@ export default async function PermAttorneysPage() {
           <section className="pop mt-10">
             <div className="border-2 border-border bg-card p-6 sm:p-8">
               <h2 className="font-heading text-xl font-black">The ten busiest firms</h2>
-              <div className="mt-6 space-y-3">
+              <ChartTips label="The ten busiest firms, by filings" className="mt-6">
+              <div className="space-y-3">
                 {topTen.map((a) => (
-                  <div key={a.name} className="grid grid-cols-[minmax(0,240px)_1fr] items-center gap-3">
-                    <p className="truncate text-sm font-bold" title={a.name}>
+                  <div
+                    key={a.name}
+                    data-tip={[
+                      a.name,
+                      `#${a.rank} by filings`,
+                      `${formatInt(a.total)} filings`,
+                      `${formatInt(a.certified)} certified, ${formatInt(a.denied)} denied`,
+                      a.medianDays !== null ? `Median ${formatInt(a.medianDays)} days to a decision` : null,
+                      a.recent12m !== null ? `${formatInt(a.recent12m)} filed in the last 12 months` : null,
+                    ]
+                      .filter(Boolean)
+                      .join("\n")}
+                    className="grid grid-cols-[minmax(0,240px)_1fr] items-center gap-3">
+                    <p className="truncate text-sm font-bold">
                       {a.name}
                     </p>
                     <div className="flex min-w-0 items-center gap-2">
@@ -103,13 +112,14 @@ export default async function PermAttorneysPage() {
                           maxWidth: "calc(100% - 64px)",
                         }}
                       />
-                      <span className="whitespace-nowrap font-mono text-xs font-bold tabular-nums">
-                        {fmtInt(a.total)}
+                      <span className="whitespace-nowrap font-mono text-sm font-bold tabular-nums">
+                        {formatInt(a.total)}
                       </span>
                     </div>
                   </div>
                 ))}
               </div>
+              </ChartTips>
               <p className="mt-5 text-sm text-foreground/60">
                 Approval rates cluster above 99% across every firm on this
                 list, so the ranking is by volume alone.

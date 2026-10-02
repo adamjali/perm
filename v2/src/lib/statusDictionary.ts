@@ -195,11 +195,190 @@ export const LCA_STATUSES: FlagStatusEntry[] = [
   },
 ];
 
+/**
+ * H-2A applications (`H-300-`, ETA-9142A), H-2B applications (`H-400-`,
+ * ETA-9142B) and H-2B prevailing wage requests (`P-400-`): every status DOL's
+ * live index returned for them in the backfill, pending first.
+ * Cites are 20 CFR part 655, subpart A (H-2B) and subpart B (H-2A), read on
+ * eCFR as of Sep 29 2026. `forms` names which of the three the word appears on.
+ */
+export const SEASONAL_STATUSES: (FlagStatusEntry & { forms: string })[] = [
+  {
+    status: "IN PROCESS",
+    label: "In process",
+    pending: true,
+    forms: "All three",
+    summary: "Filed and not yet acted on. On an application DOL accepts it or sends a notice of deficiency within 7 days of receipt: calendar days for H-2A, business days for H-2B.",
+    cite: { label: "20 CFR 655.33, 655.143", href: CFR("655", "655.143") },
+  },
+  {
+    status: "NOD ISSUED",
+    label: "Notice of deficiency issued",
+    pending: true,
+    forms: "H-2A and H-2B applications",
+    summary: "DOL found the application or job order incomplete or wrong and said what to fix. The employer has 5 business days (H-2A) or 10 (H-2B) to send a modified application or ask a judge to review the notice; otherwise it is denied.",
+    cite: { label: "20 CFR 655.31, 655.141", href: CFR("655", "655.141") },
+  },
+  {
+    status: "ACCEPTED - PENDING RECRUITMENT",
+    label: "Accepted, pending recruitment",
+    pending: true,
+    forms: "H-2A and H-2B applications",
+    summary: "DOL issued a notice of acceptance. The job order goes out to state workforce agencies and the employer recruits U.S. workers before DOL decides; an H-2A decision is due no later than 30 days before the first date of need.",
+    cite: { label: "20 CFR 655.33, 655.143", href: CFR("655", "655.33") },
+  },
+  {
+    status: "NOR ISSUED",
+    label: "NOR issued",
+    pending: true,
+    forms: "H-2B applications",
+    summary: "A notice DOL sent on an H-2B application that is still open.",
+    unsourced: "DOL publishes no definition of NOR and the H-2B rules don't use the abbreviation. The letter itself says what it asks for and by when.",
+  },
+  {
+    status: "NRM ISSUED",
+    label: "NRM issued",
+    pending: true,
+    forms: "H-2A applications",
+    summary: "A notice DOL sent on an H-2A application that is still open.",
+    unsourced: "DOL publishes no definition of NRM and the H-2A rules don't use the abbreviation. The letter itself says what it asks for and by when.",
+  },
+  {
+    status: "RFI ISSUED",
+    label: "RFI issued",
+    pending: true,
+    forms: "H-2B wage requests",
+    summary: "The wage center asked the employer for information before it will set the wage.",
+    unsourced: "DOL publishes no definition and no response period for a wage-request RFI; the letter states its own.",
+  },
+  {
+    status: "PENDING APPEAL",
+    label: "Pending appeal",
+    pending: true,
+    forms: "H-2A and H-2B applications",
+    summary: "The employer asked an administrative law judge to review a notice of deficiency or a denial. On H-2A the employer can ask for an expedited review or a new hearing.",
+    cite: { label: "20 CFR 655.61, 655.171", href: CFR("655", "655.171") },
+  },
+  {
+    status: "PENDING CENTER DIRECTOR REVIEW",
+    label: "Pending Center Director review",
+    pending: true,
+    forms: "H-2B wage requests",
+    summary: "The employer disputes the wage and asked the National Prevailing Wage Center's director to review it. The request has to be made within 7 business days of the determination.",
+    cite: { label: "20 CFR 655.13(a)", href: CFR("655", "655.13") },
+  },
+  {
+    status: "Post-Cert Request Pending",
+    label: "Post-certification request pending",
+    pending: true,
+    forms: "H-2B applications",
+    summary: "DOL already certified the application and the employer has asked for something after it. DOL writes this one in mixed case.",
+    unsourced: "DOL publishes no definition; the record doesn't say what was asked for.",
+  },
+  {
+    status: "FULL CERTIFICATION",
+    label: "Full certification",
+    pending: false,
+    forms: "H-2A and H-2B applications",
+    summary: "DOL certified the application for every worker and the whole period requested. The employer files the certified application with its petition to USCIS; for H-2A, DOL sends it to USCIS directly.",
+    cite: { label: "20 CFR 655.52, 655.162", href: CFR("655", "655.162") },
+  },
+  {
+    status: "PARTIAL CERTIFICATION",
+    label: "Partial certification",
+    pending: false,
+    forms: "H-2A and H-2B applications",
+    summary: "DOL certified fewer workers, a shorter period, or both. For H-2B the number drops by one for each qualified U.S. worker who is available and wasn't rejected for a lawful reason.",
+    cite: { label: "20 CFR 655.54", href: CFR("655", "655.54") },
+  },
+  {
+    status: "FULL CERTIFICATION - EXPIRED",
+    label: "Full certification, expired",
+    pending: false,
+    forms: "H-2A applications",
+    summary: "A certification DOL now shows as expired.",
+    unsourced: "DOL publishes no definition of the expired label on a temporary certification.",
+  },
+  {
+    status: "PARTIAL CERTIFICATION - EXPIRED",
+    label: "Partial certification, expired",
+    pending: false,
+    forms: "H-2A applications",
+    summary: "A partial certification DOL now shows as expired.",
+    unsourced: "DOL publishes no definition of the expired label on a temporary certification.",
+  },
+  {
+    status: "FULL CERTIFICATION - WITHDRAWN",
+    label: "Full certification, withdrawn",
+    pending: false,
+    forms: "H-2A applications",
+    summary: "The employer withdrew the application after DOL certified it. It stays bound by the job order's terms for every worker it recruited under it.",
+    cite: { label: "20 CFR 655.172", href: CFR("655", "655.172") },
+  },
+  {
+    status: "DETERMINATION ISSUED",
+    label: "Determination issued",
+    pending: false,
+    forms: "H-2B wage requests",
+    summary: "The wage center set the prevailing wage. The H-2B job has to be advertised and paid at least that, or any higher minimum wage that applies.",
+    cite: { label: "20 CFR 655.10", href: CFR("655", "655.10") },
+  },
+  {
+    status: "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
+    label: "Center Director review affirmed",
+    pending: false,
+    forms: "H-2B wage requests",
+    summary: "The center's director kept the wage. The employer can ask BALCA to review it within 10 business days.",
+    cite: { label: "20 CFR 655.13", href: CFR("655", "655.13") },
+  },
+  {
+    status: "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
+    label: "Center Director review modified",
+    pending: false,
+    forms: "H-2B wage requests",
+    summary: "The center's director changed the wage. The modified determination is the one that governs.",
+    cite: { label: "20 CFR 655.13", href: CFR("655", "655.13") },
+  },
+  {
+    status: "BALCA OVERTURNED",
+    label: "BALCA overturned",
+    pending: false,
+    forms: "H-2B wage requests",
+    summary: "The employer took the director's decision to the Board of Alien Labor Certification Appeals, and the board reversed it.",
+    cite: { label: "20 CFR 655.13(c)", href: CFR("655", "655.13") },
+  },
+  {
+    status: "DENIED",
+    label: "Denied",
+    pending: false,
+    forms: "H-2A and H-2B applications",
+    summary: "DOL refused the certification, giving its reasons. The employer can ask a judge to review the denial; without that request the denial is final.",
+    cite: { label: "20 CFR 655.53, 655.164", href: CFR("655", "655.164") },
+  },
+  {
+    status: "RETURNED UNPROCESSED",
+    label: "Returned unprocessed",
+    pending: false,
+    forms: "H-2B wage requests",
+    summary: "The request went back to the employer without a decision.",
+    unsourced: "DOL publishes no definition for a wage request; the record doesn't say why it was returned.",
+  },
+  {
+    status: "WITHDRAWN",
+    label: "Withdrawn",
+    pending: false,
+    forms: "All three",
+    summary: "The employer withdrew the filing before DOL decided it. DOL records no reason.",
+    unsourced: "A workflow word; the H-2A and H-2B rules describe withdrawal only after certification.",
+  },
+];
+
 /** Every anchor on the dictionary page, for the jump list and the JSON-LD. */
-export function dictionaryAnchors(): { program: "perm" | "pwd" | "lca"; status: string; label: string; anchor: string }[] {
+export function dictionaryAnchors(): { program: "perm" | "pwd" | "lca" | "seasonal"; status: string; label: string; anchor: string }[] {
   return [
     ...allStatusMeanings().map((m) => ({ program: "perm" as const, status: m.status, label: m.label, anchor: statusAnchor(m.status) })),
     ...PWD_STATUSES.map((e) => ({ program: "pwd" as const, status: e.status, label: e.label, anchor: `pwd-${statusAnchor(e.status)}` })),
     ...LCA_STATUSES.map((e) => ({ program: "lca" as const, status: e.status, label: e.label, anchor: `lca-${statusAnchor(e.status)}` })),
+    ...SEASONAL_STATUSES.map((e) => ({ program: "seasonal" as const, status: e.status, label: e.label, anchor: `h2-${statusAnchor(e.status)}` })),
   ];
 }

@@ -11,9 +11,6 @@
  * - Message text
  * - CTA button (primary action)
  * - Neobrutalist card styling
- *
- * Phase: 21 (Case List)
- * Created: 2025-12-24
  */
 
 import { DocketFolderArt } from "@/components/illustrations/DocketFolderArt";

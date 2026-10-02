@@ -3,9 +3,9 @@
  *
  * Read by the About page, the homepage's "About PERM Tracker" block, the
  * Organization schema and the article bylines, so none of them can disagree.
- * Every line here is a public factual claim approved by the site owner
- * (2026-09-07: one named person, Sabrina Soltau, on every surface); change it
- * here and nowhere else.
+ * Every line here is a public factual claim approved by the site owner, with
+ * the same one person named on every surface; change it here and nowhere
+ * else.
  *
  * Two claims are deliberately NOT made. The page never says she waited on a
  * PERM case of her own; it says what is true, that she files them. And no one
@@ -27,8 +27,7 @@ export interface AboutPerson {
   sameAs: readonly string[];
   /**
    * Site-relative path of the portrait shown on the About page and emitted
-   * as the Person node's `image`. Supplied by the site owner on 2026-09-07;
-   * a 640x800 JPEG under `public/about/`.
+   * as the Person node's `image`: a 640x800 JPEG under `public/about/`.
    */
   image: string;
   /** Intrinsic size of that file, so the layout reserves the right box. */
@@ -71,10 +70,8 @@ export const ORGANIZATION_SAME_AS: readonly string[] = [
  * page's lede is it, so an engine lifting either gets the same sentence.
  */
 /**
- * The legal entity behind the site. Formed in Florida through Northwest
- * Registered Agent on Sep 22 2026 (state approval pending at the time of
- * writing); the Terms bind this name, so every surface that names the
- * operator reads it from here.
+ * The legal entity behind the site, a Florida LLC. The Terms bind this name,
+ * so every surface that names the operator reads it from here.
  */
 export const LEGAL_NAME = "PERM Tracker LLC";
 export const LEGAL_FORM = "a Florida limited liability company";
@@ -115,7 +112,7 @@ export const ABOUT_ONE_LINER =
  */
 export const ABOUT_TWO_HALVES = {
   waiting:
-    "For anyone waiting on a case: look up any PERM, prevailing wage or H-1B LCA number, pending ones included, see the federal record and where DOL's queue stands, get an estimate, set a free email alert for a status change, a queue milestone or a visa bulletin move, and search every filing by employer, law firm, state and occupation. No account needed.",
+    "For anyone waiting on a case: look up any PERM, wage request, LCA, H-2A or H-2B number, pending ones included, see the federal record and where DOL's queue stands, get an estimate, set a free email alert for a status change, a queue milestone, a visa bulletin move or an employer's cases moving, and search every filing by employer, law firm, state and occupation. No account needed.",
   practice:
-    "For attorneys, paralegals and HR teams: a free case-management app that computes every deadline per case under 20 CFR 656 (wage expiration, recruitment clocks, the ETA 9089 filing window, audit and RFI responses, the I-140 cutoff), with reminders, calendar sync, CSV import, an AI assistant over your caseload, and client data encrypted and isolated per account.",
+    "For attorneys, paralegals and HR teams: a free case-management app that computes every deadline per case under 20 CFR 656 (wage expiration, recruitment clocks, the ETA 9089 filing window, audit and RFI responses, the I-140 cutoff), with reminders, calendar sync, import and export, an AI assistant over your caseload, and client data encrypted and isolated per account.",
 } as const;

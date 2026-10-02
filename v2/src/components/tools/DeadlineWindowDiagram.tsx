@@ -1,5 +1,7 @@
+import { ChartTips } from "@/components/data/ChartTips";
 import { formatAsOf } from "@/lib/dolFormat";
 import { cn } from "@/lib/utils";
+import { MS_PER_DAY } from "@/lib/time";
 
 /**
  * The deadline calculator's own drawing: the case's windows on one date axis.
@@ -31,7 +33,7 @@ const W = 720;
 const ROW_H = 44;
 const PAD = { top: 26, right: 16, bottom: 34, left: 148 };
 
-const day = (iso: string) => Date.parse(`${iso}T00:00:00Z`) / 86_400_000;
+const day = (iso: string) => Date.parse(`${iso}T00:00:00Z`) / MS_PER_DAY;
 
 export function DeadlineWindowDiagram({
   pwdDate,
@@ -99,6 +101,8 @@ export function DeadlineWindowDiagram({
 
   return (
     <figure className={cn("m-0", className)}>
+      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
+      <ChartTips label="The case's regulatory windows">
       <div className="-mx-1 overflow-x-auto px-1">
         <svg
           viewBox={`0 0 ${W} ${H}`}
@@ -162,9 +166,9 @@ export function DeadlineWindowDiagram({
                     "somewhere after August" and had no way to ask when. The
                     band is focusable with an aria-label, so the dates are
                     reachable by keyboard and read by a screen reader, and
-                    <title> gives the same text on hover. A pointer-only
-                    tooltip would hide it from the keyboard and from every
-                    phone. */}
+                    ChartTips gives the same text on hover, tap and arrow
+                    keys. A pointer-only tooltip would hide it from the
+                    keyboard and from every phone. */}
                 <rect
                   x={x0}
                   y={y + 6}
@@ -178,9 +182,8 @@ export function DeadlineWindowDiagram({
                   role="img"
                   aria-label={`${r.label}: ${formatAsOf(r.from)} to ${formatAsOf(r.to)}`}
                   style={{ outlineOffset: "2px" }}
-                >
-                  <title>{`${r.label}: ${formatAsOf(r.from)} to ${formatAsOf(r.to)}`}</title>
-                </rect>
+                  data-tip={`${r.label}\n${formatAsOf(r.from)} to ${formatAsOf(r.to)}${r.label === "Filing window" && isPwdLimited ? "\nCapped by the wage expiration" : ""}`}
+                />
                 {r.label === "Filing window" && isPwdLimited ? (
                   <text
                     x={x1}
@@ -200,6 +203,7 @@ export function DeadlineWindowDiagram({
           })}
         </svg>
       </div>
+      </ChartTips>
       <figcaption className="mt-3 text-sm text-foreground/70">
         Every span from the dates entered, drawn to one scale.
       </figcaption>

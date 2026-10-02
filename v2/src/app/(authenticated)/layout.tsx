@@ -10,9 +10,6 @@
  * - Container padding
  * - Sign-out loading overlay
  * - Inactivity timeout with warning modal
- *
- * Phase: 20 (Dashboard + UI Polish)
- * Updated: 2025-12-24
  */
 
 import Header from "@/components/layout/Header";
@@ -101,7 +98,7 @@ export default function AuthenticatedLayout({
         <main
           id="main-content"
           // break-words: a long unbroken name, URL or note wraps inside its box
-          // instead of pushing past it (silent-limit audit, Sep 29 2026).
+          // instead of pushing past it.
           className="relative mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-8 break-words"
           tabIndex={-1}
         >

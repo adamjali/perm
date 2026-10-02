@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { BulletinMonth } from "@/lib/perm";
+import { DAYS_PER_MONTH } from "@/lib/time";
 
 /**
  * The pace arithmetic, against fixtures rather than a database.
@@ -16,7 +17,7 @@ import type { BulletinMonth } from "@/lib/perm";
 // in the libSQL client. Only the pure half is under test here.
 vi.mock("../publicData", () => ({ getVisaBulletins: vi.fn() }));
 
-const { summariseBulletins, categoriesIn, DAYS_PER_MONTH } = await import("../bulletin");
+const { summariseBulletins, categoriesIn } = await import("../bulletin");
 
 function b(
   month: string,

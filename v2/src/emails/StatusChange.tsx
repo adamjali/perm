@@ -7,13 +7,12 @@
  * - Case details
  * - CTA to view case
  * - Dark mode support via CSS classes
- *
- * Phase: 24 (Notifications + Email)
  */
 
 import { Text, Section } from "@react-email/components";
 import { EmailLayout, EmailButton, EmailHeader } from "./components";
 import { labelStyle, valueStyle, detailsSectionStyle, ctaSectionStyle } from "./components/emailStyles";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface StatusChangeProps {
   /** Beneficiary name */
@@ -171,8 +170,6 @@ StatusChange.PreviewProps = {
   newStatus: "ETA-9089 Filed",
   changeType: "stage",
   changedAt: "June 28, 2026",
-  caseUrl: "https://permtracker.app/cases/abc123",
+  caseUrl: `${SITE_URL}/cases/abc123`,
   caseNumber: "PT-1042",
 } satisfies StatusChangeProps;
-
-export default StatusChange;

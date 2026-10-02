@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule for permtracker-uscis@h1b-hub
+[Timer]
+# USCIS posts a quarter's H-1B Employer Data Hub figures some weeks after the
+# quarter ends (its page: Q1 "will be provided in April"). Monthly catches each
+# posting within a month for one ~80 MB export a run.
+OnCalendar=*-*-20 11:10:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@h1b-hub.service
+[Install]
+WantedBy=timers.target

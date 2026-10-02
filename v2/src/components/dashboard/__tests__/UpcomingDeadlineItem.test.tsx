@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import UpcomingDeadlineItem from "../UpcomingDeadlineItem";
-import type { DeadlineItem } from "../../../../convex/lib/dashboardTypes";
+import type { DeadlineItem } from "@convex/lib/dashboardTypes";
 
 function createMockDeadline(overrides: Partial<DeadlineItem> = {}): DeadlineItem {
   return {

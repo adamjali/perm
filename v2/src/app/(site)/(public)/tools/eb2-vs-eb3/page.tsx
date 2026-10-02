@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { Eb2VsEb3 } from "@/components/tools/Eb2VsEb3";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import { getLineSnapshot } from "@/lib/turso/greenCardLine";
@@ -67,29 +65,14 @@ export default async function Eb2VsEb3Page() {
       acceptedAnswer: { "@type": "Answer" as const, text: f.a },
     })),
   };
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: "Data", href: "/tools" },
-    { name: "Calculators", href: "/calculators" },
-    { name: "EB-2 vs EB-3", href: PATH },
-  ]);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumbSchema} />
 
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link href="/tools" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Data
-          </Link>{" "}
-          <span aria-hidden="true">/</span>{" "}
-          <Link href="/calculators" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Calculators
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">EB-2 or EB-3, for your date</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">EB-2 or EB-3, for your date</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           The two lines side by side for one country and priority date: what this month&apos;s bulletin prints for each,
           and how many people stand ahead of you in each.

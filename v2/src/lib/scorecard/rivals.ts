@@ -2,14 +2,15 @@ import "server-only";
 
 import type { NewPrediction, SampledCase } from "@/lib/turso/predictions";
 import { rows } from "@/lib/turso/client";
+import { MS_PER_DAY } from "@/lib/time";
 
 /**
  * Rival predictions for a few of the day's sampled cases, for the PRIVATE
  * competitor scorecard on the admin page.
  *
- * WHAT IS ALLOWED, AND WHY. The owner approved a small daily sample from the
- * rivals' public prediction endpoints on 2026-09-26, using public DOL case
- * numbers only and never a subscriber's case. Both hosts used here allow it
+ * WHAT IS ALLOWED, AND WHY. A small daily sample from the rivals' public
+ * prediction endpoints, using public DOL case numbers only and never a
+ * subscriber's case. Both hosts used here allow it
  * (one site's robots.txt allows everything but its login and admin; the other
  * rival's prediction API sits on its own host with no robots.txt). A third
  * rival's site disallows its /api/, so it is never called: its PUBLISHED method
@@ -108,7 +109,7 @@ async function rivalC(
   }
   const ahead = pendingBefore(month) + within;
   const days = Math.round(ahead / 616);
-  const predicted = new Date(Date.parse(`${today}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
+  const predicted = new Date(Date.parse(`${today}T00:00:00Z`) + days * MS_PER_DAY).toISOString().slice(0, 10);
   return { source: "rival-c", model: "rival-method", predicted, bandEarly: null, bandLate: null, casesAhead: Math.round(ahead) };
 }
 

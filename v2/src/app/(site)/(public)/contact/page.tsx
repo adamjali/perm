@@ -39,33 +39,26 @@ export const metadata: Metadata = withSocialCard({
 
 export default function ContactPage() {
   return (
-    // FULL WIDTH, TWO COLUMNS. Adam: "nothing should be so narrow, it can all
-    // take up full page... about and contact should take full width". A
-    // 768px card in a 1400px frame was the narrow thing. The routes and the
-    // figure read on the left, the form sits on the right and stays in view
-    // while the routes scroll, and below `lg` it all stacks in source order:
-    // where a question goes first, the catch-all form last.
+    // Full width, two columns: where each kind of question goes on the left,
+    // the form on the right, staying in view. Below `lg` it stacks in source
+    // order, routes first and the catch-all form last.
     <div className="mx-auto w-full max-w-[1400px] px-4 py-12 sm:px-8 sm:py-16">
-      <h1 className="font-heading text-4xl font-black sm:text-5xl">Contact Us</h1>{" "}
+      <h1 className="font-heading text-4xl font-black sm:text-5xl">Contact us</h1>{" "}
       <p className="mt-3 max-w-2xl text-lg text-foreground/70">
         Questions, feature requests and bug reports all land in the same inbox.
       </p>{" "}
       <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-14">
       <div className="min-w-0">
 
-        {/* THE FORM MOVED TO THE BOTTOM, on Adam's call. It was the first
-            thing on the page, which asks a reader to start typing before the
-            page has told them where their question actually goes. Several of
-            the routes below answer faster than a form does - a bug report
-            belongs on the issue tracker, and a case question is usually
-            answered by the case lookup - so they read first and the form
-            catches whatever they do not cover. */}
+        {/* The routes come before the form: several answer faster than a
+            message does (a case question is usually answered by the case
+            lookup), and the form catches the rest. */}
         {/* The figure before the routes, because its point is the thing the
             headings below cannot say at a glance: these are three doors into
             one inbox, not three different teams. */}
         <figure className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <RoutingFigure className="h-auto w-full text-foreground" />{" "}
-          <figcaption className="mt-4 border-t-2 border-border pt-3 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <figcaption className="mt-4 border-t-2 border-border pt-3 font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
             Three ways in, one inbox
           </figcaption>
         </figure>
@@ -98,7 +91,7 @@ export default function ContactPage() {
             </div>{" "}
             <div>
               <h2 className="font-heading text-lg font-bold mb-1">
-                Feature Requests & Feedback
+                Feature requests and feedback
               </h2>{" "}
               <p className="text-foreground/60 text-sm mb-2">
                 Have an idea for PERM Tracker? Email it. Every idea is read by
@@ -120,7 +113,7 @@ export default function ContactPage() {
             </div>{" "}
             <div>
               <h2 className="font-heading text-lg font-bold mb-1">
-                Bug Reports
+                Bug reports
               </h2>{" "}
               <p className="text-foreground/60 text-sm mb-2">
                 Found something that&apos;s not working right? Report it here.
@@ -137,7 +130,7 @@ export default function ContactPage() {
 
         {/* Response time */}
         <div className="mt-12 border-2 border-black bg-muted p-6 shadow-hard-sm dark:border-white">
-          <h3 className="font-heading text-lg font-bold mb-2">Response Time</h3>{" "}
+          <h3 className="font-heading text-lg font-bold mb-2">Response time</h3>{" "}
           <p className="text-foreground/60">
             We typically respond to inquiries within 24-48 hours during business
             days. For urgent matters related to case deadlines, please include

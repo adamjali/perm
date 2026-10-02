@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { CompareMyOffer } from "@/components/tools/CompareMyOffer";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -76,12 +75,7 @@ export default async function CompareMyOfferPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/calculators" className="underline underline-offset-2 hover:text-primary">
-            Calculators
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Compare my offer
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">

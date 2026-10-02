@@ -214,7 +214,7 @@ def main() -> int:
           live_norm(built_row(*decided, "2026-09-01")))
 
     # Every group runs BEFORE the verdict. These three used to run after it,
-    # so a failure in them printed FAIL and still exited 0 (found 2026-09-26).
+    # so a failure in them printed FAIL and still exited 0.
     check_live_only_rows()
     check_et_date()
     check_pending_diff()

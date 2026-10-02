@@ -12,6 +12,7 @@
 
 import { useId, useState } from "react";
 import { isQueued, replyHeading } from "@/lib/alertReply";
+import { AlertNote, OptInBox } from "@/components/alerts/AlertOptIns";
 
 function subscribeEndpoint(): string | null {
   const cloud = process.env.NEXT_PUBLIC_CONVEX_URL;
@@ -109,7 +110,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
       onSubmit={handleSubmit}
       className="border-2 border-border bg-card p-6 shadow-hard sm:p-8"
     >
-      <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+      <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
         Alert
       </p>{" "}
       <h2 className="mt-1 font-heading text-2xl font-black">
@@ -171,39 +172,8 @@ export function BulletinAlertForm({ source }: { source: string }) {
           className={inputClasses}
         />
       </div>
-      <div className="mt-4 flex items-start gap-2.5">
-        <input
-          id={newsId}
-          type="checkbox"
-          checked={news}
-          onChange={(e) => setNews(e.target.checked)}
-          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none border-2 border-border bg-background checked:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
-        />{" "}
-        <label
-          htmlFor={newsId}
-          className="cursor-pointer text-sm leading-relaxed text-muted-foreground"
-        >
-          Also send occasional product news. The same confirmation covers it,
-          and it&apos;s off by default.
-        </label>
-      </div>{" "}
-      <div className="mt-3 flex items-start gap-2.5">
-        <input
-          id={`${newsId}-newsletter`}
-          type="checkbox"
-          checked={newsletter}
-          onChange={(e) => setNewsletter(e.target.checked)}
-          className="mt-0.5 h-5 w-5 shrink-0 cursor-pointer appearance-none border-2 border-border bg-background checked:bg-primary focus:outline-none focus:ring-2 focus:ring-primary"
-        />{" "}
-        <label
-          htmlFor={`${newsId}-newsletter`}
-          className="cursor-pointer text-sm leading-relaxed text-muted-foreground"
-        >
-          Also send the weekly bulletin digest once it launches: the cutoffs,
-          DOL&apos;s queue and any new rule, every Tuesday. Same confirmation, off
-          by default.
-        </label>
-      </div>
+      <OptInBox id={newsId} kind="news" checked={news} onChange={setNews} className="mt-4" />{" "}
+      <OptInBox id={`${newsId}-newsletter`} kind="newsletter" checked={newsletter} onChange={setNewsletter} className="mt-3" />
       {status === "error" && message ? (
         <p className="mt-4 text-sm font-bold text-destructive" role="alert">
           {message}
@@ -216,12 +186,7 @@ export function BulletinAlertForm({ source }: { source: string }) {
       >
         {status === "sending" ? "Sending" : "Email me when it moves"}
       </button>{" "}
-      <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-        Double opt-in: you confirm by email first, so an address can&apos;t be
-        signed up by someone who doesn&apos;t control it, and one click opts
-        out. We send one confirmation every 10 minutes per address - if nothing
-        lands, wait that long before trying again.
-      </p>
+      <AlertNote className="mt-4" />
     </form>
   );
 }

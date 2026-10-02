@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { VisaChooser } from "@/components/tools/VisaChooser";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { FaqList } from "@/components/tools/FaqList";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 
@@ -56,29 +54,14 @@ export default function WhichGreenCardPage() {
       acceptedAnswer: { "@type": "Answer" as const, text: f.a },
     })),
   };
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Data", href: "/tools" },
-    { name: "Calculators", href: "/calculators" },
-    { name: "Which green card", href: PATH },
-  ]);
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumb} />
 
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link href="/tools" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Data
-          </Link>{" "}
-          <span aria-hidden="true">/</span>{" "}
-          <Link href="/calculators" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Calculators
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">Which employment green card fits?</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Which employment green card fits?</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           A few questions about the job and about you, matched against the regulation&apos;s own definitions: which
           categories could apply, whether each needs a PERM or an employer, and where its queue stands.

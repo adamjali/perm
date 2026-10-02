@@ -9,118 +9,37 @@
  *
  */
 
-import Image from "next/image";
-import { CircleNotchIcon, MagnifyingGlassIcon, RocketIcon } from "@phosphor-icons/react";
+import { CircleNotchIcon, MagnifyingGlassIcon, CalendarCheckIcon } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { MagneticButton } from "@/components/ui/magnetic-button";
 import { ScrollReveal } from "@/components/ui/scroll-reveal";
 import { useNavigationLoading } from "@/hooks/useNavigationLoading";
-import { RocketLaunchSVG } from "@/components/illustrations";
+import { FlapWord } from "./FlapBoard";
 
 /**
- * TWO DOORS, one per audience (2026-09-15). The closing call used to speak to
- * the practitioner only ("Start Tracking Cases"), so the last thing on a page
- * built for both sides addressed one. The primary button is now the lookup,
+ * TWO DOORS, one per audience, so the last thing on a page built for both
+ * sides addresses both. The primary button is the lookup,
  * which needs no account and is what most visitors came for; the practice's
  * door sits beside it at equal weight.
  */
-export function CTASection({
-  eyebrow = "Both sides of a filing",
-}: {
-  /** The audience line above the heading. */
-  eyebrow?: string;
-}) {
+export function CTASection() {
   const { isNavigating, navigateTo, targetPath } = useNavigationLoading();
 
   return (
     <section className="relative overflow-hidden bg-primary py-16 text-center sm:py-20">
-      {/* Background photo with heavy green overlay */}
-      <div className="absolute inset-0 opacity-[0.08] mix-blend-multiply">
-        <Image
-          src="/images/backgrounds/abstract-green.jpg"
-          alt=""
-          fill
-          className="object-cover"
-          sizes="100vw"
-          aria-hidden="true"
-        />
-      </div>
-
-      {/* Decorative corners - larger and more prominent */}
-      <div
-        className="absolute -left-24 -top-24 h-56 w-56 rotate-45 bg-black/10"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute -bottom-24 -right-24 h-56 w-56 rotate-45 bg-black/10"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute -bottom-16 -left-16 h-32 w-32 rotate-12 bg-black/5"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute -top-16 -right-16 h-32 w-32 -rotate-12 bg-black/5"
-        aria-hidden="true"
-      />
-
-      {/* Floating decorative SVG icons */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        {/* Mini document */}
-        <svg className="absolute top-[15%] left-[8%] opacity-15 rotate-[-12deg]" width="36" height="36" viewBox="0 0 36 36" fill="none">
-          <rect x="5" y="3" width="26" height="30" fill="none" stroke="black" strokeWidth="2" />
-          <line x1="10" y1="12" x2="26" y2="12" stroke="black" strokeWidth="1.5" opacity="0.5" />
-          <line x1="10" y1="18" x2="22" y2="18" stroke="black" strokeWidth="1.5" opacity="0.4" />
-          <line x1="10" y1="24" x2="24" y2="24" stroke="black" strokeWidth="1.5" opacity="0.3" />
-        </svg>
-
-        {/* Mini checkmark */}
-        <svg className="absolute top-[20%] right-[12%] opacity-12 rotate-[6deg]" width="30" height="30" viewBox="0 0 30 30" fill="none">
-          <circle cx="15" cy="15" r="12" fill="none" stroke="black" strokeWidth="2" />
-          <path d="M10 15 L14 19 L21 11" fill="none" stroke="black" strokeWidth="2.5" strokeLinecap="square" />
-        </svg>
-
-        {/* Mini calendar */}
-        <svg className="absolute bottom-[18%] left-[15%] opacity-10 rotate-[8deg]" width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <rect x="4" y="7" width="24" height="20" fill="none" stroke="black" strokeWidth="2" />
-          <rect x="4" y="7" width="24" height="6" fill="black" opacity="0.2" stroke="black" strokeWidth="2" />
-          <rect x="9" y="4" width="3" height="6" fill="black" />
-          <rect x="20" y="4" width="3" height="6" fill="black" />
-        </svg>
-
-        {/* Mini shield */}
-        <svg className="absolute bottom-[25%] right-[8%] opacity-12 rotate-[-8deg]" width="28" height="28" viewBox="0 0 28 28" fill="none">
-          <path d="M14 3 L24 8 L24 15 Q24 23 14 25 Q4 23 4 15 L4 8 Z" fill="none" stroke="black" strokeWidth="2" />
-          <path d="M10 14 L13 17 L19 11" fill="none" stroke="black" strokeWidth="2" strokeLinecap="square" />
-        </svg>
-
-        {/* Plus signs */}
-        <svg className="absolute top-[40%] left-[4%] opacity-8" width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <line x1="8" y1="1" x2="8" y2="15" stroke="black" strokeWidth="2.5" />
-          <line x1="1" y1="8" x2="15" y2="8" stroke="black" strokeWidth="2.5" />
-        </svg>{" "}
-        <svg className="absolute bottom-[35%] right-[5%] opacity-8" width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <line x1="7" y1="1" x2="7" y2="13" stroke="black" strokeWidth="2" />
-          <line x1="1" y1="7" x2="13" y2="7" stroke="black" strokeWidth="2" />
-        </svg>
-      </div>
-
+      {/* NO DECORATION: nothing here that is not an object from this
+          site's world doing a job, and no hand-rolled icon paths, which the
+          house rules ban. The flap word below is the films' end card. */}
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-8">
         {/* Single stagger container (1 Intersection Observer) */}
         <ScrollReveal direction="up" stagger>
-          {/* Rocket illustration */}
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center">
-            <RocketLaunchSVG size={64} className="text-black" />
-          </div>{" "}
+          <FlapWord word="permtracker.app" className="mx-auto mb-6 justify-center" />{" "}
 
           <div>
             {/* /70, not /60. Black at 60% over the lime panel measures 4.37:1
                 against a 4.5 floor; 70% gives 5.80:1. Computed against the
                 real token (#2ecc40), not eyeballed. */}
-            <p className="mb-3 font-mono text-sm text-black/70 uppercase tracking-wider">
-              {eyebrow}
-            </p>{" "}
             <h2 className="font-heading text-2xl font-black text-black sm:text-3xl lg:text-4xl">
               Check a case, or track a caseload
             </h2>{" "}
@@ -139,7 +58,7 @@ export function CTASection({
               <MagneticButton>
                 <Button
                   size="lg"
-                  className="h-12 border-3 border-black bg-black px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
+                  className="h-12 border-3 border-black bg-black px-6 font-heading text-base font-bold text-white transition-all duration-150 hover:bg-white hover:text-black hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:bg-black dark:text-white dark:hover:bg-white dark:hover:text-black"
                   style={{ boxShadow: "4px 4px 0px #000" }}
                   onClick={() => navigateTo("/perm-case-status")}
                   disabled={isNavigating}
@@ -155,14 +74,14 @@ export function CTASection({
               <Button
                 size="lg"
                 variant="outline"
-                className="h-12 border-3 border-black bg-transparent px-6 font-heading text-sm font-bold uppercase tracking-[0.05em] text-black transition-all duration-150 hover:bg-black hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:text-black dark:hover:bg-black dark:hover:text-white"
+                className="h-12 border-3 border-black bg-transparent px-6 font-heading text-base font-bold text-black transition-all duration-150 hover:bg-black hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 dark:border-black dark:text-black dark:hover:bg-black dark:hover:text-white"
                 onClick={() => navigateTo("/signup")}
                 disabled={isNavigating}
               >
                 {isNavigating && targetPath === "/signup" ? (
                   <CircleNotchIcon className="mr-2 h-5 w-5 animate-spin" />
                 ) : (
-                  <RocketIcon className="mr-2 h-5 w-5" />
+                  <CalendarCheckIcon className="mr-2 h-5 w-5" />
                 )}
                 Start tracking cases
               </Button>
@@ -180,4 +99,3 @@ export function CTASection({
   );
 }
 
-export default CTASection;

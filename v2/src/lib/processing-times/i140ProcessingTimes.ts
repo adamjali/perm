@@ -1,31 +1,24 @@
 /**
  * I-140 processing times, as USCIS actually reports them.
  *
- * This file previously carried a service-center matrix ("as of April 2025")
- * that was wrong in two independent ways, both material:
+ * Two rules, both material:
  *
- *  1. **The numbers were off by up to 4x.** It listed EB-2 NIW at a 7-month
- *     median. USCIS published 29.0 to 32.0 months. Someone planning a case
- *     around 7 months was being misled on a page they make decisions from.
+ *  1. **USCIS's own published figure per petition subtype.** The subtypes
+ *     within a category differ enormously (EB-1 runs from 15 months for an
+ *     outstanding professor to 32.5 for extraordinary ability), so collapsing
+ *     a category to one number can be off by up to 4x, on a page people plan
+ *     a case around.
  *
- *  2. **The service-center dimension no longer exists.** USCIS reports I-140
- *     under a single office (Service Center Operations), not per center, so
- *     asking someone to pick Texas or Nebraska offered a choice that changes
- *     nothing and implied a precision the source does not have.
+ *  2. **No service-center dimension.** USCIS reports I-140 under a single
+ *     office (Service Center Operations), not per center, so asking someone
+ *     to pick Texas or Nebraska offers a choice that changes nothing and
+ *     implies a precision the source does not have.
  *
- * What replaced it: USCIS's own published figure per petition subtype. The
- * subtypes within a category differ enormously (EB-1 runs from 15 months for an
- * outstanding professor to 32.5 for extraordinary ability), so collapsing a
- * category to one number is what produced the original error. Each category
- * reports its subtypes.
- *
- * **What the figure is (re-read 2026-09-26).** USCIS's processing-times page
- * prints ONE number per subtype: "80% of cases are completed within N months",
- * which it defines as "how long it took us to complete 80% of adjudicated cases
- * over the past six months". This module used to store two numbers per subtype
- * (a low and a high, documented as the 50% and 93% points); the page no longer
- * prints a range, so each subtype now carries the single 80% figure, read in a
- * real browser from Service Center Operations, the only office USCIS lists for
+ * **What the figure is.** USCIS's processing-times page prints ONE number per
+ * subtype: "80% of cases are completed within N months", which it defines as
+ * "how long it took us to complete 80% of adjudicated cases over the past six
+ * months". Each subtype carries that single 80% figure, read in a real
+ * browser from Service Center Operations, the only office USCIS lists for
  * any I-140 subtype.
  */
 

@@ -11,8 +11,6 @@
  * - Smooth, fast animations (150ms)
  *
  * Design System: Neobrutalist + Glass Panel
- * Phase: 20 (Dashboard + UI Polish)
- * Updated: 2025-12-24 - Use centralized z-index
  */
 
 import { useAuthContext } from "@/lib/contexts/AuthContext";

@@ -68,5 +68,3 @@ export function NotLegalAdviceNotice({
     </motion.div>
   );
 }
-
-export default NotLegalAdviceNotice;

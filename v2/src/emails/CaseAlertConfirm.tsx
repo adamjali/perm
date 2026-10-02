@@ -151,7 +151,7 @@ export function CaseAlertConfirm({
       ) : null}
       {includesNewsletter ? (
         <Text className="em-text-secondary" style={styles.newsNote}>
-          You also asked for the weekly bulletin digest, once it launches. The
+          You also asked for the weekly digest. The
           same click confirms that.
         </Text>
       ) : null}

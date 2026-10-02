@@ -1,18 +1,12 @@
 /**
  * The site-wide social card, served at /opengraph-image.
  *
- * WHAT IT USED TO BE. An AI-drawn isometric laptop whose screen read
- * "Immigration Case Tracking Dashboard, Client J. Doe, I-140, Biometrics,
- * Interview, Approved": USCIS steps, not PERM, an invented client, and the old
- * "Deadline Tracking" tagline, on every one of ~13,758 URLs and in every
- * WhatsApp and iMessage preview. Google Images showed it for the site while
- * the rival's per-page screenshots showed real product (measured 2026-09-07).
- *
- * WHAT IT IS NOW. The home card from public/og/, rendered by
- * scripts/make-page-cards.mjs from a real screenshot of the homepage inset in
- * the house frame. Every public page sets its own card through
- * `withSocialCard`; this route is what any page without one falls back to,
- * and what the root layout's metadata points at.
+ * The home card from public/og/, rendered by scripts/make-page-cards.mjs from
+ * a real screenshot of the homepage inset in the house frame. A card shows
+ * the real product, never a drawn stand-in: it is what every link preview
+ * and image result shows for the site. Every public page sets its own card
+ * through `withSocialCard`; this route is what any page without one falls
+ * back to, and what the root layout's metadata points at.
  */
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";

@@ -2,9 +2,9 @@
  * The one-time pass that ties the human check to the sign-up itself.
  *
  * convex/turnstile.ts asks Cloudflare whether a Turnstile token is good.
- * Until Sep 28 2026 that was only a check the browser ran BEFORE calling
- * signIn with flow "signUp", so a script could call signIn directly and
- * skip it. Now a passing check also issues a pass: a random string handed to
+ * Run only by the browser BEFORE calling signIn with flow "signUp", that
+ * check would let a script call signIn directly and skip it, so a passing
+ * check also issues a pass: a random string handed to
  * the browser and stored here only as its SHA-256. The sign-up form sends it
  * along, and the createOrUpdateUser hook in convex/auth.ts refuses to create
  * a password account without a live, unused pass, then deletes it.
@@ -18,9 +18,10 @@
  */
 import { ConvexError } from "convex/values";
 import type { MutationCtx } from "../_generated/server";
+import { MS_PER_MINUTE } from "./time";
 
 /** How long a pass stays good. The form sends it the moment the check passes. */
-export const PASS_TTL_MS = 10 * 60 * 1000;
+export const PASS_TTL_MS = 10 * MS_PER_MINUTE;
 /** Expired rows each new pass deletes. */
 export const PRUNE_PER_ISSUE = 25;
 /**

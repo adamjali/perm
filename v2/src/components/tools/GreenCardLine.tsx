@@ -3,8 +3,10 @@
 import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import { UsersThreeIcon, WarningIcon } from "@phosphor-icons/react";
 
+import { ChartHit } from "@/components/data/ChartHit";
+import { ChartTips } from "@/components/data/ChartTips";
 import { DateInput } from "@/components/forms/DateInput";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { monthsToReach, type PaceBasis } from "@/lib/bulletinNext";
 import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import {
@@ -20,6 +22,7 @@ import {
 } from "@/lib/greenCardLine";
 import type { CountryKey } from "@/lib/perm";
 import { cn } from "@/lib/utils";
+import { DAYS_PER_MONTH_2DP } from "@/lib/time";
 
 const SELECT_CLASS =
   "mt-2 block min-h-[44px] w-full min-w-0 border-2 border-border bg-background px-3 py-2 text-base font-bold focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2";
@@ -59,8 +62,7 @@ export interface GreenCardLineProps {
   lockCategory?: boolean;
   /**
    * Divide the line by the visas it actually got in the newest published year
-   * and print years, labelled as that year's pace. ON by default (owner's call,
-   * 2026-09-26). It's arithmetic on one measured year, never a date: the page
+   * and print years, labelled as that year's pace. On by default. It's arithmetic on one measured year, never a date: the page
    * says so beside the figure. Off, the supply is printed as a bare fact.
    */
   showYears?: boolean;
@@ -295,7 +297,8 @@ function LineAnswer({
 
       <div className="border-b-2 border-border p-6 sm:p-8">
         <h3 className="font-heading text-lg font-black">Who they are</h3>{" "}
-        <div className="mt-4 flex h-8 w-full overflow-hidden border-2 border-border" role="img" aria-label="The three groups ahead of you, to scale">
+        <ChartTips label="The three groups ahead of you" className="mt-4">
+        <div className="flex h-8 w-full overflow-hidden border-2 border-border" role="img" aria-label="The three groups ahead of you, to scale">
           {total > 0
             ? segs.map((s) => (
                 <span
@@ -303,10 +306,12 @@ function LineAnswer({
                   className={cn("h-full", s.cls)}
                   style={{ width: `${(s.value / total) * 100}%` }}
                   aria-hidden="true"
+                  data-tip={`${s.label}\n${roundPeople(s.value)} people\n${s.note}`}
                 />
               ))
             : null}
-        </div>{" "}
+        </div>
+        </ChartTips>{" "}
         <ul className="mt-4 grid grid-cols-1 gap-3 [&>*]:min-w-0 sm:grid-cols-3">
           {segs.map((s) => (
             <Fragment key={s.key}>
@@ -331,11 +336,11 @@ function LineAnswer({
           <h3 className="font-heading text-lg font-black">The bulletin&apos;s own pace, for comparison</h3>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
             Over the {reach.basis.spanMonths} months this site holds, this line&apos;s final action date moved{" "}
-            {Math.round(reach.basis.movedDays / 30.44)} months of priority dates
+            {Math.round(reach.basis.movedDays / DAYS_PER_MONTH_2DP)} months of priority dates
             {reach.basis.retrogressions > 0 ? `, with ${reach.basis.retrogressions} step${reach.basis.retrogressions === 1 ? "" : "s"} backwards` : ""}.
             At that pace it reaches your date in about{" "}
-            <b className="font-bold">{formatYears(reach.months / 12)} years</b>. The pace is the past, and the line
-            behind the cutoff grew fastest in the last three years, so the count above is the better guide.
+            <b className="font-bold">{formatYears(reach.months / 12)} years</b>. That&apos;s the past pace, and the
+            line behind the cutoff grew fastest in the last three years, so the count above is the better guide.
           </p>
         </div>
       ) : null}
@@ -434,22 +439,30 @@ function LineStrip({ histogram, front, you }: { histogram: Array<{ month: string
       <p className="mt-1 text-base text-foreground/70">
         People ahead of you by priority date, from the bulletin&apos;s cutoff ({formatAsOf(front)}) to yours.
       </p>{" "}
-      <div className="mt-4 overflow-x-auto">
+      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
+      <ChartTips label="People ahead by priority-date month" className="mt-4">
+      <div className="overflow-x-auto">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px] text-foreground" role="img" aria-labelledby={titleId}>
           <title id={titleId}>{`People ahead by priority-date month, ${formatMonth(first)} to ${formatMonth(last)}`}</title>
           {bars.map((b, i) => {
             const h = ((H - PAD.t - PAD.b) * b.people) / max;
             return (
-              <rect
+              <ChartHit
                 key={b.label}
-                x={PAD.l + i * bw + 0.5}
-                y={H - PAD.b - h}
-                width={Math.max(bw - 1, 0.5)}
-                height={h}
-                className="fill-foreground/75"
+                tip={`${formatMonth(b.label)}${histogram.length > 48 ? " and the next two months" : ""}\nAbout ${roundPeople(b.people)} people`}
+                x={PAD.l + i * bw}
+                width={bw}
+                y={PAD.t}
+                height={H - PAD.t - PAD.b}
               >
-                <title>{`${formatMonth(b.label)}: about ${roundPeople(b.people)} people`}</title>
-              </rect>
+                <rect
+                  x={PAD.l + i * bw + 0.5}
+                  y={H - PAD.b - h}
+                  width={Math.max(bw - 1, 0.5)}
+                  height={h}
+                  className="fill-foreground/75"
+                />
+              </ChartHit>
             );
           })}
           <line x1={PAD.l} x2={W - PAD.r} y1={H - PAD.b} y2={H - PAD.b} className="stroke-foreground" strokeWidth={2} />
@@ -457,6 +470,7 @@ function LineStrip({ histogram, front, you }: { histogram: Array<{ month: string
           <text x={W - PAD.r} y={H - 8} fontSize={16} textAnchor="end" className="fill-foreground font-bold">{`You: ${formatMonth(you.slice(0, 7))} `}</text>
         </svg>
       </div>
+      </ChartTips>
     </div>
   );
 }

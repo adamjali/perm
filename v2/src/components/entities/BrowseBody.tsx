@@ -16,6 +16,7 @@ import {
 import type { EntityKind } from "@/lib/entityPayload";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { browseBucket, browseCounts } from "@/lib/turso/entityBrowse";
+import { formatInt } from "@/lib/format";
 
 import { BrowseIndexGrid, BrowseList, BrowseStrip } from "./EntityBrowse";
 
@@ -32,10 +33,6 @@ import { BrowseIndexGrid, BrowseList, BrowseStrip } from "./EntityBrowse";
  * `generateMetadata` export, `revalidate`, `generateStaticParams` - because
  * Next reads those off the module it loads, not off a component.
  */
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
 
 /**
  * The reader's own share, to one decimal, never rounded to a bare integer.
@@ -83,7 +80,7 @@ export async function browseLetterMetadata(
   const description =
     bucketTotal === 0
       ? `No ${cfg.plural} in DOL's PERM disclosure files begin with ${phrase} often enough to have a page. Every other letter is indexed here.`
-      : `${fmt(bucketTotal)} ${cfg.plural} whose name begins with ${phrase}, each linked to its own PERM record with filing counts, from DOL's disclosure files.`;
+      : `${formatInt(bucketTotal)} ${cfg.plural} whose name begins with ${phrase}, each linked to its own PERM record with filing counts, from DOL's disclosure files.`;
 
   return {
     title,
@@ -192,22 +189,13 @@ export async function BrowseIndexBody({ kind }: { kind: EntityKind }) {
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-2xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link
-            href={cfg.base}
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            {cfg.titleNoun}
-          </Link>{" "}
-          · A-Z index
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Browse {cfg.plural} A to Z
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          All {fmt(total)} {cfg.plural} with a page of their own, grouped by the
+          All {formatInt(total)} {cfg.plural} with a page of their own, grouped by the
           first letter of the name DOL prints. {bucketLabel(busiest)} is the
-          biggest group at {fmt(counts[busiest] ?? 0)}. The ranked table on the{" "}
+          biggest group at {formatInt(counts[busiest] ?? 0)}. The ranked table on the{" "}
           <Link
             href={cfg.base}
             className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -272,9 +260,7 @@ export async function BrowseTeaser({
     <section className={className}>
       <h2 className="font-heading text-2xl font-black">Browse A to Z</h2>{" "}
       <p className="mt-2 max-w-3xl text-base text-foreground/70">
-        The table above sorts by volume. This sorts by name: {fmt(total)}{" "}
-        {cfg.plural} with a page of their own, split across 26 letters and one
-        bucket for the names that start with a number. The{" "}
+        {formatInt(total)} {cfg.plural} with a page of their own, by first letter. The{" "}
         <Link
           href={browseHref(cfg.base)}
           className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
@@ -323,29 +309,13 @@ export async function BrowseLetterBody({
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-3xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link
-            href={cfg.base}
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            {cfg.titleNoun}
-          </Link>{" "}
-          ·{" "}
-          <Link
-            href={browseHref(cfg.base)}
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            A-Z index
-          </Link>{" "}
-          · {label}
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           {cfg.plural.charAt(0).toUpperCase() + cfg.plural.slice(1)} beginning
           with {phrase}
         </h1>{" "}
         {entries.length > 0 && busiest ? (
           <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-            {fmt(bucketTotal)} of the {fmt(total)} {cfg.plural} with a page
+            {formatInt(bucketTotal)} of the {formatInt(total)} {cfg.plural} with a page
             here, {pct(bucketTotal, total)}% of them. The busiest is{" "}
             <Link
               href={`${cfg.base}/${busiest.slug}`}
@@ -353,8 +323,8 @@ export async function BrowseLetterBody({
             >
               {busiest.name}
             </Link>{" "}
-            with {fmt(busiest.total)} {cfg.unit}; the smallest carry{" "}
-            {fmt(smallest)}. Every name is DOL&apos;s own spelling from the
+            with {formatInt(busiest.total)} {cfg.unit}; the smallest carry{" "}
+            {formatInt(smallest)}. Every name is DOL&apos;s own spelling from the
             disclosure files.
           </p>
         ) : (
@@ -377,22 +347,16 @@ export async function BrowseLetterBody({
         <section className="mt-10">
           <h2 className="font-heading text-2xl font-black">
             {capped
-              ? `The first ${fmt(shown)}, alphabetically`
-              : `All ${fmt(shown)}, alphabetically`}
+              ? `The first ${formatInt(shown)}, alphabetically`
+              : `All ${formatInt(shown)}, alphabetically`}
           </h2>{" "}
           <p className="mt-2 max-w-3xl text-base text-foreground/70">
-            The number beside each name is how many PERM cases DOL&apos;s
-            current disclosure window records for it. Opening one gives that{" "}
-            {cfg.singular}&apos;s certifications, denials, median days and where
-            it sits against the field.
+            Each number is the PERM cases DOL&apos;s current files record for that {cfg.singular}.
           </p>{" "}
           {capped ? (
             <p className="mt-3 max-w-3xl border-l-4 border-primary bg-tint-primary px-4 py-3 text-base text-foreground/80">
-              This letter holds {fmt(bucketTotal)} {cfg.plural} and the list
-              below stops at {fmt(shown)}, because {fmt(bucketTotal)} names on
-              one page is several megabytes and nobody reads it. The other{" "}
-              {fmt(bucketTotal - shown)} each still have their own page, and
-              every one is in our sitemap and reachable by name.{" "}
+              This letter holds {formatInt(bucketTotal)} {cfg.plural}; the list stops at {formatInt(shown)}. The other{" "}
+              {formatInt(bucketTotal - shown)} still have their own pages.{" "}
               <Link href={cfg.base} className="underline underline-offset-2">
                 Search {cfg.plural} by name
               </Link>{" "}

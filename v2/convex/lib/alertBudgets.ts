@@ -10,7 +10,7 @@
  * case confirmations' pool and its alerts from the case alerts' pool.
  *
  * A REFUSAL IS THE UPGRADE SIGNAL. The free Resend plan caps the account at
- * 100 a day. A full CONFIRMATION pool queues the request since Sep 29 2026
+ * 100 a day. A full CONFIRMATION pool queues the request
  * (convex/confirmationQueue.ts, sent while Resend's own count leaves room);
  * `noteQueued` counts those and `noteRefusal` counts the people who got no
  * email at all, per pool per Eastern day, so the admin panel can say "this
@@ -18,19 +18,13 @@
  * admin that day.
  */
 import type { MutationCtx } from "../_generated/server";
-import { etDay } from "./alertDelivery";
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { easternDay, MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "./time";
 
 /**
- * Raised Sep 29 2026 (Adam: "any limit we hit needs to be bigger"). Measured
- * first: the case pool's 15 ran out on Sep 28 to real people (44 distinct
- * addresses across four days, 31 of 40 checkable ones confirmed, traffic
- * ordinary at about 1,000 visitors), because sign-ups had grown to about 14
- * a day against a cap sized in August for 2 to 5. These are now per-kind
- * bounds against abuse, not shares of Resend's 100: that is guarded once, by
- * what was actually sent (convex/lib/emailLimits.ts), and a full pool queues
- * rather than refuses (convex/confirmationQueue.ts).
+ * Per-kind bounds against abuse, not shares of Resend's 100: that is guarded
+ * once, by what was actually sent (convex/lib/emailLimits.ts), and a full pool
+ * queues rather than refuses (convex/confirmationQueue.ts). Each is set well
+ * above measured real demand, so ordinary growth in sign-ups never meets it.
  */
 export const BUDGETS = {
   caseConfirm: { key: "case_subscribe_global", limit: 60, label: "Case and employer confirmations" },
@@ -60,13 +54,36 @@ export const LIST_MAIL_POOLS = [
 
 /** Codes to one address, whatever kind: enough for a few resends, not a flood. */
 export const AUTH_MAIL_ADDRESS_KEY = "auth_mail_address";
-export const AUTH_MAIL_PER_ADDRESS = { limit: 5, windowMs: 60 * 60 * 1000 };
+export const AUTH_MAIL_PER_ADDRESS = { limit: 5, windowMs: MS_PER_HOUR };
+
+/**
+ * Minimum gap between confirmation emails to one address, for every alert
+ * kind. It stops one address being mailed repeatedly. It does NOT stop a
+ * caller cycling through many addresses, because a first-time address has no
+ * previous send to compare against: the per-caller limit below and the global
+ * pools above handle that.
+ */
+export const CONFIRMATION_COOLDOWN_MS = 10 * MS_PER_MINUTE;
+
+/**
+ * Per-caller ceiling on subscribe attempts, for every alert kind: 30 an hour,
+ * so an office or a family behind one address can follow several things. The
+ * identifier is the caller IP the HTTP route reports, which can be spoofed;
+ * the global pools bound the mail whatever it says.
+ */
+export const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: MS_PER_HOUR };
+
+/**
+ * Gap before a sweep that stopped on its batch limit runs again: long enough
+ * for a rate limit to clear, short enough that a backlog drains the same day.
+ */
+export const SWEEP_RESUME_DELAY_MS = 5 * MS_PER_MINUTE;
 
 export type BudgetName = keyof typeof BUDGETS;
 
 /** A pool as the rate limiter takes it. */
 export function windowFor(name: BudgetName): { limit: number; windowMs: number } {
-  return { limit: BUDGETS[name].limit, windowMs: DAY_MS };
+  return { limit: BUDGETS[name].limit, windowMs: MS_PER_DAY };
 }
 
 export const CASE_CONFIRMATION_KEY = BUDGETS.caseConfirm.key;
@@ -76,7 +93,7 @@ export const CASE_ALERT_BUDGET = windowFor("caseAlert");
 
 /**
  * Count `n` refusals against a pool for today (Eastern): people who got no
- * email at all. Since Sep 29 2026 a full confirmation pool QUEUES the request
+ * email at all. A full confirmation pool QUEUES the request
  * (convex/confirmationQueue.ts), so for confirmations this counts only what
  * the queue could not hold, or held past its limit. Alert pools still refuse.
  * Returns true when this is the first refusal of the day for the pool.
@@ -96,7 +113,7 @@ export async function noteQueued(ctx: MutationCtx, name: BudgetName, n = 1): Pro
 
 async function bump(ctx: MutationCtx, name: BudgetName, field: "count" | "queued", n: number): Promise<boolean> {
   if (n <= 0) return false;
-  const day = etDay(Date.now());
+  const day = easternDay(Date.now());
   const row = await ctx.db
     .query("budgetRefusals")
     .withIndex("by_day_pool", (q) => q.eq("day", day).eq("pool", name))

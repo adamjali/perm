@@ -3,9 +3,6 @@
  *
  * Simple V1-style toolbar for react-big-calendar.
  * Clean neobrutalist design with consistent styling.
- *
- * Phase: 23.1 (Calendar UI)
- * Updated: 2025-12-30
  */
 
 "use client";
@@ -282,5 +279,3 @@ export function CalendarToolbar(props: ToolbarProps<CalendarEvent, object>) {
     </div>
   );
 }
-
-export default CalendarToolbar;

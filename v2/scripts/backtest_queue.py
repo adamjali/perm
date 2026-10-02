@@ -1,13 +1,11 @@
 """The standing backtest of the decision-pace estimate.
 
-WHY THIS EXISTS (2026-09-26). The estimate's scorecard used to rest on five
-hand-picked cases. This rebuilds the PERM queue as it stood on a past day (T0),
-predicts every in-line case near the front the way the site does, and scores
-the predictions against what DOL actually decided between T0 and END. On its
-first run (T0 = 2026-09-13) it scored 7,112 real decisions and showed that
-counting cases on hold, at an RFI or on appeal as "ahead" made every date
-about a week late; the site now counts analyst review only (see `inLine` in
-src/lib/queueAhead.ts and .planning/estimator-backtest-2026-09-26.md).
+This rebuilds the PERM queue as it stood on a past day (T0), predicts every
+in-line case near the front the way the site does, and scores the
+predictions against what DOL actually decided between T0 and END. It is why
+the site counts only analyst-review cases as "ahead" (see `inLine` in
+src/lib/queueAhead.ts): counting holds, RFIs and appeals made every date
+about a week late.
 
 HOW THE PAST QUEUE IS REBUILT. `perm_case_status` holds today's status. A
 case's status on T0 is the `from_status` of its first event after T0, or its
@@ -38,16 +36,13 @@ import collections
 import json
 import statistics
 import sys
-import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import ET, Turso, query_rows, write_doc  # noqa: E402
 import ingest_case_status_direct as c  # noqa: E402
 
-ET = ZoneInfo("America/New_York")
 FINAL = ("CERTIFIED", "DENIED", "WITHDRAWN")
 IN_LINE = "ANALYST REVIEW"
 
@@ -62,7 +57,7 @@ def is_final_status(s: str) -> bool:
 
 
 def pace_before(db: Turso, t0: date) -> float | None:
-    rows = c._rows(
+    rows = query_rows(
         db,
         "SELECT total FROM daily_decisions WHERE source = 'sweep-observed' AND date >= ? AND date < ?",
         [(t0 - timedelta(days=28)).isoformat(), t0.isoformat()],
@@ -70,8 +65,8 @@ def pace_before(db: Turso, t0: date) -> float | None:
     vals = [float(r[0]) for r in rows if r[0] is not None]
     if len(vals) < 14:
         return None
-    # Over the days actually observed, like `measurePace`: the series began on
-    # 2026-08-26, and dividing a partial window by 28 halved the first run's pace.
+    # Over the days actually observed, like `measurePace`: a window the series
+    # doesn't yet fill must not be divided by 28.
     return sum(vals) / len(vals)
 
 
@@ -82,7 +77,7 @@ MIN_BAND_FRACTION = 0.55   # decisionPace.ts
 def weekday_spread(db: Turso, t0: date, pace: float) -> tuple[float, float] | None:
     """(fast, slow) calendar rates from the weekday p90/p10, scaled onto the
     calendar pace the way `measurePace` does it."""
-    rows = c._rows(
+    rows = query_rows(
         db,
         "SELECT date, total FROM daily_decisions WHERE source = 'sweep-observed' AND date >= ? AND date < ?",
         [(t0 - timedelta(days=28)).isoformat(), t0.isoformat()],
@@ -127,7 +122,7 @@ def rebuild(db: Turso, t0: date) -> tuple[list[dict], dict[str, date]]:
     t0_ms = int(datetime(t0.year, t0.month, t0.day, tzinfo=ET).timestamp() * 1000)
     first_after = {
         r[0]: (r[1], r[2])
-        for r in c._rows(
+        for r in query_rows(
             db,
             "SELECT case_number, from_status, MIN(changed_at) FROM perm_case_events "
             "WHERE changed_at >= ? AND source = ? GROUP BY case_number",
@@ -136,7 +131,7 @@ def rebuild(db: Turso, t0: date) -> tuple[list[dict], dict[str, date]]:
     }
     decided_at = {
         r[0]: datetime.fromtimestamp(int(r[1]) / 1000, ET).date()
-        for r in c._rows(
+        for r in query_rows(
             db,
             "SELECT case_number, MIN(changed_at) FROM perm_case_events WHERE changed_at >= ? "
             "AND source = ? AND to_final = 1 AND from_status NOT LIKE 'CERTIFIED%' "
@@ -146,17 +141,16 @@ def rebuild(db: Turso, t0: date) -> tuple[list[dict], dict[str, date]]:
         )
     }
     cases = []
-    for cn, fd, cur, isf in c._rows(
+    for cn, fd, cur, isf in query_rows(
         db,
         "SELECT case_number, filing_date, current_status, is_final FROM perm_case_status "
         "WHERE filing_date >= '2015-01-01' AND filing_date < ?",
         [(t0 + timedelta(days=1)).isoformat()],
     ):
         st0 = ((first_after[cn][0] if cn in first_after else cur) or "").upper()
-        # PENDING ON T0 means its status THAT DAY was not final. "Final now or
-        # decided later" is not enough: a CERTIFIED case whose certification
-        # EXPIRED after T0 logs a final event after T0, and counting it made
-        # 6,500 long-certified cases "pending" on the first run.
+        # Pending on T0 means its status that day was not final. "Final now or
+        # decided later" is not enough: a certification that expired after T0
+        # logs a final event after T0 without having been pending.
         if is_final_status(st0) or not fd:
             continue
         cases.append({"cn": cn, "fd": fd, "m": fd[:7], "st0": st0})
@@ -248,10 +242,7 @@ def main() -> int:
     }
     print(json.dumps(result, indent=2))
     if a.write:
-        db.execute(
-            "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES ('estimator_backtest', ?, ?)",
-            [json.dumps(result), int(time.time() * 1000)],
-        )
+        write_doc(db, "estimator_backtest", json.dumps(result))
         print("wrote perm_docs['estimator_backtest']")
     return 0
 

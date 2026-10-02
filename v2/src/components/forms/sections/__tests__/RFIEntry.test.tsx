@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { FormProvider, useForm } from "react-hook-form";
-import { RFIEntry } from "../RFIEntry";
+import { RequestEntry } from "../RequestEntry";
 import type { CaseFormData, RFIEntry as RFIEntryType } from "@/lib/forms/case-form-schema";
 
 // TEST WRAPPER
@@ -61,7 +61,8 @@ function renderRFIEntry({
   return {
     ...render(
       <TestWrapper defaultValues={defaultValues}>
-        <RFIEntry
+        <RequestEntry
+          kind="rfi"
           index={index}
           minReceivedDate={minReceivedDate}
           maxReceivedDate={maxReceivedDate}

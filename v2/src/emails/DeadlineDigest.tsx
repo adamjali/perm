@@ -26,6 +26,7 @@ import {
   getUrgencyColor,
 } from "../../convex/lib/digestHelpers";
 import type { DeadlineDigestItem } from "../../convex/lib/reminderDigest";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface DeadlineDigestProps {
   /** First name (or display name) of the recipient. */
@@ -51,8 +52,8 @@ const SECTIONS: ReadonlyArray<{ key: Urgency; label: string; icon: string; color
 export function DeadlineDigest({
   userName,
   items,
-  baseUrl = "https://permtracker.app",
-  settingsUrl = "https://permtracker.app/settings",
+  baseUrl = SITE_URL,
+  settingsUrl = `${SITE_URL}/settings`,
 }: DeadlineDigestProps) {
   const total = items.length;
   const overdueCount = items.filter((i) => i.urgency === "overdue").length;
@@ -237,8 +238,8 @@ const styles = {
 /** Preview props for React Email dev server. */
 DeadlineDigest.PreviewProps = {
   userName: "Jake",
-  baseUrl: "https://permtracker.app",
-  settingsUrl: "https://permtracker.app/settings",
+  baseUrl: SITE_URL,
+  settingsUrl: `${SITE_URL}/settings`,
   items: [
     { caseId: "c1" as never, employerName: "Globex Corporation", beneficiaryIdentifier: "A. Rivera", deadlineType: "PWD expiration", deadlineDate: "2026-06-27", daysUntil: -2, urgency: "overdue" },
     { caseId: "c2" as never, employerName: "Acme Inc", beneficiaryIdentifier: "B. Chen", deadlineType: "PWD expiration", deadlineDate: "2026-06-30", daysUntil: 1, urgency: "urgent" },
@@ -248,5 +249,3 @@ DeadlineDigest.PreviewProps = {
     { caseId: "c6" as never, employerName: "Wayne Enterprises", beneficiaryIdentifier: "F. Adeyemi", deadlineType: "Recruitment window closes", deadlineDate: "2026-07-29", daysUntil: 30, urgency: "later" },
   ],
 } satisfies DeadlineDigestProps;
-
-export default DeadlineDigest;

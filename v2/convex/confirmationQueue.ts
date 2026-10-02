@@ -1,16 +1,13 @@
 /**
  * Confirmations a full pool could not send at once, sent when there's room.
  *
- * ## Why this exists (Sep 29 2026)
+ * ## Why this exists
  *
- * On Sep 28 fifteen people asked for case alerts after the day's 15
- * case-confirmation emails were spent, and two more the next morning. Each
- * was told "try again later" and nothing was kept, so none of them got an
- * email unless they came back. That day the whole Resend account sent 57 of
- * its 100: the pool was full, the account was not. The pools were sized when
- * their sum was the only guard against Resend's cap; Resend now reports its
- * own count on every send and in its list of sent mail, which is a better
- * guard than a fixed share.
+ * A full pool can turn people away while the account itself has room, and a
+ * person told "try again later" with nothing kept gets no email unless they
+ * come back. Resend reports its own count on every send and in its list of
+ * sent mail, which is a better guard than a fixed share, so a confirmation a
+ * pool holds back waits here instead of being refused.
  *
  * ## How it works
  *
@@ -52,17 +49,18 @@ import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { siteThrottleReply } from "./lib/throttleReply";
 import { createLogger } from "./lib/logging";
 import { drainRetries } from "./emailLedger";
+import { EASTERN_TIMEZONE, MS_PER_DAY, MS_PER_MINUTE } from "./lib/time";
 
 const log = createLogger("ConfirmationQueue");
 
 export type QueueKind = Doc<"confirmationQueue">["kind"];
 
-/** Waiting requests the queue holds in all (100 until Adam asked for more, Sep 29 2026). */
+/** Waiting requests the queue holds in all. */
 export const QUEUE_MAX = 1000;
 /** A request unsent after seven days is dropped and counted as turned away. */
-export const EXPIRE_MS = 7 * 24 * 60 * 60 * 1000;
+export const EXPIRE_MS = 7 * MS_PER_DAY;
 /** A drain's claim on a row; older than this, another drain may take it. */
-export const CLAIM_LEASE_MS = 10 * 60 * 1000;
+export const CLAIM_LEASE_MS = 10 * MS_PER_MINUTE;
 /** Replays of one row before it's given up (each one failed by throwing). */
 export const MAX_ATTEMPTS = 5;
 /** Emails one drain run may send (retries first, then queued confirmations). */
@@ -156,7 +154,7 @@ export async function queueConfirmation(
 
 function easternTime(ms: number): string {
   return new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
+    timeZone: EASTERN_TIMEZONE,
     hour: "numeric",
     minute: "2-digit",
     timeZoneName: "short",

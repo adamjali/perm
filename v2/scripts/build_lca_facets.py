@@ -32,7 +32,7 @@ import sys
 import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, record_run  # noqa: E402
+from lib_turso import Turso, query_rows, record_run, write_doc  # noqa: E402
 
 DOC_KEY = "lca_filter_options"
 
@@ -55,17 +55,9 @@ def min_for_median() -> int:
     return int(m.group(1))
 
 
-def _rows(db: Turso, sql: str, args: list) -> list[list]:
-    res = db.execute(sql, args)
-    return [
-        [None if c["type"] == "null" else c["value"] for c in r]
-        for r in res["response"]["result"]["rows"]
-    ]
-
-
 # MUST STAY IN STEP WITH ANNUAL_WAGE_SQL AND THE BAND IN src/lib/turso/lcaWages.ts.
 # Duplicated deliberately, the same way the entity slug rules are duplicated in
-# store_entities.py and entitySlug.ts: a doc built over a different population
+# lib_slugs.py and entitySlug.ts: a doc built over a different population
 # than the fallback query reads is worse than no doc, because it is invisible.
 ANNUAL_WAGE_SQL = (
     "CASE wage_unit WHEN 'YEAR' THEN wage WHEN 'HOUR' THEN wage * 2080 "
@@ -140,11 +132,10 @@ def build_default_view(db: Turso, min_cases: int) -> dict:
     # so an empty or missing table would be an IndexError here rather than a
     # readable refusal. The caller's guard below only sees what this returns.
     #
-    # LIMIT 1, BECAUSE `FROM o` IS ONE ROW PER CERTIFIED LCA. Every row carries
-    # the same scalar answers, so without the limit this sent ~2.2 million copies
-    # of one row and the caller kept the first. Turso sent them all; the Oracle
-    # database's reply cap refused it (RESPONSE_TOO_LARGE, Sep 29 2026).
-    st_rows = _rows(db, f"""
+    # LIMIT 1, because `FROM o` is one row per certified LCA. Every row carries
+    # the same scalar answers, so without the limit the reply is millions of
+    # copies of one row, past the database's reply cap.
+    st_rows = query_rows(db, f"""
         WITH f AS (SELECT ({ANNUAL_WAGE_SQL}) AS wage FROM lca_cases WHERE {DEFAULT_WHERE}),
              c AS (SELECT COUNT(*) AS n FROM f),
              o AS (SELECT wage, ROW_NUMBER() OVER (ORDER BY wage) AS rn FROM f)
@@ -167,12 +158,12 @@ def build_default_view(db: Turso, min_cases: int) -> dict:
     width = bin_width(stats["p5"], stats["p95"])
     print(f"[lca-facets] default view n={stats['n']:,} binWidth={width:,}", flush=True)
 
-    hist = _rows(db, f"""
+    hist = query_rows(db, f"""
         SELECT CAST(({ANNUAL_WAGE_SQL}) / ? AS INTEGER) * ? AS bin, COUNT(*) AS n
           FROM lca_cases WHERE {DEFAULT_WHERE} GROUP BY bin ORDER BY bin
     """, [width, width])
 
-    by_state = _rows(db, f"""
+    by_state = query_rows(db, f"""
         WITH o AS (
           SELECT worksite_state AS state, ({ANNUAL_WAGE_SQL}) AS wage,
                  ROW_NUMBER() OVER (PARTITION BY worksite_state
@@ -223,7 +214,7 @@ def verify_median(db: Turso, stats: dict) -> None:
         raise SystemExit(f"FATAL: default view has n={n} and p50={stats['p50']}")
     k = (n - 1) * 0.5
     lo_off = int(k)
-    pair = _rows(db, f"""
+    pair = query_rows(db, f"""
         SELECT ({ANNUAL_WAGE_SQL}) AS wage FROM lca_cases WHERE {DEFAULT_WHERE}
          ORDER BY wage LIMIT 2 OFFSET ?
     """, [lo_off])
@@ -253,7 +244,7 @@ def build(db: Turso, min_cases: int) -> dict:
     # alphabetically: MIN(soc_title) names 15-1252 "Computer Programmers"
     # because a few filings still use the old title, while the bulk say
     # "Software Developers".
-    occ = _rows(db, """
+    occ = query_rows(db, """
         WITH t AS (SELECT substr(soc_code, 1, 7) AS code, soc_title AS title,
                           COUNT(*) AS n
                      FROM lca_cases
@@ -267,7 +258,7 @@ def build(db: Turso, min_cases: int) -> dict:
          ORDER BY tot.n DESC LIMIT 400
     """, [min_cases])
 
-    st = _rows(db, """
+    st = query_rows(db, """
         SELECT worksite_state, COUNT(*) AS n
           FROM lca_cases
          WHERE case_status = 'CERTIFIED'
@@ -276,7 +267,7 @@ def build(db: Turso, min_cases: int) -> dict:
          ORDER BY n DESC
     """, [min_cases])
 
-    fy = _rows(db, """
+    fy = query_rows(db, """
         SELECT DISTINCT fiscal_year FROM lca_cases
          WHERE fiscal_year IS NOT NULL AND fiscal_year <> ''
          ORDER BY fiscal_year DESC
@@ -324,10 +315,7 @@ def main() -> int:
     payload = json.dumps(facets, separators=(",", ":"))
     db.execute("""CREATE TABLE IF NOT EXISTS perm_docs (
         key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)""", [])
-    db.execute(
-        "INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-        [DOC_KEY, payload, int(time.time() * 1000)],
-    )
+    write_doc(db, DOC_KEY, payload)
     got = db.scalar("SELECT length(json) FROM perm_docs WHERE key = ?", [DOC_KEY])
     if int(got or 0) != len(payload):
         raise SystemExit("FATAL: lca_filter_options read-back does not match write")

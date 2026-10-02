@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/nextjs';
+import type { Meta, StoryObj } from '@storybook/nextjs-vite';
 import { ETA9089Section } from './ETA9089Section';
 import { addDays } from 'date-fns';
 

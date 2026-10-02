@@ -4,31 +4,24 @@
  *   day   = today + (cases ahead / 28-day calendar pace)
  *   band  = cases ahead / {p90, p10} weekday pace, floored, late-heavy
  *
- * This is the shape the rival tracker and the rival dashboard both use, measured here across
- * ~88,000 backtested predictions before being written down. It has ZERO
- * fitted parameters: a count divided by a measured rate, with a band from
- * that rate's own spread. Every number in it can be pointed at in the data.
+ * It was backtested across ~88,000 predictions before being written down,
+ * and it has ZERO fitted parameters: a count divided by a measured rate, with
+ * a band from that rate's own spread. Every number in it can be pointed at in
+ * the data.
  *
- * THE BAND IS A PACE SCENARIO, NOT A CONFIDENCE INTERVAL. Measured coverage
- * is 57-58% overall and 41% at the near horizon. Any surface rendering it
- * must say so; calling it "80% confident" is the single most checkable lie
- * a queue estimator can tell, and a rival ships exactly that (their
- * `confidence_level: 0.8` is a constant, and real coverage is 8-15%).
+ * THE BAND IS A PACE SCENARIO, NOT A CONFIDENCE INTERVAL. Its measured
+ * coverage is well under 80%, about four in ten near the front of the queue.
+ * Any surface rendering it must say so; calling it "80% confident" is the
+ * single most checkable false claim a queue estimator can make.
  *
- * WHAT THIS MODULE IS NOT WIRED TO, AND WHY (measured 2026-09-13).
- * The backtest fed `days` from DOL's own `decision_date` in the quarterly
- * disclosure files. Production cannot: those files end 2026-06-30, so
- * "the last 28 days" does not exist in them. The only daily-resolution
- * source we hold is `perm_case_events`, which records when OUR SWEEP SAW a
- * change, and it begins 2026-08-27. The two ranges do not overlap by a
- * single day, so the substitution cannot be validated at all yet - it
- * becomes checkable when DOL publishes FY2026 Q4 (July-September), which
- * also lands the first days the event log covers.
- *
- * Until then this is exported, tested and NOT used to produce any number a
- * reader sees. That is deliberate. `estimateQueueDecision` keeps leading
- * with queue-advance, which is anchored on DOL's own published frontier and
- * needs no substitution.
+ * WHERE `days` COMES FROM. The backtest fed it from DOL's own
+ * `decision_date` in the quarterly disclosure files, which end at the last
+ * published quarter, so "the last 28 days" never exists in them. Production
+ * feeds it from the sweep's observed decisions, dated by when OUR SWEEP SAW a
+ * case become final. The two ranges do not overlap, so the substitution is
+ * checked against an independent published daily series instead (see
+ * `estimateQueueDecision`), and against outcomes once DOL publishes a
+ * quarter the event log covers.
  */
 
 /** Below this many usable weekdays the pace is not measurable. */
@@ -65,7 +58,7 @@ export const MAX_HORIZON_DAYS = 1400;
  * carefully: the band is in practice `0.55 x horizon` grown late-heavy, and
  * the p10/p90 spread decides only how that growth splits, not how wide it is.
  * The measured spread runs 35-52% of the horizon, entirely below the floor -
- * verified against production 2026-09-13, where a 110-day horizon gave 37
+ * verified against production, where a 110-day horizon gave 37
  * days from the spread and 61 from the floor. That is a defensible choice
  * because 0.55 was swept rather than picked, but it is a constant fraction
  * with a measured justification, not a live measurement, and it must not be
@@ -120,17 +113,14 @@ export function measurePace(days: readonly DecisionDay[]): MeasuredPace | null {
   /*
    * THE CENTRAL RATE IS A PLAIN CALENDAR MEAN OVER EVERY OBSERVED DAY.
    *
-   * It used to be rebuilt as (weekdayMean * 5 + weekendMean * 2) / 7 from a
-   * weekday mean that EXCLUDED collapsed days. That reads 11% high, and the
-   * error is structural rather than small: dropping Labor Day from the
-   * weekday average produces "a typical working weekday", and projecting
-   * five of those into every future week silently assumes no future week
-   * contains a holiday.
-   *
-   * Caught by cross-checking against the rival dashboard's published daily_volume
-   * over 16 overlapping days: our raw counts match theirs to 0.7% (619/day
-   * against 623) while our reconstruction was claiming 688. The data was
-   * never wrong; the projection was.
+   * Not (weekdayMean * 5 + weekendMean * 2) / 7 from a weekday mean that
+   * EXCLUDES collapsed days: that reads 11% high, and the error is
+   * structural rather than small. Dropping Labor Day from the weekday
+   * average produces "a typical working weekday", and projecting five of
+   * those into every future week silently assumes no future week contains a
+   * holiday. Against an independent published daily series over 16
+   * overlapping days, the raw counts agree to within 1% while that
+   * reconstruction reads 11% high: the data is right, the projection is not.
    *
    * Federal holidays are a normal part of the calendar and belong in a
    * calendar rate. Only a SUSTAINED collapse - three or more consecutive
@@ -277,9 +267,9 @@ export function estimateByPace(input: PaceEstimateInput): PaceEstimate {
   }
 
   /*
-   * A case with almost nothing ahead of it is NOT about to be decided, and
-   * assuming so was a bug here until it was measured. Actual days to
-   * decision, by how much work sits ahead (31 origins, real outcomes):
+   * A case with almost nothing ahead of it is NOT about to be decided.
+   * Actual days to decision, by how much work sits ahead (31 origins, real
+   * outcomes):
    *
    *   queue ahead      n       p25   MEDIAN    p75    p90
    *   <1 day          708       12      34      81    149
@@ -294,8 +284,8 @@ export function estimateByPace(input: PaceEstimateInput): PaceEstimate {
    * see. The branch is named for what is true (the queue is clear) rather
    * than for what is not (a decision is imminent).
    *
-   * The comparison also used to be `casesAhead <= pace`, against the pace
-   * OBJECT, which coerced to NaN so this branch never ran at all.
+   * Compare against `pace.pace`, never the pace object: an object coerces to
+   * NaN and the branch would never run.
    */
   if (casesAhead <= pace.pace) {
     return {

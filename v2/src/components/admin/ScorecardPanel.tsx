@@ -3,7 +3,9 @@
 import { useAction } from "convex/react";
 import { useEffect, useState } from "react";
 
-import { api } from "../../../convex/_generated/api";
+import { EASTERN_TIMEZONE } from "@/lib/time";
+
+import { api } from "@convex/_generated/api";
 import { HORIZONS, type Cell, type Summary } from "@/lib/scorecard/score";
 
 /**
@@ -75,7 +77,7 @@ export function ScorecardPanel() {
       <section aria-labelledby="sc-h" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <h2 id="sc-h" className="font-heading text-xl font-black">Everyone on the same cases</h2>{" "}
         <p className="mt-1 text-sm text-muted-foreground">
-          PERM, since {state.perm.since ?? "-"}. Summarised {new Date(state.computedAt).toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" })} ET.
+          PERM, since {state.perm.since ?? "-"}. Summarised {new Date(state.computedAt).toLocaleString("en-US", { timeZone: EASTERN_TIMEZONE, dateStyle: "medium", timeStyle: "short" })} ET.
           Bias is decided minus predicted: positive means DOL was later. Settled: dates more than 30 days past, pending counted as a miss.
         </p>{" "}
         <div className="mt-4 overflow-x-auto border-2 border-border">

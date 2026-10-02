@@ -1,5 +1,7 @@
 import "server-only";
 
+import { MS_PER_DAY } from "@/lib/time";
+
 import type { LiveCaseRow } from "./cases";
 import { keepLinkableSlugs } from "./entityLinks";
 import type { FlagCaseRow, FlagDisclosedRow } from "./flagCases";
@@ -68,8 +70,8 @@ import {
  * **One row per case.** A case can be in both halves of its program at once.
  */
 
-export type Program = "perm" | "pwd" | "lca";
-export const PROGRAMS: readonly Program[] = ["perm", "pwd", "lca"];
+export type Program = "perm" | "pwd" | "lca" | "seasonal";
+export const PROGRAMS: readonly Program[] = ["perm", "pwd", "lca", "seasonal"];
 export function isProgram(v: string): v is Program {
   return (PROGRAMS as readonly string[]).includes(v);
 }
@@ -141,8 +143,8 @@ export interface UnifiedSearchArgs {
 }
 
 /**
- * Rows in one answer. 1,000 since Sep 29 2026 (was 300, set when Turso billed
- * every row read; the site's own database reads thousands in milliseconds).
+ * Rows in one answer: 1,000, because the site's own database reads thousands
+ * in milliseconds.
  * The page shows them 100 at a time and the CSV carries all of them.
  */
 export const UNIFIED_MAX = 1000;
@@ -150,7 +152,7 @@ export const UNIFIED_MAX = 1000;
 function stageLimit(limit: number | undefined): number {
   return Math.min(Math.max(1, Math.floor(limit ?? UNIFIED_MAX)), UNIFIED_MAX);
 }
-/** Rows each program's live and published halves may contribute (100 until Sep 29 2026). */
+/** Rows each program's live and published halves may contribute. */
 export const PER_SOURCE = 500;
 
 /**
@@ -265,7 +267,7 @@ function daysBetween(from: string | null, to: string | null): number | null {
   const a = Date.parse(`${from}T00:00:00Z`);
   const b = Date.parse(`${to}T00:00:00Z`);
   if (!Number.isFinite(a) || !Number.isFinite(b) || b < a) return null;
-  return Math.round((b - a) / 86_400_000);
+  return Math.round((b - a) / MS_PER_DAY);
 }
 
 const fromFlagDisclosed = (r: FlagDisclosedRow, program: Program): UnifiedCase => ({
@@ -282,10 +284,8 @@ const fromFlagDisclosed = (r: FlagDisclosedRow, program: Program): UnifiedCase =
   wage: r.wage,
   wageUnit: r.wageUnit,
   state: r.worksiteState,
-  // THE FIRM, which these rows have carried since the 2026-09-03 backfill and
-  // this mapper kept returning null for. A reader searched a law firm, got 44
-  // of its wage requests back, and every one showed an empty law-firm column -
-  // the rows were right and the field was dropped on the way out.
+  // THE FIRM. These rows carry it; dropped here, a firm search would return
+  // the right rows with an empty law-firm column.
   firmName: r.attorneyName,
   firmSlug: r.attorneySlug,
   socCode: r.socCode,
@@ -539,7 +539,7 @@ async function finish(
     (r) => ({ ...r, firmSlug: null }),
   );
   await addSeenDecided(rows);
-  const counts: Record<Program, number> = { perm: 0, pwd: 0, lca: 0 };
+  const counts: Record<Program, number> = { perm: 0, pwd: 0, lca: 0, seasonal: 0 };
   for (const r of rows) counts[r.program] += 1;
   return {
     rows,
@@ -591,19 +591,11 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
       ? { status: args.lead.value, program: args.lead.program }
       : (narrow.stage ?? null);
 
-  // THE PROGRAM CHIPS MEAN SOMETHING FOR EVERY LEAD BUT A FIRM. A firm lead
-  // reads published PERM and nothing else - DOL publishes the firm for the
-  // other two programs and this site has not ingested it - so honouring a chip
-  // set of ["pwd"] there would return an empty answer to a search the page had
-  // already told the reader was PERM-only. `filterAvailability` turns the chips
-  // off for exactly that lead and leaves them on for the others; this is the
-  // same rule on the server side, which is where it is enforced.
-  // THE PROGRAM CHIPS APPLY TO EVERY LEAD NOW. A firm used to be forced to
-  // `perm` here, because `pwd_cases` and `lca_cases` carried no firm column -
-  // DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` for all three programs and this
-  // site had never ingested it. It is ingested and backfilled now (91.5% of
-  // wage-request rows, 74.6% of LCA rows carry a firm), so the chips choose
-  // between three real sources for a firm exactly as they do for a state.
+  // THE PROGRAM CHIPS APPLY TO EVERY LEAD. DOL publishes
+  // `LAWFIRM_NAME_BUSINESS_NAME` for all three programs and the wage-request
+  // and LCA tables carry it (about nine in ten wage-request rows and three in
+  // four LCA rows name a firm), so the chips choose between three real
+  // sources for a firm exactly as they do for a state.
   // A stage is a PERM status, so a stage search reads PERM whatever the program chips say.
   // A FILTER ONLY PUBLISHED PERM CARRIES rules the other programs out: their
   // tables here have no industry, city or worker column, so reading them would
@@ -623,9 +615,8 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
         : askLive(p) && employer
           ? readFlagLive(p, employer, narrow, PER_SOURCE).catch(none<FlagCaseRow>)
           : none<FlagCaseRow>();
-  // EVERY LEAD THAT REACHES HERE REACHES THE FLAG TABLES. There used to be a
-  // `flagCanLead` guard excluding a firm; the typechecker now says a case-number
-  // lead cannot arrive at all, so any such guard is dead by construction.
+  // EVERY LEAD THAT REACHES HERE REACHES THE FLAG TABLES: the types rule out
+  // a case-number lead arriving at all, so no guard is needed.
   const flagPublished = (p: FlagProgramKey) =>
     askPublished(p)
       ? readFlagPublished(p, args.lead, narrow, PER_SOURCE).catch(none<FlagDisclosedRow>)
@@ -633,7 +624,7 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
 
   // Every read is caught individually: one program's table being unavailable
   // should narrow the answer, never blank the page.
-  const [permPub, permLive, pwdLive, pwdPub, lcaLive, lcaPub] = await Promise.all([
+  const [permPub, permLive, pwdLive, pwdPub, lcaLive, lcaPub, seasonalLive] = await Promise.all([
     askPublished("perm")
       ? readPermPublished({ lead: args.lead, narrow, limit: PER_SOURCE }).catch(none<PermSearchRow>)
       : none<PermSearchRow>(),
@@ -652,6 +643,9 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
     flagPublished("pwd"),
     flagLive("lca"),
     flagPublished("lca"),
+    // H-2A and H-2B: the live half only. No quarterly file is loaded, so a
+    // state, occupation or firm lead (published-only) finds nothing here.
+    flagLive("seasonal"),
   ]);
 
   const collected = [
@@ -661,9 +655,10 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
     ...pwdLive.rows.map((r) => fromFlagLive(r, "pwd")),
     ...lcaPub.rows.map((r) => fromFlagDisclosed(r, "lca")),
     ...lcaLive.rows.map((r) => fromFlagLive(r, "lca")),
+    ...seasonalLive.rows.map((r) => fromFlagLive(r, "seasonal")),
   ];
 
-  const halves = [permPub, permLive, pwdPub, pwdLive, lcaPub, lcaLive];
+  const halves = [permPub, permLive, pwdPub, pwdLive, lcaPub, lcaLive, seasonalLive];
   const capped = halves.some((half) => half.rows.length >= PER_SOURCE);
   // At least one source applied its filters inside a window of this
   // employer's newest filings rather than over everything they have filed.

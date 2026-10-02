@@ -1,9 +1,6 @@
 /**
  * Event styling utilities for react-big-calendar.
  * Neobrutalist design with stage-based coloring.
- *
- * Phase: 23.1 (Calendar UI)
- * Created: 2026-01-09
  */
 
 import type { EventPropGetter } from "react-big-calendar";

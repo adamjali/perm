@@ -5,7 +5,7 @@ import Link from "next/link";
 import { CheckIcon, WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import {
   CATEGORIES,
   COUNTRIES,
@@ -23,8 +23,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * The case's timeline after PERM: what people report, and a form to add
- * yours. Kept under its old name so the case page did not change; it replaced
- * the one-milestone report on 2026-09-26 and still counts those 14 reports.
+ * yours. It also counts the reports made through the older one-milestone
+ * form.
  *
  * WHAT IS CHECKED AND WHAT IS NOT is said above the form, not under it: the
  * PERM dates come from DOL's record by case number and are never typed here;

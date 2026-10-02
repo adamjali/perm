@@ -10,8 +10,8 @@ from the processing-times snapshot; and the newest visa bulletin's EB-2 and
 EB-3 cutoffs for India and China, with the count of categories that moved
 against the month before. No estimate, no adjective, one link per post.
 
-WHAT IS NOT BUILT. Posting needs Adam's API credentials, which do not exist
-yet: X's v2 API with an OAuth 1.0a user context (X_API_KEY, X_API_SECRET,
+WHAT IS NOT BUILT. Posting needs the owner's API credentials, which don't
+exist yet: X's v2 API with an OAuth 1.0a user context (X_API_KEY, X_API_SECRET,
 X_ACCESS_TOKEN, X_ACCESS_SECRET) and LinkedIn's posts API with a member
 token (LINKEDIN_ACCESS_TOKEN, LINKEDIN_AUTHOR_URN). Without them `--post`
 prints the draft and exits 0, and the dispatch-only workflow does the same.
@@ -182,14 +182,13 @@ def post_to_linkedin(text: str, token: str, author_urn: str, url: str = LINKEDIN
 # ---------------------------------------------------------------- record
 
 def load_record() -> tuple[dict, dict, dict | None]:
-    from lib_turso import Turso  # noqa: E402
+    from lib_turso import Turso, query_rows  # noqa: E402
 
     db = Turso()
-    cells = lambda r: [None if c["type"] == "null" else c["value"] for c in r]  # noqa: E731
-    snap = db.execute("SELECT json FROM processing_times ORDER BY perm_as_of DESC LIMIT 1")
-    snapshot = json.loads(cells(snap["response"]["result"]["rows"][0])[0])
-    bl = db.execute("SELECT bulletin_month, final_action FROM visa_bulletins ORDER BY bulletin_month DESC LIMIT 2")
-    rows = [cells(r) for r in bl["response"]["result"]["rows"]]
+    snap = query_rows(db, "SELECT json FROM processing_times ORDER BY perm_as_of DESC LIMIT 1")
+    snapshot = json.loads(snap[0][0])
+    rows = query_rows(db, "SELECT bulletin_month, final_action FROM visa_bulletins "
+                          "ORDER BY bulletin_month DESC LIMIT 2")
     bulletin = {"month": rows[0][0], "final_action": json.loads(rows[0][1])}
     previous = {"month": rows[1][0], "final_action": json.loads(rows[1][1])} if len(rows) > 1 else None
     return snapshot, bulletin, previous

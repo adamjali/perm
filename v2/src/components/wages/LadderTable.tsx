@@ -1,4 +1,5 @@
-import { RUNGS, RUNG_LABEL, isComplete, money, type Ladder } from "@/lib/wageLadder";
+import { RUNGS, RUNG_LABEL, isComplete, type Ladder } from "@/lib/wageLadder";
+import { formatDollars } from "@/lib/format";
 
 /**
  * The same ladders as exact figures.
@@ -41,17 +42,17 @@ export function LadderTable({
         </caption>
         <thead>
           <tr className="border-b-2 border-border bg-muted">
-            <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
               {subjectLabel}{" "}
             </th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Cases{" "}
             </th>
             {RUNGS.map((r) => (
               <th
                 key={r}
                 scope="col"
-                className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider"
+                className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider"
               >
                 {RUNG_LABEL[r]}{" "}
               </th>
@@ -69,7 +70,7 @@ export function LadderTable({
               </td>
               {RUNGS.map((r) => (
                 <td key={r} className="px-3 py-2 text-right font-mono tabular-nums">
-                  {money(l[r] as number)}{" "}
+                  {formatDollars(l[r] as number)}{" "}
                 </td>
               ))}
             </tr>

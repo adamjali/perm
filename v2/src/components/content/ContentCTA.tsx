@@ -11,7 +11,7 @@
 import * as React from "react";
 import { motion } from "motion/react";
 import { NavLink } from "@/components/ui/nav-link";
-import { useParallax } from "@/lib/hooks/useGSAP";
+import { useParallax } from "@/hooks/useGSAP";
 import { stagger, fadeUp } from "@/lib/content/animations";
 
 interface ContentCTAProps {

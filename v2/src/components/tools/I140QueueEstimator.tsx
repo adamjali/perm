@@ -19,6 +19,7 @@
 import { Fragment, useId, useMemo, useState } from "react";
 import { FileTextIcon, TrendUpIcon as TrendingUp, WarningIcon } from "@phosphor-icons/react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { estimateI140Queue, type I140QuarterStats } from "@/lib/perm";
 import {
   formatMonths,
@@ -27,7 +28,7 @@ import {
 } from "@/lib/processing-times/i140ProcessingTimes";
 import Link from "next/link";
 
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 export interface I140QueueEstimatorProps {
@@ -157,7 +158,7 @@ export function I140QueueEstimator({
 
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2">
         <div className="bg-tint-primary p-6 sm:p-8">
-          <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
             Petitions waiting
           </p>{" "}
           <p className="mt-2 font-heading text-4xl font-black leading-none">
@@ -169,7 +170,7 @@ export function I140QueueEstimator({
           </p>
         </div>
         <div className="bg-card p-6 sm:p-8">
-          <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
             Decided last quarter
           </p>{" "}
           <p className="mt-2 font-heading text-4xl font-black leading-none">
@@ -189,7 +190,7 @@ export function I140QueueEstimator({
       <div className="grid [&>*]:min-w-0 grid-cols-1 gap-px border-b-2 border-border bg-border sm:grid-cols-2">
         {published ? (
           <div className="bg-card p-6 sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+            <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
               USCIS published time
             </p>{" "}
             <p className="mt-2 font-heading text-2xl font-black leading-none">
@@ -203,7 +204,7 @@ export function I140QueueEstimator({
         ) : null}
         {quarterlyMedian ? (
           <div className="bg-card p-6 sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+            <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
               USCIS quarterly median, all I-140s
             </p>{" "}
             <p className="mt-2 font-heading text-2xl font-black leading-none">
@@ -222,7 +223,7 @@ export function I140QueueEstimator({
         ) : null}
         {published?.premiumBusinessDays ? (
           <div className="bg-card p-6 sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+            <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
               With premium processing
             </p>{" "}
             <p className="mt-2 font-heading text-2xl font-black leading-none">
@@ -263,7 +264,8 @@ export function I140QueueEstimator({
           Every I-140 petition type USCIS reports, and how many are waiting on
           each.
         </p>
-        <ol className="mt-6 space-y-2">
+        <ChartTips label="I-140 petitions pending, by type" className="mt-6">
+        <ol className="space-y-2">
           {[...subtypes]
             .sort((a, b) => b.pending - a.pending)
             .map((s) => (
@@ -273,6 +275,7 @@ export function I140QueueEstimator({
               <Fragment key={s.code}>
                 {" "}
                 <li
+                  data-tip={`${s.code} · ${s.label}\n${s.pending.toLocaleString("en-US")} pending at quarter end\n${s.received.toLocaleString("en-US")} received in the quarter\n${s.approved.toLocaleString("en-US")} approved, ${s.denied.toLocaleString("en-US")} denied`}
                   className="grid [&>*]:min-w-0 grid-cols-[4.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[16rem_1fr_5rem]"
                 >
                   <span
@@ -305,6 +308,7 @@ export function I140QueueEstimator({
               </Fragment>
             ))}
         </ol>
+        </ChartTips>
       </div>
 
       <div className="bg-muted p-6 sm:p-8">

@@ -28,7 +28,7 @@ export async function GET() {
   return new Response(indexXml(names, lastmod), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      // Vercel already serves application/xml compressed, so no .gz here:
+      // Cloudflare already serves application/xml compressed, so no .gz here:
       // both size limits in play are measured on the UNCOMPRESSED bytes, so
       // gzipping the file itself would buy exactly nothing.
       "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=86400",

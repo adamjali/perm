@@ -3,7 +3,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react";
 
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { SelectedInFull } from "@/components/tools/SelectedInFull";
 import { US_STATE_NAMES } from "@/lib/usStateNames";
 import { seriesYearFor, SOC_RE, type AreaOption, type WageLevel } from "@/lib/wageLevels";
@@ -106,7 +106,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
             pattern="\d{2}-\d{4}(\.\d{2})?"
             className={SELECT}
           />{" "}
-          <p className="mt-1 text-xs text-muted-foreground">The occupation code on the wage request or the PERM; every occupation page prints its own.</p>
+          <p className="mt-1 text-sm text-muted-foreground">The occupation code on the wage request or the PERM; every occupation page prints its own.</p>
         </div>{" "}
         <div>
           <Label htmlFor={stateId}>State</Label>{" "}
@@ -174,7 +174,7 @@ export function WageLevelsTool({ initialSoc = "" }: { initialSoc?: string }) {
               </div>
             ))}
           </dl>{" "}
-          <p className="mt-3 text-xs text-muted-foreground">
+          <p className="mt-3 text-sm text-muted-foreground">
             Source:{" "}
             <a href={result.source} rel="noopener noreferrer" className="underline underline-offset-2 hover:text-primary">
               OFLC wage search

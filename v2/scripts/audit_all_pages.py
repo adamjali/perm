@@ -29,9 +29,8 @@ from lib_audit import audit_headers  # noqa: E402
 UA = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
     "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36",
-    # The Firewall's bypass for the site's own audits. Bot Protection
-    # (Challenge mode, Sep 7 2026) serves a JavaScript challenge to anything
-    # that claims to be a browser and is not; this header is the exemption.
+    # The site's own audits send the audit key, which exempts them from the
+    # front door's per-address rate limits (lib_audit.py).
     **audit_headers(),
 }
 
@@ -43,8 +42,7 @@ DESC_MIN = 70
 def display_width(s: str) -> int:
     """Characters as a snippet is cut: by width. Google truncates titles and
     descriptions by pixels, and a CJK or Hangul character is full-width, about
-    two Latin ones. Counting it as one flagged /zh's 60-character description,
-    which fills a snippet, as too short (2026-09-26)."""
+    two Latin ones; counted as one, a full Chinese description reads as short."""
     return sum(2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1 for ch in s)
 TITLE_MAX = 62
 
@@ -75,10 +73,8 @@ def get(url: str, timeout: int = 30, tries: int = 2) -> tuple[int, str]:
     """Fetch a URL, retrying once on a TRANSPORT failure only.
 
     A status 0 means the connection never completed, and this sweep runs
-    concurrently against a live site, so a blip reads as a dead page: three
-    URLs reported HTTP 0 on one run and all three answered 200 seconds later.
-    An HTTPError is a real answer from the server and is never retried, or a
-    genuine 404 would cost a second request and still be reported.
+    concurrently against a live site, so a blip would read as a dead page. An
+    HTTPError is a real answer from the server and is never retried.
     """
     last = (0, "no attempt")
     for attempt in range(tries):
@@ -155,10 +151,7 @@ def audit(base: str, path: str) -> list[str]:
         out.append(f"{path}: no meta description")
     else:
         # Decode first: the raw attribute carries &#x27; for every apostrophe,
-        # which is six characters where the reader and Google see one. An
-        # earlier version measured the raw string and reported a 150-character
-        # description as 160 - it made real copy look broken because our house
-        # style is contraction-heavy.
+        # six characters where the reader and Google see one.
         desc = html_mod.unescape(d.group(2)).strip()
         if width(desc) > DESC_MAX:
             out.append(f"{path}: description {width(desc)} wide (>{DESC_MAX})")
@@ -173,20 +166,17 @@ def audit(base: str, path: str) -> list[str]:
     if not re.search(r'rel="canonical"', html):
         out.append(f"{path}: no canonical")
 
-    # House style bans the em-dash in visible copy. Checked on the RENDERED
+    # House style bans the em-dash in visible copy. Checked on the rendered
     # page rather than in source, because source carries them in comments and
-    # in generated strings, and only what a reader sees is the violation.
-    # Measured on 39 live pages the day this was added: 21 across 8 pages.
+    # generated strings, and only what a reader sees is the violation.
     for hit in prose_em_dashes(html):
         out.append(f"{path}: em-dash in prose -> '{hit}'")
 
     if path in DATA_PAGES:
         if EMPTY_STATE in html:
             out.append(f"{path}: RENDERING ITS EMPTY STATE - data pipeline broken")
-        # Case-insensitive: DOL prints whatever the filer typed, so the
-        # display name for a merged entity is whichever spelling had the most
-        # cases - often all caps. A case-sensitive check called a correct
-        # page broken.
+        # Case-insensitive: DOL prints whatever the filer typed, so the display
+        # name for a merged entity is often all caps.
         elif not re.search(DATA_PAGES[path], html, re.I):
             out.append(
                 f"{path}: no live figure matching {DATA_PAGES[path]!r}"
@@ -212,11 +202,8 @@ def main() -> int:
     if status != 200:
         sys.exit(f"FATAL: sitemap.xml returned {status}; nothing to audit")
 
-    # /sitemap.xml is a sitemap INDEX now, not a urlset. Following it matters
-    # more than it looks: an index yields 7 <loc> values, all of them sitemap
-    # files, and this audit would happily check those 7 and print "urls in
-    # sitemap: 7" as though it had covered the site. A gate that cannot see
-    # its subject reads exactly like a pass.
+    # /sitemap.xml is a sitemap index: its <loc> values are child sitemaps, not
+    # pages, so they are followed.
     if "<sitemapindex" in sm:
         children = re.findall(r"<loc>(.*?)</loc>", sm)
         print(f"sitemap index : {len(children)} child sitemaps")
@@ -244,10 +231,9 @@ def main() -> int:
     if not paths:
         sys.exit("FATAL: sitemap parsed to zero URLs; the audit can see nothing")
     print(f"urls in sitemap: {len(locs)}")
-    # Sample by TEMPLATE, not by position. `--limit N` takes the first N, and
-    # since the sitemap emits 12,240 employer URLs before anything else, a
-    # positional cut audits one component 500 times and every other page zero
-    # times. That reads as broad coverage and is the opposite.
+    # Sample by template, not by position: the sitemap lists thousands of
+    # employer URLs first, so a positional cut would audit one component many
+    # times and every other page not at all.
     if args.per_shape > 0:
         paths, sizes = sample_by_shape(paths, args.per_shape)
         for line in describe_sampling(sizes, args.per_shape):

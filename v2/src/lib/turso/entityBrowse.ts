@@ -40,6 +40,7 @@ import {
   bucketRanges,
   type BrowseBucket,
 } from "@/lib/entityBrowse";
+import { MS_PER_HOUR } from "@/lib/time";
 
 import { rows } from "./client";
 
@@ -71,21 +72,19 @@ const BROWSE_COLS = "slug, name, total, rank";
 /**
  * The most names one letter page will render.
  *
- * MEASURED 2026-09-10, before the page floor dropped to 1. The live
- * `/perm-employers/browse/s` was **600.6 KB** of HTML at 953 names, against
- * 218.6 KB for `/browse/q` at 51 - so the chrome is ~205 KB and each name
- * costs ~0.42 KB. At a floor of 1 that bucket holds **6,813** employers, which
- * renders at roughly **3.1 MB**.
+ * MEASURED: a letter page's chrome is ~205 KB and each name costs ~0.42 KB,
+ * so the largest bucket at a page floor of 1 (6,813 employers) would render
+ * at roughly **3.1 MB**.
  *
- * That is not a page. It is slow on a phone, it is ~390 ISR write units every
- * regeneration (a unit is 8 KB), and nobody reads six thousand links. So the
+ * That is not a page. It is slow on a phone, it is that much cache written on
+ * every regeneration, and nobody reads six thousand links. So the
  * listing is capped and the remainder is stated in words - the same shape
  * `stageListing()` already uses for the review-stage cohorts, and for the same
  * reason.
  *
- * 1,000 is chosen so that NO letter page after the floor change is heavier
- * than the heaviest one before it: 205 + 1000 x 0.42 is about 625 KB, next to
- * today's 600.6 KB. It is a page-weight budget, not a judgement about which
+ * 1,000 keeps every letter page near the weight of the heaviest uncapped one
+ * at the old floor: 205 + 1000 x 0.42 is about 625 KB. It is a page-weight
+ * budget, not a judgement about which
  * entities matter.
  *
  * THE CAP IS ON THE RENDERED LIST, NOT ON WHAT IS INDEXED. Every entity above
@@ -182,7 +181,7 @@ export function browseCounts(kind: EntityKind): Promise<Record<BrowseBucket, num
  * 27 identical reads of 16,309 rows each. An hour collapses that to one, and is
  * far below the quarterly cadence of the data underneath.
  */
-const COUNTS_TTL_MS = 60 * 60 * 1000;
+const COUNTS_TTL_MS = MS_PER_HOUR;
 
 const countsCache = new Map<
   EntityKind,

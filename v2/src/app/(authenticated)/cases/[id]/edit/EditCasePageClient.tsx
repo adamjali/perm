@@ -7,8 +7,8 @@ import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { CaretRightIcon } from "@phosphor-icons/react";
 import Link from "next/link";
-import { api } from "../../../../../../convex/_generated/api";
-import type { Id, Doc } from "../../../../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id, Doc } from "@convex/_generated/dataModel";
 import { CaseForm, type CaseFormInitialData } from "@/components/forms/CaseForm";
 import { CaseFormSkeleton } from "@/components/forms/CaseFormSkeleton";
 import { BreadcrumbSkeleton } from "@/components/skeletons";
@@ -36,9 +36,9 @@ import { caseWriteErrorMessage } from "@/lib/caseWriteErrors";
  */
 /**
  * The edit page while the case loads, in the page's own frame. Shared with
- * edit/loading.tsx. It used to carry px-4 py-8 the page does not have (a 32px
- * jump up and 16px sideways on arrival), its own form shapes, and a FIXED
- * footer that vanished before the real sticky one slid in.
+ * edit/loading.tsx. Its padding, form shapes and footer match the page's, or
+ * the form jumps on arrival and the footer vanishes before the real sticky
+ * one slides in.
  */
 export function EditPageSkeleton() {
   return (

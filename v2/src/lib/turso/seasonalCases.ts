@@ -5,8 +5,7 @@ import { makeFlagProgram } from "./flagCases";
  * The temporary-labor programs on DOL's FLAG counter: H-2A applications
  * (`H-300-`, ETA-9142A), H-2B applications (`H-400-`, ETA-9142B) and H-2B
  * prevailing wage requests (`P-400-`). Same endpoint and same serial counter
- * as PERM, PWD and LCA, which is how they were found on Oct 1 2026; same
- * factory as the PWD and LCA programs.
+ * as PERM, PWD and LCA, and the same factory as the PWD and LCA programs.
  *
  * `P-400-` is kept out of the PWD program on purpose: the PWD pages describe
  * the ETA-9141 queue PERM and H-1B wait in, and an H-2B wage request runs
@@ -29,6 +28,7 @@ export const SEASONAL_FINAL_STATUSES: ReadonlySet<string> = new Set([
   "RETURNED UNPROCESSED",
   "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
   "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
+  "BALCA OVERTURNED",
 ]);
 
 export const seasonal = makeFlagProgram({
@@ -42,4 +42,11 @@ export const seasonal = makeFlagProgram({
 });
 
 export const normaliseSeasonalCaseNumber = seasonal.normalise;
+export const isSeasonalCaseNumber = seasonal.isNumber;
+export const lookupSeasonalCase = seasonal.lookup;
 export const lookupSeasonalCaseOutcome = seasonal.lookupOutcome;
+export const searchSeasonalCases = seasonal.search;
+export const listSeasonalCases = seasonal.list;
+export const getSeasonalSummary = seasonal.getSummary;
+
+export { SEASONAL_FORMS, seasonalForm } from "@/lib/seasonalForms";

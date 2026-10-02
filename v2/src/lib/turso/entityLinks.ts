@@ -7,9 +7,9 @@ import { rows } from "@/lib/turso/client";
  *
  * Every filing row stores its employer's and law firm's slug, page or not. A
  * prevailing wage request from a ski resort that never filed a PERM, or a law
- * firm from a FY2016 file, carries a slug no page answers, and linking it sent
- * visitors and crawlers to a 404: 132 in three days to Oct 1 2026, from the
- * daily activity tables and the case search.
+ * firm from a FY2016 file, carries a slug no page answers, and linking it
+ * sends visitors and crawlers to a 404 (the daily activity tables and the
+ * case search are where those links appear).
  *
  * The rule mirrors the pages themselves. An employer page exists for a
  * published employer, an alias of one (`resolveEntity`), or an employer with a

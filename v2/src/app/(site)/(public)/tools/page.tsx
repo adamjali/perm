@@ -1,8 +1,8 @@
 /**
  * The overview of the public data surface.
  *
- * This page used to be a static menu of six cards. It is now the front door of
- * the instrument: DOL's live position first, the queue drawn as a tape, then
+ * The front door of the instrument: DOL's live position first, the queue
+ * drawn as a tape, then
  * the calculators. The section nav on top makes every data page one click from
  * here and from each other.
  */
@@ -17,7 +17,7 @@ import { formatAsOf, formatMonth } from "@/lib/dolFormat";
 import {
   analystReviewQueue,
   analystReviewAverage,
-} from "../../../../../convex/lib/dolProcessingTimes";
+} from "@convex/lib/dolProcessingTimes";
 import {
   AttestationStackMini,
   BulletinStepsMini,
@@ -67,11 +67,8 @@ export default async function ToolsPage() {
   const frontierMonth = analyst?.priorityDate ?? null;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <header className="pt-10 sm:pt-12">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Data
-          {snapshot?.permAsOf ? ` · DOL figures as of ${formatAsOf(snapshot.permAsOf)}` : null}
-        </p>{" "}
+    <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
+      <header className="pt-10 sm:pt-12">
         {/* NOT "Where the PERM queue stands" - that is /perm-queue's H1, and
             this page shipped a byte-identical copy of it. Two pages competing
             on one headline is a duplicate-content signal, and the borrowed one
@@ -79,12 +76,12 @@ export default async function ToolsPage() {
             figure and calculator, and the queue is one of the things it links
             to. The H1 now says what the page is, matching its own title and
             the sentence directly under it. */}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Live PERM data and free calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          DOL&apos;s own figures, each with its date, and calculators built on
-          them.
+          DOL&apos;s own figures, each with its date, and calculators built on them.
+          {snapshot?.permAsOf ? ` DOL's figures below are as of ${formatAsOf(snapshot.permAsOf)}.` : null}
         </p>
       </header>
 
@@ -93,7 +90,7 @@ export default async function ToolsPage() {
       {snapshot ? (
         <section aria-label="Live DOL position" className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-4">
           <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard">
-            <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+            <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
               DOL is deciding cases filed
             </p>{" "}
             <p className="mt-2 font-heading text-3xl font-black leading-none">
@@ -104,7 +101,7 @@ export default async function ToolsPage() {
             </p>
           </div>
           <div className="border-2 border-border bg-tint-primary p-6 shadow-hard">
-            <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+            <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
               Average to a determination
             </p>{" "}
             <p className="mt-2 font-heading text-3xl font-black leading-none">
@@ -115,7 +112,7 @@ export default async function ToolsPage() {
             </p>
           </div>
           <div className="border-2 border-border bg-card p-6 shadow-hard">
-            <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+            <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
               Wage requests pending
             </p>{" "}
             <p className="mt-2 font-heading text-3xl font-black leading-none">
@@ -128,10 +125,8 @@ export default async function ToolsPage() {
         </section>
       ) : null}
 
-      {/* THE FUNNEL, FIRST: a person holding a case number outranks every
-          aggregate below. Same GET contract as the homepage hero - no client
-          JS, an honest form a crawler can see. This hub had no path to the
-          lookup at all until Adam asked where the important pages were. */}
+      {/* The case lookup first: a person holding a case number outranks every
+          aggregate below. A plain GET form, like the homepage's. */}
       <section className="mt-10 border-3 border-border bg-card p-6 shadow-hard sm:p-8">
         <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div className="min-w-0">
@@ -219,7 +214,7 @@ export default async function ToolsPage() {
             {
               href: "/case-search",
               label: "Search all programs",
-              blurb: "One box across PERM, wage requests and LCAs.",
+              blurb: "One box across PERM, wage requests, LCAs and H-2A and H-2B.",
               tone: "ink",
               viz: "union" as const,
             },
@@ -279,6 +274,13 @@ export default async function ToolsPage() {
               tone: "card",
               viz: "attest" as const,
             },
+            {
+              href: "/seasonal-cases",
+              label: "H-2A and H-2B",
+              blurb: "Seasonal farm and non-farm filings as DOL confirms them, by employer.",
+              tone: "tint",
+              viz: "records" as const,
+            },
           ].map((c) => (
             <a
               key={c.href}
@@ -319,7 +321,7 @@ export default async function ToolsPage() {
               </p>{" "}
               <span
                 className={
-                  "mt-4 font-mono text-xs font-bold uppercase tracking-wider " +
+                  "mt-4 font-mono text-sm font-bold uppercase tracking-wider " +
                   // NOT `text-primary` ON THE INK CARD. That card is
                   // `bg-foreground`, which is near-black in light and
                   // near-WHITE in dark, while the lime holds still at #2ecc40
@@ -357,7 +359,7 @@ export default async function ToolsPage() {
             >
               <h3 className="font-heading text-lg font-black">{c.label}</h3>{" "}
               <p className="mt-2 flex-1 text-sm leading-relaxed text-foreground/70">{c.blurb}</p>{" "}
-              <span className="mt-3 font-mono text-xs font-bold uppercase tracking-wider text-foreground/60 group-hover:text-primary">
+              <span className="mt-3 font-mono text-sm font-bold uppercase tracking-wider text-foreground/60 group-hover:text-primary">
                 Open →
               </span>
             </Link>
@@ -374,7 +376,7 @@ export default async function ToolsPage() {
 
       <section className="mt-12 grid [&>*]:min-w-0 grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="border-2 border-border bg-card p-6 shadow-hard sm:p-8">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+          <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
             For your own case
           </p>{" "}
           <h2 className="mt-2 font-heading text-xl font-black">
@@ -399,7 +401,7 @@ export default async function ToolsPage() {
           </p>
         </div>
         <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+          <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
             For a caseload
           </p>{" "}
           <h2 className="mt-2 font-heading text-xl font-black">

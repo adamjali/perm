@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useState } from "react";
 
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { calculateGreenCardFees, FEE_SCHEDULE, type FeeInput } from "@/lib/perm";
 
 /**
@@ -23,7 +23,7 @@ function Count({ id, label, value, onChange, note }: { id: string; label: string
     <div>
       <Label htmlFor={id}>{label}</Label>{" "}
       <input id={id} type="number" inputMode="numeric" min={0} max={20} value={value} onChange={(e) => onChange(Math.max(0, Math.min(20, Math.floor(Number(e.target.value) || 0))))} className={NUMBER} />{" "}
-      {note ? <p className="mt-1 text-xs text-muted-foreground">{note}</p> : null}
+      {note ? <p className="mt-1 text-sm text-muted-foreground">{note}</p> : null}
     </div>
   );
 }
@@ -59,7 +59,7 @@ export function GreenCardFeesCalculator() {
             <option value="small">Employer, 25 or fewer</option>
             <option value="nonprofit">Nonprofit</option>
           </select>{" "}
-          <p className="mt-1 text-xs text-muted-foreground">Sets the asylum program fee USCIS charges with every I-140, counted in full-time employees. A self-petitioner pays the 25-or-fewer amount.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Sets the asylum program fee USCIS charges with every I-140, counted in full-time employees. A self-petitioner pays the 25-or-fewer amount.</p>
         </div>{" "}
         <div className="flex flex-col justify-end gap-3">
           <label htmlFor={onlineId} className="flex min-h-11 items-center gap-3 text-base">
@@ -89,7 +89,7 @@ export function GreenCardFeesCalculator() {
           <tbody>
             {result.lines.map((l) => (
               <tr key={`${l.form}-${l.label}`} className="border-b border-border/40">
-                <td className="py-2 pr-3 font-mono text-xs font-bold">{l.form}{" "}</td>
+                <td className="py-2 pr-3 font-mono text-sm font-bold">{l.form}{" "}</td>
                 <td className="py-2 pr-3">{l.label}{" "}</td>
                 <td className="py-2 pr-3 text-right tabular-nums">{usd(l.each)}{" "}</td>
                 <td className="py-2 pr-3 text-right tabular-nums">{l.count}{" "}</td>
@@ -113,7 +113,7 @@ export function GreenCardFeesCalculator() {
           </tfoot>
         </table>
       </div>{" "}
-      <p className="mt-3 text-xs text-muted-foreground">
+      <p className="mt-3 text-sm text-muted-foreground">
         Every figure is from USCIS Form G-1055, edition {result.edition}, read at{" "}
         <a href={result.source} className="underline underline-offset-2 hover:text-primary" rel="noopener">
           uscis.gov/g-1055

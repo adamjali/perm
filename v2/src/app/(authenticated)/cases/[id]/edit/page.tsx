@@ -11,9 +11,7 @@
  * - Success redirect to case detail page
  * - Cancel navigation back to case detail
  *
- * Phase: 22 (Case Forms)
  * Task: 22-05 (Edit Case Page)
- * Created: 2025-12-25
  */
 
 import { Suspense } from "react";

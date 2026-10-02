@@ -134,5 +134,3 @@ const styles = {
     margin: "14px 0 0 0",
   },
 } as const;
-
-export default FigureTable;

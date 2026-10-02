@@ -1,54 +1,36 @@
 #!/usr/bin/env python3
-"""Ingest DOL's quarterly PERM disclosure files into derived aggregates.
+"""Ingest DOL's quarterly PERM disclosure files.
 
-Runs OUTSIDE Convex, and has to. One quarterly file is 156 MB compressed and
-**1.21 GB of XML uncompressed**, which no Convex action can hold or parse
-inside its limits. This streams the sheet, keeps only counts and percentiles,
-and posts a few KB of aggregates to Convex.
+One file is about 156 MB compressed and over 1 GB of XML, so the sheet is
+streamed, never loaded whole. `--out` writes the aggregate payload; `--cases-out`
+writes one line per decided case (case number, dates, employer, job, wage, law
+firm: the same public record DOL publishes). turso_migrate.py and
+turso_migrate_public.py load both into the database.
 
-NO CONTACT DATA, EVER. The source rows carry `ATTY_AG_EMAIL`, `EMP_POC_EMAIL`,
-`DECL_PREP_EMAIL`, direct phone numbers and street addresses for roughly
-112,000 real people. Not one of those columns is in COLUMN_CANDIDATES, so
-nothing here can read them and nothing downstream can print them.
+No contact data, ever. The source rows carry attorney, employer and preparer
+emails, direct phone numbers and street addresses for real people. None of
+those columns is in COLUMN_CANDIDATES, so nothing here can read them and
+nothing downstream can print them.
 
-That boundary is about CONTACT DETAILS, not about aggregation, and the two
-used to be conflated here. `--out` still emits aggregates only. `--cases-out`
-additionally writes one line per decided case - case number, dates, employer,
-job, wage, law firm - which is the same public record DOL publishes and the
-same facts the aggregate pages already sum, just not yet summed. It exists
-because the rival product ships a case-level browser off this identical file
-and the only thing separating us from it was where the rows were dropped.
+Two things this refuses to guess:
 
-Two things this script refuses to guess:
+1. The download URL. DOL moved the current-year file to `/media/` while the
+archive stayed on `/sites/dolgov/files/ETA/oflc/pdfs/`, and a hardcoded path
+returns a styled 404 that reads like a dead link. URLs are discovered from
+DOL's performance page on every run.
 
-1. **The download URL.** DOL moved the current-year file to `/media/` while the
-   archive stayed on `/sites/dolgov/files/ETA/oflc/pdfs/`. A hardcoded path
-   returns a styled 404 that reads like a dead link. URLs are discovered from
-   DOL's own performance page every run.
-
-2. **Whether one file is enough.** Each file is a window on DETERMINATIONS, not
-   a record of a filing-month cohort. A case filed 2024-07 and decided 2025-08
-   is in the FY2025 file and absent from FY2026, so reading one file shows an
-   old cohort's slow tail and a new cohort's fast head, and both look like
-   medians. Files are unioned and de-duplicated by case number.
-
-Writes a JSON payload; it does not talk to Convex. `npx convex run` already
-handles deploy-key auth, internal functions and error reporting, so the
-workflow pipes this file into it rather than reimplementing that here.
+2. Whether one file is enough. A file is a window on determinations, not a
+record of a filing-month cohort: a case filed 2024-07 and decided 2025-08 is
+in the FY2025 file and absent from FY2026, so one file shows an old cohort's
+slow tail and a new cohort's fast head. Files are unioned and de-duplicated
+by case number.
 
 Usage:
-    python3 scripts/ingest_perm_disclosure.py --out /tmp/perm.json
-    python3 scripts/ingest_perm_disclosure.py --out /tmp/perm.json --local a.xlsx b.xlsx
-    npx convex run permDisclosure:storeStats "$(cat /tmp/perm.json)" --prod
-
-    # ...plus the case-level artifact, which store_cases.py then chunks in.
-    python3 scripts/ingest_perm_disclosure.py --out /tmp/perm.json \
-        --cases-out /tmp/perm-cases.ndjson.gz
-    python3 scripts/store_cases.py --cases /tmp/perm-cases.ndjson.gz \
-        --payload /tmp/perm.json
-
-    # What column names does this quarter's file actually use?
-    python3 scripts/ingest_perm_disclosure.py --dump-header --local a.xlsx
+python3 scripts/ingest_perm_disclosure.py --out /tmp/perm.json \
+--cases-out /tmp/perm-cases.ndjson.gz
+python3 scripts/ingest_perm_disclosure.py --out /tmp/perm.json --local a.xlsx b.xlsx
+# What column names does this quarter's file actually use?
+python3 scripts/ingest_perm_disclosure.py --dump-header --local a.xlsx
 """
 from __future__ import annotations
 
@@ -61,19 +43,15 @@ import pathlib
 import re
 import sys
 import tempfile
-import time
-import urllib.error
-import urllib.request
 import zipfile
 from collections import Counter, defaultdict
 from datetime import date, timedelta
 from xml.etree.ElementTree import iterparse
 
 PERFORMANCE_PAGE = "https://www.dol.gov/agencies/eta/foreign-labor/performance"
-NS = "{http://schemas.openxmlformats.org/spreadsheetml/2006/main}"
 EXCEL_EPOCH = date(1899, 12, 30)  # 1900 date system, including its leap-year bug
 
-# Columns are resolved BY HEADER NAME per file — indexes drift between fiscal
+# Columns are resolved BY HEADER NAME per file: indexes drift between fiscal
 # years, and a silent shift would swap one state's numbers for another's.
 # Candidates are tried in order. Deliberately excludes every contact field.
 COLUMN_CANDIDATES: dict[str, list[str]] = {
@@ -91,15 +69,11 @@ COLUMN_CANDIDATES: dict[str, list[str]] = {
     # The employer's own wording for the role, which is what someone searches
     # for when the SOC title is too coarse to recognise.
     #
-    # UNVERIFIED against the record layout: www.dol.gov was refusing this
-    # address while these were written (403 from the full browser header set,
-    # which is the documented address-reputation refusal, not a missing
-    # header). Safe anyway, and deliberately so: `job_title` is NOT in
-    # REQUIRED_FIELDS, so an unresolved name degrades to an empty column and
-    # says so in the log rather than failing. And every candidate contains the
-    # literal token JOB_TITLE, so a match cannot silently be some other
-    # concept. Verify with the header dump in `--dump-header` before trusting
-    # the column is really absent.
+    # Not confirmed against a record layout. Safe anyway: `job_title` is not
+    # in REQUIRED_FIELDS, so an unresolved name degrades to an empty column
+    # and says so in the log, and every candidate contains the token
+    # JOB_TITLE, so a match can't silently be some other field. Check with
+    # `--dump-header`.
     "job_title": [
         "JOB_OPP_JOB_TITLE", "PWD_JOB_TITLE", "JOB_TITLE",
         "JOB_INFO_JOB_TITLE", "PW_JOB_TITLE_9089",
@@ -114,24 +88,20 @@ COLUMN_CANDIDATES: dict[str, list[str]] = {
         "WAGE_OFFER_UNIT_OF_PAY_9089", "WAGE_UNIT_OF_PAY_9089",
         "WAGE_OFFER_UNIT_OF_PAY", "PW_UNIT_OF_PAY_9089", "PW_UNIT_OF_PAY",
     ],
-    # The law firm on the filing. This is the column that speaks to the
-    # attorney half of the audience, and no competitor surfaces it for them.
-    # Names read off PERM_Record_Layout_FY2026_Q3.pdf, not guessed: every one
-    # of my first guesses here was wrong, and a wrong column name degrades
-    # silently to "no data" rather than erroring.
+    # The law firm on the filing. Names read off
+    # PERM_Record_Layout_FY2026_Q3.pdf: a wrong column name degrades silently
+    # to "no data" rather than erroring.
     "attorney": ["ATTY_AG_LAW_FIRM_NAME", "LAWFIRM_NAME_BUSINESS", "AGENT_ATTORNEY_FIRM_NAME"],
     "attorney_state": ["ATTY_AG_STATE", "AGENT_ATTORNEY_STATE"],
     # Risk factors DOL records on the form itself (Form 9089, Sections A & G).
     "layoff": ["OTHER_REQ_EMP_LAYOFF", "EMP_LAYOFF_IN_PAST_SIX_MONTHS"],
     "ownership": ["EMP_WORKER_INTEREST", "FW_OWNERSHIP_INTEREST"],
     "fulltime": ["OTHER_REQ_IS_FULLTIME_EMP", "JOB_OPP_FULL_TIME"],
-    # The employer's industry and the city the job is in. Read off
-    # PERM_Record_Layout_FY2026_Q3.pdf (Sep 26 2026): EMP_NAICS is Form 9089
-    # Section A, Item 13, a bare code with no title; the title comes from the
-    # Census Bureau's list (lib_naics.py). The new form publishes NO country
-    # of citizenship and NO education for the worker: those moved to
-    # Appendix A, which DOL does not release. The legacy names are the old
-    # form's, kept as fallbacks for the FY2024 old-form file.
+    # The employer's industry and the city the job is in, read off
+    # PERM_Record_Layout_FY2026_Q3.pdf. EMP_NAICS (Form 9089 Section A, Item
+    # 13) is a bare code; its title comes from the Census Bureau's list
+    # (lib_naics.py). The legacy names are the old form's, kept as fallbacks
+    # for the FY2024 old-form file.
     "naics": ["EMP_NAICS", "NAICS_US_CODE", "NAICS_CODE"],
     "worksite_city": ["PRIMARY_WORKSITE_CITY", "WORKSITE_CITY", "JOB_INFO_WORK_CITY"],
     # The worker's side of the OLD form (to mid-2023, and the FY2024 old-form
@@ -214,13 +184,9 @@ ANNUALIZE = {
 # The plausibility band. A value outside it is a typo or a unit mismatch, not a
 # salary, and the policy is to EXCLUDE it rather than clamp or keep it.
 #
-# Excluding is the pre-existing behaviour and is left unchanged on purpose: it
-# already decides every published wage figure on the site, and quietly moving
-# that line would move numbers nobody asked to move. What IS new is that the
-# exclusions are now COUNTED and reported, because silently dropping outliers
-# and silently keeping them look identical from the outside. The competitor
-# ships the other policy and prints the consequence: a P5 of $24,960 next to a
-# P95 of $197,829 for one occupation, which is a $12/hr wage read as annual.
+# The exclusions are counted and reported, because silently dropping outliers
+# and silently keeping them look identical from outside. Keeping them is how a
+# $12 hourly wage read as an annual salary ends up as an occupation's P5.
 WAGE_MIN = 15_000
 WAGE_MAX = 1_000_000
 WAGE_POLICY = "exclude-out-of-band"
@@ -311,24 +277,17 @@ def no(raw: str | None) -> bool:
 # firm arrives as six spellings that differ only in punctuation, case and
 # these words.
 #
-# THE RULES MOVED. `entity_key` used to live here with a private noise list,
-# and it shredded punctuation to spaces BEFORE removing that list, so `P.C.`
-# arrived as `p` + `c` and the list - which contains "pc" - never saw it.
-# 604 pairs of firms were two firms with two pages and two ranks because of
-# it. Identity now lives in `scripts/entity_identity.py` alongside the typo
-# pass, with `src/lib/entitySlug.ts` mirroring it and one fixture file
-# asserting both. Re-exported here so `store_cases.py`, which imports
-# `entity_key` from this module to join a case to its entity slug, keeps
-# reading exactly the key the entity table was built with.
-from entity_identity import ENTITY_NOISE as _ENTITY_NOISE  # noqa: E402
+# Identity lives in `scripts/entity_identity.py`, with `src/lib/entitySlug.ts`
+# mirroring it and one fixture file asserting both.
 from entity_identity import entity_key, typo_aliases  # noqa: E402
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_load_guard import Fingerprint  # noqa: E402
+from lib_gov_data import (  # noqa: E402
+    SPREADSHEET_NS, column_index, fetch, log, read_shared_strings,
+)
 from lib_naics import normalize_naics  # noqa: E402
-from lib_turso import Turso  # noqa: E402
-
-__all_identity__ = (entity_key, typo_aliases, _ENTITY_NOISE)
+from lib_turso import Turso, stamp_freshness  # noqa: E402
 
 
 def merge_entities(bucket: dict, name_of, kind: str | None = None) -> list[dict]:
@@ -410,21 +369,16 @@ PERM_TRACKED = (
 class CaseWriter:
     """Streams one JSON line per decided case, and counts the facets as it goes.
 
-    STREAMS rather than accumulates. 259,000 rows held as Python dicts is a
-    quarter of a gigabyte of interpreter overhead before any of it is
-    serialised, on a runner that is already holding 1.2 GB of parsed XML.
-    Each row is written and forgotten.
+    Streams rather than accumulates: a quarter of a million rows held as dicts
+    is a lot of memory on a runner already parsing over a gigabyte of XML.
 
-    The facet counters are the other half of the job and the reason they live
-    HERE rather than being recomputed later: the browser's "12,431 cases in
-    California" has to be the count of rows the browser can actually page
-    through. Counted in the same pass that writes them, the two cannot
-    disagree. Counted anywhere else, they eventually do.
+    The facet counters are counted in the same pass that writes the rows, so a
+    count like "12,431 cases in California" is always the number of rows a
+    reader can page through.
 
-    Slugs are deliberately absent. An employer's slug depends on the MERGED
-    entity ranking, which is not known until the whole parse is finished, so
-    `store_cases.py` joins them on from the aggregate payload using the same
-    `entity_key` this file already uses to merge. One place decides slugs.
+    Slugs are absent: an employer's slug depends on the merged entity ranking,
+    which isn't known until the whole parse is done, so the loader joins them on
+    with the same `entity_key` this file merges with.
     """
 
     def __init__(self, path: str):
@@ -514,40 +468,14 @@ class CaseWriter:
         return meta
 
 
-# A complete browser header set. DOL fronts www.dol.gov with Akamai, which
-# answers a bare or partial UA with 403 "Access Denied" (Reference #18...,
-# errors.edgesuite). The full set clears it; flag.dol.gov needs none of this.
-BROWSER_HEADERS = {
-    "User-Agent": (
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
-        "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-    ),
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Sec-Ch-Ua": '"Chromium";v="126", "Not)A;Brand";v="24", "Google Chrome";v="126"',
-    "Sec-Ch-Ua-Mobile": "?0",
-    "Sec-Ch-Ua-Platform": '"macOS"',
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-    "Upgrade-Insecure-Requests": "1",
-}
-
 # How many of the most recent files to union. Two quarterly files span enough
 # determination history to close out every cohort DOL has worked through.
 DEFAULT_FILE_COUNT = 2
-# EVERY entity is stored. The floor that used to live here was a STORAGE
-# floor, and it hid 65,026 of 82,677 employers -- 79% of them -- so searching
-# for a small sponsor returned "no match" for a company that is plainly in
-# DOL's files. That is a worse failure than a thin row.
-#
-# The judgement the old floor encoded is still right and still applied, just
-# further downstream: below three decided cases an approval rate is one or two
-# coin flips and a median is a single value. So those entities are stored and
-# searchable, and MIN_TOTAL_FOR_PAGE (src/lib/entityPayload.ts) decides which
-# of them get a page of their own and a sitemap entry. Rates below
-# MIN_DECIDED_FOR_RATE are withheld on the page regardless.
+# Every entity is stored, however small, so a search for a small sponsor finds
+# it. Below three decided cases an approval rate is one or two coin flips, so
+# MIN_TOTAL_FOR_PAGE (src/lib/entityPayload.ts) decides which entities get a
+# page and a sitemap entry, and rates below MIN_DECIDED_FOR_RATE are withheld
+# on the page regardless.
 ENTITY_FLOOR = 1
 
 MIN_COHORT_SIZE = 30
@@ -555,46 +483,6 @@ MIN_COHORT_SIZE = 30
 MAX_PLAUSIBLE_DAYS = 2500
 # Determinations a month needs before its median filing month is trustworthy.
 MIN_FRONTIER_DECISIONS = 1000
-
-
-def log(msg: str) -> None:
-    print(msg, flush=True)
-
-
-def fetch(url: str, referer: str | None = None, attempts: int = 4) -> bytes:
-    """GET with the browser header set and backoff on Akamai's throttle.
-
-    Two failure modes, and they look identical from here:
-
-    * A bare or partial User-Agent is refused outright. The full header set
-      above clears that.
-    * Sustained traffic from one address is refused even WITH the full set.
-      Measured while building this: the same request that returned 200 came
-      back 403 twenty minutes and ~240 MB later, from curl and urllib alike.
-      So this is address reputation, not a client fingerprint, and no header
-      tweak fixes it.
-
-    Backoff is the right answer for the second, because the real job runs
-    quarterly and asks for two files. A 403 that survives every attempt raises,
-    and must: a run that could not read DOL is not a run that found no data.
-    """
-    headers = dict(BROWSER_HEADERS)
-    if referer:
-        headers["Referer"] = referer
-
-    delay = 20
-    for attempt in range(1, attempts + 1):
-        try:
-            req = urllib.request.Request(url, headers=headers)
-            with urllib.request.urlopen(req, timeout=300) as resp:
-                return resp.read()
-        except urllib.error.HTTPError as exc:
-            if exc.code not in (403, 429, 503) or attempt == attempts:
-                raise
-            log(f"  HTTP {exc.code} from DOL (attempt {attempt}/{attempts}); waiting {delay}s")
-            time.sleep(delay)
-            delay *= 3
-    raise SystemExit("unreachable")
 
 
 def file_fiscal_year(name: str) -> int:
@@ -635,13 +523,10 @@ def select_files(
     Pure, so the selection can be tested against a real filename list without
     touching DOL.
 
-    `since_fy` is the safe control and the one to use for multi-year work: it
-    takes EVERY file for every fiscal year at or above the floor, so a year
-    published as two files cannot be split. `limit` is the old newest-N knob,
-    kept working, and it CAN split a year - FY2024 is two files, so
-    `--files 4` takes one of them and silently undercounts FY2024 by however
-    many cases the other form holds. That is a plausible-looking wrong number,
-    which is the worst kind, so it warns.
+    `since_fy` is the safe control: it takes every file for every fiscal year at
+    or above the floor, so a year published as two files can't be split.
+    `limit` (newest N) can split a year (FY2024 is two files), which would
+    undercount it plausibly, so it warns.
     """
     ordered = sorted(found.items(), key=lambda kv: file_sort_key(kv[0]), reverse=True)
 
@@ -697,21 +582,6 @@ def discover_files(limit: int | None, since_fy: int | None = None) -> list[tuple
     return picked
 
 
-def col_index(ref: str) -> int:
-    """'BC12' -> 54, zero-based.
-
-    XLSX omits empty cells entirely, so indexing a row's <c> children by
-    position silently shifts every column after the first blank one. The cell's
-    own r= reference is the only reliable source of its column.
-    """
-    n = 0
-    for ch in ref:
-        if ch.isdigit():
-            break
-        n = n * 26 + (ord(ch.upper()) - 64)
-    return n - 1
-
-
 def to_iso(raw: str) -> str | None:
     """Excel serial or formatted date -> YYYY-MM-DD. None when unreadable."""
     if not raw:
@@ -744,18 +614,13 @@ def histogram(values: list[int]) -> list[int]:
 def percentile(values: list[int], p: float) -> int | None:
     """The p-th percentile by LINEAR INTERPOLATION between closest ranks.
 
-    Stated because "close enough" percentiles disagree at small n in ways
-    nobody notices until a number looks wrong. This is numpy's default
-    `linear` method, and it is what every existing figure on the site already
-    uses, so wage stats and processing-time percentiles are computed the same
-    way: rank `k = (n-1) * p/100`, then interpolate between `floor(k)` and
-    `ceil(k)`. NOT nearest-rank, which would return an actual observed value
-    and disagrees with this by up to one whole gap between neighbours.
+    This is numpy's default `linear` method, and every figure on the site uses
+    it: rank `k = (n-1) * p/100`, interpolated between `floor(k)` and `ceil(k)`.
+    Not nearest-rank, which can differ by a whole gap between neighbours.
 
-    The result is rounded to a whole unit, which for wages is a dollar. Python
-    rounds halves to even, so `percentile([1,2,3,4], 50)` is 2, not 3 - it is
-    2.5 before rounding. Wage values are far apart enough that this never
-    decides anything, but a test asserting a hand-computed value has to know.
+    The result is rounded to a whole unit, a dollar for wages. Python rounds
+    halves to even, so `percentile([1,2,3,4], 50)` is 2, not 3; a test asserting
+    a hand-computed value has to know.
     """
     if not values:
         return None
@@ -782,32 +647,27 @@ def parse_file(
     """
     z = zipfile.ZipFile(path)
 
-    shared: list[str] = []
-    with z.open("xl/sharedStrings.xml") as f:
-        for _, el in iterparse(f, events=("end",)):
-            if el.tag == NS + "si":
-                shared.append("".join(t.text or "" for t in el.iter(NS + "t")))
-                el.clear()
+    shared = read_shared_strings(z)
 
     rows = kept = 0
     colmap: dict[int, str] = {}
     with z.open("xl/worksheets/sheet1.xml") as f:
         for _, el in iterparse(f, events=("end",)):
-            if el.tag != NS + "row":
+            if el.tag != SPREADSHEET_NS + "row":
                 continue
             cells: dict[int, str] = {}
-            for c in el.findall(NS + "c"):
-                ci = col_index(c.get("r", "A1"))
+            for c in el.findall(SPREADSHEET_NS + "c"):
+                ci = column_index(c.get("r", "A1"))
                 if rows > 0 and ci not in colmap:
                     continue
-                v = c.find(NS + "v")
+                v = c.find(SPREADSHEET_NS + "v")
                 if v is None or v.text is None:
                     val = ""
                 elif c.get("t") == "s":
                     i = int(v.text)
                     val = shared[i] if i < len(shared) else ""
                 elif c.get("t") == "inlineStr":
-                    val = "".join(t.text or "" for t in c.iter(NS + "t"))
+                    val = "".join(t.text or "" for t in c.iter(SPREADSHEET_NS + "t"))
                 else:
                     val = v.text
                 cells[ci] = val
@@ -833,20 +693,12 @@ def parse_file(
                 absent = [f for f in COLUMN_CANDIDATES if f not in resolved]
                 if absent:
                     log(f"    (no column for {absent}; those aggregates degrade)")
-                # The multi-year trap, guarded.
-                #
-                # DOL replaced the ETA-9089 mid-FY2024, so an older file uses
-                # older column names. A name that does not resolve degrades to
-                # an empty value rather than an error, which is the right
-                # behaviour for a field DOL genuinely stopped publishing and
-                # the WRONG behaviour for a mapping we simply got wrong: every
-                # case in that file then lands with no state, no occupation
-                # and no wage, and quietly drags every aggregate toward the
-                # mean while looking like a successful run.
-                #
-                # No real PERM file lacks all three. Losing all three means the
-                # mapping is wrong, so fail and name the file rather than
-                # publish a diluted number.
+                # The multi-year trap, guarded. An older file uses older column
+                # names, and a name that doesn't resolve degrades to an empty value:
+                # right for a field DOL stopped publishing, wrong for a mapping we got
+                # wrong, which would land every case with no state, occupation or wage
+                # and dilute every aggregate. No real PERM file lacks all three, so
+                # losing all three fails the run and names the file.
                 core = {"state", "soc_code", "wage"}
                 if not (core & resolved):
                     raise SystemExit(
@@ -1029,9 +881,8 @@ def build_wage_stats(acc: dict, files: list[tuple[str, str]]) -> dict:
     Per-year rows are bounded the same way in aggregate, because a case is in
     exactly one year, so the year-split rows total no more than the pooled
     ones. Worst case is therefore about 26,000 rows and realistically a
-    fraction of that - fine for a table, and far past what a 1 MB Convex
-    document could hold, which is why these go to `permWageStats` rather than
-    onto the aggregate document.
+    fraction of that: fine for a table, and too many for the aggregate
+    document, which is why they are written to their own file (--wages-out).
     """
     reasons = acc["wageReasons"]
     considered = sum(reasons.values())
@@ -1043,12 +894,9 @@ def build_wage_stats(acc: dict, files: list[tuple[str, str]]) -> dict:
         "considered": considered,
         "kept": kept,
         "excluded": considered - kept,
-        # An ARRAY, not a map: Convex validators want a declared shape, and a
-        # list of {reason, count} renders in a stable order besides.
-        #
-        # "ok" is deliberately NOT in here. It was, and it made the field a
-        # lie: a reader who sums a list called `excludedByReason` gets
-        # `considered`, not `excluded`. The kept count has its own field.
+        # A list of {reason, count}, so it renders in a stable order. "ok" is
+        # deliberately not in it: summing a list called `excludedByReason`
+        # must give `excluded`. The kept count has its own field.
         "excludedByReason": [
             {"reason": r, "count": n}
             for r, n in sorted(reasons.items())
@@ -1341,8 +1189,7 @@ def self_test() -> int:
     eq("monthly annualises at 12", annual_wage_detail("8666.67", "Month")[0], 104_000)
     eq("yearly passes through", annual_wage_detail("104000", "Year")[0], 104_000)
     eq("dollar signs and commas are stripped", annual_wage_detail("$104,000.00", "Year")[0], 104_000)
-    # The failure the competitor's data visibly contains: an hourly rate
-    # entered with unit Year. It must be EXCLUDED and it must say why.
+    # An hourly rate entered with unit Year must be excluded, and say why.
     eq("an hourly rate typed as annual is refused", annual_wage_detail("30.00", "Year"), (None, "below-band"))
     eq("an absurd figure is refused", annual_wage_detail("4500000", "Year"), (None, "above-band"))
     eq("an unknown unit is refused", annual_wage_detail("95000", "Fortnight"), (None, "unknown-unit"))
@@ -1417,17 +1264,14 @@ def main() -> int:
         help=(
             "Also write one gzipped JSON line per decided case here, plus a "
             "sibling <path>.meta.json holding the coverage statement and the "
-            "exact facet counts. Kept out of --out on purpose: the aggregate "
-            "payload is passed to `convex run` on a command line."
+            "exact facet counts. Kept out of --out, which stays small."
         ),
     )
     ap.add_argument(
         "--wages-out",
         help=(
             "Also write the salary-explorer percentile cells here as JSON. "
-            "Kept out of --out because the cell list runs to thousands of rows "
-            "and the aggregate payload is passed to `convex run` on a command "
-            "line."
+            "Kept out of --out because the cell list runs to thousands of rows."
         ),
     )
     ap.add_argument(
@@ -1555,8 +1399,7 @@ def main() -> int:
         log(f"wrote {args.cases_out} ({size:.1f} MB gzipped)")
         log(f"wrote {meta_path}")
         # A run that wrote the file and no rows is a broken run, not an empty
-        # quarter. It must be loud rather than a clean zero, or store_cases.py
-        # cheerfully clears 259,000 good rows and replaces them with nothing.
+        # quarter, and must fail before a loader replaces good rows with none.
         if meta["totalCases"] == 0:
             raise SystemExit("FATAL: --cases-out wrote no rows. Refusing to report success.")
 
@@ -1574,25 +1417,14 @@ def main() -> int:
         json.dump(payload, fh, separators=(",", ":"))
     log(f"wrote {args.out} ({os.path.getsize(args.out) / 1024:.1f} KB)")
 
-    # STAMP OUR OWN FRESHNESS ROW.
-    #
-    # This ingest wrote data and never recorded that it had. The row for this
-    # dataset was created once by `a one-off backfill script (since removed)`, a one-off that is in
-    # no workflow, so `as_of` stayed frozen at whatever that run left while the
-    # data underneath refreshed on schedule. That makes the freshness table -
-    # which `DataProvenance` renders to readers and `check_ingest_health.py`
-    # alerts on - describe a moment that has nothing to do with this data.
-    #
-    # A monitor reading a frozen row eventually fires a FALSE alarm, which is
-    # worse than no monitor: it teaches you to ignore the real one.
+    # This run's own freshness row, which the site's provenance lines render
+    # and the health check alerts on; a row no run refreshes would freeze and
+    # end in a false alarm.
     db = Turso()
-    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
-    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-               ["perm-cases", str(db.scalar("SELECT max(decision_date) FROM perm_cases"))[:10], int(time.time() * 1000),
-                "DOL quarterly disclosure files (flag.dol.gov)", "Quarterly",
-                f"{len(seen):,} decided cases", 135])
+    stamp_freshness(db, "perm-cases",
+                    as_of=str(db.scalar("SELECT max(decision_date) FROM perm_cases"))[:10],
+                    source="DOL quarterly disclosure files (flag.dol.gov)", cadence="Quarterly",
+                    note=f"{len(seen):,} decided cases", max_age_days=135)
 
     return 0
 

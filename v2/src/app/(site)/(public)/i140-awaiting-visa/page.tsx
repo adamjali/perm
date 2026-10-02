@@ -24,7 +24,6 @@ import { Fragment } from "react";
 import { withSocialCard } from "@/lib/socialCard";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { FaqList } from "@/components/tools/FaqList";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -45,12 +44,14 @@ import {
   shareOf,
   yearsFor,
 } from "@/lib/uscisQuarterlyShape";
+import { SITE_URL } from "@/lib/constants/site";
+import { formatInt } from "@/lib/format";
 
 const TITLE = "Approved I-140s Waiting for a Visa Number";
 const DESCRIPTION =
   "How many approved I-140, I-360 and I-526 petitions are waiting for a visa number, by preference and country of birth, from USCIS's quarterly count.";
 const PATH = "/i140-awaiting-visa";
-const SITE = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+const SITE = SITE_URL;
 const USCIS_DATA_PAGE = "https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data";
 
 export const metadata: Metadata = withSocialCard({
@@ -93,16 +94,12 @@ const FAQS = [
 const CATEGORY_LABEL: Record<string, string> = Object.fromEntries(AWAITING_CATEGORY_LABELS.map((c) => [c.code, c.label]));
 
 function n(v: number | null | undefined): string {
-  return v === null || v === undefined ? "n/a" : v.toLocaleString("en-US");
+  return v === null || v === undefined ? "n/a" : formatInt(v);
 }
 
 export default async function I140AwaitingVisaPage() {
   const [awaiting, classCountry] = await Promise.all([getEbAwaitingVisa(), getI140ClassCountry()]);
 
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: TITLE, href: PATH },
-  ]);
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
@@ -165,20 +162,15 @@ export default async function I140AwaitingVisaPage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumb} />
 
       <header>
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          USCIS quarterly data{awaiting ? ` · as of ${monthLabel(awaiting.asOf)}` : ""}
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Approved, and waiting for a visa number
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
-          USCIS&apos;s own count of approved I-140, I-360 and I-526 petitions whose
-          beneficiary can&apos;t file for the green card yet, by category and country
-          of birth, and how the count moved since the last one. The India wait,
-          measured rather than argued.
+          USCIS&apos;s count of approved I-140, I-360 and I-526 petitions whose beneficiary can&apos;t file
+          for a green card yet, by category and country of birth
+          {awaiting ? `, as of ${monthLabel(awaiting.asOf)}` : ""}, and how it moved since the last count.
         </p>
       </header>
 
@@ -217,7 +209,7 @@ export default async function I140AwaitingVisaPage() {
                         <p className="font-mono text-base font-bold tabular-nums">{total.toLocaleString("en-US")}</p>
                       </div>
                       {total > 0 ? (
-                        <StackedBar segments={segments} total={total} className="mt-1.5" />
+                        <StackedBar segments={segments} total={total} label={`${CATEGORY_LABEL[cat] ?? cat} by country of birth`} className="mt-1.5" />
                       ) : (
                         <p className="mt-1 text-sm text-muted-foreground">Nobody waiting: the category is current for every country.</p>
                       )}
@@ -249,7 +241,7 @@ export default async function I140AwaitingVisaPage() {
                 }
                 source={<>USCIS, two consecutive quarterly counts.</>}
               >
-                {moveRows.length > 0 ? <BarRows rows={moveRows} /> : (
+                {moveRows.length > 0 ? <BarRows label="What moved since the last count" rows={moveRows} /> : (
                   <p className="text-base text-muted-foreground">No cell moved between the two counts.</p>
                 )}
               </FigurePlate>
@@ -315,6 +307,7 @@ export default async function I140AwaitingVisaPage() {
             source={<>USCIS, {classCountry.sourceFile}, by fiscal year received; the newest year is partial.</>}
           >
             <BarRows
+              label="I-140 petitions by the year filed, India"
               rows={indiaYears.map((y) => {
                 const all = allYears.find((a) => a.fy === y.fy);
                 return {
@@ -329,7 +322,7 @@ export default async function I140AwaitingVisaPage() {
             />
             {latestFullFy !== null ? (
               <div className="mt-6 border-t border-border/60 pt-4">
-                <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
                   Approvals by class, FY{latestFullFy}, petitions received that year
                 </p>{" "}
                 <div className="mt-2 overflow-x-auto">
@@ -378,7 +371,7 @@ export default async function I140AwaitingVisaPage() {
           </li>{" "}
           <li>
             <Link href="/visa-bulletin" className="font-bold underline underline-offset-2 hover:text-primary">
-              What the next visa bulletin could do, from the last 84
+              What the next visa bulletin could do, from every bulletin since 2014
             </Link>
           </li>{" "}
           <li>

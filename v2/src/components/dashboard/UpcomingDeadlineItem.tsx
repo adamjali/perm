@@ -12,7 +12,7 @@
 
 "use client";
 
-import type { DeadlineItem } from "../../../convex/lib/dashboardTypes";
+import type { DeadlineItem } from "@convex/lib/dashboardTypes";
 import { cn } from "@/lib/utils";
 import { NavigableCard } from "@/components/ui/navigable-card";
 import { formatCountdown, safeFormatShortDate } from "@/lib/utils/date";

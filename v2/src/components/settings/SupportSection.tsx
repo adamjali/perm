@@ -1,11 +1,11 @@
 "use client";
 
 // `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here (2026-09-01) rather
+// which exists only in React's client build. Declared here rather
 // than inherited from whichever importer happened to cross a boundary first.
 // Without it this module works until the chunk graph shifts, then fails with
 // `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx for the incident.
+// and no source file. See components/layout/Footer.tsx.
 
 /**
  * SupportSection Component
@@ -20,10 +20,6 @@
  * - App Version - Display version from env or fallback
  * - Delete Account - Soft delete with 30-day grace period
  * - Neobrutalist styling matching other settings sections
- *
- * Phase: 25 (Settings & Preferences)
- * Created: 2025-12-31
- * Updated: 2025-12-31 - Merged Account section (delete account functionality)
  */
 
 "use client";
@@ -32,7 +28,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { useMutation, useConvex } from "convex/react";
 import { useRouter } from "next/navigation";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { Button } from "@/components/ui/button";

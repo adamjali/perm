@@ -1,8 +1,8 @@
 name: Daily monitor
 
-# The morning report (Adam, 2026-09-27): health, price, every workflow run,
-# the ingests, failures and re-runs, the data, traffic, what was expected and
-# what was not. Emailed to the admin address every morning.
+# The morning report: health, bills, every workflow run, the ingests, failures
+# and re-runs, the data, traffic, what was expected and what was not. Emailed
+# to the admin address every morning.
 #
 # scripts/daily_monitor.py gathers what lives outside Convex into a JSON file;
 # `dailyReport:send` adds what only Convex can see, stores the report for the
@@ -18,8 +18,7 @@ name: Daily monitor
 # morning email is itself the alarm, and the review routine says so.
 #
 # Optional secrets, each switching on one section (the report says "off" until
-# it is set): POSTHOG_PERSONAL_API_KEY,
-# SENTRY_AUTH_TOKEN.
+# it is set): POSTHOG_PERSONAL_API_KEY, SENTRY_AUTH_TOKEN.
 
 on:
   workflow_dispatch:

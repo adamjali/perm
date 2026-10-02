@@ -2,9 +2,8 @@
  * What to tell someone when a write to their case is refused for a reason the
  * server stated.
  *
- * The case form, the edit page, quick edit and document upload each showed a
- * fixed "Failed to save, try again" for every refusal (silent-limit audit,
- * Sep 29 2026). Two of those refusals have a reason worth reading:
+ * A fixed "Failed to save, try again" for every refusal hides the two that
+ * have a reason worth reading:
  *   - the per-user write limit (`caseCreate` / `caseUpdate` in
  *     convex/rateLimitConfig.ts), which the rate limiter throws as
  *     `ConvexError({ kind: "RateLimited", name, retryAfter })`, where a retry

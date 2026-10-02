@@ -8,6 +8,8 @@ import { getBadgeData } from "@/lib/badgeData";
 import { renderBadge, renderUnavailable } from "@/lib/badgeRender";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { MoreText } from "@/components/data/MoreText";
+import { SITE_URL } from "@/lib/constants/site";
 
 /**
  * The badge catalogue.
@@ -33,7 +35,7 @@ const TITLE = "PERM and Visa Bulletin Badges";
 const DESCRIPTION =
   "Embeddable SVG badges carrying figures DOL and the State Department publish: queue positions, decision days, visa bulletin cutoffs. Rebuilt daily.";
 const PATH = "/badges";
-const ORIGIN = "https://permtracker.app";
+const ORIGIN = SITE_URL;
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -82,16 +84,10 @@ export default async function BadgesPage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <header className="max-w-2xl">
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/methodology" className="underline underline-offset-2 hover:text-primary">
-            Reference
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">Badges</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">Badges</h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          A federal number that updates itself, wherever you paste it. {rows.length} of them: the queues DOL is
-          working, the visa bulletin cutoffs, where pending cases sit, and the size of the record behind all of it.
-          Every one names its source and its date. None of them guesses.
+          {rows.length} live federal figures you can paste anywhere. Each updates itself and names its source
+          and date.
         </p>
       </header>
 
@@ -123,7 +119,7 @@ export default async function BadgesPage() {
             />
           ))}
         </ul>{" "}
-        <p className="mt-6 font-mono text-xs leading-relaxed text-white/70">
+        <p className="mt-6 font-mono text-sm leading-relaxed text-white/70">
           {live} of {rows.length} carrying a figure right now. The rest say so rather than showing an old number.
         </p>
       </section>
@@ -134,13 +130,15 @@ export default async function BadgesPage() {
 
       <section className="mt-12 max-w-3xl">
         <h2 className="font-heading text-2xl font-black">What a badge will not do</h2>{" "}
-        <p className="mt-3 text-base leading-relaxed text-foreground/80">
-          It will not predict anything. Every figure is one a federal source printed or one this site counted from
-          federal files, and each badge draws the publisher and the date into the image, because a number on a page
-          that is not ours has to say where it came from. On a day nothing was published for a figure, that badge says
-          so rather than showing yesterday&apos;s, which is the only behaviour that is safe on a page nobody is
-          watching.
-        </p>{" "}
+        <MoreText gist={"Each badge prints only a federal figure, with its publisher and date drawn in."} className="mt-3">
+          <p className="text-base leading-relaxed text-foreground/80">
+            It will not predict anything. Every figure is one a federal source printed or one this site counted from
+            federal files, and each badge draws the publisher and the date into the image, because a number on a page
+            that is not ours has to say where it came from. On a day nothing was published for a figure, that badge says
+            so rather than showing yesterday&apos;s, which is the only behaviour that is safe on a page nobody is
+            watching.
+          </p>
+        </MoreText>{" "}
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
           The estimator&apos;s own accuracy is kept on{" "}
           <Link href="/estimate-scorecard" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">

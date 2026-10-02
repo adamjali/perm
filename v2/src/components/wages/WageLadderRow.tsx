@@ -1,4 +1,5 @@
-import { RUNGS, isComplete, money, type Ladder } from "@/lib/wageLadder";
+import { RUNGS, RUNG_LABEL, isComplete, type Ladder } from "@/lib/wageLadder";
+import { formatDollars } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
@@ -32,6 +33,19 @@ export interface WageLadderRowProps {
   className?: string;
 }
 
+/**
+ * What a ladder says on hover: every rung, which the row draws but only partly
+ * prints, and its population. Read inside a `ChartTips` the caller places
+ * around the whole set of rows.
+ */
+export function ladderTip(ladder: Ladder): string {
+  return [
+    ladder.label,
+    ...RUNGS.map((r) => `${r === "p50" ? "Median" : `${RUNG_LABEL[r]} percentile`}: ${formatDollars(ladder[r] as number)}`),
+    `${ladder.count.toLocaleString("en-US")} certified cases`,
+  ].join("\n");
+}
+
 /** Position within the shared domain, clamped so nothing escapes the track. */
 function pct(v: number, [lo, hi]: [number, number]): number {
   if (hi <= lo) return 0;
@@ -60,11 +74,12 @@ export function WageLadderRow({
   return (
     <div
       className={cn("relative h-7 w-full", className)}
+      data-tip={ladderTip(ladder)}
       role="img"
       aria-label={
-        `${ladder.label}: 5th percentile ${money(ladder.p5 as number)}, ` +
-        `median ${money(ladder.p50 as number)}, ` +
-        `95th percentile ${money(ladder.p95 as number)}, ` +
+        `${ladder.label}: 5th percentile ${formatDollars(ladder.p5 as number)}, ` +
+        `median ${formatDollars(ladder.p50 as number)}, ` +
+        `95th percentile ${formatDollars(ladder.p95 as number)}, ` +
         `from ${ladder.count.toLocaleString("en-US")} certified cases.`
       }
     >
@@ -118,7 +133,7 @@ export function WageLadderKey({ className }: { className?: string }) {
   return (
     <ul
       className={cn(
-        "flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-foreground/70",
+        "flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-foreground/70",
         className,
       )}
     >

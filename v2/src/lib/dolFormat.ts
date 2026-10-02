@@ -8,6 +8,9 @@
  * @module
  */
 
+import { formatInt } from "../../convex/lib/format";
+import { DAYS_PER_MONTH_2DP, MS_PER_DAY } from "../../convex/lib/time";
+
 /**
  * Exported because QueueAlertForm needs the same twelve strings to label its
  * month picker, and had its own byte-identical copy four lines long in a
@@ -102,13 +105,13 @@ export function daysBetween(
   const a = Date.parse(`${from}T00:00:00Z`);
   const b = Date.parse(`${to}T00:00:00Z`);
   if (Number.isNaN(a) || Number.isNaN(b)) return null;
-  return Math.round((b - a) / 86_400_000);
+  return Math.round((b - a) / MS_PER_DAY);
 }
 
 /** 14386 to "14,386". Null in, null out, like every other formatter here. */
 export function formatCount(n: number | null | undefined): string | null {
   if (n === null || n === undefined || !Number.isFinite(n)) return null;
-  return n.toLocaleString("en-US");
+  return formatInt(n);
 }
 
 /**
@@ -124,7 +127,7 @@ export function daysAsApproxMonths(days: number | null | undefined): string | nu
   if (days === null || days === undefined || !Number.isFinite(days) || days < 0) {
     return null;
   }
-  const months = Math.round(days / 30.44);
+  const months = Math.round(days / DAYS_PER_MONTH_2DP);
   return `about ${months} month${months === 1 ? "" : "s"}`;
 }
 

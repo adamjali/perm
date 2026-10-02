@@ -66,6 +66,9 @@ const SECTION_KEYWORDS: Readonly<Record<string, string>> = {
   activity: "decided decisions day certified denied withdrawn citizenship education visa",
   "pwd-cases": "prevailing wage request p-100 pwd",
   "lca-cases": "lca h-1b labor condition i-200",
+  "seasonal-cases": "h-2a h-2b h2a h2b seasonal farm agricultural temporary h-300 h-400 p-400 9142a 9142b",
+  "opt-employers": "opt stem opt cpt f-1 student students practical training sevis ice",
+  "h1b-lottery-calc": "h-1b h1b lottery registration cap selection odds chance wage level weighted",
   "employers-under-review": "on hold rfi audit appeals census",
   "compare-employers": "compare sponsors side by side",
   layoffs: "warn layoff notices",
@@ -126,7 +129,7 @@ function staticIndex(): { label: string; href: string; group: string; keywords: 
     out.push({ label, href, group: "Data", keywords: `browse alphabetical index ${noun}` });
   }
   // Pages reached from no nav list: the community timelines, the embed
-  // gallery, and the guide in five languages (added 2026-09-26).
+  // gallery, and the guide in five languages.
   out.push({
     label: "Green card timelines",
     href: "/green-card-timelines",
@@ -414,7 +417,7 @@ export function SearchPalette({
             whole list of what this box accepts. */}
         <p className="border-b-2 border-border px-4 py-2 text-sm leading-snug text-muted-foreground">
           Employers, law firms, occupations, pages and articles. Paste a G-, A-,
-          P- or I- case number and it goes straight to the lookup.
+          P-, I- or H- case number and it goes straight to the lookup.
         </p>
         {navTarget !== null ? (
           <p
@@ -520,7 +523,7 @@ export function SearchPalette({
                   className="flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2.5 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
                 >
                   <span className="min-w-0 truncate font-semibold">{h.name}</span>{" "}
-                  <span className="shrink-0 font-mono text-xs text-muted-foreground data-[selected=true]:text-primary-foreground/80">
+                  <span className="shrink-0 font-mono text-sm text-muted-foreground data-[selected=true]:text-primary-foreground/80">
                     {h.more
                       ? "More than fit here"
                       : `${h.kindLabel} · ${h.total.toLocaleString("en-US")} ${h.total === 1 ? "case" : "cases"}`}
@@ -566,7 +569,7 @@ export function SearchPalette({
                   className="flex cursor-pointer items-baseline justify-between gap-3 px-3 py-2.5 data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground"
                 >
                   <span className="min-w-0 truncate font-semibold">{a.title}</span>{" "}
-                  <span className="shrink-0 font-mono text-xs uppercase text-muted-foreground data-[selected=true]:text-primary-foreground/80">
+                  <span className="shrink-0 font-mono text-sm uppercase text-muted-foreground data-[selected=true]:text-primary-foreground/80">
                     {a.kind}
                   </span>
                 </Command.Item>
@@ -574,7 +577,7 @@ export function SearchPalette({
             </Command.Group>
           ) : null}
         </Command.List>
-        <div className="border-t-2 border-border px-4 py-2 font-mono text-xs text-muted-foreground">
+        <div className="border-t-2 border-border px-4 py-2 font-mono text-sm text-muted-foreground">
           Esc closes · Enter opens · a case number goes straight to the lookup
         </div>
       </Command>

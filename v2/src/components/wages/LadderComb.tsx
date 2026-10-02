@@ -4,10 +4,11 @@ import Link from "next/link";
 import {
   isComplete,
   ladderExtent,
-  money,
   overlaps,
   type Ladder,
 } from "@/lib/wageLadder";
+import { formatDollars } from "@/lib/format";
+import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
 
 import { WageAxis } from "./WageAxis";
@@ -61,6 +62,7 @@ export function LadderComb({
   return (
     <div className={className}>
       <WageLadderKey className="mb-6" />{" "}
+      <ChartTips label="Wage percentiles, row by row">
       <ol className="m-0 list-none p-0">
         {drawable.map((l) => {
           const link = href?.(l) ?? null;
@@ -85,8 +87,8 @@ export function LadderComb({
                     l.label
                   )}
                 </p>{" "}
-                <p className="font-mono text-xs font-bold tabular-nums text-foreground/60">
-                  {money(l.p50 as number)} median ·{" "}
+                <p className="font-mono text-sm font-bold tabular-nums text-foreground/60">
+                  {formatDollars(l.p50 as number)} median ·{" "}
                   {l.count.toLocaleString("en-US")} {unit}
                 </p>
               </div>
@@ -96,6 +98,7 @@ export function LadderComb({
           );
         })}
       </ol>
+      </ChartTips>
       <WageAxis domain={padded} className="mt-1" />
     </div>
   );
@@ -135,17 +138,17 @@ export function TwoMarketsNote({
       {disjoint && ratio !== null ? (
         <>
           The two ends do not meet. {high.label} open at{" "}
-          {money(high.p5 as number)} on the 5th percentile, which is{" "}
+          {formatDollars(high.p5 as number)} on the 5th percentile, which is{" "}
           {ratio.toFixed(1)} times what {low.label.toLowerCase()} reach at the
-          95th ({money(floor)}). There is no wage at which those two
+          95th ({formatDollars(floor)}). There is no wage at which those two
           populations overlap, and they run through the same federal process at
           the same time.
         </>
       ) : (
         <>
           The highest-paid and lowest-paid occupations in this set now overlap:{" "}
-          {high.label} start at {money(high.p5 as number)} on the 5th percentile
-          against {money(low.p95 as number)} at the 95th for{" "}
+          {high.label} start at {formatDollars(high.p5 as number)} on the 5th percentile
+          against {formatDollars(low.p95 as number)} at the 95th for{" "}
           {low.label.toLowerCase()}.
         </>
       )}

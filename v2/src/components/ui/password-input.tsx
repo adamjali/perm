@@ -15,9 +15,9 @@ function PasswordInput({
   className,
   defaultVisible = false,
   disabled,
-  // The eye toggle owns the type. A caller's `type` used to land after it in
-  // the spread and win: AuthField passes type="text" by default, so sign-up
-  // and reset showed the password in plain text (Sep 28 2026).
+  // The eye toggle owns the type. A caller's `type` must not land after it in
+  // the spread and win: AuthField passes type="text" by default, which would
+  // show the password in plain text.
   type: _callerType,
   ...props
 }: PasswordInputProps) {

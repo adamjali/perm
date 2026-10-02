@@ -2,7 +2,8 @@
 
 import { Fragment, useId, useMemo, useState } from "react";
 
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
+import { ChartTips } from "@/components/data/ChartTips";
 import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverLayer";
 import {
   PREFERENCE_OF,
@@ -11,6 +12,7 @@ import {
   totalsFor,
   type TrendRow,
 } from "@/lib/i140Trends";
+import { formatInt } from "@/lib/format";
 
 /**
  * USCIS's quarterly I-140 counts, by category.
@@ -27,7 +29,6 @@ export interface I140TrendsProps {
   rows: readonly TrendRow[];
 }
 
-const int = (n: number) => n.toLocaleString("en-US");
 const pct = (n: number | null) => (n === null ? "n/a" : `${n.toFixed(2)}%`);
 
 export function I140Trends({ rows }: I140TrendsProps) {
@@ -146,12 +147,12 @@ export function I140Trends({ rows }: I140TrendsProps) {
       <div className="p-6 sm:p-8">
         <div className="flex flex-wrap gap-3">
           {[
-            { k: "Receipts", v: int(totals.received), n: "petitions filed across these quarters" },
-            { k: "Approved", v: int(totals.approved), n: "across these quarters" },
-            { k: "Denied", v: int(totals.denied), n: "across these quarters" },
+            { k: "Receipts", v: formatInt(totals.received), n: "petitions filed across these quarters" },
+            { k: "Approved", v: formatInt(totals.approved), n: "across these quarters" },
+            { k: "Denied", v: formatInt(totals.denied), n: "across these quarters" },
             {
               k: "Pending",
-              v: totals.pending === null ? "n/a" : int(totals.pending),
+              v: totals.pending === null ? "n/a" : formatInt(totals.pending),
               n: "waiting at the newest quarter, not a sum",
             },
             { k: "Approval rate", v: pct(totals.approvalRate), n: "of petitions USCIS decided" },
@@ -173,13 +174,10 @@ export function I140Trends({ rows }: I140TrendsProps) {
         </div>
 
         <p className="mt-4 text-base leading-relaxed text-foreground/70">
-          Both rates are over petitions USCIS actually{" "}
-          <b className="font-bold text-foreground">decided</b>, not over
-          receipts. A rate measured against receipts falls in a quarter where
-          USCIS simply decided less, while nothing about the outcomes changed.
-          Pending is a snapshot at the newest quarter for the same reason
-          summing it would be wrong: it would count one waiting petition once
-          per quarter.
+          Both rates are over petitions USCIS{" "}
+          <b className="font-bold text-foreground">decided</b>, not over receipts, which would fall whenever
+          USCIS simply decided less. Pending is the newest quarter&apos;s snapshot, since summing it would count
+          one petition once per quarter.
         </p>
 
         {points.length > 0 ? (
@@ -189,13 +187,15 @@ export function I140Trends({ rows }: I140TrendsProps) {
               <p className="mt-2 text-base text-foreground/70">
                 Only quarters USCIS has reported.
               </p>
-              <ol className="mt-4 space-y-1">
+              <ChartTips label="I-140 receipts per quarter" className="mt-4">
+              <ol className="space-y-1">
                 {points.map((p) => (
                   <Fragment key={p.label}>
                     {" "}
                     <li
                       className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-2 [&>*]:min-w-0 sm:grid-cols-[7rem_1fr_5.5rem] sm:gap-3"
-                      aria-label={`${p.label}: ${int(p.received)} received`}
+                      aria-label={`${p.label}: ${formatInt(p.received)} received`}
+                      data-tip={`${p.label}\n${formatInt(p.received)} received\n${formatInt(p.approved)} approved, ${formatInt(p.denied)} denied\n${formatInt(p.pending)} pending at quarter end`}
                     >
                       <span className="text-sm tabular-nums text-foreground/70">{p.label}</span>{" "}
                       <span className="block h-6 w-full border-2 border-border bg-muted">
@@ -205,12 +205,13 @@ export function I140Trends({ rows }: I140TrendsProps) {
                         />
                       </span>{" "}
                       <span className="text-right text-sm tabular-nums text-foreground/70">
-                        {int(p.received)}
+                        {formatInt(p.received)}
                       </span>
                     </li>
                   </Fragment>
                 ))}
               </ol>
+              </ChartTips>
             </section>
 
             <section className="mt-10">
@@ -221,7 +222,8 @@ export function I140Trends({ rows }: I140TrendsProps) {
                 Bars are scaled to the busiest quarter, so a shorter track
                 means fewer decisions rather than a different mix.
               </p>
-              <ol className="mt-4 space-y-1">
+              <ChartTips label="I-140s approved against denied, per quarter" className="mt-4">
+              <ol className="space-y-1">
                 {points.map((p) => {
                   const decided = p.approved + p.denied;
                   const width = (decided / maxDecided) * 100;
@@ -231,7 +233,8 @@ export function I140Trends({ rows }: I140TrendsProps) {
                       {" "}
                       <li
                         className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-2 [&>*]:min-w-0 sm:grid-cols-[7rem_1fr_5.5rem] sm:gap-3"
-                        aria-label={`${p.label}: ${int(p.approved)} approved, ${int(p.denied)} denied`}
+                        aria-label={`${p.label}: ${formatInt(p.approved)} approved, ${formatInt(p.denied)} denied`}
+                        data-tip={`${p.label}\n${formatInt(p.approved)} approved\n${formatInt(p.denied)} denied\n${formatInt(decided)} decided${p.denialRate !== null ? `\n${pct(p.denialRate)} denied` : ""}`}
                       >
                         <span className="text-sm tabular-nums text-foreground/70">{p.label}</span>{" "}
                         <span className="block h-6 w-full border-2 border-border bg-muted">
@@ -247,13 +250,14 @@ export function I140Trends({ rows }: I140TrendsProps) {
                           </span>
                         </span>{" "}
                         <span className="text-right text-sm tabular-nums text-foreground/70">
-                          {int(p.denied)}
+                          {formatInt(p.denied)}
                         </span>
                       </li>
                     </Fragment>
                   );
                 })}
               </ol>
+              </ChartTips>
               <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground/70">
                 <span className="flex items-center gap-2">
                   <span className="h-3 w-3 border-2 border-border bg-primary" aria-hidden="true" />
@@ -279,11 +283,15 @@ export function I140Trends({ rows }: I140TrendsProps) {
                   {category} itself: every petition goes in under one of its
                   subtypes, and they aren&rsquo;t deciding alike.
                 </p>{" "}
-                <ul className="mt-6 space-y-3">
+                <ChartTips label={`Denial rate by ${category} subtype`} className="mt-6">
+                <ul className="space-y-3">
                   {split.children.map((c) => (
                     <Fragment key={c.code}>
                       {" "}
-                      <li className="grid grid-cols-1 gap-1 sm:grid-cols-[16rem_1fr_5rem] sm:items-center sm:gap-4 [&>*]:min-w-0">
+                      <li
+                        data-tip={`${c.code} · ${c.label}\n${pct(c.denialRate)} denied\n${formatInt(c.decided)} decided`}
+                        className="grid grid-cols-1 gap-1 sm:grid-cols-[16rem_1fr_5rem] sm:items-center sm:gap-4 [&>*]:min-w-0"
+                      >
                         <span className="text-sm font-bold">
                           {c.code} · {c.label}
                         </span>{" "}
@@ -301,14 +309,15 @@ export function I140Trends({ rows }: I140TrendsProps) {
                       </li>
                     </Fragment>
                   ))}
-                </ul>{" "}
+                </ul>
+                </ChartTips>{" "}
                 <p className="mt-4 text-sm leading-relaxed text-foreground/70">
                   Denial rates over the{" "}
-                  {int(split.children.reduce((n, c) => n + c.decided, 0))}{" "}
+                  {formatInt(split.children.reduce((n, c) => n + c.decided, 0))}{" "}
                   petitions USCIS decided in these {totals.quarters}{" "}
                   {totals.quarters === 1 ? "quarter" : "quarters"}, per subtype:{" "}
                   {split.children
-                    .map((c) => `${c.code} ${int(c.decided)}`)
+                    .map((c) => `${c.code} ${formatInt(c.decided)}`)
                     .join(", ")}
                   . These are rates over past petitions, not odds for a
                   particular one.
@@ -397,7 +406,7 @@ function DenialRateLine({
             y: py(p.denialRate),
             label: p.label,
             value: pct(p.denialRate),
-            detail: `${int(p.denied)} denied of ${int(p.approved + p.denied)} decided`,
+            detail: `${formatInt(p.denied)} denied of ${formatInt(p.approved + p.denied)} decided`,
           },
         ],
   );

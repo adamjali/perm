@@ -10,8 +10,7 @@ import { Fragment } from "react";
 
 import Image from "next/image";
 import { motion } from "motion/react";
-import { ArrowLeftIcon, CalendarIcon, ClockIcon, UserIcon } from "@phosphor-icons/react";
-import { NavLink } from "@/components/ui/nav-link";
+import { CalendarIcon, ClockIcon, UserIcon } from "@phosphor-icons/react";
 import type { PostMeta, ContentType } from "@/lib/content/types";
 import { CONTENT_TYPE_CONFIG } from "@/lib/content/types";
 import { stagger, fadeUp } from "@/lib/content/animations";
@@ -38,27 +37,11 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
           initial={false}
           animate="show"
         >
-          {/* Breadcrumb */}
-          <motion.nav
-            variants={fadeUp}
-            className="mb-6 flex items-center gap-2 text-sm text-muted-foreground"
-            aria-label="Breadcrumb"
-          >
-            <NavLink
-              href={`/${type}`}
-              className="flex items-center gap-1 transition-colors hover:text-primary"
-              spinnerClassName="text-muted-foreground"
-              spinnerSize={12}
-            >
-              <ArrowLeftIcon className="h-3.5 w-3.5" />
-              {config.plural}
-            </NavLink>
-          </motion.nav>
 
           {/* Type badge */}
           <motion.span
             variants={fadeUp}
-            className="mb-3 inline-block border-2 border-border bg-primary px-2 py-0.5 font-heading text-xs font-bold uppercase tracking-wider text-black"
+            className="mb-3 inline-block border-2 border-border bg-primary px-2 py-0.5 font-heading text-sm font-bold uppercase tracking-wider text-black"
           >
             {config.label}
           </motion.span>{" "}
@@ -100,7 +83,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
               </time>
             </span>{" "}
             {meta.updated && meta.updated !== meta.date && (
-              <span className="flex items-center gap-1.5 text-xs">
+              <span className="flex items-center gap-1.5 text-sm">
                 Updated{" "}
                 <time dateTime={meta.updated}>
                   {new Date(meta.updated).toLocaleDateString("en-US", {

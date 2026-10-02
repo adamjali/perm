@@ -22,6 +22,7 @@ function splitLead(definition: string): string[] {
 }
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { SITE_URL } from "@/lib/constants/site";
 
 /**
  * The glossary: every term the site uses, defined once, each pointing at the
@@ -51,7 +52,7 @@ export const dynamic = "force-static";
 export default function GlossaryPage() {
   const terms = glossarySorted();
   const letters = glossaryLetters();
-  const base = "https://permtracker.app";
+  const base = SITE_URL;
   const termSet = {
     "@context": "https://schema.org",
     "@type": "DefinedTermSet" as const,
@@ -82,15 +83,7 @@ export default function GlossaryPage() {
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={termSet} />
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link
-            href="/methodology"
-            className="underline underline-offset-2 hover:text-primary"
-          >
-            Reference
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Glossary
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
@@ -133,9 +126,9 @@ export default function GlossaryPage() {
             >
               {g.letter}
             </h2>{" "}
-            {/* A DICTIONARY INDEX, NOT A WALL. Measured 2026-09-13: this
-                page carried 2,386 visible prose words, 95% of everything on
-                it, against 670 for a comparable gov.uk service page. The
+            {/* A DICTIONARY INDEX, NOT A WALL. Uncollapsed, this page is
+                almost all prose, several times the words of a comparable
+                gov.uk service page. The
                 definitions are the content and stay in the DOM whether open
                 or shut - <details> keeps its body for every crawler - so the
                 first sentence of each is the row a reader scans and the rest
@@ -182,7 +175,7 @@ export default function GlossaryPage() {
                           <a
                             href={t.cite.href}
                             rel="noopener noreferrer"
-                            className="font-mono text-xs font-bold underline underline-offset-2 hover:text-primary"
+                            className="font-mono text-sm font-bold underline underline-offset-2 hover:text-primary"
                           >
                             {t.cite.label}
                           </a>

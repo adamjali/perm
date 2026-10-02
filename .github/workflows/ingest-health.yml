@@ -1,30 +1,25 @@
 name: Ingest health
 
-# THE ONLY THING THAT WILL TELL US AN INGEST HAS STOPPED.
+# The daily alarm for the ingests. A failed ingest step is often allowed to
+# exit green, and the staleness note a page renders is something nobody
+# watches, so without this a dead ingest would leave the site serving the last
+# good numbers under their own as-of date indefinitely.
 #
-# Before this, a dead ingest was silent. Four of the six ingest workflows mark
-# their step `continue-on-error: true`, so a failed run exits GREEN and GitHub
-# sends nothing. The other signal - the staleness warning `DataProvenance`
-# renders - appears on a page, and nobody watches pages. So if the rival tracker
-# changed shape, DOL moved a file, or a token expired, the site would keep
-# serving the last good numbers under their own as-of date indefinitely and
-# nothing would say otherwise. That is worse than an outage: an outage is
-# visible.
+# check_ingest_health.py fails when a dataset is past the freshness budget its
+# own ingest declared, when an ingest's latest run did not finish clean, or
+# when the discovery walk has stopped moving. A red run is what triggers
+# GitHub's notification to the repo owner, so this needs no other alerting
+# service. Deliberately not continue-on-error: failing is the feature.
 #
-# This reads every row of `data_freshness` and fails when any dataset is past
-# the `max_age_days` ITS OWN INGEST declared. A red scheduled run is what
-# triggers GitHub's built-in notification to the repo owner, so this needs no
-# new alerting service and no extra credential.
-#
-# Deliberately NOT continue-on-error. Failing is the entire feature.
+# Two clocks on purpose: the server's timer dispatches this at 10:00 UTC
+# through /api/cron/dispatch, and the GitHub schedule below is a second,
+# independent one, so a stopped server clock is itself reported.
 #
 # Manual run:
 #   cd v2 && python3 scripts/check_ingest_health.py
 
 on:
   schedule:
-    # 10:00 UTC - after the daily ingests (07:00 processing times, 09:30 month
-    # stats) so a same-day failure is caught the same day rather than tomorrow.
     - cron: "0 10 * * *"
   workflow_dispatch:
 
@@ -39,6 +34,9 @@ jobs:
   check:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -47,31 +45,14 @@ jobs:
 
       - name: Check every dataset against its own freshness budget
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-        run: |
-          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
-            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
-          python3 scripts/check_ingest_health.py
+        run: python3 scripts/check_ingest_health.py
 
       # The health check asks whether the jobs ran and moved. This asks whether
       # the data they wrote has the shape the code assumes: no foreign prefixes
-      # in the PERM tables, every new status in a known vocabulary, filing
-      # dates that agree with the case number, a consistent alias table, no
-      # duplicate indexes. Each of those was broken and green on Sep 6 2026.
+      # in the PERM tables, every status in a known vocabulary, filing dates
+      # that agree with the case number, a consistent alias table, no
+      # duplicate indexes.
       - name: Check the data's invariants
         if: ${{ !cancelled() }}
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-        run: |
-          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
-            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
-          python3 scripts/check_invariants.py
-
-      - name: Remove credentials
-        if: always()
-        working-directory: v2
-        run: rm -f .env.local
+        run: python3 scripts/check_invariants.py

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { ONBOARDING_ROLES } from "@/lib/onboarding/constants";
 import type { UserRole } from "@/lib/onboarding/types";

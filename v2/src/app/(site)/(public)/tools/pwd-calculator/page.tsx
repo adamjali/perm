@@ -82,12 +82,7 @@ export default async function PwdCalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/tools" className="underline underline-offset-2 hover:text-primary">
-            Tools
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Prevailing wage queue calculator
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
@@ -152,15 +147,15 @@ export default async function PwdCalculatorPage() {
       </section>
 
       <p className="mt-8 max-w-3xl text-base leading-relaxed text-foreground/80">
-        Have a request in this queue and no number for it? The{" "}
+        No number for your request?{" "}
         <Link href="/pwd-cases" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
-          wage request search
-        </Link>{" "}
-        finds it by employer, and a P- number pasted into the{" "}
+          Search wage requests by employer
+        </Link>
+        , or paste a P- number into the{" "}
         <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
           status lookup
         </Link>{" "}
-        shows where it sits in this queue.
+        to see where it sits.
       </p>{" "}
       <DataProvenance datasets={["processing-times"]} />
 

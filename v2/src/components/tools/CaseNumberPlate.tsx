@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import type { ParsedCaseNumber } from "@/lib/permCaseNumber";
+import { MS_PER_DAY } from "@/lib/time";
 
 /**
  * The case number, read back as the artifact it is.
@@ -14,9 +15,9 @@ import type { ParsedCaseNumber } from "@/lib/permCaseNumber";
  * the DIGITS mean, never as the filing date, because the two are the same for
  * 89% of cases and a day or two apart for the rest. When DOL's own record is
  * available the page states the date from there and this plate stays a
- * reading of the number. And the prefix is labelled "prefix" rather than
- * "office": DOL publishes no key for it, and inventing one here would be a
- * fact-shaped guess sitting inside a plate that reads as authoritative.
+ * reading of the number. The prefix's letter names the program (G is PERM,
+ * which the lookup's own routing relies on); DOL publishes no key for the
+ * number after it, so the plate doesn't invent one.
  */
 
 const DAY_NAMES = [
@@ -53,7 +54,7 @@ export function CaseNumberPlate({
     Math.round(
       (Date.parse(`${parsed.filingDate}T00:00:00Z`) -
         Date.parse(`${parsed.filingDate.slice(0, 4)}-01-01T00:00:00Z`)) /
-        86_400_000,
+        MS_PER_DAY,
     ) + 1,
   ).padStart(3, "0");
 
@@ -117,8 +118,9 @@ export function CaseNumberPlate({
               , and the record is what every figure on this page uses.
             </>
           ) : null}{" "}
-          DOL publishes no key for the prefix, so this page does not put a
-          meaning on it.
+          {letter === "G"
+            ? "The G is PERM; DOL publishes no key for the number after it."
+            : null}
         </p>
       </div>
     </div>

@@ -3,8 +3,8 @@
 
     python3 scripts/backtest_pace.py [--target 0.90]
 
-WHY THIS EXISTS. Every competitor in this space publishes a completion
-estimate, and the whole field - us included - computes it as
+Why: every completion estimate in this space, this site's included, is
+computed as
 
     days_remaining = pending / recent_pace
 
@@ -15,8 +15,8 @@ and compare against when the cohort actually reached the target.
 
 WHAT THE FIRST RUN ESTABLISHED (2026-08-27, 40 pairs):
 
-  * Pace-estimator choice barely matters. 7d-calendar (the rival tracker's shape),
-    28d-working (ours), 56d, 90d, mean vs median - all land at median 6-9d,
+  * Pace-estimator choice barely matters. 7d-calendar, 28d-working (ours),
+    56d, 90d, mean vs median: all land at median 6-9d,
     mean 26d, 85% within 30 days. A claim that one is meaningfully better
     than another is not supported.
   * The error is a TAIL, not a level. Mean 26d against median 6d. All six
@@ -42,15 +42,10 @@ import statistics
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, query_rows  # noqa: E402
 
 MIN_COHORT = 500          # below this a cohort is a tail, not a population
 OBSERVE_AT = (0.25, 0.50)
-
-
-def rows(db: Turso, sql: str) -> list[list]:
-    r = db.execute(sql)["response"]["result"]
-    return [[None if c["type"] == "null" else c["value"] for c in x] for x in r["rows"]]
 
 
 def main() -> int:
@@ -63,18 +58,16 @@ def main() -> int:
 
     db = Turso()
     by_month: dict[str, list] = collections.defaultdict(list)
-    for m, d, n in rows(db, """
+    for m, d, n in query_rows(db, """
             SELECT substr(received_date,1,7), substr(decision_date,1,10), count(*)
               FROM perm_cases
              WHERE received_date IS NOT NULL AND decision_date IS NOT NULL
                AND received_date <> '' AND decision_date <> ''
              GROUP BY 1, 2"""):
         by_month[m].append((d, int(n)))
-    # One source, deliberately - see the note in backtest_models.py. The
-    # unfiltered form summed `dol-disclosure` and the retired `rival-b`
-    # series together on 88 overlapping dates, roughly doubling the measured
-    # pace across Dec 2025 - Mar 2026, which is inside this backtest's window.
-    daily = {d: int(n) for d, n in rows(db,
+    # One source, deliberately (see backtest_models.py): summing sources by
+    # date double-counts every date they share.
+    daily = {d: int(n) for d, n in query_rows(db,
         "SELECT date, sum(total) FROM daily_decisions "
         "WHERE source = 'dol-disclosure' GROUP BY date")}
     print(f"cohorts {len(by_month)}   daily-decision days {len(daily):,}")
@@ -87,7 +80,7 @@ def main() -> int:
         return sum(v) / len(v) if v else None
 
     variants = {
-        "7d calendar (the rival tracker)": lambda t: pace(t, 7, False),
+        "7d calendar":             lambda t: pace(t, 7, False),
         "28d working (ours)":      lambda t: pace(t, 28, True),
         "56d working":             lambda t: pace(t, 56, True),
         "90d working":             lambda t: pace(t, 90, True),

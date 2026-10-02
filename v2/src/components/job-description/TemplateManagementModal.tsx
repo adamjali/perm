@@ -598,5 +598,3 @@ export function TemplateManagementModal({
     </>
   );
 }
-
-export default TemplateManagementModal;

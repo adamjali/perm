@@ -1,6 +1,5 @@
 version: 2
-# Tuesday, not Monday: keeps a Monday free of dependency PRs. (The site has
-# run on its own server since Sep 28 2026; PRs no longer build previews.)
+# Tuesday, not Monday: keeps a Monday free of dependency PRs.
 updates:
   # Frontend dependencies (npm) - v2 directory
   - package-ecosystem: "npm"
@@ -17,10 +16,6 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
-    # `reviewers` removed: GitHub retired the option on 2025-05-20 in favour of
-    # CODEOWNERS, so it had been dead config here. Not replaced with a
-    # CODEOWNERS file, which would add nothing on a single-maintainer repo where
-    # the owner is already notified of every PR.
     groups:
       development-dependencies:
         dependency-type: "development"
@@ -36,19 +31,14 @@ updates:
       # Keep @types/node on v24: the server runs Node 24 (engines.node 24.x).
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
-      # Ignore next major bumps only — allow minor+patch auto-update.
-      # Major bumps (17.x+) require manual review due to RSC/caching behavior changes.
+      # A Next.js major changes rendering and caching behaviour, so it is
+      # upgraded by hand; minors and patches come through here.
       - dependency-name: "next"
         update-types: ["version-update:semver-major"]
-      # @sentry/nextjs 10.72+ stopped depending on
-      # @apm-js-collab/code-transformer-bundler-plugins and VENDORS it instead,
-      # copying an ESM file that runs `fileURLToPath(import.meta.url)` at module
-      # load into its CJS build. Vitest cannot resolve that to a file:// URL, so
-      # it throws ERR_INVALID_URL_SCHEME on import: 10.73.0 failed 24 test files
-      # and stopped 109 more from ever running. The production webpack build is
-      # UNAFFECTED, which is why this is invisible until the suite runs.
-      # Pinned to ~10.70.0 in v2/package.json. Drop this rule once upstream
-      # ships a build whose vendored copy no longer touches import.meta.url.
+      # @sentry/nextjs 10.72+ vendors an ESM file into its CJS build that reads
+      # `import.meta.url` at load, which Vitest cannot resolve: the suite fails
+      # on import while the production build is fine. Pinned to ~10.70.0 in
+      # v2/package.json; drop this rule once upstream fixes the vendored copy.
       - dependency-name: "@sentry/nextjs"
         versions: [">=10.71.0"]
 
@@ -68,11 +58,9 @@ updates:
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
-    # CodeQL's init, autobuild and analyze (and Semgrep's upload-sarif) must
-    # move together: init writes a config stamped with its version and
-    # autobuild refuses one from another ("Loaded a configuration file for
-    # version '4.38.1', but running version '4.38.0'", Sep 29 2026, when
-    # Dependabot bumped init alone and CodeQL failed on its PR).
+    # CodeQL's actions (and Semgrep's upload-sarif) must move together: init
+    # writes a config stamped with its own version and the later steps refuse
+    # one from another version.
     groups:
       codeql-action:
         patterns:

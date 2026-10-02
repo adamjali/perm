@@ -18,7 +18,7 @@ const sharedConfig = {
     alias: {
       "@": path.resolve(__dirname, "./src"),
       "@/test-utils": path.resolve(__dirname, "./test-utils"),
-      "@/convex": path.resolve(__dirname, "./convex"),
+      "@convex": path.resolve(__dirname, "./convex"),
       // `server-only` throws on import from anything with a DOM. Every vitest
       // project here runs happy-dom or edge-runtime, so a test of a SERVER
       // module - sitemap.ts, which reaches src/lib/turso/client.ts - fails to
@@ -100,6 +100,10 @@ const ISOLATED_UNIT_FILES = [
   // means no neighbour can decide what it imports.
   "src/lib/turso/caseDiscovery.test.ts",
   "src/lib/turso/embedLookup.test.ts",
+  // Added 2026-10-01. Mocks ../client, ../tableColumns and ../employerPrograms;
+  // isolated from the start rather than after its first shared-pool collision.
+  "src/lib/turso/__tests__/lcaProfile.test.ts",
+  "src/lib/turso/__tests__/uscisH1b.test.ts",
 ];
 
 export default defineConfig({

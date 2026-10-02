@@ -2,7 +2,7 @@
  * The Internet Archive's first capture of each visa bulletin page that
  * carried the bulletin's charts, as an Eastern date: a floor on when the
  * bulletin came out. Written by `scripts/measure_bulletin_captures.py`
- * on 2026-09-26 from the archive's index of
+ * from the archive's index of
  * travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin/<fiscal year>/,
  * each capture fetched and read before it counted. Do not edit by hand.
  *

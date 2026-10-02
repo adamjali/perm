@@ -366,59 +366,6 @@ describe("Notifications", () => {
       }, 120_000);
     });
 
-    describe("getNotificationsByCase", () => {
-      it("returns only case notifications", async () => {
-        const t = createTestContext();
-        const { ctx: user, userId } = await createAuthenticatedContext(t, "User 1");
-
-        // Create a case first
-        // Note: cases.create automatically creates a "New Case Created" notification
-        const caseId = await user.mutation(api.cases.create, {
-          employerName: "Test Corp",
-          beneficiaryIdentifier: "John D.",
-          positionTitle: "Engineer",
-        });
-        await finishScheduledFunctions(t);
-
-        await user.run(async (ctx) => {
-          const now = Date.now();
-          // Additional notification for the case (beyond the auto-created one)
-          await ctx.db.insert("notifications", {
-            userId,
-            caseId: caseId,
-            type: "deadline_reminder",
-            title: "Case Notification",
-            message: "Message",
-            priority: "normal",
-            isRead: false,
-            emailSent: false,
-            createdAt: now,
-            updatedAt: now,
-          });
-          // System notification (no case) - should NOT appear in case notifications
-          await ctx.db.insert("notifications", {
-            userId,
-            type: "system",
-            title: "System Notification",
-            message: "Message",
-            priority: "normal",
-            isRead: false,
-            emailSent: false,
-            createdAt: now + 1000,
-            updatedAt: now + 1000,
-          });
-        });
-
-        const result = await user.query(api.notifications.getNotificationsByCase, { caseId });
-        // Should have 1 case notification (manual "Case Notification")
-        // Should NOT include the system notification (no caseId)
-        expect(result).toHaveLength(1);
-        const titles = result.map((n: { title: string }) => n.title);
-        expect(titles).toContain("Case Notification");
-        expect(titles).not.toContain("System Notification");
-      });
-    });
-
     describe("getNotificationStats", () => {
       it("returns correct breakdown", async () => {
         const t = createTestContext();
@@ -562,51 +509,6 @@ describe("Notifications", () => {
 
         const unreadCount = await user.query(api.notifications.getUnreadCount, {});
         expect(unreadCount).toBe(0);
-      });
-    });
-
-    describe("markMultipleAsRead", () => {
-      it("handles mixed ownership (only updates owned)", async () => {
-        const t = createTestContext();
-        const { ctx: userA, userId: userAId } = await createAuthenticatedContext(t, "User A");
-        const { ctx: userB, userId: userBId } = await createAuthenticatedContext(t, "User B");
-
-        const notificationAId = await userA.run(async (ctx) => {
-          const now = Date.now();
-          return await ctx.db.insert("notifications", {
-            userId: userAId,
-            type: "deadline_reminder",
-            title: "User A Notification",
-            message: "Message",
-            priority: "normal",
-            isRead: false,
-            emailSent: false,
-            createdAt: now,
-            updatedAt: now,
-          });
-        });
-
-        const notificationBId = await userB.run(async (ctx) => {
-          const now = Date.now();
-          return await ctx.db.insert("notifications", {
-            userId: userBId,
-            type: "deadline_reminder",
-            title: "User B Notification",
-            message: "Message",
-            priority: "normal",
-            isRead: false,
-            emailSent: false,
-            createdAt: now,
-            updatedAt: now,
-          });
-        });
-
-        // User A tries to mark both - should fail because they don't own notification B
-        await expect(
-          userA.mutation(api.notifications.markMultipleAsRead, {
-            notificationIds: [notificationAId, notificationBId],
-          })
-        ).rejects.toThrow("Access denied");
       });
     });
 
@@ -816,9 +718,12 @@ describe("Notifications", () => {
         });
 
         // Should only have the system notification left
-        const caseNotifications = await user.query(api.notifications.getNotificationsByCase, {
-          caseId,
-        });
+        const caseNotifications = await user.run((ctx) =>
+          ctx.db
+            .query("notifications")
+            .withIndex("by_case_id", (q) => q.eq("caseId", caseId))
+            .collect(),
+        );
         expect(caseNotifications).toHaveLength(0);
 
         // Total should be 1 (system notification)

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon, ArrowRightIcon, WarningIcon } from "@phosphor-icons/react/ssr";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { SourceNote } from "@/components/queue/SourceNote";
 import { DecidedList, PendingCensus } from "@/components/queue/PendingCensus";
@@ -23,6 +24,7 @@ import { getLiveRemainderSummary, listLiveCases } from "@/lib/turso/liveCases";
 import { LiveCaseBrowser } from "@/components/tools/LiveCaseBrowser";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { formatInt } from "@/lib/format";
 
 /**
  * One filing month, split across the queues DOL actually runs.
@@ -53,7 +55,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { month } = await params;
   // Both misses are decided at the earliest point, and the segment has no
-  // loading boundary above it (the shared (public)/loading.tsx was removed) -
+  // loading boundary above it (there is no shared (public)/loading.tsx) -
   // with a boundary, Next streams a 200 before any page code runs and a
   // notFound() can never change the status. The backlog read dedupes with
   // the page's own (getLiveCensus is React-cached), so this costs no extra
@@ -81,11 +83,11 @@ export const revalidate = 21600;
 
 /**
  * No month is built ahead; each is built on its first request and cached for
- * the window above. Without this export the route rendered fresh on EVERY
+ * the window above. Without this export the route renders fresh on EVERY
  * request despite `revalidate`: Next treats a dynamic segment with no
- * generateStaticParams as dynamic, and production served these pages
- * `private, no-store`, 1 to 1.5 s each (measured Oct 1 2026, the only public
- * [param] route missing it). `dynamic-routes-cache.test.ts` holds every route.
+ * generateStaticParams as dynamic, so these pages would be served
+ * `private, no-store` at 1 to 1.5 s each. `dynamic-routes-cache.test.ts`
+ * holds every route.
  */
 export async function generateStaticParams(): Promise<{ month: string }[]> {
   return [];
@@ -94,12 +96,10 @@ export async function generateStaticParams(): Promise<{ month: string }[]> {
 /**
  * How many of the month's live rows the page lists before pointing at the
  * full list on /perm-cases. A busy month holds ~14,500 filings; the whole set
- * belongs in the paginated browser, not in a prerendered page whose size is
- * an ISR write unit every 8 KB.
+ * belongs in the paginated browser, not in a prerendered page written whole
+ * to the page cache on every regeneration.
  */
 const MONTH_LIST_MAX = 50;
-
-const int = (n: number) => n.toLocaleString("en-US");
 
 export default async function CohortPage({
   params,
@@ -136,7 +136,7 @@ export default async function CohortPage({
   const liveMonth = remainder?.byMonth.find((m) => m.month === month) ?? null;
   // The first page of the month's live cases, server-rendered as the
   // browser's seed: the rows read before hydration and crawlers see them.
-  // Every month lists, however small (owner's call, Sep 8 2026).
+  // Every month lists its cases, however few.
   const seedPage = liveMonth && liveMonth.total > 0
     ? await listLiveCases({ kind: "all", month, numItems: MONTH_LIST_MAX })
     : null;
@@ -152,20 +152,15 @@ export default async function CohortPage({
     <div className="mx-auto w-full max-w-4xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
 
       <header>
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/80">
-          <Link href="/perm-queue" className="underline underline-offset-2 hover:text-primary">
-            PERM queue
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Filed {label}
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/80">
-          {int(backlog.total)}{" "}
+          {formatInt(backlog.total)}{" "}
           {backlog.total === 1 ? "application carries" : "applications carry"}{" "}
           {article(label)} {label} filing date.{" "}
-          {int(backlog.decided)} {backlog.decided === 1 ? "has" : "have"} a
-          decision. {int(split.pending)}{" "}
+          {formatInt(backlog.decided)} {backlog.decided === 1 ? "has" : "have"} a
+          decision. {formatInt(split.pending)}{" "}
           {split.pending === 1 ? "was" : "were"} still waiting when the scan
           last checked.
         </p>{" "}
@@ -195,7 +190,7 @@ export default async function CohortPage({
         <p className="mt-3 text-base leading-relaxed text-foreground/80">
           {ahead > 0 ? (
             <>
-              <b className="font-bold">{int(ahead)}</b> cases filed before{" "}
+              <b className="font-bold">{formatInt(ahead)}</b> cases filed before{" "}
               {label} were undecided at their last check, so that&rsquo;s what
               sits in front of this month, counting only cases DOL still has to
               decide. Some will have been decided since, so it runs a little
@@ -227,7 +222,7 @@ export default async function CohortPage({
             <>
               {split.outOfOrder.length > 0 ? (
                 <>
-                  {int(split.ordinary)} of them are in analyst review, the
+                  {formatInt(split.ordinary)} of them are in analyst review, the
                   ordinary queue that moves in filing order. The rest are in
                   queues that take a case out of that order, so their wait
                   doesn&rsquo;t follow the month.
@@ -250,7 +245,9 @@ export default async function CohortPage({
 
         {split.pending > 0 ? (
           <>
-            <StageBar stages={split.stages} scale="composition" className="mt-6" />
+            <ChartTips label={`Pending cases filed in ${label}, by stage`} className="mt-6">
+              <StageBar stages={split.stages} scale="composition" tipHeading={`Filed in ${label}`} />
+            </ChartTips>
             <StageLegend stages={split.stages} className="mt-4" />
             <div className="mt-8 border-t-2 border-border pt-6">
               <PendingCensus
@@ -272,7 +269,7 @@ export default async function CohortPage({
           Already decided
         </h2>{" "}
         <p className="mt-2 text-base leading-relaxed text-foreground/80">
-          {int(backlog.decided)} of the {int(backlog.total)} applications filed
+          {formatInt(backlog.decided)} of the {formatInt(backlog.total)} applications filed
           in {label} {backlog.decided === 1 ? "has" : "have"} a final
           determination.{" "}
           <WithdrawalNote decided={split.decided} />
@@ -288,9 +285,9 @@ export default async function CohortPage({
         </h2>{" "}
         {liveMonth ? (
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
-            {int(liveMonth.total)} of the {int(backlog.total)} {label} filings{" "}
+            {formatInt(liveMonth.total)} of the {formatInt(backlog.total)} {label} filings{" "}
             {liveMonth.total === 1 ? "isn't" : "aren't"} in DOL&apos;s published
-            files yet: {int(liveMonth.pending)} still waiting, {int(liveMonth.decided)}{" "}
+            files yet: {formatInt(liveMonth.pending)} still waiting, {formatInt(liveMonth.decided)}{" "}
             decided since the last file. DOL&apos;s daily check gives the employer,
             job title and status. Everything else arrives when DOL publishes the
             case.
@@ -327,7 +324,7 @@ export default async function CohortPage({
               href={`/perm-cases?filed=${month}#live`}
               className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
             >
-              All {int(liveMonth.total)} live {label} filings, pending and decided
+              All {formatInt(liveMonth.total)} live {label} filings, pending and decided
             </Link>
             , newest first. DOL doesn&apos;t decide a month in filing order,
             so decisions won&apos;t follow this list.
@@ -473,13 +470,13 @@ function WithdrawalNote({
   const other = total - withdrawn;
   return (
     <>
-      {int(withdrawn)} of those are withdrawals, which an employer files rather
+      {formatInt(withdrawn)} of those are withdrawals, which an employer files rather
       than DOL issuing a determination.{" "}
       {other === 0 ? (
         <>Nothing filed this month has been certified or denied yet.</>
       ) : (
         <>
-          {int(other)} {other === 1 ? "is a certification or a denial" : "are certifications or denials"}.
+          {formatInt(other)} {other === 1 ? "is a certification or a denial" : "are certifications or denials"}.
         </>
       )}
     </>
@@ -504,7 +501,7 @@ function SiblingLink({
         <Icon className="h-4 w-4 shrink-0" aria-hidden="true" />
       ) : null}{" "}
       <span>
-        <span className="block font-mono text-xs font-normal uppercase tracking-wider text-foreground/70">
+        <span className="block font-mono text-sm font-normal uppercase tracking-wider text-foreground/70">
           {direction === "previous" ? "Filed earlier" : "Filed later"}
         </span>{" "}
         <span>{label}</span>

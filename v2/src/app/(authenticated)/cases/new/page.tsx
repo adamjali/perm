@@ -10,9 +10,7 @@
  * - Success redirect to case detail
  * - Cancel navigation back to cases list
  *
- * Phase: 22 (Case Forms)
  * Task: 22-04 (Add Case Page)
- * Created: 2025-12-25
  */
 
 import type { Metadata } from "next";

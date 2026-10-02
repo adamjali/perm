@@ -7,7 +7,7 @@ import { useMutation, useConvex } from "convex/react";
 import { analytics } from "@/lib/analytics";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { CaseForm } from "@/components/forms/CaseForm";
 import {
   Dialog,
@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { NewCaseHeading } from "./NewCaseHeading";
 import type { CaseFormData } from "@/lib/forms/case-form-schema";
-import type { Id } from "../../../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 
 // ============================================================================
 // COMPONENT

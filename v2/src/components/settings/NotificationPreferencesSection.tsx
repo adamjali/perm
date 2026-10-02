@@ -4,14 +4,17 @@ import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { analytics } from "@/lib/analytics";
 import { useMutation, useAction } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BellIcon, BellRingingIcon, BriefcaseIcon, CalendarIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, ClockIcon, DeviceMobileIcon as Smartphone, EnvelopeIcon as Mail, FileArrowUpIcon as FileCheck, FileTextIcon, MegaphoneIcon, MinusIcon, NewspaperIcon, PaperPlaneTiltIcon as Send, PlusIcon, QuestionIcon as HelpCircle, WarningIcon as AlertTriangle, WarningCircleIcon as AlertCircle, type Icon as PhosphorIcon } from "@phosphor-icons/react";
+import { BellIcon, BellRingingIcon, BriefcaseIcon, CalendarIcon, CaretDownIcon, CheckIcon, CircleNotchIcon, ClockIcon, DeviceMobileIcon as Smartphone, EnvelopeIcon as Mail, FileArrowUpIcon as FileCheck, FileTextIcon, MegaphoneIcon, MinusIcon, NewspaperIcon, PaperPlaneTiltIcon as Send, PlusIcon, QuestionIcon as HelpCircle, WarningIcon as AlertTriangle, WarningCircleIcon as AlertCircle } from "@phosphor-icons/react";
 import { toast } from "@/lib/toast";
+import { MAIL_KINDS } from "@/lib/mailKinds";
+import { SettingsCard } from "./SettingsCard";
+import { MailSubscriptionsCard } from "./MailSubscriptionsCard";
 import { captureError } from "@/lib/sentry";
 import {
   isPushSupported,
@@ -154,30 +157,6 @@ function TestButton({ onClick, disabled, loading, justSent, label, sentLabel = "
       </AnimatePresence>
       {justSent ? sentLabel : label}
     </Button>
-  );
-}
-
-interface SectionCardProps {
-  icon: PhosphorIcon;
-  title: string;
-  description: string;
-  headerRight?: React.ReactNode;
-  children: React.ReactNode;
-}
-
-function SectionCard({ icon: Icon, title, description, headerRight, children }: SectionCardProps): React.ReactElement {
-  return (
-    <div className="border-2 border-border bg-card p-6" style={{ boxShadow: "var(--shadow-hard)" }}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Icon className="w-5 h-5 text-foreground" />
-          <h3 className="font-heading font-bold text-lg text-foreground">{title}</h3>
-        </div>
-        {headerRight}
-      </div>
-      <p className="text-sm text-muted-foreground mb-6">{description}</p>
-      {children}
-    </div>
   );
 }
 
@@ -476,8 +455,8 @@ export default function NotificationPreferencesSection({
   // Weekly digest toggle with undo toast
   const handleWeeklyDigestToggle = useCallback((value: boolean): void => {
     if (!value) {
-      toast("Weekly digest disabled", {
-        description: "You’ll no longer receive Monday morning summaries.",
+      toast(`${MAIL_KINDS.digest.name} turned off`, {
+        description: "It won’t arrive on Mondays any more.",
         action: {
           label: "Undo",
           onClick: () => handleToggle("emailWeeklyDigest", true, setWeeklyDigest),
@@ -490,7 +469,7 @@ export default function NotificationPreferencesSection({
   return (
     <div className="space-y-6">
       {/* Email Notifications Section */}
-      <SectionCard icon={Mail} title="Email notifications" description="Control which email notifications you receive">
+      <SettingsCard icon={Mail} title="Email notifications" description="Control which email notifications you receive">
         <div className="space-y-5">
           <ToggleRow
             id="email-notifications-enabled"
@@ -519,10 +498,10 @@ export default function NotificationPreferencesSection({
                   <div className="space-y-0.5 flex-1">
                     <span className={`text-sm font-medium flex items-center gap-2 ${!emailEnabled ? "opacity-50" : ""}`}>
                       <BellRingingIcon className="w-4 h-4" />
-                      Deadline reminders
+                      {MAIL_KINDS.reminders.name}
                     </span>{" "}
                     <p className={`text-sm text-muted-foreground ${!emailEnabled ? "opacity-50" : ""}`}>
-                      Get notified about upcoming deadlines
+                      {MAIL_KINDS.reminders.what}
                     </p>
                   </div>
                 </button>
@@ -580,8 +559,8 @@ export default function NotificationPreferencesSection({
 
             <ToggleRow
               id="email-status-updates"
-              label="Status updates"
-              description="Get notified when case statuses change"
+              label={MAIL_KINDS.updates.name}
+              description={MAIL_KINDS.updates.what}
               checked={statusUpdates}
               onCheckedChange={(value) => handleToggle("emailStatusUpdates", value, setStatusUpdates)}
               disabled={!emailEnabled}
@@ -590,8 +569,8 @@ export default function NotificationPreferencesSection({
 
             <ToggleRow
               id="email-weekly-digest"
-              label="Weekly digest"
-              description="Receive a summary email every Monday morning"
+              label={MAIL_KINDS.digest.name}
+              description={`${MAIL_KINDS.digest.when}: ${MAIL_KINDS.digest.what}`}
               checked={weeklyDigest}
               onCheckedChange={handleWeeklyDigestToggle}
               disabled={!emailEnabled}
@@ -642,10 +621,12 @@ export default function NotificationPreferencesSection({
             />
           </div>
         </div>
-      </SectionCard>
+      </SettingsCard>
+
+      <MailSubscriptionsCard email={userEmail} />
 
       {/* Push Notifications Section */}
-      <SectionCard
+      <SettingsCard
         icon={Smartphone}
         title="Push notifications"
         description="Receive notifications directly in your browser"
@@ -696,10 +677,10 @@ export default function NotificationPreferencesSection({
             />
           </div>
         </div>
-      </SectionCard>
+      </SettingsCard>
 
       {/* Reminder Settings Section */}
-      <SectionCard icon={ClockIcon} title="Reminder settings" description="Configure when you receive deadline reminders">
+      <SettingsCard icon={ClockIcon} title="Reminder settings" description="Configure when you receive deadline reminders">
         <div className="space-y-4">
           <div>
             <Label className="text-sm font-medium text-foreground">Remind me before deadlines</Label>
@@ -765,7 +746,7 @@ export default function NotificationPreferencesSection({
             </p>
           </div>
         </div>
-      </SectionCard>
+      </SettingsCard>
     </div>
   );
 }

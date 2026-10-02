@@ -11,7 +11,7 @@ import {
 } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { usePathname } from "next/navigation";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { toast } from "@/lib/toast";
 import { captureError } from "@/lib/sentry";
 import { handleOperationError } from "@/lib/errors";

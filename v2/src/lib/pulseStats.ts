@@ -12,6 +12,7 @@
  * Nothing here is projected. Every figure is a count of decisions DOL made,
  * dated by the day our sweep saw them change.
  */
+import { MS_PER_DAY } from "@/lib/time";
 import {
   type ActivityDay,
   type WeekdayProfile,
@@ -69,4 +70,38 @@ export function recentWeekdays(days: readonly ActivityDay[], weeks = 4): Weekday
 /** Share of a day's decisions that were certifications, whole percent, or null on an empty day. */
 export function certifiedShare(day: ActivityDay): number | null {
   return day.total > 0 ? Math.round((day.certified / day.total) * 100) : null;
+}
+
+export interface PulseSummary {
+  /** Decisions in the 7 calendar days ending on the newest day. */
+  last7: number;
+  /** Decisions in the 30 calendar days ending on the newest day. */
+  last30: number;
+  /** Mean decisions on a Monday-to-Friday day in those 30 days, or null with none. */
+  weekdayAvg: number | null;
+  /** Share of the 30 days' decisions that were certifications, whole percent, or null. */
+  certifiedPct: number | null;
+}
+
+/**
+ * The few numbers a reader wants before any chart: how many in the last week,
+ * the last month, on a typical working day, and how many were approvals.
+ * Windows are CALENDAR days back from the newest day, so a missing day counts
+ * as nothing rather than pulling an older day into the window.
+ */
+export function pulseSummary(days: readonly ActivityDay[]): PulseSummary | null {
+  if (days.length === 0) return null;
+  const sorted = byDate(days);
+  const newest = Date.parse(`${sorted[sorted.length - 1]!.date}T00:00:00Z`);
+  const within = (n: number) => sorted.filter((d) => newest - Date.parse(`${d.date}T00:00:00Z`) < n * MS_PER_DAY);
+  const sum = (rows: readonly ActivityDay[], key: "total" | "certified") => rows.reduce((a, r) => a + r[key], 0);
+  const month = within(30);
+  const weekdays = month.filter((d) => weekdayIndex(d.date) < 5);
+  const last30 = sum(month, "total");
+  return {
+    last7: sum(within(7), "total"),
+    last30,
+    weekdayAvg: weekdays.length ? Math.round(sum(weekdays, "total") / weekdays.length) : null,
+    certifiedPct: last30 > 0 ? Math.round((sum(month, "certified") / last30) * 100) : null,
+  };
 }

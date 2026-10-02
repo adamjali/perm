@@ -14,8 +14,9 @@ import { captureError } from '@/lib/sentry';
 import { isAuthenticatedNextjs, convexAuthNextjsToken } from '@convex-dev/auth/nextjs/server';
 import { fetchMutation, fetchQuery } from 'convex/nextjs';
 import { rateLimitedToolResult } from '@/lib/ai/limits';
-import { api } from '@/../convex/_generated/api';
-import type { Id } from '@/../convex/_generated/dataModel';
+import type { CaseStatus, ProgressStatus } from '@/lib/perm';
+import { api } from '@convex/_generated/api';
+import type { Id } from '@convex/_generated/dataModel';
 
 // ============================================================================
 // Helper: Fetch case details for accurate confirmation messages
@@ -50,9 +51,6 @@ interface ExecuteToolRequest {
   arguments: Record<string, unknown>;
 }
 
-// Type-safe case status values
-type CaseStatus = 'pwd' | 'recruitment' | 'eta9089' | 'i140' | 'closed';
-type ProgressStatus = 'working' | 'waiting_intake' | 'filed' | 'approved' | 'under_review' | 'rfi_rfe';
 type PriorityLevel = 'low' | 'normal' | 'high' | 'urgent';
 type I140Category = 'EB-1' | 'EB-2' | 'EB-3';
 

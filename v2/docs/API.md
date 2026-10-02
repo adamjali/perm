@@ -952,40 +952,6 @@ const loadMore = async () => {
 
 ---
 
-#### `getNotificationsByCase` - Query
-
-Get all notifications for a specific case.
-
-```typescript
-getNotificationsByCase(args: {
-  caseId: Id<"cases">;
-}): Promise<Notification[]>
-```
-
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `caseId` | `Id<"cases">` | Yes | The case to get notifications for |
-
-**Returns:** `Notification[]` - Array of notifications, ordered by `createdAt` desc
-
-**Authentication:** Uses `getCurrentUserIdOrNull()` - returns empty array if unauthenticated or case not owned
-
-**Security:** Verifies user owns the case before returning notifications
-
-**Example:**
-```typescript
-const caseNotifications = useQuery(api.notifications.getNotificationsByCase, {
-  caseId: selectedCaseId,
-});
-
-return (
-  <CaseNotificationHistory notifications={caseNotifications} />
-);
-```
-
----
-
 #### `getNotificationStats` - Query
 
 Get notification statistics for dashboard display.
@@ -1100,43 +1066,6 @@ const handleMarkAllAsRead = async () => {
   }
 
   toast.success(`Marked ${totalMarked} notifications as read`);
-};
-```
-
----
-
-#### `markMultipleAsRead` - Mutation
-
-Mark specific notifications as read.
-
-```typescript
-markMultipleAsRead(args: {
-  notificationIds: Id<"notifications">[];
-}): Promise<{ count: number }>
-```
-
-**Parameters:**
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `notificationIds` | `Id<"notifications">[]` | Yes | Array of notification IDs to mark |
-
-**Returns:** `{ count: number }` - Number of notifications actually marked (excludes already-read)
-
-**Authentication:** Uses `getCurrentUserId()` - throws if unauthenticated
-
-**Throws:**
-- `"Notification {id} not found"` - Any notification in array doesn't exist
-- `"Access denied: you do not own notification {id}"` - User doesn't own any notification
-
-**Validation:** Verifies ownership of ALL notifications before updating ANY (atomic check)
-
-**Example:**
-```typescript
-const markMultipleAsRead = useMutation(api.notifications.markMultipleAsRead);
-
-const handleBulkRead = async (selectedIds: Id<"notifications">[]) => {
-  const { count } = await markMultipleAsRead({ notificationIds: selectedIds });
-  toast.success(`Marked ${count} notifications as read`);
 };
 ```
 
@@ -2749,59 +2678,6 @@ sendStatusChangeEmail(args: {
 ```
 
 **Subject:** `"Case {Stage|Progress} Updated: {previousStatus} to {newStatus} - {beneficiaryName}"`
-
----
-
-#### `sendRfiAlertEmail` - Internal Action
-
-Send an RFI (Request for Information) alert email.
-
-```typescript
-// Internal - called from scheduled jobs and case mutations
-sendRfiAlertEmail(args: {
-  notificationId: Id<"notifications">;
-  to: string;
-  beneficiaryName: string;
-  companyName: string;
-  dueDate: string;
-  daysRemaining: number;
-  receivedDate: string;
-  alertType: "new" | "reminder";
-  caseId: string;
-  caseNumber?: string;
-}): Promise<void>
-```
-
-**Subject Generation:**
-- Overdue: `"OVERDUE: RFI Response for {beneficiaryName}"`
-- Urgent (<=7 days): `"Urgent: RFI Response Due in {daysRemaining} day(s)"`
-- New: `"New RFI Received - {beneficiaryName}"`
-- Reminder: `"RFI Response Due in {daysRemaining} days"`
-
----
-
-#### `sendRfeAlertEmail` - Internal Action
-
-Send an RFE (Request for Evidence) alert email.
-
-```typescript
-// Internal - called from scheduled jobs and case mutations
-sendRfeAlertEmail(args: {
-  notificationId: Id<"notifications">;
-  to: string;
-  beneficiaryName: string;
-  companyName: string;
-  dueDate: string;
-  daysRemaining: number;
-  receivedDate: string;
-  alertType: "new" | "reminder";
-  caseId: string;
-  caseNumber?: string;
-  i140FilingDate?: string;
-}): Promise<void>
-```
-
-**Subject Generation:** Similar to RFI with 14-day urgent threshold instead of 7
 
 ---
 

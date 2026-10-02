@@ -1,7 +1,9 @@
 import { Fragment } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import type { WorkerFacet, WorkerFacetRow } from "@/lib/turso/employerHistory";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 /**
  * Who an employer (or an occupation) sponsored, from its FY2016 to FY2023
@@ -22,23 +24,20 @@ const PANELS: { facet: WorkerFacet; title: string }[] = [
   { facet: "major", title: "Fields of study" },
 ];
 
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 function Panel({ title, rows }: { title: string; rows: WorkerFacetRow[] }) {
   const top = rows[0]?.n ?? 0;
   return (
     <section className="border-2 border-border bg-card p-5 sm:p-6">
       <h3 className="font-heading text-lg font-black">{title}</h3>{" "}
-      <ul className="mt-4 space-y-2.5">
-        {rows.map((r) => (
+      <ChartTips label={`${title}, FY2016 to FY2023 cases`} className="mt-4">
+      <ul className="space-y-2.5">
+        {rows.map((r, i) => (
           <Fragment key={r.key}>
             {" "}
-            <li>
+            <li data-tip={`${r.label}\n${formatInt(r.n)} ${r.n === 1 ? "case" : "cases"}, FY2016 to FY2023\n#${i + 1} of the top ${rows.length}`}>
               <span className="flex items-baseline justify-between gap-3">
                 <span className="min-w-0 truncate text-sm font-bold">{r.label}</span>{" "}
-                <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{fmt(r.n)}</span>
+                <span className="shrink-0 font-mono text-sm tabular-nums text-foreground/70">{formatInt(r.n)}</span>
               </span>{" "}
               <span className="mt-1 block h-2 w-full bg-muted" aria-hidden="true">
                 <span
@@ -50,6 +49,7 @@ function Panel({ title, rows }: { title: string; rows: WorkerFacetRow[] }) {
           </Fragment>
         ))}
       </ul>
+      </ChartTips>
     </section>
   );
 }
@@ -72,9 +72,8 @@ export function WorkerMix({
         {subject === "employer" ? "Who they sponsored, FY2016 to FY2023" : "Who filled these jobs, FY2016 to FY2023"}
       </h2>{" "}
       <p className="mt-2 max-w-2xl text-base text-foreground/70">
-        From the worker&apos;s side of each PERM, as DOL published it. DOL printed these fields on its old
-        form, whose last cases were decided in FY2024; the form in use since mid-2023 doesn&apos;t
-        carry them. The top six of each are shown.
+        From DOL&apos;s old form; the form in use since mid-2023 doesn&apos;t carry
+        them. Top six of each.
       </p>
       <div className="mt-6 grid grid-cols-1 gap-4 [&>*]:min-w-0 md:grid-cols-2 xl:grid-cols-3">
         {panels.map((p) => (

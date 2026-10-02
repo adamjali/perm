@@ -70,8 +70,10 @@ describe("the sitemap reaches the live-only employers, and the page lets them in
     expect(start).toBeGreaterThan(0);
     expect(end).toBeGreaterThan(start);
     const liveBranch = page.slice(start, end);
-    expect(liveBranch).toContain("alternates: { canonical:");
-    expect(liveBranch).not.toContain("index: false");
+    // The branch builds its metadata like the published branch does (canonical
+    // and Open Graph included, see entityPage.test.ts) and never asks for noindex.
+    expect(liveBranch).toContain("return entityMetadata(");
+    expect(liveBranch).not.toMatch(/noindex:|index: false/);
   });
 
   it("the nightly rebuild writes the table the sitemap reads, on both of its paths", () => {

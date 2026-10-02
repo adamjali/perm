@@ -132,8 +132,7 @@ export const refreshAccessToken = internalAction({
       });
       // A person withdrawing the site's Google access (or Google expiring an
       // unused grant) answers `invalid_grant`. That's their choice, not a
-      // fault: disconnect quietly. Sep 29 2026 it emailed the admin and raised
-      // two Sentry issues during a routine resync.
+      // fault: disconnect quietly, with no admin email and no Sentry issue.
       if (!isRevokedGrant(error)) {
         await recordError(ctx, "action", "googleCalendarActions.refreshAccessToken.tokenRefresh", error, {
           userId: args.userId,
@@ -695,7 +694,8 @@ export const deleteCaseCalendarEvents = internalAction({
 /**
  * Bulk delete calendar events by type across all user's cases.
  *
- * This action is called when a calendar sync preference is toggled OFF.
+ * Scheduled by users.updateUserProfile when a calendar sync preference is
+ * switched off.
  * It deletes all events of the specified type(s) from Google Calendar
  * and clears the corresponding event IDs from all user's cases.
  *

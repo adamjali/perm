@@ -12,14 +12,11 @@
  * - Badge shows "99+" when count > 99
  * - Scale transition on badge appearance
  * - Bell icon with hover/active states
- *
- * Phase: 24 (Notifications)
- * Created: 2025-12-30
  */
 
 import { BellIcon } from "@phosphor-icons/react";
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import {
   DropdownMenu,

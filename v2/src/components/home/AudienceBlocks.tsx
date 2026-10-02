@@ -1,27 +1,33 @@
 import Link from "next/link";
 
 import { ABOUT_TWO_HALVES } from "@/lib/constants/about";
+import { FILM_ATTORNEYS, FILM_WAITING, type Film } from "@/lib/constants/films";
 
+import { ExplainerFilm } from "./ExplainerFilm";
 import { ArrowRight } from "./icons";
 
 /**
  * The two audiences, side by side, with EQUAL headings.
  *
- * Answer engines aggregate a page's H2s into "what this product is". The Sep 3
- * 2026 audit removed the attorney H2s from the homepage because AI overviews
- * were calling the site attorney-only; that fixed the framing by absence and
- * left the page describing one side. This block states both sides in full at
- * the same weight: the same heading level, the same list length, the same
- * shape. `/for-attorneys` keeps the long form; this is the complete short one.
+ * Answer engines aggregate a page's H2s into "what this product is".
+ * Attorney-only H2s make AI overviews call the site attorney-only, and
+ * removing them leaves the page describing one side. This block states both
+ * sides at the same
+ * weight: the same heading level, the same film-then-list shape.
  *
- * Plain server-rendered markup on purpose: no Motion wrapper, so the text is in
- * the prerendered HTML for every crawler and every reader before hydration.
+ * Film first, the list folded. Each half is its film, a fold called "What it does" holding the
+ * list and the full description (`ABOUT_TWO_HALVES`), and its two buttons.
+ * Every word stays in the HTML for search and for answer engines. `about-surfaces.test.ts` holds the shared description here.
+ *
+ * Plain server-rendered markup: no Motion wrapper, so the text is in the
+ * prerendered HTML for every crawler and every reader before hydration.
  */
 
 interface Half {
-  eyebrow: string;
   heading: string;
+  film: Film;
   lede: string;
+  /** Folded under "What it does", with the lede: the film carries the half. */
   items: readonly string[];
   cta: { href: string; label: string };
   secondary: { href: string; label: string };
@@ -29,13 +35,13 @@ interface Half {
 
 const HALVES: readonly Half[] = [
   {
-    eyebrow: "If you are waiting on a case",
     heading: "For the person waiting on a PERM case",
+    film: FILM_WAITING,
     lede: ABOUT_TWO_HALVES.waiting,
     items: [
-      "Look up any PERM (G- or A-), prevailing wage (P-) or H-1B LCA (I-) number, pending included",
-      "See the federal record, where DOL's queue stands, and an estimate that says when it is one",
-      "Free email alerts: a status change, DOL reaching your filing month, a visa bulletin move",
+      "Look up any PERM, wage request, LCA, H-2A or H-2B number, pending ones included",
+      "See where DOL's queue stands and when yours could be decided",
+      "Free email alerts when your case moves or DOL reaches your month",
       "Search every filing by employer, law firm, worksite state and occupation",
       "Processing times, wages, denial rates and the visa bulletin, from the government's own files",
     ],
@@ -43,14 +49,15 @@ const HALVES: readonly Half[] = [
     secondary: { href: "/perm-queue", label: "Where the queue stands" },
   },
   {
-    eyebrow: "If you file or manage cases",
     heading: "For attorneys, paralegals and HR teams",
+    film: FILM_ATTORNEYS,
     lede: ABOUT_TWO_HALVES.practice,
     items: [
-      "Every deadline computed per case under 20 CFR 656: wage expiration, recruitment clocks, the ETA 9089 window, audit and RFI responses, the I-140 cutoff",
-      "Change one date and every downstream date recalculates",
-      "Email and push reminders 1 to 30 days out, quiet hours, calendar sync, a Monday digest",
-      "CSV import with field mapping, export any time, an AI assistant over your caseload",
+      "Every deadline computed per case under 20 CFR 656",
+      "Change one date and every date after it recalculates",
+      "Reminders by email and push, calendar sync and a weekly case summary",
+      "Wage expiration, recruitment clocks, the ETA 9089 window, audit and RFI responses, the I-140 cutoff",
+      "Import cases from a JSON file, export to CSV or JSON any time, an AI assistant over your caseload",
       "Client data encrypted at rest and isolated per account, with a privacy mode for screen sharing",
     ],
     cta: { href: "/signup", label: "Start tracking cases" },
@@ -58,12 +65,29 @@ const HALVES: readonly Half[] = [
   },
 ];
 
+function Bullets({ items }: { items: readonly string[] }) {
+  return (
+    <ul className="flex flex-col gap-2.5">
+      {items.map((item) => (
+        <li key={item} className="flex gap-3 text-base leading-relaxed text-foreground/90">
+          <span aria-hidden="true" className="mt-[0.55em] block h-2.5 w-2.5 shrink-0 bg-primary" />
+          <span>{item}{" "}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function AudienceBlocks() {
   return (
     <section
       id="who-it-is-for"
       aria-labelledby="who-it-is-for-heading"
-      className="border-b-3 border-border bg-background py-16 sm:py-20"
+      // THE DARK BAND: the films play on ink, like a screen
+      // room. `dark` scopes the theme tokens to this section only (the
+      // `dark` variant is `&:is(.dark *)`), so every child reads its colours
+      // from the dark palette without a second set of classes.
+      className="dark border-b-3 border-border bg-background py-16 text-foreground sm:py-20"
     >
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8">
         <h2
@@ -72,34 +96,26 @@ export function AudienceBlocks() {
         >
           Both sides of a PERM filing
         </h2>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/70 sm:text-lg">
-          One site, two halves, both free. The person waiting on a case and the
-          people who file it read the same federal record.
+        <p className="mt-3 max-w-2xl text-lg text-foreground/75">
+          Same federal record, both free.
         </p>{" "}
-        <div className="mt-10 grid grid-cols-1 gap-6 [&>*]:min-w-0 lg:grid-cols-2">
+        <div className="mt-10 grid grid-cols-1 gap-10 [&>*]:min-w-0 lg:grid-cols-2 lg:gap-8">
           {HALVES.map((h) => (
-            <article
-              key={h.heading}
-              className="flex flex-col border-3 border-border bg-card p-6 shadow-hard sm:p-8"
-            >
-              <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-                {h.eyebrow}
-              </p>{" "}
-              <h3 className="mt-3 font-heading text-xl font-black tracking-tight sm:text-2xl">
+            <article key={h.heading} className="flex flex-col">
+              <h3 className="font-heading text-xl font-black tracking-tight sm:text-2xl">
                 {h.heading}
               </h3>{" "}
-              <p className="mt-3 text-base leading-relaxed text-foreground/80">
-                {h.lede}
-              </p>{" "}
-              <ul className="mt-5 flex flex-col gap-3">
-                {h.items.map((item) => (
-                  <li key={item} className="flex gap-3 text-base leading-relaxed text-foreground/90">
-                    <span aria-hidden="true" className="mt-[0.55em] block h-2.5 w-2.5 shrink-0 bg-primary" />
-                    <span>{item}{" "}</span>
-                  </li>
-                ))}
-              </ul>{" "}
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+              <ExplainerFilm film={h.film} className="mt-4" />{" "}
+              <details className="mt-4 border-y-2 border-border">
+                <summary className="flex min-h-[48px] cursor-pointer items-center font-bold">
+                  What it does
+                </summary>{" "}
+                <div className="pb-4">
+                  <Bullets items={h.items} />
+                  <p className="mt-4 text-base leading-relaxed text-foreground/80">{h.lede}</p>
+                </div>
+              </details>{" "}
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <Link
                   href={h.cta.href}
                   className="group inline-flex min-h-[48px] items-center justify-center gap-2 border-3 border-border bg-primary px-6 font-heading font-black text-primary-foreground shadow-hard transition-transform duration-150 hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5"

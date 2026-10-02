@@ -3,6 +3,7 @@ import { v } from "convex/values";
 import { internalMutation, internalQuery } from "./_generated/server";
 import { checkAndRecordRateLimit } from "./lib/rateLimit";
 import { normaliseFlagCaseNumber } from "../src/lib/flagCaseNumber";
+import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
 
 /**
  * Browser push alerts for a case, for people with no account and no wish to
@@ -22,14 +23,16 @@ import { normaliseFlagCaseNumber } from "../src/lib/flagCaseNumber";
  * browser watches at most ten cases; GET is never a mutation.
  */
 
-// Raised Sep 29 2026 (were 5 an hour, 200 a day, 10 cases): browser push costs
-// nothing to send, so these only bound the table and a flood.
-const PER_IP = { limit: 20, windowMs: 60 * 60 * 1000 };
-export const GLOBAL_BUDGET = { limit: 1000, windowMs: 24 * 60 * 60 * 1000 };
+// Browser push costs nothing to send, so these only bound the table and a
+// flood.
+const PER_IP = { limit: 20, windowMs: MS_PER_HOUR };
+export const GLOBAL_BUDGET = { limit: 1000, windowMs: MS_PER_DAY };
 export const CASES_PER_BROWSER = 25;
 /** Rows the sweep reads per run; more than this is a scale the sweep should be re-designed for, not a loop. */
 const SWEEP_READ = 2000;
 const CLOSE_AFTER_FAILURES = 5;
+/** Rows read for one browser endpoint when it stops: twice the cases it may watch. */
+const ENDPOINT_READ = 2 * CASES_PER_BROWSER;
 
 const result = v.object({ ok: v.boolean(), message: v.string(), throttled: v.optional(v.boolean()) });
 
@@ -112,7 +115,7 @@ export const stop = internalMutation({
   returns: v.object({ ok: v.boolean(), message: v.string(), closed: v.number() }),
   handler: async (ctx, a) => {
     if (a.endpointHash.length !== 64) return { ok: false, message: "Malformed request.", closed: 0 };
-    const rows = await ctx.db.query("caseStatusPushAlerts").withIndex("by_endpoint", (q) => q.eq("endpointHash", a.endpointHash)).take(50);
+    const rows = await ctx.db.query("caseStatusPushAlerts").withIndex("by_endpoint", (q) => q.eq("endpointHash", a.endpointHash)).take(ENDPOINT_READ);
     let closed = 0;
     const now = Date.now();
     for (const r of rows) {

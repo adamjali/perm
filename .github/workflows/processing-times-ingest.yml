@@ -1,40 +1,24 @@
 name: DOL processing times
 
-# Fetches https://flag.dol.gov/processingtimes and stores the parsed snapshot
-# in Turso.
+# The daily federal reads that are each one small fetch: DOL's processing times
+# (flag.dol.gov/processingtimes), the Federal Register feed, OFLC's
+# announcements, state WARN notices, DOL's debarment lists, the visa bulletin
+# and the State Department's annual limits. Each later step runs whatever
+# happened before it and records its own failure, so one source's bad day
+# never costs the others.
 #
-# This used to be a Convex cron. It moved because that is exactly how the data
-# went stale without anyone noticing: the Convex deployment was disabled for
-# exceeding its free tier, the cron stopped with it, and the page kept
-# rendering the last snapshot as though it were current. A scheduled job that
-# lives in the same system as the data it feeds fails silently together with
-# it.
+# The processing-times row is keyed by DOL's own as-of date, so a run on a day
+# DOL has not republished replaces a row with an identical one and never
+# invents a history point (the PWD drain rate is measured between two
+# different as-of dates).
 #
-# DAILY. It was weekly, on the reasoning that DOL republishes weekly - true,
-# but it meant a mid-week update sat unseen for up to six days while the site
-# rendered the older snapshot as current. The rival polls this same page every
-# few minutes; a day is the honest middle, and it costs one page fetch.
-#
-# Safe at any cadence because the job is idempotent: the row is keyed by DOL's
-# own `permAsOf` date, so a run on a day DOL has not republished replaces one
-# row with an identical one and never fabricates a history point. That matters
-# - the PWD drain rate is measured BETWEEN two snapshots with different as-of
-# dates, so inventing points would invent a rate.
-#
-# flag.dol.gov serves scripts without any header ceremony. That is NOT true of
-# www.dol.gov, which 403s a bare user agent and 403s a full browser header set
-# again after sustained traffic. Measured 2026-08-25 with cloudflare.com and
-# discord.com as controls, because "the site blocks bots" and "we are rate
-# limited" need completely different responses and look identical from one
-# failed request.
+# The server's timer dispatches this daily at 07:00 UTC through
+# /api/cron/dispatch, because GitHub's own `schedule` ran hours late here.
 #
 # Manual run:
 #   cd v2 && node --experimental-strip-types scripts/ingest_processing_times.mts
 
 on:
-  # No `schedule:` any more: the server's timer dispatches processing-times at
-  # 07:00 UTC through /api/cron/dispatch (GitHub ran this cron 4 to 7.5 hours
-  # late every day, measured Sep 7 2026).
   workflow_dispatch:
 
 permissions:
@@ -48,17 +32,20 @@ jobs:
   ingest:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
-          node-version: "24"
+          node-version: 24.x
 
       - name: Install
         working-directory: v2
-        # The ingest needs @libsql/client and the parser's own (zero)
-        # dependencies. A frozen lockfile so a transitive bump cannot change
-        # what a scheduled job runs without a commit saying so.
+        # @libsql/client for the processing-times ingest. A frozen lockfile so a
+        # transitive bump cannot change what a scheduled job runs without a
+        # commit saying so.
         run: |
           corepack enable
           pnpm install --frozen-lockfile --ignore-scripts
@@ -66,114 +53,66 @@ jobs:
       - name: Fetch and store
         id: ingest
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-        run: |
-          # The script reads .env.local; in CI the values arrive as secrets, so
-          # materialise them into the file it expects rather than teaching the
-          # script two ways to find a credential.
-          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
-            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
-          node --experimental-strip-types scripts/ingest_processing_times.mts
+        run: node --experimental-strip-types scripts/ingest_processing_times.mts
 
-      # Expire the public pages that render DOL's number, but ONLY on a day DOL
-      # actually republished.
-      #
-      # The pages carry `revalidate = 86400` while this job runs daily, so
-      # without this the fresh figure can sit in Turso while every page still
-      # serves the old one for up to another 24 hours: worst case ~48h behind
-      # DOL, on a band whose whole claim is that it is live.
-      #
-      # Gated on `dol_changed` rather than running every night because DOL moves
-      # roughly weekly. Firing unconditionally would expire these pages on the
-      # ~29 days a month nothing changed, and every expiry a visitor walks into
-      # is a paid ISR render for an identical number.
-      #
-      # Never fails the run: the ingest above has already stored the data, and a
-      # page staying one window staler is not a reason to report a successful
-      # federal-data fetch as failed. Same rule the employer-page expiry uses.
-      # The Federal Register feed rides the same daily clock. It cannot fail
-      # the run: the processing times above are already stored, and a feed
-      # that missed a day is recorded through the failure hook and shows on
-      # the health check as its own dataset.
+      # openpyxl reads the WARN spreadsheets; pdfplumber reads the debarment
+      # and annual-limits PDFs. Installed here because nothing else in the
+      # tree needs them.
+      - name: Python dependencies
+        if: always()
+        run: |
+          python3 -m pip install --quiet --user openpyxl pdfplumber \
+            || python3 -m pip install --quiet --break-system-packages openpyxl pdfplumber
+
       - name: Federal Register notices
         if: always()
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           python3 scripts/ingest_policy_notices.py \
             || python3 scripts/record_ingest_failure.py --script ingest_policy_notices.py --note "policy feed failed" || true
 
-      # DOL's debarment lists: the OFLC program-debarments PDF (PERM, H-2A,
-      # H-2B) and the Wage and Hour H-1B page. www.dol.gov answers this
-      # runner with a full browser header set and refuses residential
-      # addresses, so this step has no laptop backstop. pdfplumber is the
-      # one non-stdlib dependency, installed here rather than pinned in the
-      # repo because nothing else in the tree reads a PDF.
-      # OFLC's own announcements page, into the policy feed. Same host and
-      # header rules as the debarment lists: the runner answers, a laptop does
-      # not, so there is no residential backstop. A parse of zero rows refuses
-      # to write rather than emptying the feed's OFLC half.
+      # OFLC's announcements page, into the policy feed. A parse of zero rows
+      # refuses to write rather than emptying the feed's OFLC half.
       - name: OFLC announcements
         if: always()
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           python3 scripts/ingest_oflc_news.py \
             || python3 scripts/record_ingest_failure.py --script ingest_oflc_news.py --note "OFLC announcements failed"
 
-      # California's WARN report (a 50 KB spreadsheet), matched to sponsors by
-      # merge key. Weekly would do; daily is cheap and keeps the freshness row
-      # honest. Four states: California, Texas, New York and Washington; Texas's
-      # site challenges scripts on some days and then the run records partial.
+      # California, New York, Texas and Washington. Texas's own site challenges
+      # scripts, so its automatic source is the state's open data portal.
       - name: WARN notices
         if: always()
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
-          python3 -m pip install --quiet --user openpyxl \
-            || python3 -m pip install --quiet --break-system-packages openpyxl
           python3 scripts/ingest_warn.py \
             || python3 scripts/record_ingest_failure.py --script ingest_warn.py --note "WARN notices failed"
 
+      # The OFLC program-debarments PDF (PERM, H-2A, H-2B) and the Wage and
+      # Hour H-1B page. www.dol.gov answers this runner with a full browser
+      # header set.
       - name: Debarment lists
         if: always()
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
-          python3 -m pip install --quiet --user pdfplumber \
-            || python3 -m pip install --quiet --break-system-packages pdfplumber
           python3 scripts/ingest_debarments.py \
             || python3 scripts/record_ingest_failure.py --script ingest_debarments.py --note "debarment lists failed" || true
 
-      # The visa bulletin, from the State Department's own host. travel.state.gov
-      # refuses scripts; adoption.state.gov serves the same pages (measured
-      # 2026-09-26). One index request a day, plus a page on the day a bulletin
-      # lands. A refusal warns and exits 0: the visa-bulletin freshness budget
-      # is the alarm, and --from-file with a browser-saved page is the fallback.
+      # The visa bulletin from the State Department's own adoption.state.gov
+      # host (travel.state.gov refuses scripts). A refusal warns and exits 0:
+      # the visa-bulletin freshness budget is the alarm, and --from-file with a
+      # browser-saved page is the fallback.
       - name: Visa bulletin (direct)
         id: bulletin
         if: always()
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
           python3 scripts/ingest_visa_bulletin.py --direct \
             || python3 scripts/record_ingest_failure.py --script ingest_visa_bulletin.py --note "visa bulletin direct read failed"
 
-      # The bulletin pages sit on a one-day window and this runs at 3 AM, so a
-      # bulletin published during the day kept showing the old month until the
-      # next morning. The script reports bulletin_changed when it stored one.
+      # The bulletin pages sit on a one-day window, so a bulletin stored today
+      # expires them now rather than tomorrow.
       - name: Expire the bulletin pages
         if: always() && steps.bulletin.outputs.bulletin_changed == 'true'
         env:
@@ -186,56 +125,42 @@ jobs:
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
             || echo "revalidation call failed"
 
-      # The yearly spillover figures (annual limits, Table V) from the same State
-      # host. Three small page reads a day; a PDF only in the week a new fiscal
-      # year appears.
+      # The yearly spillover figures (annual limits, Table V) from the same
+      # State host. A PDF is fetched only in the week a new fiscal year appears.
       - name: Visa annual limits (direct)
         if: always()
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
-          python3 -m pip install --quiet --user pdfplumber \
-            || python3 -m pip install --quiet --break-system-packages pdfplumber
           python3 scripts/ingest_visa_limits.py --discover \
             || python3 scripts/record_ingest_failure.py --script ingest_visa_limits.py --note "visa limits discovery failed"
 
+      # Expire the pages that print DOL's figure, only on a day DOL actually
+      # republished (roughly weekly). Never fails the run: the data is already
+      # stored, and a page one window staler is not a failed fetch.
       - name: Expire the DOL pages
         if: steps.ingest.outputs.dol_changed == 'true'
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
-          # Through env, not interpolated into the shell: this value is parsed
-          # out of a third party's HTML, so it is untrusted by construction.
+          # Through env, not interpolated into the shell: the value is parsed
+          # out of a third party's HTML, so it is untrusted.
           PERM_AS_OF: ${{ steps.ingest.outputs.perm_as_of }}
         run: |
           if [ -z "$REVALIDATE_SECRET" ]; then
             echo "REVALIDATE_SECRET not set; skipping"; exit 0
           fi
           echo "DOL published a new as-of ($PERM_AS_OF); expiring the pages that show it"
-          # -f so a 4xx/5xx is visible in the log rather than a silent 403 body
-          # scrolling past as if it were a success.
           curl -fsS -X POST https://permtracker.app/api/revalidate-dol \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
             || echo "revalidation call failed"
 
-      # A second, independent read of the same public sources. It does not
-      # import anything - it compares. A disagreement on a cutoff cell we both
-      # publish for the same month means one of us has a parsing bug, and that
-      # is worth a red run. continue-on-error because their availability is
-      # not our correctness: if their API is down or changed shape, our data
-      # is unaffected and the ingest above has already succeeded.
-      - name: Cross-check against the rival tracker public API
+      # A second, independent read of the same public sources from a third
+      # party, compared rather than imported: a disagreement on a cutoff both
+      # sides publish means one side has a parsing bug. Their availability is
+      # not our correctness, so it can't fail the run.
+      - name: Cross-check against a third-party source
         if: always()
         continue-on-error: true
         working-directory: v2
         env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           CROSS_CHECK_API: ${{ secrets.CROSS_CHECK_API }}
         run: python3 scripts/cross_check_sources.py
-
-      - name: Remove credentials
-        if: always()
-        working-directory: v2
-        run: rm -f .env.local

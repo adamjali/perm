@@ -6,8 +6,9 @@
 
 import { KNOWN_PERSON_AUTHORS } from "@/lib/constants/externalLinks";
 import type { PostMeta, ContentType, PostSummary } from "./types";
+import { SITE_URL } from "@/lib/constants/site";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+const BASE_URL = SITE_URL;
 
 /** Emitted identically by Article and VideoObject; written once so it stays that way. */
 const PUBLISHER = {
@@ -55,12 +56,12 @@ export function generateArticleSchema(
     dateModified: toISO8601(meta.updated || meta.date),
     // THE ARTICLE'S OWN BYLINE, resolved to the right schema type.
     //
-    // Everything used to be an Organization called "PERM Tracker Team", which
-    // asserts no expertise and names nobody accountable - the weakest possible
-    // signal on immigration guidance, the category where Google weighs
-    // experience hardest. The first fix overcorrected and hardcoded ONE person
-    // across all 22 articles, which threw away the per-file frontmatter that
-    // already existed and would have bylined the changelog to a human.
+    // An Organization called "PERM Tracker Team" asserts no expertise and
+    // names nobody accountable, the weakest possible signal on immigration
+    // guidance, the category where Google weighs experience hardest. One
+    // hardcoded person across every article is wrong the other way: it
+    // ignores each file's frontmatter and would byline the changelog to a
+    // human.
     //
     // A registered name becomes a Person with `sameAs`, which is what makes a
     // byline a checkable identity rather than a string. Anything else stays an

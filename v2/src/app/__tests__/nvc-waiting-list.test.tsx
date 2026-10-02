@@ -35,9 +35,10 @@ describe("/nvc-waiting-list", () => {
 
   it("draws every November from 2016 for each employment category", async () => {
     const { out } = await html();
-    const titles = [...out.matchAll(/<title>November (\d{4}): /g)].map((m) => m[1]);
-    expect(new Set(titles)).toEqual(new Set(["2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023"]));
-    expect(out).toContain("November 2023: 44,470 ");
+    // Each bar names its year on hover (ChartTips' data-tip), not in an SVG <title>.
+    const years = [...out.matchAll(/ waiting\nAs of Nov 1, (\d{4})"/g)].map((m) => m[1]);
+    expect(new Set(years)).toEqual(new Set(["2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023"]));
+    expect(out).toContain("44,470 waiting\nAs of Nov 1, 2023");
   });
 
   it("links the report behind each year", async () => {

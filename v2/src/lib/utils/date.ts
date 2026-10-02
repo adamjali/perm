@@ -3,16 +3,14 @@
  * Pure JavaScript implementation - no external dependencies
  */
 
+import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "@/lib/time";
+
 const MONTH_NAMES = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
 ] as const;
 
-const SECOND = 1000;
-const MINUTE = 60 * SECOND;
-const HOUR = 60 * MINUTE;
-const DAY = 24 * HOUR;
-const WEEK = 7 * DAY;
+const WEEK = 7 * MS_PER_DAY;
 
 /**
  * Format a date as a relative time from now (e.g., "5m ago", "just now")
@@ -28,25 +26,25 @@ export function formatDistanceToNow(date: Date | number): string {
 
   // Within 60 seconds (inclusive): "just now"
   // Edge case: exactly 60 seconds is still considered "just now"
-  if (diffMs <= 60 * SECOND) {
+  if (diffMs <= MS_PER_MINUTE) {
     return "just now";
   }
 
   // Within 1 hour: "Xm ago"
-  if (diffMs < HOUR) {
-    const minutes = Math.floor(diffMs / MINUTE);
+  if (diffMs < MS_PER_HOUR) {
+    const minutes = Math.floor(diffMs / MS_PER_MINUTE);
     return `${minutes}m ago`;
   }
 
   // Within 24 hours: "Xh ago"
-  if (diffMs < DAY) {
-    const hours = Math.floor(diffMs / HOUR);
+  if (diffMs < MS_PER_DAY) {
+    const hours = Math.floor(diffMs / MS_PER_HOUR);
     return `${hours}h ago`;
   }
 
   // Within 7 days: "Xd ago"
   if (diffMs < WEEK) {
-    const days = Math.floor(diffMs / DAY);
+    const days = Math.floor(diffMs / MS_PER_DAY);
     return `${days}d ago`;
   }
 

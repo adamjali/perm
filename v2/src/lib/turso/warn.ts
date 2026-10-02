@@ -85,11 +85,9 @@ export interface WarnTotals {
 /**
  * What the table HOLDS, which is not what the page lists.
  *
- * The page shows the newest few hundred notices, and until 2026-09-09 its
- * three headline figures were computed from that slice. That was accurate
- * while the corpus was one state's current report and became false the moment
- * Texas brought 2,367 notices back to 2019: a card reading "notices read: 400"
- * over a table holding 2,969 understates the record by a factor of seven.
+ * The page shows the newest few hundred notices, so headline figures computed
+ * from that slice would understate a multi-state record reaching back years:
+ * a card reading "notices read: 400" over a table of thousands.
  * Three aggregates over a few thousand indexed rows cost nothing; a wrong
  * figure on a page whose whole claim is checkable facts costs the page.
  *
@@ -116,12 +114,11 @@ export const warnTotals = cache(async (): Promise<WarnTotals> => {
 /**
  * Every notice matched to a sponsor, newest first, for the layoffs table.
  *
- * The page used to take the newest 400 notices of all four states and keep
- * the matched ones, so a matched notice older than the 400th filing anywhere
- * never reached the table: measured 2026-09-26, 258 matched notices held and
- * the table could show only the ones inside that window. The whole table is
- * about 3,100 rows, so reading the matched set outright is a walk of the date
- * index the page's six-hour window pays for four times a day.
+ * Taking the newest 400 notices of all four states and keeping the matched
+ * ones would drop every matched notice older than the 400th filing anywhere.
+ * The whole table is a few thousand rows, so reading the matched set outright
+ * is a walk of the date index the page's six-hour window pays for four times
+ * a day.
  */
 export const matchedWarn = cache(async (limit = 2000): Promise<WarnNotice[]> => {
   const r = await rows<DbRow>(

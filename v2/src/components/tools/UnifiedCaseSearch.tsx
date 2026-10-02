@@ -7,7 +7,7 @@ import { useUrlSearchParams } from "@/hooks/useUrlSearchParams";
 import { STAGE_PROGRAM_LABEL, searchStages } from "@/lib/searchStages";
 import { CircleNotchIcon, WarningIcon } from "@phosphor-icons/react";
 
-import { usePublicQuery } from "@/lib/usePublicQuery";
+import { usePublicQuery } from "@/hooks/usePublicQuery";
 import { formatWage } from "@/lib/wageFormat";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
 import { SortableHeader } from "@/components/tools/SortableHeader";
@@ -39,6 +39,7 @@ import {
 import type { Program, UnifiedCase } from "@/lib/turso/unifiedSearch";
 import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/turso/caseSearchReads";
 import { RequestFailed } from "@/components/tools/RequestFailed";
+import { formatInt } from "@/lib/format";
 
 /**
  * Every DOL filing this site holds, in one search, with every filter the
@@ -90,18 +91,20 @@ const PROGRAM_LABEL: Record<Program, string> = {
   perm: "PERM",
   pwd: "Wage request",
   lca: "H-1B LCA",
+  seasonal: "H-2A / H-2B",
 };
 
 const PROGRAM_BLURB: Record<Program, string> = {
   perm: "The labor certification itself (ETA-9089).",
   pwd: "The wage DOL sets before the PERM (ETA-9141).",
   lca: "The H-1B labor condition application (ETA-9035).",
+  seasonal: "Seasonal work: H-2A and H-2B applications and H-2B wage requests. DOL's live record only.",
 };
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
 /** A typed NAICS code. A sector range comes only from the list. */
 const NAICS_CODE_RE = /^\d{2,6}$/;
-const ALL_PROGRAMS: Program[] = ["perm", "pwd", "lca"];
+const ALL_PROGRAMS: Program[] = ["perm", "pwd", "lca", "seasonal"];
 const WORKER_KEYS: CaseFieldKey[] = ["citizenship", "birthCountry", "visaClass", "education", "jobEducation"];
 /** The route's parameter for each worker and job field. */
 const WORKER_PARAM: Record<CaseFieldKey, string> = {
@@ -136,11 +139,9 @@ const CONTROL =
   // gate scans file TEXT and cannot tell a comment from a className.)
   "disabled:border-border/50 disabled:bg-tint-primary/40 disabled:text-muted-foreground";
 const BUTTON =
-  "min-h-[44px] border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
 const CHIP =
-  "min-h-[44px] border-2 border-border px-4 font-mono text-xs font-bold uppercase tracking-wider transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-card ";
-
-const fmt = (n: number) => n.toLocaleString("en-US");
+  "min-h-[44px] border-2 border-border px-4 font-mono text-sm font-bold uppercase tracking-wider transition-colors hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-card ";
 
 /**
  * Rows drawn at once. An answer holds up to 1,000 (UNIFIED_MAX); drawing them
@@ -281,7 +282,7 @@ function Choice({
         {options.map((o) => (
           <option key={o.value} value={o.value}>
             {display(o.value)}
-            {o.n === null ? "" : ` (${fmt(o.n)})`}
+            {o.n === null ? "" : ` (${formatInt(o.n)})`}
           </option>
         ))}
       </select>
@@ -582,12 +583,12 @@ export function UnifiedCaseSearch({
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
         <form onSubmit={submit} className="space-y-6">
           <fieldset className="min-w-0">
-            <legend className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
               What to search by
             </legend>{" "}
             <p className="mb-3 mt-1 text-sm leading-relaxed text-foreground/70">
-              Fill in any one of these. An employer reaches all three programs
-              and both halves of each; a firm, a state or an occupation reads
+              Fill in any one of these. An employer reaches every program, live
+              and published; a firm, a state or an occupation reads
               DOL&apos;s published PERM file, which is the only place those
               fields exist.
             </p>{" "}
@@ -628,10 +629,9 @@ export function UnifiedCaseSearch({
                 Out here it spans the full width and the button lines up with
                 the field it submits. */}
             <p id={`${uid}-q-hint`} className="mt-1 text-sm leading-snug text-foreground/70">
-              An employer is matched from the start of the name. All four
-              case-number prefixes work: G- and A- for PERM, P- for a wage
-              request, I- for an H-1B LCA. Or leave this empty and search by law
-              firm, worksite state or occupation instead.
+              The start of an employer&apos;s name, or any case number: G- or A- (PERM), P-100 (wage request),
+              I- (H-1B LCA), H-300, H-400 or P-400 (H-2A, H-2B). Or leave it empty and search by law firm,
+              state or occupation.
             </p>{" "}
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
               <Field
@@ -667,7 +667,7 @@ export function UnifiedCaseSearch({
                   <option value="">Any state</option>
                   {states.map((s) => (
                     <option key={s.code} value={s.code}>
-                      {s.code} ({fmt(s.total)})
+                      {s.code} ({formatInt(s.total)})
                     </option>
                   ))}
                 </select>
@@ -693,7 +693,7 @@ export function UnifiedCaseSearch({
           </fieldset>
 
           <fieldset className="min-w-0">
-            <legend className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
               Narrow it
             </legend>{" "}
             {can.outcome.why === "no-lead" ? (
@@ -880,7 +880,7 @@ export function UnifiedCaseSearch({
                   <option value="">Any year</option>
                   {fiscalYears.map((f) => (
                     <option key={f.fiscalYear} value={f.fiscalYear}>
-                      FY{f.fiscalYear} ({fmt(f.total)})
+                      FY{f.fiscalYear} ({formatInt(f.total)})
                     </option>
                   ))}
                 </select>
@@ -1016,12 +1016,13 @@ export function UnifiedCaseSearch({
           </fieldset>
 
           <fieldset className="min-w-0">
-            <legend className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
               Worker and job
             </legend>{" "}
             <p className="mb-3 mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">
               These are fields of DOL&apos;s published PERM file alone, so setting
-              one leaves out wage requests, LCAs and filings still open.{" "}
+              one leaves out wage requests, LCAs, H-2A and H-2B filings and
+              filings still open.{" "}
               {OLD_FORM_NOTE}
             </p>{" "}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
@@ -1142,7 +1143,7 @@ export function UnifiedCaseSearch({
           <p className="mt-3">
             <Link
               href={`/perm-case-status?case=${encodeURIComponent(typedCaseNumber)}`}
-              className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-foreground px-5 font-mono text-xs font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
+              className="inline-flex min-h-[44px] items-center gap-2 border-2 border-border bg-foreground px-5 font-mono text-sm font-bold uppercase tracking-wider text-background hover:bg-primary hover:text-primary-foreground"
             >
               <LinkPending />
               Check {typedCaseNumber} with DOL
@@ -1227,7 +1228,7 @@ export function UnifiedCaseSearch({
           <p className="text-base leading-relaxed">
             <b className="font-bold">Law firm:</b> {data.resolved.firm.name}{" "}
             <span className="text-foreground/70">
-              ({fmt(data.resolved.firm.total)} published cases)
+              ({formatInt(data.resolved.firm.total)} published cases)
             </span>
           </p>{" "}
           {data.resolved.firm.alternatives.length > 0 ? (
@@ -1244,7 +1245,7 @@ export function UnifiedCaseSearch({
                       onClick={() => applyAlternative("firm", a.name)}
                       className="min-h-[44px] border-2 border-border bg-card px-3 text-sm font-bold hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
                     >
-                      {a.name} ({fmt(a.total)})
+                      {a.name} ({formatInt(a.total)})
                     </button>{" "}
                   </Fragment>
                 ))}
@@ -1272,7 +1273,7 @@ export function UnifiedCaseSearch({
                     onClick={() => applyAlternative("occupation", a.name)}
                     className="min-h-[44px] border-2 border-border bg-card px-3 text-sm font-bold hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
                   >
-                    {a.name} ({fmt(a.total)})
+                    {a.name} ({formatInt(a.total)})
                   </button>{" "}
                 </Fragment>
               ))}
@@ -1333,7 +1334,7 @@ export function UnifiedCaseSearch({
             <b className="font-bold">Only published PERM cases are in this answer.</b>{" "}
             The {data.permOnly?.join(", ")}{" "}
             {data.permOnly?.length === 1 ? "is a field" : "are fields"} of
-            DOL&apos;s PERM file alone; wage requests and LCAs don&apos;t carry{" "}
+            DOL&apos;s PERM file alone; wage requests, LCAs and H-2A and H-2B filings don&apos;t carry{" "}
             {data.permOnly?.length === 1 ? "it" : "them"}.
           </p>
         </div>
@@ -1354,7 +1355,7 @@ export function UnifiedCaseSearch({
             >
               The status lookup
             </Link>{" "}
-            takes all three prefixes and asks DOL directly.
+            takes every prefix and asks DOL directly.
           </p>
         </div>
       ) : null}
@@ -1382,7 +1383,7 @@ export function UnifiedCaseSearch({
                   when it is the newest slice of it. */}
               Shown:{" "}
               {ALL_PROGRAMS.filter((p) => data.counts[p] > 0)
-                .map((p) => `${fmt(data.counts[p])} ${PROGRAM_LABEL[p]}`)
+                .map((p) => `${formatInt(data.counts[p])} ${PROGRAM_LABEL[p]}`)
                 .join(" · ")}
             </p>{" "}
             {/* The same search as CSV: the route runs every guard again and
@@ -1392,9 +1393,9 @@ export function UnifiedCaseSearch({
               <a
                 href={`/api/case-search?${submitted}&format=csv`}
                 download="permtracker-case-search.csv"
-                className="inline-flex min-h-[44px] items-center border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
+                className="inline-flex min-h-[44px] items-center border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-tint-primary focus-visible:ring-2 focus-visible:ring-primary"
               >
-                Download CSV ({fmt(data.rows.length)} rows)
+                Download CSV ({formatInt(data.rows.length)} rows)
               </a>
             ) : null}
           </div>{" "}
@@ -1402,7 +1403,7 @@ export function UnifiedCaseSearch({
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[1200px] border-collapse text-left text-base">
               <caption className="sr-only">
-                Every filing found across PERM, wage requests and LCAs
+                Every filing found across PERM, wage requests, LCAs and H-2A and H-2B
               </caption>
               <SortableHeader
                 columns={COLUMNS}
@@ -1508,15 +1509,15 @@ export function UnifiedCaseSearch({
           {shown.length > visible ? (
             <div className="mt-3 flex flex-wrap items-center gap-3">
               <p className="text-sm text-foreground/70">
-                Showing {fmt(visible)} of {fmt(shown.length)}. The CSV download carries all{" "}
-                {fmt(data.rows.length)}.
+                Showing {formatInt(visible)} of {formatInt(shown.length)}. The CSV download carries all{" "}
+                {formatInt(data.rows.length)}.
               </p>{" "}
               <button
                 type="button"
                 className={CHIP + "bg-card"}
                 onClick={() => setExpanded({ key: pageKey, n: visible + PAGE_ROWS })}
               >
-                Show {fmt(Math.min(PAGE_ROWS, shown.length - visible))} more
+                Show {formatInt(Math.min(PAGE_ROWS, shown.length - visible))} more
               </button>
             </div>
           ) : null}{" "}
@@ -1528,26 +1529,20 @@ export function UnifiedCaseSearch({
           {data.rows.some((r) => !r.decidedOn && r.seenDecidedOn) ? (
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-foreground/70">
               <span className="font-bold text-primary">*</span>{" "}
-              Not DOL&apos;s determination date. DOL publishes none until a case
-              reaches a quarterly file, so this is the day our daily check first
-              saw the case final. It is an upper bound: the decision happened at
-              some point between that check and the one before it.
+              Not DOL&apos;s decision date, which it publishes only in its quarterly files: the day our daily check
+              first saw the case final. The decision came between that check and the one before.
             </p>
           ) : null}{" "}
 
           {data.windowed ? (
             <p className="mt-4 max-w-3xl border-2 border-border bg-tint-primary p-4 text-base leading-relaxed">
-              <b className="font-bold">These filters were applied to the newest
-              part of this employer&apos;s record, not all of it.</b>{" "}
-              An employer name is matched as a prefix, and no index can hand
-              those rows back in date order, so each program is narrowed within
-              its most recent filings rather than by reading the whole slice on
-              every search. Give the employer&apos;s full name, or add a filing
-              month, to move the window.
+              <b className="font-bold">These filters covered this employer&apos;s newest filings, not its whole
+              record.</b>{" "}
+              Give the full employer name, or add a filing month, to reach older ones.
             </p>
           ) : null}{" "}
           <p className="mt-4 max-w-3xl text-sm leading-relaxed text-foreground/70">
-            Showing {fmt(shown.length)} of {fmt(data.rows.length)} filings.
+            Showing {formatInt(shown.length)} of {formatInt(data.rows.length)} filings.
             {data.truncated || data.capped
               ? data.order === "decided-asc"
                 ? " More matched than fit one answer: these are the oldest decisions, and a filing month, a decision month or a fiscal year brings the rest into reach."

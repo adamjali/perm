@@ -16,7 +16,7 @@ import { screen, within } from "@testing-library/react";
 import { renderWithProviders } from "../../../../test-utils/render-utils";
 import { TimelineGrid } from "../TimelineGrid";
 import type { TimelineCaseData } from "../TimelineGrid";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 
 // TEST FIXTURES
 

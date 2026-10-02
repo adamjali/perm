@@ -15,7 +15,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import type { UnifiedCase } from "@/lib/turso/unifiedSearch";
 
 const usePublicQuery = vi.fn();
-vi.mock("@/lib/usePublicQuery", () => ({ usePublicQuery }));
+vi.mock("@/hooks/usePublicQuery", () => ({ usePublicQuery }));
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
   useRouter: () => ({ push: vi.fn() }),
@@ -41,7 +41,7 @@ function answer(over: Record<string, unknown> = {}) {
       }),
       row("G-100-24001-000002", { wage: 150000, decidedOn: "2024-03-01" }),
     ],
-    counts: { perm: 2, pwd: 0, lca: 0 },
+    counts: { perm: 2, pwd: 0, lca: 0, seasonal: 0 },
     truncated: false, capped: false, windowed: false,
     skipped: { live: true, published: false, because: ["citizenship"] },
     lead: { kind: "employer", value: "acme" },
@@ -190,7 +190,7 @@ describe("a long answer is shown a page at a time, and says so", () => {
   it("draws 100 rows, counts the rest, and shows more on request", () => {
     const many = Array.from({ length: 230 }, (_, i) => row(`G-100-24001-${String(100000 + i).padStart(6, "0")}`));
     usePublicQuery.mockImplementation((url: string) =>
-      url === "skip" ? { data: undefined, failed: false } : { data: answer({ rows: many, counts: { perm: 230, pwd: 0, lca: 0 } }), failed: false },
+      url === "skip" ? { data: undefined, failed: false } : { data: answer({ rows: many, counts: { perm: 230, pwd: 0, lca: 0, seasonal: 0 } }), failed: false },
     );
     renderIt();
     fireEvent.change(screen.getByLabelText("Employer or case number"), { target: { value: "acme" } });

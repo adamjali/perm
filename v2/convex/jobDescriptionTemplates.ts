@@ -103,32 +103,6 @@ export const searchByName = query({
   },
 });
 
-/**
- * Find template by exact name match.
- * Used for auto-populating when case position title matches a template.
- */
-export const findByExactName = query({
-  args: { name: v.string() },
-  handler: async (ctx, args) => {
-    const userId = await getCurrentUserIdOrNull(ctx);
-    if (!userId) return null;
-
-    const nameLower = args.name.toLowerCase().trim();
-    if (!nameLower) return null;
-
-    const templates = await ctx.db
-      .query("jobDescriptionTemplates")
-      .withIndex("by_user_and_name", (q) =>
-        q.eq("userId", userId)
-      )
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
-      .collect();
-
-    // Case-insensitive exact match
-    return templates.find((t) => t.name.toLowerCase() === nameLower) ?? null;
-  },
-});
-
 // ============================================================================
 // MUTATIONS
 // ============================================================================

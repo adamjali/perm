@@ -4,6 +4,7 @@ import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { recordError } from "./lib/errorRecording";
+import { MS_PER_DAY, MS_PER_HOUR } from "./lib/time";
 
 /**
  * The contact form's write path. Public-endpoint checklist applied:
@@ -20,10 +21,8 @@ import { recordError } from "./lib/errorRecording";
 
 const GLOBAL_PER_DAY = 25;
 const PER_IP_PER_HOUR = 10;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const HOUR_MS = 60 * 60 * 1000;
 
-/** Where the form lands. Adam's forwarding picks it up from support@. */
+/** Where the form lands; support@ forwards to the owner. */
 const CONTACT_INBOX = "support@permtracker.app";
 
 export const submit = internalMutation({
@@ -43,7 +42,7 @@ export const submit = internalMutation({
 
     // Global budget: bounded read via the index range, newest first.
     let today = 0;
-    const dayFloor = now - DAY_MS;
+    const dayFloor = now - MS_PER_DAY;
     for await (const row of ctx.db
       .query("contactMessages")
       .withIndex("by_created", (q) => q.gte("createdAt", dayFloor))) {
@@ -64,7 +63,7 @@ export const submit = internalMutation({
     for await (const row of ctx.db
       .query("contactMessages")
       .withIndex("by_ip_created", (q) =>
-        q.eq("ip", args.ip).gte("createdAt", now - HOUR_MS),
+        q.eq("ip", args.ip).gte("createdAt", now - MS_PER_HOUR),
       )) {
       mine += 1;
       if (mine >= PER_IP_PER_HOUR) {

@@ -6,8 +6,9 @@
  */
 
 import { getAllPosts } from "@/lib/content";
+import { SITE_URL } from "@/lib/constants/site";
 
-const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+const BASE_URL = SITE_URL;
 
 function escapeXml(str: string): string {
   return str

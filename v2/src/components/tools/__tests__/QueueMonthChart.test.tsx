@@ -61,7 +61,13 @@ describe("QueueMonthChart", () => {
     // explains it. A marker with no named month is the thing that reads as a
     // rendering fault.
     expect(screen.getAllByText("October 2025")).toHaveLength(2);
-    expect(screen.getByTitle(/Far fewer cases were filed/)).toBeInTheDocument();
+    // The marked row says why on hover (ChartTips), not in a native title,
+    // so a mouse never sees two tooltips.
+    expect(
+      [...document.querySelectorAll("[data-tip]")].filter((el) =>
+        el.getAttribute("data-tip")?.includes("Far fewer cases were filed in this month"),
+      ),
+    ).toHaveLength(1);
     expect(screen.getByText(/1,616 against a neighbouring average of 13,950/))
       .toBeInTheDocument();
     // The cliff is described as real data, not apologised for as a gap.

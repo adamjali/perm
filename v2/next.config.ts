@@ -45,19 +45,18 @@ const withSerwist = withSerwistInit({
   //                        and the public entries are appended immediately
   //                        after it returns.
   //
-  // Neither errors. Both just filter nothing, which is exactly how this was
-  // "fixed" twice without the manifest changing by a single byte.
+  // Neither errors. Both just filter nothing, so a "fix" made there leaves
+  // the manifest byte-for-byte unchanged.
   //
   // globPublicPatterns is the glob that produces those entries in the first
   // place, so it is the one place the decision can be made for public/ files.
   // (The `glob` package ignores `!`-negation inside a pattern array, which is
   // why this list names what it keeps rather than what it drops.)
   //
-  // PRECACHE ONLY WHAT THE PUSH HANDLER SHOWS (Sep 29 2026). The patterns that
-  // stood here had grown to 186 public files, 18.5 MB (12.7 MB of guide
-  // screenshots alone), plus all 340 build chunks, downloaded by every
-  // visitor's browser the moment the worker installed. None of it bought
-  // anything offline: documents are NetworkOnly in sw.ts, so no page opens
+  // PRECACHE ONLY WHAT THE PUSH HANDLER SHOWS. Precaching the public files
+  // and build chunks downloads tens of megabytes into every visitor's browser
+  // the moment the worker installs, and buys nothing offline: documents are
+  // NetworkOnly in sw.ts, so no page opens
   // without the network whatever is precached. The worker's real jobs are push
   // notifications and caching the images a visitor actually views (sw.ts
   // runtimeCaching), and neither needs a precache beyond the two icons a
@@ -81,11 +80,11 @@ function contentSecurityPolicy(frameAncestors: "'none'" | "*"): string {
     // 'unsafe-eval' only in development, where hot reloading evaluates code.
     // The live site runs nothing that needs it, so an injected string cannot
     // be turned into running code.
-    `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"} https://browser.sentry-cdn.com https://*.senja.io https://challenges.cloudflare.com https://analytics.ahrefs.com`,
+    `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "production" ? "" : " 'unsafe-eval'"} https://browser.sentry-cdn.com https://challenges.cloudflare.com https://analytics.ahrefs.com`,
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "img-src 'self' data: blob: https:",
     "font-src 'self' https://fonts.gstatic.com",
-    "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://*.sentry.io https://browser.sentry-cdn.com https://*.senja.io https://senja.io https://fonts.googleapis.com https://fonts.gstatic.com https://us.i.posthog.com https://us-assets.i.posthog.com https://challenges.cloudflare.com https://analytics.ahrefs.com",
+    "connect-src 'self' https://*.convex.cloud https://*.convex.site wss://*.convex.cloud https://*.sentry.io https://browser.sentry-cdn.com https://fonts.googleapis.com https://fonts.gstatic.com https://us.i.posthog.com https://us-assets.i.posthog.com https://challenges.cloudflare.com https://analytics.ahrefs.com",
     "media-src 'self' blob: data:",
     "frame-src 'self' https://app.supademo.com https://*.convex.cloud https://challenges.cloudflare.com",
     "worker-src 'self' blob:",
@@ -104,26 +103,24 @@ const nextConfig: NextConfig = {
   output: "standalone",
   deploymentId: process.env.DEPLOYMENT_ID || undefined,
   /*
-   * Prerender budget per page, up from the 60s default. Measured 2026-08-28:
-   * Turso (the status page's own word was "degraded") served full-table
-   * scans at 5s instead of 0.5s, the scan-heavy pages (salary explorer,
-   * wages, RFI) blew the default three times each, and two production
-   * deploys died on it - a deploy should get slower under a slow provider,
-   * not fail. Point reads were fine throughout; this only buys headroom for
-   * the aggregate prerenders.
+   * Prerender budget per page, up from the 60s default. A degraded database
+   * can serve full-table scans ten times slower while point reads stay fast,
+   * and the scan-heavy pages (salary explorer, wages, RFI) then blow the
+   * default; a deploy should get slower under a slow database, not fail. This
+   * only buys headroom for the aggregate prerenders.
    */
   staticPageGenerationTimeout: 180,
   /*
    * Build output directory, overridable for a side-by-side build.
    *
-   * Added 2026-08-27. Several sessions work in this checkout at once, and
-   * `.next` is one directory: a `next build` in one of them replaces the
-   * artifacts four `next start` servers are reading, and a `next dev` holds
-   * the lock. `NEXT_DIST_DIR=.next-<something> pnpm build` gives a session its
-   * own output and leaves everyone else's serving.
+   * Several sessions can work in this checkout at once, and `.next` is one
+   * directory: a `next build` in one of them replaces the artifacts other
+   * `next start` servers are reading, and a `next dev` holds the lock.
+   * `NEXT_DIST_DIR=.next-<something> pnpm build` gives a session its own
+   * output and leaves everyone else's serving.
    *
-   * Unset it and nothing changes, so production, Vercel and CI are all
-   * untouched. Add any new value to .gitignore before using it.
+   * Unset it and nothing changes, so production and CI are untouched. Add
+   * any new value to .gitignore before using it.
    */
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   poweredByHeader: false,
@@ -139,11 +136,10 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
-    // Inline critical CSS to eliminate render-blocking stylesheets
-    // inlineCss was ON and measured ~250KB of styles inlined into EVERY HTML
-    // response alongside the linked sheets — the worst of both: uncacheable
+    // inlineCss stays OFF. On, it inlines ~250KB of styles into EVERY HTML
+    // response alongside the linked sheets, the worst of both: uncacheable
     // across pages, re-parsed per navigation, and doubled delivery. Inlining
-    // pays only when the CSS is small; this site's is not. (2026-08-24)
+    // pays only when the CSS is small; this site's is not.
     inlineCss: false,
     // Tree-shake barrel exports for these packages
     // motion/react removed — its dep motion-dom has ESM export bugs with Webpack
@@ -152,7 +148,7 @@ const nextConfig: NextConfig = {
     // Reuse a visited dynamic page's server payload for 5 minutes on a
     // client navigation. The default is 0, so every click back to the
     // dashboard, cases or calendar re-rendered it on the server behind its
-    // loading skeleton: measured on production Sep 30 2026, 0.5 to 1.3
+    // loading skeleton: measured on production, 0.5 to 1.3
     // seconds of skeleton per click, with the data already warm. The
     // signed-in pages are client shells whose data comes live from Convex,
     // so a reused shell is never stale; the one public dynamic page is a
@@ -172,17 +168,17 @@ const nextConfig: NextConfig = {
   async rewrites() {
     // EMAILED LINKS ARE SERVED FROM THIS DOMAIN, and answered by Convex.
     //
-    // Every confirm, unsubscribe and preferences link used to be addressed to
-    // `<deployment>.convex.site`. That is where the handler really lives, and a
-    // deployment name is an endpoint rather than a credential, so nothing was
-    // leaking. The problem was trust: an unfamiliar domain, a long opaque
-    // token and "click to change your email settings" is the anatomy of a
-    // phishing message, on the one email whose whole job is to be clicked.
+    // Addressed to `<deployment>.convex.site`, where the handler really
+    // lives, a confirm, unsubscribe or preferences link would leak nothing (a
+    // deployment name is an endpoint rather than a credential). The problem is
+    // trust: an unfamiliar domain, a long opaque token and "click to change
+    // your email settings" is the anatomy of a phishing message, on the one
+    // email whose whole job is to be clicked.
     //
     // These are GET routes that RENDER a page; the mutation is behind a POST
     // button on it (`stateByToken` says so in its own docstring: "it writes
     // nothing"). That matters here because putting them on the main domain
-    // puts them behind mail-gateway prefetching and the Vercel firewall, and
+    // puts them behind mail-gateway prefetching and the site's firewall, and
     // a prefetch of a non-mutating GET is harmless.
     //
     // The Convex origin still answers on every one of these paths, forever:
@@ -190,10 +186,9 @@ const nextConfig: NextConfig = {
     // Paths are identical on both hosts so a stale link and a fresh one differ
     // only in origin.
     //
-    // DERIVED FROM THE CLOUD URL, not from an env var of its own. Checked on
-    // 2026-09-09: production has NEXT_PUBLIC_CONVEX_URL and does NOT have
-    // NEXT_PUBLIC_CONVEX_SITE_URL, so a rewrite keyed on the latter would have
-    // silently not registered and every emailed link would have 404'd. Convex
+    // DERIVED FROM THE CLOUD URL, not from an env var of its own: a rewrite
+    // keyed on a second variable that production lacks would silently not
+    // register, and every emailed link would 404. Convex
     // serves HTTP actions from the `.convex.site` twin of the `.convex.cloud`
     // deployment, which is the same derivation ContactForm and QueueAlertForm
     // already do client-side. One variable to keep in sync instead of two, and
@@ -208,18 +203,16 @@ const nextConfig: NextConfig = {
           // preferences page is server-rendered BY CONVEX and its buttons are
           // a relative `<form method="POST" action="/prefs/update?token=...">`.
           // A relative action resolves against the host the page was served
-          // from, so branding the page's URL moved the form's target to
-          // permtracker.app too - and with only `/prefs` rewritten the POST
-          // fell through to Next and answered 404 "DEAD END". Reported
-          // 2026-09-10, 2:54 PM after clicking "turn off": the request never
-          // reached Convex, so nothing was turned off.
+          // from, so branding the page's URL moves the form's target to
+          // permtracker.app too, and with only `/prefs` rewritten the POST
+          // would fall through to Next's 404 and never reach Convex: a click
+          // on "turn off" would turn nothing off.
           //
-          // Audited the surface rather than patching the one hole: a relative
-          // `action=`/`href=` appears exactly twice in all Convex-rendered
-          // HTML, both pointing at /prefs/update. Every other Convex route is
-          // reached by a client fetch that builds an absolute .convex.site URL
-          // (/contact, /milestone/*, /prefs/request, /queue-alert/subscribe),
-          // so none of those were ever affected.
+          // Across all Convex-rendered HTML a relative `action=`/`href=`
+          // appears exactly twice, both pointing at /prefs/update. Every other
+          // Convex route is reached by a client fetch that builds an absolute
+          // .convex.site URL (/contact, /milestone/*, /prefs/request,
+          // /queue-alert/subscribe), so none of those depend on a rewrite.
           //
           // /resend-inbound is deliberately absent: Resend is configured with
           // the .convex.site URL, and that webhook must not depend on our
@@ -264,30 +257,22 @@ const nextConfig: NextConfig = {
     return [
       // Fix GSC 404s: stray URLs → clean routes
       { source: "/%24", destination: "/", permanent: true },
-      // /demo was removed 2026-08-24 (a 595-line localStorage shadow app; the
-      // product is free, so the calculators and signup ARE the trial). Old
-      // links land on the data surface.
-      // Content consolidated 2026-08-24: tutorials and resources merged into
-      // guides. Fourteen articles never justified five sections.
-      // `/corrections` as its own top-level route retired 2026-09-09, and the
-      // log moved twice more: interleaved into the changelog timeline as
-      // fourteen special-cased rows, then (2026-09-10) into ONE ordinary
-      // changelog entry, `content/changelog/corrections.mdx`. So this now
-      // points at the log itself rather than the index above it - a reader
-      // typing /corrections wants the corrections, and there is a page for
-      // exactly that again. The RECORD is kept whatever shape it takes,
-      // because a site arguing its numbers are checkable does not get to drop
-      // the list of times they were not.
+      // Old links to /demo land on the data surface: the product is free, so
+      // the calculators and signup ARE the trial. Tutorials and resources
+      // merged into guides. /corrections points at the corrections log
+      // itself, `content/changelog/corrections.mdx`, because a reader typing
+      // /corrections wants the corrections. The RECORD is kept whatever shape
+      // it takes, because a site arguing its numbers are checkable does not
+      // get to drop the list of times they were not.
       { source: "/corrections", destination: "/changelog/corrections", permanent: true },
       { source: "/tutorials", destination: "/guides", permanent: true },
       { source: "/resources", destination: "/guides", permanent: true },
       { source: "/tutorials/:slug", destination: "/guides/:slug", permanent: true },
       { source: "/resources/:slug", destination: "/guides/:slug", permanent: true },
-      // Six analysis pieces moved guides -> blog on 2026-09-03. They argue a
-      // position from our own measured data rather than instructing, which is
-      // what the blog is for; guides stays how-to and reference. Redirects
-      // because these shipped at /guides/ hours earlier and are linked from
-      // other articles and from the sitemap Google has already read.
+      // Six analysis pieces live in the blog: they argue a position from our
+      // own measured data rather than instructing, which is what the blog is
+      // for; guides stays how-to and reference. Their /guides/ URLs are
+      // linked from other articles and were in a sitemap Google has read.
       { source: "/guides/why-perm-cases-are-denied", destination: "/blog/why-perm-cases-are-denied", permanent: true },
       { source: "/guides/what-law-firm-volume-tells-you", destination: "/blog/what-law-firm-volume-tells-you", permanent: true },
       { source: "/guides/what-an-employers-perm-record-shows", destination: "/blog/what-an-employers-perm-record-shows", permanent: true },
@@ -297,8 +282,8 @@ const nextConfig: NextConfig = {
       { source: "/demo", destination: "/tools", permanent: true },
       { source: "/demo.html", destination: "/tools", permanent: true },
       { source: "/register.html", destination: "/signup", permanent: true },
-      // The bare path too. Only the .html form was covered, so /register was a
-      // live 404 that Googlebot had crawled and filed under "Not found (404)".
+      // The bare path too, or /register is a 404 that Googlebot files under
+      // "Not found (404)".
       { source: "/register", destination: "/signup", permanent: true },
       { source: "/terms.html", destination: "/terms", permanent: true },
       { source: "/privacy.html", destination: "/privacy", permanent: true },
@@ -355,8 +340,7 @@ const nextConfig: NextConfig = {
             // Calendar (src/lib/google/oauth.ts). The `-allow-popups` variant
             // keeps popups WE open able to talk back, while still cutting off
             // references held by pages that opened US, which is where the
-            // attack lives. Verified 2026-08-31 against the report's own
-            // recommendation.
+            // attack lives. Verified against the report's own recommendation.
             //
             // COEP is deliberately NOT set alongside it: this site embeds
             // third-party widgets (Senja) that do not send CORP headers, and

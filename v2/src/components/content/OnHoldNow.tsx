@@ -4,17 +4,14 @@ import { Fragment } from "react";
 import { stageMeta } from "@/components/rfi/stageMeta";
 import { HOLD_STATUS, holdSincePhrase, longDate } from "@/lib/employerStages";
 import { getEmployerStages } from "@/lib/turso/employerStages";
+import { formatInt, formatShare } from "@/lib/format";
 
 /**
  * The on-hold guide's numbers, read live from the census the sweep writes.
  *
- * WHY THIS EXISTS (Sep 25 2026). The guide was written on Sep 3 with its
- * counts typed in: "1,855 on hold right now", "you are one of about 1,855
- * people". Three weeks later there were 2,070, 2,047 of them two employers',
- * and the guide was the page Adobe's 216 waiting workers landed on when they
- * searched their status. A number typed into prose is true on the day it is
- * typed; this component makes the guide true on the day it is read, and says
- * which day that is.
+ * WHY THIS EXISTS. A number typed into prose is true on the day it is typed,
+ * and an on-hold count can move by hundreds in a few weeks; this component
+ * makes the guide true on the day it is read, and says which day that is.
  *
  * WHO IS NAMED. Only employers with at least `NAMED_FLOOR` cases on hold,
  * which is a hold on an employer's filings as a group. A small filer with a
@@ -25,8 +22,6 @@ import { getEmployerStages } from "@/lib/turso/employerStages";
  */
 
 const NAMED_FLOOR = 25;
-const int = (n: number) => n.toLocaleString("en-US");
-const pct = (x: number) => `${(x * 100).toFixed(x >= 0.1 ? 0 : 1)}%`;
 const LINK = "underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
 
 export async function OnHoldNow() {
@@ -54,7 +49,7 @@ export async function OnHoldNow() {
   return (
     <div className="not-prose my-6 border-2 border-border bg-card p-5 shadow-hard sm:p-6">
       <p className="text-base leading-relaxed">
-        {`As of ${longDate(doc.asOf)}, ${int(held)} of the ${int(doc.pendingTotal)} PERM cases waiting on DOL are on hold (${pct(
+        {`As of ${longDate(doc.asOf)}, ${formatInt(held)} of the ${formatInt(doc.pendingTotal)} PERM cases waiting on DOL are on hold (${formatShare(
           doc.pendingTotal ? held / doc.pendingTotal : 0,
         )}), read from DOL's own case system.`}
       </p>{" "}
@@ -69,7 +64,7 @@ export async function OnHoldNow() {
           {stages.map(([status, n]) => (
             <tr key={status} className="border-b border-border">
               <td className={`py-2 pr-4 ${status === HOLD_STATUS ? "font-bold" : ""}`}>{`${stageMeta(status).label} `}</td>
-              <td className={`py-2 text-right tabular-nums ${status === HOLD_STATUS ? "font-bold" : ""}`}>{`${int(n)} `}</td>
+              <td className={`py-2 text-right tabular-nums ${status === HOLD_STATUS ? "font-bold" : ""}`}>{`${formatInt(n)} `}</td>
             </tr>
           ))}
         </tbody>
@@ -77,7 +72,7 @@ export async function OnHoldNow() {
       {named.length > 0 ? (
         <>
           <p className="mt-5 text-base leading-relaxed">
-            {`${named.length === 1 ? "One employer holds" : `${named.length} employers hold`} ${int(namedHeld)} of the ${int(held)} (${pct(
+            {`${named.length === 1 ? "One employer holds" : `${named.length} employers hold`} ${formatInt(namedHeld)} of the ${formatInt(held)} (${formatShare(
               held ? namedHeld / held : 0,
             )}):`}
           </p>{" "}
@@ -94,14 +89,14 @@ export async function OnHoldNow() {
                     ) : (
                       <span className="font-bold">{e.name}</span>
                     )}
-                    {`: ${int(e.byStatus[HOLD_STATUS] ?? 0)} of ${int(e.pending)} pending on hold${since ? `; ${since}` : ""}. `}
+                    {`: ${formatInt(e.byStatus[HOLD_STATUS] ?? 0)} of ${formatInt(e.pending)} pending on hold${since ? `; ${since}` : ""}. `}
                   </li>{" "}
                 </Fragment>
               );
             })}
           </ul>{" "}
           <p className="mt-3 text-base leading-relaxed">
-            {`The other ${int(rest)} are spread across smaller filers. When nearly all of one employer's pending cases are on hold, the hold is on its filings as a group, and no one application in it was picked out. The status itself carries no reason.`}
+            {`The other ${formatInt(rest)} are spread across smaller filers. When nearly all of one employer's pending cases are on hold, the hold is on its filings as a group, and no one application in it was picked out. The status itself carries no reason.`}
           </p>
         </>
       ) : null}{" "}

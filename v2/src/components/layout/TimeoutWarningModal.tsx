@@ -12,15 +12,13 @@
  * - Accessible (ARIA roles, keyboard support)
  *
  * Design System: Neobrutalist + Glass Panel
- * Phase: 20 (Dashboard + UI Polish)
- * Updated: 2025-12-24 - Use centralized z-index
  * Inspired by: v1/frontend/src/js/components/TimeoutWarningModal.js
  */
 
 import { useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { ClockIcon, SignOutIcon } from "@phosphor-icons/react";
-import { formatTimeRemaining } from "@/lib/hooks/useInactivityTimeout";
+import { formatTimeRemaining } from "@/hooks/useInactivityTimeout";
 import { Z_INDEX } from "@/lib/constants/zIndex";
 
 interface TimeoutWarningModalProps {

@@ -9,7 +9,9 @@ import {
   type WageBandSeries,
 } from "@/lib/wageLadder";
 import { cn } from "@/lib/utils";
+import { ChartTips } from "@/components/data/ChartTips";
 import { FinePrint } from "@/components/data/FinePrint";
+import { MoreText } from "@/components/data/MoreText";
 
 /**
  * Denial rate by wage band, at the resolution the data actually supports.
@@ -61,21 +63,34 @@ function Panel({
   const worst = worstBand(bands);
   return (
     <div className="border-2 border-border bg-card p-4">
-      <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+      <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
         {title}
       </p>{" "}
-      <p className="mt-0.5 text-xs text-foreground/70">{note}</p>{" "}
-      <ul className="mt-3 space-y-2">
+      <p className="mt-0.5 text-sm text-foreground/70">{note}</p>{" "}
+      <ChartTips label={`Denial rate by wage band, ${title}`} className="mt-3">
+      <ul className="space-y-2">
         {bands.map((b) => {
           const isWorst = worst != null && b.from === worst.from;
           return (
             // Keyed Fragment with a trailing space: array items render with
             // NOTHING between them, so "20,120" glues to "FY2025".
             <Fragment key={b.from}>
-            <li>
+            <li
+              data-tip={[
+                `${title}: ${b.band}`,
+                b.deniedPct === null
+                  ? "Rate withheld, too few decided cases"
+                  : `${b.deniedPct.toFixed(2)}% denied`,
+                `${b.denied.toLocaleString("en-US")} denied of ${b.decided.toLocaleString("en-US")} decided`,
+                b.interval ? `95% interval ${b.interval.lo.toFixed(2)} to ${b.interval.hi.toFixed(2)}%` : null,
+                isWorst ? "The highest rate in this block" : null,
+              ]
+                .filter(Boolean)
+                .join("\n")}
+            >
               <div className="flex items-baseline justify-between gap-2">
-                <span className="text-xs font-bold">{b.band}</span>{" "}
-                <span className="font-mono text-xs font-bold tabular-nums text-foreground/70">
+                <span className="text-sm font-bold">{b.band}</span>{" "}
+                <span className="font-mono text-sm font-bold tabular-nums text-foreground/70">
                   {b.deniedPct === null ? "withheld" : `${b.deniedPct.toFixed(2)}%`}
                 </span>
               </div>
@@ -117,6 +132,7 @@ function Panel({
           );
         })}
       </ul>
+      </ChartTips>
     </div>
   );
 }
@@ -144,35 +160,37 @@ export function DenialByWageBand({
       {/* The reading goes ABOVE the drawing. A reader who forms an impression
           from the bars first and meets the caveat afterwards has already been
           misled, which is exactly how the retracted version worked. */}
-      <p className="text-base leading-relaxed text-foreground/80">
-        The denial rate broadly falls as the offered wage rises
-        {lowest && highest ? (
-          <>
-            , from {(lowest.deniedPct as number).toFixed(1)}% in the{" "}
-            {lowest.band.toLowerCase()} band to{" "}
-            {(highest.deniedPct as number).toFixed(1)}% in the{" "}
-            {highest.band.toLowerCase()} band
-          </>
-        ) : null}
-        . It does not fall smoothly.{" "}
-        {peak ? (
-          <>
-            The highest rate here is {peak.band.toLowerCase()} at{" "}
-            {(peak.deniedPct as number).toFixed(2)}%, not the bottom of the
-            range.{" "}
-          </>
-        ) : null}
-        {bumps.length > 0 ? (
-          <>
-            {bumps.length === 1 ? "One pair of neighbouring bands goes" : `${bumps.length} pairs of neighbouring bands go`}{" "}
-            the wrong way.{" "}
-          </>
-        ) : null}
-        Where those bumps sit moves with the band edges, so no cause is offered
-        for them: wage, occupation and employer are entangled here and nothing
-        separates them.
-      </p>{" "}
-      <p className="mt-6 font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+      <MoreText gist={"Denials fall as the offered wage rises."}>
+        <p className="text-base leading-relaxed text-foreground/80">
+          The denial rate broadly falls as the offered wage rises
+          {lowest && highest ? (
+            <>
+              , from {(lowest.deniedPct as number).toFixed(1)}% in the{" "}
+              {lowest.band.toLowerCase()} band to{" "}
+              {(highest.deniedPct as number).toFixed(1)}% in the{" "}
+              {highest.band.toLowerCase()} band
+            </>
+          ) : null}
+          . It does not fall smoothly.{" "}
+          {peak ? (
+            <>
+              The highest rate here is {peak.band.toLowerCase()} at{" "}
+              {(peak.deniedPct as number).toFixed(2)}%, not the bottom of the
+              range.{" "}
+            </>
+          ) : null}
+          {bumps.length > 0 ? (
+            <>
+              {bumps.length === 1 ? "One pair of neighbouring bands goes" : `${bumps.length} pairs of neighbouring bands go`}{" "}
+              the wrong way.{" "}
+            </>
+          ) : null}
+          Where those bumps sit moves with the band edges, so no cause is offered
+          for them: wage, occupation and employer are entangled here and nothing
+          separates them.
+        </p>
+      </MoreText>{" "}
+      <p className="mt-6 font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
         Eleven bands, by fiscal year and pooled
       </p>
       <div className="mt-3 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -196,7 +214,7 @@ export function DenialByWageBand({
 
       {/* The summary comes SECOND and says what it costs. */}
       <div className="mt-8 border-2 border-border bg-muted p-4">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+        <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
           The same cases in five wide bands
         </p>{" "}
         <p className="mt-1 text-sm leading-relaxed text-foreground/70">

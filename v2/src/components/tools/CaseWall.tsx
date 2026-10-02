@@ -1,8 +1,10 @@
 import { Fragment } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { formatMonth, formatMonthShort } from "@/lib/dolFormat";
 import type { Wall } from "@/lib/casePosition";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 /**
  * The wall in front of one case, drawn as mass rather than as progress.
@@ -49,8 +51,6 @@ export interface CaseWallProps {
   className?: string;
 }
 
-const int = (n: number) => n.toLocaleString("en-US");
-
 export function CaseWall({
   wall,
   publishedFront,
@@ -63,20 +63,33 @@ export function CaseWall({
 
   return (
     <div className={className}>
+      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
+      <ChartTips label="Undecided cases by filing month, up to this case's month">
       <div className="-mx-1 overflow-x-auto px-1">
         <ul className="flex min-w-[560px] items-end gap-1.5">
           {wall.segments.map((s) => {
             const label = formatMonthShort(s.month) ?? s.month;
             return (
               <Fragment key={s.month}>{" "}
-              <li className="flex min-w-0 flex-1 flex-col items-center">
+              <li
+                data-tip={[
+                  formatMonth(s.month) ?? s.month,
+                  `${formatInt(s.pending)} undecided in DOL's normal queue`,
+                  `${Math.round(s.share)}% of the cases drawn`,
+                  s.isSubject ? (ownCase ? "Your filing month" : "The month this number decodes to") : null,
+                  s.isFront ? "The oldest month still open" : null,
+                ]
+                  .filter(Boolean)
+                  .join("\n")}
+                className="flex min-w-0 flex-1 flex-col items-center"
+              >
                 <span
                   className={cn(
                     "font-mono text-sm font-bold tabular-nums",
                     s.isSubject ? "text-foreground" : "text-foreground/60",
                   )}
                 >
-                  {int(s.pending)}
+                  {formatInt(s.pending)}
                 </span>{" "}
                 {/* The column. A floor of 3% keeps a thin month visible as a
                     real quantity rather than dropping it out of the drawing,
@@ -117,10 +130,11 @@ export function CaseWall({
           })}
         </ul>
       </div>
+      </ChartTips>
 
       <p className="mt-4 border-t-2 border-border pt-3 text-sm leading-relaxed text-foreground/70">
         <b className="font-bold text-foreground">
-          {int(wall.drawnAhead)} undecided cases
+          {formatInt(wall.drawnAhead)} undecided cases
         </b>{" "}
         in DOL&apos;s normal queue sit in the months drawn here, between the
         oldest month still open and{" "}
@@ -128,11 +142,11 @@ export function CaseWall({
         {wall.ahead > wall.drawnAhead ? (
           <>
             {" "}
-            Another {int(wall.ahead - wall.drawnAhead)} were filed earlier still
+            Another {formatInt(wall.ahead - wall.drawnAhead)} were filed earlier still
             and remain open: cases held up in an audit, an appeal or a request
             for information, in months DOL has otherwise finished. Counting
             them takes the total filed before{" "}
-            {ownCase ? "yours" : "that month"} to {int(wall.ahead)}.
+            {ownCase ? "yours" : "that month"} to {formatInt(wall.ahead)}.
           </>
         ) : null}
         {publishedFront ? (
@@ -189,17 +203,15 @@ export function PastFrontNote({
         case&apos;s filing month. So filing order is no longer what this case
         is waiting on.{" "}
         <b className="font-bold text-foreground">
-          {int(wall.sameMonth)} cases
+          {formatInt(wall.sameMonth)} cases
         </b>{" "}
         filed in{" "}
         {formatMonth(wall.subject.month)} are still open, out of{" "}
-        {int(wall.subject.total)} filed that month.
+        {formatInt(wall.subject.total)} filed that month.
       </p>{" "}
       <p className="mt-3 text-base leading-relaxed text-foreground/80">
-        A case that stays open past its month is usually in one of the queues
-        that takes it out of filing order: a request for information, an
-        audit, supervised recruitment, or an appeal. The split below shows
-        which of those the rest of the month is sitting in.
+        A case still open past its month is usually out of filing order: at an RFI, an audit, supervised
+        recruitment or an appeal. The split below shows where the rest of its month sits.
       </p>
     </div>
   );
@@ -251,8 +263,8 @@ export function CohortNeighbours({
               ) : null}
             </span>{" "}
             <span className="font-mono text-sm tabular-nums text-foreground/70">
-              <b className="font-bold text-foreground">{int(x.pending)}</b> of{" "}
-              {int(x.total)} still open
+              <b className="font-bold text-foreground">{formatInt(x.pending)}</b> of{" "}
+              {formatInt(x.total)} still open
               {x.decidedPct !== null ? (
                 <span className="ml-2 text-foreground/60">
                   ({x.decidedPct.toFixed(0)}% decided)

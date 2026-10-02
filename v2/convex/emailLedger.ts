@@ -1,9 +1,8 @@
 /**
  * The day's email count against Resend's quota, and the queue of sends that
- * failed and will be tried again (Sep 29 2026).
+ * failed and will be tried again.
  *
- * Adam: "for any and all email failures like resend or anything so never just
- * refuse and lost". Every sender goes through `sendOrQueue` in
+ * No email is refused and lost. Every sender goes through `sendOrQueue` in
  * convex/lib/email.ts, which checks the day's count, sends, records the count,
  * and hands a send that failed for a fixable reason to this queue. The drain
  * in convex/confirmationQueue.ts (every 15 minutes, and right after anything
@@ -32,11 +31,14 @@ import {
   utcDay,
 } from "./lib/emailLimits";
 import { createLogger } from "./lib/logging";
+import { MS_PER_MINUTE } from "./lib/time";
 
 const log = createLogger("EmailLedger");
 
 /** A drain's claim on a retry row; older than this, another drain may take it. */
-const CLAIM_LEASE_MS = 10 * 60 * 1000;
+const CLAIM_LEASE_MS = 10 * MS_PER_MINUTE;
+/** Retries past their two weeks dropped per claim. */
+const EXPIRED_BATCH = 100;
 
 async function dayRow(ctx: MutationCtx, now: number): Promise<Doc<"emailDays">> {
   const day = utcDay(now);
@@ -168,7 +170,7 @@ export const claimRetries = internalMutation({
     const old = await ctx.db
       .query("emailRetries")
       .withIndex("by_queuedAt", (q) => q.lt("queuedAt", now - RETRY_EXPIRE_MS))
-      .take(100);
+      .take(EXPIRED_BATCH);
     if (old.length > 0) {
       for (const r of old) await ctx.db.delete(r._id);
       const row = await countOnDay(ctx, "lost", old.length);

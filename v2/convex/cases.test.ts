@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { createTestContext, createAuthenticatedContext, setupSchedulerTests, finishScheduledFunctions, resetRateLimit } from "../test-utils/convex";
-import { api, internal } from "./_generated/api";
+import { api } from "./_generated/api";
 import type { Id } from "./_generated/dataModel";
 
 describe("Cases Security", () => {
@@ -1432,66 +1432,6 @@ describe("Calendar Sync Integration", () => {
       expect(case2?.calendarSyncEnabled).toBe(false);
     });
   });
-
-  describe("hasAnyCases", () => {
-    it("returns false when unauthenticated", async () => {
-      const t = createTestContext();
-      const result = await t.query(api.cases.hasAnyCases, {});
-      expect(result).toBe(false);
-    });
-
-    it("returns false when user has no cases", async () => {
-      const t = createTestContext();
-      const authT = await createAuthenticatedContext(t, "User 1");
-      const result = await authT.query(api.cases.hasAnyCases, {});
-      expect(result).toBe(false);
-    });
-
-    it("returns true when user has an active case", async () => {
-      const t = createTestContext();
-      const authT = await createAuthenticatedContext(t, "User 1");
-      await authT.mutation(api.cases.create, {
-        employerName: "Test Corp",
-        positionTitle: "Engineer",
-      });
-      await finishScheduledFunctions(t);
-      const result = await authT.query(api.cases.hasAnyCases, {});
-      expect(result).toBe(true);
-    });
-
-    it("returns false when all cases are soft-deleted", async () => {
-      const t = createTestContext();
-      const authT = await createAuthenticatedContext(t, "User 1");
-      const caseId = await authT.mutation(api.cases.create, {
-        employerName: "Test Corp",
-        positionTitle: "Engineer",
-      });
-      await finishScheduledFunctions(t);
-      await authT.mutation(api.cases.remove, { id: caseId });
-      await finishScheduledFunctions(t);
-      const result = await authT.query(api.cases.hasAnyCases, {});
-      expect(result).toBe(false);
-    });
-
-    it("returns true with mix of active and deleted cases", async () => {
-      const t = createTestContext();
-      const authT = await createAuthenticatedContext(t, "User 1");
-      const caseId1 = await authT.mutation(api.cases.create, {
-        employerName: "Corp A",
-        positionTitle: "Engineer",
-      });
-      await finishScheduledFunctions(t);
-      await authT.mutation(api.cases.create, {
-        employerName: "Corp B",
-        positionTitle: "Designer",
-      });
-      await finishScheduledFunctions(t);
-      await authT.mutation(api.cases.remove, { id: caseId1 });
-      await finishScheduledFunctions(t);
-      const result = await authT.query(api.cases.hasAnyCases, {});
-      expect(result).toBe(true);
-    });
-  });
 });
 
 describe("auto-closure cleanup when a case leaves closed", () => {
@@ -1679,54 +1619,81 @@ describe("A certified case always carries its ETA 9089 expiration", () => {
   });
 });
 
-describe("Moving saved ETA 9089 expirations from +180 to +179", () => {
+
+describe("Nothing a case is given is dropped", () => {
   setupSchedulerTests();
 
-  const certified = async (user: Awaited<ReturnType<typeof createAuthenticatedContext>>, name: string) =>
-    user.mutation(api.cases.create, {
-      employerName: name,
-      beneficiaryIdentifier: "A. B.",
-      positionTitle: "Engineer",
-      eta9089FilingDate: "2026-01-10",
-      eta9089CertificationDate: "2026-03-01",
-    });
+  const caseRow = (t: ReturnType<typeof createTestContext>, employerName: string) =>
+    t.run(async (ctx) => (await ctx.db.query("cases").collect()).find((c) => c.employerName === employerName));
 
-  it("moves only an exact +180, keeps the user's own date, leaves updatedAt, and runs once", async () => {
+  it("create keeps the job description and its position title", async () => {
     const t = createTestContext();
     const user = await createAuthenticatedContext(t, "User 1");
-    const old = await certified(user, "Old Rule Co");
-    const own = await certified(user, "Own Date Co");
-    const fresh = await certified(user, "New Rule Co");
-    const gone = await certified(user, "Deleted Co");
-    await finishScheduledFunctions(t);
-    await t.run(async (ctx) => {
-      await ctx.db.patch(old, { eta9089ExpirationDate: "2026-08-28", updatedAt: 1000 });
-      await ctx.db.patch(own, { eta9089ExpirationDate: "2026-09-15" });
-      await ctx.db.patch(gone, { eta9089ExpirationDate: "2026-08-28", deletedAt: 2000 });
+    await user.mutation(api.cases.create, {
+      employerName: "Acme Corp",
+      beneficiaryIdentifier: "A. B.",
+      positionTitle: "Engineer",
+      jobDescriptionPositionTitle: "Senior Engineer",
+      jobDescription: "Design and build data pipelines.",
     });
-
-    const dry = await t.mutation(internal.migrations.moveEta9089ExpirationTo179, { dryRun: true });
-    expect(dry).toMatchObject({ dryRun: true, certified: 4, alreadyNew: 1, other: 1, moved: 2 });
-    expect(await t.run(async (ctx) => (await ctx.db.get(old))?.eta9089ExpirationDate)).toBe("2026-08-28");
-
-    const run = await t.mutation(internal.migrations.moveEta9089ExpirationTo179, {});
-    expect(run.moved).toBe(2);
-    expect(run.cases.find((c) => c.caseId === gone)).toMatchObject({ deleted: true, passedNow: false });
+    const row = await caseRow(t, "Acme Corp");
+    expect(row?.jobDescriptionPositionTitle).toBe("Senior Engineer");
+    expect(row?.jobDescription).toBe("Design and build data pipelines.");
     await finishScheduledFunctions(t);
+  });
 
-    const after = await t.run(async (ctx) => ({
-      old: await ctx.db.get(old),
-      own: await ctx.db.get(own),
-      fresh: await ctx.db.get(fresh),
-      gone: await ctx.db.get(gone),
-    }));
-    expect(after.old?.eta9089ExpirationDate).toBe("2026-08-27");
-    expect(after.old?.updatedAt).toBe(1000);
-    expect(after.own?.eta9089ExpirationDate).toBe("2026-09-15");
-    expect(after.fresh?.eta9089ExpirationDate).toBe("2026-08-27");
-    expect(after.gone?.eta9089ExpirationDate).toBe("2026-08-27");
+  it("import keeps every field an export carries", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    await user.mutation(api.cases.importCases, {
+      cases: [
+        {
+          employerName: "Imported Co",
+          beneficiaryIdentifier: "E. F.",
+          positionTitle: "Engineer",
+          eta9089FilingDate: "2026-01-10",
+          eta9089AuditDate: "2026-02-01",
+          recruitmentNotes: "Two applicants, both rejected for lawful reasons.",
+          i140Category: "EB-2",
+          i140PremiumProcessing: true,
+          i140ServiceCenter: "Nebraska",
+          progressStatusOverride: true,
+          tags: ["priority"],
+          jobDescriptionPositionTitle: "Senior Engineer",
+          jobDescription: "Design and build data pipelines.",
+        },
+      ],
+    });
+    const row = await caseRow(t, "Imported Co");
+    expect(row).toMatchObject({
+      eta9089AuditDate: "2026-02-01",
+      recruitmentNotes: "Two applicants, both rejected for lawful reasons.",
+      i140Category: "EB-2",
+      i140PremiumProcessing: true,
+      i140ServiceCenter: "Nebraska",
+      progressStatusOverride: true,
+      tags: ["priority"],
+      jobDescriptionPositionTitle: "Senior Engineer",
+      jobDescription: "Design and build data pipelines.",
+    });
+    await finishScheduledFunctions(t);
+  });
+});
 
-    const again = await t.mutation(internal.migrations.moveEta9089ExpirationTo179, {});
-    expect(again).toMatchObject({ moved: 0, alreadyNew: 3, other: 1 });
+describe("Select all picks what the list shows", () => {
+  setupSchedulerTests();
+
+  it("listFilteredIds matches listFiltered's search, typos included", async () => {
+    const t = createTestContext();
+    const user = await createAuthenticatedContext(t, "User 1");
+    await user.mutation(api.cases.create, { employerName: "Google LLC", beneficiaryIdentifier: "A. B.", positionTitle: "Data Scientist" });
+    await user.mutation(api.cases.create, { employerName: "Acme Corp", beneficiaryIdentifier: "C. D.", positionTitle: "Engineer" });
+    for (const searchQuery of ["googel", "data scientist", "  acme "]) {
+      const page = await user.query(api.cases.listFiltered, { searchQuery, page: 1, pageSize: 50 });
+      const ids = await user.query(api.cases.listFilteredIds, { searchQuery });
+      expect(new Set(ids)).toEqual(new Set(page.cases.map((c) => c._id)));
+      expect(ids.length).toBeGreaterThan(0);
+    }
+    await finishScheduledFunctions(t);
   });
 });

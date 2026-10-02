@@ -10,6 +10,8 @@
  * sentence when either side is too thin to mean anything.
  */
 
+import { formatDollars } from "@/lib/format";
+
 export type EmployerProgramKey = "perm" | "pwd" | "lca";
 
 export interface ProgramLine {
@@ -65,14 +67,12 @@ export function wageGap(perm: ProgramLine | null, lca: ProgramLine | null): Wage
   };
 }
 
-const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
-
 /** One sentence, with both figures and both counts in it, so the reader can weigh it. */
 export function wageGapSentence(gap: WageGap): string {
   const pct = `${Math.abs(gap.share * 100).toFixed(gap.share * 100 >= 10 ? 0 : 1)}%`;
   if (Math.abs(gap.share) < 0.02) {
-    return `Its median H-1B wage (${usd(gap.lcaMedian)} across ${gap.lcaN.toLocaleString("en-US")} LCAs) and its median PERM wage (${usd(gap.permMedian)} across ${gap.permN.toLocaleString("en-US")} cases) are within 2% of each other.`;
+    return `Its median H-1B wage (${formatDollars(gap.lcaMedian)} across ${gap.lcaN.toLocaleString("en-US")} LCAs) and its median PERM wage (${formatDollars(gap.permMedian)} across ${gap.permN.toLocaleString("en-US")} cases) are within 2% of each other.`;
   }
   const dir = gap.dollars > 0 ? "higher" : "lower";
-  return `Its median H-1B wage is ${usd(gap.lcaMedian)} across ${gap.lcaN.toLocaleString("en-US")} LCAs, ${pct} ${dir} than its median PERM wage of ${usd(gap.permMedian)} across ${gap.permN.toLocaleString("en-US")} cases. Different forms, different years and different jobs sit behind the two medians, so this is a gap in what was filed, not a finding.`;
+  return `Its median H-1B wage is ${formatDollars(gap.lcaMedian)} across ${gap.lcaN.toLocaleString("en-US")} LCAs, ${pct} ${dir} than its median PERM wage of ${formatDollars(gap.permMedian)} across ${gap.permN.toLocaleString("en-US")} cases. Different forms, different years and different jobs sit behind the two medians, so this is a gap in what was filed, not a finding.`;
 }

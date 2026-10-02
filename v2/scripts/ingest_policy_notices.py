@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Federal Register notices that touch the PERM, H-1B and green-card process.
 
-    python3 scripts/ingest_policy_notices.py            # last 180 days, to Turso
+    python3 scripts/ingest_policy_notices.py            # last 180 days
     python3 scripts/ingest_policy_notices.py --days 30  # a shorter window
     python3 scripts/ingest_policy_notices.py --dry-run  # print, write nothing
 
@@ -9,8 +9,7 @@ WHAT THIS IS. The Federal Register is the primary record of a rule, a
 proposed rule or a notice from DOL, USCIS, DHS and State. Its public API
 (https://www.federalregister.gov/developers/documentation/api/v1) serves the
 title, type, agencies, publication date, abstract and canonical URL of every
-document, with no key and no challenge. A rival's "policy alerts" page is 15
-of 20 items reposted from one law firm's blog; this reads the documents
+document, with no key and no challenge, so this reads the documents
 themselves and links to them.
 
 WHAT IT IS NOT. A summary, an opinion, or a prediction of effect. The
@@ -44,7 +43,9 @@ import urllib.parse
 import urllib.request
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_turso import Turso, record_run, stamp_freshness  # noqa: E402
+from lib_turso import (  # noqa: E402
+    Turso, add_missing_columns, query_rows, record_run, stamp_freshness,
+)
 
 API = "https://www.federalregister.gov/api/v1/documents.json"
 UA = "permtracker.app policy feed (support@permtracker.app)"
@@ -75,15 +76,14 @@ FIELDS = ["title", "type", "abstract", "document_number", "html_url",
           "effective_on", "comments_close_on", "comment_url", "citation",
           "action", "dates", "correction_of", "pdf_url"]
 
-# Columns added 2026-09-16, after the table already existed in production.
-# `CREATE TABLE IF NOT EXISTS` can never ADD a column, so `ensure_columns`
-# runs before every write. All nullable: the OFLC feed shares this table and
+# Columns added after the table already existed, so every write first adds
+# any the live table lacks. All nullable: the OFLC feed shares this table and
 # writes none of them.
-EXTRA_COLUMNS = [
-    ("effective_on", "TEXT"), ("comments_close_on", "TEXT"), ("comment_url", "TEXT"),
-    ("citation", "TEXT"), ("action", "TEXT"), ("dates", "TEXT"),
-    ("correction_of", "TEXT"), ("pdf_url", "TEXT"),
-]
+EXTRA_COLUMNS = {
+    "effective_on": "TEXT", "comments_close_on": "TEXT", "comment_url": "TEXT",
+    "citation": "TEXT", "action": "TEXT", "dates": "TEXT",
+    "correction_of": "TEXT", "pdf_url": "TEXT",
+}
 
 DATASET = "policy-notices"
 # The Register publishes every business day; a newest document older than
@@ -133,10 +133,9 @@ AGENCIES_OF_INTEREST = (
 # Omnibus listings that match every term and say nothing specific.
 OMNIBUS = re.compile(r"unified agenda|regulatory agenda|agenda of regulations|semiannual regulatory", re.I)
 
-# Agency housekeeping that matches a term by accident. A Labor Department
-# notice appointing members to its Performance Review Board matched "labor
-# certification" on 2026-09-10 and sat beside the H-1B fee rule for six days.
-# Board appointments and meeting notices change nothing a filing runs under.
+# Agency housekeeping that matches a term by accident (a notice appointing a
+# Performance Review Board matches "labor certification"). Board appointments
+# and meeting notices change nothing a filing runs under.
 PERSONNEL = re.compile(
     r"senior executive service|performance review board|appointment of members"
     r"|membership of the|notice of (?:a |an )?(?:open |public |closed )?meeting|advisory (?:committee|council|board)",
@@ -235,22 +234,7 @@ DDL = [
 ]
 
 
-EXTRA_NAMES = [name for name, _ in EXTRA_COLUMNS]
-
-
-def ensure_columns(db: Turso) -> list[str]:
-    """Add any column the live table lacks. Returns the names added."""
-    res = db.execute("PRAGMA table_info(policy_notices)")
-    have = set()
-    for r in res["response"]["result"]["rows"]:
-        vals = [None if c["type"] == "null" else c["value"] for c in r]
-        have.add(vals[1])
-    added = []
-    for name, typ in EXTRA_COLUMNS:
-        if name not in have:
-            db.execute(f"ALTER TABLE policy_notices ADD COLUMN {name} {typ}")
-            added.append(name)
-    return added
+EXTRA_NAMES = list(EXTRA_COLUMNS)
 
 
 def signature(r: dict) -> tuple:
@@ -262,16 +246,11 @@ def signature(r: dict) -> tuple:
 def write(db: Turso, rows: list[dict]) -> int:
     """Upsert, writing only rows that are new or changed."""
     db.script(DDL)
-    added = ensure_columns(db)
+    added = add_missing_columns(db, "policy_notices", EXTRA_COLUMNS)
     if added:
         log(f"  added columns: {', '.join(added)}")
-    res = db.execute(
-        "SELECT document_number, title, abstract, topics, " + ", ".join(EXTRA_NAMES) + " FROM policy_notices"
-    )
-    have = {}
-    for r in res["response"]["result"]["rows"]:
-        vals = [None if c["type"] == "null" else c["value"] for c in r]
-        have[vals[0]] = tuple(vals[1:])
+    have = {r[0]: tuple(r[1:]) for r in query_rows(
+        db, "SELECT document_number, title, abstract, topics, " + ", ".join(EXTRA_NAMES) + " FROM policy_notices")}
     now = int(time.time() * 1000)
     written = 0
     cols = ["document_number", "publication_date", "type", "title", "abstract", "html_url",

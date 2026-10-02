@@ -2,23 +2,25 @@
  * The chat's limits, and the words that go with each one.
  *
  * Every limit on the assistant has to say which limit it hit and what to do
- * next. Before Sep 29 2026 five of them failed silently: a reply that hit the
- * output cap just stopped mid-sentence, a spent web-search quota came back as
- * "no results", a knowledge-search rate limit told the model to "try
- * rephrasing", the per-address limit showed as "the AI services didn't
- * respond", and a case query that stopped at 100 rows gave no sign it had.
+ * next. Silent, each misleads: a reply that hits the output cap stops
+ * mid-sentence, a spent web-search quota reads as "no results", a
+ * knowledge-search rate limit reads as "try rephrasing", the per-address
+ * limit reads as "the AI services didn't respond", and a case query that
+ * stops at 100 rows gives no sign it did.
  *
  * Pure functions only, so the route, the tools and the panel share one
  * wording and the tests can pin it.
  */
+
+import { EASTERN_TIMEZONE, MS_PER_HOUR, MS_PER_MINUTE } from "@/lib/time";
 
 /** Tool-using steps allowed in one reply (streamText's stopWhen). */
 export const CHAT_MAX_STEPS = 10;
 
 /**
  * Output tokens per reply. 8,000 sits under the smallest limit in the model
- * chain: Gemini 2.0 Flash's "Output token limit: 8,192" (ai.google.dev, read
- * Sep 29 2026). Groq keeps its own lower cap in providers.ts, because its free
+ * chain: Gemini 2.0 Flash's "Output token limit: 8,192" (ai.google.dev).
+ * Groq keeps its own lower cap in providers.ts, because its free
  * tier counts the requested maximum against a 12,000 tokens-a-minute budget.
  */
 export const CHAT_MAX_OUTPUT_TOKENS = 8000;
@@ -47,9 +49,9 @@ export function cutShortNotice(kind: CutShort, maxSteps: number = CHAT_MAX_STEPS
 export function formatWait(ms: number): string {
   if (!Number.isFinite(ms) || ms <= 0) return 'a moment';
   const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
-  if (ms < 60_000) return plural(Math.max(1, Math.ceil(ms / 1000)), 'second');
-  if (ms < 3_600_000) return plural(Math.ceil(ms / 60_000), 'minute');
-  return plural(Math.ceil(ms / 3_600_000), 'hour');
+  if (ms < MS_PER_MINUTE) return plural(Math.max(1, Math.ceil(ms / 1000)), 'second');
+  if (ms < MS_PER_HOUR) return plural(Math.ceil(ms / MS_PER_MINUTE), 'minute');
+  return plural(Math.ceil(ms / MS_PER_HOUR), 'hour');
 }
 
 /**
@@ -125,7 +127,7 @@ export function nextUtcMidnight(now: Date): Date {
 /** "8:00 PM EDT": the owner's clock, 12-hour, with the zone. */
 export function formatEastern(date: Date): string {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
+    timeZone: EASTERN_TIMEZONE,
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
@@ -179,8 +181,8 @@ export function queryCapNote(totalCount: number | undefined, shown: number): str
 /**
  * A case query's result, with a note when the list stopped at its cap.
  * `chatCaseData.queryCases` returns every match in `count` and at most
- * `limit` (default and maximum 100) in `cases`; before Sep 29 2026 the model
- * got the shorter list with nothing telling it to say so.
+ * `limit` (default and maximum 100) in `cases`; without the note the model
+ * gets the shorter list with nothing telling it to say so.
  */
 export function annotateCaseQuery<T>(result: T): T & { note?: string; _ai_instruction?: string } {
   type Annotated = T & { note?: string; _ai_instruction?: string };
@@ -211,9 +213,10 @@ export function annotateCaseQuery<T>(result: T): T & { note?: string; _ai_instru
 
 /**
  * The chat route's per-address refusal (authRateLimit's ip_chat), in the same
- * JSON shape nginx answers with under /api, so the panel reads both one way.
- * It used to be `{ error: "Too many requests..." }` with no wait, and the panel
- * showed "the AI services didn't respond" over it.
+ * JSON shape nginx answers with under /api, so the panel reads both one way
+ * and can say how long to wait. A bare `{ error: "Too many requests..." }`
+ * carries no wait, and the panel would read it as "the AI services didn't
+ * respond".
  */
 export function chatIpLimitBody(retryAfterMs: number, blocked: boolean) {
   const wait = formatWait(retryAfterMs);

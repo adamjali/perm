@@ -6,7 +6,7 @@
  *
  * JOBS:
  * - cleanupOldNotifications: Hourly cleanup of read notifications older than 90 days
- * - sendWeeklyDigest: Weekly summary email for opted-in users
+ * - sendWeeklyDigest: Weekly case summary for opted-in users
  *
  * QUERIES:
  * - getCasesNeedingReminders: Find cases with upcoming deadlines that need notifications
@@ -35,6 +35,7 @@ import {
   buildUserNotificationPrefs,
   type DeadlineNotificationType,
   type UserNotificationPrefs,
+  UNREAD_COUNT_CAP,
 } from "./lib/notificationHelpers";
 import { extractReminderDeadlines } from "./lib/perm/deadlines";
 import {
@@ -56,6 +57,12 @@ import {
   mapCaseToEnforcementData,
   VIOLATION_TO_DEADLINE_TYPE,
 } from "./lib/deadlineEnforcementHelpers";
+import { MS_PER_DAY } from "./lib/time";
+
+/** Read notifications deleted per cleanup run; the hourly run takes the rest next time. */
+const NOTIFICATION_CLEANUP_BATCH = 1000;
+/** Accounts past their grace period purged per run. */
+const DELETION_BATCH = 100;
 
 // ============================================================================
 // TYPES
@@ -101,7 +108,7 @@ function daysUntilDeadline(
   const todayStr = getTodayForDeadline(deadlineType, userTimezone);
   const todayMs = new Date(todayStr + "T00:00:00Z").getTime();
   const deadlineMs = new Date(deadlineDate + "T00:00:00Z").getTime();
-  return Math.ceil((deadlineMs - todayMs) / (1000 * 60 * 60 * 24));
+  return Math.ceil((deadlineMs - todayMs) / MS_PER_DAY);
 }
 
 // ============================================================================
@@ -295,10 +302,8 @@ export const getUsersForWeeklyDigest = internalQuery({
 // ACTIONS
 // ============================================================================
 
-// checkDeadlineReminders was removed 2026-08-24. It was this file's original
-// daily reminder sweep, orphaned when crons.ts repointed daily reminders at
-// deadlineDigest.runDeadlineReminders — which reuses getCasesNeedingReminders
-// above, so that query stays.
+// The daily reminder sweep is deadlineDigest.runDeadlineReminders, which
+// reads getCasesNeedingReminders above.
 
 
 /**
@@ -314,7 +319,7 @@ export const getUsersForWeeklyDigest = internalQuery({
 export const cleanupOldNotifications = internalAction({
   args: {},
   handler: async (ctx): Promise<{ deleted: number }> => {
-    const ninetyDaysAgo = Date.now() - 90 * 24 * 60 * 60 * 1000;
+    const ninetyDaysAgo = Date.now() - 90 * MS_PER_DAY;
 
     // Get old read notifications
     const oldNotifications = await ctx.runQuery(
@@ -350,7 +355,7 @@ export const getOldReadNotifications = internalQuery({
           q.lt(q.field("createdAt"), olderThan)
         )
       )
-      .take(1000); // Batch limit to prevent timeout
+      .take(NOTIFICATION_CLEANUP_BATCH);
 
     return notifications.map((n) => n._id);
   },
@@ -380,7 +385,7 @@ export const deleteNotification = internalMutation({
  *
  * Skips "All Clear" digests (no overdue/upcoming/later deadlines AND no recent case
  * updates) — those add no value and needlessly burn Resend's daily send cap during the
- * Monday digest burst. Only opted-in users with something to report are emailed.
+ * Monday case summary burst. Only opted-in users with something to report are emailed.
  */
 export const sendWeeklyDigest = internalAction({
   args: {},
@@ -494,8 +499,8 @@ export const getDeadlinesForDigest = internalQuery({
     todayUtc.setUTCHours(0, 0, 0, 0);
 
     // Include deadlines from 30 days ago (to capture overdue) to 14 days ahead
-    const pastDate = new Date(todayUtc.getTime() - 30 * 24 * 60 * 60 * 1000);
-    const futureDate = new Date(todayUtc.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const pastDate = new Date(todayUtc.getTime() - 30 * MS_PER_DAY);
+    const futureDate = new Date(todayUtc.getTime() + 14 * MS_PER_DAY);
     const pastDateStr = pastDate.toISOString().split("T")[0]!;
     const futureDateStr = futureDate.toISOString().split("T")[0]!;
 
@@ -549,7 +554,7 @@ export const getRecentlyUpdatedCases = internalQuery({
     userId: v.id("users"),
   },
   handler: async (ctx, { userId }): Promise<RawCaseUpdateData[]> => {
-    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const sevenDaysAgo = Date.now() - 7 * MS_PER_DAY;
 
     const cases = await ctx.db
       .query("cases")
@@ -609,7 +614,7 @@ export const getUnreadCountForUser = internalQuery({
       .withIndex("by_user_and_unread", (q) =>
         q.eq("userId", userId).eq("isRead", false)
       )
-      .take(1000);
+      .take(UNREAD_COUNT_CAP);
 
     return unread.length;
   },
@@ -662,9 +667,9 @@ export const permanentlyDeleteAccount = internalMutation({
   },
 });
 
-// processExpiredDeletions was removed 2026-08-24, superseded by
-// accountDeletion.processExpiredDeletions (which the cron points at, and which
-// reuses getUsersWithExpiredDeletions and permanentlyDeleteAccount here).
+// accountDeletion.processExpiredDeletions, which the cron runs, reads
+// getUsersWithExpiredDeletions below, and its per-user purge runs
+// permanentlyDeleteAccount above.
 
 
 /**
@@ -685,7 +690,7 @@ export const getUsersWithExpiredDeletions = internalQuery({
           q.lt(q.field("deletedAt"), now)
         )
       )
-      .take(100); // Process in batches
+      .take(DELETION_BATCH);
 
     return users.map((u) => u._id);
   },
@@ -706,7 +711,7 @@ export const getUsersWithExpiredDeletions = internalQuery({
 export const cleanupRateLimits = internalMutation({
   args: {},
   handler: async (ctx): Promise<{ deleted: number }> => {
-    const maxAgeMs = 24 * 60 * 60 * 1000; // 24 hours
+    const maxAgeMs = MS_PER_DAY; // 24 hours
     const cutoff = Date.now() - maxAgeMs;
     const BATCH_SIZE = 1000;
 
@@ -750,7 +755,7 @@ export const cleanupExpiredConversations = internalMutation({
   handler: async (ctx): Promise<{ deleted: number; hasMore: boolean }> => {
     const RETENTION_DAYS = 90;
     const BATCH_SIZE = 50;
-    const cutoff = Date.now() - RETENTION_DAYS * 24 * 60 * 60 * 1000;
+    const cutoff = Date.now() - RETENTION_DAYS * MS_PER_DAY;
 
     // Find conversations older than retention period
     const oldConversations = await ctx.db

@@ -5,6 +5,8 @@ import { useMemo } from "react";
 
 import { FilterableStatTable, type CsvSpec, type Facet, type StatColumn } from "@/components/tools/FilterableStatTable";
 import { HOLD_STATUS, longDate, type EmployerStageRow } from "@/lib/employerStages";
+import { formatInt, formatShare } from "@/lib/format";
+import { SITE_URL } from "@/lib/constants/site";
 
 /**
  * Every employer with pending PERM cases, by how many sit outside DOL's
@@ -22,8 +24,6 @@ const HOLD = HOLD_STATUS;
 const RFI = "RFI ISSUED";
 const APPEALS = ["RECONSIDERATION APPEALS", "BALCA APPEALS", "REQUEST FOR REVIEW"];
 
-const int = (n: number) => n.toLocaleString("en-US");
-const pct = (x: number) => `${(x * 100).toFixed(x >= 0.1 ? 0 : 1)}%`;
 const at = (r: EmployerStageRow, s: string) => r.byStatus[s] ?? 0;
 const appeals = (r: EmployerStageRow) => APPEALS.reduce((a, s) => a + at(r, s), 0);
 const other = (r: EmployerStageRow) => r.review - at(r, HOLD) - at(r, RFI) - appeals(r);
@@ -41,7 +41,7 @@ function holdCell(r: EmployerStageRow, logFrom: string | null): { text: string; 
   if (held === 0 || r.holdUndated === undefined) return { text: "", sort: "" };
   if (r.holdSince) {
     const n = r.holdSinceCases ?? 0;
-    return { text: n === held ? longDate(r.holdSince) : `${longDate(r.holdSince)} (${int(n)})`, sort: r.holdSince };
+    return { text: n === held ? longDate(r.holdSince) : `${longDate(r.holdSince)} (${formatInt(n)})`, sort: r.holdSince };
   }
   if (logFrom && (r.holdBeforeLog ?? 0) === held) return { text: `before ${longDate(logFrom)}`, sort: "0000" };
   return { text: "", sort: "" };
@@ -85,19 +85,19 @@ function columns(logFrom: string | null): StatColumn<EmployerStageRow>[] {
           <span className="font-bold">{r.name}</span>
         ),
     },
-    { key: "pending", label: "Pending", numeric: true, sortValue: (r) => r.pending, render: (r) => <span className="tabular-nums">{int(r.pending)}</span> },
+    { key: "pending", label: "Pending", numeric: true, sortValue: (r) => r.pending, render: (r) => <span className="tabular-nums">{formatInt(r.pending)}</span> },
     {
       key: "review",
       label: "Outside queue",
       numeric: true,
       sortValue: (r) => r.review,
-      render: (r) => <span className="font-bold tabular-nums">{int(r.review)}</span>,
+      render: (r) => <span className="font-bold tabular-nums">{formatInt(r.review)}</span>,
     },
-    { key: "hold", label: "On hold", numeric: true, sortValue: (r) => at(r, HOLD), render: (r) => <span className="tabular-nums">{int(at(r, HOLD))}</span> },
-    { key: "rfi", label: "RFI", numeric: true, sortValue: (r) => at(r, RFI), render: (r) => <span className="tabular-nums">{int(at(r, RFI))}</span> },
-    { key: "appeals", label: "Appeals", numeric: true, sortValue: (r) => appeals(r), render: (r) => <span className="tabular-nums">{int(appeals(r))}</span>, secondary: true },
-    { key: "other", label: "Other review", numeric: true, sortValue: (r) => other(r), render: (r) => <span className="tabular-nums">{int(other(r))}</span>, secondary: true },
-    { key: "share", label: "Share of pending", numeric: true, sortValue: (r) => r.share, render: (r) => <span className="tabular-nums">{pct(r.share)}</span> },
+    { key: "hold", label: "On hold", numeric: true, sortValue: (r) => at(r, HOLD), render: (r) => <span className="tabular-nums">{formatInt(at(r, HOLD))}</span> },
+    { key: "rfi", label: "RFI", numeric: true, sortValue: (r) => at(r, RFI), render: (r) => <span className="tabular-nums">{formatInt(at(r, RFI))}</span> },
+    { key: "appeals", label: "Appeals", numeric: true, sortValue: (r) => appeals(r), render: (r) => <span className="tabular-nums">{formatInt(appeals(r))}</span>, secondary: true },
+    { key: "other", label: "Other review", numeric: true, sortValue: (r) => other(r), render: (r) => <span className="tabular-nums">{formatInt(other(r))}</span>, secondary: true },
+    { key: "share", label: "Share of pending", numeric: true, sortValue: (r) => r.share, render: (r) => <span className="tabular-nums">{formatShare(r.share)}</span> },
     {
       key: "holdSince",
       label: "On hold since",
@@ -132,7 +132,7 @@ export function EmployerStagesTable({
         other(r),
         r.share,
         holdCell(r, logFrom).text || null,
-        r.slug ? `https://permtracker.app/perm-employers/${r.slug}` : null,
+        r.slug ? `${SITE_URL}/perm-employers/${r.slug}` : null,
       ],
     }),
     [asOf, logFrom],

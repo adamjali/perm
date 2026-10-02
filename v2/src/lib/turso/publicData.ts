@@ -25,6 +25,7 @@ import {
   type EntityKind,
   type EntityRow,
 } from "@/lib/entityPayload";
+import { MS_PER_DAY } from "@/lib/time";
 
 import { one, rows } from "./client";
 import { wageView } from "./wageViews";
@@ -83,21 +84,18 @@ export async function getEntitySeed(
 /**
  * Every row of one kind that belongs in the BULK dump, in one query.
  *
- * The Convex version paged in 2,000-row batches with a rank cursor, a
- * 40,000-row runaway guard and a duplicate-rank check, because that backend
- * capped a single read. None of that is needed here, and the guards went with
- * it rather than being carried over as decoration.
+ * No paging: a single read here is not capped the way a Convex read is, so it
+ * needs no rank cursor, runaway guard or duplicate-rank check.
  *
- * IT READS `MIN_TOTAL_FOR_BULK`, NOT THE PAGE FLOOR, and that stopped being a
- * distinction without a difference on 2026-09-10 when the page floor went to
- * 1. Its only caller is `/api/perm-entities/<kind>`, which the search palette
- * downloads as a client-side slice: at the page floor that response is 69,204
- * employers rather than 9,176, which is both a page-weight problem and a
- * one-request copy of the compilation that §4 of the Terms tells other people
- * not to take. The sitemap used to share this function and no longer does -
- * it reads its own rank window (`getEntitySlugWindow`), because slicing a
- * whole-table fetch in JS meant fourteen full reads a day to emit fourteen
- * files.
+ * IT READS `MIN_TOTAL_FOR_BULK`, NOT THE PAGE FLOOR, which is 1. Its only
+ * caller is `/api/perm-entities/<kind>`, which the search palette downloads
+ * as a client-side slice: at the page floor that response would be tens of
+ * thousands of employers rather than about nine thousand, which is both a
+ * page-weight problem and a one-request copy of the compilation that §4 of
+ * the Terms tells other people not to take. The sitemap does not share this
+ * function: it reads its own rank window (`getEntitySlugWindow`), because
+ * slicing a whole-table fetch in JS would mean one full read per sitemap
+ * file.
  */
 export async function getAllEntities(kind: EntityKind): Promise<EntityRow[]> {
   const all = await rows<EntityDbRow>(
@@ -110,7 +108,7 @@ export async function getAllEntities(kind: EntityKind): Promise<EntityRow[]> {
 /**
  * The slugs for ONE sitemap chunk, read as a rank window.
  *
- * MEASURED 2026-09-10 on production, employer chunk 12 of 14:
+ * MEASURED on production, one employer chunk deep in the kind:
  *
  *     LIMIT 5000 OFFSET 60000 ORDER BY rank      4,858 ms
  *     WHERE rank > 60000 AND rank <= 65000         459 ms
@@ -118,8 +116,8 @@ export async function getAllEntities(kind: EntityKind): Promise<EntityRow[]> {
  * The offset form is not a paged read at all. `idx_pe_kind_total` orders by
  * `total`, so an `ORDER BY rank` on top of it is `USE TEMP B-TREE FOR ORDER
  * BY`: SQLite reads all 71,512 rows of the kind and sorts them before
- * discarding all but 5,000. Every chunk pays for the whole table, which is
- * the same defect in a different costume as the JS `.slice()` this replaced.
+ * discarding all but 5,000. Every chunk pays for the whole table, the same
+ * defect in a different costume as slicing a whole-table fetch in JS.
  * The rank range is served by `idx_pe_kind_rank` directly and touches exactly
  * the 5,000 index entries it returns.
  *
@@ -181,8 +179,8 @@ export async function countEntityRanks(kind: EntityKind): Promise<number> {
  * sitemap on the site; `captureError` names it.
  *
  * Each row carries `lastChanged`: the Eastern day any of that employer's cases
- * last changed as the page shows it, written by the nightly builder since
- * 2026-09-23 (`last_changed`, from perm_case_status.fetched_at). It is the
+ * last changed as the page shows it, written by the nightly builder
+ * (`last_changed`, from perm_case_status.fetched_at). It is the
  * page's sitemap lastmod, in place of one nightly date on every URL.
  */
 export interface LiveOnlySlug {
@@ -526,17 +524,16 @@ export async function getVisaBulletinSeries(): Promise<
  * The sitemap index has to know how many child files exist before it can list
  * them, and that count is of PAGEWORTHY rows, not of all rows: everything
  * below the threshold is stored and searchable but has no URL. Counting in
- * SQL rather than fetching 16,305 rows to call .filter().length on them.
+ * SQL rather than fetching every row to call .filter().length on them.
  *
  * ONE ROW READ, NOT A COUNT. `count(*) ... WHERE kind = ? AND total >= ?`
  * walks every index entry of the kind (71,512 for employers), and every
- * entity page, the case page's estimate and llms.txt asked it three times
- * per render: 67.25 billion of the 98.4 billion rows Turso billed from
- * Sep 2 to Sep 26 2026 (2.64M runs, measured in its Top Queries panel).
+ * entity page, the case page's estimate and llms.txt would ask it three
+ * times per render, which makes it by far the heaviest read on the database.
  * Ranks are dense 1..N per kind and ordered by total, so the pageworthy
  * count is the last rank whenever the last-ranked entity clears the floor,
  * which it does at a floor of 1 (every entity holds at least one filing;
- * measured the same day: no rank/total inversions, minimum total 1). The
+ * measured: no rank/total inversions, minimum total 1). The
  * count survives as the fallback for a floor the tail does not clear.
  */
 export const countPageworthy = cache(async (kind: EntityKind): Promise<number> => {
@@ -580,11 +577,10 @@ export interface DailyDecisions {
 /**
  * Decisions DOL issued on a single day, ascending.
  *
- * Two sources live in this table and they are not interchangeable.
- * "dol-disclosure" is ours, derived from our own case corpus, and runs to 947
- * days. "rival-b" is the rival's series, backfilled for comparison, and runs
- * to 88. The default is ours; pass the other only when the point IS the
- * comparison.
+ * Two sources live in this table and they are not interchangeable:
+ * "dol-disclosure", derived from our own case corpus by DOL's decision date,
+ * and "sweep-observed", dated by when our sweep saw a case become final. The
+ * default is the first; ask for the second by name.
  */
 export async function getDailyDecisions(
   source = "dol-disclosure",
@@ -615,11 +611,10 @@ export async function getDailyDecisions(
  * Freshness for every dataset. Read by nearly every public page, and the SAME
  * result for all of them.
  *
- * From Sep 1 to Sep 27 2026 this sat in `unstable_cache` for an hour, so that
- * a deploy's cold ISR cache would not re-run it on every entity page. The
- * trade was backwards: a Data Cache entry's window caps every page reading
- * it, so the pages rebuilt hourly for good, a far larger bill than one
- * ~40-row query per render. See getFreshness below.
+ * Not in `unstable_cache`: a data cache entry's window caps every page
+ * reading it, so an hour-long entry would make those pages rebuild hourly
+ * for good, far costlier than one ~40-row query per render. See getFreshness
+ * below.
  */
 const freshnessUncached = async (): Promise<Record<string, DatasetFreshness>> => {
   const r = await rows<Record<string, unknown>>(
@@ -650,7 +645,7 @@ const freshnessUncached = async (): Promise<Record<string, DatasetFreshness>> =>
         const y = Number(m[1]);
         const mo = Number(m[2]);
         const d = m[3] ? Number(m[3]) : new Date(Date.UTC(y, mo, 0)).getUTCDate();
-        ageDays = Math.floor((now - Date.UTC(y, mo - 1, d)) / 86_400_000);
+        ageDays = Math.floor((now - Date.UTC(y, mo - 1, d)) / MS_PER_DAY);
       }
     }
     out[x.dataset as string] = {
@@ -671,12 +666,11 @@ const freshnessUncached = async (): Promise<Record<string, DatasetFreshness>> =>
   return out;
 };
 
-// React's per-request cache, NOT `unstable_cache`. A Data Cache entry's
-// `revalidate` becomes the ceiling of every page that reads it, and this one
-// (an hour) sat under DataProvenance on 86 of the site's ISR pages: the build's
-// route table printed 1h for pages declaring 30 days, 6 hours and a day, and
-// Vercel billed 15.3M ISR write units against 3.8M reads for Aug 28 to Sep 28
-// 2026, $61 of the cycle's $141 (measured Sep 27). The query reads ~40 rows,
+// React's per-request cache, NOT `unstable_cache`. A data cache entry's
+// `revalidate` becomes the ceiling of every page that reads it, and this sits
+// under DataProvenance on most of the site's ISR pages: an hour-long entry
+// here makes pages that declare 30 days, 6 hours or a day rebuild every hour
+// (the build's route table shows it). The query reads ~40 rows,
 // so running it once per render costs nothing, and the stamp is always the
 // one that was true when the page was built.
 export const getFreshness = cache(freshnessUncached);
@@ -707,10 +701,11 @@ export interface I485Position {
  *
  * WE PUBLISH A RANGE, NOT A POINT. USCIS replaces any cell holding 1-10
  * applications with a "D", so an exact total is not knowable from the
- * release. The rival resolves every D to 5 and prints one number with an
- * error bar underneath; on a site that refuses to blend denial factors into
- * a single score because the inputs cannot carry it, a point estimate here
- * would be the same mistake. `low` and `high` are the arithmetic bounds and
+ * release. Resolving every D to 5 and printing one number would claim a
+ * precision the release does not carry; on a site that refuses to blend
+ * denial factors into a single score because the inputs cannot carry it, a
+ * point estimate here would be the same mistake. `low` and `high` are the
+ * arithmetic bounds and
  * both are true statements about the published data.
  *
  * "Ahead" counts BOTH pending statuses. A case whose visa number is already
@@ -918,10 +913,9 @@ function toMonthStat(r: Record<string, unknown>): MonthQueueStat {
  * exactly the direction that flatters a wait estimate.
  */
 export async function getQueueAhead(filingMonth: string): Promise<QueueAhead | null> {
-  // FROM THE LIVE CENSUS, NOT perm_month_stats. That table was filled daily
-  // from the rival tracker's aggregate and froze when the mirror schedule was
-  // removed (2026-08-27) - nothing writes it any more, so reading it served
-  // a queue position that silently aged. The census doc is our own mirror,
+  // FROM THE LIVE CENSUS, NOT perm_month_stats: nothing writes that table,
+  // so reading it would serve a queue position that silently ages. The
+  // census doc is our own count,
   // recomputed twice a day, and carries its own source attribution.
   const census = await getLiveCensus();
   const fromCensus = census ? monthQueueStatsFromMatrix(census.matrix) : [];
@@ -1024,14 +1018,8 @@ export async function getMonthQueueStats(): Promise<MonthQueueStat[]> {
   const census = await getLiveCensus();
   if (census) return monthQueueStatsFromMatrix(census.matrix);
   /*
-   * COMPUTED FROM OUR OWN ROWS, not read from a mirrored aggregate.
-   *
-   * This used to read `perm_month_stats`, filled daily from the rival tracker's
-   * pre-computed per-month endpoint - the same cases we already hold, counted
-   * by somebody else and shipped back. Measured across ten months before the
-   * switch: pending matched EXACTLY on eight, and the two that differed (by 2
-   * and by 8) differed because our mirror had refreshed more recently than
-   * their aggregate. Equivalent, and strictly fresher.
+   * COMPUTED FROM OUR OWN ROWS, not read from anybody else's aggregate of
+   * the same cases.
    *
    * TWO DIFFERENT QUESTIONS, ANSWERED TWO DIFFERENT WAYS, deliberately:
    *
@@ -1349,16 +1337,13 @@ export async function getWageByState(
 /**
  * The salary explorer's filter dropdowns.
  *
- * PRECOMPUTED, because computing them per render is what was timing out. The
- * state facet is a GROUP BY over the whole of perm_cases that no index can
- * serve past its first predicate: about 1.5s idle, and far worse under a
- * concurrent disclosure load - this repo measured an ordinary GROUP BY state
- * going from ~0.3s to a worst of 59.2s while a 147k-row file was written.
- *
- * Sentry's week to 2026-09-12 carried 11 occurrences of "turso query deadline
- * (20000ms, attempt 2): SELECT state, CO..." plus 4 SQLITE_NOMEM, all on this
- * page. The facets only change when perm_cases is reloaded, which is
- * quarterly, so there was never a reason to recompute them per request.
+ * PRECOMPUTED, because computing them per render times out. The state facet
+ * is a GROUP BY over the whole of perm_cases that no index can serve past its
+ * first predicate: about 1.5s idle, and far worse under a concurrent
+ * disclosure load (measured: an ordinary GROUP BY state goes from ~0.3s to a
+ * worst of 59.2s while a 147k-row file is written). The facets only change
+ * when perm_cases is reloaded, which is quarterly, so there is no reason to
+ * recompute them per request.
  *
  * `build_wage_bands.py` writes perm_docs['wage_filter_options'] on the same
  * quarterly run that rebuilds the table. The live queries stay as the

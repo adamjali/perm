@@ -64,9 +64,9 @@ export interface DigestContent {
   next14DaysDeadlines: DigestDeadline[]; // Days 8-14
   recentCaseUpdates: DigestCaseUpdate[];
   /**
-   * Every update this week, before the list above was cut to 10. The email
-   * counted "+N more" from the CUT list, so 30 updates read as "+5 more"
-   * (Sep 29 2026 audit). Optional: digests built before it render as before.
+   * Every update this week, before the list above was cut to 10. Counting
+   * "+N more" from the CUT list would make 30 updates read as "+5 more".
+   * Optional: digests built before it render as before.
    */
   recentCaseUpdateTotal?: number;
   isEmpty: boolean;

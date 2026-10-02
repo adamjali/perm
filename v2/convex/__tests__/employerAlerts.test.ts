@@ -15,7 +15,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestContext } from "../../test-utils/convex";
 import { internal } from "../_generated/api";
 import { makeUnsubscribeToken } from "../lib/unsubscribeToken";
-import { etDay } from "../lib/alertDelivery";
+import { easternDay } from "../lib/time";
 import { bundleSubject, MORE_TOMORROW } from "../alertOutbox";
 import { employerSubject, unheard } from "../employerAlerts";
 import { QUEUED_REPLY } from "../confirmationQueue";
@@ -27,7 +27,7 @@ const originalFetch = global.fetch;
 type T = ReturnType<typeof createTestContext>;
 
 function isoMinus(days: number): string {
-  const d = new Date(`${etDay(Date.now())}T12:00:00Z`);
+  const d = new Date(`${easternDay(Date.now())}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() - days);
   return d.toISOString().slice(0, 10);
 }
@@ -59,7 +59,7 @@ interface Fixture {
 function stub(f: Fixture) {
   const sends: Record<string, unknown>[] = [];
   const doc = {
-    asOf: etDay(Date.now()),
+    asOf: easternDay(Date.now()),
     pendingTotal: 250,
     nationwide: { "ANALYST REVIEW": 30, "APPLICATION ON HOLD": 216, "RECONSIDERATION APPEALS": 4 },
     minPending: 5,
@@ -355,7 +355,7 @@ describe("one email a day, whatever the address follows", () => {
     await t.run(async (ctx) =>
       ctx.db.insert("alertRecipients", {
         email: "i@example.com",
-        lastSentDay: etDay(Date.now()),
+        lastSentDay: easternDay(Date.now()),
         lastSentAt: Date.now(),
         emailsSent: 1,
       }),

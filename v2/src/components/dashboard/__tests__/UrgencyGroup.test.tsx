@@ -7,7 +7,7 @@ import {
   createManyDeadlinesGroup,
   createOverdueDeadline,
 } from "../../../../test-utils/deadline-fixtures";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 import UrgencyGroup from "../UrgencyGroup";
 
 describe("UrgencyGroup", () => {

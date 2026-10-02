@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { useQuery } from "convex/react";
-import { api } from "../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { useAuthContext } from "@/lib/contexts/AuthContext";
 import { defaultCaseListQueryArgs } from "@/app/(authenticated)/cases/cases-storage";
 
@@ -11,9 +11,8 @@ import { defaultCaseListQueryArgs } from "@/app/(authenticated)/cases/cases-stor
  * Keeps the main pages' queries subscribed on every signed-in page, so moving
  * between the dashboard, the case list, the calendar and the timeline renders
  * each one filled in, not as skeletons that resolve one by one. (Measured on
- * production Sep 30 2026: with the dashboard and calendar warm, those two
- * opened with no skeleton at all; the case list and timeline, not yet warm,
- * showed one for 0.7 to 1.2 seconds on every visit.)
+ * production: a warm page opens with no skeleton at all; a cold one shows
+ * one for 0.7 to 1.2 seconds on every visit.)
  *
  * Convex shares one subscription per (query, arguments) pair across the whole
  * client, so these cost nothing extra while the dashboard is open, and on any

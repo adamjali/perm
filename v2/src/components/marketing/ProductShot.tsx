@@ -5,24 +5,19 @@ import Image from "next/image";
  *
  * WHY A PHOTOGRAPH OF THE THING AND NOT A DIAGRAM. The sign-up and sign-in
  * pages each carried a hand-drawn SVG of a filing window - geometrically
- * correct, on-palette, and completely inert. Adam: "need... an actual media use
- * jina or something, like whats there rn is SO lazy and low effort and ai
- * slop." He is right, and the reason is not that the drawing was ugly. A
- * schematic ILLUSTRATES a claim the copy has already made. A screenshot of the
+ * correct, on-palette, and inert. A schematic ILLUSTRATES a claim the copy has already made. A screenshot of the
  * running app is EVIDENCE for it, and on the one page whose whole job is "here
  * is what an account gets you", evidence is the entire argument.
  *
  * NO STOCK PHOTOGRAPHY, and that is the same decision rather than a different
  * one. The house rule ranks a real photograph above a diagram, and the primary
  * source here is our own product - not a person at a laptop, which is the
- * actual slop this was in danger of becoming. `public/images/screenshots/`
- * already held these; nothing needed sourcing.
+ * actual slop this was in danger of becoming. The pictures are the app's real
+ * pages drawn from a sample firm's recorded data (src/components/tour/).
  *
- * THE CAPTION SAYS IT IS A DEMO ACCOUNT. Every one of these shots is the seeded
- * demo tenant - "Demo User", Acme Inc, Dario's Gelato - so the employers and
- * dates in them are invented. Showing invented data without saying so is the
- * kind of small dishonesty that costs more than it buys, and the caption is one
- * clause.
+ * THE CAPTION SAYS THE CASES ARE SAMPLES. The employers and dates are
+ * invented, and showing invented data without saying so is the kind of small
+ * dishonesty that costs more than it buys; the caption is one clause.
  *
  * `sizes` matters here: the frame is a 26rem-ish column on a laptop and full
  * width on a phone, so without it Next serves the 1200px asset to a 390px
@@ -81,8 +76,8 @@ export function ProductShot({
       <figcaption
         className={
           dark
-            ? "mt-3 font-mono text-xs font-bold uppercase tracking-wider opacity-60"
-            : "mt-3 border-t-2 border-border pt-3 font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground"
+            ? "mt-3 font-mono text-sm font-bold uppercase tracking-wider opacity-60"
+            : "mt-3 border-t-2 border-border pt-3 font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground"
         }
       >
         {caption}

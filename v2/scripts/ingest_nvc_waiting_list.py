@@ -240,23 +240,18 @@ def main() -> int:
         print(json.dumps(doc, indent=1)[:1500])
         return 0
 
-    from lib_turso import Turso
+    from lib_turso import Turso, stamp_freshness, write_doc
     db = Turso()
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-               [DOC_KEY, json.dumps(doc), int(time.time() * 1000)])
-    db.execute("""CREATE TABLE IF NOT EXISTS data_freshness (
-        dataset TEXT PRIMARY KEY, as_of TEXT, fetched_at INTEGER,
-        source TEXT, cadence TEXT, note TEXT, max_age_days INTEGER)""")
-    # The budget is not a year. State published nothing after the November 2023
-    # report: checked 2026-09-26 on its statistics page (which no longer links
-    # the report at all), by the 2024 and 2025 file names (404) and by search.
-    # A yearly budget would print "source hasn't republished" every day for a
+    write_doc(db, DOC_KEY, json.dumps(doc))
+    # The budget isn't a year. State has published nothing after the November
+    # 2023 report (its statistics page no longer links one, and the 2024 and
+    # 2025 file names 404), so a yearly budget would warn every day about a
     # condition nobody can act on; this one warns if a newer report lands and
-    # is then not loaded for months.
-    db.execute("INSERT OR REPLACE INTO data_freshness VALUES (?,?,?,?,?,?,?)",
-               [DATASET, doc["newest"], int(time.time() * 1000),
-                "State Dept annual NVC waiting list report, via Internet Archive or a saved page",
-                "Yearly", f"{len(doc['series'])} dates, {datetime.date.today():%Y-%m-%d} load", MAX_AGE_DAYS])
+    # then isn't loaded for months.
+    stamp_freshness(db, DATASET, as_of=doc["newest"],
+                    source="State Dept annual NVC waiting list report, via Internet Archive or a saved page",
+                    cadence="Yearly", note=f"{len(doc['series'])} dates, {datetime.date.today():%Y-%m-%d} load",
+                    max_age_days=MAX_AGE_DAYS)
     print(f"wrote perm_docs['{DOC_KEY}'] ({len(json.dumps(doc)) / 1024:.1f} KB)")
     return 0
 

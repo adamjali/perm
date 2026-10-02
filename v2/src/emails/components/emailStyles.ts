@@ -1,8 +1,6 @@
 /**
  * Shared email styles for PERM Tracker templates.
  * Eliminates duplication across email components.
- *
- * Phase: Code simplification
  */
 
 import type { CSSProperties } from 'react';

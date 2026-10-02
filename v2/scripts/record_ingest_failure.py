@@ -50,17 +50,15 @@ def main() -> int:
         return 0
 
     try:
-        from lib_turso import Turso, record_run
+        from lib_turso import Turso, query_rows, record_run
         db = Turso()
         record_run(db, args.script, status=args.status, note=args.note[:500])
         # Read it back. "recorded" used to print whether or not the row
         # landed, so a hook that could not write looked exactly like one that
         # had; the health check then had nothing to find and stayed green.
-        res = db.execute(
-            "SELECT status FROM ingest_runs WHERE script = ? "
-            "ORDER BY finished_at DESC LIMIT 1", [args.script])
-        rows = res["response"]["result"]["rows"]
-        landed = bool(rows) and rows[0][0].get("value") == args.status
+        rows = query_rows(db, "SELECT status FROM ingest_runs WHERE script = ? "
+                              "ORDER BY finished_at DESC LIMIT 1", [args.script])
+        landed = bool(rows) and rows[0][0] == args.status
         if landed:
             print(f"recorded {args.status} for {args.script} (verified)")
         else:

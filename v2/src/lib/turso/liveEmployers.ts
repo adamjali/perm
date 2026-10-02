@@ -1,21 +1,20 @@
 /**
  * Employers we know about from the LIVE feed and nowhere else.
  *
- * ## The incoherence this fixes
+ * ## Why this exists
  *
  * `perm_entities` is built from DOL's quarterly disclosure files, so it only
  * ever holds employers with a DECIDED case in a PUBLISHED quarter.
  * `perm_live_recent` is the remainder - every case in our corpus the
  * published files do not hold - and it knows thousands of employers the
- * entity tables have never seen. Measured on production 2026-08-30:
+ * entity tables have never seen. Measured on production:
  *
  *     employers named in perm_live_recent          37,813
  *     of those with no perm_entities row at all    21,495
  *
- * So a visitor could look a pending case up by number, read its employer's
- * name off the case page, type that name into the employer search, and be
- * told it does not exist. We hold the information; it simply was not
- * reachable from the place a person would look for it.
+ * Without this, a visitor could look a pending case up by number, read its
+ * employer's name off the case page, type that name into the employer
+ * search, and be told it does not exist, though we hold the information.
  *
  * ## What these employers can and cannot say, and why the split is absolute
  *
@@ -37,9 +36,9 @@
  *
  * Every query below rides `perm_live_recent_emp (employer_slug,
  * filing_date DESC)` or `perm_entities`' own (kind, slug) primary key.
- * Verified with EXPLAIN QUERY PLAN against production, because Turso reads
- * were BLOCKED in August by exactly one unindexed path on a page a crawler
- * can walk:
+ * Verified with EXPLAIN QUERY PLAN against production, because one
+ * unindexed path on a page a crawler can walk is enough to swamp the
+ * database:
  *
  *   SEARCH perm_live_recent USING INDEX perm_live_recent_emp
  *          (employer_slug>? AND employer_slug<?)
@@ -48,7 +47,7 @@
  *          sqlite_autoindex_perm_entities_1 (kind=? AND slug=?)
  *
  * ERRORS ARE NOT SWALLOWED, same as every sibling module. A `.catch(() => [])`
- * here would turn a Turso outage into "this employer does not exist", which
+ * here would turn a database outage into "this employer does not exist", which
  * is the one wrong answer this file was written to stop giving.
  */
 import "server-only";

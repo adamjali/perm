@@ -9,10 +9,12 @@ import type { Metadata } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
 
+import { ChartHit } from "@/components/data/ChartHit";
+import { ChartTips } from "@/components/data/ChartTips";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
+import { timesWord } from "@/lib/h1bLotteryCalc";
 import {
   BENEFICIARY_CENTRIC_FROM,
   H1B_REGISTRATIONS,
@@ -26,6 +28,7 @@ import {
 } from "@/lib/h1bLottery";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
+import { formatPercent } from "@/lib/format";
 
 const TITLE = "H-1B Lottery Odds by Year";
 const DESCRIPTION =
@@ -58,10 +61,6 @@ const FAQS = [
   },
 ];
 
-function pct(n: number): string {
-  return `${(n * 100).toFixed(1)}%`;
-}
-
 export default function H1bLotteryOddsPage() {
   const years = H1B_REGISTRATIONS;
   const newest = years[years.length - 1]!;
@@ -77,10 +76,6 @@ export default function H1bLotteryOddsPage() {
       acceptedAnswer: { "@type": "Answer" as const, text: f.a },
     })),
   };
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Data", href: "/tools" },
-    { name: "H-1B lottery odds", href: PATH },
-  ]);
 
   // The year chart: eligible registrations as the frame, selected filled in.
   const W = 720;
@@ -95,15 +90,9 @@ export default function H1bLotteryOddsPage() {
     <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumb} />
 
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link href="/tools" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Data
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">H-1B lottery odds, year by year</h1>{" "}
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">H-1B lottery odds, year by year</h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           How many H-1B cap registrations USCIS received and selected each year, from its own table, and how the odds
           change now that the draw is weighted by wage.
@@ -113,7 +102,7 @@ export default function H1bLotteryOddsPage() {
       <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="latest">
         <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">FY{newest.fy} cap</p>{" "}
         <h2 id="latest" className="mt-2 font-heading text-4xl font-black leading-tight tabular-nums sm:text-5xl">
-          {pct(newestRate)}
+          {formatPercent(newestRate, 1)}
         </h2>{" "}
         <p className="mt-1 font-heading text-xl font-bold">of eligible registrations selected</p>{" "}
         <p className="mt-4 max-w-3xl text-base leading-relaxed text-foreground/80">
@@ -125,7 +114,9 @@ export default function H1bLotteryOddsPage() {
           {H1B_REGISTRATION_REVISED}).
         </p>
 
-        <div className="mt-6 overflow-x-auto">
+        {/* The tooltip sits outside the scrolling strip, which would clip it. */}
+        <ChartTips label="Eligible and selected H-1B registrations by fiscal year" className="mt-6">
+        <div className="overflow-x-auto">
           <svg viewBox={`0 0 ${W} ${H}`} className="w-full min-w-[520px] text-foreground" role="img" aria-labelledby="years-title">
             <title id="years-title">{`Eligible and selected H-1B registrations, FY${years[0]!.fy} to FY${newest.fy}`}</title>
             {years.map((y, i) => {
@@ -134,14 +125,26 @@ export default function H1bLotteryOddsPage() {
               const hs = (plotH * y.selected) / max;
               return (
                 <g key={y.fy}>
-                  <rect x={x} y={H - PAD.b - he} width={bw} height={he} className="fill-none stroke-foreground" strokeWidth={2}>
-                    <title>{`FY${y.fy}: ${y.eligible.toLocaleString("en-US")} eligible registrations `}</title>
-                  </rect>
-                  <rect x={x} y={H - PAD.b - hs} width={bw} height={hs} className="fill-foreground/75">
-                    <title>{`FY${y.fy}: ${y.selected.toLocaleString("en-US")} selected `}</title>
-                  </rect>
+                  <ChartHit
+                    tip={[
+                      `FY${y.fy}`,
+                      `${y.eligible.toLocaleString("en-US")} eligible registrations`,
+                      `${y.selected.toLocaleString("en-US")} selected, ${formatPercent(perRegistrationRate(y), 1)}`,
+                      `${y.multipleRegistrations.toLocaleString("en-US")} from people registered more than once`,
+                      y.uniqueBeneficiaries ? `About ${y.uniqueBeneficiaries.toLocaleString("en-US")} unique beneficiaries` : null,
+                    ]
+                      .filter(Boolean)
+                      .join("\n")}
+                    x={PAD.l + i * slot}
+                    width={slot}
+                    y={PAD.t}
+                    height={plotH}
+                  >
+                    <rect x={x} y={H - PAD.b - he} width={bw} height={he} className="fill-none stroke-foreground" strokeWidth={2} />
+                    <rect x={x} y={H - PAD.b - hs} width={bw} height={hs} className="fill-foreground/75" />
+                  </ChartHit>
                   <text x={x + bw / 2} y={H - PAD.b - he - 10} fontSize={16} textAnchor="middle" className="fill-foreground font-bold">
-                    {`${pct(perRegistrationRate(y))} `}
+                    {`${formatPercent(perRegistrationRate(y), 1)} `}
                   </text>
                   <text x={x + bw / 2} y={H - 10} fontSize={16} textAnchor="middle" className="fill-foreground">
                     {`FY${y.fy} `}
@@ -151,7 +154,8 @@ export default function H1bLotteryOddsPage() {
             })}
             <line x1={PAD.l} x2={W - PAD.r} y1={H - PAD.b} y2={H - PAD.b} className="stroke-foreground" strokeWidth={2} />
           </svg>
-        </div>{" "}
+        </div>
+        </ChartTips>{" "}
         <p className="mt-3 text-base text-foreground/75">
           Outline: eligible registrations. Filled: selected. The share above each bar is selected over eligible. From FY
           {BENEFICIARY_CENTRIC_FROM} USCIS drew people rather than registrations, which is why the FY2024 pile of
@@ -168,11 +172,15 @@ export default function H1bLotteryOddsPage() {
           what that does to one beneficiary&apos;s chance, in the final rule, before the first weighted lottery ran:
         </p>{" "}
         <div className="mt-5 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
+          <ChartTips label="DHS's estimated chance at each wage level">
           <ul className="space-y-4">
             {WEIGHTED_ESTIMATE.levels.map((l) => (
               <Fragment key={l.level}>
                 {" "}
-                <li className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3 [&>*]:min-w-0">
+                <li
+                  data-tip={`Level ${l.level}\n${l.percent.toFixed(1)}% estimated chance\nEntered in the draw ${timesWord(l.entries)}\n${WEIGHTED_ESTIMATE.randomPercent}% under the random draw`}
+                  className="grid grid-cols-[5.5rem_1fr_4.5rem] items-center gap-3 [&>*]:min-w-0"
+                >
                   <span className="font-heading text-lg font-black">Level {l.level}</span>{" "}
                   <span className="relative block h-8 border-2 border-border bg-background" aria-hidden="true">
                     <span className="absolute inset-y-0 left-0 bg-foreground" style={{ width: `${l.percent}%` }} />
@@ -185,13 +193,14 @@ export default function H1bLotteryOddsPage() {
                 </li>
               </Fragment>
             ))}
-          </ul>{" "}
+          </ul>
+          </ChartTips>{" "}
           <p className="mt-4 text-base text-foreground/75">
-            Dashed line: {WEIGHTED_ESTIMATE.randomPercent}%, DHS&apos;s figure for every beneficiary under the random draw.
-            DHS&apos;s estimate, {WEIGHTED_ESTIMATE.citation}, assumes employers keep their current wages and pools the
-            regular cap with the master&apos;s cap; DHS notes it may understate selections at higher levels.{" "}
-            <Link href="/tools/wage-levels" className="font-semibold underline underline-offset-2 hover:text-primary">
-              Find the OEWS wage level for a job
+            Dashed line: {WEIGHTED_ESTIMATE.randomPercent}%, DHS&apos;s figure for everyone under the random draw. Its
+            estimate ({WEIGHTED_ESTIMATE.citation}) assumes employers keep their wages and pools the two caps; DHS
+            notes it may understate selections at higher levels.{" "}
+            <Link href="/tools/h1b-lottery-odds-calculator" className="font-semibold underline underline-offset-2 hover:text-primary">
+              Work out the level and the odds for one job
             </Link>
             .
           </p>
@@ -224,7 +233,7 @@ export default function H1bLotteryOddsPage() {
                   <td className="px-3 py-3">{y.soleRegistrations.toLocaleString("en-US")}{" "}</td>
                   <td className="px-3 py-3">{y.multipleRegistrations.toLocaleString("en-US")}{" "}</td>
                   <td className="px-3 py-3">{y.selected.toLocaleString("en-US")}{" "}</td>
-                  <td className="px-3 py-3 font-bold">{pct(perRegistrationRate(y))}{" "}</td>
+                  <td className="px-3 py-3 font-bold">{formatPercent(perRegistrationRate(y), 1)}{" "}</td>
                 </tr>
               ))}
             </tbody>
@@ -271,6 +280,7 @@ export default function H1bLotteryOddsPage() {
       <ToolPageFooter
         currentHref={PATH}
         reading={[
+          { href: "/tools/h1b-lottery-odds-calculator", label: "H-1B lottery odds for a job", note: "the level an offer meets, and DHS's estimate at it" },
           { href: "/tools/wage-levels", label: "Wage levels for a job", note: "the four OEWS levels the weighted lottery uses, from DOL" },
           { href: "/lca-wages", label: "H-1B wages by occupation", note: "what certified LCAs offered, from DOL's disclosure files" },
           { href: "/tools/h1b-six-year-limit", label: "H-1B six-year limit", note: "how long H-1B status can run, and what extends it" },

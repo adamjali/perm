@@ -6,11 +6,10 @@
  */
 
 /**
- * Three sections, down from five on 2026-08-24. Fourteen articles never
- * justified five listing pages, five nav slots and five OG routes — /resources
- * held ONE file. Tutorials and resources merged into guides (their old URLs
- * 301 there); changelog stays as a standalone update log linked from the
- * footer rather than the content nav.
+ * Three sections. Tutorials and resources merged into guides (their old URLs
+ * 301 there), because a few dozen articles cannot justify five listing pages,
+ * five nav slots and five OG routes; the changelog is a standalone update log
+ * linked from the footer rather than the content nav.
  */
 export type ContentType = "blog" | "guides" | "changelog";
 
@@ -54,7 +53,7 @@ export const CONTENT_TYPE_CONFIG: Record<
 > = {
   blog: {
     label: "Blog",
-    plural: "Blog Posts",
+    plural: "Blog posts",
     description:
       "Insights on PERM labor certification, immigration practice, and industry trends.",
     icon: "FileText",

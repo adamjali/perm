@@ -87,17 +87,7 @@ export default async function I140CalculatorPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          {/* inline-flex with a 44px min-height: the link is a standalone tap
-              target and rendered at 15px tall before this. */}
-          <Link
-            href="/tools"
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            Tools
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           I-140 queue calculator
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
@@ -152,9 +142,9 @@ export default async function I140CalculatorPage() {
           <li className="border-2 border-border bg-background p-5">
             <p className="font-heading text-lg font-black">The worker might change jobs</p>{" "}
             <p className="mt-2 text-base leading-relaxed text-foreground/80">
-              Once an I-140 has been approved for 180 days, the employer withdrawing it doesn&apos;t undo the approval
-              (8 CFR 205.1(a)(3)(iii)(C)), and the priority date carries to a new petition (8 CFR 204.5(e)). Premium starts
-              that clock months sooner.{" "}
+              After 180 days of approval, the employer withdrawing the I-140 doesn&apos;t undo it (8 CFR
+              205.1(a)(3)(iii)(C)), and the priority date carries to a new petition (8 CFR 204.5(e)). Premium
+              processing starts that clock sooner.{" "}
               <Link href="/tools/priority-date-retention" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                 Check a priority date
               </Link>

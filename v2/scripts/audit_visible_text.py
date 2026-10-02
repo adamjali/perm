@@ -37,8 +37,7 @@ from lib_audit import audit_headers  # noqa: E402
 
 HEADERS = {
     "User-Agent": "permtracker-audit/1.0",
-    # Firewall rule 5: the site's own audit scripts bypass Bot Protection and
-    # the per-IP page limit. Without it a bare script is answered with 429.
+    # Exempts the audit from the per-address limits (lib_audit.py).
     **audit_headers(),
 }
 

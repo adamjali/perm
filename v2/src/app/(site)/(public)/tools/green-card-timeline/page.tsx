@@ -22,6 +22,7 @@ import { quarterLabel } from "@/lib/uscisQuarterlyShape";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { withSocialCard } from "@/lib/socialCard";
+import { DAYS_PER_MONTH_2DP } from "@/lib/time";
 /**
  * The whole employment-based green card in one view.
  *
@@ -77,7 +78,7 @@ const FAQS = [
 
 /** Months from DOL's published average calendar days to a determination. */
 function monthsFromDays(days: number | null): number | null {
-  return days === null ? null : Math.round(days / 30.44);
+  return days === null ? null : Math.round(days / DAYS_PER_MONTH_2DP);
 }
 
 export default async function GreenCardTimelinePage() {
@@ -155,15 +156,7 @@ export default async function GreenCardTimelinePage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link
-            href="/tools"
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            Tools
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Green card timeline
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
@@ -194,14 +187,12 @@ export default async function GreenCardTimelinePage() {
         />
         {i140Label ? (
           <p className="mt-6 text-sm text-foreground/60">
-            The I-140 stage uses the published processing time for {i140Label},
-            the largest category by pending volume: the time USCIS took to finish
-            80% of the petitions it decided over the past six months. Its queue runs longer than
-            that, which the{" "}
+            The I-140 stage uses USCIS&apos;s published time for {i140Label}, the time it took to finish 80% of
+            the petitions it decided over six months. The queue runs longer, as the{" "}
             <Link href="/tools/i140-calculator" className="underline underline-offset-2">
               I-140 calculator
             </Link>{" "}
-            sets out.
+            shows.
           </p>
         ) : null}
       </section>
@@ -211,7 +202,7 @@ export default async function GreenCardTimelinePage() {
           drawn as structure rather than said in a paragraph. */}
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-3">
         <div className="border-2 border-border bg-tint-primary p-6 shadow-hard-sm">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
             You control
           </p>{" "}
           <p className="mt-2 font-heading text-lg font-black">Recruitment and filing</p>{" "}
@@ -221,7 +212,7 @@ export default async function GreenCardTimelinePage() {
           </p>
         </div>
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+          <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
             DOL controls
           </p>{" "}
           <p className="mt-2 font-heading text-lg font-black">The two queues</p>{" "}
@@ -231,7 +222,7 @@ export default async function GreenCardTimelinePage() {
           </p>
         </div>
         <div className="border-2 border-border bg-foreground p-6 text-background shadow-hard-sm">
-          <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+          <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
             USCIS and State control
           </p>{" "}
           <p className="mt-2 font-heading text-lg font-black">The petition and the number</p>{" "}

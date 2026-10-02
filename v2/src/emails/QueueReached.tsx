@@ -30,6 +30,7 @@
 import { Link, Section, Text } from "@react-email/components";
 import { EmailButton, EmailLayout, EmailLinkList, QueueStamp } from "./components";
 import { MONO_STACK, SANS_STACK } from "./components/QueueStamp";
+import { SITE_URL } from "../../convex/lib/links";
 
 /** DOL's own processing-times page. The figure in the stamp comes from here. */
 export const DOL_PROCESSING_TIMES_URL = "https://flag.dol.gov/processingtimes";
@@ -147,7 +148,7 @@ export function QueueReached({
 
       <Section style={styles.cta}>
         <EmailButton
-          href="https://permtracker.app/perm-processing-times"
+          href={`${SITE_URL}/perm-processing-times`}
           variant="outline"
         >
           See the current figures
@@ -158,11 +159,11 @@ export function QueueReached({
         label="Also on PERM Tracker"
         items={[
           {
-            href: "https://permtracker.app/tools/perm-timeline-calculator",
+            href: `${SITE_URL}/tools/perm-timeline-calculator`,
             text: "The deadlines on your side of the process",
           },
           {
-            href: "https://permtracker.app/perm-cases",
+            href: `${SITE_URL}/perm-cases`,
             text: "Every PERM decision DOL has published",
           },
         ]}

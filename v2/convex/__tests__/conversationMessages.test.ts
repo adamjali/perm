@@ -440,111 +440,6 @@ describe("conversationMessages", () => {
   });
 
   // ============================================================================
-  // count TESTS
-  // ============================================================================
-
-  describe("count", () => {
-    it("returns correct message count", async () => {
-      const t = createTestContext();
-      const asUser = await createAuthenticatedContext(t, "Test User");
-
-      // Create a conversation
-      const conversationId = await asUser.mutation(api.conversations.create, {
-        title: "Test Conversation",
-      });
-
-      // Verify initial count is 0
-      let messageCount = await asUser.query(api.conversationMessages.count, {
-        conversationId,
-      });
-      expect(messageCount).toBe(0);
-
-      // Add messages
-      await asUser.mutation(api.conversationMessages.createUserMessage, {
-        conversationId,
-        content: "Message 1",
-      });
-
-      messageCount = await asUser.query(api.conversationMessages.count, {
-        conversationId,
-      });
-      expect(messageCount).toBe(1);
-
-      await asUser.mutation(api.conversationMessages.createAssistantMessage, {
-        conversationId,
-        content: "Message 2",
-      });
-
-      messageCount = await asUser.query(api.conversationMessages.count, {
-        conversationId,
-      });
-      expect(messageCount).toBe(2);
-
-      await asUser.mutation(api.conversationMessages.createUserMessage, {
-        conversationId,
-        content: "Message 3",
-      });
-
-      messageCount = await asUser.query(api.conversationMessages.count, {
-        conversationId,
-      });
-      expect(messageCount).toBe(3);
-    });
-
-    it("returns 0 for other user's conversation", async () => {
-      const t = createTestContext();
-      const asUser1 = await createAuthenticatedContext(t, "User One");
-      const asUser2 = await createAuthenticatedContext(t, "User Two");
-
-      // User 1 creates a conversation with messages
-      const conversationId = await asUser1.mutation(api.conversations.create, {
-        title: "User One's Conversation",
-      });
-
-      await asUser1.mutation(api.conversationMessages.createUserMessage, {
-        conversationId,
-        content: "User One's message",
-      });
-
-      await asUser1.mutation(api.conversationMessages.createAssistantMessage, {
-        conversationId,
-        content: "Assistant response",
-      });
-
-      // User 1 should see 2 messages
-      const user1Count = await asUser1.query(api.conversationMessages.count, {
-        conversationId,
-      });
-      expect(user1Count).toBe(2);
-
-      // User 2 should see 0 messages (security: don't reveal existence)
-      const user2Count = await asUser2.query(api.conversationMessages.count, {
-        conversationId,
-      });
-      expect(user2Count).toBe(0);
-    });
-
-    it("returns 0 for non-existent conversation", async () => {
-      const t = createTestContext();
-      const asUser = await createAuthenticatedContext(t, "Test User");
-
-      // Create and immediately delete a conversation to get a valid ID format
-      const conversationId = await asUser.mutation(api.conversations.create, {});
-      await asUser.mutation(api.conversations.deleteConversation, {
-        id: conversationId,
-      });
-
-      // Try to count messages for the deleted conversation
-      const messageCount = await asUser.query(api.conversationMessages.count, {
-        conversationId,
-      });
-
-      // Should return 0
-      expect(messageCount).toBe(0);
-    });
-  });
-
-  // ============================================================================
   // getMostRecent TESTS
   // ============================================================================
 
@@ -599,10 +494,12 @@ describe("conversationMessages", () => {
 
       advanceTime(1000);
 
-      // Update the older conversation (should make it most recent by updatedAt)
-      await asUser.mutation(api.conversations.updateTitle, {
-        id: olderConvId,
-        title: "Updated Older Conversation",
+      // Touch the older conversation (should make it most recent by updatedAt)
+      await t.run(async (ctx) => {
+        await ctx.db.patch(olderConvId, {
+          title: "Updated Older Conversation",
+          updatedAt: Date.now(),
+        });
       });
 
       // Get most recent

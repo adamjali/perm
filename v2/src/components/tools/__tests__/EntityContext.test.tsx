@@ -348,8 +348,8 @@ describe("DisclosureNote", () => {
       />,
     );
     expect(screen.getByText(/FY2026 Q3 and FY2025 Q4/)).toBeInTheDocument();
-    expect(screen.getByText(/259,489 cases/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /methodology/i })).toHaveAttribute(
+    expect(screen.getByText(/259,489 decided cases/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /how each figure is built/i })).toHaveAttribute(
       "href",
       "/methodology",
     );
@@ -509,7 +509,6 @@ describe("no HTML entities inside JS string literals", () => {
 });
 
 /**
- * The doctrine is positional, so the gate has to be positional too./**
  * The doctrine is positional, so the gate has to be positional too.
  *
  * "Warn and withhold, and the warning renders ABOVE the number" is only true

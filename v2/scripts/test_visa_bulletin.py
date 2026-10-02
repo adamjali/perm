@@ -65,7 +65,7 @@ def main() -> int:
 
     parsed = vb.parse_bulletin(page)
 
-    # The three EB-5 set-aside rows (added 2026-09-07). Both charts print the
+    # The three EB-5 set-aside rows. Both charts print the
 
     # label differently ("5th Set Aside: Rural (20%, ...)" vs "5th Set Aside:
 
@@ -101,7 +101,7 @@ def main() -> int:
         # null rather than an empty chart: null is what the backfill refills.
         check("no family chart on a page without one", "familyFinalAction" not in parsed)
 
-    # --- the FAMILY charts (added 2026-09-08), on the untrimmed July 2026 page --
+    # --- the FAMILY charts, on the untrimmed July 2026 page --
     full = (HERE / "__fixtures__" / "visa-bulletin-2026-07-family.html").read_text()
     fam = vb.parse_bulletin(full)
     check("family charts parsed from the full page", bool(fam) and "familyFinalAction" in fam and "familyDatesForFiling" in fam)
@@ -191,7 +191,7 @@ def main() -> int:
     refuses("refuses a family-sponsored chart", page_family, "2026-07",
             "no employment-based charts")
 
-    # --- before dates for filing existed (added 2026-09-26) -----------------
+    # --- before dates for filing existed -----------------
     # The Dates for Filing chart began with the October 2015 bulletin, so an
     # earlier bulletin prints ONE employment chart and ONE family chart. The
     # two fixtures are real Internet Archive captures trimmed to their charts
@@ -238,7 +238,7 @@ def main() -> int:
               len(po["finalAction"]) == 6 and len(po["datesForFiling"]) == 6,
               f"{sorted(po['finalAction'])} / {sorted(po['datesForFiling'])}")
 
-    # --- the backfill's dry run writes nothing (added 2026-09-26) -----------
+    # --- the backfill's dry run writes nothing -----------
     # A recording stand-in for the database and a fetch that serves the fixture,
     # so the ONLY statements the dry run may send are reads.
     class Recorder:

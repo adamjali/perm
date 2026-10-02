@@ -43,7 +43,7 @@ export function SortableHeader<T>({
           <Fragment key={h}>
             <th
               scope="col"
-              className="whitespace-nowrap px-3 py-3 font-mono text-xs font-bold uppercase tracking-wider"
+              className="whitespace-nowrap px-3 py-3 font-mono text-sm font-bold uppercase tracking-wider"
             >
               {h}{" "}
             </th>
@@ -56,7 +56,7 @@ export function SortableHeader<T>({
               <th
                 scope="col"
                 aria-sort={active ? (sort.dir === 1 ? "ascending" : "descending") : "none"}
-                className="whitespace-nowrap p-0 font-mono text-xs font-bold uppercase tracking-wider"
+                className="whitespace-nowrap p-0 font-mono text-sm font-bold uppercase tracking-wider"
               >
                 <button
                   type="button"

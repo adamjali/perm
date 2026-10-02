@@ -37,10 +37,10 @@ import { tableColumns } from "./tableColumns";
  *
  * ## Why every statement names its index
  *
- * Turso forbids `ANALYZE` and this database has no `sqlite_stat1`, so SQLite
- * plans from its no-statistics heuristics, which prefer an EQUALITY over a
- * RANGE. Measured against production on 2026-09-03, an employer search with
- * a status filter and no hint planned as
+ * This database carries no `sqlite_stat1`, so SQLite plans from its
+ * no-statistics heuristics, which prefer an EQUALITY over a RANGE. Measured
+ * against production, an employer search with a status filter and no hint
+ * planned as
  *
  *     SEARCH perm_cases USING INDEX idx_pc_status_dec (status=?)
  *
@@ -63,7 +63,12 @@ import { tableColumns } from "./tableColumns";
  * next two columns of `idx_pc_state_st_dec` and its siblings.
  */
 
-export type FlagProgramKey = "pwd" | "lca";
+/**
+ * The non-PERM programs. `seasonal` is H-2A and H-2B (`H-300-`, `H-400-`,
+ * `P-400-`): a live table only, because DOL's quarterly H-2A and H-2B files
+ * are not loaded, so every published read for it answers empty.
+ */
+export type FlagProgramKey = "pwd" | "lca" | "seasonal";
 
 export interface UnifiedNarrow {
   outcome?: Outcome;
@@ -130,8 +135,8 @@ export interface UnifiedNarrow {
 /**
  * The status strings behind each outcome bucket, per table.
  *
- * MEASURED, NOT REMEMBERED. Read on 2026-09-03 from the tables themselves and
- * from the two live summary docs:
+ * MEASURED, NOT REMEMBERED: read from the tables themselves and from the two
+ * live summary docs:
  *
  *   perm_cases        certified | denied | withdrawn                (lower case)
  *   perm_live_recent  ANALYST REVIEW | RFI ISSUED | CERTIFIED | DENIED | WITHDRAWN
@@ -165,6 +170,7 @@ export const OUTCOME_STATUSES: {
   perm_live: StatusBuckets;
   pwd: StatusBuckets;
   lca: StatusBuckets;
+  seasonal: StatusBuckets;
 } = {
   perm_cases: {
     granted: ["certified"],
@@ -191,6 +197,25 @@ export const OUTCOME_STATUSES: {
     granted: ["CERTIFIED"],
     denied: ["DENIED"],
     withdrawn: ["WITHDRAWN", "CERTIFIED - WITHDRAWN", "CERTIFIED-WITHDRAWN"],
+  },
+  // seasonal_case_status, read off the table. An expired
+  // certification counts as granted, as PERM's does: DOL certified it and the
+  // period then ran out. BALCA OVERTURNED is left out: the board reversed a
+  // wage decision, which is neither a grant nor a refusal of the filing.
+  seasonal: {
+    granted: [
+      "FULL CERTIFICATION",
+      "PARTIAL CERTIFICATION",
+      "FULL CERTIFICATION - EXPIRED",
+      "PARTIAL CERTIFICATION - EXPIRED",
+      "DETERMINATION ISSUED",
+      "REDETERMINATION AFFIRMED",
+      "REDETERMINATION MODIFIED",
+      "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
+      "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
+    ],
+    denied: ["DENIED"],
+    withdrawn: ["WITHDRAWN", "FULL CERTIFICATION - WITHDRAWN", "PARTIAL CERTIFICATION - WITHDRAWN"],
   },
 };
 
@@ -253,10 +278,9 @@ function commonNarrowing(
  * How many of an employer's newest filings one program's read will look at
  * when a filter has to be applied row by row.
  *
- * MEASURED. On Turso a table row cost about 1.5 ms on `perm_cases` and about
- * 6.8 ms on the colder `lca_cases`, which is why this was 400. On the site's
- * own database (Sep 29 2026) the newest 2,000 filings of one of the largest
- * sponsors read in 8 ms (PERM) and 37 ms (LCA), so the window is 5,000: nearly
+ * MEASURED on the site's own database: the newest 2,000 filings of one of
+ * the largest sponsors read in 8 ms (PERM) and 37 ms (LCA), so the window is
+ * 5,000: nearly
  * every employer's whole history, and a search stays well under a second.
  */
 export const SLICE_CAP = 5000;
@@ -673,8 +697,8 @@ async function readPermTable(
   if (narrow.outcome === "open") {
     // Every row in a disclosure file has a decision on it, so this can only
     // ever be empty. Returning without a query rather than running one that
-    // cannot match: a read that is guaranteed to find nothing is still a read
-    // Turso charges for.
+    // cannot match: a read that is guaranteed to find nothing still costs a
+    // read.
     return empty;
   }
   const bucket = narrow.outcome ? OUTCOME_STATUSES.perm_cases[narrow.outcome] : undefined;
@@ -693,10 +717,10 @@ async function readPermTable(
     // range is the only narrowing the covering pass can carry. The filed
     // range is on `received_date`, which the index does not hold.
     // A FISCAL YEAR RIDES THE COVERING PASS AS A DECIDED RANGE. As a plain
-    // `fiscal_year = ?` it sat in the second pass, which only sees the newest
-    // SLICE_CAP decisions the first pass took, so an older year came back empty
-    // for any busy employer: Adobe FY2019 answered 0 rows on Sep 27 2026 while
-    // the table held 184. The equality stays below as the exact test.
+    // `fiscal_year = ?` it would sit in the second pass, which only sees the
+    // newest SLICE_CAP decisions the first pass took, so an older year would
+    // come back empty for any busy employer. The equality stays below as the
+    // exact test.
     const fyMonths = fiscalYearMonths(narrow.fiscalYear);
     const decidedFrom = [narrow.decidedFrom, fyMonths?.from].filter(Boolean).sort().pop();
     const decidedTo = [narrow.decidedTo, fyMonths?.to].filter(Boolean).sort()[0];
@@ -964,7 +988,8 @@ export async function readPermLive(
 
 interface FlagTables {
   live: string;
-  published: string;
+  /** DOL's quarterly file for the program; absent when none is loaded. */
+  published?: string;
   /** `visa_type` on the live table, when the program's form serves several visas. */
   visaType?: string;
   /** `visa_class` on the published table, same reason. */
@@ -987,6 +1012,7 @@ export const FLAG_TABLES: Record<FlagProgramKey, FlagTables> = {
     visaClass: "PERM",
   },
   lca: { live: "lca_case_status", published: "lca_cases" },
+  seasonal: { live: "seasonal_case_status" },
 };
 
 export async function readFlagLive(
@@ -1043,7 +1069,7 @@ export async function readFlagLive(
  * The 6-digit SOC group a code belongs to, or null when it is not a SOC code.
  *
  * THE THREE PROGRAMS SPELL THE OCCUPATION DIFFERENTLY, and an exact equality
- * across them matches nothing. Measured on 2026-09-03:
+ * across them matches nothing. Measured:
  *
  * | table | dotted `15-1252.00` | bare `15-1252` |
  * |---|---|---|
@@ -1105,6 +1131,7 @@ export function flagLeadIndex(
   singleStatus: boolean,
 ): string | null {
   const t = FLAG_TABLES[program].published;
+  if (!t) return null;
   switch (lead.kind) {
     case "stage":
       return null;
@@ -1116,10 +1143,9 @@ export function flagLeadIndex(
       return singleStatus ? `${t}_soc_st_dec` : `${t}_soc_dec`;
     case "firm":
       // DOL publishes `LAWFIRM_NAME_BUSINESS_NAME` in the ETA-9035 and
-      // ETA-9141 disclosure files - read off the FY2026 Q3 record layouts on
-      // 2026-09-03 - and as of the same day the ingest reads it. Before that
-      // this returned null and the firm lead answered from the PERM file
-      // alone, which said "this firm files no wage requests" by omission.
+      // ETA-9141 disclosure files and the ingest reads it. Null here would
+      // make a firm lead answer from the PERM file alone and say "this firm
+      // files no wage requests" by omission.
       return singleStatus ? `${t}_att_st_dec` : `${t}_att_dec`;
     case "case":
       // A point read on the primary key; this function is never asked.
@@ -1136,6 +1162,9 @@ export async function readFlagPublished(
   const empty: SliceResult<FlagDisclosedRow> = { rows: [], windowed: false };
   if (narrow.outcome === "open") return empty;
   const t = FLAG_TABLES[program];
+  // No file loaded for the program (H-2A and H-2B): nothing published to read.
+  const published = t.published;
+  if (!published) return empty;
   const bucket = narrow.outcome ? OUTCOME_STATUSES[program][narrow.outcome] : undefined;
   const index = flagLeadIndex(program, lead, bucket?.length === 1);
   if (!index) return empty;
@@ -1188,7 +1217,7 @@ export async function readFlagPublished(
     params.push(...common.params);
 
     const found = await rows<DisclosedDbRow>(
-      `SELECT ${DISCLOSED_COLS} FROM ${t.published} INDEXED BY ${index} ` +
+      `SELECT ${DISCLOSED_COLS} FROM ${published} INDEXED BY ${index} ` +
         `WHERE ${conds.join(" AND ")} ORDER BY decision_date DESC LIMIT ?`,
       [...params, limit],
     );
@@ -1263,7 +1292,7 @@ export async function readFlagPublished(
 
   return readEmployerSlice<DisclosedDbRow, FlagDisclosedRow>(
     {
-      table: t.published,
+      table: published,
       index,
       columns: DISCLOSED_COLS,
       orderColumn: "received_date",
@@ -1293,7 +1322,11 @@ export async function readFlagPublished(
  * numbers and the rare `G-300-` variants take.
  */
 export function programForCaseNumber(caseNumber: string): "perm" | FlagProgramKey {
-  const letter = caseNumber.charAt(0).toUpperCase();
+  const head = caseNumber.trim().toUpperCase();
+  // H-2A (`H-300-`), H-2B (`H-400-`) and the H-2B wage request (`P-400-`)
+  // come before the bare letters: a `P-400-` is not a PERM-queue wage request.
+  if (/^(H-300|H-400|P-400)-/.test(head)) return "seasonal";
+  const letter = head.charAt(0);
   if (letter === "P") return "pwd";
   if (letter === "I") return "lca";
   return "perm";
@@ -1369,10 +1402,12 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
 
   const t = FLAG_TABLES[program];
   const [pub, live] = await Promise.all([
-    one<DisclosedDbRow>(
-      `SELECT ${DISCLOSED_COLS} FROM ${t.published} WHERE case_number = ?`,
-      [caseNumber],
-    ).catch(() => null),
+    t.published
+      ? one<DisclosedDbRow>(
+          `SELECT ${DISCLOSED_COLS} FROM ${t.published} WHERE case_number = ?`,
+          [caseNumber],
+        ).catch(() => null)
+      : null,
     one<FlagDbRow>(`SELECT ${FLAG_COLS} FROM ${t.live} WHERE case_number = ?`, [
       caseNumber,
     ]).catch(() => null),
@@ -1395,17 +1430,16 @@ export async function lookupUnifiedCase(caseNumber: string): Promise<CaseLookupR
  * UPPER BOUND: the case was final by the time our sweep looked, and could have
  * been decided any time between that sweep and the one before it.
  *
- * Measured 2026-09-04 on `perm_case_status`: 319,378 of 414,358 live rows are
- * already final, which is why "live" is not a synonym for "pending". 276,819 of
- * those (86.7%) also appear in a quarterly file, and the row deduper prefers
- * the published half, so they carry DOL's own date already. This exists for the
- * remaining 42,559, of which 5,280 were watched becoming final.
+ * Measured on `perm_case_status`: about three in four live rows are already
+ * final, which is why "live" is not a synonym for "pending". Most of those
+ * also appear in a quarterly file, and the row deduper prefers the published
+ * half, so they carry DOL's own date already. This exists for the rest.
  *
  * One seek per case number on the events table's primary key, and it is only
  * asked about rows that are live, final and undated - a handful of a page.
  */
 export async function firstSeenDecided(
-  program: ChangeProgram,
+  program: ChangeProgram | "seasonal",
   caseNumbers: readonly string[],
 ): Promise<Map<string, string>> {
   const out = new Map<string, string>();

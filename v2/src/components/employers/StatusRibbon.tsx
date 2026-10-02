@@ -1,4 +1,5 @@
 import { HOLD_STATUS, QUEUE_STATUS, type EmployerStageRow } from "@/lib/employerStages";
+import { formatInt } from "@/lib/format";
 
 /**
  * Where one employer's pending PERM cases sit, as one bar.
@@ -14,7 +15,6 @@ import { HOLD_STATUS, QUEUE_STATUS, type EmployerStageRow } from "@/lib/employer
  */
 
 const APPEALS = ["RECONSIDERATION APPEALS", "BALCA APPEALS", "REQUEST FOR REVIEW"];
-const int = (n: number) => n.toLocaleString("en-US");
 
 export interface RibbonParts {
   pending: number;
@@ -39,25 +39,37 @@ const SEGMENTS = [
 
 /** The legend's words, one per segment, each naming who acted. */
 export function ribbonLegend(p: RibbonParts): { key: string; cls: string; text: string }[] {
-  const review = [p.held > 0 ? `${int(p.held)} on hold` : "", p.otherReview > 0 ? `${int(p.otherReview)} at RFI or other DOL review` : ""]
+  const review = [p.held > 0 ? `${formatInt(p.held)} on hold` : "", p.otherReview > 0 ? `${formatInt(p.otherReview)} at RFI or other DOL review` : ""]
     .filter(Boolean)
     .join(", ");
   return [
     review ? { key: "review", cls: "bg-data-warn-ink", text: review } : null,
-    p.appeal > 0 ? { key: "appeal", cls: "bg-data-bad-ink", text: `${int(p.appeal)} under the employer's appeal` } : null,
-    p.queue > 0 ? { key: "queue", cls: "bg-data-none-ink", text: `${int(p.queue)} in DOL's normal queue` } : null,
+    p.appeal > 0 ? { key: "appeal", cls: "bg-data-bad-ink", text: `${formatInt(p.appeal)} under the employer's appeal` } : null,
+    p.queue > 0 ? { key: "queue", cls: "bg-data-none-ink", text: `${formatInt(p.queue)} in DOL's normal queue` } : null,
   ].filter((x): x is { key: string; cls: string; text: string } => x !== null);
+}
+
+/**
+ * What a segment says on hover, inside a `ChartTips` the caller places (one
+ * around a whole list, so a census of ribbons is one tab stop, not hundreds).
+ */
+export function ribbonTip(p: RibbonParts, key: string, name?: string): string {
+  const words = ribbonLegend(p).find((l) => l.key === key)?.text ?? "";
+  return `${name ?? "Pending PERM cases"}\n${words}\nOf ${formatInt(p.pending)} pending`;
 }
 
 export function StatusRibbon({
   parts,
   size = "lg",
   label,
+  name,
 }: {
   parts: RibbonParts;
   size?: "lg" | "sm";
   /** Read by screen readers in place of the bar. */
   label: string;
+  /** The employer, as the heading of each segment's hover detail. */
+  name?: string;
 }) {
   const total = Math.max(1, parts.pending);
   const segs = SEGMENTS.map((s) => ({ ...s, value: s.n(parts) })).filter((s) => s.value > 0);
@@ -70,6 +82,7 @@ export function StatusRibbon({
       {segs.map((s, i) => (
         <span
           key={s.key}
+          data-tip={ribbonTip(parts, s.key, name)}
           className={`${s.cls} h-full ${i > 0 ? "border-l-2 border-border" : ""}`}
           style={{ width: `${(100 * s.value) / total}%`, minWidth: "4px" }}
         />

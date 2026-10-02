@@ -152,8 +152,8 @@ export async function isEmailVerified(ctx: QueryCtx, userId: Id<"users">): Promi
  * Bulk-check email verification for all users.
  *
  * Loads all authAccounts once and builds a Set of verified user IDs.
- * Use in batch/cron jobs (getCasesNeedingReminders, getUsersForWeeklyDigest,
- * getAllUsersForBlast) to avoid N+1 per-user queries.
+ * Use in batch/cron jobs (getCasesNeedingReminders, getUsersForWeeklyDigest)
+ * to avoid N+1 per-user queries.
  *
  * Verification logic matches isEmailVerified(): Google = verified,
  * password + emailVerified = verified.

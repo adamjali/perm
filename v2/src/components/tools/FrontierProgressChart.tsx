@@ -271,16 +271,16 @@ function FrontierTable({
         </caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
               Decisions in
             {" "}</th>
-            <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
               Median filing month
             {" "}</th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Advanced
             {" "}</th>
-            <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
+            <th scope="col" className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell">
               Decisions{" "}
             </th>
           </tr>

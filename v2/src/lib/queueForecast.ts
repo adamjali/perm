@@ -121,8 +121,8 @@ export function forecastCohort(
  * median itself.
  *
  * The stage tells you WHICH percentile to read, and the live pending
- * population is what maps stage to tail. Mean age since filing, measured
- * 2026-08-27:
+ * population is what maps stage to tail. Mean age since filing, one
+ * measurement (live values come from `stage_stats`):
  *
  *     ANALYST REVIEW           170d   n=94,033   <- the bulk; use the median
  *     APPLICATION ON HOLD      223d   n=1,852
@@ -202,9 +202,8 @@ export function placeCaseInCohort(
    * MEANS - an RFI sits in the slow tail of its month, an appeal is a separate
    * proceeding that no percentile of that month describes - and that is
    * editorial judgement, not something a nightly aggregate gets to decide.
-   * The age is a measurement and had been hardcoded since it was first typed;
-   * checked on 2026-09-10 it had drifted on every stage and by 85 days on
-   * RECONSIDERATION APPEALS.
+   * The age is a measurement, and a hand-typed one drifts, by months on some
+   * stages.
    */
   measuredAges?: ReadonlyMap<string, number>,
 ): StagePlacement | null {

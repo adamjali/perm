@@ -1,8 +1,8 @@
 /**
  * The Calculators tab.
  *
- * Split out of the overview 2026-08-24: the section nav works as tabs, and a
- * tab that anchor-scrolls half a page down is not a tab. This page is the
+ * Its own page because the section nav works as tabs, and a tab that
+ * anchor-scrolls half a page down is not a tab. This page is the
  * calculator grid and nothing else, so choosing a tool is one short screen.
  */
 
@@ -25,6 +25,7 @@ import {
   WageLevelsMini,
   WindowSpansMini,
 } from "@/components/tools/MiniDiagrams";
+import { SITE_URL } from "@/lib/constants/site";
 
 const TITLE = "PERM Calculators";
 const DESCRIPTION =
@@ -190,6 +191,16 @@ const TOOLS = [
       "The day H-1B status runs out, and the last day to file a PERM so one-year extensions stay open under the 365-day rule.",
   },
   {
+    href: "/tools/h1b-lottery-odds-calculator",
+    viz: "levels" as const,
+    icon: ChartBarIcon,
+    kind: "Estimate",
+    name: "H-1B lottery odds",
+    tone: "paper",
+    blurb:
+      "The OEWS level an offer meets in each work area, from DOL's wage search, and DHS's estimated chance at that level in the weighted draw.",
+  },
+  {
     href: "/tools/priority-date-retention",
     viz: "steps" as const,
     icon: FileTextIcon,
@@ -268,7 +279,7 @@ export default function CalculatorsPage() {
       item: {
         "@type": "WebApplication" as const,
         name: t.name,
-        url: `https://permtracker.app${t.href}`,
+        url: `${SITE_URL}${t.href}`,
         applicationCategory: "BusinessApplication",
         offers: { "@type": "Offer" as const, price: "0", priceCurrency: "USD" },
       },
@@ -278,10 +289,7 @@ export default function CalculatorsPage() {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">
       <JsonLdScript schema={itemList} />      <header className="pt-10 sm:pt-12">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Calculators
-        </p>{" "}
-        <h1 className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           PERM calculators
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
@@ -299,9 +307,9 @@ export default function CalculatorsPage() {
           <table className="w-full border-2 border-border text-left text-sm shadow-hard-sm">
             <thead className="bg-foreground text-background">
               <tr>
-                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Your situation{" "}</th>
-                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Ask{" "}</th>
-                <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">Use{" "}</th>
+                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">Your situation{" "}</th>
+                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">Ask{" "}</th>
+                <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">Use{" "}</th>
               </tr>
             </thead>
             <tbody className="bg-card">
@@ -361,7 +369,7 @@ export default function CalculatorsPage() {
                   <Icon className="h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
                   <span
                     className={
-                      "font-mono text-xs font-bold uppercase tracking-wider " +
+                      "font-mono text-sm font-bold uppercase tracking-wider " +
                       (t.tone === "ink" ? "text-background/60" : "text-muted-foreground")
                     }
                   >
@@ -441,7 +449,7 @@ export default function CalculatorsPage() {
               >
                 <Icon className="mt-1 h-6 w-6 shrink-0 text-primary" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
-                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
                     {t.kind}
                   </span>{" "}
                   <h3 className="mt-1 font-heading text-xl font-black leading-tight">

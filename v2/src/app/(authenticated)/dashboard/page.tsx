@@ -18,9 +18,6 @@
  * 4. Summary Tiles Grid
  * 5. Two-column: UpcomingDeadlinesWidget | RecentActivityWidget
  * 6. AddCaseButton (full width)
- *
- * Phase: 20 (Dashboard Complete)
- * Created: 2025-12-23
  */
 
 import type { Metadata } from "next";

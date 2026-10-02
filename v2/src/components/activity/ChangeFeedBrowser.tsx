@@ -3,9 +3,10 @@
 import { Fragment, useId, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { usePublicQuery } from "@/lib/usePublicQuery";
+import { usePublicQuery } from "@/hooks/usePublicQuery";
 import { nextSort, sortRows, type SortState } from "@/lib/tableSort";
 import { CHANGE_PROGRAMS, PROGRAM_LABEL, type ChangeProgram } from "@/lib/changeProgram";
+import { formatInt } from "@/lib/format";
 import { CHANGE_COLUMNS, ChangeTable } from "./ChangeTable";
 import { DECIDED_COLUMNS, DecidedTable } from "./DecidedTable";
 import { DecidedFilters } from "./DecidedFilters";
@@ -56,9 +57,9 @@ const PAGE_SIZES = [25, 50, 100, 250] as const;
 const CONTROL =
   "w-full min-w-0 min-h-[44px] border-2 border-border bg-card px-3 text-base font-medium focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-not-allowed disabled:opacity-50";
 const NAV =
-  "min-h-[44px] border-2 border-border bg-card px-4 font-mono text-xs font-bold uppercase tracking-wider hover:bg-tint-primary disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
+  "min-h-[44px] border-2 border-border bg-card px-4 font-mono text-sm font-bold uppercase tracking-wider hover:bg-tint-primary disabled:opacity-40 focus-visible:ring-2 focus-visible:ring-primary";
 const LABEL =
-  "block font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground";
+  "block font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground";
 
 /**
  * What DOL does not return on a live case, and therefore what this feed cannot
@@ -92,8 +93,6 @@ const UNAVAILABLE: { slug: string; label: string; why: string }[] = [
   },
 ];
 
-const fmt = (n: number) => n.toLocaleString("en-US");
-
 function longDate(iso: string): string {
   return new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", {
     weekday: "long",
@@ -102,6 +101,9 @@ function longDate(iso: string): string {
     day: "numeric",
   });
 }
+
+/** Transition chips shown before "Show all": the busiest kinds of change. */
+const CHIPS_SHOWN = 6;
 
 /** Distinct values of one end of a transition, busiest first. */
 function ends(
@@ -146,6 +148,9 @@ export function ChangeFeedBrowser({
   const [search, setSearch] = useState("");
   const [program, setProgram] = useState<ChangeProgram | "">("");
   const [fromStatus, setFromStatus] = useState("");
+  // The transition chips show the busiest few; the rest wait behind "Show
+  // all": a day carries 30-odd, which would bury the table.
+  const [allChips, setAllChips] = useState(false);
   const [toStatus, setToStatus] = useState("");
   const [sort, setSort] = useState<SortState>({ key: "employer", dir: 1 });
   // Its own sort: the two tables have different columns, and sharing one key
@@ -349,7 +354,7 @@ export function ChangeFeedBrowser({
             className={`${CONTROL} mt-1`}
           />{" "}
           <p id={`${id}-span`} className="mt-1 text-sm text-foreground/70">
-            {span === 1 ? "One day. Widen to see a range." : `${fmt(span)} days.`}
+            {span === 1 ? "One day. Widen to see a range." : `${formatInt(span)} days.`}
           </p>
         </div>{" "}
         {/* WHAT THE OLD PICKER WAS GOOD AT, KEPT.
@@ -377,7 +382,7 @@ export function ChangeFeedBrowser({
                       reset();
                     }}
                   >
-                    {d.date} ({fmt(d.total)})
+                    {d.date} ({formatInt(d.total)})
                   </button>{" "}
                 </Fragment>
               ))}
@@ -426,7 +431,7 @@ export function ChangeFeedBrowser({
             {fromEnds.map((o) => (
               <Fragment key={o.status}>
                 <option value={o.status}>
-                  {o.status} ({fmt(o.n)})
+                  {o.status} ({formatInt(o.n)})
                 </option>
               {" "}
               </Fragment>
@@ -451,7 +456,7 @@ export function ChangeFeedBrowser({
             {toEnds.map((o) => (
               <Fragment key={o.status}>
                 <option value={o.status}>
-                  {o.status} ({fmt(o.n)})
+                  {o.status} ({formatInt(o.n)})
                 </option>
               {" "}
               </Fragment>
@@ -474,7 +479,7 @@ export function ChangeFeedBrowser({
             }}
             className={`${CONTROL} mt-1`}
           >
-            <option value="">All programs ({fmt(feed?.total ?? 0)})</option>
+            <option value="">All programs ({formatInt(feed?.total ?? 0)})</option>
             {CHANGE_PROGRAMS.map((p) => {
               const n = feed?.byProgram[p] ?? 0;
               return (
@@ -483,7 +488,7 @@ export function ChangeFeedBrowser({
                       day is a fact about the day, and hiding it would read as
                       the program not existing. */}
                   <option value={p} disabled={n === 0}>
-                    {PROGRAM_LABEL[p]} ({fmt(n)})
+                    {PROGRAM_LABEL[p]} ({formatInt(n)})
                   </option>
                 {" "}
                 </Fragment>
@@ -550,10 +555,20 @@ export function ChangeFeedBrowser({
       {/* WHAT THE CHOSEN DATES CAN ACTUALLY ANSWER.
           Stated before any table, because an empty table and a date we hold
           nothing for look identical and mean opposite things. */}
-      <div className="mt-6 border-2 border-border bg-tint-primary p-4">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider">
-          What these dates can answer
-        </p>{" "}
+      {/* ONE LINE FIRST, THE REST FOLDED. The answer to "what
+          do these dates hold" is one of four short facts; the detail behind it
+          stays a click away, in the DOM for search either way. */}
+      <details className="mt-6 border-2 border-border bg-tint-primary">
+        <summary className="flex min-h-[44px] cursor-pointer items-center px-4 py-2 text-base font-bold">
+          {hasDecided && hasObserved
+            ? "These dates cross DOL's published files and our own daily check"
+            : hasDecided
+              ? "DOL published these decisions: every filter works"
+              : hasObserved
+                ? "Newer than DOL's last file: what our daily check saw change"
+                : "We hold nothing for these dates"}
+        </summary>{" "}
+        <div className="border-t-2 border-border px-4 py-3">
         <p className="mt-2 text-base leading-relaxed text-foreground/80">
           {hasDecided && hasObserved ? (
             <>
@@ -583,8 +598,8 @@ export function ChangeFeedBrowser({
           {cov.uncoveredDays > 0 && (hasDecided || hasObserved) ? (
             <>
               {" "}
-              <strong>{fmt(cov.uncoveredDays)}</strong> of the{" "}
-              {fmt(cov.totalDays)} days selected fall between the two records
+              <strong>{formatInt(cov.uncoveredDays)}</strong> of the{" "}
+              {formatInt(cov.totalDays)} days selected fall between the two records
               and are not covered by either.
             </>
           ) : null}
@@ -601,6 +616,7 @@ export function ChangeFeedBrowser({
           </p>
         ) : null}
       </div>
+      </details>
 
       {/* THE DISABLED-FILTER EXPLANATION, AND ONLY WHEN IT APPLIES.
           It used to be a permanent panel of four dead controls, which said
@@ -613,10 +629,9 @@ export function ChangeFeedBrowser({
           `open` prop alone would stick at its first value. */}
       <details
         key={hasDecided ? "filters-live" : "filters-off"}
-        open={!hasDecided}
         className="mt-4 border-2 border-border bg-card"
       >
-        <summary className="cursor-pointer px-4 py-3 font-mono text-xs font-bold uppercase tracking-wider hover:bg-tint-primary">
+        <summary className="cursor-pointer px-4 py-3 font-mono text-sm font-bold uppercase tracking-wider hover:bg-tint-primary">
           {hasDecided
             ? "Wage, law firm, worksite and occupation: available for these dates"
             : "Why wage, law firm, worksite and occupation are off for these dates"}
@@ -682,18 +697,18 @@ export function ChangeFeedBrowser({
               <p className="mt-2 text-base leading-relaxed text-foreground/80">
                 {decided.totals ? (
                   <>
-                    DOL decided {fmt(
+                    DOL decided {formatInt(
                       decided.totals.perm + decided.totals.pwd + decided.totals.lca,
                     )}{" "}
-                    cases: {fmt(decided.totals.perm)} PERM,{" "}
-                    {fmt(decided.totals.pwd)} wage requests and{" "}
-                    {fmt(decided.totals.lca)} LCAs. From DOL&apos;s published
+                    cases: {formatInt(decided.totals.perm)} PERM,{" "}
+                    {formatInt(decided.totals.pwd)} wage requests and{" "}
+                    {formatInt(decided.totals.lca)} LCAs. From DOL&apos;s published
                     quarterly file, so each carries its wage, worksite and
                     occupation.
                   </>
                 ) : (
                   <>
-                    Showing {fmt(decidedRows.length)} of the decisions in this
+                    Showing {formatInt(decidedRows.length)} of the decisions in this
                     range. An exact total is not counted across a range, because
                     counting one walks every row in it.
                   </>
@@ -701,7 +716,7 @@ export function ChangeFeedBrowser({
                 {decided.capped ? (
                   <>
                     {" "}
-                    The list is cut at {fmt(1000)} rows per program; narrow the
+                    The list is cut at {formatInt(1000)} rows per program; narrow the
                     dates to see the rest.
                   </>
                 ) : null}
@@ -715,7 +730,7 @@ export function ChangeFeedBrowser({
               ) : null}
               {decidedRows.length === 0 && decided.cases.length > 0 ? (
                 <p className="mt-4 border-2 border-border bg-card p-4 text-base">
-                  None of the {fmt(decided.cases.length)} decisions loaded for
+                  None of the {formatInt(decided.cases.length)} decisions loaded for
                   these dates match
                   {anyDecidedFilter(decidedFilters) ? " those filters" : " that search"}.
                   Clearing them brings the rows back.
@@ -754,7 +769,7 @@ export function ChangeFeedBrowser({
       {!hasObserved || span !== 1 ? null : feed ? (
         <div className="mt-6">
           <ul className="m-0 mb-4 flex list-none flex-wrap gap-2 p-0">
-            {feed.transitions.map((t) => {
+            {(allChips || fromStatus || toStatus ? feed.transitions : feed.transitions.slice(0, CHIPS_SHOWN)).map((t) => {
               const on = fromStatus === t.fromStatus && toStatus === t.toStatus;
               return (
                 <Fragment key={`${t.fromStatus}>${t.toStatus}`}>
@@ -778,13 +793,23 @@ export function ChangeFeedBrowser({
                       </span>{" "}
                       <span aria-hidden="true">&rarr;</span>{" "}
                       <span className="font-bold">{t.toStatus}</span>{" "}
-                      <b className="ml-1 font-black tabular-nums">{fmt(t.n)}</b>
+                      <b className="ml-1 font-black tabular-nums">{formatInt(t.n)}</b>
                     </button>
                   </li>{" "}
                 </Fragment>
               );
             })}
           </ul>{" "}
+          {feed.transitions.length > CHIPS_SHOWN && !fromStatus && !toStatus ? (
+            <button
+              type="button"
+              onClick={() => setAllChips((v) => !v)}
+              aria-expanded={allChips}
+              className="mb-4 inline-flex min-h-[44px] items-center border-2 border-border bg-background px-3 text-sm font-bold hover:bg-tint-primary"
+            >
+              {allChips ? "Show the busiest only" : `Show all ${feed.transitions.length} kinds of change`}
+            </button>
+          ) : null}{" "}
           <p className="text-base text-foreground/80" aria-live="polite">
             {/* TRUE WITH THE SCRIPT BROKEN, TOO. This branch is what the
                 prerendered HTML carries, and it is also what a reader with no
@@ -793,8 +818,8 @@ export function ChangeFeedBrowser({
                 may never happen. */}
             {!ready ? (
               <>
-                Showing the first {fmt(feed.changes.length)} of{" "}
-                {fmt(feed.total)} changes observed on {longDate(feed.date)}.
+                Showing the first {formatInt(feed.changes.length)} of{" "}
+                {formatInt(feed.total)} changes observed on {longDate(feed.date)}.
                 Search, filters and sorting read the whole day, so they switch on
                 once the rest of it has loaded.
                 {failed ? (
@@ -808,20 +833,20 @@ export function ChangeFeedBrowser({
               </>
             ) : (
               <>
-                {fmt(ordered.length)}{" "}
+                {formatInt(ordered.length)}{" "}
                 {ordered.length === 1 ? "change" : "changes"}
-                {filtering ? ` of ${fmt(feed.total)}` : ""} on{" "}
+                {filtering ? ` of ${formatInt(feed.total)}` : ""} on{" "}
                 {longDate(feed.date)}
                 {ordered.length > pageSize
-                  ? `. Rows ${fmt(start + 1)} to ${fmt(start + rows.length)}.`
+                  ? `. Rows ${formatInt(start + 1)} to ${formatInt(start + rows.length)}.`
                   : "."}
               </>
             )}
           </p>
           {capped ? (
             <p className="mt-2 text-sm leading-relaxed text-foreground/80">
-              This day holds {fmt(feed.total)} changes and the feed carries the
-              first {fmt(feed.changes.length)} of them, ordered by employer.
+              This day holds {formatInt(feed.total)} changes and the feed carries the
+              first {formatInt(feed.changes.length)} of them, ordered by employer.
               Search and sorting cover the loaded rows.
             </p>
           ) : null}
@@ -834,7 +859,7 @@ export function ChangeFeedBrowser({
               Left out of that count:{" "}
               {feed.expiriesExcluded > 0 ? (
                 <>
-                  {fmt(feed.expiriesExcluded)} certifications whose 180-day
+                  {formatInt(feed.expiriesExcluded)} certifications whose 180-day
                   I-140 window lapsed, because a clock running out is not DOL
                   acting on a case
                 </>
@@ -842,7 +867,7 @@ export function ChangeFeedBrowser({
               {feed.expiriesExcluded > 0 && feed.bulkExcluded > 0 ? "; " : ""}
               {feed.bulkExcluded > 0 ? (
                 <>
-                  {fmt(feed.bulkExcluded)} rows written under a single timestamp
+                  {formatInt(feed.bulkExcluded)} rows written under a single timestamp
                   carrying more than 5,000 changes, which is a scan catching up
                   on months of history rather than a day of adjudication
                 </>
@@ -853,7 +878,7 @@ export function ChangeFeedBrowser({
           {ordered.length === 0 && ready ? (
             <p className="mt-4 border-2 border-border bg-card p-4 text-base">
               Nothing on {longDate(feed.date)} matches that. The day itself
-              holds {fmt(feed.total)} changes, so clearing the filters will
+              holds {formatInt(feed.total)} changes, so clearing the filters will
               bring them back.
             </p>
           ) : (
@@ -878,8 +903,8 @@ export function ChangeFeedBrowser({
               >
                 Previous
               </button>{" "}
-              <span className="font-mono text-xs font-bold uppercase tracking-wider">
-                Page {fmt(current + 1)} of {fmt(pages)}
+              <span className="font-mono text-sm font-bold uppercase tracking-wider">
+                Page {formatInt(current + 1)} of {formatInt(pages)}
               </span>{" "}
               <button
                 type="button"

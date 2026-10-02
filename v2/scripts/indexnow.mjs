@@ -1,16 +1,15 @@
 #!/usr/bin/env node
 /**
- * IndexNow submitter — pings IndexNow (Bing, Yandex, Seznam, et al.) with every
+ * IndexNow submitter: pings IndexNow (Bing, Yandex, Seznam and others) with every
  * public URL in the sitemap so they recrawl fast instead of waiting weeks.
  *
- * Why this matters for GEO: Bing's index feeds ChatGPT Search and Perplexity, so
- * keeping Bing fresh is the cheapest lever for getting surfaced in AI answers.
+ * Bing's index feeds several AI search products, so keeping it fresh is the
+ * cheapest way to be current in AI answers. Runs after every production deploy
+ * (.github/workflows/indexnow.yml).
  *
  * Usage:   node scripts/indexnow.mjs
  * Requires the ownership key file to be live first:
  *          https://<host>/387bc5d78cc17c7049731cf74644a70e.txt
- *
- * Optional: wire into CI (e.g. a GitHub Action on content changes) for full automation.
  */
 
 const HOST = process.env.INDEXNOW_HOST || "permtracker.app";
@@ -21,19 +20,16 @@ const SITEMAP_URL = `https://${HOST}/sitemap.xml`;
 const locs = (xml) =>
   [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1].trim()).filter(Boolean);
 
-// Waits before each retry of a sitemap the server could not answer. On Sep 30
-// 2026 one of 24 children came back as Cloudflare's 520 while the server
-// warmed a fresh deploy, and the whole run failed; the same file answered 200
-// in 1.5 s moments later. A server error is retried; one that persists across
-// all four attempts still fails the run, so a real outage stays loud.
+// Waits before each retry of a sitemap the server could not answer, as it can
+// for a moment while a fresh deploy warms. An error that persists across every
+// attempt still fails the run, so a real outage stays loud.
 const RETRY_WAITS_MS = (process.env.INDEXNOW_RETRY_WAITS_MS || "5000,15000,30000")
   .split(",")
   .map(Number);
 
 const get = async (url) => {
-  // Only sitemaps are fetched here, and Firewall rule 8 lets any client read
-  // them, so this runs on CI with no audit key (rule 5 wants its exact value
-  // since Sep 25 2026, and that value never leaves the owner's machine).
+  // Only sitemaps are fetched here, and any client may read them, so this
+  // needs no audit key.
   for (let attempt = 0; ; attempt++) {
     let why;
     try {
@@ -57,32 +53,22 @@ const get = async (url) => {
  * https://www.indexnow.org/documentation
  */
 const BATCH = 10000;
+// The site has far more pages than this; fewer means the walk itself broke.
+const MIN_URLS = 100;
 
 async function main() {
-  // THE SITEMAP IS AN INDEX, AND THIS USED TO SUBMIT THE INDEX ITSELF.
-  //
-  // `/sitemap.xml` holds five <loc> entries, and every one of them is another
-  // sitemap rather than a page. So this script submitted five .xml files and
-  // reported "Submitted 5 URLs" as a success, for months. Bing's IndexNow
-  // report shows exactly that: the most recent submissions are
-  // `sitemaps/pages.xml`, `employer-1.xml` and so on, while the last real page
-  // URLs went in on 25 August, before the sitemap was split.
-  //
-  // A sitemap URL is a legal thing to submit and IndexNow returns 200 for it,
-  // which is why nothing ever complained. It just does not tell Bing that
-  // the ~13,761 individual pages exist.
+  // `/sitemap.xml` is a sitemap INDEX: its entries are child sitemaps, not
+  // pages. IndexNow accepts a sitemap URL with a 200 and learns nothing from
+  // it, so the pages are read out of every child.
   const index = await get(SITEMAP_URL);
   const entries = locs(index);
   if (entries.length === 0) throw new Error("no <loc> URLs found in sitemap");
 
   const children = entries.filter((u) => u.endsWith(".xml"));
   let urlList = entries.filter((u) => !u.endsWith(".xml"));
-  // Per child, so an EMPTY one is caught. A child that fails at the HTTP level
-  // already throws inside get(); one that answers 200 with no <loc> entries
-  // does not, and the total floor below cannot see it: dropping both employer
-  // sitemaps (5,000 + 4,646) still leaves 4,115, which sails past `< 100` and
-  // reports success over a walk that lost two thirds of the site. Measured
-  // 2026-09-03 against the live sitemap, which is what named this gap.
+  // Per child, so an empty one is caught: a child answering 200 with no
+  // <loc> entries would otherwise pass the total floor below while most of
+  // the site went unsubmitted.
   for (const child of children) {
     const found = locs(await get(child));
     if (found.length === 0) {
@@ -96,9 +82,8 @@ async function main() {
   }
   urlList = [...new Set(urlList)];
 
-  // And a total floor, for the case where the INDEX itself came back thin.
-  // Kept deliberately loose: it is the backstop, not the real check above.
-  if (urlList.length < 100) {
+  // A total floor, for an index that itself came back thin.
+  if (urlList.length < MIN_URLS) {
     throw new Error(
       `only ${urlList.length} page URLs found across ${children.length} child sitemaps; ` +
         "refusing to report success over a broken walk",

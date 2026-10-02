@@ -28,6 +28,12 @@ function run(start: string, count: number, total: number): ActivityDay[] {
 const DISCLOSURE = run("2026-06-22", 21, 600);
 const LIVE = run("2026-08-17", 7, 800);
 
+/**
+ * The drawn series: lines and single-week dots sit directly in the <svg>. The
+ * hover rings (ChartHit) sit inside a `g[data-tip]` and are not data marks.
+ */
+const DATA_MARKS = "svg > polyline, svg > circle";
+
 describe("DecisionPaceChart", () => {
   it("breaks at a hole instead of drawing a line through it", () => {
     // The 43 days between the quarterly file ending and the live scan
@@ -41,7 +47,7 @@ describe("DecisionPaceChart", () => {
         ]}
       />,
     );
-    const marks = container.querySelectorAll("polyline, circle");
+    const marks = container.querySelectorAll(DATA_MARKS);
     expect(marks.length).toBe(2);
     // And the two runs really do sit apart on the shared axis rather than
     // being renumbered side by side.
@@ -49,7 +55,7 @@ describe("DecisionPaceChart", () => {
     const xs = (poly.getAttribute("points") ?? "")
       .split(" ")
       .map((p) => Number(p.split(",")[0]));
-    const dotX = Number(container.querySelector("circle")!.getAttribute("cx"));
+    const dotX = Number(container.querySelector("svg > circle")!.getAttribute("cx"));
     expect(dotX).toBeGreaterThan(Math.max(...xs) + 100);
   });
 
@@ -64,7 +70,7 @@ describe("DecisionPaceChart", () => {
         series={[{ label: "Disclosure", color: "var(--data-good-ink)", days: holed }]}
       />,
     );
-    expect(container.querySelectorAll("polyline, circle")).toHaveLength(2);
+    expect(container.querySelectorAll(DATA_MARKS)).toHaveLength(2);
   });
 
   it("draws a single-week run as a point, since one week is not a line", () => {
@@ -76,7 +82,7 @@ describe("DecisionPaceChart", () => {
         ]}
       />,
     );
-    expect(container.querySelectorAll("circle")).toHaveLength(1);
+    expect(container.querySelectorAll("svg > circle")).toHaveLength(1);
   });
 
   it("gives each instrument its own colour and names both", () => {
@@ -93,7 +99,7 @@ describe("DecisionPaceChart", () => {
     expect(screen.getByText("Disclosure corpus")).toBeTruthy();
     expect(screen.getByText("Live case scan")).toBeTruthy();
     const colours = new Set(
-      [...container.querySelectorAll("polyline, circle")].map(
+      [...container.querySelectorAll(DATA_MARKS)].map(
         (el) => el.getAttribute("stroke") ?? el.getAttribute("fill"),
       ),
     );
@@ -196,5 +202,24 @@ describe("OutcomeMix", () => {
   it("renders nothing without quarters", () => {
     const { container } = render(<OutcomeMix quarters={[]} />);
     expect(container.firstChild).toBeNull();
+  });
+});
+
+describe("DecisionPaceChart hover detail", () => {
+  it("gives every plotted week a tip with its total, outcomes and instrument", () => {
+    const { container } = render(
+      <DecisionPaceChart
+        series={[
+          { label: "Disclosure", color: "var(--data-good-ink)", days: DISCLOSURE },
+          { label: "Live", color: "var(--stage-pwd-ink)", days: LIVE },
+        ]}
+      />,
+    );
+    const tips = [...container.querySelectorAll("[data-tip]")].map((el) => el.getAttribute("data-tip") ?? "");
+    // Three complete disclosure weeks and one live week, nothing for the hole.
+    expect(tips).toHaveLength(4);
+    expect(tips[0]).toMatch(/^Week of Jun 22, 2026\n4,200 decided\n/);
+    expect(tips[0]).toMatch(/\nDisclosure$/);
+    expect(tips[3]).toMatch(/^Week of Aug 17, 2026\n5,600 decided\n[\s\S]*\nLive$/);
   });
 });

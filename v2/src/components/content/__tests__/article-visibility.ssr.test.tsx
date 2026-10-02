@@ -49,12 +49,11 @@ describe("article chrome is visible in the server markup", () => {
     expect(html).not.toMatch(HIDDEN);
   });
 
-  it("renders the description and breadcrumb without hiding them", () => {
+  it("renders the description without hiding it", () => {
     const html = renderToStaticMarkup(
       <ArticleHeader meta={meta} type="guides" />,
     );
     expect(html).toContain("What DOL&#x27;s published data says about the queue.");
-    expect(html).toContain('aria-label="Breadcrumb"');
     expect(html).not.toMatch(HIDDEN);
   });
 

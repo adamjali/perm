@@ -21,9 +21,11 @@
  */
 
 import { Fragment, useMemo, useState } from "react";
+import { ChartTips } from "@/components/data/ChartTips";
 import { formatMonth } from "@/lib/dolFormat";
 import type { PwdBacklogMonth } from "@/lib/perm";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 import { DataView, ScopeSelect } from "./DataView";
 
 export interface PwdBacklogChartProps {
@@ -35,10 +37,6 @@ export interface PwdBacklogChartProps {
 
 type Scope = "all" | "ahead" | "from";
 
-function fmtInt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 function Bars({
   rows,
   max,
@@ -49,6 +47,7 @@ function Bars({
   selectedMonth?: string;
 }) {
   return (
+    <ChartTips label="Prevailing wage requests still pending, by receipt month">
     <ol className="space-y-2">
       {rows.map((row) => {
         const isSelected = row.receiptMonth === selectedMonth;
@@ -63,7 +62,10 @@ function Bars({
           // "December 2025 11January 2026 63" to any extractor.
           <Fragment key={row.receiptMonth}>
             {" "}
-            <li className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[9rem_1fr_5.5rem]">
+            <li
+              data-tip={`Received ${formatMonth(row.receiptMonth) ?? row.receiptMonth}\n${formatInt(row.remainingRequests)} ${row.remainingRequests === 1 ? "request" : "requests"} still pending${isSelected ? "\nYour receipt month" : isAhead ? "\nAhead of yours" : ""}`}
+              className="grid grid-cols-[7.5rem_1fr_4.5rem] items-center gap-3 sm:grid-cols-[9rem_1fr_5.5rem]"
+            >
               <span
                 className={cn(
                   "text-sm",
@@ -101,13 +103,14 @@ function Bars({
                   isSelected ? "font-black" : "text-foreground/70",
                 )}
               >
-                {fmtInt(row.remainingRequests)}
+                {formatInt(row.remainingRequests)}
               </span>
             </li>
           </Fragment>
         );
       })}
     </ol>
+    </ChartTips>
   );
 }
 
@@ -131,16 +134,16 @@ function BacklogTable({
         </caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="px-3 py-2 font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 font-mono text-sm font-bold uppercase tracking-wider">
               Received
             {" "}</th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Still pending
             {" "}</th>
-            <th scope="col" className="px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Share
             {" "}</th>
-            <th scope="col" className="hidden px-3 py-2 text-right font-mono text-xs font-bold uppercase tracking-wider sm:table-cell">
+            <th scope="col" className="hidden px-3 py-2 text-right font-mono text-sm font-bold uppercase tracking-wider sm:table-cell">
               This month and older{" "}
             </th>
           </tr>
@@ -158,13 +161,13 @@ function BacklogTable({
                 {formatMonth(row.receiptMonth)}
               {" "}</td>
               <td className="px-3 py-2.5 text-right tabular-nums">
-                {fmtInt(row.remainingRequests)}
+                {formatInt(row.remainingRequests)}
               {" "}</td>
               <td className="px-3 py-2.5 text-right tabular-nums text-foreground/70">
                 {total > 0 ? `${((row.remainingRequests / total) * 100).toFixed(1)}%` : "—"}
               {" "}</td>
               <td className="hidden px-3 py-2.5 text-right tabular-nums text-foreground/70 sm:table-cell">
-                {fmtInt(cumulative.get(row.receiptMonth) ?? 0)}
+                {formatInt(cumulative.get(row.receiptMonth) ?? 0)}
               {" "}</td>
             </tr>
           ))}
@@ -173,7 +176,7 @@ function BacklogTable({
           <tr className="border-t-2 border-border">
             <td className="px-3 py-2.5 font-black">Whole pile{" "}</td>
             <td className="px-3 py-2.5 text-right font-black tabular-nums">
-              {fmtInt(total)}
+              {formatInt(total)}
             {" "}</td>
             <td className="px-3 py-2.5" />
             <td className="hidden px-3 py-2.5 sm:table-cell" />
@@ -236,7 +239,7 @@ export function PwdBacklogChart({
           ]}
         />{" "}
         <p className="text-sm text-foreground/70">
-          {fmtInt(rows.reduce((s, r) => s + r.remainingRequests, 0))} of {fmtInt(total)}{" "}
+          {formatInt(rows.reduce((s, r) => s + r.remainingRequests, 0))} of {formatInt(total)}{" "}
           pending requests
         </p>
       </Fragment>

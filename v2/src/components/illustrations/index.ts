@@ -8,17 +8,16 @@
  * mixing an illustration with the icon set beside it reads as two visual
  * languages on one surface.
  *
- * EVERY COLOUR IS A TOKEN, and that is load-bearing rather than tidiness.
- * These files previously baked #F5F5F5 and #FAFAFA surfaces into the artwork,
- * so a calendar body stayed near-white in dark mode and punched a bright hole
- * through the card it sat on. A token follows the theme; a hex cannot.
+ * EVERY COLOUR IS A TOKEN, and that is load-bearing rather than tidiness. A
+ * #F5F5F5 surface baked into the artwork stays near-white in dark mode and
+ * punches a bright hole through the card it sits on. A token follows the
+ * theme; a hex cannot.
  *
  * The stage colours in TimelineSVG are the --stage-* family in PERM order,
  * so a stage is the same colour here as it is anywhere else in the app.
  *
- * Unused as of 2026-08-26: ClockUrgentSVG, DocumentStackSVG, GlobePassportSVG,
- * NewspaperAdSVG. Kept and tokenised rather than deleted, because removing
- * exports while other work is in flight is a conflict nobody needs.
+ * Not used by any page: ClockUrgentSVG, DocumentStackSVG, GlobePassportSVG,
+ * NewspaperAdSVG. Kept and tokenised rather than deleted.
  *
  * Usage:
  *   import { FolderOpenSVG, RocketLaunchSVG } from '@/components/illustrations';

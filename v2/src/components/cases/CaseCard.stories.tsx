@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { CaseCard } from "./CaseCard";
-import { createCaseCardData } from "../../../convex/lib/caseListTypes";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { createCaseCardData } from "@convex/lib/caseListTypes";
+import type { Id } from "@convex/_generated/dataModel";
 
 // Helper function to generate mock case ID
 const mockCaseId = (num: number) => `case${num}` as Id<"cases">;

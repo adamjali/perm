@@ -4,10 +4,9 @@
  * AuthHeader Component
  * Header for public/authentication pages.
  *
- * ONE NAV, EVERY PUBLIC PAGE. The homepage used to render scroll-spy section
- * anchors (#how, #features) while every other page rendered links - two
- * shapes for one header, and the anchors died the day the practitioner
- * sections moved to /for-attorneys. The unified list leads with the
+ * ONE NAV, EVERY PUBLIC PAGE: no homepage-only section anchors, because two
+ * shapes for one header make the site feel like two sites. The unified list
+ * leads with the
  * highest-intent destination (Track my case), then Timelines, Data, the
  * Learn dropdown, and For attorneys, plus site-wide search (Cmd+K).
  *
@@ -87,20 +86,20 @@ export default function AuthHeader({
   // between the public group and the auth group UNMOUNTS and REMOUNTS it with
   // `isScrolled` back at false. A passive effect corrects that after the
   // browser has already painted, so a visitor arriving from a scrolled page
-  // saw the tall bar for one frame and then watched it animate 12px shorter.
-  // That twitch is a real part of "the header flashes a different one".
+  // would see the tall bar for one frame and then watch it animate 12px
+  // shorter.
   //
   // useLayoutEffect runs synchronously before paint, so the first frame is
   // already correct. `motionArmed` then flips in a passive effect (which runs
   // AFTER that paint) so the corrected value never animates into place on
   // arrival, while ordinary scrolling still transitions.
   //
-  // TWO THRESHOLDS, NOT ONE (Oct 1 2026). Compacting the bar moves it 12px,
+  // TWO THRESHOLDS, NOT ONE. Compacting the bar moves it 12px,
   // and anything that shifts the page by that much (the browser's scroll
   // anchoring, a phone toolbar) can carry scrollY back across a single
   // threshold, flip the bar, shift the page again, and flip it back. That
-  // ping-pong threw React's "Maximum update depth exceeded" (#185) from this
-  // handler on three live pages. The bar compacts past 24px and only grows
+  // ping-pong throws React's "Maximum update depth exceeded" (#185) from this
+  // handler. The bar compacts past 24px and only grows
   // again under 4px, a 20px band no 12px shift can cross.
   useIsoLayoutEffect(() => {
     const handleScroll = () => {
@@ -119,16 +118,11 @@ export default function AuthHeader({
   /**
    * Publish this bar's real height as `--site-header-h`.
    *
-   * IT IS NOT 71px. That number is true at desktop widths and the codebase had
-   * it written down as a constant; at 390px the logo lockup wraps and the bar
-   * measures **99px**. Anything positioning itself under a fixed header from a
-   * hardcoded figure is therefore 28px wrong on a phone - which is exactly how
-   * the data rail's drawer and its handle ended up partly behind it.
-   *
-   * It also changes on its own: `py-3` becomes `py-1.5` on scroll, and the
-   * security banner shifts the whole bar. A ResizeObserver is the only thing
-   * that tracks all three. Same mechanism `SecurityIncidentBanner` already uses
-   * for `--security-banner-h`, so there is one convention rather than two.
+   * The bar is 71px at rest, but it isn't a constant: `py-3` becomes
+   * `py-1.5` on scroll, the security banner shifts it, and a long label or a
+   * zoomed font can wrap it. Anything placed under the fixed header reads this
+   * variable rather than a number. Same mechanism `SecurityIncidentBanner`
+   * uses for `--security-banner-h`.
    */
   const headerRef = React.useRef<HTMLElement>(null);
   useIsoLayoutEffect(() => {
@@ -147,21 +141,16 @@ export default function AuthHeader({
       }
     };
     publish();
-    // `box: "border-box"` IS THE WHOLE FIX for the scrolled state. A
-    // ResizeObserver watches the CONTENT box by default, and this bar shrinks
-    // by swapping `py-3` for `py-1.5` - padding, which leaves the content box
-    // untouched. So the observer never fired, `--site-header-h` stayed at its
-    // unscrolled 99px while the bar became 87, and the drawer pinned to it
-    // floated 12px below the header with the page showing through the gap.
-    // Measured before and after; nothing about the callback was wrong.
+    // `box: "border-box"`: a ResizeObserver watches the content box by
+    // default, and this bar shrinks by changing its padding, which would
+    // never fire it.
     const ro = new ResizeObserver(publish);
     ro.observe(el, { box: "border-box" });
-    // A width change can shrink the bar back (the logo lockup wraps below
-    // ~400px), and ResizeObserver alone cannot lower a high-water mark. Reset
-    // it on a WIDTH change only. A phone fires `resize` whenever its toolbar
-    // shows or hides, which changes only the height; resetting then took the
-    // reservation down to the compact bar's height while scrolled, and every
-    // page jumped 12px mid-scroll (measured at 393px, Oct 1 2026: 71px to 59px).
+    // A width change can shrink the bar back, and ResizeObserver alone can't
+    // lower a high-water mark. Reset it on a WIDTH change only: a phone fires
+    // `resize` whenever its toolbar shows or hides, and resetting then would
+    // drop the reservation to the compact bar while scrolled and jump the
+    // page 12px.
     let width = window.innerWidth;
     const onResize = () => {
       if (window.innerWidth === width) return;
@@ -190,11 +179,14 @@ export default function AuthHeader({
         {/* Logo */}
         <NavLink
           href="/"
-          className="group flex min-h-[44px] items-center gap-2 px-2 py-1 font-heading text-2xl font-bold transition-colors hover:bg-primary"
+          // One line at every width: the text steps down below 400px and the
+          // icon drops below 360px, so the bar is one height everywhere.
+          className="group flex min-h-[44px] items-center gap-2 whitespace-nowrap px-2 py-1 font-heading text-xl font-bold transition-colors hover:bg-primary min-[400px]:text-2xl"
           spinnerClassName="text-(--primary) group-hover:text-black"
         >
           <FileTextIcon
-            className="size-6 text-(--primary) transition-colors group-hover:text-black"
+            aria-hidden="true"
+            className="hidden size-6 text-(--primary) transition-colors group-hover:text-black min-[360px]:block"
           />
           <span>
             {/* text-(--primary), not text-primary: the header is black in both themes,
@@ -206,11 +198,8 @@ export default function AuthHeader({
           </span>
         </NavLink>{" "}
 
-        {/* Desktop Navigation, from xl (1280px). It needs 1,137px on one line
-            (measured Sep 30 2026), so from 1024 to 1199 every label, the logo
-            and both buttons wrapped to two lines and the bar grew from 71px
-            to 99px after the page had painted. The menu button covers 1024
-            to 1279 instead. */}
+        {/* Desktop navigation from xl (1280px): it needs 1,137px on one line,
+            so narrower screens get the menu button instead. */}
         <nav className="hidden items-center gap-4 xl:flex">
           {/* Nav Links */}
           <div className="flex items-center gap-1">
@@ -316,7 +305,7 @@ export default function AuthHeader({
             {showSignIn && (
               <NavLink
                 href="/login"
-                className="border-2 border-white bg-transparent px-4 py-2 font-heading text-sm font-semibold text-white shadow-[2px_2px_0px_rgba(255,255,255,0.3)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                className="inline-flex min-h-[44px] items-center justify-center border-2 px-4 font-heading text-sm font-bold shadow-[2px_2px_0px_rgba(255,255,255,0.3)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none border-white bg-transparent text-white"
                 spinnerClassName="text-white"
                 spinnerSize={14}
               >
@@ -327,7 +316,7 @@ export default function AuthHeader({
             {showSignUp && (
               <NavLink
                 href="/signup"
-                className="border-2 border-black bg-primary px-4 py-2 font-heading text-sm font-semibold text-black shadow-[2px_2px_0px_rgba(255,255,255,0.3)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                className="inline-flex min-h-[44px] items-center justify-center border-2 px-4 font-heading text-sm font-bold shadow-[2px_2px_0px_rgba(255,255,255,0.3)] transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none border-primary bg-primary text-black"
                 spinnerClassName="text-black"
                 spinnerSize={14}
               >
@@ -412,7 +401,7 @@ export default function AuthHeader({
               {showSignIn && (
                 <NavLink
                   href="/login"
-                  className="block border-2 border-white bg-transparent px-4 py-2 text-center font-heading text-sm font-semibold text-white shadow-[2px_2px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  className="flex min-h-[48px] items-center justify-center border-2 px-4 text-center font-heading text-base font-bold shadow-[2px_2px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none border-white bg-transparent text-white"
                   spinnerClassName="text-white"
                   spinnerSize={14}
                   onClick={() => setIsMobileMenuOpen(false)}
@@ -423,7 +412,7 @@ export default function AuthHeader({
               {showSignUp && (
                 <NavLink
                   href="/signup"
-                  className="block border-2 border-black bg-primary px-4 py-2 text-center font-heading text-sm font-semibold text-black shadow-[2px_2px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none"
+                  className="flex min-h-[48px] items-center justify-center border-2 px-4 text-center font-heading text-base font-bold shadow-[2px_2px_0px_rgba(255,255,255,0.3)] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none border-primary bg-primary text-black"
                   spinnerClassName="text-black"
                   spinnerSize={14}
                   onClick={() => setIsMobileMenuOpen(false)}

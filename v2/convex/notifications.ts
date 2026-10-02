@@ -7,13 +7,11 @@
  * - getUnreadCount: Count of unread notifications (for bell badge)
  * - getRecentNotifications: Latest N notifications (for dropdown)
  * - getNotifications: Paginated list with filters (for full page)
- * - getNotificationsByCase: All notifications for a specific case
  * - getNotificationStats: Dashboard statistics
  *
  * MUTATIONS (public):
  * - markAsRead: Mark single notification as read
  * - markAllAsRead: Mark all user's notifications as read
- * - markMultipleAsRead: Mark specific notifications as read
  * - deleteNotification: Delete single notification
  * - deleteAllRead: Delete all read notifications
  *
@@ -34,14 +32,13 @@ import { logDelete } from "./lib/audit";
 import { createLogger } from "./lib/logging";
 import { rateLimiter } from "./rateLimitConfig";
 import type { QueryCtx } from "./_generated/server";
+import { UNREAD_COUNT_CAP } from "./lib/notificationHelpers";
 
 const log = createLogger("Notifications");
 
 // ============================================================================
 // CONSTANTS & VALIDATORS
 // ============================================================================
-
-const _BATCH_SIZE = 100;
 
 const notificationType = v.union(
   v.literal("deadline_reminder"),
@@ -147,7 +144,7 @@ export const getUnreadCount = query({
       .withIndex("by_user_and_unread", (q) =>
         q.eq("userId", userId).eq("isRead", false)
       )
-      .take(1000); // Limit to prevent runaway queries
+      .take(UNREAD_COUNT_CAP);
 
     return unreadNotifications.length;
   },
@@ -270,43 +267,6 @@ export const getNotifications = query({
     );
 
     return { notifications: enrichedNotifications, nextCursor, hasMore };
-  },
-});
-
-/**
- * Get all notifications for a specific case.
- * Used for case detail view to show notification history.
- *
- * @param caseId - The case to get notifications for
- * @returns Array of notifications for the case, ordered by createdAt desc
- */
-export const getNotificationsByCase = query({
-  args: {
-    caseId: v.id("cases"),
-  },
-  handler: async (ctx, { caseId }) => {
-    const userId = await getCurrentUserIdOrNull(ctx);
-
-    // Return empty array if not authenticated
-    if (userId === null) {
-      return [];
-    }
-
-    // First verify the user owns this case
-    const caseDoc = await ctx.db.get(caseId);
-    if (!caseDoc || caseDoc.deletedAt !== undefined || caseDoc.userId !== userId) {
-      return [];
-    }
-
-    // Use by_case_id index for efficient query
-    const notifications = await ctx.db
-      .query("notifications")
-      .withIndex("by_case_id", (q) => q.eq("caseId", caseId))
-      .order("desc")
-      .take(1000); // Limit to prevent runaway queries
-
-    // Filter to only notifications belonging to this user (security)
-    return notifications.filter((n) => n.userId === userId);
   },
 });
 
@@ -434,53 +394,6 @@ export const markAllAsRead = mutation({
     }
 
     return { count: toProcess.length, hasMore };
-  },
-});
-
-/**
- * Mark multiple specific notifications as read.
- *
- * @param notificationIds - Array of notification IDs to mark as read
- * @returns Count of notifications successfully marked as read
- */
-export const markMultipleAsRead = mutation({
-  args: {
-    notificationIds: v.array(v.id("notifications")),
-  },
-  handler: async (ctx, { notificationIds }): Promise<{ count: number }> => {
-    const userId = await getCurrentUserId(ctx);
-    const now = Date.now();
-
-    // Verify all notifications belong to user before updating any
-    const notifications = await Promise.all(
-      notificationIds.map((id) => ctx.db.get(id))
-    );
-
-    // Check ownership for all notifications
-    for (let i = 0; i < notifications.length; i++) {
-      const notification = notifications[i];
-      if (!notification) {
-        throw new Error(`Notification ${notificationIds[i]} not found`);
-      }
-      if (notification.userId !== userId) {
-        throw new Error(`Access denied: you do not own notification ${notificationIds[i]}`);
-      }
-    }
-
-    // Update all notifications
-    let count = 0;
-    for (const notification of notifications) {
-      if (notification && !notification.isRead) {
-        await ctx.db.patch(notification._id, {
-          isRead: true,
-          readAt: now,
-          updatedAt: now,
-        });
-        count++;
-      }
-    }
-
-    return { count };
   },
 });
 

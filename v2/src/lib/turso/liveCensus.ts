@@ -2,6 +2,8 @@ import "server-only";
 
 import { cache } from "react";
 
+import { MS_PER_DAY } from "@/lib/time";
+
 import { one } from "./client";
 
 /**
@@ -50,7 +52,7 @@ export interface LiveCensus {
  * of staleness means alerting failed too - at which point a stale queue
  * position reads as a current one, which is worse than an empty state.
  */
-const MAX_AGE_MS = 8 * 24 * 60 * 60 * 1000;
+const MAX_AGE_MS = 8 * MS_PER_DAY;
 
 function isMatrixRow(x: unknown): x is CensusMatrixRow {
   if (typeof x !== "object" || x === null) return false;
@@ -200,7 +202,8 @@ export function adjacentFrom(
  * estimator judged maturity against the published frontier instead.
  *
  * The live census knows the denominator, so the fraction becomes real.
- * VALIDATED against production 2026-09-10, disclosure-decided over live-total:
+ * VALIDATED against production, disclosure-decided over live-total (one
+ * reading):
  *
  *     mature months   2024-10 0.99  2025-01 1.00  2025-04 1.00  2025-05 0.96
  *     recent months   2025-12 0.029  2026-03 0.028  2026-06 0.024

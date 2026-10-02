@@ -127,8 +127,8 @@ function calculateDependentValue(
       return format(expirationDate, "yyyy-MM-dd");
     }
 
-    // NOTE: RFI due date is now calculated in RFIEntryList component when handling array entries
-    // The +30 day calculation happens in handleUpdate when receivedDate changes
+    // The RFI due date (+30 days) is calculated per entry in RequestEntry,
+    // when its received date changes.
 
     // I-140 approval/denial mutual exclusivity
     // When approval date is set, clear denial date

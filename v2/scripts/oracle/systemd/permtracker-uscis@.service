@@ -1,5 +1,5 @@
 [Unit]
-Description=PERM Tracker USCIS fetch %i (moved from the Mac)
+Description=PERM Tracker USCIS fetch %i
 After=network-online.target permtracker-db.service
 [Service]
 Type=oneshot

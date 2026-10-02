@@ -223,7 +223,7 @@ const RFE_FIELD_MAP: Record<string, string> = {
  *
  * Server validation uses flat field names like `rfiReceivedDate`.
  * This extracts those errors and maps them to the format expected
- * by RFIEntry components: `{ receivedDate: "error message" }`
+ * by RequestEntry: `{ receivedDate: "error message" }`
  *
  * @param errors - Flat error map from form state
  * @returns Error object for the active RFI entry (index 0)
@@ -250,7 +250,7 @@ export function extractRfiEntryErrors(
  *
  * Server validation uses flat field names like `rfeReceivedDate`.
  * This extracts those errors and maps them to the format expected
- * by RFEEntry components: `{ receivedDate: "error message" }`
+ * by RequestEntry: `{ receivedDate: "error message" }`
  *
  * @param errors - Flat error map from form state
  * @returns Error object for the active RFE entry (index 0)

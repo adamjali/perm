@@ -24,8 +24,9 @@ import { Fragment } from "react";
 
 import { withSocialCard } from "@/lib/socialCard";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { ChartHit, hitSpan } from "@/components/data/ChartHit";
+import { ChartTips } from "@/components/data/ChartTips";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { FaqList } from "@/components/tools/FaqList";
 import { FigurePlate } from "@/components/tools/FigurePlate";
 import { FinePrint } from "@/components/data/FinePrint";
@@ -48,12 +49,13 @@ import {
   type I140Category,
 } from "@/lib/processing-times/i140ProcessingTimes";
 import { formatAsOf } from "@/lib/dolFormat";
+import { SITE_URL } from "@/lib/constants/site";
 
 const TITLE = "USCIS Processing Times by Form (Median)";
 const DESCRIPTION =
   "The median months USCIS took to decide every form last quarter, from its own quarterly data, with receipts, completions, pending and history to 2016.";
 const PATH = "/uscis-processing-times";
-const SITE = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+const SITE = SITE_URL;
 const USCIS_DATA_PAGE = "https://www.uscis.gov/tools/reports-and-studies/immigration-and-citizenship-data";
 
 export const metadata: Metadata = withSocialCard({
@@ -140,6 +142,8 @@ function MedianHistoryChart({ years, series }: { years: number[]; series: Array<
   const y = (m: number) => T + (1 - m / maxMonths) * (H - T - B);
   const ticks = Array.from({ length: maxMonths / 5 + 1 }, (_, i) => i * 5);
   return (
+    // The tooltip sits outside the scrolling strip, which would clip it.
+    <ChartTips label="Median months by fiscal year, one line per form">
     <div className="overflow-x-auto">
       <svg viewBox={`0 0 ${W} ${H}`} className="min-w-[720px] w-full" role="img" aria-label="Median months by fiscal year, one line per form">
         {ticks.map((t) => (
@@ -160,18 +164,25 @@ function MedianHistoryChart({ years, series }: { years: number[]; series: Array<
               strokeLinecap="round"
               className={SERIES_CLASSES[si % SERIES_CLASSES.length]}
               points={s.months.map((m, i) => `${x(i)},${y(m)}`).join(" ")}
-            >
-              {/* ONE string child, with the anti-glue space inside it. As
-                  `{s.label}{" "}` (two children) React 19 rendered this <title>
-                  differently on the server and the client: React error #418 on
-                  every load (outside audit, 2026-09-23; the dev overlay named
-                  this node). */}
-              <title>{`${s.label} `}</title>
-            </polyline>
+            />
           </g>
+        ))}
+        {/* One hover column per year, naming every form's median there.
+            It replaced a <title> per line, which named the line and no value. */}
+        {years.map((yr, i) => (
+          <ChartHit
+            key={`hit-${yr}`}
+            tip={[`FY${yr}, median months`, ...series.map((s) => `${s.label}: ${monthsLabel(s.months[i] ?? null)}`)].join("\n")}
+            {...hitSpan(i, years.length, x, L, W - R)}
+            y={T}
+            height={H - T - B}
+            cx={series[0] && series[0].months[i] !== undefined ? x(i) : undefined}
+            cy={series[0] && series[0].months[i] !== undefined ? y(series[0].months[i]!) : undefined}
+          />
         ))}
       </svg>
     </div>
+    </ChartTips>
   );
 }
 
@@ -183,10 +194,6 @@ export default async function UscisProcessingTimesPage() {
     getUscisFormHistory("I-485"),
   ]);
 
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: TITLE, href: PATH },
-  ]);
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage" as const,
@@ -259,20 +266,15 @@ export default async function UscisProcessingTimesPage() {
     <div className="mx-auto w-full max-w-7xl px-4 pb-12 sm:px-6 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumb} />
 
       <header>
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          USCIS quarterly data{quarter ? ` · ${quarterLabel(quarter.fy, quarter.quarter)}` : ""}
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           USCIS processing times, the median, by form
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
           How many months USCIS took to decide the typical case of every form
-          last quarter, from its own quarterly workbook. It&apos;s a different
-          number from the one on USCIS&apos;s processing-times page, and this
-          page shows both.
+          {quarter ? ` in ${quarterLabel(quarter.fy, quarter.quarter)}` : " last quarter"}, from its own quarterly
+          workbook, beside the different figure on USCIS&apos;s processing-times page.
         </p>
       </header>
 
@@ -296,7 +298,7 @@ export default async function UscisProcessingTimesPage() {
               }
               source={<>USCIS, {quarter.sourceFile}, received to completion, cases decided in the quarter.</>}
             >
-              <BarRows rows={barRows} />
+              <BarRows label="Median months to a decision, by form" rows={barRows} />
             </FigurePlate>
           </section>
 
@@ -327,14 +329,14 @@ export default async function UscisProcessingTimesPage() {
               >
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)] [&>*]:min-w-0">
                   <div className="border-2 border-border bg-tint-primary p-5">
-                    <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/70">Quarterly median, all I-140s</p>{" "}
+                    <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">Quarterly median, all I-140s</p>{" "}
                     <p className="mt-2 font-heading text-5xl font-black leading-none tabular-nums">{monthsLabel(i140.medianMonths)}</p>{" "}
                     <p className="mt-2 text-sm text-foreground/70">
                       months, over {(i140.completed ?? 0).toLocaleString("en-US")} petitions decided in the quarter
                     </p>
                   </div>
                   <div>
-                    <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">Processing-times page, 80% within</p>{" "}
+                    <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">Processing-times page, 80% within</p>{" "}
                     <ul className="mt-2 divide-y divide-border">
                       {egovSubtypes.map((s) => (
                         <Fragment key={s.code}>{" "}
@@ -380,7 +382,7 @@ export default async function UscisProcessingTimesPage() {
                 </ul>
                 {i140History.length > 0 || i485ebHistory.length > 0 ? (
                   <div className="mt-6 border-t border-border/60 pt-4">
-                    <p className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">Since the factsheet, by quarter</p>{" "}
+                    <p className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">Since the factsheet, by quarter</p>{" "}
                     <div className="mt-2 overflow-x-auto">
                       <table className="min-w-[420px] text-sm">
                         <thead>

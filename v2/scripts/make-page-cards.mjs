@@ -1,17 +1,11 @@
 /**
  * Social cards for the site's PAGES, built from real screenshots.
  *
- * WHY. Every page used to share one Open Graph image: an AI-drawn laptop whose
- * screen showed an invented "Immigration Case Tracking Dashboard" with
- * I-140, biometrics and interview steps, none of which is PERM. Google Images
- * showed that for the site, and the rival's per-page screenshots for theirs
- * (measured 2026-09-07: the rival tracker ships og-timeline, og-cases, og-map).
- *
  * Each card here is the house frame (the same grounds, dots and type as the
  * article cards in make-article-cards.mjs) with a real screenshot of the page
  * inset on the right and readable type on the left. Nothing on the card is a
- * live figure, because a static image of a number that moves weekly is a lie
- * by the second week; the label states what the page IS.
+ * live figure, because a static image of a number that moves weekly is wrong
+ * by the second week; the label states what the page is.
  *
  *   node scripts/make-page-cards.mjs <spec.json> <shots-dir> [--only slug]
  *

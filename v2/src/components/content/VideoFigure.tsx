@@ -96,7 +96,7 @@ export default function VideoFigure({
       </Lightbox>
 
       {caption && (
-        <figcaption className="mt-2 font-mono text-xs text-muted-foreground">
+        <figcaption className="mt-2 font-mono text-sm text-muted-foreground">
           {caption}
         </figcaption>
       )}

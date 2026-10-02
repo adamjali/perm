@@ -70,6 +70,7 @@ import { deliverAlert } from "./lib/alertDelivery";
 import { dropQueued } from "./lib/alertOutboxStore";
 import { SITE_URL, actionUrl } from "./lib/links";
 import { prefsLink } from "./lib/prefsLink";
+import { type DolQueue, queueLabel } from "./lib/mailKinds";
 import { formatAsOf, formatMonth, monthsMoved } from "../src/lib/dolFormat";
 import { measureQueuePace, paceSentence } from "../src/lib/queuePace";
 import {
@@ -83,6 +84,7 @@ import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
+import { CONFIRMATION_COOLDOWN_MS, SUBSCRIBE_IP_LIMIT, SWEEP_RESUME_DELAY_MS } from "./lib/alertBudgets";
 
 const log = createLogger("QueueAlerts");
 
@@ -95,40 +97,10 @@ const log = createLogger("QueueAlerts");
 const NOTIFY_BATCH_LIMIT = 40;
 
 /**
- * Gap before a rescheduled sweep resumes.
- *
- * Long enough that a rate-limit condition has time to clear, short enough that
- * a large backlog still drains the same day.
- */
-const NOTIFY_RESUME_DELAY_MS = 5 * 60 * 1000;
-
-/**
- * Minimum gap between confirmation emails to one address.
- *
- * Note what this does and does not do. It stops one address being mailed
- * repeatedly. It does NOT stop an attacker cycling through many addresses,
- * because a first-time address has no previous send to compare against. That
- * vector is handled by the per-IP rate limit on the HTTP route, which is the
- * only layer that can see the caller. Do not treat this constant as the
- * anti-abuse control on its own.
- */
-const CONFIRMATION_COOLDOWN_MS = 10 * 60 * 1000;
-
-/**
- * Per-caller ceiling on subscribe attempts.
- *
- * Five an hour is far more than a human needs and far less than a script
- * wants. The identifier is the caller IP as reported by `x-forwarded-for`,
- * which IS spoofable — see the note on the global budget below for why that is
- * survivable rather than fatal.
- */
-export const SUBSCRIBE_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
-
-/**
  * Global ceiling on confirmation emails, across every caller.
  *
- * The pool is the kind's own bound against abuse (40 a day since Sep 29
- * 2026; convex/lib/alertBudgets.ts). The thing actually at risk, Resend's 100
+ * The pool is the kind's own bound against abuse (convex/lib/alertBudgets.ts).
+ * The thing actually at risk, Resend's 100
  * a day shared with sign-in codes, is guarded once by the day's real count
  * (convex/lib/emailLimits.ts), and a request either limit holds back waits in
  * the queue (convex/confirmationQueue.ts) instead of being refused.
@@ -167,28 +139,15 @@ const roleValidator = v.union(
  * snapshot. Absent on a row means "perm": every subscription that predates
  * the field has no value and rewriting them would churn rows for nothing.
  */
-export type QueueKind = "perm" | "pwd-oews" | "pwd-nonoews";
 const queueValidator = v.union(
   v.literal("perm"),
   v.literal("pwd-oews"),
   v.literal("pwd-nonoews"),
 );
 
-/** Human wording per queue, used by subjects, text parts and templates alike. */
-export function queueLabel(queue: QueueKind): string {
-  switch (queue) {
-    case "perm":
-      return "PERM analyst-review queue";
-    case "pwd-oews":
-      return "prevailing-wage queue (OEWS)";
-    case "pwd-nonoews":
-      return "prevailing-wage queue (non-OEWS)";
-  }
-}
-
 /** The frontier month for one queue, from a stored DOL snapshot. */
 export function frontierFor(
-  queue: QueueKind,
+  queue: DolQueue,
   snapshot: {
     permQueues: { queue: string; priorityDate: string | null }[];
     pwdQueues: {
@@ -321,7 +280,7 @@ export const subscribe = internalMutation({
     // One row per (address, queue). The by_email index cuts to this address's
     // rows (a handful at most); the queue match happens in JS because the
     // index predates the field and existing rows carry no value.
-    const queue: QueueKind = args.queue ?? "perm";
+    const queue: DolQueue = args.queue ?? "perm";
     const forAddress = await ctx.db
       .query("dolQueueAlerts")
       .withIndex("by_email", (q) => q.eq("email", email))
@@ -332,11 +291,11 @@ export const subscribe = internalMutation({
     const now = Date.now();
 
     // HOISTED OUT OF THE WRITE BRANCH so the budget check can sit between the
-    // two. It used to live immediately above the patch, which forced the
-    // budget check below the write - and an exhausted budget then stamped
-    // `lastConfirmationSentAt` while sending nothing, so the caller's retry
-    // was swallowed by this very cooldown and answered "check your inbox" for
-    // an email that never went out.
+    // two. Immediately above the patch it would force the budget check below
+    // the write, where an exhausted budget stamps `lastConfirmationSentAt`
+    // while sending nothing, and the caller's retry is then swallowed by this
+    // very cooldown and answered "check your inbox" for an email that never
+    // went out.
     if (existing) {
       const withinCooldown =
         existing.lastConfirmationSentAt !== undefined &&
@@ -487,7 +446,7 @@ export const sendConfirmation = internalAction({
   returns: v.null(),
   handler: async (ctx, args) => {
     try {
-      const queue: QueueKind = args.queue ?? "perm";
+      const queue: DolQueue = args.queue ?? "perm";
       const includesNews = args.includesNews === true;
       const token = await makeUnsubscribeToken(
         args.email,
@@ -632,7 +591,7 @@ export const confirmByToken = internalMutation({
     // confirm covers every staged case for the address.
     let primary: { email: string; filingMonth: string; alreadyReached: boolean } | null =
       null;
-    const queuesToNotify = new Set<QueueKind>();
+    const queuesToNotify = new Set<DolQueue>();
 
     for (const row of rows) {
       // A confirm token never expires and is replayable by anyone who can
@@ -653,7 +612,7 @@ export const confirmByToken = internalMutation({
         row.pendingFilingMonth !== undefined &&
         row.pendingFilingMonth !== row.filingMonth;
       const filingMonth = row.pendingFilingMonth ?? row.filingMonth;
-      const queue: QueueKind = row.queue ?? "perm";
+      const queue: DolQueue = row.queue ?? "perm";
 
       await ctx.db.patch(row._id, {
         confirmedAt: row.confirmedAt ?? Date.now(),
@@ -769,7 +728,7 @@ export const dueForAlert = internalQuery({
     }),
   ),
   handler: async (ctx, args) => {
-    const queue: QueueKind = args.queue ?? "perm";
+    const queue: DolQueue = args.queue ?? "perm";
     const out: {
       _id: Id<"dolQueueAlerts">;
       email: string;
@@ -834,7 +793,7 @@ export const notifyQueueReached = internalAction({
     ctx,
     args,
   ): Promise<{ sent: number; failed: number; remaining: boolean }> => {
-    const queue: QueueKind = args.queue ?? "perm";
+    const queue: DolQueue = args.queue ?? "perm";
     const due = await ctx.runQuery(internal.queueAlerts.dueForAlert, {
       frontier: args.frontier,
       limit: NOTIFY_BATCH_LIMIT + 1,
@@ -848,9 +807,8 @@ export const notifyQueueReached = internalAction({
 
     // Formatted ONCE for the whole sweep, then used by the subject, the text
     // part and the HTML props alike. The subject line is the one string every
-    // recipient sees in their inbox, and it used to render DOL's raw
-    // "2024-09". It now names the same figure the stamp does, so the inbox and
-    // the email agree.
+    // recipient sees in their inbox, so never DOL's raw "2024-09": it names
+    // the same figure the stamp does, so the inbox and the email agree.
     const frontierLabel = formatMonth(args.frontier) ?? args.frontier;
     const asOfLabel = formatAsOf(args.asOf) ?? args.asOf;
     const label = queueLabel(queue);
@@ -989,7 +947,7 @@ export const notifyQueueReached = internalAction({
 
     if (remaining && sent > 0) {
       await ctx.scheduler.runAfter(
-        NOTIFY_RESUME_DELAY_MS,
+        SWEEP_RESUME_DELAY_MS,
         internal.queueAlerts.notifyQueueReached,
         args,
       );

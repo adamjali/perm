@@ -60,13 +60,15 @@ import { v } from "convex/values";
 import {
   internalAction,
   internalMutation,
+  mutation,
+  query,
   type MutationCtx,
+  type QueryCtx,
 } from "./_generated/server";
 import { internal } from "./_generated/api";
-import type { Id } from "./_generated/dataModel";
 import { FROM_EMAIL, getResend, sendOrQueue } from "./lib/email";
 import { SITE_URL, actionUrl } from "./lib/links";
-import { getUserByEmail } from "./lib/auth";
+import { getCurrentUserIdOrNull, getUserByEmail } from "./lib/auth";
 import {
   makeUnsubscribeToken,
   verifyUnsubscribeToken,
@@ -101,6 +103,7 @@ import { stageNewsFor } from "./lib/newsConsent";
 import { createLogger } from "./lib/logging";
 import { connectionThrottleReply } from "./lib/throttleReply";
 import { admitConfirmation, queueConfirmation, replayArgs } from "./confirmationQueue";
+import { MS_PER_HOUR, MS_PER_MINUTE } from "./lib/time";
 
 const log = createLogger("EmailPrefs");
 
@@ -110,8 +113,8 @@ const log = createLogger("EmailPrefs");
  * Resend 100/day arithmetic in convex/caseAlerts.ts - every list-mail budget
  * is enumerated there and the total leaves 25/day for auth mail.
  */
-const PREFS_IP_LIMIT = { limit: 30, windowMs: 60 * 60 * 1000 };
-const PREFS_COOLDOWN_MS = 10 * 60 * 1000;
+const PREFS_IP_LIMIT = { limit: 30, windowMs: MS_PER_HOUR };
+const PREFS_COOLDOWN_MS = 10 * MS_PER_MINUTE;
 
 const NEUTRAL_REPLY =
   "If we send anything to that address, a preferences link is on its way.";
@@ -377,7 +380,7 @@ const stateValidator = v.object({
   weeklyDigest: v.union(v.boolean(), v.null()),
 });
 
-async function stateForEmail(ctx: MutationCtx, email: string) {
+async function stateForEmail(ctx: QueryCtx, email: string) {
   const queueRows = await ctx.db
     .query("dolQueueAlerts")
     .withIndex("by_email", (q) => q.eq("email", email))
@@ -525,24 +528,95 @@ export const stateByToken = internalMutation({
   },
 });
 
+const disableKind = v.union(
+  v.literal("queue"),
+  v.literal("case"),
+  v.literal("bulletin"),
+  v.literal("employer"),
+  v.literal("news"),
+  v.literal("newsletter"),
+  v.literal("digest"),
+  /** Every alert kind at once (the daily bundle's one-click); not news or digests. */
+  v.literal("alerts"),
+);
+
+type DisableKind = typeof disableKind.type;
+
 /**
- * Turn ONE thing off. Off only - see the module docstring for why this
- * surface never turns anything on.
+ * Turn ONE thing off for an address. Off only - see the module docstring for
+ * why no surface here ever turns anything on.
+ *
+ * The id names the row and the ADDRESS wins: a row that doesn't belong to
+ * `email` is never touched, so a guessed or leaked id can't cancel someone
+ * else's alert. Shared by the emailed link (address from the token) and
+ * Settings (address from the signed-in account).
  */
+async function disableForEmail(
+  ctx: MutationCtx,
+  email: string,
+  kind: DisableKind,
+  id: string | undefined,
+): Promise<void> {
+  const now = Date.now();
+
+  if (kind === "news" || kind === "newsletter") {
+    const row = await ctx.db
+      .query(kind === "news" ? "newsSubscribers" : "newsletterSubscribers")
+      .withIndex("by_email", (q) => q.eq("email", email))
+      .first();
+    if (row && row.unsubscribedAt === undefined) {
+      await ctx.db.patch(row._id, { unsubscribedAt: now });
+    }
+    return;
+  }
+  if (kind === "digest") {
+    await ctx.runMutation(internal.notifications.unsubscribeWeeklyByEmail, { email });
+    return;
+  }
+  if (kind === "alerts") {
+    await turnOffAlerts(ctx, email, now);
+    return;
+  }
+  if (!id) return;
+
+  // Each alert table clears its own staged change, so a replayed confirm
+  // link can't bring the row back.
+  if (kind === "queue") {
+    const wanted = ctx.db.normalizeId("dolQueueAlerts", id);
+    const row = wanted ? await ctx.db.get(wanted) : null;
+    if (row && row.email === email && row.unsubscribedAt === undefined) {
+      await ctx.db.patch(row._id, { unsubscribedAt: now, pendingFilingMonth: undefined });
+      await dropQueued(ctx, email, `queue:${row._id}`);
+    }
+  } else if (kind === "case") {
+    const wanted = ctx.db.normalizeId("caseStatusAlerts", id);
+    const row = wanted ? await ctx.db.get(wanted) : null;
+    if (row && row.email === email && row.unsubscribedAt === undefined) {
+      await ctx.db.patch(row._id, { unsubscribedAt: now, pendingCaseNumber: undefined });
+      await dropQueued(ctx, email, `case:${row._id}`);
+    }
+  } else if (kind === "bulletin") {
+    const wanted = ctx.db.normalizeId("bulletinAlerts", id);
+    const row = wanted ? await ctx.db.get(wanted) : null;
+    if (row && row.email === email && row.unsubscribedAt === undefined) {
+      await ctx.db.patch(row._id, { unsubscribedAt: now, pendingSeries: undefined });
+      await dropQueued(ctx, email, `bulletin:${row._id}`);
+    }
+  } else {
+    const wanted = ctx.db.normalizeId("employerAlerts", id);
+    const row = wanted ? await ctx.db.get(wanted) : null;
+    if (row && row.email === email && row.unsubscribedAt === undefined) {
+      await ctx.db.patch(row._id, { unsubscribedAt: now, pendingSlug: undefined, pendingName: undefined });
+      await dropQueued(ctx, email, `employer:${row._id}`);
+    }
+  }
+}
+
+/** Turn ONE thing off, for the address a prefs token proves. */
 export const disableByToken = internalMutation({
   args: {
     token: v.string(),
-    kind: v.union(
-      v.literal("queue"),
-      v.literal("case"),
-      v.literal("bulletin"),
-      v.literal("employer"),
-      v.literal("news"),
-      v.literal("newsletter"),
-      v.literal("digest"),
-      /** Every alert kind at once (the daily bundle's one-click); not news or digests. */
-      v.literal("alerts"),
-    ),
+    kind: disableKind,
     /** Row id for the row-backed kinds; ignored for news/newsletter/digest. */
     id: v.optional(v.string()),
   },
@@ -550,81 +624,45 @@ export const disableByToken = internalMutation({
   handler: async (ctx, args) => {
     const email = await verifyUnsubscribeToken(args.token, unsubscribeSecret(), "prefs");
     if (!email) return null;
-    const now = Date.now();
+    await disableForEmail(ctx, email, args.kind, args.id);
+    return await stateForEmail(ctx, email);
+  },
+});
 
-    if (args.kind === "news") {
-      const row = await ctx.db
-        .query("newsSubscribers")
-        .withIndex("by_email", (q) => q.eq("email", email))
-        .first();
-      if (row && row.unsubscribedAt === undefined) {
-        await ctx.db.patch(row._id, { unsubscribedAt: now });
-      }
-    } else if (args.kind === "newsletter") {
-      const row = await ctx.db
-        .query("newsletterSubscribers")
-        .withIndex("by_email", (q) => q.eq("email", email))
-        .first();
-      if (row && row.unsubscribedAt === undefined) {
-        await ctx.db.patch(row._id, { unsubscribedAt: now });
-      }
-    } else if (args.kind === "digest") {
-      await ctx.runMutation(internal.notifications.unsubscribeWeeklyByEmail, {
-        email,
-      });
-    } else if (args.kind === "alerts") {
-      await turnOffAlerts(ctx, email, now);
-    } else if (args.kind === "employer" && args.id) {
-      const wanted = ctx.db.normalizeId("employerAlerts", args.id);
-      const row = wanted ? await ctx.db.get(wanted) : null;
-      if (row && row.email === email && row.unsubscribedAt === undefined) {
-        await ctx.db.patch(row._id, { unsubscribedAt: now, pendingSlug: undefined, pendingName: undefined });
-        await dropQueued(ctx, email, `employer:${row._id}`);
-      }
-    } else if (args.id) {
-      // The id names the row, the TOKEN names the address, and the address
-      // wins: a row that does not belong to this email is never touched, so
-      // a guessed or leaked id cannot cancel someone else's alert.
-      const wanted = ctx.db.normalizeId(
-        args.kind === "queue"
-          ? "dolQueueAlerts"
-          : args.kind === "case"
-            ? "caseStatusAlerts"
-            : "bulletinAlerts",
-        args.id,
-      );
-      if (wanted) {
-        if (args.kind === "queue") {
-          const row = await ctx.db.get(wanted as Id<"dolQueueAlerts">);
-          if (row && row.email === email && row.unsubscribedAt === undefined) {
-            await ctx.db.patch(row._id, {
-              unsubscribedAt: now,
-              pendingFilingMonth: undefined,
-            });
-            await dropQueued(ctx, email, `queue:${row._id}`);
-          }
-        } else if (args.kind === "case") {
-          const row = await ctx.db.get(wanted as Id<"caseStatusAlerts">);
-          if (row && row.email === email && row.unsubscribedAt === undefined) {
-            await ctx.db.patch(row._id, {
-              unsubscribedAt: now,
-              pendingCaseNumber: undefined,
-            });
-            await dropQueued(ctx, email, `case:${row._id}`);
-          }
-        } else {
-          const row = await ctx.db.get(wanted as Id<"bulletinAlerts">);
-          if (row && row.email === email && row.unsubscribedAt === undefined) {
-            await ctx.db.patch(row._id, {
-              unsubscribedAt: now,
-              pendingSeries: undefined,
-            });
-            await dropQueued(ctx, email, `bulletin:${row._id}`);
-          }
-        }
-      }
-    }
+// ============================================================================
+// The same list for a signed-in account
+//
+// Settings shows everything sent to the account's own address, alerts and the
+// weekly digest included, so a signed-in person never needs the emailed link.
+// The address comes from the account, never from the caller.
+// ============================================================================
 
+async function accountEmail(ctx: QueryCtx): Promise<string | null> {
+  const userId = await getCurrentUserIdOrNull(ctx);
+  if (!userId) return null;
+  const user = await ctx.db.get(userId);
+  if (!user || user.deletedAt || !user.email) return null;
+  return user.email.toLowerCase().trim();
+}
+
+/** Everything sent to the signed-in account's address. Null when signed out. */
+export const mine = query({
+  args: {},
+  returns: v.union(stateValidator, v.null()),
+  handler: async (ctx) => {
+    const email = await accountEmail(ctx);
+    return email ? await stateForEmail(ctx, email) : null;
+  },
+});
+
+/** Turn one thing off for the signed-in account's address. */
+export const turnOffMine = mutation({
+  args: { kind: disableKind, id: v.optional(v.string()) },
+  returns: v.union(stateValidator, v.null()),
+  handler: async (ctx, args) => {
+    const email = await accountEmail(ctx);
+    if (!email) return null;
+    await disableForEmail(ctx, email, args.kind, args.id);
     return await stateForEmail(ctx, email);
   },
 });

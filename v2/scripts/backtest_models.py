@@ -33,7 +33,7 @@ import statistics
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, query_rows  # noqa: E402
 
 MIN_COHORT = 500
 
@@ -53,27 +53,20 @@ day = dt.date.fromisoformat
 
 
 def load(db: Turso):
-    r = db.execute("""SELECT substr(received_date,1,7), substr(decision_date,1,10), count(*)
+    bym = collections.defaultdict(list)
+    for month, day, n in query_rows(db, """SELECT substr(received_date,1,7), substr(decision_date,1,10), count(*)
                         FROM perm_cases
                        WHERE received_date IS NOT NULL AND decision_date IS NOT NULL
                          AND received_date <> '' AND decision_date <> ''
-                       GROUP BY 1,2""")["response"]["result"]["rows"]
-    bym = collections.defaultdict(list)
-    for x in r:
-        v = [None if c["type"] == "null" else c["value"] for c in x]
-        bym[v[0]].append((v[1], int(v[2])))
-    # PINNED TO ONE SOURCE. `daily_decisions` is keyed (date, source) and the
-    # sources are not interchangeable: `dol-disclosure` is dated by DOL's own
-    # decision date, `sweep-observed` by when our sweep saw the change. An
-    # unfiltered `sum(total) GROUP BY date` adds whichever ones overlap - and
-    # it already did: the retired `rival-b` series covered 88 of these dates
-    # and injected 42,056 phantom decisions into this backtest's pace curve
-    # (measured 2026-09-03, before those rows were deleted). This model is
-    # backtested against DOL's own dating, so that is the series it reads.
-    d = db.execute("SELECT date, sum(total) FROM daily_decisions "
-                   "WHERE source = 'dol-disclosure' "
-                   "GROUP BY date")["response"]["result"]["rows"]
-    daily = {x[0]["value"]: int(x[1]["value"]) for x in d}
+                       GROUP BY 1,2"""):
+        bym[month].append((day, int(n)))
+    # Pinned to one source. `daily_decisions` is keyed (date, source), and the
+    # sources aren't interchangeable: `dol-disclosure` is dated by DOL's own
+    # decision date, `sweep-observed` by when the sweep saw the change, so an
+    # unfiltered sum by date double-counts wherever they overlap. This model is
+    # backtested against DOL's own dating, so that's the series it reads.
+    daily = {d: int(n) for d, n in query_rows(
+        db, "SELECT date, sum(total) FROM daily_decisions WHERE source = 'dol-disclosure' GROUP BY date")}
     return {m: sorted(v) for m, v in bym.items()}, daily
 
 
@@ -152,9 +145,9 @@ def main() -> int:
 
             preds: dict[str, float | None] = {}
             # --- the field: pending / pace, in each of its shipped windows ---
-            for lbl, w, nz in (("the rival tracker 7d cal", 7, False),
-                               ("the rival dashboard 21d", 21, True),
-                               ("permqueue 28d", 28, True),
+            for lbl, w, nz in (("7d calendar", 7, False),
+                               ("21d working", 21, True),
+                               ("28d working", 28, True),
                                ("56d working", 56, True)):
                 p = pace(obs, w, nz)
                 preds[lbl] = ((obs - filed).days + pending / p) if p else None
@@ -178,7 +171,7 @@ def main() -> int:
     print(f"{'model':30s} {'obs@':>5s} {'n':>3s} {'median':>7s} {'mean':>6s} {'p90':>6s} {'<=14d':>6s}")
     print("-" * 72)
     order = ["ours: shape-corrected", "ours: raw cohort median", "56d working",
-             "permqueue 28d", "the rival dashboard 21d", "the rival tracker 7d cal",
+             "28d working", "21d working", "7d calendar",
              "control: last cohort's median"]
     for frac in OBSERVE_AT:
         for lbl in order:
@@ -206,7 +199,7 @@ def main() -> int:
     # It is the honest number, and it weights recent cohorts naturally
     # because they are the ones with the most history behind them.
     print("=" * 72)
-    print("WALK-FORWARD (shape fitted only on PRIOR cohorts) — production-realistic")
+    print("WALK-FORWARD (shape fitted only on PRIOR cohorts), as production would run it")
     print("=" * 72)
     wf = collections.defaultdict(list)
     per_cohort = []
@@ -249,8 +242,8 @@ def main() -> int:
     print(f"\n{'cohort':9s} {'trained on':>11s} {'ACTUAL':>7s} {'ours':>7s} {'err':>6s} "
           f"{'field':>7s} {'err':>6s}")
     for m, ntr, truth, ours, raw, theirs in per_cohort:
-        te = f"{theirs-truth:+.0f}d" if theirs else "   —"
-        tv = f"{theirs:.0f}d" if theirs else "  —"
+        te = f"{theirs-truth:+.0f}d" if theirs else "   -"
+        tv = f"{theirs:.0f}d" if theirs else "  -"
         print(f"{m:9s} {ntr:>9} mo {truth:>6}d {ours:>6.0f}d {ours-truth:>+5.0f}d {tv:>7s} {te:>6s}")
     print()
     for lbl in ("ours: shape-corrected", "ours: raw", "field: pending/pace"):

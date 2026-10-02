@@ -1,5 +1,7 @@
 import "server-only";
 
+import { MS_PER_DAY, MS_PER_HOUR } from "@/lib/time";
+
 import { exec, one } from "./client";
 import {
   fetchCaseStatus,
@@ -11,8 +13,7 @@ import {
 /**
  * Stored USCIS case statuses: what the site has been told, and when.
  *
- * STORE, BECAUSE THE OWNER SAID SO. Adam decided (2026-09-22) that USCIS
- * responses are kept, which is what lets a second reader of the same receipt
+ * USCIS responses are stored, which lets a second reader of the same receipt
  * be answered from our copy rather than from USCIS's quota, and what lets the
  * page say "status seen <date>" honestly.
  *
@@ -37,10 +38,10 @@ import {
  * creates its own tables the same way; nothing here needs a migration.
  */
 
-export const FRESH_MS = 6 * 60 * 60 * 1000;
+export const FRESH_MS = 6 * MS_PER_HOUR;
 
 /** Rows nobody has looked up for this long are pruned. The privacy policy states it. */
-export const RETENTION_MS = 365 * 24 * 60 * 60 * 1000;
+export const RETENTION_MS = 365 * MS_PER_DAY;
 
 export const TABLE_DDL = `CREATE TABLE IF NOT EXISTS uscis_case_status (
   receipt        TEXT PRIMARY KEY,

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getClientIp } from "@/lib/net/getClientIp";
+import { MS_PER_MINUTE } from "@/lib/time";
 
 import { RECEIPT_SHAPE_MESSAGE, normaliseReceipt } from "./receipt";
 import type { UscisLookupResult } from "@/lib/turso/uscisCaseStatus";
@@ -33,7 +34,7 @@ import type { UscisLookupResult } from "@/lib/turso/uscisCaseStatus";
  */
 
 export const MAX_INPUT_LENGTH = 20;
-/** 60 a minute since Sep 29 2026 (was 20); the global daily budget below is the guarantee. */
+/** 60 a minute; the global daily budget below is the guarantee. */
 export const PER_IP_PER_MINUTE = 60;
 
 export interface HandlerDeps {
@@ -47,7 +48,7 @@ interface Bucket {
   windowStart: number;
 }
 
-const WINDOW_MS = 60_000;
+const WINDOW_MS = MS_PER_MINUTE;
 const buckets = new Map<string, Bucket>();
 
 /** Test hook. */

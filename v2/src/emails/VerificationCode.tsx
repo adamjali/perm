@@ -13,6 +13,7 @@
 
 import { Text, Section, Link } from "@react-email/components";
 import { EmailLayout } from "./components";
+import { SITE_URL } from "../../convex/lib/links";
 
 export interface VerificationCodeProps {
   /** The OTP verification code */
@@ -27,7 +28,7 @@ export interface VerificationCodeProps {
  */
 export function VerificationCode({
   code,
-  baseUrl = "https://permtracker.app",
+  baseUrl = SITE_URL,
 }: VerificationCodeProps) {
   return (
     <EmailLayout
@@ -171,7 +172,5 @@ const styles = {
 /** Preview props for React Email dev server. */
 VerificationCode.PreviewProps = {
   code: "481605",
-  baseUrl: "https://permtracker.app",
+  baseUrl: SITE_URL,
 } satisfies VerificationCodeProps;
-
-export default VerificationCode;

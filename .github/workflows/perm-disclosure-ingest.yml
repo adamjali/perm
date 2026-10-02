@@ -1,58 +1,35 @@
 name: Federal data ingest
 
-# Downloads the quarterly federal datasets this app cites, reduces them to
-# aggregates, and stores those in Convex.
+# Downloads DOL's quarterly PERM disclosure files (www.dol.gov, ~156 MB each,
+# over 1 GB of XML uncompressed), reduces them to a payload, loads the case
+# corpus into the database and rebuilds everything derived from it. It runs on
+# a GitHub runner because the files are far too large for a Convex action, and
+# www.dol.gov serves GitHub's runners.
 #
-# Two sources, both quarterly, both reachable to scripts:
-#   DOL   PERM disclosure files (www.dol.gov) - 156 MB, 1.21 GB uncompressed
-#   USCIS I-140 counts (www.uscis.gov)        - a few hundred KB. Reachable
-#         from residential IPs; 403s from GitHub's datacenter range (measured
-#         2026-08-24), so the step is non-fatal here and the manual-run path
-#         below covers it from a home connection.
-#   DOS   visa bulletin, via the Internet Archive - monthly, ~20 KB
+# It also refreshes the visa bulletin series from the Internet Archive, which
+# the corpus load merges in below whatever the daily direct read already holds.
 #
-# USCIS's PROCESSING TIMES are deliberately absent: they live on
-# egov.uscis.gov behind a bot challenge and are maintained as a small dated
-# table in the app instead.
-#
-# The visa bulletin comes from the Internet Archive rather than
-# travel.state.gov, which refuses automated clients. Reading a public archive
-# of a public page is a different thing from defeating a bot protection. The
-# trade is freshness: the archive lags by a month or two, so the page built on
-# it is framed as a history and labels every figure with its bulletin month.
-#
-# This runs here rather than in a Convex action because it cannot run there:
-# one quarterly file is ~156 MB compressed and **1.21 GB of XML uncompressed**,
-# well past what an action can download, hold or parse. A GitHub runner has the
-# memory and the time; Convex receives ~5 KB of counts and percentiles.
-#
-# Quarterly, a few days after each federal quarter ends, because that is when
-# DOL republishes. The job is idempotent: the mutation hashes its payload and
-# stores nothing when DOL has not changed the files, so an extra run is free.
+# Idempotent: the case load writes only the rows that changed, so an extra run
+# costs a download and little else.
 #
 # Manual run:
 #   python3 v2/scripts/ingest_perm_disclosure.py --out /tmp/perm.json
-#   (the reduced payload is loaded into Turso; there is no Convex mirror)
 
 on:
   schedule:
-    # 06:00 UTC on the 8th of Jan/Apr/Jul/Oct, a few days after each federal
-    # quarter ends, which is when DOL and USCIS republish.
+    # The 8th of Jan/Apr/Jul/Oct, a few days after each federal quarter ends,
+    # when DOL republishes; and the 20th of every month, to catch a quarter
+    # DOL publishes late.
     - cron: "0 6 8 1,4,7,10 *"
-    # The visa bulletin is monthly, and the archive needs time to capture it.
     - cron: "0 7 20 * *"
   workflow_dispatch:
     inputs:
       since_fy:
         description: "Earliest fiscal year to union (e.g. 2024). Takes whole years, so the FY2024 old-form/new-form pair is never split."
         required: false
-        # 2024, NOT 2025, because that is what the live corpus actually spans:
-        # perm_cases holds decisions from 2023-10-01 (FY2024) and the freshness
-        # row describes it as "FY2024-FY2026". A narrower union does not just
-        # miss rows, it makes the TABLE and the DOCS describe different
-        # universes - build_state_profiles.py refused to publish for exactly
-        # that reason, comparing 343,649 state-attributed decided cases against
-        # a disclosure_stats baseline of 248,158 and failing the run.
+        # Must match what the live corpus spans (decisions from FY2024): a
+        # narrower union makes the case table and the published docs describe
+        # different populations, which build_state_profiles.py refuses.
         default: "2024"
 
 permissions:
@@ -65,19 +42,9 @@ concurrency:
 jobs:
   ingest:
     runs-on: ubuntu-24.04
-    # The download plus two streaming parses of ~1.8 GB of XML runs well under
-    # this, but a DOL throttle triggers backoff and the default 6h is far too
+    # A DOL throttle triggers backoff, and the default six hours is far too
     # generous for a job that should either work or fail visibly.
     timeout-minutes: 45
-
-    # JOB-LEVEL, because three separate steps need it and only one of them
-    # looked like it did. Each of ingest_perm_disclosure.py,
-    # ingest_visa_bulletin.py and ingest_uscis_i140.py ends main() by stamping
-    # its own row in `data_freshness`, so each opens Turso. Without these the
-    # DOL step parsed 259,489 cases, wrote every payload, and THEN died on the
-    # stamp - the work all done, the job red, and the error naming a
-    # `.env.local` nobody had asked for. lib_turso.env() now reads the real
-    # environment first, so these are all any step needs.
     env:
       TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
       TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
@@ -88,39 +55,31 @@ jobs:
         with:
           python-version: "3.12"
 
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
-        with:
-          node-version: "22"
-
       - name: Download and reduce DOL disclosure files
         working-directory: v2
-        # The dispatch input goes through env and is checked against a digit
-        # pattern before it reaches a shell. Interpolating `${{ ... }}` straight
-        # into `run:` splices the value into the command itself, so a crafted
-        # input would execute rather than be read as an argument.
+        # The input reaches the shell through env and is checked against a
+        # digit pattern first: interpolating `${{ ... }}` into `run:` would
+        # splice a crafted value into the command itself.
         env:
-          # The scheduled run has no inputs, so THIS fallback is what the
-          # quarterly cron actually uses. It has to match the input default
-          # above, or the automated run and a hand-dispatched one build
-          # different corpora.
+          # The scheduled run has no inputs, so this fallback must match the
+          # input's default or a scheduled run and a dispatch build different
+          # corpora.
           SINCE_FY: ${{ github.event.inputs.since_fy || '2024' }}
         run: |
           case "$SINCE_FY" in
             ''|*[!0-9]*) echo "FATAL: since_fy must be a 4-digit year" >&2; exit 1 ;;
           esac
-          # --since-fy, not --files. DOL replaced the ETA-9089 mid-FY2024 and
-          # published BOTH an old-form and a new-form file for that year, so a
-          # count can take one of the pair and undercount FY2024 while looking
-          # entirely plausible. Selecting by year cannot split a year.
+          # By year, not by file: DOL published both an old-form and a new-form
+          # file for FY2024, and a file count could take only one of the pair.
           python3 scripts/ingest_perm_disclosure.py \
             --since-fy "$SINCE_FY" \
             --out "${RUNNER_TEMP}/perm-payload.json" \
             --cases-out "${RUNNER_TEMP}/perm-cases.ndjson.gz" \
             --wages-out "${RUNNER_TEMP}/perm-wages.json"
 
-      # Fails the job rather than storing a truncated payload. The script
+      # Fails the job rather than loading a truncated payload. The script
       # already refuses to write an empty one; this catches a partial write.
-      - name: Check the payload before sending it
+      - name: Check the payload before loading it
         run: |
           python3 - "${RUNNER_TEMP}/perm-payload.json" <<'PY'
           import json, sys
@@ -134,154 +93,60 @@ jobs:
               sys.exit("FATAL: payload is too small to be a real quarter of DOL data")
           PY
 
-      - name: Download and reduce USCIS I-140 counts
-        working-directory: v2
-        # Non-fatal: www.uscis.gov serves residential IPs and 403s GitHub's
-        # datacenter range. An optional source must never sink the DOL store,
-        # which is the load-bearing one. The store step checks per-payload.
-        continue-on-error: true
-        run: |
-          python3 scripts/ingest_uscis_i140.py --out "${RUNNER_TEMP}/uscis-payload.json"
-
       - name: Download the visa bulletin series
         working-directory: v2
-        # Non-fatal: the archive is a free public service and a slow day for it
-        # must not fail the DOL and USCIS ingests, which are the load-bearing
-        # ones. The mutation refuses a short series anyway.
+        # Non-fatal: the archive is a free public service, and a slow day for it
+        # must not fail the DOL load. The loader refuses a short series anyway.
         continue-on-error: true
         run: |
           python3 scripts/ingest_visa_bulletin.py \
             --out "${RUNNER_TEMP}/visa-bulletin.json" --months 18
 
-      # The payloads always survive the run: if the store step cannot run
-      # (secret missing) or fails, `gh run download` retrieves them and
-      # `npx convex run ...:storeStats` finishes the job from any machine
-      # with Convex CLI auth.
+      # Kept for a week so a failed load can be finished from the artifact.
       - name: Upload payload artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: federal-payloads
-          # The case stream is .ndjson.gz, and a *.json glob would drop the
-          # single largest thing this job produces precisely when the store
-          # step failed, which is when the artifact matters.
+          # The case stream is .ndjson.gz; a *.json glob alone would drop the
+          # largest thing this job produces.
           path: |
             ${{ runner.temp }}/*.json
             ${{ runner.temp }}/*.ndjson.gz
           retention-days: 7
           if-no-files-found: error
 
-      # Two steps used to run here: "Store every entity in its own table" and
-      # "Store case-level rows", writing ~455,000 documents into Convex tables
-      # (permEntities, permCases, permWageStats) that NOTHING reads. Every
-      # page that shows entities, cases or wages reads Turso (below), and no
-      # `api.permCases`/`api.permEntities`/`api.permWageStats` call exists in
-      # the app. Those writes are what pushed the Convex deployment past its
-      # plan on 2026-08-25. Removed 2026-09-06; the payload artifact above
-      # still carries the data.
-      #
-      # `permDisclosure:storeStats` WENT THE SAME WAY ON 2026-09-20, and with
-      # it the "Split the payload" step, which existed only to build the
-      # `perm-aggregate.json` that step passed in. The 2026-09-06 audit named
-      # `permDisclosureStats` in that same finding and this was one of the two
-      # steps that survived the sweep. The comment here used to read "DOL is
-      # required - the job exists for this payload", which was false: the job
-      # exists for the Turso load below. `permDisclosure:getLatest` was the
-      # table's only reader and had zero call sites anywhere, and the figures
-      # the site actually serves come from Turso's `disclosure_stats`
-      # (src/lib/turso/publicData.ts).
-      #
-      # `perm-payload.json` is deliberately untouched - it IS load-bearing,
-      # read by turso_migrate.py and turso_migrate_public.py.
-      #
-      # `uscisI140:storeStats` in the next step is
-      # kept because /tools/i140-calculator and /tools/green-card-timeline
-      # read `api.uscisI140.getLatest`.
-      - name: Store aggregates in Convex
-        working-directory: v2
-        env:
-          CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
-        run: |
-          if [ -z "$CONVEX_DEPLOY_KEY" ]; then
-            echo "WARNING: CONVEX_DEPLOY_KEY secret is not set on this repo." >&2
-            echo "The payloads are uploaded as the federal-payloads artifact;" >&2
-            echo "store them manually with npx convex run ...:storeStats." >&2
-            exit 1
-          fi
-          if [ -s "${RUNNER_TEMP}/uscis-payload.json" ]; then
-            npx --yes convex run uscisI140:storeStats \
-              "$(cat "${RUNNER_TEMP}/uscis-payload.json")" --prod
-          else
-            echo "USCIS payload absent; skipping (see the step above)"
-          fi
-          # THE VISA BULLETIN IS NOT MIRRORED INTO CONVEX (removed 2026-09-20).
-          # Nothing ever read the `visaBulletins` table: /visa-bulletin and its
-          # family page read Turso, which ingest_visa_bulletin.py writes
-          # directly on both of its routes, and the same payload is loaded into
-          # Turso by turso_migrate_public.py below. The 2026-09-06 audit named
-          # this table in H7 alongside permCases/permEntities/permWageStats and
-          # its step was the one that got missed. It then broke: the script has
-          # emitted the family charts since 2026-09-08 and the mutation's
-          # validator had not been told, so the first scheduled run afterwards
-          # failed the WHOLE mutation and took this job red - for a write no
-          # reader was waiting on. The payload file is still produced; it is
-          # turso_migrate_public.py's input, not Convex's.
-
-      # THE PUBLIC SITE READS TURSO, NOT CONVEX, and this load was in no
-      # workflow at all - only the Convex writes above were automated, and the
-      # public case browser, employer/attorney/wage/state pages and the
-      # alphabet all read Turso's `perm_cases`. So after each quarterly release
-      # the whole public data surface would have frozen on the old quarter,
-      # silently, while freshness stamped green. These steps load the SAME
-      # payload artifact (`${RUNNER_TEMP}`, produced by the ingest above -
-      # independent of CONVEX_DEPLOY_KEY) into Turso and rebuild everything
-      # derived from it, in dependency order: the derived builders read
-      # `perm_cases` back out of Turso, so the two migrate steps must land
-      # first.
-      - name: Load the public corpus into Turso
+      # The public site reads the database, so after each quarterly release
+      # this is what moves it. The derived builders read perm_cases back out of
+      # the database, so the two loads land first.
+      - name: Load the public corpus
         working-directory: v2
         run: |
-          # The payload guard is a SHELL test, not an `if:` expression.
-          # It used to be `if: hashFiles(format('{0}/perm-cases.ndjson.gz',
-          # runner.temp)) != ''`, and hashFiles() only ever matches paths
-          # inside GITHUB_WORKSPACE - RUNNER_TEMP is outside it, so the
-          # expression returned an empty string on every run and this step
-          # SKIPPED every time while the job reported success. Two dispatches
-          # went green without it ever executing.
-          #
-          # And it now FAILS on a missing payload rather than skipping. A skip
-          # is what let this hide: the whole point of the step is that the
-          # public site freezes on the old quarter without it, so "quietly did
-          # nothing" is the one outcome that must not look like success.
+          # A shell test rather than an `if:` expression: hashFiles() only sees
+          # paths inside the workspace, and RUNNER_TEMP is outside it. A missing
+          # payload fails rather than skips, because a quiet skip leaves the
+          # public site frozen on the old quarter.
           if [ ! -f "${RUNNER_TEMP}/perm-cases.ndjson.gz" ]; then
             echo "::error::payload missing at ${RUNNER_TEMP}/perm-cases.ndjson.gz; the DOL step should have written it."
             exit 1
           fi
           if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
-            echo "::error::TURSO secrets absent; the public site would freeze on the old quarter."
+            echo "::error::database secrets absent; the public site would freeze on the old quarter."
             exit 1
           fi
-          # 1. The ~374k case rows (perm_cases), from the artifact.
-          #    --incremental is REQUIRED here. Without it the script drops the
-          #    table and reloads all 373,939 rows, which is ~4.76M row-writes
-          #    (table + 10 indexes) against a 10M/month plan, and leaves the
-          #    public case search reading an empty table while it reloads. A
-          #    quarterly file is a superset of the last, so the fingerprint
-          #    diff writes only the few thousand rows that actually moved. It
-          #    falls back to a full load by itself when the table is empty.
+          # 1. The case rows. --incremental writes only the rows whose
+          #    fingerprint changed; it falls back to a full load by itself when
+          #    the table is empty.
           python3 scripts/turso_migrate.py "${RUNNER_TEMP}" --incremental
           # 2. Everything else the public pages read: entities, wage cells and
           #    stats, the disclosure-stats document.
           python3 scripts/turso_migrate_public.py "${RUNNER_TEMP}"
-          # The loader re-slugs perm_entities with its own slugifier; the
-          # alias table remembers slugs from another one. Reconcile or the
-          # two drift: 62 aliases pointed live pages at 404s on Sep 6 2026.
+          # The loader slugs entities its own way; the alias table remembers
+          # slugs from earlier runs. Reconcile so no alias points at a 404.
           python3 scripts/reconcile_entity_aliases.py
-          # 3. Derived from the freshly-loaded perm_cases (each reads it back
-          #    out of Turso, so they run only after the two loads above).
+          # 3. Derived from the freshly loaded perm_cases.
           python3 scripts/build_entity_detail.py
-          # FY2024 onward of each employer's year-by-year record, from the
-          # rows just loaded (FY2008 to FY2023 were loaded once by
-          # perm-history-ingest.yml and never change).
+          # FY2024 onward of each employer's year-by-year record (FY2008 to
+          # FY2023 were loaded once by perm-history-ingest.yml).
           python3 scripts/ingest_perm_history.py --current
           # The city, industry and country pages read both case tables.
           python3 scripts/build_groups.py
@@ -289,25 +154,12 @@ jobs:
           python3 scripts/build_state_profiles.py
           python3 scripts/build_wage_bands.py
           # Every PERM salary-explorer selection of 5,000+ filings, precomputed
-          # (wageViews.ts): 8.5M rows read per live page rebuild before this.
+          # (src/lib/turso/wageViews.ts).
           python3 scripts/build_wage_views.py --program perm
 
-      # USCIS I-140 trends: same host that 403s a datacenter runner for the
-      # I-140 counts above, so this is non-fatal here and the home-connection
-      # manual path is the real refresh - it is wired so it self-heals if USCIS
-      # ever serves the runner, and so it is not silently in no workflow.
-      - name: Refresh I-140 trends (best effort)
-        if: ${{ always() }}
-        working-directory: v2
-        run: |
-          python3 scripts/ingest_i140_trends.py || \
-            echo "i140-trends fetch failed (USCIS likely 403'd the runner); run from a home connection."
-
-      # THE AGGREGATE PAGES BUILT FROM THIS CORPUS SIT ON A WEEK-LONG WINDOW,
-      # because the quarterly file behind them changes four times a year and a
-      # daily window meant ~364 expiries to express four real changes. That is
-      # only correct if a load expires them, which is this step. `success()`
-      # rather than `always()`: a failed load must never claim fresh pages.
+      # The pages built from this corpus sit on a week-long window, which is
+      # only right if a load expires them. `success()` so a failed load never
+      # claims fresh pages.
       - name: Expire the pages built from the quarterly corpus
         if: success()
         env:
@@ -319,8 +171,3 @@ jobs:
           curl -fsS -X POST https://permtracker.app/api/revalidate-disclosure \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" \
             || echo "revalidation call failed"
-
-      - name: Remove credentials
-        if: ${{ always() }}
-        working-directory: v2
-        run: rm -f .env.local

@@ -3,6 +3,7 @@ import { v, ConvexError } from "convex/values";
 import type { Id } from "./_generated/dataModel";
 import { getCurrentUserId, verifyOwnership } from "./lib/auth";
 import { recordError } from "./lib/errorRecording";
+import { newEntryId } from "./lib/ids";
 import {
   ALLOWED_DOCUMENT_EXTENSIONS,
   ALLOWED_DOCUMENT_CONTENT_TYPES,
@@ -117,7 +118,7 @@ export const saveDocument = mutation({
     }
 
     const docEntry = {
-      id: `doc-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      id: newEntryId("doc"),
       name: args.fileName.slice(0, MAX_DOCUMENT_NAME_LENGTH),
       url,
       storageId: args.storageId,

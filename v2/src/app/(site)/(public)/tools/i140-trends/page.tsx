@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { I140Trends } from "@/components/tools/I140Trends";
 import { DataProvenance } from "@/components/data/DataProvenance";
@@ -93,12 +92,7 @@ export default async function I140TrendsPage() {
       <JsonLdScript schema={faqSchema} />
 
       <header>
-        <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          <Link href="/tools" className="underline underline-offset-2 hover:text-primary">
-            Tools
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           I-140 trends by category
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/70">
@@ -117,17 +111,13 @@ export default async function I140TrendsPage() {
             category
           </h2>{" "}
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
-            Both sit inside EB-2, and USCIS reports them separately. Over the
-            quarters here,{" "}
+            Both are EB-2, reported separately. Over these quarters,{" "}
             <b className="font-bold text-foreground">
-              E21 was denied {e21.denialRate!.toFixed(2)}% of the time and a
-              national interest waiver {niw.denialRate!.toFixed(2)}%
+              E21 was denied {e21.denialRate!.toFixed(2)}% of the time and a national interest waiver{" "}
+              {niw.denialRate!.toFixed(2)}%
             </b>
-            , a difference of about {ratio.toFixed(0)} times. E21 is an
-            employer-sponsored petition, which is what a PERM leads to; a
-            waiver is a self-petition that asks USCIS to set the job offer
-            aside. Trackers that label E21 &ldquo;National Interest
-            Waiver&rdquo; put the smaller, safer number under the riskier name.
+            , about {ratio.toFixed(0)} times apart. E21 is employer-sponsored, which is where a PERM leads; a
+            waiver is a self-petition.
           </p>
         </section>
       ) : null}

@@ -530,6 +530,16 @@ describe("the index names, against the DDL that creates them", () => {
   });
 });
 
+describe("readFlagPublished, a program with no file", () => {
+  it("answers empty for H-2A and H-2B under every lead, and asks nothing", async () => {
+    for (const lead of [employer, { kind: "state", value: "CA" }, { kind: "firm", value: "fragomen" }] as const) {
+      const out = await readFlagPublished("seasonal", lead, {}, 100);
+      expect(out.rows).toEqual([]);
+    }
+    expect(rows).not.toHaveBeenCalled();
+  });
+});
+
 describe("readFlagPublished, employer lead", () => {
   it("names its index, scopes the visa class and orders by the received date", async () => {
     await readFlagPublished("pwd", employer, {}, 100);
@@ -661,6 +671,11 @@ describe("programForCaseNumber", () => {
     ["P-100-26232-000009", "pwd"],
     ["I-200-26232-000001", "lca"],
     ["I-203-26232-000001", "lca"],
+    // H-2A, H-2B and the H-2B wage request: P-400 is NOT the PERM-queue
+    // wage request, which is P-100.
+    ["H-300-26272-266803", "seasonal"],
+    ["H-400-26050-650195", "seasonal"],
+    ["P-400-26272-268643", "seasonal"],
   ])("%s is %s", (n, program) => {
     expect(programForCaseNumber(n)).toBe(program);
   });
@@ -684,6 +699,13 @@ describe("lookupUnifiedCase", () => {
     expect(sqls.some((s) => s.includes("FROM pwd_cases"))).toBe(true);
     expect(sqls.some((s) => s.includes("FROM pwd_case_status"))).toBe(true);
     expect(sqls.some((s) => s.includes("perm_cases"))).toBe(false);
+  });
+
+  it("reads only the live H-2A and H-2B table for an H- number: no file is loaded", async () => {
+    await lookupUnifiedCase("H-300-26272-266803");
+    const sqls = one.mock.calls.map((c) => String(c[0]));
+    expect(sqls).toHaveLength(1);
+    expect(sqls[0]).toContain("FROM seasonal_case_status WHERE case_number = ?");
   });
 
   it("degrades one half at a time rather than failing the lookup", async () => {

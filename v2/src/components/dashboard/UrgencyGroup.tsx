@@ -2,7 +2,7 @@
 
 import { CheckCircleIcon } from "@phosphor-icons/react";
 import { useState } from "react";
-import type { DeadlineItem as DeadlineItemType, UrgencyGroup as UrgencyType } from "../../../convex/lib/dashboardTypes";
+import type { DeadlineItem as DeadlineItemType, UrgencyGroup as UrgencyType } from "@convex/lib/dashboardTypes";
 import DeadlineItemCard from "./DeadlineItem";
 
 interface UrgencyGroupProps {

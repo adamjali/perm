@@ -115,11 +115,6 @@ export function widestStep(l: Ladder): RungStep | null {
   return best;
 }
 
-/** `$139,027`. Whole dollars: a wage published to the cent is not a fact. */
-export function money(n: number): string {
-  return `$${Math.round(n).toLocaleString("en-US")}`;
-}
-
 /** `$139k`, for an axis where the full figure will not fit. */
 export function moneyShort(n: number): string {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}m`;

@@ -5,6 +5,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { statusMeaning } from "@/lib/caseStatusVocabulary";
 import type { LiveCaseRow } from "@/lib/turso/cases";
 import type { LiveEmployerRecord } from "@/lib/turso/liveEmployers";
+import { formatInt } from "@/lib/format";
 
 /**
  * An employer's page when DOL has never published a thing about them.
@@ -14,10 +15,10 @@ import type { LiveEmployerRecord } from "@/lib/turso/liveEmployers";
  * If we hold information about something, a person should be able to find it
  * everywhere they would reasonably look. A case is findable by number, and
  * that lookup names its employer - so the employer has to be findable by
- * name, and a search result that 404s on click is worse than no result. On
- * 2026-08-30 this covered 21,495 employers - 23% of the 93,007 we hold, and
- * 57% of the 37,813 the live feed names - every one of them invisible to
- * anyone who did not already know a case number.
+ * name, and a search result that 404s on click is worse than no result. Most
+ * of the employers the live feed names have no published record, and without
+ * this page every one of them would be invisible to anyone who did not
+ * already know a case number.
  *
  * ## What it must never do
  *
@@ -44,10 +45,6 @@ import type { LiveEmployerRecord } from "@/lib/turso/liveEmployers";
  * table - does not list them.
  */
 
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 function longDate(iso: string | null): string | null {
   if (!iso) return null;
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
@@ -68,6 +65,7 @@ export function UnpublishedEmployer({
   asOf,
   follow,
   wait,
+  seasonal,
 }: {
   record: LiveEmployerRecord;
   /** The newest cases, already capped by the caller. */
@@ -78,6 +76,8 @@ export function UnpublishedEmployer({
   follow?: ReactNode;
   /** The wait section, rendered after the follow card. */
   wait?: ReactNode;
+  /** The sponsor's H-2A and H-2B filings, rendered after the case list (nothing when it has none). */
+  seasonal?: ReactNode;
 }) {
   const { name, cases: total, pending, firstFiling, lastFiling, stages, otherNames } =
     record;
@@ -91,20 +91,11 @@ export function UnpublishedEmployer({
       <div className="pt-10 sm:pt-12" />
 
       <header className="max-w-3xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
-          <Link
-            href="/perm-employers"
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            All sponsors
-          </Link>{" "}
-          · Live record only
-        </p>{" "}
-        <h1 translate="no" className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 translate="no" className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           {name}
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          We hold {fmt(total)} PERM {total === 1 ? "case" : "cases"} for this
+          We hold {formatInt(total)} PERM {total === 1 ? "case" : "cases"} for this
           sponsor{first ? `, filed from ${first}` : ""}
           {last && last !== first ? ` to ${last}` : ""}. Name as DOL prints it
           on the application.
@@ -117,27 +108,19 @@ export function UnpublishedEmployer({
           of the page's honesty budget, so it is the first thing after the H1. */}
       <section className="mt-8 border-2 border-data-warn bg-data-warn/8 p-5 sm:p-6">
         <h2 className="font-heading text-lg font-black sm:text-xl">
-          Nothing about this sponsor has been published by DOL yet
+          DOL hasn&apos;t published any of this sponsor&apos;s cases yet
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-          DOL releases its PERM disclosure files quarterly, and a case only
-          appears in one once it has been decided. None of this sponsor&apos;s
-          cases have made it into a published file, so there is no approval
-          rate for them, no median time to a decision, no median offered wage,
-          and no rank against other sponsors. Those figures are not small or
-          uncertain here. They do not exist.
-        </p>{" "}
-        <p className="mt-3 max-w-3xl text-base leading-relaxed text-foreground/80">
-          What is below is the record itself: the cases we hold, and the status
-          DOL reports on each one. It is the same source the{" "}
+          A case reaches DOL&apos;s quarterly files only once it&apos;s decided, so this sponsor has no
+          approval rate, decision time, wage or rank yet. Below are its cases, with DOL&apos;s status on each.
+          For one case&apos;s status today,{" "}
           <Link
             href="/perm-case-status"
             className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
           >
-            case-number lookup
-          </Link>{" "}
-          reads, and that lookup is always current where this page is a
-          snapshot.
+            look up its number
+          </Link>
+          .
         </p>
       </section>
 
@@ -148,13 +131,13 @@ export function UnpublishedEmployer({
           {[
             {
               k: "Cases we hold",
-              v: fmt(total),
+              v: formatInt(total),
               sub: "from DOL's live case record",
             },
             {
               k: "Waiting on a decision",
-              v: fmt(pending),
-              sub: decided > 0 ? `${fmt(decided)} already decided` : "all of them",
+              v: formatInt(pending),
+              sub: decided > 0 ? `${formatInt(decided)} already decided` : "all of them",
             },
             {
               k: "Newest filing",
@@ -163,13 +146,13 @@ export function UnpublishedEmployer({
             },
           ].map((d) => (
             <div key={d.k} className="bg-card p-5">
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+              <p className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
                 {d.k}
               </p>{" "}
               <p className="mt-1.5 font-heading text-2xl font-black tabular-nums">
                 {d.v}
               </p>{" "}
-              {d.sub ? <p className="mt-1 text-xs text-foreground/70">{d.sub}</p> : null}
+              {d.sub ? <p className="mt-1 text-sm text-foreground/70">{d.sub}</p> : null}
             </div>
           ))}
         </div>
@@ -196,11 +179,11 @@ export function UnpublishedEmployer({
                 <Fragment key={`${s.status}-${String(s.isFinal)}`}>{" "}
                 <div>
                   <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5">
-                    <dt className="font-mono text-xs font-bold uppercase tracking-[0.1em]">
+                    <dt className="font-mono text-sm font-bold uppercase tracking-[0.1em]">
                       {s.status}
                     </dt>{" "}
                     <dd className="font-mono text-sm font-bold tabular-nums">
-                      {fmt(s.n)}
+                      {formatInt(s.n)}
                       <span className="ml-2 font-normal text-muted-foreground">
                         {share >= 0.5 ? `${share.toFixed(0)}%` : "<1%"}
                       </span>
@@ -224,8 +207,8 @@ export function UnpublishedEmployer({
       <section className="mt-10 border-2 border-border bg-card p-6 shadow-hard sm:p-8">
         <h2 className="font-heading text-xl font-black sm:text-2xl">
           {listed === total
-            ? `All ${fmt(total)} ${total === 1 ? "case" : "cases"}`
-            : `The newest ${fmt(listed)} of ${fmt(total)} cases`}
+            ? `All ${formatInt(total)} ${total === 1 ? "case" : "cases"}`
+            : `The newest ${formatInt(listed)} of ${formatInt(total)} cases`}
         </h2>{" "}
         <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/70">
           DOL&apos;s live record carries the case number, the job title and the
@@ -258,7 +241,7 @@ export function UnpublishedEmployer({
             this pair reached the DOM as "...ANALYST REVIEWDOL live case
             record..." with the source check green. Caught by the RENDERED
             audit, which is why that one is the authoritative gate. */}
-        <p className="mt-5 border-t-2 border-border pt-3 font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
+        <p className="mt-5 border-t-2 border-border pt-3 font-mono text-sm font-bold uppercase tracking-wider text-foreground/60">
           {asOf
             ? `DOL live case record, as of ${longDate(asOf) ?? asOf}`
             : "DOL live case record"}
@@ -284,6 +267,8 @@ export function UnpublishedEmployer({
           </ul>
         </section>
       ) : null}
+
+      {seasonal}{" "}
 
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">

@@ -11,6 +11,7 @@ import {
   isIsoDate,
   type DecidedNarrow,
 } from "@/lib/turso/decidedDays";
+import { MS_PER_DAY } from "@/lib/time";
 
 /**
  * What DOL DECIDED in a date range, from the quarterly disclosure files.
@@ -150,7 +151,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         // a settled range can be cached hard. A range touching the last 30
         // days is kept short because a new file can extend it.
         "Cache-Control":
-          to < new Date(Date.now() - 30 * 86_400_000).toISOString().slice(0, 10)
+          to < new Date(Date.now() - 30 * MS_PER_DAY).toISOString().slice(0, 10)
             ? "public, s-maxage=86400, stale-while-revalidate=604800"
             : "public, s-maxage=3600, stale-while-revalidate=86400",
       },

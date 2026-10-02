@@ -32,7 +32,7 @@ import fitz  # PyMuPDF
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib_turso import Turso  # noqa: E402
+from lib_turso import Turso, rows_of  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "public" / "images" / "policy"
@@ -53,11 +53,7 @@ def documents(db: Turso) -> list[tuple[str, str]]:
         "WHERE type != 'OFLC announcement' AND pdf_url IS NOT NULL AND correction_of IS NULL "
         "ORDER BY publication_date DESC"
     )
-    out = []
-    for r in res["response"]["result"]["rows"]:
-        vals = [None if c["type"] == "null" else c["value"] for c in r]
-        out.append((vals[0], vals[1]))
-    return out
+    return [(r[0], r[1]) for r in rows_of(res)]
 
 
 def fetch(url: str, retries: int = 3) -> bytes:
@@ -80,7 +76,7 @@ def render(pdf: bytes) -> Image.Image:
     doc = fitz.open(stream=pdf, filetype="pdf")
     pix = doc[0].get_pixmap(dpi=DPI)
     # Grayscale: the Register prints black on white, and a colour encode of
-    # that is paying for noise. Measured 2026-09-16: 225 KB RGB at 110 dpi.
+    # that is paying for noise (225 KB RGB at 110 dpi).
     return Image.open(io.BytesIO(pix.tobytes("png"))).convert("L")
 
 
@@ -121,7 +117,7 @@ def main() -> int:
             im = render(fetch(u))
             path = OUT / f"{n}.webp"
             # Sixteen grays, lossless: 86 KB against 177 KB for lossy q82 on the
-            # same page (measured 2026-09-16), and the type stays sharp. A lossy
+            # same page, and the type stays sharp. A lossy
             # encode spends its bytes on the edges of letters.
             im.quantize(colors=GRAYS).save(path, "WEBP", lossless=True, quality=100, method=6)
             log(f"  ok   {n}  {im.width}x{im.height}  {path.stat().st_size // 1024} KB")

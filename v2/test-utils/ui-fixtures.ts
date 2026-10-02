@@ -1,4 +1,4 @@
-import type { DashboardSummary } from "../convex/lib/dashboardTypes";
+import type { DashboardSummary } from "@convex/lib/dashboardTypes";
 
 export interface MockUser {
   id: string;

@@ -22,6 +22,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import ingest_uscis_quarterly as q  # noqa: E402
+from lib_turso import typed_cell  # noqa: E402
 
 FIXTURES = pathlib.Path(__file__).resolve().parent / "fixtures" / "uscis"
 FAILURES: list[str] = []
@@ -264,6 +265,12 @@ class FakeDb:
         cur = self.conn.execute(sql, args or [])
         r = cur.fetchone()
         return None if r is None else r[0]
+
+    def pipeline(self, reqs: list[dict], **_kw) -> dict:
+        for r in reqs:
+            if r.get("type") == "execute":
+                self.execute(r["stmt"]["sql"], [typed_cell(a) for a in r["stmt"].get("args", [])])
+        return {"results": []}
 
 
 def parse_fixture(name: str) -> q.Parsed:

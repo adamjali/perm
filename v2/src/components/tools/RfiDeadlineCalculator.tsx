@@ -4,8 +4,9 @@ import { useId, useMemo, useState } from "react";
 import { WarningIcon } from "@phosphor-icons/react";
 
 import { DateInput } from "@/components/forms/DateInput";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { calculateRFIDueDate, RFI_DUE_DAYS } from "@/lib/perm";
+import { daysBetween } from "@/lib/time";
 
 /**
  * The RFI and audit response deadline, from the date on DOL's letter.
@@ -25,7 +26,6 @@ const localToday = () => {
 const long = (iso: string) =>
   new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 const WEEKDAY = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString("en-US", { weekday: "long" });
-const daysBetween = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86_400_000);
 
 export function RfiDeadlineCalculator() {
   const letterId = useId();
@@ -51,7 +51,7 @@ export function RfiDeadlineCalculator() {
         <div>
           <Label htmlFor={letterId}>Date on DOL&apos;s letter</Label>{" "}
           <DateInput id={letterId} value={letter} onChange={(e) => setLetter(e.target.value)} className="mt-1.5" />{" "}
-          <p className="mt-1 text-xs text-muted-foreground">The date printed on the RFI or audit letter, not the day it was opened.</p>
+          <p className="mt-1 text-sm text-muted-foreground">The date printed on the RFI or audit letter, not the day it was opened.</p>
         </div>
       </div>{" "}
 
@@ -81,7 +81,7 @@ export function RfiDeadlineCalculator() {
               </dd>
             </div>
           </dl>{" "}
-          <ul className="mt-4 space-y-1 text-xs text-muted-foreground">
+          <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
             <li>20 CFR 656.20(b): the employer must respond within 30 days of the date of the audit letter.</li>{" "}
             <li>20 CFR 656.20: an application whose employer does not respond is denied, and the employer may be placed in supervised recruitment for up to two years.</li>
           </ul>

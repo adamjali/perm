@@ -2,9 +2,10 @@
 
 import { FilterableStatTable, type Facet, type StatColumn } from "@/components/tools/FilterableStatTable";
 import { SERVICE_CENTER_STATE, quartersOfWork, type OfficeRow } from "@/lib/uscisQuarterlyShape";
+import { formatInt } from "@/lib/format";
 
 /** USCIS withholds a small cell; it prints as "withheld", as on the rest of the page, never as 0. */
-const count = (n: number | null) => (n === null ? "withheld" : n.toLocaleString("en-US"));
+const count = (n: number | null) => (n === null ? "withheld" : formatInt(n));
 
 export const OFFICE_COLUMNS: StatColumn<OfficeRow>[] = [
   { key: "office", label: "Office", sortValue: (r) => r.office, render: (r) => <span className="font-semibold">{r.office}</span> },

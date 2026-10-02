@@ -52,9 +52,10 @@ import {
 } from "./components";
 import type { FigureRow } from "./components/FigureTable";
 import { MONO_STACK, SANS_STACK } from "./components/QueueStamp";
+import { SITE_URL } from "../../convex/lib/links";
 
 /** The public case page. The email's primary destination. */
-export const CASE_PAGE_URL = "https://permtracker.app/perm-case-status";
+export const CASE_PAGE_URL = `${SITE_URL}/perm-case-status`;
 
 export interface CaseStatusChangedProps {
   /** DOL case number, normalised, e.g. "P-100-26125-868956". */
@@ -279,11 +280,11 @@ export function CaseStatusChanged({
               ]
             : []),
           {
-            href: "https://permtracker.app/perm-processing-times",
+            href: `${SITE_URL}/perm-processing-times`,
             text: "The filing month DOL's queue has reached",
           },
           {
-            href: "https://permtracker.app/methodology",
+            href: `${SITE_URL}/methodology`,
             text: "Where every figure in this email comes from",
           },
         ]}
@@ -393,7 +394,7 @@ CaseStatusChanged.PreviewProps = {
   employerRows: null,
   employerProvenance: null,
   employerUrl: null,
-  caseUrl: "https://permtracker.app/perm-case-status?case=P-100-26125-868956",
+  caseUrl: `${SITE_URL}/perm-case-status?case=P-100-26125-868956`,
   unsubscribeUrl:
     "https://example.convex.site/case-alert/unsubscribe?token=abc",
 } satisfies CaseStatusChangedProps;

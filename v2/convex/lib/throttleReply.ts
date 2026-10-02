@@ -1,17 +1,19 @@
 /**
  * What a public form says when one of its limits refuses a request.
  *
- * All five subscribe forms used to share one line, "We can't send
- * confirmation emails right now. Please try again in a little while." - for
- * two different limits with two different waits (Sep 29 2026 audit). Neither
- * limit depends on the address, so naming which one fired and how long it
+ * One shared line ("We can't send confirmation emails right now. Please try
+ * again in a little while.") for two different limits with two different
+ * waits tells the reader nothing. Neither limit depends on the address, so
+ * naming which one fired and how long it
  * lasts leaks nothing: the per-connection limit is about the caller's own
  * network, and the site-wide one is the same for everybody.
  */
 
+import { MS_PER_MINUTE } from "./time";
+
 /** "about 40 minutes", "about 3 hours", "a minute". */
 export function waitPhrase(ms: number): string {
-  const min = Math.ceil(Math.max(0, ms) / 60_000);
+  const min = Math.ceil(Math.max(0, ms) / MS_PER_MINUTE);
   if (min <= 1) return "a minute";
   if (min < 90) return `about ${min} minutes`;
   return `about ${Math.round(min / 60)} hours`;

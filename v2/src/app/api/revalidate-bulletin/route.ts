@@ -2,11 +2,10 @@
  * Expire the pages that render the visa bulletin, the day a new one is stored.
  *
  * The ingest reads State's index at 3 AM and the pages sit on a one-day window,
- * so a bulletin published during the day showed the old month until the next
- * morning, the day most people check it and the day the bulletin-alert emails
- * link here (Oct 2026 landed at about 8 AM EDT Sep 29 and the page kept
- * September). The ingest now reports `bulletin_changed` and the workflow POSTs
- * here.
+ * so without this a bulletin published during the day would show the old month
+ * until the next morning, on the day most people check it and the day the
+ * bulletin-alert emails link here. The ingest reports `bulletin_changed` and
+ * the workflow POSTs here.
  *
  * Takes no input, like `revalidate-dol`: a caller either knows the secret and
  * expires this fixed set, or does nothing. `revalidatePath` marks a page stale;

@@ -30,7 +30,7 @@ import {
 import { formatAsOf } from "@/lib/dolFormat";
 import { DateInput } from "@/components/forms/DateInput";
 import { DeadlineWindowDiagram } from "./DeadlineWindowDiagram";
-import { Label } from "@/components/ui";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 export interface PermDeadlineCalculatorProps {
@@ -330,12 +330,10 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
                 filings on it anyway
               </p>{" "}
               <p className="mt-2 text-base leading-relaxed text-foreground/70">
-                Recruitment that began on this date stops supporting a filing
-                on {formatAsOf(result.shutdownRecruitmentEnd)}. DOL stopped
-                processing on 1 October 2025 and took FLAG offline, so for 33
-                days nobody could file at all. On 5 November 2025 it said that
-                where recruitment or a wage determination expired between 1
-                October and 2 November 2025:
+                Recruitment from this date stops supporting a filing on{" "}
+                {formatAsOf(result.shutdownRecruitmentEnd)}. DOL shut down on 1 October 2025 and FLAG was
+                offline for 33 days. On 5 November 2025 it said, for recruitment or a wage determination that
+                expired between 1 October and 2 November 2025:
               </p>{" "}
               {/* A framed excerpt rather than a single lime rule down one
                   side. The methodology page already uses that treatment for
@@ -346,17 +344,14 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
                   carry the rest. */}
               <blockquote className="mt-3 border-2 border-border bg-background p-4 text-base leading-relaxed">
                 &ldquo;{SHUTDOWN_QUOTE}&rdquo;
-                <cite className="mt-2 block font-mono text-xs font-bold uppercase not-italic tracking-wider text-muted-foreground">
+                <cite className="mt-2 block font-mono text-sm font-bold uppercase not-italic tracking-wider text-muted-foreground">
                   Office of Foreign Labor Certification, {formatAsOf(SHUTDOWN_ANNOUNCED)}
                 </cite>
               </blockquote>{" "}
               <p className="mt-3 text-base leading-relaxed text-foreground/70">
-                DOL added that FLAG would show a warning on such a filing and
-                accept it, and that a case denied on those grounds could go
-                back to the Certifying Officer for reconsideration. The dates
-                below are still 20 CFR 656, which is what a case is judged
-                against. That exception covered one 33-day window and applies
-                to nothing filed since.
+                FLAG shows a warning on such a filing and accepts it, and a denial on those grounds can go back
+                to the Certifying Officer. The dates below still follow 20 CFR 656; the exception covers only that
+                33-day window.
               </p>{" "}
               <a
                 href={SHUTDOWN_SOURCE_URL}
@@ -390,7 +385,7 @@ export function PermDeadlineCalculator({ className }: PermDeadlineCalculatorProp
         <div className="divide-y-2 divide-border">
           {result.rows.map((row) => (
             <div key={row.label} className="p-6 sm:p-8">
-              <p className="text-xs font-bold uppercase tracking-wider text-foreground/60">
+              <p className="text-sm font-bold uppercase tracking-wider text-foreground/60">
                 {row.label}
               </p>{" "}
               <p className="mt-2 font-heading text-2xl font-black leading-none sm:text-3xl">

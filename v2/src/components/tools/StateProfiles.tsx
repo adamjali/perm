@@ -2,8 +2,10 @@
 
 import { Fragment, useMemo, useState } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { stateName } from "@/lib/usStateNames";
 import type { StateProfile } from "@/lib/turso/states";
+import { formatInt } from "@/lib/format";
 import { CENSUS_REGION } from "./USStateMap";
 import { DataView } from "./DataView";
 import { FilterableStatTable, type CsvSpec, type StatColumn } from "./FilterableStatTable";
@@ -59,10 +61,6 @@ function pct(n: number): string {
   return `${n.toFixed(1)}%`;
 }
 
-function int(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 function toBars(states: StateProfile[], axis: Axis): Bar[] {
   return states
     .map((s): Bar | null => {
@@ -87,6 +85,7 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
   // and a 21% look like a full bar and a third of one, and would redraw every
   // bar when the leader changed.
   return (
+    <ChartTips label={`Each state's leading ${unit.toLowerCase()}, as a share of its filings`}>
     <ul className="space-y-4">
       {/* Array items render with nothing between them, so each one carries its
           own leading space. A whitespace-only text node is not laid out as a
@@ -94,13 +93,13 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
       {bars.map((b) => (
         <Fragment key={b.state}>
           {" "}
-          <li>
+          <li data-tip={`${stateName(b.state)}\n${b.label}\n${pct(b.share)} of its filings\n${formatInt(b.count)} of ${formatInt(b.total)}`}>
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
             <p className="font-bold">
               {stateName(b.state)}
             </p>{" "}
             <p className="font-mono text-sm tabular-nums text-foreground/70">
-              {int(b.count)} of {int(b.total)}
+              {formatInt(b.count)} of {formatInt(b.total)}
             </p>
           </div>
           <div className="mt-1.5 flex items-center gap-3">
@@ -125,7 +124,7 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
             </p>
           </div>
           <p className="mt-1.5 text-sm leading-snug text-foreground/70">
-            <span className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <span className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
               {unit}
             </span>{" "}
             {b.label}
@@ -134,6 +133,7 @@ function Bars({ bars, unit }: { bars: Bar[]; unit: string }) {
         </Fragment>
       ))}
     </ul>
+    </ChartTips>
   );
 }
 
@@ -146,16 +146,16 @@ function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
         </caption>
         <thead className="bg-foreground text-background">
           <tr>
-            <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
               State
             {" "}</th>
-            <th scope="col" className="p-3 font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 font-mono text-sm font-bold uppercase tracking-wider">
               {unit}
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Cases
             {" "}</th>
-            <th scope="col" className="p-3 text-right font-mono text-xs font-bold uppercase tracking-wider">
+            <th scope="col" className="p-3 text-right font-mono text-sm font-bold uppercase tracking-wider">
               Share{" "}
             </th>
           </tr>
@@ -165,7 +165,7 @@ function BarTable({ bars, unit }: { bars: Bar[]; unit: string }) {
             <tr key={b.state} className="border-t border-border/40">
               <td className="p-3 font-bold">{stateName(b.state)}{" "}</td>
               <td className="p-3">{b.label}{" "}</td>
-              <td className="p-3 text-right tabular-nums">{int(b.count)}{" "}</td>
+              <td className="p-3 text-right tabular-nums">{formatInt(b.count)}{" "}</td>
               <td className="p-3 text-right font-bold tabular-nums">{pct(b.share)}{" "}</td>
             </tr>
           ))}
@@ -195,7 +195,7 @@ export function StateConcentration({
         tableLabel="Every state"
         controls={
           <fieldset className="min-w-0">
-            <legend className="font-mono text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
               Concentrated in
             </legend>{" "}
             {/* Buttons, not hover-select: this is a list of controls, so
@@ -280,7 +280,7 @@ export function StateLeaders({ states, className }: StateProfilesProps) {
       label: "Filings",
       numeric: true,
       sortValue: (r) => r.total,
-      render: (r) => <span className="tabular-nums">{int(r.total)}</span>,
+      render: (r) => <span className="tabular-nums">{formatInt(r.total)}</span>,
     },
     {
       key: "occupation",
@@ -290,7 +290,7 @@ export function StateLeaders({ states, className }: StateProfilesProps) {
         <span>
           {r.occupation}{" "}
           {r.occupationShare !== null ? (
-            <span className="ml-2 font-mono text-xs tabular-nums text-foreground/60">
+            <span className="ml-2 font-mono text-sm tabular-nums text-foreground/60">
               {pct(r.occupationShare)}
             </span>
           ) : null}
@@ -318,7 +318,7 @@ export function StateLeaders({ states, className }: StateProfilesProps) {
             <span className="font-bold">{r.employer}</span>
           )}{" "}
           {r.employerShare !== null ? (
-            <span className="ml-2 font-mono text-xs tabular-nums text-foreground/60">
+            <span className="ml-2 font-mono text-sm tabular-nums text-foreground/60">
               {pct(r.employerShare)}
             </span>
           ) : null}

@@ -16,8 +16,6 @@
  * log.info('Token refreshed successfully', { userId });
  * log.error('Failed to create event', { error, caseId });
  * ```
- *
- * Phase: P2-01 Fix - Structured Logging
  */
 
 // ============================================================================

@@ -7,8 +7,6 @@
  * - NotificationTabs: Tab navigation for filtering notifications
  * - NotificationList: Full list with date grouping and pagination
  * - BulkActions: Bulk action buttons (mark all read, delete read)
- *
- * Phase: 24 (Notifications)
  */
 
 export { default as NotificationBell } from "./NotificationBell";

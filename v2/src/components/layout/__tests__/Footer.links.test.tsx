@@ -34,12 +34,12 @@ describe("Footer", () => {
     renderWithProviders(<Footer variant="extended" audience="public" />);
 
     expect(screen.getByRole("link", { name: /sign in/i })).toHaveAttribute("href", "/login");
-    expect(screen.getByRole("link", { name: /sign up free/i })).toHaveAttribute("href", "/signup");
+    expect(screen.getByRole("link", { name: /^sign up$/i })).toHaveAttribute("href", "/signup");
   });
 
   /**
    * The signed-in app renders this same footer. It used to advertise Sign In
-   * and Sign Up Free on every page of the app, to people already signed in.
+   * and Sign Up on every page of the app, to people already signed in.
    */
   it("carries no auth links at all for the signed-in app", () => {
     const { container } = renderWithProviders(<Footer variant="extended" audience="app" />);

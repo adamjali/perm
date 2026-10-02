@@ -100,7 +100,7 @@ export function FAQSection() {
   };
 
   return (
-    <section id="faq" className="relative py-16 sm:py-24">
+    <section id="faq" className="relative bg-card py-16 sm:py-24">
       {/* Content container */}
       <div className="mx-auto max-w-[800px] px-4 sm:px-8">
         {/* Section header */}
@@ -131,4 +131,3 @@ export function FAQSection() {
   );
 }
 
-export default FAQSection;

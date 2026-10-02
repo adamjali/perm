@@ -1,8 +1,10 @@
 import { query, mutation, internalQuery } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
-import { v, ConvexError } from "convex/values";
-import type { Id } from "./_generated/dataModel";
+import { v, ConvexError, type ObjectType } from "convex/values";
+import type { WithoutSystemFields } from "convex/server";
+import type { Doc, Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
+import schema from "./schema";
 import { getCurrentUserId, getCurrentUserIdOrNull, verifyOwnership } from "./lib/auth";
 import { rateLimiter } from "./rateLimitConfig";
 import { logCreate, logUpdate, logDelete } from "./lib/audit";
@@ -90,37 +92,6 @@ const DEADLINE_RELEVANT_FIELDS = [
   "caseStatus",
   "progressStatus",
 ] as const;
-
-/**
- * Check if the current user has any (non-deleted) cases.
- * Lightweight query used by onboarding skip-logic.
- */
-export const hasAnyCases = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getCurrentUserIdOrNull(ctx);
-    if (userId === null) return false;
-
-    // Check first case — if it's soft-deleted, query for an active one
-    const cursor = await ctx.db
-      .query("cases")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .first();
-
-    if (cursor === null) return false;
-    if (cursor.deletedAt === undefined) return true;
-
-    // First case was soft-deleted — check remaining cases
-    const cases = await ctx.db
-      .query("cases")
-      .withIndex("by_user_and_deleted", (q) =>
-        q.eq("userId", userId).eq("deletedAt", undefined)
-      )
-      .first();
-
-    return cases !== null;
-  },
-});
 
 /**
  * List cases for the current user
@@ -239,206 +210,127 @@ export const get = query({
 });
 
 /**
+ * The fields callers may send to `create` and `update`, taken from the `cases`
+ * table so the arguments can't drift from it. The server sets the owner, the
+ * derived recruitment dates, the closure fields and the timestamps.
+ */
+const caseTable = schema.tables.cases.validator;
+const caseInput = caseTable.omit(
+  "userId",
+  "recruitmentStartDate",
+  "recruitmentEndDate",
+  "filingWindowOpens",
+  "filingWindowCloses",
+  "recruitmentWindowCloses",
+  "closureReason",
+  "closedAt",
+  "createdAt",
+  "updatedAt",
+  "deletedAt",
+);
+
+/** The calendar event slots callers may set; calendar sync writes every slot. */
+const callerCalendarEventIds = caseTable.fields.calendarEventIds.pick(
+  "pwd_expiration",
+  "eta9089_filing_window",
+  "eta9089_expiration",
+  "i140_filing_deadline",
+  "rfi_due",
+  "rfe_due",
+  "recruitment_end",
+);
+
+/**
+ * `create` takes every field as optional except the employer and the position.
+ * The server stamps `markedAsDuplicateAt` from `duplicateOf`.
+ */
+const caseCreateArgs = {
+  ...caseInput.omit("markedAsDuplicateAt").partial().fields,
+  employerName: caseTable.fields.employerName,
+  positionTitle: caseTable.fields.positionTitle,
+  calendarEventIds: callerCalendarEventIds,
+};
+
+/** A text field `update` can clear: `null` removes the stored value. */
+const clearableText = v.optional(v.union(v.string(), v.null()));
+
+/**
+ * `update` takes every field as optional, and an absent field keeps its stored
+ * value. The fields listed here also take `null`, which clears them. Whether a
+ * case is a sample is fixed when it's created.
+ */
+const caseUpdateArgs = {
+  id: v.id("cases"),
+  ...caseInput.omit("isSample").partial().fields,
+  calendarEventIds: callerCalendarEventIds,
+  caseNumber: clearableText,
+  internalCaseNumber: clearableText,
+  employerFein: clearableText,
+  jobTitle: clearableText,
+  socCode: clearableText,
+  socTitle: clearableText,
+  jobOrderState: clearableText,
+  pwdFilingDate: clearableText,
+  pwdDeterminationDate: clearableText,
+  pwdExpirationDate: clearableText,
+  pwdCaseNumber: clearableText,
+  pwdWageLevel: clearableText,
+  jobOrderStartDate: clearableText,
+  jobOrderEndDate: clearableText,
+  sundayAdFirstDate: clearableText,
+  sundayAdSecondDate: clearableText,
+  sundayAdNewspaper: clearableText,
+  additionalRecruitmentStartDate: clearableText,
+  additionalRecruitmentEndDate: clearableText,
+  recruitmentNotes: clearableText,
+  recruitmentSummaryCustom: clearableText,
+  noticeOfFilingStartDate: clearableText,
+  noticeOfFilingEndDate: clearableText,
+  eta9089FilingDate: clearableText,
+  eta9089AuditDate: clearableText,
+  eta9089CertificationDate: clearableText,
+  eta9089ExpirationDate: clearableText,
+  eta9089CaseNumber: clearableText,
+  i140FilingDate: clearableText,
+  i140ReceiptDate: clearableText,
+  i140ReceiptNumber: clearableText,
+  i140ApprovalDate: clearableText,
+  i140DenialDate: clearableText,
+  i140ServiceCenter: clearableText,
+  i140Category: v.optional(v.union(...caseTable.fields.i140Category.members, v.null())),
+  jobDescription: clearableText,
+  jobDescriptionPositionTitle: clearableText,
+};
+
+/**
+ * Compile-time proof that every argument `create` and `update` take is a
+ * stored case field of the stored type (`null` on update means "clear").
+ * The derived fields hold by construction. A field written out above could
+ * name one the table doesn't have, and that would typecheck in the handler and
+ * fail at runtime in `ctx.db.patch`.
+ */
+type StoredCase = WithoutSystemFields<Doc<"cases">>;
+type FieldsFitTable<Args> = {
+  [K in keyof Args]-?: K extends keyof StoredCase
+    ? Exclude<Args[K], null | undefined> extends Exclude<StoredCase[K], undefined>
+      ? true
+      : false
+    : false;
+}[keyof Args];
+type CaseArgsFitTable = false extends
+  | FieldsFitTable<ObjectType<typeof caseCreateArgs>>
+  | FieldsFitTable<Omit<ObjectType<typeof caseUpdateArgs>, "id">>
+  ? never
+  : true;
+const _caseArgsFitTable: CaseArgsFitTable = true;
+void _caseArgsFitTable;
+
+/**
  * Create a new case
  * Sets defaults for all optional fields
  */
 export const create = mutation({
-  args: {
-    // Required fields
-    employerName: v.string(),
-    beneficiaryIdentifier: v.optional(v.string()),
-    positionTitle: v.string(),
-
-    // Optional fields with explicit defaults
-    caseStatus: v.optional(
-      v.union(
-        v.literal("pwd"),
-        v.literal("recruitment"),
-        v.literal("eta9089"),
-        v.literal("i140"),
-        v.literal("closed")
-      )
-    ),
-    progressStatus: v.optional(
-      v.union(
-        v.literal("working"),
-        v.literal("waiting_intake"),
-        v.literal("filed"),
-        v.literal("approved"),
-        v.literal("under_review"),
-        v.literal("rfi_rfe")
-      )
-    ),
-    priorityLevel: v.optional(
-      v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))
-    ),
-    isFavorite: v.optional(v.boolean()),
-    isPinned: v.optional(v.boolean()),
-    isProfessionalOccupation: v.optional(v.boolean()),
-    recruitmentApplicantsCount: v.optional(v.number()),
-    additionalRecruitmentMethods: v.optional(
-      v.array(
-        v.object({
-          method: v.string(),
-          date: v.string(),
-          description: v.optional(v.string()),
-          startDate: v.optional(v.string()),
-          endDate: v.optional(v.string()),
-          subEntries: v.optional(v.array(
-            v.object({
-              date: v.string(),
-              description: v.optional(v.string()),
-            })
-          )),
-        })
-      )
-    ),
-    tags: v.optional(v.array(v.string())),
-    documents: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          name: v.string(),
-          url: v.string(),
-          storageId: v.optional(v.string()),
-          mimeType: v.string(),
-          size: v.number(),
-          uploadedAt: v.number(),
-          category: v.optional(
-            v.union(
-              v.literal("pwd"),
-              v.literal("recruitment"),
-              v.literal("eta9089"),
-              v.literal("i140"),
-              v.literal("general")
-            )
-          ),
-        })
-      )
-    ),
-    calendarSyncEnabled: v.optional(v.boolean()),
-    showOnTimeline: v.optional(v.boolean()),
-
-    // Optional dates (ISO strings)
-    pwdFilingDate: v.optional(v.string()),
-    pwdDeterminationDate: v.optional(v.string()),
-    pwdExpirationDate: v.optional(v.string()),
-    pwdCaseNumber: v.optional(v.string()),
-    pwdWageAmount: v.optional(v.number()),
-    pwdWageLevel: v.optional(v.string()),
-    jobOrderStartDate: v.optional(v.string()),
-    jobOrderEndDate: v.optional(v.string()),
-    sundayAdFirstDate: v.optional(v.string()),
-    sundayAdSecondDate: v.optional(v.string()),
-    sundayAdNewspaper: v.optional(v.string()),
-    additionalRecruitmentStartDate: v.optional(v.string()),
-    additionalRecruitmentEndDate: v.optional(v.string()),
-    recruitmentNotes: v.optional(v.string()),
-    recruitmentSummaryCustom: v.optional(v.string()),
-    noticeOfFilingStartDate: v.optional(v.string()),
-    noticeOfFilingEndDate: v.optional(v.string()),
-    eta9089FilingDate: v.optional(v.string()),
-    eta9089AuditDate: v.optional(v.string()),
-    eta9089CertificationDate: v.optional(v.string()),
-    eta9089ExpirationDate: v.optional(v.string()),
-    eta9089CaseNumber: v.optional(v.string()),
-    // RFI entries array (replaces single-field RFI)
-    rfiEntries: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          title: v.optional(v.string()),
-          description: v.optional(v.string()),
-          notes: v.optional(v.string()),
-          receivedDate: v.string(),
-          responseDueDate: v.string(),
-          responseSubmittedDate: v.optional(v.string()),
-          createdAt: v.number(),
-        })
-      )
-    ),
-    // RFE entries array (replaces single-field RFE)
-    rfeEntries: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          title: v.optional(v.string()),
-          description: v.optional(v.string()),
-          notes: v.optional(v.string()),
-          receivedDate: v.string(),
-          responseDueDate: v.string(),
-          responseSubmittedDate: v.optional(v.string()),
-          createdAt: v.number(),
-        })
-      )
-    ),
-    i140FilingDate: v.optional(v.string()),
-    i140ReceiptDate: v.optional(v.string()),
-    i140ReceiptNumber: v.optional(v.string()),
-    i140ApprovalDate: v.optional(v.string()),
-    i140DenialDate: v.optional(v.string()),
-    i140Category: v.optional(v.union(v.literal("EB-1"), v.literal("EB-2"), v.literal("EB-2-NIW"), v.literal("EB-3"))),
-    i140PremiumProcessing: v.optional(v.boolean()),
-    i140ServiceCenter: v.optional(v.string()),
-
-    // Optional text fields
-    caseNumber: v.optional(v.string()),
-    internalCaseNumber: v.optional(v.string()),
-    employerFein: v.optional(v.string()),
-    jobTitle: v.optional(v.string()),
-    jobDescription: v.optional(v.string()),
-    jobDescriptionPositionTitle: v.optional(v.string()),
-    jobDescriptionTemplateId: v.optional(v.id("jobDescriptionTemplates")),
-    socCode: v.optional(v.string()),
-    socTitle: v.optional(v.string()),
-    jobOrderState: v.optional(v.string()),
-    progressStatusOverride: v.optional(v.boolean()),
-    notes: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          content: v.string(),
-          createdAt: v.number(),
-          status: v.union(
-            v.literal("pending"),
-            v.literal("done"),
-            v.literal("deleted")
-          ),
-          // Extended fields for full journal functionality (optional for backward compatibility)
-          priority: v.optional(
-            v.union(v.literal("high"), v.literal("medium"), v.literal("low"))
-          ),
-          category: v.optional(
-            v.union(
-              v.literal("follow-up"),
-              v.literal("document"),
-              v.literal("client"),
-              v.literal("internal"),
-              v.literal("deadline"),
-              v.literal("other")
-            )
-          ),
-          dueDate: v.optional(v.string()),
-        })
-      )
-    ),
-    calendarEventIds: v.optional(
-      v.object({
-        pwd_expiration: v.optional(v.string()),
-        eta9089_filing_window: v.optional(v.string()),
-        eta9089_expiration: v.optional(v.string()),
-        i140_filing_deadline: v.optional(v.string()),
-        rfi_due: v.optional(v.string()),
-        rfe_due: v.optional(v.string()),
-        recruitment_end: v.optional(v.string()),
-      })
-    ),
-
-    // Duplicate tracking: set when user creates a case knowing it's a duplicate
-    duplicateOf: v.optional(v.id("cases")),
-    // Sample case flag (for onboarding demo data)
-    isSample: v.optional(v.boolean()),
-  },
+  args: caseCreateArgs,
   handler: async (ctx, args) => {
     const userId = await getCurrentUserId(ctx);
 
@@ -599,6 +491,9 @@ export const create = mutation({
       socCode: args.socCode,
       socTitle: args.socTitle,
       jobOrderState: args.jobOrderState,
+      jobDescriptionPositionTitle: args.jobDescriptionPositionTitle,
+      jobDescription: args.jobDescription,
+      jobDescriptionTemplateId: args.jobDescriptionTemplateId,
       progressStatusOverride: args.progressStatusOverride,
       notes: args.notes,
       calendarEventIds: args.calendarEventIds,
@@ -639,7 +534,7 @@ export const create = mutation({
           userId: userId,
           caseId: caseId,
           type: "status_change",
-          title: "New Case Created",
+          title: "New case created",
           message: `Case for ${args.beneficiaryIdentifier || "beneficiary"} at ${args.employerName} has been created.`,
           priority: "normal",
         });
@@ -718,202 +613,7 @@ const METADATA_FIELDS = new Set([
  * Verifies ownership before allowing updates
  */
 export const update = mutation({
-  args: {
-    id: v.id("cases"),
-
-    // All case fields are optional for updates
-    employerName: v.optional(v.string()),
-    beneficiaryIdentifier: v.optional(v.string()),
-    positionTitle: v.optional(v.string()),
-    caseStatus: v.optional(
-      v.union(
-        v.literal("pwd"),
-        v.literal("recruitment"),
-        v.literal("eta9089"),
-        v.literal("i140"),
-        v.literal("closed")
-      )
-    ),
-    progressStatus: v.optional(
-      v.union(
-        v.literal("working"),
-        v.literal("waiting_intake"),
-        v.literal("filed"),
-        v.literal("approved"),
-        v.literal("under_review"),
-        v.literal("rfi_rfe")
-      )
-    ),
-    priorityLevel: v.optional(
-      v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))
-    ),
-    isFavorite: v.optional(v.boolean()),
-    isPinned: v.optional(v.boolean()),
-    isProfessionalOccupation: v.optional(v.boolean()),
-    recruitmentApplicantsCount: v.optional(v.number()),
-    additionalRecruitmentMethods: v.optional(
-      v.array(
-        v.object({
-          method: v.string(),
-          date: v.string(),
-          description: v.optional(v.string()),
-          startDate: v.optional(v.string()),
-          endDate: v.optional(v.string()),
-          subEntries: v.optional(v.array(
-            v.object({
-              date: v.string(),
-              description: v.optional(v.string()),
-            })
-          )),
-        })
-      )
-    ),
-    tags: v.optional(v.array(v.string())),
-    documents: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          name: v.string(),
-          url: v.string(),
-          storageId: v.optional(v.string()),
-          mimeType: v.string(),
-          size: v.number(),
-          uploadedAt: v.number(),
-          category: v.optional(
-            v.union(
-              v.literal("pwd"),
-              v.literal("recruitment"),
-              v.literal("eta9089"),
-              v.literal("i140"),
-              v.literal("general")
-            )
-          ),
-        })
-      )
-    ),
-    calendarSyncEnabled: v.optional(v.boolean()),
-    showOnTimeline: v.optional(v.boolean()),
-    // Clearable string fields: accept null as "clear this field" signal.
-    // When frontend clears a field, it sends null instead of undefined
-    // so the backend can distinguish "not sent" from "explicitly cleared".
-    pwdFilingDate: v.optional(v.union(v.string(), v.null())),
-    pwdDeterminationDate: v.optional(v.union(v.string(), v.null())),
-    pwdExpirationDate: v.optional(v.union(v.string(), v.null())),
-    pwdCaseNumber: v.optional(v.union(v.string(), v.null())),
-    pwdWageAmount: v.optional(v.number()),
-    pwdWageLevel: v.optional(v.union(v.string(), v.null())),
-    jobOrderStartDate: v.optional(v.union(v.string(), v.null())),
-    jobOrderEndDate: v.optional(v.union(v.string(), v.null())),
-    sundayAdFirstDate: v.optional(v.union(v.string(), v.null())),
-    sundayAdSecondDate: v.optional(v.union(v.string(), v.null())),
-    sundayAdNewspaper: v.optional(v.union(v.string(), v.null())),
-    additionalRecruitmentStartDate: v.optional(v.union(v.string(), v.null())),
-    additionalRecruitmentEndDate: v.optional(v.union(v.string(), v.null())),
-    recruitmentNotes: v.optional(v.union(v.string(), v.null())),
-    recruitmentSummaryCustom: v.optional(v.union(v.string(), v.null())),
-    noticeOfFilingStartDate: v.optional(v.union(v.string(), v.null())),
-    noticeOfFilingEndDate: v.optional(v.union(v.string(), v.null())),
-    eta9089FilingDate: v.optional(v.union(v.string(), v.null())),
-    eta9089AuditDate: v.optional(v.union(v.string(), v.null())),
-    eta9089CertificationDate: v.optional(v.union(v.string(), v.null())),
-    eta9089ExpirationDate: v.optional(v.union(v.string(), v.null())),
-    eta9089CaseNumber: v.optional(v.union(v.string(), v.null())),
-    // RFI entries array (replaces single-field RFI)
-    rfiEntries: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          title: v.optional(v.string()),
-          description: v.optional(v.string()),
-          notes: v.optional(v.string()),
-          receivedDate: v.string(),
-          responseDueDate: v.string(),
-          responseSubmittedDate: v.optional(v.string()),
-          createdAt: v.number(),
-        })
-      )
-    ),
-    // RFE entries array (replaces single-field RFE)
-    rfeEntries: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          title: v.optional(v.string()),
-          description: v.optional(v.string()),
-          notes: v.optional(v.string()),
-          receivedDate: v.string(),
-          responseDueDate: v.string(),
-          responseSubmittedDate: v.optional(v.string()),
-          createdAt: v.number(),
-        })
-      )
-    ),
-    i140FilingDate: v.optional(v.union(v.string(), v.null())),
-    i140ReceiptDate: v.optional(v.union(v.string(), v.null())),
-    i140ReceiptNumber: v.optional(v.union(v.string(), v.null())),
-    i140ApprovalDate: v.optional(v.union(v.string(), v.null())),
-    i140DenialDate: v.optional(v.union(v.string(), v.null())),
-    i140Category: v.optional(v.union(v.literal("EB-1"), v.literal("EB-2"), v.literal("EB-2-NIW"), v.literal("EB-3"), v.null())),
-    i140PremiumProcessing: v.optional(v.boolean()),
-    i140ServiceCenter: v.optional(v.union(v.string(), v.null())),
-    caseNumber: v.optional(v.union(v.string(), v.null())),
-    internalCaseNumber: v.optional(v.union(v.string(), v.null())),
-    employerFein: v.optional(v.union(v.string(), v.null())),
-    jobTitle: v.optional(v.union(v.string(), v.null())),
-    socCode: v.optional(v.union(v.string(), v.null())),
-    socTitle: v.optional(v.union(v.string(), v.null())),
-    jobOrderState: v.optional(v.union(v.string(), v.null())),
-    progressStatusOverride: v.optional(v.boolean()),
-    notes: v.optional(
-      v.array(
-        v.object({
-          id: v.string(),
-          content: v.string(),
-          createdAt: v.number(),
-          status: v.union(
-            v.literal("pending"),
-            v.literal("done"),
-            v.literal("deleted")
-          ),
-          // Extended fields for full journal functionality (optional for backward compatibility)
-          priority: v.optional(
-            v.union(v.literal("high"), v.literal("medium"), v.literal("low"))
-          ),
-          category: v.optional(
-            v.union(
-              v.literal("follow-up"),
-              v.literal("document"),
-              v.literal("client"),
-              v.literal("internal"),
-              v.literal("deadline"),
-              v.literal("other")
-            )
-          ),
-          dueDate: v.optional(v.string()),
-        })
-      )
-    ),
-    calendarEventIds: v.optional(
-      v.object({
-        pwd_expiration: v.optional(v.string()),
-        eta9089_filing_window: v.optional(v.string()),
-        eta9089_expiration: v.optional(v.string()),
-        i140_filing_deadline: v.optional(v.string()),
-        rfi_due: v.optional(v.string()),
-        rfe_due: v.optional(v.string()),
-        recruitment_end: v.optional(v.string()),
-      })
-    ),
-
-    // Duplicate tracking
-    duplicateOf: v.optional(v.id("cases")),
-    markedAsDuplicateAt: v.optional(v.number()),
-
-    // Job description fields
-    jobDescription: v.optional(v.union(v.string(), v.null())),
-    jobDescriptionPositionTitle: v.optional(v.union(v.string(), v.null())),
-    jobDescriptionTemplateId: v.optional(v.id("jobDescriptionTemplates")),
-  },
+  args: caseUpdateArgs,
   handler: async (ctx, args) => {
     // Input length validation (PI1 — Processing Integrity)
     validateInputLengths([
@@ -1156,7 +856,7 @@ export const update = mutation({
             userId: oldDoc!.userId,
             caseId: args.id,
             type: "status_change",
-            title: "Case Status Updated",
+            title: "Case status updated",
             message: `Case for ${caseLabel} status changed from ${formatCaseStatus(oldDoc!.caseStatus)} to ${formatCaseStatus(actualNewCaseStatus)}.`,
             priority: "normal",
           });
@@ -1209,7 +909,7 @@ export const update = mutation({
           userId: oldDoc!.userId,
           caseId: args.id,
           type: "system",
-          title: "Job Description Updated",
+          title: "Job description updated",
           message: `Job description for ${caseLabel} has been updated.`,
           priority: "low",
         });
@@ -1249,6 +949,156 @@ export const update = mutation({
     return args.id;
   },
 });
+
+/**
+ * Clears what other records hold about deleted cases: the custom case order,
+ * the timeline selection, dismissed deadlines, a conversation's related case,
+ * chat citations and duplicate links. Each step is best-effort: a failure is
+ * logged and recorded under `report.source`, and the remaining steps still run.
+ */
+async function clearCaseReferences(
+  ctx: MutationCtx,
+  userId: Id<"users">,
+  caseIds: Id<"cases">[],
+  report: { source: string; suffix: string; resourceId?: Id<"cases"> },
+): Promise<void> {
+  const ids = new Set(caseIds);
+  const failed = async (what: string, step: string, err: unknown) => {
+    log.error(`Failed to cleanup ${what}${report.suffix}`, {
+      ...(report.resourceId ? { resourceId: report.resourceId } : {}),
+      error: err instanceof Error ? err.message : String(err),
+    });
+    await recordError(
+      ctx,
+      "mutation",
+      `${report.source}.${step}`,
+      err,
+      report.resourceId ? { userId, resourceId: report.resourceId.toString() } : { userId },
+    );
+  };
+
+  // Remove the cases from userCaseOrder.caseIds
+  try {
+    const userCaseOrder = await ctx.db
+      .query("userCaseOrder")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+
+    if (userCaseOrder) {
+      const kept = userCaseOrder.caseIds.filter((id) => !ids.has(id));
+      if (kept.length !== userCaseOrder.caseIds.length) {
+        await ctx.db.patch(userCaseOrder._id, { caseIds: kept, updatedAt: Date.now() });
+      }
+    }
+  } catch (err) {
+    await failed("userCaseOrder", "cleanupCaseOrder", err);
+  }
+
+  // Remove them from timelinePreferences.selectedCaseIds
+  try {
+    const timelinePrefs = await ctx.db
+      .query("timelinePreferences")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+
+    if (timelinePrefs?.selectedCaseIds) {
+      const kept = timelinePrefs.selectedCaseIds.filter((id) => !ids.has(id));
+      if (kept.length !== timelinePrefs.selectedCaseIds.length) {
+        await ctx.db.patch(timelinePrefs._id, { selectedCaseIds: kept, updatedAt: Date.now() });
+      }
+    }
+  } catch (err) {
+    await failed("timelinePreferences", "cleanupTimeline", err);
+  }
+
+  // Remove their entries from userProfiles.dismissedDeadlines
+  try {
+    const userProfile = await ctx.db
+      .query("userProfiles")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .first();
+
+    if (userProfile) {
+      const kept = userProfile.dismissedDeadlines.filter((d) => !ids.has(d.caseId));
+      if (kept.length !== userProfile.dismissedDeadlines.length) {
+        await ctx.db.patch(userProfile._id, { dismissedDeadlines: kept, updatedAt: Date.now() });
+      }
+    }
+  } catch (err) {
+    await failed("userProfiles.dismissedDeadlines", "cleanupDismissedDeadlines", err);
+  }
+
+  // Clear conversations.metadata.relatedCaseId where it names one of them
+  try {
+    const conversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const conv of conversations) {
+      if (conv.metadata?.relatedCaseId && ids.has(conv.metadata.relatedCaseId)) {
+        await ctx.db.patch(conv._id, {
+          metadata: {
+            ...conv.metadata,
+            relatedCaseId: undefined,
+          },
+          updatedAt: Date.now(),
+        });
+      }
+    }
+  } catch (err) {
+    await failed("conversations.relatedCaseId", "cleanupConversations", err);
+  }
+
+  // Drop citations of them from conversationMessages
+  try {
+    const conversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_user_id", (q) => q.eq("userId", userId))
+      .collect();
+
+    for (const conv of conversations) {
+      const messages = await ctx.db
+        .query("conversationMessages")
+        .withIndex("by_conversation_id", (q) => q.eq("conversationId", conv._id))
+        .collect();
+
+      for (const msg of messages) {
+        if (msg.metadata?.citations?.some((c) => c.caseId && ids.has(c.caseId))) {
+          await ctx.db.patch(msg._id, {
+            metadata: {
+              ...msg.metadata,
+              citations: msg.metadata.citations.filter((c) => !c.caseId || !ids.has(c.caseId)),
+            },
+          });
+        }
+      }
+    }
+  } catch (err) {
+    await failed("conversationMessages citations", "cleanupCitations", err);
+  }
+
+  // Clear duplicateOf on cases that point at one of them
+  try {
+    for (const id of caseIds) {
+      const duplicates = await ctx.db
+        .query("cases")
+        .withIndex("by_user_and_duplicate", (q) =>
+          q.eq("userId", userId).eq("duplicateOf", id)
+        )
+        .collect();
+
+      for (const dup of duplicates) {
+        await ctx.db.patch(dup._id, {
+          duplicateOf: undefined,
+          markedAsDuplicateAt: undefined,
+        });
+      }
+    }
+  } catch (err) {
+    await failed("duplicateOf references", "cleanupDuplicateOf", err);
+  }
+}
 
 /**
  * Hard delete a case with full cascade cleanup
@@ -1303,131 +1153,12 @@ export const remove = mutation({
       await recordError(ctx, "mutation", "cases.deleteCase.calendar", calendarError, { userId, resourceId: args.id.toString() });
     }
 
-    // 3. Remove case ID from userCaseOrder.caseIds array
-    try {
-      const userCaseOrder = await ctx.db
-        .query("userCaseOrder")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId))
-        .first();
-
-      if (userCaseOrder && userCaseOrder.caseIds.includes(args.id)) {
-        await ctx.db.patch(userCaseOrder._id, {
-          caseIds: userCaseOrder.caseIds.filter((id) => id !== args.id),
-          updatedAt: Date.now(),
-        });
-      }
-    } catch (cleanupError) {
-      log.error('Failed to cleanup userCaseOrder', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-      await recordError(ctx, "mutation", "cases.deleteCase.cleanupCaseOrder", cleanupError, { userId, resourceId: args.id.toString() });
-    }
-
-    // 4. Remove case ID from timelinePreferences.selectedCaseIds array
-    try {
-      const timelinePrefs = await ctx.db
-        .query("timelinePreferences")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId))
-        .first();
-
-      if (timelinePrefs && timelinePrefs.selectedCaseIds?.includes(args.id)) {
-        await ctx.db.patch(timelinePrefs._id, {
-          selectedCaseIds: timelinePrefs.selectedCaseIds.filter((id) => id !== args.id),
-          updatedAt: Date.now(),
-        });
-      }
-    } catch (cleanupError) {
-      log.error('Failed to cleanup timelinePreferences', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-      await recordError(ctx, "mutation", "cases.deleteCase.cleanupTimeline", cleanupError, { userId, resourceId: args.id.toString() });
-    }
-
-    // 5. Remove case ID from userProfiles.dismissedDeadlines array entries
-    try {
-      const userProfile = await ctx.db
-        .query("userProfiles")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId))
-        .first();
-
-      if (userProfile && userProfile.dismissedDeadlines.some((d) => d.caseId === args.id)) {
-        await ctx.db.patch(userProfile._id, {
-          dismissedDeadlines: userProfile.dismissedDeadlines.filter((d) => d.caseId !== args.id),
-          updatedAt: Date.now(),
-        });
-      }
-    } catch (cleanupError) {
-      log.error('Failed to cleanup userProfiles.dismissedDeadlines', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-      await recordError(ctx, "mutation", "cases.deleteCase.cleanupDismissedDeadlines", cleanupError, { userId, resourceId: args.id.toString() });
-    }
-
-    // 6. Clear conversations.metadata.relatedCaseId where it matches
-    try {
-      const conversations = await ctx.db
-        .query("conversations")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId))
-        .collect();
-
-      for (const conv of conversations) {
-        if (conv.metadata?.relatedCaseId === args.id) {
-          await ctx.db.patch(conv._id, {
-            metadata: {
-              ...conv.metadata,
-              relatedCaseId: undefined,
-            },
-            updatedAt: Date.now(),
-          });
-        }
-      }
-    } catch (cleanupError) {
-      log.error('Failed to cleanup conversations.relatedCaseId', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-      await recordError(ctx, "mutation", "cases.deleteCase.cleanupConversations", cleanupError, { userId, resourceId: args.id.toString() });
-    }
-
-    // 7. Clear citation references in conversationMessages where caseId matches
-    try {
-      const conversations = await ctx.db
-        .query("conversations")
-        .withIndex("by_user_id", (q) => q.eq("userId", userId))
-        .collect();
-
-      for (const conv of conversations) {
-        const messages = await ctx.db
-          .query("conversationMessages")
-          .withIndex("by_conversation_id", (q) => q.eq("conversationId", conv._id))
-          .collect();
-
-        for (const msg of messages) {
-          if (msg.metadata?.citations?.some((c) => c.caseId === args.id)) {
-            await ctx.db.patch(msg._id, {
-              metadata: {
-                ...msg.metadata,
-                citations: msg.metadata.citations.filter((c) => c.caseId !== args.id),
-              },
-            });
-          }
-        }
-      }
-    } catch (cleanupError) {
-      log.error('Failed to cleanup conversationMessages citations', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-      await recordError(ctx, "mutation", "cases.deleteCase.cleanupCitations", cleanupError, { userId, resourceId: args.id.toString() });
-    }
-
-    // 8. Clear duplicateOf references on cases pointing to this deleted case
-    try {
-      const duplicates = await ctx.db
-        .query("cases")
-        .withIndex("by_user_and_duplicate", (q) =>
-          q.eq("userId", userId).eq("duplicateOf", args.id)
-        )
-        .collect();
-
-      for (const dup of duplicates) {
-        await ctx.db.patch(dup._id, {
-          duplicateOf: undefined,
-          markedAsDuplicateAt: undefined,
-        });
-      }
-    } catch (cleanupError) {
-      log.error('Failed to cleanup duplicateOf references', { resourceId: args.id, error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-      await recordError(ctx, "mutation", "cases.deleteCase.cleanupDuplicateOf", cleanupError, { userId, resourceId: args.id.toString() });
-    }
+    // 3-8. What other records hold about this case
+    await clearCaseReferences(ctx, userId, [args.id], {
+      source: "cases.deleteCase",
+      suffix: "",
+      resourceId: args.id,
+    });
 
     // ===== HARD DELETE THE CASE =====
     await ctx.db.delete(args.id);
@@ -1526,144 +1257,11 @@ export const bulkRemove = mutation({
 
     // ===== BATCH CLEANUP FOR SHARED RESOURCES (once, after all cases deleted) =====
     if (deletedCaseIds.length > 0) {
-      const deletedIdSet = new Set(deletedCaseIds);
-
-      // 3. Remove case IDs from userCaseOrder.caseIds array
-      try {
-        const userCaseOrder = await ctx.db
-          .query("userCaseOrder")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId))
-          .first();
-
-        if (userCaseOrder) {
-          const filteredCaseIds = userCaseOrder.caseIds.filter((id) => !deletedIdSet.has(id));
-          if (filteredCaseIds.length !== userCaseOrder.caseIds.length) {
-            await ctx.db.patch(userCaseOrder._id, {
-              caseIds: filteredCaseIds,
-              updatedAt: Date.now(),
-            });
-          }
-        }
-      } catch (cleanupError) {
-        log.error('Failed to cleanup userCaseOrder in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupCaseOrder", cleanupError, { userId });
-      }
-
-      // 4. Remove case IDs from timelinePreferences.selectedCaseIds array
-      try {
-        const timelinePrefs = await ctx.db
-          .query("timelinePreferences")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId))
-          .first();
-
-        if (timelinePrefs?.selectedCaseIds) {
-          const filteredCaseIds = timelinePrefs.selectedCaseIds.filter((id) => !deletedIdSet.has(id));
-          if (filteredCaseIds.length !== timelinePrefs.selectedCaseIds.length) {
-            await ctx.db.patch(timelinePrefs._id, {
-              selectedCaseIds: filteredCaseIds,
-              updatedAt: Date.now(),
-            });
-          }
-        }
-      } catch (cleanupError) {
-        log.error('Failed to cleanup timelinePreferences in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupTimeline", cleanupError, { userId });
-      }
-
-      // 5. Remove case IDs from userProfiles.dismissedDeadlines array entries
-      try {
-        const userProfile = await ctx.db
-          .query("userProfiles")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId))
-          .first();
-
-        if (userProfile) {
-          const filteredDeadlines = userProfile.dismissedDeadlines.filter((d) => !deletedIdSet.has(d.caseId));
-          if (filteredDeadlines.length !== userProfile.dismissedDeadlines.length) {
-            await ctx.db.patch(userProfile._id, {
-              dismissedDeadlines: filteredDeadlines,
-              updatedAt: Date.now(),
-            });
-          }
-        }
-      } catch (cleanupError) {
-        log.error('Failed to cleanup userProfiles.dismissedDeadlines in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupDismissedDeadlines", cleanupError, { userId });
-      }
-
-      // 6. Clear conversations.metadata.relatedCaseId where it matches
-      try {
-        const conversations = await ctx.db
-          .query("conversations")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId))
-          .collect();
-
-        for (const conv of conversations) {
-          if (conv.metadata?.relatedCaseId && deletedIdSet.has(conv.metadata.relatedCaseId)) {
-            await ctx.db.patch(conv._id, {
-              metadata: {
-                ...conv.metadata,
-                relatedCaseId: undefined,
-              },
-              updatedAt: Date.now(),
-            });
-          }
-        }
-      } catch (cleanupError) {
-        log.error('Failed to cleanup conversations.relatedCaseId in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupConversations", cleanupError, { userId });
-      }
-
-      // 7. Clear citation references in conversationMessages where caseId matches
-      try {
-        const conversations = await ctx.db
-          .query("conversations")
-          .withIndex("by_user_id", (q) => q.eq("userId", userId))
-          .collect();
-
-        for (const conv of conversations) {
-          const messages = await ctx.db
-            .query("conversationMessages")
-            .withIndex("by_conversation_id", (q) => q.eq("conversationId", conv._id))
-            .collect();
-
-          for (const msg of messages) {
-            if (msg.metadata?.citations?.some((c) => c.caseId && deletedIdSet.has(c.caseId))) {
-              await ctx.db.patch(msg._id, {
-                metadata: {
-                  ...msg.metadata,
-                  citations: msg.metadata.citations.filter((c) => !c.caseId || !deletedIdSet.has(c.caseId)),
-                },
-              });
-            }
-          }
-        }
-      } catch (cleanupError) {
-        log.error('Failed to cleanup conversationMessages citations in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupCitations", cleanupError, { userId });
-      }
-
-      // 8. Clear duplicateOf references on cases pointing to any deleted case
-      try {
-        for (const deletedId of deletedCaseIds) {
-          const duplicates = await ctx.db
-            .query("cases")
-            .withIndex("by_user_and_duplicate", (q) =>
-              q.eq("userId", userId).eq("duplicateOf", deletedId)
-            )
-            .collect();
-
-          for (const dup of duplicates) {
-            await ctx.db.patch(dup._id, {
-              duplicateOf: undefined,
-              markedAsDuplicateAt: undefined,
-            });
-          }
-        }
-      } catch (cleanupError) {
-        log.error('Failed to cleanup duplicateOf references in bulk', { error: cleanupError instanceof Error ? cleanupError.message : String(cleanupError) });
-        await recordError(ctx, "mutation", "cases.bulkRemove.cleanupDuplicateOf", cleanupError, { userId });
-      }
+      // 3-8. What other records hold about the deleted cases
+      await clearCaseReferences(ctx, userId, deletedCaseIds, {
+        source: "cases.bulkRemove",
+        suffix: " in bulk",
+      });
     }
 
     return {
@@ -1768,7 +1366,7 @@ export const bulkUpdateStatus = mutation({
               userId: oldDoc.userId,
               caseId: id,
               type: "status_change",
-              title: "Case Status Updated",
+              title: "Case status updated",
               message: `Case for ${oldDoc.beneficiaryIdentifier || "beneficiary"} status changed from ${oldDoc.caseStatus} to ${args.status}.`,
               priority: "normal",
             });
@@ -2259,6 +1857,19 @@ export const checkDuplicates = query({
   },
 });
 
+/** An RFI or RFE entry as an import file carries it. */
+const importedRequestEntry = v.object({
+  id: v.string(),
+  title: v.optional(v.string()),
+  description: v.optional(v.string()),
+  notes: v.optional(v.string()),
+  reason: v.optional(v.string()), // Alias for notes from v1 format
+  receivedDate: v.string(),
+  responseDueDate: v.string(),
+  responseSubmittedDate: v.optional(v.string()),
+  createdAt: v.optional(v.number()),
+});
+
 /**
  * Import multiple cases at once
  * Accepts an array of partial case data (only required fields needed)
@@ -2268,70 +1879,66 @@ export const importCases = mutation({
   args: {
     cases: v.array(
       v.object({
+        // Older export formats: the beneficiary is required, the position
+        // isn't, entries may lack `createdAt`, an RFI or RFE note may arrive
+        // as `reason`, and a note's status is pending or done.
         employerName: v.string(),
         beneficiaryIdentifier: v.string(),
-        positionTitle: v.optional(v.string()),
-        caseStatus: v.optional(
-          v.union(
-            v.literal("pwd"),
-            v.literal("recruitment"),
-            v.literal("eta9089"),
-            v.literal("i140"),
-            v.literal("closed")
+        ...caseInput
+          .pick(
+            "positionTitle",
+            "caseStatus",
+            "progressStatus",
+            "priorityLevel",
+            "isFavorite",
+            "isPinned",
+            "isProfessionalOccupation",
+            "calendarSyncEnabled",
+            "showOnTimeline",
+            "pwdFilingDate",
+            "pwdDeterminationDate",
+            "pwdExpirationDate",
+            "pwdCaseNumber",
+            "pwdWageAmount",
+            "pwdWageLevel",
+            "jobOrderStartDate",
+            "jobOrderEndDate",
+            "sundayAdFirstDate",
+            "sundayAdSecondDate",
+            "sundayAdNewspaper",
+            "additionalRecruitmentStartDate",
+            "additionalRecruitmentEndDate",
+            "eta9089FilingDate",
+            "eta9089CertificationDate",
+            "eta9089ExpirationDate",
+            "eta9089CaseNumber",
+            "i140FilingDate",
+            "i140ReceiptDate",
+            "i140ReceiptNumber",
+            "i140ApprovalDate",
+            "i140DenialDate",
+            "caseNumber",
+            "internalCaseNumber",
+            "employerFein",
+            "jobTitle",
+            "socCode",
+            "socTitle",
+            "jobOrderState",
+            "noticeOfFilingStartDate",
+            "noticeOfFilingEndDate",
+            "recruitmentApplicantsCount",
+            "recruitmentSummaryCustom",
+            "recruitmentNotes",
+            "eta9089AuditDate",
+            "i140Category",
+            "i140PremiumProcessing",
+            "i140ServiceCenter",
+            "progressStatusOverride",
+            "tags",
+            "jobDescriptionPositionTitle",
+            "jobDescription",
           )
-        ),
-        progressStatus: v.optional(
-          v.union(
-            v.literal("working"),
-            v.literal("waiting_intake"),
-            v.literal("filed"),
-            v.literal("approved"),
-            v.literal("under_review"),
-            v.literal("rfi_rfe")
-          )
-        ),
-        priorityLevel: v.optional(
-          v.union(v.literal("low"), v.literal("normal"), v.literal("high"), v.literal("urgent"))
-        ),
-        isFavorite: v.optional(v.boolean()),
-        isPinned: v.optional(v.boolean()),
-        isProfessionalOccupation: v.optional(v.boolean()),
-        calendarSyncEnabled: v.optional(v.boolean()),
-        showOnTimeline: v.optional(v.boolean()),
-        // Date fields
-        pwdFilingDate: v.optional(v.string()),
-        pwdDeterminationDate: v.optional(v.string()),
-        pwdExpirationDate: v.optional(v.string()),
-        pwdCaseNumber: v.optional(v.string()),
-        pwdWageAmount: v.optional(v.number()),
-        pwdWageLevel: v.optional(v.string()),
-        jobOrderStartDate: v.optional(v.string()),
-        jobOrderEndDate: v.optional(v.string()),
-        sundayAdFirstDate: v.optional(v.string()),
-        sundayAdSecondDate: v.optional(v.string()),
-        sundayAdNewspaper: v.optional(v.string()),
-        additionalRecruitmentStartDate: v.optional(v.string()),
-        additionalRecruitmentEndDate: v.optional(v.string()),
-        eta9089FilingDate: v.optional(v.string()),
-        eta9089CertificationDate: v.optional(v.string()),
-        eta9089ExpirationDate: v.optional(v.string()),
-        eta9089CaseNumber: v.optional(v.string()),
-        i140FilingDate: v.optional(v.string()),
-        i140ReceiptDate: v.optional(v.string()),
-        i140ReceiptNumber: v.optional(v.string()),
-        i140ApprovalDate: v.optional(v.string()),
-        i140DenialDate: v.optional(v.string()),
-        // Text fields
-        caseNumber: v.optional(v.string()),
-        internalCaseNumber: v.optional(v.string()),
-        employerFein: v.optional(v.string()),
-        jobTitle: v.optional(v.string()),
-        socCode: v.optional(v.string()),
-        socTitle: v.optional(v.string()),
-        jobOrderState: v.optional(v.string()),
-        // Notice of Filing
-        noticeOfFilingStartDate: v.optional(v.string()),
-        noticeOfFilingEndDate: v.optional(v.string()),
+          .partial().fields,
         // Additional Recruitment Methods (array of objects)
         additionalRecruitmentMethods: v.optional(
           v.array(
@@ -2350,39 +1957,8 @@ export const importCases = mutation({
             })
           )
         ),
-        recruitmentApplicantsCount: v.optional(v.number()),
-        recruitmentSummaryCustom: v.optional(v.string()),
-        // RFI/RFE arrays
-        rfiEntries: v.optional(
-          v.array(
-            v.object({
-              id: v.string(),
-              title: v.optional(v.string()),
-              description: v.optional(v.string()),
-              notes: v.optional(v.string()),
-              reason: v.optional(v.string()), // Alias for notes from v1 format
-              receivedDate: v.string(),
-              responseDueDate: v.string(),
-              responseSubmittedDate: v.optional(v.string()),
-              createdAt: v.optional(v.number()),
-            })
-          )
-        ),
-        rfeEntries: v.optional(
-          v.array(
-            v.object({
-              id: v.string(),
-              title: v.optional(v.string()),
-              description: v.optional(v.string()),
-              notes: v.optional(v.string()),
-              reason: v.optional(v.string()), // Alias for notes from v1 format
-              receivedDate: v.string(),
-              responseDueDate: v.string(),
-              responseSubmittedDate: v.optional(v.string()),
-              createdAt: v.optional(v.number()),
-            })
-          )
-        ),
+        rfiEntries: v.optional(v.array(importedRequestEntry)),
+        rfeEntries: v.optional(v.array(importedRequestEntry)),
         // Notes array
         notes: v.optional(
           v.array(
@@ -2443,6 +2019,15 @@ export const importCases = mutation({
 
     for (let i = 0; i < args.cases.length; i++) {
       const caseData = args.cases[i]!;
+      // The same caps as create, so an imported file can't store more than the form can.
+      validateInputLengths([
+        { value: caseData.employerName, name: "Employer Name", limit: INPUT_LIMITS.SHORT },
+        { value: caseData.positionTitle, name: "Position Title", limit: INPUT_LIMITS.SHORT },
+        { value: caseData.beneficiaryIdentifier, name: "Beneficiary Identifier", limit: INPUT_LIMITS.SHORT },
+        { value: caseData.jobDescription, name: "Job Description", limit: INPUT_LIMITS.LONG },
+        { value: caseData.recruitmentNotes, name: "Recruitment Notes", limit: INPUT_LIMITS.MEDIUM },
+        { value: caseData.recruitmentSummaryCustom, name: "Recruitment Summary", limit: INPUT_LIMITS.MEDIUM },
+      ]);
       // Check for duplicate (same employer + beneficiary)
       const key = `${caseData.employerName.toLowerCase().trim()}|${caseData.beneficiaryIdentifier.toLowerCase().trim()}`;
       const existingCaseId = existingKeyMap.get(key);
@@ -2659,13 +2244,15 @@ export const importCases = mutation({
         // Use imported values if provided, otherwise default to empty
         recruitmentApplicantsCount: Number(caseData.recruitmentApplicantsCount ?? 0),
         recruitmentSummaryCustom: caseData.recruitmentSummaryCustom,
+        recruitmentNotes: caseData.recruitmentNotes,
+        progressStatusOverride: caseData.progressStatusOverride,
         // Transform additionalRecruitmentMethods to ensure date is required
         additionalRecruitmentMethods: (caseData.additionalRecruitmentMethods ?? []).map((m) => ({
           method: m.method,
           date: m.date ?? "",
           description: m.description,
         })),
-        tags: [],
+        tags: caseData.tags ?? [],
         documents: [],
         // Transform notes to ensure status is required
         notes: (caseData.notes ?? []).map((n) => ({
@@ -2728,11 +2315,15 @@ export const importCases = mutation({
           caseData.eta9089ExpirationDate
         ),
         eta9089CaseNumber: caseData.eta9089CaseNumber,
+        eta9089AuditDate: caseData.eta9089AuditDate,
         i140FilingDate: caseData.i140FilingDate,
         i140ReceiptDate: caseData.i140ReceiptDate,
         i140ReceiptNumber: caseData.i140ReceiptNumber,
         i140ApprovalDate: caseData.i140ApprovalDate,
         i140DenialDate: caseData.i140DenialDate,
+        i140Category: caseData.i140Category,
+        i140PremiumProcessing: caseData.i140PremiumProcessing,
+        i140ServiceCenter: caseData.i140ServiceCenter,
 
         // Optional text fields
         caseNumber: caseData.caseNumber,
@@ -2742,6 +2333,8 @@ export const importCases = mutation({
         socCode: caseData.socCode,
         socTitle: caseData.socTitle,
         jobOrderState: caseData.jobOrderState,
+        jobDescriptionPositionTitle: caseData.jobDescriptionPositionTitle,
+        jobDescription: caseData.jobDescription,
 
         // Timestamps
         createdAt: now,
@@ -2765,6 +2358,37 @@ export const importCases = mutation({
   },
 });
 
+/** The filters the case list and its "select all" both take. */
+const caseListFilterArgs = {
+  status: v.optional(v.string()),
+  progressStatus: v.optional(v.string()),
+  searchQuery: v.optional(v.string()),
+  favoritesOnly: v.optional(v.boolean()),
+  duplicatesOnly: v.optional(v.boolean()),
+  activeOnly: v.optional(v.boolean()),
+};
+
+/**
+ * The case list's filters other than search: stage, progress, favourites,
+ * duplicates, and active-only (neither closed nor an approved I-140).
+ */
+function applyCaseListFilters<T extends Doc<"cases">>(
+  cases: T[],
+  args: ObjectType<typeof caseListFilterArgs>,
+): T[] {
+  return cases.filter((c) => {
+    if (args.status !== undefined && c.caseStatus !== args.status) return false;
+    if (args.progressStatus !== undefined && c.progressStatus !== args.progressStatus) return false;
+    if (args.favoritesOnly === true && c.isFavorite !== true) return false;
+    if (args.duplicatesOnly === true && c.duplicateOf === undefined) return false;
+    if (args.activeOnly === true) {
+      if (c.caseStatus === "closed") return false;
+      if (c.caseStatus === "i140" && c.progressStatus === "approved") return false;
+    }
+    return true;
+  });
+}
+
 /**
  * List cases with filtering, sorting, and pagination
  * Returns paginated case card data with metadata
@@ -2776,12 +2400,7 @@ export const importCases = mutation({
  */
 export const listFiltered = query({
   args: {
-    status: v.optional(v.string()),
-    progressStatus: v.optional(v.string()),
-    searchQuery: v.optional(v.string()),
-    favoritesOnly: v.optional(v.boolean()),
-    duplicatesOnly: v.optional(v.boolean()),
-    activeOnly: v.optional(v.boolean()),
+    ...caseListFilterArgs,
     sortBy: v.optional(v.string()),
     sortOrder: v.optional(v.string()),
     page: v.optional(v.number()),
@@ -2823,37 +2442,8 @@ export const listFiltered = query({
     let filteredCases = read.cases;
     const totalUnfilteredCount = filteredCases.length;
 
-    // 4. Apply status filter
-    if (args.status !== undefined) {
-      filteredCases = filteredCases.filter((c) => c.caseStatus === args.status);
-    }
-
-    // 5. Apply progress status filter
-    if (args.progressStatus !== undefined) {
-      filteredCases = filteredCases.filter((c) => c.progressStatus === args.progressStatus);
-    }
-
-    // 6. Apply favorites filter
-    if (args.favoritesOnly === true) {
-      filteredCases = filteredCases.filter((c) => c.isFavorite === true);
-    }
-
-    // 6.5 Apply duplicates filter (show only cases marked as duplicates)
-    if (args.duplicatesOnly === true) {
-      filteredCases = filteredCases.filter((c) => c.duplicateOf !== undefined);
-    }
-
-    // 6.6 Apply activeOnly filter (exclude closed AND completed cases)
-    // Completed = i140 status + approved progress status
-    if (args.activeOnly === true) {
-      filteredCases = filteredCases.filter((c) => {
-        // Exclude closed cases
-        if (c.caseStatus === "closed") return false;
-        // Exclude completed cases (i140 + approved)
-        if (c.caseStatus === "i140" && c.progressStatus === "approved") return false;
-        return true;
-      });
-    }
+    // 4-6. Stage, progress, favourites, duplicates and active-only
+    filteredCases = applyCaseListFilters(filteredCases, args);
 
     // 7. Project each case to CaseCardData using helper function
     const todayISO = new Date().toISOString().split("T")[0] as string;
@@ -2917,14 +2507,7 @@ export const readCoverage = query({
  * Returns just IDs to minimize data transfer - does not return full case data
  */
 export const listFilteredIds = query({
-  args: {
-    status: v.optional(v.string()),
-    progressStatus: v.optional(v.string()),
-    searchQuery: v.optional(v.string()),
-    favoritesOnly: v.optional(v.boolean()),
-    duplicatesOnly: v.optional(v.boolean()),
-    activeOnly: v.optional(v.boolean()),
-  },
+  args: caseListFilterArgs,
   handler: async (ctx, args): Promise<Id<"cases">[]> => {
     // 1. Get authenticated user (null-safe for sign-out transitions)
     const userId = await getCurrentUserIdOrNull(ctx);
@@ -2944,48 +2527,15 @@ export const listFilteredIds = query({
     // 2-3. Live cases, newest first (convex/lib/userCases.ts)
     let filteredCases = (await readUserCases(ctx, userId)).cases;
 
-    // 4. Apply status filter
-    if (args.status !== undefined) {
-      filteredCases = filteredCases.filter((c) => c.caseStatus === args.status);
-    }
+    // 4-7. Stage, progress, favourites, duplicates and active-only
+    filteredCases = applyCaseListFilters(filteredCases, args);
 
-    // 5. Apply progress status filter
-    if (args.progressStatus !== undefined) {
-      filteredCases = filteredCases.filter((c) => c.progressStatus === args.progressStatus);
-    }
-
-    // 6. Apply favorites filter
-    if (args.favoritesOnly === true) {
-      filteredCases = filteredCases.filter((c) => c.isFavorite === true);
-    }
-
-    // 7. Apply duplicates filter
-    if (args.duplicatesOnly === true) {
-      filteredCases = filteredCases.filter((c) => c.duplicateOf !== undefined);
-    }
-
-    // 7.5 Apply activeOnly filter (exclude closed AND completed cases)
-    if (args.activeOnly === true) {
-      filteredCases = filteredCases.filter((c) => {
-        if (c.caseStatus === "closed") return false;
-        if (c.caseStatus === "i140" && c.progressStatus === "approved") return false;
-        return true;
-      });
-    }
-
-    // 8. Apply search filter if provided (simple substring match for IDs query)
+    // 8. The list's own search, so "select all" and "export what's shown" pick
+    // exactly the cases the list shows, fuzzy matches included.
     if (args.searchQuery !== undefined && args.searchQuery.length > 0) {
-      const searchLower = args.searchQuery.toLowerCase();
-      filteredCases = filteredCases.filter((c) => {
-        const beneficiaryIdentifier = (c.beneficiaryIdentifier ?? "").toLowerCase();
-        const employerName = c.employerName.toLowerCase();
-        const jobTitle = c.jobTitle?.toLowerCase() ?? "";
-        return (
-          beneficiaryIdentifier.includes(searchLower) ||
-          employerName.includes(searchLower) ||
-          jobTitle.includes(searchLower)
-        );
-      });
+      const todayISO = new Date().toISOString().split("T")[0] as string;
+      const cards = filteredCases.map((caseDoc) => projectCaseForCard(caseDoc, todayISO));
+      return filterBySearch(cards, args.searchQuery).map((c) => c._id as Id<"cases">);
     }
 
     // 9. Return just the IDs

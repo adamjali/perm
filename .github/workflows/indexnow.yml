@@ -1,13 +1,11 @@
 name: IndexNow
 
-# Pings IndexNow (Bing, Yandex, Seznam, …) with every sitemap URL after each
-# successful PRODUCTION deploy, so search/AI engines recrawl fast. Bing's index
-# feeds ChatGPT Search and Perplexity, so this keeps AI-search (GEO) fresh with
-# zero manual effort. Manual run anytime: `node v2/scripts/indexnow.mjs`.
+# Pings IndexNow (Bing, Yandex, Seznam and others) with every sitemap URL after
+# each successful production deploy, so search and AI engines recrawl quickly.
+# Bing's index feeds several AI search products. Manual run any time:
+# `node v2/scripts/indexnow.mjs`.
 
 on:
-  # After each successful deploy to the server (the site left Vercel on Sep 28
-  # 2026, and Vercel's deployment events with it).
   workflow_run:
     workflows: ["Oracle build and deploy"]
     types: [completed]

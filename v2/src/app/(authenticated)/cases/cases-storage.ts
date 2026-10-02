@@ -9,8 +9,8 @@ import type {
   CaseListSort,
   CaseListSortField,
   SortOrder,
-} from "../../../../convex/lib/caseListTypes";
-import type { CaseStatus, ProgressStatus } from "../../../../convex/lib/dashboardTypes";
+} from "@convex/lib/caseListTypes";
+import type { CaseStatus, ProgressStatus } from "@convex/lib/dashboardTypes";
 
 // ============================================================================
 // CONSTANTS

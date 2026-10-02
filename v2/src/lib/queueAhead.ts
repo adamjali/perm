@@ -18,6 +18,8 @@
  * effort. These counts come from per-case status, mirrored with attribution.
  */
 
+import { DAYS_PER_MONTH_2DP, MS_PER_DAY } from "@/lib/time";
+
 export interface MonthQueue {
   /** "YYYY-MM". */
   filingMonth: string;
@@ -44,15 +46,14 @@ export interface MonthQueue {
  * The cases in a month that are actually IN LINE: `analystReview` when the row
  * carries it, every pending case otherwise.
  *
- * MEASURED 2026-09-26, and it is the largest error the estimator had. About
- * 5,700 pending cases sit on hold, at an RFI, on appeal or at NORD. They are
- * not in filing order (DOL is not working them as part of the line), and
- * counting them as ahead of everybody filed later added about a week to every
- * date. Rebuilding the queue as it stood on 2026-09-13 and scoring 7,112 real
- * decisions: counting every pending case gave a typical miss of 9.5 days and
- * 73% right on "decided by Sep 25"; counting ANALYST REVIEW only gave 3.9 days
- * and 86%. The ledger's recorded case landed 15 days early against the old
- * count. Method and figures: .planning/estimator-backtest-2026-09-26.md.
+ * MEASURED, and it is the largest error the estimator can make. Several
+ * thousand pending cases sit on hold, at an RFI, on appeal or at NORD. They
+ * are not in filing order (DOL is not working them as part of the line), and
+ * counting them as ahead of everybody filed later adds about a week to every
+ * date. Scored against real decisions from a rebuilt past queue, counting
+ * every pending case gives a typical miss of 9.5 days; counting ANALYST
+ * REVIEW only gives 3.9. Method and figures:
+ * .planning/estimator-backtest-2026-09-26.md.
  *
  * The fallback to `pending` keeps every caller that passes a bare
  * {total, pending, decided} row answering exactly as before.
@@ -95,9 +96,9 @@ export function deriveQueueAhead(
 /**
  * A month is not counted as settled until it has stopped growing.
  *
- * MEASURED 2026-09-13 and it is not a small effect: over one week the
- * August-2026 filing month gained 1,261 cases (+16.4%), June gained 463
- * (+4.6%), and July gained 40 (+0.4%). DOL keeps indexing a month for weeks
+ * MEASURED, and it is not a small effect: over one week the newest filing
+ * month grew by about 16% and the two before it by about 5% and under 1%.
+ * DOL keeps indexing a month for weeks
  * after it ends and our own discovery keeps finding cases in it, so the two
  * or three newest months are always undercounts.
  *
@@ -151,7 +152,7 @@ export function measureFilingRate(
   return {
     // 30.44 is the mean calendar month. The window spans whole months, so
     // there is no day-count to take from the calendar here.
-    perDay: total / settled.length / 30.44,
+    perDay: total / settled.length / DAYS_PER_MONTH_2DP,
     from: first.filingMonth,
     to: last.filingMonth,
     monthsUsed: settled.length,
@@ -204,17 +205,15 @@ export interface AheadResult {
  * WHY THE FUTURE NEEDS ITS OWN BRANCH. `casesAheadOfDay` returns null for any
  * month the census does not hold, which is right for a date BEFORE our data
  * (we genuinely do not know) and wrong for one after it (we know exactly:
- * every pending case is ahead of you, because you have not filed yet). Those
- * two were lumped together and both answered null.
+ * every pending case is ahead of you, because you have not filed yet). Lumped
+ * together, both would answer null.
  *
  * AND TODAY'S BACKLOG ALONE IS NOT THE ANSWER FOR A FUTURE DATE. People keep
  * filing between now and then - about 264 a calendar day, measured - and every
  * one of them is ahead of you. Counting only today's pending gives EVERY
- * future date the same answer: 95,326 ahead whether you file next month or
- * next year, which is transparently wrong and is what both rivals ship
- * (the rival tracker returns its whole backlog for a November date, with
- * `your_position_in_month: 0`). At a year out that understates the queue by
- * roughly 100,000 cases.
+ * future date the same answer, the whole backlog whether you file next month
+ * or next year, which is transparently wrong: at a year out it understates
+ * the queue by roughly 100,000 cases.
  *
  * The projection is returned SEPARATELY so the caller can say which half is
  * counted and which is assumed. It is never folded in silently.
@@ -240,7 +239,7 @@ export function aheadOfDay(
   const days = Math.max(
     0,
     Math.round(
-      (Date.parse(`${filingDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / 86_400_000,
+      (Date.parse(`${filingDate}T00:00:00Z`) - Date.parse(`${today}T00:00:00Z`)) / MS_PER_DAY,
     ),
   );
   const projected = Math.round(filingRate * days);

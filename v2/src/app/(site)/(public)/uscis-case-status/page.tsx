@@ -10,7 +10,6 @@ import { UscisReceiptForm } from "@/components/tools/UscisReceiptForm";
 import { UscisStatusResult } from "@/components/tools/UscisStatusResult";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { normaliseCaseNumber } from "@/lib/caseNumberShape";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { withSocialCard } from "@/lib/socialCard";
 import {
@@ -20,6 +19,7 @@ import {
   normaliseReceipt,
 } from "@/lib/uscis/receipt";
 import { uscisEnabled } from "@/lib/uscis/torchClient";
+import { MoreText } from "@/components/data/MoreText";
 
 /**
  * A USCIS receipt number in; what it encodes, and (once USCIS has issued API
@@ -152,10 +152,6 @@ export default async function UscisCaseStatusPage({
       acceptedAnswer: { "@type": "Answer" as const, text: f.a },
     })),
   };
-  const breadcrumbSchema = generateBreadcrumbSchema([
-    { name: "Data", href: "/tools" },
-    { name: "USCIS case status", href: "/uscis-case-status" },
-  ]);
 
   const prefixes = Object.entries(RECEIPT_PREFIXES);
 
@@ -163,25 +159,18 @@ export default async function UscisCaseStatusPage({
     <div className="mx-auto w-full max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
       <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumbSchema} />
 
       <header>
-        <p className="font-mono text-sm font-semibold uppercase tracking-[0.1em] text-muted-foreground">
-          <Link href="/tools" className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary">
-            Data
-          </Link>
-        </p>{" "}
-        <h1 className="mt-3 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           Check a USCIS case by receipt number
         </h1>{" "}
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
-          The number at the top of an I-797 notice, three letters and ten digits.
-          This page says which office issued it and what the digits are read as,
+          The number at the top of an I-797 notice. See which office issued it, what the digits mean,
           and{" "}
           {enabled
-            ? "asks USCIS's Case Status API for the case's current status."
-            : "will read the case's status from USCIS's Case Status API once USCIS issues PERM Tracker its API keys."}{" "}
-          A Department of Labor number (G-100-…) belongs on the{" "}
+            ? "the case's current status from USCIS."
+            : "its current status once USCIS grants this site API access."}{" "}
+          A DOL number (G-100-…) goes on the{" "}
           <Link href="/perm-case-status" className={link}>
             PERM case page
           </Link>
@@ -277,13 +266,15 @@ export default async function UscisCaseStatusPage({
 
       <section className="mt-14">
         <h2 className="font-heading text-2xl font-black">The three letters</h2>{" "}
-        <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
-          USCIS&apos;s glossary names seven prefixes. One more, YSC, appears on
-          notices from the Potomac Service Center and is listed here as seen on
-          notices rather than as USCIS&apos;s own definition. Any three letters
-          are accepted by USCIS&apos;s own validation, so a new one would still
-          look up.
-        </p>{" "}
+        <MoreText gist={"Seven office prefixes from USCIS's glossary, plus one seen on notices."} className="mt-3">
+          <p className="max-w-2xl text-base leading-relaxed text-foreground/80">
+            USCIS&apos;s glossary names seven prefixes. One more, YSC, appears on
+            notices from the Potomac Service Center and is listed here as seen on
+            notices rather than as USCIS&apos;s own definition. Any three letters
+            are accepted by USCIS&apos;s own validation, so a new one would still
+            look up.
+          </p>
+        </MoreText>{" "}
         <details className="group mt-4 border-2 border-border bg-card shadow-hard">
           <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-3 font-heading text-base font-bold transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary sm:px-6 [&::-webkit-details-marker]:hidden">
             <span>Every prefix, and the office it names</span>{" "}
@@ -312,21 +303,23 @@ export default async function UscisCaseStatusPage({
       </section>
 
       <DataProvenance datasets={["uscis-case-status"]} />
-      <p className="mt-2 text-sm text-muted-foreground">
-        Statuses on this page, when shown, are USCIS&apos;s own words from its Case
-        Status API, with the time we last heard from USCIS printed beside them. USCIS
-        is the authority for any receipt and{" "}
-        <a href={USCIS_STATUS_URL} rel="noopener noreferrer" className={link}>
-          its own status page
-        </a>{" "}
-        answers every receipt today. The office names come from USCIS&apos;s glossary;
-        the reading of the digits is a convention and is labelled as one. What a
-        lookup sends and what is kept is stated in{" "}
-        <Link href="/privacy#uscis-case-status" className={link}>
-          section 18 of the privacy policy
-        </Link>
-        .
-      </p>
+      <MoreText gist={"Statuses are USCIS's own words, timed; USCIS is the authority."} className="mt-2">
+        <p className="text-sm text-muted-foreground">
+          Statuses on this page, when shown, are USCIS&apos;s own words from its Case
+          Status API, with the time we last heard from USCIS printed beside them. USCIS
+          is the authority for any receipt and{" "}
+          <a href={USCIS_STATUS_URL} rel="noopener noreferrer" className={link}>
+            its own status page
+          </a>{" "}
+          answers every receipt today. The office names come from USCIS&apos;s glossary;
+          the reading of the digits is a convention and is labelled as one. What a
+          lookup sends and what is kept is stated in{" "}
+          <Link href="/privacy#uscis-case-status" className={link}>
+            section 18 of the privacy policy
+          </Link>
+          .
+        </p>
+      </MoreText>
 
       <PageBasics page="uscis-case-status" />
 

@@ -39,8 +39,8 @@ export function generateEntityOG(kind: EntityKind, row: EntityRow) {
  * The card for an employer DOL's live record knows and no published file names
  * yet. The page renders for these (see loadLiveOnly in the employer route), and
  * the segment's file-based image is attached to EVERY page in it, so a card
- * that only knew published employers advertised a 404 on about 22,600 pages
- * (measured 2026-09-23). The sentence is the page's own description, with the
+ * that only knew published employers would advertise a 404 on every
+ * live-only page. The sentence is the page's own description, with the
  * same count and the same absence: no outcome figures exist for these yet.
  */
 export function generateLiveEmployerOG(name: string, cases: number) {

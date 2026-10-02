@@ -5,10 +5,9 @@ import { cn } from "@/lib/utils";
 /**
  * The interpretation layer: say what the number MEANS, above the number.
  *
- * The measured gap against the rival is not data — we hold a fresher cut of
- * the same files — it is that they conclude and we tabulate. Their pages open
- * with "The DOL is deciding PERM cases filed in September 2025" and a verdict
- * chip; ours opened with a table and left the reader to do the arithmetic.
+ * A table that leaves the reader to do the arithmetic is half an answer. A
+ * page should open with the conclusion its figures support, such as "DOL is
+ * deciding PERM cases filed in September 2025".
  *
  * Everything here is a shape for a claim that is TRUE BY CONSTRUCTION:
  * arithmetic on figures already on the page. No projections, no scores, no
@@ -39,8 +38,7 @@ type Direction = "good" | "warn" | "bad" | "flat";
  *   light   rgb(250,250,250) on rgb(250,250,250)   1.00:1
  *   dark    rgb(10,10,10)    on rgb(26,26,26)      1.14:1
  *
- * Adam: "cant see that text 965 open rfis in light or dark mode." Invisible in
- * both, which is what an inherited colour does when the two surfaces it might
+ * An inherited colour was invisible in both themes, which is what it does when the two surfaces it might
  * land on are inverses of each other.
  *
  * The backgrounds are solid rather than translucent for the same reason: a
@@ -104,7 +102,7 @@ export function Verdict({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 border-2 px-2.5 py-1 font-mono text-xs font-bold uppercase tracking-wider",
+        "inline-flex items-center gap-1.5 border-2 px-2.5 py-1 font-mono text-sm font-bold uppercase tracking-wider",
         DIRECTION_STYLE[direction],
       )}
     >
@@ -154,7 +152,7 @@ export function InsightLede({
           Writing that rule out cost a second build, because spelling the
           comment delimiters literally inside a comment closes it early. */}
       {source ? (
-        <p className="mt-3 font-mono text-xs uppercase tracking-wider text-background/70">
+        <p className="mt-3 font-mono text-sm uppercase tracking-wider text-background/70">
           {source}
         </p>
       ) : null}
@@ -171,10 +169,13 @@ export function BaselineMultiple({
   rate,
   baseline,
   className,
+  withTitle = true,
 }: {
   rate: number;
   baseline: number;
   className?: string;
+  /** Off inside a chart whose hover tooltip already carries both rates. */
+  withTitle?: boolean;
 }) {
   if (baseline <= 0) return null;
   const x = rate / baseline;
@@ -192,7 +193,7 @@ export function BaselineMultiple({
             : "border-primary text-foreground",
         className,
       )}
-      title={`${rate.toFixed(2)}% against a field baseline of ${baseline.toFixed(2)}%`}
+      title={withTitle ? `${rate.toFixed(2)}% against a field baseline of ${baseline.toFixed(2)}%` : undefined}
     >
       {label} the field
     </span>
@@ -225,7 +226,7 @@ export function FreshnessDots({ items }: { items: Freshness[] }) {
               f.kind === "live" ? "bg-primary" : "bg-[var(--data-none)]",
             )}
           />
-          <span className="font-mono text-xs uppercase tracking-wider text-foreground/60">
+          <span className="font-mono text-sm uppercase tracking-wider text-foreground/60">
             {f.label}: {f.asOf}
           </span>
         </span>

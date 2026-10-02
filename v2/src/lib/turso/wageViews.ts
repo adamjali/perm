@@ -6,13 +6,13 @@ import { one } from "./client";
 
 /**
  * Precomputed wage selections, one row per filter combination big enough to
- * be slow (Sep 28 2026).
+ * be slow.
  *
  * The PERM salary explorer and the LCA wage explorer compute percentiles, a
  * histogram and a per-state table over the reader's filters with window
- * functions. On a big selection that was 8.5M rows read per page rebuild
- * (Turso Top Queries, Sep 27) and, on the LCA side, 839 deadline failures of
- * /api/lca-wages (Sentry JAVASCRIPT-NEXTJS-3K). `scripts/build_wage_views.py`
+ * functions. On a big selection that is millions of rows read per page
+ * rebuild and, on the LCA side, deadline failures of /api/lca-wages.
+ * `scripts/build_wage_views.py`
  * computes every combination of status x occupation group x state x fiscal
  * year holding at least 5,000 filings, in the same arithmetic as the SQL,
  * after each disclosure load, into `wage_views`.

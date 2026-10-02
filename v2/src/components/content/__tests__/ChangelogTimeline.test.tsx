@@ -7,7 +7,7 @@ import type { PostSummary } from "@/lib/content/types";
 
 // GSAP is lazily dynamic-imported by useScrollStagger and pulls real browser
 // globals; stub the hook to a no-op so it doesn't actually run in jsdom.
-vi.mock("@/lib/hooks/useGSAP", () => ({
+vi.mock("@/hooks/useGSAP", () => ({
   useScrollStagger: vi.fn(),
 }));
 

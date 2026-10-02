@@ -1,11 +1,11 @@
 "use client";
 
 // `convex/react` is a CLIENT-ONLY module: its hooks reach `React.createContext`,
-// which exists only in React's client build. Declared here (2026-09-01) rather
+// which exists only in React's client build. Declared here rather
 // than inherited from whichever importer happened to cross a boundary first.
 // Without it this module works until the chunk graph shifts, then fails with
 // `TypeError: (0 , d.createContext) is not a function` naming webpack bootstrap
-// and no source file. See components/layout/Footer.tsx for the incident.
+// and no source file. See components/layout/Footer.tsx.
 
 /**
  * CalendarEventPopover Component
@@ -21,9 +21,6 @@
  * - "Hide from Calendar" option
  * - Keyboard accessible (Enter opens, Escape closes)
  * - Neobrutalist styling (shadow-hard-lg, border-2, no radius)
- *
- * Phase: 23.1 (Calendar UI)
- * Created: 2025-12-28
  */
 
 "use client";
@@ -35,8 +32,8 @@ import { useMutation } from "convex/react";
 import { motion } from "motion/react";
 import { ArrowSquareOutIcon, CalendarIcon, EyeIcon, EyeSlashIcon as EyeOff } from "@phosphor-icons/react/ssr";
 
-import { api } from "../../../convex/_generated/api";
-import type { Id } from "../../../convex/_generated/dataModel";
+import { api } from "@convex/_generated/api";
+import type { Id } from "@convex/_generated/dataModel";
 import {
   Dialog,
   DialogContent,
@@ -382,5 +379,3 @@ export function CalendarEventPopover({
     </Dialog>
   );
 }
-
-export default CalendarEventPopover;

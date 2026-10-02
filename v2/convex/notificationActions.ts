@@ -7,8 +7,6 @@
  *
  * INTERNAL ACTIONS (server-side only):
  * - sendStatusChangeEmail: Send status change email
- * - sendRfiAlertEmail: Send RFI alert email
- * - sendRfeAlertEmail: Send RFE alert email
  * - sendAutoClosureEmail: Send auto-closure notification email
  * - sendAdminNotificationEmail: Send admin notification (non-throwing)
  *
@@ -32,8 +30,6 @@ import { recordError } from "./lib/errorRecording";
 
 const log = loggers.email;
 import { StatusChange } from "../src/emails/StatusChange";
-import { RfiAlert } from "../src/emails/RfiAlert";
-import { RfeAlert } from "../src/emails/RfeAlert";
 import { AutoClosure } from "../src/emails/AutoClosure";
 import { WeeklyDigest } from "../src/emails/WeeklyDigest";
 import { DeadlineDigest } from "../src/emails/DeadlineDigest";
@@ -42,10 +38,11 @@ import type { DigestContent } from "./lib/digestHelpers";
 import type { DeadlineDigestItem } from "./lib/reminderDigest";
 import { makeUnsubscribeToken } from "./lib/unsubscribeToken";
 import { extractUserIdFromAction } from "./lib/auth";
+import { SITE_URL } from "./lib/links";
 
 // App URL for generating links (falls back to production URL)
 function getAppUrl(): string {
-  return process.env.APP_URL || "https://permtracker.app";
+  return process.env.APP_URL || SITE_URL;
 }
 
 /** One-click unsubscribe URL for an email (weekly digest / nudge), or undefined if unconfigured. */
@@ -139,41 +136,6 @@ async function sendNotificationEmail(
 }
 
 
-/**
- * Generate email subject for RFI/RFE alerts based on urgency.
- */
-function generateAlertSubject(
-  type: "RFI" | "RFE",
-  beneficiaryName: string,
-  daysRemaining: number,
-  alertType: "new" | "reminder",
-  urgentThreshold: number = 7
-): string {
-  if (daysRemaining < 0) {
-    return `${type} response overdue for ${beneficiaryName}`;
-  }
-  if (daysRemaining === 0) {
-    return `${type} response due today for ${beneficiaryName}`;
-  }
-  if (daysRemaining <= urgentThreshold) {
-    return `Urgent: ${type} response due in ${daysRemaining} day${daysRemaining !== 1 ? "s" : ""} for ${beneficiaryName}`;
-  }
-  if (alertType === "new") {
-    return `New ${type} received for ${beneficiaryName}`;
-  }
-  return `${type} response due in ${daysRemaining} days for ${beneficiaryName}`;
-}
-
-// ============================================================================
-// DEADLINE REMINDER EMAIL
-// ============================================================================
-
-// sendDeadlineReminderEmail was removed 2026-08-24. Its only caller was
-// scheduledJobs.checkDeadlineReminders, itself orphaned when the daily sweep
-// moved to deadlineDigest (which batches per-user digests instead of
-// per-deadline sends — the shape that respects the shared Resend budget).
-
-
 // ============================================================================
 // STATUS CHANGE EMAIL
 // ============================================================================
@@ -219,105 +181,6 @@ export const sendStatusChangeEmail = internalAction({
       html,
       notificationId: args.notificationId,
       logContext: "status change",
-    });
-  },
-});
-
-// ============================================================================
-// RFI ALERT EMAIL
-// ============================================================================
-
-/**
- * Send an RFI alert email.
- */
-export const sendRfiAlertEmail = internalAction({
-  args: {
-    notificationId: v.id("notifications"),
-    to: v.string(),
-    beneficiaryName: v.string(),
-    companyName: v.string(),
-    dueDate: v.string(),
-    daysRemaining: v.number(),
-    receivedDate: v.string(),
-    alertType: v.union(v.literal("new"), v.literal("reminder")),
-    caseId: v.string(),
-    caseNumber: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const { caseUrl } = buildEmailUrls(args.caseId);
-
-    const html = await render(
-      RfiAlert({
-        beneficiaryName: args.beneficiaryName,
-        companyName: args.companyName,
-        dueDate: args.dueDate,
-        daysRemaining: args.daysRemaining,
-        receivedDate: args.receivedDate,
-        alertType: args.alertType,
-        caseUrl: caseUrl!,
-        caseNumber: args.caseNumber,
-      })
-    );
-
-    const subject = generateAlertSubject("RFI", args.beneficiaryName, args.daysRemaining, args.alertType);
-
-    await sendNotificationEmail(ctx, {
-      to: args.to,
-      subject,
-      html,
-      notificationId: args.notificationId,
-      logContext: "RFI alert",
-    });
-  },
-});
-
-// ============================================================================
-// RFE ALERT EMAIL
-// ============================================================================
-
-/**
- * Send an RFE alert email.
- */
-export const sendRfeAlertEmail = internalAction({
-  args: {
-    notificationId: v.id("notifications"),
-    to: v.string(),
-    beneficiaryName: v.string(),
-    companyName: v.string(),
-    dueDate: v.string(),
-    daysRemaining: v.number(),
-    receivedDate: v.string(),
-    alertType: v.union(v.literal("new"), v.literal("reminder")),
-    caseId: v.string(),
-    caseNumber: v.optional(v.string()),
-    i140FilingDate: v.optional(v.string()),
-  },
-  handler: async (ctx, args) => {
-    const { caseUrl } = buildEmailUrls(args.caseId);
-
-    const html = await render(
-      RfeAlert({
-        beneficiaryName: args.beneficiaryName,
-        companyName: args.companyName,
-        dueDate: args.dueDate,
-        daysRemaining: args.daysRemaining,
-        receivedDate: args.receivedDate,
-        alertType: args.alertType,
-        caseUrl: caseUrl!,
-        caseNumber: args.caseNumber,
-        i140FilingDate: args.i140FilingDate,
-      })
-    );
-
-    // RFE uses 14-day urgent threshold (vs 7 for RFI)
-    const subject = generateAlertSubject("RFE", args.beneficiaryName, args.daysRemaining, args.alertType, 14);
-
-    await sendNotificationEmail(ctx, {
-      to: args.to,
-      subject,
-      html,
-      notificationId: args.notificationId,
-      logContext: "RFE alert",
     });
   },
 });
@@ -544,13 +407,13 @@ export const sendWeeklyDigestEmail = internalAction({
     const { stats, isEmpty } = digestContent;
     let subject: string;
     if (isEmpty) {
-      subject = "Your weekly PERM summary: all clear";
+      subject = "Your weekly case summary: all clear";
     } else if (stats.overdueCount > 0) {
-      subject = `Weekly PERM summary: ${stats.overdueCount} overdue, ${stats.urgentCount} due this week`;
+      subject = `Weekly case summary: ${stats.overdueCount} overdue, ${stats.urgentCount} due this week`;
     } else if (stats.urgentCount > 0) {
-      subject = `Weekly PERM summary: ${stats.urgentCount} deadline${stats.urgentCount !== 1 ? "s" : ""} this week`;
+      subject = `Weekly case summary: ${stats.urgentCount} deadline${stats.urgentCount !== 1 ? "s" : ""} this week`;
     } else {
-      subject = "Your weekly PERM summary";
+      subject = "Your weekly case summary";
     }
 
     const resend = getResend();
@@ -574,7 +437,7 @@ export const sendWeeklyDigestEmail = internalAction({
 
 /**
  * Send the "we've missed you" re-engagement nudge to an inactive user.
- * Verified-gated. The email warns that the weekly summary will pause if they
+ * Verified-gated. The email warns that the weekly case summary will pause if they
  * stay away (the reengagement cron does the actual suppression).
  */
 export const sendReengagementNudge = internalAction({

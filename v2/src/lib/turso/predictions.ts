@@ -21,6 +21,7 @@ import {
   stageDurationFor,
 } from "@/lib/turso/stageStats";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
+import { easternDay } from "@/lib/time";
 
 /**
  * The automatic scorecard: record a day's predictions, grade the ones DOL has
@@ -286,11 +287,7 @@ export async function recordPredictions(recordedOn: string, preds: NewPrediction
   return insertPredictions(recordedOn, preds);
 }
 
-const ET = "America/New_York";
-export const easternDate = (ms: number): string =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: ET, year: "numeric", month: "2-digit", day: "2-digit" }).format(
-    new Date(ms),
-  );
+export const easternDate = (ms: number): string => easternDay(ms);
 
 /**
  * Grade every open prediction whose case DOL has since finished.

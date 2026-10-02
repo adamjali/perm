@@ -1,19 +1,14 @@
-// NO "use client" (removed 2026-09-01). This chart takes props and renders
-// markup: no state, no effects, no handlers, no browser APIs. As a client
-// component every node it produced was serialized into the RSC flight payload
-// AND rendered into the HTML, so the whole ~39-row chart was stored twice in
-// every cached copy of the queue pages. Measured on an entity page, the flight
-// payload was 49% of the document and the most frequent keys in it were
-// `className`, `style`, `left` and `height` - chart nodes, exactly this shape.
-//
-// Vercel bills ISR writes in 8 KB units, so page size is the bill. Keep this a
-// server component; if it ever needs interactivity, put the interactive part in
-// its own small client child rather than making the whole chart client again.
+// NO "use client": this chart takes props and renders markup, with no state,
+// no effects, no handlers and no browser APIs, so it needs no client
+// boundary. If it ever needs interactivity, put the interactive part in its
+// own small client child rather than making the whole chart client.
 import { Fragment } from "react";
 
+import { ChartTips } from "@/components/data/ChartTips";
 import { formatMonth } from "@/lib/dolFormat";
 import type { MonthQueue, VolumeAnomaly } from "@/lib/queueAhead";
 import { cn } from "@/lib/utils";
+import { formatInt } from "@/lib/format";
 
 /**
  * How far DOL has got through every filing month, oldest first.
@@ -43,8 +38,6 @@ export interface QueueMonthChartProps {
   className?: string;
 }
 
-const fmtInt = (n: number) => n.toLocaleString("en-US");
-
 export function QueueMonthChart({
   months,
   selectedMonth,
@@ -71,6 +64,7 @@ export function QueueMonthChart({
 
   return (
     <div className={className}>
+      <ChartTips label="Share of each filing month DOL has decided">
       <ol className="space-y-1">
         {months.map((m) => {
           const isSelected = m.filingMonth === selectedMonth;
@@ -87,7 +81,21 @@ export function QueueMonthChart({
               {" "}
               <li
                 className="grid grid-cols-[6rem_1fr_2.75rem_4rem] items-center gap-2 sm:grid-cols-[9.5rem_1fr_3.5rem_5rem] sm:gap-3"
-                aria-label={`${label}: ${pct.toFixed(0)}% decided, ${fmtInt(m.pending)} still pending`}
+                aria-label={`${label}: ${pct.toFixed(0)}% decided, ${formatInt(m.pending)} still pending${isFlagged ? ", far fewer cases were filed in this month" : ""}`}
+                data-tip={[
+                  `Filed in ${label}`,
+                  `${pct.toFixed(0)}% decided`,
+                  `${formatInt(m.decided)} decided of ${formatInt(m.total)} filed`,
+                  `${formatInt(m.pending)} still pending`,
+                  m.analystReview !== undefined ? `${formatInt(m.analystReview)} in analyst review` : null,
+                  m.rfiIssued ? `${formatInt(m.rfiIssued)} at an RFI` : null,
+                  m.auditResponse ? `${formatInt(m.auditResponse)} in an audit` : null,
+                  m.appeals ? `${formatInt(m.appeals)} under appeal` : null,
+                  isSelected ? "Your month" : isAhead ? "Ahead of yours" : null,
+                  isFlagged ? "Far fewer cases were filed in this month" : null,
+                ]
+                  .filter(Boolean)
+                  .join("\n")}
               >
                 <span
                   className={cn(
@@ -100,8 +108,8 @@ export function QueueMonthChart({
                     <span
                       // Real semantic state, not decoration: this month's
                       // filing volume collapsed and the note below says so.
-                      className="border border-border bg-muted px-1 font-mono text-xs font-bold text-foreground/80"
-                      title="Far fewer cases were filed in this month"
+                      // Its meaning is in the row's hover detail and aria-label.
+                      className="border border-border bg-muted px-1 font-mono text-sm font-bold text-foreground/80"
                     >
                       !
                     </span>
@@ -138,13 +146,14 @@ export function QueueMonthChart({
                     isSelected ? "font-black" : "text-foreground/70",
                   )}
                 >
-                  {fmtInt(m.pending)}
+                  {formatInt(m.pending)}
                 </span>
               </li>
             </Fragment>
           );
         })}
       </ol>
+      </ChartTips>
 
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-foreground/70">
         <span className="flex items-center gap-2">
@@ -174,8 +183,8 @@ export function QueueMonthChart({
               <b className="font-bold text-foreground">
                 {formatMonth(a.filingMonth) ?? a.filingMonth}
               </b>{" "}
-              holds {fmtInt(a.total)} against a neighbouring average of{" "}
-              {fmtInt(Math.round(a.neighbourMean))}
+              holds {formatInt(a.total)} against a neighbouring average of{" "}
+              {formatInt(Math.round(a.neighbourMean))}
             </Fragment>
           ))}
           . That is what the records contain, not a gap in them.

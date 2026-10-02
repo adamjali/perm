@@ -9,6 +9,7 @@
  */
 
 import { MutationCtx, QueryCtx } from "../_generated/server";
+import { MS_PER_DAY, MS_PER_HOUR, MS_PER_MINUTE } from "./time";
 
 /**
  * Rate limit configuration
@@ -39,13 +40,13 @@ export interface RateLimitResult {
  */
 export const RATE_LIMITS = {
   /** OTP verification: 10 attempts per 15 minutes (legit users can mistype OTP a few times) */
-  OTP_VERIFY: { limit: 10, windowMs: 15 * 60 * 1000 },
+  OTP_VERIFY: { limit: 10, windowMs: 15 * MS_PER_MINUTE },
   /** Password reset request: 5 per hour (allows re-request if email missed) */
-  PASSWORD_RESET: { limit: 5, windowMs: 60 * 60 * 1000 },
+  PASSWORD_RESET: { limit: 5, windowMs: MS_PER_HOUR },
   /** Login attempts: 20 per 15 minutes (legit users forgetting password get reasonable retries) */
-  LOGIN: { limit: 20, windowMs: 15 * 60 * 1000 },
+  LOGIN: { limit: 20, windowMs: 15 * MS_PER_MINUTE },
   /** Email send: 5 per 10 minutes (prevent spam) */
-  EMAIL_SEND: { limit: 5, windowMs: 10 * 60 * 1000 },
+  EMAIL_SEND: { limit: 5, windowMs: 10 * MS_PER_MINUTE },
 } as const;
 
 /**
@@ -179,6 +180,9 @@ export async function clearRateLimit(
   }
 }
 
+/** Expired rate-limit rows deleted per cleanup call. */
+const CLEANUP_BATCH = 100;
+
 /**
  * Cleanup old rate limit records
  * Should be run periodically to prevent table bloat
@@ -188,14 +192,14 @@ export async function clearRateLimit(
  */
 export async function cleanupRateLimits(
   ctx: MutationCtx,
-  maxAgeMs: number = 24 * 60 * 60 * 1000
+  maxAgeMs: number = MS_PER_DAY
 ): Promise<number> {
   const cutoff = Date.now() - maxAgeMs;
 
   const oldRecords = await ctx.db
     .query("rateLimits")
     .filter((q) => q.lt(q.field("timestamp"), cutoff))
-    .take(100); // Process in batches
+    .take(CLEANUP_BATCH);
 
   for (const record of oldRecords) {
     await ctx.db.delete(record._id);

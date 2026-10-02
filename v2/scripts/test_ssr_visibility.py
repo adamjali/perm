@@ -20,7 +20,7 @@ def check(ok: bool, msg: str) -> None:
         FAILS.append(msg)
 
 
-# The Aug 31 2026 defect: a wrapper serialized hidden around the whole page.
+# A wrapper serialized hidden around the whole page.
 PAGE_TRANSITION = '<main id="main-content"><div style="opacity:0;transform:translateY(8px)"><h1>X</h1></div></main>'
 # The home curtain's stylesheet in <head>: text, not an element's style.
 CURTAIN_CSS = ('<style>@media (prefers-reduced-motion:reduce){html[data-pre="leaving"] .pre'

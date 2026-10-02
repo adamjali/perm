@@ -9,11 +9,11 @@
  * a sign-in form: the ambient canvas, the scroll progress bar, hash-anchor
  * handling, the back-to-top button and the on-device diagnostic.
  *
- * No page transition, deliberately (removed Sep 30 2026). A fade keyed on the
- * pathname remounted the whole tree, data rail included, on every click. The
- * pathname commits WITH the loading state, so the fade played on the skeleton
- * and the real page then swapped in unanimated. Under reduced motion the
- * wrapper changed type after hydration and remounted the page a second time.
+ * No page transition, deliberately. A fade keyed on the pathname remounts the
+ * whole tree, data rail included, on every click; the pathname commits WITH
+ * the loading state, so the fade plays on the skeleton and the real page then
+ * swaps in unanimated; and under reduced motion the wrapper changes type
+ * after hydration and remounts the page a second time.
  */
 
 import { ScrollProgress } from "@/components/home";
@@ -22,6 +22,7 @@ import { HashScrollHandler } from "@/components/ui/hash-scroll-handler";
 import { ViewportDiag } from "@/components/diag/ViewportDiag";
 import { AmbientMurmuration } from "@/components/home/AmbientMurmuration";
 import { DataShell } from "@/components/tools/DataShell";
+import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 
 export default function PublicLayout({
   children,
@@ -52,6 +53,7 @@ export default function PublicLayout({
             pages: a sidebar has to sit BESIDE the content, so something has
             to own both. On every other public page DataShell renders its
             children untouched. */}
+        <SiteBreadcrumbs />
         <DataShell>{children}</DataShell>
       </main>
 

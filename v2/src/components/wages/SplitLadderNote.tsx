@@ -1,5 +1,7 @@
-import { isComplete, money, widestStep, RUNG_LABEL, type Ladder } from "@/lib/wageLadder";
+import { isComplete, widestStep, RUNG_LABEL, type Ladder } from "@/lib/wageLadder";
+import { formatDollars } from "@/lib/format";
 import { cn } from "@/lib/utils";
+import { MoreText } from "@/components/data/MoreText";
 
 /**
  * Names the ladders with the widest jump between two neighbouring rungs.
@@ -50,26 +52,28 @@ export function SplitLadderNote({
   const first = split[0]!;
 
   return (
-    <p className={cn("text-sm leading-relaxed text-foreground/70", className)}>
-      A few ladders jump rather than climb, and a jump is the signature of two
-      populations sharing one row. {first.ladder.label} rises{" "}
-      {first.step.ratio.toFixed(1)} times between the{" "}
-      {RUNG_LABEL[first.step.from].toLowerCase()} and the{" "}
-      {RUNG_LABEL[first.step.to].toLowerCase()}, from{" "}
-      {money(first.ladder[first.step.from] as number)} to{" "}
-      {money(first.ladder[first.step.to] as number)}
-      {split.length > 1 ? (
-        <>
-          , and{" "}
-          {split
-            .slice(1)
-            .map((s) => s.ladder.label)
-            .join(" and ")}{" "}
-          jump too
-        </>
-      ) : null}
-      . A median taken across a jump falls inside it, describing a wage few of
-      the filings behind it actually offer.
-    </p>
+    <MoreText gist={"A ladder that jumps is two populations sharing one row."}>
+      <p className={cn("text-sm leading-relaxed text-foreground/70", className)}>
+        A few ladders jump rather than climb, and a jump is the signature of two
+        populations sharing one row. {first.ladder.label} rises{" "}
+        {first.step.ratio.toFixed(1)} times between the{" "}
+        {RUNG_LABEL[first.step.from].toLowerCase()} and the{" "}
+        {RUNG_LABEL[first.step.to].toLowerCase()}, from{" "}
+        {formatDollars(first.ladder[first.step.from] as number)} to{" "}
+        {formatDollars(first.ladder[first.step.to] as number)}
+        {split.length > 1 ? (
+          <>
+            , and{" "}
+            {split
+              .slice(1)
+              .map((s) => s.ladder.label)
+              .join(" and ")}{" "}
+            jump too
+          </>
+        ) : null}
+        . A median taken across a jump falls inside it, describing a wage few of
+        the filings behind it actually offer.
+      </p>
+    </MoreText>
   );
 }

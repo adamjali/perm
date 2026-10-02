@@ -15,7 +15,7 @@
 import posthog from "posthog-js";
 
 /**
- * COOKIE-FREE UNLESS SIGNED IN (Sep 27 2026).
+ * COOKIE-FREE UNLESS SIGNED IN.
  *
  * PostHog starts with `cookieless_mode: "on_reject"` and
  * `opt_out_capturing_by_default: true` (src/instrumentation-client.ts), so a
@@ -63,7 +63,7 @@ export function isGpcEnabled(): boolean {
 /**
  * Calls made while PostHog is still starting are HELD and replayed in order.
  *
- * It starts a beat late on purpose (Oct 1 2026): instrumentation-client.ts
+ * It starts a beat late on purpose: instrumentation-client.ts
  * first asks Cloudflare's edge for the visitor's country, because cookie-free
  * mode drops the IP address before PostHog can look one up. posthog-js drops
  * any call made before init, so without this an early sign-in's consent or an

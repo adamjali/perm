@@ -19,6 +19,7 @@ import { requireAdmin } from "./lib/admin";
 import { loggers } from "./lib/logging";
 import { recordError } from "./lib/errorRecording";
 import { shouldForwardInbound } from "./lib/supportEmailForward";
+import { SITE_URL } from "./lib/links";
 
 const log = loggers.email;
 
@@ -246,7 +247,7 @@ export const replyToEmail = internalAction({
         recipientName,
         subject: `Re: ${original.subject}`,
         body: args.replyBody,
-        appUrl: "https://permtracker.app",
+        appUrl: SITE_URL,
       })
     );
 

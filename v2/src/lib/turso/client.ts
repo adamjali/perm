@@ -48,11 +48,10 @@ export function turso(): Client {
 /**
  * A per-query deadline with one retry on a fresh request.
  *
- * Added 2026-08-28, during a Turso incident their own status page called
- * degraded: most requests answered normally while a fraction HUNG - undici's
- * HeadersTimeoutError after minutes with no response headers - and one hung
- * request was enough to blow a page's whole prerender budget three times and
- * fail two production deploys. The client cannot abort libSQL's underlying
+ * A degraded database can answer most requests normally while a fraction
+ * HANG - undici's HeadersTimeoutError after minutes with no response headers
+ * - and one hung request is enough to blow a page's whole prerender budget
+ * and fail a deploy. The client cannot abort libSQL's underlying
  * fetch, so the race abandons the stuck request (it times out harmlessly on
  * its own) and the retry rides a NEW connection, which is exactly what a
  * flaky-connection failure mode wants. A genuinely slow query still throws
@@ -64,32 +63,25 @@ export function turso(): Client {
 // budget. 20s is right for a visitor waiting on a page and wrong for a
 // build-time prerender, which can afford to wait and has nobody watching.
 //
-// Measured 2026-08-31, against production Turso: `SELECT 1` answers in 0.38s
-// while /perm-wages' wage-band aggregation over the case corpus takes
-// **39.7s**. It therefore blew both 20s attempts and failed the Vercel build
-// twice on `Error occurred prerendering page "/perm-wages"` - a legitimately
-// slow scan being killed by a guard written for hung connections, not a
-// connection problem at all.
+// Measured against production: `SELECT 1` answers in well under a second
+// while /perm-wages' wage-band aggregation over the case corpus takes about
+// 40 s, so a 20 s deadline at build time kills a legitimately slow scan with
+// a guard written for hung connections.
 //
 // THE REAL FIX IS AN INDEX on `perm_cases(fiscal_year, wage)`, which would
 // cover that GROUP BY instead of scanning the table. That is a schema change to
-// a 373k-row production table and belongs in its own deliberate pass - see the
-// note on Turso forbidding ANALYZE, which means an index there has to win on
-// shape rather than statistics.
+// a large production table and belongs in its own deliberate pass; with no
+// planner statistics on this database, an index there has to win on shape
+// rather than statistics.
 const QUERY_DEADLINE_MS =
   process.env.NEXT_PHASE === "phase-production-build" ? 90_000 : 20_000;
 
 /**
- * THE RETRY USED TO FIRE ONLY ON THE DEADLINE THIS FUNCTION RAISES ITSELF, and
- * that excluded the one failure it was written for.
- *
- * Production Sentry, 2026-08-31 06:45 EDT, on a `perm-employers/[slug]` server
- * component: `SocketError: other side closed` wrapped in `TypeError: fetch
- * failed`. That is a pooled keep-alive connection the far end had already
- * dropped - the single most retryable error there is, because a fresh request
- * almost always succeeds - and `!String(e).includes("turso query deadline")`
- * threw it straight through. The comment above says the retry exists so it can
- * ride a NEW connection; the predicate disagreed.
+ * THE RETRY FIRES ON A DROPPED CONNECTION, NOT ONLY ON ITS OWN DEADLINE.
+ * `SocketError: other side closed` wrapped in `TypeError: fetch failed` is a
+ * pooled keep-alive connection the far end has already dropped - the single
+ * most retryable error there is, because a fresh request almost always
+ * succeeds, and riding a NEW connection is what the retry is for.
  *
  * THE REASON IS IN `e.cause`, NOT THE MESSAGE. `String(err)` on undici's
  * wrapper is exactly `"TypeError: fetch failed"` and nothing else, so a
@@ -110,13 +102,10 @@ const TRANSIENT_NETWORK =
  * network error.
  *
  * A `SQLITE_NOMEM` comes back as a real, successful HTTP response carrying a
- * LibsqlError, so TRANSIENT_NETWORK above cannot see it and the request threw
- * on the first attempt. Measured in production on 2026-09-03: between 13:58 and
- * 14:07 UTC, Turso was under memory pressure and Sentry caught five
- * `SQLITE_NOMEM: SQLite error: out of memory` on release 13cd6d00, including
- * getWageFilterOptions on /tools/salary-explorer and a generateMetadata call.
- * The same pressure failed two ingest workflows in the same window, and the
- * exact query that died re-ran by hand minutes later in 22.8s.
+ * LibsqlError, so TRANSIENT_NETWORK above cannot see it and the request would
+ * throw on the first attempt. Under memory pressure the database answers
+ * `SQLITE_NOMEM: SQLite error: out of memory` for page renders and ingest
+ * jobs alike, and the same statement succeeds when re-run minutes later.
  *
  * So it is transient by definition: the statement was never rejected on its
  * merits, the server ran out of room to answer it.
@@ -161,11 +150,9 @@ async function withDeadline<T>(
       // is exactly right for `other side closed`, because the point is to ride
       // a new connection. It is close to useless for SQLITE_NOMEM: the server
       // ran out of room to answer, and a few milliseconds later it still has
-      // none. Measured 2026-09-09: two production builds failed prerendering
-      // /tools/salary-explorer on SQLITE_NOMEM with both attempts inside the
-      // same instant, while a redeploy minutes later succeeded and the two
-      // window-function queries behind that page ran in 0.8s and 2.8s by hand.
-      // So pressure gets a third attempt and a real wait between tries.
+      // none: two attempts inside the same instant both fail, while the same
+      // queries succeed in seconds minutes later. So pressure gets a third
+      // attempt and a real wait between tries.
       const pressure = retryTransient && TRANSIENT_SQLITE.test(chain);
       const retryable =
         chain.includes("turso query deadline") ||
@@ -218,11 +205,10 @@ let rwClient: Client | null = null;
  *
  * PRODUCTION'S DEFAULT TOKEN IS READ-ONLY ON PURPOSE, and that is worth
  * keeping: the entire read layer runs on a credential that cannot corrupt
- * the corpus even if the web tier is compromised. Discovered the hard way
- * 2026-08-28 - the first write feature failed silently in prod with
- * "BLOCKED: SQL write operations are forbidden" while the same code
- * worked locally, because the local env carries a full-access token under
- * the same variable name. TURSO_RW_AUTH_TOKEN is the explicit write
+ * the corpus even if the web tier is compromised. A write on it fails in
+ * production with "BLOCKED: SQL write operations are forbidden" while the
+ * same code works locally, because the local env carries a full-access token
+ * under the same variable name. TURSO_RW_AUTH_TOKEN is the explicit write
  * credential; absent (local dev), the default token serves both roles.
  */
 function tursoRw(): Client {

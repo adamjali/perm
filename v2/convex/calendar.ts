@@ -10,11 +10,10 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { internal } from "./_generated/api";
 import { getCurrentUserId, getCurrentUserIdOrNull } from "./lib/auth";
 import { readUserCases } from "./lib/userCases";
+import { caseDeadlineDates, type CaseDeadlineDates } from "./lib/caseDates";
 import { buildDefaultProfile } from "./lib/userDefaults";
-import { slotsForPreference, type CalendarSyncPreference } from "./lib/calendarTypes";
 
 
 /**
@@ -34,36 +33,13 @@ interface CalendarRfiRfeEntry {
 /**
  * Calendar event data type - case with all deadline-relevant fields
  */
-interface CalendarEventData {
+interface CalendarEventData extends CaseDeadlineDates {
   id: Id<"cases">;
   employerName: string;
   beneficiaryIdentifier: string;
   positionTitle: string;
   caseStatus: "pwd" | "recruitment" | "eta9089" | "i140" | "closed";
   progressStatus: "working" | "waiting_intake" | "filed" | "approved" | "under_review" | "rfi_rfe";
-  // PWD dates
-  pwdFilingDate?: string;
-  pwdDeterminationDate?: string;
-  pwdExpirationDate?: string;
-  // Recruitment dates
-  jobOrderStartDate?: string;
-  jobOrderEndDate?: string;
-  sundayAdFirstDate?: string;
-  sundayAdSecondDate?: string;
-  additionalRecruitmentStartDate?: string;
-  additionalRecruitmentEndDate?: string;
-  noticeOfFilingStartDate?: string;
-  noticeOfFilingEndDate?: string;
-  // ETA 9089 dates
-  eta9089FilingDate?: string;
-  eta9089AuditDate?: string;
-  eta9089CertificationDate?: string;
-  eta9089ExpirationDate?: string;
-  // I-140 dates
-  i140FilingDate?: string;
-  i140ReceiptDate?: string;
-  i140ApprovalDate?: string;
-  i140DenialDate?: string;
   // RFI/RFE entries
   rfiEntries: CalendarRfiRfeEntry[];
   rfeEntries: CalendarRfiRfeEntry[];
@@ -119,29 +95,7 @@ export const getCalendarEvents = query({
       positionTitle: caseDoc.positionTitle,
       caseStatus: caseDoc.caseStatus,
       progressStatus: caseDoc.progressStatus,
-      // PWD dates
-      pwdFilingDate: caseDoc.pwdFilingDate,
-      pwdDeterminationDate: caseDoc.pwdDeterminationDate,
-      pwdExpirationDate: caseDoc.pwdExpirationDate,
-      // Recruitment dates
-      jobOrderStartDate: caseDoc.jobOrderStartDate,
-      jobOrderEndDate: caseDoc.jobOrderEndDate,
-      sundayAdFirstDate: caseDoc.sundayAdFirstDate,
-      sundayAdSecondDate: caseDoc.sundayAdSecondDate,
-      additionalRecruitmentStartDate: caseDoc.additionalRecruitmentStartDate,
-      additionalRecruitmentEndDate: caseDoc.additionalRecruitmentEndDate,
-      noticeOfFilingStartDate: caseDoc.noticeOfFilingStartDate,
-      noticeOfFilingEndDate: caseDoc.noticeOfFilingEndDate,
-      // ETA 9089 dates
-      eta9089FilingDate: caseDoc.eta9089FilingDate,
-      eta9089AuditDate: caseDoc.eta9089AuditDate,
-      eta9089CertificationDate: caseDoc.eta9089CertificationDate,
-      eta9089ExpirationDate: caseDoc.eta9089ExpirationDate,
-      // I-140 dates
-      i140FilingDate: caseDoc.i140FilingDate,
-      i140ReceiptDate: caseDoc.i140ReceiptDate,
-      i140ApprovalDate: caseDoc.i140ApprovalDate,
-      i140DenialDate: caseDoc.i140DenialDate,
+      ...caseDeadlineDates(caseDoc),
       // RFI/RFE entries - default to empty arrays
       rfiEntries: (caseDoc.rfiEntries ?? []) as CalendarRfiRfeEntry[],
       rfeEntries: (caseDoc.rfeEntries ?? []) as CalendarRfiRfeEntry[],
@@ -256,155 +210,5 @@ export const updateCalendarPreferences = mutation({
     await ctx.db.patch(profile._id, updates);
 
     return profile._id;
-  },
-});
-
-/**
- * Disconnect Google Calendar with cleanup of all calendar events
- *
- * This mutation:
- * 1. Schedules deletion of ALL calendar events from Google Calendar
- * 2. Clears OAuth tokens from userProfiles
- * 3. Sets googleCalendarConnected to false
- *
- * The event cleanup runs asynchronously via scheduler.runAfter to avoid
- * timeout issues with potentially many events to delete.
- *
- * @returns Object with cleanup scheduled status
- */
-export const disconnectGoogleCalendarWithCleanup = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await getCurrentUserId(ctx);
-    const now = Date.now();
-
-    // Get the user profile
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
-      .first();
-
-    if (!profile) {
-      throw new Error("User profile not found");
-    }
-
-    // Check if calendar is connected
-    if (!profile.googleCalendarConnected) {
-      return {
-        success: true,
-        cleanupScheduled: false,
-        message: "Google Calendar was not connected",
-      };
-    }
-
-    // Schedule the cleanup action to run immediately
-    // This deletes all calendar events from Google Calendar
-    // and clears calendarEventIds from all cases
-    await ctx.scheduler.runAfter(
-      0,
-      internal.googleCalendarActions.clearAllCalendarEvents,
-      { userId: userId }
-    );
-
-    // Clear all Google OAuth fields immediately
-    // The cleanup action handles event deletion asynchronously
-    await ctx.db.patch(profile._id, {
-      googleAccessToken: undefined,
-      googleRefreshToken: undefined,
-      googleTokenExpiry: undefined,
-      googleEmail: undefined,
-      googleScopes: undefined,
-      googleCalendarConnected: false,
-      updatedAt: now,
-    });
-
-    return {
-      success: true,
-      cleanupScheduled: true,
-      message: "Google Calendar disconnected. Calendar events are being removed.",
-    };
-  },
-});
-
-/**
- * Valid calendar sync preference names that can be toggled.
- * These map to userProfile fields.
- */
-const VALID_CALENDAR_PREFS = [
-  "calendarSyncPwd",
-  "calendarSyncEta9089",
-  "calendarSyncI140",
-  "calendarSyncRfe",
-  "calendarSyncRfi",
-  "calendarSyncRecruitment",
-  "calendarSyncFilingWindow",
-] as const;
-
-type CalendarSyncPrefName = (typeof VALID_CALENDAR_PREFS)[number];
-
-/**
- * Update a calendar sync preference with auto-cleanup when toggled OFF.
- *
- * When a calendar sync preference is toggled OFF, this mutation:
- * 1. Updates the preference in userProfiles
- * 2. Schedules deletion of all calendar events of that type from Google Calendar
- * 3. Clears the event IDs from all user's cases
- *
- * When toggled ON, only the preference is updated (events are created on next case update).
- *
- * @param preferenceName - The preference field name (e.g., "calendarSyncPwd")
- * @param newValue - The new boolean value for the preference
- */
-export const updateCalendarSyncPreference = mutation({
-  args: {
-    preferenceName: v.string(),
-    newValue: v.boolean(),
-  },
-  handler: async (ctx, args) => {
-    const { preferenceName, newValue } = args;
-    const userId = await getCurrentUserId(ctx);
-    const now = Date.now();
-
-    // Validate preference name
-    if (!VALID_CALENDAR_PREFS.includes(preferenceName as CalendarSyncPrefName)) {
-      throw new Error(`Invalid preference name: ${preferenceName}`);
-    }
-
-    // Get user profile
-    const profile = await ctx.db
-      .query("userProfiles")
-      .withIndex("by_user_id", (q) => q.eq("userId", userId))
-      .filter((q) => q.eq(q.field("deletedAt"), undefined))
-      .first();
-
-    if (!profile) {
-      throw new Error("User profile not found");
-    }
-
-    // Update the preference
-    const updates: Record<string, unknown> = {
-      [preferenceName]: newValue,
-      updatedAt: now,
-    };
-    await ctx.db.patch(profile._id, updates);
-
-    // If toggled OFF, schedule deletion of calendar events for this type
-    if (newValue === false) {
-      const schemaFields = slotsForPreference(preferenceName as CalendarSyncPreference);
-      if (schemaFields && schemaFields.length > 0) {
-        // Schedule the bulk delete action to run immediately
-        await ctx.scheduler.runAfter(
-          0,
-          internal.googleCalendarActions.bulkDeleteEventsByType,
-          {
-            userId: userId,
-            eventSchemaFields: schemaFields,
-          }
-        );
-      }
-    }
-
-    return { success: true, preferenceName, newValue };
   },
 });

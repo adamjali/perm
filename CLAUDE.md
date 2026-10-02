@@ -1,10 +1,10 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-09-30
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-01
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **510 files / 8,165 tests across 5 vitest
-> projects** (2026-09-30), not the 151 files / 3 projects TESTING.md records. Treat those
+> have drifted: the suite is now **544 files / 8,237 tests across 5 vitest
+> projects** (2026-10-01), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
 ## Production URLs
@@ -308,3 +308,23 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 1 2026".
 - **`/perm-decision-activity` read a deleted source** and showed June as "the last 28 days".
 - **The daily pulse** leads the homepage's data and the activity page; each sweep expires those pages.
 
+
+## Oct 1 2026, in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 1 2026".
+
+- **One list of every email** (`convex/lib/mailKinds.ts`) drives the emailed preferences page and Settings alike.
+- **One breadcrumb bar on every public page**, named from the menus; never two BreadcrumbLists on a page.
+- **Every chart shows detail on hover or tap**; public text is 14px; long notes are cut or folded.
+- **Switching a calendar type off now removes its events**; the cleanup had never been wired to the settings page.
+- **A large cleanup**: dead files, unused Convex functions and packages, retired mirrors, consolidated scripts.
+
+## Oct 1 2026 (evening), in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 1 2026 (evening)".
+
+- **The attorney page shows the app's real pages**, drawn in Storybook from a recorded sample firm.
+- **Creating a case kept no job description, and Import lost nine exported fields**; both fixed and held by tests.
+- **A filed case's recruitment card no longer reads "EXPIRED".**
+- **The bulletin page no longer says "at least 0 ... may well be up"** on release-watch days.
+- **Social cards hold no live figure**; the H-1B lottery, Employer Data Hub and SEVP data are loaded on the server.

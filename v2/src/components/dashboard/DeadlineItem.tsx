@@ -15,7 +15,6 @@
  * - Neobrutalist styling (2px border, hover lift with shadow)
  *
  * V1 Reference: frontend/dist/dashboard.html (lines 219-270)
- * Updated: 2025-12-24 - Use centralized z-index, passive scroll listeners
  */
 
 import { useState, useRef, useEffect, useCallback } from "react";
@@ -50,7 +49,7 @@ function useHasHover(): boolean {
 
   return hasHover;
 }
-import type { DeadlineItem as DeadlineItemType } from "../../../convex/lib/dashboardTypes";
+import type { DeadlineItem as DeadlineItemType } from "@convex/lib/dashboardTypes";
 
 interface DeadlineItemProps {
   deadline: DeadlineItemType;

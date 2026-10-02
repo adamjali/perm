@@ -85,9 +85,8 @@ export function QueueStamp({ eyebrow, month, children }: QueueStampProps) {
         </tbody>
       </table>
       {typeof children === "string" ? (
-        // A bare string used to render as a text node flush against the table,
-        // so the 6px offset shadow painted over its first line (seen in the
-        // Sep 22 2026 digest preview: "DOL's own stamp" under "November 2025").
+        // A bare string would render as a text node flush against the table,
+        // where the 6px offset shadow paints over its first line.
         // Every caller that wraps its own <Text> keeps its style; a string gets
         // the provenance style, which is what the block's contract promises.
         <Text className="em-text-secondary" style={styles.provenance}>
@@ -182,5 +181,3 @@ const styles = {
     margin: "0",
   },
 } as const;
-
-export default QueueStamp;

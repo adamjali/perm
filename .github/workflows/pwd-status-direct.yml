@@ -1,35 +1,23 @@
 name: PWD case status (direct from DOL)
 
-# Per-case PREVAILING WAGE (ETA-9141) status, straight from flag.dol.gov, the
-# same endpoint and the same discipline as case-status-direct.yml. See
-# scripts/ingest_pwd_status_direct.py for the two measurements this rests on:
-# DOL's batch endpoint serves P- cases, and PERM and PWD filings share one
-# serial counter, so the PERM corpus's serial range per filing day is the
-# range to probe for that day's wage requests.
+# Per-case prevailing wage (ETA-9141) and LCA status, straight from
+# flag.dol.gov, with the same discipline as case-status-direct.yml
+# (scripts/ingest_pwd_status_direct.py has the details).
 #
-# THREE PASSES:
-#   pending   daily 05:40 ET  - every IN PROCESS request (~8k PWD, 0 LCA:
-#                               LCAs are final within a week). Discovery of
-#                               new filings is NOT here any more: it is the
-#                               unified serial walk in case-status-direct.yml,
-#                               which asks every busy prefix per span and
-#                               writes P-/I- hits into these tables.
-#   full      Sundays 06:40 ET - every request FILED in the last 180 days
-#                               (PWD) / 90 days (LCA), so a determination
-#                               that later moves is seen. Walking every row
-#                               needed ~230 min against a 170 min timeout and
-#                               died at 65% every Sunday (first run Sep 6 2026).
-#   backfill  dispatch only    - walks earlier filing days, resumable, ~60
-#                               requests per day code; run it a few times
-#                               with --from/--to until the range is covered
+#   pending   daily 05:40 ET   every undecided request. New filings are found
+#                              by the unified serial walk in case-status-direct.yml,
+#                              which writes P- and I- hits into these tables.
+#   full      Sundays 06:40 ET every request filed in the last 180 days (PWD)
+#                              or 90 days (LCA), so a determination that later
+#                              moves is seen
+#   backfill  dispatch only    walks earlier filing days, resumable, chaining
+#                              one leg after another until the range is covered
 #
-# Scheduled AFTER the PERM sweep (04:10 ET) so the serial windows it probes
-# include that morning's PERM discoveries, and inside DOL's quiet hours.
+# Scheduled after the PERM sweep, inside DOL's quiet hours. The server's timers
+# dispatch pwd-daily and pwd-weekly-full through /api/cron/dispatch, because
+# GitHub's own `schedule` ran hours late on this repo.
 
 on:
-  # No `schedule:` any more: the server's timers dispatch pwd-daily (09:40 UTC)
-  # and pwd-weekly-full (10:40 UTC Sundays) through /api/cron/dispatch, because
-  # GitHub ran these crons hours late every day (measured Sep 7 2026).
   workflow_dispatch:
     inputs:
       mode:
@@ -49,21 +37,23 @@ on:
 
 permissions:
   contents: read
-  # The backfill re-dispatches itself until the range is covered (below).
+  # A backfill re-dispatches itself until the range is covered (below).
   actions: write
 
 # Two groups on purpose. GitHub keeps at most one running and ONE queued run
-# per group and cancels the older queued one, so a backfill that queued its
-# own next leg behind the daily cron would have that leg cancelled by it (or
-# cancel the cron's sweep). Backfill legs chain in their own group.
+# per group and cancels the older queued one, so a backfill leg queued behind
+# the daily sweep would be cancelled by it. Backfill legs chain in their own group.
 concurrency:
-  group: pwd-status-direct-${{ (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'backfill') && 'backfill' || 'sweep' }}
+  group: pwd-status-direct-${{ github.event.inputs.mode == 'backfill' && 'backfill' || 'sweep' }}
   cancel-in-progress: false
 
 jobs:
   sweep:
     runs-on: ubuntu-24.04
     timeout-minutes: 180
+    env:
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
@@ -71,63 +61,43 @@ jobs:
           python-version: "3.12"
 
       - name: Note where the backfill starts
-        if: github.event.inputs.mode == 'backfill'
+        if: inputs.mode == 'backfill'
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-        run: |
-          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
-            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
-          echo "BACKFILL_BEFORE=$(python3 scripts/ingest_pwd_status_direct.py --progress)" >> "$GITHUB_ENV"
+        run: echo "BACKFILL_BEFORE=$(python3 scripts/ingest_pwd_status_direct.py --progress)" >> "$GITHUB_ENV"
 
       - name: Sweep
         working-directory: v2
         env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          MODE_IN: ${{ github.event.inputs.mode }}
-          FROM_IN: ${{ github.event.inputs.from }}
-          TO_IN: ${{ github.event.inputs.to }}
+          MODE_IN: ${{ inputs.mode }}
+          FROM_IN: ${{ inputs.from }}
+          TO_IN: ${{ inputs.to }}
         run: |
-          printf 'TURSO_DATABASE_URL=%s\nTURSO_AUTH_TOKEN=%s\n' \
-            "$TURSO_DATABASE_URL" "$TURSO_AUTH_TOKEN" > .env.local
-          MODE="$MODE_IN"
-          if [ -z "$MODE" ]; then
-            if [ "${{ github.event.schedule }}" = "40 10 * * 0" ]; then
-              MODE=full
-            else
-              MODE=pending
-            fi
-          fi
+          MODE="${MODE_IN:-pending}"
           echo "mode: $MODE"
-          # The failure hook below records the MODE too, so a killed weekly
-          # run and Monday's clean daily run are separate rows to the health
-          # check (filename-only keys let the daily pass hide the weekly
-          # failure on Sep 6 2026).
+          # The failure hook below records the mode too, so a killed weekly run
+          # and the next clean daily run are separate rows to the health check.
           echo "MODE=$MODE" >> "$GITHUB_ENV"
-          # `timeout` rather than the job cap, so a hang FAILS and notifies
-          # instead of being cancelled silently (see case-status-direct.yml).
+          # `timeout` rather than the job cap, so a hang fails and notifies
+          # instead of being cancelled silently.
           case "$MODE" in
             backfill)
-              # ~0.5 req/s measured, so 9,000 requests (the script's default
-              # cap) is five hours and the 170m timeout would kill the leg as
-              # a FAILURE every time. 4,500 ends cleanly in ~150 minutes; the
-              # next leg is dispatched by the step below.
+              # ~0.5 requests a second, so 4,500 ends cleanly in about 150
+              # minutes, inside this timeout; the next leg is dispatched below.
               timeout 170m python3 scripts/ingest_pwd_status_direct.py \
                 --backfill --from "$FROM_IN" --to "$TO_IN" --cap 4500 ;;
             discover)
               timeout 90m python3 scripts/ingest_pwd_status_direct.py --discover ;;
-            *)
+            pending|full)
               timeout 170m python3 scripts/ingest_pwd_status_direct.py --"$MODE" ;;
+            *)
+              echo "::error::unknown mode '$MODE'"; exit 1 ;;
           esac
 
       # The wage-request and LCA summaries this run just wrote are printed by
-      # daily-window pages (/pwd-cases, /lca-cases, /case-search). Expire them
-      # with the PERM sweep's fixed list (src/app/api/revalidate-sweep/paths.ts).
+      # /pwd-cases, /lca-cases and /case-search, on the PERM sweep's fixed list
+      # (src/app/api/revalidate-sweep/paths.ts).
       - name: Expire the pages that print the sweep's figures
         if: success()
-        working-directory: v2
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |
@@ -137,21 +107,14 @@ jobs:
           curl -fsS -X POST https://permtracker.app/api/revalidate-sweep \
             -H "x-revalidate-secret: $REVALIDATE_SECRET" || echo "revalidation call failed"
 
-      # A backfill leg that stopped at its cap dispatches the next one. Guards:
-      # only when it moved the frontier (a leg that made no progress would loop
-      # forever), and only while the frontier is short of --to. GITHUB_TOKEN
-      # may dispatch workflows; it is one of the two events it is allowed to
-      # trigger.
-      # THE RESUMER. A backfill chains itself leg to leg, and the chain has
-      # two ways to die that nothing restarted: a leg killed before it moved
-      # the frontier ("no progress; not chaining", by design), and a leg that
-      # failed outright. Both left the cursor stranded (Sep 3 2026, day code
-      # 26161, for four days). The scheduled daily run now asks the record
-      # whether an incomplete backfill has gone quiet and dispatches ONE leg.
-      # One a day, so a DOL outage cannot loop it; the health check reports a
-      # frontier that has not moved in 7 days.
+      # The resumer. A backfill chain can die two ways that nothing restarts:
+      # a leg killed before it moved the frontier, and a leg that failed
+      # outright. The daily pending run asks the record whether an incomplete
+      # backfill has gone quiet and dispatches ONE leg, once a day, so a DOL
+      # outage cannot loop it; the health check reports a frontier that has
+      # not moved in 7 days.
       - name: Resume an incomplete backfill
-        if: (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && github.event.inputs.mode == 'pending')) && !cancelled()
+        if: inputs.mode == 'pending' && !cancelled()
         working-directory: v2
         env:
           GH_TOKEN: ${{ github.token }}
@@ -167,31 +130,30 @@ jobs:
               echo "dispatched a backfill leg $FROM..$TO" ;;
           esac
 
+      # A backfill leg that stopped at its cap dispatches the next one, but
+      # only when it moved the frontier (a leg that made no progress would loop
+      # forever) and only while the frontier is short of --to.
       - name: Chain the next backfill leg
-        # `!cancelled()`: a leg cancelled by a person must not dispatch its
-        # successor; `success()` (the implicit default) would also skip on a
-        # cap-stop that exited 0, which is the case that MUST chain.
-        if: github.event.inputs.mode == 'backfill' && !cancelled()
+        # `!cancelled()`: a leg a person cancelled must not dispatch its
+        # successor, while a cap stop that exited 0 must.
+        if: inputs.mode == 'backfill' && !cancelled()
         working-directory: v2
         env:
           GH_TOKEN: ${{ github.token }}
-          FROM_IN: ${{ github.event.inputs.from }}
-          TO_IN: ${{ github.event.inputs.to }}
+          FROM_IN: ${{ inputs.from }}
+          TO_IN: ${{ inputs.to }}
         run: |
           AFTER="$(python3 scripts/ingest_pwd_status_direct.py --progress)"
           TARGET="$(python3 scripts/ingest_pwd_status_direct.py --day-code "$TO_IN")"
-          # A --to in the future can never be reached: day codes past today
-          # hold no serials yet. The Sep 7 2026 backfill was dispatched
-          # --to 2026-09-08, finished every real day, and the leg that found
-          # nothing left to do was recorded as a FAILURE by the guard below.
-          # Cap the target at today, and trust the record's own flag first.
+          # A --to in the future can never be reached (day codes past today
+          # hold no serials yet), so the target is capped at today.
           TODAY="$(python3 scripts/ingest_pwd_status_direct.py --day-code "$(date -u +%F)")"
           if [ "$TARGET" -gt "$TODAY" ]; then TARGET="$TODAY"; fi
           echo "frontier before: ${BACKFILL_BEFORE:-none}  after: ${AFTER:-none}  target: $TARGET"
           if python3 scripts/ingest_pwd_status_direct.py --progress-json | grep -q '"complete": true'; then
             echo "backfill recorded complete; nothing to chain"; exit 0
           fi
-          # Completion is checked BEFORE the no-progress guard: the leg that
+          # Completion is checked before the no-progress guard: the leg that
           # finishes the range legitimately makes no progress past --to.
           if [ -n "$AFTER" ] && [ "$AFTER" -ge "$TARGET" ]; then
             echo "backfill complete through $TO_IN"; exit 0
@@ -203,39 +165,13 @@ jobs:
             -f mode=backfill -f from="$FROM_IN" -f to="$TO_IN"
           echo "dispatched the next leg"
 
-      # THE ONLY THING THAT WILL SAY THIS RUN FAILED, TOMORROW.
-      #
-      # There is no alerting on these workflows. A red scheduled run does email
-      # the repo owner, but three of the four ways this job can die send
-      # nothing at all: a CANCELLED job (the job-level timeout-minutes cap),
-      # a runner reclaimed mid-sweep, and any failure whose only record is an
-      # Actions log that ages out. And the script's own `record_run` cannot
-      # help there, because in those cases no Python is left running.
-      #
-      # So write the failure where machinery that already exists will find it.
-      # `check_ingest_health.py` reads `ingest_runs` at 10:00 UTC daily and
-      # exits non-zero when an ingest's most recent run did not finish clean,
-      # which turns THAT run red and fires GitHub's own notification. No new
-      # service, no new secret - it rides the Turso token this job already has.
-      #
-      # `cancelled()` as well as `failure()`: a cancellation is the case with
-      # NO other signal whatsoever, so it is the one most worth recording. It
-      # is best-effort inside the runner's cancellation grace window.
+      # A cancelled or killed run leaves no other record; this one is what the
+      # daily health check reads (see scripts/record_ingest_failure.py).
       - name: Record the failure where the health check will see it
         if: failure() || cancelled()
         working-directory: v2
-        env:
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
         run: |
-          # Env vars, not .env.local: a job that died before the sweep step
-          # ever wrote that file still has to be able to report itself.
           python3 scripts/record_ingest_failure.py \
             --script "ingest_pwd_status_direct.py --${MODE:-unknown}" \
             --status "${{ job.status == 'cancelled' && 'cancelled' || 'failed' }}" \
             --note "pwd-status-direct: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-
-      - name: Remove credentials
-        if: always()
-        working-directory: v2
-        run: rm -f .env.local

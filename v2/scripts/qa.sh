@@ -2,10 +2,10 @@
 #
 # One command that checks the rendered site.
 #
-# Both audits below read the SITEMAP and sample three URLs per route
-# template, so adding 16,210 entity pages did not turn this into a 16,254
-# request job. Each prints its counts and what it skipped BEFORE its verdict,
-# because a run that could not see its subject reads exactly like a pass.
+# Both audits below read the sitemap and sample three URLs per route template,
+# so the number of entity pages doesn't change the request count. Each prints
+# its counts and what it skipped before its verdict, because a run that
+# couldn't see its subject reads exactly like a pass.
 #
 #   pnpm qa                              # against production
 #   pnpm qa http://127.0.0.1:3211        # against a local server

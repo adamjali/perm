@@ -1,4 +1,6 @@
 import { Fragment } from "react";
+
+import { ChartTips } from "@/components/data/ChartTips";
 import { cn } from "@/lib/utils";
 
 /**
@@ -35,6 +37,25 @@ function addMonths(month: string, n: number): string {
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
 }
 
+const MONTHS_LONG = ["January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"];
+
+function longLabel(month: string): string {
+  const [y, m] = month.split("-").map(Number);
+  return `${MONTHS_LONG[(m ?? 1) - 1]} ${y ?? 0}`;
+}
+
+/** What a month on the tape means, for its hover detail. */
+function tipFor(month: string, offset: number, isYou: boolean): string {
+  const state =
+    offset < 0
+      ? "DOL has worked through these filings"
+      : offset === 0
+        ? "DOL is deciding these filings now"
+        : `${offset} ${offset === 1 ? "month" : "months"} behind where DOL is`;
+  return `${longLabel(month)}\n${state}${isYou ? "\nYour filing month" : ""}`;
+}
+
 function label(month: string): string {
   const [y, m] = month.split("-").map(Number);
   return `${MONTH_NAMES[(m ?? 1) - 1]} ${String(y ?? 0).slice(2)}`;
@@ -69,6 +90,8 @@ export function QueueTape({
 
   return (
     <figure className={cn("m-0", className)}>
+      {/* The tooltip sits outside the scrolling strip, which would clip it. */}
+      <ChartTips label="DOL's PERM queue by filing month">
       <div className={cn("-mx-1 overflow-x-auto px-1", flagsCollide ? "pt-14" : "pt-7")}>
         <div
           className="relative grid min-w-[560px] border-2 border-border shadow-hard-sm"
@@ -81,6 +104,7 @@ export function QueueTape({
             return (
               <Fragment key={m}>{" "}
               <div
+                data-tip={tipFor(m, months.indexOf(m) - frontierAt, isYou)}
                 className={cn(
                   "relative flex h-16 items-end justify-center border-r border-border/30 pb-1 last:border-r-0",
                   cleared && "bg-primary",
@@ -111,14 +135,14 @@ export function QueueTape({
                     and would glue for every DOM extractor. */}
                 {" "}
                 {isFrontier ? (
-                  <span className="absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-foreground px-1.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider text-background">
+                  <span className="absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-foreground px-1.5 py-0.5 font-mono text-sm font-bold uppercase tracking-wider text-background">
                     DOL is here
                   </span>
                 ) : null}
                 {isYou && !isFrontier ? (
                   <span
                     className={cn(
-                      "absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-primary px-1.5 py-0.5 font-mono text-xs font-bold uppercase tracking-wider text-black",
+                      "absolute left-1/2 z-10 -translate-x-1/2 whitespace-nowrap border-2 border-border bg-primary px-1.5 py-0.5 font-mono text-sm font-bold uppercase tracking-wider text-black",
                       flagsCollide ? "-top-14" : "-top-7",
                     )}
                   >
@@ -139,6 +163,7 @@ export function QueueTape({
           })}
         </div>
       </div>
+      </ChartTips>
       <figcaption className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-sm text-foreground/70">
         <span className="flex items-center gap-2">
           <span aria-hidden="true" className="h-3 w-3 border border-border bg-primary" />

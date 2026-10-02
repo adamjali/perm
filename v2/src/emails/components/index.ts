@@ -1,8 +1,6 @@
 /**
  * Email Components Barrel Export
  * Shared components for PERM Tracker email templates.
- *
- * Phase: 24 (Notifications + Email)
  */
 
 export { EmailLayout } from "./EmailLayout";

@@ -34,10 +34,9 @@ export const BULLETIN_PAGES = [
  * the newest bulletin and links to the next month, and every category line page
  * shows the current cutoff, so all of them go stale together.
  *
- * `revalidate-dol` refuses this form because on Vercel each regeneration was a
- * billed ISR write. Since Sep 28 2026 the site runs on its own server, where an
- * expired page costs one render on its next visit and nothing if nobody opens
- * it: 145 month pages and 45 line pages, rendered on demand.
+ * Expiring a whole family is cheap: an expired page costs one render on its
+ * next visit and nothing if nobody opens it, so every month page and every
+ * line page is rendered on demand.
  *
  * THE PATTERN IS THE FILE PATH, ROUTE GROUPS INCLUDED. Next tags a page from its
  * file path (`/(site)/(public)/visa-bulletin/[month]/page`), and

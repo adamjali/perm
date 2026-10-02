@@ -5,7 +5,7 @@
  * and date ranges.
  */
 
-import type { Id } from "../../../convex/_generated/dataModel";
+import type { Id } from "@convex/_generated/dataModel";
 import type { RfiEntry, RfeEntry, AdditionalRecruitmentMethod } from "../shared/types";
 
 // Re-export shared types for convenience
@@ -18,8 +18,8 @@ export type { RfiEntry, RfeEntry, AdditionalRecruitmentMethod } from "../shared/
 /**
  * Stage types for timeline milestones.
  * Only 4 main case stages + RFI/RFE indicators.
- * "calculated" was removed - calculated milestones now use "eta9089" stage
- * since they relate to ETA 9089 filing window.
+ * Calculated milestones use the "eta9089" stage, since they relate to the
+ * ETA 9089 filing window.
  */
 export type Stage =
   | "pwd"
@@ -31,9 +31,8 @@ export type Stage =
 
 /**
  * Stage colours for the timeline and the calendar, as hex because callers
- * append alpha digits. They are the --stage-* values in globals.css; the
- * timeline used its own orange and green until Sep 28 2026, so one stage
- * showed in two colours across the app.
+ * append alpha digits. They are the --stage-* values in globals.css, one set
+ * for the whole app, so a stage shows in one colour everywhere.
  */
 export const STAGE_COLORS: Record<Stage, string> = {
   pwd: "#0066FF",

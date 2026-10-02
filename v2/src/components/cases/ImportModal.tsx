@@ -31,7 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { parseCaseImportFile, type ImportResult as ParseResult, BENEFICIARY_PLACEHOLDER } from "@/lib/import";
-import type { CaseCardData } from "../../../convex/lib/caseListTypes";
+import type { CaseCardData } from "@convex/lib/caseListTypes";
 import { cn } from "@/lib/utils";
 import { formatDeadlineDate } from "@/components/cases/case-card.utils";
 import { CaseStageBadge } from "@/components/status/case-stage-badge";

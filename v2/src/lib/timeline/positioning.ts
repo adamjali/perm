@@ -1,9 +1,6 @@
 /**
  * Position calculation utilities for timeline components.
  * Shared logic for milestone markers and range bars.
- *
- * Phase: 24 (Timeline Visualization)
- * Created: 2026-01-09
  */
 
 /**
@@ -67,12 +64,10 @@ export const MIN_MONTH_PX = 44;
 const MARKER_FOOTPRINT_PX = 22;
 
 /**
- * Group markers that would overlap into one marker each. The first answer to
- * overlapping squares (Sep 30 2026) stacked them on three lanes and folded the
- * rest into a "+N" chip; on real cases that drew towers of same-coloured
- * squares with a chip nobody could read (Adam's phone, the same morning). A
- * group is drawn as ONE square carrying its count, and its tooltip lists every
- * date in it.
+ * Group markers that would overlap into one marker each. Not lanes with a
+ * "+N" chip: on real cases those draw towers of same-coloured squares with a
+ * chip nobody can read on a phone. A group is drawn as ONE square carrying
+ * its count, and its tooltip lists every date in it.
  *
  * Walking left to right, a marker joins the current group when it sits within
  * one footprint of the group's last marker. Positions are percentages of the

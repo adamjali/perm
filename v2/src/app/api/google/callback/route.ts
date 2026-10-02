@@ -17,7 +17,7 @@ import {
   isAuthenticatedNextjs,
 } from "@convex-dev/auth/nextjs/server";
 import { fetchMutation, fetchQuery } from "convex/nextjs";
-import { api } from "@/../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import {
   decodeState,
   getOAuthClient,

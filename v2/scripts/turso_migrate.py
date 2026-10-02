@@ -1,32 +1,16 @@
 #!/usr/bin/env python3
-"""Load the PUBLIC DOL case corpus into Turso.
+"""Load the public DOL case corpus into the database (`perm_cases`).
 
-WHAT IS IN HERE, AND WHAT IS DELIBERATELY NOT
----------------------------------------------
-Only rows the Department of Labor publishes itself: case number, status,
-dates, employer, state, job title, SOC, attorney, wage. DOL's disclosure
-files carry NO beneficiary name, so this identifies employers and law firms
-(public business information) and never an individual.
+Only rows the Department of Labor publishes itself: case number, status, dates,
+employer, state, job title, SOC, attorney, wage. DOL's disclosure files carry
+no beneficiary name, so this identifies employers and law firms (public
+business information) and never an individual. Nothing belonging to a user of
+this product is written here; accounts and their own cases live in Convex, and
+the token the web app reads this database with is read-only.
 
-Nothing belonging to a user of this product is written here. Accounts, their
-own tracked cases, chat history and audit logs stay on Convex. The database
-is named `permtracker-public-data` so that invariant is visible from the
-dashboard, and the token the web app uses is READ-ONLY.
-
-WHY THIS MOVED OFF CONVEX
--------------------------
-373,939 rows with 11 indexes and 2 search indexes exceeded Convex's 0.5 GB
-free tier and disabled the whole deployment, reads included. The data is
-public, read-mostly, and rewritten once a quarter, which is a workload
-SQLite is very good at and a reactive document store is expensive at.
-
-WHY THE SLUGS ARE IMPORTED RATHER THAN RECOMPUTED
--------------------------------------------------
-`entity_key` merges the spellings DOL prints for one firm (Fragomen appears
-six ways); `with_unique_slugs` then disambiguates what is left, in volume
-order, so the busiest spelling keeps the clean slug. Both already exist. A
-slug computed differently in the writer than in the reader is a detail page
-that 404s from its own index, so this imports them instead of porting them.
+The entity key and slug rules are imported from the scripts that own them
+rather than ported: a slug computed differently in the writer than in the
+reader is a detail page that 404s from its own index.
 """
 from __future__ import annotations
 
@@ -38,10 +22,13 @@ import time
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 
-from ingest_perm_disclosure import entity_key  # noqa: E402
+from entity_identity import entity_key  # noqa: E402
 from lib_load_guard import drift_findings, sanity_findings  # noqa: E402
-from lib_turso import Turso, lit  # noqa: E402
-from store_entities import with_unique_slugs  # noqa: E402
+from lib_turso import (  # noqa: E402
+    Turso, add_missing_columns, canon, canon_hash, case_update, query_rows, read_doc, stmt,
+    write_doc,
+)
+from lib_slugs import with_unique_slugs  # noqa: E402
 
 COLUMNS = [
     "case_number", "status", "received_date", "decision_date", "days",
@@ -52,10 +39,10 @@ COLUMNS = [
     "institution", "job_education",
 ]
 # The first CORE columns are the ones every load has carried since the table
-# was made. The two after them (the employer's NAICS code and the worksite
-# city, Sep 26 2026) are unindexed, so an incremental load that finds only
-# those different UPDATEs them in place: one row write, where an INSERT OR
-# REPLACE would also rewrite all eighteen indexes.
+# was made. The two after them (the employer's NAICS code and the worksite city)
+# are unindexed, so an incremental load that finds only those different UPDATEs
+# them in place: one row write, where an INSERT OR REPLACE would also rewrite
+# every index.
 CORE = 15
 EXTRA = COLUMNS[CORE:]
 # 24 columns. SQLite 3.47 caps bound parameters at 32,766, so 500 rows is
@@ -94,18 +81,14 @@ SCHEMA = [
        )""",
 ]
 
-# Built AFTER the load: indexing 374k rows once is far cheaper than
-# maintaining ten B-trees across 748 insert statements.
-#
-# Fewer indexes than Convex needed, and not because we are cutting corners:
-# SQLite can serve a query from any PREFIX of a composite index, so
-# (state, status, decision_date) also answers "by state" and
-# "by state and status". Convex requires an exact index per access path,
-# which is a large part of why the storage bill got away from us.
+# Built after the load: indexing every row once is far cheaper than maintaining
+# each index across hundreds of insert statements. SQLite serves a query from
+# any prefix of a composite index, so (state, status, decision_date) also
+# answers "by state" and "by state and status".
 INDEXES = [
     "CREATE INDEX idx_pc_decision      ON perm_cases(decision_date)",
-    # Filing-month cohorts (getCohortDuration fallback). Added 2026-09-02: the
-    # table had no received_date index and the fallback scanned 373k rows.
+    # Filing-month cohorts (the getCohortDuration fallback), which would
+    # otherwise scan the table.
     "CREATE INDEX idx_pc_received      ON perm_cases(received_date, days)",
     "CREATE INDEX idx_pc_status_dec    ON perm_cases(status, decision_date)",
     "CREATE INDEX idx_pc_state_dec     ON perm_cases(state, decision_date)",
@@ -116,37 +99,24 @@ INDEXES = [
     "CREATE INDEX idx_pc_emp_st_dec    ON perm_cases(employer_slug, status, decision_date)",
     "CREATE INDEX idx_pc_att_dec       ON perm_cases(attorney_slug, decision_date)",
     "CREATE INDEX idx_pc_att_st_dec    ON perm_cases(attorney_slug, status, decision_date)",
-    # THE OCCUPATION PAIR IS ON THE 6-DIGIT GROUP, added 2026-09-03, and it
-    # fixed a correctness bug rather than a slow query. `perm_cases` holds both
-    # spellings of the same occupation - 302,081 dotted (`15-1252.00`) and
-    # 71,858 bare (`15-1252`) - so `soc_code = ?` answered with whichever the
-    # lead resolved to and silently dropped the rest. SOC 13-2011 is 3,686
-    # dotted plus 1,207 bare, so an exact match lost 24.7% of the accountants.
-    # `idx_pc_soc_dec` above is kept: it is on the bare column and cannot serve
-    # the expression, and dropping it would change other plans.
+    # The occupation pair is on the 6-digit group: `perm_cases` holds both
+    # spellings of one occupation (dotted `15-1252.00` and bare `15-1252`), so
+    # an exact `soc_code = ?` would silently drop part of it. `idx_pc_soc_dec`
+    # above stays: it is on the bare column, can't serve the expression, and
+    # dropping it would change other plans.
     "CREATE INDEX idx_pc_socg_dec      ON perm_cases(substr(soc_code, 1, 7), decision_date)",
     "CREATE INDEX idx_pc_socg_st_dec   ON perm_cases(substr(soc_code, 1, 7), status, decision_date)",
-    # TWO EQUALITIES AS A SEEK, added 2026-09-03. Before these, combining a
-    # lead with a second equality walked the lead's whole slice: the biggest
-    # firm plus `state='WY'` read 48,166 rows in 17.11 s to return four cases,
-    # and `state='CA'` plus a rare occupation read 67,743 in 8.82 s to return
-    # none. That cost is why the UI used to grey out worksite state the moment
-    # a law firm was picked. Through these the same reads are 5 rows / 0.55 s
-    # and 0 rows / 0.43 s, so every filter can now be combined.
-    #
-    # `decision_date` is last in each so `ORDER BY decision_date DESC` stays
-    # free, exactly as it is for the single-equality indexes above.
+    # Two equalities as a seek, so a lead combined with a second filter (a firm
+    # and a state, a state and an occupation) reads only the rows it returns
+    # instead of walking the lead's whole slice; that is what lets every filter
+    # be combined. `decision_date` is last in each so `ORDER BY decision_date
+    # DESC` stays free, as it is for the single-equality indexes above.
     "CREATE INDEX idx_pc_att_state_dec ON perm_cases(attorney_slug, state, decision_date)",
     "CREATE INDEX idx_pc_att_soc_dec   ON perm_cases(attorney_slug, substr(soc_code, 1, 7), decision_date)",
     "CREATE INDEX idx_pc_state_soc_dec ON perm_cases(state, substr(soc_code, 1, 7), decision_date)",
-    # COVERING INDEX for the /perm-wages band aggregation, added 2026-08-31.
-    # Without it that GROUP BY was `SCAN perm_cases` over 373,939 rows plus a
-    # temp B-tree and took 68s, which blew the query deadline TWICE and failed
-    # two production deploys on "Error occurred prerendering /perm-wages".
-    # With it the plan reads `SCAN perm_cases USING COVERING INDEX` and the
-    # query runs in 4-12s. Both columns are in the index, so SQLite never
-    # touches the table. `perm_cases` is rebuilt quarterly rather than nightly,
-    # so the write cost of another index is close to nothing.
+    # A covering index for the /perm-wages band aggregation, so that GROUP BY
+    # reads the index alone rather than scanning the table. `perm_cases` is
+    # rebuilt quarterly, so the write cost of another index is close to nothing.
     "CREATE INDEX idx_pc_fy_wage       ON perm_cases(fiscal_year, wage)",
 ]
 
@@ -158,7 +128,7 @@ def log(msg: str) -> None:
 def slug_maps(payload: dict) -> tuple[dict[str, str], dict[str, str]]:
     """entity_key(name) -> slug, for employers and law firms.
 
-    Mirrors store_entities.py exactly: sort by volume descending, THEN assign
+    Mirrors lib_slugs.py exactly: sort by volume descending, THEN assign
     slugs, so the busier entity keeps the clean one and a later collision
     takes the -2 suffix. Reversing those two steps silently reassigns pages.
     """
@@ -211,78 +181,38 @@ def rows_from(cases_path: pathlib.Path, employers, firms):
 def row_fingerprint(row: tuple) -> str:
     """A short hash of everything except the key.
 
-    Cheap change detection. A quarterly disclosure file is a SUPERSET of the
-    last one: the vast majority of rows are byte-identical, a few thousand
-    have a new decision, and the rest are new cases. Rewriting all 373,939
-    every quarter costs ~4.76M row-writes (the table plus ten indexes);
-    writing only what moved costs a fraction of that and finishes in seconds
-    instead of four minutes.
+    Cheap change detection. A quarterly disclosure file is a superset of the
+    last one: most rows are byte-identical, a few thousand have a new decision,
+    and the rest are new cases, so writing only what moved is a fraction of
+    rewriting every row and every index.
     """
-    import hashlib
-    return hashlib.blake2b("\x1f".join(_canon(v) for v in row[1:CORE]).encode(),
-                           digest_size=8).hexdigest()
+    return canon_hash(row[1:CORE])
 
 
 def extras_of(row: tuple) -> tuple[str, ...]:
     """The unindexed columns, canonicalised, compared on their own."""
-    return tuple(_canon(v) for v in row[CORE:])
-
-
-def ensure_columns(db) -> list[str]:
-    """Add the EXTRA columns to a table made before they existed.
-
-    `CREATE TABLE` only runs on a full load; an incremental load writes into
-    the live table, which would reject a column it has never had.
-    """
-    res = db.execute("PRAGMA table_info(perm_cases)")
-    have = {r[1]["value"] for r in res["response"]["result"]["rows"]}
-    added = [c for c in EXTRA if c not in have]
-    for c in added:
-        db.execute(f"ALTER TABLE perm_cases ADD COLUMN {c} TEXT")
-    return added
-
-
-def _canon(v) -> str:
-    """One spelling per value, whichever side it came from.
-
-    SQLite stores `wage` as REAL, so a value written as the integer 93205
-    comes back as 93205.0. Comparing str() of the two marks every waged row
-    as changed - which is exactly what the first run of this did: it read all
-    373,939 fingerprints correctly and then rewrote the table anyway. Both
-    sides go through here so the comparison is about the VALUE, not about
-    which type the storage layer happened to choose.
-    """
-    if v is None or v == "":
-        return ""
-    try:
-        f = float(v)
-    except (TypeError, ValueError):
-        return str(v)
-    # 93205.0 and 93205 must produce the same string; 1.5 must survive.
-    return str(int(f)) if f == int(f) else repr(f)
+    return tuple(canon(v) for v in row[CORE:])
 
 
 def existing_fingerprints(db: Turso) -> dict[str, tuple[str, tuple[str, ...]]]:
     """case_number -> (fingerprint of the core columns, the extras) for
     everything already stored.
 
-    Read in pages: 373,939 rows in one response is tens of megabytes of JSON
-    and the pipeline has a response cap.
+    Read in pages: the whole table in one response is tens of megabytes of JSON,
+    past the pipeline's response cap.
     """
     out: dict[str, str] = {}
     page = 20000
     after = ""
     while True:
-        res = db.execute(
-            f"SELECT {','.join(COLUMNS)} FROM perm_cases "
-            "WHERE case_number > ? ORDER BY case_number LIMIT ?", [after, page])
-        rows = res["response"]["result"]["rows"]
+        rows = query_rows(db, f"SELECT {','.join(COLUMNS)} FROM perm_cases "
+                              "WHERE case_number > ? ORDER BY case_number LIMIT ?", [after, page])
         if not rows:
             break
         for r in rows:
-            vals = tuple(None if c["type"] == "null" else c["value"] for c in r)
+            vals = tuple(r)
             out[str(vals[0])] = (row_fingerprint(vals), extras_of(vals))
-        after = str(out and rows[-1][0]["value"])
+        after = str(rows[-1][0])
         if len(rows) < page:
             break
     return out
@@ -303,12 +233,12 @@ def main() -> int:
 
     employers, firms = slug_maps(json.load(open(payload_path)))
 
-    # THE LOAD GUARD, BEFORE ANY WRITE. The parser recorded the file's shape
-    # in the artifact's meta (which columns resolved per fiscal year, blank
-    # shares, the median wage, impossible values); the previous load's shape
-    # is in perm_docs. A column DOL renamed used to land as NULL under a
-    # green run. `--accept-drift` overrides the drift half for a human who
-    # has read the parser's log; nothing overrides impossible values.
+    # The load guard, before any write. The parser recorded the file's shape in
+    # the artifact's meta (which columns resolved per fiscal year, blank shares,
+    # the median wage, impossible values); the previous load's shape is in
+    # perm_docs, so a column DOL renamed can't land as NULL under a green run.
+    # `--accept-drift` overrides the drift half for a human who has read the
+    # parser's log; nothing overrides impossible values.
     meta_path = pathlib.Path(str(cases) + ".meta.json")
     fingerprint = None
     if meta_path.exists():
@@ -337,7 +267,9 @@ def main() -> int:
 
     incremental = "--incremental" in sys.argv
     if incremental:
-        added = ensure_columns(db)
+        # CREATE TABLE runs only on a full load; an incremental load writes into
+        # the live table, which would reject a column it has never had.
+        added = add_missing_columns(db, "perm_cases", {c: "TEXT" for c in EXTRA})
         if added:
             log(f"  added column(s) {added} to the live table")
         log("  incremental: reading existing fingerprints")
@@ -363,9 +295,8 @@ def main() -> int:
         nonlocal batch
         if not batch:
             return
-        sql = insert_head + ",".join([placeholders] * len(batch))
-        args = [lit(v) for row in batch for v in row]
-        pending.append({"type": "execute", "stmt": {"sql": sql, "args": args}})
+        pending.append(stmt(insert_head + ",".join([placeholders] * len(batch)),
+                            [v for row in batch for v in row]))
         batch = []
 
     def flush_request():
@@ -383,7 +314,8 @@ def main() -> int:
         nonlocal narrow, narrowed
         if not narrow:
             return
-        pending.append({"type": "execute", "stmt": narrow_update(narrow)})
+        pending.append(case_update("perm_cases", "case_number", EXTRA,
+                                   [(r[0], *r[CORE:]) for r in narrow]))
         narrowed += len(narrow)
         narrow = []
         if len(pending) >= STMTS_PER_REQUEST:
@@ -426,8 +358,8 @@ def main() -> int:
 
     log("  building indexes")
     ti = time.time()
-    for stmt in INDEXES:
-        db.execute(stmt)
+    for ddl in INDEXES:
+        db.execute(ddl)
     log(f"  {len(INDEXES)} indexes in {time.time() - ti:,.0f}s")
 
     # Verify against the table, never against the counter that wrote it: a
@@ -440,46 +372,18 @@ def main() -> int:
     return 0
 
 
-# Rows per narrow UPDATE: two CASE arms of two parameters each plus the IN
-# list is five parameters a row, so 200 rows is 1,000.
+# Rows per narrow UPDATE. A row costs two parameters per EXTRA column plus one
+# in the IN list (19 with nine columns), so 200 rows is 3,800 parameters.
 NARROW_ROWS = 200
-
-
-def narrow_update(rows: list[tuple]) -> dict:
-    """One UPDATE that sets only the EXTRA columns on these rows.
-
-    One statement per 200 rows, because the cost is per statement (500
-    separate UPDATEs measured 986 rows in 20 s; one CASE UPDATE per 200 rows,
-    1,233 rows a second). A row not named keeps its value, which the ELSE arm
-    makes explicit.
-    """
-    sets, args = [], []
-    for i, col in enumerate(EXTRA):
-        arms = " ".join("WHEN ? THEN ?" for _ in rows)
-        sets.append(f"{col} = CASE case_number {arms} ELSE {col} END")
-        for r in rows:
-            args += [lit(r[0]), lit(r[CORE + i])]
-    ids = ",".join("?" * len(rows))
-    args += [lit(r[0]) for r in rows]
-    return {"sql": f"UPDATE perm_cases SET {', '.join(sets)} WHERE case_number IN ({ids})",
-            "args": args}
-
 
 FINGERPRINT_KEY = "perm_cases_fingerprint"
 
 
 def read_fingerprint(db) -> dict | None:
     try:
-        raw = db.scalar("SELECT json FROM perm_docs WHERE key = ?", [FINGERPRINT_KEY])
+        return read_doc(db, FINGERPRINT_KEY)
     except Exception:  # noqa: BLE001 - a database that has never had perm_docs
         return None
-    if not raw:
-        return None
-    try:
-        doc = json.loads(raw)
-    except (TypeError, ValueError):
-        return None
-    return doc if isinstance(doc, dict) else None
 
 
 def write_fingerprint(db, fingerprint: dict | None) -> None:
@@ -488,8 +392,7 @@ def write_fingerprint(db, fingerprint: dict | None) -> None:
     if not fingerprint:
         return
     db.execute("CREATE TABLE IF NOT EXISTS perm_docs (key TEXT PRIMARY KEY, json TEXT NOT NULL, computed_at INTEGER)")
-    db.execute("INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES (?, ?, ?)",
-               [FINGERPRINT_KEY, json.dumps(fingerprint, separators=(",", ":")), int(time.time() * 1000)])
+    write_doc(db, FINGERPRINT_KEY, fingerprint)
     log("  guard: fingerprint recorded as the baseline for the next load")
 
 

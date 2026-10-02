@@ -32,7 +32,7 @@ const get = (qs: string) => GET(new Request(`https://permtracker.app/api/case-se
 function result(over: Record<string, unknown> = {}) {
   return {
     rows: [],
-    counts: { perm: 0, pwd: 0, lca: 0 },
+    counts: { perm: 0, pwd: 0, lca: 0, seasonal: 0 },
     truncated: false,
     capped: false,
     windowed: false,

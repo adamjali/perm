@@ -72,6 +72,14 @@ const STATUS_CONFIG: Record<
     iconCls: "text-muted-foreground",
     label: "INCOMPLETE",
   },
+  filed: {
+    icon: CheckCircle2,
+    bg: "",
+    border: "border-data-good",
+    text: "text-primary",
+    iconCls: "text-primary",
+    label: "FILED",
+  },
   expired: {
     icon: XCircleIcon,
  bg: "bg-data-bad/10",

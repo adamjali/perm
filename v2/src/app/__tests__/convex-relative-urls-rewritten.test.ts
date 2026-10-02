@@ -28,7 +28,10 @@ import { describe, expect, it } from "vitest";
  * on our domain or pass our firewall.
  */
 const ROOT = join(__dirname, "..", "..", "..");
-const http = readFileSync(join(ROOT, "convex", "http.ts"), "utf8");
+/** The router and the page module it renders through: both emit relative URLs. */
+const http = ["http.ts", "lib/mailPages.ts"]
+  .map((f) => readFileSync(join(ROOT, "convex", f), "utf8"))
+  .join("\n");
 const config = readFileSync(join(ROOT, "next.config.ts"), "utf8");
 
 /** Paths a Convex-rendered page links to relatively, so the browser resolves them against OUR host. */

@@ -4,34 +4,33 @@
  * <body>, on every route, and stays hidden unless the boot script (first in
  * <head>, home only) sets html[data-pre].
  *
- * Why each piece sits where it does (every one was a reported defect first):
+ * Why each piece sits where it does:
  *
  * - The CSS is inline in <head>, with LITERAL colours. globals.css is an
  *   external stylesheet and WebKit paints before a pending stylesheet, so a
  *   rule living there arrived after the header had already painted.
  *
- * - The panel is SERVER markup at the top of <body>. It used to be rendered
- *   by the home page (56 KB into the document, so the header painted first),
- *   then injected by the script at DOMContentLoaded, which showed a blank
- *   cover until the whole document had parsed. At the top of <body> it paints
- *   in the same frame as everything else. React owns the element, so the
- *   script never touches it: every state is an attribute on <html>.
+ * - The panel is SERVER markup at the top of <body>, so it paints in the
+ *   same frame as everything else. Rendered further down the document the
+ *   header paints first; injected by the script at DOMContentLoaded it shows
+ *   a blank cover until the whole document has parsed. React owns the
+ *   element, so the script never touches it: every state is an attribute on
+ *   <html>.
  *
- * - The exit slides the panel away over the PAGE. It used to slide over a
- *   second blank cover that stayed until the slide ended, so the logo left an
- *   empty screen and the page snapped in afterwards.
+ * - The exit slides the panel away over the PAGE, never over a second blank
+ *   cover, which would leave an empty screen and the page snapping in
+ *   afterwards.
  *
  * - It lifts at DOMContentLoaded, not window.load. The home page is server
  *   rendered, so the document is complete at DOMContentLoaded; waiting for
- *   every image held a finished page behind the curtain for seconds.
+ *   every image would hold a finished page behind the curtain for seconds.
  *
  * - Hard loads of "/" only. A client navigation to home is a prerendered,
- *   prefetched page that renders at once, so a curtain there is pure delay
- *   (the old one blanked the whole screen, header included, for 820 ms).
+ *   prefetched page that renders at once, so a curtain there is pure delay.
  *
  * - No scroll lock. Any wheel, touch or key dismisses it at once, so there is
- *   nothing to lock, and releasing overflow:hidden brought the scrollbar back
- *   mid-slide and shifted the page sideways on Windows.
+ *   nothing to lock, and releasing overflow:hidden would bring the scrollbar
+ *   back mid-slide and shift the page sideways on Windows.
  *
  * The attribute has three states: "on" (panel up), "leaving" (sliding away,
  * page visible), "off" (gone). Absent means never armed.

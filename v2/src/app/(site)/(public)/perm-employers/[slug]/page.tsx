@@ -22,14 +22,11 @@ import Link from "next/link";
 import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
 import { firstThatFits } from "@/lib/describe";
+import { formatDollars, formatInt } from "@/lib/format";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { openGraphBaseNoImage } from "@/lib/openGraphBase";
-import { FieldPosition } from "@/components/tools/FieldPosition";
-import { FigurePlate } from "@/components/tools/FigurePlate";
 import {
   DisclosureNote,
   LimitsPanel,
-  MIN_DECIDED_FOR_MEDIAN,
   MIN_DECIDED_FOR_RATE,
   PeerList,
   RankLadder,
@@ -37,8 +34,24 @@ import {
   entityTitle,
   rateReliability,
 } from "@/components/tools/EntityContext";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
-import { getDatasetSchema } from "@/lib/structuredData";
+import {
+  DecisionEstimatorCard,
+  EntityStatCards,
+  FieldPositionPlate,
+  approvalCard,
+  certifiedCard,
+  entityStanding,
+  medianDaysCard,
+  medianWageCard,
+  volumeCard,
+  wageIsTheJobLimit,
+} from "@/components/entities/EntityPageParts";
+import {
+  FALLBACK_BASELINE_DENIAL_PCT,
+  entityJsonLd,
+  entityMetadata,
+  entityStaticParams,
+} from "@/lib/entityPage";
 import { employerHistoryCases, employerYears, workerFacets } from "@/lib/turso/employerHistory";
 import { getDisclosureStats, getFreshness } from "@/lib/turso/publicData";
 import { LiveQueueBand } from "@/components/entities/LiveQueueBand";
@@ -61,6 +74,15 @@ import {
 import { recentLiveByEmployer } from "@/lib/turso/cases";
 import { searchPwdCases, searchPwdDeterminations } from "@/lib/turso/pwdCases";
 import { searchLcaCases, searchLcaDisclosed } from "@/lib/turso/lcaCases";
+import { searchSeasonalCases } from "@/lib/turso/seasonalCases";
+import { SeasonalFilings } from "@/components/entities/SeasonalFilings";
+import { getLcaProfile } from "@/lib/turso/lcaProfile";
+import { LcaProfile } from "@/components/entities/LcaProfile";
+import { getUscisH1bRecord } from "@/lib/turso/uscisH1b";
+import { UscisH1bRecord } from "@/components/entities/UscisH1bRecord";
+import { getEmployerLottery } from "@/lib/turso/h1bLotteryFoia";
+import { H1bLotteryHistory } from "@/components/entities/H1bLotteryHistory";
+import { CapExemptNote } from "@/components/entities/CapExemptNote";
 import { unifiedRows } from "@/lib/flagMerge";
 import { formatWage } from "@/lib/wageFormat";
 import { liveEmployerRecord } from "@/lib/turso/liveEmployers";
@@ -75,41 +97,20 @@ import { warnForSlug } from "@/lib/turso/warn";
 import { WarnNoticeBand } from "@/components/entities/WarnNotice";
 import { UnpublishedEmployer } from "@/components/entities/UnpublishedEmployer";
 import { DataProvenance } from "@/components/data/DataProvenance";
-import {
-  comparables,
-  fieldDistribution,
-  listByKind,
-  PRERENDERED_ENTITY_HEAD,
-} from "@/lib/turso/entities";
+import { comparables, fieldDistribution } from "@/lib/turso/entities";
 
-// The disclosure files are quarterly, so an hourly window bought
-// nothing and cost a regeneration per page per hour across 21,178
-// entity pages. A day bounds staleness far below the data's own
-// cadence. The ingest should also revalidate on demand.
 /**
- * SEVEN DAYS, NOT ONE, AND THE REASON IS THE SOURCE'S CADENCE.
+ * THIRTY DAYS, AND THE REASON IS THE SOURCE'S CADENCE.
  *
- * These pages render the QUARTERLY disclosure corpus. There are ~20,700 of
- * them and only the top 100 of each kind are prerendered, so every other one
- * regenerates on first request after its window expires. At revalidate=86400
- * that is up to 21,000 cold server renders A DAY - each a React SSR pass plus
- * Turso round trips - to reflect data that changes FOUR TIMES A YEAR.
- *
- * Vercel's free Fluid tier is 4 CPU-hours. 21,000 daily renders at even a
- * couple of hundred milliseconds of CPU each consumes it, and the account hit
- * 100% on 2026-08-27 with every public page still serving `x-vercel-cache:
- * HIT` - so it was never the pages people actually visit, it was the
- * regeneration of pages almost nobody opens.
- *
- * Seven days is still 13x more often than the underlying data moves. If a
- * quarter lands and these need to reflect it sooner, the ingest should call
- * on-demand revalidation rather than every page re-rendering on a timer.
+ * These pages render the QUARTERLY disclosure corpus, and only the busiest
+ * are prerendered, so every other one regenerates on its first request after
+ * its window expires. A short window means tens of thousands of cold server
+ * renders a day, each a React SSR pass plus database reads, almost all of
+ * them pages nobody opens and every one triggered by a crawler, to reflect
+ * data that changes FOUR TIMES A YEAR. The live band on a tail page moving a
+ * few weeks late is invisible, and a quarter that must show sooner belongs to
+ * on-demand revalidation, not to a timer.
  */
-// 30 days, up from 7 (2026-08-29, the night ISR writes hit 100% of the
-// Hobby cap). Every crawler hit on an expired tail page is a paid cache
-// write, and 21k pages x weekly expiry was most of the 200k. The stats
-// here move quarterly; the live band on a tail page moving a few weeks
-// late is invisible; the top-100 pages rebuild with every deploy anyway.
 /** Newest live filings shown on the page; the case search holds the rest. */
 const RECENT_LIVE_SHOWN = 8;
 
@@ -117,10 +118,6 @@ export const revalidate = 2592000;
 
 const KIND = "employer" as const;
 const BASE = "/perm-employers";
-/** Same literal this file already used for the canonical Dataset url. */
-const ORIGIN = "https://permtracker.app";
-/** DOL's own denial rate, used when the aggregate document cannot be read. */
-const FALLBACK_BASELINE_DENIAL_PCT = 2.57;
 
 interface Subject {
   slug: string;
@@ -186,26 +183,8 @@ async function loadLiveOnly(slug: string) {
   return { record, cases };
 }
 
-function median(xs: number[]): number | null {
-  if (xs.length === 0) return null;
-  const s = [...xs].sort((a, b) => a - b);
-  return s[Math.floor(s.length / 2)] ?? null;
-}
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US");
-}
-
 export async function generateStaticParams() {
-  // Only the head is prerendered. The rest are valid routes that generate on
-  // first request and cache for an hour, which keeps a 12,240-entity build
-  // from taking hours for pages almost nobody opens.
-  //
-  // Read from the entity TABLE, not from the aggregate document. The aggregate
-  // carries its own copy of the top 250 and slugs them client-side, so a slug
-  // prerendered from it is not guaranteed to be a slug `getBySlug` can find.
-  const rows = await listByKind(KIND, PRERENDERED_ENTITY_HEAD);
-  return rows.map((r) => ({ slug: r.slug }));
+  return entityStaticParams(KIND);
 }
 
 export async function generateMetadata({
@@ -230,15 +209,13 @@ export async function generateMetadata({
   if (!found) {
     const record = await liveEmployerRecord(slug);
     if (!record) notFound();
-    // INDEXABLE, BY THE OWNER'S DECISION (2026-09-17, 1:56 AM EDT). These
-    // pages carried `robots: noindex` from the day they shipped: 18,284 of
-    // the 22,313 live-only employers hold exactly one case, so the page is a
-    // heading and one row, and twenty thousand of those is the thin-content
-    // shape Google's policy names. The recommendation on record was to index
-    // only the 678 with five or more cases. Adam chose everything, with the
-    // cost stated: Google is already declining 63,218 published tail pages,
-    // so the realistic outcome is a larger "discovered, not indexed" figure,
-    // not a larger index, and no penalty either way. The sitemap lists these
+    // INDEXABLE, BY THE SITE OWNER'S DECISION, with the cost stated. Most
+    // live-only employers hold exactly one case, so the page is a heading and
+    // one row, and tens of thousands of those is the thin-content shape
+    // Google's policy names. Google already declines much of the published
+    // tail, so the realistic outcome is a larger "discovered, not indexed"
+    // figure rather than a larger index, and no penalty either way. The
+    // sitemap lists these
     // from `perm_live_only_index`, rebuilt nightly with the live remainder,
     // so the page and the sitemap read one source and cannot disagree.
     // Same title rule as the published pages: DOL's printed name is never
@@ -247,10 +224,10 @@ export async function generateMetadata({
     // are the least curated in the corpus - they come straight off the
     // application with no merge pass behind them.
     const { title, absolute } = entityTitle(record.name, [
-      // SINGULAR WHEN THERE IS ONE, and there usually is: 18,284 of the
-      // 22,467 live-only employers hold exactly one case, so "1 Live Cases"
-      // was the title on about four fifths of this family.
-      `PERM Filings: ${fmt(record.cases)} Live Case${record.cases === 1 ? "" : "s"}`,
+      // SINGULAR WHEN THERE IS ONE, and there usually is: about four in
+      // five live-only employers hold exactly one case, so "1 Live Cases"
+      // would be the title on most of this family.
+      `PERM Filings: ${formatInt(record.cases)} Live Case${record.cases === 1 ? "" : "s"}`,
       "PERM Filings",
     ]);
     // No rate, no median, no rank - not even as a phrase. A snippet is where
@@ -264,7 +241,7 @@ export async function generateMetadata({
     // blow any single template. The clauses drop in order of what a reader
     // loses least by not seeing.
     const noun = record.cases === 1 ? "case" : "cases";
-    const stem = `${record.name}: ${fmt(record.cases)} PERM ${noun} in DOL's live record`;
+    const stem = `${record.name}: ${formatInt(record.cases)} PERM ${noun} in DOL's live record`;
     const description =
       [
         `${stem}, none in a published disclosure file yet, so no outcome figures exist for them.`,
@@ -274,28 +251,10 @@ export async function generateMetadata({
         // name is the last resort because it is the phrase people search.
         `${record.name.slice(0, 140)}: PERM cases in DOL's live record.`,
       ].find((d) => d.length <= 155) ?? "PERM cases in DOL's live record.";
-    return {
-      title: absolute ? { absolute: title } : title,
-      description,
-      alternates: { canonical: `${BASE}/${slug}` },
-      // THE SAME OG BLOCK THE PUBLISHED BRANCH BUILDS, and it was missing
-      // here from the day these pages shipped (fixed 2026-09-21). Without it
-      // the page inherits the ROOT layout's Open Graph, so every one of the
-      // 22,467 live-only employers told a scraper `og:url` was the homepage
-      // and `og:title` was the site's generic tagline - while its canonical
-      // correctly named itself. Ahrefs caught 396 of them in a 5,000-URL
-      // sample; the defect was the whole branch. A share of one of these
-      // pages on WhatsApp, Slack or X rendered as the homepage card.
-      openGraph: {
-        ...openGraphBaseNoImage,
-        title: `${title} | PERM Tracker`,
-        description,
-        url: `${BASE}/${slug}`,
-      },
-      // Segment-level, for the same reason as the published branch: without
-      // it the root layout's twitter.images wins over this route's own card.
-      twitter: { card: "summary_large_image" },
-    };
+    // The same metadata the published branch builds: without its own Open
+    // Graph block the page inherits the root layout's, and a share of it
+    // renders as the homepage card.
+    return entityMetadata({ title, absolute, description, path: `${BASE}/${slug}` });
   }
   const row = found.subject;
   const reliability = rateReliability(
@@ -305,8 +264,8 @@ export async function generateMetadata({
   );
   // THE COUNT, NOT THE RATE. A specific number in the title is the difference
   // between a generic label and a result someone recognises as the page they
-  // wanted, and it is the one thing the leading competitor does better in the
-  // SERP. But only the count is safe to put here: these pages WITHHOLD the
+  // wanted in the SERP. But only the count is safe to put here: these pages
+  // WITHHOLD the
   // approval rate whenever the sample is too small to support one, and a title
   // has nowhere to carry that caveat - a snippet claiming a perfect rate over
   // three cases is exactly the claim the whole ReliabilityBand exists to
@@ -320,7 +279,7 @@ export async function generateMetadata({
   // entityTitle takes the first qualifier that fits under the 62-char limit and
   // falls back through the rest, so a long name simply keeps the short form.
   const { title, absolute } = entityTitle(row.name, [
-    `PERM Filings: ${fmt(row.total)} Cases`,
+    `PERM Filings: ${formatInt(row.total)} Cases`,
     "PERM Filings",
   ]);
   // The rate is left out of the description whenever the page itself is
@@ -335,16 +294,16 @@ export async function generateMetadata({
   // head runs long caps it at 126. Same trick the occupation page uses.
   //
   // A PRIORITY LIST, like the live-only branch: the longest that fits 155
-  // wins. The old two-way choice left a small employer at about 90
-  // characters ("Name: 3 PERM filings, ranked 40,123 by volume, from DOL's
-  // own disclosure files."), and 71% of a sampled 160 employer pages sat
-  // under 110 (Oct 1 2026), a snippet with room for the page's own wage and
+  // wins. A two-way choice leaves a small employer at about 90 characters
+  // ("Name: 3 PERM filings, ranked 40,123 by volume, from DOL's own
+  // disclosure files."), most employer pages under 110, a snippet with
+  // room for the page's own wage and
   // what the page holds. Only facts the page itself prints go in.
-  const filings = `${fmt(row.total)} PERM filing${row.total === 1 ? "" : "s"}`;
-  const head = `${row.name}: ${filings}${ratePart}, ranked ${fmt(row.rank)} by volume`;
+  const filings = `${formatInt(row.total)} PERM filing${row.total === 1 ? "" : "s"}`;
+  const head = `${row.name}: ${filings}${ratePart}, ranked ${formatInt(row.rank)} by volume`;
   const wage =
     row.medianAnnualWage != null && row.medianAnnualWage > 0
-      ? `, median offered wage $${fmt(Math.round(row.medianAnnualWage))}`
+      ? `, median offered wage ${formatDollars(row.medianAnnualWage)}`
       : "";
   const description = firstThatFits([
     `${head}${wage}. Jobs, wages and case status, from DOL's own records.`,
@@ -352,29 +311,17 @@ export async function generateMetadata({
     `${head}, from DOL's own disclosure files.`,
     `${head}.`,
   ]);
-  return {
-    // Thin-page defense: a sub-floor entity page exists for people but is
-    // not offered to the index. The sitemap already omits it.
-    ...(row && !hasOwnPage(row) ? { robots: { index: false, follow: true } } : {}),
-    // A legal entity name can run past what Google shows on its own
-    // ("VERIZON COMMUNICATIONS INC AND ALL ITS SUBSIDIARIES AND AFFILIATES"),
-    // so `entityTitle` drops the brand suffix, then the qualifier, rather than
-    // crowding out the name. It measures the RENDERED length: the old test
-    // looked at the base and let 15% of these render past 60.
-    title: absolute ? { absolute: title } : title,
+  // A legal entity name can run past what Google shows on its own
+  // ("VERIZON COMMUNICATIONS INC AND ALL ITS SUBSIDIARIES AND AFFILIATES"),
+  // so `entityTitle` drops the brand suffix, then the qualifier, rather than
+  // crowding out the name. It measures the RENDERED length.
+  return entityMetadata({
+    title,
+    absolute,
     description,
-    alternates: { canonical: `${BASE}/${found.canonicalSlug}` },
-    openGraph: {
-      ...openGraphBaseNoImage,
-      title: `${title} | PERM Tracker`,
-      description,
-      url: `${BASE}/${found.canonicalSlug}`,
-    },
-    // A segment-level `twitter` so the root layout's twitter.images does not
-    // win: the file-convention card beside this page then fills twitter:image
-    // as well as og:image. Title and description resolve from the page's own.
-    twitter: { card: "summary_large_image" },
-  };
+    path: `${BASE}/${found.canonicalSlug}`,
+    noindex: !hasOwnPage(row),
+  });
 }
 
 export default async function EmployerPage({
@@ -392,17 +339,19 @@ export default async function EmployerPage({
     // sections switched off.
     const live = await loadLiveOnly(slug);
     if (!live) notFound();
-    const [fresh, liveStages, liveWait, fieldWait, filedToday] = await Promise.all([
+    const [fresh, liveStages, liveWait, fieldWait, filedToday, liveSeasonal] = await Promise.all([
       getFreshness(),
       getEmployerStages().catch(() => null),
       getEmployerWait(slug).catch(() => ({ n: 0, p25: null, p50: null, p75: null })),
       getFieldWait().catch(() => null),
       getFiledTodayEstimate().catch(() => null),
+      searchSeasonalCases({ text: live.record.name, limit: 5 }).catch(() => []),
     ]);
     return (
       <UnpublishedEmployer
         record={live.record}
         cases={live.cases}
+        seasonal={<SeasonalFilings name={live.record.name} rows={liveSeasonal} className="mt-8" />}
         asOf={fresh["perm-case-status"]?.asOf ?? null}
         follow={
           <EmployerFollow
@@ -440,7 +389,7 @@ export default async function EmployerPage({
   // The three context reads run together. `fieldDistribution` takes the same
   // arguments on every page of this kind, and memoises on them, so all 16,305
   // sponsor pages share one cohort read rather than each re-reading 1,338 rows.
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery] =
     await Promise.all([
       getDisclosureStats(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -456,8 +405,8 @@ export default async function EmployerPage({
       absorbedCount(KIND, canonicalSlug),
       getFreshness(),
       // Filings newer than the last disclosure file, from the live feed -
-      // the gap Adam hit: a case he KNEW existed was invisible on its own
-      // sponsor's page until DOL's quarterly publication. Indexed point
+      // without it, a known case was invisible on its own sponsor's page until
+      // DOL's quarterly publication. Indexed point
       // read over the small remainder table; degrades to an absent band.
       // One over what the box shows, so it can say more exist and link them.
       recentLiveByEmployer(canonicalSlug, RECENT_LIVE_SHOWN + 1).catch(() => []),
@@ -482,6 +431,16 @@ export default async function EmployerPage({
       employerYears(canonicalSlug),
       employerHistoryCases(canonicalSlug, 25),
       workerFacets("employer", canonicalSlug),
+      // H-2A and H-2B, live record only (no quarterly file is loaded): the
+      // band shows only when the sponsor has any.
+      searchSeasonalCases({ text: row.name, limit: 5 }).catch(() => []),
+      // What the LCAs were for (new hires vs transfers, OES level, Section H),
+      // over the same slug range as the program ledger.
+      getLcaProfile(canonicalSlug).catch(() => null),
+      // What USCIS then decided on the H-1B petitions (its Employer Data Hub).
+      getUscisH1bRecord(canonicalSlug).catch(() => null),
+      // Lottery registrations FY2021 to FY2024 (USCIS's FOIA release).
+      getEmployerLottery(canonicalSlug).catch(() => null),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -497,43 +456,19 @@ export default async function EmployerPage({
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
   const kindTotal = dist.kindTotal;
 
-  // dateModified is DOL's own as-of for the disclosure corpus, not our build
-  // date. A Dataset that restamps itself on every deploy tells an answer engine
-  // the underlying figures changed when they did not, and these figures move
-  // once a quarter. Omitted rather than guessed when freshness is unavailable.
-  const dataset = getDatasetSchema(ORIGIN, {
-    name: `${row.name} PERM labor certification filings`,
-    description: `PERM filing record for ${row.name} from DOL disclosure data.`,
-    url: `${ORIGIN}${BASE}/${slug}`,
-    dateModified: freshness["perm-cases"]?.asOf ?? undefined,
-    variableMeasured: ["filings", "certified", "denied", "median days to decision"],
+  const schema = entityJsonLd({
+    path: `${BASE}/${slug}`,
+    name: row.name,
+    dataset: {
+      name: `${row.name} PERM labor certification filings`,
+      description: `PERM filing record for ${row.name} from DOL disclosure data.`,
+      variableMeasured: ["filings", "certified", "denied", "median days to decision"],
+    },
+    freshness,
   });
 
-  // Home > Employers > this page. Breadcrumbs tell Google the shape of the site,
-  // which is what it reads to decide a result deserves a hierarchy rather than
-  // a bare link. The blog carried these; the ~20,960 pages that ARE the product
-  // did not.
-  const schema = {
-    "@context": "https://schema.org",
-    "@graph": [
-      dataset,
-      generateBreadcrumbSchema([
-        { name: "Home", href: "/" },
-        { name: "Employers", href: BASE },
-        { name: row.name, href: `${BASE}/${slug}` },
-      ]),
-    ],
-  };
-
-  const reliability = rateReliability(row.certified, row.denied, baselineDenialPct);
-  const inCohort = reliability.tier !== "withheld";
-  // The card and the drawing read the same number, so they cannot disagree:
-  // this is the median of the comparable cohort's own medians, which is
-  // exactly the distribution the figure below plots.
-  const fieldDays = median(dist.medianDays);
-  const daysDelta =
-    row.medianDays != null && fieldDays != null ? row.medianDays - fieldDays : null;
-  const thinMedian = reliability.decided < MIN_DECIDED_FOR_MEDIAN;
+  const standing = entityStanding(row, dist, baselineDenialPct);
+  const { reliability, thinMedian } = standing;
   // Each caveat leads with THIS sponsor's own figure. See the note on the
   // attorney page: 721 words of every entity page were byte-identical, and the
   // entity long tail is what GSC has discovered and never crawled.
@@ -551,22 +486,12 @@ export default async function EmployerPage({
       <JsonLdScript schema={schema} />
 
       <header className="max-w-3xl">
-        <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
-          <Link
-            href={BASE}
-            className="inline-flex min-h-[44px] items-center underline underline-offset-2 hover:text-primary"
-          >
-            All sponsors
-          </Link>{" "}
-          · #{fmt(row.rank)}
-          {kindTotal > 0 ? ` of ${fmt(kindTotal)}` : ""} by volume
-        </p>{" "}
-        <h1 translate="no" className="mt-2 font-heading text-4xl font-black leading-tight sm:text-5xl">
+        <h1 translate="no" className="font-heading text-4xl font-black leading-tight sm:text-5xl">
           {row.name}
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
-          {fmt(row.total)} PERM filings in DOL&apos;s current disclosure window,{" "}
-          {fmt(row.certified)} certified and {fmt(row.denied)} denied. Name as
+          {formatInt(row.total)} PERM filings in DOL&apos;s current disclosure window,{" "}
+          {formatInt(row.certified)} certified and {formatInt(row.denied)} denied. Name as
           DOL prints it, which is the legal entity on the form.
         </p>
       </header>
@@ -584,68 +509,15 @@ export default async function EmployerPage({
       />
 
       <section className="pop mt-8">
-        <div className="grid [&>*]:min-w-0 grid-cols-2 gap-px border-2 border-border bg-border sm:grid-cols-5">
-          {[
-            {
-              k: "Filings",
-              wide: false,
-              v: fmt(row.total),
-              sub: kindTotal > 0 ? `#${fmt(row.rank)} of ${fmt(kindTotal)}` : "",
-            },
-            {
-              k: "Certified",
-              wide: false,
-              v: fmt(row.certified),
-              sub: `${fmt(row.denied)} denied`,
-            },
-            {
-              k: "Approval",
-              wide: false,
-              v: reliability.ratePct == null ? "—" : `${reliability.ratePct.toFixed(1)}%`,
-              sub:
-                reliability.ratePct == null
-                  ? `withheld: ${fmt(reliability.decided)} decided`
-                  : `field ${(100 - baselineDenialPct).toFixed(1)}%`,
-            },
-            {
-              k: "Median wage",
-              v:
-                row.medianAnnualWage == null
-                  ? "—"
-                  : `$${Math.round(row.medianAnnualWage).toLocaleString("en-US")}`,
-              sub: row.medianAnnualWage == null ? "not on file" : "offered, per year",
-              // Five cards in a two-column grid leave the fifth alone, and an
-              // empty cell in this `gap-px bg-border` grid paints as a slab of
-              // border colour. Spanning both keeps the mobile grid whole.
-              wide: true,
-            },
-            {
-              k: "Median days",
-              wide: false,
-              v: row.medianDays == null ? "—" : fmt(Math.round(row.medianDays)),
-              sub: thinMedian
-                ? `middle of ${fmt(reliability.decided)} decided`
-                : daysDelta == null
-                  ? ""
-                  : Math.round(daysDelta) === 0
-                    ? "at the field median"
-                    : `${fmt(Math.abs(Math.round(daysDelta)))} ${daysDelta > 0 ? "slower" : "faster"} than the field`,
-            },
-          ].map((d) => (
-            <div
-              key={d.k}
-              className={
-                d.wide ? "bg-card p-5 col-span-2 sm:col-span-1" : "bg-card p-5"
-              }
-            >
-              <p className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/60">
-                {d.k}
-              </p>{" "}
-              <p className="mt-1.5 font-heading text-2xl font-black tabular-nums">{d.v}</p>{" "}
-              {d.sub ? <p className="mt-1 text-xs text-foreground/70">{d.sub}</p> : null}
-            </div>
-          ))}
-        </div>
+        <EntityStatCards
+          cards={[
+            volumeCard("Filings", row, kindTotal),
+            certifiedCard(row),
+            approvalCard(reliability, baselineDenialPct),
+            medianWageCard(row.medianAnnualWage),
+            medianDaysCard(row.medianDays, standing),
+          ]}
+        />
       </section>
 
       {/* The live queue, before the history. Every figure above this point
@@ -764,7 +636,7 @@ export default async function EmployerPage({
             ].map((col) => (
               <Fragment key={col.label}>{" "}
               <div>
-                <h3 className="font-mono text-xs font-bold uppercase tracking-wider text-foreground/70">
+                <h3 className="font-mono text-sm font-bold uppercase tracking-wider text-foreground/70">
                   {col.label}
                 </h3>{" "}
                 {col.rows.length > 0 ? (
@@ -782,7 +654,7 @@ export default async function EmployerPage({
                         {formatWage(r.wage, r.wageUnit) ? (
                           <span className="font-mono text-sm font-bold">{formatWage(r.wage, r.wageUnit)}</span>
                         ) : null}{" "}
-                        <span className="ml-auto font-mono text-xs font-bold uppercase text-foreground/70">
+                        <span className="ml-auto font-mono text-sm font-bold uppercase text-foreground/70">
                           {r.date ? `${r.date} · ` : ""}
                           {r.status}
                         </span>
@@ -805,61 +677,33 @@ export default async function EmployerPage({
         </section>
       ) : null}
 
+      <CapExemptNote industry={facets.industry} />{" "}
+      <LcaProfile name={row.name} profile={lcaProfile} />{" "}
+      <UscisH1bRecord record={uscisH1b} through={freshness["uscis-h1b-hub"]?.asOf ?? null} />{" "}
+      <H1bLotteryHistory years={lottery} />{" "}
+      <SeasonalFilings name={row.name} rows={seasonalRows} />{" "}
+
       {/* Where does this sponsor sit in the field? A stat card states a
           number; only the distribution says whether that number is unusual. The population is every sponsor whose
           case count can carry a rate, which is the only denominator these two
           measures can honestly be read against. */}
-      {dist.cohort >= 8 ? (
-        <FigurePlate
-          n={pending ? "02" : "01"}
-          title="Position in the field"
-          subject={`${fmt(dist.cohort)} sponsors with ${dist.minDecided}+ decided`}
-          caption={
-            <>
-              Each bar counts sponsors at that value. Sponsors with fewer than{" "}
-              {dist.minDecided} decided cases are left out of the population
-              rather than plotted, because a rate over a handful of cases lands
-              wherever the handful landed.{" "}
-              {inCohort
-                ? "The line marks this one."
-                : `This sponsor has ${fmt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}{" "}
-              {dist.complete
-                ? ""
-                : "The scan behind this cohort didn’t reach past the last qualifying sponsor, so read it as the busiest part of the field rather than all of it. "}
-            </>
-          }
-          source="DOL PERM disclosure files"
-          className="mt-10"
-        >
-          <div className="grid [&>*]:min-w-0 grid-cols-1 gap-8 md:grid-cols-2">
-            <FieldPosition
-              population={dist.approval}
-              value={inCohort ? reliability.ratePct : null}
-              valueLabel={
-                reliability.ratePct == null ? "not shown" : `${reliability.ratePct.toFixed(1)}%`
-              }
-              measure="Approval rate"
-              betterWhen="higher"
-              format={(n) => `${n.toFixed(0)}%`}
-              note={`under ${dist.minDecided} decided`}
-            />
-            {/* The days figure is real whatever the case count is, so the
-                marker is drawn even for a subject outside the population. What
-                is withheld is the PERCENTILE, because a percentile is a claim
-                about membership and this subject is not a member. */}
-            <FieldPosition
-              population={dist.medianDays}
-              value={row.medianDays}
-              subjectInPopulation={inCohort}
-              valueLabel={row.medianDays == null ? "—" : `${Math.round(row.medianDays)} days`}
-              measure="Median days to decision"
-              betterWhen="lower"
-              format={(n) => `${Math.round(n)}d`}
-              note={`middle of ${fmt(reliability.decided)} decided, too few to rank`}
-            />
-          </div>
-        </FigurePlate>
-      ) : null}
+      <FieldPositionPlate
+        n={pending ? "02" : "01"}
+        singular="sponsor"
+        plural="sponsors"
+        dist={dist}
+        standing={standing}
+        medianDays={row.medianDays}
+        lead={
+          <>
+            Each bar counts sponsors at that value. Sponsors with fewer than{" "}
+            {dist.minDecided} decided cases are left out of the population
+            rather than plotted, because a rate over a handful of cases lands
+            wherever the handful landed.
+          </>
+        }
+        outOfCohortNote={`This sponsor has ${formatInt(reliability.decided)} decided cases, so its median days is marked but left unranked, and no approval rate is drawn at all.`}
+      />
 
       {facets.occupation || facets.state || facets.attorney || facets.city || facets.industry ? (
         <section className="mt-12">
@@ -926,17 +770,7 @@ export default async function EmployerPage({
         heading="Sponsors filing at the same rate"
         note={
           <>
-            The sponsors ranked either side of this one, which is the same as
-            saying they file about as many PERM cases a year. Worksite state
-            isn&apos;t carried per employer in this data, so these are volume peers
-            rather than neighbours; filings by state are on the{" "}
-            <Link
-              href="/perm-by-state"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              state map
-            </Link>
-            .
+            Ranked either side of this one: they file about as many PERM cases.
           </>
         }
         items={near.peers}
@@ -979,39 +813,13 @@ export default async function EmployerPage({
       <LimitsPanel
         className="mt-12"
         items={[
-          {
-            head: "The wage is the job, not the payer",
-            body: (
-              <>
-                {topOcc ? (
-                  <>
-                    Their filings are led by {topOcc.label}, {fmt(topOcc.n)} of{" "}
-                    {fmt(row.total)}.{" "}
-                  </>
-                ) : null}
-                The median offered wage moves almost entirely with what roles they
-                {" "}
-                file. A software developer and a poultry cutter are different
-                numbers wherever they are filed, so this figure is not plotted
-                against the field and no percentile is given for it: that
-                comparison would rank occupation mix and call it pay. Wages by
-                occupation are on the{" "}
-                <Link
-                  href="/perm-wages"
-                  className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-                >
-                  wages page
-                </Link>
-                .
-              </>
-            ),
-          },
+          wageIsTheJobLimit({ topOccupation: topOcc, total: row.total, filers: "they" }),
           {
             head: "Volume doesn’t change the wait",
             body: (
               <>
                 DOL works a single national queue, oldest first, whoever filed
-                the case, so these {fmt(row.total)} filings bought no priority:
+                the case, so these {formatInt(row.total)} filings bought no priority:
                 a company with four thousand waits exactly as long as one with
                 three.
               </>
@@ -1022,7 +830,7 @@ export default async function EmployerPage({
             body: (
               <>
                 DOL prints whatever went on the form, and here that name ranks{" "}
-                {fmt(row.rank)}. A group that files
+                {formatInt(row.rank)}. A group that files
                 through several subsidiaries appears as several rows, and one
                 that files everything through a parent appears once, so a rank
                 is a rank among printed names rather than among companies.
@@ -1030,7 +838,7 @@ export default async function EmployerPage({
             ),
           },
           {
-            head: `A median over ${fmt(reliability.decided)} decided cases`,
+            head: `A median over ${formatInt(reliability.decided)} decided cases`,
             body: (
               <>
                 {thinMedian
@@ -1070,19 +878,7 @@ export default async function EmployerPage({
       />
 
       <section className="mt-10 grid [&>*]:min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
-          <h2 className="font-heading text-lg font-black">Your case is with them?</h2>{" "}
-          <p className="mt-2 text-base leading-relaxed text-foreground/70">
-            The{" "}
-            <Link
-              href="/tools/perm-timeline-calculator"
-              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
-            >
-              decision estimator
-            </Link>{" "}
-            reads your filing month against where DOL is now.
-          </p>
-        </div>
+        <DecisionEstimatorCard heading="Your case is with them?" />
         <div className="border-2 border-border bg-card p-6 shadow-hard-sm">
           <h2 className="font-heading text-lg font-black">Comparing sponsors?</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/70">

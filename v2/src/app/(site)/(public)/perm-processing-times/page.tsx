@@ -2,16 +2,16 @@
  * PERM Processing Times
  *
  * The live position of DOL's PERM and prevailing-wage queues, taken from
- * https://flag.dol.gov/processingtimes and refreshed weekly.
+ * https://flag.dol.gov/processingtimes and refreshed daily.
  *
  * Why this page exists in this shape:
  *
  * DOL publishes a snapshot and overwrites it. There is no archive, so the
- * previous figures vanish the moment a new set goes up. Every competitor
- * ranking for these terms answers the reader's question with a prediction of
- * DOL's queue, and those predictions disagree with each other by as much as
- * nine months. We keep every snapshot instead, which lets this page do two
- * things none of them can: quote DOL's own number with DOL's own date, and
+ * previous figures vanish the moment a new set goes up. The pages that rank
+ * for these terms answer the reader's question with predictions of DOL's
+ * queue, which disagree with each other by as much as nine months. We keep
+ * every snapshot instead, which lets this page do two things a prediction
+ * cannot: quote DOL's own number with DOL's own date, and
  * state how far the queue actually moved between two dates we hold.
  *
  * The discipline that follows from that: nothing on this page is derived,
@@ -19,7 +19,7 @@
  * arithmetic on two dates DOL printed.
  *
  * TWO DOL PUBLICATIONS SIT HERE, ON TWO CADENCES. The queue positions come
- * from flag.dol.gov weekly. The decisions-per-month counts come from the
+ * from flag.dol.gov daily. The decisions-per-month counts come from the
  * quarterly disclosure files. Both are DOL's own figures and neither is
  * modelled, but they go stale at different rates, so the page labels which
  * is which rather than letting one freshness date stand for the whole thing.
@@ -38,12 +38,11 @@ import { ArrowRightIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/ssr";
 
 import { openGraphBase } from "@/lib/openGraphBase";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
-import { generateBreadcrumbSchema } from "@/lib/content/seo";
 import { currentMonthUtc, daysAsApproxMonths, daysBetween, formatAsOf, formatMonth, monthsMoved } from "@/lib/dolFormat";
 import {
   analystReviewQueue,
   analystReviewAverage,
-} from "../../../../../convex/lib/dolProcessingTimes";
+} from "@convex/lib/dolProcessingTimes";
 import { QueueAlertForm } from "./QueueAlertForm";
 import { QueueTape } from "@/components/tools/QueueTape";
 import { DecisionsByMonth, QueueHistoryChart } from "@/components/tools/QueueHistoryChart";
@@ -52,16 +51,19 @@ import { FreshnessDots, type Freshness } from "@/components/tools/Insight";
 import { getDisclosureStats } from "@/lib/turso/publicData";
 import { getProcessingTimes, getProcessingTimesHistory } from "@/lib/turso/processingTimes";
 import { StageMedians } from "@/components/community/TimelineBoard";
-import { api } from "../../../../../convex/_generated/api";
+import { api } from "@convex/_generated/api";
 import { getEstimatorData } from "@/lib/turso/estimate";
 
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
+import { FaqList } from "@/components/tools/FaqList";
+import { SITE_URL } from "@/lib/constants/site";
+
 const DOL_SOURCE = "https://flag.dol.gov/processingtimes";
 // Same expression as layout.tsx, sitemap.ts, feed.xml and seo.ts. A bare
 // literal here meant a preview deploy emitted Dataset markup pointing at
 // production, which is a different page than the one being previewed.
-const SITE = process.env.NEXT_PUBLIC_APP_URL || "https://permtracker.app";
+const SITE = SITE_URL;
 
 /**
  * Revalidate hourly. The underlying data changes weekly at most, so this is
@@ -72,9 +74,9 @@ export const revalidate = 21600;
 
 export const metadata: Metadata = withSocialCard({
   // The phrase people search, verbatim, then the year and the source. Search
-  // Console: "perm processing time(s)" is the largest non-brand cluster and
-  // this page had never been crawled as of 2026-09-02; "2026" answers the
-  // "perm processing times 2026" variant law-firm blogs rank on. Update the
+  // Console: "perm processing time(s)" is the largest non-brand cluster;
+  // "2026" answers the "perm processing times 2026" variant law-firm blogs
+  // rank on. Update the
   // year in January.
   title: "PERM Processing Times 2026 (DOL Data)",
   description:
@@ -129,7 +131,7 @@ function Figure({
 }) {
   return (
     <div className="border-2 border-border bg-card p-5 shadow-hard">
-      <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</p>{" "}
+      <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">{label}</p>{" "}
       <p className="mt-2 font-heading text-3xl font-black leading-none sm:text-4xl">{value}</p>{" "}
       {caption ? <p className="mt-2 text-sm text-foreground/60">{caption}</p> : null}
     </div>
@@ -259,10 +261,6 @@ export default async function PermProcessingTimesPage() {
           ? "falling further behind"
           : "holding station";
 
-  const breadcrumb = generateBreadcrumbSchema([
-    { name: "Home", href: "/" },
-    { name: "PERM Processing Times", href: "/perm-processing-times" },
-  ]);
 
   // Dataset markup. This page is a redistribution of a government dataset with
   // provenance attached, and saying so is what makes it citable by assistants
@@ -276,8 +274,8 @@ export default async function PermProcessingTimesPage() {
     url: `${SITE}/perm-processing-times`,
     ...(snapshot ? { dateModified: snapshot.permAsOf } : {}),
     isBasedOn: DOL_SOURCE,
-    // "Organization", NOT "GovernmentOrganization". Search Console flagged this
-    // on 2026-09-02 as "Invalid object type for field creator". The subtype is
+    // "Organization", NOT "GovernmentOrganization". Search Console flags the
+    // subtype as "Invalid object type for field creator". The subtype is
     // perfectly valid schema.org - GovernmentOrganization IS an Organization -
     // but Google's Dataset parser matches the type literally and does not walk
     // the hierarchy, so the more precise answer was the rejected one. The name
@@ -313,7 +311,6 @@ export default async function PermProcessingTimesPage() {
     <div className="mx-auto max-w-7xl px-4 pb-12 sm:px-8 sm:pb-16">      <div className="pt-10 sm:pt-12" />
       <JsonLdScript schema={datasetSchema} />
       <JsonLdScript schema={faqSchema} />
-      <JsonLdScript schema={breadcrumb} />
 
       <header>
         <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
@@ -338,7 +335,7 @@ export default async function PermProcessingTimesPage() {
         <>
           {/* The headline. This one sentence is what the whole search cluster asks for. */}
           <section className="mt-10 border-2 border-border bg-tint-primary p-6 shadow-hard sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
               Analyst review queue
             </p>{" "}
             <p className="mt-3 font-heading text-3xl font-black leading-tight sm:text-4xl">
@@ -411,7 +408,7 @@ export default async function PermProcessingTimesPage() {
               because a velocity from a single observation would be invented. */}
           {hasVelocity ? (
             <section className="mt-6 border-2 border-border bg-card p-6 shadow-hard">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <p className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
                 Observed movement
               </p>{" "}
               <p className="mt-2 text-base leading-relaxed">
@@ -457,7 +454,7 @@ export default async function PermProcessingTimesPage() {
               </FinePrint>
 
               <div className="mt-6 border-2 border-border bg-foreground p-6 text-background shadow-hard sm:p-8">
-                <p className="font-mono text-xs font-bold uppercase tracking-wider text-background/60">
+                <p className="font-mono text-sm font-bold uppercase tracking-wider text-background/60">
                   Measured advance
                 </p>{" "}
                 <p className="mt-3 font-heading text-4xl font-black leading-none tabular-nums sm:text-5xl">
@@ -472,11 +469,9 @@ export default async function PermProcessingTimesPage() {
                 </p>
                 {advance.slowest !== null && advance.fastest !== null ? (
                   <p className="mt-3 max-w-2xl text-base leading-relaxed text-background/80">
-                    Across the whole record it has run as slow as{" "}
-                    {advance.slowest.toFixed(2)} and as fast as{" "}
-                    {advance.fastest.toFixed(2)}, over rolling three-month
-                    windows. That spread is why this describes the past and
-                    can&apos;t be projected onto a case.
+                    It has ranged from {advance.slowest.toFixed(2)} to{" "}
+                    {advance.fastest.toFixed(2)} over rolling three-month
+                    windows, so it describes the past rather than predicting a case.
                   </p>
                 ) : null}
               </div>
@@ -552,10 +547,9 @@ export default async function PermProcessingTimesPage() {
                 Prevailing wage requests still pending
               </h2>{" "}
               <p className="mt-2 max-w-2xl text-foreground/70">
-                PERM prevailing wage requests DOL hasn’t yet decided, by the month it received
-                them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}. Each
-                month carries a running total from the oldest, which is how many
-                sit ahead of it.
+                Requests DOL hasn&apos;t decided yet, by the month it received
+                them{snapshot.pwdAsOf ? `, as of ${formatAsOf(snapshot.pwdAsOf)}` : ""}.
+                Each month&apos;s running total is how many sit ahead of it.
               </p>
               <PwdBacklogChart backlog={snapshot.pwdPermBacklog} className="mt-6" />
             </section>
@@ -638,15 +632,8 @@ export default async function PermProcessingTimesPage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-heading text-2xl font-black">Common questions</h2>
-        <dl className="mt-4 space-y-6">
-          {FAQ.map((item) => (
-            <div key={item.question}>
-              <dt className="font-heading text-lg font-bold">{item.question}</dt>{" "}
-              <dd className="mt-2 leading-relaxed text-foreground/70">{item.answer}</dd>
-            </div>
-          ))}
-        </dl>
+        <h2 className="font-heading text-2xl font-black">Common questions</h2>{" "}
+        <FaqList items={FAQ.map((item) => ({ q: item.question, a: item.answer }))} openFirst={false} />
       </section>
 
       <section className="mt-12 border-2 border-border bg-muted p-6">

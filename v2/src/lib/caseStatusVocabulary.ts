@@ -15,18 +15,17 @@
  * on flag.dol.gov/processingtimes. The rest return `null` and every caller must
  * handle that by saying nothing rather than filling the space.
  *
- * Measured against the live mirror on 2026-08-27: the glossed statuses cover
- * 410,884 of 412,865 cases (99.5%). The 0.5% that stay unglossed are
- * `IN PROCESS` (71), `APPLICATION ON HOLD` (1,789), `NORD ISSUED` (110),
- * `DETERMINATION ISSUED` (6), `REQUEST FOR REVIEW` (4) and
- * `DENIED - BALCA DISMISSED` (1). If a primary source turns up for any of them,
+ * Measured against the case-status table, the glossed statuses cover about
+ * 99.5% of cases. The unglossed rest are `IN PROCESS`, `APPLICATION ON HOLD`,
+ * `NORD ISSUED`, `DETERMINATION ISSUED`, `REQUEST FOR REVIEW` and
+ * `DENIED - BALCA DISMISSED`. If a primary source turns up for any of them,
  * add it here rather than in a template.
  *
  * ## Statuses are canonical UPPERCASE
  *
- * `scripts/mirror_case_status.py:norm_status` upper-cases and collapses
- * whitespace at ingest, because the source emits the same status in two casings
- * and `WHERE current_status = 'Certified'` silently returned a quarter of the
+ * Statuses are stored upper-cased with whitespace collapsed, because the
+ * source emits the same status in two casings and
+ * `WHERE current_status = 'Certified'` would silently return a quarter of the
  * certified cases. Lookups here normalise the same way so a caller that gets
  * its hands on an un-normalised string still resolves.
  *
