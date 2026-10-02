@@ -7480,5 +7480,10 @@ still reads every page, more slowly; the other crawlers keep 90.
 **The welcome email is signed "The PERM Tracker team"**, like the bylines (`welcomeSignoff.test.tsx`). The About
 page is the one place a person is named.
 
+**The first two-copy deploy (81d3d8c9, 3:15 AM EDT) went as designed**: both new copies warmed with 779 pages,
+traffic switched, the old slot kept for rollback. It showed one false alarm: Node exits 143 when systemd stops it,
+so the old slot's stopped second copy read "failed" and would have warned every morning. `SuccessExitStatus=143`
+in the web drop-in (`systemd/dropins/resources-web.conf`) makes a normal stop read as one.
+
 **The attorney hero** fits more on one screen: at 1440x900 the dashboard picture's top moved from 539px
 down, 60% visible, to about 80% visible.
