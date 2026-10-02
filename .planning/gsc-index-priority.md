@@ -1,6 +1,32 @@
 # GSC indexing priority list
 
-**Run of 2026-09-30, 2:33 to 2:49 PM EDT: 11 accepted, the 12th refused.** Automatic daily
+**Run of 2026-10-01, 11:35 PM to 12:06 AM EDT (into Oct 2): 11 accepted, the 12th refused.**
+It ran after the evening deploy that rebuilt the attorney page and the homepage (commit
+`d3a66f97`), so those two went first. The cap was 11 for the eleventh run running. The sitemap
+index needed no resubmission: Google read it Sep 30 and counts 106,258 discovered pages against
+106,300 in the live children. Accepted times are approximate (each to the minute the dialog showed).
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/for-attorneys` | indexed (rebuilt tonight: deadline hub hero, product tour) | ~11:36 PM |
+| 2 | `/` | indexed (redesigned tonight) | ~11:38 PM |
+| 3 | `/tools/i485-queue-position` | indexed (HTML changed Sep 30) | ~11:40 PM |
+| 4 | `/perm-cases` | indexed (HTML changed Sep 30) | ~11:42 PM |
+| 5 | `/pwd-cases` | indexed (HTML changed Sep 30) | ~11:45 PM |
+| 6 | `/lca-cases` | indexed (HTML changed Sep 30) | ~11:47 PM |
+| 7 | `/guides/perm-application-on-hold-meaning` | indexed, last crawled Sep 22 (before the Sep 25 rewrite) | ~11:50 PM |
+| 8 | `/changelog/the-whole-field-three-ways` | indexed, last crawled Sep 3 | ~11:54 PM |
+| 9 | `/changelog/live-data-and-two-doors` | indexed, last crawled Sep 2 | ~11:57 PM |
+| 10 | `/changelog/march-2026-timeline-and-ux` | indexed, last crawled Sep 4 | ~12:00 AM |
+| 11 | `/perm-case-statuses` | indexed, recrawled Sep 28, but restructured tonight | ~12:04 AM |
+| 12 | `/es` | Discovered, never crawled; **refused, Quota Exceeded** | ~12:06 AM |
+
+Inspected only: `/debarments` (recrawled Sep 21, 3:26 PM, after its request; skipped), `/vi`
+(indexed), `/pt-br` and `/ko` (Discovered, never crawled; queued below).
+
+---
+
+**Previous run:** 2026-09-30, 2:33 to 2:49 PM EDT: 11 accepted, the 12th refused. Automatic daily
 rounds resumed the same afternoon (session timer, 3:07, 5:07 and 7:07 PM; see the Sep 30 queue
 at the end of this file for what remains).
 
@@ -27,7 +53,7 @@ the resubmission closes).
 
 ---
 
-**Previous run:** 2026-09-27, 9:27 to 9:43 PM EDT: 11 accepted, the 12th refused.
+**Earlier run:** 2026-09-27, 9:27 to 9:43 PM EDT: 11 accepted, the 12th refused.
 
 The cap was 11 for the ninth run running. It ran after both of the evening's deploys (8:14 and
 9:24 PM), so every page Google fetches now carries the history search, the breakdown pages'
@@ -686,3 +712,10 @@ and `/vi` before spending a slot on any of them.
 When every item above is either indexed or requested, the queue is EMPTY: say so here in one
 line ("Queue empty as of <date>"), and the automatic round deletes its own timer.
 
+## Queue after the Oct 1 run (the next round probes from about 11:35 PM EDT Oct 2; a refusal is free)
+
+1. `/es`, `/pt-br`, `/ko`: Discovered, never crawled (inspected Oct 1). `/zh` and `/vi` are indexed.
+2. One live-only employer page, inspect only, to watch that family convert.
+
+After those the queue is empty: write "Queue empty as of <date>" here and the automatic round
+deletes its own timer.
