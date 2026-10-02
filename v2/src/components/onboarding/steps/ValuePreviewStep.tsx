@@ -1,8 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { EnvelopeSimpleIcon, RobotIcon } from "@phosphor-icons/react";
+import { differenceInCalendarDays, format, parseISO } from "date-fns";
 
 import { Button } from "@/components/ui/button";
+import { sampleCaseFilingWindow } from "@convex/lib/sampleCase";
 import { STAGE_VISUALS } from "@/components/status/stage-visuals";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +19,9 @@ interface ValuePreviewStepProps {
  */
 export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
   const eta = STAGE_VISUALS.eta9089;
+  // The sample case's own window, worked out by the central rules from today,
+  // so these four pictures agree with the case the tour is about to create.
+  const [dates] = useState(() => previewDates(new Date()));
   return (
     <div className="flex flex-col items-center px-2">
       <h2 className="mb-1 text-center font-heading text-2xl font-bold tracking-tight sm:text-3xl">
@@ -30,7 +36,7 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
               <span className="block truncate font-heading text-sm font-bold">Acme Technology Inc.</span>{" "}
               <span className="block truncate text-sm text-muted-foreground">9089 window opens</span>
             </span>{" "}
-            <span className="shrink-0 font-mono text-lg font-bold text-data-warn-ink">24d</span>
+            <span className="shrink-0 font-mono text-lg font-bold text-data-warn-ink">{dates.opensInDays}d</span>
           </div>
         </Preview>
 
@@ -41,7 +47,7 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
             </span>{" "}
             <span className="min-w-0">
               <span className="block truncate font-heading text-sm font-bold">7 days left</span>{" "}
-              <span className="block truncate text-sm text-muted-foreground">Filing window closes Feb 15</span>
+              <span className="block truncate text-sm text-muted-foreground">Filing window closes {dates.closesShort}</span>
             </span>
           </div>
         </Preview>
@@ -49,8 +55,8 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
         <Preview caption="On your calendar">
           <div className="flex items-stretch gap-3">
             <span className="flex w-14 shrink-0 flex-col items-center border-2 border-border bg-card">
-              <span className="w-full bg-foreground py-0.5 text-center font-mono text-sm font-bold text-background">Oct</span>{" "}
-              <span className="py-1 font-heading text-2xl font-black leading-none">22</span>
+              <span className="w-full bg-foreground py-0.5 text-center font-mono text-sm font-bold text-background">{dates.opensMonth}</span>{" "}
+              <span className="py-1 font-heading text-2xl font-black leading-none">{dates.opensDay}</span>
             </span>{" "}
             <span className={cn("flex flex-1 items-center border-2 border-border px-3 font-heading text-sm font-bold", eta.fill, eta.onFill)}>
               Filing window opens
@@ -64,7 +70,7 @@ export function ValuePreviewStep({ onNext }: ValuePreviewStepProps) {
               When does my window close?
             </p>{" "}
             <p className="flex w-fit max-w-[90%] items-start gap-2 border-2 border-border bg-card px-3 py-1.5 text-sm">
-              <RobotIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> Feb 15, 2027, 140 days from today.
+              <RobotIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> {dates.closesLong}, {dates.closesInDays} days from today.
             </p>
           </div>
         </Preview>
@@ -84,4 +90,20 @@ function Preview({ caption, children }: { caption: string; children: React.React
       <p className="font-heading text-sm font-bold">{caption}</p>
     </li>
   );
+}
+
+/** The four dates the illustration prints, from the sample case's window. */
+export function previewDates(today: Date) {
+  const window = sampleCaseFilingWindow(today);
+  // The sample case always has a window; the fallback keeps the step drawable.
+  const opens = window ? parseISO(window.opens) : today;
+  const closes = window ? parseISO(window.closes) : today;
+  return {
+    opensInDays: differenceInCalendarDays(opens, today),
+    opensMonth: format(opens, "MMM"),
+    opensDay: format(opens, "d"),
+    closesShort: format(closes, "MMM d"),
+    closesLong: format(closes, "MMM d, yyyy"),
+    closesInDays: differenceInCalendarDays(closes, today),
+  };
 }

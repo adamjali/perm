@@ -52,17 +52,20 @@ switch_to(){ # $1 slot
   # key is the path and query without Next's `_rsc` token (nginx config), so a
   # page and its data request always reach the same copy. w1/w2 are the copies
   # one by one: refresh calls go to w1 and are mirrored to w2.
-  local p1 p2
+  # A copy is set aside only after 3 failures, for 5 s (nginx's default is 1
+  # failure for 10 s): on Oct 2 2026 single resets marked both copies down at
+  # once and every request in those seconds got a 502 ("no live upstreams").
+  local p1 p2 opts="max_fails=3 fail_timeout=5s"
   p1=$(port_of "$1"); p2=$p1
   if systemctl is-active --quiet "permtracker-web@${1}2"; then p2=$(port_of "${1}2"); fi
   if [ "$p2" != "$p1" ]; then
-    printf 'hash "$uri?$pt_args_no_rsc" consistent;\nserver 127.0.0.1:%s;\nserver 127.0.0.1:%s;\n' "$p1" "$p2" \
+    printf 'hash "$uri?$pt_args_no_rsc" consistent;\nserver 127.0.0.1:%s %s;\nserver 127.0.0.1:%s %s;\n' "$p1" "$opts" "$p2" "$opts" \
       > /etc/nginx/permtracker-active-upstream.conf
   else
-    echo "server 127.0.0.1:$p1;" > /etc/nginx/permtracker-active-upstream.conf
+    echo "server 127.0.0.1:$p1 $opts;" > /etc/nginx/permtracker-active-upstream.conf
   fi
-  echo "server 127.0.0.1:$p1;" > /etc/nginx/permtracker-active-w1.conf
-  echo "server 127.0.0.1:$p2;" > /etc/nginx/permtracker-active-w2.conf
+  echo "server 127.0.0.1:$p1 $opts;" > /etc/nginx/permtracker-active-w1.conf
+  echo "server 127.0.0.1:$p2 $opts;" > /etc/nginx/permtracker-active-w2.conf
   # $A/live points at the serving release: nginx serves its public/ images
   # straight from disk. Renamed into place, so it is never missing mid-switch.
   ln -sfn "$(readlink -f "$A/slots/$1")" "$A/live.next" && mv -T "$A/live.next" "$A/live"

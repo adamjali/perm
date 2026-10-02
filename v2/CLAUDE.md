@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 544 files / 8,237 tests (2026-10-01, night; ~20 min at a load average near 45, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 549 files / 8,276 tests (2026-10-02, morning; ~25 min at a load average near 36, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -7487,3 +7487,44 @@ in the web drop-in (`systemd/dropins/resources-web.conf`) makes a normal stop re
 
 **The attorney hero** fits more on one screen: at 1440x900 the dashboard picture's top moved from 539px
 down, 60% visible, to about 80% visible.
+
+## Oct 2 2026 (morning): open data, a longer record, and a defense that acts by itself
+
+**Open data** (`/open-data`, `src/lib/openData.ts`, readers in `src/lib/turso/openData.ts`). Two files in two
+formats, under CC BY 4.0: the visa bulletin archive (one CSV row per printed cell, `as_printed` beside the parsed
+`cutoff_date` and its `status`) and every DOL processing-times reading kept (one row per published value; a blank
+month is DOL's "--", never written as `--`, which a spreadsheet would try as a formula). The JSON keeps cells as
+printed. Each download sends CORS `*` and `Link: <licence>; rel="license"`. The Terms name the exception in §4 and
+§6; every other compiled dataset stays under them. `getDatasetSchema` takes `license` and `distribution` for these
+two only. The readers are named `getVisaBulletinsArchive` and `getProcessingTimesArchive` on purpose: the two
+revalidation tests find readers by those names, so the page and the four files are expired when either source moves.
+Estimate scorecard moved to the rail's Queue group: Open data in Reference ran the rail past its height budget.
+
+**The visa bulletin archive reaches June 2005** (237 bulletins to October 2026). `ingest_visa_bulletin.py
+--backfill-direct N` reads State's own index and names and skips any month it can't read whole; the nightly
+`--direct` still stops on a bad month. 127 re-read months matched the stored cells exactly, four new months were
+checked against State's raw page text, 0 differed. 20 months in the span are missing: Jul 2005 to May 2007 (15,
+an older layout the parser doesn't read) and 2009-03, 2009-09 to 2009-11 and 2012-10 (not linked from State's
+index; the Internet Archive route could fill them). Before 2011 there are no family charts, and before 2014 EB-5
+is often absent. June 2009 printed "PHILIPP-INES"; the header match now drops hyphens.
+**Paces, moves and backward steps are still measured from October 2014** (`BOARD_MEASURED_FROM` in
+`src/lib/turso/bulletin.ts`): the older months are history (each cell's `states`, the month pages, the open data),
+and adding them moved no published estimate. Copy that quotes the window says "since October 2014".
+
+**DOL's decisions per day reach October 2015** (`scripts/build_daily_decisions.py`, after both case loads): 3,484
+days, 1,241,325 decisions from `perm_cases` and `perm_cases_history`, a case in both counted once on perm_cases'
+date. It had been built once from perm_cases alone (Aug 26), so it started 2023-10-01. The new years' zero weekdays
+are federal holidays and January 22 2018 (a shutdown day). `DailyDecisionsChart` draws months once the record
+passes three years (weekly, ten years is ~560 points in 626 units).
+
+**The automatic defense** (`bin/permtracker-defend`, every minute; details in `scripts/oracle/README.md`). It acts on
+people being turned away, never on traffic: a managed challenge for the source (a network from Cloudflare's new
+`x-pt-asn` header, or one browser label), then Under Attack Mode after 10 more minutes or when there's no single
+source, then all off after 30 calm minutes, emailing each change. It only watches until `/etc/permtracker/defend.env`
+holds a Cloudflare token. Custom rule 2 skips the security level, so trusted traffic never sees Under Attack Mode.
+
+**Smaller:** nginx keeps upstream connections 4 s (Node closes at 5 s; the resets were the 502s) and marks an
+upstream down after 3 failures in 5 s; the edge serves a stale page for up to a day when the origin errors
+(`stale-if-error`); a passed challenge lasts 30 minutes. Onboarding: a brand-new account is welcomed, not welcomed
+back; the illustration's dates come from the sample case's real window (`convex/lib/sampleCase.ts`, shared with the
+case the tour creates); the tour's last part is "Getting around"; labels in sentence case.

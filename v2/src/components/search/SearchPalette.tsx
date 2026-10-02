@@ -59,6 +59,7 @@ interface EntityHit {
  * filters by it.
  */
 const SECTION_KEYWORDS: Readonly<Record<string, string>> = {
+  "open-data": "open data download csv json dataset bulk licence license cc-by bulletin history",
   "by-city": "city cities town metro worksite location",
   "by-industry": "industry industries naics sector",
   "by-country": "country countries citizenship nationality birth",

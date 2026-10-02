@@ -44,6 +44,9 @@ export const DOL_PAGES = [
   // The catalogue page reads the snapshot ITSELF: it prints federal figures
   // inline from one read, so it is on this list.
   "/badges",
+  "/open-data",
+  "/open-data/dol-processing-times.csv",
+  "/open-data/dol-processing-times.json",
   // Every badge's canonical path, DERIVED rather than hand-listed. A hand list
   // fell behind the registry the same day six kinds were added, and the file
   // said "keep in step with BADGE_KINDS" in a comment, which is not a thing

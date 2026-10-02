@@ -84,3 +84,9 @@ jobs:
               --note "run ${GITHUB_RUN_ID} failed; see the log" || true
             exit 1
           }
+          # DOL's decisions per day, which read the history table too.
+          python3 scripts/build_daily_decisions.py || {
+            python3 scripts/record_ingest_failure.py --script build_daily_decisions.py \
+              --note "run ${GITHUB_RUN_ID} failed; see the log" || true
+            exit 1
+          }

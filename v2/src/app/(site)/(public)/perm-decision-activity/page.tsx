@@ -473,8 +473,8 @@ export default async function DecisionActivityPage() {
             <>
               <p className="mt-4 max-w-3xl text-sm leading-relaxed text-foreground/60">
                 {formatInt(idleWeekdays.length)} weekdays carry no determination at
-                all, so the quietest list is a list of ties: federal holidays
-                and the October 2025 stoppage.
+                all, so the quietest list is a list of ties: federal holidays,
+                the January 2018 shutdown and the October 2025 stoppage.
               </p>{" "}
               <FinePrint summary="Why a zero is a zero" className="mt-3">
                 <p>

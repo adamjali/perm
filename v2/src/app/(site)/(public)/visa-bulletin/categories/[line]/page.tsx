@@ -164,7 +164,7 @@ export default async function BulletinLinePage({ params }: { params: Promise<{ l
             <dd className="font-heading text-2xl font-black tabular-nums">{cutoffLabel(dff?.latest ?? null)}</dd>
           </div>{" "}
           <div className="grid grid-cols-1 gap-y-1 border-b-2 border-border py-3 sm:grid-cols-[14rem_minmax(0,1fr)] sm:gap-x-4">
-            <dt className="text-base text-foreground/75">Across the archive</dt>{" "}
+            <dt className="text-base text-foreground/75">Since October 2014</dt>{" "}
             <dd className="text-base leading-relaxed">
               {paceSentence(fa)}{" "}
               {fa.retrogressions.length > 0

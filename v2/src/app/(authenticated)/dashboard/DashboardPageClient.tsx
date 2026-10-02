@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { captureError } from "@/lib/sentry";
 import { useQuery, useMutation } from "convex/react";
 import { useRouter } from "next/navigation";
@@ -15,10 +15,16 @@ import { OnboardingChecklist } from "@/components/onboarding/OnboardingChecklist
 import { QueuePulseWidget } from "@/components/dashboard/QueuePulseWidget";
 import { CaseCapNotice } from "@/components/cases/CaseCapNotice";
 
+/** An account younger than this is greeted "Welcome", not "Welcome back". */
+const NEW_ACCOUNT_MS = 24 * 60 * 60 * 1000;
+
 export function DashboardPageClient() {
   const router = useRouter();
   const currentUser = useQuery(api.users.currentUser);
   const hasRunEnforcement = useRef(false);
+  // Read once per mount: the greeting only needs to know whether the account
+  // is under a day old.
+  const [mountedAt] = useState(() => Date.now());
 
   // Check if enforcement is enabled
   const isEnforcementEnabled = useQuery(api.deadlineEnforcement.isEnforcementEnabled);
@@ -61,9 +67,13 @@ export function DashboardPageClient() {
   const firstName =
     currentUser === undefined ? undefined : rawName ? rawName.split(" ")[0] : null;
 
+  // A brand-new account is welcomed, not welcomed back.
+  const isNewAccount =
+    currentUser !== undefined && mountedAt - currentUser._creationTime < NEW_ACCOUNT_MS;
+
   return (
     <div className="space-y-6">
-      <DashboardHeading firstName={firstName} />
+      <DashboardHeading firstName={firstName} isNewAccount={isNewAccount} />
 
       <CaseCapNotice />
 

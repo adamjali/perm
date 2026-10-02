@@ -169,3 +169,21 @@ describe("summariseBulletins: the window", () => {
     expect(board.finalAction.map((c) => c.country)).toEqual(["india"]);
   });
 });
+
+describe("bulletins older than the measured window", () => {
+  it("appear in the history and never move the pace, the move or the backward steps", () => {
+    const recent = slowSeries();
+    const older = [
+      b("2008-06", { EB2: { india: "01APR04" } }),
+      b("2009-06", { EB2: { india: "01JAN00" } }), // a retrogression, in 2009
+      b("2012-12", { EB2: { india: "01SEP04" } }),
+    ];
+    const without = summariseBulletins(recent)!.finalAction.find((c) => c.country === "india")!;
+    const withOld = summariseBulletins([...older, ...recent])!.finalAction.find((c) => c.country === "india")!;
+    expect(withOld.states.map((s) => s.month).slice(0, 3)).toEqual(["2008-06", "2009-06", "2012-12"]);
+    expect(withOld.pace).toBe(without.pace);
+    expect(withOld.movedDays).toBe(without.movedDays);
+    expect(withOld.spanMonths).toBe(without.spanMonths);
+    expect(withOld.retrogressions).toEqual(without.retrogressions);
+  });
+});

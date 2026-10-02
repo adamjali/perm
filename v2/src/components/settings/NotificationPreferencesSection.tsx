@@ -586,7 +586,7 @@ export default function NotificationPreferencesSection({
             <div className="space-y-0.5 flex-1">
               <Label htmlFor="marketing-updates" className="text-sm font-medium flex items-center gap-2">
                 <MegaphoneIcon className="w-4 h-4 text-primary" />
-                Product Updates &amp; Announcements
+                Product updates and announcements
               </Label>
               <p className="text-sm text-muted-foreground">
                 Occasional emails about new features and improvements

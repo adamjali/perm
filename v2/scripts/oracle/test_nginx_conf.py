@@ -115,6 +115,12 @@ def run(conf_text: str) -> None:
     check("the mirror target is internal and goes to the second copy",
           "internal;" in locs.get("= /__pt_revalidate_w2", "")
           and "proxy_pass http://permtracker_w2$request_uri;" in locs.get("= /__pt_revalidate_w2", ""))
+    cdn = re.search(r"map \$upstream_http_cache_control \$pt_cdn_cc\s*\{([^}]*)\}", head)
+    check("shareable pages may be served stale while refreshing and when the server errors",
+          cdn is not None and "stale-while-revalidate=" in cdn.group(1) and "stale-if-error=" in cdn.group(1))
+    ups = re.findall(r"upstream (permtracker_\w+)\s*\{([^}]*)\}", head)
+    check("every app upstream closes idle connections before Node does (under 5 s)",
+          len(ups) >= 3 and all(re.search(r"keepalive_timeout\s+[1-4]s;", b) for _, b in ups), str([n for n, _ in ups]))
     check("the copies' upstream files are included",
           all(f"include /etc/nginx/permtracker-active-{n}.conf;" in head for n in ("upstream", "w1", "w2")))
     check("the proxied locations were found", len(proxied) >= 5, str(sorted(proxied)))
@@ -213,6 +219,18 @@ def run(conf_text: str) -> None:
     check("busy-seen: log records time, status, address, kind and browser",
           fmt is not None and all(v in fmt.group(1) for v in ("$time_iso8601", "$status", "$remote_addr", "$arg_k", "$http_user_agent")))
 
+    # The automatic defense's log (bin/permtracker-defend reads it every
+    # minute). Declared at server level, beside the main log: an access_log
+    # there replaces the one nginx.conf sets, so naming only the new one would
+    # stop the main log.
+    server_level = server[: server.index("location")]
+    check("defend: request log kept at server level",
+          "access_log /var/log/permtracker-busy/defend.log pt_defend" in server_level)
+    check("defend: main access log still written", "access_log /var/log/nginx/access.log;" in server_level)
+    fmt = re.search(r"log_format pt_defend '([^']*)'", head)
+    check("defend: log records time, status, network, crawler flag, path and browser",
+          fmt is not None and fmt.group(1).startswith('$msec $status $http_x_pt_asn $http_x_pt_verified_bot "$uri" "$http_user_agent"'))
+
 
 def probe() -> None:
     """The checks must fail on the drifts they exist for."""
@@ -232,10 +250,14 @@ def probe() -> None:
         "refresh no longer mirrored": good.replace("        mirror /__pt_revalidate_w2;\n", "", 1),
         "email links forward Cloudflare's headers": good.replace("        proxy_pass_request_headers off;\n", "", 1),
         "email-link pages stored again": good.replace('        add_header Cache-Control "private, no-store" always;\n', "", 1),
+        "edge no longer serves stale on errors": good.replace(", stale-if-error=86400", "", 1),
+        "upstream keeps idle connections past Node's": good.replace("    keepalive_timeout 4s;\n", "", 1),
         "Meta's allowance dropped from a page": good.replace("        limit_req zone=pt_meta burst=15 nodelay;\n", "", 1),
         "refusal views no longer logged": good.replace("        access_log /var/log/permtracker-busy/seen.log pt_busy_seen;\n", "", 1),
         "refusal-view log loses the status": good.replace("'$time_iso8601 $status $remote_addr", "'$time_iso8601 $remote_addr", 1),
         "counting image answered before its limit": good.replace("        empty_gif;\n    }", "        return 204;\n    }", 1),
+        "main access log dropped for the defense log": good.replace("    access_log /var/log/nginx/access.log;\n", "", 1),
+        "defense log loses the network": good.replace("$status $http_x_pt_asn $http_x_pt_verified_bot", "$status $http_x_pt_verified_bot", 1),
     }
     global failures
     for name, text in mutations.items():

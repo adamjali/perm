@@ -3,8 +3,8 @@
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-02
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **544 files / 8,237 tests across 5 vitest
-> projects** (2026-10-01), not the 151 files / 3 projects TESTING.md records. Treat those
+> have drifted: the suite is now **549 files / 8,276 tests across 5 vitest
+> projects** (2026-10-02), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
 ## Production URLs
@@ -344,3 +344,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 2 2026".
 - **Tencent Cloud (AS132203) must pass a Cloudflare browser check**; a scraper there filled the app at 2:42 AM EDT.
 - **Email links go from nginx straight to the backend**, never stored (Cloudflare had kept them 2 hours), never framed.
 - **A repeat click on a confirmation link says you're already on the list** instead of calling it invalid.
+
+## Oct 2 2026 (morning), in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 2 2026 (morning)".
+
+- **`/open-data`: the visa bulletin archive and DOL's processing-times readings** as CSV and JSON under CC BY 4.0.
+- **The bulletin archive reaches June 2005** (237 bulletins, 20 months missing); paces stay measured from Oct 2014.
+- **DOL's decisions per day reach October 2015**, from both case tables (`build_daily_decisions.py`).
+- **An automatic defense** challenges whoever is turning people away, then Under Attack Mode, then stands down.
+- **Onboarding's dates match the sample case**, and a new account is welcomed, not welcomed back.

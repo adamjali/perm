@@ -110,10 +110,10 @@ export function OnboardingTour({
         stagePadding: isMobile ? 4 : 10,
         stageRadius: 0,
         popoverClass: "neo-popover",
-        progressText: `Step {{current}}/{{total}} \u2022 ${phaseConfig.phase?.charAt(0).toUpperCase()}${phaseConfig.phase?.slice(1)}`,
+        progressText: `Step {{current}}/{{total}} \u2022 ${phaseConfig.label}`,
         nextBtnText: "Next \u2192",
         prevBtnText: "\u2190 Back",
-        doneBtnText: isLastPhase ? "Finish Tour \u2713" : "Continue \u2192",
+        doneBtnText: isLastPhase ? "Finish tour \u2713" : "Continue \u2192",
         onNextClick: () => {
           // If this is the last step and user clicked Done/Continue, mark as completed
           if (!driverObj.hasNextStep()) {

@@ -150,6 +150,8 @@ jobs:
           python3 scripts/ingest_perm_history.py --current
           # The city, industry and country pages read both case tables.
           python3 scripts/build_groups.py
+          # DOL's decisions per day, from both case tables (FY2016 on).
+          python3 scripts/build_daily_decisions.py
           python3 scripts/build_alphabet.py
           python3 scripts/build_state_profiles.py
           python3 scripts/build_wage_bands.py

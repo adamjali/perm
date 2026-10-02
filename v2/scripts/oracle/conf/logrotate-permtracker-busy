@@ -12,3 +12,17 @@
 		invoke-rc.d nginx rotate >/dev/null 2>&1
 	endscript
 }
+
+# The automatic defense's request log (nginx pt_defend). It reads only the last
+# few minutes, so two days are kept; maxsize rotates it early on a heavy day.
+/var/log/permtracker-busy/defend.log {
+	daily
+	rotate 2
+	missingok
+	notifempty
+	maxsize 300M
+	create 0640 root permtracker
+	postrotate
+		invoke-rc.d nginx rotate >/dev/null 2>&1
+	endscript
+}

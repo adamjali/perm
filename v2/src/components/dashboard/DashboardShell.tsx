@@ -13,7 +13,14 @@ import { Skeleton } from "@/components/ui/skeleton";
  * loading: only the greeting line waits, as a bar the height of the heading.
  * The eyebrow, the lede and the button never change, so they never wait.
  */
-export function DashboardHeading({ firstName }: { firstName: string | null | undefined }) {
+export function DashboardHeading({
+  firstName,
+  isNewAccount = false,
+}: {
+  firstName: string | null | undefined;
+  isNewAccount?: boolean;
+}) {
+  const greeting = isNewAccount ? "Welcome" : "Welcome back";
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
@@ -28,7 +35,7 @@ export function DashboardHeading({ firstName }: { firstName: string | null | und
           </div>
         ) : (
           <h1 className="mt-2 font-heading text-3xl font-black leading-[1.08] tracking-[-0.03em] sm:text-4xl">
-            {firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+            {firstName ? `${greeting}, ${firstName}` : greeting}
           </h1>
         )}{" "}
         <p className="mt-3 max-w-[52ch] text-base leading-relaxed text-foreground/70">

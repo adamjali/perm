@@ -3,8 +3,9 @@
  *
  * TWO SOURCES, BOTH OURS:
  *
- *   dol-disclosure  from 2023-10-01 through the last published quarter.
- *                   Derived from our own case corpus by decision date.
+ *   dol-disclosure  from 2015-10-01 through the last published quarter.
+ *                   Derived from both case tables by DOL's decision date
+ *                   (scripts/build_daily_decisions.py).
  *   sweep-observed  daily. Our own sweep's record of when each case's
  *                   status changed (perm_case_events).
  *

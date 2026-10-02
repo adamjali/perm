@@ -335,7 +335,7 @@ function LineAnswer({
         <div className="border-b-2 border-border p-6 sm:p-8">
           <h3 className="font-heading text-lg font-black">The bulletin&apos;s own pace, for comparison</h3>{" "}
           <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
-            Over the {reach.basis.spanMonths} months this site holds, this line&apos;s final action date moved{" "}
+            Over the {reach.basis.spanMonths} months since October 2014, this line&apos;s final action date moved{" "}
             {Math.round(reach.basis.movedDays / DAYS_PER_MONTH_2DP)} months of priority dates
             {reach.basis.retrogressions > 0 ? `, with ${reach.basis.retrogressions} step${reach.basis.retrogressions === 1 ? "" : "s"} backwards` : ""}.
             At that pace it reaches your date in about{" "}

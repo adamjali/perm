@@ -31,7 +31,7 @@ export const ONBOARDING_ROLES: {
     // one this wizard cannot serve, so it should be the easiest to find and
     // the fastest to leave by.
     role: "Waiting on my own case",
-    description: "You're the applicant — we'll take you to your case",
+    description: "You're the applicant. We'll take you to your case",
     icon: "UserCheck",
   },
   {
@@ -92,6 +92,7 @@ export const CHECKLIST_ITEMS: ChecklistItem[] = [
 export const TOUR_PHASES: TourPhaseConfig[] = [
   {
     phase: "dashboard",
+    label: "Dashboard",
     page: "/dashboard",
     steps: [
       {
@@ -122,6 +123,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
   },
   {
     phase: "cases",
+    label: "Cases",
     page: "/cases",
     steps: [
       {
@@ -134,6 +136,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
   },
   {
     phase: "calendar",
+    label: "Calendar",
     page: "/calendar",
     steps: [
       {
@@ -146,6 +149,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
   },
   {
     phase: "settings",
+    label: "Settings",
     page: "/settings",
     steps: [
       {
@@ -158,6 +162,7 @@ export const TOUR_PHASES: TourPhaseConfig[] = [
   },
   {
     phase: "chat",
+    label: "Getting around",
     page: "/dashboard",
     steps: [
       {

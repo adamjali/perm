@@ -123,7 +123,7 @@ export function CreateCaseStep({ onNext }: CreateCaseStepProps) {
         {/* Beneficiary Identifier */}
         <div className="space-y-1.5">
           <Label htmlFor="onb-beneficiary" className="font-heading font-semibold text-sm">
-            Beneficiary Identifier{" "}
+            Beneficiary identifier{" "}
             <span className="text-muted-foreground font-normal">(optional)</span>
           </Label>
           <Input

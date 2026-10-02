@@ -220,7 +220,7 @@ const SOURCES = [
     name: "State Department visa bulletin",
     seal: "/agency/dos-seal.png",
     sealAlt: "Seal of the US Department of State",
-    what: "Cutoff dates from every bulletin since October 2014, read from the State Department's own pages as each one appears, with older months from the Internet Archive's copies of the same pages. Nothing in it is forecast.",
+    what: "Cutoff dates from every bulletin since October 2014 and most back to June 2005, read from the State Department's own pages as each one appears, with some months from the Internet Archive's copies of the same pages. A few older months are missing, where State's pages don't parse or aren't linked. Paces and backward steps are measured from October 2014. Nothing in it is forecast.",
     cadence: "Monthly.",
     href: "https://travel.state.gov/content/travel/en/legal/visa-law0/visa-bulletin.html",
   },

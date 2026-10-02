@@ -1,0 +1,359 @@
+#!/usr/bin/env python3
+"""Every minute: turn Cloudflare's defenses up when people are being turned
+away, aim them at whoever is causing it, and turn them back down once it's calm.
+
+WHAT COUNTS AS TROUBLE. Not traffic: a crawler at 300 pages a minute is fine
+while there's room. Trouble is people getting the "busy for a moment" page,
+from either of two signals:
+
+- two or more people (a browser, not a script) drew the busy page in the last
+  10 minutes (the page's counting image, /__pt/busy-seen?k=503); or
+- the whole app was full for 3 minutes running: at least 2% of page requests,
+  and at least 20, answered 503 in each of the last 3 minutes.
+
+WHAT IT DOES, in order:
+
+1. Finds the source. Over the last 5 minutes of page requests from anything
+   Cloudflare hasn't verified as a crawler: a network (ASN) or one exact
+   browser label sending 30% or more, and at least 300 requests, is the source.
+   A network is preferred, unless it's a consumer ISP or our own hosts, where
+   the label is used instead so the rule doesn't land on everyone at home.
+   It adds ONE custom rule (ref pt-autodefend): a managed challenge for that
+   source. Real browsers pass it without a click; scripts don't.
+2. Still in trouble 10 minutes later, or no single source: Under Attack Mode
+   (every visitor gets Cloudflare's check). Custom rule 2 skips the security
+   level, so verified crawlers, AI assistants, link previews, one-click
+   unsubscribe and sign-in POSTs, revalidation and the database host never see
+   it.
+3. Calm for 30 minutes in a row: removes the rule and puts the security level
+   back to what it was.
+
+Every change is emailed (at most 8 a day), written to health/repairs.log (the
+morning email shows it) and kept in health/defend.json. With no Cloudflare
+token (/etc/permtracker/defend.env) or with health/defend.off present it only
+WATCHES: it logs what it would do and changes nothing.
+"""
+from __future__ import annotations
+
+import json
+import os
+import pathlib
+import re
+import sys
+import time
+import urllib.error
+import urllib.request
+from collections import Counter
+from datetime import datetime, timezone
+
+HEALTH = pathlib.Path(os.environ.get("PT_HEALTH_DIR", "/srv/permtracker/health"))
+STATE = HEALTH / "defend.json"
+OFF = HEALTH / "defend.off"
+REPAIRS = HEALTH / "repairs.log"
+DEFEND_LOG = pathlib.Path(os.environ.get("PT_DEFEND_LOG", "/var/log/permtracker-busy/defend.log"))
+BUSY_LOG = pathlib.Path(os.environ.get("PT_BUSY_LOG", "/var/log/permtracker-busy/seen.log"))
+CONFIG = pathlib.Path(os.environ.get("PT_DEFEND_CONFIG", "/etc/permtracker/defend.env"))
+APP_ENV = pathlib.Path("/srv/permtracker/app/env/production.env")
+
+PEOPLE_BUSY = 2            # people who drew the busy page ...
+PEOPLE_WINDOW = 600        # ... in this many seconds
+FULL_SHARE = 0.02          # a minute is "full" at 2% of page requests answered 503,
+FULL_MIN = 20              # and at least 20 of them,
+FULL_MINUTES = 3           # for this many minutes running
+SOURCE_WINDOW = 300        # look for the source over the last 5 minutes
+SOURCE_SHARE = 0.30
+SOURCE_MIN = 300
+ESCALATE_AFTER = 600       # Under Attack Mode if still in trouble 10 minutes after the rule
+CALM_FOR = 1800            # all off after 30 calm minutes
+EMAILS_PER_DAY = 8
+RULE_REF = "pt-autodefend"
+
+# Never challenged as a whole network: our own hosts, and the big consumer and
+# mobile ISPs in the US, Canada, India and China, where the visitors are people
+# at home. A source on one of these is targeted by its browser label instead.
+WHOLE_NETWORK_NEVER = {
+    13335, 31898,  # Cloudflare; Oracle (this server)
+    7922, 20115, 7018, 701, 22773, 20001, 11351, 11426, 12271, 10796,
+    21928, 6167, 22394, 209, 5650, 30036, 6128, 19108,
+    577, 812, 6327, 852,
+    55836, 45609, 9498, 24560, 4134, 4837, 9808,
+}
+
+STATIC = re.compile(r"^/(_next/|images/|og/|lottie/|about/|agency/|favicon|icon-|apple-touch|badge-72|__pt/|sw\.js|manifest)")
+NOT_PERSON = re.compile(
+    r"bot|crawl|spider|slurp|externalagent|externalhit|fetcher|headless|lighthouse|python|curl|wget|"
+    r"httpclient|java/|go-http|node-fetch|axios|okhttp|scrapy|playwright|puppeteer|phantom", re.I)
+# nginx pt_defend: $msec $status $http_x_pt_asn $http_x_pt_verified_bot "$uri" "$http_user_agent"
+DEFEND_LINE = re.compile(r'^(\d+(?:\.\d+)?) (\d{3}) (\S+) (\S+) "([^"]*)" "(.*)"$')
+# nginx pt_busy_seen: $time_iso8601 $status $remote_addr $arg_k "$http_user_agent"
+BUSY_LINE = re.compile(r'^(\S+) (\d{3}) (\S+) (\S*) "(.*)"$')
+
+
+def tail_lines(path: pathlib.Path, max_bytes: int = 16 << 20) -> list[str]:
+    """The end of a log (its last 16 MB is several times the 10 minutes read)."""
+    try:
+        with path.open("rb") as f:
+            f.seek(0, os.SEEK_END)
+            size = f.tell()
+            f.seek(max(0, size - max_bytes))
+            data = f.read()
+    except OSError:
+        return []
+    lines = data.decode("utf-8", "replace").splitlines()
+    return lines[1:] if size > max_bytes else lines
+
+
+def page_requests(lines: list[str], since: float) -> list[tuple[float, int, int | None, bool, str]]:
+    """(time, status, asn, verified crawler, user agent) for each app page since `since`."""
+    out = []
+    for ln in lines:
+        m = DEFEND_LINE.match(ln)
+        if not m:
+            continue
+        t = float(m.group(1))
+        if t < since or STATIC.match(m.group(5)):
+            continue
+        asn = int(m.group(3)) if m.group(3).isdigit() else None
+        out.append((t, int(m.group(2)), asn, m.group(4) == "true", m.group(6)))
+    return out
+
+
+def people_busy(lines: list[str], now: float) -> int:
+    """Distinct people (address and browser) who drew the busy page lately."""
+    seen = set()
+    for ln in lines:
+        m = BUSY_LINE.match(ln)
+        if not m or m.group(2) != "200" or m.group(4) != "503" or NOT_PERSON.search(m.group(5)):
+            continue
+        try:
+            t = datetime.fromisoformat(m.group(1).replace("Z", "+00:00")).timestamp()
+        except ValueError:
+            continue
+        if t >= now - PEOPLE_WINDOW:
+            seen.add((m.group(3), m.group(5)))
+    return len(seen)
+
+
+def full_minutes(reqs, now: float) -> int:
+    """How many of the last FULL_MINUTES whole minutes the app was full."""
+    n = 0
+    for k in range(1, FULL_MINUTES + 1):
+        lo, hi = now - 60 * k, now - 60 * (k - 1)
+        minute = [r for r in reqs if lo <= r[0] < hi]
+        refused = sum(1 for r in minute if r[1] == 503)
+        if refused >= FULL_MIN and refused >= FULL_SHARE * len(minute):
+            n += 1
+    return n
+
+
+def find_source(reqs, now: float) -> dict | None:
+    """The network or browser label sending most unverified page requests."""
+    recent = [r for r in reqs if r[0] >= now - SOURCE_WINDOW and not r[3]]
+    if len(recent) < SOURCE_MIN:
+        return None
+    asn, n_asn = (Counter(r[2] for r in recent if r[2] is not None).most_common(1) or [(None, 0)])[0]
+    ua, n_ua = (Counter(r[4] for r in recent if r[4]).most_common(1) or [(None, 0)])[0]
+    total = len(recent)
+    if asn is not None and asn not in WHOLE_NETWORK_NEVER and n_asn >= SOURCE_MIN and n_asn >= SOURCE_SHARE * total:
+        return {"kind": "asn", "value": asn, "share": round(n_asn / total, 2), "requests": n_asn}
+    if ua and n_ua >= SOURCE_MIN and n_ua >= SOURCE_SHARE * total:
+        return {"kind": "ua", "value": ua, "share": round(n_ua / total, 2), "requests": n_ua}
+    return None
+
+
+def rule_expression(source: dict) -> str:
+    if source["kind"] == "asn":
+        return f"ip.src.asnum eq {int(source['value'])}"
+    ua = str(source["value"]).replace("\\", "\\\\").replace('"', '\\"')
+    return f'http.user_agent eq "{ua}"'
+
+
+def describe(source: dict | None) -> str:
+    if not source:
+        return "no single source"
+    what = f"network AS{source['value']}" if source["kind"] == "asn" else f"browser label \"{source['value'][:90]}\""
+    return f"{what} ({source['requests']} page requests in 5 minutes, {int(source['share'] * 100)}%)"
+
+
+def decide(state: dict, trouble: bool, source: dict | None, now: float) -> list[tuple[str, dict]]:
+    """The actions this minute calls for, given the saved state. Pure."""
+    acts: list[tuple[str, dict]] = []
+    mode = state.get("mode", "off")
+    if trouble:
+        state["calmSince"] = None
+        if mode == "off":
+            if source:
+                acts.append(("rule_on", {"source": source}))
+            else:
+                acts.append(("attack_on", {"reason": "no single source"}))
+        elif mode == "rule" and now - float(state.get("since", now)) >= ESCALATE_AFTER:
+            acts.append(("attack_on", {"reason": "still turning people away 10 minutes after the rule"}))
+    elif mode != "off":
+        calm = state.get("calmSince") or now
+        state["calmSince"] = calm
+        if now - float(calm) >= CALM_FOR:
+            acts.append(("all_off", {}))
+    return acts
+
+
+class Cloudflare:
+    def __init__(self, token: str, zone: str):
+        self.token, self.zone = token, zone
+
+    def call(self, method: str, path: str, body: dict | None = None) -> dict:
+        req = urllib.request.Request(
+            f"https://api.cloudflare.com/client/v4/zones/{self.zone}{path}",
+            data=json.dumps(body).encode() if body is not None else None, method=method,
+            headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=20) as r:
+            out = json.load(r)
+        if not out.get("success"):
+            raise RuntimeError(f"Cloudflare {method} {path}: {out.get('errors')}")
+        return out["result"]
+
+    def entrypoint(self) -> dict:
+        return self.call("GET", "/rulesets/phases/http_request_firewall_custom/entrypoint")
+
+    def add_rule(self, source: dict) -> None:
+        ep = self.entrypoint()
+        if any(r.get("ref") == RULE_REF for r in ep.get("rules", [])):
+            return
+        self.call("POST", f"/rulesets/{ep['id']}/rules", {
+            "ref": RULE_REF, "action": "managed_challenge", "enabled": True,
+            "expression": rule_expression(source),
+            "description": f"AUTO (permtracker-defend): {describe(source)}. Removed by itself after 30 calm minutes.",
+        })
+
+    def remove_rule(self) -> None:
+        ep = self.entrypoint()
+        for r in ep.get("rules", []):
+            if r.get("ref") == RULE_REF:
+                self.call("DELETE", f"/rulesets/{ep['id']}/rules/{r['id']}")
+
+    def security_level(self) -> str:
+        return self.call("GET", "/settings/security_level")["value"]
+
+    def set_security_level(self, value: str) -> None:
+        self.call("PATCH", "/settings/security_level", {"value": value})
+
+
+def read_env(path: pathlib.Path) -> dict:
+    out = {}
+    try:
+        for ln in path.read_text().splitlines():
+            if "=" in ln and not ln.lstrip().startswith("#"):
+                k, v = ln.split("=", 1)
+                out[k.strip()] = v.strip().strip('"').strip("'")
+    except OSError:
+        pass
+    return out
+
+
+def note(msg: str) -> None:
+    line = f"{datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')} defend: {msg}"
+    print(line)
+    try:
+        with REPAIRS.open("a") as f:
+            f.write(line + "\n")
+    except OSError:
+        pass
+
+
+def email(state: dict, cfg: dict, subject: str, text: str) -> None:
+    day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    sent = state.setdefault("emails", {})
+    if sent.get(day, 0) >= EMAILS_PER_DAY:
+        return
+    key, to = read_env(APP_ENV).get("RESEND_API_KEY"), cfg.get("ALERT_TO")
+    if not key or not to:
+        return
+    req = urllib.request.Request(
+        "https://api.resend.com/emails", method="POST",
+        data=json.dumps({"from": "PERM Tracker <notifications@permtracker.app>", "to": [to],
+                         "subject": subject, "text": text}).encode(),
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+    try:
+        urllib.request.urlopen(req, timeout=20).read()
+        sent[day] = sent.get(day, 0) + 1
+        state["emails"] = {d: n for d, n in sent.items() if d >= day}
+    except (urllib.error.URLError, OSError) as exc:
+        print(f"email failed: {exc}")
+
+
+UNDO = ("To undo by hand: Cloudflare, Security, WAF, custom rules: delete the rule whose description "
+        "starts AUTO; Security, Settings: set the security level back. To stop this from acting: "
+        "touch /srv/permtracker/health/defend.off on the server.")
+
+
+def main() -> int:
+    now = time.time()
+    try:
+        state = json.loads(STATE.read_text())
+    except (OSError, ValueError):
+        state = {"mode": "off"}
+    reqs = page_requests(tail_lines(DEFEND_LOG), now - max(SOURCE_WINDOW, 60 * FULL_MINUTES))
+    people = people_busy(tail_lines(BUSY_LOG, 2 << 20), now)
+    full = full_minutes(reqs, now)
+    trouble = people >= PEOPLE_BUSY or full >= FULL_MINUTES
+    source = find_source(reqs, now) if trouble else None
+    acts = decide(state, trouble, source, now)
+    if not trouble:
+        state.pop("lastWould", None)
+
+    cfg = read_env(CONFIG)
+    live = bool(cfg.get("CF_API_TOKEN") and cfg.get("CF_ZONE_ID")) and not OFF.exists()
+    why = f"{people} people shown the busy page in 10 minutes, app full {full} of the last {FULL_MINUTES} minutes"
+    cf = Cloudflare(cfg["CF_API_TOKEN"], cfg["CF_ZONE_ID"]) if live else None
+    for act, info in acts:
+        if not live:
+            # Watching only: say what would have happened once per change of mind.
+            key = f"{act}:{describe(info.get('source'))}"
+            if state.get("lastWould") != key:
+                note(f"would {act.replace('_', ' ')} ({describe(info.get('source'))}; {why}); not live")
+                state["lastWould"] = key
+            continue
+        try:
+            if act == "rule_on":
+                cf.add_rule(info["source"])
+                state.update(mode="rule", since=now, source=info["source"])
+                note(f"challenge on for {describe(info['source'])}; {why}")
+                email(state, cfg, "PERM Tracker: automatic defense on",
+                      f"People were being turned away ({why}).\n\nCloudflare now asks {describe(info['source'])} "
+                      f"to pass a browser check. It turns itself off after 30 calm minutes, and moves to "
+                      f"Under Attack Mode if trouble continues for 10.\n\n{UNDO}")
+            elif act == "attack_on":
+                if state.get("mode") != "attack":
+                    level = cf.security_level()
+                    if level != "under_attack":
+                        state["restoreLevel"] = level
+                    cf.set_security_level("under_attack")
+                    state.update(mode="attack", since=now)
+                    note(f"Under Attack Mode on ({info['reason']}); {why}")
+                    email(state, cfg, "PERM Tracker: Under Attack Mode on",
+                          f"People were still being turned away ({info['reason']}; {why}).\n\nEvery visitor now "
+                          f"passes Cloudflare's check first, except verified crawlers, AI assistants, link "
+                          f"previews, unsubscribe and sign-in, which skip it. It turns itself off after 30 calm "
+                          f"minutes.\n\n{UNDO}")
+            elif act == "all_off":
+                cf.remove_rule()
+                if state.get("mode") == "attack":
+                    cf.set_security_level(state.get("restoreLevel") or "low")
+                lasted = int((now - float(state.get("since", now))) / 60)
+                note(f"all off after 30 calm minutes (was {state.get('mode')} for {lasted} min)")
+                email(state, cfg, "PERM Tracker: automatic defense off",
+                      f"Thirty calm minutes, so the automatic rule is removed and the security level is back to "
+                      f"{state.get('restoreLevel') or 'low'}. It was on for {lasted} minutes.")
+                state.update(mode="off", since=None, source=None, calmSince=None, restoreLevel=None)
+        except Exception as exc:  # noqa: BLE001 - one failed call must not wedge the state
+            note(f"{act} failed: {exc}")
+    state["checkedAt"] = int(now)
+    state["last"] = {"people": people, "fullMinutes": full, "pageRequests": len(reqs), "live": live}
+    HEALTH.mkdir(parents=True, exist_ok=True)
+    tmp = STATE.with_suffix(".tmp")
+    tmp.write_text(json.dumps(state))
+    tmp.replace(STATE)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

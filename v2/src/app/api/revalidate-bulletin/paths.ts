@@ -19,6 +19,9 @@ export const BULLETIN_PAGES = [
   "/tools/i485-queue-position",
   "/tools/priority-date-calculator",
   "/badges",
+  "/open-data",
+  "/open-data/visa-bulletins.csv",
+  "/open-data/visa-bulletins.json",
   // The sitemap child that lists the month pages, so a new month is advertised
   // the day it lands rather than the next day.
   "/sitemaps/pages.xml",

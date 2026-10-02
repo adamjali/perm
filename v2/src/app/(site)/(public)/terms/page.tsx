@@ -60,7 +60,7 @@ export default function TermsPage() {
       <div className="card-brutalist p-8">
         <h1 className="font-heading text-4xl font-black mb-2">Terms of Service</h1>{" "}
         <p className="text-foreground/60 mb-8">
-          Effective Date: February 17, 2026 | Last Updated: October 1, 2026
+          Effective Date: February 17, 2026 | Last Updated: October 2, 2026
         </p>{" "}
 
         <SectionIndex sections={SECTIONS} />
@@ -191,7 +191,12 @@ export default function TermsPage() {
                 <a href="#intellectual-property" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
                   Intellectual Property
                 </a>
-                )
+                ). The files on{" "}
+                <Link href="/open-data" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                  Open data
+                </Link>{" "}
+                are the exception: those you may download and reuse under
+                their licence.
               </li>{" "}
               <li>Interfere with or disrupt the Service or servers</li>{" "}
               <li>Transmit viruses, malware, or other harmful code</li>{" "}
@@ -272,6 +277,17 @@ export default function TermsPage() {
               original work, and are reserved to the extent the law allows.
               Extracting the compiled dataset in bulk, or redistributing it as a
               dataset, is not permitted under these Terms.
+            </p>{" "}
+            <p className="text-foreground/80 leading-relaxed mt-4">
+              <strong>Two files are open.</strong> The visa bulletin archive and
+              the history of DOL&rsquo;s processing-times readings, offered on{" "}
+              <Link href="/open-data" className="underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
+                Open data
+              </Link>
+              , are licensed under the Creative Commons Attribution 4.0
+              International licence (CC BY 4.0): you may copy, adapt and
+              publish them, commercially too, with credit to PERM Tracker. The
+              licence covers those files only.
             </p>{" "}
             <p className="text-foreground/80 leading-relaxed mt-4">
               Quoting a figure with a link back is fine and always has been.

@@ -68,6 +68,8 @@ export interface TourStepConfig {
 /** A tour phase with its target page and steps */
 export interface TourPhaseConfig {
   phase: TourPhase;
+  /** What the tour's progress line calls this part ("Step 1/2 • Getting around"). */
+  label: string;
   page: string;
   steps: TourStepConfig[];
 }

@@ -1,0 +1,8 @@
+[Unit]
+Description=PERM Tracker automatic defense: Cloudflare up when people are turned away, down when calm
+[Service]
+Type=oneshot
+# Runs every minute; a hung Cloudflare call stops here instead of piling up.
+TimeoutStartSec=50s
+Nice=5
+ExecStart=/usr/local/sbin/permtracker-defend

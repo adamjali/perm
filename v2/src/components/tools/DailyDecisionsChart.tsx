@@ -17,9 +17,18 @@ import { ChartHoverLayer, type HoverPoint } from "@/components/tools/ChartHoverL
  * rate, and a rate over calendar days would be wrong for the same reason the
  * daily chart would be: see businessDayPace.
  *
+ * MONTHS PAST THREE YEARS. Since Oct 2 2026 the series reaches back to
+ * October 2015 (about 3,900 days): weekly, that is ~560 points at 1.1 units
+ * each, the sawtooth problem again one level up. Past three years of record
+ * the buckets are calendar months (~130 points), and the readout and labels
+ * say so.
+ *
  * Both figures come from the same array. Nothing here is modelled, smoothed or
  * projected - the line is DOL's own decisions, summed.
  */
+
+/** Past this many days of record, the line is drawn by month, not by week. */
+export const MONTHLY_AFTER_DAYS = 3 * 366;
 
 const W = 720;
 const H = 260;
@@ -50,6 +59,13 @@ function longDay(iso: string): string {
   return `${Number(d)} ${months[Number(m) - 1]} ${y}`;
 }
 
+/** "July 2025", for a month's readout. */
+function monthLong(iso: string): string {
+  const [y, m] = iso.split("-");
+  const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  return `${months[Number(m) - 1]} ${y}`;
+}
+
 function shortLabel(iso: string): string {
   const [y, m] = iso.split("-");
   const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
@@ -59,14 +75,20 @@ function shortLabel(iso: string): string {
 export function DailyDecisionsChart({ points, className }: DailyDecisionsChartProps) {
   if (points.length === 0) return null;
 
+  const sorted = [...points].sort((a, z) => a.date.localeCompare(z.date));
+  const spanDays =
+    (Date.parse(`${sorted[sorted.length - 1]!.date}T00:00:00Z`) - Date.parse(`${sorted[0]!.date}T00:00:00Z`)) / 86_400_000;
+  const monthly = spanDays > MONTHLY_AFTER_DAYS;
+  const unit = monthly ? "month" : "week";
   const byWeek = new Map<string, number>();
   for (const p of points) {
-    const k = weekStart(p.date);
+    const k = monthly ? `${p.date.slice(0, 7)}-01` : weekStart(p.date);
     byWeek.set(k, (byWeek.get(k) ?? 0) + p.total);
   }
   // Drop the first and last buckets: a series almost never starts on a Monday
-  // or ends on a Sunday, so those two weeks are partial and would draw as a
-  // cliff at each end that nothing in the data justifies.
+  // (or the 1st) or ends on a Sunday (or the last day), so those buckets are
+  // partial and would draw as a cliff at each end that nothing in the data
+  // justifies.
   const weeks = [...byWeek.entries()].sort((a, z) => a[0].localeCompare(z[0])).slice(1, -1);
   if (weeks.length < 3) return null;
 
@@ -85,7 +107,7 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
   const hover: HoverPoint[] = weeks.map(([w, v], i) => ({
     x: x(i),
     y: y(v),
-    label: `Week of ${longDay(w)}`,
+    label: monthly ? monthLong(w) : `Week of ${longDay(w)}`,
     value: `${v.toLocaleString("en-US")} decisions`,
   }));
   const yTicks = [0, max / 2, max];
@@ -104,7 +126,7 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
           viewBox={`0 0 ${W} ${H}`}
           className="block h-auto w-full min-w-[44rem]"
           role="img"
-          aria-label={`Decisions per week from ${shortLabel(first)} to ${shortLabel(last)}, peaking at ${max.toLocaleString("en-US")}`}
+          aria-label={`Decisions per ${unit} from ${shortLabel(first)} to ${shortLabel(last)}, peaking at ${max.toLocaleString("en-US")}`}
         >
           {yTicks.map((v) => (
             <g key={v}>
@@ -133,7 +155,7 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
           <polyline
             points={line}
             fill="none"
-            stroke="var(--primary)"
+            stroke="var(--data-good-ink)"
             strokeWidth="2.5"
             strokeLinejoin="round"
           />
@@ -154,12 +176,12 @@ export function DailyDecisionsChart({ points, className }: DailyDecisionsChartPr
             points={hover}
             plot={{ x: PAD_L, y: PAD_T, width: plotW, height: plotH }}
             viewBox={{ width: W, height: H }}
-            label="Decisions per week. Use the arrow keys to step through the weeks."
+            label={`Decisions per ${unit}. Use the arrow keys to step through the ${unit}s.`}
           />
         </svg>
       </div>{" "}
       <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-        Weekly totals from {points.length.toLocaleString("en-US")} days of DOL&apos;s published
+        {monthly ? "Monthly" : "Weekly"} totals from {points.length.toLocaleString("en-US")} days of DOL&apos;s published
         records. The rate counts working days only.
       </p>
     </div>

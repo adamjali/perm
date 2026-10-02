@@ -305,6 +305,14 @@ export interface DatasetSchemaInput {
    * check.
    */
   isBasedOn?: string;
+  /**
+   * A licence URL that replaces the default (our Terms). Only the open
+   * datasets pass one: they are offered under CC BY 4.0, and every other
+   * Dataset on the site stays under the Terms' compilation clause.
+   */
+  license?: string;
+  /** Files a reader can download, one per format. */
+  distribution?: Array<{ encodingFormat: string; contentUrl: string }>;
 }
 
 /**
@@ -345,7 +353,7 @@ export function getDatasetSchema(baseUrl: string, input: DatasetSchemaInput) {
     // whether they may reuse the data. §6 now separates the two layers: the
     // federal records are public domain and we claim nothing over them, the
     // compilation is ours.
-    license: `${baseUrl}/terms#intellectual-property`,
+    license: input.license ?? `${baseUrl}/terms#intellectual-property`,
     // Every record is a US filing. Constant, so it belongs here rather than in
     // ten call sites that could each spell it differently.
     spatialCoverage: { '@type': 'Place' as const, name: 'United States' },
@@ -353,5 +361,11 @@ export function getDatasetSchema(baseUrl: string, input: DatasetSchemaInput) {
     ...(input.dateModified ? { dateModified: input.dateModified } : {}),
     ...(input.variableMeasured ? { variableMeasured: input.variableMeasured } : {}),
     ...(input.keywords ? { keywords: input.keywords } : {}),
+    ...(input.distribution
+      ? {
+          isAccessibleForFree: true,
+          distribution: input.distribution.map((d) => ({ '@type': 'DataDownload' as const, ...d })),
+        }
+      : {}),
   };
 }

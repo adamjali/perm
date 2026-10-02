@@ -20,6 +20,7 @@ export type DataSection =
   | "glossary"
   | "scorecard"
   | "badges"
+  | "open-data"
   | "layoffs"
   | "visa-bulletin-family"
   | "visa-bulletin-categories"
@@ -113,6 +114,10 @@ export const SECTIONS: DataNavSection[] = [
   { key: "queue", group: "Queue", label: "Queue backlog", href: "/perm-queue" },
   { key: "processing-times", group: "Queue", label: "Processing times", href: "/perm-processing-times" },
   { key: "activity", group: "Queue", label: "Daily activity", href: "/perm-decision-activity" },
+  // How our queue estimates scored against DOL's outcomes, so it sits with the
+  // queue it grades (moved from Reference when Open data joined it, Oct 2 2026:
+  // eight entries there ran the rail past its height budget).
+  { key: "scorecard", group: "Queue", label: "Estimate scorecard", href: "/estimate-scorecard" },
 
   { key: "employers", group: "Employers and wages", label: "Employers", href: "/perm-employers" },
   { key: "attorneys", group: "Employers and wages", label: "Law firms", href: "/perm-attorneys" },
@@ -171,8 +176,8 @@ export const SECTIONS: DataNavSection[] = [
   { key: "policy-changes", group: "Reference", label: "Policy changes", href: "/policy-changes" },
   { key: "debarments", group: "Reference", label: "Debarments", href: "/debarments" },
   { key: "glossary", group: "Reference", label: "Glossary", href: "/glossary" },
-  { key: "scorecard", group: "Reference", label: "Estimate scorecard", href: "/estimate-scorecard" },
   { key: "badges", group: "Reference", label: "Badges", href: "/badges" },
+  { key: "open-data", group: "Reference", label: "Open data", href: "/open-data" },
 ];
 
 export const GROUPS: DataGroup[] = [

@@ -43,7 +43,7 @@ export interface BoardCell {
   latest: Cutoff;
   /** The newest bulletin month that published this cell, `YYYY-MM`. */
   latestMonth: string;
-  /** Days between the first and last real cutoff DATE in the window. */
+  /** Days between the first and last real cutoff DATE since BOARD_MEASURED_FROM. */
   movedDays: number | null;
   /** Whole months between those two bulletins. */
   spanMonths: number | null;
@@ -59,7 +59,7 @@ export interface BoardCell {
    * queue shut is a fact about a queue that no longer exists.
    */
   pace: number | null;
-  /** Bulletin months where the cutoff went backwards, or the category shut. */
+  /** Bulletin months since BOARD_MEASURED_FROM where the cutoff went backwards, or the category shut. */
   retrogressions: string[];
   /** Every state the cell took across the window, oldest first. */
   states: Array<{ month: string; cutoff: Cutoff }>;
@@ -107,6 +107,17 @@ export function categoriesIn(bulletins: readonly BulletinMonth[]): string[] {
   });
 }
 
+/**
+ * Where a cell's pace, move and backward steps are measured from.
+ *
+ * The archive reaches back to 2005 since Oct 2 2026, with gaps where State's
+ * older pages don't parse. Those months are history (each cell's `states`, the
+ * month pages, the open data), but the figures the estimates divide by stay on
+ * the window they have always used: one unbroken run, in the current layout,
+ * so adding old bulletins never quietly moved a published estimate.
+ */
+export const BOARD_MEASURED_FROM = "2014-10";
+
 function monthsBetween(from: string, to: string): number {
   return (
     (Number(to.slice(0, 4)) - Number(from.slice(0, 4))) * 12 +
@@ -127,8 +138,9 @@ function cellFor(
   }
   const newest = states[states.length - 1];
   if (!newest) return null;
+  const measured = states.filter((s) => s.month >= BOARD_MEASURED_FROM);
 
-  const dated = states.filter(
+  const dated = measured.filter(
     (s): s is { month: string; cutoff: { kind: "date"; iso: string } } =>
       s.cutoff.kind === "date",
   );
@@ -145,13 +157,13 @@ function cellFor(
   }
 
   const retrogressions: string[] = [];
-  for (let i = 1; i < states.length; i += 1) {
-    const prev = states[i - 1]!.cutoff;
-    const curr = states[i]!.cutoff;
+  for (let i = 1; i < measured.length; i += 1) {
+    const prev = measured[i - 1]!.cutoff;
+    const curr = measured[i]!.cutoff;
     if (curr.kind === "unavailable" && prev.kind !== "unavailable") {
-      retrogressions.push(states[i]!.month);
+      retrogressions.push(measured[i]!.month);
     } else if (prev.kind === "date" && curr.kind === "date" && curr.iso < prev.iso) {
-      retrogressions.push(states[i]!.month);
+      retrogressions.push(measured[i]!.month);
     }
   }
 

@@ -237,6 +237,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "WARN Act layoff and closing notices as the states publish them (California, Texas, New York and Washington), matched by name to the employers in DOL's PERM record, each linked to the state's own file.",
   },
   {
+    path: "/open-data",
+    label: "Open data",
+    blurb: "Two datasets as CSV and JSON under CC BY 4.0: every visa bulletin cutoff (employment and family, final action and dates for filing, by category and country) back to June 2005, every one since October 2014, and every reading of DOL's PERM and prevailing wage processing-times page we've kept.",
+  },
+  {
     path: "/badges",
     label: "Badges",
     blurb: "Embeddable SVG badges of DOL's own published figures, and every calculator, estimate and chart plus the case lookup as an iframe for other sites, with the HTML to copy.",

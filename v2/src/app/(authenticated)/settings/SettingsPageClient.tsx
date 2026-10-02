@@ -57,8 +57,9 @@ function SettingsPageSkeleton() {
 
         {/* Desktop sidebar skeleton */}
         <div className="hidden md:flex flex-col gap-2 w-56">
-          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+          {/* One row per real tab, so the menu doesn't shift when it arrives. */}
+          {VALID_TABS.map((tab) => (
+            <Skeleton key={tab} className="h-12 w-full" />
           ))}
         </div>
 

@@ -72,6 +72,11 @@ describe("Dataset license", () => {
   it("the shared builder still emits one", () => {
     // Fourteen of the sixteen Datasets depend on this single line.
     const src = readFileSync("src/lib/structuredData.ts", "utf8");
-    expect(/license:\s*`?\$?\{?baseUrl/.test(src), "getDatasetSchema dropped its license").toBe(true);
+    // A caller may name its own (the open datasets pass CC BY 4.0); the
+    // default behind it must still be the Terms.
+    expect(
+      /license:\s*(input\.license\s*\?\?\s*)?`?\$?\{?baseUrl/.test(src),
+      "getDatasetSchema dropped its license",
+    ).toBe(true);
   });
 });

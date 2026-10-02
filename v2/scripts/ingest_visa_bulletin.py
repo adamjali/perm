@@ -271,7 +271,9 @@ def parse_bulletin(page: str, month: str | None = None) -> dict | None:
         layouts, ignores columns we don't track, and still fails loudly when a
         country we need is absent.
         """
-        header = [h.upper().replace("- ", "").replace(" ", "") for h in rows[0]]
+        # Hyphens go too: June 2009 printed "PHILIPP-INES", a word broken for
+        # the column width.
+        header = [h.upper().replace("- ", "").replace(" ", "").replace("-", "") for h in rows[0]]
         idx: dict[str, int] = {}
         for col, heading in zip(COUNTRY_COLUMNS, COUNTRY_HEADINGS):
             want = heading.replace(" ", "")
@@ -455,9 +457,14 @@ def direct_months(index_html: str) -> list[tuple[str, str]]:
     return sorted(out.items(), reverse=True)
 
 
-def ingest_direct(limit: int, dry_run: bool = False) -> int:
+def ingest_direct(limit: int, dry_run: bool = False, skip_bad: bool = False) -> int:
     """Store any bulletin State's own index links that we don't already hold
     at primary-source rank. Newest first, at most `limit` months a run.
+
+    `skip_bad` is the backfill's mode: a month whose page this parser can't
+    read whole (the oldest bulletins are laid out differently) is named and
+    skipped, and the rest still load. The nightly run keeps it off, so a new
+    month that fails to parse stops the run where someone will see it.
 
     A refusal is not a crash: it prints a warning and exits 0, because the
     `visa-bulletin` freshness budget is the alarm that matters (it goes red
@@ -488,19 +495,31 @@ def ingest_direct(limit: int, dry_run: bool = False) -> int:
         log("nothing new: every linked month is already held from a primary source")
         return 0
     stored = 0
+    skipped: list[str] = []
     for m, url in todo:
         log(f"  {m}  {url}")
-        page = fetch(url)
-        if month_from_page(page) not in (None, m):
-            log(f"::warning::{url} reads as {month_from_page(page)}, not {m}; skipped")
+        try:
+            page = fetch(url)
+            if month_from_page(page) not in (None, m):
+                log(f"::warning::{url} reads as {month_from_page(page)}, not {m}; skipped")
+                skipped.append(m)
+                continue
+            parsed = validated(page, m)
+        except (Exception, SystemExit) as exc:  # noqa: BLE001 - SystemExit is validated()'s refusal
+            if not skip_bad:
+                raise
+            log(f"::warning::{m} skipped, not read whole: {exc}")
+            skipped.append(m)
+            time.sleep(1)
             continue
-        parsed = validated(page, m)
+        time.sleep(1)
         if dry_run:
             log("    dry run: parsed, not written")
             continue
         write_month(db, m, parsed, DIRECT_SOURCE)
         stored += 1
-        time.sleep(1)
+    if skipped:
+        log(f"skipped {len(skipped)}: {', '.join(sorted(skipped))}")
     if stored:
         stamp_bulletin_freshness(db, DIRECT_SOURCE)
         note_stored()
@@ -641,6 +660,11 @@ def main() -> int:
              "not yet held from a primary source (at most --months a run).",
     )
     ap.add_argument(
+        "--backfill-direct", type=int, metavar="N",
+        help="Like --direct, for up to N months, skipping (and naming) any month "
+             "the parser can't read whole instead of stopping.",
+    )
+    ap.add_argument(
         "--dry-run", action="store_true",
         help="With --backfill-turso: fetch and parse, write nothing.",
     )
@@ -655,6 +679,8 @@ def main() -> int:
     # so it short-circuits before any archive lookup.
     if args.from_file:
         return ingest_saved_page(args.from_file, args.month)
+    if args.backfill_direct:
+        return ingest_direct(args.backfill_direct, args.dry_run, skip_bad=True)
     if args.direct:
         # Two a run is plenty for a monthly page; the backlog, if any, clears
         # over the following days rather than in one burst.
