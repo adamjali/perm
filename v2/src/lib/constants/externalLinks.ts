@@ -63,10 +63,8 @@ export const SOCIAL_LINKS = [
   // name for recognition, since the icon alone is still ambiguous to many users.
   { href: X_PROFILE_URL, label: "X (formerly Twitter)", icon: "twitter" },
   // A personal profile, not a company page. She is the one person the site
-  // names, the public voice of the product's email (every message signs off
-  // "Sabrina S. / PERM Tracker Team") and the byline on every article, so
-  // this is consistent with how the brand presents itself everywhere else.
-  // Swap it for a company page if one is ever created.
+  // names (the About page). Articles and emails are signed by the team. Swap it
+  // for a company page if one is ever created.
   {
     href: LINKEDIN_SABRINA_URL,
     label: "LinkedIn",
@@ -75,39 +73,19 @@ export const SOCIAL_LINKS = [
 ] as const satisfies readonly SocialLink[];
 
 /**
- * The byline on articles, and the profile that corroborates it.
- *
- * Publishing a person's name is an identity decision rather than an SEO one,
- * so the site owner makes it, and one person is named everywhere: bylines,
- * the About page, the Organization schema and the footer.
- *
- * WHY A PERSON AT ALL. Articles credited `Organization: "PERM Tracker Team"`,
- * which asserts no expertise and names nobody accountable. This is immigration
- * guidance - the category where Google weighs experience and accountability
- * hardest - and a named individual with a profile link is the signal it
- * looks for. `sameAs` is what turns a name into a checkable identity rather
- * than a string. The profile is a professional one (an immigration attorney's
- * LinkedIn), which is the stronger form of that signal.
- */
-export const ARTICLE_AUTHOR = {
-  name: "Sabrina Soltau",
-  url: LINKEDIN_SABRINA_URL,
-} as const;
-
-/**
  * Which bylines are PEOPLE, and where to find them.
  *
- * Authorship is per article, from each file's own frontmatter, and it is
- * deliberately NOT uniform. A changelog entry is the product speaking and
- * belongs to the site; a guide is advice and belongs to a person. A site where
- * every single page carries the same human byline reads as manufactured, and
- * one where nothing does asserts no accountability at all.
+ * Articles are credited to the site's team, not a named person: each MDX file
+ * carries its type's byline (CONTENT_TYPE_CONFIG[type].byline in
+ * src/lib/content/types.ts), and content-frontmatter.test.ts holds every file
+ * to it. A team byline is emitted as an Organization tied to the site's own.
  *
- * Anything absent from this map is emitted as an Organization, so adding a new
- * byline to a file cannot silently invent a person - the name has to be
- * registered here, with a profile that corroborates it, before it is published
- * as one.
+ * This map is the gate a person's name has to pass before any byline could
+ * publish it as a Person: a listed name becomes a Person with `sameAs`, its
+ * profile being what turns a name into a checkable identity. Anything absent
+ * stays an Organization, so a new name in a frontmatter file cannot silently
+ * invent a person with no profile behind them.
  */
 export const KNOWN_PERSON_AUTHORS: Record<string, { url: string }> = {
-  [ARTICLE_AUTHOR.name]: { url: ARTICLE_AUTHOR.url },
+  "Sabrina Soltau": { url: LINKEDIN_SABRINA_URL },
 };

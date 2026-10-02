@@ -780,7 +780,14 @@ async function rowsForToken(
 export const confirmByToken = internalMutation({
   args: { token: v.string() },
   returns: v.union(
-    v.object({ email: v.string(), caseNumbers: v.array(v.string()) }),
+    v.object({
+      email: v.string(),
+      caseNumbers: v.array(v.string()),
+      // True when nothing was waiting and the address is still on the list:
+      // someone clicking their old confirmation link again (Oct 2 2026, a
+      // subscriber of two weeks was told the link was "no longer valid").
+      already: v.optional(v.boolean()),
+    }),
     v.null(),
   ),
   handler: async (ctx, args) => {
@@ -789,8 +796,18 @@ export const confirmByToken = internalMutation({
 
     const now = Date.now();
     const confirmed: string[] = [];
+    const active: string[] = [];
 
     for (const row of all) {
+      if (
+        row.pendingCaseNumber === undefined &&
+        row.confirmedAt !== undefined &&
+        row.unsubscribedAt === undefined &&
+        row.caseClosedAt === undefined &&
+        row.caseNumber !== undefined
+      ) {
+        active.push(row.caseNumber);
+      }
       // A confirm token never expires and is replayable by anyone who can read
       // the original email, including a corporate link scanner. So it is not a
       // fresh act of consent: only a NEW subscribe request, which is what
@@ -818,7 +835,11 @@ export const confirmByToken = internalMutation({
       confirmed.push(caseNumber);
     }
 
-    if (confirmed.length === 0) return null;
+    // Nothing staged: say so only to someone still on the list. An opted-out
+    // address still gets null, so an old link can't even confirm it was there.
+    if (confirmed.length === 0) {
+      return active.length > 0 ? { email: all[0]!.email, caseNumbers: active, already: true } : null;
+    }
 
     // Seed `lastSeenStatus` from the mirror right now, so the first alert is a
     // genuine transition rather than a restatement of what was already true

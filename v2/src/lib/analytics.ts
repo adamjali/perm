@@ -117,6 +117,23 @@ function capture(
 }
 
 /**
+ * Record an error the app CAUGHT (an error screen, a handled failure) as a
+ * PostHog `$exception`. Uncaught errors reach PostHog on their own; one an
+ * error boundary catches never does, because React handles it, so without
+ * this a crash that showed a visitor an error screen left no trace anywhere.
+ * The morning report reads `$exception`. Never throws.
+ */
+function captureException(error: unknown, properties?: Record<string, unknown>): void {
+  whenAnalyticsReady(() => {
+    try {
+      posthog.captureException(error, properties);
+    } catch (e) {
+      console.warn("[Analytics] Failed to capture an exception:", e);
+    }
+  });
+}
+
+/**
  * Safely identify a user in PostHog. Never throws.
  * Idempotent, safe to call multiple times.
  */
@@ -207,6 +224,7 @@ function hasOptedOut(): boolean {
 
 export const analytics = {
   capture,
+  captureException,
   identify,
   reset,
   consentForAccount,

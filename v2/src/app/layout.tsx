@@ -120,9 +120,16 @@ export const metadata: Metadata = {
     creator: "@permtracker",
     site: "@permtracker",
   },
+  // Large image previews and full snippets for every engine (Bing reads the
+  // general tag; Google Discover needs max-image-preview:large to show a big
+  // picture). A page that sets `robots` replaces this whole object, so only
+  // set it to say noindex (robots-preview.test.ts holds that).
   robots: {
     index: true,
     follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+    "max-video-preview": -1,
     googleBot: {
       index: true,
       follow: true,

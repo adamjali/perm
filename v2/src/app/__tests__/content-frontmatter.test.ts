@@ -3,6 +3,8 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { CONTENT_TYPE_CONFIG, type ContentType } from "@/lib/content/types";
+
 /**
  * Every content entry carries the same frontmatter keys as its siblings.
  *
@@ -15,7 +17,7 @@ import { describe, expect, it } from "vitest";
 
 const ROOT = join(process.cwd(), "content");
 const REQUIRED = ["title", "description", "date", "image", "imageAlt", "tags"];
-const TYPES = ["blog", "guides", "changelog"];
+const TYPES: ContentType[] = ["blog", "guides", "changelog"];
 
 function frontmatter(raw: string): Record<string, string> {
   const m = /^---\n([\s\S]*?)\n---/.exec(raw);
@@ -60,5 +62,35 @@ describe("content frontmatter is consistent", () => {
       }))
       .filter((d) => d.len > 155);
     expect(tooLong).toEqual([]);
+  });
+
+  it("every entry carries its type's team byline", () => {
+    // Articles are credited to the site's team, not a named person. The
+    // byline lives once, in CONTENT_TYPE_CONFIG, and each file states it.
+    const wrong = files
+      .map((f) => ({
+        name: f.name,
+        author: (frontmatter(readFileSync(f.path, "utf8")).author ?? "").replace(/^"|"$/g, ""),
+        want: CONTENT_TYPE_CONFIG[f.type as ContentType].byline,
+      }))
+      .filter((a) => a.author !== a.want)
+      .map((a) => `${a.name}: ${a.author || "(none)"}`);
+    expect(wrong).toEqual([]);
+  });
+
+  it("an updated date is a real date, not before the publish date", () => {
+    // `updated` is what the article header, the index cards, JSON-LD
+    // dateModified, Open Graph and the sitemap show as the last revision.
+    const bad = files
+      .map((f) => {
+        const fm = frontmatter(readFileSync(f.path, "utf8"));
+        const date = (fm.date ?? "").replace(/^"|"$/g, "");
+        const updated = fm.updated?.replace(/^"|"$/g, "");
+        return { name: f.name, date, updated };
+      })
+      .filter((d) => d.updated !== undefined)
+      .filter((d) => !/^\d{4}-\d{2}-\d{2}$/.test(d.updated!) || d.updated! < d.date)
+      .map((d) => `${d.name}: ${d.date} -> ${d.updated}`);
+    expect(bad).toEqual([]);
   });
 });

@@ -196,7 +196,10 @@ describe("consent", () => {
     const token = await makeUnsubscribeToken("b@example.com", SECRET, "employer-confirm");
     const first = await t.mutation(internal.employerAlerts.confirmByToken, { token });
     expect(first?.employers).toEqual(["Adobe Inc."]);
-    expect(await t.mutation(internal.employerAlerts.confirmByToken, { token })).toBeNull();
+    expect(first?.already).toBeUndefined();
+    // Clicking the same link again says they're already following, and changes nothing.
+    const again = await t.mutation(internal.employerAlerts.confirmByToken, { token });
+    expect(again).toMatchObject({ employers: ["Adobe Inc."], already: true });
 
     const off = await makeUnsubscribeToken("b@example.com", SECRET, "employer-unsubscribe");
     expect(await t.mutation(internal.employerAlerts.unsubscribeByToken, { token: off })).toBe(true);
@@ -204,6 +207,22 @@ describe("consent", () => {
     expect(await t.mutation(internal.employerAlerts.confirmByToken, { token })).toBeNull();
     const row = await t.run(async (ctx) => ctx.db.query("employerAlerts").first());
     expect(row?.unsubscribedAt).toBeDefined();
+  });
+
+  it("a second click on the confirm link says they're already following", async () => {
+    const t = createTestContext();
+    stub({});
+    await t.mutation(internal.employerAlerts.subscribe, {
+      email: "c@example.com",
+      slug: "adobe-inc",
+      employerName: "Adobe Inc.",
+    });
+    const token = encodeURIComponent(await makeUnsubscribeToken("c@example.com", SECRET, "employer-confirm"));
+    const first = await t.fetch(`/employer-alert/confirm?token=${token}`, { method: "POST" });
+    expect(await first.text()).toMatch(/You('|&#39;)re following/);
+    const again = await t.fetch(`/employer-alert/confirm?token=${token}`, { method: "POST" });
+    expect(again.status).toBe(200);
+    expect(await again.text()).toMatch(/You('|&#39;)re already following/);
   });
 
   it("draws confirmations from the case confirmations' budget, and queues what it can't send", async () => {

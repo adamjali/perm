@@ -33,7 +33,6 @@ export const metadata: Metadata = withSocialCard({
     description: DESCRIPTION,
     url: "/accessibility",
   },
-  robots: { index: true, follow: true },
 }, "accessibility");
 
 const STATEMENT_DATE = "September 22, 2026";

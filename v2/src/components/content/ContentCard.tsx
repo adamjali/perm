@@ -43,6 +43,8 @@ export default function ContentCard({
   const { slug, type, meta } = post;
   const href = `/${type}/${slug}`;
   const config = CONTENT_TYPE_CONFIG[type];
+  const revised = Boolean(meta.updated && meta.updated > meta.date);
+  const shown = revised ? meta.updated! : meta.date;
   const context = useNavigationContext();
   const isNavigating = context?.activeNavigation === href;
 
@@ -116,14 +118,19 @@ export default function ContentCard({
 
             {/* Meta row */}
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              {/* The newest date the article carries: a revision outranks the
+                  publish date, said as "Updated" so the two can't be confused. */}
               <span className="flex items-center gap-1">
                 <CalendarIcon className="h-3 w-3" />
-                {new Date(meta.date).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                  timeZone: "UTC",
-                })}
+                {revised ? "Updated " : null}
+                <time dateTime={shown}>
+                  {new Date(shown).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    timeZone: "UTC",
+                  })}
+                </time>
               </span>{" "}
               <span className="flex items-center gap-1">
                 <ClockIcon className="h-3 w-3" />

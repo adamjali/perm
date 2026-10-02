@@ -59,16 +59,24 @@ describe("route error boundaries", () => {
     expect(src).toContain("travel.state.gov");
   });
 
-  it("the public boundary reports to Sentry without a static import", () => {
+  it("the public screens report to Sentry without a static import", () => {
     // Sentry is lazy-loaded and may be uninitialised on a public page, so a
     // static import inside an error handler can throw while handling an
     // error. Reporting a failure must not become a second failure.
-    const src = readFileSync(
-      join(APP, "(site)", "(public)", "error.tsx"),
+    // Since Oct 2 2026 the public and global screens report through
+    // components/error/recovery.ts (PostHog, then Sentry), so the lazy import
+    // lives there and neither screen may import Sentry itself.
+    const recovery = readFileSync(
+      join(process.cwd(), "src", "components", "error", "recovery.ts"),
       "utf8",
     );
-    expect(src).toMatch(/import\(["']@sentry\/nextjs["']\)/);
-    expect(src).not.toMatch(/^import .*@sentry\/nextjs/m);
+    expect(recovery).toMatch(/import\(["']@sentry\/nextjs["']\)/);
+    expect(recovery).not.toMatch(/^import .*@sentry\/nextjs/m);
+    for (const path of [join(APP, "(site)", "(public)", "error.tsx"), join(APP, "global-error.tsx")]) {
+      const src = readFileSync(path, "utf8");
+      expect(src).toMatch(/reportCaughtError\(/);
+      expect(src).not.toMatch(/^import .*@sentry\/nextjs/m);
+    }
   });
 
   it("boundaries are real files with content, not empty placeholders", () => {

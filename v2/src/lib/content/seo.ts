@@ -5,6 +5,7 @@
  */
 
 import { KNOWN_PERSON_AUTHORS } from "@/lib/constants/externalLinks";
+import { SCHEMA_IDS } from "@/lib/structuredData";
 import type { PostMeta, ContentType, PostSummary } from "./types";
 import { SITE_URL } from "@/lib/constants/site";
 
@@ -56,16 +57,14 @@ export function generateArticleSchema(
     dateModified: toISO8601(meta.updated || meta.date),
     // THE ARTICLE'S OWN BYLINE, resolved to the right schema type.
     //
-    // An Organization called "PERM Tracker Team" asserts no expertise and
-    // names nobody accountable, the weakest possible signal on immigration
-    // guidance, the category where Google weighs experience hardest. One
-    // hardcoded person across every article is wrong the other way: it
-    // ignores each file's frontmatter and would byline the changelog to a
-    // human.
+    // Articles carry a team byline (CONTENT_TYPE_CONFIG[type].byline), emitted
+    // as an Organization that points at the site's own Organization node as
+    // its parent and at the About page, where the people behind the site are
+    // named. The byline's own name stays on this node: giving the shared
+    // Organization's @id a second name would make one entity two things.
     //
-    // A registered name becomes a Person with `sameAs`, which is what makes a
-    // byline a checkable identity rather than a string. Anything else stays an
-    // Organization, so a new name in a frontmatter file cannot quietly invent a
+    // A name registered in KNOWN_PERSON_AUTHORS becomes a Person with
+    // `sameAs`, so a new name in a frontmatter file cannot quietly invent a
     // person who has no profile behind them.
     author: KNOWN_PERSON_AUTHORS[meta.author]
       ? {
@@ -77,7 +76,8 @@ export function generateArticleSchema(
       : {
           "@type": "Organization" as const,
           name: meta.author,
-          url: BASE_URL,
+          url: `${BASE_URL}/about`,
+          parentOrganization: { "@id": SCHEMA_IDS.organization(BASE_URL) },
         },
     publisher: PUBLISHER,
     mainEntityOfPage: {

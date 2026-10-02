@@ -31,10 +31,6 @@ export const metadata: Metadata = withSocialCard({
       "The terms that govern use of PERM Tracker.",
     url: "/terms",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
 }, "terms");
 
 const SECTIONS = [

@@ -1,6 +1,6 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-01
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-02
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
 > have drifted: the suite is now **544 files / 8,237 tests across 5 vitest
@@ -328,3 +328,19 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 1 2026 (evening)".
 - **A filed case's recruitment card no longer reads "EXPIRED".**
 - **The bulletin page no longer says "at least 0 ... may well be up"** on release-watch days.
 - **Social cards hold no live figure**; the H-1B lottery, Employer Data Hub and SEVP data are loaded on the server.
+
+
+## Oct 2 2026, in ten lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 2 2026".
+
+- **The live site runs as two copies, one per CPU**; nginx splits pages between them and mirrors refresh calls to both.
+- **Case lookups from everyone together hold at most 24 of the app's 64 slots**, so a scraper walking numbers can't fill it.
+- **Analytics goes from nginx straight to PostHog**; the relay through Next was the MaxListeners warning flood.
+- **Every error screen records what it caught** and reloads once by itself when a fresh load cures it.
+- **The morning report counts people shown a "busy" page**, the signal for a bigger server.
+- **Articles carry team bylines and their real updated dates**; every page asks for large image previews.
+- **Meta's AI crawler reads at 30 pages a minute**, a third of other crawlers; it was the biggest load that wasn't a person.
+- **Tencent Cloud (AS132203) must pass a Cloudflare browser check**; a scraper there filled the app at 2:42 AM EDT.
+- **Email links go from nginx straight to the backend**, never stored (Cloudflare had kept them 2 hours), never framed.
+- **A repeat click on a confirmation link says you're already on the list** instead of calling it invalid.

@@ -15,6 +15,7 @@ import * as Sentry from "@sentry/nextjs";
 import { ArrowCounterClockwiseIcon as RefreshCcw, HouseIcon as Home } from "@phosphor-icons/react";
 import { isAuthError, isStaleDeploymentError, isLikelySessionTimeout } from "./auth-error";
 import { ErrorDisplay } from "./ErrorDisplay";
+import { claimAutoReload, isReloadCurable, reportCaughtError } from "./recovery";
 
 export interface RouteErrorProps {
   error: Error & { digest?: string };
@@ -25,7 +26,6 @@ export interface RouteErrorProps {
 
 export function RouteError({
   error,
-  reset,
   title = "Something went wrong",
   homeHref = "/dashboard",
 }: RouteErrorProps) {
@@ -33,9 +33,10 @@ export function RouteError({
   const isStaleDeployment = isStaleDeploymentError(error);
 
   useEffect(() => {
-    // Stale deployment — silently reload to pick up new Server Action hashes
+    // Stale deployment: silently reload to pick up new Server Action hashes,
+    // once a minute at most so it can't loop.
     if (isStaleDeployment) {
-      window.location.reload();
+      if (claimAutoReload()) window.location.reload();
       return;
     }
 
@@ -46,6 +47,11 @@ export function RouteError({
     }
 
     console.error("[RouteError]", error);
+
+    // Code from a previous deploy or a request dropped mid-navigation: a fresh
+    // load cures it. Reported either way, Sentry below and PostHog here.
+    const reload = isReloadCurable(error) && claimAutoReload();
+    reportCaughtError("RouteError", error, { sentry: false, autoReloaded: reload });
 
     Sentry.captureException(error, {
       tags: {
@@ -60,6 +66,7 @@ export function RouteError({
           typeof document !== "undefined" ? document.referrer : undefined,
       },
     });
+    if (reload) window.location.reload();
   }, [error, isExpiredSession, isStaleDeployment]);
 
   // Stale deployment: show brief message while reloading
@@ -67,7 +74,14 @@ export function RouteError({
     return (
       <div className="flex items-center justify-center min-h-[200px]">
         <p className="text-sm text-muted-foreground">
-          Updating to latest version&hellip;
+          Updating to the latest version&hellip;{" "}
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="min-h-[44px] font-semibold underline underline-offset-2"
+          >
+            Reload
+          </button>
         </p>
       </div>
     );
@@ -95,9 +109,11 @@ export function RouteError({
       details={isDev && error.digest ? `Digest: ${error.digest}` : undefined}
       actions={[
         {
+          // A full reload, not React's reset(): reset re-renders the state
+          // the page broke on, and a reload fetches everything again.
           label: "Try again",
           icon: RefreshCcw,
-          onClick: reset,
+          onClick: () => window.location.reload(),
         },
         {
           label: "Go to Dashboard",

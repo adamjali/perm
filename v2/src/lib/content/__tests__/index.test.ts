@@ -345,7 +345,7 @@ describe("getPostBySlug", () => {
     );
   });
 
-  it("defaults author to 'PERM Tracker Team' when not provided", () => {
+  it("defaults the byline to its content type's team name when not provided", () => {
     mockExistsSync.mockReturnValue(true);
     mockReadFileSync.mockReturnValue("raw");
     mockMatter.mockReturnValue({
@@ -353,10 +353,9 @@ describe("getPostBySlug", () => {
       content: "Body",
     });
 
-    const post = getPostBySlug("blog", "no-author");
-
-    expect(post).not.toBeNull();
-    expect(post!.meta.author).toBe("PERM Tracker Team");
+    expect(getPostBySlug("blog", "no-author")!.meta.author).toBe("PERM Tracker team");
+    expect(getPostBySlug("guides", "no-author")!.meta.author).toBe("PERM Tracker data desk");
+    expect(getPostBySlug("changelog", "no-author")!.meta.author).toBe("PERM Tracker team");
   });
 
   it("defaults description to empty string when not provided", () => {

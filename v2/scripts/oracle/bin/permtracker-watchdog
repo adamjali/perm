@@ -36,7 +36,9 @@ db_ok && note db 1 || note db 0
 # Both copies: the live one serves visitors, the idle one is the instant
 # rollback, and a rollback onto a hung copy would take the site down.
 live=$(cat /srv/permtracker/app/active 2>/dev/null || echo blue)
-for s in blue green; do
+# blue2/green2 are each slot's second copy (one per CPU); a stopped one is the
+# old slot's, stopped on purpose by the deploy, and is not checked.
+for s in blue green blue2 green2; do
   if systemctl is-active --quiet "permtracker-web@$s"; then web_ok "$s" && note "web_$s" 1 || note "web_$s" 0; else fails[web_$s]=0; fi
 done
 # Through nginx only means something when the live copy answers directly.
@@ -54,6 +56,8 @@ repair() { # name, unit
 repair db permtracker-db
 repair web_blue permtracker-web@blue
 repair web_green permtracker-web@green
+repair web_blue2 permtracker-web@blue2
+repair web_green2 permtracker-web@green2
 repair nginx nginx
 repair tunnel cloudflared
 

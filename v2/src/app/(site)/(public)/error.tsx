@@ -26,6 +26,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { ArrowClockwiseIcon, ArrowSquareOutIcon } from "@phosphor-icons/react/dist/ssr";
+import { claimAutoReload, isReloadCurable, reportCaughtError } from "@/components/error/recovery";
 
 /** Where each dataset actually comes from, for the outage case. */
 const PRIMARY_SOURCES = [
@@ -48,26 +49,17 @@ const PRIMARY_SOURCES = [
 
 export default function PublicDataError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
   useEffect(() => {
-    // Dynamic import: Sentry is lazy-loaded and may not be initialised on a
-    // public page, so a static import would throw inside the error handler.
-    import("@sentry/nextjs")
-      .then((Sentry) => {
-        Sentry.captureException(error, {
-          tags: {
-            component: "PublicDataError",
-            ...(error.digest && { digest: error.digest }),
-          },
-        });
-      })
-      .catch(() => {
-        // Reporting the failure must never become a second failure.
-      });
+    // Stale code after a deploy or a request dropped mid-navigation: a fresh
+    // load cures it, so do that instead of leaving this screen up (once a
+    // minute at most, so a page that fails every load still shows it).
+    const reload = isReloadCurable(error) && claimAutoReload();
+    reportCaughtError("PublicDataError", error, { autoReloaded: reload });
+    if (reload) window.location.reload();
   }, [error]);
 
   return (
@@ -84,9 +76,11 @@ export default function PublicDataError({
         unaffected.
       </p>{" "}
       <div className="mt-8 flex flex-wrap gap-3">
+        {/* A full reload, not React's reset(): reset re-renders the same state
+            the page broke on, and a reload fetches everything again. */}
         <button
           type="button"
-          onClick={reset}
+          onClick={() => window.location.reload()}
           className="inline-flex min-h-[44px] items-center gap-2 border-3 border-border bg-primary px-5 py-3 font-heading text-sm font-bold uppercase tracking-wider text-primary-foreground shadow-hard transition-all duration-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-hard-lg"
         >
           <ArrowClockwiseIcon className="size-4" weight="bold" aria-hidden="true" />

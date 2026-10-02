@@ -94,7 +94,7 @@ export default function ArticleHeader({ meta, type }: ArticleHeaderProps) {
                   })}
                 </time>
               </span>
-            )}
+            )}{" "}
             <span className="flex items-center gap-1.5">
               <ClockIcon className="h-4 w-4" />
               {meta.readingTime}

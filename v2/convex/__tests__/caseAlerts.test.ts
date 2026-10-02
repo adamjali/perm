@@ -543,7 +543,11 @@ describe("action tokens", () => {
     const confirm = await makeUnsubscribeToken(email, SECRET, "case-confirm");
     const unsub = await makeUnsubscribeToken(email, SECRET, "case-unsubscribe");
 
-    await t.mutation(internal.caseAlerts.confirmByToken, { token: confirm });
+    const first = await t.mutation(internal.caseAlerts.confirmByToken, { token: confirm });
+    expect(first?.already).toBeUndefined();
+    // Clicking the same link again while subscribed says so, and changes nothing.
+    const again = await t.mutation(internal.caseAlerts.confirmByToken, { token: confirm });
+    expect(again).toMatchObject({ caseNumbers: [CASE], already: true });
     expect(await t.mutation(internal.caseAlerts.unsubscribeByToken, { token: unsub })).toBe(true);
 
     // These tokens never expire and are readable by anyone who saw the email,
@@ -552,6 +556,20 @@ describe("action tokens", () => {
     expect(await t.mutation(internal.caseAlerts.confirmByToken, { token: confirm })).toBeNull();
     const row = await t.run(async (ctx) => ctx.db.query("caseStatusAlerts").first());
     expect(row!.unsubscribedAt).toBeDefined();
+  });
+
+  it("a second click on the confirm link says they're already on the list", async () => {
+    const t = createTestContext();
+    stubMirrorAndResend({ cases: {} });
+    const email = "person@example.com";
+    await t.mutation(internal.caseAlerts.subscribe, { email, caseNumber: CASE });
+    const token = encodeURIComponent(await makeUnsubscribeToken(email, SECRET, "case-confirm"));
+    const first = await t.fetch(`/case-alert/confirm?token=${token}`, { method: "POST" });
+    expect(first.status).toBe(200);
+    expect(await first.text()).toMatch(/You('|&#39;)re on the list/);
+    const again = await t.fetch(`/case-alert/confirm?token=${token}`, { method: "POST" });
+    expect(again.status).toBe(200);
+    expect(await again.text()).toMatch(/You('|&#39;)re already on the list/);
   });
 
   it("one-click unsubscribe silences every case on the address", async () => {

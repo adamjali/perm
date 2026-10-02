@@ -113,8 +113,13 @@ def remove(stem: str) -> None:
 
 def main() -> int:
     live = read(os.path.join(APP, "active"))
-    slots = {s: os.path.realpath(os.path.join(APP, "slots", s)) for s in ("blue", "green")
+    # Each slot runs its release twice (blue/blue2, green/green2), the second
+    # copy from its own <release>.w2 folder; both folders of the live slot are
+    # live, both of the other are standby.
+    slots = {s: os.path.realpath(os.path.join(APP, "slots", s))
+             for s in ("blue", "blue2", "green", "green2")
              if os.path.exists(os.path.join(APP, "slots", s))}
+    live_dirs = {slots[s] for s in (live, live + "2") if s in slots}
     free = shutil.disk_usage("/").free
     budgets = TIGHT if free < FREE_FLOOR else BUDGET
     report = {"at": int(time.time()), "freeGB": round(free / GB, 1),
@@ -122,7 +127,7 @@ def main() -> int:
     releases_dir = os.path.join(APP, "releases")
     for name in sorted(os.listdir(releases_dir)):
         rel = os.path.realpath(os.path.join(releases_dir, name))
-        role = ("live" if slots.get(live) == rel else
+        role = ("live" if rel in live_dirs else
                 "standby" if rel in slots.values() else "old")
         pages = sorted(groups(rel))                     # least recently used first
         total = sum(size for _u, size, _s in pages)

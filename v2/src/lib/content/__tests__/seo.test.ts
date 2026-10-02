@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { ARTICLE_AUTHOR } from "@/lib/constants/externalLinks";
+import { KNOWN_PERSON_AUTHORS } from "@/lib/constants/externalLinks";
+import { CONTENT_TYPE_CONFIG } from "../types";
 import { describe, it, expect } from "vitest";
 import {
   generateArticleSchema,
@@ -272,31 +273,35 @@ describe("generateItemListSchema", () => {
 });
 
 describe("article authorship", () => {
+  const [registered, profile] = Object.entries(KNOWN_PERSON_AUTHORS)[0]!;
   const person = generateArticleSchema(
-    createTestMeta({ author: ARTICLE_AUTHOR.name }), "s", "blog");
+    createTestMeta({ author: registered }), "s", "blog");
   const org = generateArticleSchema(
-    createTestMeta({ author: "PERM Tracker Team" }), "s", "changelog");
+    createTestMeta({ author: CONTENT_TYPE_CONFIG.guides.byline }), "s", "guides");
 
-  it("emits a Person, with a corroborating profile, for a registered byline", () => {
+  it("emits a Person, with a corroborating profile, only for a registered name", () => {
     // sameAs is what turns a name into a checkable identity rather than a
-    // string. A Person with no external reference is barely better than the
-    // Organization it replaced.
+    // string. A Person with no external reference is barely better than an
+    // Organization.
     const a = person.author as Record<string, unknown>;
     expect(a["@type"]).toBe("Person");
-    expect(a.name).toBe(ARTICLE_AUTHOR.name);
-    expect(a.url).toBe(ARTICLE_AUTHOR.url);
-    expect(a.sameAs).toContain(ARTICLE_AUTHOR.url);
+    expect(a.name).toBe(registered);
+    expect(a.url).toBe(profile.url);
+    expect(a.sameAs).toContain(profile.url);
   });
 
-  it("leaves an UNREGISTERED byline as an Organization", () => {
-    // Authorship is deliberately mixed: a changelog entry is the product
-    // speaking and belongs to the site, a guide is advice and belongs to a
-    // person. This branch is also the safety property - a new name in a
-    // frontmatter file cannot silently be published as a human with no profile
-    // behind them; it has to be registered first.
+  it("emits a team byline as an Organization tied to the site's own", () => {
+    // Articles carry a team byline. Its node keeps its own name and points at
+    // the shared Organization as its parent rather than reusing that @id under
+    // a second name. This branch is also the safety property: a new name in a
+    // frontmatter file cannot be published as a person with no profile behind
+    // it.
     const a = org.author as Record<string, unknown>;
     expect(a["@type"]).toBe("Organization");
-    expect(a.name).toBe("PERM Tracker Team");
+    expect(a.name).toBe("PERM Tracker data desk");
+    expect(a.url).toBe(`${BASE_URL}/about`);
+    expect(a.parentOrganization).toEqual({ "@id": `${BASE_URL}/#organization` });
+    expect(a["@id"]).toBeUndefined();
   });
 
   it("never publishes a personal email or the operator's legal identity", () => {

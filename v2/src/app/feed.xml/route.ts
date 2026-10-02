@@ -25,12 +25,19 @@ export function GET() {
   const items = posts.map((post) => {
     const url = `${BASE_URL}/${post.type}/${post.slug}`;
     const pubDate = new Date(post.meta.date).toUTCString();
+    // pubDate stays the publish date, so a revision doesn't re-announce the
+    // item to readers; the revision rides alongside as atom:updated.
+    const updated =
+      post.meta.updated && post.meta.updated > post.meta.date
+        ? `\n      <atom:updated>${post.meta.updated}T00:00:00Z</atom:updated>`
+        : "";
 
     return `    <item>
       <title>${escapeXml(post.meta.title)}</title>
       <link>${url}</link>
       <description>${escapeXml(post.meta.description)}</description>
-      <pubDate>${pubDate}</pubDate>
+      <dc:creator>${escapeXml(post.meta.author)}</dc:creator>
+      <pubDate>${pubDate}</pubDate>${updated}
       <guid isPermaLink="true">${url}</guid>
       <category>${post.type}</category>
       ${post.meta.tags.map((tag) => `<category>${escapeXml(tag)}</category>`).join("\n      ")}
@@ -38,7 +45,7 @@ export function GET() {
   });
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <channel>
     <title>PERM Tracker</title>
     <link>${BASE_URL}</link>

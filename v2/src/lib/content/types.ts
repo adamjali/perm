@@ -46,14 +46,23 @@ export interface PostSummary {
   meta: PostMeta;
 }
 
-/** Content type display configuration */
+/**
+ * Content type display configuration.
+ *
+ * `byline` is the team name every article of the type carries. Articles are
+ * credited to the site's team rather than a named person; guides are built
+ * from the federal record, so they carry the data desk. Each MDX file states
+ * its byline in frontmatter, and content-frontmatter.test.ts holds the file
+ * to its type's byline.
+ */
 export const CONTENT_TYPE_CONFIG: Record<
   ContentType,
-  { label: string; plural: string; description: string; icon: string }
+  { label: string; plural: string; description: string; icon: string; byline: string }
 > = {
   blog: {
     label: "Blog",
     plural: "Blog posts",
+    byline: "PERM Tracker team",
     description:
       "Insights on PERM labor certification, immigration practice, and industry trends.",
     icon: "FileText",
@@ -61,6 +70,7 @@ export const CONTENT_TYPE_CONFIG: Record<
   guides: {
     label: "Guide",
     plural: "Guides",
+    byline: "PERM Tracker data desk",
     description:
       "How-tos, references, checklists and comparisons for the PERM process and for PERM Tracker itself.",
     icon: "BookOpen",
@@ -68,6 +78,7 @@ export const CONTENT_TYPE_CONFIG: Record<
   changelog: {
     label: "Update",
     plural: "Changelog",
+    byline: "PERM Tracker team",
     // Names the corrections log, which moved onto this page when
     // `/corrections` was retired. This string is the changelog's one line in
     // `llms.txt` and on the content hub, so leaving it out is how the record

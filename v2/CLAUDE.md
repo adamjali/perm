@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-10-01
+> **Status:** Production | **Last Updated:** 2026-10-02
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -7395,3 +7395,90 @@ ICE's SEVP top-employer lists (1,604 rows), the H-1B lottery FOIA release FY2021
 From FY2022 the FOIA file says `ELIGIBLE` where FY2021 said `CREATED` (registered, not selected);
 FY2024's selected count is 9 under USCIS's table (188,391 against 188,400) while every other total
 matches exactly, so that one gap is allowed by name (`KNOWN_SELECTED_GAP`) and recorded in the doc.
+
+## Oct 2 2026: two copies, a scraper, crashes that left no trace, and the bylines
+
+**One copy of the site was the ceiling, and a scraper found it.** Node builds a page on one CPU, so one
+copy saturates at two to three times normal traffic while the second CPU idles. On Oct 1 at 11:34 PM,
+11:51 PM, 12:12 AM and 12:16 AM EDT a scraper on rotating addresses (browser user agents, realistic
+referrers, mostly Chinese ranges plus US proxies) walked `?case=` lookups and filled all 64 in-flight
+slots; people got "busy" pages. Three changes, all in `scripts/oracle/` (runbook in its README):
+- **The live slot runs two copies** (`@<slot>` and `@<slot>2`, ports 3001/3011 and 3002/3012, the second
+  from `<release>.w2`); nginx splits by `hash "$uri?$pt_args_no_rsc" consistent`, so a page and its
+  click data hit the same copy's cache. `permtracker-deploy` starts and checks both, warms both, and
+  rolls back to the other slot's first copy at once. The health check lists the second copy and the
+  morning report warns when the site runs on one.
+- **Lookups from everyone together hold at most 24 of the 64 slots** (`pt_lookup_conn`), so a lookup
+  walk can't fill the app whatever addresses it rotates through.
+- **Refresh calls reach both copies**: Next keeps the stale-page list in each process's memory, so
+  `/api/revalidate-*` goes to the first copy and nginx `mirror`s it to the second.
+
+**`MaxListenersExceededWarning` was the analytics relay.** Next's external rewrite (httpxy), compression
+and Sentry's request tracking put 11 `close` listeners on every relayed `/ingest` response, about 1,500
+warnings an hour. nginx relays `/ingest/` straight to PostHog now (runtime DNS, `X-Forwarded-For` the
+visitor's address, cookies stripped); zero warnings since. Visitor counts per hour were checked before
+and after: no merging. `next.config.ts` keeps its rewrite as a fallback nothing reaches.
+
+**An error screen hid every crash it caught.** A visitor's /perm-cases showed "This page's figures
+didn't load" and "Try again" re-rendered the same broken state; nothing was recorded, because React
+handles an error a boundary catches (PostHog's automatic capture never sees it) and Sentry isn't loaded
+on public pages. `src/components/error/recovery.ts`: every error screen (public, app, global) records
+the error in PostHog as `$exception` with where it was caught; an error a fresh load cures (old code
+after a deploy, a dropped request) reloads the page by itself at most once a minute per tab; "Try again"
+is a real reload. The stale-deployment reload, which had no limit, goes through the same once-a-minute
+claim.
+
+**Counting people shown a refusal page.** Both nginx refusal pages carry a 1-pixel image
+(`/__pt/busy-seen`) that only a browser drawing the page asks for; nginx logs it to its own file, the
+health check counts people per day (address plus browser, crawlers left out) and the morning report
+prints the week and warns at 10 people shown "busy" in a day or 3+ on 3 days running: the signal for
+adding CPUs. nginx's `return` answers before `limit_req` runs, so the image is `empty_gif`.
+
+**The root icons come from disk.** Next served them `max-age=0`; in 5 hours about 1,800 requests went
+through the app for unchanged icons and some were refused under the page limits. `sw.js` stays with the
+app: a service worker's security policy comes from its own response headers.
+
+**Articles carry team bylines** (`CONTENT_TYPE_CONFIG[type].byline`: blog and changelog "PERM Tracker
+team", guides "PERM Tracker data desk"), emitted as an Organization tied to the site's own; a person's
+name becomes a Person only through `KNOWN_PERSON_AUTHORS`. 46 articles carry an `updated` date from
+their real last revision; cards say "Updated <date>", the feed adds `atom:updated` and `dc:creator`.
+
+**Google Discover**: every article's lead image is 1,200px or wider (one 800px photo became its own
+card, `scripts/make-article-cards.mjs`), and every page sends `max-image-preview:large`. Four legal pages
+had restated `robots: { index: true }`, which replaces the root's whole object and dropped it;
+`robots-preview.test.ts` fails on a page doing that.
+
+**A second scraper, on ordinary pages, met a Cloudflare browser check.** 2:42 to 2:46 AM EDT: Tencent Cloud
+addresses (AS132203, 43.172/43.173, one Windows Chrome label) sent 69% of page requests and filled all 64 app
+slots, so about 1,240 requests from everyone else got busy pages. The lookup cap couldn't help (these were page
+views). Cloudflare custom rule 3 makes AS132203 pass a managed challenge; verified crawlers skip it through rule 2.
+Within a minute Tencent's requests at the server fell from 1,354 a minute to 12. The scraper then moved to
+residential proxies (40 to 54 home and mobile addresses a minute, each too slow for any per-address limit) under
+one label, Windows Chrome/151.0.0.0: 3,643 requests in 12 minutes against 72 from 4 addresses the whole day before.
+Rule 4 puts Windows Chrome reporting 151 or 80 to 139 through Cloudflare's interactive (one-click) check, switched from the automatic one at 3:10 AM because the Chrome/151 part passed it; PostHog showed real Windows Chrome on 80 to 139 at 19
+pageviews in 3 days, and version 151 at one pageview per session (a headless browser that runs our JavaScript, so
+it also inflates PostHog's visitor counts and would count as a person in the busy-page tally). Its click-data
+requests carried believable referrers, so "no referrer" was not a usable tell (8 of 367,000 real ones lacked it).
+
+**Email links go from nginx straight to the backend**: `/prefs`, `/unsubscribe` and every alert's confirm and
+unsubscribe. They were the last relayed-through-Next requests (the last MaxListeners warnings), and two defects
+came out of moving them: the backend sends no Cache-Control, so Cloudflare kept these pages up to 2 hours (a
+reopened preferences link could show settings already changed), and they carried no security headers. nginx marks
+them `private, no-store`, unframeable and no-referrer, and passes only the headers the backend needs (Cloudflare's
+own, like CF-Connecting-IP, are refused by the backend's Cloudflare). 19 answers compared before and after: byte
+for byte identical. Cloudflare's stored copies were purged by prefix.
+
+**A repeat click on a confirmation link says "You're already on the list"** for case and employer alerts, where it
+said "This confirmation link is no longer valid" to people who were subscribed (one did, Oct 2). An unsubscribed
+address still gets nothing back, so an old link still can't re-subscribe anyone. The bulletin and queue alerts
+already answered this way.
+
+**Meta's AI crawler reads at 30 pages a minute** (`pt_meta`, owner's call). It was the biggest load that wasn't a
+person: a median 73 pages a minute (peaks 133) from 110 addresses, mostly employer pages built from scratch. It
+still reads every page, more slowly; the other crawlers keep 90.
+
+**The welcome email is signed "The PERM Tracker team"**, like the bylines (`welcomeSignoff.test.tsx`). The About
+page is the one place a person is named.
+
+**The attorney hero** fits more on one screen: at 1440x900 the dashboard picture's top moved from 539px
+down, 60% visible, to about 80% visible.

@@ -467,6 +467,12 @@ DB_DIR_RATIO = 3.0
 # The page-cache cap (permtracker-prune) runs every 30 minutes; two hours
 # without a run means it stopped, and the disk fills at crawl speed without it.
 PAGE_CACHE_STALE_MIN = 120
+# People shown "busy for a moment" (the whole server was full). A few on a
+# rare day is a crawler burst the limits absorbed; this many in one day, or
+# some on three days running, means the server is too small for its traffic,
+# which is the time to add CPUs (the limits protect it, they can't add room).
+BUSY_PEOPLE_WARN = 10
+BUSY_STREAK_DAYS, BUSY_STREAK_MIN = 3, 3
 # Memory the machine can still hand out. Under 1 GB, the next big render or a
 # job's burst reaches swap or the out-of-memory killer.
 MEM_AVAILABLE_WARN_MB = 1024
@@ -477,6 +483,32 @@ def repo_timers() -> list[str]:
     """The timer units the repo installs on the server (scripts/oracle/systemd)."""
     d = pathlib.Path(__file__).resolve().parent / "oracle" / "systemd"
     return sorted(p.name for p in d.glob("*.timer"))
+
+
+def busy_line(doc: dict, now_ms: int, warns: list, lines: list) -> None:
+    """People turned away with a refusal page, counted by the server from the
+    1-pixel image those pages carry (only a browser that draws the page asks
+    for it). Absent from a doc written before the count existed: says nothing.
+    Present but unreadable: says so, never zero."""
+    if "busySeen" not in doc:
+        return
+    bs = doc.get("busySeen")
+    if not bs:
+        warns.append("the count of people shown a busy page can't be read on the server")
+        return
+    last = bs.get("last24h") or {}
+    by_day = {d["day"]: d for d in bs.get("days") or []}
+    today = dt.datetime.fromtimestamp(now_ms / 1000, dt.timezone.utc).date()
+    week = [(today - dt.timedelta(days=i)).isoformat() for i in range(6, -1, -1)]
+    series = [(by_day.get(d) or {}).get("busyPeople", 0) for d in week]
+    busy, slow = last.get("busyPeople", 0), last.get("people", 0) - last.get("busyPeople", 0)
+    lines.append(f"People shown \"busy\" (server full): {busy} in 24 h; by day, oldest first: "
+                 + ", ".join(str(n) for n in series)
+                 + (f". Shown \"one moment\" (their own address too fast): {slow}" if slow else ""))
+    if busy >= BUSY_PEOPLE_WARN:
+        warns.append(f"{busy} people were shown \"busy\" in 24 h: the server is too small for its traffic")
+    elif all(n >= BUSY_STREAK_MIN for n in series[-BUSY_STREAK_DAYS:]):
+        warns.append(f"people shown \"busy\" {BUSY_STREAK_DAYS} days running: the server is getting too small")
 
 
 def server_verdict(doc: dict | None, now_ms: int) -> dict:
@@ -499,6 +531,11 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
     down = [u for u in must if svc.get(u) != "active"]
     if down:
         fails.append("not running: " + ", ".join(down))
+    # The live release normally runs twice, one copy per CPU. One copy still
+    # serves everything, so a missing second copy warns rather than fails.
+    second = f"permtracker-web@{slot}2" if slot else None
+    if second and second in svc and svc.get(second) != "active":
+        warns.append(f"the site is running on one copy: {second} is {svc.get(second)}")
     if svc.get("permtracker-dbcache") != "active":
         warns.append("the database is no longer held in memory (permtracker-dbcache)")
     if doc.get("failedUnits"):
@@ -622,6 +659,7 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
                         f"memory low {pct(idle.get('memMin'))}")
     if slot:
         lines.append(f"Live copy: {slot} ({(doc.get('slot') or {}).get('release')})")
+    busy_line(doc, now_ms, warns, lines)
     status = "fail" if fails else "warn" if warns else "ok"
     summary = (fails + warns)[0] if fails or warns else f"all services up, memory {n.get('memPct')}%"
     return section("server", title, status, summary, fails + warns + lines)

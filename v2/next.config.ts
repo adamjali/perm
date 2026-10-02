@@ -196,6 +196,9 @@ const nextConfig: NextConfig = {
     const convexSite =
       process.env.NEXT_PUBLIC_CONVEX_SITE_URL ??
       process.env.NEXT_PUBLIC_CONVEX_URL?.replace(".convex.cloud", ".convex.site");
+    // Since Oct 2 2026 nginx answers these paths itself (straight to the same
+    // backend, never stored, never framed: scripts/oracle/nginx/permtracker.conf,
+    // "EMAIL LINKS"), so these rewrites are the fallback for running without it.
     const emailLinkRewrites = convexSite
       ? [
           { source: "/prefs", destination: `${convexSite}/prefs` },

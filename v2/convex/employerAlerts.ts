@@ -384,14 +384,23 @@ async function rowsForToken(
 
 export const confirmByToken = internalMutation({
   args: { token: v.string() },
-  returns: v.union(v.object({ email: v.string(), employers: v.array(v.string()) }), v.null()),
+  returns: v.union(
+    // `already`: nothing was waiting and the address still follows these
+    // employers (a repeat click on an old confirmation link).
+    v.object({ email: v.string(), employers: v.array(v.string()), already: v.optional(v.boolean()) }),
+    v.null(),
+  ),
   handler: async (ctx, args) => {
     const all = await rowsForToken(ctx, args.token, "employer-confirm");
     const confirmed: string[] = [];
+    const active: string[] = [];
     const now = Date.now();
     for (const row of all) {
       // Only a fresh request stages a slug; a replayed link finds nothing to do.
-      if (row.pendingSlug === undefined) continue;
+      if (row.pendingSlug === undefined) {
+        if (row.confirmedAt !== undefined && row.unsubscribedAt === undefined) active.push(row.employerName);
+        continue;
+      }
       const moved = row.slug !== row.pendingSlug;
       await ctx.db.patch(row._id, {
         confirmedAt: row.confirmedAt ?? now,
@@ -405,7 +414,9 @@ export const confirmByToken = internalMutation({
       });
       confirmed.push(row.pendingName ?? row.employerName);
     }
-    if (confirmed.length === 0) return null;
+    if (confirmed.length === 0) {
+      return active.length > 0 ? { email: all[0]!.email, employers: active, already: true } : null;
+    }
     const email = all[0]!.email;
     // What the page already showed them is not news: mark today's moves told.
     await ctx.scheduler.runAfter(0, internal.employerAlerts.seedTold, { email });

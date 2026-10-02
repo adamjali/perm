@@ -52,7 +52,7 @@ describe("RouteError", () => {
     originalLocation = window.location;
     Object.defineProperty(window, "location", {
       writable: true,
-      value: { href: "", pathname: "/test" },
+      value: { href: "", pathname: "/test", reload: vi.fn() },
     });
   });
 
@@ -149,13 +149,16 @@ describe("RouteError", () => {
   });
 
   describe("Button Interactions", () => {
-    it("calls reset function when Try Again button is clicked", { timeout: 15000 }, () => {
+    // A full reload, not reset(): reset re-renders the state the page broke
+    // on, which is how a visitor clicked "Try again" seven times on Oct 2.
+    it("reloads the page when Try Again button is clicked", { timeout: 15000 }, () => {
       render(<RouteError error={mockError} reset={mockReset} />);
 
       const tryAgainButton = screen.getByRole("button", { name: /try again/i });
       fireEvent.click(tryAgainButton);
 
-      expect(mockReset).toHaveBeenCalledTimes(1);
+      expect(window.location.reload).toHaveBeenCalledTimes(1);
+      expect(mockReset).not.toHaveBeenCalled();
     });
 
     it("navigates to dashboard when Go to Dashboard button is clicked", () => {

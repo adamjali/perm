@@ -3,6 +3,7 @@
 #   deploy <release-id>   read a .tar.zst release on stdin, start it on the
 #                         idle copy, health-check it, then switch traffic
 #   rollback              switch traffic back to the other copy
+#   second                start the live slot's second copy and add it
 #   status                print which copy serves and what each runs
 #   convex-backup <stamp> store a SEALED Convex export read on stdin (the
 #                         nightly workflow encrypts it on GitHub with the
@@ -11,8 +12,20 @@ set -euo pipefail
 A=/srv/permtracker/app
 cmd="${1:-status}"; set -- $cmd
 action="${1:-status}"; rel="${2:-}"
-port_of(){ [ "$1" = blue ] && echo 3001 || echo 3002; }
+# Each slot runs its release TWICE, one copy per CPU (Oct 2 2026): Node builds
+# pages on one core, so one copy saturated at two or three times normal
+# traffic while the second core idled, and a scraper burst turned people away.
+# The second copy ("blue2", "green2") runs its own copy of the release folder
+# (<release>.w2), so the two never write the same cache file, and nginx sends
+# each page to the same copy every time (hash in the upstream file), so a page
+# is built and cached once. After a switch the old slot keeps its FIRST copy
+# running for an instant rollback; its second copy stops and frees its memory.
+port_of(){ case "$1" in blue) echo 3001 ;; green) echo 3002 ;; blue2) echo 3011 ;; green2) echo 3012 ;; esac; }
 other_of(){ [ "$1" = blue ] && echo green || echo blue; }
+ensure_env(){ # $1 copy: blue2/green2 need a PORT file like blue's and green's
+  local f="$A/env/$1.env"
+  [ -f "$f" ] || { echo "PORT=$(port_of "$1")" > "$f"; chown root:permtracker "$f"; chmod 640 "$f"; }
+}
 active=$(cat $A/active)
 log(){ echo "[deploy $(date -u +%H:%M:%S)] $*"; logger -t permtracker-deploy "$*"; }
 
@@ -35,14 +48,28 @@ reload_nginx(){
   return 1
 }
 switch_to(){ # $1 slot
-  echo "server 127.0.0.1:$(port_of "$1");" > /etc/nginx/permtracker-active-upstream.conf
+  # Both copies when the second one runs; the first alone otherwise. The hash
+  # key is the path and query without Next's `_rsc` token (nginx config), so a
+  # page and its data request always reach the same copy. w1/w2 are the copies
+  # one by one: refresh calls go to w1 and are mirrored to w2.
+  local p1 p2
+  p1=$(port_of "$1"); p2=$p1
+  if systemctl is-active --quiet "permtracker-web@${1}2"; then p2=$(port_of "${1}2"); fi
+  if [ "$p2" != "$p1" ]; then
+    printf 'hash "$uri?$pt_args_no_rsc" consistent;\nserver 127.0.0.1:%s;\nserver 127.0.0.1:%s;\n' "$p1" "$p2" \
+      > /etc/nginx/permtracker-active-upstream.conf
+  else
+    echo "server 127.0.0.1:$p1;" > /etc/nginx/permtracker-active-upstream.conf
+  fi
+  echo "server 127.0.0.1:$p1;" > /etc/nginx/permtracker-active-w1.conf
+  echo "server 127.0.0.1:$p2;" > /etc/nginx/permtracker-active-w2.conf
   # $A/live points at the serving release: nginx serves its public/ images
   # straight from disk. Renamed into place, so it is never missing mid-switch.
   ln -sfn "$(readlink -f "$A/slots/$1")" "$A/live.next" && mv -T "$A/live.next" "$A/live"
   # Traffic is recorded as moved only once nginx has taken the new upstream.
   reload_nginx
   echo "$1" > $A/active
-  log "traffic now on $1 ($(readlink $A/slots/$1 | xargs basename))"
+  log "traffic now on $1 ($(readlink $A/slots/$1 | xargs basename)), ports $p1$([ "$p2" != "$p1" ] && echo " and $p2")"
 }
 warm(){ # $1 port
   # Render the core pages on the NEW copy before it takes traffic. Each release
@@ -81,12 +108,28 @@ healthy(){ # $1 port
 case "$action" in
   status)
     echo "active: $active"
-    for s in blue green; do echo "$s: $(readlink $A/slots/$s 2>/dev/null | xargs -r basename) $(systemctl is-active permtracker-web@$s)"; done ;;
+    for s in blue blue2 green green2; do echo "$s: $(readlink $A/slots/$s 2>/dev/null | xargs -r basename) $(systemctl is-active permtracker-web@$s)"; done ;;
+  second)
+    # Start the live slot's second copy (from its own .w2 folder, made here if
+    # missing) and put it into traffic: the first time after Oct 2 2026, and
+    # by hand whenever the live site is running on one copy.
+    live_rel=$(readlink -f "$A/slots/$active")
+    [ -d "$live_rel.w2" ] || { log "copying $(basename "$live_rel") for the second copy"; ionice -c3 nice cp -a "$live_rel" "$live_rel.w2"; chown -R permtracker:permtracker "$live_rel.w2"; }
+    ln -sfn "$live_rel.w2" "$A/slots/${active}2"
+    ensure_env "${active}2"
+    systemctl enable -q "permtracker-web@${active}2"; systemctl restart "permtracker-web@${active}2"
+    healthy "$(port_of "${active}2")" || { log "second copy of $active failed its health check; staying on one"; systemctl stop "permtracker-web@${active}2"; exit 4; }
+    switch_to "$active" ;;
   rollback)
     to=$(other_of "$active")
     [ -e "$A/slots/$to" ] || { log "no other copy to roll back to"; exit 1; }
     healthy "$(port_of "$to")" || { log "other copy is not healthy; staying on $active"; exit 1; }
-    switch_to "$to" ;;
+    switch_to "$to"                       # instant, on the copy that kept running
+    if [ -e "$A/slots/${to}2" ]; then     # then its second copy joins
+      ensure_env "${to}2"; systemctl restart "permtracker-web@${to}2"
+      healthy "$(port_of "${to}2")" && switch_to "$to" || log "second copy of $to did not start; serving on one"
+    fi
+    systemctl stop "permtracker-web@${active}2" 2>/dev/null || true ;;
   deploy)
     [[ "$rel" =~ ^[0-9a-f]{7,40}(-[0-9]{1,6})?$ ]] || { log "bad release id"; exit 2; }
     idle=$(other_of "$active")
@@ -98,18 +141,28 @@ case "$action" in
     [ -f "$A/releases/$rel/server.js" ] || { log "release has no server.js"; exit 3; }
     chown -R permtracker:permtracker "$A/releases/$rel"
     cp -a --no-clobber "$A/releases/$rel/.next/static/." "$A/shared/_next/static/"
+    # The second copy's own folder, copied while it holds only the build.
+    rm -rf "$A/releases/$rel.w2"; cp -a "$A/releases/$rel" "$A/releases/$rel.w2"
     ln -sfn "$A/releases/$rel" "$A/slots/$idle"
-    systemctl enable -q "permtracker-web@$idle"; systemctl restart "permtracker-web@$idle"
-    if ! healthy "$(port_of "$idle")"; then
-      log "NEW RELEASE FAILED its health check on $idle; traffic stays on $active"
-      journalctl -u "permtracker-web@$idle" -n 30 --no-pager | tail -30
-      exit 4
-    fi
-    warm "$(port_of "$idle")" || true
+    ln -sfn "$A/releases/$rel.w2" "$A/slots/${idle}2"
+    ensure_env "${idle}2"
+    for w in "$idle" "${idle}2"; do systemctl enable -q "permtracker-web@$w"; systemctl restart "permtracker-web@$w"; done
+    for w in "$idle" "${idle}2"; do
+      if ! healthy "$(port_of "$w")"; then
+        log "NEW RELEASE FAILED its health check on $w; traffic stays on $active"
+        journalctl -u "permtracker-web@$w" -n 30 --no-pager | tail -30
+        systemctl stop "permtracker-web@${idle}2" || true
+        exit 4
+      fi
+    done
+    # Each copy builds the core pages for itself, side by side on the two CPUs.
+    warm "$(port_of "$idle")" & warm "$(port_of "${idle}2")" & wait || true
     switch_to "$idle"
-    # keep the previous copy running: rollback is instant.
-    keep=$(for s in blue green; do readlink "$A/slots/$s" 2>/dev/null | xargs -r basename; done)
-    ls -1t "$A/releases" | tail -n +6 | while read r; do echo "$keep" | grep -qx "$r" || rm -rf "$A/releases/$r"; done
+    # The previous release keeps its first copy running (instant rollback); its
+    # second copy stops.
+    systemctl stop "permtracker-web@${active}2" 2>/dev/null || true
+    keep=$(for s in blue blue2 green green2; do readlink "$A/slots/$s" 2>/dev/null | xargs -r basename; done)
+    ls -1t "$A/releases" | tail -n +11 | while read r; do echo "$keep" | grep -qx "$r" || rm -rf "$A/releases/$r"; done
     find "$A/shared/_next/static" -type f -mtime +21 -delete 2>/dev/null || true
     log "deployed $rel" ;;
   convex-backup)

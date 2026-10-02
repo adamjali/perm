@@ -8,7 +8,7 @@
  * - Tutorial + Guide links
  * - CTA button to create first case
  * - Senja review ask
- * - Personal sign-off (Sabrina S.)
+ * - A team sign-off
  * - Dark mode support via CSS classes
  * - Neobrutalist design matching v2 aesthetic
  */
@@ -177,13 +177,10 @@ export function WelcomeEmail({
         </Text>
       </Section>
 
-      {/* Sign-off */}
+      {/* Sign-off: the team, like the articles' bylines (owner's call, Oct 2 2026). */}
       <Section style={styles.signoff}>
         <Text className="em-text" style={styles.signoffName}>
-          Sabrina S.
-        </Text>
-        <Text className="em-text-secondary" style={styles.signoffTeam}>
-          PERM Tracker Team
+          The PERM Tracker team
         </Text>
       </Section>
     </EmailLayout>
@@ -296,12 +293,6 @@ const styles = {
     color: "#18181b",
     fontSize: "15px",
     fontWeight: "700" as const,
-    margin: "0 0 2px 0",
-  },
-  signoffTeam: {
-    color: "#71717a",
-    fontSize: "13px",
-    fontWeight: "500" as const,
     margin: "0",
   },
 } as const;

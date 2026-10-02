@@ -35,10 +35,6 @@ export const metadata: Metadata = withSocialCard({
       "Security posture and public incident record for permtracker.app.",
     url: "/security",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
 }, "security");
 
 export default function SecurityPage() {

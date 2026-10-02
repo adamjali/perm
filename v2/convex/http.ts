@@ -541,6 +541,12 @@ http.route({
     }
 
     const list = result.caseNumbers.join(", ");
+    if (result.already) {
+      return messagePage(
+        "You're already on the list",
+        `Nothing more to do: we'll email you when the Department of Labor's status changes for ${list}.`,
+      );
+    }
     return messagePage(
       "You're on the list",
       `We'll email you when the Department of Labor's status changes for ${list}, and again each time it moves until the case is decided. Current figures are always on permtracker.app/perm-case-status.`,
@@ -889,6 +895,12 @@ http.route({
     if (!token) return badLinkPage();
     const result = await ctx.runMutation(internal.employerAlerts.confirmByToken, { token });
     if (!result) return badLinkPage("This confirmation link is no longer valid.");
+    if (result.already) {
+      return messagePage(
+        "You're already following",
+        `Nothing more to do: we'll write when DOL moves ${escapeHtml(result.employers.join(", "))}'s PERM cases as a group.`,
+      );
+    }
     return messagePage(
       "You're following",
       `We'll write when DOL moves ${escapeHtml(result.employers.join(", "))}'s PERM cases as a group. Every figure is on permtracker.app/perm-employers/under-review.`,

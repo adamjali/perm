@@ -9,6 +9,7 @@ import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import readingTime from "reading-time";
+import { CONTENT_TYPE_CONFIG } from "./types";
 import type { ContentType, Post, PostMeta, PostSummary } from "./types";
 import { captureError } from "@/lib/sentry";
 
@@ -76,7 +77,7 @@ export function getPostBySlug(type: ContentType, slug: string): Post | null {
     description: (data.description as string) ?? "",
     date: (data.date as string) ?? new Date().toISOString().split("T")[0],
     updated: data.updated as string | undefined,
-    author: (data.author as string) ?? "PERM Tracker Team",
+    author: (data.author as string) ?? CONTENT_TYPE_CONFIG[type].byline,
     image: data.image as string | undefined,
     imageAlt: data.imageAlt as string | undefined,
     tags: (Array.isArray(data.tags) ? data.tags : []) as string[],

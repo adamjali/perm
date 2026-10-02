@@ -41,6 +41,7 @@ vi.mock("posthog-js", () => ({
   default: {
     init: vi.fn(),
     capture: vi.fn(),
+    captureException: vi.fn(),
     identify: vi.fn(),
     reset: vi.fn(),
     opt_out_capturing: vi.fn(),

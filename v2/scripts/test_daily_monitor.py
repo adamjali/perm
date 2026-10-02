@@ -173,6 +173,11 @@ def main() -> int:
           "the LIVE copy down fails")
     check(v(doc(services={"permtracker-web@green": "inactive"}), now_ms)["status"] == "ok",
           "the idle copy down does not")
+    live = (doc().get("slot") or {}).get("active") or "blue"
+    check(v(doc(services={f"permtracker-web@{live}2": "failed"}), now_ms)["status"] == "warn",
+          "the live slot's second copy down warns (one copy still serves)")
+    check(v(doc(services={f"permtracker-web@{live}2": "active"}), now_ms)["status"] == "ok",
+          "both copies up reads ok")
     check(v(doc(services={"permtracker-dbcache": "inactive"}), now_ms)["status"] == "warn",
           "the database falling out of memory warns")
     check(v(doc(idle={"memP95": 12.0, "cpuP95": 4.0}), now_ms)["status"] == "fail",
@@ -235,6 +240,24 @@ def main() -> int:
     check(v(doc(now={"swapUsedMb": 1800}), now_ms)["status"] == "warn", "1.8 GB of swap in use warns")
     check(v(doc(now={"memAvailableMb": 5300, "swapUsedMb": 20}), now_ms)["status"] == "ok",
           "a roomy machine reads ok")
+
+    # People shown a refusal page (the server's count of the pages' image).
+    def busy(last_busy, days, people=None):
+        return {"last24h": {"busyPeople": last_busy, "people": people if people is not None else last_busy},
+                "days": [{"day": f"2026-09-{d:02d}", "busyPeople": n} for d, n in days]}
+    check(v(doc(), now_ms)["status"] == "ok" and not any("busy" in ln for ln in v(doc(), now_ms)["lines"]),
+          "a doc from before the count says nothing about it")
+    check(v(doc(busySeen=None), now_ms)["status"] == "warn", "a count the server can't read warns, never zero")
+    quiet = v(doc(busySeen=busy(2, [(26, 0), (27, 4), (28, 2)], people=5)), now_ms)
+    check(quiet["status"] == "ok" and any("2 in 24 h" in ln and "0, 0, 0, 0, 0, 4, 2" in ln and "one moment" in ln
+                                           for ln in quiet["lines"]),
+          "a few people on a day reads ok and prints the week, oldest first, zeros filled")
+    check(v(doc(busySeen=busy(12, [(28, 12)])), now_ms)["status"] == "warn",
+          "10+ people shown busy in 24 h warns: the server is too small")
+    check(v(doc(busySeen=busy(4, [(26, 3), (27, 5), (28, 4)])), now_ms)["status"] == "warn",
+          "people shown busy three days running warns")
+    check(v(doc(busySeen=busy(4, [(25, 6), (26, 0), (27, 5), (28, 4)])), now_ms)["status"] == "ok",
+          "a quiet day in between breaks the streak")
 
     print(f"\n{len(FAILS)} failure(s)")
     return 1 if FAILS else 0

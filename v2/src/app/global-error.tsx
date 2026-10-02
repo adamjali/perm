@@ -12,10 +12,10 @@
 
 import { useEffect } from "react";
 import { isAuthError, isStaleDeploymentError } from "@/components/error/auth-error";
+import { claimAutoReload, isReloadCurable, reportCaughtError } from "@/components/error/recovery";
 
 export default function GlobalError({
   error,
-  reset,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
@@ -24,9 +24,10 @@ export default function GlobalError({
   const isStaleDeployment = isStaleDeploymentError(error);
 
   useEffect(() => {
-    // Stale deployment: silently reload to pick up new Server Action hashes
+    // Stale deployment: silently reload to pick up new Server Action hashes,
+    // once a minute at most so it can't loop.
     if (isStaleDeployment) {
-      window.location.reload();
+      if (claimAutoReload()) window.location.reload();
       return;
     }
 
@@ -35,19 +36,9 @@ export default function GlobalError({
       return;
     }
 
-    // Dynamic import — Sentry may not be initialized on public pages
-    import("@sentry/nextjs")
-      .then((Sentry) => {
-        Sentry.captureException(error, {
-          tags: {
-            component: "GlobalError",
-            ...(error.digest && { digest: error.digest }),
-          },
-        });
-      })
-      .catch((err) => {
-        console.error("[GlobalError] Couldn’t report to Sentry:", err);
-      });
+    const reload = isReloadCurable(error) && claimAutoReload();
+    reportCaughtError("GlobalError", error, { autoReloaded: reload });
+    if (reload) window.location.reload();
   }, [error, isExpiredSession, isStaleDeployment]);
 
   // Stale deployment: show brief message while reloading
@@ -66,7 +57,14 @@ export default function GlobalError({
           }}
         >
           <p style={{ color: "#666", fontSize: 14 }}>
-            Updating to latest version&hellip;
+            Updating to the latest version&hellip;{" "}
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              style={{ minHeight: 44, background: "none", border: "none", textDecoration: "underline", fontWeight: 600, cursor: "pointer", fontSize: 14 }}
+            >
+              Reload
+            </button>
           </p>
         </body>
       </html>
@@ -114,10 +112,13 @@ export default function GlobalError({
             Something went wrong
           </h1>{" "}
           <p style={{ color: "#666", marginBottom: 24 }}>
-            An unexpected error occurred. Our team has been notified.
+            An unexpected error occurred, and it&rsquo;s been recorded.
           </p>
+          {/* A full reload, not React's reset(): this screen replaced the whole
+              document, and reset re-renders the state it broke on. */}
           <button
-            onClick={reset}
+            type="button"
+            onClick={() => window.location.reload()}
             style={{
               padding: "10px 24px",
               background: "#000",

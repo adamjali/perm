@@ -1,0 +1,14 @@
+# /etc/logrotate.d/permtracker-busy: the refusal pages' counting log
+# (nginx location /__pt/busy-seen). Ten days kept, so the health check always
+# has the full week it reports. Readable by the permtracker group only.
+/var/log/permtracker-busy/seen.log {
+	daily
+	rotate 10
+	missingok
+	notifempty
+	maxsize 50M
+	create 0640 root permtracker
+	postrotate
+		invoke-rc.d nginx rotate >/dev/null 2>&1
+	endscript
+}

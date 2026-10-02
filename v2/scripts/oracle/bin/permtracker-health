@@ -21,6 +21,7 @@ import shutil
 import subprocess
 import time
 import urllib.request
+from datetime import datetime
 
 APP = pathlib.Path("/srv/permtracker")
 HERE = APP / "health"
@@ -60,6 +61,75 @@ def meminfo():
 def active(unit):
     r = subprocess.run(["systemctl", "is-active", unit], capture_output=True, text=True)
     return r.stdout.strip() or "unknown"
+
+
+BUSY_LOG = pathlib.Path("/var/log/permtracker-busy/seen.log")
+# Not people: crawlers and scripts that happen to render pages.
+NOT_PERSON = re.compile(r"bot|crawl|spider|slurp|headless|lighthouse|python|curl|wget|httpclient|java/|go-http|node-fetch|axios|okhttp|scrapy|playwright|puppeteer|phantom",
+                        re.I)
+BUSY_LINE = re.compile(r'^(\S+) (\d{3}) (\S+) (\S*) "(.*)"$')
+
+
+def busy_seen(now: float, log: pathlib.Path = BUSY_LOG) -> dict | None:
+    """People shown a refusal page, from nginx's log of its counting image
+    (nginx/permtracker.conf, pt_busy_seen). Only a browser that draws the page
+    asks for the image, so scripts turned away are not in it. A person is one
+    address and browser; the page reloads itself, so one person can see it
+    several times, which `views` counts. `busyPeople` saw "busy for a moment"
+    (the whole server was full, the sign it is too small); the rest saw "one
+    moment" (their own address asked too fast). Each of the last 7 days (UTC)
+    and the last 24 hours. None when the log can't be read (nginx not set up
+    for it)."""
+    files = sorted(log.parent.glob(log.name + "*")) if log.parent.exists() else []
+    if not files:
+        return None
+    week_ago = now - 7 * 86_400
+    day_ago = now - 86_400
+    days: dict[str, dict] = {}
+    last: dict = {"views": 0, "people": set(), "busyPeople": set(), "busy": 0, "slowDown": 0}
+    latest = None
+    for f in files:
+        if f.suffix == ".gz":
+            continue  # the rotation keeps these uncompressed; a stray .gz is older than a week
+        try:
+            lines = f.read_text(errors="replace").splitlines()
+        except OSError:
+            return None
+        for ln in lines:
+            m = BUSY_LINE.match(ln)
+            # 200: the image was served (refused hits are logged elsewhere).
+            if not m or m.group(2) != "200" or m.group(4) not in ("503", "429"):
+                continue
+            if NOT_PERSON.search(m.group(5)):
+                continue
+            try:
+                t = datetime.fromisoformat(m.group(1)).timestamp()
+            except ValueError:
+                continue
+            if t < week_ago:
+                continue
+            who = (m.group(3), m.group(5))
+            busy = m.group(4) == "503"
+            d = days.setdefault(time.strftime("%Y-%m-%d", time.gmtime(t)),
+                                {"views": 0, "people": set(), "busyPeople": set()})
+            d["views"] += 1
+            d["people"].add(who)
+            if busy:
+                d["busyPeople"].add(who)
+            if t >= day_ago:
+                last["views"] += 1
+                last["people"].add(who)
+                if busy:
+                    last["busyPeople"].add(who)
+                last["busy" if busy else "slowDown"] += 1
+            latest = max(latest or t, t)
+    return {
+        "last24h": {"views": last["views"], "people": len(last["people"]), "busyPeople": len(last["busyPeople"]),
+                    "busyViews": last["busy"], "slowDownViews": last["slowDown"]},
+        "days": [{"day": k, "views": v["views"], "people": len(v["people"]), "busyPeople": len(v["busyPeople"])}
+                 for k, v in sorted(days.items())],
+        "lastAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(latest)) if latest else None,
+    }
 
 
 def p95(xs):
@@ -203,7 +273,9 @@ def main():
         },
         "backup": {"lastOk": last_ok, "count": len(backups), "offsiteOk": offsite_ok, "restoreOk": restore_ok,
                    **sealed},
-        "services": {u: active(u) for u in SERVICES},
+        # The live slot's second copy (one per CPU) is a service too; the old
+        # slot's second copy is stopped on purpose and not listed.
+        "services": {u: active(u) for u in SERVICES + ([f"permtracker-web@{slot}2"] if slot else [])},
         "failedUnits": [ln.split()[0] for ln in failed if ln.strip()],
         "repairs24h": repairs[-5:],
         "repairCount24h": len(repairs),
@@ -211,6 +283,8 @@ def main():
         "timers": sorted(set(re.findall(r"permtracker[^\s]*\.timer", timers))),
         "slot": {"active": slot, "release": release},
         "pageCache": page_cache,
+        # People shown "busy for a moment" or "one moment" (see busy_seen).
+        "busySeen": busy_seen(now),
     }
 
     token = (APP / "secrets" / "db_rw.jwt").read_text().strip()

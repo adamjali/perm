@@ -31,10 +31,6 @@ export const metadata: Metadata = withSocialCard({
       "How PERM Tracker collects, uses and protects immigration case data.",
     url: "/privacy",
   },
-  robots: {
-    index: true,
-    follow: true,
-  },
 }, "privacy");
 
 const SECTIONS = [
