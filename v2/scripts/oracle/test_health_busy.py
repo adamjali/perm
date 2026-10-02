@@ -64,7 +64,9 @@ check("busy and one-moment views apart", (r["last24h"]["busyViews"], r["last24h"
 bots = run([line("2026-10-02T11:00:00+00:00", f"3.3.3.{i}", ua=ua) for i, ua in enumerate([
     "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 HeadlessChrome/141.0 Safari/537.36",
-    "python-requests/2.32", "curl/8.5.0", "Mozilla/5.0 (compatible; bingbot/2.0)"])])
+    "python-requests/2.32", "curl/8.5.0", "Mozilla/5.0 (compatible; bingbot/2.0)",
+    # Meta's renderer, seen in this log on Oct 2 2026, without the URL that names it a crawler
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/145.0.0.0 Safari/537.36 (compatible; meta-externalagent/1.1)"])])
 check("crawlers and headless browsers left out", bots["last24h"]["people"] == 0 and bots["days"] == [], str(bots))
 check("the week, a row a day", [d["day"] for d in r["days"]] == ["2026-09-30", "2026-10-01", "2026-10-02"], str(r["days"]))
 check("each day counts its own people", [d["people"] for d in r["days"]] == [1, 1, 3], str(r["days"]))

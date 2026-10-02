@@ -65,7 +65,7 @@ def active(unit):
 
 BUSY_LOG = pathlib.Path("/var/log/permtracker-busy/seen.log")
 # Not people: crawlers and scripts that happen to render pages.
-NOT_PERSON = re.compile(r"bot|crawl|spider|slurp|headless|lighthouse|python|curl|wget|httpclient|java/|go-http|node-fetch|axios|okhttp|scrapy|playwright|puppeteer|phantom",
+NOT_PERSON = re.compile(r"bot|crawl|spider|slurp|externalagent|externalhit|fetcher|headless|lighthouse|python|curl|wget|httpclient|java/|go-http|node-fetch|axios|okhttp|scrapy|playwright|puppeteer|phantom",
                         re.I)
 BUSY_LINE = re.compile(r'^(\S+) (\d{3}) (\S+) (\S*) "(.*)"$')
 
