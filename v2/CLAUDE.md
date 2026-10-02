@@ -7520,8 +7520,9 @@ passes three years (weekly, ten years is ~560 points in 626 units).
 **The automatic defense** (`bin/permtracker-defend`, every minute; details in `scripts/oracle/README.md`). It acts on
 people being turned away, never on traffic: a managed challenge for the source (a network from Cloudflare's new
 `x-pt-asn` header, or one browser label), then Under Attack Mode after 10 more minutes or when there's no single
-source, then all off after 30 calm minutes, emailing each change. It only watches until `/etc/permtracker/defend.env`
-holds a Cloudflare token. Custom rule 2 skips the security level, so trusted traffic never sees Under Attack Mode.
+source, then all off after 30 calm minutes, emailing each change. Under Attack Mode lasts at most an hour, then
+waits three hours: the Oct 2 scraper passes Cloudflare's checks, so it would otherwise hold every visitor behind one.
+Live since 7:09 AM EDT Oct 2 with a token scoped to permtracker.app (Zone WAF Edit, Zone Settings Edit). Custom rule 2 skips the security level, so trusted traffic never sees Under Attack Mode.
 
 **Smaller:** nginx keeps upstream connections 4 s (Node closes at 5 s; the resets were the 502s) and marks an
 upstream down after 3 failures in 5 s; the edge serves a stale page for up to a day when the origin errors

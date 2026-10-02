@@ -28,6 +28,12 @@ WHAT IT DOES, in order:
 3. Calm for 30 minutes in a row: removes the rule and puts the security level
    back to what it was.
 
+Under Attack Mode runs at most an hour at a time. A scraper that passes
+Cloudflare's checks (one did on Oct 2 2026) is not stopped by it, and bursts
+often enough that 30 calm minutes may never come, which would leave every real
+visitor behind the check for hours for nothing. So after an hour it steps back
+to the rule alone and may not return for three hours.
+
 Every change is emailed (at most 8 a day), written to health/repairs.log (the
 morning email shows it) and kept in health/defend.json. With no Cloudflare
 token (/etc/permtracker/defend.env) or with health/defend.off present it only
@@ -65,6 +71,8 @@ SOURCE_SHARE = 0.30
 SOURCE_MIN = 300
 ESCALATE_AFTER = 600       # Under Attack Mode if still in trouble 10 minutes after the rule
 CALM_FOR = 1800            # all off after 30 calm minutes
+ATTACK_MAX = 3600          # Under Attack Mode at most an hour at a time,
+ATTACK_COOLDOWN = 10800    # then not again for three hours
 EMAILS_PER_DAY = 8
 RULE_REF = "pt-autodefend"
 
@@ -184,10 +192,13 @@ def decide(state: dict, trouble: bool, source: dict | None, now: float) -> list[
         if mode == "off":
             if source:
                 acts.append(("rule_on", {"source": source}))
-            else:
+            elif now >= float(state.get("attackCooldownUntil") or 0):
                 acts.append(("attack_on", {"reason": "no single source"}))
-        elif mode == "rule" and now - float(state.get("since", now)) >= ESCALATE_AFTER:
+        elif (mode == "rule" and now - float(state.get("since", now)) >= ESCALATE_AFTER
+              and now >= float(state.get("attackCooldownUntil") or 0)):
             acts.append(("attack_on", {"reason": "still turning people away 10 minutes after the rule"}))
+        elif mode == "attack" and now - float(state.get("since", now)) >= ATTACK_MAX:
+            acts.append(("attack_off", {"reason": "an hour of Under Attack Mode did not end it"}))
     elif mode != "off":
         calm = state.get("calmSince") or now
         state["calmSince"] = calm
@@ -334,6 +345,14 @@ def main() -> int:
                           f"passes Cloudflare's check first, except verified crawlers, AI assistants, link "
                           f"previews, unsubscribe and sign-in, which skip it. It turns itself off after 30 calm "
                           f"minutes.\n\n{UNDO}")
+            elif act == "attack_off":
+                cf.set_security_level(state.get("restoreLevel") or "low")
+                state.update(mode="rule", since=now, attackCooldownUntil=now + ATTACK_COOLDOWN)
+                note(f"Under Attack Mode off after an hour ({info['reason']}); not again for 3 hours; {why}")
+                email(state, cfg, "PERM Tracker: Under Attack Mode off after an hour",
+                      f"An hour of Under Attack Mode did not end the trouble ({why}), so it is off again and "
+                      f"may not come back for three hours: whatever is causing it is passing Cloudflare's check. "
+                      f"The rule for the source stays until 30 calm minutes.\n\n{UNDO}")
             elif act == "all_off":
                 cf.remove_rule()
                 if state.get("mode") == "attack":

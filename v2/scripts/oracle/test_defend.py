@@ -81,6 +81,12 @@ st = {"mode": "rule", "calmSince": NOW - 1700}
 d.decide(st, True, S, NOW)
 check("new trouble resets the calm clock", st["calmSince"] is None)
 check("nothing to do when off and calm", d.decide({"mode": "off"}, False, None, NOW) == [])
+check("an hour of Under Attack Mode steps back down",
+      d.decide({"mode": "attack", "since": NOW - 3600}, True, S, NOW)[0][0] == "attack_off")
+check("not back within three hours", d.decide({"mode": "rule", "since": NOW - 900, "attackCooldownUntil": NOW + 60}, True, S, NOW) == [])
+check("back after the three hours", d.decide({"mode": "rule", "since": NOW - 900, "attackCooldownUntil": NOW - 1}, True, S, NOW)[0][0] == "attack_on")
+check("no single source during the wait: nothing, not Under Attack Mode",
+      d.decide({"mode": "off", "attackCooldownUntil": NOW + 60}, True, None, NOW) == [])
 
 # Watching only (no token): logs what it would do, once, and changes nothing.
 with tempfile.TemporaryDirectory() as tmp:
