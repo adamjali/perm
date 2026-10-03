@@ -215,6 +215,12 @@ def main() -> int:
     rep = v(doc(repairCount24h=2, repairs24h=["2026-09-28T17:35:39Z web_blue: restarted"]), now_ms)
     check(rep["status"] == "warn" and any("Repair:" in ln for ln in rep["lines"]),
           "a watchdog repair in the last day warns and names it")
+    ua = v(doc(underAttack24h=2, defenseCount24h=4,
+               defense24h=["2026-10-02T21:38:35Z defend: Under Attack Mode on (no single source)"]), now_ms)
+    said = " ".join(ua["lines"]) + " " + str(ua.get("summary", ""))
+    check(ua["status"] == "warn" and "restarted" not in said
+          and "Under Attack Mode 2 time(s)" in said and any("Defense:" in ln for ln in ua["lines"]),
+          "the defense is reported as the defense, never as restarts")
     check(v(doc(now={"dbBytes": 7_000_000_000, "dbDataBytes": 3_300_000_000}), now_ms)["status"] == "ok",
           "a database folder at 2.1x its data file is normal (one snapshot)")
     check(v(doc(now={"dbBytes": 11_000_000_000, "dbDataBytes": 3_300_000_000}), now_ms)["status"] == "warn",

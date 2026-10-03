@@ -204,6 +204,12 @@ def decide(state: dict, trouble: bool, source: dict | None, now: float) -> list[
         state["calmSince"] = calm
         if now - float(calm) >= CALM_FOR:
             acts.append(("all_off", {}))
+            # The three-hour wait follows EVERY Under Attack episode, not only
+            # one that hit the hour cap. On Oct 2 2026 five episodes each ended
+            # calmly after 31 to 41 minutes and came straight back, about three
+            # hours of every visitor passing Cloudflare's check in six.
+            if mode == "attack":
+                state["attackCooldownUntil"] = now + ATTACK_COOLDOWN
     return acts
 
 
@@ -358,7 +364,9 @@ def main() -> int:
                 if state.get("mode") == "attack":
                     cf.set_security_level(state.get("restoreLevel") or "low")
                 lasted = int((now - float(state.get("since", now))) / 60)
-                note(f"all off after 30 calm minutes (was {state.get('mode')} for {lasted} min)")
+                waits = state.get("mode") == "attack"
+                note(f"all off after 30 calm minutes (was {state.get('mode')} for {lasted} min)"
+                     + ("; Under Attack Mode not again for 3 hours" if waits else ""))
                 email(state, cfg, "PERM Tracker: automatic defense off",
                       f"Thirty calm minutes, so the automatic rule is removed and the security level is back to "
                       f"{state.get('restoreLevel') or 'low'}. It was on for {lasted} minutes.")

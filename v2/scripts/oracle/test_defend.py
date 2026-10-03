@@ -85,6 +85,12 @@ check("an hour of Under Attack Mode steps back down",
       d.decide({"mode": "attack", "since": NOW - 3600}, True, S, NOW)[0][0] == "attack_off")
 check("not back within three hours", d.decide({"mode": "rule", "since": NOW - 900, "attackCooldownUntil": NOW + 60}, True, S, NOW) == [])
 check("back after the three hours", d.decide({"mode": "rule", "since": NOW - 900, "attackCooldownUntil": NOW - 1}, True, S, NOW)[0][0] == "attack_on")
+st = {"mode": "attack", "since": NOW - 2400, "calmSince": NOW - 1800}
+check("an Under Attack episode that ends calmly still starts the three-hour wait",
+      d.decide(st, False, None, NOW) == [("all_off", {})] and st.get("attackCooldownUntil") == NOW + d.ATTACK_COOLDOWN)
+st = {"mode": "rule", "since": NOW - 2400, "calmSince": NOW - 1800}
+d.decide(st, False, None, NOW)
+check("control: a source rule ending calmly starts no wait", "attackCooldownUntil" not in st)
 check("no single source during the wait: nothing, not Under Attack Mode",
       d.decide({"mode": "off", "attackCooldownUntil": NOW + 60}, True, None, NOW) == [])
 

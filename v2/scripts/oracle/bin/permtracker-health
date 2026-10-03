@@ -277,8 +277,14 @@ def main():
         # slot's second copy is stopped on purpose and not listed.
         "services": {u: active(u) for u in SERVICES + ([f"permtracker-web@{slot}2"] if slot else [])},
         "failedUnits": [ln.split()[0] for ln in failed if ln.strip()],
-        "repairs24h": repairs[-5:],
-        "repairCount24h": len(repairs),
+        # The defense writes to the same log; it is not a restart, so it is
+        # counted apart (the Oct 3 report called five defense on/off pairs
+        # "the watchdog restarted something 10 times").
+        "repairs24h": [r for r in repairs if " defend: " not in r][-5:],
+        "repairCount24h": sum(1 for r in repairs if " defend: " not in r),
+        "defense24h": [r for r in repairs if " defend: " in r and " defend: would " not in r][-5:],
+        "defenseCount24h": sum(1 for r in repairs if " defend: " in r and " defend: would " not in r),
+        "underAttack24h": sum(1 for r in repairs if " defend: Under Attack Mode on" in r),
         "timersEnabled": len(re.findall(r"permtracker[^\s]*\.timer", timers)),
         "timers": sorted(set(re.findall(r"permtracker[^\s]*\.timer", timers))),
         "slot": {"active": slot, "release": release},

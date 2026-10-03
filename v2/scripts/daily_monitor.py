@@ -543,6 +543,12 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
     if doc.get("repairCount24h"):
         warns.append(f"the watchdog restarted something {doc['repairCount24h']} time(s) in 24 h")
         lines.extend("Repair: " + r for r in (doc.get("repairs24h") or [])[-3:])
+    if doc.get("underAttack24h"):
+        warns.append(f"the automatic defense turned on Under Attack Mode {doc['underAttack24h']} time(s) in 24 h "
+                     "(every visitor passes Cloudflare's check while it's on)")
+    elif doc.get("defenseCount24h"):
+        warns.append(f"the automatic defense acted {doc['defenseCount24h']} time(s) in 24 h")
+    lines.extend("Defense: " + r for r in (doc.get("defense24h") or [])[-3:])
 
     idle = doc.get("idle") or {}
     cpu, mem = idle.get("cpuP95"), idle.get("memP95")
