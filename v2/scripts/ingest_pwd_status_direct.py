@@ -58,7 +58,11 @@ PROGRAMS: dict[str, dict] = {
         "label": "prevailing wage",
         "table": "pwd_case_status",
         "events": "pwd_case_events",
-        "prefixes": ["P-100-"],
+        # P-100 is a wage request for a PERM job; P-200 to P-203 one for an
+        # H-1B, H-1B1 Chile, H-1B1 Singapore or E-3 job (DOL's answer names the
+        # visa). DOL publishes their processing time as one queue ("PERM, H-1B,
+        # H-1B1 and E-3"), so they are one program here. Mirror pwdCases.ts.
+        "prefixes": ["P-100-", "P-200-", "P-201-", "P-202-", "P-203-"],
         # RETURNED UNPROCESSED (274 rows) and CENTER DIRECTOR REVIEW AFFIRMED
         # DETERMINATION (1) were unknown to this set and so counted as pending
         # forever; both are terminal. Mirror pwdCases.ts, pinned by its test.
@@ -98,16 +102,19 @@ PROGRAMS: dict[str, dict] = {
         "freshness_max_age": 8,
     },
     "seasonal": {
-        "label": "H-2A and H-2B",
+        "label": "H-2A, H-2B and CW-1",
         "table": "seasonal_case_status",
         "events": "seasonal_case_events",
         # The temporary-labor programs, from the same counter and the same
         # endpoint: H-300 is an H-2A application (ETA-9142A),
         # H-400 an H-2B application (ETA-9142B), P-400 an H-2B prevailing
-        # wage request. P-400 is kept OUT of the PWD program on purpose: the
+        # wage request, P-500 a wage request for a CW-1 job (the Northern
+        # Mariana Islands' temporary-worker program, 48 U.S.C. 1806), whose
+        # requests run through the same temporary-labor process as H-2B's.
+        # P-400 is kept OUT of the PWD program on purpose: the
         # PWD pages describe the ETA-9141 queue that PERM and H-1B wait in,
         # and H-2B requests run through a different one.
-        "prefixes": ["H-300-", "H-400-", "P-400-"],
+        "prefixes": ["H-300-", "H-400-", "P-400-", "P-500-"],
         # Statuses read off DOL's own answers over the FY2026 backfill's first
         # 27,000 cases. One not in either set is logged and
         # treated as pending, which costs a daily re-check and never a wrong
@@ -137,7 +144,8 @@ PROGRAMS: dict[str, dict] = {
 PREFIX_TO_PROGRAM = {p: name for name, cfg in PROGRAMS.items() for p in cfg["prefixes"]}
 # Probe order across programs, by measured hit rate: the more a prefix
 # claims early, the fewer serials the rarer prefixes are asked about.
-DISCOVERY_ORDER = ["I-200-", "P-100-", "H-300-", "P-400-", "H-400-", "I-203-", "I-201-", "I-202-"]
+DISCOVERY_ORDER = ["I-200-", "P-100-", "H-300-", "P-400-", "H-400-", "I-203-", "P-200-",
+                   "P-500-", "I-201-", "I-202-", "P-203-", "P-201-", "P-202-"]
 
 # Kept under their original names: scripts/test_pwd_status.py imports them.
 PREFIX = "P-100-"

@@ -47,9 +47,9 @@ SCRIPT = "check_watched_cases.py"
 
 
 def split_programs(numbers: list[str]) -> dict[str, list[str]]:
-    """PERM, PWD and LCA numbers, each list deduplicated and sorted.
+    """PERM numbers and each FLAG program's, each list deduplicated and sorted.
     Anything that matches no program's prefixes is dropped."""
-    out: dict[str, set[str]] = {"perm": set(), "pwd": set(), "lca": set()}
+    out: dict[str, set[str]] = {"perm": set(), **{name: set() for name in flag.PROGRAMS}}
     for raw in numbers:
         cn = (raw or "").strip().upper()
         if cn.startswith(PERM_OFFICE_PREFIXES):

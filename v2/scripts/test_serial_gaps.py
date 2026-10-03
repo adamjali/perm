@@ -3,9 +3,10 @@
 from __future__ import annotations
 import pathlib, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from sweep_serial_gaps import (holes, sweep, record_misses, true_span,
-                               SERIALS_PER_REQUEST, MISS_LIMIT, MAX_PLAUSIBLE_SPAN)
-from lib_flag_serials import ALL_FLAG_PREFIXES as PREFIXES, PERM_OFFICE_PREFIXES
+from sweep_serial_gaps import (holes, sweep, record_misses, true_span, prefix_order,
+                               MISS_LIMIT, MAX_PLAUSIBLE_SPAN)
+from lib_flag_serials import (ALL_FLAG_PREFIXES as PREFIXES, PERM_OFFICE_PREFIXES,
+                              RARE_PREFIXES, WALK_PREFIXES)
 import ingest_case_status_direct as core
 
 fails: list[str] = []
@@ -38,8 +39,23 @@ _homeless = [p for p in PREFIXES
              if p not in PERM_OFFICE_PREFIXES and p not in PREFIX_TO_PROGRAM]
 check(not _homeless,
       f"every asked prefix routes to a table (homeless: {_homeless})")
-check(SERIALS_PER_REQUEST * len(PREFIXES) <= core.BATCH,
-      "widening the prefix set kept the request under DOL's 50-number ceiling")
+# ---- the prefix list: complete, unique, and split for the walk ----------
+# DOL's published wage file carried P-200 to P-203 and P-500 numbers on this
+# counter, and DOL answered each live (Oct 3 2026). Unasked, every one of them
+# was recorded as "no case" by this sweep.
+for _p in ("P-200-", "P-201-", "P-202-", "P-203-", "P-500-"):
+    check(_p in PREFIXES, f"{_p} is asked")
+check(len(set(PREFIXES)) == len(PREFIXES), "no prefix is listed twice")
+check(set(WALK_PREFIXES) <= set(PREFIXES), "the walk asks nothing the sweep doesn't know")
+check(set(WALK_PREFIXES) | set(RARE_PREFIXES) == set(PREFIXES) and
+      not set(WALK_PREFIXES) & set(RARE_PREFIXES),
+      "walk and rare prefixes split the full list exactly")
+
+# ---- prefix_order(): the day's own mix first --------------------------
+_o = prefix_order({"H-300-": {1, 2, 3}, "G-100-": {4}}, PREFIXES)
+check(_o[:2] == ["H-300-", "G-100-"], f"the prefixes a day already holds most are asked first (got {_o[:2]})")
+check(sorted(_o) == sorted(PREFIXES), "every prefix is still asked")
+check(prefix_order({}, PREFIXES) == list(PREFIXES), "a day we hold nothing for uses the overall order")
 check("G-300-" in PERM_OFFICE_PREFIXES,
       "G-300 is a PERM office code and is stored as one")
 check("G-400-" in PERM_OFFICE_PREFIXES,
@@ -101,11 +117,6 @@ check(_codes_for("26001", "26005")[0] == "26005",
 check(_codes_for("26001", "26005")[-1] == "26001",
       "and ends at the oldest")
 
-# ---- request shape -------------------------------------------------------
-check(SERIALS_PER_REQUEST * len(PREFIXES) <= core.BATCH,
-      f"a request stays under DOL's batch ceiling ({SERIALS_PER_REQUEST}x{len(PREFIXES)} <= {core.BATCH})")
-check(SERIALS_PER_REQUEST >= 1, "at least one serial per request")
-
 # ---- sweep(), against a fake DOL -----------------------------------------
 class FakeDB:
     def __init__(self, serials, misses=(), bounds=None):
@@ -124,11 +135,13 @@ def fake_rows(db, sql, args=None):
     # ROUTE BY THE TABLE, NOT BY CALL ORDER. A fake that answers every query
     # with the same rows would hand the held serials back as retired misses
     # and silently empty the hole list, which is a pass that proves nothing.
+    if "sqlite_master" in sql:                    # case_tables()
+        return [["perm_case_status"], ["perm_cases"]]
     if "perm_serial_misses" in sql:
         return [[str(s)] for s in db.misses]
     if "GROUP BY d" in sql:                       # day_bounds()
         return [[str(d), str(lo), str(hi), str(n)] for d, lo, hi, n in db.bounds]
-    return [[str(s)] for s in db.serials]
+    return [["G-100-", str(s)] for s in db.serials]  # held_by_prefix()
 
 # The sweep and the walk's insert path each read through their own import.
 import sweep_serial_gaps as _sweep_mod  # noqa: E402
@@ -143,12 +156,53 @@ try:
                  "employerName": "X", "jobTitle": "Y", "submittedDate": "2026-08-28"}] \
                if "G-200-26240-000102" in nums else []
 
+    # ---- held means live OR published, read by number range -------------
+    seen: list[tuple[str, list]] = []
+    def spy_rows(db, sql, args=None):
+        seen.append((sql, list(args or [])))
+        return fake_rows(db, sql, args)
+    _sweep_mod.query_rows = spy_rows
+    try:
+        held = _sweep_mod.held_serials(FakeDB([100, 105]), "26240")
+        q = [(sql, args) for sql, args in seen if "case_number >= ?" in sql]
+        check(held == [100, 105], f"held serials come back as sorted numbers (got {held})")
+        check(q and "FROM perm_cases " in q[0][0],
+              "DOL's published file is read as held, so its cases are never re-asked")
+        check(q and "G-100-26240-" in q[0][1] and "G-100-26240." in q[0][1],
+              "each day is read as a range on the case number (an index seek, not a table scan)")
+        seen.clear()
+        sweep(FakeDB([100, 105]), ["26240"], cap=99, lookup=lambda n: [], dry=True, settle_after=1)
+        miss_args = [args for sql, args in seen if "perm_serial_misses" in sql]
+        check(miss_args and miss_args[0][-1] == 1,
+              "settle_after=1 retires a number after one empty answer (old days only)")
+    finally:
+        _sweep_mod.query_rows = fake_rows
+
     r = sweep(FakeDB([100, 105]), ["26240"], cap=99, lookup=fake_lookup, dry=True)
     check(r["probed"] == 4, f"probes exactly the 4 interior holes (got {r['probed']})")
     check(r["found"] == 1, f"counts the one DOL confirmed (got {r['found']})")
     check(all(len(n) <= core.BATCH for n in asked), "never exceeds the batch ceiling")
-    check(any(n.startswith("G-200-") for n in asked[0]),
-          "asks every known prefix, not just the busiest")
+    check({n[:6] for b in asked for n in b} == set(PREFIXES),
+          "a hole no prefix claims is asked under every prefix, not just the busiest")
+    check(all(len({n[:6] for n in b}) == 1 for b in asked),
+          "each request asks one prefix, so it carries up to 50 serials")
+    _want = prefix_order({"G-100-": {100, 105}}, PREFIXES).index("G-200-") + 1
+    _got = sum("-000102" in n for b in asked for n in b)
+    check(_got == _want,
+          f"a serial is asked until its own prefix claims it and never after ({_got} asks, expected {_want})")
+
+    # A serial is asked again only until one prefix claims it.
+    asked.clear()
+    def first_round_lookup(nums):
+        asked.append(nums)
+        return [{"caseNumber": n, "caseStatus": "ANALYST REVIEW", "employerName": "X",
+                 "jobTitle": "Y", "submittedDate": "2026-08-28"} for n in nums if n == "G-100-26240-000101"]
+    rf = sweep(FakeDB([100, 105]), ["26240"], cap=99, lookup=first_round_lookup, dry=True)
+    check(sum(n.endswith("-000101") for b in asked for n in b) == 1,
+          "a serial the first prefix claims is asked exactly once")
+    check(sum(n.endswith("-000102") for b in asked for n in b) == len(PREFIXES),
+          "an unclaimed serial is asked under every prefix once")
+    check(rf["missed"] == 3, f"and only the unclaimed serials count as misses (got {rf['missed']})")
     check(r["inserted_perm"] == 0, "a dry run inserts nothing")
 
     # A DRY RUN DOES NOT EXERCISE THE INSERT PATH, AND THAT IS HOW THE FIRST
@@ -238,13 +292,15 @@ try:
           f"a refusal is reported, not raised (got {rr.get('refused')!r})")
     check(rr["requests"] == 2,
           f"the refused request is counted as attempted (got {rr['requests']})")
-    check(rr["probed"] == SERIALS_PER_REQUEST,
+    check(rr["probed"] == core.BATCH,
           f"only serials DOL actually answered count as probed (got {rr['probed']})")
-    check(rr["missed"] == SERIALS_PER_REQUEST,
-          f"misses are recorded for the answered chunk only (got {rr['missed']})")
+    # A serial is a miss only once EVERY prefix has been asked about it; a day
+    # cut short by a refusal retires nothing, and the next run asks it again.
+    check(rr["missed"] == 0,
+          f"a day a refusal cut short retires no serial (got {rr['missed']})")
     check(not rr["capped"], "a refusal is not reported as the cap")
-    check(any("INSERT INTO perm_serial_misses" in w for w in rdb.writes),
-          "the answered chunk's misses still reach the ledger")
+    check(not any("INSERT INTO perm_serial_misses" in w for w in rdb.writes),
+          "and writes nothing to the miss ledger")
     # It ends the RUN, not just the day: the same day twice has holes both
     # times, and without the outer stop the second pass would keep asking.
     calls["n"] = 0

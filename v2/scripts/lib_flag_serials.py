@@ -84,9 +84,25 @@ def decode_filing_date(case_number: str) -> str | None:
 # from the same counter. Unasked, they're invisible twice over: no such case is
 # found, and 50 of them in a row (an agent filing a season's job orders at
 # once) read to the walk as the edge of DOL's issuance and stop it there.
-ALL_FLAG_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-",
-                     "I-200-", "I-203-", "I-201-", "I-202-", "P-100-",
-                     "H-300-", "H-400-", "P-400-")
+# P-200 to P-203 are wage requests for an H-1B, H-1B1 (Chile, Singapore) and
+# E-3 job, and P-500 one for a CW-1 job (DOL's own answers name the visa;
+# measured Oct 3 2026, after DOL's published wage files showed all five).
+# The order is busiest first, measured over DOL's files and our tables: the gap
+# sweep asks a day's holes one prefix at a time in this order (after the
+# day's own mix), and a number claimed early is never asked again.
+ALL_FLAG_PREFIXES = ("I-200-", "P-100-", "G-100-", "H-300-", "P-400-", "H-400-",
+                     "G-200-", "I-203-", "P-200-", "G-300-", "P-500-", "I-201-",
+                     "I-202-", "P-203-", "P-201-", "P-202-", "G-400-")
+
+# The prefixes the nightly walk asks every span under: the busy ones. Each span
+# is asked under all of them in one request, so every prefix added costs the
+# walk serials per request, and the walk has to out-run the counter. The rest
+# (under 1% of the counter) are asked only before the walk calls a gap DOL's
+# edge, and the gap sweep asks them for every hole the walk stepped over.
+WALK_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-",
+                 "I-200-", "I-203-", "I-201-", "I-202-", "P-100-",
+                 "H-300-", "H-400-", "P-400-")
+RARE_PREFIXES = tuple(p for p in ALL_FLAG_PREFIXES if p not in WALK_PREFIXES)
 
 PERM_OFFICE_PREFIXES = ("G-100-", "G-200-", "G-300-", "G-400-")
 

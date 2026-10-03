@@ -215,9 +215,28 @@ def main() -> int:
     check("the other programs' tables are created first, once",
           sum(d.startswith("CREATE TABLE IF NOT EXISTS seasonal_case_status ") for d in db.ddl) == 1,
           f"{len(db.ddl)} DDL statements")
-    check("every request asks the H-2A, H-2B and H-2B wage prefixes",
+    check("every busy-prefix request asks the H-2A, H-2B and H-2B wage prefixes",
           all(any(n.startswith(p) for n in batch) for batch in look.asked
+              if batch and batch[0][:6] not in csd.RARE_PREFIXES
               for p in ("H-300-", "H-400-", "P-400-")), look.asked[0][:12])
+    check("a request asks either the busy prefixes or only the rare ones",
+          all({n[:6] for n in batch} <= set(csd.WALK_PREFIXES) or {n[:6] for n in batch} <= set(csd.RARE_PREFIXES)
+              for batch in look.asked), str(look.asked[-1][:6]))
+
+    # 1c. The rare prefixes (H-1B, H-1B1, E-3 and CW-1 wage requests) are not in
+    # every request, so a run of them must still not read as DOL's edge: a span
+    # the busy prefixes leave unclaimed is asked under the rare ones first.
+    u = dict([(f"P-200-26240-{s:06d}", {"caseStatus": "IN PROCESS", "employerName": "Tech Co",
+               "jobTitle": "Engineer", "visaType": "H-1B"}) for s in range(101, 161)]
+             + [perm("G-100-26240-000161")])
+    db = WalkDB(); look = fake_dol(u)
+    r = csd.run_discovery(db, lookup=look, today=T, frontier_override=("26240", 100))
+    check("a run of 60 H-1B wage requests does not stop the walk",
+          "G-100-26240-000161" in db.perm and r["frontier_after"][1] == 161, str(r["frontier_after"]))
+    check("they are stored with the wage requests",
+          r["inserted_other"] == 60, f"{r['inserted_other']}")
+    check("the rare prefixes are asked only after the busy ones come back empty",
+          all(batch[0][:6] in csd.WALK_PREFIXES for batch in look.asked[:1]), str(look.asked[0][:3]))
 
     # 2. A 200-serial stretch that is all LCA/PWD (an overnight lull) does NOT stop it.
     u = dict([lca(f"I-200-26240-{s:06d}") for s in range(101, 301)] + [perm("G-100-26240-000301")])

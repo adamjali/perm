@@ -23,7 +23,9 @@ import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_turso import Turso, query_rows  # noqa: E402
-from lib_flag_serials import code_to_date, code_of, recent_day_codes  # noqa: E402
+from lib_flag_serials import (  # noqa: E402
+    ALL_FLAG_PREFIXES, PERM_OFFICE_PREFIXES, code_to_date, code_of, recent_day_codes,
+)
 from ingest_case_status_direct import FINAL_STATUSES as PERM_FINAL  # noqa: E402
 from ingest_pwd_status_direct import PROGRAMS  # noqa: E402
 from reconcile_entity_aliases import classify as classify_aliases  # noqa: E402
@@ -36,7 +38,8 @@ PERM_PENDING = {
     "RECONSIDERATION REQUEST", "IN PROCESS", "NORD RESPONSE", "AUDIT RESPONSE",
     "BALCA APPEAL", "REMANDED", "CERTIFIED - PENDING", "PENDING",
 }
-FOREIGN_PREFIXES = ("P-100-", "I-200-", "I-203-", "I-201-", "I-202-")
+# Every prefix on the counter that is not a PERM office code.
+FOREIGN_PREFIXES = tuple(p for p in ALL_FLAG_PREFIXES if p not in PERM_OFFICE_PREFIXES)
 SAMPLE_DAYS = 4          # newest rows: an unknown status appears on new rows first
 MAX_DATE_DRIFT_DAYS = 2  # the counter rolls at a moment that is not midnight
 MAX_DRIFT_SHARE = 0.02

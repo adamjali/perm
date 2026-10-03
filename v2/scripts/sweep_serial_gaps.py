@@ -53,33 +53,76 @@ MISS_DDL = """
     PRIMARY KEY (day_code, serial)
   )
 """
-# Every prefix is asked per serial (lib_flag_serials.ALL_FLAG_PREFIXES, shared
-# with the nightly walk), so a request carries this many serials.
-SERIALS_PER_REQUEST = core.BATCH // len(ALL_FLAG_PREFIXES)
+# A day's holes are asked one prefix at a time (lib_flag_serials.ALL_FLAG_PREFIXES),
+# busiest first, 50 numbers to a request, and a serial one prefix claims is not
+# asked again. A serial counts as never issued only after every prefix came
+# back empty. Asking all 17 prefixes per serial in one request carried 2
+# serials a request; rounds carry 50 for most of them, because a serial belongs
+# to exactly one prefix and the busiest one usually claims it first.
 
 # Every table that holds a FLAG case, read from the program list rather than
 # typed out, so a program added later is never a hole re-asked every night.
 CASE_TABLES = ("perm_case_status", *(cfg["table"] for cfg in programs.PROGRAMS.values()))
+# DOL's published files (decided cases) count as held too: a number one of them
+# lists exists, so asking DOL about it is a wasted question. Measured Oct 3 2026:
+# most gaps in 2025's numbers were other programs' decided cases we never kept
+# live, and 3,550 decided PERM cases were in DOL's file but not our live table.
+PUBLISHED_TABLES = ("perm_cases", "pwd_cases", "lca_cases")
 
 
-def held_serials(db, code: str) -> list[int]:
-    """Every serial we hold for one day code, across all three programs."""
-    sql = "\n      UNION ".join(
-        f"SELECT CAST(substr(case_number, 13) AS INT) s FROM {t} "
-        f"WHERE CAST(substr(case_number, 7, 5) AS INT) = ?" for t in CASE_TABLES)
-    n = int(code)
-    # libSQL hands integers back as strings, CAST(... AS INT) included, and
-    # sorting or ranging over strings compares lexically ("9" > "10"), so this
-    # coercion is load-bearing.
-    return sorted(int(r[0]) for r in query_rows(db, sql, [n] * len(CASE_TABLES))
-                  if r[0] is not None)
+def case_tables(db) -> tuple[str, ...]:
+    """The live and published case tables this database actually has."""
+    have = {str(r[0]) for r in query_rows(
+        db, "SELECT name FROM sqlite_master WHERE type = 'table'", [])}
+    return tuple(t for t in (*CASE_TABLES, *PUBLISHED_TABLES) if t in have)
 
 
-def settled_misses(db, code: str) -> set[int]:
-    """Serials DOL has denied MISS_LIMIT times. Asking again buys nothing."""
+def held_by_prefix(db, code: str, tables: tuple[str, ...] | None = None) -> dict[str, set[int]]:
+    """{prefix: serials} we hold for one day code, live or published.
+
+    A range on the case number per prefix, so each read is an index seek on the
+    primary key rather than a scan of the table (the old form compared
+    CAST(substr(...)) and read every row of every table for every day).
+    """
+    tables = tables if tables is not None else case_tables(db)
+    parts: list[str] = []
+    args: list[str] = []
+    for t in tables:
+        for p in ALL_FLAG_PREFIXES:
+            parts.append(f"SELECT substr(case_number, 1, 6) p, substr(case_number, 13) s FROM {t} "
+                         "WHERE case_number >= ? AND case_number < ?")
+            # '.' sorts right after '-', so this is every number of the day.
+            args += [f"{p}{code}-", f"{p}{code}."]
+    out: dict[str, set[int]] = {}
+    if not parts:
+        return out
+    # libSQL hands values back as strings, and sorting or ranging over strings
+    # compares lexically ("9" > "10"), so this coercion is load-bearing.
+    for pfx, ser in query_rows(db, "\n      UNION ".join(parts), args):
+        if ser is not None and str(ser).isdigit():
+            out.setdefault(str(pfx), set()).add(int(ser))
+    return out
+
+
+def held_serials(db, code: str, tables: tuple[str, ...] | None = None) -> list[int]:
+    """Every serial we hold for one day code, in any program, live or published."""
+    return sorted(set().union(*held_by_prefix(db, code, tables).values()))
+
+
+def prefix_order(held: dict[str, set[int]], prefixes: tuple[str, ...]) -> list[str]:
+    """`prefixes`, busiest first for this day: by how many of the day's numbers
+    we already hold under each, then by the overall order. A day's own mix is
+    the best guess at its holes' mix (an H-2A season, a quiet PERM week), and
+    it updates itself as the tables fill."""
+    rank = {p: i for i, p in enumerate(prefixes)}
+    return sorted(prefixes, key=lambda p: (-len(held.get(p, ())), rank[p]))
+
+
+def settled_misses(db, code: str, limit: int = MISS_LIMIT) -> set[int]:
+    """Serials DOL has denied `limit` times. Asking again buys nothing."""
     rows = query_rows(
         db, "SELECT serial FROM perm_serial_misses WHERE day_code = ? AND misses >= ?",
-        [int(code), MISS_LIMIT])
+        [int(code), limit])
     # Integers arrive as strings here too.
     return {int(r[0]) for r in rows if r[0] is not None}
 
@@ -97,7 +140,10 @@ def day_bounds(db) -> dict[int, tuple[int, int, int]]:
     """
     union = "\n        UNION ".join(
         f"SELECT CAST(substr(case_number,7,5) AS INT) d, "
-        f"CAST(substr(case_number,13) AS INT) n FROM {t}" for t in CASE_TABLES)
+        f"CAST(substr(case_number,13) AS INT) n FROM {t} "
+        # Only this counter's numbers: the old form's A- numbers are another series.
+        f"WHERE substr(case_number,1,6) IN ({','.join(repr(p) for p in ALL_FLAG_PREFIXES)})"
+        for t in case_tables(db))
     sql = f"""
       WITH s AS (
         {union})
@@ -208,7 +254,8 @@ def run_record(r: dict, cap: int) -> tuple[str, str]:
 
 def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
           bounds: dict[int, tuple[int, int, int]] | None = None,
-          prefixes: tuple[str, ...] = ALL_FLAG_PREFIXES, recheck: bool = False) -> dict:
+          prefixes: tuple[str, ...] = ALL_FLAG_PREFIXES, recheck: bool = False,
+          settle_after: int = MISS_LIMIT) -> dict:
     """Probe each day's holes under `prefixes`.
 
     `recheck` is the one-off mode for a prefix added after the fact: it asks
@@ -219,11 +266,11 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
     other nine.
     """
     lookup = lookup or core.lookup_with_retry
-    per_request = core.BATCH // len(prefixes)
     # Built once for the whole run. Without it each day is probed only between
     # its own known serials and the inter-day regions are never asked about.
     if bounds is None:
         bounds = day_bounds(db)
+    tables = case_tables(db)
     now_iso = datetime.datetime.now(datetime.timezone.utc).isoformat()
     stamp = int(core.time.time() * 1000)
     requests = probed = found = ins_perm = ins_other = retired = 0
@@ -243,52 +290,65 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
             if int(code) in bounds:
                 skipped.append(code)
             continue
-        skip = set() if recheck else settled_misses(db, code)
-        gaps = holes(held_serials(db, code), skip, span)
+        skip = set() if recheck else settled_misses(db, code, settle_after)
+        held = held_by_prefix(db, code, tables)
+        gaps = holes(sorted(set().union(*held.values())), skip, span)
         if not gaps:
             continue
         day_found = 0
-        day_missed: list[int] = []
-        for i in range(0, len(gaps), per_request):
-            if requests >= cap:
+        pending = list(gaps)        # not claimed by any prefix asked so far
+        complete = True             # every prefix asked about every pending serial
+        first_round = True
+        for pfx in prefix_order(held, prefixes):
+            if not pending:
                 break
-            chunk = gaps[i:i + per_request]
-            nums = [case_number(p, code, s) for s in chunk for p in prefixes]
-            requests += 1
-            try:
-                hits = lookup(nums)
-            except RuntimeError as exc:
-                # The HTTP-status shape `lookup` raises, after its retries.
-                # Only that: a code defect in the insert path must still
-                # propagate, or a bug becomes a quiet nightly "ok". The
-                # serials in this chunk were never answered, so they are not
-                # probed and not misses; the day's answered chunks still
-                # reach the miss ledger below.
-                refused = str(exc)
+            still: list[int] = []
+            for i in range(0, len(pending), core.BATCH):
+                if requests >= cap:
+                    complete = False
+                    break
+                chunk = pending[i:i + core.BATCH]
+                nums = [case_number(pfx, code, s) for s in chunk]
+                requests += 1
+                try:
+                    hits = lookup(nums)
+                except RuntimeError as exc:
+                    # The HTTP-status shape `lookup` raises, after its retries.
+                    # Only that: a code defect in the insert path must still
+                    # propagate, or a bug becomes a quiet nightly "ok". The day
+                    # is left unfinished, so none of its serials is retired;
+                    # what it found is kept, and the next run asks the rest.
+                    refused = str(exc)
+                    complete = False
+                    break
+                # Only exact matches count. The endpoint is a search: asked about
+                # numbers that don't exist, it answers with scored near matches
+                # from other serials, days and prefixes, which must be neither
+                # counted nor stored. The walk keeps exact matches only, and so
+                # does this.
+                wanted = set(nums)
+                hits = [h for h in hits if h.get("caseNumber") in wanted]
+                if first_round:
+                    probed += len(chunk)
+                claimed = {int(h["caseNumber"][12:]) for h in hits
+                           if h.get("caseNumber") and h["caseNumber"][12:].isdigit()}
+                still.extend(s for s in chunk if s not in claimed)
+                if not hits:
+                    continue
+                found += len(hits)
+                day_found += len(hits)
+                if dry:
+                    continue
+                perm = [h for h in hits if prefix_of(h["caseNumber"]) in PERM_OFFICE_PREFIXES]
+                other = [h for h in hits if h not in perm]
+                ins_perm += core._insert_perm_hits(db, perm, now_iso, stamp)
+                ins_other += core._insert_other_hits(db, other)
+            if not complete:
                 break
-            # Only exact matches count. The endpoint is a search: asked about
-            # numbers that don't exist, it answers with scored near matches from
-            # other serials, days and prefixes, which must be neither counted nor
-            # stored. The walk keeps exact matches only, and so does this.
-            wanted = set(nums)
-            hits = [h for h in hits if h.get("caseNumber") in wanted]
-            probed += len(chunk)
-            # Every serial in the chunk that DOL did not claim under ANY
-            # prefix is a miss. Read it off the answer rather than assuming
-            # an empty response means the whole chunk was empty.
-            claimed = {int(h["caseNumber"][12:]) for h in hits
-                       if h.get("caseNumber") and h["caseNumber"][12:].isdigit()}
-            day_missed.extend(s for s in chunk if s not in claimed)
-            if not hits:
-                continue
-            found += len(hits)
-            day_found += len(hits)
-            if dry:
-                continue
-            perm = [h for h in hits if prefix_of(h["caseNumber"]) in PERM_OFFICE_PREFIXES]
-            other = [h for h in hits if h not in perm]
-            ins_perm += core._insert_perm_hits(db, perm, now_iso, stamp)
-            ins_other += core._insert_other_hits(db, other)
+            pending = still
+            first_round = False
+        # A serial is a miss only when every prefix was asked and none claimed it.
+        day_missed = pending if complete else []
         if not dry and not recheck:
             record_misses(db, code, day_missed, stamp)
         retired += len(day_missed)

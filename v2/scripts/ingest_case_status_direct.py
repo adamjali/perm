@@ -45,7 +45,8 @@ from lib_turso import (  # noqa: E402
 )
 from lib_housekeeping import prune as prune_old_rows  # noqa: E402
 from lib_flag_serials import (  # noqa: E402
-    ALL_FLAG_PREFIXES, CASE_RE, PERM_OFFICE_PREFIXES, case_number, code_of,
+    CASE_RE, PERM_OFFICE_PREFIXES, RARE_PREFIXES, WALK_PREFIXES,
+    case_number, code_of,
     day_code, day_codes_between, decode_filing_date, fmt_serial, newer,
     recent_day_codes, serial_add, serial_gap, serial_of, serial_span,
 )
@@ -148,13 +149,17 @@ DISCOVERY_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, discovered)"
 # and names the stop in its note. The health check reads this exact string
 # (check_ingest_health.SWEEP_CAP_NOTE, shared with sweep_serial_gaps.CAP_NOTE).
 CAP_NOTE = "stopped on the request cap"
-# Every span is asked under every prefix (ALL_FLAG_PREFIXES): a sparse office
-# code asked under none would answer empty, count toward the "unissued" streak
-# that ends a day, and hide the serials behind it. A confirmed hit is stored as
+# Every span is asked under every busy prefix (WALK_PREFIXES), and a span none
+# of them claims is asked again under the rare ones (RARE_PREFIXES) before it
+# counts toward the "unissued" streak that ends a day: a prefix asked under
+# none would answer empty, end the walk there, and hide the serials behind it,
+# every night. Asking all 17 in one request would halve the serials a request
+# covers; the rare ones are under 1% of the counter, and the gap sweep asks
+# every prefix for the holes the walk stepped over. A confirmed hit is stored as
 # PERM when its prefix is a PERM office code (PERM_OFFICE_PREFIXES) and handed
 # to the PWD prober otherwise; a prefix asked but stored nowhere would be found
 # and dropped every night.
-DISCOVERY_STEP = BATCH // len(ALL_FLAG_PREFIXES)   # serials per request, at the 50 ceiling
+DISCOVERY_STEP = BATCH // len(WALK_PREFIXES)   # serials per request, at the 50 ceiling
 # The walk has to out-run the counter, so it runs on both daily passes and is
 # bounded by a time budget; this cap is only a sanity bound. At ~1.4 s a
 # request, 2,000 is ~47 minutes and ~10,000 serials: a backlog of days clears in
@@ -317,7 +322,7 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
     # the frontier, which is not a place DOL confirmed anything.
     probe_code, probe_serial = start
     log(f"discovery: frontier {code}:{fmt_serial(serial)}, walking toward {today_code} "
-        f"({DISCOVERY_STEP} serials x {len(ALL_FLAG_PREFIXES)} prefixes per request, cap {cap})")
+        f"({DISCOVERY_STEP} serials x {len(WALK_PREFIXES)} prefixes per request, cap {cap})")
     requests = inserted = inserted_other = 0
     unissued = 0
     stopped: str | None = None
@@ -330,24 +335,29 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
         codes = day_codes_between(probe_code, today_code)[:DISCOVERY_MAX_DAYS_AHEAD + 1]
         claimed: list[dict] = []
         claimed_code: str | None = None
-        for c in codes:
-            if requests >= cap:
-                break
-            if deadline is not None and clock() >= deadline:
-                timed_out = True
-                break
-            asked = [case_number(pfx, c, s) for s in span for pfx in ALL_FLAG_PREFIXES]
-            try:
-                got = lookup(asked)
-            except Exception as exc:  # noqa: BLE001
-                stopped = f"batch failed ({exc})"
-                break
-            requests += 1
-            time.sleep(PACE_S)
-            wanted = set(asked)
-            found = [v for v in got if v.get("caseNumber") in wanted]
-            if found:
-                claimed, claimed_code = found, c
+        # Busy prefixes under every later day code first, then the rare ones:
+        # a span counts as unissued only when no prefix FLAG issues claims it.
+        for prefixes in (WALK_PREFIXES, RARE_PREFIXES):
+            for c in codes:
+                if requests >= cap:
+                    break
+                if deadline is not None and clock() >= deadline:
+                    timed_out = True
+                    break
+                asked = [case_number(pfx, c, s) for s in span for pfx in prefixes]
+                try:
+                    got = lookup(asked)
+                except Exception as exc:  # noqa: BLE001
+                    stopped = f"batch failed ({exc})"
+                    break
+                requests += 1
+                time.sleep(PACE_S)
+                wanted = set(asked)
+                found = [v for v in got if v.get("caseNumber") in wanted]
+                if found:
+                    claimed, claimed_code = found, c
+                    break
+            if claimed or stopped or timed_out or requests >= cap:
                 break
         if stopped or timed_out:
             break
