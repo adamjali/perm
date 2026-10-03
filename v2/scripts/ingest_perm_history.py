@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """PERM decisions from FY2008 to FY2023: a record per employer per year, and
-the cases themselves from FY2016.
+the cases themselves.
 
 The current corpus (`perm_cases`) starts with decisions on 2023-10-01, the
 first day of FY2024, because that is where the quarterly ingest's `--since-fy`
@@ -10,13 +10,17 @@ and writes two things, chosen for what they answer and what they cost:
     perm_employer_years   slug, fiscal year, certified / denied / withdrawn.
                           FY2008 onward. An employer's track record, the thing
                           an older year is actually useful for.
-    perm_cases_history    the case rows for FY2016 to FY2023, perm_cases'
+    perm_cases_history    the case rows for FY2008 to FY2023, perm_cases'
                           columns plus the worker's (citizenship, birth
                           country, visa at filing, education, field of study,
                           school, the job's required education: the old form
                           carries them, the new one doesn't), so a case can be
-                          looked up, listed and searched. FY2016 is where
-                          those fields begin; older years are counted.
+                          looked up, listed and searched. The worker's fields
+                          begin with FY2016; before it they are NULL, and
+                          before FY2015 so are the received date and the
+                          duration (the files carry no received date).
+                          Until Oct 3 2026 rows began at FY2016 to spare
+                          Turso's per-row bill, which the server move ended.
     perm_country_years    decisions by country of citizenship and year,
                           national, FY2008 onward.
     perm_history_facets   each employer's and occupation's top values for the
@@ -80,7 +84,7 @@ from lib_gov_data import SPREADSHEET_NS, column_index, fetch, log, read_shared_s
 from lib_slugs import slugify  # noqa: E402
 
 FIRST_FY, LAST_FY = 2008, 2023
-ROWS_FROM_FY = 2016
+ROWS_FROM_FY = 2008
 DOC_KEY = "perm_history"
 PAUSE_BETWEEN_FILES_S = 30
 

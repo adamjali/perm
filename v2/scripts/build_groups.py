@@ -84,7 +84,13 @@ def log(msg: str) -> None:
 
 
 
-def read_table(db, table: str):
+# The group pages (cities, industries, countries) describe decisions from
+# FY2016 on, and say so: the history table reaches FY2008 since Oct 3 2026, and
+# folding 2008 wages into "what they paid" would mislead.
+GROUPS_FROM_DATE = "2015-10-01"
+
+
+def read_table(db, table: str, since: str | None = None):
     """Every row of one case table, the READ_COLS only, in rowid pages.
 
     A column the table doesn't have yet (perm_cases gains the worker's fields
@@ -94,8 +100,10 @@ def read_table(db, table: str):
     select = ",".join(c if c in have else f"NULL AS {c}" for c in READ_COLS)
     after = 0
     while True:
+        floor = " AND decision_date >= ?" if since else ""
         res = db.execute(f"SELECT rowid, {select} FROM {table} "
-                         f"WHERE rowid > ? ORDER BY rowid LIMIT {PAGE}", [after])
+                         f"WHERE rowid > ?{floor} ORDER BY rowid LIMIT {PAGE}",
+                         [after, since] if since else [after])
         rs = rows_of(res)
         for r in rs:
             yield dict(zip(READ_COLS, r[1:]))
@@ -282,7 +290,7 @@ def main() -> int:
     def both():
         yield from read_table(db, "perm_cases")
         try:
-            yield from read_table(db, "perm_cases_history")
+            yield from read_table(db, "perm_cases_history", since=GROUPS_FROM_DATE)
         except Exception as exc:  # noqa: BLE001 - a missing history still builds today's groups
             log(f"  perm_cases_history unreadable ({exc}); groups cover perm_cases only")
 

@@ -252,8 +252,10 @@ PROGRAMS.update({
             # Section A, Item 8b: the hourly or monthly wage offered.
             "wage": ["WAGE_OFFER"],
             # Item 2b and the National Processing Center's certified count.
-            "workers": ["TOTAL_WORKERS_H-2A_REQUESTED", "TOTAL_WORKERS_H_2A_REQUESTED"],
-            "workers_certified": ["TOTAL_WORKERS_H-2A_CERTIFIED", "TOTAL_WORKERS_H_2A_CERTIFIED"],
+            # The file's real headers have no hyphen (read off FY2026 Q3 with
+            # --dump-header); the layout PDF prints "H-2A".
+            "workers": ["TOTAL_WORKERS_H2A_REQUESTED", "TOTAL_WORKERS_H-2A_REQUESTED"],
+            "workers_certified": ["TOTAL_WORKERS_H2A_CERTIFIED", "TOTAL_WORKERS_H-2A_CERTIFIED"],
         },
         "event_dates": [],
     },

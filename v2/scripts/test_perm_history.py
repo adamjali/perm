@@ -3,7 +3,8 @@
 
 Asserts:
 1. an FY2010-shaped workbook (CASE_NO, no received date, 2007_NAICS_US_CODE,
-   its first sheet not named sheet1.xml) is COUNTED and never stored as rows;
+   its first sheet not named sheet1.xml) is counted AND stored, with no
+   received date or duration (the file has none);
 2. an FY2021-shaped workbook is counted AND stored, with the law firm, the
    annualised wage, the state code and a duration;
 3. counts land on today's employer page through entity_key, across the
@@ -175,7 +176,13 @@ def main() -> int:
         "SELECT case_number, fiscal_year, employer_slug, state, wage, attorney_slug, days, naics, worksite_city, "
         "citizenship, birth_country, visa_class, education, major, institution, job_education "
         "FROM perm_cases_history")}
-    check("FY2010 is counted, never stored as rows", not any(k.startswith("A-09") for k in rows))
+    old = {k: v for k, v in rows.items() if k.startswith("A-09")}
+    check(f"FY2010 rows are stored too, the undated one skipped (got {sorted(old)})",
+          sorted(old) == ["A-09111-00001", "A-09111-00002", "A-09111-00003", "A-09111-00004"])
+    r10 = old.get("A-09111-00001")
+    check(f"an FY2010 row has its year, state, city and industry, and no duration (got {r10})",
+          r10 is not None and r10[1] == "2010" and r10[3] == "WA" and r10[6] is None
+          and r10[7] == "541511" and r10[8] == "Seattle")
     a = rows.get("A-20001-11111")
     check(f"FY2021 row stored whole (got {a})",
           a is not None and a[1] == "2021" and a[2] == "acme-inc" and a[3] == "WA"

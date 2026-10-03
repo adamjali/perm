@@ -74,6 +74,19 @@ def main() -> int:
           and doc["visaClass"] == [{"value": "H-1B", "n": 5}]
           and set(doc) == {"citizenship", "birthCountry", "visaClass", "education", "jobEducation"}
           and doc["birthCountry"] == [])
+    # The pages say "since FY2016": the history table's older rows stay out.
+    from lib_sqlite_shim import SqliteTurso
+    db = SqliteTurso()
+    db.script(["CREATE TABLE perm_cases_history (case_number TEXT PRIMARY KEY, decision_date TEXT, "
+               + ", ".join(c + " TEXT" for c in g.READ_COLS) + ")"])
+    for cn, dec, fy in (("A-09111-00001", "2010-01-04", "2010"), ("A-20001-11111", "2021-03-01", "2021")):
+        db.execute("INSERT INTO perm_cases_history (case_number, decision_date, fiscal_year) VALUES (?, ?, ?)",
+                   [cn, dec, fy])
+    kept = [r["fiscal_year"] for r in g.read_table(db, "perm_cases_history", since=g.GROUPS_FROM_DATE)]
+    check(f"the groups read history from FY2016 only (got {kept})", kept == ["2021"])
+    every = sorted(r["fiscal_year"] for r in g.read_table(db, "perm_cases_history"))
+    check(f"without a floor every row is read (got {every})", every == ["2010", "2021"])
+
     print(f"\n{len(FAILS)} failed" if FAILS else "\nall passed")
     return 1 if FAILS else 0
 
