@@ -1,6 +1,21 @@
 # GSC indexing priority list
 
-**Run of 2026-10-01, 11:35 PM to 12:06 AM EDT (into Oct 2): 11 accepted, the 12th refused.**
+**Run of 2026-10-03, 3:55 to 3:59 AM EDT: 3 accepted, the queue is empty.** No refusal: the
+queue held three pages. The sitemap index needed no resubmission: Google counts 106,317 discovered
+pages against 106,452 in the live children (135 apart; last read Sep 30).
+
+| # | URL | Google's verdict | accepted (EDT) |
+|---|---|---|---|
+| 1 | `/es` | Discovered, never crawled | 3:55 AM |
+| 2 | `/pt-br` | Discovered, never crawled | 3:57 AM |
+| 3 | `/ko` | unknown to Google (it read "Discovered" on Oct 1) | 3:58 AM |
+
+Inspected only: `/perm-employers/the-wine-group-llc` (a live-only employer, first in
+`live-employer-1.xml`): Discovered, never crawled, found through the sitemap, no referring page.
+
+---
+
+**Previous run:** 2026-10-01, 11:35 PM to 12:06 AM EDT (into Oct 2): 11 accepted, the 12th refused.
 It ran after the evening deploy that rebuilt the attorney page and the homepage (commit
 `d3a66f97`), so those two went first. The cap was 11 for the eleventh run running. The sitemap
 index needed no resubmission: Google read it Sep 30 and counts 106,258 discovered pages against
@@ -26,7 +41,7 @@ Inspected only: `/debarments` (recrawled Sep 21, 3:26 PM, after its request; ski
 
 ---
 
-**Previous run:** 2026-09-30, 2:33 to 2:49 PM EDT: 11 accepted, the 12th refused. Automatic daily
+**Earlier run:** 2026-09-30, 2:33 to 2:49 PM EDT: 11 accepted, the 12th refused. Automatic daily
 rounds resumed the same afternoon (session timer, 3:07, 5:07 and 7:07 PM; see the Sep 30 queue
 at the end of this file for what remains).
 
@@ -719,3 +734,7 @@ line ("Queue empty as of <date>"), and the automatic round deletes its own timer
 
 After those the queue is empty: write "Queue empty as of <date>" here and the automatic round
 deletes its own timer.
+
+Queue empty as of 2026-10-03 (3:59 AM EDT). `/es`, `/pt-br` and `/ko` were requested; the
+live-only employer page was inspected (Discovered, never crawled). The automatic round's timer is
+deleted. Start a new queue section here when a deploy changes pages worth recrawling.
