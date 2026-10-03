@@ -97,6 +97,21 @@ check("control: a source rule ending calmly starts no wait", "attackCooldownUnti
 check("no single source during the wait: nothing, not Under Attack Mode",
       d.decide({"mode": "off", "attackCooldownUntil": NOW + 60}, True, None, NOW) == [])
 
+# A deploy's own load is not an attack.
+with tempfile.TemporaryDirectory() as tmp:
+    saved = d.DEPLOYING
+    d.DEPLOYING = pathlib.Path(tmp) / "deploying"
+    try:
+        check("no marker: not deploying", not d.deploying_now(NOW))
+        d.DEPLOYING.write_text("1")
+        import os as _os
+        _os.utime(d.DEPLOYING, (NOW - 60, NOW - 60))
+        check("a fresh marker: deploying", d.deploying_now(NOW))
+        _os.utime(d.DEPLOYING, (NOW - d.DEPLOY_GRACE - 1, NOW - d.DEPLOY_GRACE - 1))
+        check("a marker left by a deploy that died stops counting", not d.deploying_now(NOW))
+    finally:
+        d.DEPLOYING = saved
+
 # Watching only (no token): logs what it would do, once, and changes nothing.
 with tempfile.TemporaryDirectory() as tmp:
     t = pathlib.Path(tmp)

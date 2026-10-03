@@ -58,6 +58,8 @@ OFF = HEALTH / "defend.off"
 REPAIRS = HEALTH / "repairs.log"
 DEFEND_LOG = pathlib.Path(os.environ.get("PT_DEFEND_LOG", "/var/log/permtracker-busy/defend.log"))
 BUSY_LOG = pathlib.Path(os.environ.get("PT_BUSY_LOG", "/var/log/permtracker-busy/seen.log"))
+DEPLOYING = HEALTH / "deploying"   # written by permtracker-deploy while it warms and switches
+DEPLOY_GRACE = 1200                # a marker older than this is a deploy that died; ignore it
 CONFIG = pathlib.Path(os.environ.get("PT_DEFEND_CONFIG", "/etc/permtracker/defend.env"))
 APP_ENV = pathlib.Path("/srv/permtracker/app/env/production.env")
 
@@ -302,6 +304,17 @@ UNDO = ("To undo by hand: Cloudflare, Security, WAF, custom rules: delete the ru
         "touch /srv/permtracker/health/defend.off on the server.")
 
 
+def deploying_now(now: float) -> bool:
+    """A deploy is warming the new copies, so the app being full is our own
+    load, not an attack (Oct 3 2026: the warm-up's busy minutes set off Under
+    Attack Mode with nobody shown the busy page). A stale marker, from a deploy
+    that died before removing it, stops counting after DEPLOY_GRACE."""
+    try:
+        return now - DEPLOYING.stat().st_mtime < DEPLOY_GRACE
+    except OSError:
+        return False
+
+
 def in_trouble(people: int, full: int) -> bool:
     """People are being turned away: enough of them drew the busy page, or the
     app was full minute after minute. Two people set off Under Attack Mode five
@@ -318,7 +331,8 @@ def main() -> int:
         state = {"mode": "off"}
     reqs = page_requests(tail_lines(DEFEND_LOG), now - max(SOURCE_WINDOW, 60 * FULL_MINUTES))
     people = people_busy(tail_lines(BUSY_LOG, 2 << 20), now)
-    full = full_minutes(reqs, now)
+    deploying = deploying_now(now)
+    full = 0 if deploying else full_minutes(reqs, now)
     trouble = in_trouble(people, full)
     source = find_source(reqs, now) if trouble else None
     acts = decide(state, trouble, source, now)
@@ -327,7 +341,8 @@ def main() -> int:
 
     cfg = read_env(CONFIG)
     live = bool(cfg.get("CF_API_TOKEN") and cfg.get("CF_ZONE_ID")) and not OFF.exists()
-    why = f"{people} people shown the busy page in 10 minutes, app full {full} of the last {FULL_MINUTES} minutes"
+    why = (f"{people} people shown the busy page in 10 minutes, app full {full} of the last {FULL_MINUTES} minutes"
+           + (" (a deploy is running, so a full app is not counted)" if deploying else ""))
     cf = Cloudflare(cfg["CF_API_TOKEN"], cfg["CF_ZONE_ID"]) if live else None
     for act, info in acts:
         if not live:

@@ -158,8 +158,18 @@ case "$action" in
         exit 4
       fi
     done
-    # Each copy builds the core pages for itself, side by side on the two CPUs.
+    # Each copy builds the core pages for itself, side by side on the two CPUs,
+    # at a tenth of the live copies' CPU weight (20 against 200) so the
+    # visitors on the live copies come first. Oct 3 2026: at equal weight the
+    # warm-up starved the live copies, 64 page requests a minute got the busy
+    # page, and the automatic defense read that as an attack and turned on
+    # Under Attack Mode. The marker tells the defense a deploy is running, so
+    # its own load is never mistaken for one (people shown busy still count).
+    date +%s > /srv/permtracker/health/deploying
+    trap 'rm -f /srv/permtracker/health/deploying' EXIT
+    for w in "$idle" "${idle}2"; do systemctl set-property --runtime "permtracker-web@$w" CPUWeight=20; done
     warm "$(port_of "$idle")" & warm "$(port_of "${idle}2")" & wait || true
+    for w in "$idle" "${idle}2"; do systemctl set-property --runtime "permtracker-web@$w" CPUWeight=200; done
     switch_to "$idle"
     # The previous release keeps its first copy running (instant rollback); its
     # second copy stops.
