@@ -119,9 +119,11 @@ check(_codes_for("26001", "26005")[-1] == "26001",
 
 # ---- sweep(), against a fake DOL -----------------------------------------
 class FakeDB:
-    def __init__(self, serials, misses=(), bounds=None):
+    def __init__(self, serials, misses=(), bounds=None, owed=()):
         self.serials = serials
         self.misses = list(misses)
+        # Misses recorded under the twelve busy prefixes only (asked_all NULL).
+        self.owed = list(owed)
         # Default to the day owning exactly what it holds, so the existing
         # assertions keep testing the same 4 interior holes.
         self.bounds = bounds if bounds is not None else (
@@ -129,7 +131,12 @@ class FakeDB:
         self.writes: list[str] = []
     def execute(self, sql, *a, **k):
         self.writes.append(sql)
-        return {"response": {"result": {"affected_row_count": 1}}}
+        rows = []
+        if sql.startswith("PRAGMA table_info(perm_serial_misses)"):
+            # The live ledger as it stood before Oct 3 2026: no asked_all.
+            rows = [[{"type": "integer", "value": str(i)}, {"type": "text", "value": c}]
+                    for i, c in enumerate(("day_code", "serial", "misses", "last_probed_at"))]
+        return {"response": {"result": {"affected_row_count": 1, "rows": rows}}}
 
 def fake_rows(db, sql, args=None):
     # ROUTE BY THE TABLE, NOT BY CALL ORDER. A fake that answers every query
@@ -138,7 +145,7 @@ def fake_rows(db, sql, args=None):
     if "sqlite_master" in sql:                    # case_tables()
         return [["perm_case_status"], ["perm_cases"]]
     if "perm_serial_misses" in sql:
-        return [[str(s)] for s in db.misses]
+        return [[str(s), "1"] for s in db.misses] + [[str(s), None] for s in db.owed]
     if "GROUP BY d" in sql:                       # day_bounds()
         return [[str(d), str(lo), str(hi), str(n)] for d, lo, hi, n in db.bounds]
     return [["G-100-", str(s)] for s in db.serials]  # held_by_prefix()
@@ -317,6 +324,33 @@ try:
         check(False, "a non-HTTP exception must propagate")
     except KeyError:
         check(True, "a non-HTTP exception propagates")
+
+    # ---- serials retired before the rare prefixes existed ------------------
+    # Misses recorded before Oct 3 2026 covered the twelve busy prefixes only.
+    # They are asked under the five rare ones, and only those, then settle.
+    rare_asked: list[list[str]] = []
+    def rare_lookup(nums):
+        rare_asked.append(nums)
+        return [{"caseNumber": n, "caseStatus": "IN PROCESS", "visaType": "H-1B",
+                 "employerName": "Tech Co", "jobTitle": "Engineer"}
+                for n in nums if n == "P-200-26240-000103"]
+    core._OTHER_SCHEMA_READY = True
+    od = FakeDB([100, 105], owed=[101, 102, 103, 104])
+    od.pipeline = lambda reqs, **k: {"results": [
+        {"response": {"result": {"affected_row_count": 1}}}
+        for r in reqs if r.get("type") == "execute"]}
+    ro = sweep(od, ["26240"], cap=99, lookup=rare_lookup, dry=False, settle_after=1)
+    _prefixes_asked = {n[:6] for b in rare_asked for n in b}
+    check(_prefixes_asked == set(RARE_PREFIXES),
+          f"an owed serial is asked under the rare prefixes only (got {sorted(_prefixes_asked)})")
+    check(ro["found"] == 1, f"which finds the H-1B wage request the old sweep called no case (got {ro['found']})")
+    check(any("UPDATE perm_serial_misses SET asked_all = 1" in w and "103" not in w.split("IN (")[1]
+              for w in od.writes),
+          "the owed serials that stay empty settle, and the one found does not")
+    check(not any("INSERT INTO perm_serial_misses" in w for w in od.writes),
+          "settling an owed serial adds no second miss")
+    check(any("ALTER TABLE perm_serial_misses ADD COLUMN asked_all" in w for w in od.writes),
+          "the ledger gains its asked_all column on a live table")
 
     # ---- the re-ask for prefixes added later -----------------
     # Serials the ledger retired were retired under the OLD prefix set, so

@@ -65,9 +65,9 @@ def run() -> None:
     for k in ("live_census", "discovery_budget_notes", f"discoveryXbudget_{old}", f"xdiscovery_budget_{old}"):
         db.execute("INSERT INTO perm_docs VALUES (?, '{}', 0)", [k])
 
-    old_code = hk.day_code(TODAY - datetime.timedelta(days=hk.SERIAL_MISS_KEEP_DAYS + 1))
-    new_code = hk.day_code(TODAY - datetime.timedelta(days=hk.SERIAL_MISS_KEEP_DAYS - 1))
-    last_year = 25360  # 2025-12-26: YYDDD must compare as a number across the year
+    old_code = 19274   # Oct 1 2019: the backfill's oldest day
+    new_code = hk.day_code(TODAY - datetime.timedelta(days=10))
+    last_year = 25360
     for code in (old_code, new_code, last_year):
         db.execute("INSERT INTO perm_serial_misses VALUES (?, 1, 3, 0)", [code])
 
@@ -87,8 +87,10 @@ def run() -> None:
     check("counts what it deleted", out["daily_counters"] == len(hk.DAILY_COUNTER_PREFIXES), str(out))
 
     codes = {r[0] for r in db.conn.execute("SELECT day_code FROM perm_serial_misses")}
-    check("serial misses past the horizon go, recent ones stay", codes == {new_code}, str(codes))
-    check("the gap sweep's 90-day window sits inside the kept range", hk.SERIAL_MISS_KEEP_DAYS >= 90)
+    # The miss ledger is the record that every number is accounted for: the
+    # full-history backfill relies on it, so no age deletes it.
+    check("serial misses are kept at any age", codes == {old_code, new_code, last_year}, str(codes))
+    check("and the prune reports no such kind", "serial_misses" not in out, str(out))
     check("the lookup-demand check's 30 days sit inside the kept counters", hk.COUNTER_KEEP_DAYS >= 31)
 
     for table in ("ingest_runs", "sweep_runs"):

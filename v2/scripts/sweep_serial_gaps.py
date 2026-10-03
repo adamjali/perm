@@ -23,9 +23,9 @@ import pathlib
 import sys
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, query_rows, record_run  # noqa: E402
+from lib_turso import Turso, add_missing_columns, query_rows, record_run  # noqa: E402
 from lib_flag_serials import (  # noqa: E402
-    ALL_FLAG_PREFIXES, PERM_OFFICE_PREFIXES, case_number, day_code, prefix_of,
+    ALL_FLAG_PREFIXES, PERM_OFFICE_PREFIXES, RARE_PREFIXES, case_number, day_code, prefix_of,
 )
 import ingest_case_status_direct as core  # noqa: E402
 import ingest_pwd_status_direct as programs  # noqa: E402
@@ -50,9 +50,14 @@ MISS_DDL = """
     serial   INTEGER NOT NULL,
     misses   INTEGER NOT NULL DEFAULT 1,
     last_probed_at INTEGER NOT NULL,
+    asked_all INTEGER,
     PRIMARY KEY (day_code, serial)
   )
 """
+# `asked_all` is 1 once a serial's empty answers covered every prefix in
+# ALL_FLAG_PREFIXES. Rows written before Oct 3 2026 have it NULL: they were
+# asked under the twelve busy prefixes only (WALK_PREFIXES), so they still owe
+# the rare ones (RARE_PREFIXES) before they count as settled.
 # A day's holes are asked one prefix at a time (lib_flag_serials.ALL_FLAG_PREFIXES),
 # busiest first, 50 numbers to a request, and a serial one prefix claims is not
 # asked again. A serial counts as never issued only after every prefix came
@@ -118,13 +123,29 @@ def prefix_order(held: dict[str, set[int]], prefixes: tuple[str, ...]) -> list[s
     return sorted(prefixes, key=lambda p: (-len(held.get(p, ())), rank[p]))
 
 
-def settled_misses(db, code: str, limit: int = MISS_LIMIT) -> set[int]:
-    """Serials DOL has denied `limit` times. Asking again buys nothing."""
+def ensure_miss_ledger(db) -> None:
+    """The ledger, with the column that says which prefix set a miss covered."""
+    db.execute(MISS_DDL, [])
+    add_missing_columns(db, "perm_serial_misses", {"asked_all": "INTEGER"})
+
+
+def _ledger(db, code: str, limit: int) -> list[tuple[int, bool]]:
     rows = query_rows(
-        db, "SELECT serial FROM perm_serial_misses WHERE day_code = ? AND misses >= ?",
+        db, "SELECT serial, asked_all FROM perm_serial_misses WHERE day_code = ? AND misses >= ?",
         [int(code), limit])
     # Integers arrive as strings here too.
-    return {int(r[0]) for r in rows if r[0] is not None}
+    return [(int(r[0]), str(r[1] or "0") == "1") for r in rows if r[0] is not None]
+
+
+def settled_misses(db, code: str, limit: int = MISS_LIMIT) -> set[int]:
+    """Serials DOL has denied `limit` times under every prefix. Asking again buys nothing."""
+    return {s for s, full in _ledger(db, code, limit) if full}
+
+
+def owed_rare(db, code: str, limit: int = MISS_LIMIT) -> set[int]:
+    """Serials denied `limit` times under the busy prefixes only: they are
+    asked under the rare ones once, and settle if those come back empty too."""
+    return {s for s, full in _ledger(db, code, limit) if not full}
 
 
 # A span this wide is a wrap, not a day: the counter rolls at 1,000,000, so the
@@ -211,18 +232,28 @@ def holes(serials: list[int], skip: set[int] | None = None,
 
 
 def record_misses(db, code: str, serials: list[int], stamp: int) -> None:
-    """Bump the miss counter for every serial DOL just declined to confirm."""
+    """Bump the miss counter for every serial DOL just declined under every prefix."""
     if not serials:
         return
     # One statement per batch, never one per serial: the cost is per statement.
     for i in range(0, len(serials), 200):
         chunk = serials[i:i + 200]
-        values = ", ".join(f"({int(code)}, {s}, 1, {stamp})" for s in chunk)
+        values = ", ".join(f"({int(code)}, {s}, 1, {stamp}, 1)" for s in chunk)
         db.execute(
-            f"INSERT INTO perm_serial_misses (day_code, serial, misses, last_probed_at) "
+            f"INSERT INTO perm_serial_misses (day_code, serial, misses, last_probed_at, asked_all) "
             f"VALUES {values} "
             f"ON CONFLICT(day_code, serial) DO UPDATE SET "
-            f"misses = misses + 1, last_probed_at = excluded.last_probed_at", [])
+            f"misses = misses + 1, last_probed_at = excluded.last_probed_at, asked_all = 1", [])
+
+
+def record_rare_misses(db, code: str, serials: list[int], stamp: int) -> None:
+    """Serials that already had their busy-prefix misses and now came back
+    empty under the rare prefixes too: they settle without a new count."""
+    for i in range(0, len(serials), 200):
+        chunk = serials[i:i + 200]
+        db.execute(
+            f"UPDATE perm_serial_misses SET asked_all = 1, last_probed_at = {int(stamp)} "
+            f"WHERE day_code = {int(code)} AND serial IN ({', '.join(str(int(s)) for s in chunk)})", [])
 
 
 # A stop on the sweep's own cap is not a failure: it records `ok` and names the
@@ -276,7 +307,7 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
     requests = probed = found = ins_perm = ins_other = retired = 0
     skipped: list[str] = []
     if not dry and not recheck:
-        db.execute(MISS_DDL, [])
+        ensure_miss_ledger(db)
     per_day: list[tuple[str, int, int]] = []
     refused: str | None = None
     for code in codes:
@@ -291,6 +322,9 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
                 skipped.append(code)
             continue
         skip = set() if recheck else settled_misses(db, code, settle_after)
+        # Retired under the busy prefixes only (before the rare ones were
+        # known): those still owe the rare prefixes, and only those.
+        owed = set() if recheck else owed_rare(db, code, settle_after)
         held = held_by_prefix(db, code, tables)
         gaps = holes(sorted(set().union(*held.values())), skip, span)
         if not gaps:
@@ -298,16 +332,22 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
         day_found = 0
         pending = list(gaps)        # not claimed by any prefix asked so far
         complete = True             # every prefix asked about every pending serial
-        first_round = True
+        counted: set[int] = set()   # serials already counted as probed
         for pfx in prefix_order(held, prefixes):
             if not pending:
                 break
-            still: list[int] = []
-            for i in range(0, len(pending), core.BATCH):
+            # An owed serial is asked only under the prefixes its old misses
+            # did not cover; it rides along unasked through the rest.
+            asking = pending if pfx in RARE_PREFIXES else [x for x in pending if x not in owed]
+            if not asking:
+                continue
+            asked_now = set(asking)
+            still: list[int] = [x for x in pending if x not in asked_now]
+            for i in range(0, len(asking), core.BATCH):
                 if requests >= cap:
                     complete = False
                     break
-                chunk = pending[i:i + core.BATCH]
+                chunk = asking[i:i + core.BATCH]
                 nums = [case_number(pfx, code, s) for s in chunk]
                 requests += 1
                 try:
@@ -328,8 +368,9 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
                 # does this.
                 wanted = set(nums)
                 hits = [h for h in hits if h.get("caseNumber") in wanted]
-                if first_round:
-                    probed += len(chunk)
+                fresh = [x for x in chunk if x not in counted]
+                probed += len(fresh)
+                counted.update(fresh)
                 claimed = {int(h["caseNumber"][12:]) for h in hits
                            if h.get("caseNumber") and h["caseNumber"][12:].isdigit()}
                 still.extend(s for s in chunk if s not in claimed)
@@ -345,13 +386,14 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
                 ins_other += core._insert_other_hits(db, other)
             if not complete:
                 break
-            pending = still
-            first_round = False
+            pending = sorted(still)
         # A serial is a miss only when every prefix was asked and none claimed it.
-        day_missed = pending if complete else []
+        day_missed = [x for x in pending if x not in owed] if complete else []
+        day_settled = [x for x in pending if x in owed] if complete else []
         if not dry and not recheck:
             record_misses(db, code, day_missed, stamp)
-        retired += len(day_missed)
+            record_rare_misses(db, code, day_settled, stamp)
+        retired += len(day_missed) + len(day_settled)
         if day_found:
             per_day.append((code, len(gaps), day_found))
     return {"requests": requests, "probed": probed, "found": found,

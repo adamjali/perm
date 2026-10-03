@@ -11,9 +11,6 @@ Measured Sep 29 2026 on the server's database, one month after the move:
 None of it is read past a known horizon, so each keeps a margin past what its
 readers use and the rest goes:
 
-    serial misses   the gap sweep asks about the last 90 day codes; a miss for
-                    an older day is never read again. Deleting one early costs
-                    at most a repeated question to DOL, never a wrong answer.
     daily counters  check_lookup_demand reads 30 days of discovery_budget.
     run logs        every scheduled job runs at least yearly (the visa limits
                     sheet is the slowest), and the health check reads each
@@ -24,6 +21,14 @@ readers use and the rest goes:
 What is NOT pruned, on purpose: `perm_case_events` and `estimate_predictions`
 ARE the record (the status history and the scorecard); `pwd_`/`lca_case_events`
 the same. They grow with DOL's own activity, which is the product.
+
+`perm_serial_misses` is not pruned either, since Oct 3 2026. It was cut at 180
+days while only the trailing 90 were ever swept; the full-history backfill
+(backfill_serial_gaps.py) made it the record that every number on DOL's
+counter is accounted for (held, published, or answered "no case" under every
+prefix). Pruning it would undo that and have the backfill ask the old years
+again. It holds one row per number DOL never confirmed: at most a few
+thousand a day, tens of megabytes a year.
 
 Called from the nightly full sweep as one of its independent tail steps, so a
 failure here is logged and never costs the sweep.
@@ -40,7 +45,6 @@ DAILY_COUNTER_PREFIXES = (
     "uscis_budget_",
 )
 COUNTER_KEEP_DAYS = 90
-SERIAL_MISS_KEEP_DAYS = 180
 RUN_LOG_KEEP_DAYS = 400
 API_USAGE_KEEP_DAYS = 400
 
@@ -59,10 +63,6 @@ def _affected(res) -> int:
 def prune(db, today: datetime.date) -> dict[str, int]:
     """Delete what is past its horizon. Returns rows deleted per kind."""
     out: dict[str, int] = {}
-
-    miss_cut = day_code(today - datetime.timedelta(days=SERIAL_MISS_KEEP_DAYS))
-    out["serial_misses"] = _affected(db.execute(
-        "DELETE FROM perm_serial_misses WHERE day_code < ?", [miss_cut]))
 
     counter_cut = (today - datetime.timedelta(days=COUNTER_KEEP_DAYS)).isoformat()
     n = 0
