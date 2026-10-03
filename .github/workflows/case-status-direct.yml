@@ -46,9 +46,10 @@ concurrency:
 jobs:
   sweep:
     runs-on: ubuntu-24.04
-    # Above the main step's `timeout 105m` plus the gap sweep's 25m. The
-    # step-level `timeout` commands are what catch a hang (see below).
-    timeout-minutes: 150
+    # Above the main step's `timeout 105m`, the gap sweep's 25m, the published
+    # sync's 15m and the Monday backtest's 20m. The step-level `timeout`
+    # commands are what catch a hang (see below).
+    timeout-minutes: 175
     env:
       TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
       TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
@@ -99,6 +100,19 @@ jobs:
             || python3 scripts/record_ingest_failure.py \
                  --script "sweep_serial_gaps.py" \
                  --note "gap sweep: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
+      # Every case DOL's published files hold goes into the live tables where
+      # it can still change (every new-form PERM case; wage requests and LCAs
+      # inside their re-check windows), confirmed with DOL first. A night with
+      # nothing to sync asks nothing. A failure is recorded, never fatal.
+      - name: Sync published cases into the live tables
+        if: env.MODE == 'full'
+        working-directory: v2
+        run: |
+          timeout 15m python3 scripts/sync_published_live.py --cap 400 \
+            || python3 scripts/record_ingest_failure.py \
+                 --script "sync_published_live.py" \
+                 --note "published sync: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
       # The standing estimator backtest, Mondays on the full pass. It scores
       # the site's dates against what DOL decided since and writes the one doc

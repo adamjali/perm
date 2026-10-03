@@ -29,6 +29,31 @@ bounds = {26270: (1, 2, 2), 26100: (1, 2, 2), 25001: (1, 2, 2), 19274: (1, 2, 2)
 todo = b.todo_codes(bounds, datetime.date(2026, 10, 3), 67)
 check(todo == [26100, 25001, 19274], f"recent days are left to the nightly sweep, oldest last (got {todo})")
 
+# The nightly sweep's window is read from its workflow, so the two can't drift.
+import re as _re  # noqa: E402
+_wf = (pathlib.Path(__file__).resolve().parents[2] / ".github/workflows/case-status-direct.yml").read_text()
+_m = _re.search(r"sweep_serial_gaps\.py --window (\d+)", _wf)
+check(_m is not None and int(_m.group(1)) == b.NIGHTLY_WINDOW,
+      f"NIGHTLY_WINDOW matches the workflow's --window ({_m.group(1) if _m else None} vs {b.NIGHTLY_WINDOW})")
+
+# No day belongs to nobody: the nightly sweep's days (ages 0..NIGHTLY_WINDOW-1)
+# and the backfill's (ages >= its default window) must overlap, never leave a gap.
+_win = b.NIGHTLY_WINDOW - b.OVERLAP_DAYS
+_today = datetime.date(2026, 10, 3)
+_all = {int(f"{(_today - datetime.timedelta(days=i)):%y}{(_today - datetime.timedelta(days=i)).timetuple().tm_yday:03d}")
+        for i in range(400)}
+_nightly = {int(f"{(_today - datetime.timedelta(days=i)):%y}{(_today - datetime.timedelta(days=i)).timetuple().tm_yday:03d}")
+            for i in range(b.NIGHTLY_WINDOW)}
+_back = set(b.todo_codes({c: (1, 2, 2) for c in _all}, _today, _win))
+check(_nightly | _back == _all, f"every day is swept by the nightly sweep or the backfill ({len(_all - _nightly - _back)} left out)")
+check(b.OVERLAP_DAYS >= 1, "the two overlap, so a late night can't open a gap")
+
+# The daily tail is the days that just aged out: from the backfill's window to TAIL_DAYS beyond.
+_tail = b.todo_codes({c: (1, 2, 2) for c in _all}, _today, _win, _win + b.TAIL_DAYS)
+check(len(_tail) == b.TAIL_DAYS + 1 and max(_tail) == max(_back),
+      f"the tail sweeps the {b.TAIL_DAYS + 1} days just past the window, newest first (got {len(_tail)})")
+check(_tail == sorted(_tail, reverse=True), "newest first")
+
 # ---- quiet hours ------------------------------------------------------------
 q = b.parse_quiet("3:45-7:45,15:15-18:15")
 check(q == [(225, 465), (915, 1095)], f"quiet hours parse to minutes (got {q})")
