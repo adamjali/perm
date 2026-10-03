@@ -1,7 +1,7 @@
 # GSC indexing priority list
 
-**Run of 2026-10-03, 3:55 to 3:59 AM EDT: 3 accepted, the queue is empty.** No refusal: the
-queue held three pages. The sitemap index needed no resubmission: Google counts 106,317 discovered
+**Run of 2026-10-03, 3:55 to 4:15 AM EDT: 5 accepted, no refusal.** The first three emptied the
+old queue; the last two are pages the Oct 1 and Oct 2 deploys changed (queue reopened below). The sitemap index needed no resubmission: Google counts 106,317 discovered
 pages against 106,452 in the live children (135 apart; last read Sep 30).
 
 | # | URL | Google's verdict | accepted (EDT) |
@@ -9,9 +9,13 @@ pages against 106,452 in the live children (135 apart; last read Sep 30).
 | 1 | `/es` | Discovered, never crawled | 3:55 AM |
 | 2 | `/pt-br` | Discovered, never crawled | 3:57 AM |
 | 3 | `/ko` | unknown to Google (it read "Discovered" on Oct 1) | 3:58 AM |
+| 4 | `/perm-decision-activity` | indexed, last crawled Sep 30 (before the daily pulse and the record back to 2015) | 4:13 AM |
+| 5 | `/visa-bulletin` | indexed, last crawled Sep 24 (before the October bulletin and the month strip back to 2005) | 4:15 AM |
 
 Inspected only: `/perm-employers/the-wine-group-llc` (a live-only employer, first in
 `live-employer-1.xml`): Discovered, never crawled, found through the sitemap, no referring page.
+`/developers` and `/open-data` (both new Oct 2): already indexed, no request needed (`/open-data`
+shows 2 valid Datasets). `/perm-employers/under-review`: indexed, recrawled Sep 27; skipped.
 
 ---
 
@@ -735,6 +739,22 @@ line ("Queue empty as of <date>"), and the automatic round deletes its own timer
 After those the queue is empty: write "Queue empty as of <date>" here and the automatic round
 deletes its own timer.
 
-Queue empty as of 2026-10-03 (3:59 AM EDT). `/es`, `/pt-br` and `/ko` were requested; the
-live-only employer page was inspected (Discovered, never crawled). The automatic round's timer is
-deleted. Start a new queue section here when a deploy changes pages worth recrawling.
+Queue was empty at 2026-10-03, 3:59 AM EDT, and reopened at 4:05 AM: the old list never held the
+pages the Oct 1 and Oct 2 deploys changed. `/es`, `/pt-br` and `/ko` were requested; the
+live-only employer page was inspected (Discovered, never crawled).
+
+## Queue after the Oct 3 run (the next round probes from about 3:55 AM EDT Oct 4; a refusal is free)
+
+Nearly every page changed Oct 1 and Oct 2 (the visual pass, bylines on every article), and ~11
+requests a day cannot follow that: Google recrawls the rest on its own. The lever at scale is the
+sitemap's `lastmod`, and 58 static pages in `src/lib/sitemap/build.ts` carry hand-typed dates that
+never move (`/terms` says 2026-06-15 though it changed Oct 2). That fix ships with the next deploy.
+
+1. `/terms`, `/privacy`, `/api-terms` (changed or new Oct 2): inspect; request any last crawled
+   before Oct 2.
+2. `/perm-processing-times`: inspect; request if last crawled before Oct 1.
+3. `/visa-bulletin/2008-07`: inspect only, to see whether Google has found the 92 month pages
+   from 2005 to 2014 through the sitemap and the hub.
+
+After those the queue is empty: write "Queue empty as of <date>" here and the automatic round
+deletes its own timer.
