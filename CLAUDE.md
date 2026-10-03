@@ -3,7 +3,7 @@
 **Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-03
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **561 files / 8,399 tests across 5 vitest
+> have drifted: the suite is now **563 files / 8,409 tests across 5 vitest
 > projects** (2026-10-03), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
@@ -388,11 +388,12 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (afternoon)".
 - **Case-number shape rules accept `JO-A`** exactly, in all four copies and the date decoder.
 - **Published H-2A, H-2B and CW-1 cases sync into the live table** like every other program's.
 
-## Oct 3 2026 (evening), in four lines
+## Oct 3 2026 (evening), in five lines
 
 Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (evening)".
 
 - **DOL's published H-2A, H-2B and CW-1 record reaches every surface**: the case lookup (decision, wage, workers, period, worksite), the all-programs search and its CSV, employer pages and the API.
+- **Pending H-2A, H-2B and CW-1 applications show when DOL usually decides**, measured from its certifications (`seasonal_timing`).
 - **A later decision wins whatever order DOL's files load in**: the writer upserts, and the load check counts the rows a newer file kept.
 - **H-2A, H-2B and CW-1 reach October 2024; LCA reaches FY2020 Q2.** LCA FY2020 Q1 is held back by the load guard (yearly salaries under weekly and monthly units).
 - **A summary written before a backfill stays stale until the next pass**; the seasonal one was rebuilt by hand.

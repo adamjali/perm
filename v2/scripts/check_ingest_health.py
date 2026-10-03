@@ -369,6 +369,8 @@ PRECOMPUTED_DOCS = {
     "recent_decision_wait": (3, "the employer pages' wait section and the fastest/slowest view"),
     "scorecard_summary": (3, "the estimate scorecard's daily sample"),
     "estimator_backtest": (9, "the estimate scorecard's headline backtest"),
+    # Rebuilt after each monthly H-2A, H-2B and CW-1 load (the 10th).
+    "seasonal_timing": (45, "the seasonal case page's decision-timing panel"),
 }
 
 

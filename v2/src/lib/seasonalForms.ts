@@ -13,7 +13,7 @@
  *   application and approved on its own.
  * - `C-500-`: a CW-1 application for temporary labor certification, ETA-9142C.
  */
-type SeasonalVisa = "H-2A" | "H-2B" | "CW-1";
+export type SeasonalVisa = "H-2A" | "H-2B" | "CW-1";
 
 export const SEASONAL_FORMS: Readonly<Record<string, { form: string; label: string; visa: SeasonalVisa }>> = {
   "H-300": { form: "ETA-9142A", label: "H-2A application", visa: "H-2A" },

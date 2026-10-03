@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 561 files / 8,399 tests (2026-10-03 evening; ~23 min at a load average near 60, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 563 files / 8,409 tests (2026-10-03 evening; ~22 min at a load average near 60, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -7746,6 +7746,19 @@ sample (`database_bound`): at 12:02 PM our own load put Under Attack Mode in fro
 - **The API's case answer** carries the workers and period in `decision`, and `accepted` (the posting).
 - **DOL writes the county with its word** ("KNOX COUNTY", "ACADIA PARISH", "CAPITOL PLANNING REGION");
   `worksitePhrase` adds "County" only to a bare name. It printed "Knox County County" for a day.
+
+**"When DOL usually decides", on every pending H-2A, H-2B and CW-1 application** (`SeasonalTimingPanel`,
+`src/lib/seasonalTiming.ts`, doc `perm_docs['seasonal_timing']` from `scripts/build_seasonal_timing.py`,
+rebuilt after every monthly seasonal load, health budget 45 days). Nearest-rank percentiles over DOL's
+certifications only (denials and withdrawals don't count), and no visa under 50. Two clocks, chosen by
+the rules: an H-2A case with a known first day of work is placed against that day (20 CFR 655.160 has
+DOL decide 30 days before it; across FY2025 and FY2026, 43,601 certifications, half came 25 to 42 days
+ahead and 65% met the rule), so the panel draws the rule's date and the duplicate paragraph under the
+job details is dropped. H-2B and CW-1 are counted from filing, because their decisions land on both
+sides of the start date (a quarter of H-2B certifications came after it). The bar runs from the 10th
+to the 90th percentile with the middle half solid; "Today" is a dated label, because off either end of
+the bar it is held at the edge. Past three in four, the panel says the case is taking longer than most.
+No doc, no visa block or no date to count from: no panel.
 
 **A later decision wins, whatever order the files load in.** Three H-2B cases are in both the FY2025
 Q4 and the FY2026 Q3 file, and loading FY2025 second replaced their newer rows: the writer was

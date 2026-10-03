@@ -35,7 +35,7 @@ export function CaseStatusHead({ typed, loading = false }: { typed: string; load
         <p className="mt-4 max-w-2xl text-lg leading-relaxed text-foreground/80">
           Its status in plain English, where it sits in DOL&apos;s queue, an
           estimated decision date, and an email when it changes. Wage request,
-          LCA, H-2A and H-2B numbers work too.
+          LCA, H-2A, H-2B and CW-1 numbers work too.
         </p>
       </header>
 

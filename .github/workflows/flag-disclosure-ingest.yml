@@ -229,6 +229,14 @@ jobs:
           # Every LCA selection of 5,000+ filings (src/lib/turso/wageViews.ts).
           timeout 30m python3 scripts/build_wage_views.py --program lca
 
+      # When DOL usually decides an H-2A, H-2B or CW-1 application, measured
+      # from every certification in seasonal_cases (the case page's timing
+      # panel reads it). After any of the three loads, so it moves with them.
+      - name: Rebuild the seasonal decision timing
+        if: success() && (matrix.program == 'h2a' || matrix.program == 'h2b' || matrix.program == 'cw1') && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
+        working-directory: v2
+        run: timeout 10m python3 scripts/build_seasonal_timing.py
+
       # The pages built from these files sit on a week-long window, which is
       # only right if a load expires them. `success()` so a failed or refused
       # load never claims fresh pages.

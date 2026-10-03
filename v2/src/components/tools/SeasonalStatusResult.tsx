@@ -19,6 +19,9 @@ import {
 import { isLookupGap } from "@/lib/dolMiss";
 import { SEASONAL_STATUSES, statusAnchor } from "@/lib/statusDictionary";
 import { seasonalForm } from "@/lib/seasonalForms";
+import { easternDay, timingView } from "@/lib/seasonalTiming";
+import { getSeasonalTiming } from "@/lib/turso/seasonalTiming";
+import { SeasonalTimingPanel } from "@/components/tools/SeasonalTimingPanel";
 
 /**
  * An H-2A application (`H-300-`), an H-2B application (`H-400-`) or an H-2B
@@ -106,15 +109,18 @@ function SeasonalDetails({
   posting,
   pending,
   caseNumber,
+  ruleShownElsewhere = false,
 }: {
   record: SeasonalRecord | null;
   posting: SeasonalPosting | null;
   pending: boolean;
   caseNumber: string;
+  /** The timing panel already states the 30-day rule for this case. */
+  ruleShownElsewhere?: boolean;
 }) {
   if (!record && !posting) return null;
   const firstDay = record?.beginDate ?? posting?.beginDate ?? null;
-  const decideBy = pending && /^H-300-/.test(caseNumber) ? h2aDecideBy(firstDay) : null;
+  const decideBy = pending && !ruleShownElsewhere && /^H-300-/.test(caseNumber) ? h2aDecideBy(firstDay) : null;
   return (
     <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
       <h3 className="font-heading text-xl font-black">
@@ -167,10 +173,11 @@ function SeasonalDetails({
 }
 
 export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
-  const [outcome, record, posting] = await Promise.all([
+  const [outcome, record, posting, timing] = await Promise.all([
     lookupSeasonalCaseOutcome(caseNumber).catch(() => ({ row: null, dolMiss: "records" as const })),
     lookupSeasonalRecord(caseNumber).catch(() => null),
     lookupSeasonalPosting(caseNumber).catch(() => null),
+    getSeasonalTiming().catch(() => null),
   ]);
   const { row, dolMiss } = outcome;
   const form = formOf(caseNumber);
@@ -231,6 +238,19 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
   }
 
   const entry = entryFor(row.status);
+  // When DOL usually decides a case like this one, for a pending application
+  // only; null when there's no measured basis, and nothing is drawn.
+  const timingFiled = (row.submittedDate ?? row.filingDate)?.slice(0, 10) ?? null;
+  const timingFirstDay = posting?.beginDate ?? record?.beginDate ?? null;
+  const view = row.isFinal
+    ? null
+    : timingView({
+        caseNumber: row.caseNumber,
+        filingDate: timingFiled,
+        firstDay: timingFirstDay,
+        today: easternDay(),
+        timing,
+      });
   return (
     <div className="space-y-6">
       <section className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">
@@ -261,7 +281,15 @@ export async function SeasonalLookup({ caseNumber }: { caseNumber: string }) {
         </dl>
       </section>
 
-      <SeasonalDetails record={record} posting={posting} pending={!row.isFinal} caseNumber={row.caseNumber} />{" "}
+      <SeasonalDetails
+        record={record}
+        posting={posting}
+        pending={!row.isFinal}
+        caseNumber={row.caseNumber}
+        ruleShownElsewhere={view?.ruleDay != null}
+      />{" "}
+
+      {view ? <SeasonalTimingPanel view={view} firstDay={timingFirstDay} filingDate={timingFiled} /> : null}{" "}
 
       {!row.isFinal ? <CaseAlertForm caseNumber={row.caseNumber} program="seasonal" /> : null}
 
