@@ -1,3 +1,4 @@
+import { seasonalForm } from "@/lib/seasonalForms";
 import type { UnifiedCase } from "@/lib/turso/unifiedSearch";
 
 /**
@@ -16,6 +17,8 @@ import type { UnifiedCase } from "@/lib/turso/unifiedSearch";
 export const CSV_COLUMNS: readonly { key: string; label: string; get: (r: UnifiedCase) => unknown }[] = [
   { key: "case_number", label: "case_number", get: (r) => r.caseNumber },
   { key: "program", label: "program", get: (r) => r.program },
+  // The seasonal program holds six forms; the number says which ("H-2A job order").
+  { key: "form", label: "form", get: (r) => (r.program === "seasonal" ? seasonalForm(r.caseNumber)?.label ?? null : null) },
   { key: "record", label: "record", get: (r) => (r.half === "live" ? "live check" : r.era === "history" ? "published, FY2016-FY2023" : "published") },
   { key: "status", label: "status", get: (r) => r.status },
   { key: "filed", label: "filed", get: (r) => r.filedOn },

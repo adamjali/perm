@@ -293,9 +293,9 @@ describe("unifiedSearch", () => {
     expect(readFlagLive.mock.calls[0]?.[0]).toBe("pwd");
   });
 
-  it("reads H-2A and H-2B from the live table only, and labels the rows", async () => {
-    // No quarterly H-2A or H-2B file is loaded, so an employer search reads
-    // seasonal_case_status and nothing else, and its rows say which program.
+  it("reads H-2A, H-2B and CW-1 from both halves, and labels the rows", async () => {
+    // DOL's quarterly H-2A, H-2B and CW-1 files land in seasonal_cases beside
+    // the live table, so an employer search reads both and says which program.
     readFlagLive.mockImplementation(async (program: string) =>
       program === "seasonal"
         ? slice([{ caseNumber: "H-300-26272-266803", filingDate: "2026-09-29", status: "IN PROCESS", isFinal: false,
@@ -303,17 +303,28 @@ describe("unifiedSearch", () => {
             submittedDate: null, firstSeenAt: null, lastCheckedAt: null }])
         : slice([]),
     );
+    readFlagPublished.mockImplementation(async (program: string) =>
+      slice(
+        program === "seasonal"
+          ? [flagFile("H-400-25301-000123", { status: "DETERMINATION ISSUED - CERTIFICATION", wageUnit: "Hour", wage: 17.5 })]
+          : [],
+      ),
+    );
     const { rows, counts } = await unifiedSearch({ lead: employerLead, programs: ["seasonal"] });
     expect(readFlagLive.mock.calls.map((c) => c[0])).toEqual(["seasonal"]);
+    expect(readFlagPublished.mock.calls.map((c) => c[0])).toEqual(["seasonal"]);
     expect(readPermPublished).not.toHaveBeenCalled();
-    expect(rows.map((r) => [r.caseNumber, r.program, r.half])).toEqual([["H-300-26272-266803", "seasonal", "live"]]);
-    expect(counts.seasonal).toBe(1);
+    expect(rows.map((r) => [r.caseNumber, r.program, r.half]).sort()).toEqual([
+      ["H-300-26272-266803", "seasonal", "live"],
+      ["H-400-25301-000123", "seasonal", "published"],
+    ]);
+    expect(counts.seasonal).toBe(2);
   });
 
   it.each([
     ["state", stateLead],
     ["occupation", occupationLead],
-  ] as const)("reaches all three published programs under a %s lead", async (_kind, lead) => {
+  ] as const)("reaches every published program under a %s lead", async (_kind, lead) => {
     // THE DEFECT THIS PINS. `pwd_cases` and `lca_cases` have always held a
     // worksite state and a SOC code; what they lacked was an index, so these
     // two leads read the PERM file alone and the answer said nothing about it.
@@ -321,8 +332,9 @@ describe("unifiedSearch", () => {
     // way to tell.
     await unifiedSearch({ lead });
     expect(readPermPublished).toHaveBeenCalledTimes(1);
-    expect(readFlagPublished).toHaveBeenCalledTimes(2);
-    expect(readFlagPublished.mock.calls.map((c) => c[0]).sort()).toEqual(["lca", "pwd"]);
+    // Three FLAG files: wage requests, LCAs, and the H-2A, H-2B and CW-1 file.
+    expect(readFlagPublished).toHaveBeenCalledTimes(3);
+    expect(readFlagPublished.mock.calls.map((c) => c[0]).sort()).toEqual(["lca", "pwd", "seasonal"]);
     // The LEAD is handed down, not an employer string: the read layer picks
     // its own index from it.
     expect(readFlagPublished.mock.calls[0]?.[1]).toEqual(lead);
@@ -355,10 +367,10 @@ describe("unifiedSearch", () => {
     expect(readFlagPublished.mock.calls[0]?.[0]).toBe("pwd");
   });
 
-  it("asks all three programs for a firm when no chip narrows it", async () => {
+  it("asks every program for a firm when no chip narrows it", async () => {
     await unifiedSearch({ lead: firmLead });
     expect(readPermPublished).toHaveBeenCalledTimes(1);
-    expect(readFlagPublished).toHaveBeenCalledTimes(2);
+    expect(readFlagPublished).toHaveBeenCalledTimes(3);
   });
 
   it("stops asking the live tables once a published-only filter is set", async () => {
@@ -366,7 +378,7 @@ describe("unifiedSearch", () => {
     expect(readPermLive).not.toHaveBeenCalled();
     expect(readFlagLive).not.toHaveBeenCalled();
     expect(readPermPublished).toHaveBeenCalledTimes(1);
-    expect(readFlagPublished).toHaveBeenCalledTimes(2);
+    expect(readFlagPublished).toHaveBeenCalledTimes(3);
   });
 
   it('stops asking the published tables for "still open"', async () => {
@@ -536,7 +548,7 @@ describe("filters only published PERM can answer", () => {
 
   it("leaves the other programs in when none is set", async () => {
     await unifiedSearch({ lead: employerLead, narrow: {} });
-    expect(readFlagPublished).toHaveBeenCalledTimes(2);
+    expect(readFlagPublished).toHaveBeenCalledTimes(3);
   });
 
   it("names every PERM-only filter in words", () => {

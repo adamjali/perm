@@ -7,7 +7,7 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { DataProvenance } from "@/components/data/DataProvenance";
 import { FlagCaseBrowser, SEASONAL_PROGRAM } from "@/components/tools/FlagCaseBrowser";
 import { openGraphBase } from "@/lib/openGraphBase";
-import { getSeasonalSummary } from "@/lib/turso/seasonalCases";
+import { getSeasonalPublishedSummary, getSeasonalSummary } from "@/lib/turso/seasonalCases";
 import { SEASONAL_FORMS } from "@/lib/seasonalForms";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { formatInt } from "@/lib/format";
@@ -24,9 +24,9 @@ import { formatInt } from "@/lib/format";
  * loaded, and the page says so.
  */
 
-const TITLE = "H-2A and H-2B Case Search";
+const TITLE = "H-2A, H-2B and CW-1 Case Search";
 const DESCRIPTION =
-  "Find an H-2A or H-2B labor certification (ETA-9142A, 9142B) or H-2B wage request by employer, with DOL's current status from its daily check.";
+  "Find an H-2A, H-2B or CW-1 filing by employer: DOL's current status, and the wage, workers and work period from its published files.";
 
 // No card of its own yet (a card is a capture of the rendered page, made
 // after it ships); until then the root home card stands in.
@@ -55,7 +55,10 @@ function longDate(iso: string | null): string | null {
 const FORM_ORDER = ["H-300", "JO-A-300", "H-400", "P-400", "C-500", "P-500"] as const;
 
 export default async function SeasonalCasesPage() {
-  const summary = await getSeasonalSummary();
+  const [summary, published] = await Promise.all([
+    getSeasonalSummary(),
+    getSeasonalPublishedSummary().catch(() => []),
+  ]);
   const earliest = summary?.byMonth.length
     ? [...summary.byMonth].map((m) => m.month).sort()[0] ?? null
     : null;
@@ -135,9 +138,20 @@ export default async function SeasonalCasesPage() {
           <h2 className="font-heading text-lg font-black">What&apos;s in here, and what isn&apos;t</h2>{" "}
           <p className="mt-2 text-base leading-relaxed text-foreground/80">
             Every status comes from DOL&apos;s case system, pending ones included. The wage, the
-            number of workers and the worksite are in DOL&apos;s quarterly files, which this
-            page doesn&apos;t load yet.
+            workers and the worksite come from DOL&apos;s quarterly H-2A, H-2B and CW-1 files once
+            a case is decided, and, for an application DOL has accepted but not yet decided, from
+            its SeasonalJobs feed.
           </p>{" "}
+          {published.length > 0 ? (
+            <ul className="mt-3 space-y-1 text-sm text-foreground/75">
+              {published.map(({ visa, summary: pub }) => (
+                <li key={visa}>
+                  <span className="font-bold">{visa}:</span> {formatInt(pub.rows)} decided cases in DOL&apos;s file
+                  {pub.latestDecision ? `, decided through ${longDate(pub.latestDecision) ?? pub.latestDecision}` : ""}.
+                </li>
+              ))}
+            </ul>
+          ) : null}{" "}
           <p className="mt-3 text-sm leading-relaxed text-foreground/70">
             Have the number? The{" "}
             <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
@@ -164,9 +178,10 @@ export default async function SeasonalCasesPage() {
             </p>
           </FinePrint>{" "}
           <p>
-            <b className="font-bold">Why one might be missing.</b> These forms were added on
-            October 1, 2026, and the record is still being filled in backwards through earlier
-            filings. A filing from today appears after the next check.
+            <b className="font-bold">Why one might be missing.</b> These forms joined the live
+            record on October 1, 2026, and it is still being filled in backwards; DOL&apos;s
+            quarterly files reach further back and are loaded year by year. A filing from today
+            appears after the next check.
           </p>
         </div>
       </section>

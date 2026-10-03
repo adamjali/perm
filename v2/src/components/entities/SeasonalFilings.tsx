@@ -27,7 +27,7 @@ export function SeasonalFilings({
   if (rows.length === 0) return null;
   return (
     <section className={`${className} border-2 border-border bg-card p-6 shadow-hard sm:p-8`}>
-      <h2 className="font-heading text-xl font-black sm:text-2xl">Seasonal work: H-2A and H-2B</h2>{" "}
+      <h2 className="font-heading text-xl font-black sm:text-2xl">Seasonal work: H-2A, H-2B and CW-1</h2>{" "}
       <p className="mt-2 text-base leading-relaxed text-foreground/70">
         Filed by {name}, as DOL&apos;s daily check shows them.
       </p>{" "}

@@ -20,7 +20,7 @@ import { searchByName } from "@/lib/turso/entities";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { pwd } from "@/lib/turso/pwdCases";
 import { lca } from "@/lib/turso/lcaCases";
-import { seasonal } from "@/lib/turso/seasonalCases";
+import { lookupSeasonalPosting, lookupSeasonalRecord, seasonal } from "@/lib/turso/seasonalCases";
 import { estimatePermCase, loadPermEstimateContext } from "@/lib/turso/permEstimate";
 
 export interface ApiMeta {
@@ -41,7 +41,7 @@ const PROGRAM_NAMES: Record<FlagProgram, string> = {
   perm: "PERM labor certification",
   pwd: "prevailing wage determination",
   lca: "H-1B labor condition application",
-  seasonal: "H-2A or H-2B seasonal program",
+  seasonal: "H-2A, H-2B or CW-1 seasonal program",
 };
 const FLAG_PROGRAMS = { pwd, lca, seasonal } as const;
 
@@ -65,6 +65,11 @@ export interface CaseRecord {
   statusCheckedOn: string | null;
   /** DOL's decided record, once a disclosure file carries the case. */
   decision: Record<string, unknown> | null;
+  /**
+   * H-2A and H-2B only: the job as DOL accepted it, from its SeasonalJobs
+   * feed (wage, workers, period, worksite), before any decision.
+   */
+  accepted?: Record<string, unknown> | null;
   /** PERM only: where the case's filing month stands in the queue. */
   queue: {
     filingMonth: string;
@@ -133,22 +138,28 @@ export async function readCase(input: string): Promise<ReadResult<CaseRecord>> {
   }
 
   const program = FLAG_PROGRAMS[ref.program];
-  const [row, disc] = await Promise.all([
+  const isSeasonal = ref.program === "seasonal";
+  const [row, disc, extra, posting] = await Promise.all([
     program.lookup(ref.caseNumber, { discover: false }),
     program.lookupDisclosed(ref.caseNumber).catch(() => null),
+    // The seasonal record adds what the shared reader doesn't select (the
+    // workers, the work period, the county) and covers the H-2B and CW-1 wage
+    // requests, which DOL publishes in its prevailing wage file instead.
+    isSeasonal ? lookupSeasonalRecord(ref.caseNumber).catch(() => null) : Promise.resolve(null),
+    isSeasonal ? lookupSeasonalPosting(ref.caseNumber).catch(() => null) : Promise.resolve(null),
   ]);
-  if (!row && !disc) return notFound;
+  if (!row && !disc && !extra && !posting) return notFound;
   return {
     ok: true,
     data: {
       caseNumber: ref.caseNumber,
       program: ref.program,
       programName: PROGRAM_NAMES[ref.program],
-      status: row?.status ?? disc?.status ?? null,
-      isFinal: row ? row.isFinal : true,
-      filingDate: row?.filingDate ?? disc?.receivedDate ?? null,
-      employer: row?.employerName ?? disc?.employerName ?? null,
-      jobTitle: row?.jobTitle ?? disc?.jobTitle ?? null,
+      status: row?.status ?? disc?.status ?? extra?.status ?? null,
+      isFinal: row ? row.isFinal : !!(disc ?? extra),
+      filingDate: row?.filingDate ?? disc?.receivedDate ?? extra?.receivedDate ?? null,
+      employer: row?.employerName ?? disc?.employerName ?? extra?.employerName ?? posting?.employerName ?? null,
+      jobTitle: row?.jobTitle ?? disc?.jobTitle ?? extra?.jobTitle ?? posting?.jobTitle ?? null,
       statusCheckedOn: day(row?.lastCheckedAt),
       decision: disc
         ? {
@@ -162,8 +173,50 @@ export async function readCase(input: string): Promise<ReadResult<CaseRecord>> {
             worksiteState: disc.worksiteState,
             visaClass: disc.visaClass,
             lawFirm: disc.attorneyName,
+            ...(extra
+              ? {
+                  workersRequested: extra.workers,
+                  workersCertified: extra.workersCertified,
+                  workBegins: extra.beginDate,
+                  workEnds: extra.endDate,
+                  worksiteCity: extra.worksiteCity,
+                  worksiteCounty: extra.worksiteCounty,
+                }
+              : {}),
           }
-        : null,
+        : extra
+          ? {
+              status: extra.status,
+              receivedDate: extra.receivedDate,
+              decisionDate: extra.decisionDate,
+              occupation: extra.socTitle,
+              wage: extra.wage,
+              wageUnit: extra.wageUnit,
+              worksiteState: extra.worksiteState,
+              visaClass: extra.visaClass,
+              lawFirm: extra.attorneyName,
+            }
+          : null,
+      ...(isSeasonal
+        ? {
+            accepted: posting
+              ? {
+                  acceptedDate: posting.acceptedDate,
+                  submittedDate: posting.submittedDate,
+                  wage: posting.wage,
+                  wageUnit: posting.wageUnit,
+                  workersForeign: posting.workersForeign,
+                  workBegins: posting.beginDate,
+                  workEnds: posting.endDate,
+                  worksiteCity: posting.worksiteCity,
+                  worksiteCounty: posting.worksiteCounty,
+                  worksiteState: posting.worksiteState,
+                  jobOrderNumber: posting.jobOrderNumber,
+                  wageDeterminationNumber: posting.pwdNumber,
+                }
+              : null,
+          }
+        : {}),
       queue: null,
     },
     meta: { source: DOL_SOURCE, asOf: day(row?.lastCheckedAt) ?? disc?.decisionDate ?? null, url },

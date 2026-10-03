@@ -3,13 +3,14 @@ name: FLAG disclosure ingest
 # (a run of history quarters) can be told apart by anyone listing the runs.
 run-name: FLAG disclosure ingest${{ inputs.program && format(' ({0})', inputs.program) || '' }}${{ inputs.name && format(' {0}', inputs.name) || '' }}
 
-# Loads DOL's quarterly disclosure files for every FLAG program into one table
-# each, one row per case: prevailing wage (Form ETA-9141, `pwd_cases`), LCA
-# (ETA-9035, `lca_cases`), H-2A (ETA-9142A, `h2a_cases`), H-2B (ETA-9142B,
-# `h2b_cases`) and CW-1 (ETA-9142C, `cw1_cases`). As in perm-disclosure-ingest.yml, the file URL is discovered from DOL's
+# Loads DOL's quarterly disclosure files for every FLAG program, one row per
+# case: prevailing wage (Form ETA-9141, `pwd_cases`), LCA
+# (ETA-9035, `lca_cases`), and H-2A, H-2B and CW-1 (ETA-9142A, 9142B, 9142C) in one
+# table, `seasonal_cases`. As in perm-disclosure-ingest.yml, the file URL is discovered from DOL's
 # performance page, never constructed; the workbook is streamed (an LCA file
 # is multiple GB of XML); and the run reports success only after `COUNT(*)` for
-# the file equals the unique cases it read.
+# the file equals the unique cases it read, less any a newer file's later
+# decision kept.
 #
 # Monthly, not quarterly: DOL republishes each quarter a week or two after it
 # ends, under a new filename, so a monthly check picks it up within weeks. The

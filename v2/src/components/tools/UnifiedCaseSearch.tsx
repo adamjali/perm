@@ -40,6 +40,7 @@ import type { Program, UnifiedCase } from "@/lib/turso/unifiedSearch";
 import type { CaseFieldKey, CaseFieldOptions, FieldOption } from "@/lib/turso/caseSearchReads";
 import { RequestFailed } from "@/components/tools/RequestFailed";
 import { formatInt } from "@/lib/format";
+import { seasonalForm } from "@/lib/seasonalForms";
 
 /**
  * Every DOL filing this site holds, in one search, with every filter the
@@ -91,14 +92,19 @@ const PROGRAM_LABEL: Record<Program, string> = {
   perm: "PERM",
   pwd: "Wage request",
   lca: "H-1B LCA",
-  seasonal: "H-2A / H-2B",
+  seasonal: "H-2A, H-2B, CW-1",
 };
+
+/** A row's program, naming the seasonal form ("H-2A job order") where the number says which. */
+function rowProgramLabel(r: { program: Program; caseNumber: string }): string {
+  return (r.program === "seasonal" ? seasonalForm(r.caseNumber)?.label : undefined) ?? PROGRAM_LABEL[r.program];
+}
 
 const PROGRAM_BLURB: Record<Program, string> = {
   perm: "The labor certification itself (ETA-9089).",
   pwd: "The wage DOL sets before the PERM (ETA-9141).",
   lca: "The H-1B labor condition application (ETA-9035).",
-  seasonal: "Seasonal work: H-2A and H-2B applications and H-2B wage requests. DOL's live record only.",
+  seasonal: "Seasonal and CNMI work: H-2A, H-2B and CW-1 applications, wage requests and job orders, live and from DOL's quarterly files.",
 };
 
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -156,7 +162,7 @@ const PAGE_ROWS = 100;
  * ascending makes the first click on each feel like a bug.
  */
 const COLUMNS: SortColumn<UnifiedCase>[] = [
-  { key: "program", label: "Program", get: (r) => PROGRAM_LABEL[r.program] },
+  { key: "program", label: "Program", get: (r) => rowProgramLabel(r) },
   { key: "status", label: "Status", get: (r) => r.status },
   { key: "employer", label: "Employer", get: (r) => r.employerName },
   { key: "title", label: "Job title", get: (r) => r.jobTitle },
@@ -589,8 +595,7 @@ export function UnifiedCaseSearch({
             <p className="mb-3 mt-1 text-sm leading-relaxed text-foreground/70">
               Fill in any one of these. An employer reaches every program, live
               and published; a firm, a state or an occupation reads
-              DOL&apos;s published PERM file, which is the only place those
-              fields exist.
+              DOL&apos;s published files, the only place those fields exist.
             </p>{" "}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] [&>*]:min-w-0">
               <div className="block min-w-0">
@@ -1021,7 +1026,7 @@ export function UnifiedCaseSearch({
             </legend>{" "}
             <p className="mb-3 mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">
               These are fields of DOL&apos;s published PERM file alone, so setting
-              one leaves out wage requests, LCAs, H-2A and H-2B filings and
+              one leaves out wage requests, LCAs, H-2A, H-2B and CW-1 filings and
               filings still open.{" "}
               {OLD_FORM_NOTE}
             </p>{" "}
@@ -1334,7 +1339,7 @@ export function UnifiedCaseSearch({
             <b className="font-bold">Only published PERM cases are in this answer.</b>{" "}
             The {data.permOnly?.join(", ")}{" "}
             {data.permOnly?.length === 1 ? "is a field" : "are fields"} of
-            DOL&apos;s PERM file alone; wage requests, LCAs and H-2A and H-2B filings don&apos;t carry{" "}
+            DOL&apos;s PERM file alone; wage requests, LCAs and H-2A, H-2B and CW-1 filings don&apos;t carry{" "}
             {data.permOnly?.length === 1 ? "it" : "them"}.
           </p>
         </div>
@@ -1403,7 +1408,7 @@ export function UnifiedCaseSearch({
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[1200px] border-collapse text-left text-base">
               <caption className="sr-only">
-                Every filing found across PERM, wage requests, LCAs and H-2A and H-2B
+                Every filing found across PERM, wage requests, LCAs and H-2A, H-2B and CW-1
               </caption>
               <SortableHeader
                 columns={COLUMNS}
@@ -1424,10 +1429,10 @@ export function UnifiedCaseSearch({
                         {r.caseNumber}
                       </PendingLink>{" "}
                       {r.era === "history" ? (
-                        <span className="mt-1 block font-sans text-sm text-foreground/70">FY2016 to FY2023 file</span>
+                        <span className="mt-1 block font-sans text-sm text-foreground/70">FY2008 to FY2023 file</span>
                       ) : null}
                     {" "}</td>
-                    <td className="whitespace-nowrap px-3 py-3 text-sm">{PROGRAM_LABEL[r.program]}{" "}</td>
+                    <td className="whitespace-nowrap px-3 py-3 text-sm">{rowProgramLabel(r)}{" "}</td>
                     <td className="px-3 py-3">
                       <span className={"inline-block border-2 border-border px-2 py-1 text-sm font-bold " + statusTone(r.status, r.isFinal)}>
                         {r.status || "—"}

@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 558 files / 8,350 tests (2026-10-03; ~25 min at a load average near 36, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 561 files / 8,399 tests (2026-10-03 evening; ~23 min at a load average near 60, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -7726,3 +7726,51 @@ sample (`database_bound`): at 12:02 PM our own load put Under Attack Mode in fro
 
 **Published seasonal cases join the live table.** `sync_published_live.py` feeds
 `seasonal_case_status` from `pwd_cases` (P-400 and P-500) and `seasonal_cases`.
+
+## Oct 3 2026 (evening): the seasonal record on every surface, and a later decision wins
+
+**DOL's published H-2A, H-2B and CW-1 record reaches every surface that reads a FLAG program.**
+- **The case lookup** (`SeasonalStatusResult.tsx`): DOL's decision, the wage with its unit, workers
+  requested and certified, the work period, the worksite, occupation and law firm, from
+  `lookupSeasonalRecord` (applications from `seasonal_cases`; the H-2B and CW-1 wage requests from
+  `pwd_cases`, which has no workers or period). Before a decision, the job as DOL accepted it, from
+  `lookupSeasonalPosting` (`seasonal_postings`). A case in the file but not the live table answers
+  from the file instead of "no record". Words and the H-2A decide-by date are in `src/lib/seasonalDetails.ts`.
+- **The all-programs search** reads `seasonal_cases` beside the live table (`FLAG_TABLES.seasonal`),
+  the published row winning as for every program; the published statuses sit in the seasonal outcome
+  buckets; each row is named by its form ("H-2A job order", `seasonalForm`), and the CSV gained a
+  `form` column after `program`.
+- **Employer pages** get a seasonal line (`seasonalLine` in `turso/employerPrograms.ts`): published
+  applications, open ones, workers certified, and the median HOURLY wage ($5 to $200, read off the
+  employer's own slug range). Absent for an employer with none.
+- **The API's case answer** carries the workers and period in `decision`, and `accepted` (the posting).
+- **DOL writes the county with its word** ("KNOX COUNTY", "ACADIA PARISH", "CAPITOL PLANNING REGION");
+  `worksitePhrase` adds "County" only to a bare name. It printed "Knox County County" for a day.
+
+**A later decision wins, whatever order the files load in.** Three H-2B cases are in both the FY2025
+Q4 and the FY2026 Q3 file, and loading FY2025 second replaced their newer rows: the writer was
+`INSERT OR REPLACE`. `write_cases` upserts now (`upsert_tail`): an incoming row is written when the held
+row has no decision date, comes from the same file, or decided on the same day or earlier. It returns
+(sent, written) from the database's own affected-row counts, and the load check expects the file's count
+to be what was read less what a newer file kept. `scripts/test_flag_later_decision.py` runs the real
+writer on SQLite; removing the clause reproduces the live symptom.
+
+**Loaded the same day:** H-2A, H-2B and CW-1 FY2025 (all three reach October 2024; DOL's newest CW-1
+file for FY2025 ends at Q3) and LCA back to FY2020 Q2 (3.65 million rows). **LCA FY2020 Q1 is held back
+by the load guard on purpose:** its hourly (43.23) and yearly (100,000) medians are normal, while its
+bi-weekly, monthly and weekly medians (92,310, 91,957, 99,807) are yearly salaries typed under the
+wrong unit, so the file is DOL's data and not a mis-mapped column. It loads with `accept_drift` once
+someone decides the rows are worth carrying. The retired `h2a_cases` table was dropped.
+
+**A summary doc written before a backfill is stale until the next pass.** `seasonal_live_summary` was
+written at 5:51 AM, before the backfill stored the job-order, CW-1 and P-500 rows, so the seasonal page
+showed 0 for three forms. It was rebuilt by hand from the server (`write_summary_doc(db, "seasonal")`).
+
+**Three instruments that misled while building it.**
+- A `beforeEach(() => mock.mockReset())` RETURNS the mock, and vitest calls a returned function as the
+  hook's cleanup, so the mock ran with no arguments after every test. Use braces.
+- `str.replace` changes every copy of a block: a patch aimed at `write_cases`'s `flush_request` also
+  hit an identical block in `backfill_columns`. `ast.parse` passed; `nonlocal` binding is checked at
+  compile time, so `compile()` (or importing the module) is the check.
+- The case-search help line said a firm, state or occupation reads only the PERM file; it has read every
+  published program since the wage-request and LCA files were indexed.

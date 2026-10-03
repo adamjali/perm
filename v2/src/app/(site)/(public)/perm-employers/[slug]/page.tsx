@@ -549,6 +549,7 @@ export default async function EmployerPage({
         }
         pwd={programs?.pwd ?? null}
         lca={programs?.lca ?? null}
+        seasonal={programs?.seasonal ?? null}
         stages={stagesDoc?.employers.find((e) => e.slug === canonicalSlug) ?? null}
         logFrom={stagesDoc?.logFrom ?? null}
         searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}

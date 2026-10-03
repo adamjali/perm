@@ -49,7 +49,7 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
   "seasonal-postings":
     "H-2A and H-2B applications and H-2A job orders DOL accepted, with the wage, workers, work period and worksite, from SeasonalJobs.dol.gov, accepted since February 6, 2024. Not the decision: that is the live status and, later, the quarterly file.",
   "seasonal-status":
-    "Live status of H-2A and H-2B applications and of H-2B and CW-1 prevailing wage requests, pending included. No wage or worksite: those arrive with the quarterly files.",
+    "Live status of H-2A, H-2B and CW-1 applications, H-2A job orders, and H-2B and CW-1 prevailing wage requests, pending included. No wage or worksite: those come from the quarterly files and SeasonalJobs.",
   "live-recent":
     "The cases our sweep knows that DOL has not published yet, so they can be found by employer before any file lists them.",
   "decisions-observed":

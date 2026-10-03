@@ -227,7 +227,7 @@ export default async function PermCaseStatusPage({
             </b>{" "}
             so nothing was looked up. PERM numbers look like G-100-26125-868956 (A-23043-00641 for 2022 and
             2023) and are on the ETA-9089 receipt. Wage requests start with P, H-1B LCAs with I, H-2A and H-2B
-            cases with H.
+            cases with H (an H-2A job order with JO-A), and CW-1 with C.
           </span>
         </p>
       ) : null}

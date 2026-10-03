@@ -6,7 +6,7 @@ import { PROGRAM_LABEL, WAGE_FLOOR, wageGap, wageGapSentence, type ProgramLine }
 import { formatDollars, formatInt, formatShare } from "@/lib/format";
 
 /**
- * One employer across DOL's three programs, as a ledger.
+ * One employer across DOL's programs, as a ledger.
  *
  * Three rows in the prose's own measure: what DOL has published, what its
  * live record shows still open, and the median wage on the published rows.
@@ -24,6 +24,7 @@ export function EmployerPrograms({
   perm,
   pwd,
   lca,
+  seasonal = null,
   stages,
   logFrom = null,
   searchHref,
@@ -33,6 +34,8 @@ export function EmployerPrograms({
   perm: ProgramLine;
   pwd: ProgramLine | null;
   lca: ProgramLine | null;
+  /** H-2A, H-2B and CW-1, only when the employer has filed any. */
+  seasonal?: ProgramLine | null;
   /** This employer's row in the outside-the-queue census, when it has five or more pending cases. */
   stages: EmployerStageRow | null;
   /** The first day of the site's status-change record, which dates a hold. */
@@ -42,14 +45,14 @@ export function EmployerPrograms({
   /** The normalised-name prefix the three files were joined on. */
   matchedPrefix?: string | null;
 }) {
-  const lines: ProgramLine[] = [perm, ...(pwd ? [pwd] : []), ...(lca ? [lca] : [])];
+  const lines: ProgramLine[] = [perm, ...(pwd ? [pwd] : []), ...(lca ? [lca] : []), ...(seasonal ? [seasonal] : [])];
   const gap = wageGap(perm, lca);
   return (
     <section className="mt-10">
-      <h2 className="font-heading text-xl font-black sm:text-2xl">Across DOL&apos;s three programs</h2>{" "}
+      <h2 className="font-heading text-xl font-black sm:text-2xl">Across DOL&apos;s programs</h2>{" "}
       <p className="mt-2 max-w-3xl text-base text-foreground/75">
-        The wage request, the PERM and the H-1B labor condition application,
-        one line each.
+        The wage request, the PERM and the H-1B labor condition application
+        {seasonal ? ", and its seasonal H-2A, H-2B and CW-1 work" : ""}, one line each.
       </p>{" "}
       <dl className="mt-4 max-w-3xl border-t-2 border-border">
         {lines.map((l) => (
@@ -73,7 +76,20 @@ export function EmployerPrograms({
               )}
             </dd>{" "}
             <dd className="tabular-nums sm:text-right">
-              {l.medianAnnualWage !== null && l.wageN >= WAGE_FLOOR ? (
+              {l.medianHourlyWage !== undefined ? (
+                l.medianHourlyWage !== null && l.wageN >= WAGE_FLOOR ? (
+                  <>
+                    <span className="font-heading text-lg font-black">
+                      ${l.medianHourlyWage.toFixed(2)}
+                    </span>{" "}
+                    <span className="text-sm text-muted-foreground">an hour, median, n={formatInt(l.wageN)}</span>
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    {l.wageN > 0 ? `${formatInt(l.wageN)} hourly wage${l.wageN === 1 ? "" : "s"}, under the floor` : "no hourly wage published"}
+                  </span>
+                )
+              ) : l.medianAnnualWage !== null && l.wageN >= WAGE_FLOOR ? (
                 <>
                   <span className="font-heading text-lg font-black">{formatDollars(l.medianAnnualWage)}</span>{" "}
                   <span className="text-sm text-muted-foreground">median, n={formatInt(l.wageN)}</span>
@@ -105,7 +121,7 @@ export function EmployerPrograms({
       ) : null}{" "}
       <p className="mt-3 max-w-3xl text-sm text-foreground/75">
         <Link href={searchHref} className={LINK}>
-          Every case across the three programs
+          Every case across these programs
         </Link>{" "}
         is in the search.
       </p>{" "}
@@ -117,6 +133,9 @@ export function EmployerPrograms({
           The PERM is the green-card step; the wage request comes months before
           it, and the LCA is the separate form for an H-1B. DOL publishes each
           in its own file, and its live record shows what is still open.
+          {seasonal
+            ? ` Seasonal wages stay hourly, as DOL's H-2A, H-2B and CW-1 files quote them: a job lasting a season, annualised over a full year, would describe pay nobody earns.${seasonal.workersCertified ? ` DOL certified ${formatInt(seasonal.workersCertified)} workers across these filings.` : ""}`
+            : ""}
         </p>
       </FinePrint>
     </section>

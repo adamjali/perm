@@ -530,13 +530,26 @@ describe("the index names, against the DDL that creates them", () => {
   });
 });
 
-describe("readFlagPublished, a program with no file", () => {
-  it("answers empty for H-2A and H-2B under every lead, and asks nothing", async () => {
-    for (const lead of [employer, { kind: "state", value: "CA" }, { kind: "firm", value: "fragomen" }] as const) {
-      const out = await readFlagPublished("seasonal", lead, {}, 100);
-      expect(out.rows).toEqual([]);
-    }
-    expect(rows).not.toHaveBeenCalled();
+describe("readFlagPublished, the seasonal file", () => {
+  it("reads seasonal_cases, where DOL's H-2A, H-2B and CW-1 files land, by its own indexes", async () => {
+    await readFlagPublished("seasonal", employer, {}, 100);
+    expect(firstPass().sql).toMatch(/SELECT rowid FROM seasonal_cases INDEXED BY seasonal_cases_emp/);
+    rows.mockClear();
+    await readFlagPublished("seasonal", { kind: "state", value: "GA" }, {}, 100);
+    expect(rows.mock.calls[0]?.[0]).toMatch(/FROM seasonal_cases INDEXED BY seasonal_cases_state_dec/);
+  });
+
+  it("scopes no visa class: the visa is the program here, and all three belong to it", async () => {
+    await readFlagPublished("seasonal", { kind: "firm", value: "fragomen" }, {}, 100);
+    expect(rows.mock.calls[0]?.[0]).not.toContain("visa_class = ?");
+  });
+
+  it("counts a published certification, partial or expired, as granted", async () => {
+    await readFlagPublished("seasonal", { kind: "state", value: "GA" }, { outcome: "granted" }, 100);
+    const args = rows.mock.calls[0]?.[1] as unknown[];
+    expect(args).toContain("DETERMINATION ISSUED - CERTIFICATION");
+    expect(args).toContain("DETERMINATION ISSUED - PARTIAL CERTIFICATION (EXPIRED)");
+    expect(args).not.toContain("DETERMINATION ISSUED - DENIED");
   });
 });
 
@@ -701,11 +714,12 @@ describe("lookupUnifiedCase", () => {
     expect(sqls.some((s) => s.includes("perm_cases"))).toBe(false);
   });
 
-  it("reads only the live H-2A and H-2B table for an H- number: no file is loaded", async () => {
+  it("reads the H-2A and H-2B tables for an H- number, live and published, and no PERM table", async () => {
     await lookupUnifiedCase("H-300-26272-266803");
     const sqls = one.mock.calls.map((c) => String(c[0]));
-    expect(sqls).toHaveLength(1);
-    expect(sqls[0]).toContain("FROM seasonal_case_status WHERE case_number = ?");
+    expect(sqls.some((s) => s.includes("FROM seasonal_case_status WHERE case_number = ?"))).toBe(true);
+    expect(sqls.some((s) => s.includes("FROM seasonal_cases WHERE case_number = ?"))).toBe(true);
+    expect(sqls.some((s) => s.includes("perm_cases"))).toBe(false);
   });
 
   it("degrades one half at a time rather than failing the lookup", async () => {

@@ -214,7 +214,7 @@ export default async function ToolsPage() {
             {
               href: "/case-search",
               label: "Search all programs",
-              blurb: "One box across PERM, wage requests, LCAs and H-2A and H-2B.",
+              blurb: "One box across PERM, wage requests, LCAs and H-2A, H-2B and CW-1.",
               tone: "ink",
               viz: "union" as const,
             },

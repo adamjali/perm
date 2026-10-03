@@ -1001,29 +1001,55 @@ def backfill_columns(db: Turso, table: str, rows, cols: tuple[str, ...],
     return seen
 
 
-def write_cases(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> int:
-    """INSERT OR REPLACE, ROWS_PER_STMT rows a statement and STMTS_PER_REQUEST
-    statements a request, idling `pause` seconds between requests."""
+def upsert_tail(table: str) -> str:
+    """The clause that keeps the LATER decision when a case is in two files.
+
+    A case can sit in two DOL files (three H-2B cases are in both FY2025 Q4
+    and FY2026 Q3), and the order the files load in must not decide which row
+    stays: loading FY2025 after FY2026 replaced those three newer decisions
+    with older ones (Oct 3 2026). An incoming row wins when the held row has
+    no decision date, when it comes from the same file (a reload), or when its
+    own decision is the same day or later.
+    """
+    sets = ",".join(f"{c}=excluded.{c}" for c in COLUMNS if c != "case_number")
+    return (
+        f" ON CONFLICT(case_number) DO UPDATE SET {sets} "
+        f"WHERE {table}.decision_date IS NULL "
+        f"OR {table}.source_file = excluded.source_file "
+        f"OR (excluded.decision_date IS NOT NULL AND excluded.decision_date >= {table}.decision_date)"
+    )
+
+
+def write_cases(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> tuple[int, int]:
+    """Upsert ROWS_PER_STMT rows a statement and STMTS_PER_REQUEST statements a
+    request, idling `pause` seconds between requests. Returns (sent, written):
+    `written` is what the database says it inserted or updated, so the rows a
+    later decision kept are `sent - written`."""
     placeholders = "(" + ",".join("?" * len(COLUMNS)) + ")"
-    head = f"INSERT OR REPLACE INTO {table} ({','.join(COLUMNS)}) VALUES "
+    head = f"INSERT INTO {table} ({','.join(COLUMNS)}) VALUES "
+    tail = upsert_tail(table)
     pending: list[dict] = []
     batch: list[dict] = []
     sent = 0
+    written = 0
     t0 = time.time()
 
     def flush_stmt() -> None:
         nonlocal batch
         if not batch:
             return
-        pending.append(stmt(head + ",".join([placeholders] * len(batch)),
+        pending.append(stmt(head + ",".join([placeholders] * len(batch)) + tail,
                             [row[c] for row in batch for c in COLUMNS]))
         batch = []
 
     def flush_request() -> None:
-        nonlocal pending
+        nonlocal pending, written
         if not pending:
             return
-        db.pipeline(pending + [{"type": "close"}])
+        out = db.pipeline(pending + [{"type": "close"}])
+        for r in out.get("results", []):
+            res = (r.get("response") or {}).get("result") or {}
+            written += int(res.get("affected_row_count") or 0)
         pending = []
         if pause > 0:
             time.sleep(pause)
@@ -1040,8 +1066,10 @@ def write_cases(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> in
                     log(f"    {sent:>9,} rows  ({rate:,.0f}/s)")
     flush_stmt()
     flush_request()
-    log(f"  wrote {sent:,} rows in {time.time() - t0:,.0f}s")
-    return sent
+    kept = sent - written
+    log(f"  wrote {written:,} of {sent:,} rows in {time.time() - t0:,.0f}s"
+        + (f"; {kept:,} held a later decision from another file and were kept" if kept else ""))
+    return sent, written
 
 
 # ---------------------------------------------------------------------------
@@ -1374,15 +1402,20 @@ def main() -> int:
         db.script(index_ddl(table))
         written = 0
         try:
-            written = write_cases(db, table, iter_cases(path, cfg, stats), pause=write_pause())
+            sent, written = write_cases(db, table, iter_cases(path, cfg, stats), pause=write_pause())
             stats.report()
             have = count_for_file(db, table, name)
-            log(f"  VERIFY count(*) where source_file = {name}: {have:,} (read {stats.kept:,})")
-            if have != stats.kept:
+            # A case another file holds with a later decision keeps that row
+            # (upsert_tail), so this file's own count is what was read less
+            # what was kept, and the database's affected-row count says which.
+            expect = stats.kept - (sent - written)
+            log(f"  VERIFY count(*) where source_file = {name}: {have:,} "
+                f"(read {stats.kept:,}, kept from newer files {sent - written:,})")
+            if have != expect:
                 raise SystemExit(
                     f"FATAL: reconcile failed for {name}: table holds {have:,} rows "
-                    f"for this file, parser read {stats.kept:,} unique cases. "
-                    "Freshness NOT stamped."
+                    f"for this file, expected {expect:,} ({stats.kept:,} read, "
+                    f"{sent - written:,} kept from newer files). Freshness NOT stamped."
                 )
             if stats.kept == 0:
                 raise SystemExit(f"FATAL: {name} yielded no cases. Refusing to report success.")

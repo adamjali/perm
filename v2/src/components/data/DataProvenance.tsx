@@ -102,7 +102,7 @@ function label(d: string): string {
     "perm-case-status": "Per-case statuses",
     "pwd-status": "Wage request statuses",
     "lca-status": "LCA statuses",
-    "seasonal-status": "H-2A and H-2B statuses",
+    "seasonal-status": "H-2A, H-2B and CW-1 statuses",
     "pw-disclosure": "Wage determinations",
     "lca-disclosure": "LCA disclosures",
     "policy-notices": "Federal Register notices",

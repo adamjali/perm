@@ -145,7 +145,7 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     path: "/case-search",
     label: "Search every DOL program at once",
     blurb:
-      "One employer, law firm, worksite state or occupation searched across PERM, prevailing wage requests, H-1B LCAs and H-2A and H-2B filings together. DOL runs them all off one case-number counter but publishes them separately, so an employer's record is normally split across several searches; this returns them together, each result labelled with the program it came from.",
+      "One employer, law firm, worksite state or occupation searched across PERM, prevailing wage requests, H-1B LCAs and H-2A, H-2B and CW-1 filings together. DOL runs them all off one case-number counter but publishes them separately, so an employer's record is normally split across several searches; this returns them together, each result labelled with the program it came from.",
   },
   {
     path: "/calculators",

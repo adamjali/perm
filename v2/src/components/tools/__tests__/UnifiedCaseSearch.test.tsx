@@ -134,14 +134,14 @@ describe("the answer", () => {
     expect(screen.getByText("Only published PERM cases are in this answer.")).toBeInTheDocument();
   });
 
-  it("shows the worker and job under the title, and marks a row from the FY2016 to FY2023 file", () => {
+  it("shows the worker and job under the title, and marks a row from the FY2008 to FY2023 file", () => {
     renderIt();
     fireEvent.change(screen.getByLabelText("Employer or case number"), { target: { value: "acme" } });
     fireEvent.click(screen.getByRole("button", { name: "Search" }));
     expect(screen.getByText("Seattle · Custom Computer Programming Services")).toBeInTheDocument();
     expect(screen.getByText(/Worker: India citizen, H-1B at filing, Master's in Computer Science/)).toBeInTheDocument();
     expect(screen.getByText(/Job requires: Bachelor's/)).toBeInTheDocument();
-    expect(screen.getAllByText("FY2016 to FY2023 file")).toHaveLength(1);
+    expect(screen.getAllByText("FY2008 to FY2023 file")).toHaveLength(1);
   });
 
   it("orders the table as asked and says whether the order covers every match", () => {

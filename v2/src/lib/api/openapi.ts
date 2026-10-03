@@ -21,7 +21,7 @@ export const API_BASE = "https://permtracker.app/v1";
 export const ENDPOINTS: EndpointDoc[] = [
   {
     path: "/cases/{caseNumber}",
-    summary: "One case by number: its status, filing date, employer and, once decided, DOL's record. Covers PERM, prevailing wage, H-1B LCA and H-2A/H-2B.",
+    summary: "One case by number: its status, filing date, employer and, once decided, DOL's record. Covers PERM, prevailing wage, H-1B LCA and H-2A, H-2B and CW-1 (applications, job orders and wage requests); a seasonal case adds its workers, work period and worksite, and the job as DOL accepted it.",
     example: "/cases/G-100-26045-123456",
     params: [{ name: "caseNumber", in: "path", required: true, description: "As DOL prints it, e.g. G-100-26045-123456 or P-100-26045-123456." }],
     counted: true,

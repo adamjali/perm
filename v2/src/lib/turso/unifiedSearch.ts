@@ -624,7 +624,7 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
 
   // Every read is caught individually: one program's table being unavailable
   // should narrow the answer, never blank the page.
-  const [permPub, permLive, pwdLive, pwdPub, lcaLive, lcaPub, seasonalLive] = await Promise.all([
+  const [permPub, permLive, pwdLive, pwdPub, lcaLive, lcaPub, seasonalLive, seasonalPub] = await Promise.all([
     askPublished("perm")
       ? readPermPublished({ lead: args.lead, narrow, limit: PER_SOURCE }).catch(none<PermSearchRow>)
       : none<PermSearchRow>(),
@@ -643,9 +643,11 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
     flagPublished("pwd"),
     flagLive("lca"),
     flagPublished("lca"),
-    // H-2A and H-2B: the live half only. No quarterly file is loaded, so a
-    // state, occupation or firm lead (published-only) finds nothing here.
+    // H-2A, H-2B and CW-1: the live record and DOL's quarterly files, which
+    // share one table (`seasonal_cases`), so a state, occupation or firm lead
+    // reaches them like any program's published half.
     flagLive("seasonal"),
+    flagPublished("seasonal"),
   ]);
 
   const collected = [
@@ -656,9 +658,10 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
     ...lcaPub.rows.map((r) => fromFlagDisclosed(r, "lca")),
     ...lcaLive.rows.map((r) => fromFlagLive(r, "lca")),
     ...seasonalLive.rows.map((r) => fromFlagLive(r, "seasonal")),
+    ...seasonalPub.rows.map((r) => fromFlagDisclosed(r, "seasonal")),
   ];
 
-  const halves = [permPub, permLive, pwdPub, pwdLive, lcaPub, lcaLive, seasonalLive];
+  const halves = [permPub, permLive, pwdPub, pwdLive, lcaPub, lcaLive, seasonalLive, seasonalPub];
   const capped = halves.some((half) => half.rows.length >= PER_SOURCE);
   // At least one source applied its filters inside a window of this
   // employer's newest filings rather than over everything they have filed.

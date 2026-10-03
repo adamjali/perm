@@ -54,3 +54,65 @@ describe("H-2A and H-2B numbers", () => {
     expect(pythonFinalSet("seasonal")).toEqual(new Set(SEASONAL_FINAL_STATUSES));
   });
 });
+
+const { one } = (await import("../client")) as unknown as { one: ReturnType<typeof vi.fn> };
+const { lookupSeasonalRecord, lookupSeasonalPosting, getSeasonalPublishedSummary } = await import("../seasonalCases");
+
+describe("the published record and the accepted job", () => {
+  it("reads an application's row from seasonal_cases, workers and period included", async () => {
+    one.mockReset();
+    one.mockResolvedValueOnce({
+      case_number: "H-300-25301-000123", case_status: "DETERMINATION ISSUED - PARTIAL CERTIFICATION",
+      received_date: "2025-10-28", decision_date: "2025-11-20", employer_name: "MCRP Farms",
+      employer_slug: "mcrp-farms", job_title: "Farmworker", soc_title: "Farmworkers", wage: "17.5",
+      wage_unit: "Hour", worksite_city: "Danielsville", worksite_state: "GA", attorney_name: null,
+      visa_class: "H-2A", source_file: "H-2A_Disclosure_Data_FY2026_Q4.xlsx", workers: "40",
+      workers_certified: 35, begin_date: "2026-01-02", end_date: "2026-11-01", worksite_county: "Madison",
+    });
+    const r = await lookupSeasonalRecord("h-300-25301-000123");
+    expect(one.mock.calls[0]?.[0]).toMatch(/FROM seasonal_cases WHERE case_number = \?/);
+    expect(one.mock.calls[0]?.[0]).toContain("workers_certified");
+    expect(r).toMatchObject({ wage: 17.5, workers: 40, workersCertified: 35, worksiteCounty: "Madison", attorneyName: null });
+  });
+
+  it("reads an H-2B or CW-1 wage request from the prevailing wage file, which has no workers", async () => {
+    one.mockReset();
+    one.mockResolvedValueOnce(null);
+    await lookupSeasonalRecord("P-400-26272-268643");
+    expect(one.mock.calls[0]?.[0]).toMatch(/FROM pwd_cases WHERE case_number = \?/);
+    expect(one.mock.calls[0]?.[0]).not.toContain("workers");
+  });
+
+  it("asks nothing for a job order, which has no published file, and degrades to null on a read error", async () => {
+    one.mockReset();
+    expect(await lookupSeasonalRecord("JO-A-300-26271-264525")).toBeNull();
+    expect(one).not.toHaveBeenCalled();
+    one.mockRejectedValueOnce(new Error("no such table: seasonal_cases"));
+    expect(await lookupSeasonalRecord("H-400-26050-650195")).toBeNull();
+  });
+
+  it("reads the accepted job for applications and job orders, never for a wage request", async () => {
+    one.mockReset();
+    one.mockResolvedValueOnce({ case_number: "JO-A-300-26271-264525", feed: "jo", employer_name: "MCRP Farms",
+      workers: 12, wage: 16.08, wage_unit: "Hour", accepted_date: "2026-09-30" });
+    const p = await lookupSeasonalPosting("JO-A-300-26271-264525");
+    expect(one.mock.calls[0]?.[0]).toMatch(/FROM seasonal_postings WHERE case_number = \?/);
+    expect(p).toMatchObject({ feed: "jo", workers: 12, wage: 16.08, acceptedDate: "2026-09-30", pwdNumber: null });
+    one.mockReset();
+    expect(await lookupSeasonalPosting("P-400-26272-268643")).toBeNull();
+    expect(one).not.toHaveBeenCalled();
+  });
+
+  it("lists one summary per loaded visa and leaves out a visa with no rows", async () => {
+    one.mockReset();
+    one.mockImplementation(async (_sql: string, args: unknown[]) => {
+      const key = String(args[0]);
+      if (key.endsWith("h2a")) return { json: JSON.stringify({ rows: 20638, latestDecision: "2025-09-30", files: { "a.xlsx": 20638 } }), computed_at: 1 };
+      if (key.endsWith("h2b")) return { json: JSON.stringify({ rows: 0, files: {} }), computed_at: 1 };
+      return null;
+    });
+    const out = await getSeasonalPublishedSummary();
+    expect(out.map((x) => x.visa)).toEqual(["H-2A"]);
+    one.mockReset();
+  });
+});

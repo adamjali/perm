@@ -213,9 +213,23 @@ export const OUTCOME_STATUSES: {
       "REDETERMINATION MODIFIED",
       "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
       "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
+      // seasonal_cases, DOL's quarterly files, which print the decision as
+      // "Determination Issued - ...". A certification DOL returned (H-2B's
+      // "(Returned)") was still granted.
+      "DETERMINATION ISSUED - CERTIFICATION",
+      "DETERMINATION ISSUED - CERTIFICATION (EXPIRED)",
+      "DETERMINATION ISSUED - CERTIFICATION (RETURNED)",
+      "DETERMINATION ISSUED - PARTIAL CERTIFICATION",
+      "DETERMINATION ISSUED - PARTIAL CERTIFICATION (EXPIRED)",
+      "DETERMINATION ISSUED - PARTIAL CERTIFICATION (RETURNED)",
     ],
-    denied: ["DENIED"],
-    withdrawn: ["WITHDRAWN", "FULL CERTIFICATION - WITHDRAWN", "PARTIAL CERTIFICATION - WITHDRAWN"],
+    denied: ["DENIED", "DETERMINATION ISSUED - DENIED", "DETERMINATION ISSUED - REJECTED"],
+    withdrawn: [
+      "WITHDRAWN",
+      "FULL CERTIFICATION - WITHDRAWN",
+      "PARTIAL CERTIFICATION - WITHDRAWN",
+      "DETERMINATION ISSUED - WITHDRAWN",
+    ],
   },
 };
 
@@ -1012,7 +1026,8 @@ export const FLAG_TABLES: Record<FlagProgramKey, FlagTables> = {
     visaClass: "PERM",
   },
   lca: { live: "lca_case_status", published: "lca_cases" },
-  seasonal: { live: "seasonal_case_status" },
+  // DOL's H-2A, H-2B and CW-1 files share one table, the visa on each row.
+  seasonal: { live: "seasonal_case_status", published: "seasonal_cases" },
 };
 
 export async function readFlagLive(
@@ -1162,7 +1177,7 @@ export async function readFlagPublished(
   const empty: SliceResult<FlagDisclosedRow> = { rows: [], windowed: false };
   if (narrow.outcome === "open") return empty;
   const t = FLAG_TABLES[program];
-  // No file loaded for the program (H-2A and H-2B): nothing published to read.
+  // A program with no published table: nothing published to read.
   const published = t.published;
   if (!published) return empty;
   const bucket = narrow.outcome ? OUTCOME_STATUSES[program][narrow.outcome] : undefined;

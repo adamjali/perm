@@ -95,8 +95,9 @@ export const SEASONAL_PROGRAM: FlagBrowserProgram = {
   nouns: "H-2A, H-2B and CW-1 filings",
   pendingLabel: "In process",
   decidedLabel: "Decided",
-  // No quarterly file is loaded for these yet, so no wage column ever shows.
-  wageLabel: "Wage",
+  // DOL's quarterly H-2A, H-2B and CW-1 files (`seasonal_cases`): the wage the
+  // employer offered, in the unit the file quotes (an hour, mostly).
+  wageLabel: "Wage offered",
   article: "an",
   showForm: true,
 };

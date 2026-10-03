@@ -12,7 +12,7 @@ import { getCaseFieldOptions, getPermHistoryYears } from "@/lib/turso/caseSearch
 import { getLiveRemainderSummary } from "@/lib/turso/liveCases";
 import { getPwdSummary, getPwdDisclosureSummary } from "@/lib/turso/pwdCases";
 import { getLcaSummary, getLcaDisclosureSummary } from "@/lib/turso/lcaCases";
-import { getSeasonalSummary } from "@/lib/turso/seasonalCases";
+import { getSeasonalPublishedSummary, getSeasonalSummary } from "@/lib/turso/seasonalCases";
 import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { MoreText } from "@/components/data/MoreText";
 import { formatInt } from "@/lib/format";
@@ -35,7 +35,7 @@ import { formatInt } from "@/lib/format";
 
 const TITLE = "Search Every DOL Case";
 const DESCRIPTION =
-  "One search across PERM, prevailing wage requests, H-1B LCAs and H-2A and H-2B: every filing an employer has made, with status, dates and wage.";
+  "One search across PERM, wage requests, H-1B LCAs, H-2A, H-2B and CW-1: every filing an employer has made, with status, dates and wage.";
 
 export const metadata: Metadata = withSocialCard({
   title: TITLE,
@@ -54,7 +54,7 @@ export const metadata: Metadata = withSocialCard({
 export const revalidate = 86400;
 
 export default async function CaseSearchPage() {
-  const [permMeta, permLive, pwd, pwdFile, lca, lcaFile, seasonal, historyYears, fieldOptions] = await Promise.all([
+  const [permMeta, permLive, pwd, pwdFile, lca, lcaFile, seasonal, seasonalFiles, historyYears, fieldOptions] = await Promise.all([
     getMeta().catch(() => null),
     getLiveRemainderSummary().catch(() => null),
     getPwdSummary().catch(() => null),
@@ -62,6 +62,7 @@ export default async function CaseSearchPage() {
     getLcaSummary().catch(() => null),
     getLcaDisclosureSummary().catch(() => null),
     getSeasonalSummary().catch(() => null),
+    getSeasonalPublishedSummary().catch(() => []),
     getPermHistoryYears(),
     getCaseFieldOptions(),
   ]);
@@ -104,9 +105,11 @@ export default async function CaseSearchPage() {
     },
     {
       label: "H-2A, H-2B and CW-1",
-      n: seasonal?.total ?? null,
+      n: seasonal || seasonalFiles.length
+        ? (seasonal?.total ?? 0) + seasonalFiles.reduce((n, f) => n + f.summary.rows, 0)
+        : null,
       href: "/seasonal-cases",
-      note: "Seasonal farm and non-farm filings and their wage requests, from DOL's daily check.",
+      note: "Seasonal farm and non-farm work and Northern Mariana Islands jobs, with their wage requests and job orders.",
     },
   ];
 

@@ -84,10 +84,61 @@ async function programLine(program: "perm" | "pwd" | "lca", range: { lo: string;
   };
 }
 
+/** An hourly wage outside this range is a typo or another unit, not a seasonal wage. */
+const MIN_HOURLY = 5;
+const MAX_HOURLY = 200;
+
+/**
+ * One employer's H-2A, H-2B and CW-1 record: the applications DOL published
+ * (`seasonal_cases`), those still open in the live record, the workers DOL
+ * certified, and the median hourly wage offered. Null when it has none, so
+ * the page shows no empty seasonal line for the many employers that never
+ * file one.
+ */
+async function seasonalLine(range: { lo: string; hi: string }): Promise<ProgramLine | null> {
+  const where = "employer_slug >= ? AND employer_slug < ?";
+  const hourly = "wage_unit IN ('HOUR', 'HOURLY') AND wage BETWEEN ? AND ?";
+  const [counts, live] = await Promise.all([
+    one<{ n: number | string; wage_n: number | string; certified: number | string | null }>(
+      `SELECT COUNT(*) AS n, SUM(CASE WHEN ${hourly} THEN 1 ELSE 0 END) AS wage_n, ` +
+        `SUM(workers_certified) AS certified FROM seasonal_cases INDEXED BY seasonal_cases_emp WHERE ${where}`,
+      [MIN_HOURLY, MAX_HOURLY, range.lo, range.hi],
+    ),
+    one<{ n: number | string }>(
+      `SELECT COUNT(*) AS n FROM seasonal_case_status INDEXED BY seasonal_case_status_emp WHERE ${where} AND is_final = 0`,
+      [range.lo, range.hi],
+    ).catch(() => null),
+  ]);
+  const published = Number(counts?.n ?? 0);
+  const pending = live ? Number(live.n) : null;
+  if (published === 0 && !pending) return null;
+  const wageN = Number(counts?.wage_n ?? 0);
+  let median: number | null = null;
+  if (wageN > 0) {
+    const mid = await one<{ wage: number | string }>(
+      `SELECT wage FROM seasonal_cases INDEXED BY seasonal_cases_emp WHERE ${where} AND ${hourly} ` +
+        "ORDER BY wage LIMIT 1 OFFSET ?",
+      [range.lo, range.hi, MIN_HOURLY, MAX_HOURLY, medianOffset(wageN)],
+    );
+    median = mid ? Number(mid.wage) : null;
+  }
+  return {
+    program: "seasonal",
+    published,
+    pending,
+    medianAnnualWage: null,
+    wageN,
+    medianHourlyWage: median,
+    workersCertified: counts?.certified === null || counts?.certified === undefined ? null : Number(counts.certified),
+  };
+}
+
 export interface EmployerPrograms {
   perm: ProgramLine;
   pwd: ProgramLine;
   lca: ProgramLine;
+  /** H-2A, H-2B and CW-1, from `seasonal_cases` and the live table; null when the employer has none. */
+  seasonal: ProgramLine | null;
   /** The slug prefix every read was bounded by. */
   matchedPrefix: string;
 }
@@ -118,10 +169,11 @@ export const employerSlugRange = cache(async (slug: string): Promise<{ lo: strin
 export const getEmployerPrograms = cache(async (slug: string): Promise<EmployerPrograms | null> => {
   const range = await employerSlugRange(slug);
   if (!range) return null;
-  const [perm, pwd, lca] = await Promise.all([
+  const [perm, pwd, lca, seasonal] = await Promise.all([
     programLine("perm", range),
     programLine("pwd", range),
     programLine("lca", range),
+    seasonalLine(range).catch(() => null),
   ]);
-  return { perm, pwd, lca, matchedPrefix: range.lo };
+  return { perm, pwd, lca, seasonal, matchedPrefix: range.lo };
 });

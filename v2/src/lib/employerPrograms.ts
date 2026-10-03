@@ -12,7 +12,7 @@
 
 import { formatDollars } from "@/lib/format";
 
-export type EmployerProgramKey = "perm" | "pwd" | "lca";
+export type EmployerProgramKey = "perm" | "pwd" | "lca" | "seasonal";
 
 export interface ProgramLine {
   program: EmployerProgramKey;
@@ -24,6 +24,14 @@ export interface ProgramLine {
   medianAnnualWage: number | null;
   /** How many published rows carried a usable wage. */
   wageN: number;
+  /**
+   * Seasonal work only: the median HOURLY wage. An H-2A or H-2B job lasts
+   * weeks or months, so a wage annualised over 2,080 hours would describe a
+   * year nobody works; the hourly figure is the one DOL's files quote.
+   */
+  medianHourlyWage?: number | null;
+  /** Seasonal work only: workers DOL certified across the published rows. */
+  workersCertified?: number | null;
 }
 
 /** Below this many wages a median is one or two offers, not a figure. */
@@ -33,6 +41,7 @@ export const PROGRAM_LABEL: Record<EmployerProgramKey, string> = {
   perm: "PERM (green card)",
   pwd: "Prevailing wage requests",
   lca: "H-1B labor condition applications",
+  seasonal: "H-2A, H-2B and CW-1 (seasonal work)",
 };
 
 /** The middle row of `n` rows sorted ascending, as an OFFSET. */

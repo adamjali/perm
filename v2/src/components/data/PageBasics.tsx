@@ -289,7 +289,7 @@ export const BASICS: Record<string, BasicsEntry[]> = {
   ],
   "seasonal-cases": [
     {
-      q: "What are H-2A and H-2B?",
+      q: "What are H-2A, H-2B and CW-1?",
       a: (
         <>
           Temporary work visas. H-2A covers seasonal or temporary farm work;
@@ -297,10 +297,15 @@ export const BASICS: Record<string, BasicsEntry[]> = {
           intermittent need, usually up to nine months (20 CFR 655.6). Before
           USCIS can approve either petition, the Department of Labor must
           certify that no qualified U.S. workers are available and that hiring
-          won&apos;t lower local wages (20 CFR 655.100). Numbers start with{" "}
-          <b className="font-bold">H-300</b> (H-2A, form ETA-9142A),{" "}
-          <b className="font-bold">H-400</b> (H-2B, ETA-9142B) or{" "}
-          <b className="font-bold">P-400</b> (the wage request for an H-2B job).
+          won&apos;t lower local wages (20 CFR 655.100). CW-1 is temporary work
+          in the Northern Mariana Islands, certified by DOL on form ETA-9142C.
+          Numbers start with <b className="font-bold">H-300</b> (H-2A, form
+          ETA-9142A), <b className="font-bold">JO-A-300</b> (the H-2A job
+          order, ETA-790A), <b className="font-bold">H-400</b> (H-2B,
+          ETA-9142B), <b className="font-bold">C-500</b> (CW-1), or{" "}
+          <b className="font-bold">P-400</b> and{" "}
+          <b className="font-bold">P-500</b> (the wage request for an H-2B or
+          CW-1 job).
         </>
       ),
     },
@@ -334,26 +339,27 @@ export const BASICS: Record<string, BasicsEntry[]> = {
       ),
     },
     {
-      q: "Why doesn't this show the wage or the number of workers?",
+      q: "Where do the wage and the number of workers come from?",
       a: (
         <>
-          DOL&apos;s case lookup never returns them. They&apos;re in its
-          quarterly H-2A and H-2B disclosure files, which PERM Tracker doesn&apos;t
-          load yet, so every row here is the status, employer, job title and
-          filing date DOL&apos;s own system reports.
+          DOL&apos;s case lookup never returns them. Once a case is decided they
+          come from DOL&apos;s quarterly H-2A, H-2B and CW-1 disclosure files,
+          and for an H-2A or H-2B job DOL has accepted but not yet decided, from
+          its SeasonalJobs feed. A case newer than both shows the status,
+          employer, job title and filing date DOL&apos;s own system reports.
         </>
       ),
     },
   ],
   "case-search": [
     {
-      q: "Can I search PERM, wage requests and LCAs at once?",
+      q: "Can I search PERM, wage requests, LCAs and H-2A, H-2B and CW-1 at once?",
       a: (
         <>
-          That is what this page is for. DOL runs the three programs on one
-          case-number counter but publishes them in three separate files, so an
-          employer&apos;s record is normally split across three searches. Here
-          one employer name reaches all three, and each result says which
+          That is what this page is for. DOL runs these programs on one
+          case-number counter but publishes them in separate files, so an
+          employer&apos;s record is normally split across several searches. Here
+          one employer name reaches them all, and each result says which
           program it came from.
         </>
       ),

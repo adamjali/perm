@@ -216,7 +216,7 @@ export const GLOSSARY: GlossaryTerm[] = [
     slug: "flag",
     aka: ["Foreign Labor Application Gateway"],
     definition:
-      "DOL's filing system for PERM, prevailing wage, LCA, H-2A and H-2B cases, and the source of the status words on this site. Its case-status search answers by case number; it publishes no definitions of the words it returns.",
+      "DOL's filing system for PERM, prevailing wage, LCA, H-2A, H-2B and CW-1 cases, and the source of the status words on this site. Its case-status search answers by case number; it publishes no definitions of the words it returns.",
     see: [{ label: "Every status, explained", href: "/perm-case-statuses" }],
   },
   {

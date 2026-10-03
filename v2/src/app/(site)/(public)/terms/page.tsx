@@ -95,7 +95,7 @@ export default function TermsPage() {
             <ul className="list-disc list-inside text-foreground/80 space-y-2 ml-4 mt-4">
               <li>
                 <strong>Public lookups and data.</strong> Anyone, with or without an
-                account, may look up PERM, prevailing wage, LCA, H-2A and H-2B case
+                account, may look up PERM, prevailing wage, LCA, H-2A, H-2B and CW-1 case
                 numbers; view data published by the Department of Labor (DOL), U.S.
                 Citizenship and Immigration Services (USCIS) and the Department of
                 State, and figures derived from it; read estimates; and subscribe to

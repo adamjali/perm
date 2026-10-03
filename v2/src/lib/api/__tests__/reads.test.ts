@@ -21,10 +21,21 @@ vi.mock("@/lib/turso/client", () => ({ one: vi.fn() }));
 vi.mock("@/lib/turso/processingTimes", () => ({ getProcessingTimes: vi.fn() }));
 vi.mock("@/lib/turso/pwdCases", () => ({ pwd: {} }));
 vi.mock("@/lib/turso/lcaCases", () => ({ lca: {} }));
-vi.mock("@/lib/turso/seasonalCases", () => ({ seasonal: {} }));
+const seasonalLookup = vi.fn();
+const seasonalDisclosed = vi.fn();
+const seasonalRecord = vi.fn();
+const seasonalPosting = vi.fn();
+vi.mock("@/lib/turso/seasonalCases", () => ({
+  seasonal: {
+    lookup: (...a: unknown[]) => seasonalLookup(...a),
+    lookupDisclosed: (...a: unknown[]) => seasonalDisclosed(...a),
+  },
+  lookupSeasonalRecord: (...a: unknown[]) => seasonalRecord(...a),
+  lookupSeasonalPosting: (...a: unknown[]) => seasonalPosting(...a),
+}));
 vi.mock("@/lib/turso/permEstimate", () => ({ estimatePermCase: vi.fn(), loadPermEstimateContext: vi.fn() }));
 
-import { readEntity, searchEntities } from "../reads";
+import { readCase, readEntity, searchEntities } from "../reads";
 
 const adobe = {
   slug: "adobe-inc",
@@ -135,5 +146,49 @@ describe("fields by kind", () => {
     if (!r.ok) return;
     expect(r.data.state).toBe("NY");
     expect(r.data).not.toHaveProperty("medianAnnualWage");
+  });
+});
+
+describe("readCase, H-2A, H-2B and CW-1", () => {
+  beforeEach(() => {
+    for (const f of [seasonalLookup, seasonalDisclosed, seasonalRecord, seasonalPosting]) f.mockReset().mockResolvedValue(null);
+  });
+
+  it("answers a live H-2A case with the job DOL accepted, before any decision", async () => {
+    seasonalLookup.mockResolvedValue({
+      caseNumber: "H-300-26272-266803", status: "IN PROCESS", isFinal: false, filingDate: "2026-09-29",
+      employerName: "MCRP Farms", jobTitle: "Farmworker", lastCheckedAt: "2026-10-03T12:00:00Z",
+    });
+    seasonalPosting.mockResolvedValue({
+      caseNumber: "H-300-26272-266803", feed: "h2a", employerName: "MCRP Farms", jobTitle: "Farmworker",
+      workers: 40, workersForeign: 40, beginDate: "2026-11-27", endDate: "2027-06-30", wage: 16.08, wageUnit: "HOUR",
+      worksiteCity: "Danielsville", worksiteCounty: "Madison", worksiteState: "GA", jobOrderNumber: "JO-A-300-26271-264525",
+      pwdNumber: null, submittedDate: "2026-09-29", acceptedDate: "2026-10-01",
+    });
+    const out = await readCase("H-300-26272-266803");
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.data).toMatchObject({ program: "seasonal", status: "IN PROCESS", isFinal: false, decision: null });
+    expect(out.data.accepted).toMatchObject({ wage: 16.08, wageUnit: "HOUR", workBegins: "2026-11-27", jobOrderNumber: "JO-A-300-26271-264525" });
+  });
+
+  it("answers an H-2B wage request from DOL's prevailing wage file when no live row exists", async () => {
+    seasonalRecord.mockResolvedValue({
+      caseNumber: "P-400-25100-000001", status: "DETERMINATION ISSUED", receivedDate: "2025-04-10",
+      decisionDate: "2025-06-02", employerName: "Shore Crabs LLC", employerSlug: "shore-crabs-llc",
+      jobTitle: "Crab Picker", socTitle: "Meat, Poultry, and Fish Cutters", wage: 15.2, wageUnit: "HOUR",
+      workers: null, workersCertified: null, beginDate: null, endDate: null, worksiteCity: "Hoopers Island",
+      worksiteCounty: null, worksiteState: "MD", attorneyName: null, visaClass: "H-2B", sourceFile: "PW.xlsx",
+    });
+    const out = await readCase("P-400-25100-000001");
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.data).toMatchObject({ status: "DETERMINATION ISSUED", isFinal: true, employer: "Shore Crabs LLC", accepted: null });
+    expect(out.data.decision).toMatchObject({ decisionDate: "2025-06-02", wage: 15.2, visaClass: "H-2B" });
+  });
+
+  it("is not found only when no source holds the case", async () => {
+    const out = await readCase("C-500-26271-263466");
+    expect(out.ok).toBe(false);
   });
 });

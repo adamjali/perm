@@ -115,8 +115,8 @@ function CaseNumberAnatomy({ id }: { id: string }) {
       <p className="sr-only">
         A case number has three parts: the program and office (G-100 is PERM),
         the day it was filed (26240 is the 240th day of 2026), and DOL&apos;s
-        serial. PERM (G-), wage request (P-), LCA (I-), H-2A and H-2B (H-)
-        numbers all work, and so does an employer&apos;s name.
+        serial. PERM (G-), wage request (P-), LCA (I-), H-2A and H-2B (H-, JO-A-)
+        and CW-1 (C-) numbers all work, and so does an employer&apos;s name.
       </p>{" "}
       {/* A grid, so each label sits under its own part. */}
       <div aria-hidden="true" className="grid w-max grid-cols-[auto_auto_auto_auto_auto] items-center gap-x-1.5 font-mono [&>*]:min-w-0">
