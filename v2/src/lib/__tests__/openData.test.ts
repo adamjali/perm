@@ -100,6 +100,31 @@ describe("open data: DOL processing times", () => {
     ]);
   });
 
+  it("keeps both wage readings DOL published under one PERM date, and writes the PERM half once", () => {
+    // Sep 30 2026: DOL moved only its wage figures; the PERM date stayed Sep 22.
+    const before = reading("2026-09-22", { pwdAsOf: "2026-08-31", fetchedAt: Date.UTC(2026, 8, 22) });
+    const after = reading("2026-09-22", {
+      pwdAsOf: "2026-09-30",
+      pwdPermBacklog: [{ receiptMonth: "2025-12", remainingRequests: 3900 }],
+      fetchedAt: Date.UTC(2026, 8, 30),
+    });
+    const rows = dolRows([after, before]);
+    expect(rows.filter((r) => r.table === "perm_queue" && r.row === "Analyst Review")).toHaveLength(1);
+    expect(rows.filter((r) => r.table === "pwd_perm_backlog").map((r) => [r.as_of, r.month])).toEqual([
+      ["2026-08-31", "2025-11"],
+      ["2026-09-30", "2025-12"],
+    ]);
+  });
+
+  it("writes a wage reading once when only the PERM figures moved", () => {
+    const rows = dolRows([
+      reading("2026-08-31", { pwdAsOf: "2026-08-31", fetchedAt: Date.UTC(2026, 8, 5) }),
+      reading("2026-09-22", { pwdAsOf: "2026-08-31", fetchedAt: Date.UTC(2026, 8, 22) }),
+    ]);
+    expect(rows.filter((r) => r.table === "pwd_perm_backlog")).toHaveLength(1);
+    expect(rows.filter((r) => r.table === "perm_average_days").map((r) => r.as_of)).toEqual(["2026-08-31", "2026-09-22"]);
+  });
+
   it("never writes DOL's '--' as a cell a spreadsheet would treat as a formula", () => {
     expect(dolCsv([reading("2026-09-30")])).not.toMatch(/'?--/);
   });

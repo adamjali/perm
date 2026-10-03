@@ -61,7 +61,7 @@ BUSY_LOG = pathlib.Path(os.environ.get("PT_BUSY_LOG", "/var/log/permtracker-busy
 CONFIG = pathlib.Path(os.environ.get("PT_DEFEND_CONFIG", "/etc/permtracker/defend.env"))
 APP_ENV = pathlib.Path("/srv/permtracker/app/env/production.env")
 
-PEOPLE_BUSY = 2            # people who drew the busy page ...
+PEOPLE_BUSY = 5            # people who drew the busy page (owner, Oct 3 2026; was 2) ...
 PEOPLE_WINDOW = 600        # ... in this many seconds
 FULL_SHARE = 0.02          # a minute is "full" at 2% of page requests answered 503,
 FULL_MIN = 20              # and at least 20 of them,
@@ -302,6 +302,14 @@ UNDO = ("To undo by hand: Cloudflare, Security, WAF, custom rules: delete the ru
         "touch /srv/permtracker/health/defend.off on the server.")
 
 
+def in_trouble(people: int, full: int) -> bool:
+    """People are being turned away: enough of them drew the busy page, or the
+    app was full minute after minute. Two people set off Under Attack Mode five
+    times on Oct 2 2026, and the busy page itself already tells a person to try
+    again in a moment, so the bar is five."""
+    return people >= PEOPLE_BUSY or full >= FULL_MINUTES
+
+
 def main() -> int:
     now = time.time()
     try:
@@ -311,7 +319,7 @@ def main() -> int:
     reqs = page_requests(tail_lines(DEFEND_LOG), now - max(SOURCE_WINDOW, 60 * FULL_MINUTES))
     people = people_busy(tail_lines(BUSY_LOG, 2 << 20), now)
     full = full_minutes(reqs, now)
-    trouble = people >= PEOPLE_BUSY or full >= FULL_MINUTES
+    trouble = in_trouble(people, full)
     source = find_source(reqs, now) if trouble else None
     acts = decide(state, trouble, source, now)
     if not trouble:

@@ -127,20 +127,34 @@ export interface DolRow {
 const DOL_COLUMNS = ["as_of", "table", "row", "month", "calendar_days", "remaining_requests"] as const;
 
 /**
- * One row per published value, oldest reading first. A blank month means DOL
+ * One row per published value, oldest date first. A blank month means DOL
  * printed "--" that day; the cell is kept so the row's absence isn't mistaken
  * for a gap in our record.
+ *
+ * Each half is written once per DOL date. A reading carries both halves, and
+ * two readings can share a PERM date (DOL moved only its wage figures, Sep 30
+ * 2026) or a wage date (only the PERM figures moved), which used to repeat
+ * the shared half. Where two readings disagree about one date, the one we
+ * recorded later wins.
  */
 export function dolRows(readings: readonly DolReading[]): DolRow[] {
-  const out: DolRow[] = [];
-  const sorted = [...readings].sort((a, b) => a.permAsOf.localeCompare(b.permAsOf));
-  for (const r of sorted) {
+  const time = (r: DolReading) => (Number.isFinite(r.fetchedAt) ? r.fetchedAt : 0);
+  const byTime = [...readings].sort((a, b) => time(a) - time(b));
+  const perm = new Map<string, DolReading>();
+  const pwd = new Map<string, DolReading>();
+  for (const r of byTime) {
+    perm.set(r.permAsOf, r);
+    if (r.pwdAsOf) pwd.set(r.pwdAsOf, r);
+  }
+  const blocks: Array<{ asOf: string; order: number; rows: DolRow[] }> = [];
+  for (const [asOf, r] of perm) {
+    const rows: DolRow[] = [];
     for (const q of r.permQueues) {
-      out.push({ as_of: r.permAsOf, table: "perm_queue", row: q.queue, month: q.priorityDate ?? "", calendar_days: "", remaining_requests: "" });
+      rows.push({ as_of: asOf, table: "perm_queue", row: q.queue, month: q.priorityDate ?? "", calendar_days: "", remaining_requests: "" });
     }
     for (const d of r.permAverageDays) {
-      out.push({
-        as_of: r.permAsOf,
+      rows.push({
+        as_of: asOf,
         table: "perm_average_days",
         row: d.determination,
         month: d.month ?? "",
@@ -148,16 +162,21 @@ export function dolRows(readings: readonly DolReading[]): DolRow[] {
         remaining_requests: "",
       });
     }
-    if (!r.pwdAsOf) continue;
+    blocks.push({ asOf, order: 0, rows });
+  }
+  for (const [asOf, r] of pwd) {
+    const rows: DolRow[] = [];
     for (const p of r.pwdQueues) {
-      out.push({ as_of: r.pwdAsOf, table: "pwd_queue_oews", row: p.program, month: p.oewsReceiptDate ?? "", calendar_days: "", remaining_requests: "" });
-      out.push({ as_of: r.pwdAsOf, table: "pwd_queue_non_oews", row: p.program, month: p.nonOewsReceiptDate ?? "", calendar_days: "", remaining_requests: "" });
+      rows.push({ as_of: asOf, table: "pwd_queue_oews", row: p.program, month: p.oewsReceiptDate ?? "", calendar_days: "", remaining_requests: "" });
+      rows.push({ as_of: asOf, table: "pwd_queue_non_oews", row: p.program, month: p.nonOewsReceiptDate ?? "", calendar_days: "", remaining_requests: "" });
     }
     for (const b of r.pwdPermBacklog) {
-      out.push({ as_of: r.pwdAsOf, table: "pwd_perm_backlog", row: "PERM", month: b.receiptMonth, calendar_days: "", remaining_requests: b.remainingRequests });
+      rows.push({ as_of: asOf, table: "pwd_perm_backlog", row: "PERM", month: b.receiptMonth, calendar_days: "", remaining_requests: b.remainingRequests });
     }
+    blocks.push({ asOf, order: 1, rows });
   }
-  return out;
+  blocks.sort((a, b) => a.asOf.localeCompare(b.asOf) || a.order - b.order);
+  return blocks.flatMap((b) => b.rows);
 }
 
 function toCsv<T extends object>(columns: readonly (keyof T & string)[], rows: readonly T[]): string {
@@ -197,7 +216,9 @@ export function bulletinJson(bulletins: readonly BulletinRecord[]): string {
 }
 
 export function dolJson(readings: readonly DolReading[]): string {
-  const sorted = [...readings].sort((a, b) => a.permAsOf.localeCompare(b.permAsOf));
+  const sorted = [...readings].sort(
+    (a, b) => a.permAsOf.localeCompare(b.permAsOf) || (a.pwdAsOf ?? "").localeCompare(b.pwdAsOf ?? ""),
+  );
   return JSON.stringify({
     name: "DOL processing times history",
     ...LICENSE_BLOCK,

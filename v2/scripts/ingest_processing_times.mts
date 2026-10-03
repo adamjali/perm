@@ -106,6 +106,30 @@ async function main() {
   const dolChanged = isNewAsOf || figuresMoved;
 
   const now = Date.now();
+  // Every reading DOL published, kept, and written BEFORE processing_times is
+  // overwritten below, so the seed still sees the reading being replaced: one row per (PERM date, wage date) pair.
+  // processing_times holds one row per PERM date, so a wage-only move (Sep 30
+  // 2026) overwrote the earlier wage reading there; the open-data history reads
+  // this table instead. fetched_at is when we FIRST saw the pair; a corrected
+  // value under the same two dates updates the figures and keeps that time.
+  // The seed from processing_times is idempotent and keeps the table whole even
+  // if a run once failed between the two writes.
+  await db.execute(`CREATE TABLE IF NOT EXISTS processing_time_readings (
+      perm_as_of TEXT NOT NULL,
+      pwd_as_of  TEXT NOT NULL DEFAULT '',
+      json       TEXT NOT NULL,
+      fetched_at INTEGER NOT NULL,
+      PRIMARY KEY (perm_as_of, pwd_as_of)
+    )`);
+  await db.execute(`INSERT OR IGNORE INTO processing_time_readings (perm_as_of, pwd_as_of, json, fetched_at)
+      SELECT perm_as_of, COALESCE(json_extract(json, '$.pwdAsOf'), ''), json, fetched_at FROM processing_times`);
+  await db.execute({
+    sql: `INSERT INTO processing_time_readings (perm_as_of, pwd_as_of, json, fetched_at) VALUES (?, ?, ?, ?)
+          ON CONFLICT (perm_as_of, pwd_as_of) DO UPDATE SET json = excluded.json
+          WHERE processing_time_readings.json <> excluded.json`,
+    args: [snap.permAsOf, snap.pwdAsOf ?? "", JSON.stringify(snap), now],
+  });
+
   // Keyed by DOL's own as-of date, so re-running on a day DOL has not
   // republished is idempotent and does not fabricate a history point.
   await db.execute({

@@ -47,6 +47,9 @@ check("an unknown network reads as none", d.page_requests([dl(NOW, asn="-")], 0)
 lines = [bl(NOW - 30), bl(NOW - 40), bl(NOW - 60, ip="198.51.100.9"), bl(NOW - 50, ua="python-requests/2"),
          bl(NOW - 70, k="429", ip="192.0.2.1"), bl(NOW - 2000, ip="192.0.2.2")]
 check("counts each person once, browsers only, busy page only, last 10 minutes", d.people_busy(lines, NOW) == 2)
+check("four people shown the busy page is not trouble", not d.in_trouble(4, 0))
+check("five is", d.in_trouble(5, 0))
+check("an app full three minutes running is trouble whatever the count", d.in_trouble(0, d.FULL_MINUTES))
 
 # A full app
 full = [dl(NOW - 30 - i % 50, status=503 if i % 10 == 0 else 200) for i in range(600)]
@@ -98,7 +101,9 @@ check("no single source during the wait: nothing, not Under Attack Mode",
 with tempfile.TemporaryDirectory() as tmp:
     t = pathlib.Path(tmp)
     (t / "defend.log").write_text("\n".join(mix) + "\n")
-    (t / "seen.log").write_text("\n".join([bl(NOW - 30), bl(NOW - 40, ip="198.51.100.9")]) + "\n")
+    # As many different people as the bar asks for (PEOPLE_BUSY), each a new address.
+    seen = [bl(NOW - 30 - i, ip=f"198.51.100.{i + 1}") for i in range(d.PEOPLE_BUSY)]
+    (t / "seen.log").write_text("\n".join(seen) + "\n")
     d.HEALTH, d.STATE, d.OFF, d.REPAIRS = t, t / "defend.json", t / "defend.off", t / "repairs.log"
     d.DEFEND_LOG, d.BUSY_LOG, d.CONFIG = t / "defend.log", t / "seen.log", t / "none.env"
     real_time = d.time.time

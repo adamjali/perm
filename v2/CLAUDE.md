@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 557 files / 8,346 tests (2026-10-03; ~25 min at a load average near 36, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 558 files / 8,350 tests (2026-10-03; ~25 min at a load average near 36, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -7623,8 +7623,14 @@ check red; it would have done so every night.
 
 **DOL's processing-times pages refresh when any figure moves**, not only the PERM date: the ingest compares the
 stored snapshot with the new one. DOL moved its wage figures on Sep 30 with the PERM date unchanged, and the pages
-waited about two days. Still open: the history table is keyed by the PERM date, so a wage-only move overwrites the
-earlier wage reading in `processing_times` (and the open-data file built from it).
+waited about two days. **Every reading is kept now**: `processing_times` holds one row per PERM date (the newest), and
+`processing_time_readings` one per (PERM date, wage date) pair, written before the overwrite so its seed still sees the
+reading being replaced. The open-data history reads the readings (falling back to `processing_times`) and writes each
+half once per DOL date: it had repeated the shared half whenever only one date moved. The one reading the Sep 30 move
+had overwritten (PERM Sep 22, wage Aug 31) was restored from the Oct 2 nightly backup.
+
+**The automatic defense acts at 5 people shown the busy page in 10 minutes** (owner, Oct 3; it was 2), and every
+Under Attack episode is followed by the three-hour wait, not only one that hit the hour cap.
 
 **The API's entity answers carry dates and the live queue**: `meta.asOf` is the disclosure files' last decision
 day, `pendingNow` is DOL's live status for the entity's cases by stage with the sweep's day, and each kind carries
