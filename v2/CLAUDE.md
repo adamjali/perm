@@ -7633,3 +7633,13 @@ carry example calls.
 
 **PostHog's "new error type" alert** is what fills the inbox: it fires on any error message first seen in the
 last hour. Microsoft's link scanner ("Object Not Found Matching Id:N, MethodName:...") is filtered now.
+
+**The MCP server is in the official MCP Registry** as `app.permtracker/perm-tracker` (published Oct 3 2026, 7:48 AM
+EDT; `registry.modelcontextprotocol.io/v0/servers?search=app.permtracker`). The name proves the domain: a TXT record on
+the apex (`v=MCPv1; k=ecdsap384; p=...`, Cloudflare, comment "MCP Registry") carries the public half of an ECDSA
+P-384 key whose private half is only at `~/.config/permtracker-mcp-registry/key.pem` (0600) on the owner's Mac, beside
+the published `server.json`. No repository and no person are named. To publish a new version: bump `version` in that
+`server.json` (each version's metadata is fixed once published), `mcp-publisher login dns --algorithm ecdsap384
+--domain permtracker.app --private-key "$(openssl ec -in key.pem -noout -text | grep -A4 priv: | tail -n +2 | tr -d
+' :\n')"`, then `mcp-publisher publish`. Never print the private key. Removing the TXT record blocks future logins,
+not the published entry.
