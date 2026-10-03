@@ -74,7 +74,7 @@ CASE_TABLES = ("perm_case_status", *(cfg["table"] for cfg in programs.PROGRAMS.v
 # lists exists, so asking DOL about it is a wasted question. Measured Oct 3 2026:
 # most gaps in 2025's numbers were other programs' decided cases we never kept
 # live, and 3,550 decided PERM cases were in DOL's file but not our live table.
-PUBLISHED_TABLES = ("perm_cases", "pwd_cases", "lca_cases", "h2a_cases", "h2b_cases", "cw1_cases")
+PUBLISHED_TABLES = ("perm_cases", "pwd_cases", "lca_cases", "seasonal_cases")
 
 
 def case_tables(db) -> tuple[str, ...]:

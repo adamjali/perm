@@ -7700,7 +7700,8 @@ CW-1 application (`C-500-`); DOL answers both. That makes 19. Three consequences
   together), and `AVAILABLE FOR 9142A LINKING` pending.
 
 **H-2A, H-2B and CW-1 disclosure files** load through `ingest_flag_disclosure.py` as programs
-`h2a`, `h2b` and `cw1`, into `h2a_cases`, `h2b_cases` and `cw1_cases`, with column names from DOL's
+`h2a`, `h2b` and `cw1`, into ONE table, `seasonal_cases` (so the case search, lookups and employer pages
+read it like any program's published table), with column names from DOL's
 FY2026 Q3 record layouts. The files carry no VISA_CLASS (`visa_default` names it); the seasonal
 columns are `workers_certified`, `begin_date` and `end_date` (the REQUESTED period, which every
 application has) and `worksite_county`. CW-1 calls the employer `LEGAL_BUSINESS_NAME`. The guard
@@ -7724,5 +7725,4 @@ sample (`database_bound`): at 12:02 PM our own load put Under Attack Mode in fro
 31 minutes with nobody shown the busy page.
 
 **Published seasonal cases join the live table.** `sync_published_live.py` feeds
-`seasonal_case_status` from four published tables (`pwd_cases` for P-400 and P-500, and the three
-new ones).
+`seasonal_case_status` from `pwd_cases` (P-400 and P-500) and `seasonal_cases`.

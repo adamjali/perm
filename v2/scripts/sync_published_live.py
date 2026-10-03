@@ -47,10 +47,10 @@ SYNC_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, from the published file)"
 DEFAULT_CAP = 400           # requests a night; 20,000 numbers, a backlog clears in a run
 
 # Which published tables feed each live program table. The seasonal program
-# draws on four: its wage requests (P-400, P-500) are in DOL's PW file, and its
-# H-2A, H-2B and CW-1 applications each have their own file and table.
+# draws on two: its wage requests (P-400, P-500) are in DOL's PW file, and its
+# H-2A, H-2B and CW-1 applications share `seasonal_cases`.
 PUBLISHED_FOR = {"pwd": ("pwd_cases",), "lca": ("lca_cases",),
-                 "seasonal": ("pwd_cases", "h2a_cases", "h2b_cases", "cw1_cases")}
+                 "seasonal": ("pwd_cases", "seasonal_cases")}
 
 
 def plan(have_tables: set[str]) -> list[tuple[str, str, tuple[str, ...], int | None]]:

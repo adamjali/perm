@@ -382,7 +382,7 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026 (afternoon)".
 
 - **A 38-minute outage (12:46 to 1:24 PM EDT) was our own history loads**: sqld compacted its replication log until writes stalled. It runs with `--max-log-size 4096` now, history files load at a 2-second pace, and the watchdog takes the write lock every 2 minutes.
 - **The counter has 19 prefixes**: `JO-A-300-` (H-2A job orders) and `C-500-` (CW-1 applications) were found in our own "no case" ledger; the ledger records which prefix era a miss covered.
-- **DOL's H-2A, H-2B and CW-1 disclosure files** load like PW and LCA (`h2a_cases`, `h2b_cases`, `cw1_cases`; the workflow is "FLAG disclosure ingest").
+- **DOL's H-2A, H-2B and CW-1 disclosure files** load like PW and LCA into one table, `seasonal_cases` (visa on each row; the workflow is "FLAG disclosure ingest").
 - **SeasonalJobs.dol.gov's daily feeds** (accepted H-2A and H-2B applications and job orders, with wage and worksite) load into `seasonal_postings` on the server at 8:20 AM ET.
 - **The defense's alert emails had all failed** (Cloudflare refuses Python's default User-Agent); and a full app no longer counts when the database, not traffic, is using the CPU.
 - **Case-number shape rules accept `JO-A`** exactly, in all four copies and the date decoder.

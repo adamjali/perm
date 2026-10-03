@@ -8,7 +8,7 @@ the cases DOL accepted in about the last three weeks, with what the live
 case-status service never returns: the wage, the workers wanted, the work
 period and where the work is. That makes it the seasonal programs' equivalent
 of the live remainder: a decided case arrives later in DOL's quarterly file
-(h2a_cases, h2b_cases), and the status comes from the daily sweep
+(seasonal_cases), and the status comes from the daily sweep
 (seasonal_case_status); this is the job itself, before either.
 
     https://api.seasonaljobs.dol.gov/datahub-search/sjCaseData/zip/<feed>/<YYYY-MM-DD>

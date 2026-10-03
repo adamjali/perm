@@ -69,12 +69,12 @@ def dol(nums):
 
 r = s.sync(db, cap=99, lookup=dol, today=TODAY, pace=0, sleep=lambda _x: None)
 flat = [n for b in asked for n in b]
-_all = {"perm_cases", "perm_case_status", "pwd_cases", "lca_cases", "h2a_cases", "h2b_cases",
-        "cw1_cases", *(c["table"] for c in programs.PROGRAMS.values())}
+_all = {"perm_cases", "perm_case_status", "pwd_cases", "lca_cases", "seasonal_cases",
+        *(c["table"] for c in programs.PROGRAMS.values())}
 _seasonal = sorted(pub for pub, live, _p, _w in s.plan(_all) if live == "seasonal_case_status")
-check(_seasonal == ["cw1_cases", "h2a_cases", "h2b_cases", "pwd_cases"],
-      f"the seasonal live table is fed by the PW file and the H-2A, H-2B and CW-1 files ({_seasonal})")
-check(not [pub for pub, _l, _p, _w in s.plan(_all - {"h2a_cases"}) if pub == "h2a_cases"],
+check(_seasonal == ["pwd_cases", "seasonal_cases"],
+      f"the seasonal live table is fed by the PW file and the shared H-2A, H-2B and CW-1 table ({_seasonal})")
+check(not [pub for pub, _l, _p, _w in s.plan(_all - {"seasonal_cases"}) if pub == "seasonal_cases"],
       "a published table the database lacks is left out of the plan")
 check("G-100-25010-100001" in flat, "a published new-form PERM case missing live is asked")
 check("G-200-25010-100002" not in flat, "a case the live table holds is not asked")

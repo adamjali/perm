@@ -215,7 +215,10 @@ PROGRAMS: dict[str, dict] = {
 # The seasonal programs: H-2A (Form ETA-9142A), H-2B (ETA-9142B) and CW-1
 # (ETA-9142C). Names verbatim from DOL's FY2026 Q3 record layouts
 # (H-2A_Record_Layout_FY2026_Q3.pdf and its H-2B and CW-1 siblings). None of
-# the three files carries a VISA_CLASS column, so `visa_default` names it. The
+# the three files carries a VISA_CLASS column, so `visa_default` names it, and
+# all three share ONE table, `seasonal_cases`: the case search, the lookups and
+# the employer pages read one published table per program, so one table gives
+# them every filter, sort and index the PW and LCA tables have. The
 # work period is the REQUESTED one: every application carries it, while the
 # EMPLOYMENT_* dates are blank on a denial. Point-of-contact names, emails,
 # phones and FEINs are in all three files and in none of these maps.
@@ -240,7 +243,7 @@ SEASONAL_COMMON = {
 PROGRAMS.update({
     "h2a": {
         "label": "H-2A (ETA-9142A)",
-        "table": "h2a_cases",
+        "table": "seasonal_cases",
         "freshness": "h2a-disclosure",
         "source": "DOL quarterly H-2A disclosure files (www.dol.gov)",
         "visa_default": "H-2A",
@@ -261,7 +264,7 @@ PROGRAMS.update({
     },
     "h2b": {
         "label": "H-2B (ETA-9142B)",
-        "table": "h2b_cases",
+        "table": "seasonal_cases",
         "freshness": "h2b-disclosure",
         "source": "DOL quarterly H-2B disclosure files (www.dol.gov)",
         "visa_default": "H-2B",
@@ -278,7 +281,7 @@ PROGRAMS.update({
     },
     "cw1": {
         "label": "CW-1 (ETA-9142C)",
-        "table": "cw1_cases",
+        "table": "seasonal_cases",
         "freshness": "cw1-disclosure",
         "source": "DOL quarterly CW-1 disclosure files (www.dol.gov)",
         "visa_default": "CW-1",
@@ -891,11 +894,14 @@ def summary_key(program: str) -> str:
 def write_summary_doc(db: Turso, program: str, table: str) -> dict:
     """What the web reads instead of counting the table on every render:
     rows, the span of dates, and the files behind them. Two scans, once per
-    load, against a table nothing else counts."""
+    load, against a table nothing else counts. A program that shares its
+    table (the seasonal three) counts only its own visa's rows."""
+    visa = PROGRAMS[program].get("visa_default")
+    where, args = ("WHERE visa_class = ?", [visa]) if visa else ("", [])
     rows, earliest, latest = query_rows(
-        db, f"SELECT count(*), min(received_date), max(decision_date) FROM {table}")[0]
+        db, f"SELECT count(*), min(received_date), max(decision_date) FROM {table} {where}", args)[0]
     files = {f: int(n) for f, n in query_rows(
-        db, f"SELECT source_file, count(*) FROM {table} GROUP BY source_file ORDER BY source_file")}
+        db, f"SELECT source_file, count(*) FROM {table} {where} GROUP BY source_file ORDER BY source_file", args)}
     doc = {
         "rows": int(rows or 0),
         "earliestReceived": earliest,

@@ -706,6 +706,25 @@ def check_seasonal(tmp: str, write) -> None:
     check("CW-1: both prefixes DOL used, never an appendix", got["cw1"],
           ["CW-1_Disclosure_Data_FY2026_Q3.xlsx", "CW_Disclosure_Data_FY2025_Q3.xlsx"])
     check("CW-1: the newest is FY2026 Q3", pick_latest(got["cw1"]), "CW-1_Disclosure_Data_FY2026_Q3.xlsx")
+    # The three share one table; each program's summary counts its own visa.
+    check("H-2A, H-2B and CW-1 share seasonal_cases",
+          {PROGRAMS[p]["table"] for p in ("h2a", "h2b", "cw1")}, {"seasonal_cases"})
+    from lib_sqlite_shim import SqliteTurso
+    db = SqliteTurso()
+    db.script(fd.table_ddl("seasonal_cases"))
+    for row in rows + cw:
+        db.execute(f"INSERT INTO seasonal_cases ({', '.join(fd.COLUMNS)}) VALUES ({', '.join('?' * len(fd.COLUMNS))})",
+                   [row[c] for c in fd.COLUMNS])
+    written: dict = {}
+    real_write = fd.write_doc
+    fd.write_doc = lambda _db, key, doc: written.__setitem__(key, doc)
+    try:
+        h2b_doc = fd.write_summary_doc(db, "h2b", "seasonal_cases")
+        cw1_doc = fd.write_summary_doc(db, "cw1", "seasonal_cases")
+    finally:
+        fd.write_doc = real_write
+    check("the H-2B summary counts H-2B rows only", h2b_doc["rows"], 2)
+    check("the CW-1 summary counts CW-1 rows only", cw1_doc["rows"], 1)
     for prog in ("pw", "lca"):
         check(f"{prog}: no seasonal file is mistaken for this program",
               discover_links(html, PROGRAMS[prog]["file_pattern"], HOST), {})
