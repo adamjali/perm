@@ -324,6 +324,22 @@ def main() -> int:
               not any("INSERT OR REPLACE INTO visa_bulletins" in q for q in held.sql),
               "stored the July fixture as October or June")
 
+        # Old history we've never held (2005-2007 pages in a layout the
+        # parser can't read) is the backfill's job, never the nightly run's.
+        old_idx = idx + '<a href="/content/travel/en/legal/visa-law0/visa-bulletin/2007/visa-bulletin-for-may-2007.html">May 2007</a>'
+        asked.clear()
+        vb.Turso = lambda: Held()
+        vb.fetch = lambda url, attempts=3: (asked.append(url), old_idx if url == vb.DIRECT_INDEX else page)[1]
+        vb.ingest_direct(5)
+        check("the nightly run does not fetch an old month it has never held",
+              not any("may-2007" in u for u in asked), str(asked))
+        check("control: it still reads a new month past the newest held",
+              any("october-2026" in u for u in asked), str(asked))
+        asked.clear()
+        vb.ingest_direct(5, skip_bad=True)
+        check("control: the backfill does fetch the old month",
+              any("may-2007" in u for u in asked), str(asked))
+
         def refused(url, attempts=3):
             raise vb.urllib.error.HTTPError(url, 403, "Forbidden", {}, None)
 

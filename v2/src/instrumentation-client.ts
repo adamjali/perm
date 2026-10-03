@@ -219,6 +219,10 @@ function startPostHog(key: string, country: string | null): void {
           // "Script error.", and a browser refusing service-worker
           // registration ("Rejected", thrown inside register()).
           if (/zaloJSV2/.test(msg)) return null;
+          // Microsoft's link scanner (Outlook Safe Links) opening a page in its
+          // own browser; its bridge rejects with this. Seen Oct 2 2026 on three
+          // pages within two seconds, the shape of a scan, not a visitor.
+          if (/Object Not Found Matching Id:\d+, MethodName:/.test(msg)) return null;
           if (/Java exception was raised during method invocation/.test(msg)) return null;
           if (/Script \S*sw\.js load failed/.test(msg)) return null;
           if (/^\s*Script error\.?\s*$/.test(msg)) return null;

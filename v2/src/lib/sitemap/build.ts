@@ -1,6 +1,7 @@
 import "server-only";
 
 import { reviewStages } from "@/components/rfi/stageMeta";
+import PAGE_DATES from "./page-dates.json";
 import { getAllPosts } from "@/lib/content";
 import {
   BROWSE_BUCKETS,
@@ -86,6 +87,22 @@ const KIND_PATH: Record<EntityKind, string> = {
  * would mask it.
  */
 const MIN_ROWS_PER_KIND = 100;
+
+/**
+ * The day anything a page renders from last changed in git, written at build
+ * time by scripts/page_dates.mjs (keys are routes, `[param]` for a template).
+ * These were typed by hand until Oct 3 2026 and had stopped moving: /terms
+ * said June 15 after changing on Oct 2. A route missing from the file gets a
+ * fixed fallback, which is stale rather than false.
+ */
+export function changed(route: string): string {
+  return (PAGE_DATES as Record<string, string>)[route] ?? "2026-08-24";
+}
+
+/** The later of two dates, where the first may be missing (DOL's as-of, the sweep's day). */
+export function newer(a: string | null | undefined, b: string): string {
+  return a && a > b ? a : b;
+}
 
 export function baseUrl(): string {
   return SITE_URL;
@@ -207,47 +224,47 @@ export async function pagesEntries(): Promise<Entry[]> {
     // `${base}/` with the slash: it is the form Google inspects and the
     // form the canonical declares; without it the homepage inspection reads
     // "no referring sitemaps".
-    { url: `${base}/`, lastModified: latest, images: [`${base}/og/home.jpg`] },
-    { url: `${base}/blog`, lastModified: latest, images: [`${base}/og/blog.jpg`] },
-    { url: `${base}/guides`, lastModified: latest, images: [`${base}/og/guides.jpg`] },
-    { url: `${base}/changelog`, lastModified: latest, images: [`${base}/og/changelog.jpg`] },
-    { url: `${base}/faq`, lastModified: "2026-08-24", images: [`${base}/og/faq.jpg`] },
-    { url: `${base}/for-attorneys`, lastModified: "2026-08-28", images: [`${base}/og/for-attorneys.jpg`] },
-    { url: `${base}/email-preferences`, lastModified: "2026-08-28", images: [`${base}/og/email-preferences.jpg`] },
-    { url: `${base}/perm-processing-times`, lastModified: dol ?? latest, images: [`${base}/og/perm-processing-times.jpg`] },
-    { url: `${base}/tools`, lastModified: "2026-08-23", images: [`${base}/og/tools.jpg`] },
-    { url: `${base}/tools/green-card-timeline`, lastModified: dol ?? "2026-08-23", images: [`${base}/og/green-card-timeline.jpg`] },
-    { url: `${base}/tools/perm-timeline-calculator`, lastModified: dol ?? "2026-08-23", images: [`${base}/og/perm-timeline-calculator.jpg`] },
-    { url: `${base}/tools/pwd-calculator`, lastModified: dol ?? "2026-08-23", images: [`${base}/og/pwd-calculator.jpg`] },
-    { url: `${base}/tools/i140-calculator`, lastModified: "2026-08-23", images: [`${base}/og/i140-calculator.jpg`] },
-    { url: `${base}/tools/i485-queue-position`, lastModified: "2026-08-26", images: [`${base}/og/i485-queue-position.jpg`] },
-    { url: `${base}/tools/green-card-line`, lastModified: "2026-09-26", images: [`${base}/og/green-card-line.jpg`] },
-    { url: `${base}/tools/eb2-vs-eb3`, lastModified: "2026-09-26", images: [`${base}/og/eb2-vs-eb3.jpg`] },
-    { url: `${base}/tools/which-green-card`, lastModified: "2026-09-26", images: [`${base}/og/which-green-card.jpg`] },
-    { url: `${base}/h1b-lottery-odds`, lastModified: "2026-09-26", images: [`${base}/og/h1b-lottery-odds.jpg`] },
-    { url: `${base}/nvc-waiting-list`, lastModified: "2026-09-26", images: [`${base}/og/nvc-waiting-list.jpg`] },
-    { url: `${base}/perm-cities`, lastModified: "2026-09-26", images: [`${base}/og/perm-cities.jpg`] },
-    { url: `${base}/perm-industries`, lastModified: "2026-09-26", images: [`${base}/og/perm-industries.jpg`] },
-    { url: `${base}/perm-countries`, lastModified: "2026-09-26", images: [`${base}/og/perm-countries.jpg`] },
-    { url: `${base}/green-card-timelines`, lastModified: "2026-09-26", images: [`${base}/og/green-card-timelines.jpg`] },
+    { url: `${base}/`, lastModified: newer(latest, changed("/")), images: [`${base}/og/home.jpg`] },
+    { url: `${base}/blog`, lastModified: newer(latest, changed("/blog")), images: [`${base}/og/blog.jpg`] },
+    { url: `${base}/guides`, lastModified: newer(latest, changed("/guides")), images: [`${base}/og/guides.jpg`] },
+    { url: `${base}/changelog`, lastModified: newer(latest, changed("/changelog")), images: [`${base}/og/changelog.jpg`] },
+    { url: `${base}/faq`, lastModified: changed("/faq"), images: [`${base}/og/faq.jpg`] },
+    { url: `${base}/for-attorneys`, lastModified: changed("/for-attorneys"), images: [`${base}/og/for-attorneys.jpg`] },
+    { url: `${base}/email-preferences`, lastModified: changed("/email-preferences"), images: [`${base}/og/email-preferences.jpg`] },
+    { url: `${base}/perm-processing-times`, lastModified: newer(dol, changed("/perm-processing-times")), images: [`${base}/og/perm-processing-times.jpg`] },
+    { url: `${base}/tools`, lastModified: changed("/tools"), images: [`${base}/og/tools.jpg`] },
+    { url: `${base}/tools/green-card-timeline`, lastModified: newer(dol, changed("/tools/green-card-timeline")), images: [`${base}/og/green-card-timeline.jpg`] },
+    { url: `${base}/tools/perm-timeline-calculator`, lastModified: newer(dol, changed("/tools/perm-timeline-calculator")), images: [`${base}/og/perm-timeline-calculator.jpg`] },
+    { url: `${base}/tools/pwd-calculator`, lastModified: newer(dol, changed("/tools/pwd-calculator")), images: [`${base}/og/pwd-calculator.jpg`] },
+    { url: `${base}/tools/i140-calculator`, lastModified: changed("/tools/i140-calculator"), images: [`${base}/og/i140-calculator.jpg`] },
+    { url: `${base}/tools/i485-queue-position`, lastModified: changed("/tools/i485-queue-position"), images: [`${base}/og/i485-queue-position.jpg`] },
+    { url: `${base}/tools/green-card-line`, lastModified: changed("/tools/green-card-line"), images: [`${base}/og/green-card-line.jpg`] },
+    { url: `${base}/tools/eb2-vs-eb3`, lastModified: changed("/tools/eb2-vs-eb3"), images: [`${base}/og/eb2-vs-eb3.jpg`] },
+    { url: `${base}/tools/which-green-card`, lastModified: changed("/tools/which-green-card"), images: [`${base}/og/which-green-card.jpg`] },
+    { url: `${base}/h1b-lottery-odds`, lastModified: changed("/h1b-lottery-odds"), images: [`${base}/og/h1b-lottery-odds.jpg`] },
+    { url: `${base}/nvc-waiting-list`, lastModified: changed("/nvc-waiting-list"), images: [`${base}/og/nvc-waiting-list.jpg`] },
+    { url: `${base}/perm-cities`, lastModified: changed("/perm-cities"), images: [`${base}/og/perm-cities.jpg`] },
+    { url: `${base}/perm-industries`, lastModified: changed("/perm-industries"), images: [`${base}/og/perm-industries.jpg`] },
+    { url: `${base}/perm-countries`, lastModified: changed("/perm-countries"), images: [`${base}/og/perm-countries.jpg`] },
+    { url: `${base}/green-card-timelines`, lastModified: changed("/green-card-timelines"), images: [`${base}/og/green-card-timelines.jpg`] },
     // The guide for the person waiting, in five languages. Their hreflang
     // alternates are in each page's own head (src/lib/i18n/locales.ts).
-    { url: `${base}/zh`, lastModified: "2026-09-26" },
-    { url: `${base}/es`, lastModified: "2026-09-26" },
-    { url: `${base}/pt-br`, lastModified: "2026-09-26" },
-    { url: `${base}/ko`, lastModified: "2026-09-26" },
-    { url: `${base}/vi`, lastModified: "2026-09-26" },
-    { url: `${base}/tools/salary-explorer`, lastModified: "2026-08-26", images: [`${base}/og/salary-explorer.jpg`] },
-    { url: `${base}/tools/i140-trends`, lastModified: "2026-08-27", images: [`${base}/og/i140-trends.jpg`] },
-    { url: `${base}/uscis-processing-times`, lastModified: "2026-09-22", images: [`${base}/og/uscis-processing-times.jpg`] },
-    { url: `${base}/i485-by-field-office`, lastModified: "2026-09-22", images: [`${base}/og/i485-by-field-office.jpg`] },
-    { url: `${base}/i140-awaiting-visa`, lastModified: "2026-09-22", images: [`${base}/og/i140-awaiting-visa.jpg`] },
+    { url: `${base}/zh`, lastModified: changed("/zh") },
+    { url: `${base}/es`, lastModified: changed("/es") },
+    { url: `${base}/pt-br`, lastModified: changed("/pt-br") },
+    { url: `${base}/ko`, lastModified: changed("/ko") },
+    { url: `${base}/vi`, lastModified: changed("/vi") },
+    { url: `${base}/tools/salary-explorer`, lastModified: changed("/tools/salary-explorer"), images: [`${base}/og/salary-explorer.jpg`] },
+    { url: `${base}/tools/i140-trends`, lastModified: changed("/tools/i140-trends"), images: [`${base}/og/i140-trends.jpg`] },
+    { url: `${base}/uscis-processing-times`, lastModified: changed("/uscis-processing-times"), images: [`${base}/og/uscis-processing-times.jpg`] },
+    { url: `${base}/i485-by-field-office`, lastModified: changed("/i485-by-field-office"), images: [`${base}/og/i485-by-field-office.jpg`] },
+    { url: `${base}/i140-awaiting-visa`, lastModified: changed("/i140-awaiting-visa"), images: [`${base}/og/i140-awaiting-visa.jpg`] },
     // Gated on MIRROR_COMPLETE together with the page's own robots directive
     // and its provisional notice: a page carrying provisional counts must not
     // be listed for search, and one that is listed must not still be calling
     // itself provisional.
     ...(MIRROR_COMPLETE
-      ? [{ url: `${base}/perm-queue`, lastModified: "2026-08-26", images: [`${base}/og/perm-queue.jpg`] }]
+      ? [{ url: `${base}/perm-queue`, lastModified: changed("/perm-queue"), images: [`${base}/og/perm-queue.jpg`] }]
       : []),
     // The month pages share the hub's gate: the route noindexes them on the
     // same constant, and a sitemap must never advertise a page that asks not
@@ -255,43 +272,43 @@ export async function pagesEntries(): Promise<Entry[]> {
     ...(MIRROR_COMPLETE
       ? queueMonths.map((m) => ({
           url: `${base}/perm-queue/${m}`,
-          lastModified: queueAsOf ?? "2026-08-26",
+          lastModified: newer(queueAsOf, changed("/perm-queue/[month]")),
         }))
       : []),
-    { url: `${base}/tools/priority-date-calculator`, lastModified: "2026-08-23", images: [`${base}/og/priority-date-calculator.jpg`] },
-    { url: `${base}/tools/perm-deadline-calculator`, lastModified: "2026-08-23", images: [`${base}/og/perm-deadline-calculator.jpg`] },
-    { url: `${base}/calculators`, lastModified: "2026-08-24", images: [`${base}/og/calculators.jpg`] },
-    { url: `${base}/methodology`, lastModified: "2026-08-24", images: [`${base}/og/methodology.jpg`] },
-    { url: `${base}/about`, lastModified: "2026-09-07", images: [`${base}/og/about.jpg`] },
-    { url: `${base}/visa-bulletin`, lastModified: dol ?? "2026-09-07", images: [`${base}/og/visa-bulletin.jpg`] },
+    { url: `${base}/tools/priority-date-calculator`, lastModified: changed("/tools/priority-date-calculator"), images: [`${base}/og/priority-date-calculator.jpg`] },
+    { url: `${base}/tools/perm-deadline-calculator`, lastModified: changed("/tools/perm-deadline-calculator"), images: [`${base}/og/perm-deadline-calculator.jpg`] },
+    { url: `${base}/calculators`, lastModified: changed("/calculators"), images: [`${base}/og/calculators.jpg`] },
+    { url: `${base}/methodology`, lastModified: changed("/methodology"), images: [`${base}/og/methodology.jpg`] },
+    { url: `${base}/about`, lastModified: changed("/about"), images: [`${base}/og/about.jpg`] },
+    { url: `${base}/visa-bulletin`, lastModified: newer(dol, changed("/visa-bulletin")), images: [`${base}/og/visa-bulletin.jpg`] },
     // One page per archived bulletin. An older month's table is that month's
     // bulletin and nothing else, so its lastmod is the bulletin's own month;
     // the newest one carries the DOL stamp because its "since" column moves
     // with the next parse. Never the clock.
     ...bulletinMonths.map((m, i) => ({
       url: `${base}/visa-bulletin/${m}`,
-      lastModified: i === bulletinMonths.length - 1 ? (dol ?? "2026-09-07") : `${m}-01`,
+      lastModified: i === bulletinMonths.length - 1 ? newer(dol, changed("/visa-bulletin/[month]")) : `${m}-01`,
     })),
     // The hub is a static page and always listed; its line pages only when
     // the archive holds the line (the route 404s otherwise).
-    { url: `${base}/visa-bulletin/categories`, lastModified: dol ?? "2026-09-26", images: [`${base}/og/visa-bulletin-categories.jpg`] },
+    { url: `${base}/visa-bulletin/categories`, lastModified: newer(dol, changed("/visa-bulletin/categories")), images: [`${base}/og/visa-bulletin-categories.jpg`] },
     ...bulletinLines.map((slug) => ({
       url: `${base}/visa-bulletin/categories/${slug}`,
-      lastModified: dol ?? "2026-09-26",
+      lastModified: newer(dol, changed("/visa-bulletin/categories/[line]")),
     })),
-    { url: `${base}/perm-by-state`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-by-state.jpg`] },
-    { url: `${base}/perm-wages`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-wages.jpg`] },
-    { url: `${base}/lca-wages`, lastModified: dol ?? "2026-09-08", images: [`${base}/og/lca-wages.jpg`] },
-    { url: `${base}/tools/compare-my-offer`, lastModified: "2026-09-08", images: [`${base}/og/compare-my-offer.jpg`] },
-    { url: `${base}/tools/rfi-deadline`, lastModified: "2026-09-09", images: [`${base}/og/rfi-deadline.jpg`] },
-    { url: `${base}/tools/pwd-validity`, lastModified: "2026-09-09", images: [`${base}/og/pwd-validity.jpg`] },
-    { url: `${base}/tools/h1b-six-year-limit`, lastModified: "2026-09-09", images: [`${base}/og/h1b-six-year-limit.jpg`] },
-    { url: `${base}/tools/priority-date-retention`, lastModified: "2026-09-09", images: [`${base}/og/priority-date-retention.jpg`] },
-    { url: `${base}/tools/green-card-fees`, lastModified: "2026-09-09", images: [`${base}/og/green-card-fees.jpg`] },
-    { url: `${base}/tools/wage-levels`, lastModified: "2026-09-09", images: [`${base}/og/wage-levels.jpg`] },
+    { url: `${base}/perm-by-state`, lastModified: newer(dol, changed("/perm-by-state")), images: [`${base}/og/perm-by-state.jpg`] },
+    { url: `${base}/perm-wages`, lastModified: newer(dol, changed("/perm-wages")), images: [`${base}/og/perm-wages.jpg`] },
+    { url: `${base}/lca-wages`, lastModified: newer(dol, changed("/lca-wages")), images: [`${base}/og/lca-wages.jpg`] },
+    { url: `${base}/tools/compare-my-offer`, lastModified: changed("/tools/compare-my-offer"), images: [`${base}/og/compare-my-offer.jpg`] },
+    { url: `${base}/tools/rfi-deadline`, lastModified: changed("/tools/rfi-deadline"), images: [`${base}/og/rfi-deadline.jpg`] },
+    { url: `${base}/tools/pwd-validity`, lastModified: changed("/tools/pwd-validity"), images: [`${base}/og/pwd-validity.jpg`] },
+    { url: `${base}/tools/h1b-six-year-limit`, lastModified: changed("/tools/h1b-six-year-limit"), images: [`${base}/og/h1b-six-year-limit.jpg`] },
+    { url: `${base}/tools/priority-date-retention`, lastModified: changed("/tools/priority-date-retention"), images: [`${base}/og/priority-date-retention.jpg`] },
+    { url: `${base}/tools/green-card-fees`, lastModified: changed("/tools/green-card-fees"), images: [`${base}/og/green-card-fees.jpg`] },
+    { url: `${base}/tools/wage-levels`, lastModified: changed("/tools/wage-levels"), images: [`${base}/og/wage-levels.jpg`] },
     // No card of their own yet, so no image entry.
-    { url: `${base}/tools/h1b-lottery-odds-calculator`, lastModified: "2026-10-01" },
-    { url: `${base}/opt-employers`, lastModified: "2026-10-01" },
+    { url: `${base}/tools/h1b-lottery-odds-calculator`, lastModified: changed("/tools/h1b-lottery-odds-calculator") },
+    { url: `${base}/opt-employers`, lastModified: changed("/opt-employers") },
     // `/perm-employers/compare` IS DELIBERATELY ABSENT. The page sets
     // `robots: { index: false }` - it is a tool that renders whatever two
     // slugs the query names, so there is nothing stable to index - and
@@ -300,41 +317,41 @@ export async function pagesEntries(): Promise<Entry[]> {
     // disallows `/perm-employers/compare?`, and the bare path must not be
     // advertised either. `sitemap-excludes-noindex.test.ts` keeps the class
     // shut.
-    { url: `${base}/policy-changes`, lastModified: dol ?? "2026-09-08", images: [`${base}/og/policy-changes.jpg`] },
-    { url: `${base}/debarments`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/debarments.jpg`] },
-    { url: `${base}/perm-case-statuses`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/perm-case-statuses.jpg`] },
-    { url: `${base}/glossary`, lastModified: "2026-09-09", images: [`${base}/og/glossary.jpg`] },
-    { url: `${base}/estimate-scorecard`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/estimate-scorecard.jpg`] },
-    { url: `${base}/badges`, lastModified: "2026-09-09", images: [`${base}/og/badges.jpg`] },
-    { url: `${base}/open-data`, lastModified: dol ?? "2026-10-02", images: [`${base}/og/open-data.jpg`] },
-    { url: `${base}/developers`, lastModified: "2026-10-02", images: [`${base}/og/developers.jpg`] },
-    { url: `${base}/api-terms`, lastModified: "2026-10-02", images: [`${base}/og/api-terms.jpg`] },
-    { url: `${base}/layoffs`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/layoffs.jpg`] },
-    { url: `${base}/visa-bulletin/family`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/visa-bulletin-family.jpg`] },
-    { url: `${base}/perm-employers`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-employers.jpg`] },
-    { url: `${base}/perm-attorneys`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-attorneys.jpg`] },
+    { url: `${base}/policy-changes`, lastModified: newer(dol, changed("/policy-changes")), images: [`${base}/og/policy-changes.jpg`] },
+    { url: `${base}/debarments`, lastModified: newer(dol, changed("/debarments")), images: [`${base}/og/debarments.jpg`] },
+    { url: `${base}/perm-case-statuses`, lastModified: newer(dol, changed("/perm-case-statuses")), images: [`${base}/og/perm-case-statuses.jpg`] },
+    { url: `${base}/glossary`, lastModified: changed("/glossary"), images: [`${base}/og/glossary.jpg`] },
+    { url: `${base}/estimate-scorecard`, lastModified: newer(dol, changed("/estimate-scorecard")), images: [`${base}/og/estimate-scorecard.jpg`] },
+    { url: `${base}/badges`, lastModified: changed("/badges"), images: [`${base}/og/badges.jpg`] },
+    { url: `${base}/open-data`, lastModified: newer(dol, changed("/open-data")), images: [`${base}/og/open-data.jpg`] },
+    { url: `${base}/developers`, lastModified: changed("/developers"), images: [`${base}/og/developers.jpg`] },
+    { url: `${base}/api-terms`, lastModified: changed("/api-terms"), images: [`${base}/og/api-terms.jpg`] },
+    { url: `${base}/layoffs`, lastModified: newer(dol, changed("/layoffs")), images: [`${base}/og/layoffs.jpg`] },
+    { url: `${base}/visa-bulletin/family`, lastModified: newer(dol, changed("/visa-bulletin/family")), images: [`${base}/og/visa-bulletin-family.jpg`] },
+    { url: `${base}/perm-employers`, lastModified: newer(dol, changed("/perm-employers")), images: [`${base}/og/perm-employers.jpg`] },
+    { url: `${base}/perm-attorneys`, lastModified: newer(dol, changed("/perm-attorneys")), images: [`${base}/og/perm-attorneys.jpg`] },
     // The A-Z index pages. Written literally rather than generated from
     // BROWSE_KINDS because `scripts/audit_page_registration.py` matches a
     // template literal here against every static route in the app tree, and a
     // generated entry is invisible to it. Their letter children ARE generated,
     // below, since those are dynamic segments the gate skips anyway.
-    { url: `${base}/perm-employers/browse`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-employers-browse.jpg`] },
-    { url: `${base}/perm-attorneys/browse`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-attorneys-browse.jpg`] },
-    { url: `${base}/perm-wages/browse`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-wages-browse.jpg`] },
-    { url: `${base}/perm-cases`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-cases.jpg`] },
-    { url: `${base}/pwd-cases`, lastModified: "2026-09-02", images: [`${base}/og/pwd-cases.jpg`] },
-    { url: `${base}/lca-cases`, lastModified: "2026-09-02", images: [`${base}/og/lca-cases.jpg`] },
+    { url: `${base}/perm-employers/browse`, lastModified: newer(dol, changed("/perm-employers/browse")), images: [`${base}/og/perm-employers-browse.jpg`] },
+    { url: `${base}/perm-attorneys/browse`, lastModified: newer(dol, changed("/perm-attorneys/browse")), images: [`${base}/og/perm-attorneys-browse.jpg`] },
+    { url: `${base}/perm-wages/browse`, lastModified: newer(dol, changed("/perm-wages/browse")), images: [`${base}/og/perm-wages-browse.jpg`] },
+    { url: `${base}/perm-cases`, lastModified: newer(dol, changed("/perm-cases")), images: [`${base}/og/perm-cases.jpg`] },
+    { url: `${base}/pwd-cases`, lastModified: changed("/pwd-cases"), images: [`${base}/og/pwd-cases.jpg`] },
+    { url: `${base}/lca-cases`, lastModified: changed("/lca-cases"), images: [`${base}/og/lca-cases.jpg`] },
     // No card image yet: the page's own card is made from a capture after it ships.
-    { url: `${base}/seasonal-cases`, lastModified: "2026-10-01" },
-    { url: `${base}/case-search`, lastModified: "2026-09-03", images: [`${base}/og/case-search.jpg`] },
+    { url: `${base}/seasonal-cases`, lastModified: changed("/seasonal-cases") },
+    { url: `${base}/case-search`, lastModified: changed("/case-search"), images: [`${base}/og/case-search.jpg`] },
     // The bare path only. A `?case=` result sets robots:{index:false} and
     // canonicalises back here, so advertising one would contradict the page's
     // own directive and open ~412,000 URLs of crawl space.
-    { url: `${base}/perm-case-status`, lastModified: "2026-08-27", images: [`${base}/og/perm-case-status.jpg`] },
-    { url: `${base}/uscis-case-status`, lastModified: "2026-09-22", images: [`${base}/og/uscis-case-status.jpg`] },
-    { url: `${base}/perm-denial-risk`, lastModified: dol ?? "2026-08-24", images: [`${base}/og/perm-denial-risk.jpg`] },
-    { url: `${base}/perm-rfi-audit`, lastModified: "2026-08-27", images: [`${base}/og/perm-rfi-audit.jpg`] },
-    { url: `${base}/perm-employers/under-review`, lastModified: dol ?? "2026-09-09", images: [`${base}/og/perm-employers-under-review.jpg`] },
+    { url: `${base}/perm-case-status`, lastModified: changed("/perm-case-status"), images: [`${base}/og/perm-case-status.jpg`] },
+    { url: `${base}/uscis-case-status`, lastModified: changed("/uscis-case-status"), images: [`${base}/og/uscis-case-status.jpg`] },
+    { url: `${base}/perm-denial-risk`, lastModified: newer(dol, changed("/perm-denial-risk")), images: [`${base}/og/perm-denial-risk.jpg`] },
+    { url: `${base}/perm-rfi-audit`, lastModified: changed("/perm-rfi-audit"), images: [`${base}/og/perm-rfi-audit.jpg`] },
+    { url: `${base}/perm-employers/under-review`, lastModified: newer(dol, changed("/perm-employers/under-review")), images: [`${base}/og/perm-employers-under-review.jpg`] },
     // One page per review stage. Listed from `reviewStages()`, the same
     // function the route's `generateStaticParams` reads, so the sitemap and
     // the router cannot come to disagree about which of these exist - a
@@ -343,14 +360,14 @@ export async function pagesEntries(): Promise<Entry[]> {
     // ANALYST REVIEW is /perm-queue's subject, not a page here.
     ...reviewStages().map((s) => ({
       url: `${base}/perm-rfi-audit/${s.slug}`,
-      lastModified: "2026-08-30",
+      lastModified: newer(queueAsOf, changed("/perm-rfi-audit/[stage]")),
     })),
-    { url: `${base}/perm-decision-activity`, lastModified: "2026-08-27", images: [`${base}/og/perm-decision-activity.jpg`] },
-    { url: `${base}/contact`, lastModified: "2026-08-24", images: [`${base}/og/contact.jpg`] },
-    { url: `${base}/terms`, lastModified: "2026-06-15", images: [`${base}/og/terms.jpg`] },
-    { url: `${base}/privacy`, lastModified: "2026-09-22", images: [`${base}/og/privacy.jpg`] },
-    { url: `${base}/security`, lastModified: "2026-06-15", images: [`${base}/og/security.jpg`] },
-    { url: `${base}/accessibility`, lastModified: "2026-09-22", images: [`${base}/og/accessibility.jpg`] },
+    { url: `${base}/perm-decision-activity`, lastModified: changed("/perm-decision-activity"), images: [`${base}/og/perm-decision-activity.jpg`] },
+    { url: `${base}/contact`, lastModified: changed("/contact"), images: [`${base}/og/contact.jpg`] },
+    { url: `${base}/terms`, lastModified: changed("/terms"), images: [`${base}/og/terms.jpg`] },
+    { url: `${base}/privacy`, lastModified: changed("/privacy"), images: [`${base}/og/privacy.jpg`] },
+    { url: `${base}/security`, lastModified: changed("/security"), images: [`${base}/og/security.jpg`] },
+    { url: `${base}/accessibility`, lastModified: changed("/accessibility"), images: [`${base}/og/accessibility.jpg`] },
   ];
 
   const content: Entry[] = allPosts.map((post) => ({

@@ -1,0 +1,139 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+// The entity answers carry two dates: the last decision in DOL's published
+// files (meta.asOf) and the sweep that read DOL's live status (pendingNow.asOf).
+// Both were null before Oct 3 2026, so an assistant quoting the counts had no
+// date to give.
+const getEntityBySlug = vi.fn();
+const getFreshness = vi.fn();
+const entityPending = vi.fn();
+const searchByName = vi.fn();
+
+vi.mock("@/lib/turso/publicData", () => ({
+  getEntityBySlug: (...a: unknown[]) => getEntityBySlug(...a),
+  getFreshness: (...a: unknown[]) => getFreshness(...a),
+  getLiveBacklog: vi.fn(),
+}));
+vi.mock("@/lib/turso/entityDetail", () => ({ entityPending: (...a: unknown[]) => entityPending(...a) }));
+vi.mock("@/lib/turso/entities", () => ({ searchByName: (...a: unknown[]) => searchByName(...a) }));
+vi.mock("@/lib/turso/caseLookup", () => ({ lookupCase: vi.fn() }));
+vi.mock("@/lib/turso/client", () => ({ one: vi.fn() }));
+vi.mock("@/lib/turso/processingTimes", () => ({ getProcessingTimes: vi.fn() }));
+vi.mock("@/lib/turso/pwdCases", () => ({ pwd: {} }));
+vi.mock("@/lib/turso/lcaCases", () => ({ lca: {} }));
+vi.mock("@/lib/turso/seasonalCases", () => ({ seasonal: {} }));
+vi.mock("@/lib/turso/permEstimate", () => ({ estimatePermCase: vi.fn(), loadPermEstimateContext: vi.fn() }));
+
+import { readEntity, searchEntities } from "../reads";
+
+const adobe = {
+  slug: "adobe-inc",
+  name: "Adobe Inc.",
+  rank: 40,
+  total: 1200,
+  certified: 1100,
+  denied: 20,
+  medianDays: 480,
+  medianAnnualWage: 180000,
+  state: "CA",
+  code: null,
+  recent12m: 300,
+};
+
+beforeEach(() => {
+  getEntityBySlug.mockReset().mockResolvedValue(adobe);
+  getFreshness.mockReset().mockResolvedValue({
+    "perm-cases": { asOf: "2026-06-30T00:00:00Z" },
+    "perm-case-status": { asOf: "2026-10-02T09:14:00Z" },
+  });
+  entityPending.mockReset().mockResolvedValue({
+    tracked: 230,
+    pending: 224,
+    stages: [
+      { status: "APPLICATION ON HOLD", n: 216 },
+      { status: "ANALYST REVIEW", n: 8 },
+    ],
+    oldest: "2025-02-11T00:00:00Z",
+  });
+  searchByName.mockReset().mockResolvedValue([adobe]);
+});
+
+describe("readEntity", () => {
+  it("dates the published counts and the live pending count separately", async () => {
+    const r = await readEntity("employer", "adobe-inc");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.meta.asOf).toBe("2026-06-30");
+    expect(r.data.pendingNow).toEqual({
+      pending: 224,
+      casesTracked: 230,
+      byStatus: [
+        { status: "APPLICATION ON HOLD", cases: 216 },
+        { status: "ANALYST REVIEW", cases: 8 },
+      ],
+      oldestPendingFiled: "2025-02-11",
+      asOf: "2026-10-02",
+    });
+  });
+
+  it("answers without the pending block when the live read fails", async () => {
+    entityPending.mockRejectedValue(new Error("db down"));
+    const r = await readEntity("employer", "adobe-inc");
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.data.pendingNow).toBeNull();
+  });
+
+  it("answers with null dates when the freshness read fails", async () => {
+    getFreshness.mockRejectedValue(new Error("db down"));
+    const r = await readEntity("employer", "adobe-inc");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.meta.asOf).toBeNull();
+    expect((r.data.pendingNow as { asOf: string | null }).asOf).toBeNull();
+  });
+
+  it("still 404s a name with no page", async () => {
+    getEntityBySlug.mockResolvedValue(null);
+    const r = await readEntity("employer", "nobody-here");
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.status).toBe(404);
+  });
+});
+
+describe("searchEntities", () => {
+  it("dates the results by the published files", async () => {
+    const r = await searchEntities("employer", "adobe");
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.meta.asOf).toBe("2026-06-30");
+  });
+});
+
+describe("fields by kind", () => {
+  it("gives an employer no wage, state or occupation code", async () => {
+    const r = await readEntity("employer", "adobe-inc");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data).not.toHaveProperty("medianAnnualWage");
+    expect(r.data).not.toHaveProperty("state");
+    expect(r.data).not.toHaveProperty("occupationCode");
+  });
+
+  it("gives an occupation its code and median wage", async () => {
+    getEntityBySlug.mockResolvedValue({ ...adobe, slug: "software-developers", code: "15-1252", medianAnnualWage: 150000 });
+    const r = await readEntity("occupation", "software-developers");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.occupationCode).toBe("15-1252");
+    expect(r.data.medianAnnualWage).toBe(150000);
+    expect(r.data).not.toHaveProperty("state");
+  });
+
+  it("gives a law firm its state", async () => {
+    getEntityBySlug.mockResolvedValue({ ...adobe, slug: "fragomen", state: "NY" });
+    const r = await readEntity("attorney", "fragomen");
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.data.state).toBe("NY");
+    expect(r.data).not.toHaveProperty("medianAnnualWage");
+  });
+});

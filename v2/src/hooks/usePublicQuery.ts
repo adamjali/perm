@@ -29,9 +29,9 @@ import { failureFromError, failureFromResponse, FetchFailureError, type FetchFai
  * AND A TIMEOUT. A `fetch` against a stalled connection or a slow database
  * query neither resolves nor rejects, so without a deadline `data` stays
  * `undefined` forever and the caller shows "Checking..." with no end.
- * `AbortSignal.timeout` fires a `TimeoutError` (distinct from the `AbortError`
- * a supersede/unmount raises), so the deadline can set `failed` without the
- * supersede path ever reading as a failure.
+ * A timer aborts the request and marks it timed out, so the deadline sets
+ * `failed` (as a `TimeoutError`) without a supersede or unmount ever reading
+ * as a failure.
  *
  * AND THE REASON. `failed` alone lets every caller print one generic line,
  * "reloading usually clears it", including for the front door's own 429 -
@@ -91,16 +91,20 @@ export function usePublicQuery<T>(
     }
     const id = ++latest.current;
     const controller = new AbortController();
-    // The request aborts on WHICHEVER fires first: our controller (a newer
-    // url superseded this one, or the component unmounted) or the deadline.
-    // The two abort with different reasons, which is how the catch tells a
-    // supersede (ignore) from a timeout (a real failure to report).
-    const signal = AbortSignal.any([
-      controller.signal,
-      AbortSignal.timeout(timeoutMs),
-    ]);
+    // One controller aborts on WHICHEVER comes first: a newer url superseding
+    // this one, the component unmounting, or the deadline. The flag, not the
+    // abort reason, tells a timeout (a real failure to report) from a
+    // supersede (ignore), because older browsers reject an aborted fetch with
+    // a plain AbortError whatever reason was given. No AbortSignal.any or
+    // AbortSignal.timeout: Chrome 109, the last release for Windows 7 and 8.1,
+    // has neither, and the search pages crashed there (Oct 3 2026).
+    let timedOut = false;
+    const deadline = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
     setState((s) => ({ data: undefined, failed: false, failure: null, previous: s.previous }));
-    fetch(url, { signal })
+    fetch(url, { signal: controller.signal })
       .then(async (r) => {
         if (!r.ok) throw new FetchFailureError(await failureFromResponse(r));
         return r.json() as Promise<T>;
@@ -113,17 +117,22 @@ export function usePublicQuery<T>(
         // an error on every keystroke. A TimeoutError IS a failure - the
         // request never came back. Everything else (HTTP status, JSON, network)
         // is a failure too.
-        if (error instanceof DOMException && error.name === "AbortError") return;
+        const reason = timedOut ? new DOMException("The request timed out.", "TimeoutError") : error;
+        if (!timedOut && error instanceof DOMException && error.name === "AbortError") return;
         if (latest.current === id) {
           setState((s) => ({
             data: undefined,
             failed: true,
-            failure: failureFromError(error, timeoutMs),
+            failure: failureFromError(reason, timeoutMs),
             previous: s.previous,
           }));
         }
-      });
-    return () => controller.abort();
+      })
+      .finally(() => clearTimeout(deadline));
+    return () => {
+      clearTimeout(deadline);
+      controller.abort();
+    };
   }, [url, timeoutMs, attempt]);
 
   return { ...state, retry };

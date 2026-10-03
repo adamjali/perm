@@ -68,7 +68,7 @@ export default function DevelopersPage() {
     },
     {
       title: "Call the API",
-      body: "Send the key in a header. Every answer names its source, its date and the page it came from.",
+      body: "Send the key in a header, from your server: browsers on other sites can't call it, which keeps keys out of web pages. Every answer names its source, its date and the page it came from.",
       code: `curl -H "Authorization: Bearer YOUR_KEY" \\\n${API_BASE}/queue`,
     },
     {

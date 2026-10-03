@@ -47,6 +47,35 @@ export function claimAutoReload(): boolean {
 }
 
 /**
+ * The build-file and page-data requests this page made that came back wrong:
+ * a status outside 2xx, or a script answered with something that isn't
+ * JavaScript (Chrome 129+ reports the type). "reading 'call'" means webpack
+ * asked for a module no loaded file defined, about 20 times a day from Oct 2
+ * 2026 on the live build itself, not a stale one, and it would not reproduce
+ * in 14 clicks. This is what the next one records, so its cause can be read.
+ */
+export function failedRequests(): string[] {
+  try {
+    const entries = performance.getEntriesByType("resource") as Array<
+      PerformanceResourceTiming & { responseStatus?: number; contentType?: string }
+    >;
+    return entries
+      .filter((e) => /\/_next\/static\/|[?&]_rsc=/.test(e.name))
+      .filter((e) => {
+        const status = e.responseStatus;
+        const badStatus = typeof status === "number" && status !== 0 && (status < 200 || status > 299);
+        const type = e.contentType;
+        const badType = /\/_next\/static\/.*\.js/.test(e.name) && !!type && !/javascript/.test(type);
+        return badStatus || badType;
+      })
+      .slice(-10)
+      .map((e) => `${e.responseStatus ?? "?"} ${e.contentType || "-"} ${new URL(e.name, "https://x").pathname.slice(-80)}`);
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Record a caught error in PostHog (always loaded) and, where it is, Sentry.
  * Pass `sentry: false` when the caller already reports to Sentry itself.
  */
@@ -56,12 +85,14 @@ export function reportCaughtError(
   { sentry = true, autoReloaded = false }: { sentry?: boolean; autoReloaded?: boolean } = {},
 ): void {
   const path = typeof window !== "undefined" ? window.location.pathname : "";
+  const reloadCurable = isReloadCurable(error);
   analytics.captureException(error, {
     boundary,
     digest: error.digest,
     path,
-    reloadCurable: isReloadCurable(error),
+    reloadCurable,
     autoReloaded,
+    ...(reloadCurable && { failedRequests: failedRequests() }),
   });
   if (!sentry) return;
   import("@sentry/nextjs")

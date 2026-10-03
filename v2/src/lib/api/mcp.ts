@@ -99,7 +99,8 @@ export function buildMcpServer(caller: ApiCaller): McpServer {
       title: "Look up a case",
       description:
         "One DOL case by number: status, filing date, employer, job and, once decided, DOL's decided record. " +
-        "PERM (G-100-...), prevailing wage (P-100-...), H-1B LCA (I-200-...) and H-2A/H-2B numbers.",
+        "PERM (G-100-...), prevailing wage (P-100-...), H-1B LCA (I-200-...) and H-2A/H-2B numbers. " +
+        'Example: {"case_number": "G-100-26045-123456"}.',
       inputSchema: z.object({ case_number: z.string().max(40).describe("As DOL prints it, e.g. G-100-26045-123456.") }),
       annotations: readOnly,
     },
@@ -112,7 +113,8 @@ export function buildMcpServer(caller: ApiCaller): McpServer {
       title: "Estimate a PERM decision date",
       description:
         "When a pending PERM case is likely to be decided, with a range, the model used and its caveats. " +
-        "Pass a case number, or a filing date for a case in analyst review. An estimate, not a promise.",
+        "Pass a case number, or a filing date for a case in analyst review. An estimate, not a promise. " +
+        'Examples: {"case_number": "G-100-26045-123456"} or {"filed": "2026-01-15"}.',
       inputSchema: z.object({
         case_number: z.string().max(40).optional().describe("A PERM case number."),
         filed: z.string().max(10).optional().describe("Filing date, YYYY-MM-DD, when there's no case number."),
@@ -128,7 +130,7 @@ export function buildMcpServer(caller: ApiCaller): McpServer {
       title: "PERM and prevailing wage queues",
       description:
         "DOL's processing times today: the month each PERM and prevailing wage queue is working on, average days to " +
-        "a decision, and how many PERM cases are pending from each filing month.",
+        "a decision, and how many PERM cases are pending from each filing month. Takes no arguments: {}.",
       inputSchema: z.object({}),
       annotations: readOnly,
     },
@@ -140,7 +142,8 @@ export function buildMcpServer(caller: ApiCaller): McpServer {
     {
       title: "Visa bulletin",
       description:
-        "A visa bulletin's employment and family final action and dates for filing charts, as printed. The newest by default; months back to June 2005.",
+        "A visa bulletin's employment and family final action and dates for filing charts, as printed. The newest by default; months back to June 2005. " +
+        'Examples: {} for the newest, or {"month": "2026-10"}.',
       inputSchema: z.object({ month: z.string().max(7).optional().describe("YYYY-MM. Leave out for the newest.") }),
       annotations: readOnly,
     },
@@ -152,10 +155,11 @@ export function buildMcpServer(caller: ApiCaller): McpServer {
     {
       title: "Find an employer, law firm or occupation",
       description:
-        "Search DOL's PERM records by name. Returns each match's record and the slug that employer_profile takes.",
+        "Search DOL's PERM records by name. Returns each match's record and the slug that employer_profile takes. " +
+        'Example: {"kind": "employer", "name": "Microsoft"}.',
       inputSchema: z.object({
-        kind: z.enum(["employer", "law firm", "occupation"]),
-        name: z.string().min(2).max(120),
+        kind: z.enum(["employer", "law firm", "occupation"]).describe('One of "employer", "law firm" or "occupation" (singular).'),
+        name: z.string().min(2).max(120).describe("Part of the name, 2 to 120 characters, e.g. Microsoft."),
       }),
       annotations: readOnly,
     },
@@ -167,9 +171,11 @@ export function buildMcpServer(caller: ApiCaller): McpServer {
     {
       title: "An employer's, law firm's or occupation's PERM record",
       description:
-        "Cases in DOL's published files, certified and denied, median days to a decision, median offered wage and filings in the last 12 months. Find the slug with search_sponsors.",
+        "Cases in DOL's published files (certified, denied, median days to a decision, filings in the last 12 months, " +
+        "and for an occupation the median offered wage), plus how many of its cases are pending at DOL right now and " +
+        'at which stage. Find the slug with search_sponsors first. Example: {"kind": "employer", "slug": "microsoft-corporation"}.',
       inputSchema: z.object({
-        kind: z.enum(["employer", "law firm", "occupation"]),
+        kind: z.enum(["employer", "law firm", "occupation"]).describe('One of "employer", "law firm" or "occupation" (singular).'),
         slug: z.string().max(120).describe("From search_sponsors, e.g. google-llc."),
       }),
       annotations: readOnly,

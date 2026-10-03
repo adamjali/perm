@@ -61,7 +61,7 @@ export const ENDPOINTS: EndpointDoc[] = [
   },
   {
     path: "/employers/{slug}",
-    summary: "One employer's PERM record: cases, certified and denied, median days to decision, median wage, filings in the last 12 months.",
+    summary: "One employer's PERM record: cases, certified and denied, median days to decision, filings in the last 12 months, and how many of its cases are pending at DOL now, by stage.",
     example: "/employers/google-llc",
     params: [{ name: "slug", in: "path", required: true, description: "The name in its page's address, as search returns it." }],
     counted: true,
@@ -78,7 +78,7 @@ export const ENDPOINTS: EndpointDoc[] = [
   },
   {
     path: "/law-firms/{slug}",
-    summary: "One law firm's PERM record.",
+    summary: "One law firm's PERM record, and how many of its cases are pending at DOL now, by stage.",
     example: "/law-firms/fragomen-del-rey-bernsen-loewy-llp",
     params: [{ name: "slug", in: "path", required: true, description: "The name in its page's address, as search returns it." }],
     counted: true,
@@ -179,7 +179,7 @@ export const MCP_TOOLS: { name: string; summary: string }[] = [
   { name: "queue_status", summary: "DOL's processing times and the pending queue by filing month." },
   { name: "visa_bulletin", summary: "A visa bulletin's charts, the newest by default." },
   { name: "search_sponsors", summary: "Find an employer, law firm or occupation by name." },
-  { name: "employer_profile", summary: "One employer's, law firm's or occupation's PERM record." },
+  { name: "employer_profile", summary: "One employer's, law firm's or occupation's PERM record, and its cases pending at DOL now." },
 ];
 
 export const MCP_URL = "https://permtracker.app/mcp";

@@ -51,6 +51,7 @@ const ISOLATED_UNIT_FILES = [
   "src/lib/api/__tests__/usage.test.ts",
   "src/lib/api/__tests__/route.test.ts",
   "src/lib/api/__tests__/mcp.test.ts",
+  "src/lib/api/__tests__/reads.test.ts",
   "src/lib/ai/__tests__/page-context.test.tsx",
   "src/lib/__tests__/toast.test.ts",
   // Mocks posthog-js; in the shared pool the mock would leak into every

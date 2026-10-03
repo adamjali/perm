@@ -490,7 +490,18 @@ def ingest_direct(limit: int, dry_run: bool = False, skip_bad: bool = False) -> 
     db = Turso()
     held = {str(m)[:7]: src or "" for m, src in query_rows(
         db, "SELECT bulletin_month, source_url FROM visa_bulletins")}
-    todo = [(m, u) for m, u in linked if rank_of(held.get(m, "")) < 3][:limit]
+    # The nightly run reads what's NEW (a month past the newest we hold) and
+    # upgrades months we hold from a lesser source. A month older than that
+    # which we've never held is history, and history is the backfill's job:
+    # after the Oct 2 2026 backfill the only such months left were the 15
+    # from 2005 to 2007 in a layout this parser can't read, and the nightly
+    # run stopped on them every night (Oct 3), which is the loud failure
+    # meant for a NEW month it can't read.
+    newest_held = max(held) if held else ""
+    todo = [
+        (m, u) for m, u in linked
+        if rank_of(held.get(m, "")) < 3 and (skip_bad or m in held or m > newest_held)
+    ][:limit]
     if not todo:
         log("nothing new: every linked month is already held from a primary source")
         return 0

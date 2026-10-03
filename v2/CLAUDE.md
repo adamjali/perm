@@ -1,7 +1,7 @@
 # CLAUDE.md — PERM Tracker v2
 
 > **Stack:** Next.js 16.3 + Convex 1.45 + React 19.2 + AI SDK 7 + Turso/libSQL + TypeScript 6 (strict)
-> **Status:** Production | **Last Updated:** 2026-10-02
+> **Status:** Production | **Last Updated:** 2026-10-03
 
 **Convex rules:** read [`convex/_generated/ai/guidelines.md`](convex/_generated/ai/guidelines.md) before writing Convex code.
 **Codebase deep-dives:** [`.planning/codebase/`](../.planning/codebase/) — STACK, INTEGRATIONS, ARCHITECTURE, STRUCTURE, CONVENTIONS, TESTING, CONCERNS.
@@ -29,7 +29,7 @@ http://localhost:3000 · [Convex Dashboard](https://dashboard.convex.dev)
 | `pnpm typecheck:convex` | `tsc -p convex --noEmit` (Convex's own tsconfig) |
 | `pnpm test` | Vitest watch |
 | `pnpm test:fast` | ~1300 tests, **2 of 5 projects only** (~40s). Not a pre-push gate |
-| `pnpm test:run` | **All 5 projects. Baseline 549 files / 8,276 tests (2026-10-02, morning; ~25 min at a load average near 36, ~12.5 min on a quiet machine). Run this before every push.** |
+| `pnpm test:run` | **All 5 projects. Baseline 557 files / 8,346 tests (2026-10-03; ~25 min at a load average near 36, ~12.5 min on a quiet machine). Run this before every push.** |
 | `pnpm test:e2e` | Playwright E2E |
 | `pnpm storybook` | Component dev (:6006) |
 
@@ -7581,3 +7581,55 @@ read-only token): all six tools answered, including a PERM and a wage-request ca
 
 **Not built yet** (plan phases 3 and on): OAuth sign-in for assistants, billing, webhooks, exports, live lookups,
 an admin Developers tab and morning-report lines for API use, the CLI and SDKs, directory listings.
+
+## Oct 3 2026: browser errors read to their cause, sitemap dates from git, the nightly bulletin read
+
+**The search pages crashed on Chrome 109** (the last release for Windows 7 and 8.1): `usePublicQuery` used
+`AbortSignal.any` (Chrome 116+, Safari 17.4+). One controller and a timer now do the same job, and a `timedOut`
+flag, not the abort reason, marks a timeout, because older browsers reject an aborted fetch with a plain
+AbortError whatever reason was given. The test stubs `AbortSignal` without `any` or `timeout`. Server code may
+keep `AbortSignal.timeout`; anything that runs in the browser must not use `AbortSignal.any`.
+
+**"Cannot read properties of undefined (reading 'call')" is in the live build, not stale pages.** About 20 a day
+since the error screens started recording (Oct 2), every one carrying the `dpl=` of the build live at that moment,
+caught by the error screen and cured by its automatic reload. Next already turns a build mismatch into a full load
+(on navigation and on prefetch), so it isn't version skew. It didn't reproduce in 14 clicks. `reportCaughtError`
+now adds `failedRequests` to any reload-curable error: build files and page data that came back with a non-2xx
+status, or a script answered as something other than JavaScript. Read that property on the next one before
+changing anything.
+
+**Every build writes `static/build-TfctsWXpff2fKS/`, the same folder name**, and the deploy copies static files
+into `shared/` with `--no-clobber`, so the shared `_buildManifest.js` is older than any release on the server.
+Harmless today because no App Router page loads it (checked: the HTML doesn't reference it); it would matter if
+a Pages Router page came back.
+
+**Cloudflare keeps page HTML for a day to a week and serves the stale copy while it refreshes**
+(`s-maxage` plus a year of `stale-while-revalidate`), so a visitor can get a page built by an earlier deploy.
+Old build files stay in `shared/`, so such a page still works; it explains a filtered error (Zalo's) still
+arriving from a page cached before the filter shipped.
+
+**Sitemap lastmod comes from git** (`scripts/page_dates.mjs` -> `src/lib/sitemap/page-dates.json`, read by
+`changed()` in `src/lib/sitemap/build.ts`). For each page: the newest commit day across its own folder and what
+it imports from `components/` (not `ui/` or `layout/`), `lib/constants/` and the app tree, two imports deep.
+Pages that print DOL's or the sweep's figures take the later of that and the data date (`newer()`). The deploy
+checks out the whole history without file contents (`fetch-depth: 0`, `filter: blob:none`) and writes the file
+before the build; in a shallow clone the script keeps the committed file. 80 hand-typed dates are gone (/terms had
+said June 15 after changing Oct 2); `page-dates.test.ts` fails if the sitemap asks for a route the file lacks.
+
+**The nightly bulletin read only looks forward.** `ingest_direct` without `skip_bad` takes months newer than the
+newest held and upgrades held ones; never-held history older than that is the backfill's (`--backfill-direct`).
+After the Oct 2 backfill to 2005 the nightly run tried 2007-05 (an older layout), failed, and turned the health
+check red; it would have done so every night.
+
+**DOL's processing-times pages refresh when any figure moves**, not only the PERM date: the ingest compares the
+stored snapshot with the new one. DOL moved its wage figures on Sep 30 with the PERM date unchanged, and the pages
+waited about two days. Still open: the history table is keyed by the PERM date, so a wage-only move overwrites the
+earlier wage reading in `processing_times` (and the open-data file built from it).
+
+**The API's entity answers carry dates and the live queue**: `meta.asOf` is the disclosure files' last decision
+day, `pendingNow` is DOL's live status for the entity's cases by stage with the sweep's day, and each kind carries
+only its own fields (an occupation its code and median wage, a law firm its state). The MCP tool descriptions
+carry example calls.
+
+**PostHog's "new error type" alert** is what fills the inbox: it fires on any error message first seen in the
+last hour. Microsoft's link scanner ("Object Not Found Matching Id:N, MethodName:...") is filtered now.

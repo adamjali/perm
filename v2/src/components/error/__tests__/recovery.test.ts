@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import posthog from "posthog-js";
-import { claimAutoReload, isReloadCurable, reportCaughtError } from "../recovery";
+import { claimAutoReload, failedRequests, isReloadCurable, reportCaughtError } from "../recovery";
 
 vi.mock("@sentry/nextjs", () => ({ captureException: vi.fn() }));
 
@@ -79,7 +79,28 @@ describe("reportCaughtError", () => {
       path: expect.any(String),
       reloadCurable: true,
       autoReloaded: true,
+      failedRequests: [],
     });
+  });
+
+  it("lists the build files and page data that came back wrong", () => {
+    const entry = (name: string, responseStatus: number, contentType = "") => ({ name, responseStatus, contentType });
+    const spy = vi.spyOn(performance, "getEntriesByType").mockReturnValue([
+      entry("https://permtracker.app/_next/static/chunks/a-1.js?dpl=x", 200, "text/javascript"),
+      entry("https://permtracker.app/_next/static/chunks/b-2.js?dpl=x", 200, "text/html"),
+      entry("https://permtracker.app/perm-queue?_rsc=abc", 429, "application/json"),
+      entry("https://permtracker.app/images/logo.png", 404),
+    ] as unknown as PerformanceEntryList);
+    try {
+      expect(failedRequests()).toEqual(["200 text/html /_next/static/chunks/b-2.js", "429 application/json /perm-queue"]);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("adds nothing for an error a reload can't cure", () => {
+    reportCaughtError("RouteError", new Error("x is not a function"), { sentry: false });
+    expect(posthog.captureException).toHaveBeenCalledWith(expect.any(Error), expect.not.objectContaining({ failedRequests: expect.anything() }));
   });
 
   it("leaves Sentry alone when the caller reports there itself", async () => {

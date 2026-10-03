@@ -14,7 +14,8 @@ import { normaliseFlagCaseNumber, type FlagProgram } from "@/lib/flagCaseNumber"
 import { isEntityKind, type EntityKind } from "@/lib/entityPayload";
 import { lookupCase } from "@/lib/turso/caseLookup";
 import { one } from "@/lib/turso/client";
-import { getEntityBySlug, getLiveBacklog } from "@/lib/turso/publicData";
+import { getEntityBySlug, getFreshness, getLiveBacklog } from "@/lib/turso/publicData";
+import { entityPending } from "@/lib/turso/entityDetail";
 import { searchByName } from "@/lib/turso/entities";
 import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { pwd } from "@/lib/turso/pwdCases";
@@ -274,26 +275,56 @@ function entityData(kind: EntityKind, page: string, e: NonNullable<Awaited<Retur
     denied: e.denied,
     certifiedShare: decided > 0 ? Math.round((e.certified / decided) * 1000) / 1000 : null,
     medianDaysToDecision: e.medianDays,
-    medianAnnualWage: e.medianAnnualWage,
-    state: e.state,
-    occupationCode: kind === "occupation" ? e.code : null,
+    // Each kind carries only the fields its record holds: an occupation its
+    // code and median offered wage, a law firm its state. Printing null for
+    // the others read as missing data.
+    ...(kind === "occupation" ? { occupationCode: e.code, medianAnnualWage: e.medianAnnualWage } : {}),
+    ...(kind === "attorney" ? { state: e.state } : {}),
     filingsLast12Months: e.recent12m,
     url: `${SITE_URL}${page}/${e.slug}`,
   };
+}
+
+/**
+ * The dates an entity answer is true for: the last decision in DOL's published
+ * files (the counts, rates and medians), and the sweep that read DOL's live
+ * status (the pending count). A failed read leaves the date null rather than
+ * failing the answer.
+ */
+async function entityDates(): Promise<{ disclosedThrough: string | null; sweptOn: string | null }> {
+  const f = await getFreshness().catch(() => ({}) as Record<string, { asOf: string | null } | undefined>);
+  return { disclosedThrough: day(f["perm-cases"]?.asOf), sweptOn: day(f["perm-case-status"]?.asOf) };
 }
 
 export async function readEntity(kind: EntityKind, slug: string): Promise<ReadResult<Record<string, unknown>>> {
   if (!isEntityKind(kind)) return bad("Unknown kind.");
   if (!SLUG_RE.test(slug)) return bad("That isn't a valid name in a URL. Search by name first to find it.");
   const page = Object.values(ENTITY_PATHS).find((p) => p.kind === kind)!.page;
-  const e = await getEntityBySlug(kind, slug);
+  const [e, dates, live] = await Promise.all([
+    getEntityBySlug(kind, slug),
+    entityDates(),
+    entityPending(kind, slug).catch(() => null),
+  ]);
   if (!e) return { ok: false, status: 404, code: "not_found", message: "No page by that name. Search by name to find the right one." };
   return {
     ok: true,
-    data: entityData(kind, page, e),
+    data: {
+      ...entityData(kind, page, e),
+      // DOL's live status for this entity's cases, from the latest sweep: the
+      // queue the published files can't show, because they hold decided cases only.
+      pendingNow: live
+        ? {
+            pending: live.pending,
+            casesTracked: live.tracked,
+            byStatus: live.stages.map((st) => ({ status: st.status, cases: st.n })),
+            oldestPendingFiled: live.oldest ? live.oldest.slice(0, 10) : null,
+            asOf: dates.sweptOn,
+          }
+        : null,
+    },
     meta: {
-      source: "U.S. Department of Labor, OFLC PERM disclosure files (decided cases)",
-      asOf: null,
+      source: "U.S. Department of Labor, OFLC PERM disclosure files (decided cases) and FLAG case status (pending)",
+      asOf: dates.disclosedThrough,
       url: `${SITE_URL}${page}/${e.slug}`,
     },
   };
@@ -305,7 +336,7 @@ export async function searchEntities(kind: EntityKind, q: string, limit = 25): P
   if (needle.length < 2 || needle.length > 120) return bad("Search with 2 to 120 characters.");
   const take = Math.min(Math.max(1, Math.floor(limit)), 100);
   const page = Object.values(ENTITY_PATHS).find((p) => p.kind === kind)!.page;
-  const found = await searchByName(kind, needle, take + 1);
+  const [found, dates] = await Promise.all([searchByName(kind, needle, take + 1), entityDates()]);
   return {
     ok: true,
     data: {
@@ -314,7 +345,11 @@ export async function searchEntities(kind: EntityKind, q: string, limit = 25): P
       // than imply it found everything.
       more: found.length > take,
     },
-    meta: { source: "U.S. Department of Labor, OFLC PERM disclosure files (decided cases)", asOf: null, url: `${SITE_URL}${page}?q=${encodeURIComponent(needle)}` },
+    meta: {
+      source: "U.S. Department of Labor, OFLC PERM disclosure files (decided cases)",
+      asOf: dates.disclosedThrough,
+      url: `${SITE_URL}${page}?q=${encodeURIComponent(needle)}`,
+    },
   };
 }
 

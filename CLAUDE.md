@@ -1,10 +1,10 @@
 # CLAUDE.md - PERM Tracker
 
-**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-02
+**Status:** Production | **Version:** 2.0.0 | **Last Updated:** 2026-10-03
 
 > The codebase-map table below is a dated snapshot (2026-02-21) and its counts
-> have drifted: the suite is now **549 files / 8,276 tests across 5 vitest
-> projects** (2026-10-02), not the 151 files / 3 projects TESTING.md records. Treat those
+> have drifted: the suite is now **557 files / 8,346 tests across 5 vitest
+> projects** (2026-10-03), not the 151 files / 3 projects TESTING.md records. Treat those
 > docs as orientation, and `v2/CLAUDE.md` plus `pnpm test:run` as current.
 
 ## Production URLs
@@ -364,3 +364,13 @@ Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 2 2026 (afternoon)".
 - **Keys are hashed in Convex; calls are counted in the public-data database** under a random account id, never a user id.
 - **Free plan: 10 calls a minute, 300 a day, 3,000 a month** (`convex/lib/apiPlans.ts`); Plus exists for comped accounts until billing.
 - **`/developers` and `/api-terms`** document it; the Terms carve API use out of the no-scripts rule.
+
+## Oct 3 2026, in five lines
+
+Detailed in [`v2/CLAUDE.md`](v2/CLAUDE.md) under "Oct 3 2026".
+
+- **The search pages work on Chrome 109 again**: no `AbortSignal.any` in browser code.
+- **Sitemap dates come from git** (`scripts/page_dates.mjs`), and the deploy fetches the history to write them.
+- **The nightly bulletin read only looks forward**; old history stays with the backfill.
+- **DOL's pages refresh when any of its figures moves**, the wage table included.
+- **API entity answers carry their dates and the live queue**; caught errors record which requests failed.

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import PAGE_DATES from "@/lib/sitemap/page-dates.json";
 import type { PostSummary, ContentType } from "@/lib/content/types";
 
 // Mock the content layer so we control which "posts" the sitemap sees without
@@ -214,8 +215,11 @@ describe("sitemap.ts", () => {
     vi.mocked(getAllPosts).mockReturnValue([mkPost("a", "blog", "2026-01-01")]);
     const entries = await sitemap();
     const byUrl = new Map(entries.map((e) => [e.url, e.lastModified]));
-    expect(byUrl.get("https://permtracker.app/perm-queue/2025-11")).toBe("2026-09-15");
-    expect(byUrl.get("https://permtracker.app/perm-queue/2025-12")).toBe("2026-09-15");
+    // The later of the sweep's day and the month page's own last change.
+    const monthPage = (PAGE_DATES as Record<string, string>)["/perm-queue/[month]"]!;
+    const expected = monthPage > "2026-09-15" ? monthPage : "2026-09-15";
+    expect(byUrl.get("https://permtracker.app/perm-queue/2025-11")).toBe(expected);
+    expect(byUrl.get("https://permtracker.app/perm-queue/2025-12")).toBe(expected);
     expect(byUrl.has("https://permtracker.app/perm-queue/2026-09")).toBe(false);
     // The hub is still there beside its children.
     expect(byUrl.has("https://permtracker.app/perm-queue")).toBe(true);
@@ -313,16 +317,18 @@ describe("sitemap.ts", () => {
 
   it("homepage lastModified derives from the newest post's date or updated", async () => {
     vi.mocked(getAllPosts).mockReturnValue([
-      mkPost("first", "blog", "2026-01-01"),
-      mkPost("second", "blog", "2026-02-15", "2026-03-04"),
-      mkPost("third", "tutorials", "2026-01-20"),
+      // Dated past any page change, so the posts decide (the homepage takes
+      // the later of its newest post and its own last change).
+      mkPost("first", "blog", "2099-01-01"),
+      mkPost("second", "blog", "2099-02-15", "2099-03-04"),
+      mkPost("third", "tutorials", "2099-01-20"),
     ]);
     const entries = await sitemap();
     // With the trailing slash since 2026-09-15: the form Google inspects and the canonical declares.
     const root = entries.find((e) => e.url === "https://permtracker.app/");
     expect(root).toBeDefined();
-    // The second post has the most recent `updated` (2026-03-04) — that should win.
-    expect(root!.lastModified).toBe("2026-03-04");
+    // The second post has the most recent `updated` (2099-03-04) — that should win.
+    expect(root!.lastModified).toBe("2099-03-04");
   });
 
   it("does NOT include /login or /signup (they are noindex per their page metadata)", async () => {
@@ -384,8 +390,13 @@ describe("sitemap.ts", () => {
     const entries = await sitemap();
     const timeline = entries.find((e) => e.url.endsWith("/tools/perm-timeline-calculator"));
     const pwd = entries.find((e) => e.url.endsWith("/tools/pwd-calculator"));
-    expect(timeline?.lastModified).toBe("2026-08-20");
-    expect(pwd?.lastModified).toBe("2026-08-20");
+    // The later of DOL's as-of and the page's own last change, never a post's date.
+    const later = (route: string) => {
+      const d = (PAGE_DATES as Record<string, string>)[route]!;
+      return d > "2026-08-20" ? d : "2026-08-20";
+    };
+    expect(timeline?.lastModified).toBe(later("/tools/perm-timeline-calculator"));
+    expect(pwd?.lastModified).toBe(later("/tools/pwd-calculator"));
   });
 
   it("emits per-slug URLs for every content type, changelog included", async () => {
@@ -470,7 +481,9 @@ describe("sitemap.ts", () => {
     const entry = (await sitemap()).find((e) =>
       e.url.endsWith("/perm-processing-times"),
     );
-    expect(entry!.lastModified).toBe("2026-08-20");
+    const page = (PAGE_DATES as Record<string, string>)["/perm-processing-times"]!;
+    expect(entry!.lastModified).toBe(page > "2026-08-20" ? page : "2026-08-20");
+    expect(entry!.lastModified).not.toBe("2026-01-01");
   });
 
   it("still builds when the DISCLOSURE read fails: a stale lastmod is not a reason to fail", async () => {

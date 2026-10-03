@@ -67,6 +67,17 @@ describe("usePublicQuery", () => {
     });
   });
 
+  it("works in a browser without AbortSignal.any or AbortSignal.timeout", async () => {
+    // Chrome 109 (the last release for Windows 7 and 8.1) has neither, and
+    // the search pages crashed there on Oct 3 2026. The deadline must still
+    // read as a timeout, not as a silent supersede.
+    vi.stubGlobal("AbortSignal", Object.assign(function AbortSignal() {}, { any: undefined, timeout: undefined }));
+    hangingFetch();
+    const { result } = renderHook(() => usePublicQuery("/x", { timeoutMs: 40 }));
+    await waitFor(() => expect(result.current.failed).toBe(true), { timeout: 500 });
+    expect(result.current.failure?.kind).toBe("timeout");
+  });
+
   it("does NOT mark failed when superseded by a new url", async () => {
     // The abort from a url change must never read as a failure - otherwise an
     // error flashes on every keystroke of a search box.

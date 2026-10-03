@@ -92,11 +92,18 @@ async function main() {
   // The workflow expires the public pages only when this is true. DOL moves
   // roughly weekly, so expiring on every run would re-render those pages on
   // the days nothing changed.
+  //
+  // DOL can move its prevailing wage figures without moving the PERM date (Sep
+  // 30 2026), and the row is keyed by the PERM date, so "a new key" alone
+  // missed those days and the pages waited up to two days. Any change to the
+  // stored snapshot counts.
   const existing = await db.execute({
-    sql: "SELECT 1 FROM processing_times WHERE perm_as_of = ? LIMIT 1",
+    sql: "SELECT json FROM processing_times WHERE perm_as_of = ? LIMIT 1",
     args: [snap.permAsOf],
   });
   const isNewAsOf = existing.rows.length === 0;
+  const figuresMoved = !isNewAsOf && String(existing.rows[0]!.json) !== JSON.stringify(snap);
+  const dolChanged = isNewAsOf || figuresMoved;
 
   const now = Date.now();
   // Keyed by DOL's own as-of date, so re-running on a day DOL has not
@@ -131,7 +138,13 @@ async function main() {
   for (const r of rows.rows) console.log(`    ${r.perm_as_of}`);
   console.log(`  freshness stamped: as_of ${snap.permAsOf}`);
   console.log(
-    `  DOL as-of ${snap.permAsOf} is ${isNewAsOf ? "NEW (revalidation will fire)" : "unchanged (no revalidation)"}`,
+    `  DOL as-of ${snap.permAsOf} is ${
+      isNewAsOf
+        ? "NEW (revalidation will fire)"
+        : figuresMoved
+          ? `unchanged, but other figures moved (wage as-of ${snap.pwdAsOf ?? "-"}; revalidation will fire)`
+          : "unchanged, figures identical (no revalidation)"
+    }`,
   );
 
   // Hand the decision to the workflow. Written only under GITHUB_OUTPUT so a
@@ -139,7 +152,7 @@ async function main() {
   // file is shared with every other step in the job.
   const ghOut = process.env.GITHUB_OUTPUT;
   if (ghOut) {
-    appendFileSync(ghOut, `dol_changed=${isNewAsOf}\nperm_as_of=${snap.permAsOf}\n`);
+    appendFileSync(ghOut, `dol_changed=${dolChanged}\nperm_as_of=${snap.permAsOf}\n`);
   }
 }
 
