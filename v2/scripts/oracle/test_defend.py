@@ -132,6 +132,54 @@ with tempfile.TemporaryDirectory() as tmp:
     check("without a token it only watches", state["mode"] == "off" and state["last"]["live"] is False)
     check("and says what it would do, once", len(log) == 1 and "would rule on" in log[0] and "AS132203" in log[0], str(log))
 
+# A full app is not counted when the database, not the traffic, is using the CPU.
+check("database work beyond the website's is database-bound",
+      d.database_bound({"db": 100, "web": 100}, {"db": 400, "web": 250}))
+check("page renders beyond the database's are not",
+      not d.database_bound({"db": 100, "web": 100}, {"db": 150, "web": 600}))
+check("an idle sample is not database-bound", not d.database_bound({"db": 5, "web": 5}, {"db": 5, "web": 5}))
+with tempfile.TemporaryDirectory() as _proc:
+    _root = pathlib.Path(_proc)
+    def _p(pid, comm, utime, stime):
+        (_root / pid).mkdir()
+        (_root / pid / "comm").write_text(comm + "\n")
+        # The comm in stat is in parentheses and may hold spaces; fields after it count from 3.
+        rest = ["S"] + ["0"] * 10 + [str(utime), str(stime)] + ["0"] * 5
+        (_root / pid / "stat").write_text(f"{pid} ({comm}) " + " ".join(rest) + "\n")
+    _p("10", "sqld", 700, 300)
+    _p("11", "next-server (v1", 40, 10)
+    _p("12", "next-server (v1", 30, 20)
+    _p("13", "bash", 999, 999)
+    (_root / "self").mkdir()
+    _real_proc = d.PROC
+    d.PROC = _root
+    try:
+        _ticks = d.cpu_ticks()
+    finally:
+        d.PROC = _real_proc
+check("reads the database's and the website copies' ticks, nothing else",
+      _ticks == {"db": 1000, "web": 100}, str(_ticks))
+
+# An alert must name its User-Agent: Resend sits behind Cloudflare, which
+# answered Python's default one with 403 "error code: 1010" on every alert sent
+# until Oct 3 2026.
+_sent = []
+_real_open, _real_env = d.urllib.request.urlopen, d.read_env
+class _Resp:
+    def read(self):
+        return b"{}"
+d.urllib.request.urlopen = lambda req, timeout=None: (_sent.append(req), _Resp())[1]
+d.read_env = lambda path: {"RESEND_API_KEY": "re_test"}
+try:
+    _state = {}
+    d.email(_state, {"ALERT_TO": "owner@example.com"}, "subject", "text")
+finally:
+    d.urllib.request.urlopen, d.read_env = _real_open, _real_env
+_ua = _sent[0].get_header("User-agent") if _sent else None
+check("an alert email names its own User-Agent, not Python's default",
+      bool(_ua) and "urllib" not in _ua.lower(), str(_ua))
+check("and a sent alert is counted against the day's limit", sum(_state.get("emails", {}).values()) == 1)
+
 print()
 print(f"{len(failures)} failure(s)")
 sys.exit(1 if failures else 0)

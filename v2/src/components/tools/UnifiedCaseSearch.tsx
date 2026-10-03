@@ -629,8 +629,8 @@ export function UnifiedCaseSearch({
                 Out here it spans the full width and the button lines up with
                 the field it submits. */}
             <p id={`${uid}-q-hint`} className="mt-1 text-sm leading-snug text-foreground/70">
-              The start of an employer&apos;s name, or any case number: G- or A- (PERM), P-100 (wage request),
-              I- (H-1B LCA), H-300, H-400 or P-400 (H-2A, H-2B). Or leave it empty and search by law firm,
+              The start of an employer&apos;s name, or any case number: G- or A- (PERM), P-100 to P-203 (wage request),
+              I- (H-1B LCA), H-300, JO-A-300, H-400, P-400, C-500 or P-500 (H-2A, H-2B, CW-1). Or leave it empty and search by law firm,
               state or occupation.
             </p>{" "}
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">

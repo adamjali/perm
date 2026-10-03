@@ -19,11 +19,25 @@ declare -A fails last
 [ -f "$STATE" ] && source "$STATE"
 
 token=$(cat /srv/permtracker/secrets/db_ro.jwt)
+rw_token=$(cat /srv/permtracker/secrets/db_rw.jwt)
 port_of() { sed -n 's/^PORT=//p' "/srv/permtracker/app/env/$1.env" 2>/dev/null; }
 
 db_ok()     { curl -sf -m 10 -H "Authorization: Bearer $token" -H "Content-Type: application/json" \
                 -d '{"requests":[{"type":"execute","stmt":{"sql":"SELECT 1"}},{"type":"close"}]}' \
                 http://127.0.0.1:8080/v2/pipeline >/dev/null; }
+# A read is not enough: on Oct 3 2026 sqld answered SELECT 1 in 0.2 s while no
+# write could take the lock from 12:46 to 1:24 PM EDT, and the website, waiting
+# on its writes, filled every slot and served the busy page to about 9 visitors
+# in 10. Taking the write lock and releasing it at once writes nothing; Hrana
+# answers 200 with an error result when the lock can't be had, so the body is
+# what's checked.
+db_write_ok() {
+  local out
+  out=$(curl -sf -m 20 -H "Authorization: Bearer $rw_token" -H "Content-Type: application/json" \
+        -d '{"requests":[{"type":"execute","stmt":{"sql":"BEGIN IMMEDIATE"}},{"type":"execute","stmt":{"sql":"ROLLBACK"}},{"type":"close"}]}' \
+        http://127.0.0.1:8080/v2/pipeline) || return 1
+  case "$out" in *'"type":"error"'*) return 1 ;; *'"type":"ok"'*) return 0 ;; *) return 1 ;; esac
+}
 web_ok()    { curl -sf -m 15 "http://127.0.0.1:$(port_of "$1")/api/health" >/dev/null; }
 nginx_ok()  { curl -sf -m 15 -H "Host: permtracker.app" http://127.0.0.1:8081/api/health >/dev/null; }
 tunnel_ok() { curl -sf -m 5 http://127.0.0.1:20241/ready >/dev/null; }
@@ -33,6 +47,8 @@ note() { # name, passed?
 }
 
 db_ok && note db 1 || note db 0
+# Only when reads answer: a database that is down entirely is the read check's case.
+if [ "${fails[db]}" = 0 ]; then db_write_ok && note db_write 1 || note db_write 0; else fails[db_write]=0; fi
 # Both copies: the live one serves visitors, the idle one is the instant
 # rollback, and a rollback onto a hung copy would take the site down.
 live=$(cat /srv/permtracker/app/active 2>/dev/null || echo blue)
@@ -54,6 +70,11 @@ repair() { # name, unit
   last[$n]=$now; fails[$n]=0
 }
 repair db permtracker-db
+# One restart covers both checks, so a stuck write never restarts the database
+# twice in a run, and the 30-minute limit applies to the database as a whole.
+if [ "${last[db]:-0}" = "$now" ]; then fails[db_write]=0; last[db_write]=$now; fi
+repair db_write permtracker-db
+if [ "${last[db_write]:-0}" = "$now" ]; then last[db]=$now; fi
 repair web_blue permtracker-web@blue
 repair web_green permtracker-web@green
 repair web_blue2 permtracker-web@blue2

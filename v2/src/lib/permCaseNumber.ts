@@ -33,8 +33,11 @@ export interface ParsedCaseNumber {
   serial: string;
 }
 
-/** `G-100-26125-868956`, and the same shape with any letter/office prefix. */
-const CASE_RE = /^([A-Za-z])-(\d{3})-(\d{2})(\d{3})-(\d+)$/;
+/**
+ * `G-100-26125-868956`, and the same shape with any letter/office prefix. The
+ * H-2A job order's code is `JO-A-300`; its day code is read the same way.
+ */
+const CASE_RE = /^([A-Za-z]|JO-A)-(\d{3})-(\d{2})(\d{3})-(\d+)$/i;
 
 /**
  * Decode a case number. Returns null for anything that is not one, rather

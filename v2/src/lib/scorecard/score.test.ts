@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   grade,
+  headToHead,
   horizonOf,
   isGradedOutcome,
   pick,
@@ -84,6 +85,33 @@ describe("summariseCell", () => {
     expect(c.typicalMissDays).toBe(4);
   });
 
+  it("counts a case still pending past its date at the days it is already late", () => {
+    // Predicted Sep 20, Sep 25 and Oct 5; on Oct 1 the first two are still
+    // pending, so they are at least 11 and 6 days late. The third's date is
+    // ahead, so it says nothing yet.
+    const rows = [
+      row({ predicted: "2026-09-20" }),
+      row({ predicted: "2026-09-25" }),
+      row({ predicted: "2026-10-05" }),
+      row({ predicted: "2026-09-28", decidedOn: "2026-09-26", outcome: "CERTIFIED" }), // -2
+    ];
+    const c = summariseCell(rows, "2026-10-01");
+    expect(c.overdue).toBe(2);
+    expect(c.overdueDays).toBe(9); // median of 11 and 6, rounded
+    // Decided-only, the method looks 2 days early. Counting what is already
+    // late, it runs at least 6 days late: a floor that only rises.
+    expect(c.biasDays).toBe(-2);
+    expect(c.missAtLeastDays).toBe(6);
+    expect(c.biasAtLeastDays).toBe(6);
+    expect(c.missAtLeastDays!).toBeGreaterThanOrEqual(c.typicalMissDays!);
+  });
+
+  it("leaves withdrawals out of the overdue count", () => {
+    const c = summariseCell([row({ predicted: "2026-09-01", decidedOn: "2026-09-03", outcome: "WITHDRAWN" })], "2026-10-01");
+    expect(c.overdue).toBe(0);
+    expect(c.missAtLeastDays).toBeNull();
+  });
+
   it("does not settle a prediction whose date is recent", () => {
     const c = summariseCell([row({ predicted: "2026-09-25" })], "2026-10-01");
     expect(c.settled).toBe(0);
@@ -118,5 +146,55 @@ describe("the sample", () => {
     expect(a).not.toEqual(c);
     expect(new Set(a).size).toBe(10);
     expect(pick([1, 2], 5, rngFor("x"))).toHaveLength(2);
+  });
+});
+
+describe("headToHead", () => {
+  const r = (over: Partial<PredictionRow> & { caseNumber: string }) => ({ ...row(over), caseNumber: over.caseNumber });
+
+  it("compares a rival with ours only on the cases both predicted that day", () => {
+    const rows = [
+      r({ caseNumber: "G-1", predicted: "2026-09-10", decidedOn: "2026-09-12", outcome: "CERTIFIED" }), // ours off 2
+      r({ caseNumber: "G-1", source: "rival-a", model: "rival", predicted: "2026-09-01", decidedOn: "2026-09-12", outcome: "CERTIFIED" }), // off 11
+      r({ caseNumber: "G-2", source: "rival-a", model: "rival", predicted: "2026-09-12", decidedOn: "2026-09-12", outcome: "CERTIFIED" }), // no ours: not shared
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-a"]!;
+    expect(h.shared).toBe(1);
+    expect(h.decided).toBe(1);
+    expect(h.oursTypicalDays).toBe(2);
+    expect(h.rivalTypicalDays).toBe(11);
+    expect(h.oursCloser).toBe(1);
+    expect(h.rivalCloser).toBe(0);
+  });
+
+  it("settles a case still waiting past both dates in favour of the later one", () => {
+    const rows = [
+      r({ caseNumber: "G-3", predicted: "2026-09-20" }),
+      r({ caseNumber: "G-3", source: "rival-b", model: "rival", predicted: "2026-09-05" }),
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-b"]!;
+    expect(h.settledWhileWaiting).toBe(1);
+    expect(h.oursCloser).toBe(1);
+    expect(h.decided).toBe(0);
+  });
+
+  it("leaves a waiting case alone while one of the two dates is still ahead", () => {
+    const rows = [
+      r({ caseNumber: "G-4", predicted: "2026-10-20" }),
+      r({ caseNumber: "G-4", source: "rival-b", model: "rival", predicted: "2026-09-05" }),
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-b"]!;
+    expect(h.shared).toBe(1);
+    expect(h.oursCloser + h.rivalCloser + h.ties).toBe(0);
+  });
+
+  it("never grades a withdrawal", () => {
+    const rows = [
+      r({ caseNumber: "G-5", predicted: "2026-09-10", decidedOn: "2026-09-11", outcome: "WITHDRAWN" }),
+      r({ caseNumber: "G-5", source: "rival-c", model: "rival-method", predicted: "2026-09-01", decidedOn: "2026-09-11", outcome: "WITHDRAWN" }),
+    ];
+    const h = headToHead(rows, "2026-10-01")["rival-c"]!;
+    expect(h.shared).toBe(1);
+    expect(h.decided + h.oursCloser + h.rivalCloser).toBe(0);
   });
 });

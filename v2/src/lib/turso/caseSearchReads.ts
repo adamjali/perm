@@ -1323,9 +1323,10 @@ export async function readFlagPublished(
  */
 export function programForCaseNumber(caseNumber: string): "perm" | FlagProgramKey {
   const head = caseNumber.trim().toUpperCase();
-  // H-2A (`H-300-`), H-2B (`H-400-`) and the H-2B wage request (`P-400-`)
-  // come before the bare letters: a `P-400-` is not a PERM-queue wage request.
-  if (/^(H-300|H-400|P-400)-/.test(head)) return "seasonal";
+  // H-2A (`H-300-`, job order `JO-A-300-`), H-2B (`H-400-`), CW-1 (`C-500-`)
+  // and the H-2B and CW-1 wage requests (`P-400-`, `P-500-`) come before the
+  // bare letters: neither wage request is a PERM-queue one.
+  if (/^(H-300|H-400|P-400|P-500|JO-A-300|C-500)-/.test(head)) return "seasonal";
   const letter = head.charAt(0);
   if (letter === "P") return "pwd";
   if (letter === "I") return "lca";

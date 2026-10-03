@@ -91,7 +91,7 @@ const PROGRAMS = [
   { id: "program-perm", program: "perm", label: "PERM" },
   { id: "program-wage", program: "pwd", label: "Wage requests" },
   { id: "program-lca", program: "lca", label: "H-1B LCAs" },
-  { id: "program-h2", program: "seasonal", label: "H-2A and H-2B" },
+  { id: "program-h2", program: "seasonal", label: "H-2A, H-2B and CW-1" },
 ] as const;
 
 /**

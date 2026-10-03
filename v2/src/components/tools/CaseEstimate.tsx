@@ -127,7 +127,9 @@ export function CaseEstimate(props: CaseEstimateInput) {
               ? "If DOL keeps its recent pace, between "
               : est.modelId === "queue-advance"
                 ? "At the fastest and slowest the queue has moved, between "
-                : "Between "}
+                : est.modelId === "stragglers"
+                  ? "Half of the cases still in line behind DOL's queue are decided by the date above, and eight in ten between "
+                  : "Between "}
             <b>{fmtDate(est.earliestDate)}</b> and <b>{fmtDate(est.latestDate)}</b>.{" "}
           </>
         ) : null}

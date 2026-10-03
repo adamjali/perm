@@ -7663,3 +7663,66 @@ the published `server.json`. No repository and no person are named. To publish a
 --domain permtracker.app --private-key "$(openssl ec -in key.pem -noout -text | grep -A4 priv: | tail -n +2 | tr -d
 ' :\n')"`, then `mcp-publisher publish`. Never print the private key. Removing the TXT record blocks future logins,
 not the published entry.
+
+## Oct 3 2026 (afternoon): an outage we caused, two more prefixes, and every seasonal source
+
+**The outage, 12:46 to 1:24 PM EDT.** Back-to-back LCA history loads (about 200,000 rows a quarter,
+each row written into a dozen indexes) made sqld compact its replication log continuously: a
+50,000-frame snapshot every 41 seconds, then a merge into a 4.2 GB full snapshot. sqld held both
+CPUs, reads still answered in 0.2 s, and no write could take the lock. Every request that writes
+waited, the app's slots filled, and about 9 visitors in 10 got the busy page. The watchdog checked
+reads only, so it saw nothing. What changed:
+- `permtracker-db.service` runs sqld with **`--max-log-size 4096`** (the default is 200 MB). That
+  log exists for read replicas, which we don't run; at 4 GB it compacts about twenty times less often.
+- **The watchdog takes and releases the write lock** every 2 minutes (`db_write_ok`, the
+  `db_rw.jwt` token) and restarts the database after 3 failed checks, one restart per 30 minutes
+  shared with the read check. Tested against a server that never answers and an error reply. An
+  idle held lock is no test: sqld steals a write transaction idle for about 5 s.
+- **History files load at `HISTORY_PAUSE_S` = 2 s between write requests** (0.35 s for DOL's newest
+  file), chosen by `file_is_newest()`, so a back catalogue can never outrun the live site.
+- A restart of a sqld killed mid-hang finds its log dirty and compacts about a million frames (12
+  minutes at both CPUs, the site still up); a clean restart afterwards came back in 1 s.
+
+**Two more prefixes on the counter, found in our own ledger.** 14 of 60 serials the miss ledger
+had recorded as "no case" were H-2A job orders (`JO-A-300-`, Form ETA-790/790A), and one was a
+CW-1 application (`C-500-`); DOL answers both. That makes 19. Three consequences:
+- **Fixed-width code broke on a nine-character prefix.** `CASE_RE`, `[:6]`, `substr(case_number,
+  1, 6)` and `caseNumber[12:]` all assumed one letter and three digits. `lib_flag_serials` has
+  `SQL_PREFIX` / `SQL_DAY` / `SQL_SERIAL` (everything before the twelve-character day-and-serial
+  tail), and `prefix_of` / `serial_of` everywhere else. A test proves a job-order hit is never
+  also written down as a miss (it was, with `[12:]`).
+- **The miss ledger records a prefix ERA, not a flag.** `asked_all` is NULL for the walk's original
+  twelve, then 1 and 2 as prefixes were found (`PREFIX_ERAS`, `CURRENT_ERA`, `owed_after`). A miss
+  from an older era is asked only the prefixes found since, and settles at the current era.
+- **The site's shape rule accepts `JO-A` exactly**, nothing looser: `caseStatusVocabulary`,
+  `caseNumberShape`, both rules in `turso/caseLookup.ts`, and the date decoder in `permCaseNumber`.
+  `APPROVED` is a final seasonal status (a job order's decision; Python and TypeScript sets, pinned
+  together), and `AVAILABLE FOR 9142A LINKING` pending.
+
+**H-2A, H-2B and CW-1 disclosure files** load through `ingest_flag_disclosure.py` as programs
+`h2a`, `h2b` and `cw1`, into `h2a_cases`, `h2b_cases` and `cw1_cases`, with column names from DOL's
+FY2026 Q3 record layouts. The files carry no VISA_CLASS (`visa_default` names it); the seasonal
+columns are `workers_certified`, `begin_date` and `end_date` (the REQUESTED period, which every
+application has) and `worksite_county`. CW-1 calls the employer `LEGAL_BUSINESS_NAME`. The guard
+knows the "Piece Rate" unit, and its date floor is 2000 so the FY2008 history can load. The
+workflow is now "FLAG disclosure ingest", with one concurrency queue per program, a run title naming
+the file, and `dry_run`, `dump_header` and `accept_drift` inputs. FY2013's H-2A and H-2B files are
+`.xls`, which the parser can't read.
+
+**SeasonalJobs.dol.gov's feeds** (`ingest_seasonal_jobs.py`, table `seasonal_postings`, dataset
+`seasonal-postings`): three zips a day of the H-2A and H-2B applications and H-2A job orders DOL
+accepted in about the last three weeks, with what the live status service never returns: wage,
+workers, work period and worksite. The first file DOL serves is Feb 25 2024 (Feb 24 answers 404),
+reaching back to acceptances on Feb 6 2024; each file covers about three weeks, so a backfill takes
+one file a week. Older seasonal cases are in the quarterly disclosure files (FY2008 on). No contact field, preparer, FEIN, street address or postcode is
+read. The server runs it daily (`permtracker-uscis seasonal-jobs`, 8:20 AM ET).
+
+**The defense, two fixes.** Its alert emails had all failed: Resend sits behind Cloudflare, which
+answers Python's default User-Agent with 403 "error code: 1010"; it sends a named one now. And a
+full app no longer counts when sqld has used more CPU than every website copy over a 3-second
+sample (`database_bound`): at 12:02 PM our own load put Under Attack Mode in front of visitors for
+31 minutes with nobody shown the busy page.
+
+**Published seasonal cases join the live table.** `sync_published_live.py` feeds
+`seasonal_case_status` from four published tables (`pwd_cases` for P-400 and P-500, and the three
+new ones).

@@ -204,10 +204,26 @@ export const LCA_STATUSES: FlagStatusEntry[] = [
  */
 export const SEASONAL_STATUSES: (FlagStatusEntry & { forms: string })[] = [
   {
+    status: "AVAILABLE FOR 9142A LINKING",
+    label: "Available for 9142A linking",
+    pending: true,
+    forms: "H-2A job orders",
+    summary: "The job order is in and waiting to be attached to the H-2A application (Form ETA-9142A) the employer files for the same work. The job order comes first, 60 to 75 days before the first date of need.",
+    unsourced: "DOL publishes no definition of this status; this reading comes from its name and from 20 CFR 655.121, which has the job order filed before the application.",
+  },
+  {
+    status: "APPROVED",
+    label: "Approved",
+    pending: false,
+    forms: "H-2A job orders",
+    summary: "The job order was approved and placed in clearance, so the state workforce agency starts recruiting U.S. workers. It is the job order's own decision: the H-2A application filed with it (an H-300- number) is decided separately.",
+    cite: { label: "20 CFR 655.121(e), (f)", href: CFR("655", "655.121") },
+  },
+  {
     status: "IN PROCESS",
     label: "In process",
     pending: true,
-    forms: "All three",
+    forms: "Every form",
     summary: "Filed and not yet acted on. On an application DOL accepts it or sends a notice of deficiency within 7 days of receipt: calendar days for H-2A, business days for H-2B.",
     cite: { label: "20 CFR 655.33, 655.143", href: CFR("655", "655.143") },
   },
@@ -367,7 +383,7 @@ export const SEASONAL_STATUSES: (FlagStatusEntry & { forms: string })[] = [
     status: "WITHDRAWN",
     label: "Withdrawn",
     pending: false,
-    forms: "All three",
+    forms: "Every form",
     summary: "The employer withdrew the filing before DOL decided it. DOL records no reason.",
     unsourced: "A workflow word; the H-2A and H-2B rules describe withdrawal only after certification.",
   },

@@ -48,7 +48,7 @@ from lib_turso import (  # noqa: E402
 from ingest_case_status_direct import (  # noqa: E402
     BATCH, PACE_S, decode_filing_date, log, lookup_with_retry,
 )
-from lib_flag_serials import SERIAL_MOD, case_number, day_code, serial_of  # noqa: E402
+from lib_flag_serials import SERIAL_MOD, case_number, day_code, prefix_of, serial_of  # noqa: E402
 from lib_slugs import slugify  # noqa: E402
 
 PERM_PREFIX = "G-100-"
@@ -114,7 +114,9 @@ PROGRAMS: dict[str, dict] = {
         # P-400 is kept OUT of the PWD program on purpose: the
         # PWD pages describe the ETA-9141 queue that PERM and H-1B wait in,
         # and H-2B requests run through a different one.
-        "prefixes": ["H-300-", "H-400-", "P-400-", "P-500-"],
+        # JO-A-300 is the H-2A job order (Form ETA-790/790A) filed before the
+        # H-300 application, and C-500 the CW-1 application (ETA-9142C).
+        "prefixes": ["H-300-", "H-400-", "P-400-", "P-500-", "JO-A-300-", "C-500-"],
         # Statuses read off DOL's own answers over the FY2026 backfill's first
         # 27,000 cases. One not in either set is logged and
         # treated as pending, which costs a daily re-check and never a wrong
@@ -130,10 +132,17 @@ PROGRAMS: dict[str, dict] = {
                   "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
                   # The Board's decision on an appealed wage determination is
                   # the last administrative word (20 CFR 655.13(c)).
-                  "BALCA OVERTURNED"},
+                  "BALCA OVERTURNED",
+                  # An H-2A job order's own decision (JO-A-300); DOL's answers
+                  # for all 1,399 job orders SeasonalJobs listed on Oct 3 2026
+                  # read APPROVED, IN PROCESS, NOD ISSUED, WITHDRAWN, DENIED or
+                  # AVAILABLE FOR 9142A LINKING.
+                  "APPROVED"},
         "pending": {"IN PROCESS", "ACCEPTED - PENDING RECRUITMENT", "NOD ISSUED",
                     "NOR ISSUED", "NRM ISSUED", "RFI ISSUED", "PENDING APPEAL",
-                    "PENDING CENTER DIRECTOR REVIEW", "POST-CERT REQUEST PENDING"},
+                    "PENDING CENTER DIRECTOR REVIEW", "POST-CERT REQUEST PENDING",
+                    # A job order accepted and waiting for its H-2A application.
+                    "AVAILABLE FOR 9142A LINKING"},
         "doc": "seasonal_live_summary",
         "freshness": "seasonal-status",
         # An H-2A or H-2B season is decided within months of filing.
@@ -144,8 +153,8 @@ PROGRAMS: dict[str, dict] = {
 PREFIX_TO_PROGRAM = {p: name for name, cfg in PROGRAMS.items() for p in cfg["prefixes"]}
 # Probe order across programs, by measured hit rate: the more a prefix
 # claims early, the fewer serials the rarer prefixes are asked about.
-DISCOVERY_ORDER = ["I-200-", "P-100-", "H-300-", "P-400-", "H-400-", "I-203-", "P-200-",
-                   "P-500-", "I-201-", "I-202-", "P-203-", "P-201-", "P-202-"]
+DISCOVERY_ORDER = ["I-200-", "P-100-", "H-300-", "P-400-", "H-400-", "JO-A-300-", "I-203-",
+                   "P-200-", "P-500-", "I-201-", "I-202-", "P-203-", "P-201-", "P-202-", "C-500-"]
 
 # Kept under their original names: scripts/test_pwd_status.py imports them.
 PREFIX = "P-100-"
@@ -233,8 +242,8 @@ def _serial_stats(db: Turso, table: str, prefixes: list[str], codes: list[str]):
             for _day, mn, mx in query_rows(
                     db,
                     f"SELECT ? AS day, "
-                    f"       MIN(CAST(substr(case_number, 13) AS INTEGER)), "
-                    f"       MAX(CAST(substr(case_number, 13) AS INTEGER)) "
+                    f"       MIN(CAST(substr(case_number, -6) AS INTEGER)), "
+                    f"       MAX(CAST(substr(case_number, -6) AS INTEGER)) "
                     f"  FROM {table} WHERE case_number >= ? AND case_number < ?",
                     [code, lo, hi]):
                 if mn is not None:
@@ -323,7 +332,7 @@ def known_serials(db: Turso, code: str) -> set[int]:
         pairs += [(cfg["table"], pfx) for pfx in cfg["prefixes"]]
     for table, prefix in pairs:
         # Primary-key range, not LIKE: see _serial_stats.
-        for (s,) in query_rows(db, f"SELECT CAST(substr(case_number, 13) AS INTEGER) FROM {table} "
+        for (s,) in query_rows(db, f"SELECT CAST(substr(case_number, -6) AS INTEGER) FROM {table} "
                               f"WHERE case_number >= ? AND case_number < ?",
                           [f"{prefix}{code}-", f"{prefix}{code}-~"]):
             known.add(int(s))
@@ -391,7 +400,7 @@ def insert_hits(db: Turso, hits: list[dict], source: str) -> int:
     stmts = []
     for v in hits:
         cn = v.get("caseNumber") or ""
-        program = PREFIX_TO_PROGRAM.get(cn[:6])
+        program = PREFIX_TO_PROGRAM.get(prefix_of(cn) or "")
         status = (v.get("caseStatus") or "").strip()
         if not program or not status:
             continue
@@ -612,7 +621,10 @@ def write_summary_doc(db: Turso, program: str = "pwd") -> bool:
     # Per form prefix (H-300, H-400, P-400 under one table; I-200 and I-203
     # under another): the H-2A and H-2B page names the three forms apart.
     by_prefix_rows = query_rows(
-        db, f"SELECT substr(case_number, 1, 5) AS p, COUNT(*), SUM(is_final) FROM {table} GROUP BY p")
+        # The form code without its dash ("H-300", "JO-A-300"): everything before
+        # the twelve-character day-and-serial tail and its dash.
+        db, f"SELECT substr(case_number, 1, length(case_number) - 13) AS p, COUNT(*), SUM(is_final) "
+            f"FROM {table} GROUP BY p")
     total = int(query_rows(db, f"SELECT COUNT(*) FROM {table}")[0][0] or 0)
     if sum(by_status.values()) != total:
         log(f"  MISMATCH {key} {sum(by_status.values()):,} vs count {total:,}; doc not written")

@@ -62,6 +62,10 @@ DEPLOYING = HEALTH / "deploying"   # written by permtracker-deploy while it warm
 DEPLOY_GRACE = 1200                # a marker older than this is a deploy that died; ignore it
 CONFIG = pathlib.Path(os.environ.get("PT_DEFEND_CONFIG", "/etc/permtracker/defend.env"))
 APP_ENV = pathlib.Path("/srv/permtracker/app/env/production.env")
+# Resend sits behind Cloudflare, which refuses Python's default User-Agent
+# ("Python-urllib/3.x") with HTTP 403 and "error code: 1010". Every alert this
+# script sent failed that way until Oct 3 2026; a named agent gets through.
+USER_AGENT = "permtracker-defend/1.0 (+https://permtracker.app)"
 
 PEOPLE_BUSY = 5            # people who drew the busy page (owner, Oct 3 2026; was 2) ...
 PEOPLE_WINDOW = 600        # ... in this many seconds
@@ -223,7 +227,8 @@ class Cloudflare:
         req = urllib.request.Request(
             f"https://api.cloudflare.com/client/v4/zones/{self.zone}{path}",
             data=json.dumps(body).encode() if body is not None else None, method=method,
-            headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json"})
+            headers={"Authorization": f"Bearer {self.token}", "Content-Type": "application/json",
+                     "User-Agent": USER_AGENT})
         with urllib.request.urlopen(req, timeout=20) as r:
             out = json.load(r)
         if not out.get("success"):
@@ -290,7 +295,8 @@ def email(state: dict, cfg: dict, subject: str, text: str) -> None:
         "https://api.resend.com/emails", method="POST",
         data=json.dumps({"from": "PERM Tracker <notifications@permtracker.app>", "to": [to],
                          "subject": subject, "text": text}).encode(),
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"})
+        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+                 "User-Agent": USER_AGENT})
     try:
         urllib.request.urlopen(req, timeout=20).read()
         sent[day] = sent.get(day, 0) + 1
@@ -315,6 +321,41 @@ def deploying_now(now: float) -> bool:
         return False
 
 
+PROC = pathlib.Path(os.environ.get("PT_PROC", "/proc"))
+CPU_SAMPLE_S = 3
+
+
+def cpu_ticks() -> dict[str, int]:
+    """CPU ticks used so far by the database and by the website copies."""
+    out = {"db": 0, "web": 0}
+    for d in PROC.iterdir():
+        if not d.name.isdigit():
+            continue
+        try:
+            comm = (d / "comm").read_text().strip()
+            fields = (d / "stat").read_text().rsplit(")", 1)[1].split()
+        except (OSError, IndexError):
+            continue
+        ticks = int(fields[11]) + int(fields[12])      # utime + stime
+        if comm == "sqld":
+            out["db"] += ticks
+        elif comm.startswith("next-server"):
+            out["web"] += ticks
+    return out
+
+
+def database_bound(before: dict[str, int], after: dict[str, int]) -> bool:
+    """The server, not the traffic, is the bottleneck: over the sample the
+    database used more CPU than every website copy together. An attack fills
+    the app with page renders; our own load fills it with database work, and a
+    browser check in front of visitors helps with only the first. On Oct 3 2026
+    at 12:02 PM EDT a history load did exactly this, and Under Attack Mode ran
+    for 31 minutes with nobody shown the busy page."""
+    db = after["db"] - before["db"]
+    web = after["web"] - before["web"]
+    return db > web and db > 0
+
+
 def in_trouble(people: int, full: int) -> bool:
     """People are being turned away: enough of them drew the busy page, or the
     app was full minute after minute. Two people set off Under Attack Mode five
@@ -333,6 +374,14 @@ def main() -> int:
     people = people_busy(tail_lines(BUSY_LOG, 2 << 20), now)
     deploying = deploying_now(now)
     full = 0 if deploying else full_minutes(reqs, now)
+    db_bound = False
+    if full >= FULL_MINUTES and people < PEOPLE_BUSY:
+        # Only worth the sample when the full app is the whole case.
+        before = cpu_ticks()
+        time.sleep(CPU_SAMPLE_S)
+        db_bound = database_bound(before, cpu_ticks())
+        if db_bound:
+            full = 0
     trouble = in_trouble(people, full)
     source = find_source(reqs, now) if trouble else None
     acts = decide(state, trouble, source, now)
@@ -342,7 +391,8 @@ def main() -> int:
     cfg = read_env(CONFIG)
     live = bool(cfg.get("CF_API_TOKEN") and cfg.get("CF_ZONE_ID")) and not OFF.exists()
     why = (f"{people} people shown the busy page in 10 minutes, app full {full} of the last {FULL_MINUTES} minutes"
-           + (" (a deploy is running, so a full app is not counted)" if deploying else ""))
+           + (" (a deploy is running, so a full app is not counted)" if deploying else "")
+           + (" (the database, not traffic, is using the CPU, so a full app is not counted)" if db_bound else ""))
     cf = Cloudflare(cfg["CF_API_TOKEN"], cfg["CF_ZONE_ID"]) if live else None
     for act, info in acts:
         if not live:

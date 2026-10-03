@@ -105,7 +105,7 @@ export const SECTIONS: DataNavSection[] = [
   // The step before the PERM, findable the same way: employer, title, month.
   { key: "pwd-cases", group: "Case tools", label: "Wage requests", href: "/pwd-cases" },
   { key: "lca-cases", group: "Case tools", label: "H-1B LCAs", href: "/lca-cases" },
-  { key: "seasonal-cases", group: "Case tools", label: "H-2A and H-2B", href: "/seasonal-cases" },
+  { key: "seasonal-cases", group: "Case tools", label: "H-2A, H-2B and CW-1", href: "/seasonal-cases" },
   { key: "calculators", group: "Case tools", label: "Calculators", href: "/calculators" },
 
   // "Queue backlog", not "Live queue": these counts are the last sweep's

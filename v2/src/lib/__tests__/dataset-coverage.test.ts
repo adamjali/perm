@@ -35,6 +35,11 @@ function registeredDatasets(): string[] {
       ids.add(m[1]!);
     }
     for (const m of src.matchAll(/dataset\s*=\s*["']([a-z0-9-]+)["']/g)) ids.add(m[1]!);
+    // A program table names its dataset as `"freshness": "h2a-disclosure"`
+    // and stamps it through `cfg["freshness"]`, which the call pattern above
+    // cannot see. Every FLAG program (disclosure files and live sweeps) is
+    // registered this way.
+    for (const m of src.matchAll(/["']freshness["']\s*:\s*["']([a-z0-9-]+)["']/g)) ids.add(m[1]!);
   }
   return [...ids].sort();
 }
@@ -81,7 +86,8 @@ describe("dataset coverage", () => {
     // that is gone. Allowed only where an id is registered outside scripts/.
     // Most ids are not scrapable (see the control), so this only asserts the
     // map has not grown wildly beyond what production registers.
-    expect(Object.keys(DATASET_COVERAGE).length).toBeLessThanOrEqual(40);
+    // 43 entries on Oct 3 2026 (the H-2A, H-2B and CW-1 files added three).
+    expect(Object.keys(DATASET_COVERAGE).length).toBeLessThanOrEqual(55);
     void known;
   });
 });

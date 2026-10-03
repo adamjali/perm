@@ -4,7 +4,8 @@ import { makeFlagProgram } from "./flagCases";
 /**
  * The temporary-labor programs on DOL's FLAG counter: H-2A applications
  * (`H-300-`, ETA-9142A), H-2B applications (`H-400-`, ETA-9142B) and H-2B
- * prevailing wage requests (`P-400-`). Same endpoint and same serial counter
+ * prevailing wage requests (`P-400-`), and CW-1 prevailing wage requests
+ * (`P-500-`, the Northern Mariana Islands' program). Same endpoint and same serial counter
  * as PERM, PWD and LCA, and the same factory as the PWD and LCA programs.
  *
  * `P-400-` is kept out of the PWD program on purpose: the PWD pages describe
@@ -29,12 +30,14 @@ export const SEASONAL_FINAL_STATUSES: ReadonlySet<string> = new Set([
   "CENTER DIRECTOR REVIEW AFFIRMED DETERMINATION",
   "CENTER DIRECTOR REVIEW MODIFIED DETERMINATION",
   "BALCA OVERTURNED",
+  // An H-2A job order's own decision (JO-A-300).
+  "APPROVED",
 ]);
 
 export const seasonal = makeFlagProgram({
   key: "seasonal",
   table: "seasonal_case_status",
-  numberRe: /^(?:H-300|H-400|P-400)-\d{5}-\d+$/,
+  numberRe: /^(?:H-300|H-400|P-400|P-500|JO-A-300|C-500)-\d{5}-\d+$/,
   finalStatuses: SEASONAL_FINAL_STATUSES,
   docKey: "seasonal_live_summary",
   discoverySource: "flag.dol.gov/recaptcha/caseStatus (DOL, via lookup)",

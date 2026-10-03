@@ -23,6 +23,10 @@ const CURRENT = [
   "G-200-24267-358106",
   "G-300-25048-699608",
   "P-100-26021-574323",
+  // An H-2A job order (Form ETA-790A) and a CW-1 application, both answered by
+  // DOL's live service on Oct 3 2026.
+  "JO-A-300-26271-264525",
+  "C-500-26271-263466",
 ];
 const LEGACY = [
   "A-23043-00641",
@@ -33,7 +37,7 @@ const LEGACY = [
 
 describe("against the server's own copies", () => {
   it("uses the identical current-format pattern", () => {
-    expect(SERVER_SRC).toContain("/^[A-Z]-\\d{3}-\\d{5}-\\d+$/");
+    expect(SERVER_SRC).toContain("/^(?:[A-Z]|JO-A)-\\d{3}-\\d{5}-\\d+$/");
   });
 
   it("uses the identical legacy-format pattern", () => {
@@ -72,6 +76,8 @@ describe("normaliseCaseNumber, the wide lookup rule", () => {
     ["G-100-26125", "current with no serial"],
     ["1-100-26125-868956", "a digit where the letter goes"],
     ["A-23043-00641; DROP TABLE", "a string with SQL in it"],
+    ["JO-B-300-26271-264525", "a two-letter code that is not the job order's"],
+    ["JO-A-26271-264525", "a job order with no form digits"],
   ])("still refuses %s (%s)", (input) => {
     expect(normaliseCaseNumber(input)).toBeNull();
   });

@@ -37,6 +37,12 @@ describe("programOf", () => {
       ["A-100-26125-868956", "perm"],
       ["G-300-26237-193005", "perm"],
       ["P-100-26125-868956", "pwd"],
+      // Wage requests for an H-1B, H-1B1 Chile, H-1B1 Singapore and E-3 job:
+      // the same ETA-9141 queue (DOL answered each live, Oct 3 2026).
+      ["P-200-26181-067725", "pwd"],
+      ["P-201-26091-748303", "pwd"],
+      ["P-202-26090-741137", "pwd"],
+      ["P-203-26146-948740", "pwd"],
       ["I-200-26125-868956", "lca"],
       ["I-203-26125-868956", "lca"],
       // I-201 and I-202 returned nothing in DOL's sampled windows but are in
@@ -48,6 +54,8 @@ describe("programOf", () => {
       ["H-300-26272-266803", "seasonal"],
       ["H-400-26050-650195", "seasonal"],
       ["P-400-26272-268643", "seasonal"],
+      // A CW-1 wage request runs with the temporary-labor programs.
+      ["P-500-26146-946655", "seasonal"],
     ];
     for (const [caseNumber, program] of cases) {
       expect(programOf(caseNumber), caseNumber).toBe(program);
@@ -183,6 +191,20 @@ describe("the prefix rules", () => {
    * that decides which table a number is read from is exactly the drift worth
    * gating, so this reads the other copy off disk.
    */
+  it("files an H-2A job order and a CW-1 application under seasonal", () => {
+    // Both draw from the same counter; DOL's live service answers them as
+    // H-2A and CW-1 (measured Oct 3 2026).
+    expect(programOf("JO-A-300-26271-264525")).toBe("seasonal");
+    expect(programOf("C-500-26271-263466")).toBe("seasonal");
+    expect(normaliseFlagCaseNumber(" jo-a-300-26271-264525 ")).toEqual({
+      caseNumber: "JO-A-300-26271-264525",
+      program: "seasonal",
+    });
+    // Exactly JO-A, nothing looser: an invented two-letter code is not a case number.
+    expect(normaliseFlagCaseNumber("JO-B-300-26271-264525")).toBeNull();
+    expect(normaliseFlagCaseNumber("XX-A-300-26271-264525")).toBeNull();
+  });
+
   it("match the Turso read layer's own copies", async () => {
     const pwd = await source("../turso/pwdCases.ts");
     const lca = await source("../turso/lcaCases.ts");
@@ -192,11 +214,11 @@ describe("the prefix rules", () => {
       return;
     }
     expect(
-      seasonal.includes("/^(?:H-300|H-400|P-400)-\\d{5}-\\d+$/"),
+      seasonal.includes("/^(?:H-300|H-400|P-400|P-500|JO-A-300|C-500)-\\d{5}-\\d+$/"),
       "seasonalCases.ts no longer uses the same prefix pattern as flagCaseNumber.ts",
     ).toBe(true);
     expect(
-      pwd.includes("/^P-100-\\d{5}-\\d+$/"),
+      pwd.includes("/^P-(?:100|200|201|202|203)-\\d{5}-\\d+$/"),
       "pwdCases.ts no longer uses the same prefix pattern as flagCaseNumber.ts",
     ).toBe(true);
     expect(
@@ -211,7 +233,7 @@ describe("the nouns", () => {
     expect(programNoun("perm")).toBe("PERM case");
     expect(programNoun("pwd")).toBe("prevailing wage request");
     expect(programNoun("lca")).toBe("LCA");
-    expect(programNoun("seasonal")).toBe("H-2A or H-2B filing");
+    expect(programNoun("seasonal")).toBe("H-2A, H-2B or CW-1 filing");
   });
 
   it("gets the article right, including the one that is not 'a'", () => {

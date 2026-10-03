@@ -207,9 +207,9 @@ export const GLOSSARY: GlossaryTerm[] = [
     slug: "eta-9142",
     aka: ["H-2A application form", "H-2B application form", "Application for Temporary Employment Certification"],
     definition:
-      "The applications for temporary labor certification: 9142A for H-2A farm work, 9142B for H-2B non-farm work. FLAG numbers them H-300- and H-400-. The employer files them against a date of need: at least 45 days ahead for H-2A, 75 to 90 days ahead for H-2B.",
+      "The applications for temporary labor certification: 9142A for H-2A farm work, 9142B for H-2B non-farm work. FLAG numbers them H-300- and H-400-. The employer files them against a date of need: at least 45 days ahead for H-2A, 75 to 90 days ahead for H-2B. An H-2A job order (Form ETA-790/790A, JO-A-300- numbers) goes in first, 60 to 75 days ahead; CW-1's application is Form ETA-9142C (C-500-).",
     cite: CFR655("655.15"),
-    see: [{ label: "H-2A and H-2B case search", href: "/seasonal-cases" }],
+    see: [{ label: "H-2A, H-2B and CW-1 case search", href: "/seasonal-cases" }],
   },
   {
     term: "FLAG",
@@ -233,7 +233,7 @@ export const GLOSSARY: GlossaryTerm[] = [
     definition:
       "The visa for temporary or seasonal farm work. DOL must first certify that no qualified U.S. workers are available and that hiring won't depress local wages; the application is decided no later than 30 days before the first date of need when it is complete.",
     cite: CFR655("655.160"),
-    see: [{ label: "H-2A and H-2B case search", href: "/seasonal-cases" }],
+    see: [{ label: "H-2A, H-2B and CW-1 case search", href: "/seasonal-cases" }],
   },
   {
     term: "H-2B",
@@ -242,7 +242,7 @@ export const GLOSSARY: GlossaryTerm[] = [
     definition:
       "The visa for temporary non-farm work: a one-time, seasonal, peakload or intermittent need, denied past nine months unless it is a one-time occurrence. The employer needs a prevailing wage determination (a P-400- number) before filing the 9142B.",
     cite: CFR655("655.6"),
-    see: [{ label: "H-2A and H-2B case search", href: "/seasonal-cases" }],
+    see: [{ label: "H-2A, H-2B and CW-1 case search", href: "/seasonal-cases" }],
   },
   {
     term: "I-140",

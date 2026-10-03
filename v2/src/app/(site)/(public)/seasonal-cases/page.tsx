@@ -13,12 +13,13 @@ import { SearchParamsBoundary } from "@/hooks/useUrlSearchParams";
 import { formatInt } from "@/lib/format";
 
 /**
- * H-2A and H-2B filings, findable by employer as DOL confirms them.
+ * H-2A, H-2B and CW-1 filings, findable by employer as DOL confirms them.
  *
  * FLAG serves three temporary-labor forms from the same counter as PERM, PWD
  * and LCA: H-2A applications (`H-300-`, ETA-9142A), H-2B
  * applications (`H-400-`, ETA-9142B) and the prevailing wage requests filed
- * for H-2B jobs (`P-400-`). Live statuses only: DOL's quarterly H-2A and
+ * for H-2B jobs (`P-400-`), plus the CW-1 wage request (`P-500-`, the
+ * Northern Mariana Islands' program). Live statuses only: DOL's quarterly H-2A and
  * H-2B disclosure files (the wage, the worker count, the worksite) are not
  * loaded, and the page says so.
  */
@@ -50,8 +51,8 @@ function longDate(iso: string | null): string | null {
   return new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
-/** The three forms in the order a reader meets them: farm work, other seasonal work, its wage. */
-const FORM_ORDER = ["H-300", "H-400", "P-400"] as const;
+/** The forms in the order a reader meets them: farm work and its job order, other seasonal work and its wage, then CW-1. */
+const FORM_ORDER = ["H-300", "JO-A-300", "H-400", "P-400", "C-500", "P-500"] as const;
 
 export default async function SeasonalCasesPage() {
   const summary = await getSeasonalSummary();
@@ -66,7 +67,7 @@ export default async function SeasonalCasesPage() {
 
       <header className="max-w-3xl">
         <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">
-          Find an H-2A or H-2B filing
+          Find an H-2A, H-2B or CW-1 filing
         </h1>{" "}
         <p className="mt-4 text-lg leading-relaxed text-foreground/70">
           Seasonal farm and non-farm work. Search the employer to get the number, the job and DOL&apos;s status.
@@ -77,7 +78,7 @@ export default async function SeasonalCasesPage() {
         <section aria-label="What DOL has confirmed so far" className="mt-8">
           {hasForms ? (
             <ChartTips label="Each form's share of the filings DOL has confirmed">
-            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-3 [&>*]:min-w-0">
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 [&>*]:min-w-0">
               {FORM_ORDER.map((p) => {
                 const f = SEASONAL_FORMS[p];
                 const n = summary.byPrefix[p] ?? 0;
@@ -142,7 +143,7 @@ export default async function SeasonalCasesPage() {
             <Link href="/perm-case-status" className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary">
               status lookup
             </Link>{" "}
-            takes H-300, H-400 and P-400 numbers, asks DOL directly, and can email you when the status changes.
+            takes H-300, JO-A-300, H-400, P-400, C-500 and P-500 numbers, asks DOL directly, and can email you when the status changes.
           </p>
         </div>
       </section>

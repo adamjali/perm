@@ -4,6 +4,7 @@ import { CaseAlertForm } from "@/components/tools/CaseAlertForm";
 import { lookupSeasonalCaseOutcome, type SeasonalRow } from "@/lib/turso/seasonalCasesTypes";
 import { isLookupGap } from "@/lib/dolMiss";
 import { SEASONAL_STATUSES, statusAnchor } from "@/lib/statusDictionary";
+import { seasonalForm } from "@/lib/seasonalForms";
 
 /**
  * An H-2A application (`H-300-`), an H-2B application (`H-400-`) or an H-2B
@@ -15,14 +16,10 @@ import { SEASONAL_STATUSES, statusAnchor } from "@/lib/statusDictionary";
  * would be filed under the ETA-9141 queue PERM waits in.
  */
 
-const FORM: Record<string, string> = {
-  "H-300-": "H-2A application · ETA-9142A",
-  "H-400-": "H-2B application · ETA-9142B",
-  "P-400-": "H-2B prevailing wage request",
-};
-
+/** The form, named from the one list every seasonal surface reads (src/lib/seasonalForms.ts). */
 function formOf(caseNumber: string): string {
-  return FORM[caseNumber.slice(0, 6)] ?? "H-2A or H-2B filing";
+  const f = seasonalForm(caseNumber);
+  return f ? `${f.label} · ${f.form}` : "H-2A, H-2B or CW-1 filing";
 }
 
 function prettyStatus(s: string): string {

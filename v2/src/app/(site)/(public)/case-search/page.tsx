@@ -103,7 +103,7 @@ export default async function CaseSearchPage() {
       note: "The ETA-9035 an employer files to sponsor or extend an H-1B.",
     },
     {
-      label: "H-2A and H-2B",
+      label: "H-2A, H-2B and CW-1",
       n: seasonal?.total ?? null,
       href: "/seasonal-cases",
       note: "Seasonal farm and non-farm filings and their wage requests, from DOL's daily check.",

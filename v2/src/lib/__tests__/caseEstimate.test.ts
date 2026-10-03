@@ -167,6 +167,55 @@ describe("a filing month the frontier has already passed", () => {
   });
 });
 
+describe("a case still in line behind DOL's queue, with the straggler rate", () => {
+  const STRAGGLERS = {
+    asOf: TODAY, frontierMonth: "2025-09", windowDays: 14, pending: 1242, pool: 4408,
+    decided: 2952, dailyRate: 0.088, medianDays: 8, p80Days: 18,
+  };
+
+  it("dates it from how fast DOL is deciding that group, not from the filing month", () => {
+    const e = buildCaseEstimate({
+      filingDate: "2024-11-05",
+      status: "ANALYST REVIEW",
+      isFinal: false,
+      estimator: ESTIMATOR,
+      stragglers: STRAGGLERS,
+      today: TODAY,
+    });
+    if (e?.kind !== "date") throw new Error("expected a dated estimate");
+    expect(e.modelId).toBe("stragglers");
+    expect(e.estimatedDate).toBe("2026-09-05"); // today + the median, 8 days
+    expect(e.earliestDate).toBe("2026-08-29");
+    expect(e.latestDate).toBe("2026-09-15"); // today + eight in ten, 18 days
+    expect(e.basis).toContain("2,952 of the 4,408");
+    expect(e.estimatedDate > TODAY).toBe(true);
+  });
+
+  it("keeps the refusal for a case out of line (an RFI, a hold): the rate is about the line", () => {
+    const e = buildCaseEstimate({
+      filingDate: "2024-11-05",
+      status: "RFI ISSUED",
+      isFinal: false,
+      estimator: ESTIMATOR,
+      stragglers: STRAGGLERS,
+      today: TODAY,
+    });
+    expect(e?.kind === "date" && e.modelId === "stragglers").toBe(false);
+  });
+
+  it("keeps the refusal when there is no usable rate", () => {
+    const e = buildCaseEstimate({
+      filingDate: "2024-11-05",
+      status: "ANALYST REVIEW",
+      isFinal: false,
+      estimator: ESTIMATOR,
+      stragglers: null,
+      today: TODAY,
+    });
+    expect(e?.kind).toBe("no-date");
+  });
+});
+
 describe("statuses where a decision already exists", () => {
   it("refuses to estimate a case at DETERMINATION ISSUED", () => {
     // The decision has been made; only the published outcome lags. An

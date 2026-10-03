@@ -2,6 +2,7 @@ import "server-only";
 
 import { estimatePwdQueue } from "@/lib/perm";
 import {
+  headToHead,
   isGradedOutcome,
   PWD_MODEL,
   summarise,
@@ -65,8 +66,13 @@ export const PERM_PER_MONTH = 3;
 export const PERM_MONTHS = 14;
 export const PWD_PER_MONTH = 3;
 export const PWD_MONTHS = 6;
-/** Of the day's PERM sample, how many are also put to each rival. */
-export const RIVAL_SAMPLE = 5;
+/**
+ * Of the day's PERM sample, how many are also put to each rival: all of them,
+ * since Oct 3 2026, so every rival is graded on exactly our cases and the
+ * head-to-head compares like with like. About 42 cases, two requests each,
+ * spaced a second and a half apart: well under one request a second per host.
+ */
+export const RIVAL_SAMPLE = PERM_PER_MONTH * PERM_MONTHS;
 
 export interface SampledCase {
   caseNumber: string;
@@ -370,7 +376,11 @@ export async function writeScorecardDocs(today: string): Promise<{ rows: number 
       outcome: r.outcome!,
     }));
   const pub: ScorecardDoc = { perm: summarise(ours, today, "perm"), pwd: summarise(ours, today, "pwd"), recent };
-  const priv = { perm: summarise(mapped, today, "perm") };
+  const priv = {
+    perm: summarise(mapped, today, "perm"),
+    // The same cases, ours against each rival: neither side scored on an easier sample.
+    headToHead: headToHead(all.map((r) => ({ ...toRow(r), caseNumber: r.case_number })), today),
+  };
   const now = Date.now();
   await exec(
     `INSERT OR REPLACE INTO perm_docs (key, json, computed_at) VALUES ('scorecard_summary', ?, ?)`,

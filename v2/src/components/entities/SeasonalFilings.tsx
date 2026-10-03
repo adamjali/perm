@@ -42,7 +42,7 @@ export function SeasonalFilings({
               >
                 {r.caseNumber}
               </Link>{" "}
-              <span className="text-sm font-bold">{seasonalForm(r.caseNumber)?.label ?? "H-2A or H-2B filing"}</span>{" "}
+              <span className="text-sm font-bold">{seasonalForm(r.caseNumber)?.label ?? "H-2A, H-2B or CW-1 filing"}</span>{" "}
               {r.jobTitle ? <span className="text-foreground/80">{r.jobTitle}</span> : null}{" "}
               <span className="ml-auto font-mono text-sm font-bold uppercase text-foreground/70">
                 {r.filingDate ? `${r.filingDate} · ` : ""}
@@ -57,7 +57,7 @@ export function SeasonalFilings({
           href={`/seasonal-cases?q=${encodeURIComponent(name)}`}
           className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
         >
-          All H-2A and H-2B filings by this employer
+          All H-2A, H-2B and CW-1 filings by this employer
         </Link>
       </p>
     </section>

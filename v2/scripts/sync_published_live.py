@@ -46,15 +46,18 @@ SCRIPT = "sync_published_live.py"
 SYNC_SOURCE = "flag.dol.gov/recaptcha/caseStatus (DOL, from the published file)"
 DEFAULT_CAP = 400           # requests a night; 20,000 numbers, a backlog clears in a run
 
-# (published table, live table, prefixes, window in days or None for every number)
-PUBLISHED_FOR = {"pwd": "pwd_cases", "lca": "lca_cases", "seasonal": "pwd_cases"}
+# Which published tables feed each live program table. The seasonal program
+# draws on four: its wage requests (P-400, P-500) are in DOL's PW file, and its
+# H-2A, H-2B and CW-1 applications each have their own file and table.
+PUBLISHED_FOR = {"pwd": ("pwd_cases",), "lca": ("lca_cases",),
+                 "seasonal": ("pwd_cases", "h2a_cases", "h2b_cases", "cw1_cases")}
 
 
 def plan(have_tables: set[str]) -> list[tuple[str, str, tuple[str, ...], int | None]]:
+    """(published table, live table, prefixes, window in days or None for every number)."""
     out = [("perm_cases", "perm_case_status", PERM_OFFICE_PREFIXES, None)]
     for name, cfg in programs.PROGRAMS.items():
-        pub = PUBLISHED_FOR.get(name)
-        if pub:
+        for pub in PUBLISHED_FOR.get(name, ()):
             out.append((pub, cfg["table"], tuple(cfg["prefixes"]), int(cfg["full_window_days"])))
     return [p for p in out if p[0] in have_tables and p[1] in have_tables]
 

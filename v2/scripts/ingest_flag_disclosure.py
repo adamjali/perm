@@ -212,6 +212,87 @@ PROGRAMS: dict[str, dict] = {
     },
 }
 
+# The seasonal programs: H-2A (Form ETA-9142A), H-2B (ETA-9142B) and CW-1
+# (ETA-9142C). Names verbatim from DOL's FY2026 Q3 record layouts
+# (H-2A_Record_Layout_FY2026_Q3.pdf and its H-2B and CW-1 siblings). None of
+# the three files carries a VISA_CLASS column, so `visa_default` names it. The
+# work period is the REQUESTED one: every application carries it, while the
+# EMPLOYMENT_* dates are blank on a denial. Point-of-contact names, emails,
+# phones and FEINs are in all three files and in none of these maps.
+SEASONAL_COMMON = {
+    "case": ["CASE_NUMBER"],
+    "status": ["CASE_STATUS"],
+    "received": ["RECEIVED_DATE"],
+    "decision": ["DECISION_DATE"],
+    "job_title": ["JOB_TITLE"],
+    "soc_code": ["SOC_CODE"],
+    "soc_title": ["SOC_TITLE"],
+    "wage_unit": ["PER"],
+    "state": ["WORKSITE_STATE"],
+    "city": ["WORKSITE_CITY"],
+    "county": ["WORKSITE_COUNTY"],
+    "naics": ["NAICS_CODE"],
+    "attorney": ["LAWFIRM_NAME_BUSINESS_NAME"],
+    "begin_date": ["REQUESTED_BEGIN_DATE"],
+    "end_date": ["REQUESTED_END_DATE"],
+}
+
+PROGRAMS.update({
+    "h2a": {
+        "label": "H-2A (ETA-9142A)",
+        "table": "h2a_cases",
+        "freshness": "h2a-disclosure",
+        "source": "DOL quarterly H-2A disclosure files (www.dol.gov)",
+        "visa_default": "H-2A",
+        # The main file only: the Addendum A and B files are companion tables.
+        "file_pattern": r"(?:H-?2A_Disclosure_Data_FY\d{2,4}(?:_Q\d|_EOY|_updated)?|H-?2A_FY\d{2,4}(?:_Q\d)?)\.xlsx$",
+        "columns": {
+            **SEASONAL_COMMON,
+            "employer": ["EMPLOYER_NAME"],
+            # Section A, Item 8b: the hourly or monthly wage offered.
+            "wage": ["WAGE_OFFER"],
+            # Item 2b and the National Processing Center's certified count.
+            "workers": ["TOTAL_WORKERS_H-2A_REQUESTED", "TOTAL_WORKERS_H_2A_REQUESTED"],
+            "workers_certified": ["TOTAL_WORKERS_H-2A_CERTIFIED", "TOTAL_WORKERS_H_2A_CERTIFIED"],
+        },
+        "event_dates": [],
+    },
+    "h2b": {
+        "label": "H-2B (ETA-9142B)",
+        "table": "h2b_cases",
+        "freshness": "h2b-disclosure",
+        "source": "DOL quarterly H-2B disclosure files (www.dol.gov)",
+        "visa_default": "H-2B",
+        # FY2024's file drops "_Data" and FY2020's drops the hyphen.
+        "file_pattern": r"(?:H-?2B_Disclosure(?:_Data)?_FY\d{2,4}(?:_Q\d|_EOY)?|H-?2B_FY\d{2,4}(?:_Q\d)?)\.xlsx$",
+        "columns": {
+            **SEASONAL_COMMON,
+            "employer": ["EMPLOYER_NAME"],
+            "wage": ["BASIC_WAGE_RATE_FROM"],
+            "workers": ["TOTAL_WORKERS_REQUESTED"],
+            "workers_certified": ["TOTAL_WORKERS_CERTIFIED"],
+        },
+        "event_dates": [],
+    },
+    "cw1": {
+        "label": "CW-1 (ETA-9142C)",
+        "table": "cw1_cases",
+        "freshness": "cw1-disclosure",
+        "source": "DOL quarterly CW-1 disclosure files (www.dol.gov)",
+        "visa_default": "CW-1",
+        # FY2025's file is named CW_ rather than CW-1_.
+        "file_pattern": r"CW(?:-1)?_Disclosure_Data_FY\d{2,4}(?:_Q\d)?\.xlsx$",
+        "columns": {
+            **SEASONAL_COMMON,
+            "employer": ["LEGAL_BUSINESS_NAME", "EMPLOYER_NAME"],
+            "wage": ["BASIC_WAGE_RATE_FROM"],
+            "workers": ["TOTAL_WORKERS_REQUESTED"],
+            "workers_certified": ["TOTAL_WORKERS_CERTIFIED"],
+        },
+        "event_dates": [],
+    },
+})
+
 # The LCA worker-count columns, in form order (Section B, Items 7a to 7f).
 LCA_COUNT_COLUMNS = (
     "new_employment", "continued_employment", "change_previous_employment",
@@ -233,8 +314,12 @@ COLUMNS = (
     "worksite_city", "naics",
     # LCA only; NULL on every wage-request row. See PROGRAMS["lca"].
     "workers", *LCA_COUNT_COLUMNS, "wage_level", "h1b_dependent", "willful_violator",
+    # The seasonal programs only (H-2A, H-2B, CW-1); NULL elsewhere. `workers`
+    # above holds their requested count.
+    "workers_certified", "begin_date", "end_date", "worksite_county",
 )
-INTEGER_COLUMNS = frozenset({"fiscal_year", "workers", *LCA_COUNT_COLUMNS, "h1b_dependent", "willful_violator"})
+INTEGER_COLUMNS = frozenset({"fiscal_year", "workers", *LCA_COUNT_COLUMNS, "h1b_dependent",
+                             "willful_violator", "workers_certified"})
 
 ROWS_PER_STMT = 500
 STMTS_PER_REQUEST = 4
@@ -243,6 +328,11 @@ STMTS_PER_REQUEST = 4
 # the live site; a load is a background chore and the site isn't. 2,000 rows a
 # request at 0.35 s idle adds ~26 s per 147k rows.
 WRITE_PAUSE_S = 0.35
+# A history file (any file but DOL's newest) is loaded at a gentler pace. On
+# Oct 3 2026 back-to-back history quarters made the database compact its log
+# continuously until its writes stalled for 38 minutes and the site served its
+# busy page. History is never urgent, and the live site always is.
+HISTORY_PAUSE_S = 2.0
 # Names and titles are truncated exactly as the PERM corpus truncates them,
 # so an employer string here matches the one the entity tables were built on.
 NAME_LEN = 80
@@ -289,7 +379,11 @@ def table_ddl(table: str) -> list[str]:
              amended_petition           INTEGER,
              wage_level                 TEXT,
              h1b_dependent              INTEGER,
-             willful_violator           INTEGER)""",
+             willful_violator           INTEGER,
+             workers_certified          INTEGER,
+             begin_date                 TEXT,
+             end_date                   TEXT,
+             worksite_county            TEXT)""",
     ]
 
 
@@ -604,7 +698,8 @@ def resolve_columns(header_cells: dict[int, str], cfg: dict, filename: str) -> t
     return colmap, events
 
 
-def normalise_row(rec: dict[str, str], events: list[str | None], source_file: str, fy: int) -> dict | None:
+def normalise_row(rec: dict[str, str], events: list[str | None], source_file: str, fy: int,
+                  visa_default: str | None = None) -> dict | None:
     """One DOL row -> one table row, or None when there is no case number."""
     case_no = (rec.get("case") or "").strip()
     if not case_no:
@@ -633,7 +728,8 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
         "wage": parse_wage(rec.get("wage")),
         "wage_unit": unit.upper() if unit else None,
         "worksite_state": parse_state(rec.get("state")),
-        "visa_class": clean_text(rec.get("visa"), 40),
+        # The seasonal files carry no VISA_CLASS column; their program names it.
+        "visa_class": clean_text(rec.get("visa"), 40) or visa_default,
         "attorney_name": firm,
         # THE SAME SLUG FUNCTION THE PERM INGEST AND THE READ LAYER USE. A firm
         # slugged differently here would be a law firm whose wage requests
@@ -649,6 +745,11 @@ def normalise_row(rec: dict[str, str], events: list[str | None], source_file: st
         "wage_level": parse_wage_level(rec.get("wage_level")),
         "h1b_dependent": parse_flag(rec.get("h1b_dependent")),
         "willful_violator": parse_flag(rec.get("willful_violator")),
+        # The seasonal programs only (the PW and LCA maps name none of these).
+        "workers_certified": parse_count(rec.get("workers_certified")),
+        "begin_date": to_iso((rec.get("begin_date") or "").strip()),
+        "end_date": to_iso((rec.get("end_date") or "").strip()),
+        "worksite_county": clean_text(rec.get("county"), 60),
     }
 
 
@@ -739,7 +840,7 @@ def iter_cases(path: str, cfg: dict, stats: ParseStats, dump_header: bool = Fals
         for i, slot in events.items():
             if i in cells:
                 slots[slot] = cells[i]
-        row = normalise_row(rec, slots, filename, fy)
+        row = normalise_row(rec, slots, filename, fy, cfg.get("visa_default"))
         if row is None:
             stats.blank_case += 1
             continue
@@ -940,7 +1041,8 @@ def write_cases(db: Turso, table: str, rows, pause: float = WRITE_PAUSE_S) -> in
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--program", required=True, choices=sorted(PROGRAMS),
-                    help="Which disclosure file: pw (ETA-9141) or lca (ETA-9035).")
+                    help="Which disclosure file: pw (ETA-9141), lca (ETA-9035), h2a (ETA-9142A), "
+                         "h2b (ETA-9142B) or cw1 (ETA-9142C).")
     ap.add_argument("--file", help="Parse this local workbook instead of downloading.")
     ap.add_argument("--dry-run", action="store_true",
                     help="Parse and print counts; never open Turso, never write.")
@@ -950,9 +1052,10 @@ def main() -> int:
                     help="Print the file's resolved and raw column names, then stop.")
     ap.add_argument("--force", action="store_true",
                     help="Write even when the file's hash matches the last load.")
-    ap.add_argument("--pause", type=float, default=WRITE_PAUSE_S, metavar="SECONDS",
+    ap.add_argument("--pause", type=float, default=None, metavar="SECONDS",
                     help="Idle between write requests so a load cannot starve the live site "
-                         f"(default {WRITE_PAUSE_S}; 0 disables).")
+                         f"(default {WRITE_PAUSE_S} for DOL's newest file, {HISTORY_PAUSE_S} for history; "
+                         "0 disables).")
     ap.add_argument("--backfill-attorney", action="store_true",
                     help="Write ONLY the law-firm columns onto rows that already "
                          "exist, then create their indexes. Ten times cheaper "
@@ -1073,6 +1176,12 @@ def main() -> int:
             newest_cache.append(verdict)
             return verdict
 
+        def write_pause() -> float:
+            """The pause given, or the default for this file: newest or history."""
+            if args.pause is not None:
+                return args.pause
+            return WRITE_PAUSE_S if file_is_newest() else HISTORY_PAUSE_S
+
         stats = ParseStats()
         if args.dump_header:
             for _ in iter_cases(path, cfg, stats, dump_header=True):
@@ -1123,7 +1232,7 @@ def main() -> int:
                     "backfill onto. Run the ordinary load first.")
             ensure_columns(db, table)
             n = backfill_columns(db, table, iter_cases(path, cfg, stats),
-                                 BACKFILL_GROUPS["lca-detail"], pause=args.pause)
+                                 BACKFILL_GROUPS["lca-detail"], pause=write_pause())
             stats.report()
             filled = int(db.scalar(
                 f"SELECT count(*) FROM {table} WHERE source_file = ? AND workers IS NOT NULL",
@@ -1146,7 +1255,7 @@ def main() -> int:
                     "backfill onto. Run the ordinary load first.")
             ensure_columns(db, table)
             n = backfill_columns(db, table, iter_cases(path, cfg, stats),
-                                 BACKFILL_GROUPS["place"], pause=args.pause)
+                                 BACKFILL_GROUPS["place"], pause=write_pause())
             stats.report()
             filled = int(db.scalar(
                 f"SELECT count(*) FROM {table} WHERE source_file = ? AND naics IS NOT NULL",
@@ -1175,7 +1284,7 @@ def main() -> int:
                     "backfill onto. Run the ordinary load first.")
             ensure_columns(db, table)
             n = backfill_attorney(db, table, iter_cases(path, cfg, stats),
-                                  pause=args.pause)
+                                  pause=write_pause())
             stats.report()
             filled = int(db.scalar(
                 f"SELECT count(*) FROM {table} WHERE attorney_slug IS NOT NULL") or 0)
@@ -1257,7 +1366,7 @@ def main() -> int:
         db.script(index_ddl(table))
         written = 0
         try:
-            written = write_cases(db, table, iter_cases(path, cfg, stats), pause=args.pause)
+            written = write_cases(db, table, iter_cases(path, cfg, stats), pause=write_pause())
             stats.report()
             have = count_for_file(db, table, name)
             log(f"  VERIFY count(*) where source_file = {name}: {have:,} (read {stats.kept:,})")

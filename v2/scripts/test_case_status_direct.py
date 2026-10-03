@@ -217,10 +217,11 @@ def main() -> int:
           f"{len(db.ddl)} DDL statements")
     check("every busy-prefix request asks the H-2A, H-2B and H-2B wage prefixes",
           all(any(n.startswith(p) for n in batch) for batch in look.asked
-              if batch and batch[0][:6] not in csd.RARE_PREFIXES
+              if batch and csd.prefix_of(batch[0]) not in csd.RARE_PREFIXES
               for p in ("H-300-", "H-400-", "P-400-")), look.asked[0][:12])
     check("a request asks either the busy prefixes or only the rare ones",
-          all({n[:6] for n in batch} <= set(csd.WALK_PREFIXES) or {n[:6] for n in batch} <= set(csd.RARE_PREFIXES)
+          all({csd.prefix_of(n) for n in batch} <= set(csd.WALK_PREFIXES)
+              or {csd.prefix_of(n) for n in batch} <= set(csd.RARE_PREFIXES)
               for batch in look.asked), str(look.asked[-1][:6]))
 
     # 1c. The rare prefixes (H-1B, H-1B1, E-3 and CW-1 wage requests) are not in
@@ -236,7 +237,7 @@ def main() -> int:
     check("they are stored with the wage requests",
           r["inserted_other"] == 60, f"{r['inserted_other']}")
     check("the rare prefixes are asked only after the busy ones come back empty",
-          all(batch[0][:6] in csd.WALK_PREFIXES for batch in look.asked[:1]), str(look.asked[0][:3]))
+          all(csd.prefix_of(batch[0]) in csd.WALK_PREFIXES for batch in look.asked[:1]), str(look.asked[0][:3]))
 
     # 2. A 200-serial stretch that is all LCA/PWD (an overnight lull) does NOT stop it.
     u = dict([lca(f"I-200-26240-{s:06d}") for s in range(101, 301)] + [perm("G-100-26240-000301")])

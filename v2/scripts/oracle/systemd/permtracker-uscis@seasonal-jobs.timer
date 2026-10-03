@@ -1,0 +1,11 @@
+[Unit]
+Description=Schedule for permtracker-uscis@seasonal-jobs
+# DOL updates the SeasonalJobs feeds at midnight Eastern; this reads them after
+# the night's sweeps, outside the gap backfill's quiet hours.
+[Timer]
+OnCalendar=*-*-* 08:20:00 America/New_York
+Persistent=true
+Unit=permtracker-uscis@seasonal-jobs.service
+
+[Install]
+WantedBy=timers.target

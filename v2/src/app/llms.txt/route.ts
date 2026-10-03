@@ -137,9 +137,9 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
   },
   {
     path: "/seasonal-cases",
-    label: "H-2A and H-2B case search",
+    label: "H-2A, H-2B and CW-1 case search",
     blurb:
-      "Find an H-2A application (ETA-9142A, H-300- numbers), an H-2B application (ETA-9142B, H-400-) or an H-2B prevailing wage request (P-400-) by employer, job title and filing month, with DOL's current status. Live from DOL's daily check, pending included; no wage or worker count.",
+      "Find an H-2A application (ETA-9142A, H-300- numbers) or job order (ETA-790A, JO-A-300-), an H-2B application (ETA-9142B, H-400-), a CW-1 application (ETA-9142C, C-500-) or an H-2B or CW-1 prevailing wage request (P-400-, P-500-) by employer, job title and filing month, with DOL's current status. Live from DOL's daily check, pending included; no wage or worker count.",
   },
   {
     path: "/case-search",

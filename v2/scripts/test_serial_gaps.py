@@ -5,8 +5,9 @@ import pathlib, sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from sweep_serial_gaps import (holes, sweep, record_misses, true_span, prefix_order,
                                MISS_LIMIT, MAX_PLAUSIBLE_SPAN)
-from lib_flag_serials import (ALL_FLAG_PREFIXES as PREFIXES, PERM_OFFICE_PREFIXES,
-                              RARE_PREFIXES, WALK_PREFIXES)
+from lib_flag_serials import (ALL_FLAG_PREFIXES as PREFIXES, CURRENT_ERA, PERM_OFFICE_PREFIXES,
+                              PREFIX_ERAS, RARE_PREFIXES, SQL_DAY, SQL_PREFIX, SQL_SERIAL,
+                              WALK_PREFIXES, code_of, owed_after, prefix_of, serial_of)
 import ingest_case_status_direct as core
 
 fails: list[str] = []
@@ -47,6 +48,25 @@ for _p in ("P-200-", "P-201-", "P-202-", "P-203-", "P-500-"):
     check(_p in PREFIXES, f"{_p} is asked")
 check(len(set(PREFIXES)) == len(PREFIXES), "no prefix is listed twice")
 check(set(WALK_PREFIXES) <= set(PREFIXES), "the walk asks nothing the sweep doesn't know")
+# ---- prefix eras and the two number shapes ---------------------------------
+check(set().union(*PREFIX_ERAS) == set(PREFIXES) and sum(map(len, PREFIX_ERAS)) == len(PREFIXES),
+      "every prefix belongs to exactly one era")
+check(owed_after(CURRENT_ERA) == (), "a serial settled at the current era owes nothing")
+check(set(owed_after(1)) == {"JO-A-300-", "C-500-"}, "an era-1 miss owes only the H-2A job order and CW-1")
+check(set(owed_after(None)) == set(PREFIXES) - set(PREFIX_ERAS[0]),
+      "a pre-Oct-3 miss owes every prefix found since the walk's twelve")
+check((prefix_of("JO-A-300-26276-278017"), code_of("JO-A-300-26276-278017"),
+       serial_of("JO-A-300-26276-278017")) == ("JO-A-300-", "26276", 278017),
+      "a job-order number parses: its nine-character prefix, day and serial")
+check((prefix_of("G-100-26240-000101"), serial_of("C-500-26271-263466")) == ("G-100-", 263466),
+      "the one-letter shape still parses")
+import sqlite3 as _sq  # noqa: E402
+_c = _sq.connect(":memory:")
+_got = [_c.execute(f"SELECT {SQL_PREFIX}, {SQL_DAY}, {SQL_SERIAL} FROM (SELECT ? AS case_number)",
+                   [n]).fetchone()
+        for n in ("JO-A-300-26276-278017", "G-100-26240-000101", "P-400-25001-999999")]
+check(_got == [("JO-A-300-", 26276, 278017), ("G-100-", 26240, 101), ("P-400-", 25001, 999999)],
+      f"the SQL split agrees with prefix_of on both shapes ({_got})")
 check(set(WALK_PREFIXES) | set(RARE_PREFIXES) == set(PREFIXES) and
       not set(WALK_PREFIXES) & set(RARE_PREFIXES),
       "walk and rare prefixes split the full list exactly")
@@ -145,7 +165,7 @@ def fake_rows(db, sql, args=None):
     if "sqlite_master" in sql:                    # case_tables()
         return [["perm_case_status"], ["perm_cases"]]
     if "perm_serial_misses" in sql:
-        return [[str(s), "1"] for s in db.misses] + [[str(s), None] for s in db.owed]
+        return [[str(s), str(CURRENT_ERA)] for s in db.misses] + [[str(s), None] for s in db.owed]
     if "GROUP BY d" in sql:                       # day_bounds()
         return [[str(d), str(lo), str(hi), str(n)] for d, lo, hi, n in db.bounds]
     return [["G-100-", str(s)] for s in db.serials]  # held_by_prefix()
@@ -189,9 +209,9 @@ try:
     check(r["probed"] == 4, f"probes exactly the 4 interior holes (got {r['probed']})")
     check(r["found"] == 1, f"counts the one DOL confirmed (got {r['found']})")
     check(all(len(n) <= core.BATCH for n in asked), "never exceeds the batch ceiling")
-    check({n[:6] for b in asked for n in b} == set(PREFIXES),
+    check({prefix_of(n) for b in asked for n in b} == set(PREFIXES),
           "a hole no prefix claims is asked under every prefix, not just the busiest")
-    check(all(len({n[:6] for n in b}) == 1 for b in asked),
+    check(all(len({prefix_of(n) for n in b}) == 1 for b in asked),
           "each request asks one prefix, so it carries up to 50 serials")
     _want = prefix_order({"G-100-": {100, 105}}, PREFIXES).index("G-200-") + 1
     _got = sum("-000102" in n for b in asked for n in b)
@@ -340,11 +360,11 @@ try:
         {"response": {"result": {"affected_row_count": 1}}}
         for r in reqs if r.get("type") == "execute"]}
     ro = sweep(od, ["26240"], cap=99, lookup=rare_lookup, dry=False, settle_after=1)
-    _prefixes_asked = {n[:6] for b in rare_asked for n in b}
-    check(_prefixes_asked == set(RARE_PREFIXES),
-          f"an owed serial is asked under the rare prefixes only (got {sorted(_prefixes_asked)})")
+    _prefixes_asked = {prefix_of(n) for b in rare_asked for n in b}
+    check(_prefixes_asked == set(owed_after(None)),
+          f"an owed serial is asked under the prefixes found since, only (got {sorted(_prefixes_asked)})")
     check(ro["found"] == 1, f"which finds the H-1B wage request the old sweep called no case (got {ro['found']})")
-    check(any("UPDATE perm_serial_misses SET asked_all = 1" in w and "103" not in w.split("IN (")[1]
+    check(any(f"UPDATE perm_serial_misses SET asked_all = {CURRENT_ERA}" in w and "103" not in w.split("IN (")[1]
               for w in od.writes),
           "the owed serials that stay empty settle, and the one found does not")
     check(not any("INSERT INTO perm_serial_misses" in w for w in od.writes),
@@ -367,7 +387,7 @@ try:
                prefixes=("H-300-", "H-400-", "P-400-"), recheck=True)
     check(rr["probed"] == 4, f"a recheck re-asks retired serials (got {rr['probed']})")
     check(rr["found"] == 1, f"and finds the case the old prefixes could not (got {rr['found']})")
-    check(all(n[:6] in ("H-300-", "H-400-", "P-400-") for b in seen for n in b),
+    check(all(prefix_of(n) in ("H-300-", "H-400-", "P-400-") for b in seen for n in b),
           "a recheck asks only the prefixes it was given")
     # This fake models neither DDL nor pipelines; the walk's test owns the
     # schema step, so it is marked done here and the insert is counted.
@@ -385,6 +405,22 @@ try:
     rn2 = sweep(FakeDB([100, 105], misses=[101, 102, 103, 104]), ["26240"], cap=99,
                 lookup=h2a_lookup, dry=True)
     check(rn2["probed"] == 0, f"the nightly sweep still skips retired serials (got {rn2['probed']})")
+
+    # A job order's nine-character prefix: a hit claims its serial, so it is
+    # never also written down as "no case" (reading the serial as
+    # caseNumber[12:] read "6240-000102" for it and left it unclaimed).
+    def jo_lookup(nums):
+        return [{"caseNumber": n, "caseStatus": "APPROVED", "visaType": "H-2A",
+                 "employerName": "Farm Co", "jobTitle": "Farmworker"}
+                for n in nums if n == "JO-A-300-26240-000102"]
+    db_j = FakeDB([100, 105])
+    db_j.pipeline = db_w.pipeline
+    rj = sweep(db_j, ["26240"], cap=999, lookup=jo_lookup, dry=False, settle_after=1)
+    check(rj["found"] == 1, f"a job order in a hole is found (got {rj['found']})")
+    _miss_writes = [w for w in db_j.writes if "INSERT INTO perm_serial_misses" in w]
+    check(_miss_writes and not any("26240, 102," in w for w in _miss_writes),
+          "and its serial is not recorded as a miss")
+    check(any("26240, 101," in w for w in _miss_writes), "while the holes nobody claimed are")
 finally:
     _sweep_mod.query_rows, core.query_rows = _real_rows
 

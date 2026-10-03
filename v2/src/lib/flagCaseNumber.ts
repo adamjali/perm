@@ -36,8 +36,9 @@ import {
 
 /**
  * The FLAG programs this product tracks per case. `seasonal` is H-2A
- * (`H-300-`), H-2B (`H-400-`) and the H-2B prevailing wage request
- * (`P-400-`), all on the same counter.
+ * (`H-300-`, and its job order `JO-A-300-`), H-2B (`H-400-`) and the H-2B
+ * prevailing wage request (`P-400-`), plus CW-1 (the application `C-500-` and
+ * the wage request `P-500-`), all on the same counter.
  */
 export type FlagProgram = "perm" | "pwd" | "lca" | "seasonal";
 
@@ -51,10 +52,12 @@ export const FLAG_PROGRAMS: readonly FlagProgram[] = ["perm", "pwd", "lca", "sea
  * fallback rather than a pattern. See `programOf`.
  */
 const PROGRAM_PATTERNS: readonly { program: FlagProgram; re: RegExp }[] = [
-  // P-100 only. Any P-### would file an H-2B wage request (P-400) under the
+  // P-100 (a PERM job) and P-200 to P-203 (an H-1B, H-1B1 or E-3 job): one
+  // ETA-9141 queue, as DOL publishes it. Never any P-###, which would file an
+  // H-2B or CW-1 wage request (P-400, P-500) under the
   // PWD program and its ETA-9141 queue.
-  { program: "pwd", re: /^P-100-\d{5}-\d+$/ },
-  { program: "seasonal", re: /^(?:H-300|H-400|P-400)-\d{5}-\d+$/ },
+  { program: "pwd", re: /^P-(?:100|200|201|202|203)-\d{5}-\d+$/ },
+  { program: "seasonal", re: /^(?:H-300|H-400|P-400|P-500|JO-A-300|C-500)-\d{5}-\d+$/ },
   { program: "lca", re: /^I-\d{3}-\d{5}-\d+$/ },
 ];
 
@@ -160,7 +163,7 @@ const NOUNS: Record<FlagProgram, { noun: string; withArticle: string }> = {
     withArticle: "a prevailing wage request",
   },
   lca: { noun: "LCA", withArticle: "an LCA" },
-  seasonal: { noun: "H-2A or H-2B filing", withArticle: "an H-2A or H-2B filing" },
+  seasonal: { noun: "H-2A, H-2B or CW-1 filing", withArticle: "an H-2A, H-2B or CW-1 filing" },
 };
 
 export function programNoun(program: FlagProgram): string {

@@ -1,8 +1,12 @@
-name: PW and LCA disclosure ingest
+name: FLAG disclosure ingest
+# The run's title names its program and file, so dispatches made close together
+# (a run of history quarters) can be told apart by anyone listing the runs.
+run-name: FLAG disclosure ingest${{ inputs.program && format(' ({0})', inputs.program) || '' }}${{ inputs.name && format(' {0}', inputs.name) || '' }}
 
-# Loads DOL's quarterly prevailing-wage (Form ETA-9141) and LCA (Form
-# ETA-9035) disclosure files into `pwd_cases` and `lca_cases`, one row per
-# case. As in perm-disclosure-ingest.yml, the file URL is discovered from DOL's
+# Loads DOL's quarterly disclosure files for every FLAG program into one table
+# each, one row per case: prevailing wage (Form ETA-9141, `pwd_cases`), LCA
+# (ETA-9035, `lca_cases`), H-2A (ETA-9142A, `h2a_cases`), H-2B (ETA-9142B,
+# `h2b_cases`) and CW-1 (ETA-9142C, `cw1_cases`). As in perm-disclosure-ingest.yml, the file URL is discovered from DOL's
 # performance page, never constructed; the workbook is streamed (an LCA file
 # is multiple GB of XML); and the run reports success only after `COUNT(*)` for
 # the file equals the unique cases it read.
@@ -29,7 +33,7 @@ on:
         required: true
         default: all
         type: choice
-        options: [all, pw, lca]
+        options: [all, pw, lca, h2a, h2b, cw1]
       force:
         description: Write even if the file's hash matches the last load
         required: false
@@ -58,6 +62,21 @@ on:
         required: false
         type: boolean
         default: false
+      dry_run:
+        description: "Download and parse, print counts and three rows, write nothing"
+        required: false
+        type: boolean
+        default: false
+      dump_header:
+        description: "Download and print the file's real column names, write nothing"
+        required: false
+        type: boolean
+        default: false
+      accept_drift:
+        description: "Load although the file's shape differs from the newest load (an older layout). Read a dry run first."
+        required: false
+        type: boolean
+        default: false
       backfill_lca_detail:
         description: "LCA only: write ONLY the worker counts, wage level and the two employer flags onto existing rows (one quarter per run; pair with name)."
         required: false
@@ -67,8 +86,11 @@ on:
 permissions:
   contents: read
 
+# One queue per program: a history load of one program never waits on, or is
+# cancelled by, another program's dispatch (GitHub keeps one pending run per
+# group and drops the rest). Scheduled runs share the `all` queue.
 concurrency:
-  group: flag-disclosure-ingest
+  group: flag-disclosure-ingest-${{ inputs.program || 'all' }}
   cancel-in-progress: false
 
 jobs:
@@ -86,7 +108,7 @@ jobs:
         # A scheduled run and an `all` dispatch load both programs; a
         # dispatch naming one program loads only that one. The expression is
         # the `(cond && a) || b` form because Actions has no ternary.
-        program: ${{ fromJSON((github.event_name == 'workflow_dispatch' && inputs.program != 'all' && format('["{0}"]', inputs.program)) || '["pw","lca"]') }}
+        program: ${{ fromJSON((github.event_name == 'workflow_dispatch' && inputs.program != 'all' && format('["{0}"]', inputs.program)) || '["pw","lca","h2a","h2b","cw1"]') }}
 
     # lib_turso.env() reads the environment first, so no credentials file is
     # written to the runner's disk.
@@ -114,10 +136,13 @@ jobs:
           BACKFILL_LCA_DETAIL: ${{ inputs.backfill_lca_detail }}
           NAME: ${{ inputs.name }}
           LIST_ONLY: ${{ inputs.list_only }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          DUMP_HEADER: ${{ inputs.dump_header }}
+          ACCEPT_DRIFT: ${{ inputs.accept_drift }}
         run: |
           case "$PROGRAM" in
-            pw|lca) ;;
-            *) echo "::error::program must be pw or lca, got '$PROGRAM'"; exit 1 ;;
+            pw|lca|h2a|h2b|cw1) ;;
+            *) echo "::error::program must be pw, lca, h2a, h2b or cw1, got '$PROGRAM'"; exit 1 ;;
           esac
           if [ -z "$TURSO_DATABASE_URL" ] || [ -z "$TURSO_AUTH_TOKEN" ]; then
             echo "::error::database secrets absent; nothing to load into."
@@ -168,9 +193,22 @@ jobs:
           # return, so a typo can't become a constructed URL.
           if [ -n "$NAME" ]; then
             case "$NAME" in
-              *_Disclosure_Data_FY[0-9][0-9][0-9][0-9]*.xlsx) EXTRA="$EXTRA --name $NAME" ;;
+              *[!A-Za-z0-9_.-]*) echo "::error::name has characters no DOL filename uses: '$NAME'"; exit 1 ;;
+              *FY[0-9][0-9]*.xlsx) EXTRA="$EXTRA --name $NAME" ;;
               *) echo "::error::name must be a DOL disclosure filename, got '$NAME'"; exit 1 ;;
             esac
+          fi
+          # Probes: download and parse, write nothing.
+          if [ "$DUMP_HEADER" = "true" ]; then
+            timeout 60m python3 scripts/ingest_flag_disclosure.py --program "$PROGRAM" ${NAME:+--name "$NAME"} ${FY:+--fy "$FY"} --dump-header
+            exit 0
+          fi
+          if [ "$DRY_RUN" = "true" ]; then
+            timeout 120m python3 scripts/ingest_flag_disclosure.py --program "$PROGRAM" ${NAME:+--name "$NAME"} ${FY:+--fy "$FY"} --dry-run --dump-rows 3
+            exit 0
+          fi
+          if [ "$ACCEPT_DRIFT" = "true" ]; then
+            EXTRA="$EXTRA --accept-drift"
           fi
           echo "program: $PROGRAM ${EXTRA:+($EXTRA)}"
           # `timeout` rather than the job cap, so a hang fails and notifies.
@@ -183,7 +221,7 @@ jobs:
       # a fallback, so a skipped rebuild is a slow page, never an empty one.
       - name: Rebuild the LCA salary explorer's precomputed docs
         # A detail backfill writes no wage, so these docs cannot change.
-        if: success() && matrix.program == 'lca' && inputs.backfill_lca_detail != true
+        if: success() && matrix.program == 'lca' && inputs.backfill_lca_detail != true && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
         working-directory: v2
         run: |
           timeout 30m python3 scripts/build_lca_facets.py
@@ -194,7 +232,7 @@ jobs:
       # only right if a load expires them. `success()` so a failed or refused
       # load never claims fresh pages.
       - name: Expire the pages built from the disclosure files
-        if: success()
+        if: success() && inputs.dry_run != true && inputs.dump_header != true && inputs.list_only != true
         env:
           REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
         run: |

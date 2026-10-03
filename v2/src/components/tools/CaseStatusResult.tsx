@@ -89,6 +89,7 @@ export interface CaseStatusResultProps {
   /** DOL's measured decision rate, or null when unmeasurable. */
   decisionPace?: Parameters<typeof CaseEstimate>[0]["decisionPace"];
   sweepAgeDays?: number | null;
+  stragglers?: Parameters<typeof CaseEstimate>[0]["stragglers"];
   /** Measured stage ages, so the estimate reads today's numbers not a table. */
   measuredStageAges?: ReadonlyMap<string, number>;
   /** What usually happens next at this case's stage, when measurable. */
@@ -132,6 +133,7 @@ export function CaseStatusResult({
   casesAhead = null,
   decisionPace = null,
   sweepAgeDays = null,
+  stragglers = null,
   measuredStageAges,
   stageExit,
   stageDuration,
@@ -291,6 +293,7 @@ export function CaseStatusResult({
         casesAhead={casesAhead}
         decisionPace={decisionPace}
         sweepAgeDays={sweepAgeDays}
+        stragglers={stragglers}
         measuredStageAges={measuredStageAges}
         stageExit={stageExit}
         stageDuration={stageDuration}

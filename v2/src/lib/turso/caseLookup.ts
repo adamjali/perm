@@ -96,7 +96,7 @@ export interface CaseLookupResult {
 /** `G-100-24158-078964` and friends, normalised for a primary-key lookup. */
 export function normaliseCaseNumber(input: string): string | null {
   const raw = input.trim().toUpperCase().replace(/\s+/g, "");
-  return /^[A-Z]-\d{3}-\d{5}-\d+$/.test(raw) ? raw : null;
+  return /^(?:[A-Z]|JO-A)-\d{3}-\d{5}-\d+$/.test(raw) ? raw : null;
 }
 
 /**
@@ -118,7 +118,7 @@ export function normaliseCaseNumber(input: string): string | null {
  */
 export function normaliseLookupCaseNumber(input: string): string | null {
   const raw = input.trim().toUpperCase().replace(/\s+/g, "");
-  if (/^[A-Z]-\d{3}-\d{5}-\d+$/.test(raw)) return raw;
+  if (/^(?:[A-Z]|JO-A)-\d{3}-\d{5}-\d+$/.test(raw)) return raw;
   return /^[A-Z]-\d{5}-\d{5}$/.test(raw) ? raw : null;
 }
 

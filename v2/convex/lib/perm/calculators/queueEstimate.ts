@@ -139,7 +139,10 @@ export interface QueueEstimateInput {
 export const PACE_ABSENT = 'The cases-ahead model, which usually leads, isn\'t used here:';
 
 export type EstimateModelId = 'decision-pace' | 'dol-average' | 'queue-advance'
-  | 'cohort-percentile' | 'cohort-shape';
+  | 'cohort-percentile' | 'cohort-shape'
+  /** A case DOL's queue has passed, still in line: from the measured straggler
+   *  rate (src/lib/stragglerRates.ts), never from the filing month. */
+  | 'stragglers';
 
 export interface EstimateModel {
   id: EstimateModelId;

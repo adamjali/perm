@@ -1,5 +1,5 @@
 #!/bin/bash
-# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp>: the USCIS fetches that ran on the
+# permtracker-uscis <i485|i140|quarterly|h1b-hub|sevp|seasonal-jobs>: the USCIS fetches that ran on the
 # owner's Mac until Sep 28 2026, moved here because www.uscis.gov answers this server.
 # Same scripts, same failure recording.
 set -uo pipefail
@@ -38,6 +38,10 @@ case "$job" in
   h1b-hub) nice -n 10 python3 scripts/ingest_uscis_h1b_hub.py || { rc=1; fail ingest_uscis_h1b_hub.py "ingest exited non-zero"; } ;;
   # ICE's yearly top-200 OPT and CPT employer lists (a handful of small PDFs).
   sevp) python3 scripts/ingest_sevp_top_employers.py || { rc=1; fail ingest_sevp_top_employers.py "ingest exited non-zero"; } ;;
+  # DOL's SeasonalJobs feeds: the H-2A and H-2B applications and job orders DOL
+  # accepted, with wage and worksite (published daily at midnight Eastern).
+  # The ingest records its own ok or failed row.
+  seasonal-jobs) python3 scripts/ingest_seasonal_jobs.py || { rc=1; fail ingest_seasonal_jobs.py "ingest exited non-zero"; } ;;
   *) echo "unknown job $job"; exit 2 ;;
 esac
 exit $rc

@@ -24,6 +24,12 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Decided prevailing wage requests only, with the wage DOL determined. Pending requests are absent.",
   "lca-disclosure":
     "Certified and denied H-1B labor condition applications only, with the wage offered.",
+  "h2a-disclosure":
+    "Decided H-2A applications only, with the wage offered, the workers requested and certified, and the work period. Pending applications are absent.",
+  "h2b-disclosure":
+    "Decided H-2B applications only, with the wage offered, the workers requested and certified, and the work period. Pending applications are absent.",
+  "cw1-disclosure":
+    "Decided CW-1 applications in the Northern Mariana Islands only, with the wage offered and the workers requested and certified. Pending applications are absent.",
   "daily-decisions":
     "Derived from decided cases, so it counts determinations DOL issued, never cases waiting.",
   entities:
@@ -40,8 +46,10 @@ export const DATASET_COVERAGE: Readonly<Record<string, string>> = {
     "Live status of prevailing wage requests, pending included. The wage itself is not here; it arrives with the quarterly file.",
   "lca-status":
     "Live status of H-1B labor condition applications, pending included.",
+  "seasonal-postings":
+    "H-2A and H-2B applications and H-2A job orders DOL accepted, with the wage, workers, work period and worksite, from SeasonalJobs.dol.gov, accepted since February 6, 2024. Not the decision: that is the live status and, later, the quarterly file.",
   "seasonal-status":
-    "Live status of H-2A and H-2B applications and H-2B prevailing wage requests filed since October 2025, pending included. No wage or worksite.",
+    "Live status of H-2A and H-2B applications and of H-2B and CW-1 prevailing wage requests, pending included. No wage or worksite: those arrive with the quarterly files.",
   "live-recent":
     "The cases our sweep knows that DOL has not published yet, so they can be found by employer before any file lists them.",
   "decisions-observed":

@@ -67,7 +67,9 @@ def main() -> int:
     check("BI-WEEKLY is a known unit, and its range is not judged",
           row_issues(row(wage=3_000.0, wage_unit="BI-WEEKLY"), TODAY), [])
     check("an unknown unit flagged", row_issues(row(wage_unit="FORTNIGHT"), TODAY), ["wage_unit_unknown"])
-    check("a 2014 receipt flagged", row_issues(row(received_date="2014-12-31"), TODAY), ["received_date_range"])
+    # The floor is 2000: the history files reach back to FY2008 (received 2007).
+    check("a 1999 receipt flagged", row_issues(row(received_date="1999-12-31"), TODAY), ["received_date_range"])
+    check("a 2007 receipt (FY2008 history) is plausible", row_issues(row(received_date="2007-10-02"), TODAY), [])
     check("a decision dated next week flagged",
           row_issues(row(decision_date="2026-09-14"), TODAY), ["decision_date_range"])
     check("a decision dated tomorrow is allowed (time zones)",

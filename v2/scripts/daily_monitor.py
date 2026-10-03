@@ -57,7 +57,7 @@ DROP = 0.5
 DATA_WORKFLOWS = {
     "Case status (direct from DOL)", "PWD case status (direct from DOL)",
     "DOL processing times", "Federal data ingest", "Ingest health",
-    "PW and LCA disclosure ingest", "PERM history ingest (FY2008 to FY2023)",
+    "FLAG disclosure ingest", "PERM history ingest (FY2008 to FY2023)",
     "Watched cases (hourly)", "Backup observations",
 }
 
@@ -592,7 +592,7 @@ def server_verdict(doc: dict | None, now_ms: int) -> dict:
                 fails.append(f"R2 holds {gb:.1f} GB, about to pass the free 10 GB")
             elif gb > R2_WARN_GB:
                 warns.append(f"R2 holds {gb:.1f} GB of the free 10 GB")
-            lines.append(f"R2 bucket: {gb:.1f} GB of 10 GB free")
+            lines.append(f"R2 bucket: {gb:.1f} GB used of the free 10 GB")
     rest = b.get("restoreOk") or {}
     if not rest.get("at"):
         warns.append("the off-site backup has never been restore-tested")

@@ -56,7 +56,9 @@ export function canonicalStatus(status: string): string {
  */
 export function normaliseCaseNumber(input: string): string | null {
   const raw = input.trim().toUpperCase().replace(/\s+/g, "");
-  return /^[A-Z]-\d{3}-\d{5}-\d+$/.test(raw) ? raw : null;
+  // One letter and three digits for every form but the H-2A job order, whose
+  // code is JO-A-300 (`JO-A-300-26271-264525`). Exactly that, nothing looser.
+  return /^(?:[A-Z]|JO-A)-\d{3}-\d{5}-\d+$/.test(raw) ? raw : null;
 }
 
 /**

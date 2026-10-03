@@ -30,6 +30,7 @@ import { normaliseSeasonalCaseNumber } from "@/lib/turso/seasonalCases";
 import { getEstimatorData } from "@/lib/turso/estimate";
 import { caseEstimateInputs } from "@/lib/caseEstimateInputs";
 import { getDecisionPace } from "@/lib/turso/decisionPace";
+import { getStragglerRates } from "@/lib/turso/stragglers";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { getSameDay } from "@/lib/turso/sameDay";
 import {
@@ -364,7 +365,7 @@ export default async function PermCaseStatusPage({
 async function Lookup({ caseNumber }: { caseNumber: string }) {
   const today = todayUtc();
 
-  const [result, backlog, estimator, mirrorSize, decisionPace, sweep] =
+  const [result, backlog, estimator, mirrorSize, decisionPace, sweep, stragglers] =
     await Promise.all([
       lookupCase(caseNumber).catch(() => null),
       getLiveBacklog().catch((): CohortMonth[] => []),
@@ -375,6 +376,8 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       // which is exactly the behaviour that shipped before this existed.
       getDecisionPace().catch(() => null),
       getSweepCoverage().catch(() => null),
+      // Null when stale or thin; a case behind the queue then gets no date.
+      getStragglerRates().catch(() => null),
     ]);
 
   // Inputs to the decision-pace model, both null-safe, from the SAME helper
@@ -459,6 +462,7 @@ async function Lookup({ caseNumber }: { caseNumber: string }) {
       estimator={estimator}
       casesAhead={casesAhead}
       decisionPace={decisionPace?.pace ?? null}
+      stragglers={stragglers}
       sweepAgeDays={sweepAgeDays}
       measuredStageAges={ageByStatusFrom(stageStats)}
       stageExit={exitMixFor(stageStats, result.live?.status ?? "")}

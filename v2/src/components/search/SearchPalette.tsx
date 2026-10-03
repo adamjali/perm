@@ -67,7 +67,7 @@ const SECTION_KEYWORDS: Readonly<Record<string, string>> = {
   activity: "decided decisions day certified denied withdrawn citizenship education visa",
   "pwd-cases": "prevailing wage request p-100 pwd",
   "lca-cases": "lca h-1b labor condition i-200",
-  "seasonal-cases": "h-2a h-2b h2a h2b seasonal farm agricultural temporary h-300 h-400 p-400 9142a 9142b",
+  "seasonal-cases": "h-2a h-2b h2a h2b cw-1 cw1 seasonal farm agricultural temporary h-300 h-400 p-400 p-500 jo-a-300 c-500 job order 790a 9142a 9142b 9142c northern mariana",
   "opt-employers": "opt stem opt cpt f-1 student students practical training sevis ice",
   "h1b-lottery-calc": "h-1b h1b lottery registration cap selection odds chance wage level weighted",
   "employers-under-review": "on hold rfi audit appeals census",

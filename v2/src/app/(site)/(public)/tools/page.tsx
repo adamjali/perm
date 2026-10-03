@@ -276,7 +276,7 @@ export default async function ToolsPage() {
             },
             {
               href: "/seasonal-cases",
-              label: "H-2A and H-2B",
+              label: "H-2A, H-2B and CW-1",
               blurb: "Seasonal farm and non-farm filings as DOL confirms them, by employer.",
               tone: "tint",
               viz: "records" as const,

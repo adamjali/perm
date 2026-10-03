@@ -114,6 +114,18 @@ jobs:
                  --script "sync_published_live.py" \
                  --note "published sync: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
 
+      # How fast DOL is deciding the in-line cases its queue has passed, from
+      # the sweep's own events: the date range a case behind the queue shows.
+      # The estimate falls back to no date when this is stale or thin.
+      - name: Measure the stragglers
+        if: env.MODE == 'full'
+        working-directory: v2
+        run: |
+          timeout 5m python3 scripts/build_straggler_rates.py \
+            || python3 scripts/record_ingest_failure.py \
+                 --script "build_straggler_rates.py" \
+                 --note "stragglers: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+
       # The standing estimator backtest, Mondays on the full pass. It scores
       # the site's dates against what DOL decided since and writes the one doc
       # /estimate-scorecard prints. A failure only warns: the page keeps last

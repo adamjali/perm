@@ -69,10 +69,17 @@ function Figure({ label, value, note }: { label: string; value: string; note: st
 
 function SampleCells({ cell, since }: { cell: Cell; since: string | null }) {
   return (
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5 [&>*]:min-w-0">
       <Figure label="Recorded" value={formatInt(cell.recorded)} note={since ? `predictions since ${long(since)}` : "predictions"} />
       <Figure label="Graded" value={formatInt(cell.graded)} note="DOL has decided these (withdrawals left out)" />
       <Figure label="Typical miss" value={days(cell.typicalMissDays)} note="median distance, decided cases" />
+      {/* A case still waiting past its date is already that late, and only
+          gets later, so this figure is a floor. Older summaries lack it. */}
+      <Figure
+        label="Counting the late ones"
+        value={cell.missAtLeastDays == null ? "-" : `at least ${days(cell.missAtLeastDays)}`}
+        note={`${formatInt(cell.overdue ?? 0)} still waiting past their date, counted at the days they're already late`}
+      />
       <Figure label="Inside the range" value={pct(cell.inBandShare)} note="decided between the range's two ends" />
     </div>
   );
@@ -115,7 +122,8 @@ export default async function EstimateScorecardPage() {
           </p>{" "}
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-foreground/80">
             Across {formatInt(cur.decided)} cases DOL decided between {longNoYear(backtest.t0)} and {long(backtest.end)},
-            each dated the way the site dates it, from the queue as it stood on the first of those days.
+            each dated from the queue as it stood on the first of those days, at DOL&apos;s measured pace. This scores
+            decided cases only; the daily sample below also counts the ones still waiting past their date.
           </p>{" "}
           {old && old.typicalMissDays !== null ? (
             <BarRows
@@ -237,7 +245,7 @@ export default async function EstimateScorecardPage() {
             {pwdBeforeFix ? (
               <>
                 {" "}
-                The {formatInt(pwdBeforeFix.recorded)} recorded before October 3, 2026 counted the wait from the month
+                The {formatInt(pwdBeforeFix.recorded)} recorded before the fix on October 3, 2026 counted the wait from the month
                 a request was received instead of from DOL&rsquo;s own count date, which dated most of them in the
                 past. They stay in the record and are left out of this line.
               </>

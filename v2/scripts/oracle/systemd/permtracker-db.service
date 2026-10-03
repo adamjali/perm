@@ -11,7 +11,16 @@ Group=permtracker
 # Hrana JSON): "Response is too large" at 4:10 AM Sep 29 2026, the first full
 # sweep after the move off Turso, which had served it. The total covers replies
 # in flight at once.
-ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db/data.sqld --http-listen-addr 127.0.0.1:8080 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome --max-response-size 256MB --max-total-response-size 1GB
+#
+# Replication log: sqld keeps one for read replicas (we run none) and compacts
+# it into a snapshot every time it passes --max-log-size (200 MB by default),
+# merging the snapshots into a full copy of the database every 32 files. A
+# history load writes hundreds of MB, so on Oct 3 2026 it compacted back to
+# back (50,000 frames every 41 s), merged a 4.2 GB snapshot, and from 12:46 to
+# 1:24 PM EDT no write could take the lock while sqld held both CPUs. At 4 GB
+# the same writes compact about twenty times less often, and a page rewritten
+# many times in one log is compacted once.
+ExecStart=/usr/local/bin/sqld --db-path /srv/permtracker/db/data.sqld --http-listen-addr 127.0.0.1:8080 --auth-jwt-key-file /srv/permtracker/db-auth/jwt_public.pem --no-welcome --max-response-size 256MB --max-total-response-size 1GB --max-log-size 4096
 Restart=always
 RestartSec=2
 LimitNOFILE=65536

@@ -91,8 +91,8 @@ export const LCA_PROGRAM: FlagBrowserProgram = {
 
 export const SEASONAL_PROGRAM: FlagBrowserProgram = {
   api: "/api/seasonal-cases",
-  noun: "H-2A or H-2B filing",
-  nouns: "H-2A and H-2B filings",
+  noun: "H-2A, H-2B or CW-1 filing",
+  nouns: "H-2A, H-2B and CW-1 filings",
   pendingLabel: "In process",
   decidedLabel: "Decided",
   // No quarterly file is loaded for these yet, so no wage column ever shows.
@@ -673,7 +673,7 @@ export function FlagCaseBrowser({
         >
           Search every DOL program at once
         </Link>{" "}
-        for the PERM, the wage request, the LCA and any H-2A or H-2B filing side by side.
+        for the PERM, the wage request, the LCA and any H-2A, H-2B or CW-1 filing side by side.
       </p>
 
       <section id="browse" className="border-2 border-border bg-card p-5 shadow-hard sm:p-6">

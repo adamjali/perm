@@ -37,12 +37,17 @@ import datetime
 import statistics
 from collections import Counter, defaultdict
 
-KNOWN_UNITS = frozenset({"YEAR", "ANNUAL", "HOUR", "HOURLY", "WEEK", "MONTH", "BI-WEEKLY"})
+# "PIECE RATE" is an H-2B and CW-1 unit (their record layouts list it beside
+# hour, week, bi-weekly, month and year); a piece rate has no range to check.
+KNOWN_UNITS = frozenset({"YEAR", "ANNUAL", "HOUR", "HOURLY", "WEEK", "MONTH", "BI-WEEKLY",
+                         "PIECE RATE"})
 YEARLY_UNITS = frozenset({"YEAR", "ANNUAL"})
 HOURLY_UNITS = frozenset({"HOUR", "HOURLY"})
 WAGE_YEAR_RANGE = (10_000.0, 2_000_000.0)
 WAGE_HOUR_RANGE = (5.0, 500.0)
-DATE_MIN = "2015-01-01"
+# The history files reach back to FY2008 (filings received in 2007), so the
+# floor sits before the oldest file DOL lists rather than at the first one loaded.
+DATE_MIN = "2000-01-01"
 
 # Drift thresholds. A blank share is a fraction in [0, 1]; a jump is the
 # absolute difference between the previous load's share and this one's.

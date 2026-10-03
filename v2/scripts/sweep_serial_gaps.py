@@ -25,7 +25,8 @@ import sys
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from lib_turso import Turso, add_missing_columns, query_rows, record_run  # noqa: E402
 from lib_flag_serials import (  # noqa: E402
-    ALL_FLAG_PREFIXES, PERM_OFFICE_PREFIXES, RARE_PREFIXES, case_number, day_code, prefix_of,
+    ALL_FLAG_PREFIXES, CURRENT_ERA, PERM_OFFICE_PREFIXES, SQL_DAY, SQL_PREFIX, SQL_SERIAL,
+    case_number, day_code, owed_after, prefix_of, serial_of,
 )
 import ingest_case_status_direct as core  # noqa: E402
 import ingest_pwd_status_direct as programs  # noqa: E402
@@ -54,10 +55,11 @@ MISS_DDL = """
     PRIMARY KEY (day_code, serial)
   )
 """
-# `asked_all` is 1 once a serial's empty answers covered every prefix in
-# ALL_FLAG_PREFIXES. Rows written before Oct 3 2026 have it NULL: they were
-# asked under the twelve busy prefixes only (WALK_PREFIXES), so they still owe
-# the rare ones (RARE_PREFIXES) before they count as settled.
+# `asked_all` names the prefix era a serial's empty answers covered
+# (lib_flag_serials.PREFIX_ERAS): NULL for rows from before Oct 3 2026, which
+# were asked under the walk's twelve, then 1 and 2 as prefixes were found. A
+# serial settles only at CURRENT_ERA; before that it owes the later eras'
+# prefixes, and only those.
 # A day's holes are asked one prefix at a time (lib_flag_serials.ALL_FLAG_PREFIXES),
 # busiest first, 50 numbers to a request, and a serial one prefix claims is not
 # asked again. A serial counts as never issued only after every prefix came
@@ -72,7 +74,7 @@ CASE_TABLES = ("perm_case_status", *(cfg["table"] for cfg in programs.PROGRAMS.v
 # lists exists, so asking DOL about it is a wasted question. Measured Oct 3 2026:
 # most gaps in 2025's numbers were other programs' decided cases we never kept
 # live, and 3,550 decided PERM cases were in DOL's file but not our live table.
-PUBLISHED_TABLES = ("perm_cases", "pwd_cases", "lca_cases")
+PUBLISHED_TABLES = ("perm_cases", "pwd_cases", "lca_cases", "h2a_cases", "h2b_cases", "cw1_cases")
 
 
 def case_tables(db) -> tuple[str, ...]:
@@ -94,7 +96,7 @@ def held_by_prefix(db, code: str, tables: tuple[str, ...] | None = None) -> dict
     args: list[str] = []
     for t in tables:
         for p in ALL_FLAG_PREFIXES:
-            parts.append(f"SELECT substr(case_number, 1, 6) p, substr(case_number, 13) s FROM {t} "
+            parts.append(f"SELECT {SQL_PREFIX} p, substr(case_number, -6) s FROM {t} "
                          "WHERE case_number >= ? AND case_number < ?")
             # '.' sorts right after '-', so this is every number of the day.
             args += [f"{p}{code}-", f"{p}{code}."]
@@ -129,23 +131,31 @@ def ensure_miss_ledger(db) -> None:
     add_missing_columns(db, "perm_serial_misses", {"asked_all": "INTEGER"})
 
 
-def _ledger(db, code: str, limit: int) -> list[tuple[int, bool]]:
+def _ledger(db, code: str, limit: int) -> list[tuple[int, int | None]]:
     rows = query_rows(
         db, "SELECT serial, asked_all FROM perm_serial_misses WHERE day_code = ? AND misses >= ?",
         [int(code), limit])
     # Integers arrive as strings here too.
-    return [(int(r[0]), str(r[1] or "0") == "1") for r in rows if r[0] is not None]
+    return [(int(r[0]), None if r[1] is None or str(r[1]) == "" else int(r[1]))
+            for r in rows if r[0] is not None]
 
 
 def settled_misses(db, code: str, limit: int = MISS_LIMIT) -> set[int]:
     """Serials DOL has denied `limit` times under every prefix. Asking again buys nothing."""
-    return {s for s, full in _ledger(db, code, limit) if full}
+    return {s for s, era in _ledger(db, code, limit) if era is not None and era >= CURRENT_ERA}
+
+
+def owed_prefixes(db, code: str, limit: int = MISS_LIMIT) -> dict[int, frozenset[str]]:
+    """{serial: prefixes it still owes} for serials denied `limit` times under an
+    older prefix set: each is asked once under the prefixes found since, and
+    settles if those come back empty too."""
+    return {s: frozenset(owed_after(era)) for s, era in _ledger(db, code, limit)
+            if era is None or era < CURRENT_ERA}
 
 
 def owed_rare(db, code: str, limit: int = MISS_LIMIT) -> set[int]:
-    """Serials denied `limit` times under the busy prefixes only: they are
-    asked under the rare ones once, and settle if those come back empty too."""
-    return {s for s, full in _ledger(db, code, limit) if not full}
+    """The serials `owed_prefixes` names (kept for callers that need only which)."""
+    return set(owed_prefixes(db, code, limit))
 
 
 # A span this wide is a wrap, not a day: the counter rolls at 1,000,000, so the
@@ -160,10 +170,11 @@ def day_bounds(db) -> dict[int, tuple[int, int, int]]:
     ones being swept, because a day's true span is defined by its neighbours.
     """
     union = "\n        UNION ".join(
-        f"SELECT CAST(substr(case_number,7,5) AS INT) d, "
-        f"CAST(substr(case_number,13) AS INT) n FROM {t} "
-        # Only this counter's numbers: the old form's A- numbers are another series.
-        f"WHERE substr(case_number,1,6) IN ({','.join(repr(p) for p in ALL_FLAG_PREFIXES)})"
+        f"SELECT {SQL_DAY} d, {SQL_SERIAL} n FROM {t} "
+        # Only this counter's numbers: the old form's A- numbers are another
+        # series, and the shape check keeps a short serial out of the split.
+        f"WHERE substr(case_number, -7, 1) = '-' AND substr(case_number, -13, 1) = '-' "
+        f"AND {SQL_PREFIX} IN ({','.join(repr(p) for p in ALL_FLAG_PREFIXES)})"
         for t in case_tables(db))
     sql = f"""
       WITH s AS (
@@ -238,21 +249,21 @@ def record_misses(db, code: str, serials: list[int], stamp: int) -> None:
     # One statement per batch, never one per serial: the cost is per statement.
     for i in range(0, len(serials), 200):
         chunk = serials[i:i + 200]
-        values = ", ".join(f"({int(code)}, {s}, 1, {stamp}, 1)" for s in chunk)
+        values = ", ".join(f"({int(code)}, {s}, 1, {stamp}, {CURRENT_ERA})" for s in chunk)
         db.execute(
             f"INSERT INTO perm_serial_misses (day_code, serial, misses, last_probed_at, asked_all) "
             f"VALUES {values} "
             f"ON CONFLICT(day_code, serial) DO UPDATE SET "
-            f"misses = misses + 1, last_probed_at = excluded.last_probed_at, asked_all = 1", [])
+            f"misses = misses + 1, last_probed_at = excluded.last_probed_at, asked_all = {CURRENT_ERA}", [])
 
 
 def record_rare_misses(db, code: str, serials: list[int], stamp: int) -> None:
-    """Serials that already had their busy-prefix misses and now came back
-    empty under the rare prefixes too: they settle without a new count."""
+    """Serials that already had their misses under an older prefix set and now
+    came back empty under the prefixes they owed: they settle without a new count."""
     for i in range(0, len(serials), 200):
         chunk = serials[i:i + 200]
         db.execute(
-            f"UPDATE perm_serial_misses SET asked_all = 1, last_probed_at = {int(stamp)} "
+            f"UPDATE perm_serial_misses SET asked_all = {CURRENT_ERA}, last_probed_at = {int(stamp)} "
             f"WHERE day_code = {int(code)} AND serial IN ({', '.join(str(int(s)) for s in chunk)})", [])
 
 
@@ -322,9 +333,9 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
                 skipped.append(code)
             continue
         skip = set() if recheck else settled_misses(db, code, settle_after)
-        # Retired under the busy prefixes only (before the rare ones were
-        # known): those still owe the rare prefixes, and only those.
-        owed = set() if recheck else owed_rare(db, code, settle_after)
+        # Retired under an older prefix set: each still owes the prefixes found
+        # since, and only those.
+        owed = {} if recheck else owed_prefixes(db, code, settle_after)
         held = held_by_prefix(db, code, tables)
         gaps = holes(sorted(set().union(*held.values())), skip, span)
         if not gaps:
@@ -338,7 +349,7 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
                 break
             # An owed serial is asked only under the prefixes its old misses
             # did not cover; it rides along unasked through the rest.
-            asking = pending if pfx in RARE_PREFIXES else [x for x in pending if x not in owed]
+            asking = [x for x in pending if x not in owed or pfx in owed[x]]
             if not asking:
                 continue
             asked_now = set(asking)
@@ -371,8 +382,8 @@ def sweep(db, codes: list[str], *, cap: int, lookup=None, dry: bool = False,
                 fresh = [x for x in chunk if x not in counted]
                 probed += len(fresh)
                 counted.update(fresh)
-                claimed = {int(h["caseNumber"][12:]) for h in hits
-                           if h.get("caseNumber") and h["caseNumber"][12:].isdigit()}
+                claimed = {serial_of(h["caseNumber"]) for h in hits if h.get("caseNumber")}
+                claimed.discard(None)
                 still.extend(s for s in chunk if s not in claimed)
                 if not hits:
                     continue

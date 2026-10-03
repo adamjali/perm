@@ -48,7 +48,7 @@ from lib_flag_serials import (  # noqa: E402
     CASE_RE, PERM_OFFICE_PREFIXES, RARE_PREFIXES, WALK_PREFIXES,
     case_number, code_of,
     day_code, day_codes_between, decode_filing_date, fmt_serial, newer,
-    recent_day_codes, serial_add, serial_gap, serial_of, serial_span,
+    prefix_of, recent_day_codes, serial_add, serial_gap, serial_of, serial_span,
 )
 # CASE_RE, decode_filing_date and recent_day_codes are re-exported: the PWD
 # prober and the tests import them from here.
@@ -371,8 +371,8 @@ def run_discovery(db, *, lookup=None, today: datetime.date | None = None,
             unissued += 1
             continue
         unissued = 0
-        perm = [v for v in claimed if v["caseNumber"][:6] in PERM_OFFICE_PREFIXES]
-        other = [v for v in claimed if v["caseNumber"][:6] not in PERM_OFFICE_PREFIXES]
+        perm = [v for v in claimed if prefix_of(v["caseNumber"]) in PERM_OFFICE_PREFIXES]
+        other = [v for v in claimed if prefix_of(v["caseNumber"]) not in PERM_OFFICE_PREFIXES]
         inserted += _insert_perm_hits(db, perm, now_iso, stamp)
         inserted_other += _insert_other_hits(db, other)
         top = _furthest(span[0], [serial_of(v["caseNumber"]) for v in claimed])

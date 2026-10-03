@@ -27,7 +27,7 @@ const PROGRAM: Record<EmbedCaseAnswer["program"], string> = {
   perm: "PERM",
   pwd: "Prevailing wage request",
   lca: "H-1B LCA",
-  seasonal: "H-2A or H-2B filing",
+  seasonal: "H-2A, H-2B or CW-1 filing",
 };
 
 const day = (iso: string | null) => {

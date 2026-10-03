@@ -28,7 +28,18 @@ SERIAL_WIDTH = 6
 
 # Serial is \d+ rather than \d{6} on purpose: parsing must accept whatever a
 # row already holds; FORMATTING is what must pad.
-CASE_RE = re.compile(r"^([A-Za-z]-\d{3})-(\d{2})(\d{3})-(\d+)$")
+# The form code is one letter and three digits ("G-100") for every program but
+# the H-2A job order, whose code is "JO-A-300". Everything after it has one
+# shape: a five-digit day code and a six-digit serial, twelve characters with
+# their dash, which is what the SQL helpers below rely on.
+CASE_RE = re.compile(r"^((?:[A-Za-z]{2}-)?[A-Za-z]-\d{3})-(\d{2})(\d{3})-(\d+)$")
+
+# The same split in SQL, for tables of stored numbers (six-digit serials only:
+# a number from DOL's live service always carries six). `SQL_PREFIX` keeps the
+# trailing dash, so it compares equal to the entries in ALL_FLAG_PREFIXES.
+SQL_PREFIX = "substr(case_number, 1, length(case_number) - 12)"
+SQL_DAY = "CAST(substr(case_number, -12, 5) AS INTEGER)"
+SQL_SERIAL = "CAST(substr(case_number, -6) AS INTEGER)"
 
 
 def day_code(d: datetime.date) -> str:
@@ -90,9 +101,34 @@ def decode_filing_date(case_number: str) -> str | None:
 # The order is busiest first, measured over DOL's files and our tables: the gap
 # sweep asks a day's holes one prefix at a time in this order (after the
 # day's own mix), and a number claimed early is never asked again.
+# JO-A-300 is an H-2A job order (Form ETA-790/790A) and C-500 a CW-1
+# application (ETA-9142C); DOL's live service answers both under its own visa
+# names (measured Oct 3 2026: 14 of 60 serials our ledger had recorded as "no
+# case" were H-2A job orders, and one was a CW-1 application).
 ALL_FLAG_PREFIXES = ("I-200-", "P-100-", "G-100-", "H-300-", "P-400-", "H-400-",
-                     "G-200-", "I-203-", "P-200-", "G-300-", "P-500-", "I-201-",
-                     "I-202-", "P-203-", "P-201-", "P-202-", "G-400-")
+                     "JO-A-300-", "G-200-", "I-203-", "P-200-", "G-300-", "P-500-",
+                     "I-201-", "I-202-", "P-203-", "P-201-", "P-202-", "G-400-", "C-500-")
+
+# The prefix set grew, and a "no case" answer is a claim only about the
+# prefixes it was asked under. The miss ledger records which of these eras a
+# serial's misses covered (perm_serial_misses.asked_all: NULL for the first,
+# then the era's number); a serial owes the prefixes of every later era.
+PREFIX_ERAS: tuple[tuple[str, ...], ...] = (
+    # The walk's twelve, before Oct 3 2026.
+    ("G-100-", "G-200-", "G-300-", "G-400-", "I-200-", "I-203-", "I-201-", "I-202-",
+     "P-100-", "H-300-", "H-400-", "P-400-"),
+    # The other wage requests, Oct 3 2026 morning.
+    ("P-200-", "P-201-", "P-202-", "P-203-", "P-500-"),
+    # The H-2A job order and the CW-1 application, Oct 3 2026 afternoon.
+    ("JO-A-300-", "C-500-"),
+)
+CURRENT_ERA = len(PREFIX_ERAS) - 1
+
+
+def owed_after(era: int | None) -> tuple[str, ...]:
+    """The prefixes a serial whose misses covered `era` was never asked under."""
+    start = 0 if era is None else era
+    return tuple(p for later in PREFIX_ERAS[start + 1:] for p in later)
 
 # The prefixes the nightly walk asks every span under: the busy ones. Each span
 # is asked under all of them in one request, so every prefix added costs the

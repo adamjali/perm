@@ -99,7 +99,7 @@ export function buildMcpServer(caller: ApiCaller): McpServer {
       title: "Look up a case",
       description:
         "One DOL case by number: status, filing date, employer, job and, once decided, DOL's decided record. " +
-        "PERM (G-100-...), prevailing wage (P-100-...), H-1B LCA (I-200-...) and H-2A/H-2B numbers. " +
+        "PERM (G-100-...), prevailing wage (P-100- to P-203-...), H-1B LCA (I-200-...) and H-2A, H-2B or CW-1 numbers. " +
         'Example: {"case_number": "G-100-26045-123456"}.',
       inputSchema: z.object({ case_number: z.string().max(40).describe("As DOL prints it, e.g. G-100-26045-123456.") }),
       annotations: readOnly,

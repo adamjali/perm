@@ -218,8 +218,12 @@ PW_ROWS = [
      "51-4121", "Welders, Cutters, Solderers, and Brazers", "n/a", "Fortnight", "Toronto", "junk"],
 ]
 
+# Seasonal-only columns (H-2A, H-2B, CW-1): a PW or LCA row carries every one as None.
+NO_SEASONAL = {"workers_certified": None, "begin_date": None, "end_date": None, "worksite_county": None}
+
 # LCA-only columns: a wage request's row carries every one as None.
 NO_LCA_DETAIL = {
+    **NO_SEASONAL,
     "workers": None, "new_employment": None, "continued_employment": None,
     "change_previous_employment": None, "new_concurrent_employment": None,
     "change_employer": None, "amended_petition": None,
@@ -301,7 +305,7 @@ LCA_EXPECTED = [
      "workers": 2, "new_employment": 1, "continued_employment": 0,
      "change_previous_employment": 0, "new_concurrent_employment": 0,
      "change_employer": 1, "amended_petition": 0,
-     "wage_level": "II", "h1b_dependent": 0, "willful_violator": 0},
+     "wage_level": "II", "h1b_dependent": 0, "willful_violator": 0, **NO_SEASONAL},
     {"case_number": "I-203-26011-222222", "case_status": "CERTIFIED - WITHDRAWN",
      "received_date": "2026-01-11", "decision_date": "2026-02-20",
      "employer_name": "Pied Piper LLC", "employer_slug": "pied-piper-llc",
@@ -313,7 +317,7 @@ LCA_EXPECTED = [
      "workers": 1, "new_employment": None, "continued_employment": 1,
      "change_previous_employment": 0, "new_concurrent_employment": 0,
      "change_employer": 0, "amended_petition": 0,
-     "wage_level": None, "h1b_dependent": 1, "willful_violator": None},
+     "wage_level": None, "h1b_dependent": 1, "willful_violator": None, **NO_SEASONAL},
 ]
 
 # The performance page as it was on 2026-09-02, hrefs verbatim: the misspelled
@@ -626,6 +630,87 @@ def check_lca_detail_parsers() -> None:
            "wage_level", "h1b_dependent", "willful_violator"))
 
 
+def check_seasonal(tmp: str, write) -> None:
+    """H-2A, H-2B and CW-1: names from DOL's FY2026 Q3 layouts, one row each.
+
+    Every file carries point-of-contact names, emails and phones; the fixture
+    includes them so a map that read one would show it in the row.
+    """
+    import lib_load_guard as guard
+    h2b_header = ["CASE_NUMBER", "CASE_STATUS", "RECEIVED_DATE", "DECISION_DATE",
+                  "JOB_TITLE", "SOC_CODE", "SOC_TITLE", "TOTAL_WORKERS_REQUESTED",
+                  "TOTAL_WORKERS_CERTIFIED", "REQUESTED_BEGIN_DATE", "REQUESTED_END_DATE",
+                  "EMPLOYER_NAME", "EMPLOYER_POC_EMAIL", "EMPLOYER_POC_PHONE", "NAICS_CODE",
+                  "LAWFIRM_NAME_BUSINESS_NAME", "WORKSITE_CITY", "WORKSITE_STATE",
+                  "WORKSITE_COUNTY", "BASIC_WAGE_RATE_FROM", "PER"]
+    h2b_rows = [h2b_header,
+                ["H-400-26001-000123", "Determination Issued \u2013 Certification", "2026-01-02",
+                 "2026-02-10", "Landscape Laborer", "37-3011", "Landscaping Workers", "40", "35",
+                 "2026-04-01", "2026-11-15", "Green Acres LLC", "poc@example.com", "555-0100",
+                 "561730", "", "Austin", "TX", "Travis", "17.34", "Hour"],
+                ["H-400-26001-000124", "Determination Issued \u2013 Certification", "2026-01-03",
+                 "2026-02-11", "Crab Picker", "51-3022", "Meat, Poultry, and Fish Cutters", "20",
+                 "20", "2026-04-01", "2026-12-01", "Bay Seafood Inc", "x@example.com", "555-0101",
+                 "311710", "Smith Law PLLC", "Hoopers Island", "MD", "Dorchester", "3.50", "Piece Rate"]]
+    path = os.path.join(tmp, "H-2B_Disclosure_Data_FY2026_Q3.xlsx")
+    write(path, h2b_rows)
+    rows, stats = parse(path, "h2b")
+    check("H-2B: both rows parse", len(rows), 2)
+    r = rows[0]
+    check("H-2B: no VISA_CLASS column, so the program names it", r["visa_class"], "H-2B")
+    check("H-2B: requested and certified workers", (r["workers"], r["workers_certified"]), (40, 35))
+    check("H-2B: the requested work period", (r["begin_date"], r["end_date"]), ("2026-04-01", "2026-11-15"))
+    check("H-2B: worksite city, state and county", (r["worksite_city"], r["worksite_state"], r["worksite_county"]),
+          ("Austin", "TX", "Travis"))
+    check("H-2B: the hourly wage and its unit", (r["wage"], r["wage_unit"]), (17.34, "HOUR"))
+    check("H-2B: a blank law firm stays NULL", r["attorney_name"], None)
+    check("H-2B: no contact field reaches a row",
+          any("example.com" in str(v) or "555-01" in str(v) for row in rows for v in row.values()), False)
+    check("H-2B: the second row keeps its firm", rows[1]["attorney_slug"] is not None, True)
+    fp = guard.Fingerprint()
+    for row in rows:
+        fp.see(row)
+    check("guard: a piece rate is a known unit, not an impossible value", fp.to_doc()["badShare"], 0.0)
+    check("guard: a 2008 history date is plausible",
+          guard.row_issues({"received_date": "2007-11-02", "decision_date": "2008-01-15"},
+                           __import__("datetime").date(2026, 10, 3)), [])
+
+    # CW-1 calls the employer LEGAL_BUSINESS_NAME and has no county.
+    cw_header = ["CASE_NUMBER", "CASE_STATUS", "RECEIVED_DATE", "DECISION_DATE", "LEGAL_BUSINESS_NAME",
+                 "JOB_TITLE", "SOC_CODE", "SOC_TITLE", "TOTAL_WORKERS_REQUESTED", "TOTAL_WORKERS_CERTIFIED",
+                 "WORKSITE_CITY", "WORKSITE_STATE", "BASIC_WAGE_RATE_FROM", "PER"]
+    cw_path = os.path.join(tmp, "CW-1_Disclosure_Data_FY2026_Q3.xlsx")
+    write(cw_path, [cw_header, ["C-500-26010-000001", "Withdrawn", "2026-01-12", "2026-02-01",
+                                "Saipan Builders Corp", "Carpenter", "47-2031", "Carpenters", "4", "",
+                                "Saipan", "MP", "9.25", "Hour"]])
+    cw, _ = parse(cw_path, "cw1")
+    check("CW-1: the employer comes from LEGAL_BUSINESS_NAME", cw[0]["employer_name"], "Saipan Builders Corp")
+    check("CW-1: visa class named by the program", cw[0]["visa_class"], "CW-1")
+    check("CW-1: a blank certified count is NULL, never 0", cw[0]["workers_certified"], None)
+
+    # Discovery for the three programs, on the filenames DOL lists (Oct 3 2026).
+    names = ["H-2A_Disclosure_Data_FY2026_Q3.xlsx", "H-2A_Addendum_A_FY2026_Q3.xlsx",
+             "H-2A_Addendum_B_Housing_FY2026_Q3.xlsx", "H-2A_FY2020_AddendumA.xlsx",
+             "H-2A_Disclosure_Data_FY16_updated.xlsx", "H-2A_FY14_Q4.xlsx", "H2A_FY2008.xlsx",
+             "H2A_FY2013.xls", "H-2B_Disclosure_FY2024_Q4.xlsx", "H-2B_Appendix_C_FY2024_Q4.xlsx",
+             "H2B_Disclosure_Data_FY2020.xlsx", "H2B_FY2020_Appendix_A.xlsx", "H-2B_FY2017.xlsx",
+             "CW_Disclosure_Data_FY2025_Q3.xlsx", "CW-1_Appendix_A_FY2025_Q4.xlsx",
+             "CW_Appendix_A_FY2024_Q4.xlsx", "CW-1_Disclosure_Data_FY2026_Q3.xlsx"]
+    html = "".join(f'<a href="/sites/dolgov/files/ETA/oflc/pdfs/{n}">x</a>' for n in names)
+    got = {p: sorted(discover_links(html, PROGRAMS[p]["file_pattern"], HOST)) for p in ("h2a", "h2b", "cw1")}
+    check("H-2A: the main files only, never an addendum or the .xls", got["h2a"],
+          ["H-2A_Disclosure_Data_FY16_updated.xlsx", "H-2A_Disclosure_Data_FY2026_Q3.xlsx",
+           "H-2A_FY14_Q4.xlsx", "H2A_FY2008.xlsx"])
+    check("H-2B: every naming DOL used, never an appendix", got["h2b"],
+          ["H-2B_Disclosure_FY2024_Q4.xlsx", "H-2B_FY2017.xlsx", "H2B_Disclosure_Data_FY2020.xlsx"])
+    check("CW-1: both prefixes DOL used, never an appendix", got["cw1"],
+          ["CW-1_Disclosure_Data_FY2026_Q3.xlsx", "CW_Disclosure_Data_FY2025_Q3.xlsx"])
+    check("CW-1: the newest is FY2026 Q3", pick_latest(got["cw1"]), "CW-1_Disclosure_Data_FY2026_Q3.xlsx")
+    for prog in ("pw", "lca"):
+        check(f"{prog}: no seasonal file is mistaken for this program",
+              discover_links(html, PROGRAMS[prog]["file_pattern"], HOST), {})
+
+
 def main() -> int:
     print("flag disclosure parser contract")
     check_units()
@@ -636,6 +721,7 @@ def main() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         for writer_name, write in available_writers():
             check_fixture(tmp, writer_name, write)
+        check_seasonal(tmp, available_writers()[0][1])
 
     print()
     # Counts before the verdict: a suite that asserted nothing must be loud.

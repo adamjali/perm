@@ -14,6 +14,13 @@
  * how many were decided within that many days of it. A case still pending
  * then counts as a miss, which is what it is.
  *
+ * AND A CASE STILL PENDING PAST ITS DATE IS ALREADY LATE (2026-10-03). On
+ * Oct 13 a case predicted for Oct 10 and not yet decided is at least 3 days
+ * off, and that only grows. `missAtLeastDays` and `biasAtLeastDays` count every
+ * such case at the days it is already late, beside the decided ones. Each of
+ * those can only move further out, so the medians are floors: the method is
+ * at least this far off, whatever DOL does next.
+ *
  * Plain module, pure functions, so the unit project tests every rule.
  */
 
@@ -108,6 +115,14 @@ export interface Cell {
   settled: number;
   /** Of those, decided within SETTLE_DAYS of the date (pending counts as a miss). */
   settledHitShare: number | null;
+  /** Past their date and still pending (withdrawals left out). */
+  overdue: number;
+  /** Median days those are past their date so far. */
+  overdueDays: number | null;
+  /** Median |miss| with each overdue case at the days it is already late: a floor. */
+  missAtLeastDays: number | null;
+  /** Median signed miss counted the same way: a floor on how late the method runs. */
+  biasAtLeastDays: number | null;
 }
 
 export function summariseCell(rows: readonly PredictionRow[], today: string): Cell {
@@ -121,6 +136,10 @@ export function summariseCell(rows: readonly PredictionRow[], today: string): Ce
   const hits = settledRows.filter(
     (r) => r.decidedOn && Math.abs(daysBetween(r.predicted, r.decidedOn)) <= SETTLE_DAYS,
   ).length;
+  const lateSoFar = rows
+    .filter((r) => !r.decidedOn && daysBetween(r.predicted, today) > 0)
+    .map((r) => daysBetween(r.predicted, today));
+  const withLate = [...errs, ...lateSoFar];
   return {
     recorded: rows.length,
     graded: graded.length,
@@ -130,6 +149,10 @@ export function summariseCell(rows: readonly PredictionRow[], today: string): Ce
     within14Share: graded.length ? errs.filter((e) => Math.abs(e) <= 14).length / graded.length : null,
     settled: settledRows.length,
     settledHitShare: settledRows.length ? hits / settledRows.length : null,
+    overdue: lateSoFar.length,
+    overdueDays: median(lateSoFar),
+    missAtLeastDays: median(withLate.map(Math.abs)),
+    biasAtLeastDays: median(withLate),
   };
 }
 
@@ -161,6 +184,81 @@ export function summarise(rows: readonly PredictionRow[], today: string, program
     bySource[src] = { all: summariseCell(s, today), byModel, byHorizon };
   }
   return { computedOn: today, since, bySource };
+}
+
+/** One rival against ours, on the cases both predicted the same day. */
+export interface HeadToHead {
+  /** Cases both predicted on the same day. */
+  shared: number;
+  /** Of those, decided (withdrawals left out). */
+  decided: number;
+  /** Median |miss| on the decided shared cases, each side. */
+  oursTypicalDays: number | null;
+  rivalTypicalDays: number | null;
+  /** Shared cases each side was closer on, decided or already settled. */
+  oursCloser: number;
+  rivalCloser: number;
+  ties: number;
+  /** Still waiting past BOTH dates: the later prediction is already the closer one. */
+  settledWhileWaiting: number;
+}
+
+/**
+ * Ours against each rival on exactly the same cases, so neither side's figure
+ * comes from an easier sample.
+ *
+ * A case still pending past both predicted dates is already settled between
+ * the two: DOL will decide after today, so the later prediction is the closer
+ * one whenever that happens. A case pending past only one date is not settled
+ * (the other may yet be exact) and is left out of the count.
+ */
+export function headToHead(
+  rows: readonly (PredictionRow & { caseNumber: string })[],
+  today: string,
+): Record<string, HeadToHead> {
+  const key = (r: { recordedOn: string; caseNumber: string }) => `${r.recordedOn}|${r.caseNumber}`;
+  const ours = new Map<string, PredictionRow & { caseNumber: string }>();
+  for (const r of rows) if (r.source === "ours" && r.program === "perm") ours.set(key(r), r);
+  const out: Record<string, HeadToHead> = {};
+  for (const src of [...new Set(rows.filter((r) => r.source !== "ours").map((r) => r.source))].sort()) {
+    const h: HeadToHead = {
+      shared: 0, decided: 0, oursTypicalDays: null, rivalTypicalDays: null,
+      oursCloser: 0, rivalCloser: 0, ties: 0, settledWhileWaiting: 0,
+    };
+    const oursErr: number[] = [];
+    const rivalErr: number[] = [];
+    for (const r of rows) {
+      if (r.source !== src || r.program !== "perm") continue;
+      const o = ours.get(key(r));
+      if (!o) continue;
+      h.shared += 1;
+      if (r.decidedOn && !isGradedOutcome(r.outcome)) continue;
+      let eo: number;
+      let er: number;
+      if (r.decidedOn) {
+        h.decided += 1;
+        eo = Math.abs(daysBetween(o.predicted, r.decidedOn));
+        er = Math.abs(daysBetween(r.predicted, r.decidedOn));
+        oursErr.push(eo);
+        rivalErr.push(er);
+      } else if (o.predicted < today && r.predicted < today) {
+        // Both dates passed: each miss is (decision - its date), so the later
+        // date's miss is the smaller one, whatever the decision day turns out.
+        h.settledWhileWaiting += 1;
+        eo = daysBetween(o.predicted, today);
+        er = daysBetween(r.predicted, today);
+      } else {
+        continue;
+      }
+      if (eo < er) h.oursCloser += 1;
+      else if (er < eo) h.rivalCloser += 1;
+      else h.ties += 1;
+    }
+    h.oursTypicalDays = median(oursErr);
+    h.rivalTypicalDays = median(rivalErr);
+    out[src] = h;
+  }
+  return out;
 }
 
 /** A small, seeded generator, so a day's sample can be reproduced from its date. */

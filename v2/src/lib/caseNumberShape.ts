@@ -26,8 +26,8 @@
  * the worse failure here.
  */
 
-/** The current four-segment form: `G-100-26125-868956`. */
-const CURRENT = /^[A-Z]-\d{3}-\d{5}-\d+$/;
+/** The current four-segment form: `G-100-26125-868956`, or an H-2A job order's `JO-A-300-26271-264525`. */
+const CURRENT = /^(?:[A-Z]|JO-A)-\d{3}-\d{5}-\d+$/;
 
 /** The legacy three-segment form: `A-23043-00641`. Five digits, then five. */
 const LEGACY = /^[A-Z]-\d{5}-\d{5}$/;

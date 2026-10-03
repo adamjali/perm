@@ -446,7 +446,7 @@ http.route({
 //
 // Every string interpolated into `unsubscribePage` below is either a literal or
 // a case number that has already been through `normaliseCaseNumber`, which
-// admits only `^[A-Z]-\d{3}-\d{5}-\d+$`. That helper does no escaping, so
+// admits only `^(?:[A-Z]|JO-A)-\d{3}-\d{5}-\d+$`. That helper does no escaping, so
 // nothing that has not passed that filter may reach it.
 
 http.route({

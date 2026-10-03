@@ -117,24 +117,34 @@ export async function rivalPredictions(
   cases: readonly SampledCase[],
   today: string,
   pendingBefore: (month: string) => number,
+  spacingMs: number = SPACING_MS,
 ): Promise<{ preds: NewPrediction[]; failures: string[] }> {
-  const preds: NewPrediction[] = [];
   const failures: string[] = [];
-  for (const c of cases) {
-    const base = { caseNumber: c.caseNumber, filingDate: c.filingDate, status: c.status, program: "perm" as const };
-    for (const [name, fn] of [
-      ["rival-a", () => rivalA(c)],
-      ["rival-b", () => rivalB(c)],
-      ["rival-c", () => rivalC(c, today, pendingBefore)],
-    ] as const) {
+  const base = (c: SampledCase) => ({ caseNumber: c.caseNumber, filingDate: c.filingDate, status: c.status, program: "perm" as const });
+  // Each host is asked one case at a time with a pause between, and the two
+  // hosts run side by side: every sampled case, and still under one request a
+  // second to either host.
+  const perHost = async (
+    name: string,
+    fn: (c: SampledCase) => Promise<Omit<NewPrediction, "caseNumber" | "filingDate" | "status" | "program"> | null>,
+    spaced: boolean,
+  ): Promise<NewPrediction[]> => {
+    const out: NewPrediction[] = [];
+    for (const [i, c] of cases.entries()) {
+      if (spaced && i > 0) await sleep(spacingMs);
       try {
-        const p = await fn();
-        if (p) preds.push({ ...base, ...p });
+        const p = await fn(c);
+        if (p) out.push({ ...base(c), ...p });
       } catch (e) {
         failures.push(`${name} ${c.caseNumber}: ${e instanceof Error ? e.message : String(e)}`);
       }
-      if (name !== "rival-c") await sleep(SPACING_MS);
     }
-  }
-  return { preds, failures };
+    return out;
+  };
+  const [a, b, cc] = await Promise.all([
+    perHost("rival-a", rivalA, true),
+    perHost("rival-b", rivalB, true),
+    perHost("rival-c", (c) => rivalC(c, today, pendingBefore), false),
+  ]);
+  return { preds: [...a, ...b, ...cc], failures };
 }
