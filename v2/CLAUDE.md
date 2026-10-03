@@ -7647,6 +7647,13 @@ nobody drew the busy pixel, and the defense's "app full 3 minutes running" rule 
 deploy writes `health/deploying` while it runs, during which the defense ignores app-full minutes (people shown busy
 still count; a marker older than 20 minutes is ignored).
 
+**The wage-request estimate counted its wait from the wrong date until Oct 3.** `estimatePwdQueue` added the months
+of work ahead to the REQUEST month instead of DOL's as-of date, so on Oct 3 a June request showed "July 2026" and a July
+request "August 2026", months already past (September came out right only because the two dates coincide). It now
+counts from the as-of date, reading Sep 30 as the whole month gone. The scorecard had recorded 144 wage predictions that
+way (typical miss 79 days, the bug, not the estimator); they're relabelled `pwd-queue-request-month`, kept, and left out
+of the public line, which grades only `pwd-queue` (`PWD_MODEL` / `PWD_BEFORE_FIX` in `src/lib/scorecard/score.ts`).
+
 **The MCP server is in the official MCP Registry** as `app.permtracker/perm-tracker` (published Oct 3 2026, 7:48 AM
 EDT; `registry.modelcontextprotocol.io/v0/servers?search=app.permtracker`). The name proves the domain: a TXT record on
 the apex (`v=MCPv1; k=ecdsap384; p=...`, Cloudflare, comment "MCP Registry") carries the public half of an ECDSA

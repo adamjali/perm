@@ -38,6 +38,16 @@ export interface PredictionRow {
 /** Days after a predicted date before an undecided case counts as a miss. */
 export const SETTLE_DAYS = 30;
 
+/**
+ * The wage-request estimate's method names. Predictions recorded before Oct 3
+ * 2026 counted the wait from the month a request was received instead of from
+ * DOL's own count date, which put most of them in the past; they were
+ * relabelled PWD_BEFORE_FIX in the table (kept, never deleted) and the page
+ * grades only PWD_MODEL.
+ */
+export const PWD_MODEL = "pwd-queue";
+export const PWD_BEFORE_FIX = "pwd-queue-request-month";
+
 export type Horizon = "0-30" | "31-90" | "91-180" | "181+";
 export const HORIZONS: readonly Horizon[] = ["0-30", "31-90", "91-180", "181+"];
 

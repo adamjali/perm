@@ -108,11 +108,22 @@ export function estimatePwdQueue(input: PwdQueueInput): PwdQueueEstimate {
     // within a month is not published.
     const effective = requestsAhead + requestsSameMonth / 2;
     estimatedMonthsRemaining = effective / rate;
+    // The wait runs from DOL's as-of date, because that is when the counts it
+    // divides were true. Until Oct 3 2026 it ran from the REQUEST month, so a
+    // June request with a few thousand ahead came out "July 2026" in late
+    // September: a month already past, for every request not yet decided.
+    //
     // Month arithmetic on the numbers, never through a Date. Building the
     // target with Date.UTC and rendering it with date-fns `format` reads the
     // instant back in LOCAL time, so 2026-09-01T00:00Z printed as "2026-08"
     // anywhere west of UTC and the estimate came out a month early.
-    estimatedMonth = addMonths(requestMonth, Math.ceil(estimatedMonthsRemaining));
+    const asOfMonth = input.asOf.slice(0, 7);
+    const day = Number(input.asOf.slice(8, 10));
+    const [y, m] = asOfMonth.split('-').map(Number) as [number, number];
+    const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    // Months past the start of the as-of month: Sep 30 is 1.0, Sep 15 is 0.5.
+    const into = day / daysInMonth + estimatedMonthsRemaining;
+    estimatedMonth = addMonths(asOfMonth, Math.max(0, Math.ceil(into - 1e-9) - 1));
   } else {
     caveats.push(
       'How fast DOL clears the prevailing wage backlog is not something it publishes, and we will not guess at it. The count of requests ahead is exact; the wait it implies is not shown until the rate can be measured from DOL’s own figures over time.',

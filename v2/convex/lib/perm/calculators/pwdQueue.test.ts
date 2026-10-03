@@ -78,7 +78,50 @@ describe('estimatePwdQueue: refusing to guess the drain rate', () => {
       clearancePerMonth: 8_000,
     });
     expect(result.estimatedMonthsRemaining).toBeCloseTo(3.0435, 3);
-    expect(result.estimatedMonth).toBe('2026-09');
+    // From DOL's as-of (June 30), not from the request month (May): June 30
+    // plus 3.04 months is early October. Until Oct 3 2026 this test pinned
+    // '2026-09', the request-month arithmetic.
+    expect(result.estimatedMonth).toBe('2026-10');
+  });
+
+  it('never names a month before the counts it is built on', () => {
+    // Sep 30 2026, as published: a June request with 1,810 effectively ahead
+    // at 15,306 a month is days away, not "July 2026".
+    const live = {
+      asOf: '2026-09-30',
+      frontierMonth: '2026-06',
+      clearancePerMonth: 15_306,
+      backlog: [
+        { receiptMonth: '2026-04', remainingRequests: 8 },
+        { receiptMonth: '2026-05', remainingRequests: 36 },
+        { receiptMonth: '2026-06', remainingRequests: 3_532 },
+        { receiptMonth: '2026-07', remainingRequests: 15_959 },
+        { receiptMonth: '2026-08', remainingRequests: 14_980 },
+        { receiptMonth: '2026-09', remainingRequests: 14_519 },
+      ],
+    };
+    const month = (requestMonth: string) => estimatePwdQueue({ ...live, requestMonth }).estimatedMonth;
+    expect(month('2026-06')).toBe('2026-10');
+    expect(month('2026-07')).toBe('2026-10');
+    expect(month('2026-08')).toBe('2026-11');
+    expect(month('2026-09')).toBe('2026-12');
+    for (const m of ['2026-04', '2026-05', '2026-06', '2026-07', '2026-08', '2026-09']) {
+      expect(month(m)! >= '2026-09').toBe(true);
+    }
+  });
+
+  it('reads a mid-month as-of date as half the month gone', () => {
+    // Sep 15 plus 0.4 months is late September; plus 0.6 is early October.
+    const at = (clear: number) =>
+      estimatePwdQueue({
+        asOf: '2026-09-15',
+        frontierMonth: '2026-06',
+        requestMonth: '2026-06',
+        clearancePerMonth: clear,
+        backlog: [{ receiptMonth: '2026-06', remainingRequests: 2_000 }],
+      }).estimatedMonth;
+    expect(at(2_500)).toBe('2026-09'); // 1,000 effective / 2,500 = 0.4
+    expect(at(1_666)).toBe('2026-10'); // 0.6
   });
 
   it.each([0, -5, null, undefined])('ignores a rate of %s', (rate) => {

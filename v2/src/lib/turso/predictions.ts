@@ -3,6 +3,7 @@ import "server-only";
 import { estimatePwdQueue } from "@/lib/perm";
 import {
   isGradedOutcome,
+  PWD_MODEL,
   summarise,
   type PredictionRow,
   type Source,
@@ -237,7 +238,7 @@ export async function predictOurs(today: string): Promise<{
         caseNumber: c.caseNumber,
         filingDate: c.filingDate,
         status: c.status,
-        model: "pwd-queue",
+        model: PWD_MODEL,
         predicted: `${q.estimatedMonth}-15`,
         bandEarly: `${q.estimatedMonth}-01`,
         bandLate: new Date(Date.UTC(Number(q.estimatedMonth.slice(0, 4)), Number(q.estimatedMonth.slice(5, 7)), 0))

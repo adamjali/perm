@@ -6,7 +6,7 @@ import { FinePrint } from "@/components/data/FinePrint";
 import { formatAsOf } from "@/lib/dolFormat";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { daysToAnchor } from "@/lib/predictionLedger";
-import { HORIZONS, type Cell } from "@/lib/scorecard/score";
+import { HORIZONS, PWD_BEFORE_FIX, PWD_MODEL, type Cell } from "@/lib/scorecard/score";
 import { getEstimatorBacktest, getScorecardSummary } from "@/lib/turso/predictions";
 import { getScorecard } from "@/lib/turso/scorecard";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
@@ -89,6 +89,9 @@ export default async function EstimateScorecardPage() {
   const asOf = sweep?.finishedOn ?? null;
   const perm = sample?.perm.bySource.ours ?? null;
   const pwd = sample?.pwd.bySource.ours ?? null;
+  // Graded only as the estimator now works; see PWD_BEFORE_FIX.
+  const pwdNow = pwd?.byModel[PWD_MODEL] ?? null;
+  const pwdBeforeFix = pwd?.byModel[PWD_BEFORE_FIX] ?? null;
   const cur = backtest?.current ?? null;
   const old = backtest?.allPending ?? null;
 
@@ -225,12 +228,20 @@ export default async function EstimateScorecardPage() {
             The first sample is recorded the morning after this page went live. Grades follow as DOL decides.
           </p>
         )}
-        {pwd && pwd.all.recorded > 0 ? (
+        {pwd && (pwd.all.recorded > 0 || pwdBeforeFix) ? (
           <p className="mt-6 border-t-2 border-border pt-4 text-base text-foreground/80">
-            <b className="font-bold text-foreground">Prevailing wage requests:</b> {formatInt(pwd.all.recorded)} recorded,{" "}
-            {formatInt(pwd.all.graded)} graded
-            {pwd.all.graded > 0 ? <>, typical miss {days(pwd.all.typicalMissDays)}</> : null}. That estimate names a
-            month, so it is graded against the middle of the month.
+            <b className="font-bold text-foreground">Prevailing wage requests:</b> {formatInt(pwdNow?.recorded ?? 0)}{" "}
+            recorded, {formatInt(pwdNow?.graded ?? 0)} graded
+            {pwdNow && pwdNow.graded > 0 ? <>, typical miss {days(pwdNow.typicalMissDays)}</> : null}. That estimate names
+            a month, so it is graded against the middle of the month.
+            {pwdBeforeFix ? (
+              <>
+                {" "}
+                The {formatInt(pwdBeforeFix.recorded)} recorded before October 3, 2026 counted the wait from the month
+                a request was received instead of from DOL&rsquo;s own count date, which dated most of them in the
+                past. They stay in the record and are left out of this line.
+              </>
+            ) : null}
           </p>
         ) : null}
       </section>
