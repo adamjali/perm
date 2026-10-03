@@ -443,16 +443,19 @@ def lookup_with_retry(nums: list[str], attempts: int = 4) -> list[dict]:
 
 
 def lookup(nums: list[str]) -> list[dict]:
-    """One batch. curl, not urllib: this host answers python-urllib with 1010."""
-    p = pathlib.Path("/tmp/_csd_batch.json")
-    p.write_text(json.dumps(nums))
+    """One batch. curl, not urllib: this host answers python-urllib with 1010.
+
+    The body goes in on stdin. It went through one fixed file, /tmp/_csd_batch.json,
+    which two jobs running at once would overwrite under each other, and which
+    another user's leftover copy made unwritable (Oct 3 2026).
+    """
     r = subprocess.run(
         ["/usr/bin/curl", "-s", "-X", "POST", URL,
          "-H", "Content-Type: application/json",
          "-H", "Origin: https://flag.dol.gov",
          "-H", "Referer: https://flag.dol.gov/case-status-search",
-         "-A", UA, "--data", f"@{p}", "--max-time", "60", "-w", "\n%{http_code}"],
-        capture_output=True, text=True,
+         "-A", UA, "--data", "@-", "--max-time", "60", "-w", "\n%{http_code}"],
+        input=json.dumps(nums), capture_output=True, text=True,
     )
     body, _, code = r.stdout.rpartition("\n")
     if code.strip() != "200":
