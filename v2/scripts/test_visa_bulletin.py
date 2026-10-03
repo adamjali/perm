@@ -245,7 +245,7 @@ def main() -> int:
         def __init__(self):
             self.sql: list[str] = []
 
-        def execute(self, sql, args=None):
+        def execute(self, sql, args=None, **kw):
             self.sql.append(sql)
             return {"response": {"result": {"rows": []}}}
 
@@ -288,7 +288,7 @@ def main() -> int:
           vb.rank_of("third party (mirror; original: travel.state.gov)") == 1)
 
     class Held(Recorder):
-        def execute(self, sql, args=None):
+        def execute(self, sql, args=None, **kw):
             self.sql.append(sql)
             if sql.startswith("SELECT bulletin_month, source_url"):
                 return {"response": {"result": {"rows": [
@@ -315,6 +315,8 @@ def main() -> int:
         vb.ingest_direct(2)
         check("a run that stores nothing does not ask the workflow to expire the pages",
               "bulletin_changed" not in open(gh_out.name).read())
+        check("a clean nightly run records itself, so an earlier failure clears",
+              any("INSERT INTO ingest_runs" in q for q in held.sql), str(held.sql)[-300:])
         pages = [u for u in asked if u != vb.DIRECT_INDEX]
         check("a month already held from a primary source is not fetched again",
               not any("july-2026" in u for u in pages), str(pages))

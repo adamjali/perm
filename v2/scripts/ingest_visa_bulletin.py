@@ -43,7 +43,7 @@ import urllib.error
 import urllib.request
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
-from lib_turso import Turso, add_missing_columns, query_rows, stamp_freshness  # noqa: E402
+from lib_turso import Turso, add_missing_columns, query_rows, record_run, stamp_freshness  # noqa: E402
 
 # Queried per calendar year: one wildcard over the whole bulletin path hits the
 # row limit and truncates before the recent months, while reporting success.
@@ -502,8 +502,14 @@ def ingest_direct(limit: int, dry_run: bool = False, skip_bad: bool = False) -> 
         (m, u) for m, u in linked
         if rank_of(held.get(m, "")) < 3 and (skip_bad or m in held or m > newest_held)
     ][:limit]
+    # A clean run is recorded under the same name the workflow's failure hook
+    # uses, or one failed night stays red in the health check for its whole
+    # 3-day window however many clean nights follow (Oct 3 2026).
+    run_name = "ingest_visa_bulletin.py --backfill-direct" if skip_bad else "ingest_visa_bulletin.py"
     if not todo:
         log("nothing new: every linked month is already held from a primary source")
+        if not dry_run:
+            record_run(db, run_name, status="ok", rows_written=0, note="direct: nothing new")
         return 0
     stored = 0
     skipped: list[str] = []
@@ -534,6 +540,9 @@ def ingest_direct(limit: int, dry_run: bool = False, skip_bad: bool = False) -> 
     if stored:
         stamp_bulletin_freshness(db, DIRECT_SOURCE)
         note_stored()
+    if not dry_run:
+        note = f"direct: stored {stored}" + (f", skipped {', '.join(sorted(skipped))}" if skipped else "")
+        record_run(db, run_name, status="ok", rows_written=stored, note=note[:300])
     return 0
 
 
