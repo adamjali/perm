@@ -1,0 +1,28 @@
+# The full-history gap backfill: asks DOL about every number on its counter
+# that we hold under no prefix and haven't settled, back to Oct 1 2019, once.
+# Paced (one request every 1.5 s plus DOL's own time), steps aside at the
+# nightly sweeps' hours, and resumes from perm_docs['gap_backfill'] after any
+# stop. It exits 0 when it is done and is not started again; a crash restarts
+# it in 10 minutes. Progress: `python3 scripts/backfill_serial_gaps.py --status`.
+[Unit]
+Description=PERM Tracker gap backfill (every number on DOL's counter)
+After=network-online.target permtracker-db.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=permtracker
+WorkingDirectory=/srv/permtracker/repo/v2
+EnvironmentFile=/srv/permtracker/app/env/uscis.env
+ExecStart=/usr/bin/python3 scripts/backfill_serial_gaps.py --pace 1.5
+Restart=on-failure
+RestartSec=600
+Nice=10
+CPUWeight=25
+IOWeight=25
+MemoryHigh=512M
+MemoryMax=1G
+OOMScoreAdjust=500
+
+[Install]
+WantedBy=multi-user.target
