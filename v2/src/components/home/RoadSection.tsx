@@ -212,7 +212,7 @@ export function RoadSection(props: RoadSectionProps) {
                   {s.name}{" "}
                   <ArrowRight className="shrink-0" />
                 </span>{" "}
-                <span className="road-fact">{s.fact}</span>
+                <span className="road-fact">{s.fact}</span>{" "}
               </Link>
             </li>
           ))}

@@ -5,6 +5,7 @@ import { EadExtensionCalculator } from "@/components/tools/EadExtensionCalculato
 import { FaqList } from "@/components/tools/FaqList";
 import { ToolPageFooter } from "@/components/tools/ToolPageFooter";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 
 /**
  * Was a work permit automatically extended by its renewal? Since October 30,
@@ -19,12 +20,12 @@ const DESCRIPTION =
 const PATH = "/tools/ead-extension";
 
 // No social card yet (a card is a capture of the rendered page).
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: PATH },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
-};
+}, "ead-extension");
 
 export const dynamic = "force-static";
 

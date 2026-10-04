@@ -5,6 +5,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { formatInt } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 import {
   PAGE_SIZE,
   RATE_STEPS,
@@ -34,12 +35,12 @@ const DESCRIPTION =
   "Find employers that file PERM green card cases, by state, industry, approval rate, recent filing and H-1B transfers, from DOL's own records.";
 const PATH = "/sponsor-finder";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: PATH },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
-};
+}, "sponsor-finder");
 
 const STATES = new Set(Object.keys(US_STATE_NAMES));
 const LINK = "font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary";
@@ -81,7 +82,7 @@ export default async function SponsorFinderPage({
                   </option>
                 ))}
             </select>
-          </label>
+          </label>{" "}
           <label className="block text-sm font-bold">
             Industry
             <select name="sector" defaultValue={f.sector ?? ""} className={`mt-1 ${FIELD}`}>
@@ -92,7 +93,7 @@ export default async function SponsorFinderPage({
                 </option>
               ))}
             </select>
-          </label>
+          </label>{" "}
           <label className="block text-sm font-bold">
             PERM filings, last 12 months
             <select name="recent" defaultValue={String(f.minRecent)} className={`mt-1 ${FIELD}`}>
@@ -102,7 +103,7 @@ export default async function SponsorFinderPage({
                 </option>
               ))}
             </select>
-          </label>
+          </label>{" "}
           <label className="block text-sm font-bold">
             PERM approval rate
             <select name="rate" defaultValue={f.minRate === null ? "" : String(f.minRate)} className={`mt-1 ${FIELD}`}>

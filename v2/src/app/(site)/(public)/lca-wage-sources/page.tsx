@@ -7,6 +7,7 @@ import { DataProvenance } from "@/components/data/DataProvenance";
 import { FinePrint } from "@/components/data/FinePrint";
 import { formatInt, formatShare } from "@/lib/format";
 import { openGraphBase } from "@/lib/openGraphBase";
+import { withSocialCard } from "@/lib/socialCard";
 import { getWageSources } from "@/lib/turso/wageSources";
 import { splitYears } from "@/lib/wageSourceYears";
 
@@ -24,12 +25,12 @@ const DESCRIPTION =
 const PATH = "/lca-wage-sources";
 
 // No social card yet (a card is a capture of the rendered page).
-export const metadata: Metadata = {
+export const metadata: Metadata = withSocialCard({
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: PATH },
   openGraph: { ...openGraphBase, title: `${TITLE} | PERM Tracker`, description: DESCRIPTION, url: PATH },
-};
+}, "lca-wage-sources");
 
 export const revalidate = 86400;
 
@@ -116,25 +117,25 @@ export default async function LcaWageSourcesPage() {
                 {pending.length === 1 ? `FY${pending[0]} appears` : `FY${pending[0]} to FY${pending[pending.length - 1]} appear`}{" "}
                 once this site has read the wage source on most of {pending.length === 1 ? "its" : "their"} LCAs.
               </p>
-            ) : null}
+            ) : null}{" "}
             {/* sr-only on a <table> can't shrink it below its content; a div can. */}
             <div className="sr-only">
               <table>
-                <caption>Prevailing wage sources by fiscal year</caption>
+                <caption>Prevailing wage sources by fiscal year </caption>
                 <thead>
                   <tr>
-                    <th scope="col">Fiscal year</th>
+                    <th scope="col">Fiscal year </th>
                     {KINDS.map((k) => (
-                      <th key={k} scope="col">{KIND_LABEL[k]}</th>
+                      <th key={k} scope="col">{`${KIND_LABEL[k]} `}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {years.map((y) => (
                     <tr key={y.fy}>
-                      <th scope="row">{`FY${y.fy}`}</th>
+                      <th scope="row">{`FY${y.fy} `}</th>
                       {KINDS.map((k) => (
-                        <td key={k}>{formatInt(y[k])}</td>
+                        <td key={k}>{`${formatInt(y[k])} `}</td>
                       ))}
                     </tr>
                   ))}

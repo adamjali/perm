@@ -378,7 +378,7 @@ export function DataShelf({ figures }: { figures?: DataPageFigures }) {
                   {d.figure}
                 </span>
               ) : null}{" "}
-              <span className="sr-only">{d.what}</span>
+              <span className="sr-only">{d.what}</span>{" "}
             </Link>
           ))}
         </nav>

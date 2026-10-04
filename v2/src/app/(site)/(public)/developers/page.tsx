@@ -96,8 +96,8 @@ export default function DevelopersPage() {
               </span>{" "}
               <span className="font-heading text-xl font-black">{s.title}</span>
             </p>{" "}
-            <p className="mt-3 text-base leading-relaxed text-foreground/75">{s.body}</p>
-            <Code>{s.code}</Code>
+            <p className="mt-3 text-base leading-relaxed text-foreground/75">{s.body}</p>{" "}
+            <Code>{s.code}</Code>{" "}
           </li>
         ))}
       </ol>
