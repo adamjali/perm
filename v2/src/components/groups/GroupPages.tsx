@@ -10,7 +10,9 @@ import { naicsSectorTitle } from "@/lib/naicsSectors";
 import { openGraphBase } from "@/lib/openGraphBase";
 import { countryYears, getGroup, GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
 import { formatInt } from "@/lib/format";
+import { lcaCityByKey, lcaCityBySlug, type LcaCity } from "@/lib/turso/lcaCities";
 
+import { CityH1b } from "./CityH1b";
 import { GroupIndexTable, type GroupIndexRow } from "./GroupIndexTable";
 import { GroupView } from "./GroupView";
 
@@ -137,11 +139,38 @@ export async function GroupIndexPage({ kind }: { kind: GroupKind }) {
   );
 }
 
+/**
+ * A city with 20 or more H-1B LCAs and too few PERM cases for a PERM page
+ * (lca_cities, Oct 4 2026). Null for every other kind and slug.
+ */
+async function h1bOnlyCity(kind: GroupKind, slug: string): Promise<LcaCity | null> {
+  if (kind !== "city") return null;
+  const c = await lcaCityBySlug(slug);
+  return c && !c.hasPermPage ? c : null;
+}
+
 export async function groupDetailMetadata(kind: GroupKind, slug: string): Promise<Metadata> {
   const g = await getGroup(kind, slug);
-  // notFound() here, at the earliest point, so a junk slug answers 404 and
-  // not a 200 streamed before the page could decide (the soft-404 rule).
-  if (!g) notFound();
+  if (!g) {
+    const city = await h1bOnlyCity(kind, slug);
+    // notFound() here, at the earliest point, so a junk slug answers 404 and
+    // not a 200 streamed before the page could decide (the soft-404 rule).
+    if (!city) notFound();
+    const path = `${GROUP_PATH.city}/${slug}`;
+    const title = `H-1B Jobs in ${city.label}`;
+    const lcas = `${formatInt(city.total)} H-1B LCAs`;
+    const description = firstThatFits([
+      `${title}: ${lcas}, with the employers and jobs behind them, from DOL's own LCA files.`,
+      `${title}: ${lcas}, from DOL's own files.`,
+      `${title}: ${lcas}.`,
+    ]);
+    return {
+      title: { absolute: title.length > 44 ? title : `${title} | PERM Tracker` },
+      description,
+      alternates: { canonical: path },
+      openGraph: { ...openGraphBase, title, description, url: path },
+    };
+  }
   const c = COPY[kind];
   const path = `${GROUP_PATH[kind]}/${slug}`;
   const title = c.detailTitle(g.label);
@@ -164,9 +193,28 @@ export async function groupDetailMetadata(kind: GroupKind, slug: string): Promis
 
 export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: string }) {
   const g = await getGroup(kind, slug);
-  if (!g) notFound();
+  if (!g) {
+    const city = await h1bOnlyCity(kind, slug);
+    if (!city) notFound();
+    return (
+      <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
+        <div className="pt-10 sm:pt-12" />
+        <JsonLdScript schema={breadcrumbSchema(`${GROUP_PATH.city}/${slug}`, city.label)} />
+        <header>
+          <h1 className="font-heading text-4xl font-black leading-tight sm:text-5xl">H-1B jobs in {city.label}</h1>{" "}
+          <p className="mt-4 max-w-3xl text-lg leading-relaxed text-foreground/70">
+            Fewer than 20 PERM green card cases name {city.label} as the worksite, so this city has no PERM page; its
+            H-1B record is below.
+          </p>
+        </header>
+        <CityH1b city={city} />
+        <DataProvenance datasets={["lca-disclosure"]} />
+      </div>
+    );
+  }
   const c = COPY[kind];
   const years = kind === "country" ? await countryYears(g.key) : undefined;
+  const h1b = kind === "city" ? await lcaCityByKey(g.key).catch(() => null) : null;
   const breadcrumb = breadcrumbSchema(`${GROUP_PATH[kind]}/${slug}`, g.label);
   return (
     <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6 sm:pb-16">
@@ -179,8 +227,9 @@ export async function GroupDetailPage({ kind, slug }: { kind: GroupKind; slug: s
         ) : null}
       </header>
       <GroupView kind={kind} group={g} yearsOverride={years} />
+      <CityH1b city={h1b} />
       <p className="mt-8 max-w-3xl text-sm leading-relaxed text-foreground/70">{c.coverage}</p>
-      <DataProvenance datasets={["perm-cases"]} />
+      <DataProvenance datasets={h1b ? ["perm-cases", "lca-disclosure"] : ["perm-cases"]} />
     </div>
   );
 }

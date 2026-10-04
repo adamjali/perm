@@ -17,6 +17,7 @@ import { getProcessingTimes } from "@/lib/turso/processingTimes";
 import { getSweepCoverage } from "@/lib/turso/sweepCoverage";
 import { GROUP_PATH, listGroups, type GroupKind } from "@/lib/turso/groups";
 import { countOtherEmployerRanks, getOtherEmployerSlugWindow } from "@/lib/turso/otherEmployers";
+import { lcaOnlyCities } from "@/lib/turso/lcaCities";
 import {
   countEntityRanks,
   countLiveOnlyRanks,
@@ -530,10 +531,17 @@ export async function groupEntries(): Promise<Entry[]> {
   const base = baseUrl();
   const asOf = (await corpusAsOf()) ?? "2026-09-26";
   const kinds: GroupKind[] = ["city", "industry", "country"];
-  const lists = await Promise.all(kinds.map((k) => listGroups(k).catch(() => [])));
-  return kinds.flatMap((k, i) =>
-    (lists[i] ?? []).map((g) => ({ url: `${base}${GROUP_PATH[k]}/${g.slug}`, lastModified: asOf })),
-  );
+  const [lists, h1bCities] = await Promise.all([
+    Promise.all(kinds.map((k) => listGroups(k).catch(() => []))),
+    // Cities with 20+ H-1B LCAs and no PERM page have a page of their own (Oct 4 2026).
+    lcaOnlyCities().catch(() => []),
+  ]);
+  return [
+    ...kinds.flatMap((k, i) =>
+      (lists[i] ?? []).map((g) => ({ url: `${base}${GROUP_PATH[k]}/${g.slug}`, lastModified: asOf })),
+    ),
+    ...h1bCities.map((c) => ({ url: `${base}${GROUP_PATH.city}/${c.slug}`, lastModified: asOf })),
+  ];
 }
 
 /**

@@ -58,6 +58,8 @@ vi.mock("@/lib/turso/publicData", () => ({
 // builds its month strip from and the month route peeks before rendering.
 // Mocked at that module; `beforeEach` arranges a census with one EMPTY month,
 // because the route 404s an empty month and the sitemap must omit it.
+// Cities with H-1B filings and no PERM page: none by default.
+vi.mock("@/lib/turso/lcaCities", () => ({ lcaOnlyCities: vi.fn(async () => []) }));
 vi.mock("@/lib/turso/groups", () => ({
   GROUP_PATH: { city: "/perm-cities", industry: "/perm-industries", country: "/perm-countries" },
   listGroups: vi.fn(async (kind: string) => [
@@ -219,6 +221,14 @@ describe("sitemap.ts", () => {
     vi.mocked(getLiveOnlySlugWindow).mockResolvedValue([]);
     vi.mocked(countOtherEmployerRanks).mockResolvedValue(0);
     vi.mocked(getOtherEmployerSlugWindow).mockResolvedValue([]);
+  });
+
+  it("lists the cities that have an H-1B page and no PERM page", async () => {
+    const { lcaOnlyCities } = await import("@/lib/turso/lcaCities");
+    vi.mocked(lcaOnlyCities).mockResolvedValueOnce([{ slug: "boise-id" }]);
+    const urls = (await groupEntries()).map((e) => e.url);
+    expect(urls).toContain("https://permtracker.app/perm-cities/boise-id");
+    expect(urls).toContain("https://permtracker.app/perm-cities/seattle-wa");
   });
 
   it("lists every /perm-queue month holding a case, from the census, and OMITS an empty month (that page 404s)", async () => {

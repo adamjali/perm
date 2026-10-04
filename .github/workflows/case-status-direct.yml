@@ -97,6 +97,9 @@ jobs:
           # (the employer page's profile and the sponsor finder). Reads the map
           # above, so it runs after it.
           timeout 20m python3 scripts/build_sponsor_index.py || true
+          # H-1B LCAs by worksite city, for the city pages (and a page for each
+          # city with 20+ LCAs and no PERM page). Links employers through the map.
+          timeout 20m python3 scripts/build_lca_cities.py || true
 
       # The walk only moves forward, so this is its second look: it re-asks DOL
       # about the holes in the trailing 90 day codes and writes only what DOL

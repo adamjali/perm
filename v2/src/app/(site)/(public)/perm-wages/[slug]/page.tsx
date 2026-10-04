@@ -19,6 +19,7 @@ import { hasOwnPage } from "@/lib/entityPayload";
 import { notFound } from "next/navigation";
 import { firstThatFits } from "@/lib/describe";
 import { formatDollars, formatInt } from "@/lib/format";
+import { getLcaWageStats } from "@/lib/turso/lcaWages";
 import { JsonLdScript } from "@/components/seo/JsonLdScript";
 import { FieldPosition } from "@/components/tools/FieldPosition";
 import { FigurePlate } from "@/components/tools/FigurePlate";
@@ -216,7 +217,7 @@ export default async function OccupationPage({
   // The materialised wage cells are keyed by SOC code, so an occupation with
   // no code on file simply has no ladder rather than a wrong one.
   const wageKey = row.code ?? "";
-  const [stats, dist, near, ladderYears, stateLadders, facets, freshness, workers] = await Promise.all([
+  const [stats, dist, near, ladderYears, stateLadders, facets, freshness, workers, h1b] = await Promise.all([
     getDisclosureStats(),
     fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
     comparables({
@@ -237,6 +238,9 @@ export default async function OccupationPage({
     // here only so the Dataset can state WHEN its figures were last true.
     getFreshness(),
     workerFacets("occupation", slug),
+    // The same job's certified H-1B LCAs (FY2020 onward), from the salary
+    // explorer's own read: precomputed for 5,000+ filings, live below that.
+    row.code ? getLcaWageStats({ socCode: row.code, status: "certified" }).catch(() => null) : Promise.resolve(null),
   ]);
 
   const baselineDenialPct = stats?.risk?.baseline.denialRate ?? FALLBACK_BASELINE_DENIAL_PCT;
@@ -451,6 +455,30 @@ export default async function OccupationPage({
         unit="filings"
         className="mt-12"
       />
+
+      {h1b && h1b.n > 0 && row.code ? (
+        <section className="mt-12 border-2 border-border bg-card p-6 shadow-hard sm:p-8" aria-labelledby="occ-h1b">
+          <h2 id="occ-h1b" className="font-heading text-xl font-black sm:text-2xl">
+            The same job on H-1B
+          </h2>{" "}
+          <p className="mt-2 max-w-3xl text-base leading-relaxed text-foreground/80">
+            <span className="font-heading text-2xl font-black tabular-nums">{formatInt(h1b.n)}</span> certified H-1B
+            labor condition applications for this occupation since FY2020
+            {h1b.p50 != null ? `, offering a median of ${formatDollars(h1b.p50)} a year` : ""}
+            {h1b.p25 != null && h1b.p75 != null
+              ? `; the middle half ran ${formatDollars(h1b.p25)} to ${formatDollars(h1b.p75)}`
+              : ""}
+            .{" "}
+            <Link
+              href={`/lca-wages?soc=${encodeURIComponent(row.code.trim().slice(0, 7))}`}
+              className="font-bold underline decoration-primary decoration-2 underline-offset-2 hover:text-primary"
+            >
+              By state and year in the salary explorer
+            </Link>
+            .
+          </p>
+        </section>
+      ) : null}
 
       {/* ONE LINE AND A LINK, THE READING FOLDED. */}
       <section className="mt-12 border-2 border-border bg-tint-primary p-6 shadow-hard-sm sm:p-8">
