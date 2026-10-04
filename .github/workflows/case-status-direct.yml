@@ -93,6 +93,10 @@ jobs:
           # because a live-only employer's spellings go to that page, and adds
           # the pages it changed to the expiry list below.
           timeout 30m python3 scripts/build_employer_map.py || true
+          # Each PERM sponsor's record, ranked part by part against the others
+          # (the employer page's profile and the sponsor finder). Reads the map
+          # above, so it runs after it.
+          timeout 20m python3 scripts/build_sponsor_index.py || true
 
       # The walk only moves forward, so this is its second look: it re-asks DOL
       # about the holes in the trailing 90 day codes and writes only what DOL

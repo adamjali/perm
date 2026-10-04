@@ -282,6 +282,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Dates with citations, no prediction.",
   },
   {
+    path: "/sponsor-finder",
+    label: "Green card sponsor finder",
+    blurb: "Employers that file PERM cases, filtered by state, industry, recent filing, approval rate, how often their H-1B hires are transfers, and likely cap-exempt status. Each links to its full record.",
+  },
+  {
     path: "/opt-employers",
     label: "Top OPT and CPT employers",
     blurb: "ICE's own top-200 lists of employers of F-1 students on OPT, STEM OPT and CPT, for every year ICE published one, as ICE printed them.",

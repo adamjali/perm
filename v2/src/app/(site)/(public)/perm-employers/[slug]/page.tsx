@@ -88,6 +88,8 @@ import { unifiedRows } from "@/lib/flagMerge";
 import { liveEmployerRecord } from "@/lib/turso/liveEmployers";
 import { getEmployerPrograms } from "@/lib/turso/employerPrograms";
 import { employerMatch, pageForSpelling } from "@/lib/turso/employerSlugs";
+import { getSponsorProfile } from "@/lib/turso/sponsorIndex";
+import { SponsorProfile } from "@/components/entities/SponsorProfile";
 import { getEmployerStages } from "@/lib/turso/employerStages";
 import { EmployerPrograms } from "@/components/entities/EmployerPrograms";
 import { EmployerFollow } from "@/components/employers/EmployerFollow";
@@ -541,7 +543,7 @@ export default async function EmployerPage({
   // tables (employer_page_map, built nightly). Cached, so the program ledger,
   // the LCA panel and the lists below all read the same rows.
   const match = await employerMatch(canonicalSlug).catch(() => null);
-  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery] =
+  const [stats, dist, near, pending, facets, variants, absorbed, freshness, recentLive, wageLive, lcaLive, wageDets, lcaDets, programs, stagesDoc, debarments, warn, empWait, fieldWait, filedToday, years, historyCases, workers, seasonalRows, lcaProfile, uscisH1b, lottery, sponsor] =
     await Promise.all([
       getDisclosureStats(),
       fieldDistribution(KIND, MIN_DECIDED_FOR_RATE),
@@ -593,6 +595,8 @@ export default async function EmployerPage({
       getUscisH1bRecord(canonicalSlug).catch(() => null),
       // Lottery registrations FY2021 to FY2024 (USCIS's FOIA release).
       getEmployerLottery(canonicalSlug).catch(() => null),
+      // Each part of its record ranked against other sponsors (sponsor_index).
+      getSponsorProfile(canonicalSlug).catch(() => null),
     ]);
   const wageReqs = unifiedRows(wageLive, wageDets, 5);
   const lcas = unifiedRows(lcaLive, lcaDets, 5);
@@ -707,6 +711,7 @@ export default async function EmployerPage({
         searchHref={`/case-search?q=${encodeURIComponent(row.name)}`}
         spellings={programs?.match.basis === "map" ? programs.match.spellings : null}
       />{" "}
+      <SponsorProfile parts={sponsor?.parts ?? []} facts={(sponsor?.facts ?? []).filter((f) => f.id === "dependent" || f.id === "willful")} />{" "}
       <EmployerFollow
         slug={canonicalSlug}
         name={row.name}
