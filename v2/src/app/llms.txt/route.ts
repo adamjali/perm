@@ -282,6 +282,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Dates with citations, no prediction.",
   },
   {
+    path: "/tools/ead-extension",
+    label: "EAD automatic extension calculator",
+    blurb: "Whether a work permit was automatically extended by its renewal, and to when: nothing for renewals received on or after October 30, 2025 (8 CFR 274a.13(e)), up to 540 days before that under 274a.13(d).",
+  },
+  {
     path: "/sponsor-finder",
     label: "Green card sponsor finder",
     blurb: "Employers that file PERM cases, filtered by state, industry, recent filing, approval rate, how often their H-1B hires are transfers, and likely cap-exempt status. Each links to its full record.",

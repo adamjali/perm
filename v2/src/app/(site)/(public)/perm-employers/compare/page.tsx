@@ -10,6 +10,8 @@ import { approvalRate } from "@/lib/entityPayload";
 import { wilsonInterval } from "@/lib/wageLadder";
 import { stateName } from "@/lib/usStateNames";
 import { entityFacets, entityPending, resolveEntity, type EntityFacets, type EntityPending, type ResolvedEntity } from "@/lib/turso/entityDetail";
+import { getSponsorProfile } from "@/lib/turso/sponsorIndex";
+import { partValue, type SponsorPart } from "@/lib/sponsorProfile";
 import { formatDollars, formatInt, formatPercent } from "@/lib/format";
 
 /**
@@ -46,16 +48,27 @@ interface Side {
   entity: ResolvedEntity;
   pending: EntityPending | null;
   facets: EntityFacets;
+  /** Its parts ranked among other sponsors (sponsor_index), by part id. */
+  parts: Map<string, SponsorPart>;
 }
 
 async function loadSide(slug: string): Promise<Side | null> {
   const entity = await resolveEntity("employer", slug);
   if (!entity) return null;
-  const [pending, facets] = await Promise.all([
+  const [pending, facets, profile] = await Promise.all([
     entityPending("employer", entity.canonicalSlug),
     entityFacets("employer", entity.canonicalSlug),
+    getSponsorProfile(entity.canonicalSlug).catch(() => null),
   ]);
-  return { entity, pending, facets };
+  return { entity, pending, facets, parts: new Map((profile?.parts ?? []).map((p) => [p.id, p])) };
+}
+
+/** A ranked part's figure and where it stands, or why there's none. */
+function partCell(s: Side, id: SponsorPart["id"], none: string): string {
+  const p = s.parts.get(id);
+  if (!p) return none;
+  const share = Math.round(p.pct * 100);
+  return `${partValue(p)} (${share >= 100 ? "top" : share <= 0 ? "bottom" : `higher than ${share}%`} of ${formatInt(p.of)})`;
 }
 
 const int = (n: number | null | undefined) => (n === null || n === undefined ? "n/a" : formatInt(n));
@@ -104,6 +117,11 @@ export default async function CompareEmployersPage({
     { label: "State", value: (s) => (s.entity.row.state ? `${s.entity.row.state}, ${stateName(s.entity.row.state)}` : "n/a") },
     { label: "Pending with DOL now", value: (s) => (s.pending ? int(s.pending.pending) : "n/a"), note: "from the nightly status sweep" },
     { label: "Oldest pending filing", value: (s) => s.pending?.oldest ?? "n/a" },
+    // Ranked among other sponsors with enough cases (sponsor_index).
+    { label: "PERM filings in the last 12 months", value: (s) => partCell(s, "perm_recent", "none"), note: "and where it ranks among sponsors that filed any" },
+    { label: "H-1B LCAs certified, last 24 months", value: (s) => partCell(s, "lca_24m", "none") },
+    { label: "H-1B positions that were transfers", value: (s) => partCell(s, "transfer_share", "too few positions to rate"), note: "a change of employer, over the newest 24 months of LCA detail" },
+    { label: "USCIS H-1B approval rate", value: (s) => partCell(s, "uscis_rate", "too few decisions to rate"), note: "last three fiscal years of USCIS's Employer Data Hub" },
   ];
 
   const facetList = (s: Side, kind: "occupation" | "state") =>
@@ -198,14 +216,47 @@ export default async function CompareEmployersPage({
       ) : null}{" "}
 
       {both ? (
-        <p className="mt-6 max-w-3xl text-sm leading-relaxed text-foreground/75">
-          Moving employers before an I-140 is approved usually means a new PERM; 180 days after approval,
-          the priority date moves with you (AC21). That matters more than any figure above.{" "}
-          <Link href="/guides/three-180-day-clocks" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
-            The three 180-day clocks
-          </Link>{" "}
-          explains the rules.
-        </p>
+        <section className="mt-8 max-w-3xl border-2 border-border bg-card p-5 sm:p-6" aria-labelledby="switching">
+          <h2 id="switching" className="font-heading text-xl font-black">
+            If you&apos;re moving from one to the other
+          </h2>{" "}
+          <p className="mt-2 text-base leading-relaxed text-foreground/80">
+            Where your own case stands matters more than any figure above.
+          </p>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-base leading-relaxed text-foreground/80">
+            <li>Before the I-140 is approved, a move usually means a new PERM with the new employer.</li>{" "}
+            <li>
+              Once it&apos;s approved, the priority date stays yours for a later employment-based petition unless
+              USCIS revokes the approval for fraud or a willful misrepresentation, a revoked or invalidated labor
+              certification, or a material error (8 CFR 204.5(e)).
+            </li>{" "}
+            <li>
+              If the old employer withdraws the I-140 180 days or more after approval, it stays approved (8 CFR
+              205.1(a)(3)(iii)(C)).
+            </li>{" "}
+            <li>
+              An I-485 pending 180 days or more can move to a same or similar job (INA 204(j); 8 CFR 245.25).
+            </li>{" "}
+            <li>
+              In H-1B status, you can start with the new employer once it files a nonfrivolous H-1B petition for you,
+              or on its requested start date, whichever is later (8 CFR 214.2(h)(2)(i)(H)).
+            </li>
+          </ul>{" "}
+          <p className="mt-3 text-base">
+            <Link href="/tools/priority-date-retention" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+              Check your own dates
+            </Link>
+            , read{" "}
+            <Link href="/guides/three-180-day-clocks" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+              the three 180-day clocks
+            </Link>
+            , or see{" "}
+            <Link href="/tools/h1b-six-year-limit" className="font-semibold text-primary underline decoration-primary/30 underline-offset-2 hover:decoration-primary">
+              how H-1B time past six years works
+            </Link>
+            .
+          </p>
+        </section>
       ) : null}{" "}
 
       <DataProvenance datasets={["perm-cases", "entities", "perm-case-status"]} />

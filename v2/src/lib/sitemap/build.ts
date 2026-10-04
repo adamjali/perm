@@ -312,6 +312,7 @@ export async function pagesEntries(): Promise<Entry[]> {
     { url: `${base}/tools/h1b-lottery-odds-calculator`, lastModified: changed("/tools/h1b-lottery-odds-calculator") },
     { url: `${base}/opt-employers`, lastModified: changed("/opt-employers") },
     { url: `${base}/sponsor-finder`, lastModified: changed("/sponsor-finder") },
+    { url: `${base}/tools/ead-extension`, lastModified: changed("/tools/ead-extension") },
     // `/perm-employers/compare` IS DELIBERATELY ABSENT. The page sets
     // `robots: { index: false }` - it is a tool that renders whatever two
     // slugs the query names, so there is nothing stable to index - and
