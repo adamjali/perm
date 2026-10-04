@@ -28,6 +28,7 @@ import { annualised } from "@/lib/wageFormat";
 export { SLICE_CAP };
 import {
   PERM_ONLY_FILTERS,
+  LCA_ONLY_FILTERS,
   PUBLISHED_ONLY_FILTERS,
   type FilterKey,
   type Lead,
@@ -360,6 +361,8 @@ export interface UnifiedSearchResult {
    * request and LCA records were not read, and the page names these as why.
    */
   permOnly: string[];
+  /** The LCA-only filters set (a prevailing wage source), in words: the answer is LCAs alone. */
+  lcaOnly: string[];
   /** The order the rows are in, and whether it covers everything that matched. */
   order: SearchOrder;
   /**
@@ -385,6 +388,7 @@ const FILTER_WORDS: Partial<Record<FilterKey, string>> = {
   visaClass: "visa at filing",
   education: "worker's education",
   jobEducation: "education the job requires",
+  wageSource: "prevailing wage source",
 };
 
 /** Which filter keys this narrow sets, by the plan module's names. */
@@ -402,7 +406,18 @@ function filtersSet(narrow: UnifiedNarrow): Partial<Record<FilterKey, boolean>> 
     visaClass: narrow.visaClass !== undefined,
     education: narrow.education !== undefined,
     jobEducation: narrow.jobEducation !== undefined,
+    wageSource: narrow.wageSource !== undefined,
   };
+}
+
+/**
+ * The LCA-only filters a narrow sets, in words. Non-empty means only DOL's
+ * published LCA file can answer: no other record names a prevailing wage
+ * source.
+ */
+export function lcaOnlyFilters(narrow: UnifiedNarrow): string[] {
+  const set = filtersSet(narrow);
+  return LCA_ONLY_FILTERS.filter((k) => set[k]).map((k) => FILTER_WORDS[k] ?? k);
 }
 
 /**
@@ -537,6 +552,7 @@ async function finish(
   windowed: boolean,
   skipped: SkippedSources,
   permOnly: string[] = [],
+  lcaOnly: string[] = [],
 ): Promise<UnifiedSearchResult> {
   const all = dedupeToOnePerCase(collected);
   const order = args.order ?? "filed-desc";
@@ -560,6 +576,7 @@ async function finish(
     windowed,
     skipped,
     permOnly,
+    lcaOnly,
     order,
     orderScope: capped || all.length > take ? "fetched" : "complete",
     lead: args.lead,
@@ -612,8 +629,13 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // tables here have no industry, city or worker column, so reading them would
   // return rows the filter never touched. The answer names the filters.
   const permOnly = permOnlyFilters(narrow);
+  // And the other way: a prevailing wage source exists only in the LCA file.
+  const lcaOnly = lcaOnlyFilters(narrow);
   const wanted = (p: Program) =>
-    want.has(p) && (stage === null || p === stage.program) && (permOnly.length === 0 || p === "perm");
+    want.has(p) &&
+    (stage === null || p === stage.program) &&
+    (permOnly.length === 0 || p === "perm") &&
+    (lcaOnly.length === 0 || p === "lca");
   const askPublished = (p: Program) => wanted(p) && !skipped.published;
   const askLive = (p: Program) => wanted(p) && !skipped.live && (employer !== null || stage !== null);
 
@@ -679,5 +701,5 @@ export async function unifiedSearch(args: UnifiedSearchArgs): Promise<UnifiedSea
   // Different claim from `capped`, and a much more important one to print.
   const windowed = halves.some((half) => half.windowed);
 
-  return await finish(collected, args, capped, windowed, skipped, permOnly);
+  return await finish(collected, args, capped, windowed, skipped, permOnly, lcaOnly);
 }

@@ -100,6 +100,8 @@ jobs:
           # H-1B LCAs by worksite city, for the city pages (and a page for each
           # city with 20+ LCAs and no PERM page). Links employers through the map.
           timeout 20m python3 scripts/build_lca_cities.py || true
+          # Where H-1B prevailing wages come from (the /lca-wage-sources page).
+          timeout 15m python3 scripts/build_wage_sources.py || true
 
       # The walk only moves forward, so this is its second look: it re-asks DOL
       # about the holes in the trailing 90 day codes and writes only what DOL

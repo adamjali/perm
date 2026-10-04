@@ -146,6 +146,42 @@ describe("the worker, job and industry filters", () => {
   });
 });
 
+describe("the prevailing wage source", () => {
+  it.each(["oes", "survey", "cba", "contract"])("passes wsrc=%s to the search", async (src) => {
+    const r = await get(`q=acme&wsrc=${src}`);
+    expect(r.status).toBe(200);
+    expect(lastNarrow()).toEqual({ wageSource: src });
+  });
+
+  it.each([
+    ["DOL's own spelling", "wsrc=Survey"],
+    ["an unknown source", "wsrc=union"],
+    ["a prototype key", "wsrc=toString"],
+  ])("400s on %s, before any search", async (_label, qs) => {
+    const r = await get(`q=acme&${qs}`);
+    expect(r.status).toBe(400);
+    expect(unifiedSearch).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["an industry", "naics=54"],
+    ["a city", "city=austin"],
+    ["the worker's citizenship", "cit=india"],
+  ])("400s when it's combined with %s, which only the PERM file carries", async (_label, qs) => {
+    const r = await get(`q=acme&wsrc=survey&${qs}`);
+    expect(r.status).toBe(400);
+    expect((await r.json()).error).toContain("LCA file");
+    expect(unifiedSearch).not.toHaveBeenCalled();
+  });
+
+  it("drops it under a stage lead, which reads the live feed only, and says so", async () => {
+    const r = await get("stage=rfi-issued&wsrc=survey");
+    expect(r.status).toBe(200);
+    expect(lastNarrow()).toEqual({});
+    expect((await r.json()).dropped).toContain("wageSource");
+  });
+});
+
 describe("the order", () => {
   it("hands the chosen order to the search", async () => {
     await get("q=acme&order=wage-desc");

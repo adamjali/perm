@@ -121,7 +121,8 @@ export type FilterKey =
   | "birthCountry"
   | "visaClass"
   | "education"
-  | "jobEducation";
+  | "jobEducation"
+  | "wageSource";
 
 export const FILTER_KEYS: readonly FilterKey[] = [
   "programs",
@@ -142,6 +143,7 @@ export const FILTER_KEYS: readonly FilterKey[] = [
   "visaClass",
   "education",
   "jobEducation",
+  "wageSource",
 ];
 
 /**
@@ -161,6 +163,28 @@ export const PERM_ONLY_FILTERS: readonly FilterKey[] = [
   "education",
   "jobEducation",
 ];
+
+/**
+ * The filters only DOL's published LCA file can answer: where the prevailing
+ * wage the employer attested to came from (Section F of the ETA-9035), which
+ * no other record this site holds carries. A search that sets one reads
+ * published LCAs and says so.
+ */
+export const LCA_ONLY_FILTERS: readonly FilterKey[] = ["wageSource"];
+
+/** The prevailing wage sources the LCA file names, as the filter offers them. */
+export const WAGE_SOURCES = {
+  oes: "OES (DOL's wage data)",
+  survey: "A private salary survey",
+  cba: "A union contract",
+  // The Service Contract Act and Davis-Bacon Act wages for federal contracts.
+  contract: "A federal contract wage",
+} as const;
+export type WageSourceKey = keyof typeof WAGE_SOURCES;
+export function isWageSource(v: string): v is WageSourceKey {
+  // Own keys only: `"toString" in WAGE_SOURCES` is true through the prototype.
+  return Object.prototype.hasOwnProperty.call(WAGE_SOURCES, v);
+}
 
 /**
  * The filters DOL fills only on cases filed on its OLD ETA-9089 (the worker's
@@ -190,7 +214,11 @@ export type Refusal =
   | "stage-live-only"
   | "stage-pending"
   | "stage-perm"
-  | "lead-published-only";
+  | "lead-published-only"
+  /** A PERM-only field is set, and this one is in the LCA file alone. */
+  | "perm-only-set"
+  /** A prevailing wage source is set, and this field is in the PERM file alone. */
+  | "lca-only-set";
 
 export interface FilterState {
   on: boolean;
@@ -222,6 +250,10 @@ export function refusalText(why: Refusal): string {
         "A law firm, state or occupation search reads DOL's published file, and no " +
         "published row carries a review stage. Search by employer, or by stage alone."
       );
+    case "perm-only-set":
+      return "The wage source is in DOL's LCA file, and a field you've set is in the PERM file. Clear that field to use this one.";
+    case "lca-only-set":
+      return "This field is in DOL's PERM file, and the wage source you've set is in the LCA file. Clear the wage source to use it.";
   }
 }
 
@@ -244,6 +276,7 @@ export const FILTER_LABEL: Record<FilterKey, string> = {
   visaClass: "Visa at filing",
   education: "Worker's education",
   jobEducation: "Education the job requires",
+  wageSource: "Prevailing wage source",
 };
 
 /**
@@ -423,6 +456,7 @@ export const PUBLISHED_ONLY_FILTERS: readonly FilterKey[] = [
   "fiscalYear",
   "wage",
   ...PERM_ONLY_FILTERS,
+  ...LCA_ONLY_FILTERS,
 ];
 
 /**
@@ -447,8 +481,30 @@ export function withStageNarrow(
     occupation: { on: false, why: "stage-live-only" },
     fiscalYear: { on: false, why: "stage-live-only" },
     wage: { on: false, why: "stage-live-only" },
-    ...Object.fromEntries(PERM_ONLY_FILTERS.map((k) => [k, { on: false, why: "stage-live-only" as const }])),
+    ...Object.fromEntries(
+      [...PERM_ONLY_FILTERS, ...LCA_ONLY_FILTERS].map((k) => [k, { on: false, why: "stage-live-only" as const }]),
+    ),
   };
+}
+
+/**
+ * A PERM-only field and an LCA-only field can't both narrow one search: no
+ * file carries both, so the answer would be empty for a reason nobody typed.
+ * Whichever side is set turns the other side's controls off, with the reason
+ * beside them. A control already off keeps its own reason.
+ */
+export function withFileScope(
+  can: Record<FilterKey, FilterState>,
+  set: { permOnly: boolean; lcaOnly: boolean },
+): Record<FilterKey, FilterState> {
+  const out = { ...can };
+  if (set.permOnly) {
+    for (const k of LCA_ONLY_FILTERS) if (out[k].on) out[k] = { on: false, why: "perm-only-set" };
+  }
+  if (set.lcaOnly) {
+    for (const k of PERM_ONLY_FILTERS) if (out[k].on) out[k] = { on: false, why: "lca-only-set" };
+  }
+  return out;
 }
 
 /**

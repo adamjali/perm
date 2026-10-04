@@ -34,6 +34,7 @@ export type DataSection =
   | "h1b-lottery-calc"
   | "opt-employers"
   | "sponsor-finder"
+  | "wage-sources"
   | "nvc-waiting-list"
   | "by-city"
   | "by-industry"
@@ -140,6 +141,7 @@ export const SECTIONS: DataNavSection[] = [
   // Employers by what their record shows (sponsor_index); in Breakdowns
   // because Employers and wages is at the rail's height budget (Oct 4 2026).
   { key: "sponsor-finder", group: "Breakdowns", label: "Find a sponsor", href: "/sponsor-finder" },
+  { key: "wage-sources", group: "Breakdowns", label: "H-1B wage sources", href: "/lca-wage-sources" },
 
   { key: "risk", group: "Denials and audits", label: "Denial rates", href: "/perm-denial-risk" },
   // Its own key rather than borrowing "risk". Measured before adding: this

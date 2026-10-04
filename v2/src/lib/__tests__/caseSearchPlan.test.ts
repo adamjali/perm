@@ -6,6 +6,9 @@ import {
   OUTCOMES,
   SEARCH_ORDERS,
   PUBLISHED_ONLY_FILTERS,
+  PERM_ONLY_FILTERS,
+  LCA_ONLY_FILTERS,
+  WAGE_SOURCES,
   availableOutcomes,
   chooseLead,
   filterAvailability,
@@ -14,6 +17,8 @@ import {
   orderToSort,
   refusalText,
   withStageNarrow,
+  withFileScope,
+  isWageSource,
   type Lead,
 } from "../caseSearchPlan";
 
@@ -280,5 +285,55 @@ describe("the orders", () => {
     expect(isSearchOrder("wage-desc")).toBe(true);
     expect(isSearchOrder("wage")).toBe(false);
     expect(isSearchOrder("constructor")).toBe(false);
+  });
+});
+
+describe("the prevailing wage source, a field of the LCA file alone", () => {
+  it("recognises exactly the four sources the filter offers", () => {
+    expect(Object.keys(WAGE_SOURCES)).toEqual(["oes", "survey", "cba", "contract"]);
+    for (const k of Object.keys(WAGE_SOURCES)) expect(isWageSource(k)).toBe(true);
+    expect(isWageSource("Survey")).toBe(false);
+    expect(isWageSource("toString")).toBe(false);
+    expect(isWageSource("")).toBe(false);
+  });
+
+  it("is published-only, so a search that sets it skips the live half", () => {
+    expect(PUBLISHED_ONLY_FILTERS).toContain("wageSource");
+    expect(LCA_ONLY_FILTERS).toEqual(["wageSource"]);
+  });
+
+  it("is open under an employer lead and off under a stage, which reads the live feed", () => {
+    expect(filterAvailability(leads.employer).wageSource).toEqual({ on: true });
+    expect(withStageNarrow(filterAvailability(leads.employer), true).wageSource).toEqual({
+      on: false,
+      why: "stage-live-only",
+    });
+  });
+
+  it("turns the PERM-only fields off when it is set, and itself off when one of them is", () => {
+    const can = filterAvailability(leads.employer);
+    const lcaSet = withFileScope(can, { permOnly: false, lcaOnly: true });
+    for (const k of PERM_ONLY_FILTERS) expect(lcaSet[k]).toEqual({ on: false, why: "lca-only-set" });
+    expect(lcaSet.wageSource).toEqual({ on: true });
+    const permSet = withFileScope(can, { permOnly: true, lcaOnly: false });
+    expect(permSet.wageSource).toEqual({ on: false, why: "perm-only-set" });
+    for (const k of PERM_ONLY_FILTERS) expect(permSet[k]).toEqual({ on: true });
+  });
+
+  it("leaves everything as it was when neither side is set, and keeps a reason already given", () => {
+    const can = filterAvailability(leads.employer);
+    expect(withFileScope(can, { permOnly: false, lcaOnly: false })).toEqual(can);
+    const staged = withStageNarrow(can, true);
+    expect(withFileScope(staged, { permOnly: true, lcaOnly: true }).wageSource.why).toBe("stage-live-only");
+  });
+
+  it("says which file each side lives in, and how to get the field back", () => {
+    for (const why of ["perm-only-set", "lca-only-set"] as const) {
+      const text = refusalText(why);
+      expect(text).toContain("LCA file");
+      expect(text).toContain("PERM file");
+      expect(text).toMatch(/Clear /);
+      expect(text).not.toContain("—");
+    }
   });
 });

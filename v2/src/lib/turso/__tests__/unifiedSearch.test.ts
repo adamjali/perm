@@ -24,7 +24,7 @@ vi.mock("../caseSearchReads", () => ({
   readFlagEmployerStage,
 }));
 
-const { compareBy, dedupeToOnePerCase, permOnlyFilters, skippedSources, unifiedSearch, PER_SOURCE, UNIFIED_MAX } = await import(
+const { compareBy, dedupeToOnePerCase, lcaOnlyFilters, permOnlyFilters, skippedSources, unifiedSearch, PER_SOURCE, UNIFIED_MAX } = await import(
   "../unifiedSearch"
 );
 type UnifiedCase = Parameters<typeof dedupeToOnePerCase>[0][number];
@@ -556,6 +556,24 @@ describe("filters only published PERM can answer", () => {
       permOnlyFilters({ naics: "54", city: "Austin", visaClass: "H-1B", jobEducation: "Master's" }),
     ).toEqual(["industry", "worksite city", "visa at filing", "education the job requires"]);
     expect(permOnlyFilters({ state: "TX" })).toEqual([]);
+  });
+});
+
+describe("a filter only published LCAs can answer", () => {
+  it("reads published LCAs alone, skips the live half, and names the filter", async () => {
+    const out = await unifiedSearch({ lead: employerLead, narrow: { wageSource: "survey" } });
+    expect(readFlagPublished).toHaveBeenCalledOnce();
+    expect(readFlagPublished).toHaveBeenCalledWith("lca", expect.anything(), expect.anything(), expect.anything());
+    expect(readPermPublished).not.toHaveBeenCalled();
+    expect(readFlagLive).not.toHaveBeenCalled();
+    expect(readPermLive).not.toHaveBeenCalled();
+    expect(out.lcaOnly).toEqual(["prevailing wage source"]);
+    expect(out.permOnly).toEqual([]);
+    expect(out.skipped.live).toBe(true);
+  });
+
+  it("names nothing when it isn't set", () => {
+    expect(lcaOnlyFilters({ state: "TX", naics: "54" })).toEqual([]);
   });
 });
 

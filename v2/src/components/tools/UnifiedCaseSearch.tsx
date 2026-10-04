@@ -21,9 +21,11 @@ import {
   ORDER_LABEL,
   OUTCOME_LABEL,
   SEARCH_ORDERS,
+  WAGE_SOURCES,
   availableOutcomes,
   chooseLead,
   withStageNarrow,
+  withFileScope,
   filterAvailability,
   isFieldValue,
   orderToSort,
@@ -33,6 +35,7 @@ import {
   type Lead,
   type Outcome,
   type SearchOrder,
+  type WageSourceKey,
 } from "@/lib/caseSearchPlan";
 // One line, deliberately: no-server-only-in-client.test.ts checks each import
 // line on its own, so a type import wrapped over several lines reads as a
@@ -205,6 +208,8 @@ interface SearchResponse {
   needsLead: boolean;
   /** Absent on a `needsLead` answer, which ran no search. */
   permOnly?: string[];
+  /** The LCA-only filters set, in words: the answer is published LCAs alone. */
+  lcaOnly?: string[];
   order?: SearchOrder;
   orderScope?: "complete" | "fetched";
 }
@@ -351,11 +356,11 @@ function Field({
     <div className="block min-w-0">
       <span className="mb-1 block text-sm font-bold">{label}</span>{" "}
       {children}
-      {state.on || !state.why ? null : state.why === "no-lead" ? (
-        // Said once, under "Narrow it", rather than under all nineteen
-        // controls; the control still carries it for a screen reader.
+      {state.on || !state.why ? null : state.why === "no-lead" || state.why === "lca-only-set" ? (
+        // Said once, at the top of its section, rather than under every
+        // control; the control still carries it for a screen reader.
         <span id={describedBy} className="sr-only">
-          {NO_LEAD_SHORT}
+          {state.why === "no-lead" ? NO_LEAD_SHORT : refusalText(state.why)}
         </span>
       ) : (
         <span id={describedBy} className="mt-1 block text-sm leading-snug text-foreground/70">
@@ -413,6 +418,8 @@ export function UnifiedCaseSearch({
     citizenship: "", birthCountry: "", visaClass: "", education: "", jobEducation: "",
   });
   const setWorkerField = (k: CaseFieldKey, v: string) => setWorker((cur) => ({ ...cur, [k]: v }));
+  // Where an LCA's prevailing wage came from: published LCAs only.
+  const [wageSourceInput, setWageSourceInput] = useState<WageSourceKey | "">("");
   const [orderInput, setOrderInput] = useState<SearchOrder>("filed-desc");
   const stageOption = useMemo(() => stageOptions.find((o) => o.slug === stageInput) ?? null, [stageOptions, stageInput]);
 
@@ -460,9 +467,21 @@ export function UnifiedCaseSearch({
   // An employer search narrowed to a stage loses what the live record lacks,
   // through the same rule the route applies, so the greyed controls and the
   // dropped filters are one list.
+  // A PERM-only field and the LCA-only wage source never narrow one search
+  // together: no file carries both, so setting one side turns the other off.
+  const permOnlySet =
+    Boolean(industryInput) ||
+    naicsInput.trim() !== "" ||
+    cityInput.trim() !== "" ||
+    WORKER_KEYS.some((k) => worker[k].trim() !== "");
+  const lcaOnlySet = wageSourceInput !== "";
   const can = useMemo(
-    () => withStageNarrow(filterAvailability(lead), Boolean(stageInput) && lead?.kind === "employer"),
-    [lead, stageInput],
+    () =>
+      withFileScope(withStageNarrow(filterAvailability(lead), Boolean(stageInput) && lead?.kind === "employer"), {
+        permOnly: permOnlySet,
+        lcaOnly: lcaOnlySet,
+      }),
+    [lead, stageInput, permOnlySet, lcaOnlySet],
   );
   const outcomes = useMemo(() => availableOutcomes(lead), [lead]);
 
@@ -530,6 +549,7 @@ export function UnifiedCaseSearch({
     for (const k of WORKER_KEYS) {
       if (isFieldValue(worker[k])) s.set(WORKER_PARAM[k], worker[k].trim());
     }
+    if (wageSourceInput && can.wageSource.on) s.set("wsrc", wageSourceInput);
     if (orderInput !== "filed-desc") s.set("order", orderInput);
     return s.toString();
   };
@@ -1031,6 +1051,12 @@ export function UnifiedCaseSearch({
               filings still open.{" "}
               {OLD_FORM_NOTE}
             </p>{" "}
+            {lcaOnlySet && can.wageSource.on ? (
+              <p className="mb-3 border-l-4 border-border pl-3 text-sm font-semibold leading-relaxed">
+                Off while a prevailing wage source is set: that field is in DOL&apos;s LCA file, and these
+                are in the PERM file. Clear the wage source to use them.
+              </p>
+            ) : null}{" "}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 [&>*]:min-w-0">
               <Field label={FILTER_LABEL.industry} state={can.industry} describedBy={`${uid}-ind-why`}>
                 <select
@@ -1101,6 +1127,38 @@ export function UnifiedCaseSearch({
                   </Field>{" "}
                 </Fragment>
               ))}
+            </div>
+          </fieldset>
+
+          <fieldset className="min-w-0">
+            <legend className="font-mono text-sm font-bold uppercase tracking-wider text-muted-foreground">
+              H-1B prevailing wage
+            </legend>{" "}
+            <p className="mb-3 mt-1 max-w-3xl text-sm leading-relaxed text-foreground/70">
+              Where the employer&apos;s prevailing wage came from is a field of DOL&apos;s
+              published LCA file alone, so setting it reads published LCAs only.{" "}
+              <Link href="/lca-wage-sources" className="font-semibold underline underline-offset-2">
+                How often each source is used
+              </Link>
+            </p>{" "}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 [&>*]:min-w-0">
+              <Field label={FILTER_LABEL.wageSource} state={can.wageSource} describedBy={`${uid}-wsrc-why`}>
+                <select
+                  value={wageSourceInput}
+                  onChange={(e) => setWageSourceInput(e.target.value as WageSourceKey | "")}
+                  disabled={!can.wageSource.on}
+                  aria-label={FILTER_LABEL.wageSource}
+                  aria-describedby={can.wageSource.on ? undefined : `${uid}-wsrc-why`}
+                  className={CONTROL + " min-w-0"}
+                >
+                  <option value="">Any source</option>
+                  {(Object.keys(WAGE_SOURCES) as WageSourceKey[]).map((k) => (
+                    <option key={k} value={k}>
+                      {WAGE_SOURCES[k]}
+                    </option>
+                  ))}
+                </select>
+              </Field>
             </div>
           </fieldset>
 
@@ -1342,6 +1400,16 @@ export function UnifiedCaseSearch({
             {data.permOnly?.length === 1 ? "is a field" : "are fields"} of
             DOL&apos;s PERM file alone; wage requests, LCAs and H-2A, H-2B and CW-1 filings don&apos;t carry{" "}
             {data.permOnly?.length === 1 ? "it" : "them"}.
+          </p>
+        </div>
+      ) : null}
+
+      {data && !data.needsLead && (data.lcaOnly?.length ?? 0) > 0 ? (
+        <div className="border-2 border-border bg-card p-4">
+          <p className="text-base leading-relaxed">
+            <b className="font-bold">Only published H-1B LCAs are in this answer.</b>{" "}
+            The prevailing wage source is a field of DOL&apos;s LCA file alone; PERM,
+            wage requests and H-2A, H-2B and CW-1 filings don&apos;t carry it.
           </p>
         </div>
       ) : null}

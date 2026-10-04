@@ -50,6 +50,7 @@ const {
   readFlagEmployerStage,
   readFlagStage,
   socGroup,
+  wageSourceCondition,
 } = await import("../caseSearchReads");
 
 /**
@@ -1054,5 +1055,39 @@ describe("getCaseFieldOptions", () => {
     expect(await getCaseFieldOptions()).toEqual({
       citizenship: [], birthCountry: [], visaClass: [], education: [], jobEducation: [],
     });
+  });
+});
+
+describe("the prevailing wage source", () => {
+  it("matches each source the way DOL's LCA file spells it", () => {
+    // Measured on production, every fiscal year: "Survey", "CBA", "SCA", "DBA",
+    // and an OES year where the wage came from OES.
+    expect(wageSourceCondition("oes")).toEqual({ cond: "pw_oes_year IS NOT NULL", params: [] });
+    expect(wageSourceCondition("survey")).toEqual({ cond: "pw_other_source = ?", params: ["Survey"] });
+    expect(wageSourceCondition("cba")).toEqual({ cond: "pw_other_source = ?", params: ["CBA"] });
+    expect(wageSourceCondition("contract")).toEqual({ cond: "pw_other_source IN (?, ?)", params: ["SCA", "DBA"] });
+  });
+
+  it("narrows an employer's published LCAs on the second pass", async () => {
+    await readFlagPublished("lca", employer, { wageSource: "survey" }, 100);
+    expect(secondPass().sql).toContain("pw_other_source = ?");
+    expect(secondPass().args).toContain("Survey");
+  });
+
+  it("narrows an equality lead in its one statement", async () => {
+    rows.mockResolvedValueOnce([]);
+    await readFlagPublished("lca", { kind: "state", value: "CA" }, { wageSource: "contract" }, 100);
+    expect(firstPass().sql).toContain("pw_other_source IN (?, ?)");
+    expect(firstPass().args).toEqual(expect.arrayContaining(["SCA", "DBA"]));
+  });
+
+  it("reads nothing from a file that doesn't carry the field", async () => {
+    for (const program of ["pwd", "seasonal"] as const) {
+      expect(await readFlagPublished(program, employer, { wageSource: "oes" }, 100)).toEqual({
+        rows: [],
+        windowed: false,
+      });
+    }
+    expect(rows).not.toHaveBeenCalled();
   });
 });

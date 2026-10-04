@@ -282,6 +282,11 @@ const DATA_PAGES: { path: string; label: string; blurb: string }[] = [
     blurb: "When H-1B status maxes out, and the last day to file a PERM so one-year extensions stay available under AC21 section 106(a). Dates with citations, no prediction.",
   },
   {
+    path: "/lca-wage-sources",
+    label: "H-1B prevailing wage sources",
+    blurb: "Where H-1B prevailing wages come from, by fiscal year: DOL's OES data, private salary surveys (publishers and survey names) or union contracts, and the employers that use surveys most, from DOL's LCA files.",
+  },
+  {
     path: "/tools/ead-extension",
     label: "EAD automatic extension calculator",
     blurb: "Whether a work permit was automatically extended by its renewal, and to when: nothing for renewals received on or after October 30, 2025 (8 CFR 274a.13(e)), up to 540 days before that under 274a.13(d).",

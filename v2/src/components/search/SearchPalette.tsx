@@ -70,6 +70,7 @@ const SECTION_KEYWORDS: Readonly<Record<string, string>> = {
   "seasonal-cases": "h-2a h-2b h2a h2b cw-1 cw1 seasonal farm agricultural temporary h-300 h-400 p-400 p-500 jo-a-300 c-500 job order 790a 9142a 9142b 9142c northern mariana",
   "opt-employers": "opt stem opt cpt f-1 student students practical training sevis ice",
   "sponsor-finder": "sponsor sponsors green card employer employers find search filter state industry transfer cap-exempt",
+  "wage-sources": "prevailing wage source survey oes radford aon mercer willis towers watson cba union h-1b lca",
   "h1b-lottery-calc": "h-1b h1b lottery registration cap selection odds chance wage level weighted",
   "employers-under-review": "on hold rfi audit appeals census",
   "compare-employers": "compare sponsors side by side",

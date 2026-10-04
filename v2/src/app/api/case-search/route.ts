@@ -10,6 +10,7 @@ import {
   filterAvailability,
   withStageNarrow,
   isOutcome,
+  isWageSource,
   type FilterKey,
   type Outcome,
 } from "@/lib/caseSearchPlan";
@@ -183,6 +184,14 @@ export async function GET(request: Request): Promise<NextResponse> {
   if ([city, citizenship, birthCountry, visaClass, education, jobEducation].includes("bad")) {
     return bad(`worker and job fields must be at most ${MAX_FIELD} letters, digits, spaces or . , ' ( ) & / -`);
   }
+  // Where an LCA's prevailing wage came from: one of four names, nothing else.
+  const wsrcRaw = (p.get("wsrc") ?? "").trim();
+  if (wsrcRaw && !isWageSource(wsrcRaw)) return bad("wsrc must be oes, survey, cba or contract");
+  const wageSource = wsrcRaw && isWageSource(wsrcRaw) ? wsrcRaw : null;
+  // No file carries both halves, so the pair can only answer "nothing"; say why instead.
+  if (wageSource && (naicsRaw || [city, citizenship, birthCountry, visaClass, education, jobEducation].some(Boolean))) {
+    return bad("a prevailing wage source is in DOL's LCA file, and industry, city and the worker's fields are in the PERM file; use one side");
+  }
 
   const orderRaw = (p.get("order") ?? "").trim();
   if (orderRaw && (orderRaw.length > 20 || !isSearchOrder(orderRaw))) return bad("unknown order");
@@ -301,6 +310,8 @@ export async function GET(request: Request): Promise<NextResponse> {
     if (visaClass && allowed("visaClass")) narrow.visaClass = visaClass;
     if (education && allowed("education")) narrow.education = education;
     if (jobEducation && allowed("jobEducation")) narrow.jobEducation = jobEducation;
+    // The LCA file alone names it; `unifiedSearch` reads that one source when it's set.
+    if (wageSource && allowed("wageSource")) narrow.wageSource = wageSource;
 
     const result = await unifiedSearch({ lead, narrow, programs, limit, ...(order ? { order } : {}) });
     if (csv) {

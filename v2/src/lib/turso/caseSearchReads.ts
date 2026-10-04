@@ -23,7 +23,7 @@ import {
   type FlagDbRow,
   type FlagDisclosedRow,
 } from "./flagCases";
-import type { Lead, Outcome } from "@/lib/caseSearchPlan";
+import type { Lead, Outcome, WageSourceKey } from "@/lib/caseSearchPlan";
 import type { ChangeProgram } from "@/lib/changeProgram";
 import { tableColumns } from "./tableColumns";
 import { FLAG_ANNUAL_WAGE_SQL } from "./lcaWages";
@@ -123,6 +123,12 @@ export interface UnifiedNarrow {
   /** The worker's education and the job's minimum, compared case-insensitively. Old-form only. */
   education?: string;
   jobEducation?: string;
+  /**
+   * Where the prevailing wage came from (Section F of the ETA-9035). Published
+   * LCAs only: no other record names it, so a search that sets it reads the
+   * LCA file alone.
+   */
+  wageSource?: WageSourceKey;
   /**
    * Which end of the decided record the published PERM reads take. `desc`
    * (the default) is the newest hundred decisions; `asc` the OLDEST, which is
@@ -1169,6 +1175,24 @@ export function flagLeadIndex(
   }
 }
 
+/**
+ * The prevailing wage source as a condition on `lca_cases`. DOL's file names
+ * the OES year when the wage came from OES, and otherwise the other source
+ * ("Survey", "CBA", "SCA", "DBA"); scripts/ingest_flag_disclosure.py reads both.
+ */
+export function wageSourceCondition(source: WageSourceKey): { cond: string; params: string[] } {
+  switch (source) {
+    case "oes":
+      return { cond: "pw_oes_year IS NOT NULL", params: [] };
+    case "survey":
+      return { cond: "pw_other_source = ?", params: ["Survey"] };
+    case "cba":
+      return { cond: "pw_other_source = ?", params: ["CBA"] };
+    case "contract":
+      return { cond: "pw_other_source IN (?, ?)", params: ["SCA", "DBA"] };
+  }
+}
+
 export async function readFlagPublished(
   program: FlagProgramKey,
   lead: Lead,
@@ -1184,6 +1208,10 @@ export async function readFlagPublished(
   const bucket = narrow.outcome ? OUTCOME_STATUSES[program][narrow.outcome] : undefined;
   const index = flagLeadIndex(program, lead, bucket?.length === 1);
   if (!index) return empty;
+  // An LCA-only filter on another program's file matches nothing; the runner
+  // doesn't ask, and this keeps a direct caller honest too.
+  const source = narrow.wageSource ? wageSourceCondition(narrow.wageSource) : null;
+  if (source && program !== "lca") return empty;
 
   if (lead.kind !== "employer") {
     // AN EQUALITY LEAD: one statement, and the index supplies the ordering, so
@@ -1217,6 +1245,10 @@ export async function readFlagPublished(
       const s = statusClause("case_status", bucket);
       conds.push(s.cond);
       params.push(...s.params);
+    }
+    if (source) {
+      conds.push(source.cond);
+      params.push(...source.params);
     }
     // The decided range only, and for the same reason as `readPermPublished`:
     // it is the last column of this index. The title and the filed range are
@@ -1298,6 +1330,10 @@ export async function readFlagPublished(
   if (narrow.wageMax !== undefined) {
     restConds.push(`(${FLAG_ANNUAL_WAGE_SQL}) <= ?`);
     restParams.push(narrow.wageMax);
+  }
+  if (source) {
+    restConds.push(source.cond);
+    restParams.push(...source.params);
   }
   const rest = commonNarrowing(
     {

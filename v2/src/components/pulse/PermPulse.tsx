@@ -226,29 +226,32 @@ export function PermPulse({ days, checkedAt, showLink = true, variant = "band", 
         </figure>
       </div>{" "}
 
-      <table className="sr-only">
-        <caption>PERM decisions per day, from DOL&apos;s case status</caption>
-        <thead>
-          <tr>
-            <th scope="col">Date{" "}</th>
-            <th scope="col">Decided{" "}</th>
-            <th scope="col">Certified{" "}</th>
-            <th scope="col">Denied{" "}</th>
-            <th scope="col">Withdrawn{" "}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bars.map((b) => (
-            <tr key={b.date}>
-              <td>{b.date}{" "}</td>
-              <td>{b.total}{" "}</td>
-              <td>{b.certified}{" "}</td>
-              <td>{b.denied}{" "}</td>
-              <td>{b.withdrawn}{" "}</td>
+      {/* sr-only on a <table> can't shrink it below its content; a div can. */}
+      <div className="sr-only">
+        <table>
+          <caption>PERM decisions per day, from DOL&apos;s case status</caption>
+          <thead>
+            <tr>
+              <th scope="col">Date{" "}</th>
+              <th scope="col">Decided{" "}</th>
+              <th scope="col">Certified{" "}</th>
+              <th scope="col">Denied{" "}</th>
+              <th scope="col">Withdrawn{" "}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>{" "}
+          </thead>
+          <tbody>
+            {bars.map((b) => (
+              <tr key={b.date}>
+                <td>{b.date}{" "}</td>
+                <td>{b.total}{" "}</td>
+                <td>{b.certified}{" "}</td>
+                <td>{b.denied}{" "}</td>
+                <td>{b.withdrawn}{" "}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>{" "}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <p className="text-sm text-foreground/70">

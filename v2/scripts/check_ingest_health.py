@@ -361,6 +361,8 @@ GAP_SWEEP_MAX_AGE_DAYS = 3
 # (`lca_live_summary`, `flag_disclosure_summary_lca`).
 PRECOMPUTED_DOCS = {
     "lca_filter_options": (100, "the H-1B salary explorer's facets and default view"),
+    # Rebuilt nightly by build_wage_sources.py; a week's grace for a missed night.
+    "lca_wage_sources": (7, "the H-1B prevailing wage sources page"),
     "live_census": (8, "the case lookup's queue position"),
     "review_stages": (5, "the review-stage cohort pages"),
     "wage_filter_options": (100, "the PERM salary explorer's facets"),
